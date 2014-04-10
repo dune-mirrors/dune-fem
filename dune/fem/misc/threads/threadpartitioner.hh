@@ -72,6 +72,7 @@ namespace ALUGridSpace {
     virtual void bcast(int*,int, int) const { }
     virtual void bcast(char*,int, int) const { }
     virtual void bcast(double*,int, int) const { }
+    virtual void bcast ( ObjectStream &, int ) const {}
     virtual int exscan( int value ) const { return 0; }
     virtual int scan( int value ) const { return value; }
     virtual std::vector < int > gcollect ( int value ) const { return std::vector<int> (psize(), value); }
