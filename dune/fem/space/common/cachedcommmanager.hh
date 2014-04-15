@@ -62,8 +62,6 @@ namespace Dune
        //! type of grid part 
       typedef typename SpaceType :: GridPartType GridPartType; 
      
-      class UnsaveObjectStream;
-
     protected:
       // type of communication indices 
       typedef CommunicationIndexMap IndexMapType;
@@ -581,9 +579,6 @@ namespace Dune
 
         // reserve write buffer for storage of dofs 
         str.reserve( (size * blockSize * sizeof( DofType )) );
-
-        // dirty hack to have faster access to stream 
-        UnsaveObjectStream &os = (UnsaveObjectStream &)str;
         for( int i = 0; i < size; ++i )
         {
           // get dof block 
@@ -592,7 +587,7 @@ namespace Dune
           // write dof block to stream  
           for( int k = 0; k < blockSize; ++k )
           {
-            os.writeUnsave( ((*blockPtr)[ k ]) );
+            str.writeUnchecked( ((*blockPtr)[ k ]) );
           }
         }
       }
@@ -623,8 +618,6 @@ namespace Dune
         enum { blockSize = DiscreteFunction :: 
                 DiscreteFunctionSpaceType :: localBlockSize } ;
 
-        UnsaveObjectStream &os = (UnsaveObjectStream &)str;
-
         // get index map of rank belonging to link  
         const IndexMapType &indexMap = recvIndexMap_[ dest( link ) ];
 
@@ -641,7 +634,11 @@ namespace Dune
           // read block 
           for( int k = 0; k < blockSize; ++k )  
           {
-            os.readUnsave( value );
+#if HAVE_DUNE_ALUGRID
+            str.readUnchecked( value );
+#else
+            str.read( value );
+#endif
             Operation :: apply( value, ((*blockPtr)[ k ]) );
           }
         }
@@ -853,48 +850,6 @@ namespace Dune
         const PartitionType myPartitionType = entity.partitionType();
         const bool send = EntityCommHelper< CommInterface > :: send( myPartitionType );
         return (send) ? (blockMapper_.numEntityDofs( entity ) + 1) : 0;
-      }
-    };
-
-
-
-    //! object stream with unsave writing and reading
-    template< class SpaceImp >
-    class DependencyCache< SpaceImp > :: UnsaveObjectStream
-    : public ALU3DSPACE ObjectStream 
-    {
-      typedef ALU3DSPACE ObjectStream BaseType;
-
-    public:
-      // create empty object stream 
-      inline UnsaveObjectStream () : BaseType() {}
-      // copy constructor taking object stream 
-      inline UnsaveObjectStream (const ObjectStream & os) : BaseType(os) {}
-      // copy constructor 
-      inline UnsaveObjectStream (const UnsaveObjectStream & os) : BaseType(os) {}
-
-      // write value to stream without testing size 
-      template <class T> 
-      inline void writeUnsave (const T & a)
-      {
-        T & val = *((T *) this->getBuff( this->_wb) );
-        // increase size and make sure that buffer size is ok 
-        this->_wb += sizeof(T) ;
-        assert( this->_wb <= this->_len );
-        val = a;
-        return ;
-      } 
-      
-      // read value from stream without checking 
-      template <class T>
-      inline void readUnsave (T & a)
-      {
-        const T & val = *((const T *) this->getBuff(this->_rb) );
-        this->_rb += sizeof(T);
-        // make sure that buffer size is ok
-        assert( this->_rb <= this->_wb ); 
-        a = val;
-        return ;
       }
     };
 
