@@ -795,7 +795,7 @@ namespace Dune
       // create empty object stream 
       inline UnsaveObjectStream () : BaseType() {}
       // copy constructor taking object stream 
-      inline UnsaveObjectStream (const ObjectStream & os) : BaseType(os) {}
+      inline UnsaveObjectStream (const BaseType & os) : BaseType(os) {}
       // copy constructor 
       inline UnsaveObjectStream (const UnsaveObjectStream & os) : BaseType(os) {}
 
