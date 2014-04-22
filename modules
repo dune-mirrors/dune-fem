@@ -59,9 +59,17 @@
           @ingroup DiscreteFunctionSpace */
       /** @defgroup CombinedSpace Wrapper from scalar to vector valued spaces 
           @ingroup DiscreteFunctionSpace */
+      /** @defgroup CombinedDiscreteFunctionSpace Wrapperspace for two different type of discrete function spaces
+          @ingroup DiscreteFunctionSpace */
       /** @defgroup RBSpace Reduced Basis Space
           @ingroup DiscreteFunctionSpace */
-      /** @defgroup BaseFunction Base functions and base functiton sets
+      /** @defgroup PAdaptiveDGSpace Discontinous Galerkin Space with polynom adaptation
+          @ingroup DiscreteFunctionSpace */
+      /** @defgroup PAdaptiveLagrangeSpace Lagrange Discrete Function Space with polynom adaptation
+          @ingroup DiscreteFunctionSpace */
+      /** @defgroup BaseFunction Base functions and base function sets
+          @ingroup DiscreteFunctionSpace */
+      /** @defgroup ShapeFunction Shape functions and shape function sets
           @ingroup DiscreteFunctionSpace */
       /** @defgroup DofMapper DOF mapper 
           @ingroup DiscreteFunctionSpace */
@@ -73,6 +81,8 @@
       /** @defgroup BlockVectorDFunction An implementation using dune-istl block vectors
           @ingroup DiscreteFunction */
       /** @defgroup ProductDFunction A discrete function for product spaces
+          @ingroup DiscreteFunction */
+      /** @defgroup PetscDiscreFunction A discrete function for PETsc Vectors
           @ingroup DiscreteFunction */
       /** @defgroup SubDFunction A discrete function for extraction of scalar functions 
             from a discrete function holding vectorial data

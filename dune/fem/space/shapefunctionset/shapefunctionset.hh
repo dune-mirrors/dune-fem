@@ -20,6 +20,7 @@ namespace Dune
     // ----------------
 
     /**
+     * \addtogroup ShapeFunction
      * \brief Interface class for shape function sets
      *
      * This class cannot be used itself, it is for documentation purposes

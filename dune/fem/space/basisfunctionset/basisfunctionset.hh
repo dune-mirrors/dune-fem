@@ -28,6 +28,7 @@ namespace Dune
     // ----------------
 
     /**
+     * \addtogroup BaseFunction
      * \brief Interface class for basis function sets
      *
      * This class cannot be used itself, it is for documentation purposes

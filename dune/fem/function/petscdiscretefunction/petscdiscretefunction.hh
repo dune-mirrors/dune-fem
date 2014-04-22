@@ -74,9 +74,15 @@ namespace Dune
       typedef typename PetscVectorType::ConstDofBlockPtrType            ConstDofBlockPtrType;
     };
 
+
     /* ========================================
      * class PetscDiscreteFunction
      * =======================================
+     */
+
+    /*  @addtogroup PetscDiscreFunction
+     *  \brief Discrete Function implementation based on the PETsc vector.
+     *
      */
     template< class DiscreteFunctionSpace >
     class PetscDiscreteFunction
