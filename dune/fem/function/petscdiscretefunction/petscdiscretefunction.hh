@@ -91,6 +91,15 @@ namespace Dune
       typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
     };
 
+    /* ========================================
+     * class PetscDiscreteFunction
+     * =======================================
+     */
+
+    /*  @addtogroup PetscDiscreFunction
+     *  \brief Discrete Function implementation based on the PETsc vector.
+     *
+     */
 
     // PetscDiscreteFunction
     //----------------------

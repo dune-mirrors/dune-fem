@@ -20,13 +20,14 @@ namespace Dune
     // ----------------
 
     /**
-      \brief Interface class for shape function sets
-
-       This class cannot be used itself, it is for documentation purposes
-       only.
-
-       \note Constructor signatures are explicitly not specified by this
-             interface.
+     * \addtogroup ShapeFunction
+     * \brief Interface class for shape function sets
+     *
+     * This class cannot be used itself, it is for documentation purposes
+     * only.
+     *
+     * \note Constructor signatures are explicitly not specified by this
+     *       interface.
      */
     template< class FunctionSpace >
     class ShapeFunctionSet
