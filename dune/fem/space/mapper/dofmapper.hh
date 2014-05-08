@@ -63,7 +63,7 @@ namespace Dune
 
     public: 
       /** \brief  return number of dofs for special function space and grid on
-                  specified level */
+                  specified level  */
       SizeType size () const 
       {
         CHECK_INTERFACE_IMPLEMENTATION(asImp().size());
@@ -71,10 +71,10 @@ namespace Dune
       }
 
       /** \brief returns true if DoFs for given codimension exist 
-       *
-       *  \param[in]  codim   codimension to check 
-       *
-       *  \returns true if DoFs for codimension exist 
+        
+          \param[in]  codim   codimension to check 
+        
+          \returns true if DoFs for codimension exist 
        */
       bool contains ( const int codim ) const
       {
@@ -90,27 +90,27 @@ namespace Dune
       }
 
       /** \brief map each local DoF number to a global key
-       *
-       *  \param[in]  element  element, the DoFs belong to
-       *  \param[in]  f        functor to call for each DoF
-       *
-       *  The functor has to be a copyable object satisfying the following
-       *  interface:
-       *  \code
-       *  struct Functor
-       *  {
-       *
-       *    // application operator
-       *    template< class GlobalKey >
-       *    void operator() ( const int localDoF, const GlobalKey &globalDoF );
-       *  };
-       *  \endcode
-       *
-       *  For each DoF to be mapped, this method will call the application operator
-       *  once.
-       *  
-       *  \note There is no guarantee on the order, in which the functor is applied.
-       *  \note The global key has to be compatible with the Dof storage.
+       
+          \param[in]  element  element, the DoFs belong to
+          \param[in]  f        functor to call for each DoF
+        
+          The functor has to be a copyable object satisfying the following
+          interface:
+          \code
+          struct Functor
+          {
+        
+            // application operator
+            template< class GlobalKey >
+            void operator() ( const int localDoF, const GlobalKey &globalDoF );
+          };
+          \endcode
+        
+          For each DoF to be mapped, this method will call the application operator
+          once.
+          
+          \note There is no guarantee on the order, in which the functor is applied.
+          \note The global key has to be compatible with the Dof storage.
        */
       template< class Functor >
       void mapEach ( const ElementType &element, Functor f ) const
@@ -119,27 +119,27 @@ namespace Dune
       }
 
       /** \brief map each local DoF number to a global key
-       *
-       *  \param[in]  entity   entity, the DoFs belong to
-       *  \param[in]  f        functor to call for each DoF
-       *
-       *  The functor has to be a copyable object satisfying the following
-       *  interface:
-       *  \code
-       *  struct Functor
-       *  {
-       *
-       *    // application operator
-       *    template< class GlobalKey >
-       *    void operator() ( const int localDoF, const GlobalKey &globalKey );
-       *  };
-       *  \endcode
-       *
-       *  For each DoF to be mapped, this method will call the application operator
-       *  once.
-       *  
-       *  \note There is no guarantee on the order, in which the functor is applied.
-       *  \note The global key has to be compatible with the Dof storage.
+        
+          \param[in]  entity   entity, the DoFs belong to
+          \param[in]  f        functor to call for each DoF
+        
+          The functor has to be a copyable object satisfying the following
+          interface:
+          \code
+          struct Functor
+          {
+        
+            // application operator
+            template< class GlobalKey >
+            void operator() ( const int localDoF, const GlobalKey &globalKey );
+          };
+          \endcode
+        
+          For each DoF to be mapped, this method will call the application operator
+          once.
+          
+          \note There is no guarantee on the order, in which the functor is applied.
+          \note The global key has to be compatible with the Dof storage.
        */
       template< class Entity, class Functor >
       void mapEachEntityDof ( const Entity &entity, Functor f ) const
@@ -157,9 +157,9 @@ namespace Dune
 
       /** \brief obtain number of DoFs on an entity
        * 
-       *  \param[in]  element  entity of codimension 0
-       *  
-       *  \returns number of DoFs on the entity
+          \param[in]  element  entity of codimension 0
+          
+          \returns number of DoFs on the entity
        */
       SizeType numDofs ( const ElementType &element ) const
       {
@@ -168,18 +168,18 @@ namespace Dune
       }
 
       /** \brief obtain number of DoFs actually belonging to an entity
-       *
-       *  In contrast to numDofs, this method returns the number of DoFs actually
-       *  associated with an entity (usually a subentity). We have the following
-       *  relation for an entity \f$E\f$ of codimension 0:
-       *  \f[
-       *  \mathrm{numDofs}( E ) = \sum_{e \subset E} \mathrm{numEntityDofs}( e ),
-       *  \f]
-       *  where \f$\subset\f$ denotes the subentity relation.
-       * 
-       *  \param[in]  entity  entity of codimension
-       *  
-       *  \returns number of DoFs on the entity
+        
+          In contrast to numDofs, this method returns the number of DoFs actually
+          associated with an entity (usually a subentity). We have the following
+          relation for an entity \f$E\f$ of codimension 0:
+          \f[
+          \mathrm{numDofs}( E ) = \sum_{e \subset E} \mathrm{numEntityDofs}( e ),
+          \f]
+          where \f$\subset\f$ denotes the subentity relation.
+         
+          \param[in]  entity  entity of codimension
+          
+          \returns number of DoFs on the entity
        */
       template< class Entity >
       SizeType numEntityDofs ( const Entity &entity ) const
