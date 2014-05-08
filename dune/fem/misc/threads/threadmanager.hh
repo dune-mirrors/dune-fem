@@ -257,24 +257,31 @@ namespace Dune
       }
     }; // end class ThreadManager 
 #else 
+    /** \class ThreadManager 
+     *  \ingroup Utility 
+     *  \brief The ThreadManager wrapps basic shared memory functionality 
+     *         provided by OpenMP or pthreads such as thread id, number of threads, etc.
+     *
+     *  \note All methods are static members. 
+     */
     struct ThreadManager 
     {
-      //! return maximal number of threads possbile in the current run 
+      //! \brief return maximal number of threads possbile in the current run 
       static inline int maxThreads() { return 1;  }
 
-      //! return number of current threads 
+      //! \brief return number of current threads 
       static inline int currentThreads() { return 1; }
 
-      //! return thread number 
+      //! \brief return thread number 
       static inline int thread() {  return 0; }
 
-      //! return true if the current thread is the master thread (i.e. thread 0)
+      //! \brief return true if the current thread is the master thread (i.e. thread 0)
       static inline bool isMaster() { return true ; }
 
-      //! set maximal number of threads available during run  
+      //! \brief set maximal number of threads available during run  
       static inline void setMaxNumberThreads( const int numThreads ) { } 
 
-      //! returns true if program is operating on one thread currently
+      //! \brief returns true if program is operating on one thread currently
       static inline bool singleThreadMode() { return true ; }
     }; // end class ThreadManager 
 #endif
