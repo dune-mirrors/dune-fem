@@ -299,106 +299,106 @@ namespace Dune
 
 
    /** \class   FemTimer
-     *  \ingroup HelperClasses
-     *  \brief   class with singleton instance managing 
-     *           timming for parts of program.
-     *
-     *  The simplest way of timing one line of
-     *  code is to enclose it with the
-     *  \c TIMEDEXECUTION
-     *  macro; the return value corresponds to the
-     *  elapsed time, e.g., instead of writting
-     *  \code
-     *  double error = calcError(u,uh);
-     *  \endcode
-     *  use
-     *  \code
-     *  double used = TIMEDEXECUTION(
-     *    double error = calcError(u,uh);
-     *  )
-     *  \endcode
-     *
-     *  A more general usage is through the 
-     *  FemTimer class.
-     *  The singleton instance can either be accessed
-     *  through FemTimer::instance or through the
-     *  reference femTimer.
-     *  Note that the following usage is only
-     *  available if \c FEMTIMER is defined 
-     *  otherwise all methods of the class
-     *  FemTimer with the exception of \c start
-     *  and \c stop used for the \c TIMEDEXECUTION
-     *  macro are empty.
-     *  
-     *  For computing the execution time of any part
-     *  of a code, first get a unique id from the
-     *  FemTimer by calling 
-     *  \code
-     *  id = femTimer.addTo(name,subMarkers);
-     *  \endcode
-     *  where \c name is a string used for output
-     *  and subMarkers is an integer value greaten
-     *  or equal to one, which can be used to 
-     *  time parts of the program. This can for example
-     *  be done in the constructor of an operator.
-     *  Remember to return the id to the FemTimer
-     *  by calling 
-     *  \code
-     *  femTimer.removeFrom(id);
-     *  \endcode
-     *
-     *  To start and stop the time keeping for a given program
-     *  write
-     *  \code
-     *  femTimer.start(id);
-     *  ...
-     *  femTimer.stop(id);
-     *  \endcode
-     *  Execution time is summed up over all calls
-     *  to start and stop. It is possible to pass an operation
-     *  argument which changes this behavior; \c sum and \c max are
-     *  implemented Using 
-     *  \code
-     *  femTimer.reset(id);
-     *  \endcode
-     *  the main timer (and all its subtimings)
-     *  are set back to zero. Calling \c reset
-     *  without an argument resets all stored
-     *  timers.
-     *
-     *  The use of sub timers works as shown in
-     *  the following example:
-     *  \code
-     *  unsigned int id = femTimer.addTo("test",2);
-     *  ...
-     *  femTimer.start(id);
-     *  ...
-     *  femTimer.start(id,1);
-     *  f1(); // call to a first function
-     *  femTimer.end(id,1);
-     *  ...
-     *  femTimer.start(id,2);
-     *  f2(); // call to a second function
-     *  femTimer.end(id,2);
-     *  ...
-     *  femTimer.end(id);
-     *  \endcode
-     *  Using \c femTimer.print(out,"test"); 
-     *  the result of all timings is printed to
-     *  an \c ostream. Subtimings are given
-     *  relative to the main timing, i.e.,
-     *  first the main time is printed and following
-     *  that the relative time used for each subpart
-     *  of the algorithm. 
-     *  In the same manner the timing information
-     *  can be stored in a file using
-     *  \c printFile(filename).
-     *  The first call opens the file and prints
-     *  the string identifying each timing;
-     *  each successive call prints one line containing
-     *  all the timing information, again given
-     *  first the main timing followed by the
-     *  relative time used in each sub timing.
+       \ingroup HelperClasses
+       \brief   class with singleton instance managing 
+                timming for parts of program.
+     
+       The simplest way of timing one line of
+       code is to enclose it with the
+       \c TIMEDEXECUTION
+       macro; the return value corresponds to the
+       elapsed time, e.g., instead of writting
+       \code
+       double error = calcError(u,uh);
+       \endcode
+       use
+       \code
+       double used = TIMEDEXECUTION(
+         double error = calcError(u,uh);
+       )
+       \endcode
+     
+       A more general usage is through the 
+       FemTimer class.
+       The singleton instance can either be accessed
+       through FemTimer::instance or through the
+       reference femTimer.
+       Note that the following usage is only
+       available if \c FEMTIMER is defined 
+       otherwise all methods of the class
+       FemTimer with the exception of \c start
+       and \c stop used for the \c TIMEDEXECUTION
+       macro are empty.
+       
+       For computing the execution time of any part
+       of a code, first get a unique id from the
+       FemTimer by calling 
+       \code
+       id = femTimer.addTo(name,subMarkers);
+       \endcode
+       where \c name is a string used for output
+       and subMarkers is an integer value greaten
+       or equal to one, which can be used to 
+       time parts of the program. This can for example
+       be done in the constructor of an operator.
+       Remember to return the id to the FemTimer
+       by calling 
+       \code
+       femTimer.removeFrom(id);
+       \endcode
+     
+       To start and stop the time keeping for a given program
+       write
+       \code
+       femTimer.start(id);
+       ...
+       femTimer.stop(id);
+       \endcode
+       Execution time is summed up over all calls
+       to start and stop. It is possible to pass an operation
+       argument which changes this behavior; \c sum and \c max are
+       implemented Using 
+       \code
+       femTimer.reset(id);
+       \endcode
+       the main timer (and all its subtimings)
+       are set back to zero. Calling \c reset
+       without an argument resets all stored
+       timers.
+     
+       The use of sub timers works as shown in
+       the following example:
+       \code
+       unsigned int id = femTimer.addTo("test",2);
+       ...
+       femTimer.start(id);
+       ...
+       femTimer.start(id,1);
+       f1(); // call to a first function
+       femTimer.end(id,1);
+       ...
+       femTimer.start(id,2);
+       f2(); // call to a second function
+       femTimer.end(id,2);
+       ...
+       femTimer.end(id);
+       \endcode
+       Using \c femTimer.print(out,"test"); 
+       the result of all timings is printed to
+       an \c ostream. Subtimings are given
+       relative to the main timing, i.e.,
+       first the main time is printed and following
+       that the relative time used for each subpart
+       of the algorithm. 
+       In the same manner the timing information
+       can be stored in a file using
+       \c printFile(filename).
+       The first call opens the file and prints
+       the string identifying each timing;
+       each successive call prints one line containing
+       all the timing information, again given
+       first the main timing followed by the
+       relative time used in each sub timing.
      */
 #ifdef FEMTIMER
     typedef Fem::Timer< true > FemTimer;
@@ -411,10 +411,10 @@ namespace Dune
 #define TIMEDEXECUTION(command) \
     (femTimer.start(),command,femTimer.stop())
    /** \class   ExecutionTimer
-     *  \ingroup HelperClasses
-     *  \brief  class with a start and stop method for
-     *          timing parts of a program.
-     **/
+       \ingroup HelperClasses
+       \brief  class with a start and stop method for
+               timing parts of a program.
+     */
   class ExecutionTimer {
     public:
     ExecutionTimer() : total_(0) {
