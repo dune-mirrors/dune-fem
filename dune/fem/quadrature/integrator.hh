@@ -11,18 +11,18 @@ namespace Dune
   {
 
     /** \addtogroup Integrators
-     * 
-     *  Integrators are able to integrate a function.
+       
+        Integrators are able to integrate a function.
      */
 
 
 
     /** \class   Integrator
-     *  \ingroup Integrators
-     *  \brief   integrator for arbitrary functions providing evaluate
-     *
-     *  \param Quadrature  quadrature to use (either ElementQuadrature or
-     *                     CachingQuadrature)
+        \ingroup Integrators
+        \brief   integrator for arbitrary functions providing evaluate
+      
+        \param Quadrature  quadrature to use (either ElementQuadrature or
+                           CachingQuadrature)
      */
     template< class Quadrature >
     class Integrator
@@ -42,30 +42,30 @@ namespace Dune
 
     public:
       /** \brief constructor
-       * 
-       *  \param[in]  order   polynomial order for which the used quadrature
-       *                      shall be exact
+         
+          \param[in]  order   polynomial order for which the used quadrature
+                              shall be exact
        */
       inline explicit Integrator ( unsigned int order )
       : order_( order )
       {}
 
       /** \brief add the integral over an entity to a variable
-       *
-       *  The function needs to have an evaluate method supporting
-       *  \ref Dune::Fem::QuadraturePointWrapper "wrapped quadrature points".
-       *  The declaration should look as follows:
-       *  \code
-       *  template< class Point >
-       *  evaluate( Point &x, RangeType &ret );
-       *  \endcode
-       *
-       *  \note The RangeType should be compatible with a Dune FieldVector.
-       *
-       *  \param[in]   entity    entity to integrate over
-       *  \param[in]   function  function to integrate
-       *  \param       ret       variable to which the value of the integral is
-       *                         added
+        
+          The function needs to have an evaluate method supporting
+          \ref Dune::Fem::QuadraturePointWrapper "wrapped quadrature points".
+          The declaration should look as follows:
+          \code
+          template< class Point >
+          evaluate( Point &x, RangeType &ret );
+          \endcode
+        
+          \note The RangeType should be compatible with a Dune FieldVector.
+        
+          \param[in]   entity    entity to integrate over
+          \param[in]   function  function to integrate
+          \param       ret       variable to which the value of the integral is
+                                 added
        */
       template< class Function >
       inline void integrateAdd ( const EntityType &entity,
@@ -95,20 +95,20 @@ namespace Dune
       }
 
       /** \brief integrate a function over an entity
-       *
-       *  The function needs to have an evaluate method supporting
-       *  \ref Dune::Fem::QuadraturePointWrapper "wrapped quadrature points".
-       *  The declaration should look as follows:
-       *  \code
-       *  template< class Point >
-       *  evaluate( Point &x, RangeType &ret );
-       *  \endcode
-       *
-       *  \note The RangeType should be compatible with a Dune FieldVector.
-       *
-       *  \param[in]   entity    entity to integrate over
-       *  \param[in]   function  function to integrate
-       *  \param[out]  ret       value of the integral
+        
+          The function needs to have an evaluate method supporting
+          \ref Dune::Fem::QuadraturePointWrapper "wrapped quadrature points".
+          The declaration should look as follows:
+          \code
+          template< class Point >
+          evaluate( Point &x, RangeType &ret );
+          \endcode
+        
+          \note The RangeType should be compatible with a Dune FieldVector.
+        
+          \param[in]   entity    entity to integrate over
+          \param[in]   function  function to integrate
+          \param[out]  ret       value of the integral
        */
       template< class Function >
       inline void integrate ( const EntityType &entity,
