@@ -42,19 +42,19 @@ namespace Dune
     // ----------------------
     
     /** \ingroup LocalFunction
-     *  \class TemporaryLocalFunction
-     *  \brief A temporary function carrying values for one entity
-     *
-     *  A TemporaryLocalFunction is a LocalFunction which is not associated with
-     *  any DiscreteFunction. It can be used when generating discrete functions
-     *  to temporarily store values for one entity.
-     *
-     *  \note Local DoF numbers correspond directly to array indices. Hence it
-     *  may be more cache efficient to generate a TemporaryLocalFunction and then
-     *  do only one update step on the discrete function's LocalFunction.
-     *
-     *  \param DiscreteFunctionSpaceImp type of the discrete function space, the
-     *                                  local function shall belong to
+        \class TemporaryLocalFunction
+        \brief A temporary function carrying values for one entity
+      
+        A TemporaryLocalFunction is a LocalFunction which is not associated with
+        any DiscreteFunction. It can be used when generating discrete functions
+        to temporarily store values for one entity.
+      
+        \note Local DoF numbers correspond directly to array indices. Hence it
+        may be more cache efficient to generate a TemporaryLocalFunction and then
+        do only one update step on the discrete function's LocalFunction.
+      
+        \param DiscreteFunctionSpaceImp type of the discrete function space, the
+                                        local function shall belong to
      */
     template< class DiscreteFunctionSpace, class Dof,
               template< class > class ArrayAllocator >
@@ -85,35 +85,35 @@ namespace Dune
       typedef typename BaseType :: EntityType EntityType;
 
       /** \brief constructor creating a local function without binding it to an 
-       *         entity
-       *
-       *  Creates the local function without initializing the fields depending on
-       *  the current entity.
-       *
-       *  \note Before using the local function it must be initilized by
-       *  \code
-       *  localFunction.init( entity );
-       *  \endcode
-       *
-       *  \param[in] dfSpace discrete function space the local function shall
-       *                     belong to
+                 entity
+        
+          Creates the local function without initializing the fields depending on
+          the current entity.
+        
+          \note Before using the local function it must be initilized by
+          \code
+          localFunction.init( entity );
+          \endcode
+        
+          \param[in] dfSpace discrete function space the local function shall
+                             belong to
        */
       explicit TemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace )
       : impl_( dfSpace )
       {}
       
       /** \brief constructor creating a local function and binding it to an
-       *         entity
-       *
-       *  Creates the local function and initilizes the fields depending on the
-       *  current entity. It is not necessary, though allowed, to call init
-       *  before using the discrete function.
-       *
-       *  \note The degrees of freedom are not initialized by this function.
-       *  
-       *  \param[in] dfSpace discrete function space the local function shall
-       *                     belong to
-       *  \param[in] entity  entity for initialize the local function to
+                 entity
+        
+          Creates the local function and initilizes the fields depending on the
+          current entity. It is not necessary, though allowed, to call init
+          before using the discrete function.
+        
+          \note The degrees of freedom are not initialized by this function.
+          
+          \param[in] dfSpace discrete function space the local function shall
+                             belong to
+          \param[in] entity  entity for initialize the local function to
        */
       TemporaryLocalFunction ( const DiscreteFunctionSpaceType &dfSpace,
                                const EntityType &entity )
@@ -121,15 +121,15 @@ namespace Dune
       {}
 
       /** \brief copy constructor
-       *
-       *  Creates the local function as a copy of the specified one. It is bound
-       *  to an entity if and only if the copied local function is bound to an
-       *  entity.
-       *
-       *  \note The degrees of freedom are always copied, even if the copied
-       *        local function is not bound to an entity.
-       * 
-       *  \param[in]  other  TemporaryLocalFunction to copy
+        
+          Creates the local function as a copy of the specified one. It is bound
+          to an entity if and only if the copied local function is bound to an
+          entity.
+        
+          \note The degrees of freedom are always copied, even if the copied
+                local function is not bound to an entity.
+         
+          \param[in]  other  TemporaryLocalFunction to copy
        */
       TemporaryLocalFunction ( const ThisType &other )
       : impl_( other.impl_ )
@@ -155,20 +155,20 @@ namespace Dune
 
     
     /** \ingroup LocalFunction
-     *  \class ConstLocalFunction
-     *  \brief A constant local function carrying values for one entity
-     *
-     *  A ConstLocalFunction is a LocalFunction which is basically doing the same as the 
-     *  LocalFunction of a discrete function. The difference is that the local dofs 
-     *  are not kept as references but are copied to a local storage. 
-     *  Therefore, this is a const local function and any modification of dofs is not
-     *  allowed. 
-     *
-     *  \note Local DoF numbers correspond directly to array indices. Hence it
-     *  may be more cache efficient to generate a ConstLocalFunction when only a 
-     *  const access to the local function is needed. 
-     *
-     *  \param DiscreteFunction type of the discrete function, the
+        \class ConstLocalFunction
+        \brief A constant local function carrying values for one entity
+      
+        A ConstLocalFunction is a LocalFunction which is basically doing the same as the 
+        LocalFunction of a discrete function. The difference is that the local dofs 
+        are not kept as references but are copied to a local storage. 
+        Therefore, this is a const local function and any modification of dofs is not
+        allowed. 
+      
+        \note Local DoF numbers correspond directly to array indices. Hence it
+        may be more cache efficient to generate a ConstLocalFunction when only a 
+        const access to the local function is needed. 
+      
+        \param DiscreteFunction type of the discrete function, the
                                 local function shall belong to
      */
     template< class DiscreteFunction,
@@ -190,17 +190,17 @@ namespace Dune
       typedef typename BaseType :: RangeFieldType RangeFieldType ;
 
       /** \brief constructor creating a local function without binding it to an 
-       *         entity
-       *
-       *  Creates the local function without initializing the fields depending on
-       *  the current entity.
-       *
-       *  \note Before using the local function it must be initilized by
-       *  \code
-       *  localFunction.init( entity );
-       *  \endcode
-       *
-       *  \param[in] df discrete function the local function shall belong to
+                 entity
+        
+          Creates the local function without initializing the fields depending on
+          the current entity.
+        
+          \note Before using the local function it must be initilized by
+          \code
+          localFunction.init( entity );
+          \endcode
+        
+          \param[in] df discrete function the local function shall belong to
        */
       explicit ConstLocalFunction ( const DiscreteFunctionType &df )
       : BaseType( df.space() ),
@@ -208,17 +208,17 @@ namespace Dune
       {}
       
       /** \brief constructor creating a local function and binding it to an
-       *         entity
-       *
-       *  Creates the local function and initilizes the fields depending on the
-       *  current entity. It is not necessary, though allowed, to call init
-       *  before using the discrete function.
-       *
-       *  \note The degrees of freedom are not initialized by this function.
-       *  
-       *  \param[in] df      discrete function the local function shall
-       *                     belong to
-       *  \param[in] entity  entity for initialize the local function to
+                 entity
+        
+          Creates the local function and initilizes the fields depending on the
+          current entity. It is not necessary, though allowed, to call init
+          before using the discrete function.
+        
+          \note The degrees of freedom are not initialized by this function.
+          
+          \param[in] df      discrete function the local function shall
+                             belong to
+          \param[in] entity  entity for initialize the local function to
        */
       ConstLocalFunction ( const DiscreteFunctionType &df, const EntityType &entity )
       : BaseType( df.space(), entity ),
@@ -226,15 +226,15 @@ namespace Dune
       {}
 
       /** \brief copy constructor
-       *
-       *  Creates the local function as a copy of the specified one. It is bound
-       *  to an entity if and only if the copied local function is bound to an
-       *  entity.
-       *
-       *  \note The degrees of freedom are always copied, even if the copied
-       *        local function is not bound to an entity.
-       * 
-       *  \param[in]  other  TemporaryLocalFunction to copy
+        
+          Creates the local function as a copy of the specified one. It is bound
+          to an entity if and only if the copied local function is bound to an
+          entity.
+        
+          \note The degrees of freedom are always copied, even if the copied
+                local function is not bound to an entity.
+         
+          \param[in]  other  TemporaryLocalFunction to copy
        */
       ConstLocalFunction ( const ThisType &other )
       : BaseType( other ),
@@ -329,47 +329,47 @@ namespace Dune
 
     public:
       /** \brief constructor creating a local function without binding it to an 
-       *         entity
-       *
-       *  Creates the local function without initializing the fields depending on
-       *  the current entity.
-       *
-       *  \note Before using the local function it must be initilized by
-       *  \code
-       *  localFunction.init( entity );
-       *  \endcode
-       *
-       *  \param[in] dfSpace discrete function space the local function shall
-       *                     belong to
+                 entity
+        
+          Creates the local function without initializing the fields depending on
+          the current entity.
+        
+          \note Before using the local function it must be initilized by
+          \code
+          localFunction.init( entity );
+          \endcode
+        
+          \param[in] dfSpace discrete function space the local function shall
+                             belong to
        */
       explicit TemporaryLocalFunctionImpl ( const DiscreteFunctionSpaceType &dfSpace );
       
       /** \brief constructor creating a local function and binding it to an
-       *         entity
-       *
-       *  Creates the local function and initilizes the fields depending on the
-       *  current entity. It is not necessary, though allowed, to call init
-       *  before using the discrete function.
-       *
-       *  \note The degrees of freedom are not initialized by this function.
-       *  
-       *  \param[in] dfSpace discrete function space the local function shall
-       *                     belong to
-       *  \param[in] entity  entity for initialize the local function to
+                 entity
+        
+          Creates the local function and initilizes the fields depending on the
+          current entity. It is not necessary, though allowed, to call init
+          before using the discrete function.
+        
+          \note The degrees of freedom are not initialized by this function.
+          
+          \param[in] dfSpace discrete function space the local function shall
+                             belong to
+          \param[in] entity  entity for initialize the local function to
        */
       TemporaryLocalFunctionImpl ( const DiscreteFunctionSpaceType &dfSpace,
                                    const EntityType &entity );
 
       /** \brief copy constructor
-       *
-       *  Creates the local function as a copy of the specified one. It is bound
-       *  to an entity if and only if the copied local function is bound to an
-       *  entity.
-       *
-       *  \note The degrees of freedom are always copied, even if the copied
-       *        local function is not bound to an entity.
-       * 
-       *  \param[in]  other  TemporaryLocalFunction to copy
+        
+          Creates the local function as a copy of the specified one. It is bound
+          to an entity if and only if the copied local function is bound to an
+          entity.
+        
+          \note The degrees of freedom are always copied, even if the copied
+                local function is not bound to an entity.
+         
+          \param[in]  other  TemporaryLocalFunction to copy
        */
       TemporaryLocalFunctionImpl ( const ThisType &other );
 
@@ -387,33 +387,33 @@ namespace Dune
 
       /** \brief initialize the local function for an entity
        *
-       *  Binds the local function to an entity.
-       *
-       *  \note A local function must be initialized to an entity before it can
-       *        be used.
-       *        
-       *  \note This function can be called multiple times to use the local
-       *        function for more than one entity.
-       *
-       *  \param[in] entity entity to bind the local function to
+          Binds the local function to an entity.
+        
+          \note A local function must be initialized to an entity before it can
+                be used.
+                
+          \note This function can be called multiple times to use the local
+                function for more than one entity.
+        
+          \param[in] entity entity to bind the local function to
        */
       void init ( const EntityType &entity );
 
       /** \brief initialize the local function for an entity
-       *
-       *  Binds the local function to an entity and copies the local dofs of the discrete
-       *  function to the local storage.
-       *
-       *  \note A local function must be initialized to an entity before it can
-       *        be used.
-       *        
-       *  \note This function can be called multiple times to use the local
-       *        function for more than one entity.
-       *
-       *  \param[in] entity           entity to bind the local function to
-       *  \param[in] discreteFunction discrete function the local dofs are copied from 
-       *
-       *  \note The dofs of the discrete function are not modified in any way. 
+        
+          Binds the local function to an entity and copies the local dofs of the discrete
+          function to the local storage.
+        
+          \note A local function must be initialized to an entity before it can
+                be used.
+                
+          \note This function can be called multiple times to use the local
+                function for more than one entity.
+        
+          \param[in] entity           entity to bind the local function to
+          \param[in] discreteFunction discrete function the local dofs are copied from 
+        
+          \note The dofs of the discrete function are not modified in any way. 
        */
       template< class DiscreteFunction >
       void init ( const EntityType &entity, const DiscreteFunction& discreteFunction );
