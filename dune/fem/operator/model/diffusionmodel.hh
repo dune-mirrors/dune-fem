@@ -12,20 +12,20 @@ namespace Dune
   {
 
     /*! \ingroup EllipticOperator
-     *  \class DiffusionModelInterface
-     *  \brief Interface for a mathematical model of a DiffusionOperator
-     *
-     *  The DiffusionModelInterface specifies the way mathematical data can
-     *  be incorporated into a DiffusionOperator, i.e. a linear operator
-     *  performing
-     *  \f[
-     *  -\nabla \cdot \bigl( a( x ) \nabla u \bigr).
-     *  \f]
-     *  Here the mathematical data is exactly the function \f$a\f$, which we call
-     *  diffusive flux.
-     *
-     *  \param  FunctionSpace   function space to work in
-     *  \param  DiffusionModel  actual implementation (Barton-Nackman)
+        \class DiffusionModelInterface
+        \brief Interface for a mathematical model of a DiffusionOperator
+      
+        The DiffusionModelInterface specifies the way mathematical data can
+        be incorporated into a DiffusionOperator, i.e. a linear operator
+        performing
+        \f[
+        -\nabla \cdot \bigl( a( x ) \nabla u \bigr).
+        \f]
+        Here the mathematical data is exactly the function \f$a\f$, which we call
+        diffusive flux.
+      
+        \param  FunctionSpace   function space to work in
+        \param  DiffusionModel  actual implementation (Barton-Nackman)
      */
     template< class FunctionSpace, class DiffusionModel >
     class DiffusionModelInterface
@@ -66,13 +66,13 @@ namespace Dune
 
     public:
       /** \brief calculate the diffusive flux \f$a( x ) \nabla u\f$ in a point
-       *
-       *  \param[in]  diffVariable  vector describin the partial derivative to
-       *                            evaluate
-       *  \param[in]  entity        entity to evaluate the flux on
-       *  \param[in]  x             evaluation point (in local coordinates)
-       *  \param[in]  gradient      \f$\nabla u\f$ in the evaluation point
-       *  \param[out] flux          variable to receive the evaluated flux
+        
+          \param[in]  diffVariable  vector describin the partial derivative to
+                                    evaluate
+          \param[in]  entity        entity to evaluate the flux on
+          \param[in]  x             evaluation point (in local coordinates)
+          \param[in]  gradient      \f$\nabla u\f$ in the evaluation point
+          \param[out] flux          variable to receive the evaluated flux
        */
       template< int diffOrder, class EntityType, class PointType >
       inline void diffusiveFlux ( const FieldVector< int, diffOrder > &diffVariable,
@@ -86,11 +86,11 @@ namespace Dune
       }
 
       /** \brief calculate the diffusive flux \f$a( x ) \nabla u\f$ in a point
-       *
-       *  \param[in]  entity      entity to evaluate the flux on
-       *  \param[in]  x           evaluation point (in local coordinates)
-       *  \param[in]  gradient    \f$\nabla u\f$ in the evaluation point
-       *  \param[out] flux        variable to receive the evaluated flux
+        
+          \param[in]  entity      entity to evaluate the flux on
+          \param[in]  x           evaluation point (in local coordinates)
+          \param[in]  gradient    \f$\nabla u\f$ in the evaluation point
+          \param[out] flux        variable to receive the evaluated flux
        */
       template< class EntityType, class PointType >
       inline void diffusiveFlux ( const EntityType &entity,
@@ -143,12 +143,12 @@ namespace Dune
 
     public:
       /** \copydoc Dune::Fem::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const PointType &x,const JacobianRangeType &gradient,JacobianRangeType &flux) const
-       *
-       *  The default implementation calls
-       *  \code
-       *  FieldVector< int, 0 > diffVar;
-       *  diffusiveFlux( diffVar, entity, x, gradient, flux );
-       *  \endcode
+        
+          The default implementation calls
+          \code
+          FieldVector< int, 0 > diffVar;
+          diffusiveFlux( diffVar, entity, x, gradient, flux );
+          \endcode
        */
       template< class EntityType, class PointType >
       inline void diffusiveFlux ( const EntityType &entity,
