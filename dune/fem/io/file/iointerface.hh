@@ -76,12 +76,14 @@ namespace Dune
        are used, the format is choosen through the parameter
        \b fem.io.outputformat;
        values are
-       - 0: write data in GraPE format which can also
-            be used for checkpointing - this format
-            is basicly lossless.
-       - 1: VTK cell data
-       - 2: VTK vertex data
+       - vtk-cell: VTK cell data 
+       - sub-vtk-cell: VTK cell data including a specified level of subsampling
+       - vtk-vertex: VTK vertex data (might require interpolation into Lagrange space)
+       - binary: write binary data (only available with DataWriter and CheckPointer)
+       - gnuplot: write gunplot compatible data 
+       - none: avoid data output 
        .
+
        Utilities for Matlab output are availabe
        through the Dune::MatlabHelper.
       
@@ -99,7 +101,7 @@ namespace Dune
                by IOInterface. A general purpose data writter
                is provided by the class Dune::DataWriter.
 
-       Since the GraPE output format is lossless
+       Since the binary output format is lossless
        it is also used by the Dune::CheckPointer
        class which also writes data to files
        but alternates between to filenames -
