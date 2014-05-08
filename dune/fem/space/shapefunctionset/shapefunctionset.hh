@@ -20,13 +20,13 @@ namespace Dune
     // ----------------
 
     /**
-     * \brief Interface class for shape function sets
-     *
-     * This class cannot be used itself, it is for documentation purposes
-     * only.
-     *
-     * \note Constructor signatures are explicitly not specified by this
-     *       interface.
+      \brief Interface class for shape function sets
+      
+       This class cannot be used itself, it is for documentation purposes
+       only.
+      
+       \note Constructor signatures are explicitly not specified by this
+             interface.
      */
     template< class FunctionSpace >
     class ShapeFunctionSet
@@ -51,58 +51,58 @@ namespace Dune
       std::size_t size () const;
 
       /**
-       * \brief evalute each shape function
-       *
-       *  \param[in]  x        coordinate or quadrature point
-       *  \param[in]  functor  functor call for evaluating each shape function
-       *
-       *  The functor has to be a copyable object satisfying the following
-       *  interface:
-       *  \code
-       *  struct Functor
-       *  {
-       *    template< class Value >
-       *    void operator() ( const int shapeFunction, const Value &value );
-       *  };
-       *  \endcode
+         \brief evalute each shape function
+        
+          \param[in]  x        coordinate or quadrature point
+          \param[in]  functor  functor call for evaluating each shape function
+        
+          The functor has to be a copyable object satisfying the following
+          interface:
+          \code
+          struct Functor
+          {
+            template< class Value >
+            void operator() ( const int shapeFunction, const Value &value );
+          };
+          \endcode
        */
       template< class Point, class Functor >
       void evaluateEach ( const Point &x, Functor functor ) const;
 
       /**
-       * \brief evalute jacobian of each shape function
-       *
-       *  \param[in]  x        coordinate or quadrature point
-       *  \param[in]  functor  functor call for evaluating the jacobian of each shape function
-       *
-       *  The functor has to be a copyable object satisfying the following
-       *  interface:
-       *  \code
-       *  struct Functor
-       *  {
-       *    template< class Jacobian >
-       *    void operator() ( const int shapeFunction, const Jacobian &jacobian );
-       *  };
-       *  \endcode
+         \brief evalute jacobian of each shape function
+        
+          \param[in]  x        coordinate or quadrature point
+          \param[in]  functor  functor call for evaluating the jacobian of each shape function
+        
+          The functor has to be a copyable object satisfying the following
+          interface:
+          \code
+          struct Functor
+          {
+            template< class Jacobian >
+            void operator() ( const int shapeFunction, const Jacobian &jacobian );
+          };
+          \endcode
        */
       template< class Point, class Functor > 
       void jacobianEach ( const Point &x, Functor functor ) const;
 
       /**
-       * \brief evalute hessian of each shape function
-       *
-       *  \param[in]  x        coordinate or quadrature point
-       *  \param[in]  functor  functor call for evaluating the hessian of each shape function
-       *
-       *  The functor has to be a copyable object satisfying the following
-       *  interface:
-       *  \code
-       *  struct Functor
-       *  {
-       *    template< class Hessian >
-       *    void operator() ( const int shapeFunction, const Hessian &hessian );
-       *  };
-       *  \endcode
+         \brief evalute hessian of each shape function
+        
+          \param[in]  x        coordinate or quadrature point
+          \param[in]  functor  functor call for evaluating the hessian of each shape function
+        
+          The functor has to be a copyable object satisfying the following
+          interface:
+          \code
+          struct Functor
+          {
+            template< class Hessian >
+            void operator() ( const int shapeFunction, const Hessian &hessian );
+          };
+          \endcode
        */
       template< class Point, class Functor > 
       void hessianEach ( const Point &x, Functor functor ) const;
