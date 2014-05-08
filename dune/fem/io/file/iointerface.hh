@@ -64,17 +64,14 @@ namespace Dune
        Visualization output of discrete functions
        is provided at the moment for
        - GraPE   
-       - VTK, e.g., for paraview
+       - VTK, e.g., for ParaView, VisIt, or others
        - Matlab 
        .
        In addition data can be visualized in GraPE online during 
        a simulation by setting the parameter
        \b fem.io.grapedisplay to one.
-       With the exception of Matlab output
-       the Dune::DataWritter or the 
-       Dune::Checkpointer 
-       are used, the format is choosen through the parameter
-       \b fem.io.outputformat (see below).
+       Except for Matlab output or Dune::Checkpointer (always binary)
+       the format is choosen through the parameter \b fem.io.outputformat (see below).
 
        Utilities for Matlab output are availabe
        through the Dune::MatlabHelper.
@@ -130,7 +127,7 @@ namespace Dune
        IOTupleType dataTup ( &U );
        typedef DataWriter< GridType, IOTupleType > DataWriterType;
        DataWriterType dataWriter( grid,gridfilename,dataTup,startTime,endTime );
-       for (counter=0;time<endTime;counter++) {
+       for (counter=0; time<endTime; ++counter) {
          ...
          dataWriter.write(time,counter);
        }
@@ -141,13 +138,13 @@ namespace Dune
         \femparam{fem.io.outputformat, output format, vtk-vertex} 
                   values are: 
                 - vtk-cell =  VTK cell data 
-                - sub-vtk-cell =  VTK cell data including a specified level of subsampling
                 - vtk-vertex = VTK vertex data (might require interpolation into Lagrange space)
+                - sub-vtk-cell =  VTK cell data including a specified level of subsampling
                 - binary = write binary data (only available with DataWriter and CheckPointer)
                 - gnuplot = write gunplot compatible data 
                 - none = no data output 
                 .
-        \femparam{fem.io.grapedisplay, use grape for online visualization; default is 0 (no)}
+        \femparam{fem.io.grapedisplay, use grape for online visualization; default is false}
         \femparam{fem.io.savestep, interval for writting data files}
          use value <0 to deativate
         \femparam{fem.io.savecount, number of time steps between writting
