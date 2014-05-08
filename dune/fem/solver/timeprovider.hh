@@ -193,93 +193,93 @@ namespace Dune
 
 
     /** 
-     *  \ingroup ODESolver
-     *  \brief   manager for global simulation time of time-dependent solutions
-     *
-     *  When calculating possibly multiple time-dependent solutions, it is often
-     *  necessary to use the same time in all calculations. This means that we
-     *  have to use the same time step for all our calculations. A TimeProvider
-     *  keeps track of this information in a simple and unified way.
-     *
-     *  An example of a time loop could look as follows:
-     *  \code
-     *  // create time provider
-     *  TimeProvider tp( startTime );
-     *
-     *  SpaceOperator spaceOperator;
-     *  typedef SpaceOperator::DestinationType DestinationType;
-     *  OdeSolver<DestinationType> odeSolver(spaceOperator,tp,order);
-     *
-     *  DestinationType U;
-     *  initialize(U);
-     *
-     *  // set the initial time step estimate
-     *  odeSolver.initialize( U );
-     *
-     *  // time loop
-     *  for( tp.init(); tp.time() < endTime; tp.next() )
-     *  {
-     *    // do calculation
-     *    odeSolver.solve(U);
-     *  }
-     *  \endcode
-     *
-     *  Within the time loop, both tp.time() and tp.deltaT() are fixed and cannot
-     *  be altered and an the next time step should be fixed in the loop,
-     *  e.g., in the method solve of the ode solver an upper estimate
-     *  for the next time step is provided; if more than one time
-     *  step restriction has to be imposed, the minimum is taken for
-     *  the next time step.
-     *  By calling the method provideTimeStepEstimate(maxDt) in the body of the
-     *  loop an upper estimate for the next time step can be supplied;
-     *  to fix the next time step (ignoring the estimates) an optinal
-     *  argument can be passed to the next method on the
-     *  Dune::TimeProvider.
-     *
-     *  Obviously, we need to provide an initial estimate. In the above example,
-     *  this is done by the initialize method of the ODE solver. In tp.init(),
-     *  the first time step (deltaT) is set based on the estimate and 
-     *  this value can also be fixed independent of the estimate through
-     *  an optional argument. The following loop would fix the time step
-     *  to 1e-3
-     *  \code
-     *  for( tp.init(1e-3); tp.time() < endTime; tp.next(1e-3) )
-     *  {
-     *    // do calculation
-     *    odeSolver.solve(U);
-     *  }
-     *  \endcode
-     *
-     *  In order to allow the user to incfluence the calculation of the next time
-     *  step from the estimate, the time provider also maintains an additional
-     *  factor (which is constant during the entire simulation). 
-     *  Therefore the actual time step used, is calculated as follows:
-     *  \f[
-     *  \mathrm{deltaT} = \mathrm{factor} * \mathrm{timeStepEstimate}.
-     *  \f]
-     *  Therefore in the above example 1e-3 might not be the acctual
-     *  time step depending on the value of the factor in the
-     *  TimeProvider.
-     *  The default value for this factor is equal to one but can be changed
-     *  either during the construction of the Dune::TimeProvider or
-     *  by using the parameter \c fem.timeprovider.factor.
-     *  A further parameter read by the Dune::TimeProvider is
-     *  fem.timeprovider.starttime defining the starting time of
-     *    the simulation (default is zero).
-     *
-     *  The most general implementation is given in the class
-     *  Dune::TimeProvider< CollectiveCommunication< C > >  which
-     *  takes a Dune::CollectiveCommunication instance in the 
-     *  constructor which is used in parallel computations is
-     *  syncronize the time step. It defaults to 
-     *  Dune::CollectiveCommHelperType :: defaultCommunication()
-     *  and also works for seriell runs where the template argument
-     *  does not have to be prescribed.
-     *  If the communication manager from a given grid is to be used
-     *  the class Dune::GridTimeProvider using the GridType as
-     *  template argument can be used instead, with the same
-     *  functionality.
-     *
+       \ingroup ODESolver
+       \brief   manager for global simulation time of time-dependent solutions
+     
+       When calculating possibly multiple time-dependent solutions, it is often
+       necessary to use the same time in all calculations. This means that we
+       have to use the same time step for all our calculations. A TimeProvider
+       keeps track of this information in a simple and unified way.
+     
+       An example of a time loop could look as follows:
+       \code
+       // create time provider
+       TimeProvider tp( startTime );
+     
+       SpaceOperator spaceOperator;
+       typedef SpaceOperator::DestinationType DestinationType;
+       OdeSolver<DestinationType> odeSolver(spaceOperator,tp,order);
+     
+       DestinationType U;
+       initialize(U);
+     
+       // set the initial time step estimate
+       odeSolver.initialize( U );
+     
+       // time loop
+       for( tp.init(); tp.time() < endTime; tp.next() )
+       {
+         // do calculation
+         odeSolver.solve(U);
+       }
+       \endcode
+     
+       Within the time loop, both tp.time() and tp.deltaT() are fixed and cannot
+       be altered and an the next time step should be fixed in the loop,
+       e.g., in the method solve of the ode solver an upper estimate
+       for the next time step is provided; if more than one time
+       step restriction has to be imposed, the minimum is taken for
+       the next time step.
+       By calling the method provideTimeStepEstimate(maxDt) in the body of the
+       loop an upper estimate for the next time step can be supplied;
+       to fix the next time step (ignoring the estimates) an optinal
+       argument can be passed to the next method on the
+       Dune::TimeProvider.
+     
+       Obviously, we need to provide an initial estimate. In the above example,
+       this is done by the initialize method of the ODE solver. In tp.init(),
+       the first time step (deltaT) is set based on the estimate and 
+       this value can also be fixed independent of the estimate through
+       an optional argument. The following loop would fix the time step
+       to 1e-3
+       \code
+       for( tp.init(1e-3); tp.time() < endTime; tp.next(1e-3) )
+       {
+         // do calculation
+         odeSolver.solve(U);
+       }
+       \endcode
+     
+       In order to allow the user to incfluence the calculation of the next time
+       step from the estimate, the time provider also maintains an additional
+       factor (which is constant during the entire simulation). 
+       Therefore the actual time step used, is calculated as follows:
+       \f[
+       \mathrm{deltaT} = \mathrm{factor} * \mathrm{timeStepEstimate}.
+       \f]
+       Therefore in the above example 1e-3 might not be the acctual
+       time step depending on the value of the factor in the
+       TimeProvider.
+       The default value for this factor is equal to one but can be changed
+       either during the construction of the Dune::TimeProvider or
+       by using the parameter \c fem.timeprovider.factor.
+       A further parameter read by the Dune::TimeProvider is
+       fem.timeprovider.starttime defining the starting time of
+       the simulation (default is zero).
+     
+       The most general implementation is given in the class
+       Dune::TimeProvider< CollectiveCommunication< C > >  which
+       takes a Dune::CollectiveCommunication instance in the 
+       constructor which is used in parallel computations is
+       syncronize the time step. It defaults to 
+       Dune::CollectiveCommHelperType :: defaultCommunication()
+       and also works for seriell runs where the template argument
+       does not have to be prescribed.
+       If the communication manager from a given grid is to be used
+       the class Dune::GridTimeProvider using the GridType as
+       template argument can be used instead, with the same
+       functionality.
+     
        \parametername \c fem.timeprovider.factor \n
                       multiplication factor to use for each time step;
                       defaults to 1.
