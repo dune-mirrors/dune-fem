@@ -188,8 +188,8 @@ namespace Dune
       //! type of used dune index set 
       typedef typename GridPartType :: IndexSetType IndexSetType;
       /** \brief type of iterator for grid traversal
-       *
-       *  \note Only grid traversal for codimension 0 is currently supported.
+       
+          \note Only grid traversal for codimension 0 is currently supported.
        */
       typedef typename GridPartType :: template Codim< Traits::codimension > :: IteratorType
         IteratorType;
@@ -199,10 +199,10 @@ namespace Dune
       typedef typename GridPartType :: IntersectionType IntersectionType;
 
       /** \brief defines type of data handle for communication
-       *  \param  DiscreteFunction  type of \ref Dune::Fem::DiscreteFunctionInterface
-       *                            "discrete function" to communicate
-       *  \param  Operation         type of operation to perform on communication
-       *                            (defaults to copy)
+          \param  DiscreteFunction  type of \ref Dune::Fem::DiscreteFunctionInterface
+                                    "discrete function" to communicate
+          \param  Operation         type of operation to perform on communication
+                                    (defaults to copy)
        */
       template< class DiscreteFunction,
                 class Operation =  // get default type from traits 
@@ -266,11 +266,11 @@ namespace Dune
       }
    
       /** \brief get basis function set for given entity
-       *
-       *  \param[in]  entity  entity (of codim 0) for which base function is
-       *                      requested
-       *
-       *  \returns BasisFunctionSet for the entity
+        
+          \param[in]  entity  entity (of codim 0) for which base function is
+                              requested
+        
+          \returns BasisFunctionSet for the entity
        */
       inline const BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
@@ -279,16 +279,16 @@ namespace Dune
       }
 
       /** \brief returns true if the space contains only globally continuous
-       *         functions
-       *
-       *  For example, a \ref Dune::Fem::LagrangeDiscreteFunctionSpace
-       *  "Lagrange space" returns \b true while a \ref
-       *  Dune::Fem::DiscontinuousGalerkinSpace "discontiuous Galerkin space" returns
-       *  \b false.
-       *
-       *  \returns \b true  if the space contians only globally continous
-       *                    functions,
-       *           \b false otherwise
+                 functions
+        
+          For example, a \ref Dune::Fem::LagrangeDiscreteFunctionSpace
+          "Lagrange space" returns \b true while a \ref
+          Dune::Fem::DiscontinuousGalerkinSpace "discontiuous Galerkin space" returns
+          \b false.
+        
+          \returns \b true  if the space contians only globally continous
+                            functions,
+                   \b false otherwise
        */
       inline bool continuous () const
       { 
@@ -297,8 +297,8 @@ namespace Dune
       }
 
       /** \brief get index of the sequence in grid sequences
-       *
-       *  \return number of current sequence
+        
+          \return number of current sequence
        */
       inline int sequence () const
       { 
@@ -307,9 +307,9 @@ namespace Dune
       }
 
       /** \brief get global order of space
-       *
-       *  \return order of space, i.e., the maximal polynomial order of base
-       *          functions 
+        
+          \return order of space, i.e., the maximal polynomial order of base
+                  functions 
        */
       inline int order () const 
       { 
@@ -318,17 +318,17 @@ namespace Dune
       } 
     
       /** \brief returns true if discrete functions over this space have zero jump
-       *         over the given intersection.
-       *
-       *  For example, a \ref Dune::Fem::LagrangeDiscreteFunctionSpace
-       *  "Lagrange space" returns \b true iff the intersection is conforming while a \ref
-       *  Dune::Fem::DiscontinuousGalerkinSpace "discontiuous Galerkin space" always returns
-       *  \b false.
-       *
-       *  \param intersection Intersection for which we want to know the continuety 
-       *  \returns \b true  if the space contians functions which are continuous over the
-       *                    intersection,
-       *           \b false otherwise
+                 over the given intersection.
+        
+          For example, a \ref Dune::Fem::LagrangeDiscreteFunctionSpace
+          "Lagrange space" returns \b true iff the intersection is conforming while a \ref
+          Dune::Fem::DiscontinuousGalerkinSpace "discontiuous Galerkin space" always returns
+          \b false.
+        
+          \param intersection Intersection for which we want to know the continuety 
+          \returns \b true  if the space contians functions which are continuous over the
+                            intersection,
+                   \b false otherwise
        */
       inline bool continuous (const IntersectionType &intersection) const
       { 
@@ -337,8 +337,8 @@ namespace Dune
       }
 
       /** \brief get a reference to the block mapper
-       *
-       *  \returns refernce to the block mapper
+        
+          \returns refernce to the block mapper
        */    
       inline BlockMapperType &blockMapper () const
       {
@@ -347,8 +347,8 @@ namespace Dune
       }
       
       /** \brief get reference to grid this discrete function space belongs to
-       * 
-       *  \returns constant reference to grid  
+        
+          \returns constant reference to grid  
        */
       inline const GridType &grid () const
       { 
@@ -357,8 +357,8 @@ namespace Dune
       }
 
       /** \brief get reference to grid this discrete function space belongs to
-       * 
-       *  \returns reference to grid  
+        
+          \returns reference to grid  
        */
       inline GridType &grid ()
       { 
@@ -368,8 +368,8 @@ namespace Dune
 
 #if 0
       /** \brief get a reference to the associated grid partition
-       *
-       *  \returns constant reference to the grid partition
+       
+         \returns constant reference to the grid partition
        */
       inline const GridPartType &gridPart () const
       { 
@@ -379,8 +379,8 @@ namespace Dune
 #endif
       
       /** \brief get a reference to the associated grid partition
-       *
-       *  \returns reference to the grid partition
+        
+          \returns reference to the grid partition
        */
       inline GridPartType &gridPart ()
       { 
@@ -389,8 +389,8 @@ namespace Dune
       }
 
       /** \brief Get a reference to the associated index set
-       *
-       *  \returns const reference to index set
+        
+          \returns const reference to index set
        */ 
       inline const IndexSetType &indexSet () const
       {
@@ -399,8 +399,8 @@ namespace Dune
       }
 
       /** \brief get number of DoFs for this space
-       *
-       *  \returns number of DoFs (degrees of freedom)
+        
+          \returns number of DoFs (degrees of freedom)
        */
       inline int size () const
       { 
@@ -409,9 +409,9 @@ namespace Dune
       }
 
       /** \brief get iterator pointing to the first entity of the associated grid
-       *         partition
-       *
-       *  \returns iterator pointing to first entity
+                 partition
+        
+          \returns iterator pointing to first entity
        */
       inline IteratorType begin () const
       {
@@ -420,9 +420,9 @@ namespace Dune
       }
 
       /** \brief get iterator pointing behind the last entity of the associated
-       *         grid partition
-       *
-       *  \returns iterator pointing behind last entity
+                 grid partition
+        
+          \returns iterator pointing behind last entity
        */
       inline IteratorType end () const
       {
@@ -431,14 +431,14 @@ namespace Dune
       }
       
       /** \brief apply a functor to each entity in the associated grid partition
-       *
-       *  The functor must provide an the following operator
-       *  \code
-       *  template< class EntityType >
-       *  void operator() ( const EntityType & );
-       *  \endcode
-       *
-       *  \param[in]  f  functor to apply
+       
+          The functor must provide an the following operator
+          \code
+          template< class EntityType >
+          void operator() ( const EntityType & );
+          \endcode
+        
+          \param[in]  f  functor to apply
        */
       template< class FunctorType >
       inline void forEach ( FunctorType &f ) const
@@ -447,9 +447,9 @@ namespace Dune
       }
 
       /** \brief returns true if the grid has more than one geometry type
-       *
-       *  \return \b true if the underlying grid has more than one geometry type
-       *          (hybrid grid), \b false otherwise 
+        
+          \return \b true if the underlying grid has more than one geometry type
+                  (hybrid grid), \b false otherwise 
        */
       inline bool multipleGeometryTypes () const
       { 
@@ -459,9 +459,9 @@ namespace Dune
 
      
       /** \brief returns true if base function sets depend on the entity
-       *
-       *  \returns \b true if base function set depend on entities, \b false
-       *           otherwise
+        
+          \returns \b true if base function set depend on entities, \b false
+                   otherwise
        */
       inline bool multipleBasisFunctionSets () const
       {
@@ -471,7 +471,7 @@ namespace Dune
 
       /** \brief return the communication interface appropriate for this space 
           \return communication interface 
-      */
+       */
       InterfaceType communicationInterface() const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().communicationInterface() );
@@ -497,9 +497,9 @@ namespace Dune
       }
 
       /** \brief communicate data for given discrete function using the space's
-       *         default communication operation
-       *
-       *  \param  discreteFunction  discrete function to be communicated
+                 default communication operation
+        
+          \param  discreteFunction  discrete function to be communicated
        */
       template <class DiscreteFunction>
       void communicate(DiscreteFunction& discreteFunction) const
@@ -509,10 +509,10 @@ namespace Dune
       }
 
       /** \brief communicate data for given discrete function
-       *
-       *  \param      discreteFunction  discrete function to be communicated
-       *  \param[in]  op                communication operation to use
-       *                                (see DFCommunicationOperation)
+        
+          \param      discreteFunction  discrete function to be communicated
+          \param[in]  op                communication operation to use
+                                        (see DFCommunicationOperation)
        */
       template <class DiscreteFunction, class Operation>
       void communicate(DiscreteFunction& discreteFunction, const Operation* op) const
@@ -522,11 +522,11 @@ namespace Dune
       }
 
       /** \brief Creates DataHandle for given discrete function
-       *
-       *  \param[in]  discreteFunction  \ref DiscreteFunctionInterface
-       *                                "discrete function" to create the data
-       *                                handle for
-       *  \param[in]  operation         operation to perform on scatter
+        
+          \param[in]  discreteFunction  \ref DiscreteFunctionInterface
+                                        "discrete function" to create the data
+                                        handle for
+          \param[in]  operation         operation to perform on scatter
        */
       template< class DiscreteFunction, class Operation >
       inline typename CommDataHandle< DiscreteFunction, Operation > :: Type
@@ -555,14 +555,14 @@ namespace Dune
 
 
     /** \brief check two spaces for equality
-     *  \relates DiscreteFunctionSpaceInterface
-     *  
-     *  This is a default implemented equality operator for discrete function
-     *  spaces. It assumes the mapper to be a singleton and then compares the
-     *  addresses of the two mappers.
-     *
-     *  Note that this method can be specialized by implementing another version
-     *  that uses the exact traits of the discrete function space.
+       \relates DiscreteFunctionSpaceInterface
+        
+        This is a default implemented equality operator for discrete function
+        spaces. It assumes the mapper to be a singleton and then compares the
+        addresses of the two mappers.
+      
+        Note that this method can be specialized by implementing another version
+        that uses the exact traits of the discrete function space.
      */
     template< class Traits >
     inline bool operator== ( const DiscreteFunctionSpaceInterface< Traits > &X,
@@ -751,13 +751,13 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::forEach(FunctorType &f) const
-       *
-       *  \note The default implementation simply does the following:
-       *  \code
-       *  const IteratorType end = asImp().end();
-       *  for( IteratorType it = asImp().begin(); it != end; ++it )
-       *    f( *it );
-       *  \endcode
+       
+          \note The default implementation simply does the following:
+          \code
+          const IteratorType end = asImp().end();
+          for( IteratorType it = asImp().begin(); it != end; ++it )
+            f( *it );
+          \endcode
        */
       template< class FunctorType >
       inline void forEach ( FunctorType &f ) const
@@ -826,11 +826,11 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::createDataHandle(DiscreteFunction &discreteFunction.const Operation *operation) const
-       *
-       *  \note The default implementation is
-       *  \code
-       *  return CommDataHandle< DiscreteFunction, Operation > :: Type( discreteFunction );
-       *  \endcode
+       
+          \note The default implementation is
+          \code
+          return CommDataHandle< DiscreteFunction, Operation > :: Type( discreteFunction );
+          \endcode
        */
       template< class DiscreteFunction, class Operation >
       inline typename BaseType
