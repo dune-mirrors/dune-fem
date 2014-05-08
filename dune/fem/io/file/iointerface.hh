@@ -74,15 +74,7 @@ namespace Dune
        the Dune::DataWritter or the 
        Dune::Checkpointer 
        are used, the format is choosen through the parameter
-       \b fem.io.outputformat;
-       values are
-       - vtk-cell: VTK cell data 
-       - sub-vtk-cell: VTK cell data including a specified level of subsampling
-       - vtk-vertex: VTK vertex data (might require interpolation into Lagrange space)
-       - binary: write binary data (only available with DataWriter and CheckPointer)
-       - gnuplot: write gunplot compatible data 
-       - none: avoid data output 
-       .
+       \b fem.io.outputformat (see below).
 
        Utilities for Matlab output are availabe
        through the Dune::MatlabHelper.
@@ -146,13 +138,15 @@ namespace Dune
 
         \femparam{fem.prefix, path used for all file output, ./}
         \femparam{fem.io.datafileprefix, prefix used for all data files}
-        \femparam{fem.io.outputformat, output format, 0} 
+        \femparam{fem.io.outputformat, output format, vtk-vertex} 
                   values are: 
-                       - 0 = GRAPE (lossless format), 
-                       - 1 = VTK, 
-                       - 2 = VTK vertex data, 
-                       - 3 = gnuplot
-                       .
+                - vtk-cell =  VTK cell data 
+                - sub-vtk-cell =  VTK cell data including a specified level of subsampling
+                - vtk-vertex = VTK vertex data (might require interpolation into Lagrange space)
+                - binary = write binary data (only available with DataWriter and CheckPointer)
+                - gnuplot = write gunplot compatible data 
+                - none = no data output 
+                .
         \femparam{fem.io.grapedisplay, use grape for online visualization; default is 0 (no)}
         \femparam{fem.io.savestep, interval for writting data files}
          use value <0 to deativate
