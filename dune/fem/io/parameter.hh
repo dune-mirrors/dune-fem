@@ -23,149 +23,149 @@ namespace Dune
   {
   
     /** \addtogroup Parameter
-     *
-     *  Handling Parameters, i.e., values that can be set after compilation, in
-     *  dune-fem is extremely easy. Just add
-     *  \code
-     *  Dune::MPIManager::initialize( argc, argv );
-     *  Dune::Parameter::append( argc, argv );
-     *  \endcode
-     *  at the head of your main function. Parameters are strings of the
-     *  format "key: value". Any command line argument containing a colon
-     *  will thus be interpreted as a parameter.
-     *
-     *  \note All parameter keys are case sensitive.
-     *  \note Found parameters are removed from the command line.
-     *
-     *  There are 8 static methods in Parameter to obtain the value of a
-     *  parameter. They are divided by the following criteria:
-     *  - \b Default \b Value: The methods taking a default value will return the
-     *    default, if the parameter has not been specified by the user.
-     *    Additionally, they will add "\e key : \e value" to the database. The
-     *    methods not taking a default value will throw an exception, if the
-     *    parameter could not be found in the database.
-     *  - \b Return \b Value: For convenience, there is always a method (called
-     *    getValue) returning the value of the parameter. If you do not want to
-     *    rely on return value optimization, use the method (called get) taking
-     *    a reference to the return variable as an argument.
-     *  - \b Validation: It is often necessary to make sure the value satisfies
-     *    certain constraints. For this purpose, some methods take a validator
-     *    as an argument.
-     *  .
-     *
-     *  Of course, you don't have to pass every parameter on the command line.
-     *  They can also be gathered in files. Parameter provides a kind of include
-     *  mechanism. Whenever a parameter with key "paramfile" is encountered, the
-     *  value is interpreted as a paramter file to include.
-     *
-     *  Fem parameters can also be appended to the parameter list via an DGF file.
-     *  The method 
-     *  \code
-     *  appendDGF( "macrogrid.dgf" );
-     *  \endcode
-     *  reads in the DGF-block: 
-     *  \code
-     *  FemParameter
-     *
-     *  #
-     *  \endcode
-     *  from file "macrogrid.dgf". All parameters defined within this block are appended
-     *  to the parameter list.
-     *
-     *
-     *  If a parameter is defined multiply, the first definition is added to the
-     *  database. All later definitions are ignored. Therefore it is important to
-     *  know the exact behaviour of the "paramfile" parameter:
-     *  - All parameters in the current file (or the command line) are added
-     *    first.
-     *  - If there were includes, they are processed in the order of appearance.
-     *  - Should an included file have includes, they are added depth-first,
-     *    i.e., The includes of one included file are parsed down to the last
-     *    file included, before the includes of the next included file are
-     *    considered.
-     *  .
-     *
-     *  All parameter names defined by dune-fem should conform to the following
-     *  naming convention:
-     *  \code
-     *  fem.<group>.<parameter>
-     *  \endcode
-     *  The group name can be omitted if necessary.
-     *  
-     *  An example is the parameter 
-     *  \code 
-     *  fem.verboserank
-     *  \endcode
-     *  This can beused throughout the the program; by calling:
-     *  \code
-     *  Parameter::verbose()
-     *  \endcode
-     *  If verbose is set, information concerning the parameters read will
-     *  be output to stdout.
-     *
-     *  \b Parameter Substitution: \b
-     *  Parameter can consist of parts of other parameters. In order to resolve this
-     *  dependency, the  substituted parameter is put into $(NewParameter) brackets.
-     *  A smale example for this is
-     *  \code
-     *  N: 128
-     *  parameter1: macrogrid_$(N).dgf
-     *  \endcode
-     *  results in 
-     *  \code
-     *  parameter1: macrogrid_128.dgf
-     *  \endcode
-     *  This can be used when on parameter controls several other parameters, such like the
-     *  number of cells in the macrogrid.
-     *
-     *  \b Shell Program executions:\b
-     *  Out of the Parameter file shell scripts/commands can be called in order to
-     *  calculate the value of a parameter. The object which should be executed 
-     *  has to be put into $[command] brackets.
-     *  \code
-     *  parameter1: $[ ./script.sh]
-     *  \endcode
-     *  with the script.sh
-     *  \code
-     *  #!/bin/bash
-     *  echo 'HalloWorld';
-     *  \endcode
-     *  This smale example resolves the parameter to have the value 'HalloWorld'
-     *
-     *  If $ is used explicite in a parameter value, $$ kills the substitution
-     *  of the parameter.
-     *
-     *  Here is an example usage:
-     *  \code
-     *  #include <dune/fem/io/parameter.hh>
-     *  
-     *  using Dune::Parameter;
-     *
-     *  int globalFlag;
-     *
-     *  int main ( int argc, char **argv )
-     *  {
-     *    Dune::MPIManager::initialize( argc, argv );
-     *    Parameter::append( argc, argv );
-     *
-     *    // get parameters
-     *    double startTime = Parameter::getValue< double >( "starttime", 0.0 );
-     *    Dune::ValidateGreater< double > validator( startTime );
-     *    double endTime = Parameter::getValidValue< double >( "endtime", validator );
-     *    Parameter::get( "flag", 0, globalFlag );
-     *    
-     *    if( Parameter::verbose() )
-     *      std::cout << "Computing from " << startTime << " to " << endTime << std::endl;
-     *    
-     *    // ...
-     *
-     *    std::ofstream results( (Parameter::outputPrefix() + "/results").c_str() );
-     *
-     *    // ...
-     *
-     *    Parameter::write( "parameter.log" );
-     *  }
-     *  \endcode
+      
+        Handling Parameters, i.e., values that can be set after compilation, in
+        dune-fem is extremely easy. Just add
+        \code
+        Dune::MPIManager::initialize( argc, argv );
+        Dune::Parameter::append( argc, argv );
+        \endcode
+        at the head of your main function. Parameters are strings of the
+        format "key: value". Any command line argument containing a colon
+        will thus be interpreted as a parameter.
+      
+        \note All parameter keys are case sensitive.
+        \note Found parameters are removed from the command line.
+      
+        There are 8 static methods in Parameter to obtain the value of a
+        parameter. They are divided by the following criteria:
+        - \b Default \b Value: The methods taking a default value will return the
+          default, if the parameter has not been specified by the user.
+          Additionally, they will add "\e key : \e value" to the database. The
+          methods not taking a default value will throw an exception, if the
+          parameter could not be found in the database.
+        - \b Return \b Value: For convenience, there is always a method (called
+          getValue) returning the value of the parameter. If you do not want to
+          rely on return value optimization, use the method (called get) taking
+          a reference to the return variable as an argument.
+        - \b Validation: It is often necessary to make sure the value satisfies
+          certain constraints. For this purpose, some methods take a validator
+          as an argument.
+        .
+      
+        Of course, you don't have to pass every parameter on the command line.
+        They can also be gathered in files. Parameter provides a kind of include
+        mechanism. Whenever a parameter with key "paramfile" is encountered, the
+        value is interpreted as a paramter file to include.
+      
+        Fem parameters can also be appended to the parameter list via an DGF file.
+        The method 
+        \code
+        appendDGF( "macrogrid.dgf" );
+        \endcode
+        reads in the DGF-block: 
+        \code
+        FemParameter
+      
+        #
+        \endcode
+        from file "macrogrid.dgf". All parameters defined within this block are appended
+        to the parameter list.
+      
+      
+        If a parameter is defined multiply, the first definition is added to the
+        database. All later definitions are ignored. Therefore it is important to
+        know the exact behaviour of the "paramfile" parameter:
+        - All parameters in the current file (or the command line) are added
+          first.
+        - If there were includes, they are processed in the order of appearance.
+        - Should an included file have includes, they are added depth-first,
+          i.e., The includes of one included file are parsed down to the last
+          file included, before the includes of the next included file are
+          considered.
+        .
+      
+        All parameter names defined by dune-fem should conform to the following
+        naming convention:
+        \code
+        fem.<group>.<parameter>
+        \endcode
+        The group name can be omitted if necessary.
+        
+        An example is the parameter 
+        \code 
+        fem.verboserank
+        \endcode
+        This can beused throughout the the program; by calling:
+        \code
+        Parameter::verbose()
+        \endcode
+        If verbose is set, information concerning the parameters read will
+        be output to stdout.
+      
+        \b Parameter Substitution: \b
+        Parameter can consist of parts of other parameters. In order to resolve this
+        dependency, the  substituted parameter is put into $(NewParameter) brackets.
+        A smale example for this is
+        \code
+        N: 128
+        parameter1: macrogrid_$(N).dgf
+        \endcode
+        results in 
+        \code
+        parameter1: macrogrid_128.dgf
+        \endcode
+        This can be used when on parameter controls several other parameters, such like the
+        number of cells in the macrogrid.
+      
+        \b Shell Program executions:\b
+        Out of the Parameter file shell scripts/commands can be called in order to
+        calculate the value of a parameter. The object which should be executed 
+        has to be put into $[command] brackets.
+        \code
+        parameter1: $[ ./script.sh]
+        \endcode
+        with the script.sh
+        \code
+        #!/bin/bash
+        echo 'HalloWorld';
+        \endcode
+        This smale example resolves the parameter to have the value 'HalloWorld'
+      
+        If $ is used explicite in a parameter value, $$ kills the substitution
+        of the parameter.
+      
+        Here is an example usage:
+        \code
+        #include <dune/fem/io/parameter.hh>
+        
+        using Dune::Parameter;
+      
+        int globalFlag;
+      
+        int main ( int argc, char **argv )
+        {
+          Dune::MPIManager::initialize( argc, argv );
+          Parameter::append( argc, argv );
+      
+          // get parameters
+          double startTime = Parameter::getValue< double >( "starttime", 0.0 );
+          Dune::ValidateGreater< double > validator( startTime );
+          double endTime = Parameter::getValidValue< double >( "endtime", validator );
+          Parameter::get( "flag", 0, globalFlag );
+          
+          if( Parameter::verbose() )
+            std::cout << "Computing from " << startTime << " to " << endTime << std::endl;
+          
+          // ...
+      
+          std::ofstream results( (Parameter::outputPrefix() + "/results").c_str() );
+      
+          // ...
+      
+          Parameter::write( "parameter.log" );
+        }
+        \endcode
      */
 
     class ParameterNotFound
@@ -271,13 +271,13 @@ namespace Dune
 
 
     /** \class Parameter
-     *  \brief Container for User Specified Parameters
-     *
-     *  The class Parameter provides parameters collected from given parameter
-     *  files or the command line in a unified and easy to use way.
-     *
-     *  This class adheres to the singleton concept, i.e., all methods are static
-     *  and internally use a single instance of this object to store all data.
+        \brief Container for User Specified Parameters
+      
+        The class Parameter provides parameters collected from given parameter
+        files or the command line in a unified and easy to use way.
+      
+        This class adheres to the singleton concept, i.e., all methods are static
+        and internally use a single instance of this object to store all data.
      */
     class Parameter 
     {
