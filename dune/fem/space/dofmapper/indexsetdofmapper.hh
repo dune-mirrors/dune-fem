@@ -71,24 +71,24 @@ namespace Dune
 
       // mapping for DoFs
       /** \brief map each local DoF number to a global one
-       *
-       *  \param[in]  element  element, the DoFs belong to
-       *  \param[in]  f        functor to call for each DoF
-       *
-       *  The functor has to be a copyable object satisfying the following
-       *  interface:
-       *  \code
-       *  struct Functor
-       *  {
-       *    // application operator
-       *    void operator() ( int localDoF, int globalDoF );
-       *  };
-       *  \endcode
-       *
-       *  For each DoF to be mapped, this method will call the application operator
-       *  once.
-       *  
-       *  \note There is no guarantee on the order, in which the functor is applied.
+        
+          \param[in]  element  element, the DoFs belong to
+          \param[in]  f        functor to call for each DoF
+        
+          The functor has to be a copyable object satisfying the following
+          interface:
+          \code
+          struct Functor
+          {
+            // application operator
+            void operator() ( int localDoF, int globalDoF );
+          };
+          \endcode
+        
+          For each DoF to be mapped, this method will call the application operator
+          once.
+          
+          \note There is no guarantee on the order, in which the functor is applied.
        */
       template< class Functor >
       void mapEach ( const ElementType &element, Functor f ) const;
