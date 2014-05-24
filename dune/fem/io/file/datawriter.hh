@@ -176,9 +176,9 @@ namespace Dune
       }
 
       //! return default value for check point prefix 
-      static const char * checkPointPrefix()
+      static std::string checkPointPrefix()
       {
-        return "checkpoint";
+        return Parameter :: getValue< std::string > (  "fem.io.checkpointfile", "checkpoint" );
       }
 
       //! writeMode, true when checkpointer is in backup mode 
@@ -191,6 +191,11 @@ namespace Dune
       virtual bool separateRankPath () const 
       { 
         return false; 
+      }
+
+      virtual int outputformat() const 
+      {
+        return 5; // i.e. none
       }
     };
 
