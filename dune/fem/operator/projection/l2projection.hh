@@ -19,7 +19,7 @@ namespace Dune
      *  \class L2Projection
      *  \brief The L2Projection class provides methods for projecting a function
      *         unto a given discrete function space. Note that this implementation
-     *         assumes orthorgonal base functions!
+     *         assumes orthogonal base functions!
      */
     template < class DType, class RType>
     class L2Projection : public Operator<DType , RType> 
