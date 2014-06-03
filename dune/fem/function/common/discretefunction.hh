@@ -187,6 +187,16 @@ namespace Dune
         return asImp().localFunction( entity );
       }
 
+      /** \brief obtain a local function for an entity (read-write)
+       *
+       *  \param[in]  entity  Entity to focus view of discrete function
+       *  \returns a local function associated with the entity
+       */
+      const LocalFunctionType localFunction ( const EntityType &entity ) const
+      {
+        return asImp().localFunction( entity );
+      }
+
       /** \brief set all degrees of freedom to zero
        */
       inline void clear()
@@ -576,6 +586,12 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
       LocalFunctionType localFunction ( const EntityType &entity ) { return LocalFunctionType( asImp(), entity ); }
     
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
+      const LocalFunctionType localFunction ( const EntityType &entity ) const
+      {
+        return LocalFunctionType( const_cast< DiscreteFunctionType& >( asImp() ), entity );
+      }
+
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::clear() */
       void clear();
       
