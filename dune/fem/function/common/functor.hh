@@ -1,8 +1,6 @@
 #ifndef DUNE_FEM_FUNCTION_COMMON_FUNCTOR_HH
 #define DUNE_FEM_FUNCTION_COMMON_FUNCTOR_HH
 
-#include <utility>
-
 #include <dune/fem/misc/functor.hh>
 
 namespace Dune
@@ -70,6 +68,23 @@ namespace Dune
       Vector &vector_;
     };
 
+    // DofBlockTraits
+    // --------------
+
+    template<class DiscreteFunction >
+    struct DofBlockTraits
+    {
+      typedef typename DiscreteFunction::DofBlockPtrType DofBlockPtrType;
+      typedef typename DiscreteFunction::DofBlockType DofBlockType;
+    };
+
+    template<class DiscreteFunction >
+    struct DofBlockTraits<const DiscreteFunction>
+    {
+      typedef typename DiscreteFunction::ConstDofBlockPtrType DofBlockPtrType;
+      typedef typename DiscreteFunction::ConstDofBlockType DofBlockType;
+    };
+
 
     // DofBlockFunctor
     // ---------------
@@ -77,8 +92,8 @@ namespace Dune
     template< class DiscreteFunction, class Functor >
     struct DofBlockFunctor
     {
-      typedef decltype( std::declval< DiscreteFunction >().block( std::size_t( 0 ) ) ) DofBlockPtrType;
-      typedef decltype( *std::declval< DofBlockPtrType >() ) DofBlockType;
+      typedef typename DofBlockTraits< DiscreteFunction >::DofBlockPtrType DofBlockPtrType;
+      typedef typename DofBlockTraits< DiscreteFunction >::DofBlockType DofBlockType;
 
       static const int blockSize = DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize;
 
@@ -90,7 +105,7 @@ namespace Dune
       void operator () ( const std::size_t local, const GlobalKey& globalKey )
       {
         DofBlockPtrType blockPtr = df_.block( globalKey );
-        DofBlockType block = *( blockPtr );
+        DofBlockType &block = *( blockPtr );
         for( unsigned int i = 0; i < blockSize; ++i )
           functor_( local*blockSize + i, block[ i ] );
       }
