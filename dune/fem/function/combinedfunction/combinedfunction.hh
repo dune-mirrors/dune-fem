@@ -207,7 +207,7 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
-      void assign( const DiscreteFunctionInterfaceType &g )
+      void assign( const ThisType &g )
       {
         for( int i=0; i<N; ++i)
           func_[i]->assign( g.subFunction( i ) );
@@ -220,7 +220,7 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
-      ThisType &operator+= ( const DiscreteFunctionInterfaceType &g )
+      ThisType &operator+= ( const ThisType &g )
       {
         for (int i=0; i<N; ++i)
           *func_[ i ] +=  g.subFunction( i );
@@ -230,7 +230,7 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator-=
        */ 
       using BaseType::operator-=;
-      ThisType &operator-= ( const DiscreteFunctionInterfaceType &g )
+      ThisType &operator-= ( const ThisType &g )
       {
         // std::cout << "     special operator -= in combineddf" 
         //        << std::endl;
@@ -412,7 +412,7 @@ namespace Dune
     {
     public:
       typedef CombinedDiscreteFunctionDofIterator<ContainedDiscreteFunctionImp,N> ThisType;
-      typedef CombinedDiscreteFunctionTraits<ContainedDiscreteFunctionImp,N> Traits;
+      typedef DiscreteFunctionTraits<CombinedDiscreteFunction< ContainedDiscreteFunctionImp,N> > Traits;
       typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
       typedef typename Traits::ContainedDiscreteFunctionType ContainedDiscreteFunctionType;
       typedef typename ContainedDiscreteFunctionType::DofIteratorType ContainedDofIteratorType;
