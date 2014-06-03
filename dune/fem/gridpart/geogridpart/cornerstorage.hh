@@ -221,7 +221,7 @@ namespace Dune
       }
 
     private:
-      dune_static_assert( LocalCoordFunctionType::dimRange == dimensionworld, "Invalid local coordinate function." );
+      static_assert( LocalCoordFunctionType::dimRange == dimensionworld, "Invalid local coordinate function." );
 
       const LocalCoordFunctionType &localCoordFunction_;
     };

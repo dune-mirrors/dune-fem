@@ -1,5 +1,5 @@
 #ifndef DUNE_FEM_COMMON_SUBVECTOR_HH
-#define DUNE_FEM_COMMON_SUBVECTOR_H
+#define DUNE_FEM_COMMON_SUBVECTOR_HH
 
 #include <cmath>
 #include <complex>
