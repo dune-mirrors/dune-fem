@@ -655,7 +655,7 @@ namespace Dune
           const CommunicationDirection commDirection = ForwardCommunication )
       : BaseType(),
         gridPart_( gridPart ),
-        ldvStack_( sizeof( typename BaseType::RangeFieldType ) * blockMapper().maxNumDofs() * localBlockSize ),
+        ldvStack_( 0 ),
         ldvAllocator_( &ldvStack_ ),
         allGeomTypes_( gridPart.indexSet() ),
         dofManager_( DofManagerType :: instance( gridPart.grid() ) ),
@@ -696,6 +696,9 @@ namespace Dune
        */
       LocalFunctionType localFunction ( const EntityType &entity ) const
       {
+        if( ldvStack_().objectSize() == 0 )
+          ldvStack_().resize( sizeof( typename BaseType::RangeFieldType ) * blockMapper().maxNumDofs() * localBlockSize );
+
         return LocalFunctionType( *this, entity, LocalDofVectorType( ldvAllocator_ ) ); 
       }
     

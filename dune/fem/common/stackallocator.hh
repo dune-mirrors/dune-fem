@@ -44,6 +44,8 @@ namespace Dune
 
       std::size_t objectSize () const { return objectSize_; }
 
+      void resize ( std::size_t newSize ) { clear(); objectSize_ = newSize; }
+
     private:
       std::size_t objectSize_;
     };

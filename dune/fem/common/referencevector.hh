@@ -95,6 +95,13 @@ namespace Dune
         return *this;
       }
 
+      This & operator= ( const This &other )
+      {
+        assert( data_.size() == other.size() );
+        std::copy( other.begin(), other.end(), Base::begin() );
+        return *this;
+      }
+
       //==== forward some methods of std::vector
       /** \brief Number of elements for which memory has been allocated.
 
