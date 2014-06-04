@@ -114,7 +114,8 @@ Dune::FieldVector< typename BasisFunctionSetType::RangeType::value_type, 3 >
           b[ r ].axpy( dofs[ i ], values[ i ][ r ] );
       }
 
-      a -= b;
+      for( int r =0; r < dimRange; ++r )
+        a[ r ] -= b[ r ];
 
       for( int r =0; r < dimRange; ++r )
         error += a[ r ].frobenius_norm2();
