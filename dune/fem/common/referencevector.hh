@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <limits>
+#include <utility>
 #include <vector>
 
 #include <dune/common/exceptions.hh>
@@ -85,6 +86,7 @@ namespace Dune
       : data_( std::move( other.data_ ) )
       {}
 
+      //! assignment 
       using Base::operator=;
 
       template< class V >
@@ -99,6 +101,12 @@ namespace Dune
       {
         assert( data_.size() == other.size() );
         std::copy( other.begin(), other.end(), Base::begin() );
+        return *this;
+      }
+
+      This & operator= ( This &&other )
+      {
+        data_ = std::move( other.data_ );
         return *this;
       }
 

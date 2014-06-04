@@ -112,8 +112,8 @@ namespace Dune
         localDofVector_.resize( basisFunctionSet.size() );
       }
 
-      LocalFunction ( ThisType && ) = default;
       LocalFunction ( const ThisType & ) = default;
+      LocalFunction ( ThisType && ) = default;
 
       /** \brief access to local dofs (read-only)
        *

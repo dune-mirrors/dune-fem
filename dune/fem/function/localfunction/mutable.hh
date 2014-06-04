@@ -53,43 +53,48 @@ namespace Dune
       //! cast from ConstLocalFunction
       MutableLocalFunction( const ConstLocalFunction< DiscreteFunctionType > &constLocalFunction ) DUNE_DEPRECATED
       : BaseType( constLocalFunction.basisFunctionSet(), LocalDofVectorType( constLocalFunction.discreteFunction_.localDofVectorAllocator() ) ),
-        discreteFunction_( const_cast< DiscreteFunctionType& >( constLocalFunction.discreteFunction_ ) )
+        discreteFunction_( &const_cast< DiscreteFunctionType& >( constLocalFunction.discreteFunction() ) )
       {
-        discreteFunction_.getLocalDofs( constLocalFunction.entity(), localDofVector() );
+        discreteFunction().getLocalDofs( constLocalFunction.entity(), localDofVector() );
       }
 
 
       //! Constructor creating empty local function from given discrete function 
       explicit MutableLocalFunction ( DiscreteFunctionType &discreteFunction ) 
       : BaseType( LocalDofVectorType( discreteFunction.localDofVectorAllocator() ) ),
-        discreteFunction_( discreteFunction )
+        discreteFunction_( &discreteFunction )
       {
       }
 
       //! Constructor creating local function from given discrete function and entity, not empty
       explicit MutableLocalFunction ( DiscreteFunctionType &discreteFunction, const EntityType &entity ) 
       : BaseType( discreteFunction.space().basisFunctionSet( entity ), LocalDofVectorType( discreteFunction.localDofVectorAllocator() ) ), 
-        discreteFunction_( discreteFunction )
+        discreteFunction_( &discreteFunction )
       {
-        discreteFunction_.getLocalDofs( entity, localDofVector() );
+        discreteFunction.getLocalDofs( entity, localDofVector() );
       }
 
       MutableLocalFunction ( const ThisType & ) = default;
       MutableLocalFunction ( ThisType && ) = default;
 
-      void init ( const EntityType &entity )
-      {
-        BaseType::init( discreteFunction_.space().basisFunctionSet( entity ) );
-        discreteFunction_.getLocalDofs( entity, localDofVector() );
-      }
+      // prohibit assignment
+      ThisType &operator= ( const ThisType & ) = delete;
+      ThisType &operator= ( ThisType && ) = delete;
 
       using BaseType::localDofVector;
 
+      void init ( const EntityType &entity )
+      {
+        BaseType::init( discreteFunction().space().basisFunctionSet( entity ) );
+        discreteFunction().getLocalDofs( entity, localDofVector() );
+      }
+
+      const DiscreteFunctionType &discreteFunction () const { return *discreteFunction_; }
+      DiscreteFunctionType &discreteFunction () { return *discreteFunction_; }
+
     private:
-      DiscreteFunctionType &discreteFunction_;
-      // prohibit assignment 
-      ThisType &operator= ( const ThisType & );
-    }; // end MutableLocalFunction  
+      DiscreteFunctionType *discreteFunction_;
+    };
 
   } // namespace Fem
 

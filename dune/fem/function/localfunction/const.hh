@@ -57,15 +57,17 @@ namespace Dune
       explicit BasicConstLocalFunction ( const LocalDofVectorType &localDofVector ) : BaseType( localDofVector ) {}
 
       BasicConstLocalFunction ( const BasisFunctionSetType &basisFunctionSet, const LocalDofVectorType &localDofVector )
-      : BaseType( basisFunctionSet, localDofVector ) {}
+      : BaseType( basisFunctionSet, localDofVector )
+      {}
 
       explicit BasicConstLocalFunction ( LocalDofVectorType &&localDofVector ) : BaseType( localDofVector ) {}
 
       BasicConstLocalFunction ( const BasisFunctionSetType &basisFunctionSet, LocalDofVectorType &&localDofVector )
-      : BaseType( basisFunctionSet, localDofVector ) {}
+      : BaseType( basisFunctionSet, localDofVector )
+      {}
 
       BasicConstLocalFunction ( const BaseType &other ) : BaseType( other.basisFunctionSet(), other.localDofVector() ) {}
-      
+
       BasicConstLocalFunction ( const ThisType & ) = default;
       BasicConstLocalFunction ( ThisType && ) = default;
 
@@ -120,8 +122,6 @@ namespace Dune
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
       typedef typename BaseType::LocalDofVectorType LocalDofVectorType;
 
-      using BaseType::localDofVector;
-
       /** \brief constructor creating a local function without binding it to an 
                  entity
         
@@ -137,14 +137,14 @@ namespace Dune
        */
       explicit ConstLocalFunction ( const DiscreteFunctionType &df )
       : BaseType( LocalDofVectorType( df.localDofVectorAllocator() ) ),
-        discreteFunction_( df )
+        discreteFunction_( &df )
       {
       }
 
       //! cast a MutableLocalFunction into this one !!! expensive !!!
       ConstLocalFunction ( const typename DiscreteFunctionType::LocalFunctionType &localFunction )
-      : BaseType( localFunction.basisFunctionSet(), LocalDofVectorType( localFunction.size(), localFunction.discreteFunction_.localDofVectorAllocator() ) ), 
-        discreteFunction_( localFunction.discreteFunction_ )
+      : BaseType( localFunction.basisFunctionSet(), LocalDofVectorType( localFunction.size(), localFunction.discreteFunction().localDofVectorAllocator() ) ),
+        discreteFunction_( &localFunction.discreteFunction() )
       {
         std::copy( localFunction.localDofVector().begin(), localFunction.localDofVector().end(), localDofVector().begin() );
       }
@@ -164,24 +164,27 @@ namespace Dune
        */
       ConstLocalFunction ( const DiscreteFunctionType &df, const EntityType &entity )
       : BaseType( df.space().basisFunctionSet( entity ), LocalDofVectorType( df.localDofVectorAllocator() )  ),
-        discreteFunction_( df )
+        discreteFunction_( &df )
       {
-        discreteFunction_.getLocalDofs( entity, localDofVector() );
+        discreteFunction().getLocalDofs( entity, localDofVector() );
       }
 
       ConstLocalFunction ( const ThisType &other ) = default;
       ConstLocalFunction ( ThisType &&other ) = default;
 
+      using BaseType::localDofVector;
 
       /** \copydoc Dune::Fem::LocalFunction :: init */
       void init ( const EntityType &entity )
       {
-        BaseType::init( discreteFunction_.space().basisFunctionSet( entity ) );
-        discreteFunction_.getLocalDofs( entity, localDofVector() );
+        BaseType::init( discreteFunction().space().basisFunctionSet( entity ) );
+        discreteFunction().getLocalDofs( entity, localDofVector() );
       }
 
+      const DiscreteFunctionType& discreteFunction() const { return *discreteFunction_; }
+
     protected:
-      const DiscreteFunctionType& discreteFunction_ ;
+      const DiscreteFunctionType* discreteFunction_;
     };
 
   } // namespace Fem
