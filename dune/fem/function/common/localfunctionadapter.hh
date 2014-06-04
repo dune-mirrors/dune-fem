@@ -218,6 +218,12 @@ namespace Dune
         return LocalFunctionType( entity, *this );
       }
 
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
+      const LocalFunctionType localFunction( const EntityType &entity ) const
+      {
+        return LocalFunctionType( entity, *this );
+      }
+
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::name */
       const std::string &name() const
       {
