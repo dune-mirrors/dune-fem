@@ -2,7 +2,7 @@
 #define DUNE_FEM_PASS_COMMON_LOCALFUNCTIONSELECTOR_HH
 
 #include <dune/fem/function/common/localfunctionadapter.hh>
-#include <dune/fem/function/localfunction/temporary.hh>
+#include <dune/fem/function/localfunction/const.hh>
 
 namespace Dune
 {

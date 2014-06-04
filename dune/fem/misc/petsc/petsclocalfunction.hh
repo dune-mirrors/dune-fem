@@ -6,7 +6,7 @@
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
 
-#include <dune/fem/function/localfunction/default.hh>
+#include <dune/fem/function/localfunction/localfunction.hh>
 
 namespace Dune 
 {
