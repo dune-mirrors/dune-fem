@@ -32,7 +32,7 @@ fi
 fails=`grep "^FAIL:" $CHECKLOG | wc -l`
 if test $fails -gt 0 ; then
   echo "Error: The following $fails tests have failed:"
-  failedTests=`grep "^FAIL:" $CHECKLOG | sed -r 's/FAIL://g'`
+  failedTests=`grep "^FAIL:" $CHECKLOG | sed -r 's/FAIL: //g'`
   echo $failedTests
   retvalue=1
 fi
