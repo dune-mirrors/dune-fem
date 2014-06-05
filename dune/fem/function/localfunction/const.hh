@@ -105,13 +105,20 @@ namespace Dune
                                 local function shall belong to
      */
     template< class DiscreteFunction >
-    class ConstLocalFunction 
-    : public BasicConstLocalFunction< typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction > :: type >::DiscreteFunctionSpaceType::BasisFunctionSetType, 
-              Dune::DynamicVector< typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction > :: type >::DofType, typename remove_const< DiscreteFunction > :: type :: LocalDofVectorAllocatorType > >
+    class ConstLocalFunction
+    : public BasicConstLocalFunction<
+      typename DiscreteFunctionTraits<
+      typename remove_const< DiscreteFunction > :: type >::DiscreteFunctionSpaceType::BasisFunctionSetType,
+      Dune::DynamicVector< typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction > :: type >::DofType,
+        typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction > :: type >::LocalDofVectorAllocatorType
+      :: template rebind< typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction >::type > ::DofType > ::other > >
     {
       typedef ConstLocalFunction< DiscreteFunction > ThisType;
-      typedef BasicConstLocalFunction< typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction > :: type >::DiscreteFunctionSpaceType::BasisFunctionSetType, 
-              Dune::DynamicVector< typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction > :: type >::DofType, typename remove_const< DiscreteFunction > :: type :: LocalDofVectorAllocatorType > > BaseType;
+      typedef BasicConstLocalFunction< typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction > :: type >::DiscreteFunctionSpaceType::BasisFunctionSetType,
+              Dune::DynamicVector< typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction > :: type >::DofType,
+              typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction > :: type > :: LocalDofVectorAllocatorType
+              :: template rebind< typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction >::type >::DofType >::other  > >
+          BaseType;
 
     public:
       typedef typename remove_const< DiscreteFunction >::type DiscreteFunctionType;
