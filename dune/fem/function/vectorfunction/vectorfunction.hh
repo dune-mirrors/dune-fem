@@ -1,7 +1,6 @@
 #ifndef DUNE_FEM_VECTORFUNCTION_HH
 #define DUNE_FEM_VECTORFUNCTION_HH
 
-#include <dune/common/static_assert.hh>
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/common/referencevector.hh>
@@ -83,7 +82,7 @@ namespace Dune
       typedef VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > ThisType;
       typedef DiscreteFunctionDefault< VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > > BaseType;
 
-      dune_static_assert( SupportsVectorInterface< DofVector >::v, "DofVector must support VectorInterface." );
+      static_assert( SupportsVectorInterface< DofVector >::v, "DofVector must support VectorInterface." );
 
     public:
       //! type of this class's traits
