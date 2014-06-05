@@ -587,10 +587,7 @@ namespace Dune
       LocalFunctionType localFunction ( const EntityType &entity ) { return LocalFunctionType( asImp(), entity ); }
     
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
-      const LocalFunctionType localFunction ( const EntityType &entity ) const
-      {
-        return LocalFunctionType( const_cast< DiscreteFunctionType& >( asImp() ), entity );
-      }
+      const LocalFunctionType localFunction ( const EntityType &entity ) const { return LocalFunctionType( asImp(), entity ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::clear() */
       void clear();

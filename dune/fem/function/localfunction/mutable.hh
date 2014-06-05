@@ -49,7 +49,6 @@ namespace Dune
       //! type of BasisFunctionSet
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
-
       //! cast from ConstLocalFunction
       MutableLocalFunction( const ConstLocalFunction< DiscreteFunctionType > &constLocalFunction ) DUNE_DEPRECATED
       : BaseType( constLocalFunction.basisFunctionSet(), LocalDofVectorType( constLocalFunction.discreteFunction_.localDofVectorAllocator() ) ),
@@ -58,13 +57,17 @@ namespace Dune
         discreteFunction().getLocalDofs( constLocalFunction.entity(), localDofVector() );
       }
 
-
-      //! Constructor creating empty local function from given discrete function 
-      explicit MutableLocalFunction ( DiscreteFunctionType &discreteFunction ) 
+      //! Constructor creating empty local function from given discrete function
+      explicit MutableLocalFunction ( DiscreteFunctionType &discreteFunction )
       : BaseType( LocalDofVectorType( discreteFunction.localDofVectorAllocator() ) ),
         discreteFunction_( &discreteFunction )
-      {
-      }
+      {}
+
+      //! Constructor creating empty local function from given discrete function 
+      explicit MutableLocalFunction ( const DiscreteFunctionType &discreteFunction )
+      : BaseType( LocalDofVectorType( discreteFunction.localDofVectorAllocator() ) ),
+        discreteFunction_( &const_cast<DiscreteFunctionType &>( discreteFunction ) )
+      {}
 
       //! Constructor creating local function from given discrete function and entity, not empty
       explicit MutableLocalFunction ( DiscreteFunctionType &discreteFunction, const EntityType &entity ) 
@@ -72,6 +75,14 @@ namespace Dune
         discreteFunction_( &discreteFunction )
       {
         discreteFunction.getLocalDofs( entity, localDofVector() );
+      }
+
+      //! Constructor creating local function from given discrete function and entity, not empty
+      explicit MutableLocalFunction ( const DiscreteFunctionType &dFunction, const EntityType &entity )
+      : BaseType( dFunction.space().basisFunctionSet( entity ), LocalDofVectorType( dFunction.localDofVectorAllocator() ) ),
+        discreteFunction_( &const_cast<DiscreteFunctionType &>( dFunction ) )
+      {
+        discreteFunction().getLocalDofs( entity, localDofVector() );
       }
 
       MutableLocalFunction ( const ThisType & ) = default;
