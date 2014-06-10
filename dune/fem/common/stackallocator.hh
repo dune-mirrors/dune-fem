@@ -83,8 +83,8 @@ namespace Dune
       template< class U >
       StackAllocator ( StackAllocator< U, S > &&other ) : stack_( std::move( other.stack_ ) ) {}
 
-      StackAllocator ( const StackAllocator & ) = default;
-      StackAllocator ( StackAllocator && ) = default;
+      StackAllocator ( const StackAllocator &other ) : stack_( other.stack_ ) {}
+      StackAllocator ( StackAllocator && other ) : stack_( other.stack_ ) {}
 
       pointer address ( reference x ) const { return &x; }
       const_pointer address ( const_reference x ) const { return &x; }

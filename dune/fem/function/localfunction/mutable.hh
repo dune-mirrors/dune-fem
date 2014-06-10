@@ -3,6 +3,7 @@
 
 //-s system includes 
 #include <cassert>
+#include <utility>
 
 //- Dune includes 
 #include <dune/fem/storage/objectstack.hh>
@@ -85,8 +86,17 @@ namespace Dune
         discreteFunction().getLocalDofs( entity, localDofVector() );
       }
 
-      MutableLocalFunction ( const ThisType & ) = default;
-      MutableLocalFunction ( ThisType && ) = default;
+      //! copy constructor
+      MutableLocalFunction ( const ThisType &other )
+      : BaseType( static_cast< const BaseType& > ( other ) ),
+        discreteFunction_( other.discreteFunction_ )
+      {}
+
+      //! move constructor
+      MutableLocalFunction ( ThisType &&other )
+      : BaseType( static_cast< BaseType&& > ( other ) ),
+        discreteFunction_( other.discreteFunction_ )
+      {}
 
       // prohibit assignment
       ThisType &operator= ( const ThisType & ) = delete;

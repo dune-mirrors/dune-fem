@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_LOCALFUNCTION_HH
 #define DUNE_FEM_FUNCTION_LOCALFUNCTION_LOCALFUNCTION_HH
 
+#include <utility>
+
 // dune-common includes
 #include <dune/common/fvector.hh>
 
@@ -112,8 +114,17 @@ namespace Dune
         localDofVector_.resize( basisFunctionSet.size() );
       }
 
-      LocalFunction ( const ThisType & ) = default;
-      LocalFunction ( ThisType && ) = default;
+      //! move constructor
+      LocalFunction ( ThisType && other )
+      : basisFunctionSet_( std::move( other.basisFunctionSet_ ) ),
+        localDofVector_( std::move( other.localDofVector_ ) )
+      {}
+
+      //! copy constructor
+      LocalFunction ( const ThisType & other )
+      : basisFunctionSet_( other.basisFunctionSet_ ),
+        localDofVector_( other.localDofVector_ )
+      {}
 
       /** \brief access to local dofs (read-only)
        *

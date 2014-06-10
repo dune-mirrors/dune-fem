@@ -2,6 +2,7 @@
 #define DUNE_FEM_FUNCTION_LOCALFUNCTION_CONST_HH
 
 #include <utility>
+
 #include <dune/common/dynvector.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
@@ -66,10 +67,10 @@ namespace Dune
       : BaseType( basisFunctionSet, localDofVector )
       {}
 
-      BasicConstLocalFunction ( const BaseType &other ) : BaseType( other.basisFunctionSet(), other.localDofVector() ) {}
+      BasicConstLocalFunction ( const BaseType &other ) : BaseType( other ) {}
 
-      BasicConstLocalFunction ( const ThisType & ) = default;
-      BasicConstLocalFunction ( ThisType && ) = default;
+      BasicConstLocalFunction ( const ThisType &other ) : BaseType( static_cast<const BaseType &>( other ) ) {}
+      BasicConstLocalFunction ( ThisType && other ) : BaseType( static_cast<BaseType&&>(other) ) {}
 
       using BaseType::operator[];
       using BaseType::localDofVector;
@@ -176,8 +177,17 @@ namespace Dune
         discreteFunction().getLocalDofs( entity, localDofVector() );
       }
 
-      ConstLocalFunction ( const ThisType &other ) = default;
-      ConstLocalFunction ( ThisType &&other ) = default;
+      //! copy constructor
+      ConstLocalFunction ( const ThisType &other )
+      : BaseType( static_cast<const BaseType &>( other ) ),
+        discreteFunction_( other.discreteFunction_ )
+      {}
+
+      //! move constructor
+      ConstLocalFunction ( ThisType &&other )
+      : BaseType( static_cast< BaseType &&>( other ) ),
+        discreteFunction_( other.discreteFunction_ )
+      {}
 
       using BaseType::localDofVector;
 
