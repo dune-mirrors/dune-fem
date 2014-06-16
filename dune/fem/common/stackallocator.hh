@@ -6,6 +6,8 @@
 #include <stack>
 #include <utility>
 
+#include <dune/common/nullptr.hh>
+
 namespace Dune
 {
 
