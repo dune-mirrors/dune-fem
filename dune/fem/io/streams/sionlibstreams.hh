@@ -311,8 +311,8 @@ namespace Dune
        *  \param[in] mpiComm   MPI communicator (defaults to MPIHelper :: getCommunicator())
        */
       static SIONlibInStream* create( const std::string& filename,
-                                 const int rank = MPIManager::rank(),
-                                 const MPICommunicatorType& mpiComm = MPIHelper :: getCommunicator() )
+                                      const int rank = MPIManager::rank(),
+                                      const MPICommunicatorType& mpiComm = MPIHelper :: getCommunicator() )
       {
         return new SIONlibInStream( filename, rank, mpiComm );
       }
