@@ -20,6 +20,7 @@ common_HEADERS = adaptmanager.hh \
      localrestrictprolong.hh \
      restrictprolongfunction.hh \
      restrictprolonginterface.hh \
+     restrictprolongtuple.hh \
      adaptcallbackhandle.hh
 
 include $(top_srcdir)/am/global-rules
