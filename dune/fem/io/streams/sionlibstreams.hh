@@ -260,6 +260,9 @@ namespace Dune
 
         assert( file );
 
+        // get bytes available for reading (might differ from total chunkSize)
+        chunkSize = sion_bytes_avail_in_block( sid );
+
         // create buffer 
         std::string data;
         data.resize( chunkSize );
