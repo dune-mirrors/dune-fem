@@ -33,6 +33,8 @@ namespace Dune
 
       // flag that is set to true when at least one entity was coarsend or refined 
       mutable bool wasChanged_ ;
+      bool preAdaptCalled_; 
+      bool postAdaptCalled_; 
 
     public:
       typedef typename Base::Entity Entity;
@@ -40,13 +42,17 @@ namespace Dune
       RestrictProlongWrapper ( DofManager &dofManager, RestrictProlongOperator &rpOp )
       : dofManager_( dofManager ),
         rpOp_( rpOp ),
-        wasChanged_( false )
+        wasChanged_( false ),
+        preAdaptCalled_( false ),
+        postAdaptCalled_( false )
       {}
 
       RestrictProlongWrapper ( const RestrictProlongWrapper& org ) 
       : dofManager_( org.dofManager_ ), 
         rpOp_( org.rpOp_ ),
-        wasChanged_( org.wasChanged_ )
+        wasChanged_( org.wasChanged_ ),
+        preAdaptCalled_( org.preAdaptCalled_ ),
+        postAdaptCalled_( org.postAdaptCalled_ )
       {}
 
       bool isValidEntity( const Entity& entity ) const
@@ -61,14 +67,26 @@ namespace Dune
 
       void preAdapt ( const unsigned int estimatedAdditionalElements )
       {
+        // if preAdapt was already called just return
+        if( preAdaptCalled_ ) return ;
+
         // unset was changed 
         wasChanged_ = false;
         // reserve memory 
         dofManager_.reserveMemory( estimatedAdditionalElements );
+
+        // set preAdaptCalled_ flag in case method is called again (only dune-grid version)
+        preAdaptCalled_ = true; 
+        // reset postAdaptCalled flag
+        postAdaptCalled_ = false ;
+
       }
 
       void postAdapt ()
       {
+        // if method has been called already do nothing
+        if( postAdaptCalled_ ) return ;
+
         // notifyGlobalChange make wasChanged equal on all cores
         if( dofManager_.notifyGlobalChange( wasChanged_ ) )
         {
@@ -79,6 +97,12 @@ namespace Dune
           // unset was changed flag
           wasChanged_ = false;
         }
+
+        // set postAdaptCalled flag
+        postAdaptCalled_ = true ;
+
+        // reset preAdaptCalled_ flag
+        preAdaptCalled_ = false ;
       }
 
       void preCoarsening ( const Entity &father ) const
@@ -102,8 +126,8 @@ namespace Dune
       {
         if( isValidEntity( father ) )
         {
-          dofManager_.indexSetRestrictProlong().restrictLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
-          rpOp_.restrictLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
+          dofManager_.indexSetRestrictProlong().restrictLocal( father, son, initialize );
+          rpOp_.restrictLocal( father, son, initialize );
         }
       }
 
@@ -128,8 +152,8 @@ namespace Dune
       {
         if( isValidEntity( father ) ) 
         {
-          dofManager_.indexSetRestrictProlong().prolongLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
-          rpOp_.prolongLocal( const_cast< Entity & >( father ), const_cast< Entity & >( son ), initialize );
+          dofManager_.indexSetRestrictProlong().prolongLocal( father, son, initialize );
+          rpOp_.prolongLocal( father, son, initialize );
         }
       }
     };
