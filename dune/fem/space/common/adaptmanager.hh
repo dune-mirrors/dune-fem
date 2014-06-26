@@ -252,13 +252,13 @@ namespace Dune
           RPType restrictProlongHandle ( dm , rpop );
 
           // reserve memory 
-          restrictProlongHandle.preAdapt( grid.preAdapt() );
+          restrictProlongHandle.initialize();
 
           // call grid adaptation 
           grid.adapt( restrictProlongHandle ); 
 
           // do compress (if not already called)
-          restrictProlongHandle.postAdapt();
+          restrictProlongHandle.finalize();
           return ;
         }
       }

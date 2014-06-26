@@ -33,8 +33,8 @@ namespace Dune
 
       // flag that is set to true when at least one entity was coarsend or refined 
       mutable bool wasChanged_ ;
-      bool preAdaptCalled_; 
-      bool postAdaptCalled_; 
+      bool initializeCalled_; 
+      bool finalizeCalled_; 
 
     public:
       typedef typename Base::Entity Entity;
@@ -43,16 +43,17 @@ namespace Dune
       : dofManager_( dofManager ),
         rpOp_( rpOp ),
         wasChanged_( false ),
-        preAdaptCalled_( false ),
-        postAdaptCalled_( false )
-      {}
+        initializeCalled_( false ),
+        finalizeCalled_( false )
+      {
+      }
 
       RestrictProlongWrapper ( const RestrictProlongWrapper& org ) 
       : dofManager_( org.dofManager_ ), 
         rpOp_( org.rpOp_ ),
         wasChanged_( org.wasChanged_ ),
-        preAdaptCalled_( org.preAdaptCalled_ ),
-        postAdaptCalled_( org.postAdaptCalled_ )
+        initializeCalled_( org.initializeCalled_ ),
+        finalizeCalled_( org.finalizeCalled_ )
       {}
 
       bool isValidEntity( const Entity& entity ) const
@@ -65,27 +66,33 @@ namespace Dune
         return true ;
       }
 
-      void preAdapt ( const unsigned int estimatedAdditionalElements )
+      // old interface methods 
+      void preAdapt ( const unsigned int estimatedAdditionalElements ) { initialize (); }
+      void postAdapt () { finalize(); }
+
+      /** \brief initialize basically reserves some memory on the DofManager */
+      void initialize ( unsigned int estimatedAdditionalElements = 0 ) 
       {
         // if preAdapt was already called just return
-        if( preAdaptCalled_ ) return ;
+        if( initializeCalled_ ) return ;
 
         // unset was changed 
         wasChanged_ = false;
         // reserve memory 
         dofManager_.reserveMemory( estimatedAdditionalElements );
 
-        // set preAdaptCalled_ flag in case method is called again (only dune-grid version)
-        preAdaptCalled_ = true; 
+        // set initializeCalled_ flag in case method is called again (only dune-grid version)
+        initializeCalled_ = true; 
         // reset postAdaptCalled flag
-        postAdaptCalled_ = false ;
+        finalizeCalled_ = false ;
 
       }
 
-      void postAdapt ()
+      /** \brief finalize calls the compress on the DofManager */
+      void finalize ()
       {
         // if method has been called already do nothing
-        if( postAdaptCalled_ ) return ;
+        if( finalizeCalled_ ) return ;
 
         // notifyGlobalChange make wasChanged equal on all cores
         if( dofManager_.notifyGlobalChange( wasChanged_ ) )
@@ -99,12 +106,13 @@ namespace Dune
         }
 
         // set postAdaptCalled flag
-        postAdaptCalled_ = true ;
+        finalizeCalled_ = true ;
 
-        // reset preAdaptCalled_ flag
-        preAdaptCalled_ = false ;
+        // reset initializeCalled_ flag
+        initializeCalled_ = false ;
       }
 
+      /** \copydoc Dune::AdaptDataHandleInterface::preCoarsening */
       void preCoarsening ( const Entity &father ) const
       {
         if( isValidEntity( father ) )
@@ -131,6 +139,7 @@ namespace Dune
         }
       }
 
+      /** \copydoc Dune::AdaptDataHandleInterface::postRefinement */
       void postRefinement ( const Entity &father ) const
       {
         if( isValidEntity( father ) )
