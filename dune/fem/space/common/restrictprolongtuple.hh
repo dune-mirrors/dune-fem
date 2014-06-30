@@ -97,8 +97,12 @@ namespace Dune {
      * compound data-type for tuples of DiscreteFunction
      * implementations. This works by template recursion. This 
      */
+    template<class... All>
+    struct RestrictProlongDefaultTraits;
+
+    //!@copydoc RestrictProlongDefaultTraits
     template<class DiscreteFunction, class... Rest>
-    struct RestrictProlongDefaultTraits
+    struct RestrictProlongDefaultTraits< DiscreteFunction, Rest... >
     {
       typedef DiscreteFunction FirstDiscreteFunctionType;
       typedef RestrictProlongDefault<FirstDiscreteFunctionType> FirstRestrictProlongType;
