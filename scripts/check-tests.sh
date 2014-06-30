@@ -29,6 +29,13 @@ if test $urefs -gt 0 ; then
   echo "Error: $urefs undefined linker references occurred."
   retvalue=1
 fi
+fails=`grep "^FAIL:" $CHECKLOG | wc -l`
+if test $fails -gt 0 ; then
+  echo "Error: The following $fails tests have failed:"
+  failedTests=`grep "^FAIL:" $CHECKLOG | sed -r 's/FAIL: //g'`
+  echo $failedTests
+  retvalue=1
+fi
 
 #if test x`grep "\\"All \\[\\[\\:digit\\:\\]\\]\\+ tests passed\\"" $CHECKLOG` == x ; then
 #  exit 1

@@ -68,7 +68,7 @@ namespace Dune
      */
     template< class DomainFunction, class RangeFunction = DomainFunction >
     struct LinearOperator
-      : public Operator<DomainFunction, RangeFunction>
+      : public virtual Operator<DomainFunction, RangeFunction>
     {
 
       /**Return @c true if the Operator is symmetric. */
@@ -104,7 +104,7 @@ namespace Dune
      */
     template< class DomainFunction, class RangeFunction = DomainFunction >
     struct AssembledOperator
-      : public LinearOperator<DomainFunction, RangeFunction>
+      : public virtual LinearOperator<DomainFunction, RangeFunction>
     {
     };
 	      
@@ -134,7 +134,7 @@ namespace Dune
             typename DType , typename RType>
   class Operator
   : public Fem::Mapping < DFieldType, RFieldType, DType, RType >,
-    public Fem::Operator< DType, RType >
+    public virtual Fem::Operator< DType, RType >
   {
     typedef Fem::Operator< DType, RType > BaseType;
 

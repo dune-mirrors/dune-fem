@@ -11,6 +11,7 @@ SUBDIRS =
 
 # test programs 
 check_PROGRAMS = test-pass
+TESTS = test-pass
 
 test_pass_SOURCES = test-pass.cc
 test_pass_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS) -DDIMRANGE=$(DIMRANGE) -DPOLORDER=$(POLORDER)

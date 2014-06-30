@@ -11,6 +11,8 @@ GEOMETRYTYPE = simplex
 SCALAR = 0
 
 check_PROGRAMS = tester generic testnonscalarmapper 
+TESTS = tester generic testnonscalarmapper 
+
 tester_SOURCES = main.cc 
 generic_SOURCES = generic.cc
 generic_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DDIMENSION=$(DIMENSION) -DPOLORDER=$(POLORDER) -DGEOMETRYTYPE=$(GEOMETRYTYPE)

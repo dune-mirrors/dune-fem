@@ -14,7 +14,7 @@ LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 
 check_PROGRAMS = cachingquadrature elementquadrature
-TESTS = elementquadrature
+TESTS = cachingquadrature elementquadrature
 
 cachingquadrature_SOURCES = cachingquadrature.cc
 elementquadrature_SOURCES = elementquadrature.cc
