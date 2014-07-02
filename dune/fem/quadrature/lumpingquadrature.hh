@@ -23,7 +23,7 @@ namespace Fem {
  */
 template<class FieldImp, class Topology>
 class LumpingQuadrature
-  : public Dune::Fem::QuadratureImp<FieldImp, Topology::dimension>
+  : public QuadratureImp<FieldImp, Topology::dimension>
 {
  public:
   typedef FieldImp FieldType;
@@ -32,7 +32,7 @@ class LumpingQuadrature
 
  private:
   typedef LumpingQuadrature<FieldType, TopologyType> ThisType;
-  typedef Dune::Fem::QuadratureImp<FieldType, dimension> BaseType;
+  typedef QuadratureImp<FieldType, dimension> BaseType;
 
  public:
   typedef typename BaseType::CoordinateType CoordinateType;
@@ -61,10 +61,10 @@ class LumpingQuadrature
     }
   }
       
-  /** \copydoc Dune::Fem::QuadratureImp::geometry
+  /** \copydoc QuadratureImp::geometry
    */
   virtual GeometryType geometryType() const { return GeometryType(topologyId, dimension); }
-  /** \copydoc Dune::Fem::QuadratureImp::order
+  /** \copydoc QuadratureImp::order
    */
   virtual int order () const { return 1; }
 
@@ -75,7 +75,7 @@ class LumpingQuadrature
 template<class FieldType, int dimension>
 struct DefaultLumpingQuadratureTraits
 {
-  typedef Dune::Fem::QuadratureImp<FieldType, dimension> IntegrationPointListType;
+  typedef QuadratureImp<FieldType, dimension> IntegrationPointListType;
 
   typedef LumpingQuadrature<FieldType, typename GenericGeometry::SimplexTopology<dimension>::type> SimplexQuadratureType;
   typedef LumpingQuadrature<FieldType, typename GenericGeometry::CubeTopology<dimension>::type> CubeQuadratureType;
@@ -97,7 +97,7 @@ struct LumpingQuadratureTraits
   // Co-dimension.
   enum { codimension = codim };
 
-  typedef Dune::Fem::Quadrature<ctype, dimension-codim, DefaultLumpingQuadratureTraits> IntegrationPointListType;
+  typedef Quadrature<ctype, dimension-codim, DefaultLumpingQuadratureTraits> IntegrationPointListType;
 
   typedef typename IntegrationPointListType::CoordinateType CoordinateType;
 };
@@ -107,7 +107,7 @@ class CachingLumpingQuadrature;
 
 template<typename GridPart>
 class CachingLumpingQuadrature<GridPart, 0>
-  : public Dune::Fem::CachingPointList<GridPart, 0, LumpingQuadratureTraits<GridPart, 0> >
+  : public CachingPointList<GridPart, 0, LumpingQuadratureTraits<GridPart, 0> >
 {
  public:
   //! type of grid partition
@@ -120,7 +120,7 @@ class CachingLumpingQuadrature<GridPart, 0>
   typedef LumpingQuadratureTraits<GridPartType, codimension> IntegrationTraits;
       
   typedef CachingLumpingQuadrature<GridPartType, codimension> ThisType;
-  typedef Dune::Fem::CachingPointList<GridPartType, codimension, IntegrationTraits>
+  typedef CachingPointList<GridPartType, codimension, IntegrationTraits>
   BaseType;
 
  public:
@@ -170,7 +170,7 @@ class CachingLumpingQuadrature<GridPart, 0>
 
 template<typename GridPart>
 class CachingLumpingQuadrature<GridPart, 1>
-  : public Dune::Fem::CachingPointList<GridPart, 1, LumpingQuadratureTraits<GridPart, 1> >
+  : public CachingPointList<GridPart, 1, LumpingQuadratureTraits<GridPart, 1> >
 {
  public:
   //! type of grid partition
@@ -183,7 +183,7 @@ class CachingLumpingQuadrature<GridPart, 1>
   typedef LumpingQuadratureTraits<GridPartType, codimension> IntegrationTraits;
       
   typedef CachingLumpingQuadrature<GridPartType, codimension> ThisType;
-  typedef Dune::Fem::CachingPointList<GridPartType, codimension, IntegrationTraits>
+  typedef CachingPointList<GridPartType, codimension, IntegrationTraits>
   BaseType;
 
  public:
