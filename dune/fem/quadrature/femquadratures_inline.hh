@@ -49,7 +49,7 @@ namespace Dune
         }
       }
 
-      if (m==0) DUNE_THROW(NotImplemented, "order not implemented");
+      if (m==0) DUNE_THROW(NotImplemented, "order " << order_ << " not implemented");
       order_ = gp.order(m);
 
       // fill in all the gauss points
