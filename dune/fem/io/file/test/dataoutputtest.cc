@@ -304,70 +304,63 @@ int main (int argc, char **argv)
   Parameter::append(argc,argv);
   try
   {
-  
-  if(argc != 2)
-  {
-    fprintf(stderr,"usage: %s <maxlevel> \n",argv[0]);
-    exit(1);
-  }
-  int ml = atoi( argv[1] );
-  std::vector< double> error(ml);
-  std::stringstream tmp; 
-  tmp << dimw;
-  std::string macroGridName (tmp.str()); 
-  macroGridName += "dgrid.dgf";
+    int ml = (argc > 2)? atoi( argv[1] ) : 2;
+    Parameter::append("parameter");
+    std::vector< double> error(ml);
+    std::stringstream tmp;
+    tmp << dimw;
+    std::string macroGridName (tmp.str());
+    macroGridName += "dgrid.dgf";
 
-  GridPtr<GridType> gridptr(macroGridName);
-  GridType& grid=*gridptr;
-  const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
+    GridPtr<GridType> gridptr(macroGridName);
+    GridType& grid=*gridptr;
+    const int step = Dune::DGFGridInfo<GridType>::refineStepsForHalf();
 
-  GridPartType part ( grid );
-  DiscreteFunctionSpaceType linFuncSpace ( part );
-  DiscreteFunctionType solution ( "sol", linFuncSpace );
-  solution.clear();
-  // Model model;
-  // solution.space().setDescription(model);
-  
-  typedef AddLsgErr<DiscreteFunctionType> AddLsgErrType;
-  AddLsgErrType evalAddLsgErr(solution,0);
-  
-  typedef LocalFunctionAdapter<AddLsgErrType> AddLsgErrFunction;
-  AddLsgErrFunction addLsgErr("U",evalAddLsgErr,solution.space().gridPart());
-  
-  typedef tuple<AddLsgErrFunction*> OutputType;
-  OutputType out(&addLsgErr);
-  
-  {
-    OutputParameters1 param1;
-    DataOutput<GridType,OutputType> output(grid,out); // ,param1);
-    for(int i=0; i<ml; i+=step)
+    GridPartType part ( grid );
+    DiscreteFunctionSpaceType linFuncSpace ( part );
+    DiscreteFunctionType solution ( "sol", linFuncSpace );
+    solution.clear();
+    // Model model;
+    // solution.space().setDescription(model);
+
+    typedef AddLsgErr<DiscreteFunctionType> AddLsgErrType;
+    AddLsgErrType evalAddLsgErr(solution,0);
+
+    typedef LocalFunctionAdapter<AddLsgErrType> AddLsgErrFunction;
+    AddLsgErrFunction addLsgErr("U",evalAddLsgErr,solution.space().gridPart());
+
+    typedef tuple<AddLsgErrFunction*> OutputType;
+    OutputType out(&addLsgErr);
+
     {
-      GlobalRefine::apply(grid,step);
-      error[i] = algorithm ( grid , solution );
-      output.write();
-      if (i>0) 
+      OutputParameters1 param1;
+      DataOutput<GridType,OutputType> output(grid,out); // ,param1);
+      for(int i=0; i<ml; i+=step)
       {
-        double eoc = log( error[i-step]/error[i]) / M_LN2; 
-        std::cout << "EOC = " << eoc << " \n";
+        GlobalRefine::apply(grid,step);
+        error[i] = algorithm ( grid , solution );
+        output.write();
+        if (i>0)
+        {
+          double eoc = log( error[i-step]/error[i]) / M_LN2;
+          std::cout << "EOC = " << eoc << " \n";
+        }
       }
     }
-  }
-  
-  {
-    GridTimeProvider<GridType> tp(0,grid);
-    // tp.setEndTime(1);
-    DataOutput<GridType,OutputType> output(grid,out,tp,OutputParameters2());
-    for( tp.init(0.01) ; tp.time()<=1 ; tp.next(0.01) )
+
     {
-      algorithm ( grid , solution,tp.time() );
-      output.write(tp);
+      GridTimeProvider<GridType> tp(0,grid);
+      // tp.setEndTime(1);
+      DataOutput<GridType,OutputType> output(grid,out,tp,OutputParameters2());
+      for( tp.init(0.01) ; tp.time()<=0.04 ; tp.next(0.01) )
+      {
+        algorithm ( grid , solution,tp.time() );
+        output.write(tp);
+      }
+      output.write();
     }
-    output.write();
-  }
 
-
-  
-  return 0;
+    return 0;
   }
   catch( Exception e )
   {
