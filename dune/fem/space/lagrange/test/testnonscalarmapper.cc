@@ -40,11 +40,8 @@ int main( int argc, char **argv )
   
   try
   {
-    if( argc < 2 )
-    {
-      std::cout << "Usuage: " << argv[ 0 ] << " <startLevel> <times>" << std::endl;
-      return 1;
-    }
+    const int minLevel = (argc > 2) ? atoi(argv[1]) : 0 ;
+    const int times = (argc >3 )? atoi(argv[2]) : 4 ;
 
     typedef GridSelector :: GridType GridType;
 
@@ -54,8 +51,6 @@ int main( int argc, char **argv )
     // get grid reference 
     GridType& grid = *gridptr ;
 
-    const int minLevel = atoi(argv[1]);
-    const int times = atoi(argv[2]);
 
     GlobalRefine::apply(grid, minLevel);
 //    grid.globalRefine(minLevel);

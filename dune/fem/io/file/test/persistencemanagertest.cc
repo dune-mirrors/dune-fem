@@ -70,11 +70,7 @@ int main (int argc, char **argv) {
 
   MPIManager :: initialize( argc, argv );
   Parameter::append(argc,argv);
-  if(argc != 2) {
-   fprintf(stderr,"usage: %s restart? (0/1) \n",argv[0]);
-   exit(1);
-  }
-  int restart = atoi( argv[1] );
+  int restart = (argc>2)? atoi( argv[1] ) : 0;
   
   // test adding and removing objects
   TestClass1 test1a(1.0),test1b(-sqrt(2.));  // derived from PeristentObject
@@ -159,4 +155,6 @@ int main (int argc, char **argv) {
        << 1 << "  ,  "
        << -17 << " "
        << std::endl;
+
+  return 0;
 }

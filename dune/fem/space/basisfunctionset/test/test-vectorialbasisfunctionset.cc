@@ -397,7 +397,7 @@ int main ( int argc, char **argv )
   const int refineStepsForHalf = Dune::Fem::TestGrid::refineStepsForHalf();
   Dune::Fem::GlobalRefine::apply( grid, refCount*refineStepsForHalf );
   
-  typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
+  typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
   GridPartType gridPart( grid );
   traverse( gridPart );
   
