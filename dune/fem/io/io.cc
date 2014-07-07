@@ -16,8 +16,14 @@ namespace Dune
   namespace Fem
   {
 
-    bool createDirectory ( const std::string &name )
+    bool createDirectory ( const std::string &inName )
     {
+      std::string name = inName;
+
+      // strip of last character if it is a '/'
+      if( name[ name.size() - 1 ] == '/' )
+        name = name.substr( 0, name.size() -1 );
+
       // try to open directory (returns null pointer, if path does not exist)
       DIR *dir = opendir( name.c_str() );
       if( dir != 0 )
