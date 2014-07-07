@@ -106,7 +106,7 @@ namespace Dune
       {
         DofBlockPtrType blockPtr = df_.block( globalKey );
         DofBlockType &block = *( blockPtr );
-        for( unsigned int i = 0; i < blockSize; ++i )
+        for( int i = 0; i < blockSize; ++i )
           functor_( local*blockSize + i, block[ i ] );
       }
     private:
