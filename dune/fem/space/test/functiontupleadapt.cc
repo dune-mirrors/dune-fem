@@ -185,13 +185,11 @@ typedef GridFunctionAdapter< ExactSolutionType, GridPartType >
 typedef DofManager< MyGridType > DofManagerType;
 
 //! type of restrict-prolong operator
-typedef typename
-RestrictProlongDefaultTraits<DiscreteFunctionType, DiscreteFunctionTwoType, DiscreteFunctionType>::Type
+typedef RestrictProlongDefaultTraits<DiscreteFunctionType, DiscreteFunctionTwoType, DiscreteFunctionType>::Type
 RestrictProlongOperatorType;
 
 typedef tuple<DiscreteFunctionType&, DiscreteFunctionTwoType&, DiscreteFunctionType&> FunctionTupleType;
-typedef typename
-RestrictProlongDefaultTraits<FunctionTupleType>::Type
+typedef RestrictProlongDefaultTraits<FunctionTupleType>::Type
 AlternateRestrictProlongOperatorType;
 
 static_assert(std::is_same<RestrictProlongOperatorType,
