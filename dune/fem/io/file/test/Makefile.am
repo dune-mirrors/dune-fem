@@ -15,6 +15,7 @@ persistencemanagertest_SOURCES = persistencemanagertest.cc
 dataoutputtest_SOURCES = dataoutputtest.cc
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DWANT_GRAPE=$(WANT_GRAPE)
 
+EXTRA_DIST = parameter *.dgf
 CXXFLAGS = -g
 
 include $(top_srcdir)/am/global-rules
