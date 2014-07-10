@@ -108,6 +108,7 @@ for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
 
     cd $WORKINGDIR
     CHECKLOG="$WORKINGDIR/${OPTS%.opts}-check.out"
+    TESTLOG="$WORKINGDIR/${OPTS%.opts}-test.log"
     MAKE_CHECK_FLAGS=""
     MAKE_CHECK_FLAGS="$(source $OPTSDIR/$OPTS; echo $MAKE_CHECK_FLAGS)"
 
@@ -116,6 +117,7 @@ for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
       errors=$((errors+1))
     fi
     mv $WORKINGDIR/check-tests.out $CHECKLOG
+    mv $WORKINGDIR/tests.log $TESTLOG
   else
     echo "Skipping $OPTS due to missing dependencies:$MISSINGDEPS"
   fi
