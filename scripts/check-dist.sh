@@ -117,7 +117,7 @@ for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
       errors=$((errors+1))
     fi
     mv $WORKINGDIR/check-tests.out $CHECKLOG
-    mv $WORKINGDIR/tests.log $TESTLOG
+    mv $WORKINGDIR/test.log $TESTLOG
   else
     echo "Skipping $OPTS due to missing dependencies:$MISSINGDEPS"
   fi
