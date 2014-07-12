@@ -64,11 +64,25 @@ namespace Dune
         return set_.size(codim);
       }
 
+      template< int codim >
+      IndexType
+      index ( const typename IndexSetImp :: template Codim< codim > :: Entity &entity ) const
+      {
+        return set_index(entity);
+      }
+
       //! return index of en 
       template< class Entity >
       IndexType index ( const Entity &entity ) const
       {
         return set_.index( entity );
+      }
+
+      template< int cc >
+      IndexType subIndex ( const typename IndexSetImp::template Codim< cc >::Entity &e,
+                           int i, unsigned int codim ) const
+      {
+        return set_.subIndex(e,i,codim);
       }
 
       template< class Entity >

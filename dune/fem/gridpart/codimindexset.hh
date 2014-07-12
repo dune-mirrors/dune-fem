@@ -96,10 +96,10 @@ namespace Dune
       // type of exported index 
       typedef int IndexType ;
 
-    protected:  
       // indices in this status have not been initialized 
       static IndexType invalidIndex() { return -1; }
 
+    protected:  
       // array type for indices 
       typedef MutableArray< IndexType > IndexArrayType;
       typedef MutableArray< INDEXSTATE > IndexStateArrayType;
@@ -374,6 +374,7 @@ namespace Dune
       {
         assert( myCodim_ == EntityType :: codimension );
         const IndexType &index = leafIndex_[ entity ];
+        if (index==invalidIndex()) return false;
         return (indexState_[ index ] != UNUSED);
       }
      
@@ -383,6 +384,7 @@ namespace Dune
       {
         assert( 0 == EntityType :: codimension );
         const IndexType &index = leafIndex_( entity, subNumber );
+        if (index==invalidIndex()) return false;
         assert( index < IndexType( indexState_.size() ) );
         return (indexState_[ index ] != UNUSED);
       }
