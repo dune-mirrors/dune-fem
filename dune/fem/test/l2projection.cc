@@ -11,8 +11,6 @@
 #include <sstream>
 
 
-#if defined HAVE_PETSC
-
 // Includes from DUNE-FEM
 // ----------------------
 
@@ -20,16 +18,27 @@
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrange.hh>
 
+#if defined HAVE_PETSC && USE_PETSCDISCRETEFUNCTION
 #include <dune/fem/function/petscdiscretefunction.hh>
-#include <dune/fem/function/adaptivefunction.hh>
-
+#include <dune/fem/operator/linear/petscoperator.hh>
 #include <dune/fem/solver/petscsolver.hh>
+#elif defined USE_BLOCKVECTORFUNCTION && HAVE_ISTL
+#include <dune/fem/function/blockvectorfunction.hh>
+#include <dune/fem/operator/linear/istloperator.hh>
+#include <dune/fem/solver/istlinverseoperators.hh>
+#else
+#include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/operator/linear/spoperator.hh>
+#include <dune/fem/solver/cginverseoperator.hh>
+#endif
 
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 
+
 #include "massoperator.hh"
 #include "testgrid.hh"
+
 
 
 // Global Type Definitions
@@ -44,6 +53,24 @@ const int polOrder = 1;
 
 typedef Dune::GridSelector :: GridType GridType;
 
+typedef Dune::Fem::AdaptiveLeafGridPart< GridType, Dune::InteriorBorder_Partition > GridPartType;
+typedef Dune::Fem::FunctionSpace< double, double, GridType::dimensionworld, 1 > SpaceType;
+typedef Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, polOrder > DiscreteSpaceType;
+#if defined HAVE_PETSC && USE_PETSCDISCRETEFUNCTION
+typedef Dune::Fem::PetscDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
+typedef Dune::Fem::PetscLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
+typedef Dune::Fem::PetscInverseOperator< DiscreteFunctionType, LinearOperatorType > InverseOperatorType;
+#elif defined USE_BLOCKVECTORFUNCTION && HAVE_ISTL
+typedef Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
+typedef Dune::Fem::ISTLLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
+typedef Dune::Fem::ISTLInverseOperator< DiscreteFunctionType, Dune::Fem::ISTLCGSolver > InverseOperatorType;
+#else
+typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
+typedef Dune::Fem::SparseRowLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
+typedef Dune::Fem::CGInverseOperator< DiscreteFunctionType > InverseOperatorType;
+#endif
+
+typedef MassOperator< DiscreteFunctionType, LinearOperatorType > MassOperatorType;
 
 // Function to Project
 // -------------------
@@ -82,13 +109,7 @@ struct Function
 
 struct Algorithm
 {
-  typedef Dune::Fem::AdaptiveLeafGridPart< GridType, Dune::InteriorBorder_Partition > GridPartType;
-  typedef Dune::Fem::FunctionSpace< double, double, GridType::dimensionworld, 1 > SpaceType;
-  typedef Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, polOrder > DiscreteSpaceType;
-  typedef Dune::Fem::PetscDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
-
   typedef Dune::FieldVector< double, 2 > ErrorType;
-
   typedef Function< SpaceType > FunctionType;
 
   explicit Algorithm ( GridType &grid );
@@ -119,7 +140,6 @@ inline typename Algorithm::ErrorType Algorithm::operator() ( int step )
   DiscreteFunctionType solution( "solution", space );
      
   // get operator
-  typedef MassOperator< DiscreteFunctionType > MassOperatorType;
   MassOperatorType massOperator( space );
 
   // assemble RHS
@@ -128,8 +148,6 @@ inline typename Algorithm::ErrorType Algorithm::operator() ( int step )
 
   unsigned long maxIter = space.size();
   maxIter = space.gridPart().comm().sum( maxIter );
-
-  typedef Dune::Fem::PetscInverseOperator< DiscreteFunctionType, MassOperatorType > InverseOperatorType;  
 
   // clear result
   solution.clear();
@@ -159,7 +177,6 @@ inline typename Algorithm::ErrorType Algorithm::finalize ( DiscreteFunctionType 
   return error;
 }
 
-#endif // #if defined HAVE_PETSC
 
 // Main Program
 // ------------
@@ -167,7 +184,6 @@ inline typename Algorithm::ErrorType Algorithm::finalize ( DiscreteFunctionType 
 int main ( int argc, char **argv )
 try
 {
-#if defined HAVE_PETSC
   // initialize MPI manager and PETSc
   Dune::Fem::MPIManager::initialize( argc, argv );
 
@@ -194,7 +210,6 @@ try
 
   for( int step = 1; step <nrSteps; ++step )
   {
-    // !!! note there is a bug within the H1 Norm, the test will fail !!!
     double l2eoc = log( error[ step ][ 0 ] / error[ step -1 ][ 0 ] ) / log( 0.5 );
     double h1eoc = log( error[ step ][ 1 ] / error[ step -1 ][ 1 ] ) / log( 0.5 );
 
@@ -215,13 +230,6 @@ try
   Dune::Fem::Parameter::write( "parameter.log" );
 
   return 0;
-
-#else
-
-  std::cout<<"Running an empty Petsc test, so its successful ;)"<<std::endl;
-  return 0;
-
-#endif // #if defined HAVE_PETSC
 }
 catch( const Dune::Exception &exception )
 {
