@@ -21,7 +21,7 @@ namespace Dune
   // External Forward Declarations
   // -----------------------------
 
-  template< int dim >
+  template< int dim, class CoordCont >
   class YaspGrid;
 
 #ifdef ENABLE_UG 

@@ -46,7 +46,7 @@ namespace Dune
   template< int dim >
   class UGGrid;
 
-  template< int dim >
+  template< int dim, class CoordCont >
   class YaspGrid;
 
   template< int dim, int dimworld >

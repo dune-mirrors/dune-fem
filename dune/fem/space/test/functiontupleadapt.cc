@@ -68,7 +68,7 @@ struct CheckGridEnabled
 // disable YaspGrid
 namespace Dune
 {
-  template< int dim >
+  template< int dim, class CoordCont >
   class YaspGrid;
 }
 
