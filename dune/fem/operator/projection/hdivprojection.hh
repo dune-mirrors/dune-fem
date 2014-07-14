@@ -523,8 +523,8 @@ namespace Dune
         }
       };
 
-      template <class FaceBSetType, int dim> 
-      struct GetSubBaseFunctionSet< FaceBSetType, YaspGrid< dim > >
+      template <class FaceBSetType, int dim, class CoordCont>
+      struct GetSubBaseFunctionSet< FaceBSetType, YaspGrid< dim, CoordCont > >
       {
         template <class EntityType, class SpaceType> 
         static inline FaceBSetType faceBaseSet(const EntityType& en, const SpaceType& space) 

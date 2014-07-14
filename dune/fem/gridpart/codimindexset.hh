@@ -24,13 +24,13 @@ namespace Dune
   // PersistentContainer for YaspGrid
   // --------------------------------
 
-  template< int dim, class Data >
-  class PersistentContainer< YaspGrid< dim >, Data >
-  : public PersistentContainerVector< YaspGrid< dim >, 
-                                      typename YaspGrid< dim >::LeafIndexSet,
+  template< int dim, class CoordCont, class Data >
+  class PersistentContainer< YaspGrid< dim, CoordCont >, Data >
+  : public PersistentContainerVector< YaspGrid< dim, CoordCont >,
+                                      typename YaspGrid< dim, CoordCont >::LeafIndexSet,
                                       std::vector<Data> >
   {
-    typedef YaspGrid< dim > Grid;
+    typedef YaspGrid< dim, CoordCont > Grid;
     typedef PersistentContainerVector< Grid, typename Grid::LeafIndexSet, std::vector<Data> > BaseType;
 
   public:

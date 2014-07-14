@@ -230,11 +230,11 @@ namespace Dune
     template< int dim, class CoordCont >
     class YaspGrid;
 
-    template< int dim, int codim >
-    class ReferenceElementProvider< YaspGrid< dim >, codim >
-    : public ReferenceElementProviderBase< YaspGrid< dim >, codim >
+    template< int dim, class CoordCont, int codim >
+    class ReferenceElementProvider< YaspGrid< dim, CoordCont >, codim >
+    : public ReferenceElementProviderBase< YaspGrid< dim, CoordCont >, codim >
     {
-      typedef ReferenceElementProviderBase< YaspGrid< dim >, codim > BaseType;
+      typedef ReferenceElementProviderBase< YaspGrid< dim, CoordCont >, codim > BaseType;
 
     public:
       typedef typename BaseType::ReferenceElementType ReferenceElementType;

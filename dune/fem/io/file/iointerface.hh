@@ -429,11 +429,11 @@ namespace Dune
         }
       };
 
-      template < int dim > 
-      struct SaveParallelCartesianGrid< YaspGrid< dim > >
+      template < int dim, class CoordCont >
+      struct SaveParallelCartesianGrid< YaspGrid< dim, CoordCont > >
       {
         static const bool saveMacroGrid = true  ;
-        typedef YaspGrid< dim >  Grid;
+        typedef YaspGrid< dim, CoordCont >  Grid;
         typedef FieldVector<int, dim> iTupel;
 
         static void getCoordinates(const Grid& grid, const iTupel& anz, 

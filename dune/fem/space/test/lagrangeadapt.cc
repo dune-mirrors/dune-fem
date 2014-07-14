@@ -71,10 +71,10 @@ namespace Dune
   class YaspGrid;
 }
 
-template< int dim >
-struct CheckGridEnabled< Dune :: YaspGrid< dim > >
+template< int dim, class CoordCont >
+struct CheckGridEnabled< Dune :: YaspGrid< dim, CoordCont > >
 {
-  typedef Dune :: YaspGrid< dim > GridType;
+  typedef Dune :: YaspGrid< dim, CoordCont > GridType;
   
   typedef Dune :: Fem :: LeafGridPart< GridType > GridPartType;
 
