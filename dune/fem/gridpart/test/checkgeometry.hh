@@ -46,7 +46,7 @@ namespace Dune
         template< int codim, class Entity  >
         static void check ( const Entity &entity, FailureHandler & )
         {
-          for ( int i = 0; i < entity.template count< codim >(); ++i )
+          for ( int i = 0; i < entity.subEntities( codim ); ++i )
           {
             typedef typename Entity::template Codim< codim >::EntityPointer SubEP;
             const SubEP subEP = entity.template subEntity< codim >( i );

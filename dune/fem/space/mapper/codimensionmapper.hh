@@ -171,7 +171,7 @@ namespace Dune
       /** \copydoc Dune::DofMapper::numDofs(const ElementType &element) const */
       SizeType numDofs ( const ElementType &element ) const
       {
-        return element.template count< codimension >();
+        return element.subEntities( codimension );
       }
 
       /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */

@@ -130,7 +130,7 @@ namespace Dune
             if( !filter.contains( entity ) )
               continue;
 
-            const int count = entity.template count< codim >();
+            const int count = entity.subEntities( codim );
             for( int i = 0; i < count; ++i )
             {
               size_t subIndex = size_t( indexSet.subIndex( entity, i , codim ) );

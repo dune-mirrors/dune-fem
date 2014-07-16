@@ -413,7 +413,7 @@ namespace Dune
           }
           else 
           {
-            const int count = entity.template count< codim > ();
+            const int count = entity.subEntities( codim );
             for(int i=0; i<count; ++i ) 
             {
               insertDofs( entity, clk, polOrd, i, globalSize, 
@@ -431,7 +431,7 @@ namespace Dune
                            std::vector< DofContainerType* > dofContainers ) 
         {
           DofContainerType &dofContainer = *dofContainers[ codim ];
-          const int count = entity.template count< codim > ();
+          const int count = entity.subEntities( codim );
           for(int i=0; i<count; ++i ) 
           {
             EntityDofStorage& entityDofs = dofContainer( entity, i );

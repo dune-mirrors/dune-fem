@@ -113,7 +113,7 @@ namespace Dune
           
           CodimIndexSetType &codimSet = indexSet.codimLeafSet( codim );
 
-          const int count = element.template count< codim >();
+          const int count = element.subEntities( codim );
           for( int i = 0; i < count; ++i )
           {
             codimSet.insertSubEntity( element, i );
@@ -138,7 +138,7 @@ namespace Dune
 
           CodimIndexSetType &codimSet = indexSet.codimLeafSet( codim );
 
-          for( int i = 0; i < entity.template count< codim >(); ++i )
+          for( int i = 0; i < entity.subEntities( codim ); ++i )
           {
             EntityPointerType ptr = entity.template subEntity< codim >( i );
             const EntityType &subentity = *ptr;
