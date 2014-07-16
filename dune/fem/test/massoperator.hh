@@ -101,7 +101,7 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
   typedef typename IteratorType::Entity EntityType;
   typedef typename EntityType::Geometry GeometryType;
 
-  BaseType::reserve( Dune::Fem::SimpleStencil<DiscreteFunctionSpaceType,DiscreteFunctionSpaceType>() );
+  BaseType::reserve( Dune::Fem::DiagonalStencil<DiscreteFunctionSpaceType,DiscreteFunctionSpaceType>( dfSpace_, dfSpace_ ) );
   BaseType::clear();
 
   std::vector< typename DiscreteFunctionSpaceType::RangeType > values;

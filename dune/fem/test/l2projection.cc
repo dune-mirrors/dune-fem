@@ -18,11 +18,11 @@
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrange.hh>
 
-#if defined HAVE_PETSC && USE_PETSCDISCRETEFUNCTION
+#if HAVE_PETSC && defined USE_PETSCDISCRETEFUNCTION
 #include <dune/fem/function/petscdiscretefunction.hh>
 #include <dune/fem/operator/linear/petscoperator.hh>
 #include <dune/fem/solver/petscsolver.hh>
-#elif defined USE_BLOCKVECTORFUNCTION && HAVE_ISTL
+#elif HAVE_DUNE_ISTL && defined USE_BLOCKVECTORFUNCTION
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/operator/linear/istloperator.hh>
 #include <dune/fem/solver/istlinverseoperators.hh>
@@ -56,11 +56,11 @@ typedef Dune::GridSelector :: GridType GridType;
 typedef Dune::Fem::AdaptiveLeafGridPart< GridType, Dune::InteriorBorder_Partition > GridPartType;
 typedef Dune::Fem::FunctionSpace< double, double, GridType::dimensionworld, 1 > SpaceType;
 typedef Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, polOrder > DiscreteSpaceType;
-#if defined HAVE_PETSC && USE_PETSCDISCRETEFUNCTION
+#if HAVE_PETSC && defined USE_PETSCDISCRETEFUNCTION
 typedef Dune::Fem::PetscDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
 typedef Dune::Fem::PetscLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
 typedef Dune::Fem::PetscInverseOperator< DiscreteFunctionType, LinearOperatorType > InverseOperatorType;
-#elif defined USE_BLOCKVECTORFUNCTION && HAVE_ISTL
+#elif HAVE_DUNE_ISTL && defined USE_BLOCKVECTORFUNCTION
 typedef Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
 typedef Dune::Fem::ISTLLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
 typedef Dune::Fem::ISTLInverseOperator< DiscreteFunctionType, Dune::Fem::ISTLCGSolver > InverseOperatorType;
@@ -217,12 +217,12 @@ try
 //    std::cout<< "H1 Eoc: " << h1eoc << std::endl;
     if( std::abs( l2eoc -1 - polOrder )  > 0.2 )
     {
-      DUNE_THROW(Dune::InvalidStateException,"EOC check of refinement failed");
+      DUNE_THROW(Dune::InvalidStateException,"EOC check of solving mass matrix system failed");
     }
     if( std::abs( h1eoc - polOrder )  > 0.2 )
     { 
       //note: This will fail with Yaspgrid, bug in Geometry JacobianInverse
-      DUNE_THROW(Dune::InvalidStateException,"EOC check of refinement failed");
+      DUNE_THROW(Dune::InvalidStateException,"EOC check of solving mass matrix system failed");
     }
   }
 
