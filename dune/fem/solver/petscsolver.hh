@@ -247,7 +247,11 @@ namespace Dune
 
         // set operator to PETSc solver context 
         // ::Dune::Petsc::KSPSetOperators( ksp_, A, A, DIFFERENT_NONZERO_PATTERN);
+#if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 5
         ::Dune::Petsc::KSPSetOperators( ksp_, A, A, SAME_PRECONDITIONER); 
+#else
+        ::Dune::Petsc::KSPSetOperators( ksp_, A, A );
+#endif
         // set prescribed tolerances 
         PetscInt  maxits = maxIter_ ;
         PetscReal reduc  = reduction_;

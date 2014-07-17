@@ -61,7 +61,10 @@ namespace Dune
      */
     inline ErrorCode ErrorCheckHelper ( ErrorCode errorCode ) { CHKERRQ( errorCode ); return 0; }
 
-    inline ErrorCode ErrorHandler ( MPI_Comm comm, int line, const char *function, const char *file, const char *dir, 
+    inline ErrorCode ErrorHandler ( MPI_Comm comm, int line, const char *function, const char *file,
+#if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 5
+                                    const char *dir,
+#endif
                                     ErrorCode errorCode, PetscErrorType p, const char *message, void *context )
     {
       std::ostringstream msgout;
@@ -175,7 +178,12 @@ namespace Dune
     inline void KSPGetIterationNumber( KSP ksp, PetscInt* its ) 
     { ErrorCheck( ::KSPGetIterationNumber( ksp, its ) ); }
 
+
+#if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 5
     inline void KSPSetOperators (KSP ksp, Mat Amat, Mat Pmat, MatStructure flag ) { ErrorCheck( ::KSPSetOperators( ksp, Amat, Pmat, flag ) ); }
+#else
+    inline void KSPSetOperators (KSP ksp, Mat Amat, Mat Pmat ) { ErrorCheck( ::KSPSetOperators( ksp, Amat, Pmat ) ); }
+#endif
     inline void KSPSetTolerances ( KSP ksp, PetscReal rtol, PetscReal abstol, PetscReal dtol, PetscInt maxits ) 
       { ErrorCheck( ::KSPSetTolerances( ksp, rtol, abstol, dtol, maxits ) ); }
     inline void KSPSolve ( KSP ksp, Vec b, Vec x ) { ErrorCheck( ::KSPSolve( ksp, b, x ) ); }
