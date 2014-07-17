@@ -8,15 +8,11 @@
 #include <vector>
 
 #include <dune/common/parallel/mpihelper.hh>
-#if HAVE_ALUGRID 
-#include <dune/grid/alugrid/3d/alugrid.hh>
-#elif HAVE_DUNE_ALUGRID
-#include <dune/alugrid/3d/alugrid.hh>
-#endif
-
 #include <dune/fem/gridpart/common/capabilities.hh>
 
 #if HAVE_DUNE_ALUGRIOD
+#include <dune/alugrid/3d/alugrid.hh>
+
 #warning "Using the ThreadPartitioner"
 
 namespace Dune {
