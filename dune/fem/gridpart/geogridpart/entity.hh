@@ -190,7 +190,9 @@ namespace Dune
       {
         return hostEntity().template count< codim >();
       }
-      
+
+      unsigned int subEntites ( unsigned int codim ) const { return hostEntity().subEntities( codim ); }
+
       template< int codim >
       typename Traits::template Codim< codim >::EntityPointer
       subEntity ( int i ) const
