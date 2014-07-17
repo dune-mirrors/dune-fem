@@ -16,87 +16,8 @@
 
 #include <dune/fem/gridpart/common/capabilities.hh>
 
-
+#if HAVE_DUNE_ALUGRIOD
 #warning "Using the ThreadPartitioner"
-
-#if HAVE_DUNE_ALUGRID 
-// the dune-alugrid module always allows to use the partitioners
-#define ALUGRID_PARTIONER_AVAILABLE 1
-namespace ALUGrid {
-#else
-// the dune-grid ALUGrid version needs MPI to allows to use the partitioners
-#define ALUGRID_PARTIONER_AVAILABLE ALU3DGRID_PARALLEL
-namespace ALUGridSpace {
-#endif
-
-#if ALUGRID_PARTIONER_AVAILABLE
-  // class fulfilling the ALUGrid communicator interface
-  // but without any communication, this is needed to avoid 
-  // communication during the call of DataBase :: repartition 
-  class MpAccessSerial : public MpAccessGlobal
-  {
-  public:  
-    MpAccessSerial() {} 
-
-#if HAVE_DUNE_ALUGRID || defined ALUGRID_CONSTRUCTION_WITH_STREAMS 
-    // this features is only available in the newer version 
-    typedef MpAccessGlobal :: minmaxsum_t  minmaxsum_t;
-#else 
-    typedef double minmaxsum_t ;
-#endif
-
-    virtual int psize() const { return 1; }
-    int myrank () const { return 0; }
-
-    virtual int barrier () const { return psize(); }
-    virtual bool gmax (bool value) const { return value; }
-    virtual int gmax (int value) const { return value; }
-    virtual int gmin ( int value ) const { return value; }
-    virtual int gsum ( int value ) const { return value; }
-    virtual long gmax ( long value ) const { return value; }
-    virtual long gmin ( long value ) const { return value; }
-    virtual long gsum ( long value ) const { return value; }
-    virtual double gmax ( double value ) const { return value; }
-    virtual double gmin ( double value ) const { return value; }
-    virtual double gsum ( double value ) const { return value; }
-    virtual void gmax (double* in, int length, double* out) const { std::copy(in, in+length, out ); }
-    virtual void gmin (double* in, int length, double* out) const { std::copy(in, in+length, out ); }
-    virtual void gsum (double* in, int length, double* out) const { std::copy(in, in+length, out ); }
-    virtual void gmax (int*,int,int*) const {  }
-    virtual void gmin (int*,int,int*) const {  }
-    virtual void gsum (int*,int,int*) const {  }
-    virtual minmaxsum_t minmaxsum( double value ) const { return minmaxsum_t( value ); }
-    virtual std::pair<double,double> gmax (std::pair<double,double> value ) const { return value; }
-    virtual std::pair<double,double> gmin (std::pair<double,double> value ) const { return value; }
-    virtual std::pair<double,double> gsum (std::pair<double,double> value ) const { return value; }
-    virtual void bcast(int*,int, int) const { }
-    virtual void bcast(char*,int, int) const { }
-    virtual void bcast(double*,int, int) const { }
-    virtual void bcast ( ObjectStream &, int ) const {}
-    virtual int exscan( int value ) const { return 0; }
-    virtual int scan( int value ) const { return value; }
-    virtual std::vector < int > gcollect ( int value ) const { return std::vector<int> (psize(), value); }
-    virtual std::vector < double > gcollect ( double value ) const { return std::vector<double> (psize(), value); }
-    virtual std::vector < std::vector < int > > gcollect (const std::vector < int > & value) const 
-    { 
-      return std::vector < std::vector < int > > (psize(), value); 
-    }
-    virtual std::vector < ObjectStream > gcollect (const ObjectStream &, const std::vector<int>& ) const
-    {
-      return std::vector < ObjectStream > (psize()); 
-    }
-    virtual std::vector < std::vector < double > > gcollect (const std::vector < double > & value) const 
-    { 
-      return std::vector < std::vector < double > > (psize(), value); 
-    }
-    virtual std::vector < ObjectStream > gcollect (const ObjectStream &os) const { return std::vector < ObjectStream >(psize(),os); }
-
-#if HAVE_ALUGRID
-    //! return address of communicator (not optimal but avoid explicit MPI types here)
-    virtual const CommIF* communicator() const { return 0; }
-#endif
-  };
-}
 
 namespace Dune {
 
@@ -246,16 +167,7 @@ protected:
         }
       }
 
-#if HAVE_ALUGRID // old ALUGrid version 1.52
-      double center[ 3 ] = { 0, 0, 0 };
-      typedef typename EntityType::Geometry::GlobalCoordinate GlobalCoordinate;
-      const GlobalCoordinate barycenter = entity.geometry().center();
-      for( int i = 0; i < GlobalCoordinate::dimension; ++i ) 
-        center[ i ] = barycenter[ i ];
-      db.vertexUpdate( typename LoadBalancerType::GraphVertex( index, weight, center ) );
-#else // new dune-alugrid version
       db.vertexUpdate( typename LoadBalancerType::GraphVertex( index, weight ) );
-#endif
       ++graphSize_; 
     }
     
@@ -283,19 +195,14 @@ protected:
         {
           const int eid = getIndex( en );
           const int nid = getIndex( nb );
-#if HAVE_DUNE_ALUGRID 
           // the newest ALU version only needs the edges to be inserted only once
           if( eid < nid ) 
-#endif
           // the older version works with double insertion 
           // insert edges twice, with both orientations 
           // the ALUGrid partitioner expects it this way 
           {
-            db.edgeUpdate ( typename LoadBalancerType :: GraphEdge ( eid, nid, weight
-#if HAVE_DUNE_ALUGRID 
-                  ,-1, -1
-#endif
-                  ) );
+            typedef typename LoadBalancerType :: GraphEdge GraphEdge;
+            db.edgeUpdate ( GraphEdge ( eid, nid, weight, -1, -1 ) );
           }
         }
       }
@@ -330,11 +237,7 @@ public:
           partition_ = db_.repartition( mpAccess_, DataBaseType :: METIS_PartGraphKway, pSize_ );
         else if( method == sfc ) 
         {
-#if HAVE_DUNE_ALUGRID
           partition_ = db_.repartition( mpAccess_, DataBaseType :: ALUGRID_SpaceFillingCurve, pSize_ );
-#else   
-          DUNE_THROW(InvalidStateException,"ThreadPartitioner::serialPartition: dune-alugrid not found, therefore not sfc partitioning");
-#endif
         }
         else 
           DUNE_THROW(InvalidStateException,"ThreadPartitioner::serialPartition: wrong method");
@@ -380,10 +283,10 @@ public:
 
 };
 
-#else 
-#warning "ALUGrid Partitioner not available"
-#endif // ALUGRID_PARTIONER_AVAILABLE 
-#undef ALUGRID_PARTIONER_AVAILABLE
-
 } // end namespace Dune 
+
+#else 
+#warning "DUNE-ALUGrid Partitioner not available"
+#endif // HAVE_DUNE_ALUGRID
+
 #endif // ifndef DUNE_FEM_THREADPARTITIONER_HH
