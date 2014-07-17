@@ -1004,7 +1004,7 @@ namespace Dune
       for( Iterator it = gridPart_.template begin< 0, pitype >(); it != end; ++it )
       {
         const ElementType& element = *it ;
-        for (int i = 0; i < element.template count<codim>(); ++i )
+        for (int i = 0; i < element.subEntities( codim ); ++i )
         {
           if (! codimLeafSet( codim ).exists( element, i) )
             codimLeafSet( codim ).insertSubEntity( element, i );
@@ -1086,7 +1086,7 @@ namespace Dune
       for( Iterator it = gridPart_.template begin< 0, pitype >(); it != end; ++it )
       {
         const ElementType& element = *it ;
-        const int subEntities = element.template count<codim>();
+        const int subEntities = element.subEntities( codim );
         for (int i=0; i < subEntities; ++i)
         {
           if (! codimLeafSet( codim ).exists( element, i) )
