@@ -78,7 +78,7 @@ namespace Dune
 
         LocalFunction< BasisFunctionSetType1, SubDofVectorTypeFather > lfFather1 (
             fatherBasisFunctionSet1, SubDofVectorTypeFather( lfFather.localDofVector(), fatherSize1, fatherOffset1 ) );
-        LocalFunction< BasisFunctionSetType1, SubDofVectorTypeFather > lfFather2 (
+        LocalFunction< BasisFunctionSetType2, SubDofVectorTypeFather > lfFather2 (
             fatherBasisFunctionSet2, SubDofVectorTypeFather( lfFather.localDofVector(), fatherSize2, fatherOffset2 ) );
 
         BasicConstLocalFunction< BasisFunctionSetType1, SubDofVectorTypeSon > lfSon1 (
@@ -119,7 +119,7 @@ namespace Dune
 
         LocalFunction< BasisFunctionSetType1, SubDofVectorTypeSon > lfSon1 (
             sonBasisFunctionSet1, SubDofVectorTypeSon( lfSon.localDofVector(), sonSize1, sonOffset1 ) );
-        LocalFunction< BasisFunctionSetType1, SubDofVectorTypeSon > lfSon2 (
+        LocalFunction< BasisFunctionSetType2, SubDofVectorTypeSon > lfSon2 (
             sonBasisFunctionSet2, SubDofVectorTypeSon( lfSon.localDofVector(), sonSize2, sonOffset2 ) );
 
         BasicConstLocalFunction< BasisFunctionSetType1, SubDofVectorTypeFather > lfFather1 (
