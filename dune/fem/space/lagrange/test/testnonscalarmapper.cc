@@ -45,8 +45,11 @@ int main( int argc, char **argv )
 
     typedef GridSelector :: GridType GridType;
 
+    std::stringstream gridFile;
+    gridFile << GridType::dimensionworld <<"dgrid.dgf";
+
     // generate GridPointer holding grid instance
-    GridPtr< GridType > gridptr ("2dgrid.dgf");
+    GridPtr< GridType > gridptr ( gridFile.str() );
 
     // get grid reference 
     GridType& grid = *gridptr ;

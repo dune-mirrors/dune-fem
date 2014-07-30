@@ -1,0 +1,10 @@
+DGF
+Interval
+0 0 0   #p0
+1 1 1   #p1
+4 4 4   #nx ny nz
+#
+
+BOUNDARYDOMAIN
+1    -1 -1 -1   30 30 30
+#BOUNDARYDOMAIN

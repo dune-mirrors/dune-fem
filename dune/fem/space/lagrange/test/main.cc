@@ -15,16 +15,13 @@ using namespace Fem;
 int main( int argc, char **argv ) 
 {
   MPIManager::initialize( argc, argv );
-  //std :: string gridFile( "../../../examples/elliptic/square.dgf" );
-  //std :: string gridFile( "onesimplex.dgf" );
-  //std :: string gridFile( "cube.dgf" );
-  //std :: string gridFile( "../../test/2dgrid.dgf" );
-  std :: string gridFile( "2dgrid.dgf" );
-  //std :: string gridFile( "../../../examples/poisson/3dgrid.al" );
-  
+
+  std::stringstream gridFile;
+  gridFile << GRIDDIM<<"dgrid.dgf";
+
   Suite suite("Basisfunction tests");
-  suite.addTest( new LagrangeBasis_Test(gridFile));
-  suite.addTest( new LagrangeMapper_Test< GridSelector::GridType >( gridFile ) );
+  suite.addTest( new LagrangeBasis_Test(gridFile.str()) );
+  suite.addTest( new LagrangeMapper_Test< GridSelector::GridType >( gridFile.str() ) );
 
   suite.run();
   suite.report();
