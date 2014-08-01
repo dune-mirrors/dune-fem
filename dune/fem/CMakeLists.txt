@@ -1,5 +1,5 @@
 # do everything in the subdirs
-set(SUBDIRS  common pass space function gridpart quadrature operator petsc solver storage io misc test)
+set(SUBDIRS  common pass space function gridpart quadrature operator solver storage io misc test)
 
 # construct only from sub-libraries
 
