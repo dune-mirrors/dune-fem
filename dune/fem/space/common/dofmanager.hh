@@ -1477,41 +1477,6 @@ namespace Dune
       }
     }
 
-    template <class GridType>
-    inline bool DofManager<GridType>::
-    writeIndexSets(const std::string& filename , int timestep )
-    {
-      XDRFileOutStream out( filename );
-      // save module version for later changes 
-      unsigned int versionId = DUNE_MODULE_VERSION_ID(DUNE_FEM);
-      out << versionId;
-      IndexListIteratorType endit = indexList_.end();
-      for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
-      {
-        (*it)->write( out );
-      }
-      return true;
-    }
-
-    template <class GridType>
-    inline bool DofManager<GridType>::
-    readIndexSets(const std::string& filename , int timestep )
-    {
-      XDRFileInStream in( filename );
-      // check version of file 
-      unsigned int versionId;
-      in >> versionId;
-      if( versionId < DUNE_VERSION_ID(1,1,0) )
-        DUNE_THROW( IOError, "Trying to read outdated file." );
-
-      IndexListIteratorType endit = indexList_.end();
-      for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
-      {
-        (*it)->read( in );
-      }
-      return true;
-    }
-
     //@} 
 
 
