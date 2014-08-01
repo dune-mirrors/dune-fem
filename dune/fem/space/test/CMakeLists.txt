@@ -37,8 +37,8 @@ add_executable(legendretest legendretest.cc)
 add_executable(arraytest arraytest.cc)
 add_executable(dgcomm dgcomm.cc)
 add_executable(dgcomm_cached dgcomm.cc)
-target_link_libraries(dgcomm ${DUNE_LIBS})
-target_link_libraries(dgcomm_cached ${DUNE_LIBS})
+dune_target_link_libraries(dgcomm ${DUNE_LIBS})
+dune_target_link_libraries(dgcomm_cached ${DUNE_LIBS})
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
 foreach(i ${TESTS})

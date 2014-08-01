@@ -13,8 +13,10 @@ set(LDADD  ${ALL_PKG_LDFLAGS} ${ALL_PKG_LIBS} ${LOCAL_LIBS} ${MPI_LDFLAGS})
 set(CHECK_PROGS  )
 set(check_PROGRAMS  ${CHECK_PROGS})
 set(CLEANFILES  *.tex data/*)
-add_executable(commtest commtest.cc)
-target_link_libraries(commtest ${DUNE_LIBS})
+
+# add_executable(commtest commtest.cc)
+# dune_target_link_libraries(commtest ${DUNE_LIBS})
+
 set(EXTRA_DIST  domain_commtest.dgf parameter_commtest)
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules

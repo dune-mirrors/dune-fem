@@ -14,12 +14,12 @@ set(CHECK_PROGS  l2projection l2projection_petscmatrix)
 set(TESTS  ${CHECK_PROGS})
 set(check_PROGRAMS  ${CHECK_PROGS})
 set(CLEANFILES  *.tex data/*)
-add_executable(petsc_l2projection l2projection.cc)
-target_link_libraries(petsc_l2projection ${DUNE_LIBS})
-add_executable(l2projection_petscmatrix l2projection.cc)
-target_link_libraries(l2projection_petscmatrix ${DUNE_LIBS})
-# include not needed for CMake
-# include $(top_srcdir)/am/global-rules
+
+# add_executable(petsc_l2projection l2projection.cc)
+# dune_target_link_libraries(petsc_l2projection ${DUNE_LIBS})
+# add_executable(l2projection_petscmatrix l2projection.cc)
+# dune_target_link_libraries(l2projection_petscmatrix ${DUNE_LIBS})
+
 foreach(i ${TESTS})
   add_test(${i} ${i})
 endforeach(i ${TESTS})

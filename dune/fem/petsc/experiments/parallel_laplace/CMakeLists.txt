@@ -8,8 +8,10 @@ set(AM_CPPFLAGS  ${ALL_PKG_CPPFLAGS} ${DUNEMPICPPFLAGS})
 set(CHECK_PROGS  )
 set(check_PROGRAMS  ${CHECK_PROGS})
 set(CLEANFILES  *.tex data/* rhs.out.gnuplot* solution.out.gnuplot* error.out.gnuplot*)
-add_executable(parallel_laplace parallel_laplace.cc)
-target_link_libraries(parallel_laplace ${DUNE_LIBS})
+
+# add_executable(parallel_laplace parallel_laplace.cc)
+# dune_target_link_libraries(parallel_laplace ${DUNE_LIBS})
+
 set(EXTRA_DIST  mpiexec.sh)
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
