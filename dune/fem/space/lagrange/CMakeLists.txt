@@ -14,9 +14,9 @@ set(lagrange_HEADERS  adaptmanager.hh
                    restrictprolong.hh
                    storage.hh)
 set(noinst_LTLIBRARIES  liblagrange.la)
-add_executable(liblagrange_la shapefunctionset.cc)
-target_link_libraries(liblagrange_la ${DUNE_LIBS})
-set(liblagrange_la_LIBADD )
+dune_add_library(lagrange SOURCES shapefunctionset.cc)
+target_link_libraries(lagrange ${DUNE_LIBS})
+
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
 install(FILES ${lagrange_HEADERS} DESTINATION ${lagrangedir})

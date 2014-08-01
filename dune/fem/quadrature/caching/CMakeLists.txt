@@ -3,9 +3,9 @@ set(cachingdir   ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/quadrature/caching)
 set(caching_HEADERS  cacheprovider.cc  pointmapper.hh    pointprovider.hh  topology.cc  twistprovider.cc  twistutility.cc
                                                                         cacheprovider.hh  pointprovider.cc  registry.hh       topology.hh  twistprovider.hh  twistutility.hh)
 set(noinst_LTLIBRARIES  libcaching.la)
-add_executable(libcaching_la twistutility.cc topology.cc)
-add_dune_ug_flags(libcaching_la )
-target_link_libraries(libcaching_la ${DUNE_LIBS})
+dune_add_library(caching SOURCES twistutility.cc topology.cc)
+add_dune_ug_flags(caching )
+
 install(FILES ${caching_HEADERS} DESTINATION ${cachingdir})
 foreach(i ${SUBDIRS})
   if(${i} STREQUAL "test")

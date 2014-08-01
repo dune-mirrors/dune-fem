@@ -20,6 +20,7 @@
 /missing
 /setup.sh
 /stamp-h1
+/test-driver
 /check.out
 /check-doxygen.out
 /check-headers.out
@@ -35,4 +36,8 @@ Makefile.in
 *.log
 *.o
 *.swp
+<<<<<<< HEAD
+*.trs
+=======
 build-cmake/
+>>>>>>> e617b1e... [cmake] some more cleanup, add_library -> dune_add_library

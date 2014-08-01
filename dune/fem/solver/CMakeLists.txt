@@ -1,14 +1,13 @@
 # don't follow the full GNU-standard; we definitely need automake >= 1.5
 set(AUTOMAKE_OPTIONS  foreign 1.5)
 set(SUBDIRS  ode oemsolver test)
-set(noinst_LTLIBRARIES  libsolver.la)
+
 # construct only from sub-libraries
-add_executable(libsolver_la )
 # if par DG was found, then ODE solver are not included
 # if PARDG
 # libsolver_la_LIBADD =
 # else
-set(libsolver_la_LIBADD  ode/libodesolver.la)
+
 # endif
 set(solverdir   ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/solver)
 set(solver_HEADERS  cginverseoperator.hh
@@ -34,3 +33,5 @@ foreach(i ${SUBDIRS})
   endif(${i} STREQUAL "test")
   add_subdirectory(${i} ${opt})
 endforeach(i ${SUBDIRS})
+
+dune_add_library(solver ADD_LIBS odesolver)

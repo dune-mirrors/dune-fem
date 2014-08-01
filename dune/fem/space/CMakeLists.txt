@@ -18,13 +18,7 @@ set(SUBDIRS  basefunctions basisfunctionset
           padaptivespace rannacherturek
           reducedbasisspace shapefunctionset
           test)
-set(noinst_LTLIBRARIES  libspace.la)
-# construct only from sub-libraries
-add_executable(libspace_la )
-set(libspace_la_LIBADD  discontinuousgalerkin/libdiscontinuousgalerkin.la
-                     lagrange/liblagrange.la)
-# include not needed for CMake
-# include $(top_srcdir)/am/global-rules
+
 install(FILES ${space_HEADERS} DESTINATION ${spacedir})
 foreach(i ${SUBDIRS})
   if(${i} STREQUAL "test")
@@ -32,3 +26,6 @@ foreach(i ${SUBDIRS})
   endif(${i} STREQUAL "test")
   add_subdirectory(${i} ${opt})
 endforeach(i ${SUBDIRS})
+
+dune_add_library(libspace_la ADD_LIBS space discontinuousgalerkin
+                     lagrang)
