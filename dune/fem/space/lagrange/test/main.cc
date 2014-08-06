@@ -5,6 +5,12 @@
 #define TEST_SECOND_ORDER
 #define TEST_THIRD_ORDER
 
+#ifdef ALUGRID_SIMPLEX 
+#if GRIDDIM > 2
+#undef TEST_THIRD_ORDER
+#endif
+#endif
+
 #include <dune/fem/misc/suite.hh>
 using namespace Dune;
 using namespace Fem;
