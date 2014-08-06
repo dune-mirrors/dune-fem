@@ -277,6 +277,9 @@ void algorithm ( GridPartType &gridPart,
   std::cout << "Unknowns before adaptation: " << solution.space().size() << std::endl;
   std::cout << "L2 error before adaptation: " << preL2error << std::endl;
   std::cout << "H1 error before adaptation: " << preH1error << std::endl; 
+
+  DiscreteFunctionTwoType &second = std::get<1>(functionTuple);
+  Fem::LagrangeInterpolation< GridExactSolutionType, DiscreteFunctionTwoType > :: interpolateFunction( f, second );
   
   adapt( gridPart.grid(), functionTuple, step, locallyAdaptive );
 
