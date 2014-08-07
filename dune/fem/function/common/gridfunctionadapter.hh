@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDFUNCTIONADAPTER_HH
 #define DUNE_FEM_GRIDFUNCTIONADAPTER_HH
 
+#include <dune/common/exceptions.hh>
+
 //- local includes 
 #include <dune/fem/version.hh>
 #include <dune/fem/function/common/discretefunction.hh>
@@ -191,22 +193,33 @@ namespace Dune
       typedef GridFunctionAdapter< Function, GridPart > DiscreteFunctionType;
 
     public:
-      typedef typename Traits::EntityType EntityType; 
+      //! function space type
+      typedef typename Traits::FunctionSpaceType FunctionSpaceType;
 
-      static const int dimRange = DiscreteFunctionSpaceType::dimRange;
+      //! domain field type (from function space)
+      typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+      //! range field type (from function space)
+      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+      //! domain dimension (from function space)
       static const int dimDomain = GridPart::GridType::dimensionworld;
-      static const int dimLocal = GridPart::GridType::dimension;
+      //! range dimension (from function space)
+      static const int dimRange = FunctionSpaceType::dimRange;
 
       //! domain type (from function space)
-      typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
+      typedef typename FunctionSpaceType::DomainType DomainType;
       //! range type (from function space)
-      typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType ;
-      //! domain type (from function space)
-      typedef typename DiscreteFunctionSpaceType::DomainType DomainType ;
-      //! range type (from function space)
-      typedef typename DiscreteFunctionSpaceType::RangeType RangeType ;
+      typedef typename FunctionSpaceType::RangeType RangeType;
       //! jacobian type (from function space)
-      typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      //! hessian type (from function space)
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+
+      //! entity type
+      typedef typename Traits::EntityType EntityType; 
+      //! local coordinate type
+      typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
+      //! local dimension
+      static const int dimLocal = LocalCoordinateType::dimension;
 
       //! constructor initializing local function 
       LocalFunction ( const EntityType &entity, const DiscreteFunctionType &df )
@@ -260,6 +273,13 @@ namespace Dune
             gjt.mtv( tmp, ret[ i ] );
           }
         }
+      }
+
+      //! hessian of local function 
+      template< class PointType >
+      void hessian ( const PointType &x, HessianRangeType &ret ) const
+      {
+        DUNE_THROW( NotImplemented, "Method hessian() not implemented yet" );
       }
 
       //! evaluate function or jacobian of function for given quadrature 
