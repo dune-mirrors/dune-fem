@@ -25,15 +25,9 @@ const int polOrder = POLORDER;
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
-#include <dune/fem/operator/2order/lagrangematrixsetup.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 #include <dune/fem/space/padaptivespace.hh>
-
-// include solvers
-#include <dune/fem/solver/cginverseoperator.hh>
-#include <dune/fem/solver/oemsolver.hh>
-#include <dune/fem/operator/linear/spoperator.hh>
 
 #if HAVE_GRAPE
   #define USE_GRAPE WANT_GRAPE
