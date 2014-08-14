@@ -1,7 +1,6 @@
 #include <config.h>
 
 #include <iostream>
-//#include <dune/common/stdstreams.cc>
 
 using namespace Dune;
 
@@ -259,7 +258,7 @@ try {
       {
         double eoc = log( error[i-1]/error[i]) / M_LN2; 
         std::cout << "EOC = " << eoc << std::endl;
-        if( std::abs( eoc - (space.order()+1.0) ) > eocThreshold ) 
+        if( std::abs( eoc - (space.order()+eocThreshold) ) < 0 ) 
         {
           DUNE_THROW(InvalidStateException,"EOC check of refinement failed");
         }
@@ -278,7 +277,7 @@ try {
       {
         double eoc = log( error[i+1]/error[i]) / M_LN2; 
         std::cout << "EOC = " << eoc << std::endl;
-        if( std::abs( eoc + (space.order()+1.0) ) > eocThreshold ) 
+        if( std::abs( eoc + (space.order()+eocThreshold) ) < 0 ) 
         {
           DUNE_THROW(InvalidStateException,"EOC check of coarsening failed");
         }
