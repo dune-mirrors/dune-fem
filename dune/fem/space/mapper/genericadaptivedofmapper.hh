@@ -188,7 +188,7 @@ namespace Dune
 
         int dof ( const int codim, const int polOrd, const size_t dofNumber ) const 
         { 
-          const int entry = determineVectorEntry( codim, polOrd );
+          const unsigned int entry = determineVectorEntry( codim, polOrd );
           assert( entry < dofs_.size() );
           assert( type_ != GeometryType() );
           assert( dofNumber < dofs_[ entry ].size() );
