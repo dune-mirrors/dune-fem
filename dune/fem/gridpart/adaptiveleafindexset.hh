@@ -50,7 +50,7 @@ namespace Dune
       //! number of supported codimensions 
       static const int numCodimensions = TraitsImp :: numCodimensions ;
 
-      //! number of supported codimensions 
+      //! intersection codimension (numCodim-1 if enabled, otherwise -1)
       static const int intersectionCodimension = TraitsImp :: intersectionCodimension ;
 
       //! true if only one geometry type is available 
@@ -368,7 +368,7 @@ namespace Dune
       IndexType size ( int codim ) const
       {
         assert( codim < numCodimensions );
-        if( codim == intersectionCodimension ) 
+        if( codim == intersectionCodimension && intersectionCodimension > 0 ) 
         {
           return codimLeafSet( codim ).size();
         }
@@ -1004,7 +1004,8 @@ namespace Dune
       for( Iterator it = gridPart_.template begin< 0, pitype >(); it != end; ++it )
       {
         const ElementType& element = *it ;
-        for (int i = 0; i < element.subEntities( codim ); ++i )
+        const int subEntities = element.subEntities( codim );
+        for (int i = 0; i < subEntities; ++i )
         {
           if (! codimLeafSet( codim ).exists( element, i) )
             codimLeafSet( codim ).insertSubEntity( element, i );

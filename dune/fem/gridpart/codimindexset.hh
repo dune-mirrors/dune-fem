@@ -374,7 +374,9 @@ namespace Dune
       {
         assert( myCodim_ == EntityType :: codimension );
         const IndexType &index = leafIndex_[ entity ];
+        // if index is invalid (-1) it does not exist 
         if (index==invalidIndex()) return false;
+        assert( index < IndexType( indexState_.size() ) );
         return (indexState_[ index ] != UNUSED);
       }
      
@@ -384,6 +386,7 @@ namespace Dune
       {
         assert( 0 == EntityType :: codimension );
         const IndexType &index = leafIndex_( entity, subNumber );
+        // if index is invalid (-1) it does not exist 
         if (index==invalidIndex()) return false;
         assert( index < IndexType( indexState_.size() ) );
         return (indexState_[ index ] != UNUSED);

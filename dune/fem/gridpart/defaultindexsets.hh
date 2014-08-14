@@ -68,7 +68,7 @@ namespace Dune
       IndexType
       index ( const typename IndexSetImp :: template Codim< codim > :: Entity &entity ) const
       {
-        return set_index(entity);
+        return set_.index(entity);
       }
 
       //! return index of en 
