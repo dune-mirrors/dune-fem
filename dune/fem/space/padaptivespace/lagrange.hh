@@ -198,6 +198,7 @@ namespace Dune
        *        is unique to the LagrangeDiscreteFunctionSpace.
        *
        *  \param[in]  type  type of geometry the Lagrange point set is requested for
+       *  \param[in]  order polynomial order the Lagrange point set is requested for
        *
        *  \returns LagrangePointSetType
        */
