@@ -368,7 +368,7 @@ namespace Dune
       IndexType size ( int codim ) const
       {
         assert( codim < numCodimensions );
-        if( codim == intersectionCodimension && intersectionCodimension > 0 ) 
+        if( intersectionCodimension > 0 && codim == intersectionCodimension )
         {
           return codimLeafSet( codim ).size();
         }
