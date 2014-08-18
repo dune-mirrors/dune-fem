@@ -133,7 +133,7 @@ inline void Algorithm :: nextMesh ()
   grid_.globalRefine( Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
 }
 
-inline typename Algorithm::ErrorType Algorithm::operator() ( int step )
+inline Algorithm::ErrorType Algorithm::operator() ( int step )
 {
   GridPartType gridPart( grid_ );
   DiscreteSpaceType space( gridPart );
@@ -160,7 +160,7 @@ inline typename Algorithm::ErrorType Algorithm::operator() ( int step )
 }
 
 
-inline typename Algorithm::ErrorType Algorithm::finalize ( DiscreteFunctionType &solution )
+inline Algorithm::ErrorType Algorithm::finalize ( DiscreteFunctionType &solution )
 {
   const GridPartType &gridPart = solution.space().gridPart();
   ErrorType error;
@@ -200,8 +200,8 @@ try
 
   std::cout<< "testing with polorder "<< polOrder <<std::endl;
   Algorithm algorithm( grid );
-  typename Algorithm::ErrorType *error; 
-  error = new  typename Algorithm::ErrorType[ nrSteps ];
+  Algorithm::ErrorType *error; 
+  error = new  Algorithm::ErrorType[ nrSteps ];
   for( int step = 0; step<nrSteps; ++step )
   {
     error[ step ] = algorithm( step );
