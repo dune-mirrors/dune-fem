@@ -12,7 +12,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh>
-#include <dune/fem/solver/rungekutta.hh>
+#include <dune/fem/solver/rungekutta/explicit.hh>
 
 
 using namespace Dune;
