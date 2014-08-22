@@ -822,7 +822,6 @@ namespace Dune
       {
         typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
         typedef typename IntersectionIteratorType::Intersection IntersectionType;
-        typedef typename GridType :: template Codim<0> :: Entity EntityType;
         typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
 
         typedef typename FaceDiscreteSpaceType :: BaseFunctionSetType FaceBSetType  ; 
