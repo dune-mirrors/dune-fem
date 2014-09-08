@@ -17,6 +17,7 @@ const int polOrder = POLORDER;
 #include <iostream>
 #include <sstream>
 //#include <dune/common/stdstreams.cc>
+#include <tuple>
 
 #include <dune/fem/gridpart/leafgridpart.hh>
 
@@ -185,16 +186,8 @@ typedef GridFunctionAdapter< ExactSolutionType, GridPartType >
 typedef DofManager< MyGridType > DofManagerType;
 
 //! type of restrict-prolong operator
-typedef RestrictProlongDefaultTraits<DiscreteFunctionType, DiscreteFunctionTwoType, DiscreteFunctionType>::Type
+typedef RestrictProlongDefaultTuple<DiscreteFunctionType, DiscreteFunctionTwoType, DiscreteFunctionType>
 RestrictProlongOperatorType;
-
-typedef tuple<DiscreteFunctionType&, DiscreteFunctionTwoType&, DiscreteFunctionType&> FunctionTupleType;
-typedef RestrictProlongDefaultTraits<FunctionTupleType>::Type
-AlternateRestrictProlongOperatorType;
-
-static_assert(std::is_same<RestrictProlongOperatorType,
-                           AlternateRestrictProlongOperatorType>::value,
-              "BUG: Variadic template and tuple variants produce different RestrictProlong-operators");              
 
 //! type of the adaption manager
 typedef AdaptationManager< MyGridType, RestrictProlongOperatorType >
@@ -205,7 +198,8 @@ typedef AdaptationManager< MyGridType, RestrictProlongOperatorType >
 
  
 
-void adapt( MyGridType &grid, FunctionTupleType &functionTuple, int step, 
+template< class... DiscreteFunction >
+void adapt( MyGridType &grid, std::tuple< DiscreteFunction &... > functionTuple, int step, 
             const bool locallyAdaptive )
 {
   typedef DiscreteFunctionSpaceType :: IteratorType IteratorType;
@@ -253,8 +247,9 @@ void adapt( MyGridType &grid, FunctionTupleType &functionTuple, int step,
 
 
 
+template< class... DiscreteFunction >
 void algorithm ( GridPartType &gridPart,
-                 FunctionTupleType& functionTuple,
+                 std::tuple< DiscreteFunction &... > functionTuple,
                  int step,
                  int turn,
                  const bool locallyAdaptive )
@@ -394,9 +389,9 @@ try
   solutionTwo.clear();
   solutionThree.clear();
 
-  auto functionTuple = make_tuple(std::ref(solutionOne),
-                                  std::ref(solutionTwo),
-                                  std::ref(solutionThree));
+  auto functionTuple = std::make_tuple(std::ref(solutionOne),
+                                       std::ref(solutionTwo),
+                                       std::ref(solutionThree));
 
   const bool locallyAdaptive = Parameter :: getValue< bool >("adapt.locallyadaptive", false );
 
