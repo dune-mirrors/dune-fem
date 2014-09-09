@@ -44,7 +44,7 @@ namespace Dune
     class RestrictProlongTuple
     : public Dune::Fem::RestrictProlongInterface< RestrictProlongTraits< RestrictProlongTuple< Head, Tail... >, typename Head::DomainFieldType > >
     {
-      using BaseType = Dune::Fem::RestrictProlongInterface< RestrictProlongTraits< RestrictProlongTuple< Head, Tail... >, typename Head::DomainFieldType > >;
+      typedef Dune::Fem::RestrictProlongInterface< RestrictProlongTraits< RestrictProlongTuple< Head, Tail... >, typename Head::DomainFieldType > > BaseType;
 
       template< int i > struct AddToList;
       template< int i > struct AddToLoadBalancer;
@@ -54,7 +54,7 @@ namespace Dune
 
     public:
       /** \copydoc Dune::Fem::RestrictProlongInterface::DomainFieldType */
-      using DomainFieldType = typename BaseType::DomainFieldType;
+      typedef typename BaseType::DomainFieldType DomainFieldType;
 
       /** \name Construction
        *  \{
@@ -242,13 +242,13 @@ namespace Dune
     class RestrictProlongDefaultTuple
     : public RestrictProlongTuple< RestrictProlongDefault< DiscreteFunctions >... >
     {
-      using BaseType = RestrictProlongTuple< RestrictProlongDefault< DiscreteFunctions >... >;
+      typedef RestrictProlongTuple< RestrictProlongDefault< DiscreteFunctions >... > BaseType;
 
       template< class DiscreteFunction >
       struct Operation
       {
-        using DiscreteFunctionType = typename std::decay< DiscreteFunction >::type;
-        using Type = RestrictProlongDefault< DiscreteFunctionType >;
+        typedef typename std::decay< DiscreteFunction >::type DiscreteFunctionType;
+        typedef RestrictProlongDefault< DiscreteFunctionType > Type;
 
         static Type apply ( DiscreteFunctionType &discreteFunction )
         {
@@ -261,7 +261,7 @@ namespace Dune
         : BaseType( RestrictProlongDefault< DiscreteFunctions >( discreteFunctions )... )
       {}
 
-      explicit RestrictProlongDefaultTuple ( std::tuple< DiscreteFunctions &... > &tuple )
+      explicit RestrictProlongDefaultTuple ( std::tuple< DiscreteFunctions &... > tuple )
         : BaseType( Dune::transformTuple< Operation >( tuple ) )
       {}
     };
@@ -288,7 +288,7 @@ namespace Dune
 
     template< class... DiscreteFunctions >
     static inline RestrictProlongDefaultTuple< DiscreteFunctions... >
-    DUNE_DEPRECATED makeRestrictProlongDefault ( std::tuple< DiscreteFunctions &... > &tuple )
+    DUNE_DEPRECATED makeRestrictProlongDefault ( std::tuple< DiscreteFunctions &... > tuple )
     {
       return RestrictProlongDefaultTuple< DiscreteFunctions ... >( tuple );
     }
