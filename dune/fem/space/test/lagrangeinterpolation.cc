@@ -93,40 +93,11 @@ typedef AdaptiveDiscreteFunction< DiscreteGradientFunctionSpaceType >
 typedef DofManager< MyGridType > DofManagerType;
 
 
-class ExactSolution
-: public Fem::Function< FunctionSpaceType, ExactSolution >
-{
-  typedef ExactSolution ThisType;
-  typedef Fem::Function< FunctionSpaceType, ThisType > BaseType;
-
-public:
-  typedef FunctionSpaceType::DomainFieldType DomainFieldType;
-  typedef FunctionSpaceType::RangeFieldType RangeFieldType;
-
-  typedef FunctionSpaceType::DomainType DomainType;
-  typedef FunctionSpaceType::RangeType RangeType;
-  typedef FunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-  virtual void evaluate ( const DomainType &x, RangeType &phi ) const = 0;
-  virtual void jacobian( const DomainType &x, JacobianRangeType &Dphi ) const = 0;
-
-  void evaluate( const DomainType &x, RangeFieldType t, RangeType &phi ) const
-  {
-    evaluate( x, phi );
-  }
-
-  void jacobian( const DomainType &x, RangeFieldType t, JacobianRangeType &Dphi ) const
-  {
-    jacobian( x, Dphi );
-  }
-};
-
-
 class MyExactSolution
-: public ExactSolution
+: public Fem::Function< FunctionSpaceType, MyExactSolution >
 {
   typedef MyExactSolution ThisType;
-  typedef ExactSolution BaseType;
+  typedef Fem::Function< FunctionSpaceType, ThisType > BaseType;
 
 public:
   typedef BaseType::DomainFieldType DomainFieldType;
@@ -135,6 +106,7 @@ public:
   typedef BaseType::DomainType DomainType;
   typedef BaseType::RangeType RangeType;
   typedef BaseType::JacobianRangeType JacobianRangeType;
+
 
   void evaluate ( const DomainType &x, RangeType &phi ) const
   {
@@ -152,6 +124,17 @@ public:
         // Dphi[ 0 ][ j ] *= ((i != j) ? 1. : 2.*x[i]);
         Dphi[ 0 ][ j ] *= ((i != j) ? sin( M_PI * x[ i ]) : M_PI * cos( M_PI * x[ i ] ));
   }
+
+  void evaluate( const DomainType &x, RangeFieldType t, RangeType &phi ) const
+  {
+    evaluate( x, phi );
+  }
+
+  void jacobian( const DomainType &x, RangeFieldType t, JacobianRangeType &Dphi ) const
+  {
+    jacobian( x, Dphi );
+  }
+
 };
                       
  
@@ -396,10 +379,10 @@ double algorithm( MyGridType &grid, DiscreteFunctionType &solution, int turn )
 
   GridPartType part( grid );
   DiscreteFunctionSpaceType discreteFunctionSpace( part );
-  ExactSolution *f = new MyExactSolution;
+  MyExactSolution f;
   
   //! perform Lagrange interpolation
-  Fem::LagrangeInterpolation< ExactSolution, DiscreteFunctionType >::interpolateFunction( *f, solution );
+  Fem::LagrangeInterpolation< MyExactSolution, DiscreteFunctionType >::interpolateFunction( f, solution );
 
   #if 0
   DiscreteGradientFunctionSpaceType discreteGradientFunctionSpace( part );
@@ -413,10 +396,10 @@ double algorithm( MyGridType &grid, DiscreteFunctionType &solution, int turn )
   // pol ord for calculation the error chould by higher than 
   // pol for evaluation the basefunctions
   #ifdef USE_H1ERROR
-    RangeType error = H1Error< DiscreteFunctionType >::norm( *f ,solution, 0 );
+    RangeType error = H1Error< DiscreteFunctionType >::norm( f ,solution, 0 );
     std :: cout << std :: endl << "H1 Error: [ " << error[ 0 ];
   #else
-    RangeType error = L2Error< DiscreteFunctionType >::norm( *f ,solution, 0 );
+    RangeType error = L2Error< DiscreteFunctionType >::norm( f ,solution, 0 );
     std :: cout << std :: endl << "L2 Error: [ " << error[ 0 ];
   #endif
   for( int i = 1; i < RangeType :: dimension; ++i )
@@ -434,7 +417,6 @@ double algorithm( MyGridType &grid, DiscreteFunctionType &solution, int turn )
    }
   #endif
    
-  delete f;
   return sqrt( error * error );
 }
 
