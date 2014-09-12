@@ -1,15 +1,16 @@
 discontinuousgalerkindir =  $(includedir)/dune/fem/space/discontinuousgalerkin
 discontinuousgalerkin_HEADERS = \
-	capabilities.hh \
+	basisfunctionsets.hh \
 	declaration.hh \
-	default.hh \
-	hierarchiclegendre.hh	\
+	generic.hh \
+	hierarchiclegendre.hh \
 	hierarchiclegendremap.hh \
 	lagrange.hh \
 	legendre.hh \
 	localdgmassmatrix.hh \
 	localinterpolation.hh \
 	localrestrictprolong.hh \
+	shapefunctionsets.hh \
 	space.hh
 
 EXTRA_DIST =

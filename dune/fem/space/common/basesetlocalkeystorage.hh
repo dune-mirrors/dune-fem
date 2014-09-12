@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_BASESETLOCALKEYSTORAGE_HH
 #define DUNE_FEM_BASESETLOCALKEYSTORAGE_HH
 
+#include <utility>
+
 //- dune-common includes
 #include <dune/common/exceptions.hh>
 
@@ -95,6 +97,15 @@ namespace Dune
             entryStorage_[ i ] = factory_->getObject( otherEntry->type() );
           }
         }
+      }
+
+      //! move constructor
+      BaseSetLocalKeyStorage ( BaseSetLocalKeyStorage &&other )
+        : factory_( other.factory_ ),
+          entryStorage_( std::move( other.entryStorage_ ) )
+      {
+        other.factory_ = nullptr;
+        other.entryStorage_.clear();
       }
 
       //! destructor 

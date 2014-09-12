@@ -4,13 +4,12 @@
 #include <cassert>
 #include <cstddef>
 
-#include <dune/common/nullptr.hh>
+#include <dune/common/std/constexpr.hh>
 
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/version.hh>
 
 namespace Dune
 {
@@ -24,27 +23,49 @@ namespace Dune
     template< class Entity, class Range >
     struct FiniteVolumeBasisFunctionSet
     {
+      /** \copydoc Dune::Fem::BasisFunctionSet::EntityType */
       typedef Entity EntityType;
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::FunctionSpaceType */
       typedef FunctionSpace< typename Entity::Geometry::ctype, typename Range::value_type, 
                              Entity::Geometry::coorddimension, Range::dimension
                            > FunctionSpaceType;
        
+      /** \copydoc Dune::Fem::BasisFunctionSet::DomainType */
       typedef typename FunctionSpaceType::DomainType DomainType;
+      /** \copydoc Dune::Fem::BasisFunctionSet::RangeType */
       typedef typename FunctionSpaceType::RangeType RangeType;
+      /** \copydoc Dune::Fem::BasisFunctionSet::JacobianRangeType */
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      /** \copydoc Dune::Fem::BasisFunctionSet::HessianRangeType */
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::ReferenceElementType */
       typedef Dune::ReferenceElement< typename DomainType::value_type, DomainType::dimension > ReferenceElementType;
+
+      /** \name Construction
+       *  \{
+       */
 
       FiniteVolumeBasisFunctionSet () : entity_( nullptr ) {}
 
-      FiniteVolumeBasisFunctionSet ( const EntityType &entity ) : entity_( &entity ) {}
+      explicit FiniteVolumeBasisFunctionSet ( const EntityType &entity )
+        : entity_( &entity )
+      {}
 
-      int order () const { return 0; }
+      /** \} */
 
-      std::size_t size () const { return RangeType::dimension; }
+      /** \name Public member methods
+       *  \{
+       */
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::order */
+      static DUNE_CONSTEXPR int order () { return 0; }
+
+      /** \copydoc Dune::Fem::BasisFunctionSet::size */
+      static DUNE_CONSTEXPR std::size_t size () { return RangeType::dimension; }
+
+      /** \copydoc Dune::Fem::BasisFunctionSet::axpy */
       template< class Quadrature, class Vector, class DofVector >
       void axpy ( const Quadrature &quadrature, const Vector &values, DofVector &dofs ) const
       {
@@ -53,6 +74,7 @@ namespace Dune
           axpy( quadrature[ qp ], values[ qp ], dofs );
       }
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::axpy */
       template< class Quadrature, class VectorA, class VectorB, class DofVector >
       void axpy ( const Quadrature &quadrature, const VectorA &valuesA, const VectorB &valuesB, DofVector &dofs ) const
       {
@@ -64,6 +86,7 @@ namespace Dune
         }
       }
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::axpy */
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const
       {
@@ -71,10 +94,12 @@ namespace Dune
           dofs[ i ] += valueFactor[ i ];
       }
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::axpy */
       template< class Point, class DofVector >
       void axpy ( const Point &x, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const
       {}
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::axpy */
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, const JacobianRangeType &jacobianFactor,
                   DofVector &dofs ) const
@@ -82,6 +107,7 @@ namespace Dune
         axpy( x, valueFactor, dofs );
       }
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::evaluateAll */
       template< class Quadrature, class DofVector, class RangeArray >
       void evaluateAll ( const Quadrature &quadrature, const DofVector &dofs, RangeArray &ranges ) const
       {
@@ -90,6 +116,7 @@ namespace Dune
           evaluateAll( quadrature[ qp ], dofs, ranges[ qp ] );
       }
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::evaluateAll */
       template< class Point, class DofVector >
       void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
       {
@@ -97,6 +124,7 @@ namespace Dune
           value[ i ] = dofs[ i ];
       }
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::evaluateAll */
       template< class Point, class RangeArray >
       void evaluateAll ( const Point &x, RangeArray &values ) const
       {
@@ -107,6 +135,7 @@ namespace Dune
         }
       }
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::jacobianAll */
       template< class QuadratureType, class DofVector, class JacobianArray >
       void jacobianAll ( const QuadratureType &quadrature, const DofVector &dofs, JacobianArray &jacobians ) const
       {
@@ -115,12 +144,14 @@ namespace Dune
           jacobianAll( quadrature[ qp ], dofs, jacobians[ qp ] );
       }
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::jacobianAll */
       template< class Point, class DofVector >
       void jacobianAll ( const Point &x, const DofVector &dofs, JacobianRangeType &jacobian ) const
       {
         jacobian = JacobianRangeType( 0 );
       }
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::jacobianAll */
       template< class Point, class JacobianRangeArray >
       void jacobianAll ( const Point &x, JacobianRangeArray &jacobians ) const
       {
@@ -128,12 +159,14 @@ namespace Dune
           jacobians[ i ] = JacobianRangeType( 0 );
       }
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::hessianAll */
       template< class Point, class DofVector >
       void hessianAll ( const Point &x, const DofVector &dofs, HessianRangeType &hessian ) const
       {
         hessian = HessianRangeType( typename HessianRangeType::value_type( 0 ) );
       }
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::hessianAll */
       template< class Point, class HessianRangeArray >
       void hessianAll ( const Point &x, HessianRangeArray &hessians ) const
       {
@@ -141,22 +174,27 @@ namespace Dune
           hessians[ i ] = HessianRangeType( typename HessianRangeType::value_type( 0 ) );
       }
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::entity */
       const EntityType &entity () const
       {
         assert( entity_ );
         return *entity_;
       }
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::referenceElementType */
       const ReferenceElementType &referenceElement () const
       {
         return Dune::ReferenceElements< typename EntityType::Geometry::ctype, EntityType::Geometry::coorddimension >::general( type() );
       }
 
+      /** \copydoc Dune::Fem::BasisFunctionSet::type */
       Dune::GeometryType type () const { return entity().type(); }
 
     private:
       const EntityType *entity_;
     };
+
+    /** \} */
 
   } // namespace Fem
 
