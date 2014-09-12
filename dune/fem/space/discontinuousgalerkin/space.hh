@@ -7,13 +7,13 @@
 // dune-fem includes
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/space/shapefunctionset/orthonormal.hh>
 #include <dune/fem/space/shapefunctionset/proxy.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
 
 // local includes
 #include <dune/fem/space/discontinuousgalerkin/capabilities.hh>
 #include <dune/fem/space/discontinuousgalerkin/default.hh>
-#include <dune/fem/space/discontinuousgalerkin/shapefunctionset.hh>
 
 
 namespace Dune

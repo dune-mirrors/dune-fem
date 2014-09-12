@@ -1,6 +1,6 @@
 #include <config.h>
 
-#include <dune/fem/space/discontinuousgalerkin/legendrepolynomials.hh>
+#include <dune/fem/space/shapefunctionset/legendrepolynomials.hh>
 
 namespace Dune
 {
