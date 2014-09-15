@@ -19,6 +19,8 @@ namespace Dune
     // Internal forward declaration
     // ----------------------------
 
+    template< class... RestrictProlongInterfaces >
+    class RestrictProlongTuple;
     template< class... DiscreteFunctions >
     class RestrictProlongDefaultTuple;
 
@@ -41,7 +43,7 @@ namespace Dune
      *  \tparam  Tail  additional Dune::Fem::RestrictProlongInterface types
      */
     template< class Head, class... Tail >
-    class RestrictProlongTuple
+    class RestrictProlongTuple< Head, Tail... >
     : public Dune::Fem::RestrictProlongInterface< RestrictProlongTraits< RestrictProlongTuple< Head, Tail... >, typename Head::DomainFieldType > >
     {
       typedef Dune::Fem::RestrictProlongInterface< RestrictProlongTraits< RestrictProlongTuple< Head, Tail... >, typename Head::DomainFieldType > > BaseType;
