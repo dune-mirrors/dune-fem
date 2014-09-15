@@ -28,6 +28,7 @@
 // local includes
 #include "adaptmanager.hh"
 #include "capabilities.hh"
+#include "interpolation.hh"
 #include "lagrangepoints.hh"
 #include "shapefunctionset.hh"
 #include "storage.hh"
@@ -154,6 +155,7 @@ namespace Dune
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
       typedef LagrangePointSet< GridPartType, polynomialOrder > LagrangePointSetType;
+      typedef LagrangeLocalInterpolation< GridPartType, polynomialOrder, BasisFunctionSetType > InterpolationType;
 
     private:
       typedef typename Traits::ScalarShapeFunctionSetType ScalarShapeFunctionSetType;
@@ -247,6 +249,15 @@ namespace Dune
       ///////////////////////////
       // Non-interface methods //
       ///////////////////////////
+
+      /** \brief return local interpolation for given entity
+       *
+       *  \param[in]  entity  grid part entity
+       */
+      InterpolationType interpolation ( const EntityType &entity ) const
+      {
+        return InterpolationType( lagrangePointSet( entity ), basisFunctionSet( entity ) );
+      }
 
       /** \brief interpolate a function locally
        *
