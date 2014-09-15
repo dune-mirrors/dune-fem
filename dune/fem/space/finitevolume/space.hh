@@ -17,6 +17,7 @@
 
 #include "basisfunctionsets.hh"
 #include "declaration.hh"
+#include "interpolation.hh"
 
 namespace Dune
 {
@@ -72,6 +73,11 @@ namespace Dune
 
       /** \brief basis function sets type */
       typedef typename BaseType::BasisFunctionSetsType BasisFunctionSetsType;
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::BasisFunctionSetType */
+      typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
+
+      /** \brief local interpolation type */
+      typedef FiniteVolumeLocalInterpolation< GridPart, typename BasisFunctionSetType::RangeType > InterpolationType;
 
       explicit FiniteVolumeSpace ( GridPartType &gridPart,
                                    const InterfaceType commInterface = InteriorBorder_All_Interface,
@@ -82,14 +88,10 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type */
       static DFSpaceIdentifier type () { return FiniteVolumeSpace_id; }
 
-      /** \copydoc Dune::Fem::GenericDiscontinuousGalerkinSpace::interpolate */
-      template< class LocalFunction, class LocalDofVector >
-      void interpolate ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
+      /** \brief return local interpolation */
+      static InterpolationType interpolation ( const EntityType &entity )
       {
-        typename BaseType::RangeType value;
-        LocalAverage< LocalFunction, GridPartType >::apply( localFunction, value );
-        for( int i = 0; i < BaseType::FunctionSpaceType::dimRange; ++i )
-          localDofVector[ i ] = value[ i ];
+        return InterpolationType( entity );
       }
     };
 
