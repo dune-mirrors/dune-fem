@@ -134,8 +134,7 @@ namespace Dune
       void interpolate ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
       {
         const EntityType &entity = localFunction.entity();
-        const auto interpolation = asImp().interpolation( entity );
-        interpolation( localFunction, localDofVector );
+        asImp().interpolation( entity )( localFunction, localDofVector );
       }
 
       /** \} */
