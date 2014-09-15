@@ -90,6 +90,8 @@ namespace Dune
       typedef GenericDiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
 
     public:
+      using BaseType::basisFunctionSet;
+
       static const int polynomialOrder = polOrder;
 
       typedef typename BaseType::GridPartType GridPartType;
