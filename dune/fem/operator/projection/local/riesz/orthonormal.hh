@@ -2,8 +2,8 @@
 #define DUNE_FEM_OPERATOR_PROJECTION_LOCAL_RIESZ_ORTHONORMAL_HH
 
 #include <cassert>
+#include <cstddef>
 
-#include <algorithm>
 #include <utility>
 
 #include <dune/geometry/referenceelements.hh>
@@ -87,7 +87,9 @@ namespace Dune
       void apply ( const F &f, LocalDofVector &dofs ) const
       {
         assert( f.size() == dofs.size() );
-        std::transform( f.begin(), f.end(), dofs.begin(), [this]( RangeFieldType value ){ return factor_*value; } );
+        const std::size_t size = dofs.size();
+        for( std::size_t i = 0u; i < size; ++i )
+          dofs[ i ] = factor_*f[ i ];
       }
 
       /** \} */
