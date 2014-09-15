@@ -19,6 +19,7 @@
 #include "basisfunctionsets.hh"
 #include "generic.hh"
 #include "hierarchiclegendremap.hh"
+#include "interpolation.hh"
 #include "shapefunctionsets.hh"
 
 namespace Dune
@@ -93,7 +94,12 @@ namespace Dune
       static const int polynomialOrder = polOrder;
 
       typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::EntityType EntityType;
+
       typedef typename BaseType::BasisFunctionSetsType BasisFunctionSetsType;
+      typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
+
+      typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
 
       explicit HierarchicLegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                                               const InterfaceType commInterface = InteriorBorder_All_Interface,
@@ -102,6 +108,11 @@ namespace Dune
       {}
 
       static DFSpaceIdentifier type () { return HierarchicLegendreDGSpace_id; }
+
+      InterpolationType interpolation ( const EntityType &entity ) const
+      {
+        return InterpolationType( basisFunctionSet( entity ) );
+      }
 
     private:
       static BasisFunctionSetsType basisFunctionSets ( const GridPartType &gridPart )

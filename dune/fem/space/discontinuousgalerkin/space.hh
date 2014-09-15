@@ -9,15 +9,16 @@
 
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/common/capabilities.hh>
-#include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/space/shapefunctionset/selectcaching.hh>
-#include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/commoperations.hh>
+#include <dune/fem/space/common/defaultcommhandler.hh>
+#include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/shapefunctionset/orthonormal.hh>
+#include <dune/fem/space/shapefunctionset/selectcaching.hh>
 
 #include "basisfunctionsets.hh"
 #include "declaration.hh"
 #include "generic.hh"
+#include "interpolation.hh"
 #include "shapefunctionsets.hh"
 
 namespace Dune
@@ -77,13 +78,23 @@ namespace Dune
       static const int polynomialOrder = polOrder;
 
       typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::EntityType EntityType;
+
       typedef typename BaseType::BasisFunctionSetsType BasisFunctionSetsType;
+      typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
+
+      typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
 
       explicit DiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                             const InterfaceType commInterface = InteriorBorder_All_Interface,
                                             const CommunicationDirection commDirection = ForwardCommunication )
         : BaseType( gridPart, basisFunctionSets( gridPart ), commInterface, commDirection )
       {}
+
+      InterpolationType interpolation ( const EntityType &entity ) const
+      {
+        return InterpolationType( basisFunctionSet( entity ) );
+      }
 
     private:
       static BasisFunctionSetsType basisFunctionSets ( const GridPartType &gridPart )

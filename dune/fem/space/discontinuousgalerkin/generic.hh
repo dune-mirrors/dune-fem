@@ -126,14 +126,19 @@ namespace Dune
       /** \brief local interpolation using discontinuous L2-projection
        *
        *  \param[in]  localFunction  local function to interpolate
-       *  \param[in]  dofs           local degrees of freedom of the interpolation
+       *  \param[in]  localDofVector  local degrees of freedom of the interpolation
        */
       template< class LocalFunction, class LocalDofVector >
-      void interpolate ( const LocalFunction &localFunction, LocalDofVector &dofs ) const
+      void interpolate ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
       {
+        const EntityType &entity = localFunction.entity();
+        const auto interpolation = asImp().interpolation( entity );
+        interpolation( localFunction, localDofVector );
+#if 0
         typedef DiscontinuousGalerkinLocalInterpolation< typename BaseType::DiscreteFunctionSpaceType > LocalInterpolationType;
         LocalInterpolationType interpolation( asImp() );
-        interpolation( localFunction, dofs );
+        interpolation( localFunction, localDofVector );
+#endif
       }
 
       /** \} */

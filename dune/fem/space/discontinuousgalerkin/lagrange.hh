@@ -6,6 +6,9 @@
 #include <dune/grid/common/gridenums.hh>
 
 #include <dune/fem/gridpart/common/capabilities.hh>
+#include <dune/fem/operator/projection/local/l2projection.hh>
+#include <dune/fem/operator/projection/local/riesz.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/capabilities.hh>
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
@@ -84,7 +87,17 @@ namespace Dune
       static const int polynomialOrder = polOrder;
 
       typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::EntityType EntityType;
+
       typedef typename BaseType::BasisFunctionSetsType BasisFunctionSetsType;
+      typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
+
+    private:
+      typedef CachingQuadrature< GridPart, EntityType::codimension > QuadratureType;
+      typedef DenseLocalRieszProjection< BasisFunctionSetType, QuadratureType > LocalRieszProjectionType;
+
+    public:
+      typedef DefaultLocalL2Projection< LocalRieszProjectionType, QuadratureType > InterpolationType;
 
       explicit LagrangeDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                                     const InterfaceType commInterface = InteriorBorder_All_Interface,
@@ -93,6 +106,11 @@ namespace Dune
       {}
 
       static DFSpaceIdentifier type () { return LagrangeDGSpace_id; }
+
+      InterpolationType interpolation ( const EntityType &entity ) const
+      {
+        return InterpolationType( basisFunctionSet( entity ) );
+      }
 
     private:
       static BasisFunctionSetsType basisFunctionSets ( const GridPartType &gridPart )

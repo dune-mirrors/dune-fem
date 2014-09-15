@@ -5,6 +5,7 @@ discontinuousgalerkin_HEADERS = \
 	generic.hh \
 	hierarchiclegendre.hh \
 	hierarchiclegendremap.hh \
+	interpolation.hh \
 	lagrange.hh \
 	legendre.hh \
 	localdgmassmatrix.hh \
