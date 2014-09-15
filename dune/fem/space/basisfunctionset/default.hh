@@ -85,7 +85,7 @@ namespace Dune
       {}
 
       //! \brief constructor
-      DefaultBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
+      explicit DefaultBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
       : entity_( &entity ),
         shapeFunctionSet_( shapeFunctionSet )
       {}
