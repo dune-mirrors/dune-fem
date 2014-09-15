@@ -69,8 +69,10 @@ void interpolate ( const LocalFunction &f, LocalDofVector &dofs ) const;
         for( IteratorType it = iteratorProvider.begin(); it != end; ++it )
         {
           const EntityType &entity = *it;
+          const auto interpolation = space.interpolation( entity );
+
           LocalFunctionType vLocal = v.localFunction( entity );
-          space.interpolate( u.localFunction( entity ), vLocal );
+          interpolation( u.localFunction( entity ), vLocal.localDofVector() );
         }
       }
     };

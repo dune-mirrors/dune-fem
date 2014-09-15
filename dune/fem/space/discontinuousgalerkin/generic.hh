@@ -3,6 +3,7 @@
 
 #include <utility>
 
+#include <dune/common/deprecated.hh>
 #include <dune/common/std/constexpr.hh>
 
 #include <dune/fem/space/common/discretefunctionspace.hh>
@@ -129,16 +130,12 @@ namespace Dune
        *  \param[in]  localDofVector  local degrees of freedom of the interpolation
        */
       template< class LocalFunction, class LocalDofVector >
+      DUNE_DEPRECATED
       void interpolate ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
       {
         const EntityType &entity = localFunction.entity();
         const auto interpolation = asImp().interpolation( entity );
         interpolation( localFunction, localDofVector );
-#if 0
-        typedef DiscontinuousGalerkinLocalInterpolation< typename BaseType::DiscreteFunctionSpaceType > LocalInterpolationType;
-        LocalInterpolationType interpolation( asImp() );
-        interpolation( localFunction, localDofVector );
-#endif
       }
 
       /** \} */

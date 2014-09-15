@@ -5,6 +5,7 @@
 #include <vector>
 
 // dune-common includes
+#include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/nullptr.hh>
 
@@ -261,26 +262,16 @@ namespace Dune
 
       /** \brief interpolate a function locally
        *
-       *  \param[in]  f     local function to interpolate
-       *  \param[out] dofs  local degrees of freedom of the interpolion
+       *  \param[in]  loalFunction  local function to interpolate
+       *  \param[out]  localDofVector local degrees of freedom of the interpolion
        */
       template< class LocalFunction, class LocalDofVector >
-      void interpolate ( const LocalFunction &f, LocalDofVector &dofs ) const
+      DUNE_DEPRECATED
+      void interpolate ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
       {
-        const EntityType &entity = f.entity();
-
-        const LagrangePointSetType &pointSet = lagrangePointSet( entity );
-
-        int k = 0;
-        const std::size_t numPoints = pointSet.nop();
-        for( std::size_t pt = 0; pt < numPoints; ++pt )
-        {
-          typename FunctionSpaceType::RangeType phi;
-          f.evaluate( pointSet[ pt ], phi );
-
-          for( int i = 0; i < FunctionSpaceType::dimRange; ++i, ++k )
-            dofs[ k ] = phi[ i ];
-        }
+        const EntityType &entity = localFunction.entity();
+        const auto interpolation = this->interpolation( entity );
+        interpolation( localFunction, localDofVector );
       }
 
       /** \brief return shape function set for given entity
