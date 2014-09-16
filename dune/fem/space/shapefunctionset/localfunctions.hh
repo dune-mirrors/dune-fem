@@ -9,6 +9,7 @@
 #include <dune/common/exceptions.hh>
 
 // dune-fem includes
+#include <dune/fem/quadrature/quadrature.hh>
 #include <dune/fem/space/common/functionspace.hh>
 
 namespace Dune

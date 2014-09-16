@@ -13,6 +13,7 @@
 #include <dune/geometry/type.hh>
 
 // local includes 
+#include <dune/fem/quadrature/quadrature.hh>
 #include <dune/fem/space/shapefunctionset/orthonormal/orthonormalbase_1d.hh>
 #include <dune/fem/space/shapefunctionset/orthonormal/orthonormalbase_2d.hh>
 #include <dune/fem/space/shapefunctionset/orthonormal/orthonormalbase_3d.hh>

@@ -13,6 +13,7 @@
 #include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
 
+#include <dune/fem/quadrature/quadrature.hh>
 
 namespace Dune
 {
