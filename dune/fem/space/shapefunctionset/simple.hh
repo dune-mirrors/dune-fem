@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <vector>
 
-#include <dune/fem/quadrature/quadrature.hh>
+#include <dune/fem/common/coordinate.hh>
 
 namespace Dune
 {

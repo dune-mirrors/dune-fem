@@ -3,6 +3,7 @@
 
 #include <dune/common/exceptions.hh>
 
+#include <dune/fem/common/coordinate.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 
 namespace Dune

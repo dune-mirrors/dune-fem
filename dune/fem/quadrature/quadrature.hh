@@ -8,6 +8,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/grid.hh>
 
+#include <dune/fem/common/coordinate.hh>
 #include <dune/fem/storage/array.hh>
 
 // quadrature storage classes 
@@ -74,35 +75,6 @@ namespace Dune
 
 
 
-  template< class Point >
-  struct QuadraturePointWrapperHelper
-  {
-    typedef Point PointType;
-    typedef Point DomainType;
-
-    inline static const DomainType &point ( const PointType &x )
-    {
-      return x;
-    }
-  };
-
-
-
-  template< class Quadrature >
-  struct QuadraturePointWrapperHelper< QuadraturePointWrapper< Quadrature > >
-  {
-    typedef Quadrature QuadratureType;
-    typedef QuadraturePointWrapper< QuadratureType > PointType;
-    typedef typename QuadratureType :: CoordinateType DomainType;
-
-    inline static const DomainType &point ( const PointType &x )
-    {
-      return x.quadrature().point( x.point() );
-    }
-  };
-
-
-
   /** \brief   extract the real coordinate from a point
    *  \relates Dune::Fem::QuadraturePointWrapper
    *
@@ -115,11 +87,11 @@ namespace Dune
    *  
    *  \returns a reference to the actual point
    */
-  template< class Point >
-  inline const typename QuadraturePointWrapperHelper< Point > :: DomainType &
-    coordinate ( const Point &x )
+  template< class Quadrature >
+  static inline typename Quadrature::CoordinateType
+  coordinate ( const QuadraturePointWrapper< Quadrature > &x )
   {
-    return QuadraturePointWrapperHelper< Point > :: point( x );
+    return x.quadrature().point( x.point() );
   }
 
 

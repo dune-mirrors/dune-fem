@@ -5,8 +5,8 @@
 
 //- local includes 
 #include <dune/fem/version.hh>
+#include <dune/fem/common/coordinate.hh>
 #include <dune/fem/function/common/discretefunction.hh>
-#include <dune/fem/quadrature/quadrature.hh>
 
 // for compatibility 
 #include <dune/fem/function/common/localfunctionadapter.hh>
