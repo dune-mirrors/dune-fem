@@ -55,7 +55,7 @@ namespace Dune
        */
 
       /** \brief return basis function set */
-      static BasisFunctionSetType basisFunctionSet ( const EntityType &entity )
+      BasisFunctionSetType basisFunctionSet () const
       {
         return BasisFunctionSetType( entity() );
       }
