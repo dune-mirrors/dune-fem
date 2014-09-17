@@ -1,3 +1,4 @@
+#--with-alugrid=$MODULEDIR/alugrid \
 MODULEDIR=/hosts/raid5/aragorn/dune/modules/$HOSTTYPE
 CONFIGURE_FLAGS="\
 --disable-documentation \
@@ -5,7 +6,6 @@ CONFIGURE_FLAGS="\
 --enable-parallel \
 --without-gmp \
 --prefix=/hosts/gandalf/raid5/morgoth/dune/src/dune \
---with-alugrid=$MODULEDIR/alugrid \
 --x-includes=/usr/X11R6/include \
 --x-libraries=/usr/X11R6/lib \
 --enable-fieldvector-size-is-method \
