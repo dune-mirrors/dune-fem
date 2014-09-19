@@ -7,7 +7,6 @@
 #include <dune/grid/io/file/vtk/subsamplingvtkwriter.hh>
 
 #include <dune/fem/version.hh>
-#include <dune/fem/misc/field.hh>
 #include <dune/fem/gridpart/common/gridpartview.hh>
 #include <dune/fem/io/parameter.hh>
 
@@ -84,9 +83,9 @@ namespace Dune
         RangeType val;
         lf.evaluate(xi,val);
         if (vector_)
-          return (comp > dimDomain ? 0.0 : Dune::field_cast< double >( val[ comp + component_ ] ));
+          return (comp > dimDomain ? 0.0 : static_cast< double >( val[ comp + component_ ] ));
         else 
-          return Dune::field_cast< double >( val[component_] );
+          return static_cast< double >( val[ component_ ] );
       }
 
       //! get name
