@@ -74,7 +74,7 @@ namespace Dune
       void evaluateEach ( const Point &x, Functor f ) const
       {
         localBasis_.evaluateFunction( coordinate( x ), values_ );
-        assert( jacobians_.size() == size() );
+        assert( values_.size() == size() );
         callFunctor( values_, f );
       }
 
