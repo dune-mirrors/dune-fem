@@ -333,7 +333,7 @@ namespace Dune
     };
 
     template <class MatrixImp,class Space>
-    class ISTLParallelMatrixAdapter;
+    struct ISTLParallelMatrixAdapter;
 
     template< class MatrixImp,
               class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
