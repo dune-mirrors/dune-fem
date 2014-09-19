@@ -540,7 +540,7 @@ namespace Dune
     }
 
   private:
-    template< class, class, class, int > friend class InstantiateTuple;
+    template< class, class, class, int > friend struct InstantiateTuple;
 
     static Tuple append ( const Key &key, Seed &seed )
     {
@@ -560,7 +560,7 @@ namespace Dune
     static Tuple apply ( const Key &key = Key() ) { return Tuple(); }
 
   private:
-    template< class, class, class, int > friend class InstantiateTuple;
+    template< class, class, class, int > friend struct InstantiateTuple;
 
     static Seed append ( const Key &key, Seed &seed ) { return seed; }
   };

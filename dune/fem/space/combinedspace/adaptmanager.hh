@@ -140,11 +140,12 @@ namespace Dune
 
 
     template< class SP1, class SP2 >
-    struct DefaultLocalRestrictProlong< CombinedDiscreteFunctionSpace< SP1, SP2 > >
+    class DefaultLocalRestrictProlong< CombinedDiscreteFunctionSpace< SP1, SP2 > >
     : public CombinedLocalRestrictProlong< SP1, SP2 >
     {
       typedef DefaultLocalRestrictProlong< CombinedDiscreteFunctionSpace< SP1, SP2 > > ThisType;
       typedef CombinedLocalRestrictProlong< SP1, SP2 > BaseType;
+    public:
 
       DefaultLocalRestrictProlong ( const CombinedDiscreteFunctionSpace< SP1, SP2 > & space )
       : BaseType( space )

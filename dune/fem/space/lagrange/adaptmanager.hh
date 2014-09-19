@@ -18,9 +18,10 @@ namespace Dune
     // ---------------------------
 
     template< class FunctionSpaceType, class GridPartType, int order, template< class > class StorageType >
-    struct DefaultLocalRestrictProlong< LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, order, StorageType > >
+    class DefaultLocalRestrictProlong< LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, order, StorageType > >
     : public LagrangeLocalRestrictProlong< typename GridPartType::GridType, order >
     {
+    public:
       DefaultLocalRestrictProlong ( const LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, order, StorageType > & )
       { }
     };

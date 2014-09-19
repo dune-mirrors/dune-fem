@@ -25,7 +25,7 @@ namespace Dune
     // -----------------------------
 
     template< class DiscreteModel, class LocalOperator, class PreviousPass, int id >
-    struct ApplyLocalOperatorPass;
+    class ApplyLocalOperatorPass;
     template< class DiscreteModel, class Argument, class PassIds, class Selector >
     class ApplyLocalOperatorDiscreteModelCaller;
 

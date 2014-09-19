@@ -101,9 +101,10 @@ namespace Dune
     // -------------------------------------------------
 
     template< class FunctionSpace, class GridPart, int codim, template< class > class Storage >
-    struct DefaultLocalRestrictProlong< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
+    class DefaultLocalRestrictProlong< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
     : public ConstantLocalRestrictProlong< FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > >
     {
+    public:
       DefaultLocalRestrictProlong ( const FiniteVolumeSpace< FunctionSpace, GridPart, codim, Storage > & )
       {}
     };

@@ -22,9 +22,10 @@ namespace Dune
     // ---------------------------
 
     template< class FS, class GP, int ord, template< class > class S >
-    struct DefaultLocalRestrictProlong< Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > >
+    class DefaultLocalRestrictProlong< Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > >
     : public PLagrangeLocalRestrictProlong< typename GP::GridType, Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > >
     {
+    public:
       DefaultLocalRestrictProlong ( const Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > &space )
       : PLagrangeLocalRestrictProlong< typename GP::GridType, Fem::PAdaptiveLagrangeSpace< FS, GP, ord, S > >( space )
       {}
@@ -32,9 +33,10 @@ namespace Dune
 
 
     template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
-    struct DefaultLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
+    class DefaultLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
     : public DiscontinuousGalerkinLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false > // invert mass matrix or not 
     {
+    public:
       typedef DiscontinuousGalerkinLocalRestrictProlong< Fem::PAdaptiveDGSpace<
                                                          FunctionSpaceImp, 
                                                          GridPartImp, 
@@ -45,9 +47,10 @@ namespace Dune
     };
 
     template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
-    struct DefaultLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+    class DefaultLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     : public ConstantLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     {
+    public:
       DefaultLocalRestrictProlong ( const Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > & )
       {}
     };

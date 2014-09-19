@@ -27,11 +27,12 @@ namespace Dune
   template < class DiscreteFunctionSpaceImp, 
              int N, 
              DofStoragePolicy policy> 
-  struct DefaultLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > 
+  class DefaultLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > 
   : public DiscontinuousGalerkinLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy>, false >
   {
 		typedef DiscontinuousGalerkinLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy>, false >
 			BaseType;
+  public:
 
     DefaultLocalRestrictProlong( const CombinedSpace<DiscreteFunctionSpaceImp,N,policy> & space)
 			: BaseType( space )
@@ -45,9 +46,10 @@ namespace Dune
     template < class DiscreteFunctionSpaceImp, 
                int N, 
                DofStoragePolicy policy> 
-    struct DefaultLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > 
+    class DefaultLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> > 
     : public EmptyLocalRestrictProlong< CombinedSpace<DiscreteFunctionSpaceImp,N,policy> >
     {
+    public:
       DefaultLocalRestrictProlong( const CombinedSpace<DiscreteFunctionSpaceImp,N,policy> & )
       {}
     };
