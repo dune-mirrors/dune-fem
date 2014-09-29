@@ -8,7 +8,6 @@ CONFIGURE_FLAGS="\
 --enable-parallel \
 --with-petsc=$MODULEDIR/petsc \
 --prefix=/hosts/gandalf/raid5/morgoth/dune/src/dune \
---with-alugrid=$MODULEDIR/alugrid \
 --with-alberta=$MODULEDIR/alberta \
 --x-includes=/usr/X11R6/include \
 --x-libraries=/usr/X11R6/lib \
