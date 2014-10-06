@@ -4,11 +4,13 @@ set(SUBDIRS )
 
 set(EXTRA_DIST )
 set(CLEANFILES )
+
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
-foreach(i ${SUBDIRS})
-  if(${i} STREQUAL "test")
-    set(opt EXCLUDE_FROM_ALL)
-  endif(${i} STREQUAL "test")
-  add_subdirectory(${i} ${opt})
-endforeach(i ${SUBDIRS})
+foreach(i ${TESTS})
+  add_test(${i} ${i})
+endforeach(i ${TESTS})
+# We do not want want to build the tests during make all
+# but just build them on demand
+add_directory_test_target(_test_target)
+#add_dependencies(${_test_target} ${TESTS} ${COMPILE_XFAIL_TESTS})
