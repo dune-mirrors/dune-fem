@@ -1,18 +1,23 @@
 # IGNORE_HEADERS
 # set default grid type for make all
-set(GRIDTYPE YASPGRID)
-#GRIDTYPE=ALUGRID_CONFORM
-set(GRIDDIM 2)
-#GRIDDIM=3
+set( GRIDTYPE YASPGRID )
+#set( GRIDTYPE ALUGRID_CONFORM )
+set(GRIDDIM 2 )
+#set( GRIDDIM 3 )
 set(EXTRA_DIST  2dgrid.dgf
              3dgrid.dgf
-                                                 adaptation-4.sh
+             adaptation-4.sh
              dfspace.hh
              exactsolution.hh
              weightfunction.hh
              testgrid.hh)
+
+add_definitions( "-D${GRIDTYPE}" )
+add_definitions( "-DGRIDDIM=${GRIDDIM}" ) 
+           
 # linker flags
 set(LDADD  ${ALL_PKG_LDFLAGS} ${ALL_PKG_LIBS} ${DUNEMPILIBS} ${LOCAL_LIBS})
+
 # preprocessor flags
 set(AM_CPPFLAGS  ${ALL_PKG_CPPFLAGS} ${DUNEMPICPPFLAGS})
 set(TESTPROGS  lagrangeinterpolation_linear lagrangeinterpolation_quadratic
@@ -24,8 +29,10 @@ set(TESTPROGS  lagrangeinterpolation_linear lagrangeinterpolation_quadratic
             dgl2projection_idgridpart
             vtxprojection_adaptive
             intersectionindexset)
+
 set(TESTS  ${TESTPROGS} adaptation-4.sh)
 set(check_PROGRAMS  ${TESTPROGS} adaptation)
+
 add_executable(lagrangeinterpolation_linear lagrangeinterpolation.cc)
 dune_target_link_libraries(lagrangeinterpolation_linear ${DUNE_LIBS})
 add_executable(lagrangeinterpolation_quadratic lagrangeinterpolation.cc)
@@ -57,6 +64,7 @@ add_executable(intersectionindexset intersectionindexset.cc)
 dune_target_link_libraries(intersectionindexset ${DUNE_LIBS})
 add_executable(adaptation adaptation.cc)
 dune_target_link_libraries(adaptation ${DUNE_LIBS})
+
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
 foreach(i ${TESTS})

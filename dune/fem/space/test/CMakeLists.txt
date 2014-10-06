@@ -49,6 +49,8 @@ add_executable(dgcomm_cached dgcomm.cc)
 dune_target_link_libraries(dgcomm ${DUNE_LIBS})
 dune_target_link_libraries(dgcomm_cached ${DUNE_LIBS})
 
+add_dune_alugrid_flags(lagrangeadapt)
+
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
 foreach(i ${TESTS})

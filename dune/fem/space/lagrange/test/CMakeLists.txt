@@ -23,8 +23,7 @@ add_executable(tester main.cc)
 add_executable(generic generic.cc)
 add_executable(testnonscalarmapper testnonscalarmapper.cc)
 set(testdir ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/space/lagrange/test)
-set(test_HEADERS  basisfunctiontest.hh  mappertest.hh basisfunctiontest.cc
-mappertest.cc)
+set(test_HEADERS  basisfunctiontest.hh  mappertest.hh basisfunctiontest.cc mappertest.cc)
 set(EXTRA_DIST  2dgrid.dgf cube.dgf onesimplex.dgf)
 
 # include not needed for CMake
