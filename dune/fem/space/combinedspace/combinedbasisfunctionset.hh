@@ -73,6 +73,7 @@ namespace Dune
 
 
       typedef typename BasisFunctionSetType1 :: EntityType EntityType;
+      typedef typename EntityType :: EntityPointer EntityPointerType;
       typedef typename BasisFunctionSetType1 :: ReferenceElementType ReferenceElementType;
 
 
@@ -142,7 +143,7 @@ namespace Dune
       //! \copydoc BasisFunctionSet::entity
       const EntityType &entity () const
       {
-        assert( basisSet1().entity() == basisSet2().entity() );
+        assert( EntityPointerType( basisSet1().entity() ) == EntityPointerType( basisSet2().entity() ) );
         return basisSet1().entity();
       }
 
