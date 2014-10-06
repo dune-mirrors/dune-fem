@@ -440,15 +440,13 @@ namespace Dune
                                    iTupel& origin, iTupel& originInterior, 
                                    iTupel& lengthInterior )
         {
-#if HAVE_MPI
           // Yasp only can do origin = 0
           origin = 0;
 
           enum { tag = Grid::tag };
           YLoadBalance< dim > loadBalancer;
-          Torus< dim > torus( MPI_COMM_WORLD, tag, anz, &loadBalancer );
+          Torus< typename Grid::CollectiveCommunication, dim > torus( grid.comm(), tag, anz, &loadBalancer );
           torus.partition( torus.rank(), origin, anz, originInterior, lengthInterior );
-#endif
         }
       };
 
