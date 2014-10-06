@@ -5,6 +5,7 @@ set(DIMRANGE  5)
 set(USE_VERTICAL_DOF_ALIGNMENT  1)
 set(LDADD  ${ALL_PKG_LDFLAGS} ${ALL_PKG_LIBS} ${LOCAL_LIBS} ${MPI_LDFLAGS})
 set(AM_CPPFLAGS  ${ALL_PKG_CPPFLAGS})
+set(TESTS  test-vectorialbasisfunctionset)
 set(check_PROGRAMS  test-vectorialbasisfunctionset)
 add_executable(test_vectorialbasisfunctionset test-vectorialbasisfunctionset.cc)
 add_dune_mpi_flags(test_vectorialbasisfunctionset )
@@ -12,4 +13,11 @@ set(DGFFILES  1dgrid.dgf 2dgrid.dgf 3dgrid.dgf)
 set(EXTRA_DIST  ${DGFFILES})
 set(CLEANFILES  dgfparser.log)
 # include not needed for CMake
-# include $(top_srcdir)/am/global-rules
+# include $(top_srcdir)/am/global-rulesset(TESTS  parametertest)
+foreach(i ${TESTS})
+  add_test(${i} ${i})
+endforeach(i ${TESTS})
+# We do not want want to build the tests during make all
+# but just build them on demand
+add_directory_test_target(_test_target)
+add_dependencies(${_test_target} ${TESTS} ${COMPILE_XFAIL_TESTS})

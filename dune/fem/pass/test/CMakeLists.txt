@@ -6,6 +6,7 @@ set(LDADD  ${ALL_PKG_LDFLAGS} ${ALL_PKG_LIBS} ${LOCAL_LIBS} ${MPI_LDFLAGS})
 set(AM_CPPFLAGS  ${ALL_PKG_CPPFLAGS})
 set(SUBDIRS )
 # test programs
+set(TESTS  test-pass)
 set(check_PROGRAMS  test-pass)
 add_executable(test_pass test-pass.cc)
 add_dune_mpi_flags(test_pass )
@@ -14,9 +15,10 @@ set(EXTRA_DIST  ${DGFFILES} parameter)
 set(CLEANFILES )
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
-foreach(i ${SUBDIRS})
-  if(${i} STREQUAL "test")
-    set(opt EXCLUDE_FROM_ALL)
-  endif(${i} STREQUAL "test")
-  add_subdirectory(${i} ${opt})
-endforeach(i ${SUBDIRS})
+foreach(i ${TESTS})
+  add_test(${i} ${i})
+endforeach(i ${TESTS})
+# We do not want want to build the tests during make all
+# but just build them on demand
+add_directory_test_target(_test_target)
+add_dependencies(${_test_target} ${TESTS} ${COMPILE_XFAIL_TESTS})
