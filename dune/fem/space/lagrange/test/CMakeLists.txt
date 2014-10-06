@@ -8,8 +8,17 @@ set(POLORDER  2)
 set(GEOMETRYTYPE  simplex)
 set(SCALAR  0)
 
-set(TESTS  tester generic testnonscalarmapper)
+add_definitions( "-D${GRIDTYPE}" )
+add_definitions( "-DGRIDDIM=${GRIDDIM}" ) 
+add_definitions( "-DDIMENSION=${DIMENSION}" )
+add_definitions( "-DPOLORDER=${POLORDER}" )
+add_definitions( "-DGEOMETRYTYPE=${GEOMETRYTYPE}" )
+add_definitions( "-DSCALAR=${SCALAR}" )
+
+set(TESTS  tester generic )
+#testnonscalarmapper)
 set(check_PROGRAMS  tester generic testnonscalarmapper)
+
 add_executable(tester main.cc)
 add_executable(generic generic.cc)
 add_executable(testnonscalarmapper testnonscalarmapper.cc)
