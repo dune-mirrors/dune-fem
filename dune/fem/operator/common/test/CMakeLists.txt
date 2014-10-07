@@ -3,6 +3,7 @@ set(AM_CPPFLAGS  ${ALL_PKG_CPPFLAGS} -DPOLORDER=${POLORDER})
 set(TESTS  mappings)
 set(check_PROGRAMS  mappings)
 add_executable(mappings mappingtest.cc)
+dune_target_link_libraries(mappings ${DUNE_LIBS})
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
 foreach(i ${TESTS})

@@ -14,7 +14,9 @@ set(check_PROGRAMS  persistencemanagertest dataoutputtest)
 set(TESTS  persistencemanagertest dataoutputtest)
 
 add_executable(persistencemanagertest persistencemanagertest.cc)
+dune_target_link_libraries(persistencemanagertest ${DUNE_LIBS})
 add_executable(dataoutputtest dataoutputtest.cc)
+dune_target_link_libraries(dataoutputtest ${DUNE_LIBS})
 
 set(AM_CPPFLAGS  ${ALL_PKG_CPPFLAGS} -DPOLORDER=${POLORDER} -DWANT_GRAPE=${WANT_GRAPE})
 set(CXXFLAGS  -g)
