@@ -50,7 +50,7 @@ namespace Dune
       //! number of supported codimensions 
       static const int numCodimensions = TraitsImp :: numCodimensions ;
 
-      //! number of supported codimensions 
+      //! intersection codimension (numCodim-1 if enabled, otherwise -1)
       static const int intersectionCodimension = TraitsImp :: intersectionCodimension ;
 
       //! true if only one geometry type is available 
@@ -113,7 +113,7 @@ namespace Dune
           
           CodimIndexSetType &codimSet = indexSet.codimLeafSet( codim );
 
-          const int count = element.template count< codim >();
+          const int count = element.subEntities( codim );
           for( int i = 0; i < count; ++i )
           {
             codimSet.insertSubEntity( element, i );
@@ -138,7 +138,7 @@ namespace Dune
 
           CodimIndexSetType &codimSet = indexSet.codimLeafSet( codim );
 
-          for( int i = 0; i < entity.template count< codim >(); ++i )
+          for( unsigned int i = 0; i < entity.subEntities( codim ); ++i )
           {
             EntityPointerType ptr = entity.template subEntity< codim >( i );
             const EntityType &subentity = *ptr;
@@ -368,7 +368,7 @@ namespace Dune
       IndexType size ( int codim ) const
       {
         assert( codim < numCodimensions );
-        if( codim == intersectionCodimension ) 
+        if( intersectionCodimension > 0 && codim == intersectionCodimension )
         {
           return codimLeafSet( codim ).size();
         }
@@ -1004,7 +1004,8 @@ namespace Dune
       for( Iterator it = gridPart_.template begin< 0, pitype >(); it != end; ++it )
       {
         const ElementType& element = *it ;
-        for (int i = 0; i < element.template count<codim>(); ++i )
+        const int subEntities = element.subEntities( codim );
+        for (int i = 0; i < subEntities; ++i )
         {
           if (! codimLeafSet( codim ).exists( element, i) )
             codimLeafSet( codim ).insertSubEntity( element, i );
@@ -1086,7 +1087,7 @@ namespace Dune
       for( Iterator it = gridPart_.template begin< 0, pitype >(); it != end; ++it )
       {
         const ElementType& element = *it ;
-        const int subEntities = element.template count<codim>();
+        const int subEntities = element.subEntities( codim );
         for (int i=0; i < subEntities; ++i)
         {
           if (! codimLeafSet( codim ).exists( element, i) )

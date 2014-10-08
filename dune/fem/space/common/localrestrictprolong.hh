@@ -46,8 +46,8 @@ namespace Dune
       }
 
       //! restrict data to father 
-      template< class FT, class ST, class LocalGeometry >
-      void restrictLocal ( LocalFunction< FT > &lfFather, const LocalFunction< ST > &lfSon, 
+      template< class LFFather, class LFSon, class LocalGeometry >
+      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon, 
                            const LocalGeometry &geometryInFather, bool initialize ) const
       {
         const DomainFieldType weight = (weight_ < DomainFieldType( 0 ) ? calcWeight( lfFather.entity(), lfSon.entity() ) : weight_); 
@@ -70,8 +70,8 @@ namespace Dune
       }
 
       //! prolong data to children 
-      template< class FT, class ST, class LocalGeometry >
-      void prolongLocal ( const LocalFunction< FT > &lfFather, LocalFunction< ST > &lfSon,
+      template< class LFFather, class LFSon, class LocalGeometry >
+      void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,
                           const LocalGeometry &geometryInFather, bool initialize ) const
       {
         const int numDofs = lfFather.numDofs();
@@ -118,14 +118,14 @@ namespace Dune
       void setFatherChildWeight ( const DomainFieldType &weight ) {}
 
       //! restrict data to father 
-      template< class FT, class ST, class LocalGeometry >
-      void restrictLocal ( LocalFunction< FT > &lfFather, const LocalFunction< ST > &lfSon, 
+      template< class LFFather, class LFSon, class LocalGeometry >
+      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon, 
                            const LocalGeometry &geometryInFather, bool initialize ) const
       {}
 
       //! prolong data to children 
-      template< class FT, class ST, class LocalGeometry >
-      void prolongLocal ( const LocalFunction< FT > &lfFather, LocalFunction< ST > &lfSon,
+      template< class LFFather, class LFSon, class LocalGeometry >
+      void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,
                           const LocalGeometry &geometryInFather, bool initialize ) const
       {}
 

@@ -249,10 +249,10 @@ namespace Dune
         hostGridPart().communicate( handleWrapper, iftype, dir );
       }
 
-      template< class LCFTraits >
+      template< class LocalFunction >
       typename Codim< 0 >::EntityPointerType
       exchangeGeometry ( const typename Codim< 0 >::EntityType &entity,
-                         const LocalFunction< LCFTraits > &localCoordFunction ) const
+                         const LocalFunction &localCoordFunction ) const
       {
         return typename Codim< 0 >::EntityPointerType::Implementation( entity.impl(), localCoordFunction );
       }

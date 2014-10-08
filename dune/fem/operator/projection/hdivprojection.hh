@@ -21,7 +21,7 @@ namespace Dune
   // External Forward Declarations
   // -----------------------------
 
-  template< int dim >
+  template< int dim, class CoordCont >
   class YaspGrid;
 
 #ifdef ENABLE_UG 
@@ -523,8 +523,8 @@ namespace Dune
         }
       };
 
-      template <class FaceBSetType, int dim> 
-      struct GetSubBaseFunctionSet< FaceBSetType, YaspGrid< dim > >
+      template <class FaceBSetType, int dim, class CoordCont>
+      struct GetSubBaseFunctionSet< FaceBSetType, YaspGrid< dim, CoordCont > >
       {
         template <class EntityType, class SpaceType> 
         static inline FaceBSetType faceBaseSet(const EntityType& en, const SpaceType& space) 
@@ -822,7 +822,6 @@ namespace Dune
       {
         typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
         typedef typename IntersectionIteratorType::Intersection IntersectionType;
-        typedef typename GridType :: template Codim<0> :: Entity EntityType;
         typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
 
         typedef typename FaceDiscreteSpaceType :: BaseFunctionSetType FaceBSetType  ; 

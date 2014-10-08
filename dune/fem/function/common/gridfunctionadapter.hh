@@ -1,10 +1,12 @@
 #ifndef DUNE_FEM_GRIDFUNCTIONADAPTER_HH
 #define DUNE_FEM_GRIDFUNCTIONADAPTER_HH
 
+#include <dune/common/exceptions.hh>
+
 //- local includes 
 #include <dune/fem/version.hh>
+#include <dune/fem/common/coordinate.hh>
 #include <dune/fem/function/common/discretefunction.hh>
-#include <dune/fem/quadrature/quadrature.hh>
 
 // for compatibility 
 #include <dune/fem/function/common/localfunctionadapter.hh>
@@ -113,12 +115,10 @@ namespace Dune
 
     private:
       class LocalFunction;
-      class LocalFunctionStorage;
 
-      public:
+    public:
       //! type of local function to export 
       typedef LocalFunction LocalFunctionType; 
-      typedef LocalFunctionStorage LocalFunctionStorageType;
 
       // reference to function this local belongs to
       GridFunctionAdapter ( const std::string &name,
@@ -126,7 +126,6 @@ namespace Dune
                             const GridPartType &gridPart,
                             unsigned int order = DiscreteFunctionSpaceType::polynomialOrder )
       : space_( gridPart, order ),
-        localFunctionStorage_( *this ),
         function_( f ),
         name_( name )
       {}
@@ -134,7 +133,6 @@ namespace Dune
       // reference to function this local belongs to
       GridFunctionAdapter ( const ThisType &other ) 
       : space_( other.space_ ),
-        localFunctionStorage_( *this ),
         function_( other.function_ ),
         name_( other.name_ )
       {}
@@ -151,21 +149,16 @@ namespace Dune
         function_.jacobian(global,result);  
       }
 
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */ 
+      LocalFunctionType localFunction ( const EntityType &entity ) 
+      {
+        return LocalFunctionType( entity, *this );
+      }
+
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */ 
       const LocalFunctionType localFunction ( const EntityType &entity ) const 
       {
-        return localFunctionStorage().localFunction( entity );
-      }
-
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */ 
-      LocalFunctionType localFunction ( const EntityType &entity )
-      {
-        return localFunctionStorage().localFunction( entity );
-      }
-
-      LocalFunctionStorageType &localFunctionStorage () const
-      {
-        return localFunctionStorage_;
+        return LocalFunctionType( entity, *this );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::name() const */
@@ -184,7 +177,6 @@ namespace Dune
 
     protected:    
       DiscreteFunctionSpaceType space_;
-      mutable LocalFunctionStorageType localFunctionStorage_;
       const FunctionType& function_; 
       const std::string name_;
     };
@@ -201,22 +193,33 @@ namespace Dune
       typedef GridFunctionAdapter< Function, GridPart > DiscreteFunctionType;
 
     public:
-      typedef typename Traits::EntityType EntityType; 
+      //! function space type
+      typedef typename Traits::FunctionSpaceType FunctionSpaceType;
 
-      static const int dimRange = DiscreteFunctionSpaceType::dimRange;
+      //! domain field type (from function space)
+      typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+      //! range field type (from function space)
+      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+      //! domain dimension (from function space)
       static const int dimDomain = GridPart::GridType::dimensionworld;
-      static const int dimLocal = GridPart::GridType::dimension;
+      //! range dimension (from function space)
+      static const int dimRange = FunctionSpaceType::dimRange;
 
       //! domain type (from function space)
-      typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType ;
+      typedef typename FunctionSpaceType::DomainType DomainType;
       //! range type (from function space)
-      typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType ;
-      //! domain type (from function space)
-      typedef typename DiscreteFunctionSpaceType::DomainType DomainType ;
-      //! range type (from function space)
-      typedef typename DiscreteFunctionSpaceType::RangeType RangeType ;
+      typedef typename FunctionSpaceType::RangeType RangeType;
       //! jacobian type (from function space)
-      typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      //! hessian type (from function space)
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+
+      //! entity type
+      typedef typename Traits::EntityType EntityType; 
+      //! local coordinate type
+      typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
+      //! local dimension
+      static const int dimLocal = LocalCoordinateType::dimension;
 
       //! constructor initializing local function 
       LocalFunction ( const EntityType &entity, const DiscreteFunctionType &df )
@@ -229,12 +232,6 @@ namespace Dune
       : function_( &df.function_ ),
         entity_( 0 ),
         order_( df.space().order() )
-      {}
-
-      LocalFunction ( LocalFunctionStorage &storage )
-      : function_( &storage.function().function_ ),
-        entity_( 0 ),
-        order_( storage.function().space().order() )
       {}
 
       //! evaluate local function 
@@ -260,6 +257,12 @@ namespace Dune
 
         if( dimLocal != dimDomain )
         {
+	  // This computes the projection to the tangential space
+	  // (i.e. the hyperplane this entity is contained in). This
+	  // is done in a generic way by first projecting to the local
+	  // tangential space of the reference elment, and then
+	  // projecting back to the ambient space.
+
           const typename GeometryType::JacobianTransposed gjt = geometry.jacobianTransposed( cx );
           const typename GeometryType::JacobianInverseTransposed gjit = geometry.jacobianInverseTransposed( cx );
 
@@ -270,6 +273,13 @@ namespace Dune
             gjt.mtv( tmp, ret[ i ] );
           }
         }
+      }
+
+      //! hessian of local function 
+      template< class PointType >
+      void hessian ( const PointType &x, HessianRangeType &ret ) const
+      {
+        DUNE_THROW( NotImplemented, "Method hessian() not implemented yet" );
       }
 
       //! evaluate function or jacobian of function for given quadrature 
@@ -323,53 +333,6 @@ namespace Dune
       const FunctionType *function_;
       const EntityType *entity_;
       int order_;
-    };
-
-
-
-    // GridFunctionAdapter::LocalFunctionStorage
-    // ---------------------------------------------
-
-    template< class Function, class GridPart >
-    class GridFunctionAdapter< Function, GridPart >::LocalFunctionStorage
-    {
-      typedef LocalFunctionStorage ThisType;
-      typedef GridFunctionAdapter< Function, GridPart > DiscreteFunctionType;
-
-    public:
-      typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
-
-      explicit LocalFunctionStorage ( DiscreteFunctionType &discreteFunction )
-      : discreteFunction_( discreteFunction )
-      {}
-
-      LocalFunctionType localFunction ()
-      {
-        return LocalFunctionType( discreteFunction_ );
-      }
-
-      template< class Entity >
-      const LocalFunctionType localFunction ( const Entity &entity ) const
-      {
-        return LocalFunctionType( entity, discreteFunction_ );
-      }
-
-      template< class Entity >
-      LocalFunctionType localFunction ( const Entity &entity )
-      {
-        return LocalFunctionType( entity, discreteFunction_ );
-      }
-
-      DiscreteFunctionType &function ()
-      {
-        return discreteFunction_;
-      }
-
-    private:
-      LocalFunctionStorage ( const ThisType & );
-      ThisType operator= ( const ThisType & );
-
-      DiscreteFunctionType &discreteFunction_;
     };
 
 

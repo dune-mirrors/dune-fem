@@ -43,16 +43,14 @@ namespace Dune
       template< class DomainField >
       void setFatherChildWeight ( const DomainField &weight ) {}
 
-      template< class FT, class ST, class LocalGeometry >
-      void restrictLocal ( LocalFunction< FT > &fatherFunction,
-                           const LocalFunction< ST > &sonFunction,
-                          const LocalGeometry &geometryInFather,
-                           const bool initialize ) const
+      template< class LFFather, class LFSon, class LocalGeometry >
+      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon,
+                           const LocalGeometry &geometryInFather, bool initialize ) const
       {
-        static const int dimRange = LocalFunction< ST >::dimRange;
+        static const int dimRange = LFSon::dimRange;
 
-        const Entity &father = fatherFunction.entity();
-        const Entity &son = sonFunction.entity();
+        const Entity &father = lfFather.entity();
+        const Entity &son = lfSon.entity();
 
         const Dune::ReferenceElement< ctype, dimension > &refSon
           = Dune::ReferenceElements< ctype, dimension >::general( son.type() );
@@ -67,23 +65,22 @@ namespace Dune
           const DomainVector pointInSon = geometryInFather.local( pointInFather );
           if( refSon.checkInside( pointInSon ) )
           {
-            typename LocalFunction< ST >::RangeType phi;
-            sonFunction.evaluate( pointInSon, phi );
+            typename LFSon::RangeType phi;
+            lfSon.evaluate( pointInSon, phi );
             for( int coordinate = 0; coordinate < dimRange; ++coordinate )
-              fatherFunction[ dimRange * dof + coordinate ] = phi[ coordinate ];
+              lfFather[ dimRange * dof + coordinate ] = phi[ coordinate ];
           }
         }
       }
 
-      template< class FT, class ST, class LocalGeometry >
-      void prolongLocal ( const LocalFunction< FT > &fatherFunction,
-                          LocalFunction< ST > &sonFunction,
-                          const LocalGeometry &geometryInFather,
-                          bool initialize ) const
-      {
-        static const int dimRange = LocalFunction< FT >::dimRange;
 
-        const Entity &son = sonFunction.entity();
+      template< class LFFather, class LFSon, class LocalGeometry >
+      void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,
+                          const LocalGeometry &geometryInFather, bool initialize ) const
+      {
+        static const int dimRange = LFFather::dimRange;
+
+        const Entity &son = lfSon.entity();
 
         const LagrangePointSet &pointSet = lagrangePointSet( son );
 
@@ -94,23 +91,23 @@ namespace Dune
           const DomainVector &pointInSon = pointSet.point( dof );
           const DomainVector pointInFather = geometryInFather.global( pointInSon );
           
-          typename LocalFunction< FT >::RangeType phi;
-          fatherFunction.evaluate( pointInFather, phi );
+          typename LFFather::RangeType phi;
+          lfFather.evaluate( pointInFather, phi );
           for( int coordinate = 0; coordinate < dimRange; ++coordinate )
           {
             const int idx = dimRange * dof + coordinate  ;
-            sonFunction[ idx ] = phi[ coordinate ];
+            lfSon[ idx ] = phi[ coordinate ];
           }
         }
       }
 
-      template< class FT, class ST >
-      void localInterpolation ( const LocalFunction< FT > &oldFunction,
-                                LocalFunction< ST > &newFunction ) const
+      template< class ArgLocal, class DestLocal >
+      void localInterpolation ( const ArgLocal &argLocal,
+                                DestLocal &destLocal ) const
       {
-        static const int dimRange = LocalFunction< ST >::dimRange;
+        static const int dimRange = DestLocal::dimRange;
 
-        const Entity &entity = newFunction.entity();
+        const Entity &entity = destLocal.entity();
 
         const LagrangePointSet &pointSet = lagrangePointSet( entity );
 
@@ -120,12 +117,12 @@ namespace Dune
           const unsigned int dof = *sit;
           const DomainVector &localPoint = pointSet.point( dof );
           
-          typename LocalFunction< FT >::RangeType phi;
-          oldFunction.evaluate( localPoint, phi );
+          typename ArgLocal::RangeType phi;
+          argLocal.evaluate( localPoint, phi );
           for( int coordinate = 0; coordinate < dimRange; ++coordinate )
           {
             const int idx = dimRange * dof + coordinate  ;
-            newFunction[ idx ] = phi[ coordinate ];
+            destLocal[ idx ] = phi[ coordinate ];
           }
         }
       }

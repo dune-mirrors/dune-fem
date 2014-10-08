@@ -77,8 +77,8 @@ namespace Dune
       static const bool v = false;
     };
 
-    template< int dim >
-    struct hasHierarchicIndexSet< YaspGrid< dim > >
+    template< int dim, class CoordCont >
+    struct hasHierarchicIndexSet< YaspGrid< dim, CoordCont > >
     {
       static const bool v = false;
     };

@@ -71,7 +71,7 @@ Dune::FieldVector< typename BasisFunctionSetType::RangeType::value_type, 3 >
       basisFunctionSet.evaluateAll( quadrature[ qp ], dofs, a );
       basisFunctionSet.evaluateAll( quadrature[ qp ], values );
 
-      for( int i =0; i< values.size(); ++i )
+      for( unsigned int i =0; i< values.size(); ++i )
         b.axpy( dofs[ i ], values[ i ] );
       a -= b;
 
@@ -89,7 +89,7 @@ Dune::FieldVector< typename BasisFunctionSetType::RangeType::value_type, 3 >
       basisFunctionSet.jacobianAll( quadrature[ qp ], dofs, a );
       basisFunctionSet.jacobianAll( quadrature[ qp ], values );
 
-      for( int i =0; i< values.size(); ++i )
+      for( unsigned int i =0; i< values.size(); ++i )
         b.axpy( dofs[ i ], values[ i ] );
       a -= b;
 
@@ -110,7 +110,7 @@ Dune::FieldVector< typename BasisFunctionSetType::RangeType::value_type, 3 >
 
       for( int r =0; r < dimRange; ++r )
       {
-        for( int i =0; i< values.size(); ++i )
+        for( unsigned int i =0; i< values.size(); ++i )
           b[ r ].axpy( dofs[ i ], values[ i ][ r ] );
       }
 

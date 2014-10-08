@@ -4,6 +4,8 @@
 #include <cassert>
 #include <cstddef>
 
+#include <dune/fem/common/coordinate.hh>
+
 namespace Dune
 {
 

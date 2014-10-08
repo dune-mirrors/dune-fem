@@ -1,21 +1,27 @@
 #ifndef DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_LEGENDRE_HH
 #define DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_LEGENDRE_HH
 
-// dune-common includes
+#include <cassert>
+
 #include <dune/common/power.hh>
 
-// dune-geometry includes
 #include <dune/geometry/type.hh>
 
-// dune-fem includes
+#include <dune/grid/common/gridenums.hh>
+
+#include <dune/fem/gridpart/common/capabilities.hh>
+#include <dune/fem/space/common/capabilities.hh>
+#include <dune/fem/space/common/commoperations.hh>
+#include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/shapefunctionset/legendre.hh>
-#include <dune/fem/space/shapefunctionset/proxy.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
 
-// local includes
-#include "default.hh"
-
+#include "basisfunctionsets.hh"
+#include "declaration.hh"
+#include "generic.hh"
+#include "interpolation.hh"
+#include "shapefunctionsets.hh"
 
 namespace Dune
 {
@@ -33,36 +39,43 @@ namespace Dune
 
       typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;
-      
+
       static const int codimension = 0;
-      static const int polynomialOrder = polOrder;
 
-    private:
-      template <int p, int dim>
-      struct NumLegendreShapeFunctions
+      typedef Dune::Fem::FunctionSpace<
+          typename FunctionSpace::DomainFieldType, typename FunctionSpace::RangeFieldType,
+           GridPartType::dimension, 1
+        > ScalarShapeFunctionSpaceType;
+
+      struct ScalarShapeFunctionSet
+        : public Dune::Fem::LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType >
       {
-        static const int v = StaticPower< p+1, dim >::power;
-      };
+        typedef Dune::Fem::LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType > BaseType;
 
-      static const int dimLocal = GridPartType::dimension;
-
-    public:
-      static const int localBlockSize = FunctionSpaceType::dimRange * NumLegendreShapeFunctions< polOrder, dimLocal >::v;
-
-      typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
-      typedef LegendreShapeFunctionSet< typename ToNewDimDomainFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type > LegendreShapeFunctionSetType;
-      typedef SelectCachingShapeFunctionSet< LegendreShapeFunctionSetType, Storage > ScalarShapeFunctionSetType;
-
-      struct ScalarShapeFunctionSetFactory
-      {
-        static ScalarShapeFunctionSetType *createObject ( const GeometryType &type )
+      public:
+        explicit ScalarShapeFunctionSet ( Dune::GeometryType type )
+          : BaseType( polOrder )
         {
-          return new ScalarShapeFunctionSetType( type, LegendreShapeFunctionSetType( polOrder ) );
+          assert( type.isCube() );
         }
-
-        static void deleteObject ( ScalarShapeFunctionSetType *object ) { delete object; }
       };
-      typedef ScalarShapeFunctionSetFactory ScalarShapeFunctionSetFactoryType;
+
+      typedef SelectCachingShapeFunctionSets< GridPartType, ScalarShapeFunctionSet, Storage > ScalarShapeFunctionSetsType;
+      typedef VectorialShapeFunctionSets< ScalarShapeFunctionSetsType, typename FunctionSpaceType::RangeType > ShapeFunctionSetsType;
+
+      typedef DefaultBasisFunctionSets< GridPartType, ShapeFunctionSetsType > BasisFunctionSetsType;
+      typedef typename BasisFunctionSetsType::BasisFunctionSetType BasisFunctionSetType;
+
+      typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
+      static const int localBlockSize
+        = FunctionSpaceType::dimRange*StaticPower< polOrder+1, GridPartType::dimension >::power;
+
+      template <class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
+      struct CommDataHandle
+      {
+        typedef Operation OperationType;
+        typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
+      };
     };
 
 
@@ -72,26 +85,100 @@ namespace Dune
 
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
     class LegendreDiscontinuousGalerkinSpace
-    : public DiscontinuousGalerkinSpaceDefault< 
-        DiscontinuousGalerkinSpaceDefaultTraits< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
-      >
+    : public GenericDiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
     {
-      typedef LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
-      typedef DiscontinuousGalerkinSpaceDefault< 
-          DiscontinuousGalerkinSpaceDefaultTraits< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
-        > BaseType;
+      typedef GenericDiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
 
     public:
-      typedef typename BaseType::GridPartType GridPartType;
+      using BaseType::basisFunctionSet;
 
-      LegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
-                                           const InterfaceType commInterface = BaseType::defaultInterface,
-                                           const CommunicationDirection commDirection = BaseType::defaultDirection )
-      : BaseType( gridPart, commInterface, commDirection )
+      static const int polynomialOrder = polOrder;
+
+      typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::EntityType EntityType;
+
+      typedef typename BaseType::BasisFunctionSetsType BasisFunctionSetsType;
+      typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
+
+      typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
+
+      explicit LegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
+                                                    const InterfaceType commInterface = InteriorBorder_All_Interface,
+                                                    const CommunicationDirection commDirection = ForwardCommunication )
+        : BaseType( gridPart, basisFunctionSets( gridPart ), commInterface, commDirection )
       {}
 
-      DFSpaceIdentifier type () const { return LegendreDGSpace_id; }
+      static DFSpaceIdentifier type () { return LegendreDGSpace_id; }
+
+      InterpolationType interpolation ( const EntityType &entity ) const
+      {
+        return InterpolationType( basisFunctionSet( entity ) );
+      }
+
+    private:
+      static BasisFunctionSetsType basisFunctionSets ( const GridPartType &gridPart )
+      {
+        typedef typename BasisFunctionSetsType::ShapeFunctionSetsType ShapeFunctionSetsType;
+        ShapeFunctionSetsType shapeFunctionSets( gridPart );
+        return BasisFunctionSetsType( std::move( shapeFunctionSets ) );
+      }
     };
+
+
+
+    namespace Capabilities
+    {
+
+      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      struct hasFixedPolynomialOrder< LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
+      {
+        static const bool v = true;
+      };
+
+      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      struct hasStaticPolynomialOrder< LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
+      {
+        static const bool v = true;
+        static const int order = polOrder;
+      };
+
+      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      struct isContinuous< LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
+      {
+        static const bool v = false;
+      };
+
+      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      struct isLocalized< LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
+      {
+        static const bool v = true;
+      };
+
+      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      struct isParallel< LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
+      {
+        static const bool v = Dune::Fem::GridPartCapabilities::isParallel< GridPart >::v;
+      };
+
+      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      struct isAdaptive< LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
+      {
+        static const bool v = true;
+      };
+
+      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      struct threadSafe< LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
+      {
+        static const bool v = false;
+      };
+
+      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      struct viewThreadSafe< LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
+      {
+        static const bool v = true;
+      };
+
+    } // namespace Capabilities
 
   } // namespace Fem
 

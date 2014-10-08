@@ -13,10 +13,10 @@
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
+#include <dune/fem/common/coordinate.hh>
 #include <dune/fem/space/basisfunctionset/functor.hh>
 #include <dune/fem/space/basisfunctionset/transformation.hh>
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/quadrature/quadrature.hh>
 #include <dune/fem/version.hh>
 
 
@@ -85,7 +85,7 @@ namespace Dune
       {}
 
       //! \brief constructor
-      DefaultBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
+      explicit DefaultBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
       : entity_( &entity ),
         shapeFunctionSet_( shapeFunctionSet )
       {}

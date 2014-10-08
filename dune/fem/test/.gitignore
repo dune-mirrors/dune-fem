@@ -18,7 +18,9 @@
 /lagrangeinterpolation_linear
 /lagrangeinterpolation_quadratic
 /vtxprojection_adaptive
-/petscl2projection
+/l2projection_adaptive
+/l2projection_istl
+/l2projection_petsc
 
 /*.dgf.*
 /*.tmp

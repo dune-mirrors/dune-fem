@@ -11,7 +11,7 @@
 #include <vector>
 
 // dune-common includes
-#include <dune/common/nullptr.hh>
+#include <dune/common/deprecated.hh>
 
 // dune-geometry types
 #include <dune/geometry/type.hh>
@@ -153,6 +153,8 @@ namespace Dune
       
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
+      typedef RannacherTurekLocalInterpolation< BasisFunctionSetType, typename Traits::LocalInterpolationType > InterpolationType;
+
     private:
       typedef typename Traits::ScalarShapeFunctionSetType ScalarShapeFunctionSetType;
       typedef SingletonList< GeometryType, ScalarShapeFunctionSetType, typename Traits::ScalarShapeFunctionSetFactoryType > ScalarShapeFunctionSetProviderType;
@@ -232,17 +234,27 @@ namespace Dune
         return *blockMapper_;
       }
 
+      /** \brief return local interpolation
+       *
+       *  \param[in]  entity  grid part entity
+       */
+      InterpolationType interpolation ( const EntityType &entity ) const
+      {
+        return InterpolationType( basisFunctionSet( entity ) );
+      }
+
       /** \brief interpolate a function locally
        *
-       *  \param[in]  f     local function to interpolate
+       *  \param[in]  localFunction  local function to interpolate
        *  \param[out] dofs  local degrees of freedom of the interpolion
        */
       template< class LocalFunction, class LocalDofVector >
-      static void interpolate ( const LocalFunction &f, LocalDofVector &dofs )
+      DUNE_DEPRECATED
+      void interpolate ( const LocalFunction &localFunction, LocalDofVector &dofs ) const
       {
-        typedef typename Traits::LocalInterpolationType LocalInterpolationType;
-        VectorialLocalInterpolation< LocalInterpolationType, typename FunctionSpaceType::RangeType > interpolation;
-        interpolation( f, dofs );
+        const EntityType &entity = localFunction.entity();
+        InterpolationType interpolation = this->interpolation( entity );
+        interpolation( localFunction, dofs );
       }
 
     private:

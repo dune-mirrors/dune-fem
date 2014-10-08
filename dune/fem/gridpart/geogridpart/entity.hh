@@ -152,12 +152,12 @@ namespace Dune
         hostEntity_( &hostEntity )
       {}
 
-      template< class LCFTraits >
-      GeoEntity ( const GeoEntity &other, const LocalFunction< LCFTraits > &localCoordFunction )
+      template< class LocalFunction >
+      GeoEntity ( const GeoEntity &other, const LocalFunction &localCoordFunction )
       : coordFunction_( other.coordFunction_ ),
         hostEntity_( other.hostEntity_ )
       {
-        GeoLocalCoordVector< mydimension, GridFamily, LCFTraits > coords( localCoordFunction );
+        GeoLocalCoordVector< mydimension, GridFamily, LocalFunction > coords( localCoordFunction );
         geo_ = GeometryImplType( type(), coords );
       }
 
@@ -190,7 +190,9 @@ namespace Dune
       {
         return hostEntity().template count< codim >();
       }
-      
+
+      unsigned int subEntities ( unsigned int codim ) const { return hostEntity().subEntities( codim ); }
+
       template< int codim >
       typename Traits::template Codim< codim >::EntityPointer
       subEntity ( int i ) const

@@ -343,10 +343,10 @@ namespace Dune
     // BoundaryIdProvider for YaspGrid
     // -------------------------------
 
-    template< int dim >
-    struct BoundaryIdProvider< YaspGrid< dim > >
+    template< int dim, class CoordCont >
+    struct BoundaryIdProvider< YaspGrid< dim, CoordCont > >
     {
-      typedef YaspGrid< dim > GridType;
+      typedef YaspGrid< dim, CoordCont > GridType;
 
       template< class Intersection >
       static int boundaryId ( const Intersection &intersection )

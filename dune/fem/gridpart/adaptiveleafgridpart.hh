@@ -19,7 +19,7 @@ namespace Dune
   namespace Fem
   {
 
-#if 0
+    /*- see dune/grid/common/gridenums.hh 
       enum InterfaceType { 
             InteriorBorder_InteriorBorder_Interface=0, //!< send/receive interior and border entities
             InteriorBorder_All_Interface=1,            //!< send interior and border, receive all entities
@@ -35,7 +35,8 @@ namespace Dune
             All_Partition=4,            //!< all entities
             Ghost_Partition=5           //!< only ghost entities
       };
-#endif
+    */  
+
     template <PartitionIteratorType ittype>
     struct IteratorToInterface
     {

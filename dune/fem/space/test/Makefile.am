@@ -14,19 +14,20 @@ GRIDDIM=3
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) $(MPI_LDFLAGS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DDIMRANGE=$(DIMRANGE) -DWANT_GRAPE=$(WANT_GRAPE)
 
-ADAPTPROG = lagrangeadapt adapt padapt functiontupleadapt
+ADAPTPROG = adapt lagrangeadapt padapt functiontupleadapt
 
 # programs run during make check 
 TESTS = $(ADAPTPROG) dgcomm-4.sh dgcomm-cached-4.sh
 
 check_PROGRAMS = $(ADAPTPROG) \
+		 adapt \
 		 arraytest \
 		 combinedspacetest \
 		 dgcomm \
 		 dgcomm_cached \
 		 interpolation \
-     l2projection \
-     lagrangeglobalrefine \
+		 l2projection \
+		 lagrangeglobalrefine \
 		 lagrangeinterpolation \
 		 legendretest
 

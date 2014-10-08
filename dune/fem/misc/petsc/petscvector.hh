@@ -343,7 +343,11 @@ namespace Dune
             PetscSynchronizedPrintf(PETSC_COMM_WORLD,"%D %G\n",i,PetscRealPart(array[i]));
           }
           VecRestoreArray( ghostedVec_, &array );
+#if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 5
           PetscSynchronizedFlush( PETSC_COMM_WORLD );
+#else
+          PetscSynchronizedFlush( PETSC_COMM_WORLD, PETSC_STDOUT );
+#endif
       }
 
       // assign from other given PetscVector

@@ -5,7 +5,6 @@ lagrangeadapt.maxlevel: 3
 # adaptation method:  none | generic | callback 
 fem.adaptation.method: generic
 
-
 # Parameters for lagrangeglobalrefine
 # -----------------------------------
 
@@ -16,4 +15,4 @@ lagrangeglobalrefine.maxlevel: 3
 adapt.locallyadaptive: false
 
 # EOC error threshold 
-adapt.eocthreshold: 0.15
+adapt.eocthreshold: 0.25

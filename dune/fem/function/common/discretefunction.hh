@@ -10,15 +10,16 @@
 // dune-fem includes 
 #include <dune/fem/function/common/dofiterator.hh>
 #include <dune/fem/function/common/function.hh>
+#include <dune/fem/function/common/functor.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
-#include <dune/fem/function/localfunction/wrapper.hh>
+#include <dune/fem/function/localfunction/functor.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/debug.hh>
+#include <dune/fem/misc/functor.hh>
 #include <dune/fem/misc/threadmanager.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
-#include <dune/fem/storage/objectstack.hh>
 #include <dune/fem/version.hh>
 
 
@@ -52,7 +53,11 @@ namespace Dune
     class HasLocalFunction
     {};
 
-    template <class Traits>
+
+    template< class DiscreteFunction >
+    struct DiscreteFunctionTraits;
+
+    template< class Traits >
     class DiscreteFunctionDefault;
     
     //----------------------------------------------------------------------
@@ -70,21 +75,18 @@ namespace Dune
 
         \interfaceclass
     */
-    template< class TraitsImp >
+    template< class Impl >
     class DiscreteFunctionInterface
-    : public Function< typename TraitsImp::DiscreteFunctionSpaceType::FunctionSpaceType,
-                       typename TraitsImp::DiscreteFunctionType >,
+    : public Function< typename DiscreteFunctionTraits< Impl >::DiscreteFunctionSpaceType::FunctionSpaceType, Impl >,
       public IsDiscreteFunction, 
       public HasLocalFunction
     {
-      typedef DiscreteFunctionInterface< TraitsImp > ThisType;
-      typedef Function< typename TraitsImp::DiscreteFunctionSpaceType::FunctionSpaceType,
-                        typename TraitsImp::DiscreteFunctionType >
-        BaseType;
+      typedef DiscreteFunctionInterface< Impl > ThisType;
+      typedef Function< typename DiscreteFunctionTraits< Impl >::DiscreteFunctionSpaceType::FunctionSpaceType, Impl > BaseType;
 
     public:
       //! type of the traits
-      typedef TraitsImp Traits;
+      typedef DiscreteFunctionTraits< Impl > Traits;
 
       //! type of the implementaton (Barton-Nackman)
       typedef typename Traits :: DiscreteFunctionType DiscreteFunctionType;
@@ -93,7 +95,7 @@ namespace Dune
       typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
        //! type of the discrete function interface (this type)
-      typedef DiscreteFunctionInterface< Traits > DiscreteFunctionInterfaceType;
+      typedef DiscreteFunctionInterface< Impl > DiscreteFunctionInterfaceType;
    
       //! type of domain field, i.e. type of coordinate component
       typedef typename DiscreteFunctionSpaceType :: DomainFieldType DomainFieldType;
@@ -112,11 +114,8 @@ namespace Dune
       //! Type of the underlying grid
       typedef typename DiscreteFunctionSpaceType :: GridType GridType;
 
-      // type of the local function storage
-      typedef typename Traits :: LocalFunctionStorageType LocalFunctionStorageType;
-
       //! type of local functions
-      typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
+      typedef typename Traits :: LocalFunctionType LocalFunctionType;
 
       //! Type of the dof iterator used in the discrete function implementation.
       typedef typename Traits :: DofIteratorType DofIteratorType;
@@ -124,13 +123,14 @@ namespace Dune
       //! Type of the constantdof iterator used in the discrete function implementation
       typedef typename Traits :: ConstDofIteratorType ConstDofIteratorType;
 
+      typedef typename Traits :: DofType DofType;
       typedef typename Traits :: DofBlockType DofBlockType;
       typedef typename Traits :: ConstDofBlockType ConstDofBlockType;
       typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
       typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
       //! type of mapping base class for this discrete function
-      typedef typename BaseType::MappingType MappingType;
+      typedef typename BaseType :: MappingType MappingType;
 
       template< class Operation >
       struct CommDataHandle
@@ -177,22 +177,22 @@ namespace Dune
         return asImp().gridPart();
       }
 
-      /** \brief obtain a local function for an entity (read-only)
-       *
-       *  \param[in]  entity  Entity to focus view of discrete function on
-       *  \returns a local function associated with the entity
-       */
-      inline const LocalFunctionType localFunction ( const EntityType &entity ) const
-      {
-        return asImp().localFunction( entity );
-      }
-      
       /** \brief obtain a local function for an entity (read-write)
        *
        *  \param[in]  entity  Entity to focus view of discrete function
        *  \returns a local function associated with the entity
        */
-      inline LocalFunctionType localFunction ( const EntityType &entity )
+      LocalFunctionType localFunction ( const EntityType &entity ) 
+      {
+        return asImp().localFunction( entity );
+      }
+
+      /** \brief obtain a local function for an entity (read-write)
+       *
+       *  \param[in]  entity  Entity to focus view of discrete function
+       *  \returns a local function associated with the entity
+       */
+      const LocalFunctionType localFunction ( const EntityType &entity ) const
       {
         return asImp().localFunction( entity );
       }
@@ -478,31 +478,28 @@ namespace Dune
     //! the discrete function by multiplying the dofs and the basefunctions. 
     //! 
     //*************************************************************************
-    template< class DiscreteFunctionTraits >
+    template< class Impl >
     class DiscreteFunctionDefault
-    : public DiscreteFunctionInterface< DiscreteFunctionTraits > ,
+    : public DiscreteFunctionInterface< Impl > ,
       public PersistentObject 
     { 
-      typedef DiscreteFunctionDefault< DiscreteFunctionTraits > ThisType;
-      typedef DiscreteFunctionInterface< DiscreteFunctionTraits > BaseType;
+      typedef DiscreteFunctionDefault< Impl > ThisType;
+      typedef DiscreteFunctionInterface< Impl > BaseType;
 
     public:
-      typedef DiscreteFunctionTraits Traits;
+      typedef typename BaseType :: Traits Traits;
 
       //! type of the discrete function (Barton-Nackman parameter)
-      typedef typename DiscreteFunctionTraits :: DiscreteFunctionType
-        DiscreteFunctionType;
+      typedef Impl DiscreteFunctionType;
 
       typedef typename BaseType::DiscreteFunctionInterfaceType DiscreteFunctionInterfaceType;
 
     private:
-      typedef DiscreteFunctionDefault< DiscreteFunctionTraits >
-        DiscreteFunctionDefaultType;
+      typedef DiscreteFunctionDefault< Impl > DiscreteFunctionDefaultType;
 
       enum { myId_ = 0 };
 
-      typedef ParallelScalarProduct< DiscreteFunctionInterfaceType >
-        ScalarProductType;
+      typedef ParallelScalarProduct< DiscreteFunctionInterfaceType > ScalarProductType;
     
     public:
       //! type of discrete function space
@@ -525,30 +522,27 @@ namespace Dune
       //! type of range field (usually a float type)
       typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
 
-      //! type of mapping base class for this discrete function 
-      typedef Mapping< DomainFieldType, RangeFieldType, DomainType, RangeType>
-        MappingType;
-
        //! type of the dof iterator
-      typedef typename DiscreteFunctionTraits :: DofIteratorType DofIteratorType;
+      typedef typename Traits :: DofIteratorType DofIteratorType;
       //! type of the const dof iterator
-      typedef typename DiscreteFunctionTraits :: ConstDofIteratorType
-        ConstDofIteratorType;
+      typedef typename Traits :: ConstDofIteratorType ConstDofIteratorType;
    
-      //! type of the local function factory
-      typedef typename Traits :: LocalFunctionFactoryType LocalFunctionFactoryType;
-      //! type of the local function storage
-      typedef typename Traits :: LocalFunctionStorageType LocalFunctionStorageType;
+      //! type of LocalDofVector
+      typedef typename Traits :: LocalDofVectorType LocalDofVectorType;
+      //! type of LocalDofVector
+      typedef typename Traits :: LocalDofVectorAllocatorType LocalDofVectorAllocatorType;
 
       //! type of local functions
-      typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
+      typedef typename BaseType :: LocalFunctionType LocalFunctionType;
 
-      typedef typename Traits :: DofBlockType DofBlockType;
-      typedef typename Traits :: ConstDofBlockType ConstDofBlockType;
-      typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
-      typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
+      typedef typename BaseType :: DofBlockType DofBlockType;
+      typedef typename BaseType :: ConstDofBlockType ConstDofBlockType;
+      typedef typename BaseType :: DofBlockPtrType DofBlockPtrType;
+      typedef typename BaseType :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
       typedef typename BaseType :: EntityType EntityType ;
+
+      typedef typename BaseType :: DofType DofType;
 
       template< class Operation >
       struct CommDataHandle
@@ -558,7 +552,6 @@ namespace Dune
     protected:
       using BaseType :: asImp;
 
-    protected:
       /** \brief Constructor storing discrete function space and local function
        *         factory
        *
@@ -570,8 +563,8 @@ namespace Dune
        *  \param[in]  lfFactory  local function factory
        */
       DiscreteFunctionDefault ( const std::string &name,
-                                const DiscreteFunctionSpaceType &dfSpace,
-                                const LocalFunctionFactoryType &lfFactory );
+                                const DiscreteFunctionSpaceType &dfSpace, 
+                                const LocalDofVectorAllocatorType &ldvAllocator );
     private:
       // prohibit copying and assignment
       inline DiscreteFunctionDefault ( const ThisType & );
@@ -590,12 +583,12 @@ namespace Dune
       /** \brief obtain a reference to the underlying grid part */
       const GridPartType &gridPart () const { return space().gridPart(); }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) const */
-      const LocalFunctionType localFunction ( const EntityType &entity ) const;
-      
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
-      LocalFunctionType localFunction ( const EntityType &entity );
+      LocalFunctionType localFunction ( const EntityType &entity ) { return LocalFunctionType( asImp(), entity ); }
     
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
+      const LocalFunctionType localFunction ( const EntityType &entity ) const { return LocalFunctionType( asImp(), entity ); }
+
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::clear() */
       void clear();
       
@@ -618,7 +611,7 @@ namespace Dune
       
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::scalarProductDofs */
       inline RangeFieldType
-      scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const;
+      scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const { return scalarProduct_.scalarProductDofs( *this, other ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::print */
       void print ( std :: ostream &out ) const;
@@ -642,13 +635,25 @@ namespace Dune
       }
    
       /** \copydoc Dune::Fem::Function::evaluate(const DomainType &x,RangeType &value) const */
-      inline void evaluate ( const DomainType &x, RangeType &value ) const;
+      inline void evaluate ( const DomainType &x, RangeType &value ) const
+      {
+        LocalFunctionEvaluateFunctor< LocalFunctionType > functor( value );
+        asImp().evaluateGlobal( x, functor );
+      }
 
       /** \copydoc Dune::Fem::Function::jacobian(const DomainType &x,JacobianRangeType &jacobian) const */
-      inline void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const;
+      inline void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
+      {
+        LocalFunctionJacobianFunctor< LocalFunctionType > functor( jacobian );
+        asImp().evaluateGlobal( x, functor );
+      }
 
       /** \copydoc Dune::Fem::Function::hessian (const DomainType &x,HessianRangeType &hessian) const */
-      inline void hessian ( const DomainType &x, HessianRangeType &hessian ) const;
+      inline void hessian ( const DomainType &x, HessianRangeType &hessian ) const
+      {
+        LocalFunctionHessianFunctor< LocalFunctionType > functor( hessian );
+        asImp().evaluateGlobal( x, functor );
+      }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
       DiscreteFunctionType &operator+= ( const DiscreteFunctionInterfaceType &g );
@@ -674,7 +679,7 @@ namespace Dune
        *  
        *  \returns reference to this discrete function (i.e. *this)
        */
-      inline DiscreteFunctionType &operator/= ( const RangeFieldType &scalar );
+      inline DiscreteFunctionType &operator/= ( const RangeFieldType &scalar ) { return BaseType :: operator*=( RangeFieldType(1 ) / scalar ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::read */
       template< class StreamTraits >
@@ -688,7 +693,7 @@ namespace Dune
        *
        *  \note The default implementation does nothing.
        */
-      inline void enableDofCompression ();
+      inline void enableDofCompression () {}
 
 
     public:
@@ -697,20 +702,71 @@ namespace Dune
     
       inline bool operator== ( const DiscreteFunctionType &g ) const;
       
-      inline bool operator!= ( const DiscreteFunctionType &g ) const;
+      inline bool operator!= ( const DiscreteFunctionType &g ) const { return !(operator==( g )); }
     
       /** \brief obtain the local function storage
        *
        *  \returns a reference to the local function storage
        */
-      inline LocalFunctionStorageType &localFunctionStorage () const;
+      inline LocalDofVectorAllocatorType &localDofVectorAllocator () const { return ldvAllocator_; }
+      
+      //! add local Dofs to dof vector
+      template< class LocalDofs >
+      void addLocalDofs ( const EntityType &entity, const LocalDofs &localDofs )
+      {
+        typedef LeftAdd< const LocalDofs > AssignFunctorType;
+        AssignFunctorType assignFunctor( localDofs );
+
+        DofBlockFunctor< DiscreteFunctionType, AssignFunctorType > functor( asImp(), assignFunctor );
+        space().blockMapper().mapEach( entity, functor );
+      }
+
+      //! set local Dofs to dof vector
+      template< class LocalDofs >
+      void setLocalDofs ( const EntityType &entity, const LocalDofs &localDofs )
+      {
+        typedef LeftAssign< const LocalDofs > AssignFunctorType;
+        AssignFunctorType assignFunctor( localDofs );
+
+        DofBlockFunctor< DiscreteFunctionType, AssignFunctorType > functor( asImp(), assignFunctor );
+        space().blockMapper().mapEach( entity, functor );
+      }
+
+      //! get local Dofs and store a reference to it in the LocalDofVector
+      void getLocalDofs ( const EntityType &entity, LocalDofVectorType &localDofs )
+      {
+        typedef AssignVectorReference< LocalDofVectorType > AssignFunctorType;
+        AssignFunctorType assignFunctor( localDofs );
+
+        DofBlockFunctor< DiscreteFunctionType, AssignFunctorType > functor( asImp(), assignFunctor );
+        space().blockMapper().mapEach( entity, functor );
+      }
+
+      //! get local Dofs and store the values  in LocalDofVector
+      template< class A >
+      void getLocalDofs ( const EntityType &entity, Dune::DynamicVector< DofType, A > &localDofs ) const
+      {
+        typedef AssignFunctor< Dune::DynamicVector< DofType, A > > AssignFunctorType;
+        AssignFunctorType assignFunctor( localDofs );
+
+        DofBlockFunctor< const DiscreteFunctionType, AssignFunctorType > functor( asImp(), assignFunctor );
+        space().blockMapper().mapEach( entity, functor );
+      }
 
     protected:  
       /** \copydoc Dune::PersistentObject::backup */
-      virtual void backup() const; 
+      virtual void backup() const        
+      {
+        // get backup stream from persistence manager and write to it 
+        write( PersistenceManager :: backupStream() );
+      }
 
       /** \copydoc Dune::PersistentObject::restore */
-      virtual void restore(); 
+      virtual void restore()
+      {
+        // get restore stream from persistence manager and read from it 
+        read( PersistenceManager :: restoreStream() );
+      }
 
       /** \copydoc Dune::PersistentObject::insertSubData */
       virtual void insertSubData();
@@ -744,7 +800,7 @@ namespace Dune
       const DiscreteFunctionSpaceType &dfSpace_;
 
       // the local function storage 
-      mutable LocalFunctionStorageType lfStorage_;
+      mutable LocalDofVectorAllocatorType ldvAllocator_;
 
       DebugLock dofPointerLock_;
 

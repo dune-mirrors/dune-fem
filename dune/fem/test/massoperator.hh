@@ -1,20 +1,18 @@
 #ifndef MASSOPERATOR_HH
 #define MASSOPERATOR_HH
 
-#if defined HAVE_PETSC
-
 #include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/linear/petscoperator.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 
-template< class DiscreteFunction >
+template< class DiscreteFunction, class LinearOperator >
 class MassOperator
-: public Dune::Fem:: PetscLinearOperator< DiscreteFunction, DiscreteFunction >
+: public LinearOperator
 {
-  typedef MassOperator< DiscreteFunction > ThisType;
-  typedef Dune::Fem::PetscLinearOperator< DiscreteFunction, DiscreteFunction > BaseType;
+  typedef MassOperator< DiscreteFunction, LinearOperator > ThisType;
+  typedef LinearOperator BaseType;
 
   typedef DiscreteFunction DiscreteFunctionType;
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
@@ -41,9 +39,9 @@ private:
 };
 
 
-template< class DiscreteFunction >
+template< class DiscreteFunction, class LinearOperator >
 template< class Function >
-void MassOperator< DiscreteFunction >
+void MassOperator< DiscreteFunction, LinearOperator >
   ::assembleRHS( const Function &u, DiscreteFunctionType &w ) const
 {
   typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
@@ -92,8 +90,8 @@ void MassOperator< DiscreteFunction >
 }
 
 
-template< class DiscreteFunction >
-void MassOperator< DiscreteFunction >::assemble ()
+template< class DiscreteFunction, class LinearOperator >
+void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
 {
   typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
   typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
@@ -103,7 +101,7 @@ void MassOperator< DiscreteFunction >::assemble ()
   typedef typename IteratorType::Entity EntityType;
   typedef typename EntityType::Geometry GeometryType;
 
-  BaseType::reserve( Dune::Fem::SimpleStencil<DiscreteFunctionSpaceType,DiscreteFunctionSpaceType>() );
+  BaseType::reserve( Dune::Fem::DiagonalStencil<DiscreteFunctionSpaceType,DiscreteFunctionSpaceType>( dfSpace_, dfSpace_ ) );
   BaseType::clear();
 
   std::vector< typename DiscreteFunctionSpaceType::RangeType > values;
@@ -145,7 +143,5 @@ void MassOperator< DiscreteFunction >::assemble ()
   }
   BaseType::communicate();
 }
-
-#endif // #if defined HAVE_PETSC
 
 #endif // #ifndef MASSOPERATOR_HH

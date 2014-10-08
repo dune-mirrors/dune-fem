@@ -25,9 +25,9 @@ namespace Dune
     public: 
       typedef T Ttype;  //! remember the value type
 
-    private:
-      typedef std::vector < std::vector < T > > MatrixType; 
       typedef std::vector < T > RowType;
+    private:
+      typedef std::vector < RowType > MatrixType;
 
       MatrixType matrix_;
 

@@ -9,7 +9,7 @@
 #include <dune/common/array.hh>
 
 // dune-fem includes
-#include <dune/fem/space/discontinuousgalerkin/legendrepolynomials.hh>
+#include <dune/fem/space/shapefunctionset/legendrepolynomials.hh>
 #include <dune/fem/space/shapefunctionset/simple.hh>
 
 /**

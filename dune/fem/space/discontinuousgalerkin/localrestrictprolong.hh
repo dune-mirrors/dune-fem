@@ -56,8 +56,8 @@ namespace Dune
       }
 
       //! restrict data to father 
-      template< class FT, class ST, class LocalGeometry >
-      void restrictLocal ( LocalFunction< FT > &lfFather, const LocalFunction< ST > &lfSon, 
+      template< class LFFather, class LFSon, class LocalGeometry >
+      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon, 
                            const LocalGeometry &geometryInFather, bool initialize ) const
       {
         typedef ConstantLocalRestrictProlong< DiscreteFunctionSpaceType > ConstantLocalRestrictProlongType;
@@ -74,10 +74,10 @@ namespace Dune
           temp_.clear();
         }
 
-        typedef typename LocalFunction< ST > :: EntityType  EntityType ;
+        typedef typename LFSon :: EntityType  EntityType ;
         typedef typename EntityType :: Geometry   Geometry;
         const EntityType& sonEntity = lfSon.entity();
-        const Geometry& sonGeo = sonEntity.geometry();
+        const Geometry sonGeo = sonEntity.geometry();
 
         QuadratureType quad( sonEntity, 2*lfFather.order()+1 );
         const int nop = quad.nop();
@@ -112,16 +112,16 @@ namespace Dune
         }
       }
 
-      template< class FT, class ST, class LocalGeometry >
-      void prolongLocal ( const LocalFunction< FT > &lfFather, LocalFunction< ST > &lfSon,
+      template< class LFFather, class LFSon, class LocalGeometry >
+      void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,
                           const LocalGeometry &geometryInFather, bool initialize ) const
       {
         lfSon.clear();
 
-        typedef typename LocalFunction< ST > :: EntityType  EntityType ;
+        typedef typename LFSon :: EntityType  EntityType ;
         typedef typename EntityType :: Geometry   Geometry;
         const EntityType& sonEntity = lfSon.entity();
-        const Geometry& sonGeo = sonEntity.geometry();
+        const Geometry sonGeo = sonEntity.geometry();
 
         QuadratureType quad( sonEntity, 2*lfSon.order()+1 );
         const int nop = quad.nop();
@@ -163,9 +163,10 @@ namespace Dune
     // ----------------------------------------------------------
 
     template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
-    struct DefaultLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
+    class DefaultLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
     : public DiscontinuousGalerkinLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false >
     {
+    public:
       typedef DiscontinuousGalerkinLocalRestrictProlong< DiscontinuousGalerkinSpace<
         FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false  >  BaseType;
       DefaultLocalRestrictProlong ( const DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & space )
@@ -174,9 +175,10 @@ namespace Dune
     };
 
     template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
-    struct DefaultLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+    class DefaultLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     : public ConstantLocalRestrictProlong< DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     {
+    public:
       DefaultLocalRestrictProlong ( const DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > & )
       {}
     };
@@ -187,9 +189,10 @@ namespace Dune
     // ------------------------------------------------------------------
 
     template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
-    struct DefaultLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
+    class DefaultLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
     : public DiscontinuousGalerkinLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false >
     {
+    public:
       typedef DiscontinuousGalerkinLocalRestrictProlong<
         LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd,  StorageImp >, false > BaseType;
       DefaultLocalRestrictProlong ( const LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & space )
@@ -198,9 +201,10 @@ namespace Dune
     };
 
     template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
-    struct DefaultLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+    class DefaultLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     : public ConstantLocalRestrictProlong< LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     {
+    public:
       DefaultLocalRestrictProlong ( const LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > & )
       {}
     };
@@ -211,9 +215,10 @@ namespace Dune
     // ----------------------------------------------------------------------------
 
     template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
-    struct DefaultLocalRestrictProlong< HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
+    class DefaultLocalRestrictProlong< HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
     : public DiscontinuousGalerkinLocalRestrictProlong< HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false >
     {
+    public:
       typedef DiscontinuousGalerkinLocalRestrictProlong<
         HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd,  StorageImp >, false > BaseType;
       DefaultLocalRestrictProlong ( const HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & space )
@@ -222,9 +227,10 @@ namespace Dune
     };
 
     template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
-    struct DefaultLocalRestrictProlong< HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+    class DefaultLocalRestrictProlong< HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     : public ConstantLocalRestrictProlong< HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     {
+    public:
       DefaultLocalRestrictProlong ( const HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > & )
       {}
     };
@@ -235,9 +241,10 @@ namespace Dune
     // ------------------------------------------------------------------
 
     template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
-    struct DefaultLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
+    class DefaultLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
     : public DiscontinuousGalerkinLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, true >
     {
+    public:
       typedef DiscontinuousGalerkinLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, true >  BaseType ;
       DefaultLocalRestrictProlong ( const LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & space )
         : BaseType( space )
@@ -245,9 +252,10 @@ namespace Dune
     };
 
     template< class FunctionSpaceImp, class GridPartImp, template< class > class StorageImp >
-    struct DefaultLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
+    class DefaultLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     : public ConstantLocalRestrictProlong< LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > >
     {
+    public:
       DefaultLocalRestrictProlong ( const LagrangeDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, 0, StorageImp > & )
       {}
     };

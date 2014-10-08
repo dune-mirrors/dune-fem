@@ -15,8 +15,9 @@
 
 //- Local includes
 #include "adaptiveimp.hh"
-#include <dune/fem/function/localfunction/standard.hh>
-#include <dune/fem/function/localfunction/generic.hh>
+#include <dune/fem/function/localfunction/mutable.hh>
+#include <dune/fem/common/referencevector.hh>
+#include <dune/fem/common/stackallocator.hh>
 
 namespace Dune
 {
@@ -32,26 +33,19 @@ namespace Dune
     class SubFunctionStorage;
 
     //- Class definitions
-    //! Traits class for AdaptiveDiscreteFunction and AdaptiveLocalFunction
-    template< class DiscreteFunctionSpaceImp >
-    struct AdaptiveDiscreteFunctionTraits
+    //! Traits class for AdaptiveDiscreteFunction 
+    template< class DiscreteFunctionSpace >
+    struct DiscreteFunctionTraits< AdaptiveDiscreteFunction< DiscreteFunctionSpace > >
     {
-      typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
-   
-      typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+      typedef AdaptiveDiscreteFunction< DiscreteFunctionSpace > DiscreteFunctionType;
+    private:
 
-      typedef AdaptiveFunctionImplementation< DiscreteFunctionSpaceType >
-        ImplementationType;
+      typedef DiscreteFunctionTraits< DiscreteFunctionType > Traits;
 
-      typedef AdaptiveDiscreteFunctionTraits< DiscreteFunctionSpaceType > Traits;
+      typedef AdaptiveFunctionImplementation< DiscreteFunctionSpace > ImplementationType;
 
-      static const bool isGenericSpace = Conversion< DiscreteFunctionSpaceType, isGenericDiscreteFunctionSpace >::exists;
-      typedef typename conditional< isGenericSpace, GenericLocalFunctionFactory< Traits >, StandardLocalFunctionFactory< Traits > >::type
-        LocalFunctionFactoryType;
-
-      typedef LocalFunctionStack< LocalFunctionFactoryType > LocalFunctionStorageType;
-
-      typedef typename LocalFunctionStorageType :: LocalFunctionType LocalFunctionType;
+    public:
+      typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 
       typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
       typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
@@ -64,9 +58,15 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
       typedef typename DiscreteFunctionSpaceType :: GridType GridType;
 
+      typedef ThreadSafeValue< UninitializedObjectStack > LocalDofVectorStackType;
+      typedef StackAllocator< DofType, LocalDofVectorStackType* > LocalDofVectorAllocatorType;
+      typedef DynamicReferenceVector< DofType, LocalDofVectorAllocatorType > LocalDofVectorType;
+
+      typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType; 
+
       // type used to determine size etc.
       typedef NonBlockMapper< BlockMapperType, 
-                              DiscreteFunctionSpaceType :: localBlockSize > MapperType ;
+                              DiscreteFunctionSpaceType :: localBlockSize > MapperType;
 
       // type of Array seen by functions 
       typedef StaticArray<DofType>  DofStorageType;
@@ -82,7 +82,7 @@ namespace Dune
       typedef typename ImplementationType :: ConstDofBlockType ConstDofBlockType;
       typedef typename ImplementationType :: DofBlockPtrType DofBlockPtrType;
       typedef typename ImplementationType :: ConstDofBlockPtrType ConstDofBlockPtrType;
-    }; // end class AdaptiveDiscreteFunctionTraits
+    };
 
 
 
@@ -93,12 +93,11 @@ namespace Dune
     //! functionality (access to subfunctions) and runtime optimisations
     template <class DiscreteFunctionSpaceImp>
     class AdaptiveDiscreteFunction
-    : public DiscreteFunctionDefault< AdaptiveDiscreteFunctionTraits< DiscreteFunctionSpaceImp > >,
+    : public DiscreteFunctionDefault< AdaptiveDiscreteFunction< DiscreteFunctionSpaceImp > >,
       private AdaptiveFunctionImplementation< DiscreteFunctionSpaceImp >
     {
       typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceImp > ThisType;
-      typedef DiscreteFunctionDefault< AdaptiveDiscreteFunctionTraits< DiscreteFunctionSpaceImp > >
-        BaseType;
+      typedef DiscreteFunctionDefault< AdaptiveDiscreteFunction< DiscreteFunctionSpaceImp > > BaseType;
 
       typedef AdaptiveFunctionImplementation< DiscreteFunctionSpaceImp > Imp;
 
@@ -107,7 +106,7 @@ namespace Dune
       typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
 
       //! Traits class with all necessary type definitions
-      typedef AdaptiveDiscreteFunctionTraits< DiscreteFunctionSpaceType > Traits;
+      typedef DiscreteFunctionTraits< AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > > Traits;
 
       typedef typename BaseType::DiscreteFunctionInterfaceType DiscreteFunctionInterfaceType;
 
@@ -123,56 +122,53 @@ namespace Dune
       typedef Imp ImplementationType;
 
       //! Local function implementation 
-      typedef typename Traits::GridType GridType;
+      typedef typename BaseType::GridType GridType;
       
       //! Discrete function type (identical to this type, needed as 
       //! Barton-Nackman parameter
-      typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
+      typedef typename BaseType::DiscreteFunctionType DiscreteFunctionType;
       
       //! Intrinsic type used for the dofs (typically a float type)
-      typedef typename Traits::DofType DofType;
+      typedef typename BaseType::DofType DofType;
       //! Intrinsic type used for the range field (identical to DofType)
-      typedef typename Traits::RangeFieldType RangeFieldType;
+      typedef typename BaseType::RangeFieldType RangeFieldType;
       //! Intrinsic type used for the domain field
-      typedef typename Traits::DomainFieldType DomainFieldType;
+      typedef typename BaseType::DomainFieldType DomainFieldType;
       //! Vector type used for the range field
-      typedef typename Traits::RangeType RangeType;
+      typedef typename BaseType::RangeType RangeType;
       //! Vector type used for the domain field
-      typedef typename Traits::DomainType DomainType;
-      //! Mapper type (from the space)
-      typedef typename Traits::MapperType MapperType;
+      typedef typename BaseType::DomainType DomainType;
       
       //! Container class type for the dofs (managed by the DofManager)
-      typedef typename Traits :: MutableDofStorageType MutableDofStorageType;
+      typedef typename Traits::MutableDofStorageType MutableDofStorageType;
       //! Container class type for the dofs (managed by the DofManager)
       typedef typename Traits::DofStorageType DofStorageType;
-   
+       //! Mapper type (from the space)
+      typedef typename Traits::MapperType MapperType;
+  
       //! Iterator over dof container
-      typedef typename Traits::DofIteratorType DofIteratorType;
+      typedef typename BaseType::DofIteratorType DofIteratorType;
       //! Read-only iterator over dof container
-      typedef typename Traits::ConstDofIteratorType ConstDofIteratorType;
+      typedef typename BaseType::ConstDofIteratorType ConstDofIteratorType;
       
-      typedef typename Traits :: DofBlockType DofBlockType;
-      typedef typename Traits :: ConstDofBlockType ConstDofBlockType;
-      typedef typename Traits :: DofBlockPtrType DofBlockPtrType;
-      typedef typename Traits :: ConstDofBlockPtrType ConstDofBlockPtrType;
+      typedef typename BaseType :: DofBlockType DofBlockType;
+      typedef typename BaseType :: ConstDofBlockType ConstDofBlockType;
+      typedef typename BaseType :: DofBlockPtrType DofBlockPtrType;
+      typedef typename BaseType :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
-      typedef Mapping<DomainFieldType, RangeFieldType,
-                      DomainType, RangeType> MappingType;
-
-      typedef typename Traits :: LocalFunctionFactoryType LocalFunctionFactoryType;
+      typedef typename BaseType :: LocalDofVectorAllocatorType LocalDofVectorAllocatorType;
 
     protected:
-      const LocalFunctionFactoryType lfFactory_;
+      typename Traits :: LocalDofVectorStackType ldvStack_;
 
     public:
       //- Public methods
       //! Constructor
       AdaptiveDiscreteFunction( const std :: string &name,
                                 const DiscreteFunctionSpaceType &spc )
-      : BaseType( name, spc, lfFactory_ ),
+      : BaseType( name, spc, LocalDofVectorAllocatorType( &ldvStack_ ) ),
         Imp( name, spc ),
-        lfFactory_( *this )
+        ldvStack_( std::max( sizeof( DofType ), sizeof( DofType* ) ) * spc.blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize )
       {
         spc.addFunction( *this );
       }
@@ -182,9 +178,9 @@ namespace Dune
       AdaptiveDiscreteFunction( const std :: string &name,
                                 const DiscreteFunctionSpaceType &spc,
                                 VectorPointerType *vector)
-      : BaseType( name, spc, lfFactory_ ),
+      : BaseType( name, spc, LocalDofVectorAllocatorType( &ldvStack_ ) ),
         Imp( name, spc, vector ),
-        lfFactory_( *this )
+        ldvStack_( std::max( sizeof( DofType ), sizeof( DofType* ) ) * spc.blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize )
       {}
 
       //! Constructor for SubDiscreteFunctions
@@ -192,17 +188,17 @@ namespace Dune
       AdaptiveDiscreteFunction( const std :: string &name,
                                 const DiscreteFunctionSpaceType &spc,
                                 DofStorageType &dofVec )
-      : BaseType( name, spc, lfFactory_ ),
+      : BaseType( name, spc, LocalDofVectorAllocatorType( &ldvStack_ ) ),
         Imp( name, spc, dofVec ),
-        lfFactory_( *this )
+        ldvStack_( std::max( sizeof( DofType ), sizeof( DofType* ) ) * spc.blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize )
       {}
 
       //! Copy constructor
       //! The copy constructor copies the dofs
       AdaptiveDiscreteFunction( const ThisType & other )
-      : BaseType( "copy of " + other.name(), other.space(), lfFactory_ ),
+      : BaseType( "copy of " + other.name(), other.space(), LocalDofVectorAllocatorType( &ldvStack_ ) ),
         Imp( BaseType :: name(), other ),
-        lfFactory_( *this )
+        ldvStack_( other.ldvStack_ )
       {
         space().addFunction( *this );
       }
@@ -270,7 +266,8 @@ namespace Dune
 
       friend class SubFunctionStorage < ThisType >;
     }; // end class AdaptiveDiscreteFunction
- 
+
+
   } // end namespace Fem 
 
 } // end namespace Dune

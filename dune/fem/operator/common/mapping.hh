@@ -202,7 +202,7 @@ namespace Dune
         bool scaleIt_;
 
         // friendship for operations 
-        friend class MappingOperators;
+        friend struct MappingOperators;
       };
 
 
@@ -213,7 +213,7 @@ namespace Dune
       mutable bool loopDetected_ ;
 
       // friendship for operations 
-      friend class MappingOperators;
+      friend struct MappingOperators;
     };
 
 

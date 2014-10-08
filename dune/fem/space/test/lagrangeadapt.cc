@@ -67,14 +67,14 @@ struct CheckGridEnabled
 // disable YaspGrid
 namespace Dune
 {
-  template< int dim >
+  template< int dim, class CoordCont >
   class YaspGrid;
 }
 
-template< int dim >
-struct CheckGridEnabled< Dune :: YaspGrid< dim > >
+template< int dim, class CoordCont >
+struct CheckGridEnabled< Dune :: YaspGrid< dim, CoordCont > >
 {
-  typedef Dune :: YaspGrid< dim > GridType;
+  typedef Dune :: YaspGrid< dim, CoordCont > GridType;
   
   typedef Dune :: Fem :: LeafGridPart< GridType > GridPartType;
 
@@ -307,21 +307,20 @@ void algorithm ( GridPartType &gridPart,
 
   const bool isLocallyAdaptive = Dune::Fem::Capabilities::isLocallyAdaptive< GridPartType :: GridType > :: v ;
   // threshold for EOC difference to predicted value 
-  const double eocThreshold = Parameter :: getValue("adapt.eocthreshold", double(0.2) );
+  const double eocThreshold = Parameter :: getValue("adapt.eocthreshold", double(0.25) );
 
-  /*
   if( isLocallyAdaptive ) 
   {
     const double sign = step / std::abs( step );
     if( std::abs( l2eoc - h1eoc - sign ) > eocThreshold )
       DUNE_THROW( InvalidStateException,"Wrong L2/H1 relation");
 
-    if( std::abs( l2eoc - ( sign * ( solution.space().order() + 1) ) ) > eocThreshold )
-      DUNE_THROW( InvalidStateException,"Wrong L2-EOC for " << (step > 0) ? "refinement" : "coarsening" );
-    if( std::abs( h1eoc - ( sign * ( solution.space().order() ) ) ) > eocThreshold )
-      DUNE_THROW( InvalidStateException,"Wrong H1-EOC for " << (step > 0) ? "refinement" : "coarsening" );
+    const char* refcrs = (step > 0) ? "refinement" : "coarsening";
+    if( std::abs( l2eoc - ( sign * ( solution.space().order() + eocThreshold) ) ) < 0 )
+      DUNE_THROW( InvalidStateException,"Wrong L2-EOC for " << refcrs );
+    if( std::abs( h1eoc - ( sign * ( solution.space().order()-1.0+eocThreshold ) ) ) < 0 )
+      DUNE_THROW( InvalidStateException,"Wrong H1-EOC for " << refcrs );
   }
-  */
 
   #if WRITE_DATA
     GrapeDataIO< MyGridType > dataio; 

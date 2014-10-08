@@ -24,13 +24,13 @@ namespace Dune
   // PersistentContainer for YaspGrid
   // --------------------------------
 
-  template< int dim, class Data >
-  class PersistentContainer< YaspGrid< dim >, Data >
-  : public PersistentContainerVector< YaspGrid< dim >, 
-                                      typename YaspGrid< dim >::LeafIndexSet,
+  template< int dim, class CoordCont, class Data >
+  class PersistentContainer< YaspGrid< dim, CoordCont >, Data >
+  : public PersistentContainerVector< YaspGrid< dim, CoordCont >,
+                                      typename YaspGrid< dim, CoordCont >::LeafIndexSet,
                                       std::vector<Data> >
   {
-    typedef YaspGrid< dim > Grid;
+    typedef YaspGrid< dim, CoordCont > Grid;
     typedef PersistentContainerVector< Grid, typename Grid::LeafIndexSet, std::vector<Data> > BaseType;
 
   public:
@@ -96,10 +96,10 @@ namespace Dune
       // type of exported index 
       typedef int IndexType ;
 
-    protected:  
       // indices in this status have not been initialized 
       static IndexType invalidIndex() { return -1; }
 
+    protected:  
       // array type for indices 
       typedef MutableArray< IndexType > IndexArrayType;
       typedef MutableArray< INDEXSTATE > IndexStateArrayType;
@@ -374,6 +374,9 @@ namespace Dune
       {
         assert( myCodim_ == EntityType :: codimension );
         const IndexType &index = leafIndex_[ entity ];
+        // if index is invalid (-1) it does not exist 
+        if (index==invalidIndex()) return false;
+        assert( index < IndexType( indexState_.size() ) );
         return (indexState_[ index ] != UNUSED);
       }
      
@@ -383,6 +386,8 @@ namespace Dune
       {
         assert( 0 == EntityType :: codimension );
         const IndexType &index = leafIndex_( entity, subNumber );
+        // if index is invalid (-1) it does not exist 
+        if (index==invalidIndex()) return false;
         assert( index < IndexType( indexState_.size() ) );
         return (indexState_[ index ] != UNUSED);
       }

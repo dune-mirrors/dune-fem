@@ -46,15 +46,15 @@ try
     checkQuadraturePoints< 1 >( GeometryType( GeometryType::simplex, 1 ), order );
   for( int order = 0; order < 12; ++order )
     checkQuadraturePoints< 2 >( GeometryType( GeometryType::cube, 2 ), order );
-  for( int order = 0; order < 19; ++order )
+  for( int order = 0; order < 11; ++order )
     checkQuadraturePoints< 2 >( GeometryType( GeometryType::simplex, 2 ), order );
   for( int order = 0; order < 12; ++order )
     checkQuadraturePoints< 3 >( GeometryType( GeometryType::cube, 3 ), order );
-  for( int order = 0; order < 12; ++order )
+  for( int order = 0; order < 9; ++order )
     checkQuadraturePoints< 3 >( GeometryType( GeometryType::simplex, 3 ), order );
-  for( int order = 0; order < 12; ++order )
+  for( int order = 0; order < 11; ++order )
     checkQuadraturePoints< 3 >( GeometryType( GeometryType::prism, 3 ), order );
-  for( int order = 0; order < 12; ++order )
+  for( int order = 0; order < 3; ++order )
     checkQuadraturePoints< 3 >( GeometryType( GeometryType::pyramid, 3 ), order );
 
   return 0;

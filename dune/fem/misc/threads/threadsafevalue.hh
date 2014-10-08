@@ -25,12 +25,13 @@ namespace Dune {
       typedef T ValueType ;
 
       //! \brief constructor initializing values for all threads given a init value
-      ThreadSafeValue( const ValueType& init ) 
-        : value_( 
+      template< class ...Args >
+      ThreadSafeValue( Args&& ...args )
 #ifdef USE_SMP_PARALLEL
-            ThreadManager::maxThreads(), 
+        : value_( ThreadManager::maxThreads(), ValueType( std::forward< Args >( args )... ) )
+#else
+        : value_( std::forward< Args >( args )... )
 #endif
-            init )
       {}
 
       //! \brief default constructor 
@@ -49,6 +50,9 @@ namespace Dune {
       ValueType& operator * () { return this->operator[]( ThreadManager::thread() ); }
       //! \brief return reference to thread private value 
       const ValueType& operator * () const { return this->operator[]( ThreadManager::thread() ); }
+
+      operator const ValueType& () const { return this->operator[]( ThreadManager::thread() ); }
+      operator ValueType& () { return this->operator[]( ThreadManager::thread() ); }
 
       //! \brief return reference to private value for given thread number 
       ValueType& operator [] ( const unsigned int thread ) { 

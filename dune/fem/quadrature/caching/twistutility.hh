@@ -87,9 +87,9 @@ namespace Dune
     // Specialization for YaspGrid
     // ------------------------------
     
-    template< int dimw  > 
-    struct TwistUtility< YaspGrid< dimw > > 
-      : public TwistFreeTwistUtility< YaspGrid< dimw > >
+    template< int dimw, class CoordCont >
+    struct TwistUtility< YaspGrid< dimw, CoordCont > >
+      : public TwistFreeTwistUtility< YaspGrid< dimw, CoordCont > >
     {
     };
 

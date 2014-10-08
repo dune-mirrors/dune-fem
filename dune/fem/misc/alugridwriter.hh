@@ -170,7 +170,7 @@ namespace Dune
                    it != endit; ++it )
               {
                 const EntityType& entity = *it ;
-                const int count = entity.template count< dimension > ();
+                const int count = entity.subEntities( dimension );
                 for( int i = 0; i<count; ++i) 
                 {
                   typedef typename GridType :: template Codim< dimension > :: EntityPointer  EntityPointer;
@@ -347,7 +347,7 @@ namespace Dune
             it != endit; ++it )
         {
           const Entity& entity = *it ;
-          const int nVx = entity.template count< dimension > ( );
+          const int nVx = entity.subEntities( dimension );
 
           out << getIndex( entity, ElementTopo::dune2aluVertex( 0 ) );
           for(int i=1; i<nVx; ++i) 

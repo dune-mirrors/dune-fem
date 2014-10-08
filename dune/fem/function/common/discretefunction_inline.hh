@@ -5,7 +5,6 @@
 
 #include <dune/geometry/referenceelements.hh>
 
-#include <dune/fem/function/localfunction/functor.hh>
 #include <dune/fem/gridpart/dunefemindexsets.hh>
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/threadmanager.hh>
@@ -21,39 +20,21 @@ namespace Dune
     // DiscreteFunctionDefault 
     // -----------------------
 
-    template< class Traits >
-    inline DiscreteFunctionDefault< Traits >
+    template< class Impl >
+    inline DiscreteFunctionDefault< Impl >
       :: DiscreteFunctionDefault ( const std::string &name,
                                    const DiscreteFunctionSpaceType &dfSpace,
-                                   const LocalFunctionFactoryType &lfFactory )
+                                   const LocalDofVectorAllocatorType &ldvAllocator )
     : dfSpace_( dfSpace ),
-      lfStorage_( lfFactory ),
+      ldvAllocator_( ldvAllocator ),
       name_( name ),
       scalarProduct_( dfSpace )
     {
     }
 
 
-    template< class Traits >
-    inline const typename DiscreteFunctionDefault< Traits > ::  LocalFunctionType
-    DiscreteFunctionDefault< Traits >
-      :: localFunction ( const EntityType &entity ) const
-    {
-      return localFunctionStorage().localFunction( entity );
-    }
-
-
-    template< class Traits >
-    inline typename DiscreteFunctionDefault< Traits > ::  LocalFunctionType
-    DiscreteFunctionDefault< Traits >
-      :: localFunction ( const EntityType &entity )
-    {
-      return localFunctionStorage().localFunction( entity );
-    }
-
-
-    template< class Traits >
-    inline void DiscreteFunctionDefault< Traits > :: clear ()
+    template< class Impl >
+    inline void DiscreteFunctionDefault< Impl > :: clear ()
     {
       const DofIteratorType end = BaseType :: dend();
       for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it )
@@ -61,9 +42,9 @@ namespace Dune
     }
 
     
-    template< class Traits >
-    inline typename DiscreteFunctionDefault< Traits > :: RangeFieldType *
-    DiscreteFunctionDefault< Traits > :: allocDofPointer()
+    template< class Impl >
+    inline typename DiscreteFunctionDefault< Impl > :: RangeFieldType *
+    DiscreteFunctionDefault< Impl > :: allocDofPointer()
     {
       dofPointerLock_.lock();
 
@@ -80,8 +61,8 @@ namespace Dune
     }
 
     
-    template< class Traits >
-    inline void DiscreteFunctionDefault< Traits >
+    template< class Impl >
+    inline void DiscreteFunctionDefault< Impl >
       :: freeDofPointer( RangeFieldType *dofPointer )
     {
       unsigned int i = 0;
@@ -95,8 +76,8 @@ namespace Dune
     }
 
 
-    template< class Traits >
-    inline void DiscreteFunctionDefault< Traits >
+    template< class Impl >
+    inline void DiscreteFunctionDefault< Impl >
       ::axpy ( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g )
     {
       assert( BaseType::size() == g.size() );
@@ -107,17 +88,9 @@ namespace Dune
     }
 
 
-    template< class Traits >
-    inline typename DiscreteFunctionDefault< Traits > :: RangeFieldType
-    DiscreteFunctionDefault< Traits >
-      ::scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const
-    {
-      return scalarProduct_.scalarProductDofs( *this, other );
-    }
-
     
-    template< class Traits >
-    inline void DiscreteFunctionDefault<Traits >
+    template< class Impl >
+    inline void DiscreteFunctionDefault<Impl >
       :: print ( std::ostream &out ) const
     {
       out << BaseType :: name() << std::endl;
@@ -128,8 +101,8 @@ namespace Dune
     }
 
 
-    template< class Traits >
-    inline bool DiscreteFunctionDefault< Traits >
+    template< class Impl >
+    inline bool DiscreteFunctionDefault< Impl >
       :: dofsValid () const
     {
       const ConstDofIteratorType end = BaseType :: dend();
@@ -141,8 +114,8 @@ namespace Dune
     }
 
     
-    template< class Traits >
-    inline void DiscreteFunctionDefault< Traits >
+    template< class Impl >
+    inline void DiscreteFunctionDefault< Impl >
       ::assign ( const DiscreteFunctionInterfaceType &g )
     {
       assert( BaseType::size() == g.size() );
@@ -154,19 +127,19 @@ namespace Dune
     }
 
 
-    template< class Traits >
+    template< class Impl >
     template< class Operation >
-    inline typename DiscreteFunctionDefault< Traits >
+    inline typename DiscreteFunctionDefault< Impl >
       :: template CommDataHandle< Operation > :: Type
-    DiscreteFunctionDefault< Traits > :: dataHandle ( const Operation *operation )
+    DiscreteFunctionDefault< Impl > :: dataHandle ( const Operation *operation )
     {
       return BaseType :: space().createDataHandle( asImp(), operation );
     }
 
 
-    template< class Traits >
+    template< class Impl >
     template< class Functor >
-    inline void DiscreteFunctionDefault< Traits >
+    inline void DiscreteFunctionDefault< Impl >
       ::evaluateGlobal ( const DomainType &x, Functor functor ) const
     {
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
@@ -180,36 +153,9 @@ namespace Dune
     }
 
 
-    template< class Traits >
-    inline void DiscreteFunctionDefault< Traits >
-      ::evaluate ( const DomainType &x, RangeType &value ) const
-    {
-      LocalFunctionEvaluateFunctor< LocalFunctionType > functor( value );
-      asImp().evaluateGlobal( x, functor );
-    }
-
-
-    template< class Traits >
-    inline void DiscreteFunctionDefault< Traits >
-      ::jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
-    {
-      LocalFunctionJacobianFunctor< LocalFunctionType > functor( jacobian );
-      asImp().evaluateGlobal( x, functor );
-    }
-
-
-    template< class Traits >
-    inline void DiscreteFunctionDefault< Traits >
-      ::hessian ( const DomainType &x, HessianRangeType &hessian ) const
-    {
-      LocalFunctionHessianFunctor< LocalFunctionType > functor( hessian );
-      asImp().evaluateGlobal( x, functor );
-    }
-
-
-    template< class Traits >
-    inline typename DiscreteFunctionDefault< Traits > :: DiscreteFunctionType &
-    DiscreteFunctionDefault< Traits >
+    template< class Impl >
+    inline typename DiscreteFunctionDefault< Impl > :: DiscreteFunctionType &
+    DiscreteFunctionDefault< Impl >
       ::operator+= ( const DiscreteFunctionInterfaceType &g )
     {
       assert( BaseType::size() == g.size() );
@@ -222,10 +168,10 @@ namespace Dune
     }
 
 
-    template< class Traits >
+    template< class Impl >
     template< class DFType >
-    inline typename DiscreteFunctionDefault< Traits > :: DiscreteFunctionType &
-    DiscreteFunctionDefault< Traits >
+    inline typename DiscreteFunctionDefault< Impl > :: DiscreteFunctionType &
+    DiscreteFunctionDefault< Impl >
       :: operator-= ( const DFType &g )
     {
       assert( BaseType :: size() == g.size() );
@@ -238,9 +184,9 @@ namespace Dune
     }
 
 
-    template< class Traits >
-    inline typename DiscreteFunctionDefault< Traits > :: DiscreteFunctionType &
-    DiscreteFunctionDefault< Traits >
+    template< class Impl >
+    inline typename DiscreteFunctionDefault< Impl > :: DiscreteFunctionType &
+    DiscreteFunctionDefault< Impl >
       :: operator*= ( const RangeFieldType &scalar )
     {
       const DofIteratorType end = BaseType :: dend();
@@ -250,18 +196,9 @@ namespace Dune
     }
 
 
-    template< class Traits >
-    inline typename DiscreteFunctionDefault< Traits > :: DiscreteFunctionType &
-    DiscreteFunctionDefault< Traits >
-      :: operator/= ( const RangeFieldType &scalar )
-    {
-      return BaseType :: operator*=( RangeFieldType( 1 ) / scalar );
-    }
-
-
-    template< class Traits >
+    template< class Impl >
     template< class StreamTraits >
-    inline void DiscreteFunctionDefault< Traits >
+    inline void DiscreteFunctionDefault< Impl >
       :: read ( InStreamInterface< StreamTraits > &in )
     {
       unsigned int versionId = in.readUnsignedInt();
@@ -306,9 +243,9 @@ namespace Dune
     }
 
 
-    template< class Traits >
+    template< class Impl >
     template< class StreamTraits >
-    inline void DiscreteFunctionDefault< Traits >
+    inline void DiscreteFunctionDefault< Impl >
       :: write ( OutStreamInterface< StreamTraits > &out ) const
     {
       unsigned int versionId = DUNE_MODULE_VERSION_ID(DUNE_FEM);
@@ -336,25 +273,8 @@ namespace Dune
     }
 
 
-    template< class Traits >
-    void DiscreteFunctionDefault< Traits >
-      :: backup() const
-    {
-      // get backup stream from persistence manager and write to it 
-      write( PersistenceManager :: backupStream() );
-    }
-
-
-    template< class Traits >
-    void DiscreteFunctionDefault< Traits >
-      :: restore()
-    {
-      // get restore stream from persistence manager and read from it 
-      read( PersistenceManager :: restoreStream() );
-    }
-
-    template< class Traits >
-    void DiscreteFunctionDefault< Traits >
+    template< class Impl >
+    void DiscreteFunctionDefault< Impl >
       :: insertSubData()
     {
       // if indexset is persistent it must be  
@@ -367,8 +287,8 @@ namespace Dune
       }
     }
 
-    template< class Traits >
-    void DiscreteFunctionDefault< Traits >
+    template< class Impl >
+    void DiscreteFunctionDefault< Impl >
       :: removeSubData()
     {
       // if indexset is persistent it must be 
@@ -381,14 +301,9 @@ namespace Dune
       }
     }
 
-    template< class Traits >
-    inline void DiscreteFunctionDefault< Traits >
-      :: enableDofCompression ()
-    {}
 
-
-    template< class Traits >
-    inline bool DiscreteFunctionDefault< Traits >
+    template< class Impl >
+    inline bool DiscreteFunctionDefault< Impl >
       :: operator== ( const DiscreteFunctionType &g ) const
     {
       if( BaseType :: size() != g.size() )
@@ -404,24 +319,7 @@ namespace Dune
       
       return true;
     }
-    
    
-    template< class Traits >
-    inline bool DiscreteFunctionDefault< Traits >
-      :: operator!= ( const DiscreteFunctionType &g ) const
-    {
-      return !(operator==( g ));
-    }
-
-    
-    template< class Traits >
-    inline typename DiscreteFunctionDefault< Traits > :: LocalFunctionStorageType &
-    DiscreteFunctionDefault< Traits > :: localFunctionStorage () const
-    {
-      return lfStorage_;
-    }
-
-
 
     // Stream Operators
     // ----------------
@@ -434,10 +332,10 @@ namespace Dune
      *
      *  \returns the STL stream (for concatenation)
      */
-    template< class Traits >
+    template< class Impl >
     inline std :: ostream &
       operator<< ( std :: ostream &out,
-                   const DiscreteFunctionInterface< Traits > &df )
+                   const DiscreteFunctionInterface< Impl > &df )
     {
       df.print( out );
       return out;
@@ -454,10 +352,10 @@ namespace Dune
      *
      *  \returns the output stream (for concatenation)
      */
-    template< class StreamTraits, class Traits >
+    template< class StreamTraits, class Impl >
     inline OutStreamInterface< StreamTraits > &
       operator<< ( OutStreamInterface< StreamTraits > &out,
-                   const DiscreteFunctionInterface< Traits > &df )
+                   const DiscreteFunctionInterface< Impl > &df )
     {
       df.write( out );
       return out;
@@ -474,10 +372,10 @@ namespace Dune
      *
      *  \returns the input stream (for concatenation)
      */
-    template< class StreamTraits, class Traits >
+    template< class StreamTraits, class Impl >
     inline InStreamInterface< StreamTraits > &
       operator>> ( InStreamInterface< StreamTraits > &in,
-                   DiscreteFunctionInterface< Traits > &df )
+                   DiscreteFunctionInterface< Impl > &df )
     {
       df.read( in );
       return in;

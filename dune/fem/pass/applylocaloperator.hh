@@ -9,6 +9,7 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/nullptr.hh>
 
+#include <dune/fem/common/coordinate.hh>
 #include <dune/fem/common/tupletypetraits.hh>
 #include <dune/fem/common/tupleutility.hh>
 #include <dune/fem/pass/common/localfunctiontuple.hh>
@@ -24,7 +25,7 @@ namespace Dune
     // -----------------------------
 
     template< class DiscreteModel, class LocalOperator, class PreviousPass, int id >
-    struct ApplyLocalOperatorPass;
+    class ApplyLocalOperatorPass;
     template< class DiscreteModel, class Argument, class PassIds, class Selector >
     class ApplyLocalOperatorDiscreteModelCaller;
 

@@ -1,11 +1,11 @@
 #ifndef DUNE_FEM_SPACE_RANNACHERTUREK_LOCALINTERPOLATION_HH
 #define DUNE_FEM_SPACE_RANNACHERTUREK_LOCALINTERPOLATION_HH
 
-// C++ includes
-#include <cstdlib>
+#include <cstddef>
+
+#include <utility>
 #include <vector>
 
-// dune-common includes
 #include <dune/common/fvector.hh>
 
 
@@ -15,47 +15,83 @@ namespace Dune
   namespace Fem
   {
 
-    // VectorialLocalInterpolation
-    // ---------------------------
+    // RannacherTurekLocalInterpolation
+    // --------------------------------
 
-    template< class LocalInterpolation, class RangeVector >
-    struct VectorialLocalInterpolation
+    template< class BasisFunctionSet, class LocalInterpolation >
+    class RannacherTurekLocalInterpolation
     {
-      typedef LocalInterpolation LocalInterpolationType;
-      typedef RangeVector RangeType;
+      typedef RannacherTurekLocalInterpolation< BasisFunctionSet, LocalInterpolation > ThisType;
 
-      typedef typename RangeType::field_type RangeFieldType;
-      static const int dimRange = RangeType::dimension;
+    public:
+      typedef BasisFunctionSet BasisFunctionSetType;
+      typedef LocalInterpolation LocalInterpolationType;
+
+    private:
+      typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
+
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+      static const int dimRange = FunctionSpaceType::dimRange;
 
       typedef std::size_t size_type;
 
-    private:
       template< class LocalFunction >
       struct LocalFunctionWrapper;
 
     public:
-      explicit VectorialLocalInterpolation ( const LocalInterpolationType &localInterpolation = LocalInterpolationType() )
-      : localInterpolation_( localInterpolation )
+      explicit RannacherTurekLocalInterpolation ( const BasisFunctionSetType &basisFunctionSet,
+                                                  const LocalInterpolationType &localInterpolation = LocalInterpolationType() )
+        : basisFunctionSet_( basisFunctionSet ),
+          localInterpolation_( localInterpolation )
       {}
-      
+
+      RannacherTurekLocalInterpolation ( const ThisType & ) = default;
+
+      RannacherTurekLocalInterpolation ( ThisType &&other )
+        : basisFunctionSet_( std::move( other.basisFunctionSet_ ) ),
+          localInterpolation_( std::move( other.localInterpolation_ ) )
+      {}
+
+      RannacherTurekLocalInterpolation &operator= ( const ThisType & ) = default;
+
+      RannacherTurekLocalInterpolation &operator= ( ThisType &&other )
+      {
+        basisFunctionSet_ = std::move( other.basisFunctionSet_ );
+        localInterpolation_ = std::move( other.localInterpolation_ );
+        return *this;
+      }
+
+      BasisFunctionSetType basisFunctionSet () const
+      {
+        return basisFunctionSet_;
+      }
+
       template< class LocalFunction, class LocalDofVector >
-      void operator() ( const LocalFunction &f, LocalDofVector &dofs ) const;
+      void operator() ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
+      {
+        apply( localFunction, localDofVector );
+      }
+
+      template< class LocalFunction, class LocalDofVector >
+      void apply ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const;
 
     protected:
       const LocalInterpolationType &localInterpolation () const { return localInterpolation_; }
 
     private:
+      BasisFunctionSet basisFunctionSet_;
       LocalInterpolationType localInterpolation_;
     };
 
 
 
-    // Implementation of VectorialLocalInterpolation::LocalFunctionWrapper
-    // -------------------------------------------------------------------
+    // Implementation of RannacherTurekLocalInterpolation::LocalFunctionWrapper
+    // ------------------------------------------------------------------------
 
     template< class LocalInterpolation, class RangeVector >
     template< class LocalFunction >
-    struct VectorialLocalInterpolation< LocalInterpolation, RangeVector >::LocalFunctionWrapper
+    struct RannacherTurekLocalInterpolation< LocalInterpolation, RangeVector >::LocalFunctionWrapper
     {
       LocalFunctionWrapper ( const LocalFunction &localFunction, size_type component )
       : localFunction_( localFunction ),
@@ -81,27 +117,25 @@ namespace Dune
 
 
 
-    // Implementation of VectorialLocalInterpolation
-    // ---------------------------------------------
+    // Implementation of RannacherTurekLocalInterpolation
+    // --------------------------------------------------
 
-     
+
     template< class LocalInterpolation, class RangeVector >
     template< class LocalFunction, class LocalDofVector >
-    inline void VectorialLocalInterpolation< LocalInterpolation, RangeVector >
-      ::operator() ( const LocalFunction &f, LocalDofVector &dofs ) const
+    inline void RannacherTurekLocalInterpolation< LocalInterpolation, RangeVector >
+      ::apply ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
     {
       std::vector< RangeFieldType > phi;
-      
+
       for( int k = 0; k < dimRange; ++k )
       {
-        LocalFunctionWrapper< LocalFunction > localFunctionWrapper( f, k );
+        LocalFunctionWrapper< LocalFunction > localFunctionWrapper( localFunction, k );
         localInterpolation().interpolate( localFunctionWrapper, phi );
-        
+
         const size_type size = phi.size();
         for( size_type i = 0; i < size; ++i )
-        {
-          dofs[ i*dimRange + k ] = phi[ i ];
-        }
+          localDofVector[ i*dimRange + k ] = phi[ i ];
       }
     }
 

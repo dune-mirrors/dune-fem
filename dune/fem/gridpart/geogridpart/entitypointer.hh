@@ -87,8 +87,8 @@ namespace Dune
       }
 
       // warning: copying the entity copies the wrong pointer to the host entity!
-      template< class LCFTraits >
-      GeoEntityPointer ( const EntityImpl &entity, const LocalFunction< LCFTraits > &localCoordFunction )
+      template< class LocalFunction >
+      GeoEntityPointer ( const EntityImpl &entity, const LocalFunction &localCoordFunction )
       : entity_( EntityImpl( entity, localCoordFunction ) ),
         hostIterator_( entity.hostEntity() )
       {

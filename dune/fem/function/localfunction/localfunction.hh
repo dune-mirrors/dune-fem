@@ -1,12 +1,10 @@
 #ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_LOCALFUNCTION_HH
 #define DUNE_FEM_FUNCTION_LOCALFUNCTION_LOCALFUNCTION_HH
 
+#include <utility>
+
 // dune-common includes
 #include <dune/common/fvector.hh>
-
-// dune-fem includes
-#include <dune/fem/misc/engineconcept.hh>
-#include <dune/fem/version.hh>
 
 
 namespace Dune
@@ -39,78 +37,108 @@ namespace Dune
      *  The LocalFunctionInterface defines the functionality that can be expected
      *  from such a local function.
      */
-    template< class LFTraits >
+    template< class BasisFunctionSet, class LocalDofVector >
     class LocalFunction
-    : public EngineWrapper< typename LFTraits::LocalFunctionImpType, typename LFTraits::LocalFunctionUserType >
     {
-      typedef EngineWrapper< typename LFTraits::LocalFunctionImpType, typename LFTraits::LocalFunctionUserType >
-        BaseType;
-
+      typedef LocalFunction< BasisFunctionSet, LocalDofVector > ThisType;
     public:
-      //! type of the traits
-      typedef LFTraits Traits;
 
-      //! type of the local function (this type!)
-      typedef LocalFunction< Traits > LocalFunctionType;
+      //! type of basis function set  
+      typedef BasisFunctionSet BasisFunctionSetType;
 
-      //! type of the discrete function space, the local function belongs to
-      typedef typename Traits::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      /** \brief  type of local Dof Vector  */
+      typedef LocalDofVector LocalDofVectorType;
 
       //! type of DoF use with the discrete function 
-      typedef typename Traits::DofType DofType;
+      typedef typename LocalDofVectorType::value_type DofType;
 
-      //! type of the local function implementation (engine concept)
-      typedef typename Traits::LocalFunctionImpType LocalFunctionImpType;
-
-      //! type of the user implementation (Barton-Nackman)
-      typedef typename Traits::LocalFunctionUserType LocalFunctionUserType;
+      //! type of index
+      typedef typename LocalDofVectorType::size_type SizeType;
 
       //! type of the entity, the local function lives on is given by the space 
-      typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
+      typedef typename BasisFunctionSetType::EntityType EntityType;
+
+      //! type of functionspace
+      typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
 
       //! field type of the domain
-      typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
+      typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
       //! field type of the range
-      typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
+      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
       //! type of domain vectors, i.e., type of coordinates
-      typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
+      typedef typename FunctionSpaceType::DomainType DomainType;
       //! type of range vectors, i.e., type of function values
-      typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
       //! type of the Jacobian, i.e., type of evaluated Jacobian matrix
-      typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       //! type of the Hessian
-      typedef typename DiscreteFunctionSpaceType::HessianRangeType HessianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       //! type of local coordinates 
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
 
       //! dimension of the domain
-      static const int dimDomain = DiscreteFunctionSpaceType::dimDomain;
+      static const int dimDomain = FunctionSpaceType::dimDomain;
       //! dimension of the range
-      static const int dimRange = DiscreteFunctionSpaceType::dimRange;
+      static const int dimRange = FunctionSpaceType::dimRange;
 
-      //! type of basis function set  
-      typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
+      //! default constructor, calls default ctor of BasisFunctionSetType and LocalDofVectorType
+      LocalFunction () {}
+
+      //! ctor taking a basisFunctionSet, calling default ctor for LocalDofVectorType, and resize
+      explicit LocalFunction ( const BasisFunctionSetType &basisFunctionSet )
+      : basisFunctionSet_( basisFunctionSet )
+      {
+        localDofVector_.resize( basisFunctionSet.size() );
+      }
+
+      //! ctor taking a localDofVector, calling default ctor for BasisFunctionSetType 
+      explicit LocalFunction ( const LocalDofVectorType &localDofVector ) : localDofVector_( localDofVector ) {}
+
+      //! copy given agruments
+      LocalFunction ( const BasisFunctionSetType &basisFunctionSet, const LocalDofVector &localDofVector )
+      : basisFunctionSet_( basisFunctionSet ),
+        localDofVector_( localDofVector )
+      {
+        localDofVector_.resize( basisFunctionSet.size() );
+      }
+
+      //! half move ctor
+      explicit LocalFunction ( LocalDofVectorType &&localDofVector ) : localDofVector_( localDofVector ) {}
+
+      //! half move ctor
+      LocalFunction ( const BasisFunctionSetType &basisFunctionSet, LocalDofVector &&localDofVector )
+      : basisFunctionSet_( basisFunctionSet ),
+        localDofVector_( localDofVector )
+      {
+        localDofVector_.resize( basisFunctionSet.size() );
+      }
+
+      //! move constructor
+      LocalFunction ( ThisType && other )
+      : basisFunctionSet_( std::move( other.basisFunctionSet_ ) ),
+        localDofVector_( std::move( other.localDofVector_ ) )
+      {}
+
+      //! copy constructor
+      LocalFunction ( const ThisType & other )
+      : basisFunctionSet_( other.basisFunctionSet_ ),
+        localDofVector_( other.localDofVector_ )
+      {}
 
       /** \brief access to local dofs (read-only)
        *
        *  \param[in]  num  local dof number 
        *  \return reference to dof 
        */
-      const DofType &operator[] ( const int num ) const
-      {
-        return asImp()[ num ];
-      }
+      const DofType &operator[] ( SizeType num ) const { return localDofVector_[ num ]; }
 
       /** \brief access to local dofs (read-write)
        *
        *  \param[in]  num  local DoF number
        *  \return reference to DoF
        */
-      DofType &operator[] ( const int num )
-      {
-        return asImp()[ num ];
-      }
+      DofType &operator[] ( SizeType num ) { return localDofVector_[ num ]; }
 
       /** \brief add another local function to this one
        *
@@ -122,9 +150,9 @@ namespace Dune
        *  \returns a reference to this local function (i.e., *this)
        */
       template< class T >
-      LocalFunctionType &operator+= ( const LocalFunction< T > &lf )
+      ThisType& operator+= ( const LocalFunction< BasisFunctionSet, T > &other )
       {
-        asImp() += lf;
+        localDofVector() += other.localDofVector();
         return *this;
       }
 
@@ -133,15 +161,15 @@ namespace Dune
        *  \param[in]  lf  local function to assign DoFs from 
        */
       template< class T >
-      void assign ( const LocalFunction< T > &lf )
+      void assign ( const LocalFunction< BasisFunctionSet, T > &other )
       {
-        asImp().assign(lf);
+        localDofVector() = other.localDofVector();
       }
 
       /** \brief set all DoFs to zero */
       void clear ()
       {
-        asImp().clear();
+        std::fill( localDofVector().begin(), localDofVector().end(), DofType( 0 ) );
       }
 
       /** \brief subtract another local function to this one
@@ -154,9 +182,9 @@ namespace Dune
        *  \returns a reference to this local function (i.e., *this)
        */
       template< class T >
-      LocalFunctionType &operator-= ( const LocalFunction< T > &lf )
+      ThisType &operator-= ( const LocalFunction< BasisFunctionSet, T > &other )
       {
-        asImp() -= lf;
+        localDofVector() -= other.localDofVector();
         return *this;
       }
 
@@ -171,9 +199,9 @@ namespace Dune
        *  \returns a reference to this local function (i.e., *this)
        */
       template< class T >
-      LocalFunctionType &axpy ( const RangeFieldType s, const LocalFunction< T > &lf )
+      ThisType &axpy ( const RangeFieldType s, const LocalFunction< BasisFunctionSet, T > &other )
       {
-        asImp().axpy( s, lf );
+        localDofVector().axpy( s, other.localDofVector() );
         return *this;
       }
 
@@ -192,7 +220,7 @@ namespace Dune
       template< class PointType >
       void axpy ( const PointType &x, const RangeType &factor )
       {
-        asImp().axpy( x, factor );
+        basisFunctionSet().axpy( x, factor, localDofVector() );
       }
     
       /** \brief axpy operation for local function
@@ -210,7 +238,7 @@ namespace Dune
       template< class PointType >
       void axpy ( const PointType &x, const JacobianRangeType &factor)
       {
-        asImp().axpy( x, factor );
+        basisFunctionSet().axpy( x, factor, localDofVector() );
       }
 
       /** \brief axpy operation for local function
@@ -229,7 +257,7 @@ namespace Dune
       template< class PointType >
       void axpy ( const PointType &x, const RangeType &factor1, const JacobianRangeType &factor2 )
       {
-        asImp().axpy( x, factor1, factor2 );
+        basisFunctionSet().axpy( x, factor1, factor2, localDofVector() );
       }
 
       /** \brief obtain the order of this local function
@@ -242,33 +270,25 @@ namespace Dune
        *
        *  \returns order of the local function
        */
-      int order () const
-      {
-        return asImp().order();
-      }
+      int order () const { return basisFunctionSet().order(); }
 
       /** \brief obtain the basis function set for this local function
        *
        *  \returns reference to the basis function set
        */
-      const BasisFunctionSetType &basisFunctionSet () const 
-      {
-        return asImp().basisFunctionSet();
-      }
+      const BasisFunctionSetType &basisFunctionSet () const { return basisFunctionSet_; }
 
       /** \brief obtain the entity, this local function lives on
        *
        *  \returns reference to the entity
        */
-      const EntityType &entity () const
-      {
-        return asImp().entity();
-      }
+      const EntityType &entity () const { return basisFunctionSet().entity(); }
 
       //! \todo please doc me
-      void init ( const EntityType &entity )
+      void init ( const BasisFunctionSetType &basisFunctionSet ) 
       {
-        asImp().init( entity );
+        basisFunctionSet_ = basisFunctionSet;
+        localDofVector_.resize( basisFunctionSet.size() );
       }
 
       /** \brief evaluate the local function
@@ -279,7 +299,7 @@ namespace Dune
       template< class PointType >
       void evaluate ( const PointType &x, RangeType &ret ) const
       {
-        asImp().evaluate( x, ret );
+        basisFunctionSet().evaluateAll( x, localDofVector(), ret );
       }
 
       /** \brief evaluate Jacobian of the local function
@@ -293,7 +313,7 @@ namespace Dune
       template< class PointType >
       void jacobian ( const PointType &x, JacobianRangeType &ret ) const
       {
-        asImp().jacobian( x, ret );
+        basisFunctionSet().jacobianAll( x, localDofVector(), ret );
       }
 
       /** \brief evaluate Hessian of the local function
@@ -302,12 +322,12 @@ namespace Dune
        *        return value is the Hessian with respect to the actual entity.
        *
        *  \param[in]   x        evaluation point in local coordinates
-       *  \param[out]  hessian  Hessian of the function in the evaluation point
+       *  \param[out]  ret  Hessian of the function in the evaluation point
        */
       template< class PointType >
-      void hessian ( const PointType &x, HessianRangeType &hessian ) const
+      void hessian ( const PointType &x, HessianRangeType &ret ) const
       {
-        asImp().hessian( x, hessian );
+        basisFunctionSet().hessianAll( x, localDofVector(), ret );
       }
 
       /** \brief obtain the number of local DoFs
@@ -317,15 +337,9 @@ namespace Dune
        *  
        *  \returns number of local DoFs
        */
-      int numDofs () const 
-      {
-        return asImp().numDofs();
-      }
+      int numDofs () const { return localDofVector().size(); }
 
-      size_t size () const
-      {
-        return asImp().numDofs();
-      }
+      SizeType size () const { return localDofVector().size(); }
 
       /** \brief obtain the number of local DoFs in the scalar case 
        *
@@ -337,7 +351,8 @@ namespace Dune
        */
       int numScalarDofs () const 
       {
-        return asImp().numScalarDofs();
+        assert( numDofs() % dimRange == 0 );
+        return numDofs() / dimRange; 
       }
 
       /** \brief evaluate all basisfunctions for all quadrature points, multiply with the given factor and 
@@ -345,7 +360,7 @@ namespace Dune
       template< class QuadratureType, class VectorType >
       void axpyQuadrature ( const QuadratureType &quad, const VectorType &values )
       {
-        asImp().basisFunctionSet().axpy( quad, values, asImp() );
+        basisFunctionSet().axpy( quad, values, localDofVector() );
       }
 
       /** \brief evaluate all basisfunctions for all quadrature points, multiply with the given factor and 
@@ -355,25 +370,32 @@ namespace Dune
                             const RangeVectorType& rangeVector,
                             const JacobianRangeVectorType& jacobianVector )
       {
-        asImp().basisFunctionSet().axpy( quad, rangeVector, jacobianVector, asImp() );
+        basisFunctionSet().axpy( quad, rangeVector, jacobianVector, localDofVector() );
       }
       
       /** \brief evaluate all basisfunctions for all quadrature points and store the results in the result vector */
-      template< class QuadratureType, class VectorType  >
+      template< class QuadratureType, class VectorType >
       void evaluateQuadrature( const QuadratureType &quad, VectorType &result ) const
       {
         assert( result.size() > 0 );
         evaluateQuadrature( quad, result, result[ 0 ] );
       }
 
+
+      /** \brief return const reference to local Dof Vector  */
+      const LocalDofVectorType &localDofVector () const { return localDofVector_; }
+
+      /** \brief return mutable reference to local Dof Vector  */
+      LocalDofVectorType &localDofVector () { return localDofVector_; }
+
     protected:  
       // evaluate local function and store results in vector of RangeTypes 
       // this method only helps to identify the correct method on
       // the basis function set
-      template< class QuadratureType, class VectorType  >
+      template< class QuadratureType, class VectorType >
       void evaluateQuadrature( const QuadratureType &quad, VectorType &result, const RangeType & ) const
       {
-        asImp().basisFunctionSet().evaluateAll( quad, asImp(), result );
+        basisFunctionSet().evaluateAll( quad, localDofVector(), result );
       }
 
       // evaluate jacobian of local function and store result in vector of
@@ -382,10 +404,11 @@ namespace Dune
       template< class QuadratureType, class VectorType >
       void evaluateQuadrature( const QuadratureType &quad, VectorType &result, const JacobianRangeType & ) const
       {
-        asImp().basisFunctionSet().jacobianAll( quad, asImp(), result );
+        basisFunctionSet().jacobianAll( quad, localDofVector(), result );
       }
 
-      using BaseType::asImp;
+      BasisFunctionSetType basisFunctionSet_;
+      LocalDofVectorType localDofVector_;
     };
 
     /** \} */

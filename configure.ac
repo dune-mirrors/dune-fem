@@ -6,7 +6,7 @@ DUNE_AC_INIT
 #AM_INIT_AUTOMAKE([foreign 1.9 tar-pax dist-bzip2])
 
 # check if we're in the right directory
-AC_CONFIG_SRCDIR([dune/fem/space/finitevolume.hh])
+AC_CONFIG_SRCDIR([dune/fem/space/shapefunctionset/legendrepolynomials.hh])
 # which header-file is created
 AC_CONFIG_HEADER([config.h])
 
@@ -37,6 +37,7 @@ AC_CONFIG_FILES([Makefile
      dune/fem/space/basisfunctionset/Makefile
      dune/fem/space/basisfunctionset/test/Makefile
      dune/fem/space/shapefunctionset/Makefile
+     dune/fem/space/shapefunctionset/orthonormal/Makefile
      dune/fem/space/common/Makefile
      dune/fem/space/dofmapper/Makefile
      dune/fem/space/discontinuousgalerkin/Makefile
@@ -75,6 +76,8 @@ AC_CONFIG_FILES([Makefile
      dune/fem/operator/matrix/Makefile
      dune/fem/operator/model/Makefile
      dune/fem/operator/projection/Makefile
+     dune/fem/operator/projection/local/Makefile
+     dune/fem/operator/projection/local/riesz/Makefile
      dune/fem/io/Makefile
      dune/fem/io/test/Makefile
      dune/fem/io/file/Makefile

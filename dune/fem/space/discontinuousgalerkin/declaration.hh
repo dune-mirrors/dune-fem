@@ -27,13 +27,13 @@ namespace Dune
 
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
     class LegendreDiscontinuousGalerkinSpace;
+
     
     // HierarchicLegendreDiscontinuousGalerkinSpace
     // ----------------------------------
 
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
     class HierarchicLegendreDiscontinuousGalerkinSpace;
-
 
   } // namespace Fem
 

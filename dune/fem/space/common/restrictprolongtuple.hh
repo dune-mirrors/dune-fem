@@ -1,220 +1,304 @@
-/**@file
- *
- * Define a default RestrictProlongTuple by chaining sufficiently many
- * Dune::ACFem::RestrictProlongPair templates together.
- */
-#ifndef __DUNE_FEM_RESTRICT_PROLONG_TUPLE_HH__
-#define __DUNE_FEM_RESTRICT_PROLONG_TUPLE_HH__
+#ifndef DUNE_FEM_SPACE_COMMON_RESTRICTPROLONGTUPLE_HH
+#define DUNE_FEM_SPACE_COMMON_RESTRICTPROLONGTUPLE_HH
 
-#include "restrictprolonginterface.hh"
-#include "../../function/common/function.hh"
-#include <dune/common/tuples.hh>
+#include <tuple>
+#include <utility>
 
-namespace Dune {
+#include <dune/common/deprecated.hh>
+#include <dune/common/forloop.hh>
+#include <dune/common/tupleutility.hh>
 
-  namespace Fem {
+#include <dune/fem/space/common/restrictprolonginterface.hh>
 
-    /**@addtogroup RestrictProlongInterface
-     * @{
-     */    
+namespace Dune
+{
 
-    /**Chain two RestrictProlong implementations together. Note that
-     * RP1 and RP2 must be copy-constructible. This
-     * RestrictProlongPair forms the base for forming RestrictProlong
-     * tuples which chain the RestrictProlongDefault implementation of
-     * arbitrary many DiscreteFunction-types together.
+  namespace Fem
+  {
+
+    // Internal forward declaration
+    // ----------------------------
+
+    template< class... RestrictProlongInterfaces >
+    class RestrictProlongTuple;
+    template< class... DiscreteFunctions >
+    class RestrictProlongDefaultTuple;
+
+
+
+    // RestrictProlongTuple
+    // --------------------
+
+    /** \addtogroup RestrictProlongInterface
+     *  \{
+     **/
+
+    /** \class RestrictProlongTuple
+     *
+     *  \brief combine a variadic number of Dune::Fem::RestrictProlongInterface
+     *         instances into a single object again derived from
+     *         Dune::Fem::RestrictProlongInterface
+     *
+     *  \tparam  Head  a Dune::Fem::RestrictProlongInterface type
+     *  \tparam  Tail  additional Dune::Fem::RestrictProlongInterface types
      */
-    template<class RP1, class RP2>
-    class RestrictProlongPair
-      : public RestrictProlongInterface<
-      RestrictProlongTraits<RestrictProlongPair<RP1, RP2>,
-                                       typename RP1::DomainFieldType> >,
-        public std::pair<RP1, RP2>
+    template< class Head, class... Tail >
+    class RestrictProlongTuple< Head, Tail... >
+    : public Dune::Fem::RestrictProlongInterface< RestrictProlongTraits< RestrictProlongTuple< Head, Tail... >, typename Head::DomainFieldType > >
     {
-      typedef std::pair<RP1, RP2> StorageType;
-      typedef RestrictProlongInterface<
-        RestrictProlongTraits<RestrictProlongPair<RP1, RP2>,
-                                         typename RP1::DomainFieldType> >
-      InterfaceType;
+      typedef Dune::Fem::RestrictProlongInterface< RestrictProlongTraits< RestrictProlongTuple< Head, Tail... >, typename Head::DomainFieldType > > BaseType;
 
-      using StorageType::first;
-      using StorageType::second;
+      template< int i > struct AddToList;
+      template< int i > struct AddToLoadBalancer;
+      template< int i > struct ProlongLocal;
+      template< int i > struct RestrictLocal;
+      template< int i > struct SetFatherChildWeight;
 
-     public:
-      typedef typename RP1::DomainFieldType DomainFieldType; // do we really need to check that ...
+    public:
+      /** \copydoc Dune::Fem::RestrictProlongInterface::DomainFieldType */
+      typedef typename BaseType::DomainFieldType DomainFieldType;
 
-      RestrictProlongPair(const RP1& rp1, const RP2& rp2)
-        : StorageType(rp1, rp2)
+      /** \name Construction
+       *  \{
+       */
+
+      explicit RestrictProlongTuple ( Head &&head, Tail &&... tail )
+        : tuple_( std::forward< Head >( head ), std::forward< Tail >( tail )... )
       {}
 
-      void setFatherChildWeight(const DomainFieldType &weight) const {
-        first.setFatherChildWeight(weight);
-        second.setFatherChildWeight(weight);
-      }
+      explicit RestrictProlongTuple ( std::tuple< Head, Tail... > &&tuple )
+        : tuple_( tuple )
+      {}
 
-      template<class Entity>
-      void restrictLocal(const Entity &father, const Entity &son, bool initialize) const {
-        first.restrictLocal(father, son, initialize);
-        second.restrictLocal(father, son, initialize);
-      }
-  
-      template<class Entity, class LocalGeometry>
-      void restrictLocal(const Entity &father, const Entity &son,
-                         const LocalGeometry &geometryInFather,
-                         bool initialize) const {
-        first.restrictLocal(father, son, geometryInFather, initialize);
-        second.restrictLocal(father, son, geometryInFather, initialize);
-      }
+      /** \} */
 
-      template<class Entity>
-      void prolongLocal(const Entity &father, const Entity &son, bool initialize) const {
-        first.prolongLocal(father, son, initialize);
-        second.prolongLocal(father, son, initialize);
-      }
+      /** \name Interface methods
+       *  \{
+       */
 
-      template<class Entity, class LocalGeometry>
-      void prolongLocal(const Entity &father, const Entity &son,
-                        const LocalGeometry &geometryInFather,
-                        bool initialize) const {
-        first.prolongLocal(father, son, geometryInFather, initialize);
-        second.prolongLocal(father, son, geometryInFather, initialize);
-      }
-
-      template<class Communicator>
-      void addToList(Communicator &comm) {
-        first.addToList(comm);
-        second.addToList(comm);
-      }
-
-      template<class LoadBalancer>
-      void addToLoadBalancer(LoadBalancer &lb) {
-        first.addToLoadBalancer(lb);
-        second.addToLoadBalancer(lb);
-      }
-    };
-
-    /**A helper class which defines the proper RestrictProlong
-     * compound data-type for tuples of DiscreteFunction
-     * implementations. This works by template recursion. This 
-     */
-    template<class... All>
-    struct RestrictProlongDefaultTraits;
-
-    //!@copydoc RestrictProlongDefaultTraits
-    template<class DiscreteFunction, class... Rest>
-    struct RestrictProlongDefaultTraits< DiscreteFunction, Rest... >
-    {
-      typedef DiscreteFunction FirstDiscreteFunctionType;
-      typedef RestrictProlongDefault<FirstDiscreteFunctionType> FirstRestrictProlongType;
-      typedef RestrictProlongPair<FirstRestrictProlongType, typename RestrictProlongDefaultTraits<Rest...>::Type> Type;
-    };
-
-    //!@copydoc RestrictProlongDefaultTraits
-    template<class DiscreteFunction>
-    struct RestrictProlongDefaultTraits<DiscreteFunction>
-    {
-      typedef DiscreteFunction FirstDiscreteFunctionType;
-      typedef RestrictProlongDefault<FirstDiscreteFunctionType> FirstRestrictProlongType;
-      typedef FirstRestrictProlongType Type;
-    };
-
-    /**Endpoint for the makeRestrictProlongDefault recursion. Define a
-     * version for a single argument.
-     */
-    template<class DF>
-    static inline
-    RestrictProlongDefault<DF>
-    makeRestrictProlongDefault(Function<typename DF::FunctionSpaceType, DF>& df_)
-    {
-      DF& df(static_cast<DF&>(df_));
-
-      return RestrictProlongDefault<DF>(df);
-    }
-
-    /**Take arbitrary many discrete functions of potentially different
-     * type and generate a suitable RestrictProlong implementation for
-     * use with the AdaptationManager.
-     */
-    template<class DF1, class DF2, class... Rest>
-    static inline
-    typename RestrictProlongDefaultTraits<DF1, DF2, Rest...>::Type
-    makeRestrictProlongDefault(DF1& df1, DF2& df2, Rest&... rest)
-    {
-      typedef typename RestrictProlongDefaultTraits<DF1, DF2, Rest...>::Type ResultType;
-
-      return ResultType(makeRestrictProlongDefault(df1), makeRestrictProlongDefault(df2, rest...));
-    }
-
-    /**AFAIK, C++11 is not capable of expanding tuples into parameter
-     * packs, so this recursive helper function is used to unpack a
-     * tuple and perform the necessary constructions in order to
-     * finally have a compound RestrictProlong type. This involved
-     * O(N*N) copy constructions. maybe std::forward should be used
-     * here ...
-     */
-    template<class Tuple, class Index = std::integral_constant<size_t, 0> >
-    struct RestrictProlongDefaultTupleHelper
-    {
-      enum { index = Index::value };
-      typedef std::integral_constant<size_t, index+1> NextIndexType;
-      typedef typename remove_reference<typename tuple_element<index, Tuple>::type>::type DiscreteFunctionType;
-      typedef RestrictProlongDefault<DiscreteFunctionType> RestrictProlongType;
-      typedef RestrictProlongDefaultTupleHelper<Tuple, NextIndexType> NextHelperType;
-      typedef RestrictProlongPair<RestrictProlongType, typename NextHelperType::Type> Type;
-
-      static Type construct(const Tuple& arg)
+      /** \copydoc Dune::Fem::RestrictProlongInterface::setFatherChildWeight */
+      void setFatherChildWeight ( const DomainFieldType &weight ) const
       {
-        return Type(RestrictProlongType(get<index>(arg)), NextHelperType::construct(arg));
+        Dune::ForLoop< SetFatherChildWeight, 0, sizeof...( Tail ) >::apply( weight, tuple_ );
       }
-    };
 
-    /**Recursion end-point to access the last argument of the tuple. */
-    template<class Tuple>
-    struct RestrictProlongDefaultTupleHelper<Tuple, std::integral_constant<size_t, std::tuple_size<Tuple>::value-1> >
-    {
-      enum { index = tuple_size<Tuple>::value - 1 };
-      typedef typename remove_reference<typename tuple_element<index, Tuple>::type>::type DiscreteFunctionType;
-      typedef RestrictProlongDefault<DiscreteFunctionType> RestrictProlongType;
-      typedef RestrictProlongType Type;
-  
-      static Type construct(const Tuple& arg)
+      /** \copydoc Dune::Fem::RestrictProlongInterface::restrictLocal */
+      template< class Entity >
+      void restrictLocal ( const Entity &father, const Entity &child, bool initialize ) const
       {
-        return Type(get<index>(arg));
+        Dune::ForLoop< RestrictLocal, 0, sizeof...( Tail ) >::apply( father, child, initialize, tuple_ );
+      }
+
+      /** \copydoc Dune::Fem::RestrictProlongInterface::restrictLocal */
+      template< class Entity, class LocalGeometry >
+      void restrictLocal ( const Entity &father, const Entity &child,
+                           const LocalGeometry &geometryInFather, bool initialize ) const
+      {
+        Dune::ForLoop< RestrictLocal, 0, sizeof...( Tail ) >::apply( father, child, geometryInFather, initialize, tuple_ );
+      }
+
+      /** \copydoc Dune::Fem::RestrictProlongInterface::prolongLocal */
+      template< class Entity >
+      void prolongLocal ( const Entity &father, const Entity &child, bool initialize ) const
+      {
+        Dune::ForLoop< ProlongLocal, 0, sizeof...( Tail ) >::apply( father, child, initialize, tuple_ );
+      }
+
+      /** \copydoc Dune::Fem::RestrictProlongInterface::prolongLocal */
+      template< class Entity, class LocalGeometry >
+      void prolongLocal ( const Entity &father, const Entity &child,
+                          const LocalGeometry &geometryInFather, bool initialize ) const
+      {
+        Dune::ForLoop< ProlongLocal, 0, sizeof...( Tail ) >::apply( father, child, geometryInFather, initialize, tuple_ );
+      }
+
+      /** \copydoc Dune::Fem::RestrictProlongInterface::addToList */
+      template< class Communicator >
+      void addToList ( Communicator &comm )
+      {
+        Dune::ForLoop< AddToList, 0, sizeof...( Tail ) >::apply( comm, tuple_ );
+      }
+
+      /** \copydoc Dune::Fem::RestrictProlongInterface::addToLoadBalancer */
+      template< class LoadBalancer >
+      void addToLoadBalancer ( LoadBalancer &loadBalancer )
+      {
+        Dune::ForLoop< AddToLoadBalancer, 0, sizeof...( Tail ) >::apply( loadBalancer, tuple_ );
+      }
+
+      /** \} */
+
+    private:
+      std::tuple< Head, Tail... > tuple_;
+    };
+
+
+
+    // RestrictProlongTuple< Head, Tail... >::AddToList
+    // ------------------------------------------------
+
+    template< class Head, class... Tail >
+    template< int i >
+    struct RestrictProlongTuple< Head, Tail... >::AddToList
+    {
+      template< class Communicator >
+      static void apply ( Communicator &comm, std::tuple< Head, Tail... > &tuple )
+      {
+        std::get< i >( tuple ).addToList( comm );
       }
     };
 
-    template<class... Args>
-    struct RestrictProlongDefaultTraits<tuple<Args...> >
+
+
+    // RestrictProlongTuple< Head, Tail... >::AddToLoadBalancer
+    // --------------------------------------------------------
+
+    template< class Head, class... Tail >
+    template< int i >
+    struct RestrictProlongTuple< Head, Tail... >::AddToLoadBalancer
     {
-      typedef
-      typename RestrictProlongDefaultTupleHelper<tuple<Args...> >::Type
-      Type;
+      template< class LoadBalancer >
+      static void apply ( LoadBalancer &loadBalancer, std::tuple< Head, Tail... > &tuple )
+      {
+        std::get< i >( tuple ).addToLoadBalancer( loadBalancer );
+      }
     };
 
-    /**Conveniently form a compound RestrictProlong-implementation
-     * which conforms to RestrictProlongInterface. This
-     * functions simply takes a std::tuple of references to
-     * DiscreteFunction instances and glues them together. The result
-     * is a RestrictProlong instance which can be added to a
-     * AdaptationManager.
+
+
+    // RestrictProlongTuple< Head, Tail... >::ProlongLocal
+    // ---------------------------------------------------
+
+    template< class Head, class... Tail >
+    template< int i >
+    struct RestrictProlongTuple< Head, Tail... >::ProlongLocal
+    {
+      template< class Entity >
+      static void apply ( const Entity &father, const Entity &child, bool initialize,
+                          const std::tuple< Head, Tail... > &tuple )
+      {
+        std::get< i >( tuple ).prolongLocal( father, child, initialize );
+      }
+
+      template< class Entity, class LocalGeometry >
+      static void apply ( const Entity &father, const Entity &child, const LocalGeometry &geometryInFather, bool initialize,
+                          const std::tuple< Head, Tail... > &tuple )
+      {
+        std::get< i >( tuple ).prolongLocal( father, child, geometryInFather, initialize );
+      }
+    };
+
+
+
+    // RestrictProlongTuple< Head, Tail... >::RestrictLocal
+    // ----------------------------------------------------
+
+    template< class Head, class... Tail >
+    template< int i >
+    struct RestrictProlongTuple< Head, Tail... >::RestrictLocal
+    {
+      template< class Entity >
+      static void apply ( const Entity &father, const Entity &child, bool initialize,
+                          const std::tuple< Head, Tail... > &tuple )
+      {
+        std::get< i >( tuple ).restrictLocal( father, child, initialize );
+      }
+
+      template< class Entity, class LocalGeometry >
+      static void apply ( const Entity &father, const Entity &child, const LocalGeometry &geometryInFather, bool initialize,
+                          const std::tuple< Head, Tail... > &tuple )
+      {
+        std::get< i >( tuple ).restrictLocal( father, child, geometryInFather, initialize );
+      }
+    };
+
+
+
+    // RestrictProlongTuple< Head, Tail... >::SetFatherChildWeight
+    // -----------------------------------------------------------
+
+    template< class Head, class... Tail >
+    template< int i >
+    struct RestrictProlongTuple< Head, Tail... >::SetFatherChildWeight
+    {
+      static void apply ( const DomainFieldType &weight, const std::tuple< Head, Tail... > &tuple )
+      {
+        std::get< i >( tuple ).setFatherChildWeight( weight );
+      }
+    };
+
+
+
+    // RestrictProlongDefaultTuple
+    // ---------------------------
+
+    /** \class RestrictProlongDefaultTuple
      *
-     * @bug Rather a remark: C++14 will add index-sequences which can
-     * be used to unpack tuples into template parameter packs.
+     *  \brief conveniently set up a tuple of Dune::Fem::RestrictProlongDefault
+     *         restriction/prolongation objects created from a variadic list of
+     *         discrete functions
+     *
+     *  \tparam  DiscreteFunctions  a variadic list of discrete function types
      */
-    template<class... Rest>
-    static inline
-    typename RestrictProlongDefaultTraits<Rest...>::Type
-    makeRestrictProlongDefault(const tuple<Rest&...>& arg)
+    template< class... DiscreteFunctions >
+    class RestrictProlongDefaultTuple
+    : public RestrictProlongTuple< RestrictProlongDefault< DiscreteFunctions >... >
     {
-      typedef tuple<Rest&...> TupleType;
-      return RestrictProlongDefaultTupleHelper<TupleType>::construct(arg);
+      typedef RestrictProlongTuple< RestrictProlongDefault< DiscreteFunctions >... > BaseType;
+
+      template< class DiscreteFunction >
+      struct Operation
+      {
+        typedef typename std::decay< DiscreteFunction >::type DiscreteFunctionType;
+        typedef RestrictProlongDefault< DiscreteFunctionType > Type;
+
+        static Type apply ( DiscreteFunctionType &discreteFunction )
+        {
+          return Type( discreteFunction );
+        }
+      };
+
+    public:
+      explicit RestrictProlongDefaultTuple ( DiscreteFunctions &... discreteFunctions )
+        : BaseType( RestrictProlongDefault< DiscreteFunctions >( discreteFunctions )... )
+      {}
+
+      explicit RestrictProlongDefaultTuple ( std::tuple< DiscreteFunctions &... > tuple )
+        : BaseType( Dune::transformTuple< Operation >( tuple ) )
+      {}
+    };
+
+
+
+    // makeRestrictProlongDefault
+    // --------------------------
+
+    /** \fn makeRestrictProlongDefault
+     *
+     *  \brief conveniently set up a tuple of Dune::Fem::RestrictProlongDefault
+     *         restriction/prolongation objects created from a variadic list of
+     *         discrete functions
+     *
+     *  \param[in]  discreteFunctions  a variadic list of discrete function types
+     */
+    template< class... DiscreteFunctions >
+    static inline RestrictProlongDefaultTuple< DiscreteFunctions... >
+    DUNE_DEPRECATED makeRestrictProlongDefault ( DiscreteFunctions &... discreteFunctions )
+    {
+      return RestrictProlongDefaultTuple< DiscreteFunctions... >( discreteFunctions... );
     }
 
-    //!@} RestrictProlongInterface
+    template< class... DiscreteFunctions >
+    static inline RestrictProlongDefaultTuple< DiscreteFunctions... >
+    DUNE_DEPRECATED makeRestrictProlongDefault ( std::tuple< DiscreteFunctions &... > tuple )
+    {
+      return RestrictProlongDefaultTuple< DiscreteFunctions ... >( tuple );
+    }
 
-  } // Fem
+    /** \} */
 
-} // Dune
+  } // namespace Fem
 
-#endif // __DUNE_FEM_RESTRICT_PROLONG_TUPLE_HH__
+} // namespace Dune
 
+#endif // #ifndef DUNE_FEM_SPACE_COMMON_RESTRICTPROLONGTUPLE_HH

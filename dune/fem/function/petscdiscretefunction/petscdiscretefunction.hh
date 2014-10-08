@@ -15,18 +15,16 @@
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/misc/petsc/petscdofmappings.hh>
 #include <dune/fem/misc/petsc/petscvector.hh>
-#include <dune/fem/misc/petsc/petsclocalfunction.hh>
-
 #include <dune/fem/misc/petsc/petscslavedofprovider.hh>
 
 
 #include <dune/common/fvector.hh> 
+#include <dune/common/dynvector.hh>
 
+#include <dune/fem/common/stackallocator.hh>
 #include <dune/fem/function/common/discretefunction.hh>
-#include <dune/fem/function/localfunction/localfunction.hh>
-#include <dune/fem/function/blockvectordiscretefunction/blockvectordiscretefunction.hh>
-
-#include <dune/geometry/referenceelements.hh>
+#include <dune/fem/function/common/functor.hh>
+#include <dune/fem/function/localfunction/mutable.hh>
 
 #include <dune/common/shared_ptr.hh>
 
@@ -42,36 +40,66 @@ namespace Dune
      */
     template< class DiscreteFunctionSpace > class PetscDiscreteFunction;
 
+    // AssignVectorReference
+    // ---------------------
+
+    template< class DofProxy, class Allocator >
+    struct AssignVectorReference< Dune::DynamicVector< DofProxy, Allocator >  >
+    {
+      // we need to overload this
+      typedef Dune::DynamicVector< DofProxy, Allocator > Vector;
+
+      AssignVectorReference ( Vector &vector )
+        : vector_( vector )
+      {}
+
+      void operator() ( const std::size_t index, DofProxy value )
+      {
+        vector_[ index ].assign( value );
+      }
+
+      protected:
+      Vector &vector_;
+    };
+
 
     /* ========================================
      * struct PetscDiscreteFunctionTraits
      * =======================================
      */
     template< class DiscreteFunctionSpace >
-    struct PetscDiscreteFunctionTraits
+    struct DiscreteFunctionTraits< PetscDiscreteFunction< DiscreteFunctionSpace > >
     {
       typedef DiscreteFunctionSpace                                     DiscreteFunctionSpaceType;
-      typedef PetscDiscreteFunctionTraits< DiscreteFunctionSpaceType >  Traits;
-      typedef typename DiscreteFunctionSpaceType::DomainType            DomainType;
-      typedef typename DiscreteFunctionSpaceType::RangeType             RangeType;
-
-      typedef typename DiscreteFunctionSpaceType::JacobianRangeType     JacobianRangeType;
-      typedef typename DiscreteFunctionSpaceType::BlockMapperType       BlockMapperType;
-      typedef typename DiscreteFunctionSpaceType::GridPartType          GridPartType;
       typedef PetscDiscreteFunction< DiscreteFunctionSpaceType >        DiscreteFunctionType;
 
-      typedef PetscLocalFunctionFactory< Traits >                       LocalFunctionFactoryType;
-      typedef LocalFunctionStack< LocalFunctionFactoryType >            LocalFunctionStorageType;
-      typedef PetscLocalFunction< DiscreteFunctionType >                LocalFunctionType;
+      typedef typename DiscreteFunctionSpaceType::DomainType            DomainType;
+      typedef typename DiscreteFunctionSpaceType::RangeType             RangeType;
+      typedef typename DiscreteFunctionSpaceType::RangeFieldType        RangeFieldType;
+      typedef typename DiscreteFunctionSpaceType::JacobianRangeType     JacobianRangeType;
 
-      typedef PetscVector< DiscreteFunctionSpaceType  >                 PetscVectorType;
+      typedef typename DiscreteFunctionSpaceType::BlockMapperType       BlockMapperType;
+      typedef typename DiscreteFunctionSpaceType::GridPartType          GridPartType;
+
+      typedef PetscVector< DiscreteFunctionSpaceType >                  PetscVectorType;
       typedef typename PetscVectorType::DofBlockType                    DofBlockType;
       typedef typename PetscVectorType::ConstDofBlockType               ConstDofBlockType;
       typedef typename PetscVectorType::DofIteratorType                 DofIteratorType;
       typedef typename PetscVectorType::ConstDofIteratorType            ConstDofIteratorType;
       typedef typename PetscVectorType::DofBlockPtrType                 DofBlockPtrType;
       typedef typename PetscVectorType::ConstDofBlockPtrType            ConstDofBlockPtrType;
+
+      typedef typename DofBlockType::DofProxy DofProxyType;
+
+      typedef RangeFieldType DofType;
+
+      typedef ThreadSafeValue< UninitializedObjectStack > LocalDofVectorStackType;
+      typedef StackAllocator< DofProxyType, LocalDofVectorStackType* > LocalDofVectorAllocatorType;
+      typedef Dune::DynamicVector< DofProxyType, LocalDofVectorAllocatorType > LocalDofVectorType;
+
+      typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
     };
+
 
     /* ========================================
      * class PetscDiscreteFunction
@@ -79,18 +107,17 @@ namespace Dune
      */
     template< class DiscreteFunctionSpace >
     class PetscDiscreteFunction
-      : public DiscreteFunctionDefault< PetscDiscreteFunctionTraits< DiscreteFunctionSpace > >
+      : public DiscreteFunctionDefault< PetscDiscreteFunction< DiscreteFunctionSpace > >
     {
       typedef PetscDiscreteFunction< DiscreteFunctionSpace > ThisType;
-      typedef DiscreteFunctionDefault< PetscDiscreteFunctionTraits< DiscreteFunctionSpace > > BaseType;
-      friend class PetscLocalFunction< ThisType >;
+      typedef DiscreteFunctionDefault< PetscDiscreteFunction< DiscreteFunctionSpace > > BaseType;
 
     public:
 
       /*
        * types
        */
-      typedef PetscDiscreteFunctionTraits< DiscreteFunctionSpace > Traits;
+      typedef DiscreteFunctionTraits< ThisType > Traits;
       typedef typename Traits::DiscreteFunctionSpaceType                DiscreteFunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType::FunctionSpaceType     FunctionSpaceType;
       typedef typename Traits::DiscreteFunctionSpaceType::EntityType    EntityType ;
@@ -104,8 +131,6 @@ namespace Dune
       typedef typename Traits::BlockMapperType                          BlockMapperType;
       typedef typename Traits::GridPartType                             GridPartType;
 
-      typedef typename Traits :: LocalFunctionFactoryType               LocalFunctionFactoryType;
-
       typedef typename Traits::DomainType                               DomainType;
       typedef typename Traits::RangeType                                RangeType;
       typedef typename Traits::JacobianRangeType                        JacobianRangeType;
@@ -117,8 +142,10 @@ namespace Dune
       typedef typename PetscVectorType::DofBlockPtrType                 DofBlockPtrType;
       typedef typename PetscVectorType::ConstDofBlockPtrType            ConstDofBlockPtrType;
 
-      // what is DoFType ?!?!?!? this
-      typedef RangeFieldType DofType;
+      typedef typename Traits :: DofType                                DofType;
+      typedef typename Traits :: DofProxyType                           DofProxyType;
+
+      typedef typename BaseType :: LocalDofVectorAllocatorType LocalDofVectorAllocatorType;
 
     protected:  
       typedef PetscManagedDofStorage< DiscreteFunctionSpace, BlockMapperType > PetscManagedDofStorageType;
@@ -131,15 +158,15 @@ namespace Dune
        */
       PetscDiscreteFunction ( const std::string &name,
                               const DiscreteFunctionSpaceType &dfSpace )
-      : BaseType( name, dfSpace, lfFactory_ ),
-        lfFactory_( *this ),
+      : BaseType( name, dfSpace, LocalDofVectorAllocatorType( &ldvStack_ ) ),
+        ldvStack_( std::max( sizeof( DofType ), sizeof( DofProxyType ) ) * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
         memObject_( space(), space().blockMapper(), name ),
         petscVector_( memObject_.getArray() )
       {}
 
       PetscDiscreteFunction ( const ThisType &other )
-      : BaseType( "copy of " + other.name(), other.space(), lfFactory_ ),
-        lfFactory_( *this ),
+      : BaseType( "copy of " + other.name(), other.space(), LocalDofVectorAllocatorType( &ldvStack_ ) ),
+        ldvStack_( other.ldvStack_ ),
         memObject_( space(), space().blockMapper(), name() ),
         petscVector_( memObject_.getArray() )
       {
@@ -252,11 +279,10 @@ namespace Dune
       /*
        * data fields
        */
-      LocalFunctionFactoryType   lfFactory_;
+      typename Traits::LocalDofVectorStackType ldvStack_;
       PetscManagedDofStorageType memObject_;
       PetscVectorType&           petscVector_;
     };
-
 
   } // namespace Fem
 
