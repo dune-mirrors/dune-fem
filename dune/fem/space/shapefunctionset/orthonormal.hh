@@ -1,18 +1,14 @@
 #ifndef DUNE_FEM_SPACE_SHAPEFUNCTIONSET_ORTHONORMAL_HH
 #define DUNE_FEM_SPACE_SHAPEFUNCTIONSET_ORTHONORMAL_HH
 
-// C++ includes
 #include <cassert>
 #include <cstdlib>
 
-// dune-common includes
 #include <dune/common/exceptions.hh>
 
-// dune-geometry includes
 #include <dune/geometry/genericgeometry/topologytypes.hh>
 #include <dune/geometry/type.hh>
 
-// local includes 
 #include <dune/fem/common/coordinate.hh>
 #include <dune/fem/space/shapefunctionset/orthonormal/orthonormalbase_1d.hh>
 #include <dune/fem/space/shapefunctionset/orthonormal/orthonormalbase_2d.hh>
@@ -45,8 +41,7 @@ namespace Dune
     template< class FunctionSpace, int polOrder >
     class OrthonormalShapeFunctionSetSize
     {
-      static_assert( (FunctionSpace::dimDomain <= 3),
-                          "Shape function set only implemented up to dimension 3." );
+      static_assert( (FunctionSpace::dimDomain <= 3), "Shape function set only implemented up to dimension 3." );
 
       template< int order, int dimension >
       struct ShapeFunctionSetSize;
@@ -80,12 +75,15 @@ namespace Dune
     // ------------------------------
 
     template< class FunctionSpace, int polOrder >
-    struct OrthonormalShapeFunctionHelper 
+    struct OrthonormalShapeFunctionHelper
     {
       static_assert( (FunctionSpace::dimRange == 1),
                           "FunctionSpace must be scalar (i.e., dimRange = 1)." );
 
       typedef FunctionSpace FunctionSpaceType;
+
+      typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
 
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
@@ -110,7 +108,7 @@ namespace Dune
 
       // mapping from topology to basic geometry type (see list above)
       template< class Topology >
-      class BasicGeometryType 
+      class BasicGeometryType
       {
         template< unsigned int topologyId >
         struct UniqueId
@@ -162,36 +160,40 @@ namespace Dune
 
 
     protected:
-      typedef typename DomainType :: value_type  DomainField;
-      typedef typename RangeType  :: value_type  RangeField;
-      typedef OrthonormalBase_1D< DomainField, RangeField > OrthonormalBase1d;
-      typedef OrthonormalBase_2D< DomainField, RangeField > OrthonormalBase2d;
-      typedef OrthonormalBase_3D< DomainField, RangeField > OrthonormalBase3d;
+      typedef OrthonormalBase_1D< DomainFieldType, RangeFieldType > OrthonormalBase1d;
+      typedef OrthonormalBase_2D< DomainFieldType, RangeFieldType > OrthonormalBase2d;
+      typedef OrthonormalBase_3D< DomainFieldType, RangeFieldType > OrthonormalBase3d;
 
       static RangeType evaluate ( const Line &, std::size_t i, const DomainType &x )
       {
         return OrthonormalBase1d::eval_line( i, &x[ 0 ] );
       }
+
       static RangeType evaluate ( const Quadrilateral &, std::size_t i, const DomainType &x )
       {
         return OrthonormalBase2d::eval_quadrilateral_2d( i, &x[ 0 ] );
       }
+
       static RangeType evaluate ( const Triangle &, std::size_t i, const DomainType &x )
       {
         return OrthonormalBase2d::eval_triangle_2d( i, &x[ 0 ] );
       }
+
       static RangeType evaluate ( const Pyramid &, std::size_t i, const DomainType &x )
       {
         return OrthonormalBase3d::eval_pyramid_3d( i, &x[ 0 ] );
       }
+
       static RangeType evaluate ( const Hexahedron &, std::size_t i, const DomainType &x )
       {
         return OrthonormalBase3d::eval_hexahedron_3d( i, &x[ 0 ] );
       }
+
       static RangeType evaluate ( const Prism &, std::size_t i, const DomainType &x )
       {
         return OrthonormalBase3d::eval_prism_3d( i, &x[ 0 ] );
       }
+
       static RangeType evaluate ( const Tetrahedron &, std::size_t i, const DomainType &x )
       {
         return OrthonormalBase3d::eval_tetrahedron_3d( i, &x[ 0 ] );
@@ -221,41 +223,47 @@ namespace Dune
       }
 
     protected:
-      typedef typename DomainType :: value_type       DomainField;
-      typedef typename JacobianRangeType:: value_type RangeField;
-      typedef OrthonormalBase_1D< DomainField, RangeField > OrthonormalBase1d;
-      typedef OrthonormalBase_2D< DomainField, RangeField > OrthonormalBase2d;
-      typedef OrthonormalBase_3D< DomainField, RangeField > OrthonormalBase3d;
+      typedef OrthonormalBase_1D< DomainFieldType, RangeFieldType > OrthonormalBase1d;
+      typedef OrthonormalBase_2D< DomainFieldType, RangeFieldType > OrthonormalBase2d;
+      typedef OrthonormalBase_3D< DomainFieldType, RangeFieldType > OrthonormalBase3d;
 
       static void evaluate ( const Line &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase1d::grad_line( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
       }
+
       static void evaluate ( const Quadrilateral &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase2d::grad_quadrilateral_2d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
       }
+
       static void evaluate ( const Triangle &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase2d::grad_triangle_2d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
       }
+
       static void evaluate ( const Pyramid &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase3d::grad_pyramid_3d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
       }
+
       static void evaluate ( const Hexahedron &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase3d::grad_hexahedron_3d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
       }
+
       static void evaluate ( const Prism &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase3d::grad_prism_3d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
       }
+
       static void evaluate ( const Tetrahedron &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
       {
         OrthonormalBase3d::grad_tetrahedron_3d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
       }
     };
+
+
 
     // Implementation of OrthonormalShapeFunctionHelper::HessianEach
     // -------------------------------------------------------------
@@ -267,61 +275,40 @@ namespace Dune
       template< class Functor >
       static void apply ( const DomainType &x, Functor functor )
       {
-        typedef typename DomainType :: value_type Field;
-        Field hess[3] = { 0, 0, 0 };
         HessianRangeType hessian;
         const std::size_t size = OrthonormalShapeFunctionSetSize< FunctionSpace, polOrder >::v;
         for( std::size_t i = 0; i < size; ++i )
         {
           assert( x.size() == Topology::dimension );
-          evaluate( basicGeometryType< Topology >(), i, x, hess );
-          for( unsigned int j = 0; j < FunctionSpace::dimDomain;  ++j )
-            for( unsigned int k = 0; k < FunctionSpace::dimDomain; ++k )
-              hessian[ 0 ][ j ][ k ] = hess[ j + k ];
-
+          evaluate( basicGeometryType< Topology >(), i, x, hessian );
           functor( i, hessian );
         }
       }
 
     protected:
-      typedef typename DomainType :: value_type  DomainField;
-      typedef typename RangeType :: value_type  RangeField;
-      typedef OrthonormalBase_2D< DomainField, RangeField > OrthonormalBase2d;
+      static void evaluate ( const Triangle &, std::size_t i, const DomainType &x, HessianRangeType &hessian )
+      {
+        typedef OrthonormalBase_2D< DomainFieldType, RangeFieldType > OrthonormalBase2d;
+        RangeFieldType values[] = { 0, 0, 0 };
+        OrthonormalBase2d::hess_triangle_2d( i , &x[ 0 ], values );
 
-      static void evaluate ( const Line &, std::size_t i, const DomainType &x, double (&hessian)[3] )
-      {
-        DUNE_THROW( NotImplemented, "On orthonormal shape function set HessianAll() is only implemented for triangles" );
+        for( unsigned int j = 0; j < FunctionSpace::dimDomain;  ++j )
+          for( unsigned int k = 0; k < FunctionSpace::dimDomain; ++k )
+            hessian[ 0 ][ j ][ k ] = values[ j + k ];
       }
-      static void evaluate ( const Quadrilateral &, std::size_t i, const DomainType &x, double (&hessian)[3] )
-      {
-        DUNE_THROW( NotImplemented, "On orthonormal shape function set HessianAll() is only implemented for triangles" );
-      }
-      static void evaluate ( const Triangle &, std::size_t i, const DomainType &x, double (&hessian)[3] )
-      {
-        OrthonormalBase2d::hess_triangle_2d( i , &x[ 0 ], hessian );
-      }
-      static void evaluate ( const Pyramid &, std::size_t i, const DomainType &x, double (&hessian)[3] )
-      {
-        DUNE_THROW( NotImplemented, "On orthonormal shape function set HessianAll() is only implemented for triangles" );
-      }
-      static void evaluate ( const Hexahedron &, std::size_t i, const DomainType &x, double (&hessian)[3] )
-      {
-        DUNE_THROW( NotImplemented, "On orthonormal shape function set HessianAll() is only implemented for triangles" );
-      }
-      static void evaluate ( const Prism &, std::size_t i, const DomainType &x, double (&hessian)[3] )
-      {
-        DUNE_THROW( NotImplemented, "On orthonormal shape function set HessianAll() is only implemented for triangles" );
-      }
-      static void evaluate ( const Tetrahedron &, std::size_t i, const DomainType &x, double (&hessian)[3] )
+
+      template< class Other >
+      static void evaluate ( const Other &, std::size_t i, const DomainType &x, HessianRangeType &hessian )
       {
         DUNE_THROW( NotImplemented, "On orthonormal shape function set HessianAll() is only implemented for triangles" );
       }
     };
 
 
+
     // OrthonormalShapeFunctionSet
     // ---------------------------
-    
+
     template< class FunctionSpace, int polOrder >
     class OrthonormalShapeFunctionSet
     {
@@ -351,7 +338,7 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       explicit OrthonormalShapeFunctionSet ( const GeometryType &type )
-      : topologyId_( type.id() )
+        : topologyId_( type.id() )
       {}
 
       /** @copydoc Dune::Fem::ShapeFunctionSet::order*/
@@ -368,24 +355,27 @@ namespace Dune
       template< class Point, class Functor >
       void evaluateEach ( const Point &x, Functor functor ) const
       {
+        const DomainType y = coordinate( x );
         Dune::GenericGeometry::IfTopology< ShapeFunctionSetHelperType::template EvaluateEach, dimension >
-          ::apply( topologyId_, coordinate( x ), functor );
+          ::apply( topologyId_, y, functor );
       }
 
       /** @copydoc Dune::Fem::ShapeFunctionSet::jacobianEach */
       template< class Point, class Functor >
       void jacobianEach ( const Point &x, Functor functor ) const
       {
+        const DomainType y = coordinate( x );
         Dune::GenericGeometry::IfTopology< ShapeFunctionSetHelperType::template JacobianEach, dimension >
-          ::apply( topologyId_, coordinate( x ), functor );
+          ::apply( topologyId_, y, functor );
       }
 
       /** @copydoc Dune::Fem::ShapeFunctionSet::hessianEach */
       template< class Point, class Functor >
       void hessianEach ( const Point &x, Functor functor ) const
       {
+        const DomainType y = coordinate( x );
         Dune::GenericGeometry::IfTopology< ShapeFunctionSetHelperType::template HessianEach, dimension >
-          ::apply( topologyId_, coordinate( x ), functor );
+          ::apply( topologyId_, y, functor );
       }
 
     private:
