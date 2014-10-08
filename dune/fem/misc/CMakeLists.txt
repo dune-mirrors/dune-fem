@@ -1,5 +1,5 @@
 set(miscdir   ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/misc)
-set(SUBDIRS  petsc test threads)
+set(SUBDIRS  petsc threads)
 set(misc_HEADERS alugridwriter.hh
                  bartonnackmaninterface.hh
                  boundaryidentifier.hh
