@@ -8,18 +8,13 @@ add_definitions( "-DGRIDDIM=${GRIDDIM}" )
 add_definitions( "-DPOLORDER=${POLORDER}" )
 add_definitions( "-DWANT_GRAPE=${WANT_GRAPE}" )
 
-
-set(LDADD  ${ALL_PKG_LDFLAGS} ${ALL_PKG_LIBS} ${LOCAL_LIBS} ${MPI_LDFLAGS})
-set(check_PROGRAMS  persistencemanagertest dataoutputtest)
-set(TESTS  persistencemanagertest dataoutputtest)
+set(TESTS  persistencemanagertest 
+           dataoutputtest)
 
 add_executable(persistencemanagertest persistencemanagertest.cc)
 dune_target_link_libraries(persistencemanagertest ${DUNE_LIBS} ${LOCAL_LIBS})
 add_executable(dataoutputtest dataoutputtest.cc)
 dune_target_link_libraries(dataoutputtest ${DUNE_LIBS} ${LOCAL_LIBS})
-
-set(AM_CPPFLAGS  ${ALL_PKG_CPPFLAGS} -DPOLORDER=${POLORDER} -DWANT_GRAPE=${WANT_GRAPE})
-set(CXXFLAGS  -g)
 
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules

@@ -1,5 +1,3 @@
-# don't follow the full GNU-standard; we definitely need automake >= 1.5
-set(AUTOMAKE_OPTIONS  foreign 1.5)
 set(SUBDIRS  ode oemsolver test)
 
 # construct only from sub-libraries

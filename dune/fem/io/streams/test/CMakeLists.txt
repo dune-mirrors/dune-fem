@@ -1,15 +1,11 @@
-# IGNORE_HEADERS
-# linker flags
-set(LDADD  ${ALL_PKG_LDFLAGS} ${ALL_PKG_LIBS} ${LOCAL_LIBS})
-# preprocessor flags
-set(AM_CPPFLAGS  ${ALL_PKG_CPPFLAGS})
-set(AM_CXXFLAGS  -O0 -g -Wall ${ALL_PKG_CXXFLAGS})
 set(TESTS  test-streams)
-set(check_PROGRAMS  test-streams)
+
 add_executable(test_streams test-streams.cc)
 dune_target_link_libraries(test_streams ${DUNE_LIBS} ${LOCAL_LIBS})
+
 set(streamstestdir   ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/io/streams/test)
 set(streamstest_HEADERS  test-streams.cc)
+
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
 install(FILES ${streamstest_HEADERS} DESTINATION ${streamstestdir})

@@ -16,22 +16,20 @@ add_definitions( "-DDIMRANGE=${DIMRANGE}" )
 add_definitions( "-DPOLORDER=${POLORDER}" )
 add_definitions( "-DWANT_GRAPE=${WANT_GRAPE}" )
 
-set(LDADD  ${ALL_PKG_LDFLAGS} ${ALL_PKG_LIBS} ${LOCAL_LIBS} ${MPI_LDFLAGS})
-set(AM_CPPFLAGS  ${ALL_PKG_CPPFLAGS} -DPOLORDER=${POLORDER} -DDIMRANGE=${DIMRANGE} -DWANT_GRAPE=${WANT_GRAPE})
-set(ADAPTPROG  lagrangeadapt adapt padapt)
-# programs run during make check
-set(TESTS  ${ADAPTPROG} dgcomm-4.sh dgcomm-cached-4.sh)
-set(check_PROGRAMS  ${ADAPTPROG}
-                 arraytest
-                 combinedspacetest
-                 dgcomm
-                 dgcomm_cached
-                 interpolation
-     l2projection
-     lagrangeglobalrefine
-                 lagrangeinterpolation
-                 legendretest)
-set(EXTRA_DIST  systemmatrix.cc)
+set(TESTS  lagrangeadapt 
+           adapt 
+           padapt
+           dgcomm-4.sh 
+           dgcomm-cached-4.sh
+           arraytest
+           combinedspacetest
+           dgcomm
+           dgcomm_cached
+           interpolation
+           l2projection
+           lagrangeglobalrefine
+           lagrangeinterpolation
+           legendretest)
 
 add_executable(l2projection l2projection.cc)
 dune_target_link_libraries(l2projection ${DUNE_LIBS} ${LOCAL_LIBS})

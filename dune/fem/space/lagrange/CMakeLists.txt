@@ -1,4 +1,3 @@
-set(AUTOMAKE_OPTIONS  foreign 1.5)
 set(SUBDIRS  test)
 set(lagrangedir  ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/space/lagrange)
 set(lagrange_HEADERS  adaptmanager.hh

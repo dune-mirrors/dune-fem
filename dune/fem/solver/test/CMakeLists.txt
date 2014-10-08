@@ -1,8 +1,5 @@
-set(LDADD  ${ALL_PKG_LDFLAGS} ${ALL_PKG_LIBS} ${LOCAL_LIBS})
-set(AM_CPPFLAGS  ${ALL_PKG_CPPFLAGS})
-
-set(TESTS  odetest odesystemtest)
-set(check_PROGRAMS  odetest odesystemtest)
+set(TESTS  odetest 
+           odesystemtest)
 
 add_executable(odetest odetest.cc)
 dune_target_link_libraries(odetest ${DUNE_LIBS} ${LOCAL_LIBS})

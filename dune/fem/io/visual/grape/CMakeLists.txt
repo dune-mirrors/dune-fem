@@ -1,5 +1,3 @@
-# don't follow the full GNU-standard; we definitely need automake >= 1.5
-set(AUTOMAKE_OPTIONS  foreign 1.5)
 set(SUBDIRS  datadisp)
 set(grapedir   ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/io/visual/grape)
 # include not needed for CMake

@@ -3,16 +3,13 @@ set(GRIDDIM  2)
 set(POLORDER  3)
 set(DIMRANGE  5)
 set(USE_VERTICAL_DOF_ALIGNMENT  1)
-set(LDADD  ${ALL_PKG_LDFLAGS} ${ALL_PKG_LIBS} ${LOCAL_LIBS} ${MPI_LDFLAGS})
-set(AM_CPPFLAGS  ${ALL_PKG_CPPFLAGS})
+
 set(TESTS  test-vectorialbasisfunctionset)
-set(check_PROGRAMS  test-vectorialbasisfunctionset)
+
 add_executable(test_vectorialbasisfunctionset test-vectorialbasisfunctionset.cc)
 dune_target_link_libraries(test_vectorialbasisfunctionset ${DUNE_LIBS} ${LOCAL_LIBS})
 add_dune_mpi_flags(test_vectorialbasisfunctionset )
-set(DGFFILES  1dgrid.dgf 2dgrid.dgf 3dgrid.dgf)
-set(EXTRA_DIST  ${DGFFILES})
-set(CLEANFILES  dgfparser.log)
+
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rulesset(TESTS  parametertest)
 foreach(i ${TESTS})
