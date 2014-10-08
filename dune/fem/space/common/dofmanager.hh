@@ -1075,7 +1075,6 @@ namespace Dune
         removeIndices_.apply( element );
       }
 
-    protected:  
       //! resize the MemObject if necessary 
       void resizeMemory()
       {
