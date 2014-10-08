@@ -28,9 +28,9 @@ foreach(i ${SUBDIRS})
 endforeach(i ${SUBDIRS})
 
 dune_add_library(space OBJECT 
-    discontinuousgalerkin/legendrepolynomials.cc
-    discontinuousgalerkin/orthonormalbase_1d.cc
-    discontinuousgalerkin/orthonormalbase_2d.cc
-    discontinuousgalerkin/orthonormalbase_3d.cc
+    shapefunctionset/legendrepolynomials.cc
+    shapefunctionset/orthonormal/orthonormalbase_1d.cc
+    shapefunctionset/orthonormal/orthonormalbase_2d.cc
+    shapefunctionset/orthonormal/orthonormalbase_3d.cc
     lagrange/shapefunctionset.cc
   )
