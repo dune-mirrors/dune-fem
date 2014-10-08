@@ -1,16 +1,17 @@
 set(discontinuousgalerkindir   ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/space/discontinuousgalerkin)
-set(discontinuousgalerkin_HEADERS  capabilities.hh
-                                declaration.hh
-                                default.hh
-                                lagrange.hh
-                                legendre.hh
-                                legendrepolynomials.hh
-                                localdgmassmatrix.hh
-                                localinterpolation.hh
-                                localrestrictprolong.hh
-                                orthonormalbase_mod.hh
-                                shapefunctionset.hh
-                                space.hh)
+set(discontinuousgalerkin_HEADERS basisfunctionsets.hh
+                                  declaration.hh
+                                  generic.hh
+                                  hierarchiclegendre.hh
+                                  hierarchiclegendremap.hh
+                                  interpolation.hh
+                                  lagrange.hh
+                                  legendre.hh
+                                  localdgmassmatrix.hh
+                                  localinterpolation.hh
+                                  localrestrictprolong.hh
+                                  shapefunctionsets.hh
+                                  space.hh)
 set(EXTRA_DIST  orthonormalbase_1d.cc orthonormalbase_2d.cc orthonormalbase_3d.cc)
 
 # include not needed for CMake

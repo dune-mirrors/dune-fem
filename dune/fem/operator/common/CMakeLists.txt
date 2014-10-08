@@ -1,11 +1,18 @@
 set(SUBDIRS  test)
 set(commondir   ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/operator/common)
-set(common_HEADERS  automaticdifferenceoperator.hh  differentiableoperator.hh
-                 discreteoperator.hh  localoperatordef.inc  operator.hh
-                 combine.inc  localoperator.hh  mapping.hh  objpointer.hh
-                 vectorspace.hh  spaceoperatorif.hh  localmatrix.hh
-                 localmatrixwrapper.hh  temporarylocalmatrix.hh
-                                                                 petsclinearoperator.hh)
+set(common_HEADERS automaticdifferenceoperator.hh
+                   differentiableoperator.hh
+                   discreteoperator.hh
+                   localmatrix.hh
+                   localmatrixwrapper.hh
+                   localoperator.hh
+                   mapping.hh
+                   objpointer.hh
+                   operator.hh
+                   spaceoperatorif.hh
+                   stencil.hh
+                   temporarylocalmatrix.hh
+                   vectorspace.hh)
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
 install(FILES ${common_HEADERS} DESTINATION ${commondir})
