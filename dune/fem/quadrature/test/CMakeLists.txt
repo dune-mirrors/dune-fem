@@ -18,7 +18,7 @@ set(AM_CPPFLAGS  ${ALL_PKG_CPPFLAGS})
 set(TESTS  cachingquadrature)
 set(check_PROGRAMS  cachingquadrature)
 add_executable(cachingquadrature cachingquadrature.cc)
-dune_target_link_libraries( cachingquadrature ${DUNE_LIBS} )
+dune_target_link_libraries( cachingquadrature ${DUNE_LIBS} ${LOCAL_LIBS})
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
 foreach(i ${TESTS})

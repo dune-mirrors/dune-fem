@@ -11,7 +11,7 @@ set(EXTRA_DIST  testparameterfile
 set(TESTS  parametertest)
 set(check_PROGRAMS  parametertest)
 add_executable(parametertest parametertest.cc)
-dune_target_link_libraries(parametertest ${DUNE_LIBS})
+dune_target_link_libraries(parametertest ${DUNE_LIBS} ${LOCAL_LIBS})
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
 foreach(i ${TESTS})

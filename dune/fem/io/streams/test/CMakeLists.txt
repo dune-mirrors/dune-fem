@@ -7,7 +7,7 @@ set(AM_CXXFLAGS  -O0 -g -Wall ${ALL_PKG_CXXFLAGS})
 set(TESTS  test-streams)
 set(check_PROGRAMS  test-streams)
 add_executable(test_streams test-streams.cc)
-dune_target_link_libraries(test_streams ${DUNE_LIBS})
+dune_target_link_libraries(test_streams ${DUNE_LIBS} ${LOCAL_LIBS})
 set(streamstestdir   ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/io/streams/test)
 set(streamstest_HEADERS  test-streams.cc)
 # include not needed for CMake
