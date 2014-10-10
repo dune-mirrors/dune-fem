@@ -43,7 +43,7 @@ namespace Dune
     typedef GridPart GridPartType;
 
     typedef TestFunctionSpace FunctionSpaceType;
-    
+
     typedef DiscontinuousGalerkinSpace
       < FunctionSpaceType :: ScalarFunctionSpaceType, GridPartType, polOrder >
       SingleDiscreteFunctionSpaceType;
@@ -65,10 +65,10 @@ namespace Dune
 #warning USING LAGRANGE
     typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
       DiscreteFunctionSpaceType;
-#elif defined USE_LEGENDRESPACE 
+#elif defined USE_LEGENDRESPACE
     typedef LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
       DiscreteFunctionSpaceType;
-#elif defined USE_HIERARCHCILEGENDRESPACE 
+#elif defined USE_HIERARCHICLEGENDRESPACE
     typedef HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder >
       DiscreteFunctionSpaceType;
 #else
