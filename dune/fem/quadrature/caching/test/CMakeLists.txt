@@ -9,7 +9,8 @@ add_definitions( "-DGRIDDIM=${GRIDDIM}" )
 # also distribute the headers for the checks
 set(TESTS  quad_tester)
 
-add_executable(quad_tester main.cc ../../../misc/test.cc ../../../misc/suite.cc refelem_test.cc cache_test.cc twist_test.cc point_test.cc)
+add_executable(quad_tester main.cc refelem_test.cc cache_test.cc twist_test.cc point_test.cc)
+dune_target_link_libraries(quad_tester "${DUNE_LIBS};${LOCAL_LIBS}")
 
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
