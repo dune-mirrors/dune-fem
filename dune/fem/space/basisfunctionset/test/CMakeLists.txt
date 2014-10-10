@@ -4,6 +4,13 @@ set(POLORDER  3)
 set(DIMRANGE  5)
 set(USE_VERTICAL_DOF_ALIGNMENT  1)
 
+add_definitions( "-D${GRIDTYPE}" )
+add_definitions( "-DGRIDDIM=${GRIDDIM}" ) 
+add_definitions( "-DPOLORDER=${POLORDER}" )
+add_definitions( "-DDIMRANGE=${DIMRANGE}" )
+add_definitions( "-DUSE_VERTICAL_DOF_ALIGNMENT=${USE_VERTICAL_DOF_ALIGNMENT}" )
+
+
 set(TESTS  test_vectorialbasisfunctionset)
 
 add_executable(test_vectorialbasisfunctionset test-vectorialbasisfunctionset.cc)
