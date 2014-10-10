@@ -50,7 +50,7 @@ dune_target_link_libraries(dgl2projection_legendre "${DUNE_LIBS};${LOCAL_LIBS}")
 set_property(TARGET dgl2projection_legendre APPEND PROPERTY 
              COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_LEGENDRESPACE;YASPGRID;GRIDDIM=${GRIDDIM}" )
 
-add_executable(dgl2projection_legendre dgl2projection.cc)
+add_executable(dgl2projection_hierarchiclegendre dgl2projection.cc)
 dune_target_link_libraries(dgl2projection_hierarchiclegendre "${DUNE_LIBS};${LOCAL_LIBS}")
 set_property(TARGET dgl2projection_legendre APPEND PROPERTY 
   COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_HIERARCHICLEGENDRESPACE;YASPGRID;GRIDDIM=${GRIDDIM}" )
