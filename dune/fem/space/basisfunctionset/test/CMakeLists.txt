@@ -11,11 +11,16 @@ add_definitions( "-DDIMRANGE=${DIMRANGE}" )
 add_definitions( "-DUSE_VERTICAL_DOF_ALIGNMENT=${USE_VERTICAL_DOF_ALIGNMENT}" )
 
 
-set(TESTS  test_vectorialbasisfunctionset)
+set(TESTS  test_vectorialbasisfunctionset
+           test_basisfunctionset)
 
 add_executable(test_vectorialbasisfunctionset test-vectorialbasisfunctionset.cc)
 dune_target_link_libraries(test_vectorialbasisfunctionset "${DUNE_LIBS};${LOCAL_LIBS}")
 add_dune_mpi_flags(test_vectorialbasisfunctionset )
+set_property(TARGET test_vectorialbasisfunctionset APPEND PROPERTY COMPILE_DEFINITIONS "USE_VERTICAL_DOF_ALIGNMENT=${USE_VERTICAL_DOF_ALIGNMENT}" )
+add_executable(test_basisfunctionset test-basisfunctionset.cc)
+dune_target_link_libraries(test_basisfunctionset "${DUNE_LIBS};${LOCAL_LIBS}")
+add_dune_mpi_flags(test_basisfunctionset )
 
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rulesset(TESTS  parametertest)
