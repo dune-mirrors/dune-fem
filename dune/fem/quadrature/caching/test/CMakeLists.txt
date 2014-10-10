@@ -7,7 +7,7 @@ add_definitions( "-D${GRIDTYPE}" )
 add_definitions( "-DGRIDDIM=${GRIDDIM}" ) 
 
 # also distribute the headers for the checks
-set(TESTS  tester)
+set(TESTS  quad_tester)
 
 add_executable(quad_tester main.cc ../../../misc/test.cc ../../../misc/suite.cc refelem_test.cc cache_test.cc twist_test.cc point_test.cc)
 
