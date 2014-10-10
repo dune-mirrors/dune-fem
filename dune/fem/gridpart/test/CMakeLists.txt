@@ -25,11 +25,10 @@ dune_target_link_libraries(test_idgridpart "${DUNE_LIBS};${LOCAL_LIBS}")
 add_executable(test_geogridpart test-geogridpart.cc)
 dune_target_link_libraries(test_geogridpart "${DUNE_LIBS};${LOCAL_LIBS}")
 
-set_property(TARGET gp_lagrangeinterpolation APPEND PROPERTY COMPILE_DEFINITIONS "COUNT_FLOPS" )
-set_property(TARGET gp_lagrangeinterpolation APPEND PROPERTY COMPILE_DEFINITIONS "USE_FILTEREDGRIDPART" )
-set_property(TARGET gp_lagrangeinterpolation APPEND PROPERTY COMPILE_DEFINITIONS "POLORDER=1" )
-set_property(TARGET test_filteredgridpart APPEND PROPERTY COMPILE_DEFINITIONS "COUNT_FLOPS" )
-set_property(TARGET test_filteredgridpart APPEND PROPERTY COMPILE_DEFINITIONS "USE_FILTEREDGRIDPART" )
+set_property(TARGET gp_lagrangeinterpolation APPEND PROPERTY 
+             COMPILE_DEFINITIONS "COUNT_FLOPS;USE_FILTEREDGRIDPART;POLORDER=1" )
+set_property(TARGET test_filteredgridpart APPEND PROPERTY 
+             COMPILE_DEFINITIONS "COUNT_FLOPS;USE_FILTEREDGRIDPART" )
 
 
 # include not needed for CMake
