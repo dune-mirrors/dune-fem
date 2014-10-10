@@ -13,6 +13,11 @@ add_definitions( "-DPOLORDER=${POLORDER}" )
 add_definitions( "-DGEOMETRYTYPE=${GEOMETRYTYPE}" )
 add_definitions( "-DSCALAR=${SCALAR}" )
 
+# copy data to build source to make tests work         
+configure_file(1dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/1dgrid.dgf COPYONLY)
+configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
+configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
+
 set(TESTS  tester 
            generic
            testnonscalarmapper)
