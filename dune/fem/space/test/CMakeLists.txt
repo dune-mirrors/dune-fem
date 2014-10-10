@@ -20,13 +20,19 @@ set(TESTS  lagrangeadapt
            padapt
            arraytest
            combinedspacetest
-           dgcomm
-           dgcomm_cached
            interpolation
            l2projection
            lagrangeglobalrefine
            lagrangeinterpolation
            legendretest)
+
+# copy data to build source to make tests work         
+configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
+configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
+configure_file(parameter ${CMAKE_CURRENT_BINARY_DIR}/parameter COPYONLY)
+configure_file(dgcomm-4.sh ${CMAKE_CURRENT_BINARY_DIR}/dgcomm_4.sh COPYONLY)
+configure_file(dgcomm-cached-4.sh ${CMAKE_CURRENT_BINARY_DIR}/dgcomm_cached_4.sh COPYONLY)
+
 
 add_executable(l2projection l2projection.cc)
 dune_target_link_libraries(l2projection "${DUNE_LIBS};${LOCAL_LIBS}")
@@ -77,20 +83,14 @@ dune_target_link_libraries(dgcomm_cached "${DUNE_LIBS};${LOCAL_LIBS}")
 set_property(TARGET dgcomm_cached APPEND PROPERTY 
              COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3" )
 
-#install(FILES systemmatrix.cc dgcomm-4.sh dgcomm-cached-4.sh parameter *.dgf 
-#DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/space/test )
-
-# todo: dgcomm_cached_4.sh and dgcomm_4.sh are not used to verify mpi tests
-#add_test(dgcomm_4.sh dgcomm-4.sh)
-#add_test(dgcomm_cached_4.sh dgcomm-cached-4.sh)
+set(ALL_TESTS ${TESTS} dgcomm dgcomm_cached)
 
 # We do not want want to build the tests during make all
 # but just build them on demand
-
-# include not needed for CMake
-# include $(top_srcdir)/am/global-rules
 foreach(i ${TESTS})
   add_test(${i} ${i})
 endforeach(i ${TESTS})
+add_test(dgcomm_4.sh dgcomm_4.sh)
+add_test(dgcomm_cached_4.sh dgcomm_cached_4.sh)
 add_directory_test_target(_test_target)
-add_dependencies(${_test_target} ${TESTS} ${COMPILE_XFAIL_TESTS})
+add_dependencies(${_test_target} ${ALL_TESTS} ${COMPILE_XFAIL_TESTS})

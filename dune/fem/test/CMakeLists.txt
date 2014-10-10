@@ -31,9 +31,12 @@ set(TESTS lagrangeinterpolation_linear
 # todo: fix compiler errors
 #set(TESTS "${TESTS} dgl2projection_filtered")
 
-
-# todo use adaptation_4.sh for testing
-
+# copy data to build source to make tests work
+configure_file(1dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/1dgrid.dgf COPYONLY)
+configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
+configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
+configure_file(parameter ${CMAKE_CURRENT_BINARY_DIR}/parameter COPYONLY)
+configure_file(adaptation-4.sh ${CMAKE_CURRENT_BINARY_DIR}/adaptation_4.sh COPYONLY)
 
 add_executable(lagrangeinterpolation_linear lagrangeinterpolation.cc)
 dune_target_link_libraries(lagrangeinterpolation_linear "${DUNE_LIBS};${LOCAL_LIBS}")
@@ -116,13 +119,17 @@ dune_target_link_libraries(adaptation "${DUNE_LIBS};${LOCAL_LIBS}")
 set_property(TARGET adaptation APPEND PROPERTY 
              COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE}" )
 
+set(ALL_TESTS ${TESTS} adaptation)
+
+
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
 foreach(i ${TESTS})
   add_test(${i} ${i})
 endforeach(i ${TESTS})
+add_test(adaptation_4.sh adaptation_4.sh)
 # We do not want want to build the tests during make all
 # but just build them on demand
 add_directory_test_target(_test_target)
-add_dependencies(${_test_target} ${TESTS} ${COMPILE_XFAIL_TESTS})
+add_dependencies(${_test_target} ${ALL_TESTS} ${COMPILE_XFAIL_TESTS})
 
