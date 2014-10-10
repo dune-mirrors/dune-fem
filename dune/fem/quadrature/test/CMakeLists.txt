@@ -14,7 +14,7 @@ add_definitions( "-DGRIDDIM=${GRIDDIM}" )
 set(TESTS  cachingquadrature)
 
 add_executable(cachingquadrature cachingquadrature.cc)
-dune_target_link_libraries( cachingquadrature ${DUNE_LIBS} ${LOCAL_LIBS})
+dune_target_link_libraries( cachingquadrature "${DUNE_LIBS};${LOCAL_LIBS}")
 
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules

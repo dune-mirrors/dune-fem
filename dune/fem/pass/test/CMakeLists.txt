@@ -12,7 +12,7 @@ add_definitions( "-DPOLORDER=${POLORDER}" )
 set(TESTS  test-pass)
 
 add_executable(test_pass test-pass.cc)
-dune_target_link_libraries(test_pass ${DUNE_LIBS} ${LOCAL_LIBS})
+dune_target_link_libraries(test_pass "${DUNE_LIBS};${LOCAL_LIBS}")
 add_dune_mpi_flags(test_pass )
 
 # include not needed for CMake

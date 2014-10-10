@@ -12,7 +12,7 @@ if( ${ADAPTPROG} )
   
   set(TESTS  ${ADAPTPROG})
   add_executable(prod productfunctiontest.cc)
-  dune_target_link_libraries(prod ${DUNE_LIBS} ${LOCAL_LIBS})
+  dune_target_link_libraries(prod "${DUNE_LIBS};${LOCAL_LIBS}")
   
   # include not needed for CMake
   # include $(top_srcdir)/am/global-rules

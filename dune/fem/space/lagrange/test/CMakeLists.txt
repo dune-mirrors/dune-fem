@@ -14,15 +14,15 @@ add_definitions( "-DGEOMETRYTYPE=${GEOMETRYTYPE}" )
 add_definitions( "-DSCALAR=${SCALAR}" )
 
 set(TESTS  tester 
-           generic 
+           generic
            testnonscalarmapper)
 
 add_executable(tester main.cc)
-dune_target_link_libraries( tester ${DUNE_LIBS} ${LOCAL_LIBS})
+dune_target_link_libraries( tester "${DUNE_LIBS};${LOCAL_LIBS}")
 add_executable(generic generic.cc)
-dune_target_link_libraries( generic ${DUNE_LIBS}  ${LOCAL_LIBS})
+dune_target_link_libraries( generic "${DUNE_LIBS};${LOCAL_LIBS}")
 add_executable(testnonscalarmapper testnonscalarmapper.cc)
-dune_target_link_libraries( testnonscalarmapper ${DUNE_LIBS} ${LOCAL_LIBS} )
+dune_target_link_libraries( testnonscalarmapper "${DUNE_LIBS};${LOCAL_LIBS}" )
 
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules

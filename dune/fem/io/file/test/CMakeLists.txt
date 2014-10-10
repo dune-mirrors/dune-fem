@@ -12,9 +12,9 @@ set(TESTS  persistencemanagertest
            dataoutputtest)
 
 add_executable(persistencemanagertest persistencemanagertest.cc)
-dune_target_link_libraries(persistencemanagertest ${DUNE_LIBS} ${LOCAL_LIBS})
+dune_target_link_libraries(persistencemanagertest "${DUNE_LIBS};${LOCAL_LIBS}")
 add_executable(dataoutputtest dataoutputtest.cc)
-dune_target_link_libraries(dataoutputtest ${DUNE_LIBS} ${LOCAL_LIBS})
+dune_target_link_libraries(dataoutputtest "${DUNE_LIBS};${LOCAL_LIBS}")
 
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules

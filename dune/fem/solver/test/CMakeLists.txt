@@ -2,9 +2,9 @@ set(TESTS  odetest
            odesystemtest)
 
 add_executable(odetest odetest.cc)
-dune_target_link_libraries(odetest ${DUNE_LIBS} ${LOCAL_LIBS})
+dune_target_link_libraries(odetest "${DUNE_LIBS};${LOCAL_LIBS}")
 add_executable(odesystemtest odesystemtest.cc)
-dune_target_link_libraries(odesystemtest ${DUNE_LIBS} ${LOCAL_LIBS})
+dune_target_link_libraries(odesystemtest "${DUNE_LIBS};${LOCAL_LIBS}")
 
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules

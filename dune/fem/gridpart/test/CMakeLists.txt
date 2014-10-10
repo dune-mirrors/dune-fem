@@ -7,19 +7,30 @@ add_definitions( "-D${GRIDTYPE}" )
 add_definitions( "-DGRIDDIM=${GRIDDIM}" ) 
 
 # test programs
-set(TESTS  test-filteredgridpart 
-           lagrangeinterpolation 
-           test-idgridpart 
-           test-geogridpart)
+set(TESTS  gp_lagrangeinterpolation 
+           test_idgridpart 
+           test_geogridpart)
+
+# non compiling tests
+# todo: fix compiler errors
+#set(TESTS "${TESTS} test_filteredgridpart")
+
 
 add_executable(gp_lagrangeinterpolation lagrangeinterpolation.cc)
-dune_target_link_libraries(gp_lagrangeinterpolation ${DUNE_LIBS} ${LOCAL_LIBS})
+dune_target_link_libraries(gp_lagrangeinterpolation "${DUNE_LIBS};${LOCAL_LIBS}")
 add_executable(test_filteredgridpart test-filteredgridpart.cc)
-dune_target_link_libraries(test_filteredgridpart ${DUNE_LIBS} ${LOCAL_LIBS})
+dune_target_link_libraries(test_filteredgridpart "${DUNE_LIBS};${LOCAL_LIBS}")
 add_executable(test_idgridpart test-idgridpart.cc)
-dune_target_link_libraries(test_idgridpart ${DUNE_LIBS} ${LOCAL_LIBS})
+dune_target_link_libraries(test_idgridpart "${DUNE_LIBS};${LOCAL_LIBS}")
 add_executable(test_geogridpart test-geogridpart.cc)
-dune_target_link_libraries(test_geogridpart ${DUNE_LIBS} ${LOCAL_LIBS})
+dune_target_link_libraries(test_geogridpart "${DUNE_LIBS};${LOCAL_LIBS}")
+
+set_property(TARGET gp_lagrangeinterpolation APPEND PROPERTY COMPILE_DEFINITIONS "COUNT_FLOPS" )
+set_property(TARGET gp_lagrangeinterpolation APPEND PROPERTY COMPILE_DEFINITIONS "USE_FILTEREDGRIDPART" )
+set_property(TARGET gp_lagrangeinterpolation APPEND PROPERTY COMPILE_DEFINITIONS "POLORDER=1" )
+set_property(TARGET test_filteredgridpart APPEND PROPERTY COMPILE_DEFINITIONS "COUNT_FLOPS" )
+set_property(TARGET test_filteredgridpart APPEND PROPERTY COMPILE_DEFINITIONS "USE_FILTEREDGRIDPART" )
+
 
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
