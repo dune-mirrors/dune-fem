@@ -1,4 +1,4 @@
-set(TESTS  test-streams)
+set(TESTS  test_streams)
 
 add_executable(test_streams test-streams.cc)
 dune_target_link_libraries(test_streams "${DUNE_LIBS};${LOCAL_LIBS}")

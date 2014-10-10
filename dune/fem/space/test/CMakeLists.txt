@@ -19,8 +19,8 @@ add_definitions( "-DWANT_GRAPE=${WANT_GRAPE}" )
 set(TESTS  lagrangeadapt 
            adapt 
            padapt
-           dgcomm-4.sh 
-           dgcomm-cached-4.sh
+           dgcomm_4.sh 
+           dgcomm_cached_4.sh
            arraytest
            combinedspacetest
            dgcomm

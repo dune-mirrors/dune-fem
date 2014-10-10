@@ -9,7 +9,7 @@ add_definitions( "-DDIMRANGE=${DIMRANGE}" )
 add_definitions( "-DPOLORDER=${POLORDER}" ) 
 
 # test programs
-set(TESTS  test-pass)
+set(TESTS  test_pass)
 
 add_executable(test_pass test-pass.cc)
 dune_target_link_libraries(test_pass "${DUNE_LIBS};${LOCAL_LIBS}")

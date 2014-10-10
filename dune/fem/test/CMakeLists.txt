@@ -15,7 +15,7 @@ set(EXTRA_DIST  2dgrid.dgf
 add_definitions( "-D${GRIDTYPE}" )
 add_definitions( "-DGRIDDIM=${GRIDDIM}" ) 
            
-set(TESTS adaptation-4.sh
+set(TESTS adaptation_4.sh
           lagrangeinterpolation_linear 
           lagrangeinterpolation_quadratic
           dgl2projection_adaptive

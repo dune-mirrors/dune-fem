@@ -4,7 +4,7 @@ set(POLORDER  3)
 set(DIMRANGE  5)
 set(USE_VERTICAL_DOF_ALIGNMENT  1)
 
-set(TESTS  test-vectorialbasisfunctionset)
+set(TESTS  test_vectorialbasisfunctionset)
 
 add_executable(test_vectorialbasisfunctionset test-vectorialbasisfunctionset.cc)
 dune_target_link_libraries(test_vectorialbasisfunctionset "${DUNE_LIBS};${LOCAL_LIBS}")
