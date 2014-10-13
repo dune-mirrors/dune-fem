@@ -6,3 +6,6 @@ dune_add_library(dunefem
     _DUNE_TARGET_OBJECTS:quadrature_
     ADD_LIBS dunegeometry)
 add_dune_mpi_flags(OBJECT dunefem)
+
+install(FILES dunefemam2cmake.lib
+  DESTINATION ${CMAKE_INSTALL_BINDIR}/../lib)

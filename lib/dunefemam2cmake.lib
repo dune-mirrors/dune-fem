@@ -1,0 +1,28 @@
+# -*-sh-*-
+
+##########################################
+###
+### Function for converting configure options
+### to CMake options for dune-fem
+###
+##########################################
+
+# CMake Packages are case sensitive
+# This is a list of packages whose names converted
+# to lower case are used for configures
+# --with-<package> or without-<package> options
+#
+
+dune_fem_options_am2cmake(){
+           
+    #todo: add more CMAKE package, i.e. zoltan, sionlib (...?)
+    CMAKE_PACKAGES=""
+    default_am2cmake_options $CMAKE_PACKAGES
+
+    # Check for --enable-compatibilty
+    echo $PARAMS | grep \\-\\-enable-compatibility > /dev/null
+    if test "$?" -eq 0 ; then
+        CMAKE_PARAMS="$CMAKE_PARAMS -DDUNE_FEM_COMPATIBILITY:BOOL=TRUE"
+    fi
+    
+}
