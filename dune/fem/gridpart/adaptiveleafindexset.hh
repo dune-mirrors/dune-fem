@@ -71,6 +71,9 @@ namespace Dune
       //! type of intersections
       typedef typename GridPartType :: IntersectionType   IntersectionType; 
 
+      //! type of object returned by types method
+      typedef std::vector< GeometryType >  Types;
+
     private:
 
       template< int codim , bool gridHasCodim >
@@ -301,13 +304,16 @@ namespace Dune
           // get level-0 view, this is alrady used in GridPtr (DFG parser)
           typedef typename GridType :: LevelGridView MacroViewType;
           MacroViewType macroView = grid_.levelGridView( 0 );
+          const typename MacroViewType :: IndexSet& indexSet = macroView.indexSet();
 
           // resize vector of geometry types 
           geomTypes_.resize( dimension+1 );
           for(int codim=0; codim <= dimension; ++codim ) 
           {
+            const int size = indexSet.types( codim ).size();
             // copy geometry types 
-            geomTypes_[ codim ] = macroView.indexSet().geomTypes( codim ); 
+            geomTypes_[ codim ].resize( size );
+            std::copy_n( indexSet.types( codim ).begin(), size, geomTypes_[ codim ].begin() );
           }
         }
 
@@ -389,7 +395,13 @@ namespace Dune
         assert( codim >= 0 && codim < int(geomTypes_.size()) );
         return geomTypes_[ codim ];
       }
-     
+
+      //! returns vector with geometry tpyes this index set has indices for
+      Types types( const int codim ) const
+      {
+        return geomTypes( codim );
+      }
+
       //! \brief returns true if entity is contained in index set 
       template <class EntityType>
       bool contains (const EntityType & en) const
