@@ -16,7 +16,6 @@
 
 #ifdef ENABLE_ADAPTIVELEAFINDEXSET_FOR_YASPGRID
 #include <dune/grid/yaspgrid.hh>
-#include <dune/grid/sgrid.hh>
 
 namespace Dune 
 {
@@ -40,27 +39,6 @@ namespace Dune
     : BaseType( grid.leafIndexSet(), codim, value )
     {}
   };
-
-  // PersistentContainer for SGrid
-  // -------------------------------
-
-  template< int dim, int dimworld, class ctype, class Data >
-  class PersistentContainer< SGrid< dim, dimworld, ctype >, Data >
-  : public PersistentContainerVector< SGrid< dim, dimworld, ctype >, 
-                                      typename SGrid< dim, dimworld, ctype >::LeafIndexSet,
-                                      std::vector<Data> >
-  {
-    typedef SGrid< dim, dimworld, ctype > Grid ;
-    typedef PersistentContainerVector< Grid, typename Grid::LeafIndexSet, std::vector<Data> > BaseType;
-
-  public:
-    //! Constructor filling the container with values using the default constructor 
-    //! Depending on the implementation this could be achieved without allocating memory
-    PersistentContainer ( const Grid &grid, const int codim, const Data& value = Data() )
-    : BaseType( grid.leafIndexSet(), codim, value )
-    {}
-  };
-
 }
 #endif
 
