@@ -97,22 +97,30 @@ namespace Dune
 
     private:
       typedef AllGeomTypes< IndexSetType, GridType > ThisType;
+      static const unsigned int ncodim = GridType :: dimension + 1;
 
     protected:
-      const IndexSetType &indexSet_;
+      std::vector< GeometryType > geomTypes_[ ncodim ];
       
     public:
       //! constructor storing index set reference 
       inline explicit AllGeomTypes( const IndexSetType &indexSet )
-        : indexSet_( indexSet )
       {
-        this->buildMaps( indexSet_.geomTypes(0) );
+        for( int codim=0; codim<GridType::dimension+1; ++codim )
+        {
+          typename IndexSetType::Types types = indexSet.types( codim );
+          const int size = types.size();
+          geomTypes_[ codim ].resize( size );
+          std::copy_n( types.begin(), size, geomTypes_[ codim ].begin() );
+        }
+        this->buildMaps( geomTypes_[ 0 ] );
       }
 
       //! returns vector with geometry tpyes this index set has indices for
-      const std :: vector< GeometryType > &geomTypes ( int codim ) const
+      const std :: vector< GeometryType > &geomTypes ( unsigned int codim ) const
       {
-        return indexSet_.geomTypes( codim );
+        assert( codim < ncodim );
+        return geomTypes_[ codim ];
       }
 
       //! UGGrid might have different geom types 
@@ -140,7 +148,7 @@ namespace Dune
       typedef Dune::UGGrid< dim > GridType;
      
     protected:
-      enum { ncodim = dim + 1 };
+      static const unsigned int ncodim = dim + 1 ;
       
       std::vector< GeometryType > geomTypes_[ ncodim ];
 
