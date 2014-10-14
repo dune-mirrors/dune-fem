@@ -24,5 +24,13 @@ dune_fem_options_am2cmake(){
     if test "$?" -eq 0 ; then
         CMAKE_PARAMS="$CMAKE_PARAMS -DDUNE_FEM_COMPATIBILITY:BOOL=TRUE"
     fi
-    
+     # Check for --enable-experimental-grid-extensions
+     # note: this is also checked in dune-grid, but "wrong" compiler
+     # definition is used
+     # todo: remove if this issue has changed
+    echo $PARAMS | grep \\-\\-enable-experimental-grid-extensions > /dev/null
+    if test "$?" -eq 0 ; then
+        CMAKE_PARAMS="$CMAKE_PARAMS -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS:BOOL=TRUE"
+    fi
+ 
 }
