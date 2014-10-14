@@ -15,8 +15,7 @@
 
 dune_fem_options_am2cmake(){
            
-    #todo: add more CMAKE package, i.e. zoltan, sionlib (...?)
-    CMAKE_PACKAGES=""
+    CMAKE_PACKAGES="sionlib petsc papi"
     default_am2cmake_options $CMAKE_PACKAGES
 
     # Check for --enable-compatibilty
@@ -32,5 +31,30 @@ dune_fem_options_am2cmake(){
     if test "$?" -eq 0 ; then
         CMAKE_PARAMS="$CMAKE_PARAMS -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS:BOOL=TRUE"
     fi
+
+
+    #############
+    # sionlib-checks
+    # todo: maybe we want to use standard naming conventions in
+    #       config.opts file? see default_am2cmake_libraries()
+    #############
+    #Check for --with-sionlibsuffixe
+    local arg=`echo "$PARAMS"| grep \\\\--with-sionlibsuffixe= | sed "s/.*--with-sionlibsuffixe=\([^$BLANK]*\).*/\1/"`
+    if test "x$arg" != "x"; then
+        CMAKE_PARAMS="$CMAKE_PARAMS -DSIONLIB_SUFFIX=$arg"
+    fi
+           
+    #Check for --with-sionlib-includedir
+    local arg=`echo "$PARAMS"| grep \\\\--with-sionlib-includedir= | sed "s/.*--with-sionlib-includedir=\([^$BLANK]*\).*/\1/"`
+    if test "x$arg" != "x"; then
+        CMAKE_PARAMS="$CMAKE_PARAMS -DSIONLIB_INCLUDEDIR=$arg"
+    fi
+
+    #Check for --with-sionlib-libdir
+    local arg=`echo "$PARAMS"| grep \\\\--with-sionlib-libdir= | sed "s/.*--with-sionlib-libdir=\([^$BLANK]*\).*/\1/"`
+    if test "x$arg" != "x"; then
+        CMAKE_PARAMS="$CMAKE_PARAMS -DSIONLIB_LIBDIR=$arg"
+    fi
+
  
 }
