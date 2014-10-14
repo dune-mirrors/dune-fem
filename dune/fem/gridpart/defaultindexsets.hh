@@ -9,6 +9,7 @@
 #include <dune/common/typetraits.hh>
 
 #include <dune/grid/common/grid.hh>
+#include <dune/grid/common/indexidset.hh>
 #include <dune/grid/common/adaptcallback.hh> // for compatibility only
 #include <dune/fem/gridpart/emptyindexset.hh>
 
@@ -27,11 +28,13 @@ namespace Dune
 
     //! Wraps the interface methods of indexsets and adds the addiotnal needed
     //! functions 
-    template< class IndexSetImp >
+    template< class Grid, class IndexSetImp >
     class IndexSetWrapper
-    : public Fem :: EmptyIndexSet 
+      : public Dune::IndexSetDefaultImplementation< Grid,
+                                                    IndexSetWrapper< Grid, IndexSetImp > >,
+        public Fem :: EmptyIndexSet 
     {
-      typedef IndexSetWrapper< IndexSetImp > ThisType;
+      typedef IndexSetWrapper< Grid, IndexSetImp > ThisType;
       typedef Fem :: EmptyIndexSet  BaseType ;
 
     public:
@@ -113,10 +116,10 @@ namespace Dune
     //! Wraps LevelIndexSet for use with LagrangeFunctionSpace 
     template< class GridType >
     class WrappedLevelIndexSet
-    : public IndexSetWrapper< typename GridType::Traits::LevelIndexSet >
+    : public IndexSetWrapper< GridType, typename GridType::Traits::LevelIndexSet >
     {
       typedef WrappedLevelIndexSet< GridType > ThisType;
-      typedef IndexSetWrapper< typename GridType::Traits::LevelIndexSet > BaseType;
+      typedef IndexSetWrapper< GridType, typename GridType::Traits::LevelIndexSet > BaseType;
 
       // my type, to be revised 
       enum { myType = 1 };
@@ -185,10 +188,10 @@ namespace Dune
     /** \deprecated */
     template< class GridType >
     class WrappedHierarchicIndexSet
-    : public IndexSetWrapper< typename HierarchicIndexSetSelector< GridType >::HierarchicIndexSet >
+    : public IndexSetWrapper< GridType, typename HierarchicIndexSetSelector< GridType >::HierarchicIndexSet >
     {
       typedef WrappedHierarchicIndexSet< GridType > ThisType;
-      typedef IndexSetWrapper< typename HierarchicIndexSetSelector< GridType >::HierarchicIndexSet > BaseType;
+      typedef IndexSetWrapper< GridType, typename HierarchicIndexSetSelector< GridType >::HierarchicIndexSet > BaseType;
 
       // my type, to be revised 
       enum { myType = 0 };
@@ -227,10 +230,10 @@ namespace Dune
     //! Wraps LeafIndexSet of Dune Grids for use with LagrangeFunctionSpace 
     template< class GridType >
     class WrappedLeafIndexSet
-    : public IndexSetWrapper< typename GridType::Traits::LeafIndexSet >
+    : public IndexSetWrapper< GridType, typename GridType::Traits::LeafIndexSet >
     {
       typedef WrappedLeafIndexSet< GridType > ThisType;
-      typedef IndexSetWrapper< typename GridType::Traits::LeafIndexSet > BaseType;
+      typedef IndexSetWrapper< GridType, typename GridType::Traits::LeafIndexSet > BaseType;
 
       // my type, to be revised 
       enum { myType = 5 };
