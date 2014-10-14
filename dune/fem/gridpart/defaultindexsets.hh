@@ -9,7 +9,6 @@
 #include <dune/common/typetraits.hh>
 
 #include <dune/grid/common/grid.hh>
-#include <dune/grid/common/indexidset.hh>
 #include <dune/grid/common/adaptcallback.hh> // for compatibility only
 #include <dune/fem/gridpart/emptyindexset.hh>
 
@@ -28,17 +27,16 @@ namespace Dune
 
     //! Wraps the interface methods of indexsets and adds the addiotnal needed
     //! functions 
-    template< class Grid, class IndexSetImp >
+    template< class IndexSetImp >
     class IndexSetWrapper
-      : public Dune::IndexSetDefaultImplementation< Grid,
-                                                    IndexSetWrapper< Grid, IndexSetImp > >,
-        public Fem :: EmptyIndexSet 
+      : public Fem :: EmptyIndexSet
     {
-      typedef IndexSetWrapper< Grid, IndexSetImp > ThisType;
+      typedef IndexSetWrapper< IndexSetImp > ThisType;
       typedef Fem :: EmptyIndexSet  BaseType ;
 
     public:
       typedef typename IndexSetImp::IndexType IndexType;
+      typedef typename IndexSetImp::Types     Types;
 
       //! store const reference to set 
       IndexSetWrapper ( const IndexSetImp &set )
@@ -100,6 +98,12 @@ namespace Dune
         return set_.geomTypes(codim); 
       }
 
+      //! wrap types method of set
+      Types types( const int codim ) const
+      {
+        return set_.types(codim);
+      }
+
       //! returns true if this set provides an index for given entity
       template< class Entity >
       bool contains ( const Entity &entity ) const
@@ -116,10 +120,10 @@ namespace Dune
     //! Wraps LevelIndexSet for use with LagrangeFunctionSpace 
     template< class GridType >
     class WrappedLevelIndexSet
-    : public IndexSetWrapper< GridType, typename GridType::Traits::LevelIndexSet >
+      : public IndexSetWrapper< typename GridType::Traits::LevelIndexSet >
     {
       typedef WrappedLevelIndexSet< GridType > ThisType;
-      typedef IndexSetWrapper< GridType, typename GridType::Traits::LevelIndexSet > BaseType;
+      typedef IndexSetWrapper< typename GridType::Traits::LevelIndexSet > BaseType;
 
       // my type, to be revised 
       enum { myType = 1 };
@@ -188,10 +192,10 @@ namespace Dune
     /** \deprecated */
     template< class GridType >
     class WrappedHierarchicIndexSet
-    : public IndexSetWrapper< GridType, typename HierarchicIndexSetSelector< GridType >::HierarchicIndexSet >
+    : public IndexSetWrapper< typename HierarchicIndexSetSelector< GridType >::HierarchicIndexSet >
     {
       typedef WrappedHierarchicIndexSet< GridType > ThisType;
-      typedef IndexSetWrapper< GridType, typename HierarchicIndexSetSelector< GridType >::HierarchicIndexSet > BaseType;
+      typedef IndexSetWrapper< typename HierarchicIndexSetSelector< GridType >::HierarchicIndexSet > BaseType;
 
       // my type, to be revised 
       enum { myType = 0 };
@@ -230,10 +234,10 @@ namespace Dune
     //! Wraps LeafIndexSet of Dune Grids for use with LagrangeFunctionSpace 
     template< class GridType >
     class WrappedLeafIndexSet
-    : public IndexSetWrapper< GridType, typename GridType::Traits::LeafIndexSet >
+    : public IndexSetWrapper< typename GridType::Traits::LeafIndexSet >
     {
       typedef WrappedLeafIndexSet< GridType > ThisType;
-      typedef IndexSetWrapper< GridType, typename GridType::Traits::LeafIndexSet > BaseType;
+      typedef IndexSetWrapper< typename GridType::Traits::LeafIndexSet > BaseType;
 
       // my type, to be revised 
       enum { myType = 5 };
