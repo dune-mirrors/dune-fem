@@ -116,7 +116,7 @@ public:
     IteratorType endit = gridPart_.template end<0>();
     for (IteratorType it = gridPart_.template begin<0>(); it != endit; ++it) 
     {
-      EntityType & entity = *it;
+      const EntityType & entity = *it;
       const IntersectionIteratorType iend = gridPart_.iend(entity);
       for( IntersectionIteratorType iit = gridPart_.ibegin(entity); iit != iend; ++iit )
       {
@@ -124,12 +124,12 @@ public:
         if (intersection.neighbor() && intersection.conforming())
         {
           EntityPointerType epInside = intersection.inside();
-          EntityType & inside = *epInside;
+          const EntityType & inside = *epInside;
           FaceQuadratureType faceQuadInner(gridPart_, intersection, order_,
               FaceQuadratureType::INSIDE);
 
           EntityPointerType epOutside = intersection.outside();
-          EntityType & outside = *epOutside;
+          const EntityType & outside = *epOutside;
           FaceQuadratureType faceQuadOuter(gridPart_, intersection, order_,
               FaceQuadratureType::OUTSIDE);
 
