@@ -127,6 +127,7 @@ endif(USE_PTHREADS)
 ################################
 
 
+find_package( sionlib )
 
 
 message(AUTHOR_WARNING "TODO. Improve module test.")
