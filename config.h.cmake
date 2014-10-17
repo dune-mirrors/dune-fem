@@ -28,4 +28,7 @@
 /* Define if we want to use pthreads */
 #cmakedefine USE_PTHREADS 1
 
+/* Define if we have papi */
+#cmakedefine HAVE_PAPI 1
+
 /* end dune-fem */
