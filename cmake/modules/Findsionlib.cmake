@@ -119,38 +119,3 @@ if(NOT CMAKE_DISABLE_FIND_PACKAGE_SIONLIB)
 
 endif(NOT CMAKE_DISABLE_FIND_PACKAGE_SIONLIB)
 
-
-
-
-
-## Module that checks for SIONLIB
-##
-## Variables used by this module which you may want to set:
-## SIONLIB_ROOT        directory with SIONLIB inside (default = /usr/local/sionlib)
-## SIONLIB_SUFFIX      suffix to the library name , e.g. gcc or something (default = "_64")
-## SIONLIB_INCLUDEDIR  directory with SIONLIB headers inside
-## SIONLIB_LIBDIR      directory with SIONLIB libraries inside
-##
-## Sets the following variables:
-## SIONLIB_FOUND True if the SIONLIB library was found.
-##
-##
-##message(AUTHOR_WARNING "TODO. Check Sionlib include.")
-##
-###sionlib found?
-##set(SIONLIB_YES 0)
-##if(SIONLIB_ROOT_UNDEFINED OR SIONLIB_ROOT)
-##  set(SIONLIB_YES 1)
-##endif(SIONLIB_ROOT_UNDEFINED OR SIONLIB_ROOT)
-##if(SIONLIB_SUFFIX)
-##  set(SIONLIB_SUFFIX "_64")
-##endif(SIONLIB_SUFFIX)
-##if(SIONLIB_INCLUDEDIR_UNDEFINED OR SIONLIB_INCLUDEDIR)
-##  set(SIONLIB_YES 1)
-##endif(SIONLIB_INCLUDEDIR_UNDEFINED OR SIONLIB_INCLUDEDIR)
-##if(SIONLIB_LIBDIR_UNDEFINED OR SIONLIB_LIBDIR)
-##  set(SIONLIB_YES 1)
-##endif(SIONLIB_LIBDIR_UNDEFINED OR SIONLIB_LIBDIR)
-##
-##message("Found sionlib? ${SIONLIB_YES}")
-##
