@@ -14,7 +14,14 @@
 # SIONLIB_LIBRARIES      Name of the SIONLIB libraries
 #
 
-message(AUTHORWARNING "TODO. Verify Sionlib checks")
+message(AUTHOR_WARNING "TODO. Verify Sionlib checks")
+
+set(SIONLIB_ROOT "" CACHE PATH "Path list to search for SIONLIB")
+set(SIONLIB_SUFFIX "_lib64" CACHE STRING "suffix to the library name , e.g. gcc or something")
+set(SIONLIB_INCLUDEDIR "" CACHE PATH "directory with SIONLIB headers inside")
+set(SIONLIB_LIBDIR "" CACHE PATH "directory with SIONLIB libraries inside")
+
+mark_as_advanced(SIONLIB_SUFFIX SIONLIB_INCLUDEDIR SIONLIB_LIBDIR)
 
 #look for header files at positions given by the user
 find_path(SIONLIB_INCLUDE_DIR
