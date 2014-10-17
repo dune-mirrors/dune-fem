@@ -133,7 +133,8 @@ endif(CMAKE_USE_PTHREADS_INIT AND NOT USE_PTHREADS)
 ################################
 
 
-find_package( sionlib )
+find_package(SIONlib)
+find_package(PAPI)
 
 
 message(AUTHOR_WARNING "TODO. Improve module test.")

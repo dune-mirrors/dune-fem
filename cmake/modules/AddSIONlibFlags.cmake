@@ -4,7 +4,7 @@
 #
 # add_dune_sionlib_flags(target1 target2 ...)
 #
-# Adds the necessary flags to compile and link the targets with ParMETIS support.
+# Adds the necessary flags to compile and link the targets with SIONLIB support.
 #
 function(add_dune_sionlib_flags _targets)
   if(SIONLIB_FOUND)
