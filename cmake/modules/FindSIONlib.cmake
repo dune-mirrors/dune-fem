@@ -74,7 +74,7 @@ if(NOT CMAKE_DISABLE_FIND_PACKAGE_SIONLIB)
   # behave like a CMake module is supposed to behave
   include(FindPackageHandleStandardArgs)
   find_package_handle_standard_args(
-    "SIONLIB"
+    "SIONlib"
     DEFAULT_MSG
     SIONLIB_INCLUDE_DIR
     SIONLIB_LIBRARY
