@@ -21,7 +21,7 @@ set(SIONLIB_SUFFIX "_lib64" CACHE STRING "suffix to the library name , e.g. gcc 
 set(SIONLIB_INCLUDEDIR "" CACHE PATH "directory with SIONLIB headers inside")
 set(SIONLIB_LIBDIR "" CACHE PATH "directory with SIONLIB libraries inside")
 
-mark_as_advanced(SIONLIB_SUFFIX SIONLIB_INCLUDEDIR SIONLIB_LIBDIR)
+mark_as_advanced(SIONLIB_ROOT SIONLIB_SUFFIX SIONLIB_INCLUDEDIR SIONLIB_LIBDIR)
 
 if(NOT CMAKE_DISABLE_FIND_PACKAGE_SIONLIB)
 

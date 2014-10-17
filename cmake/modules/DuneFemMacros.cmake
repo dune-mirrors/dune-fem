@@ -1,7 +1,7 @@
 
 #make libdunefem known locally
 set(LOCAL_LIBS "${PROJECT_BINARY_DIR}/lib/libdunefem.a"
-		CACHE STRING "path to local libs in dune-fem" )
+  CACHE FILEPATH "path to local libs in dune-fem" )
   mark_as_advanced(LOCAL_LIBS)
 
 #find endian headers
@@ -24,12 +24,12 @@ else(HAVE_ENDIAN_HEADER_HH)
       PATHS "${ENDIAN_HEADER_ROOT}/machine"
       DOC "Path where machine/endian.h was found"
     )
-    if(EXISTS SYSTEM_ENDIAN_MACHINE_HEADER_PATH)
+    if(EXISTS SYSTEM_ENDIAN_HEADER_PATH)
       set(SYSTEM_ENDIAN_HEADER "<machine/endian.h>")
-    endif(EXISTS SYSTEM_ENDIAN_MACHINE_HEADER_PATH)
+    endif(EXISTS SYSTEM_ENDIAN_HEADER_PATH)
   endif(HAVE_ENDIAN_MACHINE_HEADER_HH)
 endif(HAVE_ENDIAN_HEADER_HH)
-mark_as_advanced(ENDIAN_HEADER_ROOT)
+mark_as_advanced(ENDIAN_HEADER_ROOT SYSTEM_ENDIAN_HEADER_PATH)
 
 #todo: there seems to be no cmake equivalent for
 #xdr issues in dune-common. Thus, the following lines are only for completeness
@@ -55,7 +55,7 @@ if(EXISTS DUNE_PATH_XDR)
 else()
   message("can not find rpc.h")
 endif(EXISTS DUNE_PATH_XDR)
-mark_as_advanced(XDR_ROOT)
+mark_as_advanced(XDR_ROOT DUNE_PATH_XDR)
 
 include(CheckCXXSourceCompiles)
 
