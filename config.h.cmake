@@ -35,6 +35,9 @@
 #cmakedefine HAVE_SIONLIB 1
 
 /* Define if we have PETSc */
-#cmakedefine HAVE_PETSc 1
+#cmakedefine HAVE_PETSC 1
+
+/* true if HYPRE was found through PETSc */
+#cmakedefine HAVE_PETSC_HYPRE 1
 
 /* end dune-fem */
