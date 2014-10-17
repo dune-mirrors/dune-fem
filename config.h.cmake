@@ -12,4 +12,20 @@
 /* Define to the revision of dune-fem */
 #define DUNE_FEM_VERSION_REVISION ${DUNE_FEM_VERSION_REVISION}
 
+
+/* Define if we have name for endian header (including brackets) */
+#cmakedefine SYSTEM_ENDIAN_HEADER "${SYSTEM_ENDIAN_HEADER}"
+
+/* Define actual name of xdr_uint_64_t method */
+#cmakedefine XDR_UINT64_FUNC "${XDR_UINT_64_FUNC}"
+
+/* Define if we have thread local storage */
+#cmakedefine HAVE_PTHREAD_TLS 1
+
+/* Define if we have pthreads */
+#cmakedefine HAVE_PTHREAD 1
+
+/* Define if we want to use pthreads */
+#define USE_PTHREADS ${USE_PTHREADS}
+
 /* end dune-fem */
