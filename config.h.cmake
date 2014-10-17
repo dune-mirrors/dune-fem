@@ -31,4 +31,7 @@
 /* Define if we have papi */
 #cmakedefine HAVE_PAPI 1
 
+/* Define if we have sionlib */
+#cmakedefine HAVE_SIONLIB 1
+
 /* end dune-fem */
