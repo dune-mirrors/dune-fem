@@ -34,4 +34,7 @@
 /* Define if we have sionlib */
 #cmakedefine HAVE_SIONLIB 1
 
+/* Define if we have PETSc */
+#cmakedefine HAVE_PETSc 1
+
 /* end dune-fem */

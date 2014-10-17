@@ -15,7 +15,7 @@
 
 dune_fem_options_am2cmake(){
            
-    CMAKE_PACKAGES="SIONlib petsc PAPI"
+    CMAKE_PACKAGES="SIONlib PETSc PAPI"
     default_am2cmake_options $CMAKE_PACKAGES
 
     # Check for --enable-compatibilty

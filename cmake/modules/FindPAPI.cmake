@@ -36,7 +36,6 @@ set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${PAPI_INCLUDE_DIR})
 set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
 check_include_files(papi.h PAPI_HEADER_USABLE)
 
-
 #look for library at positions given by the user
 find_library(PAPI_LIBRARY
   NAMES "papi"

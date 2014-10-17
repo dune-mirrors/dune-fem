@@ -135,7 +135,7 @@ endif(CMAKE_USE_PTHREADS_INIT AND NOT USE_PTHREADS)
 
 find_package(SIONlib)
 find_package(PAPI)
-
+find_package(PETSc)
 
 message(AUTHOR_WARNING "TODO. Improve module test.")
 
