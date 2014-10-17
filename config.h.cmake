@@ -23,9 +23,9 @@
 #cmakedefine HAVE_PTHREAD_TLS 1
 
 /* Define if we have pthreads */
-#cmakedefine HAVE_PTHREAD 1
+#define HAVE_PTHREAD ${HAVE_PTHREAD}
 
 /* Define if we want to use pthreads */
-#define USE_PTHREADS ${USE_PTHREADS}
+#cmakedefine USE_PTHREADS 1
 
 /* end dune-fem */

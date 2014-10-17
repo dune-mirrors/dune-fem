@@ -66,8 +66,10 @@ include(CheckCXXSourceCompiles)
 message(AUTHOR_WARNING "TODO. Please check pthread issues. Not all systems are supported, yet")
 # we are using the cmake default implementation for threads at the moment
 include(FindThreads)
+set(HAVE_PTHREAD 0)
+set(USE_PTHREADS 0 CACHE BOOL "whether we are using pthreads.")
 if(CMAKE_USE_PTHREADS_INIT AND NOT USE_PTHREADS)
-  set(USE_PTHREADS 1 CACHE BOOL "whether we are using pthreads.")
+  set(HAVE_PTHREAD 1)
 
   set(CMAKE_THREAD_PREFER_PTHREAD 1)
 
