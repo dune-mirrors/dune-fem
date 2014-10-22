@@ -284,6 +284,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 int main( int argc, char *argv[] )
 try {
 #ifdef SKIP_TEST_BECAUSE_USING_YASPGRID
+  std::cerr << "No comm check for YASPGRID because overlap not working correctly!" << std::endl;
   return 0;
 #endif
 
