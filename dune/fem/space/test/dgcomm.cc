@@ -9,11 +9,9 @@
 #include <config.h>
 
 #include <iostream>
-//#include <dune/common/stdstreams.cc>
 
 using namespace Dune;
 
-#include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/vectorfunction.hh>
 #include <dune/fem/function/attachedfunction.hh>
@@ -189,7 +187,6 @@ public:
 
 void resetNonInterior( DiscreteFunctionType &solution )
 {
-  typedef DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
   typedef DiscreteFunctionType :: DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
   typedef DiscreteFunctionSpaceType :: GridPartType GridPartType ;
