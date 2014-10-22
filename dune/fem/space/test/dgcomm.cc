@@ -6,6 +6,10 @@
 #define WORLDDIM ALBERTA_DIM
 #endif
 
+#ifdef YASPGRID
+#define SKIP_TEST_BECAUSE_USING_YASPGRID
+#endif
+
 #include <config.h>
 
 #include <iostream>
@@ -279,6 +283,10 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 //**************************************************
 int main( int argc, char *argv[] )
 try {
+#ifdef SKIP_TEST_BECAUSE_USING_YASPGRID
+  return 0;
+#endif
+
   MPIManager :: initialize( argc, argv );
 
   const char* paramName = "parameter";
