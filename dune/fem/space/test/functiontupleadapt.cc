@@ -208,10 +208,10 @@ void adapt( MyGridType &grid, std::tuple< DiscreteFunction &... > functionTuple,
 
   const DiscreteFunctionSpaceType &discreteFunctionSpace = solution.space();
   
-  RestrictProlongOperatorType rp(makeRestrictProlongDefault(functionTuple));
-  RestrictProlongOperatorType rpTwo(makeRestrictProlongDefault(std::get<0>(functionTuple),
-                                                               std::get<1>(functionTuple),
-                                                               std::get<2>(functionTuple)));
+  RestrictProlongOperatorType rp(functionTuple);
+  RestrictProlongOperatorType rpTwo(std::get<0>(functionTuple),
+                                    std::get<1>(functionTuple),
+                                    std::get<2>(functionTuple));
   (void)rpTwo;
 
   AdaptationManagerType adaptationManager( grid, rp );
