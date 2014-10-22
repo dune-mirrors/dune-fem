@@ -11,6 +11,9 @@ function(add_dune_sionlib_flags _targets)
     foreach(_target ${_targets})
       target_link_libraries(${_target} ${SIONLIB_LIBRARIES})
     endforeach(_target ${_targets})
+    set_property(TARGET ${_targets}
+      APPEND_STRING
+      PROPERTY COMPILE_FLAGS ENABLE_SIONLIB=1 )
     set_property(TARGET ${_targets} APPEND PROPERTY
       INCLUDE_DIRECTORIES "${SIONLIB_INCLUDE_DIRS}")
   endif(SIONLIB_FOUND)
