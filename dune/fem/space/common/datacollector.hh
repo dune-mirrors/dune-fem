@@ -531,10 +531,17 @@ namespace Dune
       //! else xtractData is called 
       void apply ( ObjectStreamType & str, const EntityType & entity ) const 
       {
-        if( writeData() ) 
+#if HAVE_DUNE_ALUGRID
+        ParamType p( &str , &entity );
+        // apply local operators
+        ldc_.apply( p );
+#else
+        // old version with dune-grid ALUGrid version
+        if( writeData() )
           inlineData(str, entity );
-        else 
+        else
           xtractData(str, entity );
+#endif
       }
 
       //! write all data of all entities blowe this Entity to the stream 
