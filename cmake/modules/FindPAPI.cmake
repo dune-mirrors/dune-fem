@@ -88,7 +88,7 @@ if(PAPI_FOUND)
     CACHE STRING "Libraries used by DUNE when linking PAPI programs")
 else(PAPI_FOUND)
   # log errornous result
-  file(APPEND ${CMAKE_BINARY_DIR}${CMAKES_FILES_DIRECTORY}/CMakeError.log
+  file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
     "Determing location of PAPI failed:\n"
     "Include directory: ${PAPI_INCLUDE_DIRS}\n"
     "Library directory: ${PAPI_LIBRARIES}\n\n")
