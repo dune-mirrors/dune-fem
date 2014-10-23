@@ -260,6 +260,9 @@ namespace Dune
 
         assert( file );
 
+        // get bytes available for reading (might differ from total chunkSize)
+        chunkSize = sion_bytes_avail_in_block( sid );
+
         // create buffer 
         std::string data;
         data.resize( chunkSize );
@@ -311,8 +314,8 @@ namespace Dune
        *  \param[in] mpiComm   MPI communicator (defaults to MPIHelper :: getCommunicator())
        */
       static SIONlibInStream* create( const std::string& filename,
-                                 const int rank = MPIManager::rank(),
-                                 const MPICommunicatorType& mpiComm = MPIHelper :: getCommunicator() )
+                                      const int rank = MPIManager::rank(),
+                                      const MPICommunicatorType& mpiComm = MPIHelper :: getCommunicator() )
       {
         return new SIONlibInStream( filename, rank, mpiComm );
       }
