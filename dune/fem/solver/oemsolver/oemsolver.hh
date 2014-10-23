@@ -614,8 +614,6 @@ namespace Dune
       */
       void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
       {
-        typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-
         // prepare operator 
         prepare ( arg, dest );
 
@@ -721,8 +719,6 @@ namespace Dune
       */
       void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
       {
-        typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
-
         // prepare operator 
         prepare ( arg, dest );
 
