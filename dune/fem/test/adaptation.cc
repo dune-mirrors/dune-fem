@@ -158,8 +158,9 @@ struct Scheme
       DomainType x = DomainType(-time);
       x += center;
 
+      const int maxLevel_ = 3 * Dune::DGFGridInfo< GridType >::refineStepsForHalf();
       // refine if 0.3 < |x| < 1.0, otherwise (possibly) coarsen
-      if( x.two_norm() > 0.3 && x.two_norm() < 0.4 && entity.level() <= 9 + 3 * step_ )
+      if( x.two_norm() > 0.3 && x.two_norm() < 0.4 && entity.level() <= maxLevel_ + step_ )
       {
         grid_.mark( 1, entity );
         marked = 1;
@@ -217,7 +218,7 @@ template <class HGridType>
 double algorithm ( HGridType &grid, const int step )
 {
   // we want to solve the problem on the leaf elements of the grid
-  typedef Dune::Fem::AdaptiveLeafGridPart< HGridType, Dune::InteriorBorder_Partition > GridPartType;
+  typedef Dune::Fem::AdaptiveLeafGridPart< HGridType > GridPartType;
   GridPartType gridPart(grid);
 
   // use a scalar function space
@@ -239,7 +240,7 @@ double algorithm ( HGridType &grid, const int step )
   DataOutputType dataOutput( grid, ioTuple, DataOutputParameters( step ) );
   ///////////////////////////
 
-  for( double time = 0; time <= 0.35; time += 0.05 )
+  for( double time = 0; time <= 0.15; time += 0.05 )
   {
     if( Dune::Fem::MPIManager::rank() == 0 )
       std::cout << "time: " << time << std::endl;
@@ -252,7 +253,7 @@ double algorithm ( HGridType &grid, const int step )
       scheme.adapt();
 
       max++;
-      if( max > 10 )
+      if( max > 5 )
         break;
     }
 
