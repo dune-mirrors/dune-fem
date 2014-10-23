@@ -52,7 +52,8 @@ find_library(PAPI_LIBRARY
 # check if library papi works
 include(CheckSymbolExists)
 if(PAPI_LIBRARY)
-  check_library_exists(papi PAPI_flops "" PAPI_LIB_WORKS)
+  get_filename_component(PAPI_LIB_PATH ${PAPI_LIBRARY} PATH)
+  check_library_exists(papi PAPI_flops ${PAPI_LIBRARY} PAPI_LIB_WORKS)
 endif(PAPI_LIBRARY)
 
 cmake_pop_check_state()

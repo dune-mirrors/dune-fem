@@ -60,8 +60,9 @@ find_library(SIONLIB_LIBRARY
 # check if library sion/sionser works
 include(CheckSymbolExists)
 if(SIONLIB_LIBRARY)
-  check_library_exists("sion${SIONLIB_SUFFIX}" main "" SIONLIB_LIB_WORKS)
-  check_library_exists("sionser${SIONLIB_SUFFIX}" main "" SIONLIB_LIB_SIONSER_WORKS)
+  get_filename_component(SIONLIB_LIB_PATH ${SIONLIB_LIBRARY} PATH)
+  check_library_exists("sion${SIONLIB_SUFFIX}" main ${SIONLIB_LIBRARY} SIONLIB_LIB_WORKS)
+  check_library_exists("sionser${SIONLIB_SUFFIX}" main ${SIONLIB_LIBRARY} SIONLIB_LIB_SIONSER_WORKS)
 endif(SIONLIB_LIBRARY)
 
 cmake_pop_check_state()
