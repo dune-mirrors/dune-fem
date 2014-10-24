@@ -17,7 +17,7 @@ if( HAVE_ENDIAN_HEADER_HH )
     set(SYSTEM_ENDIAN_HEADER "<endian.h>")
   endif(EXISTS SYSTEM_ENDIAN_HEADER_PATH)
 else(HAVE_ENDIAN_HEADER_HH)
-  check_include_file_cxx(maschine/endian.h HAVE_ENDIAN_MACHINE_HEADER_HH)
+  check_include_file_cxx(machine/endian.h HAVE_ENDIAN_MACHINE_HEADER_HH)
   if( HAVE_ENDIAN_MACHINE_HEADER_HH )
     find_path(SYSTEM_ENDIAN_HEADER_PATH
       NAMES endian.h
@@ -31,9 +31,7 @@ else(HAVE_ENDIAN_HEADER_HH)
 endif(HAVE_ENDIAN_HEADER_HH)
 mark_as_advanced(ENDIAN_HEADER_ROOT SYSTEM_ENDIAN_HEADER_PATH)
 
-#todo: there seems to be no cmake equivalent for
-#xdr issues in dune-common. Thus, the following lines are only for completeness
-#Please check whether it works and/or delete this stuff.
+#xdr
 set(XDR_ROOT "" CACHE STRING "root of header rpc.h")
 find_path(DUNE_PATH_XDR
   NAMES rpc.h
