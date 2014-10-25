@@ -71,7 +71,7 @@ namespace Dune
        */
       LocalDofType localDof ( const GlobalDofType &globalDof ) const
       {
-        return asImp().globalDof( localDof );
+        return asImp().localDof( globalDof );
       }
     };
 
