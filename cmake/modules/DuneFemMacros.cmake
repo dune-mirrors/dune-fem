@@ -22,6 +22,7 @@ else(HAVE_ENDIAN_HEADER_HH)
     find_path(SYSTEM_ENDIAN_HEADER_PATH
       NAMES endian.h
       PATHS "${ENDIAN_HEADER_ROOT}/machine"
+      PATH_SUFFIXES "machine"
       DOC "Path where machine/endian.h was found"
     )
     if(EXISTS SYSTEM_ENDIAN_HEADER_PATH)
