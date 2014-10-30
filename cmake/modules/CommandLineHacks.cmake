@@ -19,7 +19,7 @@
 # or use the second version:
 #
 # set_gridtype_from_command_line(<target> [<target2>...] 
-                                 [FORCE] )
+#                                 [FORCE] )
 #
 # GRIDTYPE <arg>:     use the argument <arg> instead of command line option
 # GRIDDIM <arg>:      use the argument <arg> instead of command line option
