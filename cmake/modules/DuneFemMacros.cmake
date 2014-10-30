@@ -138,6 +138,8 @@ find_package(PAPI)
 include(AddPAPIFlags)
 find_package(PETSc)
 
+####### hacks
+include(CommandLineHacks)
 
 message(AUTHOR_WARNING "TODO. Improve module test.")
 
