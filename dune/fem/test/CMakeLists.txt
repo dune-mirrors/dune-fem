@@ -4,6 +4,7 @@ set( GRIDTYPE YASPGRID )
 #set( GRIDTYPE ALUGRID_CONFORM )
 set(GRIDDIM 2 )
 #set( GRIDDIM 3 )
+
 set(EXTRA_DIST  2dgrid.dgf
                 3dgrid.dgf
                 adaptation-4.sh
@@ -30,6 +31,7 @@ set(TESTS lagrangeinterpolation_linear
 # non compiling tests
 # todo: fix compiler errors
 #set(TESTS "${TESTS} dgl2projection_filtered")
+
 
 # copy data to build source to make tests work
 configure_file(1dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/1dgrid.dgf COPYONLY)
@@ -117,10 +119,21 @@ set_property(TARGET intersectionindexset APPEND PROPERTY
 add_executable(adaptation adaptation.cc)
 dune_target_link_libraries(adaptation "${DUNE_LIBS};${LOCAL_LIBS}")
 set_property(TARGET adaptation APPEND PROPERTY 
-             COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE}" )
+  COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE}" )
+
+### example "make GRIDTYPE=..."-hack:
+#set_gridtype_from_command_line(adaptation GRIDDIM ${GRIDDIM} WORLDDIM ${WORLDDIM} GRIDTYPE ${GRIDTYPE}) 
+#set_gridtype_from_command_line(adaptation FORCE) 
+
+
 
 set(ALL_TESTS ${TESTS} adaptation)
 
+foreach(i ${ALL_TESTS})
+  add_dune_zlib_flags(${i}) 
+  ###create all known gridtype-griddim-worlddim combinations
+  #dune_create_gridtype_executable(${i})
+endforeach()
 
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
