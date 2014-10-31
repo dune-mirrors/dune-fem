@@ -98,7 +98,7 @@ namespace Dune
             {
               assert( enMarker <= 0 );
               EntityPointerType ep = intersec.outside();
-              EntityType &nb = *ep;
+              const EntityType &nb = *ep;
               const int nbMarker = grid.getMark(nb); 
               const int levelDiff = ep->level() - en.level();
 
