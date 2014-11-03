@@ -130,7 +130,6 @@ set_property(TARGET adaptation APPEND PROPERTY
 set(ALL_TESTS ${TESTS} adaptation)
 
 foreach(i ${ALL_TESTS})
-  add_dune_zlib_flags(${i}) 
   ###create all known gridtype-griddim-worlddim combinations
   #dune_create_gridtype_executable(${i})
 endforeach()

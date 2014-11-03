@@ -52,7 +52,6 @@ function(set_gridtype_from_command_line)
 
     #delete some of existing flags 
     set(compile_def ${_props_compile_definitions})
-    message("------------------${compile_def}")
     if( compile_def )
       foreach(_del_grids ${GRID_LIST})
         list(REMOVE_ITEM compile_def "${_del_grids}")
@@ -143,11 +142,13 @@ function(dune_create_gridtype_executable)
     get_target_property(_props_compile_flags ${_targets} COMPILE_FLAG)
     get_target_property(_props_compile_definitions ${_targets} COMPILE_DEFINITIONS)
     get_target_property(_props_include_directories ${_targets} INCLUDE_DIRECTORIES)
+    get_target_property(_props_link_libraries ${_targets} LINK_LIBRARIES)
     get_target_property(_props_sources ${_targets} SOURCES)
   
     string(REPLACE "_props_compile_flags-NOTFOUND" "" _props_compile_flags "${_props_compile_flags}")
     string(REPLACE "_props_compile_definitions-NOTFOUND" "" _props_compile_definitions "${_props_compile_definitions}")
-    string(REPLACE "_props_include_diretories-NOTFOUND" "" _props_include_directories "${_props_include_directories}")
+    string(REPLACE "_props_include_directories-NOTFOUND" "" _props_include_directories "${_props_include_directories}")
+    string(REPLACE "_props_link_libraries-NOTFOUND" "" _props_link_libararies "${_props_link_libraries}")
     string(REPLACE "_props_sources-NOTFOUND" "" _props_sources "${_props_sources}")
   
     #known grids
@@ -221,15 +222,16 @@ function(dune_create_gridtype_executable)
       set(cur_compile_flags "GRIDDIM=${_griddim};WORLDDIM=${_worlddim};${_gridtype};${compile_flags}")
       
       #create executable and add all important flags...
-      if( ADD_EXX_MACOSX_BUNDLE )
+      if( ADD_EXEC_MACOSX_BUNDLE )
         add_executable(${_target_name} MACOSX_BUNDLE EXCLUDE_FROM_ALL ${_props_sources}) 
-      elseif(ADD_EXX_WIN32)
+      elseif(ADD_EXEC_WIN32)
         add_executable(${_target_name} WIN32 EXCLUDE_FROM_ALL ${_props_sources}) 
       else()
         add_executable(${_target_name} EXCLUDE_FROM_ALL ${_props_sources}) 
       endif()
 
-      dune_target_link_libraries(${_target_name} "${DUNE_LIBS};${LOCAL_LIBS}")
+      set_property(TARGET ${_target_name} APPEND PROPERTY
+        LINK_LIBRARIES "${_props_link_libraries}")
       set_property(TARGET ${_target_name} APPEND PROPERTY 
         COMPILE_DEFINITIONS "${compile_definitions}" )
       set_property(TARGET ${_target_name} APPEND PROPERTY
