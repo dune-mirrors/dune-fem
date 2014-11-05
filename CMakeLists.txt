@@ -29,13 +29,7 @@ set(SUBDIRS  dune m4 lib doc)
 # we need the module file to be able to build via dunecontrol
 set(EXTRA_DIST  dune.module ChangeLog modules)
 set(DISTCHECK_CONFIGURE_FLAGS  --with-dune="${DUNEROOT}" CXX="${CXX}" CC="${CC}")
-foreach(i ${SUBDIRS})
-  if(${i} STREQUAL "test")
-    set(opt EXCLUDE_FROM_ALL)
-  endif(${i} STREQUAL "test")
-  add_subdirectory(${i} ${opt})
-endforeach(i ${SUBDIRS})
+dune_add_subdirs(${SUBDIRS} cmake/modules)
 
-add_subdirectory(cmake/modules)
 # finalize the dune project, e.g. generating config.h etc.
 finalize_dune_project(GENERATE_CONFIG_H_CMAKE)
