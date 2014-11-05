@@ -1,6 +1,17 @@
 # some functions supporting some abbreviations
-#
 
+# usage:
+# 
+# dune_add_subdirs( <dir1> [<dir2>...]
+#                   [EXCLUDE <exclude string> | NOEXCLUDE]
+#
+# adds for each <dir1>, <dir2>... a subdirectory except the subdirectory 
+# name is equal to <exclude string>.
+#
+# If no <exclude string> is given a default value "test" will be used.
+#
+# Neglect the default value by using the NOEXCLUDE option.
+#
 function(dune_add_subdirs)
 
   include(CMakeParseArguments)
