@@ -1,4 +1,4 @@
-set(SUBDIRS  ode oemsolver test)
+set(SUBDIRS  rungekutta ode oemsolver test)
 
 # construct only from sub-libraries
 # if par DG was found, then ODE solver are not included
@@ -34,4 +34,5 @@ dune_add_subdirs(${SUBDIRS})
 dune_add_library(solver OBJECT 
     ode/odeobjectfiles.cc 
     ode/odeobjectfiles_mpi.cc
+    rungekutta/butchertable.cc
   )
