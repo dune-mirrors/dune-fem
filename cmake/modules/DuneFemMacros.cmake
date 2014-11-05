@@ -138,6 +138,9 @@ find_package(PAPI)
 include(AddPAPIFlags)
 find_package(PETSc)
 
+####### abbreviations
+include(FemShort)
+
 ####### hacks
 include(CommandLineHacks)
 

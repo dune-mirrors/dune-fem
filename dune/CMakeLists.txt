@@ -1,1 +1,1 @@
-add_subdirectory(fem)
+dune_add_subdirs(fem)

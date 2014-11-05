@@ -134,6 +134,8 @@ foreach(i ${ALL_TESTS})
   #dune_create_gridtype_executable(${i})
 endforeach()
 
+#dune_add_test(${TESTS})
+
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
 foreach(i ${TESTS})

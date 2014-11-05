@@ -1,1 +1,1 @@
-add_subdirectory(grape)
+dune_add_subdirs(grape)

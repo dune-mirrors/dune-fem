@@ -10,12 +10,7 @@ set(EXTRA_DIST  ${PAGES})
 # include $(top_srcdir)/am/doxygen
 # include not needed for CMake
 # include $(top_srcdir)/am/global-rules
-foreach(i ${SUBDIRS})
-  if(${i} STREQUAL "test")
-    set(opt EXCLUDE_FROM_ALL)
-  endif(${i} STREQUAL "test")
-  add_subdirectory(${i} ${opt})
-endforeach(i ${SUBDIRS})
+dune_add_subdirs(${SUBDIRS})
 # Install documentation
 # We assume that ${DOCFILES} and ${DOCFILES_EXTRA} are targets
 install(TARGETS ${DOCFILES} ${DOCFILES_EXTRA} DESTINATION ${docdir})

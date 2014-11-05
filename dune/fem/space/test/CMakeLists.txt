@@ -2,7 +2,6 @@ set(POLORDER  2)
 set(DIMRANGE  3)
 set(WANT_GRAPE  0)
 # set default grid type for make all
-set(GRIDTYPE YASPGRID)
 #set( GRIDTYPE PARALLELGRID_ALUGRID_SIMPLEX )
 #set( GRIDTYPE ALUGRID_SIMPLEX )
 #set( GRIDTYPE ALUGRID_CONFORM )
@@ -10,10 +9,14 @@ set(GRIDTYPE YASPGRID)
 #set( GRIDTYPE ALBERTAGRID )
 set(GRIDDIM 2)
 
+set(GRIDTYPE YASPGRID)
+
 add_definitions( "-D${GRIDTYPE}" )
 add_definitions( "-DDIMRANGE=${DIMRANGE}" )
 add_definitions( "-DPOLORDER=${POLORDER}" )
 add_definitions( "-DWANT_GRAPE=${WANT_GRAPE}" )
+
+#dune_add_grid_definitions(${GRIDTYPE} ${GRIDDIM} ${WORLDDIM})
 
 set(TESTS  lagrangeadapt 
            adapt 

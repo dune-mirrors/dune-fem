@@ -22,12 +22,8 @@ set(SUBDIRS  basisfunctionset
              test)
 
 install(FILES ${space_HEADERS} DESTINATION ${spacedir})
-foreach(i ${SUBDIRS})
-  if(${i} STREQUAL "test")
-    set(opt EXCLUDE_FROM_ALL)
-  endif(${i} STREQUAL "test")
-  add_subdirectory(${i} ${opt})
-endforeach(i ${SUBDIRS})
+
+dune_add_subdirs(${SUBDIRS})
 
 dune_add_library(space OBJECT 
     shapefunctionset/legendrepolynomials.cc
