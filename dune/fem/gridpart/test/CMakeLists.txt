@@ -36,14 +36,5 @@ set_property(TARGET gp_lagrangeinterpolation APPEND PROPERTY
 set_property(TARGET test_filteredgridpart APPEND PROPERTY 
              COMPILE_DEFINITIONS "COUNT_FLOPS;USE_FILTEREDGRIDPART" )
 
-
-# include not needed for CMake
-# include $(top_srcdir)/am/global-rules
-foreach(i ${TESTS})
-  add_test(${i} ${i})
-endforeach(i ${TESTS})
-# We do not want want to build the tests during make all
-# but just build them on demand
-add_directory_test_target(_test_target)
-add_dependencies(${_test_target} ${TESTS} ${COMPILE_XFAIL_TESTS})
+dune_add_test(${TESTS})
 

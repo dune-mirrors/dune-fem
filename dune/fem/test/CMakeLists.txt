@@ -124,26 +124,10 @@ set_property(TARGET adaptation APPEND PROPERTY
 ### example "make GRIDTYPE=..."-hack:
 #set_gridtype_from_command_line(adaptation GRIDDIM ${GRIDDIM} WORLDDIM ${WORLDDIM} GRIDTYPE ${GRIDTYPE}) 
 #set_gridtype_from_command_line(adaptation FORCE) 
+#foreach(i ${TESTS})
+#  ###create all known gridtype-griddim-worlddim combinations
+#  #dune_create_gridtype_executable(${i})
+#endforeach()
 
-
-
-set(ALL_TESTS ${TESTS} adaptation)
-
-foreach(i ${ALL_TESTS})
-  ###create all known gridtype-griddim-worlddim combinations
-  #dune_create_gridtype_executable(${i})
-endforeach()
-
-#dune_add_test(${TESTS})
-
-# include not needed for CMake
-# include $(top_srcdir)/am/global-rules
-foreach(i ${TESTS})
-  add_test(${i} ${i})
-endforeach(i ${TESTS})
-add_test(adaptation_4.sh adaptation_4.sh)
-# We do not want want to build the tests during make all
-# but just build them on demand
-add_directory_test_target(_test_target)
-add_dependencies(${_test_target} ${ALL_TESTS} ${COMPILE_XFAIL_TESTS})
+dune_add_test(${TESTS} TEST adaptation_4.sh DEPENDENCY adaptation)
 

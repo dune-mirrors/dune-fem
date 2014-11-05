@@ -86,14 +86,4 @@ dune_target_link_libraries(dgcomm_cached "${DUNE_LIBS};${LOCAL_LIBS}")
 set_property(TARGET dgcomm_cached APPEND PROPERTY 
              COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3" )
 
-set(ALL_TESTS ${TESTS} dgcomm dgcomm_cached)
-
-# We do not want want to build the tests during make all
-# but just build them on demand
-foreach(i ${TESTS})
-  add_test(${i} ${i})
-endforeach(i ${TESTS})
-add_test(dgcomm_4.sh dgcomm_4.sh)
-add_test(dgcomm_cached_4.sh dgcomm_cached_4.sh)
-add_directory_test_target(_test_target)
-add_dependencies(${_test_target} ${ALL_TESTS} ${COMPILE_XFAIL_TESTS})
+dune_add_test(${TESTS} TEST dgcomm_4.sh dgcomm_cached_4.sh DEPENDENCY dgcomm dgcomm_cached )

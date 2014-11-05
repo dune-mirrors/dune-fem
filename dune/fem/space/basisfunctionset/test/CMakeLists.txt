@@ -26,12 +26,4 @@ add_executable(test_basisfunctionset test-basisfunctionset.cc)
 dune_target_link_libraries(test_basisfunctionset "${DUNE_LIBS};${LOCAL_LIBS}")
 add_dune_mpi_flags(test_basisfunctionset )
 
-# include not needed for CMake
-# include $(top_srcdir)/am/global-rulesset(TESTS  parametertest)
-foreach(i ${TESTS})
-  add_test(${i} ${i})
-endforeach(i ${TESTS})
-# We do not want want to build the tests during make all
-# but just build them on demand
-add_directory_test_target(_test_target)
-add_dependencies(${_test_target} ${TESTS} ${COMPILE_XFAIL_TESTS})
+dune_add_test(${TESTS})

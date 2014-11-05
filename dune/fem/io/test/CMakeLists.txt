@@ -10,12 +10,4 @@ configure_file(param_NavierStokes ${CMAKE_CURRENT_BINARY_DIR}/param_NavierStokes
 configure_file(bc.sh ${CMAKE_CURRENT_BINARY_DIR}/bc.sh COPYONLY)
 configure_file(date.sh ${CMAKE_CURRENT_BINARY_DIR}/date.sh COPYONLY)
 
-# include not needed for CMake
-# include $(top_srcdir)/am/global-rules
-foreach(i ${TESTS})
-  add_test(${i} ${i})
-endforeach(i ${TESTS})
-# We do not want want to build the tests during make all
-# but just build them on demand
-add_directory_test_target(_test_target)
-add_dependencies(${_test_target} ${TESTS} ${COMPILE_XFAIL_TESTS})
+dune_add_test(i ${TESTS})
