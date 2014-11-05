@@ -8,9 +8,6 @@ add_definitions( "-DGRIDDIM=${GRIDDIM}" )
 add_definitions( "-DPOLORDER=${POLORDER}" )
 add_definitions( "-DWANT_GRAPE=${WANT_GRAPE}" )
 
-set(TESTS  persistencemanagertest 
-           dataoutputtest)
-
 # copy data to build source to make tests work         
 configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
 configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
@@ -21,4 +18,4 @@ dune_target_link_libraries(persistencemanagertest "${DUNE_LIBS};${LOCAL_LIBS}")
 add_executable(dataoutputtest dataoutputtest.cc)
 dune_target_link_libraries(dataoutputtest "${DUNE_LIBS};${LOCAL_LIBS}")
 
-dune_add_test(${TESTS})
+dune_add_test(persistencemanagertest dataoutputtest)

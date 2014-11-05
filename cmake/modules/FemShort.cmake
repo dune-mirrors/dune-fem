@@ -58,3 +58,11 @@ function(dune_add_test)
     add_dependencies(${_test_target} ${ADD_TEST_UNPARSED_ARGUMENTS} ${ADD_TEST_DEPENDENCY} ${COMPILE_XFAIL_TESTS})
   endif()
 endfunction(dune_add_test)
+
+# 
+# install given files into current include directory
+#
+function(dune_install)
+  string(REPLACE "${CMAKE_SOURCE_DIR}" "${CMAKE_INSTALL_INCLUDEDIR}" _dest "${CMAKE_CURRENT_SOURCE_DIR}" )
+  install(FILES ${ARGV} DESTINATION ${_dest})
+endfunction(dune_install)

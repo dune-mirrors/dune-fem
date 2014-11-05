@@ -1,5 +1,3 @@
-set(TESTS  parametertest)
-
 add_executable(parametertest parametertest.cc)
 dune_target_link_libraries(parametertest "${DUNE_LIBS};${LOCAL_LIBS}")
 
@@ -10,4 +8,4 @@ configure_file(param_NavierStokes ${CMAKE_CURRENT_BINARY_DIR}/param_NavierStokes
 configure_file(bc.sh ${CMAKE_CURRENT_BINARY_DIR}/bc.sh COPYONLY)
 configure_file(date.sh ${CMAKE_CURRENT_BINARY_DIR}/date.sh COPYONLY)
 
-dune_add_test(i ${TESTS})
+dune_add_test(parametertest)

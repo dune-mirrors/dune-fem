@@ -1,8 +1,5 @@
-# IGNORE_HEADERS
-#CXXFLAGS=-g -Wall
 # set default grid type for make all
 set(GRIDTYPE YASPGRID)
-#set(GRIDTYPE PRISMGRID_ALUGRID_SIMPLEX)
 #set(GRIDTYPE ALUGRID_SIMPLEX)
 #set(GRIDTYPE ALUGRID_CUBE)
 #set(GRIDTYPE UGGRID)
@@ -10,8 +7,6 @@ set(GRIDDIM 3)
 
 add_definitions( "-D${GRIDTYPE}" )
 add_definitions( "-DGRIDDIM=${GRIDDIM}" ) 
-
-set(TESTS  cachingquadrature)
 
 # copy data to build source to make tests work         
 configure_file(1dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/1dgrid.dgf COPYONLY)
@@ -21,7 +16,7 @@ configure_file(3dcubesimp.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dcubesimp.dgf COPYONL
 configure_file(parameter ${CMAKE_CURRENT_BINARY_DIR}/parameter COPYONLY)
 
 add_executable(cachingquadrature cachingquadrature.cc)
-dune_target_link_libraries( cachingquadrature "${DUNE_LIBS};${LOCAL_LIBS}")
+dune_target_link_libraries(cachingquadrature "${DUNE_LIBS};${LOCAL_LIBS}")
 
-dune_add_test(${TESTS})
+dune_add_test(cachingquadrature)
 

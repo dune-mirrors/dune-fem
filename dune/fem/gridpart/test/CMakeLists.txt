@@ -1,26 +1,13 @@
-# IGNORE_HEADERS
-# set default grid type for make all
 set(GRIDTYPE SGRID)
 set(GRIDDIM 2)
 
 add_definitions( "-D${GRIDTYPE}" )
 add_definitions( "-DGRIDDIM=${GRIDDIM}" ) 
+
 # copy data to build source to make tests work         
-
-
 configure_file(1dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/1dgrid.dgf COPYONLY)
 configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
 configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
-
-# test programs
-set(TESTS  gp_lagrangeinterpolation 
-           test_idgridpart 
-           test_geogridpart)
-
-# non compiling tests
-# todo: fix compiler errors
-#set(TESTS "${TESTS} test_filteredgridpart")
-
 
 add_executable(gp_lagrangeinterpolation lagrangeinterpolation.cc)
 dune_target_link_libraries(gp_lagrangeinterpolation "${DUNE_LIBS};${LOCAL_LIBS}")
@@ -36,5 +23,6 @@ set_property(TARGET gp_lagrangeinterpolation APPEND PROPERTY
 set_property(TARGET test_filteredgridpart APPEND PROPERTY 
              COMPILE_DEFINITIONS "COUNT_FLOPS;USE_FILTEREDGRIDPART" )
 
-dune_add_test(${TESTS})
+dune_add_test(gp_lagrangeinterpolation test_idgridpart test_geogridpart
+              test_filteredgridpart)
 

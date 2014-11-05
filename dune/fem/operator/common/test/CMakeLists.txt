@@ -1,6 +1,4 @@
-set(TESTS  mappings)
-
 add_executable(mappings mappingtest.cc)
 dune_target_link_libraries(mappings "${DUNE_LIBS};${LOCAL_LIBS}")
 
-dune_add_test(${TESTS})
+dune_add_test(mappings)

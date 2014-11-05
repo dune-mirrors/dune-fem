@@ -1,33 +1,18 @@
 set(POLORDER  2)
 set(DIMRANGE  3)
 set(WANT_GRAPE  0)
-# set default grid type for make all
 #set( GRIDTYPE PARALLELGRID_ALUGRID_SIMPLEX )
 #set( GRIDTYPE ALUGRID_SIMPLEX )
 #set( GRIDTYPE ALUGRID_CONFORM )
 #set( GRIDTYPE ALUGRID_CUBE ) 
 #set( GRIDTYPE ALBERTAGRID )
 set(GRIDDIM 2)
-
 set(GRIDTYPE YASPGRID)
 
 add_definitions( "-D${GRIDTYPE}" )
 add_definitions( "-DDIMRANGE=${DIMRANGE}" )
 add_definitions( "-DPOLORDER=${POLORDER}" )
 add_definitions( "-DWANT_GRAPE=${WANT_GRAPE}" )
-
-#dune_add_grid_definitions(${GRIDTYPE} ${GRIDDIM} ${WORLDDIM})
-
-set(TESTS  lagrangeadapt 
-           adapt 
-           padapt
-           arraytest
-           combinedspacetest
-           interpolation
-           l2projection
-           lagrangeglobalrefine
-           lagrangeinterpolation
-           legendretest)
 
 # copy data to build source to make tests work         
 configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
@@ -86,4 +71,9 @@ dune_target_link_libraries(dgcomm_cached "${DUNE_LIBS};${LOCAL_LIBS}")
 set_property(TARGET dgcomm_cached APPEND PROPERTY 
              COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3" )
 
-dune_add_test(${TESTS} TEST dgcomm_4.sh dgcomm_cached_4.sh DEPENDENCY dgcomm dgcomm_cached )
+dune_add_test(lagrangeadapt adapt padapt
+              arraytest combinedspacetest interpolation
+              l2projection lagrangeglobalrefine lagrangeinterpolation
+              legendretest 
+              TEST dgcomm_4.sh dgcomm_cached_4.sh 
+              DEPENDENCY dgcomm dgcomm_cached )

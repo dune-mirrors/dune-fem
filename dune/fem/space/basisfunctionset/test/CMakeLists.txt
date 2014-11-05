@@ -15,9 +15,6 @@ configure_file(1dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/1dgrid.dgf COPYONLY)
 configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
 configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
 
-set(TESTS  test_vectorialbasisfunctionset
-           test_basisfunctionset)
-
 add_executable(test_vectorialbasisfunctionset test-vectorialbasisfunctionset.cc)
 dune_target_link_libraries(test_vectorialbasisfunctionset "${DUNE_LIBS};${LOCAL_LIBS}")
 add_dune_mpi_flags(test_vectorialbasisfunctionset )
@@ -26,4 +23,4 @@ add_executable(test_basisfunctionset test-basisfunctionset.cc)
 dune_target_link_libraries(test_basisfunctionset "${DUNE_LIBS};${LOCAL_LIBS}")
 add_dune_mpi_flags(test_basisfunctionset )
 
-dune_add_test(${TESTS})
+dune_add_test(test_vectorialbasisfunctionset test_basisfunctionset)

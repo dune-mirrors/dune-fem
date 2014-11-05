@@ -17,10 +17,6 @@ add_definitions( "-DSCALAR=${SCALAR}" )
 configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
 configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
 
-set(TESTS  tester 
-           generic
-           testnonscalarmapper)
-
 add_executable(tester main.cc)
 dune_target_link_libraries( tester "${DUNE_LIBS};${LOCAL_LIBS}")
 add_executable(generic generic.cc)
@@ -28,4 +24,4 @@ dune_target_link_libraries( generic "${DUNE_LIBS};${LOCAL_LIBS}")
 add_executable(testnonscalarmapper testnonscalarmapper.cc)
 dune_target_link_libraries( testnonscalarmapper "${DUNE_LIBS};${LOCAL_LIBS}" )
 
-dune_add_test(${TESTS})
+dune_add_test(tester generic testnonscalarmapper)
