@@ -3668,6 +3668,38 @@ namespace Dune {
         }
       }
 
+      /* H\phi_i(x,y) for quadrilateral */
+      static void
+      hess_quadrilateral_2d ( const int i, DomainType xi, HessianRangeType &h )
+      {
+        h[ 0 ] = h[ 1 ] = h[ 2 ] = 0;
+        switch( i )
+        {
+          #if (PMAX2D>=0)
+          case ( 0 ):
+            return;
+          #endif
+          #if (PMAX2D>=1)
+          case ( 1 ):
+          case ( 2 ):
+            return;
+          #endif
+          #if (PMAX2D>=2)
+          case ( 3 ):
+            h[0]= 26.832815729997476356910084024775;
+            return;
+          case ( 4 ):
+            h[1] = 12;
+            return;
+          case ( 5 ):
+            h[2]= 26.832815729997476356910084024775;
+            return;
+          #endif
+          default:
+            printf( "Error in hess_quadrilateral_2d -- unmatched switch/case %d\n", i );
+        }
+      }
+
     }; // end class OrthonormalBase_2D
   } // end namespace Fem
 

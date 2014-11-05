@@ -286,6 +286,17 @@ namespace Dune
       }
 
     protected:
+      static void evaluate ( const Quadrilateral &, std::size_t i, const DomainType &x, HessianRangeType &hessian )
+      {
+        typedef OrthonormalBase_2D< DomainFieldType, RangeFieldType > OrthonormalBase2d;
+        RangeFieldType values[] = { 0, 0, 0 };
+        OrthonormalBase2d::hess_quadrilateral_2d( i , &x[ 0 ], values );
+
+        for( unsigned int j = 0; j < FunctionSpace::dimDomain;  ++j )
+          for( unsigned int k = 0; k < FunctionSpace::dimDomain; ++k )
+            hessian[ 0 ][ j ][ k ] = values[ j + k ];
+      }
+
       static void evaluate ( const Triangle &, std::size_t i, const DomainType &x, HessianRangeType &hessian )
       {
         typedef OrthonormalBase_2D< DomainFieldType, RangeFieldType > OrthonormalBase2d;
