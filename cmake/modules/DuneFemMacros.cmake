@@ -136,7 +136,10 @@ find_package(SIONlib)
 include(AddSIONlibFlags)
 find_package(PAPI)
 include(AddPAPIFlags)
-find_package(PETSc)
+
+set(PETSC_DIR  $ENV{PETSC_DIR})
+set(PETSC_ARCH $ENV{PETSC_ARCH})
+find_package(PETSc COMPONENTS CXX)
 
 ####### abbreviations
 include(FemShort)
