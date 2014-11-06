@@ -33,14 +33,15 @@ endif(HAVE_ENDIAN_HEADER_HH)
 mark_as_advanced(ENDIAN_HEADER_ROOT SYSTEM_ENDIAN_HEADER_PATH)
 
 #xdr
-set(XDR_ROOT "" CACHE STRING "root of header rpc.h")
+set(XDR_ROOT "" CACHE STRING "root of header xdr.h")
 find_path(DUNE_PATH_XDR
-  NAMES rpc.h
-  PATHS ${XDR_ROOT}
+  NAMES xdr.h
+  PATHS ${XDR_ROOT} /usr /usr/include
   PATH_SUFFIXES "rpc"
-  DOC "path to header rpc.h"
+  DOC "path to header xdr.h"
 )
-if(EXISTS DUNE_PATH_XDR)
+
+if(DUNE_PATH_XDR)
   include(CheckFunctionExists)
   check_function_exists(xdr_uint64_t XDR_UINT64_FUNC_EXISTS)
   if( XDR_UINT64_FUNC_EXISTS )
@@ -52,8 +53,8 @@ if(EXISTS DUNE_PATH_XDR)
     endif(XDR_U_INT64_FUNC_EXISTS )
   endif(XDR_UINT64_FUNC_EXISTS )
 else()
-  message("can not find rpc.h")
-endif(EXISTS DUNE_PATH_XDR)
+  message("can not find xdr.h")
+endif(DUNE_PATH_XDR)
 mark_as_advanced(XDR_ROOT DUNE_PATH_XDR)
 
 include(CheckCXXSourceCompiles)
