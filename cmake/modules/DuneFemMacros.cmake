@@ -62,7 +62,6 @@ include(CheckCXXSourceCompiles)
 ########################
 # pthreads....
 ########################
-message(AUTHOR_WARNING "TODO. Please check pthread issues. Not all systems are supported, yet")
 # we are using the cmake default implementation for threads at the moment
 include(FindThreads)
 set(HAVE_PTHREAD 0)
@@ -143,6 +142,3 @@ include(FemShort)
 
 ####### hacks
 include(CommandLineHacks)
-
-message(AUTHOR_WARNING "TODO. Improve module test.")
-
