@@ -565,8 +565,8 @@ namespace Dune
           BaseType :: init ( rowEntity , colEntity );
 
           geomType_ = rowEntity.type();
-          numRows_  = rowMapper_.numDofs(rowEntity);
-          numCols_  = colMapper_.numDofs(colEntity);
+          numCols_  = rowMapper_.numDofs(rowEntity);
+          numRows_  = colMapper_.numDofs(colEntity);
           matrices_.resize( numRows_ );
 
           RowFunctor rowFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
