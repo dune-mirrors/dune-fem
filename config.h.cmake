@@ -17,7 +17,7 @@
 #cmakedefine SYSTEM_ENDIAN_HEADER "${SYSTEM_ENDIAN_HEADER}"
 
 /* Define actual name of xdr_uint_64_t method */
-#cmakedefine XDR_UINT64_FUNC "${XDR_UINT_64_FUNC}"
+#cmakedefine XDR_UINT64_FUNC ${XDR_UINT64_FUNC}
 
 /* Define if we have thread local storage */
 #cmakedefine HAVE_PTHREAD_TLS 1
