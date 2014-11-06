@@ -6,7 +6,6 @@
 static const int dimw = Dune::GridSelector::dimworld;
 
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/lagrange.hh>
@@ -122,7 +121,6 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, bool displa
    // calculation L2 error 
    // pol ord for calculation the error should be higher than
    // pol for evaluation the basefunctions 
-   typedef DiscreteFunctionSpaceType :: RangeType RangeType; 
    typedef GridFunctionAdapter< ExactSolution, GridPartType >  GridFunctionType;
    GridFunctionType exactSolution( "exact solution", f, solution.gridPart(), solution.space().order() + 1 );
    double error = l2norm.distance( exactSolution, solution );

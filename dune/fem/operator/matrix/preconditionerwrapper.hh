@@ -43,7 +43,8 @@ namespace Dune
     {
     public:  
       typedef typename MatrixObject :: ColumnDiscreteFunctionType DiscreteFunctionType ;
-      typedef DiagonalPreconditioner< DiscreteFunctionType, MatrixObject > PreconditionerType ;
+      // select preconditioner for assembled operators
+      typedef DiagonalPreconditionerBase< DiscreteFunctionType, MatrixObject, true > PreconditionerType ;
 
     protected:
       PreconditionerType diagonalPrecon_;

@@ -1,7 +1,6 @@
 #include <config.h>
 
-#include <dune/grid/sgrid.hh>
-
+#include <dune/grid/yaspgrid.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
 
 #ifdef ENABLE_ALUGRID
@@ -248,7 +247,7 @@ namespace Dune
       const int dim = 2;
       const int codim = 1;
 
-      typedef SGrid< dim, dim > GridType;
+      typedef YaspGrid< dim > GridType;
       typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
       typedef CacheProvider< GridPartType, codim > CacheProviderType;
       typedef Quadrature< GridPartType::ctype, GridPartType::dimension-1 > QuadratureType;

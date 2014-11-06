@@ -19,7 +19,6 @@ typedef Dune::SGrid<dimw,dimw> HGridType;
 typedef Dune::YaspGrid< dimw > HGridType;
 #endif
 
-#include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>

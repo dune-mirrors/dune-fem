@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_THREADPARTITIONER_HH
 #define DUNE_FEM_THREADPARTITIONER_HH
 
-//- system includes 
+//- system includes
 #include <string>
 #include <list>
 #include <map>
@@ -10,7 +10,7 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
 
-#if HAVE_DUNE_ALUGRIOD
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/3d/alugrid.hh>
 
 #warning "Using the ThreadPartitioner"
@@ -18,10 +18,10 @@
 namespace Dune {
 
 template < class GridPartImp >
-class ThreadPartitioner 
+class ThreadPartitioner
 {
 
-protected:  
+protected:
   typedef GridPartImp GridPartType;
   typedef typename GridPartType :: GridType GridType;
   typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType;
@@ -30,14 +30,14 @@ protected:
   typedef typename GridPartType :: IndexSetType  IndexSetType;
   typedef typename IndexSetType :: IndexType IndexType;
 
-protected:  
+protected:
   typedef ALU3DSPACE LoadBalancer LoadBalancerType;
   typedef typename LoadBalancerType :: DataBase DataBaseType;
 
-  // type of communicator interface 
+  // type of communicator interface
   typedef ALU3DSPACE MpAccessLocal MPAccessInterfaceType;
 
-  // type of communicator implementation 
+  // type of communicator implementation
   typedef ALU3DSPACE MpAccessSerial  MPAccessImplType;
 
   mutable MPAccessImplType  mpAccess_;
@@ -50,13 +50,13 @@ protected:
   typedef typename GridPartType :: template Codim<0> :: EntityType         EntityType;
   typedef typename GridPartType :: template Codim<0> :: EntityPointerType  EntityPointerType;
 
-  // load balancer bounds 
+  // load balancer bounds
   const double ldbOver_ ;
   const double ldbUnder_;
   const double cutOffFactor_;
 
   const int pSize_ ;
-  int graphSize_; 
+  int graphSize_;
 
   std::vector< int > index_;
   int indexCounter_ ;
@@ -66,14 +66,14 @@ protected:
 public:
   enum Method { recursive = 0, // METIS_PartGraphRecursive,
                 kway      = 1, // METIS_PartGraphKway
-                sfc       = 2  // ALUGRID_SpaceFillingCurve 
+                sfc       = 2  // ALUGRID_SpaceFillingCurve
   };
 
-  /** \brief constructor 
-      \param gridPart  grid part with set of entities that should be partitioned 
-      \param pSize     number of partitions 
-  */    
-  ThreadPartitioner( const GridPartType& gridPart, 
+  /** \brief constructor
+      \param gridPart  grid part with set of entities that should be partitioned
+      \param pSize     number of partitions
+  */
+  ThreadPartitioner( const GridPartType& gridPart,
                      const int pSize,
                      const double cutOffFactor = 1.0 )
     : mpAccess_(),
@@ -91,11 +91,11 @@ public:
     calculateGraph( gridPart_ );
   }
 
-protected:  
-  //! create consecutive entity numbering on-the-fly 
+protected:
+  //! create consecutive entity numbering on-the-fly
   //! this is neccessary, because we might only be interating over a
   //! sub set of the given entities, and thus indices might be non-consecutive
-  int getIndex( const size_t idx ) 
+  int getIndex( const size_t idx )
   {
     assert( idx < index_.size() );
     if( index_[ idx ] < 0 ) index_[ idx ] = indexCounter_ ++ ;
@@ -103,20 +103,20 @@ protected:
   }
 
   //! access consecutive entity numbering (read-only)
-  int getIndex( const size_t idx ) const 
+  int getIndex( const size_t idx ) const
   {
     assert( idx < index_.size() );
     return index_[ idx ] ;
   }
 
-  //! get consecutive entity index, if not existing, it's created 
-  int getIndex( const EntityType& entity ) 
+  //! get consecutive entity index, if not existing, it's created
+  int getIndex( const EntityType& entity )
   {
     return getIndex( indexSet_.index( entity ) );
   }
 
   //! get consecutive entity index (read-only)
-  int getIndex( const EntityType& entity ) const 
+  int getIndex( const EntityType& entity ) const
   {
     return getIndex( indexSet_.index( entity ) );
   }
@@ -127,7 +127,7 @@ protected:
     typedef typename GridPartType :: template Codim< 0 > :: IteratorType Iterator;
     const Iterator end = gridPart.template end<0> ();
     const int cutOff = cutOffFactor_ * (indexSet_.size( 0 ) / pSize_) ;
-    // create graph 
+    // create graph
     for(Iterator it = gridPart.template begin<0> (); it != end; ++it )
     {
       const EntityType& entity = *it;
@@ -140,35 +140,35 @@ protected:
   }
 
   template <class IntersectionIteratorType>
-  void ldbUpdateVertex ( const EntityType & entity, 
+  void ldbUpdateVertex ( const EntityType & entity,
                          const int cutOff,
                          const IntersectionIteratorType& ibegin,
                          const IntersectionIteratorType& iend,
                          DataBaseType & db )
   {
     const int index = getIndex( entity );
-    int weight = (index >= cutOff) ? 1 : 8; // a least weight 1 for macro element 
+    int weight = (index >= cutOff) ? 1 : 8; // a least weight 1 for macro element
 
     {
       if( Fem::GridPartCapabilities::hasGrid< GridPartType >::v )
       {
         // calculate weight, which is number of children
         const int mxl = gridPart_.grid().maxLevel();
-        if( mxl > entity.level() && ! entity.isLeaf() ) 
+        if( mxl > entity.level() && ! entity.isLeaf() )
         {
-          typedef typename EntityType :: HierarchicIterator HierIt; 
-          const HierIt endit = entity.hend( mxl ); 
+          typedef typename EntityType :: HierarchicIterator HierIt;
+          const HierIt endit = entity.hend( mxl );
           for(HierIt it = entity.hbegin( mxl ); it != endit; ++it)
             ++weight;
         }
       }
 
       db.vertexUpdate( typename LoadBalancerType::GraphVertex( index, weight ) );
-      ++graphSize_; 
+      ++graphSize_;
     }
-    
+
     // set weight for faces (to be revised)
-    updateFaces( entity, ibegin, iend, weight, db );   
+    updateFaces( entity, ibegin, iend, weight, db );
   }
 
   template <class IntersectionIteratorType>
@@ -176,7 +176,7 @@ protected:
                    IntersectionIteratorType nit,
                    const IntersectionIteratorType endit,
                    const int weight,
-                   DataBaseType & db) 
+                   DataBaseType & db)
   {
     for( ; nit != endit; ++nit )
     {
@@ -192,10 +192,10 @@ protected:
           const int eid = getIndex( en );
           const int nid = getIndex( nb );
           // the newest ALU version only needs the edges to be inserted only once
-          if( eid < nid ) 
-          // the older version works with double insertion 
-          // insert edges twice, with both orientations 
-          // the ALUGrid partitioner expects it this way 
+          if( eid < nid )
+          // the older version works with double insertion
+          // insert edges twice, with both orientations
+          // the ALUGrid partitioner expects it this way
           {
             typedef typename LoadBalancerType :: GraphEdge GraphEdge;
             db.edgeUpdate ( GraphEdge ( eid, nid, weight, -1, -1 ) );
@@ -206,36 +206,36 @@ protected:
   }
 
 public:
-  /** \brief 
+  /** \brief
       \param method    partitioning method, available are:
-                       - kway      = METIS_PartGraphKway 
+                       - kway      = METIS_PartGraphKway
                        - recursive = METIS_PartGraphRecursive (default)
                        - sfc       = space filling curve (only in dune-alugrid)
-  */                     
-  bool serialPartition( const Method method = recursive ) 
+  */
+  bool serialPartition( const Method method = recursive )
   {
-    if( pSize_ > 1 ) 
+    if( pSize_ > 1 )
     {
-      // if the graph size is smaller then the number of partitions 
-      // the distribution is easy to compute 
-      if( graphSize_ <= pSize_ ) 
+      // if the graph size is smaller then the number of partitions
+      // the distribution is easy to compute
+      if( graphSize_ <= pSize_ )
       {
         partition_.resize( graphSize_ );
-        for( int i=0; i<graphSize_; ++ i ) 
+        for( int i=0; i<graphSize_; ++ i )
           partition_[ i ] = i;
       }
-      else 
+      else
       {
-        // || HAVE_METIS 
-        if( method == recursive ) 
+        // || HAVE_METIS
+        if( method == recursive )
           partition_ = db_.repartition( mpAccess_, DataBaseType :: METIS_PartGraphRecursive, pSize_ );
-        else if( method == kway ) 
+        else if( method == kway )
           partition_ = db_.repartition( mpAccess_, DataBaseType :: METIS_PartGraphKway, pSize_ );
-        else if( method == sfc ) 
+        else if( method == sfc )
         {
           partition_ = db_.repartition( mpAccess_, DataBaseType :: ALUGRID_SpaceFillingCurve, pSize_ );
         }
-        else 
+        else
           DUNE_THROW(InvalidStateException,"ThreadPartitioner::serialPartition: wrong method");
         assert( int(partition_.size()) >= graphSize_ );
       }
@@ -243,7 +243,7 @@ public:
       /*
       assert( partition_.size() > 0 );
       std::vector< int > counter( pSize_ , 0 );
-      for( size_t i =0; i<partition_.size(); ++i) 
+      for( size_t i =0; i<partition_.size(); ++i)
       {
         std::cout << "part[" << i << "] = " << partition_[ i ]  << endl;
         ++counter[  partition_[ i ]  ];
@@ -251,7 +251,7 @@ public:
       */
       return partition_.size() > 0;
     }
-    else 
+    else
     {
       partition_.resize( indexSet_.size( 0 ) );
       for( size_t i =0; i<partition_.size(); ++i )
@@ -260,28 +260,28 @@ public:
     }
   }
 
-  std::set < int, std::less < int > > scan() const 
+  std::set < int, std::less < int > > scan() const
   {
     return db_.scan();
   }
 
-  int getRank( const EntityType& entity ) const 
+  int getRank( const EntityType& entity ) const
   {
     //std::cout << "partSize = " << partition_.size()  << " idx = " << getIndex( entity )  << std::endl;
     assert( (int) partition_.size() > getIndex( entity ) );
     return partition_[ getIndex( entity ) ];
   }
 
-  bool validEntity( const EntityType& entity, const int rank ) const 
+  bool validEntity( const EntityType& entity, const int rank ) const
   {
     return getRank( entity ) == rank;
   }
 
 };
 
-} // end namespace Dune 
+} // end namespace Dune
 
-#else 
+#else
 #warning "DUNE-ALUGrid Partitioner not available"
 #endif // HAVE_DUNE_ALUGRID
 

@@ -29,13 +29,14 @@ namespace Dune
     //! functions 
     template< class IndexSetImp >
     class IndexSetWrapper
-    : public Fem :: EmptyIndexSet 
+      : public Fem :: EmptyIndexSet
     {
       typedef IndexSetWrapper< IndexSetImp > ThisType;
       typedef Fem :: EmptyIndexSet  BaseType ;
 
     public:
       typedef typename IndexSetImp::IndexType IndexType;
+      typedef typename IndexSetImp::Types     Types;
 
       //! store const reference to set 
       IndexSetWrapper ( const IndexSetImp &set )
@@ -97,6 +98,12 @@ namespace Dune
         return set_.geomTypes(codim); 
       }
 
+      //! wrap types method of set
+      Types types( const int codim ) const
+      {
+        return set_.types(codim);
+      }
+
       //! returns true if this set provides an index for given entity
       template< class Entity >
       bool contains ( const Entity &entity ) const
@@ -113,7 +120,7 @@ namespace Dune
     //! Wraps LevelIndexSet for use with LagrangeFunctionSpace 
     template< class GridType >
     class WrappedLevelIndexSet
-    : public IndexSetWrapper< typename GridType::Traits::LevelIndexSet >
+      : public IndexSetWrapper< typename GridType::Traits::LevelIndexSet >
     {
       typedef WrappedLevelIndexSet< GridType > ThisType;
       typedef IndexSetWrapper< typename GridType::Traits::LevelIndexSet > BaseType;

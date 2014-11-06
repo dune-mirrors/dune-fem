@@ -83,7 +83,7 @@ pardg::Matrix::Matrix(int n) : n(n), m(n), data(new double[n*n])
 
 
 inline 
-pardg::Matrix::Matrix(const Matrix &A) : n(A.n), m(A.m), data(new double[A.n*A.m])
+pardg::Matrix::Matrix(const Matrix &A) : Function(A), n(A.n), m(A.m), data(new double[A.n*A.m])
 {
   assert(data);
   cblas_dcopy(n*m, A.data, 1, data, 1);

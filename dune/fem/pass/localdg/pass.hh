@@ -300,7 +300,7 @@ namespace Dune
             {
               // get neighbor 
               EntityPointerType ep = intersection.outside();
-              EntityType & nb = *ep;
+              const EntityType &nb = *ep;
         
               const bool canUpdateNeighbor = nbChecker( en, nb );
 
