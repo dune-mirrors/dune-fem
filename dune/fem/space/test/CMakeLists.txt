@@ -75,5 +75,5 @@ dune_add_test(lagrangeadapt adapt padapt
               arraytest combinedspacetest interpolation
               l2projection lagrangeglobalrefine lagrangeinterpolation
               legendretest 
-              TEST dgcomm_4.sh dgcomm_cached_4.sh 
-              DEPENDENCY dgcomm dgcomm_cached )
+              NO_DEPENDENCY dgcomm_4.sh dgcomm_cached_4.sh 
+              DEPENDENCY_ONLY dgcomm dgcomm_cached )

@@ -96,5 +96,5 @@ dune_add_test(lagrangeinterpolation_linear lagrangeinterpolation_quadratic dgl2p
               dgl2projection_attached dgl2projection_legendre dgl2projection_hierarchiclegendre
               dgl2projection_blockvectordiscretefunction dgl2projection_fv dgl2projection_idgridpart
               vtxprojection_adaptive intersectionindexset dgl2projection_filtered
-              TEST adaptation_4.sh 
-              DEPENDENCY adaptation)
+              NO_DEPENDENCY adaptation_4.sh 
+              DEPENDENCY_ONLY adaptation)
