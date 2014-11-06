@@ -126,13 +126,14 @@ namespace Dune
                          range_type &rhs, domain_type &x,
                          Dune::InverseOperatorResult &result ) const
       {
-        SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations_, verbose_ );
+        int maxIterations = std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations_ );
+        SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), maxIterations, verbose_ );
         solver.apply( x, rhs, result );
       }
 
     private:
       ReductionType reduction_;
-      int maxIterations_;
+      unsigned int maxIterations_;
       int verbose_;
     };
 
@@ -165,7 +166,8 @@ namespace Dune
                          range_type &rhs, domain_type &x,
                          Dune::InverseOperatorResult &result ) const
       {
-        SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), restart_, maxIterations_, verbose_ );
+        int maxIterations = std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations_ );
+        SolverType solver( op, scp, pc, reduction_( op, scp, rhs, x ), restart_, maxIterations, verbose_ );
         solver.apply( x, rhs, result );
       }
 

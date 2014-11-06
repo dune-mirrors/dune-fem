@@ -163,7 +163,7 @@ inline
 double cblas_ddot(const int dim, const double *x, const int incx, 
 		  const double *y, const int incy)
 {
-  register double dot = 0.0;
+  double dot = 0.0;
   int i=dim;
 
   while(i--){
@@ -179,7 +179,7 @@ double cblas_ddot(const int dim, const double *x, const int incx,
 inline
 double cblas_dnrm2(const int dim, const double *x, const int incx)
 {
-  register double norm_sq = 0;
+  double norm_sq = 0;
   int i = dim;
 
   while(i--){

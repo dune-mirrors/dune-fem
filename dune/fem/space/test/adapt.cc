@@ -4,7 +4,6 @@
 
 using namespace Dune;
 
-#include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 //#include <dune/fem/function/vectorfunction.hh>
 //#include <dune/fem/function/attachedfunction.hh>

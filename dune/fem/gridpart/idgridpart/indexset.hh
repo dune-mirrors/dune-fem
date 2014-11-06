@@ -26,6 +26,7 @@ namespace Dune
 
     public:
       typedef typename HostIndexSet::IndexType IndexType;
+      typedef typename HostIndexSet::Types     Types;
 
       explicit IdIndexSet ( const HostIndexSet &hostIndexSet )
       : hostIndexSet_( const_cast<HostIndexSet *> (&hostIndexSet) )
@@ -49,6 +50,11 @@ namespace Dune
       const std::vector< GeometryType > &geomTypes ( const int codim ) const
       {
         return hostIndexSet().geomTypes( codim );
+      }
+
+      Types types( const int codim ) const 
+      {
+        return hostIndexSet().types( codim );
       }
 
       template< class Entity >

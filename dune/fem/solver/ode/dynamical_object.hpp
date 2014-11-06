@@ -24,7 +24,6 @@ protected:
   virtual void resize(int new_size, int component) = 0;
 
 private:
-  const int components;  
   int *_size;
   char *name;
   const int _id;
@@ -39,7 +38,7 @@ private:
 // ======== inline implementation
 inline
 DynamicalObject::DynamicalObject(const char name[], int id, int components) : 
-  components(components), _size(new int[components]), _id(id), os(NULL) 
+  _size(new int[components]), _id(id), os(NULL)
 {
   assert(_size);
   for(int i=0; i<components; i++) _size[i] = 0;

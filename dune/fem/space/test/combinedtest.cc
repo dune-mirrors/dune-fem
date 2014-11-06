@@ -4,7 +4,6 @@
 // #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 static const int dimw = Dune::GridSelector::dimworld;
 
-#include <dune/fem/operator/discreteoperatorimp.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/space/combinedspace/combinedspace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
