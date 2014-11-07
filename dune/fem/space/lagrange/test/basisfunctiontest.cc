@@ -66,7 +66,6 @@ namespace Dune
       typedef typename SpaceType :: IteratorType IteratorType; 
       typedef typename SpaceType :: BasisFunctionSetType  BasisFunctionSetType;
       typedef typename SpaceType :: LagrangePointSetType LagrangePointSetType;
-      typedef typename SpaceType :: GridPartType GridPartType;
       typedef typename SpaceType :: DomainType DomainType; 
       typedef typename SpaceType :: RangeType RangeType; 
 

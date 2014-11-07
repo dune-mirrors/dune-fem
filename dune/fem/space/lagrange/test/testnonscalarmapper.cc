@@ -66,7 +66,6 @@ int main( int argc, char **argv )
 
     typedef FunctionSpace::DomainType DomainType;
     typedef FunctionSpace::RangeType RangeType;
-    typedef FunctionSpace::RangeFieldType RangeFieldType;
 
 
     typedef LagrangeDiscreteFunctionSpace < FunctionSpace, GridPartType, PolynomialOrder, CachingStorage > DiscreteFunctionSpace;
@@ -84,9 +83,6 @@ int main( int argc, char **argv )
     typedef LagrangePointSetType :: Codim< faceCodim > :: SubEntityIteratorType
       FaceDofIteratorType;
 
-    typedef GridPartType :: IntersectionIteratorType IntersectionIteratorType;
-    typedef IntersectionIteratorType::Intersection IntersectionType; 
-        
 #if SCALAR
     DomainType v;
     v[0] = M_PI;
@@ -122,6 +118,9 @@ int main( int argc, char **argv )
         const LagrangePointSetType &lagrangePointSet = dFspace.lagrangePointSet( entity );
 
 #if 0
+        typedef GridPartType :: IntersectionIteratorType IntersectionIteratorType;
+        typedef IntersectionIteratorType::Intersection IntersectionType; 
+        
         IntersectionIteratorType iIt = gridPart.ibegin( entity );
         const IntersectionIteratorType endiIt = gridPart.iend( entity );
 

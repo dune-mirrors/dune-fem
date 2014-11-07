@@ -63,7 +63,6 @@ namespace Dune
       typedef AdaptiveDiscreteFunction< SpaceType > DiscreteFunctionType;
       
       typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
-      typedef typename DiscreteFunctionType :: DofIteratorType DofIteratorType;
       typedef typename SpaceType :: LagrangePointSetType LagrangePointSetType;
       typedef typename SpaceType :: IteratorType IteratorType;
       typedef typename IteratorType :: Entity EntityType;
