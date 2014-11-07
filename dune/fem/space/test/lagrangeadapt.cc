@@ -91,7 +91,9 @@ int main ( int argc, char **argv )
   return CheckGridEnabled< Dune::GridSelector::GridType >::CallMain( argc, argv );
 }
 
-
+#ifndef DISABLE_DEPRECATED_METHOD_CHECK
+#define DISABLE_DEPRECATED_METHOD_CHECK 1
+#endif
 #include <dune/grid/test/checkindexset.cc>
 template <class GridPart>
 void checkAdaptiveIndexSet( const GridPart& gridPart ) 
