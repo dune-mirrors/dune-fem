@@ -273,9 +273,6 @@ Dune::FieldVector< typename BasisFunctionSetType::RangeType::value_type, 3 >
   // get types
   typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
   typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-  typedef typename FunctionSpaceType::RangeType RangeType;
-  typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-  typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
   // dof alignment type
   typedef typename VectorialBasisFunctionSetType::DofAlignmentType DofAlignmentType;
