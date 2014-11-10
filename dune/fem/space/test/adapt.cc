@@ -8,6 +8,9 @@ using namespace Dune;
 //#include <dune/fem/function/vectorfunction.hh>
 //#include <dune/fem/function/attachedfunction.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
+#include <dune/fem/space/combineddiscretefunctionspace.hh>
+//#include <dune/fem/space/combinedspace.hh>
+
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
@@ -17,30 +20,30 @@ using namespace Dune;
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/capabilities.hh>
 
-#if HAVE_GRAPE && WANT_GRAPE && GRIDDIM > 1 
+#if HAVE_GRAPE && WANT_GRAPE && GRIDDIM > 1
 #define USE_GRAPE 1
-#else 
+#else
 #define USE_GRAPE 0
 #endif
 
-#if USE_GRAPE && GRIDDIM > 1 
+#if USE_GRAPE && GRIDDIM > 1
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
 #include <dune/fem/io/parameter.hh>
 
-// polynom approximation order of quadratures, 
-// at least poolynom order of basis functions 
+// polynom approximation order of quadratures,
+// at least poolynom order of basis functions
 const int polOrd = POLORDER;
 
-#ifndef GRIDDIM 
-#define GRIDDIM dimworld 
+#ifndef GRIDDIM
+#define GRIDDIM dimworld
 #endif
 
 using namespace Fem;
 
 //***********************************************************************
-/*! L2 Projection of a function f: 
+/*! L2 Projection of a function f:
 */
 //***********************************************************************
 
@@ -53,17 +56,35 @@ typedef DGAdaptiveLeafGridPart< MyGridType > GridPartType;
 // see dune/common/functionspace.hh
 // typedef MatrixFunctionSpace < double , double, GRIDDIM , 2,5 > FuncSpace;
 
-//! define the function space our unkown belong to 
+//! define the function space our unkown belong to
 //! see dune/fem/lagrangebase.hh
-typedef FunctionSpace < double , double, GRIDDIM , 5 > FuncSpace;
-typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
-                  polOrd,CachingStorage> DiscreteFunctionSpaceType;
 
-//typedef LegendreDiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
+typedef FunctionSpace < double , double, GRIDDIM , 5 > FS;
+typedef DiscontinuousGalerkinSpace< FS, GridPartType,
+                                    polOrd,CachingStorage> DiscreteFunctionSpaceType;
+
+//typedef DiscontinuousGalerkinSpace< FunctionSpace < double , double, MyGridType::dimensionworld, 1 >,
+//                                    GridPartType, polOrd, CachingStorage> ContainedDiscreteFunctionSpaceType;
+
+//typedef CombinedDiscreteFunctionSpace< ContainedDiscreteFunctionSpaceType, ContainedDiscreteFunctionSpaceType > CombinedSpaceType ;
+//typedef CombinedDiscreteFunctionSpace< CombinedSpaceType, ContainedDiscreteFunctionSpaceType > DiscreteFunctionSpaceType ;
+
+//typedef CombinedSpace< ContainedDiscreteFunctionSpaceType, 5, PointBased > DiscreteFunctionSpaceType ;
+//typedef CombinedSpace< ContainedDiscreteFunctionSpaceType, 5, VariableBased > DiscreteFunctionSpaceType ;
+
+//typedef DiscontinuousGalerkinSpace< FunctionSpace < double , double, MyGridType::dimensionworld, 1 >,
+//                                    GridPartType, polOrd, CachingStorage> ContainedDiscreteFunctionSpaceType;
+
+//typedef CombinedSpace< ContainedDiscreteFunctionSpaceType, 5, PointBased > DiscreteFunctionSpaceType ;
+//typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FuncSpace;
+
+//typedef LegendreDiscontinuousGalerkinSpace<FuncSpace, GridPartType,
 //                  polOrd,CachingStorage> DiscreteFunctionSpaceType;
 
-//typedef LagrangeDiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
+//typedef LagrangeDiscontinuousGalerkinSpace<FuncSpace, GridPartType,
 //                  polOrd,CachingStorage> DiscreteFunctionSpaceType;
+
+typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FuncSpace;
 
 //! define the type of discrete function we are using , see
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
@@ -76,9 +97,9 @@ typedef DofManager< MyGridType > DofManagerType;
 typedef AdaptationManager< MyGridType, RestrictProlongDefault< DiscreteFunctionType > > AdaptationManagerType;
 
 // ***********************************************************
-// the exact solution to the problem for EOC calculation 
+// the exact solution to the problem for EOC calculation
 struct ExactSolution
-: public Fem::Function< FuncSpace, ExactSolution > 
+: public Fem::Function< FuncSpace, ExactSolution >
 {
   typedef FuncSpace::RangeType RangeType;
   typedef FuncSpace::RangeFieldType RangeFieldType;
@@ -97,7 +118,7 @@ struct ExactSolution
     evaluate( x, ret );
   }
 };
- 
+
 // ********************************************************************
 void adapt( MyGridType &grid, DiscreteFunctionType &solution, int step )
 {
@@ -112,13 +133,13 @@ void adapt( MyGridType &grid, DiscreteFunctionType &solution, int step )
 
   int mark = 1;
   int count = std::abs(step);
-  
-  if(step < 0) 
+
+  if(step < 0)
   {
     message += "Coarsening...";
     mark = -1;
   }
-  else 
+  else
     message += "Refining...";
 
   if( Parameter :: verbose() )
@@ -141,7 +162,7 @@ void adapt( MyGridType &grid, DiscreteFunctionType &solution, int step )
     std::cout << "Grid leaf size:             " << grid.size( 0 ) << std::endl;
     std::cout << "AdaptiveLeafIndexSet.size:  " << space.indexSet().size( 0 ) << std::endl;
   }
-  
+
 }
 // ********************************************************************
 double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, int turn )
@@ -152,51 +173,51 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
     ExactSolution f;
     DGL2ProjectionImpl :: project( f, solution );
     Dune :: Fem :: L2Norm< GridPartType > l2norm ( solution.space().gridPart(), 2*order+2 ) ;
-    double new_error = l2norm.distance( f ,solution ); 
-    std::cout << "before ref." << new_error << "\n\n"; 
+    double new_error = l2norm.distance( f ,solution );
+    std::cout << "before ref." << new_error << "\n\n";
   }
 
   adapt(grid,solution,step);
 
 #if USE_GRAPE
-  // if Grape was found, then display last solution 
-  if(turn > 0) 
+  // if Grape was found, then display last solution
+  if(turn > 0)
   {
     std::cerr << "GRAPE 1" << std::endl;
-    GrapeDataDisplay < MyGridType > grape(grid); 
+    GrapeDataDisplay < MyGridType > grape(grid);
     grape.dataDisplay( solution );
   }
 #endif
 
-  ExactSolution f; 
+  ExactSolution f;
   // calculation L2 error on refined grid
-  // pol ord for calculation the error chould by higher than 
-  // pol for evaluation the basefunctions 
+  // pol ord for calculation the error chould by higher than
+  // pol for evaluation the basefunctions
   Dune :: Fem :: L2Norm< GridPartType > l2norm ( solution.space().gridPart(), 2*order+2 ) ;
   double error = l2norm.distance( f, solution );
 
 #if USE_GRAPE
-  // if Grape was found, then display last solution 
-  if(turn > 0) 
+  // if Grape was found, then display last solution
+  if(turn > 0)
   {
     std::cerr << "GRAPE 2" << std::endl;
-    GrapeDataDisplay< MyGridType > grape(grid); 
+    GrapeDataDisplay< MyGridType > grape(grid);
     grape.dataDisplay( solution );
   }
 #endif
-  
+
   //! perform l2-projection to refined grid
   DGL2ProjectionImpl :: project ( f, solution );
   double new_error = l2norm.distance( f, solution );
   std::cout << "\nL2 Error : " << error << " on new grid " << new_error << "\n\n";
 #if USE_GRAPE
-  // if Grape was found, then display last solution 
-  if(turn > 0) 
+  // if Grape was found, then display last solution
+  if(turn > 0)
   {
-    std::cerr << "SIZE: " << solution.space().size() 
+    std::cerr << "SIZE: " << solution.space().size()
         << " GRID: " << grid.size(0) << std::endl;
     std::cerr << "GRAPE 3" << std::endl;
-    GrapeDataDisplay< MyGridType > grape(grid); 
+    GrapeDataDisplay< MyGridType > grape(grid);
     grape.dataDisplay( solution );
   }
 #endif
@@ -205,7 +226,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 
 //**************************************************
 //
-//  main programm, run algorithm twice to calc EOC 
+//  main programm, run algorithm twice to calc EOC
 //
 //**************************************************
 int main( int argc, char *argv[] )
@@ -222,17 +243,17 @@ try {
 
   std::string paramFile( paramName );
 
-  // append parameter 
+  // append parameter
   Parameter :: append( argc , argv );
   Parameter :: append( paramFile );
 
-  int ml = 2 ; // default value = 2 
+  int ml = 2 ; // default value = 2
   ml = Parameter :: getValue ("lagrangeadapt.maxlevel", ml);
 
   std::vector<double> error(ml);
 
   std::ostringstream gridFilenameStream;
-  gridFilenameStream << GRIDDIM << "dgrid.dgf";
+  gridFilenameStream << MyGridType::dimensionworld << "dgrid.dgf";
   GridPtr< MyGridType > grid( gridFilenameStream.str() );
 
   const int step = DGFGridInfo< MyGridType >::refineStepsForHalf();
@@ -240,7 +261,7 @@ try {
   GridPartType part ( *grid );
   DiscreteFunctionSpaceType space( part );
 
-  // threshold for EOC difference to predicted value 
+  // threshold for EOC difference to predicted value
   const double eocThreshold = Parameter :: getValue("adapt.eocthreshold", double(0.2) );
 
   const bool isLocallyAdaptive = Dune::Fem::Capabilities::isLocallyAdaptive< MyGridType > :: v ;
@@ -251,18 +272,18 @@ try {
   for(int i=0; i<ml; i+=1)
   {
     error[i] = algorithm ( *grid , solution, step, (i==ml-1));
-    if (i>0) 
+    if (i>0)
     {
-      if ( isLocallyAdaptive ) 
+      if ( isLocallyAdaptive )
       {
-        double eoc = log( error[i-1]/error[i]) / M_LN2; 
+        double eoc = log( error[i-1]/error[i]) / M_LN2;
         std::cout << "EOC = " << eoc << std::endl;
-        if( std::abs( eoc - (space.order()+eocThreshold) ) < 0 ) 
+        if( std::abs( eoc - (space.order()+eocThreshold) ) < 0 )
         {
           DUNE_THROW(InvalidStateException,"EOC check of refinement failed");
         }
       }
-      else 
+      else
         std::cout << "no EOC for non-adaptive grid" << std::endl;
     }
   }
@@ -270,18 +291,18 @@ try {
   for(int i=ml-1; i>=0; i-=1)
   {
     error[i] = algorithm ( *grid , solution,-step, 1);
-    if (i<ml-1) 
+    if (i<ml-1)
     {
-      if( isLocallyAdaptive ) 
+      if( isLocallyAdaptive )
       {
-        double eoc = log( error[i+1]/error[i]) / M_LN2; 
+        double eoc = log( error[i+1]/error[i]) / M_LN2;
         std::cout << "EOC = " << eoc << std::endl;
-        if( std::abs( eoc + (space.order()+eocThreshold) ) < 0 ) 
+        if( std::abs( eoc + (space.order()+eocThreshold) ) < 0 )
         {
           DUNE_THROW(InvalidStateException,"EOC check of coarsening failed");
         }
       }
-      else 
+      else
         std::cout << "no EOC for non-adaptive grid" << std::endl;
     }
   }
