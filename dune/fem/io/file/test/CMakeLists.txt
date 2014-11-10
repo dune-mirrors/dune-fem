@@ -1,0 +1,21 @@
+set(POLORDER  2)
+set(WANT_GRAPE  0)
+set(GRIDTYPE YASPGRID)
+set(GRIDDIM 2)
+
+add_definitions( "-D${GRIDTYPE}" )
+add_definitions( "-DGRIDDIM=${GRIDDIM}" ) 
+add_definitions( "-DPOLORDER=${POLORDER}" )
+add_definitions( "-DWANT_GRAPE=${WANT_GRAPE}" )
+
+# copy data to build source to make tests work         
+configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
+configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
+configure_file(parameter ${CMAKE_CURRENT_BINARY_DIR}/parameter COPYONLY)
+
+add_executable(persistencemanagertest persistencemanagertest.cc)
+dune_target_link_libraries(persistencemanagertest "${DUNE_LIBS};${LOCAL_LIBS}")
+add_executable(dataoutputtest dataoutputtest.cc)
+dune_target_link_libraries(dataoutputtest "${DUNE_LIBS};${LOCAL_LIBS}")
+
+dune_add_test(persistencemanagertest dataoutputtest)

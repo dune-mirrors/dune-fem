@@ -5,7 +5,7 @@
 #define TEST_SECOND_ORDER
 #define TEST_THIRD_ORDER
 
-#ifdef ALUGRID_SIMPLEX 
+#ifdef ALUGRID_SIMPLEX
 #if GRIDDIM > 2
 #undef TEST_THIRD_ORDER
 #endif
@@ -18,7 +18,7 @@ using namespace Fem;
 #include "basisfunctiontest.cc"
 #include "mappertest.cc"
 
-int main( int argc, char **argv ) 
+int main( int argc, char **argv )
 {
   MPIManager::initialize( argc, argv );
 

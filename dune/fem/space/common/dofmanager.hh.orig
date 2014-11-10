@@ -22,13 +22,14 @@
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/storage/singletonlist.hh>
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
+<<<<<<< HEAD
 #include <dune/grid/common/datahandleif.hh>
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/common/ldbhandleif.hh>
+=======
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+>>>>>>> cbfb427... [cmake] adds verion macros to config.h
 #endif
 
 namespace Dune
@@ -70,7 +71,7 @@ namespace Dune
       /** \brief move memory blocks backwards */
       static inline 
       void memMoveBackward(ArrayType& array, const int length,
-                const int oldStartIdx, const int newStartIdx)
+                           const int oldStartIdx, const int newStartIdx)
       {
         // get new end of block which is offSet + (length of block - 1) 
         int newIdx = newStartIdx + length - 1; 
@@ -85,7 +86,7 @@ namespace Dune
       /** \brief move memory blocks forward */
       static inline
       void memMoveForward(ArrayType& array, const int length,
-                const int oldStartIdx, const int newStartIdx)
+                          const int oldStartIdx, const int newStartIdx)
       {
         const int upperBound = oldStartIdx + length;
         // get new off set that should be smaller then old one
@@ -374,7 +375,7 @@ namespace Dune
     protected:
       //! Constructor of ManagedDofStorageImplementation, only to call from derived classes 
       ManagedDofStorageImplementation ( const GridImp& grid,
-                          const MapperType& mapper,
+                                        const MapperType& mapper,
                                         const std::string& name,
                                         DofArrayType& array )
         : dm_( DofManagerType :: instance( grid ) ),
@@ -912,13 +913,13 @@ namespace Dune
       {
         // only print memory factor if it deviates from the default value
         if( std::abs( memoryFactor_ - 1.1 ) > 1e-12 ) 
-      {
-        if( Parameter::verbose() && (grid_.comm().rank() == 0) )
         {
-          std::cout << "Created DofManager with memory factor "
-                    << memoryFactor_ << "." << std::endl;
+          if( Parameter::verbose() && (grid_.comm().rank() == 0) )
+          {
+            std::cout << "Created DofManager with memory factor "
+                      << memoryFactor_ << "." << std::endl;
+          }
         }
-      }
       }
 
       // copy of dofmanagers is forbidden 
@@ -1079,6 +1080,7 @@ namespace Dune
         removeIndices_.apply( element );
       }
 
+    protected:  
       //! resize the MemObject if necessary 
       void resizeMemory()
       {

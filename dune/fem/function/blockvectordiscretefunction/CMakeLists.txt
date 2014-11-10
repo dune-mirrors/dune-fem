@@ -1,0 +1,1 @@
+dune_install(blockvectordiscretefunction.hh)

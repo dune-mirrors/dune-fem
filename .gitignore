@@ -20,7 +20,6 @@
 /missing
 /setup.sh
 /stamp-h1
-/test-driver
 /check.out
 /check-doxygen.out
 /check-headers.out
@@ -36,4 +35,4 @@ Makefile.in
 *.log
 *.o
 *.swp
-*.trs
+build-cmake/

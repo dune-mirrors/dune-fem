@@ -1,0 +1,6 @@
+dune_install(adaptiveleafgridpart.hh adaptiveleafindexset.hh codimindexset.hh
+             defaultindexsets.hh dunefemindexsets.hh emptyindexset.hh
+             filteredgridpart.hh filter.hh geogridpart.hh
+             idgridpart.hh leafgridpart.hh levelgridpart.hh)
+
+dune_add_subdirs(common filter filteredgridpart geogridpart idgridpart test)
