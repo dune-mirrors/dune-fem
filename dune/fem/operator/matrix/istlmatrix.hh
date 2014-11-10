@@ -100,15 +100,16 @@ namespace Dune
         typedef typename BaseType :: BuildMode BuildMode ;
 
       public:
-        //! constructor used by ISTLMatrixObject
-        ImprovedBCRSMatrix(size_type rows, size_type cols)
-          : BaseType (rows,cols, BaseType :: row_wise)
+        //! constructor used by ISTLMatrixObject to build matrix in implicit mode
+        ImprovedBCRSMatrix(size_type rows, size_type cols,
+                           size_type nnz, double overflowFraction)
+          : BaseType (rows, cols, nnz, overflowFraction, BaseType::implicit)
         {
         }
 
-        //! constuctor used by ILU preconditioner
-        ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nz)
-          : BaseType (rows,cols, BaseType :: row_wise)
+        //! constuctor using old row_wise assembly (and used by ILU preconditioner)
+        ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nz = 0 )
+          : BaseType (rows, cols, BaseType :: row_wise)
         {
         }
 
@@ -346,19 +347,14 @@ namespace Dune
           ConstRowIterator endi = this->end();
           for (ConstRowIterator i = this->begin(); i!=endi; ++i)
           {
+            // get diagonal entry of matrix
             const size_t row = i.index();
-            const ConstColIterator endj = (*i).end();
-            for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
+            ConstColIterator entry = (*i).find( row );
+            const LittleBlockType& block = (*entry);
+            enum { blockSize = LittleBlockType :: rows };
+            for( int l=0; l<blockSize; ++l )
             {
-              if( j.index() == row )
-              {
-                const LittleBlockType& block = (*j);
-                enum { blockSize = LittleBlockType :: rows };
-                for( int l=0; l<blockSize; ++l )
-                {
-                  diag[ row ][ l ] = block[ l ][ l ];
-                }
-              }
+              diag[ row ][ l ] = block[ l ][ l ];
             }
           }
         }
@@ -485,24 +481,21 @@ namespace Dune
         int numCols_;
 
         // vector with pointers to local matrices
-        typedef std::vector<LittleBlockType *> LittleMatrixRowStorageType ;
-        typedef std::vector< LittleMatrixRowStorageType > VecLittleMatrixRowStorageType;
+        typedef std::vector< LittleBlockType* >            LittleMatrixRowStorageType ;
+        typedef std::vector< LittleMatrixRowStorageType >  VecLittleMatrixRowStorageType;
         VecLittleMatrixRowStorageType matrices_;
 
         // matrix to build
         const MatrixObjectType& matrixObj_;
 
-        // type of actual geometry
-        GeometryType geomType_;
-
        template <class RowGlobalKey>
        struct ColFunctor
        {
          ColFunctor(LittleMatrixRowStorageType& localMatRow,
-                    RowType& matRow,
+                    MatrixType& matrix,
                     const RowGlobalKey &globalRowKey)
          : localMatRow_(localMatRow),
-           matRow_(matRow),
+           matRow_( matrix[ globalRowKey ] ),
            globalRowKey_(globalRowKey)
          {
          }
@@ -516,6 +509,30 @@ namespace Dune
          RowType& matRow_;
          const RowGlobalKey &globalRowKey_;
        };
+
+       template <class RowGlobalKey>
+       struct ColFunctorImplicitBuildMode
+       {
+         ColFunctorImplicitBuildMode(LittleMatrixRowStorageType& localMatRow,
+                                     MatrixType& matrix,
+                                     const RowGlobalKey &globalRowKey)
+         : localMatRow_(localMatRow),
+           matrix_( matrix ),
+           globalRowKey_(globalRowKey)
+         {
+         }
+         template< class GlobalKey >
+         void operator() ( const int localDoF, const GlobalKey &globalDoF )
+         {
+           localMatRow_[ localDoF ] = &matrix_.entry( globalRowKey_, globalDoF );
+         }
+         private:
+         LittleMatrixRowStorageType& localMatRow_;
+         MatrixType& matrix_;
+         const RowGlobalKey &globalRowKey_;
+       };
+
+       template <template <class> class ColFunctorImpl>
        struct RowFunctor
        {
          RowFunctor(const RowEntityType &rowEntity,
@@ -534,7 +551,7 @@ namespace Dune
          {
            LittleMatrixRowStorageType& localMatRow = matrices_[ localDoF ];
            localMatRow.resize( numCols_ );
-           ColFunctor<GlobalKey> colFunctor( localMatRow, matrix_[ globalDoF ], globalDoF );
+           ColFunctorImpl< GlobalKey > colFunctor( localMatRow, matrix_, globalDoF );
            rowMapper_.mapEach( rowEntity_, colFunctor );
          }
          private:
@@ -544,6 +561,7 @@ namespace Dune
          VecLittleMatrixRowStorageType &matrices_;
          int numCols_;
        };
+
       public:
         LocalMatrix(const MatrixObjectType & mObj,
                     const DomainSpaceType & rowSpace,
@@ -554,7 +572,6 @@ namespace Dune
           , numRows_( rowMapper_.maxNumDofs() )
           , numCols_( colMapper_.maxNumDofs() )
           , matrixObj_(mObj)
-          , geomType_(GeometryType::simplex,0)
         {
         }
 
@@ -564,13 +581,23 @@ namespace Dune
           // initialize base functions sets
           BaseType :: init ( rowEntity , colEntity );
 
-          geomType_ = rowEntity.type();
-          numCols_  = rowMapper_.numDofs(rowEntity);
-          numRows_  = colMapper_.numDofs(colEntity);
+          numRows_  = rowMapper_.numDofs(rowEntity);
+          numCols_  = colMapper_.numDofs(colEntity);
           matrices_.resize( numRows_ );
 
-          RowFunctor rowFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
-          colMapper_.mapEach(colEntity, rowFunctor);
+          if( matrixObj_.implicitModeActive() )
+          {
+            // implicit access via matrix.entry( i, j )
+            RowFunctor< ColFunctorImplicitBuildMode >
+              rowFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
+            colMapper_.mapEach(colEntity, rowFunctor);
+          }
+          else
+          {
+            // normal access to matrix via operator [i][j]
+            RowFunctor< ColFunctor > rowFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
+            colMapper_.mapEach(colEntity, rowFunctor);
+          }
         }
 
         LocalMatrix(const LocalMatrix& org)
@@ -581,7 +608,6 @@ namespace Dune
           , numCols_( org.numCols_ )
           , matrices_(org.matrices_)
           , matrixObj_(org.matrixObj_)
-          , geomType_(org.geomType_)
         {
         }
 
@@ -740,6 +766,8 @@ namespace Dune
       mutable MatrixAdapterType* matrixAdap_;
       mutable RowBlockVectorType* Arg_;
       mutable ColumnBlockVectorType* Dest_;
+      // overflow fraction for implicit build mode
+      const double overflowFraction_;
 
       // prohibit copy constructor
       ISTLMatrixObject(const ISTLMatrixObject&);
@@ -772,6 +800,7 @@ namespace Dune
         , matrixAdap_(0)
         , Arg_(0)
         , Dest_(0)
+        , overflowFraction_( Parameter::getValue( "istl.matrix.overflowfraction", 1.0 ) )
       {
         int preCon = 0;
         if(paramfile != "")
@@ -987,6 +1016,25 @@ namespace Dune
       }
 
     public:
+      bool implicitModeActive() const
+      {
+        // implicit build mode is only active when the
+        // build mode of the matrix is implicit and the
+        // matrix is currently being build
+        if( matrix().buildMode()  == MatrixType::implicit &&
+            matrix().buildStage() == MatrixType::building )
+          return true;
+
+        return false;
+      }
+
+      // compress matrix if not already done before and only in implicit build mode
+      void communicate( )
+      {
+        if( implicitModeActive() )
+          matrix().compress();
+      }
+
       //! return true, because in case of no preconditioning we have empty
       //! preconditioner (used by OEM methods)
       bool hasPreconditionMatrix() const { return (preconditioning_ != none); }
@@ -1004,15 +1052,30 @@ namespace Dune
 
       //! reserve memory for assemble based on the provided stencil
       template <class Stencil>
-      void reserve(const Stencil &stencil,bool verbose = false)
+      void reserve(const Stencil &stencil,
+                   const bool implicit = true )
       {
         // if grid sequence number changed, rebuild matrix
         if(sequence_ != domainSpace().sequence())
         {
           removeObj( true );
 
-          matrix_ = new MatrixType(rowMapper_.size(),colMapper_.size());
-          matrix().createEntries( stencil.globalStencil() );
+          if( implicit )
+          {
+            size_t nnz = stencil.maxNonZerosEstimate();
+            if( nnz == 0 )
+            {
+              Stencil tmpStencil( stencil );
+              tmpStencil.fill( *(domainSpace_.begin()), *(rangeSpace_.begin()) );
+              nnz = tmpStencil.maxNonZerosEstimate();
+            }
+            matrix_ = new MatrixType( rowMapper_.size(), colMapper_.size(), nnz, overflowFraction_ );
+          }
+          else
+          {
+            matrix_ = new MatrixType( rowMapper_.size(), colMapper_.size() );
+            matrix().createEntries( stencil.globalStencil() );
+          }
 
           sequence_ = domainSpace().sequence();
         }
@@ -1178,7 +1241,7 @@ namespace Dune
       LocalMatrixType localMatrix(const RowEntityType& rowEntity,
                                   const ColumnEntityType& colEntity) const
       {
-        return LocalMatrixType(localMatrixStack_,rowEntity,colEntity);
+        return LocalMatrixType( localMatrixStack_, rowEntity, colEntity );
       }
       LocalColumnObjectType localColumn( const ColumnEntityType &colEntity ) const
       {

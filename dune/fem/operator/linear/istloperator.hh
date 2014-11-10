@@ -31,6 +31,7 @@ namespace Dune
       static const bool assembled = true ;
 
       using Base::apply;
+      using Base::communicate;
 
       ISTLLinearOperator ( const std::string &name,
                            const DomainSpaceType &domainSpace,
@@ -50,10 +51,6 @@ namespace Dune
       Base &systemMatrix ()
       {
         return *this;
-      }
-
-      void communicate () 
-      {
       }
     };
 
