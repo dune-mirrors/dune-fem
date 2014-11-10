@@ -3,18 +3,18 @@
 
 #if HAVE_DUNE_ISTL
 
-//- system includes 
-#include <vector> 
+//- system includes
+#include <vector>
 
-//- Dune common includes 
+//- Dune common includes
 #include <dune/common/exceptions.hh>
 
-//- Dune istl includes 
+//- Dune istl includes
 #include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/preconditioners.hh>
 
-//- Dune fem includes 
+//- Dune fem includes
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
@@ -27,7 +27,7 @@
 #include <dune/fem/operator/matrix/istlmatrixadapter.hh>
 
 namespace Dune
-{ 
+{
 
   namespace Fem
   {
@@ -35,16 +35,16 @@ namespace Dune
     ///////////////////////////////////////////////////////
     // --ISTLMatrixHandle
     //////////////////////////////////////////////////////
-    template <class LittleBlockType, 
-              class RowDiscreteFunctionImp, 
-              class ColDiscreteFunctionImp = RowDiscreteFunctionImp> 
-    class ImprovedBCRSMatrix : public BCRSMatrix<LittleBlockType> 
+    template <class LittleBlockType,
+              class RowDiscreteFunctionImp,
+              class ColDiscreteFunctionImp = RowDiscreteFunctionImp>
+    class ImprovedBCRSMatrix : public BCRSMatrix<LittleBlockType>
     {
       public:
         typedef RowDiscreteFunctionImp RowDiscreteFunctionType;
         typedef ColDiscreteFunctionImp ColDiscreteFunctionType;
-        
-        typedef BCRSMatrix<LittleBlockType> BaseType; 
+
+        typedef BCRSMatrix<LittleBlockType> BaseType;
         typedef typename BaseType :: RowIterator RowIteratorType ;
         typedef typename BaseType :: ColIterator ColIteratorType ;
 
@@ -70,7 +70,7 @@ namespace Dune
         //! increment block level counter
         enum {
           //! The number of blocklevels the matrix contains.
-          blocklevel = BaseType :: blocklevel 
+          blocklevel = BaseType :: blocklevel
         };
 
         /** \brief Iterator for the entries of each row */
@@ -85,54 +85,54 @@ namespace Dune
         /** \brief Const iterator over the matrix rows */
         typedef typename BaseType :: ConstRowIterator ConstRowIterator;
 
-        //! type of discrete function space 
+        //! type of discrete function space
         typedef typename ColDiscreteFunctionType :: DiscreteFunctionSpaceType RangeSpaceType;
 
-        //! type of row block vector 
-        typedef typename RowDiscreteFunctionType :: DofStorageType  RowBlockVectorType; 
+        //! type of row block vector
+        typedef typename RowDiscreteFunctionType :: DofStorageType  RowBlockVectorType;
 
-        //! type of column block vector 
-        typedef typename ColDiscreteFunctionType :: DofStorageType  ColBlockVectorType; 
+        //! type of column block vector
+        typedef typename ColDiscreteFunctionType :: DofStorageType  ColBlockVectorType;
 
-        //! type of communication object 
+        //! type of communication object
         typedef typename RangeSpaceType :: GridType :: Traits :: CollectiveCommunication   CollectiveCommunictionType ;
 
         typedef typename BaseType :: BuildMode BuildMode ;
 
       public:
         //! constructor used by ISTLMatrixObject
-        ImprovedBCRSMatrix(size_type rows, size_type cols) 
+        ImprovedBCRSMatrix(size_type rows, size_type cols)
           : BaseType (rows,cols, BaseType :: row_wise)
         {
         }
 
-        //! constuctor used by ILU preconditioner 
-        ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nz) 
+        //! constuctor used by ILU preconditioner
+        ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nz)
           : BaseType (rows,cols, BaseType :: row_wise)
         {
         }
-        
-        //! copy constructor, needed by ISTL preconditioners 
-        ImprovedBCRSMatrix( ) 
+
+        //! copy constructor, needed by ISTL preconditioners
+        ImprovedBCRSMatrix( )
           : BaseType ()
         {}
 
-        //! copy constructor, needed by ISTL preconditioners 
-        ImprovedBCRSMatrix(const ImprovedBCRSMatrix& org) 
-          : BaseType(org) 
+        //! copy constructor, needed by ISTL preconditioners
+        ImprovedBCRSMatrix(const ImprovedBCRSMatrix& org)
+          : BaseType(org)
         {}
 
         template <class RowKeyType, class ColKeyType>
-        void createEntries(const std::map<RowKeyType , std::set<ColKeyType> >& indices) 
+        void createEntries(const std::map<RowKeyType , std::set<ColKeyType> >& indices)
         {
-          // type of create interator 
-          typedef typename BaseType :: CreateIterator CreateIteratorType; 
-          // not insert map of indices into matrix 
+          // type of create interator
+          typedef typename BaseType :: CreateIterator CreateIteratorType;
+          // not insert map of indices into matrix
           CreateIteratorType endcreate = this->createend();
           for(CreateIteratorType create = this->createbegin();
-              create != endcreate; ++create) 
+              create != endcreate; ++create)
           {
-            // set of column indices 
+            // set of column indices
             typedef typename std::map<RowKeyType , std::set<ColKeyType> >
               ::const_iterator StencilIterator;
             const StencilIterator it = indices.find( create.index() );
@@ -141,7 +141,7 @@ namespace Dune
             const std::set<ColKeyType>& localIndices = it->second;
             typedef typename std::set<ColKeyType>::const_iterator iterator;
             iterator end = localIndices.end();
-            // insert all indices for this row 
+            // insert all indices for this row
             for (iterator it = localIndices.begin(); it != end; ++it)
             {
               create.insert( *it );
@@ -150,7 +150,7 @@ namespace Dune
         }
 
         //! clear Matrix, i.e. set all entires to 0
-        void clear() 
+        void clear()
         {
           RowIteratorType endi=this->end();
           for (RowIteratorType i=this->begin(); i!=endi; ++i)
@@ -163,21 +163,21 @@ namespace Dune
           }
         }
 
-        //! setup like the old matrix but remove rows with hanging nodes 
-        template <class HangingNodesType> 
+        //! setup like the old matrix but remove rows with hanging nodes
+        template <class HangingNodesType>
         void setup(ThisType& oldMatrix,
-                   const HangingNodesType& hangingNodes) 
+                   const HangingNodesType& hangingNodes)
         {
           // necessary because element traversal not necessaryly is in
-          // ascending order 
+          // ascending order
           typedef std::set< std::pair<int, block_type> > LocalEntryType;
           typedef std::map< int , LocalEntryType > EntriesType;
           EntriesType entries;
 
           {
-            // map of indices 
+            // map of indices
             std::map< int , std::set<int> > indices;
-            // not insert map of indices into matrix 
+            // not insert map of indices into matrix
             RowIteratorType rowend  = oldMatrix.end();
             for(RowIteratorType it  = oldMatrix.begin(); it != rowend; ++it)
             {
@@ -186,11 +186,11 @@ namespace Dune
 
               if( hangingNodes.isHangingNode( row ) )
               {
-                // insert columns into other columns 
+                // insert columns into other columns
                 typedef typename HangingNodesType :: ColumnVectorType ColumnVectorType;
                 const ColumnVectorType& cols = hangingNodes.associatedDofs( row );
                 const size_t colSize = cols.size();
-                for(size_t i=0; i<colSize; ++i) 
+                for(size_t i=0; i<colSize; ++i)
                 {
                   assert( ! hangingNodes.isHangingNode( cols[i].first ) );
 
@@ -198,7 +198,7 @@ namespace Dune
                   std::set< int >& localColIndices = indices[ cols[i].first ];
                   LocalEntryType& localEntry = entries[  cols[i].first ];
 
-                  // copy from old matrix 
+                  // copy from old matrix
                   ColIteratorType endj = (*it).end();
                   for (ColIteratorType j= (*it).begin(); j!=endj; ++j)
                   {
@@ -207,16 +207,16 @@ namespace Dune
                   }
                 }
 
-                // insert diagonal and hanging columns 
+                // insert diagonal and hanging columns
                 localIndices.insert( row );
-                for(size_t i=0; i<colSize; ++i) 
+                for(size_t i=0; i<colSize; ++i)
                 {
                   localIndices.insert( cols[i].first );
                 }
               }
-              else 
+              else
               {
-                // copy from old matrix 
+                // copy from old matrix
                 ColIteratorType endj = (*it).end();
                 for (ColIteratorType j= (*it).begin(); j!=endj; ++j)
                 {
@@ -225,18 +225,18 @@ namespace Dune
               }
             }
 
-            // create matrix from entry map 
+            // create matrix from entry map
             createEntries( indices );
 
-          } // end create, matrix is on delete of create iterator 
+          } // end create, matrix is on delete of create iterator
 
           {
-            // not insert map of indices into matrix 
+            // not insert map of indices into matrix
             RowIteratorType rowit  = oldMatrix.begin();
 
             RowIteratorType endcreate = this->end();
             for(RowIteratorType create = this->begin();
-                create != endcreate; ++create, ++rowit ) 
+                create != endcreate; ++create, ++rowit )
             {
               assert( rowit != oldMatrix.end() );
 
@@ -246,12 +246,12 @@ namespace Dune
                 typedef typename HangingNodesType :: ColumnVectorType ColumnVectorType;
                 const ColumnVectorType& cols = hangingNodes.associatedDofs( row );
 
-                std::map< const int , block_type > colMap; 
-                // only working for block size 1 ath the moment 
+                std::map< const int , block_type > colMap;
+                // only working for block size 1 ath the moment
                 assert( block_type :: rows == 1 );
-                // insert columns into map 
+                // insert columns into map
                 const size_t colSize = cols.size();
-                for( size_t i=0; i<colSize; ++i) 
+                for( size_t i=0; i<colSize; ++i)
                 {
                   colMap[ cols[i].first ] = -cols[i].second;
                 }
@@ -265,8 +265,8 @@ namespace Dune
                   (*j) = colMap[ j.index() ];
                 }
               }
-              // if entries are equal, just copy 
-              else if ( entries.find( row ) == entries.end() ) 
+              // if entries are equal, just copy
+              else if ( entries.find( row ) == entries.end() )
               {
                 ColIteratorType colit = (*rowit).begin();
                 ColIteratorType endj = (*create).end();
@@ -276,17 +276,17 @@ namespace Dune
                   (*j) = (*colit);
                 }
               }
-              else 
+              else
               {
                 typedef std::map< int , block_type > ColMapType;
                 ColMapType oldCols;
 
                 {
-                  ColIteratorType colend = (*rowit).end(); 
+                  ColIteratorType colend = (*rowit).end();
                   for(ColIteratorType colit = (*rowit).begin(); colit !=
                       colend; ++colit)
                   {
-                    oldCols[ colit.index() ] = 0; 
+                    oldCols[ colit.index() ] = 0;
                   }
                 }
 
@@ -297,27 +297,27 @@ namespace Dune
                 {
                   typedef typename LocalEntryType :: iterator iterator;
                   iterator endcol = (*entry).second.end();
-                  for( iterator co = (*entry).second.begin(); co != endcol; ++co) 
+                  for( iterator co = (*entry).second.begin(); co != endcol; ++co)
                   {
                     oldCols[ (*co).first ] = 0;
                   }
                 }
 
                 {
-                  ColIteratorType colend = (*rowit).end(); 
+                  ColIteratorType colend = (*rowit).end();
                   for(ColIteratorType colit = (*rowit).begin(); colit !=
                       colend; ++colit)
                   {
-                    oldCols[ colit.index() ] += (*colit); 
+                    oldCols[ colit.index() ] += (*colit);
                   }
                 }
 
                 {
                   typedef typename LocalEntryType :: iterator iterator;
                   iterator endcol = (*entry).second.end();
-                  for( iterator co = (*entry).second.begin(); co != endcol; ++co) 
+                  for( iterator co = (*entry).second.begin(); co != endcol; ++co)
                   {
-                    oldCols[ (*co).first ] += (*co).second;   
+                    oldCols[ (*co).first ] += (*co).second;
                   }
                 }
 
@@ -326,23 +326,23 @@ namespace Dune
                 {
                   typedef typename ColMapType :: iterator iterator;
                   iterator colEntry = oldCols.find( j.index() );
-                  if( colEntry != oldCols.end() ) 
+                  if( colEntry != oldCols.end() )
                   {
                     (*j) = (*colEntry).second;
                   }
-                  else 
+                  else
                   {
                     abort();
                   }
                 }
               }
             }
-          } // end create 
+          } // end create
         }
 
-        //! extract diagonal of matrix to block vector 
+        //! extract diagonal of matrix to block vector
         void extractDiagonal( ColBlockVectorType& diag ) const
-        { 
+        {
           ConstRowIterator endi = this->end();
           for (ConstRowIterator i = this->begin(); i!=endi; ++i)
           {
@@ -350,21 +350,21 @@ namespace Dune
             const ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
             {
-              if( j.index() == row ) 
+              if( j.index() == row )
               {
                 const LittleBlockType& block = (*j);
                 enum { blockSize = LittleBlockType :: rows };
                 for( int l=0; l<blockSize; ++l )
                 {
-                  diag[ row ][ l ] = block[ l ][ l ]; 
+                  diag[ row ][ l ] = block[ l ][ l ];
                 }
               }
             }
           }
         }
 
-        //! print matrix 
-        void print(std::ostream & s) const 
+        //! print matrix
+        void print(std::ostream & s) const
         {
           std::cout << "Print ISTLMatrix \n";
           ConstRowIterator endi=this->end();
@@ -379,68 +379,68 @@ namespace Dune
         }
     };
 
-    template <class RowSpaceImp, class ColSpaceImp> 
+    template <class RowSpaceImp, class ColSpaceImp>
     class ISTLMatrixObject;
-    
+
     template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
     struct ISTLMatrixTraits
     {
-      typedef RowSpaceImp DomainSpaceType; 
-      typedef ColSpaceImp RangeSpaceType; 
-      typedef ISTLMatrixTraits<DomainSpaceType,RangeSpaceType> ThisType;  
-      
-      typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType> MatrixObjectType; 
+      typedef RowSpaceImp DomainSpaceType;
+      typedef ColSpaceImp RangeSpaceType;
+      typedef ISTLMatrixTraits<DomainSpaceType,RangeSpaceType> ThisType;
+
+      typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType> MatrixObjectType;
     };
 
-    //! MatrixObject handling an istl matrix 
-    template <class DomainSpaceImp, class RangeSpaceImp> 
+    //! MatrixObject handling an istl matrix
+    template <class DomainSpaceImp, class RangeSpaceImp>
     class ISTLMatrixObject
     {
-    public:  
-      //! type of space defining row structure 
-      typedef DomainSpaceImp DomainSpaceType; 
-      //! type of space defining column structure 
-      typedef RangeSpaceImp RangeSpaceType; 
+    public:
+      //! type of space defining row structure
+      typedef DomainSpaceImp DomainSpaceType;
+      //! type of space defining column structure
+      typedef RangeSpaceImp RangeSpaceType;
 
-      //! type of this pointer 
+      //! type of this pointer
       typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType> ThisType;
 
-      typedef typename DomainSpaceType::GridType GridType; 
+      typedef typename DomainSpaceType::GridType GridType;
 
       typedef typename RangeSpaceType :: EntityType ColumnEntityType ;
       typedef typename DomainSpaceType :: EntityType RowEntityType ;
 
       enum { littleRows = DomainSpaceType :: localBlockSize };
       enum { littleCols = RangeSpaceType :: localBlockSize };
-      
+
       typedef typename DomainSpaceType :: RangeFieldType RangeFieldType;
-      
-      typedef FieldMatrix<RangeFieldType, littleRows, littleCols> LittleBlockType; 
 
-      typedef ISTLBlockVectorDiscreteFunction< DomainSpaceType >     RowDiscreteFunctionType; 
+      typedef FieldMatrix<RangeFieldType, littleRows, littleCols> LittleBlockType;
+
+      typedef ISTLBlockVectorDiscreteFunction< DomainSpaceType >     RowDiscreteFunctionType;
       typedef typename RowDiscreteFunctionType :: LeakPointerType  RowLeakPointerType;
-      typedef ISTLBlockVectorDiscreteFunction< RangeSpaceType >  ColumnDiscreteFunctionType; 
+      typedef ISTLBlockVectorDiscreteFunction< RangeSpaceType >  ColumnDiscreteFunctionType;
       typedef typename ColumnDiscreteFunctionType :: LeakPointerType  ColumnLeakPointerType;
-      
-    protected:  
-      typedef typename RowDiscreteFunctionType :: DofStorageType    RowBlockVectorType; 
-      typedef typename ColumnDiscreteFunctionType :: DofStorageType ColumnBlockVectorType; 
 
-      typedef typename DomainSpaceType :: BlockMapperType RowMapperType; 
-      typedef typename RangeSpaceType :: BlockMapperType ColMapperType; 
+    protected:
+      typedef typename RowDiscreteFunctionType :: DofStorageType    RowBlockVectorType;
+      typedef typename ColumnDiscreteFunctionType :: DofStorageType ColumnBlockVectorType;
+
+      typedef typename DomainSpaceType :: BlockMapperType RowMapperType;
+      typedef typename RangeSpaceType :: BlockMapperType ColMapperType;
 
     public:
-      //! type of used matrix 
-      typedef ImprovedBCRSMatrix< LittleBlockType , 
-                                  RowDiscreteFunctionType , 
+      //! type of used matrix
+      typedef ImprovedBCRSMatrix< LittleBlockType ,
+                                  RowDiscreteFunctionType ,
                                   ColumnDiscreteFunctionType > MatrixType;
       typedef typename ISTLParallelMatrixAdapter<MatrixType,DomainSpaceType>::Type MatrixAdapterType;
       // get preconditioner type from MatrixAdapterType
       typedef ThisType PreconditionMatrixType;
       typedef typename MatrixAdapterType :: ParallelScalarProductType ParallelScalarProductType;
-     
-      template <class MatrixObjectImp> 
-      class LocalMatrix; 
+
+      template <class MatrixObjectImp>
+      class LocalMatrix;
 
       struct LocalMatrixTraits
       {
@@ -451,50 +451,50 @@ namespace Dune
         typedef typename MatrixType:: block_type LittleBlockType;
       };
 
-      //! LocalMatrix 
-      template <class MatrixObjectImp> 
+      //! LocalMatrix
+      template <class MatrixObjectImp>
       class LocalMatrix : public LocalMatrixDefault<LocalMatrixTraits>
       {
-      public:  
-        //! type of base class 
+      public:
+        //! type of base class
         typedef LocalMatrixDefault<LocalMatrixTraits> BaseType;
 
-        //! type of matrix object 
+        //! type of matrix object
         typedef MatrixObjectImp MatrixObjectType;
-        //! type of matrix 
+        //! type of matrix
         typedef typename MatrixObjectImp :: MatrixType MatrixType;
-        //! type of little blocks 
+        //! type of little blocks
         typedef typename MatrixType:: block_type LittleBlockType;
-        //! type of entries of little blocks 
+        //! type of entries of little blocks
         typedef typename DomainSpaceType :: RangeFieldType DofType;
 
-        typedef typename MatrixType::row_type RowType; 
+        typedef typename MatrixType::row_type RowType;
 
-        //! type of row mapper 
+        //! type of row mapper
         typedef typename MatrixObjectType :: RowMapperType RowMapperType;
-        //! type of col mapper 
+        //! type of col mapper
         typedef typename MatrixObjectType :: ColMapperType ColMapperType;
-          
+
       private:
-        // special mapper omiting block size 
+        // special mapper omiting block size
         const RowMapperType& rowMapper_;
         const ColMapperType& colMapper_;
-        
-        // number of local matrices 
+
+        // number of local matrices
         int numRows_;
         int numCols_;
 
-        // vector with pointers to local matrices 
+        // vector with pointers to local matrices
         typedef std::vector<LittleBlockType *> LittleMatrixRowStorageType ;
         typedef std::vector< LittleMatrixRowStorageType > VecLittleMatrixRowStorageType;
         VecLittleMatrixRowStorageType matrices_;
 
-        // matrix to build 
+        // matrix to build
         const MatrixObjectType& matrixObj_;
 
-        // type of actual geometry 
+        // type of actual geometry
         GeometryType geomType_;
-        
+
        template <class RowGlobalKey>
        struct ColFunctor
        {
@@ -510,7 +510,7 @@ namespace Dune
          void operator() ( const int localDoF, const GlobalKey &globalDoF )
          {
            localMatRow_[ localDoF ] = &matRow_[ globalDoF ];
-         }         
+         }
          private:
          LittleMatrixRowStorageType& localMatRow_;
          RowType& matRow_;
@@ -518,7 +518,7 @@ namespace Dune
        };
        struct RowFunctor
        {
-         RowFunctor(const RowEntityType &rowEntity, 
+         RowFunctor(const RowEntityType &rowEntity,
                     const RowMapperType &rowMapper,
                     MatrixType &matrix,
                     VecLittleMatrixRowStorageType &matrices,
@@ -544,7 +544,7 @@ namespace Dune
          VecLittleMatrixRowStorageType &matrices_;
          int numCols_;
        };
-      public:  
+      public:
         LocalMatrix(const MatrixObjectType & mObj,
                     const DomainSpaceType & rowSpace,
                     const RangeSpaceType & colSpace)
@@ -561,7 +561,7 @@ namespace Dune
         void init(const RowEntityType & rowEntity,
                   const ColumnEntityType & colEntity)
         {
-          // initialize base functions sets 
+          // initialize base functions sets
           BaseType :: init ( rowEntity , colEntity );
 
           geomType_ = rowEntity.type();
@@ -573,33 +573,33 @@ namespace Dune
           colMapper_.mapEach(colEntity, rowFunctor);
         }
 
-        LocalMatrix(const LocalMatrix& org) 
+        LocalMatrix(const LocalMatrix& org)
           : BaseType( org )
           , rowMapper_(org.rowMapper_)
           , colMapper_(org.colMapper_)
           , numRows_( org.numRows_ )
-          , numCols_( org.numCols_ ) 
+          , numCols_( org.numCols_ )
           , matrices_(org.matrices_)
           , matrixObj_(org.matrixObj_)
           , geomType_(org.geomType_)
         {
         }
 
-      private: 
+      private:
         // check whether given (row,col) pair is valid
-        void check(int localRow, int localCol) const 
+        void check(int localRow, int localCol) const
         {
           const size_t row = (int) localRow / littleRows;
           const size_t col = (int) localCol / littleCols;
           const int lRow = localRow%littleRows;
           const int lCol = localCol%littleCols;
           assert( row < matrices_.size() ) ;
-          assert( col < matrices_[row].size() ); 
+          assert( col < matrices_[row].size() );
           assert( lRow < littleRows );
-          assert( lCol < littleCols ); 
+          assert( lCol < littleCols );
         }
 
-        DofType& getValue(const int localRow, const int localCol) 
+        DofType& getValue(const int localRow, const int localCol)
         {
           const int row = (int) localRow / littleRows;
           const int col = (int) localCol / littleCols;
@@ -609,7 +609,7 @@ namespace Dune
         }
 
       public:
-        const DofType get(const int localRow, const int localCol) const 
+        const DofType get(const int localRow, const int localCol) const
         {
           const int row = (int) localRow / littleRows;
           const int col = (int) localCol / littleCols;
@@ -618,7 +618,7 @@ namespace Dune
           return (*matrices_[row][col])[lRow][lCol];
         }
 
-        void scale (const DofType& scalar) 
+        void scale (const DofType& scalar)
         {
           for(size_t i=0; i<matrices_.size(); ++i)
             for(size_t j=0; j<matrices_[i].size(); ++j)
@@ -642,19 +642,19 @@ namespace Dune
         }
 
         //! make unit row (all zero, diagonal entry 1.0 )
-        void unitRow(const int localRow) 
+        void unitRow(const int localRow)
         {
           const int row = (int) localRow / littleRows;
           const int lRow = localRow%littleRows;
 
-          // clear row 
+          // clear row
           doClearRow( row, lRow );
 
-          // set diagonal entry to 1 
+          // set diagonal entry to 1
           (*matrices_[row][row])[lRow][lRow] = 1;
         }
 
-        //! clear all entries belonging to local matrix 
+        //! clear all entries belonging to local matrix
         void clear ()
         {
           for(int i=0; i<matrices_.size(); ++i)
@@ -668,7 +668,7 @@ namespace Dune
           const int row = (int) localRow / littleRows;
           const int lRow = localRow%littleRows;
 
-          // clear the row 
+          // clear the row
           doClearRow( row, lRow );
         }
 
@@ -676,13 +676,13 @@ namespace Dune
         void resort ()
         {}
 
-    protected:  
+    protected:
         //! set matrix row to zero
         void doClearRow ( const int row, const int lRow )
         {
-          // get number of columns  
+          // get number of columns
           const int col = this->columns();
-          for(int localCol=0; localCol<col; ++localCol) 
+          for(int localCol=0; localCol<col; ++localCol)
           {
             const int col = (int) localCol / littleCols;
             const int lCol = localCol%littleCols;
@@ -690,24 +690,24 @@ namespace Dune
           }
         }
 
-      }; // end of class LocalMatrix 
+      }; // end of class LocalMatrix
 
     public:
-      //! type of local matrix 
+      //! type of local matrix
       typedef LocalMatrix<ThisType> ObjectType;
       typedef ThisType LocalMatrixFactoryType;
       typedef ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
-      //! type of local matrix 
+      //! type of local matrix
       typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
       typedef ColumnObject< ThisType > LocalColumnObjectType;
 
-    protected:  
+    protected:
       const DomainSpaceType & domainSpace_;
       const RangeSpaceType & rangeSpace_;
 
-      // sepcial row mapper 
+      // sepcial row mapper
       RowMapperType& rowMapper_;
-      // special col mapper 
+      // special col mapper
       ColMapperType& colMapper_;
 
       int size_;
@@ -718,21 +718,21 @@ namespace Dune
 
       ParallelScalarProductType scp_;
 
-      int numIterations_; 
-      double relaxFactor_; 
-        
-      enum ISTLPreConder_Id { none  = 0 ,      // no preconditioner 
-                              ssor  = 1 ,      // SSOR preconditioner 
-                              sor   = 2 ,      // SOR preconditioner 
-                              ilu_0 = 3 ,      // ILU-0 preconditioner 
-                              ilu_n = 4 ,      // ILU-n preconditioner 
-                              gauss_seidel= 5, // Gauss-Seidel preconditioner 
-                              jacobi = 6,      // Jacobi preconditioner 
-                              amg_ilu_0 = 7,   // AMG with ILU-0 smoother 
-                              amg_ilu_n = 8,   // AMG with ILU-n smoother  
-                              amg_jacobi = 9   // AMG with Jacobi smoother  
+      int numIterations_;
+      double relaxFactor_;
+
+      enum ISTLPreConder_Id { none  = 0 ,      // no preconditioner
+                              ssor  = 1 ,      // SSOR preconditioner
+                              sor   = 2 ,      // SOR preconditioner
+                              ilu_0 = 3 ,      // ILU-0 preconditioner
+                              ilu_n = 4 ,      // ILU-n preconditioner
+                              gauss_seidel= 5, // Gauss-Seidel preconditioner
+                              jacobi = 6,      // Jacobi preconditioner
+                              amg_ilu_0 = 7,   // AMG with ILU-0 smoother
+                              amg_ilu_n = 8,   // AMG with ILU-n smoother
+                              amg_jacobi = 9   // AMG with Jacobi smoother
       };
-      
+
       ISTLPreConder_Id preconditioning_;
 
       mutable LocalMatrixStackType localMatrixStack_;
@@ -741,24 +741,24 @@ namespace Dune
       mutable RowBlockVectorType* Arg_;
       mutable ColumnBlockVectorType* Dest_;
 
-      // prohibit copy constructor 
-      ISTLMatrixObject(const ISTLMatrixObject&); 
-    public:  
-      //! constructor 
-      //! \param rowSpace space defining row structure 
-      //! \param colSpace space defining column structure 
-      //! \param paramfile parameter file to read variables 
+      // prohibit copy constructor
+      ISTLMatrixObject(const ISTLMatrixObject&);
+    public:
+      //! constructor
+      //! \param rowSpace space defining row structure
+      //! \param colSpace space defining column structure
+      //! \param paramfile parameter file to read variables
       //!         - Preconditioning: {0,1,2,3,4,5,6} put -1 to get info
       //!         - Pre-iteration: number of iteration of preconditioner
-      //!         - Pre-relaxation: relaxation factor   
+      //!         - Pre-relaxation: relaxation factor
       ISTLMatrixObject ( const DomainSpaceType &rowSpace,
                          const RangeSpaceType &colSpace,
                          const std :: string &paramfile = "" )
         : domainSpace_(rowSpace)
         , rangeSpace_(colSpace)
-        // create scp to have at least one instance 
+        // create scp to have at least one instance
         // otherwise instance will be deleted during setup
-        // get new mappers with number of dofs without considerung block size 
+        // get new mappers with number of dofs without considerung block size
         , rowMapper_( rowSpace.blockMapper() )
         , colMapper_( colSpace.blockMapper() )
         , size_(-1)
@@ -778,7 +778,7 @@ namespace Dune
         {
           DUNE_THROW(InvalidStateException,"ISTLMatrixObject: old parameter method disabled");
         }
-        else 
+        else
         {
           static const std::string preConTable[]
             = { "none", "ssor", "sor", "ilu-0", "ilu-n", "gauss-seidel", "jacobi",
@@ -788,9 +788,9 @@ namespace Dune
           relaxFactor_   = Parameter::getValue( "istl.preconditioning.relaxation", relaxFactor_ );
         }
 
-        if( preCon >= 0 && preCon <= 9) 
+        if( preCon >= 0 && preCon <= 9)
           preconditioning_ = (ISTLPreConder_Id) preCon;
-        else 
+        else
           preConErrorMsg(preCon);
 
         assert( rowMapper_.size() == colMapper_.size() );
@@ -801,18 +801,18 @@ namespace Dune
 
       const ThisType& systemMatrix() const { return *this; }
       ThisType& systemMatrix() { return *this; }
-    public:  
-      //! destructor 
-      ~ISTLMatrixObject() 
+    public:
+      //! destructor
+      ~ISTLMatrixObject()
       {
         removeObj( true );
       }
 
-      //! return reference to system matrix 
-      MatrixType & matrix() const 
-      { 
+      //! return reference to system matrix
+      MatrixType & matrix() const
+      {
         assert( matrix_ );
-        return *matrix_; 
+        return *matrix_;
       }
 
       void printTexInfo(std::ostream& out) const
@@ -822,99 +822,99 @@ namespace Dune
         out  << "\\\\ \n";
       }
 
-      //! return matrix adapter object  
-      std::string preconditionName() const 
-      { 
-        std::stringstream tmp ; 
-        // no preconditioner 
-        switch (preconditioning_) 
+      //! return matrix adapter object
+      std::string preconditionName() const
+      {
+        std::stringstream tmp ;
+        // no preconditioner
+        switch (preconditioning_)
         {
           case ssor : tmp << "SSOR"; break;
           case sor  : tmp << "SOR"; break;
           case ilu_0: tmp << "ILU-0"; break;
           case ilu_n: tmp << "ILU-n"; break;
           case gauss_seidel : tmp << "Gauss-Seidel"; break;
-          case jacobi: tmp << "Jacobi"; break; 
+          case jacobi: tmp << "Jacobi"; break;
           default: tmp << "None"; break;
         }
 
-        if( preconditioning_ != ilu_0 ) 
+        if( preconditioning_ != ilu_0 )
         {
           tmp << " n=" << numIterations_;
         }
         tmp << " relax=" << relaxFactor_ ;
         return tmp.str();
       }
-      
-      template <class PreconditionerType> 
-      MatrixAdapterType 
+
+      template <class PreconditionerType>
+      MatrixAdapterType
       createMatrixAdapter(const PreconditionerType* preconditioning,
-                          size_t numIterations) const 
+                          size_t numIterations) const
       {
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
         PreConType preconAdapter(matrix(), numIterations, relaxFactor_, preconditioning );
         return MatrixAdapterType(matrix(), domainSpace(), rangeSpace(), preconAdapter );
       }
 
-      template <class PreconditionerType> 
-      MatrixAdapterType 
+      template <class PreconditionerType>
+      MatrixAdapterType
       createAMGMatrixAdapter(const PreconditionerType* preconditioning,
-                             size_t numIterations) const 
+                             size_t numIterations) const
       {
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
         PreConType preconAdapter(matrix(), numIterations, relaxFactor_, preconditioning, domainSpace().gridPart().comm() );
         return MatrixAdapterType(matrix(), domainSpace(), rangeSpace(), preconAdapter );
       }
 
-      //! return matrix adapter object  
-      const MatrixAdapterType& matrixAdapter() const 
+      //! return matrix adapter object
+      const MatrixAdapterType& matrixAdapter() const
       {
-        if( matrixAdap_ == 0 ) 
+        if( matrixAdap_ == 0 )
           matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
         return *matrixAdap_;
       }
-      MatrixAdapterType& matrixAdapter() 
+      MatrixAdapterType& matrixAdapter()
       {
-        if( matrixAdap_ == 0 ) 
+        if( matrixAdap_ == 0 )
           matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
         return *matrixAdap_;
       }
 
-    protected:  
-      MatrixAdapterType matrixAdapterObject() const 
-      { 
+    protected:
+      MatrixAdapterType matrixAdapterObject() const
+      {
 #ifndef DISABLE_ISTL_PRECONDITIONING
         const size_t procs = domainSpace().gridPart().comm().size();
 
         typedef typename MatrixType :: BaseType ISTLMatrixType ;
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-        // no preconditioner 
+        // no preconditioner
         if( preconditioning_ == none )
         {
           return MatrixAdapterType(matrix(), domainSpace(),rangeSpace(), PreConType() );
         }
-        // SSOR 
+        // SSOR
         else if( preconditioning_ == ssor )
         {
-          if( procs > 1 ) 
+          if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqSSOR not working in parallel computations");
 
           typedef SeqSSOR<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
         }
-        // SOR 
+        // SOR
         else if(preconditioning_ == sor )
         {
-          if( procs > 1 ) 
+          if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqSOR not working in parallel computations");
 
           typedef SeqSOR<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
         }
-        // ILU-0 
+        // ILU-0
         else if(preconditioning_ == ilu_0)
         {
-          if( procs > 1 ) 
+          if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqILU0 not working in parallel computations");
 
           typedef FemSeqILU0<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
@@ -923,7 +923,7 @@ namespace Dune
         // ILU-n
         else if(preconditioning_ == ilu_n)
         {
-          if( procs > 1 ) 
+          if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqILUn not working in parallel computations");
 
           typedef SeqILUn<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
@@ -932,16 +932,16 @@ namespace Dune
         // Gauss-Seidel
         else if(preconditioning_ == gauss_seidel)
         {
-          if( procs > 1 ) 
+          if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqGS not working in parallel computations");
 
           typedef SeqGS<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
         }
-        // Jacobi 
+        // Jacobi
         else if(preconditioning_ == jacobi)
         {
-          if( numIterations_ == 1 ) // diagonal preconditioning 
+          if( numIterations_ == 1 ) // diagonal preconditioning
           {
             typedef FemDiagonalPreconditioner< ThisType, RowBlockVectorType, ColumnBlockVectorType > PreconditionerType;
             typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
@@ -953,31 +953,31 @@ namespace Dune
             typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
             return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
           }
-          else 
+          else
           {
             DUNE_THROW(InvalidStateException,"ISTL::SeqJac(Jacobi) only working with istl.preconditioning.iterations: 1 in parallel computations");
           }
         }
-        // AMG ILU-0  
+        // AMG ILU-0
         else if(preconditioning_ == amg_ilu_0)
         {
           // use original SeqILU0 because of some AMG traits classes.
           typedef SeqILU0<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           return createAMGMatrixAdapter( (PreconditionerType*)0, numIterations_ );
         }
-        // AMG ILU-n  
+        // AMG ILU-n
         else if(preconditioning_ == amg_ilu_n)
         {
           typedef SeqILUn<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           return createAMGMatrixAdapter( (PreconditionerType*)0, numIterations_ );
         }
-        // AMG Jacobi   
+        // AMG Jacobi
         else if(preconditioning_ == amg_jacobi)
         {
           typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType,1> PreconditionerType;
           return createAMGMatrixAdapter( (PreconditionerType*)0, numIterations_ );
         }
-        else 
+        else
         {
           preConErrorMsg(preconditioning_);
         }
@@ -985,8 +985,8 @@ namespace Dune
 
         return MatrixAdapterType(matrix(), domainSpace(), rangeSpace(), PreConType() );
       }
-      
-    public:  
+
+    public:
       //! return true, because in case of no preconditioning we have empty
       //! preconditioner (used by OEM methods)
       bool hasPreconditionMatrix() const { return (preconditioning_ != none); }
@@ -994,19 +994,19 @@ namespace Dune
       //! return reference to preconditioner object (used by OEM methods)
       const PreconditionMatrixType& preconditionMatrix() const { return *this; }
 
-      //! set all matrix entries to zero 
+      //! set all matrix entries to zero
       void clear()
       {
         matrix().clear();
-        // clean matrix adapter and other helper classes 
+        // clean matrix adapter and other helper classes
         removeObj( false );
       }
 
-      //! reserve memory for assemble based on the provided stencil 
+      //! reserve memory for assemble based on the provided stencil
       template <class Stencil>
-      void reserve(const Stencil &stencil,bool verbose = false) 
+      void reserve(const Stencil &stencil,bool verbose = false)
       {
-        // if grid sequence number changed, rebuild matrix 
+        // if grid sequence number changed, rebuild matrix
         if(sequence_ != domainSpace().sequence())
         {
           removeObj( true );
@@ -1018,94 +1018,94 @@ namespace Dune
         }
       }
 
-      //! setup new matrix with hanging nodes taken into account 
-      template <class HangingNodesType> 
-      void changeHangingNodes(const HangingNodesType& hangingNodes) 
+      //! setup new matrix with hanging nodes taken into account
+      template <class HangingNodesType>
+      void changeHangingNodes(const HangingNodesType& hangingNodes)
       {
-        // create new matrix 
+        // create new matrix
         MatrixType* newMatrix = new MatrixType(rowMapper_.size(), colMapper_.size());
 
-        // setup with hanging rows 
+        // setup with hanging rows
         newMatrix->setup( *matrix_ , hangingNodes );
 
-        // remove old matrix 
+        // remove old matrix
         removeObj( true );
-        // store new matrix 
+        // store new matrix
         matrix_ = newMatrix;
       }
 
       //! extract diagonal entries of the matrix to a discrete function of type
-      //! BlockVectorDiscreteFunction 
+      //! BlockVectorDiscreteFunction
       void extractDiagonal( ColumnDiscreteFunctionType& diag ) const
       {
-        // extract diagonal entries 
+        // extract diagonal entries
         matrix().extractDiagonal( diag.blockVector() );
       }
 
       //! we only have right precondition
       bool rightPrecondition() const { return true; }
 
-      //! precondition method for OEM Solvers 
-      //! not fast but works, double is copied to block vector 
+      //! precondition method for OEM Solvers
+      //! not fast but works, double is copied to block vector
       //! and after application copied back
       void precondition(const double* arg, double* dest) const
       {
         createBlockVectors();
-        
+
         assert( Arg_ );
         assert( Dest_ );
 
         RowBlockVectorType& Arg = *Arg_;
         ColumnBlockVectorType & Dest = *Dest_;
-        
-        // copy from double 
+
+        // copy from double
         double2Block(arg, Arg);
-        
-        // set Dest to zero 
+
+        // set Dest to zero
         Dest = 0;
-        
+
         assert( matrixAdap_ );
-        // not parameter swaped for preconditioner 
+        // not parameter swaped for preconditioner
         matrixAdap_->preconditionAdapter().apply(Dest , Arg);
 
-        // copy back 
+        // copy back
         block2Double( Dest , dest);
       }
-        
-      //! mult method for OEM Solver 
+
+      //! mult method for OEM Solver
       void multOEM(const double* arg, double* dest) const
       {
         createBlockVectors();
-        
+
         assert( Arg_ );
         assert( Dest_ );
 
         RowBlockVectorType& Arg = *Arg_;
         ColumnBlockVectorType & Dest = *Dest_;
-        
-        // copy from double 
+
+        // copy from double
         double2Block(arg, Arg);
-        
-        // call mult of matrix adapter  
+
+        // call mult of matrix adapter
         assert( matrixAdap_ );
         matrixAdap_->apply( Arg, Dest );
 
-        //  copy back 
+        //  copy back
         block2Double( Dest , dest);
       }
-      
-      //! apply with discrete functions 
+
+      //! apply with discrete functions
       void apply(const RowDiscreteFunctionType& arg,
-                 ColumnDiscreteFunctionType& dest) const 
+                 ColumnDiscreteFunctionType& dest) const
       {
         createMatrixAdapter();
         assert( matrixAdap_ );
         matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
       }
 
-      //! apply with arbitrary discrete functions calls multOEM 
+      //! apply with arbitrary discrete functions calls multOEM
       template <class RowDFType, class ColDFType>
-      void apply(const RowDFType& arg, ColDFType& dest) const 
+      void apply(const RowDFType& arg, ColDFType& dest) const
       {
         multOEM( arg.leakPointer(), dest.leakPointer ());
       }
@@ -1118,45 +1118,45 @@ namespace Dune
         matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
       }
 
-      //! dot method for OEM Solver 
+      //! dot method for OEM Solver
       double ddotOEM(const double* v, const double* w) const
       {
         createBlockVectors();
-        
+
         assert( Arg_ );
         assert( Dest_ );
 
         RowBlockVectorType&    V = *Arg_;
         ColumnBlockVectorType& W = *Dest_;
-        
-        // copy from double 
+
+        // copy from double
         double2Block(v, V);
         double2Block(w, W);
 
-#if HAVE_MPI 
-        // in parallel use scalar product of discrete functions 
-        ISTLBlockVectorDiscreteFunction< DomainSpaceType > vF("ddotOEM:vF", domainSpace(), V ); 
-        ISTLBlockVectorDiscreteFunction< RangeSpaceType  > wF("ddotOEM:wF", rangeSpace(), W ); 
+#if HAVE_MPI
+        // in parallel use scalar product of discrete functions
+        ISTLBlockVectorDiscreteFunction< DomainSpaceType > vF("ddotOEM:vF", domainSpace(), V );
+        ISTLBlockVectorDiscreteFunction< RangeSpaceType  > wF("ddotOEM:wF", rangeSpace(), W );
         return vF.scalarProductDofs( wF );
-#else 
+#else
         return V * W;
 #endif
       }
 
-      //! resort row numbering in matrix to have ascending numbering 
+      //! resort row numbering in matrix to have ascending numbering
       void resort()
       {
       }
 
       //! create precondition matrix does nothing because preconditioner is
-      //! created only when requested 
-      void createPreconditionMatrix() 
+      //! created only when requested
+      void createPreconditionMatrix()
       {
       }
 
-      //! print matrix 
-      void print(std::ostream & s) const 
-      { 
+      //! print matrix
+      void print(std::ostream & s) const
+      {
         matrix().print(std::cout);
       }
 
@@ -1166,17 +1166,17 @@ namespace Dune
       const RowMapperType& rowMapper() const { return rowMapper_; }
       const ColMapperType& colMapper() const { return colMapper_; }
 
-      //! interface method from LocalMatrixFactory 
-      ObjectType* newObject() const 
+      //! interface method from LocalMatrixFactory
+      ObjectType* newObject() const
       {
         return new ObjectType(*this,
                               domainSpace(),
                               rangeSpace());
       }
 
-      //! return local matrix object 
-      LocalMatrixType localMatrix(const RowEntityType& rowEntity, 
-                                  const ColumnEntityType& colEntity) const 
+      //! return local matrix object
+      LocalMatrixType localMatrix(const RowEntityType& rowEntity,
+                                  const ColumnEntityType& colEntity) const
       {
         return LocalMatrixType(localMatrixStack_,rowEntity,colEntity);
       }
@@ -1185,8 +1185,8 @@ namespace Dune
         return LocalColumnObjectType ( *this, colEntity );
       }
 
-    protected:  
-      void preConErrorMsg(int preCon) const 
+    protected:
+      void preConErrorMsg(int preCon) const
       {
         std::cerr << "ERROR: Wrong precoditioning number (p = " << preCon;
         std::cerr <<") in ISTLMatrixObject! \n";
@@ -1202,47 +1202,47 @@ namespace Dune
         exit(1);
       }
 
-      void removeObj( const bool alsoClearMatrix ) 
+      void removeObj( const bool alsoClearMatrix )
       {
         delete Dest_; Dest_ = 0;
         delete Arg_;  Arg_ = 0;
         delete matrixAdap_; matrixAdap_ = 0;
-        
-        if( alsoClearMatrix ) 
+
+        if( alsoClearMatrix )
         {
-          delete matrix_; 
+          delete matrix_;
           matrix_ = 0;
         }
       }
 
-      // copy double to block vector 
-      void double2Block(const double* arg, RowBlockVectorType& dest) const 
+      // copy double to block vector
+      void double2Block(const double* arg, RowBlockVectorType& dest) const
       {
         typedef typename RowBlockVectorType :: block_type BlockType;
         const size_t blocks = dest.size();
         int idx = 0;
-        for(size_t i=0; i<blocks; ++i) 
+        for(size_t i=0; i<blocks; ++i)
         {
           BlockType& block = dest[i];
           enum { blockSize = BlockType :: dimension };
-          for(int j=0; j<blockSize; ++j, ++idx) 
+          for(int j=0; j<blockSize; ++j, ++idx)
           {
             block[j] = arg[idx];
           }
         }
       }
-        
-      // copy block vector to double 
-      void block2Double(const ColumnBlockVectorType& arg, double* dest) const 
+
+      // copy block vector to double
+      void block2Double(const ColumnBlockVectorType& arg, double* dest) const
       {
         typedef typename ColumnBlockVectorType :: block_type BlockType;
         const size_t blocks = arg.size();
         int idx = 0;
-        for(size_t i=0; i<blocks; ++i) 
+        for(size_t i=0; i<blocks; ++i)
         {
           const BlockType& block = arg[i];
           enum { blockSize = BlockType :: dimension };
-          for(int j=0; j<blockSize; ++j, ++idx) 
+          for(int j=0; j<blockSize; ++j, ++idx)
           {
             dest[idx] = block[j];
           }
@@ -1251,8 +1251,8 @@ namespace Dune
 
       void createBlockVectors() const
       {
-        if( ! Arg_ || ! Dest_ ) 
-        { 
+        if( ! Arg_ || ! Dest_ )
+        {
           delete Arg_; delete Dest_;
           Arg_  = new RowBlockVectorType( rowMapper_.size() );
           Dest_ = new ColumnBlockVectorType( colMapper_.size() );
@@ -1261,19 +1261,19 @@ namespace Dune
         createMatrixAdapter ();
       }
 
-      void createMatrixAdapter () const 
+      void createMatrixAdapter () const
       {
-        if( ! matrixAdap_ ) 
-        { 
+        if( ! matrixAdap_ )
+        {
           matrixAdap_ = new MatrixAdapterType(matrixAdapter());
         }
       }
-      
+
     };
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #if HAVE_DUNE_ISTL
 
