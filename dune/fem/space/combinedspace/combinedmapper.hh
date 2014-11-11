@@ -231,7 +231,7 @@ namespace Dune
         const int numBlock1 = mapper1_.numBlocks();
         if ( block - numBlock1 < 0 )
           return mapper1_.oldOffSet( block );
-        els
+        else
           return mapper2_.oldOffSet( block - numBlock1 ) + oldGlobalOffset_;
       }
 
