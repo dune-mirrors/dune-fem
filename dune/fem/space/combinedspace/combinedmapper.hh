@@ -206,7 +206,7 @@ namespace Dune
         if ( block - numBlock1 < 0 ) 
           return mapper1_.oldIndex( hole, block );
         else
-          return mapper2_.oldIndex( hole, block - numBlock1 );
+          return mapper2_.oldIndex( hole, block - numBlock1 ) + globalOffset_;
       }
         
       /** \copydoc Dune::DofMapper::newIndex(const int hole, const int block) const */
@@ -216,7 +216,7 @@ namespace Dune
         if ( block - numBlock1 < 0 ) 
           return mapper1_.newIndex( hole, block );
         else
-          return mapper2_.newIndex( hole, block - numBlock1 );
+          return mapper2_.newIndex( hole, block - numBlock1 ) + globalOffset_;
       }
 
       /** \copydoc Dune::DofMapper::consecutive const */
@@ -231,7 +231,7 @@ namespace Dune
         const int numBlock1 = mapper1_.numBlocks();
         if ( block - numBlock1 < 0 )
           return mapper1_.oldOffSet( block );
-        else
+        els
           return mapper2_.oldOffSet( block - numBlock1 ) + oldGlobalOffset_;
       }
 
