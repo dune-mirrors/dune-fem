@@ -20,6 +20,8 @@ namespace Dune
       typedef Dof DofType;
 
       public:
+      typedef DofType value_type;
+
         SubDofVector( DofVectorType &dofs, int size, int offset ) :
           dofs_( dofs ),
           offset_ ( offset ),
