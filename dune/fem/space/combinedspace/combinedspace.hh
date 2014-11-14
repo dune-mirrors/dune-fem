@@ -82,7 +82,7 @@ namespace Dune
     */
 
     // Forward declarations
-    template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy >
+    template< class DiscreteFunctionSpaceImp, int N, DofStoragePolicy policy = PointBased >
     class CombinedSpace;
 
     template< class ContainedDiscreteFunctionSpaceImp,
