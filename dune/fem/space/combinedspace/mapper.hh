@@ -512,9 +512,7 @@ namespace Dune
       {
         const int numContainedBlocks = containedMapper().numBlocks();
         const int containedBlock = block % numContainedBlocks;
-        std::cout << "Contained block " << containedBlock << std::endl;
         const int component = block / numContainedBlocks;
-        std::cout << "Contained comp  " << component << std::endl;
         
         const int containedOffset = containedMapper().offSet( containedBlock );
         return containedOffset + component * containedMapper().size();
