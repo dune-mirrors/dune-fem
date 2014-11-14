@@ -374,7 +374,7 @@ namespace Dune
     protected:
       //! Constructor of ManagedDofStorageImplementation, only to call from derived classes 
       ManagedDofStorageImplementation ( const GridImp& grid,
-                          const MapperType& mapper,
+                                        const MapperType& mapper,
                                         const std::string& name,
                                         DofArrayType& array )
         : dm_( DofManagerType :: instance( grid ) ),

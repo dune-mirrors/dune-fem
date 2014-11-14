@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_DOFSTORAGE_HH
 #define DUNE_FEM_DOFSTORAGE_HH
 
+#include <cassert>
+
 namespace Dune 
 {
   
@@ -16,25 +18,7 @@ namespace Dune
     //! Utility class that helps in the transformation between dofs in the
     //! combined space and its enclosed spaces
     template <DofStoragePolicy p>
-    class DofConversionUtility {
-    public:
-      DofConversionUtility(int size);
-
-      //! Sets new size (in case the number of dofs changes)
-      void newSize(int size);
-
-      //! Component which the actual base function index gives a contribution
-      //! \return is in range {0, dimRange-1}
-      int component(int combinedIndex) const;
-      //! Number of the (scalar) base function belonging to base function index
-      int containedDof(int combinedIndex) const;
-      
-      //! Reverse operation of containedDof, component
-      //! i == combinedDof(containedDof(i), component(i))
-      int combinedDof(int enclosedIndex, int component) const;
-    private:
-      int size_;
-    };
+    class DofConversionUtility;
 
     //! Specialisation for PointBased approach
     template <>
