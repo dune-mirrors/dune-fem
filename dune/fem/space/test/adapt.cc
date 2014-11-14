@@ -8,14 +8,14 @@ using namespace Dune;
 //#include <dune/fem/function/vectorfunction.hh>
 //#include <dune/fem/function/attachedfunction.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
-#include <dune/fem/space/combineddiscretefunctionspace.hh>
-//#include <dune/fem/space/combinedspace.hh>
+
+#if USE_COMBINED_SPACE
+#include <dune/fem/space/combinedspace.hh>
+#endif
 
 #include <dune/fem/quadrature/cachingquadrature.hh>
-
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
-#include <dune/fem/space/lagrange.hh>
 #include <dune/fem/operator/projection/dgl2projection.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/capabilities.hh>
@@ -34,7 +34,8 @@ using namespace Dune;
 
 // polynom approximation order of quadratures,
 // at least poolynom order of basis functions
-const int polOrd = POLORDER;
+static const int polOrd   = POLORDER;
+static const int dimRange = 3 ;
 
 #ifndef GRIDDIM
 #define GRIDDIM dimworld
@@ -50,41 +51,33 @@ using namespace Fem;
 //! the index set we are using
 typedef GridSelector::GridType MyGridType;
 typedef DGAdaptiveLeafGridPart< MyGridType > GridPartType;
-//typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
 // typedef MatrixFunctionSpace < double , double, GRIDDIM , 2,5 > FuncSpace;
 
-//! define the function space our unkown belong to
-//! see dune/fem/lagrangebase.hh
-
-typedef FunctionSpace < double , double, GRIDDIM , 5 > FS;
-typedef DiscontinuousGalerkinSpace< FS, GridPartType,
-                                    polOrd,CachingStorage> DiscreteFunctionSpaceType;
-
-//typedef DiscontinuousGalerkinSpace< FunctionSpace < double , double, MyGridType::dimensionworld, 1 >,
-//                                    GridPartType, polOrd, CachingStorage> ContainedDiscreteFunctionSpaceType;
+#ifdef USE_COMBINED_SPACE
+  typedef DiscontinuousGalerkinSpace< FunctionSpace < double , double, MyGridType::dimensionworld, 1 >,
+                                      GridPartType, polOrd, CachingStorage> ContainedDiscreteFunctionSpaceType;
+  #ifdef POINTBASED
+    static const std::string usingSpaceName("Using CombinedSpace< dimRange, PointBased >");
+    typedef CombinedSpace< ContainedDiscreteFunctionSpaceType, dimRange, PointBased > DiscreteFunctionSpaceType ;
+  #else
+    static const std::string usingSpaceName("Using CombinedSpace< dimRange, VariableBased >");
+    typedef CombinedSpace< ContainedDiscreteFunctionSpaceType, dimRange, VariableBased > DiscreteFunctionSpaceType ;
+  #endif
+#else
+    static const std::string usingSpaceName("Using DiscontinuousGalerkinSpace< dimRange >");
+typedef DiscontinuousGalerkinSpace< FunctionSpace < double , double, MyGridType::dimensionworld, dimRange >,
+                                    GridPartType, polOrd, CachingStorage>  DiscreteFunctionSpaceType;
+#endif
 
 //typedef CombinedDiscreteFunctionSpace< ContainedDiscreteFunctionSpaceType, ContainedDiscreteFunctionSpaceType > CombinedSpaceType ;
 //typedef CombinedDiscreteFunctionSpace< CombinedSpaceType, ContainedDiscreteFunctionSpaceType > DiscreteFunctionSpaceType ;
 
-//typedef CombinedSpace< ContainedDiscreteFunctionSpaceType, 5, PointBased > DiscreteFunctionSpaceType ;
-//typedef CombinedSpace< ContainedDiscreteFunctionSpaceType, 5, VariableBased > DiscreteFunctionSpaceType ;
+////typedef CombinedSpace< ContainedDiscreteFunctionSpaceType, dimRange, PointBased > DiscreteFunctionSpaceType ;
 
-//typedef DiscontinuousGalerkinSpace< FunctionSpace < double , double, MyGridType::dimensionworld, 1 >,
-//                                    GridPartType, polOrd, CachingStorage> ContainedDiscreteFunctionSpaceType;
-
-//typedef CombinedSpace< ContainedDiscreteFunctionSpaceType, 5, PointBased > DiscreteFunctionSpaceType ;
-//typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FuncSpace;
-
-//typedef LegendreDiscontinuousGalerkinSpace<FuncSpace, GridPartType,
-//                  polOrd,CachingStorage> DiscreteFunctionSpaceType;
-
-//typedef LagrangeDiscontinuousGalerkinSpace<FuncSpace, GridPartType,
-//                  polOrd,CachingStorage> DiscreteFunctionSpaceType;
-
-typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FuncSpace;
+typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FunctionSpaceType;
 
 //! define the type of discrete function we are using , see
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
@@ -99,11 +92,11 @@ typedef AdaptationManager< MyGridType, RestrictProlongDefault< DiscreteFunctionT
 // ***********************************************************
 // the exact solution to the problem for EOC calculation
 struct ExactSolution
-: public Fem::Function< FuncSpace, ExactSolution >
+: public Fem::Function< FunctionSpaceType, ExactSolution >
 {
-  typedef FuncSpace::RangeType RangeType;
-  typedef FuncSpace::RangeFieldType RangeFieldType;
-  typedef FuncSpace::DomainType DomainType;
+  typedef FunctionSpaceType::RangeType RangeType;
+  typedef FunctionSpaceType::RangeFieldType RangeFieldType;
+  typedef FunctionSpaceType::DomainType DomainType;
 
   //! f(x,y) = x*(1-x)*y*(1-y)
   void evaluate ( const DomainType &x, RangeType &ret ) const
@@ -242,6 +235,7 @@ try {
     paramName = argv[1];
 
   std::string paramFile( paramName );
+  std::cout << usingSpaceName << std::endl;
 
   // append parameter
   Parameter :: append( argc , argv );
