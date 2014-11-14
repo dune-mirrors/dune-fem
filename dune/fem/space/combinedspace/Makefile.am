@@ -1,6 +1,5 @@
 combinedspacedir =  $(includedir)/dune/fem/space/combinedspace
-combinedspace_HEADERS = combinedadaptmanager.hh \
-                        combineddofstorage.hh \
+combinedspace_HEADERS = combineddofstorage.hh \
                         combinedspace.hh \
                         mapper.hh \
 												mapperselector.hh \
