@@ -37,10 +37,6 @@ using namespace Dune;
 static const int polOrd   = POLORDER;
 static const int dimRange = 3 ;
 
-#ifndef GRIDDIM
-#define GRIDDIM dimworld
-#endif
-
 using namespace Fem;
 
 //***********************************************************************
@@ -54,7 +50,7 @@ typedef DGAdaptiveLeafGridPart< MyGridType > GridPartType;
 
 //! define the function space, \f[ \R^2 \rightarrow \R \f]
 // see dune/common/functionspace.hh
-// typedef MatrixFunctionSpace < double , double, GRIDDIM , 2,5 > FuncSpace;
+// typedef MatrixFunctionSpace < double , double, MyGridType::dimensionworld, 2,5 > FuncSpace;
 
 #ifdef USE_COMBINED_SPACE
   typedef DiscontinuousGalerkinSpace< FunctionSpace < double , double, MyGridType::dimensionworld, 1 >,
