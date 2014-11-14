@@ -119,7 +119,10 @@ namespace Dune
       //! Constructor
       //! \param numComponents Number of components in range vector (==dimRange).
       PointBasedDofConversionUtility(int numComponents) 
-      {}
+      {
+        // make sure that we use the correct number of components
+        assert( numComponents == int(dimRange) );
+      }
 
       //! Find out what type of policy this is.
       static DofStoragePolicy policy() { return PointBased; }
@@ -132,18 +135,21 @@ namespace Dune
 
       //! Component which the actual base function index gives a contribution
       //! \return is in range {0, dimRange-1}
-      int component(const int combinedIndex) const { 
+      int component(const int combinedIndex) const 
+      {
         return combinedIndex % dimRange; 
       }
       //! Number of the (scalar) base function belonging to base function index
-      int containedDof(const int combinedIndex) const {
+      int containedDof(const int combinedIndex) const 
+      {
         return combinedIndex / dimRange;
       }
 
       //! Reverse operation of containedDof, component
       //! i == combinedDof(containedDof(i), component(i))
       int combinedDof(const int containedIndex, 
-                      const int component) const {
+                      const int component) const 
+      {
         return containedIndex * dimRange + component;
       }
     };
