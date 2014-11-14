@@ -72,7 +72,7 @@ echo
 echo "Configuring with minimal options..."
 cd $DUNEDIR
 if ! minimal_configure ; then
-  echo "Fatal: Cannot configure with minimal options (see $WORKINGDIR/minimal-svn-conf.out)."
+  echo "Fatal: Cannot configure with minimal options (see minimal-svn-conf.out)."
   exit 1
 fi
 
@@ -117,7 +117,7 @@ for MODULE in $MODULES ; do
   cd $DUNEDIR/$MODULE
   find -maxdepth 1 -name "*.tar.gz" -delete
   if ! make dist &> $WORKINGDIR/$MODULE-dist.out ; then
-    echo "Error: Cannot make tarball for $MODULE (see $WORKINGDIR/$MODULE-dist.out)"
+    echo "Error: Cannot make tarball for $MODULE (see $MODULE-dist.out)"
     if test $MODULE == dune-fem ; then
       errors=$((errors+1))
     fi

@@ -113,7 +113,11 @@ for OPTS in `cd $OPTSDIR ; ls *.opts` ; do
     MAKE_CHECK_FLAGS="$(source $OPTSDIR/$OPTS; echo $MAKE_CHECK_FLAGS)"
 
     if ! $SCRIPTSDIR/check-tests.sh $TESTDIR/dune-fem "$MAKE_CHECK_FLAGS"; then
-      echo "Error: Check failed with $OPTS (see $CHECKLOG)"
+      if test -e $WORKINGDIR/test.log; then
+        echo "Error: Check failed with $OPTS (see ${OPTS%.opts}-check.out or ${OPTS%.opts}-test.log)"
+      else
+        echo "Error: Check failed with $OPTS (see ${OPTS%.opts}-check.out)"
+      fi
       errors=$((errors+1))
     fi
     mv $WORKINGDIR/check-tests.out $CHECKLOG
