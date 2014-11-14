@@ -248,7 +248,7 @@ namespace Dune
 
       void resize () { update(); }
 
-      bool compress () { return true; }
+      bool compress () { update(); return true; }
 
       template <class StreamTraits>
       void write( OutStreamInterface< StreamTraits >& out ) const {}

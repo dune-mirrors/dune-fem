@@ -118,7 +118,7 @@ namespace Dune
         component_( component ),
         utilGlobal_(mapper_,
                     policy  == PointBased ? 
-                    N :  mapper.size()/N )
+                    N :  mapper.size() )
       {
         assert(component_ < N);
       }
