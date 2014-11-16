@@ -186,6 +186,7 @@ namespace Dune
 
       /** \brief For ISTL-compatibility */
       typedef typename DofStorageType::block_type block_type;
+      typedef typename DofStorageType::block_type::field_type field_type;
 
       //! Type of the grid
       typedef typename DiscreteFunctionSpaceType::GridType GridType;
