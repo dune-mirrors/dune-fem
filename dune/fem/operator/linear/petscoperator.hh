@@ -37,6 +37,7 @@ namespace Dune
     {
       typedef PetscLinearOperator< DomainFunction, RangeFunction > ThisType;
     public:
+      typedef Mat MatrixType;
       typedef DomainFunction DomainFunctionType;
       typedef RangeFunction RangeFunctionType;
       typedef typename DomainFunctionType::RangeFieldType DomainFieldType;
