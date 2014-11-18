@@ -83,7 +83,7 @@ namespace Dune
       }
 
       /** \brief Check, whether the data in a codimension has fixed size */
-      bool fixedDataSize ( int codim ) const
+      bool fixedDataSize ( const int codim ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().fixedDataSize( codim ) );
         return asImp().fixedDataSize( codim );

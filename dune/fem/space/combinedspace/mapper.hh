@@ -191,6 +191,18 @@ namespace Dune
     public:
       //! Total number of degrees of freedom
       int size () const;
+
+      /** \copydoc Dune::DofMapper::contains( const int codim ) const */
+      bool contains (const int codim ) const
+      {
+        return containedMapper().contains( codim );
+      }
+
+      /** \copydoc Dune::DofMapper::fixedDataSize( const int codim ) const */
+      bool fixedDataSize( const int codim ) const
+      {
+        return containedMapper().fixedDataSize( codim );
+      }
       
       /** \copydoc Dune::DofMapper::begin(const ElementType &entity) const */
       DofMapIteratorType begin ( const ElementType &entity ) const;
