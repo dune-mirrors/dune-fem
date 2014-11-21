@@ -8,7 +8,7 @@
 #include <dune/common/dynmatrix.hh>
 
 #include <dune/fem/misc/functor.hh>
-#include <dune/fem/operator/common/localmatrix.hh> 
+#include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
@@ -23,16 +23,16 @@
 #include "petscmat.h"
 
 
-namespace Dune 
+namespace Dune
 {
-  namespace Fem 
+  namespace Fem
   {
 
     /* ========================================
      * class PetscLinearOperator
      */
     template< typename DomainFunction, typename RangeFunction >
-    class PetscLinearOperator 
+    class PetscLinearOperator
     : public Fem::Operator< DomainFunction, RangeFunction >
     {
       typedef PetscLinearOperator< DomainFunction, RangeFunction > ThisType;
@@ -102,12 +102,12 @@ namespace Dune
         colSlaveDofs_( rangeSpace_ ),
         rowSlaveDofs_( domainSpace_ ),
         sequence_(-1),
-        localMatrixStack_( *this ),     
+        localMatrixStack_( *this ),
         status_(statNothing)
       {
       }
 
-      //! destructor deleting PETSc Mat object 
+      //! destructor deleting PETSc Mat object
       ~PetscLinearOperator ()
       {
         if( status_ != statNothing )
@@ -134,16 +134,16 @@ namespace Dune
         apply( arg, dest );
       }
 
-      void reserve () 
+      void reserve ()
       {
         reserve( SimpleStencil<DomainSpaceType,RangeSpaceType>(0) );
       }
 
-      //! reserve memory for assemble based on the provided stencil 
+      //! reserve memory for assemble based on the provided stencil
       template <class StencilType>
-      void reserve (const StencilType &stencil) 
+      void reserve (const StencilType &stencil)
       {
-        if(sequence_ != domainSpace().sequence())  
+        if(sequence_ != domainSpace().sequence())
         {
           /*
           * initialize the row and column petsc dof mappings
@@ -154,23 +154,23 @@ namespace Dune
             colDofMapping().numOwnedDofBlocks() * rangeLocalBlockSize;
 
           assert( domainLocalBlockSize == rangeLocalBlockSize );
-          // create matrix 
+          // create matrix
           ::Dune::Petsc::MatCreate( &petscMatrix_ );
-        
+
           PetscInt bs = 1;
-          if( domainLocalBlockSize > 1 ) 
+          if( domainLocalBlockSize > 1 )
           {
             bs = domainLocalBlockSize ;
             ::Dune::Petsc::MatSetType( petscMatrix_, MATBAIJ );
-            // set block size 
+            // set block size
             ::Dune::Petsc::MatSetBlockSize( petscMatrix_, bs );
           }
-          else 
+          else
           {
             ::Dune::Petsc::MatSetType( petscMatrix_, MATAIJ );
           }
 
-          // set sizes of the matrix 
+          // set sizes of the matrix
           ::Dune::Petsc::MatSetSizes( petscMatrix_, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE );
 
           if (is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value)
@@ -197,14 +197,14 @@ namespace Dune
               LocalStencilIteratorType endLocal = it->second.end();
               for ( LocalStencilIteratorType itLocal = it->second.begin(); itLocal != endLocal; ++itLocal)
               {
-                if (!rowDofMapping().isSlave( *itLocal )) 
+                if (!rowDofMapping().isSlave( *itLocal ))
                 {
                   ++nzDiag;
                   // std::cout << "diag: (" << rowDofMapping().localSlaveMapping( femIndex )
                   //   << "," << rowDofMapping().localSlaveMapping( *itLocal )
                   //   << ") ";
                 }
-                else 
+                else
                   ++nzOff;
               }
               // std::cout << std::endl;
@@ -220,23 +220,23 @@ namespace Dune
             ::Dune::Petsc::MatSetUp( petscMatrix_, bs, &d_nnz[0], &o_nnz[0] );
           }
           sequence_ = domainSpace().sequence();
-        } 
+        }
 
         status_ = statAssembled;
-      } 
+      }
 
       void clear ()
       {
         ::Dune::Petsc::MatZeroEntries( petscMatrix_ );
       }
 
-      //! interface method from LocalMatrixFactory 
+      //! interface method from LocalMatrixFactory
       ObjectType* newObject() const
       {
         return new ObjectType( *this, domainSpace_, rangeSpace_ );
       }
-      
-      //! return local matrix representation 
+
+      //! return local matrix representation
       LocalMatrixType localMatrix ( const RowEntityType &rowEntity, const ColumnEntityType &colEntity ) const
       {
         return LocalMatrixType(localMatrixStack_,rowEntity,colEntity);
@@ -247,7 +247,7 @@ namespace Dune
       }
 
       // just here for debugging
-      void view () const 
+      void view () const
       {
         ::Dune::Petsc::MatView( petscMatrix_, PETSC_VIEWER_STDOUT_WORLD );
       }
@@ -258,12 +258,12 @@ namespace Dune
       }
       */
 
-      // return reference to PETSc matrix object 
+      // return reference to PETSc matrix object
       Mat& petscMatrix () const { return petscMatrix_; }
 
-      //! return reference to row global mapping 
+      //! return reference to row global mapping
       const RowDofMappingType& rowDofMapping() const { return rowSlaveDofs_.dofMapping(); }
-      //! return reference to column global mapping 
+      //! return reference to column global mapping
       const ColDofMappingType& colDofMapping() const { return colSlaveDofs_.dofMapping(); }
 
     private:
@@ -302,7 +302,7 @@ namespace Dune
      * class PetscLinearOperator::LocalMatrix
      */
     template< typename DomainFunction, typename RangeFunction >
-    class PetscLinearOperator< DomainFunction, RangeFunction >::LocalMatrix 
+    class PetscLinearOperator< DomainFunction, RangeFunction >::LocalMatrix
     : public LocalMatrixDefault< typename PetscLinearOperator< DomainFunction, RangeFunction >::LocalMatrixTraits >
     {
       typedef LocalMatrix ThisType;
@@ -343,8 +343,8 @@ namespace Dune
 
     public:
 
-      LocalMatrix ( const PetscLinearOperatorType &petscLinOp, 
-                    const DomainSpaceType &domainSpace, 
+      LocalMatrix ( const PetscLinearOperatorType &petscLinOp,
+                    const DomainSpaceType &domainSpace,
                     const RangeSpaceType &rangeSpace )
       : BaseType( domainSpace, rangeSpace ),
         petscLinearOperator_( petscLinOp ),
@@ -355,7 +355,7 @@ namespace Dune
       {
         return; //!
         // USE: MatSetValuesBlocked for bs>1!
-        if (status_ == statAdd) // only add is cached at the moment 
+        if (status_ == statAdd) // only add is cached at the moment
         {
           PetscScalar v[rows()][columns()];
           for (int r=0;r<rows();++r)
@@ -366,31 +366,31 @@ namespace Dune
               v[r][c] = values_[idx];
             }
           }
-          ::Dune::Petsc::MatSetValues( petscMatrix(), rows(), &(rowIndices_[0]), columns(), &(colIndices_[0]), 
+          ::Dune::Petsc::MatSetValues( petscMatrix(), rows(), &(rowIndices_[0]), columns(), &(colIndices_[0]),
                                        &v[0][0], ADD_VALUES );
         }
       }
 
-      void init ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity ) 
+      void init ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity )
       {
-        // call initialize on base class 
+        // call initialize on base class
         BaseType :: init( domainEntity, rangeEntity );
 
         //*************************************************
-        //  The rows belong to the domain space 
+        //  The rows belong to the domain space
         //  it's indices are determained by the rangeSpace
         //
         //  The columns belong to the range space
         //  it's indices are determained by the domainSpace
         //*************************************************
 
-        // setup row indices and also store number of local rows 
+        // setup row indices and also store number of local rows
         setupIndices( rangeSpace().blockMapper(), petscLinearOperator_.colDofMapping(), rangeEntity, rangeBlockSize, rowIndices_ );
 
-        // setup col indices and also store number of local cols 
+        // setup col indices and also store number of local cols
         setupIndices( domainSpace().blockMapper(), petscLinearOperator_.rowDofMapping(), domainEntity, domainBlockSize, colIndices_ );
 
-        
+
         values_.resize( columns()*rows(), 0. );
         for (int r=0;r<rows();++r)
         {
@@ -431,7 +431,7 @@ namespace Dune
         status_ = statInsert;
         petscLinearOperator_.setStatus(status_);
         const int col = this->columns();
-        for(int localCol=0; localCol<col; ++localCol) 
+        for(int localCol=0; localCol<col; ++localCol)
           ::Dune::Petsc::MatSetValue( petscMatrix(), globalRowIndex( localRow ), globalColIndex( localCol ) ,
               (localCol==localRow)?1:0., INSERT_VALUES );
         /*
@@ -460,21 +460,21 @@ namespace Dune
       const Mat& petscMatrix () const { return petscLinearOperator_.petscMatrix_; }
 
       // Used to setup row/column indices. DofMapper is the DUNE DoF mapper
-      template< typename DofMapper, typename PetscMapping, typename Entity > 
-      void setupIndices ( const DofMapper &dofMapper, const PetscMapping &petscMapping, const Entity &entity, 
+      template< typename DofMapper, typename PetscMapping, typename Entity >
+      void setupIndices ( const DofMapper &dofMapper, const PetscMapping &petscMapping, const Entity &entity,
                           const int blockSize, IndexVectorType &indices )
       {
         const int blockDofs = dofMapper.numDofs( entity ) ;
-        const int numDofs   = blockDofs * blockSize ;  
+        const int numDofs   = blockDofs * blockSize ;
         blockIndices_.resize( blockDofs );
         indices.resize( numDofs );
         // map global dofs (blocked)
         dofMapper.mapEach( entity, PetscAssignFunctor< PetscMapping >( petscMapping, blockIndices_ ) );
-        // compute non blocked dofs 
-        for( int b=0, dof=0; b<blockDofs; ++ b) 
+        // compute non blocked dofs
+        for( int b=0, dof=0; b<blockDofs; ++ b)
         {
-          int globalDof = blockIndices_[ b ] * blockSize ; 
-          for( int d=0; d<blockSize; ++d, ++dof, ++globalDof ) 
+          int globalDof = blockIndices_[ b ] * blockSize ;
+          for( int d=0; d<blockSize; ++d, ++dof, ++globalDof )
           {
             indices[ dof ] = globalDof;
           }
@@ -487,16 +487,16 @@ namespace Dune
 
 
     private:
-      DofIndexType globalRowIndex( const int localRow ) const 
-      { 
+      DofIndexType globalRowIndex( const int localRow ) const
+      {
         assert( localRow < static_cast< int >( rowIndices_.size() ) );
-        return rowIndices_[ localRow ]; 
+        return rowIndices_[ localRow ];
       }
 
-      DofIndexType globalColIndex( const int localCol ) const 
-      { 
+      DofIndexType globalColIndex( const int localCol ) const
+      {
         assert( localCol < static_cast< int >( colIndices_.size() ) );
-        return colIndices_[ localCol ]; 
+        return colIndices_[ localCol ];
       }
 
       /*

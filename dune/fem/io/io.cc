@@ -4,7 +4,7 @@
 #include <iostream>
 #include <cstdio>
 
-#include <sys/stat.h>  
+#include <sys/stat.h>
 #include <dirent.h>
 
 #include <dune/fem/io/io.hh>
@@ -57,10 +57,10 @@ namespace Dune
 
     bool directoryExists ( const std::string &name )
     {
-      // if directory does not exist return false 
+      // if directory does not exist return false
       DIR* directory = opendir( name.c_str() );
       const bool directoryExists = (directory != 0);
-      // close directory again 
+      // close directory again
       closedir( directory );
       return directoryExists;
     }
@@ -90,6 +90,6 @@ namespace Dune
       return returnString;
     }
 
-  } // namespace Fem  
-  
+  } // namespace Fem
+
 } // namespace Dune

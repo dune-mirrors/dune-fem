@@ -21,7 +21,7 @@ namespace Dune
       typedef Grid GridType;
 
       typedef LeafGridPart< GridType > GridPartType;
-        
+
       LagrangeMapper_Test( std :: string gridFile )
         : gridFile_( gridFile )
       {
@@ -35,7 +35,7 @@ namespace Dune
 
       std :: string gridFile_;
     };
-  
+
   } // namespace Fem
 
 } //namespace Dune

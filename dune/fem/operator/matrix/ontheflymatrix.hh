@@ -1,10 +1,10 @@
 #ifndef DUNE_ONTHEFLYMATRIX_HH
 #define DUNE_ONTHEFLYMATRIX_HH
 
-//- system includes 
+//- system includes
 #include <stack>
 
-//- local includes 
+//- local includes
 #include <dune/fem/operator/matrix/blockmatrix.hh>
 
 namespace Dune
@@ -15,12 +15,12 @@ namespace Dune
     //*****************************************************************
     //
     //  --OnTheFlyMatrix
-    //    
+    //
     //*****************************************************************
     template <class T>
-    class OnTheFlyMatrix 
+    class OnTheFlyMatrix
     {
-    public: 
+    public:
       typedef T Ttype;  //! remember the value type
       typedef OnTheFlyMatrix<T> ThisType;
 
@@ -34,7 +34,7 @@ namespace Dune
       int localRows_;
       int localCols_;
 
-      bool rowWise_; 
+      bool rowWise_;
 
       mutable MatrixStackType freeStack_;
 
@@ -46,18 +46,18 @@ namespace Dune
       OnTheFlyMatrix() {}
 
       //! make matrix with 'rows' rows and 'cols' columns,
-      //! maximum 'nz' non zero values in each row 
+      //! maximum 'nz' non zero values in each row
       //! and intialize all values with 'val'
-      
-      void reserve(int rows, int cols, int lrows, int lcols, 
-                   int nonZeros, bool rowWise = true) 
-      { 
-      }
-      
-      void clear () 
+
+      void reserve(int rows, int cols, int lrows, int lcols,
+                   int nonZeros, bool rowWise = true)
       {
       }
-        
+
+      void clear ()
+      {
+      }
+
     /*******************************/
     /*  Access and info functions  */
     /*******************************/
@@ -69,27 +69,27 @@ namespace Dune
       void set(int row, int col, DenseMatrixType & val)
       {
       }
-      
+
       void add(int row, int col, DenseMatrixType & val)
       {
       }
 
-      void resize( int nsize) 
+      void resize( int nsize)
       {
       }
 
-      void resize( int rows, int cols ) 
+      void resize( int rows, int cols )
       {
       }
 
-      void resort () 
+      void resort ()
       {
       }
 
-      void resortRow ( int row ) 
+      void resortRow ( int row )
       {
       }
-      
+
       void multiply(const ThisType & A , const ThisType & B )
       {
       }
@@ -98,42 +98,42 @@ namespace Dune
       {
       }
 
-      // result = this * vec 
+      // result = this * vec
       void multOEM(const T * vec, T * result) const
       {
         abort();
       }
-      
-      // result = this * vec 
+
+      // result = this * vec
       void multOEMAdd(const T * vec, T * result) const
       {
         abort();
       }
-      
-      //! this precondition is from right side 
+
+      //! this precondition is from right side
       bool rightPrecondition () const { return true; }
-      
-      // result = this * vec 
+
+      // result = this * vec
       void precondition(const T * u, T * x) const
       {
       }
-      
-      // result = this * vec 
+
+      // result = this * vec
       void setDiag(const T * diag)
       {
       }
 
-      void getDiag(T * diag) 
+      void getDiag(T * diag)
       {
       }
-      
-      void print(std::ostream & s) const 
+
+      void print(std::ostream & s) const
       {
       }
 
     };
 
-    template <class RowSpaceImp, class ColumnSpaceImp, class TraitsImp> 
+    template <class RowSpaceImp, class ColumnSpaceImp, class TraitsImp>
     class OnTheFlyMatrixObject;
 
     template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
@@ -153,16 +153,16 @@ namespace Dune
 
 
     //! matrix object holding a blockamtrix
-    template <class RowSpaceImp, class ColumnSpaceImp, class TraitsImp> 
+    template <class RowSpaceImp, class ColumnSpaceImp, class TraitsImp>
     class OnTheFlyMatrixObject
     {
-    public:  
+    public:
       typedef RowSpaceImp RowSpaceType;
       typedef ColumnSpaceImp ColumnSpaceType ;
 
-      //! number of rows of blocks 
+      //! number of rows of blocks
       enum { littleRows = RowSpaceType :: localBlockSize };
-      //! number of columns of blocks 
+      //! number of columns of blocks
       enum { littleCols = ColumnSpaceType :: localBlockSize };
 
       typedef typename RowSpaceType::GridType::template Codim<0>::Entity EntityType;
@@ -172,8 +172,8 @@ namespace Dune
       typedef OnTheFlyMatrix<double> MatrixType;
       typedef MatrixType PreconditionMatrixType;
 
-      template <class MatrixObjectImp> 
-      class LocalMatrix; 
+      template <class MatrixObjectImp>
+      class LocalMatrix;
 
       struct LocalMatrixTraits
       {
@@ -184,57 +184,57 @@ namespace Dune
         typedef Fem::DenseMatrix<RangeFieldType> LittleBlockType;
       };
 
-      template <class MatrixObjectImp> 
+      template <class MatrixObjectImp>
       class LocalMatrix : public LocalMatrixDefault<LocalMatrixTraits>
       {
-      public:  
-        //! type of base class 
+      public:
+        //! type of base class
         typedef LocalMatrixDefault<LocalMatrixTraits> BaseType;
 
-        //! type of matrix object 
+        //! type of matrix object
         typedef MatrixObjectImp MatrixObjectType;
-        //! type of matrix 
+        //! type of matrix
         typedef typename MatrixObjectImp :: MatrixType MatrixType;
-        //! type of entries of little blocks 
+        //! type of entries of little blocks
         typedef typename RowSpaceType :: RangeFieldType DofType;
 
-        //! type of little blocks 
+        //! type of little blocks
         typedef Fem::DenseMatrix<DofType> LittleMatrixType;
 
-        //! type of row mapper 
+        //! type of row mapper
         typedef typename MatrixObjectType :: RowMapperType RowMapperType;
-        //! type of col mapper 
+        //! type of col mapper
         typedef typename MatrixObjectType :: ColMapperType ColMapperType;
 
-      private:  
-        const MatrixObjectType & matrixObj_; 
-        LittleMatrixType matrix_; 
+      private:
+        const MatrixObjectType & matrixObj_;
+        LittleMatrixType matrix_;
 
-      public:  
+      public:
         LocalMatrix(const MatrixObjectType & mObj,
                     const RowSpaceType & rowSpace,
                     const ColumnSpaceType & colSpace)
-          : BaseType(rowSpace,colSpace) 
+          : BaseType(rowSpace,colSpace)
           , matrixObj_(mObj)
-          , matrix_() 
+          , matrix_()
         {
         }
 
-        //! initialize local matrix to entities 
+        //! initialize local matrix to entities
         void init(const EntityType& rowEntity,
                   const EntityType& colEntity)
         {
-          // initialize base functions sets 
+          // initialize base functions sets
           BaseType :: init ( rowEntity , colEntity );
 
-          const int numRows = this->rows(); 
+          const int numRows = this->rows();
           const int numCols = this->columns();
 
           matrix_.resize( numRows, numCols );
         }
 
-      private: 
-        //! prohibit copy cosntructor 
+      private:
+        //! prohibit copy cosntructor
         LocalMatrix(const LocalMatrix &);
 
         // check whether given (row,col) pair is valid
@@ -243,9 +243,9 @@ namespace Dune
           assert( localRow >= 0 && localRow < matrix_.rows());
           assert( localCol >= 0 && localCol < matrix_.cols());
         }
-        
+
       public:
-        //! add value to matrix 
+        //! add value to matrix
         void add(int localRow, int localCol , const DofType value)
         {
 #ifndef NDEBUG
@@ -254,8 +254,8 @@ namespace Dune
           matrix_[localRow][localCol] += value;
         }
 
-        //! return matrix entry 
-        const DofType get(int localRow, int localCol ) const 
+        //! return matrix entry
+        const DofType get(int localRow, int localCol ) const
         {
 #ifndef NDEBUG
           check(localRow,localCol);
@@ -263,7 +263,7 @@ namespace Dune
           return matrix_[localRow][localCol];
         }
 
-        //! set matrix enrty to value 
+        //! set matrix enrty to value
         void set(int localRow, int localCol, const DofType value)
         {
 #ifndef NDEBUG
@@ -272,8 +272,8 @@ namespace Dune
           matrix_[localRow][localCol] = value;
         }
 
-        //! set matrix enrty to value 
-        void unitRow(const int localRow) 
+        //! set matrix enrty to value
+        void unitRow(const int localRow)
         {
           const int col = this->columns();
           for(int localCol=0; localCol<col; ++localCol)
@@ -283,59 +283,59 @@ namespace Dune
           matrix_[localRow][localRow] = 1;
         }
 
-        //! clear all entries belonging to local matrix 
+        //! clear all entries belonging to local matrix
         void clear ()
         {
           matrix_.clear();
         }
 
-        //! scale local matrix 
+        //! scale local matrix
         void scale ( const DofType& value )
         {
           matrix_.scale ( value );
         }
 
-        //! resort does nothing because already sorted in good way 
+        //! resort does nothing because already sorted in good way
         void resort ()
         {
         }
       };
 
     public:
-      //! type of local matrix 
+      //! type of local matrix
       typedef LocalMatrix<ThisType> ObjectType;
       typedef ThisType LocalMatrixFactoryType;
       typedef Fem :: ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
-      //! type of local matrix 
+      //! type of local matrix
       typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
 
-      typedef typename RowSpaceType :: BlockMapperType RowMapperType; 
-      typedef typename ColumnSpaceType :: BlockMapperType ColMapperType; 
+      typedef typename RowSpaceType :: BlockMapperType RowMapperType;
+      typedef typename ColumnSpaceType :: BlockMapperType ColMapperType;
 
       typedef AdaptiveDiscreteFunction<RowSpaceType> DestinationType;
 
       typedef CommunicationManager<RowSpaceType> CommunicationManagerType;
 
-      // row space 
-      const RowSpaceType & rowSpace_; 
-      // column space 
+      // row space
+      const RowSpaceType & rowSpace_;
+      // column space
       const ColumnSpaceType & colSpace_;
 
       mutable MatrixType matrix_;
 
-      // local matrix stack 
+      // local matrix stack
       mutable LocalMatrixStackType localMatrixStack_;
 
-      //! constructor 
-      //! \param rowSpace space defining row structure 
-      //! \param colSpace space defining column structure 
-      //! \param paramfile parameter file to read variables 
-      //!         - Preconditioning: {0 == no, 1 == yes} used is SSOR 
-      OnTheFlyMatrixObject(const RowSpaceType & rowSpace, 
+      //! constructor
+      //! \param rowSpace space defining row structure
+      //! \param colSpace space defining column structure
+      //! \param paramfile parameter file to read variables
+      //!         - Preconditioning: {0 == no, 1 == yes} used is SSOR
+      OnTheFlyMatrixObject(const RowSpaceType & rowSpace,
                            const ColumnSpaceType & colSpace,
-                           const std::string paramfile = "") 
+                           const std::string paramfile = "")
         : rowSpace_(rowSpace)
-        , colSpace_(colSpace) 
+        , colSpace_(colSpace)
         , matrix_()
         , localMatrixStack_(*this)
       {
@@ -345,31 +345,31 @@ namespace Dune
           int precon = 0;
           readParameter(paramfile,"Preconditioning",precon);
           preconditioning_ = (precon > 0) ? true : false;
-        } 
+        }
         */
-        assert( rowSpace_.indexSet().size(0) == 
-                colSpace_.indexSet().size(0) ); 
+        assert( rowSpace_.indexSet().size(0) ==
+                colSpace_.indexSet().size(0) );
       }
 
-      //! return reference to stability matrix 
-      MatrixType & matrix() const 
-      { 
-        return matrix_; 
+      //! return reference to stability matrix
+      MatrixType & matrix() const
+      {
+        return matrix_;
       }
 
-      //! set all matrix entries to zero  
-      void clear() 
+      //! set all matrix entries to zero
+      void clear()
       {
       }
 
-      //! return true if precoditioning matrix is provided 
+      //! return true if precoditioning matrix is provided
       bool hasPreconditionMatrix () const { return false; }
 
       //! return reference to preconditioner (here also systemMatrix)
       const PreconditionMatrixType& preconditionMatrix () const { return matrix(); }
 
-      //! reserve memory corresponnding to size of spaces 
-      void reserve(bool verbose = false ) 
+      //! reserve memory corresponnding to size of spaces
+      void reserve(bool verbose = false )
       {
       }
 
@@ -381,12 +381,12 @@ namespace Dune
       }
 
       //! mult method of matrix object used by oem solver
-      void multOEM(const double * arg, double * dest) const 
+      void multOEM(const double * arg, double * dest) const
       {
         abort();
       }
 
-      //! communicate data 
+      //! communicate data
       void communicate(const double * arg) const
       {
         if( rowSpace_.gridPart().comm().size() <= 1 ) return ;
@@ -395,17 +395,17 @@ namespace Dune
         rowSpace_.communicate( tmp );
       }
 
-      //! resort row numbering in matrix to have ascending numbering 
-      void resort() 
+      //! resort row numbering in matrix to have ascending numbering
+      void resort()
       {
       }
 
-      //! print matrix 
-      void print(std::ostream & s) const 
+      //! print matrix
+      void print(std::ostream & s) const
       {
       }
 
-     //! interface method from LocalMatrixFactory 
+     //! interface method from LocalMatrixFactory
       ObjectType* newObject() const
       {
         return new ObjectType(*this,
@@ -413,7 +413,7 @@ namespace Dune
                               colSpace_);
       }
 
-      //! return local matrix 
+      //! return local matrix
       LocalMatrixType localMatrix(const EntityType& rowEntity,
                                   const EntityType& colEntity) const
       {
@@ -426,12 +426,12 @@ namespace Dune
       /** \brief delete all row belonging to a hanging node and rebuild them */
       template <class HangingNodesType>
       void changeHangingNodes(const HangingNodesType& hangingNodes)
-      { 
+      {
         DUNE_THROW(NotImplemented,"OnTheFlyMatrixObject: changeHangingNodes not implemented for this matrix object");
       }
     };
 
   } // end namespace Fem
 
-} // end namespace Dune 
-#endif  
+} // end namespace Dune
+#endif

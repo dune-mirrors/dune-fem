@@ -55,10 +55,10 @@ namespace Dune
 
     /**
      * @brief Base class for specific pass implementations.
-       InsertFunctionPass simply inserts a discrete function from outside of the pass tree 
-       into the current pass tree, for example when calculating the species 
+       InsertFunctionPass simply inserts a discrete function from outside of the pass tree
+       into the current pass tree, for example when calculating the species
        transport the velocity function comes from a different pass but has to
-       be inserted into the species pass. 
+       be inserted into the species pass.
      */
     template< class DiscreteFunction, class PreviousPass, int passId >
     class InsertFunctionPass
@@ -74,23 +74,23 @@ namespace Dune
       template <class DFType>
       struct LocalFunctionInitializer
       {
-        template <class ArgType> 
+        template <class ArgType>
         static void init( const ArgType&, const double time, DiscreteFunction& ) {}
       };
-      
+
       template <class LFType>
       struct LocalFunctionInitializer< LocalFunctionAdapter< LFType > >
       {
-        template <class ArgType> 
-        static void init( const ArgType& arg, const double time, DiscreteFunction& dest ) 
+        template <class ArgType>
+        static void init( const ArgType& arg, const double time, DiscreteFunction& dest )
         {
-          // call initialize on LocalFunctionAdapter 
+          // call initialize on LocalFunctionAdapter
           dest.initialize( arg, time );
         }
       };
-      
+
     public:
-      //! type of discrete model for this class 
+      //! type of discrete model for this class
       typedef InsertFunctionPassDiscreteModel< DiscreteFunction > DiscreteModelType;
 
       //! type of traits for this class
@@ -110,7 +110,7 @@ namespace Dune
     public:
       /** constructor
        *
-       *  \param[in]  destination   to be stored in this pass 
+       *  \param[in]  destination   to be stored in this pass
        *  \param[in]  previousPass  previous pass in the tree
        */
       InsertFunctionPass ( const DestinationType &destination, PreviousPassType &previousPass )
@@ -121,7 +121,7 @@ namespace Dune
 
       /** constructor
        *
-       *  \param[in]  destination   to be stored in this pass 
+       *  \param[in]  destination   to be stored in this pass
        *  \param[in]  previousPass  previous pass in the tree
        *  \param[in]  space         discrete function space
        *
@@ -140,7 +140,7 @@ namespace Dune
        *
        *  \param[in]  previousPass  previous pass in the tree
        */
-      explicit InsertFunctionPass ( PreviousPassType &previousPass ) 
+      explicit InsertFunctionPass ( PreviousPassType &previousPass )
       : BaseType( previousPass )
       {
         assert( destination_ == 0 );
@@ -156,14 +156,14 @@ namespace Dune
       void allocateLocalMemory ()
       {}
 
-      //! return reference to space 
+      //! return reference to space
       const DiscreteFunctionSpaceType &space () const
       {
         assert( destination_ != 0 );
         return destination_->space();
       }
 
-      //! set internal destination pointer to dest 
+      //! set internal destination pointer to dest
       void setDestination ( const DestinationType &destination )
       {
         destination_ = const_cast< DestinationType * >( &destination );
@@ -176,14 +176,14 @@ namespace Dune
       void compute ( const ArgumentType &arg, DestinationType &dest ) const
       {
         // in case DestinationType is a LocalFunctionAdapter
-        // call initialize 
+        // call initialize
         LocalFunctionInitializer< DestinationType >::init( arg, time(), dest );
       }
 
       using BaseType::destination_;
     }; // end class InsertFunctionPass
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

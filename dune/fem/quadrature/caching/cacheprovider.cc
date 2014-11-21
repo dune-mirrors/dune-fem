@@ -1,6 +1,6 @@
-namespace Dune 
+namespace Dune
 {
-  namespace Fem 
+  namespace Fem
   {
 
     template <class GridPart>
@@ -20,7 +20,7 @@ namespace Dune
       const TwistStorageType& twistMappers =
         TwistProviderType::getTwistStorage(quad);
       const MapperVectorType pointMappers =
-        PointProvider<ct, dim, codim>::getMappers(quad, 
+        PointProvider<ct, dim, codim>::getMappers(quad,
                                                   twistMappers.getPoints(),
                                                   elementGeometry);
 
@@ -33,7 +33,7 @@ namespace Dune
         (std::make_pair( key,
                          CacheStorageType(numFaces, maxTwist))).first;
 
-      for (int face = 0; face < numFaces; ++face) 
+      for (int face = 0; face < numFaces; ++face)
       {
         for (int twist = minTwist; twist < maxTwist; ++twist) {
           it->second.addMapper(pointMappers[face],
@@ -59,7 +59,7 @@ namespace Dune
       const int numFaces = pointMappers.size();
 
       QuadratureKeyType key ( elementGeometry, quad.id() );
-      
+
       MapperIteratorType it
         = mappers_.insert(std::make_pair(key, CacheStorageType(numFaces))).first;
 
@@ -68,7 +68,7 @@ namespace Dune
 
       return it;
     }
-  
+
   } // namespace Fem
 
 } // namespace Dune

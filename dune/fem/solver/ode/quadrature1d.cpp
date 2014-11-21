@@ -27,7 +27,7 @@ const Quadrature<1>& Quadrature<1>::quadrature(int minimum_degree)
   switch (minimum_degree){
   case 0: case 1: return quad1d_1; break;
   case 2: case 3: return quad1d_3; break;
-  case 4: case 5: return quad1d_5; break; 
+  case 4: case 5: return quad1d_5; break;
   case 6: case 7: return quad1d_7; break;
   case 8: case 9: return quad1d_9; break;
   case 10: case 11: return quad1d_11; break;
@@ -44,8 +44,8 @@ const Quadrature<1>& Quadrature<1>::quadrature(int minimum_degree)
   case 32: case 33: return quad1d_33; break;
   case 34: case 35: return quad1d_35; break;
   case 36: case 37: return quad1d_37; break;
-  case 38: case 39: return quad1d_39; break;  
-  default: 
+  case 38: case 39: return quad1d_39; break;
+  default:
     {
       std::cerr << "Quadrature1d::quadrature: order " << minimum_degree << " not avaiable" << std::endl;
       assert(0);
@@ -66,15 +66,15 @@ void pardg::Quadrature1d::check() const
   for(int m=0; m<=degree; m++){
     double sum = 0.0;
     for(int r=0; r<nop; r++){
-      double x_m = 1.0;      
-      for(int i=1; i<=m; i++) x_m *= x(r)[0];      
+      double x_m = 1.0;
+      for(int i=1; i<=m; i++) x_m *= x(r)[0];
       sum += w(r) * x_m;
     }
-    
+
     double error = fabs(sum - 1.0/(m+1));
     total_error += error;
-    
-    std::cout << m << "  "          
+
+    std::cout << m << "  "
 	      << "   error: " << error << "  "
 	      << std::endl;
   }

@@ -30,7 +30,7 @@ namespace Dune
     template< class FunctionSpace, class GridPart, int order >
     struct FourierDiscreteFunctionSpaceTraits
     {
-      typedef FourierDiscreteFunctionSpace< FunctionSpace, GridPart, order > DiscreteFunctionSpaceType; 
+      typedef FourierDiscreteFunctionSpace< FunctionSpace, GridPart, order > DiscreteFunctionSpaceType;
 
       typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;

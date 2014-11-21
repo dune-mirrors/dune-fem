@@ -4,18 +4,18 @@
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/space/lagrange.hh>
 
-namespace Dune 
+namespace Dune
 {
 
   namespace Fem
   {
 
-    void LagrangeBasis_Test::run() 
+    void LagrangeBasis_Test::run()
     {
       testBasisFunctions();
     }
 
-    void LagrangeBasis_Test::testBasisFunctions() 
+    void LagrangeBasis_Test::testBasisFunctions()
     {
       typedef GridSelector::GridType GridType;
       static const int dimworld = GridSelector::dimworld;
@@ -23,12 +23,12 @@ namespace Dune
       GridPtr< GridType > gridPtr( gridFile_ );
       GridType& grid = *gridPtr;
 
-      typedef LeafGridPart< GridType > GridPartType; 
+      typedef LeafGridPart< GridType > GridPartType;
       GridPartType gridPart( grid );
 
       typedef FunctionSpace< double, double, dimworld, 1 > FunctionSpaceType;
-      
-      // check polynomial order 1 
+
+      // check polynomial order 1
       typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >
         OneSpaceType;
       {
@@ -36,7 +36,7 @@ namespace Dune
         OneSpaceType space( gridPart);
         checkLagrangeBasis( space );
       }
-   
+
       #ifdef TEST_SECOND_ORDER
       // check polynomial order 2
       typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 2 >
@@ -59,18 +59,18 @@ namespace Dune
       #endif
 
     }
-    
-    template< class SpaceType > 
+
+    template< class SpaceType >
     void LagrangeBasis_Test :: checkLagrangeBasis( const SpaceType &space )
     {
-      typedef typename SpaceType :: IteratorType IteratorType; 
+      typedef typename SpaceType :: IteratorType IteratorType;
       typedef typename SpaceType :: BasisFunctionSetType  BasisFunctionSetType;
       typedef typename SpaceType :: LagrangePointSetType LagrangePointSetType;
-      typedef typename SpaceType :: DomainType DomainType; 
-      typedef typename SpaceType :: RangeType RangeType; 
+      typedef typename SpaceType :: DomainType DomainType;
+      typedef typename SpaceType :: RangeType RangeType;
 
       int errors = 0;
-      
+
       IteratorType end = space.end();
       for(IteratorType it = space.begin(); it != end; ++it)
       {
@@ -79,14 +79,14 @@ namespace Dune
 
         const LagrangePointSetType& pointSet = space.lagrangePointSet( *it );
         const int numPoints = pointSet.size();
-      
+
         std::vector< RangeType > phi( numPoints, RangeType( 0 ) );
-          
-        for( int i = 0; i < numPoints; ++i ) 
+
+        for( int i = 0; i < numPoints; ++i )
         {
-         
+
           const DomainType& x = pointSet.point( i );
-         
+
           // evaluate all basisFunctions on lagrange point i
           basisSet.evaluateAll( x, phi );
 
@@ -96,13 +96,13 @@ namespace Dune
                         << " (" << phi[ i ][ 0 ] << " != 1)!" << std :: endl;
             ++errors;
           }
-          
-          for( int j = 0; j < numBasisFct; ++j ) 
+
+          for( int j = 0; j < numBasisFct; ++j )
           {
             if( i == j )
               continue;
 
-            // evaluate on lagrange point 
+            // evaluate on lagrange point
             if( std :: abs( phi[ j ][ 0 ] ) >= 1e-10 )
             {
               std :: cout << "Basis function " << j << " failed at " << x

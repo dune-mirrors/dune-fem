@@ -51,7 +51,7 @@ namespace Dune
         std :: pair< DofStorageInterface *, StorageType * > memPair
           = allocateManagedDofStorage( key.grid(), key.mapper(), name(), null );
 
-        // store pointers 
+        // store pointers
         memObject_ = memPair.first;
         storage_ = memPair.second;
       }
@@ -113,7 +113,7 @@ namespace Dune
 
       inline void enableDofCompression ()
       {
-        if( memObject_ ) 
+        if( memObject_ )
           memObject_->enableDofCompression();
       }
 

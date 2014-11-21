@@ -11,18 +11,18 @@ using namespace Dune;
 
 using namespace Fem;
 
-template <class Vector> 
-void checkVector( Vector& vector , const size_t rows, const size_t cols ) 
+template <class Vector>
+void checkVector( Vector& vector , const size_t rows, const size_t cols )
 {
   std::cout << "Start Vector check: " << std::endl;
   vector.resize( rows );
   std::cout << "vector: capacity " << vector.capacity() << "  size " << vector.size() << std::endl;
-  for( size_t i=0; i<rows; ++i ) 
+  for( size_t i=0; i<rows; ++i )
   {
     vector[ i ].resize( cols );
     std::cout << "vector["<<i<<"]: capacity " << vector[ i ].capacity() << "  size " << vector[ i ].size() << std::endl;
     typedef typename Vector :: value_type :: value_type value_type;
-    for( size_t j=0; j<cols; ++j ) 
+    for( size_t j=0; j<cols; ++j )
     {
       vector[ i ][ j ] = value_type( j );
     }
@@ -32,7 +32,7 @@ void checkVector( Vector& vector , const size_t rows, const size_t cols )
 
 //**************************************************
 //
-//  main programm, run algorithm twice to calc EOC 
+//  main programm, run algorithm twice to calc EOC
 //
 //**************************************************
 int main( int argc, char *argv[] )

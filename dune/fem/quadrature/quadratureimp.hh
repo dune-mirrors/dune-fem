@@ -41,23 +41,23 @@ namespace Dune
     public:
       //! type of local coordinates
       typedef FieldVector< FieldType, dim > CoordinateType;
-      
-      //! to be revised, look at caching quad 
+
+      //! to be revised, look at caching quad
       enum { codimension = 0 };
-      
+
     private:
       // vector holding the coordinates for each point
       DynamicArray< CoordinateType > points_;
 
       // identifier of the integration point list
       const size_t id_;
-      
+
     protected:
       /** \brief Constructor
        *
        *  The constructor simply creates an empty point list and stores the
        *  specified identifier.
-       * 
+       *
        *  \note The constructors of derived classes should fill the integration
        *        point list via addIntegrationPoint.
        *
@@ -73,7 +73,7 @@ namespace Dune
         id_( id )
       {
       }
-     
+
     private:
       // Copying is forbidden
       IntegrationPointListImp( const IntegrationPointListImp& );
@@ -90,7 +90,7 @@ namespace Dune
        *  integration point for 0 <= i < nop(). The integration point is given
        *  in local coordinates, i.e., coordinates with respect to the reference
        *  element.
-       * 
+       *
        *  \param[in]  i  number of the integration point, 0 <= i < nop()
        *
        *  \returns reference to i-th integration point
@@ -111,14 +111,14 @@ namespace Dune
       }
 
       /** \brief obtain the identifier of the integration point list
-       * 
+       *
        *  The identifier of an integration point list must be globally unique.
        *  Even integration point lists for different dimensions must have
        *  different identifiers.
        *
        *  \note Quadratures are considered distinct if they differ in one of the
        *        following points: geometry type, order, dimension or implementation.
-       * 
+       *
        *  \returns globally unique identifier of the integration point list
        */
       size_t id () const
@@ -141,7 +141,7 @@ namespace Dune
       /** \brief obtain GeometryType for this integration point list
        *
        *  Integration point lists are specified in local coordinates, i.e.,
-       *  coordinates with respect to the reference element. Hence, each 
+       *  coordinates with respect to the reference element. Hence, each
        *  integration point list is only valid for one type of geometry, i.e.,
        *  for one reference element. The type can be retrieved via this method.
        *
@@ -181,7 +181,7 @@ namespace Dune
     public:
       //! field type
       typedef FieldImp FieldType;
-    
+
     private:
       typedef QuadratureImp< FieldType, dim > ThisType;
       typedef IntegrationPointListImp< FieldType, dim > BaseType;
@@ -191,15 +191,15 @@ namespace Dune
       typedef typename BaseType :: CoordinateType CoordinateType;
 
     private:
-      // vector holding weights of each integration point 
+      // vector holding weights of each integration point
       DynamicArray< FieldType > weights_;
-   
+
     protected:
       /** \brief Constructor
        *
        *  The constructor simply creates an empty quadrature and stores the
        *  specified identifier.
-       * 
+       *
        *  \note The constructors of derived classes should fill the quadrature
        *        via addQuadraturePoint
        *
@@ -215,7 +215,7 @@ namespace Dune
         weights_()
       {
       }
-     
+
     private:
       // Copying is forbidden
       QuadratureImp ( const QuadratureImp& );
@@ -224,14 +224,14 @@ namespace Dune
       virtual ~QuadratureImp ()
       {
       }
-      
+
       /** \brief obtain weight of i-th integration point
        *
        *  This method returns the weight of the i-th integration point for
        *  0 <= i < nop() within the quadrature.
        *
        *  \note The integration point can be obtained via the point() method.
-       * 
+       *
        *  \note The quadrature weights sum up to the volume of the reference
        *        element.
        *
@@ -293,10 +293,10 @@ namespace Dune
 
       //! Dummy order method
       virtual int order() const { return order_; }
-      
+
       //! Dummy max order method
       static size_t maxOrder() { return maxOrder_; }
-      
+
     private:
       GeometryType geo_;
       int order_;

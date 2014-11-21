@@ -103,7 +103,7 @@ namespace Dune
       }
       private:
       const Mapper2 &mapper2_;
-      const Entity2 &entity2_; 
+      const Entity2 &entity2_;
       Functor functor_;
     };
 

@@ -25,14 +25,14 @@ private:
 };
 
 
-inline 
+inline
 Timer::Timer()
 {
   reset();
 }
 
 
-inline 
+inline
 void Timer::reset()
 {
   process_elapsed_time.tms_utime = 0;
@@ -61,15 +61,15 @@ void Timer::stop()
   if (running){
     struct tms process_stop_time;
     times(&process_stop_time);
-    process_elapsed_time.tms_utime 
+    process_elapsed_time.tms_utime
       += process_stop_time.tms_utime - process_start_time.tms_utime;
-    process_elapsed_time.tms_stime 
+    process_elapsed_time.tms_stime
       += process_stop_time.tms_stime - process_start_time.tms_stime;
-    process_elapsed_time.tms_cutime 
+    process_elapsed_time.tms_cutime
       += process_stop_time.tms_cutime - process_start_time.tms_cutime;
-    process_elapsed_time.tms_cstime 
+    process_elapsed_time.tms_cstime
       += process_stop_time.tms_cstime - process_start_time.tms_cstime;
-    
+
     time_t real_stop_time;
     time(&real_stop_time);
     real_elapsed_time += difftime(real_stop_time, real_start_time);
@@ -84,12 +84,12 @@ inline
 double Timer::process_time() const
 {
   const double clocks_per_second = sysconf(_SC_CLK_TCK);
-  
-  double total_time = process_elapsed_time.tms_utime 
+
+  double total_time = process_elapsed_time.tms_utime
     +process_elapsed_time.tms_stime
-    +process_elapsed_time.tms_cutime 
+    +process_elapsed_time.tms_cutime
     +process_elapsed_time.tms_cstime;
- 
+
   if (running){
     struct tms process_stop_time;
     times(&process_stop_time);

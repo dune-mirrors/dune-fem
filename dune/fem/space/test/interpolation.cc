@@ -98,7 +98,7 @@ double algorithm ( GridType &grid, const int step )
   typedef Dune::Fem::Interpolation< DiscreteFunctionType > InterpolationType;
   InterpolationType interpolation;
 
-  // perform the interpolation 
+  // perform the interpolation
   interpolation( gridExactSolution, solution );
 
   typedef Dune::Capabilities::hasSingleGeometryType< GridType > HasSingleGeometryType;
@@ -154,7 +154,7 @@ try
     return 0;
   }
 
-  // initial refinement level 
+  // initial refinement level
   int refCount = 1;
   if( argc > 1 )
     refCount = std::max( refCount, std::atoi( argv[ 1 ] ) );
@@ -166,7 +166,7 @@ try
 
   // create grid
   GridType &grid = Dune::Fem::TestGrid::grid();
-  const int refineStepsForHalf = Dune::Fem::TestGrid::refineStepsForHalf(); 
+  const int refineStepsForHalf = Dune::Fem::TestGrid::refineStepsForHalf();
   Dune::Fem::GlobalRefine::apply( grid, refineStepsForHalf );
 
   // compute DG L2-projection
@@ -185,7 +185,7 @@ try
     }
     oldError = newError;
   }
-  
+
   return 0;
 }
 catch( Dune::Exception e )

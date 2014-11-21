@@ -27,18 +27,18 @@ public:
   void set_expl_limiter(Limiter &limiter);
 
   // user-interface for solving
-  virtual bool step(double t, double dt, double *u, 
+  virtual bool step(double t, double dt, double *u,
                     int& newton_iterations, int& ils_iterations,
 		    int& max_newton_iterations, int& max_ils_iterations)
   {
-    std::cerr << "ODESolver::step(double,double,double*,int&,int&) should not be used" 
+    std::cerr << "ODESolver::step(double,double,double*,int&,int&) should not be used"
               << std::endl;
     abort();
   }
 
   virtual bool step(double t, double dt, double *u)
   {
-    std::cerr << "ODESolver::step(double,double,double*) should not be used" 
+    std::cerr << "ODESolver::step(double,double,double*) should not be used"
               << std::endl;
     abort();
   }
@@ -76,7 +76,7 @@ public:
 protected:
   // from DynamicalObject
   virtual void resize(int new_size, int component);
-  
+
 private:
   class LinearOperator : public Function
   {
@@ -116,7 +116,7 @@ private:
 		      int& max_newton_iterations, int& max_ils_iterations);
   IterativeLinearSolver *ils;
   LinearOperator op;
-  double *u_tmp, *f_tmp; 
+  double *u_tmp, *f_tmp;
 };
 
 
@@ -125,7 +125,7 @@ private:
 class SIRK : public ODESolver, public IterativeSolver
 {
 public:
-  SIRK(Communicator &comm, const int num_of_stages, const int order, 
+  SIRK(Communicator &comm, const int num_of_stages, const int order,
        Function &f, Function &fex,
        const double *a, const double *b, const double *c,
        const double *aex, const double *cex);
@@ -141,7 +141,7 @@ public:
 protected:
   // from DynamicalObject
   virtual void resize(int new_size, int component);
-  
+
 private:
   class LinearOperator : public Function
   {
@@ -185,7 +185,7 @@ private:
                       int& max_newton_iterations, int& max_ils_iterations);
   IterativeLinearSolver *ils;
   LinearOperator op;
-  double *u_tmp, *f_tmp; 
+  double *u_tmp, *f_tmp;
 };
 
 
@@ -198,12 +198,12 @@ public:
 
   // from ODESolver
   virtual bool step(double t, double dt, double *u);
-  
+
   using ODESolver :: step ;
 private:
   Function &f;
   const int num_of_stages;
-  const Vector alpha;  
+  const Vector alpha;
 };
 
 
@@ -212,8 +212,8 @@ private:
 class ExplicitBulirschStoer : public ODESolver
 {
 public:
-  ExplicitBulirschStoer(Communicator &comm, Function &f, 
-			int num_of_stages, 
+  ExplicitBulirschStoer(Communicator &comm, Function &f,
+			int num_of_stages,
 			int (*seq)(int) = DoubleHarmonicSequence );
 
   virtual bool step(double t, double dt, double *u);
@@ -234,8 +234,8 @@ private:
 class ImplicitBulirschStoer : public ODESolver, public IterativeSolver
 {
 public:
-  ImplicitBulirschStoer(Communicator &comm, Function &f, 
-			int num_of_stages, 
+  ImplicitBulirschStoer(Communicator &comm, Function &f,
+			int num_of_stages,
 			int (*seq)(int) = DoubleHarmonicSequence );
 
   using ODESolver :: step ;
@@ -299,16 +299,16 @@ class ExplicitRungeKutta : public ODESolver
 public:
   using ODESolver :: step ;
   virtual bool step(double t, double dt, double *u);
-  
+
 protected:
-  ExplicitRungeKutta(Communicator &comm, 
+  ExplicitRungeKutta(Communicator &comm,
 		     int num_of_stages, int order, Function &f);
-  ExplicitRungeKutta(Communicator &comm, 
+  ExplicitRungeKutta(Communicator &comm,
 		     int num_of_stages, int order, Function &f,
 		     const double *a, const double *b, const double *c);
 
-  // solver interface 
-  virtual bool solve(double t, double dt, double *u); 
+  // solver interface
+  virtual bool solve(double t, double dt, double *u);
 
   Function &f;
   const int num_of_stages;

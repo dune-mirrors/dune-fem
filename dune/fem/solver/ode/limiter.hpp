@@ -11,8 +11,8 @@ namespace pardg
   class Triang2d;
   class DG;
   class DG2d;
-  
-  
+
+
   class Limiter
   {
   public:
@@ -20,7 +20,7 @@ namespace pardg
     virtual void operator()(double *u) = 0;
     virtual void operator()(const double* u, double *uLimited) = 0;
   };
-  
+
 
 
   // limit to piecwise constant data if solution is not smooth
@@ -29,9 +29,9 @@ namespace pardg
   class PCLimiter : public Limiter
   {
   public:
-    PCLimiter(int dim_system, int num_base_polys, 
+    PCLimiter(int dim_system, int num_base_polys,
 	      MeshBase &mesh, DG &dg);
-    
+
     virtual ~PCLimiter () {}
     // from Limiter
     virtual void operator()(double *U);
@@ -50,30 +50,30 @@ namespace pardg
     SlopeLimiter2d(int dim_system, int poly_order,
 		   Triang2d &tr2d, DG2d &dg2d);
     virtual ~SlopeLimiter2d();
-    
+
     // from Limiter
     virtual void operator()(double *U);
-    
+
   protected:
     virtual void pre_op(double *U);
     virtual void post_op(double *U);
-    
+
     const int dim_system, poly_order, num_base_polys;
     Triang2d &tr2d;
-    DG2d &dg2d;  
+    DG2d &dg2d;
 
   private:
     // num "integration points", 3 vertices of a triangle
-    static const int num_pts = 3; 
+    static const int num_pts = 3;
 
     // number_of_base_polys for linear polynomials
-    static const int num_lin_polys = 3; 
-  
+    static const int num_lin_polys = 3;
+
     double *op, *u, *m, *M;
   };
 
 
-  
+
 } // namespace pardg
 
 #endif

@@ -6,7 +6,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     // DefaultLocalRestrictProlong
@@ -45,12 +45,12 @@ namespace Dune
         weight_ = weight;
       }
 
-      //! restrict data to father 
+      //! restrict data to father
       template< class LFFather, class LFSon, class LocalGeometry >
-      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon, 
+      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon,
                            const LocalGeometry &geometryInFather, bool initialize ) const
       {
-        const DomainFieldType weight = (weight_ < DomainFieldType( 0 ) ? calcWeight( lfFather.entity(), lfSon.entity() ) : weight_); 
+        const DomainFieldType weight = (weight_ < DomainFieldType( 0 ) ? calcWeight( lfFather.entity(), lfSon.entity() ) : weight_);
 
         assert( weight > 0.0 );
         //assert( std::abs( geometryInFather.volume() - weight ) < 1e-8 );
@@ -62,14 +62,14 @@ namespace Dune
           for( int i = 0; i < numDofs; ++i )
             lfFather[ i ] = weight * lfSon[ i ];
         }
-        else 
+        else
         {
           for( int i = 0; i < numDofs; ++i )
             lfFather[ i ] += weight * lfSon[ i ];
         }
       }
 
-      //! prolong data to children 
+      //! prolong data to children
       template< class LFFather, class LFSon, class LocalGeometry >
       void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,
                           const LocalGeometry &geometryInFather, bool initialize ) const
@@ -78,7 +78,7 @@ namespace Dune
         assert( lfFather.numDofs() == lfSon.numDofs() );
         for( int i = 0; i < numDofs; ++i )
           lfSon[ i ] = lfFather[ i ];
-      } 
+      }
 
       //! do discrete functions need a communication after restriction / prolongation?
       bool needCommunication () const { return true; }
@@ -117,13 +117,13 @@ namespace Dune
        */
       void setFatherChildWeight ( const DomainFieldType &weight ) {}
 
-      //! restrict data to father 
+      //! restrict data to father
       template< class LFFather, class LFSon, class LocalGeometry >
-      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon, 
+      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon,
                            const LocalGeometry &geometryInFather, bool initialize ) const
       {}
 
-      //! prolong data to children 
+      //! prolong data to children
       template< class LFFather, class LFSon, class LocalGeometry >
       void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,
                           const LocalGeometry &geometryInFather, bool initialize ) const
@@ -133,7 +133,7 @@ namespace Dune
       bool needCommunication () const { return false; }
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

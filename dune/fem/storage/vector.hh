@@ -18,7 +18,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     template< class VT >
@@ -57,7 +57,7 @@ namespace Dune
 
       //! type of constant iterator
       typedef typename Traits::ConstIteratorType ConstIteratorType;
-      
+
       //! type of iterator
       typedef typename Traits::IteratorType IteratorType;
 
@@ -65,7 +65,7 @@ namespace Dune
       //! Assign another vector to this one
       template< class T >
       VectorType& operator= ( const VectorInterface< T > &v );
-      
+
       //! Assign another vector to this one
       VectorType& operator= ( const ThisType &v );
 
@@ -88,12 +88,12 @@ namespace Dune
 
       //! Multiply this vector by a scalar
       VectorType &operator*= ( const FieldType s );
-              
+
       //! Add a multiple of another vector to this one
       template< class T >
       VectorType &addScaled ( const FieldType s,
                               const VectorInterface< T > &v );
-      
+
       /** \brief copy another vector to this one
        *
        *  Copies the data from another vector to this one. Both vectors must be of
@@ -121,7 +121,7 @@ namespace Dune
 
       //! obtain end iterator
       IteratorType end ();
-      
+
       //! Returns the vector's size
       unsigned int size () const;
 
@@ -196,7 +196,7 @@ namespace Dune
           (*this)[ i ] += v[ i ];
         return asImp();
       }
-     
+
       //! Subtract another vector from this one
       template< class T >
       VectorType &operator-= ( const VectorInterface< T > &v )
@@ -216,7 +216,7 @@ namespace Dune
           (*this)[ i ] *= s;
         return asImp();
       }
-      
+
       //! Add a multiple of another vector to this one
       template< class T >
       VectorType &addScaled ( const FieldType s, const VectorInterface< T > &v )
@@ -237,7 +237,7 @@ namespace Dune
         for( unsigned int i = 0; i < size; ++i )
           asImp()[ i ] = v[ i ];
       }
-      
+
       //! Initialize all fields of this vector with a scalar
       void assign ( const FieldType s )
       {
@@ -330,11 +330,11 @@ namespace Dune
       {
         assign( v );
       }
-      
+
       FieldVectorAdapter ( const ThisType &other )
       : fieldVector_( other.fieldVector_ )
       {}
-   
+
     public:
       operator const FieldVectorType & () const
       {
@@ -363,7 +363,7 @@ namespace Dune
       {
         return assign( s );
       }
-      
+
       const FieldType &operator[] ( unsigned int index ) const
       {
         return fieldVector_[ index ];
@@ -409,7 +409,7 @@ namespace Dune
         fieldVector_.axpy( s, other.fieldVector_ );
         return *this;
       }
-      
+
       void assign ( const ThisType &other )
       {
         fieldVector_ = other.fieldVector_;
@@ -532,7 +532,7 @@ namespace Dune
 
     /** \class DynamicVector
      *  \brief A vector using a DynamicArray as storage
-     * 
+     *
      *  An implementation of VectorInterface using a DynamicArray to provide the
      *  fields.
      */
@@ -550,7 +550,7 @@ namespace Dune
       typedef Field FieldType;
 
       using BaseType :: assign;
-      
+
     protected:
       DynamicArray< FieldType, ArrayAllocator > fields_;
 
@@ -609,12 +609,12 @@ namespace Dune
       {
         return fields_[ index ];
       }
-      
+
       inline FieldType &operator[] ( unsigned int index )
       {
         return fields_[ index ];
       }
-      
+
       /** \copydoc Dune::Fem::VectorInterface::assign(const VectorInterface<T> &v) */
       template< class T >
       inline void assign ( const VectorInterface< T > &v )
@@ -631,7 +631,7 @@ namespace Dune
       {
         return fields_.leakPointer();
       }
-      
+
       inline void reserve ( unsigned int newSize )
       {
         fields_.reserve( newSize );
@@ -695,7 +695,7 @@ namespace Dune
       {
         assign( v );
       }
-      
+
       //! Copy constructor setting up a vector with the data of another one
       inline StaticVector ( const ThisType &v )
       {
@@ -742,7 +742,7 @@ namespace Dune
       }
     };
 
-    
+
     template< class Vector1Type, class Vector2Type >
     class CombinedVector
     : public VectorDefault< typename ExtractCommonFieldType< Vector1Type, Vector2Type >::FieldType,
@@ -756,13 +756,13 @@ namespace Dune
 
     public:
       typedef typename ExtractCommonFieldType< Vector1Type, Vector2Type >::FieldType FieldType;
-      
+
     public:
       CombinedVector( Vector1Type &v1, Vector2Type &v2 )
       : vector1_( v1 ),
         vector2_( v2 )
       {}
-        
+
       const FieldType &operator[] ( unsigned int index ) const
       {
         const int index2 = index - vector1_.size();
@@ -803,12 +803,12 @@ namespace Dune
       struct HasLeakPointer< DynamicVector< Field, ArrayAllocator > >
       : public MetaBool< true >
       {};
-      
-    }
-  
-  } // namespace Fem 
 
-} // namespace Dune 
+    }
+
+  } // namespace Fem
+
+} // namespace Dune
 
 #include "vector_inline.hh"
 

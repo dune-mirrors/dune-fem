@@ -218,11 +218,11 @@ try
 
   // create grid part
   GridPartType gridPart( grid );
-  
+
   // discrete function spaces
   DGDiscreteFunctionSpaceType dgSpace( gridPart );
   FVDiscreteFunctionSpaceType fvSpace( gridPart );
- 
+
   // create grid function
   typedef Dune::Fem::ExactSolution< FunctionSpaceType > FunctionType;
   FunctionType function;
@@ -251,7 +251,7 @@ try
 
   // compute error
   Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
-  double error = l2norm.distance( u, w ); 
+  double error = l2norm.distance( u, w );
   std::cout << "Error ||u - w||_L2 = " << error << std::endl;
 
   return 0;

@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_SOLVER_RUNGEKUTTA_BASICIMPLICIT_HH
 #define DUNE_FEM_SOLVER_RUNGEKUTTA_BASICIMPLICIT_HH
 
-//- system includes 
+//- system includes
 #include <cassert>
 #include <limits>
 #include <sstream>
@@ -15,7 +15,7 @@
 //- dune-fem includes
 #include <dune/fem/solver/odesolver.hh>
 
-namespace DuneODE 
+namespace DuneODE
 {
 
   // NoImplicitRungeKuttaSourceTerm
@@ -66,7 +66,7 @@ namespace DuneODE
 
     typedef Dune::Fem::TimeProviderBase TimeProviderType;
 
-    /** \brief constructor 
+    /** \brief constructor
      *
      *  \param[in]  helmholtzOp      Helmholtz operator \f$L\f$
      *  \param[in]  butcherTable     butcher table to use
@@ -132,7 +132,7 @@ namespace DuneODE
         delete update_[ i ];
     }
 
-    //! apply operator once to get dt estimate 
+    //! apply operator once to get dt estimate
     void initialize ( const DestinationType &U0 )
     {
       const double time = timeStepControl_.time();
@@ -150,7 +150,7 @@ namespace DuneODE
 
     using BaseType::solve;
 
-    //! solve the system 
+    //! solve the system
     void solve ( DestinationType &U, MonitorType &monitor )
     {
       monitor.reset();
@@ -161,7 +161,7 @@ namespace DuneODE
 
       for( int s = 0; s < stages(); ++s )
       {
-        // update for stage s 
+        // update for stage s
         DestinationType& updateStage = *update_[ s ];
 
         // assemble rhs of nonlinear equation
@@ -173,7 +173,7 @@ namespace DuneODE
         const double stageTime = time + c_[ s ]*timeStepSize;
         if( sourceTerm_( time, timeStepSize, s, U, update_, rhs_ ) )
         {
-          updateStage.axpy( alpha_[ s ][ s ]*timeStepSize, rhs_ ); 
+          updateStage.axpy( alpha_[ s ][ s ]*timeStepSize, rhs_ );
           sourceTerm_.limit( updateStage, stageTime );
         }
 
@@ -185,7 +185,7 @@ namespace DuneODE
         // solve the system
         helmholtzOp_.setLambda( alpha_[ s ][ s ]*timeStepSize );
         nonlinearSolver_( rhs_, updateStage );
-      
+
         // update monitor
         monitor.newtonIterations_       += nonlinearSolver_.iterations();
         monitor.linearSolverIterations_ += nonlinearSolver_.linearIterations();

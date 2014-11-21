@@ -20,7 +20,7 @@ namespace Dune
 
     // GeoEntityPointerTraits
     // ----------------------
-    
+
     template< int codim, class GridFamily >
     struct GeoEntityPointerTraits
     {
@@ -57,7 +57,7 @@ namespace Dune
     public:
       static const int dimension = Traits::dimension;
       static const int codimension = Traits::codimension;
-   
+
       typedef typename Traits::Entity Entity;
 
       typedef GeoEntityPointer< typename Traits::BaseTraits > EntityPointerImp;
@@ -114,7 +114,7 @@ namespace Dune
         if( entity_.impl() )
          entity_.impl().setHostEntity( *hostIterator() );
       }
-      
+
       // warning: copying the entity copies the wrong pointer to the host entity!
       ThisType &operator= ( const ThisType &other )
       {
@@ -135,14 +135,14 @@ namespace Dune
       {
         return (hostIterator() == other.hostIterator());
       }
-      
+
       Entity &dereference () const
       {
         if( !entity_.impl() )
           entity_.impl().setHostEntity( *hostIterator() );
         return entity_;
       }
-      
+
       int level () const
       {
         return hostIterator().level();

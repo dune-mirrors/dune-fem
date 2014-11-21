@@ -149,7 +149,7 @@ namespace Dune
       static Timer &instance ()
       {
         static Timer instance_;
-        // don't use this class in multi thread environment 
+        // don't use this class in multi thread environment
         assert( ThreadManager :: singleThreadMode() );
         return instance_;
       }
@@ -161,7 +161,7 @@ namespace Dune
       //! retrieve a timer from the stack
       static double stop () { return instance().pop_time(); }
 
-      //! add a new timer with description 
+      //! add a new timer with description
       //! @param name description for output
       //! @param nr   number of subtimers to store
       //! @return     id used to identify this timer in all following calls
@@ -173,7 +173,7 @@ namespace Dune
       //! remove a timer with given id
       static void removeFrom ( unsigned int id ) { instance().remove( id ); }
 
-      //! remove all timers 
+      //! remove all timers
       static void removeAll () { instance().remove(); }
 
       //! start a given timer (or subtimer)
@@ -228,7 +228,7 @@ namespace Dune
       }
 
       //! print the values of all timers to a file
-      //! if the file is open a new line is appended 
+      //! if the file is open a new line is appended
       //! information taken from a time provider is also added to the file
       //! @param tp the time provider
       //! @param fileName name of the file
@@ -240,9 +240,9 @@ namespace Dune
       }
 
     private:
-      static std::string rankName( const std::string &fileName, const int rank ) 
+      static std::string rankName( const std::string &fileName, const int rank )
       {
-        std::stringstream newfilename; 
+        std::stringstream newfilename;
         newfilename << fileName << "." << rank ;
         return newfilename.str();
       }
@@ -255,9 +255,9 @@ namespace Dune
       bool changed_;
     };
 
-    // this method is defined inline 
-    // because is uses MPI stuff which 
-    // does not work when compiled into the lib 
+    // this method is defined inline
+    // because is uses MPI stuff which
+    // does not work when compiled into the lib
     inline Timer< true >::~Timer ()
     {
       double totalTime = pop_time();
@@ -290,19 +290,19 @@ namespace Dune
                   << ", minimum = " << minTime << ", maximum = " << maxTime
                   << "   ******** " << std::endl;
       }
-      else 
+      else
         comm.gather( &totalTime, (double *)0, 1, 0 );
     }
 
-  } // namespace Fem 
+  } // namespace Fem
 
 
 
    /** \class   FemTimer
        \ingroup HelperClasses
-       \brief   class with singleton instance managing 
+       \brief   class with singleton instance managing
                 timming for parts of program.
-     
+
        The simplest way of timing one line of
        code is to enclose it with the
        \c TIMEDEXECUTION
@@ -317,36 +317,36 @@ namespace Dune
          double error = calcError(u,uh);
        )
        \endcode
-     
-       A more general usage is through the 
+
+       A more general usage is through the
        FemTimer class.
        The singleton instance can either be accessed
        through FemTimer::instance or through the
        reference femTimer.
        Note that the following usage is only
-       available if \c FEMTIMER is defined 
+       available if \c FEMTIMER is defined
        otherwise all methods of the class
        FemTimer with the exception of \c start
        and \c stop used for the \c TIMEDEXECUTION
        macro are empty.
-       
+
        For computing the execution time of any part
        of a code, first get a unique id from the
-       FemTimer by calling 
+       FemTimer by calling
        \code
        id = femTimer.addTo(name,subMarkers);
        \endcode
        where \c name is a string used for output
        and subMarkers is an integer value greaten
-       or equal to one, which can be used to 
+       or equal to one, which can be used to
        time parts of the program. This can for example
        be done in the constructor of an operator.
        Remember to return the id to the FemTimer
-       by calling 
+       by calling
        \code
        femTimer.removeFrom(id);
        \endcode
-     
+
        To start and stop the time keeping for a given program
        write
        \code
@@ -357,7 +357,7 @@ namespace Dune
        Execution time is summed up over all calls
        to start and stop. It is possible to pass an operation
        argument which changes this behavior; \c sum and \c max are
-       implemented Using 
+       implemented Using
        \code
        femTimer.reset(id);
        \endcode
@@ -365,7 +365,7 @@ namespace Dune
        are set back to zero. Calling \c reset
        without an argument resets all stored
        timers.
-     
+
        The use of sub timers works as shown in
        the following example:
        \code
@@ -383,13 +383,13 @@ namespace Dune
        ...
        femTimer.end(id);
        \endcode
-       Using \c femTimer.print(out,"test"); 
+       Using \c femTimer.print(out,"test");
        the result of all timings is printed to
        an \c ostream. Subtimings are given
        relative to the main timing, i.e.,
        first the main time is printed and following
        that the relative time used for each subpart
-       of the algorithm. 
+       of the algorithm.
        In the same manner the timing information
        can be stored in a file using
        \c printFile(filename).

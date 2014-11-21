@@ -1,5 +1,5 @@
 #ifdef HAVE_CONFIG_H
-# include "config.h"     
+# include "config.h"
 #endif
 #include <iostream>
 #include <fstream>
@@ -34,15 +34,15 @@ int main(int argc, char** argv)
     std::string userId, date;
     Parameter::get("user", userId );
     Parameter::get("date", date );
-    
+
     // get Project discription
     std::string project;
-    Parameter::get( "project", project ); 
+    Parameter::get( "project", project );
 
-    // get the parameter for the diffusion 
+    // get the parameter for the diffusion
     double diffusion = Parameter::getValue<double>("diffusion", 1.0 );
-    
-    
+
+
     // get the macro grid filename, using the NoWhiteSpaceValidator, so that no white
     // space is in the filename
     std::string macrogridname;
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
     std::cout<<"Multiplication between: " << factor1 << " and " <<
                 factor2 <<"\ncalculated with a shell script is: "
                 << multi << std::endl;
-   
+
     // finallay write the parameter log
     Parameter::write("parameter.log");
 

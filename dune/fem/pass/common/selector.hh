@@ -56,22 +56,22 @@ namespace Dune
 
   namespace Fem
   {
-    
+
     // Selector
     // --------
 
     /**
-     * \brief A helper class that creates a selector tuple from 
+     * \brief A helper class that creates a selector tuple from
      *        given pass ids.
      */
     template< int N1 = -1,
-              int N2 = -1, 
-              int N3 = -1, 
-              int N4 = -1, 
-              int N5 = -1, 
-              int N6 = -1, 
-              int N7 = -1, 
-              int N8 = -1, 
+              int N2 = -1,
+              int N3 = -1,
+              int N4 = -1,
+              int N5 = -1,
+              int N6 = -1,
+              int N7 = -1,
+              int N8 = -1,
               int N9 = -1
             >
     struct Selector
@@ -93,7 +93,7 @@ namespace Dune
       // Selector is a mere traits class, forbid construction
       Selector();
     };
- 
+
   } // namespace Fem
 
 } // namespace Dune

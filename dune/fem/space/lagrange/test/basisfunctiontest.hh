@@ -7,7 +7,7 @@
 
 #include <dune/fem/misc/test.hh>
 
-namespace Dune 
+namespace Dune
 {
 
   namespace Fem
@@ -26,7 +26,7 @@ namespace Dune
   private:
     template <class SpaceType>
     void checkLagrangeBasis(const SpaceType&);
-    
+
     std::string gridFile_;
   };
 

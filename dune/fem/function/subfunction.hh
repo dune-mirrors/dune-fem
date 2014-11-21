@@ -7,36 +7,36 @@
 #include <dune/fem/storage/subarray.hh>
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     //! @ingroup SubDFunction
-    //! A class for extracting sub functions from a 
+    //! A class for extracting sub functions from a
     //! discrete function containing pointbased combined data.
-    template <class DiscreteFunctionImp>   
+    template <class DiscreteFunctionImp>
     class SubFunctionStorage
     {
       SubFunctionStorage( const SubFunctionStorage& );
-    protected:  
+    protected:
       typedef DiscreteFunctionImp DiscreteFunctionType;
       typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType  SpaceType;
       enum { dimRange = SpaceType :: dimRange };
       typedef typename DiscreteFunctionType :: DofStorageType            DofStorageType;
-    public:  
-      typedef typename SpaceType :: template ToNewDimRange < 1 > :: Type  SubSpaceType;  
+    public:
+      typedef typename SpaceType :: template ToNewDimRange < 1 > :: Type  SubSpaceType;
 
       typedef CombinedSubMapper< typename SubSpaceType :: MapperType , dimRange, PointBased >  SubMapperType;
       typedef Fem :: SubVector< DofStorageType, SubMapperType >                  SubDofVectorType;
       typedef VectorDiscreteFunction< SubSpaceType, SubDofVectorType >    SubDiscreteFunctionType;
 
-      //! constructor storing the discrete function 
+      //! constructor storing the discrete function
       explicit SubFunctionStorage( DiscreteFunctionType& discreteFunction ) :
         discreteFunction_( discreteFunction ),
         space_( discreteFunction.space() ),
-        subSpace_( space_.gridPart (), 
+        subSpace_( space_.gridPart (),
                          space_.communicationInterface(),
                          space_.communicationDirection() ),
         subMapper_( dimRange, (SubMapperType *) 0 ),
@@ -44,8 +44,8 @@ namespace Dune
         subDiscreteFunction_( dimRange, (SubDiscreteFunctionType *) 0 )
       {}
 
-      //! destructor 
-      ~SubFunctionStorage() 
+      //! destructor
+      ~SubFunctionStorage()
       {
         for(int i=0; i<dimRange; ++i)
         {
@@ -55,10 +55,10 @@ namespace Dune
         }
       }
 
-      /** \brief return a SubDiscreteFunction repsenting only one 
+      /** \brief return a SubDiscreteFunction repsenting only one
           component of the original discrete function
-          \param component the component to be extracted 
-          
+          \param component the component to be extracted
+
           \return reference to SubDiscreteFunction for given component
       */
       SubDiscreteFunctionType& subFunction(const size_t component) const
@@ -67,9 +67,9 @@ namespace Dune
         if( ! subDiscreteFunction_[ component ] )
         {
           subMapper_[ component ] = new SubMapperType( subSpace_.mapper(), component );
-          subVector_[ component ] = new SubDofVectorType( discreteFunction_.dofStorage(), 
+          subVector_[ component ] = new SubDofVectorType( discreteFunction_.dofStorage(),
                                                           *subMapper_[component] );
-          subDiscreteFunction_[ component ] = 
+          subDiscreteFunction_[ component ] =
             new SubDiscreteFunctionType( std::string(discreteFunction_.name()+ "_sub"),
                                          subSpace_, *( subVector_[ component ] ));
         }
@@ -85,7 +85,7 @@ namespace Dune
       mutable std::vector< SubDiscreteFunctionType* > subDiscreteFunction_;
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

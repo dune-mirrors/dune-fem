@@ -8,9 +8,9 @@ using namespace pardg;
 
 
 
-CG::CG(Communicator &comm) : 
-  IterativeLinearSolver(comm), DynamicalObject("CG", comm.id()), 
-  r(NULL), d(NULL), h(NULL) 
+CG::CG(Communicator &comm) :
+  IterativeLinearSolver(comm), DynamicalObject("CG", comm.id()),
+  r(NULL), d(NULL), h(NULL)
 {}
 
 
@@ -28,7 +28,7 @@ void CG::resize(int new_size, int component)
   d = r + new_size;
   h = r + 2*new_size;
 }
- 
+
 
 
 
@@ -41,7 +41,7 @@ bool CG::solve(Function &op, double *x, const double *b)
   if (relative_tolerance){
     double global_dot;
     double local_dot = cblas_ddot(dim, b, 1, b, 1);
-    comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);      
+    comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
     _tolerance *= sqrt(global_dot);
   }
 
@@ -56,7 +56,7 @@ bool CG::solve(Function &op, double *x, const double *b)
     double global_dot;
     comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
     double nu = global_dot;
-   
+
     // iterate
     while (true){
       op(d, h);
@@ -70,13 +70,13 @@ bool CG::solve(Function &op, double *x, const double *b)
       iterations++;
       local_dot = cblas_ddot(dim, r, 1, r, 1);
       comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
-      if (sqrt(global_dot) < _tolerance 
+      if (sqrt(global_dot) < _tolerance
 	  || iterations >= max_num_of_iterations) break;
- 
+
       double beta = 1.0/nu;
       local_dot = cblas_ddot(dim, r, 1, h, 1);
       comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
-      nu = global_dot; 
+      nu = global_dot;
       beta *= nu;
       daxpby(dim, -1.0, h, 1, beta, d, 1);
     }
@@ -108,14 +108,14 @@ bool CG::solve(Function &op, double *x, const double *b)
       nu = global_dot;
       beta *= nu;
       daxpby(dim, -1.0, r, 1, beta, d, 1);
- 
+
       iterations++;
       // std::cout << iterations << " " << sqrt(nu) << std::endl;
-      if (sqrt(nu) < _tolerance || iterations >= max_num_of_iterations) break; 
+      if (sqrt(nu) < _tolerance || iterations >= max_num_of_iterations) break;
     }
   }
-    
- 
+
+
   // output
   if (IterativeSolver::os){
     *IterativeSolver::os << "CG "<< comm.id() << ": number of iterations: "
@@ -125,7 +125,7 @@ bool CG::solve(Function &op, double *x, const double *b)
 
   // update the global number of iterations from IterativeSolver
   num_of_iterations += iterations;
-  
+
   return (iterations < max_num_of_iterations)? true: false;
 }
 

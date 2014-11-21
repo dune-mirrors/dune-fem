@@ -46,7 +46,7 @@ namespace Dune
         // free the entire object stack
         obstack_free( &info_, 0 );
       }
-      
+
       inline void *allocate ( unsigned int size )
       {
         return obstack_alloc( &info_, size );
@@ -116,7 +116,7 @@ namespace Dune
         else
           array = 0;
       }
-    
+
       inline void free ( ElementPtrType &array ) const
       {
         if( array != 0 )
@@ -135,7 +135,7 @@ namespace Dune
     };
 
   } // namespace Fem
-   
+
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_OBJECTSTACK_HH

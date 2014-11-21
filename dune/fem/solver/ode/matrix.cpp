@@ -25,7 +25,7 @@ namespace pardg {
     _data_inv += n;
   }
 
-  cblas_dcopy(n*n, data_inv, 1, data, 1);   
+  cblas_dcopy(n*n, data_inv, 1, data, 1);
   delete[] data_inv;
   return *this;
 }
@@ -39,7 +39,7 @@ namespace pardg {
     for(int j=0; j<i; j++){
       double tmp = data[i*n + j];
       data[i*n + j] = data[j*n + i];
-      data[j*n + i] = tmp;      
+      data[j*n + i] = tmp;
     }
   }
   return *this;
@@ -84,7 +84,7 @@ namespace pardg {
       C(i,j) = sum;
     }
   }
-    
+
   return C;
 }
 

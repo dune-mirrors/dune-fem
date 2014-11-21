@@ -30,7 +30,7 @@ namespace Dune
       template< class HostGridPartImp, class FilterImp, bool useFilteredIndexSet >
       struct hasGrid< FilteredGridPart< HostGridPartImp, FilterImp, useFilteredIndexSet > >
       {
-        static const bool v = hasGrid< HostGridPartImp >::v; 
+        static const bool v = hasGrid< HostGridPartImp >::v;
       };
 
 
@@ -52,7 +52,7 @@ namespace Dune
       template< class HostGridPartImp, class FilterImp, bool useFilteredIndexSet, int codim >
       struct hasEntity< FilteredGridPart< HostGridPartImp, FilterImp, useFilteredIndexSet >, codim >
       {
-        static const bool v = hasEntity< HostGridPartImp, codim >::v; 
+        static const bool v = hasEntity< HostGridPartImp, codim >::v;
       };
 
 

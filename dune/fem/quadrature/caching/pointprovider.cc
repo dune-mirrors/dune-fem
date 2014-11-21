@@ -8,10 +8,10 @@
 #include <dune/fem/quadrature/caching/registry.hh>
 #include <dune/fem/misc/threadmanager.hh>
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     template <class ct, int dim>
@@ -23,10 +23,10 @@ namespace Dune
     registerQuadrature(const QuadratureType& quad)
     {
       QuadratureKeyType key( quad.geometryType(), quad.id() );
-      
-      if (points_.find( key ) == points_.end() ) 
+
+      if (points_.find( key ) == points_.end() )
       {
-        // only register when in single thread mode 
+        // only register when in single thread mode
         assert( Fem :: ThreadManager :: singleThreadMode() );
 
         PointIteratorType it =
@@ -34,7 +34,7 @@ namespace Dune
                          (key,
                           GlobalPointVectorType(quad.nop()))
                          ).first;
-        for (size_t i = 0; i < quad.nop(); ++i) 
+        for (size_t i = 0; i < quad.nop(); ++i)
           it->second[i] = quad.point(i);
 
         // register quadrature to existing storages
@@ -44,7 +44,7 @@ namespace Dune
 
     template <class ct, int dim>
     const typename PointProvider<ct, dim, 0>::GlobalPointVectorType&
-    PointProvider<ct, dim, 0>::getPoints(const size_t id, const GeometryType& elementGeo) 
+    PointProvider<ct, dim, 0>::getPoints(const size_t id, const GeometryType& elementGeo)
     {
       QuadratureKeyType key( elementGeo, id );
 
@@ -73,10 +73,10 @@ namespace Dune
     template <class ct, int dim>
     const typename PointProvider<ct, dim, 1>::MapperVectorType&
     PointProvider<ct, dim, 1>::getMappers(const QuadratureType& quad,
-                                          const GeometryType& elementGeo) 
+                                          const GeometryType& elementGeo)
     {
       QuadratureKeyType key( elementGeo , quad.id() );
-      
+
       MapperIteratorType it = mappers_.find( key );
       if (it == mappers_.end()) {
         std::vector<LocalPointType> pts(quad.nop());
@@ -96,7 +96,7 @@ namespace Dune
                                           const GeometryType& elementGeo)
     {
       QuadratureKeyType key( elementGeo, quad.id() );
-      
+
       MapperIteratorType it = mappers_.find( key );
       if (it == mappers_.end()) {
         it = addEntry(quad, pts, elementGeo);
@@ -110,7 +110,7 @@ namespace Dune
     PointProvider<ct, dim, 1>::getPoints(const size_t id, const GeometryType& elementGeo)
     {
       QuadratureKeyType key( elementGeo, id );
-      
+
       assert(points_.find(key) != points_.end());
       return points_.find(key)->second;
     }
@@ -121,38 +121,38 @@ namespace Dune
                                         const LocalPointVectorType& points,
                                         GeometryType elementGeo)
     {
-      // amke sure we are in single thread mode 
+      // amke sure we are in single thread mode
       assert( Fem :: ThreadManager::singleThreadMode() );
 
-      // generate key 
+      // generate key
       QuadratureKeyType key ( elementGeo, quad.id() );
-        
 
-      const Dune::ReferenceElement<ct, dim>& refElem = 
+
+      const Dune::ReferenceElement<ct, dim>& refElem =
         Dune::ReferenceElements<ct, dim>::general(elementGeo);
 
       const int numLocalPoints = points.size();
       const int numFaces = refElem.size(codim);
       const int numGlobalPoints = numFaces*numLocalPoints;
-      
-      PointIteratorType pit = 
-        points_.insert(std::make_pair(key, 
+
+      PointIteratorType pit =
+        points_.insert(std::make_pair(key,
                                       GlobalPointVectorType(numGlobalPoints))).first;
       MapperIteratorType mit =
         mappers_.insert(std::make_pair(key,
                                        MapperVectorType(numFaces))).first;
       int globalNum = 0;
-      for (int face = 0; face < numFaces; ++face) 
+      for (int face = 0; face < numFaces; ++face)
       {
         // Assumption: all faces have the same type
         // (not true for pyramids and prisms)
         MapperType pMap(numLocalPoints);
-          
+
         for (int pt = 0; pt < numLocalPoints; ++pt, ++globalNum) {
           // Store point on reference element
-          pit->second[globalNum] = 
+          pit->second[globalNum] =
             refElem.template geometry<codim>(face).global( points[pt] );
-          
+
           // Store point mapping
           pMap[pt] = globalNum;
         }
@@ -161,7 +161,7 @@ namespace Dune
 
       // register quadrature to existing storages
       QuadratureStorageRegistry::registerQuadrature( quad, elementGeo, 1 );
-      
+
       return mit;
     }
 

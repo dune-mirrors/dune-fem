@@ -13,7 +13,7 @@ namespace Dune
   {
 
   class ReferenceElement_Test
-  : public Test 
+  : public Test
   {
     GeometryType cube3_;
     GeometryType cube2_;

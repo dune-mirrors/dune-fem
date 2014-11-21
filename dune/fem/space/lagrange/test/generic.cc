@@ -76,7 +76,7 @@ int main( int argc, char **argv )
     x -= pointSet.point( i );
     if( x.two_norm() >= 1e-14 )
       ++pointSetErrors;
-    
+
     unsigned int codim, setCodim;
     unsigned int subEntity, setSubEntity;
     unsigned int dofNumber, setDofNumber;
@@ -85,11 +85,11 @@ int main( int argc, char **argv )
     if( (setCodim != codim) || (setSubEntity != subEntity)
         || (setDofNumber != dofNumber) )
       ++pointSetErrors;
-    
+
     unsigned int numDofs = point.numDofs( codim, subEntity );
     if( numDofs != pointSet.numDofs( codim, subEntity ) )
       ++pointSetErrors;
-    
+
     unsigned int entityDofNumber
       = point.entityDofNumber( codim, subEntity, dofNumber );
     if( entityDofNumber != pointSet.entityDofNumber( codim, subEntity, dofNumber ) )
@@ -111,9 +111,9 @@ int main( int argc, char **argv )
   std :: cout << "DoFs with dofNumber >= numDofs: " << errors << std :: endl;
   std :: cout << "DoFs entityDofNumber( dofSubEntity ) != i: " << indexErrors
               << std :: endl;
-  std :: cout << "Errors in point set: " << pointSetErrors << std :: endl; 
+  std :: cout << "Errors in point set: " << pointSetErrors << std :: endl;
   std :: cout << std :: endl;
-  
+
   errors = 0;
   for( unsigned int j = 0; j < numShapeFunctions; ++j )
   {
@@ -132,7 +132,7 @@ int main( int argc, char **argv )
       RangeType phi;
       FieldVector< int, 0 > derivative;
       shapeFunction->evaluate( x, phi );
-      
+
       double expected = ((i == j) ? 1.0 : 0.0);
       if( fabs( phi[ 0 ] - expected ) > 1e-8 )
         ++errors;
@@ -150,9 +150,9 @@ int main( int argc, char **argv )
     #endif
   }
   std :: cout << "Shape function evaluation errors: " << errors << std :: endl;
-  
+
   errors = 0;
-  for( unsigned int i = 0; i < numShapeFunctions; ++i ) 
+  for( unsigned int i = 0; i < numShapeFunctions; ++i )
   {
     LagrangePointType point( i );
 
@@ -188,6 +188,6 @@ int main( int argc, char **argv )
     #endif
   }
   std :: cout << "Shape function derivtive summation errors: " << errors << std :: endl;
-  
+
   return 0;
 }

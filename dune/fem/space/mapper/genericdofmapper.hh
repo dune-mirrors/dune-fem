@@ -80,12 +80,12 @@ namespace Dune
       {
         typedef typename std::vector< SubEntityInfo >::const_iterator Iterator;
 
-        Iterator begin() const 
+        Iterator begin() const
         {
           return subEntityInfo.begin();
         }
 
-        Iterator end() const 
+        Iterator end() const
         {
           return subEntityInfo.end();
         }
@@ -315,7 +315,7 @@ namespace Dune
     const typename GenericDofMapper< GridPart, LocalCoefficientsMap >::MapInfo &
     GenericDofMapper< GridPart, LocalCoefficientsMap >::mapInfo ( const EntityType &entity ) const
     {
-      const unsigned int topologyId = entity.type().id(); 
+      const unsigned int topologyId = entity.type().id();
       const unsigned int i = localCoefficientsMap_( entity );
       assert( i <= mapInfo_[ topologyId ].size() );
       return mapInfo_[ topologyId ][ i ];
@@ -588,7 +588,7 @@ namespace Dune
 
     // GenericDofMapIterator
     // ---------------------
-    
+
     template< class GridPart, class LocalCoefficientsMap >
     class GenericDofMapIterator
     {

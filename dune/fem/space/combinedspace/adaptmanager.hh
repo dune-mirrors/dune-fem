@@ -2,7 +2,7 @@
 #define DUNE_FEM_COMBINEDADAPTMANAGER_HH
 
 #include <dune/common/exceptions.hh>
-//- local includes  
+//- local includes
 #include <dune/fem/common/subvector.hh>
 #include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
@@ -154,6 +154,6 @@ namespace Dune
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif //  #ifndef DUNE_FEM_COMBINEDADAPTMANAGER_HH

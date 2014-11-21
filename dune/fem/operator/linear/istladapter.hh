@@ -6,7 +6,7 @@
 #include <dune/istl/operators.hh>
 
 namespace Dune
-{ 
+{
 
   namespace Fem
   {
@@ -67,7 +67,7 @@ namespace Dune
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #if HAVE_DUNE_ISTL
 

@@ -24,7 +24,7 @@ using namespace std;
 // Data structure for our unknown: fieldvector of
 // dimension N (N = number of ODEs) with some additional methods.
 // In scalar case (N=1) we have nothing more
-// than a simple, tuned up double. 
+// than a simple, tuned up double.
 template <int N>
 class myDest : public FieldVector<double, N> {
   typedef myDest< N > ThisType;
@@ -41,22 +41,22 @@ public:
 
   myDest(string, const SpaceDummy&, const double* u = 0) {
   }
-  
+
   myDest() {
   }
-  
+
   void clear() {
     BaseType::operator=(0.);
   }
-  
+
   void assign(const myDest& other) {
     BaseType::operator=(other);
   }
-  
+
   void axpy(RangeFieldType l, const myDest& other) {
     BaseType::axpy(l, other);
   }
-  
+
   double operator()(int i) const {
     if (i<0 || i>this->size-1) {
       std::cout << "ERROR: Accessing element " << i << std::endl;
@@ -81,7 +81,7 @@ class myRHS : public SpaceOperatorInterface<myDest<3> > {
 public:
   myRHS() {
   }
-  
+
   const SpaceType& space() const {
     return space_;
   }
@@ -103,7 +103,7 @@ private:
 };
 
 
-int main( int argc, char **argv ) 
+int main( int argc, char **argv )
 {
   MPIManager::initialize( argc, argv );
   // problem data

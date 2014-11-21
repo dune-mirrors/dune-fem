@@ -16,36 +16,36 @@ enum CBLAS_TRANSPOSE {CblasNoTrans=111, CblasTrans=112, CblasConjTrans=113};
 
 // BLAS level 1 functions
 void cblas_drotg(double *a, double *b, double *c, double *s);
-void cblas_drot(const int dim, double *x, const int incx, 
+void cblas_drot(const int dim, double *x, const int incx,
 		double *y, const int incy, const double c, const double s);
-void cblas_dswap(const int dim, double *x, const int incx, 
+void cblas_dswap(const int dim, double *x, const int incx,
 		 double *y, const int incy);
-void cblas_dcopy(const int dim, const double *x, const int incx, 
+void cblas_dcopy(const int dim, const double *x, const int incx,
 		 double *y, const int incy);
 void cblas_dscal(const int dim, const double alpha, double *x, const int incx);
-void cblas_daxpy(const int dim, const double alpha, 
+void cblas_daxpy(const int dim, const double alpha,
 		 const double *x, const int incx, double *y, const int incy);
-double cblas_ddot(const int dim, const double *x, const int incx, 
+double cblas_ddot(const int dim, const double *x, const int incx,
 		  const double *y, const int incy);
 double cblas_dnrm2(const int dim, const double *x, const int incx);
 int cblas_idamax(const int dim, const double *x, const int incx);
 
 
 // BLAS level 2 functions
-void cblas_dgemv(const enum CBLAS_ORDER order, 
+void cblas_dgemv(const enum CBLAS_ORDER order,
 		 const enum CBLAS_TRANSPOSE trans,
-		 const int m, const int n, 
+		 const int m, const int n,
 		 const double alpha, const double *A, const int lda,
-		 const double *x, const int incx, 
+		 const double *x, const int incx,
 		 const double beta, double *y, const int incy);
 
 
 // BLAS level 3 functions
-void cblas_dgemm(const enum CBLAS_ORDER order, 
-		 const enum CBLAS_TRANSPOSE transA, 
-		 const enum CBLAS_TRANSPOSE transB, 
-		 const int m, const int n, const int k, 
-		 const double alpha, const double *A, const int lda, 
+void cblas_dgemm(const enum CBLAS_ORDER order,
+		 const enum CBLAS_TRANSPOSE transA,
+		 const enum CBLAS_TRANSPOSE transB,
+		 const int m, const int n, const int k,
+		 const double alpha, const double *A, const int lda,
 		 const double *B, const int ldb,
                  const double beta, double *C, const int ldc);
 
@@ -84,8 +84,8 @@ void cblas_drotg(double *sa, double *sb, double *c, double *s)
 
 
 inline
-void cblas_drot(const int dim, double *x, const int incx, 
-		double *y, const int incy, 
+void cblas_drot(const int dim, double *x, const int incx,
+		double *y, const int incy,
 		double c, double s)
 {
   int i = dim;
@@ -102,7 +102,7 @@ void cblas_drot(const int dim, double *x, const int incx,
 
 
 inline
-void cblas_dswap(const int dim, double *x, const int incx, 
+void cblas_dswap(const int dim, double *x, const int incx,
 		 double *y, const int incy)
 {
   int i = dim;
@@ -118,7 +118,7 @@ void cblas_dswap(const int dim, double *x, const int incx,
 
 
 inline
-void cblas_dcopy(const int dim, const double *x, const int incx, 
+void cblas_dcopy(const int dim, const double *x, const int incx,
 		 double *y, const int incy)
 {
   if (incx == 1 && incy == 1){ // use memcpy
@@ -147,7 +147,7 @@ void cblas_dscal(const int dim, const double alpha, double *x, const int incx)
 
 
 inline
-void cblas_daxpy(const int dim, const double alpha, 
+void cblas_daxpy(const int dim, const double alpha,
 		 const double *x, const int incx, double *y, const int incy)
 {
   int i = dim;
@@ -155,12 +155,12 @@ void cblas_daxpy(const int dim, const double alpha,
     *y += alpha * (*x);
     x += incx;
     y += incy;
-  } 
+  }
 }
 
 
-inline 
-double cblas_ddot(const int dim, const double *x, const int incx, 
+inline
+double cblas_ddot(const int dim, const double *x, const int incx,
 		  const double *y, const int incy)
 {
   double dot = 0.0;
@@ -170,7 +170,7 @@ double cblas_ddot(const int dim, const double *x, const int incx,
     dot += (*x) * (*y);
     x += incx;
     y += incy;
-  } 
+  }
 
   return dot;
 }
@@ -185,7 +185,7 @@ double cblas_dnrm2(const int dim, const double *x, const int incx)
   while(i--){
     norm_sq += (*x) * (*x);
     x += incx;
-  } 
+  }
 
   return sqrt(norm_sq);
 }
@@ -222,11 +222,11 @@ int cblas_idamax(const int dim, const double *x, const int incx)
 //
 // computes y = beta y + alpha op(A) x
 inline
-void cblas_dgemv(const enum CBLAS_ORDER order, 
+void cblas_dgemv(const enum CBLAS_ORDER order,
 		 const enum CBLAS_TRANSPOSE trans,
-		 const int m, const int n, 
+		 const int m, const int n,
 		 const double alpha, const double *A, const int lda,
-		 const double *x, const int incx, 
+		 const double *x, const int incx,
 		 const double beta, double *y, const int incy)
 {
   // limited support!
@@ -234,22 +234,22 @@ void cblas_dgemv(const enum CBLAS_ORDER order,
 
   if (trans == CblasNoTrans){
     assert(lda >= n); // consistent lda
-  
+
     for(int i=0; i<m; i++){
       double sum = 0.0;
       for(int j=0; j<n; j++) sum += A[lda*i + j] * x[incx*j];
       y[incy*i] = beta * y[incy*i] + alpha * sum;
-    }     
+    }
   }
   else{
     assert(trans == CblasTrans);
-    assert(lda >= m);  // consistent lda  
+    assert(lda >= m);  // consistent lda
 
     for(int i=0; i<m; i++){
       double sum = 0.0;
       for(int j=0; j<n; j++) sum += A[lda*j + i] * x[incx*j];
       y[incy*i] = beta * y[incy*i] + alpha * sum;
-    }     
+    }
   }
 }
 
@@ -265,11 +265,11 @@ void cblas_dgemv(const enum CBLAS_ORDER order,
 //
 // computes C = alpha A*B + beta C
 inline
-void cblas_dgemm(const enum CBLAS_ORDER order, 
-		 const enum CBLAS_TRANSPOSE transA, 
-		 const enum CBLAS_TRANSPOSE transB, 
-		 const int m, const int n, const int k, 
-		 const double alpha, const double *A, const int lda, 
+void cblas_dgemm(const enum CBLAS_ORDER order,
+		 const enum CBLAS_TRANSPOSE transA,
+		 const enum CBLAS_TRANSPOSE transB,
+		 const int m, const int n, const int k,
+		 const double alpha, const double *A, const int lda,
 		 const double *B, const int ldb,
                  const double beta, double *C, const int ldc)
 {

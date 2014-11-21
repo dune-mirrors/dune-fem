@@ -3,7 +3,7 @@
 
 #include <cstring>
 #ifdef USE_EXTERNAL_BLAS
-// use atlas cblas 
+// use atlas cblas
 extern "C" {
 #include <atlas/cblas.h>
 }
@@ -15,14 +15,14 @@ extern "C" {
 // non standard functions (?)
 
 // y = alpha x + beta y
-void daxpby(int dim, 
+void daxpby(int dim,
 	    double alpha, const double *x, int incx,
 	    double beta, double *y, int incy);
 
 // w = alpha x + beta y
-void dwaxpby(int dim, 
+void dwaxpby(int dim,
 	     double alpha, const double *x, int incx,
-	     double beta, const double *y, int incy, 
+	     double beta, const double *y, int incy,
 	     double *w, int incw);
 
 
@@ -49,14 +49,14 @@ void dset(int dim, double alpha, double *x, int incx)
     while(i--){
       *x = alpha;
       x += incx;
-    } 
+    }
   }
 }
 
 
 // y = alpha x + beta y
 inline
-void daxpby(int dim, 
+void daxpby(int dim,
 	    double alpha, const double *x, int incx,
 	    double beta, double *y, int incy)
 {
@@ -65,15 +65,15 @@ void daxpby(int dim,
     *y = alpha * (*x) + beta * (*y);
     x += incx;
     y += incy;
-  } 
+  }
 }
 
 
 // w = alpha x + beta y
 inline
-void dwaxpby(int dim, 
+void dwaxpby(int dim,
 	     double alpha, const double *x, int incx,
-	     double beta, const double *y, int incy, 
+	     double beta, const double *y, int incy,
 	     double *w, int incw)
 {
   int i = dim;
@@ -83,7 +83,7 @@ void dwaxpby(int dim,
     x += incx;
     y += incy;
     w += incw;
-  } 
+  }
 }
 
 

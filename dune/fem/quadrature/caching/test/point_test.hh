@@ -7,7 +7,7 @@
 namespace Dune {
   namespace Fem {
 
-  class PointProvider_Test : public Test 
+  class PointProvider_Test : public Test
   {
   public:
     virtual void run();

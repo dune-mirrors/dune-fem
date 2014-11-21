@@ -3,26 +3,26 @@
 
 #include <dune/common/fvector.hh>
 
-// DGF gridtype 
+// DGF gridtype
 // #include <dgfgridtype.hh>
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-// adaptation classes 
+// adaptation classes
 #include <dune/fem/space/common/adaptmanager.hh>
-// lagrange space 
+// lagrange space
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/io/file/vtkio.hh>
 
-#ifndef POLORDER 
+#ifndef POLORDER
 const int PolynomialOrder = 2;
-#else 
+#else
 const int PolynomialOrder = POLORDER;
 #endif
 
 #if SCALAR
 const int dimRange = 1;
-#else 
+#else
 const int dimRange = Dune :: GridSelector :: GridType :: dimensionworld;
 #endif
 
@@ -34,10 +34,10 @@ using namespace Fem;
 // ------------
 int main( int argc, char **argv )
 {
-  // initialize MPI 
+  // initialize MPI
   Dune::Fem::MPIManager :: initialize ( argc, argv );
   const int rank = MPIManager :: rank ();
-  
+
   try
   {
     const int minLevel = (argc > 2) ? atoi(argv[1]) : 0 ;
@@ -51,13 +51,13 @@ int main( int argc, char **argv )
     // generate GridPointer holding grid instance
     GridPtr< GridType > gridptr ( gridFile.str() );
 
-    // get grid reference 
+    // get grid reference
     GridType& grid = *gridptr ;
 
 
     GlobalRefine::apply(grid, minLevel);
 //    grid.globalRefine(minLevel);
-                  
+
 
     typedef AdaptiveLeafGridPart<GridType> GridPartType;
     GridPartType gridPart (grid);
@@ -110,7 +110,7 @@ int main( int argc, char **argv )
         const EntityType &entity = *it;
         typedef DiscreteFunction :: LocalFunctionType LocalFunctionType;
 
-        LocalFunctionType solutionLocal = solution.localFunction( entity );      
+        LocalFunctionType solutionLocal = solution.localFunction( entity );
 
         typedef EntityType :: Geometry Geometry;
         const Geometry& geo = entity.geometry();
@@ -119,13 +119,13 @@ int main( int argc, char **argv )
 
 #if 0
         typedef GridPartType :: IntersectionIteratorType IntersectionIteratorType;
-        typedef IntersectionIteratorType::Intersection IntersectionType; 
-        
+        typedef IntersectionIteratorType::Intersection IntersectionType;
+
         IntersectionIteratorType iIt = gridPart.ibegin( entity );
         const IntersectionIteratorType endiIt = gridPart.iend( entity );
 
         for( ; iIt != endiIt; ++iIt )
-        {                  
+        {
           const IntersectionType &intersection = *iIt;
           const int face = intersection.indexInInside();
 #endif
@@ -164,15 +164,15 @@ int main( int argc, char **argv )
       vtkio.addVertexData(solution);
       std::stringstream name;
       name<<"testnonscalar_"<<i;
-      vtkio.write(name.str().c_str());               
+      vtkio.write(name.str().c_str());
     }
 
     return 0;
   }
-  catch( const Exception &exception )                                     
+  catch( const Exception &exception )
   {
     if( rank == 0 )
       std :: cerr << exception << std :: endl;
     return 1;
-  }                                                                 
+  }
 }

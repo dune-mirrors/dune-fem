@@ -4,11 +4,11 @@
 
 namespace Dune
 {
-  
+
   namespace Fem
   {
 
-    namespace CombinedSpaceHelper 
+    namespace CombinedSpaceHelper
     {
 
       // forward declaration of LagrangeDiscreteFunctionSpace
@@ -24,7 +24,7 @@ namespace Dune
       // Helper class for combined space to extract the Lagrange Point Set
       // for one of the contained spaces.
       // -----------------------------------------------------------------
-      
+
       template <class DFSpace>
       struct LagrangePointSetExporter
       {
@@ -44,7 +44,7 @@ namespace Dune
         typedef LagrangeDiscreteFunctionSpace< FunctionSpaceImp, GridPartImp, polOrder, BaseFunctionStorageImp > LagrangeSpaceType;
         typedef typename LagrangeSpaceType :: LagrangePointSetType LagrangePointSetType;
 
-        LagrangePointSetExporter( const LagrangeSpaceType& spc ) 
+        LagrangePointSetExporter( const LagrangeSpaceType& spc )
         : lagrangeSpace_( spc ) {}
 
         // return the lagrangepointset for a given entity

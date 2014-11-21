@@ -38,14 +38,14 @@ namespace Dune
 
       //! \brief entity types
       template < int cd >
-      struct Codim 
+      struct Codim
       {
         //! \brief entity type for given codimension
         typedef typename GridPartType::template Codim< cd >::EntityType EntityType;
       };
 
-      //! \brief entity type for codimension 0 
-      typedef typename Codim< 0 >::EntityType EntityType;   
+      //! \brief entity type for codimension 0
+      typedef typename Codim< 0 >::EntityType EntityType;
     };
 
 
@@ -59,15 +59,15 @@ namespace Dune
       // basic filter type
       typedef BasicFilterImp BasicFilterType;
 
-      // type of grid part 
+      // type of grid part
       typedef GridPartImp GridPartType;
- 
+
       // type of traits
       typedef BasicFilterWrapperTraits< GridPartType, BasicFilterType > Traits;
 
-      // this type 
+      // this type
       typedef BasicFilterWrapper< GridPartType, BasicFilterType > ThisType;
-      
+
       // base type
       typedef FilterDefaultImplementation< Traits > BaseType;
 
@@ -82,9 +82,9 @@ namespace Dune
         typedef typename ThisType::template Codim< codim >::EntityType EntityType;
 
         // return true, if entity is contained in filtered gridpart
-        static inline bool value ( const EntityType & entity, 
-                                   const GridPart & gridPart, 
-                                   const BasicFilter & filter, 
+        static inline bool value ( const EntityType & entity,
+                                   const GridPart & gridPart,
+                                   const BasicFilter & filter,
                                    std::vector< bool > & contains )
         {
           if( contains.size() != size_t(gridPart.indexSet().size(codim)) )
@@ -95,13 +95,13 @@ namespace Dune
           const IndexSetType & indexSet = gridPart.indexSet();
           size_t index = size_t( indexSet.index( entity ) );
 
-          return contains[ index ];          
+          return contains[ index ];
         }
 
         // update vector
         template< PartitionIteratorType pitype >
-        static inline void update ( const GridPart & gridPart, 
-                                    const BasicFilter & filter, 
+        static inline void update ( const GridPart & gridPart,
+                                    const BasicFilter & filter,
                                     std::vector< bool > & contains )
         {
           // type of index set
@@ -147,30 +147,30 @@ namespace Dune
         typedef typename ThisType::template Codim< 0 >::EntityType EntityType;
 
         // call BasicFilter::contains()
-        static inline bool value ( const EntityType & entity, 
-                                   const GridPart &, 
-                                   const BasicFilter & filter, 
+        static inline bool value ( const EntityType & entity,
+                                   const GridPart &,
+                                   const BasicFilter & filter,
                                    std::vector< bool > & )
         {
-          return filter.contains( entity ); 
+          return filter.contains( entity );
         }
       };
 
     public:
       //! \brief type of the filter implementation
       typedef typename Traits::FilterType FilterType;
-    
+
       template< int cd >
       struct Codim
       {
         typedef typename Traits::template Codim< cd >::EntityType EntityType;
       };
 
-      //! \brief type of codim 0 entity 
+      //! \brief type of codim 0 entity
       typedef typename Traits::EntityType EntityType;
-       
+
       //! \brief constructor
-      BasicFilterWrapper ( const GridPartType & gridPart, const BasicFilterType & filter = BasicFilterType() ) 
+      BasicFilterWrapper ( const GridPartType & gridPart, const BasicFilterType & filter = BasicFilterType() )
       : gridPart_( gridPart ),
         filter_( filter )
       { }
@@ -179,11 +179,11 @@ namespace Dune
       BasicFilterWrapper ( const ThisType & other )
       : gridPart_( other.gridPart_ ),
         filter_( other.filter_ )
-      { 
+      {
         reset();
       }
 
-      //! \brief assignment operator 
+      //! \brief assignment operator
       ThisType & operator= ( const ThisType & other )
       {
         gridPart_ = other.gridPart_;
@@ -198,37 +198,37 @@ namespace Dune
       {
         return filter().interiorIntersection( intersection );
       }
-    
-      //! \brief returns true if the given entity of the pointer in the domain 
+
+      //! \brief returns true if the given entity of the pointer in the domain
       template< int cd >
       bool contains ( const typename Codim< cd >::EntityType & entity ) const
       {
         return Contains< cd, GridPartType, BasicFilterType >::value( entity, gridPart_, filter_, contains_[ cd ] );
       }
 
-      //! \brief returns true if the given entity of the pointer in the domain 
+      //! \brief returns true if the given entity of the pointer in the domain
       template< class Entity >
       bool contains ( const Entity & entity ) const
       {
         enum { cc = Entity::codimension };
         return contains< cc >( entity );
       }
- 
-      //! \brief returns true if an intersection is a boundary intersection 
+
+      //! \brief returns true if an intersection is a boundary intersection
       template< class Intersection >
       bool intersectionBoundary( const Intersection & intersection ) const
       {
         return filter().intersectionBoundary( intersection );
       }
-     
-      //! \brief returns the boundary id for an intersection 
+
+      //! \brief returns the boundary id for an intersection
       template< class Intersection >
       int intersectionBoundaryId ( const Intersection & intersection ) const
       {
         return filter().intersectionBoundaryId( intersection );
       }
 
-      //! \brief returns true if for an intersection a neighbor exsits 
+      //! \brief returns true if for an intersection a neighbor exsits
       template< class Intersection >
       bool intersectionNeighbor ( const Intersection & intersection ) const
       {

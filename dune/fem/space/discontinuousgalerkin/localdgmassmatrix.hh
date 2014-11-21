@@ -11,7 +11,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     // LocalMassMatrix
@@ -19,12 +19,12 @@ namespace Dune
 
     /** \brief Local Mass Matrix for DG space */
     template <class FunctionSpaceImp, class GridPartImp, int polOrd,
-              template<class> class BaseFunctionStorageImp, 
+              template<class> class BaseFunctionStorageImp,
               class VolumeQuadratureImp>
-    class LocalMassMatrix< 
+    class LocalMassMatrix<
       DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >,
-      VolumeQuadratureImp > 
-      : public LocalMassMatrixImplementationDgOrthoNormal< 
+      VolumeQuadratureImp >
+      : public LocalMassMatrixImplementationDgOrthoNormal<
           DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >, VolumeQuadratureImp >
     {
       typedef DiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceImp;
@@ -39,12 +39,12 @@ namespace Dune
 
     /** \brief Local Mass Matrix for Legendre space */
     template <class FunctionSpaceImp, class GridPartImp, int polOrd,
-              template<class> class BaseFunctionStorageImp, 
+              template<class> class BaseFunctionStorageImp,
               class VolumeQuadratureImp>
-    class LocalMassMatrix< 
+    class LocalMassMatrix<
       LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >,
-      VolumeQuadratureImp > 
-      : public LocalMassMatrixImplementationDgOrthoNormal< 
+      VolumeQuadratureImp >
+      : public LocalMassMatrixImplementationDgOrthoNormal<
           LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >, VolumeQuadratureImp >
     {
       typedef LegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceImp;
@@ -56,15 +56,15 @@ namespace Dune
     };
 
     /** \brief Local Mass Matrix for hierarchic Legendre space */
-    template <class FunctionSpaceImp, 
-              class GridPartImp, 
+    template <class FunctionSpaceImp,
+              class GridPartImp,
               int polOrd,
-              template<class> class BaseFunctionStorageImp, 
+              template<class> class BaseFunctionStorageImp,
               class VolumeQuadratureImp>
-    class LocalMassMatrix< 
+    class LocalMassMatrix<
       HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >,
-                                                    VolumeQuadratureImp > 
-      : public LocalMassMatrixImplementationDgOrthoNormal< 
+                                                    VolumeQuadratureImp >
+      : public LocalMassMatrixImplementationDgOrthoNormal<
           HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp >, VolumeQuadratureImp >
     {
       typedef HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceImp, GridPartImp, polOrd, BaseFunctionStorageImp > DiscreteFunctionSpaceImp;
@@ -75,8 +75,8 @@ namespace Dune
       {}
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_LOCALDGMASSMATRIX_HH

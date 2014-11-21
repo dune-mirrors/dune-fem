@@ -38,5 +38,5 @@ namespace Dune
   };
 
 }
-  
+
 #endif // #ifndef DUNE_FEM_TEST_WEIGHTFUNCTION_HH

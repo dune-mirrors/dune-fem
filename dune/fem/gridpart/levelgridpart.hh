@@ -13,10 +13,10 @@ namespace Dune
   namespace Fem
   {
 
-    /** 
+    /**
      * @addtogroup GridPart
      *
-     * @{ 
+     * @{
      */
 
     // Forward declarations
@@ -49,8 +49,8 @@ namespace Dune
       typedef typename Traits::GridType GridType;
       //! Level index set that corresponds to the grid
       typedef typename Traits::IndexSetType IndexSetType;
-      
-      //! The corresponding IntersectionIterator 
+
+      //! The corresponding IntersectionIterator
       typedef typename Traits::IntersectionIteratorType IntersectionIteratorType ;
 
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
@@ -68,7 +68,7 @@ namespace Dune
         isetWrapper_( grid, level ),
         level_( level )
       {}
-      
+
       //! Constructor, choosing maxLevel
       explicit LevelGridPart ( GridType &grid )
       : BaseType( grid ),
@@ -76,7 +76,7 @@ namespace Dune
         isetWrapper_( grid, grid.maxLevel() ),
         level_( grid.maxLevel() )
       {}
-      
+
       //! copy constructor
       LevelGridPart ( const ThisType &other )
       : BaseType( other ),
@@ -130,7 +130,7 @@ namespace Dune
       {
         return levelGridView_.ibegin( entity );
       }
-      
+
       //! iend of corresponding intersection iterator for given entity
       IntersectionIteratorType iend ( const EntityCodim0Type &entity ) const
       {
@@ -155,7 +155,7 @@ namespace Dune
 
     private:
       LevelGridView levelGridView_;
-      //! GridDefaultIndexSet Wrapper 
+      //! GridDefaultIndexSet Wrapper
       IndexSetType isetWrapper_;
       const int level_;
     };

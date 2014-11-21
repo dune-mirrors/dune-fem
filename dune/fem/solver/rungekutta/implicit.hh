@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_SOLVER_RUNGEKUTTA_IMPLICIT_HH
 #define DUNE_FEM_SOLVER_RUNGEKUTTA_IMPLICIT_HH
 
-//- system includes 
+//- system includes
 #include <sstream>
 #include <vector>
 
@@ -13,7 +13,7 @@
 #include <dune/fem/solver/rungekutta/butchertable.hh>
 #include <dune/fem/solver/rungekutta/timestepcontrol.hh>
 
-namespace DuneODE 
+namespace DuneODE
 {
 
   // ImplicitRungeKuttaSolver
@@ -34,7 +34,7 @@ namespace DuneODE
     typedef typename TimeStepControlType::TimeProviderType TimeProviderType;
     typedef typename TimeStepControlType::ParametersType ParametersType;
 
-    /** \brief constructor 
+    /** \brief constructor
      *
      *  \param[in]  helmholtzOp   Helmholtz operator \f$L\f$
      *  \param[in]  timeProvider  time provider

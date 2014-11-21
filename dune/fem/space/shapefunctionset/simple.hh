@@ -52,7 +52,7 @@ namespace Dune
 
     public:
       typedef ShapeFunction ShapeFunctionType;
-      
+
       typedef typename ShapeFunction::FunctionSpaceType FunctionSpaceType;
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
@@ -76,12 +76,12 @@ namespace Dune
       template< class Point, class Functor >
       void evaluateEach ( const Point &x, Functor functor ) const;
 
-      template< class Point, class Functor > 
+      template< class Point, class Functor >
       void jacobianEach ( const Point &x, Functor functor ) const;
 
-      template< class Point, class Functor > 
+      template< class Point, class Functor >
       void hessianEach ( const Point &x, Functor functor ) const;
-     
+
     protected:
       std::vector< const ShapeFunctionType * > shapeFunctions_;
       int order_;
@@ -151,7 +151,7 @@ namespace Dune
         functor( i, value );
       }
     }
-    
+
 
     template< class ShapeFunction >
     template< class Point, class Functor >
@@ -182,6 +182,6 @@ namespace Dune
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_SHAPEFUNCTIONSET_SIMPLE_HH

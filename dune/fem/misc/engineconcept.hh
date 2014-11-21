@@ -83,7 +83,7 @@ namespace Dune
     protected:
       EngineWrapper ()
       {}
-      
+
       /** \brief obtain the implementation from the user class (const version)
        *
        *  Ths method uses the Barton-Nackman trick, to obtain a reference to the
@@ -160,7 +160,7 @@ namespace Dune
         return static_cast< Impl & >( *this );
       }
     };
-  
+
   } // namespace Fem
 
 } // namespace Dune

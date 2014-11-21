@@ -13,15 +13,15 @@
 #include <dune/common/exceptions.hh>
 
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     // Internal forward declaration
     // ----------------------------
-   
+
     template< class Grid > class GridName;
 
 
@@ -53,7 +53,7 @@ namespace Dune
     // GridName
     // --------
 
-    template< class GridImp > 
+    template< class GridImp >
     struct GridName
     {
       static const std::string &str ()
@@ -65,33 +65,33 @@ namespace Dune
     private:
       static std::string computeString ()
       {
-        std::string name( typeid( GridImp ).name() ); 
+        std::string name( typeid( GridImp ).name() );
 
         size_t dunePos = name.find( "Dune" );
         name.erase( 0, dunePos+4 );
 
         char *endptr = 0;
-        // get position of strings that are not numbers 
+        // get position of strings that are not numbers
         long int result = std::strtol( name.c_str(), &endptr, 0 );
-        if( result == LONG_MAX || result == LONG_MIN ) 
+        if( result == LONG_MAX || result == LONG_MIN )
           DUNE_THROW( UnknownGridException, "GridName: faild to determine name of grid!" );
 
-        if( endptr ) 
+        if( endptr )
           name = std::string( endptr );
 
-        // Grid seems to be followed by IL 
+        // Grid seems to be followed by IL
         size_t pos = name.find( "GridI" );
-        pos += 4; // add length of Grid to get pos of IL 
+        pos += 4; // add length of Grid to get pos of IL
 
-        if( pos < name.size() ) 
+        if( pos < name.size() )
           name.erase( pos, name.size() - pos );
-#ifndef NDEBUG 
+#ifndef NDEBUG
         std::vector< std::string > knownGrids;
         knownGrids.push_back( "AlbertaGrid" );
         knownGrids.push_back( "ALUConformGrid" );
-        knownGrids.push_back( "ALUCubeGrid" ); 
-        knownGrids.push_back( "ALUGrid" ); 
-        knownGrids.push_back( "ALUSimplexGrid" ); 
+        knownGrids.push_back( "ALUCubeGrid" );
+        knownGrids.push_back( "ALUGrid" );
+        knownGrids.push_back( "ALUSimplexGrid" );
         knownGrids.push_back( "CacheItGrid" );
         knownGrids.push_back( "CartesianGrid" );
         knownGrids.push_back( "GeometryGrid" );
@@ -110,7 +110,7 @@ namespace Dune
         {
           if( name == knownGrids[ i ] )
           {
-            found = true; 
+            found = true;
             break;
           }
         }

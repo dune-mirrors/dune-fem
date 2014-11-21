@@ -9,8 +9,8 @@
 using namespace pardg;
 
 
-FGMRES::FGMRES(Communicator &comm, int m) : 
-  IterativeLinearSolver(comm), DynamicalObject("FGMRES", comm.id()), 
+FGMRES::FGMRES(Communicator &comm, int m) :
+  IterativeLinearSolver(comm), DynamicalObject("FGMRES", comm.id()),
   m(m), H(m+1,m), v(NULL), z(NULL)
 {
   g = new double[6*m+1];
@@ -56,7 +56,7 @@ bool FGMRES::solve(Function &op, double *u, const double *b)
   double _tolerance = tolerance;
   if (relative_tolerance){
     local_dot[0] = cblas_ddot(dim, b, 1, b, 1);
-    comm.allreduce(1, local_dot, global_dot, MPI_SUM);      
+    comm.allreduce(1, local_dot, global_dot, MPI_SUM);
     _tolerance *= sqrt(global_dot[0]);
   }
 
@@ -66,8 +66,8 @@ bool FGMRES::solve(Function &op, double *u, const double *b)
     op(u, v);
     cblas_daxpy(dim, -1.0, b, 1, v, 1);
     local_dot[0] = cblas_ddot(dim, v, 1, v, 1);
-    comm.allreduce(1, local_dot, global_dot, MPI_SUM);      
-    double res = sqrt(global_dot[0]); 
+    comm.allreduce(1, local_dot, global_dot, MPI_SUM);
+    double res = sqrt(global_dot[0]);
     if (res < tolerance) break;
     g[0] = -res;
     for(int i=1; i<=m; i++) g[i] = 0.0;
@@ -81,17 +81,17 @@ bool FGMRES::solve(Function &op, double *u, const double *b)
 
       // apply preconditioner and the linear operator
       (*preconditioner)(vj, zj);
-      op(zj, vjp);      
-      
+      op(zj, vjp);
+
       // Gram-Schmidt procedure
       for(int i=0; i<=j; i++) local_dot[i]=cblas_ddot(dim, vjp, 1, v+i*dim, 1);
-      comm.allreduce(j+1, local_dot, global_dot, MPI_SUM);      
-      for(int i=0; i<=j; i++) H(i,j) = global_dot[i]; 
+      comm.allreduce(j+1, local_dot, global_dot, MPI_SUM);
+      for(int i=0; i<=j; i++) H(i,j) = global_dot[i];
 
       for(int i=0; i<=j; i++) cblas_daxpy(dim, -H(i,j), v+i*dim, 1, vjp, 1);
       local_dot[0] = cblas_ddot(dim, vjp, 1, vjp, 1);
-      comm.allreduce(1, local_dot, global_dot, MPI_SUM);      
-      H(j+1,j) = sqrt(global_dot[0]); 
+      comm.allreduce(1, local_dot, global_dot, MPI_SUM);
+      H(j+1,j) = sqrt(global_dot[0]);
       cblas_dscal(dim, 1.0/H(j+1,j), vjp, 1);
 
       // perform Givens rotation
@@ -109,38 +109,38 @@ bool FGMRES::solve(Function &op, double *u, const double *b)
       //*output_stream << fabs(g[j+1]) << std::endl;
 
       iterations++;
-      if (fabs(g[j+1]) < tolerance 
+      if (fabs(g[j+1]) < tolerance
 	  || iterations >= max_num_of_iterations) break;
     }
 
     //
     // form the approximate solution
     //
-      
+
     int last = iterations%m;
     if (last == 0) last = m;
     // compute y via backsubstitution
     for(int i=last-1; i>=0; i--){
       const double dot = cblas_ddot(last-(i+1), &H(i,i)+1, 1, &y[i+1], 1);
       y[i] = (g[i] - dot) / H(i,i);
-    }    
+    }
 
     // update the approx. solution
     // u += (z[0], ..., z[last-1]) y
     for(int i=0; i<last; i++) cblas_daxpy(dim, y[i], z+i*dim, 1, u, 1);
-    
+
     if (fabs(g[last]) < tolerance) break;
     if (IterativeSolver::os)
     {
-      *IterativeSolver::os<< "FGMRES " << comm.id() 
-			    << ": its: " << iterations << "  err: " 
-          << fabs(g[last]) << std::endl; 
+      *IterativeSolver::os<< "FGMRES " << comm.id()
+			    << ": its: " << iterations << "  err: "
+          << fabs(g[last]) << std::endl;
     }
   }
 
   // output
   if (IterativeSolver::os){
-    *IterativeSolver::os<< "FGMRES " << comm.id() 
+    *IterativeSolver::os<< "FGMRES " << comm.id()
 			<< ": number of iterations: "
 			<< iterations
 			<< std::endl;
@@ -149,5 +149,5 @@ bool FGMRES::solve(Function &op, double *u, const double *b)
   return (iterations < max_num_of_iterations)? true: false;
 }
 
- 
+
 

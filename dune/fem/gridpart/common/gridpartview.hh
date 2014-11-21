@@ -17,7 +17,7 @@ namespace Dune
     struct GridPartViewTraits
     {
       typedef GridPartViewImpl< GridPart > GridViewImp;
-      
+
       typedef typename GridPart::GridType Grid;
       typedef typename GridPart::IndexSetType IndexSet;
       typedef typename GridPart::IntersectionIteratorType IntersectionIterator;
@@ -56,7 +56,7 @@ namespace Dune
 
     public:
       typedef GridPart GridPartType;
-      
+
       typedef GridPartViewTraits< GridPartType > Traits;
 
       /** \brief type of the grid */
@@ -79,7 +79,7 @@ namespace Dune
       struct Codim
       : public Traits::template Codim< codim >
       {};
-   
+
       enum { conforming = Traits::conforming };
 
       enum { dimension = GridPartType::dimension };
@@ -101,7 +101,7 @@ namespace Dune
       {
         return gridPart_.grid();
       }
-      
+
       const IndexSet &indexSet () const
       {
         return gridPart_.indexSet();
@@ -128,7 +128,7 @@ namespace Dune
       {
         return gridPart_.template begin< codim, pitype >();
       }
-      
+
       template< int codim >
       typename Codim< codim >::Iterator end () const
       {
@@ -140,12 +140,12 @@ namespace Dune
       {
         return gridPart_.template end< codim, pitype >();
       }
-      
+
       IntersectionIterator ibegin ( const typename Codim< 0 >::Entity &entity ) const
       {
         return gridPart_.ibegin( entity );
       }
-      
+
       IntersectionIterator iend ( const typename Codim< 0 >::Entity &entity ) const
       {
         return gridPart_.iend( entity );
@@ -188,7 +188,7 @@ namespace Dune
       : BaseType( other )
       {}
     };
-  
+
   } // namespace Fem
 
 } // namespace Dune

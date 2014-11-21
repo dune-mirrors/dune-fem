@@ -37,7 +37,7 @@ namespace Dune
       typedef typename IntersectionType::EntityPointer EntityPointerType;
       /** \brief entity type */
       typedef typename EntityPointerType::Entity EntityType;
-    
+
       /** \brief failure type */
       struct AssignmentFailure;
       /** \brief failure type */
@@ -46,8 +46,8 @@ namespace Dune
     private:
       // static tests
       static_assert( ( is_same< typename IntersectionType::ctype,
-                                 typename GridPartType::ctype 
-                               >::value 
+                                 typename GridPartType::ctype
+                               >::value
                       ), "Conflicting types for Intersection" );
 
       static_assert( ( static_cast< int>( IntersectionType::dimension )
@@ -59,7 +59,7 @@ namespace Dune
 
       // check intersection iterator assignment
       template< class IntersectionIterator >
-      static void checkIntersectionIteratorAssignment( const IntersectionIterator &it, 
+      static void checkIntersectionIteratorAssignment( const IntersectionIterator &it,
                                                        FailureHandler &failureHandler );
 
       // check intersection iterator assignment
@@ -67,7 +67,7 @@ namespace Dune
                                       const GridPartType &gridPart,
                                       FailureHandler &failureHandler );
 
-      // check local geometries 
+      // check local geometries
       static void checkLocalGeometries ( const IntersectionType &intersection,
                                          const EntityType &entity,
                                          FailureHandler &failureHandler );
@@ -91,8 +91,8 @@ namespace Dune
 
             checkIntersection( intersection, false );
 
-            // create intersection caching quadrature to check twists 
-            IntersectionQuadrature< CachingQuadrature< GridPartType, 1 >, true > 
+            // create intersection caching quadrature to check twists
+            IntersectionQuadrature< CachingQuadrature< GridPartType, 1 >, true >
               inter( gridPart, intersection, 2 );
 
             checkIntersectionIteratorAssignment( iit, failureHandler );
@@ -159,7 +159,7 @@ namespace Dune
       for( IntersectionIteratorType it = gridPart.ibegin( entity ); it != end; ++it )
       {
         // get Gauss quadrature points
-        const Dune::QuadratureRule< ctype, LocalGeometryType::mydimension > & quad = 
+        const Dune::QuadratureRule< ctype, LocalGeometryType::mydimension > & quad =
           Dune::QuadratureRules< ctype, LocalGeometryType::mydimension >::rule( it->type(), 3 );
 
         for ( size_t i = 0; i < quad.size(); ++i )
@@ -197,7 +197,7 @@ namespace Dune
 
 
 
-    // Implementation of Failures used in CheckIntersections 
+    // Implementation of Failures used in CheckIntersections
     // -----------------------------------------------------
 
     template< class GridPartType, class FailureHandler >
@@ -256,7 +256,7 @@ namespace Dune
         assert( failed() );
         out <<  __FILE__
           << ":" << __LINE__ << ": Failure :"
-          << "Summation of normals fails for " 
+          << "Summation of normals fails for "
           << instance().fails_ << " entities in grid part";
       }
 

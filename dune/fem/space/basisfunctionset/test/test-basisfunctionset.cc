@@ -36,7 +36,7 @@ FieldType random ( FieldType a, FieldType b )
 
 template< class BasisFunctionSetType, class QuadratureType >
 Dune::FieldVector< typename BasisFunctionSetType::RangeType::value_type, 3 >
-  checkQuadratureConsistency ( const BasisFunctionSetType &basisFunctionSet, 
+  checkQuadratureConsistency ( const BasisFunctionSetType &basisFunctionSet,
                                const QuadratureType &quadrature )
 {
   // get types
@@ -135,14 +135,14 @@ void traverse ( GridPartType &gridPart )
   static const int dimRange = DIMRANGE;
 
   typedef Dune::Fem::FunctionSpace< typename GridPartType::ctype, double, dimDomain, dimRange > FunctionSpaceType;
-  
+
   // create discrete function space, needs to be changed
   typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
   DiscreteFunctionSpaceType space( gridPart );
-  
+
   typedef Dune::FieldVector< typename FunctionSpaceType::RangeFieldType, 3 > ErrorType;
   ErrorType error( 0 );
-  
+
   typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
   typedef typename IteratorType::Entity EntityType;
   const IteratorType end = space.end();
@@ -150,12 +150,12 @@ void traverse ( GridPartType &gridPart )
   {
     // get entity
     const typename IteratorType::Entity &entity = *it;
-    
-    // get basis function set 
+
+    // get basis function set
     typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
     typedef typename DiscreteFunctionSpaceType::ShapeFunctionSetType ShapeFunctionSetType;
     const BasisFunctionSetType basisFunctionSet = space.basisFunctionSet( entity );
-    
+
     // create quadrature
     typedef Dune::Fem::CachingQuadrature< GridPartType, 0 > QuadratureType;
     QuadratureType quadrature( basisFunctionSet.entity(), basisFunctionSet.order() );
@@ -192,14 +192,14 @@ int main ( int argc, char **argv )
 
   typedef Dune::GridSelector::GridType GridType;
   GridType &grid = Dune::Fem::TestGrid::grid();
-  
+
   int refCount = Dune::Fem::Parameter::getValue< int >( "startLevel", 0 );
   const int refineStepsForHalf = Dune::Fem::TestGrid::refineStepsForHalf();
   Dune::Fem::GlobalRefine::apply( grid, refCount*refineStepsForHalf );
-  
+
   typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
   GridPartType gridPart( grid );
   traverse( gridPart );
-  
+
   return 0;
 }

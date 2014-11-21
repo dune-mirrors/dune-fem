@@ -6,7 +6,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     template< class GridPart >
@@ -42,7 +42,7 @@ namespace Dune
       template< class DiscreteFunctionType >
       typename DiscreteFunctionType::RangeFieldType
       norm ( const DiscreteFunctionType &u ) const;
-      
+
       template< class UDiscreteFunctionType, class VDiscreteFunctionType >
       typename UDiscreteFunctionType::RangeFieldType
       distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
@@ -88,12 +88,12 @@ namespace Dune
       explicit FunctionJacobianSquare ( const FunctionType &function )
       : function_( function )
       {}
-      
+
       template< class Point >
       void evaluate ( const Point &x, RangeType &ret ) const
       {
         const int dimRange = FunctionType::RangeType::dimension;
-        
+
         typename FunctionType::RangeType phi;
         function_.evaluate( x, phi );
         ret[ 0 ] = phi * phi;
@@ -112,7 +112,7 @@ namespace Dune
 
     // Implementation of H1 Norm
     // -------------------------
-    
+
     template< class GridPart >
     inline H1Norm< GridPart >::H1Norm ( const GridPartType &gridPart, const unsigned int order )
     : BaseType( gridPart ),
@@ -127,7 +127,7 @@ namespace Dune
       order_( other.order_ )
     {}
 
-    
+
     template< class GridPart >
     template< class DiscreteFunctionType >
     inline typename DiscreteFunctionType::RangeFieldType
@@ -138,7 +138,7 @@ namespace Dune
 
       ReturnType sum = BaseType :: forEach( u, ReturnType( 0 ), order_ );
 
-      // return result, e.g. sqrt of calculated sum 
+      // return result, e.g. sqrt of calculated sum
       return sqrt( comm().sum( sum[ 0 ] ) );
     }
 
@@ -153,7 +153,7 @@ namespace Dune
 
       ReturnType sum = BaseType :: forEach( u, v, ReturnType( 0 ), order_ );
 
-      // return result, e.g. sqrt of calculated sum 
+      // return result, e.g. sqrt of calculated sum
       return sqrt( comm().sum( sum[ 0 ] ) );
     }
 
@@ -192,7 +192,7 @@ namespace Dune
                                     ReturnType& sum ) const
     {
       typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
-      // evaluate norm locally 
+      // evaluate norm locally
 
       IntegratorType integrator( order );
 
@@ -202,8 +202,8 @@ namespace Dune
       integrator.integrateAdd( entity, ulocal2, sum );
     }
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_H1NORM_HH

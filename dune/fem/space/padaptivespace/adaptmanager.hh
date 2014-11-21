@@ -34,14 +34,14 @@ namespace Dune
 
     template< class FunctionSpaceImp, class GridPartImp, int polOrd, template< class > class StorageImp >
     class DefaultLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > >
-    : public DiscontinuousGalerkinLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false > // invert mass matrix or not 
+    : public DiscontinuousGalerkinLocalRestrictProlong< Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp >, false > // invert mass matrix or not
     {
     public:
       typedef DiscontinuousGalerkinLocalRestrictProlong< Fem::PAdaptiveDGSpace<
-                                                         FunctionSpaceImp, 
-                                                         GridPartImp, 
+                                                         FunctionSpaceImp,
+                                                         GridPartImp,
                                                          polOrd, StorageImp >, false > BaseType ;
-      DefaultLocalRestrictProlong ( const Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & space ) 
+      DefaultLocalRestrictProlong ( const Fem::PAdaptiveDGSpace< FunctionSpaceImp, GridPartImp, polOrd, StorageImp > & space )
         : BaseType( space )
       {}
     };
@@ -59,24 +59,24 @@ namespace Dune
     // pAdaptation
     // -----------
 
-    template <class DF, class Vector, class DFS> 
-    void pAdaptation( DF& df, const Vector& polynomialOrders, const DFS &space, const int ) 
+    template <class DF, class Vector, class DFS>
+    void pAdaptation( DF& df, const Vector& polynomialOrders, const DFS &space, const int )
     {}
 
-    /** \brief pAdaptation 
-        \param df  discrete function to adapt 
-        \param polynomialOrders  vector containing polynomial orders for each cell 
-        \param space  type of space tp be adapted 
+    /** \brief pAdaptation
+        \param df  discrete function to adapt
+        \param polynomialOrders  vector containing polynomial orders for each cell
+        \param space  type of space tp be adapted
         \param polOrderShift possible shift of polynomial order (i.e. in case of
                              Taylor-Hood put -1 for the pressure) (default = 0)
     */
     template <class DF, class Vector,
               class FS, class GP, int p,
               template< class > class Storage >
-    void pAdaptation( DF& df, 
-                      const Vector& polynomialOrders, 
+    void pAdaptation( DF& df,
+                      const Vector& polynomialOrders,
                       const Fem::PAdaptiveLagrangeSpace<FS,GP,p,Storage> &space,
-                      const int polOrderShift = 0 ) 
+                      const int polOrderShift = 0 )
     {
       /*
       typedef typename DF :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
@@ -95,10 +95,10 @@ namespace Dune
       DofManagerType& dm = DofManagerType :: instance( newSpace.grid() );
 
       const IteratorType endit = newSpace.end();
-      for( IteratorType it = newSpace.begin(); it != endit; ++it ) 
+      for( IteratorType it = newSpace.begin(); it != endit; ++it )
       {
         const EntityType& entity = *it;
-        oldSpace.blockMapper().setPolynomOrder( entity, newSpace.blockMapper().polynomOrder( entity ) ); 
+        oldSpace.blockMapper().setPolynomOrder( entity, newSpace.blockMapper().polynomOrder( entity ) );
       }
 
       dm.resize();
@@ -109,7 +109,7 @@ namespace Dune
       newSpace.adapt( tmp )
       tmp.assign( df );
 
-      for( IteratorType it = newSpace.begin(); it != endit; ++it ) 
+      for( IteratorType it = newSpace.begin(); it != endit; ++it )
       {
         const EntityType& entity = *it;
         const int polOrder = polynomialOrders[ newSpace.indexSet().index( entity ) ] + polOrderShift ;
@@ -123,16 +123,16 @@ namespace Dune
       */
     }
 
-    /** \brief pAdaptation 
-        \param df  discrete function to adapt 
-        \param polynomialOrders  vector containing polynomial orders for each cell 
+    /** \brief pAdaptation
+        \param df  discrete function to adapt
+        \param polynomialOrders  vector containing polynomial orders for each cell
         \param polOrderShift possible shift of polynomial order (i.e. in case of
           Taylor-Hood put -1 for the pressure) (default = 0)
     */
-    template <class DF, class Vector> 
-    void pAdaptation( DF& df, 
+    template <class DF, class Vector>
+    void pAdaptation( DF& df,
                       const Vector& polynomialOrders,
-                      const int polOrderShift = 0 ) 
+                      const int polOrderShift = 0 )
     {
       pAdaptation( df, polynomialOrders, df.space(), polOrderShift );
     }

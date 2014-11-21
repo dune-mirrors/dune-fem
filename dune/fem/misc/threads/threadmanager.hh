@@ -4,10 +4,10 @@
 #include <cassert>
 #include <cstdlib>
 
-#if defined USE_PTHREADS && HAVE_PTHREAD == 0 
+#if defined USE_PTHREADS && HAVE_PTHREAD == 0
 #warning "pthreads were not found!"
-#undef USE_PTHREADS 
-#endif 
+#undef USE_PTHREADS
+#endif
 
 #if defined _OPENMP || defined USE_PTHREADS
 #ifndef USE_SMP_PARALLEL
@@ -15,7 +15,7 @@
 #endif
 #endif
 
-#ifdef USE_PTHREADS 
+#ifdef USE_PTHREADS
 #include <pthread.h>
 #include <map>
 #endif
@@ -25,63 +25,63 @@
 #endif
 
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
 #ifdef _OPENMP
-    struct ThreadManager 
+    struct ThreadManager
     {
-      /** return maximal number of threads possbile in the current run 
-          \note can be set by the OMP_NUM_THREADS environment variable 
+      /** return maximal number of threads possbile in the current run
+          \note can be set by the OMP_NUM_THREADS environment variable
                 from outside of the code */
-      static inline int maxThreads() 
+      static inline int maxThreads()
       {
         return omp_get_max_threads();
       }
 
-      //! return number of current threads 
-      static inline int currentThreads() 
+      //! return number of current threads
+      static inline int currentThreads()
       {
         return omp_get_num_threads();
       }
 
-      //! return thread number 
-      static inline int thread() 
+      //! return thread number
+      static inline int thread()
       {
         return omp_get_thread_num();
       }
 
       //! return true if the current thread is the master thread (i.e. thread 0)
-      static inline bool isMaster() 
+      static inline bool isMaster()
       {
         return thread() == 0 ;
       }
 
-      //! set maximal number of threads available during run  
-      static inline void setMaxNumberThreads( const int numThreads ) 
+      //! set maximal number of threads available during run
+      static inline void setMaxNumberThreads( const int numThreads )
       {
         omp_set_num_threads( numThreads );
       }
 
       //! returns true if program is operating on one thread currently
-      static inline bool singleThreadMode() 
+      static inline bool singleThreadMode()
       {
         return currentThreads() == 1 ;
       }
-    }; // end class ThreadManager 
-#elif defined USE_PTHREADS 
+    }; // end class ThreadManager
+#elif defined USE_PTHREADS
 #warning "ThreadManager: using pthreads"
 
-    struct ThreadManager 
+    struct ThreadManager
     {
-    private:  
+    private:
       struct Manager ;
       typedef int thread_number_t(Manager&);
       typedef std::map< const pthread_t, int > ThreadIdMap ;
-      struct Manager 
+      struct Manager
       {
         const pthread_t master_;
         ThreadIdMap idmap_;
@@ -89,7 +89,7 @@ namespace Dune
         int maxThreads_;
         int activeThreads_;
 
-        static inline Manager& instance() 
+        static inline Manager& instance()
         {
           static Manager mg ;
           return mg ;
@@ -98,113 +98,113 @@ namespace Dune
         inline void setThreadNumber(  const pthread_t& threadId, const int threadNum )
         {
           assert( isMaster() );
-          // thread number 0 is reserved for the master thread 
+          // thread number 0 is reserved for the master thread
           assert( threadNum > 0 );
           idmap_[ threadId ] = threadNum ;
         }
 
-        inline void setMaxThreads( const int maxThreads ) 
+        inline void setMaxThreads( const int maxThreads )
         {
           assert( isMaster() );
           maxThreads_ = maxThreads;
         }
 
-        inline void singleThreadMode() 
+        inline void singleThreadMode()
         {
-          // make sure we are in single thread mode 
+          // make sure we are in single thread mode
           assert( isMaster() );
-          // set current thread to one 
+          // set current thread to one
           activeThreads_ = 1;
-          // set pointer to thread number function 
+          // set pointer to thread number function
           threadNum_ = & Manager :: singleThreadNumber ;
         }
 
-        inline void multiThreadMode(const int nThreads ) 
+        inline void multiThreadMode(const int nThreads )
         {
-          // make sure we are in single thread mode 
+          // make sure we are in single thread mode
           assert( isMaster() );
           assert( threadNum_ == & Manager :: singleThreadNumber  );
           assert( nThreads <= maxThreads_ );
           assert( nThreads > 0 );
 
-          // set number of current threads 
+          // set number of current threads
           activeThreads_ = nThreads;
 
-          // set pointer to thread number function 
+          // set pointer to thread number function
           threadNum_ = & Manager :: multiThreadNumber ;
         }
-        
+
         inline int currentThreads() const { return activeThreads_; }
         inline int maxThreads() const { return maxThreads_; }
         inline int thread() { return threadNum_( *this ); }
 
         bool isMaster() const { return master_ == pthread_self(); }
-      private:  
-        //! default thread number 
+      private:
+        //! default thread number
         static inline int singleThreadNumber( Manager& ) { return 0; }
 
-        //! thread number in multi thread mode 
-        static inline int multiThreadNumber( Manager& mg ) 
+        //! thread number in multi thread mode
+        static inline int multiThreadNumber( Manager& mg )
         {
-          // get thread id 
+          // get thread id
           const pthread_t self = pthread_self();
-          // the master thread has always the thread number 0 
-          if( mg.master_ == self ) 
+          // the master thread has always the thread number 0
+          if( mg.master_ == self )
           {
             return 0 ;
           }
-          else 
+          else
           {
-            // otherwise find mapped thread number 
+            // otherwise find mapped thread number
             ThreadIdMap :: iterator num = mg.idmap_.find( self ) ;
             assert( num != mg.idmap_.end() );
             return (*num).second ;
           }
         }
 
-        //! default constructor 
-        Manager() 
-          : master_( pthread_self() ), // get id of master thread 
-            idmap_(), 
+        //! default constructor
+        Manager()
+          : master_( pthread_self() ), // get id of master thread
+            idmap_(),
             threadNum_( &Manager :: singleThreadNumber ),
             maxThreads_( 1 ), activeThreads_( 1 )
         {
         }
       };
 
-      static inline Manager& manager() 
+      static inline Manager& manager()
       {
         return Manager :: instance();
       }
 
 #if HAVE_PTHREAD_TLS
-      //! thread local storage of thread number 
-      static int& threadNumber () 
-      { 
-        // this static variable is thread local 
+      //! thread local storage of thread number
+      static int& threadNumber ()
+      {
+        // this static variable is thread local
         static __thread int pthreadThreadNumber = 0;
-        return pthreadThreadNumber; 
+        return pthreadThreadNumber;
       }
 #endif
 
-    public:  
+    public:
       ///////////////////////////////////////////////////////
-      //  begin of pthread specific interface 
+      //  begin of pthread specific interface
       ///////////////////////////////////////////////////////
-      //! initialize single thread mode 
-      static inline void initSingleThreadMode() 
+      //! initialize single thread mode
+      static inline void initSingleThreadMode()
       {
         manager().singleThreadMode();
       }
 
-      //! initialize multi thread mode 
-      static inline void initMultiThreadMode( const int nThreads ) 
+      //! initialize multi thread mode
+      static inline void initMultiThreadMode( const int nThreads )
       {
         manager().multiThreadMode( nThreads );
       }
 
-      //! set thread number for given thead id 
-      static inline void setThreadNumber( const pthread_t& threadId, const int threadNum ) 
+      //! set thread number for given thead id
+      static inline void setThreadNumber( const pthread_t& threadId, const int threadNum )
       {
 #if HAVE_PTHREAD_TLS
         threadNumber() = threadNum ;
@@ -214,80 +214,80 @@ namespace Dune
       }
 
       ///////////////////////////////////////////////////////
-      //  INTERFACE 
+      //  INTERFACE
       ///////////////////////////////////////////////////////
-      //! return maximal number of threads possbile in the current run 
-      static inline int maxThreads() 
+      //! return maximal number of threads possbile in the current run
+      static inline int maxThreads()
       {
-        return manager().maxThreads(); 
+        return manager().maxThreads();
       }
 
-      //! return number of current threads 
-      static inline int currentThreads() 
+      //! return number of current threads
+      static inline int currentThreads()
       {
-        return manager().currentThreads(); 
+        return manager().currentThreads();
       }
 
-      //! return thread number 
-      static inline int thread() 
+      //! return thread number
+      static inline int thread()
       {
 #if HAVE_PTHREAD_TLS
         return threadNumber();
 #else
-        return manager().thread(); 
+        return manager().thread();
 #endif
       }
 
-      //! set maximal number of threads available during run  
-      static inline void setMaxNumberThreads( const int numThreads ) 
+      //! set maximal number of threads available during run
+      static inline void setMaxNumberThreads( const int numThreads )
       {
         manager().setMaxThreads( numThreads );
       }
 
       //! return true if the current thread is the master thread (i.e. thread 0)
-      static inline bool isMaster() 
+      static inline bool isMaster()
       {
         return manager().isMaster() ;
       }
 
       //! returns true if program is operating on one thread currently
-      static inline bool singleThreadMode() 
+      static inline bool singleThreadMode()
       {
         return currentThreads() == 1 ;
       }
-    }; // end class ThreadManager 
-#else 
-    /** \class ThreadManager 
-     *  \ingroup Utility 
-     *  \brief The ThreadManager wrapps basic shared memory functionality 
+    }; // end class ThreadManager
+#else
+    /** \class ThreadManager
+     *  \ingroup Utility
+     *  \brief The ThreadManager wrapps basic shared memory functionality
      *         provided by OpenMP or pthreads such as thread id, number of threads, etc.
      *
-     *  \note All methods are static members. 
+     *  \note All methods are static members.
      */
-    struct ThreadManager 
+    struct ThreadManager
     {
-      //! \brief return maximal number of threads possbile in the current run 
+      //! \brief return maximal number of threads possbile in the current run
       static inline int maxThreads() { return 1;  }
 
-      //! \brief return number of current threads 
+      //! \brief return number of current threads
       static inline int currentThreads() { return 1; }
 
-      //! \brief return thread number 
+      //! \brief return thread number
       static inline int thread() {  return 0; }
 
       //! \brief return true if the current thread is the master thread (i.e. thread 0)
       static inline bool isMaster() { return true ; }
 
-      //! \brief set maximal number of threads available during run  
-      static inline void setMaxNumberThreads( const int numThreads ) { } 
+      //! \brief set maximal number of threads available during run
+      static inline void setMaxNumberThreads( const int numThreads ) { }
 
       //! \brief returns true if program is operating on one thread currently
       static inline bool singleThreadMode() { return true ; }
-    }; // end class ThreadManager 
+    }; // end class ThreadManager
 #endif
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_OMPMANAGER_HH

@@ -12,7 +12,7 @@ static const int dimw = Dune::GridSelector::dimworld;
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
-#include <dune/fem/gridpart/adaptiveleafgridpart.hh> 
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
 
 #include <dune/fem/misc/double.hh>
@@ -23,27 +23,27 @@ static const int dimw = Dune::GridSelector::dimworld;
 using namespace Dune;
 using namespace Fem;
 
-// polynom approximation order of quadratures, 
-// at least poolynom order of basis functions 
+// polynom approximation order of quadratures,
+// at least poolynom order of basis functions
 const int polOrd = POLORDER;
 
 //***********************************************************************
-/*! L2 Projection of a function f: 
+/*! L2 Projection of a function f:
 
-  This is an example how to solve the equation on 
+  This is an example how to solve the equation on
   \f[\Omega = (0,1)^2 \f]
 
   \f[ \int_{\Omega} u \phi = \int_{\Omega} f \phi  \ \ \ in \Omega \f]
   \f[ f(x,y) = x ( 1 - x) y ( 1 - y ) \f]
 
-  Here u is the L_2 projection of f. 
+  Here u is the L_2 projection of f.
 
   The Projection should converge to the given function f.
   with the finite element method using lagrangian elements of polynom order +1.
 */
 //***********************************************************************
 
-//! the index set we are using 
+//! the index set we are using
 typedef GridSelector::GridType MyGridType;
 typedef LeafGridPart< MyGridType > GridPartType;
 
@@ -52,7 +52,7 @@ typedef LeafGridPart< MyGridType > GridPartType;
 //typedef MatrixFunctionSpace < double , double, dimw , 3,5 > FuncSpace;
 // double -> Double
 
-// the exact solution to the problem for EOC calculation 
+// the exact solution to the problem for EOC calculation
 template< class FuncSpace >
 class ExactSolution
 : public Fem::Function< FuncSpace, ExactSolution< FuncSpace > >
@@ -68,34 +68,34 @@ public:
   explicit ExactSolution ( int shift = 0 )
   : shift_( shift )
   {}
- 
+
   //! f(x,y) = x*(1-x)*y*(1-y)
   void evaluate (const DomainType & x , RangeType & ret)  const
   {
     ret = 2.; // maximum of function is 2
-    for (int j=0;j<RangeType::dimension; j++) 
+    for (int j=0;j<RangeType::dimension; j++)
       for(int i=0; i<DomainType::dimension; i++)
 	ret[j] += pow(x[i]*(1.0 -x[i])*4.,double(j+1+shift_));
   }
-  void evaluate (const DomainType & x , RangeFieldType time , 
+  void evaluate (const DomainType & x , RangeFieldType time ,
 		 RangeType & ret) const
   {
     evaluate ( x , ret );
   }
   int shift_;
 };
- 
+
 // ********************************************************************
 template <class DiscreteFunctionType>
 class L2Projection
 {
-  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType 
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
           DiscreteFunctionSpaceType;
 
  public:
   template <class FunctionType>
-  static void project (const FunctionType &f, 
-         DiscreteFunctionType &discFunc, int polOrd) 
+  static void project (const FunctionType &f,
+         DiscreteFunctionType &discFunc, int polOrd)
   {
     typedef typename DiscreteFunctionSpaceType::Traits::GridPartType GridPartType;
     typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
@@ -110,7 +110,7 @@ class L2Projection
     typename DiscreteFunctionSpaceType::RangeType phi (0.0);
 
     Iterator endit = space.end();
-    for(Iterator it = space.begin(); it != endit ; ++it) 
+    for(Iterator it = space.begin(); it != endit ; ++it)
     {
       // Get quadrature rule
       CachingQuadrature<GridPartType,0> quad(*it, polOrd);
@@ -118,17 +118,17 @@ class L2Projection
       LocalFuncType lf = discFunc.localFunction(*it);
 
       //! Note: BaseFunctions must be ortho-normal!!!!
-      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType 
-	BaseFunctionSetType ; 
+      typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType
+	BaseFunctionSetType ;
       const BaseFunctionSetType & baseset =
         lf.baseFunctionSet();
 
-      const typename MyGridType::template Codim<0>::Entity::Geometry& 
+      const typename MyGridType::template Codim<0>::Entity::Geometry&
         itGeom = (*it).geometry();
-     
+
       const int quadNop = quad.nop();
       const int numDofs = lf.numDofs();
-      for(int qP = 0; qP < quadNop ; ++qP) 
+      for(int qP = 0; qP < quadNop ; ++qP)
       {
         f.evaluate(itGeom.global(quad.point(qP)), ret);
         for(int i=0; i<numDofs; ++i) {
@@ -138,9 +138,9 @@ class L2Projection
       }
     }
   }
-  
+
   template <class FunctionType>
-  static void project (const FunctionType &f, DiscreteFunctionType &discFunc) 
+  static void project (const FunctionType &f, DiscreteFunctionType &discFunc)
   {
     const DiscreteFunctionSpaceType& space =  discFunc.space();
     int polOrd = 2 * space.order();
@@ -152,7 +152,7 @@ class L2Projection
 template <class DiscreteFunctionType>
 class L2Error
 {
-  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType 
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
           DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
 
@@ -190,12 +190,12 @@ public:
           error[i] += weight * SQR(ret[i] - phi[i]);
       }
     }
-    
-    for(int i=0; i< dimRange; ++i) 
+
+    for(int i=0; i< dimRange; ++i)
     {
       error[i] = sqrt(error[i]);
     }
-    
+
     return error;
   }
 
@@ -212,42 +212,42 @@ public:
 // ********************************************************************
 // ********************************************************************
 const int RANGE = 3;
-typedef FunctionSpace < MyGridType :: ctype, double , 
+typedef FunctionSpace < MyGridType :: ctype, double ,
 			dimw , RANGE > FuncSpace;
-typedef FunctionSpace < MyGridType :: ctype, double , 
+typedef FunctionSpace < MyGridType :: ctype, double ,
 			dimw , 1 > SingleFuncSpace;
 typedef DiscontinuousGalerkinSpace<
-  SingleFuncSpace,GridPartType, 
+  SingleFuncSpace,GridPartType,
   polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
-typedef AdaptiveDiscreteFunction < 
+typedef AdaptiveDiscreteFunction <
   SingleDiscreteFunctionSpaceType > SingleDiscreteFunctionType;
 
 //! Get the Dofmanager type
 typedef DofManager<MyGridType> DofManagerType;
 
 template <class DiscreteFunctionType>
-double algorithm (MyGridType& grid, 
+double algorithm (MyGridType& grid,
 		  DiscreteFunctionType& solution  , int turn )
 {
-  typedef typename 
+  typedef typename
     DiscreteFunctionType::DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
   //! perform l2-projection
-  typedef typename DiscreteFunctionSpaceType :: 
+  typedef typename DiscreteFunctionSpaceType ::
     ContainedSpaceType SubDFSType;
-  typedef typename DiscreteFunctionType :: 
+  typedef typename DiscreteFunctionType ::
     SubDiscreteFunctionType SubDFType;
-  typedef typename DiscreteFunctionSpaceType :: 
-    RangeType RangeType; 
+  typedef typename DiscreteFunctionSpaceType ::
+    RangeType RangeType;
   typedef typename SubDFSType :: RangeType SubRangeType;
   RangeType error(0);
   ExactSolution< typename DiscreteFunctionSpaceType::FunctionSpaceType > f;
   L2Projection<DiscreteFunctionType>:: project(f, solution);
   for (int method=0;method<2;method++)
   {
-    // calculation L2 error 
-    // pol ord for calculation the error chould by higher than 
-    // pol for evaluation the basefunctions 
+    // calculation L2 error
+    // pol ord for calculation the error chould by higher than
+    // pol for evaluation the basefunctions
     L2Error < DiscreteFunctionType > l2err;
     error = l2err.norm(f ,solution, 0.0);
     for(int i=0; i<RangeType::dimension; ++i)
@@ -257,7 +257,7 @@ double algorithm (MyGridType& grid,
       ExactSolution< typename SubDFSType::FunctionSpaceType > f0( i );
       L2Error < SubDFType > l2err0;
       SubRangeType error0 = l2err0.norm(f0,sol0,0.0);
-      std::cout << "\n L2 SubError[" << i << "]-Error[" << i << "]  : " 
+      std::cout << "\n L2 SubError[" << i << "]-Error[" << i << "]  : "
                 << error0[0]-error[i] << "\n\n";
     }
     solution.clear();
@@ -274,7 +274,7 @@ double algorithm (MyGridType& grid,
 
 //**************************************************
 //
-//  main programm, run algorithm twice to calc EOC 
+//  main programm, run algorithm twice to calc EOC
 //
 //**************************************************
 int main (int argc, char **argv)
@@ -287,7 +287,7 @@ int main (int argc, char **argv)
   int ml = atoi( argv[1] );
   double* error = new double[ml];
   char tmp[16]; sprintf(tmp,"%d",dimw);
-  std::string macroGridName (tmp); 
+  std::string macroGridName (tmp);
   macroGridName += "dgrid.dgf";
 
   std :: cout << "Polynomial Order: " << polOrd << std :: endl;
@@ -311,13 +311,13 @@ int main (int argc, char **argv)
       dm.resize();
       error[i] = algorithm ( grid , *solution1 , i==ml-1);
       if (i>0) {
-	double eoc = log( error[i-step]/error[i]) / M_LN2; 
+	double eoc = log( error[i-step]/error[i]) / M_LN2;
 	std::cout << "EOC = " << eoc << " \n";
       }
     }
   }
   typedef CombinedSpace
-     <SingleDiscreteFunctionSpaceType,RANGE,VariableBased> 
+     <SingleDiscreteFunctionSpaceType,RANGE,VariableBased>
       DiscreteFunctionSpaceType2;
   typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType2>
       DiscreteFunctionType2;
@@ -337,14 +337,14 @@ int main (int argc, char **argv)
       dm.resize();
       error[i] = algorithm ( grid , *solution2 , i==ml-1);
       if (i>0) {
-	double eoc = log( error[i-step]/error[i]) / M_LN2; 
+	double eoc = log( error[i-step]/error[i]) / M_LN2;
 	std::cout << "EOC = " << eoc << " \n";
       }
     }
   }
   (*solution1) -= (*solution2);
-  std::cout << "Difference of function: " 
-	    << solution1->scalarProductDofs(*solution1) 
+  std::cout << "Difference of function: "
+	    << solution1->scalarProductDofs(*solution1)
             << std::endl;
   delete solution1;
   delete solution2;

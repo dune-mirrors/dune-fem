@@ -8,7 +8,7 @@
 
 #include <dune/common/typetraits.hh>
 
-#include <dune/fem/storage/envelope.hh> 
+#include <dune/fem/storage/envelope.hh>
 
 #include <dune/fem/misc/debug.hh> // for DebugCounter
 
@@ -42,7 +42,7 @@ namespace Fem {
     friend class ReferenceBlockVectorBlock< const F, BlockSize >;
 
   public:
-    
+
     //! Type of the field the dofs lie in
     typedef F                                               FieldType;
     //! Iterator to iterate over the dofs
@@ -66,8 +66,8 @@ namespace Fem {
     enum { blockSize = BlockSize };
 
 
-    /** \brief Constructor; use this to create a block vector with 'size' blocks. 
-     *   
+    /** \brief Constructor; use this to create a block vector with 'size' blocks.
+     *
      *  The dofs are not initialized.
      *
      *  \param[in]  size         Number of blocks
@@ -77,8 +77,8 @@ namespace Fem {
       array_( size*blockSize )
     {}
 
-    /** \brief Constructor; use this to create a block vector with 'size' blocks. 
-     *   
+    /** \brief Constructor; use this to create a block vector with 'size' blocks.
+     *
      *  All the dofs are set to 'initialValue'.
      *
      *  \param[in]  size          Number of blocks
@@ -168,7 +168,7 @@ namespace Fem {
 
     /** \brief Scalar product *this with another block vector
      *
-     *  \param[in] other  Other block vector 
+     *  \param[in] other  Other block vector
      *  \return Returns the scalar product " (*this)*other"
      */
     FieldType operator* ( const ThisType &other ) const
@@ -256,9 +256,9 @@ namespace Fem {
     /** \brief Reserve memory.
      *
      *  This method is a no-op. It is defined here to make the block vector
-     *  compatible to the managed dof storage mechanisms used by 
+     *  compatible to the managed dof storage mechanisms used by
      *  Dune::Fem::BlockVectorDiscreteFunction
-     * 
+     *
      *  \param[in] size  Number of blocks
      */
     void reserve ( const int size )
@@ -291,8 +291,8 @@ namespace Fem {
 
 
   private:
- 
-    // Copy block vectors. 
+
+    // Copy block vectors.
     //    Note: No '++sequence_' here, sequence_ is only changed in public methods
     void assign ( const ThisType &other )
     {
@@ -362,7 +362,7 @@ namespace Fem {
       blockBegin_( other.blockBegin_ ),
       sequence_( other.sequence_ )
     {}
-    
+
     /** \brief Copy assignment operator for constant blocks
      *
      *  \param[in] other  Other block (constant) which should be assigned to *this
@@ -422,7 +422,7 @@ namespace Fem {
     }
 
     /** \brief Calculate the scalar product of this block with another block
-     *  
+     *
      *  \param[in] other  Other block to scalar-multiply this block by
      *  \return The value of the scalar product
      */

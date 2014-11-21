@@ -22,7 +22,7 @@ namespace Dune
 
     public:
       typedef typename remove_const< GridFamily >::type::ctype ctype;
-      
+
       static const int dimension = remove_const< GridFamily >::type::dimension;
       static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
 
@@ -51,7 +51,7 @@ namespace Dune
       {
         return EntityPointerImpl( hostIntersection().inside() );
       }
-      
+
       EntityPointer outside () const
       {
         return EntityPointerImpl( hostIntersection().outside() );
@@ -66,22 +66,22 @@ namespace Dune
       {
         return hostIntersection().conforming();
       }
-          
-      int twistInSelf() const 
-      { 
-        return hostIntersection().impl().twistInSelf(); 
+
+      int twistInSelf() const
+      {
+        return hostIntersection().impl().twistInSelf();
       }
-      
-      int twistInNeighbor() const 
-      { 
-        return hostIntersection().impl().twistInNeighbor(); 
+
+      int twistInNeighbor() const
+      {
+        return hostIntersection().impl().twistInNeighbor();
       }
-          
+
       bool neighbor () const
       {
         return hostIntersection().neighbor();
       }
-          
+
       int boundaryId () const
       {
         return hostIntersection().boundaryId();
@@ -91,17 +91,17 @@ namespace Dune
       {
         return hostIntersection().boundarySegmentIndex();
       }
-          
+
       LocalGeometry geometryInInside () const
       {
         return LocalGeometry( hostIntersection().geometryInInside() );
       }
-      
+
       LocalGeometry geometryInOutside () const
       {
         return LocalGeometry( hostIntersection().geometryInOutside() );
       }
-     
+
       Geometry geometry () const
       {
         return Geometry( hostIntersection().geometry() );
@@ -116,18 +116,18 @@ namespace Dune
       {
         return hostIntersection().indexInInside();
       }
-      
+
       int indexInOutside () const
       {
         return hostIntersection().indexInOutside();
       }
-      
+
       FieldVector< ctype, dimensionworld >
       integrationOuterNormal ( const FieldVector< ctype, dimension-1 > &local ) const
       {
         return hostIntersection().integrationOuterNormal( local );
       }
-      
+
       FieldVector< ctype, dimensionworld >
       outerNormal ( const FieldVector< ctype, dimension-1 > &local ) const
       {

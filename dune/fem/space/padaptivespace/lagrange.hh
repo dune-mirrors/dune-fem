@@ -16,7 +16,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /** \addtogroup PAdaptiveLagrangeSpace
@@ -44,10 +44,10 @@ namespace Dune
       static_assert((polOrder > 0), "LagrangeSpace only defined for polOrder > 0" );
 
       typedef PAdaptiveLagrangeSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
-      
+
       typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;
-      
+
       static const int polynomialOrder = polOrder;
 
       static const bool continuousSpace = true ;
@@ -140,9 +140,9 @@ namespace Dune
       using BaseType::gridPart;
       using BaseType::order;
 
-      // default communication interface 
+      // default communication interface
       static const InterfaceType defaultInterface = InteriorBorder_InteriorBorder_Interface;
-      // default communication direction 
+      // default communication direction
       static const CommunicationDirection defaultDirection = ForwardCommunication;
 
       /** \brief constructor
@@ -157,14 +157,14 @@ namespace Dune
       : BaseType( gridPart, commInterface, commDirection )
       {}
 
-      // copy constructor needed for p-adaption 
-      PAdaptiveLagrangeSpace ( const PAdaptiveLagrangeSpace &other ) 
+      // copy constructor needed for p-adaption
+      PAdaptiveLagrangeSpace ( const PAdaptiveLagrangeSpace &other )
       : BaseType( other )
       {}
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
       bool continuous (const IntersectionType &intersection) const
-      { 
+      {
         if ( order() > 0 && intersection.conforming())
         {
           return true;
@@ -182,11 +182,11 @@ namespace Dune
        *        is unique to the LagrangeDiscreteFunctionSpace.
        *
        *  \param[in]  entity  entity the Lagrange point set is requested for
-       *  
+       *
        *  \returns LagrangePointSet
        */
       template< class EntityType >
-      const CompiledLocalKeyType &lagrangePointSet ( const EntityType &entity ) const 
+      const CompiledLocalKeyType &lagrangePointSet ( const EntityType &entity ) const
       {
         return compiledLocalKey( entity.type(),
                                  blockMapper().polynomOrder( entity ) );
@@ -207,7 +207,7 @@ namespace Dune
         return compiledLocalKey( type, order );
       }
 
-      /** \brief add function to discrete function space for p-adaptation 
+      /** \brief add function to discrete function space for p-adaptation
        *         (currently only supported by AdaptiveDiscreteFunction )
        */
       template< class DiscreteFunction >
@@ -215,8 +215,8 @@ namespace Dune
       {
         assert( searchFunction( df ) == dfList_.end() );
 
-        // select LagrangeInterpolation to be the LocalInterpolation 
-        typedef typename BaseType :: template PAdaptiveDiscreteFunctionEntry< 
+        // select LagrangeInterpolation to be the LocalInterpolation
+        typedef typename BaseType :: template PAdaptiveDiscreteFunctionEntry<
             DiscreteFunction, LagrangeInterpolation< DiscreteFunction, DiscreteFunction > > RealEntryType ;
         typedef typename BaseType :: PAdaptiveDiscreteFunctionEntryInterface
           EntryInterface;
@@ -228,7 +228,7 @@ namespace Dune
     };
 
   } // namespace Fem
-    
+
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_SPACE_PADAPTIVE_LAGRANGE_HH

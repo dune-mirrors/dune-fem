@@ -43,7 +43,7 @@ namespace Dune
       : public GridPartType::template Codim< codim >
       { };
 
-      /** \brief type of index set */ 
+      /** \brief type of index set */
       typedef typename GridPartType::IndexSetType IndexSetType;
 
       /** \brie local failure type */
@@ -51,11 +51,11 @@ namespace Dune
 
     private:
       template< int codim >
-      static void checkSize ( const IndexSetType &indexSet, 
+      static void checkSize ( const IndexSetType &indexSet,
                               const GridPartType &gridPart,
                               FailureHandler &failureHandler );
 
-      static void checkGeomTypes ( const IndexSetType &indexSet, 
+      static void checkGeomTypes ( const IndexSetType &indexSet,
                                    const GridPartType &gridPart,
                                    FailureHandler &failureHandler );
 
@@ -94,7 +94,7 @@ namespace Dune
       template< int codim >
       struct CheckSize
       {
-        static void apply ( const IndexSetType &indexSet, const GridPartType &gridPart, 
+        static void apply ( const IndexSetType &indexSet, const GridPartType &gridPart,
                            FailureHandler &failureHandler )
         {
           const bool hasEntity = Dune::Fem::GridPartCapabilities::hasEntity< GridPartType, codim >::v;
@@ -123,7 +123,7 @@ namespace Dune
     template< class GridPartType, class FailureHandler >
     template< int codim >
     inline void CheckIndexSet< GridPartType, FailureHandler >
-      ::checkSize ( const IndexSetType &indexSet, 
+      ::checkSize ( const IndexSetType &indexSet,
                     const GridPartType &gridPart,
                     FailureHandler &failureHandler )
     {
@@ -144,7 +144,7 @@ namespace Dune
 
     template< class GridPartType, class FailureHandler >
     inline void CheckIndexSet< GridPartType, FailureHandler >
-      ::checkGeomTypes ( const IndexSetType &indexSet, 
+      ::checkGeomTypes ( const IndexSetType &indexSet,
                          const GridPartType &gridPart,
                          FailureHandler &failureHandler )
     {
@@ -154,7 +154,7 @@ namespace Dune
       // find all geometry types for codimension 0
       if( GridPartCapabilities::hasSingleGeometryType< GridPartType >::v )
       {
-        unsigned int topologyId 
+        unsigned int topologyId
           = GridPartCapabilities::hasSingleGeometryType< GridPartType >::topologyId;
         geomTypes[ 0 ].push_back( GeometryType( topologyId, dimension ) );
       }
@@ -193,7 +193,7 @@ namespace Dune
 
       for( int cd = 0; cd <= dimension; ++cd )
       {
-        if( !std::equal( geomTypes[ cd ].begin(), geomTypes[ cd ].end(), 
+        if( !std::equal( geomTypes[ cd ].begin(), geomTypes[ cd ].end(),
                          indexSet.geomTypes( cd ).begin() ) )
         {
           abort();

@@ -40,8 +40,8 @@ namespace Dune
     {
       typedef IdGridPart< HostGridPart > GridPartType;
 
-      //! type of twist utility 
-      typedef MetaTwistUtility< typename HostGridPart :: TwistUtilityType >  TwistUtilityType; 
+      //! type of twist utility
+      typedef MetaTwistUtility< typename HostGridPart :: TwistUtilityType >  TwistUtilityType;
 
       // Traits for dune-grid facades ("Gen-Gurke!")
       struct GridFamily
@@ -169,44 +169,44 @@ namespace Dune
       }
 
       GridType &grid ()
-      { 
+      {
         return hostGridPart_.grid();
       }
 
       const IndexSetType &indexSet () const
-      { 
+      {
         return indexSet_;
       }
 
       template< int codim >
       typename Codim< codim >::IteratorType
-      begin () const 
+      begin () const
       {
         return begin< codim, InteriorBorder_Partition >();
       }
 
       template< int codim, PartitionIteratorType pitype >
       typename Codim< codim >::template Partition< pitype >::IteratorType
-      begin () const 
+      begin () const
       {
         return IdIterator< codim, pitype, const GridFamily >( hostGridPart().template begin< codim, pitype >() );
       }
 
       template< int codim >
       typename Codim< codim >::IteratorType
-      end () const 
-      { 
+      end () const
+      {
         return end< codim, InteriorBorder_Partition >();
       }
 
       template< int codim, PartitionIteratorType pitype >
       typename Codim< codim >::template Partition< pitype >::IteratorType
-      end () const 
-      { 
+      end () const
+      {
         return IdIterator< codim, pitype, const GridFamily >( hostGridPart().template end< codim, pitype >() );
       }
 
-      int level () const 
+      int level () const
       {
         return hostGridPart().level();
       }
@@ -215,8 +215,8 @@ namespace Dune
       {
         return IdIntersectionIterator< const GridFamily >( hostGridPart().ibegin( entity.impl().hostEntity() ) );
       }
-      
-      IntersectionIteratorType iend ( const typename Codim< 0 >::EntityType &entity ) const 
+
+      IntersectionIteratorType iend ( const typename Codim< 0 >::EntityType &entity ) const
       {
         return IdIntersectionIterator< const GridFamily >( hostGridPart().iend( entity.impl().hostEntity() ) );
       }
@@ -246,7 +246,7 @@ namespace Dune
       }
 
       // convert a grid entity to a grid part entity ("Gurke!")
-      template< class Entity > 
+      template< class Entity >
       MakeableInterfaceObject< typename Codim< Entity::codimension >::EntityType >
       convert ( const Entity &entity ) const
       {

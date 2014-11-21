@@ -14,31 +14,31 @@
 //*************************************************************
 
 // is this file still needed ???
-namespace Dune 
-{  
+namespace Dune
+{
 
   namespace Fem
   {
-  
+
     //declarations
-    template < class Model , class NumFlux , int polOrd 
+    template < class Model , class NumFlux , int polOrd
                , int passId1 = -1
                >
     class AdvDiffDModel1;
-    
+
 
     template < class Model , int polOrd
                , int passId1 = -1
                >
     class LimiterDiscreteModel1;
-    
+
 
     template < class Model , class NumFlux , int polOrd
                , int passId1 = -1
                , int passId2 = -1
                >
     class AdvDiffDModel2; // true,true
-    
+
 
     template < class Model , class NumFlux , int polOrd
                , int passId1 = -1
@@ -61,7 +61,7 @@ namespace Dune
 
     // MethodOrderTraits
     template <class Model,int dimRange,int polOrd>
-    class PassTraits 
+    class PassTraits
     {
     public:
       typedef typename Model::Traits ModelTraits;
@@ -74,15 +74,15 @@ namespace Dune
       //typedef ElementQuadrature<GridPartType,0> VolumeQuadratureType;
       //typedef ElementQuadrature<GridPartType,1> FaceQuadratureType;
       #if 0
-      typedef FunctionSpace<double, double, dimDomain, dimRange> FunctionSpaceType; 
-      typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, 
+      typedef FunctionSpace<double, double, dimDomain, dimRange> FunctionSpaceType;
+      typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType,
                  polOrd,CachingStorage> DiscreteFunctionSpaceType;
       #else
-      typedef FunctionSpace<double, double, dimDomain, 1> FunctionSpaceType; 
-      typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType, 
+      typedef FunctionSpace<double, double, dimDomain, 1> FunctionSpaceType;
+      typedef DiscontinuousGalerkinSpace<FunctionSpaceType, GridPartType,
                  polOrd,CachingStorage> SingleDiscreteFunctionSpaceType;
-      typedef CombinedSpace<SingleDiscreteFunctionSpaceType, dimRange> 
-              DiscreteFunctionSpaceType; 
+      typedef CombinedSpace<SingleDiscreteFunctionSpaceType, dimRange>
+              DiscreteFunctionSpaceType;
       #endif
       typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
       //typedef StaticDiscreteFunction<DiscreteFunctionSpaceType> DestinationType;
@@ -90,10 +90,10 @@ namespace Dune
 
 
     // DiscreteModelTraits
-    template <class Model,class NumFlux,int polOrd 
+    template <class Model,class NumFlux,int polOrd
                , int passId1 = -1
                >
-    struct AdvDiffTraits1 
+    struct AdvDiffTraits1
     {
       typedef typename Model::Traits ModelTraits;
       typedef typename ModelTraits::GridType GridType;
@@ -117,12 +117,12 @@ namespace Dune
       typedef typename DestinationType::RangeType RangeType;
       typedef typename DestinationType::JacobianRangeType JacobianRangeType;
 
-      typedef AdvDiffDModel1<Model,NumFlux,polOrd 
+      typedef AdvDiffDModel1<Model,NumFlux,polOrd
                , passId1
                > DiscreteModelType;
     };
 
-    
+
     template< class Model,class NumFlux,int polOrd
                , int passId1 = -1
                , int passId2 = -1
@@ -138,7 +138,7 @@ namespace Dune
       typedef PassTraits<Model,dimRange,polOrd> Traits;
       typedef typename Traits::FunctionSpaceType FunctionSpaceType;
       // typedef typename Traits::SingleDiscreteFunctionSpaceType SingleDiscreteFunctionSpaceType;
-      
+
       typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
       typedef typename Traits::FaceQuadratureType FaceQuadratureType;
       typedef typename Traits::GridPartType GridPartType;
@@ -171,7 +171,7 @@ namespace Dune
       typedef PassTraits<Model,dimRange,polOrd> Traits;
       typedef typename Traits::FunctionSpaceType FunctionSpaceType;
       // typedef typename Traits::SingleDiscreteFunctionSpaceType SingleDiscreteFunctionSpaceType;
-      
+
       typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
       typedef typename Traits::FaceQuadratureType FaceQuadratureType;
       typedef typename Traits::GridPartType GridPartType;
@@ -203,7 +203,7 @@ namespace Dune
       typedef PassTraits<Model,dimRange,polOrd> Traits;
       typedef typename Traits::FunctionSpaceType FunctionSpaceType;
       // typedef typename Traits::SingleDiscreteFunctionSpaceType SingleDiscreteFunctionSpaceType;
-      
+
       typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
       typedef typename Traits::FaceQuadratureType FaceQuadratureType;
       typedef typename Traits::GridPartType GridPartType;
@@ -236,7 +236,7 @@ namespace Dune
       typedef PassTraits<Model,dimRange,polOrd> Traits;
       typedef typename Traits::FunctionSpaceType FunctionSpaceType;
       // typedef typename Traits::SingleDiscreteFunctionSpaceType SingleDiscreteFunctionSpaceType;
-      
+
       typedef typename Traits::VolumeQuadratureType VolumeQuadratureType;
       typedef typename Traits::FaceQuadratureType FaceQuadratureType;
       typedef typename Traits::GridPartType GridPartType;
@@ -254,12 +254,12 @@ namespace Dune
                > DiscreteModelType;
     };
 
-    
+
     template < class Model,int polOrd
                , int passId1 = -1
                , int passId2 = -1
                >
-    struct LimiterTraits1 
+    struct LimiterTraits1
     {
       typedef typename Model::Traits ModelTraits;
       typedef typename ModelTraits::GridType GridType;
@@ -285,12 +285,12 @@ namespace Dune
       typedef typename DestinationType::RangeType RangeType;
       typedef typename DestinationType::JacobianRangeType JacobianRangeType;
 
-      typedef LimiterDiscreteModel1< Model , polOrd 
+      typedef LimiterDiscreteModel1< Model , polOrd
                , passId1
                > DiscreteModelType;
     };
 
-    
+
     // Passes
     template < class Model , class NumFlux , int polOrd
                , int passId1
@@ -301,10 +301,10 @@ namespace Dune
     {
       integral_constant<int, passId1 > uVar;
     public:
-      typedef AdvDiffTraits1< Model , NumFlux , polOrd 
+      typedef AdvDiffTraits1< Model , NumFlux , polOrd
                , passId1
                > Traits;
-      
+
       //typedef Selector< 0 > OldSelectorType;
       //typedef Selector< passId1 > SelectorType;
       typedef FieldVector<double, Traits::dimDomain> DomainType;
@@ -315,7 +315,7 @@ namespace Dune
       typedef typename Traits::JacobianRangeType JacobianRangeType;
       typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
       typedef typename GridPartType::template Codim<0>::EntityType EntityType;
-      
+
     public:
       AdvDiffDModel1(const DomainType& upwind,
                const Model& mod,
@@ -327,24 +327,24 @@ namespace Dune
       {}
       bool hasSource() const { return false; }
       bool hasFlux() const { return true; }
-      
+
       template <class ArgumentTuple>
       double numericalFlux(IntersectionIterator& it,
                            double time, const FaceDomainType& x,
-                           const ArgumentTuple& uLeft, 
+                           const ArgumentTuple& uLeft,
                            const ArgumentTuple& uRight,
                            RangeType& gLeft,
                            RangeType& gRight)
-      { 
+      {
         const DomainType normal = it.integrationOuterNormal(x);
-        
+
         //typedef typename ElementType<0, ArgumentTuple>::Type UType;
         //const UType& argULeft = Element<0>::get(uLeft);
         //const UType& argURight = Element<0>::get(uRight);
 
         JacobianRangeType diffmatrix;
         RangeType diffflux(0.);
-        /* central differences      
+        /* central differences
         model_.diffusion(*it.inside(),time,it.intersectionSelfLocal().global(x),
              argULeft,diffmatrix);
         diffmatrix.umv(normal,diffflux);
@@ -374,10 +374,10 @@ namespace Dune
                           RangeType& gLeft)
       {
         const DomainType normal = it.integrationOuterNormal(x);
-        
+
         typedef typename ArgumentTuple::template Get< passId1 >::Type UType;
         //const UType& argULeft = Element<0>::get(uLeft);
-        
+
         JacobianRangeType diffmatrix;
         gLeft*=0.;
         if (upwind_*normal>0)
@@ -396,17 +396,17 @@ namespace Dune
          uLeft[ uVar ] , diffmatrix );
         }
         diffmatrix.umv(normal,gLeft);
-        return model_.diffusionTimeStep()*cflDiffinv_; 
+        return model_.diffusionTimeStep()*cflDiffinv_;
       }
 
       template <class ArgumentTuple>
       void analyticalFlux(EntityType& en,
                           double time, const DomainType& x,
                           const ArgumentTuple& u, JacobianRangeType& f)
-      { 
+      {
         //typedef typename ElementType<0, ArgumentTuple>::Type UType;
         //const UType& argU = Element<0>::get(u);
-        
+
         model_.diffusion(en,time,x,u[ uVar ],f);
       }
     private:
@@ -416,14 +416,14 @@ namespace Dune
       const double cflDiffinv_;
     };
 
-    
+
     template <class Model,class NumFlux,int polOrd
                , int passId1
                , int passId2
                >
     class AdvDiffDModel2 :
       public DGDiscreteModelDefault
-        < AdvDiffTraits2< Model , NumFlux , polOrd , passId1 , passId2 > 
+        < AdvDiffTraits2< Model , NumFlux , polOrd , passId1 , passId2 >
           , passId1 , passId2 >
     {
       integral_constant<int, passId1 > uVar;
@@ -433,12 +433,12 @@ namespace Dune
                , passId1
                , passId2
                > Traits;
-      
+
       //typedef Selector<0, 1> OldSelectorType;
       //typedef Selector< passId1 , passId2 > SelectorType;
       typedef FieldVector<double, Traits::dimDomain> DomainType;
       typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
-      
+
       typedef typename Traits::RangeType RangeType;
       typedef typename Traits::GridType GridType;
       typedef typename Traits::GridPartType GridPartType;
@@ -460,27 +460,27 @@ namespace Dune
       template <class ArgumentTuple>
       double numericalFlux(IntersectionIterator& it,
                            double time, const FaceDomainType& x,
-                           const ArgumentTuple& uLeft, 
+                           const ArgumentTuple& uLeft,
                            const ArgumentTuple& uRight,
                            RangeType& gLeft,
                            RangeType& gRight)
-      { 
+      {
         const DomainType normal = it.integrationOuterNormal(x);
-        
+
         //typedef typename ElementType<0, ArgumentTuple>::Type UType;
         //typedef typename ElementType<1, ArgumentTuple>::Type WType;
         //const UType& argULeft = Element<0>::get(uLeft);
         //const WType& argWLeft = Element<1>::get(uLeft);
         //const UType& argURight = Element<0>::get(uRight);
         //const WType& argWRight = Element<1>::get(uRight);
-        
+
         // Advection
         double ldt=numflux_.
     numericalFlux( it , time , x , uLeft[ uVar ] , uRight[ uVar ] , gLeft , gRight );
         // Diffusion
         JacobianRangeType diffmatrix;
         RangeType diffflux(0.);
-        /* central 
+        /* central
         DomainType normal = it.integrationOuterNormal(x);
         model_.
     diffusion(*it.inside(),time,it.intersectionSelfLocal().global(x),
@@ -513,12 +513,12 @@ namespace Dune
                           RangeType& gLeft)
       {
         const DomainType normal = it.integrationOuterNormal(x);
-        
+
         //typedef typename ElementType<0, ArgumentTuple>::Type UType;
         //typedef typename ElementType<1, ArgumentTuple>::Type WType;
         //const UType& argULeft = Element<0>::get(uLeft);
         //const WType& argWLeft = Element<1>::get(uLeft);
-        
+
         // Advection
         double ldt=0.;
         if (model_.hasBoundaryValue(it,time,x)) {
@@ -541,12 +541,12 @@ namespace Dune
       void analyticalFlux(EntityType& en,
                           double time, const DomainType& x,
                           const ArgumentTuple& u, JacobianRangeType& f)
-      { 
+      {
         //typedef typename ElementType<0, ArgumentTuple>::Type UType;
         //typedef typename ElementType<1, ArgumentTuple>::Type WType;
         //const UType& argU = Element<0>::get(u);
         //const WType& argW = Element<1>::get(u);
-        
+
         // Advection
         model_.analyticalFlux( en , time , x , u[ uVar ] , f );
         // Diffusion
@@ -560,7 +560,7 @@ namespace Dune
       const NumFlux& numflux_;
     };
 
-    
+
     template <class Model,class NumFlux,int polOrd
                , int passId1
                >
@@ -576,7 +576,7 @@ namespace Dune
       //typedef Selector< passId1 > SelectorType;
       typedef FieldVector<double, Traits::dimDomain> DomainType;
       typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
-      
+
       typedef typename Traits::RangeType RangeType;
       typedef typename Traits::GridType GridType;
       typedef typename Traits::GridPartType GridPartType;
@@ -595,7 +595,7 @@ namespace Dune
       template <class ArgumentTuple>
       double numericalFlux(IntersectionIterator& it,
                            double time, const FaceDomainType& x,
-                           const ArgumentTuple& uLeft, 
+                           const ArgumentTuple& uLeft,
                            const ArgumentTuple& uRight,
                            RangeType& gLeft,
                            RangeType& gRight)
@@ -609,7 +609,7 @@ namespace Dune
         //typedef typename ArgumentTuple :: template Get< 0 > ::Type UType;
         //const UType& argULeft = uLeft.template get< 0 >();
         //const UType& argURight = uRight[ uVar ];
-        
+
         // Advection
         double ldt=numflux_.
     numericalFlux( it , time , x , uLeft[ uVar ] , uRight[ uVar ] , gLeft , gRight );
@@ -623,10 +623,10 @@ namespace Dune
                           RangeType& gLeft)
       {
         const DomainType normal = it->integrationOuterNormal(x);
-        
+
         //typedef typename ElementType<0, ArgumentTuple>::Type UType;
         //const UType& argULeft = Element<0>::get(uLeft);
-        
+
         // Advection
         double ldt=0.;
         if (model_.hasBoundaryValue(it,time,x)) {
@@ -643,10 +643,10 @@ namespace Dune
       void analyticalFlux(EntityType& en,
                           double time, const DomainType& x,
                           const ArgumentTuple& u, JacobianRangeType& f)
-      { 
+      {
         //typedef typename ElementType<0, ArgumentTuple>::Type UType;
         //const UType& argU = Element<0>::get(u);
-        
+
         // Advection
         model_.analyticalFlux( en , time , x , u[ uVar ] , f );
       }
@@ -654,7 +654,7 @@ namespace Dune
       const Model& model_;
       const NumFlux& numflux_;
     };
-    
+
 
     // pass for the advection equation with source term
     // differs from AdvDiffDModel3 by the presence of the source term
@@ -673,7 +673,7 @@ namespace Dune
       //typedef Selector< passId1 > SelectorType;
       typedef FieldVector<double, Traits::dimDomain> DomainType;
       typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
-      
+
       typedef typename Traits::RangeType RangeType;
       typedef typename Traits::GridType GridType;
       typedef typename Traits::GridPartType GridPartType;
@@ -705,7 +705,7 @@ namespace Dune
       template <class ArgumentTuple>
       double numericalFlux(IntersectionIterator& it,
                            double time, const FaceDomainType& x,
-                           const ArgumentTuple& uLeft, 
+                           const ArgumentTuple& uLeft,
                            const ArgumentTuple& uRight,
                            RangeType& gLeft,
                            RangeType& gRight)
@@ -719,7 +719,7 @@ namespace Dune
         //typedef typename ArgumentTuple :: template Get< 0 > ::Type UType;
         //const UType& argULeft = uLeft.template get< 0 >();
         //const UType& argURight = uRight[ uVar ];
-        
+
         // Advection
         double ldt=numflux_.
     numericalFlux( it , time , x , uLeft[ uVar ] , uRight[ uVar ] , gLeft , gRight );
@@ -733,10 +733,10 @@ namespace Dune
                           RangeType& gLeft)
       {
         const DomainType normal = it->integrationOuterNormal(x);
-        
+
         //typedef typename ElementType<0, ArgumentTuple>::Type UType;
         //const UType& argULeft = Element<0>::get(uLeft);
-        
+
         // Advection
         double ldt=0.;
         if (model_.hasBoundaryValue(it,time,x)) {
@@ -753,10 +753,10 @@ namespace Dune
       void analyticalFlux(EntityType& en,
                           double time, const DomainType& x,
                           const ArgumentTuple& u, JacobianRangeType& f)
-      { 
+      {
         //typedef typename ElementType<0, ArgumentTuple>::Type UType;
         //const UType& argU = Element<0>::get(u);
-        
+
         // Advection
         model_.analyticalFlux( en , time , x , u[ uVar ] , f );
       }
@@ -782,7 +782,7 @@ namespace Dune
       integral_constant<int, passId1 > uVar;
       integral_constant<int, passId2 > vVar;
     public:
-      typedef AdvDiffTraits4< Model , NumFlux , polOrd 
+      typedef AdvDiffTraits4< Model , NumFlux , polOrd
                , passId1
                , passId2
                > Traits;
@@ -790,7 +790,7 @@ namespace Dune
       //typedef Selector< passId1 , passId2 > SelectorType;
       typedef FieldVector<double, Traits::dimDomain> DomainType;
       typedef FieldVector<double, Traits::dimDomain-1> FaceDomainType;
-      
+
       typedef typename Traits::RangeType RangeType;
       typedef typename Traits::GridType GridType;
       typedef typename Traits::GridPartType GridPartType;
@@ -811,20 +811,20 @@ namespace Dune
       template <class ArgumentTuple>
       double numericalFlux(IntersectionIterator& it,
                            double time, const FaceDomainType& x,
-                           const ArgumentTuple& uLeft, 
+                           const ArgumentTuple& uLeft,
                            const ArgumentTuple& uRight,
                            RangeType& gLeft,
                            RangeType& gRight)
-      { 
+      {
         const DomainType normal = it.integrationOuterNormal(x);
-        
+
         //typedef typename ElementType<0, ArgumentTuple>::Type UType;
         //typedef typename ElementType<1, ArgumentTuple>::Type WType;
         //const UType& argULeft = Element<0>::get(uLeft);
         //const WType& argWLeft = Element<1>::get(uLeft);
         //const UType& argURight = Element<0>::get(uRight);
         //const WType& argWRight = Element<1>::get(uRight);
-        
+
         double ldt=0;
         // Diffusion
         gLeft*=0.;
@@ -849,12 +849,12 @@ namespace Dune
                           RangeType& gLeft)
       {
         const DomainType normal = it.integrationOuterNormal(x);
-        
+
         //typedef typename ElementType<0, ArgumentTuple>::Type UType;
         //typedef typename ElementType<1, ArgumentTuple>::Type WType;
         //const UType& argULeft = Element<0>::get(uLeft);
         //const WType& argWLeft = Element<1>::get(uLeft);
-        
+
         double ldt=0.;
         // Diffusion
         if (model_.hasBoundaryValue(it,time,x)) {
@@ -876,12 +876,12 @@ namespace Dune
       void analyticalFlux(EntityType& en,
                           double time, const DomainType& x,
                           const ArgumentTuple& u, JacobianRangeType& f)
-      { 
+      {
         //typedef typename ElementType<0, ArgumentTuple>::Type UType;
         //typedef typename ElementType<1, ArgumentTuple>::Type WType;
         //const UType& argU = Element<0>::get(u);
         //const WType argW = Element<1>::get(u);
-        
+
         // Diffusion
         JacobianRangeType diffmatrix;
         model_.diffusion( en , time , x , u[ uVar ] , u[ vVar ] , f );
@@ -910,7 +910,7 @@ namespace Dune
       typedef LimiterTraits1< Model , polOrd
                , passId1
                > Traits;
-      
+
       //typedef Selector<0> OldSelectorType;
       //typedef Selector< passId1 > SelectorType;
       typedef FieldVector<double, Traits::dimDomain> DomainType;
@@ -921,14 +921,14 @@ namespace Dune
       typedef typename Traits::JacobianRangeType JacobianRangeType;
       typedef typename Traits::GridPartType::IntersectionIteratorType IntersectionIterator;
       typedef typename GridPartType::template Codim<0>::EntityType EntityType;
-      
+
     public:
       LimiterDiscreteModel1(const Model& mod) :
         model_(mod) {}
 
       bool hasSource() const { return false; }
       bool hasFlux() const { return false; }
-      
+
     private:
       const Model& model_;
     };

@@ -25,9 +25,9 @@ namespace Dune
     class QuadCreator
     {
     private:
-      //! class holding vector with pointer to quadrature objects 
+      //! class holding vector with pointer to quadrature objects
       template< class QuadImp >
-      class QuadratureStorage  
+      class QuadratureStorage
       {
       public:
         typedef QuadImp QuadType;
@@ -37,14 +37,14 @@ namespace Dune
       protected:
         DynamicArray< QuadPtr > storage_;
         //std :: vector< QuadPtr > storage_;
-        
-      public:   
+
+      public:
         inline QuadratureStorage ()
         : storage_( QuadType :: maxOrder() + 1, (QuadPtr)0 )
         {
         }
-        
-        inline ~QuadratureStorage () 
+
+        inline ~QuadratureStorage ()
         {
           for( unsigned int i = 0; i < storage_.size(); ++i )
             delete storage_[ i ];
@@ -54,19 +54,19 @@ namespace Dune
                                        unsigned int order )
         {
           assert( order < storage_.size() );
-          
+
           QuadPtr& quadPtr = storage_[ order ];
           if( quadPtr == 0 )
           {
-            // make sure we work in single thread mode when quadrature is created 
+            // make sure we work in single thread mode when quadrature is created
             assert( Fem :: ThreadManager:: singleThreadMode() );
             quadPtr = new QuadImp( geometry, order, IdProvider :: instance().newId() );
           }
           assert( quadPtr != 0 );
           return *quadPtr;
-        }      
-      }; // end class QuadratureStorage 
-    
+        }
+      }; // end class QuadratureStorage
+
     public:
       /*! \brief provide quadrature
        *
@@ -89,7 +89,7 @@ namespace Dune
      *  \brief provide a single instance pool of quadratures
      *
      *  QuadratureProvider follows the monostate pattern. It provides a single
-     *  point of access (and storage) for the actual implementation of 
+     *  point of access (and storage) for the actual implementation of
      *  quadratures. Hence, the expensive creations of quadratures should be
      *  reduced to a minimum.
      *
@@ -109,7 +109,7 @@ namespace Dune
 
     private:
       typedef QuadratureProvider< FieldType, dimension, QuadratureTraits > ThisType;
-      
+
       typedef QuadratureTraits< FieldType, dimension > QuadratureTraitsType;
 
     public:
@@ -134,14 +134,14 @@ namespace Dune
       {
         return getQuadrature( geometry, order );
       }
-      
+
     private:
       // forbid creation
       QuadratureProvider();
-      
+
       // forbid copying
       QuadratureProvider( const ThisType& );
-     
+
       // forbid assignment
       QuadratureProvider &operator=( const ThisType& );
     };
@@ -177,10 +177,10 @@ namespace Dune
         assert( geometry.isCube() || geometry.isSimplex() );
         assert( order >= 0 );
         //return QuadCreator< 0 > :: template provideQuad< PointQuadratureType > ( geometry, order );
-        static PointQuadratureType quad( geometry, 
-                                         order, 
-                                         IdProvider ::instance().newId()); 
-        return quad; 
+        static PointQuadratureType quad( geometry,
+                                         order,
+                                         IdProvider ::instance().newId());
+        return quad;
       }
 
       //! Access to the quadrature implementations.
@@ -194,16 +194,16 @@ namespace Dune
     private:
       // forbid creation
       QuadratureProvider();
-      
+
       // forbid copying
       QuadratureProvider( const ThisType& );
-     
+
       // forbid assignment
       QuadratureProvider &operator=( const ThisType& );
-    }; 
-    
+    };
 
-    
+
+
     /** \copydoc Dune::Fem::QuadratureProvider */
     template< class FieldImp, template< class, int > class QuadratureTraits >
     class QuadratureProvider< FieldImp, 1, QuadratureTraits >
@@ -242,9 +242,9 @@ namespace Dune
       {
         assert( geometry.isCube() || geometry.isSimplex() );
         assert( order >= 0 );
-        // we need here to distinguish between the basic types 
-        // otherwise the this won't work for UGGrid 
-        return ( elementGeometry.isSimplex() ) ? 
+        // we need here to distinguish between the basic types
+        // otherwise the this won't work for UGGrid
+        return ( elementGeometry.isSimplex() ) ?
           QuadCreator< 0 > :: template provideQuad< LineQuadratureType > ( geometry, order ) :
           QuadCreator< 1 > :: template provideQuad< LineQuadratureType > ( geometry, order ) ;
       }
@@ -252,13 +252,13 @@ namespace Dune
     private:
       // forbid creation
       QuadratureProvider();
-      
+
       // forbid copying
       QuadratureProvider( const ThisType& );
-     
+
       // forbid assignment
       QuadratureProvider &operator=( const ThisType& );
-    }; 
+    };
 
 
 
@@ -293,14 +293,14 @@ namespace Dune
         assert( geometry.isCube() || geometry.isSimplex() );
         assert( order >= 0 );
 
-        if( geometry.isSimplex() ) 
+        if( geometry.isSimplex() )
         {
-          return QuadCreator< 0 > :: 
-            template provideQuad< SimplexQuadratureType > ( geometry, order ); 
+          return QuadCreator< 0 > ::
+            template provideQuad< SimplexQuadratureType > ( geometry, order );
         }
-        else 
+        else
         {
-          return QuadCreator< 1 > :: 
+          return QuadCreator< 1 > ::
             template provideQuad< CubeQuadratureType >    ( geometry, order ) ;
         }
       }
@@ -313,10 +313,10 @@ namespace Dune
         assert( geometry.isCube() || geometry.isSimplex() );
         assert( order >= 0 );
 
-        // if geometry is simplex return simplex quadrature 
-        if ( geometry.isSimplex() ) 
+        // if geometry is simplex return simplex quadrature
+        if ( geometry.isSimplex() )
         {
-          // check element geometry to provide quadratures with different ids 
+          // check element geometry to provide quadratures with different ids
           if( elementGeometry.isSimplex() )
             return QuadCreator< 0 > :: template provideQuad< SimplexQuadratureType > ( geometry, order ) ;
           else if( elementGeometry.isCube() )
@@ -325,13 +325,13 @@ namespace Dune
             return QuadCreator< 2 > :: template provideQuad< SimplexQuadratureType > ( geometry, order ) ;
           else if( elementGeometry.isPyramid() )
             return QuadCreator< 3 > :: template provideQuad< SimplexQuadratureType > ( geometry, order ) ;
-          else 
+          else
             DUNE_THROW( RangeError, "Element type not available for dimension 3" );
         }
-        else 
+        else
         {
-          // return cube quadrature 
-          // check element geometry to provide quadratures with different ids 
+          // return cube quadrature
+          // check element geometry to provide quadratures with different ids
           if( elementGeometry.isSimplex() )
             return QuadCreator< 4 > :: template provideQuad< CubeQuadratureType > ( geometry, order ) ;
           else if( elementGeometry.isCube() )
@@ -340,29 +340,29 @@ namespace Dune
             return QuadCreator< 6 > :: template provideQuad< CubeQuadratureType > ( geometry, order ) ;
           else if( elementGeometry.isPyramid() )
             return QuadCreator< 7 > :: template provideQuad< CubeQuadratureType > ( geometry, order ) ;
-          else 
+          else
             DUNE_THROW( RangeError, "Element type not available for dimension 3" );
         }
 
         DUNE_THROW( RangeError, "Element type not available for dimension 2" );
         // dummy return
-        return QuadCreator< 0 > :: 
+        return QuadCreator< 0 > ::
           template provideQuad< SimplexQuadratureType >( geometry, 0 );
       }
 
     private:
       // forbid creation
       QuadratureProvider();
-      
+
       // forbid copying
       QuadratureProvider( const ThisType& );
-     
+
       // forbid assignment
       QuadratureProvider &operator=( const ThisType& );
     };
 
 
-    
+
     /** \copydoc Dune::Fem::QuadratureProvider */
     template< class FieldImp, template< class, int > class QuadratureTraits >
     class QuadratureProvider< FieldImp, 3, QuadratureTraits >
@@ -398,21 +398,21 @@ namespace Dune
         assert( geometry.isCube() || geometry.isSimplex()
                 || geometry.isPrism() || geometry.isPyramid() );
         assert( order >= 0 );
-        
+
         if( geometry.isSimplex() )
           return QuadCreator< 0 > :: template provideQuad< SimplexQuadratureType >
             ( geometry, order );
         if( geometry.isCube() )
           return QuadCreator< 1 > :: template provideQuad< CubeQuadratureType >
             ( geometry, order );
-        
+
         if( geometry.isPrism() )
           return QuadCreator< 2 > :: template provideQuad< PrismQuadratureType >
             ( geometry, order );
         if( geometry.isPyramid() )
           return QuadCreator< 3 > :: template provideQuad< PyramidQuadratureType >
             ( geometry, order );
-        
+
         DUNE_THROW( RangeError, "Element type not available for dimension 3" );
         // dummy return
         return QuadCreator< 0 > :: template provideQuad< SimplexQuadratureType >
@@ -431,16 +431,16 @@ namespace Dune
     private:
       // forbid creation
       QuadratureProvider();
-      
+
       // forbid copying
       QuadratureProvider( const ThisType& );
-     
+
       // forbid assignment
       QuadratureProvider &operator=( const ThisType& );
     };
 
   } // namespace Fem
-   
-} // namespace Dune 
+
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_QUADPROVIDER_HH

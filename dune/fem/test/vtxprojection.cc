@@ -56,8 +56,8 @@ typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 
 #include <dune/fem/io/file/vtkio.hh>
 
-// main program 
-int main(int argc, char ** argv) 
+// main program
+int main(int argc, char ** argv)
 {
   MPIManager :: initialize( argc, argv );
   try
@@ -69,16 +69,16 @@ int main(int argc, char ** argv)
     GridPartType gridPart( grid );
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart ); // DG
     typedef LagrangeDiscreteFunctionSpace<FunctionSpaceType, GridPartType,
-      1,CachingStorage> LDiscreteFunctionSpaceType; 
+      1,CachingStorage> LDiscreteFunctionSpaceType;
     LDiscreteFunctionSpaceType lagspace(gridPart);
     ExactSolutionType exactSolution;
     typedef AdaptiveDiscreteFunction<LDiscreteFunctionSpaceType> LagrangeFunctionType;
 
     // perform the L2Projection
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
-    Fem::L2Projection< ExactSolutionType,  DiscreteFunctionType > dgl2; 
+    Fem::L2Projection< ExactSolutionType,  DiscreteFunctionType > dgl2;
     dgl2( exactSolution, solution );
-    
+
     LagrangeFunctionType contSolution("contSolution",lagspace);
     VtxProjection< DiscreteFunctionType,LagrangeFunctionType > projection;
     projection(solution,contSolution);

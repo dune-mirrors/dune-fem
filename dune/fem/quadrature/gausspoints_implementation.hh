@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_GAUSSPOINTS_IMPLEMENTATION_HH 
-#define DUNE_FEM_GAUSSPOINTS_IMPLEMENTATION_HH 
+#ifndef DUNE_FEM_GAUSSPOINTS_IMPLEMENTATION_HH
+#define DUNE_FEM_GAUSSPOINTS_IMPLEMENTATION_HH
 
 #include "gausspoints.hh"
 
@@ -156,6 +156,6 @@ namespace Dune
     }
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
-#endif // #ifndef DUNE_FEM_GAUSSPOINTS_IMPLEMENTATION_HH 
+#endif // #ifndef DUNE_FEM_GAUSSPOINTS_IMPLEMENTATION_HH

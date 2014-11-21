@@ -13,7 +13,7 @@ namespace Dune
 
   /** \class CodimMap
       \brief Simple array-like map for templates parameterized over codimensions
-   
+
       In some cases we need to call functions that depend on the codimension
       as template parameter. Now, if the codimension is actually a variable,
       the fastest way of accessing the functions is through an array mapping
@@ -22,14 +22,14 @@ namespace Dune
       is exactly what CodimMap does implicitly. Even the destruction of these
       objects is done implicitly be the destructor; you only need to destroy
       the CodimMap.
-   
+
       To use CodimMap you provide a class template (CodimObjectImp) depending
       only on the codimension as template parameter. All instances of this
       template have to have a common, virtual base class and a constructor
       requiring no arguments. CodimMap will then create an array of numCodims
       instances of CodimObjectImp. To the outside world it presents these
       instances as an array of objects of the common base class.
-    
+
       For example, a CodimMap could be created as follows:
       \code
         CodimMap< dimension+1, MyCodimObjectImp > map;
@@ -38,7 +38,7 @@ namespace Dune
       \code
         MyCodimBaseType &object = map[ codim ];
       \endcode
-    
+
       \param  nCodims         number of codimensions to create (usually
                               dimension+1)
       \param  CodimObjectImp  class template (parameterized by the codimension)
@@ -80,14 +80,14 @@ namespace Dune
     {
       Loop< MetaSequence, MapConstructor, numCodims - 1 > :: apply( *this );
     }
-    
+
     //! destructor freeing all the instances of CodimObjectImp
     ~CodimMap ()
     {
       for( unsigned int codim = 0; codim < numCodims; ++codim )
         delete codimObjects_[ codim ];
     }
-    
+
     /** \brief access the instance for one codimension
      *
      *  \param[in]  codim  codimension, the instance is to be obtained for

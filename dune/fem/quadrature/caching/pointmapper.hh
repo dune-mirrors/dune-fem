@@ -1,32 +1,32 @@
 #ifndef DUNE_FEM_POINTMAPPER_HH
 #define DUNE_FEM_POINTMAPPER_HH
 
-//- system includes 
+//- system includes
 #include <vector>
 
-//- Dune includes 
+//- Dune includes
 #include <dune/common/version.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
-    struct QuadratureKey  
+    struct QuadratureKey
     {
       QuadratureKey ( const GeometryType &geoType, const size_t id )
       : id_( ((topologyId( geoType ) >> 1) << 16) + id )
       {
         assert( id < (1 << 16) );
       }
-      
+
       bool operator< ( const QuadratureKey &other ) const
       {
         return (id_ < other.id_);
       }
-      
+
       bool operator== ( const QuadratureKey &other ) const
       {
         return (id_ == other.id_);
@@ -50,9 +50,9 @@ namespace Dune
 
     template <class ct, int dim>
     struct CachingTraits {
-      //! type of integration point list implementation, fix type here 
+      //! type of integration point list implementation, fix type here
       typedef IntegrationPointListImp<ct, dim> QuadratureType;
-      //! extracted types from integration point list 
+      //! extracted types from integration point list
       typedef typename QuadratureType::CoordinateType PointType;
       typedef std::vector<PointType>    PointVectorType;
       typedef std::vector<size_t>       MapperType;
@@ -60,12 +60,12 @@ namespace Dune
 
       typedef QuadratureKey QuadratureKeyType;
 
-      // minimal twist is -4 for hexahedrons 
-      // so we add 4 to start from zero 
+      // minimal twist is -4 for hexahedrons
+      // so we add 4 to start from zero
       enum { twistOffset_ = 4 };
 
     };
-  
+
   } // namespace Fem
 
 } // namespace Dune

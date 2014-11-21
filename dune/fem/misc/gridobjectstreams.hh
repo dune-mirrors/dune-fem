@@ -15,7 +15,7 @@ namespace Dune
     // -----------------
 
     struct DummyObjectStream
-    { 
+    {
       class EOFException {};
 
       template< class T >

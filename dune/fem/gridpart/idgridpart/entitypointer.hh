@@ -19,7 +19,7 @@ namespace Dune
 
     // IdEntityPointerTraits
     // ---------------------
-    
+
     template< int codim, class GridFamily >
     struct IdEntityPointerTraits
     {
@@ -55,7 +55,7 @@ namespace Dune
     public:
       static const int dimension = Traits::dimension;
       static const int codimension = Traits::codimension;
-   
+
       typedef typename Traits::Entity Entity;
 
       typedef IdEntityPointer< typename Traits::BaseTraits > EntityPointerImp;
@@ -88,7 +88,7 @@ namespace Dune
       : entity_( EntityImpl() ),
         hostIterator_( other.hostIterator_ )
       {}
-      
+
       ThisType &operator= ( const ThisType &other )
       {
         releaseEntity();
@@ -106,14 +106,14 @@ namespace Dune
       {
         return (hostIterator() == other.hostIterator());
       }
-      
+
       Entity &dereference () const
       {
         if( !entity_.impl() )
           entity_.impl() = EntityImpl( *hostIterator() );
         return entity_;
       }
-      
+
       int level () const
       {
         return hostIterator().level();

@@ -38,7 +38,7 @@ namespace Dune
       FilteredGridPartDataHandle ( WrappedHandle &dataHandle, const GridPart &gridPart )
       : gridPart_( gridPart ),
         wrappedHandle_( dataHandle )
-      { } 
+      { }
 
       bool contains ( int dim, int codim ) const
       {
@@ -47,13 +47,13 @@ namespace Dune
 
       bool fixedsize ( int dim, int codim ) const
       {
-        return false; 
+        return false;
       }
 
       template< class HostEntity >
       size_t size ( const HostEntity &hostEntity ) const
       {
-        if( gridPart().contains( hostEntity ) )          
+        if( gridPart().contains( hostEntity ) )
           return wrappedHandle_.size( hostEntity );
         else
           return 0;
@@ -62,19 +62,19 @@ namespace Dune
       template< class MessageBuffer, class HostEntity >
       void gather ( MessageBuffer &buffer, const HostEntity &hostEntity ) const
       {
-        if( gridPart().contains( hostEntity ) )          
+        if( gridPart().contains( hostEntity ) )
           wrappedHandle_.gather( buffer, hostEntity );
       }
 
       template< class MessageBuffer, class HostEntity >
       void scatter ( MessageBuffer &buffer, const HostEntity &hostEntity, size_t size )
       {
-        if( gridPart().contains( hostEntity ) )          
+        if( gridPart().contains( hostEntity ) )
           wrappedHandle_.scatter( buffer, hostEntity, size );
         else
         {
           typename BaseType::DataType tmp;
-          for (size_t i=0;i<size;++i) 
+          for (size_t i=0;i<size;++i)
             buffer.read(tmp);
         }
       }

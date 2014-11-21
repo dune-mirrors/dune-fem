@@ -1,5 +1,5 @@
 #ifdef ALBERTAGRID
-// set dimensions to ALBERTA dimensions to avoid conflicts 
+// set dimensions to ALBERTA dimensions to avoid conflicts
 #undef GRIDDIM
 #define GRIDDIM ALBERTA_DIM
 #undef WORLDDIM
@@ -8,16 +8,16 @@
 
 // only perform this test for the 3d version of ALUGrid
 #if defined ALUGRID_CONFORM || defined ALUGRID_SIMPLEX || defined ALUGRID_CUBE
-#if GRIDDIM == 3 
+#if GRIDDIM == 3
 #define RUN_PROGRAM
 #endif
 #endif
 
-#if defined ALUGRID_CONFORM 
+#if defined ALUGRID_CONFORM
 #define CONFORMING_SPACE
 #endif
 
-// include configure variables 
+// include configure variables
 #include <config.h>
 
 // iostream includes
@@ -80,7 +80,7 @@ private:
 // Scheme
 // ------
 
-template < class GridPart, class FunctionSpace > 
+template < class GridPart, class FunctionSpace >
 struct Scheme
 {
   typedef GridPart GridPartType;
@@ -91,7 +91,7 @@ struct Scheme
 #ifdef CONFORMING_SPACE
   typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
   // typedef Dune::Fem::PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
-#else 
+#else
   typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
 #endif
 #else
@@ -100,7 +100,7 @@ struct Scheme
   typedef Dune::Fem::CombinedDiscreteFunctionSpace< DiscreteFunctionSpaceType1, DiscreteFunctionSpaceType2 >
     DiscreteFunctionSpaceType;
 
-  typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FunctionSpaceType; 
+  typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FunctionSpaceType;
 #endif
 
 #if WANT_ISTL
@@ -115,7 +115,7 @@ struct Scheme
 
   typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
   typedef typename GridType :: template Codim< 0 > :: Entity ElementType;
-  typedef typename DiscreteFunctionSpaceType :: DomainType DomainType; 
+  typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
 
   Scheme( GridPartType &gridPart, const int step  = 0 )
     : gridPart_( gridPart ),
@@ -126,7 +126,7 @@ struct Scheme
       adaptationManager_( gridPart_.grid(), restrictProlong_ ),
       step_( step )
   {
-    if( discreteSpace_.begin() != discreteSpace_.end() ) 
+    if( discreteSpace_.begin() != discreteSpace_.end() )
       solution_.localFunction( *(discreteSpace_.begin()) )[0] = 0.;
     solution_.clear();
   }
@@ -136,14 +136,14 @@ struct Scheme
     return solution_;
   }
 
-  //! mark elements for adaptation 
+  //! mark elements for adaptation
   bool mark ( const double time ) const
   {
     int marked = 0;
     int count = 0;
     int total = 0;
 
-    // loop over all elements 
+    // loop over all elements
     const IteratorType end = discreteSpace_.end();
     for( IteratorType it = discreteSpace_.begin(); it != end; ++it )
     {
@@ -162,7 +162,7 @@ struct Scheme
       for( int i = 0; i < DomainType::dimension; ++i )
         x[ i ] = center[ i ] - time;
       */
-      
+
       // find center
       DomainType center = entity.geometry().center();
       DomainType x = DomainType(-time);
@@ -184,28 +184,28 @@ struct Scheme
       total++;
     }
 
-    // get global max 
+    // get global max
     marked = grid_.comm().max( marked );
 
     // print info
     if( bool( marked ) )
-      std::cout << "P" << Dune::Fem::MPIManager::rank() << ": " << 
+      std::cout << "P" << Dune::Fem::MPIManager::rank() << ": " <<
         "marked (" << count << " of " << total << ")" << std::endl;
     return bool(marked);
   }
 
-  //! do the adaptation for a given marking 
-  void adapt() 
+  //! do the adaptation for a given marking
+  void adapt()
   {
-    // apply adaptation and load balancing 
+    // apply adaptation and load balancing
     adaptationManager_.adapt();
   }
 
-protected:  
-  GridPartType &gridPart_; // grid part(view), e.g. here the leaf grid the discrete space is build with 
+protected:
+  GridPartType &gridPart_; // grid part(view), e.g. here the leaf grid the discrete space is build with
   GridType &grid_;
-  DiscreteFunctionSpaceType discreteSpace_; // discrete function space 
-  DiscreteFunctionType solution_;   // the unknown 
+  DiscreteFunctionSpaceType discreteSpace_; // discrete function space
+  DiscreteFunctionType solution_;   // the unknown
   RestrictionProlongationType restrictProlong_ ; // local restriction/prolongation object
   AdaptationManagerType  adaptationManager_ ;    // adaptation manager handling adaptation
   const int step_;
@@ -232,7 +232,7 @@ double algorithm ( HGridType &grid, const int step )
   GridPartType gridPart(grid);
 
   // use a scalar function space
-  typedef Dune::Fem::FunctionSpace< double, double, 
+  typedef Dune::Fem::FunctionSpace< double, double,
               HGridType :: dimensionworld, 1 > FunctionSpaceType;
 
   typedef Scheme< GridPartType, FunctionSpaceType > SchemeType;
@@ -246,7 +246,7 @@ double algorithm ( HGridType &grid, const int step )
   //! input/output tuple and setup datawritter
   typedef Dune::tuple< const typename SchemeType::DiscreteFunctionType *, GridExactSolutionType * > IOTupleType;
   typedef Dune::Fem::DataOutput< HGridType, IOTupleType > DataOutputType;
-  IOTupleType ioTuple( &(scheme.solution()), &gridExactSolution) ; // tuple with pointers 
+  IOTupleType ioTuple( &(scheme.solution()), &gridExactSolution) ; // tuple with pointers
   DataOutputType dataOutput( grid, ioTuple, DataOutputParameters( step ) );
   ///////////////////////////
 
@@ -255,11 +255,11 @@ double algorithm ( HGridType &grid, const int step )
     if( Dune::Fem::MPIManager::rank() == 0 )
       std::cout << "time: " << time << std::endl;
 
-    // mark element for adaptation 
+    // mark element for adaptation
     int max = 0;
-    while( scheme.mark( time ) ) 
+    while( scheme.mark( time ) )
     {
-      // adapt grid 
+      // adapt grid
       scheme.adapt();
 
       max++;
@@ -280,7 +280,7 @@ double algorithm ( HGridType &grid, const int step )
 int main ( int argc, char **argv )
 try
 {
-#ifndef RUN_PROGRAM 
+#ifndef RUN_PROGRAM
   std::cerr << "No ALUGRID_CONFORM and GRIDDIM 3, so do nothing" << std::endl;
   return 0;
 #endif
@@ -288,10 +288,10 @@ try
   // initialize MPI, if necessary
   Dune::Fem::MPIManager::initialize( argc, argv );
 
-  // append overloaded parameters from the command line 
+  // append overloaded parameters from the command line
   Dune::Fem::Parameter::append( argc, argv );
 
-  // append possible given parameter files 
+  // append possible given parameter files
   for( int i = 1; i < argc; ++i )
     Dune::Fem::Parameter::append( argv[ i ] );
   // make sure output parameters are added
@@ -303,23 +303,23 @@ try
   Dune::Fem::Parameter::append( "fem.loadbalancing.step", "1" );
   Dune::Fem::Parameter::append( "fem.adaptation.method", "callback" );
 
-  // type of hierarchical grid 
+  // type of hierarchical grid
   typedef Dune :: GridSelector :: GridType  HGridType ;
 
   // create grid from DGF file
   std::stringstream gridfilestr;
   gridfilestr << HGridType :: dimension << "dgrid.dgf";
 
-  std::string gridfile; 
+  std::string gridfile;
   Dune::Fem::Parameter::get( "fem.io.macrogrid", gridfilestr.str(), gridfile );
 
   // create grid from DGF file
 
-  // the method rank and size from MPIManager are static 
+  // the method rank and size from MPIManager are static
   if( Dune::Fem::MPIManager::rank() == 0 )
     std::cout << "Loading macro grid: " << gridfile << std::endl;
 
-  // construct macro using the DGF Parser 
+  // construct macro using the DGF Parser
   Dune::GridPtr< HGridType > gridPtr( gridfile );
   HGridType& grid = *gridPtr ;
 
@@ -330,13 +330,13 @@ try
   const int level = Dune::Fem::Parameter::getValue< int >( "level", 0 );
   const int repeats = Dune::Fem::Parameter::getValue< int >( "repeats", 2 );
 
-  // number of global refinements to bisect grid width 
+  // number of global refinements to bisect grid width
   const int refineStepsForHalf = Dune::DGFGridInfo< HGridType >::refineStepsForHalf();
 
-  // refine grid 
+  // refine grid
   Dune :: Fem :: GlobalRefine::apply( grid, level * refineStepsForHalf );
 
-  // calculate first step  
+  // calculate first step
   for( int step = 0; step < repeats; ++step )
     algorithm( grid, step );
 

@@ -45,11 +45,11 @@ namespace Dune
       typedef NonBlockMapper< BlockMapper, blockSize > ThisType;
       typedef DofMapper< NonBlockMapperTraits< BlockMapper, blockSize > > BaseType;
 
-      typedef NonBlockMapperTraits< BlockMapper, blockSize > Traits ;  
+      typedef NonBlockMapperTraits< BlockMapper, blockSize > Traits ;
     public:
       typedef typename Traits :: SizeType SizeType ;
 
-    private:  
+    private:
       template< class Functor >
       struct BlockFunctor
       {
@@ -156,7 +156,7 @@ namespace Dune
         return blockMapper_.numBlocks();
       }
 
-      bool contains( const int codim ) const 
+      bool contains( const int codim ) const
       {
         return blockMapper_.contains( codim );
       }

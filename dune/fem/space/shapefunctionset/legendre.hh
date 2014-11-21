@@ -19,7 +19,7 @@
 */
 
 
-namespace Dune 
+namespace Dune
 {
 
   namespace Fem
@@ -96,7 +96,7 @@ namespace Dune
           }
         }
       }
-      
+
       const ThisType *clone () const { return new ThisType( *this ); }
 
     private:

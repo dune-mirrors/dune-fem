@@ -19,10 +19,10 @@ namespace Dune {
   namespace Fem {
 
     /** \brief Storage of thread iterators using domain decomposition */
-    template < class ThreadIterator >  
+    template < class ThreadIterator >
     class ThreadIteratorStorageBase
     {
-    public:  
+    public:
       typedef ThreadIterator ThreadIteratorType ;
       typedef typename ThreadIterator :: GridPartType GridPartType;
       typedef typename GridPartType :: IndexSetType   IndexSetType;
@@ -43,13 +43,13 @@ namespace Dune {
           const IndexSetType& indexSet_;
           static const PartitionIteratorType ptype = pitype ;
           Key(const GridPartType& gridPart)
-           : gridPart_( gridPart ), 
+           : gridPart_( gridPart ),
              indexSet_( gridPart_.indexSet() )
           {}
 
           bool operator ==( const Key& other ) const
           {
-            // compare grid pointers 
+            // compare grid pointers
             return (&indexSet_) == (& other.indexSet_ ) && ( ptype == other.ptype );
           }
           const GridPartType& gridPart() const { return gridPart_; }
@@ -71,69 +71,69 @@ namespace Dune {
 
 
      typedef typename IteratorFactory :: KeyType KeyType;
-     typedef SingletonList< KeyType, 
+     typedef SingletonList< KeyType,
              ThreadIteratorType, IteratorFactory > IteratorProviderType;
 
-    protected:  
+    protected:
       ThreadIteratorType& iterators_;
 
-    public:  
-      //! contructor creating thread iterators 
+    public:
+      //! contructor creating thread iterators
       explicit ThreadIteratorStorageBase( const GridPartType& gridPart )
         : iterators_( IteratorProviderType::getObject( KeyType( gridPart ) ) )
       {
         update();
       }
 
-      //! destructor removing instance of thread iterators 
-      ~ThreadIteratorStorageBase() 
+      //! destructor removing instance of thread iterators
+      ~ThreadIteratorStorageBase()
       {
         IteratorProviderType::removeObject( iterators_ );
       }
 
-      //! return filter for given thread 
-      const FilterType& filter( const int thread ) const 
+      //! return filter for given thread
+      const FilterType& filter( const int thread ) const
       {
         return iterators_.filter( thread );
       }
 
-      //! update internal list of iterators 
-      void update() 
+      //! update internal list of iterators
+      void update()
       {
         iterators_.update();
       }
 
       //! set ratio between master thread and other threads in comp time
-      void setMasterRatio( const double ratio ) 
+      void setMasterRatio( const double ratio )
       {
         iterators_.setMasterRatio( ratio );
       }
 
-      //! return begin iterator for current thread 
-      IteratorType begin() const 
+      //! return begin iterator for current thread
+      IteratorType begin() const
       {
         return iterators_.begin();
       }
 
-      //! return end iterator for current thread 
-      IteratorType end() const 
+      //! return end iterator for current thread
+      IteratorType end() const
       {
         return iterators_.end();
       }
 
-      //! return thread number this entity belongs to 
-      int index(const EntityType& entity ) const 
+      //! return thread number this entity belongs to
+      int index(const EntityType& entity ) const
       {
         return iterators_.index( entity );
       }
 
-      //! return thread number this entity belongs to 
-      int thread(const EntityType& entity ) const 
+      //! return thread number this entity belongs to
+      int thread(const EntityType& entity ) const
       {
         return iterators_.thread( entity );
       }
     };
-  } // end namespace Fem 
-} // end namespace Dune 
+  } // end namespace Fem
+} // end namespace Dune
 
 #endif // #ifndef DUNE_FEM_DG_DOMAINTHREADITERATOR_HH

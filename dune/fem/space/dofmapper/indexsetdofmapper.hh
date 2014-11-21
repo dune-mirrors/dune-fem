@@ -25,9 +25,9 @@ namespace Dune
     class IndexSetDofMapper
     {
       typedef IndexSetDofMapper< GridPart > ThisType;
-    public:  
+    public:
       typedef std::size_t SizeType;
-    protected:  
+    protected:
       struct SubEntityInfo
       {
         SubEntityInfo ()
@@ -71,10 +71,10 @@ namespace Dune
 
       // mapping for DoFs
       /** \brief map each local DoF number to a global one
-        
+
           \param[in]  element  element, the DoFs belong to
           \param[in]  f        functor to call for each DoF
-        
+
           The functor has to be a copyable object satisfying the following
           interface:
           \code
@@ -84,10 +84,10 @@ namespace Dune
             void operator() ( int localDoF, int globalDoF );
           };
           \endcode
-        
+
           For each DoF to be mapped, this method will call the application operator
           once.
-          
+
           \note There is no guarantee on the order, in which the functor is applied.
        */
       template< class Functor >
@@ -147,16 +147,16 @@ namespace Dune
 
       bool compress () { update(); return true; }
 
-      template <class StreamTraits> 
-      void write( OutStreamInterface< StreamTraits >& out ) const {} 
+      template <class StreamTraits>
+      void write( OutStreamInterface< StreamTraits >& out ) const {}
 
-      template <class StreamTraits> 
-      void read( InStreamInterface< StreamTraits >& in )  
+      template <class StreamTraits>
+      void read( InStreamInterface< StreamTraits >& in )
       {
         update();
-      } 
+      }
 
-      void backup () const {} 
+      void backup () const {}
       void restore () {}
 
     protected:
@@ -240,9 +240,9 @@ namespace Dune
         const unsigned int codim = info.codim ;
 
         const unsigned int numDofs = info.numDofs ;
-        // for non-Cartesian grids check twist if on codim 1 noDofs > 1 
-        // this should be the case for polOrder > 2  
-        if( ! isCartesian && dimension == 2 && codim == 1 && numDofs > 1 ) 
+        // for non-Cartesian grids check twist if on codim 1 noDofs > 1
+        // this should be the case for polOrder > 2
+        if( ! isCartesian && dimension == 2 && codim == 1 && numDofs > 1 )
         {
           typedef typename GridPart::ctype FieldType ;
           const Dune::ReferenceElement< FieldType, dimension > &refElem
@@ -250,14 +250,14 @@ namespace Dune
 
 #ifndef NDEBUG
           const int vxSize = refElem.size( subEntity, codim, dimension );
-          // two vertices per edge in 2d 
+          // two vertices per edge in 2d
           assert( vxSize == 2 );
 #endif
           const int vx[ 2 ] = { refElem.subEntity ( subEntity, codim, 0, dimension ),
                                 refElem.subEntity ( subEntity, codim, 1, dimension ) };
 
-          // flip index if face is twisted 
-          if( gridPart_.grid().localIdSet().subId( gridEntity( element_ ), vx[ 1 ], dimension ) 
+          // flip index if face is twisted
+          if( gridPart_.grid().localIdSet().subId( gridEntity( element_ ), vx[ 1 ], dimension )
               < gridPart_.grid().localIdSet().subId( gridEntity( element_ ), vx[ 0 ], dimension ) )
           {
             std::vector< unsigned int > global( numDofs );
@@ -274,15 +274,15 @@ namespace Dune
             unsigned int reverse = numDofs - 1;
             for( unsigned int i=0; i<numDofs; ++ i, --reverse )
             {
-              functor_( local[ i ], global[ reverse ] ); 
+              functor_( local[ i ], global[ reverse ] );
             }
 
-            // already did mapping, then return  
+            // already did mapping, then return
             return ;
           }
         }
 
-        // standard mapping  
+        // standard mapping
         while( it != end )
         {
           functor_( *(it++), index++ );
@@ -411,7 +411,7 @@ namespace Dune
 
     template< class GridPart >
     template< class Entity >
-    inline unsigned int 
+    inline unsigned int
     IndexSetDofMapper< GridPart >
       ::numEntityDofs ( const Entity &entity ) const
     {

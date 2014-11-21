@@ -5,8 +5,8 @@
 using namespace pardg;
 
 
-// class ODESolver 
-ODESolver::ODESolver(Communicator &comm, int num_of_tmpobj) : 
+// class ODESolver
+ODESolver::ODESolver(Communicator &comm, int num_of_tmpobj) :
   DynamicalObject( "ODESolver", comm.id() ), comm(comm),
   num_of_tmpobj(num_of_tmpobj),
   dim(0), U(NULL), limiter(NULL), explLimiter(NULL), os(NULL)

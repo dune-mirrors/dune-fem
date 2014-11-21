@@ -18,7 +18,7 @@
 #include <dune/fem/misc/petsc/petscslavedofprovider.hh>
 
 
-#include <dune/common/fvector.hh> 
+#include <dune/common/fvector.hh>
 #include <dune/common/dynvector.hh>
 
 #include <dune/fem/common/stackallocator.hh>
@@ -28,10 +28,10 @@
 
 #include <dune/common/shared_ptr.hh>
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
 
@@ -147,7 +147,7 @@ namespace Dune
 
       typedef typename BaseType :: LocalDofVectorAllocatorType LocalDofVectorAllocatorType;
 
-    protected:  
+    protected:
       typedef PetscManagedDofStorage< DiscreteFunctionSpace, BlockMapperType > PetscManagedDofStorageType;
     public:
       using BaseType :: space;
@@ -170,7 +170,7 @@ namespace Dune
         memObject_( space(), space().blockMapper(), name() ),
         petscVector_( memObject_.getArray() )
       {
-        // copy data 
+        // copy data
         assign( other );
       }
 
@@ -208,7 +208,7 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::assign( clear() */
-      void assign( const ThisType& other ) 
+      void assign( const ThisType& other )
       {
         petscVector().assign( other.petscVector() );
       }
@@ -259,12 +259,12 @@ namespace Dune
       /** \brief obtain a pointer to the underlying PETSc Vec */
       Vec* petscVec () { return petscVector().getVector(); }
 
-      void enableDofCompression () 
-      { 
+      void enableDofCompression ()
+      {
         memObject_.enableDofCompression();
       }
 
-      void print( std::ostream& out ) 
+      void print( std::ostream& out )
       {
         petscVector().printGlobal( true );
       }

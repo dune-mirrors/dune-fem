@@ -18,7 +18,7 @@ namespace Dune
   {
 
     template< class ct, int dim, int codim >
-    class PointProvider 
+    class PointProvider
     {
       static_assert( (codim >= 0) && (codim <= 1),
                           "PointProvider exists only for codimension 0 and 1." );
@@ -33,11 +33,11 @@ namespace Dune
       typedef typename Traits::QuadratureType QuadratureType;
       typedef typename Traits::PointVectorType GlobalPointVectorType;
       typedef typename Traits::QuadratureKeyType QuadratureKeyType;
-      
+
     public:
       inline
       static void registerQuadrature(const QuadratureType& quad);
-      
+
       inline
       static const GlobalPointVectorType& getPoints(const size_t id,
                                                     const GeometryType& elementGeo);
@@ -56,7 +56,7 @@ namespace Dune
     {
       enum { codim = 1 };
       typedef CachingTraits<ct, dim-codim> Traits;
-   
+
     public:
       typedef typename Traits::QuadratureType QuadratureType;
       typedef typename Traits::PointType LocalPointType;
@@ -66,7 +66,7 @@ namespace Dune
       typedef FieldVector<ct, dim> GlobalPointType;
       typedef std::vector<GlobalPointType> GlobalPointVectorType;
       typedef typename Traits::QuadratureKeyType QuadratureKeyType;
-      
+
     public:
       inline
       static const MapperVectorType& getMappers(const QuadratureType& quad,
@@ -79,7 +79,7 @@ namespace Dune
       inline
       static const GlobalPointVectorType& getPoints(const size_t id,
                                                     const GeometryType& elementGeo);
-      
+
     private:
       typedef std::map<const QuadratureKeyType, GlobalPointVectorType> PointContainerType;
       typedef std::map<const QuadratureKeyType, MapperVectorType> MapperContainerType;
@@ -96,7 +96,7 @@ namespace Dune
       static PointContainerType points_;
       static MapperContainerType mappers_;
     };
-  
+
   } // namespace Fem
 
 } // namespace Dune

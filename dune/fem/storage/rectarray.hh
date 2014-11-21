@@ -5,7 +5,7 @@
 
 namespace Dune
 {
-   
+
   namespace Fem
   {
 
@@ -25,7 +25,7 @@ namespace Dune
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator=( element ) );
         return asImp();
       }
-      
+
       inline const RowType& operator[] ( unsigned int row ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp()[ row ] );
@@ -63,7 +63,7 @@ namespace Dune
     };
 
 
-    
+
     template< class RowImp, class RectArrayImp >
     class RectArrayDefault
     : public RectArrayInterface< RowImp, RectArrayImp >
@@ -121,12 +121,12 @@ namespace Dune
       {
         delete[] rowArray_;
       }
-      
+
       inline ThisType& operator= ( const ElementType &element )
       {
         return BaseType :: operator=( element );
       }
-      
+
       inline const RowType& operator[] ( unsigned int row ) const
       {
         assert( row < rows_ );
@@ -151,7 +151,7 @@ namespace Dune
     };
 
   } // namespace Fem
-   
+
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_RECTARRAY_HH

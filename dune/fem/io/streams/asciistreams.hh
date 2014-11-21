@@ -9,18 +9,18 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     class ASCIIOutStream;
     class ASCIIInStream;
-    
+
     struct ASCIIOutStreamTraits
     {
       typedef ASCIIOutStream OutStreamType;
     };
 
-    
+
     /** \class ASCIIOutStream
      *  \ingroup InOutStreams
      *  \brief output stream writing into an STL output stream using ASCII
@@ -40,7 +40,7 @@ namespace Dune
     public:
       //! type of the traits
       typedef ASCIIOutStreamTraits Traits;
-      
+
     protected:
       std::ostream &stream_;
       bool mustFreeStream_;
@@ -111,7 +111,7 @@ namespace Dune
       /** \copydoc Dune::Fem::OutStreamInterface::writeChar */
       void writeChar ( const char value )
       {
-        // make sure char is written as number 
+        // make sure char is written as number
         int val = (int) value;
         writeInt( val );
       }
@@ -163,14 +163,14 @@ namespace Dune
     };
 
 
-    
+
     struct ASCIIInStreamTraits
     {
       typedef ASCIIInStream InStreamType;
     };
 
-    
-    
+
+
     /** \class ASCIIInStream
      *  \ingroup InOutStreams
      *  \brief input stream reading from an STL input stream using ASCII decoding
@@ -189,7 +189,7 @@ namespace Dune
     public:
       //! type of the traits
       typedef ASCIIInStreamTraits Traits;
-      
+
     protected:
       std::istream &stream_;
       bool mustFreeStream_;
@@ -261,11 +261,11 @@ namespace Dune
         std::string val;
         readString( val );
 
-        if( val == "true" ) 
-          value = true; 
-        else if ( val == "false" ) 
+        if( val == "true" )
+          value = true;
+        else if ( val == "false" )
           value = false;
-        else 
+        else
           readError();
       }
 
@@ -307,7 +307,7 @@ namespace Dune
       }
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

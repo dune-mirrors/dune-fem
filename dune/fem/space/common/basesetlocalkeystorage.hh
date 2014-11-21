@@ -6,51 +6,51 @@
 //- dune-common includes
 #include <dune/common/exceptions.hh>
 
-//- dune-geometry includes 
+//- dune-geometry includes
 #include <dune/geometry/type.hh>
 #include <dune/geometry/typeindex.hh>
 
-//- dune-fem includes 
+//- dune-fem includes
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/storage/singletonlist.hh>
 
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
-    /*! \brief storage class for base function set pointer 
+    /*! \brief storage class for base function set pointer
           and compiled local key pointers */
-    template< class Entry > 
+    template< class Entry >
     class BaseSetLocalKeyStorage
     {
-      // interface class for factory 
-      class FactoryIF 
+      // interface class for factory
+      class FactoryIF
       {
-      protected:   
+      protected:
         FactoryIF () {}
-      public:  
+      public:
         virtual ~FactoryIF () {}
         virtual Entry* getObject( const GeometryType& geomType ) const = 0;
         virtual void removeObjects( std::vector<Entry*>& entryStorage ) const = 0;
         virtual FactoryIF* clone() const = 0;
       };
 
-      // factory implementation depends on type of singleton provider 
-      template <class SingletonProvider> 
-      class FactoryImpl : public FactoryIF 
+      // factory implementation depends on type of singleton provider
+      template <class SingletonProvider>
+      class FactoryImpl : public FactoryIF
       {
-      public:  
+      public:
         FactoryImpl() {}
 
-        Entry* getObject( const GeometryType& geomType ) const 
+        Entry* getObject( const GeometryType& geomType ) const
         {
           return & SingletonProvider :: getObject( geomType );
         }
 
-        void removeObjects( std::vector<Entry*>& entryStorage ) const 
+        void removeObjects( std::vector<Entry*>& entryStorage ) const
         {
           const size_t size = entryStorage.size();
           for( size_t i=0; i<size; ++i )
@@ -62,37 +62,37 @@ namespace Dune
             }
           }
         }
-        
+
         virtual FactoryIF* clone() const { return new FactoryImpl<SingletonProvider> (); }
       };
 
-      // pointer to apropriate factory 
-      const FactoryIF* factory_; 
-      // vector caching singleton pointers 
+      // pointer to apropriate factory
+      const FactoryIF* factory_;
+      // vector caching singleton pointers
       std::vector< Entry* > entryStorage_;
     public:
-      // export value type confomring to std::vector 
+      // export value type confomring to std::vector
       typedef Entry value_type ;
 
-      // default constructor 
+      // default constructor
       BaseSetLocalKeyStorage()
-        : factory_( 0 ) 
+        : factory_( 0 )
         , entryStorage_()
-      {} 
+      {}
 
-      //! copy constructor 
+      //! copy constructor
       BaseSetLocalKeyStorage( const BaseSetLocalKeyStorage& other )
         : factory_( other.factory_ ? other.factory_->clone() : 0 )
         , entryStorage_( other.entryStorage_.size(), ( Entry * ) 0 )
       {
-        // make a copy of the vector 
+        // make a copy of the vector
         const size_t size = entryStorage_.size();
-        for( size_t i=0; i<size; ++i ) 
+        for( size_t i=0; i<size; ++i )
         {
           Entry* otherEntry = other.entryStorage_[ i ];
-          if( otherEntry ) 
+          if( otherEntry )
           {
-            // we need the interface method geometry 
+            // we need the interface method geometry
             // (on base function sets and compiled local keys )
             entryStorage_[ i ] = factory_->getObject( otherEntry->type() );
           }
@@ -108,10 +108,10 @@ namespace Dune
         other.entryStorage_.clear();
       }
 
-      //! destructor 
-      ~BaseSetLocalKeyStorage() 
+      //! destructor
+      ~BaseSetLocalKeyStorage()
       {
-        if( entryStorage_.size() > 0 ) 
+        if( entryStorage_.size() > 0 )
         {
           factory_->removeObjects( entryStorage_ );
         }
@@ -120,14 +120,14 @@ namespace Dune
         factory_ = 0;
       }
 
-      // get maxSize of compiled keys 
-      unsigned int maxSize() const 
+      // get maxSize of compiled keys
+      unsigned int maxSize() const
       {
         unsigned int maxSize = 0;
         const size_t size = entryStorage_.size() ;
         for( size_t i=0; i<size; ++i)
         {
-          if( entryStorage_[ i ] ) 
+          if( entryStorage_[ i ] )
           {
             unsigned int enSize = entryStorage_[ i ]->size();
             maxSize = std::max( enSize , maxSize );
@@ -136,28 +136,28 @@ namespace Dune
         return maxSize;
       }
 
-      //! insert entry to storage for given geometry type 
+      //! insert entry to storage for given geometry type
       template <class SingletonProvider>
-      bool insert( const GeometryType geomType ) 
+      bool insert( const GeometryType geomType )
       {
-        // create factory if not existing yet 
-        if( factory_ == 0 ) 
+        // create factory if not existing yet
+        if( factory_ == 0 )
         {
           factory_ = new FactoryImpl< SingletonProvider > ();
         }
 
-        // check that type of factory is correct 
+        // check that type of factory is correct
         assert( dynamic_cast< const FactoryImpl< SingletonProvider >* > ( factory_ ) != 0 );
 
-        // get geometry type index 
+        // get geometry type index
         const size_t geomIndex = index( geomType ) ;
 
-        if( entryStorage_.size() <= geomIndex ) 
+        if( entryStorage_.size() <= geomIndex )
           entryStorage_.resize( geomIndex + 1, (Entry* ) 0 );
 
         assert( geomIndex < entryStorage_.size() );
 
-        // if entry is still not used, insert it  
+        // if entry is still not used, insert it
         if( entryStorage_[ geomIndex ] == 0 )
         {
           entryStorage_[ geomIndex ] = factory_->getObject( geomType );
@@ -166,17 +166,17 @@ namespace Dune
         return false ;
       }
 
-      //! return true if an entry for this geometry type exists 
-      bool exists( const GeometryType& geomType ) const 
+      //! return true if an entry for this geometry type exists
+      bool exists( const GeometryType& geomType ) const
       {
         if( index( geomType ) < static_cast< int >( entryStorage_.size() ) )
           return (entryStorage_[ index( geomType ) ] != 0) ;
-        else 
+        else
           return false;
       }
 
-      //! access to stored entry with given geometry type 
-      const Entry& operator [] ( const GeometryType& geomType ) const 
+      //! access to stored entry with given geometry type
+      const Entry& operator [] ( const GeometryType& geomType ) const
       {
         // assert( factory_ );
         assert( index( geomType ) < static_cast< int >( entryStorage_.size() ) );
@@ -184,7 +184,7 @@ namespace Dune
         return *( entryStorage_[ index( geomType ) ]);
       }
     protected:
-      int index( const GeometryType& geomType ) const 
+      int index( const GeometryType& geomType ) const
       {
         return LocalGeometryTypeIndex::index( geomType );
       }
@@ -192,19 +192,19 @@ namespace Dune
 
 
 
-    /** \brief class for storage local keys for a given range of polynomial order and 
+    /** \brief class for storage local keys for a given range of polynomial order and
                available geometry type */
     template< class CompiledLocalKey, unsigned int minPolOrder, unsigned int maxPolOrder >
-    class CompiledLocalKeyContainer 
+    class CompiledLocalKeyContainer
     {
     public:
-      // type of compiled local key 
+      // type of compiled local key
       typedef CompiledLocalKey CompiledLocalKeyType;
 
-      //! type of storage class for compiled local keys 
+      //! type of storage class for compiled local keys
       typedef BaseSetLocalKeyStorage< CompiledLocalKeyType > LocalKeyStorageType;
 
-      // vector containing storages for each polynomial order 
+      // vector containing storages for each polynomial order
       typedef std::vector< LocalKeyStorageType > LocalKeyVectorType;
 
     protected:
@@ -213,21 +213,21 @@ namespace Dune
       template <int pOrd>
       struct ConstructCompiledLocalKeys
       {
-        /** HelperClasses 
-           \brief 
+        /** HelperClasses
+           \brief
            CompiledLocalKeyFactory method createObject and
-           deleteObject for the SingletonList  
+           deleteObject for the SingletonList
         */
         class CompiledLocalKeyFactory
         {
         public:
-          //! create new BaseFunctionSet 
+          //! create new BaseFunctionSet
           static CompiledLocalKeyType* createObject( const GeometryType& type )
           {
             return new CompiledLocalKeyType( type, pOrd );
           }
 
-          //! delete BaseFunctionSet 
+          //! delete BaseFunctionSet
           static void deleteObject( CompiledLocalKeyType* obj )
           {
             delete obj;
@@ -239,18 +239,18 @@ namespace Dune
         {
           const size_t k = pOrd ;
 
-          //! type of singleton list (singleton provider) for compiled local keys 
+          //! type of singleton list (singleton provider) for compiled local keys
           typedef SingletonList
             < GeometryType, CompiledLocalKeyType, CompiledLocalKeyFactory >
             CompiledLocalKeySingletonProviderType;
 
-          // insert compiled local key 
+          // insert compiled local key
           compiledLocalKeys[ k - minPolOrder ].template insert< CompiledLocalKeySingletonProviderType > ( geometryType );
         }
       };
 
     protected:
-      // all lagrange point sets for available geometry types 
+      // all lagrange point sets for available geometry types
       LocalKeyVectorType compiledLocalKeys_ ;
 
     private:
@@ -258,14 +258,14 @@ namespace Dune
 
     public:
       template <class GridPart>
-      CompiledLocalKeyContainer( const GridPart& gridPart ) 
+      CompiledLocalKeyContainer( const GridPart& gridPart )
         : compiledLocalKeys_( numOrders )
       {
         typedef typename GridPart :: IndexSetType IndexSetType ;
         typedef typename GridPart :: GridType  GridType ;
         const IndexSetType &indexSet = gridPart.indexSet();
 
-        // get all available geometry types 
+        // get all available geometry types
         AllGeomTypes< IndexSetType, GridType > allGeometryTypes( indexSet );
         const std :: vector< GeometryType >& geometryTypes
           = allGeometryTypes.geomTypes( 0 );
@@ -278,25 +278,25 @@ namespace Dune
         }
       }
 
-      /** \brief provide access to all compiled local keys for a given polynomial order 
+      /** \brief provide access to all compiled local keys for a given polynomial order
        *
-       *  \param[in]  order polynomial order for given geometry type 
+       *  \param[in]  order polynomial order for given geometry type
        *
-       *  \returns CompiledLocalKeys storage  
+       *  \returns CompiledLocalKeys storage
        */
-      inline const LocalKeyStorageType& compiledLocalKeys( const int order ) const 
+      inline const LocalKeyStorageType& compiledLocalKeys( const int order ) const
       {
         assert( order - minPolOrder >= 0 );
         assert( int( order - minPolOrder ) < int( compiledLocalKeys_.size() ) );
         return compiledLocalKeys_[ order - minPolOrder ];
       }
 
-      /** \brief provide access to the compiled local keys for a geometry type and polynomial order 
+      /** \brief provide access to the compiled local keys for a geometry type and polynomial order
        *
        *  \param[in]  type  type of geometry the compiled local key is requested for
-       *  \param[in]  order polynomial order for given geometry type 
+       *  \param[in]  order polynomial order for given geometry type
        *
-       *  \returns CompiledLocalKey 
+       *  \returns CompiledLocalKey
        */
       inline const CompiledLocalKeyType &compiledLocalKey( const GeometryType& type, const int order ) const
       {
@@ -304,8 +304,8 @@ namespace Dune
       }
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // DUNE_FEM_BASESETLOCALKEYSTORAGE_HH

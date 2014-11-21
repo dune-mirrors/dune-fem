@@ -13,7 +13,7 @@ namespace Dune
 
   namespace Fem
   {
-  
+
     template< class ContainedMapper, int N, DofStoragePolicy policy >
     class CombinedMapper;
 
@@ -36,7 +36,7 @@ namespace Dune
 
       typedef CombinedDofConversionUtility< ContainedMapperType, numComponents, policy >
         GlobalDofConversionUtilityType;
-      
+
       typedef CombinedDofMapIterator< Traits > DofMapIteratorType;
 
       typedef CombinedMapper< ContainedMapperType, numComponents, policy >
@@ -45,7 +45,7 @@ namespace Dune
       typedef typename ContainedMapperType :: SizeType SizeType;
     };
 
-    
+
 
     template< class CombinedMapperTraits >
     class CombinedDofMapIterator
@@ -70,7 +70,7 @@ namespace Dune
 
       ContainedDofMapIteratorType containedIterator_;
       int component_;
-      
+
     public:
       inline
       CombinedDofMapIterator ( const ContainedDofMapIteratorType &containedIterator,
@@ -166,7 +166,7 @@ namespace Dune
 
       typedef typename Traits :: GlobalDofConversionUtilityType
         GlobalDofConversionUtilityType;
-      
+
       // local dof ordering is always point based !!!
       typedef PointBasedDofConversionUtility< numComponents > LocalDofConversionUtilityType;
 
@@ -203,10 +203,10 @@ namespace Dune
       {
         return containedMapper().fixedDataSize( codim );
       }
-      
+
       /** \copydoc Dune::DofMapper::begin(const ElementType &entity) const */
       DofMapIteratorType begin ( const ElementType &entity ) const;
-      
+
       /** \copydoc Dune::DofMapper::end(const ElementType &entity) const */
       DofMapIteratorType end ( const ElementType &entity ) const;
 
@@ -231,22 +231,22 @@ namespace Dune
       template< class Entity >
       int numEntityDofs ( const Entity &entity ) const;
 
-      //! return new index in dof array 
+      //! return new index in dof array
       int newIndex ( const int hole, const int block ) const;
 
-      //! return old index in dof array of given index ( for dof compress ) 
+      //! return old index in dof array of given index ( for dof compress )
       int oldIndex ( const int hole, const int block ) const;
 
-      //! return number of holes in the data 
+      //! return number of holes in the data
       int numberOfHoles ( const int block ) const;
-    
-      //! returnn number of mem blocks 
-      int numBlocks () const; 
 
-      //! return current old offset of block 
+      //! returnn number of mem blocks
+      int numBlocks () const;
+
+      //! return current old offset of block
       int oldOffSet ( const int block ) const;
 
-      //! return current offset of block 
+      //! return current offset of block
       int offSet ( const int block ) const;
 
       //! return true if compress will affect data (always true for VariableBased)
@@ -275,18 +275,18 @@ namespace Dune
       void restore () {}
 
     protected:
-      void update () 
-      { 
+      void update ()
+      {
         // store sizes for old-new index mapping
         containedOldSize_ = containedSize_ ;
-        containedSize_    = containedMapper().size(); 
+        containedSize_    = containedMapper().size();
       }
 
       ContainedMapperType &containedMapper () const;
 
     }; // end class CombinedMapper
-    
-    /** @} **/  
+
+    /** @} **/
 
 
 
@@ -297,14 +297,14 @@ namespace Dune
     template< class Functor >
     struct CombinedMapper< ContainedMapper, N, policy >::FunctorWrapper
     {
-      FunctorWrapper ( const GlobalDofConversionUtilityType &dofUtil, 
+      FunctorWrapper ( const GlobalDofConversionUtilityType &dofUtil,
                        Functor functor )
       : dofUtil_( dofUtil ),
         functor_( functor )
       {}
 
       template< class GlobalKey >
-      void operator() ( int localBlock, const GlobalKey &globalKey ) 
+      void operator() ( int localBlock, const GlobalKey &globalKey )
       {
         int localDof = localBlock*numComponents;
         for( int component = 0; component < numComponents; ++component, ++localDof )
@@ -312,7 +312,7 @@ namespace Dune
       }
 
       template< class GlobalKey >
-      void operator() ( const GlobalKey &globalKey ) 
+      void operator() ( const GlobalKey &globalKey )
       {
         for( int component = 0; component < numComponents; ++component )
           functor_( dofUtil_.combinedDof( globalKey, component ) );
@@ -327,7 +327,7 @@ namespace Dune
 
     // Implementation of CombinedMapper
     // --------------------------------
-    
+
     template< class ContainedMapper, int N, DofStoragePolicy policy >
     inline CombinedMapper< ContainedMapper, N, policy >
       :: CombinedMapper ( ContainedMapperType &mapper )
@@ -370,21 +370,21 @@ namespace Dune
     inline void CombinedMapper< ContainedMapper, N, policy >
       ::mapEach ( const ElementType &element, Functor f ) const
     {
-      containedMapper().mapEach( element, 
+      containedMapper().mapEach( element,
           FunctorWrapper< Functor >( utilGlobal_, f ) );
     }
 
-    
+
     template< class ContainedMapper, int N, DofStoragePolicy policy >
     inline int CombinedMapper< ContainedMapper, N, policy >
-      :: mapToGlobal ( const ElementType &entity, const int localDof ) const 
+      :: mapToGlobal ( const ElementType &entity, const int localDof ) const
     {
       const int component      = utilLocal_.component( localDof );
       const int containedLocal = utilLocal_.containedDof( localDof );
-   
+
       const int containedGlobal
         = containedMapper().mapToGlobal( entity, containedLocal );
-      
+
       return utilGlobal_.combinedDof( containedGlobal, component );
     }
 
@@ -392,14 +392,14 @@ namespace Dune
     template< class ContainedMapper, int N, DofStoragePolicy policy >
     template< class Entity, class Functor >
     inline void CombinedMapper< ContainedMapper, N, policy >
-      ::mapEachEntityDof ( const Entity &entity, Functor f ) const 
+      ::mapEachEntityDof ( const Entity &entity, Functor f ) const
     {
-      containedMapper().mapEachEntityDof( entity, 
+      containedMapper().mapEachEntityDof( entity,
             FunctorWrapper< Functor >( utilGlobal_, f ) );
     }
 
 
-    
+
     template< class ContainedMapper, int N, DofStoragePolicy policy >
     inline int CombinedMapper< ContainedMapper, N, policy >
       :: maxNumDofs () const
@@ -416,7 +416,7 @@ namespace Dune
     }
 
 
-    
+
     template< class ContainedMapper, int N, DofStoragePolicy policy >
     template< class Entity >
     inline int CombinedMapper< ContainedMapper, N, policy >
@@ -436,7 +436,7 @@ namespace Dune
         return containedMapper().numberOfHoles( block % containedMapper().numBlocks() );
     }
 
-    
+
     template< class ContainedMapper, int N, DofStoragePolicy policy >
     inline int CombinedMapper< ContainedMapper, N, policy > :: numBlocks () const
     {
@@ -459,12 +459,12 @@ namespace Dune
         const int containedIndex = containedMapper().newIndex( containedHole, block );
         return utilGlobal_.combinedDof( containedIndex, component );
       }
-      else 
+      else
       {
         const int numContainedBlocks = containedMapper().numBlocks();
         const int containedBlock     = block % numContainedBlocks;
         const int component          = block / numContainedBlocks;
-        
+
         const int containedOffset = containedMapper().newIndex( hole, containedBlock );
         return containedOffset + component * containedMapper().size();
       }
@@ -487,17 +487,17 @@ namespace Dune
         const int numContainedBlocks = containedMapper().numBlocks();
         const int containedBlock     = block % numContainedBlocks;
         const int component          = block / numContainedBlocks;
-        
+
         const int containedOffIndex = containedMapper().oldIndex( hole, containedBlock );
         return containedOffIndex + component * containedOldSize_;
       }
     }
 
-    
+
 
     template< class ContainedMapper, int N, DofStoragePolicy policy >
     inline int CombinedMapper< ContainedMapper, N, policy >
-      :: oldOffSet ( const int block ) const 
+      :: oldOffSet ( const int block ) const
     {
       if( policy == PointBased )
         return numComponents * containedMapper().oldOffSet( block );
@@ -506,7 +506,7 @@ namespace Dune
         const int numContainedBlocks = containedMapper().numBlocks();
         const int containedBlock     = block % numContainedBlocks;
         const int component          = block / numContainedBlocks;
-        
+
         const int containedOffset = containedMapper().oldOffSet( containedBlock );
         return containedOffset + component * containedOldSize_;
       }
@@ -525,7 +525,7 @@ namespace Dune
         const int numContainedBlocks = containedMapper().numBlocks();
         const int containedBlock = block % numContainedBlocks;
         const int component = block / numContainedBlocks;
-        
+
         const int containedOffset = containedMapper().offSet( containedBlock );
         return containedOffset + component * containedMapper().size();
       }
@@ -536,9 +536,9 @@ namespace Dune
     inline bool CombinedMapper< ContainedMapper, N, policy >
       :: consecutive () const
     {
-      if( policy == PointBased ) 
+      if( policy == PointBased )
         return containedMapper().consecutive();
-      else 
+      else
         // since we have different blocks it's true no matter what
         return true;
     }

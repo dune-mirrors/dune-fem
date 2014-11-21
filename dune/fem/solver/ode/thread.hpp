@@ -7,7 +7,7 @@
 #include <iostream>
 
 
-extern "C"{ 
+extern "C"{
   void* _run(void *ptr);
 }
 
@@ -40,7 +40,7 @@ private:
 
 
 inline
-void* _run(void *ptr) 
+void* _run(void *ptr)
 {
   Thread *thread = (Thread *)ptr;
   thread->run();

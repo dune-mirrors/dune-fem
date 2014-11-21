@@ -24,7 +24,7 @@ namespace Dune
      * Local interpolation for Discontinuous Galerkin spaces.
      */
     template< class DiscreteFunctionSpace, template< class, int > class Quadrature = CachingQuadrature >
-    class DiscontinuousGalerkinLocalInterpolation 
+    class DiscontinuousGalerkinLocalInterpolation
     {
       typedef DiscontinuousGalerkinLocalInterpolation< DiscreteFunctionSpace, Quadrature > ThisType;
 
@@ -63,7 +63,7 @@ namespace Dune
         // get entity and geometry
         const EntityType &entity = localFunction.entity();
         const typename EntityType::Geometry geometry = entity.geometry();
-        
+
         QuadratureType quadrature( entity, localFunction.order() + order_ );
         const int nop = quadrature.nop();
         for( int qp = 0; qp < nop; ++qp )

@@ -31,7 +31,7 @@ namespace Dune
       typedef typename Traits::DomainType DomainType;
       typedef typename DomainType::value_type DomainFieldType;
       static const int dimDomain = DomainType::dimension;
-      
+
       typedef typename Traits::RangeType RangeType;
       typedef typename RangeType::value_type RangeFieldType;
       static const int dimRange = RangeType::dimension;

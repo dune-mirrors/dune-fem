@@ -43,7 +43,7 @@ namespace Dune
       {
         asImp().print( s );
       }
-      
+
     protected:
       const Impl &asImp () const
       {
@@ -80,7 +80,7 @@ namespace Dune
     };
 
 
-    
+
     template< class T >
     class ValidateGreater
     : public ValidatorDefault< T, ValidateGreater< T > >
@@ -279,6 +279,6 @@ namespace Dune
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_VALIDATOR_HH

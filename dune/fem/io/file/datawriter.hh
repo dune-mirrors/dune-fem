@@ -21,10 +21,10 @@
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     struct DataWriterParameters : public DataOutputParameters
@@ -35,31 +35,31 @@ namespace Dune
         return Parameter::getValue< std::string >( IOInterface::defaultGridKey( dim ) );
       }
 
-      //! return true if all data should be written to a spearate path per rank 
-      virtual bool separateRankPath () const 
-      { 
-        return false; 
+      //! return true if all data should be written to a spearate path per rank
+      virtual bool separateRankPath () const
+      {
+        return false;
       }
     };
 
-    /** @ingroup DiscFuncIO 
-       \brief Implementation of the Dune::IOInterface. 
+    /** @ingroup DiscFuncIO
+       \brief Implementation of the Dune::IOInterface.
        This class manages data output.
        Available output formats are GRAPE, VTK and VTK Vertex projected
        using the VtxProjection operator. Details can be
        found in \ref DiscFuncIO.
-    */    
-    template <class GridImp, 
-              class DataImp> 
-    class DataWriter : public DataOutput< GridImp, DataImp > 
+    */
+    template <class GridImp,
+              class DataImp>
+    class DataWriter : public DataOutput< GridImp, DataImp >
     {
-    protected:  
-      //! \brief type of grid used 
+    protected:
+      //! \brief type of grid used
       typedef GridImp GridType;
-      //! \brief type of data tuple 
-      typedef DataImp OutPutDataType; 
+      //! \brief type of data tuple
+      typedef DataImp OutPutDataType;
 
-      //! \brief type of this class 
+      //! \brief type of this class
       typedef DataWriter< GridImp, DataImp > ThisType;
 
       typedef DataOutput< GridImp, DataImp > BaseType;
@@ -76,12 +76,12 @@ namespace Dune
       mutable std::stringstream macroGrid_;
       const bool separateRankPath_ ;
 
-    public: 
+    public:
 
-      /** \brief Constructor creating data writer 
-        \param grid corresponding grid 
-        \param data Tuple containing discrete functions to write 
-        \param parameter structure for tuning the behavior of the Dune::DataWriter 
+      /** \brief Constructor creating data writer
+        \param grid corresponding grid
+        \param data Tuple containing discrete functions to write
+        \param parameter structure for tuning the behavior of the Dune::DataWriter
                          defaults to Dune::DataWriterParameters
       */
       DataWriter(const GridType & grid,
@@ -92,9 +92,9 @@ namespace Dune
       {
       }
 
-      /** \brief Constructor creating data writer 
-        \param grid corresponding grid 
-        \param data Tuple containing discrete functions to write 
+      /** \brief Constructor creating data writer
+        \param grid corresponding grid
+        \param data Tuple containing discrete functions to write
         \param tp   a time provider to set time (e.g. for restart)
         \param parameter structure for tuning the behavior of the Dune::DataWriter
                          defaults to Dune::DataWriterParameters
@@ -108,15 +108,15 @@ namespace Dune
       {
       }
 
-      //! destructor 
+      //! destructor
       virtual ~DataWriter() {}
 
-    protected:  
-      //! print class name 
+    protected:
+      //! print class name
       virtual const char* myClassName() const { return "DataWriter"; }
-        
-      //! write binary data 
-      virtual void writeBinaryData(const double sequenceStamp) const 
+
+      //! write binary data
+      virtual void writeBinaryData(const double sequenceStamp) const
       {
         writeMyBinaryData( sequenceStamp, writeStep_ , data_ );
       }
@@ -130,8 +130,8 @@ namespace Dune
 
         typedef IOTuple< OutputTuple > IOTupleType ;
 
-        // if data is given, use BinaryDataIO to write it 
-        if( IOTupleType :: length > 0 ) 
+        // if data is given, use BinaryDataIO to write it
+        if( IOTupleType :: length > 0 )
         {
           // call output of IOTuple
           IOTupleType :: output( grid_, sequenceStamp, timeStepPath, datapref_, data );
@@ -139,22 +139,22 @@ namespace Dune
 
         return timeStepPath;
       }
-    }; // end class DataWriter 
+    }; // end class DataWriter
 
     //////////////////////////////////////////////////////////////////
     //
-    //  Checkpointer 
+    //  Checkpointer
     //
     //////////////////////////////////////////////////////////////////
 
-    struct CheckPointerParameters : public DataWriterParameters 
+    struct CheckPointerParameters : public DataWriterParameters
     {
     protected:
       bool writeMode_;
 
-    public:  
+    public:
       explicit CheckPointerParameters( const bool writeMode = true ) :
-        writeMode_( writeMode ) 
+        writeMode_( writeMode )
       {}
 
       //! base of file name for data file (fem.io.datafileprefix)
@@ -163,48 +163,48 @@ namespace Dune
         return checkPointPrefix();
       }
 
-      //! return number of timestep to be passed until next checkpoint in written 
-      virtual int checkPointStep() const 
+      //! return number of timestep to be passed until next checkpoint in written
+      virtual int checkPointStep() const
       {
         return Parameter::getValue< int > ("fem.io.checkpointstep", 500 );
       }
 
       //! maximal number of checkpoint stages written (default = 2)
-      virtual int maxNumberOfCheckPoints() const 
+      virtual int maxNumberOfCheckPoints() const
       {
         return Parameter :: getValue< int > ("fem.io.checkpointmax", 2 );
       }
 
-      //! return default value for check point prefix 
+      //! return default value for check point prefix
       static std::string checkPointPrefix()
       {
         return Parameter :: getValue< std::string > (  "fem.io.checkpointfile", "checkpoint" );
       }
 
-      //! writeMode, true when checkpointer is in backup mode 
-      virtual bool writeMode() const 
+      //! writeMode, true when checkpointer is in backup mode
+      virtual bool writeMode() const
       {
         return writeMode_;
       }
 
-      //! return true if all data should be written to a spearate path per rank 
-      virtual bool separateRankPath () const 
-      { 
-        return false; 
+      //! return true if all data should be written to a spearate path per rank
+      virtual bool separateRankPath () const
+      {
+        return false;
       }
 
-      virtual int outputformat() const 
+      virtual int outputformat() const
       {
         return 5; // i.e. none
       }
     };
 
-    /** @ingroup Checkpointing 
-       \brief Implementation of the IOInterface. 
-       This class manages checkpointing. 
+    /** @ingroup Checkpointing
+       \brief Implementation of the IOInterface.
+       This class manages checkpointing.
 
        The data will be stored in GRAPE output format, meaning that every
-       checkpoint is also a visualizable data set. 
+       checkpoint is also a visualizable data set.
        Constructor and write are simular to the
        Dune::DataWriter, but in addition a
        static method Dune::CheckPointer::restoreGrid
@@ -213,65 +213,65 @@ namespace Dune
        the type of the grid and a tuple type
        of pointers to the discrete functions types
        to be stored.
-    */    
-    template< class GridImp, class DataImp = tuple<> > 
+    */
+    template< class GridImp, class DataImp = tuple<> >
     class CheckPointer
     : public DataWriter< GridImp, DataImp >
     {
     protected:
-      //! used grid type 
+      //! used grid type
       typedef GridImp GridType;
 
       typedef DofManager< GridType > DofManagerType ;
 
-      //! call appropriate backup and restore methods on the grid class 
-      struct GridPersistentObject : public PersistentObject 
+      //! call appropriate backup and restore methods on the grid class
+      struct GridPersistentObject : public PersistentObject
       {
         const GridType& grid_ ;
         const std::string name_;
-        
-        //! constructor storing grid 
-        GridPersistentObject( const GridType& grid ) 
+
+        //! constructor storing grid
+        GridPersistentObject( const GridType& grid )
           : grid_( grid ),
             name_( Fem :: gridName( grid_ ) )
         {
-          // we need to push the grid at the 
-          // front position of the PersistenceManager list 
+          // we need to push the grid at the
+          // front position of the PersistenceManager list
           // since we have to read it first on restore
           const bool pushFront = true ;
-          // add grid at first position 
+          // add grid at first position
           PersistenceManager::insert( *this, pushFront );
         }
 
-        //! destructor removing grid object 
-        ~GridPersistentObject() 
-        { 
+        //! destructor removing grid object
+        ~GridPersistentObject()
+        {
           // remove myself
-          PersistenceManager::remove( *this ); 
+          PersistenceManager::remove( *this );
         }
 
-        //! backup grid 
-        virtual void backup() const 
+        //! backup grid
+        virtual void backup() const
         {
-          // this feature is available in dune-grid 2.3.x and later 
+          // this feature is available in dune-grid 2.3.x and later
 
-          // try backup using stream method first 
-          try 
-          { 
+          // try backup using stream method first
+          try
+          {
             std::ostream& stream = PersistenceManager :: backupStream().stream();
             Dune::BackupRestoreFacility< GridType > :: backup( grid_, stream );
-          } 
-          catch ( Dune :: NotImplemented ) 
+          }
+          catch ( Dune :: NotImplemented )
           {
 #ifndef NDEBUG
             if( Parameter :: verbose () )
               std::cerr << "GridPersistentObject::backup: cannot use stream backup." << std::endl;
 #endif
 
-            // try method given a filename 
+            // try method given a filename
             try {
               std::string filename( PersistenceManager :: uniqueFileName( name_ ) );
-              Dune::BackupRestoreFacility< GridType > :: backup( grid_, filename ); 
+              Dune::BackupRestoreFacility< GridType > :: backup( grid_, filename );
             }
             catch ( Dune :: NotImplemented )
             {
@@ -279,20 +279,20 @@ namespace Dune
             }
           }
 
-          // backup dof manager 
+          // backup dof manager
           DofManagerType :: instance( grid_ ).backup();
         }
 
-        //! restore grid 
-        virtual void restore () 
+        //! restore grid
+        virtual void restore ()
         {
-          // restore of the grid is done below in method restoreGrid 
-          // here we only need to restore the DofManager 
+          // restore of the grid is done below in method restoreGrid
+          // here we only need to restore the DofManager
           DofManagerType :: instance( grid_ ).restore();
-        } 
+        }
       };
 
-      //! type of base class 
+      //! type of base class
       typedef DataWriter<GridImp,DataImp> BaseType;
 
       using BaseType :: grid_;
@@ -305,14 +305,14 @@ namespace Dune
       using BaseType :: grapeDisplay_;
       using BaseType :: separateRankPath_;
 
-      // friendship for restoreData calls 
+      // friendship for restoreData calls
       friend class CheckPointer< GridImp >;
 
-      //! type of this class  
+      //! type of this class
       typedef CheckPointer<GridImp,DataImp> ThisType;
-      
-      //! used data tuple 
-      typedef DataImp OutPutDataType; 
+
+      //! used data tuple
+      typedef DataImp OutPutDataType;
 
       typedef GridPersistentObject PersistentGridObjectType;
       PersistentGridObjectType* persistentGridObject_ ;
@@ -325,131 +325,131 @@ namespace Dune
 
       std::string checkPointFile_;
 
-      bool takeCareOfPersistenceManager_; 
+      bool takeCareOfPersistenceManager_;
 
-    public: 
-      /** \brief Constructor generating a checkpointer 
-        \param grid corresponding grid 
-        \param data Tuple containing discrete functions to write 
+    public:
+      /** \brief Constructor generating a checkpointer
+        \param grid corresponding grid
+        \param data Tuple containing discrete functions to write
         \param tp   a time provider to set time (e.g. for restart)
         \param parameter structure for tuning the behavior of the Dune::CheckPointer
                          defaults to Dune::CheckPointerParameters
       */
-      CheckPointer(const GridType & grid, 
+      CheckPointer(const GridType & grid,
                    OutPutDataType& data,
                    const TimeProviderBase& tp,
-                   const CheckPointerParameters& parameter = CheckPointerParameters() ) 
-        : BaseType(grid,data,tp,parameter)  
-        , persistentGridObject_( new PersistentGridObjectType( grid_ ) ) 
+                   const CheckPointerParameters& parameter = CheckPointerParameters() )
+        : BaseType(grid,data,tp,parameter)
+        , persistentGridObject_( new PersistentGridObjectType( grid_ ) )
         , dataPtr_ ( 0 )
         , checkPointStep_( parameter.checkPointStep() )
         , maxCheckPointNumber_( parameter.maxNumberOfCheckPoints() )
-        , myRank_( grid.comm().rank() )  
+        , myRank_( grid.comm().rank() )
         , takeCareOfPersistenceManager_( true )
       {
         initialize( parameter );
       }
 
-      /** \brief Constructor generating a checkpointer 
-        \param grid corresponding grid 
+      /** \brief Constructor generating a checkpointer
+        \param grid corresponding grid
         \param tp   a time provider to set time (e.g. for restart)
         \param parameter structure for tuning the behavior of the Dune::CheckPointer
                          defaults to Dune::CheckPointerParameters
       */
-      CheckPointer( const GridType & grid, 
+      CheckPointer( const GridType & grid,
                     const TimeProviderBase& tp,
                     const CheckPointerParameters& parameter = CheckPointerParameters() )
-        : BaseType(grid, *( new OutPutDataType () ), tp, parameter )  
-        , persistentGridObject_( new PersistentGridObjectType( grid_ ) ) 
+        : BaseType(grid, *( new OutPutDataType () ), tp, parameter )
+        , persistentGridObject_( new PersistentGridObjectType( grid_ ) )
         , dataPtr_ ( &data_ )
         , checkPointStep_( parameter.checkPointStep() )
         , maxCheckPointNumber_( parameter.maxNumberOfCheckPoints() )
-        , myRank_( grid.comm().rank() )  
+        , myRank_( grid.comm().rank() )
         , takeCareOfPersistenceManager_( true )
       {
         initialize( parameter );
       }
 
-      ~CheckPointer() 
+      ~CheckPointer()
       {
         // remove persistent grid object from PersistenceManager
         delete persistentGridObject_;
         persistentGridObject_ = 0;
 
-        // if data_ was created inside this class 
+        // if data_ was created inside this class
         // we have also to delete it
-        if( dataPtr_ ) 
+        if( dataPtr_ )
         {
           delete dataPtr_;
           dataPtr_ = 0 ;
         }
       }
 
-    protected:  
-      void initialize( const CheckPointerParameters& parameter ) 
+    protected:
+      void initialize( const CheckPointerParameters& parameter )
       {
         // output format can only be binary
-        outputFormat_ = BaseType :: binary; 
-        // do not display 
+        outputFormat_ = BaseType :: binary;
+        // do not display
         grapeDisplay_ = false ;
 
-        checkPointFile_ = path_; 
-        checkPointFile_ += "/"; 
+        checkPointFile_ = path_;
+        checkPointFile_ += "/";
         checkPointFile_ += parameter.prefix();
       }
 
-    protected:  
-      /** \brief Constructor generating a checkpointer to restore data 
-        \param grid corresponding grid 
-        \param myRank rank of process 
-        \param data Tuple containing discrete functions to write 
+    protected:
+      /** \brief Constructor generating a checkpointer to restore data
+        \param grid corresponding grid
+        \param myRank rank of process
+        \param data Tuple containing discrete functions to write
         \param checkFile filename for restoring state of program from
-               previous runs 
-        \param takeCareOfPersistenceManager flag whether to keep persistent 
+               previous runs
+        \param takeCareOfPersistenceManager flag whether to keep persistent
                values by PersistenceManager (default true)
         \param writeStep initial counter value, default 0
-        \note In Addition to the parameters read by the DataWriter this class 
-              reads the following parameters: 
+        \note In Addition to the parameters read by the DataWriter this class
+              reads the following parameters:
 
         # write checkpoint every `CheckPointStep' time step
-        fem.io.checkpointstep: 500 
+        fem.io.checkpointstep: 500
         # store checkpoint information to file `CheckPointFile'
         fem.io.checkpointfile: checkpoint
       */
-      CheckPointer(const GridType & grid, 
+      CheckPointer(const GridType & grid,
                    const int myRank,
-                   OutPutDataType& data, 
+                   OutPutDataType& data,
                    const char * checkFile,
                    const bool takeCareOfPersistenceManager = true,
                    const int writeStep = 0 )
-        : BaseType(grid, data, CheckPointerParameters( checkFile == 0 ) ) // checkFile != 0 means read mode 
+        : BaseType(grid, data, CheckPointerParameters( checkFile == 0 ) ) // checkFile != 0 means read mode
         , persistentGridObject_( 0 ) // do not create a persistent object here, since we are in read mode
         , dataPtr_ ( 0 )
         , checkPointStep_( 0 )
         , maxCheckPointNumber_( writeStep + 1 )
-        , myRank_( myRank )  
+        , myRank_( myRank )
         , takeCareOfPersistenceManager_( takeCareOfPersistenceManager )
       {
         // output format can oinly be binary
-        outputFormat_ = BaseType :: binary; 
-        // do not display 
+        outputFormat_ = BaseType :: binary;
+        // do not display
         grapeDisplay_ = false ;
 
         datapref_ = CheckPointerParameters :: checkPointPrefix();
 
         if( checkFile )
         {
-          // try to read given check point file 
+          // try to read given check point file
           checkPointFile_ = checkFile;
-          // read last counter 
+          // read last counter
           bool ok = readCheckPoint();
 
-          // if check point couldn't be opened, try again with default  
+          // if check point couldn't be opened, try again with default
           if(!ok)
           {
-            // read name of check point file 
-            checkPointFile_ = path_; 
-            checkPointFile_ += "/"; 
+            // read name of check point file
+            checkPointFile_ = path_;
+            checkPointFile_ += "/";
             checkPointFile_ += CheckPointerParameters :: checkPointPrefix();
 
             ok = readCheckPoint();
@@ -470,13 +470,13 @@ namespace Dune
       }
 
     public:
-      /** \brief restore grid from previous runs 
-        \param[in] checkFile checkPoint filename 
+      /** \brief restore grid from previous runs
+        \param[in] checkFile checkPoint filename
         \param[in] givenRank number of my process (defaults to MPIManager :: rank() )
         \param[in] parameter Parameterclass which provides informations about the
         checkpoint
 
-        \return Pointer to restored grid instance 
+        \return Pointer to restored grid instance
       */
       static GridType* restoreGrid(const std::string checkFile,
                                    const int givenRank = -1,
@@ -489,16 +489,16 @@ namespace Dune
         const bool verbose = (rank == 0);
 
         int checkPointNumber = 0;
-        // if given checkpointfile is not valid use default checkpoint file 
+        // if given checkpointfile is not valid use default checkpoint file
         if( ! readParameter(checkFile,"LastCheckPoint",checkPointNumber,verbose ) )
         {
           // read default path
           path = IOInterface::readPath();
-          // set checkpointfile 
+          // set checkpointfile
           std::string checkPointFile = path;
-          // try out default checkpoint file 
-          checkPointFile += "/"; 
-          checkPointFile += parameter.checkPointPrefix(); 
+          // try out default checkpoint file
+          checkPointFile += "/";
+          checkPointFile += parameter.checkPointPrefix();
           readParameter(checkPointFile,"LastCheckPoint",checkPointNumber, verbose);
         }
         else
@@ -510,21 +510,21 @@ namespace Dune
           }
         }
 
-        // now add timestamp (and rank) 
+        // now add timestamp (and rank)
         path = IOInterface::createRecoverPath(
             path, rank, datapref, checkPointNumber, parameter.separateRankPath() );
 
-        // initialize PersistenceManager 
-        PersistenceManager :: startRestore ( path ); 
+        // initialize PersistenceManager
+        PersistenceManager :: startRestore ( path );
 
         GridType* grid = 0;
         // this is only available in dune-grid 2.3.x and later
-        try 
+        try
         {
           std::istream& stream = PersistenceManager :: restoreStream().stream();
           grid = Dune::BackupRestoreFacility< GridType > :: restore( stream );
         }
-        catch ( Dune :: NotImplemented ) 
+        catch ( Dune :: NotImplemented )
         {
 #ifndef NDEBUG
           if( Parameter :: verbose () )
@@ -533,7 +533,7 @@ namespace Dune
           try {
             std::string name ( Fem :: gridName( *grid ) );
             std::string filename( PersistenceManager :: uniqueFileName( name ) );
-            grid = Dune::BackupRestoreFacility< GridType > :: restore( filename ); 
+            grid = Dune::BackupRestoreFacility< GridType > :: restore( filename );
           }
           catch ( Dune :: NotImplemented )
           {
@@ -541,7 +541,7 @@ namespace Dune
           }
         }
 
-        if( grid == 0 ) 
+        if( grid == 0 )
         {
           DUNE_THROW(InvalidStateException,"Could not recover grid");
         }
@@ -552,10 +552,10 @@ namespace Dune
       /** \brief restores data, assumes that all objects have been created and inserted to
        *         PersistenceManager before this method is called
        *
-       *  \param grid Grid the data belong to 
-       *  \param checkFile check point file 
+       *  \param grid Grid the data belong to
+       *  \param checkFile check point file
       */
-      static inline 
+      static inline
       void restoreData ( const GridType &grid, const std::string checkFile )
       {
         tuple<> fakeData;
@@ -565,31 +565,31 @@ namespace Dune
       /** \brief restores data, assumes that all objects have been created and inserted to
        *         PersistenceManager before this method is called
        *
-       *  \param grid Grid the data belong to 
-       *  \param data tuple of discrete functions to be additionally read during restore  
-       *  \param checkFile check point file 
+       *  \param grid Grid the data belong to
+       *  \param data tuple of discrete functions to be additionally read during restore
+       *  \param checkFile check point file
        *  \param rank rank of process (defaults to grid.comm().rank())
       */
       template <class InputTupleType>
-      static inline 
-      void restoreData(const GridType& grid, 
+      static inline
+      void restoreData(const GridType& grid,
                        InputTupleType& data,
                        const std::string checkFile,
                        const int rank = -1 )
       {
-        // make rank exchangable 
+        // make rank exchangable
         const int myRank = ( rank < 0 ) ? grid.comm().rank() : rank ;
 
-        // check that check point is not empty 
-        if( checkFile == "" ) 
+        // check that check point is not empty
+        if( checkFile == "" )
         {
           DUNE_THROW(InvalidStateException,"Checkpoint file empty!");
         }
-        
-        // create temporary check pointer 
+
+        // create temporary check pointer
         CheckPointer<GridType, InputTupleType> checker( grid, myRank, data, checkFile.c_str() );
 
-        // restore data 
+        // restore data
         checker.restoreData();
       }
 
@@ -599,14 +599,14 @@ namespace Dune
       */
       std::string restorePersistentData()
       {
-        // now add timestamp and rank 
+        // now add timestamp and rank
         std::string path = IOInterface::createRecoverPath(
             path_, myRank_ , datapref_, writeStep_, separateRankPath_ );
 
-        // if true also restore PersistenceManager 
-        if( takeCareOfPersistenceManager_ ) 
+        // if true also restore PersistenceManager
+        if( takeCareOfPersistenceManager_ )
         {
-          // restore all persistent values kept by PersistenceManager 
+          // restore all persistent values kept by PersistenceManager
           PersistenceManager::restore( path );
         }
 
@@ -616,45 +616,45 @@ namespace Dune
       template< class InputTuple >
       void restoreUserData ( InputTuple &data )
       {
-        // restore persistent data 
+        // restore persistent data
         std::string path = restorePersistentData( );
 
         typedef IOTuple< InputTuple > IOTupleType ;
 
-        // restore user data 
-        if( IOTupleType :: length > 0 ) 
+        // restore user data
+        if( IOTupleType :: length > 0 )
         {
           IOTupleType :: restoreData( data, grid_, path , datapref_ );
         }
 
-        // make data consecutive at the end of the restore process 
+        // make data consecutive at the end of the restore process
         DofManagerType :: instance( grid_ ).compress();
       }
 
-      void restoreData( ) 
+      void restoreData( )
       {
         restoreUserData( data_ );
       }
 
     public:
-      //! print class name 
+      //! print class name
       virtual const char* myClassName() const { return "CheckPointer"; }
-        
+
       using BaseType :: willWrite ;
       /** \brief returns true if data will be written on next write call
       */
       bool willWrite(const TimeProviderBase& tp) const
       {
         const int timestep = tp.timeStep();
-        // only write data time > saveTime  
+        // only write data time > saveTime
         return ( (checkPointStep_ > 0) && (((timestep % checkPointStep_) == 0) && timestep > 0) );
       }
 
-      template <class OutputTuple> 
-      static void writeSingleCheckPoint(const GridType& grid, 
+      template <class OutputTuple>
+      static void writeSingleCheckPoint(const GridType& grid,
                                         OutputTuple& data,
                                         const double time,
-                                        const bool storePersistenceManager, 
+                                        const bool storePersistenceManager,
                                         const int writeStep = 0 )
       {
         CheckPointer< GridType, OutputTuple > checkPointer( grid, grid.comm().rank(),
@@ -662,23 +662,23 @@ namespace Dune
         checkPointer.writeBinaryData( time );
       }
 
-      virtual void writeBinaryData(const double time) const 
+      virtual void writeBinaryData(const double time) const
       {
-        // reset writeStep_ when maxCheckPointNumber_ is reached 
+        // reset writeStep_ when maxCheckPointNumber_ is reached
         if( writeStep_ >= maxCheckPointNumber_ ) writeStep_ = 0;
 
-        // write data 
+        // write data
         std::string path = this->writeMyBinaryData( time, writeStep_, data_ );
 
-        // if true also backup PersistenceManager 
-        if( takeCareOfPersistenceManager_ ) 
+        // if true also backup PersistenceManager
+        if( takeCareOfPersistenceManager_ )
         {
-          // backup all persistent values kept by PersistenceManager 
+          // backup all persistent values kept by PersistenceManager
           PersistenceManager::backup( path );
         }
 
-        // write checkpoint info 
-        writeCheckPoint(path, time, 
+        // write checkpoint info
+        writeCheckPoint(path, time,
                         writeStep_ );
 
         return;
@@ -688,13 +688,13 @@ namespace Dune
       //! read checkpoint file
       bool readCheckPoint(const bool warn = true)
       {
-        const bool verbose = Parameter::verbose(); 
+        const bool verbose = Parameter::verbose();
 
-        // read Checkpiont file 
+        // read Checkpiont file
         if( readParameter(checkPointFile_,"LastCheckPoint",writeStep_, verbose, warn ) )
         {
           std::string recoverPath;
-          // try to read recover path 
+          // try to read recover path
           if( ! readParameter(checkPointFile_,"RecoverPath", recoverPath, verbose) )
           {
             // default value is output path
@@ -707,26 +707,26 @@ namespace Dune
             takeCareOfPersistenceManager_ = ( storedPersistentManager > 0 );
           }
 
-          // overwrite path with recover path 
+          // overwrite path with recover path
           path_ = recoverPath;
-          
+
           return true;
         }
         return false;
       }
 
-      // write some info for checkpointing 
+      // write some info for checkpointing
       void writeCheckPoint (const std::string& path,
                             const double time,
-                            const int savestep ) const 
-      {   
-        // write some needed informantion to current checkpoint file 
-        // only proc 0 writes the global checkpoint file 
+                            const int savestep ) const
+      {
+        // write some needed informantion to current checkpoint file
+        // only proc 0 writes the global checkpoint file
         if( myRank_ <= 0 )
         {
-          std::string checkpointstr ; 
+          std::string checkpointstr ;
           {
-            std::stringstream checkpoint; 
+            std::stringstream checkpoint;
             checkpoint << "LastCheckPoint: " << savestep << std::endl;
             checkpoint.precision( 16 );
             checkpoint << "Time: " << std::scientific << time << std::endl;
@@ -738,7 +738,7 @@ namespace Dune
             checkpointstr = checkpoint.str();
           }
 
-          // overwrite the last checkpoint file 
+          // overwrite the last checkpoint file
           {
             std::ofstream file (checkPointFile_.c_str());
             if( file.is_open() )
@@ -761,10 +761,10 @@ namespace Dune
         }
       }
 
-    }; // end class CheckPointer 
+    }; // end class CheckPointer
 
-  } // end namespace Fem 
+  } // end namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_DATAWRITER_HH

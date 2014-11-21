@@ -7,7 +7,7 @@
 
 #include <dune/fem/pass/common/selector.hh>
 
-namespace Dune 
+namespace Dune
 {
   namespace Fem
   {
@@ -21,12 +21,12 @@ namespace Dune
      *  The problem interface prescribes the methods needed by the implementation
      *  of local DG passes. Users need to derive from either this class or the
      *  DGDiscreteModelDefault class. The methods provided by this class are used by
-     *  LocalDGPass (and possibly other classes) to solve for the space 
+     *  LocalDGPass (and possibly other classes) to solve for the space
      *  discretization of the equation d_t u + div f(u) = s(u), where f
      *  represents a flux function and s a source term. Even non-conservative
      *  fluxes can be treated (for details see paper by Dedner et al).
      *
-     *  \note The definition of f(u) differs from the usual definition for 
+     *  \note The definition of f(u) differs from the usual definition for
      *        conservation laws in the leading sign.
      */
     template <class DGDiscreteModelTraits>
@@ -45,36 +45,36 @@ namespace Dune
       typedef typename FunctionSpaceType::DomainType DomainType;
       //! \brief Vector type of the function space's range
       typedef typename FunctionSpaceType::RangeType RangeType;
-      //! \brief Vector type of the function space's range field type 
+      //! \brief Vector type of the function space's range field type
       typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
       //! \brief Matrix type of the function space's jacobian
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-      //! \brief Type of GridPart 
-      typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType; 
+      //! \brief Type of GridPart
+      typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
       //! \brief Element (codim 0 entity) of the grid
       typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
       //! \brief Intersection type
       typedef typename DiscreteFunctionSpaceType::IntersectionType IntersectionType;
 
-      //! \brief Type of local coordinate 
+      //! \brief Type of local coordinate
       typedef typename EntityType::Geometry::LocalCoordinate  LocalCoordinateType;
 
-      //! \brief dimRange 
+      //! \brief dimRange
       enum { dimRange = DiscreteFunctionSpaceType::dimRange };
 
-      //! \brief Mass factor type 
+      //! \brief Mass factor type
       template< class MatrixType > struct ExtractMatrix;
 
       template< template < class, int, int > class MatrixType,
-                class ctype, int dimD, int dimR 
-              > 
+                class ctype, int dimD, int dimR
+              >
       struct ExtractMatrix<MatrixType< ctype, dimD, dimR> >
       {
         typedef MatrixType< RangeFieldType, dimRange, dimRange > Type;
       };
 
-      //! \brief Type of mass factor 
+      //! \brief Type of mass factor
       typedef typename ExtractMatrix< JacobianRangeType >::Type MassFactorType;
 
     public:
@@ -108,7 +108,7 @@ namespace Dune
        *  \param uLeft Tuple of the states on the inner side of the intersection.
        *  \param uRight Tuple of the states on the outer side of the
        *                intersection.
-       *  \param gLeft The numerical flux contribution to the inner element 
+       *  \param gLeft The numerical flux contribution to the inner element
        *               (return value).
        *  \param gRight The numerical flux contribution to the outer element
        *                (return value).
@@ -118,13 +118,13 @@ namespace Dune
        */
       template <class ArgumentTuple, class FaceDomainType>
       double numericalFlux ( const IntersectionType &intersection,
-                             const double time, 
+                             const double time,
                              const FaceDomainType &x,
-                             const ArgumentTuple &uLeft, 
+                             const ArgumentTuple &uLeft,
                              const ArgumentTuple &uRight,
                              RangeType &gLeft,
                              RangeType &gRight)
-      { 
+      {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().numericalFlux( intersection, time, x, uLeft, uRight, gLeft, gRight) );
         return asImp().numericalFlux( intersection, time, x, uLeft, uRight, gLeft, gRight );
       }
@@ -138,9 +138,9 @@ namespace Dune
        *  \param x Local coordinate of the point where the numerical flux gets
        *           evaluated.
        *  \param uLeft Tuple of the states on the inner side of the intersection.
-       *  \param gLeft The numerical flux contribution to the inner element 
+       *  \param gLeft The numerical flux contribution to the inner element
        *               (return value).
-       *               
+       *
        *  \return Speed of the fastest wave. This information is used to compute
        *         the maximum admissible timestep size.
        */
@@ -150,7 +150,7 @@ namespace Dune
                             const FaceDomainType &x,
                             const ArgumentTuple &uLeft,
                             RangeType &gLeft )
-      { 
+      {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().boundaryFlux( intersection, time, x, uLeft, gLeft ) );
         return asImp().boundaryFlux( intersection, time, x, uLeft, gLeft );
       }
@@ -168,13 +168,13 @@ namespace Dune
        */
       template <class ArgumentTuple>
       void analyticalFlux ( const EntityType& en,
-                            const double time, 
+                            const double time,
                             const LocalCoordinateType& x,
-                            const ArgumentTuple& u, 
+                            const ArgumentTuple& u,
                             JacobianRangeType& f )
-      { 
+      {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
-                asImp().analyticalFlux(en, time, x, u, f) ); 
+                asImp().analyticalFlux(en, time, x, u, f) );
       }
 
       /** \brief Implements the source term of the problem.
@@ -186,64 +186,64 @@ namespace Dune
        *  \param x Reference element coordinate where the flux is evaluated
        *  \param u Tuple of the states of the previous passes and of the global
        *           argument.
-       *  \param jac Tuple of the gradients of the precedings passes' results 
+       *  \param jac Tuple of the gradients of the precedings passes' results
        *             (needed for the non-conservative contributions)
        *  \param s The source contribution (return value).
        */
       template <class ArgumentTuple, class JacobianTuple>
-      double source ( const EntityType& en, 
-                      const double time, 
+      double source ( const EntityType& en,
+                      const double time,
                       const LocalCoordinateType& x,
-                      const ArgumentTuple& u, 
-                      const JacobianTuple& jac, 
+                      const ArgumentTuple& u,
+                      const JacobianTuple& jac,
                       RangeType& s )
-      { 
+      {
         CHECK_INTERFACE_IMPLEMENTATION(
-            asImp().source(en, time, x, u, jac, s) ); 
-        return asImp().source(en, time, x, u, jac, s); 
+            asImp().source(en, time, x, u, jac, s) );
+        return asImp().source(en, time, x, u, jac, s);
       }
 
       /** \brief Implements the mass factor term of the problem.
-       *         Mass term contribution. 
+       *         Mass term contribution.
        *
        *  \param en Entity where the mass is to be evaluated
        *  \param time Global time.
        *  \param x Reference element coordinate where the mass is evaluated
        *  \param u Tuple of the states of the previous passes and of the global
-       *  \param m The mass contribution (return value). default implementation 
-       *           sets this factor to 1.0 
+       *  \param m The mass contribution (return value). default implementation
+       *           sets this factor to 1.0
        */
       template <class ArgumentTuple>
-      void mass ( const EntityType& en, 
-                  const double time, 
+      void mass ( const EntityType& en,
+                  const double time,
                   const LocalCoordinateType& x,
-                  const ArgumentTuple& u, 
+                  const ArgumentTuple& u,
                   MassFactorType& m )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
-            asImp().mass(en, time, x, u, m) ); 
+            asImp().mass(en, time, x, u, m) );
       }
 
       /** \brief Passes the active entity to the model.
        *         This can be used, to set local functions required as data function
        *         in the model.
        *
-       *  \param en active Entity 
+       *  \param en active Entity
        */
-      void setEntity ( EntityType& en ) 
-      { 
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().setEntity(en) ); 
+      void setEntity ( EntityType& en )
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().setEntity(en) );
       }
 
       /** \brief Passes the active neigbor entity to the model.
-       *         This can be used, to set local functions required as data functions 
+       *         This can be used, to set local functions required as data functions
        *         in the model.
        *
-       *  \param nb active neighbor Entity 
+       *  \param nb active neighbor Entity
        */
       void setNeighbor ( EntityType& nb )
-      { 
-        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().setNeighbor(nb) ); 
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().setNeighbor(nb) );
       }
 
     protected:
@@ -259,19 +259,19 @@ namespace Dune
     /** \brief Default implementation of the DGDiscreteModelInterface where methods for
      *         the fluxes and the source term do nothing, so that the user needn't
      *         implement them if not needed.
-     *         
+     *
      *  \note N1, ..., N9 are passIds on which model depends
      */
     template< class DGDiscreteModelTraits
-              , int N1 = -1 
-              , int N2 = -1 
-              , int N3 = -1 
-              , int N4 = -1 
-              , int N5 = -1 
-              , int N6 = -1 
-              , int N7 = -1 
-              , int N8 = -1 
-              , int N9 = -1 
+              , int N1 = -1
+              , int N2 = -1
+              , int N3 = -1
+              , int N4 = -1
+              , int N5 = -1
+              , int N6 = -1
+              , int N7 = -1
+              , int N8 = -1
+              , int N9 = -1
               >
     class DGDiscreteModelDefault :
       public DGDiscreteModelInterface<DGDiscreteModelTraits>
@@ -292,8 +292,8 @@ namespace Dune
        * functions and can be accessed by...
        * Other way of filling the ArgumentTuple with corresponding pass
        * results is when one uses passIds. In this case if \$ u_{n+1} \$
-       * depends on the passes with following passIds: firstPassId , passId2 
-       * , passId5 then the desired Selector is 
+       * depends on the passes with following passIds: firstPassId , passId2
+       * , passId5 then the desired Selector is
        * Selector< firstPassId , passId2 , passId5 > ...
        * If there's no SelectorType in user-implemented DGDiscreteModel then
        * this Selector is used. Therefore it's good to pass passIds to this class
@@ -317,19 +317,19 @@ namespace Dune
        *  The default implementation always returns false
        */
       inline bool hasFlux () const { return false; }
-      
+
       /** \copydoc Dune::DGDiscreteModelInterface::hasSource() const
        *
        *  The default implementation always returns false
        */
       inline bool hasSource () const { return false; }
-      
+
       /** \copydoc Dune::DGDiscreteModelInterface::hasMass() const
        *
        *  The default implementation always returns false
        */
       inline bool hasMass () const { return false; }
-      
+
       /** \brief Empty implementation that fails if problem claims to have a flux
        *          contribution.
        */
@@ -337,12 +337,12 @@ namespace Dune
       double numericalFlux ( const IntersectionType& it,
                              const double time,
                              const FaceDomainType& x,
-                             const ArgumentTuple& uLeft, 
+                             const ArgumentTuple& uLeft,
                              const ArgumentTuple& uRight,
                              RangeType& gLeft,
                              RangeType& gRight )
-      { 
-        assert(!this->asImp().hasFlux()); 
+      {
+        assert(!this->asImp().hasFlux());
         gLeft = 0.0;
         gRight = 0.0;
         return 0.0;
@@ -372,55 +372,55 @@ namespace Dune
                             const LocalCoordinateType &x,
                             const ArgumentTuple &u,
                             JacobianRangeType &f )
-      { 
+      {
         assert( !this->asImp().hasFlux() );
         f = 0.0;
       }
 
-      /** \brief Empty implementation that fails if problem claims to have a source 
+      /** \brief Empty implementation that fails if problem claims to have a source
        *         term.
        */
       template <class ArgumentTuple, class JacobianTuple>
-      double source ( const EntityType& en, 
+      double source ( const EntityType& en,
                       const double time,
                       const LocalCoordinateType& x,
                       const ArgumentTuple& u,
-                      const JacobianTuple& jac, 
+                      const JacobianTuple& jac,
                       RangeType& s )
-      { 
-        assert(!this->asImp().hasSource()); 
+      {
+        assert(!this->asImp().hasSource());
         s = 0.0;
         return 0.0;
       }
 
-      /** \brief empty implementation for mass factor 
-       *         default implementation sets this factor to 1.0 
+      /** \brief empty implementation for mass factor
+       *         default implementation sets this factor to 1.0
        */
       template <class ArgumentTuple>
-      void mass (const EntityType& en, 
-                 const double time, 
+      void mass (const EntityType& en,
+                 const double time,
                  const LocalCoordinateType& x,
-                 const ArgumentTuple& u, 
+                 const ArgumentTuple& u,
                  MassFactorType& m )
       {
         enum { rows = MassFactorType :: rows };
         enum { cols = MassFactorType :: cols };
-        // default implementation sets mass factor to identity 
-        for(int i=0; i<rows; ++i) 
+        // default implementation sets mass factor to identity
+        for(int i=0; i<rows; ++i)
         {
-          // set diagonal to 1 
+          // set diagonal to 1
           m[i][i] = 1;
           // and all other values to 0
-          for(int j=i+1; j<cols; ++j) 
+          for(int j=i+1; j<cols; ++j)
             m[i][j] = m[j][i] = 0;
         }
       }
 
-      //! \brier empty implementation 
+      //! \brier empty implementation
       void setEntity( const EntityType& en )
       { }
 
-      //! \brief empty implementation 
+      //! \brief empty implementation
       void setNeighbor( const EntityType& nb )
       { }
     };
@@ -431,18 +431,18 @@ namespace Dune
     class DGAdaptiveDiscreteModel
     {
     public:
-      //! \brief default method for setting adaptation handle to discrete model 
+      //! \brief default method for setting adaptation handle to discrete model
       template <class Adaptation>
-      void setAdaptation( Adaptation&, 
+      void setAdaptation( Adaptation&,
                           const double weight = 1.0 ) {}
 
-      //! \brief default method for setting adaptation handle and thead filter to discrete model 
+      //! \brief default method for setting adaptation handle and thead filter to discrete model
       template <class Adaptation, class ThreadFilter>
-      void setAdaptation( Adaptation&, 
-                          const ThreadFilter&, 
+      void setAdaptation( Adaptation&,
+                          const ThreadFilter&,
                           const double weight = 1.0 ) {}
 
-      //! remove pointer to adaptation handle 
+      //! remove pointer to adaptation handle
       void removeAdaptation() {}
     };
 
@@ -454,15 +454,15 @@ namespace Dune
     //! the fluxes and the source term do nothing, so that the user needn't
     //! implement them if not needed.
     template <class DGDiscreteModelTraits
-              , int N1 = -1 
-              , int N2 = -1 
-              , int N3 = -1 
-              , int N4 = -1 
-              , int N5 = -1 
-              , int N6 = -1 
-              , int N7 = -1 
-              , int N8 = -1 
-              , int N9 = -1 
+              , int N1 = -1
+              , int N2 = -1
+              , int N3 = -1
+              , int N4 = -1
+              , int N5 = -1
+              , int N6 = -1
+              , int N7 = -1
+              , int N8 = -1
+              , int N9 = -1
               >
     class DGDiscreteModelDefaultWithInsideOutside
     : public DGDiscreteModelDefault< DGDiscreteModelTraits, N1, N2, N3, N4, N5, N6, N7, N8, N9 >,
@@ -474,63 +474,63 @@ namespace Dune
       typedef typename BaseType::EntityType EntityType;
 
       DGDiscreteModelDefaultWithInsideOutside ()
-      : enVol_(-1.0) , nbVol_(-1.0) , en_(0) , nb_(0) 
+      : enVol_(-1.0) , nbVol_(-1.0) , en_(0) , nb_(0)
       {}
 
       DGDiscreteModelDefaultWithInsideOutside ( const DGDiscreteModelDefaultWithInsideOutside& other )
-      : enVol_(other.enVol_) , nbVol_(other.nbVol_), 
-        en_(other.en_) , nb_(other.nb_) 
+      : enVol_(other.enVol_) , nbVol_(other.nbVol_),
+        en_(other.en_) , nb_(other.nb_)
       {}
 
-      /** \brief method setting pointer of inside entity and getting volume 
+      /** \brief method setting pointer of inside entity and getting volume
        *
-       *  \param[in] en reference to inside entity 
+       *  \param[in] en reference to inside entity
        */
       void setEntity ( const EntityType& en )
-      { 
+      {
         en_ = &en;
         enVol_ = en.geometry().volume();
       }
 
-      /** \brief method seting pointer of outside entity and getting volume 
+      /** \brief method seting pointer of outside entity and getting volume
        *
-       *  \param[in] nb reference to outside entity 
+       *  \param[in] nb reference to outside entity
        */
       void setNeighbor ( const EntityType& nb )
-      { 
+      {
         nb_ = &nb;
         nbVol_ = nb.geometry().volume();
       }
-      
-      /** \brief method returning reference to inside entity 
+
+      /** \brief method returning reference to inside entity
        *
-       *  \return reference to inside entity 
+       *  \return reference to inside entity
        */
-      const EntityType &inside () const  
+      const EntityType &inside () const
       {
         assert( en_ );
         return *en_;
       }
-      
-      /** \brief method returning reference to outside entity 
+
+      /** \brief method returning reference to outside entity
        *
-       *  \return reference to outside entity 
+       *  \return reference to outside entity
        */
-      const EntityType &outside () const 
+      const EntityType &outside () const
       {
         assert( nb_ );
         return *nb_;
       }
 
       //! \brief return volume of entity
-      double enVolume () const 
-      { 
+      double enVolume () const
+      {
         assert(enVol_ > 0.0);
-        return enVol_; 
+        return enVol_;
       }
 
       //! \brief return volume of neighbor
-      double nbVolume () const 
+      double nbVolume () const
       {
         assert( nbVol_ > 0.0 );
         return nbVol_;
@@ -544,7 +544,7 @@ namespace Dune
       const EntityType* nb_;
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
 }  // namespace Dune
 

@@ -38,7 +38,7 @@ class LumpingQuadrature
   typedef typename BaseType::CoordinateType CoordinateType;
 
  protected:
-  static const unsigned int topologyId = TopologyType::id;      
+  static const unsigned int topologyId = TopologyType::id;
   typedef Dune::GenericGeometry::ReferenceDomain<TopologyType> ReferenceDomain;
 
  public:
@@ -51,16 +51,16 @@ class LumpingQuadrature
   LumpingQuadrature(const GeometryType& geometry, int ignored, int id)
     : BaseType(id)
   {
-    // make sure that we only use orders that are available 
+    // make sure that we only use orders that are available
     assert(ignored == 1);
-    
+
     for (unsigned i = 0; i < ReferenceDomain::numCorners; ++i) {
       CoordinateType pt;
       ReferenceDomain::corner(i, pt);
       this->addQuadraturePoint(pt, ReferenceDomain::template volume<FieldType>() / ReferenceDomain::numCorners);
     }
   }
-      
+
   /** \copydoc QuadratureImp::geometry
    */
   virtual GeometryType geometryType() const { return GeometryType(topologyId, dimension); }
@@ -90,10 +90,10 @@ struct LumpingQuadratureTraits
 {
   // Type of a single coordinate.
   typedef typename GridPartImp::ctype ctype;
-  
+
   // Dimension of the quadrature.
   enum { dimension = GridPartImp::dimension };
-  
+
   // Co-dimension.
   enum { codimension = codim };
 
@@ -112,13 +112,13 @@ class CachingLumpingQuadrature<GridPart, 0>
  public:
   //! type of grid partition
   typedef GridPart GridPartType;
-      
+
   //! codimension of the element quadrature
   enum { codimension = 0 };
-     
+
  private:
   typedef LumpingQuadratureTraits<GridPartType, codimension> IntegrationTraits;
-      
+
   typedef CachingLumpingQuadrature<GridPartType, codimension> ThisType;
   typedef CachingPointList<GridPartType, codimension, IntegrationTraits>
   BaseType;
@@ -134,7 +134,7 @@ class CachingLumpingQuadrature<GridPart, 0>
 
   // for compatibility
   typedef typename GridPartType::template Codim<0>::EntityType EntityType;
-      
+
  protected:
   using BaseType::quadImp;
 
@@ -175,13 +175,13 @@ class CachingLumpingQuadrature<GridPart, 1>
  public:
   //! type of grid partition
   typedef GridPart GridPartType;
-      
+
   //! codimension of the element quadrature
   enum { codimension = 1 };
-     
+
  private:
   typedef LumpingQuadratureTraits<GridPartType, codimension> IntegrationTraits;
-      
+
   typedef CachingLumpingQuadrature<GridPartType, codimension> ThisType;
   typedef CachingPointList<GridPartType, codimension, IntegrationTraits>
   BaseType;
@@ -209,7 +209,7 @@ class CachingLumpingQuadrature<GridPart, 1>
    *  \param[in]  gridPart      grid partition
    *  \param[in]  intersection  intersection
    *  \param[in]  ignored       desired order of the quadrature, which is ignored here
-   *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for 
+   *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for
    *                            which the ElementQuadrature shall be created
    */
   CachingLumpingQuadrature(const GridPartType& gridPart,

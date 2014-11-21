@@ -34,14 +34,14 @@ namespace Dune
 
       //! \brief entity types
       template < int cd >
-      struct Codim 
+      struct Codim
       {
         //! \brief entity type for given codimension
         typedef typename GridPartType::template Codim< cd >::EntityType EntityType;
       };
 
-      //! \brief entity type for codimension 0 
-      typedef typename Codim< 0 >::EntityType EntityType;   
+      //! \brief entity type for codimension 0
+      typedef typename Codim< 0 >::EntityType EntityType;
     };
 
 
@@ -52,15 +52,15 @@ namespace Dune
     class ThreadFilter
     : public FilterDefaultImplementation< ThreadFilterTraits< GridPartImp > >
     {
-      // type of grid part 
+      // type of grid part
       typedef GridPartImp GridPartType;
- 
+
       // type of traits
       typedef ThreadFilterTraits< GridPartType > Traits;
 
-      // this type 
+      // this type
       typedef ThreadFilter< GridPartType > ThisType;
-      
+
       // base type
       typedef FilterDefaultImplementation< Traits > BaseType;
 
@@ -72,22 +72,22 @@ namespace Dune
       //! \brief type of the filter implementation
       typedef typename Traits::FilterType FilterType;
 
-      //! \brief type of index set 
+      //! \brief type of index set
       typedef typename GridPartType :: IndexSetType IndexSetType;
-    
+
       template< int cd >
       struct Codim
       {
         typedef typename Traits::template Codim< cd >::EntityType EntityType;
       };
 
-      //! \brief type of codim 0 entity 
+      //! \brief type of codim 0 entity
       typedef typename Traits::EntityType EntityType;
 
       typedef MutableArray< int >  ThreadArrayType ;
-       
+
       //! \brief constructor
-      ThreadFilter ( const GridPartType & gridPart, 
+      ThreadFilter ( const GridPartType & gridPart,
                      const ThreadArrayType& threadNum,
                      const int thead )
       : indexSet_( gridPart.indexSet() ),
@@ -100,53 +100,53 @@ namespace Dune
       : indexSet_( other.indexSet_ ),
         threadNum_( other.threadNum_ ),
         thread_( other.thread_ )
-      { 
+      {
       }
 
-      //! \brief return false since all interior intersections should be skipped 
+      //! \brief return false since all interior intersections should be skipped
       template< class Intersection >
       bool interiorIntersection( const Intersection &intersection ) const
       {
         return false;
       }
-    
-      //! \brief returns true if the given entity has the correct thread number  
-      //! for higher codims false is returned 
+
+      //! \brief returns true if the given entity has the correct thread number
+      //! for higher codims false is returned
       template< int cd >
       bool contains ( const typename Codim< cd >::EntityType & entity ) const
       {
-        if( cd == 0 ) 
+        if( cd == 0 )
         {
           return (thread_ == threadNum_[ indexSet_.index( entity ) ]);
         }
-        else 
+        else
           return false ;
       }
 
-      //! \brief returns true if the given entity has the correct thread number  
-      //! for higher codims false is returned 
+      //! \brief returns true if the given entity has the correct thread number
+      //! for higher codims false is returned
       template< class Entity >
       bool contains ( const Entity & entity ) const
       {
         enum { cc = Entity::codimension };
         return contains< cc >( entity );
       }
- 
-      //! \brief returns true if an intersection is a boundary intersection 
+
+      //! \brief returns true if an intersection is a boundary intersection
       template< class Intersection >
       bool intersectionBoundary( const Intersection & intersection ) const
       {
         return intersection.boundary();
       }
-     
-      //! \brief returns the boundary id for an intersection 
+
+      //! \brief returns the boundary id for an intersection
       template< class Intersection >
       int intersectionBoundaryId ( const Intersection & intersection ) const
       {
         return intersection.boundaryId();
       }
 
-      //! \brief returns true if for an intersection a neighbor exsits 
+      //! \brief returns true if for an intersection a neighbor exsits
       template< class Intersection >
       bool intersectionNeighbor ( const Intersection & intersection ) const
       {

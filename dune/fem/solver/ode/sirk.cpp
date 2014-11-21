@@ -5,23 +5,23 @@ using namespace pardg;
 
 
 
-SIRK::SIRK(Communicator &comm, 
-     const int numofstages, const int ord, 
+SIRK::SIRK(Communicator &comm,
+     const int numofstages, const int ord,
      Function &f, Function &fex,
      const double *a, const double *b, const double *c,
      const double *aex, const double *cex) :
-  ODESolver(comm, 0), 
-  f(f), fex(fex), 
+  ODESolver(comm, 0),
+  f(f), fex(fex),
   num_of_stages(numofstages), order(ord),
   A(num_of_stages, a), b(num_of_stages, b), c(num_of_stages, c),
   Aex(num_of_stages, aex), cex(num_of_stages, cex),
   alpha(num_of_stages), beta(num_of_stages), gamma(num_of_stages),
   alphaex(num_of_stages), gammaex(num_of_stages),
-  F(NULL), y(NULL), 
+  F(NULL), y(NULL),
   ils(NULL), op(comm, f, dim, u_tmp, f_tmp), u_tmp(NULL), f_tmp(NULL)
 {
   // set this to some useful values
-  tolerance = 1.0e-6; 
+  tolerance = 1.0e-6;
   max_num_of_iterations = 20;
 
   // build matrix alpha
@@ -34,13 +34,13 @@ SIRK::SIRK(Communicator &comm,
 
   // build matrix alphaex
   alphaex = Aex * Ainv;
-  
+
   // build vector beta
   for(int i=0; i<num_of_stages; i++){
     beta[i] = 0.0;
     for(int j=0; j<num_of_stages; j++) beta[i] += b[j] * Ainv(j,i);
   }
-  
+
   // build vector gamma / gammaex
   for(int i=0; i<num_of_stages; i++){
     gamma[i] = 1.0;
@@ -68,12 +68,12 @@ void SIRK::resize(int new_size, int component)
 {
   // new_size >= dim
   delete[] U;
-  U = new double[ (num_of_stages + 5) * new_size ];  
+  U = new double[ (num_of_stages + 5) * new_size ];
   Fpre = U + num_of_stages * new_size;
-  F = Fpre + new_size;    
+  F = Fpre + new_size;
   y = F + new_size;
   u_tmp = y + new_size;    // for LinearOperator
-  f_tmp = u_tmp + new_size; // 
+  f_tmp = u_tmp + new_size; //
 }
 
 
@@ -99,7 +99,7 @@ bool SIRK::step(double t, double dt, double *u, int& newton_iterations, int& ils
 }
 
 
-bool SIRK::step_iterative(double t, double dt, double *u, int& newton_iterations, 
+bool SIRK::step_iterative(double t, double dt, double *u, int& newton_iterations,
                           int& ils_iterations, int& max_newton_iterations,
                           int& max_ils_iterations)
 {
@@ -126,11 +126,11 @@ bool SIRK::step_iterative(double t, double dt, double *u, int& newton_iterations
 
     // prediction uf ui, todo: extrapolation or something...
     // ui = u^n
-    
+
     // apply limiter if set, or copy to ui
-    if (explLimiter) 
+    if (explLimiter)
       (*explLimiter)(Fpre, ui);
-    else 
+    else
       cblas_dcopy(dim, Fpre, 1, ui, 1);
 
     // Newton iteration
@@ -170,12 +170,12 @@ bool SIRK::step_iterative(double t, double dt, double *u, int& newton_iterations
            << std::endl;
       }
 
-      newton_iter++;    
+      newton_iter++;
 
       if( ils_iter > max_ils_iterations)
        max_ils_iterations = ils_iter;
 
-      if(sqrt(global_dot) < tolerance) break;      
+      if(sqrt(global_dot) < tolerance) break;
     }
 
     newton_iterations += newton_iter;
@@ -183,7 +183,7 @@ bool SIRK::step_iterative(double t, double dt, double *u, int& newton_iterations
     if (newton_iter > max_newton_iterations)
       max_newton_iterations = newton_iter;
 
-    if (newton_iter >= max_num_of_iterations) return false;    
+    if (newton_iter >= max_num_of_iterations) return false;
   }
 
   return true;
@@ -258,8 +258,8 @@ bool SIRK::step_iterative(double t, double dt, double *u, int& newton_iterations
 
 // SIRK::LinearOperator implementation
 SIRK::LinearOperator::LinearOperator(Communicator &comm, Function &f,
-             const int &dim, 
-             double *&u_tmp, double *&f_tmp) : 
+             const int &dim,
+             double *&u_tmp, double *&f_tmp) :
   comm(comm), f(f), dim(dim), u_tmp(u_tmp), f_tmp(f_tmp)
 {}
 
@@ -316,10 +316,10 @@ static const double SIEuler_cex[] = {0.0};
 // common part
 static const double SIEuler_b[] = {1.0};
 
-SemiImplicitEuler::SemiImplicitEuler(Communicator &comm, 
+SemiImplicitEuler::SemiImplicitEuler(Communicator &comm,
              Function &f, Function &fex) :
-  SIRK(comm, 1, 1, f, fex, SIEuler_A, SIEuler_b, SIEuler_c, 
-       SIEuler_Aex, SIEuler_cex) 
+  SIRK(comm, 1, 1, f, fex, SIEuler_A, SIEuler_b, SIEuler_c,
+       SIEuler_Aex, SIEuler_cex)
 {}
 
 
@@ -333,7 +333,7 @@ static const double SIRK23_A[] =
    -1.0, 0.5, 0.0,
    0.25, 0.25, 0.5
   };
-static const double SIRK23_c[] = 
+static const double SIRK23_c[] =
   {0.5, -0.5, 1.0};
 // explicit part
 static const double SIRK23_Aex[] =
@@ -341,30 +341,30 @@ static const double SIRK23_Aex[] =
    1.0, 0.0, 0.0,
    0.0, 0.5, 0.0
   };
-static const double SIRK23_cex[] = 
+static const double SIRK23_cex[] =
   {0.0, 1.0, 0.5};
 // common part
-static const double SIRK23_b[] = 
+static const double SIRK23_b[] =
   {0.25, 0.25, 0.5};
 
 SIRK23::SIRK23(Communicator &comm, Function &f, Function &fex) :
-  SIRK(comm, 3, 2, f, fex, SIRK23_A, SIRK23_b, SIRK23_c, 
-       SIRK23_Aex, SIRK23_cex) 
+  SIRK(comm, 3, 2, f, fex, SIRK23_A, SIRK23_b, SIRK23_c,
+       SIRK23_Aex, SIRK23_cex)
 {}
 
 
 
 //class SIRK33, 3 stages, 3rd order
-// YZ33 from Dennis Diss 
+// YZ33 from Dennis Diss
 // implicit part
 static const double SIRK33_A[] =
   {3.0/4.0, 0.0, 0.0,
    5589.0/6524.0, 75.0/233.0, 0.0,
    7691.0/26096.0, -26335.0/78288.0, 65.0/168.0
   };
-static const double SIRK33_c[] = 
-  {3.0/4.0, 
-   5589.0/6524.0 + 75.0/233.0, 
+static const double SIRK33_c[] =
+  {3.0/4.0,
+   5589.0/6524.0 + 75.0/233.0,
    7691.0/26096.0 - 26335.0/78288.0 + 65.0/168.0
   };
 // explicit part
@@ -373,15 +373,15 @@ static const double SIRK33_Aex[] =
    8.0/7.0, 0.0, 0.0,
    71.0/252.0, 7.0/36.0, 0.0
   };
-static const double SIRK33_cex[] = 
+static const double SIRK33_cex[] =
   {0.0, 8.0/7.0, 71.0/252.0 + 7.0/36.0};
 // common part
-static const double SIRK33_b[] = 
+static const double SIRK33_b[] =
   {1.0/8.0, 1.0/8.0, 3.0/4.0};
 
 SIRK33::SIRK33(Communicator &comm, Function &f, Function &fex) :
-  SIRK(comm, 3, 3, f, fex, SIRK33_A, SIRK33_b, SIRK33_c, 
-       SIRK33_Aex, SIRK33_cex) 
+  SIRK(comm, 3, 3, f, fex, SIRK33_A, SIRK33_b, SIRK33_c,
+       SIRK33_Aex, SIRK33_cex)
 {}
 
 
@@ -393,29 +393,29 @@ static const double IMEX_SSP222_A[] =
   {delta, 0.0,
    1.0-2.0*delta, delta
   };
-static const double IMEX_SSP222_c[] = 
+static const double IMEX_SSP222_c[] =
   {delta, 1.0-delta};
 // explicit part
 static const double IMEX_SSP222_Aex[] =
   {0.0, 0.0,
    1.0, 0.0
   };
-static const double IMEX_SSP222_cex[] = 
+static const double IMEX_SSP222_cex[] =
   {0.0, 1.0};
 // common part
-static const double IMEX_SSP222_b[] = 
+static const double IMEX_SSP222_b[] =
   {0.5, 0.5};
 
-IMEX_SSP222::IMEX_SSP222(Communicator &comm, 
+IMEX_SSP222::IMEX_SSP222(Communicator &comm,
        Function &f, Function &fex) :
-  SIRK(comm, 2, 2, f, fex, IMEX_SSP222_A, IMEX_SSP222_b, IMEX_SSP222_c, 
-       IMEX_SSP222_Aex, IMEX_SSP222_cex) 
+  SIRK(comm, 2, 2, f, fex, IMEX_SSP222_A, IMEX_SSP222_b, IMEX_SSP222_c,
+       IMEX_SSP222_Aex, IMEX_SSP222_cex)
 {}
 
 
 
 //class ARK34, 4 stages, 3rd order
-// Kennedy and Carpenter, Appl. Num. Math. 44, 2003 
+// Kennedy and Carpenter, Appl. Num. Math. 44, 2003
 // explicit part
 static const double ARK34_Aex[] =
   {
@@ -435,33 +435,33 @@ static const double ARK34_A[] =
   };
 
 // common part
-static const double ARK34_b[] = 
+static const double ARK34_b[] =
   { 1471266399579.0/7840856788654.0, -4482444167858.0/7529755066697.0, 11266239266428.0/11593286722821.0, 1767732205903.0/4055673282236.0 };
   //{ 2756255671327.0/12835298489170.0, -10771552573575.0/22201958757719.0, 9247589265047.0/10645013368117.0, 2193209047091.0/5459859503100.0 };
-static const double ARK34_c[] = 
+static const double ARK34_c[] =
   {0.0, 1767732205903.0/2027836641118.0 , 3.0/5.0, 1.0};
 
 IMEX_ARK34::IMEX_ARK34(Communicator &comm, Function &f, Function &fex) :
-  SIRK(comm, 4, 3, f, fex, ARK34_A, ARK34_b, ARK34_c, 
-       ARK34_Aex, ARK34_c) 
+  SIRK(comm, 4, 3, f, fex, ARK34_A, ARK34_b, ARK34_c,
+       ARK34_Aex, ARK34_c)
 {}
 
 
 
 //class ARK46, 6 stages, 4rd order
-// Kennedy and Carpenter, Appl. Num. Math. 44, 2003 
+// Kennedy and Carpenter, Appl. Num. Math. 44, 2003
 // explicit part
 static const double ARK46_Aex[] =
   {
-    0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 
-    0.5,  0.0, 0.0, 0.0, 0.0, 0.0, 
-    13861.0/62500.0, 6889.0/62500.0, 0.0, 0.0, 0.0, 0.0, 
+    0.0,  0.0, 0.0, 0.0, 0.0, 0.0,
+    0.5,  0.0, 0.0, 0.0, 0.0, 0.0,
+    13861.0/62500.0, 6889.0/62500.0, 0.0, 0.0, 0.0, 0.0,
     -116923316275.0/2393684061468.0, -2731218467317.0/15368042101831.0, 9408046702089.0/11113171139209.0, 0.0, 0.0, 0.0,
     -451086348788.0/2902428689909.0, -2682348792572.0/7519795681897.0, 12662868775082.0/11960479115383.0, 3355817975965.0/11060851509271.0, 0.0, 0.0,
     647845179188.0/3216320057751.0, 73281519250.0/8382639484533.0, 552539513391.0/3454668386233.0, 3354512671639.0/8306763924573.0, 4040.0/17871.0, 0.0
   };
 static const double ARK46_cex[] = {
-    0.0, 0.5, 13861.0/62500.0 + 6889.0/62500.0, 
+    0.0, 0.5, 13861.0/62500.0 + 6889.0/62500.0,
     -116923316275.0/2393684061468.0 -2731218467317.0/15368042101831.0 + 9408046702089.0/11113171139209.0,
     -451086348788.0/2902428689909.0 -2682348792572.0/7519795681897.0 + 12662868775082.0/11960479115383.0 + 3355817975965.0/11060851509271.0,
     647845179188.0/3216320057751.0 + 73281519250.0/8382639484533.0 + 552539513391.0/3454668386233.0 + 3354512671639.0/8306763924573.0 + 4040.0/17871.0
@@ -470,27 +470,27 @@ static const double ARK46_cex[] = {
 // implicit part
 static const double ARK46_A[] =
   {
-    0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 
-    0.25, 0.25, 0.0, 0.0, 0.0, 0.0, 
+    0.0,  0.0,  0.0, 0.0, 0.0, 0.0,
+    0.25, 0.25, 0.0, 0.0, 0.0, 0.0,
     8611.0/62500.0, -1743.0/31250.0, 0.25 , 0.0, 0.0, 0.0,
     5012029.0/34652500.0, -654441.0/2922500.0, 174375.0/388108.0, 0.25, 0.0, 0.0,
     15267082809.0/155376265600.0, -71443401.0/120774400.0, 730878875.0/902184768.0, 2285395.0/8070912.0, 0.25, 0.0,
-    82889.0/524892.0, 0.0, 15625.0/83664.0, 69875.0/102672.0, -2260.0/8211.0, 0.25 
+    82889.0/524892.0, 0.0, 15625.0/83664.0, 69875.0/102672.0, -2260.0/8211.0, 0.25
   };
 
 // common part
-static const double ARK46_b[] = 
+static const double ARK46_b[] =
   { 82889.0/524892.0, 0.0, 15625.0/83664.0, 69875.0/102672.0, -2260.0/8211.0, 0.25 };
-static const double ARK46_c[] = 
-  {0.0, 0.5 , 8611.0/62500.0 -1743.0/31250.0 + 0.25, 
+static const double ARK46_c[] =
+  {0.0, 0.5 , 8611.0/62500.0 -1743.0/31250.0 + 0.25,
    5012029.0/34652500.0 -654441.0/2922500.0 + 174375.0/388108.0 + 0.25,
    15267082809.0/155376265600.0 -71443401.0/120774400.0 + 730878875.0/902184768.0 + 2285395.0/8070912.0 + 0.25,
    82889.0/524892.0 + 15625.0/83664.0 + 69875.0/102672.0  -2260.0/8211.0 + 0.25
   };
 
 IMEX_ARK46::IMEX_ARK46(Communicator &comm, Function &f, Function &fex) :
-  SIRK(comm, 6, 4, f, fex, ARK46_A, ARK46_b, ARK46_c, 
-       ARK46_Aex, ARK46_cex) 
+  SIRK(comm, 6, 4, f, fex, ARK46_A, ARK46_b, ARK46_c,
+       ARK46_Aex, ARK46_cex)
 {}
 
 
@@ -507,7 +507,7 @@ static const double IERK45_Aex[] =
     0.14631668003312, 0.69488738277516, 0.46893381306619, 0.0, 0.0,
     -1.33389883143642, 2.90509214801204, -1.06511748457024, 0.27210900509137, 0.0
   };
-static const double IERK45_cex[] = 
+static const double IERK45_cex[] =
   { 0.0, 0.39098372452428, IERK45_Aex[ 10 ] + IERK45_Aex[ 11 ],
     IERK45_Aex[ 15 ] + IERK45_Aex[ 16 ] + IERK45_Aex[ 17 ],
     IERK45_Aex[ 20 ] + IERK45_Aex[ 21 ] + IERK45_Aex[ 22 ] + IERK45_Aex[ 23 ]
@@ -515,29 +515,29 @@ static const double IERK45_cex[] =
 
 // implicit part
 static const double IERK45_A[] =
-  { 
+  {
     0.25, 0.0,  0.0,  0.0,  0.0,
     0.34114705729739, 0.25, 0.0,  0.0,  0.0,
     0.80458720789763, -0.07095262154540, 0.25,  0.0,  0.0,
     -0.52932607329103, 1.15137638494253, -0.80248263237803, 0.25, 0.0,
-    0.11933093090075, 0.55125531344927, -0.1216872844994, 0.20110104014943, 0.25 
+    0.11933093090075, 0.55125531344927, -0.1216872844994, 0.20110104014943, 0.25
   };
-static const double IERK45_c[] = 
+static const double IERK45_c[] =
   {
-    0.25, 0.34114705729739 + 0.25, 0.80458720789763  -0.07095262154540 + 0.25, 
+    0.25, 0.34114705729739 + 0.25, 0.80458720789763  -0.07095262154540 + 0.25,
     -0.52932607329103 + 1.15137638494253 -0.80248263237803+ 0.25,
     0.11933093090075 + 0.55125531344927  -0.1216872844994 + 0.20110104014943 + 0.25
   };
 
 
 // common part
-static const double IERK45_b[] = 
+static const double IERK45_b[] =
   { IERK45_A[20] , IERK45_A[21], IERK45_A[22], IERK45_A[23] , IERK45_A[24] };
 
 
 IERK45::IERK45(Communicator &comm, Function &f, Function &fex) :
-  SIRK(comm, 5, 4, f, fex, IERK45_A, IERK45_b, IERK45_c, 
-       IERK45_Aex, IERK45_cex) 
+  SIRK(comm, 5, 4, f, fex, IERK45_A, IERK45_b, IERK45_c,
+       IERK45_Aex, IERK45_cex)
 {}
 
 

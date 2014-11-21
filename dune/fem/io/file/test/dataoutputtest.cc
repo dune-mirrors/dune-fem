@@ -12,7 +12,7 @@ static const int dimw = Dune::GridSelector::dimworld;
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
-#include <dune/fem/gridpart/adaptiveleafgridpart.hh> 
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 
@@ -27,7 +27,7 @@ static const int dimw = Dune::GridSelector::dimworld;
 using namespace Dune;
 using namespace Fem;
 
-struct OutputParameters1 
+struct OutputParameters1
 : public LocalParameter<DataOutputParameters,OutputParameters1> {
   virtual ~OutputParameters1() {}
   //! path where the data is stored (path are always relative to fem.prefix)
@@ -59,7 +59,7 @@ struct OutputParameters1
   }
 };
 
-struct OutputParameters2 : 
+struct OutputParameters2 :
   public LocalParameter<DataOutputParameters,OutputParameters2> {
   virtual ~OutputParameters2() {}
   //! path where the data is stored (path are always relative to fem.prefix)
@@ -80,20 +80,20 @@ struct OutputParameters2 :
   }
 };
 
-// polynom approximation order of quadratures, 
+// polynom approximation order of quadratures,
 // at least polynom order of basis functions
 const int polOrd = POLORDER;
 
 //***********************************************************************
-/*! L2 Projection of a function f: 
+/*! L2 Projection of a function f:
 
-  This is an example how to solve the equation on 
+  This is an example how to solve the equation on
   \f[\Omega = (0,1)^2 \f]
 
   \f[ \int_{\Omega} u \phi = \int_{\Omega} f \phi  \ \ \ in \Omega \f]
   \f[ f(x,y) = x ( 1 - x) y ( 1 - y ) \f]
 
-  Here u is the L_2 projection of f. 
+  Here u is the L_2 projection of f.
 
   The Projection should converge to the given function f.
   with the finite element method using lagrangian elements of polynom order +1.
@@ -101,7 +101,7 @@ const int polOrd = POLORDER;
 //***********************************************************************
 typedef GridSelector::GridType GridType;
 
-//! the index set we are using 
+//! the index set we are using
 //typedef HierarchicGridPart<GridType> GridPartType;
 //typedef DGAdaptiveLeafGridPart<GridType> GridPartType;
 typedef AdaptiveLeafGridPart<GridType> GridPartType;
@@ -111,27 +111,27 @@ typedef AdaptiveLeafGridPart<GridType> GridPartType;
 //typedef MatrixFunctionSpace < double , double, dimw , 3,5 > FuncSpace;
 typedef FunctionSpace < GridType :: ctype, double , dimw , 4 > FuncSpace;
 
-//! define the function space our unkown belong to 
+//! define the function space our unkown belong to
 //! see dune/fem/lagrangebase.hh
-typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
+typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType,
 	polOrd,CachingStorage> DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
 //! dune/fem/discfuncarray.hh
 typedef AdaptiveDiscreteFunction < DiscreteFunctionSpaceType > DiscreteFunctionType;
 
-// the exact solution to the problem for EOC calculation 
+// the exact solution to the problem for EOC calculation
 struct ExactSolution
 : public Fem::Function< FuncSpace, ExactSolution >
 {
   typedef FuncSpace::RangeType RangeType;
   typedef FuncSpace::RangeFieldType RangeFieldType;
   typedef FuncSpace::DomainType DomainType;
-  
+
   ExactSolution ( double time = 0 )
   : time_( time )
   {}
- 
+
   //! f(x,y) = x*(1-x)*y*(1-y)
   void evaluate (const DomainType & x , RangeType & ret)  const
   {
@@ -151,23 +151,23 @@ struct ExactSolution
 private:
   double time_;
 };
- 
+
 // ********************************************************************
 double algorithm (GridType& grid, DiscreteFunctionType& solution,double time=0)
 {
-   // create exact solution for error evaluation 
-   ExactSolution f( time ); 
+   // create exact solution for error evaluation
+   ExactSolution f( time );
 
-   // L2 error class 
+   // L2 error class
    L2Norm< GridPartType > l2norm( solution.space().gridPart() );
-       
+
    //! perform l2-projection
    DGL2ProjectionImpl::project(f, solution);
 
-   // calculation L2 error 
-   // pol ord for calculation the error chould by higher than 
-   // pol for evaluation the basefunctions 
-   typedef DiscreteFunctionSpaceType :: RangeType RangeType; 
+   // calculation L2 error
+   // pol ord for calculation the error chould by higher than
+   // pol for evaluation the basefunctions
+   typedef DiscreteFunctionSpaceType :: RangeType RangeType;
    double error = l2norm.distance( f ,solution );
    std::cout << "\nL2 Error: " << error << std::endl;
    return sqrt(error*error);
@@ -177,14 +177,14 @@ template <class ConsType>
 struct AddLsgErr {
   typedef typename ConsType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-  typedef typename GridPartType :: GridType :: 
+  typedef typename GridPartType :: GridType ::
           template Codim<0> :: Entity EntityType;
   typedef typename EntityType :: Geometry GeometryImp;
   typedef typename ConsType :: DiscreteFunctionSpaceType :: FunctionSpaceType
                    ConsFunctionSpaceType;
   typedef typename ConsFunctionSpaceType :: DomainType ConsDomainType;
   typedef typename ConsFunctionSpaceType :: RangeType ConsRangeType;
-  
+
   typedef FunctionSpace<double,double,
       ConsDomainType::dimension,
       3*ConsRangeType::dimension>
@@ -213,9 +213,9 @@ struct AddLsgErr {
     return space_.vecsize(i%d);
   }
   */
-  AddLsgErr(const ConsType& Uh,double time) : 
+  AddLsgErr(const ConsType& Uh,double time) :
     space_(Uh.space()),
-    lUh_(Uh), 
+    lUh_(Uh),
     time_(time),
     entity_(0),
     initialized_(false) {
@@ -229,7 +229,7 @@ struct AddLsgErr {
     lUh_.evaluate(x,u);
     ConsRangeType u0;
     DomainType global = entity().geometry().global( coordinate( x ) );
-    ExactSolution f( time_ ); 
+    ExactSolution f( time_ );
     f.evaluate(global,u0);
     const int d = ConsRangeType::dimension;
     for (int i=0;i<d;i++) {
@@ -269,7 +269,7 @@ struct Model { // : public SpaceDescriptor {
   virtual std::string name(int i) const {
     switch (i) {
     case 0: return "rho";
-    case 1: 
+    case 1:
     case 2: return "momentum";
     case 3: return "energy";
     }
@@ -295,7 +295,7 @@ struct Model { // : public SpaceDescriptor {
 */
 //**************************************************
 //
-//  main programm, run algorithm twice to calc EOC 
+//  main programm, run algorithm twice to calc EOC
 //
 //**************************************************
 int main (int argc, char **argv)

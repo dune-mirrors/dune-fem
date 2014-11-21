@@ -20,8 +20,8 @@ typedef FieldMatrix< double, n, m > MatrixType;
 
 typedef FieldMatrixConverter< VectorType, MatrixType > ConverterType;
 
-// main program 
-int main(int argc, char ** argv) 
+// main program
+int main(int argc, char ** argv)
 {
   try
   {

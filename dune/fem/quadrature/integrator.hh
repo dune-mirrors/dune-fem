@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_INTEGRATOR_HH
 #define DUNE_FEM_INTEGRATOR_HH
 
-//- Dune includes 
+//- Dune includes
 #include <dune/fem/quadrature/quadrature.hh>
 
 namespace Dune
@@ -11,7 +11,7 @@ namespace Dune
   {
 
     /** \addtogroup Integrators
-       
+
         Integrators are able to integrate a function.
      */
 
@@ -20,7 +20,7 @@ namespace Dune
     /** \class   Integrator
         \ingroup Integrators
         \brief   integrator for arbitrary functions providing evaluate
-      
+
         \param Quadrature  quadrature to use (either ElementQuadrature or
                            CachingQuadrature)
      */
@@ -42,7 +42,7 @@ namespace Dune
 
     public:
       /** \brief constructor
-         
+
           \param[in]  order   polynomial order for which the used quadrature
                               shall be exact
        */
@@ -51,7 +51,7 @@ namespace Dune
       {}
 
       /** \brief add the integral over an entity to a variable
-        
+
           The function needs to have an evaluate method supporting
           \ref Dune::Fem::QuadraturePointWrapper "wrapped quadrature points".
           The declaration should look as follows:
@@ -59,9 +59,9 @@ namespace Dune
           template< class Point >
           evaluate( Point &x, RangeType &ret );
           \endcode
-        
+
           \note The RangeType should be compatible with a Dune FieldVector.
-        
+
           \param[in]   entity    entity to integrate over
           \param[in]   function  function to integrate
           \param       ret       variable to which the value of the integral is
@@ -84,7 +84,7 @@ namespace Dune
           // evaluate function in quadrature point
           RangeType phi;
           function.evaluate( quadrature[ pt ], phi );
-         
+
           // calculate the weight of the quadrature point
           const RangeFieldType weight
             = geometry.integrationElement( quadrature.point( pt ) )
@@ -95,7 +95,7 @@ namespace Dune
       }
 
       /** \brief integrate a function over an entity
-        
+
           The function needs to have an evaluate method supporting
           \ref Dune::Fem::QuadraturePointWrapper "wrapped quadrature points".
           The declaration should look as follows:
@@ -103,9 +103,9 @@ namespace Dune
           template< class Point >
           evaluate( Point &x, RangeType &ret );
           \endcode
-        
+
           \note The RangeType should be compatible with a Dune FieldVector.
-        
+
           \param[in]   entity    entity to integrate over
           \param[in]   function  function to integrate
           \param[out]  ret       value of the integral
@@ -120,7 +120,7 @@ namespace Dune
       }
     };
 
-  } // namespace Fem  
+  } // namespace Fem
 
 } // namespace Dune
 

@@ -22,7 +22,7 @@ namespace Dune
     // BlockDiagonalLinearOperator
     // ---------------------------
 
-    template< class DiscreteFunctionSpace, 
+    template< class DiscreteFunctionSpace,
               class LocalBlock = Dune::FieldMatrix< typename DiscreteFunctionSpace ::
                 RangeFieldType, DiscreteFunctionSpace::localBlockSize, DiscreteFunctionSpace::localBlockSize > >
     class BlockDiagonalLinearOperator
@@ -93,14 +93,14 @@ namespace Dune
       }
 
       template < class DomainSpace, class RangeSpace >
-      void operator() ( const AdaptiveDiscreteFunction< DomainSpace > &u, 
+      void operator() ( const AdaptiveDiscreteFunction< DomainSpace > &u,
                         AdaptiveDiscreteFunction< RangeSpace > &w ) const
       {
         multiply( u, w );
       }
 
       template < class DomainSpace, class RangeSpace >
-      void multiply( const AdaptiveDiscreteFunction< DomainSpace > &u, 
+      void multiply( const AdaptiveDiscreteFunction< DomainSpace > &u,
                      AdaptiveDiscreteFunction< RangeSpace > &w ) const
       {
         typedef typename std::vector< LocalBlockType >::const_iterator Iterator;
@@ -142,7 +142,7 @@ namespace Dune
           dit->invert();
       }
 
-      void rightmultiply( const ThisType& other ) 
+      void rightmultiply( const ThisType& other )
       {
         assert( other.diagonal_.size() == diagonal_.size() );
         typedef typename std::vector< LocalBlockType >::iterator Iterator;
@@ -155,7 +155,7 @@ namespace Dune
         }
       }
 
-      void leftmultiply( const ThisType& other ) 
+      void leftmultiply( const ThisType& other )
       {
         assert( other.diagonal_.size() == diagonal_.size() );
         typedef typename std::vector< LocalBlockType >::iterator Iterator;
@@ -176,7 +176,7 @@ namespace Dune
       }
 
       //! return block matrix for given block number (== entity number)
-      ConstDofBlockPtrType block( const size_t block ) const 
+      ConstDofBlockPtrType block( const size_t block ) const
       {
         assert( block < diagonal_.size() );
         return &diagonal_[ block ];
@@ -184,16 +184,16 @@ namespace Dune
 
       /** \brief copy matrices to ghost cells to make this class work in parallel
           \note needs the block methods to behave like discrete function
-          (needed to make this class work with CommunicationManager) 
-      */ 
-      void communicate () 
+          (needed to make this class work with CommunicationManager)
+      */
+      void communicate ()
       {
-        domainSpace().communicate( *this ); 
+        domainSpace().communicate( *this );
       }
 
-      /** \brief return reference to data handle object 
-          (needed to make this class work with CommunicationManager) 
-      */ 
+      /** \brief return reference to data handle object
+          (needed to make this class work with CommunicationManager)
+      */
       template< class Operation >
       typename CommDataHandle< Operation > :: Type
       dataHandle( const Operation *operation )
@@ -218,7 +218,7 @@ namespace Dune
       const DomainSpaceType &domainSpace () const { return space_; }
       const RangeSpaceType &rangeSpace () const { return space_; }
 
-      /** \brief return reference to space (needed to make this class work with CommunicationManager) */ 
+      /** \brief return reference to space (needed to make this class work with CommunicationManager) */
       const DomainSpaceType &space () const { return space_; }
 
       const std::string &name () const { return name_; }
@@ -311,16 +311,16 @@ namespace Dune
         basisFunctionSet_ = domainSpace().basisFunctionSet( domainEntity );
         SetLocalBlockFunctor f( op_->diagonal_, localBlock_ );
         domainSpace().blockMapper().mapEach( domainEntity, f );
-        if( &domainEntity != &rangeEntity ) 
+        if( &domainEntity != &rangeEntity )
         {
           static LocalBlockType dummyBlock( 0 );
 
           LocalBlockType *otherBlock = 0;
           SetLocalBlockFunctor f( op_->diagonal_, otherBlock );
           rangeSpace().blockMapper().mapEach( rangeEntity, f );
-          // check whether the blocks match, otherwise off-diagonal 
-          // for off-diagonal we simply use a dummy local matrix 
-          if( otherBlock != localBlock_ ) 
+          // check whether the blocks match, otherwise off-diagonal
+          // for off-diagonal we simply use a dummy local matrix
+          if( otherBlock != localBlock_ )
             localBlock_ = &dummyBlock ;
         }
       }

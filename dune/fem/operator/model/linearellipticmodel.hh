@@ -30,7 +30,7 @@ namespace Dune
 
     /** \class LinearEllipticModelInterface
         \brief interface for models of linear elliptic problems
-      
+
         This class models the data for equations of the following type:
         \f{displaymath}
           -\nabla \cdot (a(x) \nabla u) + \nabla \cdot (b( x ) u) + c( x ) u = f( x )
@@ -43,16 +43,16 @@ namespace Dune
         .
         Additionally, boundary conditions are modelled by this class. For details,
         see BoundaryModelInterface.
-      
+
         Beside the properties of a BoundaryModelInterface, a LinearEllipticModel
         has the following properties:
         - \b hasConvectiveFlux : The convective flux is nontrivial
         - \b hasMass           : The mass in nontrivial
         - \b hasSource         : The source is nontrivial
-        . 
+        .
         If one of these properties is \b false, the solver does not need to
         evaluate the corresponding terms. This may speed up the program.
-      
+
         \param  FunctionSpaceImp        function space to work in
         \param  LinearEllipticModelImp  actual implementation (Barton-Nackman)
         \param  PropertiesImp           properties of the implementation
@@ -99,10 +99,10 @@ namespace Dune
 
     protected:
       using BaseType :: asImp;
-      
+
     public:
       /** \brief evaluate the convective flux in a point
-        
+
           \param[in]   entity      entity to evaluate the flux on
           \param[in]   x           evaluaton point (in local coordinates)
           \param[in]   phi         value of the solution in the evaluation point
@@ -118,9 +118,9 @@ namespace Dune
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
           ( asImp().convectiveFlux( entity, x, phi, flux ) );
       }
-     
+
       /** \brief evaluate the mass in a point
-        
+
           \param[in]   entity      entity to evaluate the mass on
           \param[in]   x           evaluaton point (in local coordinates)
           \param[out]  ret         variable to receive the evaluated mass
@@ -136,7 +136,7 @@ namespace Dune
       }
 
       /** \brief evaluate the source in a point
-        
+
           \param[in]   entity      entity to evaluate the source on
           \param[in]   x           evaluaton point (in local coordinates)
           \param[out]  ret         variable to receive the evaluated source
@@ -195,12 +195,12 @@ namespace Dune
 
       typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
       typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
-      
+
     public:
       LinearEllipticModelDefault ()
       : boundaryModelDefault_()
       {}
-      
+
       template< class IntersectionType, class QuadratureType >
       void dirichletValues ( const IntersectionType &intersection,
                              const QuadratureType &quadrature,
@@ -218,7 +218,7 @@ namespace Dune
       {
         boundaryModelDefault_.neumannValues( intersection, quadrature, point, phi );
       }
-      
+
       template< class IntersectionType, class QuadratureType >
       void robinValues ( const IntersectionType &intersection,
                          const QuadratureType &quadrature,
@@ -235,9 +235,9 @@ namespace Dune
       {
         return boundaryModelDefault_.robinAlpha( intersection, quadrature, point );
       }
-      
+
       /** \copydoc Dune::Fem::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const PointType &x,const JacobianRangeType &gradient,JacobianRangeType &flux) const
-        
+
           The default implementation calls
           \code
           FieldVector< int, 0 > diffVar;
@@ -253,9 +253,9 @@ namespace Dune
         FieldVector< int, 0 > diffVar;
         asImp().diffusiveFlux( diffVar, entity, x, gradient, flux );
       }
-     
+
       /** \copydoc Dune::Fem::LinearEllipticModelInterface::convectiveFlux(const EntityType &entity,const PointType &x,const RangeType &phi,JacobianRangeType &flux) const
-        
+
           The default implementation returns 0.
        */
       template< class EntityType, class PointType >
@@ -269,7 +269,7 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::LinearEllipticModelInterface::mass(const EntityType &entity,const PointType &x,RangeType &ret) const
-       
+
          The default implementation returns 0.
        */
       template< class EntityType, class PointType >
@@ -282,7 +282,7 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::LinearEllipticModelInterface::source(const EntityType &entity,const PointType &x,RangeType &ret) const
-       
+
          The default implementation returns 0.
        */
       template< class EntityType, class PointType >
@@ -296,7 +296,7 @@ namespace Dune
     };
 
   } // namespace Fem
- 
+
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_LINEARELLIPTICMODEL_HH

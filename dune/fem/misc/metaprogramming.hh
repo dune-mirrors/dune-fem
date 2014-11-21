@@ -8,7 +8,7 @@ namespace Dune
   {
 
     // meta programming for boolean values
-    
+
     template< bool b >
     struct MetaBool
     {
@@ -16,7 +16,7 @@ namespace Dune
       static const bool v = b;
       static const bool value = v;
     };
-    
+
     struct MetaTrue
     : public MetaBool< true >
     {};
@@ -63,13 +63,13 @@ namespace Dune
               template< unsigned int > class Then, unsigned int i,
               template< unsigned int > class Else, unsigned int j >
     struct MetaIfTemplate;
-    
+
     template< template< unsigned int > class Then, unsigned int i,
               template< unsigned int > class Else, unsigned int j >
     struct MetaIfTemplate< true, Then, i, Else, j >
     : public Then< i >
     {};
-    
+
     template< template< unsigned int > class Then, unsigned int i,
               template< unsigned int > class Else, unsigned int j >
     struct MetaIfTemplate< false, Then, i, Else, j >
@@ -84,11 +84,11 @@ namespace Dune
     template<>
     struct MetaAssert< true >
     {};
-   
+
 
 
     // meta programming for integer values
-    
+
     template< int i >
     struct MetaInt
     {
@@ -98,7 +98,7 @@ namespace Dune
 
 
 
-   
+
     template< class A, class B >
     struct MetaPlus
     : public MetaInt< (A :: value + B :: value) >
@@ -122,7 +122,7 @@ namespace Dune
     {};
 
 
-    
+
     template< class A, class B >
     struct MetaMultiply
     : public MetaInt< (A :: value * B :: value) >
@@ -133,8 +133,8 @@ namespace Dune
     : public MetaInt< (A :: value / B :: value) >
     {};
 
-    
-    
+
+
     template< class A, class B >
     struct MetaMin
     : public MetaInt< (A :: value <= B :: value ? A :: value : B :: value) >
@@ -156,12 +156,12 @@ namespace Dune
     struct MetaLessEqual
     : public MetaBool< (A :: value <= B :: value) >
     {};
-    
+
     template< class A, class B >
     struct MetaGreaterEqual
     : public MetaBool< (A :: value >= B :: value) >
     {};
-    
+
     template< class A, class B >
     struct MetaGreater
     : public MetaBool< (A :: value > B :: value) >
@@ -186,7 +186,7 @@ namespace Dune
 
 
     // Loop: apply an operation i times (which means there are i+1 arguments)
-    
+
     template< template< class, class > class Operation,
               template< unsigned int > class f,
               unsigned int i >
@@ -205,7 +205,7 @@ namespace Dune
 
 
     // MetaProtect: protect template instanciation
-   
+
     template< class Void,
               bool condition,
               template< unsigned int > class Value,
@@ -217,7 +217,7 @@ namespace Dune
     : public Value< i >
     {
     };
-    
+
     template< class Void, template< unsigned int > class Value, unsigned int i >
     struct MetaProtect< Void, false, Value, i >
     : public Void
@@ -225,7 +225,7 @@ namespace Dune
     };
 
 
-    
+
     template< bool condition, template< unsigned int > class Value, unsigned int i >
     struct MetaProtectInt
     : public MetaProtect< MetaInt< 0 >, condition, Value, i >

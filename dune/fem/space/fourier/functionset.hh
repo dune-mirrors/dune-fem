@@ -56,7 +56,7 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       typedef std::size_t SizeType;
-      
+
       explicit FourierFunctionSet ( int order ) : order_( order ) {}
 
       int order () const { return order_; }
@@ -322,9 +322,9 @@ namespace Dune
             return *this;
           multiIndex_[ j ] = 0;
         }
-        
+
         // otherwise, reset this iterator to end iterator
-        *this = end(); 
+        *this = end();
         return *this;
       }
 

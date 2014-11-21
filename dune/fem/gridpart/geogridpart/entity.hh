@@ -45,7 +45,7 @@ namespace Dune
       typedef typename HostGridPartType::template Codim< codimension >::EntityType HostEntityType;
       typedef typename HostGridPartType::template Codim< codimension >::EntityPointerType HostEntityPointerType;
 
-      explicit GeoEntity ( const CoordFunctionType &coordFunction ) 
+      explicit GeoEntity ( const CoordFunctionType &coordFunction )
       : coordFunction_( &coordFunction ),
         hostEntity_( 0 )
       {}
@@ -142,7 +142,7 @@ namespace Dune
       typedef typename HostGridPartType::template Codim< codimension >::EntityType HostEntityType;
       typedef typename HostGridPartType::template Codim< codimension >::EntityPointerType HostEntityPointerType;
 
-      explicit GeoEntity ( const CoordFunctionType &coordFunction ) 
+      explicit GeoEntity ( const CoordFunctionType &coordFunction )
       : coordFunction_( &coordFunction ),
         hostEntity_( 0 )
       {}

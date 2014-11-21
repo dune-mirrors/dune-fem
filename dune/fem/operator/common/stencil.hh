@@ -9,9 +9,9 @@
 #include <dune/grid/common/gridenums.hh>
 #include <dune/fem/misc/functor.hh>
 
-namespace Dune 
+namespace Dune
 {
-  namespace Fem 
+  namespace Fem
   {
     /** \class Stencil
      *  \brief default implementation for a general operator stencil
@@ -20,7 +20,7 @@ namespace Dune
      *  called on the linear operator class passing a stencil object as
      *  parameter. To setup a full stencil the method fill has to be
      *  called with each pair (en,nb) for which the locslMatrix method is
-     *  called during the assembly. 
+     *  called during the assembly.
      *
      *  \tparam  DomainSpace  type of discrete function space for the domain
      *  \tparam  RangeSpace   type of discrete function space for the range
@@ -49,7 +49,7 @@ namespace Dune
       typedef std::map<DomainGlobalKeyType,LocalStencilType> GlobalStencilType;
 
     public:
-      /** \brief Constructor 
+      /** \brief Constructor
        *
        *  \param[in]  dSpace    domain space
        *  \param[in]  rSpace    range space
@@ -74,7 +74,7 @@ namespace Dune
         typedef typename Dune::Fem::MatrixFunctor<DomainBlockMapper,DomainEntityType,FillFunctor > MFunctor;
 
         bool doFill = (dEntity.partitionType()!=GhostEntity) || fillGhost;
-        rangeBlockMapper_.mapEach(rEntity, 
+        rangeBlockMapper_.mapEach(rEntity,
                   MFunctor( domainBlockMapper_, dEntity, FillFunctor(globalStencil_,doFill) ) );
       }
 
@@ -84,14 +84,14 @@ namespace Dune
        *
        */
       const LocalStencilType &localStencil(const DomainGlobalKeyType &key) const
-      { 
-        return globalStencil_[key]; 
+      {
+        return globalStencil_[key];
       }
       /** \brief Return the full stencil
        */
       const GlobalStencilType &globalStencil() const
-      { 
-        return globalStencil_; 
+      {
+        return globalStencil_;
       }
       /** \brief Return an upper bound for the maximum number of non-zero entries in all row
        */
@@ -111,7 +111,7 @@ namespace Dune
       struct FillFunctor
       {
         typedef DomainGlobalKeyType GlobalKey;
-        FillFunctor(GlobalStencilType &stencil,bool fill) 
+        FillFunctor(GlobalStencilType &stencil,bool fill)
         : stencil_(stencil),
           localStencil_(0),
           fill_(fill)
@@ -143,7 +143,7 @@ namespace Dune
      *
      */
     template <class DomainSpace, class RangeSpace>
-    class SimpleStencil 
+    class SimpleStencil
     {
       typedef Stencil<DomainSpace,RangeSpace> StencilType;
     public:
@@ -154,12 +154,12 @@ namespace Dune
       typedef typename StencilType::LocalStencilType       LocalStencilType;
       typedef typename StencilType::GlobalStencilType      GlobalStencilType;
 
-      SimpleStencil(int maxNZ) 
+      SimpleStencil(int maxNZ)
       : maxNZ_(maxNZ)
       {}
       SimpleStencil()
       {
-        maxNZ_ = 1; 
+        maxNZ_ = 1;
       }
       int maxNonZerosEstimate() const
       {
@@ -255,12 +255,12 @@ namespace Dune
                it != endit; ++it )
           {
             const IntersectionType& intersection = *it;
-            if ( onlyNonContinuousNeighbors 
+            if ( onlyNonContinuousNeighbors
                 && rSpace.continuous(intersection) && dSpace.continuous(intersection) )
               continue;
-            if( intersection.neighbor() ) 
+            if( intersection.neighbor() )
             {
-              EntityPointer ep = intersection.outside(); 
+              EntityPointer ep = intersection.outside();
               const DomainEntityType& neighbor = *ep;
               BaseType::fill(neighbor,entity);
             }

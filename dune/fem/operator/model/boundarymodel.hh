@@ -99,7 +99,7 @@ namespace Dune
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
           ( asImp().neumannValues( intersection, quadrature, point, phi ) );
       }
-      
+
       template< class IntersectionType, class QuadratureType >
       inline void robinValues ( const IntersectionType &intersection,
                                 const QuadratureType &quadrature,
@@ -159,7 +159,7 @@ namespace Dune
 
       typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
       typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
-      
+
     public:
       template< class IntersectionType, class QuadratureType >
       inline void dirichletValues ( const IntersectionType &intersection,
@@ -180,7 +180,7 @@ namespace Dune
         assert( Properties :: hasNeumannValues );
         phi = 0;
       }
-      
+
       template< class IntersectionType, class QuadratureType >
       inline void robinValues ( const IntersectionType &intersection,
                                 const QuadratureType &quadrature,

@@ -20,7 +20,7 @@ struct Data
   unsigned int my_uint;
   uint64_t my_uint64;
   unsigned long int my_ulong;
-  size_t my_sizet; 
+  size_t my_sizet;
   double my_double;
   int my_int;
   float my_float;
@@ -33,16 +33,16 @@ void write ( OutStreamInterface< Traits > &out, const Data &data )
 {
   unsigned int versionId = DUNE_MODULE_VERSION_ID(DUNE_FEM);
   out << versionId;
-  
-  out << data.my_string 
-      << data.my_uint 
-      << data.my_uint64 
-      << data.my_ulong 
+
+  out << data.my_string
+      << data.my_uint
+      << data.my_uint64
+      << data.my_ulong
       << data.my_sizet
-      << data.my_double 
-      << data.my_int 
-      << data.my_float 
-      << data.my_char 
+      << data.my_double
+      << data.my_int
+      << data.my_float
+      << data.my_char
       << data.my_bool;
 
   out << DUNE_MODULE_VERSION_ID(DUNE_FEM);
@@ -61,20 +61,20 @@ bool read ( InStreamInterface< Traits > &in, const Data &data )
   }
 
   Data check;
-  in >> check.my_string 
+  in >> check.my_string
      >> check.my_uint >> check.my_uint64
      >> check.my_ulong >> check.my_sizet
      >> check.my_double
      >> check.my_int >> check.my_float >> check.my_char >> check.my_bool;
 
-  std :: cerr << "Data: " << check.my_string 
+  std :: cerr << "Data: " << check.my_string
               << ", " << check.my_uint
               << ", " << check.my_uint64
               << ", " << check.my_ulong
               << ", " << check.my_sizet
-              << ", " << check.my_double 
+              << ", " << check.my_double
               << ", " << check.my_int
-              << ", " << check.my_float 
+              << ", " << check.my_float
               << ", " << (int)check.my_char
               << ", " << check.my_bool
               << std :: endl;
@@ -115,15 +115,15 @@ int main ( int argc, char** argv )
     Data data;
     data.my_string = "Hello, World!";
     data.my_uint   = 42;
-    data.my_uint64 = -4 ; // this results in 18446744073709551612 
-    data.my_ulong  = uint32_t(-4) ; // this results in 4294967292 
-    data.my_sizet  = uint32_t(-16) ; // this results in 4294967280 
+    data.my_uint64 = -4 ; // this results in 18446744073709551612
+    data.my_ulong  = uint32_t(-4) ; // this results in 4294967292
+    data.my_sizet  = uint32_t(-16) ; // this results in 4294967280
     data.my_double = 1.2345678901234;
     data.my_int    = -767;
     data.my_float  = 1.23456;
     data.my_char   = 123;
     data.my_bool   = true;
-    
+
     bool failed = false ;
     std::stringstream filestr;
     std::cout << "Path: "<< Parameter :: commonOutputPath() << std::endl;
@@ -131,7 +131,7 @@ int main ( int argc, char** argv )
     {
       std::string filename( filestr.str() + "ascii" );
       std :: cerr << "Checking ASCII streams..." << std :: endl;
-      if( writeStreams ) 
+      if( writeStreams )
       {
         Fem :: ASCIIOutStream aout( filename.c_str() );
         write( aout, data );
@@ -145,7 +145,7 @@ int main ( int argc, char** argv )
     {
       std::string filename( filestr.str() + "binary" );
       std :: cerr << "Checking Binary streams..." << std :: endl;
-      if( writeStreams ) 
+      if( writeStreams )
       {
         Fem :: BinaryFileOutStream bout( filename.c_str() );
         write( bout, data );
@@ -159,7 +159,7 @@ int main ( int argc, char** argv )
     {
       std::string filename( filestr.str() + "xdr" );
       std :: cerr << "Checking XDR streams..." << std :: endl;
-      if( writeStreams ) 
+      if( writeStreams )
       {
         Fem :: XDRFileOutStream xout( filename.c_str() );
         write( xout, data );
@@ -176,27 +176,27 @@ int main ( int argc, char** argv )
       std::stringstream file;
       file << Parameter::commonOutputPath() << "/test.sion." << MPIManager :: size() ;
       std::string filename( file.str() );
-      if( writeStreams ) 
+      if( writeStreams )
       {
         Fem :: SIONlibOutStream sionout( filename.c_str() );
         write( sionout, data );
         sionout.flush();
       }
-      // check parallel read 
+      // check parallel read
       {
         Fem :: SIONlibInStream sionin( filename.c_str() );
         if( ! read( sionin, data ) )
           failed = true ;
       }
 
-      if( MPIManager :: size () == 1 ) 
+      if( MPIManager :: size () == 1 )
       {
         int size = (argc > 2) ? atoi( argv[ 2 ] ) : MPIManager :: size();
         std::cout << "Check serial read for " << size << " procs" << std::endl;
         std::stringstream file;
         file <<  Parameter::commonOutputPath() << "/test.sion." << size ;
         // check serial read
-        for( int rank=0; rank<size; ++rank ) 
+        for( int rank=0; rank<size; ++rank )
         {
           Fem :: SIONlibInStream sionin( filename.c_str(), rank );
           if( ! read( sionin, data ) )
@@ -219,5 +219,5 @@ int main ( int argc, char** argv )
   {
     return 1;
   }
-  return 0; 
+  return 0;
 }

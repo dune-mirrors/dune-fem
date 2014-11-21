@@ -24,7 +24,7 @@ namespace Dune
 
     /** \brief print output to ostream */
     virtual void writeTo ( std::ostream &out ) const = 0;
-  }; 
+  };
 
   std::ostream &operator<< ( std::ostream &s, const Failure &failure )
   {
@@ -53,21 +53,21 @@ namespace Dune
   private:
     // hide copy constructor
     FailureHandler ( const FailureHandler & );
-    // hide assignment operator 
+    // hide assignment operator
     FailureHandler &operator= ( const FailureHandler & );
 
-    //  Barton-Nackman trick 
+    //  Barton-Nackman trick
     FailureHandlerImp &asImp ()
     {
       return static_cast< FailureHandlerImp & >( *this );
     }
 
-    //  Barton-Nackman trick 
+    //  Barton-Nackman trick
     const FailureHandlerImp &asImp () const
     {
       return static_cast< const FailureHandlerImp & >( *this );
     }
-  }; 
+  };
 
 
 
@@ -84,7 +84,7 @@ namespace Dune
       std::cerr<< failure << std::endl;
       assert( false );
     }
-  }; 
+  };
 
 } // end namespace Dune
 

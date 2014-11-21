@@ -1,8 +1,8 @@
 namespace Dune
 {
-  
-  namespace Fem 
-  { 
+
+  namespace Fem
+  {
 
     template <class DiscreteFunctionSpaceImp>
     AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>
@@ -15,9 +15,9 @@ namespace Dune
     {
     }
 
-    // create discrete function with vector 
+    // create discrete function with vector
     template <class DiscreteFunctionSpaceImp>
-    template <class VectorPointerType> 
+    template <class VectorPointerType>
     AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>
       :: AdaptiveFunctionImplementation ( const std :: string &name,
                                           const DiscreteFunctionSpaceType &spc,
@@ -54,33 +54,33 @@ namespace Dune
 
     template <class DiscreteFunctionSpaceImp>
     AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-    ~AdaptiveFunctionImplementation() 
+    ~AdaptiveFunctionImplementation()
     {
-      if( memObject_ ) 
+      if( memObject_ )
       {
         delete memObject_;
       }
     }
-   
+
     template <class DiscreteFunctionSpaceImp>
-    inline void 
+    inline void
     AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-    clear () 
+    clear ()
     {
       dofVec_.clear();
     }
 
     template <class DiscreteFunctionSpaceImp>
-    inline void 
+    inline void
     AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-    axpy(const RangeFieldType& c, const ThisType& org) 
+    axpy(const RangeFieldType& c, const ThisType& org)
     {
       dofVec_.axpy(org.dofVec_ , c);
     }
 
     // operator=
     template <class DiscreteFunctionSpaceImp>
-    inline void 
+    inline void
     AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
     assignFunction(const ThisType& org)
     {
@@ -90,7 +90,7 @@ namespace Dune
 
     // operator +=
     template <class DiscreteFunctionSpaceImp>
-    inline void 
+    inline void
     AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
     addFunction(const ThisType& org)
     {
@@ -100,7 +100,7 @@ namespace Dune
 
     // operator +=
     template <class DiscreteFunctionSpaceImp>
-    inline void 
+    inline void
     AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
     substractFunction(const ThisType& org)
     {
@@ -110,7 +110,7 @@ namespace Dune
 
     template <class DiscreteFunctionSpaceImp>
     int AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-    size() const 
+    size() const
     {
       return dofVec_.size();
     }
@@ -119,7 +119,7 @@ namespace Dune
     typename AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
     DofIteratorType
     AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-    dbegin() 
+    dbegin()
     {
       return dofStorage().begin();
     }
@@ -128,7 +128,7 @@ namespace Dune
     typename AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
     DofIteratorType
     AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-    dend() 
+    dend()
     {
       return dofStorage().end();
     }
@@ -137,7 +137,7 @@ namespace Dune
     typename AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
     ConstDofIteratorType
     AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-    dbegin() const 
+    dbegin() const
     {
       return dofStorage().begin();
     }
@@ -153,12 +153,12 @@ namespace Dune
 
     template<class DiscreteFunctionSpaceImp>
     void AdaptiveFunctionImplementation<DiscreteFunctionSpaceImp>::
-    enableDofCompression() 
+    enableDofCompression()
     {
       if( memObject_ )
         memObject_->enableDofCompression();
     }
-    
-  } // end namespace Fem 
+
+  } // end namespace Fem
 
 } // end namespace Dune

@@ -1,7 +1,7 @@
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     template <class ct, int dim>
@@ -29,36 +29,36 @@ namespace Dune
     }
 
     template <class ct, int dim>
-    const typename TwistStorage<ct, dim>::MapperType& 
-    TwistStorage<ct, dim>::getMapper(int twist) const 
+    const typename TwistStorage<ct, dim>::MapperType&
+    TwistStorage<ct, dim>::getMapper(int twist) const
     {
       return mappers_[twist + Traits::twistOffset_];
     }
 
     template <class ct, int dim>
     const typename TwistStorage<ct, dim>::PointVectorType&
-    TwistStorage<ct, dim>::getPoints() const 
+    TwistStorage<ct, dim>::getPoints() const
     {
       return points_;
     }
 
     template <class ct, int dim>
-    int TwistStorage<ct, dim>::minTwist() const 
+    int TwistStorage<ct, dim>::minTwist() const
     {
       return minTwist_;
     }
 
     template <class ct, int dim>
-    int TwistStorage<ct, dim>::maxTwist() const 
+    int TwistStorage<ct, dim>::maxTwist() const
     {
       return maxTwist_;
     }
 
     template <class ct, int dim>
-    const typename TwistProvider<ct, dim>::TwistStorageType& 
+    const typename TwistProvider<ct, dim>::TwistStorageType&
     TwistProvider<ct, dim>::getTwistStorage(const QuadratureType& quad)
     {
-      typedef const TwistStorageType* TwistStoragePtr; 
+      typedef const TwistStorageType* TwistStoragePtr;
       assert( quad.id() < MapperContainer::instance().size() );
       TwistStoragePtr& ptr = MapperContainer::instance()[ quad.id() ];
 
@@ -67,11 +67,11 @@ namespace Dune
         TwistMapperCreator<ct, dim> creator(quad);
         ptr = creator.createStorage();
       }
-      
+
       assert( ptr != 0 );
       return *ptr ;
     }
-    
+
     template <class ct, int dim>
     const ct TwistMapperCreator<ct, dim>::eps_ = 1.0e-5;
 
@@ -86,12 +86,12 @@ namespace Dune
       }
       else if (dim == 1) {
         helper_ = new LineTwistMapperStrategy<ct, dim>( geoType );
-      } 
-      else 
+      }
+      else
       {
         assert (dim == 2);
 
-        if(geoType.isTriangle()) 
+        if(geoType.isTriangle())
         {
           helper_ = new TriangleTwistMapperStrategy<ct, dim>( geoType );
           return ;
@@ -101,7 +101,7 @@ namespace Dune
           helper_ = new QuadrilateralTwistMapperStrategy<ct,dim>( geoType );
           return ;
         }
-        DUNE_THROW(NotImplemented, 
+        DUNE_THROW(NotImplemented,
                    "No creator for given GeometryType exists");
       }
     }
@@ -113,10 +113,10 @@ namespace Dune
     }
 
     template <class ct, int dim>
-    const typename TwistMapperCreator<ct, dim>::TwistStorageType* 
-    TwistMapperCreator<ct, dim>::createStorage() const 
+    const typename TwistMapperCreator<ct, dim>::TwistStorageType*
+    TwistMapperCreator<ct, dim>::createStorage() const
     {
-      TwistStorageType* storage = 
+      TwistStorageType* storage =
         new TwistStorageType(helper_->minTwist(), helper_->maxTwist());
 
       // Add quadrature points
@@ -125,17 +125,17 @@ namespace Dune
       }
 
       // Loop over all twists
-      // and find all mapped quad points 
-      for (int twist = helper_->minTwist(); 
-           twist < helper_->maxTwist(); ++twist) 
+      // and find all mapped quad points
+      for (int twist = helper_->minTwist();
+           twist < helper_->maxTwist(); ++twist)
       {
         MapperType mapper(quad_.nop());
-        
+
         const MatrixType& mat = helper_->buildTransformationMatrix(twist);
 
-        for (size_t i = 0; i < quad_.nop(); ++i) 
+        for (size_t i = 0; i < quad_.nop(); ++i)
         {
-          // get local quad point 
+          // get local quad point
           PointType pFace = quad_.point(i);
 
           // create barycentric coordinate
@@ -146,15 +146,15 @@ namespace Dune
             c[d+1] = pFace[d];
           }
 
-          // apply mapping 
-          PointType pRef(0.);     
+          // apply mapping
+          PointType pRef(0.);
           mat.umtv(c, pRef);
 
           bool found = false;
           // find equivalent quadrature point
-          for (size_t j = 0; j < quad_.nop(); ++j) 
+          for (size_t j = 0; j < quad_.nop(); ++j)
           {
-            // check if | pRef - quad_j | < eps 
+            // check if | pRef - quad_j | < eps
             if( (pRef - quad_.point(j)).infinity_norm() < eps_)
             {
               mapper[i] = j;
@@ -166,16 +166,16 @@ namespace Dune
           // add point if it is not one of the quadrature points
           if (!found) {
             //if point not found, something is wrong,
-            //could be the quadratue or the mapping 
-            assert( found ); 
+            //could be the quadratue or the mapping
+            assert( found );
             std::cout << "TwistMapperCreator<ct, dim>::createStorage failed! in: "<<__FILE__<<" line: " << __LINE__ <<"\n";
             abort();
           }
-          
+
         } // for all quadPoints
         storage->addMapper(mapper, twist);
       } // for all twists
-      
+
       return storage;
     }
 
@@ -191,7 +191,7 @@ namespace Dune
 
     template <class ct, int dim>
     const typename TwistMapperStrategy<ct, dim>::MatrixType&
-    PointTwistMapperStrategy<ct, dim>::buildTransformationMatrix(int twist) const 
+    PointTwistMapperStrategy<ct, dim>::buildTransformationMatrix(int twist) const
     {
       assert( twist == 0 );
       mat_[ 0 ] = refElem_.position( 0, dim );
@@ -210,7 +210,7 @@ namespace Dune
 
     template <class ct, int dim>
     const typename TwistMapperStrategy<ct, dim>::MatrixType&
-    LineTwistMapperStrategy<ct, dim>::buildTransformationMatrix(int twist) const 
+    LineTwistMapperStrategy<ct, dim>::buildTransformationMatrix(int twist) const
     {
       assert( (twist == 0) || (twist == 1) );
       mat_[ twist   ] = refElem_.position( 0, dim );
@@ -231,16 +231,16 @@ namespace Dune
     template <class ct, int dim>
     const typename TwistMapperStrategy<ct, dim>::MatrixType&
     TriangleTwistMapperStrategy<ct, dim>::
-    buildTransformationMatrix(int twist) const 
+    buildTransformationMatrix(int twist) const
     {
       typedef Dune::Fem::FaceTopologyMapping<tetra> FaceTopo;
       mat_ = 0.0;
-      for (int idx = 0; idx < dim+1; ++idx) 
+      for (int idx = 0; idx < dim+1; ++idx)
       {
-        mat_[idx] = refElem_.position( 
+        mat_[idx] = refElem_.position(
             FaceTopo::twistedDuneIndex(idx, twist), dim); // dim == codim here
       }
-      
+
       return mat_;
     }
 
@@ -255,13 +255,13 @@ namespace Dune
     }
 
     template <class ct, int dim>
-    const typename TwistMapperStrategy<ct, dim>::MatrixType& 
+    const typename TwistMapperStrategy<ct, dim>::MatrixType&
     QuadrilateralTwistMapperStrategy<ct, dim>::
-    buildTransformationMatrix(int twist) const 
+    buildTransformationMatrix(int twist) const
     {
       typedef Dune::Fem::FaceTopologyMapping<hexa> FaceTopo;
       mat_ = 0.0;
-      for (int idx = 0; idx < dim+1; ++idx) 
+      for (int idx = 0; idx < dim+1; ++idx)
       {
         mat_[idx] = refElem_.position(
             FaceTopo::twistedDuneIndex(idx, twist), dim); // dim == codim here

@@ -5,17 +5,17 @@
 // BUG: return values are initialized with *= 0. Problematic for nan
 // values!
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
-    // Constructor making discrete function  
+    // Constructor making discrete function
     template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
       inline ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
       ProductDiscreteFunction(const DiscreteFunctionSpaceType& f, const DiscreteFunctionSpace2Type& f2) :
-        // DiscreteFunctionDefaultType ( f ), 
+        // DiscreteFunctionDefaultType ( f ),
         name_ ("no name"),
         functionSpace_( f ),
         functionSpace2_( f2 ),
@@ -24,7 +24,7 @@ namespace Dune
        // std::cout << "Size old = " << dofVec_.size() << "  Size  f2 = " << functionSpace2_.size();
        // std::cout << " New size will be " << dofVec_.size() * functionSpace2_.size() << "\n";
     }
-    // Desctructor 
+    // Desctructor
     template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
     inline ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::
     ~ProductDiscreteFunction()
@@ -36,8 +36,8 @@ namespace Dune
     {
       const int size = dofVec_.size();
       DofStorageType &vec = dofVec_;
-      for(int i=0; i<size; ++i) vec[i] = 0.0; 
-      //set ( 0.0 ); 
+      for(int i=0; i<size; ++i) vec[i] = 0.0;
+      //set ( 0.0 );
     }
 
     template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
@@ -46,33 +46,33 @@ namespace Dune
     {
       RangeFieldType sum = 0.;
       ConstDofIteratorType enddof = dend ( );
-      for(ConstDofIteratorType itdof = dbegin ( ); itdof != enddof; ++itdof) 
+      for(ConstDofIteratorType itdof = dbegin ( ); itdof != enddof; ++itdof)
       {
         s << (*itdof) << " DofValue \n";
         sum += std::abs(*itdof);
-      } 
+      }
       s << "sum = " << sum << "\n";
     }
     //*************************************************************************
-    //  Interface Methods 
+    //  Interface Methods
     //*************************************************************************
     //return local function for global dof index dofIndex2 of space two
-    template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type> 
+    template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
     inline AdaptiveDiscreteFunction< DiscreteFunctionSpaceType>
     ProductDiscreteFunction<DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::localFunction(int dofIndex2) const
     {
      return AdaptiveDiscreteFunction< DiscreteFunctionSpaceType> ( name(), this->functionSpace_, &(dofVec_.leakPointer()[this->functionSpace_.size()*dofIndex2]));
-     
+
     }
 
     //return local function for local dof index dofIndex2 of space two and given entity2
-    template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type> 
+    template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
     template < class Entity2Type>
     inline AdaptiveDiscreteFunction< DiscreteFunctionSpaceType>
     ProductDiscreteFunction<DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::localFunction(const Entity2Type &en2,int dofIndex2) const
     {
      return AdaptiveDiscreteFunction< DiscreteFunctionSpaceType> ( name(), this->functionSpace_, &(dofVec_.leakPointer()[this->functionSpace_.size()*space2().mapToGlobal( en2 ,dofIndex2)]));
-     
+
     }
 
     //local function for given entity2, quadrature type and qudrature point number of second space and discrete function of first space
@@ -85,15 +85,15 @@ namespace Dune
      discFunc.clear();
      const BaseFunctionSetType bSet2 = space2().baseFunctionSet(en2);
      const int numOfDofs = bSet2.numBaseFunctions();
-     
-     for(int i = 0; i< numOfDofs; i++) 
+
+     for(int i = 0; i< numOfDofs; i++)
      {
-       const int map = space2().mapToGlobal( en2 , i );  
+       const int map = space2().mapToGlobal( en2 , i );
        bSet2.evaluate(i,quad2[pointNr],tmp_);
        DiscreteFunction1Type df = this->localFunction(map);
          discFunc.axpy(tmp_, df);
      }
-      
+
     }
 
     //local function for given entity2, quadrature type and qudrature point number of second space and discrete function of first space
@@ -107,40 +107,40 @@ namespace Dune
      discFunc.clear();
      const BaseFunctionSetType bSet2 = space2().baseFunctionSet(en2);
      const int numOfDofs = bSet2.numBaseFunctions();
-     
-     for(int i = 0; i< numOfDofs; i++) 
+
+     for(int i = 0; i< numOfDofs; i++)
      {
-       const int map = space2().mapToGlobal( en2 , i );  
+       const int map = space2().mapToGlobal( en2 , i );
        bSet2.evaluate(pt,tmp_);
        DiscreteFunction1Type df = this->localFunction(map);
           discFunc.axpy(tmp_, df);
      }
     }
 
-    template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type> 
-    inline typename ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::DofIteratorType 
+    template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
+    inline typename ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::DofIteratorType
     ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::dbegin ( )
     {
       return dofVec_.begin();
     }
 
-    template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type> 
-    inline typename ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::DofIteratorType 
+    template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
+    inline typename ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::DofIteratorType
     ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::dend ()
     {
       return dofVec_.end();
     }
 
-    template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type> 
-    inline typename ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::ConstDofIteratorType 
+    template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
+    inline typename ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::ConstDofIteratorType
     ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::dbegin ( ) const
     {
       return dofVec_.begin();
     }
 
-    template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type> 
-    inline typename ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::ConstDofIteratorType 
-    ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::dend () const 
+    template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
+    inline typename ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::ConstDofIteratorType
+    ProductDiscreteFunction< DiscreteFunctionSpaceType, DiscreteFunctionSpace2Type>::dend () const
     {
       return dofVec_.end();
     }

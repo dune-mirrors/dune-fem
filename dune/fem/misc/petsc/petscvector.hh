@@ -2,7 +2,7 @@
 #ifndef DUNE_FEM_PETSCVECTOR_HH
 #define DUNE_FEM_PETSCVECTOR_HH
 
-#include <dune/fem/storage/envelope.hh> 
+#include <dune/fem/storage/envelope.hh>
 
 #if HAVE_PETSC
 
@@ -13,10 +13,10 @@
 #include <dune/fem/misc/petsc/petscdofblock.hh>
 
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     // forward declarations
@@ -25,10 +25,10 @@ namespace Dune
 
     /*! ManagedDofStorage for PetscDiscreteFunction using PetscVector */
     template < class DiscreteFunctionSpace, class Mapper >
-    class PetscManagedDofStorage 
-      : public ManagedDofStorageImplementation< typename DiscreteFunctionSpace :: GridType, 
+    class PetscManagedDofStorage
+      : public ManagedDofStorageImplementation< typename DiscreteFunctionSpace :: GridType,
                                                 Mapper,
-                                                PetscVector< DiscreteFunctionSpace > > 
+                                                PetscVector< DiscreteFunctionSpace > >
     {
       typedef typename DiscreteFunctionSpace :: GridType GridType;
       typedef PetscSlaveDofProvider< DiscreteFunctionSpace > PetscSlaveDofProviderType;
@@ -38,9 +38,9 @@ namespace Dune
     protected:
       DofArrayType myArray_;
     public:
-      //! Constructor of ManagedDofStorageImpl, only to call from DofManager 
-      PetscManagedDofStorage( const DiscreteFunctionSpace& space, 
-                              const MapperType& mapper, 
+      //! Constructor of ManagedDofStorageImpl, only to call from DofManager
+      PetscManagedDofStorage( const DiscreteFunctionSpace& space,
+                              const MapperType& mapper,
                               const std::string& name )
         : BaseType( space.grid(), mapper, name, myArray_ ),
           myArray_( space )
@@ -49,10 +49,10 @@ namespace Dune
     };
 
 
-    /*! specialization of SpecialArrayFeatures for PetscVector 
+    /*! specialization of SpecialArrayFeatures for PetscVector
      * dealing with the strange PetscVec */
-    template< class DFS > 
-    struct SpecialArrayFeatures< PetscVector< DFS > > 
+    template< class DFS >
+    struct SpecialArrayFeatures< PetscVector< DFS > >
     {
       typedef PetscVector< DFS >  ArrayType ;
       /** \brief value type of array, i.e. double */
@@ -114,7 +114,7 @@ namespace Dune
      *  3) And there is a representation of the process vector, which also has 'ghost dof blocks'.
      *     We call this represenation the _ghosted vector_.
      */
-    template< class DFSpace > 
+    template< class DFSpace >
     class PetscVector
     {
       typedef PetscVector< DFSpace > ThisType;
@@ -127,12 +127,12 @@ namespace Dune
 
       static const int blockSize = DFSpace :: localBlockSize;
       typedef typename PetscSlaveDofsType :: PetscDofMappingType  PetscDofMappingType;
-      
+
       typedef PetscDofBlock< ThisType >                       DofBlockType;
       typedef PetscDofBlock< const ThisType >                 ConstDofBlockType;
       typedef typename DofBlockType::DofIterator              DofIteratorType;
       typedef typename ConstDofBlockType::DofIterator         ConstDofIteratorType;
-      typedef Envelope< DofBlockType >                        DofBlockPtrType; 
+      typedef Envelope< DofBlockType >                        DofBlockPtrType;
       typedef Envelope< ConstDofBlockType >                   ConstDofBlockPtrType;
       typedef typename DofBlockType::IndexType                IndexType;
 
@@ -149,7 +149,7 @@ namespace Dune
         static_assert( CommunicationOperationType::value == DFCommunicationOperation::copy ||
                             CommunicationOperationType::value == DFCommunicationOperation::add,
                             "only copy/add are available communication operations for petsc");
-        // init vector 
+        // init vector
         init();
       }
 
@@ -162,19 +162,19 @@ namespace Dune
         localSize_( other.localSize_ ),
         numGhosts_( other.numGhosts_ )
       {
-        // assign vectors 
+        // assign vectors
         assign( other );
       }
-      
+
       ~PetscVector ()
       {
-        // destroy vectors 
+        // destroy vectors
         removeObj();
       }
 
       size_t size () const { return static_cast< size_t >( localSize_ + numGhosts_ ); }
 
-      void resize( const size_t newsize ) 
+      void resize( const size_t newsize )
       {
         /*
         std::vector< double > values( dofMapping().size() );
@@ -182,7 +182,7 @@ namespace Dune
 
         const DofIteratorType end = dend ();
         iterator value = values.begin();
-        for( DofIteratorType it = dbegin(); it != end ; ++ it, ++value ) 
+        for( DofIteratorType it = dbegin(); it != end ; ++ it, ++value )
         {
           if( value == values.end() ) break ;
           assert( value != values.end() );
@@ -191,36 +191,36 @@ namespace Dune
         */
 
         // TODO: keep old data stored in current vector
-        // remove old vectors 
+        // remove old vectors
         removeObj();
 
-        // initialize new 
+        // initialize new
         init();
 
         /*
         const size_t vsize = std::min( values.size(), size() );
         DofIteratorType it = dbegin();
-        for( size_t i=0; i<vsize; ++ i, ++ it ) 
-          *it = values[ i ];      
+        for( size_t i=0; i<vsize; ++ i, ++ it )
+          *it = values[ i ];
         */
 
         hasBeenModified ();
       }
 
-      void reserve( const size_t capacity ) 
+      void reserve( const size_t capacity )
       {
         resize( capacity );
       }
 
       void hasBeenModified () { ++sequence_; }
 
-      void communicate () 
-      { 
-        communicateFlag_ = true; 
+      void communicate ()
+      {
+        communicateFlag_ = true;
       }
 
       // accessors for the underlying PETSc vectors
-      Vec* getVector () 
+      Vec* getVector ()
       {
         communicateIfNecessary();
         return &vec_;
@@ -255,7 +255,7 @@ namespace Dune
       //DofBlockPtrType operator [] ( const IndexType index ) { return block( index ); }
       //ConstDofBlockPtrType operator [] const ( const IndexType index ) { return block( index ); }
 
-      DofBlockPtrType block ( IndexType index ) 
+      DofBlockPtrType block ( IndexType index )
       {
         assert( index < dofMapping().size() );
         return DofBlockPtrType( typename DofBlockType::UnaryConstructorParamType( *this, index ) );
@@ -324,21 +324,21 @@ namespace Dune
 
       // debugging; comes in handy to call these 2 methods in gdb
       // doit is only here to prevent the compiler from optimizing these calls away...
-      void printGlobal ( bool doit ) 
-      { 
-          if( !doit ) 
-            return; 
-          VecView( vec_, PETSC_VIEWER_STDOUT_WORLD ); 
+      void printGlobal ( bool doit )
+      {
+          if( !doit )
+            return;
+          VecView( vec_, PETSC_VIEWER_STDOUT_WORLD );
       }
 
-      void printGhost ( bool doit) 
-      { 
-          if( !doit ) 
-            return; 
+      void printGhost ( bool doit)
+      {
+          if( !doit )
+            return;
 
           PetscScalar *array;
           VecGetArray( ghostedVec_,&array );
-          for( int i=0; i < localSize_ + numGhosts_; i++ ) 
+          for( int i=0; i < localSize_ + numGhosts_; i++ )
           {
             PetscSynchronizedPrintf(PETSC_COMM_WORLD,"%D %G\n",i,PetscRealPart(array[i]));
           }
@@ -351,7 +351,7 @@ namespace Dune
       }
 
       // assign from other given PetscVector
-      void assign( const ThisType& other ) 
+      void assign( const ThisType& other )
       {
         // we want the 'other' to do all its communication right now before
         // we start copying values from it
@@ -366,8 +366,8 @@ namespace Dune
       }
 
     protected:
-      // setup vector according to mapping sizes 
-      void init() 
+      // setup vector according to mapping sizes
+      void init()
       {
         // set up the DofMapping instance and all variables depending on it
         localSize_ = dofMapping().numOwnedDofBlocks() * blockSize;
@@ -380,20 +380,20 @@ namespace Dune
         typedef PetscGhostArrayBuilder< PetscSlaveDofsType, PetscDofMappingType > PetscGhostArrayBuilderType;
         PetscGhostArrayBuilderType ghostArrayBuilder( petscSlaveDofs_, dofMapping() );
         assert( int( ghostArrayBuilder.size() ) == dofMapping().numSlaveBlocks() );
-        
+
         // finally, create the PETSc Vecs
-        ::Dune::Petsc::VecCreateGhost( 
-          static_cast< PetscInt >( localSize_ ), 
-          PETSC_DECIDE, 
-          static_cast< PetscInt >( numGhosts_ ), 
+        ::Dune::Petsc::VecCreateGhost(
+          static_cast< PetscInt >( localSize_ ),
+          PETSC_DECIDE,
+          static_cast< PetscInt >( numGhosts_ ),
           ghostArrayBuilder.array(),
-          &vec_ 
+          &vec_
         );
         ::Dune::Petsc::VecGhostGetLocalForm( vec_, &ghostedVec_ );
       }
 
-      // delete vectors 
-      void removeObj() 
+      // delete vectors
+      void removeObj()
       {
         ::Dune::Petsc::VecGhostRestoreLocalForm( vec_, &ghostedVec_ );
         ::Dune::Petsc::VecDestroy( &vec_ );
@@ -404,7 +404,7 @@ namespace Dune
 
       PetscDofMappingType& dofMapping () { return petscSlaveDofs_.dofMapping(); }
       const PetscDofMappingType& dofMapping () const { return petscSlaveDofs_.dofMapping(); }
-      
+
       void communicateIfNecessary () const
       {
         // communicate this process' values
@@ -424,17 +424,17 @@ namespace Dune
           }
 
           communicateFlag_ = false;
-        } 
+        }
       }
 
       // Updates the ghost dofs, obtains them from the owning process
-      void updateGhostRegions () 
+      void updateGhostRegions ()
       {
         ::Dune::Petsc::VecGhostUpdateBegin( vec_, INSERT_VALUES, SCATTER_FORWARD );
         ::Dune::Petsc::VecGhostUpdateEnd( vec_, INSERT_VALUES, SCATTER_FORWARD );
       }
 
-      void vectorIsUpToDateNow () const 
+      void vectorIsUpToDateNow () const
       {
         memorySequence_ = sequence_;
         communicateFlag_ = false;
@@ -460,6 +460,6 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #if HAVE_PETSC 
+#endif // #if HAVE_PETSC
 
 #endif // DUNE_FEM_PETSCVECTOR_HH

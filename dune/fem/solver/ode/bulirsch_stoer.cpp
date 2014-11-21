@@ -24,23 +24,23 @@ int ExplicitBulirschStoer::DoubleHarmonicSequence(int i)
 }
 
 
-ExplicitBulirschStoer::ExplicitBulirschStoer(Communicator &comm, 
-					     Function &f, 
-					     int num_of_stages, 
+ExplicitBulirschStoer::ExplicitBulirschStoer(Communicator &comm,
+					     Function &f,
+					     int num_of_stages,
 					     int (*seq)(int) ) :
-  ODESolver(comm, num_of_stages+2), num_of_stages(num_of_stages), 
+  ODESolver(comm, num_of_stages+2), num_of_stages(num_of_stages),
   f(f), sequence(seq)
 {}
 
 
 // Strehmel, Karl;  Weiner, Rüdiger
-// Numerik gewöhnlicher Differentialgleichungen. 
+// Numerik gewöhnlicher Differentialgleichungen.
 // (Numerical methods for ordinary differential equations). (German)
-// Teubner Studienbücher: Mathematik. Stuttgart: Teubner. 462 p. (1995). 
+// Teubner Studienbücher: Mathematik. Stuttgart: Teubner. 462 p. (1995).
 // S. 77 ff
 //
 // Stoer, Josef;  Bulirsch, Roland
-// Numerische Mathematik II. Eine Einführung - unter Berücksichtigung 
+// Numerische Mathematik II. Eine Einführung - unter Berücksichtigung
 // von Vorlesungen von F. L. Bauer. 3., verb. Aufl. (German)
 // Springer-Lehrbuch. Berlin etc.: Springer-Verlag. xiii, 341 p. (1990).
 // S. 166
@@ -52,12 +52,12 @@ bool ExplicitBulirschStoer::step(double t, double dt, double *u)
 
   // store f(t,u) in U[0], this is necessary in every stage,
   // can be (and will be) overwritten in the last stage
-  f(t, u, U); 
+  f(t, u, U);
 
   for(int i=0; i<num_of_stages; i++){
     const int n = sequence(i); // n_i
 
-    // compute u_{dt/n_i} (t+dt) by application of the modified midpoint 
+    // compute u_{dt/n_i} (t+dt) by application of the modified midpoint
     // scheme, store it in U[num_of_stages-1-i]
 
     // init
@@ -67,7 +67,7 @@ bool ExplicitBulirschStoer::step(double t, double dt, double *u)
     dwaxpby(dim, 1.0, u, 1, dt_n, U, 1, z_k, 1); // z_k = u + dt/n * f(t,u)
     if (limiter) (*limiter)(z_k);
     cblas_dcopy(dim, u, 1, z_km, 1);
-  
+
     // loop
     for(int k=1; k<n; k++){
       f(t + k*dt_n, z_k, tmp);
@@ -87,24 +87,24 @@ bool ExplicitBulirschStoer::step(double t, double dt, double *u)
 
     // Extrapolation process
     // T_{i,0} = u_{dt/n_i} is stored in U[num_of_stages-1-i],
-    // compute T_{i,1},..,T_{i,i} stored in 
+    // compute T_{i,1},..,T_{i,i} stored in
     // U[num_of_stages-1-i+1],..,U[num_of_stages-1]
 
     for(int j=1; j<=i; j++){
-      const double h_i_j = 1.0 / sequence(i-j); // 1.0/n_{i-j}      
+      const double h_i_j = 1.0 / sequence(i-j); // 1.0/n_{i-j}
       const double alpha = 1.0 / (n*n*h_i_j*h_i_j - 1.0);
-      daxpby(dim, 1.0+alpha, U+(num_of_stages-1-i+j-1)*dim, 1, 
+      daxpby(dim, 1.0+alpha, U+(num_of_stages-1-i+j-1)*dim, 1,
 	     -alpha, U+(num_of_stages-1-i+j)*dim, 1);
-    }    
+    }
   }
 
-  // update approximate solution, stored in U[num_of_stages-1] after 
+  // update approximate solution, stored in U[num_of_stages-1] after
   // num_of_stages stages
   cblas_dcopy(dim, U+(num_of_stages-1)*dim, 1, u, 1);
 
   return true;
 }
-  
+
 
 
 
@@ -140,24 +140,24 @@ void ImplicitBulirschStoer::resize(int new_size, int component)
   // new_size >= dim
   delete[] U;
   if (dls){ // for direct linear solver use
-    U = new double[ (num_of_stages + 3 + new_size)*new_size ]; 
+    U = new double[ (num_of_stages + 3 + new_size)*new_size ];
   }
   else if (ils){
     U = new double[ (num_of_stages + 4)*new_size];
   }
 
   tmp = U + (num_of_stages+1)*new_size;
-  F = tmp + new_size;  
+  F = tmp + new_size;
 }
 
 
 
 
-ImplicitBulirschStoer::ImplicitBulirschStoer(Communicator &comm, 
-					     Function &f, 
-					     int num_of_stages, 
+ImplicitBulirschStoer::ImplicitBulirschStoer(Communicator &comm,
+					     Function &f,
+					     int num_of_stages,
 					     int (*seq)(int) ) :
-  ODESolver(comm, 0), num_of_stages(num_of_stages), 
+  ODESolver(comm, 0), num_of_stages(num_of_stages),
   f(f), sequence(seq), dls(NULL), ils(NULL), op(*this)
 {
   // set this to some useful values
@@ -218,7 +218,7 @@ bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u,
 
     // loop
     for(k=0; k<n; k++)
-    {    
+    {
       if (true) cblas_dcopy(dim, z_km, 1, z_k, 1); // z_k = z_km
       else { // z_k = z_km + dt/n f(t+(k+0.5)*dt/n, z_k) euler predictor step
 	      f(t + (k+0.5)*dt_n, z_k, tmp);
@@ -226,13 +226,13 @@ bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u,
       }
 
 
-      // Newton iteration for solving 
+      // Newton iteration for solving
       // z_k = z_km + dt/n * f(t + (k+0.5)*dt/n, 0.5*(z_k + z_km))
       int newton_iter = 0;
       double dist_old = DBL_MAX;
-      while (true) 
+      while (true)
       {
-        for(int l=0; l<dim; l++) tmp[l] = 0.5 * (z_k[l] + z_km[l]); 
+        for(int l=0; l<dim; l++) tmp[l] = 0.5 * (z_k[l] + z_km[l]);
         f(t + (k+0.5)*dt_n, tmp, F);
         for(int l=0; l<dim; l++) F[l] = z_k[l] - z_km[l] - dt_n*F[l];
 
@@ -265,26 +265,26 @@ bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u,
         // successfully converged
         if (ils_iter > max_ils_iterations)
           max_ils_iterations = ils_iter;
-        
-        if (dist < tolerance){ // successful solving 
+
+        if (dist < tolerance){ // successful solving
           double *z_kp = z_km;
           z_km = z_k;
           z_k = z_kp;
           break;
         }
-        else if (num_of_iterations >= max_num_of_iterations 
+        else if (num_of_iterations >= max_num_of_iterations
            || dist >= dist_old) return false; // not successful
 
         dist_old = dist;
         newton_iter++;
       }
       // end of Newton iteration, approx solution is stored in z_km
-      
+
       // update statistics after solving nonlinear system
       newton_iterations += newton_iter;
       if (newton_iter > max_newton_iterations)
         max_newton_iterations = newton_iter;
-      
+
       // store approx solution at (k+1)*dt/n in the right position
       // if it isnt (because of swapping of variables z_k and z_km)
       double *_U = U + (num_of_stages-1-i)*dim;
@@ -311,7 +311,7 @@ bool ImplicitBulirschStoer::step_iterative(double t, double dt, double *u,
 
   return true;
 }
-  
+
 
 
 bool ImplicitBulirschStoer::step_direct(double t, double dt, double *u,
@@ -348,13 +348,13 @@ bool ImplicitBulirschStoer::step_direct(double t, double dt, double *u,
       }
 
 
-      // Newton iteration for solving 
+      // Newton iteration for solving
       // z_k = z_km + dt/n * f(t + (k+0.5)*dt/n, 0.5*(z_k + z_km))
       int newton_iter = 0;
       double dist_old = DBL_MAX;
-      while (true) 
+      while (true)
       {
-        for(int l=0; l<dim; l++) tmp[l] = 0.5 * (z_k[l] + z_km[l]); 
+        for(int l=0; l<dim; l++) tmp[l] = 0.5 * (z_k[l] + z_km[l]);
         f(t + (k+0.5)*dt_n, tmp, F);
         for(int l=0; l<dim; l++) F[l] = z_k[l] - z_km[l] - dt_n*F[l];
 
@@ -377,25 +377,25 @@ bool ImplicitBulirschStoer::step_direct(double t, double dt, double *u,
         if (IterativeSolver::os)
         {
           *IterativeSolver::os << "Newton iteration: " << newton_iter << "    "
-                   << "linear iterations: ??fix me??  " 
+                   << "linear iterations: ??fix me??  "
                    << "|du|: " << dist << "   "
                    << std::endl;
         }
 
-        if (dist < tolerance){ // successful solving 
+        if (dist < tolerance){ // successful solving
           double *z_kp = z_km;
           z_km = z_k;
           z_k = z_kp;
           break;
         }
-        else if (newton_iter >= max_num_of_iterations 
+        else if (newton_iter >= max_num_of_iterations
            || dist >= dist_old) return false; // not successful
 
         dist_old = dist;
         newton_iter++;
       }
       // end of Newton iteration, approx solution is stored in z_km
-      
+
       // update statistics after solving nonlinear system
       newton_iterations += newton_iter;
 
@@ -425,7 +425,7 @@ bool ImplicitBulirschStoer::step_direct(double t, double dt, double *u,
 
   return true;
 }
-  
+
 
 
 

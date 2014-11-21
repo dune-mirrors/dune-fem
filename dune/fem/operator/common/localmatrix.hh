@@ -1,21 +1,21 @@
 #ifndef DUNE_FEM_LOCALMATRIX_HH
 #define DUNE_FEM_LOCALMATRIX_HH
 
-//- Dune includes 
+//- Dune includes
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 
-namespace Dune 
-{ 
+namespace Dune
+{
 
   namespace Fem
   {
 
-    /** @ingroup Matrix  
-        @{ 
+    /** @ingroup Matrix
+        @{
     **/
 
-    //- forward declaration of MatrixColumnObject, see below 
-    template <class Traits> 
+    //- forward declaration of MatrixColumnObject, see below
+    template <class Traits>
     class MatrixColumnObject ;
 
 
@@ -25,7 +25,7 @@ namespace Dune
 
     /** \brief Interface for local matrix classes. */
     template< class LocalMatrixTraits >
-    class LocalMatrixInterface 
+    class LocalMatrixInterface
     : public BartonNackmanInterface< LocalMatrixInterface< LocalMatrixTraits >,
                                      typename LocalMatrixTraits::LocalMatrixType >
     {
@@ -34,22 +34,22 @@ namespace Dune
                                       typename LocalMatrixTraits::LocalMatrixType >
         BaseType;
 
-    public:  
-      //! type of traits class 
-      typedef LocalMatrixTraits Traits; 
+    public:
+      //! type of traits class
+      typedef LocalMatrixTraits Traits;
 
       //! type of this interface
       typedef ThisType LocalMatrixInterfaceType;
 
-      //! type of local matrix implementation 
-      typedef typename Traits :: LocalMatrixType LocalMatrixType; 
+      //! type of local matrix implementation
+      typedef typename Traits :: LocalMatrixType LocalMatrixType;
 
-      //! type of range field 
+      //! type of range field
       typedef typename Traits :: RangeFieldType RangeFieldType;
 
       //! type of domain discrete function space
       typedef typename Traits :: DomainSpaceType DomainSpaceType;
-      
+
       //! type of range discrete function space
       typedef typename Traits :: RangeSpaceType RangeSpaceType;
 
@@ -69,13 +69,13 @@ namespace Dune
 
       typedef MatrixColumnObject< Traits >  MatrixColumnType;
 
-    protected:  
+    protected:
       using BaseType::asImp;
 
-      //! constructor 
+      //! constructor
       LocalMatrixInterface ()
       {}
-     
+
     public:
       /** \brief initialize the local matrix to entities
        *  \param[in]  domainEntity  entity within grid of domain space,
@@ -88,13 +88,13 @@ namespace Dune
       }
 
       /*! \brief add value to matrix entry (row,col) where row and col are
-          local row and local column 
-          \param[in] localRow local row 
-          \param[in] localCol local column 
-          \param[in] value value to add 
+          local row and local column
+          \param[in] localRow local row
+          \param[in] localCol local column
+          \param[in] value value to add
       */
-      void add ( const int localRow, 
-                        const int localCol, 
+      void add ( const int localRow,
+                        const int localCol,
                         const RangeFieldType &value )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
@@ -102,13 +102,13 @@ namespace Dune
       }
 
       /*! \brief set value of matrix entry (row,col) where row and col are
-          local row and local column 
-          \param[in] localRow local row 
-          \param[in] localCol local column 
-          \param[in] value value to set  
+          local row and local column
+          \param[in] localRow local row
+          \param[in] localCol local column
+          \param[in] value value to set
       */
-      void set ( const int localRow, 
-                        const int localCol, 
+      void set ( const int localRow,
+                        const int localCol,
                         const RangeFieldType &value )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
@@ -116,7 +116,7 @@ namespace Dune
       }
 
       /*! \brief set row to zero values
-          \param[in] localRow local row that is set to zero 
+          \param[in] localRow local row that is set to zero
        */
       void clearRow( const int  localRow )
       {
@@ -132,16 +132,16 @@ namespace Dune
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
             asImp().clearCol( localCol ));
-      }   
-      
+      }
 
-      /*! \brief multiply left hand side with local matrix and add to right hand side 
-                 rhs += Matrix * lhs  
-          \param[in] lhs left hand side 
-          \param[out] rhs right hand side 
+
+      /*! \brief multiply left hand side with local matrix and add to right hand side
+                 rhs += Matrix * lhs
+          \param[in] lhs left hand side
+          \param[out] rhs right hand side
       */
       template <class DomainLocalFunctionType,
-                class RangeLocalFunctionType> 
+                class RangeLocalFunctionType>
       void multiplyAdd(const DomainLocalFunctionType& lhs,
                               RangeLocalFunctionType& rhs) const
       {
@@ -150,12 +150,12 @@ namespace Dune
       }
 
       /*! \brief get value of matrix entry (row,col) where row and col are
-          local row and local column 
-          \param[in] localRow local row 
-          \param[in] localCol local column 
-          \return value of matrix entry   
+          local row and local column
+          \param[in] localRow local row
+          \param[in] localCol local column
+          \return value of matrix entry
       */
-      const RangeFieldType get ( const int localRow, 
+      const RangeFieldType get ( const int localRow,
                                         const int localCol ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION(
@@ -163,7 +163,7 @@ namespace Dune
         return asImp().get(localRow,localCol);
       }
 
-      /*! \brief scale matrix with scalar value 
+      /*! \brief scale matrix with scalar value
           \param[in] scalar scalar value that scales the matrix
       */
       void scale ( const RangeFieldType& scalar )
@@ -190,7 +190,7 @@ namespace Dune
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().rows() );
         return asImp().rows();
       }
-      
+
       /** \brief get number of columns within the matrix */
       int columns () const
       {
@@ -204,7 +204,7 @@ namespace Dune
         CHECK_INTERFACE_IMPLEMENTATION( asImp().domainSpace() );
         return asImp().domainSpace();
       }
-      
+
       /** \brief access to the range space */
       const RangeSpaceType &rangeSpace () const
       {
@@ -218,7 +218,7 @@ namespace Dune
         CHECK_INTERFACE_IMPLEMENTATION( asImp().domainBasisFunctionSet() );
         return asImp().domainBasisFunctionSet();
       }
-      
+
       /** \brief access to the base function set within the range space */
       const RangeBasisFunctionSetType &rangeBasisFunctionSet () const
       {
@@ -238,19 +238,19 @@ namespace Dune
         return asImp().rangeEntity();
       }
 
-      /** \brief return column object for local matrix which contains axpy methods 
-                 for convenience 
-          \param col  local column number 
+      /** \brief return column object for local matrix which contains axpy methods
+                 for convenience
+          \param col  local column number
 
-          \return object of type MatrixColumnObject 
+          \return object of type MatrixColumnObject
       */
-      MatrixColumnType column( const unsigned int col )  
+      MatrixColumnType column( const unsigned int col )
       {
         return MatrixColumnType( asImp(), col );
       }
 
       /*! \brief finalize local matrix setup and possibly add values to real matrix */
-      void finalize() 
+      void finalize()
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(asImp().finalize());
       }
@@ -331,13 +331,13 @@ namespace Dune
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::rows */
       int rows () const { return rangeBaseSet_.size(); }
-      
+
       /** \copydoc Dune::Fem::LocalMatrixInterface::columns */
       int columns () const { return domainBaseSet_.size(); }
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::domainSpace */
       const DomainSpaceType &domainSpace () const { return domainSpace_; }
-      
+
       /** \copydoc Dune::Fem::LocalMatrixInterface::rangeSpace */
       const RangeSpaceType &rangeSpace () const { return rangeSpace_; }
 
@@ -358,7 +358,7 @@ namespace Dune
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::multiplyAdd */
       template <class DomainLocalFunctionType,
-                class RangeLocalFunctionType> 
+                class RangeLocalFunctionType>
       void multiplyAdd(const DomainLocalFunctionType& lhs,
                               RangeLocalFunctionType& rhs) const
       {
@@ -374,42 +374,42 @@ namespace Dune
       }
     };
 
-    template <class Traits> 
-    class MatrixColumnObject 
+    template <class Traits>
+    class MatrixColumnObject
     {
     public:
-      //! type of local matrix implementation 
+      //! type of local matrix implementation
       typedef typename Traits :: LocalMatrixType LocalMatrixType;
 
       //! type of domain discrete function space
       typedef typename Traits :: DomainSpaceType  DomainSpaceType;
 
-      //! type of range 
+      //! type of range
       typedef typename DomainSpaceType :: RangeType          RangeType ;
-      //! type of jacobian range 
+      //! type of jacobian range
       typedef typename DomainSpaceType :: JacobianRangeType  JacobianRangeType ;
-      //! type of range field 
+      //! type of range field
       typedef typename DomainSpaceType :: RangeFieldType     RangeFieldType ;
 
     protected:
-      // reference to local matrix 
+      // reference to local matrix
       LocalMatrixType& localMatrix_;
-      // local column number 
+      // local column number
       const unsigned int column_;
 
-      //! constructor taking local matrix and column number 
-      MatrixColumnObject( LocalMatrixType& localMatrix, const unsigned int col ) 
+      //! constructor taking local matrix and column number
+      MatrixColumnObject( LocalMatrixType& localMatrix, const unsigned int col )
         : localMatrix_( localMatrix ),
-          column_( col ) 
+          column_( col )
       {
       }
 
-      // at the moment only allow LocalMatrixInterface to construct this object 
+      // at the moment only allow LocalMatrixInterface to construct this object
       friend class LocalMatrixInterface< Traits >;
 
     public:
 
-      /** \brief axpy operation for local matrices 
+      /** \brief axpy operation for local matrices
        *
        *  Denoting an entry of the local matrix by \f$a_{i,j}\f$ and the base
        *  functions by \f$\varphi_i\f$, this function performs the following
@@ -422,9 +422,9 @@ namespace Dune
        *  \param[in]  weight  integration weight for quadrature point (default = 1)
        */
       template <class RangeVectorType>
-      void axpy( const RangeVectorType& phi, 
+      void axpy( const RangeVectorType& phi,
                  const RangeType& factor,
-                 const RangeFieldType& weight = RangeFieldType(1) ) 
+                 const RangeFieldType& weight = RangeFieldType(1) )
       {
         const unsigned int numBasisFunctions = localMatrix_.rows();
         assert( phi.size() >= numBasisFunctions );
@@ -435,10 +435,10 @@ namespace Dune
         }
       }
 
-      /** \brief axpy operation for local matrices 
+      /** \brief axpy operation for local matrices
        *
-       *  Denoting an entry of the local matrix by \f$a_{i,j}\f$ and 
-       *  the gradients of the  base functions by \f$\nabla \varphi_i\f$, 
+       *  Denoting an entry of the local matrix by \f$a_{i,j}\f$ and
+       *  the gradients of the  base functions by \f$\nabla \varphi_i\f$,
        *  this function performs the following operation:
        *  \f[
        *  a_{i,j} = a_{i,j} + weight * (jacobianFactor \cdot \nabla\varphi_i( x ))
@@ -450,13 +450,13 @@ namespace Dune
       template <class JacobianVectorType>
       void axpy( const JacobianVectorType& dphi,
                  const JacobianRangeType& jacobianFactor,
-                 const RangeFieldType& weight = RangeFieldType(1) ) 
+                 const RangeFieldType& weight = RangeFieldType(1) )
       {
         const unsigned int numBasisFunctions = localMatrix_.rows();
         assert( dphi.size() >= numBasisFunctions );
         for( unsigned int row = 0; row < numBasisFunctions; ++ row )
         {
-          RangeFieldType value = 0; 
+          RangeFieldType value = 0;
           for( int k = 0; k < jacobianFactor.rows; ++k )
             value += jacobianFactor[ k ] * dphi[ row ][ k ];
 
@@ -464,26 +464,26 @@ namespace Dune
         }
       }
 
-      /** \brief axpy operation for local matrices 
+      /** \brief axpy operation for local matrices
        *
-       *  Denoting an entry of the local matrix by \f$a_{i,j}\f$ and 
-       *  the base functions by \f$\nabla \varphi_i\f$, 
+       *  Denoting an entry of the local matrix by \f$a_{i,j}\f$ and
+       *  the base functions by \f$\nabla \varphi_i\f$,
        *  this function performs the following operation:
        *  \f[
        *  a_{i,j} = a_{i,j} + weight (factor \cdot \varphi_i( x ) + jacobianFactor \cdot \nabla\varphi_i( x ))
        *  \f]
        *  \param[in]  phi            evaluations of all base functions \f$\varphi_i( x )\f$
        *  \param[in]  dphi           evaluations of the jacobian of all base functions \f$\varphi_i( x )\f$
-       *  \param[in]  factor         axpy factor for phi 
-       *  \param[in]  jacobianFactor axpy factor for dphi 
+       *  \param[in]  factor         axpy factor for phi
+       *  \param[in]  jacobianFactor axpy factor for dphi
        *  \param[in]  weight         integration weight for quadrature point (default = 1)
        */
       template <class RangeVectorType, class JacobianVectorType>
-      void axpy( const RangeVectorType& phi, 
+      void axpy( const RangeVectorType& phi,
                  const JacobianVectorType& dphi,
                  const RangeType& factor,
                  const JacobianRangeType& jacobianFactor,
-                 const RangeFieldType& weight = RangeFieldType(1) ) 
+                 const RangeFieldType& weight = RangeFieldType(1) )
       {
         const unsigned int numBasisFunctions = localMatrix_.rows();
         assert( phi.size() >= numBasisFunctions );
@@ -501,8 +501,8 @@ namespace Dune
 
 ///@}
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_LOCALMATRIX_HH

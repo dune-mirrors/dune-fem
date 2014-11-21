@@ -2,7 +2,7 @@
 #ifndef DUNE_FEM_PETSCDOFBLOCK_HH
 #define DUNE_FEM_PETSCDOFBLOCK_HH
 
-#include <dune/fem/storage/envelope.hh> 
+#include <dune/fem/storage/envelope.hh>
 
 #if HAVE_PETSC
 
@@ -11,10 +11,10 @@
 
 #include <dune/fem/io/streams/streams.hh>
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
 
@@ -45,7 +45,7 @@ namespace Dune
       PetscDofBlock ( PetscVectorType &petscVector, IndexType blockIndex )
       : petscVector_( petscVector ),
         blockIndex_( blockIndex )
-      {} 
+      {}
 
       // ..or this one, which is semantically equivalent to the above ctor
       explicit PetscDofBlock ( UnaryConstructorParamType arg )
@@ -107,7 +107,7 @@ namespace Dune
         blockIndex_ = other.blockIndex_;
         indexInBlock_ = other.indexInBlock_;
       }
-     
+
       const ThisType& operator= ( ThisType &other )
       {
         setValue( other.getValue() );
@@ -119,7 +119,7 @@ namespace Dune
         setValue( val );
         return *this;
       }
-      
+
       const ThisType& operator*= ( const ThisType& other )
       {
         PetscScalar value = getValue() * other.getValue();
@@ -179,13 +179,13 @@ namespace Dune
       }
 
       PetscVectorType& petscVector ()
-      { 
+      {
         assert( petscVector_ );
         return *petscVector_;
       }
 
       const PetscVectorType& petscVector () const
-      { 
+      {
         assert( petscVector_ );
         return *petscVector_;
       }
@@ -197,9 +197,9 @@ namespace Dune
 
     };
 
-     
-    // TODO: to be revised 
-    //! proper implementation for InStreamInterface of the DofProxy 
+
+    // TODO: to be revised
+    //! proper implementation for InStreamInterface of the DofProxy
     //template< class Traits,  class PVector >
     template< class Traits,  class T >
     inline InStreamInterface< Traits > &
@@ -219,7 +219,7 @@ namespace Dune
 
     /*
      * This is almost a bidirectional iterator but does not completely satisfy the required
-     * interface (see the C++2003 standard, 24.1.4) [no default ctor, no operator->]. 
+     * interface (see the C++2003 standard, 24.1.4) [no default ctor, no operator->].
      */
 
     /* ========================================
@@ -227,7 +227,7 @@ namespace Dune
      * =======================================
      */
     template< typename PVector >
-    class PetscDofBlock< PVector >::DofIterator 
+    class PetscDofBlock< PVector >::DofIterator
     : public std::iterator< std::input_iterator_tag, PetscScalar >
     {
       typedef typename PetscDofBlock< PVector >::DofIterator ThisType;
@@ -258,9 +258,9 @@ namespace Dune
         }
       }
 
-      bool operator== ( const ThisType &other ) const 
-      { 
-        return blockIndex_ == other.blockIndex_ && 
+      bool operator== ( const ThisType &other ) const
+      {
+        return blockIndex_ == other.blockIndex_ &&
                indexInBlock_ == other.indexInBlock_;
       }
 

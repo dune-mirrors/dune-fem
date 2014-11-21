@@ -11,7 +11,7 @@ namespace Dune {
   {
   public:
     virtual void run();
-   
+
     void lineTest();
     void triangleTest();
     void quadrilateralTest();

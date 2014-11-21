@@ -8,7 +8,7 @@ namespace Dune
 
   namespace Fem
   {
-  
+
   template <class ct, int dim>
   inline TestQuadrature<ct, dim>::TestQuadrature(const GeometryType& geo, int order) :
     QuadratureImp<ct, dim>(IdProvider::instance().newId()),
@@ -18,7 +18,7 @@ namespace Dune
 
   template <class ct, int dim>
   inline void TestQuadrature<ct, dim>::
-  newQuadraturePoint(const CoordinateType& c, ct w) 
+  newQuadraturePoint(const CoordinateType& c, ct w)
   {
     this->addQuadraturePoint(c, w);
   }

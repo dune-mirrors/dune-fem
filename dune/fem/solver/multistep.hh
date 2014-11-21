@@ -1,19 +1,19 @@
 #ifndef MULTISTEP_SOLVER_HH
 #define MULTISTEP_SOLVER_HH
 
-// inlcude all used headers before, that they don not appear in DuneODE 
+// inlcude all used headers before, that they don not appear in DuneODE
 
-//- system includes 
+//- system includes
 #include <iostream>
 #include <cmath>
 #include <vector>
 #include <cassert>
 
-//- Dune includes 
+//- Dune includes
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/solver/rungekutta.hh>
 
-namespace DuneODE 
+namespace DuneODE
 {
 
   using namespace Dune;
@@ -28,12 +28,12 @@ namespace DuneODE
 
   /** \brief \newimplementation Base class for explicit multistep method. */
   template<class Operator>
-  class ExplMultiStepBase 
+  class ExplMultiStepBase
   {
   public:
     typedef typename Operator::DestinationType DestinationType;
     typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
-    // typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
+    // typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType;
   protected:
     std::vector< std::vector<double> > a;
     std::vector<double> b;
@@ -44,17 +44,17 @@ namespace DuneODE
     std::vector<DestinationType*> Fj;
     std::vector<double> deltat_;
     bool msInit,msFirst;
-  protected:  
+  protected:
     const int ord_;
 
   public:
-    /** \brief constructor 
-      \param[in] op Operator \f$L\f$ 
-      \param[in] tp TimeProvider 
+    /** \brief constructor
+      \param[in] op Operator \f$L\f$
+      \param[in] tp TimeProvider
       \param[in] pord polynomial order
-      \param[in] verbose verbosity 
+      \param[in] verbose verbosity
     */
-    ExplMultiStepBase(Operator& op, TimeProviderBase& tp, 
+    ExplMultiStepBase(Operator& op, TimeProviderBase& tp,
                       int pord, bool verbose = true ) :
       a(0),b(0),c(0)
       , steps_(pord+1)
@@ -74,9 +74,9 @@ namespace DuneODE
       {
         a[i].resize(ord_);
       }
-      b.resize(ord_); 
-      c.resize(ord_); 
-      
+      b.resize(ord_);
+      c.resize(ord_);
+
       switch (ord_) {
       case 4 :
         a[0][0]=0.;     a[0][1]=0.;     a[0][2]=0.;    a[0][3]=0.;
@@ -104,7 +104,7 @@ namespace DuneODE
         b[0]=1.;
         c[0]=0.;
         break;
-      default : std::cerr << "Runge-Kutta method of this order not implemented" 
+      default : std::cerr << "Runge-Kutta method of this order not implemented"
                           << std::endl;
                 abort();
       }
@@ -116,7 +116,7 @@ namespace DuneODE
       Uj.push_back(new DestinationType("UMS",op_.space()) );
     }
 
-    //! destructor 
+    //! destructor
     ~ExplMultiStepBase()
     {
       for(size_t i=0; i<Fj.size(); ++i) {
@@ -127,19 +127,19 @@ namespace DuneODE
       }
     }
 
-    //! apply operator once to get dt estimate 
+    //! apply operator once to get dt estimate
     void initialize(const DestinationType& U0)
     {
-      if( ! initialized_ ) 
+      if( ! initialized_ )
       {
         // Compute Steps
         op_(U0, (*Fj[0]));
         initialized_ = true;
       }
     }
-    
-    //! solve the system 
-    void solve(DestinationType& U0) 
+
+    //! solve the system
+    void solve(DestinationType& U0)
     {
       if (!msInit) {
         // Startup phase using RungeKutta
@@ -150,7 +150,7 @@ namespace DuneODE
         if (Uj.size()==steps_) {
           Uj[steps_-1]->assign(U0);
           for (size_t i=0;i<steps_-1;i++) {
-            op_(*(Uj[i]),(*Fj[i])); 
+            op_(*(Uj[i]),(*Fj[i]));
           }
           msInit=true;
         }
@@ -158,19 +158,19 @@ namespace DuneODE
       }
       // now multistep
 
-      // get cfl * timeStepEstimate 
+      // get cfl * timeStepEstimate
       deltat_[steps_-1] = tp_.deltaT();
-      // get time 
+      // get time
 
       // Compute Steps
       Uj[steps_-1]->assign(U0);
 
-      // set new time 
+      // set new time
       op_.setTime( tp_.time() );
 
       op_(*(Uj[steps_-1]), *(Fj[steps_-1]));
 
-      // provide time step estimate 
+      // provide time step estimate
       tp_.provideTimeStepEstimate( op_.timeStepEstimate() );
 
       // Perform Update
@@ -185,15 +185,15 @@ namespace DuneODE
         alpha[0] = -((2.*gamma_-1.)*w*w/(1.+w))/alpha2;
         beta[1]  = (1.+gamma_*w)/alpha2*deltat_[steps_-1];
         beta[0]  = -(gamma_*w)/alpha2*deltat_[steps_-1];
-        std::cout << "# MS Coeffs : " 
-      << alpha[0] << " " << alpha[1] << " " 
-      << alpha2 << "   " 
+        std::cout << "# MS Coeffs : "
+      << alpha[0] << " " << alpha[1] << " "
+      << alpha2 << "   "
       << beta[0] << " " << beta[1] << "  "
-      << deltat_[0] << " " << deltat_[1] 
+      << deltat_[0] << " " << deltat_[1]
       << std::endl;
       } break;
       case 3: {
-        /* Shu 
+        /* Shu
         alpha[0] = 1./4.;
         alpha[1] = 0.;
         alpha[2] = 3./4.;
@@ -276,12 +276,12 @@ namespace DuneODE
           }
           if (p==1)
             cond += beta[0];
-          std::cout << "# MS Cond for p= " << p 
+          std::cout << "# MS Cond for p= " << p
                     << " " << cond
                     << std::endl;
           ++p;
         } while (fabs(cond)<1e-7 && p<10);
-        std::cout << "   # CFL and stability: "; 
+        std::cout << "   # CFL and stability: ";
         for (int i=0;i<steps_;i++) {
           if (fabs(beta[i])>1e-10) {
             std::cout << alpha[i]/beta[i]*
@@ -309,56 +309,56 @@ namespace DuneODE
       Uj[steps_-1] = Utmp;
       Fj[steps_-1] = Ftmp;
     }
-    //! solve the system 
-    void solveRK(DestinationType& U0) 
+    //! solve the system
+    void solveRK(DestinationType& U0)
     {
       DestinationType Uval("Utmp",op_.space());
-      
-      // get cfl * timeStepEstimate 
+
+      // get cfl * timeStepEstimate
       const double dt = tp_.deltaT();
-      // get time 
+      // get time
       const double t = tp_.time();
 
-      // set new time 
+      // set new time
       op_.setTime( t );
 
       // Compute Steps
       op_(U0, *(Fj[0]));
 
-      // provide time step estimate 
+      // provide time step estimate
       tp_.provideTimeStepEstimate( op_.timeStepEstimate() );
-      
-      for (int i=1; i<ord_; ++i) 
+
+      for (int i=1; i<ord_; ++i)
       {
         Uval.assign(U0);
-        for (int j=0; j<i ; ++j) 
+        for (int j=0; j<i ; ++j)
         {
           Uval.axpy((a[i][j]*dt), *(Fj[j]));
         }
 
-        // set new time 
+        // set new time
         op_.setTime( t + c[i]*dt );
 
-        // apply operator 
+        // apply operator
         op_(Uval,*(Fj[i]));
 
-        // provide time step estimate 
+        // provide time step estimate
         tp_.provideTimeStepEstimate( op_.timeStepEstimate() );
       }
 
       // Perform Update
-      for (int j=0; j<ord_; ++j) 
+      for (int j=0; j<ord_; ++j)
       {
         U0.axpy((b[j]*dt), *(Fj[j]));
       }
     }
 
   protected:
-    // operator to solve for 
+    // operator to solve for
     const Operator& op_;
-    // time provider 
+    // time provider
     TimeProviderBase& tp_;
-    // init flag 
+    // init flag
     bool initialized_;
   };
 
@@ -366,26 +366,26 @@ namespace DuneODE
   /** \brief Exlicit multi step ODE solver that also behaves like a time
       stepper. */
   template<class Operator>
-  class ExplMultiStep : public TimeProvider , 
-                        public ExplMultiStepBase<Operator> 
+  class ExplMultiStep : public TimeProvider ,
+                        public ExplMultiStepBase<Operator>
   {
     typedef ExplMultiStepBase<Operator> BaseType;
   public:
     typedef typename Operator :: DestinationType DestinationType;
     typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
-    typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType; 
+    typedef typename SpaceType :: GridType :: Traits :: CollectiveCommunication DuneCommunicatorType;
 
   public:
-    /** \brief constructor 
-      \param[in] op Operator \f$L\f$ 
-      \param[in] pord polynomial order 
-      \param[in] cfl cfl number 
-      \param[in] verbose verbosity 
+    /** \brief constructor
+      \param[in] op Operator \f$L\f$
+      \param[in] pord polynomial order
+      \param[in] cfl cfl number
+      \param[in] verbose verbosity
     */
     ExplMultiStep (Operator& op,int pord,double cfl, bool verbose = true ) :
       TimeProvider(0.0,(cfl/double(pord))*0.95),
       BaseType(op,*this,pord,verbose),
-      tp_(op.space().gridPart().comm(),*this), 
+      tp_(op.space().gridPart().comm(),*this),
       savetime_(0.0), savestep_(1)
     {
       op.timeProvider(this);
@@ -395,31 +395,31 @@ namespace DuneODE
     {
       if(! this->initialized_)
       {
-        // initialize 
+        // initialize
         BaseType :: initialize(U0);
-      
-        // global min of dt and reset of dtEstimate 
+
+        // global min of dt and reset of dtEstimate
         this->tp_.syncTimeStep();
       }
     }
-      
-    double solve(typename Operator::DestinationType& U0) 
+
+    double solve(typename Operator::DestinationType& U0)
     {
       initialize( U0 );
-      
-      // solve ode 
+
+      // solve ode
       BaseType :: solve (U0);
-      
-      // calls setTime ( t + dt ); 
+
+      // calls setTime ( t + dt );
       this->tp_.augmentTime();
-      
-      // global min of dt and reset of dtEstimate 
+
+      // global min of dt and reset of dtEstimate
       this->tp_.syncTimeStep();
-      
+
       return this->tp_.time();
     }
-    
-    void printGrid(int nr, const typename Operator::DestinationType& U) 
+
+    void printGrid(int nr, const typename Operator::DestinationType& U)
     {
       if (time()>=savetime_) {
         printSGrid(time(),savestep_*10+nr,this->op_.space(),U);
@@ -427,7 +427,7 @@ namespace DuneODE
         savetime_+=0.001;
       }
     }
-    
+
     void printmyInfo(string filename) const {
       std::ostringstream filestream;
       filestream << filename;
@@ -439,7 +439,7 @@ namespace DuneODE
     }
 
   private:
-    // TimeProvider with communicator 
+    // TimeProvider with communicator
     ParallelTimeProvider<DuneCommunicatorType> tp_;
     double savetime_;
     int savestep_;
@@ -452,11 +452,11 @@ namespace DuneODE
    *        the CFL constant saved in this solver
    */
   template<class DestinationImp>
-  class ExplicitMultiStepSolver : 
+  class ExplicitMultiStepSolver :
     public OdeSolverInterface<DestinationImp> ,
-    public ExplMultiStepBase<SpaceOperatorInterface<DestinationImp> >  
+    public ExplMultiStepBase<SpaceOperatorInterface<DestinationImp> >
   {
-    typedef DestinationImp DestinationType; 
+    typedef DestinationImp DestinationType;
     typedef SpaceOperatorInterface<DestinationImp> OperatorType;
     typedef ExplMultiStepBase<OperatorType> BaseType;
 
@@ -465,45 +465,45 @@ namespace DuneODE
     double cfl_;
 
   public:
-    /** \brief constructor 
-      \param[in] op Operator \f$L\f$ 
-      \param[in] tp TimeProvider 
-      \param[in] pord polynomial order 
-      \param[in] verbose verbosity 
+    /** \brief constructor
+      \param[in] op Operator \f$L\f$
+      \param[in] tp TimeProvider
+      \param[in] pord polynomial order
+      \param[in] verbose verbosity
     */
     ExplicitMultiStepSolver(OperatorType& op, TimeProviderBase& tp, int pord, bool verbose = false) :
       BaseType(op,tp,pord,verbose),
       timeProvider_(tp),
       cfl_( std :: min( 0.45 / (2.0 * pord+1) / double(pord), 1.0 ) )
     {
-      if(verbose) 
+      if(verbose)
         std::cout << "ExplicitMultiStepSolver: cfl = " << cfl_ << "!" << std :: endl;
     }
 
-    //! destructor 
+    //! destructor
     virtual ~ExplicitMultiStepSolver() {}
-    
-    //! apply operator once to get dt estimate 
+
+    //! apply operator once to get dt estimate
     void initialize(const DestinationType& U0)
     {
       BaseType :: initialize(U0);
     }
-    
-    //! solve system 
-    void solve(DestinationType& U0) 
+
+    //! solve system
+    void solve(DestinationType& U0)
     {
-      // initialize 
-      if( ! this->initialized_ ) 
+      // initialize
+      if( ! this->initialized_ )
       {
         DUNE_THROW(InvalidStateException,"ExplicitMultiStepSolver wasn't initialized before first call!");
       }
 
-      // solve ode 
+      // solve ode
       BaseType :: solve(U0);
     }
   };
 
   /** @} **/
-} // namespace DuneODE 
+} // namespace DuneODE
 
 #endif // #ifndef MULTISTEP_SOLVER_HH

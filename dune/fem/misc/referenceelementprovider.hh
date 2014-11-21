@@ -175,7 +175,7 @@ namespace Dune
 
     // ReferenceElementProvider for ALUGrid
     // -------------------------------------
-    // TODO: add specialization for ALUGrid 
+    // TODO: add specialization for ALUGrid
 
 
     // ReferenceElementProvider for OneDGrid

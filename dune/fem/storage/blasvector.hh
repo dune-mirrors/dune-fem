@@ -12,7 +12,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     class BlasVector
@@ -26,7 +26,7 @@ namespace Dune
       BlasVector(unsigned int n, const double *a);
       BlasVector(const BlasVector &v); // copy constructor
       ~BlasVector();
-      
+
       // element access
       double& operator[](unsigned int i);
       double operator[](unsigned int i) const;
@@ -63,9 +63,9 @@ namespace Dune
       }
       void resize(unsigned int newSize) {
         assert(owner_);
-        if (newSize>totalSize) 
+        if (newSize>totalSize)
           reserve(newSize);
-        else 
+        else
           n = newSize;
       }
     private:
@@ -76,7 +76,7 @@ namespace Dune
 
     // class BlasVector inline implementation
 
-    inline 
+    inline
     BlasVector::BlasVector(unsigned int pn) : owner_(true),
     n(pn), totalSize(pn), data(new double[pn])
     {
@@ -85,7 +85,7 @@ namespace Dune
     }
 
 
-    inline 
+    inline
     BlasVector::BlasVector(unsigned int pn, const double *a) : owner_(false),
     n(pn), totalSize(pn), data(const_cast<double*>(a))
     {
@@ -94,7 +94,7 @@ namespace Dune
     }
 
 
-    inline 
+    inline
     BlasVector::BlasVector(const BlasVector &v) : owner_(true),
     n(v.n), totalSize(v.n), data(new double[v.n])
     {
@@ -103,7 +103,7 @@ namespace Dune
     }
 
 
-    inline 
+    inline
     BlasVector::~BlasVector()
     {
       if (owner_)
@@ -175,7 +175,7 @@ namespace Dune
       return n;
     }
 
-  } // namespace Fem  
+  } // namespace Fem
 
 } // namespace Dune
 

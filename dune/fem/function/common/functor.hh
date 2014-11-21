@@ -48,7 +48,7 @@ namespace Dune
     };
 
 
-    // AssignReference 
+    // AssignReference
     // ---------------
 
     template< class Vector >
@@ -59,7 +59,7 @@ namespace Dune
       {}
 
       template< class Value >
-      void operator() ( const std::size_t index, Value &value ) 
+      void operator() ( const std::size_t index, Value &value )
       {
         vector_.bind( index, value );
       }

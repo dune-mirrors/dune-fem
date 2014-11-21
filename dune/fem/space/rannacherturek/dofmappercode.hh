@@ -15,7 +15,7 @@ namespace Dune
 
   namespace Fem
   {
-  
+
     // RannacherTurekBlockMapperSingletonKey
     // -------------------------------------
 
@@ -32,12 +32,12 @@ namespace Dune
       {}
 
       const GridPartType &gridPart () const { return gridPart_; }
-    
+
       bool operator== ( const ThisType &other ) const
       {
         return ( &gridPart_ == &(other.gridPart_) );
       }
-      
+
       bool operator!= ( const ThisType &other ) const
       {
         return !( *this == other );

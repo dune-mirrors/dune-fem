@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_ARRAYS_HH
 #define DUNE_FEM_ARRAYS_HH
 
-//- System includes 
+//- System includes
 #include <cassert>
 #include <cmath>
 #include <cstring>
@@ -10,25 +10,25 @@
 
 #include <string>
 
-//- Dune includes 
+//- Dune includes
 #include <dune/common/genericiterator.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/version.hh>
 
-#if HAVE_BLAS 
-// include BLAS for daxpy operation 
+#if HAVE_BLAS
+// include BLAS for daxpy operation
 #include <dune/fem/solver/oemsolver/cblas.h>
 #endif
 
 #include <dune/fem/io/streams/streams.hh>
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
-  // forward declarations 
+  // forward declarations
   template <class T>
   class DefaultDofAllocator;
 
@@ -39,7 +39,7 @@ namespace Dune
   struct SpecialArrayFeatures;
 
 
-  //! oriented to the STL Allocator funtionality 
+  //! oriented to the STL Allocator funtionality
   template <class T>
   class DefaultDofAllocator {
   public:
@@ -57,7 +57,7 @@ namespace Dune
     {
       delete [] p;
     }
-    
+
     //! allocate array of nmemb objects of type T
     static T* realloc (T* oldMem, size_t oldSize , size_t nmemb)
     {
@@ -72,9 +72,9 @@ namespace Dune
   };
 
   //! allocator for simple structures like int, double and float
-  //! using the C malloc,free, and realloc 
-  template <typename T> 
-  struct SimpleDofAllocator 
+  //! using the C malloc,free, and realloc
+  template <typename T>
+  struct SimpleDofAllocator
   {
     //! allocate array of nmemb objects of type T
     static T* malloc (size_t nmemb)
@@ -91,7 +91,7 @@ namespace Dune
       assert(p);
       std::free(p);
     }
-    
+
     //! allocate array of nmemb objects of type T
     static T* realloc (T* oldMem, size_t oldSize , size_t nmemb)
     {
@@ -104,40 +104,40 @@ namespace Dune
   };
 
   template <>
-  struct DefaultDofAllocator<double> : public SimpleDofAllocator< double > 
+  struct DefaultDofAllocator<double> : public SimpleDofAllocator< double >
   {
   };
 
   template <>
-  struct DefaultDofAllocator< float > : public SimpleDofAllocator< float > 
+  struct DefaultDofAllocator< float > : public SimpleDofAllocator< float >
   {
   };
 
   template <>
-  struct DefaultDofAllocator< int > : public SimpleDofAllocator< int > 
+  struct DefaultDofAllocator< int > : public SimpleDofAllocator< int >
   {
   };
 
   template <>
-  struct DefaultDofAllocator< size_t > : public SimpleDofAllocator< size_t > 
+  struct DefaultDofAllocator< size_t > : public SimpleDofAllocator< size_t >
   {
   };
 
   template <>
-  struct DefaultDofAllocator< char > : public SimpleDofAllocator< char > 
+  struct DefaultDofAllocator< char > : public SimpleDofAllocator< char >
   {
   };
 
   template <>
-  struct DefaultDofAllocator< bool > : public SimpleDofAllocator< bool > 
+  struct DefaultDofAllocator< bool > : public SimpleDofAllocator< bool >
   {
   };
 
   /** \brief Static Array Wrapper for simple C Vectors like double* and
     int*. This also works as base class for the MutableArray which is used
-    to store the degrees of freedom. 
+    to store the degrees of freedom.
   */
-  template <class T> 
+  template <class T>
   class StaticArray
   {
   protected:
@@ -146,68 +146,68 @@ namespace Dune
     // pointer to mem
     T * vec_;
 
-    // size of array 
+    // size of array
     size_t size_;
 
     StaticArray(const StaticArray&);
   public:
     typedef T FieldType;
-    //! definition conforming to STL  
+    //! definition conforming to STL
     typedef T value_type;
-    
-    //! definition conforming to ISTL  
+
+    //! definition conforming to ISTL
     typedef T block_type;
-    
+
     //! DofIterator
     typedef GenericIterator<ThisType, T> DofIteratorType;
-    
-    //! make compatible with std::vector 
+
+    //! make compatible with std::vector
     typedef DofIteratorType iterator ;
 
     //! Const DofIterator
     typedef GenericIterator<const ThisType, const T> ConstDofIteratorType;
 
-    //! make compatible with std::vector 
+    //! make compatible with std::vector
     typedef ConstDofIteratorType const_iterator ;
 
-    //! create array of length size and store vec as pointer to memory 
-    explicit StaticArray(const size_t size, T* vec) 
-      : vec_(vec) 
+    //! create array of length size and store vec as pointer to memory
+    explicit StaticArray(const size_t size, T* vec)
+      : vec_(vec)
       , size_(size)
     {
       //assert( size_ >= 0 );
     }
 
-    //! create array of length size and store vec as pointer to memory 
-    explicit StaticArray(const size_t size, const T* vec) 
-      : vec_( const_cast< T * > (vec) ) 
+    //! create array of length size and store vec as pointer to memory
+    explicit StaticArray(const size_t size, const T* vec)
+      : vec_( const_cast< T * > (vec) )
       , size_(size)
     {
       //assert( size_ >= 0 );
     }
 
-    //! iterator pointing to begin of array 
+    //! iterator pointing to begin of array
     DofIteratorType begin() {
       return DofIteratorType(*this, 0);
     }
-    
-    //! const iterator pointing to begin of array 
-    ConstDofIteratorType begin() const {    
+
+    //! const iterator pointing to begin of array
+    ConstDofIteratorType begin() const {
       return ConstDofIteratorType(*this, 0);
     }
-    
-    //! iterator pointing to end of array 
+
+    //! iterator pointing to end of array
     DofIteratorType end() {
       return DofIteratorType(*this, size_);
     }
-    
-    //! const iterator pointing to end of array 
-    ConstDofIteratorType end() const {    
+
+    //! const iterator pointing to end of array
+    ConstDofIteratorType end() const {
       return ConstDofIteratorType(*this, size_);
     }
 
-    //! return number of enties of array 
-    size_t size () const { return size_; }  
+    //! return number of enties of array
+    size_t size () const { return size_; }
 
   private:
     void assertIndex ( const size_t i ) const
@@ -225,30 +225,30 @@ namespace Dune
 
   public:
     //! return reference to entry i
-    T& operator [] ( const size_t i )       
-    { 
-      assertIndex( i );
-      return vec_[i]; 
-    }
-    
-    //! return reference to const entry i
-    const T& operator [] ( const size_t i ) const 
+    T& operator [] ( const size_t i )
     {
       assertIndex( i );
-      return vec_[i]; 
+      return vec_[i];
     }
 
-    //! assign arrays 
+    //! return reference to const entry i
+    const T& operator [] ( const size_t i ) const
+    {
+      assertIndex( i );
+      return vec_[i];
+    }
+
+    //! assign arrays
     ThisType& operator= (const ThisType & org)
     {
       assert(org.size_ >= size() );
       assert( ( size_ > 0 ) ? vec_ != 0 : true );
-      // copy the entries 
+      // copy the entries
       std::copy(org.vec_, org.vec_ + size_, vec_ );
       return *this;
     }
-   
-    //! operator +=  
+
+    //! operator +=
     ThisType& operator += (const ThisType & org)
     {
       assert(org.size_ >= size() );
@@ -257,8 +257,8 @@ namespace Dune
       for(size_t i=0; i<s; ++i) vec_[i] += ov[i];
       return *this;
     }
-   
-    //! operator -=  
+
+    //! operator -=
     ThisType& operator -= (const ThisType& org)
     {
       assert(org.size() >= size() );
@@ -267,25 +267,25 @@ namespace Dune
       for(size_t i=0; i<s; ++i) vec_[i] -= ov[i];
       return *this;
     }
-   
-    //! operator *= multiplies array with a scalar  
+
+    //! operator *= multiplies array with a scalar
     ThisType& operator *= (const T scalar)
     {
       const size_t s = size();
       for(size_t i=0; i<s; ++i) vec_[i] *= scalar;
       return *this;
     }
-    
-    //! operator /= divides array with a scalar  
+
+    //! operator /= divides array with a scalar
     ThisType& operator /= (const T scalar)
     {
-      const T scalar_1 = (((T) 1)/scalar); 
+      const T scalar_1 = (((T) 1)/scalar);
       const size_t s = size();
       for(size_t i=0; i<s; ++i) vec_[i] *= scalar_1;
       return *this;
     }
-    
-    //! operator = assign all entrys to given scalar value  
+
+    //! operator = assign all entrys to given scalar value
     ThisType& operator= (const T scalar)
     {
       const size_t s = size();
@@ -293,45 +293,45 @@ namespace Dune
       return *this;
     }
 
-    //! axpy operation  
+    //! axpy operation
     void axpy (const ThisType& org, const T scalar)
     {
       const size_t s = size();
       const T * ov = org.vec_;
       for(size_t i=0; i<s; ++i) vec_[i] += scalar*ov[i];
     }
-   
-    //! set all entries to zero 
-    void clear () 
+
+    //! set all entries to zero
+    void clear ()
     {
       const size_t s = size();
       for(size_t i=0; i<s; ++i) vec_[i] = 0;
     }
-   
-    //! move memory from old to new destination 
-    void memmove(const int length, const int oldStartIdx, const int newStartIdx) 
+
+    //! move memory from old to new destination
+    void memmove(const int length, const int oldStartIdx, const int newStartIdx)
     {
       void * dest = ((void *) (&vec_[newStartIdx]));
       const void * src = ((const void *) (&vec_[oldStartIdx]));
       std::memmove(dest, src, length * sizeof(T));
     }
-   
+
     //! Comparison operator
     //! The comparison operator checks for object identity, i.e. if this and
     //! other are the same objects in memory rather than containing the same data
-    bool operator==(const ThisType& other) const 
+    bool operator==(const ThisType& other) const
     {
       return vec_ == other.vec_;
     }
 
-    //! return leak pointer for usage in BLAS routines 
+    //! return leak pointer for usage in BLAS routines
     T* leakPointer() { return vec_; }
-    //! return leak pointer for usage in BLAS routines 
+    //! return leak pointer for usage in BLAS routines
     const T* leakPointer() const { return vec_; }
 
-    //! write to  stream 
-    template <class StreamTraits> 
-    bool write(OutStreamInterface< StreamTraits >& out) const 
+    //! write to  stream
+    template <class StreamTraits>
+    bool write(OutStreamInterface< StreamTraits >& out) const
     {
       const uint64_t len = size_;
       out << len;
@@ -342,13 +342,13 @@ namespace Dune
       return true;
     }
 
-    //! write to  stream 
-    template <class StreamTraits> 
-    bool read(InStreamInterface< StreamTraits >& in) 
+    //! write to  stream
+    template <class StreamTraits>
+    bool read(InStreamInterface< StreamTraits >& in)
     {
-      uint64_t len; 
+      uint64_t len;
       in >> len;
-      // when read check size 
+      // when read check size
       if( size_ != len )
       {
         DUNE_THROW(InvalidStateException,"StaticArray::read: internal size " << size_ << " and size to read " << len << " not equal!");
@@ -361,8 +361,8 @@ namespace Dune
       return true;
     }
 
-    //! print array 
-    void print(std::ostream& s) const 
+    //! print array
+    void print(std::ostream& s) const
     {
       s << "Print StaticArray(addr = "<< this << ") (size = " << size_ << ")\n";
       for(size_t i=0; i<size(); ++i)
@@ -372,20 +372,20 @@ namespace Dune
     }
   };
 
-  // specialisations of axpy 
+  // specialisations of axpy
   template <>
   inline void StaticArray<double>::axpy(const ThisType& org, const double scalar)
   {
 #if HAVE_BLAS
     DuneCBlas :: daxpy( size() , scalar, org.vec_, 1 , vec_, 1);
-#else 
+#else
     const size_t s = size();
     const double* ov = org.vec_;
     for(size_t i=0; i<s; ++i) vec_[i] += scalar * ov[i];
 #endif
   }
-   
-  // specialisations of clear 
+
+  // specialisations of clear
   template <>
   inline void StaticArray<int>::clear()
   {
@@ -396,14 +396,14 @@ namespace Dune
   {
     std::memset(vec_, 0 , size() * sizeof(double));
   }
-   
-  /*! 
+
+  /*!
    MutableArray is the array that a discrete functions sees. If a discrete
    function is created, then it is signed in by the function space and the
    return value is a MemObject. This MemObject contains a MutableArrayMemory
-   which is then as reference given to the MutableArray of the DiscreteFunction. 
+   which is then as reference given to the MutableArray of the DiscreteFunction.
    The MutableArray is only a wrapper class for MutableArrayMemory where we dont know
-   the type of the dofs only the size of one dof. 
+   the type of the dofs only the size of one dof.
    Therefore we have this wrapper class for cast to the right type.
   */
   template <class T, class AllocatorType>
@@ -416,59 +416,59 @@ namespace Dune
     using BaseType :: size_ ;
     using BaseType :: vec_ ;
 
-    // make new memory memFactor larger 
+    // make new memory memFactor larger
     double memoryFactor_;
 
     // actual capacity of array
     size_t memSize_;
-   
+
   public:
     using BaseType :: size ;
 
-    //! create array of length 0 
-    MutableArray() 
+    //! create array of length 0
+    MutableArray()
       : BaseType(0, (T *) 0)
       , memoryFactor_(1.0)
-      , memSize_(0) 
+      , memSize_(0)
     {
     }
 
     //! copy constructor
-    MutableArray(const MutableArray& other) 
+    MutableArray(const MutableArray& other)
       : BaseType(0, (T *) 0),
         memoryFactor_(1.0),
         memSize_(0)
     {
-      // assign vector 
+      // assign vector
       *this = other;
     }
 
     //! create array of length size
-    MutableArray(const size_t size) 
-      : BaseType(size, 
+    MutableArray(const size_t size)
+      : BaseType(size,
                  // only alloc memory if size > 0
                  ((T *) (size == 0) ? 0 : AllocatorType :: malloc (size)))
       , memoryFactor_(1.0)
-      , memSize_(size) 
+      , memSize_(size)
     {
     }
-    
+
     //! set memory factor
     void setMemoryFactor(const double memFactor)
     {
       memoryFactor_ = memFactor;
     }
 
-    //! Destructor 
-    ~MutableArray() 
+    //! Destructor
+    ~MutableArray()
     {
       freeMemory();
     }
 
-    //! return number of total enties of array 
-    size_t capacity () const { return memSize_; }  
-   
-    //! assign arrays 
+    //! return number of total enties of array
+    size_t capacity () const { return memSize_; }
+
+    //! assign arrays
     ThisType& operator= (const ThisType & org)
     {
       resize( org.size_ );
@@ -477,56 +477,56 @@ namespace Dune
       std::copy(org.vec_, org.vec_ + size_, vec_ );
       return *this;
     }
-   
+
     //! resize vector with new size nsize
     //! if nsize is smaller then actual memSize, size is just set to new value
     void resize ( size_t nsize )
     {
       // just set size if nsize is smaller than memSize but larger the
-      // half of memSize 
-      if( (nsize <= memSize_) && (nsize >= (memSize_/2)) ) 
+      // half of memSize
+      if( (nsize <= memSize_) && (nsize >= (memSize_/2)) )
       {
         size_ = nsize;
         return ;
       }
 
       // if nsize == 0 freeMemory
-      if( nsize == 0 ) 
+      if( nsize == 0 )
       {
         freeMemory();
         return ;
       }
 
-      // reserve or shrink to memory + overestimate 
+      // reserve or shrink to memory + overestimate
       adjustMemory( nsize );
-      // set new size 
+      // set new size
       size_ = nsize;
     }
 
-    //! reserve vector size with new mSize 
-    //! if mSize is smaller then actual memSize, 
-    //! then nothing is done 
+    //! reserve vector size with new mSize
+    //! if mSize is smaller then actual memSize,
+    //! then nothing is done
     void reserve ( size_t mSize )
     {
-      // check whether we already have the mem size 
-      // and if just do nothing 
-      if( mSize <= memSize_ ) 
+      // check whether we already have the mem size
+      // and if just do nothing
+      if( mSize <= memSize_ )
       {
         return ;
       }
 
-      // adjust memory accordingly 
+      // adjust memory accordingly
       adjustMemory( mSize );
     }
 
-    //! return size of vector in bytes 
-    size_t usedMemorySize() const 
+    //! return size of vector in bytes
+    size_t usedMemorySize() const
     {
       return memSize_ * sizeof(T) + sizeof(ThisType);
-    } 
+    }
 
-  protected: 
-    //! adjust the memory 
+  protected:
+    //! adjust the memory
     void adjustMemory( size_t mSize )
     {
       assert( memoryFactor_ >= 1.0 );
@@ -536,29 +536,29 @@ namespace Dune
 
       if( !vec_ )
       {
-        // allocate new memory 
+        // allocate new memory
         vec_ = AllocatorType :: malloc(nMemSize);
       }
-      else 
+      else
       {
         assert( nMemSize > 0 );
-        // nsize is the minimum needed size of the vector 
+        // nsize is the minimum needed size of the vector
         // we double this size to reserve some memory and minimize
-        // reallocations 
+        // reallocations
         assert( vec_ );
 
-        // reallocate memory 
+        // reallocate memory
         vec_ = AllocatorType :: realloc (vec_,memSize_,nMemSize);
       }
 
-      // set new mem size 
+      // set new mem size
       memSize_ = nMemSize;
     }
 
-    // free memory and reset sizes 
-    void freeMemory() 
+    // free memory and reset sizes
+    void freeMemory()
     {
-      if( vec_ ) 
+      if( vec_ )
       {
         AllocatorType :: free ( vec_ );
         vec_ = 0;
@@ -573,40 +573,40 @@ namespace Dune
   struct SpecialArrayFeatures<MutableArray<ValueType> >
   {
     typedef MutableArray<ValueType> ArrayType;
-    static size_t used(const ArrayType & array)  
+    static size_t used(const ArrayType & array)
     {
       return array.usedMemorySize();
     }
-    static inline void setMemoryFactor(ArrayType & array, const double memFactor) 
+    static inline void setMemoryFactor(ArrayType & array, const double memFactor)
     {
       array.setMemoryFactor(memFactor);
     }
 
-    static inline void memMoveBackward(ArrayType& array, 
+    static inline void memMoveBackward(ArrayType& array,
                                        const size_t length,
-                                       const size_t oldStartIdx, 
+                                       const size_t oldStartIdx,
                                        const size_t newStartIdx)
     {
       assert( newStartIdx >= oldStartIdx );
       //array.memmove(length,oldStartIdx,newStartIdx);
-      // get new end of block which is offSet + (length of block - 1) 
-      size_t newIdx = newStartIdx + length - 1; 
+      // get new end of block which is offSet + (length of block - 1)
+      size_t newIdx = newStartIdx + length - 1;
       assert( newIdx < array.size() );
-      // copy all entries backwards 
+      // copy all entries backwards
       for(size_t oldIdx = oldStartIdx + length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
       {
         assert( oldIdx < array.size() );
-        // move value to new location 
+        // move value to new location
         array[newIdx] = array[oldIdx];
 #ifndef NDEBUG
-        // for debugging purpose 
+        // for debugging purpose
         array[oldIdx ] = 0.0;
 #endif
       }
     }
-    static inline void memMoveForward(ArrayType& array, 
+    static inline void memMoveForward(ArrayType& array,
                                       const size_t length,
-                                      const size_t oldStartIdx, 
+                                      const size_t oldStartIdx,
                                       const size_t newStartIdx)
     {
       assert( newStartIdx <= oldStartIdx );
@@ -616,16 +616,16 @@ namespace Dune
       size_t newIdx = newStartIdx;
       for(size_t oldIdx = oldStartIdx; oldIdx<upperBound; ++oldIdx, ++newIdx )
       {
-        // copy to new location 
+        // copy to new location
         array[newIdx] = array[oldIdx];
-#ifndef NDEBUG 
-        // for debugging issues only 
+#ifndef NDEBUG
+        // for debugging issues only
         array[oldIdx] = 0.0;
 #endif
       }
     }
 
-    static inline 
+    static inline
     void assign( ArrayType& array, const int newIndex, const int oldIndex )
     {
       array[ newIndex ] = array[ oldIndex ];
@@ -634,5 +634,5 @@ namespace Dune
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 #endif // #ifndef DUNE_FEM_ARRAYS_HH

@@ -1,6 +1,6 @@
-#if defined ALUGRID_CUBE || defined ALUGRID_SIMPLEX 
-#if GRIDDIM == 3 
-#define COMPILE_TEST 
+#if defined ALUGRID_CUBE || defined ALUGRID_SIMPLEX
+#if GRIDDIM == 3
+#define COMPILE_TEST
 #endif
 #endif
 
@@ -23,8 +23,8 @@
 
 using namespace Dune;
 
-// polynom approximation order of quadratures, 
-// at least poolynom order of basis functions 
+// polynom approximation order of quadratures,
+// at least poolynom order of basis functions
 #ifdef POLORDER
   const int polOrder = POLORDER;
 #else
@@ -112,7 +112,7 @@ using namespace Dune;
   };
 
 
-  int main(int argc, char ** argv) 
+  int main(int argc, char ** argv)
   {
     Dune::Fem::MPIManager :: initialize( argc, argv );
     try
@@ -154,9 +154,9 @@ using namespace Dune;
       return 1;
     }
   }
-#else 
-  // no ALUGrid, no test 
-  int main(int argc, char ** argv) 
+#else
+  // no ALUGrid, no test
+  int main(int argc, char ** argv)
   {
     return 0;
   }

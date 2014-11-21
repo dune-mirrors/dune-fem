@@ -1,6 +1,6 @@
 #include <config.h>
 
-#include <iostream> 
+#include <iostream>
 
 #include <dune/common/fvector.hh>
 #include <dune/fem/operator/common/mapping.hh>
@@ -11,10 +11,10 @@ using namespace Dune;
 using namespace Fem;
 
 typedef FunctionSpace<double,double,1,1> SpaceType;
-typedef SpaceType :: DomainFieldType DomainFieldType; 
-typedef SpaceType :: RangeFieldType RangeFieldType; 
-typedef SpaceType :: DomainType DomainType; 
-typedef SpaceType :: RangeType  RangeType; 
+typedef SpaceType :: DomainFieldType DomainFieldType;
+typedef SpaceType :: RangeFieldType RangeFieldType;
+typedef SpaceType :: DomainType DomainType;
+typedef SpaceType :: RangeType  RangeType;
 
 typedef Mapping<
           DomainFieldType,
@@ -23,16 +23,16 @@ typedef Mapping<
           RangeType > MappingType ;
 
 class A : public Mapping<
-          DomainFieldType, 
-          RangeFieldType, 
-          DomainType, 
+          DomainFieldType,
+          RangeFieldType,
+          DomainType,
           RangeType >
 {
-  typedef SpaceType :: DomainType DomainType; 
-  typedef SpaceType :: RangeType  RangeType; 
+  typedef SpaceType :: DomainType DomainType;
+  typedef SpaceType :: RangeType  RangeType;
 
-public:   
-  void apply (const DomainType& arg, RangeType& dest) const 
+public:
+  void apply (const DomainType& arg, RangeType& dest) const
   {
     dest = arg;
     std::cout << "Call A :: apply \n";
@@ -41,16 +41,16 @@ public:
 };
 
 class B : public Mapping<
-          DomainFieldType, 
-          RangeFieldType, 
-          DomainType, 
+          DomainFieldType,
+          RangeFieldType,
+          DomainType,
           RangeType >
 {
-  typedef SpaceType :: DomainType DomainType; 
-  typedef SpaceType :: RangeType  RangeType; 
+  typedef SpaceType :: DomainType DomainType;
+  typedef SpaceType :: RangeType  RangeType;
 
-public:   
-  void apply (const DomainType& arg, RangeType& dest) const 
+public:
+  void apply (const DomainType& arg, RangeType& dest) const
   {
     dest = arg;
     std::cout << "Call B :: apply \n";
@@ -60,16 +60,16 @@ public:
 
 
 class C : public Mapping<
-          DomainFieldType, 
-          RangeFieldType, 
-          DomainType, 
+          DomainFieldType,
+          RangeFieldType,
+          DomainType,
           RangeType >
 {
-  typedef SpaceType :: DomainType DomainType; 
-  typedef SpaceType :: RangeType  RangeType; 
+  typedef SpaceType :: DomainType DomainType;
+  typedef SpaceType :: RangeType  RangeType;
 
-public:   
-  void operator () (const DomainType& arg, RangeType& dest) const 
+public:
+  void operator () (const DomainType& arg, RangeType& dest) const
   {
     dest = arg;
     std::cout << "Call C :: apply \n";
@@ -78,14 +78,14 @@ public:
 };
 
 
-int main () 
+int main ()
 {
-  A a; 
+  A a;
   B b;
   C c;
 
   MappingType m = a + b * 2.0 + a / 2.0 + b - 3.0 * a;
-  DomainType arg = 1.0; 
+  DomainType arg = 1.0;
   DomainType dest;
 
   MappingType m1;
@@ -96,7 +96,7 @@ int main ()
   m1( arg, dest );
 
 
-  m1 = a + b * 2.0 + c; // result should be 4 
+  m1 = a + b * 2.0 + c; // result should be 4
   m1( arg, dest );
   std::cout << "Result (should be 4) of m1 combined mapping is: " << dest << std::endl;
 

@@ -15,7 +15,7 @@
 
 using namespace std;
 
-namespace Dune 
+namespace Dune
 {
 
   namespace Fem
@@ -24,7 +24,7 @@ namespace Dune
     const double Test::eps = std::numeric_limits<double>::epsilon();
 
     void Test::doFloatTest(double arg1, double arg2, const std::string& lbl1,
-                           const std::string& lbl2, const char* fname, 
+                           const std::string& lbl2, const char* fname,
                            long lineno, double relTol) {
       std::string lbl = lbl1 + std::string(" ~= ") + lbl2;
       double error;
@@ -66,7 +66,7 @@ namespace Dune
     {
       if (m_osptr)
       {
-        *m_osptr << "Test \"" 
+        *m_osptr << "Test \""
                  << typeid(*this).name() << "\":\n"
                  << "\tPassed: " << m_nPass
                  << "\tFailed: " << m_nFail

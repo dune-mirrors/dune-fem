@@ -19,7 +19,7 @@ namespace Dune
     // ---------------
 
     template< int dim, class T >
-    struct MapGeometryType 
+    struct MapGeometryType
     {
       /** \brief dimension */
       static const int dimension = dim;

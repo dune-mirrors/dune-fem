@@ -34,50 +34,50 @@
 namespace Dune
 {
 
-  namespace Fem 
-  { 
+  namespace Fem
+  {
 
-    /** @addtogroup DofManager  
+    /** @addtogroup DofManager
 
         @{
     **/
 
-    // forward declaration 
+    // forward declaration
     template <class GridType> class DofManager;
     template <class DofManagerImp> class DofManagerFactory;
 
     /** \brief SpecialArrayFeatures is a wrapper class to extend some array
         classes with some special features needed for the MemObject.
-        There exsist a specialization for MutableArray and PetscVector. 
-     */ 
+        There exsist a specialization for MutableArray and PetscVector.
+     */
     template<class ArrayType>
     struct SpecialArrayFeatures
     {
-      /** \brief value type of array, i.e. double */ 
+      /** \brief value type of array, i.e. double */
       typedef typename ArrayType :: value_type ValueType;
 
       /** \brief return used memory size of Array */
-      static size_t used(const ArrayType & array)  
+      static size_t used(const ArrayType & array)
       {
         return array.size() * sizeof(ValueType);
       }
-      
-      /** \brief set memory overestimate factor, here does nothing */ 
-      static void setMemoryFactor(ArrayType & array, const double memFactor) 
+
+      /** \brief set memory overestimate factor, here does nothing */
+      static void setMemoryFactor(ArrayType & array, const double memFactor)
       {
       }
 
       /** \brief move memory blocks backwards */
-      static inline 
+      static inline
       void memMoveBackward(ArrayType& array, const int length,
                 const int oldStartIdx, const int newStartIdx)
       {
-        // get new end of block which is offSet + (length of block - 1) 
-        int newIdx = newStartIdx + length - 1; 
-        // copy all entries backwards 
+        // get new end of block which is offSet + (length of block - 1)
+        int newIdx = newStartIdx + length - 1;
+        // copy all entries backwards
         for(int oldIdx = oldStartIdx+length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
         {
-          // move value to new location 
+          // move value to new location
           array[newIdx] = array[oldIdx];
         }
       }
@@ -92,7 +92,7 @@ namespace Dune
         int newIdx = newStartIdx;
         for(int oldIdx = oldStartIdx; oldIdx<upperBound; ++oldIdx, ++newIdx )
         {
-          // copy to new location 
+          // copy to new location
           array[newIdx] = array[oldIdx];
         }
       }
@@ -107,28 +107,28 @@ namespace Dune
 
     ///////////////////////////////////////////////////////////////////////
     //
-    //  ManagedIndexSetInterface 
+    //  ManagedIndexSetInterface
     //
     ///////////////////////////////////////////////////////////////////////
     /*! This class is the virtual interface for the index sets managed by
       the DofManager. The derived classes are of the type ManagedIndexSet<IndexSet>.
       This means we don't have to inherit every index set we want to use with
-      this DofManager. 
+      this DofManager.
       */
     class ManagedIndexSetInterface
     {
       ManagedIndexSetInterface(const ManagedIndexSetInterface& org);
     protected:
-      // use address of object as id 
+      // use address of object as id
       typedef const void * IdentifierType;
-      // pointer to compare index sets 
+      // pointer to compare index sets
       IdentifierType setPtr_;
-      // reference counter 
+      // reference counter
       size_t referenceCounter_;
 
       template< class IndexSet >
       explicit ManagedIndexSetInterface ( const IndexSet &iset )
-      : setPtr_( getIdentifier( iset ) ), 
+      : setPtr_( getIdentifier( iset ) ),
         referenceCounter_( 1 )
       {
       }
@@ -136,14 +136,14 @@ namespace Dune
     public:
       virtual ~ManagedIndexSetInterface () {}
 
-      //! resize of index set 
-      virtual void resize () = 0; 
-      //! compress of index set 
+      //! resize of index set
+      virtual void resize () = 0;
+      //! compress of index set
       virtual bool compress () = 0;
 
-      /** \copydoc Dune::PersistentObject :: backup */ 
+      /** \copydoc Dune::PersistentObject :: backup */
       virtual void backup() const = 0;
-      /** \copydoc Dune::PersistentObject :: restore */ 
+      /** \copydoc Dune::PersistentObject :: restore */
       virtual void restore() = 0;
 
       //! new read/write methods using xdr streams
@@ -154,15 +154,15 @@ namespace Dune
       virtual void write( StandardOutStream& out ) const = 0;
       virtual void read( StandardInStream& out ) = 0;
 
-      //! increase reference counter 
-      void addReference ( ) { ++referenceCounter_; } 
+      //! increase reference counter
+      void addReference ( ) { ++referenceCounter_; }
 
-      //! decrease reference counter and return true if zero reached 
+      //! decrease reference counter and return true if zero reached
       bool removeReference ( )
       {
         return (--referenceCounter_ == 0);
       }
-      
+
       template< class IndexSet >
       bool equals ( const IndexSet &iset ) const
       {
@@ -173,108 +173,108 @@ namespace Dune
       template< class IndexSet >
       IdentifierType getIdentifier ( const IndexSet &iset ) const
       {
-        return static_cast< IdentifierType >( &iset ); 
-      } 
+        return static_cast< IdentifierType >( &iset );
+      }
     };
 
     template <class IndexSetType, class EntityType> class RemoveIndicesFromSet;
     template <class IndexSetType, class EntityType> class InsertIndicesToSet;
 
     template <class IndexSetType, class EntityType>
-    class ManagedIndexSet : 
+    class ManagedIndexSet :
       public ManagedIndexSetInterface ,
       public LocalInlinePlus < ManagedIndexSet<IndexSetType,EntityType> , EntityType >
     {
       typedef LocalInterface<EntityType> LocalIndexSetObjectsType;
-    protected: 
+    protected:
       // the dof set stores number of dofs on entity for each codim
       IndexSetType & indexSet_;
 
-      // insertion and removal of indices 
+      // insertion and removal of indices
       InsertIndicesToSet   <IndexSetType, EntityType> insertIdxObj_;
       RemoveIndicesFromSet <IndexSetType, EntityType> removeIdxObj_;
 
-      LocalIndexSetObjectsType & indexSetList_; 
-      LocalIndexSetObjectsType & insertList_; 
-      LocalIndexSetObjectsType & removeList_; 
+      LocalIndexSetObjectsType & indexSetList_;
+      LocalIndexSetObjectsType & insertList_;
+      LocalIndexSetObjectsType & removeList_;
 
-    public:  
-      //! type of base class 
+    public:
+      //! type of base class
       typedef ManagedIndexSetInterface BaseType;
-      
-      //! Constructor of MemObject, only to call from DofManager 
+
+      //! Constructor of MemObject, only to call from DofManager
       ManagedIndexSet ( const IndexSetType & iset,
                         LocalIndexSetObjectsType & indexSetList,
                         LocalIndexSetObjectsType & insertList,
-                        LocalIndexSetObjectsType & removeList ) 
+                        LocalIndexSetObjectsType & removeList )
        : BaseType( iset )
-       , indexSet_ (const_cast<IndexSetType &> (iset)) 
-       , insertIdxObj_(indexSet_), removeIdxObj_(indexSet_) 
-       , indexSetList_(indexSetList) 
-       , insertList_(insertList) 
+       , indexSet_ (const_cast<IndexSetType &> (iset))
+       , insertIdxObj_(indexSet_), removeIdxObj_(indexSet_)
+       , indexSetList_(indexSetList)
+       , insertList_(insertList)
        , removeList_(removeList)
       {
         this->setPtr_ = (void *) &indexSet_;
-        
+
         indexSetList_ += *this;
-        if( indexSet_.consecutive() ) 
+        if( indexSet_.consecutive() )
         {
-          insertList_ += insertIdxObj_; 
+          insertList_ += insertIdxObj_;
           removeList_ += removeIdxObj_;
         }
-      } 
+      }
 
-      //! desctructor 
-      ~ManagedIndexSet () 
+      //! desctructor
+      ~ManagedIndexSet ()
       {
         indexSetList_.remove( *this );
-        if( indexSet_.consecutive() ) 
+        if( indexSet_.consecutive() )
         {
-          insertList_.remove( insertIdxObj_ ); 
+          insertList_.remove( insertIdxObj_ );
           removeList_.remove( removeIdxObj_ );
         }
       }
 
-      //! wrap resize of index set 
-      void resize () 
+      //! wrap resize of index set
+      void resize ()
       {
         indexSet_.resize();
       }
-      
-      //! wrap compress of index set 
-      bool compress () 
-      { 
-        return indexSet_.compress(); 
+
+      //! wrap compress of index set
+      bool compress ()
+      {
+        return indexSet_.compress();
       }
 
-      // forward backup call to indexSet 
-      virtual void backup () const 
-      { 
+      // forward backup call to indexSet
+      virtual void backup () const
+      {
         indexSet_.backup();
       }
 
-      // forward restore call to indexSet 
-      virtual void restore () 
-      { 
+      // forward restore call to indexSet
+      virtual void restore ()
+      {
         indexSet_.restore();
       }
 
-      //! new write method 
+      //! new write method
       virtual void read( XDRFileInStream& in ) { indexSet_.read( in ); }
 
-      //! new write method 
+      //! new write method
       virtual void write( XDRFileOutStream& out ) const { indexSet_.write( out ); }
 
-      //! new write method 
+      //! new write method
       virtual void read( StandardInStream& in ) { indexSet_.read( in ); }
 
-      //! new write method 
+      //! new write method
       virtual void write( StandardOutStream& out ) const { indexSet_.write( out ); }
     };
 
     /////////////////////////////////////////////////////////////
     //
-    // DofStorageInterface 
+    // DofStorageInterface
     //
     /////////////////////////////////////////////////////////////
     /** \brief Interface class for a dof storage object to be stored in
@@ -282,17 +282,17 @@ namespace Dune
     class DofStorageInterface
     {
     protected:
-      //! do not allow to create explicit instances 
+      //! do not allow to create explicit instances
       DofStorageInterface() {}
 
     public:
-      //! destructor 
+      //! destructor
       virtual ~DofStorageInterface() {};
 
       //! enable dof compression for dof storage (default is empty)
       virtual void enableDofCompression() { }
 
-      //! returns name of dof storage 
+      //! returns name of dof storage
       virtual const std::string& name () const  = 0;
 
       //! size of space, i.e. mapper.size()
@@ -301,25 +301,25 @@ namespace Dune
 
 
     /** \brief Interface class for a dof storage object that can be managed
-        (resized and compressed) by the DofManager 
+        (resized and compressed) by the DofManager
     */
     class ManagedDofStorageInterface : public DofStorageInterface
     {
     protected:
-      //! do not allow to create explicit instances 
+      //! do not allow to create explicit instances
       ManagedDofStorageInterface() {}
 
     public:
-      //! destructor 
+      //! destructor
       virtual ~ManagedDofStorageInterface() {};
 
-      //! resize memory 
+      //! resize memory
       virtual void resize () = 0;
-      //! resize memory 
+      //! resize memory
       virtual void reserve (int newSize) = 0;
-      //! compressed the underlying dof vector 
+      //! compressed the underlying dof vector
       virtual void dofCompress () = 0;
-      //! return size of mem used by MemObject 
+      //! return size of mem used by MemObject
       virtual size_t usedMemorySize() const = 0;
     };
 
@@ -327,16 +327,16 @@ namespace Dune
     template <class MemObjectType> class ResizeMemoryObjects;
     template <class MemObjectType> class ReserveMemoryObjects;
 
-    /*! 
+    /*!
       A ManagedDofStorage holds the memory for one DiscreteFunction and the
-      corresponding DofArrayMemory. ManagedDofStorageImplementation implements the 
+      corresponding DofArrayMemory. ManagedDofStorageImplementation implements the
       basic features such as resize and dof compression. If a DiscreteFunction is signed in by a
-      function space, then such a MemObject is created by the DofManager. 
+      function space, then such a MemObject is created by the DofManager.
       The MemObject also knows the DofMapper from the function space which the
       discrete function belongs to. Here we dont know the exact type of the dof
       mapper therefore the methods newSize and calcInsertPoints of the mappers
       have to be virtual. This isnt a problem because this methods should only
-      be called during memory reorganizing which is only once per timestep. 
+      be called during memory reorganizing which is only once per timestep.
     */
     template <class GridImp, class MapperType , class DofArrayType>
     class ManagedDofStorageImplementation : public ManagedDofStorageInterface
@@ -344,21 +344,21 @@ namespace Dune
       // interface for MemObject lists
       typedef LocalInterface< int > MemObjectCheckType;
     protected:
-      // type of this class 
+      // type of this class
       typedef ManagedDofStorageImplementation <GridImp, MapperType , DofArrayType> ThisType;
 
       typedef DofManager<GridImp> DofManagerType;
 
-      // reference to dof manager 
+      // reference to dof manager
       DofManagerType &dm_;
 
       // the dof set stores number of dofs on entity for each codim
       MapperType &mapper_;
 
-      // Array which the dofs are stored in 
+      // Array which the dofs are stored in
       DofArrayType& array_;
 
-      // name of mem object, i.e. name of discrete function 
+      // name of mem object, i.e. name of discrete function
       std::string name_;
 
       typedef ResizeMemoryObjects < ThisType > ResizeMemoryObjectType;
@@ -366,13 +366,13 @@ namespace Dune
       ResizeMemoryObjectType  resizeMemObj_;
       ReserveMemoryObjectType reserveMemObj_;
 
-      // true if data need to be compressed 
+      // true if data need to be compressed
       bool dataCompressionEnabled_;
 
-      // prohibit copying 
+      // prohibit copying
       ManagedDofStorageImplementation(const ManagedDofStorageImplementation& );
     protected:
-      //! Constructor of ManagedDofStorageImplementation, only to call from derived classes 
+      //! Constructor of ManagedDofStorageImplementation, only to call from derived classes
       ManagedDofStorageImplementation ( const GridImp& grid,
                                         const MapperType& mapper,
                                         const std::string& name,
@@ -385,58 +385,58 @@ namespace Dune
           reserveMemObj_(*this),
           dataCompressionEnabled_(false)
       {
-        // add to dof manager 
+        // add to dof manager
         dm_.addDofStorage( *this );
 
-        // set memory over estimate factor, only for DofArray 
+        // set memory over estimate factor, only for DofArray
         SpecialArrayFeatures<DofArrayType>::setMemoryFactor(array_,dm_.memoryFactor());
       }
 
       //! \brief destructor deleting MemObject from resize and reserve List
       ~ManagedDofStorageImplementation()
       {
-        // remove from dof manager 
+        // remove from dof manager
         dm_.removeDofStorage( *this );
       }
 
-    public:  
-      //! return object that calls resize of this memory object 
+    public:
+      //! return object that calls resize of this memory object
       ResizeMemoryObjectType& resizeMemoryObject() { return resizeMemObj_; }
 
-      //! return object that calls reserve of this memory object 
+      //! return object that calls reserve of this memory object
       ReserveMemoryObjectType& reserveMemoryObject() { return reserveMemObj_; }
 
-      //! returns name of this vector 
+      //! returns name of this vector
       const std::string& name () const { return name_; }
 
-      //! return size of underlying array 
+      //! return size of underlying array
       int size () const { return array_.size(); }
 
-      //! resize the memory with the new size 
-      void resize () 
+      //! resize the memory with the new size
+      void resize ()
       {
-        // store old size of space (don't use mapper here) 
+        // store old size of space (don't use mapper here)
         const int oldSize = array_.size();
 
-        // get current size 
+        // get current size
         const int nSize = mapper().size();
 
-        // if nothing changed do nothing 
+        // if nothing changed do nothing
         if( nSize == oldSize ) return ;
 
-        // resize memory to current value 
+        // resize memory to current value
         array_.resize( nSize );
 
-        // if data is only temporary data, don't adjust memory 
+        // if data is only temporary data, don't adjust memory
         if( ! dataCompressionEnabled_ ) return ;
 
-        // now check all blocks beginning with the largest 
+        // now check all blocks beginning with the largest
         const int numBlocks = mapper().numBlocks();
 
         // initialize upperBound
-        int upperBound = oldSize ; 
+        int upperBound = oldSize ;
 
-        // make sure offset of block 0 is zero  
+        // make sure offset of block 0 is zero
         assert( mapper().offSet( 0 ) == 0 );
         assert( mapper().oldOffSet( 0 ) == 0 );
 
@@ -447,71 +447,71 @@ namespace Dune
           const int newOffSet = mapper().offSet( block );
           const int oldOffSet = mapper().oldOffSet( block );
 
-          // make sure new offset is larger 
+          // make sure new offset is larger
           assert( newOffSet >= oldOffSet );
 
-          // if off set is not zero  
+          // if off set is not zero
           if( newOffSet > oldOffSet )
           {
-            // calculate block size 
+            // calculate block size
             const int blockSize = upperBound - oldOffSet;
-            // move block backward 
+            // move block backward
             SpecialArrayFeatures< DofArrayType >
               :: memMoveBackward( array_, blockSize, oldOffSet, newOffSet );
 
-            // update upper bound 
+            // update upper bound
             upperBound = oldOffSet;
           }
         }
       }
 
-      //! reserve memory for what is comming 
+      //! reserve memory for what is comming
       inline void reserve ( const int needed )
       {
-        // if index set is compressible, then add requested size 
+        // if index set is compressible, then add requested size
         if( mapper().consecutive() )
         {
           const int nSize = size() + (needed * mapper().maxNumDofs());
           array_.reserve( nSize );
         }
-        else 
+        else
         {
-          // if compress is not needed just resize with given size 
-          // therefore use newSize to enleage array 
+          // if compress is not needed just resize with given size
+          // therefore use newSize to enleage array
           assert( ! mapper().consecutive() );
-          // resize array 
-          resize (); 
+          // resize array
+          resize ();
         }
       }
 
-      //! copy the dof from the rear section of the vector to the holes 
-      void dofCompress () 
+      //! copy the dof from the rear section of the vector to the holes
+      void dofCompress ()
       {
-        // get current size 
+        // get current size
         const int nSize = mapper().size();
 
-        // if data is non-temporary do data compression 
-        if( dataCompressionEnabled_ ) 
+        // if data is non-temporary do data compression
+        if( dataCompressionEnabled_ )
         {
           // get old size (which we still have in array)
-          const int oldSize = array_.size(); 
+          const int oldSize = array_.size();
 
-          // NOTE: new size can also be larger than old size 
-          // e.g. during loadBalancing when ghosts where 
-          // introduced before compressing the index set 
+          // NOTE: new size can also be larger than old size
+          // e.g. during loadBalancing when ghosts where
+          // introduced before compressing the index set
 
-          // begin with block zero since closing of holes 
+          // begin with block zero since closing of holes
           // has to be done anyway if the mapper is consecutive
           const int numBlocks = mapper().numBlocks();
           for( int block = 0; block < numBlocks; ++block )
           {
-            // move memory 
+            // move memory
             moveToFront( oldSize, block );
 
-            // only close holes for consecutive mappers  
-            if( mapper().consecutive () ) 
+            // only close holes for consecutive mappers
+            if( mapper().consecutive () )
             {
-              // run over all holes and copy array vules to new place 
+              // run over all holes and copy array vules to new place
               const int holes = mapper().numberOfHoles( block );
               for( int i = 0; i < holes; ++i )
               {
@@ -526,62 +526,62 @@ namespace Dune
           }
         }
 
-        // store new size, which should be smaller then actual size 
+        // store new size, which should be smaller then actual size
         array_.resize( nSize );
       }
-     
-      //! return used memory size 
-      size_t usedMemorySize() const 
+
+      //! return used memory size
+      size_t usedMemorySize() const
       {
-        return ((size_t) sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_)); 
+        return ((size_t) sizeof(ThisType) + SpecialArrayFeatures<DofArrayType>::used(array_));
       }
 
       //! enable dof compression for this MemObject
-      void enableDofCompression() 
+      void enableDofCompression()
       {
         dataCompressionEnabled_ = true;
       }
 
-      //! return reference to array for DiscreteFunction 
-      DofArrayType & getArray() { return array_; } 
+      //! return reference to array for DiscreteFunction
+      DofArrayType & getArray() { return array_; }
 
     protected:
       inline MapperType &mapper () const
       {
         return mapper_;
       }
-      
-      // move array to rear insertion points 
+
+      // move array to rear insertion points
       void resizeAndMoveToRear ()
       {
       }
 
-      //! move block to front again 
+      //! move block to front again
       void moveToFront ( const int oldSize, const int block )
       {
         // get insertion point from block
         const int oldOffSet = mapper().oldOffSet( block );
 
-        // get new off set 
+        // get new off set
         const int newOffSet = mapper().offSet( block );
 
-        // here we should have at least the same offsets 
+        // here we should have at least the same offsets
         assert( newOffSet <= oldOffSet );
 
-        // only if block is not starting from zero 
+        // only if block is not starting from zero
         if( newOffSet < oldOffSet )
         {
-          // get number of blocks 
+          // get number of blocks
           const int numBlocks = mapper().numBlocks();
 
-          // for last section upperBound is size 
+          // for last section upperBound is size
           const int upperBound
             = (block == numBlocks - 1) ? oldSize : mapper().oldOffSet( block + 1 );
           const int blockSize = upperBound - oldOffSet;
 
-          // move block forward 
+          // move block forward
           SpecialArrayFeatures< DofArrayType >
-            :: memMoveForward( array_, blockSize, oldOffSet, newOffSet ); 
+            :: memMoveForward( array_, blockSize, oldOffSet, newOffSet );
         }
       }
     };
@@ -593,8 +593,8 @@ namespace Dune
       typedef ManagedDofStorageImplementation< GridImp, MapperType, DofArrayType > BaseType;
     protected:
       DofArrayType myArray_;
-    public:  
-      //! Constructor of ManagedDofStorage 
+    public:
+      //! Constructor of ManagedDofStorage
       ManagedDofStorage( const GridImp& grid,
                          const MapperType& mapper,
                          const std::string& name )
@@ -604,7 +604,7 @@ namespace Dune
       }
     };
 
-    //! default implementation for creating a managed dof storage 
+    //! default implementation for creating a managed dof storage
     template< class DofStorageType, class GridType, class MapperType >
     static inline std::pair< DofStorageInterface* , DofStorageType* >
       allocateManagedDofStorage( const GridType& grid,
@@ -612,15 +612,15 @@ namespace Dune
                                  const std::string& name,
                                  const DofStorageType * = 0 )
     {
-      // create managed dof storage 
+      // create managed dof storage
       typedef ManagedDofStorage< GridType, MapperType,
                                  DofStorageType > ManagedDofStorageType;
-          
+
       ManagedDofStorageType* mds =
         new ManagedDofStorageType( grid, mapper, name );
       assert( mds );
 
-      // return pair with dof storage pointer and array pointer 
+      // return pair with dof storage pointer and array pointer
       return std::pair< DofStorageInterface* , DofStorageType* >
               ( mds , & mds->getArray () );
     }
@@ -629,23 +629,23 @@ namespace Dune
 
     ///////////////////////////////////////////////////////////////
     //
-    //  RestrictPorlong for Index Sets 
+    //  RestrictPorlong for Index Sets
     //
     ///////////////////////////////////////////////////////////////
 
     template <class IndexSetType, class EntityType>
-    class RemoveIndicesFromSet 
+    class RemoveIndicesFromSet
     : public LocalInlinePlus < RemoveIndicesFromSet<IndexSetType,EntityType> , EntityType >
     {
     private:
       // the dof set stores number of dofs on entity for each codim
       IndexSetType & indexSet_;
 
-    public:  
-      // Constructor of MemObject, only to call from DofManager 
-      explicit RemoveIndicesFromSet ( IndexSetType & iset ) : indexSet_ (iset) {} 
+    public:
+      // Constructor of MemObject, only to call from DofManager
+      explicit RemoveIndicesFromSet ( IndexSetType & iset ) : indexSet_ (iset) {}
 
-      //! apply wraps the removeEntity Method of the index set 
+      //! apply wraps the removeEntity Method of the index set
       inline void apply ( EntityType & entity )
       {
         indexSet_.removeEntity( entity );
@@ -653,16 +653,16 @@ namespace Dune
     };
 
     template <class IndexSetType, class EntityType>
-    class InsertIndicesToSet 
+    class InsertIndicesToSet
     : public LocalInlinePlus < InsertIndicesToSet< IndexSetType, EntityType > , EntityType >
     {
     private:
       // the dof set stores number of dofs on entity for each codim
       IndexSetType & indexSet_;
 
-    public:  
-      // Constructor of MemObject, only to call from DofManager 
-      explicit InsertIndicesToSet ( IndexSetType & iset ) : indexSet_ (iset) {} 
+    public:
+      // Constructor of MemObject, only to call from DofManager
+      explicit InsertIndicesToSet ( IndexSetType & iset ) : indexSet_ (iset) {}
 
       //! apply wraps the insertEntity method of the index set
       inline void apply ( EntityType & entity )
@@ -671,68 +671,68 @@ namespace Dune
       }
     };
 
-    template <class MemObjectType> 
-    class ResizeMemoryObjects 
-    : public LocalInlinePlus < ResizeMemoryObjects < MemObjectType > , int > 
+    template <class MemObjectType>
+    class ResizeMemoryObjects
+    : public LocalInlinePlus < ResizeMemoryObjects < MemObjectType > , int >
     {
     private:
       // the dof set stores number of dofs on entity for each codim
       MemObjectType & memobj_;
 
-    public:  
-      // Constructor of MemObject, only to call from DofManager 
-      ResizeMemoryObjects ( MemObjectType & mo ) : memobj_ (mo) {} 
-      ResizeMemoryObjects ( const ResizeMemoryObjects& org ) 
+    public:
+      // Constructor of MemObject, only to call from DofManager
+      ResizeMemoryObjects ( MemObjectType & mo ) : memobj_ (mo) {}
+      ResizeMemoryObjects ( const ResizeMemoryObjects& org )
         : memobj_(org.memobj_)
       {}
 
-      // resize mem object, parameter not needed 
+      // resize mem object, parameter not needed
       inline void apply ( int & )
       {
         memobj_.resize();
       }
     };
 
-    // this class is the object for a single MemObject to 
-    template <class MemObjectType> 
-    class ReserveMemoryObjects  
-    : public LocalInlinePlus < ReserveMemoryObjects < MemObjectType > , int > 
+    // this class is the object for a single MemObject to
+    template <class MemObjectType>
+    class ReserveMemoryObjects
+    : public LocalInlinePlus < ReserveMemoryObjects < MemObjectType > , int >
     {
     private:
       // the dof set stores number of dofs on entity for each codim
       MemObjectType & memobj_;
 
-    public:  
-      // Constructor of MemObject, only to call from DofManager 
-      ReserveMemoryObjects ( MemObjectType & mo ) : memobj_ (mo) {} 
+    public:
+      // Constructor of MemObject, only to call from DofManager
+      ReserveMemoryObjects ( MemObjectType & mo ) : memobj_ (mo) {}
 
-      // reserve for at least chunkSize new values 
+      // reserve for at least chunkSize new values
       inline void apply ( int & chunkSize )
       {
-        memobj_.reserve( chunkSize );  
+        memobj_.reserve( chunkSize );
       }
     };
 
 
-    // this is the dofmanagers object which is being used during restriction 
+    // this is the dofmanagers object which is being used during restriction
     // and prolongation process for adding and removing indices to and from
     // index sets which belong to functions that belong to that dofmanager
-    template <class DofManagerType , class RestrictProlongIndexSetType, bool doResize > 
-    class IndexSetRestrictProlong  : 
+    template <class DofManagerType , class RestrictProlongIndexSetType, bool doResize >
+    class IndexSetRestrictProlong  :
       public RestrictProlongInterface<
               RestrictProlongTraits<
-                IndexSetRestrictProlong<DofManagerType,RestrictProlongIndexSetType,doResize>, double > > 
+                IndexSetRestrictProlong<DofManagerType,RestrictProlongIndexSetType,doResize>, double > >
     {
       DofManagerType & dm_;
 
       RestrictProlongIndexSetType & insert_;
       RestrictProlongIndexSetType & remove_;
-    public: 
-      
-      IndexSetRestrictProlong ( DofManagerType & dm , RestrictProlongIndexSetType & is, RestrictProlongIndexSetType & rm ) 
+    public:
+
+      IndexSetRestrictProlong ( DofManagerType & dm , RestrictProlongIndexSetType & is, RestrictProlongIndexSetType & rm )
         : dm_(dm) , insert_( is ), remove_( rm ) {}
 
-      //! restrict data to father and resize memory if doResize is true 
+      //! restrict data to father and resize memory if doResize is true
       template <class EntityType>
       inline void restrictLocal ( const EntityType & father, const EntityType & son , bool initialize ) const
       {
@@ -741,40 +741,40 @@ namespace Dune
         // mark index of son for removal
         remove_.apply( son );
 
-        // resize memory if doResize is true 
-        if ( doResize ) 
+        // resize memory if doResize is true
+        if ( doResize )
         {
-          dm_.resizeMemory(); 
+          dm_.resizeMemory();
         }
-      }  
+      }
 
-      //! prolong data to children and resize memory if doResize is true 
+      //! prolong data to children and resize memory if doResize is true
       template <class EntityType>
       inline void prolongLocal ( const EntityType & father, const EntityType & son , bool initialize ) const
       {
         // mark index of father for removal
         remove_.apply( father );
-        // insert index of son 
+        // insert index of son
         insert_.apply( son );
-        
-        // resize memory if doResize is true 
-        if ( doResize ) 
+
+        // resize memory if doResize is true
+        if ( doResize )
         {
-          dm_.resizeMemory(); 
+          dm_.resizeMemory();
         }
       }
     };
 
-    // empty restrict prolong operator 
-    class EmptyIndexSetRestrictProlong  : 
-      public RestrictProlongInterface< RestrictProlongTraits< EmptyIndexSetRestrictProlong, double > > 
+    // empty restrict prolong operator
+    class EmptyIndexSetRestrictProlong  :
+      public RestrictProlongInterface< RestrictProlongTraits< EmptyIndexSetRestrictProlong, double > >
     {
-    public: 
-      EmptyIndexSetRestrictProlong() {} 
-      //! restrict data to father and resize memory if doResize is true 
+    public:
+      EmptyIndexSetRestrictProlong() {}
+      //! restrict data to father and resize memory if doResize is true
       template <class EntityType>
       inline void restrictLocal ( EntityType & father, EntityType & son , bool initialize ) const {}
-      //! prolong data to children and resize memory if doResize is true 
+      //! prolong data to children and resize memory if doResize is true
       template <class EntityType>
       inline void prolongLocal ( EntityType & father, EntityType & son , bool initialize ) const {}
     };
@@ -782,59 +782,59 @@ namespace Dune
 
     class DofManError : public Exception {};
 
-    /*! 
+    /*!
      The DofManager is responsible for managing memory allocation and freeing
-     for all discrete functions living on the grid the manager belongs to. 
+     for all discrete functions living on the grid the manager belongs to.
      There is only one DofManager per grid.
-     Each discrete function knows its dofmanager and can sign in. 
+     Each discrete function knows its dofmanager and can sign in.
      If the grid is adapted, then the
      dofmanager reorganizes the memory if necessary. The DofManager holds a
      list of MemObjects which manage the memory and the corresponding
-     mapper so they can determine the size of new memory. 
+     mapper so they can determine the size of new memory.
      Furthermore the DofManager holds an IndexSet which the DofMapper needs for
      calculating the indices in the dof vector for a given entity and local dof
      number. This IndexSet is delivered to the mapper when a function space is
      created. The default value for the IndexSet is the DefaultIndexSet class
-     which is mostly a wrapper for the grid indices. 
+     which is mostly a wrapper for the grid indices.
     */
-    // --DofManager 
-    template< class Grid > 
+    // --DofManager
+    template< class Grid >
     class DofManager : public IsDofManager,
 #if HAVE_DUNE_ALUGRID
       public LoadBalanceHandleWithReserveAndCompress,
 #endif
       // DofManager behaves like a communication data handle for load balancing
-      public CommDataHandleIF< DofManager< Grid >, char > 
+      public CommDataHandleIF< DofManager< Grid >, char >
     {
       typedef DofManager< Grid > ThisType;
 
       friend class DefaultSingletonFactory< const Grid*, ThisType >;
       friend class DofManagerFactory< ThisType >;
 
-    public:  
-      //! type of Grid this DofManager belongs to 
+    public:
+      //! type of Grid this DofManager belongs to
       typedef Grid GridType;
 
       typedef typename GridObjectStreamTraits< GridType >::InStreamType  XtractStreamImplType;
       typedef typename GridObjectStreamTraits< GridType >::OutStreamType InlineStreamImplType;
     public:
-      // types of inlining and xtraction stream types 
+      // types of inlining and xtraction stream types
       typedef MessageBufferIF< XtractStreamImplType > XtractStreamType;
       typedef MessageBufferIF< InlineStreamImplType > InlineStreamType;
 
-      // types of data collectors 
+      // types of data collectors
       typedef DataCollectorInterface<GridType, XtractStreamType >   DataXtractorType;
       typedef DataCollectorInterface<GridType, InlineStreamType  >  DataInlinerType;
 
       typedef typename GridType :: template Codim< 0 > :: Entity  ElementType ;
 
-    private:  
+    private:
       typedef std::list< ManagedDofStorageInterface* > ListType;
       typedef typename ListType::iterator ListIteratorType;
       typedef typename ListType::const_iterator ConstListIteratorType;
 
       typedef LocalInterface< int > MemObjectCheckType;
-      
+
       typedef std::list< ManagedIndexSetInterface * > IndexListType;
       typedef typename IndexListType::iterator IndexListIteratorType;
       typedef typename IndexListType::const_iterator ConstIndexListIteratorType;
@@ -842,64 +842,64 @@ namespace Dune
       // list with MemObjects, for each DiscreteFunction we have one MemObject
       ListType memList_;
 
-      // list of all different indexsets 
+      // list of all different indexsets
       IndexListType indexList_;
 
-      // the dofmanager belong to one grid only 
+      // the dofmanager belong to one grid only
       const GridType &grid_;
 
-      // index set for mapping 
+      // index set for mapping
       mutable DataInlinerType  dataInliner_;
       mutable DataXtractorType dataXtractor_;
 
-      //! type of IndexSet change interfaces 
+      //! type of IndexSet change interfaces
       //// use const Entities as parameters (typedef here to avoid confusion)
-      typedef const ElementType  ConstElementType; 
+      typedef const ElementType  ConstElementType;
       typedef LocalInterface< ConstElementType > LocalIndexSetObjectsType;
 
-      mutable LocalIndexSetObjectsType indexSets_; 
+      mutable LocalIndexSetObjectsType indexSets_;
 
       mutable LocalIndexSetObjectsType insertIndices_;
       mutable LocalIndexSetObjectsType removeIndices_;
 
-      // lists containing all MemObjects 
-      // to have fast access during resize and reserve 
+      // lists containing all MemObjects
+      // to have fast access during resize and reserve
       mutable MemObjectCheckType resizeMemObjs_;
       mutable MemObjectCheckType reserveMemObjs_;
 
-      //! if chunk size if small then defaultChunkSize is used 
-      const int defaultChunkSize_; 
+      //! if chunk size if small then defaultChunkSize is used
+      const int defaultChunkSize_;
 
       //! number of sequence, incremented every resize is called
-      int sequence_; 
-      
-    public: 
+      int sequence_;
+
+    public:
       typedef IndexSetRestrictProlong< ThisType, LocalIndexSetObjectsType , true >
         NewIndexSetRestrictProlongType;
       typedef IndexSetRestrictProlong< ThisType, LocalIndexSetObjectsType , false >
         IndexSetRestrictProlongNoResizeType;
 
-      // old type 
+      // old type
       typedef EmptyIndexSetRestrictProlong IndexSetRestrictProlongType;
 
-      // this class needs to call resizeMemory 
+      // this class needs to call resizeMemory
       friend class IndexSetRestrictProlong< ThisType , LocalIndexSetObjectsType , true  > ;
       friend class IndexSetRestrictProlong< ThisType , LocalIndexSetObjectsType , false > ;
 
     private:
-      // combine object holding all index set for restrict and prolong 
-      NewIndexSetRestrictProlongType indexSetRestrictProlong_; 
-      IndexSetRestrictProlongNoResizeType indexSetRestrictProlongNoResize_; 
+      // combine object holding all index set for restrict and prolong
+      NewIndexSetRestrictProlongType indexSetRestrictProlong_;
+      IndexSetRestrictProlongNoResizeType indexSetRestrictProlongNoResize_;
 
-      // old type 
+      // old type
       IndexSetRestrictProlongType indexRPop_;
-      
-      //! memory over estimation factor for re-allocation 
+
+      //! memory over estimation factor for re-allocation
       double memoryFactor_;
       //**********************************************************
       //**********************************************************
-      //! Constructor 
-      inline explicit DofManager ( const GridType *grid ) 
+      //! Constructor
+      inline explicit DofManager ( const GridType *grid )
       : grid_( *grid ),
         defaultChunkSize_( 128 ),
         sequence_( 0 ),
@@ -911,7 +911,7 @@ namespace Dune
             ValidateNotLess< double >( 1.0 ) ) )
       {
         // only print memory factor if it deviates from the default value
-        if( std::abs( memoryFactor_ - 1.1 ) > 1e-12 ) 
+        if( std::abs( memoryFactor_ - 1.1 ) > 1e-12 )
       {
         if( Parameter::verbose() && (grid_.comm().rank() == 0) )
         {
@@ -921,18 +921,18 @@ namespace Dune
       }
       }
 
-      // copy of dofmanagers is forbidden 
+      // copy of dofmanagers is forbidden
       DofManager( const ThisType & )
       {
         std::cerr << "DofManager(const DofManager &) not allowed!" << std :: endl;
         abort();
       }
-      
-      //! Desctructor, removes all MemObjects and IndexSetObjects 
-      ~DofManager (); 
+
+      //! Desctructor, removes all MemObjects and IndexSetObjects
+      ~DofManager ();
 
     public:
-      //! return factor to over estimate new memory allocation 
+      //! return factor to over estimate new memory allocation
       double memoryFactor() const { return memoryFactor_; }
 
       /** \brief add index set to dof manager's list of index sets
@@ -948,13 +948,13 @@ namespace Dune
        *  void resize();
        *  bool compress();
        *  void write( OutStreamInterface<Traits>& );
-       *  void read( InStreamInterface<Traits>& ) 
+       *  void read( InStreamInterface<Traits>& )
        *  \endcode
        *
        *  \param[in]  iset  index set to add to list
        */
       template <class IndexSetType>
-      inline void addIndexSet (const IndexSetType &iset ); 
+      inline void addIndexSet (const IndexSetType &iset );
 
       /** \brief removed index set from dof manager's list of index sets
        *
@@ -964,101 +964,101 @@ namespace Dune
        *  \param[in]  iset  index set to add to list
        */
       template <class IndexSetType>
-      inline void removeIndexSet (const IndexSetType &iset ); 
+      inline void removeIndexSet (const IndexSetType &iset );
 
-    public:  
-      /** \brief add a managed dof storage to the dof manager. 
-          \param dofStorage  dof storage to add which must fulfill the 
-                 ManagedDofStorageInterface 
+    public:
+      /** \brief add a managed dof storage to the dof manager.
+          \param dofStorage  dof storage to add which must fulfill the
+                 ManagedDofStorageInterface
       */
 
-      /** \brief add a managed dof storage to the dof manager. 
-          \param dofStorage  dof storage to add which must fulfill the 
-                 ManagedDofStorageInterface 
+      /** \brief add a managed dof storage to the dof manager.
+          \param dofStorage  dof storage to add which must fulfill the
+                 ManagedDofStorageInterface
       */
       template <class ManagedDofStorageImp>
       void addDofStorage(ManagedDofStorageImp& dofStorage);
 
-      /** \brief remove a managed dof storage from the dof manager. 
-          \param dofStorage  dof storage to remove which must fulfill the 
-                 ManagedDofStorageInterface 
+      /** \brief remove a managed dof storage from the dof manager.
+          \param dofStorage  dof storage to remove which must fulfill the
+                 ManagedDofStorageInterface
       */
       template <class ManagedDofStorageImp>
       void removeDofStorage(ManagedDofStorageImp& dofStorage);
 
       //! returns the index set restriction and prolongation operator
-      NewIndexSetRestrictProlongType & indexSetRestrictProlong () 
+      NewIndexSetRestrictProlongType & indexSetRestrictProlong ()
       {
-        // hier muss statt dessen ein Combiniertes Object erzeugt werden. 
+        // hier muss statt dessen ein Combiniertes Object erzeugt werden.
         // dafuer sollte bei einhaengen der IndexSets ein Methoden Pointer
         // erzeugt werden, welcher die den IndexSet mit einem anderen Object
-        // kombiniert 
+        // kombiniert
         return indexSetRestrictProlong_;
       }
 
       //! returns the index set restriction and prolongation operator
-      IndexSetRestrictProlongNoResizeType& indexSetRestrictProlongNoResize() 
+      IndexSetRestrictProlongNoResizeType& indexSetRestrictProlongNoResize()
       {
         // return index set restrict/prolong operator that is only inserting
-        // and mark for removal indices but not doing resize 
+        // and mark for removal indices but not doing resize
         return indexSetRestrictProlongNoResize_;
       }
 
-      //! if dofmanagers list is not empty return true 
-      bool hasIndexSets() const 
+      //! if dofmanagers list is not empty return true
+      bool hasIndexSets() const
       {
-        return ! insertIndices_.empty(); 
+        return ! insertIndices_.empty();
       }
-       
+
       /** \brief return used memory size of all MemObjects in bytes. */
-      size_t usedMemorySize () const 
+      size_t usedMemorySize () const
       {
         size_t used = 0;
         ConstListIteratorType endit = memList_.end();
         for(ConstListIteratorType it = memList_.begin(); it != endit ; ++it)
         {
-          used += (*it)->usedMemorySize(); 
+          used += (*it)->usedMemorySize();
         }
         return used;
       }
-      
-      /** \brief resize memory before data restriction 
+
+      /** \brief resize memory before data restriction
           during grid adaptation is done.
-      */ 
-      void resizeForRestrict () 
+      */
+      void resizeForRestrict ()
       {
         resizeMemory();
       }
-      
-      /** \brief reserve memory for at least nsize elements, 
-       *         dummy is needed for dune-grid ALUGrid version */ 
-      void reserveMemory ( int nsize, bool dummy = false ) 
+
+      /** \brief reserve memory for at least nsize elements,
+       *         dummy is needed for dune-grid ALUGrid version */
+      void reserveMemory ( int nsize, bool dummy = false )
       {
         int localChunkSize = std::max(nsize, defaultChunkSize_ );
         assert( localChunkSize > 0 );
 
-        // reserves (size + chunkSize * elementMemory), see above 
+        // reserves (size + chunkSize * elementMemory), see above
         reserveMemObjs_.apply ( localChunkSize );
       }
 
       /** \brief return number of sequence, if dofmanagers memory was changed by
           calling some method like resize, then also this number will increase
-         \note The increase of this number could be larger than 1 
+         \note The increase of this number could be larger than 1
       */
       int sequence () const { return sequence_; }
 
       //- --resize
       /** \brief Resize index sets and memory due to what the mapper has as new size.
-          \note This will increase the sequence counter by 1. 
+          \note This will increase the sequence counter by 1.
       */
       void resize()
       {
-        // new number in grid series 
+        // new number in grid series
 
         IndexListIteratorType endit = indexList_.end();
         for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
         {
-          (*it)->resize(); 
+          (*it)->resize();
         }
         resizeMemory();
       }
@@ -1066,10 +1066,10 @@ namespace Dune
       /** \brief Inserts entity to all index sets added to dof manager. */
       inline void insertEntity( ConstElementType & element )
       {
-        // insert new index 
+        // insert new index
         insertIndices_.apply( element );
 
-        // resize memory 
+        // resize memory
         resizeMemory();
       }
 
@@ -1079,21 +1079,21 @@ namespace Dune
         removeIndices_.apply( element );
       }
 
-      //! resize the MemObject if necessary 
+      //! resize the MemObject if necessary
       void resizeMemory()
       {
         int dummy = -1;
-        // pass dummy parameter 
-        resizeMemObjs_.apply ( dummy ); 
+        // pass dummy parameter
+        resizeMemObjs_.apply ( dummy );
       }
-      
+
     public:
       /** \brief increase the DofManagers internal sequence number
           \note  This will increase the sequence counter by 1.
       */
-      void incrementSequenceNumber () 
+      void incrementSequenceNumber ()
       {
-        // mark next sequence 
+        // mark next sequence
         ++sequence_;
 
         // check that sequence number is the same for all processes
@@ -1101,43 +1101,43 @@ namespace Dune
       }
 
       //- --compress
-      /** \brief Compress all data that is hold by this dofmanager 
+      /** \brief Compress all data that is hold by this dofmanager
           \note  This will increase the sequence counter by 1.
       */
-      void compress() 
+      void compress()
       {
-        // mark next sequence 
+        // mark next sequence
         incrementSequenceNumber ();
 
-        // compress indexsets first 
+        // compress indexsets first
         {
           IndexListIteratorType endit  = indexList_.end();
           for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
           {
-            // reset compressed so the next time compress of index set is called 
-            (*it)->compress(); 
+            // reset compressed so the next time compress of index set is called
+            (*it)->compress();
           }
         }
 
-        // compress all data now 
+        // compress all data now
         {
           ListIteratorType endit  = memList_.end();
           for(ListIteratorType it = memList_.begin(); it != endit ; ++it)
           {
             // if correponding index was not compressed yet, this is called in
-            // the MemObject dofCompress, if index has not changes, nothing happens  
+            // the MemObject dofCompress, if index has not changes, nothing happens
             // if IndexSet actual needs  no compress, nothing happens to the
-            // data either 
+            // data either
             // also data is resized, which means the vector is getting shorter
             (*it)->dofCompress () ;
           }
         }
       }
 
-      //! communicate new sequence number 
-      bool notifyGlobalChange( const bool wasChanged ) const 
+      //! communicate new sequence number
+      bool notifyGlobalChange( const bool wasChanged ) const
       {
-        // make sure that wasChanged is the same on all cores 
+        // make sure that wasChanged is the same on all cores
         int wasChangedCounter = int( wasChanged );
         return bool( grid_.comm().max( wasChangedCounter ) );
       }
@@ -1149,7 +1149,7 @@ namespace Dune
         dataInliner_ += d;
       }
 
-      //! clear data inliner list 
+      //! clear data inliner list
       void clearDataInliners ()
       {
         dataInliner_.clear();
@@ -1162,93 +1162,93 @@ namespace Dune
         dataXtractor_ += d;
       }
 
-      //! clear data xtractor list 
+      //! clear data xtractor list
       void clearDataXtractors ()
       {
         dataXtractor_.clear();
       }
 
       //////////////////////////////////////////////////////////
-      //  CommDataHandleIF methods 
+      //  CommDataHandleIF methods
       //////////////////////////////////////////////////////////
 
       //! the dof manager only transfers element data during load balancing
-      bool contains( const int dim, const int codim ) const 
+      bool contains( const int dim, const int codim ) const
       {
         return ( codim == 0 );
       }
 
-      //! fixed size is false 
-      bool fixedsize( const int dim, const int codim ) const 
+      //! fixed size is false
+      bool fixedsize( const int dim, const int codim ) const
       {
         return false;
-      } 
+      }
 
-      //! for convenience 
+      //! for convenience
       template <class Entity>
-      size_t size( const Entity& ) const 
+      size_t size( const Entity& ) const
       {
         DUNE_THROW(NotImplemented,"DofManager::size should not be called!");
         return 0;
       }
 
-      //! packs all data attached to this entity 
+      //! packs all data attached to this entity
       void gather( InlineStreamType& str, ConstElementType& element ) const
       {
         dataInliner_.apply(str, element);
       }
 
       template <class MessageBuffer, class Entity>
-      void gather( MessageBuffer& str, const Entity& entity ) const 
+      void gather( MessageBuffer& str, const Entity& entity ) const
       {
         DUNE_THROW(NotImplemented,"DofManager::gather( entity ) with codim > 0 not implemented");
       }
 
-      //! unpacks all data attached of this entity from message buffer 
+      //! unpacks all data attached of this entity from message buffer
       void scatter ( XtractStreamType& str, ConstElementType& element, size_t )
       {
-        // here the elements already have been created 
+        // here the elements already have been created
         // that means we can xtract data
         dataXtractor_.apply(str, element);
       }
 
-      //! unpacks all data of this entity from message buffer 
+      //! unpacks all data of this entity from message buffer
       template <class MessageBuffer, class Entity>
       void scatter ( MessageBuffer & str, const Entity& entity, size_t )
       {
         DUNE_THROW(NotImplemented,"DofManager::scatter( entity ) with codim > 0 not implemented");
       }
 
-#if HAVE_ALUGRID 
+#if HAVE_ALUGRID
       ///////////////////////////////////////////////////////////////////////////////
       // old implementation for convenience, when using dune-grid ALUGrid version
       ///////////////////////////////////////////////////////////////////////////////
-      //! packs all data attached to this entity 
+      //! packs all data attached to this entity
       void inlineData( InlineStreamImplType& str, ConstElementType& element ) const
       {
-        InlineStreamType buffer( str ); 
+        InlineStreamType buffer( str );
         dataInliner_.apply( buffer, element);
       }
 
-      //! unpacks all data attached of this entity from message buffer 
+      //! unpacks all data attached of this entity from message buffer
       void xtractData( XtractStreamImplType& str, ConstElementType& element, size_t newElements )
       {
-        // reserve memory for elements to be read 
+        // reserve memory for elements to be read
         reserveMemory( newElements );
 
         XtractStreamType buffer( str );
-        // here the elements already have been created 
+        // here the elements already have been created
         // that means we can xtract data
         dataXtractor_.apply( buffer, element);
       }
 #endif
 
       //********************************************************
-      // Interface for PersistentObjects 
+      // Interface for PersistentObjects
       //********************************************************
-      
+
       /** \copydoc Dune::PersistentObject :: backup */
-      void backup () const 
+      void backup () const
       {
         // backup all index sets marked as persistent
         ConstIndexListIteratorType endit = indexList_.end();
@@ -1259,7 +1259,7 @@ namespace Dune
       }
 
       /** \copydoc Dune::PersistentObject :: restore */
-      void restore () 
+      void restore ()
       {
         // restore all index sets marked as persistent
         IndexListIteratorType endit = indexList_.end();
@@ -1269,22 +1269,22 @@ namespace Dune
         }
 
         // make all index sets consistent
-        // before any data is read this can be 
-        // assured since DofManager is an 
-        // AutoPersistentObject and thus in the 
+        // before any data is read this can be
+        // assured since DofManager is an
+        // AutoPersistentObject and thus in the
         // beginning of the list, fater the grid of course
         resize();
       }
 
       //********************************************************
-      // read/write using fem streams 
+      // read/write using fem streams
       //********************************************************
-      /** \brief write all index sets to a given stream 
+      /** \brief write all index sets to a given stream
        *
-       *  \param[out]  out  stream to write to 
+       *  \param[out]  out  stream to write to
        */
       template < class OutStream >
-      void write( OutStream& out ) const 
+      void write( OutStream& out ) const
       {
         ConstIndexListIteratorType endit = indexList_.end();
         for(ConstIndexListIteratorType it = indexList_.begin(); it != endit; ++it)
@@ -1292,13 +1292,13 @@ namespace Dune
           (*it)->write( out );
         }
       }
-      
-      /** \brief read all index sets from a given stream 
+
+      /** \brief read all index sets from a given stream
        *
-       *  \param[in] in  stream to read from 
+       *  \param[in] in  stream to read from
        */
       template < class InStream >
-      void read( InStream& in ) 
+      void read( InStream& in )
       {
         IndexListIteratorType endit = indexList_.end();
         for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
@@ -1306,11 +1306,11 @@ namespace Dune
           (*it)->read( in );
         }
       }
-      
+
       //********************************************************
-      // Interface for DofManager access 
+      // Interface for DofManager access
       //********************************************************
-      
+
       /** \brief obtain a reference to the DofManager for a given grid
        *
        *  \param[in]  grid  grid for which the DofManager is desired
@@ -1326,12 +1326,12 @@ namespace Dune
 
     //***************************************************************************
     //
-    //  inline implemenations 
+    //  inline implemenations
     //
     //***************************************************************************
 
     template <class GridType>
-    inline DofManager<GridType>::~DofManager () 
+    inline DofManager<GridType>::~DofManager ()
     {
       if(memList_.size() > 0)
       {
@@ -1339,16 +1339,16 @@ namespace Dune
         {
           DofStorageInterface * mobj = (* memList_.rbegin() );
           memList_.pop_back();
-          
-          // alloc new mem an copy old mem 
-          dverb << "Removing '" << mobj->name() << "' from DofManager!\n";  
+
+          // alloc new mem an copy old mem
+          dverb << "Removing '" << mobj->name() << "' from DofManager!\n";
         }
       }
 
       if(indexList_.size() > 0)
       {
         std::cerr << "ERROR: Not all index sets have been removed from DofManager yet!" << std::endl;
-        while ( indexList_.rbegin() != indexList_.rend()) 
+        while ( indexList_.rbegin() != indexList_.rend())
         {
           ManagedIndexSetInterface* iobj = (* indexList_.rbegin() );
           indexList_.pop_back();
@@ -1367,7 +1367,7 @@ namespace Dune
       typedef ManagedIndexSet< IndexSetType, ConstElementType > ManagedIndexSetType;
 
       typedef typename IndexListType::reverse_iterator IndexListIteratorType;
-      
+
       ManagedIndexSetType * indexSet = 0;
 
       // search index set list in reverse order to find latest index sets faster
@@ -1383,9 +1383,9 @@ namespace Dune
           break;
         }
       }
-      
+
       if( !indexSet )
-      { 
+      {
         indexSet = new ManagedIndexSetType ( iset, indexSets_ , insertIndices_ , removeIndices_  );
         indexList_.push_back( static_cast< ManagedIndexSetInterface * >( indexSet ) );
       }
@@ -1435,13 +1435,13 @@ namespace Dune
       // make sure we got an ManagedDofStorage
       ManagedDofStorageInterface* obj = &dofStorage;
 
-      // push_front, makes search faster 
+      // push_front, makes search faster
       memList_.push_front( obj );
 
-      // add the special object to the memResize list object 
+      // add the special object to the memResize list object
       resizeMemObjs_  += dofStorage.resizeMemoryObject();
 
-      // the same for the reserve call  
+      // the same for the reserve call
       reserveMemObjs_ += dofStorage.reserveMemoryObject();
     }
 
@@ -1455,19 +1455,19 @@ namespace Dune
       // make sure we got an ManagedDofStorage
       ManagedDofStorageInterface* obj = &dofStorage;
 
-      // search list starting from tail  
+      // search list starting from tail
       ListIteratorType endit = memList_.end();
       for( ListIteratorType it = memList_.begin();
            it != endit ; ++it)
       {
         if(*it == obj)
         {
-          // alloc new mem and copy old mem 
+          // alloc new mem and copy old mem
           memList_.erase( it );
 
           dvverb << "Remove '" << dofStorage.name() << "' from DofManager!\n";
 
-          // remove from list 
+          // remove from list
           resizeMemObjs_.remove( dofStorage.resizeMemoryObject() );
           reserveMemObjs_.remove( dofStorage.reserveMemoryObject() );
 
@@ -1476,7 +1476,7 @@ namespace Dune
       }
     }
 
-    //@} 
+    //@}
 
 
     /** \class DofManagerFactory
@@ -1493,7 +1493,7 @@ namespace Dune
 
     public:
       typedef DofManagerImp DofManagerType;
-      typedef typename DofManagerType :: GridType GridType; 
+      typedef typename DofManagerType :: GridType GridType;
 
     private:
       typedef const GridType *KeyType;
@@ -1501,7 +1501,7 @@ namespace Dune
       typedef SingletonList< KeyType, DofManagerType > DMProviderType;
 
       // declare friendship becase of methods instance
-      friend class DofManager< GridType >; 
+      friend class DofManager< GridType >;
 
     protected:
       /** \brief obtain a reference to the DofManager for a given grid
@@ -1516,10 +1516,10 @@ namespace Dune
         if( !dm )
           return DMProviderType :: getObject( &grid );
         return *dm;
-      } 
+      }
 
-      //! writes DofManager of corresponding grid, when DofManager exists 
-      inline static bool 
+      //! writes DofManager of corresponding grid, when DofManager exists
+      inline static bool
       writeDofManagerNew ( const GridType &grid,
                            const std :: string &filename,
                            int timestep )
@@ -1532,8 +1532,8 @@ namespace Dune
         return false;
       }
 
-      //! reads DofManager of corresponding grid, when DofManager exists 
-      inline static bool 
+      //! reads DofManager of corresponding grid, when DofManager exists
+      inline static bool
       readDofManagerNew ( const GridType &grid,
                           const std :: string &filename,
                           int timestep )
@@ -1547,22 +1547,22 @@ namespace Dune
       }
 
     public:
-      //! delete the dof manager that belong to the given grid 
+      //! delete the dof manager that belong to the given grid
       inline static void deleteDofManager ( DofManagerType &dm )
       {
         DMProviderType :: removeObject( &dm );
       }
 
-    private: 
-      // return pointer to dof manager for given grid 
+    private:
+      // return pointer to dof manager for given grid
       inline static DofManagerType *getDmFromList( const GridType &grid )
       {
         return (DMProviderType :: getObjFromList( &grid )).first;
       }
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_DOFMANAGER_HH

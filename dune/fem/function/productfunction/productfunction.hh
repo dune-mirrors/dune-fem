@@ -1,10 +1,10 @@
 #ifndef DUNE_FEM_PRODUCTFUNCTION_HH
 #define DUNE_FEM_PRODUCTFUNCTION_HH
 
-//- system includes 
+//- system includes
 #include <fstream>
 
-//- Dune includes 
+//- Dune includes
 #include <dune/geometry/type.hh>
 
 #include <dune/fem/function/adaptivefunction.hh>
@@ -14,34 +14,34 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     template <class DiscreteFunctionSpaceImp,class DiscreteFunctionSpace2Imp> class ProductDiscreteFunction;
 
     template <class DiscreteFunctionSpaceImp>
-    struct ProductDiscreteFunctionTraits 
+    struct ProductDiscreteFunctionTraits
     {
       typedef DiscreteFunctionSpaceImp DiscreteFunctionSpaceType;
-    
+
       typedef ProductDiscreteFunction<DiscreteFunctionSpaceImp,DiscreteFunctionSpaceImp> DiscreteFunctionType;
       typedef MutableArray<typename DiscreteFunctionSpaceImp::RangeFieldType> DofArrayType;
-        
+
       typedef typename DofArrayType::DofIteratorType DofIteratorType;
       typedef typename DofArrayType::ConstDofIteratorType ConstDofIteratorType;
     };
 
     //**********************************************************************
     //! @addtogroup ProductDFunction
-    // --ProductDiscreteFunction 
+    // --ProductDiscreteFunction
     //
     //! \brief This is one special implementation of a discrete function  \f$  u(x,y) = \sum _{i=1} ^{n_x}\sum _{j=1} ^{n_y} u_{ij}\varphi _i(x) \psi _j(y) \f$ for product spaces \f$ X \times Y \f$ using an
-    //! array for storing the dofs with \f$u_{ij}= u\left[j n_x +i\right]\f$.  
+    //! array for storing the dofs with \f$u_{ij}= u\left[j n_x +i\right]\f$.
     //!
     //!
     //**********************************************************************
     template<class DiscreteFunctionSpaceType, class DiscreteFunctionSpace2Type>
-    class ProductDiscreteFunction 
+    class ProductDiscreteFunction
     {
     public:
       //!Type of range field, (usually a float type)
@@ -62,10 +62,10 @@ namespace Dune
       //! Type of the constant dof iterator used in the discrete function implementation
       typedef typename DofStorageType::ConstDofIteratorType ConstDofIteratorType;
 
-      //! Type of this class 
+      //! Type of this class
       typedef ProductDiscreteFunction <DiscreteFunctionSpaceType,DiscreteFunctionSpace2Type> DiscreteFunctionType;
       typedef DiscreteFunctionType ThisType;
-      
+
       //! Type of class AdaptiveDiscreteFunction
       typedef AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> DiscreteFunction1Type;
       typedef typename DiscreteFunction1Type::DofStorageType DofStorage1Type;
@@ -76,28 +76,28 @@ namespace Dune
 
       /** \brief For ISTL-compatibility */
       typedef FieldVector<DofType,1> block_type;
-      
+
     public:
 
-     /** \brief Constructor storing discrete function spaces 
-            \param[in] f discrete function space  
+     /** \brief Constructor storing discrete function spaces
+            \param[in] f discrete function space
       \param[in] f2 discrete function space2
      */
       ProductDiscreteFunction(const DiscreteFunctionSpaceType& f, const DiscreteFunctionSpace2Type& f2) ;
-      
+
       //! delete stack of free local functions belonging to this discrete
-      //! function 
+      //! function
       virtual ~ProductDiscreteFunction ();
-           
+
       // ***********  Interface  *************************
-      
+
       /** \brief returns local function \f$  u_{j_0}(x) = \sum _{i=1} ^{n_x}  u\left[j_0 n_x +i\right]\varphi _i(x) \f$ for global dof index \f$j_0\f$ of second space
           \param[in] dofIndex2 global dof index of second space
           \returns \f$  u_{j_0}(x) = \sum _{i=1} ^{n_x}  u\left[j_0 n_x +i\right]\varphi _i(x) \f$
        */
       inline DiscreteFunction1Type
-      localFunction(int dofIndex2) const; 
-      
+      localFunction(int dofIndex2) const;
+
       /** \brief returns local function \f$  u_{j_0,en_2}(x) = \sum _{i=1} ^{n_x}  u\left[global(j_0,en_2) n_x +i\right]\varphi _i(x) \f$ for local dof index \f$j_0\f$ of second space and given entity2
           \param[in] en2 entity of second space
           \param[in] dofIndex2 global dof index of second space
@@ -106,7 +106,7 @@ namespace Dune
       template <class Entity2Type>
       inline DiscreteFunction1Type
       localFunction(const Entity2Type &en2, int dofIndex2) const;
-      
+
       /** \brief local function \f$  u_{loc_2,en_2}(x) = \sum _{i=1} ^{n_x} \left[ \sum_{k=1} ^{\#dof_2}  u\left[global(k,en_2) n_x +i\right]\psi _k (loc_2) \right]\varphi _i(x) \f$ for given entity2 and local coordinate of second space and discrete function of first space
           \param[in] en2 entity of second space
           \param[in] loc2 local coordinate of second space
@@ -126,71 +126,71 @@ namespace Dune
       inline
       void localFunction(const Entity2Type &en2, const QuadratureType &quad2, int pointNr, DiscreteFunction1Type &discFunc) const;
 
-     
-     /** \brief returns dof iterator pointing to the first degree of freedom of this discrete function 
-         \return dof iterator pointing to first dof 
+
+     /** \brief returns dof iterator pointing to the first degree of freedom of this discrete function
+         \return dof iterator pointing to first dof
      */
       inline
       DofIteratorType dbegin ( );
-      
-     /** \brief returns dof iterator pointing behind the last degree of freedom of this discrete function 
-         \return dof iterator pointing behind the last dof 
+
+     /** \brief returns dof iterator pointing behind the last degree of freedom of this discrete function
+         \return dof iterator pointing behind the last dof
       */
       inline
       DofIteratorType dend   ( );
 
-      /** \brief returns dof iterator pointing to the first degree of freedom of this discrete function 
-          \return dof iterator pointing to first dof 
+      /** \brief returns dof iterator pointing to the first degree of freedom of this discrete function
+          \return dof iterator pointing to first dof
        */
        inline
       ConstDofIteratorType dbegin ( ) const;
-      
-      /** \brief returns dof iterator pointing behind the last degree of freedom of this discrete function 
-          \return dof iterator pointing behind the last dof 
-       */  
+
+      /** \brief returns dof iterator pointing behind the last degree of freedom of this discrete function
+          \return dof iterator pointing behind the last dof
+       */
       inline
       ConstDofIteratorType dend   ( ) const;
 
        /** \brief set all degrees of freedom to zero
-        */  
+        */
       inline
       void clear( );
 
        /** \brief axpy operation
-           \param[in] g discrete function that is added 
-           \param[in] c scalar value to scale 
-        */  
+           \param[in] g discrete function that is added
+           \param[in] c scalar value to scale
+        */
       inline
-      void axpy (const ThisType & g, const RangeFieldType &c); 
-          
+      void axpy (const ThisType & g, const RangeFieldType &c);
+
        /** \brief print all degrees of freedom of this function to stream (for debugging purpose)
            \param[out] s std::ostream (e.g. std::cout)
         */
       inline
-      void print(std::ostream& s) const; 
+      void print(std::ostream& s) const;
 
-      /** \brief returns name of discrete function 
-          \return string holding name of discrete function 
-      */ 
+      /** \brief returns name of discrete function
+          \return string holding name of discrete function
+      */
       std::string name () const { return name_; }
 
-      /** \brief returns total number of degrees of freedom, i.e. size of discrete function space 
-          \return total number of dofs 
-      */ 
+      /** \brief returns total number of degrees of freedom, i.e. size of discrete function space
+          \return total number of dofs
+      */
       int size() const { return dofVec_.size(); }
-      
-      //! return pointer to internal array for use of BLAS routines 
+
+      //! return pointer to internal array for use of BLAS routines
       DofType * leakPointer () { return dofVec_.leakPointer();  };
-      //! return pointer to internal array for use of BLAS routines 
+      //! return pointer to internal array for use of BLAS routines
       const DofType * leakPointer () const { return dofVec_.leakPointer(); };
-      
+
       //! Get access to the related function space
       const DiscreteFunctionSpaceType& space() const { return functionSpace_; }
       //! Get access to the related function space2
       const DiscreteFunctionSpace2Type& space2() const { return functionSpace2_; }
 
 
-    private:  
+    private:
       // name of this func
       std::string name_;
 
@@ -200,10 +200,10 @@ namespace Dune
       const DiscreteFunctionSpace2Type & functionSpace2_;
 
       //! array containing the dof of this function, see dofmanager.hh
-      //! the array is stored within the mem object 
+      //! the array is stored within the mem object
       mutable DofStorageType dofVec_;
 
-    }; // end class ProductDiscreteFunction 
+    }; // end class ProductDiscreteFunction
 
   } // end namespace Fem
 

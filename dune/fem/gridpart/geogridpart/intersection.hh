@@ -20,7 +20,7 @@ namespace Dune
 
     public:
       typedef typename remove_const< GridFamily >::type::ctype ctype;
-      
+
       static const int dimension = remove_const< GridFamily >::type::dimension;
       static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
 
@@ -55,7 +55,7 @@ namespace Dune
       {
         return EntityPointerImplType( coordFunction(), hostIntersection().inside() );
       }
-      
+
       EntityPointer outside () const
       {
         return EntityPointerImplType( coordFunction(), hostIntersection().outside() );
@@ -70,32 +70,32 @@ namespace Dune
       {
         return hostIntersection().conforming();
       }
-          
+
       bool neighbor () const
       {
         return hostIntersection().neighbor();
       }
-          
+
       int boundaryId () const
       {
         return hostIntersection().boundaryId();
       }
-          
+
       size_t boundarySegmentIndex () const
       {
         return hostIntersection().boundarySegmentIndex();
       }
-          
+
       LocalGeometry geometryInInside () const
       {
         return hostIntersection().geometryInInside();
       }
-      
+
       LocalGeometry geometryInOutside () const
       {
         return hostIntersection().geometryInOutside();
       }
-     
+
       Geometry geometry () const
       {
         const LocalGeometry &localGeo = geometryInInside();
@@ -112,12 +112,12 @@ namespace Dune
       {
         return hostIntersection().indexInInside();
       }
-      
+
       int indexInOutside () const
       {
         return hostIntersection().indexInOutside();
       }
-     
+
       FieldVector< ctype, dimensionworld >
       integrationOuterNormal ( const FieldVector< ctype, dimension-1 > &local ) const
       {
@@ -134,7 +134,7 @@ namespace Dune
         normal *= ctype( 1 ) / jit.det();
         return normal;
       }
-      
+
       FieldVector< ctype, dimensionworld >
       outerNormal ( const FieldVector< ctype, dimension-1 > &local ) const
       {

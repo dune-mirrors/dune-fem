@@ -4,7 +4,7 @@
 **   $Revision: 1.4 $$Name:  $
 **        Date: 28.11.2005
 **   Copyright: GPL Bernard Haasdonk
-** Description: collection of auxiliary functions for writing 
+** Description: collection of auxiliary functions for writing
 **              vector/matrix data for further external processing, e.g. in
 **              MATLAB
 **************************************************************************/
@@ -32,7 +32,7 @@ namespace Dune
  *  \brief The MatlabHelper class provides functionality for exporting
  *         Dune Structures to Matlab.
  *
- *   Currently only two methods are provides, which perform a binary 
+ *   Currently only two methods are provides, which perform a binary
  *   saving of SparseRowMatrix and DiscreteFunction's DOFVectors to a
  *   binary format, which can be read by appropriate MATLAB-files
  */
@@ -42,17 +42,17 @@ namespace Dune
     class MatlabHelper
     {
     public:
-      
+
 /*======================================================================*/
-/*! 
+/*!
  *   saveSparseMatrixBinary
  *
- *   simple save routine, which writes a sparse matrix to a binary file. This 
- *   can then be simply read in, e.g. in MATLAB by appropriate reading 
+ *   simple save routine, which writes a sparse matrix to a binary file. This
+ *   can then be simply read in, e.g. in MATLAB by appropriate reading
  *   methods. The current version is suited to feop/matrix/spmatrix class
  *   The MATLAB-code for the reading method is the function
- *   load_sparse_matrix.m 
- * 
+ *   load_sparse_matrix.m
+ *
  *   \param filename the filename to write
  *
  *   \param matrix the matrix to write
@@ -64,8 +64,8 @@ namespace Dune
  */
 /*======================================================================*/
 
-// select between implementation for new spmatrix class in 
-// operator/matrix/spmatrix or old spmatrix  class in 
+// select between implementation for new spmatrix class in
+// operator/matrix/spmatrix or old spmatrix  class in
 // operator/feop/spmatrix
 
 #ifdef USE_OLD_SPARSEMATRIX
@@ -73,50 +73,50 @@ namespace Dune
       template <class SparseRowMatrix>
       int saveSparseMatrixBinary(const char* filename, SparseRowMatrix& matrix)
       {
-        // open file for writing  
-        std::ofstream fid(filename, std::ios::binary | std::ios::out);    
+        // open file for writing
+        std::ofstream fid(filename, std::ios::binary | std::ios::out);
 
-        // DSM (Dune Sparse Matrix)            
+        // DSM (Dune Sparse Matrix)
         fid.write("DSM",3);
-        
+
         // for debugging purposes: write an int and a double
         int magicint =    111;
         double magicdouble = 111.0;
         fid.write((char*)&magicint,sizeof(int));
         fid.write((char*)&magicdouble,sizeof(double));
-        
+
         int nrows = matrix.rows();
         int ncols = matrix.cols();
         int nonzero = matrix.numNonZeros();
-        
+
         // write number of rows and cols and maxnonzeros per row
         fid.write((char*)&nrows,sizeof(int));
         fid.write((char*)&ncols,sizeof(int));
         fid.write((char*)&nonzero,sizeof(int));
-        
+
         // count nonzero entries
-        int totalnonzeros = 0;  
+        int totalnonzeros = 0;
         for (int r=0; r<nrows; r++)
         {
-          int nonzero = matrix.numNonZeros(r);    
+          int nonzero = matrix.numNonZeros(r);
           for (int c = 0; c < nonzero ; c ++)
-          {  
-            typename SparseRowMatrix::ColumnIterator it = 
+          {
+            typename SparseRowMatrix::ColumnIterator it =
                 matrix.rbegin(r);
             for (;it!=matrix.rend(r);++it)
                 if (matrix(r,it.col())!=0.0)
-                    totalnonzeros ++; 
+                    totalnonzeros ++;
           }
         }
         fid.write((char*)&totalnonzeros,sizeof(int));
-        
+
         // write all nonzero entries
         for (int r=0; r<nrows; r++)
         {
           int nonzero = matrix.numNonZeros(r);
           for (int c = 0; c < nonzero ; c ++)
-          {  
-            typename SparseRowMatrix::ColumnIterator it = 
+          {
+            typename SparseRowMatrix::ColumnIterator it =
                 matrix.rbegin(r);
             for (;it!=matrix.rend(r);++it)
             {
@@ -125,33 +125,33 @@ namespace Dune
               //! write rownum, colnum and entry
               fid.write((char*)&r,sizeof(int));
               fid.write((char*)&colnum,sizeof(int));
-              fid.write((char*)&entry,sizeof(double));        
-            }    
+              fid.write((char*)&entry,sizeof(double));
+            }
           }
         }
 
-        // write end-of-file marker            
+        // write end-of-file marker
         fid.write("EOF",3);
 
         int status = fid.good();
-        
-        fid.close();  
 
-        return status; 
+        fid.close();
+
+        return status;
 
       }
-      
+
 #else
-      
+
   // new spmatrix-class:
       template <class SparseRowMatrix>
       int saveSparseMatrixBinary(const char* filename, SparseRowMatrix& matrix)
       {
-        // open file for writing  
-        std::ofstream fid(filename, std::ios::binary | std::ios::out);    
-        
-        // write magic number: type of binary file: 
-        // DSM (Dune Sparse Matrix)            
+        // open file for writing
+        std::ofstream fid(filename, std::ios::binary | std::ios::out);
+
+        // write magic number: type of binary file:
+        // DSM (Dune Sparse Matrix)
         fid.write("DSM",3);
 
         // for debugging purposes and platform check: write an int and a double
@@ -159,67 +159,67 @@ namespace Dune
         double magicdouble = 111.0;
         fid.write((char*)&magicint,sizeof(int));
         fid.write((char*)&magicdouble,sizeof(double));
-        
+
         int nrows = matrix.rows();
         int ncols = matrix.cols();
         int nonzero = matrix.numNonZeros();
-        
+
         // write number of rows and cols and maxnonzeros per row
         fid.write((char*)&nrows,sizeof(int));
         fid.write((char*)&ncols,sizeof(int));
         fid.write((char*)&nonzero,sizeof(int));
-        
+
         // count nonzero entries
-        int totalnonzeros = 0;  
+        int totalnonzeros = 0;
         for (int r=0; r<nrows; r++)
         {
           int nonzero = matrix.numNonZeros(r);
           for (int fakeCol = 0; fakeCol < nonzero ; fakeCol ++)
-          {  
+          {
             int realCol = matrix.realCol(r,fakeCol);
-            if ((realCol != SparseRowMatrix::defaultCol) && 
+            if ((realCol != SparseRowMatrix::defaultCol) &&
                 (matrix(r,realCol)!=0.0))
-                totalnonzeros ++; 
+                totalnonzeros ++;
           }
         }
         fid.write((char*)&totalnonzeros,sizeof(int));
-        
+
         // write all nonzero entries
         for (int r=0; r<nrows; r++)
         {
           int nonzero = matrix.numNonZeros(r);
 //    for (int c = 0; c < nonzero ; c ++)
-//    {  
-          
+//    {
+
           for (int fakeCol = 0; fakeCol < nonzero ; fakeCol ++)
-          {  
+          {
             int realCol = matrix.realCol(r,fakeCol);
-            if ((realCol != SparseRowMatrix::defaultCol) && 
+            if ((realCol != SparseRowMatrix::defaultCol) &&
                 (matrix(r,realCol)!=0.0))
             {
               double entry = matrix(r,realCol);
               //! write rownum, colnum and entry
               fid.write((char*)&r,sizeof(int));
               fid.write((char*)&realCol,sizeof(int));
-              fid.write((char*)&entry,sizeof(double));        
-            }    
+              fid.write((char*)&entry,sizeof(double));
+            }
           }
         }
-        // write end-of-file marker            
+        // write end-of-file marker
         fid.write("EOF",3);
 
         int status = fid.good();
-        
-        fid.close();  
 
-        return status; 
+        fid.close();
+
+        return status;
 
       }
 
 #endif
 
 /*======================================================================*/
-/*! 
+/*!
 *   saveDofVectorBinary: save dof vector in binary file
 *
 *   \param filename file name to be generated
@@ -235,54 +235,54 @@ namespace Dune
 
 template <class DiscreteFunctionType>
 int saveDofVectorBinary(const char* filename, DiscreteFunctionType& func)
-      {  
-        typedef typename DiscreteFunctionType::DofIteratorType DofIteratorType;    
-        
-        //const DiscFuncSpaceType& dfsp = func.getFunctionSpace();  
-        
-        // open file for writing  
-        std::ofstream fid(filename, std::ios::binary | std::ios::out);    
+      {
+        typedef typename DiscreteFunctionType::DofIteratorType DofIteratorType;
 
-        // write magic number: type of binary file: 
-        // DDV (Dune Dof Vector)            
+        //const DiscFuncSpaceType& dfsp = func.getFunctionSpace();
+
+        // open file for writing
+        std::ofstream fid(filename, std::ios::binary | std::ios::out);
+
+        // write magic number: type of binary file:
+        // DDV (Dune Dof Vector)
         fid.write("DDV",3);
-        
+
         // for debugging purposes: write an int and a double
         int magicint =    111;
         double magicdouble = 111.0;
         fid.write((char*)&magicint,sizeof(int));
         fid.write((char*)&magicdouble,sizeof(double));
-        
+
         // write number of entries
         int ndofs = func.size();
         fid.write((char*)&ndofs,sizeof(int));
-        
-        DofIteratorType it = func.dbegin();  
-        DofIteratorType eit = func.dend();  
-        
+
+        DofIteratorType it = func.dbegin();
+        DofIteratorType eit = func.dend();
+
         // iterate over all elements defining the function
         for (it = func.dbegin(); it!=eit; ++it)
         {
           double entry = *it;
           fid.write((char*)&entry,sizeof(double));
-        } // end element iteration 
+        } // end element iteration
 
-        // write end-of-file marker            
+        // write end-of-file marker
         fid.write("EOF",3);
 
         int status = fid.good();
-        
-        fid.close();  
 
-        return status; 
-        
+        fid.close();
+
+        return status;
+
       }
 
 /*======================================================================*/
-/*! 
+/*!
 *   saveDenseMatrixBinary: save dense matrix in binary file
 *
-*   The matrix class is assumed to give access to the values by 
+*   The matrix class is assumed to give access to the values by
 *   matrix[nr][nc], values are written as doubles
 *
 *   \param filename file name to be generated
@@ -301,51 +301,51 @@ int saveDofVectorBinary(const char* filename, DiscreteFunctionType& func)
 /*======================================================================*/
 
 template <class DenseRowMatrix>
-int saveDenseMatrixBinary(const char* filename, 
+int saveDenseMatrixBinary(const char* filename,
                           DenseRowMatrix& matrix, int nrows, int ncols)
       {
-        // open file for writing  
-        std::ofstream fid(filename, std::ios::binary | std::ios::out);    
-        
-        // write magic number: type of binary file: 
-        // DDM (Dune Dense Matrix)            
+        // open file for writing
+        std::ofstream fid(filename, std::ios::binary | std::ios::out);
+
+        // write magic number: type of binary file:
+        // DDM (Dune Dense Matrix)
         fid.write("DDM",3);
-       
+
         // for debugging purposes: write an int and a double
 
         int magicint =    111;
         double magicdouble = 111.0;
         fid.write((char*)&magicint,sizeof(int));
         fid.write((char*)&magicdouble,sizeof(double));
-                    
+
         // write number of rows and cols and maxnonzeros per row
         fid.write((char*)&nrows,sizeof(int));
         fid.write((char*)&ncols,sizeof(int));
-        
+
         // write all entries
         for (int r=0; r<nrows; r++)
         {
           for (int c = 0; c < ncols ; c ++)
-          {  
-            double entry = matrix[r][c];             
-            fid.write((char*)&entry,sizeof(double));        
+          {
+            double entry = matrix[r][c];
+            fid.write((char*)&entry,sizeof(double));
           }
         }
-        
-        // write end-of-file marker            
+
+        // write end-of-file marker
         fid.write("EOF",3);
 
         int status = fid.good();
-        
-        fid.close();  
 
-        return status; 
+        fid.close();
+
+        return status;
       }
 
     }; // end class MatlabHelper
 
   } // namespace Fem
-  
+
 } // namespace Dune
 
 #endif

@@ -8,7 +8,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     template< class LocalOperatorImp, class RangeDiscreteFunctionImp >
@@ -28,10 +28,10 @@ namespace Dune
       typedef typename LocalOperatorType :: DomainFunctionSpaceType
         DomainFunctionSpaceType;
       typedef typename LocalOperatorType :: DomainFunctionType DomainFunctionType;
-      
+
       typedef typename RangeFunctionType :: DiscreteFunctionSpaceType
         RangeFunctionSpaceType;
-      
+
       typedef typename LocalOperatorType :: DomainFieldType DomainFieldType;
       typedef typename LocalOperatorType :: RangeFieldType RangeFieldType;
     };
@@ -79,7 +79,7 @@ namespace Dune
       const LocalOperatorType &localOperator_;
       const DomainFunctionSpaceType &domainFunctionSpace_;
       const RangeFunctionSpaceType &rangeFunctionSpace_;
-      
+
     public:
       inline IntegrationOperator ( const LocalOperatorType &localOperator,
                                    const DomainFunctionSpaceType &domainFunctionSpace,
@@ -98,7 +98,7 @@ namespace Dune
         // type of iterator over grid partition for range function space
         typedef typename RangeFunctionSpaceType :: IteratorType IteratorType;
         typedef typename IteratorType :: Entity EntityType;
-       
+
         // type of base function set for range function space
         typedef typename RangeFunctionSpaceType :: BaseFunctionSetType
           BaseFunctionSetType;
@@ -109,19 +109,19 @@ namespace Dune
 
         // obtain range function space (discrete function space)
         const RangeFunctionSpaceType &rangeFunctionSpace = w.space();
-       
+
         // clear destination function
         w.clear();
-       
+
         // Loop over entire grid
         const IteratorType &end = rangeFunctionSpace.end();
         for( IteratorType it = rangeFunctionSpace.begin(); it != end; ++it )
         {
           const EntityType &entity = *it;
-          
+
            // obtain a temporary local function
           TemporaryLocalFunctionType w_temp = rangeFunctionSpace.localFunction( entity );
-            
+
           // apply the local operator
           localOperator_( entity, u, w_temp );
 
@@ -138,7 +138,7 @@ namespace Dune
         typedef typename RangeFunctionSpaceType :: IteratorType IteratorType;
 
         typedef typename IteratorType :: Entity EntityType;
-       
+
         // type of base function sets
         typedef typename DomainFunctionSpaceType :: BaseFunctionSetType
           DomainBaseFunctionSetType;
@@ -150,7 +150,7 @@ namespace Dune
 
         // create local matrix
         TemporaryLocalMatrixType localMatrix( domainFunctionSpace, rangeFunctionSpace );
-        
+
         // clear global matrix
         matrix.clear();
 
@@ -188,7 +188,7 @@ namespace Dune
     };
 
 
-    
+
     template< class TraitsImp >
     class IntegrationOperator< TraitsImp, false >
     : public Operator< typename TraitsImp :: DomainFunctionType,
@@ -215,13 +215,13 @@ namespace Dune
     protected:
       typedef typename RangeFunctionType :: LocalFunctionType
         RangeLocalFunctionType;
-      
+
       typedef TemporaryLocalFunction< RangeFunctionSpaceType >
         RangeTemporaryLocalFunctionType;
 
     protected:
       const LocalOperatorType localOperator_;
-      
+
     public:
       inline explicit IntegrationOperator ( const LocalOperatorType &localOperator )
       : localOperator_( localOperator )
@@ -233,7 +233,7 @@ namespace Dune
       {
         // type of iterator over grid partition for range function space
         typedef typename RangeFunctionSpaceType :: IteratorType IteratorType;
-       
+
         // type of base function set for range function space
         typedef typename RangeFunctionSpaceType :: BaseFunctionSetType
           BaseFunctionSetType;
@@ -243,10 +243,10 @@ namespace Dune
 
         // create a temporary local function
         RangeTemporaryLocalFunctionType w_temp( rangeFunctionSpace );
-        
+
         // clear destination function
         w.clear();
-       
+
         // Loop over entire grid
         const IteratorType &end = rangeFunctionSpace.end();
         for( IteratorType it = rangeFunctionSpace.begin(); it != end; ++it )

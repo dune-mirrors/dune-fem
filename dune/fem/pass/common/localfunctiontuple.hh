@@ -24,15 +24,15 @@ namespace Dune
 
     /*
      * \brief Choose local function for given discrete function.
-     *        Use LocalFunctionSelector to define the type of 
+     *        Use LocalFunctionSelector to define the type of
      *        the local function.
      */
     template< class DiscreteFunction >
     struct LocalFunctionEvaluator
     {
-      typedef typename Dune::Fem::LocalFunctionSelector< 
+      typedef typename Dune::Fem::LocalFunctionSelector<
           typename Dune::TypeTraits< DiscreteFunction >::ReferredType
-        >::Type Type; 
+        >::Type Type;
 
       static Type apply ( const DiscreteFunction &discreteFunction )
       {
@@ -101,7 +101,7 @@ namespace Dune
       template< int pos > struct EvaluateQuadrature;
       template< int pos > struct Jacobian;
       template< int pos > struct Hessian;
-   
+
     public:
       //! \brief discrete function tuple
       typedef DiscreteFunctionTuple DiscreteFunctionTupleType;
@@ -382,7 +382,7 @@ namespace Dune
 DUNE_OPEN_TUPLE_NAMESPACE
   // tuple_element for LocalFunctionTuple
   // ------------------------------------
-  
+
   template< size_t i, class DiscreteFunctionTuple, class Entity, size_t TupleSize >
   struct tuple_element< i, Dune::Fem::LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize > >
   {

@@ -43,8 +43,8 @@ public:
   {
     phi = 1;
     for( int i = 0; i < DomainType::dimension; ++i )
-      // phi[ 0 ] += x[ i ] * x[ i ]; 
-      phi[ 0 ] *= sin( M_PI * x[ i ] ); 
+      // phi[ 0 ] += x[ i ] * x[ i ];
+      phi[ 0 ] *= sin( M_PI * x[ i ] );
   }
 
   void evaluate ( const DomainType &x,
@@ -115,7 +115,7 @@ void algorithm ( MyGridType &grid, int level )
 
   std::cout << "Unknowns on father level: " << fatherSpace.size() << std::endl;
   std::cout << "L2 error on father level: " << fatherL2error << std::endl;
-  std::cout << "H1 error on father level: " << fatherH1error << std::endl; 
+  std::cout << "H1 error on father level: " << fatherH1error << std::endl;
 
   GridPartType sonGrid( grid, level+1 );
   DiscreteFunctionSpaceType sonSpace( sonGrid );
@@ -132,7 +132,7 @@ void algorithm ( MyGridType &grid, int level )
 
   std::cout << "Unknowns on son level: " << sonSpace.size() << std::endl;
   std::cout << "L2 error on son level: " << sonL2error << std::endl;
-  std::cout << "H1 error on son level: " << sonH1error << std::endl; 
+  std::cout << "H1 error on son level: " << sonH1error << std::endl;
 
   double l2eoc = -log( sonL2error / fatherL2error) / M_LN2;
   double h1eoc = -log( sonH1error / fatherH1error) / M_LN2;
@@ -158,8 +158,8 @@ try
   std::string paramFile = "parameter";
   if( argc < 2 )
     std::cerr << "Usage: " << argv[ 0 ] << "<parameter>" << std::endl;
-  else 
-    paramFile = argv[ 1 ]; 
+  else
+    paramFile = argv[ 1 ];
   Dune::Fem::Parameter::append( paramFile );
 
   const int ml = Dune::Fem::Parameter::getValue< int >( "lagrangeglobalrefine.maxlevel", 2 );

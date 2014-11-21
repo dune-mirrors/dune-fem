@@ -5,16 +5,16 @@
 
 namespace Dune{
 
- /** \ingroup Mapping 
+ /** \ingroup Mapping
   * \brief Vector class
   * This is the base class for all methods and operators.
 
-   An instance of this class is an element of an vector space. 
-   Elements of vector spaces can be added and multiplied by a 
+   An instance of this class is an element of an vector space.
+   Elements of vector spaces can be added and multiplied by a
    scalar.
  */
-template <typename Field> 
-class Vector 
+template <typename Field>
+class Vector
 {
 public:
 
@@ -24,7 +24,7 @@ public:
   //virtual Vector<Field> operator - (const Vector<Field> &) const = 0;
   //virtual Vector<Field> operator * (const Field &) const = 0;
   //virtual Vector<Field> operator / (const Field &) const = 0;
-  
+
   /** \brief Assignment operator
       \note Only returns itself...
   */

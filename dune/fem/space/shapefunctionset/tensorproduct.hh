@@ -69,10 +69,10 @@ namespace Dune
       template< class Point, class Functor >
       void evaluateEach ( const Point &x, Functor functor ) const;
 
-      template< class Point, class Functor > 
+      template< class Point, class Functor >
       void jacobianEach ( const Point &x, Functor functor ) const;
 
-      template< class Point, class Functor > 
+      template< class Point, class Functor >
       void hessianEach ( const Point &x, Functor functor ) const;
 
     private:
@@ -351,7 +351,7 @@ namespace Dune
         {
           RangeType v( value );
           v[ 0 ] *= buffer[ i ];
-          doEvaluateEach( d+1, v, index, buffer+sizes_[ d ], functor ); 
+          doEvaluateEach( d+1, v, index, buffer+sizes_[ d ], functor );
         }
       }
       else
@@ -372,7 +372,7 @@ namespace Dune
           j[ 0 ][ d ] *= buffer[ i + sizes_[ d ] ];
           for( int k = 1; k < dimension; ++k )
             j[ 0 ][ (d+k)%dimension ] *= buffer[ i ];
-          doJacobianEach( d+1, j, index, buffer+2*sizes_[ d ], functor ); 
+          doJacobianEach( d+1, j, index, buffer+2*sizes_[ d ], functor );
         }
       }
       else
@@ -398,7 +398,7 @@ namespace Dune
             for( int k = 1; k < dimension; ++k )
               h[ 0 ][ (d+j)%dimension ][ (d+k)%dimension ] *= buffer[ i ];
           }
-          doHessianEach( d+1, h, index, buffer+3*sizes_[ d ], functor ); 
+          doHessianEach( d+1, h, index, buffer+3*sizes_[ d ], functor );
         }
       }
       else

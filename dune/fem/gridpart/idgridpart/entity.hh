@@ -18,8 +18,8 @@ namespace Dune
     // --------
 
     template< int codim, int dim, class GridFamily >
-    class IdEntity 
-    : public DefaultGridPartEntity < codim, dim, GridFamily > 
+    class IdEntity
+    : public DefaultGridPartEntity < codim, dim, GridFamily >
     {
       typedef typename remove_const< GridFamily >::type::Traits Traits;
 
@@ -41,7 +41,7 @@ namespace Dune
       typedef typename HostGridPartType::template Codim< codimension >::EntityType HostEntityType;
       typedef typename HostGridPartType::template Codim< codimension >::EntityPointerType HostEntityPointerType;
 
-      IdEntity () 
+      IdEntity ()
       : hostEntity_( 0 )
       {}
 
@@ -84,8 +84,8 @@ namespace Dune
     // --------------------------
 
     template< int dim, class GridFamily >
-    class IdEntity< 0, dim, GridFamily > 
-    : public DefaultGridPartEntity < 0, dim, GridFamily > 
+    class IdEntity< 0, dim, GridFamily >
+    : public DefaultGridPartEntity < 0, dim, GridFamily >
     {
       typedef typename remove_const< GridFamily >::type::Traits Traits;
 
@@ -146,7 +146,7 @@ namespace Dune
       {
         return hostEntity().template count< codim >();
       }
-      
+
       unsigned int subEntities ( unsigned int codim ) const { return hostEntity().subEntities(codim); }
 
       template< int codim >

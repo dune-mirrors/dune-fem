@@ -35,7 +35,7 @@ namespace Dune
       typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
 
       typedef typename GridPartType::IndexSetType IndexSetType;
-      
+
       typedef CodimensionMapper< GridPartType, codim > DofMapperType;
 
       typedef typename IndexSetType :: IndexType SizeType;
@@ -51,7 +51,7 @@ namespace Dune
       typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
 
       typedef typename GridPartType::IndexSetType IndexSetType;
-      
+
       typedef CodimensionMapper< GridPartType, 0 > DofMapperType;
 
       typedef typename IndexSetType :: IndexType SizeType;
@@ -89,14 +89,14 @@ namespace Dune
       //! dimension of the grid
       static const int dimension = GridPartType::dimension;
 
-      //! codimension that is mapped 
+      //! codimension that is mapped
       static const int codimension = cdim;
 
       //! Constructor
       explicit CodimensionMapper( const GridPartType &gridPart );
 
       /** \copydoc DofMapper::contains */
-      bool contains ( const int codim ) const 
+      bool contains ( const int codim ) const
       {
         return (codim == codimension);
       }
@@ -104,7 +104,7 @@ namespace Dune
       /** \copydoc DofMapper::size */
       SizeType size () const
       {
-        // return number of dofs for codimension 
+        // return number of dofs for codimension
         return indexSet_.size( codimension );
       }
 
@@ -130,12 +130,12 @@ namespace Dune
 
     protected:
       template <int codim1, int codim>
-      struct IndexExtractor 
+      struct IndexExtractor
       {
         template <class Entity >
         static inline GlobalKeyType index(const IndexSetType& indexSet, const Entity& entity )
         {
-          DUNE_THROW(InvalidStateException,"Wrong codimension selected"); 
+          DUNE_THROW(InvalidStateException,"Wrong codimension selected");
           return -1;
         }
       };
@@ -180,18 +180,18 @@ namespace Dune
       {
         return (contains( Entity::codimension ) ? 1 : 0);
       }
-     
+
       /** \copydoc AdaptiveDofMapper::oldIndex */
       GlobalKeyType oldIndex ( const int hole, int ) const
       {
-        // forward to index set 
+        // forward to index set
         return indexSet_.oldIndex( hole, codimension ) ;
       }
 
       /** \copydoc AdaptiveDofMapper::newIndex */
       GlobalKeyType newIndex ( const int hole, int ) const
       {
-        // forward to index set 
+        // forward to index set
         return indexSet_.newIndex( hole, codimension );
       }
 
@@ -202,7 +202,7 @@ namespace Dune
       }
 
       /** \copydoc AdaptiveDofMapper::consecutive */
-      bool consecutive () const 
+      bool consecutive () const
       {
         return indexSet_.consecutive();
       }
@@ -249,7 +249,7 @@ namespace Dune
       for( unsigned int i = 0; i < numTypes; ++i )
       {
         const GeometryType &type = types[ i ];
-        
+
         const int numSubEntities = RefElements::general( type ).size( codimension );
         maxNumberOfDofs_ = std::max( maxNumberOfDofs_, numSubEntities );
       }
@@ -339,13 +339,13 @@ namespace Dune
         const GridPart &gridPart;
       };
 
-      //! create new mapper  
+      //! create new mapper
       static Object *createObject ( const Key &key )
       {
         return new Object ( key.gridPart );
       }
 
-      //! delete mapper object 
+      //! delete mapper object
       static void deleteObject ( Object *object )
       {
         delete object;

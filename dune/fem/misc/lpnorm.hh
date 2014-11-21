@@ -14,16 +14,16 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
-    // LPNormBase 
+    // LPNormBase
     // ----------
 
     template< class GridPart, class NormImplementation >
-    class LPNormBase 
-      : public BartonNackmanInterface< LPNormBase< GridPart, NormImplementation >, 
-                                       NormImplementation > 
+    class LPNormBase
+      : public BartonNackmanInterface< LPNormBase< GridPart, NormImplementation >,
+                                       NormImplementation >
     {
       typedef BartonNackmanInterface< LPNormBase< GridPart, NormImplementation >,
                                       NormImplementation >  BaseType ;
@@ -39,18 +39,18 @@ namespace Dune
       typedef typename GridIteratorType::Entity EntityType;
 
       template < class ReturnType,
-                 class UDiscreteFunctionType, 
+                 class UDiscreteFunctionType,
                  class VDiscreteFunctionType >
       struct NormOnEntityFunctor
       {
         const ThisType& norm_;
         const UDiscreteFunctionType& u_;
-        const VDiscreteFunctionType* v_; 
+        const VDiscreteFunctionType* v_;
         const unsigned int order_ ;
         ReturnType sum_;
 
-        unsigned int getOrder( const UDiscreteFunctionType& u, 
-                               const VDiscreteFunctionType& v ) const 
+        unsigned int getOrder( const UDiscreteFunctionType& u,
+                               const VDiscreteFunctionType& v ) const
         {
           const unsigned int uorder = u.space().order();
           const unsigned int vorder = v.space().order();
@@ -60,7 +60,7 @@ namespace Dune
 
         NormOnEntityFunctor( const ThisType& norm,
                       const UDiscreteFunctionType& u,
-                      const unsigned int order = 0 ) 
+                      const unsigned int order = 0 )
           : norm_( norm ),
             u_( u ),
             v_( 0 ),
@@ -71,7 +71,7 @@ namespace Dune
         NormOnEntityFunctor( const ThisType& norm,
                       const UDiscreteFunctionType& u,
                       const VDiscreteFunctionType& v,
-                      const unsigned int order = 0 ) 
+                      const unsigned int order = 0 )
           : norm_( norm ),
             u_( u ),
             v_( &v ),
@@ -80,14 +80,14 @@ namespace Dune
         {
         }
 
-        // apply norm operation on entity 
-        void operator() ( const EntityType& entity ) 
-        { 
-          // if v is not zero apply distance 
-          if( v_ ) 
+        // apply norm operation on entity
+        void operator() ( const EntityType& entity )
+        {
+          // if v is not zero apply distance
+          if( v_ )
             norm_.distanceLocal( entity, order_, u_, *v_, sum_ );
-          else   
-            norm_.normLocal( entity, order_, u_, sum_ ); 
+          else
+            norm_.normLocal( entity, order_, u_, sum_ );
         }
 
         const ReturnType& result() const { return sum_; }
@@ -96,14 +96,14 @@ namespace Dune
       template <bool uDiscrete, bool vDiscrete>
       struct ForEachCaller
       {
-        template <class UDiscreteFunctionType, 
-                  class VDiscreteFunctionType, 
+        template <class UDiscreteFunctionType,
+                  class VDiscreteFunctionType,
                   class ReturnType>
-        static 
+        static
         ReturnType forEach ( const ThisType& norm,
-                             const UDiscreteFunctionType& u, 
-                             const VDiscreteFunctionType& v, 
-                             const ReturnType& initialValue, 
+                             const UDiscreteFunctionType& u,
+                             const VDiscreteFunctionType& v,
+                             const ReturnType& initialValue,
                              const unsigned int order )
         {
           static_assert( uDiscrete && vDiscrete, "Distance can only be calculated between GridFunctions" );
@@ -111,61 +111,61 @@ namespace Dune
           typedef NormOnEntityFunctor< ReturnType, UDiscreteFunctionType, VDiscreteFunctionType >
             ForEachFunctorType;
 
-          // create functor 
+          // create functor
           ForEachFunctorType normOnEntity( norm, u, v, order );
 
-          // do grid part traversal and apply action on entity 
+          // do grid part traversal and apply action on entity
           u.space().forEach( normOnEntity );
 
           return normOnEntity.result();
         }
       };
 
-      // this specialization creates a grid function adapter 
+      // this specialization creates a grid function adapter
       template <bool vDiscrete>
       struct ForEachCaller<false, vDiscrete>
       {
-        template <class F, 
-                  class VDiscreteFunctionType, 
+        template <class F,
+                  class VDiscreteFunctionType,
                   class ReturnType>
-        static 
+        static
         ReturnType forEach ( const ThisType& norm,
-                             const F& f, const VDiscreteFunctionType& v, 
-                             const ReturnType& initialValue, 
+                             const F& f, const VDiscreteFunctionType& v,
+                             const ReturnType& initialValue,
                              const unsigned int order )
         {
           typedef GridFunctionAdapter< F, GridPartType>  GridFunction ;
-          GridFunction u( "LPNorm::adapter" , f , v.space().gridPart(), v.space().order() ); 
+          GridFunction u( "LPNorm::adapter" , f , v.space().gridPart(), v.space().order() );
 
-          return ForEachCaller< true, vDiscrete > :: 
+          return ForEachCaller< true, vDiscrete > ::
             forEach( norm, u, v, initialValue, order );
         }
       };
 
-      // this specialization simply switches arguments 
+      // this specialization simply switches arguments
       template <bool uDiscrete>
       struct ForEachCaller<uDiscrete, false>
       {
-        template <class UDiscreteFunctionType, 
-                  class F, 
+        template <class UDiscreteFunctionType,
+                  class F,
                   class ReturnType>
-        static 
+        static
         ReturnType forEach ( const ThisType& norm,
-                             const UDiscreteFunctionType& u, 
-                             const F& f, 
-                             const ReturnType& initialValue, 
+                             const UDiscreteFunctionType& u,
+                             const F& f,
+                             const ReturnType& initialValue,
                              const unsigned int order )
         {
-          return ForEachCaller< false, uDiscrete > :: 
+          return ForEachCaller< false, uDiscrete > ::
             forEach( norm, f, u, initialValue, order );
         }
       };
 
-      template <class DiscreteFunctionType, class ReturnType> 
-      ReturnType 
-      forEach ( const DiscreteFunctionType& u,  
+      template <class DiscreteFunctionType, class ReturnType>
+      ReturnType
+      forEach ( const DiscreteFunctionType& u,
                 const ReturnType& initialValue,
-                const unsigned int order = 0 ) const 
+                const unsigned int order = 0 ) const
       {
         static_assert( (IsBaseOf<Fem::HasLocalFunction, DiscreteFunctionType>::value),
                             "Norm only implemented for quantities implementing a local function!" );
@@ -173,30 +173,30 @@ namespace Dune
         typedef NormOnEntityFunctor< ReturnType, DiscreteFunctionType, DiscreteFunctionType >
           ForEachFunctorType;
 
-        // create functor 
+        // create functor
         ForEachFunctorType normOnEntity( *this, u, order );
 
-        // do grid part traversal and apply action on entity 
+        // do grid part traversal and apply action on entity
         u.space().forEach( normOnEntity );
 
         return normOnEntity.result();
       }
 
-      template <class UDiscreteFunctionType, 
-                class VDiscreteFunctionType, 
-                class ReturnType> 
-      ReturnType 
-      forEach ( const UDiscreteFunctionType& u,  
-                const VDiscreteFunctionType& v, 
+      template <class UDiscreteFunctionType,
+                class VDiscreteFunctionType,
+                class ReturnType>
+      ReturnType
+      forEach ( const UDiscreteFunctionType& u,
+                const VDiscreteFunctionType& v,
                 const ReturnType& initialValue,
-                const unsigned int order = 0 ) const 
+                const unsigned int order = 0 ) const
       {
         enum { uDiscrete = Conversion<UDiscreteFunctionType, HasLocalFunction>::exists };
         enum { vDiscrete = Conversion<VDiscreteFunctionType, HasLocalFunction>::exists };
 
-        // call forEach depending on which argument is a grid function, 
-        // i.e. has a local function 
-        return ForEachCaller< uDiscrete, vDiscrete > :: 
+        // call forEach depending on which argument is a grid function,
+        // i.e. has a local function
+        return ForEachCaller< uDiscrete, vDiscrete > ::
                   forEach( *this, u, v, initialValue, order );
       }
 
@@ -206,28 +206,28 @@ namespace Dune
       {}
 
     protected:
-      template< class UDiscreteFunctionType, 
+      template< class UDiscreteFunctionType,
                 class VDiscreteFunctionType,
                 class ReturnType >
-      inline void 
-      distanceLocal ( const EntityType& entity, const unsigned int order, 
+      inline void
+      distanceLocal ( const EntityType& entity, const unsigned int order,
                       const UDiscreteFunctionType &u,
                       const VDiscreteFunctionType &v,
-                      ReturnType& sum ) const 
+                      ReturnType& sum ) const
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().distanceLocal( entity, order, u, v, sum ) );
       }
-      
-      template< class UDiscreteFunctionType, 
+
+      template< class UDiscreteFunctionType,
                 class ReturnType >
-      inline void 
-      normLocal ( const EntityType& entity, const unsigned int order, 
+      inline void
+      normLocal ( const EntityType& entity, const unsigned int order,
                   const UDiscreteFunctionType &u,
-                  ReturnType& sum ) const 
+                  ReturnType& sum ) const
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().normLocal( entity, order, u, sum ) );
       }
-      
+
       const GridPartType &gridPart () const { return gridPart_; }
 
       typename GridPartType::CollectiveCommunicationType comm () const
@@ -256,7 +256,7 @@ namespace Dune
     };
 
     //! default Quadrature Order Calculator
-    //  can be re-implemented in order to use 
+    //  can be re-implemented in order to use
     //  a different type of calculation
     //  which can be sepcified in the second template argument of LPNorm
     struct DefaultOrderCalculator : public OrderCalculatorInterface
@@ -273,7 +273,7 @@ namespace Dune
     };
 
     template< class GridPart, class OrderCalculator = DefaultOrderCalculator >
-    class LPNorm : public LPNormBase < GridPart, LPNorm< GridPart, OrderCalculator > > 
+    class LPNorm : public LPNormBase < GridPart, LPNorm< GridPart, OrderCalculator > >
     {
       typedef LPNorm< GridPart, OrderCalculator > ThisType;
       typedef LPNormBase< GridPart, ThisType > BaseType ;
@@ -302,7 +302,7 @@ namespace Dune
       template< class DiscreteFunctionType >
       typename DiscreteFunctionType::RangeFieldType
       norm ( const DiscreteFunctionType &u ) const;
-      
+
       template< class UDiscreteFunctionType, class VDiscreteFunctionType >
       typename UDiscreteFunctionType::RangeFieldType
       distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
@@ -335,7 +335,7 @@ namespace Dune
 
     // WeightedLPNorm
     // --------------
-    
+
     template< class WeightFunction, class OrderCalculator = DefaultOrderCalculator >
     class WeightedLPNorm
     : public LPNorm< typename WeightFunction::DiscreteFunctionSpaceType::GridPartType,
@@ -349,14 +349,14 @@ namespace Dune
 
       typedef typename WeightFunctionType::DiscreteFunctionSpaceType WeightFunctionSpaceType;
       typedef typename WeightFunctionSpaceType::GridPartType GridPartType;
-     
+
     protected:
       template< class Function >
       struct WeightedFunctionMultiplicator;
-      
+
       typedef typename WeightFunctionType::LocalFunctionType LocalWeightFunctionType;
       typedef typename WeightFunctionType::RangeType WeightType;
-      
+
       typedef typename BaseType::GridIteratorType GridIteratorType;
       typedef typename BaseType::IntegratorType IntegratorType;
 
@@ -390,12 +390,12 @@ namespace Dune
 
     // Implementation of LPNorm
     // ------------------------
-   
+
     template< class GridPart, class OrderCalculator >
     inline LPNorm< GridPart, OrderCalculator >::LPNorm ( const GridPartType &gridPart, const double p )
       :  BaseType( gridPart ),
          p_(p),
-         orderCalc_( new OrderCalculator() )    
+         orderCalc_( new OrderCalculator() )
     {
     }
 
@@ -414,7 +414,7 @@ namespace Dune
       typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
       typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
-      // calculate integral over each element 
+      // calculate integral over each element
       ReturnType sum = BaseType :: forEach( u, ReturnType(0) );
 
       // return result
@@ -430,10 +430,10 @@ namespace Dune
       typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
       typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
-      // calculate integral over each element 
+      // calculate integral over each element
       ReturnType sum = BaseType :: forEach( u, v, ReturnType(0) );
 
-      // return result 
+      // return result
       return std::pow( comm().sum( sum[ 0 ] ), (1.0/p_) );
     }
 
@@ -441,7 +441,7 @@ namespace Dune
     template< class DiscreteFunctionType, class ReturnType >
     inline void
     LPNorm< GridPart, OrderCalculator >::
-    normLocal ( const EntityType& entity, 
+    normLocal ( const EntityType& entity,
                 const unsigned int order,
                 const DiscreteFunctionType &u,
                 ReturnType& sum ) const
@@ -462,7 +462,7 @@ namespace Dune
               class ReturnType >
     inline void
     LPNorm< GridPart, OrderCalculator >::
-    distanceLocal ( const EntityType& entity, 
+    distanceLocal ( const EntityType& entity,
                     const unsigned int order,
                     const UDiscreteFunctionType &u,
                     const VDiscreteFunctionType &v,
@@ -481,11 +481,11 @@ namespace Dune
 
       LocalDistanceType dist( ulocal, vlocal );
       FunctionMultiplicator< LocalDistanceType > distp( dist, p_ );
-        
+
       integrator.integrateAdd( entity, distp, sum );
     }
 
-   
+
     template< class GridPart, class OrderCalculator >
     template< class Function >
     struct LPNorm< GridPart, OrderCalculator >::FunctionMultiplicator
@@ -499,7 +499,7 @@ namespace Dune
       : function_( function ),
         p_(p)
       {}
-      
+
       template< class Point >
       void evaluate ( const Point &x, RangeType &ret ) const
       {
@@ -514,7 +514,7 @@ namespace Dune
     };
 
 
-    template< class GridPart, class OrderCalculator >    
+    template< class GridPart, class OrderCalculator >
     template< class UFunction, class VFunction >
     struct LPNorm< GridPart, OrderCalculator >::FunctionDistance
     {
@@ -528,7 +528,7 @@ namespace Dune
       FunctionDistance ( const UFunctionType &u, const VFunctionType &v )
       : u_( u ), v_( v )
       {}
-      
+
       template< class Point >
       void evaluate ( const Point &x, RangeType &ret ) const
       {
@@ -555,7 +555,7 @@ namespace Dune
 
     // Implementation of WeightedL2Norm
     // --------------------------------
-    
+
     template< class WeightFunction, class OrderCalculator >
     inline WeightedLPNorm< WeightFunction, OrderCalculator >
       ::WeightedLPNorm ( const WeightFunctionType &weightFunction, double p )
@@ -572,8 +572,8 @@ namespace Dune
     template< class UDiscreteFunctionType, class ReturnType >
     inline void
     WeightedLPNorm< WeightFunction, OrderCalculator >
-      ::normLocal ( const EntityType &entity, const int order, 
-          const UDiscreteFunctionType &u, 
+      ::normLocal ( const EntityType &entity, const int order,
+          const UDiscreteFunctionType &u,
           ReturnType &sum ) const
     {
       typedef typename UDiscreteFunctionType::LocalFunctionType LocalFunctionType;
@@ -583,20 +583,20 @@ namespace Dune
 
       LocalWeightFunctionType wflocal = weightFunction_.localFunction( entity );
       LocalFunctionType ulocal = u.localFunction( entity );
-     
+
       WeightedFunctionMultiplicator< LocalFunctionType > ulocal2( wflocal, ulocal, p_ );
 
       integrator.integrateAdd( entity, ulocal2, sum );
     }
-   
-    
+
+
     template< class WeightFunction,class OrderCalculator >
     template< class UDiscreteFunctionType, class VDiscreteFunctionType, class ReturnType >
     inline void
     WeightedLPNorm< WeightFunction, OrderCalculator >
       ::distanceLocal ( const EntityType &entity, const int order,
-          const UDiscreteFunctionType &u, 
-          const VDiscreteFunctionType &v, 
+          const UDiscreteFunctionType &u,
+          const VDiscreteFunctionType &v,
           ReturnType &sum ) const
     {
       typedef typename UDiscreteFunctionType::LocalFunctionType ULocalFunctionType;
@@ -612,14 +612,14 @@ namespace Dune
       LocalWeightFunctionType wflocal = weightFunction_.localFunction( entity );
       ULocalFunctionType ulocal = u.localFunction( entity );
       VLocalFunctionType vlocal = v.localFunction( entity );
-     
+
       LocalDistanceType dist( ulocal, vlocal );
       WeightedFunctionMultiplicator< LocalDistanceType > dist2( wflocal, dist );
-      
+
       integrator.integrateAdd( entity, dist2, sum );
     }
 
-    
+
     template< class WeightFunction, class OrderCalculator>
     template< class Function >
     struct WeightedLPNorm< WeightFunction, OrderCalculator>::WeightedFunctionMultiplicator
@@ -636,7 +636,7 @@ namespace Dune
         function_( function ),
         p_(p)
       {}
-      
+
       template< class Point >
       void evaluate ( const Point &x, RangeType &ret ) const
       {
@@ -654,8 +654,8 @@ namespace Dune
       double p_;
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_LPNORM_HH

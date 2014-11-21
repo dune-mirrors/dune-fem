@@ -7,9 +7,9 @@
 
 using namespace std;
 
-namespace Dune 
+namespace Dune
 {
-  
+
   namespace Fem
   {
 

@@ -9,8 +9,8 @@
 namespace Dune
 {
 
-  namespace Fem 
-  {  
+  namespace Fem
+  {
 
     class LegendrePolynomials
     {
@@ -30,9 +30,9 @@ namespace Dune
           phi = phi * x + factor[ num ][ i ];
         return weight[ num ] * phi;
       }
-      
+
       static double jacobian ( const int num, const double x )
-      { 
+      {
         assert( 0 <= num && num < maxOrder );
 
         double phi = 0.;
@@ -44,9 +44,9 @@ namespace Dune
         }
         return weight[ num ] * phi;
       }
-         
+
       static double hessian ( const int num, const double x )
-      { 
+      {
         assert( 0 <= num && num < maxOrder );
 
         double phi=0.;
@@ -60,8 +60,8 @@ namespace Dune
       }
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_SPACE_SHAPEFUNCTIONSET_LEGENDREPOLYNOMIALS_HH

@@ -34,7 +34,7 @@ namespace Dune
     // ApplyLocalOperatorDiscreteModel
     // -------------------------------
 
-    /** \brief Sample class layout of discrete models as expected by 
+    /** \brief Sample class layout of discrete models as expected by
      *         ApplyLocalOperatorPass.
      *
      *  The discrete model determines the local function to be passed
@@ -77,7 +77,7 @@ namespace Dune
       //! \brief return order of local function to be passed to local operator
       int order ( const EntityType &entity ) const;
 
-      //! \brief evaluate method of local function 
+      //! \brief evaluate method of local function
       template< class ArgumentTuple >
       void evaluate ( const EntityType &entity,
                       const LocalCoordinateType &x,
@@ -108,11 +108,11 @@ namespace Dune
      *         operation to be applied.
      *
      *  Local pass that evaluates a local function from given discrete
-     *  model. The resulting local function is passed to the template 
-     *  argument local operator. The local operator writes to the 
+     *  model. The resulting local function is passed to the template
+     *  argument local operator. The local operator writes to the
      *  destination of this pass.
      *
-     *  The local operator must have the following form: 
+     *  The local operator must have the following form:
      * \code
   struct LocalOperator
   {
@@ -125,7 +125,7 @@ namespace Dune
      *  \tparam  LocalOperator  local operator
      *  \tparam  PreviousPass   type of previous pass
      *  \tparam  id             pass id
-     * 
+     *
      */
     template< class DiscreteModel, class LocalOperator, class PreviousPass, int id >
     class ApplyLocalOperatorPass
@@ -339,7 +339,7 @@ namespace Dune
         discreteFunctionPointerTuple_( FilterType::apply( argument ) ),
         localFunctionTuple_( DereferenceTuple< DiscreteFunctionPointerTupleType >::apply( discreteFunctionPointerTuple_ ) )
       {}
-      
+
       //! \brief update local functions
       void setEntity ( const EntityType &entity )
       {
@@ -367,7 +367,7 @@ namespace Dune
         localFunctionTuple().evaluate( x, values_ );
         discreteModel().evaluate( entity(), coordinate( x ), values_, value );
       }
-      
+
       //! \brief evalute jacobians or local functions and pass values to discrete model
       template< class Point >
       void jacobian ( const Point &x, JacobianRangeType &jacobian ) const

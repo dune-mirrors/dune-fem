@@ -157,7 +157,7 @@ namespace Dune
 
       // type of Vectorial BasisFunctionSet
       // NOTE: local dof ordering is always point based !!!
-      // VerticalDofAlignment   == PointBased 
+      // VerticalDofAlignment   == PointBased
       // HorizontalDofAlignment == VariableBased
       typedef VectorialBasisFunctionSet< ContainedBasisFunctionSetType, RangeType, VerticalDofAlignment >  BasisFunctionSetType;
 
@@ -263,10 +263,10 @@ namespace Dune
 
 
       //! destructor removing mapper from DofManagers index set list
-      ~CombinedSpace() 
-      { 
+      ~CombinedSpace()
+      {
         DofManagerType::instance( gridPart().grid() ).removeIndexSet( blockMapper_ );
-      } 
+      }
 
     private:
       // prohibit copying
@@ -428,7 +428,7 @@ namespace Dune
     // DefaultLocalRestrictProlong also simply derives from the base class for the PointBased approach
     template< class ContainedSpace, int N >
     class DefaultLocalRestrictProlong< CombinedSpace< ContainedSpace, N, PointBased > >
-    : public DefaultLocalRestrictProlong< typename CombinedSpace< ContainedSpace, N, PointBased >::BaseType > 
+    : public DefaultLocalRestrictProlong< typename CombinedSpace< ContainedSpace, N, PointBased >::BaseType >
     {
       typedef CombinedSpace< ContainedSpace, N, PointBased > SpaceType;
       typedef DefaultLocalRestrictProlong< typename SpaceType::BaseType > BaseType;

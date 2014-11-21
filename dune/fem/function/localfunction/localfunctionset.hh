@@ -26,7 +26,7 @@ namespace Dune
      *  \tparam  FunctionSpace  function space
      */
     template< class Entity, class Range >
-    struct LocalFunctionSet 
+    struct LocalFunctionSet
     {
       //! \brief entity type
       typedef Entity EntityType;
@@ -34,7 +34,7 @@ namespace Dune
       //! \brief function space type
       typedef FunctionSpace< typename Entity::Geometry::ctype, typename Range::value_type,
                              Entity::Geometry::coorddimension, Range::dimension > FunctionSpaceType;
-      
+
       //! \brief domain type
       typedef typename FunctionSpaceType::DomainType DomainType;
       //! \brief range type
@@ -142,7 +142,7 @@ namespace Dune
       typedef typename LocalFunctionSet::HessianRangeType HessianRangeType;
 
       LocalFunctionSetProxy () : localFunctionSet_( nullptr ) {}
-      
+
       LocalFunctionSetProxy ( const LocalFunctionSet *localFunctionSet )
       : localFunctionSet_( localFunctionSet )
       {}

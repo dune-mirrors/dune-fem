@@ -15,8 +15,8 @@
 namespace Dune
 {
 
-  namespace Fem 
-  { 
+  namespace Fem
+  {
 
     // Internal Forward Declarations
     // -----------------------------
@@ -29,7 +29,7 @@ namespace Dune
     // ----------------------------
 
     template< class DiscreteFunctionSpace, class DofVector >
-    struct DiscreteFunctionTraits< VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > > 
+    struct DiscreteFunctionTraits< VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > >
     {
       typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 
@@ -130,7 +130,7 @@ namespace Dune
         dofVector_( &dofVector ),
         freeDofVector_( false )
       {
-        // size of dof vector must be size of space in blocks x localBlockSize 
+        // size of dof vector must be size of space in blocks x localBlockSize
         assert( dofVector_->size() == (unsigned int)dfSpace.blockMapper().size() *
             DiscreteFunctionSpaceType :: localBlockSize );
       }
@@ -253,7 +253,7 @@ namespace Dune
       {
         return *dofVector_;
       }
-      
+
       DofVectorType &dofVector ()
       {
         return *dofVector_;
@@ -277,10 +277,10 @@ namespace Dune
         < Fem :: VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > >
       : public HasLeakPointer< DofVector >
       {};
-      
+
     }
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

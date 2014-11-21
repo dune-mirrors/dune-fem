@@ -24,7 +24,7 @@ namespace Dune
         colEntity_( colEntity )
       {}
 
-      //! return local matrix 
+      //! return local matrix
       inline LocalMatrixType localMatrix( const RowEntityType &rowEntity ) const
       {
         return linOp_.localMatrix( rowEntity, colEntity_ );

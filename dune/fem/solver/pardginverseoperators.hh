@@ -28,12 +28,12 @@ namespace Dune
 
     template< class DomainFunctionSpace, class RangeFunctionSpace >
     class ParDGOperator< AdaptiveDiscreteFunction< DomainFunctionSpace >, AdaptiveDiscreteFunction< RangeFunctionSpace > >
-    : public PARDG::Function 
+    : public PARDG::Function
     {
       typedef ParDGOperator< AdaptiveDiscreteFunction< DomainFunctionSpace >, AdaptiveDiscreteFunction< RangeFunctionSpace > > ThisType;
 
       typedef AdaptiveDiscreteFunction< DomainFunctionSpace > DomainFunctionType;
-      typedef AdaptiveDiscreteFunction< RangeFunctionSpace > RangeFunctionType; 
+      typedef AdaptiveDiscreteFunction< RangeFunctionSpace > RangeFunctionType;
 
     public:
       typedef Operator< DomainFunctionType, RangeFunctionType > OperatorType;
@@ -53,15 +53,15 @@ namespace Dune
         RangeFunctionType wFunction( "ParDGOperator w", rangeSpace_, w );
         operator_( uFunction, wFunction );
       }
-      
+
       int dim_of_argument( int i = 0 ) const
-      { 
+      {
         assert( i == 0 );
         return domainSpace_.size();
       }
 
       int dim_of_value ( int i = 0 ) const
-      { 
+      {
         assert( i == 0 );
         return rangeSpace_.size();
       }
@@ -163,7 +163,7 @@ namespace Dune
       void setupSolver ( double redEps, double absLimit, unsigned int maxIterations, bool verbose )
       {
         static const std::string errorTypeTable[] = { "absolute", "relative" };
-        // errormeassure used in the linear solver 
+        // errormeassure used in the linear solver
         int errorType = Parameter::getEnum( "fem.solver.errormeasure", errorTypeTable, 0 );
         if (errorType == 1)
           solver_.set_tolerance( redEps, true);
@@ -173,7 +173,7 @@ namespace Dune
         maxIterations = std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations );
         solver_.set_max_number_of_iterations( int( maxIterations ) );
 
-        // only set output when general verbose mode is enabled 
+        // only set output when general verbose mode is enabled
         // (basically to avoid output on every rank)
         if( verbose && Parameter :: verbose() )
         {

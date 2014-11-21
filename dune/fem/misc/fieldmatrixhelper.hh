@@ -41,14 +41,14 @@ namespace Dune
           for( int j = 0; j < p; ++j )
           {
             Field3 &value = C[ i ][ j ];
-            
+
             value = 0;
             for( int k = 0; k < n; ++k )
               value += A[ i ][ k ] * B[ k ][ j ];
           }
         }
       }
-      
+
       template< class Field1, class Field2, class Field3 >
       inline void multiply ( const DynamicMatrix< Field1 >& A,
                              const DynamicMatrix< Field2 >& B,
@@ -69,14 +69,14 @@ namespace Dune
           for( int j = 0; j < p; ++j )
           {
             Field3 &value = C[ i ][ j ];
-            
+
             value = 0;
             for( int k = 0; k < n; ++k )
               value += A[ i ][ k ] * B[ k ][ j ];
           }
         }
       }
-      
+
       template< class Field1, class Field2, class Field3, int m, int n, int p >
       inline void multiply ( const FieldMatrix< Field1, m, n > &A,
                              const FieldMatrix< Field2, n, p > &B,
@@ -93,7 +93,7 @@ namespace Dune
           }
         }
       }
-      
+
     }
 
   } // namespace Fem

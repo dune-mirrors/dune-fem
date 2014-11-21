@@ -9,11 +9,11 @@
 
 #include "dgl2projection.hh"
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
-  { 
+  namespace Fem
+  {
 
     /*! @ingroup L2ProjectionOperator
      *  \class L2Projection
@@ -22,41 +22,41 @@ namespace Dune
      *         assumes orthogonal base functions!
      */
     template < class DType, class RType>
-    class L2Projection : public Operator<DType , RType> 
+    class L2Projection : public Operator<DType , RType>
     {
     public:
-      //! domain function type 
+      //! domain function type
       typedef DType  DomainType;
-      //! range function type 
+      //! range function type
       typedef RType  RangeType;
 
-      /** \brief Constructor 
+      /** \brief Constructor
        *    \param  quadOrder      degree for quadrature rule (default = 2*space.order())
        *    \param  doCommunicate  apply communication for the result (default = true)
-       */    
-      explicit L2Projection( const int quadOrder = -1, 
-                             const bool doCommunicate = true ) 
-        : quadOrder_( quadOrder ), doCommunicate_( doCommunicate ) 
+       */
+      explicit L2Projection( const int quadOrder = -1,
+                             const bool doCommunicate = true )
+        : quadOrder_( quadOrder ), doCommunicate_( doCommunicate )
       {}
 
-      /** \brief  calculates the L2 projection of a function onto the 
+      /** \brief  calculates the L2 projection of a function onto the
        *          discrete space discreteFunction belongs to.
-       *  \param  function          function to be projected 
+       *  \param  function          function to be projected
        *  \param  discreteFunction  discrete result of projection  */
-      virtual void operator() ( const DomainType& function, RangeType& discreteFunction ) const 
+      virtual void operator() ( const DomainType& function, RangeType& discreteFunction ) const
       {
         if( discreteFunction.space().continuous() )
-          DUNE_THROW(NotImplemented,"L2-Projection not implemented for contiuous spaces!"); 
-        else 
+          DUNE_THROW(NotImplemented,"L2-Projection not implemented for contiuous spaces!");
+        else
           DGL2ProjectionImpl::project( function, discreteFunction, quadOrder_, doCommunicate_ );
       }
 
     protected:
-      const int quadOrder_;          // order of quadrature  
-      const bool doCommunicate_ ; // true if communication is applied for the result 
+      const int quadOrder_;          // order of quadrature
+      const bool doCommunicate_ ; // true if communication is applied for the result
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

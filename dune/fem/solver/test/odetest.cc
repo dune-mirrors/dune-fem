@@ -24,16 +24,16 @@ using namespace std;
 // Faked data structure for our unknown,
 // nothing more than a "tuned up" double
 class myDest {
-  struct SpaceDummy 
+  struct SpaceDummy
   {
     int size () const { return 1; }
   };
-  
+
 public:
   typedef double DomainFieldType;
   typedef double RangeFieldType;
   typedef SpaceDummy DiscreteFunctionSpaceType;
-  
+
   myDest(string, const SpaceDummy&, const double* u = 0) {
   }
   myDest() {
@@ -83,7 +83,7 @@ public:
   void operator()(const DestinationType& x,
                   DestinationType& y) const {
     y[0]=2.0*t_;
-    //y[0]=3.0*t_*t_;        
+    //y[0]=3.0*t_*t_;
     //y[0]=x[0];
   }
 

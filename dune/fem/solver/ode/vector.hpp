@@ -14,7 +14,7 @@ public:
   Vector(int n, const double *a);
   Vector(const Vector &v); // copy constructor
   ~Vector();
-  
+
   // element access
   double& operator()(int i);
   double operator()(int i) const;
@@ -46,7 +46,7 @@ private:
 
 // class Vector inline implementation
 
-inline 
+inline
 Vector::Vector(int n) : n(n), data(new double[n])
 {
   assert(data);
@@ -54,7 +54,7 @@ Vector::Vector(int n) : n(n), data(new double[n])
 }
 
 
-inline 
+inline
 Vector::Vector(int n, const double *a) : n(n), data(new double[n])
 {
   assert(data);
@@ -62,7 +62,7 @@ Vector::Vector(int n, const double *a) : n(n), data(new double[n])
 }
 
 
-inline 
+inline
 Vector::Vector(const Vector &v) : n(v.n), data(new double[v.n])
 {
   assert(data);
@@ -70,7 +70,7 @@ Vector::Vector(const Vector &v) : n(v.n), data(new double[v.n])
 }
 
 
-inline 
+inline
 Vector::~Vector()
 {
   delete[] data;

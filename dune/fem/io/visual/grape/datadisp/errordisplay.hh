@@ -12,7 +12,7 @@ namespace Dune
   template< class DiscreteFunction, class SolutionType, bool withTime = true >
   class DisplayErrorFunction;
 
-  
+
   template< class DiscreteFunction, class SolutionType >
   class DisplayErrorFunction< DiscreteFunction, SolutionType, true >
   {
@@ -32,7 +32,7 @@ namespace Dune
     struct Error;
 
     typedef Fem::LocalFunctionAdapter< Error > ErrorFunctionType;
-    
+
   public:
     template< class GrapeDispType >
     DisplayErrorFunction ( GrapeDispType &disp,
@@ -62,7 +62,7 @@ namespace Dune
   struct DisplayErrorFunction< DiscreteFunction, SolutionType, true >::Error
   {
     typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-    
+
     typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType
       FunctionSpaceType;
     typedef typename FunctionSpaceType :: DomainType DomainType;
@@ -80,7 +80,7 @@ namespace Dune
     Error ( const DiscreteFunctionType &Uh,
             const SolutionType &solution,
             double time = 0 )
-    : lUh_( Uh ), 
+    : lUh_( Uh ),
       initU0_( solution ),
       entity_( 0 ),
       time_( time )
@@ -147,7 +147,7 @@ namespace Dune
     struct Error
     {
       typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-      
+
       typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType
         FunctionSpaceType;
       typedef typename FunctionSpaceType :: DomainType DomainType;
@@ -210,13 +210,13 @@ namespace Dune
     typedef Fem::LocalFunctionAdapter< Error > ErrorFunctionType;
     typedef Fem::GridFunctionAdapter< SolutionType, GridPartType >
       GridSolutionType;
-    
+
   protected:
     const GridPartType &gridPart_;
     GridSolutionType gridSolution_;
     Error error_;
     ErrorFunctionType errorFunction_;
-    
+
   public:
     template< class GrapeDispType >
     DisplayErrorFunction ( GrapeDispType &disp,

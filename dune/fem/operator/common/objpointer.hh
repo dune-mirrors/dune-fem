@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_OBJPOINTER_HH
 #define DUNE_FEM_OBJPOINTER_HH
 
-namespace Dune 
+namespace Dune
 {
 
   namespace Fem
@@ -13,18 +13,18 @@ namespace Dune
     struct ObjPointer
     {
       typedef ObjPointer<ObjType> ObjPointerType;
-      //! remember object item and next pointer 
+      //! remember object item and next pointer
       ObjType * item;
       ObjPointerType *next;
 
-      //! new ObjPointer is only created with pointer for item 
+      //! new ObjPointer is only created with pointer for item
       ObjPointer () : item (0) , next (0) {}
 
-      //! new ObjPointer is only created with pointer for item 
+      //! new ObjPointer is only created with pointer for item
       ObjPointer (ObjType  *t) : item (t) , next (0) {}
 
-      //! delete the next ObjPointer and the item 
-      //! need virtual desctructor for deleting the real objects. 
+      //! delete the next ObjPointer and the item
+      //! need virtual desctructor for deleting the real objects.
       virtual ~ObjPointer ()
       {
         if(next) delete next; next = 0;
@@ -32,22 +32,22 @@ namespace Dune
       }
     };
 
-    //! stores the new created objects when DiscreteOperatorDefault 
-    //! operator + or operator * is called 
+    //! stores the new created objects when DiscreteOperatorDefault
+    //! operator + or operator * is called
     class ObjPointerStorage
     {
       typedef ObjPointerStorage MyType;
     public:
-      //! make new operator with item points to null 
+      //! make new operator with item points to null
       ObjPointerStorage () : item_ (0) {}
 
-      //! need virtual desctructor for deleting the real objects. 
+      //! need virtual desctructor for deleting the real objects.
       virtual ~ObjPointerStorage ()
       {
         if(item_) delete item_; item_ = 0;
       }
 
-      //! Store new generated DiscreteOperator Pointer 
+      //! Store new generated DiscreteOperator Pointer
       template <class DiscrOpType>
       void saveObjPointer ( DiscrOpType * discrOp )
       {
@@ -62,11 +62,11 @@ namespace Dune
       void saveObjPointer ( DiscrOpType * discrOp , LocalOpType * lop )
       {
         saveObjPointer( discrOp );
-        saveObjPointer( lop     );  
+        saveObjPointer( lop     );
       }
 
     private:
-      // store the objects created by operator + in here 
+      // store the objects created by operator + in here
       typedef ObjPointer<MyType> ObjPointerType;
       ObjPointerType * item_;
 

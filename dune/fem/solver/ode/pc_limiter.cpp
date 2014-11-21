@@ -8,7 +8,7 @@ using namespace pardg;
 
 
 
-PCLimiter::PCLimiter(int dim_system, int num_base_polys, 
+PCLimiter::PCLimiter(int dim_system, int num_base_polys,
 		     MeshBase &mesh, DG &dg) :
   dim_system(dim_system), num_base_polys(num_base_polys), mesh(mesh), dg(dg)
 {

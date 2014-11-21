@@ -257,7 +257,7 @@ namespace Dune
       {
         const EntityType &entity = localMatrix.domainEntity();
         Geometry geo = entity.geometry();
-        if( affine() || geo.affine() ) 
+        if( affine() || geo.affine() )
           rightMultiplyInverseLocally( entity, geo, localMatrix );
         else
           rightMultiplyInverseDefault( entity, geo, localMatrix );
@@ -469,8 +469,8 @@ namespace Dune
         {
           return true;
         }
-        
-        // otherwise use geometry affinity 
+
+        // otherwise use geometry affinity
         return false ;
       }
 

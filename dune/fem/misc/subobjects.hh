@@ -13,8 +13,8 @@ namespace Dune
   namespace Fem
   {
 
-    template< class DofVector, class Dof > 
-    class SubDofVector 
+    template< class DofVector, class Dof >
+    class SubDofVector
     {
       typedef DofVector DofVectorType;
       typedef Dof DofType;
@@ -34,7 +34,7 @@ namespace Dune
           return dofs_[ i + offset_ ];
         }
 
-        DofType &operator[] ( const int i ) 
+        DofType &operator[] ( const int i )
         {
           assert( (i < size_ )&& (i >= 0 ) );
           return dofs_[ i + offset_ ];
@@ -80,7 +80,7 @@ namespace Dune
 
 
     template <class DomainObject, class RangeObject, int offset >
-    class SubObject 
+    class SubObject
     {
       typedef DomainObject DomainObjectType;
       typedef RangeObject RangeObjectType;
@@ -126,7 +126,7 @@ namespace Dune
 
   // cast into fieldMatrix
   template<class DomainObj, class RangeObj, int offset>
-  void istl_assign_to_fmatrix( DenseMatrix< typename remove_const< RangeObj > :: type >& fm, 
+  void istl_assign_to_fmatrix( DenseMatrix< typename remove_const< RangeObj > :: type >& fm,
                                const Fem::SubObject<DomainObj, RangeObj, offset>& s)
   {
     for( int i = 0; i < s.size(); ++i )

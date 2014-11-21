@@ -10,7 +10,7 @@ namespace Dune
 
   namespace Fem
   {
- 
+
     template< class Traits >
     class ArrayAllocatorInterface
     : public BartonNackmanInterface< ArrayAllocatorInterface< Traits >,
@@ -25,13 +25,13 @@ namespace Dune
       typedef typename Traits :: ArrayAllocatorType ArrayAllocatorType;
 
       typedef ThisType ArrayAllocatorInterfaceType;
-      
+
       typedef typename Traits :: ElementType ElementType;
       typedef typename Traits :: ElementPtrType ElementPtrType;
 
     protected:
       using BaseType :: asImp;
-      
+
     public:
       inline void allocate ( unsigned int size,
                              ElementPtrType &array ) const
@@ -83,7 +83,7 @@ namespace Dune
       {
         ElementPtrType newArray;
         allocate( newSize, newArray );
-        
+
         const unsigned int copySize = std :: min( oldSize, newSize );
         for( unsigned int i = 0; i < copySize; ++i )
           newArray[ i ] = array[ i ];
@@ -119,7 +119,7 @@ namespace Dune
       {};
     #endif
 
-    
+
     template< class Element >
     struct StandardArrayAllocatorTraits
     {
@@ -141,7 +141,7 @@ namespace Dune
     public:
       typedef typename Traits :: ElementType ElementType;
       typedef typename Traits :: ElementPtrType ElementPtrType;
-      
+
     public:
       inline void allocate ( unsigned int size,
                              ElementPtrType &array ) const
@@ -154,7 +154,7 @@ namespace Dune
         else
           array = 0;
       }
-    
+
       inline void free ( ElementPtrType &array ) const
       {
         if( array != 0 )
@@ -184,11 +184,11 @@ namespace Dune
       typedef CArrayAllocator< Element > ThisType;
       typedef CArrayAllocatorTraits< Element > Traits;
       typedef ArrayAllocatorDefault< Traits > BaseType;
-      
+
     public:
       typedef typename Traits :: Element ElementType;
       typedef typename Traits :: ElementPtrType ElementPtrType;
-      
+
     public:
       inline void allocate ( unsigned int size,
                              ElementPtrType &array ) const
@@ -200,7 +200,7 @@ namespace Dune
         } else
           array = 0;
       }
-    
+
       inline void free ( ElementPtrType &array ) const
       {
         if( array != 0 )
@@ -235,9 +235,9 @@ namespace Dune
     {
       typedef ArrayOverAllocatorElementPointer< Element, WrappedArrayAllocator >
         ThisType;
-      
+
       friend class ArrayOverAllocator< Element, WrappedArrayAllocator >;
-      
+
     public:
       typedef Element ElementType;
 
@@ -374,7 +374,7 @@ namespace Dune
         array.size_ = (size * memFactor_) / 1024;
         allocator_.allocate( array.size_, array.ptr_ );
       }
-    
+
       inline void free ( ElementPtrType &array ) const
       {
         allocator_.free( array.ptr_ );
@@ -409,7 +409,7 @@ namespace Dune
 #endif
 
   } // namespace Fem
-   
+
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_ARRAYALLOCATOR_HH

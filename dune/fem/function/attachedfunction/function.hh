@@ -22,7 +22,7 @@ namespace Dune
 
 
     template< class DiscreteFunctionSpace >
-    struct DiscreteFunctionTraits< AttachedDiscreteFunction< DiscreteFunctionSpace > > 
+    struct DiscreteFunctionTraits< AttachedDiscreteFunction< DiscreteFunctionSpace > >
     {
       typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
 

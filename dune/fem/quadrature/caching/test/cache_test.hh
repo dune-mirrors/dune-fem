@@ -8,7 +8,7 @@
 namespace Dune {
   namespace Fem {
 
-  class CacheProvider_Test : public Test 
+  class CacheProvider_Test : public Test
   {
   public:
     virtual void run();

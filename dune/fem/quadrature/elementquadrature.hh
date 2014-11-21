@@ -8,7 +8,7 @@ namespace Dune
 {
 
   namespace Fem
-  { 
+  {
 
     /*! \class ElementQuadrature
      *  \ingroup Quadrature
@@ -27,7 +27,7 @@ namespace Dune
      *
      *  The ElementQuadrature takes a subentity and transforms the quadrature
      *  corresponding to the geometry to the codim-0 reference element.
-     *  
+     *
      *  To achieve this goal, an element quadrature depends stronger on the
      *  context in which it is used. For example, for each face within a
      *  tetrahedron (though they are all the same) we need a different
@@ -54,7 +54,7 @@ namespace Dune
       // type of single coordinate
       typedef typename GridPartImp :: ctype ctype;
 
-      // dimension of quadrature 
+      // dimension of quadrature
       enum { dimension = GridPartImp ::  dimension };
 
       // codimension of quadrature
@@ -62,13 +62,13 @@ namespace Dune
 
       // type of used integration point list
       typedef Quadrature< ctype, dimension-codim, DefaultQuadratureTraits > IntegrationPointListType;
-      
+
       // type of local coordinate (with respect to the codim-0 entity)
       typedef typename Quadrature< ctype, dimension, DefaultQuadratureTraits > :: CoordinateType
-        CoordinateType; 
+        CoordinateType;
     };
 
-    
+
 
     /** \copydoc ElementQuadrature */
     template< typename GridPartImp >
@@ -88,13 +88,13 @@ namespace Dune
 
       //! dimension of the world
       enum { dimension = GridPartType :: dimension };
-      
+
       //! type for reals (usually double)
       typedef typename GridPartType :: ctype RealType;
-      
-      //! type for coordinates in the codim-0 reference element 
+
+      //! type for coordinates in the codim-0 reference element
       typedef typename IntegrationTraits :: CoordinateType CoordinateType;
-      
+
       // for compatibility
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
@@ -121,7 +121,7 @@ namespace Dune
       ElementQuadrature( const GeometryType &type, int order )
       : BaseType( type, order )
       {}
-      
+
       /** \brief copy constructor
        *
        *  \param[in]  org  element quadrature to copy
@@ -154,18 +154,18 @@ namespace Dune
 
     private:
       typedef ElementQuadratureTraits< GridPartType, codimension > IntegrationTraits;
-      
+
       typedef ElementQuadrature< GridPartType, codimension > ThisType;
       typedef ElementIntegrationPointList< GridPartType, 1, IntegrationTraits >
         BaseType;
 
     protected:
       using BaseType :: quadImp;
-      
+
     public:
       //! dimension of the world
       enum { dimension = GridPartType :: dimension };
-      
+
       //! type for reals (usually double)
       typedef typename GridPartType :: ctype RealType;
 
@@ -180,21 +180,21 @@ namespace Dune
       typedef typename IntegrationTraits :: IntegrationPointListType :: CoordinateType
         LocalCoordinateType;
 
-      //! type of quadrature for use on non-conforming intersections 
+      //! type of quadrature for use on non-conforming intersections
       typedef ThisType NonConformingQuadratureType;
-      
+
     public:
       /*! \brief constructor
        *
        *  \param[in]  gridPart      grid partition (a dummy here)
        *  \param[in]  intersection  intersection
        *  \param[in]  order         desired order of the quadrature
-       *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for 
+       *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for
        *                            which the ElementQuadrature shall be created
        */
       ElementQuadrature ( const GridPartType &gridPart,
-                          const IntersectionType &intersection, 
-                          int order, 
+                          const IntersectionType &intersection,
+                          int order,
                           typename BaseType :: Side side )
       : BaseType( gridPart, intersection, order, side )
       {}
@@ -207,7 +207,7 @@ namespace Dune
       : BaseType( org )
       {
       }
-      
+
       /*! obtain the weight of the i-th quadrature point
        *
        *  \note The quadrature weights sum up to the volume of the corresponding

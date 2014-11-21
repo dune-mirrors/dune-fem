@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_SOLVER_RUNGEKUTTA_TIMESTEPCONTROL_HH
 #define DUNE_FEM_SOLVER_RUNGEKUTTA_TIMESTEPCONTROL_HH
 
-//- system includes 
+//- system includes
 #include <cassert>
 
 //- dune-common includes
@@ -11,7 +11,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/timeprovider.hh>
 
-namespace DuneODE 
+namespace DuneODE
 {
 
   // ImplicitRungeKuttaSolverParameters
@@ -19,21 +19,21 @@ namespace DuneODE
 
   struct ImplicitRungeKuttaSolverParameters
   : public Dune::Fem::LocalParameter< ImplicitRungeKuttaSolverParameters, ImplicitRungeKuttaSolverParameters >
-  { 
+  {
     enum { noVerbosity = 0,  noConvergenceVerbosity = 1,
            cflVerbosity = 2, fullVerbosity = 3 };
 
-  protected:  
-    // number of minimal iterations that the linear solver should do 
-    // if the number of iterations done is smaller then the cfl number is increased  
+  protected:
+    // number of minimal iterations that the linear solver should do
+    // if the number of iterations done is smaller then the cfl number is increased
     const int minIter_;
-    // number of maximal iterations that the linear solver should do 
-    // if the number of iterations larger then the cfl number is decreased   
+    // number of maximal iterations that the linear solver should do
+    // if the number of iterations larger then the cfl number is decreased
     const int maxIter_;
     // factor for cfl number on increase (decrease is 0.5)
     const double sigma_;
 
-  public:  
+  public:
     ImplicitRungeKuttaSolverParameters ()
     : minIter_( Dune::Fem::Parameter::getValue< int >( "fem.ode.miniterations" , 14 ) ),
       maxIter_( Dune::Fem::Parameter::getValue< int >( "fem.ode.maxiterations" , 16 ) ),
@@ -81,7 +81,7 @@ namespace DuneODE
      *  \param[in] converged Convergence of the ILS
      *  \param[out] factor Multiplication factor for the current cfl number
      *
-     *  \note Do not increase the cfl number of the implicit solver if its time step 
+     *  \note Do not increase the cfl number of the implicit solver if its time step
      *    estimate is already larger than the one of the explicit solver
      */
     virtual bool cflFactor( const double imOpTimeStepEstimate,
@@ -90,12 +90,12 @@ namespace DuneODE
                             bool converged,
                             double &factor) const
     {
-      const int iter = numberOfLinearIterations; 
+      const int iter = numberOfLinearIterations;
       factor = 1.;
       bool changed = false;
-      if (converged) 
+      if (converged)
       {
-        if (iter < minIter_) 
+        if (iter < minIter_)
         {
           if( imOpTimeStepEstimate <= exOpTimeStepEstimate )
           {
@@ -103,7 +103,7 @@ namespace DuneODE
             changed = true;
           }
         }
-        else if (iter > maxIter_) 
+        else if (iter > maxIter_)
         {
           factor = (double)maxIter_/(sigma_*(double)iter);
           changed = true;
@@ -198,7 +198,7 @@ namespace DuneODE
 
       double factor( 1 );
       // true means converged, which is always true since this function is only called
-      // when the implicit solver did converge 
+      // when the implicit solver did converge
       parameters().cflFactor( helmholtzEstimate, sourceTermEstimate, monitor.linearSolverIterations_, true, factor );
       if( !((factor >= std::numeric_limits< double >::min()) && (factor <= std::numeric_limits< double >::max())) )
         DUNE_THROW( Dune::InvalidStateException, "invalid cfl factor: " << factor );

@@ -12,7 +12,7 @@ using std::string;
 using std::ostream;
 using std::vector;
 
-namespace Dune 
+namespace Dune
 {
 
   namespace Fem
@@ -36,7 +36,7 @@ namespace Dune
         {}
     };
 
-     
+
     /** Suite of tests. Running a group of test cases is best be done by
         adding each test case to a test suite. This suite does then the
         run and report of the whole group.
@@ -50,7 +50,7 @@ namespace Dune
       //! \param name Name of the test suite
       //! \param osptr Pointer to the output stream. Defaults to cout.
       Suite(const string& name, ostream* osptr = &std::cout);
-      
+
       //! Returns name of the test suite
       string getName() const;
       //! Get number of passed tests of contained test objects
@@ -61,7 +61,7 @@ namespace Dune
       const ostream* getStream() const;
       //! Set output stream for reporting
       void setStream(ostream* osptr);
-      
+
       //! Add a test object to the this suite
       void addTest(Test* t) throw (TestSuiteError);
       //! Add a subsuite to this suite
@@ -72,13 +72,13 @@ namespace Dune
       long report() const;
       //! Delete all contained tests
       void free();    // deletes tests
-      
+
     private:
       string m_name;
       ostream* m_osptr;
       vector<Test*> m_tests;
       void reset();
-      
+
       // Disallowed ops:
       Suite(const Suite&);
       Suite& operator=(const Suite&);

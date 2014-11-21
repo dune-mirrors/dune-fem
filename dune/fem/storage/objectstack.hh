@@ -16,7 +16,7 @@ namespace Dune
     template< class ObjectFactoryImp >
     class ObjectStackEntry;
 
- 
+
     template< class ObjectFactoryImp >
     struct ObjectStackEntryTraits
     {
@@ -77,7 +77,7 @@ namespace Dune
       {
         delete object_;
       }
-      
+
     private:
       // prohivit assignment
       ThisType &operator= ( const ThisType & );
@@ -102,7 +102,7 @@ namespace Dune
       {
         return *object_;
       }
-      
+
       inline ObjectType &getObject ()
       {
         return *object_;
@@ -115,7 +115,7 @@ namespace Dune
     //! Stores pointers to a given class in a stack
     //! used for local functions and for basefunctionsets
     template< class ObjectFactoryImp >
-    class ObjectStack 
+    class ObjectStack
     {
       typedef ObjectFactoryImp ObjectFactoryType;
 
@@ -133,7 +133,7 @@ namespace Dune
 
       //! type of object pointers
       typedef ObjectPointer< StackEntryType > PointerType;
-      
+
     protected:
       const ObjectFactoryType &factory_;
 
@@ -144,7 +144,7 @@ namespace Dune
       // thread safe stack entries (in multi thread mode a vector)
       ThreadSafeValuesType stackEntries_;
     public:
-      //! constructor 
+      //! constructor
       ObjectStack ( const ObjectFactoryType &factory )
       : factory_( factory ),
         stackEntries_( StackEntryPtrType(0) )
@@ -156,10 +156,10 @@ namespace Dune
       ObjectStack ( const ThisType & );
 
     public:
-      //! delete all objects on stack 
+      //! delete all objects on stack
       ~ObjectStack ()
       {
-        // make sure this is only called in single thread mode 
+        // make sure this is only called in single thread mode
         // because the master thread is taking care of all object delete
         assert( ThreadManager::singleThreadMode() );
         const size_t threadSize = stackEntries_.size();
@@ -174,7 +174,7 @@ namespace Dune
           }
         }
       }
-      
+
     private:
       // Disallow copying
       ThisType &operator= ( const ThisType & );
@@ -195,18 +195,18 @@ namespace Dune
       // push storage object to the stack
       inline void push ( StackEntryType *obj )
       {
-        // get thread private value 
+        // get thread private value
         push( obj, *stackEntries_ );
       }
 
       // pop a storage object from the stack
       inline StackEntryType *pop ()
       {
-        // get thread private value 
+        // get thread private value
         return pop( *stackEntries_ );
       }
 
-    private:  
+    private:
       // push storage object to the stack
       inline void push ( StackEntryType *obj, StackEntryPtrType& stackEntry )
       {
@@ -227,7 +227,7 @@ namespace Dune
     };
 
   } // namespace Fem
-   
+
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_OBJECTSTACK_HH

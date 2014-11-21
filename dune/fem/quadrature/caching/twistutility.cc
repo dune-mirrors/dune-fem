@@ -23,9 +23,9 @@ namespace Dune
     template<>
     int TwistUtility< UGGrid< 2 > >::twistInSelf ( const GridType &grid, const LeafIntersection &it )
     {
-      // for simplex twist is 0 
-      // for cube twist is 1 for side 0 and 3 
-      // for 1 and 2 is 0 
+      // for simplex twist is 0
+      // for cube twist is 1 for side 0 and 3
+      // for 1 and 2 is 0
       if( it.inside()->type().isCube() )
       {
         const int face = it.indexInInside();
@@ -38,9 +38,9 @@ namespace Dune
     template<>
     int TwistUtility< UGGrid< 2 > >::twistInSelf ( const GridType &grid, const LevelIntersection &it )
     {
-      // for simplex twist is 0 
-      // for cube twist is 1 for side 0 and 3 
-      // for 1 and 2 is 0 
+      // for simplex twist is 0
+      // for cube twist is 1 for side 0 and 3
+      // for 1 and 2 is 0
       if( it.inside()->type().isCube() )
       {
         const int face = it.indexInInside();
@@ -86,11 +86,11 @@ namespace Dune
     namespace UG3
     {
 
-      struct CubeTwists 
+      struct CubeTwists
       {
         template <class ReferenceElement, class LocalGeometry>
-        static int twistInNeighbor ( const ReferenceElement& refElem, 
-                                     const LocalGeometry& localGeom, 
+        static int twistInNeighbor ( const ReferenceElement& refElem,
+                                     const LocalGeometry& localGeom,
                                      const int face )
         {
           assert( localGeom.type().isCube() );
@@ -103,24 +103,24 @@ namespace Dune
           const int vxSize = refElem.size( face, 1, dim );
           typedef typename LocalGeometry :: GlobalCoordinate CoordinateVectorType;
 
-          // now calculate twist by trial and error for all possible twists 
-          // the calculated twist is with respect to the ALUGrid 
-          // reference face, see twistprovider.cc  
+          // now calculate twist by trial and error for all possible twists
+          // the calculated twist is with respect to the ALUGrid
+          // reference face, see twistprovider.cc
           int twistFound = -66;
           for(int twist = -vxSize; twist<vxSize; ++twist)
           {
             bool twistOk = true;
-            // now check mapping with twist 
+            // now check mapping with twist
             for(int i=0; i<vxSize; ++i)
             {
               const int twistedDuneIndex = CubeFaceMapping::twistedDuneIndex( i, twist );
-              // get face vertices of number in self face 
+              // get face vertices of number in self face
               const int vxIdx = refElem.subEntity( face, 1 , twistedDuneIndex , dim);
 
               // get position in reference element of vertex i
               CoordinateVectorType refPos = refElem.position( vxIdx, dim );
 
-              // check coordinates again 
+              // check coordinates again
               CoordinateVectorType localPos = localGeom.corner( i );
               if( (refPos - localPos).infinity_norm() > 1e-8 )
               {
@@ -136,7 +136,7 @@ namespace Dune
             }
           }
 
-          // if no twist found, then something is wrong 
+          // if no twist found, then something is wrong
           if( twistFound == -66 )
           {
             assert(false);
@@ -152,7 +152,7 @@ namespace Dune
           return twistInNeigh[ face ];
           */
         }
-        
+
         static int twistInSelf( const int face )
         {
           static const int twistInSelf[6]  = {-2,  0,  0, -2, -1,  0 };
@@ -175,17 +175,17 @@ namespace Dune
           = Dune::ReferenceElements< ctype, dim >::general( en.type() );
         const Dune::ReferenceElement< ctype, dim > &nbRef
           = Dune::ReferenceElements< ctype, dim >::general( nb.type() );
-          
-        // number of vertices of face 
+
+        // number of vertices of face
         const int numVertices = enRef.size( inEn, 1, dim );
         assert( numVertices == nbRef.size( inNb, 1, dim ) );
         int enVx[ 4 ];
         int nbVx[ 4 ];
-        
+
         int faceMap[ 4 ] = { 0, 1, 2, 3 };
 
         bool allRight = true;
-        for( int i = 0; i < numVertices; ++i ) 
+        for( int i = 0; i < numVertices; ++i )
         {
           enVx[ i ] = indexSet.subIndex( en, enRef.subEntity( inEn, 1, i ,dim ), dim );
           nbVx[ i ] = indexSet.subIndex( nb, nbRef.subEntity( inNb, 1, i, dim ), dim );
@@ -224,10 +224,10 @@ namespace Dune
     {
       if( it.inside()->type().isSimplex() )
       {
-        // inside twist for simplices is zero 
+        // inside twist for simplices is zero
         return 0;
       }
-      else 
+      else
       {
         assert( it.inside()->type().isCube() );
         return UG3::CubeTwists::twistInSelf( it.indexInInside() );
@@ -239,16 +239,16 @@ namespace Dune
     {
       if( it.inside()->type().isSimplex() )
       {
-        // inside twist for simplices is zero 
+        // inside twist for simplices is zero
         return 0;
       }
-      else 
+      else
       {
         assert( it.inside()->type().isCube() );
         return UG3::CubeTwists::twistInSelf( it.indexInInside() );
       }
     }
-    
+
     template<>
     int TwistUtility< UGGrid< 3 > >::twistInNeighbor ( const GridType &grid, const LeafIntersection &it )
     {
@@ -258,7 +258,7 @@ namespace Dune
         return UG3::calculateSimplexTwistInNeighbor
           ( grid.leafIndexSet(), *it.inside(), it.indexInInside(), *it. outside(), it.indexInOutside() );
       }
-      else 
+      else
       {
         assert( it.outside()->type().isCube() );
         typedef UGGrid< 3 > :: ctype ctype ;
@@ -279,7 +279,7 @@ namespace Dune
         return UG3::calculateSimplexTwistInNeighbor
           ( grid.leafIndexSet(), *it.inside(), it.indexInInside(), *it. outside(), it.indexInOutside() );
       }
-      else 
+      else
       {
         assert( it.outside()->type().isCube() );
         typedef UGGrid< 3 > :: ctype ctype ;

@@ -38,7 +38,7 @@ const int polOrder = POLORDER;
   #endif
 #endif
 
-#if USE_GRAPE 
+#if USE_GRAPE
   #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 #include <dune/fem/io/parameter.hh>
@@ -56,7 +56,7 @@ struct CheckGridEnabled
   typedef Grid GridType;
 
   typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
-  
+
   inline static int CallMain ( int argc, char **argv )
   {
     return Main( argc, argv );
@@ -98,8 +98,8 @@ public:
   {
     phi = 1;
     for( int i = 0; i < DomainType :: dimension; ++i )
-      // phi[ 0 ] += x[ i ] * x[ i ]; 
-      phi[ 0 ] *= sin( M_PI * x[ i ] ); 
+      // phi[ 0 ] += x[ i ] * x[ i ];
+      phi[ 0 ] *= sin( M_PI * x[ i ] );
   }
 
   void evaluate ( const DomainType &x, RangeFieldType t, RangeType &phi ) const
@@ -159,7 +159,7 @@ typedef AdaptationManager< MyGridType, RestrictProlongOperatorType >
   AdaptationManagerType;
 
 
-void setPolOrder( const DiscreteFunctionSpaceType &space, bool increase ) 
+void setPolOrder( const DiscreteFunctionSpaceType &space, bool increase )
 {
   const int maxPol = POLORDER;
   //const int maxPol = 2;
@@ -170,7 +170,7 @@ void setPolOrder( const DiscreteFunctionSpaceType &space, bool increase )
   const int p = increase ? minPol : maxPol ;
   std::vector< int > polOrds( size, p );
 
-  for( int i=0; i<size/2; ++i ) 
+  for( int i=0; i<size/2; ++i )
   {
     const int p = increase ? maxPol : minPol ;
     polOrds[ i ] = p;
@@ -180,16 +180,16 @@ void setPolOrder( const DiscreteFunctionSpaceType &space, bool increase )
   space.adapt( polOrds );
 }
 
-void polOrderAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step) 
+void polOrderAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step)
 {
   setPolOrder( solution.space(), step > 0 );
 }
 
-void gridAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step, 
-                const bool locallyAdaptive = false ) 
+void gridAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step,
+                const bool locallyAdaptive = false )
 {
   #if USE_GRAPE && SHOW_RESTRICT_PROLONG
-    //if( turn > 0 ) 
+    //if( turn > 0 )
     {
       GrapeDataDisplay< MyGridType > grape( grid );
       grape.dataDisplay( solution );
@@ -207,32 +207,32 @@ void gridAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step,
   const int mark = (step < 0 ? -1 : 1);
   const int count = std :: abs( step );
 
-  for( int i = 0; i < count; ++i ) 
+  for( int i = 0; i < count; ++i )
   {
     int numElements = grid.size( 0 );
-    if( locallyAdaptive ) 
+    if( locallyAdaptive )
     {
       numElements /= 4;
       numElements = std::max( numElements, 1 );
     }
-    
+
     IteratorType it = discreteFunctionSpace.begin();
     const IteratorType endit = discreteFunctionSpace.end();
     int elemNo = 0;
     for( ; it != endit; ++it, ++elemNo )
     {
-      if( elemNo < numElements ) 
+      if( elemNo < numElements )
       {
         grid.mark( mark, *it );
       }
     }
 
-    // adapt grid 
+    // adapt grid
     adaptationManager.adapt();
   }
 
   #if USE_GRAPE && SHOW_RESTRICT_PROLONG
-    //if( turn > 0 ) 
+    //if( turn > 0 )
     {
       GrapeDataDisplay< MyGridType > grape( grid );
       grape.dataDisplay( solution );
@@ -250,15 +250,15 @@ bool checkContinuous( DiscreteFunctionType &solution )
   typedef IteratorType :: Entity  EntityType ;
   typedef GridPartType :: IntersectionIteratorType IntersectionIteratorType;
   typedef GridPartType :: IntersectionType         IntersectionType;
-  
+
   const IteratorType endit = solution.space().end();
-  for( IteratorType it = solution.space().begin(); it != endit; ++it ) 
+  for( IteratorType it = solution.space().begin(); it != endit; ++it )
   {
     const EntityType& entity = *it;
     const IntersectionIteratorType endiit = solution.space().gridPart().iend( entity );
-    for( IntersectionIteratorType iit = solution.space().gridPart().ibegin( entity ); iit != endiit ; ++ iit ) 
+    for( IntersectionIteratorType iit = solution.space().gridPart().ibegin( entity ); iit != endiit ; ++ iit )
     {
-      const IntersectionType& intersection = *iit ; 
+      const IntersectionType& intersection = *iit ;
 	    if( intersection.neighbor() && intersection.conforming() )
       {
         typedef CachingQuadrature< GridPartType, 1 > FaceQuadratureType;
@@ -302,7 +302,7 @@ void interpolate( const Function &f, DiscreteFunctionType &solution )
 
   DiscreteFunctionType rhs( "rhs", solution.space() );
   assembleRHS( f, rhs );
-  
+
   EllipticOperatorType ellipticOp;
 
   // create linear inverse operator
@@ -328,11 +328,11 @@ void interpolate( const Function &f, DiscreteFunctionType &solution )
 
   std::cout << "Solution is " << (continuous?"":"NOT") << " continuous" << std::endl;
   std::cout << "L2 error before adaptation: " << preL2error << std::endl;
-  std::cout << "H1 error before adaptation: " << preH1error << std::endl; 
+  std::cout << "H1 error before adaptation: " << preH1error << std::endl;
 }
 
 void algorithm ( GridPartType &gridPart,
-                 DiscreteFunctionType &solution, 
+                 DiscreteFunctionType &solution,
                  int step,
                  int turn )
 {
@@ -345,10 +345,10 @@ void algorithm ( GridPartType &gridPart,
   GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );
 
   interpolate( f, solution );
-  
+
   std::cout << "Unknowns before adaptation: " << solution.space().size() << std::endl;
   polOrderAdapt( gridPart.grid(), solution, step );
-  
+
   L2Norm< GridPartType > l2norm( gridPart );
   H1Norm< GridPartType > h1norm( gridPart );
   double postL2error = l2norm.distance( f, solution );
@@ -363,10 +363,10 @@ void algorithm ( GridPartType &gridPart,
               << ": " << postL2error << std::endl;
   std::cout << "H1 error after "
               << (step < 0 ? "restriction" : "prolongation")
-              << ": " << postH1error << std::endl; 
-  
+              << ": " << postH1error << std::endl;
+
   #if USE_GRAPE && SHOW_RESTRICT_PROLONG
-    //if( turn > 0 ) 
+    //if( turn > 0 )
     {
       GrapeDataDisplay< MyGridType > grape( gridPart.grid() );
       grape.dataDisplay( solution );
@@ -374,9 +374,9 @@ void algorithm ( GridPartType &gridPart,
   #endif
 
   interpolate( f, solution );
-  
+
   #if USE_GRAPE && SHOW_INTERPOLATION
-    //if( turn > 0 ) 
+    //if( turn > 0 )
     {
       GrapeDataDisplay< MyGridType > grape( gridPart.grid() );
       grape.dataDisplay( solution );
@@ -392,7 +392,7 @@ void algorithm ( GridPartType &gridPart,
 */
 
   #if WRITE_DATA
-    GrapeDataIO< MyGridType > dataio; 
+    GrapeDataIO< MyGridType > dataio;
     dataio.writeGrid( gridPart.grid(), xdr, "gridout", 0, turn );
     dataio.writeData( solution, xdr, "sol", turn );
   #endif
@@ -412,16 +412,16 @@ try
   {
     std :: cerr << "Usage: " << argv[ 0 ] << "<parameter>" << std :: endl;
   }
-  else 
-    paramName = argv[1]; 
+  else
+    paramName = argv[1];
 
   std::string paramFile( paramName );
 
-  // append parameter 
+  // append parameter
   Parameter :: append( argc , argv );
   Parameter :: append( paramFile );
 
-  int ml = 2 ; // default value = 2 
+  int ml = 2 ; // default value = 2
   //ml = Parameter :: getValue ("lagrangeadapt.maxlevel", ml);
 
   std::ostringstream gridName;
@@ -440,7 +440,7 @@ try
   ExactSolutionType fexact;
   GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );
 
-  const bool locallyAdaptive = Parameter :: getValue< bool >("adapt.locallyadaptive", false ); 
+  const bool locallyAdaptive = Parameter :: getValue< bool >("adapt.locallyadaptive", false );
 
   interpolate( f, solution );
   for ( int r = 0; r < 4; ++r )
@@ -448,7 +448,7 @@ try
     std :: cout << std :: endl << "Refining: " << std :: endl;
     for( int i = 0; i < ml; ++i )
       algorithm( gridPart, solution, step, (i == ml-1) );
-    
+
     std :: cout << std :: endl << "Coarsening:" << std::endl;
     for( int i = ml - 1; i >= 0; --i )
       algorithm( gridPart, solution, -step, 1 );

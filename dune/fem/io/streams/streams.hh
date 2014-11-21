@@ -3,7 +3,7 @@
 
 #include <string>
 #include <fstream>
-// we would use cstdint, 
+// we would use cstdint,
 // if it would be available for all compilers, e.g. clang
 #include <stdint.h>
 
@@ -15,12 +15,12 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     class StreamError : public Exception {};
 
-    
+
     /** \class OutStreamInterface
      *  \ingroup InOutStreams
      *  \brief abstract interface for an output stream
@@ -62,7 +62,7 @@ namespace Dune
 
     public:
       /** \brief flush the stream
-       * 
+       *
        *  By calling the flush method, the user can ensure that the stream is
        *  actually transferred (e.g., written to disk)
        */
@@ -70,7 +70,7 @@ namespace Dune
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().flush() );
       }
-     
+
       /** \brief write a double to the stream
        *
        * \param[in]  value  value to write to the stream
@@ -79,7 +79,7 @@ namespace Dune
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeDouble( value ) );
       }
-      
+
       /** \brief write a float to the stream
        *
        * \param[in]  value  value to write to the stream
@@ -88,7 +88,7 @@ namespace Dune
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().writeFloat( value ) );
       }
-      
+
       /** \brief write an int to the stream
        *
        * \param[in]  value  value to write to the stream
@@ -150,7 +150,7 @@ namespace Dune
       }
     };
 
-   
+
 
     /** \class InStreamInterface
      *  \ingroup InOutStreams
@@ -170,7 +170,7 @@ namespace Dune
      *  result in uninitialized objects. If the user catches the exception, he
      *  may not assume the object, that should be read, to be in a defined or
      *  even useful state.
-     * 
+     *
      *  \interfaceclass
      */
     template< class TraitsImp >
@@ -192,7 +192,7 @@ namespace Dune
 
     protected:
       using BaseType::asImp;
-      
+
     public:
       /** \brief read a double from the stream
        *
@@ -213,7 +213,7 @@ namespace Dune
         readDouble( value );
         return value;
       }
-      
+
       /** \brief read a float from the stream
        *
        *  \param[out]  value  reference to the variable to read from the stream
@@ -222,7 +222,7 @@ namespace Dune
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readFloat( value ) );
       }
-      
+
       /** \brief read a double from the stream
        *
        *  \returns a double read from the stream
@@ -233,7 +233,7 @@ namespace Dune
         readFloat( value );
         return value;
       }
-      
+
       /** \brief read an int from the stream
        *
        *  \param[out]  value  reference to the variable to read from the stream
@@ -242,7 +242,7 @@ namespace Dune
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readInt( value ) );
       }
-      
+
       /** \brief read an int from the stream
        *
        *  \returns an int read from the stream
@@ -262,11 +262,11 @@ namespace Dune
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readChar( value ) );
       }
-      
+
       /** \brief read a char from the stream
        *
        *  \returns a char read from the stream
-       */  
+       */
       int readChar ()
       {
         char value;
@@ -283,11 +283,11 @@ namespace Dune
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().readBool( value ) );
       }
-      
+
       /** \brief read a bool from the stream
        *
        *  \returns a bool read from the stream
-       */  
+       */
       bool readBool ()
       {
         bool value;
@@ -351,22 +351,22 @@ namespace Dune
       }
     };
 
-    /** \brief Factory class for Fem Streams to deal with different constructor 
-     *         parameters. 
+    /** \brief Factory class for Fem Streams to deal with different constructor
+     *         parameters.
      */
-    template <class StreamImpl> 
+    template <class StreamImpl>
     struct StreamFactory
     {
-      //! type of MPI communicator 
+      //! type of MPI communicator
       typedef typename MPIHelper :: MPICommunicator MPICommunicatorType;
 
-      /** \brief return pointer to stream object created by new. 
-       *  
+      /** \brief return pointer to stream object created by new.
+       *
        *  \param[in] filename  name of file that the stream read/writes
        *  \param[in] rank      rank of process data is read/written (defaults to MPIManager::rank())
        *  \param[in] mpiComm   MPI communicator (defaults to MPIHelper :: getCommunicator())
        */
-      static StreamImpl* create( const std::string& filename, 
+      static StreamImpl* create( const std::string& filename,
                                  const int rank = MPIManager::rank(),
                                  const MPICommunicatorType& mpiComm = MPIHelper :: getCommunicator() )
       {
@@ -374,7 +374,7 @@ namespace Dune
       }
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // end namespace Dune
 

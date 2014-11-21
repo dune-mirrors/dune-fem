@@ -14,21 +14,21 @@
 namespace Dune
 {
 
-  namespace Fem 
-  { 
+  namespace Fem
+  {
 
   /** @addtogroup Checkpointing
-      
+
       The Dune::Fem::PersistenceManager manages a list of persistent
       object the state should be recovered during a restart process.
       The singleton instance is available using persistenceManager.
-    
+
       Variables of any type can be added to the manager
       using operator<< and removed through operator>>.
       For general types the state is written to an ascii file
       \c persistentobjects through the call to PersistenceManager::backup(path).
-      
-      Finer control is available for user defined classes by 
+
+      Finer control is available for user defined classes by
       deriving these from the Dune::PersistentObject class and
       implementing the virtual functions \c backup and \c restore.
       Values can then either be written to the ascii file
@@ -39,34 +39,34 @@ namespace Dune
       If data is to be written to a different stream a unique filename
       can be obtained from the Dune::PersistenceManager using the
       \c uniqueFileName method.
-    
-      If a class is derived from Dune::AutoPersistenceObject 
+
+      If a class is derived from Dune::AutoPersistenceObject
       then instances of this class are automatically added to the
       PersistenceManager on construction and removed on destruction;
       again the virtual methods backup/restore must be provided.
-    
+
       The restart process is activated through the method \c restore.
       Note that care must be taken to add the objects in exactly
       the same order when using the PersistenceManager for creating
       the backup file as when used to restore the saved states.
-    
+
       The Dune::Fem::Parameter class is automatically backuped and restored.
       For the restore process the saved parameter file is read first and
       existing values for parameters are replaced by these values.
-      Therefore it is possible to reread the state of a variable 
+      Therefore it is possible to reread the state of a variable
       orignally defined through a run time parameter using the Parameter
       class:
-      \code 
+      \code
       class A : public Dune::AutoPersistentObject {
         int var_,b_;
         ComplexType U_;
         A() : var_(Dune::Parameter::getValue("token",0,var_) {}
         virtual backup() const {
           // note var_ is saved in the parameter file
-    
-          // write b to ascii file 
+
+          // write b to ascii file
           PersistenceManager::backupValue("b",b);
-          
+
           // write U to stream
           ofstream out((PersistenceManager::uniqueFileName()+"classA").c_str());
           U.write(out);
@@ -74,26 +74,26 @@ namespace Dune
         virtual restore() {
           // set var_ through parameter file
           var_= Dune::Parameter::getValue<int>("token",var_);
-          
-          // read b from ascii file 
+
+          // read b from ascii file
           PersistenceManager::restoreValue("b",b);
-          
+
           // read U from stream
           ifstream in((PersistenceManager::uniqueFileName()+"classA").c_str());
           U.read(in);
         }
       };
       \endcode
-      
+
     */
 
     class PersistenceManager;
-    
+
     /** \class   PersistentObject
         \ingroup Checkpointing
         \brief   base class for persistent objects
      */
-    class PersistentObject 
+    class PersistentObject
     {
       typedef PersistentObject ThisType;
 
@@ -108,10 +108,10 @@ namespace Dune
 
     protected:
       /** \brief insert possible sub data of object */
-      virtual void insertSubData() {} 
+      virtual void insertSubData() {}
       /** \brief remove possible sub data of object */
-      virtual void removeSubData() {} 
-     
+      virtual void removeSubData() {}
+
       virtual void *pointer ()
       {
         return this;
@@ -119,13 +119,13 @@ namespace Dune
     };
 
 
-    
+
     template< class ObjectType >
     struct IsPersistent
     {
       static const bool value = Dune::Conversion< ObjectType *, PersistentObject * >::exists;
     };
-   
+
 
 
     /** \class   PersistenceManager
@@ -139,14 +139,14 @@ namespace Dune
       template <class ObjectType,bool isPersistent>
       struct WrapObject;
 
-    public:  
-      // make backup and restore streams exchangeable 
+    public:
+      // make backup and restore streams exchangeable
 #ifdef FEM_PERSISTENCEMANAGERSTREAMTRAITS
       typedef FEM_PERSISTENCEMANAGERSTREAMTRAITS :: BackupStreamType  BackupStreamType;
       typedef FEM_PERSISTENCEMANAGERSTREAMTRAITS :: RestoreStreamType RestoreStreamType;
       static const bool singleBackupRestoreFile = FEM_PERSISTENCEMANAGERSTREAMTRAITS ::
         singleBackupRestoreFile ;
-#else 
+#else
       typedef Fem :: BinaryFileOutStream  BackupStreamType ;
       typedef Fem :: BinaryFileInStream   RestoreStreamType ;
       static const bool singleBackupRestoreFile = false ;
@@ -163,13 +163,13 @@ namespace Dune
       std::ofstream outAsciStream_;
       bool closed_,invalid_;
 
-      BackupStreamType*  backupStream_; 
+      BackupStreamType*  backupStream_;
       RestoreStreamType* restoreStream_;
-      
+
       PersistenceManager ()
       : fileCounter_( 0 ),
         lineNo_(),
-        path_(), 
+        path_(),
         closed_( false ),
         invalid_( false ),
         backupStream_( 0 ),
@@ -179,14 +179,14 @@ namespace Dune
       PersistenceManager ( const ThisType & );
       ThisType &operator= ( const ThisType & );
 
-      BackupStreamType& backupStreamObj () 
-      { 
+      BackupStreamType& backupStreamObj ()
+      {
         assert( backupStream_ );
         return *backupStream_ ;
       }
 
-      RestoreStreamType& restoreStreamObj () 
-      { 
+      RestoreStreamType& restoreStreamObj ()
+      {
         assert( restoreStream_ );
         return *restoreStream_ ;
       }
@@ -204,11 +204,11 @@ namespace Dune
           return;
         }
 
-        // for objects like the grid 
-        // we need to allow to add this later 
-        if ( closed_ && ! pushFront ) 
+        // for objects like the grid
+        // we need to allow to add this later
+        if ( closed_ && ! pushFront )
         {
-#ifndef NDEBUG 
+#ifndef NDEBUG
           std::cerr << "WARNING: new object added to PersistenceManager "
                     << "although backup/restore has been called - "
                     << "Object will be ignored!" << std::endl;
@@ -216,16 +216,16 @@ namespace Dune
           return;
         }
 
-        PersistentObject *obj = 
+        PersistentObject *obj =
           WrapObject< ObjectType, IsPersistent< ObjectType > :: value >
           :: apply( object );
 
-        // insert possible sub data 
+        // insert possible sub data
         obj->insertSubData();
 
-        if( pushFront ) 
+        if( pushFront )
           objects_.push_front( std :: make_pair( obj, 1 ) );
-        else 
+        else
           objects_.push_back( std :: make_pair( obj, 1 ) );
       }
 
@@ -237,13 +237,13 @@ namespace Dune
         {
           if( it->first->pointer() != &object )
             continue;
-            
+
           --it->second;
           if( it->second == 0 )
           {
             if (closed_) invalid_=true;
             PersistentObject *obj = it->first;
-            // remove possible sub data 
+            // remove possible sub data
             obj->removeSubData();
             objects_.erase( it );
             if( !IsPersistent< ObjectType > :: value )
@@ -253,11 +253,11 @@ namespace Dune
         }
       }
 
-      void backupObjects ( const std::string& path ) 
+      void backupObjects ( const std::string& path )
       {
         if( invalid_ )
         {
-#ifndef NDEBUG 
+#ifndef NDEBUG
           std::cerr << "WARNING: backup called although objects "
                     << "have been removed from the PersistenceManager! "
                     << "Backup ignored!" << std::endl;
@@ -273,11 +273,11 @@ namespace Dune
 
         closeStreams();
       }
-      
+
       void restoreObjects ( const std::string &path )
       {
         if (invalid_) {
-#ifndef NDEBUG 
+#ifndef NDEBUG
           std::cerr << "WARNING: restore called although objects "
                     << "have been removed from the PersistenceManager! "
                     << "Restore ignored!" << std::endl;
@@ -295,12 +295,12 @@ namespace Dune
       }
 
       std::string getUniqueFileName ( const std::string &tag )
-      { 
+      {
         return generateFilename( path_ + "/" + tag, ++fileCounter_ );
       }
 
       std::string getUniqueTag ( const std::string &tag )
-      { 
+      {
         return generateFilename( tag, ++fileCounter_ );
       }
 
@@ -308,7 +308,7 @@ namespace Dune
       void backup ( const std::string &token, const T &value )
       {
         backupStreamObj() << token;
-        backupStreamObj() << value;  
+        backupStreamObj() << value;
       }
 
       template< class T >
@@ -316,8 +316,8 @@ namespace Dune
       {
         std::string readToken ;
         restoreStreamObj() >> readToken;
-        restoreStreamObj() >> value; 
-        if( token != readToken ) 
+        restoreStreamObj() >> value;
+        if( token != readToken )
         {
           DUNE_THROW(InvalidStateException,"wrong object restored in PersistenceManager" << token << " " << readToken );
         }
@@ -330,12 +330,12 @@ namespace Dune
         return theInstance;
       }
 
-      static BackupStreamType& backupStream() 
+      static BackupStreamType& backupStream()
       {
         return instance ().backupStreamObj();
       }
 
-      static RestoreStreamType& restoreStream() 
+      static RestoreStreamType& restoreStream()
       {
         return instance ().restoreStreamObj();
       }
@@ -390,10 +390,10 @@ namespace Dune
     private:
       const char* myTag() const { return "persistentobjects"; }
 
-      // create filename for persistent objects 
-      std::string createFilename( const std::string& path, 
+      // create filename for persistent objects
+      std::string createFilename( const std::string& path,
                                   const int rank,
-                                  const int size ) const 
+                                  const int size ) const
       {
         std::stringstream s;
         const int number = ( singleBackupRestoreFile ) ? size : rank ;
@@ -414,10 +414,10 @@ namespace Dune
           assert( backupStream_ == 0 );
           backupStream_ = Fem :: StreamFactory<BackupStreamType> :: create( filename );
 
-          if( rank == 0 ) 
+          if( rank == 0 )
           {
             std::ofstream paramfile( (path_ + "parameter").c_str() );
-            if( paramfile ) 
+            if( paramfile )
             {
               // write parameters on rank 0
               Parameter::write( paramfile, true );
@@ -430,26 +430,26 @@ namespace Dune
 
       void startRestoreImpl ( const std::string &path )
       {
-        if( restoreStream_ == 0 ) 
+        if( restoreStream_ == 0 )
         {
           path_ = path + "/";
           const int rank = MPIManager :: rank();
           const int size = MPIManager :: size();
           std::string filename( createFilename( path_, rank, size ) );
-          // create strema with stream factory 
+          // create strema with stream factory
           restoreStream_ = Fem :: StreamFactory<RestoreStreamType> :: create( filename );
 
           if( Parameter :: verbose () )
             std::cout << "Restore from " << filename << std::endl;
 
-          if( ! restoreStream_ ) 
+          if( ! restoreStream_ )
           {
             std::cout << "Error opening global stream: " << path_+myTag()
                       << std::endl;
             abort();
           }
 
-          // restore parameter 
+          // restore parameter
           Parameter::clear();
           Parameter::append(path_ + "parameter");
         }
@@ -457,21 +457,21 @@ namespace Dune
 
       void closeStreams ()
       {
-        if( backupStream_ ) 
+        if( backupStream_ )
         {
           backupStream_->flush();
           delete backupStream_;
           backupStream_ = 0;
         }
 
-        if( restoreStream_ ) 
+        if( restoreStream_ )
         {
-          delete restoreStream_; 
+          delete restoreStream_;
           restoreStream_ = 0;
         }
       }
     };
-   
+
 
     // !!!! not accessable outside namespace Dune::Fem ?!?!?!
     namespace
@@ -489,7 +489,7 @@ namespace Dune
       return pm;
     }
 
-    
+
     template< class ObjectType >
     inline PersistenceManager &
     operator>> ( PersistenceManager &pm, ObjectType &object )
@@ -498,7 +498,7 @@ namespace Dune
       return pm;
     }
 
-    
+
     template< class ObjectType >
     struct PersistenceManager::WrapObject< ObjectType, true >
     {
@@ -508,7 +508,7 @@ namespace Dune
       }
     };
 
-    
+
     template< class ObjectType >
     struct PersistenceManager::WrapObject< ObjectType, false >
     : public PersistentObject
@@ -519,33 +519,33 @@ namespace Dune
     protected:
       ObjectType& obj_;
       std::string token_;
-      
+
       WrapObject( ObjectType &obj )
       : obj_( obj ),
-        // store unique token of this object 
-        token_( "_token"+PersistenceManager::uniqueTag() ) 
+        // store unique token of this object
+        token_( "_token"+PersistenceManager::uniqueTag() )
       {}
-      
+
     public:
       virtual ~WrapObject ()
       {}
-      
+
       virtual void backup () const
       {
         PersistenceManager::backupValue( token_, obj_ );
       }
-      
+
       virtual void restore ()
       {
         PersistenceManager::restoreValue( token_, obj_ );
       }
-      
+
     protected:
       virtual void *pointer ()
       {
         return &obj_;
       }
-      
+
     public:
       static PersistentObject *apply ( ObjectType &obj )
       {
@@ -582,8 +582,8 @@ namespace Dune
       }
     };
 
-  } // end namespace Fem 
+  } // end namespace Fem
 
-} // end namespace Dune 
+} // end namespace Dune
 
 #endif // #ifndef DUNE_FEM_PERSISTENCEMANAGER_HH

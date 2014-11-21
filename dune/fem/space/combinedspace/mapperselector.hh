@@ -12,17 +12,17 @@ namespace Dune
   namespace Fem
   {
 
-    template<class GridPart, class Mapper1, int blockSize1, class Mapper2, int blockSize2 > 
+    template<class GridPart, class Mapper1, int blockSize1, class Mapper2, int blockSize2 >
     struct CombinedDiscreteFunctionSpaceMapperSelector;
 
-    template<class GridPart, int codim1, int blockSize1, int codim2, int blockSize2 > 
-    struct CombinedDiscreteFunctionSpaceMapperSelector< GridPart, 
-      CodimensionMapper< GridPart, codim1 >, blockSize1, 
-      CodimensionMapper< GridPart, codim2 >, blockSize2 > 
+    template<class GridPart, int codim1, int blockSize1, int codim2, int blockSize2 >
+    struct CombinedDiscreteFunctionSpaceMapperSelector< GridPart,
+      CodimensionMapper< GridPart, codim1 >, blockSize1,
+      CodimensionMapper< GridPart, codim2 >, blockSize2 >
     {
       static_assert( codim1 == codim2, "CombinedDiscreteFunctionSpace only implemented for same codim spaces" );
 
-      static const int localBlockSize = blockSize1 + blockSize2; 
+      static const int localBlockSize = blockSize1 + blockSize2;
       typedef CodimensionMapper< GridPart, codim1 > BlockMapperType;
 
       typedef CodimensionMapperSingletonFactory< GridPart, codim1 > BlockMapperSingletonFactoryType;
@@ -42,7 +42,7 @@ namespace Dune
     };
 
 
-    template<class GridPart, class Mapper1, int blockSize1, class Mapper2, int blockSize2 > 
+    template<class GridPart, class Mapper1, int blockSize1, class Mapper2, int blockSize2 >
     struct CombinedDiscreteFunctionSpaceMapperSelector
     {
       static const int localBlockSize = 1;

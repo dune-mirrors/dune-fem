@@ -59,7 +59,7 @@ namespace Dune
 
       //! Constructor making uninitialized vector
       explicit DenseSubVector ( V& v, size_type size, size_type offset )
-      : v_( v ), 
+      : v_( v ),
         size_( size ),
         offset_( offset )
       {}
@@ -67,7 +67,7 @@ namespace Dune
       DenseSubVector ( const This &other )
       : v_( other.v_ ),
         size_( other.size_ ),
-        offset_( other.offset_ ) 
+        offset_( other.offset_ )
       {}
 
       using Base::operator=;
@@ -89,7 +89,7 @@ namespace Dune
       typename DenseMatVecTraits< This > :: container_type &v_;
       const size_type size_, offset_;
     };
- 
+
     /** @} end documentation */
 
   } // namespace Fem

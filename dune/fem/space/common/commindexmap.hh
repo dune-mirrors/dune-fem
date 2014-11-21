@@ -40,25 +40,25 @@ namespace Dune
         return indices_[ i ];
       }
 
-      //! clear index map 
-      void clear() 
+      //! clear index map
+      void clear()
       {
         resize( 0 );
       }
 
-      //! append index vector with idx 
-      //! result is unsorted 
+      //! append index vector with idx
+      //! result is unsorted
       template <class GlobalKey>
       void insert( const std :: vector< GlobalKey > &idx )
       {
         const size_t size = idx.size();
         size_t  count = indices_.size();
 
-        // reserve memory 
+        // reserve memory
         resize( count + size );
         assert( indices_.size() == (count + size) );
 
-        // copy indices to index vector 
+        // copy indices to index vector
         for( size_t i = 0; i < size; ++i, ++count )
         {
           assert( idx[ i ] >= 0 );
@@ -66,18 +66,18 @@ namespace Dune
         }
       }
 
-      //! insert sorted set of indices  
-      template <class GlobalKey> 
+      //! insert sorted set of indices
+      template <class GlobalKey>
       void set( const std :: set< GlobalKey > &idxSet )
       {
-        // resize to given new size 
+        // resize to given new size
         resize( idxSet.size() );
-        
-        // copy all elements from set to array 
+
+        // copy all elements from set to array
         size_t count = 0;
-        typedef typename std :: set< GlobalKey > :: const_iterator iterator; 
+        typedef typename std :: set< GlobalKey > :: const_iterator iterator;
         const iterator end = idxSet.end();
-        for(iterator it = idxSet.begin(); it != end; ++it, ++count) 
+        for(iterator it = idxSet.begin(); it != end; ++it, ++count)
         {
           indices_[count] = *it;
         }
@@ -89,7 +89,7 @@ namespace Dune
         return indices_.size();
       }
 
-      //! print  map for debugging only 
+      //! print  map for debugging only
       void print( std :: ostream &s, int rank ) const
       {
         const size_t size = this->size();
@@ -100,13 +100,13 @@ namespace Dune
       }
 
       //! write all indices to buffer
-      template <class CommBuffer> 
-      void writeToBuffer(CommBuffer& buffer) const 
+      template <class CommBuffer>
+      void writeToBuffer(CommBuffer& buffer) const
       {
-        const size_t idxSize = indices_.size(); 
+        const size_t idxSize = indices_.size();
         buffer.write( idxSize );
         //std::cout << "P[" << MPIManager ::rank() << " write Buffer size " << idxSize << std::endl;
-        for(size_t i=0; i<idxSize; ++i) 
+        for(size_t i=0; i<idxSize; ++i)
         {
           //std::cout << "P[" << MPIManager ::rank() << " write idx " << indices_[i] << std::endl;
           buffer.write( indices_[i] );
@@ -114,23 +114,23 @@ namespace Dune
       }
 
       //! read all indices from buffer
-      template <class CommBuffer> 
-      void readFromBuffer(CommBuffer& buffer) 
+      template <class CommBuffer>
+      void readFromBuffer(CommBuffer& buffer)
       {
-        size_t idxSize; 
+        size_t idxSize;
         buffer.read( idxSize );
         //std::cout << "P[" << MPIManager ::rank() << " read Buffer size " << idxSize << std::endl;
         indices_.resize( idxSize );
-        for(size_t i=0; i<idxSize; ++i) 
+        for(size_t i=0; i<idxSize; ++i)
         {
           buffer.read( indices_[i] );
           //std::cout << "P[" << MPIManager ::rank() << " read idx " << indices_[i] << std::endl;
         }
       }
 
-    protected:  
-      //! resize map with size size  
-      inline void resize ( size_t size ) 
+    protected:
+      //! resize map with size size
+      inline void resize ( size_t size )
       {
         indices_.resize( size );
       }
@@ -139,7 +139,7 @@ namespace Dune
       {
         indices_.reserve( size );
       }
-      
+
     };
 
   } // namespace Fem

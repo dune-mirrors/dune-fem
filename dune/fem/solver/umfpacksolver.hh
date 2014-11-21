@@ -6,23 +6,23 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/io/parameter.hh>
 
-#ifdef ENABLE_UMFPACK 
+#ifdef ENABLE_UMFPACK
 #include <umfpack.h>
 #endif
 
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
-    /** @addtogroup DirectSolver  
-        
-        In this section implementations of direct solvers 
-        for solving linear systems of the from 
+    /** @addtogroup DirectSolver
+
+        In this section implementations of direct solvers
+        for solving linear systems of the from
         \f$A x = b\f$, where \f$A\f$ is a Mapping or
-        Operator and \f$x\f$ and \f$b\f$ are discrete functions 
-        (see DiscreteFunctionInterface) can be found. 
+        Operator and \f$x\f$ and \f$b\f$ are discrete functions
+        (see DiscreteFunctionInterface) can be found.
      **/
 
 
@@ -38,13 +38,13 @@ namespace Dune
       typedef Op OperatorType;
 
       /** \brief constructor of UMFPACKOp
-          \param[in] op Operator to invert 
+          \param[in] op Operator to invert
           \param[in] redEps realative tolerance for residual (not used here)
           \param[in] absLimit absolut solving tolerance for residual (not used here)
           \param[in] maxIter maximal number of iterations performed (not used here)
-          \param[in] verbose verbosity 
+          \param[in] verbose verbosity
       */
-      UMFPACKOp ( const OperatorType &op, 
+      UMFPACKOp ( const OperatorType &op,
                   double redEps,
                   double absLimit,
                   int maxIter,
@@ -64,7 +64,7 @@ namespace Dune
         maxIter_( maxIter ),
         verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) )
       {}
-                  
+
 
       void prepare ( const DiscreteFunctionType &, DiscreteFunctionType & ) const
       {}
@@ -72,32 +72,32 @@ namespace Dune
       void finalize () const
       {}
 
-      /** \brief solve the system 
-          \param[in] arg right hand side 
-          \param[out] dest solution 
+      /** \brief solve the system
+          \param[in] arg right hand side
+          \param[out] dest solution
       */
       void apply ( const DiscreteFunctionType &arg, DiscreteFunctionType &dest ) const
       {
-        // prepare operator 
+        // prepare operator
         prepare( arg, dest );
 
-#ifdef ENABLE_UMFPACK 
+#ifdef ENABLE_UMFPACK
         // call UMF solve method on SparseRowMatrix
         if (symmetric)
           op_.systemMatrix().solveUMF( arg, dest );
         else
           op_.systemMatrix().solveUMFNonSymmetric( arg, dest );
-#else 
+#else
         DUNE_THROW( InvalidStateException, "UMFPACK was not found, reconfigure or use other solver!" );
 #endif
 
-        // finalize operator  
+        // finalize operator
         finalize ();
       }
 
-      /** \brief solve the system 
-          \param[in] arg right hand side 
-          \param[out] dest solution 
+      /** \brief solve the system
+          \param[in] arg right hand side
+          \param[out] dest solution
       */
       void operator() ( const DiscreteFunctionType &arg, DiscreteFunctionType &dest ) const
       {
@@ -110,12 +110,12 @@ namespace Dune
         out  << "\\\\ \n";
       }
 
-      double averageCommTime() const 
+      double averageCommTime() const
       {
         return 0.0;
       }
 
-      int iterations() const 
+      int iterations() const
       {
         return 0;
       }
@@ -128,8 +128,8 @@ namespace Dune
       bool verbose_ ;
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_UMFPACKSOLVER_HH

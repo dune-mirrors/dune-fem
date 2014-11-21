@@ -8,7 +8,7 @@ using namespace pardg;
 
 
 
-// 3d quadrature rules for the reference 
+// 3d quadrature rules for the reference
 // tetrahedron [(0,0,0), (1,0,0), (0,1,0), (0,0,1)]
 //
 // naming convention of quad3d_x: x denotes the order of the formula
@@ -28,7 +28,7 @@ const Quadrature3d& Quadrature3d::quadrature(int minimum_degree)
   if (minimum_degree < 0) return quad3d_0;
 
   switch (minimum_degree){
-  case 0: 
+  case 0:
   case 1: return quad3d_1; break;
   case 2: return quad3d_2; break;
   case 3: return quad3d_3; break;
@@ -40,7 +40,7 @@ const Quadrature3d& Quadrature3d::quadrature(int minimum_degree)
   case 9: return quad3d_9; break;
   case 10:
   case 11: return quad3d_11; break;
-  default: 
+  default:
     {
       std::cerr << "Quadrature3d::quadrature: order " << minimum_degree << " not avaiable" << std::endl;
       assert(0);
@@ -57,7 +57,7 @@ template<>
 void Quadrature3d::check() const
 {
   double total_error = 0.0;
-  
+
   for(int i=0; i<=degree; i++){
     for(int j=0; j<=i; j++){
       for(int l=0; l<=j; l++){
@@ -81,10 +81,10 @@ void Quadrature3d::check() const
 	for(int k=1; k<=j_l; k++) a *= k;
 	for(int k=1; k<=l; k++) a *= k;
 	for(int k=1; k<=i+3; k++) b *= k;
-	
+
 	double error = fabs(sum - (double)a / (double)b);
 	total_error += error;
-	
+
 	std::cout << i_j << "  "
 		  << j_l << "  "
 		  << l << "  "
@@ -107,23 +107,23 @@ const Quadrature3d pardg::quad3d_0(0, 0, quad3d_0_x);
 
 
 
-static const double quad3d_1_x[][4] = 
+static const double quad3d_1_x[][4] =
   {{0.25, 0.25, 0.25,   1.0/6.0}
   };
 const Quadrature3d pardg::quad3d_1(1, 1, quad3d_1_x);
 
 
 
-// Approximate calculation of multiple integrals / A. H. Stroud. 
-// Englewood Cliffs, NJ : Prentice-Hall, c 1971. - XIII, 
-// 431 S. : graph. Darst.; 
+// Approximate calculation of multiple integrals / A. H. Stroud.
+// Englewood Cliffs, NJ : Prentice-Hall, c 1971. - XIII,
+// 431 S. : graph. Darst.;
 // (engl.)(Prentice-Hall series in automatic computation)
 // ISBN 0-13-043893-6
 //
 // page 307
 //
-static const double quad3d_2_x[][4] = 
-  {{(5.0-sqrt(5.0))/20.0, (5.0-sqrt(5.0))/20.0, (5.0-sqrt(5.0))/20.0, 
+static const double quad3d_2_x[][4] =
+  {{(5.0-sqrt(5.0))/20.0, (5.0-sqrt(5.0))/20.0, (5.0-sqrt(5.0))/20.0,
     1.0/24.0},
    {(5.0+3.0*sqrt(5.0))/20.0, (5.0-sqrt(5.0))/20.0, (5.0-sqrt(5.0))/20.0,
     1.0/24.0},
@@ -137,15 +137,15 @@ const Quadrature3d pardg::quad3d_2(4, 2, quad3d_2_x);
 
 
 
-// Approximate calculation of multiple integrals / A. H. Stroud. 
-// Englewood Cliffs, NJ : Prentice-Hall, c 1971. - XIII, 
-// 431 S. : graph. Darst.; 
+// Approximate calculation of multiple integrals / A. H. Stroud.
+// Englewood Cliffs, NJ : Prentice-Hall, c 1971. - XIII,
+// 431 S. : graph. Darst.;
 // (engl.)(Prentice-Hall series in automatic computation)
 // ISBN 0-13-043893-6
 //
 // page 308
 //
-static const double quad3d_3_x[][4] = 
+static const double quad3d_3_x[][4] =
   {{0.25, 0.25, 0.25,           -2.0/15.0}, // w0
    {1.0/6.0, 1.0/6.0, 1.0/6.0,  3.0/40.0}, // w1
    {1.0/2.0, 1.0/6.0, 1.0/6.0,  3.0/40.0},
@@ -156,14 +156,14 @@ const Quadrature3d pardg::quad3d_3(5, 3, quad3d_3_x);
 
 
 
-// P. Keast,  Moderate-degree tetrahedral quadrature formulas, 
+// P. Keast,  Moderate-degree tetrahedral quadrature formulas,
 // Comput. Methods Appl. Mech. Engrg.  55 (1986), 339--348.
 //
 // http://www.cs.kuleuven.ac.be/~nines/research/ecf/mtables.html
 // login=encyclop, passwd=stroud71
 //
 // note: has negative weights
-static const double quad3d_4_x[][4] = 
+static const double quad3d_4_x[][4] =
   {{0.25, 0.25, 0.25,
     -0.013155555555555555}, // w0
    {0.785714285714285716, 0.071428571428571428 ,0.071428571428571428,
@@ -196,13 +196,13 @@ const Quadrature3d pardg::quad3d_4(11, 4, quad3d_4_x);
 // Noel J. Walkington
 // Scientific Report 2000
 // 00-CNA-023 (Center for Nonlinear Analysis)
-static const double quad3d_5_x[][4] = 
+static const double quad3d_5_x[][4] =
   {{0.31088591926330060980, 0.31088591926330060980, 0.31088591926330060980,
     0.018781320953002641800}, // w0
    {0.06734224221009817060, 0.31088591926330060980, 0.31088591926330060980,
     0.018781320953002641800},
    {0.31088591926330060980, 0.06734224221009817060, 0.31088591926330060980,
-    0.018781320953002641800},   
+    0.018781320953002641800},
    {0.31088591926330060980, 0.31088591926330060980, 0.06734224221009817060,
     0.018781320953002641800},
    {0.092735250310891226402, 0.092735250310891226402, 0.092735250310891226402,
@@ -233,10 +233,10 @@ const Quadrature3d pardg::quad3d_5(14, 5, quad3d_5_x);
 
 
 // stolen from ALBERTA sources
-static const double quad3d_5b_x[][4] = 
-  {{0.250000000000000, 0.250000000000000, 0.250000000000000, 
+static const double quad3d_5b_x[][4] =
+  {{0.250000000000000, 0.250000000000000, 0.250000000000000,
     0.118518518518519/6.0}, // w0
-   {0.091971078052723, 0.091971078052723, 0.091971078052723,  
+   {0.091971078052723, 0.091971078052723, 0.091971078052723,
     0.071937083779019/6.0}, // w1
    {0.724086765841831, 0.091971078052723, 0.091971078052723,
     0.071937083779019/6.0},
@@ -263,20 +263,20 @@ static const double quad3d_5b_x[][4] =
    {0.443649167310371, 0.443649167310371, 0.056350832689629,
     0.052910052910053/6.0},
    {0.056350832689629, 0.443649167310371, 0.443649167310371,
-    0.052910052910053/6.0} 
+    0.052910052910053/6.0}
   };
 const Quadrature3d pardg::quad3d_5b(15, 5, quad3d_5b_x);
 
 
 
 
-// P. Keast,  Moderate-degree tetrahedral quadrature formulas, 
+// P. Keast,  Moderate-degree tetrahedral quadrature formulas,
 // Comput. Methods Appl. Mech. Engrg.  55 (1986), 339--348.
 //
 // http://www.cs.kuleuven.ac.be/~nines/research/ecf/mtables.html
 // login=encyclop, passwd=stroud71
 //
-static const double quad3d_6_x[][4] = 
+static const double quad3d_6_x[][4] =
   {{0.35619138622254394, 0.21460287125915202 ,0.21460287125915202,
     6.6537917096945820e-3}, // w0
    {0.21460287125915202, 0.35619138622254394 ,0.21460287125915202,
@@ -335,7 +335,7 @@ const Quadrature3d pardg::quad3d_6(24, 6, quad3d_6_x);
 // Noel J. Walkington
 // Scientific Report 2000
 // 00-CNA-023 (Center for Nonlinear Analysis)
-static const double quad3d_7b_x[][4] = 
+static const double quad3d_7b_x[][4] =
   {{0.25, 0.25, 0.25,   -8.0/945.0}, // w0
    {1.0/6.0, 1.0/6.0, 1.0/6.0,   243.0/4480.0}, // w1
    {0.5, 1.0/6.0, 1.0/6.0,       243.0/4480.0},
@@ -370,9 +370,9 @@ static const double quad3d_7b_x[][4] =
    {0.3, 0.3, 0.3,               3125.0/72576.0}, // w3
    {0.1, 0.3, 0.3,               3125.0/72576.0},
    {0.3, 0.1, 0.3,               3125.0/72576.0},
-   {0.3, 0.3, 0.1,               3125.0/72576.0}   
+   {0.3, 0.3, 0.1,               3125.0/72576.0}
   };
-static const double quad3d_7b_w[] = 
+static const double quad3d_7b_w[] =
   {-8.0/945.0, // w0
    243.0/4480.0, // w1
    243.0/4480.0,
@@ -413,15 +413,15 @@ const Quadrature3d pardg::quad3d_7b(35, 7, quad3d_7b_x);
 
 
 
-// P. Keast,  
-// Moderate-degree tetrahedral quadrature formulas, 
+// P. Keast,
+// Moderate-degree tetrahedral quadrature formulas,
 // Comput. Methods Appl. Mech. Engrg.  55 (1986), 339--348.
 //
 // http://www.cs.kuleuven.ac.be/~nines/research/ecf/mtables.html
 // login=encyclop, passwd=stroud71
 //
 // note: has negative weights
-static const double quad3d_7_x[][4] = 
+static const double quad3d_7_x[][4] =
   {{0.25, 0.25, 0.25,   0.018264223466108820}, // w0
    {0.5, 0.5, 0.0,      9.7001763668430335e-4}, // w1
    {0.5, 0.0, 0.5,      9.7001763668430335e-4},
@@ -454,7 +454,7 @@ static const double quad3d_7_x[][4] =
    {0.33253916444642062, 0.33253916444642062, 0.00238250666073814,
     4.8914252630734993e-3},
    {0.6, 0.2, 0.1,   0.027557319223985890}, // w5
-   {0.6, 0.1, 0.2,   0.027557319223985890}, 
+   {0.6, 0.1, 0.2,   0.027557319223985890},
    {0.6, 0.1, 0.1,   0.027557319223985890},
    {0.2, 0.6, 0.1,   0.027557319223985890},
    {0.2, 0.1, 0.6,   0.027557319223985890},
@@ -471,18 +471,18 @@ const Quadrature3d pardg::quad3d_7(31, 7, quad3d_7_x);
 
 
 
-// M. Beckers and A. Haegemans,  
-// The construction of cubature formulae for the tetrahedron, 
+// M. Beckers and A. Haegemans,
+// The construction of cubature formulae for the tetrahedron,
 // Report TW 128, Dept. of Computer Science, K.U. Leuven, 1990.
 //
-// M. Beckers,  Numerical integration in high dimensions, 
+// M. Beckers,  Numerical integration in high dimensions,
 // Ph.D. thesis, Katholieke Universiteit Leuven, 1992.
 //
 // http://www.cs.kuleuven.ac.be/~nines/research/ecf/mtables.html
 // login=encyclop, passwd=stroud71
 //
 // note: has negative weights
-static const double quad3d_8_x[][4] = 
+static const double quad3d_8_x[][4] =
   {{0.25, 0.25, 0.25,
     -0.020500188658639915}, // w0
    {0.20682993161067320, 0.20682993161067320, 0.20682993161067320,
@@ -576,11 +576,11 @@ const Quadrature3d pardg::quad3d_8(43, 8, quad3d_8_x);
 
 
 
-// M. Beckers and A. Haegemans,  
-// The construction of cubature formulae for the tetrahedron, 
+// M. Beckers and A. Haegemans,
+// The construction of cubature formulae for the tetrahedron,
 // Report TW 128, Dept. of Computer Science, K.U. Leuven, 1990.
 //
-// M. Beckers,  Numerical integration in high dimensions, 
+// M. Beckers,  Numerical integration in high dimensions,
 // Ph.D. thesis, Katholieke Universiteit Leuven, 1992.
 //
 // http://www.cs.kuleuven.ac.be/~nines/research/ecf/mtables.html
@@ -588,7 +588,7 @@ const Quadrature3d pardg::quad3d_8(43, 8, quad3d_8_x);
 //
 // note: has negative baryzentric coordinates!
 //       has negative weights
-static const double quad3d_9_x[][4] = 
+static const double quad3d_9_x[][4] =
   {{0.25, 0.25, 0.25,
     -0.13779903832610864}, // w0
    {0.854946884350789780, 0.048351038549736740 ,0.048351038549736740,
@@ -702,19 +702,19 @@ const Quadrature3d pardg::quad3d_9(53, 9, quad3d_9_x);
 
 
 // Sainz de la Maza, Eduardo;  Maeztu, José I.
-// An invariant quadrature rule of degree 11 for the tetrahedron. 
+// An invariant quadrature rule of degree 11 for the tetrahedron.
 // (English. Abridged French version)
-// C. R. Acad. Sci., Paris, Sér. I 321, No.9, 1263-1267 (1995). 
+// C. R. Acad. Sci., Paris, Sér. I 321, No.9, 1263-1267 (1995).
 //
 // remark: - has negative baryzentric coordinates! and
 //           negative weights
 //         - coordinates are not computed very accurately
 //           e.g. the sum of the baryzentric coordinates of the second group
-//           gives 
+//           gives
 //           3*0.3197881306061907 + 0.04063561442097275
 //            = 1.00000000623954485,
 //           hence errors can not be better than 1e-9 or 1e-10...
-static const double quad3d_11_x[][4] = 
+static const double quad3d_11_x[][4] =
   {{0.25, 0.25, 0.25,
     -0.3229059250896649/6.0}, // w0
    {0.3197881306061907, 0.3197881306061907, 0.3197881306061907,

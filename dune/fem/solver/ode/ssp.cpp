@@ -17,7 +17,7 @@ static const double ssp_alpha[] =
 
 
 ExplicitSSP::ExplicitSSP(Communicator &comm, Function &f, int m) :
-  ODESolver(comm, 2), f(f), num_of_stages(m), 
+  ODESolver(comm, 2), f(f), num_of_stages(m),
   alpha(m, ssp_alpha+m*(m-1)/2)
 {
   assert(m>0 && m<=6);
@@ -29,7 +29,7 @@ bool ExplicitSSP::step(double t, double dt, double *u)
 {
   dim = f.dim_of_value();
   new_size(dim);
- 
+
   double *ui = U;
   double *tmp = U + dim;
   cblas_dcopy(dim, u, 1, ui, 1);

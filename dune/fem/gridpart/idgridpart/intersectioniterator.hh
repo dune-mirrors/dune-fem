@@ -49,7 +49,7 @@ namespace Dune
       {
         return (hostIterator_ == other.hostIterator_);
       }
-      
+
       void increment ()
       {
         ++hostIterator_;

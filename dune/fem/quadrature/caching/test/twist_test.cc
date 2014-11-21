@@ -6,8 +6,8 @@
 
 namespace Dune {
   namespace Fem {
-  
-  void TwistProvider_Test::run() 
+
+  void TwistProvider_Test::run()
   {
     lineTest();
     triangleTest();
@@ -15,7 +15,7 @@ namespace Dune {
     nonSymmetricTest();
   }
 
-  void TwistProvider_Test::lineTest() 
+  void TwistProvider_Test::lineTest()
   {
 
     GeometryType line(GeometryType::simplex,1);
@@ -32,16 +32,16 @@ namespace Dune {
     TestQuadrature<double, 1> quadImp(line, 0);
     quadImp.newQuadraturePoint(begin, 0.5);
     quadImp.newQuadraturePoint(end, 0.5);
-    
+
     Quadrature<double, 1> quad(quadImp);
- 
+
     const TwistStorageType& storage =
       TwistProvider<double, 1>::getTwistStorage(quad.ipList());
 
     // Test minTwist, maxTwist
     _test(storage.minTwist() == 0);
     _test(storage.maxTwist() == 2);
-    
+
     // Test points
     const PointVectorType& points = storage.getPoints();
     _floatTest(points[0][0], begin[0]);
@@ -51,14 +51,14 @@ namespace Dune {
     const MapperType& m0 = storage.getMapper(0);
     _test(m0[0] == 0);
     _test(m0[1] == 1);
-    
+
     const MapperType& m1 = storage.getMapper(1);
     _test(m1[0] == 1);
     _test(m1[1] == 0);
 
   }
 
-  void TwistProvider_Test::triangleTest() 
+  void TwistProvider_Test::triangleTest()
   {
     GeometryType simplex(GeometryType::simplex,2);
     typedef FieldVector<double, 2> CoordinateType;
@@ -78,7 +78,7 @@ namespace Dune {
     quadImp.newQuadraturePoint(p2, oneThird);
 
     Quadrature<double, 2> quad(quadImp);
-  
+
     const TwistStorageType& storage =
       TwistProvider<double, 2>::getTwistStorage(quad.ipList());
 
@@ -133,7 +133,7 @@ namespace Dune {
     //std::cout << "(" << m2[0] << ", " << m2[1] << ", " << m2[2] << ")\n";
   }
 
-  void TwistProvider_Test::quadrilateralTest() 
+  void TwistProvider_Test::quadrilateralTest()
   {
     GeometryType cube(GeometryType::cube,2);
     typedef FieldVector<double, 2> CoordinateType;
@@ -144,7 +144,7 @@ namespace Dune {
     CoordinateType p0(0.0);
     CoordinateType p1(0.0); p1[0] = 1.0;
     CoordinateType p2(0.0); p2[1] = 1.0;
-    CoordinateType p3(1.0); 
+    CoordinateType p3(1.0);
 
     TestQuadrature<double, 2> quadImp(cube, 0);
     quadImp.newQuadraturePoint(p0, 0.25);
@@ -153,7 +153,7 @@ namespace Dune {
     quadImp.newQuadraturePoint(p3, 0.25);
 
     Quadrature<double, 2> quad(quadImp);
-  
+
     const TwistStorageType& storage =
       TwistProvider<double, 2>::getTwistStorage(quad.ipList());
 
@@ -171,7 +171,7 @@ namespace Dune {
     _floatTest(points[2][1], p2[1]);
     _floatTest(points[3][0], p3[0]);
     _floatTest(points[3][1], p3[1]);
-    
+
     // Test twists
     const MapperType& m_4 = storage.getMapper(-4);
     _test(m_4[0] == 2);
@@ -230,7 +230,7 @@ namespace Dune {
     //std::cout << "(" << m3[0] << ", " << m3[1] << ", " << m3[2] << ", " << m3[3] << ")\n";
   }
 
-  void TwistProvider_Test::nonSymmetricTest() 
+  void TwistProvider_Test::nonSymmetricTest()
   {
     typedef FieldVector<double, 1> CoordinateType;
     typedef TwistProvider<double, 1>::TwistStorageType TwistStorageType;
@@ -239,30 +239,30 @@ namespace Dune {
 
     CoordinateType begin(0.1);
     CoordinateType end(0.9);
-    
+
     GeometryType line(GeometryType::simplex,1);
     TestQuadrature<double, 1> quadImp(line, 0);
     quadImp.newQuadraturePoint(begin, 0.5);
     quadImp.newQuadraturePoint(end, 0.5);
-    
+
     Quadrature<double, 1> quad(quadImp);
-    
+
     const TwistStorageType& storage =
       TwistProvider<double, 1>::getTwistStorage(quad.ipList());
-    
+
     // Test points
     const PointVectorType& points = storage.getPoints();
     _test(points.size() == 2);
     _floatTest(points[0][0], begin[0]);
     _floatTest(points[1][0], end[0]);
-    
+
     // Test mapping
     const MapperType& m0 = storage.getMapper(0);
     _test(m0[0] == 0);
-    
+
     const MapperType& m1 = storage.getMapper(1);
     _test(m1[0] == 1);
-  
+
   }
   } // end namespace Fem
 } // end namespace Dune

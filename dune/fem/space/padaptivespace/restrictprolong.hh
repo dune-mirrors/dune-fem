@@ -90,7 +90,7 @@ namespace Dune
           const unsigned int dof = *sit;
           const DomainVector &pointInSon = pointSet.point( dof );
           const DomainVector pointInFather = geometryInFather.global( pointInSon );
-          
+
           typename LFFather::RangeType phi;
           lfFather.evaluate( pointInFather, phi );
           for( int coordinate = 0; coordinate < dimRange; ++coordinate )
@@ -116,7 +116,7 @@ namespace Dune
         {
           const unsigned int dof = *sit;
           const DomainVector &localPoint = pointSet.point( dof );
-          
+
           typename ArgLocal::RangeType phi;
           argLocal.evaluate( localPoint, phi );
           for( int coordinate = 0; coordinate < dimRange; ++coordinate )
@@ -140,6 +140,6 @@ namespace Dune
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_SPACE_PADAPTIVE_RESTRICTPROLONG_HH

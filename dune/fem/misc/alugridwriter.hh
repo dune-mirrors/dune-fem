@@ -11,10 +11,10 @@
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/alugrid/3d/topology.hh>
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     template <class GridPartType>
@@ -33,19 +33,19 @@ namespace Dune
       typedef typename GridType :: template Codim< 0 >  :: Geometry :: GlobalCoordinate  CoordinateType;
       typedef typename GridType :: template Codim< 0 >  :: Entity EntityType;
 
-      class Vertex 
+      class Vertex
       {
         CoordinateType vx_;
         IdType id_;
-        int index_; 
+        int index_;
       public:
         Vertex() {}
 
-        Vertex( const CoordinateType& vx, 
-                const IdType& id, 
-                const int index) 
+        Vertex( const CoordinateType& vx,
+                const IdType& id,
+                const int index)
          : vx_( vx ), id_( id ), index_( index )
-        {} 
+        {}
         const CoordinateType& vx() const { return vx_ ; }
         const IdType& id () const { return id_; }
         const int index () const { assert(index_ >= 0); return index_; }
@@ -58,43 +58,43 @@ namespace Dune
       mutable IndexMapType indices_;
       const bool useIds_;
 
-      class DataHandle : 
-        public CommDataHandleIF< 
-         DataHandle, int > 
+      class DataHandle :
+        public CommDataHandleIF<
+         DataHandle, int >
       {
         const IdSetType& idSet_;
         const int myRank_;
         IndexMapType& indices_;
       public:
-        explicit DataHandle( const IdSetType& idSet, 
+        explicit DataHandle( const IdSetType& idSet,
                              const int rank,
-                             IndexMapType& indices ) 
+                             IndexMapType& indices )
           : idSet_( idSet ),
             myRank_( rank ),
             indices_( indices )
         {}
 
 
-        //! returns true if combination is contained 
+        //! returns true if combination is contained
         bool contains ( int dim, int codim ) const
         {
           return dim == codim;
         }
 
-        //! return whether we have a fixed size 
+        //! return whether we have a fixed size
         bool fixedsize ( int dim, int codim ) const
         {
           return true;
         }
 
-        //! return local dof size to be communicated 
+        //! return local dof size to be communicated
         template< class Entity >
         size_t size ( const Entity &entity ) const
         {
           return 2;
         }
 
-        //! read buffer and apply operation 
+        //! read buffer and apply operation
         template< class MessageBuffer, class Entity >
         void gather ( MessageBuffer &buffer,
                       const Entity &entity ) const
@@ -106,7 +106,7 @@ namespace Dune
           buffer.write( index );
         }
 
-        //! read buffer and apply operation 
+        //! read buffer and apply operation
         template< class MessageBuffer, class Entity >
         void scatter ( MessageBuffer &buffer,
                        const Entity &entity,
@@ -117,11 +117,11 @@ namespace Dune
           buffer.read( rank );
           int index ;
           buffer.read( index );
-          if( myRank_ > rank && index > -1 ) 
+          if( myRank_ > rank && index > -1 )
           {
             const IdType id = idSet_.id( entity );
             IndexMapIteratorType it = indices_.find( id );
-            if( it == indices_.end() ) 
+            if( it == indices_.end() )
             {
               VertexType vx( entity.geometry().corner(0), id, index );
               indices_[ id ] = vx;
@@ -131,20 +131,20 @@ namespace Dune
       };
     public:
       explicit GlobalConsecutiveIndexSet( const GridPartType& gridPart,
-                                          const bool useIds = false  ) 
+                                          const bool useIds = false  )
        : gridPart_( gridPart ),
          grid_( gridPart.grid() ),
          idSet_( grid_.localIdSet() ),
-         useIds_( useIds ) 
+         useIds_( useIds )
       {
         const int pSize = grid_.comm().size();
         const int myRank = grid_.comm().rank();
         int index = 0;
         for( int p = 0; p<pSize; ++p )
         {
-          if( p == myRank ) 
+          if( p == myRank )
           {
-            if( useIds_ ) 
+            if( useIds_ )
             {
               typedef typename GridPartType :: template Codim< dimension > :: IteratorType
                 IteratorType;
@@ -161,7 +161,7 @@ namespace Dune
                 }
               }
             }
-            else 
+            else
             {
               typedef typename GridPartType :: template Codim< 0 > :: IteratorType
                 IteratorType;
@@ -171,7 +171,7 @@ namespace Dune
               {
                 const EntityType& entity = *it ;
                 const int count = entity.subEntities( dimension );
-                for( int i = 0; i<count; ++i) 
+                for( int i = 0; i<count; ++i)
                 {
                   typedef typename GridType :: template Codim< dimension > :: EntityPointer  EntityPointer;
                   EntityPointer vertex = entity.template subEntity< dimension > ( i );
@@ -185,35 +185,35 @@ namespace Dune
                 }
               }
               {
-                // set index according to appearance in map 
+                // set index according to appearance in map
                 int myindex = 0;
                 IndexMapIteratorType end = indices_.end();
                 for( IndexMapIteratorType it = indices_.begin(); it != end; ++it, ++myindex)
                 {
-                  (*it).second.setIndex( myindex ); 
+                  (*it).second.setIndex( myindex );
                 }
               }
             }
           }
 
           //std::cout << "P["<<myRank<< "] inddex = " << index << std::endl;
-          // send current index number 
+          // send current index number
           grid_.comm().broadcast(&index, 1, p );
           //std::cout << "P["<<myRank<< "] inddex = " << index << std::endl;
 
           if( grid_.comm().size() > 1 )
           {
             DataHandle dataHandle( idSet_, myRank, indices_ );
-            gridPart_.communicate( dataHandle, 
-                                   InteriorBorder_InteriorBorder_Interface, 
+            gridPart_.communicate( dataHandle,
+                                   InteriorBorder_InteriorBorder_Interface,
                                    ForwardCommunication );
           }
         }
       }
 
-      void writeCoordinates ( std::ostream& out ) const 
+      void writeCoordinates ( std::ostream& out ) const
       {
-        out << indices_.size() << std::endl; 
+        out << indices_.size() << std::endl;
         out.precision( 16 );
         out << std::scientific;
         IndexMapIteratorType end = indices_.end();
@@ -223,7 +223,7 @@ namespace Dune
         }
       }
 
-      void writeIndices ( std::ostream& out ) const 
+      void writeIndices ( std::ostream& out ) const
       {
         IndexMapIteratorType end = indices_.end();
         for( IndexMapIteratorType it = indices_.begin(); it != end; ++it)
@@ -233,25 +233,25 @@ namespace Dune
       }
 
       template <class EntityType>
-      int index ( const EntityType& entity ) const 
+      int index ( const EntityType& entity ) const
       {
         //assert( (int) EntityType :: codimension == (int) dimension );
         //assert( (int) EntityType :: dimension ==  0 );
-        IndexMapIteratorType it = indices_.find( 
-            ( useIds_ ) ? 
-              idSet_.id( entity ) : 
+        IndexMapIteratorType it = indices_.find(
+            ( useIds_ ) ?
+              idSet_.id( entity ) :
               gridPart_.indexSet().index( entity ) );
         assert( it != indices_.end() );
-        return (*it).second.index(); 
+        return (*it).second.index();
       }
 
-      int size() const 
+      int size() const
       {
         return indices_.size();
       }
     };
 
-    template <class GridPartType, class IndexSetType > 
+    template <class GridPartType, class IndexSetType >
     class ALUGridWriter
     {
       const GridPartType& gridPart_;
@@ -263,15 +263,15 @@ namespace Dune
       enum { dimension = GridType :: dimension };
 
       typedef typename GridType :: template Codim< 0 > :: Entity  Entity;
-    protected:  
+    protected:
       ALUGridWriter( const GridPartType& gridPart,
-                     const IndexSetType& indexSet ) 
+                     const IndexSetType& indexSet )
         : gridPart_( gridPart ),
           indexSet_( indexSet )
       {
       }
 
-      void write(const std::string& filename, const int rank ) const 
+      void write(const std::string& filename, const int rank ) const
       {
         typedef typename GridPartType :: template Codim< 0 > :: IteratorType
           IteratorType;
@@ -280,7 +280,7 @@ namespace Dune
         if( it == endit ) return;
 
         bool hexahedra = it->type().isHexahedron();
-        if( ! hexahedra && ! it->type().isTetrahedron() ) 
+        if( ! hexahedra && ! it->type().isTetrahedron() )
         {
           DUNE_THROW(InvalidStateException,"Wrong geometry type");
         }
@@ -291,11 +291,11 @@ namespace Dune
           ++noElements;
         }
 
-        std::stringstream filestr; 
+        std::stringstream filestr;
         filestr << filename << "." << rank;
 
         std::ofstream file ( filestr.str().c_str() );
-        if( ! file ) 
+        if( ! file )
         {
           std::cerr << "ERROR: couldn't open file " << filestr.str() << std::endl;
           assert( false );
@@ -305,41 +305,41 @@ namespace Dune
         file.setf (std::ios::fixed, std::ios::floatfield) ;
 
         const char* header = ( hexahedra ) ? "!Hexahedra" : "!Tetrahedra";
-        // write header 
+        // write header
         file << header;
         file << "  ( noVertices = " << indexSet_.size();
         file << " | noElements = " << noElements << " )" << std :: endl;
 
-        // write vertex coordinates  
+        // write vertex coordinates
         indexSet_.writeCoordinates( file );
 
         file << noElements << std::endl;
-        if( hexahedra ) 
+        if( hexahedra )
         {
           typedef ElementTopologyMapping< hexa > ElementTopo;
           writeElements< ElementTopo >( file );
           writeBoundaries< ElementTopo >( file );
         }
-        else 
+        else
         {
           typedef ElementTopologyMapping< tetra > ElementTopo;
           writeElements< ElementTopo >( file );
           writeBoundaries< ElementTopo >( file );
         }
 
-        // write global numbers of indices 
+        // write global numbers of indices
         indexSet_.writeIndices( file );
       }
 
-      int getIndex( const Entity& entity, const int i ) const 
+      int getIndex( const Entity& entity, const int i ) const
       {
         typedef typename GridType :: template Codim< dimension > :: EntityPointer  EntityPointer;
         EntityPointer vx = entity.template subEntity< dimension > ( i );
         return indexSet_.index( *vx );
       }
-      
-      template <class ElementTopo> 
-      void writeElements( std::ostream& out ) const 
+
+      template <class ElementTopo>
+      void writeElements( std::ostream& out ) const
       {
         typedef typename GridPartType :: template Codim< 0 > :: IteratorType IteratorType;
         const IteratorType endit = gridPart_.template end< 0 > ();
@@ -350,7 +350,7 @@ namespace Dune
           const int nVx = entity.subEntities( dimension );
 
           out << getIndex( entity, ElementTopo::dune2aluVertex( 0 ) );
-          for(int i=1; i<nVx; ++i) 
+          for(int i=1; i<nVx; ++i)
           {
             out << "  " << getIndex( entity, ElementTopo::dune2aluVertex( i ));
           }
@@ -358,8 +358,8 @@ namespace Dune
         }
       }
 
-      template <class ElementTopo> 
-      void writeBoundaries( std::ostream& out ) const 
+      template <class ElementTopo>
+      void writeBoundaries( std::ostream& out ) const
       {
         typedef typename GridPartType :: template Codim< 0 > :: IteratorType IteratorType;
         typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
@@ -372,14 +372,14 @@ namespace Dune
           const Entity& entity = *it ;
           const IntersectionIteratorType endnit = gridPart_.iend( entity );
           for( IntersectionIteratorType nit = gridPart_.ibegin( entity );
-               nit != endnit ; ++nit ) 
+               nit != endnit ; ++nit )
           {
             typedef typename IntersectionIteratorType :: Intersection Intersection;
             const Intersection& inter = *nit;
             if( inter.boundary() )
               ++bndFaces;
-            else if( inter.neighbor() && 
-                     inter.outside()->partitionType() != InteriorEntity ) 
+            else if( inter.neighbor() &&
+                     inter.outside()->partitionType() != InteriorEntity )
              ++bndFaces;
           }
         }
@@ -396,19 +396,19 @@ namespace Dune
 
           const IntersectionIteratorType endnit = gridPart_.iend( entity );
           for( IntersectionIteratorType nit = gridPart_.ibegin( entity );
-               nit != endnit ; ++nit ) 
+               nit != endnit ; ++nit )
           {
             typedef typename IntersectionIteratorType :: Intersection Intersection;
             const Intersection& inter = *nit;
             int bndId = 0;
-            if( inter.boundary() ) 
+            if( inter.boundary() )
             {
               bndId = inter.boundaryId();
             }
-            else if( inter.neighbor() && 
+            else if( inter.neighbor() &&
                      inter.outside()->partitionType() != InteriorEntity )
             {
-              bndId = 111; 
+              bndId = 111;
             }
 
             if( bndId != 0 )
@@ -420,7 +420,7 @@ namespace Dune
 
               std::vector< int > vertices( vxNr );
               const int aluFace = ElementTopo :: generic2aluFace( duneFace );
-              for( int i=0; i<vxNr; ++i) 
+              for( int i=0; i<vxNr; ++i)
               {
                 const int j = ElementTopo :: faceVertex( aluFace, i );
                 const int k = ElementTopo :: alu2genericVertex( j );
@@ -434,11 +434,11 @@ namespace Dune
         }
       }
 
-    public:  
-      static void dumpMacroGrid(const GridPartType& gridPart, 
+    public:
+      static void dumpMacroGrid(const GridPartType& gridPart,
                                 const IndexSetType& indexSet,
                                 const std::string& filename,
-                                const int p =  -1 ) 
+                                const int p =  -1 )
       {
         const int rank = ( p < 0 ? gridPart.comm().rank() : p);
         ALUGridWriter< GridPartType, IndexSetType > writer ( gridPart, indexSet );
@@ -447,8 +447,8 @@ namespace Dune
     };
 
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_ALUGRIDWRITER_HH

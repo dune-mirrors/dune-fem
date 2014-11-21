@@ -33,7 +33,7 @@ public:
   void assembleRHS( const Function &u, DiscreteFunctionType &w ) const;
 
 private:
-  void assemble (); 
+  void assemble ();
 
   const DiscreteFunctionSpaceType &dfSpace_;
 };
@@ -69,7 +69,7 @@ void MassOperator< DiscreteFunction, LinearOperator >
     for( unsigned int qp = 0; qp < numQuadraturePoints; ++qp )
     {
       // evaluate u
-      const typename QuadratureType::CoordinateType &x = quadrature.point( qp );        
+      const typename QuadratureType::CoordinateType &x = quadrature.point( qp );
 
       RangeType uValue;
       u.evaluate( geometry.global( x ), uValue );
@@ -77,10 +77,10 @@ void MassOperator< DiscreteFunction, LinearOperator >
       // put all things together and don't forget quadrature weights
       const FieldType weight = quadrature.weight( qp )*geometry.integrationElement( x );
 
-      // apply weight 
-      uValue *= weight; 
+      // apply weight
+      uValue *= weight;
 
-      // add to local function 
+      // add to local function
       localFunction.axpy( quadrature[ qp ], uValue );
     }
 
@@ -137,7 +137,7 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
       {
         RangeType value = values[ i ];
         // add column
-        localMatrix.column( i ).axpy( values, value, weight ); 
+        localMatrix.column( i ).axpy( values, value, weight );
       }
     }
   }

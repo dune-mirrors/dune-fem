@@ -1,60 +1,60 @@
 //**************************************************************
-//  (C) written and directecd by Robert Kloefkorn 
+//  (C) written and directecd by Robert Kloefkorn
 //**************************************************************
 #ifndef GRAPE_READ_PARAMS_CC
 #define GRAPE_READ_PARAMS_CC
 
-//- system includes 
+//- system includes
 #include <string>
 #include <sys/types.h>
 #include <dirent.h>
 
-//- Dune includes 
+//- Dune includes
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/file/datawriter.hh>
 
-inline bool readDataInfo(std::string path, DATAINFO * dinf, 
-                         const int timestamp, const int dataSet) 
+inline bool readDataInfo(std::string path, DATAINFO * dinf,
+                         const int timestamp, const int dataSet)
 {
   static const bool useRankPath = Dune::Fem::DataWriterParameters().separateRankPath();
   std::cout << "Reading data base for " << dinf->name << "! \n";
-  std::string dataname; 
-  if( useRankPath )  
+  std::string dataname;
+  if( useRankPath )
   {
-    dataname = Fem::IOTupleBase::dataName( 
+    dataname = Fem::IOTupleBase::dataName(
                   Fem::IOInterface::createRecoverPath(path,0, dinf->name, timestamp, useRankPath ),
                   dinf->name);
   }
-  else 
+  else
   {
     return true ;
   }
 
   {
-    std::stringstream dummy; 
-    dummy << dataSet; 
+    std::stringstream dummy;
+    dummy << dataSet;
     dataname += "_";
     dataname += dummy.str();
   }
-  
+
   std::cerr << "reading dofs from: " << dataname << std::endl;
 
   std::ifstream check ( dataname.c_str() );
-  if( ! check ) 
+  if( ! check )
   {
     std::cerr << "Removing non-valid data set `" << dataname << "'\n";
-    // comp = 0 marks non-valid data set 
+    // comp = 0 marks non-valid data set
     dinf->comp = 0;
     return false;
   }
-  
+
   int fakedata = 1;
   bool fake = Fem::readParameter(dataname,"Fake_data",fakedata);
-  
+
   std::cerr << "FAKE: " << fake << " " << fakedata << std::endl;
   if( (!fake) || (!fakedata) )
   {
-    std::string dummy; 
+    std::string dummy;
     Fem::readParameter(dataname,"DataBase",dummy);
     std::string * basename = new std::string (dummy);
     std::cout << "Read Function: " << *basename << std::endl;
@@ -69,7 +69,7 @@ inline bool readDataInfo(std::string path, DATAINFO * dinf,
   }
   else
   {
-    std::string dummy; 
+    std::string dummy;
     Fem::readParameter(dataname,"DataBase",dummy);
     std::string * basename = new std::string (dummy);
     std::cout << "Read Function: " << *basename << std::endl;
@@ -87,12 +87,12 @@ inline bool readDataInfo(std::string path, DATAINFO * dinf,
     int * comp = new int [dimVal];
     for(int k=0; k<dimVal; k++)
     {
-      std::stringstream tmpDummy; 
-      tmpDummy << k; 
-      
+      std::stringstream tmpDummy;
+      tmpDummy << k;
+
       std::string compkey ("comp_");
       compkey += tmpDummy.str();
-      
+
       bool couldread = Fem::readParameter(dataname,compkey.c_str(),comp[k]);
       if(!couldread) dataDispErrorExit("wrong " + compkey);
     }
@@ -101,8 +101,8 @@ inline bool readDataInfo(std::string path, DATAINFO * dinf,
   return true;
 }
 
-// return number of procs of data set 
-inline int scanProcsPaths(const std::string globalPath, 
+// return number of procs of data set
+inline int scanProcsPaths(const std::string globalPath,
                    const std::string dataPrefix,
                    int step)
 {
@@ -112,7 +112,7 @@ inline int scanProcsPaths(const std::string globalPath,
     std::string path( Fem::IOInterface::
         createRecoverPath(globalPath,procs,dataPrefix,step) );
 
-    // check for directory 
+    // check for directory
     if( ! Dune::Fem::directoryExists( path ) )
     {
       return procs;
@@ -123,26 +123,26 @@ inline int scanProcsPaths(const std::string globalPath,
   return procs;
 }
 
-// return number of procs of data set 
-inline int scanProcsFiles(const std::string globalPath, 
+// return number of procs of data set
+inline int scanProcsFiles(const std::string globalPath,
                           const std::string dataPrefix,
                           int step)
 {
   const bool singleBackupRestoreFile = Dune::Fem::PersistenceManager :: singleBackupRestoreFile ;
 
-  int procs = 0; 
+  int procs = 0;
   std::string path( Fem::IOInterface::
       createRecoverPath(globalPath,procs,dataPrefix,step, false ) );
 
   while ( true )
   {
-    std::stringstream filename; 
+    std::stringstream filename;
     filename << path << "/" << dataPrefix << "." << procs;
 
-    // check for file 
+    // check for file
     const bool fileOk = Dune::Fem::fileExists( filename.str() ) ;
 
-    if( (singleBackupRestoreFile && fileOk) || (! singleBackupRestoreFile && ! fileOk ) ) 
+    if( (singleBackupRestoreFile && fileOk) || (! singleBackupRestoreFile && ! fileOk ) )
     {
       return procs;
     }
@@ -154,7 +154,7 @@ inline int scanProcsFiles(const std::string globalPath,
 
 std::string path,solprefix;
 
-inline int readParameterList (int argc, char **argv, bool displayData = true ) 
+inline int readParameterList (int argc, char **argv, bool displayData = true )
 {
   int   i, i_start, i_end;
   INFO * info = 0;
@@ -166,10 +166,10 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
 #ifdef USE_GRAPE_DISPLAY
   const  char *replay = 0;
 #endif
-  
+
   info = (INFO *) malloc(n_info*sizeof(INFO));
   assert(info != 0);
-  
+
   info[0].datinf = 0;
   info[0].name = "grid";
   info[0].fix_mesh = 0;
@@ -192,15 +192,15 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
       DATAINFO * dinf = (DATAINFO *) std::malloc(sizeof(DATAINFO));
       assert(dinf);
       dinf->name = solprefix.c_str();
-      dinf->base_name = 0; 
+      dinf->base_name = 0;
       dinf->comp = 0;
       dinf->dimVal = 0;
-      dinf->next = info[n].datinf; 
+      dinf->next = info[n].datinf;
       info[n].datinf = dinf;
     }
     n++;
   }
-  
+
   i_start = atoi(argv[1]);
   i_end = atoi(argv[2]);
 
@@ -224,7 +224,7 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
     {
       if (i+1 == argc)
         dataDispErrorExit("usage: -v `vectorprefix'\n");
-      
+
       DATAINFO * dinf = (DATAINFO *) std::malloc(sizeof(DATAINFO));
       assert(dinf);
       dinf->name = argv[i+1];
@@ -234,7 +234,7 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
       dinf->dimVal = 0;
 
       /* seems wrong order, but grape truns it arround, we can do nothing else here */
-      dinf->next = info[n].datinf; 
+      dinf->next = info[n].datinf;
       info[n].datinf = dinf;
 
       i += 2;
@@ -255,15 +255,15 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
       info[n].datinf = 0;
       info[n].fix_mesh = 0;
       const int tupleSize = tuple_size<GR_DiscFuncType>::value ;
-      for (int df = 0; df < tupleSize; ++df ) 
+      for (int df = 0; df < tupleSize; ++df )
       {
         DATAINFO * dinf = (DATAINFO *) std::malloc(sizeof(DATAINFO));
         assert(dinf);
         dinf->name = argv[i+1];
-        dinf->base_name = 0; 
+        dinf->base_name = 0;
         dinf->comp = 0;
         dinf->dimVal = 0;
-        dinf->next = info[n].datinf; 
+        dinf->next = info[n].datinf;
         info[n].datinf = dinf;
       }
       n++;
@@ -299,13 +299,13 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
     }
     printf("i = %d, argc = %d\n", i, argc);
   }
- 
-  // defined in readiotupledata.cc 
+
+  // defined in readiotupledata.cc
 #ifdef USE_GRAPE_DISPLAY
   if(replay)
   {
     std::string replayfile(replay);
-    // if strcmp > 0 then strins not equal 
+    // if strcmp > 0 then strins not equal
     if(replayfile != "manager.replay")
     {
       std::string cmd("ln -s ");
@@ -319,41 +319,41 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
     }
   }
 /*
-  if( fixedMesh ) 
+  if( fixedMesh )
   {
-    for(int j=0; j<n; ++j) 
+    for(int j=0; j<n; ++j)
     {
       info[j].fix_mesh = 1;
     }
   }
 */
 #endif
- 
-  // scan for max number of processor paths  
+
+  // scan for max number of processor paths
   int numberProcessors = 0;
   static const bool useRankPath = Dune::Fem::DataWriterParameters().separateRankPath();
-  for(int k=0; k<n; k++) 
+  for(int k=0; k<n; k++)
   {
-    // scan for max number of processor paths  
-    int para = ( useRankPath ) ? 
-          scanProcsPaths(path,info[k].name,i_start) : 
+    // scan for max number of processor paths
+    int para = ( useRankPath ) ?
+          scanProcsPaths(path,info[k].name,i_start) :
           scanProcsFiles(path,info[k].name,i_start) ;
 
     std::cout << "*******************************************" << std::endl;
     std::cout << "***   Start reading data for " << para << " procs." << std::endl;
     std::cout << "*******************************************" << std::endl;
 
-    // should be at least 1 
+    // should be at least 1
     if( para <= 0 )
     {
       std::cerr << "ERROR: not a valid data path! \n";
       abort();
-    }   
+    }
     numberProcessors = std::max(numberProcessors,para);
-    
+
     int df = 0;
-    DATAINFO * dinf = info[k].datinf; 
-    while ( dinf ) 
+    DATAINFO * dinf = info[k].datinf;
+    while ( dinf )
     {
       if( path == "") path = "./";
       readDataInfo(path, dinf, i_start, df);
@@ -361,28 +361,28 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
       ++df;
     }
   }
-  
+
 #ifdef USE_GRAPE_DISPLAY
   // initialize time scenes
   timeSceneInit(info, n , numberProcessors);
 #endif
 
-  // read all data 
+  // read all data
   readData(info, path.c_str(),i_start,i_end,i_delta,n,timestep,numberProcessors);
-  
+
 #ifdef USE_GRAPE_DISPLAY
-  if( displayData ) 
+  if( displayData )
   {
     std::cout << "Displaying data of " << numberProcessors << " processors! \n";
-    // run grape 
+    // run grape
     displayTimeScene(info,numberProcessors);
   }
-  
-  if(replay) 
+
+  if(replay)
   {
     std::string cmd("rm manager.replay");
     int result = system(cmd.c_str());
-    if( result != 0 ) 
+    if( result != 0 )
       std::cerr << "System call possibly failed!" << std::endl;
   }
 #endif

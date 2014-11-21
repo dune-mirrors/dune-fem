@@ -89,12 +89,12 @@ void Communicator::write2(const char filename[])
   length[_id] = send_buffer[_id].size();
   MPI_Allgather(length+_id, 1, MPI_INT, length, 1, MPI_INT, comm);
 
-  MPI_File_open(comm, const_cast<char*>(filename), 
+  MPI_File_open(comm, const_cast<char*>(filename),
 		MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file);
 
   if ( !file ){
     std::cerr << __FILE__ << ", " << __LINE__ << ": "
-	      << "error writing file: " 
+	      << "error writing file: "
 	      << filename
 	      << std::endl;
   }
@@ -104,20 +104,20 @@ void Communicator::write2(const char filename[])
     MPI_File_write(file, &num_of_processes, 1, MPI_INT, &status);
     MPI_File_write(file, length, num_of_processes, MPI_INT, &status);
   }
-  
+
   // write the data
   int offset = (num_of_processes+1) * sizeof(int); // header
   for(int i=0; i<_id; i++) offset += length[i] * sizeof(char);
   MPI_File_seek(file, offset, MPI_SEEK_SET);
-  MPI_File_write(file, send_buffer[_id].data + Buffer::pre_data_size, 
+  MPI_File_write(file, send_buffer[_id].data + Buffer::pre_data_size,
 		 length[_id], MPI_CHAR, &status);
 
   if (os){
     *os << "send: " << id() << "->" << filename << "   "
 	<< "size: " << length[_id]
 	<< std::endl;
-  } 
-  
+  }
+
   // clear buffer and close file
   send_buffer[_id].clear();
   MPI_File_close(&file);
@@ -134,23 +134,23 @@ int Communicator::read2(const char filename[], int cycle)
 {
 #if MPI_VERSION >= 2
   int exold_num_of_processes, *length;
- 
+
   receive_buffer[_id].clear();
 
   MPI_Status status;
   MPI_File file;
 
-  MPI_File_open(comm, const_cast<char*>(filename), 
+  MPI_File_open(comm, const_cast<char*>(filename),
 		MPI_MODE_RDONLY, MPI_INFO_NULL, &file);
 
   if ( !file ){
     std::cerr << __FILE__ << ", " << __LINE__ << ": "
-	      << "error reading file: " 
+	      << "error reading file: "
 	      << filename
 	      << std::endl;
     exit(-1);
   }
-   
+
   // read the header: num_proc, length[num_proc]
   int old_num_of_processes;
   MPI_File_read(file, &old_num_of_processes, 1, MPI_INT, &status);
@@ -169,7 +169,7 @@ int Communicator::read2(const char filename[], int cycle)
   length = new int[exold_num_of_processes];
   assert(length);
   MPI_File_read(file, length, old_num_of_processes, MPI_INT, &status);
-  
+
   // fill rest of length with zeros
   for(int i=old_num_of_processes; i<exold_num_of_processes; i++){
     length[i] = 0;
@@ -188,7 +188,7 @@ int Communicator::read2(const char filename[], int cycle)
   }
 
   // read content from file
-  MPI_File_read(file, receive_buffer[_id].data+Buffer::pre_data_size, 
+  MPI_File_read(file, receive_buffer[_id].data+Buffer::pre_data_size,
 		length[index], MPI_CHAR, &status);
   receive_buffer[_id]._size = length[index];
 
@@ -196,7 +196,7 @@ int Communicator::read2(const char filename[], int cycle)
     *os << "receive: " << id() << "<-" << filename << "   "
 	<< "size: " << length[index]
 	<< std::endl;
-  } 
+  }
 
 
   // close file
@@ -224,7 +224,7 @@ void Communicator::write1(const char filename[])
 
   if (_id != master()){
     // send buffer
-    MPI_Send(send_buffer[_id].data + Buffer::pre_data_size, 
+    MPI_Send(send_buffer[_id].data + Buffer::pre_data_size,
 	     length[_id], MPI_CHAR, master(), tag, comm);
   }
   else{
@@ -233,11 +233,11 @@ void Communicator::write1(const char filename[])
 
     if ( !file ){
       std::cerr << __FILE__ << ", " << __LINE__ << ": "
-		<< "error writing file: " 
+		<< "error writing file: "
 		<< filename
 		<< std::endl;
     }
-    
+
     // buffer
     int max_length = 0;
     for(int i=0; i<num_of_processes; i++){
@@ -245,7 +245,7 @@ void Communicator::write1(const char filename[])
     }
     char *buffer = new char[max_length];
     assert(buffer);
-    
+
 
     // write header
     file.write( (char *)(&num_of_processes), sizeof(int) );
@@ -263,7 +263,7 @@ void Communicator::write1(const char filename[])
 	file.write(send_buffer[_id].data + Buffer::pre_data_size, length[_id]);
       }
     }
-      
+
     delete[] buffer;
   }
 
@@ -275,7 +275,7 @@ void Communicator::write1(const char filename[])
     *os << "send: " << id() << "->" << filename << "   "
 	<< "size: " << length[_id]
 	<< std::endl;
-  } 
+  }
 
   // clear buffer
   send_buffer[_id].clear();
@@ -299,7 +299,7 @@ int Communicator::read1(const char filename[], int cycle)
     std::ifstream file(filename);
     if ( !file ){
       std::cerr << __FILE__ << ", " << __LINE__ << ": "
-		<< "error reading file: " 
+		<< "error reading file: "
 		<< filename
 		<< std::endl;
       exit(-1);
@@ -316,7 +316,7 @@ int Communicator::read1(const char filename[], int cycle)
       exold_num_of_processes = old_num_of_processes;
     }
     else{
-      exold_num_of_processes = 
+      exold_num_of_processes =
 	(old_num_of_processes / num_of_processes + 1) * num_of_processes;
     }
 
@@ -328,7 +328,7 @@ int Communicator::read1(const char filename[], int cycle)
     // fill rest of length with zeros
     for(int i=old_num_of_processes; i<exold_num_of_processes; i++){
       length[i] = 0;
-    }    
+    }
 
     // determine max_length for file-read-buffer
     int max_length = 0;
@@ -386,7 +386,7 @@ int Communicator::read1(const char filename[], int cycle)
     get<int>( master(), exold_num_of_processes );
     length = new int[exold_num_of_processes];
     assert(length);
-    get<int>( master(), length, exold_num_of_processes );    
+    get<int>( master(), length, exold_num_of_processes );
 
     // resize receive_buffer and receive
     const int index = cycle*num_of_processes + _id;
@@ -396,7 +396,7 @@ int Communicator::read1(const char filename[], int cycle)
     }
 
     MPI_Status status;
-    MPI_Recv(receive_buffer[_id].data + Buffer::pre_data_size, 
+    MPI_Recv(receive_buffer[_id].data + Buffer::pre_data_size,
 	     length[index], MPI_CHAR, master(), tag, comm, &status);
 
     receive_buffer[_id]._size = length[index];
@@ -411,7 +411,7 @@ int Communicator::read1(const char filename[], int cycle)
     *os << "receive: " << _id << "<-" << filename << "   "
 	<< "size: " << receive_buffer[_id].size()
 	<< std::endl;
-  } 
+  }
 
   // free mem
   delete[] length;
@@ -459,7 +459,7 @@ bool Communicator::start_and_finish_communication(const char comment[])
 
 void Communicator::start_communication(const char comment[])
 {
-  // repermutate 
+  // repermutate
   if (counter % perm_threshold == 0) rng.permute(perm, num_of_processes);
 
   if (os){
@@ -472,7 +472,7 @@ void Communicator::start_communication(const char comment[])
   counter++;
 
   double idle_start = time();
- 
+
   //MPI_Barrier(comm); // ????????????????
 
   idle_time += time() - idle_start;
@@ -484,7 +484,7 @@ void Communicator::start_communication(const char comment[])
     if (sreq[i]) num_send++;
     if (rreq[i]) num_recv++;
   }
-	
+
 
   // receive
   for(int source=0, i=0; source<num_of_processes; source++) {
@@ -493,7 +493,7 @@ void Communicator::start_communication(const char comment[])
       receive_buffer[sourcep].receive(comm, mpi_receive_request+i, tag);
       i++;
     }
-  }	   
+  }
 
 
   // send
@@ -508,14 +508,14 @@ void Communicator::start_communication(const char comment[])
   // increment of tag
   inc_tag();
 }
- 
+
 
 bool Communicator::finish_communication()
 {
-  // repermutate 
+  // repermutate
   if (counter % perm_threshold == 0) rng.permute(perm, num_of_processes);
 
-  // wait 
+  // wait
   MPI_Status *send_status = new MPI_Status[num_send];
   MPI_Status *receive_status = new MPI_Status[num_recv];
   assert(send_status && receive_status);
@@ -553,7 +553,7 @@ bool Communicator::finish_communication()
 
   // increment of tag
   inc_tag();
-  
+
   // wait for rest
   idle_start = time();
   MPI_Waitall( num_send, mpi_send_request, send_status );
@@ -571,7 +571,7 @@ bool Communicator::finish_communication()
       send_buffer[dest].clear();
       sreq[dest] = false;
     }
-  }  
+  }
 
   // update timers
   comm_time += MPI_Wtime() - comm_start;

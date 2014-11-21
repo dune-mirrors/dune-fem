@@ -115,8 +115,8 @@ namespace Dune
     static const bool isPointerTuple = CheckAllElements< Tuple, IsPointer >::value;
 
     typedef typename Dune::conditional< isPointerTuple,
-                                        typename Dune::ForEachType< PointeeTypeEvaluator, Tuple >::Type, 
-                                        EmptyTuple< Dune::tuple_size< Tuple >::value > 
+                                        typename Dune::ForEachType< PointeeTypeEvaluator, Tuple >::Type,
+                                        EmptyTuple< Dune::tuple_size< Tuple >::value >
                                       >::type PointeeTupleType;
 
     static const bool isReferenceTuple = CheckAllElements< Tuple, IsReference >::value;
@@ -161,7 +161,7 @@ namespace Dune
   class ReferenceTuple
   {
     template< class T >
-    struct ReferenceEvaluator 
+    struct ReferenceEvaluator
     {
       typedef typename Dune::TypeTraits< T >::ReferredType & Type;
     };
@@ -176,7 +176,7 @@ namespace Dune
   // ----------
 
   /**
-   * \brief Add const qualifier to all tuple elements. 
+   * \brief Add const qualifier to all tuple elements.
    *
    * \tparam  Tuple  tuple to convert
    */

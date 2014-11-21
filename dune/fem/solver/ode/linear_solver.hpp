@@ -40,12 +40,12 @@ public:
 
   virtual void set_preconditioner(Function &preconditioner);
 
-  // set pointer to predonditioner to zero 
-  virtual void unset_preconditioner() 
+  // set pointer to predonditioner to zero
+  virtual void unset_preconditioner()
   {
     preconditioner = 0;
   }
-  
+
   // solve Au = b,   A = linear_operator
   // return convergence
   virtual bool solve(Function &op, double *u, const double *b) = 0;
@@ -112,7 +112,7 @@ private:
 
 
 // Saad, Youcef;  Schultz, Martin H.
-// GMRES: A generalized minimal residual algorithm for solving nonsymmetric 
+// GMRES: A generalized minimal residual algorithm for solving nonsymmetric
 // linear systems. (English)
 // [J] SIAM J. Sci. Stat. Comput. 7, 856-869 (1986). [ISSN 0196-5204]
 class GMRES : public IterativeLinearSolver, public DynamicalObject
@@ -121,7 +121,7 @@ public:
   GMRES(Communicator &comm, int m);
   virtual ~GMRES();
   virtual void set_preconditioner(Function &preconditioner);
-  // set pointer to predonditioner to zero 
+  // set pointer to predonditioner to zero
   virtual void unset_preconditioner();
 
   // from Function, solve Au = b, Au = linear_operator(u)
@@ -164,10 +164,10 @@ private:
 
 
 
-// Iterative methods for sparse linear systems / Yousef Saad. 
-// Boston, Mass. : PWS Publ., 1996. - XVI, 447 S. : graph. Darst.; 
+// Iterative methods for sparse linear systems / Yousef Saad.
+// Boston, Mass. : PWS Publ., 1996. - XVI, 447 S. : graph. Darst.;
 // (engl.)(The PWS series in computer science)
-// ISBN 0-534-94776-X 
+// ISBN 0-534-94776-X
 //
 // BICGSTAB - Solver page 220
 class BICGSTAB : public IterativeLinearSolver, public DynamicalObject

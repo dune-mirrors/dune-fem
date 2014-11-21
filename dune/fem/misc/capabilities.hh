@@ -99,7 +99,7 @@ namespace Dune
 
     // Fem Capabilities
     // ----------------
- 
+
     namespace Capabilities
     {
 
@@ -113,7 +113,7 @@ namespace Dune
         struct Codim
         : public Dune::Capabilities::hasEntity< Grid, codim >
         {};
-      
+
       public:
         static const bool v = Loop< MetaAnd, Codim, Grid :: dimension > :: v;
         static const bool value = v;
@@ -252,7 +252,7 @@ namespace Dune
       };
 #endif // #if HAVE_DUNE_METAGRID
 
-    } // namespace Capabilities 
+    } // namespace Capabilities
 
   } // namespace Fem
 

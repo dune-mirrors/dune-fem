@@ -80,7 +80,7 @@ namespace Dune
     {
       static const int dimension = HostEntity::dimension;
       static const int codimension = HostEntity::codimension;
-      
+
       typedef Dune::Entity< codimension, dimension, const GridFamily, GeoEntity > Entity;
 
     private:

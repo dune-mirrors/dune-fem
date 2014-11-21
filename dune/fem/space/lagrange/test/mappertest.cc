@@ -6,7 +6,7 @@
 #include <dune/fem/function/adaptivefunction.hh>
 
 namespace Dune
-{ 
+{
 
   namespace Fem
   {
@@ -61,7 +61,7 @@ namespace Dune
       :: checkDiscreteFunction( const SpaceType &space )
     {
       typedef AdaptiveDiscreteFunction< SpaceType > DiscreteFunctionType;
-      
+
       typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
       typedef typename SpaceType :: LagrangePointSetType LagrangePointSetType;
       typedef typename SpaceType :: IteratorType IteratorType;
@@ -138,7 +138,7 @@ namespace Dune
         const int numLPoints = lagrangePoints.nop();
 
         LocalFunctionType ulocal = u.localFunction( entity );
-        
+
         assert( numLPoints * dimworld == ulocal.numDofs() );
         for( int i = 0; i < numLPoints; ++i )
         {
@@ -162,5 +162,5 @@ namespace Dune
     }
 
   } // namespace Fem
-    
+
 } // namespace Dune

@@ -22,7 +22,7 @@ namespace Dune
         static_assert( (Conversion< Interface, ThisType >::exists), "Interface must be derived from BartonNackmanInterface." );
         //static_assert( (Conversion< Implementation, Interface >::exists), "Implementation must be derived from its interface." );
       }
-      
+
     protected:
       static const Implementation &asImp ( const ThisType &other )
       {
@@ -46,7 +46,7 @@ namespace Dune
     };
 
   } // namespace Fem
-  
-} // namespace Dune 
+
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_BARTONNACKMANINTERFACE_HH

@@ -10,16 +10,16 @@
 #include <dune/fem/common/tupleutility.hh>
 #include <dune/fem/operator/common/operator.hh>
 
-namespace Dune 
+namespace Dune
 {
 
   namespace Fem
   {
 
     // empty non-blocking communication for start pass as default argument
-    struct EmptyNonBlockingComm 
+    struct EmptyNonBlockingComm
     {
-      // initialize communication 
+      // initialize communication
       template <class Destination>
       void initComm( const Destination& ) const {}
 
@@ -32,7 +32,7 @@ namespace Dune
       void finalizeComm( const Destination& ) const {}
     };
 
-    /*! @addtogroup Pass 
+    /*! @addtogroup Pass
      *
      */
     /*!
@@ -41,7 +41,7 @@ namespace Dune
      */
     template < class ArgumentImp , int passIdImp,
                class NonBlockingCommunication = EmptyNonBlockingComm  >
-    class StartPass 
+    class StartPass
     {
       NonBlockingCommunication nonBlockingComm_;
     public:
@@ -51,38 +51,38 @@ namespace Dune
 
       //! pass ids up to here (tuple of integral constants)
       typedef Dune::tuple< integral_constant< int, passIdImp > > PassIds;
-      
+
       //! The argument (and destination) type of the overall operator
       typedef ArgumentImp GlobalArgumentType;
       //! End marker for tuple of return types of the passes
       typedef Dune::tuple<> NextArgumentType;
 
     public:
-      //! empty constructor 
-      StartPass() : nonBlockingComm_() {} 
-      //! copy constructor 
+      //! empty constructor
+      StartPass() : nonBlockingComm_() {}
+      //! copy constructor
       StartPass(const StartPass&) : nonBlockingComm_() {}
-      
+
       //- Public methods
-      //! The pass method initialized the communication only 
-      void pass( const GlobalArgumentType& arg ) const 
+      //! The pass method initialized the communication only
+      void pass( const GlobalArgumentType& arg ) const
       {
         nonBlockingComm_.initComm( arg );
       }
 
       //! receive data for previously initialized communication
-      void receiveCommunication( const GlobalArgumentType& arg ) const 
+      void receiveCommunication( const GlobalArgumentType& arg ) const
       {
         nonBlockingComm_.receiveComm( arg );
       }
 
-      //! cleanup of overwritten data. i.e. ghost values if neccessary 
-      void finalizeCommunication( const GlobalArgumentType& arg ) const 
+      //! cleanup of overwritten data. i.e. ghost values if neccessary
+      void finalizeCommunication( const GlobalArgumentType& arg ) const
       {
         nonBlockingComm_.finalizeComm( arg );
       }
 
-      // dummy printTexInfo method 
+      // dummy printTexInfo method
       void printTexInfo(std::ostream& out) const {}
 
       //! Returns the closure of the destination tuple.
@@ -91,13 +91,13 @@ namespace Dune
       //! No memory needs to be allocated.
       void allocateLocalMemory() {}
 
-      //! StartPass does not need a time 
+      //! StartPass does not need a time
       void setTime(const double) {}
 
-      //! return time step estimate 
-      double timeStepEstimate() const 
+      //! return time step estimate
+      double timeStepEstimate() const
       {
-        return std::numeric_limits<double>::max(); 
+        return std::numeric_limits<double>::max();
       }
     };
 
@@ -112,31 +112,31 @@ namespace Dune
      */
     template <class DiscreteModelImp, class PreviousPassImp , int passIdImp>
     class Pass :
-      public Operator<typename PreviousPassImp::GlobalArgumentType, 
+      public Operator<typename PreviousPassImp::GlobalArgumentType,
                       typename DiscreteModelImp::Traits::DestinationType>
     {
       template <class PT, class PP, int PI>
       friend class Pass;
     public:
-      //! little interface class for deleting discrete function 
-      //! held by this class 
+      //! little interface class for deleting discrete function
+      //! held by this class
       template <class ObjectToDelete>
       class DeleteHandler
       {
-      protected:  
-        // don't create intances of this class 
+      protected:
+        // don't create intances of this class
         DeleteHandler () {}
-      public:  
-        //! destructor 
-        virtual ~DeleteHandler () {} 
-        //! default implementation just deletes obj 
-        virtual void freeLocalMemory(ObjectToDelete * obj) 
+      public:
+        //! destructor
+        virtual ~DeleteHandler () {}
+        //! default implementation just deletes obj
+        virtual void freeLocalMemory(ObjectToDelete * obj)
         {
           delete obj;
         }
 
-        //! return reference to default object deleter 
-        static DeleteHandler<ObjectToDelete>& instance () 
+        //! return reference to default object deleter
+        static DeleteHandler<ObjectToDelete>& instance ()
         {
           static DeleteHandler<ObjectToDelete> mh;
           return mh;
@@ -153,11 +153,11 @@ namespace Dune
       //! pass ids up to here (tuple of integral constants)
       typedef typename Dune::PushBackTuple< typename PreviousPassType::PassIds, integral_constant< int, passIdImp > >::type PassIds;
 
-      //! Type of the discrete function which stores the result of this pass' 
+      //! Type of the discrete function which stores the result of this pass'
       //! computations.
       typedef typename DiscreteModelImp::Traits::DestinationType DestinationType;
-      
-      //! type of mem handler, which deletes destination 
+
+      //! type of mem handler, which deletes destination
       typedef DeleteHandler<DestinationType> DeleteHandlerType;
 
       typedef typename DestinationType :: DiscreteFunctionSpaceType :: CommunicationManagerType
@@ -169,7 +169,7 @@ namespace Dune
       //! Tuple containing destination types of all preceding passes.
       typedef typename PreviousPassType::NextArgumentType LocalArgumentType;
       //! Tuple containing destination types of all preceding passes plus the
-      //! global argument. This serves as the argument for this pass' 
+      //! global argument. This serves as the argument for this pass'
       //! computations
       typedef typename PushFrontTuple< LocalArgumentType, const GlobalArgumentType* >::type TotalArgumentType;
       //! Tuple containing destination types of all passes up to this one.
@@ -195,16 +195,16 @@ namespace Dune
       }
 
       //! Destructor
-      virtual ~Pass() 
+      virtual ~Pass()
       {
-        // if deleteHandler was set by derived class, 
-        // then use to delete destination_ 
+        // if deleteHandler was set by derived class,
+        // then use to delete destination_
         if( deleteHandler_ ) deleteHandler_->freeLocalMemory(destination_);
         destination_ = 0;
       }
 
-      //! printTex info of operator 
-      void printTexInfo(std::ostream& out) const 
+      //! printTex info of operator
+      void printTexInfo(std::ostream& out) const
       {
         previousPass_.printTexInfo(out);
       }
@@ -219,39 +219,39 @@ namespace Dune
         const TotalArgumentType totalArg = tuple_push_front( prevArg, &arg );
         this->compute(totalArg, dest);
 
-        // if initComm has not been called for this pass, we have to 
+        // if initComm has not been called for this pass, we have to
         // call finalizeCommunication for all previous passes
-        if( finalizeCommunication_ ) 
+        if( finalizeCommunication_ )
           finalizeCommunication( arg );
       }
       //! Allocates the local memory of a pass, if needed.
       //! If memory is allocated, then deleteHandler must be set for removal of
-      //! memory to avoid leaks 
+      //! memory to avoid leaks
       virtual void allocateLocalMemory() = 0;
 
       //! Set time provider (which gives you access to the global time).
-      void setTime(const double t) 
+      void setTime(const double t)
       {
         previousPass_.setTime(t);
         time_ = t;
       }
 
-      /** \brief return time step estimate for explicit Runge Kutta solver, calls 
-           recursively the method timeStepEstimateImpl of all previous passes. 
+      /** \brief return time step estimate for explicit Runge Kutta solver, calls
+           recursively the method timeStepEstimateImpl of all previous passes.
            Make sure to overload the method timeStepEstimateImpl in your
            implementation if this method really does something. */
-      double timeStepEstimate() const 
-      { 
+      double timeStepEstimate() const
+      {
         double ret= std::min( previousPass_.timeStepEstimate(),
                               this->timeStepEstimateImpl() );
         return ret;
       }
 
-      //! return current time of calculation 
+      //! return current time of calculation
       double time() const { return time_; }
 
-      //! return reference to internal discrete function 
-      const DestinationType & destination () const 
+      //! return reference to internal discrete function
+      const DestinationType & destination () const
       {
         assert(destination_);
         return *destination_;
@@ -261,13 +261,13 @@ namespace Dune
       //! Same as application operator, but uses own memory instead of the
       //! discrete function provided by the client. This method is called on all
       //! passes except the last one.
-      void pass(const GlobalArgumentType& arg) const 
+      void pass(const GlobalArgumentType& arg) const
       {
-        // send my destination data needed by the next pass 
+        // send my destination data needed by the next pass
         initComm();
-        // since initComm was called we are not the last pass 
-        // and thus must not call finalizeCommunication 
-        finalizeCommunication_ = false ; 
+        // since initComm was called we are not the last pass
+        // and thus must not call finalizeCommunication
+        finalizeCommunication_ = false ;
         operator()(arg, *destination_);
       }
 
@@ -279,114 +279,114 @@ namespace Dune
       }
 
       /** \brief finalizeCommunication collects possbily initiated non-blocking
-                 communications for all passes including the global argument 
-                 this method will be called from the next pass 
+                 communications for all passes including the global argument
+                 this method will be called from the next pass
       */
-      void finalizeCommunication(const GlobalArgumentType& arg) const 
+      void finalizeCommunication(const GlobalArgumentType& arg) const
       {
         // we only need the first argument
-        // the other argument are known to the previous passes 
+        // the other argument are known to the previous passes
         previousPass_.finalizeCommunication( arg );
 
-        // this method has to be overloaded in the pass implementation 
+        // this method has to be overloaded in the pass implementation
         finalizeComm();
-        // reset finalizeCommunication flag 
-        finalizeCommunication_ = true; 
+        // reset finalizeCommunication flag
+        finalizeCommunication_ = true;
       }
 
       /** \brief finalizeCommunication collects possbily initiated non-blocking
-                 communications for all passes including the global argument 
-                 this method will be called from the next pass 
+                 communications for all passes including the global argument
+                 this method will be called from the next pass
       */
-      void receiveCommunication(const GlobalArgumentType& arg) const 
+      void receiveCommunication(const GlobalArgumentType& arg) const
       {
         // we only need the first argument
-        // the other argument are known to the previous passes 
+        // the other argument are known to the previous passes
         previousPass_.receiveCommunication( arg );
 
-        // this method has to be overloaded in the pass implementation 
+        // this method has to be overloaded in the pass implementation
         receiveComm();
       }
 
-      //! derived passes have to implement this method 
-      //! returning the time step estimate 
-      virtual double timeStepEstimateImpl() const 
+      //! derived passes have to implement this method
+      //! returning the time step estimate
+      virtual double timeStepEstimateImpl() const
       {
-        return std::numeric_limits<double>::max(); 
+        return std::numeric_limits<double>::max();
       }
 
-      /** \brief requireCommunication returns true if the pass needs communication at all 
-       *         \note The default implementation returns \b true \b 
+      /** \brief requireCommunication returns true if the pass needs communication at all
+       *         \note The default implementation returns \b true \b
        */
       virtual bool requireCommunication () const { return true; }
 
     protected:
       //! Does the actual computations. Needs to be overridden in the derived
       //! clases
-      virtual void compute(const TotalArgumentType& arg, 
+      virtual void compute(const TotalArgumentType& arg,
                            DestinationType& dest) const = 0;
 
       /** \brief finalizeCommunication collects possbily initiated non-blocking
-                 communications for all passes 
+                 communications for all passes
       */
-      void finalizeCommunication( const TotalArgumentType& totalArg ) const 
+      void finalizeCommunication( const TotalArgumentType& totalArg ) const
       {
-        // this method is called on the last pass which needs no 
-        // finalizing of communication, so call the correct method 
-        // on the previous pass 
-        // get<0> ( totalArg ) is the global argument type 
+        // this method is called on the last pass which needs no
+        // finalizing of communication, so call the correct method
+        // on the previous pass
+        // get<0> ( totalArg ) is the global argument type
         previousPass_.finalizeCommunication( *(get<0> ( totalArg )) );
       }
 
       /** \brief receiveCommunication collects possbily initiated non-blocking
-                 communications for all passes 
+                 communications for all passes
       */
-      void receiveCommunication( const TotalArgumentType& totalArg ) const 
+      void receiveCommunication( const TotalArgumentType& totalArg ) const
       {
-        // this method is called on the last pass which needs no 
-        // finalizing of communication, so call the correct method 
-        // on the previous pass 
-        // get<0> ( totalArg ) is the global argument type 
+        // this method is called on the last pass which needs no
+        // finalizing of communication, so call the correct method
+        // on the previous pass
+        // get<0> ( totalArg ) is the global argument type
         previousPass_.receiveCommunication( *(get<0> ( totalArg )) );
       }
 
-      /** \brief initializeCommunication of this pass, this will initialize   
-                 the communication of destination_ and has to be overloaded in 
-                 the implementation 
+      /** \brief initializeCommunication of this pass, this will initialize
+                 the communication of destination_ and has to be overloaded in
+                 the implementation
       */
       virtual void initComm() const {}
 
-      /** \brief finalizeCommunication of this pass, this will collect 
-                 the communication of destination_ and has to be overloaded in 
-                 the implementation 
+      /** \brief finalizeCommunication of this pass, this will collect
+                 the communication of destination_ and has to be overloaded in
+                 the implementation
       */
       virtual void finalizeComm() const {}
 
-      /** \brief receiveCommunication of this pass, 
-                 which will reset changes the communication 
-                 did to the destination_ and has to be overloaded in 
-                 the implementation 
+      /** \brief receiveCommunication of this pass,
+                 which will reset changes the communication
+                 did to the destination_ and has to be overloaded in
+                 the implementation
       */
       virtual void receiveComm() const {}
 
     protected:
-      //! destination (might be set from outside) 
+      //! destination (might be set from outside)
       DestinationType* destination_;
 
-      //! object to delete destination_ 
-      DeleteHandlerType* deleteHandler_; 
+      //! object to delete destination_
+      DeleteHandlerType* deleteHandler_;
 
-      // previous pass 
+      // previous pass
       PreviousPassType& previousPass_;
 
-      // current calculation time 
+      // current calculation time
       double time_;
 
       // flag whether we are the last pass, i.e. we have to finalize the communication
       mutable bool finalizeCommunication_ ;
     }; // end class Pass
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

@@ -1,14 +1,14 @@
 #ifndef DUNE_FEM_SPOPERATOR_HH
 #define DUNE_FEM_SPOPERATOR_HH
- 
+
 #include <dune/fem/operator/matrix/spmatrix.hh>
 
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
-  
+
     // SparseRowLinearOperator
     // -----------------------
 
@@ -23,7 +23,7 @@ namespace Dune
       typedef typename Base::DomainSpaceType DomainSpaceType;
       typedef typename Base::RangeSpaceType RangeSpaceType;
 
-      /** \copydoc Fem::Operator::assembled */ 
+      /** \copydoc Fem::Operator::assembled */
       static const bool assembled = true ;
 
       using Base::apply;

@@ -23,7 +23,7 @@ namespace Dune
      *  \tparam  FunctionSet  implementation of FunctionSet
      */
     template< class Entity, class FunctionSet >
-    struct LocalFunctionSetAdapter 
+    struct LocalFunctionSetAdapter
     {
       //! \brief entity type
       typedef Entity EntityType;
@@ -32,7 +32,7 @@ namespace Dune
 
       //! \brief function space type
       typedef typename FunctionSet::FunctionSpaceType FunctionSpaceType;
-      
+
       //! \brief domain type
       typedef typename FunctionSpaceType::DomainType DomainType;
       //! \brief range type

@@ -1,4 +1,4 @@
-#include <cmath> 
+#include <cmath>
 #include <cassert>
 #include <cfloat>
 #include "quasi_exact_newton.hpp"
@@ -8,9 +8,9 @@ using namespace pardg;
 
 
 
-QuasiExactNewton::QuasiExactNewton(Communicator &comm) : 
+QuasiExactNewton::QuasiExactNewton(Communicator &comm) :
   DynamicalObject( "QuasiExactNewton", comm.id() ),
-  f(NULL), p(NULL), u_tmp(NULL), op(*this), comm(comm), linear_solver(NULL) 
+  f(NULL), p(NULL), u_tmp(NULL), op(*this), comm(comm), linear_solver(NULL)
 {
   // set this to some useful values
   tolerance = 1.0e-6;
@@ -51,7 +51,7 @@ bool QuasiExactNewton::solve(Function &F, double *u)
 
   while (num_of_iterations < max_num_of_iterations) {
     F(u, f);
-    
+
     double local_dot, global_dot;
     local_dot = cblas_ddot(dim, f, 1, f, 1);
     comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
@@ -67,16 +67,16 @@ bool QuasiExactNewton::solve(Function &F, double *u)
 
     cblas_daxpy(dim, -1.0, p, 1, u, 1);
 
-    if (NonlinearSolver::os){    
-      *NonlinearSolver::os << "QuasiExactNewton: iteration: " 
+    if (NonlinearSolver::os){
+      *NonlinearSolver::os << "QuasiExactNewton: iteration: "
 			   << num_of_iterations << "    "
 			   << "res: " << res << "   "
 			   << std::endl;
     }
 
     num_of_iterations++;
-  } 
-  
+  }
+
   return false; // num_of_iterations >= max_num_of_iterations
 }
 
@@ -112,9 +112,9 @@ operator()(const double *p, double *DFu_p, int component)
   double norm_u = sqrt(global_dot[0]);
   double norm_p_sq = global_dot[1];
 
-  double eps = (norm_p_sq > DBL_EPSILON)? 
+  double eps = (norm_p_sq > DBL_EPSILON)?
     sqrt( (1.0+norm_u)*DBL_EPSILON / norm_p_sq ) : sqrt(DBL_EPSILON);
-  
+
   //for(int k=0; k<qen.dim; k++) qen.u_tmp[k] = qen.u[k] + eps*p[k];
   dwaxpby(qen.dim, 1.0, qen.u, 1, eps, p, 1, qen.u_tmp, 1);
   (*qen.F)(qen.u_tmp, DFu_p, component);

@@ -97,7 +97,7 @@ namespace Dune
           BasisFunctionSetType;
 
       // mapper
-      typedef CombinedDiscreteFunctionSpaceMapperSelector< GridPartType, 
+      typedef CombinedDiscreteFunctionSpaceMapperSelector< GridPartType,
               typename DiscreteFunctionSpace1 :: BlockMapperType, DiscreteFunctionSpace1 :: localBlockSize,
               typename DiscreteFunctionSpace2 :: BlockMapperType, DiscreteFunctionSpace2 :: localBlockSize
             >  MapperSelectorType;
@@ -219,9 +219,9 @@ namespace Dune
       template< int newDimRange >
       struct ToNewDimRange
       {
-        typedef typename conditional< (newDimRange == 1), 
+        typedef typename conditional< (newDimRange == 1),
                     typename DiscreteFunctionSpaceType1 :: template ToNewDimRange< 1 > :: Type,
-                    typename BaseType :: template ToNewDimRange< newDimRange > :: Type 
+                    typename BaseType :: template ToNewDimRange< newDimRange > :: Type
                   > :: type Type;
       };
 

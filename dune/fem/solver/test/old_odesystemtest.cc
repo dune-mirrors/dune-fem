@@ -28,7 +28,7 @@ const double MAXT = 2.;
 const double savestep = 0.05;
 */
 bool usePAdapt = false;
-double* h; 
+double* h;
 
 
 using namespace Dune;
@@ -45,25 +45,25 @@ struct Dest : public FieldVector<double, N> {
   typedef double RangeFieldType;
   typedef SpaceDummy DiscreteFunctionSpaceType;
   typedef Dest<N> ScalarDestinationType;
-  
+
   Dest(string, const SpaceDummy&) {
   }
-  
+
   Dest() {
   }
-  
+
   void clear() {
     BaseType::operator=(0.);
   }
-  
+
   void assign(const Dest& other) {
     BaseType::operator=(other);
   }
-  
+
   void addScaled(const Dest& other, RangeFieldType l) {
     (*this).axpy(l,other);
   }
-  
+
   double operator()(int i) const {
     if (i<0 || i>this->size-1) {
       std::cout << "ERROR: Accessing element " << i << std::endl;
@@ -200,44 +200,44 @@ struct Advect : SpaceOperatorInterface<Dest<size> > {
   TimeProviderType* tp_;
   SpaceType space_;
   mutable int eval;
-  
+
   double lsg(double t, double x) const {
-    double s = x-a*t;   
+    double s = x-a*t;
     while (s>length())
       s-=length();
     while (s<0)
       s+=length();
     return cos(4.*M_PI*s);
-    
+
     if (s>0.1 && s<0.3)
       return 1.;
     else
       return 0.;
   }
-  
+
   Advect() : eval(0), tp_(0), a(2.) {
   }
-  
+
   const double length() const {
     return 1.;
   }
-  
+
   const double maxTime() const {
     return 5.;
   }
-  
+
   const double saveStep() const {
     return 0.1;
   }
-  
+
   const SpaceType& space() const {
     return space_;
   }
-  
+
   double mass(double x, double gridh) {
     return gridh/a;
   }
-  
+
   double cfl(double dt, double h, double gridh) {
     return dt/h;
   }
@@ -249,31 +249,31 @@ struct Advect : SpaceOperatorInterface<Dest<size> > {
     ret = -ui;
     return ret;
   }
-  
+
   double minmod(double a, double b) const {
     double ret=0;
     // return ret;
     if (a*b>0) {
       if (fabs(a)<fabs(b))
 	    ret=a;
-      else 
+      else
 	    ret=b;
     } else ret=0;
-    
+
     return ret;
   }
-  
+
   void applyIntersection (
            const SpaceType::IntersectionIteratorType& iter,
 	       double time,
-	       const DestinationType& u, 
+	       const DestinationType& u,
 	       double& ret,
            int& localOrder) const {
     localOrder=2;
     SpaceType::IteratorType::EntityType in = iter.inside();
     SpaceType::IteratorType::EntityType out = iter.outside();
-    typedef SpaceType::IntersectionIteratorType 
-      IntersectionIteratorType;     
+    typedef SpaceType::IntersectionIteratorType
+      IntersectionIteratorType;
     double aIn, aOut;
     {
       double W0,W[2];
@@ -294,7 +294,7 @@ struct Advect : SpaceOperatorInterface<Dest<size> > {
 	    W[nbiter.numberInSelf()] = u[nbiter.outside()];
       }
       aOut = minmod(W0-W[0],W[1]-W0);
-    }   
+    }
     /*
     if (iter.numberInSelf()==1)
       ret = flux(u[in],u[out]);
@@ -310,7 +310,7 @@ struct Advect : SpaceOperatorInterface<Dest<size> > {
       ret *= -1;
     }
   }
-  
+
   double elementFlux (int i,
 		      double time,
 		      const DestinationType& u) const {
@@ -318,7 +318,7 @@ struct Advect : SpaceOperatorInterface<Dest<size> > {
     double f = 0.;
     return f;
   }
-  
+
   void applyElement (
            const SpaceType::IteratorType::EntityType& en,
 	       double time,
@@ -326,7 +326,7 @@ struct Advect : SpaceOperatorInterface<Dest<size> > {
 	       double& ret) const {
     ret = elementFlux(en,time,u);
   }
-		     
+
   void operator()(const DestinationType& u,
                   DestinationType& y) const {
     y.clear();
@@ -349,7 +349,7 @@ struct Advect : SpaceOperatorInterface<Dest<size> > {
       }
     }
   }
-  
+
   void timeProvider(TimeProviderType* tp) {
     tp_ = tp;
   }
@@ -504,16 +504,16 @@ int main (int argc, char **argv) {
     fprintf(stderr,"usage: %s dt \n",argv[0]);
     exit(1);
   }
-  
+
   // Heat rhs;
   Advect<TimeProvider<> > rhs;
   // BuckleyLevert rhs;
-  
+
   TimeProvider<> tp(0.,1.);
   rhs.timeProvider(&tp);
   tp.setDeltaT(atof(argv[1]));
   double cfl = 1.;
-  
+
   #if USERK
     ExplicitRungeKuttaSolver<Dest<size> > rk(rhs, tp, order, true);
     // ExplicitMultiStepSolver<Dest<size> > rk(rhs,tp,order,true); cfl /= double(order);
@@ -523,12 +523,12 @@ int main (int argc, char **argv) {
     // cfl /= 16.;
     cfl /= double(order);
   #endif
-  
+
   h = new double[size];
   double minh = 10.;
   tp.setCfl(cfl);
   double meshWidth = rhs.length() / double(size);
-  
+
   Dest<size> u;
   for (int i=0;i<size;i++) {
     x[i] = rhs.length() * (double(i)+0.5) / double(size);
@@ -536,22 +536,22 @@ int main (int argc, char **argv) {
     h[i] = rhs.mass(x[i], meshWidth);
     if (h[i]<minh) minh = h[i];
   }
-  
-  /* two odes 
+
+  /* two odes
   u[0] = 0.6;
   u[1] = 0.4;
   h[0] = 0.1;
   h[1] = 0.5;
   */
-  /* one ode 
+  /* one ode
   u[0] = 1.;
   h[0] = 1.;
   */
-  
+
   std::cout << "#  " << minh << " "
-        << " " << tp.deltaT() 
+        << " " << tp.deltaT()
 	    << " " << tp.deltaT()/minh*rhs.length() << std::endl;
-	    
+
   rk.initialize(u);
   int steps = 0, oldfluxes = 0;
   std::cout.precision(16);
@@ -560,7 +560,7 @@ int main (int argc, char **argv) {
   double mxerror=0;
   double l1error=0;
   double mass=0;
-  
+
   while (1) {
     if (tp.time()>=savetime || size<=4) {
       l1error=0;
@@ -589,8 +589,8 @@ int main (int argc, char **argv) {
               << std::endl;
       }
       /* two odes
-      std::cout << tp.time() << " " 
-		<< u[0] << " " << u[1] 
+      std::cout << tp.time() << " "
+		<< u[0] << " " << u[1]
 		<< std::endl;
       */
     }
@@ -612,22 +612,22 @@ int main (int argc, char **argv) {
       // return 0;
     }
     oldfluxes = rhs.eval;
-     
+
     rk.solve(u);
-    
+
     #if USERK
       tp.augmentTime();
     #endif
     steps++;
     if (USERK) {
        steps++;
-       // if (steps==4 && USERK) 
+       // if (steps==4 && USERK)
        // tp.setDeltaT(tp.deltaT()*0.25*0.25);
     }
-    if (tp.time()>rhs.maxTime()) 
+    if (tp.time()>rhs.maxTime())
       break;
   }
-  
+
   mxerror=0;
   l1error=0;
   mass=0;
@@ -641,8 +641,8 @@ int main (int argc, char **argv) {
     l1error += lerr*meshWidth;
     mass += u[i]*meshWidth;
     mxerror = (mxerror<lerr)?lerr:mxerror;
-    std::cout << x[i] 
-	      << " " << u[i] 
+    std::cout << x[i]
+	      << " " << u[i]
 	      << " " << rhs.lsg(tp.time(),x[i])
 	      << " " << tp.time()
 	      << " " << tp.deltaT()
@@ -651,12 +651,12 @@ int main (int argc, char **argv) {
 	      << std::endl;
   }
   /* two odes
-     std::cout << tp.time() << " " 
-     << u[0] << " " << u[1] 
+     std::cout << tp.time() << " "
+     << u[0] << " " << u[1]
      << std::endl;
   */
   std::cout << "# " << tp.time()
-        << " " << tp.deltaT() 
+        << " " << tp.deltaT()
 	    << " " << rhs.eval
 	    << " " << steps
 	    << " # output" << std::endl

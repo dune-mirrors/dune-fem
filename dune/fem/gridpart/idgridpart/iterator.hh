@@ -28,7 +28,7 @@ namespace Dune
 
     // IdIterator
     // ----------
-    
+
     template< int codim, PartitionIteratorType pitype, class GridFamily >
     class IdIterator
     : public IdEntityPointer< IdIteratorTraits< codim, pitype, GridFamily > >
@@ -45,7 +45,7 @@ namespace Dune
       IdIterator ( const HostIteratorType &hostIterator )
       : Base( hostIterator )
       {}
-      
+
       void increment ()
       {
         ++hostIterator_;

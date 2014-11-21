@@ -35,8 +35,8 @@ namespace Dune
      * \tparam  Entity            entity type
      * \tparam  ShapeFunctionSet  shape function set
      *
-     * \note ShapeFunctionSet must be a copyable object. For most 
-     *       non-trivial implementations, you may want to use a 
+     * \note ShapeFunctionSet must be a copyable object. For most
+     *       non-trivial implementations, you may want to use a
      *       proxy, see file
 \code
     <dune/fem/space/shapefunctionset/proxy.hh>
@@ -121,10 +121,10 @@ namespace Dune
       }
 
       /** \brief evaluate all basis function and multiply with given
-       *         values and add to dofs 
+       *         values and add to dofs
        *
        *  \note valuesA and valuesB can be vectors of RangeType or
-       *        JacobianRangeType 
+       *        JacobianRangeType
       */
       template< class QuadratureType, class VectorA, class VectorB, class DofVector >
       void axpy ( const QuadratureType &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector &dofs ) const

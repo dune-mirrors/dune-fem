@@ -61,27 +61,27 @@ void testGridPart( const GridPartType & gridPart )
   }
 
   std::cout << "entities visited: " << count << std::endl;
-  
+
   std::cout << "entities in index set: " << indexSet.size( 0 ) << std::endl;
   std::cout << "maximum value in index set: " << maxIndex << std::endl;
 
   for (int c=0;c<=GridPartType::dimension;++c)
   {
-    std::cout << "index set for codim " << c; 
-    if ( !isConsecutiveIndex[c] ) 
+    std::cout << "index set for codim " << c;
+    if ( !isConsecutiveIndex[c] )
     {
       std::cout << " is not consecutive: too large index encountered" << std::endl;
       continue;
     }
     for (unsigned int i=0;i<consecutiveIndex[c].size();++i)
     {
-      if (!consecutiveIndex[c][i]) 
+      if (!consecutiveIndex[c][i])
       {
         isConsecutiveIndex[c] = false;
         break;
       }
     }
-    if ( !isConsecutiveIndex[c] ) 
+    if ( !isConsecutiveIndex[c] )
     {
       std::cout << " is not consecutive: hole encountered" << std::endl;
     }

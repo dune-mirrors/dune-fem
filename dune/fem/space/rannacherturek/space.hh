@@ -94,7 +94,7 @@ namespace Dune
           assert( type.isCube() );
           return new ScalarShapeFunctionSetType( type, LocalFunctionsShapeFunctionSetType( LocalBasisType() ) );
         }
-        
+
         static void deleteObject ( ScalarShapeFunctionSetType *object ) { delete object; }
       };
 
@@ -147,10 +147,10 @@ namespace Dune
       typedef typename BaseType::GridPartType GridPartType;
       typedef typename BaseType::EntityType EntityType;
       typedef typename BaseType::IntersectionType IntersectionType;
-     
+
       typedef typename BaseType::Traits::ShapeFunctionSetType ShapeFunctionSetType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
-      
+
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
       typedef RannacherTurekLocalInterpolation< BasisFunctionSetType, typename Traits::LocalInterpolationType > InterpolationType;
@@ -192,7 +192,7 @@ namespace Dune
           ScalarShapeFunctionSetProviderType::removeObject( *scalarShapeFunctionSet_ );
         scalarShapeFunctionSet_ = nullptr;
       }
-      
+
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type */
       DFSpaceIdentifier type () const { return RannacherTurekSpace_id; }
 
@@ -204,10 +204,10 @@ namespace Dune
 
       /** \brief return shape function set for given entity
        *
-       * \param[in]  entity  entity (of codim 0) for which shape function set 
+       * \param[in]  entity  entity (of codim 0) for which shape function set
        *                     is requested
        *
-       * \returns  ShapeFunctionSetType  shape function set                     
+       * \returns  ShapeFunctionSetType  shape function set
        */
       ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
       {

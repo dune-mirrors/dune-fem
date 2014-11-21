@@ -8,13 +8,13 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /*! \ingroup EllipticOperator
         \class DiffusionModelInterface
         \brief Interface for a mathematical model of a DiffusionOperator
-      
+
         The DiffusionModelInterface specifies the way mathematical data can
         be incorporated into a DiffusionOperator, i.e. a linear operator
         performing
@@ -23,7 +23,7 @@ namespace Dune
         \f]
         Here the mathematical data is exactly the function \f$a\f$, which we call
         diffusive flux.
-      
+
         \param  FunctionSpace   function space to work in
         \param  DiffusionModel  actual implementation (Barton-Nackman)
      */
@@ -66,7 +66,7 @@ namespace Dune
 
     public:
       /** \brief calculate the diffusive flux \f$a( x ) \nabla u\f$ in a point
-        
+
           \param[in]  diffVariable  vector describin the partial derivative to
                                     evaluate
           \param[in]  entity        entity to evaluate the flux on
@@ -86,7 +86,7 @@ namespace Dune
       }
 
       /** \brief calculate the diffusive flux \f$a( x ) \nabla u\f$ in a point
-        
+
           \param[in]  entity      entity to evaluate the flux on
           \param[in]  x           evaluation point (in local coordinates)
           \param[in]  gradient    \f$\nabla u\f$ in the evaluation point
@@ -104,7 +104,7 @@ namespace Dune
     };
 
 
-    
+
     template< class FunctionSpaceImp, class DiffusionModelImp >
     class DiffusionModelDefault
     : public DiffusionModelInterface< FunctionSpaceImp, DiffusionModelImp >
@@ -143,7 +143,7 @@ namespace Dune
 
     public:
       /** \copydoc Dune::Fem::DiffusionModelInterface::diffusiveFlux(const EntityType &entity,const PointType &x,const JacobianRangeType &gradient,JacobianRangeType &flux) const
-        
+
           The default implementation calls
           \code
           FieldVector< int, 0 > diffVar;

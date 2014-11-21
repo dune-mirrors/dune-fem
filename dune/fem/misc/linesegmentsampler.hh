@@ -19,7 +19,7 @@ namespace Dune
 
     /** \class LineSegmentSampler
      *  \brief samples values of a discrete function along a given line segment
-     *         
+     *
      *  The class LineSegmentSampler provides a method for sampling the values
      *  of given discrete function along an arbitrary line contained in some
      *  GridPart. The sampling points are always equidistant and include the
@@ -79,9 +79,9 @@ namespace Dune
        */
       template< class GridFunction >
       void operator() ( const GridFunction &f, std::vector< typename GridFunction::RangeType > &samples ) const;
-          
-      /** \brief returns sampling points 
-       * 
+
+      /** \brief returns sampling points
+       *
        *  The operator() actually samples the values of a given grid function.
        *
        *  \param[out]  points  std::vector receiving the points
@@ -208,7 +208,7 @@ namespace Dune
 
     template< class GridPart >
     inline void LineSegmentSampler< GridPart >
-      :: samplePoints ( std::vector< DomainType > &points ) const 
+      :: samplePoints ( std::vector< DomainType > &points ) const
     {
       const int numSamples = points.size();
       if( numSamples < 2 )

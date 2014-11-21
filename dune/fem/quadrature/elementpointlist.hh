@@ -8,7 +8,7 @@ namespace Dune
 {
 
   namespace Fem
-  {  
+  {
 
     /*! \class ElementIntegrationPointList
      *  \ingroup Quadrature
@@ -28,7 +28,7 @@ namespace Dune
      *  The ElementIntegrationPointList takes a subentity and transforms the
      *  integration point list corresponding to the geometry to the codim-0
      *  reference element.
-     *  
+     *
      *  To achieve this goal, an ElementIntegrationPointList depends stronger on
      *  the context in which it is used. For example, for each face within a
      *  tetrahedron (though they are all the same) we need a different
@@ -66,21 +66,21 @@ namespace Dune
 
     public:
       using Base::localPoint;
-     
+
       /** \brief constructor
-       *  
+       *
        *  \param[in]  geometry  geometry type, the quadrature lives on
        *  \param[in]  order     desired minimal order of the quadrature
        */
       ElementIntegrationPointList( const GeometryType &geometry, int order )
       : Base( geometry, order )
       {}
-      
+
       const QuadraturePointWrapperType operator[] ( const size_t i ) const
       {
         return QuadraturePointWrapperType( *this, i );
       }
-     
+
       /** \copydoc Dune::Fem::IntegrationPointList::point */
       const CoordinateType &point ( const size_t i ) const
       {
@@ -106,16 +106,16 @@ namespace Dune
 
       //! Type of coordinates in codim-0 reference element
       typedef typename Base::CoordinateType CoordinateType;
-      
+
       //! Type of the intersection iterator
       typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
       typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
 
-      //! type quadrature for use on non-conforming intersections 
+      //! type quadrature for use on non-conforming intersections
       typedef This NonConformingQuadratureType;
-     
+
 
       // for compatibility
       typedef typename GridPartType::TwistUtilityType  TwistUtilityType;
@@ -130,14 +130,14 @@ namespace Dune
        *  \param[in]  gridPart      grid partition (a dummy here)
        *  \param[in]  intersection  intersection
        *  \param[in]  order         desired order of the quadrature
-       *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for 
+       *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for
        *                            which the ElementQuadrature shall be created
        *
        *  \note This code assumes that the codim-0 entity is either a simplex or
        *        a cube (otherwise elementGeometry() returns a wrong geometry).
        */
-      ElementIntegrationPointList ( const GridPartType &gridPart, 
-                                    const IntersectionType &intersection, 
+      ElementIntegrationPointList ( const GridPartType &gridPart,
+                                    const IntersectionType &intersection,
                                     const int order,
                                     const typename Base :: Side side )
       : Base( getPointList( intersection, order, side ) ),
@@ -161,7 +161,7 @@ namespace Dune
       using Base::localFaceIndex;
 
     protected:
-      Base getPointList ( const IntersectionType &intersection, const int order, 
+      Base getPointList ( const IntersectionType &intersection, const int order,
                           const typename Base :: Side side )
       {
         switch( side )

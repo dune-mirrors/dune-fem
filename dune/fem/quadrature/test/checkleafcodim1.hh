@@ -12,9 +12,9 @@
 namespace Dune {
   namespace Fem {
 
-struct CachingQuadratureTest : public Test 
+struct CachingQuadratureTest : public Test
 {
-  template <class GridPartType> 
+  template <class GridPartType>
   static void checkLeafsCodimOne(GridPartType& gridPart,
                                  const int quadOrd)
   {
@@ -24,9 +24,9 @@ struct CachingQuadratureTest : public Test
 
   void run (){};
 
-protected:  
+protected:
   template <class EntityType, class LocalGeometryType>
-  int aluTwistCheck(const EntityType& en, const LocalGeometryType& localGeom, 
+  int aluTwistCheck(const EntityType& en, const LocalGeometryType& localGeom,
                     const int face, const bool neighbor, const bool output ) const
   {
     enum { dim = EntityType :: dimension };
@@ -35,62 +35,62 @@ protected:
     typedef FaceTopologyMapping<tetra> SimplexFaceMapping;
     typedef FaceTopologyMapping<hexa>  CubeFaceMapping;
 
-    // get reference element 
-    const Dune::ReferenceElement< ctype, dim > &refElem = 
-      Dune::ReferenceElements< ctype, dim >::general( en.type() ); 
+    // get reference element
+    const Dune::ReferenceElement< ctype, dim > &refElem =
+      Dune::ReferenceElements< ctype, dim >::general( en.type() );
 
     const int vxSize = refElem.size( face, 1, dim );
     typedef  FieldVector<ctype,dim> CoordinateVectorType;
 
-    // now calculate twist by trial and error for all possible twists 
-    // the calculated twist is with respect to the ALUGrid 
-    // reference face, see twistprovider.cc  
+    // now calculate twist by trial and error for all possible twists
+    // the calculated twist is with respect to the ALUGrid
+    // reference face, see twistprovider.cc
     int twistFound = -66;
-    for(int twist = -vxSize; twist<vxSize; ++twist) 
+    for(int twist = -vxSize; twist<vxSize; ++twist)
     {
-      bool twistOk = true; 
-      // now check mapping with twist 
-      for(int i=0; i<vxSize; ++i) 
+      bool twistOk = true;
+      // now check mapping with twist
+      for(int i=0; i<vxSize; ++i)
       {
         int twistedDuneIndex = -1;
-        if( localGeom.type().isCube() ) 
+        if( localGeom.type().isCube() )
         {
           twistedDuneIndex = CubeFaceMapping::twistedDuneIndex( i, twist );
         }
-        else 
+        else
         {
           twistedDuneIndex = SimplexFaceMapping::twistedDuneIndex( i, twist );
         }
-        
-        // get face vertices of number in self face 
+
+        // get face vertices of number in self face
         int vxIdx = refElem.subEntity( face, 1 , twistedDuneIndex , dim);
-        
+
         // get position in reference element of vertex i
         CoordinateVectorType refPos = refElem.position( vxIdx, dim );
 
-        // check coordinates again 
+        // check coordinates again
         CoordinateVectorType localPos = localGeom.corner( i );
         if( (refPos - localPos).infinity_norm() > 1e-8 )
         {
           twistOk = false;
-          break; 
+          break;
         }
       }
 
-      if( twistOk ) 
+      if( twistOk )
       {
         twistFound = twist;
         break ;
       }
     }
 
-    // if no twist found, then something is wrong 
-    if( twistFound == -66 ) 
+    // if no twist found, then something is wrong
+    if( twistFound == -66 )
     {
       assert(false);
       DUNE_THROW(GridError,"Not matching twist found");
     }
-    
+
     if( output )
     {
       std::string twistIn( (neighbor) ? "twistInNeighbor()" : "twistInSelf" );
@@ -103,9 +103,9 @@ protected:
     return twistFound;
   }
 
-  template <class GridPartType> 
+  template <class GridPartType>
   void checkLeafsCodim1(GridPartType& gridPart,
-                        const int quadOrd) 
+                        const int quadOrd)
   {
     enum { dim = GridPartType :: dimension };
     enum { codim = 1 };
@@ -122,7 +122,7 @@ protected:
     typedef FieldVector<ctype,dim> DomainType;
 
     IteratorType enditer = gridPart.template end<0> ();
-    for(IteratorType eiter = gridPart.template begin<0> (); 
+    for(IteratorType eiter = gridPart.template begin<0> ();
         eiter != enditer; ++eiter)
     {
       const GeometryType geomType = eiter->geometry().type();
@@ -134,14 +134,14 @@ protected:
       //int twist = -4;
       const IntersectionIterator endit = gridPart.iend( *eiter );
       for (IntersectionIterator it = gridPart.ibegin( *eiter );
-           it != endit; ++it) 
+           it != endit; ++it)
       {
         const Intersection& inter=*it;
-        typedef typename GridPartType::TwistUtilityType TwistUtilityType; 
+        typedef typename GridPartType::TwistUtilityType TwistUtilityType;
 
         if( inter.boundary() ) continue ;
 
-        // set this flag to true for output of twists that have been calculated 
+        // set this flag to true for output of twists that have been calculated
         const bool output = Parameter :: verbose() ;
 
         if( dim > 2 )
@@ -151,12 +151,12 @@ protected:
           const int twistFound = aluTwistCheck( *inter.inside(),
                                 inter.geometryInInside(), inter.indexInInside() , false, false);
           const int twistInside = TwistUtilityType::twistInSelf( gridPart.grid(), inter);
-          if( output && twistFound != twistInside ) 
+          if( output && twistFound != twistInside )
           {
             std::cout << "Twist inconsistent: calculated twist " << twistFound << "  not equal to inside " << twistInside << "\n";
           }
 
-          if( inter.neighbor() ) 
+          if( inter.neighbor() )
           {
             //const int twstF = checkLocalIntersectionConsistency( *inter.outside(),
             //              inter.geometryInOutside(), inter.indexInOutside(), true, false);
@@ -164,7 +164,7 @@ protected:
                           inter.geometryInOutside(), inter.indexInOutside(), true, false);
 
             const int twistOutside = TwistUtilityType::twistInNeighbor( gridPart.grid(), inter);
-            if( output && twstF != twistOutside ) 
+            if( output && twstF != twistOutside )
             {
               std::cout << "Twist inconsistent: calculated twist " << twstF << "  not equal to outside " << twistOutside << "\n";
             }
@@ -175,11 +175,11 @@ protected:
 
         QuadratureType quad(gridPart, inter, quadOrd , QuadratureType :: INSIDE);
 
-        const PointVectorType& points = 
+        const PointVectorType& points =
           PointProviderType::getPoints(quad.id(), geomType);
 
         _test( points.size() == numFaces * quad.nop());
-        if ( output ) 
+        if ( output )
         {
           std::cout << points.size() << " ps | qnop " << numFaces * quad.nop() << "\n";
           std::cout << "New Intersection: Twists: ";
@@ -187,10 +187,10 @@ protected:
           std::cout << TwistUtilityType :: twistInNeighbor( gridPart.grid(), inter) << "\n";
         }
 
-        for (size_t i = 0; i < quad.nop(); ++i) 
+        for (size_t i = 0; i < quad.nop(); ++i)
         {
           typedef typename PointVectorType :: value_type PointType;
-          for (int d = 0; d < dim; ++d) 
+          for (int d = 0; d < dim; ++d)
           {
             assert( quad.cachingPoint(i) < points.size() );
             _floatTest(points[quad.cachingPoint(i)][d],
@@ -212,10 +212,10 @@ protected:
           {
             const LocalGeometryType& nGeo = inter.geometryInOutside();
             QuadratureType outerQuad(gridPart, inter, quadOrd , QuadratureType::OUTSIDE);
-            
-            for (size_t i = 0; i < outerQuad.nop(); ++i) 
+
+            for (size_t i = 0; i < outerQuad.nop(); ++i)
             {
-              for (int d = 0; d < dim; ++d) 
+              for (int d = 0; d < dim; ++d)
               {
                 assert( outerQuad.cachingPoint(i) < points.size() );
                 _floatTest(points[outerQuad.cachingPoint(i)][d],
@@ -223,7 +223,7 @@ protected:
               }
 
               /*
-              { 
+              {
                 std::cout << "nin: " << inter.indexInOutside();
                 std::cout << " nis: " << inter.indexInInside();
                 std::cout << " pt " << i << ": " << points[outerQuad.cachingPoint(i)]
@@ -240,7 +240,7 @@ protected:
 #if 0
   template <class EntityType, class LocalGeometryType>
   int checkLocalIntersectionConsistency(
-      const EntityType& en, const LocalGeometryType& localGeom, 
+      const EntityType& en, const LocalGeometryType& localGeom,
       const int face, const bool neighbor, const bool output ) const
   {
     enum { dim = EntityType :: dimension };
@@ -249,30 +249,30 @@ protected:
     typedef FaceTopologyMapping<tetra> SimplexFaceMapping;
     typedef FaceTopologyMapping<hexa>  CubeFaceMapping;
 
-    // get reference element 
-    const Dune::ReferenceElement< ctype, dim > &refElem = 
-      Dune::ReferenceElements< ctype, dim >::general( en.type() ); 
+    // get reference element
+    const Dune::ReferenceElement< ctype, dim > &refElem =
+      Dune::ReferenceElements< ctype, dim >::general( en.type() );
 
     const int vxSize = refElem.size( face, 1, dim );
     std::vector<int> vx( vxSize ,-1);
-    for(int i=0; i<vxSize; ++i) 
+    for(int i=0; i<vxSize; ++i)
     {
       //const int idx = i;
       const int idx = ( localGeom.type().isCube() ) ?
             CubeFaceMapping::dune2aluVertex( i ) :
             SimplexFaceMapping::dune2aluVertex( i );
 
-      // get face vertices of number in self face 
+      // get face vertices of number in self face
       vx[i] = refElem.subEntity( face, 1 , idx , dim);
     }
 
-    // debugging output 
+    // debugging output
     if( output )
     {
       std::string neighout ((neighbor)?"outside":"inside");
       std::cout << "\n******************************************\n";
       std::cout << "Found ("<<neighout<<") face["<< face << "] vx = {";
-      for(size_t i=0; i<vx.size(); ++i) 
+      for(size_t i=0; i<vx.size(); ++i)
       {
         std::cout << vx[i] << ",";
       }
@@ -284,22 +284,22 @@ protected:
 
     typedef  FieldVector<ctype,dim> CoordinateVectorType;
 
-    for(int i=0; i<vxSize; ++i) 
+    for(int i=0; i<vxSize; ++i)
     {
       //const int idx = i;
       const int idx = ( localGeom.type().isCube() ) ?
             CubeFaceMapping::dune2aluVertex( i ) :
             SimplexFaceMapping::dune2aluVertex( i );
 
-      // standard face map is identity 
+      // standard face map is identity
       faceMap[i] = idx;
 
       // get position in reference element of vertex i
       CoordinateVectorType refPos = refElem.position( vx[i], dim );
 
-      // get position as we get it from intersectionSelfLocal 
-      // in the best case this should be the same 
-      // at least the orientatation should be the same 
+      // get position as we get it from intersectionSelfLocal
+      // in the best case this should be the same
+      // at least the orientatation should be the same
       CoordinateVectorType localPos = localGeom.corner( idx );
 
       if( (refPos - localPos).infinity_norm() > 1e-8 )
@@ -310,63 +310,63 @@ protected:
       }
     }
 
-    if( faceTwisted ) 
+    if( faceTwisted )
     {
-      if( output ) 
+      if( output )
       {
         std::string neighout ((neighbor)?"outside":"inside");
         std::cout <<"Face "<< face << " ("<<neighout<< ") is twisted! \n";
       }
 
-      // now calculate twist by trial and error for all possible twists 
-      // the calculated twist is with respect to the ALUGrid 
-      // reference face, see twistprovider.cc  
+      // now calculate twist by trial and error for all possible twists
+      // the calculated twist is with respect to the ALUGrid
+      // reference face, see twistprovider.cc
       int twistFound = -66;
-      for(int twist = -vxSize; twist<vxSize; ++twist) 
+      for(int twist = -vxSize; twist<vxSize; ++twist)
       {
-        bool twistOk = true; 
-        // now check mapping with twist 
-        for(int i=0; i<vxSize; ++i) 
+        bool twistOk = true;
+        // now check mapping with twist
+        for(int i=0; i<vxSize; ++i)
         {
           int twistedDuneIndex = -1;
-          if( localGeom.type().isCube() ) 
+          if( localGeom.type().isCube() )
           {
             twistedDuneIndex = CubeFaceMapping::twistedDuneIndex( i, twist );
           }
-          else 
+          else
           {
             twistedDuneIndex = SimplexFaceMapping::twistedDuneIndex( i, twist );
           }
-          
-          // get face vertices of number in self face 
+
+          // get face vertices of number in self face
           int vxIdx = refElem.subEntity( face, 1 , twistedDuneIndex , dim);
-          
+
           // get position in reference element of vertex i
           CoordinateVectorType refPos = refElem.position( vxIdx, dim );
 
-          // check coordinates again 
+          // check coordinates again
           CoordinateVectorType localPos = localGeom.corner( i );
           if( (refPos - localPos).infinity_norm() > 1e-8 )
           {
             twistOk = false;
-            break; 
+            break;
           }
         }
 
-        if( twistOk ) 
+        if( twistOk )
         {
           twistFound = twist;
           break ;
         }
       }
 
-      // if no twist found, then something is wrong 
-      if( twistFound == -66 ) 
+      // if no twist found, then something is wrong
+      if( twistFound == -66 )
       {
         assert(false);
         DUNE_THROW(GridError,"Not matching twist found");
       }
-      
+
       if( output )
       {
         std::string twistIn( (neighbor) ? "twistInNeighbor()" : "twistInSelf" );
@@ -386,6 +386,6 @@ protected:
 };
 
   } // end namespace Fem
-} // namespace Dune 
+} // namespace Dune
 
 #endif

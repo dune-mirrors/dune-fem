@@ -118,7 +118,7 @@ namespace Dune
         clear();
       }
 
-      void print( std::ostream& out ) const 
+      void print( std::ostream& out ) const
       {
         for( unsigned int row = 0; row < rows(); ++row )
         {
@@ -363,7 +363,7 @@ namespace Dune
       void init ( const RowEntityType &rowEntity, const ColEntityType &colEntity )
       {
         BaseType::init( rowEntity, colEntity );
-        
+
         map( rangeSpace().mapper(), rowEntity, rowIndices_ );
         map( domainSpace().mapper(), colEntity, colIndices_ );
       }

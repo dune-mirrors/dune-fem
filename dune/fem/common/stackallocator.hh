@@ -11,7 +11,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     // UninitializedObjectStack
@@ -74,7 +74,7 @@ namespace Dune
       template< class U >
       struct rebind { typedef StackAllocator< U, S > other; };
 
-      typedef UninitializedObjectStack Stack; 
+      typedef UninitializedObjectStack Stack;
       typedef S StackPtr;
 
       explicit StackAllocator ( StackPtr stack ) : stack_( stack ) {}
@@ -149,8 +149,8 @@ namespace Dune
       typedef UninitializedObjectStack Stack;
     };
 
-  } // namespace 
+  } // namespace
 
-} //namespace Dune 
+} //namespace Dune
 
 #endif // #ifndef DUNE_FEM_COMMON_STACKALLOCATOR_HH

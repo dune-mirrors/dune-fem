@@ -14,7 +14,7 @@
 
 namespace Dune
 {
-  namespace Fem 
+  namespace Fem
   {
 
     /** \class CachingQuadrature
@@ -27,7 +27,7 @@ namespace Dune
      *  codim-0 reference element. Consider, for instance, a quadrature for one
      *  of the faces of a tetrahedron: It provides n local quadrature points, which
      *  can lie on one of the four faces, resulting in 4*n global quadrature points.
-     *  
+     *
      *  The information from the mapping can be used to cache a base function on
      *  those global quadrature points.
      *
@@ -50,13 +50,13 @@ namespace Dune
     public:
       //! type of grid partition
       typedef GridPart GridPartType;
-      
+
       //! codimension of the element quadrature
       enum { codimension = 0 };
-     
+
     private:
       typedef ElementQuadratureTraits< GridPartType, codimension > IntegrationTraits;
-      
+
       typedef CachingQuadrature< GridPartType, codimension > ThisType;
       typedef CachingPointList< GridPartType, codimension, IntegrationTraits >
         BaseType;
@@ -72,7 +72,7 @@ namespace Dune
 
       // for compatibility
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
-      
+
     protected:
       using BaseType :: quadImp;
 
@@ -103,19 +103,19 @@ namespace Dune
        *
        *  \param[in]  org  element quadrature to copy
        */
-      CachingQuadrature( const ThisType &org ) 
+      CachingQuadrature( const ThisType &org )
       : BaseType( org )
       {}
 
       /** \copydoc Dune::Fem::ElementQuadrature<GridPartImp,0>::weight */
-      const RealType &weight ( size_t i ) const 
+      const RealType &weight ( size_t i ) const
       {
         return quadImp().weight( i );
       }
     };
 
 
-   
+
     /** \copydoc CachingQuadrature */
     template< typename GridPartImp >
     class CachingQuadrature< GridPartImp, 1 >
@@ -142,7 +142,7 @@ namespace Dune
     public:
       //! Dimeinsion of the world
       enum { dimension = BaseType::dimension };
-      
+
       //! A double... or whatever your grid wants
       typedef typename BaseType::RealType RealType;
 
@@ -153,9 +153,9 @@ namespace Dune
       //! Type of the intersection iterator
       typedef typename BaseType :: IntersectionIteratorType IntersectionIteratorType;
       typedef typename IntersectionIteratorType :: Intersection IntersectionType;
-      
-      //! type of quadrature used for non-conforming intersections  
-      typedef ElementQuadrature< GridPartImp, codimension > NonConformingQuadratureType; 
+
+      //! type of quadrature used for non-conforming intersections
+      typedef ElementQuadrature< GridPartImp, codimension > NonConformingQuadratureType;
 
     public:
       /** \brief constructor
@@ -163,14 +163,14 @@ namespace Dune
        *  \note The CachingQuadrature requires the grid part to get twist
        *        information for TwistUtility (see also
        *        ElementQuadrature<GridPartImp,1>).
-       * 
+       *
        *  \param[in]  gridPart      grid partition
        *  \param[in]  intersection  intersection
        *  \param[in]  order         desired order of the quadrature
-       *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for 
+       *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for
        *                            which the ElementQuadrature shall be created
        */
-      CachingQuadrature( const GridPartType &gridPart, 
+      CachingQuadrature( const GridPartType &gridPart,
                          const IntersectionType &intersection,
                          int order,
                          typename BaseType::Side side )
@@ -181,12 +181,12 @@ namespace Dune
        *
        *  \param[in]  org  element quadrature to copy
        */
-      CachingQuadrature( const ThisType& org ) 
+      CachingQuadrature( const ThisType& org )
       : BaseType( org )
       {}
 
       /** \copydoc Dune::Fem::ElementQuadrature<GridPartImp,1>::weight */
-      const RealType &weight( size_t i ) const 
+      const RealType &weight( size_t i ) const
       {
         return quadImp().weight(i);
       }

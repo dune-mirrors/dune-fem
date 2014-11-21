@@ -7,7 +7,7 @@
 
 namespace Dune
 {
-  
+
   namespace Fem
   {
 
@@ -25,7 +25,7 @@ namespace Dune
       struct hasStaticPolynomialOrder< RannacherTurekDiscreteFunctionSpace< FunctionSpace, GridPart, Storage > >
       {
         static const bool v = true;
-        static const int order = 1; 
+        static const int order = 1;
       };
 
 
@@ -74,6 +74,6 @@ namespace Dune
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_SPACE_RANNACHERTUREK_CAPABILITIES_HH

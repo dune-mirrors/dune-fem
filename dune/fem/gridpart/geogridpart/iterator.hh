@@ -29,7 +29,7 @@ namespace Dune
 
     // GeoIterator
     // -----------
-    
+
     template< int codim, PartitionIteratorType pitype, class GridFamily >
     class GeoIterator
     : public GeoEntityPointer< GeoIteratorTraits< codim, pitype, GridFamily > >
@@ -48,7 +48,7 @@ namespace Dune
       GeoIterator ( const CoordFunctionType &coordFunction, const HostIteratorType &hostIterator )
       : Base( coordFunction, hostIterator )
       {}
-      
+
       void increment ()
       {
         ++hostIterator_;

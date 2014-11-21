@@ -9,7 +9,7 @@
 namespace
 {
 
-  // TupleToInStream 
+  // TupleToInStream
   // ---------------
 
   template< class InStream >

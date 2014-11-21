@@ -17,7 +17,7 @@
 /** \brief Check geometries for all entities in the
  *         grid part. The tests are implemented in
  *         \code
-<dune/grid/test/checkgeometry.cc>         
+<dune/grid/test/checkgeometry.cc>
  *         \endcode
  *         Thus, failure handlers passed to this test
  *         will be ignored.

@@ -8,29 +8,29 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /** \brief MetaTwistUtility forwards the twist calls to the TwistUtility of the
-     *         underlying HostTwistUtility. 
-     *  
+     *         underlying HostTwistUtility.
+     *
      *  \note The class Intersection implementation is assumed to have a method
-     *        hostIntersection(). 
+     *        hostIntersection().
      */
-    template< class HostTwistUtility > 
+    template< class HostTwistUtility >
     struct MetaTwistUtility
     {
       typedef HostTwistUtility  HostTwistUtilityType;
       typedef typename HostTwistUtilityType :: GridType  GridType;
 
-      //! \brief return 0 for inner face 
+      //! \brief return 0 for inner face
       template< class Intersection >
       static int twistInSelf ( const GridType & grid, const Intersection & intersection )
       {
         return HostTwistUtilityType::twistInSelf( grid, intersection.impl().hostIntersection() );
       }
-      
-      //! \brief return 0 for outer face 
+
+      //! \brief return 0 for outer face
       template< class Intersection >
       static int twistInNeighbor ( const GridType & grid , const Intersection & intersection )
       {
@@ -44,9 +44,9 @@ namespace Dune
         return HostTwistUtilityType::elementGeometry( intersection.impl().hostIntersection(), inside );
       }
     };
-  
-  } // namespace Fem 
 
-} // namespace Dune 
+  } // namespace Fem
+
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_METATWISTUTILITY_HH

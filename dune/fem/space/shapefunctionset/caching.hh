@@ -32,7 +32,7 @@ namespace Dune
 
     public:
       typedef typename ShapeFunctionSet::FunctionSpaceType FunctionSpaceType;
-      
+
       typedef typename ShapeFunctionSet::DomainType DomainType;
       typedef typename ShapeFunctionSet::RangeType RangeType;
       typedef typename ShapeFunctionSet::JacobianRangeType JacobianRangeType;
@@ -73,8 +73,8 @@ namespace Dune
         const bool cacheable = Conversion< Quadrature, CachingInterface >::exists;
         evaluateEach( x.quadrature(), x.point(), functor, integral_constant< bool, cacheable >() );
       }
-     
-      template< class Point, class Functor > 
+
+      template< class Point, class Functor >
       void jacobianEach ( const Point &x, Functor functor ) const
       {
         return shapeFunctionSet_.jacobianEach( x, functor );
@@ -87,14 +87,14 @@ namespace Dune
         jacobianEach( x.quadrature(), x.point(), functor, integral_constant< bool, cacheable >() );
       }
 
-      template< class Point, class Functor > 
+      template< class Point, class Functor >
       void hessianEach ( const Point &x, Functor functor ) const
       {
         return shapeFunctionSet_.hessianEach( x, functor );
       }
 
       GeometryType type () const {  return type_; }
-      
+
       template < class QuadratureType >
       const RangeType* rangeCache( const QuadratureType& quadrature ) const
       {
@@ -119,11 +119,11 @@ namespace Dune
                 const ValueCacheVectorType&,
                 RangeVectorType& storage )
         {
-          // evaluate all basis functions and multiply with dof value 
+          // evaluate all basis functions and multiply with dof value
           const unsigned int nop  = quad.nop();
           const unsigned int size = shapeFunctionSet.size();
 
-          // make sure cache has the appropriate size 
+          // make sure cache has the appropriate size
           storage.resize( size * nop * 10  );
 
           for( unsigned int qp = 0 ; qp < nop; ++ qp )
@@ -141,11 +141,11 @@ namespace Dune
                    const JacobianCacheVectorType&,
                    JacobianRangeVectorType& storage )
         {
-          // evaluate all basis functions and multiply with dof value 
+          // evaluate all basis functions and multiply with dof value
           const unsigned int nop  = quad.nop();
           const unsigned int size = shapeFunctionSet.size();
 
-          // make sure cache has the appropriate size 
+          // make sure cache has the appropriate size
           storage.resize( size * nop * 10  );
 
           for( unsigned int qp = 0 ; qp < nop; ++ qp )

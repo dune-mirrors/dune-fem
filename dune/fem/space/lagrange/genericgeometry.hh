@@ -225,12 +225,12 @@ namespace Dune
 
     // Local Coordinates
     // -----------------
-    
+
     template< class Geometry, class Field, unsigned int offset = 0 >
     class LocalCoordinate;
 
 
-    
+
     template< class Field, unsigned int offset >
     class LocalCoordinate< PointGeometry, Field, offset >
     {
@@ -245,7 +245,7 @@ namespace Dune
 
       inline LocalCoordinate ()
       {}
-      
+
       template< int sz >
       explicit LocalCoordinate ( const FieldVector< FieldType, sz > &x )
       {
@@ -263,7 +263,7 @@ namespace Dune
         static_assert( (sz >= offset + dimension), "Invalid vector size" );
         return *this;
       }
-      
+
       ThisType &operator= ( const ThisType &v )
       {
         return *this;
@@ -304,40 +304,40 @@ namespace Dune
 
     public:
       typedef BaseGeometry BaseGeometryType;
-      
+
       typedef PyramidGeometry< BaseGeometryType > GeometryType;
 
       static const unsigned int dimension = GeometryType::dimension;
 
       typedef Field FieldType;
-      
+
       typedef LocalCoordinate< BaseGeometry, FieldType, offset > BaseCoordinateType;
 
       static const unsigned int index = offset + BaseGeometryType::dimension;
-      
+
       LocalCoordinate ()
       {}
-      
+
       template< int sz >
       explicit LocalCoordinate ( const FieldVector< FieldType, sz > &x )
       : myCoordinate_( x[ index ] ),
-        baseCoordinate_( x ) 
+        baseCoordinate_( x )
       {
         static_assert( (sz >= offset + dimension), "Invalid vector size" );
       }
-      
+
       ThisType &operator= ( const FieldType s )
       {
         myCoordinate_ = s;
         baseCoordinate_ = s;
         return *this;
       }
-      
+
       template< int sz >
       ThisType &operator= ( const FieldVector< FieldType, sz > &x )
       {
         static_assert( (sz >= offset + dimension), "Invalid vector size" );
-        
+
         myCoordinate_ = x[ index ];
         baseCoordinate_ = x;
         return *this;
@@ -356,21 +356,21 @@ namespace Dune
         baseCoordinate_ *= s;
         return *this;
       }
-      
+
       ThisType &operator+= ( const ThisType &v )
       {
         myCoordinate_ += v.myCoordinate_;
         baseCoordinate_ += v.baseCoordinate_;
         return *this;
       }
-      
+
       ThisType &operator-= ( const ThisType &v )
       {
         myCoordinate_ -= v.myCoordinate_;
         baseCoordinate_ -= v.baseCoordinate_;
         return *this;
       }
-      
+
       const FieldType &operator[] ( const unsigned int i ) const
       {
         if( i == index )
@@ -438,7 +438,7 @@ namespace Dune
 
       LocalCoordinate ()
       {}
-      
+
       template< int sz >
       explicit LocalCoordinate ( const FieldVector< FieldType, sz > &x )
       : firstCoordinate_( x ),
@@ -453,12 +453,12 @@ namespace Dune
         secondCoordinate_ = s;
         return *this;
       }
-      
+
       template< int sz >
       ThisType &operator= ( const FieldVector< FieldType, sz > &x )
       {
         static_assert( (sz >= offset + dimension), "Invalid vector size" );
-        
+
         firstCoordinate_ = x;
         secondCoordinate_ = x;
         return *this;
@@ -477,14 +477,14 @@ namespace Dune
         secondCoordinate_ *= s;
         return *this;
       }
-      
+
       ThisType &operator+= ( const ThisType &v )
       {
         firstCoordinate_ += v;
         secondCoordinate_ += v;
         return *this;
       }
-      
+
       ThisType &operator-= ( const ThisType &v )
       {
         firstCoordinate_ -= v;
@@ -532,7 +532,7 @@ namespace Dune
       FirstCoordinateType firstCoordinate_;
       SecondCoordinateType secondCoordinate_;
     };
-    
+
   } // namespace Fem
 
 } // namespace Dune

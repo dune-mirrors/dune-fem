@@ -302,10 +302,10 @@ namespace Dune
       }
     }
 
-    
+
     // CombinedBasisFunctionSet::evaluateAll
     // -------------------------------------
-   
+
     template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
     template< class Quadrature, class DofVector, class RangeArray >
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
@@ -513,7 +513,7 @@ namespace Dune
     // ------------------------------
 
     template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
-    template< class Quadrature, class Vector, class DofVector >  
+    template< class Quadrature, class Vector, class DofVector >
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
     :: axpy ( const Quadrature &quad, const Vector &values, DofVector &dofs ) const
     {
@@ -527,7 +527,7 @@ namespace Dune
     // ------------------------------
 
     template<class CombFunctSpace, class BasisSetType1, class BasisSetType2>
-    template< class Quadrature, class VectorA, class VectorB, class DofVector >  
+    template< class Quadrature, class VectorA, class VectorB, class DofVector >
     inline void CombinedBasisFunctionSet< CombFunctSpace, BasisSetType1, BasisSetType2>
     :: axpy ( const Quadrature &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector &dofs ) const
     {

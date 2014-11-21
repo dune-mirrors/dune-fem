@@ -3,9 +3,9 @@
 
 #include <dune/grid/common/gridenums.hh>
 
-namespace Dune 
+namespace Dune
 {
-  
+
   namespace Fem
   {
 

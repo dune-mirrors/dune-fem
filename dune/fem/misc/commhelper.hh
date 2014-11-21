@@ -40,7 +40,7 @@ namespace Dune
       DefaultCollectiveCommunicationType;
 
   } //  namespace Fem
-  
+
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_COMMHELPER_HH

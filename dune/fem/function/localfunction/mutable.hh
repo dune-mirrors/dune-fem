@@ -1,18 +1,18 @@
 #ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_MUTABLE_HH
 #define DUNE_FEM_FUNCTION_LOCALFUNCTION_MUTABLE_HH
 
-//-s system includes 
+//-s system includes
 #include <cassert>
 #include <utility>
 
-//- Dune includes 
+//- Dune includes
 #include <dune/fem/storage/objectstack.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
 
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     template< class >
@@ -23,11 +23,11 @@ namespace Dune
 
     //**************************************************************************
     //
-    //  --MutableLocalFunction 
+    //  --MutableLocalFunction
     //
     //**************************************************************************
-    //! Manages the getting and deleting of local function pointers and 
-    //! acts like a local functions 
+    //! Manages the getting and deleting of local function pointers and
+    //! acts like a local functions
     template < class DiscreteFunction >
     class MutableLocalFunction
     : public LocalFunction< typename DiscreteFunctionTraits< DiscreteFunction > :: DiscreteFunctionSpaceType ::  BasisFunctionSetType,
@@ -38,7 +38,7 @@ namespace Dune
       typename DiscreteFunctionTraits< DiscreteFunction > :: LocalDofVectorType > BaseType;
 
     public:
-      //! type of DiscreteFunction 
+      //! type of DiscreteFunction
       typedef DiscreteFunction DiscreteFunctionType;
 
       //! type of the entity, the local function lives on is given by the space
@@ -64,15 +64,15 @@ namespace Dune
         discreteFunction_( &discreteFunction )
       {}
 
-      //! Constructor creating empty local function from given discrete function 
+      //! Constructor creating empty local function from given discrete function
       explicit MutableLocalFunction ( const DiscreteFunctionType &discreteFunction )
       : BaseType( LocalDofVectorType( discreteFunction.localDofVectorAllocator() ) ),
         discreteFunction_( &const_cast<DiscreteFunctionType &>( discreteFunction ) )
       {}
 
       //! Constructor creating local function from given discrete function and entity, not empty
-      explicit MutableLocalFunction ( DiscreteFunctionType &discreteFunction, const EntityType &entity ) 
-      : BaseType( discreteFunction.space().basisFunctionSet( entity ), LocalDofVectorType( discreteFunction.localDofVectorAllocator() ) ), 
+      explicit MutableLocalFunction ( DiscreteFunctionType &discreteFunction, const EntityType &entity )
+      : BaseType( discreteFunction.space().basisFunctionSet( entity ), LocalDofVectorType( discreteFunction.localDofVectorAllocator() ) ),
         discreteFunction_( &discreteFunction )
       {
         discreteFunction.getLocalDofs( entity, localDofVector() );

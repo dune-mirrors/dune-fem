@@ -27,12 +27,12 @@ namespace Dune
 
       //! highest quadrature order within the array
       enum { highestOrder=19 };
-      
+
     private:
       double G[MAXP+1][MAXP]; // positions of Gauss points
-      double W[MAXP+1][MAXP]; // weights associated with points       
+      double W[MAXP+1][MAXP]; // weights associated with points
       int    O[MAXP+1];       // order of the rule
-      
+
     private:
       /*! \brief constructor initializing the Gauss points for all orders
        */
@@ -103,7 +103,7 @@ namespace Dune
         return m;
       }
     };
-  
+
   } // namespace Fem
 
 } // namespace Dune

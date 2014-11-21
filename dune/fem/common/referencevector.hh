@@ -86,11 +86,11 @@ namespace Dune
       : data_( std::move( other.data_ ) )
       {}
 
-      //! assignment 
+      //! assignment
       using Base::operator=;
 
       template< class V >
-      This & operator= ( const DenseVector< V > &other ) 
+      This & operator= ( const DenseVector< V > &other )
       {
         assert( data_.size() == other.size() );
         std::copy( other.begin(), other.end(), Base::begin() );
@@ -130,7 +130,7 @@ namespace Dune
       K &vec_access ( size_type i ) { return *data_[ i ]; }
       const K &vec_access ( size_type i ) const { return *data_[ i ]; }
     };
- 
+
     /** @} end documentation */
 
   } // namespace Fem

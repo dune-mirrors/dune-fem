@@ -10,13 +10,13 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
-    /** 
+    /**
      * @addtogroup GridPart
      *
-     * @{ 
+     * @{
      */
 
     // Forward declarations
@@ -46,13 +46,13 @@ namespace Dune
       typedef typename Traits::GridType GridType;
       //! The leaf index set of the grid implementation
       typedef typename Traits::IndexSetType IndexSetType;
-      
-      //! The corresponding IntersectionIterator 
+
+      //! The corresponding IntersectionIterator
       typedef typename Traits::IntersectionIteratorType IntersectionIteratorType ;
 
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
-    
-      //! the leaf grid view from the grid 
+
+      //! the leaf grid view from the grid
       typedef typename GridType::template Partition< All_Partition >::LeafGridView LeafGridView;
 
     private:
@@ -119,7 +119,7 @@ namespace Dune
       {
         return leafGridView_.ibegin( entity );
       }
-      
+
       //! iend of corresponding intersection iterator for given entity
       IntersectionIteratorType iend ( const EntityCodim0Type &entity ) const
       {
@@ -136,16 +136,16 @@ namespace Dune
 
       //! corresponding communication method for this grid part
       template <class DataHandleImp,class DataType>
-      void communicate(CommDataHandleIF<DataHandleImp,DataType> & data, 
-                       InterfaceType iftype, CommunicationDirection dir) const 
+      void communicate(CommDataHandleIF<DataHandleImp,DataType> & data,
+                       InterfaceType iftype, CommunicationDirection dir) const
       {
         leafGridView_.communicate( data, iftype, dir );
       }
 
-    private: 
-      //! leaf grid view 
+    private:
+      //! leaf grid view
       LeafGridView leafGridView_ ;
-      //! GridDefaultIndexSet Wrapper 
+      //! GridDefaultIndexSet Wrapper
       IndexSetType isetWrapper_;
     };
 
@@ -199,7 +199,7 @@ namespace Dune
 
       typedef typename GridType::CollectiveCommunication CollectiveCommunicationType;
 
-      //! \brief is true if grid on this view only has conforming intersections 
+      //! \brief is true if grid on this view only has conforming intersections
       static const bool conforming = Dune::Capabilities::isLeafwiseConforming< GridType >::v;
     };
 

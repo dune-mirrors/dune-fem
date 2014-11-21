@@ -43,8 +43,8 @@ private:
 // class Function inline implementation
 
 inline
-pardg::Function::Function(int num_of_parameters) : 
-  num_of_parameters(num_of_parameters), _flag(0), _time(0.0), 
+pardg::Function::Function(int num_of_parameters) :
+  num_of_parameters(num_of_parameters), _flag(0), _time(0.0),
   _parameter(new double[num_of_parameters])
 {
   assert(_parameter);
@@ -68,28 +68,28 @@ void pardg::Function::operator()(double t, const double *u, double *f, int i)
 
 inline
 double pardg::Function::time() const
-{ 
+{
   return _time;
 }
 
 
 inline
 double& pardg::Function::time()
-{ 
+{
   return _time;
 }
 
 
 inline
 int pardg::Function::flag() const
-{ 
+{
   return _flag;
 }
 
 
 inline
 int& pardg::Function::flag()
-{ 
+{
   return _flag;
 }
 
@@ -104,7 +104,7 @@ double pardg::Function::parameter(int i) const
 
 inline
 double& pardg::Function::parameter(int i)
-{ 
+{
   assert(i >= 0 && i < num_of_parameters);
   return _parameter[i];
 }

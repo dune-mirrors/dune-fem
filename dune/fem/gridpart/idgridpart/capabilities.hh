@@ -30,7 +30,7 @@ namespace Dune
       template< class HostGridPartType >
       struct hasGrid< IdGridPart< HostGridPartType > >
       {
-        static const bool v = true; 
+        static const bool v = true;
       };
 
 
@@ -52,7 +52,7 @@ namespace Dune
       template< class HostGridPartType, int codim  >
       struct hasEntity< IdGridPart< HostGridPartType >, codim >
       {
-        static const bool v = hasEntity< HostGridPartType, codim >::v; 
+        static const bool v = hasEntity< HostGridPartType, codim >::v;
       };
 
 

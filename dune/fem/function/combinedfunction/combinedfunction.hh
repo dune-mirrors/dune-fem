@@ -15,19 +15,19 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
-  
+
     //- Forward declarations
     template< class ContainedDiscreteFunction, int N >
     class CombinedDiscreteFunction;
-    
+
     template< class ContainedDiscreteFunction, int N >
     class CombinedDiscreteFunctionDofIterator;
 
-    
+
     //- Class definitions
-    //! Traits class for AdaptiveDiscreteFunction and 
+    //! Traits class for AdaptiveDiscreteFunction and
     //! AdaptiveLocalFunction
     template< class ContainedDiscreteFunction, int N >
     struct DiscreteFunctionTraits< CombinedDiscreteFunction< ContainedDiscreteFunction, N > >
@@ -45,14 +45,14 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
       typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
       typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
-      
+
       typedef typename DiscreteFunctionSpaceType :: JacobianRangeType JacobianRangeType;
 
       typedef RangeFieldType DofType;
       typedef typename DiscreteFunctionSpaceType :: MapperType MapperType;
       typedef typename DiscreteFunctionSpaceType :: GridType GridType;
       typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
-      
+
       typedef CombinedDiscreteFunctionDofIterator< ContainedDiscreteFunctionType, N >
         DofIteratorType;
       typedef ConstDofIteratorDefault< DofIteratorType > ConstDofIteratorType;
@@ -78,7 +78,7 @@ namespace Dune
     //! type to a vector valued function
     template <class ContainedDiscreteFunctionImp,int N >
     class CombinedDiscreteFunction
-    : public DiscreteFunctionDefault< CombinedDiscreteFunction< ContainedDiscreteFunctionImp, N > > 
+    : public DiscreteFunctionDefault< CombinedDiscreteFunction< ContainedDiscreteFunctionImp, N > >
     {
       typedef CombinedDiscreteFunction< ContainedDiscreteFunctionImp, N > ThisType;
       typedef DiscreteFunctionDefault< CombinedDiscreteFunction< ContainedDiscreteFunctionImp, N > >
@@ -92,24 +92,24 @@ namespace Dune
       //! Traits class with all necessary type definitions
       typedef DiscreteFunctionTraits< ThisType > Traits;
 
-      //! Grid implementation 
+      //! Grid implementation
       typedef typename BaseType::GridType GridType;
-      
-      //! GridPart implementation 
+
+      //! GridPart implementation
       typedef typename BaseType::GridPartType GridPartType;
-      
-      //! Discrete function type (identical to this type, 
+
+      //! Discrete function type (identical to this type,
       //! needed as Barton-Nackman parameter
-      typedef typename BaseType::DiscreteFunctionType 
+      typedef typename BaseType::DiscreteFunctionType
       DiscreteFunctionType;
       //! the combined discrete function type
       typedef typename BaseType::DiscreteFunctionSpaceType
       DiscreteFunctionSpaceType;
-      //! Contained discrete function space 
+      //! Contained discrete function space
       typedef typename Traits::ContainedDiscreteFunctionSpaceType
       ContainedDiscreteFunctionSpaceType;
-      typedef ContainedDiscreteFunctionSpaceType 
-      SubDiscreteFunctionSpaceType; 
+      typedef ContainedDiscreteFunctionSpaceType
+      SubDiscreteFunctionSpaceType;
       //! Intrinsic type used for dofs (typically a float type)
       typedef typename BaseType::DofType DofType;
       //! Intrinsic type used for range field (like DofType)
@@ -122,11 +122,11 @@ namespace Dune
       typedef typename BaseType::DomainType DomainType;
       //! Mapper type (from the space)
       typedef typename Traits::MapperType MapperType;
-       
+
       //! Iterator over dof container
       typedef typename BaseType::DofIteratorType DofIteratorType;
       //! Read-only iterator over dof container
-      typedef typename BaseType::ConstDofIteratorType 
+      typedef typename BaseType::ConstDofIteratorType
       ConstDofIteratorType;
 
       typedef typename BaseType :: DofBlockPtrType DofBlockPtrType;
@@ -139,36 +139,36 @@ namespace Dune
       using BaseType :: space;
 
       //- Public methods
-      //! Constructor 
+      //! Constructor
       //! WARNING: here we have to use a const cast for the
       //! function space!
-      CombinedDiscreteFunction( const ContainedDiscreteFunctionType& func ) 
+      CombinedDiscreteFunction( const ContainedDiscreteFunctionType& func )
         : BaseType( "combined_"+func.name(), createSpace( func.space().gridPart() ), LocalDofVectorAllocatorType( &ldvStack_ ) ),
           ldvStack_( std::max( sizeof( DofType ), sizeof( DofType* ) ) * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize )
       {
-        for (int i=0; i<N; ++i) 
+        for (int i=0; i<N; ++i)
         {
           func_[i] = new ContainedDiscreteFunctionType(func);
         }
       }
 
-      CombinedDiscreteFunction(const std::string &name, 
-                               const ContainedDiscreteFunctionSpaceType& spc) 
+      CombinedDiscreteFunction(const std::string &name,
+                               const ContainedDiscreteFunctionSpaceType& spc)
         : BaseType( "combined_"+name, createSpace( spc.gridPart() ), LocalDofVectorAllocatorType( &ldvStack_ ) ),
           ldvStack_( std::max( sizeof( DofType ), sizeof( DofType* ) ) * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize )
       {
-        for (int i=0; i<N; ++i) 
+        for (int i=0; i<N; ++i)
         {
           func_[i] = new ContainedDiscreteFunctionType(name,spc);
         }
       }
 
-      CombinedDiscreteFunction(const std::string &name, 
-                               const DiscreteFunctionSpaceType& spc ) 
+      CombinedDiscreteFunction(const std::string &name,
+                               const DiscreteFunctionSpaceType& spc )
         : BaseType( "combined_"+name, createSpace( spc.gridPart() ), LocalDofVectorAllocatorType( &ldvStack_) ),
           ldvStack_( std::max( sizeof( DofType ), sizeof( DofType* ) ) * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize )
       {
-        for (int i=0; i<N; ++i) 
+        for (int i=0; i<N; ++i)
         {
           func_[i] = new ContainedDiscreteFunctionType(name,space().containedSpace());
         }
@@ -180,17 +180,17 @@ namespace Dune
         : BaseType( other.name()+"_copy", createSpace( other.space().gridPart() ), LocalDofVectorAllocatorType( &ldvStack_ ) ),
           ldvStack_( other.ldvStack_ )
       {
-        for (int i=0; i<N; ++i) 
+        for (int i=0; i<N; ++i)
         {
-          func_[i] = new 
+          func_[i] = new
             ContainedDiscreteFunctionType(other.subFunction(i));
         }
       }
 
       //! Destructor
-      ~CombinedDiscreteFunction() 
+      ~CombinedDiscreteFunction()
       {
-        for (int i=0; i<N; ++i) 
+        for (int i=0; i<N; ++i)
           delete func_[i];
 
         delete &space();
@@ -198,7 +198,7 @@ namespace Dune
 
     private:
       ThisType &operator= ( const ThisType &other );
-      
+
     public:
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::clear */
       inline void clear() {
@@ -213,7 +213,7 @@ namespace Dune
           func_[i]->assign( g.subFunction( i ) );
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::size() const */ 
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::size() const */
       int size() const
       {
         return func_[0]->size()*N;
@@ -228,18 +228,18 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator-=
-       */ 
+       */
       using BaseType::operator-=;
       ThisType &operator-= ( const ThisType &g )
       {
-        // std::cout << "     special operator -= in combineddf" 
+        // std::cout << "     special operator -= in combineddf"
         //        << std::endl;
         for( int i = 0; i < N; ++i )
           *func_[ i ] -=  g.subFunction( i );
        return *this;
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator*=(const RangeFieldType &scalar) */    
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator*=(const RangeFieldType &scalar) */
       DiscreteFunctionType& operator *= (const RangeFieldType &scalar)
       {
         for (int i=0; i<N; ++i)
@@ -317,7 +317,7 @@ namespace Dune
         const ContainedDiscreteFunctionType& func = *(func_[ component ]);
         return func.block( containedIndex );
       }
-      
+
       inline DofBlockPtrType block ( unsigned int index )
       {
         // This is wrong with the current implementation of CombinedSpace
@@ -348,7 +348,7 @@ namespace Dune
         int point    = index % func_[0]->size();
         return func_[variable]->dof(point);
       }
-      
+
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dbegin() const */
       inline ConstDofIteratorType dbegin () const
       {
@@ -369,18 +369,18 @@ namespace Dune
       {
         return DofIteratorType(false,*this);
       }
-      
-      inline ContainedDiscreteFunctionType& subFunction( const int i ) 
+
+      inline ContainedDiscreteFunctionType& subFunction( const int i )
       {
         return *(func_[i]);
       }
 
-      inline const ContainedDiscreteFunctionType& subFunction( const int i ) const 
+      inline const ContainedDiscreteFunctionType& subFunction( const int i ) const
       {
         return *(func_[i]);
       }
 
-      inline ContainedDiscreteFunctionSpaceType& subSpace() 
+      inline ContainedDiscreteFunctionSpaceType& subSpace()
       {
         return space().containedSpace();
       }
@@ -392,22 +392,22 @@ namespace Dune
 
       DiscreteFunctionSpaceType& createSpace( GridPartType& gp )
       {
-        // we need to delete the space in the destructor 
+        // we need to delete the space in the destructor
         return *(new DiscreteFunctionSpaceType( gp ));
       }
-      
+
       typename Traits :: LocalDofVectorStackType ldvStack_;
       ContainedDiscreteFunctionType* func_[N];
       friend class CombinedDiscreteFunctionDofIterator<ContainedDiscreteFunctionType,N>;
     };
-    
-    /** \brief Iterator over an array of dofs 
+
+    /** \brief Iterator over an array of dofs
         \todo Please doc me!
     */
     template <class ContainedDiscreteFunctionImp,int N>
     class CombinedDiscreteFunctionDofIterator
-    : public DofIteratorDefault < 
-      typename ContainedDiscreteFunctionImp::DofType , 
+    : public DofIteratorDefault <
+      typename ContainedDiscreteFunctionImp::DofType ,
       CombinedDiscreteFunctionDofIterator<ContainedDiscreteFunctionImp,N> >
     {
     public:
@@ -418,7 +418,7 @@ namespace Dune
       typedef typename ContainedDiscreteFunctionType::DofIteratorType ContainedDofIteratorType;
       typedef typename ContainedDiscreteFunctionType::ConstDofIteratorType ContainedConstDofIteratorType;
       typedef typename Traits::DofType DofType;
-      
+
       //! End constructor
       CombinedDiscreteFunctionDofIterator
       (bool end,const DiscreteFunctionType& df) :
@@ -471,7 +471,7 @@ namespace Dune
       //! return dof
       DofType& operator *() { return *iter_; }
 
-      //! return dof read only 
+      //! return dof read only
       const DofType& operator * () const { return *iter_; }
 
       //! go to next dof
@@ -481,32 +481,32 @@ namespace Dune
           ++comp_;
           iter_ = df_.func_[comp_]->dbegin();
           endIter_ = df_.func_[comp_]->dend();
-        } 
+        }
         return *this;
       }
-    
+
       //! compare
       bool operator == (const ThisType & I ) const { return (comp_ == I.comp_) && (iter_ == I.iter_); }
 
-      //! compare 
+      //! compare
       bool operator != (const ThisType & I ) const { return !((*this) == I); }
 
-      void reset() 
+      void reset()
       {
         comp_    = 0;
         iter_    = df_.func_[ 0 ]->dbegin();
         endIter_ = df_.func_[ 0 ]->dend();
       }
-      
+
   private:
       DiscreteFunctionType& df_;
-      //! index 
+      //! index
       mutable int comp_;
       mutable ContainedDofIteratorType iter_,endIter_;
 
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

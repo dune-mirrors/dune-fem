@@ -22,7 +22,7 @@ namespace Dune
     public:
       //! type of the implementation (Barton-Nackman)
       typedef IM IndexMapperType;
-      
+
       //! type of the interface
       typedef ThisType IndexMapperInterfaceType;
 
@@ -32,7 +32,7 @@ namespace Dune
       {
         return asImp().operator[]( index );
       }
-      
+
       //! Returns the map's range
       unsigned int range () const
       {
@@ -48,8 +48,8 @@ namespace Dune
     protected:
       using BaseType::asImp;
     };
-    
-    
+
+
     template< class IndexMapper >
     struct SupportsIndexMapperInterface
     {
@@ -73,15 +73,15 @@ namespace Dune
 
       //! type of array elements
       typedef typename BaseArrayType :: ElementType ElementType;
-        
+
     private:
       typedef SubArray< BaseArrayType, IndexMapperType > ThisType;
       typedef ArrayDefault< ElementType, ThisType > BaseType;
-        
+
     private:
       BaseArrayType &baseArray_;
       const IndexMapperType &indexMapper_;
-        
+
     public:
       SubArray( BaseArrayType &baseArray, const IndexMapperType &indexMapper )
       : baseArray_( baseArray ),
@@ -133,11 +133,11 @@ namespace Dune
 
       //! type of array elements
       typedef typename BaseVectorType :: FieldType FieldType;
-        
+
     private:
       typedef SubVector< BaseVectorType, IndexMapperType > ThisType;
       typedef Fem :: VectorDefault< FieldType, ThisType > BaseType;
-        
+
     private:
       BaseVectorType &baseVector_;
       const IndexMapperType &indexMapper_;
@@ -154,7 +154,7 @@ namespace Dune
 
         assert( (unsigned int)baseVector_.size() == indexMapper_.range() );
       }
-      
+
 
     private:
       SubVector ( const ThisType & );
@@ -176,7 +176,7 @@ namespace Dune
         return indexMapper_.size();
       }
     };
-  
+
   } // namespace Fem
 
 } // namespace Dune

@@ -11,7 +11,7 @@
 using std::string;
 using std::ostream;
 
-namespace Dune 
+namespace Dune
 {
 
   namespace Fem
@@ -35,7 +35,7 @@ namespace Dune
     // For consistency, _succeed() also has an underscore.
 #define _exec(str) doExec(*this, str,  __FILE__, __LINE__)
     //! \brief Tests if \c cond is true (test passed) or not
-    //! This macro acts as the standard testing function, evaluating the result of 
+    //! This macro acts as the standard testing function, evaluating the result of
     //! boolean expression cond.
 #define _test(cond) doTest(cond, #cond, __FILE__, __LINE__)
 
@@ -46,7 +46,7 @@ namespace Dune
       doFloatTest(arg1, arg2, #arg1, #arg2, __FILE__, __LINE__)
 
     //! \brief Tests if \c arg1 and \c arg2 are identical up to a relative difference \c tol
-    //! Use this macro to test the equality of float types. A user-prescribed 
+    //! Use this macro to test the equality of float types. A user-prescribed
     //! tolerance of \c tol for the relative difference is allowed before the test
     //! fails.
 #define _floatTestTol(arg1, arg2, tol) \
@@ -71,10 +71,10 @@ namespace Dune
       //! Destructor
       virtual ~Test(){}
       //! \brief Runs the tests
-      //! Must be overwritten in derived classes. run must explicitly call the 
+      //! Must be overwritten in derived classes. run must explicitly call the
       //! actual testing methods of a test class.
       virtual void run() = 0;
-      
+
       //! Returns the number of passed tests
       long getNumPassed() const;
       //! Returns the number of failed tests
@@ -84,28 +84,28 @@ namespace Dune
       //! Sets the output stream for the report
       //! \param osptr Pointer to the output stream
       void setStream(ostream* osptr);
-      
+
       //! \brief Method signalling a successful test
       //! Use this method to explicitly signal a successful conclusion of a test.
-      //! Consider using _test when you can express the fact using a boolean 
+      //! Consider using _test when you can express the fact using a boolean
       //! condition.
       void _succeed();
       //! Display the report
       long report() const;
       //! Reset the test object's statistics
       virtual void reset();
-      
+
     protected:
       //! Internal class for compile-time checks
       template <bool cond>
       struct CompileAssertion {
-        static inline void doExec(Test& tester, string str, 
+        static inline void doExec(Test& tester, string str,
                                   const char* fname, long lineno);
       };
 
       //! Internal method for floating point comparisons
       void doFloatTest(double arg1, double arg2, const std::string& lbl1,
-                       const std::string& lbl2, const char* fname, 
+                       const std::string& lbl2, const char* fname,
                        long lineno, double tol = 1e-10);
       //! Internal method for generic tests
       void doTest(bool cond, const string& lbl,
@@ -116,12 +116,12 @@ namespace Dune
 
       //! Computer precision for doubles
       static const double eps;
-      
+
     private:
       ostream* m_osptr;
       long m_nPass;
       long m_nFail;
-      
+
       // Disallowed:
       Test(const Test&);
       Test& operator=(const Test&);

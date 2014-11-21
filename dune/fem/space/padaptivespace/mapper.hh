@@ -22,9 +22,9 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
-  
+
     // Internal forward declaration
     // ----------------------------
     template< class GridPart, int polOrder >
@@ -39,7 +39,7 @@ namespace Dune
     struct PAdaptiveLagrangeMapperTraits
     {
       typedef GridPart GridPartType;
-      
+
       static const int polynomialOrder = polOrder;
       // if this is set to true the mapper behaves like a DG mapper
       static const bool discontinuousMapper = false;
@@ -47,13 +47,13 @@ namespace Dune
       typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
       typedef PAdaptiveLagrangeMapper< GridPartType, polynomialOrder > DofMapperType;
 
-      //! type of the compiled local key 
+      //! type of the compiled local key
       typedef LagrangePointSet< GridPartType, polynomialOrder >  CompiledLocalKeyType;
       typedef BaseSetLocalKeyStorage< CompiledLocalKeyType > BaseSetLocalKeyStorageType;
 
       typedef std::vector< BaseSetLocalKeyStorageType > CompiledLocalKeyVectorType ;
 
-      typedef int SizeType ; 
+      typedef int SizeType ;
       typedef int GlobalKeyType ;
     };
 
@@ -87,9 +87,9 @@ namespace Dune
       static const int dimension = GridType::dimension;
 
       //! order of the Lagrange polynoms
-      static const int polynomialOrder = 1; 
+      static const int polynomialOrder = 1;
 
-      // my traits class 
+      // my traits class
       typedef PAdaptiveLagrangeMapperTraits< GridPart, polynomialOrder > Traits;
 
       typedef typename Traits :: CompiledLocalKeyVectorType  CompiledLocalKeyVectorType;
@@ -105,12 +105,12 @@ namespace Dune
         return true;
       }
 
-      int polynomOrder( const ElementType& entity ) const 
+      int polynomOrder( const ElementType& entity ) const
       {
         return 1;
       }
 
-      void setPolynomOrder( const ElementType& entity, const int polOrd ) 
+      void setPolynomOrder( const ElementType& entity, const int polOrd )
       {
       }
 
@@ -123,14 +123,14 @@ namespace Dune
     // ----------------------------
 
     template< class GridPart, int polOrder >
-    class PAdaptiveLagrangeMapper 
+    class PAdaptiveLagrangeMapper
       : public GenericAdaptiveDofMapper< PAdaptiveLagrangeMapperTraits< GridPart, polOrder > >
     {
-    public:   
-      // my traits class 
+    public:
+      // my traits class
       typedef PAdaptiveLagrangeMapperTraits< GridPart, polOrder > Traits;
 
-    private:   
+    private:
       typedef PAdaptiveLagrangeMapper< GridPart, polOrder > ThisType;
       typedef GenericAdaptiveDofMapper< Traits > BaseType;
 
@@ -138,7 +138,7 @@ namespace Dune
       //! type of the grid part
       typedef typename Traits::GridPartType GridPartType;
 
-      //! type of compiled local keys vector 
+      //! type of compiled local keys vector
       typedef typename Traits :: CompiledLocalKeyVectorType  CompiledLocalKeyVectorType;
 
     public:
@@ -152,23 +152,23 @@ namespace Dune
       //! sort of copy constructor
       PAdaptiveLagrangeMapper ( const ThisType& other,
                                 CompiledLocalKeyVectorType &compiledLocalKeys )
-        : BaseType( other, compiledLocalKeys ) 
-      {} 
+        : BaseType( other, compiledLocalKeys )
+      {}
     };
-  
+
     template< class GridPart, int polOrder >
     class PAdaptiveDGMapper;
 
     template< class GridPart, int polOrder >
-    struct PAdaptiveDGMapperTraits 
+    struct PAdaptiveDGMapperTraits
       : public PAdaptiveLagrangeMapperTraits< GridPart, polOrder >
     {
-      // this is a mapper for DG 
+      // this is a mapper for DG
       static const bool discontinuousMapper = true ;
 
       typedef typename GridPart::template Codim< 0 >::EntityType ElementType;
       typedef PAdaptiveDGMapper< GridPart, polOrder > DofMapperType;
-      typedef int SizeType ; 
+      typedef int SizeType ;
       typedef int GlobalKeyType ;
     };
 
@@ -177,14 +177,14 @@ namespace Dune
     // -------------------------------
 
     template< class GridPart, int polOrder >
-    class PAdaptiveDGMapper 
+    class PAdaptiveDGMapper
       : public GenericAdaptiveDofMapper< PAdaptiveDGMapperTraits< GridPart, polOrder > >
     {
-    public:   
-      // my traits class 
+    public:
+      // my traits class
       typedef PAdaptiveDGMapperTraits< GridPart, polOrder > Traits;
 
-    private:   
+    private:
       typedef PAdaptiveDGMapper< GridPart, polOrder > ThisType;
       typedef GenericAdaptiveDofMapper< Traits > BaseType;
 
@@ -192,7 +192,7 @@ namespace Dune
       //! type of the grid part
       typedef typename Traits::GridPartType GridPartType;
 
-      //! type of compiled local keys vector 
+      //! type of compiled local keys vector
       typedef typename Traits :: CompiledLocalKeyVectorType  CompiledLocalKeyVectorType;
 
     public:
@@ -205,12 +205,12 @@ namespace Dune
       //! sort of copy constructor
       PAdaptiveDGMapper ( const ThisType& other,
                           CompiledLocalKeyVectorType &compiledLocalKeys )
-        : BaseType( other, compiledLocalKeys ) 
-      {} 
+        : BaseType( other, compiledLocalKeys )
+      {}
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_SPACE_PADAPTIVE_MAPPER_HH

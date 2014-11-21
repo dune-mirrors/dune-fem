@@ -31,12 +31,12 @@ namespace Dune
     public:
       //! type of the operators to invert
       typedef Operator OperatorType;
-     
+
       //! field type of the operator's domain vectors
       typedef typename OperatorType::DomainFieldType DomainFieldType;
       //! field type of the operator's range vectors
       typedef typename OperatorType::RangeFieldType RangeFieldType;
-      
+
       //! type of the operator's domain vectors
       typedef typename OperatorType::DomainFunctionType DomainFunctionType;
       //! type of the operator's range vectors
@@ -65,7 +65,7 @@ namespace Dune
         verbose_( verbose ),
         averageCommTime_( 0.0 ),
         realCount_( 0 )
-        
+
       {}
 
       /** \brief constructor
@@ -108,21 +108,21 @@ namespace Dune
        *
        *  \param[in]   op  linear operator to invert (must be symmetic and
        *                   positive definite)
-       *  \param[in]   p   (lef) preconditioning operator  
+       *  \param[in]   p   (lef) preconditioning operator
        *  \param[in]   b   right hand side
        *  \param       x   solution (must be initialized to a start value)
        */
-      void solve ( const OperatorType &op, const PreconditionerType &p, 
+      void solve ( const OperatorType &op, const PreconditionerType &p,
                    const RangeFunctionType &b, DomainFunctionType &x ) const;
 
-      //! number of iterations needed for last solve 
-      unsigned int iterations () const 
+      //! number of iterations needed for last solve
+      unsigned int iterations () const
       {
         return realCount_;
       }
-      
-      //! return average communication time during last solve 
-      double averageCommTime() const 
+
+      //! return average communication time during last solve
+      double averageCommTime() const
       {
         return averageCommTime_;
       }
@@ -136,29 +136,29 @@ namespace Dune
     };
 
 
-    namespace Solver 
+    namespace Solver
     {
       // CGInverseOperator
       // -----------------
-     
+
       /** \class   CGInverseOperator
        *  \ingroup OEMSolver
        *  \brief   Inverse operator base on CG method. This is the base class for the
        *           cg solver and does not imvolve any runtime parametrization
        */
-      template< class DiscreteFunction > 
+      template< class DiscreteFunction >
       class CGInverseOperator
       : public Fem::Operator< DiscreteFunction, DiscreteFunction >
       {
         typedef Fem::Operator< DiscreteFunction, DiscreteFunction > BaseType;
-        
+
       public:
         typedef typename BaseType::DomainFunctionType DomainFunctionType;
         typedef typename BaseType::RangeFunctionType RangeFunctionType;
 
         typedef Fem::Operator< DomainFunctionType, RangeFunctionType > OperatorType;
         typedef Fem::Operator< RangeFunctionType, DomainFunctionType > PreconditionerType;
-        
+
       private:
         typedef ConjugateGradientSolver< OperatorType > SolverType;
 
@@ -193,7 +193,7 @@ namespace Dune
             preconditioner_ ( 0 ),
             solver_( absLimit, maxIter )
         {}
-        
+
         /** \brief constructor of CGInverseOperator
          *
          *  \param[in]  op       operator to invert
@@ -223,18 +223,18 @@ namespace Dune
         {
           if(preconditioner_)
             solver_.solve( operator_, *preconditioner_, u, w );
-          else 
+          else
             solver_.solve(operator_,u,w);
         }
 
-        //! number of iterations needed for last solve 
-        unsigned int iterations () const 
+        //! number of iterations needed for last solve
+        unsigned int iterations () const
         {
           return solver_.iterations();
         }
-        
-        //! return average communication time during last solve 
-        double averageCommTime() const 
+
+        //! return average communication time during last solve
+        double averageCommTime() const
         {
           return solver_.averageCommTime();
         }
@@ -248,7 +248,7 @@ namespace Dune
 
     // CGInverseOperator
     // -----------------
-   
+
     /** \class   CGInverseOperator
      *  \ingroup OEMSolver
      *  \brief   Inverse operator base on CG method. Uses a runtime parameter
@@ -256,22 +256,22 @@ namespace Dune
      *           diagonal matrix entries are available, i.e.,
      *           Op :: assembled is true.
      */
-    template< class DiscreteFunction, 
+    template< class DiscreteFunction,
               class Op = Fem::Operator< DiscreteFunction, DiscreteFunction > >
     class CGInverseOperator
     : public Fem::Solver::CGInverseOperator< DiscreteFunction >
     {
       typedef Fem::Solver::CGInverseOperator< DiscreteFunction > BaseType;
-      
+
     public:
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
 
       typedef DomainFunctionType DestinationType;
-      
-      //! type of operator 
+
+      //! type of operator
       typedef Op OperatorType;
-      
+
       // Preconditioner is to approximate op^-1 !
       typedef Fem::Operator< RangeFunctionType,DomainFunctionType > PreconditioningType;
 
@@ -309,7 +309,7 @@ namespace Dune
       {
         checkPreconditioning( op );
       }
-      
+
       /** \brief constructor of CGInverseOperator
        *
        *  \param[in]  op       operator to invert
@@ -338,9 +338,9 @@ namespace Dune
       void checkPreconditioning( const LinearOperator &linearOp )
       {
         const bool preconditioning = Parameter::getValue< bool >( "fem.preconditioning", false );
-        if( preconditioning && IsBaseOf< AssembledOperator< DomainFunctionType, DomainFunctionType > ,LinearOperator > :: value ) 
+        if( preconditioning && IsBaseOf< AssembledOperator< DomainFunctionType, DomainFunctionType > ,LinearOperator > :: value )
         {
-          // create diagonal preconditioner 
+          // create diagonal preconditioner
           precondObj_ = new DiagonalPreconditioner< DomainFunctionType, LinearOperator >( linearOp );
           preconditioner_ = precondObj_;
         }
@@ -358,11 +358,11 @@ namespace Dune
       ::solve ( const OperatorType &op, const RangeFunctionType &b, DomainFunctionType &x ) const
     {
       const bool verbose = (verbose_ && (b.space().gridPart().comm().rank() == 0));
-      
-      const RangeFieldType tolerance = (epsilon_ * epsilon_) * b.scalarProductDofs( b ); 
+
+      const RangeFieldType tolerance = (epsilon_ * epsilon_) * b.scalarProductDofs( b );
 
       averageCommTime_ = 0.0;
-      
+
       RangeFunctionType h( b );
       op( x, h );
 
@@ -374,11 +374,11 @@ namespace Dune
 
       RangeFieldType prevResiduum = 0;
       RangeFieldType residuum = r.scalarProductDofs( r );
-   
+
       for( realCount_ = 0; (residuum > tolerance) && (realCount_ < maxIterations_); ++realCount_ )
       {
         if( realCount_ > 0 )
-        { 
+        {
           assert( residuum/prevResiduum == residuum/prevResiduum );
           p *= (residuum / prevResiduum);
           p -= r;
@@ -394,16 +394,16 @@ namespace Dune
 
         prevResiduum = residuum;
         residuum = r.scalarProductDofs( r );
-        
+
         double exchangeTime = h.space().communicator().exchangeTime();
         if( verbose )
         {
           std::cerr << "CG-Iteration: " << realCount_ << ", sqr(Residuum): " << residuum << std::endl;
-          // only for parallel apps 
+          // only for parallel apps
           if( b.space().gridPart().comm().size() > 1 )
             std::cerr << "Communication needed: " << exchangeTime << " s" << std::endl;
         }
-        
+
         averageCommTime_ += exchangeTime;
       }
     }
@@ -414,11 +414,11 @@ namespace Dune
     ::solve ( const OperatorType &op, const PreconditionerType &precond, const RangeFunctionType &b, DomainFunctionType &x ) const
     {
       const bool verbose = (verbose_ && (b.space().gridPart().comm().rank() == 0));
-      
-      const RangeFieldType tolerance = (epsilon_ * epsilon_) * b.scalarProductDofs( b ); 
+
+      const RangeFieldType tolerance = (epsilon_ * epsilon_) * b.scalarProductDofs( b );
 
       averageCommTime_ = 0.0;
-      
+
       RangeFunctionType h( b );
       //h=Ax
       op( x, h );
@@ -426,54 +426,54 @@ namespace Dune
       //r=Ax-b
       RangeFunctionType r( h );
       r -= b;
-   
+
       //p=b-A*x <= r_0 Deufelhard
       RangeFunctionType p( b );
       p -= h;
-      
+
       //q=B*p <=q Deuf
       RangeFunctionType q ( b );
       precond(p,q);
-   
+
       RangeFunctionType s (q);
-      
+
       RangeFieldType prevResiduum = 0;
       RangeFieldType residuum = p.scalarProductDofs( q );//<p,Bp>
-   
+
       for( realCount_ = 0; (residuum > tolerance) && (realCount_ < maxIterations_); ++realCount_ )
       {
         if( realCount_ > 0 )
-        { 
+        {
           assert( residuum/prevResiduum == residuum/prevResiduum );
           const RangeFieldType beta=residuum/prevResiduum;
           q*=beta;
           q+=(s);
         }
-        
+
         op( q, h );
-        
+
         double qdoth = q.scalarProductDofs( h );
         const RangeFieldType alpha = residuum / qdoth;//<p,Bp>/<q,Aq>
         assert( alpha == alpha );
         x.axpy( alpha, q );
-        
+
         p.axpy( -alpha, h );//r_k
-        
+
         precond(p,s); //B*r_k
-        
+
         prevResiduum = residuum;//<rk-1,B*rk-1>
-        
+
         residuum = p.scalarProductDofs( s );//<rk,B*rk>
-        
+
         double exchangeTime = h.space().communicator().exchangeTime();
         if( verbose )
         {
           std::cerr << "CG-Iteration: " << realCount_ << ", Residuum: " << residuum << std::endl;
-          // only for parallel apps 
+          // only for parallel apps
           if( b.space().gridPart().comm().size() > 1 )
             std::cerr << "Communication needed: " << exchangeTime << " s" << std::endl;
         }
-        
+
         averageCommTime_ += exchangeTime;
       }
     }

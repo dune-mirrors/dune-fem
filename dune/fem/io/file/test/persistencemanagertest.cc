@@ -33,11 +33,11 @@ struct TestClass2 : public PersistentObject {
   TestClass2(double pb) : b(pb) {}
   virtual void backup() const {
     ofstream out(PersistenceManager::uniqueFileName().c_str());
-    out << b; 
+    out << b;
   }
   virtual void restore() {
     ifstream in(PersistenceManager::uniqueFileName().c_str());
-    in >> b; 
+    in >> b;
   }
   double b;
 };
@@ -55,12 +55,12 @@ struct TestClassA : public AutoPersistentObject {
   virtual void backup() const {
     PersistenceManager::backupValue("classA",a);
     ofstream out(PersistenceManager::uniqueFileName().c_str());
-    out << b; 
+    out << b;
   }
   virtual void restore() {
     PersistenceManager::restoreValue("classA",a);
     ifstream in(PersistenceManager::uniqueFileName().c_str());
-    in >> b; 
+    in >> b;
   }
   double a,b;
 };
@@ -71,7 +71,7 @@ int main (int argc, char **argv) {
   MPIManager :: initialize( argc, argv );
   Parameter::append(argc,argv);
   int restart = (argc>2)? atoi( argv[1] ) : 0;
-  
+
   // test adding and removing objects
   TestClass1 test1a(1.0),test1b(-sqrt(2.));  // derived from PeristentObject
   double a=-100,b=-200;                      // build in types can also be handeled
@@ -92,7 +92,7 @@ int main (int argc, char **argv) {
   // some more objects
   TestClass2 test2(1.0);
   TestClassA testA(5.0,2.0);
-  TestClassA* testAptr = new TestClassA[10]; 
+  TestClassA* testAptr = new TestClassA[10];
   persistenceManager << b << test2;
 
   // the TimeProvider is an example of an AutoPersistent object
@@ -107,9 +107,9 @@ int main (int argc, char **argv) {
 
   double* aPtr = new double;
   persistenceManager << *aPtr;
-  
+
   if (restart) {
-    // restore 
+    // restore
     PersistenceManager::restore("backup");
     Parameter::get("test",1e5,param);
   } else {
@@ -135,20 +135,20 @@ int main (int argc, char **argv) {
   PersistenceManager::backup("backup.end");
 
   // write all objects
-  cout << "Data:     " 
+  cout << "Data:     "
        << a << " " << b << " " << s << " ,  "
-       << test1a.a << " " << test1b.a << " ,  " 
-       << test2.b << " ,  " 
+       << test1a.a << " " << test1b.a << " ,  "
+       << test2.b << " ,  "
        << testA.a << " " << testA.b  << "  ,  "
        << param << "  ,  "
        << timeProv.time() << " "
        << timeProv1.time() << "  ,  "
        << *aPtr << " "
        << std::endl;
-  cout << "Expected: " 
+  cout << "Expected: "
        << 10 << " " << 20 << " " << "HALLO" << " ,  "
-       << -10 << " " << -sqrt(2) << " ,  " 
-       << 1 << " ,  " 
+       << -10 << " " << -sqrt(2) << " ,  "
+       << 1 << " ,  "
        << 25 << " " << 16  << "  ,  "
        << 100000 << "  ,  "
        << 0 << " "

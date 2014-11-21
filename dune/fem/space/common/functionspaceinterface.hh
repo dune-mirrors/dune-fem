@@ -7,11 +7,11 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /** \addtogroup FunctionSpace
-     * 
+     *
      *  This provides the interfaces for analytical function spaces.
      *  A function space is characterized by it's domain and range field type
      *  and the two finite dimensional vector spaces over these fields.
@@ -31,7 +31,7 @@ namespace Dune
      *  \ingroup FunctionSpace
      *
      *  Base class for specific function spaces.
-     *  
+     *
      *  \interfaceclass
      */
     template< typename FunctionSpaceTraits >
@@ -54,36 +54,36 @@ namespace Dune
         DimDomain = dimDomain,
         DimRange = dimRange
       };
-      
+
       /** \brief Intrinsic type used for values in the domain field (usually a double) */
       typedef typename FunctionSpaceTraits::DomainFieldType DomainFieldType;
-      
+
       /** \brief Intrinsic type used for values in the range field (usually a double) */
       typedef typename FunctionSpaceTraits::RangeFieldType RangeFieldType;
-      
-      /** \brief Type of domain vector (using type of domain field) 
+
+      /** \brief Type of domain vector (using type of domain field)
           has a Dune::FieldVector type interface */
       typedef typename FunctionSpaceTraits::DomainType DomainType;
-      
-      /** \brief Type of range vector (using type of range field) 
+
+      /** \brief Type of range vector (using type of range field)
           has a Dune::FieldVector type interface */
       typedef typename FunctionSpaceTraits::RangeType RangeType;
-      
-      /** \brief Intrinsic type used for the jacobian values 
+
+      /** \brief Intrinsic type used for the jacobian values
           has a Dune::FieldMatrix type interface */
       typedef typename FunctionSpaceTraits::LinearMappingType JacobianRangeType;
-      
-      /** \brief Intrinsic type used for the hessian values 
+
+      /** \brief Intrinsic type used for the hessian values
           has a Dune::FieldMatrix type interface */
       typedef FieldVector< FieldMatrix< RangeFieldType, dimDomain, dimDomain >, dimRange > HessianRangeType;
-      
+
       /** \brief corresponding scalar function space */
       typedef typename FunctionSpaceTraits :: ScalarFunctionSpaceType
         ScalarFunctionSpaceType;
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_FUNCTIONSPACEINTERFACE_HH

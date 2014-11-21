@@ -3,14 +3,14 @@
 
 #include <cassert>
 
-//- Dune includes 
+//- Dune includes
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/fem/space/common/commoperations.hh>
 
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /** \class   DefaultCommunicationHandler
@@ -28,7 +28,7 @@ namespace Dune
       typedef DefaultCommunicationHandler< DiscreteFunction, Operation > ThisType;
       typedef CommDataHandleIF< ThisType, typename DiscreteFunction::DofType > BaseType;
 
-    public:  
+    public:
       typedef typename BaseType::DataType DataType;
 
       typedef DiscreteFunction DiscreteFunctionType;
@@ -41,19 +41,19 @@ namespace Dune
       typedef typename DiscreteFunctionType::DofBlockPtrType DofBlockPtrType;
 
       static const unsigned int blockSize = DiscreteFunctionSpaceType::localBlockSize;
-      
+
     public:
       DefaultCommunicationHandler( DiscreteFunctionType &function )
       : function_( &function ),
         blockMapper_( function.space().blockMapper() )
-      {} 
-      
+      {}
+
       DefaultCommunicationHandler( const DefaultCommunicationHandler &other )
       : function_( other.function_ ),
         blockMapper_( other.blockMapper_ )
       {}
-      
-    private:  
+
+    private:
       //! cannot be implemented because of the reference
       DefaultCommunicationHandler &operator= ( const DefaultCommunicationHandler & );
 
@@ -70,7 +70,7 @@ namespace Dune
         }
 
         template <class GlobalKey>
-        void operator () ( const size_t local, const GlobalKey& globalKey ) 
+        void operator () ( const size_t local, const GlobalKey& globalKey )
         {
           DofBlockPtrType blockPtr = function_->block( globalKey );
           for( unsigned int j = 0; j < blockSize; ++j )
@@ -93,7 +93,7 @@ namespace Dune
         }
 
         template <class GlobalKey>
-        void operator () ( const size_t local, const GlobalKey& globalKey ) 
+        void operator () ( const size_t local, const GlobalKey& globalKey )
         {
           DofBlockPtrType blockPtr = function_->block( globalKey );
           for( unsigned int j = 0; j < blockSize; ++j )
@@ -116,7 +116,7 @@ namespace Dune
         return blockMapper_.fixedDataSize( codim );
       }
 
-      //! read buffer and apply operation 
+      //! read buffer and apply operation
       template< class MessageBuffer, class Entity >
       void gather ( MessageBuffer &buffer, const Entity &entity ) const
       {
@@ -124,7 +124,7 @@ namespace Dune
         blockMapper_.mapEachEntityDof( entity, gatherDofs );
       }
 
-      //! read buffer and apply operation 
+      //! read buffer and apply operation
       template< class MessageBuffer, class Entity >
       void scatter ( MessageBuffer &buffer, const Entity &entity, size_t n )
       {
@@ -134,7 +134,7 @@ namespace Dune
         blockMapper_.mapEachEntityDof( entity, scatterDofs );
       }
 
-      //! return local dof size to be communicated 
+      //! return local dof size to be communicated
       template< class Entity >
       size_t size ( const Entity &entity ) const
       {
@@ -145,8 +145,8 @@ namespace Dune
       DiscreteFunctionType *const function_;
       const BlockMapperType &blockMapper_;
     };
-  
-  } // namespace Fem 
+
+  } // namespace Fem
 
 } // namespace Dune
 

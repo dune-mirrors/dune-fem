@@ -9,13 +9,13 @@ extern "C" {
   #include <mmintrin.h>
 }
 
-namespace Dune 
-{ 
+namespace Dune
+{
 
-  namespace Fem 
-  {  
+  namespace Fem
+  {
 
-    template <class K> 
+    template <class K>
     class SSEVector
     {
       SSEVector(const SSEVector& );
@@ -25,31 +25,31 @@ namespace Dune
       typedef Field* RowType;
 
       typedef RowType SSEType;
-    protected:  
+    protected:
       RowType sseVec_;
       const size_t size_;
     public:
-      SSEVector(const size_t SIZE) : size_( SIZE ) 
+      SSEVector(const size_t SIZE) : size_( SIZE )
       {
         const size_t SIZE_J = (2*((SIZE+1)/2));
         sseVec_ = new K [ SIZE_J ];
         assert( sseVec_ );
-      } 
+      }
 
-      ~SSEVector () 
-      { 
+      ~SSEVector ()
+      {
         delete [] sseVec_;
-      } 
+      }
 
       void resize( const size_t ) {}
 
-      K& operator [] (const size_t i) 
+      K& operator [] (const size_t i)
       {
         assert( i < size() );
         return sseVec_[ i ];
       }
 
-      const K& operator [] (const size_t i) const 
+      const K& operator [] (const size_t i) const
       {
         assert( i < size() );
         return sseVec_[ i ];
@@ -60,62 +60,62 @@ namespace Dune
       size_t size() const { return size_; }
     };
 
-    template < class K > 
-    class SSEMatrix 
+    template < class K >
+    class SSEMatrix
     {
       SSEMatrix(const SSEMatrix& other) ;
     public:
       //typedef K  Field __attribute__((aligned (16)));
       typedef K  Field ;
-      typedef Field* RowType; 
+      typedef Field* RowType;
       typedef RowType* MatrixType;
 
       typedef MatrixType SSEType;
-    protected:  
-      typedef void multiplySSE_t(const size_t I, const size_t J, 
-                                 K** const &A, 
-                                 K*  const &X, 
+    protected:
+      typedef void multiplySSE_t(const size_t I, const size_t J,
+                                 K** const &A,
+                                 K*  const &X,
                                  K*  &Y);
 
-      template <int n, int m> 
+      template <int n, int m>
       struct Multiply
       {
-        static multiplySSE_t* mv(const int rows, const int cols) 
+        static multiplySSE_t* mv(const int rows, const int cols)
         {
           if( n == rows && m == cols )
           {
             return multSSE;
           }
-          else if( n == rows ) 
+          else if( n == rows )
           {
             return Multiply< n, m - 1>::mv( rows, cols );
           }
-          else 
+          else
           {
             return Multiply<n-1, m> ::mv( rows, cols );
           }
         }
 
-        static multiplySSE_t* umtv(const int rows, const int cols) 
+        static multiplySSE_t* umtv(const int rows, const int cols)
         {
           if( n == rows && m == cols )
           {
             return multUmtvSSE;
           }
-          else if( n == rows ) 
+          else if( n == rows )
           {
             return Multiply< n, m - 1>::umtv( rows, cols );
           }
-          else 
+          else
           {
             return Multiply<n-1, m> ::umtv( rows, cols );
           }
         }
 
-        static inline 
-        void multSSE(const size_t I, const size_t J, 
-                     K** const &A, 
-                     K*  const &X, 
+        static inline
+        void multSSE(const size_t I, const size_t J,
+                     K** const &A,
+                     K*  const &X,
                      K*  &Y)
         {
           assert( n == I );
@@ -123,10 +123,10 @@ namespace Dune
           SSEMatrix< K > :: multiplySSE(n, m, A, X , Y);
         }
 
-        static inline 
-        void multUmtvSSE(const size_t I, const size_t J, 
-                         K** const &A, 
-                         K*  const &X, 
+        static inline
+        void multUmtvSSE(const size_t I, const size_t J,
+                         K** const &A,
+                         K*  const &X,
                          K*  &Y)
         {
           assert( n == I );
@@ -135,29 +135,29 @@ namespace Dune
         }
       };
 
-      template <int m> 
-      struct Multiply<0, m> 
+      template <int m>
+      struct Multiply<0, m>
       {
-        static multiplySSE_t* mv(const int rows, const int cols) 
+        static multiplySSE_t* mv(const int rows, const int cols)
         {
-          return 0; 
+          return 0;
         }
-        static multiplySSE_t* umtv(const int rows, const int cols) 
+        static multiplySSE_t* umtv(const int rows, const int cols)
         {
-          return 0; 
+          return 0;
         }
       };
 
-      template <int n> 
-      struct Multiply<n, 0> 
+      template <int n>
+      struct Multiply<n, 0>
       {
-        static multiplySSE_t* mv(const int rows, const int cols) 
+        static multiplySSE_t* mv(const int rows, const int cols)
         {
-          return 0; 
+          return 0;
         }
-        static multiplySSE_t* umtv(const int rows, const int cols) 
+        static multiplySSE_t* umtv(const int rows, const int cols)
         {
-          return 0; 
+          return 0;
         }
       };
 
@@ -177,8 +177,8 @@ namespace Dune
       enum { countSize = 100 };
     public:
       SSEMatrix(const size_t n, const size_t m ,
-                const size_t realRows ) 
-        : xTmp_(  m ) 
+                const size_t realRows )
+        : xTmp_(  m )
         , yTmp_(  n )
         , quadMat_( 0 )
         , mvSSE_(   Multiply<countSize, countSize>::mv( realRows, m ) )
@@ -190,19 +190,19 @@ namespace Dune
         quadMat_ = new RowType [ n ];
         assert( sseMat_ );
         const size_t SIZE_J = (2*(( m + 1 ) / 2));
-        for( size_t i = 0; i < rows_; ++i) 
+        for( size_t i = 0; i < rows_; ++i)
         {
           sseMat_[ i ] = new K [ SIZE_J ];
           assert( sseMat_[ i ] );
         }
-      } 
+      }
 
       // dummy method for fillRangeCache
       void resize( const size_t ) {}
 
-      ~SSEMatrix() 
+      ~SSEMatrix()
       {
-        if( quadMat_ ) 
+        if( quadMat_ )
         {
           for( size_t i = 0; i < rows_; ++i)
           {
@@ -215,13 +215,13 @@ namespace Dune
         quadMat_ = 0;
       }
 
-      RowType& operator [] (const size_t i) 
+      RowType& operator [] (const size_t i)
       {
         assert( i < rows_ );
         return sseMat_[ i ];
       }
 
-      const RowType& operator [] (const size_t i) const 
+      const RowType& operator [] (const size_t i) const
       {
         assert( i < cols_ );
         return sseMat_[ i ];
@@ -230,16 +230,16 @@ namespace Dune
       size_t rows () const { return rows_; }
       size_t cols () const { return cols_; }
 
-      template <class X, class Y> 
-      void mv(const X& x, Y& y, const size_t offset ) const 
+      template <class X, class Y>
+      void mv(const X& x, Y& y, const size_t offset ) const
       {
         mv( sseMat_, rows(), x, y, offset );
       }
 
-      template <class X, class Y, class quad_t > 
-      void mv(const X& x, Y& y, 
+      template <class X, class Y, class quad_t >
+      void mv(const X& x, Y& y,
               const quad_t& quad,
-              const size_t offset ) const 
+              const size_t offset ) const
       {
         assert( realRows_ == quad.nop() );
         for( size_t i = 0; i < realRows_; ++i)
@@ -250,12 +250,12 @@ namespace Dune
       }
 
 #if 1
-      template <class X, class Y> 
-      void 
-      mv(const MatrixType& mat, 
+      template <class X, class Y>
+      void
+      mv(const MatrixType& mat,
          const size_t realRows,
-         const X& x, Y& y, 
-         const size_t offset ) const 
+         const X& x, Y& y,
+         const size_t offset ) const
       {
         for(size_t r = 0; r < offset ; ++r )
         {
@@ -263,28 +263,28 @@ namespace Dune
           //multiplySSE( realRows, cols(), mat, xTmp_.raw(), yTmp_.raw() );
           mvSSE_( realRows, cols(), mat, xTmp_.raw(), yTmp_.raw() );
           for(size_t i = 0; i < realRows; ++i ) y[ i ][ r ] = yTmp_[ i ];
-        } 
+        }
       }
 #else
-      template <int n, int m, class X, class Y> 
-      void 
-      mv(const MatrixType& mat, 
+      template <int n, int m, class X, class Y>
+      void
+      mv(const MatrixType& mat,
          const size_t realRows,
-         const X& x, Y& y, 
-         const size_t offset ) const 
+         const X& x, Y& y,
+         const size_t offset ) const
       {
         for (size_t i = 0; i < realRows; ++i)
         {
           const RowType& matRow = mat[ i ];
 
-          for(size_t r = 0; r < offset; ++r ) 
+          for(size_t r = 0; r < offset; ++r )
           {
             y[ i ][ r ] = 0;
           }
 
           for (size_t j = 0; j < cols_; ++j)
           {
-            for(size_t r = 0; r < offset; ++r ) 
+            for(size_t r = 0; r < offset; ++r )
             {
               y[ i ][ r ] += matRow[ j ] * x[ j * offset + r ];
             }
@@ -293,46 +293,46 @@ namespace Dune
       }
 #endif
 
-      template <class X, class Y, class quad_t > 
-      void umtv(const X& x, Y& y, const quad_t& quad, 
-                const size_t offset ) const 
+      template <class X, class Y, class quad_t >
+      void umtv(const X& x, Y& y, const quad_t& quad,
+                const size_t offset ) const
       {
         const size_t quadSize = quad.nop();
-        for( size_t i = 0; i < quadSize; ++i) 
+        for( size_t i = 0; i < quadSize; ++i)
         {
           quadMat_[ i ] = sseMat_[ quad.cachingPoint( i ) ];
         }
         umtv( quadMat_, quadSize, x, y, offset );
       }
 
-      template <class X, class Y, class quad_t > 
-      void umtv(const X& x, Y& y, const quad_t& quad, 
-                const size_t offset , bool ) const 
+      template <class X, class Y, class quad_t >
+      void umtv(const X& x, Y& y, const quad_t& quad,
+                const size_t offset , bool ) const
       {
         const size_t quadSize = quad.nop();
-        for( size_t i = 0; i < quadSize; ++i) 
+        for( size_t i = 0; i < quadSize; ++i)
         {
           quadMat_[ i ] = sseMat_[ quad.cachingPoint( i ) ];
         }
         umtv( quadMat_, quadSize, x, y, offset , true );
       }
 
-      template <class X, class Y> 
-      void umtv(const X& x, Y& y, const size_t offset ) const 
+      template <class X, class Y>
+      void umtv(const X& x, Y& y, const size_t offset ) const
       {
         umtv( sseMat_, rows(), x, y, offset );
       }
 
-      template <class X, class Y> 
-      void umtv(const X& x, Y& y, const size_t offset , bool ) const 
+      template <class X, class Y>
+      void umtv(const X& x, Y& y, const size_t offset , bool ) const
       {
         umtv( sseMat_, rows(), x, y, offset , true  );
       }
 
 #if 1
-      template <class X, class Y> 
+      template <class X, class Y>
       void umtv(const MatrixType& mat, const size_t realRows,
-                const X& x, Y& y, const size_t offset , bool ) const 
+                const X& x, Y& y, const size_t offset , bool ) const
       {
         for(size_t r = 0; r < offset ; ++r )
         {
@@ -340,12 +340,12 @@ namespace Dune
           //multiplySSE( realRows, cols(), mat, xTmp_.raw(), yTmp_.raw() );
           umtvSSE_( realRows, cols(), mat, yTmp_.raw(), xTmp_.raw() );
           for(size_t c = 0, cR = 0; c < cols(); ++c, cR += r ) y[ cR ] += xTmp_[ c ];
-        } 
+        }
       }
 
-      template <class X, class Y> 
+      template <class X, class Y>
       void umtv(const MatrixType& mat, const size_t realRows,
-                const X& x, Y& y, const size_t offset ) const 
+                const X& x, Y& y, const size_t offset ) const
       {
         for(size_t r = 0; r < offset ; ++r )
         {
@@ -353,40 +353,40 @@ namespace Dune
           //multiplySSE( realRows, cols(), mat, xTmp_.raw(), yTmp_.raw() );
           umtvSSE_( realRows, cols(), mat, yTmp_.raw(), xTmp_.raw() );
           for(size_t c = 0, cR = 0; c < cols(); ++c, cR += r ) y[ cR ] += xTmp_[ c ];
-        } 
+        }
       }
 
-      static inline 
+      static inline
       void umtv(const size_t rows,
                 const size_t cols,
-                K** const &A, 
-                K*  const &X, 
+                K** const &A,
+                K*  const &X,
                 K*  &Y)
       {
-        for( size_t j = 0; j < cols; ++j ) 
+        for( size_t j = 0; j < cols; ++j )
         {
           Y[ j ] = 0;
         }
         for( size_t i = 0; i < rows; ++i )
         {
-          for( size_t j = 0; j < cols; ++j ) 
+          for( size_t j = 0; j < cols; ++j )
           {
             Y[ j ] += A[ i ][ j ] * X[ i ];
           }
         }
       }
-#else 
-      template <class X, class Y> 
+#else
+      template <class X, class Y>
       void umtv(K** const & mat, const size_t realRows,
-                const X& x, Y& y, const size_t offset ) const 
+                const X& x, Y& y, const size_t offset ) const
       {
         for( size_t row = 0; row < realRows ; ++row )
         {
-          for( size_t col = 0; col < cols_; ++col ) 
+          for( size_t col = 0; col < cols_; ++col )
           {
             const Field& matvalue = mat[ row ][ col ];
             size_t colR = col * offset;
-            for( int r = 0; r < offset ; ++r, ++ colR ) 
+            for( int r = 0; r < offset ; ++r, ++ colR )
             {
               y[ colR ] += matvalue * x[ row ][ r ];
             }
@@ -395,14 +395,14 @@ namespace Dune
       }
 #endif
 
-      template <class X, class Y> 
-      void mv(const X& x, Y& y) const 
+      template <class X, class Y>
+      void mv(const X& x, Y& y) const
       {
         mv(x, y, 1);
       }
 
-      template <class Y> 
-      void mv(const SSEVector<K>& x, Y& y) const 
+      template <class Y>
+      void mv(const SSEVector<K>& x, Y& y) const
       {
         multiplySSE( rows(), cols(), raw(), x.raw(), y );
       }
@@ -412,27 +412,27 @@ namespace Dune
 
       size_t size() const { return rows() * cols(); }
 
-      static inline 
-      void multiplySSE(const size_t I, const size_t J, 
-                       double** const &A, 
-                       double*  const &X, 
+      static inline
+      void multiplySSE(const size_t I, const size_t J,
+                       double** const &A,
+                       double*  const &X,
                        double*  &Y)
       {
 #if 1
-        for(size_t i = 0; i < I; ++i ) 
+        for(size_t i = 0; i < I; ++i )
         {
-          Y[ i ] = 0; 
-          for( size_t j = 0; j < J; ++j ) 
+          Y[ i ] = 0;
+          for( size_t j = 0; j < J; ++j )
           {
-            Y[ i ] += A[ i ][ j ] * X[ j ]; 
+            Y[ i ] += A[ i ][ j ] * X[ j ];
           }
         }
-#else 
+#else
         const size_t N = 3;
-        const size_t FI = ((N)*(( I )/(N)));  
+        const size_t FI = ((N)*(( I )/(N)));
         const size_t FJ = (2*( J )/2);
 
-        for (size_t i = 0; i < FI; i += N) 
+        for (size_t i = 0; i < FI; i += N)
         {
           __m128d tmp[N];
           for (size_t n = 0; n < N; ++n)
@@ -450,7 +450,7 @@ namespace Dune
               Y[i+n] += A[i+n][j] * X[j];
         }
 
-        for (size_t i = FI; i < I; ++i) 
+        for (size_t i = FI; i < I; ++i)
         {
           __m128d tmp = _mm_set1_pd(0);
 
@@ -465,10 +465,10 @@ namespace Dune
 #endif
       }
 
-      static inline 
-      void multiplySSE(const size_t I, const size_t J, 
-                       float** const &A, 
-                       float* const &X, 
+      static inline
+      void multiplySSE(const size_t I, const size_t J,
+                       float** const &A,
+                       float* const &X,
                        float* Y)
       {
         const size_t N = 3;
@@ -479,18 +479,18 @@ namespace Dune
         const size_t AI = ((N)*((I+(N-1)/(N))));
         const size_t AJ = (4*((J+3)/4));
 
-        for (size_t i = 0; i < FI; i += N) 
+        for (size_t i = 0; i < FI; i += N)
         {
           __m128 tmp[N];
           for (size_t n = 0; n < N; n++)
             tmp[n] = _mm_set1_ps(0);
-            
+
           for (size_t j = 0; j < FJ; j += 4)
             for (size_t n = 0; n < N; n++)
               tmp[n] = _mm_add_ps(tmp[n], _mm_mul_ps(_mm_load_ps(A[i+n]+j), _mm_load_ps(X+j)));
-              
+
           for (size_t n = 0; n < N; n++)
-            _mm_store_ss(Y+i+n, _mm_add_ss(_mm_add_ss(_mm_add_ss(tmp[n], _mm_shuffle_ps(tmp[n], tmp[n], 1)), 
+            _mm_store_ss(Y+i+n, _mm_add_ss(_mm_add_ss(_mm_add_ss(tmp[n], _mm_shuffle_ps(tmp[n], tmp[n], 1)),
                         _mm_shuffle_ps(tmp[n], tmp[n], 2)), _mm_shuffle_ps(tmp[n], tmp[n], 3)));
 
           for (size_t n = 0; n < N; n++)
@@ -512,8 +512,8 @@ namespace Dune
 
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_SSEMATRIXVECTOR_HH

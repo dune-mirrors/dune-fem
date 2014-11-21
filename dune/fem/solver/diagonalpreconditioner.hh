@@ -11,7 +11,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     // DiagonalPreconditionerBase (default non-assembled)
@@ -20,13 +20,13 @@ namespace Dune
     class DiagonalPreconditionerBase
       : public Operator< DFImp, DFImp >
     {
-    public:   
+    public:
       typedef DFImp        DiscreteFunctionType;
       typedef OperatorImp  OperatorType;
-      
-      typedef typename DiscreteFunctionType :: DofIteratorType DofIteratorType;  
-      typedef typename DiscreteFunctionType :: ConstDofIteratorType ConstDofIteratorType;  
-        
+
+      typedef typename DiscreteFunctionType :: DofIteratorType DofIteratorType;
+      typedef typename DiscreteFunctionType :: ConstDofIteratorType ConstDofIteratorType;
+
     public:
       DiagonalPreconditionerBase(const OperatorType &op) {}
 
@@ -37,9 +37,9 @@ namespace Dune
 
 #if HAVE_DUNE_ISTL
       //! apply for ISTL BlockVectors
-      template < class YBlock, class XBlock > 
-      void applyToISTLBlockVector( const BlockVector< YBlock >& d, 
-                                   BlockVector< XBlock >& v ) const 
+      template < class YBlock, class XBlock >
+      void applyToISTLBlockVector( const BlockVector< YBlock >& d,
+                                   BlockVector< XBlock >& v ) const
       {
         DUNE_THROW(NotImplemented,"preconditioning not possible for non-assembled operators");
       }
@@ -59,14 +59,14 @@ namespace Dune
     class DiagonalPreconditionerBase< DFImp, OperatorImp, true  >
       : public Operator< DFImp, DFImp >
     {
-    public:   
+    public:
       typedef DFImp              DiscreteFunctionType;
       typedef OperatorImp        OperatorType;
-      
+
       typedef typename DiscreteFunctionType :: DofType DofType;
-      typedef typename DiscreteFunctionType :: DofIteratorType DofIteratorType;  
-      typedef typename DiscreteFunctionType :: ConstDofIteratorType ConstDofIteratorType;  
-        
+      typedef typename DiscreteFunctionType :: DofIteratorType DofIteratorType;
+      typedef typename DiscreteFunctionType :: ConstDofIteratorType ConstDofIteratorType;
+
     protected:
       DiscreteFunctionType diagonalInv_;
 
@@ -74,13 +74,13 @@ namespace Dune
       DiagonalPreconditionerBase( const OperatorType& assembledOperator )
         : diagonalInv_( "diag-preconditioning", assembledOperator.systemMatrix().domainSpace() )
       {
-        // estract diagonal elements form matrix object 
+        // estract diagonal elements form matrix object
         assembledOperator.systemMatrix().extractDiagonal( diagonalInv_ );
 
-        // make consistent at border dofs  
+        // make consistent at border dofs
         diagonalInv_.communicate();
 
-        // In general: store 1/diag 
+        // In general: store 1/diag
         //
         // note: We set near-zero entries to 1 to avoid NaNs. Such entries occur
         //       if DoFs are excluded from matrix setup
@@ -97,14 +97,14 @@ namespace Dune
 
 #if HAVE_DUNE_ISTL
       //! apply for ISTL BlockVectors
-      template < class YBlock, class XBlock > 
-      void applyToISTLBlockVector( const BlockVector< YBlock >& d, 
-                                   BlockVector< XBlock >& v ) const 
+      template < class YBlock, class XBlock >
+      void applyToISTLBlockVector( const BlockVector< YBlock >& d,
+                                   BlockVector< XBlock >& v ) const
       {
         DiscreteFunctionType vTmp("diag-precon::X", diagonalInv_.space(), v );
         DiscreteFunctionType dTmp("diag-precon::Y", diagonalInv_.space(), d );
 
-        // apply 1/diagonal 
+        // apply 1/diagonal
         apply( dTmp, vTmp );
       }
 #endif
@@ -118,8 +118,8 @@ namespace Dune
 
         const DofIteratorType resEnd = res.dend();
 
-        // apply 1/diagonal  
-        for(DofIteratorType resIt = res.dbegin(); 
+        // apply 1/diagonal
+        for(DofIteratorType resIt = res.dbegin();
             resIt != resEnd; ++ resIt, ++diagInv, ++ uIt )
         {
           assert( diagInv != diagonalInv_.dend() );
@@ -134,30 +134,30 @@ namespace Dune
     // DiagonalPreconditioner
     // ----------------------
     /** \class DiagonalPreconditioner
-      *  \ingroup OEMSolver 
+      *  \ingroup OEMSolver
       *  \brief   Precondtioner, multiplies with inverse of the diagonal
-      *           works with 
-      *           - OEM 
-      *           - ISTL (choose jacobi, iteration = 1) 
+      *           works with
+      *           - OEM
+      *           - ISTL (choose jacobi, iteration = 1)
       *
       *  \param  DFImp     type of the disctete function
       *  \param  Operator  type of the operator (only works for assembled operators)
       */
     template< class DFImp, class Operator>
     class DiagonalPreconditioner
-      : public DiagonalPreconditionerBase< DFImp, Operator, IsBaseOf< AssembledOperator< DFImp, DFImp >, Operator > :: value > 
+      : public DiagonalPreconditionerBase< DFImp, Operator, IsBaseOf< AssembledOperator< DFImp, DFImp >, Operator > :: value >
     {
       typedef DiagonalPreconditionerBase< DFImp, Operator, IsBaseOf< AssembledOperator< DFImp, DFImp >, Operator > :: value >
         BaseType;
     public:
       typedef Operator   OperatorType;
-      DiagonalPreconditioner(const OperatorType &op) 
+      DiagonalPreconditioner(const OperatorType &op)
         : BaseType( op )
       {}
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_DIAGONALPRECONDITIONER_HH

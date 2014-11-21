@@ -7,7 +7,7 @@
 // dune-common includes
 #include <dune/common/fvector.hh>
 
-// local includes 
+// local includes
 #include "genericgeometry.hh"
 
 
@@ -20,7 +20,7 @@ namespace Dune
     template< class GenericGeometryType, unsigned int order, bool bottom = true >
     class GenericLagrangePoint;
 
-    
+
     template< unsigned int order, bool bottom >
     class GenericLagrangePoint< PointGeometry, order, bottom >
     {
@@ -29,18 +29,18 @@ namespace Dune
       static const unsigned int dimension = GeometryType::dimension;
 
       typedef LocalCoordinate< GeometryType, unsigned int > DofCoordinateType;
-   
+
       static const unsigned int polynomialOrder = order;
-      
+
       template< class, unsigned int, bool >
       friend class GenericLagrangePoint;
-     
+
       template< class, class, unsigned int >
       friend class GenericLagrangeBaseFunction;
 
     private:
       typedef GenericLagrangePoint< GeometryType, polynomialOrder > ThisType;
-   
+
     public:
       static const unsigned int numLagrangePoints = 1;
 
@@ -56,7 +56,7 @@ namespace Dune
       {
         dofCoordinate( index, dofCoordinate_ );
       }
-      
+
       GenericLagrangePoint ( const ThisType &point )
       : dofCoordinate_( point.dofCoordinate_ )
       {}
@@ -86,14 +86,14 @@ namespace Dune
       {
         dofSubEntity( dofCoordinate_, codim, subEntity );
       }
-      
+
       void dofSubEntity ( unsigned int &codim,
                           unsigned int &subEntity,
                           unsigned int &dofNumber )
       {
         dofSubEntity( dofCoordinate_, codim, subEntity, dofNumber );
       }
-     
+
       static unsigned int entityDofNumber ( unsigned int codim,
                                             unsigned int subEntity,
                                             unsigned int dof )
@@ -101,7 +101,7 @@ namespace Dune
         //assert( (codim == 0) && (subEntity == 0) && (dof == 0) );
         return 0;
       }
-      
+
       template< class LocalCoordinateType >
       static unsigned int height ( LocalCoordinateType &coordinate )
       {
@@ -118,11 +118,11 @@ namespace Dune
       {
         const FieldType factor = FieldType( 1 ) / FieldType( polynomialOrder );
         for( unsigned int i = 0; i < dimension; ++i )
-          coordinate[ i ] = factor * dofCoordinate_[ i ]; 
+          coordinate[ i ] = factor * dofCoordinate_[ i ];
       }
 
       /** \brief obtain the maximal number of DoFs in one entity of a codimension
-       * 
+       *
        *  \param[in]  codim  codimension, the information is desired for
        *
        *  \returns maximal number of DoFs for one entity in the codimension
@@ -133,7 +133,7 @@ namespace Dune
       }
 
       /** \brief obtain the number of DoFs on one entity
-       * 
+       *
        *  \param[in]  codim      codimension of the entity
        *  \param[in]  subEntity  number of the subentity (of the given codimension)
        *
@@ -145,7 +145,7 @@ namespace Dune
       }
 
       /** \brief obtain the total number of DoFs in a codimension
-       * 
+       *
        *  \param[in]  codim      codimension the information is desired for
        *
        *  \returns the number of DoFs associated with the codimension
@@ -165,7 +165,7 @@ namespace Dune
       }
     };
 
-    
+
     /** \cond */
     template< unsigned int order, bool bottom >
     template< unsigned int codim >
@@ -178,29 +178,29 @@ namespace Dune
     };
     /** \endcond */
 
-    
+
     template< class BaseGeometry, bool bottom >
     class GenericLagrangePoint< PyramidGeometry< BaseGeometry >, 0, bottom >
     {
     public:
       typedef BaseGeometry BaseGeometryType;
       typedef PyramidGeometry< BaseGeometryType > GeometryType;
-      
+
       static const unsigned int dimension = GeometryType::dimension;
 
       typedef LocalCoordinate< GeometryType, unsigned int > DofCoordinateType;
-   
+
       static const unsigned int polynomialOrder = 0;
 
       template< class, unsigned int, bool >
       friend class GenericLagrangePoint;
-   
+
       template< class, class, unsigned int >
       friend class GenericLagrangeBaseFunction;
-    
+
     private:
       typedef GenericLagrangePoint< GeometryType, polynomialOrder > ThisType;
-      
+
     public:
       static const unsigned int numLagrangePoints = 1;
 
@@ -210,7 +210,7 @@ namespace Dune
     public:
       template< unsigned int codim >
       struct Codim;
-      
+
     public:
       GenericLagrangePoint ( unsigned int index )
       {
@@ -220,7 +220,7 @@ namespace Dune
       GenericLagrangePoint ( const ThisType &point )
       : dofCoordinate_( point.dofCoordinate_ )
       {}
-      
+
       template< class LocalCoordinateType >
       static void dofSubEntity ( LocalCoordinateType &coordinate,
                                  unsigned int &codim,
@@ -229,7 +229,7 @@ namespace Dune
         codim = (bottom ? 0 : dimension);
         subEntity = 0;
       }
-      
+
       template< class LocalCoordinateType >
       static void dofSubEntity ( LocalCoordinateType &coordinate,
                                  unsigned int &codim,
@@ -240,20 +240,20 @@ namespace Dune
         subEntity = 0;
         dofNumber = 0;
       }
-    
+
       void dofSubEntity ( unsigned int &codim,
                           unsigned int &subEntity )
       {
         dofSubEntity( dofCoordinate_, codim, subEntity );
-      } 
-      
+      }
+
       void dofSubEntity ( unsigned int &codim,
                           unsigned int &subEntity,
                           unsigned int &dofNumber )
       {
         dofSubEntity( dofCoordinate_, codim, subEntity, dofNumber );
-      } 
-      
+      }
+
       static unsigned int entityDofNumber ( unsigned int codim,
                                             unsigned int subEntity,
                                             unsigned int dof )
@@ -277,11 +277,11 @@ namespace Dune
       {
         const FieldType factor = FieldType( 1 ) / FieldType( polynomialOrder );
         for( unsigned int i = 0; i < dimension; ++i )
-          coordinate[ i ] = factor * dofCoordinate_[ i ]; 
+          coordinate[ i ] = factor * dofCoordinate_[ i ];
       }
-      
+
       /** \brief obtain the maximal number of DoFs in one entity of a codimension
-       * 
+       *
        *  \param[in]  codim  codimension, the information is desired for
        *
        *  \returns maximal number of DoFs for one entity in the codimension
@@ -293,9 +293,9 @@ namespace Dune
         else
           return ((codim == dimension) ? 1 : 0);
       }
-      
+
       /** \brief obtain the number of DoFs on one entity
-       * 
+       *
        *  \param[in]  codim      codimension of the entity
        *  \param[in]  subEntity  number of the subentity (of the given codimension)
        *
@@ -310,7 +310,7 @@ namespace Dune
       }
 
       /** \brief obtain the total number of DoFs in a codimension
-       * 
+       *
        *  \param[in]  codim      codimension the information is desired for
        *
        *  \returns the number of DoFs associated with the codimension
@@ -322,7 +322,7 @@ namespace Dune
         else
           return ((codim == dimension) ? 1 : 0);
       }
-      
+
     protected:
       template< class LocalCoordinateType >
       static void dofCoordinate ( unsigned int index,
@@ -359,18 +359,18 @@ namespace Dune
       static const unsigned int dimension = GeometryType :: dimension;
 
       typedef LocalCoordinate< GeometryType, unsigned int > DofCoordinateType;
-   
+
       static const unsigned int polynomialOrder = order;
-      
+
       template< class, unsigned int, bool >
       friend class GenericLagrangePoint;
-      
+
       template< class, class, unsigned int >
       friend class GenericLagrangeBaseFunction;
-      
+
     private:
       typedef GenericLagrangePoint< GeometryType, polynomialOrder > ThisType;
-   
+
       typedef GenericLagrangePoint< GeometryType, polynomialOrder - 1, false >
         OrderReductionType;
       typedef GenericLagrangePoint< BaseGeometryType, polynomialOrder >
@@ -379,7 +379,7 @@ namespace Dune
     public:
       static const unsigned int numLagrangePoints
         = DimensionReductionType::numLagrangePoints + OrderReductionType::numLagrangePoints;
-     
+
     protected:
       DofCoordinateType dofCoordinate_;
 
@@ -392,7 +392,7 @@ namespace Dune
       {
         dofCoordinate( index, dofCoordinate_ );
       }
-      
+
       GenericLagrangePoint ( const ThisType &point )
       : dofCoordinate_( point.dofCoordinate_ )
       {}
@@ -418,7 +418,7 @@ namespace Dune
             ++codim;
         }
       }
-      
+
       template< class LocalCoordinateType >
       static void dofSubEntity ( LocalCoordinateType &coordinate,
                                  unsigned int &codim,
@@ -444,7 +444,7 @@ namespace Dune
         }
       }
 
-   
+
       void dofSubEntity ( unsigned int &codim,
                           unsigned int &subEntity )
       {
@@ -510,11 +510,11 @@ namespace Dune
       {
         const FieldType factor = FieldType( 1 ) / FieldType( polynomialOrder );
         for( unsigned int i = 0; i < dimension; ++i )
-          coordinate[ i ] = factor * dofCoordinate_[ i ]; 
+          coordinate[ i ] = factor * dofCoordinate_[ i ];
       }
-      
+
       /** \brief obtain the maximal number of DoFs in one entity of a codimension
-       * 
+       *
        *  \param[in]  codim  codimension, the information is desired for
        *
        *  \returns maximal number of DoFs for one entity in the codimension
@@ -535,7 +535,7 @@ namespace Dune
       }
 
       /** \brief obtain the number of DoFs on one entity
-       * 
+       *
        *  \param[in]  codim      codimension of the entity
        *  \param[in]  subEntity  number of the subentity (of the given codimension)
        *
@@ -547,7 +547,7 @@ namespace Dune
         {
           if( bottom && (codim == 0) )
             return OrderReductionType::numDofs( codim, subEntity );
-        
+
           const unsigned int numBaseSubEntities
             = BaseGeometryType::numSubEntities( codim - 1 );
           if( subEntity < numBaseSubEntities )
@@ -563,7 +563,7 @@ namespace Dune
       }
 
       /** \brief obtain the total number of DoFs in a codimension
-       * 
+       *
        *  \param[in]  codim      codimension the information is desired for
        *
        *  \returns the number of DoFs associated with the codimension
@@ -634,7 +634,7 @@ namespace Dune
     };
     /** \endcond */
 
-    
+
     template< class FirstGeometry, class SecondGeometry, unsigned int order, bool bottom >
     class GenericLagrangePoint< ProductGeometry< FirstGeometry, SecondGeometry >, order, bottom >
     {
@@ -648,7 +648,7 @@ namespace Dune
 
       template< class, unsigned int, bool >
       friend class GenericLagrangePoint;
-   
+
       template< class, class, unsigned int >
       friend class GenericLagrangeBaseFunction;
 
@@ -657,11 +657,11 @@ namespace Dune
 
       typedef GenericLagrangePoint< FirstGeometry, polynomialOrder > FirstReductionType;
       typedef GenericLagrangePoint< SecondGeometry, polynomialOrder > SecondReductionType;
-   
+
     public:
       static const unsigned int numLagrangePoints
         = FirstReductionType::numLagrangePoints * SecondReductionType::numLagrangePoints;
-     
+
     protected:
       DofCoordinateType dofCoordinate_;
 
@@ -724,18 +724,18 @@ namespace Dune
 
         dofNumber = firstDofNumber + secondDofNumber * FirstReductionType::numDofs( firstCodim, firstSubEntity );
       }
-     
+
       void dofSubEntity ( unsigned int &codim, unsigned int &subEntity )
       {
         dofSubEntity( dofCoordinate_, codim, subEntity );
-      } 
-      
+      }
+
       void dofSubEntity ( unsigned int &codim,
                           unsigned int &subEntity,
                           unsigned int &dofNumber )
       {
         dofSubEntity( dofCoordinate_, codim, subEntity, dofNumber );
-      } 
+      }
 
       static unsigned int entityDofNumber ( unsigned int codim,
                                             unsigned int subEntity,
@@ -752,7 +752,7 @@ namespace Dune
             break;
           subEntity -= num;
         }
-        
+
         const unsigned int n = FirstGeometry::numSubEntities( firstCodim );
         const unsigned int firstSubEntity = subEntity % n;
         const unsigned int secondSubEntity = subEntity / n;
@@ -760,12 +760,12 @@ namespace Dune
         const unsigned int m = FirstReductionType::numDofs( firstCodim, firstSubEntity );
         const unsigned int firstDofNumber = dofNumber % m;
         const unsigned int secondDofNumber = dofNumber / m;
-     
+
         const unsigned int firstEntityDofNumber
           = FirstReductionType::entityDofNumber( firstCodim, firstSubEntity, firstDofNumber );
         const unsigned int secondEntityDofNumber
           = SecondReductionType::entityDofNumber( secondCodim, secondSubEntity, secondDofNumber );
-        
+
         return firstEntityDofNumber + secondEntityDofNumber * FirstReductionType::numLagrangePoints;
       }
 
@@ -774,7 +774,7 @@ namespace Dune
       {
         const unsigned int firstHeight = FirstReductionType::height( coordinate.first() );
         const unsigned int secondHeight = SecondReductionType::height( coordinate.second() );
-          
+
         return ((firstHeight < secondHeight) ? firstHeight : secondHeight);
       }
 
@@ -788,11 +788,11 @@ namespace Dune
       {
         const FieldType factor = FieldType( 1 ) / FieldType( polynomialOrder );
         for( unsigned int i = 0; i < dimension; ++i )
-          coordinate[ i ] = factor * dofCoordinate_[ i ]; 
+          coordinate[ i ] = factor * dofCoordinate_[ i ];
       }
-      
+
       /** \brief obtain the maximal number of DoFs in one entity of a codimension
-       * 
+       *
        *  \param[in]  codim  codimension, the information is desired for
        *
        *  \returns maximal number of DoFs for one entity in the codimension
@@ -810,7 +810,7 @@ namespace Dune
       }
 
       /** \brief obtain the number of DoFs on one entity
-       * 
+       *
        *  \param[in]  codim      codimension of the entity
        *  \param[in]  subEntity  number of the subentity (of the given codimension)
        *
@@ -820,7 +820,7 @@ namespace Dune
       {
         unsigned int firstCodim = codim;
         unsigned int secondCodim = 0;
-        for( ; secondCodim <= codim; --firstCodim, ++secondCodim ) 
+        for( ; secondCodim <= codim; --firstCodim, ++secondCodim )
         {
           const unsigned int numSubEntities
             = FirstGeometry::numSubEntities( firstCodim ) * SecondGeometry :: numSubEntities( secondCodim );
@@ -829,17 +829,17 @@ namespace Dune
             break;
           subEntity -= numSubEntities;
         }
-        
+
         const unsigned int n = FirstGeometry::numSubEntities( firstCodim );
         const unsigned int firstSubEntity = subEntity % n;
         const unsigned int secondSubEntity = subEntity / n;
-       
+
         return FirstReductionType :: numDofs( firstCodim, firstSubEntity )
                * SecondReductionType :: numDofs( secondCodim, secondSubEntity );
       }
 
       /** \brief obtain the total number of DoFs in a codimension
-       * 
+       *
        *  \param[in]  codim      codimension the information is desired for
        *
        *  \returns the number of DoFs associated with the codimension
@@ -895,18 +895,18 @@ namespace Dune
     {
       static unsigned int maxDofs ()
       {
-        if( i == 0 ) 
+        if( i == 0 )
         {
           typedef typename FirstReductionType::template Codim< codim > FirstCodim;
           typedef typename SecondReductionType::template Codim< 0 > SecondCodim;
           return FirstCodim::maxDofs() * SecondCodim::maxDofs();
         }
-        else 
+        else
         {
           typedef typename FirstReductionType::template Codim< codim-i > FirstCodim;
           typedef typename SecondReductionType::template Codim< i > SecondCodim;
           const unsigned int n = FirstCodim::maxDofs() * SecondCodim::maxDofs();
-      
+
           const unsigned int m = CodimIterator< codim, i-1 >::maxDofs();
           return std::max( m, n );
         }
