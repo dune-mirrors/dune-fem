@@ -257,11 +257,11 @@ namespace Dune
 
         if( dimLocal != dimDomain )
         {
-	  // This computes the projection to the tangential space
-	  // (i.e. the hyperplane this entity is contained in). This
-	  // is done in a generic way by first projecting to the local
-	  // tangential space of the reference elment, and then
-	  // projecting back to the ambient space.
+          // This computes the projection to the tangential space
+          // (i.e. the hyperplane this entity is contained in). This
+          // is done in a generic way by first projecting to the local
+          // tangential space of the reference elment, and then
+          // projecting back to the ambient space.
 
           const typename GeometryType::JacobianTransposed gjt = geometry.jacobianTransposed( cx );
           const typename GeometryType::JacobianInverseTransposed gjit = geometry.jacobianInverseTransposed( cx );
