@@ -277,7 +277,6 @@ namespace Dune
 
     public:
       //! Constructor
-      //AdaptiveIndexSetBase (const GridPartType & gridPart)
       AdaptiveIndexSetBase (const GridPartType & gridPart)
         : BaseType( gridPart.grid() )
         , gridPart_( gridPart )
