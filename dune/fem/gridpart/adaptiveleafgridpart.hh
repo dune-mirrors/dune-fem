@@ -92,46 +92,24 @@ namespace Dune
       {};
 
     private:
-      struct IndexSetFactory
+      struct Key
       {
-        struct Key
+        const GridPartType& gridPart_;
+        const GridType& grid_;
+        Key(const GridPartType& gridPart, const GridType& grid)
+         : gridPart_( gridPart ), grid_( grid )
+        {}
+
+        bool operator ==( const Key& other ) const
         {
-          const GridPartType& gridPart_;
-          const GridType& grid_;
-          Key(const GridPartType& gridPart, const GridType& grid)
-           : gridPart_( gridPart ), grid_( grid )
-          {}
-
-          Key( const Key& other )
-            : gridPart_( other.gridPart_ )
-            , grid_( other.grid_ )
-          {}
-          bool operator ==( const Key& other ) const
-          {
-            // compare grid pointers
-            return (&grid_) == (& other.grid_ );
-          }
-          const GridPartType& gridPart() const { return gridPart_; }
-          const GridType& grid() const { return grid_; }
-        };
-
-        typedef IndexSetType ObjectType;
-        typedef Key KeyType;
-
-        inline static ObjectType *createObject ( const KeyType &key )
-        {
-          return new ObjectType( key.gridPart() );
+          // compare grid pointers
+          return (&grid_) == (& other.grid_ );
         }
-
-        inline static void deleteObject ( ObjectType *object )
-        {
-          delete object;
-        }
+        operator const GridPartType& () const { return gridPart_; }
       };
+      typedef Key KeyType;
 
-      typedef typename IndexSetFactory :: KeyType KeyType;
-      typedef SingletonList
-        < KeyType, IndexSetType, IndexSetFactory > IndexSetProviderType;
+      typedef SingletonList < Key, IndexSetType > IndexSetProviderType;
 
       // type of entity with codimension zero
       typedef typename Codim< 0 > :: EntityType ElementType;
