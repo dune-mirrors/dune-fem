@@ -5,6 +5,8 @@
 #include <vector>
 #include <set>
 #include <algorithm>
+#include <iostream>
+#include <fstream>
 
 //- local includes
 #include <dune/fem/function/adaptivefunction/adaptivefunction.hh>
@@ -296,7 +298,10 @@ namespace Dune
       void addDiag(DiscFuncType &rhs) const;
 
       //! print matrix
-      void print (std::ostream& s) const;
+      void print (std::ostream& s, unsigned int offset=0) const;
+
+      //! dump matrix on file
+      void print(const std::string& filename, unsigned int offset=0) const;
 
       //! print values
       void printReal (std::ostream& s) const;

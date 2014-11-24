@@ -581,22 +581,32 @@ namespace Dune
       return;
     }
 
-
     template <class T>
-    void SparseRowMatrix<T>::print(std::ostream& s) const
+    void SparseRowMatrix<T>::print(std::ostream& s, unsigned int offset) const
     {
+      std::cout << "Print SparseRowMatrix" << std::endl;
       s.precision( 6 );
-      for(int row=0; row<dim_[0]; row++)
+      for(int row=0; row<dim_[0]; ++row)
       {
-        for(int col=0; col<dim_[1]; col++)
+        for(int col=0; col<dim_[1]; ++col)
         {
           double val = (*this)(row,col);
-          val = std::abs( val ) < 1e-14 ? 0 : val;
-          s << val << " ";
+          if(std::abs( val ) > 1.e-15)
+            s << row+offset << " " << col+offset << " " << val <<std::endl;
         }
-        s << "\n";
       }
-      return;
+    }
+
+    template <class T>
+    void SparseRowMatrix<T>::print(const std::string& filename, unsigned int offset) const
+    {
+      std::ofstream ofs;
+      ofs.open(filename.c_str());
+      if(ofs.is_open())
+        this->print(ofs,offset);
+      else
+        std::cout << "Not able to open the file " << filename << std::endl;
+      ofs.close();
     }
 
     template <class T>
