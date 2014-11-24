@@ -597,8 +597,8 @@ namespace Dune
           // initialize base functions sets
           BaseType :: init ( rowEntity , colEntity );
 
-          numRows_  = rowMapper_.numDofs(rowEntity);
-          numCols_  = colMapper_.numDofs(colEntity);
+          numRows_  = rowMapper_.numDofs(colEntity);
+          numCols_  = colMapper_.numDofs(rowEntity);
           matrices_.resize( numRows_ );
 
           if( matrixObj_.implicitModeActive() )
