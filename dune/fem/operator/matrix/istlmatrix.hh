@@ -5,6 +5,8 @@
 
 //- system includes
 #include <vector>
+#include <iostream>
+#include <fstream>
 
 //- Dune common includes
 #include <dune/common/exceptions.hh>
@@ -360,18 +362,31 @@ namespace Dune
         }
 
         //! print matrix
-        void print(std::ostream & s) const
+        void print(std::ostream& s, unsigned int offset=0) const
         {
-          std::cout << "Print ISTLMatrix \n";
+          std::cout << "Print ISTLMatrix" << std::endl;
           ConstRowIterator endi=this->end();
           for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
             {
-              s << (*j) << std::endl;
+              if(std::abs( *j ) > 1.e-15)
+                s << i.index()+offset << " " << j.index()+offset << " " << *j << std::endl;
             }
           }
+        }
+
+        //! dump matrix on file
+        void print(const std::string& filename, unsigned int offset=0) const
+        {
+          std::ofstream ofs;
+          ofs.open(filename);
+          if(ofs.is_open())
+            print(ofs,offset);
+          else
+            std::cout << "Not able to open the file " << filename << std::endl;
+          ofs.close();
         }
     };
 
