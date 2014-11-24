@@ -1,5 +1,5 @@
+USE_CMAKE=no
 CONFIGURE_FLAGS="\
---no-cmake \
 --disable-documentation \
 --enable-fieldvector-size-is-method \
 --enable-experimental-grid-extensions \
