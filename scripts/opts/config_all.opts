@@ -2,6 +2,7 @@
 # #AUTOGEN_FLAGS="--ac=2.59 --am=-1.8"
 MODULEDIR=/hosts/raid5/aragorn/dune/modules/$HOSTTYPE
 CONFIGURE_FLAGS="\
+--no-cmake \
 --enable-experimental-grid-extensions \
 --enable-fieldvector-size-is-method \
 --without-gmp \

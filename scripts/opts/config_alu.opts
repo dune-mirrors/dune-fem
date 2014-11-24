@@ -1,5 +1,6 @@
 MODULEDIR=/hosts/raid5/aragorn/dune/modules/$HOSTTYPE
 CONFIGURE_FLAGS="\
+--no-cmake \
 --disable-documentation \
 --enable-experimental-grid-extensions \
 --enable-parallel \
