@@ -6,11 +6,13 @@
 
 // dune-common includes
 #include <dune/common/bartonnackmanifcheck.hh>
+#include <dune/common/dynvector.hh>
 #include <dune/common/nullptr.hh>
 
 // dune-fem includes
 #include <dune/fem/common/stackallocator.hh>
 #include <dune/fem/function/localfunction/temporary.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/dofmanager.hh>
@@ -629,9 +631,9 @@ namespace Dune
 
       typedef ThreadSafeValue< UninitializedObjectStack > LocalDofVectorStackType;
       typedef StackAllocator< typename BaseType::RangeFieldType, LocalDofVectorStackType* > LocalDofVectorAllocatorType;
-      typedef DynamicVector< typename BaseType::RangeFieldType, LocalDofVectorAllocatorType > LocalDofVectorType;
+      typedef Dune::DynamicVector< typename BaseType::RangeFieldType, LocalDofVectorAllocatorType > LocalDofVectorType;
 
-      LocalDofVectorStackType ldvStack_;
+      mutable LocalDofVectorStackType ldvStack_;
       mutable LocalDofVectorAllocatorType ldvAllocator_;
 
       typedef BasicTemporaryLocalFunction< ThisType, LocalDofVectorType > LocalFunctionType;
@@ -696,8 +698,9 @@ namespace Dune
        */
       LocalFunctionType localFunction ( const EntityType &entity ) const
       {
-        if( ldvStack_().objectSize() == 0 )
-          ldvStack_().resize( sizeof( typename BaseType::RangeFieldType ) * blockMapper().maxNumDofs() * localBlockSize );
+        if( static_cast< const UninitializedObjectStack& >(ldvStack_).objectSize() == 0 )
+          static_cast< UninitializedObjectStack&>( ldvStack_ ).resize(
+              sizeof( typename BaseType::RangeFieldType ) * blockMapper().maxNumDofs() * localBlockSize );
 
         return LocalFunctionType( *this, entity, LocalDofVectorType( ldvAllocator_ ) );
       }
