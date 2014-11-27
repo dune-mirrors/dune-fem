@@ -328,6 +328,25 @@ namespace Dune
         axpy( x, jacobianFactor, dofs );
       }
 
+      template< class Quadrature, class Vector, class DofVector >
+      void axpy ( const Quadrature &quad, const Vector &values, DofVector & dofs ) const
+      {
+        const unsigned int nop = quad.nop();
+        for( unsigned int qp = 0; qp < nop ; ++qp )
+          axpy( quad[ qp ], values[ qp ], dofs );
+      }
+
+      template< class Quadrature, class VectorA, class VectorB, class DofVector >
+      void axpy ( const Quadrature &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector & dofs ) const
+      {
+        const unsigned int nop = quad.nop();
+        for( unsigned int qp = 0; qp < nop ; ++qp )
+        {
+          axpy( quad[ qp ], valuesA[ qp ], dofs );
+          axpy( quad[ qp ], valuesB[ qp ], dofs );
+        }
+      }
+
       template< class Point, class DofVector >
       void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
       {
@@ -340,6 +359,14 @@ namespace Dune
         evaluateAll< EvaluateAll >( x, values );
       }
 
+      template< class Quadrature, class DofVector, class RangeArray >
+      void evaluateAll ( const Quadrature &quad, const DofVector &dofs, RangeArray &ranges ) const
+      {
+        const unsigned int nop = quad.nop();
+        for( unsigned int qp = 0; qp < nop ; ++qp )
+          evaluateAll( quad[ qp ], dofs, ranges[ qp ] );
+      }
+
       template< class Point, class DofVector >
       void jacobianAll ( const Point &x, const DofVector &dofs, JacobianRangeType &jacobian ) const
       {
@@ -350,6 +377,14 @@ namespace Dune
       void jacobianAll ( const Point &x, JacobianRangeArray &jacobians ) const
       {
         evaluateAll< JacobianAll >( x, jacobians );
+      }
+
+      template< class Quadrature, class DofVector, class JacobianArray >
+      void jacobianAll ( const Quadrature &quad, const DofVector &dofs, JacobianArray &jacobians ) const
+      {
+        const unsigned int nop = quad.nop();
+        for( unsigned int qp = 0; qp < nop ; ++qp )
+          jacobianAll( quad[ qp ], dofs, jacobians[ qp ] );
       }
 
       template< class Point, class DofVector >
