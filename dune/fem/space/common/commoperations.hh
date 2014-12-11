@@ -283,7 +283,7 @@ namespace Dune
     //! enum of all avialable operations
     struct DFCommunicationOperation
     {
-      enum dfCommunicationOperation {copy,add,min,max};
+      enum dfCommunicationOperation {copy,add,sub,min,max};
       //! just copy data
       struct Copy
       {
@@ -313,6 +313,22 @@ namespace Dune
         static inline void apply(const DataType & arg, DataType & dest)
         {
           dest += arg;
+        }
+      };
+
+      //! substract data
+      struct Sub
+      {
+        static const dfCommunicationOperation value = sub;
+        static const char * name ()
+        {
+          return "Sub";
+        }
+
+        template <class DataType>
+        static inline void apply(const DataType & arg, DataType & dest)
+        {
+          dest -= arg;
         }
       };
 
