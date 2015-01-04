@@ -268,8 +268,19 @@ namespace Dune
       {}
     };
 
+    // RestrictProlongDefaultTraits
+    template<class... DiscreteFunctions>
+    struct RestrictProlongDefaultTraits
+    {
+      typedef RestrictProlongDefaultTuple<DiscreteFunctions...> Type;
+    };
 
-
+    template<class... DiscreteFunctions>
+    struct RestrictProlongDefaultTraits<std::tuple<DiscreteFunctions&...> >
+    {
+      typedef RestrictProlongDefaultTuple<DiscreteFunctions...> Type;
+    };
+    
     // makeRestrictProlongDefault
     // --------------------------
 
