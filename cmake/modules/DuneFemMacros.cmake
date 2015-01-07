@@ -114,10 +114,12 @@ include(AddPAPIFlags)
 set(PETSC_CMAKE_MODULES "${PROJECT_SOURCE_DIR}/cmake/modules/petsc/")
 if(NOT EXISTS "${PETSC_CMAKE_MODULES}")
   message (STATUS "Downloading cmake-modules from Jed Brown into ${PETSC_CMAKE_MODULES}")
-  execute_process(COMMAND git clone https://github.com/jedbrown/cmake-modules.git ${PETSC_CMAKE_MODULES})
+  execute_process(COMMAND git clone https://github.com/jedbrown/cmake-modules.git ${PETSC_CMAKE_MODULES}
+                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/modules/)
 else()
   message (STATUS "Updating cmake-modules from Jed Brown into ${PETSC_CMAKE_MODULES}")
-  execute_process(COMMAND "cd ${PETSC_CMAKE_MODULES}; git pull")
+  execute_process(COMMAND git pull
+                  WORKING_DIRECTORY ${PETSC_CMAKE_MODULES})
 endif ()
 
 # check for PETSc if Jed Browns cmake-modules have been successfully downloaded
