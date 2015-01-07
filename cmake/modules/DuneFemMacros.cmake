@@ -111,10 +111,25 @@ include(AddSIONlibFlags)
 find_package(PAPI)
 include(AddPAPIFlags)
 
+# download Eigen if user doesn't have the correct version
+set(PETSC_CMAKE_MODULES "${PROJECT_SOURCE_DIR}/cmake/modules/cmake-modules/")
+IF(NOT EXISTS "${PETSC_CMAKE_MODULES}")
+  message (STATUS "Downloading cmake-modules from Jed Brown")
+  include (ExternalProject)
+    externalProject_Add (cmake-modules
+      GIT_REPOSITORY https://github.com/jedbrown/cmake-modules.git
+      UPDATE_COMMAND git pull
+      )
+endif ()
+
+# check for PETSc using Jed Browns cmake-modules
+# needs to set environment variables PETSC_DIR and optional PETSC_ARCH
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PETSC_CMAKE_MODULES}")
 set(PETSC_DIR  $ENV{PETSC_DIR})
 set(PETSC_ARCH $ENV{PETSC_ARCH})
-find_package(PETSc COMPONENTS CXX)
+find_package(PETSc)
 
+# check for XDR (deprecated)
 find_package(XDR)
 
 ####### abbreviations
