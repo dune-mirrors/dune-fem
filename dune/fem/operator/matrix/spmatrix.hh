@@ -384,8 +384,8 @@ namespace Dune
       typedef SparseRowMatrixTraits<RowSpaceType,ColumnSpaceType> ThisType;
       typedef SparseRowMatrixObject<RowSpaceType,ColumnSpaceType> MatrixObjectType;
 
-      typedef RowSpaceImp  DomainSpaceType;
-      typedef ColSpaceImp  RangeSpaceType;
+      typedef RowSpaceImp  RangeSpaceType;
+      typedef ColSpaceImp  DomainSpaceType;
 
     };
 
@@ -402,8 +402,8 @@ namespace Dune
       *******************************************************************/
       typedef typename DomainSpaceType :: EntityType  DomainEntityType ;
       typedef typename RangeSpaceType  :: EntityType  RangeEntityType ;
-      typedef typename DomainSpaceType :: EntityType  RowEntityType ;
-      typedef typename RangeSpaceType  :: EntityType  ColumnEntityType ;
+      typedef typename DomainSpaceType :: EntityType  ColumnEntityType ;
+      typedef typename RangeSpaceType  :: EntityType  RowEntityType ;
 
       typedef typename DomainSpaceType :: BlockMapperType DomainBlockMapperType ;
       typedef NonBlockMapper< DomainBlockMapperType,

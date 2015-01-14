@@ -72,7 +72,7 @@ namespace Dune
 
     public:
       DiagonalPreconditionerBase( const OperatorType& assembledOperator )
-        : diagonalInv_( "diag-preconditioning", assembledOperator.systemMatrix().domainSpace() )
+        : diagonalInv_( "diag-preconditioning", assembledOperator.systemMatrix().rangeSpace() )
       {
         // estract diagonal elements form matrix object
         assembledOperator.systemMatrix().extractDiagonal( diagonalInv_ );

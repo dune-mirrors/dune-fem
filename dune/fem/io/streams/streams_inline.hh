@@ -34,6 +34,16 @@ namespace Dune
     template< class Traits >
     inline OutStreamInterface< Traits > &
       operator<< ( OutStreamInterface< Traits > &out,
+                   const std::complex<double>& value )
+    {
+      out.writeDouble( std::real(value) );
+      out.writeDouble( std::imag(value) );
+      return out;
+    }
+
+    template< class Traits >
+    inline OutStreamInterface< Traits > &
+      operator<< ( OutStreamInterface< Traits > &out,
                    const int value )
     {
       out.writeInt( value );
@@ -179,6 +189,18 @@ namespace Dune
                    float &value )
     {
       in.readFloat( value );
+      return in;
+    }
+
+    template< class Traits >
+    inline InStreamInterface< Traits > &
+      operator>> ( InStreamInterface< Traits > &in,
+                   std::complex<double> &value )
+    {
+      double a,b;
+      in.readDouble( a );
+      in.readDouble( b );
+      value = std::complex<double>(a,b);
       return in;
     }
 

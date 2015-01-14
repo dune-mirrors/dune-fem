@@ -382,14 +382,14 @@ namespace Dune
       typedef typename Traits :: LocalMatrixType LocalMatrixType;
 
       //! type of domain discrete function space
-      typedef typename Traits :: DomainSpaceType  DomainSpaceType;
+      typedef typename Traits :: RangeSpaceType  RangeSpaceType;
 
       //! type of range
-      typedef typename DomainSpaceType :: RangeType          RangeType ;
+      typedef typename RangeSpaceType :: RangeType          RangeType ;
       //! type of jacobian range
-      typedef typename DomainSpaceType :: JacobianRangeType  JacobianRangeType ;
+      typedef typename RangeSpaceType :: JacobianRangeType  JacobianRangeType ;
       //! type of range field
-      typedef typename DomainSpaceType :: RangeFieldType     RangeFieldType ;
+      typedef typename RangeSpaceType :: RangeFieldType     RangeFieldType ;
 
     protected:
       // reference to local matrix
