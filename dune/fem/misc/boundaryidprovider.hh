@@ -308,8 +308,8 @@ namespace Dune
     // -----------------------------
 
 #if HAVE_DUNE_SPGRID
-    template< class ct, int dim, SPRefinementStrategy strategy, class Comm >
-    struct BoundaryIdProvider< SPGrid< ct, dim, strategy, Comm > >
+    template< class ct, int dim, template< int > class Strategy, class Comm >
+    struct BoundaryIdProvider< SPGrid< ct, dim, Strategy, Comm > >
     {
       typedef SPGrid< ct, dim, strategy, Comm > GridType;
 

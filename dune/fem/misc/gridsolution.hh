@@ -190,8 +190,8 @@ namespace Dune
       };
 
 #if HAVE_DUNE_SPGRID
-      template <class DomainType, class ct, int dim, SPRefinementStrategy strategy , class Comm>
-      struct CheckDomain< DomainType, SPGrid< ct, dim, strategy, Comm > >
+      template <class DomainType, class ct, int dim, template< int > class Strategy , class Comm>
+      struct CheckDomain< DomainType, SPGrid< ct, dim, Strategy, Comm > >
       {
         typedef SPGrid< ct, dim, strategy, Comm >  Grid;
         static bool isInside(const DomainType& x, const Grid& grid )
