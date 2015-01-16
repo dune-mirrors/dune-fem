@@ -193,7 +193,7 @@ namespace Dune
       template <class DomainType, class ct, int dim, template< int > class Strategy , class Comm>
       struct CheckDomain< DomainType, SPGrid< ct, dim, Strategy, Comm > >
       {
-        typedef SPGrid< ct, dim, strategy, Comm >  Grid;
+        typedef SPGrid< ct, dim, Strategy, Comm >  Grid;
         static bool isInside(const DomainType& x, const Grid& grid )
         {
           return grid.domain().contains( x );

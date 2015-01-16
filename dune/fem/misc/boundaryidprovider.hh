@@ -311,7 +311,7 @@ namespace Dune
     template< class ct, int dim, template< int > class Strategy, class Comm >
     struct BoundaryIdProvider< SPGrid< ct, dim, Strategy, Comm > >
     {
-      typedef SPGrid< ct, dim, strategy, Comm > GridType;
+      typedef SPGrid< ct, dim, Strategy, Comm > GridType;
 
       template< class Intersection >
       static int boundaryId ( const Intersection &intersection )
