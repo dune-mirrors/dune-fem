@@ -99,7 +99,10 @@ struct LumpingQuadratureTraits
 
   typedef Quadrature<ctype, dimension-codim, DefaultLumpingQuadratureTraits> IntegrationPointListType;
 
-  typedef typename IntegrationPointListType::CoordinateType CoordinateType;
+  // type of local coordinate (with respect to the codim-0 entity). Mind the difference in the dimension!
+  typedef typename
+  Quadrature<ctype, dimension, DefaultQuadratureTraits>::CoordinateType
+  CoordinateType;
 };
 
 template<class GridPartImp, int codim>
