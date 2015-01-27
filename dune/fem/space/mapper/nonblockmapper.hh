@@ -38,6 +38,7 @@ namespace Dune
     // NonBlockMapper
     // --------------
 
+    /**Flatten the index-space of a given BlockMapper. */
     template< class BlockMapper, int blockSize >
     class NonBlockMapper
     : public DofMapper< NonBlockMapperTraits< BlockMapper, blockSize > >
