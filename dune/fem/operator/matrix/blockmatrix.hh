@@ -68,7 +68,7 @@ namespace Dune
         for(int row=0; row<rows_; ++row)
         {
           matrix_[row].resize(cols);
-          for(register int col=0; col<cols_; ++col) matrix_[row][col] = 0;
+          for(int col=0; col<cols_; ++col) matrix_[row][col] = 0;
         }
       }
 

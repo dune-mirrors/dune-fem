@@ -361,9 +361,10 @@ namespace Dune
     template< class DFunctionSpaceImp1,
               class DFunctionSpaceImp2,
               class NewFunctionSpace >
-    class DifferentDiscreteFunctionSpace< Fem::CombinedDiscreteFunctionSpace<
+    struct DifferentDiscreteFunctionSpace< Fem::CombinedDiscreteFunctionSpace<
           DFunctionSpaceImp1, DFunctionSpaceImp2 >, NewFunctionSpace >
     {
+     private:
       static const int dimRange1 = DFunctionSpaceImp1 :: dimRange;
       static const int dimRange2 = DFunctionSpaceImp2 :: dimRange;
       static const int newDimRange = NewFunctionSpace :: dimRange;

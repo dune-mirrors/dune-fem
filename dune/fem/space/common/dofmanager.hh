@@ -808,7 +808,7 @@ namespace Dune
     {
       typedef DofManager< Grid > ThisType;
 
-      friend class DefaultSingletonFactory< const Grid*, ThisType >;
+      friend struct DefaultSingletonFactory< const Grid*, ThisType >;
       friend class DofManagerFactory< ThisType >;
 
     public:

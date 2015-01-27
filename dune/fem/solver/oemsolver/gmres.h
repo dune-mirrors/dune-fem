@@ -129,7 +129,7 @@ gmres_algo (const CommunicatorType & comm,
         
         dscal(n,1./h,v[j+1],1);
         
-        for ( register int i=0; i<j; ++i ) 
+        for ( int i=0; i<j; ++i ) 
         { // rotiere neue Spalte
           double tmp = c[i]*U[uij]-s[i]*U[uij+1];
           U[uij+1]   = s[i]*U[uij]+c[i]*U[uij+1];
