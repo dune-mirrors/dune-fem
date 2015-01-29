@@ -394,7 +394,7 @@ namespace Dune
       {
         typedef typename HostGridAccess :: HostLeafIntersection HostIntersection;
         const HostIntersection &hostIntersection
-          = HostGridAccess :: getIntersection( intersection );
+          = HostGridAccess :: hostIntersection( intersection );
         return HostTwistUtility :: twistInSelf( grid.hostGrid(), hostIntersection );
       }
 
@@ -404,7 +404,7 @@ namespace Dune
       {
         typedef typename HostGridAccess :: HostLevelIntersection HostIntersection;
         const HostIntersection &hostIntersection
-          = HostGridAccess :: getIntersection( intersection );
+          = HostGridAccess :: hostIntersection( intersection );
         return HostTwistUtility :: twistInSelf( grid.hostGrid(), hostIntersection );
       }
 
@@ -414,7 +414,7 @@ namespace Dune
       {
         typedef typename HostGridAccess :: HostLeafIntersection HostIntersection;
         const HostIntersection &hostIntersection
-          = HostGridAccess :: getIntersection( intersection );
+          = HostGridAccess :: hostIntersection( intersection );
         return HostTwistUtility :: twistInNeighbor( grid.hostGrid(), hostIntersection );
       }
 
@@ -424,7 +424,7 @@ namespace Dune
       {
         typedef typename HostGridAccess :: HostLevelIntersection HostIntersection;
         const HostIntersection &hostIntersection
-          = HostGridAccess :: getIntersection( intersection );
+          = HostGridAccess :: hostIntersection( intersection );
         return HostTwistUtility :: twistInNeighbor( grid.hostGrid(), hostIntersection );
       }
 
@@ -434,7 +434,7 @@ namespace Dune
       {
         typedef typename HostGridAccess :: HostLeafIntersection HostIntersection;
         const HostIntersection &hostIntersection
-          = HostGridAccess :: getIntersection( intersection );
+          = HostGridAccess :: hostIntersection( intersection );
         return HostTwistUtility :: elementGeometry( hostIntersection, inside );
       }
 
@@ -444,7 +444,7 @@ namespace Dune
       {
         typedef typename HostGridAccess :: HostLevelIntersection HostIntersection;
         const HostIntersection &hostIntersection
-          = HostGridAccess :: getIntersection( intersection );
+          = HostGridAccess :: hostIntersection( intersection );
         return HostTwistUtility :: elementGeometry( hostIntersection, inside );
       }
 
