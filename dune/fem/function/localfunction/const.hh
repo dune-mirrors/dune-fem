@@ -50,6 +50,9 @@ namespace Dune
       //! type of LocalDofVector
       typedef typename BaseType :: LocalDofVectorType LocalDofVectorType;
 
+      //! type of SizeType
+      typedef typename BaseType SizeType;
+
       //! default ctor
       BasicConstLocalFunction () {}
 
@@ -76,7 +79,7 @@ namespace Dune
       using BaseType::localDofVector;
 
    protected:
-      DofType &operator[] ( int num )
+      DofType &operator[] ( SizeType num )
       {
         return static_cast< BaseType &>( *this )[ num ];
       }
