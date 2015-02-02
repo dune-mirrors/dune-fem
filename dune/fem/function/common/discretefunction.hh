@@ -12,7 +12,6 @@
 #include <dune/fem/function/common/function.hh>
 #include <dune/fem/function/common/functor.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
-#include <dune/fem/function/localfunction/functor.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/streams/streams.hh>
@@ -549,6 +548,55 @@ namespace Dune
       : public BaseType :: template CommDataHandle< Operation >
       {};
 
+    private:
+      struct LocalFunctionEvaluateFunctor
+      {
+        typedef typename LocalFunctionType::LocalCoordinateType LocalCoordinateType;
+        typedef typename LocalFunctionType::RangeType RangeType;
+
+        LocalFunctionEvaluateFunctor ( RangeType &value ) : value_( value ) {}
+
+        void operator() ( const LocalCoordinateType &x, const LocalFunctionType &localFunction )
+        {
+          localFunction.evaluate( x, value_ );
+        }
+
+      private:
+        RangeType &value_;
+      };
+
+      struct LocalFunctionJacobianFunctor
+      {
+        typedef typename LocalFunctionType::LocalCoordinateType LocalCoordinateType;
+        typedef typename LocalFunctionType::JacobianRangeType JacobianRangeType;
+
+        LocalFunctionJacobianFunctor ( JacobianRangeType &jacobian ) : jacobian_( jacobian ) {}
+
+        void operator() ( const LocalCoordinateType &x, const LocalFunctionType &localFunction )
+        {
+          localFunction.jacobian( x, jacobian_);
+        }
+
+      private:
+        JacobianRangeType &jacobian_;
+      };
+
+      struct LocalFunctionHessianFunctor
+      {
+        typedef typename LocalFunctionType::LocalCoordinateType LocalCoordinateType;
+        typedef typename LocalFunctionType::HessianRangeType HessianRangeType;
+
+        LocalFunctionHessianFunctor ( HessianRangeType &hessian ) : hessian_( hessian ) {}
+
+        void operator() ( const LocalCoordinateType &x, const LocalFunctionType &localFunction )
+        {
+          localFunction.hessian( x, hessian_ );
+        }
+
+      private:
+        HessianRangeType &hessian_;
+      };
+
     protected:
       using BaseType :: asImp;
 
@@ -637,21 +685,21 @@ namespace Dune
       /** \copydoc Dune::Fem::Function::evaluate(const DomainType &x,RangeType &value) const */
       inline void evaluate ( const DomainType &x, RangeType &value ) const
       {
-        LocalFunctionEvaluateFunctor< LocalFunctionType > functor( value );
+        LocalFunctionEvaluateFunctor functor( value );
         asImp().evaluateGlobal( x, functor );
       }
 
       /** \copydoc Dune::Fem::Function::jacobian(const DomainType &x,JacobianRangeType &jacobian) const */
       inline void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
       {
-        LocalFunctionJacobianFunctor< LocalFunctionType > functor( jacobian );
+        LocalFunctionJacobianFunctor functor( jacobian );
         asImp().evaluateGlobal( x, functor );
       }
 
       /** \copydoc Dune::Fem::Function::hessian (const DomainType &x,HessianRangeType &hessian) const */
       inline void hessian ( const DomainType &x, HessianRangeType &hessian ) const
       {
-        LocalFunctionHessianFunctor< LocalFunctionType > functor( hessian );
+        LocalFunctionHessianFunctor functor( hessian );
         asImp().evaluateGlobal( x, functor );
       }
 
