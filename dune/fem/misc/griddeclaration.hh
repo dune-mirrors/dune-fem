@@ -29,15 +29,6 @@ namespace Dune
   // Forward Declarations for all Standard Grids
   // -------------------------------------------
 
-  template< int dim, int dimw >
-  class ALUConformGrid;
-
-  template< int dim, int dimw >
-  class ALUCubeGrid;
-
-  template< int dim, int dimw >
-  class ALUSimplexGrid;
-
   class OneDGrid;
 
   template< int dim, int dimw, class ctype >
