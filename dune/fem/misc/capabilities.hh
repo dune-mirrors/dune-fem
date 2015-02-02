@@ -35,24 +35,6 @@ namespace Dune
       static const bool v = false;
     };
 
-    template< int dim, int dimw >
-    struct hasHierarchicIndexSet< ALUConformGrid< dim, dimw > >
-    {
-      static const bool v = true;
-    };
-
-    template< int dim, int dimw >
-    struct hasHierarchicIndexSet< ALUCubeGrid< dim, dimw > >
-    {
-      static const bool v = true;
-    };
-
-    template< int dim, int dimw >
-    struct hasHierarchicIndexSet< ALUSimplexGrid< dim, dimw > >
-    {
-      static const bool v = true;
-    };
-
     template< int dim, int dimw, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
     struct hasHierarchicIndexSet< ALUGrid< dim, dimw, elType, refineType, Comm > >
     {
