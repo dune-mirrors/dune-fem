@@ -17,7 +17,7 @@
 
 #include <dune/fem/space/common/adaptcallbackhandle.hh>
 #include <dune/fem/io/parameter.hh>
-#include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
 
 
 namespace Dune

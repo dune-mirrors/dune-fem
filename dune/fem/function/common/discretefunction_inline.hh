@@ -7,7 +7,7 @@
 
 #include <dune/fem/gridpart/dunefemindexsets.hh>
 #include <dune/fem/io/streams/streams.hh>
-#include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
 
 #include "discretefunction.hh"
 

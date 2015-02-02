@@ -18,7 +18,7 @@
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/debug.hh>
 #include <dune/fem/misc/functor.hh>
-#include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/version.hh>
 
