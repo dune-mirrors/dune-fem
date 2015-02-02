@@ -51,7 +51,7 @@ namespace Dune
       typedef typename BaseType :: LocalDofVectorType LocalDofVectorType;
 
       //! type of SizeType
-      typedef typename BaseType SizeType;
+      typedef typename BaseType::SizeType SizeType;
 
       //! default ctor
       BasicConstLocalFunction () {}
