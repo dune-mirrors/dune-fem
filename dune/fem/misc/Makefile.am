@@ -36,7 +36,6 @@ misc_HEADERS = alugridwriter.hh \
 	       mpimanager.hh \
 	       nil.hh \
 	       nonconformitylevel.hh \
-	       referenceelementprovider.hh \
 	       subobjects.hh \
 	       suite.cc \
 	       suite.hh \
