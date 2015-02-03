@@ -138,31 +138,30 @@ namespace Dune
         \code
         #include <dune/fem/io/parameter.hh>
 
-        using Dune::Parameter;
-
         int globalFlag;
 
         int main ( int argc, char **argv )
         {
-          Dune::MPIManager::initialize( argc, argv );
-          Parameter::append( argc, argv );
+          Dune::Fem::MPIManager::initialize( argc, argv );
+          Dune::Fem::Parameter::append( argc, argv );
 
           // get parameters
           double startTime = Parameter::getValue< double >( "starttime", 0.0 );
-          Dune::ValidateGreater< double > validator( startTime );
+          auto validator = [ startTime ]( double time ) { return time > startTime; };
           double endTime = Parameter::getValidValue< double >( "endtime", validator );
-          Parameter::get( "flag", 0, globalFlag );
 
-          if( Parameter::verbose() )
+          Dune::Fem::Parameter::get( "flag", 0, globalFlag );
+
+          if( Dune::Fem::Parameter::verbose() )
             std::cout << "Computing from " << startTime << " to " << endTime << std::endl;
 
           // ...
 
-          std::ofstream results( (Parameter::outputPrefix() + "/results").c_str() );
+          std::ofstream results( Dune::Fem::Parameter::outputPrefix() + "/results" );
 
           // ...
 
-          Parameter::write( "parameter.log" );
+          Dune::Fem::Parameter::write( "parameter.log" );
         }
         \endcode
      */
@@ -1024,9 +1023,7 @@ namespace Dune
                           const Validator &validator,
                           T &value )
     {
-      if( !ParameterParser< T >::parse( instance().map( key ), value ) )
-        DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
-      if( !validator( value ) )
+      if( !ParameterParser< T >::parse( instance().map( key ), value ) || !validator( value ) )
         DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
     }
 
@@ -1037,16 +1034,8 @@ namespace Dune
                           const Validator &validator,
                           T &value )
     {
-      bool valid = true ;
-      if( !ParameterParser< T >::parse( instance().map( key, defaultValue ), value ) ) valid = false;
-      if( !validator( value ) ) valid = false;
-
-      if( ! valid )
-      {
-        std::cerr << std::endl << "Parameter '" << key << "' invalid." << std::endl;
-        validator.print( std::cerr );
+      if( !ParameterParser< T >::parse( instance().map( key, defaultValue ), value ) || !validator( value ) )
         DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
-      }
     }
 
     inline std::string
