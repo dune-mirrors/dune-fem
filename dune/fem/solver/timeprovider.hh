@@ -321,12 +321,14 @@ namespace Dune
 
       double getCflFactor() const
       {
-        return Parameter::getValidValue( "fem.timeprovider.factor", (double)1.0, ValidateGreater< double >( 0.0 ) );
+        return Parameter::getValidValue( "fem.timeprovider.factor", (double)1.0,
+            [] ( double val ) { return val > 0.0; } );
       }
 
       int getUpdateStep () const
       {
-        return Parameter::getValidValue( "fem.timeprovider.updatestep", (int)1, ValidateGreater< int >( 0 ) );
+        return Parameter::getValidValue( "fem.timeprovider.updatestep", (int)1,
+            [] ( int step ) { return step > 0; } );
       }
 
     public:
