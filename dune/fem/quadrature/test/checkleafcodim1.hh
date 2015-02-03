@@ -1,10 +1,6 @@
 #ifndef DUNE_CHECKLEAFCODIM1_HH
 #define DUNE_CHECKLEAFCODIM1_HH
 
-#include <dune/fem/misc/suite.hh>
-#include <dune/fem/misc/test.hh>
-#include <dune/fem/misc/test.cc>
-#include <dune/fem/misc/suite.cc>
 #include <dune/fem/io/parameter.hh>
 
 #include <dune/fem/quadrature/cachingquadrature.hh>
@@ -12,7 +8,7 @@
 namespace Dune {
   namespace Fem {
 
-struct CachingQuadratureTest : public Test
+struct CachingQuadratureTest
 {
   template <class GridPartType>
   static void checkLeafsCodimOne(GridPartType& gridPart,
@@ -20,6 +16,24 @@ struct CachingQuadratureTest : public Test
   {
     CachingQuadratureTest tester;
     tester.checkLeafsCodim1( gridPart, quadOrd );
+  }
+
+  static void doTest( const double& a, const double& b )
+  {
+    if( std::abs( a - b ) > 1e-12 )
+    {
+      assert( false );
+      std::abort();
+    }
+  }
+
+  static void doTest( const bool value )
+  {
+    if( ! value )
+    {
+      assert( false );
+      std::abort();
+    }
   }
 
   void run (){};
@@ -178,7 +192,7 @@ protected:
         const PointVectorType& points =
           PointProviderType::getPoints(quad.id(), geomType);
 
-        _test( points.size() == numFaces * quad.nop());
+        doTest( points.size() == numFaces * quad.nop());
         if ( output )
         {
           std::cout << points.size() << " ps | qnop " << numFaces * quad.nop() << "\n";
@@ -193,7 +207,7 @@ protected:
           for (int d = 0; d < dim; ++d)
           {
             assert( quad.cachingPoint(i) < points.size() );
-            _floatTest(points[quad.cachingPoint(i)][d],
+            doTest(points[quad.cachingPoint(i)][d],
                        geo.global(quad.localPoint(i))[d]);
           }
 
@@ -218,7 +232,7 @@ protected:
               for (int d = 0; d < dim; ++d)
               {
                 assert( outerQuad.cachingPoint(i) < points.size() );
-                _floatTest(points[outerQuad.cachingPoint(i)][d],
+                doTest(points[outerQuad.cachingPoint(i)][d],
                            nGeo.global(outerQuad.localPoint(i))[d]);
               }
 
