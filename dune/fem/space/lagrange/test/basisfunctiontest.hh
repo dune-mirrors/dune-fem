@@ -5,15 +5,13 @@
 
 #define TEST_SECOND_ORDER
 
-#include <dune/fem/misc/test.hh>
-
 namespace Dune
 {
 
   namespace Fem
   {
 
-  class LagrangeBasis_Test : public Fem::Test {
+  class LagrangeBasis_Test {
   public:
     LagrangeBasis_Test(std::string gridFile) :
       gridFile_(gridFile)

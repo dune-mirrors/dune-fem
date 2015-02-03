@@ -11,24 +11,19 @@
 #endif
 #endif
 
-#include <dune/fem/misc/suite.hh>
-using namespace Dune;
-using namespace Fem;
+#include <dune/fem/misc/mpimanager.hh>
 
 #include "basisfunctiontest.cc"
 #include "mappertest.cc"
 
 int main( int argc, char **argv )
 {
-  MPIManager::initialize( argc, argv );
+  Dune::Fem::MPIManager::initialize( argc, argv );
 
   std::stringstream gridFile;
   gridFile << GRIDDIM<<"dgrid.dgf";
 
-  Suite suite("Basisfunction tests");
-  suite.addTest( new LagrangeBasis_Test(gridFile.str()) );
-  suite.addTest( new LagrangeMapper_Test< GridSelector::GridType >( gridFile.str() ) );
-
-  suite.run();
-  suite.report();
+  Dune::Fem::LagrangeBasis_Test(gridFile.str()).run();
+  Dune::Fem::LagrangeMapper_Test< Dune::GridSelector::GridType >( gridFile.str() ).run();
+  return 0;
 }
