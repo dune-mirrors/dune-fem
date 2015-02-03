@@ -15,12 +15,6 @@
 #include <dune/fem/solver/rungekutta/explicit.hh>
 
 
-using namespace Dune;
-using namespace Fem;
-using namespace DuneODE;
-using namespace std;
-
-
 // Faked data structure for our unknown,
 // nothing more than a "tuned up" double
 class myDest {
@@ -34,7 +28,7 @@ public:
   typedef double RangeFieldType;
   typedef SpaceDummy DiscreteFunctionSpaceType;
 
-  myDest(string, const SpaceDummy&, const double* u = 0) {
+  myDest(std::string, const SpaceDummy&, const double* u = 0) {
   }
   myDest() {
   }
@@ -71,7 +65,7 @@ private:
 
 
 // implement right hand side F(y,t)
-class myRHS : public SpaceOperatorInterface<myDest> {
+class myRHS : public Dune::Fem::SpaceOperatorInterface<myDest> {
 public:
   myRHS() {
   }
@@ -103,7 +97,7 @@ int main( int argc, char ** argv )
 
   // problem data
   const double initialData = 1.0;
-  const double startTime = -2.0;
+  const double startTime = 0.0;
   const double endTime = 2.0;
 
   // options
@@ -114,10 +108,10 @@ int main( int argc, char ** argv )
   // types
   typedef myRHS SpaceOperatorType;
   typedef SpaceOperatorType::DestinationType DestinationType;
-  typedef ExplicitRungeKuttaSolver<DestinationType> OdeSolverType;
+  typedef DuneODE::ExplicitRungeKuttaSolver<DestinationType> OdeSolverType;
 
   // create solver
-  TimeProvider<> tp( startTime, cfl );
+  Dune::Fem::TimeProvider<> tp( startTime, cfl );
   SpaceOperatorType spaceOperator;
   OdeSolverType odeSolver( spaceOperator, tp, order );
 
@@ -138,4 +132,6 @@ int main( int argc, char ** argv )
               << " " << U[0]
               << std::endl;
   }
+
+  return 0;
 }
