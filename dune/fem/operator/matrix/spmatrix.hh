@@ -19,6 +19,7 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/matrix/columnobject.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
+#include <dune/fem/storage/objectstack.hh>
 
 #ifdef ENABLE_UMFPACK
 #include <umfpack.h>
