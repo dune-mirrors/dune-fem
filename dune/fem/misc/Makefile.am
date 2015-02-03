@@ -34,7 +34,6 @@ misc_HEADERS = alugridwriter.hh \
 	       mapgeomtype.hh \
 	       metaprogramming.hh \
 	       mpimanager.hh \
-	       nil.hh \
 	       nonconformitylevel.hh \
 	       subobjects.hh \
 	       suite.cc \

@@ -8,7 +8,7 @@ dune_install(alugridwriter.hh bartonnackmaninterface.hh
              gridsolution.hh gridwidth.hh h1norm.hh
              iteratorprovider.hh l1norm.hh l2norm.hh
              linesegmentsampler.hh lpnorm.hh mapgeomtype.hh
-             metaprogramming.hh mpimanager.hh nil.hh
+             metaprogramming.hh mpimanager.hh
              nonconformitylevel.hh subobjects.hh
              suite.hh test.hh validator.hh)
 
