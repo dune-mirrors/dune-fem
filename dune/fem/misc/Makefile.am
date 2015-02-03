@@ -4,7 +4,6 @@ SUBDIRS = petsc threads
 
 misc_HEADERS = alugridwriter.hh \
 	       bartonnackmaninterface.hh \
-	       boundaryidentifier.hh \
 	       boundaryidprovider.hh \
 	       capabilities.hh \
 	       checkgeomaffinity.hh \

@@ -1,4 +1,4 @@
-dune_install(alugridwriter.hh bartonnackmaninterface.hh boundaryidentifier.hh
+dune_install(alugridwriter.hh bartonnackmaninterface.hh
              boundaryidprovider.hh capabilities.hh checkgeomaffinity.hh
              codimmap.hh commhelper.hh debug.hh
              double.hh engineconcept.hh femeoc.hh
