@@ -36,13 +36,9 @@ misc_HEADERS = alugridwriter.hh \
 	       mpimanager.hh \
 	       nonconformitylevel.hh \
 	       subobjects.hh \
-	       suite.cc \
-	       suite.hh \
-	       test.cc \
-	       test.hh \
 	       validator.hh
 
 noinst_LTLIBRARIES = libmisc.la
-libmisc_la_SOURCES = femtimer.cc test.cc suite.cc
+libmisc_la_SOURCES = femtimer.cc
 
 include $(top_srcdir)/am/global-rules
