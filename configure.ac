@@ -84,9 +84,6 @@ AC_CONFIG_FILES([Makefile
      dune/fem/io/file/test/Makefile
      dune/fem/io/streams/Makefile
      dune/fem/io/streams/test/Makefile
-     dune/fem/io/matlab/Makefile
-     dune/fem/io/matlab/m/Makefile
-     dune/fem/io/matlab/test/Makefile
      dune/fem/io/visual/Makefile
      dune/fem/io/visual/grape/Makefile
      dune/fem/io/visual/grape/datadisp/Makefile
