@@ -1,13 +1,12 @@
 #ifndef DUNE_TWIST_TEST_HH
 #define DUNE_TWIST_TEST_HH
 
-#include <dune/fem/misc/test.hh>
 #include "../twistprovider.hh"
 
 namespace Dune {
   namespace Fem {
 
-  class TwistProvider_Test : public Test
+  class TwistProvider_Test
   {
   public:
     virtual void run();

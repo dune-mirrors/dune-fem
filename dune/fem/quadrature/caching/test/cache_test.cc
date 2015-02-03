@@ -29,6 +29,26 @@ namespace Dune
   namespace Fem
   {
 
+    namespace {
+      static void doTest( const double& a, const double& b )
+      {
+        if( std::abs( a - b ) > 1e-12 )
+        {
+          assert( false );
+          std::abort();
+        }
+      }
+
+      static void doTest( const bool value )
+      {
+        if( ! value )
+        {
+          assert( false );
+          std::abort();
+        }
+      }
+    }
+
     void CacheProvider_Test::run ()
     {
       hexaTest();
@@ -80,7 +100,7 @@ namespace Dune
         const MapperType &m
           = CacheProviderType::getMapper( quad, elemGeo, i, 0 );
 
-        _test( m.size() == (size_t) quad.nop());
+        doTest( m.size() == (size_t) quad.nop());
 
         // Loop over all points
         const RefElement::Codim< codim >::Geometry refEmbedding = refElement.geometry< codim >( i );
@@ -88,7 +108,7 @@ namespace Dune
         {
           const FieldVector< double, dim > qpGlobal = refEmbedding.global( quad.point( j ) );
           for( int d = 0; d < dim; ++d )
-            _floatTest( points[ m[ j ] ][ d ], qpGlobal[ d ] );
+            doTest( points[ m[ j ] ][ d ], qpGlobal[ d ] );
         }
       }
 #endif
@@ -131,14 +151,14 @@ namespace Dune
         const MapperType &m
           = CacheProviderType::getMapper( quad, elemGeo, i, 0 );
 
-        _test( m.size() == (size_t) quad.nop());
+        doTest( m.size() == (size_t) quad.nop());
         // Loop over all points
         const RefElement::Codim< codim >::Geometry refEmbedding = refElement.geometry< codim >( i );
         for( std::size_t j = 0; j < m.size(); ++j )
         {
           const FieldVector< double, dim > qpGlobal = refEmbedding.global( quad.point( j ) );
           for( int d = 0; d < dim; ++d )
-            _floatTest( points[ m[ j ] ][ d ], qpGlobal[ d ] );
+            doTest( points[ m[ j ] ][ d ], qpGlobal[ d ] );
         }
       }
 #endif
@@ -180,14 +200,14 @@ namespace Dune
       {
         const MapperType &m = CacheProviderType::getMapper( quad, elemGeo, i, 0 );
 
-        _test( m.size() == (size_t) quad.nop());
+        doTest( m.size() == (size_t) quad.nop());
         // Loop over all points
         const RefElement::Codim< codim >::Geometry refEmbedding = refElement.geometry< codim >( i );
         for( std::size_t j = 0; j < m.size(); ++j )
         {
           const FieldVector< double, dim > qpGlobal = refEmbedding.global( quad.point( j ) );
           for( int d = 0; d < dim; ++d )
-            _floatTest( points[ m[ j ] ][ d ], qpGlobal[ d ] );
+            doTest( points[ m[ j ] ][ d ], qpGlobal[ d ] );
         }
       }
 #endif
@@ -229,14 +249,14 @@ namespace Dune
       {
         const MapperType &m = CacheProviderType::getMapper( quad, elemGeo, i, 0 );
 
-        _test( m.size() == (size_t) quad.nop());
+        doTest( m.size() == (size_t) quad.nop());
         // Loop over all points
         const RefElement::Codim< codim >::Geometry refEmbedding = refElement.geometry< codim >( i );
         for( size_t j = 0; j < m.size(); ++j )
         {
           const FieldVector< double, dim > qpGlobal = refEmbedding.global( quad.point( j ) );
           for( int d = 0; d < dim; ++d )
-            _floatTest( points[ m[ j ] ][ d ], qpGlobal[ d ] );
+            doTest( points[ m[ j ] ][ d ], qpGlobal[ d ] );
         }
       }
 #endif
@@ -277,14 +297,14 @@ namespace Dune
       {
         const MapperType &m = CacheProviderType::getMapper( quad, elemGeo, i, 0 );
 
-        _test( m.size() == (size_t) quad.nop());
+        doTest( m.size() == (size_t) quad.nop());
         // Loop over all points
         const RefElement::Codim< codim >::Geometry refEmbedding = refElement.geometry< codim >( i );
         for( std::size_t j = 0; j < m.size(); ++j )
         {
           const FieldVector< double, dim > qpGlobal = refEmbedding.global( quad.point( j ) );
           for( int d = 0; d < dim; ++d )
-            _floatTest( points[ m[ j ] ][ d ], qpGlobal[ d ] );
+            doTest( points[ m[ j ] ][ d ], qpGlobal[ d ] );
         }
       }
     }

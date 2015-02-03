@@ -11,6 +11,7 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 EXTRA_DIST = cache_test.hh  refelem_test.hh  twist_test.hh  point_test.hh
 
 check_PROGRAMS = tester 
+TESTS = tester
 tester_SOURCES = main.cc ../../../misc/test.cc ../../../misc/suite.cc \
 	refelem_test.cc cache_test.cc twist_test.cc point_test.cc
 
