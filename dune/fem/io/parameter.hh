@@ -13,7 +13,6 @@
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 
 #include <dune/fem/io/io.hh>
-#include <dune/fem/misc/validator.hh>
 #include <dune/fem/misc/mpimanager.hh>
 
 namespace Dune
