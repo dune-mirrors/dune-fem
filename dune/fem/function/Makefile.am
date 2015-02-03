@@ -6,7 +6,6 @@ SUBDIRS = common \
           adaptivefunction \
           combinedfunction \
           blockvectorfunction \
-          productfunction \
           vectorfunction \
 				  blockvectordiscretefunction \
 				  blockvectors \
@@ -16,7 +15,6 @@ functiondir =  $(includedir)/dune/fem/function
 function_HEADERS = adaptivefunction.hh \
                    blockvectorfunction.hh \
                    combinedfunction.hh \
-                   productfunction.hh \
                    vectorfunction.hh \
                    subfunction.hh \
 								   blockvectordiscretefunction.hh \

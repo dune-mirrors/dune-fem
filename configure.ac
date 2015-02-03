@@ -59,8 +59,6 @@ AC_CONFIG_FILES([Makefile
      dune/fem/function/adaptivefunction/Makefile
      dune/fem/function/blockvectorfunction/Makefile
      dune/fem/function/combinedfunction/Makefile
-     dune/fem/function/productfunction/Makefile
-     dune/fem/function/productfunction/test/Makefile
      dune/fem/function/vectorfunction/Makefile
      dune/fem/function/blockvectors/Makefile
      dune/fem/function/blockvectordiscretefunction/Makefile
