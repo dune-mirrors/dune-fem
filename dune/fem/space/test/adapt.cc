@@ -6,7 +6,6 @@ using namespace Dune;
 
 #include <dune/fem/function/adaptivefunction.hh>
 //#include <dune/fem/function/vectorfunction.hh>
-//#include <dune/fem/function/attachedfunction.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 
 #if USE_COMBINED_SPACE
@@ -79,7 +78,6 @@ typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FunctionSpaceTyp
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 //typedef ManagedDiscreteFunction< VectorDiscreteFunction< DiscreteFunctionSpaceType, DynamicVector< double > > > DiscreteFunctionType;
-//typedef AttachedDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 typedef DofManager< MyGridType > DofManagerType;
 
