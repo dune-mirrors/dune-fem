@@ -41,8 +41,6 @@ misc_HEADERS = alugridwriter.hh \
 	       suite.hh \
 	       test.cc \
 	       test.hh \
-	       threaditerator.hh \
-	       threadmanager.hh \
 	       validator.hh
 
 noinst_LTLIBRARIES = libmisc.la

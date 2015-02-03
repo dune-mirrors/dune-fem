@@ -10,8 +10,7 @@ dune_install(alugridwriter.hh bartonnackmaninterface.hh
              linesegmentsampler.hh lpnorm.hh mapgeomtype.hh
              metaprogramming.hh mpimanager.hh nil.hh
              nonconformitylevel.hh subobjects.hh
-             suite.hh test.hh threaditerator.hh
-             threadmanager.hh validator.hh)
+             suite.hh test.hh validator.hh)
 
 dune_add_subdirs(petsc threads)
 
