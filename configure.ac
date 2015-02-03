@@ -66,12 +66,9 @@ AC_CONFIG_FILES([Makefile
      dune/fem/operator/Makefile
      dune/fem/operator/common/Makefile
      dune/fem/operator/common/test/Makefile
-     dune/fem/operator/0order/Makefile
      dune/fem/operator/1order/Makefile
-     dune/fem/operator/2order/Makefile
      dune/fem/operator/linear/Makefile
      dune/fem/operator/matrix/Makefile
-     dune/fem/operator/model/Makefile
      dune/fem/operator/projection/Makefile
      dune/fem/operator/projection/local/Makefile
      dune/fem/operator/projection/local/riesz/Makefile
