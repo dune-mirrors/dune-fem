@@ -23,10 +23,11 @@ namespace Dune
       // obtain types
       typedef typename DiscreteFunction::GridPartType::template Codim< 0 >::EntityType EntityType;
       typedef typename DiscreteFunction::GridPartType::template Codim< 0 >::template Partition< pitype >::IteratorType IteratorType;
+      typedef typename DiscreteFunction::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
       // reserve memory for local dof vector
       Dune::DynamicVector< typename DiscreteFunction::RangeFieldType > ldv;
-      ldv.reserve( v.space().maxNumLocalDofs() );
+      ldv.reserve( v.space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize );
 
       // iterate over selected partition of grid part
       const IteratorType end = v.gridPart().template end< 0, pitype >();
