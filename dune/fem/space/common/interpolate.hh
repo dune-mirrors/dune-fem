@@ -22,7 +22,7 @@ namespace Dune
 
       // obtain types
       typedef typename DiscreteFunction::GridPartType::template Codim< 0 >::EntityType EntityType;
-      typedef typename DiscreteFunction::GridPartType::template Codim< 0 >::Partition< pitype >::IteratorType IteratorType;
+      typedef typename DiscreteFunction::GridPartType::template Codim< 0 >::template Partition< pitype >::IteratorType IteratorType;
 
       // reserve memory for local dof vector
       Dune::DynamicVector< typename DiscreteFunction::RangeFieldType > ldv;
