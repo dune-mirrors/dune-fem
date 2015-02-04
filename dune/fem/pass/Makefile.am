@@ -2,8 +2,7 @@ SUBDIRS = common localdg test
 
 passdir =  $(includedir)/dune/fem/pass
 
-pass_HEADERS = applylocaloperator.hh \
-	       createpass.hh \
+pass_HEADERS = createpass.hh \
 	       dginversemass.hh \
 	       insertfunction.hh \
 	       insertoperator.hh \

@@ -1,26 +1,14 @@
-GRIDTYPE = YASPGRID
-GRIDDIM = 2
+AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS)
+LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) $(DUNEMPILIBS)
 
-DIMRANGE = 2
-POLORDER = 2
+check_PROGRAMS = test-insertoperatorpass
+TESTS = test-insertoperatorpass
 
-LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) $(MPI_LDFLAGS) 
-AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) 
+test_insertoperatorpass_SOURCES = test-insertoperatorpass.cc
 
 SUBDIRS =
 
-# test programs 
-check_PROGRAMS = test-pass test-insertoperatorpass
-TESTS = test-pass test-insertoperatorpass
-
-test_pass_SOURCES = test-pass.cc
-test_pass_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS) -DDIMRANGE=$(DIMRANGE) -DPOLORDER=$(POLORDER)
-
-test_insertoperatorpass_SOURCES = test-insertoperatorpass.cc
-test_insertoperatorpass_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS)
-DGFFILES = 1dgrid.dgf 2dgrid.dgf 3dgrid.dgf
-
-EXTRA_DIST = $(DGFFILES) parameter
+EXTRA_DIST = CMakeLists.txt
 
 CLEANFILES =
 
