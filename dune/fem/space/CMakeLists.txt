@@ -3,7 +3,7 @@ dune_install(combineddiscretefunctionspace.hh combinedspace.hh discontinuousgale
              padaptivespace.hh rannacherturek.hh)
 
 dune_add_subdirs(basisfunctionset combinedspace common
-                 discontinuousgalerkin dofmapper finitevolume
+                 discontinuousgalerkin finitevolume
                  fourier lagrange mapper
                  padaptivespace rannacherturek shapefunctionset
                  test)

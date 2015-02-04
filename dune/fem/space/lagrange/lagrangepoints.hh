@@ -6,7 +6,7 @@
 
 // dune-fem includes
 #include <dune/fem/quadrature/cachingpointlist.hh>
-#include <dune/fem/space/dofmapper/localkey.hh>
+#include <dune/fem/space/mapper/localkey.hh>
 
 // local includes
 #include "genericgeometry.hh"

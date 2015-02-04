@@ -6,8 +6,8 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/typeindex.hh>
 
-#include <dune/fem/space/dofmapper/code.hh>
-#include <dune/fem/space/dofmapper/localkey.hh>
+#include <dune/fem/space/mapper/code.hh>
+#include <dune/fem/space/mapper/localkey.hh>
 
 namespace Dune
 {

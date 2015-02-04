@@ -8,8 +8,8 @@
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/space/dofmapper/code.hh>
-#include <dune/fem/space/dofmapper/exceptions.hh>
+#include <dune/fem/space/mapper/code.hh>
+#include <dune/fem/space/mapper/exceptions.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 
 namespace Dune

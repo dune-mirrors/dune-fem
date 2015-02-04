@@ -39,7 +39,6 @@ AC_CONFIG_FILES([Makefile
      dune/fem/space/shapefunctionset/Makefile
      dune/fem/space/shapefunctionset/orthonormal/Makefile
      dune/fem/space/common/Makefile
-     dune/fem/space/dofmapper/Makefile
      dune/fem/space/discontinuousgalerkin/Makefile
      dune/fem/space/finitevolume/Makefile
      dune/fem/space/fourier/Makefile
