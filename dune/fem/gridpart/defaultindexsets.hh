@@ -25,7 +25,7 @@ namespace Dune
   namespace Fem
   {
 
-    //! Wraps the interface methods of indexsets and adds the addiotnal needed
+    //! Wraps the interface methods of indexsets and adds the additional needed
     //! functions
     template< class IndexSetImp >
     class IndexSetWrapper

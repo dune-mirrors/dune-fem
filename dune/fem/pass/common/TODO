@@ -1,6 +1,0 @@
------------------------------
-TODO for dune/fem/pass/common
------------------------------
-
-  - replace template argument DiscreteFunctionTuple in LocalFunctionTuple
-    (dune/fem/pass/common/localfunctiontuple.hh)

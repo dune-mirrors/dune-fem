@@ -61,11 +61,6 @@ dune_target_link_libraries(dgl2projection_vector_int "${DUNE_LIBS};${LOCAL_LIBS}
 set_property(TARGET dgl2projection_vector_int APPEND PROPERTY 
              COMPILE_DEFINITIONS "POLORDER=1;USE_VECTORFUNCTION;USE_DOFTYPE_INT;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
 
-add_executable(dgl2projection_attached dgl2projection.cc)
-dune_target_link_libraries(dgl2projection_attached "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET dgl2projection_attached APPEND PROPERTY 
-             COMPILE_DEFINITIONS "POLORDER=1;USE_ATTACHEDFUNCTION;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
-
 add_executable(dgl2projection_blockvectordiscretefunction dgl2projection.cc)
 dune_target_link_libraries(dgl2projection_blockvectordiscretefunction "${DUNE_LIBS};${LOCAL_LIBS}")
 set_property(TARGET dgl2projection_blockvectordiscretefunction APPEND PROPERTY 
@@ -93,7 +88,7 @@ set_property(TARGET adaptation APPEND PROPERTY
 
 dune_add_test(lagrangeinterpolation_linear lagrangeinterpolation_quadratic dgl2projection_adaptive
               dgl2projection_blockvector dgl2projection_vector dgl2projection_vector_int
-              dgl2projection_attached dgl2projection_legendre dgl2projection_hierarchiclegendre
+              dgl2projection_hierarchiclegendre
               dgl2projection_blockvectordiscretefunction dgl2projection_fv dgl2projection_idgridpart
               vtxprojection_adaptive intersectionindexset dgl2projection_filtered
               NO_DEPENDENCY adaptation_4.sh 

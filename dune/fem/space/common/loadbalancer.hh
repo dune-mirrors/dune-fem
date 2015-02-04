@@ -12,7 +12,7 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/parameter.hh>
-#include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/space/common/datacollector.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 

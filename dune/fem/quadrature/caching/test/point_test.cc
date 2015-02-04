@@ -12,6 +12,29 @@ namespace Dune {
     transformationTest();
   }
 
+
+  namespace {
+    static void doTest( const double& a, const double& b )
+    {
+      if( std::abs( a - b ) > 1e-12 )
+      {
+        assert( false );
+        std::abort();
+      }
+    }
+
+    static void doTest( const bool value )
+    {
+      if( ! value )
+      {
+        assert( false );
+        std::abort();
+      }
+    }
+  }
+
+
+
   void PointProvider_Test::codim0Test()
   {
     const int dim = 2;
@@ -26,11 +49,11 @@ namespace Dune {
     const PointVectorType& points =
       PointProvider<double, dim, 0>::getPoints(quad.id(), simplex);
 
-    _test( (int) points.size() == quad.nop() );
+    doTest( (int) points.size() == quad.nop() );
     for (size_t i = 0; i < points.size(); ++i)
     {
       for (int j = 0; j < dim; ++j) {
-        _floatTest(points[i][j], quad.point(i)[j]);
+        doTest(points[i][j], quad.point(i)[j]);
       }
     }
   }
@@ -64,10 +87,10 @@ namespace Dune {
     const PointVectorType& p2 =
       PointProviderType::getPoints(quad2.id(), simplex);
 
-    _test(p1.size() == p2.size());
+    doTest(p1.size() == p2.size());
     for (size_t i = 0; i < p1.size(); ++i) {
       for (int j = 0; j < dim; ++j) {
-        _floatTest(p1[i][j], p2[i][j]);
+        doTest(p1[i][j], p2[i][j]);
       }
     }
   }
@@ -110,19 +133,19 @@ namespace Dune {
     const PointProvider2Type::GlobalPointVectorType& ptsHexa =
       PointProvider2Type::getPoints(quadQuad.id(), quadrilateral);
 
-    _test(ptsHexa.size() == 6);
+    doTest(ptsHexa.size() == 6);
     tmp3[0] = 0.;
-    _test(findPoint(tmp3, ptsHexa));
+    doTest(findPoint(tmp3, ptsHexa));
     tmp3[0] = 0.5; tmp3[1] = 0.;
-    _test(findPoint(tmp3, ptsHexa));
+    doTest(findPoint(tmp3, ptsHexa));
     tmp3[1] = 0.5; tmp3[2] = 0.;
-    _test(findPoint(tmp3, ptsHexa));
+    doTest(findPoint(tmp3, ptsHexa));
     tmp3[2] = 1.0;
-    _test(findPoint(tmp3, ptsHexa));
+    doTest(findPoint(tmp3, ptsHexa));
     tmp3[2] = 0.5; tmp3[1] = 1.0;
-    _test(findPoint(tmp3, ptsHexa));
+    doTest(findPoint(tmp3, ptsHexa));
     tmp3[1] = 0.5; tmp3[0] = 1.0;
-    _test(findPoint(tmp3, ptsHexa));
+    doTest(findPoint(tmp3, ptsHexa));
 
     // Tetra test
     Point2Type pt(oneThird);
@@ -134,15 +157,15 @@ namespace Dune {
     const PointProvider2Type::GlobalPointVectorType& ptsTetra =
       PointProvider2Type::getPoints(quadTri.id(), triangle);
 
-    _test(ptsTetra.size() == 4);
+    doTest(ptsTetra.size() == 4);
     tmp3 = oneThird;
-    _test(findPoint(tmp3, ptsTetra));
+    doTest(findPoint(tmp3, ptsTetra));
     tmp3[0] = 0.;
-    _test(findPoint(tmp3, ptsTetra));
+    doTest(findPoint(tmp3, ptsTetra));
     tmp3[1] = 0.; tmp3[0] = oneThird;
-    _test(findPoint(tmp3, ptsTetra));
+    doTest(findPoint(tmp3, ptsTetra));
     tmp3[2] = 0.; tmp3[1] = oneThird;
-    _test(findPoint(tmp3, ptsTetra));
+    doTest(findPoint(tmp3, ptsTetra));
 
      // Quadrilateral test
     Point1Type pl(0.5);
@@ -154,15 +177,15 @@ namespace Dune {
     const PointProvider1Type::GlobalPointVectorType& ptsQuad =
       PointProvider1Type::getPoints(quadLine.id(), quadrilateral);
 
-    _test(ptsQuad.size() == 4);
+    doTest(ptsQuad.size() == 4);
     tmp2[0] = 0.;
-    _test(findPoint(tmp2, ptsQuad));
+    doTest(findPoint(tmp2, ptsQuad));
     tmp2[1] = 0.; tmp2[0] = 0.5;
-    _test(findPoint(tmp2, ptsQuad));
+    doTest(findPoint(tmp2, ptsQuad));
     tmp2[0] = 1.; tmp2[1] = 0.5;
-    _test(findPoint(tmp2, ptsQuad));
+    doTest(findPoint(tmp2, ptsQuad));
     tmp2[1] = 1.; tmp2[0] = 0.5;
-    _test(findPoint(tmp2, ptsQuad));
+    doTest(findPoint(tmp2, ptsQuad));
 
     // Triangle test
     TestQuadrature<double, 1> quadImpLine2(lineS, 0);
@@ -174,13 +197,13 @@ namespace Dune {
     const PointProvider1Type::GlobalPointVectorType& ptsTri =
       PointProvider1Type::getPoints(quadLine2.id(), triangle);
 
-    _test(ptsTri.size() == 3);
+    doTest(ptsTri.size() == 3);
     tmp2 = 0.5;
-    _test(findPoint(tmp2, ptsTri));
+    doTest(findPoint(tmp2, ptsTri));
     tmp2[0] = 0.;
-    _test(findPoint(tmp2, ptsTri));
+    doTest(findPoint(tmp2, ptsTri));
     tmp2[0] = 0.5; tmp2[1] = 0;
-    _test(findPoint(tmp2, ptsTri));
+    doTest(findPoint(tmp2, ptsTri));
   }
 
   template <class PointType>

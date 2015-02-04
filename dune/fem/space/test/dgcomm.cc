@@ -18,7 +18,6 @@ using namespace Dune;
 
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/vectorfunction.hh>
-#include <dune/fem/function/attachedfunction.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
@@ -70,7 +69,6 @@ typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType,
 //! define the type of discrete function we are using , see
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 //typedef ManagedDiscreteFunction< VectorDiscreteFunction< DiscreteFunctionSpaceType, DynamicVector< double > > > DiscreteFunctionType;
-//typedef AttachedDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 typedef DofManager< MyGridType > DofManagerType;
 

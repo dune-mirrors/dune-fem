@@ -25,6 +25,7 @@
 #include <dune/fem/operator/matrix/preconditionerwrapper.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/matrix/columnobject.hh>
+#include <dune/fem/storage/objectstack.hh>
 
 #include <dune/fem/operator/matrix/istlmatrixadapter.hh>
 

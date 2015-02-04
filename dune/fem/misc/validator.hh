@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_VALIDATOR_HH
 #define DUNE_FEM_VALIDATOR_HH
 
+#warning "File 'fem/misc/validator.hh' is deprecated and will be deleted. Use lambdas instead, have a look into the fem/io/test/paramtertest.cc"
 #include <iostream>
 
 namespace Dune

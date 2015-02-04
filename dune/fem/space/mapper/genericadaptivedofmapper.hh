@@ -9,7 +9,6 @@
 #include <dune/grid/utility/persistentcontainer.hh>
 
 #include <dune/fem/misc/capabilities.hh>
-#include <dune/fem/misc/codimmap.hh>
 #include <dune/fem/misc/metaprogramming.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/dofmapper/localkey.hh>

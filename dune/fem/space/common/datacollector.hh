@@ -47,10 +47,35 @@ namespace Dune
       enum ReadWriteType { readData , writeData };
     };
 
-#define PARAM_CLASSNAME CombinedLocalDataCollect
-#define PARAM_INHERIT LocalInlinePlus
-#define PARAM_FUNC_1 apply
-#include <dune/fem/operator/common/combine.inc>
+    template <class A, class B >
+    class CombinedLocalDataCollect
+      : public LocalInlinePlus< CombinedLocalDataCollect< A, B >, typename A::Traits::ParamType >
+    {
+    protected:
+      const A& a_;
+      const B& b_;
+    public:
+      CombinedLocalDataCollect( const A& a, const B& b ) : a_( a ), b_( b ) {}
+
+      template <class Arg>
+      void apply(Arg & arg) const
+      {
+        a_.apply( arg );
+        b_.apply( arg );
+      }
+
+      template <class Arg1, class Arg2>
+      void apply(Arg1 & arg1, Arg2 & arg2) const
+      {
+        a_.apply( arg1, arg2 );
+        b_.apply( arg1, arg2 );
+      }
+    };
+
+//#define PARAM_CLASSNAME CombinedLocalDataCollect
+//#define PARAM_INHERIT LocalInlinePlus
+//#define PARAM_FUNC_1 apply
+//#include <dune/fem/operator/common/combine.inc>
 
     template <class ParamT>
     class LocalInterface : public ObjPointerStorage

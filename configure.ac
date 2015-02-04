@@ -57,11 +57,8 @@ AC_CONFIG_FILES([Makefile
      dune/fem/function/common/Makefile
      dune/fem/function/localfunction/Makefile
      dune/fem/function/adaptivefunction/Makefile
-     dune/fem/function/attachedfunction/Makefile
      dune/fem/function/blockvectorfunction/Makefile
      dune/fem/function/combinedfunction/Makefile
-     dune/fem/function/productfunction/Makefile
-     dune/fem/function/productfunction/test/Makefile
      dune/fem/function/vectorfunction/Makefile
      dune/fem/function/blockvectors/Makefile
      dune/fem/function/blockvectordiscretefunction/Makefile
@@ -69,12 +66,9 @@ AC_CONFIG_FILES([Makefile
      dune/fem/operator/Makefile
      dune/fem/operator/common/Makefile
      dune/fem/operator/common/test/Makefile
-     dune/fem/operator/0order/Makefile
      dune/fem/operator/1order/Makefile
-     dune/fem/operator/2order/Makefile
      dune/fem/operator/linear/Makefile
      dune/fem/operator/matrix/Makefile
-     dune/fem/operator/model/Makefile
      dune/fem/operator/projection/Makefile
      dune/fem/operator/projection/local/Makefile
      dune/fem/operator/projection/local/riesz/Makefile
@@ -84,9 +78,6 @@ AC_CONFIG_FILES([Makefile
      dune/fem/io/file/test/Makefile
      dune/fem/io/streams/Makefile
      dune/fem/io/streams/test/Makefile
-     dune/fem/io/matlab/Makefile
-     dune/fem/io/matlab/m/Makefile
-     dune/fem/io/matlab/test/Makefile
      dune/fem/io/visual/Makefile
      dune/fem/io/visual/grape/Makefile
      dune/fem/io/visual/grape/datadisp/Makefile

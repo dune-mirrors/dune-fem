@@ -4,7 +4,6 @@ SUBDIRS = petsc threads
 
 misc_HEADERS = alugridwriter.hh \
 	       bartonnackmaninterface.hh \
-	       boundaryidentifier.hh \
 	       boundaryidprovider.hh \
 	       capabilities.hh \
 	       checkgeomaffinity.hh \
@@ -35,19 +34,11 @@ misc_HEADERS = alugridwriter.hh \
 	       mapgeomtype.hh \
 	       metaprogramming.hh \
 	       mpimanager.hh \
-	       nil.hh \
 	       nonconformitylevel.hh \
-	       referenceelementprovider.hh \
 	       subobjects.hh \
-	       suite.cc \
-	       suite.hh \
-	       test.cc \
-	       test.hh \
-	       threaditerator.hh \
-	       threadmanager.hh \
 	       validator.hh
 
 noinst_LTLIBRARIES = libmisc.la
-libmisc_la_SOURCES = femtimer.cc test.cc suite.cc
+libmisc_la_SOURCES = femtimer.cc
 
 include $(top_srcdir)/am/global-rules

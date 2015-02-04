@@ -35,24 +35,6 @@ namespace Dune
       static const bool v = false;
     };
 
-    template< int dim, int dimw >
-    struct hasHierarchicIndexSet< ALUConformGrid< dim, dimw > >
-    {
-      static const bool v = true;
-    };
-
-    template< int dim, int dimw >
-    struct hasHierarchicIndexSet< ALUCubeGrid< dim, dimw > >
-    {
-      static const bool v = true;
-    };
-
-    template< int dim, int dimw >
-    struct hasHierarchicIndexSet< ALUSimplexGrid< dim, dimw > >
-    {
-      static const bool v = true;
-    };
-
     template< int dim, int dimw, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
     struct hasHierarchicIndexSet< ALUGrid< dim, dimw, elType, refineType, Comm > >
     {
@@ -135,24 +117,6 @@ namespace Dune
         static const bool v = Dune::Fem::Capabilities::supportsCallbackAdaptation< Grid > :: v;
       };
 
-      template< int dim, int dimworld >
-      struct supportsCallbackAdaptation< ALUSimplexGrid< dim, dimworld > >
-      {
-        static const bool v = true;
-      };
-
-      template< int dim, int dimworld >
-      struct supportsCallbackAdaptation< ALUCubeGrid< dim, dimworld > >
-      {
-        static const bool v = true;
-      };
-
-      template< int dim, int dimworld >
-      struct supportsCallbackAdaptation< ALUConformGrid< dim, dimworld > >
-      {
-        static const bool v = true;
-      };
-
       template< int dim, int dimworld, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
       struct supportsCallbackAdaptation< ALUGrid< dim, dimworld, elType, refineType, Comm > >
       {
@@ -194,24 +158,6 @@ namespace Dune
       struct isLocallyAdaptive< const Grid >
       {
         static const bool v = Dune::Fem::Capabilities::isLocallyAdaptive< Grid > :: v;
-      };
-
-      template< int dim, int dimworld >
-      struct isLocallyAdaptive< ALUSimplexGrid< dim, dimworld > >
-      {
-        static const bool v = true;
-      };
-
-      template< int dim, int dimworld >
-      struct isLocallyAdaptive< ALUCubeGrid< dim, dimworld > >
-      {
-        static const bool v = true;
-      };
-
-      template< int dim, int dimworld >
-      struct isLocallyAdaptive< ALUConformGrid< dim, dimworld > >
-      {
-        static const bool v = true;
       };
 
       template< int dim, int dimworld, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >

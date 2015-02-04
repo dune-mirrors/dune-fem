@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_CODIMMAP_HH
 #define DUNE_FEM_CODIMMAP_HH
 
+#error File is on removal list
+
 #include <cassert>
 
 #include <dune/fem/misc/metaprogramming.hh>

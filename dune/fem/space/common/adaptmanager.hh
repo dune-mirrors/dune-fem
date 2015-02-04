@@ -17,7 +17,7 @@
 
 #include <dune/fem/space/common/adaptcallbackhandle.hh>
 #include <dune/fem/io/parameter.hh>
-#include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
 
 
 namespace Dune
@@ -199,20 +199,6 @@ namespace Dune
     //! method identifier
     AdaptationMethodType adaptationMethod_;
   };
-
-  /*! This could be seen as a hack, but is not
-    With this method we define the class CombineRestProl which is only
-    for combining of local grid operations without using virtual methods.
-    The interface of the two defined methods of the class (restrictLocal and
-    prolongLocal) is given by the implementation (see below ) and
-    has to be the same for all local operators you want to combine.
-  */
-#define PARAM_CLASSNAME CombinedRestProl
-#define PARAM_FUNC_1 restrictLocal
-#define PARAM_FUNC_2 prolongLocal
-#define PARAM_FUNC_3 calcFatherChildWeight
-#define PARAM_FUNC_4 addToCommunicator
-#include <dune/fem/operator/common/combine.inc>
 
   /*! \brief This class manages the adaptation process.
    If the method adapt is called, then the grid is adapted and also

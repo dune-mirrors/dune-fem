@@ -4,8 +4,6 @@
 #include <iostream>
 #include <vector>
 
-#include <dune/fem/operator/common/vectorspace.hh>
-
 namespace Dune
 {
 
@@ -45,7 +43,7 @@ namespace Dune
         interface).
     */
     template<typename DFieldType,typename RFieldType, class DType, class RType>
-    class Mapping //: public Vector < RFieldType >
+    class Mapping
     {
     protected:
       //! type of mapping

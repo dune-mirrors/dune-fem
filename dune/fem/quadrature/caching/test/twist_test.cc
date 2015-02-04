@@ -15,6 +15,26 @@ namespace Dune {
     nonSymmetricTest();
   }
 
+  namespace {
+    static void doTest( const double& a, const double& b )
+    {
+      if( std::abs( a - b ) > 1e-12 )
+      {
+        assert( false );
+        std::abort();
+      }
+    }
+
+    static void doTest( const bool value )
+    {
+      if( ! value )
+      {
+        assert( false );
+        std::abort();
+      }
+    }
+  }
+
   void TwistProvider_Test::lineTest()
   {
 
@@ -39,22 +59,22 @@ namespace Dune {
       TwistProvider<double, 1>::getTwistStorage(quad.ipList());
 
     // Test minTwist, maxTwist
-    _test(storage.minTwist() == 0);
-    _test(storage.maxTwist() == 2);
+    doTest(storage.minTwist() == 0);
+    doTest(storage.maxTwist() == 2);
 
     // Test points
     const PointVectorType& points = storage.getPoints();
-    _floatTest(points[0][0], begin[0]);
-    _floatTest(points[1][0], end[0]);
+    doTest(points[0][0], begin[0]);
+    doTest(points[1][0], end[0]);
 
     // Test mapping
     const MapperType& m0 = storage.getMapper(0);
-    _test(m0[0] == 0);
-    _test(m0[1] == 1);
+    doTest(m0[0] == 0);
+    doTest(m0[1] == 1);
 
     const MapperType& m1 = storage.getMapper(1);
-    _test(m1[0] == 1);
-    _test(m1[1] == 0);
+    doTest(m1[0] == 1);
+    doTest(m1[1] == 0);
 
   }
 
@@ -83,53 +103,53 @@ namespace Dune {
       TwistProvider<double, 2>::getTwistStorage(quad.ipList());
 
     // Test minTwist, maxTwist
-    _test(storage.minTwist() == -3);
-    _test(storage.maxTwist() == 3);
+    doTest(storage.minTwist() == -3);
+    doTest(storage.maxTwist() == 3);
 
     // Test points
     const PointVectorType& points = storage.getPoints();
-    _floatTest(points[0][0], p0[0]);
-    _floatTest(points[0][1], p0[1]);
-    _floatTest(points[1][0], p1[0]);
-    _floatTest(points[1][1], p1[1]);
-    _floatTest(points[2][0], p2[0]);
-    _floatTest(points[2][1], p2[1]);
+    doTest(points[0][0], p0[0]);
+    doTest(points[0][1], p0[1]);
+    doTest(points[1][0], p1[0]);
+    doTest(points[1][1], p1[1]);
+    doTest(points[2][0], p2[0]);
+    doTest(points[2][1], p2[1]);
 
     // Test twists
     const MapperType& m_3 = storage.getMapper(-3);
-    _test(m_3[0] == 2);
-    _test(m_3[1] == 1);
-    _test(m_3[2] == 0);
+    doTest(m_3[0] == 2);
+    doTest(m_3[1] == 1);
+    doTest(m_3[2] == 0);
     //std::cout << "(" << m_3[0] << ", " << m_3[1] << ", " << m_3[2] << ")\n";
 
     const MapperType& m_2 = storage.getMapper(-2);
-    _test(m_2[0] == 1);
-    _test(m_2[1] == 0);
-    _test(m_2[2] == 2);
+    doTest(m_2[0] == 1);
+    doTest(m_2[1] == 0);
+    doTest(m_2[2] == 2);
     //std::cout << "(" << m_2[0] << ", " << m_2[1] << ", " << m_2[2] << ")\n";
 
     const MapperType& m_1 = storage.getMapper(-1);
-    _test(m_1[0] == 0);
-    _test(m_1[1] == 2);
-    _test(m_1[2] == 1);
+    doTest(m_1[0] == 0);
+    doTest(m_1[1] == 2);
+    doTest(m_1[2] == 1);
     //std::cout << "(" << m_1[0] << ", " << m_1[1] << ", " << m_1[2] << ")\n";
 
     const MapperType& m0 = storage.getMapper(0);
-    _test(m0[0] == 0);
-    _test(m0[1] == 1);
-    _test(m0[2] == 2);
+    doTest(m0[0] == 0);
+    doTest(m0[1] == 1);
+    doTest(m0[2] == 2);
     //std::cout << "(" << m0[0] << ", " << m0[1] << ", " << m0[2] << ")\n";
 
     const MapperType& m1 = storage.getMapper(1);
-    _test(m1[0] == 1);
-    _test(m1[1] == 2);
-    _test(m1[2] == 0);
+    doTest(m1[0] == 1);
+    doTest(m1[1] == 2);
+    doTest(m1[2] == 0);
     //std::cout << "(" << m1[0] << ", " << m1[1] << ", " << m1[2] << ")\n";
 
     const MapperType& m2 = storage.getMapper(2);
-    _test(m2[0] == 2);
-    _test(m2[1] == 0);
-    _test(m2[2] == 1);
+    doTest(m2[0] == 2);
+    doTest(m2[1] == 0);
+    doTest(m2[2] == 1);
     //std::cout << "(" << m2[0] << ", " << m2[1] << ", " << m2[2] << ")\n";
   }
 
@@ -158,75 +178,75 @@ namespace Dune {
       TwistProvider<double, 2>::getTwistStorage(quad.ipList());
 
     // Test minTwist, maxTwist
-    _test(storage.minTwist() == -4);
-    _test(storage.maxTwist() == 4);
+    doTest(storage.minTwist() == -4);
+    doTest(storage.maxTwist() == 4);
 
     // Test points
     const PointVectorType& points = storage.getPoints();
-    _floatTest(points[0][0], p0[0]);
-    _floatTest(points[0][1], p0[1]);
-    _floatTest(points[1][0], p1[0]);
-    _floatTest(points[1][1], p1[1]);
-    _floatTest(points[2][0], p2[0]);
-    _floatTest(points[2][1], p2[1]);
-    _floatTest(points[3][0], p3[0]);
-    _floatTest(points[3][1], p3[1]);
+    doTest(points[0][0], p0[0]);
+    doTest(points[0][1], p0[1]);
+    doTest(points[1][0], p1[0]);
+    doTest(points[1][1], p1[1]);
+    doTest(points[2][0], p2[0]);
+    doTest(points[2][1], p2[1]);
+    doTest(points[3][0], p3[0]);
+    doTest(points[3][1], p3[1]);
 
     // Test twists
     const MapperType& m_4 = storage.getMapper(-4);
-    _test(m_4[0] == 2);
-    _test(m_4[1] == 3);
-    _test(m_4[2] == 0);
-    _test(m_4[3] == 1);
+    doTest(m_4[0] == 2);
+    doTest(m_4[1] == 3);
+    doTest(m_4[2] == 0);
+    doTest(m_4[3] == 1);
     //std::cout << "(" << m_4[0] << ", " << m_4[1] << ", " << m_4[2] << ", " << m_4[3] << ")\n";
 
     const MapperType& m_3 = storage.getMapper(-3);
-    _test(m_3[0] == 3);
-    _test(m_3[1] == 1);
-    _test(m_3[2] == 2);
-    _test(m_3[3] == 0);
+    doTest(m_3[0] == 3);
+    doTest(m_3[1] == 1);
+    doTest(m_3[2] == 2);
+    doTest(m_3[3] == 0);
     //std::cout << "(" << m_3[0] << ", " << m_3[1] << ", " << m_3[2] << ", " << m_3[3] << ")\n";
 
     const MapperType& m_2 = storage.getMapper(-2);
-    _test(m_2[0] == 1);
-    _test(m_2[1] == 0);
-    _test(m_2[2] == 3);
-    _test(m_2[3] == 2);
+    doTest(m_2[0] == 1);
+    doTest(m_2[1] == 0);
+    doTest(m_2[2] == 3);
+    doTest(m_2[3] == 2);
     //std::cout << "(" << m_2[0] << ", " << m_2[1] << ", " << m_2[2] << ", " << m_2[3] << ")\n";
 
     const MapperType& m_1 = storage.getMapper(-1);
-    _test(m_1[0] == 0);
-    _test(m_1[1] == 2);
-    _test(m_1[2] == 1);
-    _test(m_1[3] == 3);
+    doTest(m_1[0] == 0);
+    doTest(m_1[1] == 2);
+    doTest(m_1[2] == 1);
+    doTest(m_1[3] == 3);
     // std::cout << "(" << m_1[0] << ", " << m_1[1] << ", " << m_1[2] << ", " << m_1[3] << ")\n";
 
     const MapperType& m0 = storage.getMapper(0);
-    _test(m0[0] == 0);
-    _test(m0[1] == 1);
-    _test(m0[2] == 2);
-    _test(m0[3] == 3);
+    doTest(m0[0] == 0);
+    doTest(m0[1] == 1);
+    doTest(m0[2] == 2);
+    doTest(m0[3] == 3);
     //std::cout << "(" << m0[0] << ", " << m0[1] << ", " << m0[2] << ", " << m0[3] << ")\n";
 
     const MapperType& m1 = storage.getMapper(1);
-    _test(m1[0] == 1);
-    _test(m1[1] == 3);
-    _test(m1[2] == 0);
-    _test(m1[3] == 2);
+    doTest(m1[0] == 1);
+    doTest(m1[1] == 3);
+    doTest(m1[2] == 0);
+    doTest(m1[3] == 2);
     // std::cout << "(" << m1[0] << ", " << m1[1] << ", " << m1[2] << ", " << m1[3] << ")\n";
 
     const MapperType& m2 = storage.getMapper(2);
-    _test(m2[0] == 3);
-    _test(m2[1] == 2);
-    _test(m2[2] == 1);
-    _test(m2[3] == 0);
+    doTest(m2[0] == 3);
+    doTest(m2[1] == 2);
+    doTest(m2[2] == 1);
+    doTest(m2[3] == 0);
     //std::cout << "(" << m2[0] << ", " << m2[1] << ", " << m2[2] << ", " << m2[3] << ")\n";
 
     const MapperType& m3 = storage.getMapper(3);
-    _test(m3[0] == 2);
-    _test(m3[1] == 0);
-    _test(m3[2] == 3);
-    _test(m3[3] == 1);
+    doTest(m3[0] == 2);
+    doTest(m3[1] == 0);
+    doTest(m3[2] == 3);
+    doTest(m3[3] == 1);
     //std::cout << "(" << m3[0] << ", " << m3[1] << ", " << m3[2] << ", " << m3[3] << ")\n";
   }
 
@@ -252,16 +272,16 @@ namespace Dune {
 
     // Test points
     const PointVectorType& points = storage.getPoints();
-    _test(points.size() == 2);
-    _floatTest(points[0][0], begin[0]);
-    _floatTest(points[1][0], end[0]);
+    doTest(points.size() == 2);
+    doTest(points[0][0], begin[0]);
+    doTest(points[1][0], end[0]);
 
     // Test mapping
     const MapperType& m0 = storage.getMapper(0);
-    _test(m0[0] == 0);
+    doTest(m0[0] == 0);
 
     const MapperType& m1 = storage.getMapper(1);
-    _test(m1[0] == 1);
+    doTest(m1[0] == 1);
 
   }
   } // end namespace Fem

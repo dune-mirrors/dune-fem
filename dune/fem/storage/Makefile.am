@@ -4,19 +4,14 @@ AUTOMAKE_OPTIONS = foreign 1.5
 storagedir =  $(includedir)/dune/fem/storage
 storage_HEADERS = arrayallocator.hh \
       		        array.hh \
-									array_inline.hh \
-		              blasvector.hh \
     		          envelope.hh \
         		      objectstack.hh \
-            		  obstack.hh \
-		              rectarray.hh \
     		          referencecounter.hh \
         		      stlarray.hh \
             		  singletonlist.hh \
 		              subarray.hh \
     		          vector.hh \
-        		      vector_inline.hh \
-            		  ssematrixdynamic.hh
+        		      vector_inline.hh
 
 include $(top_srcdir)/am/global-rules
 

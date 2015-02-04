@@ -1,13 +1,13 @@
 #ifndef DUNE_FEM_COMMOPERATIONS_HH
 #define DUNE_FEM_COMMOPERATIONS_HH
 
-#include <dune/common/tuples.hh>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
 #include <dune/common/tupleutility.hh>
 
 #include <dune/grid/common/datahandleif.hh>
-
-#include <dune/fem/misc/nil.hh>
-
 
 namespace Dune
 {
@@ -19,38 +19,45 @@ namespace Dune
       @{
   **/
 
-    /** Class to combine data handles. The outcome is a class satifying the
-        DataHandleIF itself.
-     */
-    template <  class DataImpOne
-              , class DataImpTwo   = Nil
-              , class DataImpThree = Nil
-              , class DataImpFour  = Nil
-              , class DataImpFive  = Nil
-              , class DataImpSix   = Nil
-              , class DataImpSeven = Nil
-              , class DataImpEight = Nil
-              , class DataImpNine  = Nil >
-    class CombinedDataHandle
-     : public CommDataHandleIF<
-         CombinedDataHandle < DataImpOne ,
-                              DataImpTwo ,
-                              DataImpThree,
-                              DataImpFour ,
-                              DataImpFive ,
-                              DataImpSix  ,
-                              DataImpSeven,
-                              DataImpEight,
-                              DataImpNine
-                              > ,
-                              typename DataImpOne ::DataType >
+    // CombinedDataType
+    // ----------------
+
+    template< class... DataHandle >
+    struct CombinedDataType;
+
+    template< class DataHandle >
+    struct CombinedDataType< DataHandle >
     {
+      typedef typename DataHandle::DataType Type;
+    };
+
+    template< class DataHandle, class... Tail >
+    struct CombinedDataType< DataHandle, Tail... >
+    {
+      typedef typename DataHandle::DataType Type;
+      static_assert( std::is_same< Type, typename CombinedDataType< Tail... >::Type >::value, "Only data handles for the same data type can be combined." );
+    };
+
+
+
+    // CombinedDataHandle
+    // ------------------
+
+    /**
+     * \brief combine multiple data handles into one
+     */
+    template< class... DataHandle >
+    class CombinedDataHandle
+      : public CommDataHandleIF< CombinedDataHandle< DataHandle... >, typename CombinedDataType< DataHandle... >::Type >
+    {
+      typedef std::tuple< DataHandle... > DataHandlerTupleType;
+
       /** DataGather functor  */
       template <class BufferImp, class EntityImp>
       class DataGather{
       public:
         //! Constructor taking buffer and entity
-        DataGather(BufferImp & buff, const EntityImp & en)
+        DataGather(BufferImp & buff, const EntityImp & en )
         : buff_(buff)
         , en_(en)
         {}
@@ -81,6 +88,7 @@ namespace Dune
         //! call scatter on given data handle object
         template <class DataHandlerImp>
         void visit(DataHandlerImp & dh) {
+          // TODO: here, the wrong size is passed to the subhandles
           dh.scatter(buff_,en_,size_);
         }
 
@@ -177,52 +185,16 @@ namespace Dune
         bool contains_;
       };
 
-      DataImpOne   & one_;
-      DataImpTwo   & two_;
-      DataImpThree & three_;
-      DataImpFour  & four_;
-      DataImpFive  & five_;
-      DataImpSix   & six_;
-      DataImpSeven & seven_;
-      DataImpEight & eight_;
-      DataImpNine  & nine_;
-
-      typedef Dune::tuple<  DataImpOne
-                            , DataImpTwo
-                            , DataImpThree
-                            , DataImpFour
-                            , DataImpFive
-                            , DataImpSix
-                            , DataImpSeven
-                            , DataImpEight
-                            , DataImpNine
-                            > DataHandlerTupleType;
-
-      mutable DataHandlerTupleType data_;
     public:
-      typedef typename DataImpOne :: DataType DataType;
+      typedef typename CombinedDataType< DataHandle... >::Type DataType;
 
-      // initialize of Nil
-      static Nil & null() {
-        static Nil n;
-        return n;
-      }
+      CombinedDataHandle ( const DataHandle &... handle )
+        : data_( handle... )
+      {}
 
-      CombinedDataHandle(DataImpOne & one
-                , DataImpTwo   & two   = null()
-                , DataImpThree & three = null()
-                , DataImpFour  & four  = null()
-                , DataImpFive  & five  = null()
-                , DataImpSix   & six   = null()
-                , DataImpSeven & seven = null()
-                , DataImpEight & eight = null()
-                , DataImpNine  & nine  = null() )
-        : one_(one) , two_(two) , three_(three) , four_(four)
-        , five_(five) , six_(six) , seven_(seven)
-        , eight_(eight) , nine_(nine)
-        , data_( one_ , two_, three_, four_, five_, six_ , seven_ , eight_ , nine_ )
-      {
-      }
+      CombinedDataHandle ( const std::tuple< DataHandle... > &data )
+        : data_( data )
+      {}
 
       bool contains (int dim, int codim) const
       {
@@ -270,6 +242,9 @@ namespace Dune
         forEach.apply(dataSize);
         return dataSize.size();
       }
+
+    private:
+      DataHandlerTupleType data_;
     };
 
     ////////////////////////////////////////////////////////////////

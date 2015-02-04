@@ -906,9 +906,8 @@ namespace Dune
         indexSetRestrictProlong_( *this, insertIndices_ , removeIndices_ ),
         indexSetRestrictProlongNoResize_( *this, insertIndices_ , removeIndices_ ),
         indexRPop_(),
-        memoryFactor_( Parameter :: getValidValue
-          ( "fem.dofmanager.memoryfactor",  double( 1.1 ),
-            ValidateNotLess< double >( 1.0 ) ) )
+        memoryFactor_( Parameter :: getValidValue( "fem.dofmanager.memoryfactor",  double( 1.1 ),
+            [] ( double value ) { return value >= 1.0; } ) )
       {
         // only print memory factor if it deviates from the default value
         if( std::abs( memoryFactor_ - 1.1 ) > 1e-12 )

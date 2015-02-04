@@ -368,8 +368,6 @@ namespace Dune
       }
 
     protected:
-      //void grapeDisplay ( Dune::Nil &data ) const {}
-
       //! display data with grape
       template< class OutputTupleType >
       void grapeDisplay ( OutputTupleType &data ) const;
