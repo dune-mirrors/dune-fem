@@ -10,12 +10,14 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
 SUBDIRS =
 
 # test programs 
-check_PROGRAMS = test-pass
-TESTS = test-pass
+check_PROGRAMS = test-pass test-insertoperatorpass
+TESTS = test-pass test-insertoperatorpass
 
 test_pass_SOURCES = test-pass.cc
 test_pass_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS) -DDIMRANGE=$(DIMRANGE) -DPOLORDER=$(POLORDER)
 
+test_insertoperatorpass_SOURCES = test-insertoperatorpass.cc
+test_insertoperatorpass_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS)
 DGFFILES = 1dgrid.dgf 2dgrid.dgf 3dgrid.dgf
 
 EXTRA_DIST = $(DGFFILES) parameter

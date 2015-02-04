@@ -1,7 +1,2 @@
-/tester
+/test-insertoperatorpass
 /test-pass
-/Makefile
-/Makefile.in
-/*.swp
-/.deps
-/.libs

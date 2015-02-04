@@ -6,6 +6,7 @@ pass_HEADERS = applylocaloperator.hh \
 	       createpass.hh \
 	       dginversemass.hh \
 	       insertfunction.hh \
+	       insertoperator.hh \
 	       localdg.hh
 
 include $(top_srcdir)/am/global-rules

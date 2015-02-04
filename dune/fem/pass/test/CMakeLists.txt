@@ -17,5 +17,9 @@ configure_file(parameter ${CMAKE_CURRENT_BINARY_DIR}/parameter COPYONLY)
 add_executable(test_pass test-pass.cc)
 dune_target_link_libraries(test_pass "${DUNE_LIBS};${LOCAL_LIBS}")
 add_dune_mpi_flags(test_pass )
-
 dune_add_test(test_pass)
+
+add_executable(test_insertoperatorpass test-insertoperatorpass.cc)
+dune_target_link_libraries(test_insertoperatorpass "${DUNE_LIBS};${LOCAL_LIBS}")
+add_dune_mpi_flags(test_insertoperatorpass )
+dune_add_test(test_insertoperatorpass)
