@@ -107,7 +107,7 @@ namespace Dune
       //! \brief type of Intersection
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
-      typedef GridView< Fem::GridPartViewTraits< GridPartType > > GridViewType;
+      typedef typename Traits::GridViewType GridViewType;
 
       typedef typename GridType::ctype ctype;
 
@@ -152,8 +152,8 @@ namespace Dune
       //! \brief convert grid part into a dune grid view
       GridViewType gridView () const
       {
-        typedef typename GridViewType::GridViewImp Impl;
-        return GridViewType( Impl( asImp() ) );
+        CHECK_INTERFACE_IMPLEMENTATION((asImp().gridView()));
+        return asImp().gridView();
       }
 
       //! \brief Returns reference to index set of the underlying grid

@@ -6,10 +6,12 @@
 
 //- dune-grid includes
 #include <dune/grid/common/datahandleif.hh>
+#include <dune/grid/common/gridview.hh>
 
 //- dune-fem includes
 #include <dune/fem/gridpart/adaptiveleafindexset.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
+#include <dune/fem/gridpart/common/gridpartview.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/filteredgridpart/capabilities.hh>
 #include <dune/fem/gridpart/filteredgridpart/datahandle.hh>
@@ -110,6 +112,9 @@ namespace Dune
       //! \brief type of grid
       typedef typename HostGridPartType::GridType GridType;
 
+      //! \brief wrapper around grid part
+      typedef GridView< Fem::GridPartViewTraits< GridPartType > > GridViewType;
+
       /** \brief The type of the corresponding TwistUtility */
       typedef MetaTwistUtility< typename HostGridPartType :: TwistUtilityType >  TwistUtilityType ;
 
@@ -209,6 +214,9 @@ namespace Dune
       //! \brief grid type
       typedef typename Traits::GridType GridType;
 
+      //! \brief grid view type
+      typedef typename Traits::GridViewType GridViewType;
+
       //! \brief index set type
       typedef typename Traits::IndexSetType IndexSetType;
 
@@ -219,9 +227,6 @@ namespace Dune
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
       typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
-
-      //! \brief grid view
-      typedef GridView< GridPartViewTraits< ThisType > > GridViewType;
 
       //! \brief grid part typedefs, use those of traits
       template< int codim >
@@ -268,6 +273,13 @@ namespace Dune
       GridType &grid ()
       {
         return hostGridPart().grid();
+      }
+
+      //! \brief return grid part as grid view
+      GridViewType gridView () const
+      {
+        typedef typename GridViewType::GridViewImp Impl;
+        return GridViewType( Impl( *this ) );
       }
 
       //! \brief return index set of this grid part

@@ -1,11 +1,11 @@
 #ifndef DUNE_FEM_GRIDPART_LEAFGRIDPART_HH
 #define DUNE_FEM_GRIDPART_LEAFGRIDPART_HH
 
-//- dune-fem includes
-#include <dune/fem/gridpart/common/capabilities.hh>
-#include <dune/fem/gridpart/common/gridpart.hh>
-#include <dune/fem/gridpart/defaultindexsets.hh>
+#include <dune/grid/common/capabilities.hh>
 
+#include <dune/fem/gridpart/common/capabilities.hh>
+#include <dune/fem/gridpart/common/gridview2gridpart.hh>
+#include <dune/fem/gridpart/defaultindexsets.hh>
 
 namespace Dune
 {
@@ -13,251 +13,100 @@ namespace Dune
   namespace Fem
   {
 
-    /**
-     * @addtogroup GridPart
-     *
-     * @{
-     */
-
-    // Forward declarations
-    // --------------------
-
-    template< class >
-    struct LeafGridPartTraits;
-
-
     // LeafGridPart
     // ------------
 
-    //! \brief Selects the leaf level of a grid
-    template< class GridImp >
+    template< class Grid >
     class LeafGridPart
-    : public GridPartDefault< LeafGridPartTraits< GridImp > >
+      : public GridView2GridPart< typename Grid::LeafGridView, WrappedLeafIndexSet< Grid >, LeafGridPart< Grid > >
     {
-      typedef LeafGridPart< GridImp > ThisType;
-      typedef GridPartDefault< LeafGridPartTraits< GridImp > > BaseType;
+      typedef GridView2GridPart< typename Grid::LeafGridView, WrappedLeafIndexSet< Grid >, LeafGridPart< Grid > > BaseType;
 
     public:
-      //- Public typedefs and enums
-      //! Type definitions
-      typedef LeafGridPartTraits< GridImp > Traits;
+      /** \copydoc Dune::Fem::GridPartInterface::GridType */
+      typedef typename BaseType::GridType GridType;
 
-      //! Grid implementation type
-      typedef typename Traits::GridType GridType;
-      //! The leaf index set of the grid implementation
-      typedef typename Traits::IndexSetType IndexSetType;
+      /** \copydoc Dune::Fem::GridPartInterface::GridType */
+      typedef typename BaseType::IndexSetType IndexSetType;
 
-      //! The corresponding IntersectionIterator
-      typedef typename Traits::IntersectionIteratorType IntersectionIteratorType ;
+      /** \name Construction
+       *  \{
+       */
 
-      typedef typename IntersectionIteratorType::Intersection IntersectionType;
-
-      //! the leaf grid view from the grid
-      typedef typename GridType::template Partition< All_Partition >::LeafGridView LeafGridView;
-
-    private:
-      typedef typename GridType::template Codim<0>::Entity EntityCodim0Type;
-
-    public:
-      //- Public methods
-      //! Constructor
       explicit LeafGridPart ( GridType &grid )
-      : BaseType( grid ),
-        leafGridView_( grid.leafGridView() ),
-        isetWrapper_( grid )
+        : BaseType( grid.leafGridView() ),
+          grid_( grid ),
+          indexSet_( grid )
       {}
 
-      //! copy constructor
-      LeafGridPart ( const ThisType &other )
-      : BaseType( other ),
-        leafGridView_( other.leafGridView_ ),
-        isetWrapper_( other.grid() )
-      {}
+      /** \} */
 
-      using BaseType::grid;
+      /** \name Public member methods
+       *  \{
+       */
 
-      //! Returns reference to index set of the underlying grid
-      const IndexSetType &indexSet () const
-      {
-        return isetWrapper_;
-      }
+      /** \copydoc Dune::Fem::GridPartInterface::grid */
+      GridType &grid () { return grid_; }
 
-      //! Begin iterator on the leaf level
-      template< int codim >
-      typename BaseType::template Codim< codim >::IteratorType
-      begin () const
-      {
-        return begin< codim, InteriorBorder_Partition >();
-      }
+      /** \copydoc Dune::Fem::GridPartInterface::grid */
+      const GridType &grid () const { return grid_; }
 
-      //! Begin iterator on the leaf level
-      template< int codim, PartitionIteratorType pitype >
-      typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType
-      begin () const
-      {
-        return leafGridView_.template begin< codim, pitype >();
-      }
+      /** \copydoc Dune::Fem::GridPartInterface::indexSet */
+      const IndexSetType &indexSet () const { return indexSet_; }
 
-      //! Begin iterator on the leaf level
-      template< int codim >
-      typename BaseType::template Codim< codim >::IteratorType
-      end () const
-      {
-        return end< codim, InteriorBorder_Partition >();
-      }
+      /** \copydoc Dune::Fem::GridPartInterface::level */
+      int level () const { return grid().maxLevel(); }
 
-      //! End iterator on the leaf level
-      template< int codim, PartitionIteratorType pitype >
-      typename Traits::template Codim< codim >::template Partition< pitype >::IteratorType
-      end () const
-      {
-        return leafGridView_.template end< codim, pitype >();
-      }
-
-      //! ibegin of corresponding intersection iterator for given entity
-      IntersectionIteratorType ibegin ( const EntityCodim0Type &entity ) const
-      {
-        return leafGridView_.ibegin( entity );
-      }
-
-      //! iend of corresponding intersection iterator for given entity
-      IntersectionIteratorType iend ( const EntityCodim0Type &entity ) const
-      {
-        return leafGridView_.iend( entity );
-      }
-
-      int boundaryId ( const IntersectionType &intersection ) const
-      {
-        return intersection.boundaryId();
-      }
-
-      //! Returns maxlevel of the grid
-      int level() const { return grid().maxLevel(); }
-
-      //! corresponding communication method for this grid part
-      template <class DataHandleImp,class DataType>
-      void communicate(CommDataHandleIF<DataHandleImp,DataType> & data,
-                       InterfaceType iftype, CommunicationDirection dir) const
-      {
-        leafGridView_.communicate( data, iftype, dir );
-      }
+      /** \} */
 
     private:
-      //! leaf grid view
-      LeafGridView leafGridView_ ;
-      //! GridDefaultIndexSet Wrapper
-      IndexSetType isetWrapper_;
+      GridType &grid_;
+      IndexSetType indexSet_;
     };
 
 
-
-    // LeafGridPartTraits
-    // ------------------
-
-    //! Type definitions for the LeafGridPart class
-    template< class GridImp >
-    struct LeafGridPartTraits
-    {
-      /** \brief The type of the grid */
-      typedef GridImp GridType;
-
-      /** \brief The type of the corresponding grid part class */
-      typedef LeafGridPart< GridImp > GridPartType;
-
-      /** \brief The type of the corresponding TwistUtility */
-      typedef TwistUtility< GridType >  TwistUtilityType ;
-
-      /** \brief The appropriate index set */
-      typedef WrappedLeafIndexSet<GridType> IndexSetType;
-
-      static const PartitionIteratorType indexSetPartitionType = All_Partition;
-      static const InterfaceType indexSetInterfaceType = All_All_Interface;
-
-      /** \brief The appropriate intersection iterator */
-      typedef typename GridType::template Codim<0>::Entity::LeafIntersectionIterator
-        IntersectionIteratorType;
-
-      /** \brief Iterators over the entities of codimension <tt>cd</tt> of this grid part */
-      template< int codim >
-      struct Codim
-      {
-        typedef typename GridType::template Codim< codim >::Geometry GeometryType;
-        typedef typename GridType::template Codim< codim >::LocalGeometry LocalGeometryType;
-
-        typedef typename GridType::template Codim< codim >::Entity EntityType;
-        typedef typename GridType::template Codim< codim >::EntityPointer EntityPointerType;
-
-        typedef typename GridType::template Codim< codim >::EntitySeed EntitySeedType;
-
-        template< PartitionIteratorType pitype >
-        struct Partition
-        {
-          typedef typename GridType::template Codim< codim >::template Partition< pitype >::LeafIterator
-            IteratorType;
-        };
-      };
-
-      typedef typename GridType::CollectiveCommunication CollectiveCommunicationType;
-
-      //! \brief is true if grid on this view only has conforming intersections
-      static const bool conforming = Dune::Capabilities::isLeafwiseConforming< GridType >::v;
-    };
-
-
-
-    // Leaf grid part capabilities
-    // ---------------------------
 
     namespace GridPartCapabilities
     {
 
-      template< class GridType >
-      struct hasGrid< LeafGridPart< GridType > >
+      template< class Grid >
+      struct hasGrid< LeafGridPart< Grid > >
       {
         static const bool v = true;
       };
 
-      template< class GridType >
-      struct hasSingleGeometryType< LeafGridPart< GridType > >
+      template< class Grid >
+      struct hasSingleGeometryType< LeafGridPart< Grid > >
+       : public Dune::Capabilities::hasSingleGeometryType< Grid >
+      {};
+
+      template< class Grid >
+      struct isCartesian< LeafGridPart< Grid > >
+       : public Dune::Capabilities::isCartesian< Grid >
+      {};
+
+      template< class Grid, int codim  >
+      struct hasEntity< LeafGridPart< Grid >, codim >
+       : public Dune::Capabilities::hasEntity< Grid, codim >
+      {};
+
+      template< class Grid >
+      struct isParallel< LeafGridPart< Grid > >
+       : public Dune::Capabilities::isParallel< Grid >
+      {};
+
+      template< class Grid, int codim  >
+      struct canCommunicate< LeafGridPart< Grid >, codim >
+       : public Dune::Capabilities::canCommunicate< Grid, codim >
+      {};
+
+      template< class Grid >
+      struct isConforming< LeafGridPart< Grid > >
       {
-        static const bool v = Dune::Capabilities::hasSingleGeometryType< GridType >::v;
-        static const unsigned int topologyId
-          = Dune::Capabilities::hasSingleGeometryType< GridType >::topologyId;
+        static const bool v = Dune::Capabilities::isLeafwiseConforming< Grid >::v;
       };
 
-      template< class GridType >
-      struct isCartesian< LeafGridPart< GridType > >
-      {
-        static const bool v = Dune::Capabilities::isCartesian< GridType >::v;
-      };
-
-      template< class GridType, int codim  >
-      struct hasEntity< LeafGridPart< GridType >, codim >
-      {
-        static const bool v = Dune::Capabilities::hasEntity< GridType, codim >::v;
-      };
-
-      template< class GridType >
-      struct isParallel< LeafGridPart< GridType > >
-      {
-        static const bool v = Dune::Capabilities::isParallel< GridType >::v;
-      };
-
-      template< class GridType, int codim >
-      struct canCommunicate< LeafGridPart< GridType >, codim >
-      {
-        static const bool v = Dune::Capabilities::canCommunicate< GridType, codim >::v;
-      };
-
-      template< class GridType >
-      struct isConforming< LeafGridPart< GridType > >
-      {
-        static const bool v = Dune::Capabilities::isLeafwiseConforming< GridType >::v;
-      };
-
-    } // end namespace GridPartCapabilities
-
-    /** @} */
+    } // namespace GridPartCapabilities
 
   } // namespace Fem
 

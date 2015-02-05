@@ -5,9 +5,12 @@
 #error "Experimental grid extensions required for IdGridPart. Reconfigure with --enable-experimental-grid-extensions to enable IdGridPart."
 #else
 
-#include <dune/fem/gridpart/common/gridpart.hh>
+#include <dune/grid/common/gridview.hh>
+
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
+#include <dune/fem/gridpart/common/gridpart.hh>
+#include <dune/fem/gridpart/common/gridpartview.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/idgridpart/capabilities.hh>
 #include <dune/fem/gridpart/idgridpart/datahandle.hh>
@@ -39,6 +42,8 @@ namespace Dune
     struct IdGridPartTraits
     {
       typedef IdGridPart< HostGridPart > GridPartType;
+
+      typedef GridView< Fem::GridPartViewTraits< GridPartType > > GridViewType;
 
       //! type of twist utility
       typedef MetaTwistUtility< typename HostGridPart :: TwistUtilityType >  TwistUtilityType;
@@ -149,6 +154,7 @@ namespace Dune
       typedef HostGridPart HostGridPartType;
 
       typedef typename BaseType::GridType GridType;
+      typedef typename BaseType::GridViewType GridViewType;
       typedef typename BaseType::IndexSetType IndexSetType;
       typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
       typedef typename BaseType::IntersectionType IntersectionType;
@@ -177,6 +183,12 @@ namespace Dune
       GridType &grid ()
       {
         return hostGridPart_.grid();
+      }
+
+      GridViewType gridView () const
+      {
+        typedef typename GridViewType::GridViewImp Impl;
+        return GridViewType( Impl( *this ) );
       }
 
       const IndexSetType &indexSet () const
