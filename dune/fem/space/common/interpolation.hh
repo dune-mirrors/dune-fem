@@ -3,6 +3,9 @@
 
 #include <dune/fem/misc/iteratorprovider.hh>
 
+#warning "<dune/fem/space/common/interpolation.hh> is deprecated. Use <dune/fem/space/common/interpolate.hh> instead."
+#warning "Replace 'Dune::Fem::Interpolation< DiscreteFunction >::apply( u, v )' by 'interpolate( u, v )'."
+
 namespace Dune
 {
 
