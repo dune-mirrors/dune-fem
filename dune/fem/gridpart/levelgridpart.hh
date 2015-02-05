@@ -46,11 +46,10 @@ namespace Dune
        *  \{
        */
 
-      /** \copydoc Dune::Fem::GridPartInterface::grid */
-      GridType &grid () { return grid_; }
+      using BaseType::grid;
 
       /** \copydoc Dune::Fem::GridPartInterface::grid */
-      const GridType &grid () const { return grid_; }
+      GridType &grid () { return grid_; }
 
       /** \copydoc Dune::Fem::GridPartInterface::indexSet */
       const IndexSetType &indexSet () const { return indexSet_; }

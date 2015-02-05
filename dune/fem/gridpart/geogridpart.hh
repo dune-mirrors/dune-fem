@@ -10,7 +10,6 @@
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
-#include <dune/fem/gridpart/common/gridpart2gridview.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/geogridpart/capabilities.hh>
 #include <dune/fem/gridpart/geogridpart/datahandle.hh>
@@ -107,8 +106,6 @@ namespace Dune
 
       typedef typename HostGridPartType::GridType GridType;
 
-      typedef GridView< Fem::GridPart2GridViewTraits< GridPartType > > GridViewType;
-
       //! type of twist utility
       typedef MetaTwistUtility< typename HostGridPartType :: TwistUtilityType >  TwistUtilityType;
 
@@ -165,7 +162,6 @@ namespace Dune
       typedef CoordFunction CoordFunctionType;
 
       typedef typename BaseType::GridType GridType;
-      typedef typename BaseType::GridViewType GridViewType;
       typedef typename BaseType::IndexSetType IndexSetType;
       typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
       typedef typename BaseType::IntersectionType IntersectionType;
@@ -189,12 +185,6 @@ namespace Dune
       GridType &grid ()
       {
         return const_cast< GridType & >( hostGridPart().grid() );
-      }
-
-      GridViewType gridView () const
-      {
-        typedef typename GridViewType::GridViewImp Impl;
-        return GridViewType( Impl( *this ) );
       }
 
       const IndexSetType &indexSet () const

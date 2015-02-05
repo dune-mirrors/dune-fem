@@ -17,6 +17,8 @@ add_executable(test_idgridpart test-idgridpart.cc)
 dune_target_link_libraries(test_idgridpart "${DUNE_LIBS};${LOCAL_LIBS}")
 add_executable(test_geogridpart test-geogridpart.cc)
 dune_target_link_libraries(test_geogridpart "${DUNE_LIBS};${LOCAL_LIBS}")
+add_executable(test_policies test-policies.cc)
+dune_target_link_libraries(test_policies "${DUNE_LIBS};${LOCAL_LIBS}")
 
 set_property(TARGET gp_lagrangeinterpolation APPEND PROPERTY 
              COMPILE_DEFINITIONS "COUNT_FLOPS;USE_FILTEREDGRIDPART;POLORDER=1" )

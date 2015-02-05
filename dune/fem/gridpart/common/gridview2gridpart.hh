@@ -136,8 +136,8 @@ namespace Dune
        *  \{
        */
 
-      /** \copydoc Dune::Fem::GridPartInterface::gridView */
-      GridViewType gridView () const { return gridView_; }
+      /** \copydoc Dune::Fem::GridPartInterface::grid */
+      const GridType &grid () const { return gridView_.grid(); }
 
       /** \copydoc Dune::Fem::GridPartInterface::begin */
       template< int codim >
@@ -218,6 +218,9 @@ namespace Dune
       {
         return convert< Entity::codimension >( entity );
       }
+
+      /** \brief cast to underlying grid view */
+      explicit operator GridView () const { return gridView_; }
 
       /** \} */
 

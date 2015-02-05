@@ -1,6 +1,7 @@
 /test-idgridpart
 /test-filteredgridpart
 /test-geogridpart
+/test-policies
 /lagrangeinterpolation
 /Makefile
 /Makefile.in
