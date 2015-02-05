@@ -11,7 +11,7 @@
 #include <dune/fem/gridpart/adaptiveleafindexset.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
-#include <dune/fem/gridpart/common/gridpartview.hh>
+#include <dune/fem/gridpart/common/gridpart2gridview.hh>
 #include <dune/fem/gridpart/defaultindexsets.hh>
 #include <dune/fem/misc/capabilities.hh>
 #include <dune/fem/space/common/dofmanager.hh>
@@ -266,7 +266,7 @@ namespace Dune
       typedef AdaptiveLeafGridPart< GridType, idxpitype, onlyCodimensionZero > GridPartType;
 
       //! grid view type
-      typedef GridView< Fem::GridPartViewTraits< GridPartType > > GridViewType;
+      typedef GridView< Fem::GridPart2GridViewTraits< GridPartType > > GridViewType;
 
       /** \brief The type of the corresponding TwistUtility */
       typedef TwistUtility< GridType >  TwistUtilityType ;

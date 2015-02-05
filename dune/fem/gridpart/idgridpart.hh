@@ -10,7 +10,7 @@
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
-#include <dune/fem/gridpart/common/gridpartview.hh>
+#include <dune/fem/gridpart/common/gridpart2gridview.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/idgridpart/capabilities.hh>
 #include <dune/fem/gridpart/idgridpart/datahandle.hh>
@@ -43,7 +43,7 @@ namespace Dune
     {
       typedef IdGridPart< HostGridPart > GridPartType;
 
-      typedef GridView< Fem::GridPartViewTraits< GridPartType > > GridViewType;
+      typedef GridView< Fem::GridPart2GridViewTraits< GridPartType > > GridViewType;
 
       //! type of twist utility
       typedef MetaTwistUtility< typename HostGridPart :: TwistUtilityType >  TwistUtilityType;

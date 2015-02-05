@@ -11,7 +11,7 @@
 //- dune-fem includes
 #include <dune/fem/gridpart/adaptiveleafindexset.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
-#include <dune/fem/gridpart/common/gridpartview.hh>
+#include <dune/fem/gridpart/common/gridpart2gridview.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/filteredgridpart/capabilities.hh>
 #include <dune/fem/gridpart/filteredgridpart/datahandle.hh>
@@ -113,7 +113,7 @@ namespace Dune
       typedef typename HostGridPartType::GridType GridType;
 
       //! \brief wrapper around grid part
-      typedef GridView< Fem::GridPartViewTraits< GridPartType > > GridViewType;
+      typedef GridView< Fem::GridPart2GridViewTraits< GridPartType > > GridViewType;
 
       /** \brief The type of the corresponding TwistUtility */
       typedef MetaTwistUtility< typename HostGridPartType :: TwistUtilityType >  TwistUtilityType ;

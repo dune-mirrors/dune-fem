@@ -13,7 +13,6 @@
 //- dune-fem includes
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
-#include <dune/fem/gridpart/common/gridpartview.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
 namespace Dune

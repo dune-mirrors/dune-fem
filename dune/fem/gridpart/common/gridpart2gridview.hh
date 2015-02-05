@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_GRIDVIEW_HH
-#define DUNE_FEM_GRIDVIEW_HH
+#ifndef DUNE_FEM_GRIDPART_COMMON_GRIDPART2GRIDVIEW_HH
+#define DUNE_FEM_GRIDPART_COMMON_GRIDPART2GRIDVIEW_HH
 
 #include <dune/common/exceptions.hh>
 
@@ -13,13 +13,13 @@ namespace Dune
   {
 
     template< class GridPart >
-    class GridPartViewImpl;
+    class GridPart2GridViewImpl;
 
 
     template< class GridPart >
-    struct GridPartViewTraits
+    struct GridPart2GridViewTraits
     {
-      typedef GridPartViewImpl< GridPart > GridViewImp;
+      typedef GridPart2GridViewImpl< GridPart > GridViewImp;
 
       typedef typename GridPart::GridType Grid;
       typedef typename GridPart::IndexSetType IndexSet;
@@ -53,14 +53,14 @@ namespace Dune
 
 
     template< class GridPart >
-    class GridPartViewImpl
+    class GridPart2GridViewImpl
     {
-      typedef GridPartViewImpl< GridPart > ThisType;
+      typedef GridPart2GridViewImpl< GridPart > ThisType;
 
     public:
       typedef GridPart GridPartType;
 
-      typedef GridPartViewTraits< GridPartType > Traits;
+      typedef GridPart2GridViewTraits< GridPartType > Traits;
 
       /** \brief type of the grid */
       typedef typename Traits::Grid Grid;
@@ -88,11 +88,11 @@ namespace Dune
       enum { dimension = GridPartType::dimension };
       enum { dimensionworld = GridPartType::dimensionworld };
 
-      explicit GridPartViewImpl ( const GridPartType &gridPart )
+      explicit GridPart2GridViewImpl ( const GridPartType &gridPart )
       : gridPart_( gridPart )
       {}
 
-      GridPartViewImpl ( const ThisType &other ) = default;
+      GridPart2GridViewImpl ( const ThisType &other ) = default;
 
       ThisType &operator= ( const ThisType & ) = delete;
 
@@ -180,16 +180,16 @@ namespace Dune
 
 
     template< class GridPart >
-    class GridPartView
-    : public GridView< GridPartViewTraits< GridPart > >
+    class GridPart2GridView
+    : public GridView< GridPart2GridViewTraits< GridPart > >
     {
-      typedef GridPartView< GridPart > ThisType;
-      typedef GridView< GridPartViewTraits< GridPart > > BaseType;
+      typedef GridPart2GridView< GridPart > ThisType;
+      typedef GridView< GridPart2GridViewTraits< GridPart > > BaseType;
 
       typedef typename BaseType::GridViewImp GridViewImp;
 
     public:
-      explicit GridPartView ( const GridPart &gridPart )
+      explicit GridPart2GridView ( const GridPart &gridPart )
       : BaseType( GridViewImp( gridPart ) )
       {}
     };
@@ -198,4 +198,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_GRIDVIEW_HH
+#endif // #ifndef DUNE_FEM_GRIDPART_COMMON_GRIDPART2GRIDVIEW_HH

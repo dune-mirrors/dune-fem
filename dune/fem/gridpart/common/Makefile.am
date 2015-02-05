@@ -5,7 +5,7 @@ common_HEADERS = \
 	defaultgridpartentity.hh \
 	entitysearch.hh \
 	gridpart.hh \
-	gridpartview.hh \
+	gridpart2gridview.hh \
 	gridview2gridpart.hh \
 	metatwistutility.hh
 

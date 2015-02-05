@@ -7,7 +7,6 @@
 #include <dune/grid/io/file/vtk/subsamplingvtkwriter.hh>
 
 #include <dune/fem/version.hh>
-#include <dune/fem/gridpart/common/gridpartview.hh>
 #include <dune/fem/io/parameter.hh>
 
 #include <dune/fem/misc/threads/threadmanager.hh>
