@@ -9,7 +9,7 @@
 
 //- dune-fem includes
 #include <dune/fem/space/basisfunctionset/basisfunctionset.hh>
-#include <dune/fem/misc/subobjects.hh>
+#include <dune/fem/space/combinedspace/subobjects.hh>
 
 namespace Dune
 {

@@ -34,7 +34,6 @@ misc_HEADERS = alugridwriter.hh \
 	       metaprogramming.hh \
 	       mpimanager.hh \
 	       nonconformitylevel.hh \
-	       subobjects.hh \
 	       validator.hh
 
 noinst_LTLIBRARIES = libmisc.la

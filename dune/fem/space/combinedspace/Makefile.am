@@ -1,12 +1,13 @@
 combinedspacedir =  $(includedir)/dune/fem/space/combinedspace
-combinedspace_HEADERS = combineddofstorage.hh \
-                        combinedspace.hh \
-                        mapper.hh \
-												mapperselector.hh \
-                        combineddiscretefunctionspace.hh  \
-                        combinedmapper.hh \
-                        combinedbasisfunctionset.hh \
+combinedspace_HEADERS = adaptmanager.hh \
+												combinedbasisfunctionset.hh \
+												combineddiscretefunctionspace.hh  \
+												combineddofstorage.hh \
+												combinedmapper.hh \
+												combinedspace.hh \
 												lagrangepointsetexporter.hh \
-                        adaptmanager.hh
+												mapper.hh \
+												mapperselector.hh \
+												subobjects.hh 
 
 include $(top_srcdir)/am/global-rules
