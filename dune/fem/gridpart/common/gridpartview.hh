@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_GRIDVIEW_HH
 #define DUNE_FEM_GRIDVIEW_HH
 
+#include <dune/common/exceptions.hh>
+
+#include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/gridview.hh>
 
 namespace Dune
@@ -30,8 +33,6 @@ namespace Dune
       struct Codim
       : public Grid::Traits::template Codim< codim >
       {
-        typedef typename GridPart::template Codim< codim >::IteratorType Iterator;
-
         typedef typename GridPart::template Codim< codim >::EntityType Entity;
         typedef typename GridPart::template Codim< codim >::EntityPointerType EntityPointer;
 
@@ -43,6 +44,8 @@ namespace Dune
         {
           typedef typename GridPart::template Codim< codim >::template Partition< pitype >::IteratorType Iterator;
         };
+
+        typedef typename Partition< All_Partition >::Iterator Iterator;
       };
 
       static const bool conforming = GridPart::Traits::conforming;
@@ -89,14 +92,10 @@ namespace Dune
       : gridPart_( gridPart )
       {}
 
-      GridPartViewImpl ( const ThisType &other )
-      : gridPart_( other.gridPart_ )
-      {}
+      GridPartViewImpl ( const ThisType &other ) = default;
 
-    private:
-      ThisType &operator= ( const ThisType & );
+      ThisType &operator= ( const ThisType & ) = delete;
 
-    public:
       const Grid &grid () const
       {
         return gridPart_.grid();
@@ -120,7 +119,7 @@ namespace Dune
       template< int codim >
       typename Codim< codim >::Iterator begin () const
       {
-        return gridPart_.template begin< codim >();
+        return begin< codim, All_Partition >();
       }
 
       template< int codim, PartitionIteratorType pitype >
@@ -132,7 +131,7 @@ namespace Dune
       template< int codim >
       typename Codim< codim >::Iterator end () const
       {
-        return gridPart_.template end< codim >();
+        return end< codim, All_Partition >();
       }
 
       template< int codim, PartitionIteratorType pitype >
@@ -154,6 +153,16 @@ namespace Dune
       const CollectiveCommunication &comm () const
       {
         return gridPart_.comm();
+      }
+
+      int overlapSize ( int codim ) const
+      {
+        DUNE_THROW( NotImplemented, "Method ghostSize() not implemented yet" );
+      }
+
+      int ghostSize( int codim ) const
+      {
+        DUNE_THROW( NotImplemented, "Method ghostSize() not implemented yet" );
       }
 
       template< class DataHandleImp, class DataType >
@@ -182,10 +191,6 @@ namespace Dune
     public:
       explicit GridPartView ( const GridPart &gridPart )
       : BaseType( GridViewImp( gridPart ) )
-      {}
-
-      GridPartView ( const ThisType &other )
-      : BaseType( other )
       {}
     };
 
