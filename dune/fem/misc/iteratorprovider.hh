@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_MISC_ITERATORPROVIDER_HH
 #define DUNE_FEM_MISC_ITERATORPROVIDER_HH
 
-#warning "<dune/fem/misc/iteratorprovider.hh> is deprecated."
+#warning "<dune/fem/misc/iteratorprovider.hh> is deprecated. Please use <dune/grid/common/partitionset.hh> instead."
 
 #include <dune/grid/common/gridenums.hh>
 
