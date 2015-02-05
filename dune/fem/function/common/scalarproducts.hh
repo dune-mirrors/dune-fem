@@ -7,10 +7,12 @@
 #include <set>
 #include <map>
 #include <limits>
+#include <algorithm>
 
 //- Dune includes
 #include <dune/common/exceptions.hh>
 
+#include <dune/common/genericiterator.hh>
 #include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/datahandleif.hh>
 
@@ -117,35 +119,11 @@ namespace Dune
       //! return true if index is contained, meaning is a slave dof
       bool isSlave( const int index ) const
       {
-#if false
-        // search vector for index
-        const int sSize = size();
-        for(int i=0; i< sSize; ++i)
-        {
-          if( slaves_[i] == index ) return true;
-        }
-#else
-        // The list is sorted, use a simple binary search in order to
-        // drop the typical amsymptotic effort from n^{1/d} to 1/d log(n)
-        //
-        // Note that we cannot use std::binary_search as slaves_ does
-        // not provide the necessary STL iterators.
-        int first = 0;
-        int last  = size() - 1;
-        int mid   = (first + last) / 2;
-        while (first <= last) {
-          if (slaves_[mid] < index) {
-            first = mid + 1;
-          } else if (slaves_[mid] == index) {
-            return true;
-          } else {
-            last = mid - 1;
-          }
-          
-          mid = (first + last) / 2;
-        }
-#endif
-        return false;
+        typedef GenericIterator<IndexMapType, int> IteratorType;
+        
+        return std::binary_search(IteratorType(slaves_, 0),
+                                  IteratorType(slaves_, size()-1),
+                                  index);
       }
 
     public:
