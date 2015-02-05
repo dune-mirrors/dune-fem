@@ -355,12 +355,12 @@ namespace Dune
         const int codim = dimension - type.dim();
 
         // true if only one geometry type is present
-        const bool onlySingleGeometryType = hasSingleGeometryType || geomTypes( codim ).size() == 1 ;
+        const bool onlySingleGeometryType = hasSingleGeometryType || ( geomTypes( codim ).size() == 1 ) ;
         // use size of codim index set if possible
         if( codimAvailable( codim ) && onlySingleGeometryType )
         {
           if( codimUsed_[ codim ] )
-            return codimLeafSet( codim ).size();
+            return type == geomTypes( codim )[ 0 ] ? codimLeafSet( codim ).size() : 0;
         }
 
         // count entities for given geometry type
