@@ -57,9 +57,9 @@ int main(int argc, char** argv)
     Dune::Fem::Parameter::get("outputpath", outputPath );
 
     // just a small example that mmultiplications are possible using shell scripts
-    double multi = Parameter::getValue<double>("multiplication", 1.0 );
-    double factor1 = Parameter::getValue<double>("factor1", 1.0 );
-    double factor2 = Parameter::getValue<double>("factor2", 1.0 );
+    double multi = Dune::Fem::Parameter::getValue<double>("multiplication", 1.0 );
+    double factor1 = Dune::Fem::Parameter::getValue<double>("factor1", 1.0 );
+    double factor2 = Dune::Fem::Parameter::getValue<double>("factor2", 1.0 );
 
     //*****************OutPut*********************//
     std::cout<<"User: "<< userId <<" started his compution of Project: "<< project <<"\nThe acctual date is: "<< date <<std::endl;
