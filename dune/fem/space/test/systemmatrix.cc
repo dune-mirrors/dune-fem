@@ -1,6 +1,8 @@
 #ifndef ELLIPTIC_HH
 #define ELLIPTIC_HH
 
+#error "This file seems to be unused and will be removed!!!"
+
 #include <dune/common/fmatrix.hh>
 
 #include <dune/fem/quadrature/cachingquadrature.hh>
