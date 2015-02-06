@@ -5,7 +5,6 @@ SUBDIRS = common  filter  filteredgridpart  geogridpart  idgridpart  test
 gridpart_HEADERS = adaptiveleafgridpart.hh \
 		   adaptiveleafindexset.hh \
 		   codimindexset.hh \
-		   defaultindexsets.hh \
 		   dunefemindexsets.hh \
 		   emptyindexset.hh \
 		   filter.hh \

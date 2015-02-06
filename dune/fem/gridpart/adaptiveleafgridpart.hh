@@ -11,7 +11,6 @@
 #include <dune/fem/gridpart/adaptiveleafindexset.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
-#include <dune/fem/gridpart/defaultindexsets.hh>
 #include <dune/fem/misc/capabilities.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/storage/singletonlist.hh>

@@ -6,7 +6,6 @@
 
 //- Dune includes
 #include <dune/fem/space/common/arrays.hh>
-#include <dune/fem/gridpart/defaultindexsets.hh>
 
 #include <dune/grid/utility/persistentcontainer.hh>
 
