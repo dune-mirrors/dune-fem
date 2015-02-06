@@ -82,6 +82,13 @@ namespace Dune
       };
 
 
+      template< class GridPartType >
+      struct hasAdaptiveIndexSet
+      {
+        static const bool v = false;
+      };
+
+
 
       /*
        * forward
@@ -138,6 +145,13 @@ namespace Dune
       struct isConforming< const GridPartType >
       {
         static const bool v = Dune::Fem::GridPartCapabilities::isConforming< GridPartType >::v;
+      };
+
+
+      template< class GridPartType >
+      struct hasAdaptiveIndexSet< const GridPartType >
+      {
+        static const bool v = Dune::Fem::GridPartCapabilities::hasAdaptiveIndexSet< GridPartType >::v;
       };
 
     } // namespace GridPartCapabilities
