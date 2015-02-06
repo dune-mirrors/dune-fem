@@ -7,6 +7,7 @@
 #include <dune/geometry/type.hh>
 
 #include <dune/fem/gridpart/common/capabilities.hh>
+#include <dune/fem/gridpart/common/persistentindexset.hh>
 
 namespace Dune
 {
@@ -130,6 +131,8 @@ namespace Dune
     {
       typedef IdIndexSetBase< GridFamily > BaseType;
 
+      template< class > friend class isPersistentIndexSet;
+
     public:
       using BaseType::BaseType;
     };
@@ -139,6 +142,8 @@ namespace Dune
       : public IdIndexSetBase< GridFamily >
     {
       typedef IdIndexSetBase< GridFamily > BaseType;
+
+      template< class > friend class isPersistentIndexSet;
 
     protected:
       using BaseType::hostIndexSet;
@@ -197,26 +202,27 @@ namespace Dune
       {
         return hostIndexSet().newIndex( hole, type );
       }
+    };
 
-#if 0
-      void addBackupRestore()
-      {
-        if( persistent() )
-        {
-          // this cast should work, since we have a persistent index set
-          ((PersistentIndexSetInterface &) hostIndexSet()).addBackupRestore();
-        }
-      }
 
-      void removeBackupRestore()
+
+    // Tempate specialization of isPersistentIndexSet
+    // ----------------------------------------------
+
+    template< class GridFamily, bool isAdaptive >
+    struct isPersistentIndexSet< IdIndexSet< GridFamily, isAdaptive > >
+    {
+    private:
+      typedef IdIndexSet< GridFamily, isAdaptive > IndexSetType;
+      typedef typename IndexSetType::HostIndexSetType HostIndexSetType;
+
+    public:
+      static const bool v = isPersistentIndexSet< HostIndexSetType >::v;
+
+      static constexpr PersistentIndexSetInterface *map ( IndexSetType &indexSet ) noexcept
       {
-        if( persistent() )
-        {
-          // this cast should work, since we have a persistent index set
-          ((PersistentIndexSetInterface &) hostIndexSet()).removeBackupRestore();
-        }
+        return isPersistentIndexSet< HostIndexSetType >::map( indexSet.hostIndexSet() );
       }
-#endif
     };
 
   } // namespace Fem

@@ -9,6 +9,7 @@ common_HEADERS = \
 	gridview2gridpart.hh \
 	indexset.hh \
 	metatwistutility.hh \
+	persistentindexset.hh \
 	policies.hh
 
 include $(top_srcdir)/am/global-rules
