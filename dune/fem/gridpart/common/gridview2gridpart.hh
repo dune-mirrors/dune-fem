@@ -20,7 +20,7 @@ namespace Dune
     // Internal forward declaration
     // ----------------------------
 
-    template< class GridView, class IndexSet, class Implementation >
+    template< class GridView, class Implementation >
     class GridView2GridPart;
 
 
@@ -30,7 +30,7 @@ namespace Dune
     // GridView2GridPartTraits
     // -----------------------
 
-    template< class GridView, class IndexSet, class Implementation >
+    template< class GridView, class Implementation >
     struct GridView2GridPartTraits
     {
       typedef Implementation GridPartType;
@@ -41,7 +41,7 @@ namespace Dune
       typedef typename GridViewType::Grid GridType;
       typedef typename GridViewType::CollectiveCommunication CollectiveCommunicationType;
 
-      typedef IndexSet IndexSetType;
+      typedef typename GridView::IndexSet IndexSetType;
 
       template< int codim >
       struct Codim
@@ -76,12 +76,12 @@ namespace Dune
     // GridView2GridPart
     // -----------------
 
-    template< class GridView, class IndexSet, class Implementation >
+    template< class GridView, class Implementation >
     class GridView2GridPart
-      : public GridPartInterface< GridView2GridPartTraits< GridView, IndexSet, Implementation > >
+      : public GridPartInterface< GridView2GridPartTraits< GridView, Implementation > >
     {
-      typedef GridView2GridPart< GridView, IndexSet, Implementation > ThisType;
-      typedef GridPartInterface< GridView2GridPartTraits< GridView, IndexSet, Implementation > > BaseType;
+      typedef GridView2GridPart< GridView, Implementation > ThisType;
+      typedef GridPartInterface< GridView2GridPartTraits< GridView, Implementation > > BaseType;
 
     public:
       /** \copydoc Dune::Fem::GridPartInterface::GridType */
@@ -138,6 +138,9 @@ namespace Dune
 
       /** \copydoc Dune::Fem::GridPartInterface::grid */
       const GridType &grid () const { return gridView_.grid(); }
+
+      /** \copydoc Dune::Fem::GridPartInterface::indexSet */
+      const IndexSetType &indexSet () const { return gridView_.indexSet(); }
 
       /** \copydoc Dune::Fem::GridPartInterface::begin */
       template< int codim >

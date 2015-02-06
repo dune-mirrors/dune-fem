@@ -5,7 +5,6 @@
 
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/gridpart/common/gridview2gridpart.hh>
-#include <dune/fem/gridpart/defaultindexsets.hh>
 
 namespace Dune
 {
@@ -18,16 +17,13 @@ namespace Dune
 
     template< class Grid >
     class LeafGridPart
-      : public GridView2GridPart< typename Grid::LeafGridView, WrappedLeafIndexSet< Grid >, LeafGridPart< Grid > >
+      : public GridView2GridPart< typename Grid::LeafGridView, LeafGridPart< Grid > >
     {
-      typedef GridView2GridPart< typename Grid::LeafGridView, WrappedLeafIndexSet< Grid >, LeafGridPart< Grid > > BaseType;
+      typedef GridView2GridPart< typename Grid::LeafGridView, LeafGridPart< Grid > > BaseType;
 
     public:
       /** \copydoc Dune::Fem::GridPartInterface::GridType */
       typedef typename BaseType::GridType GridType;
-
-      /** \copydoc Dune::Fem::GridPartInterface::GridType */
-      typedef typename BaseType::IndexSetType IndexSetType;
 
       /** \name Construction
        *  \{
@@ -35,8 +31,7 @@ namespace Dune
 
       explicit LeafGridPart ( GridType &grid )
         : BaseType( grid.leafGridView() ),
-          grid_( grid ),
-          indexSet_( grid )
+          grid_( grid )
       {}
 
       /** \} */
@@ -50,9 +45,6 @@ namespace Dune
       /** \copydoc Dune::Fem::GridPartInterface::grid */
       GridType &grid () { return grid_; }
 
-      /** \copydoc Dune::Fem::GridPartInterface::indexSet */
-      const IndexSetType &indexSet () const { return indexSet_; }
-
       /** \copydoc Dune::Fem::GridPartInterface::level */
       int level () const { return grid().maxLevel(); }
 
@@ -60,7 +52,6 @@ namespace Dune
 
     private:
       GridType &grid_;
-      IndexSetType indexSet_;
     };
 
 
@@ -103,6 +94,12 @@ namespace Dune
       struct isConforming< LeafGridPart< Grid > >
       {
         static const bool v = Dune::Capabilities::isLeafwiseConforming< Grid >::v;
+      };
+
+      template< class Grid >
+      struct hasAdaptiveIndexSet< LeafGridPart< Grid > >
+      {
+        static const bool v = false;
       };
 
     } // namespace GridPartCapabilities

@@ -5,7 +5,6 @@
 
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/gridpart/common/gridview2gridpart.hh>
-#include <dune/fem/gridpart/defaultindexsets.hh>
 
 namespace Dune
 {
@@ -18,16 +17,13 @@ namespace Dune
 
     template< class Grid >
     class LevelGridPart
-      : public GridView2GridPart< typename Grid::LevelGridView, WrappedLevelIndexSet< Grid >, LevelGridPart< Grid > >
+      : public GridView2GridPart< typename Grid::LevelGridView, LevelGridPart< Grid > >
     {
-      typedef GridView2GridPart< typename Grid::LevelGridView, WrappedLevelIndexSet< Grid >, LevelGridPart< Grid > > BaseType;
+      typedef GridView2GridPart< typename Grid::LevelGridView, LevelGridPart< Grid > > BaseType;
 
     public:
       /** \copydoc Dune::Fem::GridPartInterface::GridType */
       typedef typename BaseType::GridType GridType;
-
-      /** \copydoc Dune::Fem::GridPartInterface::IndexSetType */
-      typedef typename BaseType::IndexSetType IndexSetType;
 
       /** \name Construction
        *  \{
@@ -36,8 +32,7 @@ namespace Dune
       LevelGridPart ( GridType &grid, int level )
         : BaseType( grid.levelGridView( level ) ),
           grid_( grid ),
-          level_( level ),
-          indexSet_( grid, level )
+          level_( level )
       {}
 
       /** \} */
@@ -51,9 +46,6 @@ namespace Dune
       /** \copydoc Dune::Fem::GridPartInterface::grid */
       GridType &grid () { return grid_; }
 
-      /** \copydoc Dune::Fem::GridPartInterface::indexSet */
-      const IndexSetType &indexSet () const { return indexSet_; }
-
       /** \copydoc Dune::Fem::GridPartInterface::level */
       int level () const { return level_; }
 
@@ -62,7 +54,6 @@ namespace Dune
     private:
       GridType &grid_;
       int level_;
-      IndexSetType indexSet_;
     };
 
 
@@ -105,6 +96,12 @@ namespace Dune
       struct isConforming< LevelGridPart< Grid > >
       {
         static const bool v = Dune::Capabilities::isLevelwiseConforming< Grid >::v;
+      };
+
+      template< class Grid >
+      struct hasAdaptiveIndexSet< LevelGridPart< Grid > >
+      {
+        static const bool v = false;
       };
 
     } // namespace GridPartCapabilities
