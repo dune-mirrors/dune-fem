@@ -128,7 +128,7 @@ namespace Dune
       }
 
       /** \brief return EntitySeed of host grid entity */
-      EntitySeedType seed () const { return typename EntitySeedType::Implementation( hostEntity().seed() ); }
+      EntitySeedType seed () const { return hostEntity().seed(); }
 
       /** \} */
 
