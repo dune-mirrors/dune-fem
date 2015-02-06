@@ -109,7 +109,7 @@ namespace Dune
       //! type of twist utility
       typedef MetaTwistUtility< typename HostGridPartType :: TwistUtilityType >  TwistUtilityType;
 
-      typedef IdIndexSet< typename HostGridPartType::IndexSetType > IndexSetType;
+      typedef IdIndexSet< const GridPartFamily > IndexSetType;
 
       static const PartitionIteratorType indexSetPartitionType = HostGridPartType::indexSetPartitionType;
       static const InterfaceType indexSetInterfaceType = HostGridPartType::indexSetInterfaceType;

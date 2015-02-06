@@ -101,7 +101,7 @@ namespace Dune
 
       typedef typename HostGridPart::GridType GridType;
 
-      typedef IdIndexSet< typename HostGridPart::IndexSetType > IndexSetType;
+      typedef IdIndexSet< const GridFamily > IndexSetType;
 
       static const PartitionIteratorType indexSetPartitionType = HostGridPart::indexSetPartitionType;
       static const InterfaceType indexSetInterfaceType = HostGridPart::indexSetInterfaceType;

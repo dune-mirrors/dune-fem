@@ -1,13 +1,12 @@
 #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_INDEXSET_HH
 #define DUNE_FEM_GRIDPART_IDGRIDPART_INDEXSET_HH
 
+#include <type_traits>
 #include <vector>
 
-#include <dune/common/typetraits.hh>
+#include <dune/geometry/type.hh>
 
-#include <dune/grid/common/gridenums.hh>
-#include <dune/grid/common/indexidset.hh>
-#include <dune/fem/gridpart/dunefemindexsets.hh>
+#include <dune/fem/gridpart/common/capabilities.hh>
 
 namespace Dune
 {
@@ -18,43 +17,49 @@ namespace Dune
     // IdIndexSet
     // ----------
 
-    template< class HostIndexSet >
-    class IdIndexSet
-      : public PersistentIndexSetInterface
+    template< class GridFamily,
+              bool isAdaptive = GridPartCapabilities::hasAdaptiveIndexSet< typename std::remove_const< GridFamily >::type::Traits::HostGridPartType >::v >
+    class IdIndexSet;
+
+
+
+    // IdIndexSetBase
+    // --------------
+
+    template< class GridFamily >
+    class IdIndexSetBase
     {
-      typedef IdIndexSet< HostIndexSet > This;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
+      typedef typename Traits::HostGridPartType HostGridPartType;
+
+    protected:
+      typedef typename HostGridPartType::IndexSetType HostIndexSetType;
 
     public:
-      typedef typename HostIndexSet::IndexType IndexType;
-      typedef typename HostIndexSet::Types     Types;
+      static const int dimension = HostIndexSetType::dimension;
 
-      explicit IdIndexSet ( const HostIndexSet &hostIndexSet )
-      : hostIndexSet_( const_cast<HostIndexSet *> (&hostIndexSet) )
+      template< int codim >
+      struct Codim
+      {
+        typedef typename std::remove_const< GridFamily >::type::Traits::template Codim< codim >::Entity Entity;
+      };
+
+      typedef typename HostIndexSetType::IndexType IndexType;
+
+      typedef typename HostIndexSetType::Types Types;
+
+      explicit IdIndexSetBase ( const HostIndexSetType &hostIndexSet )
+        : hostIndexSet_( const_cast< HostIndexSetType * > (&hostIndexSet) )
       {}
 
-      int size ( const GeometryType &type ) const { return hostIndexSet().size( type ); }
-      int size ( const int codim ) const { return hostIndexSet().size( codim ); }
-
-      template< class Entity >
-      int index ( const Entity &entity ) const
-      {
-        return hostIndexSet().index( entity.impl().hostEntity() );
-      }
-
-      template< class Entity >
-      int subIndex ( const Entity &entity, const int local, const unsigned int codim ) const
-      {
-        return hostIndexSet().subIndex( entity.impl().hostEntity(), local, codim );
-      }
-
-      const std::vector< GeometryType > &geomTypes ( const int codim ) const
-      {
-        return hostIndexSet().geomTypes( codim );
-      }
-
-      Types types( const int codim ) const
+      Types types ( int codim ) const
       {
         return hostIndexSet().types( codim );
+      }
+
+      const std::vector< GeometryType > &geomTypes ( int codim ) const
+      {
+        return hostIndexSet().geomTypes( codim );
       }
 
       template< class Entity >
@@ -63,15 +68,137 @@ namespace Dune
         return hostIndexSet().contains( entity.impl().hostEntity() );
       }
 
-      bool consecutive () const { return hostIndexSet().consecutive(); }
-      bool persistent () const { return hostIndexSet().persistent(); }
+      IndexType size ( const GeometryType &type ) const
+      {
+        return hostIndexSet().size( type );
+      }
+
+      IndexType size ( int codim ) const
+      {
+        return hostIndexSet().size( codim );
+      }
+
+      template< class Entity >
+      IndexType index ( const Entity &entity ) const
+      {
+        return index< Entity::codimension >( entity );
+      }
+
+      template< int codim >
+      IndexType index ( const typename Codim< codim >::EntityType &entity ) const
+      {
+        return hostIndexSet().template index< codim >( entity.impl().hostEntity() );
+      }
+
+      template< class Entity >
+      IndexType subIndex ( const Entity &entity, int i, unsigned int cd ) const
+      {
+        return subIndex< Entity::codimension >( entity, i, cd );
+      }
+
+      template< int codim >
+      IndexType subIndex ( const typename Codim< codim >::Entity &entity, int i, unsigned int cd ) const
+      {
+        return hostIndexSet().subIndex( entity.impl().hostEntity(), i, cd );
+      }
+
+    protected:
+      const HostIndexSetType &hostIndexSet () const
+      {
+        assert( hostIndexSet_ );
+        return *hostIndexSet_;
+      }
+
+      HostIndexSetType &hostIndexSet ()
+      {
+        assert( hostIndexSet_ );
+        return *hostIndexSet_;
+      }
+
+    private:
+      HostIndexSetType *hostIndexSet_;
+    };
+
+
+
+    // IdIndexSet
+    // ----------
+
+    template< class GridFamily >
+    class IdIndexSet< GridFamily, false >
+      : public IdIndexSetBase< GridFamily >
+    {
+      typedef IdIndexSetBase< GridFamily > BaseType;
+
+    public:
+      using BaseType::BaseType;
+    };
+
+    template< class GridFamily >
+    class IdIndexSet< GridFamily, true >
+      : public IdIndexSetBase< GridFamily >
+    {
+      typedef IdIndexSetBase< GridFamily > BaseType;
+
+    protected:
+      using BaseType::hostIndexSet;
+
+    public:
+      using BaseType::BaseType;
+
+      bool consecutive () const
+      {
+        return hostIndexSet().consecutive();
+      }
+
+      void resize () { hostIndexSet.resize(); }
 
       void compress ()
       {
-        assert( consecutive() );
+        // assert( consecutive() );
         hostIndexSet().compress();
       }
 
+      template< class Entity >
+      void insertEntity ( const Entity &entity )
+      {
+        insertEntity< Entity::codimension >( entity );
+      }
+
+      template< int codim >
+      void insertEntity ( const typename BaseType::template Codim< codim >::EntityType &entity )
+      {
+        hostIndexSet().template insertEntity< codim >( entity.impl().hostEntity() );
+      }
+
+      template< class Entity >
+      void removeEntity ( const Entity &entity )
+      {
+        removeEntity< Entity::codimension >( entity );
+      }
+
+      template< int codim >
+      void removeEntity ( const typename BaseType::template Codim< codim >::EntityType &entity )
+      {
+        hostIndexSet().template removeEntity< codim >( entity.impl().hostEntity() );
+      }
+
+      int numberOfHoles ( GeometryType type ) const
+      {
+        return hostIndexSet().numberOfHoles( type );
+      }
+
+      int oldIndex ( int hole, GeometryType type ) const
+      {
+        return hostIndexSet().oldIndex( hole, type );
+      }
+
+      int newIndex ( int hole, GeometryType type ) const
+      {
+        return hostIndexSet().newIndex( hole, type );
+      }
+
+#if 0
       void addBackupRestore()
       {
         if( persistent() )
@@ -80,6 +207,7 @@ namespace Dune
           ((PersistentIndexSetInterface &) hostIndexSet()).addBackupRestore();
         }
       }
+
       void removeBackupRestore()
       {
         if( persistent() )
@@ -88,35 +216,7 @@ namespace Dune
           ((PersistentIndexSetInterface &) hostIndexSet()).removeBackupRestore();
         }
       }
-
-      int numberOfHoles ( const int codim ) const { return hostIndexSet().numberOfHoles( codim ); }
-
-      int oldIndex ( const int hole, const int codim ) const
-      {
-        return hostIndexSet().oldIndex( hole, codim );
-      }
-
-      int newIndex ( const int hole, const int codim ) const
-      {
-        return hostIndexSet().newIndex( hole, codim );
-      }
-
-      std::string name () const { return "IdGridPart::IndexSet" ; }
-
-    private:
-      const HostIndexSet &hostIndexSet () const
-      {
-        assert( hostIndexSet_ );
-        return *hostIndexSet_;
-      }
-
-      HostIndexSet &hostIndexSet ()
-      {
-        assert( hostIndexSet_ );
-        return *hostIndexSet_;
-      }
-
-      HostIndexSet *hostIndexSet_;
+#endif
     };
 
   } // namespace Fem
