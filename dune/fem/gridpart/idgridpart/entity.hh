@@ -133,7 +133,7 @@ namespace Dune
       /** \} */
 
 
-      /** \name Methods Supporting the Grid Implementation
+      /** \name Methods Supporting the GridPart Implementation
        *  \{ */
 
       const HostEntityType &hostEntity () const
@@ -180,6 +180,7 @@ namespace Dune
       typedef typename HostGridPartType::template Codim< codimension >::EntityType HostEntityType;
       /** \} */
 
+      /** \brief construct a null entity */
       explicit IdEntity ( ExtraData data )
       : BaseType( data )
       {}
@@ -233,13 +234,16 @@ namespace Dune
       /** \name Construction, Initialization and Destruction
        *  \{ */
 
-      /** \brief construct a null entity */
+      /** \brief construct a null entity
+       *  \param[in]  data  data pointer (here empty)
+       */
       explicit IdEntity ( ExtraData data )
       : BaseType( data )
       {}
 
       /** \brief construct an initialized entity
        *
+       *  \param[in]  data        data pointer (here empty)
        *  \param[in]  hostEntity  corresponding entity in the host grid
        *
        *  \note The reference to the host entity must remain valid as long as
