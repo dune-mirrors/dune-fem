@@ -119,8 +119,8 @@ namespace Dune
       //! return true if index is contained, meaning is a slave dof
       bool isSlave( const int index ) const
       {
-        typedef GenericIterator<IndexMapType, int> IteratorType;
-        
+        typedef GenericIterator<const IndexMapType, const int> IteratorType;
+
         return std::binary_search(IteratorType(slaves_, 0),
                                   IteratorType(slaves_, size()-1),
                                   index);
