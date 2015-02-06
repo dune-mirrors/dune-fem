@@ -94,7 +94,13 @@ int main ( int argc, char **argv )
 #ifndef DISABLE_DEPRECATED_METHOD_CHECK
 #define DISABLE_DEPRECATED_METHOD_CHECK 1
 #endif
-#include <dune/grid/test/checkindexset.cc>
+
+// disable copyiable entity / intersection feature until entities and intersections are copyable
+#ifndef DUNE_GRID_CHECK_USE_DEPRECATED_ENTITY_AND_INTERSECTION_INTERFACE
+#define DUNE_GRID_CHECK_USE_DEPRECATED_ENTITY_AND_INTERSECTION_INTERFACE 1
+#endif
+
+#include <dune/grid/test/checkindexset.hh>
 template <class GridPart>
 void checkAdaptiveIndexSet( const GridPart& gridPart )
 {
