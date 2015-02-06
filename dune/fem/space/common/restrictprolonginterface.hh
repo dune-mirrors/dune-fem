@@ -6,7 +6,6 @@
 #include <dune/grid/common/capabilities.hh>
 
 //- local includes
-#include <dune/fem/gridpart/emptyindexset.hh>
 #include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
