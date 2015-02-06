@@ -31,30 +31,34 @@ namespace Dune
       typedef typename Traits::template Codim< 1 >::Geometry Geometry;
       typedef typename Traits::template Codim< 1 >::LocalGeometry LocalGeometry;
 
+      typedef typename Traits::ExtraData  ExtraData;
+
     private:
       typedef typename EntityPointer::Implementation EntityPointerImpl;
 
       typedef typename HostGridPartType::IntersectionType HostIntersectionType;
 
     public:
-      IdIntersection ()
-      : hostIntersection_( 0 )
+      explicit IdIntersection ( ExtraData data )
+      : hostIntersection_( nullptr ),
+        data_( data )
       {}
 
-      explicit IdIntersection ( const HostIntersectionType &hostIntersection )
-      : hostIntersection_( &hostIntersection )
+      explicit IdIntersection ( ExtraData data, const HostIntersectionType &hostIntersection )
+      : hostIntersection_( &hostIntersection ),
+        data_( data )
       {}
 
       operator bool () const { return bool( hostIntersection_ ); }
 
       EntityPointer inside () const
       {
-        return EntityPointerImpl( hostIntersection().inside() );
+        return EntityPointerImpl( data(), hostIntersection().inside() );
       }
 
       EntityPointer outside () const
       {
-        return EntityPointerImpl( hostIntersection().outside() );
+        return EntityPointerImpl( data(), hostIntersection().outside() );
       }
 
       bool boundary () const
@@ -151,8 +155,11 @@ namespace Dune
         return *hostIntersection_;
       }
 
-    private:
+      ExtraData data () const { return data_; }
+
+    protected:
       const HostIntersectionType *hostIntersection_;
+      ExtraData data_;
     };
 
   } // namespace Fem

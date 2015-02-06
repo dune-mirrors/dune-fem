@@ -38,6 +38,8 @@ namespace Dune
       typedef typename HostGridPartType::template Codim< codim >::EntityType HostEntityType;
       typedef typename HostGridPartType::template Codim< codim >::EntityPointerType HostEntityPointerType;
       typedef HostEntityPointerType HostIteratorType;
+
+      typedef typename GridFamily::Traits::ExtraData  ExtraData;
     };
 
 
@@ -60,6 +62,8 @@ namespace Dune
 
       typedef IdEntityPointer< typename Traits::BaseTraits > EntityPointerImp;
 
+      typedef typename Traits::ExtraData  ExtraData;
+
     protected:
       typedef typename Traits::HostEntityPointerType HostEntityPointerType;
       typedef typename Traits::HostIteratorType HostIteratorType;
@@ -68,31 +72,31 @@ namespace Dune
       typedef typename Traits::EntityImpl EntityImpl;
 
     public:
-      IdEntityPointer ( const HostIteratorType &hostIterator )
-      : entity_( EntityImpl() ),
+      IdEntityPointer ( ExtraData data, const HostIteratorType &hostIterator )
+      : entity_( EntityImpl( data ) ),
         hostIterator_( hostIterator )
       {}
 
       IdEntityPointer ( const EntityImpl &entity )
-      : entity_( EntityImpl() ),
+      : entity_( EntityImpl( entity.data() ) ),
         hostIterator_( entity.hostEntity() )
       {}
 
       IdEntityPointer ( const ThisType &other )
-      : entity_( EntityImpl() ),
+      : entity_( EntityImpl( other.data() ) ),
         hostIterator_( other.hostIterator_ )
       {}
 
       template< class T >
       explicit IdEntityPointer ( const IdEntityPointer< T > &other )
-      : entity_( EntityImpl() ),
+      : entity_( EntityImpl( other.data() ) ),
         hostIterator_( other.hostIterator_ )
       {}
 
       ThisType &operator= ( const ThisType &other )
       {
-        releaseEntity();
-        hostIterator_ = other.hostIterator_;
+        entity_.impl() = EntityImpl( other.data() );
+        hostIterator_  = other.hostIterator_;
         return *this;
       }
 
@@ -110,7 +114,7 @@ namespace Dune
       Entity &dereference () const
       {
         if( !entity_.impl() )
-          entity_.impl() = EntityImpl( *hostIterator() );
+          entity_.impl() = EntityImpl( data(), *hostIterator() );
         return entity_;
       }
 
@@ -127,13 +131,13 @@ namespace Dune
     protected:
       void releaseEntity ()
       {
-        entity_.impl() = EntityImpl();
+        entity_.impl() = EntityImpl( data() );
       }
 
-    private:
-      mutable Entity entity_;
+      ExtraData data () const { return entity_.impl().data(); }
 
     protected:
+      mutable Entity entity_;
       HostIteratorType hostIterator_;
     };
 

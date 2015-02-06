@@ -33,17 +33,18 @@ namespace Dune
     class IdIterator
     : public IdEntityPointer< IdIteratorTraits< codim, pitype, GridFamily > >
     {
-      typedef IdEntityPointer< IdIteratorTraits< codim, pitype, GridFamily > > Base;
+      typedef IdEntityPointer< IdIteratorTraits< codim, pitype, GridFamily > > BaseType;
 
     protected:
-      typedef typename Base::HostIteratorType HostIteratorType;
+      typedef typename BaseType::HostIteratorType HostIteratorType;
+      typedef typename BaseType::ExtraData        ExtraData;
 
-      using Base::hostIterator_;
-      using Base::releaseEntity;
+      using BaseType::hostIterator_;
+      using BaseType::releaseEntity;
 
     public:
-      IdIterator ( const HostIteratorType &hostIterator )
-      : Base( hostIterator )
+      IdIterator ( ExtraData data, const HostIteratorType &hostIterator )
+      : BaseType( data, hostIterator )
       {}
 
       void increment ()
