@@ -19,8 +19,6 @@ namespace Dune
     // ----------------------------
 
     template< class Traits >
-    class PersistentIndexSet;
-    template< class Traits >
     class PersistentConsecutiveIndexSet;
     template< class Traits >
     class PersistentAdaptiveIndexSet;
@@ -119,23 +117,30 @@ namespace Dune
 
 
 
-    // PersistentIndexSetBase
-    // ----------------------
+    // PersistentIndexSet
+    // ------------------
 
     /** \brief please doc me
      *
      *  \tparam  Grid  grid type
      *  \tparam  Implementation  index set type
      */
-    template< class Grid, class Implementation >
-    class PersistentIndexSetBase
-      : public PersistentObject
+    template< class Traits, template< class > class Base >
+    class PersistentIndexSet
+      : public Base< Traits >,
+        public PersistentIndexSetInterface
     {
+      typedef Base< Traits > BaseType;
+
     protected:
-      typedef Grid GridType;
+      using BaseType::impl;
+
+      /** \brief grid type */
+      typedef typename Traits::GridType GridType;
+      /** \brief dof manager type */
       typedef DofManager< GridType > DofManagerType;
 
-      explicit PersistentIndexSetBase ( const GridType &grid )
+      explicit PersistentIndexSet ( const GridType &grid )
         : grid_( grid ),
           dofManager_( DofManagerType::instance( grid ) ),
           counter_( 0 )
@@ -144,58 +149,37 @@ namespace Dune
       }
 
     public:
-      /** \brief please doc me */
-      void backup () const override final
+      using BaseType::read;
+      using BaseType::write;
+
+      /** \copydoc Dune::Fem::ConsecutiveIndexSet::backup */
+      void backup () const
       {
         if( needsBackupRestore() )
-          impl().write( PersistenceManager::backupStream() );
+          write( PersistenceManager::backupStream() );
       }
 
-      /** \brief please doc me */
-      void restore () override final
+      /** \copydoc Dune::Fem::ConsecutiveIndexSet::backup */
+      void restore ()
       {
         if( needsBackupRestore() )
-          impl().read( PersistenceManager::backupStream() );
+          read( PersistenceManager::restoreStream() );
       }
 
-      /** \brief please doc me */
+      /** \copydoc Dune::Fem::PersistentIndexSetInterface::addBackupRestore */
       void addBackupRestore () override final { ++counter_; }
 
-      /** \brief please doc me */
+      /** \copydoc Dune::Fem::PersistentIndexSetInterface::removeBackupRestore */
       void removeBackupRestore () override final { --counter_; }
-
-      /** \brief please doc me */
-      template< class T >
-      void write ( OutStreamInterface< T > &stream )
-      {
-        impl().write( stream );
-      }
-
-      /** \brief please doc me */
-      template< class T >
-      void read ( InStreamInterface< T > &stream )
-      {
-        impl().read( stream );
-      }
 
     private:
       bool needsBackupRestore () const { return counter_ > 0; }
-
-      Implementation &impl ()
-      {
-        return static_cast< Implementation & >( *this );
-      }
-
-      const Implementation &impl () const
-      {
-        return static_cast< const Implementation & >( *this );
-      }
 
     protected:
       const GridType &grid_;
       DofManagerType &dofManager_;
 
-    public:
+    private:
       int counter_ ;
     };
 
@@ -206,10 +190,9 @@ namespace Dune
 
     template< class Traits >
     class PersistentConsecutiveIndexSet
-      : public ConsecutiveIndexSet< Traits >,
-        public PersistentIndexSetBase< typename Traits::GridType, typename Traits::IndexSetType >
+      : public PersistentIndexSet< Traits, ConsecutiveIndexSet >
     {
-      typedef PersistentIndexSetBase< typename Traits::GridType, typename Traits::IndexSetType > BaseType;
+      typedef PersistentIndexSet< Traits, ConsecutiveIndexSet > BaseType;
 
     protected:
       using BaseType::BaseType;
@@ -222,10 +205,9 @@ namespace Dune
 
     template< class Traits >
     class PersistentAdaptiveIndexSet
-      : public AdaptiveIndexSet< Traits >,
-        public PersistentIndexSetBase< typename Traits::GridType, typename Traits::IndexSetType >
+      : public PersistentIndexSet< Traits, AdaptiveIndexSet >
     {
-      typedef PersistentIndexSetBase< typename Traits::GridType, typename Traits::IndexSetType > BaseType;
+      typedef PersistentIndexSet< Traits, AdaptiveIndexSet > BaseType;
 
     protected:
       using BaseType::BaseType;
