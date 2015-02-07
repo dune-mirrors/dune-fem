@@ -21,6 +21,8 @@ namespace Dune
     template< class Traits >
     class PersistentIndexSet;
     template< class Traits >
+    class PersistentConsecutiveIndexSet;
+    template< class Traits >
     class PersistentAdaptiveIndexSet;
 
 
@@ -44,59 +46,76 @@ namespace Dune
 
 
 
-    // isPersistentIndexSet
-    // --------------------
+    namespace Capabilities
+    {
+
+      // isPersistentIndexSet
+      // --------------------
 
 #ifndef DOXYGEN
 
-    template< class IndexSet, bool value = std::is_base_of< PersistentIndexSetInterface, IndexSet >::type::value >
-    struct __isPersistentIndexSet;
+      template< class IndexSet, bool value = std::is_base_of< PersistentIndexSetInterface, IndexSet >::type::value >
+      struct __isPersistentIndexSet;
 
-    template< class IndexSet >
-    struct __isPersistentIndexSet< IndexSet, true >
-    {
-      static const bool v = true;
-
-      static constexpr PersistentIndexSetInterface* map ( IndexSet &indexSet )
+      template< class IndexSet >
+      struct __isPersistentIndexSet< IndexSet, true >
       {
-        return static_cast< PersistentIndexSetInterface * >( &indexSet );
-      }
-    };
+        static const bool v = true;
 
-    template< class IndexSet >
-    struct __isPersistentIndexSet< IndexSet, false >
-    {
-      static const bool v = false;
+        static constexpr PersistentIndexSetInterface* map ( IndexSet &indexSet )
+        {
+          return static_cast< PersistentIndexSetInterface * >( &indexSet );
+        }
+      };
 
-      static constexpr PersistentIndexSetInterface* map ( IndexSet & ) noexcept
+      template< class IndexSet >
+      struct __isPersistentIndexSet< IndexSet, false >
       {
-        return nullptr;
-      }
-    };
+        static const bool v = false;
+
+        static constexpr PersistentIndexSetInterface* map ( IndexSet & ) noexcept
+        {
+          return nullptr;
+        }
+      };
 
 #endif // #ifndef DOXYGEN
 
-    /** \brief capability for persistent index sets
-     *
-     *  \tparam  IndexSet  an index set type
-     *
-     *  \note default value is \b true if IndexSet is derived from
-     *        PersistentIndexSetInterface
-     */
-    template< class IndexSet >
-    struct isPersistentIndexSet
-      : public __isPersistentIndexSet< IndexSet >
-    {};
+      /** \brief capability for persistent index sets
+       *
+       *  \tparam  IndexSet  an index set type
+       *
+       *  \note default value is \b true if IndexSet is derived from
+       *        PersistentIndexSetInterface
+       */
+      template< class IndexSet >
+      struct isPersistentIndexSet
+        : public __isPersistentIndexSet< IndexSet >
+      {
+      private:
+        typedef __isPersistentIndexSet< IndexSet > BaseType;
+
+      public:
+        /** \brief please doc me */
+        static const bool v = BaseType::v;
+
+        /** \brief please doc me */
+        static constexpr PersistentIndexSetInterface* map ( IndexSet &indexSet ) noexcept
+        {
+          return BaseType::map( indexSet );
+        }
+      };
 
 #ifndef DOXYGEN
 
-    template< class IndexSet >
-    struct isPersistentIndexSet< const IndexSet >
-      : public isPersistentIndexSet< IndexSet >
-    {};
+      template< class IndexSet >
+      struct isPersistentIndexSet< const IndexSet >
+        : public isPersistentIndexSet< IndexSet >
+      {};
 
 #endif // #ifndef DOXYGEN
 
+    } // namespace Capabilities
 
 
 
@@ -124,20 +143,6 @@ namespace Dune
 
     public:
       /** \brief please doc me */
-      template< class T >
-      void write ( OutStreamInterface< T > &stream )
-      {
-        impl().write( stream );
-      }
-
-      /** \brief please doc me */
-      template< class T >
-      void read ( InStreamInterface< T > &stream )
-      {
-        impl().read( stream );
-      }
-
-      /** \brief please doc me */
       void backup () const override final
       {
         if( needsBackupRestore() )
@@ -156,6 +161,20 @@ namespace Dune
 
       /** \brief please doc me */
       void removeBackupRestore () override final { --counter_; }
+
+      /** \brief please doc me */
+      template< class T >
+      void write ( OutStreamInterface< T > &stream )
+      {
+        impl().write( stream );
+      }
+
+      /** \brief please doc me */
+      template< class T >
+      void read ( InStreamInterface< T > &stream )
+      {
+        impl().read( stream );
+      }
 
     private:
       bool needsBackupRestore () const { return counter_ > 0; }
@@ -176,12 +195,12 @@ namespace Dune
 
 
 
-    // PersistentIndexSet
-    // ------------------
+    // PersistentConsecutiveIndexSet
+    // -----------------------------
 
     template< class Traits >
-    class PersistentIndexSet
-      : public IndexSet< Traits >,
+    class PersistentConsecutiveIndexSet
+      : public ConsecutiveIndexSet< Traits >,
         public PersistentIndexSetBase< typename Traits::GridType, typename Traits::IndexSetType >
     {
       typedef PersistentIndexSetBase< typename Traits::GridType, typename Traits::IndexSetType > BaseType;

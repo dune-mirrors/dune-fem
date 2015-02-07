@@ -2,6 +2,7 @@
 #define DUNE_FEM_GRIDPART_COMMON_INDEXSET_HH
 
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 #include <dune/common/deprecated.hh>
@@ -23,7 +24,76 @@ namespace Dune
     template< class Traits >
     class IndexSet;
     template< class Traits >
+    class ConsecutiveIndexSet;
+    template< class Traits >
     class AdaptiveIndexSet;
+
+
+
+    namespace Capabilities
+    {
+
+      // isConsecutiveIndexSet
+      // ---------------------
+
+      /** \brief specialize with \b true if index set implements the
+       *         interface for consecutive index sets
+       *
+       *  \note default value is \b true if index set is derived from
+       *        ConsecutiveIndexSet
+       */
+      template< class IndexSet >
+      struct isConsecutiveIndexSet
+      {
+        template< class Traits >
+        std::true_type __isConsecutive ( const ConsecutiveIndexSet< Traits > & );
+
+        std::false_type __isConsecutive ( ... );
+
+      public:
+        static const bool v = decltype( __isConsecutive( std::declval< IndexSet >() ) )::value;
+      };
+
+
+
+      // isAdaptiveIndexSet
+      // ------------------
+
+      /** \brief specialize with \b true if index set implements the
+       *         interface for adaptive index sets
+       *
+       *  \note default value is \b true if index set is derived from
+       *        AdaptiveIndexSet
+       */
+      template< class IndexSet >
+      class isAdaptiveIndexSet
+      {
+        template< class Traits >
+        std::true_type __isAdaptive ( const AdaptiveIndexSet< Traits > & );
+
+        std::false_type __isAdaptive ( ... );
+
+      public:
+        static const bool v = decltype( __isAdaptive( std::declval< IndexSet >() ) )::value;
+      };
+
+
+
+#ifndef DOXYGEN
+
+      template< class IndexSet >
+      struct isConsecutiveIndexSet< const IndexSet >
+        : public isConsecutiveIndexSet< IndexSet >
+      {};
+
+      template< class IndexSet >
+      struct isAdaptiveIndexSet< const IndexSet >
+        : public isAdaptiveIndexSet< IndexSet >
+      {};
+
+#endif // #ifndef DOXYGEN
+
+    } // namespace Capabilites
 
 
 
@@ -66,7 +136,8 @@ namespace Dune
       }
 
       /** \brief return vector of geometry types used of given codimension */
-      const std::vector< GeometryType > &geomTypes ( int codim ) const DUNE_DEPRECATED
+      const std::vector< GeometryType > &geomTypes ( int codim ) const
+      DUNE_DEPRECATED_MSG("IndexSet::geomTypes(codim) is deprecated, use IndexSet::types(codim) instead")
       {
         return impl().geomTypes( codim );
       }
@@ -127,13 +198,16 @@ namespace Dune
 
 
 
-    // AdaptiveIndexSet
-    // ----------------
+    // ConsecutiveIndexSet
+    // -------------------
 
-    /** \brief extended interface for adaptive, consecutive index sets
+    /** \brief extended interface for consecutive index sets
+     *
+     *  \note IndexSets implementing this extended interface can be managed by
+     *        the DofManager
      */
     template< class Traits >
-    class AdaptiveIndexSet
+    class ConsecutiveIndexSet
       : public IndexSet< Traits >
     {
       typedef IndexSet< Traits > BaseType;
@@ -141,7 +215,7 @@ namespace Dune
     protected:
       using BaseType::impl;
 
-      AdaptiveIndexSet () = default;
+      ConsecutiveIndexSet () = default;
 
     public:
       /** \name Adaptation
@@ -149,7 +223,11 @@ namespace Dune
        */
 
       /** \brief please doc me */
-      bool consecutive () const { return impl().consecutive(); }
+      bool consecutive () const
+      DUNE_DEPRECATED_MSG("IndexSet::consecutive() is deprecated, use Capabilities::isConsecutiveIndexSet<IndexSet>::v instead")
+      {
+        return impl().consecutive();
+      }
 
       /** \brief please doc me */
       void resize () { impl().resize(); }
@@ -185,9 +263,52 @@ namespace Dune
         impl().template removeEntity< codim >( entity );
       }
 
-      /** \} */
+      /** \brief please doc me */
+      void backup () const { impl().backup(); }
 
-      /** \name Persistency
+      /** \brief please doc me */
+      void restore () { impl().restore(); }
+
+      /** \brief please doc me */
+      template< class T >
+      void write ( OutStreamInterface< T > &stream )
+      {
+        impl().write( stream );
+      }
+
+      /** \brief please doc me */
+      template< class T >
+      void read ( InStreamInterface< T > &stream )
+      {
+        impl().read( stream );
+      }
+
+      /** \} */
+    };
+
+
+
+    // AdaptiveIndexSet
+    // ----------------
+
+    /** \brief extended interface for adaptive, consecutive index sets
+     *
+     *  \note IndexSets implementing this extended interface can be used with
+     *        index set based adaptive Dof mappers
+     */
+    template< class Traits >
+    class AdaptiveIndexSet
+      : public ConsecutiveIndexSet< Traits >
+    {
+      typedef ConsecutiveIndexSet< Traits > BaseType;
+
+    protected:
+      using BaseType::impl;
+
+      AdaptiveIndexSet () = default;
+
+    public:
+      /** \name Adaptation
        *  \{
        */
 
@@ -207,32 +328,6 @@ namespace Dune
       int newIndex ( int hole, GeometryType type ) const
       {
         return impl().newIndex( hole, type );
-      }
-
-      /** \} */
-
-      /** \name Input/Output
-       *  \{
-       */
-
-      /** \brief please doc me */
-      void backup () const { impl().backup(); }
-
-      /** \brief please doc me */
-      void restore () { impl().restore(); }
-
-      /** \brief please doc me */
-      template< class T >
-      void write ( OutStreamInterface< T > &stream )
-      {
-        impl().write( stream );
-      }
-
-      /** \brief please doc me */
-      template< class T >
-      void read ( InStreamInterface< T > &stream )
-      {
-        impl().read( stream );
       }
 
       /** \} */
