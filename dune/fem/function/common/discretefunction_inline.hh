@@ -5,7 +5,7 @@
 
 #include <dune/geometry/referenceelements.hh>
 
-#include <dune/fem/gridpart/dunefemindexsets.hh>
+#include <dune/fem/gridpart/common/persistentindexset.hh>
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 
@@ -273,13 +273,16 @@ namespace Dune
     void DiscreteFunctionDefault< Impl >
       :: insertSubData()
     {
-      // if indexset is persistent it must be
-      // derived from PersistentIndexSetInterface
-      if( space().indexSet().persistent() )
+      typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
+      IndexSetType &indexSet = (IndexSetType &)space().indexSet();
+      if( Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::v )
       {
+        PersistentIndexSetInterface* persistentIndexSet
+          = Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::map( indexSet );
+
         // this marks the index set in the DofManager's list of index set as persistent
-        PersistentIndexSetInterface& indexSet = (PersistentIndexSetInterface &) space().indexSet();
-        indexSet.addBackupRestore();
+        if( persistentIndexSet )
+          persistentIndexSet->addBackupRestore();
       }
     }
 
@@ -287,13 +290,16 @@ namespace Dune
     void DiscreteFunctionDefault< Impl >
       :: removeSubData()
     {
-      // if indexset is persistent it must be
-      // derived from PersistentIndexSetInterface
-      if( space().indexSet().persistent() )
+      typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
+      IndexSetType &indexSet = (IndexSetType &)space().indexSet();
+      if( Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::v )
       {
+        PersistentIndexSetInterface* persistentIndexSet
+          = Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::map( indexSet );
+
         // this unmarks the index set in the DofManager's list of index set as persistent
-        PersistentIndexSetInterface& indexSet = (PersistentIndexSetInterface &) space().indexSet();
-        indexSet.removeBackupRestore();
+        if( persistentIndexSet )
+          persistentIndexSet->removeBackupRestore();
       }
     }
 
