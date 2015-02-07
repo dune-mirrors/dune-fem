@@ -223,10 +223,10 @@ namespace Dune
        */
 
       /** \brief please doc me */
-      bool consecutive () const
+      static constexpr bool consecutive () noexcept
       DUNE_DEPRECATED_MSG("IndexSet::consecutive() is deprecated, use Capabilities::isConsecutiveIndexSet<IndexSet>::v instead")
       {
-        return impl().consecutive();
+        return true;
       }
 
       /** \brief please doc me */
@@ -236,31 +236,15 @@ namespace Dune
       bool compress () { return impl().compress(); }
 
       /** \brief please doc me */
-      template< class Entity >
-      void insertEntity ( const Entity &entity )
+      void insertEntity ( const typename BaseType::template Codim< 0 >::EntityType &entity )
       {
-        insertEntity< Entity::codimension >( entity );
+        impl().insertEntity( entity );
       }
 
       /** \brief please doc me */
-      template< int codim >
-      void insertEntity ( const typename BaseType::template Codim< codim >::EntityType &entity )
+      void removeEntity ( const typename BaseType::template Codim< 0 >::EntityType &entity )
       {
-        impl().template insertEntity< codim >( entity );
-      }
-
-      /** \brief please doc me */
-      template< class Entity >
-      void removeEntity ( const Entity &entity )
-      {
-        removeEntity< Entity::codimension >( entity );
-      }
-
-      /** \brief please doc me */
-      template< int codim >
-      void removeEntity ( const typename BaseType::template Codim< codim >::EntityType &entity )
-      {
-        impl().template removeEntity< codim >( entity );
+        impl().removeEntity( entity );
       }
 
       /** \brief please doc me */

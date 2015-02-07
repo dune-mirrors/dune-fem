@@ -139,28 +139,14 @@ namespace Dune
 
         bool compress () { return hostIndexSet().compress(); }
 
-        template< class Entity >
-        void insertEntity ( const Entity &entity )
+        void insertEntity ( const typename BaseType::template Codim< 0 >::EntityType &entity )
         {
-          insertEntity< Entity::codimension >( entity );
+          hostIndexSet().insertEntity( entity.impl().hostEntity() );
         }
 
-        template< int codim >
-        void insertEntity ( const typename BaseType::template Codim< codim >::EntityType &entity )
+        void removeEntity ( const typename BaseType::template Codim< 0 >::EntityType &entity )
         {
-          hostIndexSet().template insertEntity< codim >( entity.impl().hostEntity() );
-        }
-
-        template< class Entity >
-        void removeEntity ( const Entity &entity )
-        {
-          removeEntity< Entity::codimension >( entity );
-        }
-
-        template< int codim >
-        void removeEntity ( const typename BaseType::template Codim< codim >::EntityType &entity )
-        {
-          hostIndexSet().template removeEntity< codim >( entity.impl().hostEntity() );
+          hostIndexSet().removeEntity( entity.impl().hostEntity() );
         }
 
         void backup () const { hostIndexSet().backup(); }
