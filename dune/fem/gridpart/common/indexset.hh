@@ -170,7 +170,7 @@ namespace Dune
 
       /** \brief return index for given entity */
       template< int codim >
-      IndexType index ( const typename Codim< codim >::EntityType &entity ) const
+      IndexType index ( const typename Codim< codim >::Entity &entity ) const
       {
         return impl().template index< codim >( entity );
       }
@@ -184,7 +184,7 @@ namespace Dune
 
       /** \brief return index for given subentity */
       template< int codim >
-      IndexType subIndex ( const typename Codim< codim >::EntityType &entity, int i, unsigned int cd ) const
+      IndexType subIndex ( const typename Codim< codim >::Entity &entity, int i, unsigned int cd ) const
       {
         return impl().template subIndex< codim >( entity, i, cd );
       }
@@ -236,13 +236,13 @@ namespace Dune
       bool compress () { return impl().compress(); }
 
       /** \brief please doc me */
-      void insertEntity ( const typename BaseType::template Codim< 0 >::EntityType &entity )
+      void insertEntity ( const typename BaseType::template Codim< 0 >::Entity &entity )
       {
         impl().insertEntity( entity );
       }
 
       /** \brief please doc me */
-      void removeEntity ( const typename BaseType::template Codim< 0 >::EntityType &entity )
+      void removeEntity ( const typename BaseType::template Codim< 0 >::Entity &entity )
       {
         impl().removeEntity( entity );
       }
