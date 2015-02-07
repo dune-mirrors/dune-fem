@@ -9,6 +9,7 @@ common_HEADERS = \
 	gridview2gridpart.hh \
 	indexset.hh \
 	metatwistutility.hh \
+	nonadaptiveindexset.hh \
 	persistentindexset.hh \
 	policies.hh
 

@@ -8,6 +8,7 @@
 #include <dune/grid/common/gridenums.hh>
 
 #include <dune/fem/gridpart/common/gridpart.hh>
+#include <dune/fem/gridpart/common/nonadaptiveindexset.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
@@ -41,7 +42,7 @@ namespace Dune
       typedef typename GridViewType::Grid GridType;
       typedef typename GridViewType::CollectiveCommunication CollectiveCommunicationType;
 
-      typedef typename GridView::IndexSet IndexSetType;
+      typedef NonAdaptiveIndexSet< typename GridView::IndexSet > IndexSetType;
 
       template< int codim >
       struct Codim
@@ -116,17 +117,20 @@ namespace Dune
 
       explicit GridView2GridPart ( const GridView &gridView )
         : gridView_( gridView ),
+          indexSet_( gridView_.indexSet() ),
           dofManager_( DofManagerType::instance( gridView.grid() ) )
 
       {}
 
       explicit GridView2GridPart ( GridView &&gridView )
         : gridView_( std::move( gridView ) ),
+          indexSet_( gridView_.indexSet() ),
           dofManager_( DofManagerType::instance( gridView.grid() ) )
       {}
 
       GridView2GridPart ( const ThisType &rhs )
         : gridView_( rhs.gridView_ ),
+          indexSet_( gridView_.indexSet() ),
           dofManager_( DofManagerType::instance( rhs.grid() ) )
       {}
 
@@ -140,7 +144,7 @@ namespace Dune
       const GridType &grid () const { return gridView_.grid(); }
 
       /** \copydoc Dune::Fem::GridPartInterface::indexSet */
-      const IndexSetType &indexSet () const { return gridView_.indexSet(); }
+      const IndexSetType &indexSet () const { return indexSet_; }
 
       /** \copydoc Dune::Fem::GridPartInterface::begin */
       template< int codim >
@@ -236,6 +240,7 @@ namespace Dune
       }
 
       GridView gridView_;
+      IndexSetType indexSet_;
       DofManagerType &dofManager_;
     };
 
