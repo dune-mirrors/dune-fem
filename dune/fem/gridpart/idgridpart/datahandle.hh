@@ -33,7 +33,7 @@ namespace Dune
     struct Codim
     {
       // type of entity
-      typedef typename Traits::template Codim< codim >::EntityType EntityType;
+      typedef typename Traits::template Codim< codim >::Entity EntityType;
     };
 
   public:

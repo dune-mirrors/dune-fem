@@ -241,7 +241,7 @@ namespace Dune
                          InterfaceType iftype, CommunicationDirection dir ) const
       {
         typedef CommDataHandleIF< DataHandle, Data >  HostHandleType;
-        IdDataHandle< GridFamily, HostHandleType > handleWrapper( data(), handle );
+        IdDataHandle< HostHandleType, GridFamily > handleWrapper( data(), handle );
         hostGridPart().communicate( handleWrapper, iftype, dir );
       }
 
@@ -268,7 +268,6 @@ namespace Dune
 
       const HostGridPartType &hostGridPart () const { return hostGridPart_; }
 
-    protected:
       typedef typename GridFamily::Traits::ExtraData ExtraData;
       ExtraData data () const { return ExtraData(); }
 
@@ -307,6 +306,7 @@ namespace Dune
 
     public:
       typedef IdGridPart< HostGridPart > GridPartType;
+      typedef typename GridPartType::ExtraData  ExtraData;
 
       typedef typename GridPartType::template Codim< codim >::EntityType EntityType;
       typedef typename GridPartType::template Codim< codim >::EntityPointerType EntityPointerType;
@@ -314,17 +314,19 @@ namespace Dune
       typedef typename EntityType::Geometry::GlobalCoordinate GlobalCoordinateType;
 
       explicit EntitySearch ( const GridPartType &gridPart )
-      : hostEntitySearch_( gridPart.hostGridPart() )
+      : hostEntitySearch_( gridPart.hostGridPart() ),
+        data_( gridPart.data() )
       {}
 
       EntityPointerType operator() ( const GlobalCoordinateType &x ) const
       {
         typedef typename EntityPointerType::Implementation EntityPointerImpl;
-        return EntityPointerImpl( hostEntitySearch_( x ) );
+        return EntityPointerImpl( data_, hostEntitySearch_( x ) );
       }
 
-    private:
+    protected:
       const EntitySearch< HostGridPart > hostEntitySearch_;
+      ExtraData data_;
     };
 
   } // namespace Fem
