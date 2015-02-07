@@ -190,7 +190,7 @@ namespace Dune
       }
 
     protected:
-      const typename Traits::IndexSetType impl () const
+      const typename Traits::IndexSetType &impl () const
       {
         return static_cast< const typename Traits::IndexSetType & >( *this );
       }

@@ -152,6 +152,11 @@ namespace Dune
       using BaseType::read;
       using BaseType::write;
 
+      ~PersistentIndexSet ()
+      {
+        dofManager_.removeIndexSet( impl() );
+      }
+
       /** \copydoc Dune::Fem::ConsecutiveIndexSet::backup */
       void backup () const
       {
