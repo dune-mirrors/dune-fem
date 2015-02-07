@@ -1,20 +1,84 @@
 #ifndef DUNE_FEM_ADAPTIVELEAFINDEXSET_HH
 #define DUNE_FEM_ADAPTIVELEAFINDEXSET_HH
 
-//- local includes
+#include <cassert>
+#include <cstddef>
+
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include <dune/common/forloop.hh>
 
-#include <dune/fem/version.hh>
-#include <dune/fem/io/file/iointerface.hh>
-#include <dune/fem/gridpart/common/gridpart.hh>
-#include <dune/fem/gridpart/dunefemindexsets.hh>
 #include <dune/fem/gridpart/codimindexset.hh>
+#include <dune/fem/gridpart/common/gridpart.hh>
+#include <dune/fem/gridpart/common/persistentindexset.hh>
+#include <dune/fem/io/file/iointerface.hh>
+#include <dune/fem/version.hh>
 
 namespace Dune
 {
 
   namespace Fem
   {
+
+    // Internal forward declations
+    // ---------------------------
+
+    template < class GridPartImp >
+    class AdaptiveLeafIndexSet;
+    template < class GridPartImp >
+    class IntersectionAdaptiveLeafIndexSet;
+    template < class GridPartImp >
+    class DGAdaptiveLeafIndexSet;
+
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    //
+    //  --AdaptiveIndexSetBaseTraits
+    //
+    /////////////////////////////////////////////////////////////////////////
+
+    template< class GridPart, class IndexSet >
+    class AdaptiveIndexSetBaseTraits
+    {
+    public:
+      // index set type derived from AdaptiveIndexSetBase
+      typedef IndexSet IndexSetType;
+
+      // grid part type
+      typedef GridPart GridPartType;
+      // grid type
+      typedef typename GridPartType :: GridType GridType;
+
+      // grid (part) dimension
+      static const int dimension = GridPartType :: dimension;
+
+      template< int codim >
+      struct Codim
+      {
+        // entity type
+        typedef typename GridPartType :: template Codim< codim > :: EntityType Entity;
+      };
+
+      // type of codim index set
+      typedef CodimIndexSet< GridType > CodimIndexSetType;
+      // index type used
+      typedef typename CodimIndexSetType :: IndexType IndexType;
+
+      // container of geometry types
+      typedef std::vector< GeometryType > Types;
+    };
+
+
+
+    /////////////////////////////////////////////////////////////////////////
+    //
+    //  --AdaptiveIndexSetBase
+    //
+    /////////////////////////////////////////////////////////////////////////
 
     /** \class AdaptiveIndexSetBase
      *  \brief consecutive, persistent index set for the leaf level based on the
@@ -29,23 +93,20 @@ namespace Dune
      */
     template <class TraitsImp >
     class AdaptiveIndexSetBase
-    : public ConsecutivePersistentIndexSet<
-              typename TraitsImp :: GridType,
-              AdaptiveIndexSetBase< TraitsImp >
-              >
+    : public PersistentAdaptiveIndexSet< TraitsImp >
     {
+      typedef AdaptiveIndexSetBase< TraitsImp > ThisType;
+      typedef PersistentAdaptiveIndexSet< TraitsImp > BaseType;
+
     protected:
       typedef typename TraitsImp :: GridPartType GridPartType;
       typedef typename GridPartType :: GridType GridType;
-      typedef AdaptiveIndexSetBase< TraitsImp > ThisType;
-      typedef ConsecutivePersistentIndexSet< GridType, ThisType > BaseType;
-
-      friend class Conversion< ThisType, Fem :: EmptyIndexSet >;
 
       typedef typename TraitsImp :: CodimIndexSetType  CodimIndexSetType ;
+
     public:
-      //! dimension of the grid
-      static const int dimension = GridType::dimension;
+      //! \copydoc Dune::Fem::IndexSet::dimension */
+      static const int dimension = BaseType::dimension;
 
       //! number of supported codimensions
       static const int numCodimensions = TraitsImp :: numCodimensions ;
@@ -56,14 +117,17 @@ namespace Dune
       //! true if only one geometry type is available
       static const bool hasSingleGeometryType = Dune::Capabilities::hasSingleGeometryType< GridType > :: v ;
 
-      //! type of index
+      //! \copydoc Dune::Fem::IndexSet::IndexType */
       typedef typename BaseType :: IndexType IndexType;
 
-      //! type of codimension 0 Entity (extract from GridPartType)
-      typedef typename GridPartType::template Codim< 0 >::EntityType   ElementType;
+      //! \copydoc Dune::Fem::IndexSet::Types */
+      typedef typename BaseType :: Types Types;
+
+      //! type of codimension 0 Entity
+      typedef typename BaseType :: template Codim< 0 > :: Entity ElementType;
 
       //! type of codimension 0 EntityPointer (extract from GridPartType)
-      typedef typename GridPartType::template Codim< 0 >::EntityPointerType  ElementPointerType;
+      typedef typename ElementType :: EntityPointer ElementPointerType;
 
       //! type of intersection iterator
       typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
@@ -71,8 +135,6 @@ namespace Dune
       //! type of intersections
       typedef typename GridPartType :: IntersectionType   IntersectionType;
 
-      //! type of object returned by types method
-      typedef std::vector< GeometryType >  Types;
 
     private:
 
@@ -349,7 +411,7 @@ namespace Dune
       //  --size
       //
       //****************************************************************
-      //! return size of grid entities per level and codim
+      //! \copydoc Dune::Fem::IndexSet::size */
       IndexType size ( GeometryType type ) const
       {
         const int codim = dimension - type.dim();
@@ -369,7 +431,7 @@ namespace Dune
         return count;
       }
 
-      //! return size of grid entities of given codim
+      //! \copydoc Dune::Fem::IndexSet::size */
       IndexType size ( int codim ) const
       {
         assert( codim < numCodimensions );
@@ -388,20 +450,20 @@ namespace Dune
         return count ;
       }
 
-      //! returns vector with geometry tpyes this index set has indices for
+      //! \copydoc Dune::Fem::IndexSet::geomTypes */
       const std::vector <GeometryType> & geomTypes (const int codim) const
       {
         assert( codim >= 0 && codim < int(geomTypes_.size()) );
         return geomTypes_[ codim ];
       }
 
-      //! returns vector with geometry tpyes this index set has indices for
+      //! \copydoc Dune::Fem::IndexSet::types */
       Types types( const int codim ) const
       {
         return geomTypes( codim );
       }
 
-      //! \brief returns true if entity is contained in index set
+      //! \copydoc Dune::Fem::IndexSet::contains */
       template <class EntityType>
       bool contains (const EntityType & en) const
       {
@@ -421,7 +483,7 @@ namespace Dune
       //
       //****************************************************************
 
-      //! insert entity into set
+      //! \copydoc Dune::Fem::ConsecutiveIndexSet::insertEntity */
       void insertEntity( const ElementType &entity )
       {
         // here we have to add the support of higher codims
@@ -429,7 +491,7 @@ namespace Dune
         insertIndex( entity );
       }
 
-      //! Unregister entity from set
+      //! \copydoc Dune::Fem::ConsecutiveIndexSet::removeEntity */
       void removeEntity( const ElementType &entity )
       {
         removeIndex( entity );
@@ -438,9 +500,7 @@ namespace Dune
       //! reallocate the vector for new size
       void resizeVectors ();
 
-      //! if grid has changed, resize index vectors, and create
-      //! indices for new entities, new entities are entities that
-      //! lie below the old entities
+      //! \copydoc Dune::Fem::ConsecutiveIndexSet::resize */
       void resize ()
       {
         resizeVectors();
@@ -480,8 +540,7 @@ namespace Dune
         }
       }
 
-      //! make to index numbers consecutive
-      //! return true, if at least one hole existed
+      //! \copydoc Dune::Fem::ConsecutiveIndexSet::compress */
       bool compress ();
 
     public:
@@ -489,14 +548,14 @@ namespace Dune
       //  index methods
       //  --index
       ///////////////////////////////////////////////////////
-      /* \brief return index for entity */
+      //! \copydoc Dune::Fem::IndexSet::size */
       template< class Entity >
       IndexType index ( const Entity &entity ) const
       {
         return index< Entity :: codimension >( entity );
       }
 
-      /* \brief return index for entity */
+      //! \copydoc Dune::Fem::IndexSet::size */
       template< int codim >
       IndexType
       index ( const typename GridType :: template Codim< codim > :: Entity &entity ) const
@@ -545,14 +604,14 @@ namespace Dune
         return -1;
       }
 
-      /* \brief subIndex of given entity */
+      //! \copydoc Dune::Fem::IndexSet::subIndex */
       template< class Entity >
       IndexType subIndex ( const Entity &entity, int subNumber, unsigned int codim ) const
       {
         return subIndex< Entity::codimension >( entity, subNumber, codim );
       }
 
-      /* \brief return index for sub entity of given entity and subEntityNumber */
+      //! \copydoc Dune::Fem::IndexSet::subIndex */
       template< int cd >
       IndexType subIndex ( const typename GridPartType::template Codim< cd >::EntityType &entity,
                            int subNumber, unsigned int codim ) const
@@ -576,6 +635,14 @@ namespace Dune
       //
       ///////////////////////////////////////////////////////////////////
 
+      //! \copydoc Dune::Fem::AdaptiveIndexSet::numberOfHoles */
+      int numberOfHoles ( GeometryType type ) const
+      {
+        const int codim = dimension - type.dim();
+        assert( hasSingleGeometryType || geomTypes( codim ).size() == 1 );
+        return numberOfHoles( codim );
+      }
+
       //! return number of holes of the sets indices
       int numberOfHoles ( const int codim ) const
       {
@@ -586,6 +653,14 @@ namespace Dune
         }
         else
           return 0;
+      }
+
+      //! \copydoc Dune::Fem::AdaptiveIndexSet::oldIndex */
+      int oldIndex ( int hole, GeometryType type ) const
+      {
+        const int codim = dimension - type.dim();
+        assert( hasSingleGeometryType || geomTypes( codim ).size() == 1 );
+        return oldIndex( hole, codim );
       }
 
       //! return old index, for dof manager only
@@ -601,6 +676,14 @@ namespace Dune
           DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
           return -1;
         }
+      }
+
+      //! \copydoc Dune::Fem::AdaptiveIndexSet::newIndex */
+      int newIndex ( int hole, GeometryType type ) const
+      {
+        const int codim = dimension - type.dim();
+        assert( hasSingleGeometryType || geomTypes( codim ).size() == 1 );
+        return newIndex( hole, codim );
       }
 
       //! return new index, for dof manager only returns index
@@ -669,11 +752,11 @@ namespace Dune
       inline IndexType countElements ( GeometryType type, const integral_constant<bool,false> &hasEntities ) const;
 
     public:
-      //! write indexset to stream
+      //! \copydoc Dune::Fem::ConsecutiveIndexSet::write */
       template< class StreamTraits >
       bool write( OutStreamInterface< StreamTraits >& out ) const;
 
-      //! read indexset from stream
+      //! \copydoc Dune::Fem::ConsecutiveIndexSet::read */
       template< class StreamTraits >
       bool read( InStreamInterface< StreamTraits >& in );
 
@@ -1203,21 +1286,17 @@ namespace Dune
     //  --AdaptiveLeafIndexSet
     //
     /////////////////////////////////////////////////////////////////////////
+
     template< class GridPartImp >
     struct AdaptiveLeafIndexSetTraits
+    : public AdaptiveIndexSetBaseTraits< GridPartImp, AdaptiveLeafIndexSet< GridPartImp > >
     {
-      // type of grid part
-      typedef GridPartImp GridPartType;
-      // type of grid
-      typedef typename GridPartType :: GridType GridType;
       // number of codimensions
-      enum { numCodimensions = GridType :: dimension + 1 };
+      enum { numCodimensions = GridPartImp :: dimension + 1 };
       // first comdimension that is supported (not yet supported)
       enum { startingCodimension = 0 };
       // intersection codimensions (this is usually dimension + 1 )
       enum { intersectionCodimension = -1 };
-      // type of codimension index set
-      typedef CodimIndexSet< GridType >  CodimIndexSetType;
     };
 
     /** \class AdaptiveLeafIndexSet
@@ -1257,21 +1336,17 @@ namespace Dune
     //  --IntersectionAdaptiveLeafIndexSet
     //
     /////////////////////////////////////////////////////////////////////////
+
     template< class GridPartImp >
     struct IntersectionAdaptiveLeafIndexSetTraits
+    : public AdaptiveIndexSetBaseTraits< GridPartImp, IntersectionAdaptiveLeafIndexSet< GridPartImp > >
     {
-      // type of grid part
-      typedef GridPartImp GridPartType;
-      // type of grid
-      typedef typename GridPartType :: GridType GridType;
       // number of codimensions
-      enum { numCodimensions = GridType :: dimension + 2 };
+      enum { numCodimensions = GridPartImp :: dimension + 2 };
       // intersection codimensions (this is usually dimension + 1 )
       enum { intersectionCodimension = numCodimensions - 1 };
       // first comdimension that is supported (not yet supported)
       enum { startingCodimension = 0 };
-      // type of codimension index set
-      typedef CodimIndexSet< GridType >  CodimIndexSetType;
     };
 
     /** \class AdaptiveLeafIndexSet
@@ -1310,21 +1385,17 @@ namespace Dune
     //  --DGAdaptiveLeafIndexSet
     //
     /////////////////////////////////////////////////////////////////////////
+
     template< class GridPartImp >
     struct DGAdaptiveLeafIndexSetTraits
+    : public AdaptiveIndexSetBaseTraits< GridPartImp, DGAdaptiveLeafIndexSet< GridPartImp > >
     {
-      // type of grid part
-      typedef GridPartImp GridPartType;
-      // type of grid
-      typedef typename GridPartType :: GridType GridType;
       // this index set only supports one codimension, codim zero
       enum { numCodimensions = 1 };
       // first comdimension that is supported (not yet supported)
       enum { startingCodimension = 0 };
       // intersection codimensions (this is usually dimension + 1 )
       enum { intersectionCodimension = -1 };
-      // type of codimension index set
-      typedef CodimIndexSet< GridType >  CodimIndexSetType;
     };
 
     /** \class DGAdaptiveLeafIndexSet

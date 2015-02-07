@@ -131,11 +131,13 @@ namespace Dune
     class PersistentIndexSetBase
       : public PersistentObject
     {
-      typedef DofManager< Grid > DofManagerType;
-
     protected:
-      explicit PersistentIndexSetBase ( const Grid &grid )
-        : dofManager_( DofManagerType::instance( grid ) ),
+      typedef Grid GridType;
+      typedef DofManager< GridType > DofManagerType;
+
+      explicit PersistentIndexSetBase ( const GridType &grid )
+        : grid_( grid ),
+          dofManager_( DofManagerType::instance( grid ) ),
           counter_( 0 )
       {
         dofManager_.addIndexSet( impl() );
@@ -189,7 +191,11 @@ namespace Dune
         return static_cast< const Implementation & >( *this );
       }
 
+    protected:
+      const GridType &grid_;
       DofManagerType &dofManager_;
+
+    public:
       int counter_ ;
     };
 
