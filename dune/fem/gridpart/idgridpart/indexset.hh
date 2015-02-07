@@ -45,7 +45,7 @@ namespace Dune
         template< int codim >
         struct Codim
         {
-          typedef typename std::remove_const< GridFamily >::type::Traits::template Codim< codim >::Entity Entity;
+          typedef typename Traits::template Codim< codim >::Entity Entity;
         };
 
         typedef typename HostIndexSetType::IndexType IndexType;
@@ -53,7 +53,7 @@ namespace Dune
         typedef typename HostIndexSetType::Types Types;
 
         explicit IndexSet ( const HostIndexSetType &hostIndexSet )
-          : hostIndexSet_( &hostIndexSet )
+          : hostIndexSet_( hostIndexSet )
         {}
 
         Types types ( int codim ) const
@@ -89,7 +89,7 @@ namespace Dune
         }
 
         template< int codim >
-        IndexType index ( const typename Codim< codim >::EntityType &entity ) const
+        IndexType index ( const typename Codim< codim >::Entity &entity ) const
         {
           return hostIndexSet().template index< codim >( entity.impl().hostEntity() );
         }
@@ -108,8 +108,7 @@ namespace Dune
 
         const HostIndexSetType &hostIndexSet () const
         {
-          assert( hostIndexSet_ );
-          return *hostIndexSet_;
+          return hostIndexSet_;
         }
 
       private:
@@ -139,12 +138,12 @@ namespace Dune
 
         bool compress () { return hostIndexSet().compress(); }
 
-        void insertEntity ( const typename BaseType::template Codim< 0 >::EntityType &entity )
+        void insertEntity ( const typename BaseType::template Codim< 0 >::Entity &entity )
         {
           hostIndexSet().insertEntity( entity.impl().hostEntity() );
         }
 
-        void removeEntity ( const typename BaseType::template Codim< 0 >::EntityType &entity )
+        void removeEntity ( const typename BaseType::template Codim< 0 >::Entity &entity )
         {
           hostIndexSet().removeEntity( entity.impl().hostEntity() );
         }
@@ -191,14 +190,29 @@ namespace Dune
           return this->hostIndexSet().numberOfHoles( type );
         }
         
+        int numberOfHoles ( int codim ) const
+        {
+          return this->hostIndexSet().numberOfHoles( codim );
+        }
+
         int oldIndex ( int hole, GeometryType type ) const
         {
           return this->hostIndexSet().oldIndex( hole, type );
         }
         
+        int oldIndex ( int hole, int codim ) const
+        {
+          return this->hostIndexSet().oldIndex( hole, codim );
+        }
+
         int newIndex ( int hole, GeometryType type ) const
         {
           return this->hostIndexSet().newIndex( hole, type );
+        }
+
+        int newIndex ( int hole, int codim ) const
+        {
+          return this->hostIndexSet().newIndex( hole, codim );
         }
       };
 
@@ -211,7 +225,7 @@ namespace Dune
                 class HostIndexSet = typename std::remove_const< GridFamily >::type::Traits::HostGridPartType::IndexSetType,
                 bool consecutive = Capabilities::isConsecutiveIndexSet< HostIndexSet >::v,
                 bool adaptive = Capabilities::isAdaptiveIndexSet< HostIndexSet >::v >
-      class Implementation
+      struct Implementation
       {
         typedef typename std::conditional< adaptive,
             AdaptiveIndexSet< GridFamily >,
@@ -234,6 +248,8 @@ namespace Dune
       : public __IdIndexSet::Implementation< GridFamily >::Type
     {
       typedef typename __IdIndexSet::Implementation< GridFamily >::Type BaseType;
+
+      friend class Capabilities::isPersistentIndexSet< IdIndexSet< GridFamily > >;
 
     public:
       using BaseType::BaseType;
