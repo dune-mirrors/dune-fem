@@ -41,7 +41,8 @@ int main(int argc, char** argv)
 
     // get the macro grid filename, using a lambda to verify 'no white spaces' in the filename
     std::string macrogridname;
-    Dune::Fem::Parameter::getValid("macrogrid", []( const std::string &name ){ (value.find_first_of( " \t" ) == std::string::npos); }, macrogridname );
+    auto valid = []( const std::string &name ){ return (name.find_first_of( " \t" ) == std::string::npos); };
+    Dune::Fem::Parameter::getValid("macrogrid", valid, macrogridname );
 
     // get velocity for the advection part
     typedef Dune::FieldVector< double, 2>  VectorType;
