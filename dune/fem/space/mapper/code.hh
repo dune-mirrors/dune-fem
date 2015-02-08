@@ -96,31 +96,34 @@ namespace Dune
        */
       static std::size_t size ( unsigned int numBlocks, unsigned int numDofs )
       {
-        // Format of the code_ array:
-        //
-        // code_[0]: number of sub-entities with DoFs
-        // code_[1]: total number of DoFs
-        //
-        // For all k = 0 ... (numBlocks-1)
-        // (NB: k corresponds ot a sub-entity with DoFs)
-        // It follows a variable size block:
-        //
-        // code_[offset_k + 0]: geometry of the sub-entity
-        // code_[offset_k + 1]: local number for given codim (0 ... refElem.size(cd))
-        // code_[offset_k + 2]: #DoFs attached to  this sub-entity
-        //
-        // code_[offset_k + 2 + j]:
-        // for all (j = 0 ... #subEntityDofs) the local index of the
-        // given DoF, where "local" now means the number of the
-        // corresponding local basis function of the bulk element,
-        // i.e. not the numbering inside the entity.
-        //
-        // offset_(k+1) is then just the start of the next block ...
-        //
-        // Oh boy :)
         return 2 + 3*numBlocks + numDofs;
       }
 
+      // Format of the code_ array:
+      //
+      // code_[0]: number of sub-entities with DoFs
+      // code_[1]: total number of DoFs
+      //
+      // For all k = 0 ... (numBlocks-1)
+      // (NB: k corresponds ot a sub-entity with DoFs)
+      // It follows a variable size block:
+      //
+      // code_[offset_k + 0]: geometry of the sub-entity
+      // code_[offset_k + 1]: local number for given codim (0 ... refElem.size(cd))
+      // code_[offset_k + 2]: #DoFs attached to  this sub-entity
+      //
+      // code_[offset_k + 2 + j]:
+      // for all (j = 0 ... #subEntityDofs == code_[offset_k + 2]) the
+      // local index of the given DoF, where "local" now means the
+      // number of the corresponding local basis function of the bulk
+      // element, i.e. not the numbering inside the entity.
+      //
+      // offset_(k+1) is then just the start of the next block ...
+      //
+      // Oh boy :) 
+      //
+      // (end-iteration limits above are potentially off by one for
+      // the sake of readability)
       unsigned int *code_;
     };
 
