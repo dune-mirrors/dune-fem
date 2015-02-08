@@ -212,6 +212,10 @@ namespace Dune
     // IndexSetDofMapper::MapFunctor
     // -----------------------------
 
+    // The functor maps all DoFs for a given entity. Intentially, it
+    // is passed as argument to DofMapperCode::operator() which then
+    // calls the apply()-method for each sub-entity with DoFs in turn.
+
     template< class GridPart >
     template< class Functor >
     struct IndexSetDofMapper< GridPart >::MapFunctor
@@ -228,6 +232,9 @@ namespace Dune
         functor_( functor )
       {}
 
+      // subEntity is the sub-entity number, given codim, as returned
+      // by refElem.subEntity(). The iterators iterate over all DoFs
+      // attached to the given sub-entity.
       template< class Iterator >
       void operator() ( unsigned int gtIndex, unsigned int subEntity, Iterator it, Iterator end )
       {

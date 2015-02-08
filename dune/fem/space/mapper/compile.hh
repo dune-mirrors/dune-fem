@@ -116,7 +116,8 @@ namespace Dune
       }
 
       // fill in the local indices
-
+      //
+      // Format of the code-array is described in code.hh
       for( std::size_t i = 0; i < numDofs; ++i )
       {
         const LocalKey &key = localCoefficients.localKey( i );
