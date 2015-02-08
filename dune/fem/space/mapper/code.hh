@@ -56,6 +56,25 @@ namespace Dune
         return *this;
       }
 
+      /**
+       * \brief execute DoF mapper code
+       *
+       * The functor has to be a copyable object satisfying the following
+       * interface:
+       * \code
+       * struct Functor
+       * {
+       *   void operator() ( unsigned int gtIndex, unsigned int subEntity, ConstIterator begin, ConstIterator end )
+       * };
+       * \endcode
+       * The type ConstIterator is defined by the DofMapperCode.
+       * It is passed the following arguments:
+       *   - gtIndex: global geometry type index of a subentity
+       *   - subEntity: local number of the subentity (wrt. the reference element)
+       *   - begin / end: iterator pair returning the local indices (wrt. to the
+       *     element) of the DoFs associated to the subentity
+       *   .
+       */
       template< class Functor >
       void operator() ( Functor f ) const
       {
