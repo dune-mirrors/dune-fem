@@ -90,7 +90,7 @@ namespace Dune
 
       /**@internal
        *
-       * @param[in] numBlocks The number of sub-entities which carry DoFs
+       * @param[in] numBlocks The number of subentities which carry DoFs
        *
        * @param[in] numDofs The total number of DoFs
        */
@@ -101,29 +101,25 @@ namespace Dune
 
       // Format of the code_ array:
       //
-      // code_[0]: number of sub-entities with DoFs
+      // code_[0]: number of subentities with DoFs
       // code_[1]: total number of DoFs
       //
       // For all k = 0 ... (numBlocks-1)
-      // (NB: k corresponds ot a sub-entity with DoFs)
-      // It follows a variable size block:
+      // (NB: k corresponds to a subentity with DoFs)
+      // It follows a variable size block (offset_0 := 2):
       //
-      // code_[offset_k + 0]: geometry of the sub-entity
-      // code_[offset_k + 1]: local number for given codim (0 ... refElem.size(cd))
-      // code_[offset_k + 2]: #DoFs attached to  this sub-entity
+      // code_[offset_k + 0]: global geometry type index of the subentity
+      //                      (this also encodes the codim)
+      // code_[offset_k + 1]: local number i_k of subentity (0 <= i_k < refElem.size( codim ))
+      // code_[offset_k + 2]: #DoFs n_k attached to this subentity
       //
-      // code_[offset_k + 2 + j]:
-      // for all (j = 0 ... #subEntityDofs == code_[offset_k + 2]) the
-      // local index of the given DoF, where "local" now means the
-      // number of the corresponding local basis function of the bulk
-      // element, i.e. not the numbering inside the entity.
+      // code_[offset_k + 3 + j]:
+      // for 0 <= j < n_k, the local index of the given DoF, where "local" now
+      // means the number of the corresponding local basis function of the bulk
+      // element, i.e., not the numbering inside the entity.
       //
-      // offset_(k+1) is then just the start of the next block ...
-      //
-      // Oh boy :) 
-      //
-      // (end-iteration limits above are potentially off by one for
-      // the sake of readability)
+      // offset_(k+1) := (offset_k + 3 + n_k) is then just the start of the
+      // next block.
       unsigned int *code_;
     };
 
