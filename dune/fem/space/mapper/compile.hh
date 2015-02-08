@@ -44,15 +44,21 @@ namespace Dune
     compile ( const Dune::ReferenceElement< Field, dim > &refElement,
               const LocalCoefficients &localCoefficients )
     {
-      const std::size_t numDofs = localCoefficients.size();
+      const std::size_t numDofs = localCoefficients.size(); // total number of DoFs
 
       // count number of keys per subentity
 
+      // total number of all sub-entities
       unsigned int numSubEntities = 0;
       for( int codim = 0; codim <= dim; ++codim )
         numSubEntities += refElement.size( codim );
       assert( numSubEntities > 0 );
 
+      // form a "matrix" with variable lenght rows. This is the usual
+      // approach: pre-allocate the needed storage once and then
+      // insert the proper offsets into the row-pointer. After
+      // completion count[codim] is an array with one entry for each
+      // sub-entity for the given codim. It is initialized with zeros.
       unsigned int *count[ dim+1 ];
       count[ 0 ] = new unsigned int[ numSubEntities ];
       assert( count[ 0 ] );
@@ -60,6 +66,13 @@ namespace Dune
       for( int codim = 0; codim < dim; ++codim )
         count[ codim+1 ] = count[ codim ] + refElement.size( codim );
 
+      // Now do the actual counting. After completion
+      // cound[codim][subEntity] will contain the number of DoFs
+      // attached to the particular sub-entity.
+      //
+      // numBlocks is the actual number of __USED__
+      // sub-entities. E.g. for continuous Lagrange-1 on a triangle numBlocks
+      // would be 3, after counting (only the vertices carry DoFs).
       unsigned int numBlocks = 0;
       for( std::size_t i = 0; i < numDofs; ++i )
       {
@@ -78,6 +91,9 @@ namespace Dune
 
       // format the code into subentity blocks
       // result: count will hold the first local index in the block (0 = unused)
+      //
+      // I.e.: count[cd][subEntIdx] = local index offset for start of
+      // DoFs attached to sub entity
 
       DofMapperCodeWriter code( numBlocks, numDofs );
 
