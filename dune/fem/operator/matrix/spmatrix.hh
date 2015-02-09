@@ -301,9 +301,6 @@ namespace Dune
       //! print matrix
       void print (std::ostream& s, unsigned int offset=0) const;
 
-      //! dump matrix on file
-      void print(const std::string& filename, unsigned int offset=0) const;
-
       //! print values
       void printReal (std::ostream& s) const;
 

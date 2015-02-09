@@ -365,7 +365,6 @@ namespace Dune
         //! print matrix
         void print(std::ostream& s, unsigned int offset=0) const
         {
-          std::cout << "Print ISTLMatrix" << std::endl;
           s.precision( 6 );
           ConstRowIterator endi=this->end();
           for (ConstRowIterator i=this->begin(); i!=endi; ++i)
@@ -377,18 +376,6 @@ namespace Dune
                 s << i.index()+offset << " " << j.index()+offset << " " << *j << std::endl;
             }
           }
-        }
-
-        //! dump matrix on file
-        void print(const std::string& filename, unsigned int offset=0) const
-        {
-          std::ofstream ofs;
-          ofs.open(filename.c_str());
-          if(ofs.is_open())
-            print(ofs,offset);
-          else
-            std::cout << "Not able to open the file " << filename << std::endl;
-          ofs.close();
         }
     };
 
