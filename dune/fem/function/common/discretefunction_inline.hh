@@ -100,23 +100,6 @@ namespace Dune
         out << (*dit) << std::endl;
     }
 
-    template< class Impl >
-    inline void DiscreteFunctionDefault<Impl >
-      :: print ( const std::string &filename ) const
-    {
-      std::cout << "Dump " << BaseType :: name() << " on file" << std::endl;
-      std::ofstream ofs;
-      ofs.open(filename.c_str());
-      if(ofs.is_open())
-      {
-        const ConstDofIteratorType end = BaseType :: dend();
-        for( ConstDofIteratorType dit = BaseType :: dbegin(); dit != end; ++dit )
-          ofs << (*dit) << std::endl;
-      }
-      else
-        std::cout << "Not able to open the file " << filename << std::endl;
-      ofs.close();
-    }
 
     template< class Impl >
     inline bool DiscreteFunctionDefault< Impl >
