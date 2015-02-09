@@ -132,8 +132,6 @@ protected:
     typedef PointProvider<ctype, dim, codim> PointProviderType;
     typedef typename PointProviderType::GlobalPointVectorType PointVectorType;
     typedef typename Intersection::LocalGeometry LocalGeometryType;
-    typedef typename Intersection::Geometry GlobalGeometryType;
-    typedef FieldVector<ctype,dim> DomainType;
 
     IteratorType enditer = gridPart.template end<0> ();
     for(IteratorType eiter = gridPart.template begin<0> ();
@@ -203,7 +201,6 @@ protected:
 
         for (size_t i = 0; i < quad.nop(); ++i)
         {
-          typedef typename PointVectorType :: value_type PointType;
           for (int d = 0; d < dim; ++d)
           {
             assert( quad.cachingPoint(i) < points.size() );
