@@ -1,8 +1,17 @@
-#ifndef DUNE_FEM_CODIMENSIONMAPPER_HH
-#define DUNE_FEM_CODIMENSIONMAPPER_HH
+#ifndef DUNE_FEM_SPACE_MAPPER_CODIMENSIONMAPPER_HH
+#define DUNE_FEM_SPACE_MAPPER_CODIMENSIONMAPPER_HH
+
+#include <cassert>
+
+#include <algorithm>
+#include <type_traits>
+
+#include <dune/common/exceptions.hh>
 
 #include <dune/geometry/referenceelements.hh>
+#include <dune/geometry/type.hh>
 
+#include <dune/fem/gridpart/common/indexset.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 
@@ -12,307 +21,291 @@ namespace Dune
   namespace Fem
   {
 
-    // Internal Forward Declarations
-    // -----------------------------
+    // Internal forward declaration
+    // ----------------------------
 
     template< class GridPart, int codim >
     class CodimensionMapper;
 
-    template< class Element, class DofMapper >
-    class CodimensionDofMapIterator;
 
 
+#ifndef DOXYGEN
 
-    // CodimensionMapperTraits
-    // -----------------------
-
-    template< class GridPart, int codim >
-    struct CodimensionMapperTraits
+    namespace __CodimensionMapper
     {
-      typedef GridPart GridPartType;
 
-      // we still need entities of codimension 0 here
-      typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
+      // Traits
+      // ------
 
-      typedef typename GridPartType::IndexSetType IndexSetType;
-
-      typedef CodimensionMapper< GridPartType, codim > DofMapperType;
-
-      typedef typename IndexSetType :: IndexType SizeType;
-      typedef typename IndexSetType :: IndexType GlobalKeyType ;
-    };
-
-
-    template< class GridPart >
-    struct CodimensionMapperTraits< GridPart, 0 >
-    {
-      typedef GridPart GridPartType;
-
-      typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
-
-      typedef typename GridPartType::IndexSetType IndexSetType;
-
-      typedef CodimensionMapper< GridPartType, 0 > DofMapperType;
-
-      typedef typename IndexSetType :: IndexType SizeType;
-      typedef typename IndexSetType :: IndexType GlobalKeyType ;
-    };
-
-
-
-    /** \class CodimensionMapper
-     *  \brief mapper allocating one DoF per subentity of a given codimension
-     *
-     *  \tparam  GridPart  grid part, the mapper shall be used on
-     *  \tparam  cdim      codimension
-     */
-    template< class GridPart, int cdim >
-    class CodimensionMapper
-    : public AdaptiveDofMapper< CodimensionMapperTraits< GridPart, cdim > >
-    {
-      typedef CodimensionMapper< GridPart, cdim > ThisType;
-      typedef AdaptiveDofMapper< CodimensionMapperTraits< GridPart, cdim > > BaseType;
-
-    public:
-      typedef typename BaseType::Traits Traits;
-
-      typedef typename Traits::ElementType ElementType;
-
-      typedef typename Traits::GridPartType GridPartType;
-
-      typedef typename Traits::IndexSetType IndexSetType;
-
-      typedef typename Traits::SizeType SizeType;
-
-      typedef typename Traits::GlobalKeyType  GlobalKeyType ;
-
-      //! dimension of the grid
-      static const int dimension = GridPartType::dimension;
-
-      //! codimension that is mapped
-      static const int codimension = cdim;
-
-      //! Constructor
-      explicit CodimensionMapper( const GridPartType &gridPart );
-
-      /** \copydoc DofMapper::contains */
-      bool contains ( const int codim ) const
+      template< class GridPart, int codim >
+      struct Traits
       {
-        return (codim == codimension);
-      }
+        typedef CodimensionMapper< GridPart, codim > DofMapperType;
 
-      /** \copydoc DofMapper::size */
-      SizeType size () const
-      {
-        // return number of dofs for codimension
-        return indexSet_.size( codimension );
-      }
+        static const int codimension = codim;
 
-      /** \brief Check, whether the data in a codimension has fixed size */
-      bool fixedDataSize ( int codim ) const
-      {
-        return true;
-      }
+        typedef GridPart GridPartType;
+        typedef typename GridPartType::IndexSetType IndexSetType;
 
-      /** \copydoc DofMapper::mapEach */
-      template< class Functor >
-      void mapEach ( const ElementType &element, Functor f ) const
-      {
-        if( codimension > 0 )
-        {
-          const SizeType n = numDofs( element );
-          for( SizeType i = 0; i < n; ++i )
-            f( i, indexSet_.subIndex( element, i, codimension ) );
-        }
-        else
-          f( 0, indexSet_.index( element ) );
-      }
-
-    protected:
-      template <int codim1, int codim>
-      struct IndexExtractor
-      {
-        template <class Entity >
-        static inline GlobalKeyType index(const IndexSetType& indexSet, const Entity& entity )
-        {
-          DUNE_THROW(InvalidStateException,"Wrong codimension selected");
-          return -1;
-        }
+        typedef typename GridPartType::template Codim< 0 >::EntityType ElementType;
+        typedef typename IndexSetType::IndexType SizeType;
+        typedef SizeType GlobalKeyType;
       };
 
-      //! return index of entity (specialized because of Grids like Yasp which are not
-      //! supporting every codimension entity)
-      template <int codim>
-      struct IndexExtractor< codim, codim >
+
+
+      // DofMapper
+      // ---------
+
+      template< class T, template< class > class Base = Dune::Fem::DofMapper >
+      class DofMapper
+        : public Base< T >
       {
+        typedef Base< T > BaseType;
+
+      public:
+        typedef typename BaseType::Traits Traits;
+
+        static const int codimension = Traits::codimension;
+
+        typedef typename Traits::GridPartType GridPartType;
+        typedef typename Traits::IndexSetType IndexSetType;
+
+        typedef typename BaseType::ElementType ElementType;
+        typedef typename BaseType::SizeType SizeType;
+        typedef typename Traits::GlobalKeyType GlobalKeyType;
+
+        explicit DofMapper ( const GridPartType &gridPart )
+          : DofMapper( gridPart.indexSet() )
+        {}
+
+        explicit DofMapper ( const IndexSetType &indexSet )
+          : indexSet_( indexSet ),
+            maxNumDofs_( 0 )
+        {
+          AllGeomTypes< IndexSetType, typename GridPartType::GridType > types( indexSet );
+          for( GeometryType type : types.geomTypes( 0 ) )
+            maxNumDofs_ = std::max( maxNumDofs_, referenceElement( type ).size( codimension ) );
+        }
+
+        /* \name DofMapper interface methods
+         * \{
+         */
+
+        SizeType size () const
+        {
+          return indexSet().size( codimension );
+        }
+
+        static constexpr bool contains ( int codim ) noexcept
+        {
+          return codim == codimension;
+        }
+
+        static constexpr bool fixedDataSize ( int codim ) noexcept
+        {
+          return true;
+        }
+
+        template< class Function >
+        void mapEach ( const ElementType &element, Function function ) const
+        {
+          if( codimension == 0 )
+            function( 0, indexSet().index( element ) );
+          else
+          {
+            const SizeType numDofs = this->numDofs( element );
+            for( SizeType i = 0; i < numDofs; ++i )
+              function( i, indexSet().subIndex( element, i, codimension ) );
+          }
+        }
+
+        template< class Entity, class Function >
+        void mapEachEntityDof ( const Entity &entity, Function function ) const
+        {
+          assert( Entity::codimension == codimension );
+          function( 0, indexSet().index( entity ) );
+        }
+
+        int maxNumDofs () const { return maxNumDofs_; }
+
+        SizeType numDofs ( const ElementType &element ) const
+        {
+          return element.subEntities( codimension );
+        }
+
         template< class Entity >
-        static inline GlobalKeyType index(const IndexSetType& indexSet, const Entity& entity )
+        static constexpr SizeType numEntityDofs ( const Entity &entity ) noexcept
         {
-          return indexSet.index( entity );
+          return contains( Entity::codimension ) ? 1 : 0;
+        }
+
+        /* \} */
+
+        /* \name AdaptiveDofMapper interface methods
+         * \{
+         */
+
+        /* Compatibility methods; users expect an AdaptiveDiscreteFunction to
+         * compile over spaces built on top of a LeafGridPart or LevelGridPart.
+         *
+         * The AdaptiveDiscreteFunction requires the block mapper (i.e. this
+         * type) to be adaptive. The CodimensionMapper however is truly
+         * adaptive if and only if the underlying index set is adaptive. We
+         * don't want to wrap the index set as 1) it hides the actual problem
+         * (don't use the AdaptiveDiscreteFunction with non-adaptive index
+         * sets), and 2) other dune-fem classes may make correct use of the
+         * index set's capabilities.
+         */
+
+        static constexpr bool consecutive () noexcept { return false; }
+
+        SizeType numBlocks () const
+        {
+          DUNE_THROW( NotImplemented, "Method numBlocks() called on non-adaptive block mapper" );
+        }
+
+        SizeType numberOfHoles ( int ) const
+        {
+          DUNE_THROW( NotImplemented, "Method numberOfHoles() called on non-adaptive block mapper" );
+        }
+
+        GlobalKeyType oldIndex ( int hole, int ) const
+        {
+          DUNE_THROW( NotImplemented, "Method oldIndex() called on non-adaptive block mapper" );
+        }
+
+        GlobalKeyType newIndex ( int hole, int ) const
+        {
+          DUNE_THROW( NotImplemented, "Method newIndex() called on non-adaptive block mapper" );
+        }
+
+        SizeType oldOffSet ( int ) const
+        {
+          DUNE_THROW( NotImplemented, "Method oldOffSet() called on non-adaptive block mapper" );
+        }
+
+        SizeType offSet ( int ) const
+        {
+          DUNE_THROW( NotImplemented, "Method offSet() called on non-adaptive block mapper" );
+        }
+
+        /* \} */
+
+      protected:
+        const IndexSetType &indexSet () const { return indexSet_; }
+
+      private:
+        static const ReferenceElement< typename GridPartType::ctype, GridPartType::dimension > &
+        referenceElement ( GeometryType type )
+        {
+          return ReferenceElements< typename GridPartType::ctype, GridPartType::dimension >::general( type );
+        }
+
+        const IndexSetType &indexSet_;
+        int maxNumDofs_;
+      };
+
+
+
+      // AdaptiveDofMapper
+      // -----------------
+
+      template< class Traits >
+      class AdaptiveDofMapper
+        : public DofMapper< Traits, Dune::Fem::AdaptiveDofMapper >
+      {
+        typedef DofMapper< Traits, Dune::Fem::AdaptiveDofMapper > BaseType;
+
+      public:
+        static const int codimension = BaseType::codimension;
+
+        typedef typename BaseType::SizeType SizeType;
+        typedef typename BaseType::GlobalKeyType GlobalKeyType;
+
+      protected:
+        using BaseType::indexSet;
+
+      public:
+        using BaseType::BaseType;
+
+        static constexpr bool consecutive () noexcept { return true; }
+
+        static constexpr SizeType numBlocks () noexcept
+        {
+          return 1;
+        }
+
+        SizeType numberOfHoles ( int ) const
+        {
+          return indexSet().numberOfHoles( codimension );
+        }
+
+        GlobalKeyType oldIndex ( int hole, int ) const
+        {
+          return indexSet().oldIndex( hole, codimension );
+        }
+
+        GlobalKeyType newIndex ( int hole, int ) const
+        {
+          return indexSet().newIndex( hole, codimension );
+        }
+
+        static constexpr SizeType oldOffSet ( int ) noexcept
+        {
+          return 0;
+        }
+
+        static constexpr SizeType offSet ( int ) noexcept
+        {
+          return 0;
         }
       };
 
-    public:
-      /** \copydoc DofMapper::mapEachEntityDof */
-      template< class Entity, class Functor >
-      void mapEachEntityDof ( const Entity &entity, Functor f ) const
+
+
+      // Implementation
+      // --------------
+
+      template< class GridPart, int codim,
+                bool adaptive = Capabilities::isAdaptiveIndexSet< typename GridPart::IndexSetType >::v >
+      class Implementation
       {
-        assert( codimension == Entity::codimension );
-        // we only have one DoF per entity, so simply assign DoF 0
-        f( 0, IndexExtractor< codimension, Entity::codimension >::index( indexSet_, entity ) );
-      }
+        typedef __CodimensionMapper::Traits< GridPart, codim > Traits;
 
-      /** \copydoc DofMapper::maxNumDofs() const */
-      SizeType maxNumDofs () const
-      {
-        return maxNumberOfDofs_;
-      }
+      public:
+        typedef typename std::conditional< adaptive,
+            AdaptiveDofMapper< Traits >,
+            DofMapper< Traits >
+          >::type Type;
+      };
 
-      /** \copydoc Dune::DofMapper::numDofs(const ElementType &element) const */
-      SizeType numDofs ( const ElementType &element ) const
-      {
-        return element.subEntities( codimension );
-      }
+    } // namespace __CodimensionMapper
 
-      /** \copydoc Dune::DofMapper::numEntityDofs(const Entity &entity) const */
-      template< class Entity >
-      SizeType numEntityDofs ( const Entity &entity ) const
-      {
-        return (contains( Entity::codimension ) ? 1 : 0);
-      }
-
-      /** \copydoc AdaptiveDofMapper::oldIndex */
-      GlobalKeyType oldIndex ( const int hole, int ) const
-      {
-        // forward to index set
-        return indexSet_.oldIndex( hole, codimension ) ;
-      }
-
-      /** \copydoc AdaptiveDofMapper::newIndex */
-      GlobalKeyType newIndex ( const int hole, int ) const
-      {
-        // forward to index set
-        return indexSet_.newIndex( hole, codimension );
-      }
-
-      /** \copydoc AdaptiveDofMapper::numberOfHoles */
-      SizeType numberOfHoles ( const int ) const
-      {
-        return indexSet_.numberOfHoles( codimension );
-      }
-
-      /** \copydoc AdaptiveDofMapper::consecutive */
-      bool consecutive () const
-      {
-        return indexSet_.consecutive();
-      }
-
-      /** \copydoc AdaptiveDofMapper::oldOffSet */
-      SizeType oldOffSet ( const int block ) const
-      {
-        return 0;
-      }
-
-      /** \copydoc AdaptiveDofMapper::offSet */
-      SizeType offSet ( const int block ) const
-      {
-        return 0;
-      }
-
-      /** \copydoc AdaptiveDofMapper::numBlocks */
-      SizeType numBlocks () const
-      {
-        return 1;
-      }
-
-    protected:
-      // index set for the grid
-      const IndexSetType &indexSet_;
-
-      // maximal number of local dofs
-      int maxNumberOfDofs_;
-    };
+#endif // #ifndef DOXYGEN
 
 
-    template< class GridPart, int cdim >
-    inline CodimensionMapper< GridPart, cdim >
-      ::CodimensionMapper( const GridPartType &gridPart )
-    : indexSet_( gridPart.indexSet() ),
-      maxNumberOfDofs_( 0 )
+
+    // CodimensionMapper
+    // -----------------
+
+    /** \brief mapper allocating one DoF per subentity of a given codimension
+     *
+     *  \tparam  GridPart  grid part type
+     *  \tparam  codim  codimension
+     *
+     *  \note This mapper is adaptve (cf. AdaptiveDofMapper) if and only if the
+     *        grid part's index set is adaptive, i.e. if
+     *        Capabilities::isAdaptiveIndexSet< GridPart::IndexSetType >::v is \b true
+     */
+    template< class GridPart, int codim >
+    class CodimensionMapper
+      : public __CodimensionMapper::template Implementation< GridPart, codim >::Type
     {
-      typedef typename GridPartType::ctype ctype;
-      typedef Dune::ReferenceElements< ctype, dimension > RefElements;
-
-      Fem::AllGeomTypes< IndexSetType, typename GridPartType::GridType > allTypes( indexSet_ );
-      const std::vector< GeometryType > &types = allTypes.geomTypes( 0 );
-      const unsigned int numTypes = types.size();
-      for( unsigned int i = 0; i < numTypes; ++i )
-      {
-        const GeometryType &type = types[ i ];
-
-        const int numSubEntities = RefElements::general( type ).size( codimension );
-        maxNumberOfDofs_ = std::max( maxNumberOfDofs_, numSubEntities );
-      }
-      assert( maxNumberOfDofs_ > 0 );
-    }
-
-
-
-    // CodimensionDofMapIterator
-    // -------------------------
-
-    template< class Element, class DofMapper >
-    class CodimensionDofMapIterator
-    {
-      typedef CodimensionDofMapIterator< Element, DofMapper > ThisType;
+      typedef typename __CodimensionMapper::template Implementation< GridPart, codim >::Type BaseType;
 
     public:
-      typedef Element ElementType;
-      typedef DofMapper DofMapperType;
-
-      enum IteratorType { beginIterator, endIterator };
-
-      CodimensionDofMapIterator ( const IteratorType type,
-                                  const ElementType &entity,
-                                  const DofMapperType &mapper )
-      : baseIndex_( (type == endIterator) ? -1 : mapper.mapToGlobal( entity, 0 ) ),
-        dof_( (type == endIterator) ? mapper.numDofs( entity ) : 0 )
-      {}
-
-      CodimensionDofMapIterator ( const ThisType &other )
-      : baseIndex_( other.baseIndex_ ),
-        dof_( other.dof_ )
-      {}
-
-      ThisType &operator++ ()
-      {
-        ++dof_;
-        return *this;
-      }
-
-      bool operator== ( const ThisType &other ) const
-      {
-        return dof_ == other.dof_;
-      }
-
-      bool operator!= ( const ThisType &other ) const
-      {
-        return dof_ != other.dof_;
-      }
-
-      int local () const
-      {
-        return dof_;
-      }
-
-      int global () const
-      {
-        return baseIndex_ + dof_;
-      }
-
-    protected:
-      const int baseIndex_;
-      int dof_;
+      using BaseType::BaseType;
     };
 
 
@@ -320,32 +313,42 @@ namespace Dune
     // CodimensionMapperSingletonFactory
     // ---------------------------------
 
-    template< class GridPart, int cdim >
-    struct CodimensionMapperSingletonFactory
+    template< class GridPart, int codim >
+    class CodimensionMapperSingletonFactory
     {
-      typedef CodimensionMapper< GridPart, cdim > Object;
+    public:
+      typedef CodimensionMapper< GridPart, codim > Object;
 
       struct Key
       {
-        Key ( const GridPart &gp )
-        : gridPart( gp )
+        Key ( const GridPart &gridPart )
+          : gridPart_( gridPart )
         {}
 
-        bool operator== ( const Key &other )
+        bool operator== ( const Key &rhs )
         {
-          return (&gridPart.indexSet() == &other.gridPart.indexSet() );
+          return &gridPart_.indexSet() == &rhs.gridPart_.indexSet();
         }
 
-        const GridPart &gridPart;
+        bool operator!= ( const Key &rhs )
+        {
+          return !(*this == rhs);
+        }
+
+        explicit operator const GridPart & () const
+        {
+          return gridPart_;
+        }
+
+      private:
+        const GridPart &gridPart_;
       };
 
-      //! create new mapper
       static Object *createObject ( const Key &key )
       {
-        return new Object ( key.gridPart );
+        return new Object( static_cast< const GridPart & >( key ) );
       }
 
-      //! delete mapper object
       static void deleteObject ( Object *object )
       {
         delete object;
@@ -356,4 +359,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_CODIMENSIONMAPPER_HH
+#endif // #ifndef DUNE_FEM_SPACE_MAPPER_CODIMENSIONMAPPER_HH
