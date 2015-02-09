@@ -111,7 +111,8 @@ int main( int argc, char ** argv )
   typedef DuneODE::ExplicitRungeKuttaSolver<DestinationType> OdeSolverType;
 
   // create solver
-  Dune::Fem::TimeProvider<> tp( startTime, cfl );
+  typedef Dune::Fem::MPIManager :: CollectiveCommunication  CollectiveCommunication;
+  Dune::Fem::TimeProvider<CollectiveCommunication> tp( startTime, cfl, Dune::Fem::MPIManager::comm() );
   SpaceOperatorType spaceOperator;
   OdeSolverType odeSolver( spaceOperator, tp, order );
 
