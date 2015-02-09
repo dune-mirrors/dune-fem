@@ -16,7 +16,7 @@
 #if HAVE_PETSC
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
-#include <dune/fem/gridpart/common/persistentindexset.hh>
+// #include <dune/fem/gridpart/common/persistentindexset.hh>
 
 namespace Dune
 {
@@ -38,12 +38,10 @@ namespace Dune
      */
     template< class SlaveDofs >
     class PetscDofMappings
-      : public PersistentIndexSetBase< typename SlaveDofs::GridPartType::GridType,
-                                       PetscDofMappings<  SlaveDofs > >
+      // : public PersistentIndexSetBase< typename SlaveDofs::GridPartType::GridType, PetscDofMappings<  SlaveDofs > >
     {
       typedef PetscDofMappings< SlaveDofs > ThisType;
-      typedef PersistentIndexSetBase< typename SlaveDofs::GridPartType::GridType,
-                                      PetscDofMappings<  SlaveDofs > > BaseType;
+      // typedef PersistentIndexSetBase< typename SlaveDofs::GridPartType::GridType, PetscDofMappings<  SlaveDofs > > BaseType;
 
     public:
       typedef SlaveDofs  SlaveDofsType;
