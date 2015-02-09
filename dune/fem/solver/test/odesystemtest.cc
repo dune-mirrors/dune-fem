@@ -4,7 +4,6 @@
 //                         F(y,0) = 0
 //
 // ****************************************
-#undef ENABLE_MPI
 
 // standard includes
 #include <config.h>
@@ -22,7 +21,7 @@
 #include <dune/fem/io/parameter.hh>
 //#include <dune/fem/solver/rungekutta/implicit.hh>
 
-static const int systemSize = 4;
+static const int systemSize = 5;
 
 // Data structure for our unknown: fieldvector of
 // dimension N (N = number of ODEs) with some additional methods.
@@ -81,7 +80,6 @@ public:
     return scp;
   }
 
-  double timeStepEstimate() const { return 0.01; }
 };
 
 
@@ -111,6 +109,7 @@ public:
     y[1] = 3.0*t_*t_;
     y[2] = x[2];
     y[3] = 5.0 * x[ 3 ] - 3.0;
+    y[4] = std::cos( x[4] );
   }
 
   static DestinationType exact (const double t) {
@@ -118,13 +117,16 @@ public:
     exact[ 0 ] = t * t;
     exact[ 1 ] = t * t * t;
     exact[ 2 ] = 0 ;
-    exact[ 4 ] = -3.0/5.0 * std::exp( 5.0 * t ) + 3.0/5.0;
+    exact[ 3 ] = -3.0/5.0 * std::exp( 5.0 * t ) + 3.0/5.0;
+    exact[ 4 ] = std::sin( t );
     return exact;
   }
 
   void setTime(const double time) {
     t_=time;
   }
+
+  double timeStepEstimate() const { return 0.01; }
 
 private:
   SpaceType space_;
@@ -137,19 +139,19 @@ void solve(const bool verbose)
 {
   typedef myRHS SpaceOperatorType;
   typedef SpaceOperatorType::DestinationType DestinationType;
+  SpaceOperatorType spaceOperator;
 
   // problem data
   const double startTime = 0.0;
-  const double endTime = 2.0;
+  const double endTime = 1.0;
 
   // options
-  const double stepSize = 0.00001;
+  const double stepSize = spaceOperator.timeStepEstimate();
   const double cfl = 1.;
-  const int order = 3;
+  const int order = 2;
 
   // create solver
   Dune::Fem::DefaultTimeProvider tp( startTime, cfl );
-  SpaceOperatorType spaceOperator;
   OdeSolverType odeSolver( spaceOperator, tp, order );
 
   // initialize solution vector, same initial data for all components
@@ -175,7 +177,18 @@ void solve(const bool verbose)
 
   // print out solution
   std::cout << "Result (t = " << tp.time() << ") U = " << U << std::endl;
-  std::cout << "                 ex U = " << spaceOperator.exact( tp.time() ) << std::endl;
+  DestinationType exact = spaceOperator.exact( tp.time() );
+  std::cout << "         exact U = " << exact << std::endl;
+  exact -= U;
+  exact /= U.two_norm();
+
+  std::cout << "Zwo norm: " << exact.two_norm() << std::endl;
+  if( exact.two_norm() > 1e-2 )
+  {
+    std::cerr << "ERROR: ode solver did not converge!" << std::endl;
+    assert( false );
+    std::abort();
+  }
 }
 
 
