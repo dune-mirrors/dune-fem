@@ -8,7 +8,6 @@ misc_HEADERS = alugridwriter.hh \
 	       capabilities.hh \
 	       checkgeomaffinity.hh \
 	       codimmap.hh \
-	       commhelper.hh \
 	       debug.hh \
 	       double.hh \
 	       femeoc.hh \

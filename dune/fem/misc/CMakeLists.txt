@@ -1,6 +1,6 @@
 dune_install(alugridwriter.hh bartonnackmaninterface.hh
              boundaryidprovider.hh capabilities.hh checkgeomaffinity.hh
-             codimmap.hh commhelper.hh debug.hh
+             codimmap.hh debug.hh
              double.hh femeoc.hh
              femeoctable.hh femtimer.hh fieldmatrixhelper.hh
              flops.hh fmatrixconverter.hh functor.hh
