@@ -17,9 +17,9 @@
 #include <dune/fem/solver/odesolver.hh>
 
 #include <dune/fem/solver/rungekutta/explicit.hh>
+//#include <dune/fem/solver/rungekutta/implicit.hh>
 
 #include <dune/fem/io/parameter.hh>
-//#include <dune/fem/solver/rungekutta/implicit.hh>
 
 static const int systemSize = 5;
 
@@ -143,12 +143,12 @@ void solve(const bool verbose)
 
   // problem data
   const double startTime = 0.0;
-  const double endTime = 1.0;
+  const double endTime = 2.0;
 
   // options
   const double stepSize = spaceOperator.timeStepEstimate();
   const double cfl = 1.;
-  const int order = 2;
+  const int order = Dune::Fem::Parameter::getValue("fem.ode.order", int(2));
 
   // create solver
   Dune::Fem::DefaultTimeProvider tp( startTime, cfl );
@@ -205,13 +205,19 @@ int main( int argc, char **argv )
   typedef myRHS SpaceOperatorType;
   typedef SpaceOperatorType::DestinationType DestinationType;
 
-  /*
+  // explicit RungeKutta (dune impl)
+  {
+    typedef DuneODE::ExplicitRungeKuttaSolver<DestinationType> OdeSolverType;
+    solve< OdeSolverType > ( verbose );
+  }
+
+  // explicit RungeKutta (pardg impl)
   {
     typedef DuneODE::ExplicitOdeSolver<DestinationType> OdeSolverType;
     solve< OdeSolverType > ( verbose );
   }
 
-  */
+  // implicit RungeKutta (pardg impl)
   {
     typedef DuneODE::ImplicitOdeSolver<DestinationType> OdeSolverType;
     solve< OdeSolverType > ( verbose );
