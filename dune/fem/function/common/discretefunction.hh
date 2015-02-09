@@ -3,6 +3,8 @@
 
 // C++ includes
 #include <string>
+#include <iostream>
+#include <fstream>
 
 // dune-common inlcudes
 #include <dune/common/version.hh>
@@ -348,6 +350,15 @@ namespace Dune
         asImp().print( out );
       }
 
+      /** \brief dump all DoFs into a file (for debugging purposes)
+       *
+       *  \param[in]  filename  name of file to dump into
+       */
+      inline void print( const std :: string &filename ) const
+      {
+        asImp().print( filename );
+      }
+
       /** \brief check for NaNs
        *  \returns if one of the DoFs is NaN \b false is returned, otherwise \b true
        */
@@ -663,6 +674,9 @@ namespace Dune
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::print */
       void print ( std :: ostream &out ) const;
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::print */
+      void print ( const std :: string &filename ) const;
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofsValid */
       inline bool dofsValid () const;
