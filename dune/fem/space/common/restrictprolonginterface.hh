@@ -154,7 +154,6 @@ namespace Dune
       bool entitiesAreCopies ( const IndexSet &indexSet,
                                const Entity &father, const Entity &son ) const
       {
-        assert( indexSet.persistent() );
         return (indexSet.index( father ) == indexSet.index( son ));
       }
 
