@@ -88,13 +88,10 @@ namespace Dune
     }
 
 
-
     template< class Impl >
     inline void DiscreteFunctionDefault<Impl >
       :: print ( std::ostream &out ) const
     {
-      out << BaseType :: name() << std::endl;
-
       const ConstDofIteratorType end = BaseType :: dend();
       for( ConstDofIteratorType dit = BaseType :: dbegin(); dit != end; ++dit )
         out << (*dit) << std::endl;
