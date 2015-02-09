@@ -122,7 +122,7 @@ int main( int argc, char **argv )
   typedef ExplicitRungeKuttaSolver<DestinationType> OdeSolverType;
 
   // create solver
-  TimeProvider<> tp( startTime, cfl );
+  DefaultTimeProvider tp( startTime, cfl );
   SpaceOperatorType spaceOperator;
   OdeSolverType odeSolver( spaceOperator, tp, order );
 
