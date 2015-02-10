@@ -48,7 +48,7 @@ namespace Dune
         if( hasSingleGeometryType::v )
           return GeometryType( hasSingleGeometryType::topologyId, GridType::dimension );
         else
-          return (inside ? intersection.inside()->type() : intersection.outside()->type());
+          return (inside ? intersection.inside().type() : intersection.outside().type());
       }
     };
 

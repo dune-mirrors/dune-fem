@@ -119,8 +119,7 @@ namespace Dune
               if( intersection.neighbor() )
               {
                 // get neighbor
-                EntityPointerType outside = intersection.outside();
-                const EntityType &neighbor = *outside;
+                const EntityType neighbor = intersection.outside();
 
                 // if non-conforming situation
                 if( entity.level() > neighbor.level() )
