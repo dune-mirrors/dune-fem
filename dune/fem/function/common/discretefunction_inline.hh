@@ -140,9 +140,10 @@ namespace Dune
       ::evaluateGlobal ( const DomainType &x, Functor functor ) const
     {
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-
       EntitySearch< GridPartType, EntityType::codimension > entitySearch( BaseType::space().gridPart() );
-      const EntityType entity = entitySearch( x );
+      const typename EntityType::EntityPointer entityPtr = entitySearch( x );
+
+      const EntityType &entity = *entityPtr;
       const typename EntityType::Geometry geometry = entity.geometry();
       functor( geometry.local( x ), BaseType::localFunction( entity ) );
     }

@@ -113,10 +113,11 @@ namespace Dune
       : hierarchicSearch_( gridPart.grid(), gridPart.indexSet() )
       {}
 
-      EntityType operator() ( const GlobalCoordinateType &x ) const
+      const EntityType operator() ( const GlobalCoordinateType &x ) const
       {
         EntityPointerType enP = hierarchicSearch_.template findEntity< partition >( x );
-        return *enP;
+        const EntityType& en = *enP;
+        return en;
       }
 
     private:

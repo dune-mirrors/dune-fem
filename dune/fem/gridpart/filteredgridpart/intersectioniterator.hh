@@ -183,13 +183,13 @@ namespace Dune
       }
 
       //! \brief return inside entity
-      EntityPointer inside () const
+      Entity inside () const
       {
         return hostIterator()->inside();
       }
 
       //! \brief return outside entity
-      EntityPointer outside () const
+      Entity outside () const
       {
         return hostIterator()->outside();
       }
