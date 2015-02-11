@@ -542,8 +542,11 @@ namespace Dune
           // calling hierarchicRestrict on interior won't work either
           if( ! isGhost )
           {
+            // get father entity
+            EntityPointerType vati = son.father();
+
             // do prolongation
-            prolop.prolongLocal( son.father(), son , initialize );
+            prolop.prolongLocal( *vati , son , initialize );
             initialize = false;
           }
         }
