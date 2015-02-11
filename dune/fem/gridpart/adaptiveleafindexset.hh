@@ -63,7 +63,7 @@ namespace Dune
       typedef typename GridPartType::template Codim< 0 >::EntityType   ElementType;
 
       //! type of codimension 0 EntityPointer (extract from GridPartType)
-      typedef typename GridPartType::template Codim< 0 >::EntityPointerType ElementPointerType;
+      typedef typename GridPartType::template Codim< 0 >::EntityPointerType  ElementPointerType;
 
       //! type of intersection iterator
       typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;

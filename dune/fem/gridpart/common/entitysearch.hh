@@ -40,6 +40,7 @@ namespace Dune
       typedef GridPart GridPartType;
 
       typedef typename GridPart::template Codim< codimension >::EntityType EntityType;
+      typedef typename GridPart::template Codim< codimension >::EntityPointerType EntityPointerType;
 
       typedef typename GeometryType::GlobalCoordinate GlobalCoordinateType;
 
@@ -47,7 +48,7 @@ namespace Dune
       : gridPart_( gridPart )
       {}
 
-      EntityType operator() ( const GlobalCoordinateType &x ) const
+      EntityPointerType operator() ( const GlobalCoordinateType &x ) const
       {
         const IteratorType end = gridPart_.template end< codimension, partition >();
         for( IteratorType it = gridPart_.template begin< codimension, partition >(); it != end; ++it )
@@ -60,7 +61,7 @@ namespace Dune
             continue;
 
           if( ReferenceElements< ctype, mydimension >::general( geo.type() ).checkInside( z ) )
-            return EntityType( it );
+            return EntityPointerType( it );
         }
         DUNE_THROW( GridError, "Coordinate " << x << " is outside the grid." );
       }
@@ -113,11 +114,9 @@ namespace Dune
       : hierarchicSearch_( gridPart.grid(), gridPart.indexSet() )
       {}
 
-      const EntityType operator() ( const GlobalCoordinateType &x ) const
+      EntityPointerType operator() ( const GlobalCoordinateType &x ) const
       {
-        EntityPointerType enP = hierarchicSearch_.template findEntity< partition >( x );
-        const EntityType& en = *enP;
-        return en;
+        return hierarchicSearch_.template findEntity< partition >( x );
       }
 
     private:
