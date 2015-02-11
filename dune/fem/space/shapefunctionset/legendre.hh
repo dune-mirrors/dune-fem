@@ -86,12 +86,12 @@ namespace Dune
           const RangeFieldType dphi = LegendrePolynomials::jacobian( multiIndex_[ k ], x[ k ] );
           for( int i = 0; i < dimension; ++i )
           {
-            hessian[ i ][ i ] *= ( k == i ) ? LegendrePolynomials::hessian( multiIndex_[ i ], x[ i ]) : phi;
+            hessian[ 0 ][ i ][ i ] *= ( k == i ) ? LegendrePolynomials::hessian( multiIndex_[ i ], x[ i ]) : phi;
             for( int j = i+1; j < dimension; ++j )
             {
               RangeFieldType tmp = ( k == i || k == j ) ? dphi : phi;
-              hessian[ i ][ j ] *= tmp;
-              hessian[ j ][ i ] *= tmp;
+              hessian[ 0 ][ i ][ j ] *= tmp;
+              hessian[ 0 ][ j ][ i ] *= tmp;
             }
           }
         }
