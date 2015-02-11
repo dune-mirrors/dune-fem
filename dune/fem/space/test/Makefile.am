@@ -24,6 +24,7 @@ check_PROGRAMS = $(ADAPTPROG) \
 		 adapt_combinedspace_pointbased \
 		 adapt_combinedspace_variablebased \
 		 arraytest \
+		 test_basisfunctionsets \
 		 combinedspacetest \
 		 dgcomm \
 		 dgcomm_cached \
@@ -33,13 +34,14 @@ check_PROGRAMS = $(ADAPTPROG) \
 		 lagrangeinterpolation \
 		 legendretest
 
-EXTRA_DIST = systemmatrix.cc dgcomm-4.sh dgcomm-cached-4.sh parameter *.dgf
+EXTRA_DIST = systemmatrix.cc dgcomm-4.sh dgcomm-cached-4.sh parameter *.dgf checkbasisfunctionset.hh
 
 l2projection_SOURCES = l2projection.cc
 adapt_SOURCES = adapt.cc
 adapt_combinedspace_pointbased_SOURCES = adapt.cc
 adapt_combinedspace_variablebased_SOURCES = adapt.cc
 padapt_SOURCES = padapt.cc
+test_basisfunctionsets_SOURCES = test-basisfunctionsets.cc
 combinedspacetest_SOURCES = combinedspacetest.cc
 lagrangeinterpolation_SOURCES = lagrangeinterpolation.cc
 interpolation_SOURCES = interpolation.cc
