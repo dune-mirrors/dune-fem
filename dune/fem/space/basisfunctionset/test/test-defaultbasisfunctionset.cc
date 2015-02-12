@@ -71,7 +71,7 @@ void traverse ( GridPartType &gridPart )
   error = Dune::Fem::checkQuadratureConsistency( basisSet1, quadrature, true );
   if( error.two_norm() > eps )
   {
-    std::cerr<<"Error: "<< error <<std::endl;
+    std::cerr<<"Errors( evaluate, jacobian, hessian, value axpy, jacobian axpy ): "<< error <<std::endl;
     DUNE_THROW( Dune::InvalidStateException, " DefaultBasisFunctionSet< LagrangeShapeFunctionSet > test failed." );
   }
 
@@ -81,7 +81,7 @@ void traverse ( GridPartType &gridPart )
   error = Dune::Fem::checkQuadratureConsistency( basisSet2, quadrature, true );
   if( error.two_norm() > eps )
   {
-    std::cerr<<"Error: "<< error <<std::endl;
+    std::cerr<<"Errors( evaluate, jacobian, hessian, value axpy, jacobian axpy ): "<< error <<std::endl;
     DUNE_THROW( Dune::InvalidStateException, " DefaultBasisFunctionSet< LegendreShapeFunctionSet > test failed." );
   }
 
@@ -91,7 +91,7 @@ void traverse ( GridPartType &gridPart )
   error = Dune::Fem::checkQuadratureConsistency( basisSet3, quadrature, false );
   if( error.two_norm() > eps )
   {
-    std::cerr<<"Error: "<< error <<std::endl;
+    std::cerr<<"Errors( evaluate, jacobian, hessian, value axpy, jacobian axpy ): "<< error <<std::endl;
     DUNE_THROW( Dune::InvalidStateException, " DefaultBasisFunctionSet< LegendreShapeFunctionSet > test failed." );
   }
 }

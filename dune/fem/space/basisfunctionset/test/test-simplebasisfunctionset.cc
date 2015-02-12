@@ -59,7 +59,7 @@ void traverse ( GridPartType &gridPart )
   error = Dune::Fem::checkQuadratureConsistency( basisSet, quadrature, true );
   if( error.two_norm() > eps )
   {
-    std::cerr<<"Error: "<<error<<std::endl;
+    std::cerr<<"Errors( evaluate, jacobian, hessian, value axpy, jacobian axpy ): "<< error <<std::endl;
     DUNE_THROW( Dune::InvalidStateException, "SimpleBasisFunctionSet test failed." );
   }
 }
