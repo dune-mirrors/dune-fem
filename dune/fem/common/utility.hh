@@ -74,8 +74,8 @@ namespace Dune
     struct are_all_same< T > : public std::true_type {};
 
     template< class U, class V, class ... T >
-    struct are_all_same< U, V, T ... > 
-    : public std::integral_constant< bool, std::is_same< U, V >::value &&are_all_same< V, T ... >::value > 
+    struct are_all_same< U, V, T ... >
+      : public std::integral_constant< bool, std::is_same< U, V >::value &&are_all_same< V, T ... >::value >
     {};
 
   } // Std
