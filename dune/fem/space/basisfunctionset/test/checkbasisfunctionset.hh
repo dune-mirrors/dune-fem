@@ -6,6 +6,7 @@
 #include <random>
 
 #include <dune/common/fvector.hh>
+#include <dune/fem/common/coordinate.hh>
 
 namespace Dune
 {
@@ -19,7 +20,7 @@ namespace Dune
     template< class BasisFunctionSet, class Quadrature >
     Dune::FieldVector< typename BasisFunctionSet::RangeType::value_type, 5 >
     checkQuadratureConsistency ( const BasisFunctionSet &basisFunctionSet, const Quadrature &quadrature,
-                                 bool supporsHessians = false )
+                                 bool supportsHessians = false )
     {
       // get types
       typedef typename BasisFunctionSet::FunctionSpaceType FunctionSpaceType;
@@ -34,9 +35,15 @@ namespace Dune
 
       static const int dimRange = FunctionSpaceType::dimRange;
 
+      const EntityType &entity = basisFunctionSet.entity();
       const ReferenceElementType &refElement = basisFunctionSet.referenceElement();
 
+      if( entity.type() != refElement.type() )
+        DUNE_THROW( Dune::InvalidStateException, "GeometryType of referenceElement and entity mismatch for this basisFunctionSet" );
+
       int order = basisFunctionSet.order();
+      // prevent warning about unused params
+      (void) order;
 
       const std::size_t size = basisFunctionSet.size();
 
@@ -94,7 +101,7 @@ namespace Dune
         }
 
         // check hessian methods
-        if( supporsHessians )
+        if( supportsHessians )
         {
           HessianRangeType a, b;
 
@@ -136,13 +143,14 @@ namespace Dune
 
         // check jacobian axpy method
         {
+          DomainType x = coordinate( quadrature[ qp ] );
           std::vector< RangeFieldType > r1( dofs );
           std::vector< RangeFieldType > r2( dofs );
 
-          basisFunctionSet.axpy( quadrature[ qp ], jacobianFactor, r1 );
+          basisFunctionSet.axpy( x, jacobianFactor, r1 );
 
           std::vector< JacobianRangeType > values( basisFunctionSet.size() );
-          basisFunctionSet.jacobianAll( quadrature[ qp ], values );
+          basisFunctionSet.jacobianAll( x, values );
           for( std::size_t i = 0; i < values.size(); ++i )
             for( int j = 0; j < JacobianRangeType::rows; ++j )
               r2[ i ] += jacobianFactor[ j ] * values[ i ][ j ];

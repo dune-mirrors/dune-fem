@@ -20,7 +20,6 @@ configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
 configure_file(parameter ${CMAKE_CURRENT_BINARY_DIR}/parameter COPYONLY)
 configure_file(dgcomm-4.sh ${CMAKE_CURRENT_BINARY_DIR}/dgcomm_4.sh COPYONLY)
 configure_file(dgcomm-cached-4.sh ${CMAKE_CURRENT_BINARY_DIR}/dgcomm_cached_4.sh COPYONLY)
-configure_file(checkbasisfunctionset.hh ${CMAKE_CURRENT_BINARY_DIR}/checkbasisfunctionset.hh COPYONLY)
 
 add_executable(l2projection l2projection.cc)
 dune_target_link_libraries(l2projection "${DUNE_LIBS};${LOCAL_LIBS}")
@@ -70,14 +69,10 @@ add_executable(dgcomm_cached dgcomm.cc)
 dune_target_link_libraries(dgcomm_cached "${DUNE_LIBS};${LOCAL_LIBS}")
 set_property(TARGET dgcomm_cached APPEND PROPERTY 
              COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3" )
-add_executable(test-basisfunctionsets test-basisfunctionsets.cc)
-dune_target_link_libraries(test-basisfunctionsets "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET test-basisfunctionsets APPEND PROPERTY
-             COMPILE_DEFINITIONS "GRIDDIM=${GRIDDIM}")
 
 dune_add_test(lagrangeadapt adapt padapt
               arraytest combinedspacetest interpolation
               l2projection lagrangeglobalrefine lagrangeinterpolation
-              legendretest test-basisfunctionsets
+              legendretest
               NO_DEPENDENCY dgcomm_4.sh dgcomm_cached_4.sh 
               DEPENDENCY_ONLY dgcomm dgcomm_cached )
