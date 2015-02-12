@@ -200,7 +200,9 @@ namespace Dune
       typedef PersistentIndexSet< Traits, ConsecutiveIndexSet > BaseType;
 
     protected:
-      using BaseType::BaseType;
+      explicit PersistentConsecutiveIndexSet ( const typename BaseType::GridType &grid )
+        : BaseType( grid )
+      {}
     };
 
 
@@ -215,7 +217,9 @@ namespace Dune
       typedef PersistentIndexSet< Traits, AdaptiveIndexSet > BaseType;
 
     protected:
-      using BaseType::BaseType;
+      explicit PersistentAdaptiveIndexSet ( const typename BaseType::GridType &grid )
+        : BaseType( grid )
+      {}
     };
 
   } // namespace Fem

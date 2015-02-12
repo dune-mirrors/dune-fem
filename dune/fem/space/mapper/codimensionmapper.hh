@@ -227,7 +227,13 @@ namespace Dune
         using BaseType::indexSet;
 
       public:
-        using BaseType::BaseType;
+        explicit AdaptiveDofMapper ( const typename BaseType::GridPartType &gridPart )
+          : BaseType( gridPart )
+        {}
+
+        explicit AdaptiveDofMapper ( const typename BaseType::IndexSetType &indexSet )
+          : BaseType( indexSet )
+        {}
 
         static constexpr bool consecutive () noexcept { return true; }
 
@@ -305,7 +311,13 @@ namespace Dune
       typedef typename __CodimensionMapper::template Implementation< GridPart, codim >::Type BaseType;
 
     public:
-      using BaseType::BaseType;
+      explicit CodimensionMapper ( const typename BaseType::GridPartType &gridPart )
+        : BaseType( gridPart )
+      {}
+
+      explicit CodimensionMapper ( const typename BaseType::IndexSetType &indexSet )
+        : BaseType( indexSet )
+      {}
     };
 
 

@@ -129,8 +129,11 @@ namespace Dune
       public:
         typedef typename BaseType::HostIndexSetType HostIndexSetType;
 
-        using BaseType::BaseType;
         using BaseType::hostIndexSet;
+
+        explicit ConsecutiveIndexSet ( const HostIndexSetType &hostIndexSet )
+          : BaseType ( hostIndexSet )
+        {}
 
         bool consecutive () const { return hostIndexSet().consecutive(); }
 
@@ -183,7 +186,9 @@ namespace Dune
         typedef ConsecutiveIndexSet< GridFamily > BaseType;
 
       public:
-        using BaseType::BaseType;
+        explicit AdaptiveIndexSet ( const typename BaseType::HostIndexSetType &hostIndexSet )
+          : BaseType ( hostIndexSet )
+        {}
 
         int numberOfHoles ( GeometryType type ) const
         {
@@ -252,7 +257,9 @@ namespace Dune
       friend class Capabilities::isPersistentIndexSet< IdIndexSet< GridFamily > >;
 
     public:
-      using BaseType::BaseType;
+      explicit IdIndexSet ( const typename BaseType::HostIndexSetType &hostIndexSet )
+        : BaseType ( hostIndexSet )
+      {}
     };
 
 
