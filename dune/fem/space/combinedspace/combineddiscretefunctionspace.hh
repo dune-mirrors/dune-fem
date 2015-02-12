@@ -19,8 +19,9 @@
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/space/discontinuousgalerkin/space.hh>
 
+#include <dune/fem/space/basisfunctionset/tuple.hh>
+
 //- local includes
-#include "combinedbasisfunctionset.hh"
 #include "adaptmanager.hh"
 #include "mapperselector.hh"
 
@@ -93,8 +94,7 @@ namespace Dune
 
     public:
       //! implementation of basefunction set
-      typedef CombinedBasisFunctionSet< FunctionSpaceType, BasisFunctionSetType1, BasisFunctionSetType2 >
-          BasisFunctionSetType;
+      typedef TupleBasisFunctionSet< BasisFunctionSetType1, BasisFunctionSetType2 > BasisFunctionSetType;
 
       // mapper
       typedef CombinedDiscreteFunctionSpaceMapperSelector< GridPartType,
