@@ -68,13 +68,13 @@ namespace Dune
 
         const std::size_t fatherSize1 = fatherBasisFunctionSet1.size();
         const std::size_t fatherSize2 = fatherBasisFunctionSet2.size();
-        const std::size_t fatherOffset1 = lfFather.basisFunctionSet().template offset<0>();
-        const std::size_t fatherOffset2 = lfFather.basisFunctionSet().template offset<1>();
+        const std::size_t fatherOffset1 = lfFather.basisFunctionSet().offset(0);
+        const std::size_t fatherOffset2 = lfFather.basisFunctionSet().offset(1);
 
         const std::size_t sonSize1 = sonBasisFunctionSet1.size();
         const std::size_t sonSize2 = sonBasisFunctionSet2.size();
-        const std::size_t sonOffset1 = lfSon.basisFunctionSet().template offset<0>();
-        const std::size_t sonOffset2 = lfSon.basisFunctionSet().template offset<1>();
+        const std::size_t sonOffset1 = lfSon.basisFunctionSet().offset(0);
+        const std::size_t sonOffset2 = lfSon.basisFunctionSet().offset(1);
 
         LocalFunction< BasisFunctionSetType1, SubDofVectorTypeFather > lfFather1 (
             fatherBasisFunctionSet1, SubDofVectorTypeFather( lfFather.localDofVector(), fatherSize1, fatherOffset1 ) );
@@ -109,13 +109,13 @@ namespace Dune
 
         const std::size_t fatherSize1 = fatherBasisFunctionSet1.size();
         const std::size_t fatherSize2 = fatherBasisFunctionSet2.size();
-        const std::size_t fatherOffset1 = lfFather.basisFunctionSet().template offset<0>();
-        const std::size_t fatherOffset2 = lfFather.basisFunctionSet().template offset<1>();
+        const std::size_t fatherOffset1 = lfFather.basisFunctionSet().offset(0);
+        const std::size_t fatherOffset2 = lfFather.basisFunctionSet().offset(1);
 
         const std::size_t sonSize1 = sonBasisFunctionSet1.size();
         const std::size_t sonSize2 = sonBasisFunctionSet2.size();
-        const std::size_t sonOffset1 = lfSon.basisFunctionSet().template offset<0>();
-        const std::size_t sonOffset2 = lfSon.basisFunctionSet().template offset<1>();
+        const std::size_t sonOffset1 = lfSon.basisFunctionSet().offset(0);
+        const std::size_t sonOffset2 = lfSon.basisFunctionSet().offset(1);
 
         LocalFunction< BasisFunctionSetType1, SubDofVectorTypeSon > lfSon1 (
             sonBasisFunctionSet1, SubDofVectorTypeSon( lfSon.localDofVector(), sonSize1, sonOffset1 ) );
