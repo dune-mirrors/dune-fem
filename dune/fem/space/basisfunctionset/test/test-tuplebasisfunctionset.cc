@@ -58,7 +58,7 @@ void traverse ( GridPartType &gridPart )
   ScalarLagrangeShapeFunctionSetType scalarLagrangeShapeFunctionSet( entity.type() );
   ScalarLegendreShapeFunctionSetType scalarLegendreShapeFunctionSet( polorder );
 
-  double eps = 1e-8;
+  double eps = 5e-8;
 
   ErrorType error( 0 );
   typedef Dune::Fem::DefaultBasisFunctionSet< EntityType, ScalarLagrangeShapeFunctionSetType > ScalarBasisFunctionSetType1;
