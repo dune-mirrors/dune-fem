@@ -2,6 +2,7 @@
 #define DUNE_FEM_SPACE_TEST_CHECKBASISFUNCTIONSET_HH
 
 #include <algorithm>
+#include <functional>
 #include <iostream>
 #include <random>
 
