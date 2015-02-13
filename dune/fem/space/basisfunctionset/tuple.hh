@@ -92,6 +92,14 @@ namespace Dune
       typedef std::array< std::size_t, setSize + 1 > OffsetType;
 
     public:
+
+      // export type of i-th subbasisfunction set
+      template< int i >
+      struct SubBasisFunctionSet
+      {
+        typedef typename Dune::tuple_element< i, BasisFunctionSetTupleType >::type type;
+      };
+
       //! size of domian space
       static const int dimDomain = ContainedFunctionSpaceType::dimDomain;
 
@@ -291,7 +299,7 @@ namespace Dune
 
       //! return i-th subbasisfunctionSet
       template< int i >
-      const typename Dune::tuple_element< i, BasisFunctionSetTupleType >::type& subBasisFunctionSet () const
+      const typename SubBasisFunctionSet< i >::type& subBasisFunctionSet () const
       {
         return std::get< i >( basisFunctionSetTuple_ );
       }
