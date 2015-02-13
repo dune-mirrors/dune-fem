@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_ENTITY_HH
 #define DUNE_FEM_GRIDPART_IDGRIDPART_ENTITY_HH
 
+#include <type_traits>
+
 //- dune-common includes
 #include <dune/common/nullptr.hh>
 
@@ -33,11 +35,11 @@ namespace Dune
       //! codimensioon of the entity
       static const int codimension = codim;
       //! dimension of the grid
-      static const int dimension = Traits::dimension;
+      static const int dimension = std::remove_const< GridFamily >::type::dimension;
       //! dimension of the entity
       static const int mydimension = dimension - codimension;
       //! dimension of the world
-      static const int dimensionworld = Traits::dimensionworld;
+      static const int dimensionworld = std::remove_const< GridFamily >::type::dimensionworld;
 
       /** \} */
 
