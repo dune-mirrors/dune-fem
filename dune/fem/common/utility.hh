@@ -11,6 +11,21 @@ namespace Dune
   namespace Std
   {
 
+    //
+    // Set of operations which can performed for an arbitrary number of arguments.
+    // Examples:
+    //
+    // sum( 5, 6, 12, .... )
+    // And( true, true, false, ... )
+    //
+    // or for constant expressions if i... is an integer sequence:
+    //
+    // sum( std::tuple_element< i, Tuple >::type::value ... )
+    //
+
+
+    // Arithmetical operations
+
     // sum
     // ---
 
@@ -39,7 +54,7 @@ namespace Dune
     template< class T, class ... U >
     static constexpr T sub ( T a, U ... b )
     {
-      return a - sum( b ... );
+      return a - sub( b ... );
     }
 
 
@@ -59,11 +74,39 @@ namespace Dune
     }
 
 
+    // Logical operations
+
+    // Or
+    // --
+
+    static constexpr bool Or ( bool a )
+    {
+      return a;
+    }
+
+    template < class ... U >
+    static constexpr bool Or ( bool a, U ... b )
+    {
+      return a || Or( b ... );
+    }
+
+
+    // And
+    // ---
+
+    template< class B, class ... U >
+    static constexpr bool And ( B a, U ... b )
+    {
+      return a && And( b... );
+    }
+
+
+
     // are_all_same
     // ------------
 
     //
-    // is true if all types in the parameter pack are the same.
+    // is true_type if all types in the parameter pack are the same.
     // similar to std::is_same
     //
 

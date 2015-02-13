@@ -22,8 +22,8 @@
 #include <dune/fem/space/basisfunctionset/tuple.hh>
 
 //- local includes
-#include "adaptmanager.hh"
 #include "mapperselector.hh"
+#include "tuplelocalrestrictprolong.hh"
 
 namespace Dune
 {
@@ -379,6 +379,21 @@ namespace Dune
       public:
       typedef Fem::CombinedDiscreteFunctionSpace< Type1, Type2 > Type;
     };
+
+
+    template< class SP1, class SP2 >
+    class DefaultLocalRestrictProlong< CombinedDiscreteFunctionSpace< SP1, SP2 > >
+    : public TupleLocalRestrictProlong< SP1, SP2 >
+    {
+      typedef DefaultLocalRestrictProlong< CombinedDiscreteFunctionSpace< SP1, SP2 > > ThisType;
+      typedef TupleLocalRestrictProlong< SP1, SP2 > BaseType;
+    public:
+
+      DefaultLocalRestrictProlong ( const CombinedDiscreteFunctionSpace< SP1, SP2> &space )
+      : BaseType( space.space1(), space.space2() )
+      {}
+    };
+
 
   } // namespace Fem
 

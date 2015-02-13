@@ -7,6 +7,7 @@ combinedspace_HEADERS = adaptmanager.hh \
 												lagrangepointsetexporter.hh \
 												mapper.hh \
 												mapperselector.hh \
-												subobjects.hh 
+												subobjects.hh  \
+												tuplelocalrestrictprolong.hh
 
 include $(top_srcdir)/am/global-rules
