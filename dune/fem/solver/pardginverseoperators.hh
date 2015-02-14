@@ -187,6 +187,113 @@ namespace Dune
       const PreconditionerType *preconditioner_;
     };
 
+    // ParDGBICGStabInverseOperator
+    // -------------------------------------
+
+    template< class DiscreteFunction >
+    class ParDGBiCGStabInverseOperator
+    : public Operator< DiscreteFunction, DiscreteFunction >
+    {
+      typedef Operator< DiscreteFunction, DiscreteFunction > BaseType;
+
+      typedef ParDGOperator< DiscreteFunction, DiscreteFunction > ParDGOperatorType;
+
+    public:
+      typedef typename BaseType::DomainFunctionType DomainFunctionType;
+      typedef typename BaseType::RangeFunctionType RangeFunctionType;
+
+      typedef Operator< DiscreteFunction, DiscreteFunction > OperatorType;
+      typedef Operator< DiscreteFunction, DiscreteFunction > PreconditionerType;
+
+      ParDGBiCGStabInverseOperator ( const OperatorType &op,
+                                     double redEps, double absLimit,
+                                     unsigned int maxIterations, bool verbose )
+      : solver_( PARDG::Communicator::instance() ),
+        operator_( op ),
+        preconditioner_( nullptr )
+      {
+        setupSolver( redEps, absLimit, maxIterations, verbose );
+      }
+
+      ParDGBiCGStabInverseOperator ( const OperatorType &op,
+                                     double redEps, double absLimit,
+                                     unsigned int maxIterations = std::numeric_limits< unsigned int >::max() )
+      : solver_( PARDG::Communicator::instance() ),
+        operator_( op ),
+        preconditioner_( nullptr )
+      {
+        setupSolver( redEps, absLimit, maxIterations, false );
+      }
+
+      ParDGBiCGStabInverseOperator ( const OperatorType &op,
+                                     const PreconditionerType &preconditioner,
+                                     double redEps, double absLimit,
+                                     unsigned int maxIterations, bool verbose )
+      : solver_( PARDG::Communicator::instance() ),
+        operator_( op ),
+        preconditioner_( &preconditioner )
+      {
+        setupSolver( redEps, absLimit, maxIterations, verbose );
+      }
+
+      ParDGBiCGStabInverseOperator ( const OperatorType &op,
+                                     const PreconditionerType &preconditioner,
+                                     double redEps, double absLimit,
+                                     unsigned int maxIterations = std::numeric_limits< unsigned int >::max() )
+      : solver_( PARDG::Communicator::instance() ),
+        operator_( op ),
+        preconditioner_( &preconditioner )
+      {
+        setupSolver( redEps, absLimit, maxIterations, false );
+      }
+
+      virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
+      {
+        ParDGOperatorType parDGOperator( operator_, w.space(), u.space() );
+        if( preconditioner_ )
+        {
+          ParDGOperatorType parDGPreconditioner( *preconditioner_, w.space(), w.space() );
+          solver_.set_preconditioner( parDGPreconditioner );
+          solver_.solve( parDGOperator, w.leakPointer(), u.leakPointer() );
+          solver_.unset_preconditioner();
+        }
+        else
+          solver_.solve( parDGOperator, w.leakPointer(), u.leakPointer() );
+      }
+
+      unsigned int iterations () const
+      {
+        return solver_.number_of_iterations();
+      }
+
+    private:
+      void setupSolver ( double redEps, double absLimit, unsigned int maxIterations, bool verbose )
+      {
+        static const std::string errorTypeTable[] = { "absolute", "relative" };
+        // errormeassure used in the linear solver 
+        int errorType = Parameter::getEnum( "fem.solver.errormeasure", errorTypeTable, 0 );
+        if (errorType == 1)
+          solver_.set_tolerance( redEps, true);
+        else
+          solver_.set_tolerance( absLimit, false );
+
+        maxIterations = std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations );
+        solver_.set_max_number_of_iterations( int( maxIterations ) );
+
+        // only set output when general verbose mode is enabled 
+        // (basically to avoid output on every rank)
+        if( verbose && Parameter :: verbose() )
+        {
+          solver_.IterativeSolver::set_output( std::cout );
+          solver_.DynamicalObject::set_output( std::cout );
+        }
+      }
+
+      mutable PARDG::BICGSTAB solver_;
+      const OperatorType &operator_;
+      const PreconditionerType *preconditioner_;
+    };
+
   } // namespace Fem
 
 } // namespace Dune
