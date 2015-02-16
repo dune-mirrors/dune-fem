@@ -112,7 +112,7 @@ int main ( int argc, char **argv )
   typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
   GridPartType gridPart( grid );
 
-  if( gridPart.template begin< 0 >() == gridPart.template end< 0 >() )
+  if( gridPart.begin< 0 >() == gridPart.end< 0 >() )
     return 1;
 
   traverse< GridPartType, 1 >( gridPart );
