@@ -375,7 +375,7 @@ namespace Dune
       //! constructor
       VTKWriter( const GridPartType &gridPart,
                  VTK::DataMode dm = VTK::conforming )
-      : BaseType( gridPart.gridView(), dm )
+      : BaseType( static_cast< GridViewType > ( gridPart ), dm )
       {}
     };
 
@@ -399,7 +399,8 @@ namespace Dune
       SubsamplingVTKWriter( const GridPartType &gridPart,
                             const int level,
                             bool coerceToSimplex = false )
-      : BaseType( gridPart.gridView(), level, coerceToSimplex )
+      : BaseType( static_cast< GridViewType > ( gridPart ),
+                  level, coerceToSimplex )
       {}
     };
 
