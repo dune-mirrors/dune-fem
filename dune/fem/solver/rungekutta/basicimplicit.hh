@@ -195,10 +195,35 @@ namespace DuneODE
           return timeStepControl_.reduceTimeStep( helmholtzOp_.timeStepEstimate(), sourceTerm_.timeStepEstimate(), monitor );
       }
 
-      // update solution
-      U *= delta_;
-      for( int s = 0; s < stages(); ++s )
-        U.axpy( beta_[ s ], *update_[ s ] );
+      double error = 0.0;
+      if( timeStepControl_.computeError() )
+      {
+        // store U (to be revised)
+        DestinationType Uerr( U );
+
+        // update solution
+        U *= delta_;
+        for( int s = 0; s < stages(); ++s )
+          U.axpy( beta_[ s ], *update_[ s ] );
+
+        Uerr.axpy( -1.0, U );
+        const double errorU = Uerr.scalarProductDofs( Uerr );
+        const double normU = U.scalarProductDofs( U );
+
+        if( normU > 0 && errorU > 0 )
+        {
+          error = std::sqrt( errorU / normU );
+        }
+      }
+      else
+      {
+        // update solution
+        U *= delta_;
+        for( int s = 0; s < stages(); ++s )
+          U.axpy( beta_[ s ], *update_[ s ] );
+      }
+      // set error to monitor
+      monitor.error_ = error;
 
       // update time step size
       timeStepControl_.timeStepEstimate( helmholtzOp_.timeStepEstimate(), sourceTerm_.timeStepEstimate(), monitor );

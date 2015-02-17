@@ -20,12 +20,12 @@ namespace DuneODE
   // ------------------------
 
   /** \brief Implicit RungeKutta ODE solver. */
-  template< class HelmholtzOperator, class NonlinearSolver >
+  template< class HelmholtzOperator, class NonlinearSolver, class TimeStepControl = ImplicitRungeKuttaTimeStepControl >
   class ImplicitRungeKuttaSolver
-  : public BasicImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, ImplicitRungeKuttaTimeStepControl >
+  : public BasicImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, TimeStepControl >
   {
-    typedef ImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver > ThisType;
-    typedef BasicImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, ImplicitRungeKuttaTimeStepControl > BaseType;
+    typedef ImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, TimeStepControl > ThisType;
+    typedef BasicImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, TimeStepControl > BaseType;
 
   public:
     typedef HelmholtzOperator HelmholtzOperatorType;
