@@ -4,7 +4,6 @@ combinedspace_HEADERS = combineddiscretefunctionspace.hh  \
 												combinedspace.hh \
 												generic.hh \
 												lagrangepointsetexporter.hh \
-												mapper.hh \
 												powerlocalrestrictprolong.hh \
 												powermapper.hh \
 												powerspace.hh \
