@@ -7,7 +7,12 @@ combinedspace_HEADERS = combineddiscretefunctionspace.hh  \
 												lagrangepointsetexporter.hh \
 												mapper.hh \
 												mapperselector.hh \
+												powerlocalrestrictprolong.hh \
+												powermapper.hh \
+												powerspace.hh \
 												subobjects.hh  \
-												tuplelocalrestrictprolong.hh
+												tuplelocalrestrictprolong.hh \
+												tuplemapper.hh \
+												tuplespace.hh
 
 include $(top_srcdir)/am/global-rules

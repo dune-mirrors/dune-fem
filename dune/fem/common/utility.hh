@@ -70,7 +70,7 @@ namespace Dune
     template< class T, class ... U >
     static constexpr T max ( T a, U ... b )
     {
-      return std::max( a, max( b ... ) );
+      return a > max( b ... )? a : max( b ... );
     }
 
 
@@ -93,6 +93,11 @@ namespace Dune
 
     // And
     // ---
+
+    static constexpr bool And ( bool a )
+    {
+      return a;
+    }
 
     template< class B, class ... U >
     static constexpr bool And ( B a, U ... b )
