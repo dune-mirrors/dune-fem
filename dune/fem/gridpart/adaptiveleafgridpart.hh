@@ -82,17 +82,21 @@ namespace Dune
       //! The leaf index set of the grid implementation
       typedef typename Traits :: IndexSetType IndexSetType;
 
-      //! The corresponding IntersectionIterator
-      typedef typename Traits :: IntersectionIteratorType
-        IntersectionIteratorType;
-
-      typedef typename IntersectionIteratorType::Intersection IntersectionType;
-
       //! Struct providing types of the leaf iterators on codimension codim
       template< int codim >
       struct Codim
       : public BaseType :: template Codim< codim >
       {};
+
+    private:
+      typedef typename GridType::LeafGridView LeafGridView;
+
+    public:
+      //! type of intersection iterator
+      typedef typename LeafGridView::IntersectionIterator IntersectionIteratorType;
+
+      //! type of intersection
+      typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
     private:
       struct Key
@@ -117,7 +121,6 @@ namespace Dune
       // type of entity with codimension zero
       typedef typename Codim< 0 > :: EntityType ElementType;
 
-      typedef typename GridType :: template Partition < All_Partition > :: LeafGridView LeafGridView;
       // the leaf grid view
       LeafGridView leafGridView_ ;
 
@@ -289,9 +292,6 @@ namespace Dune
 
       static const PartitionIteratorType indexSetPartitionType = IndexSetChooserType::indexSetPartitionType;
       static const InterfaceType indexSetInterfaceType = IndexSetChooserType::indexSetInterfaceType;
-
-      typedef typename GridType::template Codim< 0 >::Entity::LeafIntersectionIterator
-        IntersectionIteratorType;
 
       template< int codim >
       struct Codim
