@@ -46,6 +46,9 @@ namespace Dune
       typedef NonBlockMapper< BlockMapper, blockSize > ThisType;
       typedef DofMapper< NonBlockMapperTraits< BlockMapper, blockSize > > BaseType;
 
+      template< class, int >
+      friend class NonBlockMapper;
+
       typedef NonBlockMapperTraits< BlockMapper, blockSize > Traits ;
     public:
       typedef typename Traits :: SizeType SizeType ;
@@ -164,6 +167,24 @@ namespace Dune
 
     private:
       BlockMapper &blockMapper_;
+    };
+
+
+
+    // NonBlockMapper for NonBlockMapper
+    // ---------------------------------
+
+    template< class BlockMapper, int innerBlockSize, int outerBlockSize >
+    class NonBlockMapper< NonBlockMapper< BlockMapper, innerBlockSize >, outerBlockSize >
+      : public NonBlockMapper< BlockMapper, innerBlockSize * outerBlockSize >
+    {
+      typedef NonBlockMapper< NonBlockMapper< BlockMapper, innerBlockSize >, outerBlockSize > ThisType;
+      typedef NonBlockMapper< BlockMapper, innerBlockSize * outerBlockSize > BaseType;
+
+    public:
+      explicit NonBlockMapper ( const NonBlockMapper< BlockMapper, innerBlockSize > &blockMapper )
+        : BaseType( blockMapper.blockMapper_ )
+      {}
     };
 
   } // namespace Fem
