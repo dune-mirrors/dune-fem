@@ -93,7 +93,7 @@ namespace Dune
 
     public:
       //! type of intersection iterator
-      typedef typename LeafGridView::IntersectionIterator IntersectionIteratorType;
+      typedef typename Traits::IntersectionIteratorType IntersectionIteratorType;
 
       //! type of intersection
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
@@ -292,6 +292,9 @@ namespace Dune
 
       static const PartitionIteratorType indexSetPartitionType = IndexSetChooserType::indexSetPartitionType;
       static const InterfaceType indexSetInterfaceType = IndexSetChooserType::indexSetInterfaceType;
+
+      // type of intersection iterator
+      typedef typename GridType::LeafGridView::IntersectionIterator IntersectionIteratorType;
 
       template< int codim >
       struct Codim
