@@ -93,15 +93,16 @@ namespace Dune
 
       // review to make it work for all kind of combinations
       template< class DiscreteFunction,
-                class Operation = DFCommunicationOperation::Copy >
+                class Operation =
+                  typename DiscreteFunctionSpace::template CommDataHandle< DiscreteFunctionSpace >::OperationType >
       struct CommDataHandle
       {
         //! type of data handle
         typedef typename DiscreteFunctionSpace::
-          template CommDataHandle< DiscreteFunctionSpace, Operation >::Type Type;
+          template CommDataHandle< DiscreteFunction, Operation >::Type Type;
         //! type of operatation to perform on scatter
         typedef typename DiscreteFunctionSpace::
-          template CommDataHandle< DiscreteFunctionSpace, Operation >::OperationType OperationType;
+          template CommDataHandle< DiscreteFunction, Operation >::OperationType OperationType;
       };
 
       // construct new instance of blockMapper
