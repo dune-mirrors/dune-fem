@@ -201,7 +201,7 @@ namespace Dune
       }
 
       template< std::size_t ... i >
-      static bool continuous ( const IntersectionType &intersection, const DiscreteFunctionSpaceTupleType &tuple, Std::index_sequence< i ... > )
+      static bool continuous ( const DiscreteFunctionSpaceTupleType &tuple, const IntersectionType &intersection, Std::index_sequence< i ... > )
       {
         return Std::And( SubDiscreteFunctionSpace< i >::subDiscreteFunctionSpace( tuple ).continuous( intersection ) ... );
       }
