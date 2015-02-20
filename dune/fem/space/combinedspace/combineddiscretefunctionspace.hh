@@ -112,7 +112,8 @@ namespace Dune
       typedef typename DFunctionSpaceImp2::template ToNewDimRange< newDimRange2 >::Type Type2;
 
     public:
-      typedef CombinedDiscreteFunctionSpace< Type1, Type2 > Type;
+      typedef typename conditional< (newDimRange == 1), Type1,
+              CombinedDiscreteFunctionSpace< Type1, Type2 > >::type Type;
     };
 
 
