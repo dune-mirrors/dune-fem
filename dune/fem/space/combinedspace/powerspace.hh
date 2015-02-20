@@ -203,6 +203,15 @@ namespace Dune
       }
     };
 
+
+    //! specialization of DifferentDiscreteFunctionSpace for PowerDiscreteFunctionSpace
+    template< class DiscreteFunctionSpace, int  N, class NewFunctionSpace >
+    struct DifferentDiscreteFunctionSpace< PowerDiscreteFunctionSpace< DiscreteFunctionSpace, N >, NewFunctionSpace >
+    {
+      typedef PowerDiscreteFunctionSpace< DiscreteFunctionSpace, NewFunctionSpace::dimRange > Type;
+    };
+
+
     // DefaultLocalRestrictProlong
     // ---------------------------
 
