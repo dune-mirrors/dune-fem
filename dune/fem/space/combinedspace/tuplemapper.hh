@@ -359,7 +359,7 @@ namespace Dune
       }
 
       template< std::size_t ... i >
-      bool fixedDataSize ( const int codim, Std::index_sequence< i ... > )
+      bool fixedDataSize ( const int codim, Std::index_sequence< i ... > ) const
       {
         return Std::And( std::get< i >( mapperTuple_ ).fixedDataSize( codim ) ... );
       }
