@@ -1,17 +1,17 @@
 // GMRES inline implementation
 
-#ifndef ODE_GMRES_CPP 
-#define ODE_GMRES_CPP 
+#ifndef ODE_GMRES_CPP
+#define ODE_GMRES_CPP
 
 #include <cmath>
 #include <cassert>
 #include "linear_solver.hpp"
 #include "blas.hpp"
 
-using namespace pardg; 
+using namespace pardg;
 
-GMRES::GMRES(Communicator &comm, int m) : 
-  IterativeLinearSolver(comm), DynamicalObject("GMRES", comm.id()), 
+GMRES::GMRES(Communicator &comm, int m) :
+  IterativeLinearSolver(comm), DynamicalObject("GMRES", comm.id()),
   m(m), H(m+1,m), v(NULL), z(NULL)
 {
   g = new double[6*m+1];
@@ -49,7 +49,7 @@ void GMRES::set_preconditioner(Function &preconditioner)
 
 void GMRES::unset_preconditioner()
 {
-  this->preconditioner = 0; 
+  this->preconditioner = 0;
   delete [] z;
   z = 0;
 }
@@ -70,7 +70,7 @@ void GMRES::resize(int new_size, int component)
 
   dset((m+1)*new_size, 0.0, v, 1);
 }
- 
+
 
 
 
@@ -83,7 +83,7 @@ bool GMRES::solve(Function &op, double *u, const double *b)
   double _tolerance = tolerance;
   if (relative_tolerance){
     local_dot[0] = cblas_ddot(dim, b, 1, b, 1);
-    comm.allreduce(1, local_dot, global_dot, MPI_SUM);      
+    comm.allreduce(1, local_dot, global_dot, MPI_SUM);
     _tolerance *= sqrt(global_dot[0]);
   }
 
@@ -93,23 +93,23 @@ bool GMRES::solve(Function &op, double *u, const double *b)
     op(u, v);
     cblas_daxpy(dim, -1.0, b, 1, v, 1);
     local_dot[0] = cblas_ddot(dim, v, 1, v, 1);
-    comm.allreduce(1, local_dot, global_dot, MPI_SUM);      
-    double res = sqrt(global_dot[0]); 
+    comm.allreduce(1, local_dot, global_dot, MPI_SUM);
+    double res = sqrt(global_dot[0]);
     if (IterativeSolver::os)
     {
-      *IterativeSolver::os << "GMRES "<< comm.id() << " outer iteration : " << res << std::endl; 
+      *IterativeSolver::os << "GMRES "<< comm.id() << " outer iteration : " << res << std::endl;
     }
     if (res < _tolerance) break;
     g[0] = -res;
     for(int i=1; i<=m; i++) g[i] = 0.0;
     cblas_dscal(dim, 1.0/res, v, 1);
-    
+
     // iterate
     for(int j=0; j<m; j++){
       double *vj = v + j*dim;
       double *vjp = vj + dim;
 
-      // apply the linear operator (perhaps in combination with the 
+      // apply the linear operator (perhaps in combination with the
       // preconditioner)
       if (preconditioner)
       {
@@ -118,11 +118,11 @@ bool GMRES::solve(Function &op, double *u, const double *b)
       }
       else op(vj, vjp);
 
-      cblas_dgemv(CblasRowMajor, CblasNoTrans, 
+      cblas_dgemv(CblasRowMajor, CblasNoTrans,
 		  j+1, dim, 1.0, v, dim, vjp, 1, 0.0, local_dot, 1);
- 
-      comm.allreduce(j+1, local_dot, global_dot, MPI_SUM);      
-      for(int i=0; i<=j; i++) H(i,j) = global_dot[i]; 
+
+      comm.allreduce(j+1, local_dot, global_dot, MPI_SUM);
+      for(int i=0; i<=j; i++) H(i,j) = global_dot[i];
 
 
 
@@ -135,8 +135,8 @@ bool GMRES::solve(Function &op, double *u, const double *b)
 // 		  dim, j+1, -1.0, v, dim,  global_dot, 1,  1.0, vjp, 1);
 
       local_dot[0] = cblas_ddot(dim, vjp, 1, vjp, 1);
-      comm.allreduce(1, local_dot, global_dot, MPI_SUM);      
-      H(j+1,j) = sqrt(global_dot[0]); 
+      comm.allreduce(1, local_dot, global_dot, MPI_SUM);
+      H(j+1,j) = sqrt(global_dot[0]);
       cblas_dscal(dim, 1.0/H(j+1,j), vjp, 1);
 
       // perform Givens rotation
@@ -155,14 +155,14 @@ bool GMRES::solve(Function &op, double *u, const double *b)
       //*os << fabs(g[j+1]) << std::endl;
       if (IterativeSolver::os)
       {
-        *IterativeSolver::os << "GMRES "<< comm.id() << " it: " << iterations << " : " <<  fabs(g[j+1]) << std::endl; 
+        *IterativeSolver::os << "GMRES "<< comm.id() << " it: " << iterations << " : " <<  fabs(g[j+1]) << std::endl;
       }
 
       iterations++;
-      if (fabs(g[j+1]) < _tolerance 
+      if (fabs(g[j+1]) < _tolerance
 	        || iterations >= max_num_of_iterations) break;
     }
-    
+
     //
     // form the approximate solution
     //
@@ -173,12 +173,12 @@ bool GMRES::solve(Function &op, double *u, const double *b)
     for(int i=last-1; i>=0; i--){
       const double dot = cblas_ddot(last-(i+1), &H(i,i)+1, 1, &y[i+1], 1);
       y[i] = (g[i] - dot)/ H(i,i);
-    }    
+    }
 
     // update the approx. solution
     if (preconditioner)
     {
-      // u += M^{-1} (v[0], ..., v[last-1]) y	
+      // u += M^{-1} (v[0], ..., v[last-1]) y
       double *u_tmp = v + m*dim; // we don't need this vector anymore
       dset(dim, 0.0, u_tmp, 1);
       for(int i=0; i<last; i++)
@@ -204,8 +204,8 @@ bool GMRES::solve(Function &op, double *u, const double *b)
 
   // output
   if (IterativeSolver::os){
-    *IterativeSolver::os << "GMRES " << comm.id() 
-			 << ": number of iterations: "      
+    *IterativeSolver::os << "GMRES " << comm.id()
+			 << ": number of iterations: "
 			 << iterations
 			 << std::endl;
   }

@@ -7,13 +7,13 @@
 //- Dune includes
 #include <dune/common/fvector.hh>
 
-// include pardg quadratures 
+// include pardg quadratures
 #include <dune/fem/solver/pardg.hh>
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     //! Adapter to the quadratures defined by parDG.
@@ -33,23 +33,23 @@ namespace Dune
       }
 
       //! Number of quadrature points.
-      int numPoints() const 
+      int numPoints() const
       {
         return quad_.number_of_points();
       }
 
       //! The actual order of the quadrature.
-      int order() const 
+      int order() const
       {
         return order_;
       }
 
       //! Access to the ith quadrature point.
-      CoordinateType point(int i) const 
+      CoordinateType point(int i) const
       {
         assert(i >= 0 && i < numPoints());
         CoordinateType result;
-        for (size_t j = 0; j < dim; ++j) 
+        for (size_t j = 0; j < dim; ++j)
         {
           result[j] = quad_.x(i)[j];
         }
@@ -57,13 +57,13 @@ namespace Dune
       }
 
       //! Access to the ith quadrature weight.
-      double weight(int i) const 
+      double weight(int i) const
       {
         assert(i >= 0 && i < numPoints());
         // scale with volume of reference element!
         return quad_.w(i);
       }
-      
+
     private:
       const ParDGQuadratureType& quad_;
       const int order_;

@@ -8,7 +8,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     template< class DiscreteFunctionSpace,
@@ -32,7 +32,7 @@ namespace Dune
         GridType;
 
       typedef typename DiscreteFunctionSpaceType::BlockMapperType BlockMapperType;
-      typedef NonBlockMapper< BlockMapperType, 
+      typedef NonBlockMapper< BlockMapperType,
                               DiscreteFunctionSpaceType::localBlockSize > NonBlockingMapperType ;
 
     protected:
@@ -61,7 +61,7 @@ namespace Dune
 
       inline ~ManagedDiscreteFunction ()
       {
-        if( memObject_ ) 
+        if( memObject_ )
           delete memObject_ ;
         memObject_ = 0;
 
@@ -80,7 +80,7 @@ namespace Dune
                        const DiscreteFunctionSpaceType &dfSpace )
       {
         mapper_ = new NonBlockingMapperType( dfSpace.blockMapper() );
-        // allocate managed dof storage 
+        // allocate managed dof storage
         std::pair< DofStorageInterface *, DofVectorType * > memPair
           = allocateManagedDofStorage( dfSpace.gridPart().grid(), *mapper_, name, (DofVectorType *)0 );
         memObject_ = memPair.first;

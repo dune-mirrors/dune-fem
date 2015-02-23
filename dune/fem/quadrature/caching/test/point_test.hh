@@ -1,13 +1,12 @@
 #ifndef DUNE_POINT_TEST_HH
 #define DUNE_POINT_TEST_HH
 
-#include <dune/fem/misc/test.hh>
 #include "../pointprovider.hh"
 
 namespace Dune {
   namespace Fem {
 
-  class PointProvider_Test : public Test 
+  class PointProvider_Test
   {
   public:
     virtual void run();

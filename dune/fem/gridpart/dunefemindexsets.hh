@@ -1,28 +1,28 @@
 #ifndef DUNE_FEM_DUNEFEMINDEXSETS_HH
 #define DUNE_FEM_DUNEFEMINDEXSETS_HH
 
-//- system includes 
+//- system includes
 #include <iostream>
-#include <string> 
+#include <string>
 #include <cassert>
 
-//- Dune includes 
+//- Dune includes
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/grid/common/indexidset.hh>
 
-//- Dune fem includes 
+//- Dune fem includes
 #include <dune/fem/gridpart/emptyindexset.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 
 /** @file
- @brief Provides default index set class for persistent index sets. 
+ @brief Provides default index set class for persistent index sets.
 */
 
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /** \brief  class implementing the DUNE grid index set interface for any DUNE
@@ -30,7 +30,7 @@ namespace Dune
                 an interface class.
     */
     template< class GridImp, class Imp >
-    class DuneGridIndexSetAdapter 
+    class DuneGridIndexSetAdapter
     : public BartonNackmanInterface< DuneGridIndexSetAdapter< GridImp, Imp >, Imp >,
       public Fem :: EmptyIndexSet,
       public IndexSet< GridImp, Imp >
@@ -46,38 +46,38 @@ namespace Dune
       typedef IndexSet< GridImp, Imp > DuneIndexSetType;
 
     public:
-      //! type of grid 
+      //! type of grid
       typedef GridImp GridType;
 
       //! type of index (i.e. unsigned int)
       typedef typename DuneIndexSetType::IndexType IndexType;
 
-      using DuneIndexSetType::index; 
+      using DuneIndexSetType::index;
 
-      //! type of codimension 0 entity 
-      typedef typename GridType::template Codim< 0 >::Entity EntityCodim0Type; 
+      //! type of codimension 0 entity
+      typedef typename GridType::template Codim< 0 >::Entity EntityCodim0Type;
 
-      //! constructor storing grid reference 
+      //! constructor storing grid reference
       explicit DuneGridIndexSetAdapter ( const GridType &grid )
-      : grid_(grid) 
+      : grid_(grid)
       {}
 
-      //! copy constructor 
+      //! copy constructor
       DuneGridIndexSetAdapter ( const ThisType &other )
       : grid_( other.grid_ )
       {}
-      
+
     public:
       //****************************************************************
       //
-      //  INTERFACE METHODS for DUNE INDEX SETS 
+      //  INTERFACE METHODS for DUNE INDEX SETS
       //
       //****************************************************************
-      //! return global index of entity 
+      //! return global index of entity
       template< class EntityType >
       IndexType index ( const EntityType &entity ) const
       {
-        // return index of entity 
+        // return index of entity
         enum { codim = EntityType::codimension };
         return this->template index< codim >( entity, 0 );
       }
@@ -86,57 +86,57 @@ namespace Dune
       template< int codim >
       IndexType subIndex ( const EntityCodim0Type &entity, const int localNum ) const
       {
-        // return sub index of entity 
+        // return sub index of entity
         return this->template index< codim >( entity, localNum );
       }
 
       //////////////////////////////////////////////////////////////////
       //
-      //  DUNE fem index method implementer interface  
+      //  DUNE fem index method implementer interface
       //
       //////////////////////////////////////////////////////////////////
     protected:
-      //! return index for entity  
+      //! return index for entity
       template< int codim, class EntityType >
       IndexType indexImp ( const EntityType &entity, const int localNum ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().template indexImp< codim >( entity, localNum ) );
         return asImp().template indexImp< codim >( entity, localNum );
-      } 
+      }
 
-    public:  
+    public:
       //////////////////////////////////////////////////////////////////
       //
-      //  DUNE fem index method user interface  
+      //  DUNE fem index method user interface
       //
       //////////////////////////////////////////////////////////////////
-      //! return index for entity  
+      //! return index for entity
       template< int codim, class EntityType >
       IndexType index ( const EntityType &entity, const int localNum ) const
       {
         return this->template indexImp< codim >( entity, localNum );
-      } 
+      }
 
-      //! insert new index for entity to set 
+      //! insert new index for entity to set
       void insertEntity ( const EntityCodim0Type &entity )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().insertEntity( entity ) );
       }
 
-      //! remove index for entity from index set 
+      //! remove index for entity from index set
       void removeEntity ( const EntityCodim0Type &entity )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().removeEntity( entity ) );
       }
-      
-    protected:  
-      //! reference to grid 
+
+    protected:
+      //! reference to grid
       const GridType &grid_;
     };
 
-    /** \brief ConsecutivePersistentIndexSet is the base class for all index sets that 
+    /** \brief ConsecutivePersistentIndexSet is the base class for all index sets that
         are consecutive and also persistent. Implementations of this type
-        are for example AdaptiveLeafIndexSet and DGAdaptiveLeafIndexSet. 
+        are for example AdaptiveLeafIndexSet and DGAdaptiveLeafIndexSet.
     */
     template< class GridImp, class Imp >
     class ConsecutiveIndexSet
@@ -147,12 +147,12 @@ namespace Dune
 
       typedef Imp ImplementationType;
 
-    public:  
-      //! type of grid 
+    public:
+      //! type of grid
       typedef GridImp GridType;
 
     protected:
-      //! Conschdrugdor 
+      //! Conschdrugdor
       explicit ConsecutiveIndexSet ( const GridType &grid )
       : BaseType( grid )
       {}
@@ -163,45 +163,45 @@ namespace Dune
       ThisType &operator= ( const ThisType & );
 
     public:
-      //! returns true since we deal with a consecutive index set 
+      //! returns true since we deal with a consecutive index set
       bool consecutive () const
       {
         return true;
       }
 
-      //! return true if the index set is persistent 
+      //! return true if the index set is persistent
       bool persistent () const
       {
         return false;
       }
 
-      //! remove holes and make index set consecutive 
+      //! remove holes and make index set consecutive
       bool compress()
       {
         return asImp().compress();
-      } 
+      }
 
     protected:
       // use asImp from BaseType
       using BaseType::asImp;
     };
 
-    /** \brief base class for persistent index sets, the feature is mainly used in the 
+    /** \brief base class for persistent index sets, the feature is mainly used in the
      *         PersistentObject implementation of the DiscreteFunction.
      */
-    class PersistentIndexSetInterface 
+    class PersistentIndexSetInterface
     {
       protected:
         PersistentIndexSetInterface () {}
-      public:  
+      public:
         virtual ~PersistentIndexSetInterface () {}
         virtual void addBackupRestore() = 0;
         virtual void removeBackupRestore() = 0;
     };
 
-    /** \brief ConsecutivePersistentIndexSet is the base class for 
+    /** \brief ConsecutivePersistentIndexSet is the base class for
         all index sets that are persistent. Implementations of this type
-        are for example all ConsecutivePersistenIndexSets. 
+        are for example all ConsecutivePersistenIndexSets.
     */
     template< class GridImp, class Imp >
     class PersistentIndexSet
@@ -213,11 +213,11 @@ namespace Dune
 
       typedef Imp ImplementationType;
 
-    public:  
+    public:
       //! type of entity with codimension 0
       typedef typename BaseType::EntityCodim0Type EntityCodim0Type;
-      
-      //! type of grid 
+
+      //! type of grid
       typedef GridImp GridType;
       //! type of DoF manager
       typedef DofManager< GridType > DofManagerType;
@@ -230,7 +230,7 @@ namespace Dune
           dofManager_( DofManagerType::instance( grid ) ),
           backupRestoreCounter_( 0 )
       {
-        // add persistent index set to dofmanagers list 
+        // add persistent index set to dofmanagers list
         dofManager_.addIndexSet( asImp() );
       }
 
@@ -240,68 +240,68 @@ namespace Dune
       ThisType &operator= ( const ThisType & );
 
     public:
-      //! destructor remoing index set from dof manager  
-      ~PersistentIndexSet () 
+      //! destructor remoing index set from dof manager
+      ~PersistentIndexSet ()
       {
-        // remove persistent index set from dofmanagers list 
+        // remove persistent index set from dofmanagers list
         dofManager_.removeIndexSet( asImp() );
       }
 
-      //! return true if the index set is persistent 
+      //! return true if the index set is persistent
       bool persistent () const { return true; }
 
-    public:  
+    public:
       /** \brief mark the index set to need backup/restore */
-      virtual void addBackupRestore() 
-      { 
+      virtual void addBackupRestore()
+      {
         // increase counter for backup/restore
         ++ backupRestoreCounter_ ;
       }
 
       /** \brief unmark the index set to need backup/restore */
-      virtual void removeBackupRestore() 
+      virtual void removeBackupRestore()
       {
         // decrease counter for backup/restore
         -- backupRestoreCounter_ ;
       }
 
       /** \copydoc Dune::PersistentObject::backup */
-      virtual void backup() const 
+      virtual void backup() const
       {
         if( backupRestoreNeeded() )
         {
-          // write data to backup stream of persistence manager 
+          // write data to backup stream of persistence manager
           asImp().write( PersistenceManager :: backupStream() );
         }
       }
 
       /** \copydoc Dune::PersistentObject::restore */
-      virtual void restore() 
+      virtual void restore()
       {
         if( backupRestoreNeeded() )
         {
-          // read data from restore stream of persistence manager 
+          // read data from restore stream of persistence manager
           asImp().read( PersistenceManager :: restoreStream() );
         }
       }
 
-    protected:  
-      //! return if index set is marked for backup/restore 
+    protected:
+      //! return if index set is marked for backup/restore
       bool backupRestoreNeeded() const { return backupRestoreCounter_ > 0 ; }
 
       using BaseType::asImp;
 
-      // reference to dof manager 
+      // reference to dof manager
       DofManagerType& dofManager_;
 
-      // reference counter for backup/restore 
-      int backupRestoreCounter_ ; 
+      // reference counter for backup/restore
+      int backupRestoreCounter_ ;
     };
 
 
-    /** \brief ConsecutivePersistentIndexSet is the base class for all index sets that 
+    /** \brief ConsecutivePersistentIndexSet is the base class for all index sets that
         are consecutive and also persistent. Implementations of this type
-        are for example AdaptiveLeafIndexSet and DGAdaptiveLeafIndexSet. 
+        are for example AdaptiveLeafIndexSet and DGAdaptiveLeafIndexSet.
     */
     template< class GridImp, class Imp >
     class ConsecutivePersistentIndexSet
@@ -312,12 +312,12 @@ namespace Dune
 
       typedef Imp ImplementationType;
 
-    public:  
-      //! type of grid 
+    public:
+      //! type of grid
       typedef GridImp GridType;
 
     protected:
-      //! Conschdrugdor 
+      //! Conschdrugdor
       explicit ConsecutivePersistentIndexSet ( const GridType &grid )
       : BaseType( grid )
       {}
@@ -328,17 +328,17 @@ namespace Dune
       ThisType &operator= ( const ThisType & );
 
     public:
-      //! returns true since we deal with a consecutive index set 
+      //! returns true since we deal with a consecutive index set
       bool consecutive () const
       {
         return true;
       }
 
-      //! remove holes and make index set consecutive 
+      //! remove holes and make index set consecutive
       bool compress()
       {
         return asImp().compress();
-      } 
+      }
 
     protected:
       // use asImp from BaseType

@@ -27,7 +27,7 @@ namespace Dune
     {
       typedef ISTLPreconditionAdapter< Preconditioner > ThisType;
       typedef Dune::Preconditioner< typename Preconditioner::RangeFunctionType::DofStorageType, typename Preconditioner::DomainFunctionType::DofStorageType > BaseType;
-     
+
       typedef typename Preconditioner::DomainFunctionType DomainFunctionType;
       typedef typename Preconditioner::RangeFunctionType RangeFunctionType;
 
@@ -58,7 +58,7 @@ namespace Dune
         {
           x = y;
         }
-        else 
+        else
         {
           // note: ISTL switches the arguments !!!
           // it is assumed that we have a left preconditioner

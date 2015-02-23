@@ -21,26 +21,26 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     // GenericDiscreteFunctionSpace
     // ----------------------------
 
-    /** \class   GenericDiscreteFunctionSpace 
+    /** \class   GenericDiscreteFunctionSpace
      *
      *  \ingroup PAdaptiveLagrangeSpace
      *
      *  \brief   Please doc me.
      */
     template< class Traits >
-    class GenericDiscreteFunctionSpace 
-    : public DiscreteFunctionSpaceDefault< Traits > 
+    class GenericDiscreteFunctionSpace
+    : public DiscreteFunctionSpaceDefault< Traits >
     {
       typedef GenericDiscreteFunctionSpace< Traits > ThisType;
       typedef DiscreteFunctionSpaceDefault< Traits > BaseType;
 
-    public:  
+    public:
       typedef ThisType GenericDiscreteFunctionSpaceType;
       typedef typename BaseType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
@@ -78,13 +78,13 @@ namespace Dune
       typedef BaseSetLocalKeyStorage< CompiledLocalKeyType > LocalKeyStorageType;
 
     protected:
-      template< int pOrd > 
+      template< int pOrd >
       struct Initialize;
 
-      // type of intermediate storage 
+      // type of intermediate storage
       typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > IntermediateStorageFunctionType;
-      
-      /// interface for list of p-adaptive functions 
+
+      /// interface for list of p-adaptive functions
       struct PAdaptiveDiscreteFunctionEntryInterface
       {
         virtual ~PAdaptiveDiscreteFunctionEntryInterface() {}
@@ -95,12 +95,12 @@ namespace Dune
         PAdaptiveDiscreteFunctionEntryInterface () {}
       };
 
-      template < class DF, class LocalInterpolation > 
+      template < class DF, class LocalInterpolation >
       class PAdaptiveDiscreteFunctionEntry;
 
-      typedef std::list< PAdaptiveDiscreteFunctionEntryInterface * > PAdaptiveDiscreteFunctionListType; 
+      typedef std::list< PAdaptiveDiscreteFunctionEntryInterface * > PAdaptiveDiscreteFunctionListType;
       typedef typename PAdaptiveDiscreteFunctionListType::iterator DFListIteratorType;
-     
+
       // type of DoF manager
       typedef DofManager< GridType > DofManagerType;
 
@@ -109,14 +109,14 @@ namespace Dune
       typedef int IdentifierType;
       //! identifier of this discrete function space
       static const IdentifierType id = 665;
- 
+
       using BaseType::asImp;
       using BaseType::gridPart;
 
       /** \brief constructor
        *
        *  \param[in]  gridPart       grid part
-       *  \param[in]  commInterface  communication interface to use 
+       *  \param[in]  commInterface  communication interface to use
        *  \param[in]  commDirection  communication direction to use
        */
       GenericDiscreteFunctionSpace ( GridPartType &gridPart,
@@ -130,7 +130,7 @@ namespace Dune
 
     protected:
       // copy constructor needed for p-adaptation
-      GenericDiscreteFunctionSpace ( const GenericDiscreteFunctionSpace &other ) 
+      GenericDiscreteFunctionSpace ( const GenericDiscreteFunctionSpace &other )
       : BaseType( other.gridPart_, other.commInterface_, other.commDirection_ ),
         scalarShapeFunctionSets_( polynomialOrder+1 ),
         compiledLocalKeys_( polynomialOrder+1 ),
@@ -149,7 +149,7 @@ namespace Dune
       ///////////////////////
       // Interface methods //
       ///////////////////////
-      
+
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type */
       inline DFSpaceIdentifier type () const { return GenericSpace_id; }
 
@@ -166,7 +166,7 @@ namespace Dune
       inline int order () const { return polynomialOrder; }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
-      inline int order (const typename BaseType::EntityType &entity) const 
+      inline int order (const typename BaseType::EntityType &entity) const
       {
         return blockMapper().polynomOrder( entity );
       }
@@ -188,23 +188,23 @@ namespace Dune
 
       /** \brief return shape function set for given entity
        *
-       *  \param[in]  entity  entity (of codim 0) for which shape function set 
+       *  \param[in]  entity  entity (of codim 0) for which shape function set
        *                      is requested
        *
-       * \returns  ShapeFunctionSetType  shape function set                     
+       * \returns  ShapeFunctionSetType  shape function set
        */
       ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
       {
         return shapeFunctionSet( entity.type(), order( entity ) );
       }
 
-      /** \brief return shape unique function set for geometry type 
+      /** \brief return shape unique function set for geometry type
        *
-       *  \param[in]  type   geometry type (must be a cube) for which 
+       *  \param[in]  type   geometry type (must be a cube) for which
        *                     shape function set is requested
        *  \param[in]  order  polynomial order
        *
-       * \returns  ShapeFunctionSetType  shape function set                     
+       * \returns  ShapeFunctionSetType  shape function set
        */
       ShapeFunctionSetType shapeFunctionSet ( const GeometryType &type, const int order = polynomialOrder ) const
       {
@@ -217,7 +217,7 @@ namespace Dune
        *        is unique to the GenericDiscreteFunctionSpace.
        *
        *  \param[in]  entity  entity the Lagrange point set is requested for
-       *  
+       *
        *  \returns CompiledLocalKey
        */
       template< class EntityType >
@@ -226,15 +226,15 @@ namespace Dune
         return compiledLocalKey( entity.type(), order( entity ) );
       }
 
-      /** \brief provide access to the compiled local keys for a geometry type and polynomial order 
+      /** \brief provide access to the compiled local keys for a geometry type and polynomial order
        *
        *  \note This method is not part of the DiscreteFunctionSpaceInterface. It
        *        is unique to the GenericDiscreteFunctionSpace.
        *
        *  \param[in]  type  type of geometry the compiled local key is requested for
-       *  \param[in]  order polynomial order for given geometry type 
+       *  \param[in]  order polynomial order for given geometry type
        *
-       *  \returns CompiledLocalKey 
+       *  \returns CompiledLocalKey
        */
       inline const CompiledLocalKeyType &compiledLocalKey ( const GeometryType type, const int order = polynomialOrder ) const
       {
@@ -246,13 +246,13 @@ namespace Dune
       // Adaptive interface methods //
       ////////////////////////////////
 
-      /** \brief p adaptation 
+      /** \brief p adaptation
        *
-       *  \param[in]  polynomialOrders  vector containing polynomial orders for each cell 
+       *  \param[in]  polynomialOrders  vector containing polynomial orders for each cell
        *  \param[in]  polOrderShift     possible shift of polynomial order (i.e. in case of
        *                                Taylor-Hood put -1 for the pressure) (default = 0)
        */
-      template< class Vector > 
+      template< class Vector >
       void adapt ( const Vector &polynomialOrders, const int polOrderShift = 0 ) const
       {
         typedef typename IteratorType::Entity EntityType ;
@@ -263,7 +263,7 @@ namespace Dune
 
         //std::cout << "Old space size = " << oldSpace.size() << std::endl;
 
-        // set new polynomial order for space  
+        // set new polynomial order for space
         for( IteratorType it = this->begin(); it != endit; ++it )
         {
           const EntityType &entity = *it;
@@ -271,26 +271,26 @@ namespace Dune
           blockMapper().setPolynomOrder( entity, polOrder );
         }
 
-        // adjust mapper 
+        // adjust mapper
         blockMapper().adapt();
 
         //std::cout << "New space size = " << blockMapper().size() << std::endl;
         //for(size_t i=0; i<polynomialOrders.size(); ++i)
         //  std::cout << "   " << polynomialOrders[ i ] << std::endl;
 
-        // Adapt space and then discrete functions 
+        // Adapt space and then discrete functions
         IntermediateStorageFunctionType tmp( "padapt-temp", oldSpace );
         //std::cout << "created tmp with size = " << oldSpace.size() << " " << tmp.space().size() << std::endl;
 
         const DFListIteratorType endDF = dfList_.end();
-        for( DFListIteratorType it = dfList_.begin(); it != endDF; ++it ) 
+        for( DFListIteratorType it = dfList_.begin(); it != endDF; ++it )
         {
           (*it)->adaptFunction( tmp );
         }
 
         DofManagerType &dm = DofManagerType::instance( this->grid() );
-        // resize discrete functions (only functions belonging 
-        // to this space will be affected ), for convenience 
+        // resize discrete functions (only functions belonging
+        // to this space will be affected ), for convenience
         dm.resize();
         dm.compress();
 
@@ -300,7 +300,7 @@ namespace Dune
 
 
     protected:
-      // initialize space and create block mapper 
+      // initialize space and create block mapper
       BlockMapperType *initialize ( const BlockMapperType *otherMapper = 0 )
       {
         const IndexSetType &indexSet = gridPart().indexSet();
@@ -315,15 +315,15 @@ namespace Dune
             apply( scalarShapeFunctionSets_, compiledLocalKeys_, geometryTypes[ i ] );
         }
 
-        if( otherMapper ) 
+        if( otherMapper )
         {
-          // make a copy of the other block mapper 
+          // make a copy of the other block mapper
           return new BlockMapperType( *otherMapper, compiledLocalKeys_ );
         }
-        else 
+        else
         {
-          // create new block mapper, this mapper is unique for each space since 
-          // the polynomial degrees might be different for each element 
+          // create new block mapper, this mapper is unique for each space since
+          // the polynomial degrees might be different for each element
           return new BlockMapperType( gridPart(), compiledLocalKeys_ );
         }
       }
@@ -333,9 +333,9 @@ namespace Dune
       {
         assert( &df.space() == this );
         const DFListIteratorType endDF = dfList_.end();
-        for( DFListIteratorType it = dfList_.begin(); it != endDF; ++it ) 
+        for( DFListIteratorType it = dfList_.begin(); it != endDF; ++it )
         {
-          if( (*it)->equals( (void *) &df ) ) 
+          if( (*it)->equals( (void *) &df ) )
             return it;
         }
         return endDF;
@@ -354,14 +354,14 @@ namespace Dune
       }
 
     protected:
-      // storage for base function sets 
+      // storage for base function sets
       std::vector< ScalarShapeFunctionSetStorageType > scalarShapeFunctionSets_;
-      // storage for compiled local keys  
-      std::vector< LocalKeyStorageType > compiledLocalKeys_; 
+      // storage for compiled local keys
+      std::vector< LocalKeyStorageType > compiledLocalKeys_;
 
       // corresponding mapper
       BlockMapperType *blockMapper_;
-      // list of registered discrete functions 
+      // list of registered discrete functions
       mutable PAdaptiveDiscreteFunctionListType dfList_;
     };
 
@@ -371,7 +371,7 @@ namespace Dune
     // ----------------------------------------------------------
 
     template< class Traits >
-    template <int pOrd> 
+    template <int pOrd>
     struct GenericDiscreteFunctionSpace< Traits >::Initialize
     {
       struct CompiledLocalKeyFactory
@@ -386,9 +386,9 @@ namespace Dune
         }
       };
 
-      static void apply ( std::vector< ScalarShapeFunctionSetStorageType > &scalarShapeFunctionSets, 
-                          std::vector< LocalKeyStorageType > &compiledLocalKeys, 
-                          const GeometryType &type ) 
+      static void apply ( std::vector< ScalarShapeFunctionSetStorageType > &scalarShapeFunctionSets,
+                          std::vector< LocalKeyStorageType > &compiledLocalKeys,
+                          const GeometryType &type )
       {
         typedef typename ScalarShapeFunctionSetFactory< pOrd >::Type ScalarShapeFunctionSetFactoryType;
         typedef SingletonList< const GeometryType, ScalarShapeFunctionSetType, ScalarShapeFunctionSetFactoryType > SingletonProviderType;
@@ -405,33 +405,33 @@ namespace Dune
     // ------------------------------------------------------------------------------
 
     template< class Traits >
-    template < class DF, class LocalInterpolation > 
-    class GenericDiscreteFunctionSpace< Traits >::PAdaptiveDiscreteFunctionEntry 
+    template < class DF, class LocalInterpolation >
+    class GenericDiscreteFunctionSpace< Traits >::PAdaptiveDiscreteFunctionEntry
     : public PAdaptiveDiscreteFunctionEntryInterface
     {
       DF &df_;
       DofManagerType &dm_;
 
     public:
-      PAdaptiveDiscreteFunctionEntry ( DF &df ) 
+      PAdaptiveDiscreteFunctionEntry ( DF &df )
       : df_( df ),
       dm_( DofManagerType::instance( df.space().grid() ) )
       {}
 
       virtual bool equals ( void *ptr ) const { return (((void *) &df_) == ptr ); }
 
-      virtual void adaptFunction ( IntermediateStorageFunctionType &tmp ) 
+      virtual void adaptFunction ( IntermediateStorageFunctionType &tmp )
       {
         //const int oldSize = tmp.space().size() ;
         //const int newSize = df_.space().size() ;
 
-        //std::cout << " Start adaptFct: old size " << tmp.space().size() 
+        //std::cout << " Start adaptFct: old size " << tmp.space().size()
         //          << "                 new size " << df_.space().size() << std::endl;
 
         typedef typename IntermediateStorageFunctionType::DofIteratorType TmpIteratorType;
         typedef typename DF::DofIteratorType  DFIteratorType;
 
-        // copy dof to temporary storage 
+        // copy dof to temporary storage
         DFIteratorType dfit = df_.dbegin();
         const TmpIteratorType endtmp = tmp.dend();
         for( TmpIteratorType it = tmp.dbegin(); it != endtmp; ++it, ++dfit )
@@ -441,20 +441,20 @@ namespace Dune
         }
         assert( dfit == df_.dend() );
 
-        // adjust size of discrete function 
-        df_.resize(); 
+        // adjust size of discrete function
+        df_.resize();
 
-        //std::cout << " End adaptFct: old size " << tmp.space().size() 
+        //std::cout << " End adaptFct: old size " << tmp.space().size()
         //          << "               new size " << df_.space().size() << std::endl;
 
-        // interpolate to new space, this can be a 
+        // interpolate to new space, this can be a
         // Lagrange interpolation or a L2 projection
         LocalInterpolation::apply( tmp, df_ );
       }
     };
 
   } // namespace Fem
-    
-} // Dune namespace  
+
+} // Dune namespace
 
 #endif // #ifndef DUNE_FEM_SPACE_PADAPTIVE_GENERIC_HH

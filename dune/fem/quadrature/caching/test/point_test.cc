@@ -5,12 +5,35 @@
 namespace Dune {
   namespace Fem {
 
-  void PointProvider_Test::run() 
+  void PointProvider_Test::run()
   {
     codim0Test();
     sameOutputTest();
     transformationTest();
   }
+
+
+  namespace {
+    static void doTest( const double& a, const double& b )
+    {
+      if( std::abs( a - b ) > 1e-12 )
+      {
+        assert( false );
+        std::abort();
+      }
+    }
+
+    static void doTest( const bool value )
+    {
+      if( ! value )
+      {
+        assert( false );
+        std::abort();
+      }
+    }
+  }
+
+
 
   void PointProvider_Test::codim0Test()
   {
@@ -23,14 +46,14 @@ namespace Dune {
 
     PointProvider<double, dim, 0>::registerQuadrature(quad.ipList());
 
-    const PointVectorType& points = 
+    const PointVectorType& points =
       PointProvider<double, dim, 0>::getPoints(quad.id(), simplex);
 
-    _test( (int) points.size() == quad.nop() );
-    for (size_t i = 0; i < points.size(); ++i) 
+    doTest( (int) points.size() == quad.nop() );
+    for (size_t i = 0; i < points.size(); ++i)
     {
       for (int j = 0; j < dim; ++j) {
-        _floatTest(points[i][j], quad.point(i)[j]);
+        doTest(points[i][j], quad.point(i)[j]);
       }
     }
   }
@@ -57,17 +80,17 @@ namespace Dune {
     Quadrature<double, 1> quad2(quadImp);
 
     PointProviderType::getMappers(quad1.ipList(), simplex);
-    PointProviderType::getMappers(quad2.ipList(), simplex);    
+    PointProviderType::getMappers(quad2.ipList(), simplex);
 
-    const PointVectorType& p1 = 
+    const PointVectorType& p1 =
       PointProviderType::getPoints(quad1.id(), simplex);
-    const PointVectorType& p2 = 
+    const PointVectorType& p2 =
       PointProviderType::getPoints(quad2.id(), simplex);
-    
-    _test(p1.size() == p2.size());
+
+    doTest(p1.size() == p2.size());
     for (size_t i = 0; i < p1.size(); ++i) {
       for (int j = 0; j < dim; ++j) {
-        _floatTest(p1[i][j], p2[i][j]);
+        doTest(p1[i][j], p2[i][j]);
       }
     }
   }
@@ -99,31 +122,31 @@ namespace Dune {
     quadImpQuad.newQuadraturePoint(ph, 1.0);
     Quadrature<double, 2> quadQuad(quadImpQuad);
 
-    const MapperVectorType& mvh = 
+    const MapperVectorType& mvh =
       PointProvider2Type::getMappers(quadQuad.ipList() , quadrilateral);
     for (size_t i = 0; i < mvh.size(); ++i) {
       std::cout << mvh[i][0] << ", ";
     }
     std::cout << std::endl;
-    
+
 
     const PointProvider2Type::GlobalPointVectorType& ptsHexa =
       PointProvider2Type::getPoints(quadQuad.id(), quadrilateral);
 
-    _test(ptsHexa.size() == 6);
-    tmp3[0] = 0.;    
-    _test(findPoint(tmp3, ptsHexa));
+    doTest(ptsHexa.size() == 6);
+    tmp3[0] = 0.;
+    doTest(findPoint(tmp3, ptsHexa));
     tmp3[0] = 0.5; tmp3[1] = 0.;
-    _test(findPoint(tmp3, ptsHexa));
+    doTest(findPoint(tmp3, ptsHexa));
     tmp3[1] = 0.5; tmp3[2] = 0.;
-    _test(findPoint(tmp3, ptsHexa));
+    doTest(findPoint(tmp3, ptsHexa));
     tmp3[2] = 1.0;
-    _test(findPoint(tmp3, ptsHexa));
+    doTest(findPoint(tmp3, ptsHexa));
     tmp3[2] = 0.5; tmp3[1] = 1.0;
-    _test(findPoint(tmp3, ptsHexa));
+    doTest(findPoint(tmp3, ptsHexa));
     tmp3[1] = 0.5; tmp3[0] = 1.0;
-    _test(findPoint(tmp3, ptsHexa));
-    
+    doTest(findPoint(tmp3, ptsHexa));
+
     // Tetra test
     Point2Type pt(oneThird);
     TestQuadrature<double, 2> quadImpTri(triangle, 0);
@@ -133,16 +156,16 @@ namespace Dune {
     PointProvider2Type::getMappers(quadTri.ipList() , triangle);
     const PointProvider2Type::GlobalPointVectorType& ptsTetra =
       PointProvider2Type::getPoints(quadTri.id(), triangle);
-    
-    _test(ptsTetra.size() == 4);
+
+    doTest(ptsTetra.size() == 4);
     tmp3 = oneThird;
-    _test(findPoint(tmp3, ptsTetra));
+    doTest(findPoint(tmp3, ptsTetra));
     tmp3[0] = 0.;
-    _test(findPoint(tmp3, ptsTetra));
+    doTest(findPoint(tmp3, ptsTetra));
     tmp3[1] = 0.; tmp3[0] = oneThird;
-    _test(findPoint(tmp3, ptsTetra));
+    doTest(findPoint(tmp3, ptsTetra));
     tmp3[2] = 0.; tmp3[1] = oneThird;
-    _test(findPoint(tmp3, ptsTetra));
+    doTest(findPoint(tmp3, ptsTetra));
 
      // Quadrilateral test
     Point1Type pl(0.5);
@@ -151,18 +174,18 @@ namespace Dune {
     Quadrature<double, 1> quadLine(quadImpLine);
 
     PointProvider1Type::getMappers(quadLine.ipList(), quadrilateral );
-    const PointProvider1Type::GlobalPointVectorType& ptsQuad = 
+    const PointProvider1Type::GlobalPointVectorType& ptsQuad =
       PointProvider1Type::getPoints(quadLine.id(), quadrilateral);
 
-    _test(ptsQuad.size() == 4);
+    doTest(ptsQuad.size() == 4);
     tmp2[0] = 0.;
-    _test(findPoint(tmp2, ptsQuad));
+    doTest(findPoint(tmp2, ptsQuad));
     tmp2[1] = 0.; tmp2[0] = 0.5;
-    _test(findPoint(tmp2, ptsQuad));
+    doTest(findPoint(tmp2, ptsQuad));
     tmp2[0] = 1.; tmp2[1] = 0.5;
-    _test(findPoint(tmp2, ptsQuad));
+    doTest(findPoint(tmp2, ptsQuad));
     tmp2[1] = 1.; tmp2[0] = 0.5;
-    _test(findPoint(tmp2, ptsQuad));
+    doTest(findPoint(tmp2, ptsQuad));
 
     // Triangle test
     TestQuadrature<double, 1> quadImpLine2(lineS, 0);
@@ -171,24 +194,24 @@ namespace Dune {
     Quadrature<double, 1> quadLine2(quadImpLine2);
     PointProvider1Type::getMappers(quadLine2.ipList() , triangle);
 
-    const PointProvider1Type::GlobalPointVectorType& ptsTri = 
+    const PointProvider1Type::GlobalPointVectorType& ptsTri =
       PointProvider1Type::getPoints(quadLine2.id(), triangle);
 
-    _test(ptsTri.size() == 3);
+    doTest(ptsTri.size() == 3);
     tmp2 = 0.5;
-    _test(findPoint(tmp2, ptsTri));
+    doTest(findPoint(tmp2, ptsTri));
     tmp2[0] = 0.;
-    _test(findPoint(tmp2, ptsTri));
+    doTest(findPoint(tmp2, ptsTri));
     tmp2[0] = 0.5; tmp2[1] = 0;
-    _test(findPoint(tmp2, ptsTri));
-  } 
-  
+    doTest(findPoint(tmp2, ptsTri));
+  }
+
   template <class PointType>
-  bool PointProvider_Test::findPoint(const PointType& p, 
-                                      const std::vector<PointType>& vec) 
+  bool PointProvider_Test::findPoint(const PointType& p,
+                                      const std::vector<PointType>& vec)
   {
     const double eps = 1.0e-5;
-    
+
     for (size_t i = 0; i < vec.size(); ++i) {
       bool same = false;
       for (size_t j = 0; j < p.dim(); ++j) {

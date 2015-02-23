@@ -19,7 +19,7 @@ namespace Dune
   namespace Fem
   {
 
-    /** \brief check conversion from entity to entity pointer 
+    /** \brief check conversion from entity to entity pointer
      *         and entity seed, and from entity seed to entity pointer
      */
     template< class EntityType, class GridPartType, class FailureHandler >
@@ -43,7 +43,7 @@ namespace Dune
         {
           virtual void writeTo ( std::ostream &out ) const
           {
-            out <<  __FILE__  
+            out <<  __FILE__
                 << ":" << __LINE__ << ": Failure :"
                 << "Conversion failed";
           }
@@ -61,7 +61,7 @@ namespace Dune
      */
 
     template< class GridPartType, class FailureHandler >
-    class CheckEntitySeed 
+    class CheckEntitySeed
     {
       template< class GridPart, bool >
       struct If

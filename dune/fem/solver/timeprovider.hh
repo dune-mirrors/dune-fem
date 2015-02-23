@@ -8,13 +8,14 @@
 
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/parameter.hh>
-#include <dune/fem/misc/commhelper.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+
+#include <dune/fem/misc/mpimanager.hh>
 
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /** \class   TimeProviderBase
@@ -22,7 +23,7 @@ namespace Dune
      *  \brief   general base for time providers
      *
      *  This class consists of the methods required for example in the
-     *  ODE Solvers, e.g., provideTimeStepEstimate and 
+     *  ODE Solvers, e.g., provideTimeStepEstimate and
      *  provideTimeStepUpperBound.
      *  InvalidateTimeStep can be used to mark this time step as invalid.
      *  Furthermore, method for accessing the simulation time, the
@@ -30,7 +31,7 @@ namespace Dune
      *
      *  The derived class TimeProvider provides the additional method
      *  required for implementing a time loop.
-     *  
+     *
      */
     class TimeProviderBase : public AutoPersistentObject
     {
@@ -72,14 +73,14 @@ namespace Dune
 
       virtual ~TimeProviderBase() {}
 
-      void backup() const 
+      void backup() const
       {
         Dune::tuple<const double&,const int&,const double&,const bool&,const double&>
           values(time_,timeStep_,dt_,valid_,dtEstimate_);
         PersistenceManager::backupValue("timeprovider",values);
       }
 
-      void restore() 
+      void restore()
       {
         Dune::tuple<double&,int&,double&,bool&,double&>
           values(time_,timeStep_,dt_,valid_,dtEstimate_);
@@ -87,7 +88,7 @@ namespace Dune
         dtEstimateValid_ = true;
         invdt_ = 1.0 / dt_;
       }
-      
+
     private:
       TimeProviderBase ( const ThisType & );
       ThisType &operator= ( const ThisType & );
@@ -101,7 +102,7 @@ namespace Dune
       {
         return time_;
       }
-      
+
       /** \brief obtain number of the current time step
        *
        *  \return the current time step counter
@@ -111,7 +112,7 @@ namespace Dune
         assert( timeStepValid() );
         return timeStep_;
       }
-   
+
       /** \brief obtain the size of the current time step
        *
        *  \returns the size of the current time step
@@ -142,8 +143,8 @@ namespace Dune
       }
 
       /** \brief set time step estimate to minimum of given value and
-                 internal time step estiamte 
-           \param[in] dtEstimate time step size estimate 
+                 internal time step estiamte
+           \param[in] dtEstimate time step size estimate
       */
       void provideTimeStepEstimate ( const double dtEstimate )
       {
@@ -152,14 +153,14 @@ namespace Dune
       }
       /** \brief set upper bound for time step to minimum of given value and
                  internal bound
-           \param[in] upperBound time step size estimate 
+           \param[in] upperBound time step size estimate
       */
       void provideTimeStepUpperBound ( const double upperBound )
       {
         dtUpperBound_ = std::min( dtUpperBound_, upperBound );
         dtEstimateValid_ = true;
       }
-      
+
       /** \brief count current time step a not valid */
       void invalidateTimeStep ()
       {
@@ -171,7 +172,7 @@ namespace Dune
       {
         return valid_;
       }
-     
+
     protected:
       void advance ()
       {
@@ -192,30 +193,30 @@ namespace Dune
 
 
 
-    /** 
+    /**
        \ingroup ODESolver
        \brief   manager for global simulation time of time-dependent solutions
-     
+
        When calculating possibly multiple time-dependent solutions, it is often
        necessary to use the same time in all calculations. This means that we
        have to use the same time step for all our calculations. A TimeProvider
        keeps track of this information in a simple and unified way.
-     
+
        An example of a time loop could look as follows:
        \code
        // create time provider
        TimeProvider tp( startTime );
-     
+
        SpaceOperator spaceOperator;
        typedef SpaceOperator::DestinationType DestinationType;
        OdeSolver<DestinationType> odeSolver(spaceOperator,tp,order);
-     
+
        DestinationType U;
        initialize(U);
-     
+
        // set the initial time step estimate
        odeSolver.initialize( U );
-     
+
        // time loop
        for( tp.init(); tp.time() < endTime; tp.next() )
        {
@@ -223,7 +224,7 @@ namespace Dune
          odeSolver.solve(U);
        }
        \endcode
-     
+
        Within the time loop, both tp.time() and tp.deltaT() are fixed and cannot
        be altered and an the next time step should be fixed in the loop,
        e.g., in the method solve of the ode solver an upper estimate
@@ -235,10 +236,10 @@ namespace Dune
        to fix the next time step (ignoring the estimates) an optinal
        argument can be passed to the next method on the
        Dune::TimeProvider.
-     
+
        Obviously, we need to provide an initial estimate. In the above example,
        this is done by the initialize method of the ODE solver. In tp.init(),
-       the first time step (deltaT) is set based on the estimate and 
+       the first time step (deltaT) is set based on the estimate and
        this value can also be fixed independent of the estimate through
        an optional argument. The following loop would fix the time step
        to 1e-3
@@ -249,10 +250,10 @@ namespace Dune
          odeSolver.solve(U);
        }
        \endcode
-     
+
        In order to allow the user to incfluence the calculation of the next time
        step from the estimate, the time provider also maintains an additional
-       factor (which is constant during the entire simulation). 
+       factor (which is constant during the entire simulation).
        Therefore the actual time step used, is calculated as follows:
        \f[
        \mathrm{deltaT} = \mathrm{factor} * \mathrm{timeStepEstimate}.
@@ -266,12 +267,12 @@ namespace Dune
        A further parameter read by the Dune::TimeProvider is
        fem.timeprovider.starttime defining the starting time of
        the simulation (default is zero).
-     
+
        The most general implementation is given in the class
        Dune::TimeProvider< CollectiveCommunication< C > >  which
-       takes a Dune::CollectiveCommunication instance in the 
+       takes a Dune::CollectiveCommunication instance in the
        constructor which is used in parallel computations is
-       syncronize the time step. It defaults to 
+       syncronize the time step. It defaults to
        Dune::CollectiveCommHelperType :: defaultCommunication()
        and also works for seriell runs where the template argument
        does not have to be prescribed.
@@ -279,7 +280,7 @@ namespace Dune
        the class Dune::GridTimeProvider using the GridType as
        template argument can be used instead, with the same
        functionality.
-     
+
        \parametername \c fem.timeprovider.factor \n
                       multiplication factor to use for each time step;
                       defaults to 1.
@@ -287,20 +288,19 @@ namespace Dune
                       time used for initializing the starting time
                       defaults to zero.
        \parametername \c fem.timeprovider.updatestep \n
-                      only do the update of the time step size 
-                      every 'updatestep' to avoid the 
-                      expensive communication to achieve this 
-                      (for testing only); 
-                      defaults to 1 
+                      only do the update of the time step size
+                      every 'updatestep' to avoid the
+                      expensive communication to achieve this
+                      (for testing only);
+                      defaults to 1
      */
-    template< class CommProvider = DefaultCollectiveCommunicationType >
-    class TimeProvider {
-    };
-    
+    template< class CommProvider >
+    class TimeProvider {};
+
     /** \ingroup ODESolver
      *  \brief   the basic Dune::TimeProvider implementation.
      *
-     *  This implementation of a timeprovider takes a CollectiveCommunicate 
+     *  This implementation of a timeprovider takes a CollectiveCommunicate
      *  for parallel runs which default to a default communicator
      *  which also works for serial simulations.
      *
@@ -316,27 +316,25 @@ namespace Dune
       typedef CollectiveCommunication< C > CollectiveCommunicationType;
 
     protected:
-      typedef CollectiveCommunicationHelper< CollectiveCommunicationType >
-        CollectiveCommHelperType;
+      double getCflFactor() const
+      {
+        return Parameter::getValidValue( "fem.timeprovider.factor", (double)1.0,
+            [] ( double val ) { return val > 0.0; } );
+      }
 
-      double getCflFactor() const 
+      int getUpdateStep () const
       {
-        return Parameter::getValidValue( "fem.timeprovider.factor", (double)1.0, ValidateGreater< double >( 0.0 ) );
+        return Parameter::getValidValue( "fem.timeprovider.updatestep", (int)1,
+            [] ( int step ) { return step > 0; } );
       }
-      
-      int getUpdateStep () const 
-      {
-        return Parameter::getValidValue( "fem.timeprovider.updatestep", (int)1, ValidateGreater< int >( 0 ) );
-      }
-      
+
     public:
       /** \brief default constructor
        *
        *  \param[in]  comm  collective communication (optional)
        */
       explicit
-      TimeProvider ( const CollectiveCommunicationType &comm
-                       = CollectiveCommHelperType::defaultCommunication() )
+      TimeProvider ( const CollectiveCommunicationType &comm )
       : BaseType(),
         comm_( comm ),
         cfl_( getCflFactor() ),
@@ -348,19 +346,18 @@ namespace Dune
        *
        *  \param[in]  startTime  initial time
        *  \param[in]  comm       collective communication (optional)
-       
+
        */
       explicit
       TimeProvider ( const double startTime,
-                     const CollectiveCommunicationType &comm
-                       = CollectiveCommHelperType::defaultCommunication() )
+                     const CollectiveCommunicationType &comm )
       : BaseType( startTime ),
         comm_( comm ),
         cfl_( getCflFactor() ),
         updateStep_( getUpdateStep() ),
         counter_( updateStep_ )
       {}
-      
+
       /** \brief constructor taking start time and CFL constant
        *
        *  \param[in]  startTime  initial time
@@ -369,8 +366,7 @@ namespace Dune
        */
       TimeProvider ( const double startTime,
                      const double cfl,
-                     const CollectiveCommunicationType &comm
-                       = CollectiveCommHelperType :: defaultCommunication() )
+                     const CollectiveCommunicationType &comm )
       : BaseType( startTime ),
         comm_( comm ),
         cfl_( cfl ),
@@ -379,7 +375,7 @@ namespace Dune
       {}
 
       virtual~TimeProvider() {}
-      
+
     private:
       TimeProvider ( const ThisType & );
       ThisType &operator= ( const ThisType & );
@@ -401,13 +397,13 @@ namespace Dune
       {
         initTimeStep( timeStep );
       }
-      
+
       /** \brief goto next time step
        *
        * Sets the size of the next time step to the current time step estimate
        * and sets the estimate to infinity.
        */
-      void next () 
+      void next ()
       {
         assert( this->dtEstimateValid_ );
         advance();
@@ -415,21 +411,21 @@ namespace Dune
       }
 
       /** \brief goto next time step
-       * 
+       *
        * Sets the size of the next time step to the provided time step value
        * and sets the estimate to infinity.
-       * 
+       *
        *  \param[in]  timeStep  value of the next time step (is multiplied with
        *                        factor)
        */
-      void next ( const double timeStep ) 
+      void next ( const double timeStep )
       {
         advance();
         initTimeStep(timeStep);
       }
 
-      /** \brief  return the global factor number 
-          \return time step factor 
+      /** \brief  return the global factor number
+          \return time step factor
       */
       double factor () const
       {
@@ -442,17 +438,17 @@ namespace Dune
 
       void initTimeStep ( const double dtEstimate )
       {
-        // increase counter 
+        // increase counter
         ++counter_ ;
 
-        if( counter_ >= updateStep_ ) 
+        if( counter_ >= updateStep_ )
         {
-          // set timestep estimate 
+          // set timestep estimate
           dt_ = std::min(cfl_ * dtEstimate,dtUpperBound_);
           dt_ = comm_.min( dt_ );
           invdt_ = 1.0 / dt_;
           valid_ = (dt_ > 0.0);
-          // reset counter 
+          // reset counter
           counter_ = 0;
         }
 
@@ -460,17 +456,17 @@ namespace Dune
       }
 
     public:
-      /** \brief restore time and timestep from outside 
-           (i.e. from former calculation)  
-           \param[in] time new time 
-           \param[in] timeStep new time step counter 
+      /** \brief restore time and timestep from outside
+           (i.e. from former calculation)
+           \param[in] time new time
+           \param[in] timeStep new time step counter
       */
       void restore ( const double time, const int timeStep )
-      { 
-        time_ = time; 
+      {
+        time_ = time;
         timeStep_ = timeStep;
       }
-      
+
       virtual void backup () const
       {
         BaseType::backup();
@@ -490,17 +486,68 @@ namespace Dune
       using BaseType::valid_;
       using BaseType::timeStep_;
 
-      const CollectiveCommunicationType &comm_;
+      const CollectiveCommunicationType& comm_;
       const double cfl_;
       const int updateStep_;
-      int counter_; 
+      int counter_;
     };
+
+    /** \class   DefaultTimeProvider
+     *  \ingroup ODESolver
+     *  \brief   the same functionality as the Dune::TimeProvider.
+     *
+     *  This implementation of a timeprovider uses the CollectiveCommunicate
+     *  from a Fem::MPIManager.
+     */
+    class DefaultTimeProvider
+    : public TimeProvider< typename MPIManager::CollectiveCommunication >
+    {
+      typedef TimeProvider< typename MPIManager::CollectiveCommunication > BaseType;
+    public:
+      typedef typename MPIManager::CollectiveCommunication CollectiveCommunicationType ;
+
+      /** \brief constructor taking start time
+       *
+       *  \param[in]  comm       collective communication (default = MPIManager::comm())
+       */
+      explicit
+      DefaultTimeProvider ( const CollectiveCommunicationType& comm = MPIManager::comm() )
+      : BaseType( comm )
+      {}
+
+      /** \brief constructor taking start time
+       *
+       *  \param[in]  startTime  initial time
+       *  \param[in]  comm       collective communication (default = MPIManager::comm())
+       */
+      explicit
+      DefaultTimeProvider ( const double startTime,
+                            const CollectiveCommunicationType& comm = MPIManager::comm() )
+      : BaseType( startTime, comm )
+      {}
+
+      /** \brief constructor taking start time and CFL constant
+       *
+       *  \param[in]  startTime  initial time
+       *  \param[in]  cfl        CFL constant
+       *  \param[in]  comm       collective communication (default = MPIManager::comm())
+       */
+      DefaultTimeProvider ( const double startTime,
+                            const double cfl,
+                            const CollectiveCommunicationType &comm = MPIManager::comm() )
+      : BaseType( startTime, cfl, comm )
+      {}
+
+      virtual ~DefaultTimeProvider() {}
+    };
+
+
 
     /** \class   GridTimeProvider
      *  \ingroup ODESolver
      *  \brief   the same functionality as the Dune::TimeProvider.
      *
-     *  This implementation of a timeprovider takes the CollectiveCommunicate 
+     *  This implementation of a timeprovider takes the CollectiveCommunicate
      *  from a Dune::Grid instance.
      */
     template< class Grid >
@@ -510,7 +557,7 @@ namespace Dune
       typedef GridTimeProvider< Grid > ThisType;
       typedef TimeProvider< typename Grid::Traits::CollectiveCommunication > BaseType;
 
-      // type of DofManager for sequence number 
+      // type of DofManager for sequence number
       typedef DofManager < Grid > DofManagerType ;
 
     public:
@@ -528,7 +575,7 @@ namespace Dune
         dm_( DofManagerType ::instance( grid ) ),
         sequence_( -1 )
       {}
-      
+
       GridTimeProvider ( const double startTime,
                          const double cfl,
                          const Grid &grid )
@@ -536,35 +583,35 @@ namespace Dune
         dm_( DofManagerType ::instance( grid ) ),
         sequence_( -1 )
       {}
-      
+
       virtual ~GridTimeProvider() {}
 
     protected:
       using BaseType :: counter_ ;
       using BaseType :: updateStep_ ;
 
-      // this initTimeStep method also check the sequence number 
-      // in case the grid has changed due to adaptivity 
+      // this initTimeStep method also check the sequence number
+      // in case the grid has changed due to adaptivity
       void initTimeStep ( const double dtEstimate )
       {
         const int currentSequence = dm_.sequence();
         // check sequence number
         if( sequence_ != currentSequence )
         {
-          // if sequence number changed, update in any case 
-          counter_  = updateStep_ ; 
+          // if sequence number changed, update in any case
+          counter_  = updateStep_ ;
           sequence_ = currentSequence ;
         }
 
-        // call initTimeStep on base class 
+        // call initTimeStep on base class
         BaseType :: initTimeStep( dtEstimate );
       }
 
-      const DofManagerType& dm_; 
+      const DofManagerType& dm_;
       int sequence_ ;
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

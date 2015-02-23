@@ -9,7 +9,7 @@ namespace Dune
   namespace Fem
   {
 
-#if not defined NDEBUG 
+#if not defined NDEBUG
 #define USE_DEBUG_CNT
 #endif
 
@@ -17,12 +17,12 @@ namespace Dune
      *  \brief A counter only present if NDEBUG is not defined
      *
      *  There are several cases, where we need a counter for debugging
-     *  purposes that should only be present, if NDEBUG is not defined. 
+     *  purposes that should only be present, if NDEBUG is not defined.
      *
-     *  In debug mode, this counter wraps a standard integer type, 
+     *  In debug mode, this counter wraps a standard integer type,
      *  otherwise its size is zero.
      *
-     *  \note The comparison operators always return true, 
+     *  \note The comparison operators always return true,
      *  if NDEBUG is defined!
      */
     template< class CounterImp = unsigned int >
@@ -31,7 +31,7 @@ namespace Dune
     public:
       //! integral type for the actual counting
       typedef CounterImp CounterType;
-      
+
     private:
       typedef DebugCounter< CounterType > ThisType;
 
@@ -39,7 +39,7 @@ namespace Dune
 #ifdef USE_DEBUG_CNT
       CounterType count_;
 #endif
-      
+
     public:
       /** \brief constructor
        *
@@ -141,7 +141,7 @@ namespace Dune
     {
     private:
       typedef DebugLock ThisType;
-      
+
     protected:
 #ifdef USE_DEBUG_CNT
       bool lock_;
@@ -154,7 +154,7 @@ namespace Dune
 #endif
       {
       }
-      
+
     private:
       // prohibit copying
       DebugLock ( const ThisType & );
@@ -171,7 +171,7 @@ namespace Dune
         return true;
 #endif
       }
-      
+
       inline void lock ()
       {
 #ifdef USE_DEBUG_CNT

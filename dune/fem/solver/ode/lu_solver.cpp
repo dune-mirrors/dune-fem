@@ -10,7 +10,7 @@ using namespace pardg;
 LUSolver::LUSolver() : DynamicalObject("LUSolver", -1), p(NULL) {}
 
 
-LUSolver::~LUSolver() 
+LUSolver::~LUSolver()
 {
   delete[] p;
 }

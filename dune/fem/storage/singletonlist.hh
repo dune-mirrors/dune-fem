@@ -1,14 +1,14 @@
 #ifndef DUNE_FEM_SINGLETONLIST_HH
 #define DUNE_FEM_SINGLETONLIST_HH
 
-//- System includes 
+//- System includes
 #include <cassert>
-#include <vector> 
+#include <vector>
 #include <string>
 #include <list>
 #include <iostream>
 
-//- dune-fem includes 
+//- dune-fem includes
 #include <dune/fem/misc/threads/threadmanager.hh>
 
 namespace Dune
@@ -72,24 +72,24 @@ namespace Dune
       SingletonList ( const ThisType & );
 
     public:
-      //! list that store pairs of key/object pointers 
-      //! singleton list 
-      inline static ListType & singletonList() 
+      //! list that store pairs of key/object pointers
+      //! singleton list
+      inline static ListType & singletonList()
       {
-        static SingletonListStorage s; 
-        //! list that store pairs of key/object pointers 
-        return s.singletonList(); 
+        static SingletonListStorage s;
+        //! list that store pairs of key/object pointers
+        return s.singletonList();
       }
-      
-    public:  
-      //! return reference to the object for given key. 
+
+    public:
+      //! return reference to the object for given key.
       //! If the object does not exist, then it is created first, otherwise the
-      //! reference counter is increased. 
-      //inline static ObjectType & getObject(KeyType key) 
+      //! reference counter is increased.
+      //inline static ObjectType & getObject(KeyType key)
       inline static ObjectType &getObject( const KeyType &key )
       {
-        // make sure this method is only called in single thread mode 
-        assert( Fem :: ThreadManager :: singleThreadMode() ); 
+        // make sure this method is only called in single thread mode
+        assert( Fem :: ThreadManager :: singleThreadMode() );
 
         ValueType objValue = getObjFromList( key );
 
@@ -104,17 +104,17 @@ namespace Dune
         ObjectType *object = FactoryType :: createObject( key );
         assert( object );
         ValueType value( object, new unsigned int( 1 ) );
-        ListObjType tmp( key, value ); 
+        ListObjType tmp( key, value );
         singletonList().push_back( tmp );
         return *object;
-      } 
+      }
 
-      //! decrease ref counter for this object, 
-      //! if ref counter is zero, object is deleted 
+      //! decrease ref counter for this object,
+      //! if ref counter is zero, object is deleted
       inline static void removeObject ( const ObjectType &object )
       {
-        // make sure this method is only called in single thread mode 
-        assert( Fem :: ThreadManager :: singleThreadMode() ); 
+        // make sure this method is only called in single thread mode
+        assert( Fem :: ThreadManager :: singleThreadMode() );
 
         ListIteratorType end = singletonList().end();
         for( ListIteratorType it = singletonList().begin(); it != end; ++it )
@@ -130,7 +130,7 @@ namespace Dune
                     << "because it is not in the list anymore!" << std :: endl;
       }
 
-      // return pair < Object * , refCounter *> 
+      // return pair < Object * , refCounter *>
       inline static ValueType getObjFromList( const KeyType &key )
       {
         ListIteratorType endit = singletonList().end();
@@ -138,7 +138,7 @@ namespace Dune
         {
           if( (*it).first == key )
           {
-            return (*it).second; 
+            return (*it).second;
           }
         }
         return ValueType( (ObjectType *)0, (unsigned int *)0 );
@@ -155,32 +155,32 @@ namespace Dune
           deleteItem( it );
       }
 
-    private:  
-      static void deleteItem(ListIteratorType & it) 
+    private:
+      static void deleteItem(ListIteratorType & it)
       {
-        ValueType val = (*it).second; 
+        ValueType val = (*it).second;
         // remove from list
         singletonList().erase( it );
-        // delete objects 
+        // delete objects
         FactoryType :: deleteObject( val.first );
         delete val.second;
       }
-    }; // end SingletonList 
+    }; // end SingletonList
 
-    
+
     template< class Key, class Object, class Factory >
     class SingletonList< Key, Object, Factory > :: SingletonListStorage
     {
       typedef SingletonListStorage ThisType;
 
     protected:
-      ListType singletonList_; 
+      ListType singletonList_;
 
-    public:  
+    public:
       inline SingletonListStorage ()
       : singletonList_()
       {}
-      
+
       inline ~SingletonListStorage ()
       {
         while( !singletonList().empty() )
@@ -194,10 +194,10 @@ namespace Dune
 
       void deleteItem ( const ListIteratorType &it )
       {
-        ValueType val = (*it).second; 
+        ValueType val = (*it).second;
         // remove from list
         singletonList().erase( it );
-        // delete objects 
+        // delete objects
         FactoryType :: deleteObject( val.first );
         delete val.second;
       }

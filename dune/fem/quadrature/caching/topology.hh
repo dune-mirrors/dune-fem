@@ -1,17 +1,17 @@
 #ifndef DUNE_FEM_ALU3DGRIDTOPOLOGY_HH
 #define DUNE_FEM_ALU3DGRIDTOPOLOGY_HH
 
-//- system includes 
+//- system includes
 #include <cassert>
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
-    // types of the elementes, 
-    // i.e . tetra or hexa, mixed is not implemeneted 
+    // types of the elementes,
+    // i.e . tetra or hexa, mixed is not implemeneted
     enum ALU3dGridElementType { tetra = 4, hexa = 7, mixed, error };
 
     template <ALU3dGridElementType type>
@@ -23,7 +23,7 @@ namespace Dune
       enum {numVertices = 4};
       enum {numEdges = 6};
       enum {numVerticesPerFace = 3};
-      enum {numEdgesPerFace = 3}; 
+      enum {numEdgesPerFace = 3};
     };
 
     template <>
@@ -34,7 +34,7 @@ namespace Dune
       enum {numVerticesPerFace = 4};
       enum {numEdgesPerFace = 4};
     };
-    
+
 
     //! Maps indices of the Dune reference face onto the indices of the
     //! ALU3dGrid reference face and vice-versa.
@@ -46,8 +46,8 @@ namespace Dune
       //! Maps vertex index from Dune onto ALU3dGrid reference face, where the
       //! face in the ALU3dGrid has the twist <i>twist</i> compared to the orientation
       //! of the respective face in the reference element
-      //! \param index local Dune vertex index on the particular face (i.e. the 
-      //! face which has a twist <i>twist</i> compared to the reference element's face 
+      //! \param index local Dune vertex index on the particular face (i.e. the
+      //! face which has a twist <i>twist</i> compared to the reference element's face
       //! \param twist twist of the face in consideration
       //! \return local ALU3dGrid vertex index on reference element face
       static int dune2aluVertex(int index, int twist);
@@ -58,7 +58,7 @@ namespace Dune
       //! of the respective face in the reference element
       //! \param index local ALU3dGrid vertex index on the particular face (i.e.
       //! the face which has a twist <i>twist</i> compared to the reference element's
-      //! face 
+      //! face
       //! \param twist twist of the face in consideration
       //! \return local Dune vertex index on reference element face
       static int alu2duneVertex(int index, int twist);
@@ -69,10 +69,10 @@ namespace Dune
       //  private:
       static int twist(int index, int faceTwist);
       static int invTwist(int index, int faceTwist);
-    
+
       static int twistedDuneIndex( const int idx, const int twist );
 
-      // for each aluTwist apply additional mapping 
+      // for each aluTwist apply additional mapping
       static int aluTwistMap(const int aluTwist);
     private:
       const static int dune2aluVertex_[EntityCount<type>::numVerticesPerFace];
@@ -105,7 +105,7 @@ namespace Dune
     }
 
     template <ALU3dGridElementType type>
-    inline int FaceTopologyMapping<type>::alu2duneVertex(int index, int twist) 
+    inline int FaceTopologyMapping<type>::alu2duneVertex(int index, int twist)
     {
       assert(index >= 0 && index < EntityCount<type>::numVerticesPerFace);
       return alu2duneVertex_[invTwist(index, twist)];
@@ -119,25 +119,25 @@ namespace Dune
 
     template <ALU3dGridElementType type>
     inline int FaceTopologyMapping<type>::
-    aluTwistMap(const int aluTwist) 
+    aluTwistMap(const int aluTwist)
     {
-      // this map has been calculated by grid/test/checktwists.cc 
-      // and the dune-fem twist calculator 
+      // this map has been calculated by grid/test/checktwists.cc
+      // and the dune-fem twist calculator
       // this should be revised after the release 2.1
-      return aluTwistMap_[ aluTwist + ((type == tetra) ? 3 : 4) ];  
+      return aluTwistMap_[ aluTwist + ((type == tetra) ? 3 : 4) ];
     }
 
     template <ALU3dGridElementType type>
     inline int FaceTopologyMapping<type>::
-    twistedDuneIndex(const int duneIdx, const int aluTwist) 
+    twistedDuneIndex(const int duneIdx, const int aluTwist)
     {
-      if( type == tetra ) 
+      if( type == tetra )
       {
         // apply alu2dune twist mapping (only for tetra)
         const int twist = alu2duneTwist_[ aluTwist + 3 ];
         return alu2duneVertex( dune2aluVertex(duneIdx) , twist );
       }
-      else 
+      else
        return alu2duneVertex( dune2aluVertex(duneIdx) , aluTwist );
     }
 

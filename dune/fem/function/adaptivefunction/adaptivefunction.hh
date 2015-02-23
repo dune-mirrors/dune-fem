@@ -21,9 +21,9 @@
 
 namespace Dune
 {
-  
-  namespace Fem 
-  { 
+
+  namespace Fem
+  {
 
     //- Forward declarations
     template <class DiscreteFunctionSpaceImp>
@@ -33,7 +33,7 @@ namespace Dune
     class SubFunctionStorage;
 
     //- Class definitions
-    //! Traits class for AdaptiveDiscreteFunction 
+    //! Traits class for AdaptiveDiscreteFunction
     template< class DiscreteFunctionSpace >
     struct DiscreteFunctionTraits< AdaptiveDiscreteFunction< DiscreteFunctionSpace > >
     {
@@ -62,20 +62,20 @@ namespace Dune
       typedef StackAllocator< DofType, LocalDofVectorStackType* > LocalDofVectorAllocatorType;
       typedef DynamicReferenceVector< DofType, LocalDofVectorAllocatorType > LocalDofVectorType;
 
-      typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType; 
+      typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
 
       // type used to determine size etc.
-      typedef NonBlockMapper< BlockMapperType, 
+      typedef NonBlockMapper< BlockMapperType,
                               DiscreteFunctionSpaceType :: localBlockSize > MapperType;
 
-      // type of Array seen by functions 
+      // type of Array seen by functions
       typedef StaticArray<DofType>  DofStorageType;
-      // tpye of array created 
+      // tpye of array created
       typedef MutableArray<DofType> MutableDofStorageType;
-       
+
       typedef typename DofStorageType :: DofIteratorType DofIteratorType;
       typedef typename DofStorageType :: ConstDofIteratorType ConstDofIteratorType;
-   
+
       typedef DofManager< GridType > DofManagerType;
 
       typedef typename ImplementationType :: DofBlockType DofBlockType;
@@ -88,8 +88,8 @@ namespace Dune
 
     //! @ingroup AdaptiveDFunction
     //! An adaptive discrete function
-    //! This class is comparable to DFAdapt, except that it provides a 
-    //! specialisation for CombinedSpace objects which provides enriched 
+    //! This class is comparable to DFAdapt, except that it provides a
+    //! specialisation for CombinedSpace objects which provides enriched
     //! functionality (access to subfunctions) and runtime optimisations
     template <class DiscreteFunctionSpaceImp>
     class AdaptiveDiscreteFunction
@@ -114,20 +114,20 @@ namespace Dune
       using BaseType::axpy;
       using BaseType::space;
       using BaseType::asImp;
-      
+
 
     public:
       //- Typedefs and enums
       //! Class containing the actual implementation
       typedef Imp ImplementationType;
 
-      //! Local function implementation 
+      //! Local function implementation
       typedef typename BaseType::GridType GridType;
-      
-      //! Discrete function type (identical to this type, needed as 
+
+      //! Discrete function type (identical to this type, needed as
       //! Barton-Nackman parameter
       typedef typename BaseType::DiscreteFunctionType DiscreteFunctionType;
-      
+
       //! Intrinsic type used for the dofs (typically a float type)
       typedef typename BaseType::DofType DofType;
       //! Intrinsic type used for the range field (identical to DofType)
@@ -138,19 +138,19 @@ namespace Dune
       typedef typename BaseType::RangeType RangeType;
       //! Vector type used for the domain field
       typedef typename BaseType::DomainType DomainType;
-      
+
       //! Container class type for the dofs (managed by the DofManager)
       typedef typename Traits::MutableDofStorageType MutableDofStorageType;
       //! Container class type for the dofs (managed by the DofManager)
       typedef typename Traits::DofStorageType DofStorageType;
        //! Mapper type (from the space)
       typedef typename Traits::MapperType MapperType;
-  
+
       //! Iterator over dof container
       typedef typename BaseType::DofIteratorType DofIteratorType;
       //! Read-only iterator over dof container
       typedef typename BaseType::ConstDofIteratorType ConstDofIteratorType;
-      
+
       typedef typename BaseType :: DofBlockType DofBlockType;
       typedef typename BaseType :: ConstDofBlockType ConstDofBlockType;
       typedef typename BaseType :: DofBlockPtrType DofBlockPtrType;
@@ -202,16 +202,16 @@ namespace Dune
       {
         space().addFunction( *this );
       }
-    
-      //! destructor 
-      ~AdaptiveDiscreteFunction() 
+
+      //! destructor
+      ~AdaptiveDiscreteFunction()
       {
         space().removeFunction( *this );
       }
 
     private:
       ThisType &operator= ( const ThisType &other );
-      
+
     public:
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
       void assign ( const DiscreteFunctionInterfaceType &g )
@@ -219,14 +219,14 @@ namespace Dune
         Imp::assignFunction( asImp( g ) );
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */ 
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
       ThisType &operator+= ( const DiscreteFunctionInterfaceType &g )
       {
         Imp::addFunction( asImp( g ) );
         return *this;
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator-=(const DFType &g) */ 
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator-=(const DFType &g) */
       ThisType &operator-= ( const DiscreteFunctionInterfaceType &g )
       {
         Imp::substractFunction( asImp( g ) );
@@ -268,7 +268,7 @@ namespace Dune
     }; // end class AdaptiveDiscreteFunction
 
 
-  } // end namespace Fem 
+  } // end namespace Fem
 
 } // end namespace Dune
 #endif // #ifndef DUNE_FEM_ADAPTIVEFUNCTION_HH

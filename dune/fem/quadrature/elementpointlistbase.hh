@@ -9,7 +9,7 @@ namespace Dune
 {
 
   namespace Fem
-  { 
+  {
 
     /** \brief ElementPointListBase */
     template< class GridPartImp, int codim, class IntegrationTraits >
@@ -25,33 +25,33 @@ namespace Dune
       //! type of the grid partition
       typedef GridPartImp GridPartType;
 
-      //! inside and outside flags 
+      //! inside and outside flags
       enum Side { INSIDE, OUTSIDE };
 
       //! codimension of the integration point list
       static const int codimension = 0;
 
-      //! coordinate type 
+      //! coordinate type
       typedef typename GridPartType::ctype RealType;
 
       //! dimension of the grid
       static const int dimension = GridPartType::dimension;
 
-      //! type of the integration point list 
+      //! type of the integration point list
       typedef typename IntegrationTraits::IntegrationPointListType IntegrationPointListType;
 
       typedef typename IntegrationTraits::CoordinateType CoordinateType;
       typedef typename IntegrationPointListType::CoordinateType LocalCoordinateType;
 
       /** \brief constructor
-       *  
+       *
        *  \param[in]  geometry  geometry type, the quadrature lives on
        *  \param[in]  order     desired minimal order of the quadrature
        */
       ElementPointListBase ( const GeometryType &geometry, int order )
       : quad_( geometry, order )
       {}
-      
+
       /** \copydoc Dune::Fem::IntegrationPointList::nop */
       size_t nop () const
       {
@@ -93,21 +93,21 @@ namespace Dune
       {
         return quadImp().geometryType();
       }
-      
+
       /** \copydoc Dune::Fem::IntegrationPointList::geometry
        */
       GeometryType type () const
       {
         return quadImp().geometryType();
       }
-      
+
       /** \copydoc Dune::Fem::IntegrationPointList::geometry
        */
       GeometryType geometryType () const
       {
         return quadImp().geometryType();
       }
-      
+
       /** \brief obtain GeometryType of the corresponding codim-0 the integration
        *         point list belongs to
        *
@@ -126,9 +126,9 @@ namespace Dune
         return quadImp().geometry();
       }
 
-      size_t cachingPoint( const size_t quadraturePoint ) const 
+      size_t cachingPoint( const size_t quadraturePoint ) const
       {
-        return quadraturePoint; 
+        return quadraturePoint;
       }
 
     protected:
@@ -159,7 +159,7 @@ namespace Dune
       //! type of the grid partition
       typedef GridPartImp GridPartType;
 
-      //! inside and outside flags 
+      //! inside and outside flags
       enum Side { INSIDE, OUTSIDE };
 
       //! codimension of the element integration point list
@@ -170,14 +170,14 @@ namespace Dune
 
       //! dimension of the grid
       static const int dimension = GridPartType::dimension;
-      
-      //! type of the integration point list 
+
+      //! type of the integration point list
       typedef typename IntegrationTraits::IntegrationPointListType IntegrationPointListType;
 
       typedef typename IntegrationTraits::CoordinateType CoordinateType;
       typedef typename IntegrationPointListType::CoordinateType LocalCoordinateType;
 
-      //! the type of the quadrature point 
+      //! the type of the quadrature point
       typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
 
       /** \brief constructor
@@ -195,7 +195,7 @@ namespace Dune
         elementGeometry_( elementGeo ),
         localFaceIndex_( localFaceIndex )
       {}
-      
+
       /** \brief constructor
        *
        *  \param[in]  elementGeo      geometry type of the element
@@ -214,7 +214,7 @@ namespace Dune
       {
         return QuadraturePointWrapperType( *this, i );
       }
-     
+
       /** \copydoc Dune::Fem::IntegrationPointList::nop
        */
       size_t nop () const
@@ -276,9 +276,9 @@ namespace Dune
         return elementGeometry_;
       }
 
-      size_t cachingPoint( const size_t quadraturePoint ) const 
+      size_t cachingPoint( const size_t quadraturePoint ) const
       {
-        return quadraturePoint; 
+        return quadraturePoint;
       }
 
     protected:

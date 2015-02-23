@@ -1,21 +1,21 @@
 #ifndef DUNE_FEM_QUADRATURE_CACHING_REGISTRY_HH
 #define DUNE_FEM_QUADRATURE_CACHING_REGISTRY_HH
 
-// system includes 
+// system includes
 #include <cstddef>
 #include <algorithm>
 #include <list>
 
-// dune-geometry includes 
+// dune-geometry includes
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
 #include <dune/fem/misc/threads/threadmanager.hh>
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     // QuadratureStorageRegistry
@@ -57,7 +57,7 @@ namespace Dune
         static QuadratureInfoListType quadratureInfoList;
         return quadratureInfoList;
       }
-      
+
     public:
       static void registerStorage ( StorageInterface &storage )
       {
@@ -67,7 +67,7 @@ namespace Dune
         const GeometryType type = storage.type();
         for( QuadratureInfoListType::iterator it = quadratureInfoList().begin(); it != quadratureInfoList().end(); ++it )
         {
-          // only cache shape functions for quadratures with same geometry type 
+          // only cache shape functions for quadratures with same geometry type
           if( type == it->type )
             storage.cacheQuadrature( it->id, it->codim, it->size );
         }
@@ -98,7 +98,7 @@ namespace Dune
 
         for( typename StorageListType::iterator it = storageList().begin(); it != storageList().end(); ++it )
         {
-          // only cache shape functions for quadratures with same geometry type 
+          // only cache shape functions for quadratures with same geometry type
           if( (*it)->type() == type )
             (*it)->cacheQuadrature( quadInfo.id, quadInfo.codim, quadInfo.size );
         }

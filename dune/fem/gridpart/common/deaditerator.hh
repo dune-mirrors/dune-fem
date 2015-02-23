@@ -13,7 +13,7 @@ namespace Dune
 
     // DeadIterator
     // ------------
-    
+
     template< class EntityPointer >
     struct DeadIterator
     : public EntityPointer
@@ -40,7 +40,7 @@ namespace Dune
 
     public:
       typedef typename remove_const< GridFamily >::type::ctype ctype;
-      
+
       static const int dimension = remove_const< GridFamily >::type::dimension;
       static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
 
@@ -54,7 +54,7 @@ namespace Dune
       {
         DUNE_THROW( InvalidStateException, "Call to inside on dead intersection." );
       }
-      
+
       EntityPointer outside () const
       {
         DUNE_THROW( InvalidStateException, "Call to outside on dead intersection." );
@@ -69,32 +69,32 @@ namespace Dune
       {
         DUNE_THROW( InvalidStateException, "Call to conforming on dead intersection." );
       }
-          
+
       bool neighbor () const
       {
         DUNE_THROW( InvalidStateException, "Call to neighbor on dead intersection." );
       }
-          
+
       int boundaryId () const
       {
         DUNE_THROW( InvalidStateException, "Call to boundaryId on dead intersection." );
       }
-          
+
       size_t boundarySegmentIndex () const
       {
         DUNE_THROW( InvalidStateException, "Call to boundarySegmentIndex on dead intersection." );
       }
-          
+
       const LocalGeometry &geometryInInside () const
       {
         DUNE_THROW( InvalidStateException, "Call to geometryInInside on dead intersection." );
       }
-      
+
       const LocalGeometry &geometryInOutside () const
       {
         DUNE_THROW( InvalidStateException, "Call to geometryInOutside on dead intersection." );
       }
-     
+
       const Geometry &geometry () const
       {
         DUNE_THROW( InvalidStateException, "Call to geometry on dead intersection." );
@@ -109,18 +109,18 @@ namespace Dune
       {
         DUNE_THROW( InvalidStateException, "Call to indexInInside on dead intersection." );
       }
-      
+
       int indexInOutside () const
       {
         DUNE_THROW( InvalidStateException, "Call to indexInOutside on dead intersection." );
       }
-      
+
       FieldVector< ctype, dimensionworld >
       integrationOuterNormal ( const FieldVector< ctype, dimension-1 > &local ) const
       {
         DUNE_THROW( InvalidStateException, "Call to integrationOuterNormal on dead intersection." );
       }
-      
+
       FieldVector< ctype, dimensionworld >
       outerNormal ( const FieldVector< ctype, dimension-1 > &local ) const
       {
@@ -161,7 +161,7 @@ namespace Dune
       {
         return true;
       }
-      
+
       void increment ()
       {
         DUNE_THROW( InvalidStateException, "Trying to increment a dead intersection iterator." );

@@ -7,7 +7,7 @@
 
 namespace Dune
 {
-  
+
   namespace Fem
   {
 
@@ -25,7 +25,7 @@ namespace Dune
       struct hasStaticPolynomialOrder< LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
-        static const int order = polOrder; 
+        static const int order = polOrder;
       };
 
 
@@ -74,6 +74,6 @@ namespace Dune
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_SPACE_LAGRANGE_CAPABILITIES_HH

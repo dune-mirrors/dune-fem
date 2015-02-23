@@ -21,10 +21,10 @@ namespace Dune
 
     /**
       \brief Interface class for shape function sets
-      
+
        This class cannot be used itself, it is for documentation purposes
        only.
-      
+
        \note Constructor signatures are explicitly not specified by this
              interface.
      */
@@ -34,7 +34,7 @@ namespace Dune
     public:
       //! \brief function space type
       typedef FunctionSpace FunctionSpaceType;
-      
+
       //! \brief domain type
       typedef typename FunctionSpaceType::DomainType DomainType;
       //! \brief range type
@@ -52,10 +52,10 @@ namespace Dune
 
       /**
          \brief evalute each shape function
-        
+
           \param[in]  x        coordinate or quadrature point
           \param[in]  functor  functor call for evaluating each shape function
-        
+
           The functor has to be a copyable object satisfying the following
           interface:
           \code
@@ -71,10 +71,10 @@ namespace Dune
 
       /**
          \brief evalute jacobian of each shape function
-        
+
           \param[in]  x        coordinate or quadrature point
           \param[in]  functor  functor call for evaluating the jacobian of each shape function
-        
+
           The functor has to be a copyable object satisfying the following
           interface:
           \code
@@ -85,15 +85,15 @@ namespace Dune
           };
           \endcode
        */
-      template< class Point, class Functor > 
+      template< class Point, class Functor >
       void jacobianEach ( const Point &x, Functor functor ) const;
 
       /**
          \brief evalute hessian of each shape function
-        
+
           \param[in]  x        coordinate or quadrature point
           \param[in]  functor  functor call for evaluating the hessian of each shape function
-        
+
           The functor has to be a copyable object satisfying the following
           interface:
           \code
@@ -104,7 +104,7 @@ namespace Dune
           };
           \endcode
        */
-      template< class Point, class Functor > 
+      template< class Point, class Functor >
       void hessianEach ( const Point &x, Functor functor ) const;
     };
 

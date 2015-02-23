@@ -95,7 +95,7 @@ namespace Dune
           const unsigned int dof = *sit;
           const DomainVector &pointInSon = pointSet.point( dof );
           const DomainVector pointInFather = geometryInFather.global( pointInSon );
-          
+
           typename LFFather::RangeType phi;
           lfFather.evaluate( pointInFather, phi );
           for( int coordinate = 0; coordinate < dimRange; ++coordinate )
@@ -126,7 +126,7 @@ namespace Dune
       mutable LagrangePointSetMapType lagrangePointSet_;
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

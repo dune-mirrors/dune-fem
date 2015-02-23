@@ -18,7 +18,7 @@ namespace Dune
      *  required or must be freed. A simple approach to this decision is to
      *  count all references to an object. When the last reference is released,
      *  the object is freed.
-     *  
+     *
      *  The ReferenceCounterInterface provides methods, an object needs to
      *  support reference counting. Classes implementing this interface can be
      *  used with ObjectReference and ObjectPointer. Both will implicitly call
@@ -296,7 +296,7 @@ namespace Dune
       /** \brief dereference the ObjectPointer
        *
        *  \note This method asserts that the pointer is not 0.
-       * 
+       *
        *  \returns a reference to the object pointed to.
        */
       ObjectType &operator* () const

@@ -15,6 +15,7 @@ common_HEADERS = adaptmanager.hh \
      dofstorage.hh \
      functionspace.hh \
      functionspaceinterface.hh \
+     interpolate.hh \
      interpolation.hh \
      loadbalancer.hh \
      localrestrictprolong.hh \

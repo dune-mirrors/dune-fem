@@ -6,7 +6,7 @@
 
 #include <dune/fem/pass/common/pass.hh>
 
-namespace Dune 
+namespace Dune
 {
 
   namespace Fem
@@ -122,7 +122,7 @@ namespace Dune
       //! Actions to be carried out after a global grid walkthrough.
       //! To be overridden in a derived class.
       virtual void finalize (const ArgumentType &arg, DestinationType &dest) const = 0;
-      //! Actions to be taken on every element. To be overridden in a derived 
+      //! Actions to be taken on every element. To be overridden in a derived
       //! class.
       virtual void applyLocal (const EntityType &en ) const = 0;
 
@@ -132,7 +132,7 @@ namespace Dune
       //! call finalize.
       void compute (const ArgumentType &arg, DestinationType &dest) const
       {
-        // if pass was disable, don't do computation 
+        // if pass was disable, don't do computation
         if( ! active() ) return ;
 
         // get stopwatch
@@ -157,7 +157,7 @@ namespace Dune
       const DiscreteFunctionSpaceType &spc_;
       const std::string passName_;
       mutable double computeTime_;
-      mutable size_t numberOfElements_; 
+      mutable size_t numberOfElements_;
       mutable bool passIsActive_;
     };
 

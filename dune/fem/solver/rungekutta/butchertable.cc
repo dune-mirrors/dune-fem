@@ -15,10 +15,10 @@ namespace DuneODE
     {(1.+dirk34_alpha)*0.5, 0., 0.,
      -0.5*dirk34_alpha, (1.+dirk34_alpha)*0.5, 0.,
      1+dirk34_alpha, -(1+2*dirk34_alpha), (1.+dirk34_alpha)*0.5};
-  static const double DIRK34_b[] = 
+  static const double DIRK34_b[] =
     {1./(6.*dirk34_alpha2), 1.-1./(3.*dirk34_alpha2),
     1./(6.*dirk34_alpha2)};
-  static const double DIRK34_c[] = 
+  static const double DIRK34_c[] =
     {(1.+dirk34_alpha)*0.5, 0.5, (1.-dirk34_alpha)*0.5};
 
   SimpleButcherTable< double > implicit34ButcherTable ()
@@ -36,9 +36,9 @@ namespace DuneODE
     {delta_dirk, 0.0,
      1.0-2.0*delta_dirk, delta_dirk
     };
-  static const double DIRK3_b[] = 
+  static const double DIRK3_b[] =
     {(0.5-delta_dirk)/(1.0-2.0*delta_dirk), (0.5-delta_dirk)/(1.0-2.0*delta_dirk)};
-  static const double DIRK3_c[] = 
+  static const double DIRK3_c[] =
     {delta_dirk, 1.0-delta_dirk};
 
   SimpleButcherTable< double > implicit3ButcherTable ()
@@ -107,7 +107,7 @@ namespace DuneODE
      -1.0, 0.5, 0.0,
      0.25, 0.25, 0.5
     };
-  static const double SIRK23_c[] = 
+  static const double SIRK23_c[] =
     {0.5, -0.5, 1.0};
   // explicit part
   static const double SIRK23_Aex[] =
@@ -115,10 +115,10 @@ namespace DuneODE
      1.0, 0.0, 0.0,
      0.0, 0.5, 0.0
     };
-  static const double SIRK23_cex[] = 
+  static const double SIRK23_cex[] =
     {0.0, 1.0, 0.5};
   // common part
-  static const double SIRK23_b[] = 
+  static const double SIRK23_b[] =
     {0.25, 0.25, 0.5};
 
   SimpleButcherTable< double > semiImplicit23ButcherTable ( bool expl )
@@ -132,16 +132,16 @@ namespace DuneODE
   // --------------------------
 
   // SIRK33, 3 stages, 3rd order
-  // YZ33 from Dennis Diss 
+  // YZ33 from Dennis Diss
   // implicit part
   static const double SIRK33_A[] =
     {3.0/4.0, 0.0, 0.0,
      5589.0/6524.0, 75.0/233.0, 0.0,
      7691.0/26096.0, -26335.0/78288.0, 65.0/168.0
     };
-  static const double SIRK33_c[] = 
-    {3.0/4.0, 
-     5589.0/6524.0 + 75.0/233.0, 
+  static const double SIRK33_c[] =
+    {3.0/4.0,
+     5589.0/6524.0 + 75.0/233.0,
      7691.0/26096.0 - 26335.0/78288.0 + 65.0/168.0
     };
   // explicit part
@@ -150,10 +150,10 @@ namespace DuneODE
      8.0/7.0, 0.0, 0.0,
      71.0/252.0, 7.0/36.0, 0.0
     };
-  static const double SIRK33_cex[] = 
+  static const double SIRK33_cex[] =
     {0.0, 8.0/7.0, 71.0/252.0 + 7.0/36.0};
   // common part
-  static const double SIRK33_b[] = 
+  static const double SIRK33_b[] =
     {1.0/8.0, 1.0/8.0, 3.0/4.0};
 
   SimpleButcherTable< double > semiImplicit33ButcherTable ( bool expl )
@@ -173,17 +173,17 @@ namespace DuneODE
     {delta, 0.0,
      1.0-2.0*delta, delta
     };
-  static const double IMEX_SSP222_c[] = 
+  static const double IMEX_SSP222_c[] =
     {delta, 1.0-delta};
   // explicit part
   static const double IMEX_SSP222_Aex[] =
     {0.0, 0.0,
      1.0, 0.0
     };
-  static const double IMEX_SSP222_cex[] = 
+  static const double IMEX_SSP222_cex[] =
     {0.0, 1.0};
   // common part
-  static const double IMEX_SSP222_b[] = 
+  static const double IMEX_SSP222_b[] =
     {0.5, 0.5};
 
   SimpleButcherTable< double > semiImplicitSSP222ButcherTable ( bool expl )
@@ -197,7 +197,7 @@ namespace DuneODE
   // -----------------------------
 
   // ARK34, 4 stages, 3rd order
-  // Kennedy and Carpenter, Appl. Num. Math. 44, 2003 
+  // Kennedy and Carpenter, Appl. Num. Math. 44, 2003
   // explicit part
   static const double ARK34_Aex[] =
     {
@@ -217,10 +217,10 @@ namespace DuneODE
     };
 
   // common part
-  static const double ARK34_b[] = 
+  static const double ARK34_b[] =
     { 1471266399579.0/7840856788654.0, -4482444167858.0/7529755066697.0, 11266239266428.0/11593286722821.0, 1767732205903.0/4055673282236.0 };
     //{ 2756255671327.0/12835298489170.0, -10771552573575.0/22201958757719.0, 9247589265047.0/10645013368117.0, 2193209047091.0/5459859503100.0 };
-  static const double ARK34_c[] = 
+  static const double ARK34_c[] =
     {0.0, 1767732205903.0/2027836641118.0 , 3.0/5.0, 1.0};
 
   SimpleButcherTable< double > semiImplicitARK34ButcherTable ( bool expl )
@@ -234,19 +234,19 @@ namespace DuneODE
   // -----------------------------
 
   // ARK46, 6 stages, 4rd order
-  // Kennedy and Carpenter, Appl. Num. Math. 44, 2003 
+  // Kennedy and Carpenter, Appl. Num. Math. 44, 2003
   // explicit part
   static const double ARK46_Aex[] =
     {
-      0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 
-      0.5,  0.0, 0.0, 0.0, 0.0, 0.0, 
-      13861.0/62500.0, 6889.0/62500.0, 0.0, 0.0, 0.0, 0.0, 
+      0.0,  0.0, 0.0, 0.0, 0.0, 0.0,
+      0.5,  0.0, 0.0, 0.0, 0.0, 0.0,
+      13861.0/62500.0, 6889.0/62500.0, 0.0, 0.0, 0.0, 0.0,
       -116923316275.0/2393684061468.0, -2731218467317.0/15368042101831.0, 9408046702089.0/11113171139209.0, 0.0, 0.0, 0.0,
       -451086348788.0/2902428689909.0, -2682348792572.0/7519795681897.0, 12662868775082.0/11960479115383.0, 3355817975965.0/11060851509271.0, 0.0, 0.0,
       647845179188.0/3216320057751.0, 73281519250.0/8382639484533.0, 552539513391.0/3454668386233.0, 3354512671639.0/8306763924573.0, 4040.0/17871.0, 0.0
     };
   static const double ARK46_cex[] = {
-      0.0, 0.5, 13861.0/62500.0 + 6889.0/62500.0, 
+      0.0, 0.5, 13861.0/62500.0 + 6889.0/62500.0,
       -116923316275.0/2393684061468.0 -2731218467317.0/15368042101831.0 + 9408046702089.0/11113171139209.0,
       -451086348788.0/2902428689909.0 -2682348792572.0/7519795681897.0 + 12662868775082.0/11960479115383.0 + 3355817975965.0/11060851509271.0,
       647845179188.0/3216320057751.0 + 73281519250.0/8382639484533.0 + 552539513391.0/3454668386233.0 + 3354512671639.0/8306763924573.0 + 4040.0/17871.0
@@ -255,19 +255,19 @@ namespace DuneODE
   // implicit part
   static const double ARK46_A[] =
     {
-      0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 
-      0.25, 0.25, 0.0, 0.0, 0.0, 0.0, 
+      0.0,  0.0,  0.0, 0.0, 0.0, 0.0,
+      0.25, 0.25, 0.0, 0.0, 0.0, 0.0,
       8611.0/62500.0, -1743.0/31250.0, 0.25 , 0.0, 0.0, 0.0,
       5012029.0/34652500.0, -654441.0/2922500.0, 174375.0/388108.0, 0.25, 0.0, 0.0,
       15267082809.0/155376265600.0, -71443401.0/120774400.0, 730878875.0/902184768.0, 2285395.0/8070912.0, 0.25, 0.0,
-      82889.0/524892.0, 0.0, 15625.0/83664.0, 69875.0/102672.0, -2260.0/8211.0, 0.25 
+      82889.0/524892.0, 0.0, 15625.0/83664.0, 69875.0/102672.0, -2260.0/8211.0, 0.25
     };
 
   // common part
-  static const double ARK46_b[] = 
+  static const double ARK46_b[] =
     { 82889.0/524892.0, 0.0, 15625.0/83664.0, 69875.0/102672.0, -2260.0/8211.0, 0.25 };
-  static const double ARK46_c[] = 
-    {0.0, 0.5 , 8611.0/62500.0 -1743.0/31250.0 + 0.25, 
+  static const double ARK46_c[] =
+    {0.0, 0.5 , 8611.0/62500.0 -1743.0/31250.0 + 0.25,
      5012029.0/34652500.0 -654441.0/2922500.0 + 174375.0/388108.0 + 0.25,
      15267082809.0/155376265600.0 -71443401.0/120774400.0 + 730878875.0/902184768.0 + 2285395.0/8070912.0 + 0.25,
      82889.0/524892.0 + 15625.0/83664.0 + 69875.0/102672.0  -2260.0/8211.0 + 0.25
@@ -294,7 +294,7 @@ namespace DuneODE
       0.14631668003312, 0.69488738277516, 0.46893381306619, 0.0, 0.0,
       -1.33389883143642, 2.90509214801204, -1.06511748457024, 0.27210900509137, 0.0
     };
-  static const double IERK45_cex[] = 
+  static const double IERK45_cex[] =
     { 0.0, 0.39098372452428, IERK45_Aex[ 10 ] + IERK45_Aex[ 11 ],
       IERK45_Aex[ 15 ] + IERK45_Aex[ 16 ] + IERK45_Aex[ 17 ],
       IERK45_Aex[ 20 ] + IERK45_Aex[ 21 ] + IERK45_Aex[ 22 ] + IERK45_Aex[ 23 ]
@@ -302,23 +302,23 @@ namespace DuneODE
 
   // implicit part
   static const double IERK45_A[] =
-    { 
+    {
       0.25, 0.0,  0.0,  0.0,  0.0,
       0.34114705729739, 0.25, 0.0,  0.0,  0.0,
       0.80458720789763, -0.07095262154540, 0.25,  0.0,  0.0,
       -0.52932607329103, 1.15137638494253, -0.80248263237803, 0.25, 0.0,
-      0.11933093090075, 0.55125531344927, -0.1216872844994, 0.20110104014943, 0.25 
+      0.11933093090075, 0.55125531344927, -0.1216872844994, 0.20110104014943, 0.25
     };
-  static const double IERK45_c[] = 
+  static const double IERK45_c[] =
     {
-      0.25, 0.34114705729739 + 0.25, 0.80458720789763  -0.07095262154540 + 0.25, 
+      0.25, 0.34114705729739 + 0.25, 0.80458720789763  -0.07095262154540 + 0.25,
       -0.52932607329103 + 1.15137638494253 -0.80248263237803+ 0.25,
       0.11933093090075 + 0.55125531344927  -0.1216872844994 + 0.20110104014943 + 0.25
     };
 
 
   // common part
-  static const double IERK45_b[] = 
+  static const double IERK45_b[] =
     { IERK45_A[20] , IERK45_A[21], IERK45_A[22], IERK45_A[23] , IERK45_A[24] };
 
 

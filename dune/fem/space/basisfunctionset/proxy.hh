@@ -35,7 +35,7 @@ namespace Dune
      * \note This class has an implicit constructor from a pointer to a basis function set.
      */
 
-    template< class BasisFunctionSet > 
+    template< class BasisFunctionSet >
     class BasisFunctionSetProxy
     {
       typedef BasisFunctionSetProxy< BasisFunctionSet > ThisType;
@@ -57,12 +57,12 @@ namespace Dune
       typedef typename BasisFunctionSet::JacobianRangeType JacobianRangeType;
       typedef typename BasisFunctionSet::HessianRangeType HessianRangeType;
 
-      typedef typename BasisFunctionSet::ReferenceElementType ReferenceElementType; 
+      typedef typename BasisFunctionSet::ReferenceElementType ReferenceElementType;
 
       BasisFunctionSetProxy ()
       : basisFunctionSet_( nullptr )
       {}
-      
+
       BasisFunctionSetProxy ( const BasisFunctionSet *basisFunctionSet )
       : basisFunctionSet_( basisFunctionSet )
       {}
@@ -71,10 +71,10 @@ namespace Dune
       int order () const { return impl().order(); }
 
       //! \copydoc BasisFunctionSet::size
-      std::size_t size () const { return impl().size(); } 
+      std::size_t size () const { return impl().size(); }
 
       //! \copydoc BasisFunctionSet::type
-      Dune::GeometryType type () const { return impl().type(); } 
+      Dune::GeometryType type () const { return impl().type(); }
 
       //! \copydoc BasisFunctionSet::referenceElement
       const ReferenceElementType &referenceElement () const
@@ -174,7 +174,7 @@ namespace Dune
         impl().hessianAll( x, hessians );
       }
 
-      //! \copydoc BasisFunctionSet::entity 
+      //! \copydoc BasisFunctionSet::entity
       const EntityType &entity () const { return impl().entity(); }
 
     private:

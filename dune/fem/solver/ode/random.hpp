@@ -83,7 +83,7 @@ double Random::rand(double lo, double hi)
 
 
 // permutates an array of size size
-template<class T> 
+template<class T>
 inline
 void Random::permute(T *array, int size)
 {
@@ -91,7 +91,7 @@ void Random::permute(T *array, int size)
     int i1 = rand(size);
     T tmp = array[i];
     array[i] = array[i1];
-    array[i1] = tmp;      
+    array[i1] = tmp;
   }
 }
 

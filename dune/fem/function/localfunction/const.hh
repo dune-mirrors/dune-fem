@@ -50,11 +50,14 @@ namespace Dune
       //! type of LocalDofVector
       typedef typename BaseType :: LocalDofVectorType LocalDofVectorType;
 
+      //! type of SizeType
+      typedef typename BaseType::SizeType SizeType;
+
       //! default ctor
       BasicConstLocalFunction () {}
 
       explicit BasicConstLocalFunction ( const BasisFunctionSetType & basisFunctionSet ) : BaseType( basisFunctionSet ) {}
-     
+
       explicit BasicConstLocalFunction ( const LocalDofVectorType &localDofVector ) : BaseType( localDofVector ) {}
 
       BasicConstLocalFunction ( const BasisFunctionSetType &basisFunctionSet, const LocalDofVectorType &localDofVector )
@@ -76,13 +79,13 @@ namespace Dune
       using BaseType::localDofVector;
 
    protected:
-      DofType &operator[] ( int num ) 
+      DofType &operator[] ( SizeType num )
       {
         return static_cast< BaseType &>( *this )[ num ];
       }
 
       using BaseType::clear;
-      using BaseType::assign; 
+      using BaseType::assign;
       using BaseType::operator +=;
       using BaseType::operator -=;
       using BaseType::axpy;
@@ -91,17 +94,17 @@ namespace Dune
     /** \ingroup LocalFunction
         \class ConstLocalFunction
         \brief A constant local function carrying values for one entity
-      
-        A ConstLocalFunction is a LocalFunction which is basically doing the same as the 
-        LocalFunction of a discrete function. The difference is that the local dofs 
-        are not kept as references but are copied to a local storage. 
+
+        A ConstLocalFunction is a LocalFunction which is basically doing the same as the
+        LocalFunction of a discrete function. The difference is that the local dofs
+        are not kept as references but are copied to a local storage.
         Therefore, this is a const local function and any modification of dofs is not
-        allowed. 
-      
+        allowed.
+
         \note Local DoF numbers correspond directly to array indices. Hence it
-        may be more cache efficient to generate a ConstLocalFunction when only a 
-        const access to the local function is needed. 
-      
+        may be more cache efficient to generate a ConstLocalFunction when only a
+        const access to the local function is needed.
+
         \param DiscreteFunction type of the discrete function, the
                                 local function shall belong to
      */
@@ -130,17 +133,17 @@ namespace Dune
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
       typedef typename BaseType::LocalDofVectorType LocalDofVectorType;
 
-      /** \brief constructor creating a local function without binding it to an 
+      /** \brief constructor creating a local function without binding it to an
                  entity
-        
+
           Creates the local function without initializing the fields depending on
           the current entity.
-        
+
           \note Before using the local function it must be initilized by
           \code
           localFunction.init( entity );
           \endcode
-        
+
           \param[in] df discrete function the local function shall belong to
        */
       explicit ConstLocalFunction ( const DiscreteFunctionType &df )
@@ -156,16 +159,16 @@ namespace Dune
       {
         std::copy( localFunction.localDofVector().begin(), localFunction.localDofVector().end(), localDofVector().begin() );
       }
-      
+
       /** \brief constructor creating a local function and binding it to an
                  entity
-        
+
           Creates the local function and initilizes the fields depending on the
           current entity. It is not necessary, though allowed, to call init
           before using the discrete function.
-        
+
           \note The degrees of freedom are not initialized by this function.
-          
+
           \param[in] df      discrete function the local function shall
                              belong to
           \param[in] entity  entity for initialize the local function to

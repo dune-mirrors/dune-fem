@@ -11,7 +11,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     template< class OutStreamImp >
@@ -21,11 +21,11 @@ namespace Dune
     };
 
 
-   
+
     /** \class XDRBasicOutStream
      *  \ingroup InOutStreams
      *  \brief base implementation for XDR output streams
-     *  
+     *
      *  This class implements the writing functions for an XDR stream. It must
      *  be associated to a stream by a child class.
      *
@@ -42,12 +42,12 @@ namespace Dune
     public:
       //! type of the implementaton (Barton-Nackman)
       typedef OutStreamImp OutStreamType;
-      
+
       //! type of the traits
       typedef XDROutStreamTraits< OutStreamType > Traits;
 
       enum { maxStringSize = 2<<18 };
-      
+
     protected:
       XDR xdrs_;
 
@@ -90,7 +90,7 @@ namespace Dune
       /** \copydoc Dune::Fem::OutStreamInterface::writeBool */
       void writeBool ( const bool value )
       {
-        // convert to character and write 
+        // convert to character and write
         char val = ( value == true ) ? 1 : 0;
         writeChar( val );
       }
@@ -117,10 +117,10 @@ namespace Dune
 #ifdef XDR_UINT64_FUNC
         // use u_int64_t since xdr_u_long is buggy
         u_int64_t val = value ;
-        // XDR_UINT64_FUNC is defined in config.h 
+        // XDR_UINT64_FUNC is defined in config.h
         if( XDR_UINT64_FUNC( xdrs(), &val ) == 0 )
           writeError();
-#else 
+#else
         DUNE_THROW(NotImplemented,"xdr_uint64_t is missing");
 #endif
       }
@@ -133,7 +133,7 @@ namespace Dune
     };
 
 
-    
+
     template< class InStreamImp >
     struct XDRInStreamTraits
     {
@@ -144,7 +144,7 @@ namespace Dune
     /** \class XDRBasicInStream
      *  \ingroup InOutStreams
      *  \brief base implementation for XDR input streams
-     *  
+     *
      *  This class implements the reading functions for an XDR stream. It must
      *  be associated to a stream by a child class.
      *
@@ -161,7 +161,7 @@ namespace Dune
     public:
       //! type of the implementation (Barton-Nackman)
       typedef InStreamImp InStreamType;
-      
+
       //! type of the traits
       typedef XDRInStreamTraits< InStreamType > Traits;
 
@@ -212,7 +212,7 @@ namespace Dune
       {
         char val;
         readChar( val );
-        // convert to boolean 
+        // convert to boolean
         value = ( val == 1 ) ? true : false;
       }
 
@@ -239,12 +239,12 @@ namespace Dune
 #ifdef XDR_UINT64_FUNC
         // use u_int64_t since xdr_u_long is buggy
         u_int64_t val ;
-        // XDR_UINT64_FUNC is defined in config.h 
+        // XDR_UINT64_FUNC is defined in config.h
         if( XDR_UINT64_FUNC( xdrs(), &val ) == 0 )
           readError();
-        else 
+        else
           value = val;
-#else 
+#else
         DUNE_THROW(NotImplemented,"xdr_uint64_t is missing");
 #endif
       }
@@ -300,7 +300,7 @@ namespace Dune
         xdr_destroy( xdrs() );
         fclose( file_ );
       }
-      
+
       /** \copydoc Dune::Fem::OutStreamInterface::flush */
       inline void flush ()
       {
@@ -309,7 +309,7 @@ namespace Dune
     };
 
 
-    
+
     /** \class XDRFileInStream
      *  \ingroup InOutStreams
      *  \brief XDR output stream reading from a file
@@ -333,7 +333,7 @@ namespace Dune
       /** \brief constructor
        *
        *  \param[in]  filename  name of the file to read from
-       *  \param[in]  pos       starting position for file read 
+       *  \param[in]  pos       starting position for file read
        *                        (default = 0)
        */
       explicit XDRFileInStream ( const std::string &filename,
@@ -343,7 +343,7 @@ namespace Dune
         if( file_ == 0 )
           DUNE_THROW( IOError, "XDRFileInStream: Unable to open file '" << filename << "'." );
 
-        // if pos = 0 this will do nothing 
+        // if pos = 0 this will do nothing
         fseek( file_, pos , SEEK_SET );
 
         xdrstdio_create( xdrs(), file_, XDR_DECODE );

@@ -3,7 +3,7 @@
 
 #include <cassert>
 
-// temporay mem 
+// temporay mem
 class OEMTmpMem
 {
   double * mem_;

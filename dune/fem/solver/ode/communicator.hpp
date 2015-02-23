@@ -6,10 +6,10 @@
 #include <vector>
 #include <cassert>
 
-#if HAVE_MPI 
+#if HAVE_MPI
 #include <mpi.h>
-#include "mpicommunicator.hpp" 
-#else 
+#include "mpicommunicator.hpp"
+#else
 #include "emptycommunicator.hpp"
 #endif
 

@@ -1,61 +1,68 @@
 #ifndef DUNE_FEM_COMMOPERATIONS_HH
 #define DUNE_FEM_COMMOPERATIONS_HH
 
-#include <dune/common/tuples.hh>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
 #include <dune/common/tupleutility.hh>
 
 #include <dune/grid/common/datahandleif.hh>
 
-#include <dune/fem/misc/nil.hh>
-
-
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
-  /** @addtogroup DFComm  
+  /** @addtogroup DFComm
       @{
   **/
 
-    /** Class to combine data handles. The outcome is a class satifying the
-        DataHandleIF itself. 
-     */
-    template <  class DataImpOne 
-              , class DataImpTwo   = Nil  
-              , class DataImpThree = Nil
-              , class DataImpFour  = Nil 
-              , class DataImpFive  = Nil 
-              , class DataImpSix   = Nil  
-              , class DataImpSeven = Nil  
-              , class DataImpEight = Nil  
-              , class DataImpNine  = Nil > 
-    class CombinedDataHandle 
-     : public CommDataHandleIF< 
-         CombinedDataHandle < DataImpOne , 
-                              DataImpTwo ,
-                              DataImpThree,
-                              DataImpFour ,
-                              DataImpFive ,
-                              DataImpSix  , 
-                              DataImpSeven, 
-                              DataImpEight, 
-                              DataImpNine 
-                              > , 
-                              typename DataImpOne ::DataType >
+    // CombinedDataType
+    // ----------------
+
+    template< class... DataHandle >
+    struct CombinedDataType;
+
+    template< class DataHandle >
+    struct CombinedDataType< DataHandle >
     {
+      typedef typename DataHandle::DataType Type;
+    };
+
+    template< class DataHandle, class... Tail >
+    struct CombinedDataType< DataHandle, Tail... >
+    {
+      typedef typename DataHandle::DataType Type;
+      static_assert( std::is_same< Type, typename CombinedDataType< Tail... >::Type >::value, "Only data handles for the same data type can be combined." );
+    };
+
+
+
+    // CombinedDataHandle
+    // ------------------
+
+    /**
+     * \brief combine multiple data handles into one
+     */
+    template< class... DataHandle >
+    class CombinedDataHandle
+      : public CommDataHandleIF< CombinedDataHandle< DataHandle... >, typename CombinedDataType< DataHandle... >::Type >
+    {
+      typedef std::tuple< DataHandle... > DataHandlerTupleType;
+
       /** DataGather functor  */
       template <class BufferImp, class EntityImp>
       class DataGather{
       public:
-        //! Constructor taking buffer and entity 
-        DataGather(BufferImp & buff, const EntityImp & en) 
+        //! Constructor taking buffer and entity
+        DataGather(BufferImp & buff, const EntityImp & en )
         : buff_(buff)
         , en_(en)
         {}
 
-        //! call gather on given data handle object 
+        //! call gather on given data handle object
         template <class DataHandlerImp>
         void visit(DataHandlerImp & dh) {
           dh.gather(buff_,en_);
@@ -71,16 +78,17 @@ namespace Dune
       class DataScatter{
       public:
         //! Constructor
-        //! Constructor taking buffer and entity and size  
-        DataScatter(BufferImp & buff, const EntityImp & en, size_t n) 
+        //! Constructor taking buffer and entity and size
+        DataScatter(BufferImp & buff, const EntityImp & en, size_t n)
         : buff_(buff)
         , en_(en)
-        , size_(n)         
+        , size_(n)
         {}
 
-        //! call scatter on given data handle object 
+        //! call scatter on given data handle object
         template <class DataHandlerImp>
         void visit(DataHandlerImp & dh) {
+          // TODO: here, the wrong size is passed to the subhandles
           dh.scatter(buff_,en_,size_);
         }
 
@@ -96,20 +104,20 @@ namespace Dune
       {
       public:
         //! Constructor
-        //! \param entity to calc size for 
-        DataSize(const EntityImp & en) 
-        : en_(en) 
-        , size_(0) 
+        //! \param entity to calc size for
+        DataSize(const EntityImp & en)
+        : en_(en)
+        , size_(0)
         {}
 
-        //! call size on given data handle object 
+        //! call size on given data handle object
         template <class DataHandlerImp>
-        void visit(DataHandlerImp & dh) 
+        void visit(DataHandlerImp & dh)
         {
           size_ += dh.size(en_);
         }
 
-        //! return size 
+        //! return size
         size_t size() const { return size_; }
 
       private:
@@ -122,29 +130,29 @@ namespace Dune
       {
       public:
         //! Constructor
-        //! \param dim to check for 
-        //! \param codim to check for 
-        FixedSize(const int dim, const int codim) 
-        : dim_(dim) 
-        , codim_(codim) 
+        //! \param dim to check for
+        //! \param codim to check for
+        FixedSize(const int dim, const int codim)
+        : dim_(dim)
+        , codim_(codim)
         , fixedSize_(true)
         {}
 
-        //! call size on given data handle object 
+        //! call size on given data handle object
         template <class DataHandlerImp>
-        void visit(DataHandlerImp & dh) 
+        void visit(DataHandlerImp & dh)
         {
           bool fs = dh.fixedsize(dim_,codim_);
           fixedSize_ = (fs == false) ? fs : fixedSize_;
         }
 
-        //! return size 
+        //! return size
         bool fixedSize() const { return fixedSize_; }
 
       private:
-        const int dim_; 
+        const int dim_;
         const int codim_;
-        bool fixedSize_; 
+        bool fixedSize_;
       };
 
       /** Contains functor  */
@@ -152,77 +160,41 @@ namespace Dune
       {
       public:
         //! Constructor
-        //! \param dim to check for 
-        //! \param codim to check for 
-        Contains(const int dim, const int codim) 
-        : dim_(dim) 
-        , codim_(codim) 
+        //! \param dim to check for
+        //! \param codim to check for
+        Contains(const int dim, const int codim)
+        : dim_(dim)
+        , codim_(codim)
         , contains_(false)
         {}
 
-        //! call size on given data handle object 
+        //! call size on given data handle object
         template <class DataHandlerImp>
-        void visit(DataHandlerImp & dh) 
+        void visit(DataHandlerImp & dh)
         {
           bool c = dh.contains(dim_,codim_);
           contains_ = (c == true) ? c : contains_;
         }
 
-        //! return size 
+        //! return size
         bool contains() const { return contains_; }
 
       private:
-        const int dim_; 
+        const int dim_;
         const int codim_;
-        bool contains_; 
+        bool contains_;
       };
 
-      DataImpOne   & one_;
-      DataImpTwo   & two_;
-      DataImpThree & three_;
-      DataImpFour  & four_;
-      DataImpFive  & five_;
-      DataImpSix   & six_;
-      DataImpSeven & seven_;
-      DataImpEight & eight_;
-      DataImpNine  & nine_;
-
-      typedef Dune::tuple<  DataImpOne
-                            , DataImpTwo
-                            , DataImpThree
-                            , DataImpFour
-                            , DataImpFive
-                            , DataImpSix
-                            , DataImpSeven
-                            , DataImpEight
-                            , DataImpNine
-                            > DataHandlerTupleType;
-
-      mutable DataHandlerTupleType data_; 
     public:
-      typedef typename DataImpOne :: DataType DataType;
+      typedef typename CombinedDataType< DataHandle... >::Type DataType;
 
-      // initialize of Nil 
-      static Nil & null() { 
-        static Nil n;
-        return n;
-      }
+      CombinedDataHandle ( const DataHandle &... handle )
+        : data_( handle... )
+      {}
 
-      CombinedDataHandle(DataImpOne & one
-                , DataImpTwo   & two   = null()  
-                , DataImpThree & three = null()
-                , DataImpFour  & four  = null()
-                , DataImpFive  & five  = null() 
-                , DataImpSix   & six   = null() 
-                , DataImpSeven & seven = null() 
-                , DataImpEight & eight = null() 
-                , DataImpNine  & nine  = null() )
-        : one_(one) , two_(two) , three_(three) , four_(four) 
-        , five_(five) , six_(six) , seven_(seven)
-        , eight_(eight) , nine_(nine) 
-        , data_( one_ , two_, three_, four_, five_, six_ , seven_ , eight_ , nine_ )
-      {
-      }
+      CombinedDataHandle ( const std::tuple< DataHandle... > &data )
+        : data_( data )
+      {}
 
       bool contains (int dim, int codim) const
       {
@@ -241,7 +213,7 @@ namespace Dune
       }
 
       //! \brief loop over all internal data handlers and call gather for
-      //! given entity 
+      //! given entity
       template<class MessageBufferImp, class EntityType>
       void gather (MessageBufferImp& buff, const EntityType& en) const
       {
@@ -251,7 +223,7 @@ namespace Dune
       }
 
       //! \brief loop over all internal data handlers and call scatter for
-      //! given entity 
+      //! given entity
       template<class MessageBufferImp, class EntityType>
       void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
       {
@@ -261,7 +233,7 @@ namespace Dune
       }
 
       //! \brief loop over all internal data handlers and return sum of data
-      //! size of given entity 
+      //! size of given entity
       template<class EntityType>
       size_t size (const EntityType& en) const
       {
@@ -270,79 +242,98 @@ namespace Dune
         forEach.apply(dataSize);
         return dataSize.size();
       }
+
+    private:
+      DataHandlerTupleType data_;
     };
 
     ////////////////////////////////////////////////////////////////
     //
-    //  --DiscreteFunctionCommunications 
+    //  --DiscreteFunctionCommunications
     //
     ////////////////////////////////////////////////////////////////
 
-    //! \brief Mathematical operation apply during communication 
-    //! to data that is communicated 
+    //! \brief Mathematical operation apply during communication
+    //! to data that is communicated
     //! enum of all avialable operations
-    struct DFCommunicationOperation 
+    struct DFCommunicationOperation
     {
-      enum dfCommunicationOperation {copy,add,min,max};
-      //! just copy data 
-      struct Copy 
+      enum dfCommunicationOperation {copy,add,sub,min,max};
+      //! just copy data
+      struct Copy
       {
         static const dfCommunicationOperation value = copy;
-        static const char * name () 
+        static const char * name ()
         {
           return "Copy";
         }
-        
-        template <class DataType> 
-        static inline void apply(const DataType & arg, DataType & dest) 
+
+        template <class DataType>
+        static inline void apply(const DataType & arg, DataType & dest)
         {
           dest = arg;
         }
       };
-      
-      //! sum up data  
-      struct Add 
+
+      //! sum up data
+      struct Add
       {
         static const dfCommunicationOperation value = add;
-        static const char * name () 
+        static const char * name ()
         {
           return "Add";
         }
-        
-        template <class DataType> 
-        static inline void apply(const DataType & arg, DataType & dest) 
+
+        template <class DataType>
+        static inline void apply(const DataType & arg, DataType & dest)
         {
           dest += arg;
         }
       };
-      
-      //! keep minimum   
-      struct Min 
+
+      //! substract data
+      struct Sub
+      {
+        static const dfCommunicationOperation value = sub;
+        static const char * name ()
+        {
+          return "Sub";
+        }
+
+        template <class DataType>
+        static inline void apply(const DataType & arg, DataType & dest)
+        {
+          dest -= arg;
+        }
+      };
+
+      //! keep minimum
+      struct Min
       {
         static const dfCommunicationOperation value = min;
-        static const char * name () 
+        static const char * name ()
         {
           return "Min";
         }
-        
-        template <class DataType> 
-        static inline void apply(const DataType & arg, DataType & dest) 
+
+        template <class DataType>
+        static inline void apply(const DataType & arg, DataType & dest)
         {
           dest = std::min(dest,arg);
         }
       };
-      
-      //! keep maximum   
-      struct Max 
+
+      //! keep maximum
+      struct Max
       {
         static const dfCommunicationOperation value = max;
-        static const char * name () 
+        static const char * name ()
         {
           return "Max";
         }
-        
-        template <class DataType> 
-        static inline void apply(const DataType & arg, DataType & dest) 
+
+        template <class DataType>
+        static inline void apply(const DataType & arg, DataType & dest)
         {
           dest = std::max(dest,arg);
         }
@@ -351,12 +342,12 @@ namespace Dune
 
     ////////////////////////////////////////////////////////////////
     //
-    //  --LoadBalanceContainsCheck 
+    //  --LoadBalanceContainsCheck
     //
     ////////////////////////////////////////////////////////////////
 
-    //! \brief check for sets of entities for the load balance procedure 
-    template <class DiscreteFunction>     
+    //! \brief check for sets of entities for the load balance procedure
+    template <class DiscreteFunction>
     class LoadBalanceLeafData
     {
     public:
@@ -371,9 +362,9 @@ namespace Dune
       }
     };
 
-  //@} 
+  //@}
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

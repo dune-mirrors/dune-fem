@@ -19,14 +19,14 @@ namespace Dune
     class GenericLagrangeBaseFunction< FunctionSpace, PointGeometry, order >
     {
       typedef GenericLagrangeBaseFunction< FunctionSpace, PointGeometry, order > ThisType;
-      
+
       static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
     public:
       typedef FunctionSpace FunctionSpaceType;
 
       typedef PointGeometry GeometryType;
-        
+
       enum { polynomialOrder = order };
 
       typedef GenericLagrangePoint< GeometryType, polynomialOrder >
@@ -44,7 +44,7 @@ namespace Dune
 
     public:
       explicit GenericLagrangeBaseFunction ( unsigned int baseNum )
-      : lagrangePoint_( baseNum ) 
+      : lagrangePoint_( baseNum )
       {}
 
       template< class LocalDofCoordinateType, class LocalCoordinateType >
@@ -66,7 +66,7 @@ namespace Dune
       {
         phi[ 0 ] = 0;
       }
-      
+
       template< class LocalDofCoordinateType, class LocalCoordinateType >
       inline static void evaluate ( LocalDofCoordinateType &dofCoordinate,
                                     const FieldVector< int, 2 > &diffVariable,
@@ -94,20 +94,20 @@ namespace Dune
     class GenericLagrangeBaseFunction< FunctionSpace, PyramidGeometry< BaseGeometryType >, 0 >
     {
       typedef GenericLagrangeBaseFunction< FunctionSpace, PyramidGeometry< BaseGeometryType >, 0 > ThisType;
-      
+
       static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
     public:
       typedef FunctionSpace FunctionSpaceType;
 
       typedef PyramidGeometry< BaseGeometryType > GeometryType;
-        
+
       enum { polynomialOrder = 0 };
 
       typedef GenericLagrangePoint< GeometryType, polynomialOrder > LagrangePointType;
       enum { numBaseFunctions = LagrangePointType :: numLagrangePoints };
 
-     
+
       typedef typename FunctionSpaceType :: DomainType DomainType;
       typedef typename FunctionSpaceType :: RangeType RangeType;
 
@@ -131,7 +131,7 @@ namespace Dune
       {
         phi[ 0 ] = 1;
       }
-      
+
       template< class LocalDofCoordinateType, class LocalCoordinateType >
       static void evaluate ( LocalDofCoordinateType &dofCoordinate,
                              const FieldVector< int, 0 > &diffVariable,
@@ -141,7 +141,7 @@ namespace Dune
       {
         return evaluate< polynomialOrder >( dofCoordinate, diffVariable, factor, x, phi );
       }
-    
+
       template< unsigned int porder, class LocalDofCoordinateType, class LocalCoordinateType >
       static void evaluate ( LocalDofCoordinateType &dofCoordinate,
                              const FieldVector< int, 1 > &diffVariable,
@@ -151,7 +151,7 @@ namespace Dune
       {
         phi[ 0 ] = 0;
       }
-      
+
       template< class LocalDofCoordinateType, class LocalCoordinateType >
       static void evaluate ( LocalDofCoordinateType &dofCoordinate,
                              const FieldVector< int, 1 > &diffVariable,
@@ -161,7 +161,7 @@ namespace Dune
       {
         return evaluate< polynomialOrder >( dofCoordinate, diffVariable, factor, x, phi );
       }
-     
+
       template< unsigned int porder, class LocalDofCoordinateType, class LocalCoordinateType >
       static void evaluate ( LocalDofCoordinateType &dofCoordinate,
                              const FieldVector< int, 2 > &diffVariable,
@@ -192,27 +192,27 @@ namespace Dune
         evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
       }
     };
-   
-    
+
+
     template< class FunctionSpace, class BaseGeometryType, unsigned int order >
     class GenericLagrangeBaseFunction< FunctionSpace, PyramidGeometry< BaseGeometryType >, order >
     {
       typedef GenericLagrangeBaseFunction< FunctionSpace, PyramidGeometry< BaseGeometryType >, order > ThisType;
-      
+
       static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
     public:
       typedef FunctionSpace FunctionSpaceType;
 
       typedef PyramidGeometry< BaseGeometryType > GeometryType;
-        
+
       enum { polynomialOrder = order };
 
       typedef GenericLagrangePoint< GeometryType, polynomialOrder >
         LagrangePointType;
       enum { numBaseFunctions = LagrangePointType :: numLagrangePoints };
 
-     
+
       typedef typename FunctionSpaceType :: DomainType DomainType;
       typedef typename FunctionSpaceType :: RangeType RangeType;
 
@@ -270,7 +270,7 @@ namespace Dune
                     * (myfactor * factor * (*x) - myshift);
         }
       }
-      
+
       template< class LocalDofCoordinateType, class LocalCoordinateType >
       static void evaluate ( LocalDofCoordinateType &dofCoordinate,
                              const FieldVector< int, 0 > &diffVariable,
@@ -280,7 +280,7 @@ namespace Dune
       {
         return evaluate< polynomialOrder >( dofCoordinate, diffVariable, factor, x, phi );
       }
-     
+
       template< unsigned int porder, class LocalDofCoordinateType, class LocalCoordinateType >
       static void evaluate ( LocalDofCoordinateType &dofCoordinate,
                              const FieldVector< int, 1 > &diffVariable,
@@ -328,7 +328,7 @@ namespace Dune
           phi *= (polynomialOrder) / ((RangeFieldType)(*dofCoordinate));
         }
       }
-      
+
       template< class LocalDofCoordinateType, class LocalCoordinateType >
       static void evaluate ( LocalDofCoordinateType &dofCoordinate,
                              const FieldVector< int, 1 > &diffVariable,
@@ -338,7 +338,7 @@ namespace Dune
       {
         return evaluate< polynomialOrder >( dofCoordinate, diffVariable, factor, x, phi );
       }
-     
+
       template< unsigned int porder, class LocalDofCoordinateType, class LocalCoordinateType >
       static void evaluate ( LocalDofCoordinateType &dofCoordinate,
                              const FieldVector< int, 2 > &diffVariable,
@@ -377,24 +377,24 @@ namespace Dune
           --(*dofCoordinate);
           OrderReductionType::template evaluate< porder >( dofCoordinate, diffVariable, factor, x, phi );
           phi *= (myfactor * factor * (*x) - myshift);
-          
+
           if( (unsigned int)diffVariable[ 0 ] == LocalDofCoordinateType::index )
           {
             OrderReductionType::template evaluate< porder >( dofCoordinate, dv1, factor, x, psi );
             phi.axpy( myfactor * factor, psi );
           }
-          
+
           if( (unsigned int)diffVariable[ 1 ] == LocalDofCoordinateType::index )
           {
             OrderReductionType::template evaluate< porder >( dofCoordinate, dv0, factor, x, psi );
             phi.axpy( myfactor * factor, psi );
           }
-          
+
           ++(*dofCoordinate);
           phi *= (polynomialOrder) / ((RangeFieldType)(*dofCoordinate));
         }
       }
-      
+
       template< class LocalDofCoordinateType, class LocalCoordinateType >
       static void evaluate ( LocalDofCoordinateType &dofCoordinate,
                              const FieldVector< int, 2 > &diffVariable,
@@ -415,20 +415,20 @@ namespace Dune
         evaluate( point.dofCoordinate_, diffVariable, 1, xlocal, phi );
       }
     };
-   
-    
+
+
     template< class FunctionSpace, class FirstGeometryType, class SecondGeometryType, unsigned int order >
     class GenericLagrangeBaseFunction< FunctionSpace, ProductGeometry< FirstGeometryType, SecondGeometryType >, order >
     {
       typedef GenericLagrangeBaseFunction< FunctionSpace, ProductGeometry< FirstGeometryType, SecondGeometryType >, order > ThisType;
-      
+
       static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
     public:
       typedef FunctionSpace FunctionSpaceType;
 
       typedef ProductGeometry< FirstGeometryType, SecondGeometryType > GeometryType;
-        
+
       enum { polynomialOrder = order };
 
       typedef GenericLagrangePoint< GeometryType, polynomialOrder > LagrangePointType;
@@ -468,7 +468,7 @@ namespace Dune
         SecondReductionType::evaluate( dofCoordinate.second(), diffVariable, factor, x.second(), psi );
         phi[ 0 ] *= psi[ 0 ];
       }
-      
+
       template< class LocalDofCoordinateType, class LocalCoordinateType >
       static void evaluate ( LocalDofCoordinateType &dofCoordinate,
                              const FieldVector< int, 1 > &diffVariable,
@@ -478,7 +478,7 @@ namespace Dune
       {
         FieldVector< int, 0 > dv;
         RangeType psi1, psi2;
-        
+
         FirstReductionType::evaluate( dofCoordinate.first(), diffVariable, factor, x.first(), psi1 );
         SecondReductionType::evaluate( dofCoordinate.second(), dv, factor, x.second(), psi2 );
         phi[ 0 ] = psi1[ 0 ] * psi2[ 0 ];
@@ -487,7 +487,7 @@ namespace Dune
         SecondReductionType::evaluate( dofCoordinate.second(), diffVariable, factor, x.second(), psi2 );
         phi[ 0 ] += psi1[ 0 ] * psi2[ 0 ];
       }
-      
+
       template< class LocalDofCoordinateType, class LocalCoordinateType >
       static void evaluate ( LocalDofCoordinateType &dofCoordinate,
                              const FieldVector< int, 2 > &diffVariable,
@@ -499,7 +499,7 @@ namespace Dune
         FieldVector< int, 1 > dv0( diffVariable[ 0 ] );
         FieldVector< int, 1 > dv1( diffVariable[ 1 ] );
         RangeType psi1, psi2;
-        
+
         FirstReductionType::evaluate( dofCoordinate.first(), diffVariable, factor, x.first(), psi1 );
         SecondReductionType::evaluate( dofCoordinate.second(), dv, factor, x.second(), psi2 );
         phi[ 0 ] = psi1[ 0 ] * psi2[ 0 ];
@@ -507,11 +507,11 @@ namespace Dune
         FirstReductionType::evaluate( dofCoordinate.first(), dv0, factor, x.first(), psi1 );
         SecondReductionType::evaluate( dofCoordinate.second(), dv1, factor, x.second(), psi2 );
         phi[ 0 ] += psi1[ 0 ] * psi2[ 0 ];
-        
+
         FirstReductionType::evaluate( dofCoordinate.first(), dv1, factor, x.first(), psi1 );
         SecondReductionType::evaluate( dofCoordinate.second(), dv0, factor, x.second(), psi2 );
         phi[ 0 ] += psi1[ 0 ] * psi2[ 0 ];
-        
+
         FirstReductionType::evaluate( dofCoordinate.first(), dv, factor, x.first(), psi1 );
         SecondReductionType::evaluate( dofCoordinate.second(), diffVariable, factor, x.second(), psi2 );
         phi[ 0 ] += psi1[ 0 ] * psi2[ 0 ];
@@ -528,7 +528,7 @@ namespace Dune
       }
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

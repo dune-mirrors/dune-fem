@@ -27,7 +27,7 @@ namespace Dune
      *  \todo please doc me
      */
     template< class DiscreteModel, class Argument, class PassIds >
-    class DGDiscreteModelCaller 
+    class DGDiscreteModelCaller
     {
       typedef DGDiscreteModelCaller< DiscreteModel, Argument, PassIds > ThisType;
 
@@ -83,7 +83,7 @@ namespace Dune
 
       // return true, if discrete model has flux
       bool hasFlux () const { return discreteModel().hasFlux(); }
-      // return true, if discrete model has mass 
+      // return true, if discrete model has mass
       bool hasMass () const { return discreteModel().hasMass(); }
       // return true, if discrete model has source
       bool hasSource () const { return discreteModel().hasSource(); }
@@ -100,7 +100,7 @@ namespace Dune
         discreteModel().setEntity( entity );
       }
 
-      // set outside local functions to entity 
+      // set outside local functions to entity
       void setNeighbor ( const EntityType &entity )
       {
         localFunctionsOutside_.init( entity );
@@ -170,7 +170,7 @@ namespace Dune
                                        RangeType &source )
       {
         // we may only assume that hasSource() == true, cf. pass.hh
-        if( hasFlux() ) 
+        if( hasFlux() )
           analyticalFlux( entity, quadrature, qp, flux );
         return ThisType::source( entity, quadrature, qp, source );
       }

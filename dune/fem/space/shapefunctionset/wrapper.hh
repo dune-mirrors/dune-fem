@@ -25,7 +25,7 @@ namespace Dune
     {
     public:
       typedef typename ShapeFunctionSet::FunctionSpaceType FunctionSpaceType;
-      
+
       typedef typename ShapeFunctionSet::DomainType DomainType;
       typedef typename ShapeFunctionSet::RangeType RangeType;
       typedef typename ShapeFunctionSet::JacobianRangeType JacobianRangeType;
@@ -50,14 +50,14 @@ namespace Dune
       {
         return shapeFunctionSet_.evaluateEach( x, functor );
       }
-     
-      template< class Point, class Functor > 
+
+      template< class Point, class Functor >
       void jacobianEach ( const Point &x, Functor functor ) const
       {
         return shapeFunctionSet_.jacobianEach( x, functor );
       }
 
-      template< class Point, class Functor > 
+      template< class Point, class Functor >
       void hessianEach ( const Point &x, Functor functor ) const
       {
         return shapeFunctionSet_.hessianEach( x, functor );

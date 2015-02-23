@@ -95,7 +95,7 @@ struct Function
   {
     for( int j = 0; j < FunctionSpace::dimDomain; ++j )
     {
-      // jacobian has only one row, calc j-th column      
+      // jacobian has only one row, calc j-th column
       jacobian[0][j] = M_PI;
       for( int k = 0; k < FunctionSpace::dimDomain; ++k )
         jacobian[0][j] *= (j == k ? cos( M_PI*x[k] ) : sin( M_PI*x[k] ));
@@ -128,7 +128,7 @@ inline Algorithm::Algorithm ( GridType &grid )
 {
 }
 
-inline void Algorithm :: nextMesh () 
+inline void Algorithm :: nextMesh ()
 {
   grid_.globalRefine( Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
 }
@@ -138,7 +138,7 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step )
   GridPartType gridPart( grid_ );
   DiscreteSpaceType space( gridPart );
   DiscreteFunctionType solution( "solution", space );
-     
+
   // get operator
   MassOperatorType massOperator( space );
 
@@ -200,7 +200,7 @@ try
 
   std::cout<< "testing with polorder "<< polOrder <<std::endl;
   Algorithm algorithm( grid );
-  Algorithm::ErrorType *error; 
+  Algorithm::ErrorType *error;
   error = new  Algorithm::ErrorType[ nrSteps ];
   for( int step = 0; step<nrSteps; ++step )
   {
@@ -220,7 +220,7 @@ try
       DUNE_THROW(Dune::InvalidStateException,"EOC check of solving mass matrix system failed");
     }
     if( std::abs( h1eoc - polOrder )  > 0.2 )
-    { 
+    {
       //note: This will fail with Yaspgrid, bug in Geometry JacobianInverse
       DUNE_THROW(Dune::InvalidStateException,"EOC check of solving mass matrix system failed");
     }

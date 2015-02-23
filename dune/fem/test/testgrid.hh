@@ -74,9 +74,9 @@ namespace Dune
 
       GridPtr< HGridType > gridptr_;
     };
-  
+
   } // namespace Fem
-  
+
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_TEST_TESTGRID_HH

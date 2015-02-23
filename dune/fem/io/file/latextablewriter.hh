@@ -29,7 +29,7 @@ namespace Dune
 
     /** \class AbstractColumnWriter
      *  \brief Class representing column writer in general
-     *  
+     *
      *  The class represents column writer.
      *
      *  \tparam DataTuple Type of the data tuple

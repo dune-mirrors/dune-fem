@@ -1,11 +1,11 @@
 #ifndef DUNE_FEM_SOLVER_RUNGEKUTTA_BUTCHERTABLE_HH
 #define DUNE_FEM_SOLVER_RUNGEKUTTA_BUTCHERTABLE_HH
 
-//- dune-common includes 
+//- dune-common includes
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/dynvector.hh>
 
-namespace DuneODE 
+namespace DuneODE
 {
 
   // SimpleButcherTable

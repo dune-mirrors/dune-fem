@@ -13,7 +13,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     // MakeVectorialTraits
@@ -139,7 +139,7 @@ namespace Dune
     {
       typedef MakeVectorialExpression< Scalar, Vectorial > ThisType;
       typedef BasicMakeVectorialExpression< Scalar, Vectorial > BaseType;
-      
+
     public:
       typedef typename BaseType::ComponentType ComponentType;
       typedef typename BaseType::ScalarType ScalarType;
@@ -155,7 +155,7 @@ namespace Dune
     {
       typedef MakeVectorialExpression< FieldVector< K, 1 >, FieldVector< K, dimR > > ThisType;
       typedef BasicMakeVectorialExpression< FieldVector< K, 1 >, FieldVector< K, dimR > > BaseType;
-      
+
     public:
       typedef typename BaseType::ScalarType ScalarType;
       typedef typename BaseType::VectorialType VectorialType;
@@ -197,7 +197,7 @@ namespace Dune
     {
       typedef MakeVectorialExpression< FieldMatrix< K, 1, dimD >, FieldMatrix< K, dimR, dimD > > ThisType;
       typedef BasicMakeVectorialExpression< FieldMatrix< K, 1, dimD >, FieldMatrix< K, dimR, dimD > > BaseType;
-      
+
     public:
       typedef typename BaseType::ScalarType ScalarType;
       typedef typename BaseType::VectorialType VectorialType;
@@ -457,12 +457,12 @@ namespace Dune
       template< class Point, class Functor >
       void evaluateEach ( const Point &x, Functor functor ) const;
 
-      template< class Point, class Functor > 
+      template< class Point, class Functor >
       void jacobianEach ( const Point &x, Functor functor ) const;
 
-      template< class Point, class Functor > 
+      template< class Point, class Functor >
       void hessianEach ( const Point &x, Functor functor ) const;
-     
+
     protected:
       ScalarShapeFunctionSet scalarShapeFunctionSet_;
     };
@@ -507,7 +507,7 @@ namespace Dune
       typedef typename FunctionSpaceType::RangeType VectorialType;
       scalarShapeFunctionSet().evaluateEach( x, VectorialFunctor< Functor, VectorialType >( functor ) );
     }
-    
+
 
     template< class ScalarShapeFunctionSet, class RangeVector >
     template< class Point, class Functor >
@@ -528,7 +528,7 @@ namespace Dune
       scalarShapeFunctionSet().hessianEach( x, VectorialFunctor< Functor, VectorialType >( functor ) );
     }
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

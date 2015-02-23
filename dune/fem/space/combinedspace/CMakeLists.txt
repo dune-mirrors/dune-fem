@@ -1,3 +1,6 @@
-dune_install(combinedadaptmanager.hh combineddofstorage.hh combinedspace.hh
-             mapper.hh combineddiscretefunctionspace.hh combinedmapper.hh
-             combinedbasisfunctionset.hh adaptmanager.hh)
+dune_install( combineddiscretefunctionspace.hh combineddofstorage.hh 
+              combinedspace.hh generic.hh lagrangepointsetexporter.hh 
+              powerlocalrestrictprolong.hh powermapper.hh powerspace.hh 
+              subobjects.hh tuplemapper.hh tuplespace.hh 
+              tuplerestrictprolong.hh )
+

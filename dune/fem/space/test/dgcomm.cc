@@ -1,5 +1,5 @@
 #ifdef ALBERTAGRID
-// set dimensions to ALBERTA dimensions to avoid conflicts 
+// set dimensions to ALBERTA dimensions to avoid conflicts
 #undef GRIDDIM
 #define GRIDDIM ALBERTA_DIM
 #undef WORLDDIM
@@ -18,19 +18,18 @@ using namespace Dune;
 
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/vectorfunction.hh>
-#include <dune/fem/function/attachedfunction.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
-#if HAVE_GRAPE && GRIDDIM > 1 
+#if HAVE_GRAPE && GRIDDIM > 1
 #define USE_GRAPE 1
-#else 
+#else
 #define USE_GRAPE 0
 #endif
 
-#if USE_GRAPE && GRIDDIM > 1 
+#if USE_GRAPE && GRIDDIM > 1
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
@@ -38,16 +37,16 @@ using namespace Dune;
 
 using namespace Fem;
 
-// polynom approximation order of quadratures, 
-// at least poolynom order of basis functions 
+// polynom approximation order of quadratures,
+// at least poolynom order of basis functions
 const int polOrd = POLORDER;
 
-#ifndef GRIDDIM 
-#define GRIDDIM dimworld 
+#ifndef GRIDDIM
+#define GRIDDIM dimworld
 #endif
 
 //***********************************************************************
-/*! L2 Projection of a function f: 
+/*! L2 Projection of a function f:
 */
 //***********************************************************************
 
@@ -61,25 +60,24 @@ typedef DGAdaptiveLeafGridPart< MyGridType , All_Partition > GridPartType;
 // see dune/common/functionspace.hh
 // typedef MatrixFunctionSpace < double , double, GRIDDIM , 2,5 > FuncSpace;
 
-//! define the function space our unkown belong to 
+//! define the function space our unkown belong to
 //! see dune/fem/lagrangebase.hh
 typedef FunctionSpace < double , double, GRIDDIM , 5 > FuncSpace;
-typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType, 
+typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType,
   polOrd,CachingStorage> DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 //typedef ManagedDiscreteFunction< VectorDiscreteFunction< DiscreteFunctionSpaceType, DynamicVector< double > > > DiscreteFunctionType;
-//typedef AttachedDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 typedef DofManager< MyGridType > DofManagerType;
 
 typedef AdaptationManager< MyGridType, RestrictProlongDefault< DiscreteFunctionType > > AdaptationManagerType;
 
 // ***********************************************************
-// the exact solution to the problem for EOC calculation 
+// the exact solution to the problem for EOC calculation
 struct ExactSolution
-: public Fem::Function< FuncSpace, ExactSolution > 
+: public Fem::Function< FuncSpace, ExactSolution >
 {
   typedef FuncSpace::RangeType RangeType;
   typedef FuncSpace::RangeFieldType RangeFieldType;
@@ -99,14 +97,14 @@ class DGL2ProjectionAllPartitionNoComm
 {
 
  public:
-  template <class FunctionType, class DiscreteFunctionType> 
-  static void project (const FunctionType &f, DiscreteFunctionType &discFunc, 
-                       int polOrd = -1 ) 
+  template <class FunctionType, class DiscreteFunctionType>
+  static void project (const FunctionType &f, DiscreteFunctionType &discFunc,
+                       int polOrd = -1 )
   {
-    typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType 
+    typedef typename DiscreteFunctionType::Traits::DiscreteFunctionSpaceType
       FunctionSpaceType;
     typedef typename FunctionSpaceType::Traits::GridPartType GridPartType;
-    typedef typename GridPartType :: template Codim < 0 > :: 
+    typedef typename GridPartType :: template Codim < 0 > ::
       template Partition< All_Partition > :: IteratorType IteratorType;
 
     const FunctionSpaceType& space =  discFunc.space();
@@ -126,7 +124,7 @@ class DGL2ProjectionAllPartitionNoComm
     // Get quadrature rule
     CachingQuadrature<GridPartType,0> quad(*it, polOrd);
 
-    for( ; it != endit ; ++it) 
+    for( ; it != endit ; ++it)
     {
       LocalFuncType lf = discFunc.localFunction(*it);
       const typename MyGridType::template Codim<0>::Entity::Geometry &itGeom
@@ -157,12 +155,12 @@ public:
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
 
-    typedef typename GridPartType :: template Codim< 0 > :: 
+    typedef typename GridPartType :: template Codim< 0 > ::
       template Partition< All_Partition > :: IteratorType IteratorType ;
 
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
 
-    if( polOrd < 0 ) polOrd = 2*space.order() + 4 ; 
+    if( polOrd < 0 ) polOrd = 2*space.order() + 4 ;
 
     RangeType ret (0.0);
     RangeType phi (0.0);
@@ -205,10 +203,10 @@ void resetNonInterior( DiscreteFunctionType &solution )
   IteratorType endit = space.gridPart().end< 0, All_Partition > ();
 
   int count = 0;
-  for( ; it != endit; ++ it ) 
+  for( ; it != endit; ++ it )
   {
     const EntityType& entity = * it ;
-    if( entity.partitionType() != InteriorEntity ) 
+    if( entity.partitionType() != InteriorEntity )
     {
       ++count ;
       solution.localFunction( entity ).clear();
@@ -216,69 +214,69 @@ void resetNonInterior( DiscreteFunctionType &solution )
   }
 
   std::cout << "P[" << space.gridPart().comm().rank() << "]  reset " << count << " entities "  << std::endl;
-            
+
 }
- 
+
 // ********************************************************************
 double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, int turn )
 {
-  ExactSolution f; 
+  ExactSolution f;
   L2ErrorNoComm< DiscreteFunctionType > l2err;
   solution.clear();
 
   DGL2ProjectionAllPartitionNoComm :: project( f, solution );
   double new_error = l2err.norm(f ,solution);
-  std::cout << "P[" << grid.comm().rank() << "]  start comm: " << new_error << std::endl; 
+  std::cout << "P[" << grid.comm().rank() << "]  start comm: " << new_error << std::endl;
 
-  // reset all non-interior entities, 
+  // reset all non-interior entities,
   // these should be restored during communication
   resetNonInterior( solution );
 
-  // do communication 
-  solution.communicate(); 
+  // do communication
+  solution.communicate();
 
-  // calculate l2 error again 
+  // calculate l2 error again
   double error = l2err.norm(f ,solution);
   std::cout << "P[" << grid.comm().rank() << "]  done comm: " << error << std::endl;
 
-  if( std::abs( new_error - error ) > 1e-10 ) 
+  if( std::abs( new_error - error ) > 1e-10 )
     DUNE_THROW(InvalidStateException,"Communication not working correctly");
-  
+
   ///////////////////////////////////////////////////
-  //  test non-blocking communication 
+  //  test non-blocking communication
   ///////////////////////////////////////////////////
 
   typedef DiscreteFunctionType :: DiscreteFunctionSpaceType :: CommunicationManagerType
     :: NonBlockingCommunicationType  NonBlockingCommunicationType;
 
-  NonBlockingCommunicationType nonBlocking = 
+  NonBlockingCommunicationType nonBlocking =
     solution.space().communicator().nonBlockingCommunication();
 
-  // send data 
+  // send data
   nonBlocking.send( solution );
 
-  // do some work, 
-  // reset all non-interior entities, 
+  // do some work,
+  // reset all non-interior entities,
   // these should be restored during communication
   resetNonInterior( solution );
 
-  // receive data 
+  // receive data
   nonBlocking.receive( solution );
 
-  // calculate l2 error again 
+  // calculate l2 error again
   double nonBlock = l2err.norm(f ,solution);
   std::cout << "P[" << grid.comm().rank() << "]  non-blocking: " << nonBlock << std::endl;
 
-  if( std::abs( new_error - nonBlock ) > 1e-10 ) 
+  if( std::abs( new_error - nonBlock ) > 1e-10 )
     DUNE_THROW(InvalidStateException,"Communication not working correctly");
-  
+
   return error;
 }
 
 
 //**************************************************
 //
-//  main programm, run algorithm twice to calc EOC 
+//  main programm, run algorithm twice to calc EOC
 //
 //**************************************************
 int main( int argc, char *argv[] )
@@ -300,11 +298,11 @@ try {
 
   std::string paramFile( paramName );
 
-  // append parameter 
+  // append parameter
   Parameter :: append( argc , argv );
   Parameter :: append( paramFile );
 
-  int ml = 2 ; // default value = 2 
+  int ml = 2 ; // default value = 2
   //ml = Parameter :: getValue ("lagrangeadapt.maxlevel", ml);
 
   std::vector<double> error(ml);
@@ -321,10 +319,10 @@ try {
   DiscreteFunctionType solution ( "sol", space );
   for(int i=0; i<ml; ++i )
   {
-    if( grid.comm().rank() == 0) 
+    if( grid.comm().rank() == 0)
       std::cout << std::endl << "**** Start communication cycle " << i << "  ****" << std::endl;
 
-    GlobalRefine :: apply( grid, step ); 
+    GlobalRefine :: apply( grid, step );
     error[ i ] = algorithm ( grid , solution, step, (i==ml-1));
   }
   return 0;

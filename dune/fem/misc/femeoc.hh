@@ -15,18 +15,18 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
-    /**  
+    /**
         @ingroup HelperClasses
-        \brief Write a self contained tex table 
+        \brief Write a self contained tex table
         for eoc runs with timing information.
-        
+
         Constructor takes base file name for the tex file and
         generates two files:
         filename_timestamp_main.tex and filename_timestamp_body.tex or
-        without the time stamp (by default) in the name depending on 
+        without the time stamp (by default) in the name depending on
         the parameter fem.io.eocFileTimeStamp.
         A time stamp is added to the base file name to prevent the
         overwriting of a valuable eoc data from the previous simulation.
@@ -99,7 +99,7 @@ namespace Dune
         if( MPIManager::rank() != 0 )
           return;
 
-        std::string name = filename; 
+        std::string name = filename;
 
         // add time stamp to file name, if requested (prevents results from being overwritten)
         if( Parameter::getValue< bool >( "fem.io.eocFileTimeStamp", false ) )
@@ -118,7 +118,7 @@ namespace Dune
 
           if (!main) {
             std::cerr << "Could not open file : "
-                      << (name+"_main.tex").c_str() 
+                      << (name+"_main.tex").c_str()
                       << " ... ABORTING" << std::endl;
             abort();
           }
@@ -141,9 +141,9 @@ namespace Dune
                << filename_
                << "}\n\n"
                << "\\end{document}\n" << std::endl;
-          main.close();	
-        } 
-        else 
+          main.close();
+        }
+        else
         {
           std::cerr << "Could not open file : "
                     << " already opened!"
@@ -153,7 +153,7 @@ namespace Dune
       }
 
       template <class StrVectorType>
-      size_t addentry(const StrVectorType& descript,size_t size) 
+      size_t addentry(const StrVectorType& descript,size_t size)
       {
         if( tableWriter_ )
         {
@@ -165,7 +165,7 @@ namespace Dune
         pos_.push_back(error_.size());
         for (size_t i=0;i<size;++i) {
           error_.push_back(0);
-          description_.push_back(descript[i]);  
+          description_.push_back(descript[i]);
         }
         return pos_.size()-1;
       }
@@ -181,12 +181,12 @@ namespace Dune
         }
         pos_.push_back(error_.size());
         error_.push_back(0);
-        description_.push_back(descript);  
+        description_.push_back(descript);
         return pos_.size()-1;
       }
 
       template <class VectorType>
-      void seterrors(size_t id,const VectorType& err,size_t size) 
+      void seterrors(size_t id,const VectorType& err,size_t size)
       {
         assert(id<pos_.size());
         int pos = pos_[ id ];
@@ -197,11 +197,11 @@ namespace Dune
       }
 
       template <int SIZE>
-      void seterrors(size_t id,const FieldVector<double,SIZE>& err) 
+      void seterrors(size_t id,const FieldVector<double,SIZE>& err)
       {
         seterrors(id,err,SIZE);
       }
-      
+
       void seterrors(size_t id,const double& err) {
         int pos = pos_[id];
         error_[pos] = err;
@@ -213,15 +213,15 @@ namespace Dune
         const int newton_iterations, const int ils_iterations,
         const int max_newton_iterations, const int max_ils_iterations);
 
-      // do the same calculations as in write, but don't overwrite status 
-      void printerr(const double h, 
-                    const double size, 
-                    const double time, 
+      // do the same calculations as in write, but don't overwrite status
+      void printerr(const double h,
+                    const double size,
+                    const double time,
                     const int counter,
                     std::ostream& out);
-      void printerr(const double h, 
-                    const double size, 
-                    const double time, 
+      void printerr(const double h,
+                    const double size,
+                    const double time,
                     const int counter,
                     const double avgTimeStep,
                     const double minTimeStep,
@@ -249,55 +249,55 @@ namespace Dune
       static void initialize(const std::string& name, const std::string& descript) {
         instance().init(name,descript);
       }
-      /** \brief add a vector of new eoc values  
+      /** \brief add a vector of new eoc values
        *
-       *  \tparam  StrVectorType a vector type with operator[] 
+       *  \tparam  StrVectorType a vector type with operator[]
        *           returning a string (a C style array can be used)
        *           the size of the vector is given as parameter
-       *  \return  a unique index used to add the error values 
+       *  \return  a unique index used to add the error values
        */
       template <class StrVectorType>
       static size_t addEntry(const StrVectorType& descript,size_t size) {
         return instance().addentry(descript,size);
       }
-      /** \brief add a vector of new eoc values  
+      /** \brief add a vector of new eoc values
        *
        *  \tparam  StrVectorType a vector type with size() and operator[]
        *           returning a string
-       *  \return  a unique index used to add the error values 
+       *  \return  a unique index used to add the error values
        */
       template <class StrVectorType>
       static size_t addEntry(const StrVectorType& descript) {
         return instance().addentry(descript,descript.size());
       }
-      /** \brief add a single new eoc output  
+      /** \brief add a single new eoc output
        *
-       *  \return  a unique index used to add the error values 
+       *  \return  a unique index used to add the error values
        */
       static size_t addEntry(const std::string& descript) {
         return instance().addentry(descript);
       }
-      /** \brief add a single new eoc output  
+      /** \brief add a single new eoc output
        *
-       *  \return  a unique index used to add the error values 
+       *  \return  a unique index used to add the error values
        */
       static size_t addEntry(const char* descript) {
         return addEntry(std::string(descript));
       }
       /** \brief add a vector of error values for the given id (returned by
        *         addEntry)
-       *  \tparam  VectorType a vector type with an operator[] 
+       *  \tparam  VectorType a vector type with an operator[]
        *           returning a double (C style array can be used)
        */
       template <class VectorType>
-      static void setErrors(size_t id,const VectorType& err,int size) 
+      static void setErrors(size_t id,const VectorType& err,int size)
       {
         instance().seterrors(id,err,size);
       }
       /** \brief add a vector of error values for the given id (returned by
        *         addEntry)
-       *  \tparam  VectorType a vector type with a size() and an operator[] 
-       *           returning a double 
+       *  \tparam  VectorType a vector type with a size() and an operator[]
+       *           returning a double
        */
       template <class VectorType>
       static void setErrors(size_t id,const VectorType& err) {
@@ -316,40 +316,40 @@ namespace Dune
       static void setErrors(size_t id,const double& err) {
         instance().seterrors(id,err);
       }
-      /** \brief commit a line to the eoc file 
+      /** \brief commit a line to the eoc file
        *
        *  \param h grid width (e.g. given by GridWith utitlity class)
        *  \param size number of elements in the grid or number of dofs...
        *  \param time computational time
        *  \param counter number of timesteps or iterations for a solver...
        */
-      static void write(double h,double size,double time,int counter) 
+      static void write(double h,double size,double time,int counter)
       {
         instance().writeerr(h,size,time,counter);
       }
 
-      /** \brief commit a line to the eoc file 
+      /** \brief commit a line to the eoc file
        *
        *  \param h grid width (e.g. given by GridWith utitlity class)
        *  \param size number of elements in the grid or number of dofs...
        *  \param time computational time
        *  \param counter number of timesteps or iterations for a solver...
-       *  \param out std::ostream to print data to (e.g. std::cout) 
+       *  \param out std::ostream to print data to (e.g. std::cout)
        */
       static void write(const double h,
                         const double size,
-                        const double time, 
+                        const double time,
                         const int counter,
-                        std::ostream& out) 
+                        std::ostream& out)
       {
-        // print last line to out 
+        // print last line to out
         instance().printerr( h, size, time, counter, out );
 
-        // now write to file 
+        // now write to file
         instance().writeerr(h,size,time,counter);
       }
 
-      /** \brief commit a line to the eoc file 
+      /** \brief commit a line to the eoc file
        *
        *  \param  h                      grid width (e.g. given by GridWith utility class)
        *  \param  size                   number of grid elements
@@ -365,7 +365,7 @@ namespace Dune
        */
       static void write(const double h,
                         const double size,
-                        const double time, 
+                        const double time,
                         const int counter,
                         const double avgTimeStep,
                         const double minTimeStep,
@@ -375,7 +375,7 @@ namespace Dune
                         const int max_newton_iterations,
                         const int max_ils_iterations)
       {
-        // now write to file 
+        // now write to file
         instance().writeerr(h,size,time,counter,avgTimeStep,minTimeStep,
                             maxTimeStep,newton_iterations,ils_iterations,
           max_newton_iterations, max_ils_iterations);
@@ -383,7 +383,7 @@ namespace Dune
 
       static void write(const double h,
                         const double size,
-                        const double time, 
+                        const double time,
                         const int counter,
                         const double avgTimeStep,
                         const double minTimeStep,
@@ -392,14 +392,14 @@ namespace Dune
                         const int ils_iterations,
                         const int max_newton_iterations,
                         const int max_ils_iterations,
-                        std::ostream& out) 
+                        std::ostream& out)
       {
-        // print last line to out 
-        instance().printerr( h, size, time, counter, avgTimeStep, minTimeStep, 
-                             maxTimeStep, newton_iterations, ils_iterations, 
+        // print last line to out
+        instance().printerr( h, size, time, counter, avgTimeStep, minTimeStep,
+                             maxTimeStep, newton_iterations, ils_iterations,
            max_newton_iterations, max_ils_iterations, out );
 
-        // now write to file 
+        // now write to file
         instance().writeerr(h,size,time,counter,avgTimeStep,minTimeStep,
                             maxTimeStep,newton_iterations,ils_iterations,
           max_newton_iterations, max_ils_iterations);
@@ -425,7 +425,7 @@ namespace Dune
       }
 
       std::string header () const { return header_; }
-      
+
     protected:
       double error ( const FemEoc::DataTuple &data ) const
       {
@@ -572,11 +572,11 @@ namespace Dune
 
 
     inline void FemEoc
-      ::printerr(const double h, 
-                  const double size, 
-                  const double time, 
+      ::printerr(const double h,
+                  const double size,
+                  const double time,
                   const int counter,
-                  std::ostream& out) 
+                  std::ostream& out)
     {
       if (!Parameter::verbose()) return;
             out << "level:   " << level_  << std::endl;
@@ -585,7 +585,7 @@ namespace Dune
             out << "time:    " << time << " sec. " << std::endl;
             out << "counter: " << counter << std::endl;
 
-      for (unsigned int i=0;i<error_.size();++i) 
+      for (unsigned int i=0;i<error_.size();++i)
       {
         out << description_[i] << ":       " << error_[i] << std::endl;
         if( tableWriter_ )
@@ -598,9 +598,9 @@ namespace Dune
     }
 
     inline void FemEoc
-      ::printerr(const double h, 
-                  const double size, 
-                  const double time, 
+      ::printerr(const double h,
+                  const double size,
+                  const double time,
                   const int counter,
                   const double avgTimeStep,
                   const double minTimeStep,
@@ -609,7 +609,7 @@ namespace Dune
                   const int ils_iterations,
                   const int max_newton_iterations,
                   const int max_ils_iterations,
-                  std::ostream& out) 
+                  std::ostream& out)
     {
       if (!Parameter::verbose()) return;
             out << "level:   " << level_  << std::endl;
@@ -625,7 +625,7 @@ namespace Dune
             out << "max{Newton/dt}: " << max_newton_iterations << std::endl;
             out << "max{ILS/linS}: " << max_ils_iterations << std::endl;
 
-      for (unsigned int i=0;i<error_.size();++i) 
+      for (unsigned int i=0;i<error_.size();++i)
       {
         out << description_[i] << ":       " << error_[i] << std::endl;
         if( tableWriter_ )
@@ -637,7 +637,7 @@ namespace Dune
       }
     }
 
-  } // end namespace Fem 
+  } // end namespace Fem
 
 } // end namespace Dune
 

@@ -38,7 +38,7 @@ namespace Dune
         phi = 1;
         for(int r = 0; r < RangeType :: dimension; ++r )
           for( int i = 0; i < DomainType :: dimension; ++i )
-            phi[ r ] += pow(sin( M_PI * x[ i ] ),double(r+1)); 
+            phi[ r ] += pow(sin( M_PI * x[ i ] ),double(r+1));
       }
 
       void evaluate( const DomainType &x, RangeFieldType t, RangeType &phi ) const
@@ -49,7 +49,7 @@ namespace Dune
       void jacobian( const DomainType &x, JacobianRangeType &Dphi ) const
       {
         Dphi = 1;
-        for (int r = 0; r < RangeType :: dimension; ++r) 
+        for (int r = 0; r < RangeType :: dimension; ++r)
           for( int i = 0; i < DomainType :: dimension; ++i )
             for( int j = 0; j < DomainType :: dimension; ++j )
               Dphi[ r ][ j ] += double(r+1)*pow(sin( M_PI * x[ i ] ),double(r))*
@@ -63,7 +63,7 @@ namespace Dune
 
       void hessian( const DomainType &x, HessianRangeType &H ) const
       {
-        for (int r = 0; r < RangeType :: dimension; ++r) 
+        for (int r = 0; r < RangeType :: dimension; ++r)
         {
           H[ r ] = RangeFieldType ( 0 );
           for( int i = 0; i < DomainType :: dimension; ++i )
@@ -84,5 +84,5 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
-  
+
 #endif // #ifndef DUNE_FEM_TEST_EXACTSOLUTION_HH

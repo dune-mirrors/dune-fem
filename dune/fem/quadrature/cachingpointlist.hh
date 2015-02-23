@@ -19,14 +19,14 @@ namespace Dune
     /** \class CachingInterface
      *  \brief interface a cachable quadrature has to implement
      */
-    class CachingInterface 
+    class CachingInterface
     {
     protected:
       // do not create instances of this class
       CachingInterface ()
       {
       }
-      
+
     public:
       /** \brief map quadrature points to caching points
        *
@@ -57,7 +57,7 @@ namespace Dune
      *  codim-0 reference element. Consider, for instance, a quadrature for one
      *  of the faces of a tetrahedron: It provides n local quadrature points, which
      *  can lie on one of the four faces, resulting in 4*n global quadrature points.
-     *  
+     *
      *  The information from the mapping can be used to cache a base function on
      *  those global quadrature points.
      *
@@ -73,8 +73,8 @@ namespace Dune
     template< class GridPartImp, int codim, class IntegrationTraits >
     class CachingPointList;
 
-    
-    
+
+
     /** \copydoc CachingPointList */
     template< class GridPartImp, class IntegrationTraits >
     class CachingPointList< GridPartImp, 0, IntegrationTraits >
@@ -91,9 +91,9 @@ namespace Dune
       //! The type of the coordinates in the codim-0 reference element.
       typedef typename Base::CoordinateType CoordinateType;
 
-      //! the type of the quadrature point 
+      //! the type of the quadrature point
       typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
-      
+
     protected:
       using Base::quadImp;
 
@@ -125,13 +125,13 @@ namespace Dune
         return quadraturePoint;
       }
     };
-   
+
 
 
     /** \copydoc CachingPointList */
     template< typename GridPartImp, class IntegrationTraits >
     class CachingPointList< GridPartImp, 1, IntegrationTraits >
-    : public ElementPointListBase< GridPartImp, 1, IntegrationTraits >, 
+    : public ElementPointListBase< GridPartImp, 1, IntegrationTraits >,
       public CachingInterface
     {
       typedef CachingPointList< GridPartImp, 1, IntegrationTraits > This;
@@ -147,16 +147,16 @@ namespace Dune
 
       //! Type of coordinates in codim-0 reference element
       typedef typename Base::CoordinateType CoordinateType;
-      
+
       //! Type of the intersection iterator
       typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
       typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
 
-      //! type of quadrature used for non-conforming intersections  
+      //! type of quadrature used for non-conforming intersections
       typedef ElementIntegrationPointList< GridPartType, codimension, IntegrationTraits >
-        NonConformingQuadratureType; 
+        NonConformingQuadratureType;
 
 
       // for compatibility
@@ -183,11 +183,11 @@ namespace Dune
        *  \note The CachingPointList requires the grid part to get twist
        *        information for TwistUtility (see also
        *        ElementIntegrationPointList<GridPartImp,1>).
-       * 
+       *
        *  \param[in]  gridPart      grid partition
        *  \param[in]  intersection  intersection
        *  \param[in]  order         desired order of the quadrature
-       *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for 
+       *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for
        *                            which the ElementQuadrature shall be created
        */
       CachingPointList ( const GridPartType &gridPart,
@@ -218,9 +218,9 @@ namespace Dune
         return mapper_[ quadraturePoint ];
       }
 
-      // return local caching point 
-      // for debugging issues only 
-      size_t localCachingPoint ( const size_t i ) const 
+      // return local caching point
+      // for debugging issues only
+      size_t localCachingPoint ( const size_t i ) const
       {
         assert( i < (size_t)nop() );
 
@@ -235,7 +235,7 @@ namespace Dune
     protected:
       Base getPointList ( const GridPartType &gridPart,
                           const IntersectionType &intersection,
-                          const int order, 
+                          const int order,
                           const typename Base :: Side side )
       {
         switch( side )

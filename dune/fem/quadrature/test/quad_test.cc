@@ -6,25 +6,45 @@
 namespace Dune {
   namespace Fem {
 
+  namespace {
+    static void doTest( const double& a, const double& b )
+    {
+      if( std::abs( a - b ) > 1e-12 )
+      {
+        assert( false );
+        std::abort();
+      }
+    }
+
+    static void doTest( const bool value )
+    {
+      if( ! value )
+      {
+        assert( false );
+        std::abort();
+      }
+    }
+  }
+
   void Quad_Test::run() {
-    
-    // 1d types 
+
+    // 1d types
     GeometryType line ( GeometryType::cube, 1);
     GeometryType cube1 = line;
     GeometryType simplex1 = line;
 
 
-    // 2d types 
+    // 2d types
     GeometryType quadrilateral ( GeometryType::cube, 2);
     GeometryType cube2 = quadrilateral;
     GeometryType triangle ( GeometryType::simplex, 2);
-    GeometryType simplex2 = triangle; 
+    GeometryType simplex2 = triangle;
 
-    // 3d types 
+    // 3d types
     GeometryType hexahedron ( GeometryType::cube, 3);
     GeometryType cube3 = hexahedron;
     GeometryType tetrahedron ( GeometryType::simplex, 3);
-    GeometryType simplex3 = tetrahedron; 
+    GeometryType simplex3 = tetrahedron;
     GeometryType prism ( GeometryType::prism, 3);
     GeometryType pyramid ( GeometryType::pyramid, 3);
 
@@ -75,7 +95,7 @@ namespace Dune {
     FixedOrderQuad<double, Coord3, 7> fixedSimplex3d7(simplex);
 
     //- Test fixed order for simplex
-    #ifndef HAVE_ALBERTA 
+    #ifndef HAVE_ALBERTA
     // if Alberta is present, the new quadratures use the Alberta quadratures
     // while the old ones stick to the UG quadratures
     fixedOrderComparisonExec(quadSimplex2d1, fixedSimplex2d1);
@@ -125,7 +145,7 @@ namespace Dune {
     sameGeometryExec(quadCube3d1, quadHexa3d1);
     sameGeometryExec(quadSimplex1d1, quadLine1d1);
     sameGeometryExec(quadSimplex2d1, quadTriangle2d1);
-    sameGeometryExec(quadSimplex3d1, quadTetra3d1);    
+    sameGeometryExec(quadSimplex3d1, quadTetra3d1);
 
     //- Test order
     orderExec(quadCube1d1, 1);
@@ -150,41 +170,41 @@ namespace Dune {
     indicesTest();
 
     std::set<int> ids;
-    _test(ids.insert(quadCube1d1.id()).second);
-    _test(ids.insert(quadLine1d3.id()).second);
-    _test(ids.insert(quadLine1d10.id()).second);
-    _test(ids.insert(quadCube2d1.id()).second);
-    _test(ids.insert(quadCube2d3.id()).second);
-    _test(ids.insert(quadCube2d9.id()).second);
-    _test(ids.insert(quadSimplex2d1.id()).second);
-    _test(ids.insert(quadSimplex2d4.id()).second);
-    _test(ids.insert(quadSimplex2d11.id()).second);
-    _test(ids.insert(quadCube3d1.id()).second);
-    _test(ids.insert(quadCube3d2.id()).second);
-    _test(ids.insert(quadCube3d11.id()).second);
-    _test(ids.insert(quadSimplex3d1.id()).second);
-    _test(ids.insert(quadSimplex3d4.id()).second);
-    _test(ids.insert(quadSimplex3d7.id()).second);
-    _test(ids.insert(quadPrism3d1.id()).second);
-    _test(ids.insert(quadPyramid3d1.id()).second);
+    doTest(ids.insert(quadCube1d1.id()).second);
+    doTest(ids.insert(quadLine1d3.id()).second);
+    doTest(ids.insert(quadLine1d10.id()).second);
+    doTest(ids.insert(quadCube2d1.id()).second);
+    doTest(ids.insert(quadCube2d3.id()).second);
+    doTest(ids.insert(quadCube2d9.id()).second);
+    doTest(ids.insert(quadSimplex2d1.id()).second);
+    doTest(ids.insert(quadSimplex2d4.id()).second);
+    doTest(ids.insert(quadSimplex2d11.id()).second);
+    doTest(ids.insert(quadCube3d1.id()).second);
+    doTest(ids.insert(quadCube3d2.id()).second);
+    doTest(ids.insert(quadCube3d11.id()).second);
+    doTest(ids.insert(quadSimplex3d1.id()).second);
+    doTest(ids.insert(quadSimplex3d4.id()).second);
+    doTest(ids.insert(quadSimplex3d7.id()).second);
+    doTest(ids.insert(quadPrism3d1.id()).second);
+    doTest(ids.insert(quadPyramid3d1.id()).second);
 
   }
 
   template <class Quad, class Fixed>
-  void Quad_Test::fixedOrderComparisonExec(Quad& quad, Fixed& fixed) 
+  void Quad_Test::fixedOrderComparisonExec(Quad& quad, Fixed& fixed)
   {
     for (int i = 0; i < quad.nop(); ++i) {
       for (int j = 0; j < Quad::dimension; ++j) {
-        _floatTest(quad.point(i)[j], fixed.point(i)[j]);
+        doTest(quad.point(i)[j], fixed.point(i)[j]);
       }
-      _floatTest(quad.weight(i), fixed.weight(i));
+      doTest(quad.weight(i), fixed.weight(i));
     }
   }
 
   template <class Quad>
-  void Quad_Test::weightSummationExec(Quad& quad) 
+  void Quad_Test::weightSummationExec(Quad& quad)
   {
-    double sum = 0.;  
+    double sum = 0.;
     for (int i = 0; i < quad.nop(); ++i) {
       sum += quad.weight(i);
     }
@@ -192,29 +212,29 @@ namespace Dune {
     const GeometryType geom = quad.geometry();
     if ( geom.isCube())
     {
-      _floatTest(sum, 1.0);
+      doTest(sum, 1.0);
     }
     else if ( geom.isSimplex())
     {
       switch(Quad::dimension) {
       case 1:
-        _floatTest(sum, 1.0);
+        doTest(sum, 1.0);
         break;
       case 2:
-        _floatTest(sum, 0.5);
+        doTest(sum, 0.5);
         break;
       case 3:
-        _floatTestTol(sum, 0.16666666666666666667, 1e-04);
+        doTestTol(sum, 0.16666666666666666667, 1e-04);
         break;
       }
     }
     else if( geom.isPrism() )
     {
-      _floatTest(sum, 0.5);
+      doTest(sum, 0.5);
     }
-    else if ( geom.isPyramid() ) 
+    else if ( geom.isPyramid() )
     {
-      _floatTestTol(sum, 0.3333333333333333, 1e-04);
+      doTestTol(sum, 0.3333333333333333, 1e-04);
     }
     else
     {
@@ -223,33 +243,33 @@ namespace Dune {
   }
 
   template <class Quad>
-  void Quad_Test::integrationExec(Quad& quad) 
+  void Quad_Test::integrationExec(Quad& quad)
   {
     Func f;
     double result = 0.;
     for (int i = 0; i < quad.nop(); ++i) {
-      result += f(quad.point(i))*quad.weight(i); 
+      result += f(quad.point(i))*quad.weight(i);
     }
-    
+
     switch (Quad::dimension) {
     case 1:
-      _floatTest(result, -0.25);
+      doTest(result, -0.25);
       break;
     case 2:
       if (quad.geometry().isCube() ) {
-        _floatTest(result, -0.2708333333);
-      } 
+        doTest(result, -0.2708333333);
+      }
       else {
-        _floatTest(result, -0.0333333333);
-      } 
+        doTest(result, -0.0333333333);
+      }
       break;
     case 3:
       if (quad.geometry().isCube()) {
-        _floatTest(result, -0.03854166666);
-      } 
+        doTest(result, -0.03854166666);
+      }
       else {
-        _floatTestTol(result, -0.00551388888, 1e-05);
-      } 
+        doTestTol(result, -0.00551388888, 1e-05);
+      }
       break;
     default:
       _fail("should not get here");
@@ -257,18 +277,18 @@ namespace Dune {
   }
 
   template <class Quad>
-  void Quad_Test::orderExec(Quad& quad, int order) 
+  void Quad_Test::orderExec(Quad& quad, int order)
   {
-    _test(quad.order() >= order);
-  }
-  
-  template <class Quad>
-  void Quad_Test::sameGeometryExec(Quad& quad1, Quad& quad2) 
-  {
-    _test(quad1.id() == quad2.id());
+    doTest(quad.order() >= order);
   }
 
-  void Quad_Test::indicesTest() 
+  template <class Quad>
+  void Quad_Test::sameGeometryExec(Quad& quad1, Quad& quad2)
+  {
+    doTest(quad1.id() == quad2.id());
+  }
+
+  void Quad_Test::indicesTest()
   {
     const GeometryType line ( GeometryType::cube, 1 );
     size_t id;
@@ -277,7 +297,7 @@ namespace Dune {
       id = quadTemp.id();
     }
     Quadrature<double, 1> quadTemp(line, 5);
-    _test(quadTemp.id() == id);
+    doTest(quadTemp.id() == id);
   }
   } // end namespace Fem
 } // end namespace Dune

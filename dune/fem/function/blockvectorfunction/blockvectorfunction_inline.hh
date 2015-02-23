@@ -93,8 +93,6 @@ namespace Dune
     inline void ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
     ::print ( std::ostream &out ) const
     {
-      out << "ISTLBlockVectorDiscreteFunction '" << name() << "'" << std::endl;
-
       const ConstDofIteratorType end = dend();
       for( ConstDofIteratorType dit = dbegin(); dit != end; ++dit )
         out << (*dit) << std::endl;

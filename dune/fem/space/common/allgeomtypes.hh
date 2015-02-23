@@ -1,11 +1,11 @@
 #ifndef DUNE_FEM_ALLGEOMTYPES_HH
 #define DUNE_FEM_ALLGEOMTYPES_HH
 
-//- system includes 
+//- system includes
 #include <vector>
 #include <map>
 
-//- Dune includes 
+//- Dune includes
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 #include <dune/grid/common/capabilities.hh>
@@ -16,70 +16,67 @@ namespace Dune
   // External Forward Declarations
   // -----------------------------
 
-  template< int dim >
-  class UGGrid;
-
   namespace Fem
   {
 
     // GeometryInformation
     // -------------------
 
-    /**  \brief ReferenceVolume and local bary center keeper class. 
+    /**  \brief ReferenceVolume and local bary center keeper class.
      */
     template< class GridImp, int codim >
-    class GeometryInformation  
+    class GeometryInformation
     {
       typedef GeometryInformation< GridImp, codim > ThisType;
 
     public:
-      //! grid type 
+      //! grid type
       typedef GridImp GridType;
 
-      //! dimension 
+      //! dimension
       static const int dim = GridType::dimension - codim;
 
-      //! coordinate type 
+      //! coordinate type
       typedef typename GridType::ctype ctype;
 
-      //! type of reference element 
-      typedef Dune::ReferenceElement< ctype, dim > ReferenceElementType; 
+      //! type of reference element
+      typedef Dune::ReferenceElement< ctype, dim > ReferenceElementType;
 
-      //! type of domain vector 
+      //! type of domain vector
       typedef FieldVector<ctype, dim> DomainType;
 
     protected:
-      //! constructor creating empty geometry information 
+      //! constructor creating empty geometry information
       GeometryInformation ()
       {}
 
     public:
-      //! creating geometry information due to given geometry types list 
+      //! creating geometry information due to given geometry types list
       explicit GeometryInformation( const std::vector< GeometryType > &geomTypes )
       {
         buildMaps( geomTypes );
       }
 
-      //! return local bary center for geometry of type type 
-      const DomainType &localCenter ( const GeometryType &type ) const 
+      //! return local bary center for geometry of type type
+      const DomainType &localCenter ( const GeometryType &type ) const
       {
         return referenceElement( type ).position( 0, 0 );
       }
 
-      //! return volume of reference element for geometry of type type 
+      //! return volume of reference element for geometry of type type
       double referenceVolume ( const GeometryType &type ) const
       {
         return referenceElement( type ).volume();
       }
 
-      //! return reference element for type 
+      //! return reference element for type
       static const ReferenceElementType &referenceElement ( const GeometryType &type )
       {
         return Dune::ReferenceElements< ctype, dim >::general( type );
       }
 
-    protected:  
-      //! build maps 
+    protected:
+      //! build maps
       void buildMaps ( const std::vector< GeometryType > &geomTypes )
       {}
     };
@@ -89,31 +86,59 @@ namespace Dune
          set. Used in DiscreteFunctionSpaces.
      */
     template< class IndexSetImp, class GridImp >
-    class AllGeomTypes : public GeometryInformation< GridImp , 0> 
+    class AllGeomTypes : public GeometryInformation< GridImp , 0>
     {
     public:
       typedef IndexSetImp IndexSetType;
-      typedef GridImp GridType;
+      typedef GridImp     GridType;
 
     private:
       typedef AllGeomTypes< IndexSetType, GridType > ThisType;
       static const unsigned int ncodim = GridType :: dimension + 1;
 
     protected:
-      std::vector< GeometryType > geomTypes_[ ncodim ];
-      
+      std::vector< std::vector< GeometryType > > geomTypes_;
+
     public:
-      //! constructor storing index set reference 
-      inline explicit AllGeomTypes( const IndexSetType &indexSet )
+      // insert all types of the reference element into the geomTypes list
+      template <int dim>
+      struct InsertGeometryTypes
       {
-        for( int codim=0; codim<GridType::dimension+1; ++codim )
+        static void apply( std::vector< std::vector< GeometryType > >& geomTypes )
         {
-          typename IndexSetType::Types types = indexSet.types( codim );
-          const int size = types.size();
-          geomTypes_[ codim ].resize( size );
-          std::copy_n( types.begin(), size, geomTypes_[ codim ].begin() );
+          static const int codim = GridType :: dimension - dim ;
+          typedef Dune::ReferenceElements< typename GridType :: ctype, dim > ReferenceElementContainer ;
+          typedef typename ReferenceElementContainer :: Iterator Iterator ;
+          for( Iterator it = ReferenceElementContainer::begin(),
+                       end = ReferenceElementContainer::end(); it != end; ++it )
+          {
+            geomTypes[ codim ].push_back( it->type() );
+          }
         }
-        this->buildMaps( geomTypes_[ 0 ] );
+      };
+
+      //! constructor storing index set reference
+      inline explicit AllGeomTypes( const IndexSetType &indexSet )
+        : geomTypes_( ncodim )
+      {
+        if( multipleGeomTypes() )
+        {
+          // store all possible geom types
+          ForLoop< InsertGeometryTypes, 0, GridType::dimension > :: apply( geomTypes_ );
+        }
+        else
+        {
+          // single geometry type
+          for( int codim=0; codim<GridType::dimension+1; ++codim )
+          {
+            typename IndexSetType::Types types = indexSet.types( codim );
+            const int size = types.size();
+            geomTypes_[ codim ].resize( size );
+            std::copy_n( types.begin(), size, geomTypes_[ codim ].begin() );
+          }
+          // build geometry information for codim 0
+          this->buildMaps( geomTypes_[ 0 ] );
+        }
       }
 
       //! returns vector with geometry tpyes this index set has indices for
@@ -123,85 +148,10 @@ namespace Dune
         return geomTypes_[ codim ];
       }
 
-      //! UGGrid might have different geom types 
+      //! UGGrid might have different geom types
       static bool multipleGeomTypes ()
       {
-        assert( Dune::Capabilities :: hasSingleGeometryType < GridType > :: v );
-        return false;
-      }
-    };
-
-
-    /** \brief specialisation fir UGGrid, because geomTypes method of index
-        sets not usable in this case. 
-    */
-    template< class IndexSetImp, int dim >
-    class AllGeomTypes< IndexSetImp, Dune::UGGrid< dim > > 
-    : public GeometryInformation< Dune::UGGrid< dim > , 0 > 
-    {
-      typedef AllGeomTypes< IndexSetImp, Dune::UGGrid< dim > > ThisType;
-
-      static_assert( (dim == 2) || (dim == 3), "Invalid dimension for UG specified." );
-
-    public:
-      typedef IndexSetImp IndexSetType;
-      typedef Dune::UGGrid< dim > GridType;
-     
-    protected:
-      static const unsigned int ncodim = dim + 1 ;
-      
-      std::vector< GeometryType > geomTypes_[ ncodim ];
-
-    public:
-      //! constructor storing index set reference 
-      explicit AllGeomTypes ( const IndexSetType &indexSet )
-      {
-        // vertices 
-        for (int i=0;i<dim;++i)
-          geomTypes_[ i ].push_back( GeometryType( GeometryType::simplex, dim-i ) );
-
-        if ( ! ( indexSet.geomTypes(0).size() == 1 && 
-                 indexSet.geomTypes(0)[0].isSimplex() ) )
-        {
-          if( dim == 2 )
-          {
-            // elements 
-            // geomTypes_[ 0 ].push_back( GeometryType( GeometryType::simplex, 2 ) );
-            geomTypes_[ 0 ].push_back( GeometryType( GeometryType::cube, 2 ) );
-
-            // faces 
-            // geomTypes_[ 1 ].push_back( GeometryType( GeometryType::cube, 1 ) );
-          }
-          else if( dim == 3 )
-          {
-            // elements 
-            // geomTypes_[ 0 ].push_back( GeometryType( GeometryType::simplex, 3 ) );
-            geomTypes_[ 0 ].push_back( GeometryType( GeometryType::cube, 3 ) );
-            geomTypes_[ 0 ].push_back( GeometryType( GeometryType::prism, 3 ) );
-            geomTypes_[ 0 ].push_back( GeometryType( GeometryType::pyramid, 3 ) );
-
-            // faces 
-            // geomTypes_[ 1 ].push_back( GeometryType( GeometryType::simplex, 2 ) );
-            geomTypes_[ 1 ].push_back( GeometryType( GeometryType::cube, 2 ) );
-
-            // edges 
-            // geomTypes_[ 2 ].push_back( GeometryType( GeometryType::cube, 1 ) );
-          }
-        }
-        this->buildMaps( geomTypes_[ 0 ] );
-      }                  
-      
-      //! returns vector with geometry types this index set has indices for
-      const std::vector< GeometryType > &geomTypes ( int codim ) const
-      {
-        assert( (codim >= 0) && (codim < ncodim) );
-        return geomTypes_[ codim ];
-      }
-
-      //! UGGrid might have different geom types 
-      static bool multipleGeomTypes ()
-      {
-        return true;
+        return !Dune::Capabilities :: hasSingleGeometryType < GridType > :: v;
       }
     };
 

@@ -6,8 +6,13 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/stdstreams.hh>
 
+// disable copyiable entity / intersection feature until entities and intersections are copyable
+#ifndef DUNE_GRID_CHECK_USE_DEPRECATED_ENTITY_AND_INTERSECTION_INTERFACE
+#define DUNE_GRID_CHECK_USE_DEPRECATED_ENTITY_AND_INTERSECTION_INTERFACE 1
+#endif
+
 //- dune-grid includes
-#include <dune/grid/test/checkgeometry.cc>
+#include <dune/grid/test/checkgeometry.hh>
 
 //- dune-fem includes
 #include <dune/fem/gridpart/common/capabilities.hh>
@@ -17,7 +22,7 @@
 /** \brief Check geometries for all entities in the
  *         grid part. The tests are implemented in
  *         \code
-<dune/grid/test/checkgeometry.cc>         
+<dune/grid/test/checkgeometry.cc>
  *         \endcode
  *         Thus, failure handlers passed to this test
  *         will be ignored.

@@ -11,13 +11,13 @@ namespace Dune
   namespace Fem
   {
 
-    /** @addtogroup DofMapper  
+    /** @addtogroup DofMapper
 
         Dof Mapper are special implementations to provide the mapToGlobal
         feature of the spaces. Furthermore, during adaptation the mapper
-        provide information about holes in the data vectors. 
+        provide information about holes in the data vectors.
 
-        \remarks 
+        \remarks
         The DofMapper interface is described by the class
         DofMapper.
 
@@ -26,15 +26,15 @@ namespace Dune
 
     //-------------------------------------------------------------------------
     //-
-    //-  --MapperInterface 
+    //-  --MapperInterface
     //-
     //-------------------------------------------------------------------------
-    /** \brief 
+    /** \brief
        Interface for calculating the size of a function space for a grid on a
        specified level.
-       Furthermore the local to global mapping of dof number is done. 
+       Furthermore the local to global mapping of dof number is done.
        Also during grid adaptation this mapper knows about old and new indices
-       of entities. 
+       of entities.
     */
     template< class DofMapperTraits >
     class DofMapper
@@ -49,7 +49,7 @@ namespace Dune
 
       //! type of the DofMapper implementation
       typedef typename Traits::DofMapperType DofMapperType;
-     
+
       //! type of codimension 0 entities
       typedef typename Traits::ElementType ElementType;
 
@@ -61,20 +61,20 @@ namespace Dune
     protected:
       using BaseType::asImp;
 
-    public: 
+    public:
       /** \brief  return number of dofs for special function space and grid on
                   specified level  */
-      SizeType size () const 
+      SizeType size () const
       {
         CHECK_INTERFACE_IMPLEMENTATION(asImp().size());
         return asImp().size();
       }
 
-      /** \brief returns true if DoFs for given codimension exist 
-        
-          \param[in]  codim   codimension to check 
-        
-          \returns true if DoFs for codimension exist 
+      /** \brief returns true if DoFs for given codimension exist
+
+          \param[in]  codim   codimension to check
+
+          \returns true if DoFs for codimension exist
        */
       bool contains ( const int codim ) const
       {
@@ -83,32 +83,32 @@ namespace Dune
       }
 
       /** \brief Check, whether the data in a codimension has fixed size */
-      bool fixedDataSize ( int codim ) const
+      bool fixedDataSize ( const int codim ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().fixedDataSize( codim ) );
         return asImp().fixedDataSize( codim );
       }
 
       /** \brief map each local DoF number to a global key
-       
+
           \param[in]  element  element, the DoFs belong to
           \param[in]  f        functor to call for each DoF
-        
+
           The functor has to be a copyable object satisfying the following
           interface:
           \code
           struct Functor
           {
-        
+
             // application operator
             template< class GlobalKey >
             void operator() ( const int localDoF, const GlobalKey &globalDoF );
           };
           \endcode
-        
+
           For each DoF to be mapped, this method will call the application operator
           once.
-          
+
           \note There is no guarantee on the order, in which the functor is applied.
           \note The global key has to be compatible with the Dof storage.
        */
@@ -119,25 +119,25 @@ namespace Dune
       }
 
       /** \brief map each local DoF number to a global key
-        
+
           \param[in]  entity   entity, the DoFs belong to
           \param[in]  f        functor to call for each DoF
-        
+
           The functor has to be a copyable object satisfying the following
           interface:
           \code
           struct Functor
           {
-        
+
             // application operator
             template< class GlobalKey >
             void operator() ( const int localDoF, const GlobalKey &globalKey );
           };
           \endcode
-        
+
           For each DoF to be mapped, this method will call the application operator
           once.
-          
+
           \note There is no guarantee on the order, in which the functor is applied.
           \note The global key has to be compatible with the Dof storage.
        */
@@ -146,7 +146,7 @@ namespace Dune
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().mapEachEntityDof( entity, f ) );
       }
-      
+
       /** \brief obtain maximal number of DoFs on one entity
        */
       int maxNumDofs () const
@@ -156,9 +156,9 @@ namespace Dune
       }
 
       /** \brief obtain number of DoFs on an entity
-       * 
+       *
           \param[in]  element  entity of codimension 0
-          
+
           \returns number of DoFs on the entity
        */
       SizeType numDofs ( const ElementType &element ) const
@@ -168,7 +168,7 @@ namespace Dune
       }
 
       /** \brief obtain number of DoFs actually belonging to an entity
-        
+
           In contrast to numDofs, this method returns the number of DoFs actually
           associated with an entity (usually a subentity). We have the following
           relation for an entity \f$E\f$ of codimension 0:
@@ -176,9 +176,9 @@ namespace Dune
           \mathrm{numDofs}( E ) = \sum_{e \subset E} \mathrm{numEntityDofs}( e ),
           \f]
           where \f$\subset\f$ denotes the subentity relation.
-         
+
           \param[in]  entity  entity of codimension
-          
+
           \returns number of DoFs on the entity
        */
       template< class Entity >
@@ -194,10 +194,10 @@ namespace Dune
 
     //-------------------------------------------------------------------------
     //-
-    //-  --AdaptiveMapperInterface 
+    //-  --AdaptiveMapperInterface
     //-
     //-------------------------------------------------------------------------
-    /** \brief 
+    /** \brief
        Extended interface for adaptive DoF mappers
     */
     template< class DofMapperTraits >
@@ -210,40 +210,40 @@ namespace Dune
       using BaseType::asImp;
 
     public:
-      //! type of size integer 
+      //! type of size integer
       typedef typename BaseType::SizeType SizeType;
 
       //! at the moment this should be similar to SizeType
       typedef SizeType GlobalKeyType;
 
       /** \brief return number of holes for data block */
-      SizeType numberOfHoles ( const int block ) const 
+      SizeType numberOfHoles ( const int block ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION(asImp().numberOfHoles(block));
-        return asImp().numberOfHoles(block); 
+        return asImp().numberOfHoles(block);
       }
-      
+
       /** \brief return old index of hole for data block (with resprect to new offset) */
-      GlobalKeyType oldIndex ( const int hole, const int block ) const 
-      { 
+      GlobalKeyType oldIndex ( const int hole, const int block ) const
+      {
         CHECK_INTERFACE_IMPLEMENTATION(asImp().oldIndex(hole,block));
-        return asImp().oldIndex(hole,block); 
+        return asImp().oldIndex(hole,block);
       }
-        
+
       /** \brief return new index of hole for data block (with resprect to new offset) */
-      GlobalKeyType newIndex ( const int hole, const int block ) const 
-      { 
+      GlobalKeyType newIndex ( const int hole, const int block ) const
+      {
         CHECK_INTERFACE_IMPLEMENTATION(asImp().newIndex(hole,block));
-        return asImp().newIndex(hole,block); 
+        return asImp().newIndex(hole,block);
       }
 
       /** \brief return true if compress will affect data */
-      bool consecutive () const 
+      bool consecutive () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().consecutive() );
         return asImp().consecutive();
       }
- 
+
       /** \brief return old offsets for given block */
       SizeType oldOffSet ( const int block ) const
       {

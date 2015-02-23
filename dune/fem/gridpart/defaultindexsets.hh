@@ -1,11 +1,11 @@
 #ifndef DUNE_FEM_DEFAULTINDEXSETS_HH
 #define DUNE_FEM_DEFAULTINDEXSETS_HH
 
-//- system includes 
+//- system includes
 #include <vector>
 #include <rpc/rpc.h>
 
-//- Dune includes 
+//- Dune includes
 #include <dune/common/typetraits.hh>
 
 #include <dune/grid/common/grid.hh>
@@ -22,11 +22,11 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
-    //! Wraps the interface methods of indexsets and adds the addiotnal needed
-    //! functions 
+    //! Wraps the interface methods of indexsets and adds the additional needed
+    //! functions
     template< class IndexSetImp >
     class IndexSetWrapper
       : public Fem :: EmptyIndexSet
@@ -38,29 +38,29 @@ namespace Dune
       typedef typename IndexSetImp::IndexType IndexType;
       typedef typename IndexSetImp::Types     Types;
 
-      //! store const reference to set 
+      //! store const reference to set
       IndexSetWrapper ( const IndexSetImp &set )
       : BaseType(),
         set_( set )
       {}
-      
+
       //! copy constructor
       IndexSetWrapper ( const ThisType &other )
       : BaseType(),
         set_( other.set_ )
       {}
 
-      //! return persistent status 
+      //! return persistent status
       bool persistent () const { return false; }
-     
-      //! return size of set for codim  
-      IndexType size ( GeometryType type ) const   
+
+      //! return size of set for codim
+      IndexType size ( GeometryType type ) const
       {
         return set_.size(type);
       }
 
-      //! return size of grid entities per level and codim 
-      IndexType size ( int codim ) const   
+      //! return size of grid entities per level and codim
+      IndexType size ( int codim ) const
       {
         return set_.size(codim);
       }
@@ -72,7 +72,7 @@ namespace Dune
         return set_.index(entity);
       }
 
-      //! return index of en 
+      //! return index of en
       template< class Entity >
       IndexType index ( const Entity &entity ) const
       {
@@ -92,10 +92,10 @@ namespace Dune
         return set_.subIndex( entity, num, codim );
       }
 
-      //! wrap geomTypes method of set 
-      const std::vector< GeometryType > &geomTypes ( const int codim ) const 
+      //! wrap geomTypes method of set
+      const std::vector< GeometryType > &geomTypes ( const int codim ) const
       {
-        return set_.geomTypes(codim); 
+        return set_.geomTypes(codim);
       }
 
       //! wrap types method of set
@@ -111,13 +111,13 @@ namespace Dune
         return set_.contains( entity );
       }
 
-    private: 
+    private:
       const IndexSetImp &set_;
     };
 
 
 
-    //! Wraps LevelIndexSet for use with LagrangeFunctionSpace 
+    //! Wraps LevelIndexSet for use with LagrangeFunctionSpace
     template< class GridType >
     class WrappedLevelIndexSet
       : public IndexSetWrapper< typename GridType::Traits::LevelIndexSet >
@@ -125,18 +125,18 @@ namespace Dune
       typedef WrappedLevelIndexSet< GridType > ThisType;
       typedef IndexSetWrapper< typename GridType::Traits::LevelIndexSet > BaseType;
 
-      // my type, to be revised 
+      // my type, to be revised
       enum { myType = 1 };
 
     public:
-      //! number of codimensions 
+      //! number of codimensions
       enum { ncodim = GridType::dimension + 1 };
 
-      //! Constructor getting grid and level for Index Set 
+      //! Constructor getting grid and level for Index Set
       WrappedLevelIndexSet ( const GridType &grid, const int level )
       : BaseType( grid.levelIndexSet( level ) )
       {}
-     
+
       //! return type of index set (for input/output)
       static int type() { return myType; }
     };
@@ -174,21 +174,21 @@ namespace Dune
 
       static const bool hasHierarchicIndexSet = Dune::Capabilities::hasHierarchicIndexSet< Grid >::v;
       typedef typename conditional< hasHierarchicIndexSet, HierarchicIndexSetGetter< true >, LeafIndexSetGetter< false > >::type IndexSetGetter;
-      
-    public: 
+
+    public:
       //! \brief type of HierarchicIndexSet, default is LeafIndexSet
       typedef typename IndexSetGetter::IndexSet HierarchicIndexSet;
-     
-      //! \brief return reference to hierarchic index set 
+
+      //! \brief return reference to hierarchic index set
       static const HierarchicIndexSet &hierarchicIndexSet ( const Grid &grid )
-      { 
+      {
         return IndexSetGetter::indexSet( grid );
       }
     };
 
 
 
-    //! Wraps HierarchicIndex Sets of AlbertaGrid and ALUGrid 
+    //! Wraps HierarchicIndex Sets of AlbertaGrid and ALUGrid
     /** \deprecated */
     template< class GridType >
     class WrappedHierarchicIndexSet
@@ -197,21 +197,21 @@ namespace Dune
       typedef WrappedHierarchicIndexSet< GridType > ThisType;
       typedef IndexSetWrapper< typename HierarchicIndexSetSelector< GridType >::HierarchicIndexSet > BaseType;
 
-      // my type, to be revised 
+      // my type, to be revised
       enum { myType = 0 };
 
       // type of hierarchic index set selector
       typedef HierarchicIndexSetSelector< GridType > SelectorType;
-      
+
     public:
-      //! number of codimensions 
+      //! number of codimensions
       enum { ncodim = GridType::dimension + 1 };
 
-      //! constructor 
+      //! constructor
       WrappedHierarchicIndexSet ( const GridType &grid, const int level =-1 )
       : BaseType( SelectorType::hierarchicIndexSet( grid ) )
       {}
-         
+
       //! return type (for Grape In/Output)
       static int type ()
       {
@@ -225,13 +225,13 @@ namespace Dune
         std::cerr << "Warning: WrappedHierarchicIndexSet::instance( grid ) can only handle one grid." << std::endl;
         return set;
       }
-      //! return persistent status 
+      //! return persistent status
       bool persistent () const { return true; }
     };
 
 
 
-    //! Wraps LeafIndexSet of Dune Grids for use with LagrangeFunctionSpace 
+    //! Wraps LeafIndexSet of Dune Grids for use with LagrangeFunctionSpace
     template< class GridType >
     class WrappedLeafIndexSet
     : public IndexSetWrapper< typename GridType::Traits::LeafIndexSet >
@@ -239,19 +239,19 @@ namespace Dune
       typedef WrappedLeafIndexSet< GridType > ThisType;
       typedef IndexSetWrapper< typename GridType::Traits::LeafIndexSet > BaseType;
 
-      // my type, to be revised 
+      // my type, to be revised
       enum { myType = 5 };
 
     public:
-      //! number of codimensions 
+      //! number of codimensions
       enum { ncodim = GridType::dimension + 1 };
 
-      //! constructor 
+      //! constructor
       WrappedLeafIndexSet ( const GridType &grid )
       : BaseType( grid.leafIndexSet() )
       {}
 
-      //! constructor taking grid part 
+      //! constructor taking grid part
       template< class GridPartType >
       WrappedLeafIndexSet ( const GridPartType &gridPart )
       : BaseType( gridPart.grid().leafIndexSet() )
@@ -263,6 +263,6 @@ namespace Dune
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_DEFAULTINDEXSETS_HH

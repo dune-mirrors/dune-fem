@@ -11,15 +11,15 @@
 #include <dune/fem/common/coordinate.hh>
 #include <dune/fem/storage/array.hh>
 
-// quadrature storage classes 
+// quadrature storage classes
 #include <dune/fem/quadrature/quadprovider.hh>
 #include <dune/fem/quadrature/defaultquadratures.hh>
 
 namespace Dune
 {
-  namespace Fem 
+  namespace Fem
   {
-  /** \addtogroup Quadrature 
+  /** \addtogroup Quadrature
    *
    *  In dune-fem, quadratures are a set of quadrature points and corresponding
    *  weights.
@@ -31,7 +31,7 @@ namespace Dune
    */
 
 
-  
+
   /** \class   QuadraturePointWrapper
    *  \ingroup Quadrature
    *  \brief   wrapper for a (Quadrature,int) pair
@@ -84,7 +84,7 @@ namespace Dune
    *  one evaluation method for the two different kinds of evaluation points.
    *
    *  \param[in]  x  possibly wrapped point
-   *  
+   *
    *  \returns a reference to the actual point
    */
   template< class Quadrature >
@@ -115,7 +115,7 @@ namespace Dune
    */
   template< typename FieldImp, int dim,
             template< class, int > class IntegrationTraits >
-  class IntegrationPointList 
+  class IntegrationPointList
   {
   public:
     typedef FieldImp FieldType;
@@ -131,15 +131,15 @@ namespace Dune
       QuadratureProviderType;
 
   public:
-    //! type of integration point list implementation 
+    //! type of integration point list implementation
     typedef typename Traits :: IntegrationPointListType IntegrationPointListType;
-    
+
     //! type of coordinate
     typedef typename IntegrationPointListType :: CoordinateType CoordinateType;
-    
+
     typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
 
-    //! to be revised, look at caching quad 
+    //! to be revised, look at caching quad
     enum { codimension = 0 };
 
   protected:
@@ -150,7 +150,7 @@ namespace Dune
      *
      *  This constructor creates a quadrature for the specified geometry which
      *  is capable of integrating polynoms up the given order exactly.
-     * 
+     *
      *  \note The order of the quadrature may be higher than the requested one.
      *
      *  \param[in]  geometryType  geometry type of the requested quadrature
@@ -166,11 +166,11 @@ namespace Dune
      *
      *  This constructor creates a quadrature for the specified geometry which
      *  is capable of integrating polynoms up the given order exactly.
-     * 
+     *
      *  \note The order of the quadrature may be higher than the requested one.
      *
      *  \param[in]  geometryType     geometry type of the requested quadrature
-     *  \param[in]  elementGeometry  geometry type of element that resulting 
+     *  \param[in]  elementGeometry  geometry type of element that resulting
      *              quadrature is used for (in case of face quadratures)
      *  \param[in]  order            order of the requested quadrature
      */
@@ -196,9 +196,9 @@ namespace Dune
     }
 
     /** \brief copy constructor
-     *  
+     *
      *  \param[in]  org  integration point list to be copied
-     */ 
+     */
     inline IntegrationPointList ( const IntegrationPointList &org )
     : ipList_( org.ipList_ )
     {
@@ -210,7 +210,7 @@ namespace Dune
     }
 
     /** \brief obtain a reference the actual implementation
-     * 
+     *
      *  \returns a reference to the implementation of this integration point
      *           list
      */
@@ -227,7 +227,7 @@ namespace Dune
     {
       return ipList_.nop();
     }
-    
+
     /** \brief obtain coordinates of i-th integration point
      *
      *  This method returns a reference to the coordinates of the i-th
@@ -245,7 +245,7 @@ namespace Dune
     }
 
     /** \brief obtain the identifier of the integration point list
-     * 
+     *
      *  The identifier of an integration point list must be globally unique.
      *  Even integration point lists for different dimensions must have
      *  different identifiers.
@@ -259,7 +259,7 @@ namespace Dune
     {
       return ipList_.id();
     }
-    
+
     /** \brief obtain order of the integration point list
      *
      *  The order of a quadrature is the maximal polynomial degree that is
@@ -267,7 +267,7 @@ namespace Dune
      *
      *  In case of an integration point list, the definition of this value is
      *  left to the implementor.
-     *  
+     *
      *  \note Calling this method yields a virtual function call, so do not
      *        call this method unnecessarily.
      *
@@ -277,11 +277,11 @@ namespace Dune
     {
       return ipList_.order();
     }
-    
+
     /** \brief obtain GeometryType for this integration point list
      *
      *  Integration point lists are specified in local coordinates, i.e.,
-     *  coordinates with respect to the reference element. Hence, each 
+     *  coordinates with respect to the reference element. Hence, each
      *  integration point list is only valid for one type of geometry, i.e.,
      *  for one reference element. The type can be retrieved via this method.
      *
@@ -330,7 +330,7 @@ namespace Dune
     typedef IntegrationPointList< FieldType, dimension, QuadratureTraits > BaseType;
 
     typedef QuadratureTraits< FieldType, dimension > Traits;
-    
+
     typedef QuadratureProvider< FieldType, dimension, QuadratureTraits >
       QuadratureProviderType;
 
@@ -343,7 +343,7 @@ namespace Dune
     //! type of local coordinate vectors
     typedef typename IntegrationPointListType :: CoordinateType CoordinateType;
 
-    //! to be revised, look at caching quad 
+    //! to be revised, look at caching quad
     enum { codimension = 0 };
 
   public:
@@ -351,7 +351,7 @@ namespace Dune
      *
      *  This constructor creates a quadrature for the specified geometry which
      *  is capable of integrating polynoms up the given order exactly.
-     * 
+     *
      *  \note The order of the quadrature may be higher than the requested one.
      *
      *  \param[in]  geometryType  geometry type of the requested quadrature
@@ -366,15 +366,15 @@ namespace Dune
      *
      *  This constructor creates a quadrature for the specified geometry which
      *  is capable of integrating polynoms up the given order exactly.
-     * 
+     *
      *  \note The order of the quadrature may be higher than the requested one.
      *
      *  \param[in]  geometryType     geometry type of the requested quadrature
-     *  \param[in]  elementGeometry  geometry type of element that resulting 
+     *  \param[in]  elementGeometry  geometry type of element that resulting
      *              quadrature is used for (in case of face quadratures)
      *  \param[in]  order            order of the requested quadrature
      *
-     *  \note This is a specialized constructor for constructing 
+     *  \note This is a specialized constructor for constructing
      *  face quadratures for UGGrid.
      */
     inline Quadrature ( const GeometryType &geometryType,
@@ -399,9 +399,9 @@ namespace Dune
     }
 
     /** \brief copy constructor
-     *  
+     *
      *  \param[in]  org  quadrature to be copied
-     */ 
+     */
    //! Copy constructor
     inline Quadrature( const Quadrature &org )
     : BaseType( org )
@@ -427,7 +427,7 @@ namespace Dune
       return ipList().weight( i );
     }
   };
-  
+
   } //end namespace Fem
 
 } //end namespace Dune

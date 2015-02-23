@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_VALIDATOR_HH
 #define DUNE_FEM_VALIDATOR_HH
 
+#warning "File 'fem/misc/validator.hh' is deprecated and will be deleted. Use lambdas instead, have a look into the fem/io/test/paramtertest.cc"
 #include <iostream>
 
 namespace Dune
@@ -43,7 +44,7 @@ namespace Dune
       {
         asImp().print( s );
       }
-      
+
     protected:
       const Impl &asImp () const
       {
@@ -80,7 +81,7 @@ namespace Dune
     };
 
 
-    
+
     template< class T >
     class ValidateGreater
     : public ValidatorDefault< T, ValidateGreater< T > >
@@ -279,6 +280,6 @@ namespace Dune
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_VALIDATOR_HH

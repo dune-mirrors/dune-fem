@@ -5,6 +5,8 @@
 
 //- system includes
 #include <vector>
+#include <iostream>
+#include <fstream>
 
 //- Dune common includes
 #include <dune/common/exceptions.hh>
@@ -23,6 +25,7 @@
 #include <dune/fem/operator/matrix/preconditionerwrapper.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/matrix/columnobject.hh>
+#include <dune/fem/storage/objectstack.hh>
 
 #include <dune/fem/operator/matrix/istlmatrixadapter.hh>
 
@@ -360,16 +363,17 @@ namespace Dune
         }
 
         //! print matrix
-        void print(std::ostream & s) const
+        void print(std::ostream& s, unsigned int offset=0) const
         {
-          std::cout << "Print ISTLMatrix \n";
+          s.precision( 6 );
           ConstRowIterator endi=this->end();
           for (ConstRowIterator i=this->begin(); i!=endi; ++i)
           {
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
             {
-              s << (*j) << std::endl;
+              if(std::abs( *j ) > 1.e-15)
+                s << i.index()+offset << " " << j.index()+offset << " " << *j << std::endl;
             }
           }
         }
@@ -581,8 +585,8 @@ namespace Dune
           // initialize base functions sets
           BaseType :: init ( rowEntity , colEntity );
 
-          numRows_  = rowMapper_.numDofs(rowEntity);
-          numCols_  = colMapper_.numDofs(colEntity);
+          numRows_  = rowMapper_.numDofs(colEntity);
+          numCols_  = colMapper_.numDofs(rowEntity);
           matrices_.resize( numRows_ );
 
           if( matrixObj_.implicitModeActive() )

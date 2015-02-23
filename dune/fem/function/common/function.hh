@@ -1,10 +1,10 @@
 #ifndef DUNE_FEM_FUNCTION_HH
 #define DUNE_FEM_FUNCTION_HH
 
-// dune-common includes 
+// dune-common includes
 #include <dune/common/fvector.hh>
 
-// dune-fem includes 
+// dune-fem includes
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 #include <dune/fem/operator/common/mapping.hh>
 #include <dune/fem/version.hh>
@@ -20,23 +20,23 @@ namespace Dune
         Functions are mapping from one finite dimensional
         vector space into another, e.g.,
         \f$K^n\f$ into \f$L^m\f$.
-        They are element of a 
+        They are element of a
         \ref FunctionSpaceInterface "function space".
 
         \remark The interface is given by Function.
         @{
     **/
-  
 
-    /*! \brief 
+
+    /*! \brief
         Abstract class representing a function
 
 
         Template parameters are:
-        -  FunctionSpaceImp      type of the function space where the function 
+        -  FunctionSpaceImp      type of the function space where the function
                                  belongs to.
         -  FunctionImp           type of the implemented function (Barton-Nackman)
-       
+
         @interfaceclass
     **/
     template< class FunctionSpaceImp, class FunctionImp >
@@ -45,14 +45,14 @@ namespace Dune
                                      FunctionImp >,
       public Mapping < typename FunctionSpaceImp :: DomainFieldType,
                        typename FunctionSpaceImp :: RangeFieldType,
-                       typename FunctionSpaceImp :: DomainType, 
-                       typename FunctionSpaceImp :: RangeType > 
+                       typename FunctionSpaceImp :: DomainType,
+                       typename FunctionSpaceImp :: RangeType >
     {
       typedef Function< FunctionSpaceImp, FunctionImp > ThisType;
       typedef BartonNackmanInterface< ThisType, FunctionImp > BaseType;
 
     public:
-      //! type of function space this function belongs to 
+      //! type of function space this function belongs to
       typedef FunctionSpaceImp FunctionSpaceType;
 
       //! type of the implementation (Barton-Nackman)
@@ -74,7 +74,7 @@ namespace Dune
       //! type of mapping base class
       typedef Mapping< DomainFieldType, RangeFieldType, DomainType, RangeType >
         MappingType;
-   
+
     protected:
       using BaseType::asImp;
 
@@ -82,30 +82,30 @@ namespace Dune
       Function ()
       {}
 
-      // Disallow copying of function, but allow copying of derived classes 
-      Function ( const ThisType &other ) {} 
+      // Disallow copying of function, but allow copying of derived classes
+      Function ( const ThisType &other ) {}
 
-    private:  
+    private:
       // Disallow assignment
       ThisType &operator= ( const ThisType & );
-      
+
     public:
-      //! destructor 
+      //! destructor
       virtual ~Function ()
       {}
 
-      /** \brief application operator call evaluate 
-          \param[in] arg argument 
-          \param[out] dest destination, i.e. f(arg) 
+      /** \brief application operator call evaluate
+          \param[in] arg argument
+          \param[out] dest destination, i.e. f(arg)
       */
-      virtual void operator()(const DomainType & arg, RangeType & dest) const 
+      virtual void operator()(const DomainType & arg, RangeType & dest) const
       {
         evaluate(arg,dest);
       }
 
       /** \brief evaluate the function
        *
-       *  \param[in]  x      evaluation point 
+       *  \param[in]  x      evaluation point
        *  \param[out] value  value of the function in x
        */
       void evaluate ( const DomainType &x, RangeType &value ) const
@@ -138,13 +138,13 @@ namespace Dune
       //! With this function, a combined mapping can choose the right application
       //! operator (i.e. the one from Mapping itself, or from Function/Operator)
       //! \note: Do not override this definition
-      virtual void apply (const DomainType& arg, RangeType& dest) const 
+      virtual void apply (const DomainType& arg, RangeType& dest) const
       {
         operator()(arg, dest);
       }
     };
 
-    ///@} 
+    ///@}
 
   } // namespace Fem
 

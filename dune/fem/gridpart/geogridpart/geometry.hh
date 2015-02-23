@@ -99,7 +99,7 @@ namespace Dune
         if( mapping_ )
           mapping_->~Mapping();
       }
-      
+
       const ThisType &operator= ( const ThisType &other )
       {
         if( mapping_ )

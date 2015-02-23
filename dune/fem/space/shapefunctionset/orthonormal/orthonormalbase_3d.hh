@@ -8,19 +8,19 @@
 #include <stdio.h>
 #include <cassert>
 
-namespace Dune 
+namespace Dune
 {
   namespace Fem
   {
     template <class DomainField, class RangeField>
-    class OrthonormalBase_3D 
+    class OrthonormalBase_3D
     {
       typedef const DomainField*  DomainType;
       typedef       RangeField*   JacobianRangeType;
 
     public:
       /* \phi_i(x,y,z) for tetrahedron */
-      static RangeField  
+      static RangeField
       eval_tetrahedron_3d ( const int i, DomainType xi )
       {
         const RangeField &x = xi[0];
@@ -9294,7 +9294,7 @@ namespace Dune
 
 
       /* \nabla\phi_i(x,y,z) for tetrahedron */
-      static void  
+      static void
       grad_tetrahedron_3d ( const int i, DomainType xi, JacobianRangeType grad )
       {
         const RangeField &x = xi[0];
@@ -27859,7 +27859,7 @@ namespace Dune
       }
 
       /* \phi_i(x,y,z) for pyramid */
-      static RangeField  
+      static RangeField
       eval_pyramid_3d ( const int i, DomainType xi )
       {
         const RangeField &x = xi[0];
@@ -36341,7 +36341,7 @@ namespace Dune
 
 
       /* \nabla\phi_i(x,y,z) for pyramid */
-      static void  
+      static void
       grad_pyramid_3d ( const int i, DomainType xi, JacobianRangeType grad )
       {
         const RangeField &x = xi[0];
@@ -53191,7 +53191,7 @@ namespace Dune
       }
 
       /* \phi_i(x,y,z) for prim */
-      static RangeField  
+      static RangeField
       eval_prism_3d ( const int i, DomainType xi )
       {
         const RangeField &x = xi[0];
@@ -58109,7 +58109,7 @@ namespace Dune
 
 
       /* \nabla\phi_i(x,y,z) for prim */
-      static void  
+      static void
       grad_prism_3d ( const int i, DomainType xi, JacobianRangeType grad )
       {
         const RangeField &x = xi[0];
@@ -67280,7 +67280,7 @@ namespace Dune
       }
 
       /* \phi_i(x,y,z) for hexahedron */
-      static RangeField  
+      static RangeField
       eval_hexahedron_3d ( const int i, DomainType xi )
       {
         const RangeField &x = xi[0];
@@ -70482,7 +70482,7 @@ namespace Dune
 
 
       /* \nabla\phi_i(x,y,z) for hexahedron */
-      static void  
+      static void
       grad_hexahedron_3d ( const int i, DomainType xi, JacobianRangeType grad )
       {
         const RangeField &x = xi[0];
@@ -76125,6 +76125,6 @@ namespace Dune
       }
     };
 
-  } // end namespace Fem 
+  } // end namespace Fem
 } // end namespace Dune
 #endif

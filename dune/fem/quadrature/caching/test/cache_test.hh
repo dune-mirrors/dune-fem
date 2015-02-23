@@ -2,13 +2,12 @@
 #define DUNE_CACHE_TEST_HH
 
 #include "../cacheprovider.hh"
-#include <dune/fem/misc/test.hh>
 
 
 namespace Dune {
   namespace Fem {
 
-  class CacheProvider_Test : public Test 
+  class CacheProvider_Test
   {
   public:
     virtual void run();

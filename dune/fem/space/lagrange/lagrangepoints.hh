@@ -6,7 +6,7 @@
 
 // dune-fem includes
 #include <dune/fem/quadrature/cachingpointlist.hh>
-#include <dune/fem/space/dofmapper/localkey.hh>
+#include <dune/fem/space/mapper/localkey.hh>
 
 // local includes
 #include "genericgeometry.hh"
@@ -19,12 +19,12 @@ namespace Dune
   namespace Fem
   {
 
-    /** @ingroup LagrangeDiscreteFunctionSpace 
+    /** @ingroup LagrangeDiscreteFunctionSpace
      * \brief A single lagrange point
      *
      * A single Lagrange point which has methods
      * to determine on which subentity a given
-     * lagrange point is located. 
+     * lagrange point is located.
      *
      **/
     template< unsigned int topologyId, unsigned int dim, unsigned int polOrder >
@@ -51,7 +51,7 @@ namespace Dune
           return BaseType::template Codim< codim >::maxDofs();
         }
       };
-      
+
     public:
       LagrangePoint ( unsigned int index )
       : BaseType( index )
@@ -79,7 +79,7 @@ namespace Dune
     };
 
     template< unsigned int dim, unsigned int maxPolOrder >
-    class LagrangePointInterface 
+    class LagrangePointInterface
     {
       typedef LagrangePointInterface< dim, maxPolOrder > ThisType;
     protected:
@@ -90,13 +90,13 @@ namespace Dune
 
       static const unsigned int maxPolynomialOrder = maxPolOrder;
 
-      //! destructor 
+      //! destructor
       virtual ~LagrangePointInterface() {}
 
       virtual unsigned int entityDofNumber ( unsigned int codim,
                                              unsigned int subEntity,
                                              unsigned int dofNumber ) const = 0;
-      
+
       virtual GeometryType geometryType () const = 0;
 
       /** \brief obtain the maximal number of DoFs in one entity of a codimension
@@ -136,7 +136,7 @@ namespace Dune
     };
 
     template< unsigned int topologyId, unsigned int dim, unsigned int maxPolOrder, int polOrder  >
-    class LagrangePointImplementation : 
+    class LagrangePointImplementation :
       public LagrangePointInterface< dim, maxPolOrder >
     {
       typedef LagrangePoint< topologyId, dim, polOrder > LagrangePointType;
@@ -181,14 +181,14 @@ namespace Dune
       virtual int order () const { return polOrder; }
     };
 
-    /** @ingroup LagrangeDiscreteFunctionSpace 
+    /** @ingroup LagrangeDiscreteFunctionSpace
      * \brief Set of lagrange points
      *
      * Interface class for a set of lagrange points.
      * An instance of the lagrange points can be
-     * obtained from the 
+     * obtained from the
      * \ref Dune::Fem::LagrangeDiscreteFunctionSpace "lagrange function space".
-     * The set can be wrapped in a quadrature. 
+     * The set can be wrapped in a quadrature.
      *
      **/
     template< class FieldImp, int dim, unsigned int maxPolOrder >
@@ -204,7 +204,7 @@ namespace Dune
 
       //! dimension of points
       static const int dimension = dim;
-      
+
       //! polynomial order of corresponding base functions
       static const unsigned int maxPolynomialOrder = maxPolOrder;
 
@@ -228,17 +228,17 @@ namespace Dune
         lagrangePointImpl_( 0 )
       {}
 
-      ~LagrangePointListInterface () 
+      ~LagrangePointListInterface ()
       {
         delete lagrangePointImpl_;
       }
 
     private:
-      // prohibit copy construction  
+      // prohibit copy construction
       LagrangePointListInterface ( const ThisType &other );
 
     public:
-      void setLagrangePointImpl ( const LagrangePointInterfaceType* lpImpl ) 
+      void setLagrangePointImpl ( const LagrangePointInterfaceType* lpImpl )
       {
         assert( lagrangePointImpl_ == 0 );
         lagrangePointImpl_ = lpImpl ;
@@ -248,9 +248,9 @@ namespace Dune
       {
         return dofInfos_[ index ];
       }
-      
+
       void dofSubEntity ( unsigned int index,
-                          unsigned int &codim, 
+                          unsigned int &codim,
                           unsigned int &subEntity,
                           unsigned int &dofNumber ) const
       {
@@ -259,15 +259,15 @@ namespace Dune
         subEntity = dofInfo.subEntity();
         dofNumber = dofInfo.index();
       }
-      
+
       unsigned int entityDofNumber ( unsigned int codim,
                                      unsigned int subEntity,
-                                     unsigned int dofNumber ) const 
+                                     unsigned int dofNumber ) const
       {
-        return lagrangePointImpl().entityDofNumber( codim, subEntity, dofNumber ); 
+        return lagrangePointImpl().entityDofNumber( codim, subEntity, dofNumber );
       }
-      
-      GeometryType geometryType () const 
+
+      GeometryType geometryType () const
       {
         return lagrangePointImpl().geometryType();
       }
@@ -278,7 +278,7 @@ namespace Dune
        *
        *  \returns maximal number of DoFs for one entity in the codimension
        */
-      unsigned int maxDofs ( unsigned int codim ) const 
+      unsigned int maxDofs ( unsigned int codim ) const
       {
         return lagrangePointImpl().maxDofs( codim );
       }
@@ -295,7 +295,7 @@ namespace Dune
        *
        *  \returns the number of DoFs associated with the specified entity
        */
-      unsigned int numDofs ( unsigned int codim, unsigned int subEntity ) const 
+      unsigned int numDofs ( unsigned int codim, unsigned int subEntity ) const
       {
         return lagrangePointImpl().numDofs( codim, subEntity );
       }
@@ -306,9 +306,9 @@ namespace Dune
        *
        *  \returns the number of DoFs associated with the codimension
        */
-      unsigned int numDofs ( unsigned int codim ) const 
+      unsigned int numDofs ( unsigned int codim ) const
       {
-        return lagrangePointImpl().numDofs( codim ); 
+        return lagrangePointImpl().numDofs( codim );
       }
 
       int order () const
@@ -350,24 +350,24 @@ namespace Dune
 
     private:
       template <int pOrd>
-      struct CreateLagrangePoint  
+      struct CreateLagrangePoint
       {
         typedef LagrangePoint< topologyId, dimension, pOrd > LagrangePointType;
         enum { numLagrangePoints = LagrangePointType::numLagrangePoints };
 
-        static void apply( ThisType& lp, const int order ) 
+        static void apply( ThisType& lp, const int order )
         {
-          // if order is not equal to pOrd, do nothing 
+          // if order is not equal to pOrd, do nothing
           if( order != pOrd ) return ;
 
           for( unsigned int i = 0; i < numLagrangePoints; ++i )
           {
             LagrangePointType pt( i );
-            
+
             CoordinateType local;
             pt.local( local );
             lp.addIntegrationPoint( local );
-           
+
             unsigned int codim, subEntity, dofNumber;
             pt.dofSubEntity( codim, subEntity, dofNumber );
             lp.addDofInfo( LocalKey( subEntity, codim, dofNumber ) );
@@ -384,13 +384,13 @@ namespace Dune
       {
         ForLoop< CreateLagrangePoint, 1, maxPolynomialOrder > :: apply( *this, maxPolynomialOrder );
       }
-      
+
       LagrangePointListImplementation ( const GeometryType &geo, const int order, const size_t id )
       : BaseType( id )
       {
         ForLoop< CreateLagrangePoint, 1, maxPolynomialOrder > :: apply( *this, order );
 
-        // assert this after lagrangePointImpl has been created since 
+        // assert this after lagrangePointImpl has been created since
         // this->geometry() uses this class
         assert( order <= maxPolynomialOrder );
         assert( geo == this->geometryType() );
@@ -431,27 +431,27 @@ namespace Dune
 
         typedef LagrangePointListImplementation< ct, 0, 1, polynomialOrder >
           LineQuadratureType;
-        
+
         typedef LagrangePointListImplementation< ct, 0, dimension, polynomialOrder >
           SimplexQuadratureType;
-   
+
         typedef LagrangePointListImplementation< ct, (1 << dimension)-1, dimension, polynomialOrder >
           CubeQuadratureType;
-        
+
         typedef LagrangePointListImplementation< ct, (1 << (dimension-1)), dimension, polynomialOrder >
           PrismQuadratureType;
-        
+
         typedef LagrangePointListImplementation< ct, (1 << (dimension-1))-1, dimension, polynomialOrder >
           PyramidQuadratureType;
-        
-        //! type of integration point list implemementation 
-        typedef LagrangePointListInterface< ct, quaddim, polynomialOrder > IntegrationPointListType; 
-      }; 
 
-      //! type of used integration point list 
+        //! type of integration point list implemementation
+        typedef LagrangePointListInterface< ct, quaddim, polynomialOrder > IntegrationPointListType;
+      };
+
+      //! type of used integration point list
       typedef Fem::IntegrationPointList< FieldType, dimension, PointListTraits > IntegrationPointListType;
 
-      //! type of global coordinate 
+      //! type of global coordinate
       typedef typename IntegrationPointListType::CoordinateType CoordinateType;
     };
 
@@ -460,7 +460,7 @@ namespace Dune
     template< class GridPart, unsigned int polOrder >
     class LagrangePointSet;
 
-    
+
 
     // SubEntityLagrangePointIterator
     // ------------------------------
@@ -504,7 +504,7 @@ namespace Dune
         if( beginIterator )
           assertDof();
       }
-    
+
     public:
       SubEntityLagrangePointIterator ()
       : lagrangePointSet_( 0 ),
@@ -546,7 +546,7 @@ namespace Dune
       {
         return !(*this == other);
       }
-      
+
       static ThisType begin ( const LagrangePointSetType &lagrangePointSet,
                               unsigned int subEntity )
       {
@@ -568,10 +568,10 @@ namespace Dune
         while( dofNumber_ >= numDofs_ )
         {
           const ReferenceElementType &refElement = *refElement_;
-            
+
           dofNumber_ = 0;
           ++subIndex_;
-          while( subIndex_ >= numSubIndices_ ) 
+          while( subIndex_ >= numSubIndices_ )
           {
             subIndex_ = 0;
             if( ++codim_ > dimension )
@@ -592,7 +592,7 @@ namespace Dune
       unsigned int subSubEntity_;
       unsigned int dofNumber_, numDofs_;
     };
-   
+
 
 
     // SubEntityLagrangePointIterator for codimension 0
@@ -627,14 +627,14 @@ namespace Dune
       {
         assert( subEntity == 0 );
       }
-    
+
     public:
       SubEntityLagrangePointIterator ()
       : lagrangePointSet_( 0 ),
         numDofs_( 0 ),
         index_( 0 )
       {}
-      
+
       unsigned int operator* () const
       {
         assert( lagrangePointSet_ );
@@ -659,8 +659,8 @@ namespace Dune
       {
         return !(*this == other);
       }
-   
-      
+
+
       static ThisType begin ( const LagrangePointSetType &lagrangePointSet,
                               unsigned int subEntity )
       {
@@ -708,7 +708,7 @@ namespace Dune
         typedef SubEntityLagrangePointIterator< GridPartType, codim, polynomialOrder >
           SubEntityIteratorType;
       };
-     
+
     private:
       typedef typename BaseType::IntegrationPointListType::IntegrationPointListType
         LagrangePointListType;
@@ -746,13 +746,13 @@ namespace Dune
         unsigned int dofNumber;
         lagrangePointList_.dofSubEntity( index, codim, subEntity, dofNumber );
       }
-   
+
       void dofSubEntity ( unsigned int index, unsigned int &codim,
                           unsigned int &subEntity, unsigned int &dofNumber ) const
       {
         lagrangePointList_.dofSubEntity( index, codim, subEntity, dofNumber );
       }
-   
+
       unsigned int entityDofNumber ( unsigned int codim, unsigned int subEntity,
                                      unsigned int dofNumber ) const
       {
@@ -763,7 +763,7 @@ namespace Dune
       {
         return lagrangePointList_.maxDofs( codim );
       }
-      
+
       unsigned int numDofs ( unsigned int codim, unsigned int subEntity ) const
       {
         return lagrangePointList_.numDofs( codim, subEntity );

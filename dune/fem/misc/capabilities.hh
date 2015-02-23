@@ -35,24 +35,6 @@ namespace Dune
       static const bool v = false;
     };
 
-    template< int dim, int dimw >
-    struct hasHierarchicIndexSet< ALUConformGrid< dim, dimw > >
-    {
-      static const bool v = true;
-    };
-
-    template< int dim, int dimw >
-    struct hasHierarchicIndexSet< ALUCubeGrid< dim, dimw > >
-    {
-      static const bool v = true;
-    };
-
-    template< int dim, int dimw >
-    struct hasHierarchicIndexSet< ALUSimplexGrid< dim, dimw > >
-    {
-      static const bool v = true;
-    };
-
     template< int dim, int dimw, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
     struct hasHierarchicIndexSet< ALUGrid< dim, dimw, elType, refineType, Comm > >
     {
@@ -99,7 +81,7 @@ namespace Dune
 
     // Fem Capabilities
     // ----------------
- 
+
     namespace Capabilities
     {
 
@@ -113,7 +95,7 @@ namespace Dune
         struct Codim
         : public Dune::Capabilities::hasEntity< Grid, codim >
         {};
-      
+
       public:
         static const bool v = Loop< MetaAnd, Codim, Grid :: dimension > :: v;
         static const bool value = v;
@@ -133,24 +115,6 @@ namespace Dune
       struct supportsCallbackAdaptation< const Grid >
       {
         static const bool v = Dune::Fem::Capabilities::supportsCallbackAdaptation< Grid > :: v;
-      };
-
-      template< int dim, int dimworld >
-      struct supportsCallbackAdaptation< ALUSimplexGrid< dim, dimworld > >
-      {
-        static const bool v = true;
-      };
-
-      template< int dim, int dimworld >
-      struct supportsCallbackAdaptation< ALUCubeGrid< dim, dimworld > >
-      {
-        static const bool v = true;
-      };
-
-      template< int dim, int dimworld >
-      struct supportsCallbackAdaptation< ALUConformGrid< dim, dimworld > >
-      {
-        static const bool v = true;
       };
 
       template< int dim, int dimworld, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
@@ -196,24 +160,6 @@ namespace Dune
         static const bool v = Dune::Fem::Capabilities::isLocallyAdaptive< Grid > :: v;
       };
 
-      template< int dim, int dimworld >
-      struct isLocallyAdaptive< ALUSimplexGrid< dim, dimworld > >
-      {
-        static const bool v = true;
-      };
-
-      template< int dim, int dimworld >
-      struct isLocallyAdaptive< ALUCubeGrid< dim, dimworld > >
-      {
-        static const bool v = true;
-      };
-
-      template< int dim, int dimworld >
-      struct isLocallyAdaptive< ALUConformGrid< dim, dimworld > >
-      {
-        static const bool v = true;
-      };
-
       template< int dim, int dimworld, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
       struct isLocallyAdaptive< ALUGrid< dim, dimworld, elType, refineType, Comm > >
       {
@@ -252,7 +198,7 @@ namespace Dune
       };
 #endif // #if HAVE_DUNE_METAGRID
 
-    } // namespace Capabilities 
+    } // namespace Capabilities
 
   } // namespace Fem
 

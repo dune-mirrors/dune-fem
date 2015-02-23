@@ -4,8 +4,6 @@
 #include <dune/geometry/type.hh>
 #include <dune/common/fvector.hh>
 
-#include <dune/fem/misc/test.hh>
-
 
 namespace Dune
 {
@@ -13,7 +11,6 @@ namespace Dune
   {
 
   class ReferenceElement_Test
-  : public Test 
   {
     GeometryType cube3_;
     GeometryType cube2_;

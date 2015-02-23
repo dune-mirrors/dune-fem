@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_ISTLSOLVERS_HH 
-#define DUNE_FEM_ISTLSOLVERS_HH 
+#ifndef DUNE_FEM_ISTLSOLVERS_HH
+#define DUNE_FEM_ISTLSOLVERS_HH
 
 #include <limits>
 
@@ -9,7 +9,7 @@
 #include <dune/fem/io/parameter.hh>
 
 
-#if HAVE_DUNE_ISTL 
+#if HAVE_DUNE_ISTL
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/superlu.hh>
@@ -17,7 +17,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     //=====================================================================
@@ -59,12 +59,12 @@ namespace Dune
 
         typename SolverCaller :: SolverType solver( matrix, matrix.scp(), matrix.preconditionAdapter(), reduction, maxIter, verb );
 
-        // copy right hand side since ISTL is overwriting it 
+        // copy right hand side since ISTL is overwriting it
         BlockVectorType rhs( arg.blockVector() );
 
         InverseOperatorResult returnInfo;
 
-        // call solver 
+        // call solver
         solver.apply( dest.blockVector(), rhs, returnInfo );
 
         return std::pair< int, double > ( returnInfo.iterations, matrix.averageCommTime() );
@@ -81,7 +81,7 @@ namespace Dune
     struct ISTLInverseOp
     : public Operator< DF, DF >
     {
-    public:  
+    public:
       typedef DF DiscreteFunctionType;
       typedef DiscreteFunctionType  DestinationType;
       typedef Op OperatorType;
@@ -143,9 +143,9 @@ namespace Dune
         out  << "\\\\ \n";
       }
 
-      /** \brief solve the system 
-          \param[in] arg right hand side 
-          \param[out] dest solution 
+      /** \brief solve the system
+          \param[in] arg right hand side
+          \param[out] dest solution
       */
       void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
       {
@@ -156,21 +156,21 @@ namespace Dune
         averageCommTime_ = info.second;
       }
 
-      // return number of iterations 
-      int iterations() const 
+      // return number of iterations
+      int iterations() const
       {
         return iterations_;
       }
 
       //! return accumulated communication time
-      double averageCommTime() const 
+      double averageCommTime() const
       {
         return averageCommTime_;
       }
 
-      /** \brief solve the system 
-          \param[in] arg right hand side 
-          \param[out] dest solution 
+      /** \brief solve the system
+          \param[in] arg right hand side
+          \param[out] dest solution
       */
       void operator() ( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
       {
@@ -185,7 +185,7 @@ namespace Dune
       bool verbose_ ;
       mutable int iterations_;
       mutable double averageCommTime_;
-    }; 
+    };
 
 
     // LoopSolverCaller
@@ -215,7 +215,7 @@ namespace Dune
     : public ISTLInverseOp< DF, Op, LoopSolverCaller< Op, DF > >
     {
       typedef ISTLInverseOp< DF, Op, LoopSolverCaller< Op, DF > > BaseType;
-    public:  
+    public:
       typedef DF DiscreteFunctionType;
       typedef DiscreteFunctionType  DestinationType;
       typedef Op OperatorType;
@@ -392,7 +392,7 @@ namespace Dune
     : public ISTLInverseOp< DF, Op, GMResSolverCaller< Op, DF > >
     {
       typedef ISTLInverseOp< DF, Op, GMResSolverCaller< Op, DF > > BaseType;
-    public:  
+    public:
       typedef DF DiscreteFunctionType;
       typedef Op OperatorType;
       typedef DiscreteFunctionType  DestinationType;
@@ -432,7 +432,7 @@ namespace Dune
     // ISTLCGOp
     // --------
 
-    /** \brief BICG-stab scheme for block matrices (BCRSMatrix) 
+    /** \brief BICG-stab scheme for block matrices (BCRSMatrix)
     and block vectors (BVector) from dune-istl. */
     template< class DF, class Op >
     struct ISTLCGOp
@@ -472,14 +472,13 @@ namespace Dune
              double reduction, double absLimit, int maxIter, bool verbose )
       {
         typedef typename OperatorImp :: MatrixAdapterType MatrixAdapterType;
-        typedef typename MatrixAdapterType :: MatrixType MatrixType;
         MatrixAdapterType matrix  = op.systemMatrix().matrixAdapter();
-
-        typedef typename MatrixType :: BaseType ISTLMatrixType;
 
         InverseOperatorResult returnInfo;
 #if HAVE_SUPERLU
         // create solver
+        typedef typename MatrixAdapterType :: MatrixType MatrixType;
+        typedef typename MatrixType :: BaseType ISTLMatrixType;
         SuperLU< ISTLMatrixType > solver( matrix.getmat(), verbose );
         // solve the system
         solver.apply( dest.blockVector(), arg.blockVector(), returnInfo );
@@ -503,11 +502,11 @@ namespace Dune
     // ISTLSuperLUOp
     // --------------
 
-    /** \brief SuperLU solver for block matrices (BCRSMatrix) 
+    /** \brief SuperLU solver for block matrices (BCRSMatrix)
         and block vectors (BVector) from DUNE-ISTL.
-     
-        The solver is based in the 
-        well known <a href="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU 
+
+        The solver is based in the
+        well known <a href="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU
         package</a>.
     */
     template< class DF, class Op >
@@ -536,10 +535,10 @@ namespace Dune
 
   ///@}
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 
-#endif // #if HAVE_DUNE_ISTL 
+#endif // #if HAVE_DUNE_ISTL
 
-#endif // #ifndef DUNE_FEM_ISTLSOLVERS_HH 
+#endif // #ifndef DUNE_FEM_ISTLSOLVERS_HH

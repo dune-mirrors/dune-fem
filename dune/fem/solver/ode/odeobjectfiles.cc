@@ -1,4 +1,4 @@
-//- system includes 
+//- system includes
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -15,18 +15,18 @@ namespace parDG_NoMPI {
 #include "emptycommunicator.hpp"
 #define COMMUNICATOR_HPP
 
-static const int MPI_SUM = 0;  
-  
-#include "bulirsch_stoer.cpp"  
-#include "iterative_solver.cpp"  
-#include "ode_solver.cpp"     
-#include "sirk.cpp"   
+static const int MPI_SUM = 0;
 
-#include "matrix.cpp"            
-#include "qr_solver.cpp"   
+#include "bulirsch_stoer.cpp"
+#include "iterative_solver.cpp"
+#include "ode_solver.cpp"
+#include "sirk.cpp"
+
+#include "matrix.cpp"
+#include "qr_solver.cpp"
 #include "lu_solver.cpp"
 #include "ssp.cpp"
-#include "dirk.cpp"     
+#include "dirk.cpp"
 #include "runge_kutta.cpp"
 #include "gmres.cpp"
 #include "fgmres.cpp"

@@ -1,6 +1,6 @@
 #include <dune/common/version.hh>
 
-// include DUNE_DEPRECATED header 
+// include DUNE_DEPRECATED header
 #include <dune/common/deprecated.hh>
 
 // for all future versions use the usual DUNE_DEPRECATED
@@ -9,7 +9,7 @@
 #define DUNE_VERSION_DEPRECATED_1_8(m) DUNE_DEPRECATED
 #define DUNE_VERSION_DEPRECATED_1_9(m) DUNE_DEPRECATED
 
-// current version should fail 
+// current version should fail
 #define DUNE_VERSION_DEPRECATED_1_4(newmethod) \
   dune_remove_deprecated_method__use_##newmethod##_instead
 

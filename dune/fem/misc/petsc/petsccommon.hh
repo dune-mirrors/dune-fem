@@ -16,8 +16,8 @@
 
 #if HAVE_PETSC
 
-  /* 
-   * This turns off PETSc logging of MPI calls. If it is on, PETSc redifines MPI functions as macros, 
+  /*
+   * This turns off PETSc logging of MPI calls. If it is on, PETSc redifines MPI functions as macros,
    * which breaks some code. E.g. MPI_Allreduce is redefined
    */
 #define PETSC_HAVE_BROKEN_RECURSIVE_MACRO
@@ -29,7 +29,7 @@ namespace Dune
 
   namespace Petsc
   {
-    // PETSc #defines VecType to be char* - this can cause problems with e.g. ALUGrid 1.50. So we #undef 
+    // PETSc #defines VecType to be char* - this can cause problems with e.g. ALUGrid 1.50. So we #undef
     // it here and use a typedef instead. The following trick is really nasty, but conforming to the standard and
     // - most important of all - working :)
     typedef VecType
@@ -37,10 +37,10 @@ namespace Dune
     VecType;
 
 
-#if HAVE_MPI 
-#define FEM_PETSC_COMM_DEFAULT  PETSC_COMM_WORLD 
+#if HAVE_MPI
+#define FEM_PETSC_COMM_DEFAULT  PETSC_COMM_WORLD
 #else
-#define FEM_PETSC_COMM_DEFAULT  PETSC_COMM_SELF 
+#define FEM_PETSC_COMM_DEFAULT  PETSC_COMM_SELF
 #endif
 
     /*
@@ -57,7 +57,7 @@ namespace Dune
 
     /* The following 2 methods are needed to make the code work with the CHKERRQ
      * macro (which we want to use because it can print useful diagnostic output in
-     * case of errors) 
+     * case of errors)
      */
     inline ErrorCode ErrorCheckHelper ( ErrorCode errorCode ) { CHKERRQ( errorCode ); return 0; }
 
@@ -94,7 +94,7 @@ namespace Dune
      * This should be called right after the initialization of the MPI manager. It expects the same arguments
      * as PetscInitialize
      */
-    inline void initialize( const bool verbose, int &argc, char **&args, const char file[] = 0 , const char help[] = 0, bool ownHandler = true ) 
+    inline void initialize( const bool verbose, int &argc, char **&args, const char file[] = 0 , const char help[] = 0, bool ownHandler = true )
     {
       ::PetscInitialize( &argc, &args, file, help );
 
@@ -115,7 +115,7 @@ namespace Dune
      * This should be called right after the initialization of the MPI manager. It expects the same arguments
      * as PetscInitialize
      */
-    inline void initialize( int *argc, char ***args, const char file[], const char help[], bool ownHandler = true ) 
+    inline void initialize( int *argc, char ***args, const char file[], const char help[], bool ownHandler = true )
     {
       ::PetscInitialize( argc, args, file, help );
 
@@ -150,32 +150,32 @@ namespace Dune
      * The PETSC_VERSION_... customizations are not very well tested yet
      */
     inline void KSPCreate ( KSP *inksp ) { ErrorCheck( ::KSPCreate( FEM_PETSC_COMM_DEFAULT, inksp ) ); }
-    inline void KSPDestroy ( KSP *ksp ) { 
+    inline void KSPDestroy ( KSP *ksp ) {
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
-        ErrorCheck( ::KSPDestroy( *ksp ) ); 
+        ErrorCheck( ::KSPDestroy( *ksp ) );
 #else
-        ErrorCheck( ::KSPDestroy( ksp ) ); 
+        ErrorCheck( ::KSPDestroy( ksp ) );
 #endif // PETSC_PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
     }
     inline void KSPGetPC ( KSP ksp, PC *pc ) { ErrorCheck( ::KSPGetPC( ksp, pc ) ); }
     inline void KSPSetFromOptions ( KSP ksp ) { ErrorCheck( ::KSPSetFromOptions( ksp ) ); }
     inline void KSPSetType ( KSP ksp, const KSPType type ) { ErrorCheck( ::KSPSetType( ksp, type ) ); }
     inline void KSPGMRESSetRestart ( KSP ksp, PetscInt restart ) { ErrorCheck( ::KSPGMRESSetRestart( ksp, restart ) ); }
-    inline void KSPView ( KSP ksp, PetscViewer viewer = PETSC_VIEWER_STDOUT_(FEM_PETSC_COMM_DEFAULT)  ) 
-    { 
-      ErrorCheck( ::KSPView( ksp, viewer ) ); 
+    inline void KSPView ( KSP ksp, PetscViewer viewer = PETSC_VIEWER_STDOUT_(FEM_PETSC_COMM_DEFAULT)  )
+    {
+      ErrorCheck( ::KSPView( ksp, viewer ) );
     }
     inline void KSPMonitorSet (KSP ksp, PetscErrorCode (*monitor)(KSP,PetscInt,PetscReal,void*),
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
-                               void *mctx,PetscErrorCode (*monitordestroy)(void*) 
+                               void *mctx,PetscErrorCode (*monitordestroy)(void*)
 #else
-                               void *mctx,PetscErrorCode (*monitordestroy)(void**)  
+                               void *mctx,PetscErrorCode (*monitordestroy)(void**)
 #endif
                        )
-    { 
-        ErrorCheck( ::KSPMonitorSet( ksp, monitor, mctx, monitordestroy ) ); 
+    {
+        ErrorCheck( ::KSPMonitorSet( ksp, monitor, mctx, monitordestroy ) );
     }
-    inline void KSPGetIterationNumber( KSP ksp, PetscInt* its ) 
+    inline void KSPGetIterationNumber( KSP ksp, PetscInt* its )
     { ErrorCheck( ::KSPGetIterationNumber( ksp, its ) ); }
 
 
@@ -184,56 +184,56 @@ namespace Dune
 #else
     inline void KSPSetOperators (KSP ksp, Mat Amat, Mat Pmat ) { ErrorCheck( ::KSPSetOperators( ksp, Amat, Pmat ) ); }
 #endif
-    inline void KSPSetTolerances ( KSP ksp, PetscReal rtol, PetscReal abstol, PetscReal dtol, PetscInt maxits ) 
+    inline void KSPSetTolerances ( KSP ksp, PetscReal rtol, PetscReal abstol, PetscReal dtol, PetscInt maxits )
       { ErrorCheck( ::KSPSetTolerances( ksp, rtol, abstol, dtol, maxits ) ); }
     inline void KSPSolve ( KSP ksp, Vec b, Vec x ) { ErrorCheck( ::KSPSolve( ksp, b, x ) ); }
     inline void KSPSetPC ( KSP ksp, PC pc ) { ErrorCheck( ::KSPSetPC( ksp, pc ) ); }
 
-    // preconditioning 
+    // preconditioning
     inline void PCCreate  ( PC* pc) { ErrorCheck( ::PCCreate( FEM_PETSC_COMM_DEFAULT, pc ) ); }
-    inline void PCDestroy ( PC* pc) { 
+    inline void PCDestroy ( PC* pc) {
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
-      ErrorCheck( ::PCDestroy( *pc ) ); 
-#else  
-      ErrorCheck( ::PCDestroy( pc ) ); 
-#endif 
+      ErrorCheck( ::PCDestroy( *pc ) );
+#else
+      ErrorCheck( ::PCDestroy( pc ) );
+#endif
     }
     inline void PCSetType ( PC pc, const PCType type ) { ErrorCheck( ::PCSetType(  pc, type ) ); }
     inline void PCFactorSetLevels( PC pc, PetscInt level ) { ErrorCheck( ::PCFactorSetLevels(  pc, level ) ); }
     inline void PCFactorSetMatSolverPackage( PC pc, const MatSolverPackage type )
-    { 
+    {
       ErrorCheck( ::PCFactorSetMatSolverPackage(  pc, type ) );
     }
     inline void PCHYPRESetType( PC pc, const char* type )
-    { 
+    {
 #if HAVE_PETSC_HYPRE
       ErrorCheck( ::PCHYPRESetType( pc, type ) );
-#else 
+#else
       DUNE_THROW( InvalidStateException, "HYPRE not found within PETSc, please re-configure!");
 #endif
     }
 
-    // matrix routines 
+    // matrix routines
     inline void MatAssemblyBegin ( Mat mat, MatAssemblyType type ) { ErrorCheck( ::MatAssemblyBegin( mat, type ) ); }
     inline void MatAssemblyEnd ( Mat mat, MatAssemblyType type ) { ErrorCheck( ::MatAssemblyEnd( mat, type ) ); }
     inline void MatCreate ( Mat *A ) { ErrorCheck( ::MatCreate( FEM_PETSC_COMM_DEFAULT, A) ); }
-    inline void MatCreateBlockMat ( Mat *A, PetscInt m, PetscInt n, PetscInt bs, PetscInt nz, PetscInt* nnz ) 
-    { 
-      ErrorCheck( ::MatCreateBlockMat( FEM_PETSC_COMM_DEFAULT, n, m, bs, nz, nnz, A) ); 
+    inline void MatCreateBlockMat ( Mat *A, PetscInt m, PetscInt n, PetscInt bs, PetscInt nz, PetscInt* nnz )
+    {
+      ErrorCheck( ::MatCreateBlockMat( FEM_PETSC_COMM_DEFAULT, n, m, bs, nz, nnz, A) );
     }
-    inline void MatDestroy ( Mat *A ) { 
+    inline void MatDestroy ( Mat *A ) {
       #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
-        ErrorCheck( ::MatDestroy( *A ) ); 
+        ErrorCheck( ::MatDestroy( *A ) );
       #else
-        ErrorCheck( ::MatDestroy( A ) ); 
+        ErrorCheck( ::MatDestroy( A ) );
       #endif // PETSC_PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
     }
-    inline void MatSetUp( Mat mat ) 
-    { 
-      ErrorCheck( ::MatSetUp(mat)); 
+    inline void MatSetUp( Mat mat )
+    {
+      ErrorCheck( ::MatSetUp(mat));
     }
-    inline void MatSetUp( Mat mat, PetscInt bs, int nz ) 
-    { 
+    inline void MatSetUp( Mat mat, PetscInt bs, int nz )
+    {
       if (bs == 1)
       {
         ErrorCheck( ::MatSeqAIJSetPreallocation(mat,nz,PETSC_NULL) );
@@ -249,7 +249,7 @@ namespace Dune
       // the following only works for block matrix
       // but should be used with MAT_NEW_NONZERO_LOCATIONS...
       // ErrorCheck( ::MatSetOption(mat, MAT_USE_HASH_TABLE,PETSC_FALSE) );
-      ErrorCheck( ::MatSetUp(mat)); 
+      ErrorCheck( ::MatSetUp(mat));
     }
     inline void MatSetUp( Mat mat, PetscInt bs, const int *d_nnz, const int *o_nnz )
     {
@@ -286,11 +286,11 @@ namespace Dune
     inline void PetscFinalize () { ErrorCheck( ::PetscFinalize() ); }
     inline void PetscInitialize( int *argc, char ***args, const char file[], const char help[] ) { ErrorCheck( ::PetscInitialize( argc, args, file, help ) ); }
     inline void PetscViewerASCIIOpen ( MPI_Comm comm, const char name[], PetscViewer *lab ) { ErrorCheck( ::PetscViewerASCIIOpen( comm, name, lab ) ); }
-    inline void PetscViewerDestroy ( PetscViewer *viewer ) { 
+    inline void PetscViewerDestroy ( PetscViewer *viewer ) {
       #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
-        ErrorCheck( ::PetscViewerDestroy( *viewer ) );  
+        ErrorCheck( ::PetscViewerDestroy( *viewer ) );
       #else
-        ErrorCheck( ::PetscViewerDestroy( viewer ) );  
+        ErrorCheck( ::PetscViewerDestroy( viewer ) );
       #endif
     }
     inline void PetscViewerSetFormat ( PetscViewer viewer, PetscViewerFormat format ) { ErrorCheck( ::PetscViewerSetFormat( viewer, format ) ); }
@@ -301,13 +301,13 @@ namespace Dune
     inline void VecCreate ( Vec *vec ) { ErrorCheck( ::VecCreate( FEM_PETSC_COMM_DEFAULT, vec ) ); }
     inline void VecCreateGhost ( PetscInt n, PetscInt N, PetscInt nghost, const PetscInt ghosts[], Vec *vv )
       { ErrorCheck( ::VecCreateGhost( FEM_PETSC_COMM_DEFAULT, n, N, nghost, ghosts, vv ) ); }
-    inline void VecDestroy ( Vec *v ) { 
+    inline void VecDestroy ( Vec *v ) {
       #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
-        ErrorCheck( ::VecDestroy( *v ) ); 
+        ErrorCheck( ::VecDestroy( *v ) );
       #else
-        ErrorCheck( ::VecDestroy( v ) ); 
+        ErrorCheck( ::VecDestroy( v ) );
       #endif // PETSC_PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
-    } 
+    }
     inline void VecDot ( Vec x, Vec y, PetscScalar *val ) { ErrorCheck( ::VecDot( x, y, val ) ); }
     inline void VecDuplicate ( Vec v, Vec *newv ) { ErrorCheck( ::VecDuplicate( v, newv ) ); }
     inline void VecGetLocalSize ( Vec x, PetscInt *size ) { ErrorCheck( ::VecGetLocalSize( x, size ) ); }
@@ -326,7 +326,7 @@ namespace Dune
     inline void VecSetSizes ( Vec v, PetscInt n, PetscInt N ) { ErrorCheck( ::VecSetSizes( v, n, N ) ); }
     inline void VecSetValue ( Vec v, int row, PetscScalar value, InsertMode mode ) { ErrorCheck( ::VecSetValue( v, row, value, mode ) ); }
     inline void VecView ( Vec vec, PetscViewer viewer ) { ErrorCheck( ::VecView( vec, viewer ) ); }
-      
+
   } // namespace Petsc
 
 } // namespace Dune

@@ -12,7 +12,7 @@ DIRK::DIRK(Communicator &comm, int num_of_stages, int order, Function &f,
   order(order),
   A(num_of_stages, a), b(num_of_stages, b), c(num_of_stages, c),
   alpha(num_of_stages), beta(num_of_stages), gamma(num_of_stages),
-  F(NULL), y(NULL), 
+  F(NULL), y(NULL),
   ils(NULL), op(comm, f, dim, u_tmp, f_tmp), u_tmp(NULL), f_tmp(NULL)
 {
   // set this to some useful values
@@ -26,13 +26,13 @@ DIRK::DIRK(Communicator &comm, int num_of_stages, int order, Function &f,
   for(int i=0; i<num_of_stages; i++) AL(i,i) = 0.0;
   alpha = AL * Ainv;
   for(int i=0; i<num_of_stages; i++) alpha(i,i) = A(i,i);
-  
+
   // build vector beta
   for(int i=0; i<num_of_stages; i++){
     beta[i] = 0.0;
     for(int j=0; j<num_of_stages; j++) beta[i] += b[j] * Ainv(j,i);
   }
-  
+
   // build vector gamma
   for(int i=0; i<num_of_stages; i++){
     gamma[i] = 1.0;
@@ -61,10 +61,10 @@ void DIRK::resize(int new_size, int component)
   dset((num_of_stages + 5) * new_size, 0.0, U, 1);
 
   Fpre = U + num_of_stages * new_size;
-  F = Fpre + new_size;    
+  F = Fpre + new_size;
   y = F + new_size;
   u_tmp = y + new_size;    // for LinearOperator
-  f_tmp = u_tmp + new_size; // 
+  f_tmp = u_tmp + new_size; //
 }
 
 
@@ -91,8 +91,8 @@ bool DIRK::step(double t, double dt, double *u,
 }
 
 
-bool DIRK::step_iterative(double t, double dt, double *u, 
-                          int& newton_iterations, int& ils_iterations, 
+bool DIRK::step_iterative(double t, double dt, double *u,
+                          int& newton_iterations, int& ils_iterations,
                           int& max_newton_iterations, int& max_ils_iterations)
 {
   // number of iterations for the time step [t,t+dt]
@@ -105,7 +105,7 @@ bool DIRK::step_iterative(double t, double dt, double *u,
     // prediction uf ui, todo: extrapolation or something...
     // Euler predictor
     f(t+c[i]*dt, u, f_tmp);
-    dwaxpby(dim, c[i]*dt, f_tmp, 1, 1.0, u, 1, ui, 1);    
+    dwaxpby(dim, c[i]*dt, f_tmp, 1, 1.0, u, 1, ui, 1);
     // ui = u^n
     //cblas_dcopy(dim, u, 1, ui, 1);
 
@@ -150,12 +150,12 @@ bool DIRK::step_iterative(double t, double dt, double *u,
            << std::endl;
       }
 
-      newton_iter++;    
+      newton_iter++;
 
       if( ils_iter > max_ils_iterations)
        max_ils_iterations = ils_iter;
 
-      if(sqrt(global_dot) < tolerance) break;      
+      if(sqrt(global_dot) < tolerance) break;
     }
 
     newton_iterations += newton_iter;
@@ -163,7 +163,7 @@ bool DIRK::step_iterative(double t, double dt, double *u,
     if (newton_iter > max_newton_iterations)
       max_newton_iterations = newton_iter;
 
-    if (newton_iter >= max_num_of_iterations) return false;    
+    if (newton_iter >= max_num_of_iterations) return false;
   }
 
   return true;
@@ -171,8 +171,8 @@ bool DIRK::step_iterative(double t, double dt, double *u,
 
 // DIRK::LinearOperator implementation
 DIRK::LinearOperator::LinearOperator(Communicator &comm, Function &f,
-				     const int &dim, 
-				     double *&u_tmp, double *&f_tmp) : 
+				     const int &dim,
+				     double *&u_tmp, double *&f_tmp) :
   comm(comm), f(f), dim(dim), u_tmp(u_tmp), f_tmp(f_tmp)
 {}
 
@@ -209,7 +209,7 @@ void DIRK::LinearOperator::operator()(const double *p, double *DFu_p, int compon
 
   const double eps = (norm_p_sq > DBLEPSILON)?
     sqrt( (1.0+norm_u)*DBLEPSILON / norm_p_sq ) : sqrt(DBLEPSILON);
-  const double lambda_eps = lambda / eps; 
+  const double lambda_eps = lambda / eps;
 
   dwaxpby(dim, 1.0, u, 1, eps, p, 1, u_tmp, 1);
   f(t, u_tmp, DFu_p, component);
@@ -228,10 +228,10 @@ static const double DIRK34_A[] =
   {(1.+dirk34_alpha)*0.5, 0., 0.,
    -0.5*dirk34_alpha, (1.+dirk34_alpha)*0.5, 0.,
    1+dirk34_alpha, -(1+2*dirk34_alpha), (1.+dirk34_alpha)*0.5};
-static const double DIRK34_b[] = 
+static const double DIRK34_b[] =
   {1./(6.*dirk34_alpha2), 1.-1./(3.*dirk34_alpha2),
   1./(6.*dirk34_alpha2)};
-static const double DIRK34_c[] = 
+static const double DIRK34_c[] =
   {(1.+dirk34_alpha)*0.5, 0.5, (1.-dirk34_alpha)*0.5};
 
 DIRK34::DIRK34(Communicator &comm, Function &f) :
@@ -245,9 +245,9 @@ static const double DIRK3_A[] =
   {delta_dirk, 0.0,
    1.0-2.0*delta_dirk, delta_dirk
   };
-static const double DIRK3_b[] = 
+static const double DIRK3_b[] =
   { 0.5, 0.5 };
-static const double DIRK3_c[] = 
+static const double DIRK3_c[] =
   {delta_dirk, 1.0-delta_dirk};
 
 DIRK3::DIRK3(Communicator &comm, Function &f) :
@@ -261,7 +261,7 @@ static const double ImplicitEuler_b[] = {1.0};
 static const double ImplicitEuler_c[] = {1.0};
 
 ImplicitEuler::ImplicitEuler(Communicator &comm, Function &f) :
-  DIRK(comm, 1, 1, f, ImplicitEuler_A, ImplicitEuler_b, ImplicitEuler_c) 
+  DIRK(comm, 1, 1, f, ImplicitEuler_A, ImplicitEuler_b, ImplicitEuler_c)
 {}
 
 
@@ -271,7 +271,7 @@ static const double Gauss2_b[] = {1.0};
 static const double Gauss2_c[] = {0.5};
 
 Gauss2::Gauss2(Communicator &comm, Function &f) :
-  DIRK(comm, 1, 1, f, Gauss2_A, Gauss2_b, Gauss2_c) 
+  DIRK(comm, 1, 1, f, Gauss2_A, Gauss2_b, Gauss2_c)
 {}
 
 

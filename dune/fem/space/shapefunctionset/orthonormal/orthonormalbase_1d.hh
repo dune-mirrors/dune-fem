@@ -8,20 +8,20 @@
 
 namespace Dune
 {
-  namespace Fem 
+  namespace Fem
   {
     template <class DomainField, class RangeField>
-    class OrthonormalBase_1D 
+    class OrthonormalBase_1D
     {
       typedef const DomainField* DomainType;
       typedef RangeField* JacobianRangeType;
 
-    public:  
+    public:
       /****************************************************************************/
       /* functions                                                                */
       /****************************************************************************/
       /* \phi_i(x,y) for lines */
-      static RangeField  
+      static RangeField
       eval_line ( const int i, DomainType xi )
       {
         const RangeField &x = xi[0];
@@ -47,7 +47,7 @@ namespace Dune
             -420.000000000000000000000000000)
             +270.000000000000000000000000000)
              -60.0000000000000000000000000000)
-                   +3.00000000000000000000000000000;		     
+                   +3.00000000000000000000000000000;
           case ( 5 ):
             return x*(x*(x*(x*( 835.789447169560761976963049642*x
              -2089.47361792390190494240762410)
@@ -95,8 +95,8 @@ namespace Dune
               -8630.61990821053363342922432814)
               +392.3009049186606197013283786)
                     -4.3588989435406735522369819839;
-          
-          case(10):   
+
+          case(10):
             return  x*(x*(x*(x*(x*(x*(x*(x*(x*(
                 846658.355097261176257181247326*x
                -4233291.77548630588128590623663)
@@ -117,7 +117,7 @@ namespace Dune
       }
 
       /* \nabla\phi_i(x,y) for triangle */
-      static void  
+      static void
       grad_line ( const int i, DomainType xi, JacobianRangeType grad )
       {
         const RangeField &x = xi[0];
@@ -144,7 +144,7 @@ namespace Dune
               +540.000000000000000000000000000)
                                 -60.0000000000000000000000000000;
             return;
-          
+
         case (5):
           grad[0]=x*(x*(x*(4178.94723584780380988481524820*x
               -8357.89447169560761976963049640)
@@ -152,7 +152,7 @@ namespace Dune
               -1392.98241194926793662827174940)
                                  +99.4987437106619954734479821001;
           return;
-        
+
         case (6):
           grad[0]=x*(x*(x*(x*(19989.1762711723566410529627068*x
                   -49972.9406779308916026324067670)
@@ -181,7 +181,7 @@ namespace Dune
                    +10390.2261765565045855499528371)
               -296.863605044471559587141509631;
               return;
-            case(9):		 
+            case(9):
                   grad[0 ]=x*(x*(x*(x*(x*(x*(x*(1907366.99971452793298785857650*x
               -7629467.99885811173195143430599)
                 +12566182.5863545369702729506216)
@@ -206,8 +206,8 @@ namespace Dune
         }
       }
 
-    }; // end struct OrthonormalBase_1d 
+    }; // end struct OrthonormalBase_1d
 
-  } // end namespace Fem 
-} // end namespace Dune 
+  } // end namespace Fem
+} // end namespace Dune
 #endif

@@ -1,11 +1,11 @@
 #ifndef DUNE_FEM_RESTRICTPROLONGINTERFACE_HH
 #define DUNE_FEM_RESTRICTPROLONGINTERFACE_HH
 
-//- Dune includes 
+//- Dune includes
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/grid/common/capabilities.hh>
 
-//- local includes 
+//- local includes
 #include <dune/fem/gridpart/emptyindexset.hh>
 #include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/function/localfunction/temporary.hh>
@@ -14,18 +14,18 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
-    /** @addtogroup RestrictProlongInterface 
+    /** @addtogroup RestrictProlongInterface
 
-        Interface for restriction and prolongation operation of data 
+        Interface for restriction and prolongation operation of data
         on single elements.
 
-        \remarks The Interface for a restriction and prolongation operation 
+        \remarks The Interface for a restriction and prolongation operation
         is defined by the class RestrictProlongInterface.
 
-        
+
       @{
      */
 
@@ -40,8 +40,8 @@ namespace Dune
     {
       typedef RestrictProlongInterface< Traits > ThisType;
 
-    public:  
-      //! \brief type of restrict-prolong operator implementation 
+    public:
+      //! \brief type of restrict-prolong operator implementation
       typedef typename Traits::RestProlImp RestProlImp;
 
       //! \brief field type of domain vector space
@@ -58,13 +58,13 @@ namespace Dune
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().setFatherChildWeight( weight ) );
       }
 
-      //! restrict data to father 
+      //! restrict data to father
       template< class Entity >
       void restrictLocal ( const Entity &father, const Entity &son, bool initialize ) const
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().restrictLocal( father, son, initialize ) );
       }
-      
+
       //! restrict data to father
       template< class Entity, class LocalGeometry >
       void restrictLocal ( const Entity &father, const Entity &son,
@@ -74,14 +74,14 @@ namespace Dune
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().restrictLocal( father, son, geometryInFather, initialize ) );
       }
 
-      //! prolong data to children 
+      //! prolong data to children
       template< class Entity >
       void prolongLocal ( const Entity &father, const Entity &son, bool initialize ) const
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().prolongLocal( father, son, initialize ) );
       }
 
-      //! prolong data to children 
+      //! prolong data to children
       template< class Entity, class LocalGeometry >
       void prolongLocal ( const Entity &father, const Entity &son,
                           const LocalGeometry &geometryInFather,
@@ -99,7 +99,7 @@ namespace Dune
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().addToList( comm ) );
       }
 
-      /** \brief add discrete function to load balancer 
+      /** \brief add discrete function to load balancer
        *  \param[in]  lb LoadBalancer to add the discrete functions to
        */
       template< class LoadBalancer >
@@ -108,10 +108,10 @@ namespace Dune
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().addToLoadBalancer( lb ) );
       }
 
-    protected:  
+    protected:
       /** \brief calculates the weight, i.e. (volume son)/(volume father)
-          \param[in] father Father Entity 
-          \param[in] son Son Entity 
+          \param[in] father Father Entity
+          \param[in] son Son Entity
           \return proportion between fahter and son volume
       */
       template< class Entity >
@@ -121,7 +121,7 @@ namespace Dune
         assert( weight > DomainFieldType( 0 ) );
         return weight;
       }
-      
+
     protected:
       const RestProlImp &asImp () const { return static_cast< const RestProlImp & >( *this ); }
       RestProlImp &asImp () { return static_cast< RestProlImp & >( *this ); }
@@ -140,7 +140,7 @@ namespace Dune
 
     /** \brief Interface default implementation for derived classes */
     template< class Traits >
-    class RestrictProlongInterfaceDefault 
+    class RestrictProlongInterfaceDefault
     : public RestrictProlongInterface< Traits >
     {
       typedef RestrictProlongInterfaceDefault< Traits > ThisType;
@@ -160,7 +160,7 @@ namespace Dune
       }
 
     public:
-      /** \copydoc RestrictProlongInterface::setFatherChildWeight(const DomainFieldType &weight) const*/  
+      /** \copydoc RestrictProlongInterface::setFatherChildWeight(const DomainFieldType &weight) const*/
       void setFatherChildWeight ( const DomainFieldType &weight ) const {}
     };
 
@@ -168,7 +168,7 @@ namespace Dune
 
     /** \brief This is a wrapper for the default implemented
         restriction/prolongation operator, which only takes a discrete
-        function template 
+        function template
      */
     template< class DiscreteFunction >
     class RestrictProlongDefault
@@ -201,7 +201,7 @@ namespace Dune
       using BaseType::calcWeight;
       using BaseType::entitiesAreCopies;
 
-    public:  
+    public:
       /** \brief explicit set volume ratio of son and father
        *
        *  \param[in]  weight  volume of son / volume of father
@@ -213,7 +213,7 @@ namespace Dune
         localRP_.setFatherChildWeight( weight );
       }
 
-      //! restrict data to father 
+      //! restrict data to father
       template< class Entity >
       void restrictLocal ( const Entity &father, const Entity &son, bool initialize ) const
       {
@@ -228,7 +228,7 @@ namespace Dune
         if( !entitiesAreCopies( gridPart.indexSet(), gpFather, gpSon ) )
           restrictLocal( gpFather, gpSon, son.geometryInFather(), initialize );
       }
-      
+
       //! restrict data to father
       template< class Entity, class LocalGeometry >
       void restrictLocal ( const Entity &father, const Entity &son,
@@ -241,7 +241,7 @@ namespace Dune
         localRP_.restrictLocal( lfFather, constLf_, geometryInFather, initialize );
       }
 
-      //! prolong data to children 
+      //! prolong data to children
       template< class Entity >
       void prolongLocal ( const Entity &father, const Entity &son, bool initialize ) const
       {
@@ -257,7 +257,7 @@ namespace Dune
           prolongLocal( gpFather, gpSon, son.geometryInFather(), initialize );
       }
 
-      //! prolong data to children 
+      //! prolong data to children
       template< class Entity, class LocalGeometry >
       void prolongLocal ( const Entity &father, const Entity &son,
                           const LocalGeometry &geometryInFather,
@@ -269,7 +269,7 @@ namespace Dune
         localRP_.prolongLocal( constLf_, lfSon, geometryInFather, initialize );
       }
 
-      //! add discrete function to communicator 
+      //! add discrete function to communicator
       template< class Communicator >
       void addToList ( Communicator &comm )
       {
@@ -277,7 +277,7 @@ namespace Dune
           comm.addToList( discreteFunction_ );
       }
 
-      //! add discrete function to load balancer 
+      //! add discrete function to load balancer
       template< class LoadBalancer >
       void addToLoadBalancer ( LoadBalancer& lb )
       {
@@ -289,10 +289,10 @@ namespace Dune
       mutable LocalFunctionType constLf_;
       mutable LocalRestrictProlongType localRP_;
     };
-    ///@} 
+    ///@}
 
-  } // namespace Fem  
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_RESTRICTPROLONGINTERFACE_HH

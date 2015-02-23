@@ -13,15 +13,15 @@ namespace Dune
   // ----------------
 
   /*
-   * \brief Please doc me. 
+   * \brief Please doc me.
    */
   template< class Tuple, class Types >
-  class TypeIndexedTuple 
+  class TypeIndexedTuple
   {
     template< class T >
     struct Position
     {
-      static const int value = Dune::FirstTypeIndex< Types, T >::value; 
+      static const int value = Dune::FirstTypeIndex< Types, T >::value;
     };
 
   public:
@@ -105,7 +105,7 @@ DUNE_OPEN_TUPLE_NAMESPACE
   // ----------------------------------
 
   template< size_t i, class Tuple, class Types >
-  struct tuple_element< i, Dune::TypeIndexedTuple< Tuple, Types > > 
+  struct tuple_element< i, Dune::TypeIndexedTuple< Tuple, Types > >
   {
     typedef typename tuple_element< i, Tuple >::type type;
   };

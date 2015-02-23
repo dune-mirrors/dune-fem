@@ -1,5 +1,5 @@
 //**************************************************************
-//  (C) written and directecd by Robert Kloefkorn 
+//  (C) written and directecd by Robert Kloefkorn
 //**************************************************************
 
 #ifndef __PRINTHELP_CC__
@@ -9,7 +9,7 @@ static void print_help(const char *funcName)
 {
   printf("Alternative 1:\n");
   printf("usage: %s paramfile:paramfile <i_start> <i_end>", funcName);
-  printf("%s reads a sequence of grids with discretefunctions\n",            
+  printf("%s reads a sequence of grids with discretefunctions\n",
    funcName);
   printf("      and displays all data with GRAPE\n");
   printf("      The parameters fem.prefix and fem.io.datafileprefix \n");
@@ -20,7 +20,7 @@ static void print_help(const char *funcName)
   printf(" [-h] [-help] [-p path] ");
   printf("[-m grid] [-s df] [-v vecdf] [[-s drv] [-v drdv]] [-replay manager.replay file]\n");
 
-  printf("%s reads a sequence of grids with discretefunctions\n",            
+  printf("%s reads a sequence of grids with discretefunctions\n",
    funcName);
   printf("      and displays all data with GRAPE\n");
   printf("options:\n");

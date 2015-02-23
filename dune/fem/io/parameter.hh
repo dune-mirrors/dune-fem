@@ -13,7 +13,6 @@
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 
 #include <dune/fem/io/io.hh>
-#include <dune/fem/misc/validator.hh>
 #include <dune/fem/misc/mpimanager.hh>
 
 namespace Dune
@@ -21,9 +20,9 @@ namespace Dune
 
   namespace Fem
   {
-  
+
     /** \addtogroup Parameter
-      
+
         Handling Parameters, i.e., values that can be set after compilation, in
         dune-fem is extremely easy. Just add
         \code
@@ -33,10 +32,10 @@ namespace Dune
         at the head of your main function. Parameters are strings of the
         format "key: value". Any command line argument containing a colon
         will thus be interpreted as a parameter.
-      
+
         \note All parameter keys are case sensitive.
         \note Found parameters are removed from the command line.
-      
+
         There are 8 static methods in Parameter to obtain the value of a
         parameter. They are divided by the following criteria:
         - \b Default \b Value: The methods taking a default value will return the
@@ -52,27 +51,27 @@ namespace Dune
           certain constraints. For this purpose, some methods take a validator
           as an argument.
         .
-      
+
         Of course, you don't have to pass every parameter on the command line.
         They can also be gathered in files. Parameter provides a kind of include
         mechanism. Whenever a parameter with key "paramfile" is encountered, the
         value is interpreted as a paramter file to include.
-      
+
         Fem parameters can also be appended to the parameter list via an DGF file.
-        The method 
+        The method
         \code
         appendDGF( "macrogrid.dgf" );
         \endcode
-        reads in the DGF-block: 
+        reads in the DGF-block:
         \code
         FemParameter
-      
+
         #
         \endcode
         from file "macrogrid.dgf". All parameters defined within this block are appended
         to the parameter list.
-      
-      
+
+
         If a parameter is defined multiply, the first definition is added to the
         database. All later definitions are ignored. Therefore it is important to
         know the exact behaviour of the "paramfile" parameter:
@@ -84,16 +83,16 @@ namespace Dune
           file included, before the includes of the next included file are
           considered.
         .
-      
+
         All parameter names defined by dune-fem should conform to the following
         naming convention:
         \code
         fem.<group>.<parameter>
         \endcode
         The group name can be omitted if necessary.
-        
-        An example is the parameter 
-        \code 
+
+        An example is the parameter
+        \code
         fem.verboserank
         \endcode
         This can beused throughout the the program; by calling:
@@ -102,7 +101,7 @@ namespace Dune
         \endcode
         If verbose is set, information concerning the parameters read will
         be output to stdout.
-      
+
         \b Parameter Substitution: \b
         Parameter can consist of parts of other parameters. In order to resolve this
         dependency, the  substituted parameter is put into $(NewParameter) brackets.
@@ -111,16 +110,16 @@ namespace Dune
         N: 128
         parameter1: macrogrid_$(N).dgf
         \endcode
-        results in 
+        results in
         \code
         parameter1: macrogrid_128.dgf
         \endcode
         This can be used when on parameter controls several other parameters, such like the
         number of cells in the macrogrid.
-      
+
         \b Shell Program executions:\b
         Out of the Parameter file shell scripts/commands can be called in order to
-        calculate the value of a parameter. The object which should be executed 
+        calculate the value of a parameter. The object which should be executed
         has to be put into $[command] brackets.
         \code
         parameter1: $[ ./script.sh]
@@ -131,39 +130,38 @@ namespace Dune
         echo 'HalloWorld';
         \endcode
         This smale example resolves the parameter to have the value 'HalloWorld'
-      
+
         If $ is used explicite in a parameter value, $$ kills the substitution
         of the parameter.
-      
+
         Here is an example usage:
         \code
         #include <dune/fem/io/parameter.hh>
-        
-        using Dune::Parameter;
-      
+
         int globalFlag;
-      
+
         int main ( int argc, char **argv )
         {
-          Dune::MPIManager::initialize( argc, argv );
-          Parameter::append( argc, argv );
-      
+          Dune::Fem::MPIManager::initialize( argc, argv );
+          Dune::Fem::Parameter::append( argc, argv );
+
           // get parameters
           double startTime = Parameter::getValue< double >( "starttime", 0.0 );
-          Dune::ValidateGreater< double > validator( startTime );
+          auto validator = [ startTime ]( double time ) { return time > startTime; };
           double endTime = Parameter::getValidValue< double >( "endtime", validator );
-          Parameter::get( "flag", 0, globalFlag );
-          
-          if( Parameter::verbose() )
+
+          Dune::Fem::Parameter::get( "flag", 0, globalFlag );
+
+          if( Dune::Fem::Parameter::verbose() )
             std::cout << "Computing from " << startTime << " to " << endTime << std::endl;
-          
+
           // ...
-      
-          std::ofstream results( (Parameter::outputPrefix() + "/results").c_str() );
-      
+
+          std::ofstream results( Dune::Fem::Parameter::outputPrefix() + "/results" );
+
           // ...
-      
-          Parameter::write( "parameter.log" );
+
+          Dune::Fem::Parameter::write( "parameter.log" );
         }
         \endcode
      */
@@ -272,14 +270,14 @@ namespace Dune
 
     /** \class Parameter
         \brief Container for User Specified Parameters
-      
+
         The class Parameter provides parameters collected from given parameter
         files or the command line in a unified and easy to use way.
-      
+
         This class adheres to the singleton concept, i.e., all methods are static
         and internally use a single instance of this object to store all data.
      */
-    class Parameter 
+    class Parameter
     {
       typedef Parameter ThisType;
 
@@ -346,7 +344,7 @@ namespace Dune
        *  This mehtod adds all parameters (strings containing a colon) in the
        *  command line to the container. The parameters are then removed from the
        *  command line.
-       * 
+       *
        * \param[in]  argc  number of arguments (as given to main)
        * \param[in]  argv  vector of arguments (as given to main)
        */
@@ -369,7 +367,7 @@ namespace Dune
       }
 
       /** \brief add parameters from a file to the container
-       * 
+       *
        * \param[in]  filename  name of the file containing the parameters
        */
       static void append ( const std::string &filename )
@@ -381,7 +379,7 @@ namespace Dune
        *
        *  Parameters can also be read from a DGF file containing a 'FemParameter'
        *  block.
-       * 
+       *
        *  \param[in]  filename  name of the DGF file containing the parameters
        */
       static void appendDGF ( const std::string &filename )
@@ -395,7 +393,7 @@ namespace Dune
       {
         instance().params_.clear();
       }
-     
+
 #if 0
       template <class T>
       static void replaceKey ( const std::string& key, const T& value )
@@ -432,7 +430,7 @@ namespace Dune
         if( !ParameterParser< T >::parse( instance().map( key ), value ) )
           DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
       }
-      
+
       /** \brief get an optional parameter from the container
        *
        *  \note This method returns a default value, if the parameter cannot be
@@ -480,14 +478,14 @@ namespace Dune
        */
       template< class T, class Validator >
       static void getValid ( const std::string &key, const T &defaultValue, const Validator &validator, T &value );
-      
+
       /** \brief get a mandatory parameter from the container
        *
        *  \note This method throws an exception, if the parameter cannot be
        *        found.
        *
        *  \param[in]   key    name of the parameter to get
-       *  
+       *
        *  \returns value of the parameter
        */
       template< class T >
@@ -497,7 +495,7 @@ namespace Dune
         get( key, value );
         return value;
       }
-      
+
       /** \brief get an optional parameter from the container
        *
        *  \note This method returns a default value, if the parameter cannot be
@@ -515,7 +513,7 @@ namespace Dune
         get( key, defaultValue, value );
         return value;
       }
-      
+
       /** \brief get an optional parameter from the container
        *
        *  \note This method returns a default value, if the parameter cannot be
@@ -562,7 +560,7 @@ namespace Dune
       template< int n >
       static int getEnumeration( const std::string &key, const std::string& value, const std::string (&values)[ n ]);
 
-    public:  
+    public:
       /** \brief obtain common output path
        *
        *  For parallel jobs you need two different output paths:
@@ -571,7 +569,7 @@ namespace Dune
        *  - Data unique to each process should be written to outputPath().
        *    Each process should write this data.
        *  .
-       * 
+       *
        *  \returns value of parameter 'fem.prefix', which defaults to '.'.
        */
       static std::string commonOutputPath ()
@@ -601,7 +599,7 @@ namespace Dune
       {
         return (instance().verboseRank_ == MPIManager::rank());
       }
-    
+
       /** \brief write the parameter database to a file
        *
        *  This method writes paramters to the given file.
@@ -627,14 +625,14 @@ namespace Dune
        *  are written.
        *
        *  \note This method is \b not safe for parallel jobs. Parameters are
-       *        written on all ranks. 
+       *        written on all ranks.
        *
        *  \param[in]  out stream for the parameters.
        *  \param[in]  writeAll default is true
        */
       static void write ( std::ostream &out, bool writeAll = true );
 
-    protected:  
+    protected:
       friend class PersistenceManager ;
 
       /** \brief write the parameter database to a file
@@ -652,7 +650,7 @@ namespace Dune
        *  \param[in]  fileextension  chosen fileextension
        *  \param[in]  writeAll default is true
        */
-      static void write ( const std::string& path, const std::string &filename, 
+      static void write ( const std::string& path, const std::string &filename,
                           const std::string& fileextension, bool writeAll = true  );
     private:
       std::string curFileName_;
@@ -694,7 +692,7 @@ namespace Dune
       Value *val = find( key );
 
       if (!val)
-        DUNE_THROW( ParameterNotFound, "Parameter '" << key << "' not found." ); 
+        DUNE_THROW( ParameterNotFound, "Parameter '" << key << "' not found." );
 
       resolveShadows( key, *val );
 
@@ -724,7 +722,7 @@ namespace Dune
         = params_.insert( std::make_pair( key, insVal ) );
       Value &val = info.first->second;
 
-      if ( info.second )  
+      if ( info.second )
       {
         if ( verbose() )
           std::cout << "Adding default: " << key << " = " << value << std::endl;
@@ -732,7 +730,7 @@ namespace Dune
       }
       else if ( val.used )
       {
-        if (!val.hasDefault ) 
+        if (!val.hasDefault )
           DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' used first without and then with default." );
         if ( val.defaultValue != insVal.value )
           DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' used with different default values." );
@@ -770,7 +768,7 @@ namespace Dune
         std::cout << curFileName_ << "[" << curLineNumber_ << "]: ";
         if( info.second )
           std::cout << "Adding " << key << " = " << value << std::endl;
-        else 
+        else
           std::cout << "Ignored " << key << " = " << value
                     << ", using " << val.value << std::endl;
       }
@@ -785,7 +783,7 @@ namespace Dune
 
       while( (end != std::string::npos) && (line[end] =='$') )
       {
-        if( end+2 < size ) 
+        if( end+2 < size )
           end = line.find_first_of ( "%#$", end+2 );
         else
           end = std::string::npos;
@@ -839,7 +837,7 @@ namespace Dune
           break;
       }
       ++value_start;
-      
+
       for( ; value_start < size; ++value_start )
       {
         if( (s[ value_start ] != ' ') && (s[ value_start ] != '\t') )
@@ -929,7 +927,7 @@ namespace Dune
       if( verbose() )
         std::cout << "Parameter: Processing '" << filename << "'..."
                      << std::endl;
-      
+
       std::ifstream file( filename.c_str() );
       if( file.is_open() )
       {
@@ -1025,9 +1023,7 @@ namespace Dune
                           const Validator &validator,
                           T &value )
     {
-      if( !ParameterParser< T >::parse( instance().map( key ), value ) )
-        DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
-      if( !validator( value ) )
+      if( !ParameterParser< T >::parse( instance().map( key ), value ) || !validator( value ) )
         DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
     }
 
@@ -1038,18 +1034,10 @@ namespace Dune
                           const Validator &validator,
                           T &value )
     {
-      bool valid = true ;
-      if( !ParameterParser< T >::parse( instance().map( key, defaultValue ), value ) ) valid = false;
-      if( !validator( value ) ) valid = false;
-
-      if( ! valid ) 
-      {
-        std::cerr << std::endl << "Parameter '" << key << "' invalid." << std::endl;
-        validator.print( std::cerr );
+      if( !ParameterParser< T >::parse( instance().map( key, defaultValue ), value ) || !validator( value ) )
         DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
-      }
     }
-    
+
     inline std::string
     Parameter::outputPath ()
     {
@@ -1078,15 +1066,15 @@ namespace Dune
     inline int
     Parameter::getEnum ( const std::string &key, const std::string (&values)[ n ], const int defaultValue )
     {
-      return getEnumeration( key, 
+      return getEnumeration( key,
                              instance().map( key, values[ defaultValue ] ),
                              values);
     }
 
     template< int n >
     inline int
-    Parameter::getEnumeration ( const std::string &key, 
-                                const std::string& value, 
+    Parameter::getEnumeration ( const std::string &key,
+                                const std::string& value,
                                 const std::string (&values)[ n ] )
     {
       for( int i = 0; i < n; ++i )
@@ -1101,13 +1089,13 @@ namespace Dune
       if( (j < 0) || (j >= n) )
       {
         std::cerr << std::endl << "Parameter '" << key << "' invalid." << std::endl;
-        std::cerr << "Valid values are: "; 
+        std::cerr << "Valid values are: ";
         for( int i = 0; i < n; ++i )
         {
           std::cerr << values[ i ];
-          if( i < n-1 ) std::cerr << ", "; 
+          if( i < n-1 ) std::cerr << ", ";
         }
-        std::cerr << std::endl << std::endl; 
+        std::cerr << std::endl << std::endl;
         DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
       }
       return j;
@@ -1143,16 +1131,16 @@ namespace Dune
 
 
 
-    inline std::string 
+    inline std::string
     Parameter::getShadowKey( const std::string key, const char delimiter, std::string &value )
     {
-      std::string shadowKey; 
+      std::string shadowKey;
 
       while( true )
       {
-        size_t startPoint = value.find_first_of( std::string("$") + delimiter );        
-        
-        if( startPoint == std::string::npos ) 
+        size_t startPoint = value.find_first_of( std::string("$") + delimiter );
+
+        if( startPoint == std::string::npos )
           DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid." );
 
         shadowKey += value.substr( 0, startPoint );
@@ -1160,7 +1148,7 @@ namespace Dune
 
         value.replace(0, startPoint+1, "" );
 
-        if( startChar == delimiter ) 
+        if( startChar == delimiter )
           return shadowKey;
         assert( startChar == '$' );
 
@@ -1168,12 +1156,12 @@ namespace Dune
       }
     }
 
-    inline void 
+    inline void
     Parameter::resolveShadows ( const std::string &key, Value &val )
     {
       std::string &realValue = val.value;
       if( val.shadowStatus != Value::resolved )
-      {      
+      {
         if ( val.shadowStatus == Value::resolving )
           DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' invalid, contains infinite loop." );
 
@@ -1183,10 +1171,10 @@ namespace Dune
 
         while( !realValueHelper.empty() )
         {
-          size_t startPoint = realValueHelper.find_first_of('$');        
+          size_t startPoint = realValueHelper.find_first_of('$');
           realValue += realValueHelper.substr( 0, startPoint );
 
-          if( startPoint == std::string::npos ) 
+          if( startPoint == std::string::npos )
             break;
 
           realValueHelper.replace( 0, startPoint+1, "" );
@@ -1201,17 +1189,17 @@ namespace Dune
     Parameter::write ( const std::string &filename, const std::string &fileextension, bool writeAll )
     {
       // only write one parameter log file
-      // to the common path 
+      // to the common path
       if( MPIManager::rank() != 0 ) return;
 
       write( commonOutputPath(), filename, fileextension, writeAll );
     }
 
     inline void
-    Parameter::write ( const std::string &path, 
+    Parameter::write ( const std::string &path,
                        const std::string &filename,
-                       const std::string &fileextension, 
-                       bool writeAll ) 
+                       const std::string &fileextension,
+                       bool writeAll )
     {
       std::string fullname( path );
       fullname += "/";

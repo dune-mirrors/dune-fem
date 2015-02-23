@@ -27,8 +27,8 @@
 using namespace Dune;
 using namespace Fem;
 
-// polynom approximation order of quadratures, 
-// at least poolynom order of basis functions 
+// polynom approximation order of quadratures,
+// at least poolynom order of basis functions
 #ifdef POLORDER
   const int polOrder = POLORDER;
 #else
@@ -70,7 +70,7 @@ void readBack ( VirtualInStream in, DiscreteFunctionType &solution )
 
 
 
-int main(int argc, char ** argv) 
+int main(int argc, char ** argv)
 {
   MPIManager :: initialize( argc, argv );
   try
@@ -97,7 +97,7 @@ int main(int argc, char ** argv)
 
     // Let's check on IO
     DiscreteFunctionType readback( "readback", discreteFunctionSpace );
-    
+
     XDRFileOutStream xout( "solution-xdr.tmp" );
     writeOut( virtualize( xout ), solution );
 

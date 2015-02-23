@@ -20,7 +20,7 @@ namespace Dune
 
     template< class HostIndexSet >
     class IdIndexSet
-      : public PersistentIndexSetInterface 
+      : public PersistentIndexSetInterface
     {
       typedef IdIndexSet< HostIndexSet > This;
 
@@ -52,7 +52,7 @@ namespace Dune
         return hostIndexSet().geomTypes( codim );
       }
 
-      Types types( const int codim ) const 
+      Types types( const int codim ) const
       {
         return hostIndexSet().types( codim );
       }
@@ -66,25 +66,25 @@ namespace Dune
       bool consecutive () const { return hostIndexSet().consecutive(); }
       bool persistent () const { return hostIndexSet().persistent(); }
 
-      void compress () 
-      { 
+      void compress ()
+      {
         assert( consecutive() );
-        hostIndexSet().compress(); 
+        hostIndexSet().compress();
       }
 
-      void addBackupRestore() 
-      { 
-        if( persistent() ) 
+      void addBackupRestore()
+      {
+        if( persistent() )
         {
-          // this cast should work, since we have a persistent index set 
+          // this cast should work, since we have a persistent index set
           ((PersistentIndexSetInterface &) hostIndexSet()).addBackupRestore();
         }
       }
-      void removeBackupRestore() 
-      { 
-        if( persistent() ) 
+      void removeBackupRestore()
+      {
+        if( persistent() )
         {
-          // this cast should work, since we have a persistent index set 
+          // this cast should work, since we have a persistent index set
           ((PersistentIndexSetInterface &) hostIndexSet()).removeBackupRestore();
         }
       }
@@ -110,7 +110,7 @@ namespace Dune
         return *hostIndexSet_;
       }
 
-      HostIndexSet &hostIndexSet () 
+      HostIndexSet &hostIndexSet ()
       {
         assert( hostIndexSet_ );
         return *hostIndexSet_;

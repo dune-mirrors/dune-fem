@@ -1,13 +1,13 @@
 #ifndef DUNE_FEM_SPACEOPERATORIF_HH
 #define DUNE_FEM_SPACEOPERATORIF_HH
 
-//- system includes 
+//- system includes
 #include <cassert>
 #include <cstdlib>
 #include <limits>
 #include <utility>
 
-//-Dune fem includes 
+//-Dune fem includes
 #include <dune/fem/operator/common/automaticdifferenceoperator.hh>
 #include <dune/fem/operator/common/objpointer.hh>
 #include <dune/fem/function/adaptivefunction.hh>
@@ -19,53 +19,53 @@ namespace Dune
   {
 
     /** @ingroup OperatorCommon
-      \brief ODESpaceOperatorInterface for Operators that work with PARDG ODE solvers 
+      \brief ODESpaceOperatorInterface for Operators that work with PARDG ODE solvers
       of the type \f$L: X \longrightarrow X\f$ where \f$X\f$ is a discrete function space.
-      
+
       \interfaceclass
     */
-    template <class DestinationImp> 
-    class PARDGSpaceOperatorInterface 
+    template <class DestinationImp>
+    class PARDGSpaceOperatorInterface
     {
     protected:
-      // only allow derived class to call this constructor  
+      // only allow derived class to call this constructor
       PARDGSpaceOperatorInterface () {}
 
     public:
-      //! type of argument and destination 
+      //! type of argument and destination
       typedef DestinationImp DestinationType;
-      
-      //! destructor 
+
+      //! destructor
       virtual ~PARDGSpaceOperatorInterface () {}
-      
+
       /** \brief return size of discrete function space, i.e. number of unknowns */
       virtual int size () const = 0 ;
 
-      /** \brief call operator once to calculate initial time step size 
-          \param U0  initial data to compute initial time step size 
+      /** \brief call operator once to calculate initial time step size
+          \param U0  initial data to compute initial time step size
        */
       virtual void initializeTimeStepSize ( const DestinationType& U0 ) const = 0;
 
-      /** \brief application operator to apply right hand side 
-          \param u  argument, u 
+      /** \brief application operator to apply right hand side
+          \param u  argument, u
           \param f  destination, f(u)
        */
       virtual void operator() ( const double *u, double *f ) const = 0;
 
-      /** \brief apply limiter to u and store result in f 
-          \param u  argument, u 
+      /** \brief apply limiter to u and store result in f
+          \param u  argument, u
           \param f  destination, f(u)
        */
       virtual void limit ( const double *u, double *f ) const { }
 
-      /** \brief return true if limit method is implemented 
-       
-          \return true if limit is implemented 
+      /** \brief return true if limit method is implemented
+
+          \return true if limit is implemented
        */
       virtual bool hasLimiter () const { return false ; }
 
-      /** \brief set time for operators 
-          \param time current time of evaluation 
+      /** \brief set time for operators
+          \param time current time of evaluation
       */
       virtual void setTime ( const double time ) {}
 
@@ -77,9 +77,9 @@ namespace Dune
        *  Maximum time steps for higher order Runge Kutta schemes can be derived
        *  from this value.
        *  */
-      virtual double timeStepEstimate () const 
+      virtual double timeStepEstimate () const
       {
-        return std::numeric_limits< double >::max();  
+        return std::numeric_limits< double >::max();
       }
     };
 
@@ -98,7 +98,7 @@ namespace Dune
       * \interfaceclass
       */
     template< class DiscreteFunction >
-    class SpaceOperatorInterface 
+    class SpaceOperatorInterface
     : public Fem::AutomaticDifferenceOperator< DiscreteFunction >,
       public PARDGSpaceOperatorInterface< DiscreteFunction >
     {
@@ -106,14 +106,14 @@ namespace Dune
       typedef Fem::Operator< DiscreteFunction > BaseType;
 
     public:
-      //! type of argument and destination 
+      //! type of argument and destination
       typedef DiscreteFunction DestinationType;
-      
-      //! type of discrete function space 
+
+      //! type of discrete function space
       typedef typename DestinationType::DiscreteFunctionSpaceType SpaceType;
-      
-    protected:  
-      template < class Op, class DF, class Field > 
+
+    protected:
+      template < class Op, class DF, class Field >
       struct CallDoubleOperator
       {
         static inline void apply( const Op& op, const double* u, double* f )
@@ -129,9 +129,9 @@ namespace Dune
         }
       };
 
-      // this only works if the DestinationType is AdaptiveDiscreteFunction and the 
-      // DofType is double 
-      template < class Op > 
+      // this only works if the DestinationType is AdaptiveDiscreteFunction and the
+      // DofType is double
+      template < class Op >
       struct CallDoubleOperator< Op, AdaptiveDiscreteFunction< SpaceType >, double >
       {
         static inline void apply( const Op& op, const double* u, double* f )
@@ -163,7 +163,7 @@ namespace Dune
         }
       };
     public:
-      //! destructor 
+      //! destructor
       virtual ~SpaceOperatorInterface() {}
 
       using BaseType::operator ();
@@ -174,15 +174,15 @@ namespace Dune
       /** \copydoc Dune::Fem::PARDGSpaceOperatorInterface::size() const */
       virtual int size () const { return space().size(); }
 
-      //- \copydoc Dune::Fem::PARDGSpaceOperatorInterface::operator()(const double*,double*) const 
-      /** \brief application operator to apply right hand side 
-          \param u  argument, u 
+      //- \copydoc Dune::Fem::PARDGSpaceOperatorInterface::operator()(const double*,double*) const
+      /** \brief application operator to apply right hand side
+          \param u  argument, u
           \param f  destination, f(u)
        */
       virtual void operator() ( const double *u, double *f ) const;
 
-      /** \brief limiter application operator 
-          \param u  argument, u 
+      /** \brief limiter application operator
+          \param u  argument, u
           \param f  destination, Limiter(u)
        */
       virtual void limit ( const double *u, double *f ) const;
@@ -190,50 +190,50 @@ namespace Dune
       /** \brief return true if explicit limiter is available */
       virtual bool hasLimiter () const { return false ; }
 
-      /** \brief limiter application operator 
-          \param arg   argument, u 
+      /** \brief limiter application operator
+          \param arg   argument, u
           \param dest  destination, Limiter(u)
        */
       virtual void limit (const DestinationType& arg, DestinationType& dest) const
       {
-        // default operation is the identiy 
+        // default operation is the identiy
         dest.assign( arg );
       }
 
       /** \copydoc Dune::Fem::PARDGSpaceOperatorInterface::initializeTimeStepSize(const DestinationType &U0) const */
       virtual void initializeTimeStepSize ( const DestinationType &U0 ) const;
 
-      //! return reference to pass's local memory  
+      //! return reference to pass's local memory
       virtual const DestinationType* destination() const { return 0; }
     };
 
     //! only for keeping the pointer
     template <class OperatorType>
     class SpaceOperatorStorage
-    : public ObjPointerStorage                  
+    : public ObjPointerStorage
     {
-      //! copying not allowed 
+      //! copying not allowed
       SpaceOperatorStorage(const SpaceOperatorStorage& org);
       SpaceOperatorStorage& operator = (const SpaceOperatorStorage& org);
-      
-    protected:  
-      // operator storage 
+
+    protected:
+      // operator storage
       mutable OperatorType* op_;
-      // model storage  
+      // model storage
       ObjPointerStorage* model_;
-      
+
     public:
-      //! constructor storing pointer 
+      //! constructor storing pointer
       SpaceOperatorStorage(OperatorType * op)
         : op_(op), model_(0)
       {}
-      
-      //! constructor storing pointer 
+
+      //! constructor storing pointer
       SpaceOperatorStorage(OperatorType * op, ObjPointerStorage* model)
         : op_(op), model_(model)
       {}
 
-      //! destructor deletes operator 
+      //! destructor deletes operator
       ~SpaceOperatorStorage()
       {
         // delete operator before destructor of base class is called
@@ -241,11 +241,11 @@ namespace Dune
         delete model_; model_ = 0;
       }
 
-      //! return reference to pass 
+      //! return reference to pass
       OperatorType& pass() const
-      { 
+      {
         assert( op_ );
-        return (*op_); 
+        return (*op_);
       }
     };
 
@@ -255,94 +255,94 @@ namespace Dune
     : public SpaceOperatorStorage< OperatorType >,
       public SpaceOperatorInterface<typename OperatorType::DestinationType>
     {
-      //! type of base class 
+      //! type of base class
       typedef SpaceOperatorStorage< OperatorType > BaseType;
 
 			protected:
-      // use pass method of base 
+      // use pass method of base
       using BaseType :: pass;
 			private:
-      
-      //! type of destination 
+
+      //! type of destination
       typedef typename OperatorType::DestinationType DestinationType;
-      
-      //! type of discrete function space 
+
+      //! type of discrete function space
       typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
-      
-      //! copying not allowed 
+
+      //! copying not allowed
       SpaceOperatorPtr(const SpaceOperatorPtr& org);
       SpaceOperatorPtr& operator = (const SpaceOperatorPtr& org);
 
     public:
-      //! constructor storing pointer 
+      //! constructor storing pointer
       SpaceOperatorPtr(OperatorType * op)
         : BaseType(op)
       {}
 
-      //! constructor storing pointer 
+      //! constructor storing pointer
       SpaceOperatorPtr(OperatorType * op, ObjPointerStorage* model)
         : BaseType(op,model)
       {}
 
-      //! destructor 
+      //! destructor
       virtual ~SpaceOperatorPtr() {}
 
       //! application operator does nothing here
       virtual void operator () (const DestinationType& arg, DestinationType& dest) const
       {
-        // this method should not be called 
+        // this method should not be called
         assert(false);
         abort();
       }
 
-      //! return reference to space 
+      //! return reference to space
       const SpaceType& space() const { return pass().space(); }
-        
+
       /** @copydoc SpaceOperatorInterface::setTime  */
       void setTime(const double time) { pass().setTime(time); }
 
       /** @copydoc SpaceOperatorInterface::timeStepEstimate */
       double timeStepEstimate () const { return pass().timeStepEstimate(); }
 
-      //! return reference to pass's local memory  
-      const DestinationType* destination() const 
+      //! return reference to pass's local memory
+      const DestinationType* destination() const
       {
         pass().allocateLocalMemory();
         return & (pass().destination());
       }
     };
 
-    //! apply wrapper 
+    //! apply wrapper
     template <class OperatorType>
     class SpaceOperatorWrapper
     : public SpaceOperatorPtr< OperatorType >
     {
-      //! type of base class 
+      //! type of base class
       typedef SpaceOperatorPtr< OperatorType > BaseType;
 
-      // use pass method of base 
+      // use pass method of base
       using BaseType :: pass;
-      
+
       //! copying not allowed
       SpaceOperatorWrapper(const SpaceOperatorWrapper& org);
       SpaceOperatorWrapper& operator = (const SpaceOperatorWrapper& org);
     public:
-      //! type of Argument and Destination 
+      //! type of Argument and Destination
       typedef typename OperatorType::DestinationType DestinationType;
-      //! type of discrete function space 
+      //! type of discrete function space
       typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
-      
-      //! constructor storing pointer 
+
+      //! constructor storing pointer
       SpaceOperatorWrapper(OperatorType * op)
         : BaseType(op)
       {}
-        
-      //! constructor storing pointer 
+
+      //! constructor storing pointer
       SpaceOperatorWrapper(OperatorType * op, ObjPointerStorage* model)
         : BaseType(op,model)
       {}
 
-      //! call application operator of internal operator  
+      //! call application operator of internal operator
       void operator () (const DestinationType& arg, DestinationType& dest) const
       {
         pass()(arg,dest);
@@ -357,8 +357,8 @@ namespace Dune
     inline void SpaceOperatorInterface< DiscreteFunction >
       ::operator() ( const double *u, double *f ) const
     {
-      CallDoubleOperator< SpaceOperatorInterface< DiscreteFunction >, 
-                          DiscreteFunction, 
+      CallDoubleOperator< SpaceOperatorInterface< DiscreteFunction >,
+                          DiscreteFunction,
                           typename DiscreteFunction :: RangeFieldType >::apply( *this, u, f );
     }
 
@@ -366,8 +366,8 @@ namespace Dune
     inline void SpaceOperatorInterface< DiscreteFunction >
       ::limit ( const double *u, double *f ) const
     {
-      CallDoubleOperator< SpaceOperatorInterface< DiscreteFunction >, 
-                          DiscreteFunction, 
+      CallDoubleOperator< SpaceOperatorInterface< DiscreteFunction >,
+                          DiscreteFunction,
                           typename DiscreteFunction :: RangeFieldType >::limit( *this, u, f );
     }
 
@@ -383,6 +383,6 @@ namespace Dune
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_SPACEOPERATORIF_HH

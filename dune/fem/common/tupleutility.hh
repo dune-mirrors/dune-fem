@@ -7,7 +7,7 @@
 #ifdef HAVE_TR1_TUPLE // #ifdef HAVE_TUPLE
 #define DUNE_OPEN_TUPLE_NAMESPACE namespace std { namespace tr1 {
 #define DUNE_CLOSE_TUPLE_NAMESPACE } }
-#else // #if defined HAVE_TR1_TUPLE 
+#else // #if defined HAVE_TR1_TUPLE
 #define DUNE_OPEN_TUPLE_NAMESPACE namespace std {
 #define DUNE_CLOSE_TUPLE_NAMESPACE }
 #endif // #ifdef HAVE_TR1_TUPLE
@@ -337,7 +337,7 @@ namespace Dune
    * \tparam  Type   type to search for
    */
   template< class Tuple,
-            class Type, 
+            class Type,
             int N = Dune::tuple_size< Tuple >::value
           >
   struct ContainsType
@@ -463,9 +463,9 @@ namespace Dune
   // TupleToVectorConverter
   // ----------------------
 
-  /** \brief wrapper class to convert a vector of tuples of RangeTypes into something 
+  /** \brief wrapper class to convert a vector of tuples of RangeTypes into something
              that behaves like a vector< RangeType >
-  */           
+  */
   template< class VectorTupleType, int pos >
   class TupleToVectorConverter
   {
@@ -496,7 +496,7 @@ namespace Dune
       return get< pos >( vector_[ i ] );
     }
 
-    //! return size of vector 
+    //! return size of vector
     size_t size () const { return vector_.size(); }
 
   protected:

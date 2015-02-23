@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_DUNEQUADRATURES_HH
 #define DUNE_FEM_DUNEQUADRATURES_HH
 
-//- Dune includes 
+//- Dune includes
 #include <dune/geometry/type.hh>
 #include <dune/geometry/quadraturerules.hh>
 
@@ -9,14 +9,14 @@
 
 namespace Dune
 {
-   
+
   namespace Fem
   {
 
     /** \class QuadratureRulesFactory
      *  \ingroup Quadrature
      *  \brief quadrature implementation based on the standard DUNE quadratures
-     *    
+     *
      *  Though a factory by name, this is a quadrature implementation using the
      *  standard quadratures from DUNE grid to generate a list of quadrature
      *  points.
@@ -47,13 +47,13 @@ namespace Dune
       //enum { highest_order_simplex = SimplexQuadratureRule<ct,dim>::highest_order };
 
       enum { highest_order = 44 };
-      //(highest_order_cube < highest_order_simplex) ? 
+      //(highest_order_cube < highest_order_simplex) ?
       //            highest_order_cube : highest_order_simplex };
 
     protected:
       const GeometryType elementGeometry_;
       int order_;
-      
+
     public:
       /** \brief constructor filling the list of points and weights
        *
@@ -67,7 +67,7 @@ namespace Dune
       : BaseType( id ),
         elementGeometry_( geometry )
       {
-        // get gauss quadrature 
+        // get gauss quadrature
         const DuneQuadratureRuleType &rule
           = QuadratureRules< FieldType, dimension >
             :: rule( geometry, order, QuadratureType :: GaussLegendre );
@@ -84,21 +84,21 @@ namespace Dune
       /** \copydoc Dune::Fem::QuadratureImp::order
        */
       int order () const
-      { 
+      {
         return order_;
       }
-      
+
       /** \copydoc Dune::Fem::QuadratureImp::geometry
        */
       GeometryType geometryType () const
-      { 
+      {
         return elementGeometry_;
       }
 
       /** \brief maximal order of available quadratures
        */
       static unsigned int maxOrder ()
-      { 
+      {
         return highest_order;
       }
     };
@@ -110,7 +110,7 @@ namespace Dune
     {
       typedef QuadratureRulesFactory< FieldType, dim > SimplexQuadratureType;
       typedef QuadratureRulesFactory< FieldType, dim > CubeQuadratureType;
-      
+
       typedef QuadratureImp< FieldType, dim > IntegrationPointListType;
     };
 
@@ -126,7 +126,7 @@ namespace Dune
     struct DuneQuadratureTraits< FieldType, 1 >
     {
       typedef QuadratureRulesFactory< FieldType, 1 > LineQuadratureType;
-      
+
       typedef QuadratureImp< FieldType, 1 > IntegrationPointListType;
     };
 
@@ -135,15 +135,15 @@ namespace Dune
     {
       typedef QuadratureRulesFactory< FieldType, 3 > SimplexQuadratureType;
       typedef QuadratureRulesFactory< FieldType, 3 > CubeQuadratureType;
-      
+
       typedef QuadratureRulesFactory< FieldType, 3 > PrismQuadratureType;
       typedef QuadratureRulesFactory< FieldType, 3 > PyramidQuadratureType;
-      
+
       typedef QuadratureImp< FieldType, 3 > IntegrationPointListType;
     };
 
   } // namespace Fem
- 
-} // namespace Dune 
+
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_DUNEQUADRATURES_HH

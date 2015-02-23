@@ -6,8 +6,8 @@
 namespace Dune
 {
 
-  namespace Fem 
-  { 
+  namespace Fem
+  {
 
     // VectorInterface
     // ---------------
@@ -28,7 +28,7 @@ namespace Dune
       asImp().assign( v );
       return asImp();
     }
-    
+
     template< class Traits >
     inline typename Traits :: VectorType &
     VectorInterface< Traits > :: operator= ( const FieldType s )
@@ -78,7 +78,7 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator*=( s ) );
       return asImp();
     }
-    
+
     template< class Traits >
     template< class T >
     inline typename Traits :: VectorType &
@@ -88,7 +88,7 @@ namespace Dune
       CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().add( s, v.asImp() ) );
       return asImp();
     }
-    
+
     template< class Traits >
     template< class T >
     inline void VectorInterface< Traits > :: assign ( const VectorInterface< T > &v )
@@ -139,7 +139,7 @@ namespace Dune
       CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
       return asImp().end();
     }
-    
+
     template< class Traits >
     inline unsigned int VectorInterface< Traits > :: size () const
     {
@@ -168,7 +168,7 @@ namespace Dune
       return result;
     }
 
-  
+
     // Stream Operators
     // ----------------
 
@@ -195,7 +195,7 @@ namespace Dune
       return out;
     }
 
-  
+
     /** \brief read a vector from an input stream
      *  \relates VectorInterface
      *  \relatesalso InStreamInterface
@@ -233,7 +233,7 @@ namespace Dune
                                         const VectorInterface< Traits > &v )
     {
       const unsigned int size = v.size();
-        
+
       if( size > 0 ) {
         out << "[ ";
         out << v[ 0 ];
@@ -272,7 +272,7 @@ namespace Dune
                                         VectorInterface< Traits > &v )
     {
       const unsigned int size = v.size();
-      
+
       Fem :: DynamicVector< typename Traits :: FieldType > w( size );
 
       char expected = '[';

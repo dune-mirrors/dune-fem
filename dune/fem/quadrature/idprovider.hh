@@ -3,20 +3,20 @@
 
 #include <cstdlib>
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     //! Singleton that manages a globally unique identifier.
-    class IdProvider 
+    class IdProvider
     {
     public:
       //! Access to the singleton object.
-      inline static IdProvider& instance() 
+      inline static IdProvider& instance()
       {
-        static IdProvider idProvider; 
+        static IdProvider idProvider;
         return idProvider;
       }
 

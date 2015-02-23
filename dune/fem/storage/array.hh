@@ -10,7 +10,7 @@
 
 namespace Dune
 {
-  namespace Fem 
+  namespace Fem
   {
 
     /** \class ArrayInterface
@@ -28,16 +28,16 @@ namespace Dune
       //! type of the traits
       typedef AT Traits;
 
-      //! type of the implementation (Barton-Nackman) 
+      //! type of the implementation (Barton-Nackman)
       typedef typename Traits::ArrayType ArrayType;
 
       //! type of this interface
       typedef ThisType ArrayInterfaceType;
-      
+
       //! type of the array elements
       typedef typename Traits::ElementType ElementType;
 
-      //! make consistent with std::vector 
+      //! make consistent with std::vector
       typedef ElementType value_type ;
 
       //! type of constant iterator
@@ -53,7 +53,7 @@ namespace Dune
       /** \brief access an array element
        *
        *  \param[in]  index  index of the array element to access
-       *  
+       *
        *  \returns a const reference to the array element
        */
       const ElementType &operator[] ( unsigned int index ) const
@@ -61,11 +61,11 @@ namespace Dune
         CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
         return asImp()[ index ];
       }
-      
+
       /** \brief access an array element
        *
        *  \param[in]  index  index of the array element to access
-       *  
+       *
        *  \returns a reference to the array element
        */
       ElementType &operator[] ( unsigned int index )
@@ -73,7 +73,7 @@ namespace Dune
         CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
         return asImp()[ index ];
       }
-     
+
       /** \brief fill the array with copies of an element
        *
        *  \param[in]  element  element wich shall be copied into every array
@@ -96,7 +96,7 @@ namespace Dune
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( other ) );
       }
-   
+
       /** \brief obtain begin iterator
        *
        *  \returns an iterator pointing to the first array element
@@ -229,11 +229,11 @@ namespace Dune
       typedef ArrayImp ArrayType;
 
       typedef ArrayDefaultIterator< ElementType, ArrayType > IteratorType;
-      
+
       typedef ArrayDefaultIterator< const ElementType, const ArrayType > ConstIteratorType;
     };
 
-    
+
     /** \class ArrayDefault
      *  \ingroup VectorClasses
      *  \brief default implementation of the ArrayInterface
@@ -246,9 +246,9 @@ namespace Dune
       //! type of the array elements
       typedef ElementImp ElementType;
 
-      //! type of the implementation (Barton-Nackman) 
+      //! type of the implementation (Barton-Nackman)
       typedef ArrayImp ArrayType;
-      
+
       //! type of the traits
       typedef ArrayDefaultTraits< ElementType, ArrayType > Traits;
 
@@ -278,7 +278,7 @@ namespace Dune
         for( unsigned int i = 0; i < size; ++i )
           imp[ i ] = element;
       }
-      
+
       /** \copydoc Dune::Fem::ArrayInterface::assign(const ArrayInterface<T> &other) */
       template< class T >
       inline void assign( const ArrayInterface< T > &other )
@@ -345,7 +345,7 @@ namespace Dune
       {
         assert( elements_ != NULL );
       }
-     
+
       /** \copydoc Dune::Fem::ArrayInterface::operator[](unsigned int index) const */
       inline const ElementType &operator[] ( unsigned int index ) const
       {
@@ -407,7 +407,7 @@ namespace Dune
 
     public:
       /** \brief default constructor
-       *  
+       *
        *  The array elements are not initialized with this constructor
        */
       inline FixedSizeArray ()
@@ -432,7 +432,7 @@ namespace Dune
       {
         assign( other );
       }
-    
+
       /** \copydoc Dune::Fem::ArrayInterface::operator[](unsigned int index) const */
       inline const ElementType &operator[] ( unsigned int index ) const
       {
@@ -470,12 +470,12 @@ namespace Dune
 
     protected:
       typedef ArrayAllocator< ElementType > ArrayAllocatorType;
-      
+
       typedef typename ArrayAllocatorType :: ElementPtrType ElementPtrType;
 
     protected:
       ArrayAllocatorType allocator_;
-      
+
       unsigned int size_;
       ElementPtrType elements_;
 
@@ -497,7 +497,7 @@ namespace Dune
         size_ = size;
         allocator_.allocate( size_, elements_ );
       }
-      
+
       inline DynamicArray ( unsigned int size,
                             const ElementType &element )
       : allocator_()
@@ -516,7 +516,7 @@ namespace Dune
         allocator_.allocate( size_, elements_ );
         assign( defaultElement );
       }
-      
+
       inline DynamicArray ( const ThisType &other )
       : allocator_( other.allocator_ )
       {
@@ -553,14 +553,14 @@ namespace Dune
       inline void append ( const ArrayInterface< T > &array )
       {
         const unsigned int arraySize = array.size();
-        
+
         const unsigned int oldSize = size_;
         resize( oldSize + arraySize );
 
         for( unsigned int i = 0; i < arraySize; ++i )
           elements_[ oldSize + i ] = array[ i ];
       }
-      
+
       /** \copydoc Dune::Fem::ArrayInterface::assign(const ArrayInterface<T> &other) */
       template< class T >
       inline void assign( const ArrayInterface< T > &other )
@@ -616,7 +616,7 @@ namespace Dune
 
     // Capabilities
     // ------------
-    
+
     namespace Capabilities
     {
 

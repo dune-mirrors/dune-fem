@@ -6,16 +6,16 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/io/file/datawriter.hh>
 
-#if HAVE_DUNE_SPGRID 
+#if HAVE_DUNE_SPGRID
 #include <dune/grid/spgrid.hh>
 #endif
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
-  
+
     // GridSolution
     //-------------
 
@@ -25,7 +25,7 @@ namespace Dune
      *  \tparam GridImp Grid type
      *  \tparam DiscreteFunctionImp Discrete function type
      */
-    template <class GridImp, class DiscreteFunctionImp > 
+    template <class GridImp, class DiscreteFunctionImp >
     class GridSolution
     {
     public:
@@ -54,14 +54,14 @@ namespace Dune
       IOTupleType data_;
       HierarchicSearchType hierarchicSearch_;
 
-    public:  
+    public:
       GridType& grid() { assert( grid_ ); return *grid_ ; }
       const GridType& grid() const { assert( grid_ ); return *grid_ ; }
 
       //! Constructor
       explicit GridSolution(const std::string checkPointFile,
                             const int rank = -1 ) :
-        grid_( CheckPointerType :: restoreGrid( checkPointFile, rank ) ), 
+        grid_( CheckPointerType :: restoreGrid( checkPointFile, rank ) ),
         gridPtr_(),
         gridPart_( grid() ),
         space_( gridPart_ ),
@@ -82,7 +82,7 @@ namespace Dune
        *
        *  \tparam PointType The point type
        */
-      void evaluate(const DomainType& x, const double time, RangeType& result) const 
+      void evaluate(const DomainType& x, const double time, RangeType& result) const
       {
         evaluate(x, result );
       }
@@ -93,9 +93,9 @@ namespace Dune
        *
        *  \tparam PointType The point type
        */
-      void evaluate(const DomainType& x, RangeType& result) const 
+      void evaluate(const DomainType& x, RangeType& result) const
       {
-        // search entity 
+        // search entity
         EntityPointerType ep = hierarchicSearch_.findEntity( x );
         const EntityType& entity = *ep ;
 
@@ -108,24 +108,24 @@ namespace Dune
           // check that corners are within the reference element of the given type
           const Dune::ReferenceElement< typename GridType::ctype, GridType::dimensionworld > &refElement
                = Dune::ReferenceElements< typename GridType::ctype, GridType::dimensionworld >::general( entity.type() );
-            
+
           assert( refElement.checkInside( local ) );
         }
 #endif
 
-        // evaluate discrete function 
+        // evaluate discrete function
         discreteFunction_.localFunction( entity ).evaluate( local, result );
       }
 
-      //! \brief writes a discrete function 
-      static void writeDiscreteFunction(const GridType& grid, 
+      //! \brief writes a discrete function
+      static void writeDiscreteFunction(const GridType& grid,
                                         const DiscreteFunctionType& discreteFunction,
-                                        const double time, 
-                                        const int writeStep ) 
+                                        const double time,
+                                        const int writeStep )
       {
         typedef tuple< const DiscreteFunctionType* > OutputTuple;
         OutputTuple data( &discreteFunction );
-        // false means don't backup persistent objects 
+        // false means don't backup persistent objects
         CheckPointerType :: writeSingleCheckPoint( grid, data, time, false, writeStep );
       }
 
@@ -143,10 +143,10 @@ namespace Dune
      *  \tparam GridImp Grid type
      *  \tparam DiscreteFunctionImp Discrete function type
      */
-    template <class GridImp, class DiscreteFunctionImp > 
+    template <class GridImp, class DiscreteFunctionImp >
     class GridSolutionVector
     {
-    public:  
+    public:
       typedef GridImp  GridType;
       typedef DiscreteFunctionImp DiscreteFunctionType;
 
@@ -164,7 +164,7 @@ namespace Dune
       template <class DomainType, class Grid>
       struct CheckDomain
       {
-        static bool isInside(const DomainType& x, const Grid& grid ) 
+        static bool isInside(const DomainType& x, const Grid& grid )
         {
           abort();
           typedef typename Grid :: LevelGridView MacroView ;
@@ -178,7 +178,7 @@ namespace Dune
             // check that corners are within the reference element of the given type
             const Dune::ReferenceElement< typename Grid::ctype, Grid::dimensionworld > &refElement
                  = Dune::ReferenceElements< typename Grid::ctype, Grid::dimensionworld >::general( entity.type() );
-            
+
             typedef typename Entity :: Geometry Geometry;
             const Geometry& geo = entity.geometry();
 
@@ -189,12 +189,12 @@ namespace Dune
         }
       };
 
-#if HAVE_DUNE_SPGRID 
-      template <class DomainType, class ct, int dim, SPRefinementStrategy strategy , class Comm>
-      struct CheckDomain< DomainType, SPGrid< ct, dim, strategy, Comm > > 
+#if HAVE_DUNE_SPGRID
+      template <class DomainType, class ct, int dim, template< int > class Strategy , class Comm>
+      struct CheckDomain< DomainType, SPGrid< ct, dim, Strategy, Comm > >
       {
-        typedef SPGrid< ct, dim, strategy, Comm >  Grid;
-        static bool isInside(const DomainType& x, const Grid& grid ) 
+        typedef SPGrid< ct, dim, Strategy, Comm >  Grid;
+        static bool isInside(const DomainType& x, const Grid& grid )
         {
           return grid.domain().contains( x );
         }
@@ -202,15 +202,15 @@ namespace Dune
 #endif
 
       const int numProcs_;
-      std::vector< GridSolutionType* > solutions_; 
+      std::vector< GridSolutionType* > solutions_;
 
-      int numProcs(const std::string& checkPointFile) const 
+      int numProcs(const std::string& checkPointFile) const
       {
         int numProc = MPIManager :: size();
         readParameter(checkPointFile, "NumberProcessors", numProc, Parameter::verbose () );
         return numProc;
       }
-    public:  
+    public:
       //! Constructor
       explicit GridSolutionVector(const std::string checkPointFile) :
         numProcs_( numProcs( checkPointFile ) ),
@@ -224,7 +224,7 @@ namespace Dune
         }
       }
 
-      ~GridSolutionVector() 
+      ~GridSolutionVector()
       {
         for(int p=0; p<numProcs_; ++p)
         {
@@ -240,7 +240,7 @@ namespace Dune
        *
        *  \tparam PointType The point type
        */
-      void evaluate(const DomainType& x, const double time, RangeType& result) const 
+      void evaluate(const DomainType& x, const double time, RangeType& result) const
       {
         evaluate(x, result );
       }
@@ -251,7 +251,7 @@ namespace Dune
        *
        *  \tparam PointType The point type
        */
-      void evaluate(const DomainType& x, RangeType& result) const 
+      void evaluate(const DomainType& x, RangeType& result) const
       {
         for(int p=0; p<numProcs_; ++p)
         {
@@ -270,29 +270,29 @@ namespace Dune
         abort();
       }
 
-      bool isInDomain( const DomainType& x, const GridType& grid ) const 
+      bool isInDomain( const DomainType& x, const GridType& grid ) const
       {
         return CheckDomain<DomainType, GridType> :: isInside( x, grid );
       }
 
-      //! \brief writes a discrete function 
-      static void writeDiscreteFunction(const GridType& grid, 
+      //! \brief writes a discrete function
+      static void writeDiscreteFunction(const GridType& grid,
                                         const DiscreteFunctionType& discreteFunction,
                                         const double time,
-                                        const int writeStep = 0 ) 
+                                        const int writeStep = 0 )
       {
         GridSolutionType :: writeDiscreteFunction( grid, discreteFunction, time, writeStep );
       }
 
-      const DiscreteFunctionType& discreteFunction( const int rank ) const 
+      const DiscreteFunctionType& discreteFunction( const int rank ) const
       {
         assert( rank < numProcs_ );
         return solutions_[ rank ]->discreteFunction();
       }
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_GRIDSOLUTION_HH

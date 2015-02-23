@@ -34,7 +34,7 @@ namespace Dune
 
     protected:
       using BaseType :: asImp;
-      
+
     public:
       /** \brief assign another DoF iterator to this one
        *
@@ -45,7 +45,7 @@ namespace Dune
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator=( other ) );
         return asImp();
       }
-      
+
       /** \brief obtain reference to current DoF
        *
        *  \returns a reference to the current DoF
@@ -55,7 +55,7 @@ namespace Dune
         CHECK_INTERFACE_IMPLEMENTATION( *asImp() );
         return *asImp();
       }
-      
+
       /** \brief obtain reference to current DoF
        *
        *  \returns a constant reference to the current DoF
@@ -71,7 +71,7 @@ namespace Dune
         CHECK_INTERFACE_IMPLEMENTATION( asImp()[ n ] );
         return asImp()[ n ];
       }
-      
+
       inline DofImp &operator[] ( const int n )
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp()[ n ] );
@@ -93,7 +93,7 @@ namespace Dune
       /** \brief check for equality
        *
        *  \param[in]  other  DoF iterator to compare this one to
-       * 
+       *
        *  \returns \b true if the iterators are the same, \b false otherewise
        */
       inline bool operator== ( const DofIteratorType &other ) const
@@ -105,7 +105,7 @@ namespace Dune
       /** \brief check for inequality
        *
        *  \param[in]  other  DoF iterator to compare this one to
-       * 
+       *
        *  \returns \b true if the iterators are the different, \b false otherewise
        */
       inline bool operator!= ( const DofIteratorType &other ) const
@@ -119,14 +119,14 @@ namespace Dune
        *  \return global number of the current DoF
        */
       inline int index () const
-      {  
+      {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().index() );
         return asImp().index();
-      } 
+      }
 
       /** \brief reset iterator to the first position */
-      inline void reset () 
-      { 
+      inline void reset ()
+      {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().reset() );
       }
     }; // end DofIteratorInterface
@@ -154,14 +154,14 @@ namespace Dune
 
     protected:
       using BaseType :: asImp;
-        
+
     public:
       inline const DofImp &operator[] ( const int n ) const
       {
         DofIteratorType &it = const_cast< DofIteratorType & >( asImp() );
         it.reset();
         for( int i = 0; i < n; ++i )
-          ++it; 
+          ++it;
         return *asImp();
       }
 
@@ -190,7 +190,7 @@ namespace Dune
       {
         DofIteratorType it( asImp() );
         it.reset();
-        
+
         int idx = 0;
         for( ; it != *this; ++it )
           ++idx;
@@ -244,16 +244,16 @@ namespace Dune
       /** \copydoc Dune::Fem::DofIteratorInterface::operator*() const */
       const DofType& operator* () const
       {
-        return (*it_); 
+        return (*it_);
       }
 
       inline const DofType &operator[] ( const int n ) const
       {
         return it_[ n ];
       }
-     
+
       /** \copydoc Dune::Fem::DofIteratorInterface::index */
-      inline int index () const 
+      inline int index () const
       {
         return it_.index();
       }
@@ -270,7 +270,7 @@ namespace Dune
       {
         return (it_ == other.it_);
       }
-      
+
       /** \copydoc Dune::Fem::DofIteratorInterface::operator!= */
       inline bool operator!= ( const ThisType &other ) const
       {
@@ -292,6 +292,6 @@ namespace Dune
 
   } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_DOFITERATOR_HH

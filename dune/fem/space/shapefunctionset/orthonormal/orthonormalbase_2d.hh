@@ -13,7 +13,7 @@ namespace Dune {
   namespace Fem {
 
     template <class DomainField, class RangeField>
-    class OrthonormalBase_2D 
+    class OrthonormalBase_2D
     {
       typedef const DomainField* DomainType;
       typedef RangeField* JacobianRangeType;
@@ -21,7 +21,7 @@ namespace Dune {
 
     public:
       /* \phi_i(x,y) for triangle */
-      static RangeField  
+      static RangeField
       eval_triangle_2d ( const int i, DomainType xi )
       {
         const RangeField &x = xi[0];
@@ -923,7 +923,7 @@ namespace Dune {
       }
 
       /* \nabla\phi_i(x,y) for triangle */
-      static void  
+      static void
       grad_triangle_2d ( const int i, DomainType xi, JacobianRangeType grad )
       {
         const RangeField &x = xi[0];
@@ -1453,7 +1453,7 @@ namespace Dune {
              + y*(-45328.878212459659324249026854625
              + y*(203979.95195606846695912062084581
              + y*(-339966.58659344744493186770140969
-             + 186981.62262639609471252723577533*y))));  
+             + 186981.62262639609471252723577533*y))));
             return;
           #endif
           #if (PMAX2D>=7)
@@ -1780,7 +1780,7 @@ namespace Dune {
              + y*(-234238.03277862457321564197137884
              + y*(1.1711901638931228660782098568942e6
              + y*(-2.1471819671373919211433847376394e6
-             + 1.2883091802824351526860308425836e6*y)))));  
+             + 1.2883091802824351526860308425836e6*y)))));
             return;
           #endif
           #if (PMAX2D>=8)
@@ -2245,14 +2245,14 @@ namespace Dune {
              + y*(-4.8490195957533518715789455329669e6
              + y*(1.4547058787260055614736836598901e7
              + y*(-1.8911176423438072299157887578571e7
-             + 8.82521566427110040627368087e6*y))))));  
+             + 8.82521566427110040627368087e6*y))))));
             return;
           #endif
         }
       }
 
       /* H\phi_i(x,y) for triangle */
-      static void  
+      static void
       hess_triangle_2d ( const int i, DomainType xi, HessianRangeType &h )
       {
         // const RangeField &x = xi[0];
@@ -2300,7 +2300,7 @@ namespace Dune {
       }
 
       /* \phi_i(x,y) for quadrilateral */
-      static RangeField  
+      static RangeField
       eval_quadrilateral_2d ( const int i, DomainType xi )
       {
         const RangeField &x = xi[0];
@@ -2866,14 +2866,14 @@ namespace Dune {
              + 53064.36940169929127620154484639*y)))))));
           #endif
         }
-        
+
         printf("Error in eval_quadrilateral_2d -- unmatched switch/case %d\n",i);
         return -123456789.0;
       }
 
 
       /* \nabla\phi_i(x,y) for quadrilateral */
-      static void  
+      static void
       grad_quadrilateral_2d ( const int i, DomainType xi, JacobianRangeType grad )
       {
         const RangeField &x = xi[0];
@@ -3669,7 +3669,7 @@ namespace Dune {
       }
 
     }; // end class OrthonormalBase_2D
-  } // end namespace Fem  
+  } // end namespace Fem
 
-} // end namespace Dune  
+} // end namespace Dune
 #endif

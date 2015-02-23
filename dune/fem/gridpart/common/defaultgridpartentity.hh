@@ -52,39 +52,17 @@ namespace Dune
       typedef typename Traits::template Codim< codimension >::EntityPointer EntityPointer;
 
       typedef typename Traits::HierarchicIterator HierarchicIterator;
-      typedef typename Traits::LeafIntersectionIterator LeafIntersectionIterator;
-      typedef typename Traits::LevelIntersectionIterator LevelIntersectionIterator;
 
       int level () const
       {
         DUNE_THROW( InvalidStateException, "Trying to access hierarchy information from a grid part." );
-      }
-      
-      LevelIntersectionIterator ilevelbegin () const
-      {
-        DUNE_THROW( InvalidStateException, "Trying to access level intersection iterator from a grid part." );
-      }
-      
-      LevelIntersectionIterator ilevelend () const
-      {
-        DUNE_THROW( InvalidStateException, "Trying to access level intersection iterator from a grid part." );
-      }
-      
-      LeafIntersectionIterator ileafbegin () const
-      {
-        DUNE_THROW( InvalidStateException, "Trying to access leaf intersection iterator from a grid part." );
-      }
-      
-      LeafIntersectionIterator ileafend () const
-      {
-        DUNE_THROW( InvalidStateException, "Trying to access leaf intersection iterator from a grid part." );
       }
 
       bool isLeaf () const
       {
         DUNE_THROW( InvalidStateException, "Trying to access hierarchy information from a grid part." );
       }
-   
+
       EntityPointer father () const
       {
         DUNE_THROW( InvalidStateException, "Trying to access hierarchy information from a grid part." );
@@ -94,17 +72,17 @@ namespace Dune
       {
         DUNE_THROW( InvalidStateException, "Trying to access hierarchy information from a grid part." );
       }
-        
+
       const LocalGeometry &geometryInFather () const
       {
         DUNE_THROW( InvalidStateException, "Trying to access hierarchy information from a grid part." );
       }
-   
+
       HierarchicIterator hbegin ( int maxLevel ) const
       {
         DUNE_THROW( InvalidStateException, "Trying to access hierarchy information from a grid part." );
       }
-      
+
       HierarchicIterator hend ( int maxLevel ) const
       {
         DUNE_THROW( InvalidStateException, "Trying to access hierarchy information from a grid part." );
@@ -119,7 +97,7 @@ namespace Dune
       {
         DUNE_THROW( InvalidStateException, "Trying to access hierarchy information from a grid part." );
       }
-            
+
       bool mightVanish () const
       {
         DUNE_THROW( InvalidStateException, "Trying to access hierarchy information from a grid part." );

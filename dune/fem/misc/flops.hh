@@ -5,7 +5,7 @@
 #include <papi.h>
 #endif
 
-//- system includes 
+//- system includes
 #include <iostream>
 #include <vector>
 #include <cassert>
@@ -18,14 +18,14 @@
 namespace Dune {
 
   namespace Fem {
-    
+
     // FlopCounter
     // -----------
 
-    /** 
-     * @brief A class wrapper for the function PAPI_flops 
-     *        from the package PAPI. The results are 
-     *        CPU time, real and process local and the number 
+    /**
+     * @brief A class wrapper for the function PAPI_flops
+     *        from the package PAPI. The results are
+     *        CPU time, real and process local and the number
      *        of floating point operations in MFLOP/s.
      **/
     class FlopCounter
@@ -36,14 +36,14 @@ namespace Dune {
       ThreadSafeValue< int >        stopped_;
 
       // call PAPI_flops for given values
-      void evaluateCounters( float& realTime, 
-                             float& procTime, 
+      void evaluateCounters( float& realTime,
+                             float& procTime,
                              float& mFlops,
-                             long long& flop ) 
+                             long long& flop )
       {
 #if HAVE_PAPI
         int retval = PAPI_flops(&realTime, &procTime, &flop, &mFlops);
-        if( retval < PAPI_OK ) 
+        if( retval < PAPI_OK )
         {
           std::cerr << "ERROR: PAPI_FP_OPS event is not available, check papi_avail!" << std::endl;
         }
@@ -51,21 +51,21 @@ namespace Dune {
       }
 
       // constructor
-      FlopCounter () 
+      FlopCounter ()
         : values_( values_t(3, float(0.0)) ),
           stopped_( 0 )
       {
       }
 
-      static unsigned long threadId () 
+      static unsigned long threadId ()
       {
         return ThreadManager :: thread();
       }
 
-      // initialize counters 
+      // initialize counters
       void startCounter()
       {
-        if( ! ThreadManager :: singleThreadMode() ) 
+        if( ! ThreadManager :: singleThreadMode() )
         {
 #if HAVE_PAPI
           PAPI_thread_init( threadId );
@@ -75,63 +75,63 @@ namespace Dune {
         float realtime, proctime, mflops;
         long long flop ;
         evaluateCounters( realtime, proctime, mflops, flop );
-        // mark as not stopped 
+        // mark as not stopped
         *stopped_ = 0;
       }
 
       // stop counters and store values
-      void stopCounter() 
+      void stopCounter()
       {
-        if( *stopped_ == 0 ) 
+        if( *stopped_ == 0 )
         {
-          // get reference to thread local value 
+          // get reference to thread local value
           values_t& values = *values_;
           long long& flop = *flop_;
           evaluateCounters( values[ 0 ], values[ 1 ], values[ 2 ], flop );
 
-          // mark thread as stopped 
+          // mark thread as stopped
           *stopped_ = 1 ;
         }
       }
 
-      // print values to given ostream, all values are gathered to 
+      // print values to given ostream, all values are gathered to
       // the master rank
       void printCounter( std::ostream& out ) const
       {
-        // make sure this method is called in single thread mode only 
+        // make sure this method is called in single thread mode only
         assert( ThreadManager :: singleThreadMode () );
 
         int allStopped = 0 ;
         const int threads = ThreadManager :: maxThreads ();
-        for( int i=0; i<threads; ++i ) 
+        for( int i=0; i<threads; ++i )
         {
           allStopped += stopped_[ i ];
         }
 
-        // make sure all other thread have been stopped, otherwise 
-        // the results wont be coorect 
-        if( allStopped != threads ) 
+        // make sure all other thread have been stopped, otherwise
+        // the results wont be coorect
+        if( allStopped != threads )
           DUNE_THROW(InvalidStateException,"Not all thread have been stopped");
 
         typedef std::vector< double > result_t ;
         result_t values( 5, 0.0 );
 
-        for( int i=0; i<3; ++i ) 
+        for( int i=0; i<3; ++i )
           values[ i ] = values_[ 0 ][ i ];
         values[ 3 ] = flop_[ 0 ];
 
-        // tkae maximum for times and sum flops for all threads 
-        for( int i=1; i<threads; ++i ) 
+        // tkae maximum for times and sum flops for all threads
+        for( int i=1; i<threads; ++i )
         {
           values[ 0 ]  = std::max( values[ 0 ], double(values_[ i ][ 0 ]) );
           values[ 1 ]  = std::max( values[ 1 ], double(values_[ i ][ 1 ]) );
           values[ 2 ] += values_[ i ][ 2 ];
           values[ 3 ] += flop_[ i ];
         }
-        // convert to GFLOP 
+        // convert to GFLOP
         values[ 3 ] /= 1.0e9 ;
         // compute mflops ourselfs
-        values[ 4 ] = values[ 3 ] / values[ 0 ]; 
+        values[ 4 ] = values[ 3 ] / values[ 0 ];
 
         result_t max( values );
         result_t min( values );
@@ -141,12 +141,12 @@ namespace Dune {
         const CollectiveCommunication& comm = MPIManager :: comm();
 
         const int size = max.size();
-        // compute max, min, and sum of flop values 
-        comm.max( &max[ 0 ], size ); 
-        comm.min( &min[ 0 ], size ); 
-        comm.sum( &sum[ 0 ], size ); 
+        // compute max, min, and sum of flop values
+        comm.max( &max[ 0 ], size );
+        comm.min( &min[ 0 ], size );
+        comm.sum( &sum[ 0 ], size );
 
-        if( comm.rank() == 0 ) 
+        if( comm.rank() == 0 )
         {
           out << "FlopCounter::typ:   real  proc  mflops flop  flop/real " << std::endl;
           printValues( out, "FlopCounter::sum: ", sum );
@@ -155,7 +155,7 @@ namespace Dune {
         }
       }
 
-      static FlopCounter& instance() 
+      static FlopCounter& instance()
       {
         static FlopCounter counter;
         return counter;
@@ -164,7 +164,7 @@ namespace Dune {
     public:
       /** \brief Start counters.
        *
-       * \note  Call this method for the master thread before all other 
+       * \note  Call this method for the master thread before all other
        *        threads call this method if used in a multi-thread environment.
        */
       static void start( )
@@ -173,15 +173,15 @@ namespace Dune {
       }
 
       /** \brief stop counters */
-      static void stop( ) 
+      static void stop( )
       {
         instance().stopCounter();
       }
 
-      /** \brief print values to given ostream, all values are gathered to 
-       *         the master rank before printing 
-       */         
-      static void print( std::ostream& out ) 
+      /** \brief print values to given ostream, all values are gathered to
+       *         the master rank before printing
+       */
+      static void print( std::ostream& out )
       {
         instance().printCounter( out );
       }

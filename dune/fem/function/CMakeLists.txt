@@ -1,8 +1,8 @@
-dune_install(adaptivefunction.hh attachedfunction.hh blockvectorfunction.hh
-             combinedfunction.hh productfunction.hh vectorfunction.hh
+dune_install(adaptivefunction.hh blockvectorfunction.hh
+             combinedfunction.hh vectorfunction.hh
              subfunction.hh blockvectordiscretefunction.hh petscdiscretefunction.hh)
 
 dune_add_subdirs(common localfunction adaptivefunction
-                 attachedfunction combinedfunction blockvectorfunction
-                 productfunction vectorfunction blockvectordiscretefunction
+                 combinedfunction blockvectorfunction
+                 vectorfunction blockvectordiscretefunction
                  blockvectors petscdiscretefunction)

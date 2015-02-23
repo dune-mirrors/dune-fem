@@ -1,12 +1,12 @@
 #ifndef DUNE_FEM_COMMUNICATION_MANAGER_HH
 #define DUNE_FEM_COMMUNICATION_MANAGER_HH
 
-//- system includes 
+//- system includes
 #include <iostream>
-#include <map> 
+#include <map>
 #include <vector>
 
-//- Dune includes  
+//- Dune includes
 #include <dune/common/timer.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/grid.hh>
@@ -14,55 +14,55 @@
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/common/commoperations.hh>
 
-// include ALUGrid to check whether the 
-// parallel version is avaiable 
-#if defined ENABLE_ALUGRID 
+// include ALUGrid to check whether the
+// parallel version is avaiable
+#if defined ENABLE_ALUGRID
 // we only need the 3d version here.
 #include <dune/grid/alugrid/3d/alugrid.hh>
 #elif HAVE_DUNE_ALUGRID
 #include <dune/alugrid/3d/alugrid.hh>
 #endif
 
-// default is: enabled 
-#ifndef WANT_CACHED_COMM_MANAGER 
+// default is: enabled
+#ifndef WANT_CACHED_COMM_MANAGER
 #define WANT_CACHED_COMM_MANAGER 1
 #endif
 
 #if ALU3DGRID_PARALLEL && WANT_CACHED_COMM_MANAGER
-#define USE_CACHED_COMM_MANAGER 
-#else 
-#ifndef NDEBUG 
+#define USE_CACHED_COMM_MANAGER
+#else
+#ifndef NDEBUG
 #if HAVE_MPI == 0
   #ifdef DUNE_DEVEL_MODE
     #warning "HAVE_MPI == 0, therefore default CommunicationManager is used!"
   #endif
-#elif !ALU3DGRID_PARALLEL 
+#elif !ALU3DGRID_PARALLEL
   #warning "No Parallel ALUGrid found, using default CommunicationManager!"
-#elif ! WANT_CACHED_COMM_MANAGER 
+#elif ! WANT_CACHED_COMM_MANAGER
   #warning "CachedCommunication Manager disabled by WANT_CACHED_COMM_MANAGER=0!"
-#endif 
+#endif
 #endif
 #endif
 
-#undef WANT_CACHED_COMM_MANAGER 
+#undef WANT_CACHED_COMM_MANAGER
 
 #ifdef USE_CACHED_COMM_MANAGER
 #include "cachedcommmanager.hh"
 #endif
 
-//- Dune-fem includes 
+//- Dune-fem includes
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/arrays.hh>
 
 namespace Dune
 {
-  
-  namespace Fem 
+
+  namespace Fem
   {
     template <class DiscreteFunctionSpace> class PetscDiscreteFunction ;
 
-  /** @addtogroup Communication Communication 
+  /** @addtogroup Communication Communication
       @{
   **/
 
@@ -72,10 +72,10 @@ namespace Dune
      *         method
      */
     template< class Space >
-    class DefaultCommunicationManager 
+    class DefaultCommunicationManager
     {
     public:
-      typedef Space SpaceType; 
+      typedef Space SpaceType;
 
     protected:
       typedef DefaultCommunicationManager< Space > ThisType;
@@ -92,35 +92,35 @@ namespace Dune
       public:
         NonBlockingCommunication( const SpaceType& space,
                                   InterfaceType interface,
-                                  CommunicationDirection dir ) 
+                                  CommunicationDirection dir )
           : space_( space ),
             interface_( interface ),
             dir_ ( dir )
         {}
 
-        //! send data for given discrete function 
+        //! send data for given discrete function
         template < class DiscreteFunction >
         void send( const DiscreteFunction& discreteFunction )
         {
-          // nothing to do here, since DUNE does not support 
-          // non-blocking communcation yet  
+          // nothing to do here, since DUNE does not support
+          // non-blocking communcation yet
         }
 
-        //! receive data for discrete function and given operation 
+        //! receive data for discrete function and given operation
         template < class DiscreteFunctionSpace, class Operation >
-        double receive( PetscDiscreteFunction< DiscreteFunctionSpace > & discreteFunction, 
+        double receive( PetscDiscreteFunction< DiscreteFunctionSpace > & discreteFunction,
                         const Operation* operation )
         {
-          // get stopwatch 
+          // get stopwatch
           Dune::Timer exchangeT;
-        
-          // PetscDiscreteFunction has it's own communication 
+
+          // PetscDiscreteFunction has it's own communication
           discreteFunction.communicate();
 
           return exchangeT.elapsed();
         }
 
-        //! receive data for discrete function and given operation 
+        //! receive data for discrete function and given operation
         template < class DiscreteFunction, class Operation >
         double receive( DiscreteFunction& discreteFunction, const Operation* operation )
         {
@@ -128,27 +128,27 @@ namespace Dune
           typedef typename DiscreteFunction
             :: template CommDataHandle< Operation > :: Type
             DataHandleType;
-          
+
           // on serial runs: do nothing
           if( space_.gridPart().comm().size() <= 1 )
             return 0.0;
 
-          // get stopwatch 
+          // get stopwatch
           Dune::Timer exchangeT;
-        
+
           // communicate data
           DataHandleType dataHandle = discreteFunction.dataHandle( operation );
           space_.gridPart().communicate( dataHandle, interface_ , dir_ );
 
-          // store time 
+          // store time
           return exchangeT.elapsed();
         }
 
-        //! receive method with default operation  
+        //! receive method with default operation
         template < class DiscreteFunction >
         double receive( DiscreteFunction& discreteFunction )
         {
-          // get type of default operation 
+          // get type of default operation
           typedef typename DiscreteFunction :: DiscreteFunctionSpaceType
             :: template CommDataHandle< DiscreteFunction > :: OperationType  DefaultOperationType;
           return receive( discreteFunction, (DefaultOperationType *) 0 );
@@ -162,7 +162,7 @@ namespace Dune
       const CommunicationDirection dir_;
 
       mutable double exchangeTime_;
-      
+
     public:
       typedef NonBlockingCommunication  NonBlockingCommunicationType;
 
@@ -180,7 +180,7 @@ namespace Dune
     private:
       // prohibit copying
       DefaultCommunicationManager ( const DefaultCommunicationManager & );
-      
+
     public:
       /** \brief return communication interface */
       InterfaceType communicationInterface() const {
@@ -193,20 +193,20 @@ namespace Dune
         return dir_;
       }
 
-      /** \brief return time needed for last build 
+      /** \brief return time needed for last build
 
           \return time needed for last build of caches (if needed)
       */
       double buildTime() const { return 0.0; }
 
-      /** \brief return time needed for last exchange of data  
+      /** \brief return time needed for last exchange of data
 
-          \return time needed for last exchange of data 
+          \return time needed for last exchange of data
       */
       double exchangeTime() const { return exchangeTime_; }
 
-      /** \brief return object for non-blocking communication 
-       
+      /** \brief return object for non-blocking communication
+
           \return NonBlockingCommunicationType containing send and receive facilities
         */
       NonBlockingCommunicationType nonBlockingCommunication() const
@@ -215,16 +215,16 @@ namespace Dune
       }
 
       /** \brief exchange data for a discrete function using the copy operation
-       *  
+       *
        *  \param  discreteFunction  discrete function to communicate
        */
       template< class DiscreteFunction >
       inline void exchange ( DiscreteFunction &discreteFunction ) const
       {
-        // get type of default operation 
-        typedef typename DiscreteFunction :: DiscreteFunctionSpaceType :: 
+        // get type of default operation
+        typedef typename DiscreteFunction :: DiscreteFunctionSpaceType ::
           template CommDataHandle< DiscreteFunction > :: OperationType DefaultOperationType;
-        
+
         exchange( discreteFunction, (DefaultOperationType *) 0 );
       }
 
@@ -232,7 +232,7 @@ namespace Dune
        *
        *  The used operation is derived from the type of the op-pointer. The
        *  actual pointer is not used.
-       *  
+       *
        *  \param      discreteFunction  discrete function to communicate
        *  \param[in]  operation         a (phony) pointer to an operation
        */
@@ -254,22 +254,22 @@ namespace Dune
     };
 
 
-    
+
 #ifndef USE_CACHED_COMM_MANAGER
-    // if no ALUGrid found, supply default implementation 
-    //! \brief use Default CommunicationManager as Communication Manager 
-    template <class SpaceImp> 
-    class CommunicationManager 
-    : public DefaultCommunicationManager<SpaceImp> 
+    // if no ALUGrid found, supply default implementation
+    //! \brief use Default CommunicationManager as Communication Manager
+    template <class SpaceImp>
+    class CommunicationManager
+    : public DefaultCommunicationManager<SpaceImp>
     {
       typedef DefaultCommunicationManager<SpaceImp> BaseType;
       CommunicationManager(const CommunicationManager &);
     public:
       //! constructor taking space and communication interface/direction
-      CommunicationManager(const SpaceImp & space,  
+      CommunicationManager(const SpaceImp & space,
           const InterfaceType interface,
           const CommunicationDirection dir)
-        : BaseType(space,interface,dir) 
+        : BaseType(space,interface,dir)
       {}
       //! constructor taking space
       CommunicationManager(const SpaceImp & space)
@@ -281,11 +281,11 @@ namespace Dune
 
 
 
-    //! Proxy class to DependencyCache which is singleton per space 
-    class CommunicationManagerList  
+    //! Proxy class to DependencyCache which is singleton per space
+    class CommunicationManagerList
     {
-      //! communicated object interface 
-      class DiscreteFunctionCommunicatorInterface  
+      //! communicated object interface
+      class DiscreteFunctionCommunicatorInterface
       {
       protected:
         DiscreteFunctionCommunicatorInterface () {}
@@ -293,27 +293,27 @@ namespace Dune
         virtual ~DiscreteFunctionCommunicatorInterface () {}
         virtual void exchange () const = 0;
       };
-      
-      //! communicated object implementation  
+
+      //! communicated object implementation
       template <class DiscreteFunctionImp>
-      class DiscreteFunctionCommunicator 
-      : public DiscreteFunctionCommunicatorInterface 
+      class DiscreteFunctionCommunicator
+      : public DiscreteFunctionCommunicatorInterface
       {
         typedef DiscreteFunctionImp DiscreteFunctionType;
         typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-        
-        typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType; 
-      
+
+        typedef CommunicationManager<DiscreteFunctionSpaceType> CommunicationManagerType;
+
         DiscreteFunctionType& df_;
         CommunicationManagerType comm_;
-      public:  
-        //! constructor taking disctete function 
-        DiscreteFunctionCommunicator(DiscreteFunctionType& df) 
+      public:
+        //! constructor taking disctete function
+        DiscreteFunctionCommunicator(DiscreteFunctionType& df)
           : df_(df), comm_(df_.space())
         {
         }
 
-        // exchange discrete function 
+        // exchange discrete function
         void exchange () const
         {
           comm_.exchange(df_);
@@ -324,19 +324,19 @@ namespace Dune
       typedef std::list < DiscreteFunctionCommunicatorInterface * > CommObjListType;
       CommObjListType objList_;
 
-      CommunicationManagerList(const CommunicationManagerList&); 
-    public: 
+      CommunicationManagerList(const CommunicationManagerList&);
+    public:
       //! constructor
       template <class CombinedObjectType>
-      CommunicationManagerList(CombinedObjectType& cObj) 
+      CommunicationManagerList(CombinedObjectType& cObj)
       {
         cObj.addToList(*this);
       }
 
       //! remove object comm
-      ~CommunicationManagerList() 
+      ~CommunicationManagerList()
       {
-        // delete all entries 
+        // delete all entries
         while( objList_.size() > 0 )
         {
           CommObjIFType * obj = objList_.back();
@@ -345,8 +345,8 @@ namespace Dune
         }
       }
 
-      //! add discrete function to communication list 
-      template <class DiscreteFunctionImp> 
+      //! add discrete function to communication list
+      template <class DiscreteFunctionImp>
       void addToList(DiscreteFunctionImp &df)
       {
         typedef DiscreteFunctionCommunicator<DiscreteFunctionImp> CommObjType;
@@ -354,14 +354,14 @@ namespace Dune
         objList_.push_back(obj);
       }
 
-      //! exchange discrete function to all procs we share data with 
-      //! by using given OperationImp when receiving data from other procs 
+      //! exchange discrete function to all procs we share data with
+      //! by using given OperationImp when receiving data from other procs
       void exchange() const
       {
-        typedef CommObjListType :: const_iterator iterator; 
+        typedef CommObjListType :: const_iterator iterator;
         {
           iterator end = objList_.end();
-          for(iterator it = objList_.begin(); it != end; ++it) 
+          for(iterator it = objList_.begin(); it != end; ++it)
           {
             (*it)->exchange();
           }
@@ -370,7 +370,7 @@ namespace Dune
     };
 
     // end toggle AULGrid yes/no
-#endif 
+#endif
     //@}
 
   } // namespace Fem

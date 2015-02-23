@@ -18,9 +18,9 @@ public:
   Matrix(int n);
   Matrix(const Matrix &A); // copy constructor
   Matrix(int n, int m, const double *a);
-  Matrix(int n, const double *a);   
+  Matrix(int n, const double *a);
   virtual ~Matrix();
-  
+
   // element access
   double& operator()(int i, int j);
   double operator()(int i, int j) const;
@@ -54,7 +54,7 @@ public:
   friend std::ostream& operator<<(std::ostream& os, const Matrix& A);
 
   static double output_epsilon;
-  
+
 private:
   const int n, m;
   double *data;
@@ -66,7 +66,7 @@ private:
 
 
 
-inline 
+inline
 pardg::Matrix::Matrix(int n, int m) : n(n), m(m), data(new double[n*m])
 {
   assert(data);
@@ -74,7 +74,7 @@ pardg::Matrix::Matrix(int n, int m) : n(n), m(m), data(new double[n*m])
 }
 
 
-inline 
+inline
 pardg::Matrix::Matrix(int n) : n(n), m(n), data(new double[n*n])
 {
   assert(data);
@@ -82,7 +82,7 @@ pardg::Matrix::Matrix(int n) : n(n), m(n), data(new double[n*n])
 }
 
 
-inline 
+inline
 pardg::Matrix::Matrix(const Matrix &A) : Function(A), n(A.n), m(A.m), data(new double[A.n*A.m])
 {
   assert(data);
@@ -90,8 +90,8 @@ pardg::Matrix::Matrix(const Matrix &A) : Function(A), n(A.n), m(A.m), data(new d
 }
 
 
-inline 
-pardg::Matrix::Matrix(int n, int m, const double *a) : 
+inline
+pardg::Matrix::Matrix(int n, int m, const double *a) :
   n(n), m(m), data(new double[n*m])
 {
   assert(data);
@@ -99,8 +99,8 @@ pardg::Matrix::Matrix(int n, int m, const double *a) :
 }
 
 
-inline 
-pardg::Matrix::Matrix(int n, const double *a) : 
+inline
+pardg::Matrix::Matrix(int n, const double *a) :
   n(n), m(n), data(new double[n*n])
 {
   assert(data);
@@ -108,7 +108,7 @@ pardg::Matrix::Matrix(int n, const double *a) :
 }
 
 
-inline 
+inline
 pardg::Matrix::~Matrix()
 {
   delete[] data;
@@ -202,7 +202,7 @@ void pardg::Matrix::operator()(const double *u, double *f, int i)
   switch (i){
   case 0: // function
     cblas_dgemv(CblasRowMajor, CblasNoTrans,
-		m, n, 1.0, data, m, u, 1, 0.0, f, 1);  
+		m, n, 1.0, data, m, u, 1, 0.0, f, 1);
     break;
 
   case 1: // first derivative
@@ -211,11 +211,11 @@ void pardg::Matrix::operator()(const double *u, double *f, int i)
 
   default:
     assert(0);
-  } 
+  }
 }
 
 
-inline 
+inline
 int pardg::Matrix::dim_of_argument(int i) const
 {
   switch (i){

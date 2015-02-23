@@ -64,7 +64,7 @@ namespace Dune
       typedef Dune::Fem::LocalPass< DGInverseMassPassDiscreteModel< functionalId, PreviousPass >, PreviousPass, id > BaseType;
 
     public:
-      //! type of the discrete model used 
+      //! type of the discrete model used
       typedef DGInverseMassPassDiscreteModel< functionalId, PreviousPass > DiscreteModelType;
 
       //! pass ids up to here (tuple of integral constants)
@@ -98,11 +98,11 @@ namespace Dune
         dest_( 0 )
       {}
 
-      //! constructor for use with thread pass 
-      explicit DGInverseMassPass ( const DiscreteModelType& discreteModel, 
+      //! constructor for use with thread pass
+      explicit DGInverseMassPass ( const DiscreteModelType& discreteModel,
                                    PreviousPass &previousPass,
                                    const DiscreteFunctionSpaceType &space,
-                                   const int volQuadOrd  = -1, 
+                                   const int volQuadOrd  = -1,
                                    const int faceQuadOrd = -1)
       : BaseType( previousPass, space, "DGInverseMassPass" ),
         localMassMatrix_( space, ( volQuadOrd == -1 ) ? (2*space.order()) : volQuadOrd ),
@@ -116,39 +116,39 @@ namespace Dune
         out << "DGInverseMassPass: " << "\\\\" << std::endl;
       }
 
-      //! this pass needs no communication 
+      //! this pass needs no communication
       bool requireCommunication () const { return false ; }
 
-      //! interface method 
+      //! interface method
       void prepare( const TotalArgumentType &argument, DestinationType &destination ) const
       {
         arg_  = &argument;
         dest_ = &destination;
       }
 
-      //! prepare for ThreadPass 
+      //! prepare for ThreadPass
       void prepare( const TotalArgumentType &argument, DestinationType &destination, const bool ) const
       {
         prepare( argument, destination );
       }
 
-      //! finalize for ThreadPass 
+      //! finalize for ThreadPass
       void finalize( const TotalArgumentType &argument, DestinationType &destination, const bool ) const
       {
         finalize( argument, destination );
       }
 
-      //! interface method 
+      //! interface method
       void finalize( const TotalArgumentType &argument, DestinationType &destination ) const
       {
         arg_  = 0 ;
         dest_ = 0 ;
       }
 
-      //! apply inverse mass matrix locally 
-      void applyLocal( const EntityType& entity ) const 
+      //! apply inverse mass matrix locally
+      void applyLocal( const EntityType& entity ) const
       {
-        assert( arg_ ); 
+        assert( arg_ );
         assert( dest_ );
         typename DestinationType::LocalFunctionType localDestination = dest_->localFunction( entity );
         localDestination.assign( Dune::get< functionalPosition >( *arg_ )->localFunction( entity ) );
@@ -157,25 +157,25 @@ namespace Dune
 
       //! apply local with neighbor checker (not needed here)
       template <class NBChecker>
-      void applyLocal( const EntityType& entity, const NBChecker& ) const 
+      void applyLocal( const EntityType& entity, const NBChecker& ) const
       {
         applyLocal( entity );
       }
 
-      /** \brief  apply local for all elements that do not need information from 
+      /** \brief  apply local for all elements that do not need information from
        *          other processes (here all elements)
-       */         
+       */
       template <class NBChecker>
-      void applyLocalInterior( const EntityType& entity, const NBChecker& ) const 
+      void applyLocalInterior( const EntityType& entity, const NBChecker& ) const
       {
         applyLocal( entity );
       }
 
-      /** \brief  apply local for all elements that need information from 
+      /** \brief  apply local for all elements that need information from
        *          other processes (here no elements)
-       */         
+       */
       template <class NBChecker>
-      void applyLocalProcessBoundary( const EntityType& entity, const NBChecker& ) const 
+      void applyLocalProcessBoundary( const EntityType& entity, const NBChecker& ) const
       {
         DUNE_THROW(InvalidStateException,"DGInverseMassPass does not need a second phase for ThreadPass");
       }

@@ -5,18 +5,18 @@
 #include <fstream>
 #include <string>
 
-namespace Dune 
+namespace Dune
 {
 
   namespace Fem
   {
 
-    //! reads data folowing the given keyword 
+    //! reads data folowing the given keyword
     //! if verbose is true then an output of what was read is given
-    //! the token '%' or '#' stands for comment 
-    template< class T > 
-    static inline bool readParameter( std::istream& file, 
-                        const std::string keyword, 
+    //! the token '%' or '#' stands for comment
+    template< class T >
+    static inline bool readParameter( std::istream& file,
+                        const std::string keyword,
                         T & data,
                         bool verbose = true,
                         bool warn = true )
@@ -26,14 +26,14 @@ namespace Dune
       {
         std::string  keyHelp;
         file >> keyHelp;
-       
-        // % or # means comment 
+
+        // % or # means comment
         if((keyHelp[0] == '%') || (keyHelp[0] == '#'))
         {
           std::string tmp;
           std::getline(file,tmp);
         }
-        else 
+        else
         {
           // copy only keyword size and compare
           int pos = keyHelp.find_first_of(':');
@@ -43,10 +43,10 @@ namespace Dune
           {
             if(pos1 > 0)
               pos -=  pos1;
-            else 
+            else
               pos = 1;
           }
-          else 
+          else
             pos = 0;
 
           std::string key (keyHelp,0,keyHelp.size() - pos);
@@ -58,8 +58,8 @@ namespace Dune
           }
         }
       }
-      
-      // if data was read sucessfully 
+
+      // if data was read sucessfully
       if(readData)
       {
         if(verbose)
@@ -71,7 +71,7 @@ namespace Dune
           std::cout << " " << data << std::endl;
         }
       }
-      else 
+      else
       {
         if( warn )
           std::cerr << "WARNING: couldn't read " << keyword << std::endl;
@@ -80,12 +80,12 @@ namespace Dune
       return readData;
     }
 
-    //! reads data folowing the given keyword 
+    //! reads data folowing the given keyword
     //! if verbose is true then an output of what was read is given
-    //! the token '%' or '#' stands for comment 
-    template< class T > 
-    static inline bool readParameter( const std::string filename, 
-                        const std::string keyword, 
+    //! the token '%' or '#' stands for comment
+    template< class T >
+    static inline bool readParameter( const std::string filename,
+                        const std::string keyword,
                         T & data,
                         bool verbose = true,
                         bool warn = true )
@@ -99,7 +99,7 @@ namespace Dune
       }
       const bool result = readParameter( file, keyword, data, verbose, warn );
 
-      // close file 
+      // close file
       file.close();
 
       return result;

@@ -27,20 +27,21 @@ namespace Dune
 
     public:
       typedef Dune::Intersection< const GridFamily, IntersectionImplType > Intersection;
+      typedef typename Traits::ExtraData  ExtraData;
 
-      IdIntersectionIterator ( const HostIntersectionIteratorType &hostIterator )
-      : intersection_( IntersectionImplType() ),
+      IdIntersectionIterator ( ExtraData data, const HostIntersectionIteratorType &hostIterator )
+      : intersection_( IntersectionImplType( data ) ),
         hostIterator_( hostIterator )
       {}
 
       IdIntersectionIterator ( const ThisType &other )
-      : intersection_( IntersectionImplType() ),
+      : intersection_( IntersectionImplType( other.data() ) ),
         hostIterator_( other.hostIterator_ )
       {}
 
       const ThisType &operator= ( const ThisType &other )
       {
-        intersectionImpl() = IntersectionImplType();
+        intersectionImpl() = IntersectionImplType( other.data() );
         hostIterator_ = other.hostIterator_;
         return *this;
       }
@@ -49,26 +50,29 @@ namespace Dune
       {
         return (hostIterator_ == other.hostIterator_);
       }
-      
+
       void increment ()
       {
         ++hostIterator_;
-        intersectionImpl() = IntersectionImplType();
+        intersectionImpl() = IntersectionImplType( data() );
       }
 
       const Intersection &dereference () const
       {
         if( !intersectionImpl() )
-          intersectionImpl() = IntersectionImplType( *hostIterator_ );
+          intersectionImpl() = IntersectionImplType( data(), *hostIterator_ );
         return intersection_;
       }
 
-    private:
+    protected:
       IntersectionImplType &intersectionImpl () const
       {
         return intersection_.impl();
       }
 
+      ExtraData data () const { return intersectionImpl().data(); }
+
+    protected:
       mutable Intersection intersection_;
       HostIntersectionIteratorType hostIterator_;
     };

@@ -10,7 +10,7 @@ using namespace pardg;
 QRSolver::QRSolver() : DynamicalObject("QRSolver", -1), d(NULL) {}
 
 
-QRSolver::~QRSolver() 
+QRSolver::~QRSolver()
 {
   delete[] d;
 }

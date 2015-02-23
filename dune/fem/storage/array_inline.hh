@@ -21,7 +21,7 @@ namespace Dune
       for( unsigned int i = (length - 1); i < length; --i )
         array[ newOffset + i ] = array[ oldOffset + i ];
     }
-    
+
     template< class T >
     inline void moveForward ( ArrayInterface< T > &array,
                               const unsigned int oldOffset,
@@ -33,7 +33,7 @@ namespace Dune
       for( unsigned int i = 0; i < length; ++i )
         array[ newOffset + i ] = array[ oldOffset + i ];
     }
-   
+
     template< class T >
     inline void move ( ArrayInterface< T > &array,
                        const unsigned int oldOffset,
@@ -46,7 +46,7 @@ namespace Dune
         moveForward( array, oldOffset, newOffset, length );
     }
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

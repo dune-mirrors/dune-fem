@@ -3,21 +3,21 @@
 
 #include <dune/fem/io/streams/standardstreams.hh>
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /** \class BinaryFileOutStream
-     *  \copydoc StandardOutStream 
+     *  \copydoc StandardOutStream
      */
-    class BinaryFileOutStream : public StandardOutStream 
+    class BinaryFileOutStream : public StandardOutStream
     {
       typedef BinaryFileOutStream ThisType;
       typedef StandardOutStream   BaseType;
 
-      // make copy constructor private because of the file pointers 
+      // make copy constructor private because of the file pointers
       BinaryFileOutStream( const BinaryFileOutStream& );
     public:
       /** \brief constructor
@@ -30,35 +30,35 @@ namespace Dune
       }
 
       /** \brief destructor deleteing file stream */
-      ~BinaryFileOutStream() 
+      ~BinaryFileOutStream()
       {
         delete file_; file_ = 0;
       }
-    protected:  
-      std::ostream& openFile( const std::string& filename ) 
+    protected:
+      std::ostream& openFile( const std::string& filename )
       {
-        // init file 
+        // init file
         file_ = new std::ofstream( filename.c_str(), std::ios::binary );
 
-        if( ! (*file_) ) 
+        if( ! (*file_) )
           DUNE_THROW( Dune::IOError, "Unable to open file: " << filename );
 
-        return *file_;  
+        return *file_;
       }
 
-      //! standard file stream 
-      std::ofstream* file_;  
+      //! standard file stream
+      std::ofstream* file_;
     };
 
     /** \class BinaryFileInStream
-     *  \copydoc StandardInStream 
+     *  \copydoc StandardInStream
      */
-    class BinaryFileInStream: public StandardInStream 
+    class BinaryFileInStream: public StandardInStream
     {
       typedef BinaryFileInStream ThisType;
       typedef StandardInStream   BaseType;
 
-      // make copy constructor private because of the pointers 
+      // make copy constructor private because of the pointers
       BinaryFileInStream ( const BinaryFileInStream& );
 
     public:
@@ -72,27 +72,27 @@ namespace Dune
       }
 
       /** \brief destructor deleteing file stream */
-      ~BinaryFileInStream() 
+      ~BinaryFileInStream()
       {
         delete file_; file_ = 0;
       }
 
     protected:
-      std::istream& openFile( const std::string& filename ) 
+      std::istream& openFile( const std::string& filename )
       {
         file_ = (new std::ifstream( filename.c_str(), std::ios::binary ));
 
-        if( ! (*file_) ) 
+        if( ! (*file_) )
           DUNE_THROW( Dune::IOError, "Unable to open file: " << filename );
 
-        return *file_;  
+        return *file_;
       }
 
-      //! standard file stream 
+      //! standard file stream
       std::ifstream* file_;
     };
 
-  } // namespace Fem   
+  } // namespace Fem
 
 } // namespace Dune
 

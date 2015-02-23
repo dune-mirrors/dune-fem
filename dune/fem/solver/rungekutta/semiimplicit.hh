@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_SOLVER_RUNGEKUTTA_SEMIIMPLICIT_HH
 #define DUNE_FEM_SOLVER_RUNGEKUTTA_SEMIIMPLICIT_HH
 
-//- system includes 
+//- system includes
 #include <sstream>
 #include <vector>
 
@@ -13,7 +13,7 @@
 #include <dune/fem/solver/rungekutta/butchertable.hh>
 #include <dune/fem/solver/rungekutta/timestepcontrol.hh>
 
-namespace DuneODE 
+namespace DuneODE
 {
 
   // SemiImplicitRungeKuttaSourceTerm
@@ -66,15 +66,15 @@ namespace DuneODE
       return true;
     }
 
-    void limit( DestinationType& update, const double time ) 
+    void limit( DestinationType& update, const double time )
     {
-      if( limiter_ ) 
+      if( limiter_ )
       {
-        // set correct time 
+        // set correct time
         explicitOp_.setTime( time );
-        // copy given function 
+        // copy given function
         uex_.assign( update );
-        // apply limiter 
+        // apply limiter
         explicitOp_.limit( uex_, update );
       }
     }
@@ -121,7 +121,7 @@ namespace DuneODE
     typedef typename TimeStepControlType::TimeProviderType TimeProviderType;
     typedef typename TimeStepControlType::ParametersType ParametersType;
 
-    /** \brief constructor 
+    /** \brief constructor
      *
      *  \param[in]  explicitOp    explicit operator
      *  \param[in]  helmholtzOp   Helmholtz operator \f$L\f$

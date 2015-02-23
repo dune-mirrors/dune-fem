@@ -1,2 +1,5 @@
+/test-defaultbasisfunctionset
+/test-simplebasisfunctionset
+/test-tuplebasisfunctionset
 /test-vectorialbasisfunctionset
-/test-basisfunctionset
+/*.trs

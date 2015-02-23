@@ -38,6 +38,7 @@ namespace Dune
     // NonBlockMapper
     // --------------
 
+    /**Flatten the index-space of a given BlockMapper. */
     template< class BlockMapper, int blockSize >
     class NonBlockMapper
     : public DofMapper< NonBlockMapperTraits< BlockMapper, blockSize > >
@@ -45,11 +46,14 @@ namespace Dune
       typedef NonBlockMapper< BlockMapper, blockSize > ThisType;
       typedef DofMapper< NonBlockMapperTraits< BlockMapper, blockSize > > BaseType;
 
-      typedef NonBlockMapperTraits< BlockMapper, blockSize > Traits ;  
+      template< class, int >
+      friend class NonBlockMapper;
+
+      typedef NonBlockMapperTraits< BlockMapper, blockSize > Traits ;
     public:
       typedef typename Traits :: SizeType SizeType ;
 
-    private:  
+    private:
       template< class Functor >
       struct BlockFunctor
       {
@@ -156,13 +160,31 @@ namespace Dune
         return blockMapper_.numBlocks();
       }
 
-      bool contains( const int codim ) const 
+      bool contains( const int codim ) const
       {
         return blockMapper_.contains( codim );
       }
 
     private:
       BlockMapper &blockMapper_;
+    };
+
+
+
+    // NonBlockMapper for NonBlockMapper
+    // ---------------------------------
+
+    template< class BlockMapper, int innerBlockSize, int outerBlockSize >
+    class NonBlockMapper< NonBlockMapper< BlockMapper, innerBlockSize >, outerBlockSize >
+      : public NonBlockMapper< BlockMapper, innerBlockSize * outerBlockSize >
+    {
+      typedef NonBlockMapper< NonBlockMapper< BlockMapper, innerBlockSize >, outerBlockSize > ThisType;
+      typedef NonBlockMapper< BlockMapper, innerBlockSize * outerBlockSize > BaseType;
+
+    public:
+      explicit NonBlockMapper ( const NonBlockMapper< BlockMapper, innerBlockSize > &blockMapper )
+        : BaseType( blockMapper.blockMapper_ )
+      {}
     };
 
   } // namespace Fem

@@ -6,7 +6,7 @@
 #include <cassert>
 #include <vector>
 
-//- dune-common includes 
+//- dune-common includes
 #include <dune/common/bartonnackmanifcheck.hh>
 
 
@@ -27,23 +27,23 @@ namespace Dune
     // DefaultFilterTraits
     // -------------------
 
-    //! \brief type definitions 
+    //! \brief type definitions
     template < class FilterImp >
-    struct DefaultFilterTraits 
+    struct DefaultFilterTraits
     {
       //! \brief filter type
       typedef FilterImp FilterType;
 
       //! \brief entity types
       template < int cd >
-      struct Codim 
+      struct Codim
       {
         //! \brief entity type for given codimension
         typedef typename FilterType::template Codim< cd >::EntityType EntityType;
       };
 
-      //! \brief entity type for codimension 0 
-      typedef typename Codim< 0 >::EntityType EntityType;   
+      //! \brief entity type for codimension 0
+      typedef typename Codim< 0 >::EntityType EntityType;
 
     }; // end DefaultFilterTraits
 
@@ -78,7 +78,7 @@ namespace Dune
       //! \brief type of entity with codim=0
       typedef typename Codim< 0 >::EntityType EntityType;
 
-    private: 
+    private:
       // constructor
       FilterInterface () { }
 
@@ -89,7 +89,7 @@ namespace Dune
       ThisType & operator= ( const ThisType & );
 
     public:
-      //! \brief returns true if the given entity of the pointer in the domain 
+      //! \brief returns true if the given entity of the pointer in the domain
       template< int cd >
       bool contains ( const typename Codim< cd >::EntityType & entity ) const
       {
@@ -97,7 +97,7 @@ namespace Dune
         return asImp().contains< cd >( entity );
       }
 
-      //! \brief returns true if the given entity of the pointer in the domain 
+      //! \brief returns true if the given entity of the pointer in the domain
       template< class Entity >
       bool contains ( const Entity & entity ) const
       {
@@ -105,8 +105,8 @@ namespace Dune
         CHECK_INTERFACE_IMPLEMENTATION( asImp().contains< cc >( entity ) );
         return asImp().contains< cc >( entity );
       }
-      
-      //! \brief returns true if an intersection is interior 
+
+      //! \brief returns true if an intersection is interior
       //         (allows boundarys within a given domain)
       template< class Intersection >
       bool interiorIntersection ( const Intersection &intersection ) const
@@ -114,21 +114,21 @@ namespace Dune
         return asImp().interiorIntersection( intersection );
       }
 
-      //! \brief returns true if an intersection is a boundary intersection 
+      //! \brief returns true if an intersection is a boundary intersection
       template< class Intersection >
       bool intersectionBoundary( const Intersection &intersection ) const
       {
         return asImp().intersectionBoundary( intersection );
       }
-      
-      //! \brief returns the boundary id for an intersection 
+
+      //! \brief returns the boundary id for an intersection
       template< class Intersection >
       int intersectionBoundaryId ( const Intersection &intersection ) const
       {
         return asImp().intersectionBoundaryId( intersection );
       }
 
-      //! \brief returns true if for an intersection a neighbor exsits 
+      //! \brief returns true if for an intersection a neighbor exsits
       template< class Intersection >
       bool intersectionNeighbor ( const Intersection &intersection ) const
       {
@@ -140,7 +140,7 @@ namespace Dune
       {
         return static_cast< FilterType & >( *this );
       }
-      
+
       const FilterType &asImp () const
       {
         return static_cast< const FilterType & >( *this );
@@ -161,7 +161,7 @@ namespace Dune
     public:
       //! \brief type of the filter implementation
       typedef typename BaseType::FilterType FilterType;
-   
+
       //! \brief entity types
       template< int cd >
       struct Codim
@@ -170,9 +170,9 @@ namespace Dune
         typedef typename BaseType::template Codim< cd >::EntityType EntityType;
       };
 
-      //! \brief type of codim 0 entity 
+      //! \brief type of codim 0 entity
       typedef typename BaseType::EntityType EntityType;
-       
+
     protected:
       using BaseType::asImp;
 
@@ -182,7 +182,7 @@ namespace Dune
       // copy constructor
       FilterDefaultImplementation ( const ThisType & );
 
-      // assignment operator 
+      // assignment operator
       ThisType &operator= ( const ThisType & );
 
     public:
@@ -196,24 +196,24 @@ namespace Dune
         const EntityPointerType outside = intersection.outside();
         return asImp().contains( *outside );
       }
-    
-      //! \brief returns true if the given entity of the pointer in the domain 
+
+      //! \brief returns true if the given entity of the pointer in the domain
       template< int cd >
       bool contains ( const typename Codim< cd >::EntityType & ) const;
 
-      //! \brief returns true if an intersection is a boundary intersection 
+      //! \brief returns true if an intersection is a boundary intersection
       template< class Intersection >
       bool intersectionBoundary( const Intersection & ) const;
-     
-      //! \brief returns the boundary id for an intersection 
+
+      //! \brief returns the boundary id for an intersection
       template< class Intersection >
       int intersectionBoundaryId ( const Intersection & ) const;
 
-      //! \brief returns true if for an intersection a neighbor exsits 
+      //! \brief returns true if for an intersection a neighbor exsits
       template< class Intersection >
       bool intersectionNeighbor ( const Intersection & ) const;
     };
-   
+
   }  // namespace Fem
 
 }  // namespace Dune

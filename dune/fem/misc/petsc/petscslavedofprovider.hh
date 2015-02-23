@@ -11,17 +11,17 @@
 #include <dune/fem/misc/petsc/petscdofmappings.hh>
 
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /* =================================================
      * class PetscSlaveDofProvider
      * =================================================
      */
-    template< typename DFSpace > 
+    template< typename DFSpace >
     class PetscSlaveDofProvider : public SlaveDofsProvider< DFSpace >
     {
     public:
@@ -32,7 +32,7 @@ namespace Dune
     protected:
       using BaseType :: space_;
       using BaseType :: slaveDofs_;
-      
+
     public:
       typedef typename DiscreteFunctionSpaceType :: BlockMapperType  BlockMapperType;
       typedef SlaveDofs< DiscreteFunctionSpaceType, BlockMapperType > SlaveDofsType;
@@ -48,10 +48,10 @@ namespace Dune
       {
       }
 
-      //! destructor 
+      //! destructor
       ~PetscSlaveDofProvider()
       {
-        // free mapping  
+        // free mapping
         PetscDofMappingProviderType::removeObject( dofMapping_ );
       }
 
@@ -59,7 +59,7 @@ namespace Dune
       PetscDofMappingType& dofMapping() { return dofMapping_; }
 
     protected:
-      // the globally unique dof mapping 
+      // the globally unique dof mapping
       PetscDofMappingType& dofMapping_;
     };
 

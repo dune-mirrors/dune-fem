@@ -5,13 +5,13 @@
 
 namespace Dune
 {
-  
+
   namespace Fem
   {
 
     // Forward Declarations
     // --------------------
-    
+
     class VirtualOutStream;
 
     class VirtualInStream;
@@ -26,7 +26,7 @@ namespace Dune
 
     // VirtualOutStreamObject
     // ----------------------
-    
+
     class VirtualOutStreamObject
     {
       typedef VirtualOutStreamObject ThisType;
@@ -41,7 +41,7 @@ namespace Dune
       : refCount( 0 )
       {}
       virtual ~VirtualOutStreamObject() {}
-      
+
     public:
       virtual void flush () = 0;
       virtual void writeDouble ( double value ) = 0;
@@ -56,17 +56,17 @@ namespace Dune
 
     // VirtualOutStreamTraits
     // ----------------------
-    
+
     struct VirtualOutStreamTraits
     {
       typedef VirtualOutStream OutStreamType;
     };
 
 
-    
+
     // VirtualOutStream
     // ----------------
-    
+
     class VirtualOutStream
     : public OutStreamInterface< VirtualOutStreamTraits >
     {
@@ -107,7 +107,7 @@ namespace Dune
       {
         stream_->flush();
       }
-      
+
       void writeDouble ( double value )
       {
         stream_->writeDouble( value );
@@ -117,12 +117,12 @@ namespace Dune
       {
         stream_->writeFloat( value );
       }
-      
+
       void writeInt ( int value )
       {
         stream_->writeInt( value );
       }
-      
+
       void writeString ( const std :: string &s )
       {
         stream_->writeString( s );
@@ -143,7 +143,7 @@ namespace Dune
 
     // VirtualInStreamObject
     // ---------------------
-    
+
     class VirtualInStreamObject
     {
       typedef VirtualInStream ThisType;
@@ -159,7 +159,7 @@ namespace Dune
       {}
 
       virtual ~VirtualInStreamObject() {}
-      
+
     public:
       virtual void readDouble ( double &value ) = 0;
       virtual void readFloat ( float &value ) = 0;
@@ -170,20 +170,20 @@ namespace Dune
     };
 
 
-    
+
     // VirtualInStreamTraits
     // ---------------------
-    
+
     struct VirtualInStreamTraits
     {
       typedef VirtualInStream InStreamType;
     };
-    
 
-    
+
+
     // VirtualInStream
     // ---------------
-    
+
     class VirtualInStream
     : public InStreamInterface< VirtualInStreamTraits >
     {
@@ -192,7 +192,7 @@ namespace Dune
 
       template< class T >
       friend VirtualInStream virtualize ( InStreamInterface< T > & );
-      
+
     private:
       VirtualInStreamObject *const stream_;
 
@@ -224,22 +224,22 @@ namespace Dune
       {
         stream_->readDouble( value );
       }
-      
+
       void readFloat ( float &value )
       {
         stream_->readFloat( value );
       }
-      
+
       void readInt ( int &value )
       {
         stream_->readInt( value );
       }
-      
+
       void readString ( std :: string &s )
       {
         stream_->readString( s );
       }
-      
+
       void readUnsignedInt ( unsigned int &value )
       {
         stream_->readUnsignedInt( value );
@@ -265,7 +265,7 @@ namespace Dune
 
       template< class T >
       friend VirtualOutStream virtualize ( OutStreamInterface< T > & );
-    
+
     public:
       typedef OutStreamInterface< Traits > StreamType;
 
@@ -285,32 +285,32 @@ namespace Dune
       {
         stream_.flush();
       }
-      
+
       virtual void writeDouble ( double value )
       {
         stream_.writeDouble( value );
       }
-      
+
       virtual void writeFloat ( float value )
       {
         stream_.writeFloat( value );
       }
-      
+
       virtual void writeInt ( int value )
       {
         stream_.writeInt( value );
       }
-      
+
       virtual void writeString ( const std :: string &s )
       {
         stream_.writeString( s );
       }
-      
+
       virtual void writeUnsignedInt( unsigned int value )
       {
         stream_.writeUnsignedInt( value );
       }
-      
+
       virtual void writeUnsignedInt64( uint64_t value )
       {
         stream_.writeUnsignedInt64( value );
@@ -318,7 +318,7 @@ namespace Dune
     };
 
 
-    
+
     // VirtualInStreamWrapper
     // ----------------------
 
@@ -351,22 +351,22 @@ namespace Dune
       {
         stream_.readDouble( value );
       }
-      
+
       virtual void readFloat ( float &value )
       {
         stream_.readFloat( value );
       }
-      
+
       virtual void readInt ( int &value )
       {
         stream_.readInt( value );
       }
-      
+
       virtual void readString ( std :: string &s )
       {
         stream_.readString( s );
       }
-      
+
       virtual void readUnsignedInt( unsigned int &value )
       {
         stream_.readUnsignedInt( value );
@@ -388,7 +388,7 @@ namespace Dune
     {
       return VirtualOutStream( new VirtualOutStreamWrapper< Traits >( stream ) );
     }
-    
+
     template< class Traits >
     VirtualInStream virtualize ( InStreamInterface< Traits > &stream )
     {

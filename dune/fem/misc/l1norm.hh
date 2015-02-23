@@ -8,7 +8,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     // L1Norm
@@ -43,7 +43,7 @@ namespace Dune
 
       template< class DiscreteFunctionType >
       typename DiscreteFunctionType::RangeFieldType norm ( const DiscreteFunctionType &u ) const;
-      
+
       template< class UDiscreteFunctionType, class VDiscreteFunctionType >
       typename UDiscreteFunctionType::RangeFieldType
       distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
@@ -69,7 +69,7 @@ namespace Dune
 
     // Implementation of L1Norm
     // ------------------------
-    
+
     template< class GridPart >
     inline L1Norm< GridPart >::L1Norm ( const GridPartType &gridPart, const unsigned int order )
     : BaseType( gridPart ),
@@ -85,14 +85,14 @@ namespace Dune
       typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
       typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
-      // calculate integral over each element 
+      // calculate integral over each element
       ReturnType sum = BaseType :: forEach( u, ReturnType(0), order_ );
 
       // return result, e.g. sum
       return comm().sum( sum[ 0 ] );
     }
 
-    
+
     template< class GridPart >
     template< class UDiscreteFunctionType, class VDiscreteFunctionType >
     inline typename UDiscreteFunctionType::RangeFieldType
@@ -102,7 +102,7 @@ namespace Dune
       typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
       typedef FieldVector< RangeFieldType, 1 > ReturnType ;
 
-      // calculate integral over each element 
+      // calculate integral over each element
       ReturnType sum = BaseType :: forEach( u, v, ReturnType(0), order_ );
 
       // return result, e.g. sum
@@ -148,11 +148,11 @@ namespace Dune
 
       LocalDistanceType dist( ulocal, vlocal );
       FunctionAbs< LocalDistanceType > distAbs( dist );
-      
+
       integrator.integrateAdd( entity, distAbs, sum );
     }
 
-    
+
     template< class GridPart >
     template< class Function >
     struct L1Norm< GridPart >::FunctionAbs
@@ -165,7 +165,7 @@ namespace Dune
       explicit FunctionAbs ( const FunctionType &function )
       : function_( function )
       {}
-      
+
       template< class Point >
       void evaluate ( const Point &x, RangeType &ret ) const
       {
@@ -193,7 +193,7 @@ namespace Dune
       FunctionDistance ( const UFunctionType &u, const VFunctionType &v )
       : u_( u ), v_( v )
       {}
-      
+
       template< class Point >
       void evaluate ( const Point &x, RangeType &ret ) const
       {
@@ -217,8 +217,8 @@ namespace Dune
       const VFunctionType &v_;
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_L1NORM_HH

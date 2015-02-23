@@ -25,7 +25,7 @@ const Quadrature2d& Quadrature2d::quadrature(int minimum_degree)
   if (minimum_degree < 0) return quad2d_0;
 
   switch (minimum_degree){
-  case 0: 
+  case 0:
   case 1: return quad2d_1; break;
   case 2: return quad2d_2; break;
   case 3: return quad2d_3; break;
@@ -39,9 +39,9 @@ const Quadrature2d& Quadrature2d::quadrature(int minimum_degree)
   case 11: return quad2d_11; break;
   case 12:
   case 13: return quad2d_13; break;
-  default: 
+  default:
        {
-         std::cerr << "Quadrature2d::quadrature: order " << minimum_degree << " not avaiable" << std::endl; 
+         std::cerr << "Quadrature2d::quadrature: order " << minimum_degree << " not avaiable" << std::endl;
          assert(0);
          abort();
        }
@@ -102,17 +102,17 @@ const Quadrature2d pardg::quad2d_0(0, 0, quad2d_0_x);
 // taken from
 //
 // Dunavant, D.A.
-// High degree efficient symmetrical Gaussian quadrature rules for 
+// High degree efficient symmetrical Gaussian quadrature rules for
 // the triangle. (English)
 // Int. J. Numer. Methods Eng. 21, 1129-1148 (1985)
 
-static const double quad2d_1_x[][3] = 
+static const double quad2d_1_x[][3] =
   {{1.0/3.0, 1.0/3.0,  0.5}
   };
 const Quadrature2d pardg::quad2d_1(1, 1, quad2d_1_x);
 
 
-static const double quad2d_2_x[][3] = 
+static const double quad2d_2_x[][3] =
   {{1.0/6.0, 1.0/6.0,  1.0/6.0},
    {2.0/3.0, 1.0/6.0,  1.0/6.0},
    {1.0/6.0, 2.0/3.0,  1.0/6.0},
@@ -120,7 +120,7 @@ static const double quad2d_2_x[][3] =
 const Quadrature2d pardg::quad2d_2(3, 2, quad2d_2_x);
 
 
-static const double quad2d_3_x[][3] = 
+static const double quad2d_3_x[][3] =
   {{1.0/3.0, 1.0/3.0,   -9.0/32.0},
    {1.0/5.0, 1.0/5.0,   25.0/96.0},
    {3.0/5.0, 1.0/5.0,   25.0/96.0},
@@ -129,7 +129,7 @@ static const double quad2d_3_x[][3] =
 const Quadrature2d pardg::quad2d_3(4, 3, quad2d_3_x);
 
 
-static const double quad2d_4_x[][3] = 
+static const double quad2d_4_x[][3] =
   {{0.108103018168070, 0.445948490915965,   0.223381589678011*0.5},
    {0.445948490915965, 0.108103018168070,   0.223381589678011*0.5},
    {0.445948490915965, 0.445948490915965,   0.223381589678011*0.5},
@@ -140,27 +140,27 @@ static const double quad2d_4_x[][3] =
 const Quadrature2d pardg::quad2d_4(6, 4, quad2d_4_x);
 
 
-static const double quad2d_5_x[][3] = 
-  {{1.0/3.0, 1.0/3.0,   
+static const double quad2d_5_x[][3] =
+  {{1.0/3.0, 1.0/3.0,
     9.0/80.0},
-   {(6.0+sqrt(15.0))/21.0, (6.0+sqrt(15.0))/21.0,   
+   {(6.0+sqrt(15.0))/21.0, (6.0+sqrt(15.0))/21.0,
     (155.0+sqrt(15.0))/2400.0},
    {(9.0-2.0*sqrt(15.0))/21.0,(6.0+sqrt(15.0))/21.0,
     (155.0+sqrt(15.0))/2400.0},
    {(6.0+sqrt(15.0))/21.0,(9.0-2.0*sqrt(15.0))/21.0,
-    (155.0+sqrt(15.0))/2400.0}, 
-   {(6.0-sqrt(15.0))/21.0, (6.0-sqrt(15.0))/21.0,  
-    (155.0-sqrt(15.0))/2400.0}, 
+    (155.0+sqrt(15.0))/2400.0},
+   {(6.0-sqrt(15.0))/21.0, (6.0-sqrt(15.0))/21.0,
+    (155.0-sqrt(15.0))/2400.0},
    {(9.0+2.0*sqrt(15.0))/21.0, (6.0-sqrt(15.0))/21.0,
-    (155.0-sqrt(15.0))/2400.0}, 
-   {(6.0-sqrt(15.0))/21.0, (9.0+2.0*sqrt(15.0))/21.0, 
+    (155.0-sqrt(15.0))/2400.0},
+   {(6.0-sqrt(15.0))/21.0, (9.0+2.0*sqrt(15.0))/21.0,
     (155.0-sqrt(15.0))/2400.0}
   };
 const Quadrature2d pardg::quad2d_5(7, 5, quad2d_5_x);
 
 
 
-static const double quad2d_6_x[][3] = 
+static const double quad2d_6_x[][3] =
   {{0.501426509658179, 0.249286745170910,   0.116786275726379*0.5}, // w0
    {0.249286745170910, 0.501426509658179,   0.116786275726379*0.5},
    {0.249286745170910, 0.249286745170910,   0.116786275726379*0.5},
@@ -179,7 +179,7 @@ const Quadrature2d pardg::quad2d_6(12, 6, quad2d_6_x);
 
 
 
-static const double quad2d_7_x[][3] = 
+static const double quad2d_7_x[][3] =
   {{1.0/3.0, 1.0/3.0,   -0.149570044467682*0.5}, // w0
    {0.479308067841920, 0.260345966079040,   0.175615257433208*0.5}, // w1
    {0.260345966079040, 0.479308067841920,   0.175615257433208*0.5},
@@ -198,7 +198,7 @@ const Quadrature2d pardg::quad2d_7(13, 7, quad2d_7_x);
 
 
 
-static const double quad2d_8_x[][3] = 
+static const double quad2d_8_x[][3] =
   {{1.0/3.0, 1.0/3.0,   0.144315607677787*0.5}, // w0
    {0.081414823414554, 0.459292588292723,   0.095091634267285*0.5}, // w1
    {0.459292588292723, 0.081414823414554,   0.095091634267285*0.5},
@@ -220,7 +220,7 @@ const Quadrature2d pardg::quad2d_8(16, 8, quad2d_8_x);
 
 
 
-static const double quad2d_9_x[][3] = 
+static const double quad2d_9_x[][3] =
   {{1.0/3.0, 1.0/3.0,   0.097135796282799*0.5}, // w0
    {0.020634961602525, 0.489682519198738,   0.031334700227139*0.5}, // w1
    {0.489682519198738, 0.020634961602525,   0.031334700227139*0.5},
@@ -246,7 +246,7 @@ const Quadrature2d pardg::quad2d_9(19, 9, quad2d_9_x);
 
 
 
-static const double quad2d_10_x[][3] = 
+static const double quad2d_10_x[][3] =
   {{1.0/3.0, 1.0/3.0,   0.090817990382754*0.5}, // w0
    {0.028844733232685, 0.485577633383657,   0.036725957756467*0.5}, // w1
    {0.485577633383657, 0.028844733232685,   0.036725957756467*0.5},
@@ -279,7 +279,7 @@ const Quadrature2d pardg::quad2d_10(25, 10, quad2d_10_x);
 
 // note: has negative weights
 //       has negative baryzentric coordinates
-static const double quad2d_11_x[][3] = 
+static const double quad2d_11_x[][3] =
   {{0.935270103777448214, 0.032364948111275893,   6.8298655013389309e-3}, // w0
    {0.032364948111275893, 0.935270103777448214,   6.8298655013389309e-3},
    {0.032364948111275893, 0.032364948111275893,   6.8298655013389309e-3},
@@ -314,7 +314,7 @@ const Quadrature2d pardg::quad2d_11(27, 11, quad2d_11_x);
 
 
 
-static const double quad2d_13_x[][3] = 
+static const double quad2d_13_x[][3] =
   {{1.0/3.0, 1.0/3.0,    0.029348039806359515}, // w0
    {0.5, 0.5,            2.6784518955454304e-3}, // w1
    {0.5, 0.0,            2.6784518955454304e-3},

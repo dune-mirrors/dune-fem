@@ -22,7 +22,7 @@ namespace Dune
 
     public:
       typedef typename remove_const< GridFamily >::type::ctype ctype;
-      
+
       static const int dimension = remove_const< GridFamily >::type::dimension;
       static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
 
@@ -31,30 +31,34 @@ namespace Dune
       typedef typename Traits::template Codim< 1 >::Geometry Geometry;
       typedef typename Traits::template Codim< 1 >::LocalGeometry LocalGeometry;
 
+      typedef typename Traits::ExtraData  ExtraData;
+
     private:
       typedef typename EntityPointer::Implementation EntityPointerImpl;
 
       typedef typename HostGridPartType::IntersectionType HostIntersectionType;
 
     public:
-      IdIntersection ()
-      : hostIntersection_( 0 )
+      explicit IdIntersection ( ExtraData data )
+      : hostIntersection_( nullptr ),
+        data_( data )
       {}
 
-      explicit IdIntersection ( const HostIntersectionType &hostIntersection )
-      : hostIntersection_( &hostIntersection )
+      explicit IdIntersection ( ExtraData data, const HostIntersectionType &hostIntersection )
+      : hostIntersection_( &hostIntersection ),
+        data_( data )
       {}
 
       operator bool () const { return bool( hostIntersection_ ); }
 
       EntityPointer inside () const
       {
-        return EntityPointerImpl( hostIntersection().inside() );
+        return EntityPointerImpl( data(), hostIntersection().inside() );
       }
-      
+
       EntityPointer outside () const
       {
-        return EntityPointerImpl( hostIntersection().outside() );
+        return EntityPointerImpl( data(), hostIntersection().outside() );
       }
 
       bool boundary () const
@@ -66,22 +70,22 @@ namespace Dune
       {
         return hostIntersection().conforming();
       }
-          
-      int twistInSelf() const 
-      { 
-        return hostIntersection().impl().twistInSelf(); 
+
+      int twistInSelf() const
+      {
+        return hostIntersection().impl().twistInSelf();
       }
-      
-      int twistInNeighbor() const 
-      { 
-        return hostIntersection().impl().twistInNeighbor(); 
+
+      int twistInNeighbor() const
+      {
+        return hostIntersection().impl().twistInNeighbor();
       }
-          
+
       bool neighbor () const
       {
         return hostIntersection().neighbor();
       }
-          
+
       int boundaryId () const
       {
         return hostIntersection().boundaryId();
@@ -91,17 +95,17 @@ namespace Dune
       {
         return hostIntersection().boundarySegmentIndex();
       }
-          
+
       LocalGeometry geometryInInside () const
       {
         return LocalGeometry( hostIntersection().geometryInInside() );
       }
-      
+
       LocalGeometry geometryInOutside () const
       {
         return LocalGeometry( hostIntersection().geometryInOutside() );
       }
-     
+
       Geometry geometry () const
       {
         return Geometry( hostIntersection().geometry() );
@@ -116,18 +120,18 @@ namespace Dune
       {
         return hostIntersection().indexInInside();
       }
-      
+
       int indexInOutside () const
       {
         return hostIntersection().indexInOutside();
       }
-      
+
       FieldVector< ctype, dimensionworld >
       integrationOuterNormal ( const FieldVector< ctype, dimension-1 > &local ) const
       {
         return hostIntersection().integrationOuterNormal( local );
       }
-      
+
       FieldVector< ctype, dimensionworld >
       outerNormal ( const FieldVector< ctype, dimension-1 > &local ) const
       {
@@ -151,8 +155,11 @@ namespace Dune
         return *hostIntersection_;
       }
 
-    private:
+      ExtraData data () const { return data_; }
+
+    protected:
       const HostIntersectionType *hostIntersection_;
+      ExtraData data_;
     };
 
   } // namespace Fem

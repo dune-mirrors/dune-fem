@@ -1,5 +1,5 @@
 #ifdef HAVE_CONFIG_H
-# include "config.h"     
+# include "config.h"
 #endif
 #include <iostream>
 #include <fstream>
@@ -11,48 +11,43 @@
 #include <dune/fem/io/parameter.hh> // include parameters
 
 
-using namespace Dune;
-using namespace Fem;
-
 // main programm
 int main(int argc, char** argv)
 {
   try{
     //Maybe initialize Mpi
-    MPIManager :: initialize( argc, argv );
+    Dune::Fem::MPIManager :: initialize( argc, argv );
 
-    Parameter::append(argc,argv);
+    Dune::Fem::Parameter::append(argc,argv);
     if (argc == 2) {
-      Parameter::append(argv[1]);
+      Dune::Fem::Parameter::append(argv[1]);
     }
     else
     {
-      Parameter::append("testparameterfile");
+      Dune::Fem::Parameter::append("testparameterfile");
     }
 
     // get user id and date
     std::string userId, date;
-    Parameter::get("user", userId );
-    Parameter::get("date", date );
-    
+    Dune::Fem::Parameter::get("user", userId );
+    Dune::Fem::Parameter::get("date", date );
+
     // get Project discription
     std::string project;
-    Parameter::get( "project", project ); 
+    Dune::Fem::Parameter::get( "project", project );
 
-    // get the parameter for the diffusion 
-    double diffusion = Parameter::getValue<double>("diffusion", 1.0 );
-    
-    
-    // get the macro grid filename, using the NoWhiteSpaceValidator, so that no white
-    // space is in the filename
+    // get the parameter for the diffusion
+    double diffusion = Dune::Fem::Parameter::getValidValue( "diffusion", 1.0, []( const double &val ) { return val > 0; } );
+
+    // get the macro grid filename, using a lambda to verify 'no white spaces' in the filename
     std::string macrogridname;
-    Parameter::getValid("macrogrid",  NoWhiteSpaceValidator(), macrogridname );
+    auto valid = []( const std::string &name ){ return (name.find_first_of( " \t" ) == std::string::npos); };
+    Dune::Fem::Parameter::getValid("macrogrid", valid, macrogridname );
 
     // get velocity for the advection part
     typedef Dune::FieldVector< double, 2>  VectorType;
     VectorType velocity;
-    Parameter::get("velocity", velocity );
-
+    Dune::Fem::Parameter::get("velocity", velocity );
 
     {
       // do some calculations
@@ -60,12 +55,12 @@ int main(int argc, char** argv)
 
     // get output path
     std::string outputPath;
-    Parameter::get("outputpath", outputPath );
+    Dune::Fem::Parameter::get("outputpath", outputPath );
 
     // just a small example that mmultiplications are possible using shell scripts
-    double multi = Parameter::getValue<double>("multiplication", 1.0 );
-    double factor1 = Parameter::getValue<double>("factor1", 1.0 );
-    double factor2 = Parameter::getValue<double>("factor2", 1.0 );
+    double multi = Dune::Fem::Parameter::getValue<double>("multiplication", 1.0 );
+    double factor1 = Dune::Fem::Parameter::getValue<double>("factor1", 1.0 );
+    double factor2 = Dune::Fem::Parameter::getValue<double>("factor2", 1.0 );
 
     //*****************OutPut*********************//
     std::cout<<"User: "<< userId <<" started his compution of Project: "<< project <<"\nThe acctual date is: "<< date <<std::endl;
@@ -81,9 +76,9 @@ int main(int argc, char** argv)
     std::cout<<"Multiplication between: " << factor1 << " and " <<
                 factor2 <<"\ncalculated with a shell script is: "
                 << multi << std::endl;
-   
+
     // finallay write the parameter log
-    Parameter::write("parameter.log");
+    Dune::Fem::Parameter::write("parameter.log");
 
     return 0;
   }

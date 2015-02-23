@@ -66,6 +66,9 @@ namespace Dune
       typedef GenericDiscontinuousGalerkinSpace< FiniteVolumeSpaceTraits< FunctionSpace, GridPart, codim, Storage > > BaseType;
 
     public:
+      /** \brief maximum polynomial order of the space, here 0 since basis functions are constant */
+      static const int polynomialOrder = 0;
+
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::GridPartType */
       typedef typename BaseType::GridPartType GridPartType;
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::EntityType */

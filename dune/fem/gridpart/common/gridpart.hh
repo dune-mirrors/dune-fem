@@ -13,7 +13,7 @@
 //- dune-fem includes
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
-#include <dune/fem/gridpart/common/gridpartview.hh>
+#include <dune/fem/gridpart/common/policies.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
 namespace Dune
@@ -33,7 +33,7 @@ namespace Dune
      * and index set provided by the GridPart.
      *
      * \section GridPart Interface and available Implementations
-     * 
+     *
      * The interface for a GridPart is implemented by the class template
      * GridPartInterface. Basically, a GridPart provides the following
      * functionality:
@@ -58,10 +58,10 @@ namespace Dune
 
 
 
-    /** 
+    /**
      * @addtogroup GridPart
      *
-     * @{ 
+     * @{
      */
 
     //! \brief Interface for the GridPart classes
@@ -69,12 +69,15 @@ namespace Dune
     //! entities. A GridPart implementation provides the corresponding index set
     //! and a begin/end iterator pair for accessing those entities, the
     //! corresponding intersection iterators and a appropriate communication
-    //! method. 
+    //! method.
     //! GridParts are used to parametrize spaces (see DiscreteFunctionSpaceDefault [in dune-fem]).
     template< class GridPartTraits >
     class GridPartInterface
+      : public GridPartPolicies< GridPartTraits >
     {
       typedef GridPartInterface< GridPartTraits > ThisType;
+
+      typedef GridPartPolicies< GridPartTraits > PoliciesType;
 
     public:
       //! \brief Type of the Traits
@@ -82,7 +85,7 @@ namespace Dune
 
       //! \brief Type of the implementation
       typedef typename Traits::GridPartType GridPartType;
-     
+
       //! \brief type of Grid implementation
       typedef typename Traits::GridType GridType;
 
@@ -92,7 +95,7 @@ namespace Dune
       //! \brief Collective communication
       typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
 
-      //! \brief Twist utility type 
+      //! \brief Twist utility type
       typedef typename Traits::TwistUtilityType TwistUtilityType;
 
       //! \brief Maximum Partition type, the index set provides indices for
@@ -107,7 +110,7 @@ namespace Dune
       //! \brief type of Intersection
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
-      typedef GridView< Fem::GridPartViewTraits< GridPartType > > GridViewType;
+      typedef typename PoliciesType::GridViewType GridViewType;
 
       typedef typename GridType::ctype ctype;
 
@@ -134,33 +137,33 @@ namespace Dune
 
         typedef typename Partition< InteriorBorder_Partition >::IteratorType IteratorType;
       };
-      
+
     public:
       //! \brief Returns const reference to the underlying grid
       const GridType &grid () const
-      { 
+      {
         CHECK_INTERFACE_IMPLEMENTATION((asImp().grid()));
-        return asImp().grid(); 
+        return asImp().grid();
       }
       //! \brief Returns reference to the underlying grid
       GridType &grid ()
-      { 
+      {
         CHECK_INTERFACE_IMPLEMENTATION((asImp().grid()));
-        return asImp().grid(); 
+        return asImp().grid();
       }
 
       //! \brief convert grid part into a dune grid view
       GridViewType gridView () const
+      DUNE_DEPRECATED_MSG("gridPart.gridView() is deprecated, use direct cast to GridPart::GridViewType instead")
       {
-        typedef typename GridViewType::GridViewImp Impl;
-        return GridViewType( Impl( asImp() ) );
+        return static_cast< GridViewType >( asImp() );
       }
-      
+
       //! \brief Returns reference to index set of the underlying grid
-      const IndexSetType& indexSet() const 
-      { 
+      const IndexSetType& indexSet() const
+      {
         CHECK_INTERFACE_IMPLEMENTATION((asImp().indexSet()));
-        return asImp().indexSet(); 
+        return asImp().indexSet();
       }
 
       /** \brief obtain begin iterator for the interior-border partition
@@ -169,8 +172,8 @@ namespace Dune
        */
       template< int codim >
       typename Codim< codim >::IteratorType
-      begin () const 
-      { 
+      begin () const
+      {
         CHECK_INTERFACE_IMPLEMENTATION( (asImp().template begin< codim >()) );
         return asImp().template begin< codim >();
       }
@@ -182,10 +185,10 @@ namespace Dune
        */
       template< int codim, PartitionIteratorType pitype >
       typename Codim< codim >::template Partition< pitype >::IteratorType
-      begin () const 
-      { 
+      begin () const
+      {
         CHECK_INTERFACE_IMPLEMENTATION( (asImp().template begin< codim, pitype >()) );
-        return asImp().template begin< codim, pitype >(); 
+        return asImp().template begin< codim, pitype >();
       }
 
       /** \brief obtain end iterator for the interior-border partition
@@ -194,8 +197,8 @@ namespace Dune
        */
       template< int codim >
       typename Codim< codim >::IteratorType
-      end () const 
-      { 
+      end () const
+      {
         CHECK_INTERFACE_IMPLEMENTATION( (asImp().template end< codim >()) );
         return asImp().template end< codim >();
       }
@@ -207,17 +210,17 @@ namespace Dune
        */
       template< int codim, PartitionIteratorType pitype >
       typename Codim< codim >::template Partition< pitype >::IteratorType
-      end () const 
-      { 
+      end () const
+      {
         CHECK_INTERFACE_IMPLEMENTATION( (asImp().template end< codim, pitype >()) );
         return asImp().template end< codim, pitype >();
       }
 
       //! \brief Level of the grid part
-      int level () const 
-      { 
+      int level () const
+      {
         CHECK_INTERFACE_IMPLEMENTATION((asImp().level()));
-        return asImp().level(); 
+        return asImp().level();
       }
 
       //! \brief ibegin of corresponding intersection iterator for given entity
@@ -225,14 +228,14 @@ namespace Dune
       ibegin ( const typename Codim< 0 >::EntityType &entity ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( (asImp().ibegin( entity )) );
-        return asImp().ibegin( entity ); 
+        return asImp().ibegin( entity );
       }
-      
+
       //! \brief iend of corresponding intersection iterator for given entity
-      IntersectionIteratorType iend ( const typename Codim< 0 >::EntityType &entity ) const 
+      IntersectionIteratorType iend ( const typename Codim< 0 >::EntityType &entity ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( (asImp().iend( entity )) );
-        return asImp().iend( entity ); 
+        return asImp().iend( entity );
       }
 
       //! return boundary if given an intersection
@@ -267,30 +270,30 @@ namespace Dune
       }
 
       /*! \brief convert the grid's entity to a grid part entity
-          Usually the parameter is GridType :: Codim< codim > :: Entity  
-          and the return is Codim< codim > :: EntityType. 
+          Usually the parameter is GridType :: Codim< codim > :: Entity
+          and the return is Codim< codim > :: EntityType.
           In general these types are the same, but for overloaded entities on grid parts
-          this can differ. 
+          this can differ.
         */
-      template <class Entity> 
-      const Entity& convert( const Entity& entity ) const 
+      template <class Entity>
+      const Entity& convert( const Entity& entity ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().convert( entity ) );
         return asImp().convert( entity );
       }
 
-      /** \brief return sequence number to update structures depending on the grid part 
-       *  \note The default returns DofManager< Grid > :: sequence () 
+      /** \brief return sequence number to update structures depending on the grid part
+       *  \note The default returns DofManager< Grid > :: sequence ()
        */
-      int sequence () const 
+      int sequence () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().sequence() );
         return asImp().sequence() ;
       }
 
-    protected: 
-      //! do not create explicit instances of this class 
-      GridPartInterface () {}  
+    protected:
+      //! do not create explicit instances of this class
+      GridPartInterface () {}
 
     private:
       GridPartType &asImp () { return static_cast< GridPartType & >( *this ); }
@@ -321,7 +324,7 @@ namespace Dune
       typedef DofManager< GridType >  DofManagerType;
     protected:
       GridType       &grid_;
-      DofManagerType &dofManager_; 
+      DofManagerType &dofManager_;
 
     protected:
       //! constructor
@@ -338,7 +341,7 @@ namespace Dune
       ~GridPartDefault ()
       {}
 
-    public:  
+    public:
       //! Returns const reference to the underlying grid
       const GridType &grid () const { return grid_; }
 
@@ -353,9 +356,9 @@ namespace Dune
 
       /** \brief \copydoc GridPartInterface::entityPointer
        *
-       * \tparam  EntitySeed  entity seed from which to create entity pointer 
+       * \tparam  EntitySeed  entity seed from which to create entity pointer
        *
-       * The default implementation simply forwards to the corresponding 
+       * The default implementation simply forwards to the corresponding
        * method on the grid.
        */
       template < class EntitySeed >
@@ -365,21 +368,21 @@ namespace Dune
         return grid().entityPointer( seed );
       }
 
-      /** \brief \copydoc GridPartInterface::convert 
-         
-          \note  The default implementation does nothing but return the same entity 
+      /** \brief \copydoc GridPartInterface::convert
+
+          \note  The default implementation does nothing but return the same entity
        */
-      template <class Entity> 
-      const Entity& convert( const Entity& entity ) const 
+      template <class Entity>
+      const Entity& convert( const Entity& entity ) const
       {
         return entity;
       }
 
-      /** \brief \copydoc GridPartInterface::sequence 
+      /** \brief \copydoc GridPartInterface::sequence
        *
        *  \note  The default returns DofManager< Grid > :: sequence
        */
-      int sequence () const 
+      int sequence () const
       {
         return dofManager_.sequence();
       }

@@ -16,9 +16,9 @@ public:
 protected:
   IterativeSolver();
 
-  double tolerance;  
+  double tolerance;
   bool relative_tolerance;
-  int max_num_of_iterations, num_of_iterations;  
+  int max_num_of_iterations, num_of_iterations;
   std::ostream *os;
 };
 

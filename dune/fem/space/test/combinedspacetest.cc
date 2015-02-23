@@ -210,7 +210,8 @@ int checkBasisSet ( const EntityType &entity, const DiscreteFunctionSpaceType &s
           std::cout<< jacs2[i-nrBasis1]<<std::endl;
       }
 
-      hessian -= hessians[i];
+      for( int r = 0; r < dimRange; ++r )
+        hessian[ r ] -= hessians[i][ r ];
 
       double val = 0;
       for( int r = 0; r< dimRange; ++r )

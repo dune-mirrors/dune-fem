@@ -13,10 +13,10 @@
 #include "twistprovider.hh"
 #include "pointprovider.hh"
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     //! Storage class for mappers.
@@ -36,12 +36,12 @@ namespace Dune
 
     public:
       typedef typename Traits::MapperType MapperType;
-      
+
     public:
       CacheStorage(int numFaces, int maxTwist) :
         mappers_(numFaces)
       {
-        for (MapperIteratorType it = mappers_.begin(); 
+        for (MapperIteratorType it = mappers_.begin();
              it != mappers_.end(); ++it) {
           it->resize(maxTwist + Traits::twistOffset_);
         }
@@ -51,13 +51,13 @@ namespace Dune
         mappers_(other.mappers_)
       {}
 
-      void addMapper(const MapperType& faceMapper, 
+      void addMapper(const MapperType& faceMapper,
                      const MapperType& twistMapper,
                      int faceIndex, int faceTwist)
       {
         assert(twistMapper.size() == faceMapper.size());
 
-        MapperType& mapper = 
+        MapperType& mapper =
           mappers_[faceIndex][faceTwist + Traits::twistOffset_];
         mapper.resize(twistMapper.size());
 
@@ -112,7 +112,7 @@ namespace Dune
 
       const MapperType &getMapper ( int faceIndex, int faceTwist ) const
       {
-#ifndef NDEBUG 
+#ifndef NDEBUG
         if( faceIndex >= (int)mappers_.size() )
           std::cerr << "Error: faceIndex = " << faceIndex << " >= " << mappers_.size() << " = mappers_.size()" << std::endl;
 #endif
@@ -149,7 +149,7 @@ namespace Dune
     public:
       template <class QuadratureImpl>
       static void registerQuadrature(const QuadratureImpl& quad) {
-        // get quadrature implementation 
+        // get quadrature implementation
         PointProvider<ct, dim, codim>::registerQuadrature(quad.ipList());
       }
     };
@@ -162,7 +162,7 @@ namespace Dune
       typedef typename GridPart::ctype ct;
       typedef CachingTraits<ct, dim-codim> Traits;
 
-      // true if grid could have twists 
+      // true if grid could have twists
       static const bool hasTwists = ! Dune::Fem::GridPartCapabilities::isCartesian<GridPart>::v ;
     public:
       typedef typename Traits::QuadratureType QuadratureType;
@@ -176,15 +176,15 @@ namespace Dune
                                          int faceIndex,
                                          int faceTwist)
       {
-        // get quadrature implementation 
+        // get quadrature implementation
         const QuadratureType& quad = quadImpl.ipList();
-        
-        // create key 
+
+        // create key
         const QuadratureKeyType key (elementGeometry, quad.id() );
-        
+
         MapperIteratorType it = mappers_.find( key );
-        
-        if( it == mappers_.end() ) 
+
+        if( it == mappers_.end() )
         {
           integral_constant< bool, hasTwists > i2t;
           it = CacheProvider<GridPart, 1>::createMapper( quad, elementGeometry, i2t );
@@ -194,7 +194,7 @@ namespace Dune
       }
 
     private:
-      typedef CacheStorage< ct, dim-codim, hasTwists>  CacheStorageType; 
+      typedef CacheStorage< ct, dim-codim, hasTwists>  CacheStorageType;
 
       typedef typename Traits::MapperVectorType MapperVectorType;
       typedef std::map<const QuadratureKeyType, CacheStorageType> MapperContainerType;

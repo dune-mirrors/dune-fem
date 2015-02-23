@@ -6,6 +6,7 @@
 
 //- dune-grid includes
 #include <dune/grid/common/datahandleif.hh>
+#include <dune/grid/common/gridview.hh>
 
 //- dune-fem includes
 #include <dune/fem/gridpart/adaptiveleafindexset.hh>
@@ -219,9 +220,6 @@ namespace Dune
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
       typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
-
-      //! \brief grid view
-      typedef GridView< GridPartViewTraits< ThisType > > GridViewType;
 
       //! \brief grid part typedefs, use those of traits
       template< int codim >

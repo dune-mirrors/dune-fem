@@ -5,8 +5,6 @@
 
 #include <dune/fem/gridpart/leafgridpart.hh>
 
-#include <dune/fem/misc/test.hh>
-
 namespace Dune
 {
 
@@ -15,13 +13,12 @@ namespace Dune
 
     template< class Grid >
     class LagrangeMapper_Test
-    : public Test
     {
     public:
       typedef Grid GridType;
 
       typedef LeafGridPart< GridType > GridPartType;
-        
+
       LagrangeMapper_Test( std :: string gridFile )
         : gridFile_( gridFile )
       {
@@ -35,7 +32,7 @@ namespace Dune
 
       std :: string gridFile_;
     };
-  
+
   } // namespace Fem
 
 } //namespace Dune

@@ -29,7 +29,7 @@ namespace Dune
       template< class Entity >
       static bool contains ( const Entity & entity )
       {
-        return true; 
+        return true;
       }
 
       template< int cd >
@@ -37,7 +37,7 @@ namespace Dune
       {
         return true;
       }
-      
+
       template < class IntersectionIteratorType >
       static bool intersectionBoundary( const IntersectionIteratorType & it )
       {
@@ -45,7 +45,7 @@ namespace Dune
       }
 
       template < class IntersectionIteratorType >
-      static int intersectionBoundaryId(const IntersectionIteratorType & it) 
+      static int intersectionBoundaryId(const IntersectionIteratorType & it)
       {
         return 1;
       }

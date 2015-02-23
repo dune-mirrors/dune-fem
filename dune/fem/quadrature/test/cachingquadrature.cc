@@ -44,9 +44,9 @@ private:
   typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
   typedef typename IntersectionIteratorType :: Intersection IntersectionType;
 
-  typedef typename QuadratureChooser<GridPartType, 0, caching>::Quadrature VolumeQuadratureType; 
+  typedef typename QuadratureChooser<GridPartType, 0, caching>::Quadrature VolumeQuadratureType;
   typedef ElementQuadrature< GridPartType, 0 > ElementQuadratureType;
-  typedef typename QuadratureChooser<GridPartType, 1, caching>::Quadrature FaceQuadratureType; 
+  typedef typename QuadratureChooser<GridPartType, 1, caching>::Quadrature FaceQuadratureType;
 
   GridPartType & gridPart_;
   int order_;
@@ -55,14 +55,14 @@ private:
 
 public:
 
-  TestCaching(GridPartType & gridPart, int order, const double eps = 1e-8) 
+  TestCaching(GridPartType & gridPart, int order, const double eps = 1e-8)
     : gridPart_(gridPart), order_( std::abs(order) ), eps_(eps), skipFaces_( order < 0 )
   { }
 
   void runTest()
   {
     testElementQuadratures();
-    if( skipFaces_ ) 
+    if( skipFaces_ )
     {
       std::cout << "Skipping faces due to fem.skipfaces "<<std::endl;
       return ;
@@ -70,19 +70,19 @@ public:
     testFaceQuadratures();
   }
 
-  void testElementQuadratures() 
+  void testElementQuadratures()
   {
     IteratorType endit = gridPart_.template end<0>();
-    for (IteratorType it = gridPart_.template begin<0>(); it != endit; ++it) 
+    for (IteratorType it = gridPart_.template begin<0>(); it != endit; ++it)
     {
       const EntityType & entity = *it;
       const Geometry& geo = entity.geometry();
 
       VolumeQuadratureType cacheQuad( entity, order_ );
       ElementQuadratureType elemQuad( entity, order_ );
-      if( cacheQuad.nop() != elemQuad.nop() ) 
+      if( cacheQuad.nop() != elemQuad.nop() )
       {
-        std::cout << " Error: nops not equal: cachequad = " << cacheQuad.nop() 
+        std::cout << " Error: nops not equal: cachequad = " << cacheQuad.nop()
                   << "   elemQuad = " << elemQuad.nop() << std::endl;
         return ;
       }
@@ -93,9 +93,9 @@ public:
         Dune::FieldVector<typename GridPartType::ctype,GridPartType::dimensionworld> globalElem, globalCache;
         globalCache  = geo.global( cacheQuad.point( qp ) );
         globalElem   = geo.global( elemQuad.point( qp ) );
-        if( (globalCache-globalElem).two_norm() > eps_) 
+        if( (globalCache-globalElem).two_norm() > eps_)
         {
-          std::cout << " Error: x(cache) = " << globalCache << " != " 
+          std::cout << " Error: x(cache) = " << globalCache << " != "
                     << globalElem << " = x(elem) " << std::endl;
           break;
         }
@@ -103,18 +103,18 @@ public:
     }
   }
 
-  void testFaceQuadratures() 
+  void testFaceQuadratures()
   {
-    // just another face check 
+    // just another face check
     CachingQuadratureTest :: checkLeafsCodimOne( gridPart_, order_ );
 
-    const IndexSetType& indexSet = gridPart_.indexSet(); 
+    const IndexSetType& indexSet = gridPart_.indexSet();
 
-    std::set< int > insideTwists; 
-    std::set< int > outsideTwists; 
+    std::set< int > insideTwists;
+    std::set< int > outsideTwists;
 
     IteratorType endit = gridPart_.template end<0>();
-    for (IteratorType it = gridPart_.template begin<0>(); it != endit; ++it) 
+    for (IteratorType it = gridPart_.template begin<0>(); it != endit; ++it)
     {
       const EntityType & entity = *it;
       const IntersectionIteratorType iend = gridPart_.iend(entity);
@@ -140,7 +140,7 @@ public:
             Dune::FieldVector<typename GridPartType::ctype,GridPartType::dimensionworld> globalInside, globalOutside;
             globalInside = inside.geometry().global(faceQuadInner.point(qp));
             globalOutside = outside.geometry().global(faceQuadOuter.point(qp));
-            if( (globalInside-globalOutside).two_norm() > eps_) 
+            if( (globalInside-globalOutside).two_norm() > eps_)
             {
               const int twistInside  = TwistUtilityType::twistInSelf( gridPart_.grid(), intersection );
               const int twistOutside = TwistUtilityType::twistInNeighbor( gridPart_.grid(), intersection );
@@ -149,9 +149,9 @@ public:
               //std::cout << "Inside  twist = " << twistInside << std::endl;
               //std::cout << "Outside twist = " << twistOutside << std::endl;
               std::cout << "On Element " << indexSet.index( entity ) << " with neighbor " << indexSet.index( outside ) << std::endl;
-              std::cout << " Error: x(inside) = " << globalInside << " != " 
+              std::cout << " Error: x(inside) = " << globalInside << " != "
                         << globalOutside << " = x(outside) "
-                        << " at intersection.indexInInside() = " << intersection.indexInInside()  
+                        << " at intersection.indexInInside() = " << intersection.indexInInside()
                         << ", intersection.indexInOutside() = " << intersection.indexInOutside() << std::endl;
               break;
             }
@@ -162,20 +162,20 @@ public:
 
     typedef typename std::set<int> :: iterator iterator;
     const iterator endin = insideTwists.end();
-    for( iterator it = insideTwists.begin(); it != endin; ++it ) 
+    for( iterator it = insideTwists.begin(); it != endin; ++it )
     {
       std::cout << "Inside twst: " << (*it) << std::endl;
     }
     const iterator endout = outsideTwists.end();
-    for( iterator it = outsideTwists.begin(); it != endout; ++it ) 
+    for( iterator it = outsideTwists.begin(); it != endout; ++it )
     {
       std::cout << "Outside twst: " << (*it) << std::endl;
     }
   }
 };
 
-// main program 
-int main(int argc, char ** argv) 
+// main program
+int main(int argc, char ** argv)
 {
   try
   {
@@ -188,7 +188,7 @@ int main(int argc, char ** argv)
     typedef Dune::GridSelector::GridType GridType;
     std::string filename;
     std::stringstream fileKey ;
-    fileKey << "fem.gridfile" << GridType :: dimension ; 
+    fileKey << "fem.gridfile" << GridType :: dimension ;
     Parameter::get( fileKey.str(), filename);
     Dune::GridPtr< GridType > gridptr( filename );
     GridType &grid = *gridptr;
@@ -235,7 +235,7 @@ int main(int argc, char ** argv)
         grid.postAdapt();
       }
     }
- 
+
     //typedef HierarchicGridPart< GridType > GridPartType;
     typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
     GridPartType gridPart( grid );

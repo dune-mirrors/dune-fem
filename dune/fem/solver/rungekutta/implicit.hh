@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_SOLVER_RUNGEKUTTA_IMPLICIT_HH
 #define DUNE_FEM_SOLVER_RUNGEKUTTA_IMPLICIT_HH
 
-//- system includes 
+//- system includes
 #include <sstream>
 #include <vector>
 
@@ -13,19 +13,19 @@
 #include <dune/fem/solver/rungekutta/butchertable.hh>
 #include <dune/fem/solver/rungekutta/timestepcontrol.hh>
 
-namespace DuneODE 
+namespace DuneODE
 {
 
   // ImplicitRungeKuttaSolver
   // ------------------------
 
   /** \brief Implicit RungeKutta ODE solver. */
-  template< class HelmholtzOperator, class NonlinearSolver >
+  template< class HelmholtzOperator, class NonlinearSolver, class TimeStepControl = ImplicitRungeKuttaTimeStepControl >
   class ImplicitRungeKuttaSolver
-  : public BasicImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, ImplicitRungeKuttaTimeStepControl >
+  : public BasicImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, TimeStepControl >
   {
-    typedef ImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver > ThisType;
-    typedef BasicImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, ImplicitRungeKuttaTimeStepControl > BaseType;
+    typedef ImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, TimeStepControl > ThisType;
+    typedef BasicImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, TimeStepControl > BaseType;
 
   public:
     typedef HelmholtzOperator HelmholtzOperatorType;
@@ -34,7 +34,7 @@ namespace DuneODE
     typedef typename TimeStepControlType::TimeProviderType TimeProviderType;
     typedef typename TimeStepControlType::ParametersType ParametersType;
 
-    /** \brief constructor 
+    /** \brief constructor
      *
      *  \param[in]  helmholtzOp   Helmholtz operator \f$L\f$
      *  \param[in]  timeProvider  time provider

@@ -12,10 +12,10 @@ namespace Dune
   namespace Fem
   {
 
-    // FunctionSet 
+    // FunctionSet
     // -----------
 
-    /** \class FunctionSet 
+    /** \class FunctionSet
      *
      *  \brief Global basis functions.
      *
@@ -24,7 +24,7 @@ namespace Dune
      *  \tparam  FunctionSpace  function space
      */
     template< class FunctionSpace >
-    class FunctionSet 
+    class FunctionSet
     {
     public:
       //! \brief function space type

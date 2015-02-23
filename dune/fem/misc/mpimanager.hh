@@ -33,7 +33,7 @@ namespace Dune
       // prohibit copying and assignment
       MPIManager ( const MPIManager & );
       MPIManager &operator= ( const MPIManager & );
-      
+
       static MPIManager &instance ()
       {
         static MPIManager instance;
@@ -44,7 +44,7 @@ namespace Dune
       class PETSc
       {
         ~PETSc() { ::Dune::Petsc::finalize(); }
-      public:  
+      public:
         static void initialize( const bool verbose, int &argc, char **&argv )
         {
           // needed for later calling Petsc::finalize to the right time
@@ -60,21 +60,21 @@ namespace Dune
         MPIHelper *&helper = instance().helper_;
         CollectiveCommunication *&comm = instance().comm_;
 
-        // the following initalization is only enabled for 
-        // MPI-thread parallel programs 
-#if HAVE_MPI && MPI_2 
-#ifdef USE_SMP_PARALLEL 
+        // the following initalization is only enabled for
+        // MPI-thread parallel programs
+#if HAVE_MPI && MPI_2
+#ifdef USE_SMP_PARALLEL
         int provided;
-        // use MPI_Init_thread for hybrid parallel programs 
+        // use MPI_Init_thread for hybrid parallel programs
         int is_initialized = MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided );
 
-        if( is_initialized != MPI_SUCCESS ) 
+        if( is_initialized != MPI_SUCCESS )
           DUNE_THROW(InvalidStateException,"MPI_Init_thread failed!");
 
 #if not defined NDEBUG && defined DUNE_DEVEL_MODE
-        // for OpenMPI provided seems to be MPI_THREAD_SINGLE 
-        // but the bybrid version still works. On BlueGene systems 
-        // the MPI_THREAD_FUNNELED is really needed 
+        // for OpenMPI provided seems to be MPI_THREAD_SINGLE
+        // but the bybrid version still works. On BlueGene systems
+        // the MPI_THREAD_FUNNELED is really needed
         if( provided != MPI_THREAD_FUNNELED )
         {
           if( provided == MPI_THREAD_SINGLE )
@@ -82,20 +82,20 @@ namespace Dune
           else
             dwarn << "WARNING: MPI thread support = " << provided << " != MPI_THREAD_FUNNELED " << MPI_THREAD_FUNNELED << std::endl;
         }
-#endif // end NDEBUG 
+#endif // end NDEBUG
 
 #endif // end USE_SMP_PARALLEL
-#endif // end HAVE_MPI && MPI_2       
+#endif // end HAVE_MPI && MPI_2
 
         if( (helper != 0) || (comm != 0) )
           DUNE_THROW( InvalidStateException, "MPIManager has already been initialized." );
 
-        // if not already called, this will call MPI_Init 
+        // if not already called, this will call MPI_Init
         helper = &MPIHelper::instance( argc, argv );
         comm = new CollectiveCommunication( helper->getCommunicator() );
 
 #if HAVE_PETSC
-        // initialize PETSc if pressent 
+        // initialize PETSc if pressent
         PETSc::initialize( rank() == 0, argc, argv );
 #endif
       }

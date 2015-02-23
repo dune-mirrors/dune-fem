@@ -9,15 +9,15 @@ namespace Dune {
   namespace Fem {
 
 
-    /** \brief ThreadSafeValue realizes thread safety for a given variable by 
-               creating an instance of this variable for each thread. 
-    */ 
+    /** \brief ThreadSafeValue realizes thread safety for a given variable by
+               creating an instance of this variable for each thread.
+    */
     template <class T>
     class ThreadSafeValue
     {
 #ifdef USE_SMP_PARALLEL
       std::vector< T > value_;
-#else 
+#else
       T value_;
 #endif
     public:
@@ -34,50 +34,50 @@ namespace Dune {
 #endif
       {}
 
-      //! \brief default constructor 
-      ThreadSafeValue() 
-        : value_( 
+      //! \brief default constructor
+      ThreadSafeValue()
+        : value_(
 #ifdef USE_SMP_PARALLEL
             ThreadManager::maxThreads()
 #endif
              )
       {}
 
-      //! \brief return number of threads 
+      //! \brief return number of threads
       size_t size() const { return ThreadManager::maxThreads(); }
 
-      //! \brief return reference to thread private value 
+      //! \brief return reference to thread private value
       ValueType& operator * () { return this->operator[]( ThreadManager::thread() ); }
-      //! \brief return reference to thread private value 
+      //! \brief return reference to thread private value
       const ValueType& operator * () const { return this->operator[]( ThreadManager::thread() ); }
 
       operator const ValueType& () const { return this->operator[]( ThreadManager::thread() ); }
       operator ValueType& () { return this->operator[]( ThreadManager::thread() ); }
 
-      //! \brief return reference to private value for given thread number 
-      ValueType& operator [] ( const unsigned int thread ) { 
+      //! \brief return reference to private value for given thread number
+      ValueType& operator [] ( const unsigned int thread ) {
         assert( thread < size() );
         return value_
 #ifdef USE_SMP_PARALLEL
           [ thread ]
-#endif    
+#endif
           ;
       }
 
-      //! \brief return reference to private value for given thread number 
-      const ValueType& operator [] ( const unsigned int thread ) const { 
+      //! \brief return reference to private value for given thread number
+      const ValueType& operator [] ( const unsigned int thread ) const {
         assert( thread < size() );
         return value_
 #ifdef USE_SMP_PARALLEL
           [ thread ]
-#endif    
+#endif
           ;
       }
     };
 
   } // end namespace Fem
 
-} // end namespace Dune 
+} // end namespace Dune
 
 
 #endif

@@ -40,7 +40,7 @@ namespace Dune
     class LagrangeShapeFunctionInterface
     {
       typedef LagrangeShapeFunctionInterface< FunctionSpace > ThisType;
-      
+
       static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
 
     public:
@@ -68,7 +68,7 @@ namespace Dune
     // ---------------------
 
     /**
-     * \brief implementation of Lagrange shape function 
+     * \brief implementation of Lagrange shape function
      *        using generic Lagrange shape functions
      *
      * \tparam  FunctionSpace  scalar function space
@@ -102,7 +102,7 @@ namespace Dune
       virtual void hessian ( const DomainType &x, HessianRangeType &hessian ) const;
 
       virtual int order () const { return polOrder; }
-      
+
       virtual const BaseType *clone () const { return new ThisType( *this ); }
 
     protected:
@@ -115,14 +115,14 @@ namespace Dune
     // ----------------------------
 
     /**
-     * \brief factory class 
+     * \brief factory class
      *
      * \tparam  FunctionSpace  scalar function space
      * \tparam  polOrder       polynomial order
      */
 
     template< class FunctionSpace, int polOrder >
-    class LagrangeShapeFunctionFactory 
+    class LagrangeShapeFunctionFactory
     {
       static const int dimension = FunctionSpace::dimDomain;
 
@@ -161,8 +161,8 @@ namespace Dune
      */
     template< class FunctionSpace, int polOrder >
     class LagrangeShapeFunctionSet
-    : public SimpleShapeFunctionSet< 
-        typename LagrangeShapeFunctionFactory< FunctionSpace, polOrder >::ShapeFunctionType 
+    : public SimpleShapeFunctionSet<
+        typename LagrangeShapeFunctionFactory< FunctionSpace, polOrder >::ShapeFunctionType
       >
     {
       static_assert( (FunctionSpace::dimRange == 1), "FunctionSpace must be scalar." );
@@ -246,7 +246,7 @@ namespace Dune
         ::GenericGeometryType GenericGeometryType;
 
       // type of scalar shape function
-      typedef LagrangeShapeFunction< FunctionSpace, GenericGeometryType, polOrder > 
+      typedef LagrangeShapeFunction< FunctionSpace, GenericGeometryType, polOrder >
         ShapeFunctionImpl;
       typedef typename ShapeFunctionImpl::GenericBaseFunctionType GenericBaseFunctionType;
 

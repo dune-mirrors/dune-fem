@@ -8,7 +8,6 @@
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 
-#include <dune/fem/misc/engineconcept.hh>
 #include <dune/fem/space/basisfunctionset/functor.hh>
 #include <dune/fem/space/common/functionspace.hh>
 
@@ -28,17 +27,11 @@ namespace Dune
      *        HorizontalDofAlignment and
      *        VerticalDofAlignment
      *
-     *  \tparam  Imp  implementation type (CRTP)
+     *  \tparam  Implementation  implementation type (CRTP)
      */
-    template< class Imp >
+    template< class Implementation >
     class DofAlignment
-    : public EngineDefault< Imp >
     {
-      typedef EngineDefault< Imp > BaseType;
-
-    protected:
-      using BaseType::asImp;
-
     public:
       //! \brief global Dof type
       typedef std::size_t GlobalDofType;
@@ -47,6 +40,10 @@ namespace Dune
        */
       typedef std::pair< int, std::size_t > LocalDofType;
 
+    protected:
+      DofAlignment () = default;
+
+    public:
       /** \brief map local to global Dof
        *
        *  \note methods localDof and globalDof must be inverse
@@ -57,7 +54,7 @@ namespace Dune
        */
       GlobalDofType globalDof ( const LocalDofType &localDof ) const
       {
-        return asImp().globalDof( localDof );
+        return impl().globalDof( localDof );
       }
 
       /** \brief map global to local Dof
@@ -70,7 +67,13 @@ namespace Dune
        */
       LocalDofType localDof ( const GlobalDofType &globalDof ) const
       {
-        return asImp().localDof( globalDof );
+        return impl().localDof( globalDof );
+      }
+
+    protected:
+      const Implementation &impl () const
+      {
+        return static_cast< const Implementation & >( *this );
       }
     };
 
@@ -98,21 +101,11 @@ namespace Dune
       typedef typename BaseType::GlobalDofType GlobalDofType;
       typedef typename BaseType::LocalDofType LocalDofType;
 
-      HorizontalDofAlignment () {}
+      HorizontalDofAlignment () = default;
 
       explicit HorizontalDofAlignment ( const ScalarBasisFunctionSet &scalarBasisFunctionSet )
       : scalarSize_( scalarBasisFunctionSet.size() )
       {}
-
-      // need to implement copy constructor because of basis class
-      HorizontalDofAlignment ( const ThisType &other ) : scalarSize_( other.scalarSize_ ) {}
-
-      // need to implement assignment operator because of basis class
-      ThisType &operator= ( const ThisType &other )
-      {
-        scalarSize_ = other.scalarSize_;
-        return *this;
-      }
 
       /** @copydoc Dune::Fem::DofAlignment::globalDof */
       GlobalDofType globalDof ( const LocalDofType &localDof ) const
@@ -155,15 +148,9 @@ namespace Dune
       typedef typename BaseType::GlobalDofType GlobalDofType;
       typedef typename BaseType::LocalDofType LocalDofType;
 
-      VerticalDofAlignment () {}
+      VerticalDofAlignment () = default;
 
       explicit VerticalDofAlignment ( const ScalarBasisFunctionSet & ) {}
-
-      // need to implement copy constructor because of basis class
-      VerticalDofAlignment ( const ThisType & ) {}
-
-      // need to implement assignment operator because of basis class
-      ThisType &operator= ( const ThisType & ) { return *this; }
 
       /** @copydoc Dune::Fem::DofAlignment::globalDof */
       GlobalDofType globalDof ( const LocalDofType &localDof ) const
@@ -328,6 +315,25 @@ namespace Dune
         axpy( x, jacobianFactor, dofs );
       }
 
+      template< class Quadrature, class Vector, class DofVector >
+      void axpy ( const Quadrature &quad, const Vector &values, DofVector & dofs ) const
+      {
+        const unsigned int nop = quad.nop();
+        for( unsigned int qp = 0; qp < nop ; ++qp )
+          axpy( quad[ qp ], values[ qp ], dofs );
+      }
+
+      template< class Quadrature, class VectorA, class VectorB, class DofVector >
+      void axpy ( const Quadrature &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector & dofs ) const
+      {
+        const unsigned int nop = quad.nop();
+        for( unsigned int qp = 0; qp < nop ; ++qp )
+        {
+          axpy( quad[ qp ], valuesA[ qp ], dofs );
+          axpy( quad[ qp ], valuesB[ qp ], dofs );
+        }
+      }
+
       template< class Point, class DofVector >
       void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
       {
@@ -340,6 +346,14 @@ namespace Dune
         evaluateAll< EvaluateAll >( x, values );
       }
 
+      template< class Quadrature, class DofVector, class RangeArray >
+      void evaluateAll ( const Quadrature &quad, const DofVector &dofs, RangeArray &ranges ) const
+      {
+        const unsigned int nop = quad.nop();
+        for( unsigned int qp = 0; qp < nop ; ++qp )
+          evaluateAll( quad[ qp ], dofs, ranges[ qp ] );
+      }
+
       template< class Point, class DofVector >
       void jacobianAll ( const Point &x, const DofVector &dofs, JacobianRangeType &jacobian ) const
       {
@@ -350,6 +364,14 @@ namespace Dune
       void jacobianAll ( const Point &x, JacobianRangeArray &jacobians ) const
       {
         evaluateAll< JacobianAll >( x, jacobians );
+      }
+
+      template< class Quadrature, class DofVector, class JacobianArray >
+      void jacobianAll ( const Quadrature &quad, const DofVector &dofs, JacobianArray &jacobians ) const
+      {
+        const unsigned int nop = quad.nop();
+        for( unsigned int qp = 0; qp < nop ; ++qp )
+          jacobianAll( quad[ qp ], dofs, jacobians[ qp ] );
       }
 
       template< class Point, class DofVector >

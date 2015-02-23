@@ -8,14 +8,14 @@
 #include <dune/fem/space/common/localrestrictprolong.hh>
 
 // local includes
-#include "declaration.hh" 
+#include "declaration.hh"
 #include "localdgmassmatrix.hh"
 
 
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /** @ingroup RestrictProlongImpl
@@ -55,13 +55,13 @@ namespace Dune
         weight_ = weight;
       }
 
-      //! restrict data to father 
+      //! restrict data to father
       template< class LFFather, class LFSon, class LocalGeometry >
-      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon, 
+      void restrictLocal ( LFFather &lfFather, const LFSon &lfSon,
                            const LocalGeometry &geometryInFather, bool initialize ) const
       {
         typedef ConstantLocalRestrictProlong< DiscreteFunctionSpaceType > ConstantLocalRestrictProlongType;
-        const DomainFieldType weight = (weight_ < DomainFieldType( 0 ) ? ConstantLocalRestrictProlongType::calcWeight( lfFather.entity(), lfSon.entity() ) : weight_); 
+        const DomainFieldType weight = (weight_ < DomainFieldType( 0 ) ? ConstantLocalRestrictProlongType::calcWeight( lfFather.entity(), lfSon.entity() ) : weight_);
 
         assert( weight > 0.0 );
 
@@ -84,15 +84,15 @@ namespace Dune
         for( int qp = 0; qp < nop; ++qp )
         {
           RangeFieldType quadWeight = quad.weight( qp );
-          
-          // in case of non-orthonormal basis we have to 
-          // apply the integration element and the 
+
+          // in case of non-orthonormal basis we have to
+          // apply the integration element and the
           // inverse mass matrix later
-          if( applyInverse ) 
+          if( applyInverse )
           {
             quadWeight *= sonGeo.integrationElement( quad.point(qp) );
           }
-          else 
+          else
             quadWeight *= weight ;
 
           RangeType value;
@@ -101,11 +101,11 @@ namespace Dune
 
           if( applyInverse )
             temp_.axpy( geometryInFather.global( quad.point( qp ) ), value );
-          else 
+          else
             lfFather.axpy( geometryInFather.global( quad.point( qp ) ), value );
         }
 
-        if( applyInverse ) 
+        if( applyInverse )
         {
           localMassMatrix_.applyInverse( temp_ );
           lfFather += temp_;
@@ -128,11 +128,11 @@ namespace Dune
         for( int qp = 0; qp < nop; ++qp )
         {
           RangeFieldType quadWeight = quad.weight( qp );
-          
-          // in case of non-orthonormal basis we have to 
-          // apply the integration element and the 
+
+          // in case of non-orthonormal basis we have to
+          // apply the integration element and the
           // inverse mass matrix later
-          if( applyInverse ) 
+          if( applyInverse )
           {
             quadWeight *= sonGeo.integrationElement( quad.point(qp) );
           }
@@ -143,7 +143,7 @@ namespace Dune
           lfSon.axpy( quad[ qp ], value );
         }
 
-        if( applyInverse ) 
+        if( applyInverse )
         {
           localMassMatrix_.applyInverse( sonEntity, lfSon );
         }
@@ -262,7 +262,7 @@ namespace Dune
 
     ///@}
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

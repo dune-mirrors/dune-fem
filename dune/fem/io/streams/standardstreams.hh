@@ -5,7 +5,7 @@
 #include <utility>
 #include <memory>
 
-#ifdef SYSTEM_ENDIAN_HEADER 
+#ifdef SYSTEM_ENDIAN_HEADER
 #include SYSTEM_ENDIAN_HEADER
 #endif
 
@@ -14,44 +14,44 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
-    struct ByteOrder 
+    struct ByteOrder
     {
       // the default endianess is little, e.g. 0
       static const char defaultEndian = 0;
-      static const char order = 
+      static const char order =
 #if __BYTE_ORDER == __LITTLE_ENDIAN
           0 ;
 #elif __BYTE_ORDER == __BIG_ENDIAN
           1 ;
-#else 
+#else
           0 ; // default is zero (in case no endian header was found)
-#endif 
-      static inline size_t map( const size_t pos, 
+#endif
+      static inline size_t map( const size_t pos,
                                 const size_t size )
       {
-        // if byte order is not little endian, swap bytes 
+        // if byte order is not little endian, swap bytes
         return ( order == defaultEndian ) ? pos : ( size - pos - 1 );
       }
     };
 
-    class StandardOutStream; 
+    class StandardOutStream;
     class StandardInStream;
-    
+
     struct StandardOutStreamTraits
     {
       typedef StandardOutStream OutStreamType;
     };
-    
+
     /** \class StandardOutStream
      *  \ingroup InOutStreams
-     *  \brief output stream writing into a given std::ostream 
+     *  \brief output stream writing into a given std::ostream
      *
      *  \note This stream directly stores the binary representation of the data.
      *        The binary representation of the stored data is always little endian.
-     *        On write the data is converted accordingly on machines 
+     *        On write the data is converted accordingly on machines
      *        with different endianess.
      *
      *  \newimplementation
@@ -65,19 +65,19 @@ namespace Dune
     public:
       //! type of the traits
       typedef StandardOutStreamTraits Traits;
-      
+
     protected:
       using BaseType::writeError;
 
     public:
       /** \brief constructor
        *
-       *  \param[in]  stream  std::ostream to write to 
+       *  \param[in]  stream  std::ostream to write to
        */
       explicit StandardOutStream ( std::ostream& stream )
-      : stream_( stream ) 
+      : stream_( stream )
       {
-        if( ! stream ) 
+        if( ! stream )
           DUNE_THROW( Dune::IOError, "Stream not valid!" );
       }
 
@@ -153,14 +153,14 @@ namespace Dune
         const size_t tsize = sizeof( T );
         union { T value; char bytes[ tsize ]; } convert;
 
-        // copy  value 
+        // copy  value
         convert.value = value;
 
         // make sure that char is only one byte
         assert( sizeof(char) == 1 ) ;
 
-        // write with byte order little endian 
-        for( size_t i=0; i<tsize; ++i ) 
+        // write with byte order little endian
+        for( size_t i=0; i<tsize; ++i )
         {
           stream_.put( convert.bytes[ ByteOrder :: map( i, tsize ) ] );
         }
@@ -173,20 +173,20 @@ namespace Dune
       std::ostream& stream_;
     };
 
-    
+
     struct StandardInStreamTraits
     {
       typedef StandardInStream InStreamType;
     };
-    
+
 
     /** \class StandardInStream
      *  \ingroup InOutStreams
-     *  \brief input stream reading from a given std::istream 
+     *  \brief input stream reading from a given std::istream
      *
      *  \note This stream directly stores the binary representation of the data.
      *        The binary representation of the stored data is always little endian.
-     *        On read the data is converted accordingly on machines 
+     *        On read the data is converted accordingly on machines
      *        with different endianess.
      *
      *  \newimplementation
@@ -200,19 +200,19 @@ namespace Dune
     public:
       //! type of the traits
       typedef StandardInStreamTraits Traits;
-      
+
     protected:
       using BaseType::readError;
 
     public:
       /** \brief constructor
        *
-       *  \param[in]  stream  std::istream to read from 
+       *  \param[in]  stream  std::istream to read from
        */
       explicit StandardInStream ( std::istream& stream )
       : stream_( stream )
       {
-        if( ! valid() ) 
+        if( ! valid() )
           DUNE_THROW( Dune::IOError, "Stream not valid!" );
       }
 
@@ -255,7 +255,7 @@ namespace Dune
         unsigned int length;
         readPrimitive( length );
 
-        // resize string 
+        // resize string
         s.resize( length );
         for( unsigned int i = 0; i < length; ++i )
         {
@@ -287,16 +287,16 @@ namespace Dune
         const size_t tsize = sizeof( T ) ;
         union { T value; char bytes[ tsize ]; } convert;
 
-        // char should be only 1 byte 
+        // char should be only 1 byte
         assert( sizeof(char) == 1 ) ;
 
-        // read from stream with byte order little endian 
-        for( size_t i=0; i<tsize; ++i ) 
+        // read from stream with byte order little endian
+        for( size_t i=0; i<tsize; ++i )
         {
           convert.bytes[ ByteOrder :: map( i, tsize ) ] = stream_.get();
         }
 
-        // store result to value 
+        // store result to value
         value = convert.value;
 
         if( !valid() )
@@ -307,7 +307,7 @@ namespace Dune
       std::istream& stream_;
     };
 
-  } // namespace Fem   
+  } // namespace Fem
 
 } // namespace Dune
 

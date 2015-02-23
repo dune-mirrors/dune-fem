@@ -41,7 +41,7 @@ const int polOrder = POLORDER;
   #endif
 #endif
 
-#if USE_GRAPE 
+#if USE_GRAPE
   #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 #include <dune/fem/io/parameter.hh>
@@ -59,7 +59,7 @@ struct CheckGridEnabled
   typedef Grid GridType;
 
   typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
-  
+
   inline static int CallMain ( int argc, char **argv )
   {
     return Main( argc, argv );
@@ -77,7 +77,7 @@ template< int dim >
 struct CheckGridEnabled< Dune :: YaspGrid< dim > >
 {
   typedef Dune :: YaspGrid< dim > GridType;
-  
+
   typedef Dune :: Fem :: LeafGridPart< GridType > GridPartType;
 
   inline static int CallMain ( int argc, char **argv )
@@ -96,9 +96,14 @@ int main ( int argc, char **argv )
 #ifndef DISABLE_DEPRECATED_METHOD_CHECK
 #define DISABLE_DEPRECATED_METHOD_CHECK 1
 #endif
-#include <dune/grid/test/checkindexset.cc>
+
+// disable copyiable entity / intersection feature until entities and intersections are copyable
+#ifndef DUNE_GRID_CHECK_USE_DEPRECATED_ENTITY_AND_INTERSECTION_INTERFACE
+#define DUNE_GRID_CHECK_USE_DEPRECATED_ENTITY_AND_INTERSECTION_INTERFACE 1
+#endif
+#include <dune/grid/test/checkindexset.hh>
 template <class GridPart>
-void checkAdaptiveIndexSet( const GridPart& gridPart ) 
+void checkAdaptiveIndexSet( const GridPart& gridPart )
 {
   // call check index set from the DUNE grid test suite
   Dune :: checkIndexSet( gridPart.grid(), gridPart.gridView(), Dune :: dvverb );
@@ -132,8 +137,8 @@ public:
   {
     phi = 1;
     for( int i = 0; i < DomainType :: dimension; ++i )
-      // phi[ 0 ] += x[ i ] * x[ i ]; 
-      phi[ 0 ] *= sin( M_PI * x[ i ] ); 
+      // phi[ 0 ] += x[ i ] * x[ i ];
+      phi[ 0 ] *= sin( M_PI * x[ i ] );
   }
 
   void evaluate ( const DomainType &x, RangeFieldType t, RangeType &phi ) const
@@ -198,18 +203,18 @@ typedef AdaptationManager< MyGridType, RestrictProlongOperatorType >
 
 
 
- 
+
 
 template< class... DiscreteFunction >
-void adapt( MyGridType &grid, std::tuple< DiscreteFunction &... > functionTuple, int step, 
+void adapt( MyGridType &grid, std::tuple< DiscreteFunction &... > functionTuple, int step,
             const bool locallyAdaptive )
 {
   typedef DiscreteFunctionSpaceType :: IteratorType IteratorType;
-  
+
   DiscreteFunctionType& solution(std::get<0>(functionTuple));
 
   const DiscreteFunctionSpaceType &discreteFunctionSpace = solution.space();
-  
+
   RestrictProlongOperatorType rp(functionTuple);
   RestrictProlongOperatorType rpTwo(std::get<0>(functionTuple),
                                     std::get<1>(functionTuple),
@@ -221,8 +226,8 @@ void adapt( MyGridType &grid, std::tuple< DiscreteFunction &... > functionTuple,
   std :: string message = (step < 0 ? "Coarsening..." : "Refining..." );
   const int mark = (step < 0 ? -1 : 1);
   const int count = std :: abs( step );
-  
-  for( int i = 0; i < count; ++i ) 
+
+  for( int i = 0; i < count; ++i )
   {
     int numElements = grid.size( 0 );
     if( locallyAdaptive )
@@ -233,16 +238,16 @@ void adapt( MyGridType &grid, std::tuple< DiscreteFunction &... > functionTuple,
 
     IteratorType it = discreteFunctionSpace.begin();
     const IteratorType endit = discreteFunctionSpace.end();
-    int elementNumber = 0; 
+    int elementNumber = 0;
     for( ; it != endit; ++it, ++elementNumber )
     {
-      if( elementNumber < numElements ) 
+      if( elementNumber < numElements )
       {
         grid.mark( mark, *it );
       }
     }
 
-    // adapt grid 
+    // adapt grid
     adaptationManager.adapt();
   }
 }
@@ -266,23 +271,23 @@ void algorithm ( GridPartType &gridPart,
 
   L2Norm< GridPartType > l2norm( gridPart );
   H1Norm< GridPartType > h1norm( gridPart );
-  
+
   Fem::LagrangeInterpolation< GridExactSolutionType, DiscreteFunctionType > :: interpolateFunction( f, solution );
   double preL2error = l2norm.distance( f, solution );
   double preH1error = h1norm.distance( f, solution );
 
   std::cout << "Unknowns before adaptation: " << solution.space().size() << std::endl;
   std::cout << "L2 error before adaptation: " << preL2error << std::endl;
-  std::cout << "H1 error before adaptation: " << preH1error << std::endl; 
+  std::cout << "H1 error before adaptation: " << preH1error << std::endl;
 
   DiscreteFunctionTwoType &second = std::get<1>(functionTuple);
   Fem::LagrangeInterpolation< GridExactSolutionType, DiscreteFunctionTwoType > :: interpolateFunction( f, second );
-  
+
   adapt( gridPart.grid(), functionTuple, step, locallyAdaptive );
 
   // check index set for being consistent with the dune index set check
   checkAdaptiveIndexSet( gridPart );
-  
+
   //double postL2error = l2norm.distance( fexact, solution );
   double postL2error = l2norm.distance( solution, fexact );
   double postH1error = h1norm.distance( f, solution );
@@ -295,8 +300,8 @@ void algorithm ( GridPartType &gridPart,
               << ": " << postL2error << std::endl;
   std::cout << "H1 error after "
               << (step < 0 ? "restriction" : "prolongation")
-              << ": " << postH1error << std::endl; 
-  
+              << ": " << postH1error << std::endl;
+
   #if USE_GRAPE && SHOW_RESTRICT_PROLONG
     if( turn > 0 ) {
       GrapeDataDisplay< MyGridType > grape( gridPart.grid() );
@@ -309,8 +314,8 @@ void algorithm ( GridPartType &gridPart,
   double newH1error = h1norm.distance( f, solution );
 
   std :: cout << "L2 error for interpolation after adaption: " << newL2error << std :: endl;
-  std :: cout << "H1 error for interpolation after adaption: " << newH1error << std :: endl; 
-  
+  std :: cout << "H1 error for interpolation after adaption: " << newH1error << std :: endl;
+
   #if USE_GRAPE && SHOW_INTERPOLATION
     if( turn > 0 ) {
       GrapeDataDisplay< MyGridType > grape( gridPart.grid );
@@ -326,10 +331,10 @@ void algorithm ( GridPartType &gridPart,
 
   /*
   const bool isLocallyAdaptive = Dune::Fem::Capabilities::isLocallyAdaptive< GridPartType :: GridType > :: v ;
-  // threshold for EOC difference to predicted value 
+  // threshold for EOC difference to predicted value
   const double eocThreshold = Parameter :: getValue("adapt.eocthreshold", double(0.2) );
 
-  if( isLocallyAdaptive ) 
+  if( isLocallyAdaptive )
   {
     const double sign = step / std::abs( step );
     if( std::abs( l2eoc - h1eoc - sign ) > eocThreshold )
@@ -343,7 +348,7 @@ void algorithm ( GridPartType &gridPart,
   */
 
   #if WRITE_DATA
-    GrapeDataIO< MyGridType > dataio; 
+    GrapeDataIO< MyGridType > dataio;
     dataio.writeGrid( gridPart.grid(), xdr, "gridout", 0, turn );
     dataio.writeData( solution, xdr, "sol", turn );
   #endif
@@ -363,16 +368,16 @@ try
   {
     std :: cerr << "Usage: " << argv[ 0 ] << "<parameter>" << std :: endl;
   }
-  else 
-    paramName = argv[1]; 
+  else
+    paramName = argv[1];
 
   std::string paramFile( paramName );
 
-  // append parameter 
+  // append parameter
   Parameter :: append( argc , argv );
   Parameter :: append( paramFile );
 
-  int ml = 2 ; // default value = 2 
+  int ml = 2 ; // default value = 2
   ml = Parameter :: getValue ("lagrangeadapt.maxlevel", ml);
 
   std::ostringstream gridName;
@@ -400,7 +405,7 @@ try
   std :: cout << std :: endl << "Refining: " << std :: endl;
   for( int i = 0; i < ml; ++i )
     algorithm( gridPart, functionTuple, step, (i == ml-1), locallyAdaptive );
-  
+
   std :: cout << std :: endl << "Coarsening:" << std::endl;
   for( int i = ml - 1; i >= 0; --i )
     algorithm( gridPart, functionTuple, -step, 1, locallyAdaptive );

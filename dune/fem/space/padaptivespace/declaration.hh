@@ -4,7 +4,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     // PAdaptiveDGSpace
@@ -20,7 +20,7 @@ namespace Dune
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
     class PAdaptiveLagrangeSpace;
 
-  } // namespace Fem 
+  } // namespace Fem
 
 }  // namespace Dune
 

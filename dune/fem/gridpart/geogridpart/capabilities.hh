@@ -44,16 +44,16 @@ namespace Dune
       template< class CoordFunction >
       struct isCartesian< GeoGridPart< CoordFunction > >
       {
-        static const bool v = false; 
+        static const bool v = false;
       };
 
 
       template< class CoordFunction, int codim  >
       struct hasEntity< GeoGridPart< CoordFunction >, codim >
       {
-        // disable codim > 0 && < dim entities because of missing interface for subIndex method 
+        // disable codim > 0 && < dim entities because of missing interface for subIndex method
         // once this is implemented we can simply use hasEntity for the HostGridPart.
-        static const bool v = ( codim == 0 || codim == CoordFunction::GridPartType :: dimension ) ? 
+        static const bool v = ( codim == 0 || codim == CoordFunction::GridPartType :: dimension ) ?
             hasEntity< typename CoordFunction::GridPartType, codim >::v : false ;
       };
 

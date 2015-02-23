@@ -3,11 +3,11 @@
 
 #include <dune/grid/geometrygrid/declaration.hh>
 
-#if HAVE_DUNE_ALUGRID 
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/common/declaration.hh>
-#else // #if HAVE_DUNE_ALUGRID 
+#else // #if HAVE_DUNE_ALUGRID
 #include <dune/grid/alugrid/common/declaration.hh>
-#endif // #if HAVE_DUNE_ALUGRID 
+#endif // #if HAVE_DUNE_ALUGRID
 
 #if HAVE_DUNE_SPGRID
 #include <dune/grid/spgrid/declaration.hh>
@@ -23,20 +23,11 @@
 #include <dune/grid/spheregrid/declaration.hh>
 #endif // #if HAVE_DUNE_METAGRID
 
-namespace Dune 
+namespace Dune
 {
 
   // Forward Declarations for all Standard Grids
   // -------------------------------------------
-
-  template< int dim, int dimw >
-  class ALUConformGrid;
-
-  template< int dim, int dimw >
-  class ALUCubeGrid;
-
-  template< int dim, int dimw >
-  class ALUSimplexGrid;
 
   class OneDGrid;
 

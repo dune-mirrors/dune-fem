@@ -10,7 +10,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /** \class   DofBlockProxy
@@ -50,7 +50,7 @@ namespace Dune
       typedef Dof DofType;
 
       static const unsigned int size = Size;
-      
+
       typedef unsigned int size_type;
 
       typedef std::pair< DiscreteFunctionType *, size_type > KeyType;
@@ -90,12 +90,12 @@ namespace Dune
       {
         return discreteFunction_.dof( first_ + index );
       }
-      
+
       DofType &operator[] ( size_type index )
       {
         return discreteFunction_.dof( first_ + index );
       }
-     
+
       size_type dim () const
       {
         return size;

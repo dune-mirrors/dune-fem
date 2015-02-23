@@ -7,7 +7,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /** \ingroup Matrix
@@ -27,13 +27,13 @@ namespace Dune
     class TemporaryLocalMatrix;
 
 
-    
+
     template< class DomainSpaceImp, class RangeSpaceImp >
     struct TemporaryLocalMatrixTraits
     {
       typedef DomainSpaceImp DomainSpaceType;
       typedef RangeSpaceImp RangeSpaceType;
-      
+
       typedef TemporaryLocalMatrix< DomainSpaceType, RangeSpaceType >
         LocalMatrixType;
 
@@ -43,7 +43,7 @@ namespace Dune
     };
 
 
-    
+
     template< class DomainSpaceImp, class RangeSpaceImp >
     class TemporaryLocalMatrix
     : public LocalMatrixDefault
@@ -90,7 +90,7 @@ namespace Dune
       {
       }
 
-      
+
       /** \copydoc Dune::Fem::LocalMatrixInterface::init */
       template< class DomainEntityType, class RangeEntityType >
       inline void init ( const DomainEntityType &domainEntity,
@@ -111,8 +111,8 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::set */
-      inline void set ( const int localRow, 
-                        const int localCol, 
+      inline void set ( const int localRow,
+                        const int localCol,
                         const RangeFieldType &value )
       {
         assert( (localRow >= 0) && (localRow < rows()) );
@@ -120,7 +120,7 @@ namespace Dune
         fields_[ localRow * columns() + localCol ] = value;
       }
 
-      inline const RangeFieldType get ( const int localRow, 
+      inline const RangeFieldType get ( const int localRow,
                                         const int localCol ) const
       {
         assert( (localRow >= 0) && (localRow < rows()) );

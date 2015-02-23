@@ -11,13 +11,13 @@ namespace Dune
 
 #define SimplexPointsAdapter ParDGSimplexPointsAdapter
 
-  // only if we use dune-fem quadratures  
+  // only if we use dune-fem quadratures
     template <class ct, int dim>
     SimplexQuadrature<ct, dim>::SimplexQuadrature(const GeometryType&, int order, size_t id) :
       QuadratureImp<ct, dim>(id),
       order_((order <= 0) ? 1 : order)
     {
-      // make sure that we only use orders that are available 
+      // make sure that we only use orders that are available
       assert( order_ <= SimplexMaxOrder :: maxOrder( dim ) );
 
       SimplexPointsAdapter<dim> points(order);
@@ -62,7 +62,7 @@ namespace Dune
           x[k] = z%m;
           z = z/m;
         }
-        
+
         // compute coordinates and weight
         double weight = 1.0;
         CoordinateType local;
@@ -102,13 +102,13 @@ namespace Dune
       QuadratureImp<ct, 1>(id),
       order_((order <= 0) ? 1 : order)
     {
-      // make sure that we only use orders that are available 
+      // make sure that we only use orders that are available
       assert( order_ <= GaussPts::highestOrder );
 
       typedef FieldVector< ct, 1 > CoordinateType;
 
       const GaussPts& gp = GaussPts::instance();
-      
+
       int m=0;
       for (int i = 0; i <= GaussPts::MAXP; i++) {
         if (gp.order(i)>=order_) {
@@ -118,16 +118,16 @@ namespace Dune
       }
       if (m==0) DUNE_THROW(NotImplemented, "order not implemented");
       order_ = gp.order(m);
-      
+
       // fill in all the gauss points
-      int n = gp.power(m,1);    
+      int n = gp.power(m,1);
       for (int i = 0; i < n; ++i)
       {
         CoordinateType local( ct( 0 ) );
 
         local[0] = gp.point(m, i);
         double weight = gp.weight(m, i);
-        
+
         this->addQuadraturePoint(local, weight);
       }
     }
@@ -137,7 +137,7 @@ namespace Dune
       QuadratureImp<ct, 2>(id),
       order_((order <= 0) ? 1 : order)
     {
-      // make sure that we only use orders that are available 
+      // make sure that we only use orders that are available
       assert( order_ <= SimplexMaxOrder :: maxOrder( 2 ) );
 
       SimplexPointsAdapter<2> points(order);
@@ -154,7 +154,7 @@ namespace Dune
       QuadratureImp<ct, 2>(id),
       order_((order <= 0) ? 1 : order)
     {
-      // make sure that we only use orders that are available 
+      // make sure that we only use orders that are available
       assert( order_ <= GaussPts::highestOrder );
 
       typedef FieldVector< ct, 2 > CoordinateType;
@@ -185,7 +185,7 @@ namespace Dune
           x[k] = z%m;
           z = z/m;
         }
-        
+
         // compute coordinates and weight
         double weight = 1.0;
         CoordinateType local;
@@ -205,7 +205,7 @@ namespace Dune
       QuadratureImp<ct, 3>(id),
       order_((order <= 0) ? 1 : order)
     {
-      // make sure that we only use orders that are available 
+      // make sure that we only use orders that are available
       assert( order_ <= SimplexMaxOrder :: maxOrder( 3 ) );
 
       SimplexPointsAdapter<3> points(order);
@@ -222,7 +222,7 @@ namespace Dune
       QuadratureImp<ct, 3>(id),
       order_((order <= 0) ? 1 : order)
     {
-      // make sure that we only use orders that are available 
+      // make sure that we only use orders that are available
       assert( order_ <= GaussPts::highestOrder );
 
       typedef FieldVector< ct, 3 > CoordinateType;
@@ -252,7 +252,7 @@ namespace Dune
           x[k] = z%m;
           z = z/m;
         }
-        
+
         // compute coordinates and weight
         double weight = 1.0;
         CoordinateType local;
@@ -285,17 +285,17 @@ namespace Dune
         }
       }
       if (m==0) DUNE_THROW(NotImplemented, "order not implemented");
-      
+
       int gaussOrder = gp.order(m);
       int minOrder = ((simplexOrder < gaussOrder) ? simplexOrder : gaussOrder);
       order_ = minOrder;
-    
+
       int numSimplexPoints = simplexPoints.numPoints();
       int numGaussPoints = gp.power(m,1);
 
       FieldVector<ct, 3> local;
       double weight, simplexWeight;
-      
+
       for (int i = 0; i < numSimplexPoints; ++i) {
         local[0] = simplexPoints.point(i)[0];
         local[1] = simplexPoints.point(i)[1];
@@ -305,7 +305,7 @@ namespace Dune
           weight = simplexWeight;
           weight *= gp.weight(m,j);
           this->addQuadraturePoint(local, weight);
-        }    
+        }
       }
     }
 
@@ -332,7 +332,7 @@ namespace Dune
         this->addQuadraturePoint(points.point(m, i), points.weight(m, i));
       }
     }
-    
+
   } // namespace Fem
 
 } // namespace Dune

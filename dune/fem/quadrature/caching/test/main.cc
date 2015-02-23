@@ -1,7 +1,5 @@
 #include <config.h>
 
-#include <dune/fem/misc/suite.hh>
-
 #include "refelem_test.hh"
 #include "cache_test.hh"
 #include "twist_test.hh"
@@ -12,13 +10,11 @@ using namespace Fem;
 
 int main() {
 
-  Suite suite("Tests for caching");
-  suite.addTest(new Fem::ReferenceElement_Test());
-  suite.addTest(new Fem::TwistProvider_Test());
-  suite.addTest(new Fem::PointProvider_Test());
-  suite.addTest(new Fem::CacheProvider_Test());
+  //Suite suite("Tests for caching");
+  Fem::ReferenceElement_Test().run();
+  Fem::TwistProvider_Test().run();
+  Fem::PointProvider_Test().run();
+  Fem::CacheProvider_Test().run();
 
-  suite.run();
-  suite.report();
-
+  return 0;
 }

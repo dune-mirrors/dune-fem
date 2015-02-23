@@ -1,18 +1,18 @@
 #ifndef DUNE_FEM_DOUBLE_HH
 #define DUNE_FEM_DOUBLE_HH
 
-//- system includes 
+//- system includes
 #include <iostream>
-#include <cmath> 
+#include <cmath>
 #include <limits>
 
-//- Dune includes 
+//- Dune includes
 #include <dune/fem/io/streams/streams.hh>
 
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
 #ifdef COUNT_FLOPS
@@ -98,7 +98,7 @@ namespace Dune
         return instance;
       }
     };
-    
+
 #else
 
     template< class FloatImp >
@@ -130,24 +130,24 @@ namespace Dune
 
 #endif
 
-    //- forward declaration 
-    class Double; 
-    // wrap of std power 
+    //- forward declaration
+    class Double;
+    // wrap of std power
     static double pow (const Double& v, const double p);
-    // wrap of std log 
+    // wrap of std log
     static double log (const Double& v);
-    // wrap of std sqrt 
+    // wrap of std sqrt
     static double sqrt(const Double& v);
-    // wrap of std sin 
+    // wrap of std sin
     static double cos (const Double& v);
-    // wrap of std cos 
+    // wrap of std cos
     static double sin(const Double& v);
-    // wrap of std power 
+    // wrap of std power
     static double pow (const Double& v, const double p);
 
-    // wrap of std min  
+    // wrap of std min
     static inline double min (const Double& v, const double p);
-    // wrap of std min  
+    // wrap of std min
     static inline double min (const double v, const Double& p);
     // wrap of std max
     static inline double max (const Double& v, const double p);
@@ -178,7 +178,7 @@ namespace Dune
       friend Double operator- ( const int, const Double& );
       friend Double operator- ( const Double&, const unsigned int );
       friend Double operator- ( const unsigned int, const Double& );
-      
+
       friend Double operator* ( const Double&, const Double& );
       friend Double operator* ( const Double&, const double );
       friend Double operator* ( const double, const Double& );
@@ -202,7 +202,7 @@ namespace Dune
       friend bool operator== ( const Double&, const int );
       friend bool operator== ( const unsigned int, const Double& );
       friend bool operator== ( const Double&, const unsigned int );
-      
+
       friend bool operator!= ( const Double&, const Double& );
       friend bool operator!= ( const double, const Double& );
       friend bool operator!= ( const Double&, const double );
@@ -210,7 +210,7 @@ namespace Dune
       friend bool operator!= ( const Double&, const int );
       friend bool operator!= ( const unsigned int, const Double& );
       friend bool operator!= ( const Double&, const unsigned int );
-      
+
       friend bool operator< ( const Double&, const Double& );
       friend bool operator< ( const double, const Double& );
       friend bool operator< ( const Double&, const double );
@@ -226,7 +226,7 @@ namespace Dune
       friend bool operator<= ( const Double&, const int );
       friend bool operator<= ( const unsigned int, const Double& );
       friend bool operator<= ( const Double&, const unsigned int );
-      
+
       friend bool operator> ( const Double&, const Double& );
       friend bool operator> ( const double, const Double& );
       friend bool operator> ( const Double&, const double );
@@ -245,7 +245,7 @@ namespace Dune
 
       friend std :: ostream &operator<< ( std :: ostream&, const Double& );
       friend std :: istream &operator>> ( std :: istream&, Double& );
-      
+
       template< class Traits >
       friend OutStreamInterface< Traits > &
         operator<< ( OutStreamInterface< Traits > &, const Double );
@@ -301,28 +301,28 @@ namespace Dune
         value_ = other.value_;
         return *this;
       }
-      
+
       inline ThisType &operator+= ( const ThisType other )
       {
         flOp();
         value_ += other.value_;
         return *this;
       }
-      
+
       inline ThisType &operator-= ( const ThisType other )
       {
         flOp();
         value_ -= other.value_;
         return *this;
       }
-      
+
       inline ThisType &operator*= ( const ThisType other )
       {
         flOp();
         value_ *= other.value_;
         return *this;
       }
-      
+
       inline ThisType &operator/= ( const ThisType other )
       {
         flOp();
@@ -351,28 +351,28 @@ namespace Dune
     // min/max
     // ---------
 
-    // wrap of std min  
+    // wrap of std min
     static inline double min (const Double& v, const double p)
     {
-      return (v.value_ > p) ? p : v.value_;   
+      return (v.value_ > p) ? p : v.value_;
     }
 
-    // wrap of std min  
+    // wrap of std min
     static inline double min (const double v, const Double& p)
     {
-      return (v > p.value_) ? p.value_ : v;   
+      return (v > p.value_) ? p.value_ : v;
     }
 
     // wrap of std max
-    static inline double max (const Double& v, const double p) 
+    static inline double max (const Double& v, const double p)
     {
-      return (v.value_ < p) ? p : v.value_;   
+      return (v.value_ < p) ? p : v.value_;
     }
 
     // wrap of std max
-    static inline double max (const double v, const Double& p) 
+    static inline double max (const double v, const Double& p)
     {
-      return (v < p.value_) ? p.value_ : v;   
+      return (v < p.value_) ? p.value_ : v;
     }
 
     // operator+
@@ -389,31 +389,31 @@ namespace Dune
       Double :: flOp();
       return Double( a + b.value_ );
     }
-    
+
     inline Double operator+ ( const Double &a, const double b )
     {
       Double :: flOp();
       return Double( a.value_ + b );
     }
-    
+
     inline Double operator+ ( const int a, const Double &b )
     {
       Double :: flOp();
       return Double( a + b.value_ );
     }
-    
+
     inline Double operator+ ( const Double &a, const int b )
     {
       Double :: flOp();
       return Double( a.value_ + b );
     }
-    
+
     inline Double operator+ ( const unsigned int a, const Double &b )
     {
       Double :: flOp();
       return Double( a + b.value_ );
     }
-    
+
     inline Double operator+ ( const Double &a, const unsigned int b )
     {
       Double :: flOp();
@@ -424,7 +424,7 @@ namespace Dune
 
     // operator-
     // ---------
-    
+
     inline Double operator- ( const Double &a, const Double &b )
     {
       Double :: flOp();
@@ -436,38 +436,38 @@ namespace Dune
       Double :: flOp();
       return Double( a - b.value_ );
     }
-    
+
     inline Double operator- ( const Double &a, const double b )
     {
       Double :: flOp();
       return Double( a.value_ - b );
     }
-    
+
     inline Double operator- ( const int a, const Double &b )
     {
       Double :: flOp();
       return Double( a - b.value_ );
     }
-    
+
     inline Double operator- ( const Double &a, const int b )
     {
       Double :: flOp();
       return Double( a.value_ - b );
     }
-    
+
     inline Double operator- ( const unsigned int a, const Double &b )
     {
       Double :: flOp();
       return Double( a - b.value_ );
     }
-    
+
     inline Double operator- ( const Double &a, const unsigned int b )
     {
       Double :: flOp();
       return Double( a.value_ - b );
     }
 
-    
+
 
     // operator*
     // ---------
@@ -483,31 +483,31 @@ namespace Dune
       Double :: flOp();
       return Double( a * b.value_ );
     }
-    
+
     inline Double operator* ( const Double &a, const double b )
     {
       Double :: flOp();
       return Double( a.value_ * b );
     }
-    
+
     inline Double operator* ( const int a, const Double &b )
     {
       Double :: flOp();
       return Double( a * b.value_ );
     }
-    
+
     inline Double operator* ( const Double &a, const int b )
     {
       Double :: flOp();
       return Double( a.value_ * b );
     }
-    
+
     inline Double operator* ( const unsigned int a, const Double &b )
     {
       Double :: flOp();
       return Double( a * b.value_ );
     }
-    
+
     inline Double operator* ( const Double &a, const unsigned int b )
     {
       Double :: flOp();
@@ -518,7 +518,7 @@ namespace Dune
 
     // operator/
     // ---------
-    
+
     inline Double operator/ ( const Double &a, const Double &b )
     {
       Double :: flOp();
@@ -530,7 +530,7 @@ namespace Dune
       Double :: flOp();
       return Double( a / b.value_ );
     }
-    
+
     inline Double operator/ ( const Double &a, const double b )
     {
       Double :: flOp();
@@ -542,7 +542,7 @@ namespace Dune
       Double :: flOp();
       return Double( a / b.value_ );
     }
-    
+
     inline Double operator/ ( const Double &a, const int b )
     {
       Double :: flOp();
@@ -554,38 +554,38 @@ namespace Dune
       Double :: flOp();
       return Double( a / b.value_ );
     }
-    
+
     inline Double operator/ ( const Double &a, const unsigned int b )
     {
       Double :: flOp();
       return Double( a.value_ / b );
     }
-    
+
 
 
     // operator==
     // ----------
-    
+
     inline bool operator== ( const Double &a, const Double &b )
     {
       return (a.value_ == b.value_);
     }
-    
+
     inline bool operator== ( const double a, const Double &b )
     {
       return (a == b.value_);
     }
-     
+
     inline bool operator== ( const Double &a, const double b )
     {
       return (a.value_ == b);
     }
-    
+
     inline bool operator== ( const int a, const Double &b )
     {
       return (a == b.value_);
     }
-     
+
     inline bool operator== ( const Double &a, const int b )
     {
       return (a.value_ == b);
@@ -595,7 +595,7 @@ namespace Dune
     {
       return (a == b.value_);
     }
-     
+
     inline bool operator== ( const Double &a, const unsigned int b )
     {
       return (a.value_ == b);
@@ -605,27 +605,27 @@ namespace Dune
 
     // operator!=
     // ----------
-    
+
     inline bool operator!= ( const Double &a, const Double &b )
     {
       return (a.value_ != b.value_);
     }
-    
+
     inline bool operator!= ( const double a, const Double &b )
     {
       return (a != b.value_);
     }
-     
+
     inline bool operator!= ( const Double &a, const double b )
     {
       return (a.value_ != b);
     }
-    
+
     inline bool operator!= ( const int a, const Double &b )
     {
       return (a != b.value_);
     }
-     
+
     inline bool operator!= ( const Double &a, const int b )
     {
       return (a.value_ != b);
@@ -635,7 +635,7 @@ namespace Dune
     {
       return (a != b.value_);
     }
-     
+
     inline bool operator!= ( const Double &a, const unsigned int b )
     {
       return (a.value_ != b);
@@ -645,27 +645,27 @@ namespace Dune
 
     // operator<
     // ---------
-    
+
     inline bool operator< ( const Double &a, const Double &b )
     {
       return (a.value_ < b.value_);
     }
-    
+
     inline bool operator< ( const double a, const Double &b )
     {
       return (a < b.value_);
     }
-     
+
     inline bool operator< ( const Double &a, const double b )
     {
       return (a.value_ < b);
     }
-    
+
     inline bool operator< ( const int a, const Double &b )
     {
       return (a < b.value_);
     }
-     
+
     inline bool operator< ( const Double &a, const int b )
     {
       return (a.value_ < b);
@@ -675,7 +675,7 @@ namespace Dune
     {
       return (a < b.value_);
     }
-     
+
     inline bool operator< ( const Double &a, const unsigned int b )
     {
       return (a.value_ < b);
@@ -685,27 +685,27 @@ namespace Dune
 
     // operator<=
     // ----------
-    
+
     inline bool operator<= ( const Double &a, const Double &b )
     {
       return (a.value_ <= b.value_);
     }
-    
+
     inline bool operator<= ( const double a, const Double &b )
     {
       return (a <= b.value_);
     }
-     
+
     inline bool operator<= ( const Double &a, const double b )
     {
       return (a.value_ <= b);
     }
-    
+
     inline bool operator<= ( const int a, const Double &b )
     {
       return (a <= b.value_);
     }
-     
+
     inline bool operator<= ( const Double &a, const int b )
     {
       return (a.value_ <= b);
@@ -715,7 +715,7 @@ namespace Dune
     {
       return (a <= b.value_);
     }
-     
+
     inline bool operator<= ( const Double &a, const unsigned int b )
     {
       return (a.value_ <= b);
@@ -725,27 +725,27 @@ namespace Dune
 
     // operator>
     // ---------
-    
+
     inline bool operator> ( const Double &a, const Double &b )
     {
       return (a.value_ > b.value_);
     }
-    
+
     inline bool operator> ( const double a, const Double &b )
     {
       return (a > b.value_);
     }
-     
+
     inline bool operator> ( const Double &a, const double b )
     {
       return (a.value_ > b);
     }
-    
+
     inline bool operator> ( const int a, const Double &b )
     {
       return (a > b.value_);
     }
-     
+
     inline bool operator> ( const Double &a, const int b )
     {
       return (a.value_ > b);
@@ -755,7 +755,7 @@ namespace Dune
     {
       return (a > b.value_);
     }
-     
+
     inline bool operator> ( const Double &a, const unsigned int b )
     {
       return (a.value_ > b);
@@ -765,27 +765,27 @@ namespace Dune
 
     // operator>=
     // ----------
-    
+
     inline bool operator>= ( const Double &a, const Double &b )
     {
       return (a.value_ >= b.value_);
     }
-    
+
     inline bool operator>= ( const double a, const Double &b )
     {
       return (a >= b.value_);
     }
-     
+
     inline bool operator>= ( const Double &a, const double b )
     {
       return (a.value_ >= b);
     }
-    
+
     inline bool operator>= ( const int a, const Double &b )
     {
       return (a >= b.value_);
     }
-     
+
     inline bool operator>= ( const Double &a, const int b )
     {
       return (a.value_ >= b);
@@ -795,22 +795,22 @@ namespace Dune
     {
       return (a >= b.value_);
     }
-     
+
     inline bool operator>= ( const Double &a, const unsigned int b )
     {
       return (a.value_ >= b);
     }
-    
+
 
 
     // stream operators
     // ----------------
-    
+
     inline std :: ostream &operator<< ( std :: ostream &out, const Double &a )
     {
       return out << a.value_;
     }
-    
+
     inline std :: istream &operator>> ( std :: istream &in, Double &a )
     {
       return in >> a.value_;
@@ -873,11 +873,11 @@ namespace Dune
     }
 
 
-  } // namespace Fem 
+  } // namespace Fem
 
 using Fem :: Double ;
 
-} // namespace Dune 
+} // namespace Dune
 
 
 namespace std
@@ -888,26 +888,26 @@ namespace std
     return Dune::Fem::abs( a );
   }
 
-  // wrap of std power 
+  // wrap of std power
   inline double min (const Dune::Fem::Double& v, const double p)
   {
     return Dune::Fem::min(v,p);
   }
 
-  // wrap of std power 
+  // wrap of std power
   inline double min (const double v, const Dune::Fem::Double& p)
   {
     return Dune::Fem::min(v,p);
   }
 
-  // wrap of std power 
-  inline double max (const Dune::Fem::Double& v, const double p) 
+  // wrap of std power
+  inline double max (const Dune::Fem::Double& v, const double p)
   {
     return Dune::Fem::max(v,p);
   }
 
-  // wrap of std power 
-  inline double max (const double v, const Dune::Fem::Double& p) 
+  // wrap of std power
+  inline double max (const double v, const Dune::Fem::Double& p)
   {
     return Dune::Fem::max(v,p);
   }
@@ -992,6 +992,6 @@ namespace std
 
   };
 
-} // namespace std  
+} // namespace std
 
 #endif // #ifndef DUNE_FEM_DOUBLE_HH

@@ -51,7 +51,7 @@ struct Evaluate
 // --------
 
 template< class FunctionSpace >
-struct Jacobian 
+struct Jacobian
 {
   typedef FunctionSpace FunctionSpaceType;
   typedef typename FunctionSpaceType::JacobianRangeType Vector;
@@ -77,7 +77,7 @@ struct Jacobian
 // -------
 
 template< class FunctionSpace >
-struct Hessian 
+struct Hessian
 {
   typedef FunctionSpace FunctionSpaceType;
   typedef typename FunctionSpaceType::HessianRangeType Vector;
@@ -193,7 +193,7 @@ FieldType random ( FieldType a, FieldType b )
 template< class Evaluate,
           class BasisFunctionSet, class VectorialBasisFunctionSet,
           class Point, class DofVector >
-typename Evaluate::FunctionSpaceType::RangeFieldType 
+typename Evaluate::FunctionSpaceType::RangeFieldType
   evaluateAll ( const BasisFunctionSet &basisFunctionSet,
                 const VectorialBasisFunctionSet &vectorialBasisFunctionSet,
                 const Point &x, const DofVector &dofs )
@@ -215,7 +215,7 @@ typename Evaluate::FunctionSpaceType::RangeFieldType
   Evaluate::apply( basisFunctionSet, x, dofs, a );
   Evaluate::apply( vectorialBasisFunctionSet, x, convertedDofs, b );
 
-  return Error< typename Evaluate::Vector >::apply( a, b ); 
+  return Error< typename Evaluate::Vector >::apply( a, b );
 }
 
 
@@ -226,7 +226,7 @@ typename Evaluate::FunctionSpaceType::RangeFieldType
 template< class Evaluate,
           class BasisFunctionSet, class VectorialBasisFunctionSet,
           class Point >
-typename Evaluate::FunctionSpaceType::RangeFieldType 
+typename Evaluate::FunctionSpaceType::RangeFieldType
   evaluateAll ( const BasisFunctionSet &basisFunctionSet,
                 const VectorialBasisFunctionSet &vectorialBasisFunctionSet,
                 const Point &x )
@@ -257,7 +257,7 @@ typename Evaluate::FunctionSpaceType::RangeFieldType
 
 template< class BasisFunctionSetType, class VectorialBasisFunctionSetType, class QuadratureType >
 Dune::FieldVector< typename BasisFunctionSetType::RangeType::value_type, 3 >
-  compareQuadrature ( const BasisFunctionSetType &basisFunctionSet, 
+  compareQuadrature ( const BasisFunctionSetType &basisFunctionSet,
                       const VectorialBasisFunctionSetType &vectorialBasisFunctionSet,
                       const QuadratureType &quadrature )
 {
@@ -325,33 +325,33 @@ void traverse ( GridPartType &gridPart )
   static const int dimRange = DIMRANGE;
 
   typedef Dune::Fem::FunctionSpace< typename GridPartType::ctype, double, dimDomain, dimRange > FunctionSpaceType;
-  
+
   // create discrete function space
   typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
   DiscreteFunctionSpaceType space( gridPart );
-  
+
   // create scalar discrete function space
-  typedef Dune::Fem::LagrangeDiscreteFunctionSpace< typename FunctionSpaceType::ScalarFunctionSpaceType, GridPartType, POLORDER > ScalarDiscreteFunctionSpaceType; 
+  typedef Dune::Fem::LagrangeDiscreteFunctionSpace< typename FunctionSpaceType::ScalarFunctionSpaceType, GridPartType, POLORDER > ScalarDiscreteFunctionSpaceType;
   ScalarDiscreteFunctionSpaceType scalarSpace( gridPart );
 
   typedef Dune::FieldVector< typename FunctionSpaceType::RangeFieldType, 3 > ErrorType;
   ErrorType error( 0 );
-  
+
   typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
   const IteratorType end = space.end();
   for( IteratorType it = space.begin(); it != end; ++it )
   {
     // get entity
     const typename IteratorType::Entity &entity = *it;
-    
-    // get basis function set 
+
+    // get basis function set
     typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
     const BasisFunctionSetType basisFunctionSet = space.basisFunctionSet( entity );
-    
-    // get scalar basis function set 
+
+    // get scalar basis function set
     typedef typename ScalarDiscreteFunctionSpaceType::BasisFunctionSetType ScalarBasisFunctionSetType;
     const ScalarBasisFunctionSetType scalarBasisFunctionSet = scalarSpace.basisFunctionSet( entity );
-    
+
     // create vectorial basis function set
 #if USE_VERTICAL_DOF_ALIGNMENT == 1
     typedef Dune::Fem::VectorialBasisFunctionSet< ScalarBasisFunctionSetType, typename BasisFunctionSetType::RangeType, Dune::Fem::VerticalDofAlignment > VectorialBasisFunctionSetType;
@@ -359,7 +359,7 @@ void traverse ( GridPartType &gridPart )
     typedef Dune::Fem::VectorialBasisFunctionSet< ScalarBasisFunctionSetType, typename BasisFunctionSetType::RangeType, Dune::Fem::HorizontalDofAlignment > VectorialBasisFunctionSetType;
 #endif
     VectorialBasisFunctionSetType vectorialBasisFunctionSet( scalarBasisFunctionSet );
-    
+
     // create quadrature
     assert( basisFunctionSet.order() == vectorialBasisFunctionSet.order() );
     typedef Dune::Fem::CachingQuadrature< GridPartType, 0 > QuadratureType;
@@ -389,14 +389,14 @@ int main ( int argc, char **argv )
 
   typedef Dune::GridSelector::GridType GridType;
   GridType &grid = Dune::Fem::TestGrid::grid();
-  
+
   int refCount = Dune::Fem::Parameter::getValue< int >( "startLevel", 0 );
   const int refineStepsForHalf = Dune::Fem::TestGrid::refineStepsForHalf();
   Dune::Fem::GlobalRefine::apply( grid, refCount*refineStepsForHalf );
-  
+
   typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
   GridPartType gridPart( grid );
   traverse( gridPart );
-  
+
   return 0;
 }

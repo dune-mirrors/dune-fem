@@ -19,7 +19,7 @@
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/space/dofmapper/indexsetdofmapper.hh>
+#include <dune/fem/space/mapper/indexsetdofmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/shapefunctionset/proxy.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
@@ -59,7 +59,7 @@ namespace Dune
 
       typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;
-     
+
       static const int polynomialOrder = polOrder;
 
       static const int localBlockSize = FunctionSpaceType::dimRange;
@@ -276,22 +276,22 @@ namespace Dune
 
       /** \brief return shape function set for given entity
        *
-       * \param[in]  entity  entity (of codim 0) for which shape function set 
+       * \param[in]  entity  entity (of codim 0) for which shape function set
        *                     is requested
        *
-       * \returns  ShapeFunctionSetType  shape function set                     
+       * \returns  ShapeFunctionSetType  shape function set
        */
       ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
       {
         return shapeFunctionSet( entity.type() );
       }
 
-      /** \brief return shape unique function set for geometry type 
+      /** \brief return shape unique function set for geometry type
        *
-       * \param[in]  type  geometry type (must be a cube) for which 
+       * \param[in]  type  geometry type (must be a cube) for which
        *                   shape function set is requested
        *
-       * \returns  ShapeFunctionSetType  shape function set                     
+       * \returns  ShapeFunctionSetType  shape function set
        */
       ShapeFunctionSetType shapeFunctionSet ( const GeometryType &type ) const
       {
@@ -304,7 +304,7 @@ namespace Dune
        *        is unique to the LagrangeDiscreteFunctionSpace.
        *
        *  \param[in]  entity  entity the Lagrange point set is requested for
-       *  
+       *
        *  \returns LagrangePointSet
        */
       template< class EntityType >

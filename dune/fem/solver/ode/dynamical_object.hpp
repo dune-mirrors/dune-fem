@@ -37,7 +37,7 @@ private:
 
 // ======== inline implementation
 inline
-DynamicalObject::DynamicalObject(const char name[], int id, int components) : 
+DynamicalObject::DynamicalObject(const char name[], int id, int components) :
   _size(new int[components]), _id(id), os(NULL)
 {
   assert(_size);
@@ -53,8 +53,8 @@ DynamicalObject::DynamicalObject(const char name[], int id, int components) :
 
 
 
-inline 
-DynamicalObject::~DynamicalObject() 
+inline
+DynamicalObject::~DynamicalObject()
 {
   delete[] _size;
   delete[] name;
@@ -87,14 +87,14 @@ void DynamicalObject::set_eta(double eta_lo, double eta_hi)
 
 
 inline
-void DynamicalObject::set_output(std::ostream &os) 
-{ 
+void DynamicalObject::set_output(std::ostream &os)
+{
   this->os = &os;
 }
 
 
 // new_size >= requested_new_size
-inline 
+inline
 int DynamicalObject::new_size(int requested_new_size, int component)
 {
   const int add_size = static_cast<int>(eta_hi * requested_new_size);
@@ -106,13 +106,13 @@ int DynamicalObject::new_size(int requested_new_size, int component)
 
     if (os){
       if (_id >= 0){
-  *os << name << " " << _id << ":   " 
+  *os << name << " " << _id << ":   "
       << "component: " << component << "   "
       << _size[component] << " -> " << requested_new_size+add_size
       << std::endl;
       }
       else{
-  *os << name << " " << "unknown id:   " 
+  *os << name << " " << "unknown id:   "
       << "component: " << component << "   "
       << _size[component] << " -> " << requested_new_size+add_size
       << std::endl;

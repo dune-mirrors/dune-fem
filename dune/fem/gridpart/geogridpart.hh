@@ -5,9 +5,11 @@
 #error "Experimental grid extensions required for GeoGridPart. Reconfigure with --enable-experimental-grid-extensions to enable GeoGridPart."
 #else
 
-#include <dune/fem/gridpart/common/gridpart.hh>
+#include <dune/grid/common/gridview.hh>
+
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
+#include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/geogridpart/capabilities.hh>
 #include <dune/fem/gridpart/geogridpart/datahandle.hh>
@@ -104,8 +106,8 @@ namespace Dune
 
       typedef typename HostGridPartType::GridType GridType;
 
-      //! type of twist utility 
-      typedef MetaTwistUtility< typename HostGridPartType :: TwistUtilityType >  TwistUtilityType;      
+      //! type of twist utility
+      typedef MetaTwistUtility< typename HostGridPartType :: TwistUtilityType >  TwistUtilityType;
 
       typedef IdIndexSet< typename HostGridPartType::IndexSetType > IndexSetType;
 
@@ -114,7 +116,7 @@ namespace Dune
 
       typedef GeoIntersection< const GridPartFamily > IntersectionImplType;
       typedef GeoIntersectionIterator< const GridPartFamily > IntersectionIteratorImplType;
-      
+
       typedef IntersectionIterator< const GridPartFamily, IntersectionIteratorImplType, IntersectionImplType > IntersectionIteratorType;
 
       template< int codim >
@@ -181,7 +183,7 @@ namespace Dune
       }
 
       GridType &grid ()
-      { 
+      {
         return const_cast< GridType & >( hostGridPart().grid() );
       }
 
@@ -192,33 +194,33 @@ namespace Dune
 
       template< int codim >
       typename Codim< codim >::IteratorType
-      begin () const 
+      begin () const
       {
         return begin< codim, InteriorBorder_Partition >();
       }
 
       template< int codim, PartitionIteratorType pitype >
       typename Codim< codim >::template Partition< pitype >::IteratorType
-      begin () const 
+      begin () const
       {
         return GeoIterator< codim, pitype, const GridPartFamily >( coordFunction_, hostGridPart().template begin< codim, pitype >() );
       }
 
       template< int codim >
       typename Codim< codim >::IteratorType
-      end () const 
-      { 
+      end () const
+      {
         return end< codim, InteriorBorder_Partition >();
       }
 
       template< int codim, PartitionIteratorType pitype >
       typename Codim< codim >::template Partition< pitype >::IteratorType
-      end () const 
-      { 
+      end () const
+      {
         return GeoIterator< codim, pitype, const GridPartFamily >( coordFunction_, hostGridPart().template end< codim, pitype >() );
       }
 
-      int level () const 
+      int level () const
       {
         return hostGridPart().level();
       }
@@ -227,8 +229,8 @@ namespace Dune
       {
         return GeoIntersectionIterator< const GridPartFamily >( entity, hostGridPart().ibegin( entity.impl().hostEntity() ) );
       }
-      
-      IntersectionIteratorType iend ( const typename Codim< 0 >::EntityType &entity ) const 
+
+      IntersectionIteratorType iend ( const typename Codim< 0 >::EntityType &entity ) const
       {
         return GeoIntersectionIterator< const GridPartFamily >( entity, hostGridPart().iend( entity.impl().hostEntity() ) );
       }
@@ -266,7 +268,7 @@ namespace Dune
       }
 
       // convert a grid entity to a grid part entity ("Gurke!")
-      template< class Entity > 
+      template< class Entity >
       MakeableInterfaceObject< typename Codim< Entity::codimension >::EntityType >
       convert ( const Entity &entity ) const
       {

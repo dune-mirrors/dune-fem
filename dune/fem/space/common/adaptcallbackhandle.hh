@@ -13,7 +13,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     // RestrictProlongWrapper
@@ -27,14 +27,14 @@ namespace Dune
       typedef RestrictProlongWrapper< Grid, DofManager, RestrictProlongOperator > This;
       typedef AdaptDataHandle< Grid, This > Base;
 
-    protected:  
+    protected:
       DofManager &dofManager_;
       RestrictProlongOperator &rpOp_;
 
-      // flag that is set to true when at least one entity was coarsend or refined 
+      // flag that is set to true when at least one entity was coarsend or refined
       mutable bool wasChanged_ ;
-      bool initializeCalled_; 
-      bool finalizeCalled_; 
+      bool initializeCalled_;
+      bool finalizeCalled_;
 
     public:
       typedef typename Base::Entity Entity;
@@ -48,8 +48,8 @@ namespace Dune
       {
       }
 
-      RestrictProlongWrapper ( const RestrictProlongWrapper& org ) 
-      : dofManager_( org.dofManager_ ), 
+      RestrictProlongWrapper ( const RestrictProlongWrapper& org )
+      : dofManager_( org.dofManager_ ),
         rpOp_( org.rpOp_ ),
         wasChanged_( org.wasChanged_ ),
         initializeCalled_( org.initializeCalled_ ),
@@ -66,23 +66,23 @@ namespace Dune
         return true ;
       }
 
-      // old interface methods 
+      // old interface methods
       void preAdapt ( const unsigned int estimatedAdditionalElements ) { initialize (); }
       void postAdapt () { finalize(); }
 
       /** \brief initialize basically reserves some memory on the DofManager */
-      void initialize ( unsigned int estimatedAdditionalElements = 0 ) 
+      void initialize ( unsigned int estimatedAdditionalElements = 0 )
       {
         // if preAdapt was already called just return
         if( initializeCalled_ ) return ;
 
-        // unset was changed 
+        // unset was changed
         wasChanged_ = false;
-        // reserve memory 
+        // reserve memory
         dofManager_.reserveMemory( estimatedAdditionalElements );
 
         // set initializeCalled_ flag in case method is called again (only dune-grid version)
-        initializeCalled_ = true; 
+        initializeCalled_ = true;
         // reset postAdaptCalled flag
         finalizeCalled_ = false ;
 
@@ -97,7 +97,7 @@ namespace Dune
         // notifyGlobalChange make wasChanged equal on all cores
         if( dofManager_.notifyGlobalChange( wasChanged_ ) )
         {
-          // make sure that no communication calls 
+          // make sure that no communication calls
           // are done during DofManager::compress
           dofManager_.compress();
 
@@ -129,7 +129,7 @@ namespace Dune
           }
         }
       }
-      
+
       void restrictLocal ( const Entity &father, const Entity &son, bool initialize ) const
       {
         if( isValidEntity( father ) )
@@ -159,7 +159,7 @@ namespace Dune
 
       void prolongLocal ( const Entity &father, const Entity &son, bool initialize ) const
       {
-        if( isValidEntity( father ) ) 
+        if( isValidEntity( father ) )
         {
           dofManager_.indexSetRestrictProlong().prolongLocal( father, son, initialize );
           rpOp_.prolongLocal( father, son, initialize );
@@ -167,8 +167,8 @@ namespace Dune
       }
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_ADAPTCALLBACKHANDLE_HH

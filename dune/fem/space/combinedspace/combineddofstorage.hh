@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_COMBINEDDOFSTORAGE_HH
 #define DUNE_FEM_COMBINEDDOFSTORAGE_HH
 
-//- local includes 
+//- local includes
 #include <dune/fem/space/common/dofstorage.hh>
 #include <dune/fem/storage/subarray.hh>
 
@@ -18,10 +18,10 @@ namespace Dune
 
 
     //! does the same as DofConversionUtility<PointBased>, just other
-    //! construtor 
+    //! construtor
     template< class ContainedMapper , int N >
     class CombinedDofConversionUtility< ContainedMapper, N, PointBased >
-    : public PointBasedDofConversionUtility< N > 
+    : public PointBasedDofConversionUtility< N >
     {
     public:
       typedef ContainedMapper ContainedMapperType;
@@ -48,7 +48,7 @@ namespace Dune
 
     public:
       /** \brief constructor
-       *  
+       *
        *  \param[in]  mapper  mapper of the contained space
        *  \param[in]  size    number of global DoFs per component
        */
@@ -70,7 +70,7 @@ namespace Dune
       //! Component which the actual base function index gives a contribution
       //! \return is in range {0, dimRange-1}
       int component ( int combinedIndex ) const
-      { 
+      {
         return combinedIndex / containedSize();
       }
 
@@ -95,13 +95,13 @@ namespace Dune
     };
 
 
-    
+
     template< class MapperImp, int N, DofStoragePolicy policy  >
     class CombinedSubMapper
     : public Fem :: IndexMapperInterface< CombinedSubMapper< MapperImp, N, policy > >
     {
     public:
-      //- original mapper 
+      //- original mapper
       typedef MapperImp ContainedMapperType;
 
     private:
@@ -117,7 +117,7 @@ namespace Dune
       : mapper_( mapper ),
         component_( component ),
         utilGlobal_(mapper_,
-                    policy  == PointBased ? 
+                    policy  == PointBased ?
                     N :  mapper.size() )
       {
         assert(component_ < N);
@@ -126,8 +126,8 @@ namespace Dune
       CombinedSubMapper(const ThisType& other) :
         mapper_(other.mapper_),
         component_(other.component_),
-        utilGlobal_(other.utilGlobal_) 
-      { 
+        utilGlobal_(other.utilGlobal_)
+      {
         assert(component_ < N);
       }
 
@@ -138,7 +138,7 @@ namespace Dune
       inline unsigned int range () const {
         return size() * N;
       }
-      inline const unsigned int operator[] ( unsigned int index ) const 
+      inline const unsigned int operator[] ( unsigned int index ) const
       {
         utilGlobal_.newSize( mapper_.size() );
         return utilGlobal_.combinedDof(index, component_);

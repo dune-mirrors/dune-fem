@@ -34,10 +34,10 @@ namespace Dune
       typedef Entity EntityType;
 
       //! function space type
-      typedef FunctionSpace< typename Entity::Geometry::ctype, typename Range::value_type, 
+      typedef FunctionSpace< typename Entity::Geometry::ctype, typename Range::value_type,
                              Entity::Geometry::coorddimension, Range::dimension
                            > FunctionSpaceType;
-       
+
       //! \brief range type
       typedef typename FunctionSpaceType::DomainType DomainType;
       //! \brief range type
@@ -48,7 +48,7 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       //! \brief type of reference element
-      typedef Dune::ReferenceElement< typename DomainType::value_type, 
+      typedef Dune::ReferenceElement< typename DomainType::value_type,
                                       DomainType::dimension > ReferenceElementType;
 
       //! \brief return order of basis function set

@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_SOLVER_RUNGEKUTTA_TIMESTEPCONTROL_HH
 #define DUNE_FEM_SOLVER_RUNGEKUTTA_TIMESTEPCONTROL_HH
 
-//- system includes 
+//- system includes
 #include <cassert>
 
 //- dune-common includes
@@ -11,7 +11,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/timeprovider.hh>
 
-namespace DuneODE 
+namespace DuneODE
 {
 
   // ImplicitRungeKuttaSolverParameters
@@ -19,21 +19,21 @@ namespace DuneODE
 
   struct ImplicitRungeKuttaSolverParameters
   : public Dune::Fem::LocalParameter< ImplicitRungeKuttaSolverParameters, ImplicitRungeKuttaSolverParameters >
-  { 
+  {
     enum { noVerbosity = 0,  noConvergenceVerbosity = 1,
            cflVerbosity = 2, fullVerbosity = 3 };
 
-  protected:  
-    // number of minimal iterations that the linear solver should do 
-    // if the number of iterations done is smaller then the cfl number is increased  
+  protected:
+    // number of minimal iterations that the linear solver should do
+    // if the number of iterations done is smaller then the cfl number is increased
     const int minIter_;
-    // number of maximal iterations that the linear solver should do 
-    // if the number of iterations larger then the cfl number is decreased   
+    // number of maximal iterations that the linear solver should do
+    // if the number of iterations larger then the cfl number is decreased
     const int maxIter_;
     // factor for cfl number on increase (decrease is 0.5)
     const double sigma_;
 
-  public:  
+  public:
     ImplicitRungeKuttaSolverParameters ()
     : minIter_( Dune::Fem::Parameter::getValue< int >( "fem.ode.miniterations" , 14 ) ),
       maxIter_( Dune::Fem::Parameter::getValue< int >( "fem.ode.maxiterations" , 16 ) ),
@@ -81,7 +81,7 @@ namespace DuneODE
      *  \param[in] converged Convergence of the ILS
      *  \param[out] factor Multiplication factor for the current cfl number
      *
-     *  \note Do not increase the cfl number of the implicit solver if its time step 
+     *  \note Do not increase the cfl number of the implicit solver if its time step
      *    estimate is already larger than the one of the explicit solver
      */
     virtual bool cflFactor( const double imOpTimeStepEstimate,
@@ -90,12 +90,12 @@ namespace DuneODE
                             bool converged,
                             double &factor) const
     {
-      const int iter = numberOfLinearIterations; 
+      const int iter = numberOfLinearIterations;
       factor = 1.;
       bool changed = false;
-      if (converged) 
+      if (converged)
       {
-        if (iter < minIter_) 
+        if (iter < minIter_)
         {
           if( imOpTimeStepEstimate <= exOpTimeStepEstimate )
           {
@@ -103,7 +103,7 @@ namespace DuneODE
             changed = true;
           }
         }
-        else if (iter > maxIter_) 
+        else if (iter > maxIter_)
         {
           factor = (double)maxIter_/(sigma_*(double)iter);
           changed = true;
@@ -198,7 +198,7 @@ namespace DuneODE
 
       double factor( 1 );
       // true means converged, which is always true since this function is only called
-      // when the implicit solver did converge 
+      // when the implicit solver did converge
       parameters().cflFactor( helmholtzEstimate, sourceTermEstimate, monitor.linearSolverIterations_, true, factor );
       if( !((factor >= std::numeric_limits< double >::min()) && (factor <= std::numeric_limits< double >::max())) )
         DUNE_THROW( Dune::InvalidStateException, "invalid cfl factor: " << factor );
@@ -217,7 +217,9 @@ namespace DuneODE
       }
     }
 
-  private:
+    bool computeError () const { return false; }
+
+  protected:
     const ParametersType &parameters () const
     {
       assert( parameters_ );
@@ -229,6 +231,112 @@ namespace DuneODE
     double cfl_, cflMax_;
     int verbose_;
     bool initialized_;
+  };
+
+
+
+  // ImplicitRungeKuttaTimeStepControl
+  // ---------------------------------
+
+  /** \brief PID time step control
+
+      See also:
+        D. Kuzmin and S.Turek. Numerical simulation of turbulent bubbly flows. Techreport Uni Dortmund. 2004
+
+      and the original article:
+        Valli, Coutinho, and Carey. Adaptive Control for Time Step Selection in Finite Element
+        Simulation of Coupled Viscous Flow and Heat Transfer. Proc of the 10th
+        International Conference on Numerical Methods in Fluids. 1998.
+   */
+  class PIDTimeStepControl : public ImplicitRungeKuttaTimeStepControl
+  {
+    typedef PIDTimeStepControl ThisType;
+    typedef ImplicitRungeKuttaTimeStepControl BaseType;
+
+    using BaseType :: initialized_;
+    using BaseType :: cfl_;
+  public:
+    typedef Dune::Fem::TimeProviderBase TimeProviderType;
+    typedef ImplicitRungeKuttaSolverParameters ParametersType;
+
+    explicit PIDTimeStepControl ( TimeProviderType &timeProvider,
+                                  const ParametersType &parameters = ParametersType() )
+    : BaseType( timeProvider, parameters ),
+      errors_(),
+      tol_( 0.0 )
+    {
+      if( Dune::Fem::Parameter::getValue("fem.ode.pidcontrol", bool(false) ) )
+      {
+        errors_.resize( 3 );
+        tol_ = Dune::Fem::Parameter::getValue("fem.ode.pidtolerance", double(1e-3) );
+      }
+    }
+
+    bool computeError () const { return ! errors_.empty() ; }
+
+    template< class Monitor >
+    void timeStepEstimate ( double helmholtzEstimate, double sourceTermEstimate, const Monitor &monitor )
+    {
+      if( !initialized_ )
+        DUNE_THROW( Dune::InvalidStateException, "ImplicitRungeKuttaSolver must be initialized before first solve." );
+
+      if( computeError() ) // use pid control
+      {
+        cfl_ = 1.0; // reset cfl for next reduceTimeStep
+        double dtEst = pidTimeStepControl( std::min( sourceTermEstimate, helmholtzEstimate ), monitor );
+        timeProvider_.provideTimeStepEstimate( dtEst );
+
+        if( (verbose_ >= ImplicitRungeKuttaSolverParameters::cflVerbosity) && (Dune::Fem::MPIManager::rank() == 0) )
+        {
+          Dune::derr << "New dt: " << dtEst
+                     << ", iterations per time step: ILS = " << monitor.linearSolverIterations_
+                     << ", INLS = " << monitor.newtonIterations_
+                     << std::endl;
+        }
+      }
+      else
+      {
+        BaseType::timeStepEstimate( helmholtzEstimate, sourceTermEstimate, monitor );
+      }
+    }
+
+    template < class Monitor >
+    double pidTimeStepControl( const double dt, const Monitor& monitor )
+    {
+      // get error || u^n - u^n+1 || / || u^n+1 || from monitor
+      const double error = monitor.error_;
+
+      // shift errors
+      for( int i=0; i<2; ++i )
+      {
+        errors_[ i ] = errors_[i+1];
+      }
+
+      // store new error
+      errors_[ 2 ] = error ;
+
+      if( error > tol_ )
+      {
+        // adjust dt by given tolerance
+        const double newDt = dt * tol_ / error;
+        return newDt;
+      }
+      else
+      {
+        // values taking from turek time stepping paper
+        const double kP = 0.075 ;
+        const double kI = 0.175 ;
+        const double kD = 0.01 ;
+        const double newDt = (dt * std::pow( errors_[ 1 ] / errors_[ 2 ], kP ) *
+                             std::pow( tol_         / errors_[ 2 ], kI ) *
+                             std::pow( errors_[0]*errors_[0]/errors_[ 1 ]/errors_[ 2 ], kD ));
+        return newDt;
+      }
+    }
+
+  protected:
+    std::vector< double > errors_;
+    double tol_;
   };
 
 } // namespace DuneODE

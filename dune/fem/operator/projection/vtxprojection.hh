@@ -6,9 +6,9 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 
-namespace Dune 
+namespace Dune
 {
-  namespace Fem 
+  namespace Fem
   {
 
     template <class GridPartType>
@@ -23,7 +23,7 @@ namespace Dune
       }
       double volume_;
     };
-      
+
     struct VtxProjectionImpl
     {
       template< class Function, class DiscreteFunction, class Weight >
@@ -85,7 +85,7 @@ namespace Dune
             }
           }
         }
-        
+
         u.communicate();
         w.communicate();
 
@@ -118,11 +118,11 @@ namespace Dune
 
               if( intersection.neighbor() )
               {
-                // get neighbor 
+                // get neighbor
                 EntityPointerType outside = intersection.outside();
                 const EntityType &neighbor = *outside;
 
-                // if non-conforming situation 
+                // if non-conforming situation
                 if( entity.level() > neighbor.level() )
                 {
                   const int indexInInside = intersection.indexInInside();
@@ -163,7 +163,7 @@ namespace Dune
      */
     /*======================================================================*/
     template < typename DType, typename RType >
-    class VtxProjection : public Operator< DType, RType > 
+    class VtxProjection : public Operator< DType, RType >
     {
      public:
       typedef DType DomainType;
@@ -171,20 +171,20 @@ namespace Dune
       typedef typename DomainType :: RangeFieldType DomainFieldType;
       typedef typename RType :: RangeFieldType  RangeFieldType;
       typedef typename RType :: DiscreteFunctionSpaceType :: GridPartType GridPartType;
-      //! Constructor 
+      //! Constructor
       VtxProjection() {}
 
       //! apply projection
       template <class WeightType>
       void operator() (const DomainType& f, RangeType& discFunc,
-                       WeightType& weight) const 
+                       WeightType& weight) const
       {
         VtxProjectionImpl::project(f,discFunc,weight);
       }
       //! apply projection with default weight
       void operator() (const DomainType& f, RangeType& discFunc) const
       {
-        WeightDefault<GridPartType> weight; 
+        WeightDefault<GridPartType> weight;
         VtxProjectionImpl::project(f,discFunc, weight);
       }
 

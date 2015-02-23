@@ -7,10 +7,10 @@
 #include <dune/fem/misc/iteratorprovider.hh>
 #include <dune/fem/operator/common/operator.hh>
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /** \class LagrangeInterpolation
@@ -45,10 +45,10 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
 
     public:
-      //! empty contructor 
+      //! empty contructor
       LagrangeInterpolation () {}
 
-      //! virtual destructor because of inheritance from Operator  
+      //! virtual destructor because of inheritance from Operator
       virtual ~LagrangeInterpolation () {}
 
       /** interpolate an analytical function into a Lagrange discrete function
@@ -63,9 +63,9 @@ namespace Dune
        *              interpolation
        */
       void operator () ( const Function &function,
-                         DiscreteFunctionType &discreteFunction ) const 
+                         DiscreteFunctionType &discreteFunction ) const
       {
-        interpolateFunction( function, discreteFunction ); 
+        interpolateFunction( function, discreteFunction );
       }
 
       /** interpolate an analytical function into a Lagrange discrete function
@@ -85,8 +85,8 @@ namespace Dune
         interpolateFunction( function, discreteFunction, integral_constant< bool, hasLocalFunction >() );
       }
 
-      //! \copydoc interpolateFunction 
-      //- make interface equal to DGL2Projection 
+      //! \copydoc interpolateFunction
+      //- make interface equal to DGL2Projection
       static void apply ( const Function &function, DiscreteFunctionType &discreteFunction )
       {
         interpolateFunction( function, discreteFunction );
@@ -112,7 +112,7 @@ namespace Dune
     };
 
 
-    
+
     template< class Function, class DiscreteFunction, class IteratorProvider >
     template< class GridFunction >
     inline void LagrangeInterpolation< Function, DiscreteFunction, IteratorProvider >
@@ -144,7 +144,7 @@ namespace Dune
         FunctionLocalFunctionType f_local = function.localFunction( *it );
         LocalFunctionType df_local = discreteFunction.localFunction( *it );
 
-        // assume point based local dofs 
+        // assume point based local dofs
         const int nop = lagrangePointSet.nop();
         int k = 0;
         for( int qp = 0; qp < nop; ++qp )
@@ -166,7 +166,7 @@ namespace Dune
       }
     }
 
-  } // namespace Fem 
+  } // namespace Fem
 
 } // namespace Dune
 

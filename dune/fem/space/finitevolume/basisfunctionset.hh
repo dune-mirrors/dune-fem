@@ -27,10 +27,10 @@ namespace Dune
       typedef Entity EntityType;
 
       /** \copydoc Dune::Fem::BasisFunctionSet::FunctionSpaceType */
-      typedef FunctionSpace< typename Entity::Geometry::ctype, typename Range::value_type, 
+      typedef FunctionSpace< typename Entity::Geometry::ctype, typename Range::value_type,
                              Entity::Geometry::coorddimension, Range::dimension
                            > FunctionSpaceType;
-       
+
       /** \copydoc Dune::Fem::BasisFunctionSet::DomainType */
       typedef typename FunctionSpaceType::DomainType DomainType;
       /** \copydoc Dune::Fem::BasisFunctionSet::RangeType */

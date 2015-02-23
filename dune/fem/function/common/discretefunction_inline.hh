@@ -7,17 +7,17 @@
 
 #include <dune/fem/gridpart/dunefemindexsets.hh>
 #include <dune/fem/io/streams/streams.hh>
-#include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
 
 #include "discretefunction.hh"
 
-namespace Dune 
+namespace Dune
 {
- 
-  namespace Fem 
+
+  namespace Fem
   {
 
-    // DiscreteFunctionDefault 
+    // DiscreteFunctionDefault
     // -----------------------
 
     template< class Impl >
@@ -41,7 +41,7 @@ namespace Dune
         *it = 0;
     }
 
-    
+
     template< class Impl >
     inline typename DiscreteFunctionDefault< Impl > :: RangeFieldType *
     DiscreteFunctionDefault< Impl > :: allocDofPointer()
@@ -50,7 +50,7 @@ namespace Dune
 
       const unsigned int size = BaseType :: size();
       RangeFieldType *dofPointer = new RangeFieldType[ size ];
-      
+
       unsigned int i = 0;
       const DofIteratorType end = BaseType :: dend();
       for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it )
@@ -60,7 +60,7 @@ namespace Dune
       return dofPointer;
     }
 
-    
+
     template< class Impl >
     inline void DiscreteFunctionDefault< Impl >
       :: freeDofPointer( RangeFieldType *dofPointer )
@@ -88,13 +88,10 @@ namespace Dune
     }
 
 
-    
     template< class Impl >
     inline void DiscreteFunctionDefault<Impl >
       :: print ( std::ostream &out ) const
     {
-      out << BaseType :: name() << std::endl;
-      
       const ConstDofIteratorType end = BaseType :: dend();
       for( ConstDofIteratorType dit = BaseType :: dbegin(); dit != end; ++dit )
         out << (*dit) << std::endl;
@@ -113,7 +110,7 @@ namespace Dune
       return true;
     }
 
-    
+
     template< class Impl >
     inline void DiscreteFunctionDefault< Impl >
       ::assign ( const DiscreteFunctionInterfaceType &g )
@@ -143,7 +140,6 @@ namespace Dune
       ::evaluateGlobal ( const DomainType &x, Functor functor ) const
     {
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-
       EntitySearch< GridPartType, EntityType::codimension > entitySearch( BaseType::space().gridPart() );
       const typename EntityType::EntityPointer entityPtr = entitySearch( x );
 
@@ -222,21 +218,21 @@ namespace Dune
           DUNE_THROW( IOError, "Trying to read discrete function from different space: DFSpace (" << spaceName( spaceId ) << ") != DataSpace (" << spaceName( mySpaceId ) << ")" );
       }
 
-      // read name 
+      // read name
       in >> name_;
 
-      // read size as integer 
+      // read size as integer
       int mysize;
       in >> mysize ;
-      
-      // check size 
-      if( mysize != BaseType :: size() && 
-          BaseType :: size() != this->space().size() ) // only read compressed vectors 
+
+      // check size
+      if( mysize != BaseType :: size() &&
+          BaseType :: size() != this->space().size() ) // only read compressed vectors
       {
         DUNE_THROW( IOError, "Trying to read discrete function of different size." );
       }
 
-      // read all dofs 
+      // read all dofs
       const DofIteratorType end = BaseType :: dend();
       for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it )
         in >> *it;
@@ -255,18 +251,18 @@ namespace Dune
       int spaceId = space().type();
       out << spaceId ;
 
-      // write name 
+      // write name
       out << name_;
 
-      // only allow write when vector is compressed 
+      // only allow write when vector is compressed
       if( BaseType :: size() != this->space().size() )
         DUNE_THROW(InvalidStateException,"Writing DiscreteFunction in uncompressed state!");
-      
-      // write size as integer 
+
+      // write size as integer
       const int mysize = BaseType :: size();
       out << mysize;
 
-      // write all dofs 
+      // write all dofs
       const ConstDofIteratorType end = BaseType :: dend();
       for( ConstDofIteratorType it = BaseType :: dbegin(); it != end; ++it )
         out << *it;
@@ -277,8 +273,8 @@ namespace Dune
     void DiscreteFunctionDefault< Impl >
       :: insertSubData()
     {
-      // if indexset is persistent it must be  
-      // derived from PersistentIndexSetInterface 
+      // if indexset is persistent it must be
+      // derived from PersistentIndexSetInterface
       if( space().indexSet().persistent() )
       {
         // this marks the index set in the DofManager's list of index set as persistent
@@ -291,8 +287,8 @@ namespace Dune
     void DiscreteFunctionDefault< Impl >
       :: removeSubData()
     {
-      // if indexset is persistent it must be 
-      // derived from PersistentIndexSetInterface 
+      // if indexset is persistent it must be
+      // derived from PersistentIndexSetInterface
       if( space().indexSet().persistent() )
       {
         // this unmarks the index set in the DofManager's list of index set as persistent
@@ -308,7 +304,7 @@ namespace Dune
     {
       if( BaseType :: size() != g.size() )
         return false;
-      
+
       const ConstDofIteratorType end = BaseType :: dend();
 
       ConstDofIteratorType fit = BaseType :: dbegin();
@@ -316,10 +312,10 @@ namespace Dune
       for( ; fit != end; ++fit, ++git )
         if( *fit != *git )
           return false;
-      
+
       return true;
     }
-   
+
 
     // Stream Operators
     // ----------------

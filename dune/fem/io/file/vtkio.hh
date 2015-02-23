@@ -7,7 +7,6 @@
 #include <dune/grid/io/file/vtk/subsamplingvtkwriter.hh>
 
 #include <dune/fem/version.hh>
-#include <dune/fem/gridpart/common/gridpartview.hh>
 #include <dune/fem/io/parameter.hh>
 
 #include <dune/fem/misc/threads/threadmanager.hh>
@@ -16,7 +15,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     // Internal Forward Declarations
@@ -55,7 +54,7 @@ namespace Dune
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
 
 
-      //! constructor taking discrete function 
+      //! constructor taking discrete function
       VTKFunctionWrapper ( const DiscreteFunctionType& df,
                            const std::string& dataName,
                            int component, bool vector )
@@ -84,7 +83,7 @@ namespace Dune
         lf.evaluate(xi,val);
         if (vector_)
           return (comp > dimDomain ? 0.0 : static_cast< double >( val[ comp + component_ ] ));
-        else 
+        else
           return static_cast< double >( val[ component_ ] );
       }
 
@@ -94,7 +93,7 @@ namespace Dune
         if (vector_) {
           std::stringstream ret_vec;
           ret_vec << name_ << "_vec" << component_;
-          return ret_vec.str(); 
+          return ret_vec.str();
         }
         std::stringstream ret;
         ret << name_ << component_;
@@ -134,8 +133,8 @@ namespace Dune
       typedef typename GridPartType::GridType GridType;
       typedef typename GridPartType::IndexSetType IndexSetType;
 
-    protected:   
-      class PartitioningData 
+    protected:
+      class PartitioningData
         : public VTKFunction< GridViewType >
       {
         typedef PartitioningData   ThisType;
@@ -146,7 +145,7 @@ namespace Dune
 
         typedef DomainDecomposedIteratorStorage< GridPartType >  ThreadIteratorType;
 
-        //! constructor taking discrete function 
+        //! constructor taking discrete function
         PartitioningData( const GridPartType& gridPart,
                           const std::string& name,
                           const int rank, const int nThreads )
@@ -180,7 +179,7 @@ namespace Dune
 
       };
 
-      class VolumeData 
+      class VolumeData
         : public VTKFunction< GridViewType >
       {
         typedef PartitioningData   ThisType;
@@ -191,7 +190,7 @@ namespace Dune
 
         typedef DomainDecomposedIteratorStorage< GridPartType >  ThreadIteratorType;
 
-        //! constructor taking discrete function 
+        //! constructor taking discrete function
         VolumeData() {}
 
         //! virtual destructor
@@ -214,7 +213,7 @@ namespace Dune
         }
       };
 
-      int getPartitionParameter() const 
+      int getPartitionParameter() const
       {
         // 0 = none, 1 = MPI ranks only, 2 = ranks + threads, 3 = like 1 and also threads only
         const std::string names[] = { "none", "rank", "rank+thread", "rank/thread" };
@@ -232,21 +231,21 @@ namespace Dune
         type_ = typeValue[ Parameter::getEnum( "fem.io.vtk.type", typeTable, 2 ) ];
       }
 
-      void addPartitionData( const int myRank = -1 ) 
+      void addPartitionData( const int myRank = -1 )
       {
-        if( addPartition_ > 0 ) 
+        if( addPartition_ > 0 )
         {
           vtkWriter_->addCellData( new VolumeData() );
 
           const int rank = ( myRank < 0 ) ? gridPart_.comm().rank() : myRank ;
           const int nThreads = ( addPartition_ > 1 ) ? ThreadManager::maxThreads() : 1 ;
-          if( addPartition_ <= 2 ) 
+          if( addPartition_ <= 2 )
             vtkWriter_->addCellData( new PartitioningData( gridPart_, "rank", rank, nThreads ) );
-          else 
+          else
           {
-            // rank only visualization 
+            // rank only visualization
             vtkWriter_->addCellData( new PartitioningData( gridPart_, "rank", rank, -1 ) );
-            // thread only visualization 
+            // thread only visualization
             vtkWriter_->addCellData( new PartitioningData( gridPart_, "thread", 0, nThreads ) );
           }
           addPartition_ = 0 ;
@@ -259,7 +258,7 @@ namespace Dune
         delete vtkWriter_;
       }
 
-      //! return grid part 
+      //! return grid part
       const GridPartType &gridPart () const
       {
         return gridPart_;
@@ -274,8 +273,8 @@ namespace Dune
       }
 
       template< class DF >
-      void addVectorCellData( DF &df, 
-                              const std::string& dataName = "" , 
+      void addVectorCellData( DF &df,
+                              const std::string& dataName = "" ,
                               int startPoint = 0 )
       {
         vtkWriter_->addCellData( new VTKFunctionWrapper< DF >( df, dataName, startPoint, true ) );
@@ -291,8 +290,8 @@ namespace Dune
       }
 
       template< class DF >
-      void addVectorVertexData( DF &df, 
-                                const std::string& dataName = "" , 
+      void addVectorVertexData( DF &df,
+                                const std::string& dataName = "" ,
                                 int startPoint = 0 )
       {
         vtkWriter_->addVertexData( new VTKFunctionWrapper< DF >( df, dataName, startPoint, true ) );
@@ -336,7 +335,7 @@ namespace Dune
 
       std::string write ( const std::string &name,
                           VTK::OutputType type,
-                          const int rank, 
+                          const int rank,
                           const int size )
       {
         addPartitionData( rank );
@@ -344,7 +343,7 @@ namespace Dune
       }
 
       std::string write ( const std::string &name,
-                          const int rank, 
+                          const int rank,
                           const int size )
       {
         return write( name, type_, rank, size );
@@ -373,10 +372,10 @@ namespace Dune
       using BaseType::write;
       using BaseType::pwrite;
 
-      //! constructor  
-      VTKWriter( const GridPartType &gridPart, 
+      //! constructor
+      VTKWriter( const GridPartType &gridPart,
                  VTK::DataMode dm = VTK::conforming )
-      : BaseType( gridPart.gridView(), dm )
+      : BaseType( static_cast< GridViewType > ( gridPart ), dm )
       {}
     };
 
@@ -396,11 +395,12 @@ namespace Dune
       using BaseType::write;
       using BaseType::pwrite;
 
-      //! constructor  
-      SubsamplingVTKWriter( const GridPartType &gridPart, 
-                            const int level, 
+      //! constructor
+      SubsamplingVTKWriter( const GridPartType &gridPart,
+                            const int level,
                             bool coerceToSimplex = false )
-      : BaseType( gridPart.gridView(), level, coerceToSimplex )
+      : BaseType( static_cast< GridViewType > ( gridPart ),
+                  level, coerceToSimplex )
       {}
     };
 

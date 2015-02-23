@@ -6,18 +6,20 @@
 namespace DuneODE
 {
 
-  /** \brief Interface class for ODE Solver. */ 
+  /** \brief Interface class for ODE Solver. */
   template <class DestinationImp>
-  class OdeSolverInterface 
+  class OdeSolverInterface
   {
   protected:
     //! constructor
-    OdeSolverInterface () {}  
+    OdeSolverInterface () {}
 
-    struct Monitor 
+    struct Monitor
     {
       double odeSolveTime_;
       double operatorTime_;
+      double error_;
+
       std::size_t numberOfElements_;
 
       int newtonIterations_;
@@ -27,13 +29,14 @@ namespace DuneODE
 
       Monitor() { reset(); }
 
-      // reset all counters 
-      void reset() 
-      { 
+      // reset all counters
+      void reset()
+      {
         odeSolveTime_ = 0;
         operatorTime_ = 0;
+        error_ = 0;
         numberOfElements_ = 0;
-        newtonIterations_ = 0; 
+        newtonIterations_ = 0;
         linearSolverIterations_ = 0;
         maxNewtonIterations_ = 0;
         maxLinearSolverIterations_ = 0;
@@ -41,32 +44,32 @@ namespace DuneODE
     };
 
   public:
-    //! monitor type 
+    //! monitor type
     typedef Monitor MonitorType;
 
-    //! type of destination 
+    //! type of destination
     typedef DestinationImp DestinationType;
 
-    //! destructor 
+    //! destructor
     virtual ~OdeSolverInterface () {}
-    
-    /** \brief initialize solver 
+
+    /** \brief initialize solver
         \param[in] arg argument to apply internal operator once for intial time step estimate
     */
     virtual void initialize(const DestinationType& arg) = 0;
-    
-    /** \brief solve \f$\partial_t u = L(u)\f$ where \f$L\f$ is the internal operator.   
-        \param[in] u unknown to solve for 
+
+    /** \brief solve \f$\partial_t u = L(u)\f$ where \f$L\f$ is the internal operator.
+        \param[in] u unknown to solve for
     */
     virtual void solve(DestinationType& u)
     {
-      MonitorType monitor; 
+      MonitorType monitor;
       solve( u, monitor );
     }
 
-    /** \brief solve \f$\partial_t u = L(u)\f$ where \f$L\f$ is the internal operator.   
-        \param[in] u unknown to solve for 
-        \param[in] monitor Monitor to get some inside information 
+    /** \brief solve \f$\partial_t u = L(u)\f$ where \f$L\f$ is the internal operator.
+        \param[in] u unknown to solve for
+        \param[in] monitor Monitor to get some inside information
     */
     virtual void solve ( DestinationType &u, MonitorType &monitor ) = 0;
 

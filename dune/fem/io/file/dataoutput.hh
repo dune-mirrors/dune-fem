@@ -31,8 +31,8 @@
 #endif // #if ENABLE_VTXPROJECTION
 #endif // #if USE_VTKWRITER
 
-#ifndef USE_GRAPE 
-// define whether to use grape of not 
+#ifndef USE_GRAPE
+// define whether to use grape of not
 #define USE_GRAPE HAVE_GRAPE
 #endif
 
@@ -43,7 +43,7 @@
 namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /** \brief Parameter class for Dune::Fem::DataOutput
@@ -127,7 +127,7 @@ namespace Dune
       }
 
       //! return true if DataOutput was created for writing (only not true for
-      //!  CheckPointer on restore) 
+      //!  CheckPointer on restore)
       virtual bool writeMode() const
       {
         return true ;
@@ -136,20 +136,20 @@ namespace Dune
 
 
 
-    /** @ingroup DiscFuncIO 
-       \brief Implementation of the Dune::Fem::IOInterface. 
+    /** @ingroup DiscFuncIO
+       \brief Implementation of the Dune::Fem::IOInterface.
        This class manages data output.
        Available output formats are GRAPE, VTK and VTK Vertex projected
        using the VtxProjection operator. Details can be
        found in \ref DiscFuncIO.
-    */    
+    */
     template< class GridImp, class DataImp >
     class DataOutput
     : public IOInterface
     {
       typedef DataOutput< GridImp, DataImp > ThisType;
 
-    protected:  
+    protected:
       template< class Grid, class OutputTuple, int N = tuple_size< OutputTuple >::value >
       struct GridPartGetter;
 
@@ -195,12 +195,12 @@ namespace Dune
 
 #if USE_VTKWRITER
       template< class VTKIOType >
-      struct VTKListEntry 
+      struct VTKListEntry
       {
         virtual ~VTKListEntry () {}
         virtual void add ( VTKIOType & ) const = 0;
 
-      protected: 
+      protected:
         VTKListEntry () {}
       };
 
@@ -219,41 +219,41 @@ namespace Dune
       template< class GridPartType >
       class GnuplotOutputer;
 
-    protected:  
+    protected:
       enum OutputFormat { vtk = 0, vtkvtx = 1, subvtk = 2 , binary = 3, gnuplot = 4, none = 5 };
 
-      //! \brief type of grid used 
+      //! \brief type of grid used
       typedef GridImp GridType;
-      //! \brief type of data tuple 
-      typedef DataImp OutPutDataType; 
+      //! \brief type of data tuple
+      typedef DataImp OutPutDataType;
 
-    public: 
-     /** \brief Constructor creating data output class 
-        \param grid corresponding grid 
-        \param data Tuple containing discrete functions to write 
-        \param parameter structure for tuning the behavior of the Dune::DataOutput 
+    public:
+     /** \brief Constructor creating data output class
+        \param grid corresponding grid
+        \param data Tuple containing discrete functions to write
+        \param parameter structure for tuning the behavior of the Dune::DataOutput
                          defaults to Dune::DataOutputParameters
       */
       DataOutput ( const GridType &grid, OutPutDataType &data,
                    const DataOutputParameters &parameter = DataOutputParameters() );
 
-      /** \brief Constructor creating data writer 
-        \param grid corresponding grid 
-        \param data Tuple containing discrete functions to write 
+      /** \brief Constructor creating data writer
+        \param grid corresponding grid
+        \param data Tuple containing discrete functions to write
         \param tp   a time provider to set time (e.g. for restart)
-        \param parameter structure for tuning the behavior of the Dune::DataOutput 
+        \param parameter structure for tuning the behavior of the Dune::DataOutput
                          defaults to Dune::DataOutputParameters
-      */ 
+      */
       DataOutput ( const GridType &grid, OutPutDataType &data,
                    const TimeProviderBase &tp,
                    const DataOutputParameters &parameter = DataOutputParameters() );
 
       void consistentSaveStep ( const TimeProviderBase &tp ) const;
 
-      //! destructor 
+      //! destructor
       virtual ~DataOutput()
       {
-  delete param_; 
+  delete param_;
 
         if( pvd_ )
         {
@@ -264,8 +264,8 @@ namespace Dune
         }
       }
 
-    protected:  
-      //! initialize data writer 
+    protected:
+      //! initialize data writer
       void init ( const DataOutputParameters &parameter );
 
     public:
@@ -284,24 +284,24 @@ namespace Dune
 
       /** \brief returns true if data will be written on next write call
       */
-      virtual bool willWrite () const 
+      virtual bool willWrite () const
       {
         return param_->willWrite( (saveCount_ > 0) && (writeCalls_ % saveCount_ == 0) );
       }
 
       /** \brief write given data to disc, evaluates parameter savecount
-          \param outstring  pass additional string for naming  
+          \param outstring  pass additional string for naming
       */
       void write( const std::string& outstring ) const
       {
         if( willWrite() )
           writeData( writeCalls_, outstring );
-        ++writeCalls_;    
+        ++writeCalls_;
       }
 
       /** \brief write given data to disc, evaluates parameter savecount
       */
-      void write() const 
+      void write() const
       {
         if( willWrite() )
           writeData( writeCalls_, "" );
@@ -309,81 +309,79 @@ namespace Dune
       }
 
       /** \brief write given data to disc, evaluates parameter savecount and savestep
-          \param tp  time provider for time and step   
-          \param outstring  pass additional string for naming  
+          \param tp  time provider for time and step
+          \param outstring  pass additional string for naming
       */
       void write(const TimeProviderBase& tp, const std::string& outstring ) const
       {
         if( willWrite(tp) )
           writeData( tp.time(), outstring );
-        ++writeCalls_;    
+        ++writeCalls_;
       }
 
       /** \brief write given data to disc, evaluates parameter savecount and savestep
-          \param tp  time provider for time and step   
+          \param tp  time provider for time and step
       */
       void write( const TimeProviderBase& tp ) const
       {
         write( tp, "" );
       }
 
-      /** \brief write data with a given sequence stamp and outstring 
-          \param sequenceStamp stamp for the data set 
-          \param outstring pass additional string for naming 
+      /** \brief write data with a given sequence stamp and outstring
+          \param sequenceStamp stamp for the data set
+          \param outstring pass additional string for naming
       */
       void writeData ( double sequenceStamp, const std::string &outstring ) const;
 
       /** \brief write data with a given sequence stamp
-          \param sequenceStamp stamp for the data set 
+          \param sequenceStamp stamp for the data set
       */
       void writeData ( double sequenceStamp ) const
       {
-        writeData( sequenceStamp, "" ); 
+        writeData( sequenceStamp, "" );
       }
 
-      //! print class name 
+      //! print class name
       virtual const char* myClassName () const { return "DataOutput"; }
 
       /** Return output path name */
       const std::string &path () const { return path_; }
 
-    protected:  
+    protected:
 #if USE_VTKWRITER
       std::string writeVTKOutput () const;
 #endif
 
       std::string writeGnuPlotOutput () const;
 
-      //! write binary data 
+      //! write binary data
       virtual void writeBinaryData ( const double ) const
       {
         DUNE_THROW(NotImplemented, "Format 'binary' not supported by DataOutput, use DataWriter instead." );
       }
 
-      //! display data with grape 
-      virtual void display () const 
+      //! display data with grape
+      virtual void display () const
       {
         if( grapeDisplay_ )
           grapeDisplay( data_ );
       }
 
-    protected:  
-      //void grapeDisplay ( Dune::Nil &data ) const {}
-
-      //! display data with grape 
+    protected:
+      //! display data with grape
       template< class OutputTupleType >
       void grapeDisplay ( OutputTupleType &data ) const;
 
-      //! \brief type of this class 
+      //! \brief type of this class
       const GridType& grid_;
-      OutPutDataType &data_; 
+      OutPutDataType &data_;
 
-      // name for data output 
+      // name for data output
       std::string path_;
       std::string datapref_;
       // use grape display
       bool grapeDisplay_;
-      
+
       // counter for sequence of files
       mutable int writeStep_;
       // counter for call to write
@@ -433,7 +431,7 @@ namespace Dune
         // space_.setDescription(df.space().getDescription());
       }
 
-      ~VTKFunc () 
+      ~VTKFunc ()
       {
         delete func_;
       }
@@ -441,12 +439,12 @@ namespace Dune
       virtual void add ( VTKIOType &vtkio ) const
       {
         func_ = new NewFunctionType( df_.name()+"vtx-prj" , space_ );
-        if( df_.space().continuous() ) 
+        if( df_.space().continuous() )
         {
           // vtkio.addVertexData( df_ );
           LagrangeInterpolation< DFType, NewFunctionType >::interpolateFunction( df_, *func_ );
         }
-        else 
+        else
         {
           WeightDefault<GridPartType> weight;
           VtxProjectionImpl::project( df_, *func_, weight );
@@ -484,10 +482,10 @@ namespace Dune
       template< class DFType >
       void visit ( DFType *df )
       {
-        if( df ) 
+        if( df )
         {
           if( conforming_ || (df->space().order() == 0) )
-            vtkOut_.addCellData( *df ); 
+            vtkOut_.addCellData( *df );
           else
             vtkOut_.addVertexData( *df );
         }
@@ -523,8 +521,8 @@ namespace Dune
         vec_()
       {}
 
-      //! destructor, delete entries of list 
-      ~VTKOutputerLagrange () 
+      //! destructor, delete entries of list
+      ~VTKOutputerLagrange ()
       {
         for( size_t i = 0; i < vec_.size(); ++i )
         {
@@ -537,9 +535,9 @@ namespace Dune
       template< class DFType >
       void visit ( DFType *df )
       {
-        if( df ) 
+        if( df )
         {
-          typedef VTKFunc< VTKOut, DFType > EntryType; 
+          typedef VTKFunc< VTKOut, DFType > EntryType;
           EntryType *entry = new EntryType( vtkOut_.gridPart(), *df );
           entry->add( vtkOut_ );
           vec_.push_back( entry );
@@ -587,14 +585,14 @@ namespace Dune
 
       //! Applies the setting on every DiscreteFunction/LocalFunction pair.
       template <class DFType>
-      void visit(DFType* df) 
+      void visit(DFType* df)
       {
-        if( df ) 
+        if( df )
         {
           typedef typename DFType::LocalFunctionType LocalFunctionType;
           typedef typename DFType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
           typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-     
+
           static const int dimRange = DiscreteFunctionSpaceType::dimRange;
 
           LocalFunctionType lf = df->localFunction(en_);
@@ -625,7 +623,7 @@ namespace Dune
       ::DataOutput ( const GridType &grid, OutPutDataType &data,
                      const DataOutputParameters& parameter )
     : grid_( grid ),
-      data_( data ), 
+      data_( data ),
       writeStep_(0),
       writeCalls_(0),
       saveTime_(0.0),  // why 0.0?
@@ -635,7 +633,7 @@ namespace Dune
       conformingOutput_( false ),
       param_(parameter.clone())
     {
-      // initialize class 
+      // initialize class
       init( parameter );
     }
 
@@ -656,7 +654,7 @@ namespace Dune
       conformingOutput_( false ),
       param_(parameter.clone())
     {
-      // initialize class 
+      // initialize class
       init( parameter );
 
       // make save step consistent
@@ -668,10 +666,10 @@ namespace Dune
       ::consistentSaveStep ( const TimeProviderBase &tp ) const
     {
       const double oldTime = tp.time() - saveStep_;
-      // set old values according to new time 
+      // set old values according to new time
       if( saveStep_ > 0 )
       {
-        while( saveTime_ <= oldTime ) 
+        while( saveTime_ <= oldTime )
         {
           ++writeStep_;
           saveTime_ += saveStep_;
@@ -682,29 +680,29 @@ namespace Dune
 
     template< class GridImp, class DataImp >
     inline void DataOutput< GridImp, DataImp >::
-    init ( const DataOutputParameters &parameter ) 
+    init ( const DataOutputParameters &parameter )
     {
       const bool writeMode = parameter.writeMode();
-      if( writeMode ) 
+      if( writeMode )
         IOInterface :: createGlobalPath ( grid_.comm(), Parameter::commonOutputPath() );
 
       path_ = Parameter::commonOutputPath() + "/";
 
       std::string paramPath = parameter.path();
-      if( paramPath != "./" ) 
+      if( paramPath != "./" )
         path_ += paramPath;
 
-      if( writeMode ) 
+      if( writeMode )
       {
-        // create path if not already exists 
+        // create path if not already exists
         IOInterface :: createGlobalPath ( grid_.comm(), path_ );
       }
-        
+
       // add prefix for data file
       datapref_ += parameter.prefix();
 
       int outputFormat = parameter.outputformat();
-      switch( outputFormat ) 
+      switch( outputFormat )
       {
         case 0: outputFormat_ = vtk; break;
         case 1: outputFormat_ = vtkvtx; break;
@@ -726,10 +724,10 @@ namespace Dune
 
       writeStep_ = parameter.startcounter();
 
-      if( writeMode ) 
+      if( writeMode )
       {
         // only write series file for VTK output
-        if ( Parameter :: verbose() && outputFormat_ < binary ) 
+        if ( Parameter :: verbose() && outputFormat_ < binary )
         {
           {
             std::string name = path_ + "/" + datapref_;
@@ -756,7 +754,7 @@ namespace Dune
           }
         }
 
-        // write parameter file 
+        // write parameter file
         Parameter::write("parameter.log");
       }
     }
@@ -767,23 +765,23 @@ namespace Dune
       ::writeData ( double sequenceStamp, const std::string &outstring ) const
     {
       std::string filename;
-      // check online display 
-      display(); 
+      // check online display
+      display();
       switch( outputFormat_ )
       {
-      // if no output was chosen just return  
+      // if no output was chosen just return
       case none: break ;
-      case binary:   
+      case binary:
         writeBinaryData( sequenceStamp );
         break;
-      case vtk : 
+      case vtk :
       case vtkvtx :
       case subvtk :
 #if USE_VTKWRITER
-        // write data in vtk output format 
+        // write data in vtk output format
         filename = writeVTKOutput();
         break;
-#else 
+#else
         DUNE_THROW(NotImplemented,"DataOutput::write: VTKWriter was disabled by USE_VTKWRITER 0");
 #endif // #if USE_VTKWRITER
       case gnuplot :
@@ -793,7 +791,7 @@ namespace Dune
         DUNE_THROW(NotImplemented,"DataOutput::write: wrong output format = " << outputFormat_);
       }
 
-      if( outputFormat_ != none ) 
+      if( outputFormat_ != none )
       {
         if( sequence_ )
           sequence_ << writeStep_ << " "
@@ -821,7 +819,7 @@ namespace Dune
         if( Parameter::verbose() )
         {
           // only write info for proc 0, otherwise on large number of procs
-          // this is to much output 
+          // this is to much output
           std::cout << myClassName() << "[" << grid_.comm().rank() << "]::write data"
                     << " writestep=" << writeStep_
                     << " sequenceStamp=" << sequenceStamp
@@ -840,42 +838,42 @@ namespace Dune
     inline std::string DataOutput< GridImp, DataImp >::writeVTKOutput () const
     {
       std::string filename;
-      // check whether to use vertex data of discontinuous data 
+      // check whether to use vertex data of discontinuous data
       const bool vertexData = (outputFormat_ == vtkvtx);
 
-      // check whether we have parallel run  
+      // check whether we have parallel run
       const bool parallel = (grid_.comm().size() > 1);
 
-      // generate filename, with path only for serial run  
+      // generate filename, with path only for serial run
       std::string name = generateFilename( (parallel ? datapref_ : path_ + "/" + datapref_ ), writeStep_ );
 
-      if( vertexData ) 
+      if( vertexData )
       {
 #if ENABLE_VTXPROJECTION
         // get gridpart from first discrete function in tuple
-        typedef GridPartGetter< GridType, OutPutDataType > GridPartGetterType;              
-        GridPartGetterType gp( grid_, data_ );                                              
-                                                                                            
-        typedef typename GridPartGetterType::GridPartType GridPartType;                     
-        const GridPartType &gridPart = gp.gridPart();                                       
+        typedef GridPartGetter< GridType, OutPutDataType > GridPartGetterType;
+        GridPartGetterType gp( grid_, data_ );
+
+        typedef typename GridPartGetterType::GridPartType GridPartType;
+        const GridPartType &gridPart = gp.gridPart();
 
 
-        // create vtk output handler 
-        typedef VTKIO < GridPartType > VTKIOType; 
+        // create vtk output handler
+        typedef VTKIO < GridPartType > VTKIOType;
         VTKIOType vtkio ( gridPart, VTK::conforming );
 
-        // add all functions 
+        // add all functions
         VTKOutputerLagrange< VTKIOType > io( vtkio );
         io.forEach( data_ );
 
         if( parallel )
         {
-          // write all data for parallel runs  
+          // write all data for parallel runs
           filename = vtkio.pwrite( name, path_, "." );
         }
         else
         {
-          // write all data serial 
+          // write all data serial
           filename = vtkio.write( name );
         }
 #endif
@@ -885,7 +883,7 @@ namespace Dune
         typedef GridPartGetter< GridType, OutPutDataType> GridPartGetterType;
         GridPartGetterType gp( grid_, data_ );
 
-        // create vtk output handler 
+        // create vtk output handler
         typedef VTKIO< typename GridPartGetterType::GridPartType > VTKIOType;
         VTKIOType vtkio( gp.gridPart(), conformingOutput_ ? VTK::conforming : VTK::nonconforming );
 
@@ -893,15 +891,15 @@ namespace Dune
         VTKOutputerDG< VTKIOType > io( vtkio, conformingOutput_ );
         io.forEach( data_ );
 
-        // write all data 
+        // write all data
         if( parallel )
         {
-          // write all data for parallel runs  
+          // write all data for parallel runs
           filename = vtkio.pwrite( name, path_, "." );
         }
         else
         {
-          // write all data serial 
+          // write all data serial
           filename = vtkio.write( name );
         }
       }
@@ -910,23 +908,23 @@ namespace Dune
         typedef GridPartGetter< GridType, OutPutDataType> GridPartGetterType;
         GridPartGetterType gp( grid_, data_ );
 
-        // create vtk output handler 
-        typedef SubsamplingVTKIO < typename GridPartGetterType :: GridPartType > VTKIOType; 
+        // create vtk output handler
+        typedef SubsamplingVTKIO < typename GridPartGetterType :: GridPartType > VTKIOType;
         VTKIOType vtkio ( gp.gridPart(), param_->subsamplingLevel() );
 
-        // add all functions 
+        // add all functions
         VTKOutputerDG< VTKIOType > io( vtkio, conformingOutput_ );
         io.forEach( data_ );
 
-        // write all data 
+        // write all data
         if( parallel )
         {
-          // write all data for parallel runs  
+          // write all data for parallel runs
           filename = vtkio.pwrite( name, path_, "." );
         }
         else
         {
-          // write all data serial 
+          // write all data serial
           filename = vtkio.write( name );
         }
       }
@@ -991,8 +989,8 @@ namespace Dune
     }
 #endif // #else // #if USE_GRAPE
 
-  } // end namespace Fem 
+  } // end namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_DATAOUTPUT_HH

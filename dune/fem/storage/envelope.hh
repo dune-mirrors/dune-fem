@@ -47,7 +47,7 @@ namespace Dune
     };
 
   } // namespace Fem
-   
+
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_ENVELOPE_HH

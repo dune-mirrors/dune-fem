@@ -4,7 +4,7 @@
 
 #include <dune/grid/common/datahandleif.hh>
 
-#include <dune/fem/misc/mpimanager.hh> 
+#include <dune/fem/misc/mpimanager.hh>
 
 #if HAVE_PETSC
 
@@ -13,10 +13,10 @@
 #include <dune/fem/misc/petsc/petscslavedofprovider.hh>
 
 
-namespace Dune 
+namespace Dune
 {
 
-  namespace Fem 
+  namespace Fem
   {
 
     /*
@@ -53,7 +53,7 @@ namespace Dune
       static const int blockSize = DiscreteFunctionSpaceType::localBlockSize;
 
 
-      explicit PetscGhostArrayBuilder ( SlaveProviderType& slaveDofs, 
+      explicit PetscGhostArrayBuilder ( SlaveProviderType& slaveDofs,
                                         PetscDofMappingType& petscDofMapping )
       : array_( 0 ),
         arrayNeedsUpdate_( true )
@@ -73,12 +73,12 @@ namespace Dune
           }
         }
 
-        // TODO: This is a corner case, but it might be possible that 
+        // TODO: This is a corner case, but it might be possible that
         // everything works fine but this assertion fails
         //
         // the test is being removed because it does not work correctly with
         // dg spaces - needs to be modified first
-        // assert( !hasDuplicatedGhosts()); 
+        // assert( !hasDuplicatedGhosts());
       }
 
       ~PetscGhostArrayBuilder ()
@@ -92,10 +92,10 @@ namespace Dune
         arrayNeedsUpdate_ = true;
       }
 
-      bool hasDuplicatedGhosts () const 
+      bool hasDuplicatedGhosts () const
       {
         std::map< int, bool > map;
-        for( StorageType::const_iterator it = vector_.begin(); it != vector_.end(); ++it ) 
+        for( StorageType::const_iterator it = vector_.begin(); it != vector_.end(); ++it )
         {
           if( map.find( it->second ) != map.end() )
             std::cerr << it->second << " found more than once on rk " << MPIManager::rank() << "\n";
@@ -105,7 +105,7 @@ namespace Dune
         return ( map.size() < vector_.size() );
       }
 
-      value_type* array () 
+      value_type* array ()
       {
         updateArray();
         return array_;
@@ -135,10 +135,10 @@ namespace Dune
 
     private:
       PetscGhostArrayBuilder ( const ThisType& );
-      ThisType& operator= ( const ThisType & ); 
+      ThisType& operator= ( const ThisType & );
       PetscGhostArrayBuilder ();
 
-      void updateArray () const 
+      void updateArray () const
       {
         if( arrayNeedsUpdate_ )
         {
@@ -165,7 +165,7 @@ namespace Dune
     /* =================================================
      * class PetscDofCommunicator
      *
-     * This is a helper class for PetscGhostArrayBuilder which is responsable for the 
+     * This is a helper class for PetscGhostArrayBuilder which is responsable for the
      * communication necessary to build the ghost array.
      * =================================================
      */
@@ -182,7 +182,7 @@ namespace Dune
       typedef DFSpace DiscreteFunctionSpaceType;
       typedef typename BaseType::DataType DataType;
       typedef PetscSlaveDofProvider< DiscreteFunctionSpaceType > PetscSlaveDofProviderType ;
-      typedef typename PetscSlaveDofProviderType :: PetscDofMappingType PetscDofMappingType; 
+      typedef typename PetscSlaveDofProviderType :: PetscDofMappingType PetscDofMappingType;
       typedef typename DiscreteFunctionSpaceType::BlockMapperType BlockMapperType;
 
       /*
@@ -227,7 +227,7 @@ namespace Dune
           const int petscDof = petscDofMapping_.localSlaveMapping( dof );
 
           // does this process own the dof?
-          if( petscDof < petscDofMapping_.numOwnedDofBlocks() ) 
+          if( petscDof < petscDofMapping_.numOwnedDofBlocks() )
           {
             const int petscGlobalDof = petscDofMapping_.processStartIndex() + petscDof;
 
@@ -281,18 +281,18 @@ namespace Dune
           size_t &globalDof = globalDofs[ index ];
           assert( petscDofMapping_.isSlave( globalDof ) );
 
-          buffer.read( petscDof ); 
+          buffer.read( petscDof );
           if ( !isDuplicate )
             ghostArrayBuilder_.push_back( globalDof, petscDof );
         }
       }
 
-      //! return local dof size to be communicated 
+      //! return local dof size to be communicated
       template< typename Entity >
       size_t size ( const Entity &entity ) const
       {
         size_t size = 0;
-      
+
         const int numDofs = mapper_.numEntityDofs( entity );
 
         std::vector< size_t > globalDofs;
@@ -302,7 +302,7 @@ namespace Dune
 
         for( int i = 0; i < numDofs; ++i )
         {
-          if( !petscDofMapping_.isSlave( globalDofs[i] ) ) 
+          if( !petscDofMapping_.isSlave( globalDofs[i] ) )
             ++size;
         }
         assert( size == 0 || size == size_t( numDofs ) );
@@ -314,7 +314,7 @@ namespace Dune
       PetscDofCommunicator ();
       PetscDofCommunicator ( const ThisType& );
       ThisType operator= ( const ThisType& );
-      
+
 
       const DiscreteFunctionSpaceType &space_;
       const BlockMapperType &mapper_;

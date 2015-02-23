@@ -6,9 +6,9 @@
 
 using namespace pardg;
 
-  
 
-BICGSTAB::BICGSTAB(Communicator &comm) :  
+
+BICGSTAB::BICGSTAB(Communicator &comm) :
   IterativeLinearSolver(comm), DynamicalObject( "BiCGstab", comm.id() ),
   r(NULL), r_star(NULL), p(NULL), s(NULL), tmp(NULL), z(NULL)
 {}
@@ -23,7 +23,7 @@ BICGSTAB::~BICGSTAB()
 void BICGSTAB::set_preconditioner(Function &preconditioner)
 {
   this->preconditioner = &preconditioner;
-}   
+}
 
 
 void BICGSTAB::resize(int new_size, int component)
@@ -38,12 +38,12 @@ void BICGSTAB::resize(int new_size, int component)
   tmp = r + 4*new_size;
   z = (preconditioner)? r + 5*new_size : 0;
 }
- 
+
 void BICGSTAB::unset_preconditioner()
 {
   this->preconditioner = 0;
 }
- 
+
 bool BICGSTAB::solve(Function &op, double *x, const double *b)
 {
   dim = op.dim_of_value();
@@ -54,7 +54,7 @@ bool BICGSTAB::solve(Function &op, double *x, const double *b)
   double _tolerance = tolerance;
   if (relative_tolerance){
     local_dot[0] = cblas_ddot(dim, b, 1, b, 1);
-    comm.allreduce(1, local_dot, global_dot, MPI_SUM);      
+    comm.allreduce(1, local_dot, global_dot, MPI_SUM);
     _tolerance *= sqrt(global_dot[0]);
   }
 
@@ -65,16 +65,16 @@ bool BICGSTAB::solve(Function &op, double *x, const double *b)
   }
   else op(x, r);             // r = A x
 
-  for(int k=0; k<dim; k++){    
+  for(int k=0; k<dim; k++){
     r[k] = b[k] - r[k];
     p[k] = r[k];
     r_star[k] = r[k];
   }
   local_dot[0] = cblas_ddot(dim, r, 1, r_star, 1);
   comm.allreduce(1, local_dot, global_dot, MPI_SUM);
-  double nu = global_dot[0]; 
+  double nu = global_dot[0];
 
- 
+
   // iterate
   int iterations = 0;
   while (true){
@@ -82,7 +82,7 @@ bool BICGSTAB::solve(Function &op, double *x, const double *b)
     if (preconditioner){    // right preconditioning
       (*preconditioner)(p, z); // z = M^{-1} p
       op(z, tmp);              // tmp = A z
-    } 
+    }
     else op(p, tmp);           // tmp = A p
 
     local_dot[0] = cblas_ddot(dim, tmp, 1, r_star, 1);
@@ -109,12 +109,12 @@ bool BICGSTAB::solve(Function &op, double *x, const double *b)
 
     // scalars
     const double omega = global_dot[0] / global_dot[1];
-    const double res = sqrt(global_dot[2] 
+    const double res = sqrt(global_dot[2]
 			    -omega*(2.0*global_dot[0] - omega*global_dot[1]) );
 
     const double beta = (global_dot[3] - omega*global_dot[4])
       *alpha / (omega*nu);
-    
+
     nu = (global_dot[3] - omega*global_dot[4]);
 
     // update
@@ -124,19 +124,19 @@ bool BICGSTAB::solve(Function &op, double *x, const double *b)
       p[k] = r[k] + beta*( p[k] - omega*tmp[k] );
     }
 
-    iterations++;    
-    if (res < _tolerance || iterations >= max_num_of_iterations) break; 
+    iterations++;
+    if (res < _tolerance || iterations >= max_num_of_iterations) break;
     if (IterativeSolver::os)
     {
       *IterativeSolver::os << "BiCGstab " << comm.id() << " it: " << iterations << " : " << res << std::endl;
     }
   }
-    
- 
+
+
   // output
   if (IterativeSolver::os){
-    *IterativeSolver::os << "BiCGstab " << comm.id() 
-			 << ":  number of iterations: " 
+    *IterativeSolver::os << "BiCGstab " << comm.id()
+			 << ":  number of iterations: "
 			 << iterations
 			 << std::endl;
   }
@@ -153,7 +153,7 @@ bool BICGSTAB::solve(Function &op, double *x, const double *b)
   return (iterations < max_num_of_iterations)? true: false;
 }
 
-// bicg withouot preconditioner 
+// bicg withouot preconditioner
 bool BICGSTAB::solve_old(Function &op, double *x, const double *b)
 {
   // todo: extend it to preconditioner use
@@ -167,21 +167,21 @@ bool BICGSTAB::solve_old(Function &op, double *x, const double *b)
   double _tolerance = tolerance;
   if (relative_tolerance){
     local_dot[0] = cblas_ddot(dim, b, 1, b, 1);
-    comm.allreduce(1, local_dot, global_dot, MPI_SUM);      
+    comm.allreduce(1, local_dot, global_dot, MPI_SUM);
     _tolerance *= sqrt(global_dot[0]);
   }
 
   // init
   op(x, r);
-  for(int k=0; k<dim; k++){    
+  for(int k=0; k<dim; k++){
     r[k] = b[k] - r[k];
     p[k] = r[k];
     r_star[k] = r[k];
   }
   local_dot[0] = cblas_ddot(dim, r, 1, r_star, 1);
   comm.allreduce(1, local_dot, global_dot, MPI_SUM);
-  double nu = global_dot[0]; 
- 
+  double nu = global_dot[0];
+
   // iterate
   int iterations = 0;
   while (true){
@@ -206,12 +206,12 @@ bool BICGSTAB::solve_old(Function &op, double *x, const double *b)
 
     // scalars
     const double omega = global_dot[0] / global_dot[1];
-    const double res = sqrt(global_dot[2] 
+    const double res = sqrt(global_dot[2]
 			    -omega*(2.0*global_dot[0] - omega*global_dot[1]) );
 
     const double beta = (global_dot[3] - omega*global_dot[4])
       *alpha / (omega*nu);
-    
+
     nu = (global_dot[3] - omega*global_dot[4]);
 
     // update
@@ -221,15 +221,15 @@ bool BICGSTAB::solve_old(Function &op, double *x, const double *b)
       p[k] = r[k] + beta*( p[k] - omega*tmp[k] );
     }
 
-    iterations++;    
-    if (res < _tolerance || iterations >= max_num_of_iterations) break; 
+    iterations++;
+    if (res < _tolerance || iterations >= max_num_of_iterations) break;
   }
-    
- 
+
+
   // output
   if (IterativeSolver::os){
-    *IterativeSolver::os << "BiCGstab " << comm.id() 
-			 << ":  number of iterations: " 
+    *IterativeSolver::os << "BiCGstab " << comm.id()
+			 << ":  number of iterations: "
 			 << iterations
 			 << std::endl;
   }

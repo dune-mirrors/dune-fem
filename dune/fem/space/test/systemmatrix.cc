@@ -1,6 +1,8 @@
 #ifndef ELLIPTIC_HH
 #define ELLIPTIC_HH
 
+#error "This file seems to be unused and will be removed!!!"
+
 #include <dune/common/fmatrix.hh>
 
 #include <dune/fem/quadrature/cachingquadrature.hh>
@@ -28,7 +30,7 @@ protected:
   typedef typename EntityType::Geometry GeometryType;
 
   typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-  typedef typename DiscreteFunctionSpaceType :: DomainType DomainType; 
+  typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
 
   typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
   typedef typename IntersectionIteratorType::Intersection IntersectionType;
@@ -43,7 +45,7 @@ public:
   explicit EllipticOperator ( const ModelType &model = Model() )
   : model_( model )
   {}
-      
+
   virtual void
   operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w ) const;
 
@@ -56,7 +58,7 @@ private:
 
 template< class DiscreteFunction, class Model >
 void EllipticOperator< DiscreteFunction, Model >
-  ::operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w ) const 
+  ::operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w ) const
 {
   w.clear();
 
@@ -153,10 +155,10 @@ void assembleRHS ( const Function &function, DiscreteFunction &rhs )
     const EntityType &entity = *it;
     const GeometryType &geometry = entity.geometry();
 
-    typename Function::LocalFunctionType localFunction = 
+    typename Function::LocalFunctionType localFunction =
              function.localFunction( entity);
     LocalFunctionType rhsLocal = rhs.localFunction( entity );
-    
+
     QuadratureType quadrature( entity, 2*dfSpace.order()+1 );
     const size_t numQuadraturePoints = quadrature.nop();
     for( size_t pt = 0; pt < numQuadraturePoints; ++pt )
@@ -203,7 +205,7 @@ void EllipticOperator< DiscreteFunction, Model >
 
     const BaseFunctionSetType &baseSet = jLocal.domainBaseFunctionSet();
     const unsigned int numBaseFunctions = baseSet.numBaseFunctions();
-          
+
     QuadratureType quadrature( entity, 2*dfSpace.order() );
     const size_t numQuadraturePoints = quadrature.nop();
     for( size_t pt = 0; pt < numQuadraturePoints; ++pt )
@@ -213,7 +215,7 @@ void EllipticOperator< DiscreteFunction, Model >
 
       const typename GeometryType::Jacobian &gjit = geometry.jacobianInverseTransposed( x );
 
-      // evaluate all basis functions at given quadrature point 
+      // evaluate all basis functions at given quadrature point
       baseSet.evaluateAll( quadrature[ pt ], phi );
 
       // evaluate jacobians of all basis functions at given quadrature point
@@ -226,7 +228,7 @@ void EllipticOperator< DiscreteFunction, Model >
         typename LocalFunctionType::JacobianRangeType adphi;
         model_.diffusiveFlux( entity, quadrature[ pt ], dphi[ localCol ], adphi );
 
-        // get column object and call axpy method 
+        // get column object and call axpy method
         jLocal.column( localCol ).axpy( phi, dphi, aphi, adphi, weight );
       }
     }

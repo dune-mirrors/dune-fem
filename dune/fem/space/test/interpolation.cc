@@ -20,7 +20,7 @@
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/space/common/interpolation.hh>
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 
 #include "../../test/exactsolution.hh"
@@ -94,12 +94,8 @@ double algorithm ( GridType &grid, const int step )
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
   solution.clear();
 
-  // interpolation operator
-  typedef Dune::Fem::Interpolation< DiscreteFunctionType > InterpolationType;
-  InterpolationType interpolation;
-
-  // perform the interpolation 
-  interpolation( gridExactSolution, solution );
+  // perform the interpolation
+  interpolate( gridExactSolution, solution );
 
   typedef Dune::Capabilities::hasSingleGeometryType< GridType > HasSingleGeometryType;
   if( dimDomain == 2 && HasSingleGeometryType::v && HasSingleGeometryType::topologyId == 0 )
@@ -154,7 +150,7 @@ try
     return 0;
   }
 
-  // initial refinement level 
+  // initial refinement level
   int refCount = 1;
   if( argc > 1 )
     refCount = std::max( refCount, std::atoi( argv[ 1 ] ) );
@@ -166,7 +162,7 @@ try
 
   // create grid
   GridType &grid = Dune::Fem::TestGrid::grid();
-  const int refineStepsForHalf = Dune::Fem::TestGrid::refineStepsForHalf(); 
+  const int refineStepsForHalf = Dune::Fem::TestGrid::refineStepsForHalf();
   Dune::Fem::GlobalRefine::apply( grid, refineStepsForHalf );
 
   // compute DG L2-projection
@@ -185,7 +181,7 @@ try
     }
     oldError = newError;
   }
-  
+
   return 0;
 }
 catch( Dune::Exception e )

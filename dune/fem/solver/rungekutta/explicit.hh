@@ -1,18 +1,18 @@
 #ifndef DUNE_FEM_SOLVER_RUNGEKUTTA_EXPLICIT_HH
 #define DUNE_FEM_SOLVER_RUNGEKUTTA_EXPLICIT_HH
 
-//- system includes 
+//- system includes
 #include <iostream>
 #include <cmath>
 #include <vector>
 #include <cassert>
 
-//- Dune includes 
+//- Dune includes
 #include <dune/fem/operator/common/spaceoperatorif.hh>
 #include <dune/fem/solver/odesolverinterface.hh>
 #include <dune/fem/solver/timeprovider.hh>
 
-namespace DuneODE 
+namespace DuneODE
 {
 
   using namespace Dune;
@@ -20,15 +20,15 @@ namespace DuneODE
   using namespace std;
 
   /** @addtogroup ODESolver
-   
+
       A variety of runge kutta have so far been implemented based
-      on the \c pardg package. 
+      on the \c pardg package.
       These include explicit ssp methods upto order 4
       through Dune::ExplicitRungeKuttaSolver and Dune::ExplicitTimeStepper
       (where the second version uses \c pardg).
-      Furthermore implicit methods and IMEX schemes up to order 
+      Furthermore implicit methods and IMEX schemes up to order
       4 can be used through Dune::ImplicitOdeSolver
-      and Dune::SemiImplicitOdeSolver. 
+      and Dune::SemiImplicitOdeSolver.
       Each of these classes require an operator defining the right hand
       side for its construction; the template argument is a
       Dune::DiscreteFunctionSpace and the operator has to be derived
@@ -44,11 +44,11 @@ namespace DuneODE
       through the method \c timeStepEstimate on the
       Dune::SpaceOperatorInterface an upper estimate for the time
       step is provided satifying at the least the stability
-      restriction of the forward euler method. This estimate is then 
+      restriction of the forward euler method. This estimate is then
       multiplied by an additional factor depending on the ode solver used
       and then passed to the instance of the Dune::TimeProvider.
 
-      \remarks 
+      \remarks
       The interface for ODE solvers is defined by the class
       OdeSolverInterface. The interface for discretization operators
       working with the OdeSolvers is described by the class SpaceOperatorInterface.
@@ -58,11 +58,11 @@ namespace DuneODE
 
   /** \brief Exlicit RungeKutta ODE solver. */
   template<class DestinationImp>
-  class ExplicitRungeKuttaSolver 
+  class ExplicitRungeKuttaSolver
   : public OdeSolverInterface<DestinationImp>
   {
   public:
-    typedef DestinationImp DestinationType; 
+    typedef DestinationImp DestinationType;
     typedef SpaceOperatorInterface<DestinationImp> OperatorType;
     typedef typename DestinationType :: DiscreteFunctionSpaceType SpaceType;
 
@@ -77,15 +77,15 @@ namespace DuneODE
     const int ord_;
 
   public:
-    /** \brief constructor 
-      \param[in] op Operator \f$L\f$ 
-      \param[in] tp TimeProvider 
-      \param[in] pord polynomial order 
-      \param[in] verbose verbosity 
+    /** \brief constructor
+      \param[in] op Operator \f$L\f$
+      \param[in] tp TimeProvider
+      \param[in] pord polynomial order
+      \param[in] verbose verbosity
     */
-    ExplicitRungeKuttaSolver(OperatorType& op, 
-                             TimeProviderBase& tp, 
-                             const int pord, 
+    ExplicitRungeKuttaSolver(OperatorType& op,
+                             TimeProviderBase& tp,
+                             const int pord,
                              bool verbose = true ) :
       a(0),b(0),c(0), Upd(0),
       ord_(pord),
@@ -99,9 +99,9 @@ namespace DuneODE
       {
         a[i].resize(ord_);
       }
-      b.resize(ord_); 
-      c.resize(ord_); 
-      
+      b.resize(ord_);
+      c.resize(ord_);
+
       switch (ord_)
       {
         case 4 :
@@ -130,12 +130,12 @@ namespace DuneODE
           b[0]=1.;
           c[0]=0.;
           break;
-        default : std::cerr << "Runge-Kutta method of this order not implemented" 
+        default : std::cerr << "Runge-Kutta method of this order not implemented"
                             << std::endl;
                   abort();
       }
 
-      // create update memory 
+      // create update memory
       for (int i=0; i<ord_; ++i)
       {
         Upd.push_back(new DestinationType("URK",op_.space()) );
@@ -143,73 +143,73 @@ namespace DuneODE
       Upd.push_back(new DestinationType("Ustep",op_.space()) );
     }
 
-    //! destructor 
+    //! destructor
     ~ExplicitRungeKuttaSolver()
     {
-      for(size_t i=0; i<Upd.size(); ++i) 
+      for(size_t i=0; i<Upd.size(); ++i)
         delete Upd[i];
     }
 
-    //! apply operator once to get dt estimate 
+    //! apply operator once to get dt estimate
     void initialize(const DestinationType& U0)
     {
-      if( ! initialized_ ) 
+      if( ! initialized_ )
       {
         // Compute Steps
         op_(U0, *(Upd[0]));
         initialized_ = true;
-        
-        // provide operators time step estimate 
+
+        // provide operators time step estimate
         tp_.provideTimeStepEstimate( op_.timeStepEstimate() );
       }
     }
-    
-    //! solve the system 
-    void solve(DestinationType& U0, MonitorType& monitor ) 
+
+    //! solve the system
+    void solve(DestinationType& U0, MonitorType& monitor )
     {
-      // no information here 
+      // no information here
       monitor.reset();
 
-      // initialize 
-      if( ! initialized_ ) 
+      // initialize
+      if( ! initialized_ )
       {
         DUNE_THROW(InvalidStateException,"ExplicitRungeKuttaSolver wasn't initialized before first call!");
       }
 
-      // get cfl * timeStepEstimate 
+      // get cfl * timeStepEstimate
       const double dt = tp_.deltaT();
-      // get time 
+      // get time
       const double t = tp_.time();
 
-      // set new time 
+      // set new time
       op_.setTime( t );
 
       // Compute Steps
       op_(U0, *(Upd[0]));
-      
-      // provide operators time step estimate 
+
+      // provide operators time step estimate
       tp_.provideTimeStepEstimate( op_.timeStepEstimate() );
 
-      for (int i=1; i<ord_; ++i) 
+      for (int i=1; i<ord_; ++i)
       {
         (Upd[ord_])->assign(U0);
-        for (int j=0; j<i ; ++j) 
+        for (int j=0; j<i ; ++j)
         {
           (Upd[ord_])->axpy((a[i][j]*dt), *(Upd[j]));
         }
 
-        // set new time 
+        // set new time
         op_.setTime( t + c[i]*dt );
 
-        // apply operator 
+        // apply operator
         op_( *(Upd[ord_]), *(Upd[i]) );
-        
-        // provide operators time step estimate 
+
+        // provide operators time step estimate
         tp_.provideTimeStepEstimate( op_.timeStepEstimate() );
       }
 
       // Perform Update
-      for (int j=0; j<ord_; ++j) 
+      for (int j=0; j<ord_; ++j)
       {
         U0.axpy((b[j]*dt), *(Upd[j]));
       }
@@ -218,21 +218,21 @@ namespace DuneODE
     void description(std::ostream& out) const
     {
       out << "ExplRungeKutta, steps: " << ord_
-          //<< ", cfl: " << this->tp_.factor() 
+          //<< ", cfl: " << this->tp_.factor()
           << "\\\\" <<std::endl;
     }
 
   protected:
-    // operator to solve for 
+    // operator to solve for
     OperatorType& op_;
-    // time provider 
+    // time provider
     TimeProviderBase& tp_;
-    // init flag 
+    // init flag
     bool initialized_;
   };
 
   /** @} **/
 
-} // namespace DuneODE 
+} // namespace DuneODE
 
 #endif // #ifndef DUNE_FEM_SOLVER_RUNGEKUTTA_EXPLICIT_HH

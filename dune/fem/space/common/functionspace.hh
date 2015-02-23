@@ -7,15 +7,15 @@
 namespace Dune
 {
 
-  namespace Fem 
-  {  
+  namespace Fem
+  {
 
     // Forward declaration of
     // base class for vector valued function spaces.
     template< class DomainField, class RangeField, int dimD, int dimR>
     class FunctionSpace;
 
-    //! \brief Traits class for vector function spaces 
+    //! \brief Traits class for vector function spaces
     template< class DomainField, class RangeField, int dimD, int dimR>
     struct VectorSpaceTraits
     {
@@ -34,7 +34,7 @@ namespace Dune
 
       /** \copydoc Dune::Fem::FunctionSpaceInterface::RangeType */
       typedef FieldVector< RangeFieldType, dimRange> RangeType;
-      
+
       /** \brief linear mapping type */
       typedef FieldMatrix< RangeFieldType, dimRange, dimDomain > LinearMappingType;
 
@@ -45,9 +45,9 @@ namespace Dune
 
     /** @ingroup FunctionSpace
         \brief A vector valued function space.
-       
+
         FunctionSpace defines what the types of the domain vector
-        space and the range vector space for a function are. 
+        space and the range vector space for a function are.
     */
     template< class DomainField, class RangeField, int dimD, int dimR>
     class FunctionSpace
@@ -60,7 +60,7 @@ namespace Dune
       typedef ThisType FunctionSpaceType;
     };
 
-    /* Forward declaration of  
+    /* Forward declaration of
       base class for matrix valued function spaces.
     */
     template <typename DomainFieldImp,typename RangeFieldImp,int n,int m1,int m2>
@@ -69,7 +69,7 @@ namespace Dune
     /*! \brief RangeType class for matrix valued functions -
         derived from FieldMatrix but has representation as vector
     */
-    template <typename K,int n,int m> 
+    template <typename K,int n,int m>
     class RangeMatrix : public FieldMatrix<K,n,m> {
      public:
       typedef FieldMatrix<K,n,m> BaseType;
@@ -86,64 +86,64 @@ namespace Dune
       /*! \brief Default constructor
        */
       RangeMatrix () : BaseType() {}
-      
+
       /*! \brief Constructor initializing the whole matrix with a scalar
        */
       RangeMatrix (const K& k) : BaseType(k) {}
 
-      /** \brief access element in row r and column c 
-          \param[in] r row 
+      /** \brief access element in row r and column c
+          \param[in] r row
           \param[in] c column
-          \return reference to element in row r and column c 
+          \return reference to element in row r and column c
       */
       K& operator()(int r,int c) {
         return static_cast<BaseType&>(*this)[r][c];
       }
-      /** \brief access element in row r and column c 
-          \param[in] r row 
+      /** \brief access element in row r and column c
+          \param[in] r row
           \param[in] c column
-          \return reference to element in row r and column c 
+          \return reference to element in row r and column c
       */
       const K operator()(int r,int c) const {
         return static_cast<const BaseType&>(*this)[r][c];
       }
-      /** \brief access to row r 
-          \param[in] r row 
-          \return reference to row r 
+      /** \brief access to row r
+          \param[in] r row
+          \return reference to row r
       */
       const RowType& row(int r) const{
         return static_cast<BaseType&>(*this)[r];
       }
-     /** \brief access to row r 
-          \param[in] r row 
-          \return reference to row r 
+     /** \brief access to row r
+          \param[in] r row
+          \return reference to row r
      */
       RowType& row(int r){
         return static_cast<BaseType&>(*this)[r];
       }
 
-      /** \brief access i element where row = i/col and column = i%col 
-          \param[in] i element number ot access 
-          \return reference to element in row i/col and column i%col 
+      /** \brief access i element where row = i/col and column = i%col
+          \param[in] i element number ot access
+          \return reference to element in row i/col and column i%col
       */
       K& operator[](int i) {
         int r = i/cols;
         int c = i%cols;
         return (*this)(r,c);
       }
-      /** \brief access i element where row = i/col and column = i%col 
-          \param[in] i element number ot access 
-          \return reference to element in row i/col and column i%col 
+      /** \brief access i element where row = i/col and column = i%col
+          \param[in] i element number ot access
+          \return reference to element in row i/col and column i%col
       */
       const K operator[](int i) const {
         int r = i/cols;
         int c = i%cols;
         return (*this)(r,c);
       }
-      
+
       /** \brief scalar product
-          \param y RangeMatrix to scalar multiply with 
-          \return K scalar product 
+          \param y RangeMatrix to scalar multiply with
+          \return K scalar product
       */
       K operator* (const BaseType& y)
       {
@@ -152,11 +152,11 @@ namespace Dune
           ret += static_cast<BaseType&>(*this)[i] * y[i];
         return ret;
       }
-      
+
       /** \brief vector space axpy operation
-          \param a scalar factor 
-          \param y RangeMatrix to multiply with  
-          \return reference to this is returned (i.e. *this) 
+          \param a scalar factor
+          \param y RangeMatrix to multiply with
+          \return reference to this is returned (i.e. *this)
       */
       RangeMatrix& axpy (const K& a, const BaseType& y)
       {
@@ -166,10 +166,10 @@ namespace Dune
       }
     };
     /*! \brief JacobianRangeType class for matrix valued functions -
-        derived from FieldMatrix 
+        derived from FieldMatrix
     */
     template <typename DomainFieldImp,typename RangeFieldImp,int n,int m1,int m2>
-    class MatrixMapping : 
+    class MatrixMapping :
         public FieldMatrix<RangeFieldImp,m1*m2,n> {
       // Implement L : VD -> VR where VR is the space of FieldMatrix<RFI,m1,m2>
       // VD is space of FieldVector<DFT,n>
@@ -189,24 +189,24 @@ namespace Dune
       /*! \brief Constructor initializing the whole matrix with a scalar
        */
       MatrixMapping (const RangeFieldImp& k) : BaseType(k) {}
-      
-      /** \brief returning reference to row 
-          \param i number of row 
-          \return Reference to row 
+
+      /** \brief returning reference to row
+          \param i number of row
+          \return Reference to row
       */
       FieldVector<DomainFieldImp,n>& operator[](int i) {
         return static_cast<BaseType&>(*this)[i];
       }
-      /** \brief returning reference to row 
-          \param i number of row 
-          \return Reference to row 
+      /** \brief returning reference to row
+          \param i number of row
+          \return Reference to row
       */
       const FieldVector<DomainFieldImp,n>& operator[](int i) const {
         return static_cast<const BaseType&>(*this)[i];
       }
     };
 
-    //! \brief Traits class for matrix valued spaces 
+    //! \brief Traits class for matrix valued spaces
     template <typename DomainFieldImp,typename RangeFieldImp,int n,int m1,int m2>
     struct MatrixSpaceTraits {
       /** \copydoc Dune::Fem::FunctionSpaceInterface::DomainFieldType */
@@ -227,7 +227,7 @@ namespace Dune
       enum { dimDomain = n };
     };
 
-    /*! @ingroup FunctionSpace 
+    /*! @ingroup FunctionSpace
        \brief A matrix valued function space.
     */
     template <typename DomainFieldImp,typename RangeFieldImp,int n,int m1,int m2>
@@ -236,38 +236,38 @@ namespace Dune
 
     // function space converter objects
     // --------------------------------
-    
+
     //! convert functions space to space with new dim domain
     template < class FunctionSpaceImp, int newDimDomain >
     struct ToNewDimDomainFunctionSpace;
 
-    //! convert functions space to space with new dim range 
+    //! convert functions space to space with new dim range
     template < class FunctionSpaceImp, int newDimRange >
-    struct ToNewDimRangeFunctionSpace; 
+    struct ToNewDimRangeFunctionSpace;
 
-    //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,newDimDomain> 
+    //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,newDimDomain>
     template< class DomainFieldImp, class RangeFieldImp, int dimDomain, int dimRange, int newDimDomain >
     struct ToNewDimDomainFunctionSpace< FunctionSpace< DomainFieldImp, RangeFieldImp, dimDomain, dimRange >, newDimDomain >
     {
       typedef FunctionSpace< DomainFieldImp, RangeFieldImp, newDimDomain, dimRange> Type;
     };
 
-    //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,dimLocal> 
+    //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,dimLocal>
     template< class DomainFieldImp, class RangeFieldImp, int n, int m1, int m2, int newDimDomain >
     struct ToNewDimDomainFunctionSpace< MatrixFunctionSpace< DomainFieldImp, RangeFieldImp, n, m1, m2 >, newDimDomain >
     {
       typedef MatrixFunctionSpace< DomainFieldImp, RangeFieldImp, newDimDomain, m1, m2 > Type;
     };
-    
-    //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,dimLocal> 
+
+    //! specialization for parameter list <domainfile,rangefield,dimDomain,dimRange,dimLocal>
     template< class DomainFieldImp, class RangeFieldImp, int dimDomain, int dimRange, int newDimRange >
     struct ToNewDimRangeFunctionSpace< FunctionSpace< DomainFieldImp, RangeFieldImp, dimDomain, dimRange >, newDimRange >
     {
       typedef FunctionSpace< DomainFieldImp, RangeFieldImp, dimDomain, newDimRange > Type;
     };
 
-  } // namespace Fem 
+  } // namespace Fem
 
-} // namespace Dune 
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEM_FUNCTIONSPACE_HH

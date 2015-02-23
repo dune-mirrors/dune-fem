@@ -1,4 +1,4 @@
-// (c) Dennis Diehl 2007 
+// (c) Dennis Diehl 2007
 #ifndef MPICOMMUNICATOR_HPP
 #define MPICOMMUNICATOR_HPP
 
@@ -38,14 +38,14 @@ protected:
   void resize(int new_size);
   void put(const char *a, int n);
   void get(char *a, int n);
-  
+
   static const int pre_data_size = sizeof(int);
 
   int source, dest, _size, _capacity, read_pos, size_left;
   char *data;
 };
 
- 
+
 
 class SendBuffer : public Buffer
 {
@@ -53,11 +53,11 @@ public:
   SendBuffer();
 
   // send: size+data
-  void send(MPI_Comm &comm, MPI_Request *send_request, 
+  void send(MPI_Comm &comm, MPI_Request *send_request,
       int tag, std::ostream *os = NULL);
 
   // send: data, size is already known
-  void send_rest(MPI_Comm &comm, MPI_Request *send_request, 
+  void send_rest(MPI_Comm &comm, MPI_Request *send_request,
      int tag, std::ostream *os = NULL);
 
   bool rest_to_send();
@@ -83,7 +83,7 @@ public:
 
   void receive(MPI_Comm &comm, MPI_Request *receive_request, int tag);
 
-  void receive_rest(MPI_Comm &comm, MPI_Request *receive_request, 
+  void receive_rest(MPI_Comm &comm, MPI_Request *receive_request,
         int tag, std::ostream *os = NULL);
 
   bool rest_to_receive(std::ostream *os = NULL);
@@ -98,7 +98,7 @@ private:
 
 class Communicator
 {
-  Communicator() : 
+  Communicator() :
     comm(MPI_COMM_WORLD), num_send(0), num_recv(0), counter(0), os(NULL)
   {
     MPI_Comm_size(comm, &num_of_processes);
@@ -147,21 +147,21 @@ class Communicator
   }
 public:
   // static method to give one instance needed
-  static Communicator & instance () 
-  { 
+  static Communicator & instance ()
+  {
     int flag;
     flag = 0;
     MPI_Initialized(&flag);
     if (!flag) {
       std::cerr << "the MPI-Communicator in fem/solver/ode "
                 << "is used before MPI_Init was called!" << std::endl
-                << "Solution 1: configure dune-fem with the " 
+                << "Solution 1: configure dune-fem with the "
                 << "--disable-mpi option, or " << std::endl
                 << "Solution 2: start your main programm with " << std::endl
                 << "   Dune::MPIHelper & mpihelper = "
                 << "Dune::MPIHelper::instance(argc,argv);" << std::endl;
       assert(0);
-      abort(); 
+      abort();
     }
     static Communicator comm;
     return comm;
@@ -187,7 +187,7 @@ public:
   void receive_request(int source);
   void send_receive_request(int process);
   void send_request_all();
-  void receive_request_all();  
+  void receive_request_all();
   void send_receive_request_all();
   virtual void start_communication(const char comment[] = "");
   virtual bool finish_communication();
@@ -200,8 +200,8 @@ public:
   void allreduce(int n, int *in, int *out, MPI_Op op);
 
   // conversion to MPI Communicator
-  operator MPI_Comm&(); 
-  operator MPI_Comm*(); 
+  operator MPI_Comm&();
+  operator MPI_Comm*();
 
   // Timings
   double time() const;
@@ -244,8 +244,8 @@ public:
 
 
 
-// todo: check if the 
-// const char *comment 
+// todo: check if the
+// const char *comment
 // can cause a segfault!!!!!!!
 class CommunicatorThreaded : public Communicator, public Thread
 {
@@ -273,7 +273,7 @@ class CommunicatorThreaded : public Communicator, public Thread
 
 
 // class Communicator inline implementation
-template<class T> 
+template<class T>
 inline
 void pardg::Communicator::put(int dest, const T& content)
 {
@@ -281,7 +281,7 @@ void pardg::Communicator::put(int dest, const T& content)
 }
 
 
-template<class T> 
+template<class T>
 inline
 void pardg::Communicator::put_all(const T& content)
 {
@@ -291,7 +291,7 @@ void pardg::Communicator::put_all(const T& content)
 }
 
 
-template<class T> 
+template<class T>
 inline
 void pardg::Communicator::get(int source, T& content)
 {
@@ -299,15 +299,15 @@ void pardg::Communicator::get(int source, T& content)
 }
 
 
-template<class T> 
-inline 
+template<class T>
+inline
 void pardg::Communicator::put(int dest, const T* content, int num)
 {
   send_buffer[dest].put<T>(content, num);
 }
 
 
-template<class T> 
+template<class T>
 inline
 void pardg::Communicator::put_all(const T* content, int num)
 {
@@ -317,7 +317,7 @@ void pardg::Communicator::put_all(const T* content, int num)
 }
 
 
-template<class T> 
+template<class T>
 inline
 void pardg::Communicator::get(int source, T* content, int num)
 {
@@ -336,14 +336,14 @@ inline
 int pardg::Communicator::size() const
 {
   return num_of_processes;
-}  
+}
 
 
 inline
 int pardg::Communicator::master() const
 {
   return 0;
-}  
+}
 
 
 inline
@@ -362,7 +362,7 @@ pardg::Communicator::operator MPI_Comm*()
 
 // wrappers for MPI_Allreduce
 inline
-void pardg::Communicator::allreduce(int dim, double *in, double *out, 
+void pardg::Communicator::allreduce(int dim, double *in, double *out,
             MPI_Op op)
 {
   double idle_start = time();
@@ -478,7 +478,7 @@ int pardg::Buffer::capacity() const
 }
 
 
-inline 
+inline
 void pardg::Buffer::clear()
 {
   _size = 0;
@@ -527,21 +527,21 @@ void pardg::Buffer::resize(int new_capacity)
 
 
 
-inline 
+inline
 void pardg::Buffer::put(const char *a, int n)
 {
   // if necessary resize, allocate 20 percent more than necessary
-  const double eta = 0.2; 
+  const double eta = 0.2;
   if (_size+n > _capacity) resize(static_cast<int>( (1.0+eta) * (_size+n) ) );
   memcpy(data+pre_data_size+_size, a, n);
   _size += n;
 }
 
 
-inline 
+inline
 void pardg::Buffer::get(char *a, int n)
 {
-  //std::cout << "get: " << n << std::endl; 
+  //std::cout << "get: " << n << std::endl;
   assert(read_pos+n <= _size);
   memcpy(a, data+pre_data_size+read_pos, n);
   read_pos += n;
