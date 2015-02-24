@@ -3,7 +3,7 @@ CONFIGURE_FLAGS="\
 --disable-documentation \
 --enable-experimental-grid-extensions \
 --without-gmp \
---prefix=/hosts/gandalf/raid5/morgoth/dune/src/dune\
+--prefix=/hosts/gandalf/raid5/morgoth/dune/src/dune \
 --disable-dependency-tracking "
 
 # These flags are necessary to perform grid specific checks!
