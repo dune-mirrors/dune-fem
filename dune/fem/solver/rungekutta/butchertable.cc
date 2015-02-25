@@ -192,6 +192,7 @@ namespace DuneODE
   }
 
 
+#if 0 // these are not working
 
   // semiImplicitARK34ButcherTable
   // -----------------------------
@@ -275,10 +276,10 @@ namespace DuneODE
 
   SimpleButcherTable< double > semiImplicitARK46ButcherTable ( bool expl )
   {
-    return SimpleButcherTable< double >( 4, 3, expl ? ARK46_Aex : ARK46_A, ARK46_b, expl ? ARK46_cex : ARK46_c );
+    return SimpleButcherTable< double >( 6, 4, expl ? ARK46_Aex : ARK46_A, ARK46_b, expl ? ARK46_cex : ARK46_c );
   }
 
-
+#endif
 
   // semiImplicitIERK45ButcherTable
   // ------------------------------
@@ -324,7 +325,7 @@ namespace DuneODE
 
   SimpleButcherTable< double > semiImplicitIERK45ButcherTable ( bool expl )
   {
-    return SimpleButcherTable< double >( 4, 3, expl ? IERK45_Aex : IERK45_A, IERK45_b, expl ? IERK45_cex : IERK45_c );
+    return SimpleButcherTable< double >( 5, 4, expl ? IERK45_Aex : IERK45_A, IERK45_b, expl ? IERK45_cex : IERK45_c );
   }
 
 } // namespace DuneODE
