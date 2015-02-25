@@ -158,7 +158,6 @@ namespace DuneODE
       const double time = timeStepControl_.time();
       const double timeStepSize = timeStepControl_.timeStepSize();
       assert( timeStepSize > 0.0 );
-
       for( int s = 0; s < stages(); ++s )
       {
         // update for stage s
@@ -206,6 +205,7 @@ namespace DuneODE
         for( int s = 0; s < stages(); ++s )
           U.axpy( beta_[ s ], *update_[ s ] );
 
+        //error = infNorm( U, Uerr );
         Uerr.axpy( -1.0, U );
         const double errorU = Uerr.scalarProductDofs( Uerr );
         const double normU = U.scalarProductDofs( U );
@@ -214,6 +214,8 @@ namespace DuneODE
         {
           error = std::sqrt( errorU / normU );
         }
+        std::cout << std::scientific << "Error in RK = " << error << " norm " << errorU << " " << normU << std::endl;
+        //std::cout << std::scientific << "Error in RK = " << error << std::endl;
       }
       else
       {
@@ -237,6 +239,25 @@ namespace DuneODE
     }
 
   protected:
+    double infNorm(const DestinationType& U, const DestinationType& Uerr ) const
+    {
+      typedef typename DestinationType :: ConstDofIteratorType ConstDofIteratorType ;
+      const ConstDofIteratorType uend = U.dend();
+      double res = 0;
+      for( ConstDofIteratorType u = U.dbegin(), uerr = Uerr.dbegin(); u != uend; ++u, ++uerr )
+      {
+        double uval = *u;
+        double uerrval = *uerr ;
+        double div = std::abs( std::max( uval, uerrval ) );
+
+        double norm = std::abs( uval - uerrval );
+        if( std::abs(div) > 1e-12 )
+          norm /= div;
+        res = std::max( res, norm );
+      }
+      return res;
+    }
+
     HelmholtzOperatorType &helmholtzOp_;
     NonlinearSolverType nonlinearSolver_;
     TimeStepControl timeStepControl_;

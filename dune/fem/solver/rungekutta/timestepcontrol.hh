@@ -3,6 +3,7 @@
 
 //- system includes
 #include <cassert>
+#include <memory>
 
 //- dune-common includes
 #include <dune/common/exceptions.hh>
@@ -39,6 +40,9 @@ namespace DuneODE
       maxIter_( Dune::Fem::Parameter::getValue< int >( "fem.ode.maxiterations" , 16 ) ),
       sigma_( Dune::Fem::Parameter::getValue< double >( "fem.ode.cflincrease" , 1.1 ) )
     {}
+
+    // destructor (virtual)
+    virtual ~ImplicitRungeKuttaSolverParameters() {}
 
     /** \brief tolerance for the non-linear solver (should be larger than the tolerance for
                the linear solver */
@@ -127,6 +131,9 @@ namespace DuneODE
       if( (dtEstImpl > 0) && (dtEstExpl > dtEstImpl) )
         cfl = dtEstExpl / dtEstImpl;
     }
+
+    // return number of max linear iterations per newton step
+    virtual int maxLinearIterations () const { return maxIter_; }
   };
 
 
@@ -227,7 +234,7 @@ namespace DuneODE
     }
 
     TimeProviderType &timeProvider_;
-    const ParametersType *parameters_;
+    std::shared_ptr< const ParametersType > parameters_;
     double cfl_, cflMax_;
     int verbose_;
     bool initialized_;
@@ -253,8 +260,10 @@ namespace DuneODE
     typedef PIDTimeStepControl ThisType;
     typedef ImplicitRungeKuttaTimeStepControl BaseType;
 
+  protected:
     using BaseType :: initialized_;
     using BaseType :: cfl_;
+    using BaseType :: parameters ;
   public:
     typedef Dune::Fem::TimeProviderBase TimeProviderType;
     typedef ImplicitRungeKuttaSolverParameters ParametersType;
@@ -263,12 +272,12 @@ namespace DuneODE
                                   const ParametersType &parameters = ParametersType() )
     : BaseType( timeProvider, parameters ),
       errors_(),
-      tol_( 0.0 )
+      tol_( 1e-3 )
     {
       if( Dune::Fem::Parameter::getValue("fem.ode.pidcontrol", bool(false) ) )
       {
-        errors_.resize( 3 );
-        tol_ = Dune::Fem::Parameter::getValue("fem.ode.pidtolerance", double(1e-3) );
+        tol_ = Dune::Fem::Parameter::getValue("fem.ode.pidtolerance", tol_ );
+        errors_.resize( 3, tol_ );
       }
     }
 
@@ -284,6 +293,15 @@ namespace DuneODE
       {
         cfl_ = 1.0; // reset cfl for next reduceTimeStep
         double dtEst = pidTimeStepControl( std::min( sourceTermEstimate, helmholtzEstimate ), monitor );
+        const int targetIterations = parameters().maxLinearIterations();
+        /*
+        if( monitor.linearSolverIterations_ > targetIterations &&
+            targetIterations > 0 )
+        {
+          dtEst *= double( targetIterations ) / double(monitor.linearSolverIterations_);
+        }
+        */
+        std::cout << "Set dt = " << dtEst << std::endl;
         timeProvider_.provideTimeStepEstimate( dtEst );
 
         if( (verbose_ >= ImplicitRungeKuttaSolverParameters::cflVerbosity) && (Dune::Fem::MPIManager::rank() == 0) )
@@ -305,6 +323,8 @@ namespace DuneODE
     {
       // get error || u^n - u^n+1 || / || u^n+1 || from monitor
       const double error = monitor.error_;
+      std::cout << error << " error " << std::endl;
+      if( std::abs( error ) < 1e-12 ) return 10. * dt;
 
       // shift errors
       for( int i=0; i<2; ++i )
@@ -321,7 +341,7 @@ namespace DuneODE
         const double newDt = dt * tol_ / error;
         return newDt;
       }
-      else
+      else if( error > 1e-12 )
       {
         // values taking from turek time stepping paper
         const double kP = 0.075 ;
@@ -330,8 +350,11 @@ namespace DuneODE
         const double newDt = (dt * std::pow( errors_[ 1 ] / errors_[ 2 ], kP ) *
                              std::pow( tol_         / errors_[ 2 ], kI ) *
                              std::pow( errors_[0]*errors_[0]/errors_[ 1 ]/errors_[ 2 ], kD ));
+        std::cout << "newDt = " << newDt << std::endl;
         return newDt;
       }
+
+      return dt ;
     }
 
   protected:
