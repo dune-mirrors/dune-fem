@@ -242,8 +242,8 @@ namespace DuneODE
 
 
 
-  // ImplicitRungeKuttaTimeStepControl
-  // ---------------------------------
+  // PIDTimeStepControl
+  // ------------------
 
   /** \brief PID time step control
 
