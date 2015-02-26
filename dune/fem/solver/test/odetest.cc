@@ -17,7 +17,12 @@
 #include <dune/fem/solver/odesolver.hh>
 
 #include <dune/fem/solver/rungekutta/explicit.hh>
-//#include <dune/fem/solver/rungekutta/implicit.hh>
+#include <dune/fem/solver/rungekutta/implicit.hh>
+
+#include <dune/fem/solver/rungekutta/timestepcontrol.hh>
+#include <dune/fem/solver/newtoninverseoperator.hh>
+#include <dune/fem/operator/dghelmholtz.hh>
+#include <dune/fem/solver/pardginverseoperators.hh>
 
 #include <dune/fem/io/parameter.hh>
 
@@ -40,12 +45,16 @@ public:
   typedef double DomainFieldType;
   typedef double RangeFieldType;
   typedef SpaceDummy DiscreteFunctionSpaceType;
+  const DiscreteFunctionSpaceType& space_;
 
-  myDest(std::string, const SpaceDummy&, const double* u = 0) {
+  myDest(std::string, const DiscreteFunctionSpaceType& space, const double* u = 0)
+  : space_( space ){
     clear();
   }
 
-  myDest() {
+  const DiscreteFunctionSpaceType& space () const { return space_; }
+
+  myDest() : space_( DiscreteFunctionSpaceType() ) {
     clear();
   }
 
@@ -109,7 +118,7 @@ public:
     y[1] = 3.0*t_*t_;
     y[2] = x[2];
     y[3] = 5.0 * x[ 3 ] - 3.0;
-    y[4] = std::cos( x[4] );
+    y[4] = std::cos( t_ );
   }
 
   static DestinationType exact (const double t) {
@@ -133,9 +142,20 @@ private:
   double t_;
 };
 
+template <class OdeSolver>
+struct SimpleFactory
+{
+  typedef OdeSolver  OdeSolverType;
+  template <class SpaceOperatorType, class TimeProvider>
+  static OdeSolverType* create( SpaceOperatorType& op, TimeProvider& tp, const int order )
+  {
+    return new OdeSolverType( op, tp, order );
+  }
+};
 
-template <class OdeSolverType>
-void solve(const bool verbose)
+
+template <class OdeFactory>
+void solve(OdeFactory factory, const bool verbose)
 {
   typedef myRHS SpaceOperatorType;
   typedef SpaceOperatorType::DestinationType DestinationType;
@@ -152,19 +172,21 @@ void solve(const bool verbose)
 
   // create solver
   Dune::Fem::DefaultTimeProvider tp( startTime, cfl );
-  OdeSolverType odeSolver( spaceOperator, tp, order );
+  typedef typename OdeFactory :: OdeSolverType OdeSolverType;
+  std::unique_ptr< OdeSolverType > odeSolver;
+  odeSolver.reset( factory.create( spaceOperator, tp, order ) );
 
   // initialize solution vector, same initial data for all components
   DestinationType U;
   U.clear(); // set initial data U(0) = 0
 
   // initialize odesolver
-  odeSolver.initialize( U );
+  odeSolver->initialize( U );
 
   // time loop
   for( tp.init(stepSize); tp.time() < endTime; tp.next(stepSize) ) {
     // do calculation
-    odeSolver.solve(U);
+    odeSolver->solve(U);
 
     if( verbose )
     {
@@ -208,19 +230,36 @@ int main( int argc, char **argv )
   // explicit RungeKutta (dune impl)
   {
     typedef DuneODE::ExplicitRungeKuttaSolver<DestinationType> OdeSolverType;
+    solve( SimpleFactory< OdeSolverType >(), verbose );
+  }
+
+  /*
+  // implicit RungeKutta (dune impl)
+  {
+    typedef Dune::Fem::ParDGGeneralizedMinResInverseOperator< DestinationType >  LinearInverseOperatorType;
+    typedef DuneODE::ImplicitRungeKuttaTimeStepControl TimeStepControlType;
+    typedef Dune::Fem::DGHelmholtzOperator< SpaceOperatorType > HelmholtzOperatorType;
+
+    typedef Dune::Fem::NewtonInverseOperator< HelmholtzOperatorType,
+                                LinearInverseOperatorType > NonlinearInverseOperatorType;
+
+    typedef DuneODE::ImplicitRungeKuttaSolver< HelmholtzOperatorType,
+                          NonlinearInverseOperatorType > OdeSolverType;
+
     solve< OdeSolverType > ( verbose );
   }
+  */
 
   // explicit RungeKutta (pardg impl)
   {
     typedef DuneODE::ExplicitOdeSolver<DestinationType> OdeSolverType;
-    solve< OdeSolverType > ( verbose );
+    solve( SimpleFactory< OdeSolverType >(), verbose );
   }
 
   // implicit RungeKutta (pardg impl)
   {
     typedef DuneODE::ImplicitOdeSolver<DestinationType> OdeSolverType;
-    solve< OdeSolverType > ( verbose );
+    solve( SimpleFactory< OdeSolverType >(), verbose );
   }
 
   return 0;
