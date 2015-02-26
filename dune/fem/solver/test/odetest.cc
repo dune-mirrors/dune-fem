@@ -327,15 +327,15 @@ int main( int argc, char **argv )
     solve( SimpleFactory< OdeSolverType >(), verbose );
   }
 
-  // implicit RungeKutta (dune impl)
-  {
-    solve( ImplicitRKFactory< SpaceOperatorType > (), verbose );
-  }
-
   // explicit RungeKutta (pardg impl)
   {
     typedef DuneODE::ExplicitOdeSolver<DestinationType> OdeSolverType;
     solve( SimpleFactory< OdeSolverType >(), verbose );
+  }
+
+  // implicit RungeKutta (dune impl)
+  {
+    solve( ImplicitRKFactory< SpaceOperatorType > (), verbose );
   }
 
   // implicit RungeKutta (pardg impl)
