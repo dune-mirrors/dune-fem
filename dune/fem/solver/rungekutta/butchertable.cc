@@ -328,4 +328,49 @@ namespace DuneODE
     return SimpleButcherTable< double >( 5, 4, expl ? IERK45_Aex : IERK45_A, IERK45_b, expl ? IERK45_cex : IERK45_c );
   }
 
+  // row3ButcherTable
+  // ---------------------
+  static const double delta_row = 1.0/2.0 + sqrt(3.0)/6.0;
+  static const double ROW3_A[] =
+    {delta_row, 0.0,
+     -4./3.*delta_row, delta_row
+    };
+  static const double ROW3_b[] =
+    {1./4.,3./4.};
+  static const double ROW3_c[] =
+    {0,2./3.};
+  static const double ROW3_B[] =
+    {0.0, 0.0,
+     2./3., 0.0
+    };
+
+  ROWSimpleButcherTable< double > row3ButcherTable ()
+  {
+    return ROWSimpleButcherTable< double >( 2, 3, ROW3_A, ROW3_b, ROW3_c, ROW3_B );
+  }
+
+#if 0
+  static const double delta_row = 7.8867513459481287e-01;
+  static const double ROW3_A[] =
+    {delta_row, 0.0, 0.0,
+     -1.5773502691896257e+00, delta_row, 0.0,
+     -6.7075317547305480e-01, -1.7075317547305482e-01, delta_row
+    };
+  static const double ROW3_b[] =
+    {1.0566243270259355e-01, 4.9038105676657971e-02, 8.4529946162074843e-01};
+  static const double ROW3_c[] =
+    {0,0};
+  static const double ROW3_B[] =
+    {0.0, 0.0, 0.0,
+     1.5773502691896257e+00, 0.0, 0.0,
+     5.0000000000000000e-01, 0.0, 0.0 
+    };
+
+  ROWSimpleButcherTable< double > row3ButcherTable ()
+  {
+    return ROWSimpleButcherTable< double >( 3, 3, ROW3_A, ROW3_b, ROW3_c, ROW3_B );
+  }
+#endif
+
+
 } // namespace DuneODE
