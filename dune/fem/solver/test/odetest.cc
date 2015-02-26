@@ -184,6 +184,9 @@ namespace Dune
         DomainFunctionType uFunction( "ParDGOperator u", domainSpace_, u );
         RangeFunctionType  wFunction( "ParDGOperator w", rangeSpace_, w );
         operator_( uFunction, wFunction );
+        // copy result back
+        for( int i=0; i<dim_of_value(); ++ i )
+          w[ i ] = wFunction[ i ];
       }
 
       int dim_of_argument( int i = 0 ) const
