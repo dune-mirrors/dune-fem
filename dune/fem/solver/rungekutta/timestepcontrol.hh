@@ -134,6 +134,14 @@ namespace DuneODE
 
     // return number of max linear iterations per newton step
     virtual int maxLinearIterations () const { return maxIter_; }
+
+    //! return number of selected solver (default = order of solver)
+    virtual int selectedSolver( const int order ) const
+    {
+      const std::string names [] = { "ImplicitEuler", "CrankNicolson", "DIRK23", "DIRK34", "SDIRK22" };
+      // by default select according to order
+      return Dune::Fem::Parameter::getEnum( "fem.ode.solvername", names, order-1 ) + 1;
+    }
   };
 
 

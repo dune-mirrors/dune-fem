@@ -72,7 +72,7 @@ namespace DuneODE
 
   SimpleButcherTable< double > gauss2ButcherTable ()
   {
-    return SimpleButcherTable< double >( 1, 1, Gauss2_A, Gauss2_b, Gauss2_c );
+    return SimpleButcherTable< double >( 1, 2, Gauss2_A, Gauss2_b, Gauss2_c );
   }
 
 
