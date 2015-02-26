@@ -46,12 +46,12 @@ namespace DuneODE
 
   };
 
-  struct NSNewtonParameter
+  struct ROWSolverParameter
 #ifndef DOXYGEN
-  : public LocalParameter< NSNewtonParameter, NSNewtonParameter >
+  : public LocalParameter< ROWSolverParameter, ROWSolverParameter >
 #endif
   {
-    NSNewtonParameter () {}
+    ROWSolverParameter () {}
 
     virtual double linAbsTolParameter ( )  const
     {
@@ -109,7 +109,7 @@ namespace DuneODE
                                     const ButcherTable &butcherTable,
                                     const TimeStepControlType &timeStepControl = TimeStepControl(),
                                     const SourceTermType &sourceTerm = SourceTermType(),
-                                    const NSNewtonParameter &parameter = NSNewtonParameter() )
+                                    const ROWSolverParameter &parameter = ROWSolverParameter() )
     : helmholtzOp_( helmholtzOp ),
       nonlinearSolver_( helmholtzOp_ ),
       timeStepControl_( timeStepControl ),
