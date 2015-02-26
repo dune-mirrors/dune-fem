@@ -16,13 +16,13 @@
 
 #include <dune/fem/solver/odesolver.hh>
 
-#include <dune/fem/solver/rungekutta/explicit.hh>
-#include <dune/fem/solver/rungekutta/implicit.hh>
-
 #include <dune/fem/solver/rungekutta/timestepcontrol.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
 #include <dune/fem/operator/dghelmholtz.hh>
 #include <dune/fem/solver/pardginverseoperators.hh>
+
+#include <dune/fem/solver/rungekutta/explicit.hh>
+#include <dune/fem/solver/rungekutta/implicit.hh>
 
 #include <dune/fem/io/parameter.hh>
 
@@ -48,8 +48,17 @@ public:
   const DiscreteFunctionSpaceType& space_;
 
   myDest(std::string, const DiscreteFunctionSpaceType& space, const double* u = 0)
-  : space_( space ){
-    clear();
+   : space_( space )
+  {
+    if( u )
+    {
+      for( int i=0; i<N; ++i )
+      {
+        (*this)[i] = u[i];
+      }
+    }
+    else
+      clear();
   }
 
   const DiscreteFunctionSpaceType& space () const { return space_; }
@@ -91,11 +100,12 @@ public:
 
 };
 
-
 // implement right hand side F(y,t)
 // here: system of three ODEs
 class myRHS : public Dune::Fem::SpaceOperatorInterface< myDest<systemSize> > {
 public:
+  typedef myDest<systemSize> DestinationType ;
+
   myRHS() {
   }
 
@@ -142,17 +152,60 @@ private:
   double t_;
 };
 
-template <class OdeSolver>
-struct SimpleFactory
-{
-  typedef OdeSolver  OdeSolverType;
-  template <class SpaceOperatorType, class TimeProvider>
-  static OdeSolverType* create( SpaceOperatorType& op, TimeProvider& tp, const int order )
-  {
-    return new OdeSolverType( op, tp, order );
-  }
-};
 
+namespace Dune
+{
+  namespace Fem
+  {
+
+    template <>
+    class ParDGOperator< myDest<systemSize>, myDest<systemSize> >
+    : public PARDG::Function
+    {
+    public:
+      typedef myDest<systemSize> DomainFunctionType;
+      typedef DomainFunctionType RangeFunctionType;
+      typedef ParDGOperator< DomainFunctionType, RangeFunctionType> ThisType;
+
+    public:
+      typedef Operator< DomainFunctionType, RangeFunctionType > OperatorType;
+
+      typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainFunctionSpaceType;
+      typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeFunctionSpaceType;
+
+      ParDGOperator ( const OperatorType &op, const DomainFunctionSpaceType &domainSpace, const RangeFunctionSpaceType &rangeSpace )
+      : operator_( op ),
+        domainSpace_( domainSpace ),
+        rangeSpace_( rangeSpace )
+      {}
+
+      void operator() ( const double *u, double *w, int i = 0 )
+      {
+        DomainFunctionType uFunction( "ParDGOperator u", domainSpace_, u );
+        RangeFunctionType  wFunction( "ParDGOperator w", rangeSpace_, w );
+        operator_( uFunction, wFunction );
+      }
+
+      int dim_of_argument( int i = 0 ) const
+      {
+        assert( i == 0 );
+        return domainSpace_.size();
+      }
+
+      int dim_of_value ( int i = 0 ) const
+      {
+        assert( i == 0 );
+        return rangeSpace_.size();
+      }
+
+    private:
+      const OperatorType &operator_;
+      const DomainFunctionSpaceType &domainSpace_;
+      const RangeFunctionSpaceType &rangeSpace_;
+    };
+
+  }
+}
 
 template <class OdeFactory>
 void solve(OdeFactory factory, const bool verbose)
@@ -213,6 +266,44 @@ void solve(OdeFactory factory, const bool verbose)
   }
 }
 
+template <class OdeSolver>
+struct SimpleFactory
+{
+  typedef OdeSolver  OdeSolverType;
+  template <class SpaceOperatorType, class TimeProvider>
+  OdeSolverType* create( SpaceOperatorType& op, TimeProvider& tp, const int order )
+  {
+    return new OdeSolverType( op, tp, order );
+  }
+};
+
+template <class SpaceOperator>
+struct ImplicitRKFactory
+{
+  typedef SpaceOperator  SpaceOperatorType;
+  typedef typename SpaceOperatorType::DestinationType DestinationType;
+
+  typedef Dune::Fem::ParDGGeneralizedMinResInverseOperator< DestinationType >  LinearInverseOperatorType;
+  typedef DuneODE::ImplicitRungeKuttaTimeStepControl                           TimeStepControlType;
+
+  typedef Dune::Fem::DGHelmholtzOperator< SpaceOperatorType >                  HelmholtzOperatorType;
+
+  typedef Dune::Fem::NewtonInverseOperator< typename HelmholtzOperatorType::JacobianOperatorType,
+                                            LinearInverseOperatorType >        NonlinearInverseOperatorType;
+
+  typedef DuneODE::ImplicitRungeKuttaSolver<
+            HelmholtzOperatorType, NonlinearInverseOperatorType, TimeStepControlType >   OdeSolverType;
+
+  std::unique_ptr< HelmholtzOperatorType > helmOp_;
+
+  template <class TimeProvider>
+  OdeSolverType* create( SpaceOperatorType& op, TimeProvider& tp, int order )
+  {
+    helmOp_.reset( new HelmholtzOperatorType( op ) );
+    return new OdeSolverType( *helmOp_, tp, order );
+  }
+};
+
 
 int main( int argc, char **argv )
 {
@@ -233,22 +324,10 @@ int main( int argc, char **argv )
     solve( SimpleFactory< OdeSolverType >(), verbose );
   }
 
-  /*
   // implicit RungeKutta (dune impl)
   {
-    typedef Dune::Fem::ParDGGeneralizedMinResInverseOperator< DestinationType >  LinearInverseOperatorType;
-    typedef DuneODE::ImplicitRungeKuttaTimeStepControl TimeStepControlType;
-    typedef Dune::Fem::DGHelmholtzOperator< SpaceOperatorType > HelmholtzOperatorType;
-
-    typedef Dune::Fem::NewtonInverseOperator< HelmholtzOperatorType,
-                                LinearInverseOperatorType > NonlinearInverseOperatorType;
-
-    typedef DuneODE::ImplicitRungeKuttaSolver< HelmholtzOperatorType,
-                          NonlinearInverseOperatorType > OdeSolverType;
-
-    solve< OdeSolverType > ( verbose );
+    solve( ImplicitRKFactory< SpaceOperatorType > (), verbose );
   }
-  */
 
   // explicit RungeKutta (pardg impl)
   {

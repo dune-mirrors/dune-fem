@@ -1,8 +1,9 @@
-#fem.ode.order: 2
-fem.ode.verbose: none # ode output: none, cfl, full
+fem.ode.order: 3
+fem.ode.verbose: noconv # noconv # ode output: none, cfl, full
 fem.ode.cflincrease: 1.25
 fem.ode.miniterations: 95
 fem.ode.maxiterations: 105
+fem.ode.iterations: 20
 fem.ode.cflStart: 1.
 #fem.ode.cflMax: 5
 fem.timeprovider.factor: 0.15
