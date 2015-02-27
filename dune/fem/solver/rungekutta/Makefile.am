@@ -1,5 +1,13 @@
 rungekuttadir =  $(includedir)/dune/fem/rungekutta
-rungekutta_HEADERS = basicimplicit.hh butchertable.hh explicit.hh implicit.hh semiimplicit.hh timestepcontrol.hh
+rungekutta_HEADERS = \
+	basicimplicit.hh \
+	basicrow.hh \
+	butchertable.hh \
+	explicit.hh \
+	implicit.hh \
+	row.hh \
+	semiimplicit.hh \
+	timestepcontrol.hh
 
 noinst_LTLIBRARIES = librungekutta.la
 
