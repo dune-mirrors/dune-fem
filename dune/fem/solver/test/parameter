@@ -1,4 +1,4 @@
-fem.ode.order: 2
+fem.ode.order: 3
 # fem.ode.solvername: DIRK34
 fem.ode.verbose: noconv # noconv # ode output: none, cfl, full
 fem.ode.cflincrease: 1.25

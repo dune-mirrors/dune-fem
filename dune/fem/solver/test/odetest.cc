@@ -263,9 +263,9 @@ void solve(OdeFactory factory, const bool verbose)
   }
 
   // print out solution
-  std::cout << "Result (t = " << tp.time() << ") U = " << U << std::endl;
+  std::cout << "Result (t = " << std::setw(6) << tp.time() << ") U = " << U << std::endl;
   DestinationType exact = spaceOperator.exact( tp.time() );
-  std::cout << "         exact U = " << exact << std::endl;
+  std::cout << "              exact U = " << exact << std::endl;
   exact -= U;
   exact /= U.two_norm();
 
@@ -289,7 +289,7 @@ struct SimpleFactory
   }
 };
 
-template <class SpaceOperator>
+template <class SpaceOperator, template <class,class,class> class Solver >
 struct ImplicitRKFactory
 {
   typedef SpaceOperator  SpaceOperatorType;
@@ -303,35 +303,8 @@ struct ImplicitRKFactory
   typedef Dune::Fem::NewtonInverseOperator< typename HelmholtzOperatorType::JacobianOperatorType,
                                             LinearInverseOperatorType >        NonlinearInverseOperatorType;
 
-  typedef DuneODE::ImplicitRungeKuttaSolver<
-            HelmholtzOperatorType, NonlinearInverseOperatorType, TimeStepControlType >   OdeSolverType;
-
-  std::unique_ptr< HelmholtzOperatorType > helmOp_;
-
-  template <class TimeProvider>
-  OdeSolverType* create( SpaceOperatorType& op, TimeProvider& tp, int order )
-  {
-    helmOp_.reset( new HelmholtzOperatorType( op ) );
-    return new OdeSolverType( *helmOp_, tp, order );
-  }
-};
-
-template <class SpaceOperator>
-struct ROWRKFactory
-{
-  typedef SpaceOperator  SpaceOperatorType;
-  typedef typename SpaceOperatorType::DestinationType DestinationType;
-
-  typedef Dune::Fem::ParDGGeneralizedMinResInverseOperator< DestinationType >  LinearInverseOperatorType;
-  typedef DuneODE::ImplicitRungeKuttaTimeStepControl                           TimeStepControlType;
-
-  typedef Dune::Fem::DGHelmholtzOperator< SpaceOperatorType >                  HelmholtzOperatorType;
-
-  typedef Dune::Fem::NewtonInverseOperator< typename HelmholtzOperatorType::JacobianOperatorType,
-                                            LinearInverseOperatorType >        NonlinearInverseOperatorType;
-
-  typedef DuneODE::ROWRungeKuttaSolver<
-            HelmholtzOperatorType, NonlinearInverseOperatorType, TimeStepControlType >   OdeSolverType;
+  // either ImplicitRungeKuttaSolver or ROWRungeKuttaSolver
+  typedef Solver< HelmholtzOperatorType, NonlinearInverseOperatorType, TimeStepControlType >   OdeSolverType;
 
   std::unique_ptr< HelmholtzOperatorType > helmOp_;
 
@@ -366,7 +339,7 @@ int main( int argc, char **argv )
   // implicit RungeKutta (dune impl)
   {
     std::cout << "Dune-fem implicit rungekutta" << std::endl;
-    solve( ImplicitRKFactory< SpaceOperatorType > (), verbose );
+    solve( ImplicitRKFactory< SpaceOperatorType, DuneODE::ImplicitRungeKuttaSolver > (), verbose );
   }
 
   // explicit RungeKutta (pardg expl)
@@ -378,7 +351,7 @@ int main( int argc, char **argv )
 
   // implicit RungeKutta (pardg impl)
   {
-    std::cout << "pardg explicit rungekutta" << std::endl;
+    std::cout << "pardg implicit rungekutta" << std::endl;
     typedef DuneODE::ImplicitOdeSolver<DestinationType> OdeSolverType;
     solve( SimpleFactory< OdeSolverType >(), verbose );
   }
@@ -386,7 +359,7 @@ int main( int argc, char **argv )
   // row RungeKutta (dune row)
   {
     std::cout << "Dune-fem row rungekutta" << std::endl;
-    solve( ROWRKFactory< SpaceOperatorType > (), verbose );
+    solve( ImplicitRKFactory< SpaceOperatorType, DuneODE::ROWRungeKuttaSolver > (), verbose );
   }
 
 
