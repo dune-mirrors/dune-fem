@@ -216,16 +216,17 @@ namespace DuneODE
         {
           typename NonlinearSolverType::LinearInverseOperatorType jInv( jOp, *preconditioner_, linReduction_, linAbsTol_, remLinearIts, linVerbose_ );
           jInv( rhs_, updateStage );
+          monitor.linearSolverIterations_ += jInv.iterations();
         }
         else
         {
           typename NonlinearSolverType::LinearInverseOperatorType jInv( jOp, linReduction_, linAbsTol_, remLinearIts, linVerbose_ );
           jInv( rhs_, updateStage );
+          monitor.linearSolverIterations_ += jInv.iterations();
         }
 
         // update monitor
-        monitor.newtonIterations_       += nonlinearSolver_.iterations();
-        monitor.linearSolverIterations_ += nonlinearSolver_.linearIterations();
+        monitor.newtonIterations_       += 0.;
 
       }
 
