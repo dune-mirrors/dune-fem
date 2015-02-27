@@ -26,6 +26,7 @@ namespace DuneODE
       int linearSolverIterations_;
       int maxNewtonIterations_;
       int maxLinearSolverIterations_;
+      int spaceOperatorCalls_;
 
       Monitor() { reset(); }
 
@@ -40,6 +41,7 @@ namespace DuneODE
         linearSolverIterations_ = 0;
         maxNewtonIterations_ = 0;
         maxLinearSolverIterations_ = 0;
+        spaceOperatorCalls_ = 0;
       }
     };
 
