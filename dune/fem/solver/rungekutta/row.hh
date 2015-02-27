@@ -53,6 +53,8 @@ namespace DuneODE
     {
       switch( order )
       {
+      case 2:
+        return row2ButcherTable();
       case 3:
         return row3ButcherTable();
       default:

@@ -97,6 +97,7 @@ namespace DuneODE
     using Base::stages_;
     const FieldType *a2_;
   };
+  ROWSimpleButcherTable< double > row2ButcherTable ();
   ROWSimpleButcherTable< double > row3ButcherTable ();
 } // namespace DuneODE
 
