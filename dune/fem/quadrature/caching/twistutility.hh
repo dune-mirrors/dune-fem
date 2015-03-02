@@ -372,7 +372,7 @@ namespace Dune
 
 
     // Specialization for GeometryGrid
-    // --------------------------
+    // -------------------------------
 
     template< class HostGrid, class CoordFunction, class Allocator >
     struct TwistUtility< GeometryGrid< HostGrid, CoordFunction, Allocator > >
@@ -389,68 +389,25 @@ namespace Dune
 
     public:
       //! \brief return twist for inner face
-      static int twistInSelf ( const GridType &grid,
-                               const LeafIntersection &intersection )
+      template< class Intersection >
+      static int twistInSelf ( const GridType &grid, const Intersection &intersection )
       {
-        typedef typename HostGridAccess :: HostLeafIntersection HostIntersection;
-        const HostIntersection &hostIntersection
-          = HostGridAccess :: hostIntersection( intersection );
-        return HostTwistUtility :: twistInSelf( grid.hostGrid(), hostIntersection );
-      }
-
-      //! \brief return twist for inner face
-      static int twistInSelf ( const GridType &grid,
-                               const LevelIntersection &intersection )
-      {
-        typedef typename HostGridAccess :: HostLevelIntersection HostIntersection;
-        const HostIntersection &hostIntersection
-          = HostGridAccess :: hostIntersection( intersection );
-        return HostTwistUtility :: twistInSelf( grid.hostGrid(), hostIntersection );
+        return HostTwistUtility::twistInSelf( grid.hostGrid(), HostGridAccess::hostIntersection( intersection ) );
       }
 
       //! \brief return twist for outer face
-      static int twistInNeighbor ( const GridType &grid,
-                                   const LeafIntersection &intersection )
+      template< class Intersection >
+      static int twistInNeighbor ( const GridType &grid, const Intersection &intersection )
       {
-        typedef typename HostGridAccess :: HostLeafIntersection HostIntersection;
-        const HostIntersection &hostIntersection
-          = HostGridAccess :: hostIntersection( intersection );
-        return HostTwistUtility :: twistInNeighbor( grid.hostGrid(), hostIntersection );
-      }
-
-      //! \brief return twist for outer face
-      static int twistInNeighbor ( const GridType &grid,
-                                   const LevelIntersection &intersection )
-      {
-        typedef typename HostGridAccess :: HostLevelIntersection HostIntersection;
-        const HostIntersection &hostIntersection
-          = HostGridAccess :: hostIntersection( intersection );
-        return HostTwistUtility :: twistInNeighbor( grid.hostGrid(), hostIntersection );
+        return HostTwistUtility::twistInNeighbor( grid.hostGrid(), HostGridAccess::hostIntersection( intersection ) );
       }
 
       /** \brief return element geometry type of inside or outside entity */
-      static GeometryType
-      elementGeometry ( const LeafIntersection &intersection, bool inside )
+      template< class Intersection >
+      static GeometryType elementGeometry ( const Intersection &intersection, bool inside )
       {
-        typedef typename HostGridAccess :: HostLeafIntersection HostIntersection;
-        const HostIntersection &hostIntersection
-          = HostGridAccess :: hostIntersection( intersection );
-        return HostTwistUtility :: elementGeometry( hostIntersection, inside );
+        return HostTwistUtility::elementGeometry( HostGridAccess::hostIntersection( intersection ), inside );
       }
-
-      /** \brief return element geometry type of inside or outside entity */
-      static GeometryType
-      elementGeometry ( const LevelIntersection &intersection, bool inside )
-      {
-        typedef typename HostGridAccess :: HostLevelIntersection HostIntersection;
-        const HostIntersection &hostIntersection
-          = HostGridAccess :: hostIntersection( intersection );
-        return HostTwistUtility :: elementGeometry( hostIntersection, inside );
-      }
-
-    private:
-      TwistUtility( const TwistUtility & );
-      TwistUtility &operator=( const TwistUtility & );
     };
 
   }  // namespace Fem
