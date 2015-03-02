@@ -86,9 +86,9 @@ namespace Dune
       // omega for ssor preconditioning
       const double omega_;
 
-      //! Copy Constructor prohibited
-      SparseRowMatrix(const SparseRowMatrix<T> &S);
     public:
+      SparseRowMatrix(const SparseRowMatrix<T> &S) = delete;
+
       //! makes Matrix of zero length, omega is 1.1 by default
       SparseRowMatrix(double omega = 1.1);
 
@@ -822,11 +822,8 @@ namespace Dune
       {
       }
 
-    private:
-      // prohibit copying
-      LocalMatrix( const LocalMatrix & );
+      LocalMatrix( const LocalMatrix & ) = delete;
 
-    public:
       void init( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
       {
         /*******************************************************************

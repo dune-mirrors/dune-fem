@@ -773,9 +773,9 @@ namespace Dune
       // overflow fraction for implicit build mode
       const double overflowFraction_;
 
-      // prohibit copy constructor
-      ISTLMatrixObject(const ISTLMatrixObject&);
     public:
+      ISTLMatrixObject(const ISTLMatrixObject&) = delete;
+
       //! constructor
       //! \param rowSpace space defining row structure
       //! \param colSpace space defining column structure
