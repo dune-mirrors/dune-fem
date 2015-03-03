@@ -301,8 +301,8 @@ namespace DuneODE
       {
         cfl_ = 1.0; // reset cfl for next reduceTimeStep
         double dtEst = pidTimeStepControl( std::min( sourceTermEstimate, helmholtzEstimate ), monitor );
-        const int targetIterations = parameters().maxLinearIterations();
         /*
+        const int targetIterations = parameters().maxLinearIterations();
         if( monitor.linearSolverIterations_ > targetIterations &&
             targetIterations > 0 )
         {
