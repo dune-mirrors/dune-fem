@@ -466,11 +466,10 @@ namespace Dune
         out << "                       const GlobalJacobianRangeType& )" << std::endl;
         out << "  {" << std::endl;
         out << "    typedef typename JacobianRangeVectorType :: value_type  value_type;" << std::endl;
-        out << "    typedef typename JacobianRangeType :: field_type field_type;" << std::endl;
         out << "    for( size_t row = 0; row < " << numRows << " ; ++ row )" << std::endl;
         out << "    {" << std::endl;
         out << "      const value_type& jacStorageRow = jacStorage[ quad.cachingPoint( row ) ];" << std::endl;
-        out << "      typedef typename Geometry::Jacobian GeometryJacobianType;" << std::endl;
+        out << "      typedef typename Geometry::JacobianInverseTransposed GeometryJacobianType;" << std::endl;
         out << "      // use reference to GeometryJacobianType to make code compile with SPGrid Geometry" << std::endl;
         out << "      const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );" << std::endl << std::endl;
         out << "      GlobalJacobianRangeType& result = jacVector[ row ];" << std::endl;
@@ -536,7 +535,7 @@ namespace Dune
         out << "    for( size_t row = 0; row < " << numRows << " ; ++ row )" << std::endl;
         out << "    {" << std::endl;
         out << "      const value_type& jacStorageRow = jacStorage[ quad.cachingPoint( row ) ];" << std::endl;
-        out << "      typedef typename Geometry::Jacobian GeometryJacobianType;" << std::endl;
+        out << "      typedef typename Geometry::JacobianInverseTransposed GeometryJacobianType;" << std::endl;
         out << "      // use reference to GeometryJacobianType to make code compile with SPGrid Geometry" << std::endl;
         out << "      const GeometryJacobianType& gjit = geometry.jacobianInverseTransposed( quad.point( row ) );" << std::endl << std::endl;
         out << "      JacobianRangeType jacFactorTmp;" << std::endl;
