@@ -224,10 +224,6 @@ namespace DuneODE
           jInv( rhs_, updateStage );
           monitor.linearSolverIterations_ += jInv.iterations();
         }
-
-        // update monitor
-        monitor.newtonIterations_       += 0.;
-
       }
 
       double error = 0.0;
