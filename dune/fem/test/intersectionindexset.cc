@@ -3,9 +3,6 @@
 #define SKIP_TEST
 #endif
 
-// without this define this code won't compile for Yasp
-#define ENABLE_ADAPTIVELEAFINDEXSET_FOR_YASPGRID
-
 #include <config.h>
 #include <iostream>
 
