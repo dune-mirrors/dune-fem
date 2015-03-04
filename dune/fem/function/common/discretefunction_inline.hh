@@ -141,9 +141,8 @@ namespace Dune
     {
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
       EntitySearch< GridPartType, EntityType::codimension > entitySearch( BaseType::space().gridPart() );
-      const typename EntityType::EntityPointer entityPtr = entitySearch( x );
 
-      const EntityType &entity = *entityPtr;
+      const EntityType entity(entitySearch( x ));
       const typename EntityType::Geometry geometry = entity.geometry();
       functor( geometry.local( x ), BaseType::localFunction( entity ) );
     }

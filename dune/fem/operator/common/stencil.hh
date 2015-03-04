@@ -248,7 +248,6 @@ namespace Dune
           typedef typename DomainSpace::GridPartType GridPart;
           typedef typename GridPart :: IntersectionIteratorType IntersectionIteratorType;
           typedef typename IntersectionIteratorType :: Intersection IntersectionType;
-          typedef typename GridPart :: template Codim<0> :: EntityPointerType EntityPointer;
 
           const IntersectionIteratorType endit = dSpace.gridPart().iend( entity );
           for( IntersectionIteratorType it = dSpace.gridPart().ibegin( entity );
@@ -260,8 +259,7 @@ namespace Dune
               continue;
             if( intersection.neighbor() )
             {
-              EntityPointer ep = intersection.outside();
-              const DomainEntityType& neighbor = *ep;
+              const DomainEntityType neighbor(intersection.outside());
               BaseType::fill(neighbor,entity);
             }
           }

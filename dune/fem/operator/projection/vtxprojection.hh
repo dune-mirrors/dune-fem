@@ -42,7 +42,6 @@ namespace Dune
         typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
         typedef typename GridPartType::IntersectionType IntersectionType;
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
-        typedef typename GridPartType::template Codim< 0 >::EntityPointerType EntityPointerType;
         typedef typename GridPartType::template Codim< 0 >::GeometryType GeometryType;;
 
         typedef typename LagrangePointSetType::template Codim< 1 >::SubEntityIteratorType FaceDofIteratorType;
@@ -119,8 +118,7 @@ namespace Dune
               if( intersection.neighbor() )
               {
                 // get neighbor
-                EntityPointerType outside = intersection.outside();
-                const EntityType &neighbor = *outside;
+                const EntityType neighbor(intersection.outside());
 
                 // if non-conforming situation
                 if( entity.level() > neighbor.level() )
