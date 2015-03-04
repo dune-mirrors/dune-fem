@@ -96,12 +96,6 @@ namespace Dune
         static const bool v = Dune::Capabilities::isLeafwiseConforming< Grid >::v;
       };
 
-      template< class Grid >
-      struct hasAdaptiveIndexSet< LeafGridPart< Grid > >
-      {
-        static const bool v = false;
-      };
-
     } // namespace GridPartCapabilities
 
   } // namespace Fem

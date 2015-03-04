@@ -98,12 +98,6 @@ namespace Dune
         static const bool v = Dune::Capabilities::isLevelwiseConforming< Grid >::v;
       };
 
-      template< class Grid >
-      struct hasAdaptiveIndexSet< LevelGridPart< Grid > >
-      {
-        static const bool v = false;
-      };
-
     } // namespace GridPartCapabilities
 
   } // namespace Fem

@@ -76,13 +76,6 @@ namespace Dune
         static const bool v = isConforming< HostGridPartType >::v;
       };
 
-
-      template< class HostGridPartType >
-      struct hasAdaptiveIndexSet< IdGridPart< HostGridPartType > >
-      {
-        static const bool v = hasAdaptiveIndexSet< HostGridPartType >::v;
-      };
-
     } // namespace GridPartCapabilities
 
   } // namespace Fem

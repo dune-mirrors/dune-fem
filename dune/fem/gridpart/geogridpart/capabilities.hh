@@ -78,13 +78,6 @@ namespace Dune
         static const bool v = isConforming< typename CoordFunction::GridPartType >::v;
       };
 
-
-      template< class CoordFunction >
-      struct hasAdaptiveIndexSet< GeoGridPart< CoordFunction > >
-      {
-        static const bool v = hasAdaptiveIndexSet< typename CoordFunction::GridPartType >::v;
-      };
-
     } // namespace GridPartCapabilities
 
   } // namespace Fem
