@@ -46,7 +46,7 @@ public:
   typedef double DomainFieldType;
   typedef double RangeFieldType;
   typedef SpaceDummy DiscreteFunctionSpaceType;
-  const DiscreteFunctionSpaceType& space_;
+  const DiscreteFunctionSpaceType space_;
 
   myDest(std::string, const DiscreteFunctionSpaceType& space, const double* u = 0)
    : space_( space )
