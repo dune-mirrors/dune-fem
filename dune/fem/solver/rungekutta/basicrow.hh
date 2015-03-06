@@ -55,17 +55,17 @@ namespace DuneODE
 
     virtual double linAbsTolParameter ( )  const
     {
-      return Parameter::getValue< double >( "fem.solver.row.linabstol" );
+      return Parameter::getValue< double >( "fem.solver.row.linabstol", 1e-6 );
     }
 
     virtual double linReductionParameter ( ) const
     {
-      return Parameter::getValue< double >( "fem.solver.row.linreduction" );
+      return Parameter::getValue< double >( "fem.solver.row.linreduction", 1e-4  );
     }
 
     virtual bool linearSolverVerbose () const
     {
-      return Parameter::getValue< bool >( "fem.solver.row.linear.verbose" );
+      return Parameter::getValue< bool >( "fem.solver.row.linear.verbose", false );
     }
 
     virtual int maxLinearIterationsParameter () const
