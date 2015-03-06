@@ -7,4 +7,6 @@ check_PROGRAMS = odetest
 
 odetest_SOURCES = odetest.cc
 
+EXTRA_DIST = parameter
+
 include $(top_srcdir)/am/global-rules
