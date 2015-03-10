@@ -239,11 +239,8 @@ namespace Dune
                                  bool onlyNonContinuousNeighbors = false)
         : BaseType( dSpace, rSpace )
       {
-        typedef typename DomainSpace::IteratorType IteratorType;
-        const IteratorType end = dSpace.end();
-        for (IteratorType it = dSpace.begin(); it!=end; ++it)
+        for (const auto & entity: dSpace)
         {
-          const DomainEntityType &entity = *it;
           BaseType::fill(entity,entity);
           typedef typename DomainSpace::GridPartType GridPart;
           typedef typename GridPart :: IntersectionIteratorType IntersectionIteratorType;
@@ -259,7 +256,7 @@ namespace Dune
               continue;
             if( intersection.neighbor() )
             {
-              const DomainEntityType neighbor(intersection.outside());
+              const DomainEntityType & neighbor(intersection.outside());
               BaseType::fill(neighbor,entity);
             }
           }

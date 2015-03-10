@@ -36,7 +36,6 @@ namespace Dune
         typedef typename DiscreteFunction::LocalFunctionType LocalDiscreteFunctionType;
 
         typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-        typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
         typedef typename DiscreteFunctionSpaceType::LagrangePointSetType LagrangePointSetType;
 
         typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
@@ -57,10 +56,8 @@ namespace Dune
         DiscreteFunction w ( "weight", space );
         w.clear();
 
-        const IteratorType end = space.end();
-        for ( IteratorType it = space.begin(); it != end; ++it )
+        for ( const auto& entity : space )
         {
-          const EntityType &entity = *it;
           weight.setEntity( entity );
 
           LocalDiscreteFunctionType lw = w.localFunction( entity );
@@ -104,10 +101,8 @@ namespace Dune
         if( !GridPartType::Traits::conforming && Fem::GridPartCapabilities::hasGrid< GridPartType >::v)
         {
           const GridPartType &gridPart =  space.gridPart();
-          for( IteratorType it = space.begin(); it != end; ++it )
+          for( const auto& entity : space )
           {
-            const EntityType &entity = *it;
-
             const LagrangePointSetType &lagrangePointSet = space.lagrangePointSet( entity );
 
             const IntersectionIteratorType iend = gridPart.iend( entity );
@@ -118,7 +113,7 @@ namespace Dune
               if( intersection.neighbor() )
               {
                 // get neighbor
-                const EntityType neighbor(intersection.outside());
+                const EntityType & neighbor(intersection.outside());
 
                 // if non-conforming situation
                 if( entity.level() > neighbor.level() )
