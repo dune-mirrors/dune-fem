@@ -25,7 +25,6 @@ protected:
   typedef typename LocalFunctionType::JacobianRangeType JacobianRangeType;
 
   typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-  // typedef typename IteratorType::EntityPointer EntityPointerType;
   typedef typename IteratorType::Entity EntityType;
   typedef typename EntityType::Geometry GeometryType;
 
@@ -38,8 +37,6 @@ protected:
 
   typedef Dune::CachingQuadrature< GridPartType, 1 > FaceQuadratureType;
   typedef Dune::CachingQuadrature< GridPartType, 0 > QuadratureType;
-
-  typedef typename GridPartType :: GridType :: template Codim< 0 > :: EntityPointer EntityPointerType;
 
 public:
   explicit EllipticOperator ( const ModelType &model = Model() )

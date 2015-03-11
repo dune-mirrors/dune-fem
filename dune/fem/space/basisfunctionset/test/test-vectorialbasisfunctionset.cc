@@ -337,13 +337,8 @@ void traverse ( GridPartType &gridPart )
   typedef Dune::FieldVector< typename FunctionSpaceType::RangeFieldType, 3 > ErrorType;
   ErrorType error( 0 );
 
-  typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-  const IteratorType end = space.end();
-  for( IteratorType it = space.begin(); it != end; ++it )
+  for( const auto& entity : space )
   {
-    // get entity
-    const typename IteratorType::Entity &entity = *it;
-
     // get basis function set
     typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
     const BasisFunctionSetType basisFunctionSet = space.basisFunctionSet( entity );

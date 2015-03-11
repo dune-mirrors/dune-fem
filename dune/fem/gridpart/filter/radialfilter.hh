@@ -56,9 +56,9 @@ namespace Dune
       template< class Intersection >
       bool interiorIntersection( const Intersection &intersection ) const
       {
-        typedef typename Intersection::EntityPointer EntityPointerType;
-        const EntityPointerType outside = intersection.outside();
-        return contains( *outside );
+        typedef typename Intersection::Entity EntityType;
+        const EntityType& outside(intersection.outside());
+        return contains( outside );
       }
 
       //! \brief return what boundary id we have in case of boundary intersection

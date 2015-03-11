@@ -63,21 +63,18 @@ namespace Dune
     template< class SpaceType >
     void LagrangeBasis_Test :: checkLagrangeBasis( const SpaceType &space )
     {
-      typedef typename SpaceType :: IteratorType IteratorType;
       typedef typename SpaceType :: BasisFunctionSetType  BasisFunctionSetType;
       typedef typename SpaceType :: LagrangePointSetType LagrangePointSetType;
       typedef typename SpaceType :: DomainType DomainType;
       typedef typename SpaceType :: RangeType RangeType;
 
       int errors = 0;
-
-      IteratorType end = space.end();
-      for(IteratorType it = space.begin(); it != end; ++it)
+      for(const auto& entity : space)
       {
-        const BasisFunctionSetType& basisSet = space.basisFunctionSet( *it );
+        const BasisFunctionSetType& basisSet = space.basisFunctionSet( entity );
         const int numBasisFct = basisSet.size();
 
-        const LagrangePointSetType& pointSet = space.lagrangePointSet( *it );
+        const LagrangePointSetType& pointSet = space.lagrangePointSet( entity );
         const int numPoints = pointSet.size();
 
         std::vector< RangeType > phi( numPoints, RangeType( 0 ) );

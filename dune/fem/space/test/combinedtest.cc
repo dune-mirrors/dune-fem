@@ -98,8 +98,6 @@ class L2Projection
          DiscreteFunctionType &discFunc, int polOrd)
   {
     typedef typename DiscreteFunctionSpaceType::Traits::GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
-
     const DiscreteFunctionSpaceType& space =  discFunc.space();
 
     discFunc.clear();
@@ -109,13 +107,12 @@ class L2Projection
     typename DiscreteFunctionSpaceType::RangeType ret (0.0);
     typename DiscreteFunctionSpaceType::RangeType phi (0.0);
 
-    Iterator endit = space.end();
-    for(Iterator it = space.begin(); it != endit ; ++it)
+    for(const auto& entity : space)
     {
       // Get quadrature rule
-      CachingQuadrature<GridPartType,0> quad(*it, polOrd);
+      CachingQuadrature<GridPartType,0> quad(entity, polOrd);
 
-      LocalFuncType lf = discFunc.localFunction(*it);
+      LocalFuncType lf = discFunc.localFunction(entity);
 
       //! Note: BaseFunctions must be ortho-normal!!!!
       typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType
@@ -124,7 +121,7 @@ class L2Projection
         lf.baseFunctionSet();
 
       const typename MyGridType::template Codim<0>::Entity::Geometry&
-        itGeom = (*it).geometry();
+        itGeom = entity.geometry();
 
       const int quadNop = quad.nop();
       const int numDofs = lf.numDofs();
@@ -164,7 +161,6 @@ public:
     const DiscreteFunctionSpaceType & space = discFunc.space();
 
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
 
     RangeType ret (0.0);
@@ -174,16 +170,15 @@ public:
 
     enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
 
-    IteratorType endit = space.end();
-    for(IteratorType it = space.begin(); it != endit ; ++it)
+    for(const auto& entity : space)
     {
-      CachingQuadrature<GridPartType,0> quad(*it, polOrd);
-      LocalFuncType lf = discFunc.localFunction(*it);
+      CachingQuadrature<GridPartType,0> quad(entity, polOrd);
+      LocalFuncType lf = discFunc.localFunction(entity);
       const int quadNop = quad.nop();
       for(int qP = 0; qP < quadNop; ++qP)
       {
-        double weight = quad.weight(qP) * (*it).geometry().integrationElement(quad.point(qP));
-        f.evaluate((*it).geometry().global(quad.point(qP)),time, ret);
+        double weight = quad.weight(qP) * entity.geometry().integrationElement(quad.point(qP));
+        f.evaluate(entity.geometry().global(quad.point(qP)),time, ret);
         lf.evaluate(quad[qP],phi);
 
         for(int i=0; i< dimRange; ++i)

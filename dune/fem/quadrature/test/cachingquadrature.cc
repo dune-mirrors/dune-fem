@@ -39,7 +39,6 @@ private:
   typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType;
   typedef typename GridPartType :: IndexSetType  IndexSetType ;
   typedef typename IteratorType :: Entity EntityType;
-  typedef typename EntityType :: EntityPointer EntityPointerType;
   typedef typename EntityType :: Geometry  Geometry;
   typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
   typedef typename IntersectionIteratorType :: Intersection IntersectionType;
@@ -123,13 +122,11 @@ public:
         const IntersectionType &intersection = *iit;
         if (intersection.neighbor() && intersection.conforming())
         {
-          EntityPointerType epInside = intersection.inside();
-          const EntityType & inside = *epInside;
+          const EntityType & inside(intersection.inside());
           FaceQuadratureType faceQuadInner(gridPart_, intersection, order_,
               FaceQuadratureType::INSIDE);
 
-          EntityPointerType epOutside = intersection.outside();
-          const EntityType & outside = *epOutside;
+          const EntityType & outside(intersection.outside());
           FaceQuadratureType faceQuadOuter(gridPart_, intersection, order_,
               FaceQuadratureType::OUTSIDE);
 

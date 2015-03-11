@@ -192,9 +192,9 @@ namespace Dune
       template< class Intersection >
       bool interiorIntersection( const Intersection &intersection ) const
       {
-        typedef typename Intersection::EntityPointer EntityPointerType;
-        const EntityPointerType outside = intersection.outside();
-        return asImp().contains( *outside );
+        typedef typename Intersection::Entity EntityType;
+        const EntityType& outside(intersection.outside());
+        return asImp().contains( outside );
       }
 
       //! \brief returns true if the given entity of the pointer in the domain

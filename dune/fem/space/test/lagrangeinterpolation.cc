@@ -144,7 +144,6 @@ class L2Projection
   static void project (const FunctionType &f, DiscreteFunctionType &discFunc, int polOrd)
   {
     typedef typename DiscreteFunctionSpaceType::Traits::GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType::Traits::IteratorType Iterator;
 
     const DiscreteFunctionSpaceType& space =  discFunc.space();
 
@@ -155,13 +154,12 @@ class L2Projection
     typename DiscreteFunctionSpaceType::RangeType ret (0.0);
     typename DiscreteFunctionSpaceType::RangeType phi (0.0);
 
-    Iterator endit = space.end();
-    for(Iterator it = space.begin(); it != endit ; ++it)
+    for(const auto& entity : space)
     {
       // Get quadrature rule
-      CachingQuadrature<GridPartType,0> quad(*it, polOrd);
+      CachingQuadrature<GridPartType,0> quad(entity, polOrd);
 
-      LocalFuncType lf = discFunc.localFunction(*it);
+      LocalFuncType lf = discFunc.localFunction(entity);
 
       //! Note: BaseFunctions must be ortho-normal!!!!
       typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType ;
@@ -169,14 +167,14 @@ class L2Projection
         lf.baseFunctionSet();
 
       //const typename MyGridType::template Codim<0>::Entity::Geometry&
-      //  itGeom = (*it).geometry();
+      //  itGeom = entity.geometry();
 
       const int quadNop = quad.nop();
       const int numDofs = lf.numDofs();
       for(int qP = 0; qP < quadNop ; ++qP)
       {
         // f.evaluate(itGeom.global(quad.point(qP)), ret);
-        f.localFunction(*it).jacobian(quad,qP, ret);
+        f.localFunction(entity).jacobian(quad,qP, ret);
         for(int i=0; i<numDofs; ++i) {
           baseset.evaluate(i,quad[qP],phi);
           lf[i] += quad.weight(qP) * (ret * phi) ;
@@ -226,19 +224,16 @@ public:
                           double time,
                           int polOrder )
   {
-    typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
-
     const DiscreteFunctionSpaceType &discreteFunctionSpace
       = discreteFunction.space();
 
     RangeType error( 0 );
-    IteratorType endit = discreteFunctionSpace.end();
-    for( IteratorType it = discreteFunctionSpace.begin(); it != endit; ++it )
+    for( const auto& entity : discreteFunctionSpace )
     {
-      CachingQuadrature< GridPartType, 0 > quadrature( *it, polOrder );
-      LocalFunctionType localFunction = discreteFunction.localFunction( *it );
+      CachingQuadrature< GridPartType, 0 > quadrature( entity, polOrder );
+      LocalFunctionType localFunction = discreteFunction.localFunction( entity );
 
-      const GeometryType &geometry = (*it).geometry();
+      const GeometryType &geometry = entity.geometry();
 
       const int numQuadraturePoints = quadrature.nop();
       for( int qp = 0; qp < numQuadraturePoints; ++qp )
@@ -309,19 +304,16 @@ public:
                           double time,
                           int polOrder )
   {
-    typedef typename DiscreteFunctionSpaceType :: IteratorType IteratorType;
-
     const DiscreteFunctionSpaceType &discreteFunctionSpace
       = discreteFunction.space();
 
     RangeType error( 0 );
-    IteratorType endit = discreteFunctionSpace.end();
-    for( IteratorType it = discreteFunctionSpace.begin(); it != endit; ++it )
+    for( const auto& entity : discreteFunctionSpace )
     {
-      CachingQuadrature< GridPartType, 0 > quadrature( *it, polOrder );
-      LocalFunctionType localFunction = discreteFunction.localFunction( *it );
+      CachingQuadrature< GridPartType, 0 > quadrature( entity, polOrder );
+      LocalFunctionType localFunction = discreteFunction.localFunction( entity );
 
-      const GeometryType &geometry = (*it).geometry();
+      const GeometryType &geometry = entity.geometry();
 
       const int numQuadraturePoints = quadrature.nop();
       for( int qp = 0; qp < numQuadraturePoints; ++qp )

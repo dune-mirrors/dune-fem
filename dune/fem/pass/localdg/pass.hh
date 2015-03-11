@@ -57,7 +57,6 @@ namespace Dune
 
       // Types from the base class
       typedef typename BaseType::Entity EntityType;
-      typedef typename EntityType :: EntityPointer EntityPointerType;
       typedef typename BaseType::ArgumentType ArgumentType;
 
       // Types from the traits
@@ -299,8 +298,7 @@ namespace Dune
             if (intersection.neighbor())
             {
               // get neighbor
-              EntityPointerType ep = intersection.outside();
-              const EntityType &nb = *ep;
+              const EntityType &nb(intersection.outside());
 
               const bool canUpdateNeighbor = nbChecker( en, nb );
 
