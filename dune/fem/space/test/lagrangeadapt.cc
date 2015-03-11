@@ -205,8 +205,6 @@ typedef AdaptationManager< MyGridType, RestrictProlongOperatorType >
 void adapt ( MyGridType &grid, DiscreteFunctionType &solution, int step,
              const bool locallyAdaptive )
 {
-  typedef DiscreteFunctionSpaceType :: IteratorType IteratorType;
-
   const DiscreteFunctionSpaceType &discreteFunctionSpace = solution.space();
 
   RestrictProlongOperatorType rp( solution );
@@ -226,15 +224,12 @@ void adapt ( MyGridType &grid, DiscreteFunctionType &solution, int step,
       numElements = std::max( numElements, 1 );
     }
 
-    IteratorType it = discreteFunctionSpace.begin();
-    const IteratorType endit = discreteFunctionSpace.end();
     int elementNumber = 0;
-    for( ; it != endit; ++it, ++elementNumber )
+    for( const auto& entity : discreteFunctionSpace )
     {
       if( elementNumber < numElements )
-      {
-        grid.mark( mark, *it );
-      }
+        grid.mark( mark, entity );
+      ++elementNumber;
     }
 
     // adapt grid

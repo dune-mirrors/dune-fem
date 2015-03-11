@@ -195,8 +195,6 @@ void gridAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step,
       grape.dataDisplay( solution );
     }
   #endif
-
-  typedef DiscreteFunctionSpaceType :: IteratorType IteratorType;
   const DiscreteFunctionSpaceType &discreteFunctionSpace = solution.space();
 
   RestrictProlongOperatorType rp( solution );
@@ -216,15 +214,12 @@ void gridAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step,
       numElements = std::max( numElements, 1 );
     }
 
-    IteratorType it = discreteFunctionSpace.begin();
-    const IteratorType endit = discreteFunctionSpace.end();
     int elemNo = 0;
-    for( ; it != endit; ++it, ++elemNo )
+    for( const auto& entity : discreteFunctionSpace)
     {
       if( elemNo < numElements )
-      {
-        grid.mark( mark, *it );
-      }
+        grid.mark( mark, entity );
+      ++elemNo;
     }
 
     // adapt grid
@@ -246,15 +241,11 @@ bool checkContinuous( DiscreteFunctionType &solution )
   double ret = 0;
   typedef DiscreteFunctionType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef DiscreteFunctionSpaceType :: GridPartType GridPartType;
-  typedef DiscreteFunctionSpaceType :: IteratorType IteratorType ;
-  typedef IteratorType :: Entity  EntityType ;
   typedef GridPartType :: IntersectionIteratorType IntersectionIteratorType;
   typedef GridPartType :: IntersectionType         IntersectionType;
 
-  const IteratorType endit = solution.space().end();
-  for( IteratorType it = solution.space().begin(); it != endit; ++it )
+  for( const auto& entity : solution )
   {
-    const EntityType& entity = *it;
     const IntersectionIteratorType endiit = solution.space().gridPart().iend( entity );
     for( IntersectionIteratorType iit = solution.space().gridPart().ibegin( entity ); iit != endiit ; ++ iit )
     {

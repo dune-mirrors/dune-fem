@@ -24,9 +24,7 @@ protected:
   typedef typename LocalFunctionType::RangeType RangeType;
   typedef typename LocalFunctionType::JacobianRangeType JacobianRangeType;
 
-  typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-  typedef typename IteratorType::Entity EntityType;
-  typedef typename EntityType::Geometry GeometryType;
+  typedef typename DiscreteFunctionSpaceType::IteratorType::Entity::Geometry GeometryType;
 
   typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
   typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
@@ -60,11 +58,8 @@ void EllipticOperator< DiscreteFunction, Model >
   w.clear();
 
   const DiscreteFunctionSpaceType &dfSpace = w.space();
-
-  const IteratorType end = dfSpace.end();
-  for( IteratorType it = dfSpace.begin(); it != end; ++it )
+  for( const auto& entity : dfSpace )
   {
-    const EntityType &entity = *it;
     const GeometryType &geometry = entity.geometry();
 
     const LocalFunctionType uLocal = u.localFunction( entity );
@@ -135,9 +130,7 @@ void assembleRHS ( const Function &function, DiscreteFunction &rhs )
   typedef typename DiscreteFunction::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef typename DiscreteFunction::LocalFunctionType LocalFunctionType;
 
-  typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-  typedef typename IteratorType::Entity EntityType;
-  typedef typename EntityType::Geometry GeometryType;
+  typedef typename DiscreteFunctionSpaceType::IteratorType::Entity::Geometry GeometryType;
 
   typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
   typedef Dune::CachingQuadrature< GridPartType, 0 > QuadratureType;
@@ -145,11 +138,8 @@ void assembleRHS ( const Function &function, DiscreteFunction &rhs )
   rhs.clear();
 
   const DiscreteFunctionSpaceType &dfSpace = rhs.space();
-
-  const IteratorType end = dfSpace.end();
-  for( IteratorType it = dfSpace.begin(); it != end; ++it )
+  for( const auto& entity : dfSpace )
   {
-    const EntityType &entity = *it;
     const GeometryType &geometry = entity.geometry();
 
     typename Function::LocalFunctionType localFunction =
@@ -192,10 +182,8 @@ void EllipticOperator< DiscreteFunction, Model >
   std::vector< typename LocalFunctionType::RangeType > phi( dfSpace.mapper().maxNumDofs() );
   std::vector< typename LocalFunctionType::JacobianRangeType > dphi( dfSpace.mapper().maxNumDofs() );
 
-  const IteratorType end = dfSpace.end();
-  for( IteratorType it = dfSpace.begin(); it != end; ++it )
+  for( const auto& entity : dfSpace )
   {
-    const EntityType &entity = *it;
     const GeometryType &geometry = entity.geometry();
 
     LocalMatrixType jLocal = jOp.localMatrix( entity, entity );

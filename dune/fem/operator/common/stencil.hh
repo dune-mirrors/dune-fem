@@ -204,13 +204,8 @@ namespace Dune
       DiagonalStencil(const DomainSpace &dSpace, const RangeSpace &rSpace)
         : BaseType( dSpace, rSpace )
       {
-        typedef typename DomainSpace::IteratorType IteratorType;
-        const IteratorType end = dSpace.end();
-        for (IteratorType it = dSpace.begin(); it!=end; ++it)
-        {
-          const DomainEntityType &entity = *it;
+        for (const auto& entity : dSpace)
           BaseType::fill(entity,entity);
-        }
       }
     };
 
