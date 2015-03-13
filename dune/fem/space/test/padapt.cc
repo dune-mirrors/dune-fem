@@ -244,7 +244,7 @@ bool checkContinuous( DiscreteFunctionType &solution )
   typedef GridPartType :: IntersectionIteratorType IntersectionIteratorType;
   typedef GridPartType :: IntersectionType         IntersectionType;
 
-  for( const auto& entity : solution )
+  for( const auto& entity : solution.space() )
   {
     const IntersectionIteratorType endiit = solution.space().gridPart().iend( entity );
     for( IntersectionIteratorType iit = solution.space().gridPart().ibegin( entity ); iit != endiit ; ++ iit )
