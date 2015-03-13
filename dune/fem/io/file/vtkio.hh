@@ -235,18 +235,24 @@ namespace Dune
       {
         if( addPartition_ > 0 )
         {
-          vtkWriter_->addCellData( new VolumeData() );
+          std::shared_ptr<VolumeData> volumePtr( std::make_shared<VolumeData>() );
+          vtkWriter_->addCellData( volumePtr );
 
           const int rank = ( myRank < 0 ) ? gridPart_.comm().rank() : myRank ;
           const int nThreads = ( addPartition_ > 1 ) ? ThreadManager::maxThreads() : 1 ;
           if( addPartition_ <= 2 )
-            vtkWriter_->addCellData( new PartitioningData( gridPart_, "rank", rank, nThreads ) );
+          {
+            std::shared_ptr<PartitioningData> dataRankPtr( std::make_shared<PartitioningData>(gridPart_, "rank", rank, nThreads) );
+            vtkWriter_->addCellData( dataRankPtr );
+          }
           else
           {
             // rank only visualization
-            vtkWriter_->addCellData( new PartitioningData( gridPart_, "rank", rank, -1 ) );
+            std::shared_ptr<PartitioningData> dataRankPtr( std::make_shared<PartitioningData>(gridPart_, "rank", rank, -1) );
+            vtkWriter_->addCellData( dataRankPtr );
             // thread only visualization
-            vtkWriter_->addCellData( new PartitioningData( gridPart_, "thread", 0, nThreads ) );
+            std::shared_ptr<PartitioningData> dataThreadPtr( std::make_shared<PartitioningData>(gridPart_, "thread", 0, nThreads) );
+            vtkWriter_->addCellData( dataThreadPtr );
           }
           addPartition_ = 0 ;
         }
@@ -269,7 +275,10 @@ namespace Dune
       {
         static const int dimRange = DF::FunctionSpaceType::dimRange;
         for( int i = 0;i < dimRange; ++i )
-          vtkWriter_->addCellData( new VTKFunctionWrapper< DF >( df, dataName, i, false ) );
+        {
+          std::shared_ptr<VTKFunctionWrapper< DF > > ptr( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i, false) );
+          vtkWriter_->addCellData( ptr );
+        }
       }
 
       template< class DF >
@@ -277,7 +286,8 @@ namespace Dune
                               const std::string& dataName = "" ,
                               int startPoint = 0 )
       {
-        vtkWriter_->addCellData( new VTKFunctionWrapper< DF >( df, dataName, startPoint, true ) );
+        std::shared_ptr<VTKFunctionWrapper< DF > > ptr( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, startPoint, true) );
+        vtkWriter_->addCellData( ptr );
       }
 
       template< class DF >
@@ -286,7 +296,10 @@ namespace Dune
         static const int dimRange = DF::FunctionSpaceType::dimRange;
         std::string name = ( dataName.size() > 0 ) ? dataName : df.name() ;
         for( int i = 0;i < dimRange; ++i )
-          vtkWriter_->addVertexData( new VTKFunctionWrapper< DF >( df, dataName, i, false ) );
+        {
+          std::shared_ptr<VTKFunctionWrapper< DF > > ptr( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i, false) );
+          vtkWriter_->addVertexData( ptr );
+        }
       }
 
       template< class DF >
@@ -294,7 +307,8 @@ namespace Dune
                                 const std::string& dataName = "" ,
                                 int startPoint = 0 )
       {
-        vtkWriter_->addVertexData( new VTKFunctionWrapper< DF >( df, dataName, startPoint, true ) );
+        std::shared_ptr<VTKFunctionWrapper< DF > > ptr( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, startPoint, true) );
+        vtkWriter_->addVertexData( ptr );
       }
 
       void clear ()
