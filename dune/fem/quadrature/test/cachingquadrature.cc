@@ -122,11 +122,11 @@ public:
         const IntersectionType &intersection = *iit;
         if (intersection.neighbor() && intersection.conforming())
         {
-          const EntityType & inside(intersection.inside());
+          const EntityType inside(intersection.inside());
           FaceQuadratureType faceQuadInner(gridPart_, intersection, order_,
               FaceQuadratureType::INSIDE);
 
-          const EntityType & outside(intersection.outside());
+          const EntityType outside(intersection.outside());
           FaceQuadratureType faceQuadOuter(gridPart_, intersection, order_,
               FaceQuadratureType::OUTSIDE);
 

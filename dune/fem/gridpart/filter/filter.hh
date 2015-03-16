@@ -193,7 +193,7 @@ namespace Dune
       bool interiorIntersection( const Intersection &intersection ) const
       {
         typedef typename Intersection::Entity EntityType;
-        const EntityType& outside(intersection.outside());
+        const EntityType outside(intersection.outside());
         return asImp().contains( outside );
       }
 

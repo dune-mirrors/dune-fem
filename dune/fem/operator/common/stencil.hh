@@ -251,7 +251,7 @@ namespace Dune
               continue;
             if( intersection.neighbor() )
             {
-              const DomainEntityType & neighbor(intersection.outside());
+              const DomainEntityType neighbor(intersection.outside());
               BaseType::fill(neighbor,entity);
             }
           }

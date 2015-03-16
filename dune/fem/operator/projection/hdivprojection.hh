@@ -243,7 +243,7 @@ namespace Dune
             // only interior faces are considered
             if(inter.neighbor() )
             {
-              const EntityType& nb(inter.outside());
+              const EntityType nb(inter.outside());
 
               if(idSet.id( en ) < idSet.id( nb ))
               {
@@ -588,6 +588,7 @@ namespace Dune
         typedef typename FunctionSpaceType::BaseFunctionSetType BaseFunctionSetType;
         typedef typename FunctionSpaceType::GridType GridType;
         typedef typename FunctionSpaceType::GridPartType GridPartType;
+        typedef typename FunctionSpaceType::IteratorType Iterator;
         typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
         typedef typename GridType :: template Codim<0> :: Entity EntityType;
         typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType;
@@ -846,7 +847,7 @@ namespace Dune
           if(inter.neighbor())
           {
             // get neighbor entity
-            const EntityType&   nb(inter.outside());
+            const EntityType nb(inter.outside());
 
             // get local function of neighbor
             const LocalFuncType uNeighLf = uDG.localFunction(nb);
@@ -1100,7 +1101,7 @@ namespace Dune
             // only interior faces are considered
             if(inter.neighbor())
             {
-              const EntityType& nb(inter.outside());
+              const EntityType nb(inter.outside());
               const double enVol_nbVol = 0.5 * (enVol + nb.geometry().volume());
 
 #if HAVE_MPI

@@ -298,7 +298,7 @@ namespace Dune
             if (intersection.neighbor())
             {
               // get neighbor
-              const EntityType &nb(intersection.outside());
+              const EntityType nb(intersection.outside());
 
               const bool canUpdateNeighbor = nbChecker( en, nb );
 
