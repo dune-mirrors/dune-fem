@@ -14,6 +14,7 @@
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/persistentindexset.hh>
 #include <dune/fem/io/file/iointerface.hh>
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/version.hh>
 
 namespace Dune
@@ -126,9 +127,6 @@ namespace Dune
       //! type of codimension 0 Entity
       typedef typename BaseType :: template Codim< 0 > :: Entity ElementType;
 
-      //! type of codimension 0 EntityPointer (extract from GridPartType)
-      typedef typename ElementType :: EntityPointer ElementPointerType;
-
       //! type of intersection iterator
       typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
 
@@ -189,7 +187,6 @@ namespace Dune
       template< int codim , bool gridHasCodim >
       struct InsertGhostSubEntitiesBase
       {
-        typedef typename GridPartType::template Codim< codim >::EntityPointerType  EntityPointerType;
         typedef typename GridPartType::template Codim< codim >::EntityType         EntityType;
 
         static void apply ( ThisType &indexSet, const ElementType &entity ,
@@ -205,9 +202,7 @@ namespace Dune
 
           for( unsigned int i = 0; i < entity.subEntities( codim ); ++i )
           {
-            EntityPointerType ptr = entity.template subEntity< codim >( i );
-            const EntityType &subentity = *ptr;
-
+            EntityType subentity = make_entity( entity.template subEntity< codim >( i ) );
             if( !skipGhosts || (entity.partitionType() != GhostEntity) )
               codimSet.insertGhost( subentity );
           }
@@ -265,21 +260,20 @@ namespace Dune
       template < int codim, bool gridHasCodim >
       struct GetSubEntityBase
       {
-        typedef typename GridPartType :: template Codim< codim > :: EntityPointerType  EntityPointer ;
-        static EntityPointer subEntity( const ElementType& element, const int subEn )
+        typedef typename GridPartType :: template Codim< codim > :: EntityType  Entity;
+        static Entity subEntity( const ElementType& element, const int subEn )
         {
-          return element.template subEntity< codim > ( subEn );
+          return make_entity( element.template subEntity< codim > ( subEn ) );
         }
       };
 
       template < int codim >
       struct GetSubEntityBase< codim, false >
       {
-        typedef typename GridPartType :: template Codim< 0 > :: EntityPointerType  EntityPointer ;
-        static EntityPointer subEntity( const ElementType& element, const int subEn )
+        typedef typename GridPartType :: template Codim< 0 > :: EntityType  Entity;
+        static Entity subEntity( const ElementType& element, const int subEn )
         {
           DUNE_THROW(NotImplemented,"stupid grid without entities of codim 1 used");
-          return element.template subEntity< 0 > ( 0 );
         }
       };
 
@@ -289,7 +283,7 @@ namespace Dune
       };
 
       //! type of codimension 1 entity
-      typedef typename GetFaceEntity :: EntityPointer FacePointerType ;
+      typedef typename GetFaceEntity :: Entity FaceType;
 
       //! is true if grid is a Cartesian, non-adaptive grid (i.e. YaspGrid, SPGrid)
       enum { CartesianNonAdaptiveGrid =  Dune::Capabilities::isCartesian<GridType>::v &&
@@ -584,9 +578,9 @@ namespace Dune
           setupIntersections();
 
           // get corresponding face entity pointer
-          FacePointerType face = getIntersectionFace( intersection );
+          FaceType face = getIntersectionFace( intersection );
 
-          return codimLeafSet( codim ).index( *face );
+          return codimLeafSet( codim ).index( face );
         }
         else
         {
@@ -761,19 +755,18 @@ namespace Dune
       bool read( InStreamInterface< StreamTraits >& in );
 
     protected:
-      FacePointerType getIntersectionFace( const IntersectionType& intersection ) const
+      FaceType getIntersectionFace( const IntersectionType& intersection ) const
       {
-        ElementPointerType inside = intersection.inside();
-        return getIntersectionFace( intersection, *inside );
+        ElementType inside = make_entity( intersection.inside() );
+        return getIntersectionFace( intersection, inside );
       }
 
-      FacePointerType getIntersectionFace( const IntersectionType& intersection,
-                                           const ElementType& inside ) const
+      FaceType getIntersectionFace( const IntersectionType& intersection,
+                                    const ElementType& inside ) const
       {
         if( ! intersection.conforming() && intersection.neighbor() )
         {
-          const ElementPointerType outsideEp = intersection.outside();
-          const ElementType& outside = *outsideEp ;
+          ElementType outside = make_entity( intersection.outside() );
           // only if outside is more refined then inside
           if( inside.level() < outside.level() )
             return GetFaceEntity :: subEntity( outside, intersection.indexInOutside() );
@@ -896,10 +889,10 @@ namespace Dune
         const IntersectionType& intersection = *iit ;
 
         // get correct face pointer
-        FacePointerType face = getIntersectionFace( intersection, entity );
+        FaceType face = getIntersectionFace( intersection, entity );
 
         // insert face into index set
-        codimLeafSet( intersectionCodimension ).insert( *face );
+        codimLeafSet( intersectionCodimension ).insert( face );
       }
     }
 

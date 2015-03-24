@@ -7,6 +7,7 @@
 #include <map>
 
 #include <dune/grid/common/gridenums.hh>
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/misc/functor.hh>
 
 namespace Dune
@@ -251,7 +252,7 @@ namespace Dune
               continue;
             if( intersection.neighbor() )
             {
-              const DomainEntityType neighbor(intersection.outside());
+              DomainEntityType neighbor = make_entity( intersection.outside() );
               BaseType::fill(neighbor,entity);
             }
           }

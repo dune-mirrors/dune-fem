@@ -11,6 +11,7 @@
 
 // this also includes the forward declarations
 #include <dune/fem/misc/capabilities.hh>
+#include <dune/fem/misc/compatibility.hh>
 
 namespace Dune
 {
@@ -48,7 +49,7 @@ namespace Dune
         if( hasSingleGeometryType::v )
           return GeometryType( hasSingleGeometryType::topologyId, GridType::dimension );
         else
-          return (inside ? intersection.inside()->type() : intersection.outside()->type());
+          return inside ? make_entity( intersection.inside() ).type() : make_entity( intersection.outside() ).type();
       }
     };
 

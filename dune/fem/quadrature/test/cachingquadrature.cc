@@ -2,15 +2,13 @@
 #include <iostream>
 
 #include <dune/grid/common/gridinfo.hh>
-
-#include <dune/fem/gridpart/leafgridpart.hh>
-
-#include <dune/fem/quadrature/elementquadrature.hh>
-#include <dune/fem/quadrature/cachingquadrature.hh>
-
 #include <dune/grid/io/visual/grapegriddisplay.hh>
 
+#include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/misc/compatibility.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/quadrature/elementquadrature.hh>
 
 #include "checkleafcodim1.hh"
 
@@ -122,11 +120,11 @@ public:
         const IntersectionType &intersection = *iit;
         if (intersection.neighbor() && intersection.conforming())
         {
-          const EntityType inside(intersection.inside());
+          EntityType inside = make_entity(intersection.inside());
           FaceQuadratureType faceQuadInner(gridPart_, intersection, order_,
               FaceQuadratureType::INSIDE);
 
-          const EntityType outside(intersection.outside());
+          EntityType outside = make_entity(intersection.outside());
           FaceQuadratureType faceQuadOuter(gridPart_, intersection, order_,
               FaceQuadratureType::OUTSIDE);
 

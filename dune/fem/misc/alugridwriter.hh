@@ -11,6 +11,8 @@
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/alugrid/3d/topology.hh>
 
+#include <dune/fem/misc/compatibility.hh>
+
 namespace Dune
 {
 
@@ -379,7 +381,7 @@ namespace Dune
             if( inter.boundary() )
               ++bndFaces;
             else if( inter.neighbor() &&
-                     inter.outside()->partitionType() != InteriorEntity )
+                     make_entity( inter.outside() ).partitionType() != InteriorEntity )
              ++bndFaces;
           }
         }
@@ -406,7 +408,7 @@ namespace Dune
               bndId = inter.boundaryId();
             }
             else if( inter.neighbor() &&
-                     inter.outside()->partitionType() != InteriorEntity )
+                     make_entity( inter.outside() ).partitionType() != InteriorEntity )
             {
               bndId = 111;
             }

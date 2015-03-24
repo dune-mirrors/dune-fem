@@ -2,7 +2,7 @@
 #define DUNE_CHECKLEAFCODIM1_HH
 
 #include <dune/fem/io/parameter.hh>
-
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 namespace Dune {
@@ -158,9 +158,9 @@ protected:
 
         if( dim > 2 )
         {
-          //const int twistFound = checkLocalIntersectionConsistency( *inter.inside(),
+          //const int twistFound = checkLocalIntersectionConsistency( entity,
           //                      inter.geometryInInside(), inter.indexInInside() , false, false);
-          const int twistFound = aluTwistCheck( *inter.inside(),
+          const int twistFound = aluTwistCheck( entity,
                                 inter.geometryInInside(), inter.indexInInside() , false, false);
           const int twistInside = TwistUtilityType::twistInSelf( gridPart.grid(), inter);
           if( output && twistFound != twistInside )
@@ -170,9 +170,10 @@ protected:
 
           if( inter.neighbor() )
           {
-            //const int twstF = checkLocalIntersectionConsistency( *inter.outside(),
+            EntityType neighbor = make_entity( inter.outside() );
+            //const int twstF = checkLocalIntersectionConsistency( neighbor,
             //              inter.geometryInOutside(), inter.indexInOutside(), true, false);
-            const int twstF = aluTwistCheck( *inter.outside(),
+            const int twstF = aluTwistCheck( neighbor,
                           inter.geometryInOutside(), inter.indexInOutside(), true, false);
 
             const int twistOutside = TwistUtilityType::twistInNeighbor( gridPart.grid(), inter);

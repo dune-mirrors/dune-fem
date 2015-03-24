@@ -774,11 +774,8 @@ namespace Dune
       {
         if( entity.hasFather() )
         {
-          typedef typename ElementType :: EntityPointer ElementPointerType;
-          ElementPointerType father = entity.father();
-          const ElementType& dad = *father ;
-
           // if father is a new element, insert it
+          ElementType dad = make_entity( entity.father() );
           if( dad.isNew() )
           {
             unsigned int usedSize = insertEntityDofs( dad );

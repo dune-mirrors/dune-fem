@@ -1,10 +1,12 @@
 #ifndef DUNE_FEM_VTXPROJECTION_HH
 #define DUNE_FEM_VTXPROJECTION_HH
 
-#include <dune/fem/space/lagrange.hh>
 // #include <dune/grid/utility/twistutility.hh>
+
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
+#include <dune/fem/space/lagrange.hh>
 
 namespace Dune
 {
@@ -113,7 +115,7 @@ namespace Dune
               if( intersection.neighbor() )
               {
                 // get neighbor
-                const EntityType neighbor(intersection.outside());
+                EntityType neighbor = make_entity( intersection.outside() );
 
                 // if non-conforming situation
                 if( entity.level() > neighbor.level() )

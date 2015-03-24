@@ -3,6 +3,7 @@
 
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
 #include <dune/fem/pass/common/local.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
@@ -298,7 +299,7 @@ namespace Dune
             if (intersection.neighbor())
             {
               // get neighbor
-              const EntityType nb(intersection.outside());
+              EntityType nb = make_entity( intersection.outside() );
 
               const bool canUpdateNeighbor = nbChecker( en, nb );
 

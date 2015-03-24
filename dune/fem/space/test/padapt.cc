@@ -25,6 +25,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 #include <dune/fem/space/padaptivespace.hh>
@@ -262,7 +263,9 @@ bool checkContinuous( DiscreteFunctionType &solution )
 	      {
           DiscreteFunctionType::RangeType uIn,uOut;
           solution.localFunction(entity).evaluate(quadInside[qp], uIn);
-          solution.localFunction(*(intersection.outside())).evaluate(quadOutside[qp], uOut);
+
+          auto nb = make_entity(intersection.outside());
+          solution.localFunction(nb).evaluate(quadOutside[qp], uOut);
           ret = std::max(ret, (uIn-uOut).two_norm());
         }
       }

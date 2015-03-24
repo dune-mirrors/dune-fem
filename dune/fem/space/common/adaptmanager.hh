@@ -17,6 +17,7 @@
 
 #include <dune/fem/space/common/adaptcallbackhandle.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 
 
@@ -542,11 +543,8 @@ namespace Dune
           // calling hierarchicRestrict on interior won't work either
           if( ! isGhost )
           {
-            // get father entity
-            EntityPointerType vati = son.father();
-
-            // do prolongation
-            prolop.prolongLocal( *vati , son , initialize );
+            EntityType vati = make_entity( son.father() );
+            prolop.prolongLocal( vati , son , initialize );
             initialize = false;
           }
         }
