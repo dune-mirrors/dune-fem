@@ -7,6 +7,7 @@ misc_HEADERS = alugridwriter.hh \
 	       boundaryidprovider.hh \
 	       capabilities.hh \
 	       checkgeomaffinity.hh \
+	       compatibility.hh \
 	       debug.hh \
 	       double.hh \
 	       femeoc.hh \
