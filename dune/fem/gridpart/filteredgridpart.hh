@@ -342,12 +342,12 @@ namespace Dune
         hostGridPart().communicate( handleWrapper, iftype, dir );
       }
 
-      /** \copydoc GridPartInterface::entityPointer(const EntitySeed &seed) const */
+      /** \copydoc GridPartInterface::entity(const EntitySeed &seed) const */
       template < class EntitySeed >
-      typename Codim< EntitySeed::codimension >::EntityPointerType
-      entityPointer ( const EntitySeed &seed ) const
+      typename Codim< EntitySeed::codimension >::EntityType
+      entity ( const EntitySeed &seed ) const
       {
-        return hostGridPart().entityPointer( seed );
+        return hostGridPart().entity( seed );
       }
 
       //! \brief return reference to filter

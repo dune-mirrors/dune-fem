@@ -15,6 +15,7 @@ int main () { return 0; }
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/gridpart/idgridpart.hh>
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/misc/gridwidth.hh>
 
 #include "./failure.hh"
@@ -118,21 +119,27 @@ void testSubEntities( const GridPartType & gridPart )
 template< class GridPartType >
 void testIntersectionIterator( const GridPartType & gridPart )
 {
-  std::vector<int> index( gridPart.indexSet().size(0), 0 );
   typedef typename GridPartType::template Codim< 0 >::template Partition<Dune::All_Partition>::IteratorType IteratorType;
+  typedef typename GridPartType::template Codim< 0 >::EntitType EntityType;
+  typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
+  typedef typename GridPartType::IntersectionType IntersectionType;
+
+  std::vector<int> index( gridPart.indexSet().size(0), 0 );
+
   const IteratorType end = gridPart.template end< 0,Dune::All_Partition >();
   for( IteratorType it = gridPart.template begin< 0,Dune::All_Partition >(); it != end; ++it )
     index[ gridPart.indexSet().index( * it ) ] = 1;
+
   for( IteratorType it = gridPart.template begin< 0,Dune::All_Partition >(); it != end; ++it )
   {
-    typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
     const IntersectionIteratorType iend = gridPart.iend( *it );
-    for ( IntersectionIteratorType inter = gridPart.ibegin( *it );
-          inter != iend; ++inter )
+    for ( IntersectionIteratorType inter = gridPart.ibegin( *it ); inter != iend; ++inter )
     {
-      if (inter->neighbor())
+      IntersectionType intersection = *inter;
+      if( intersection.neighbor() )
       {
-        typename GridPartType::IndexSetType::IndexType nbIndex = gridPart.indexSet().index( *(inter->outside()) );
+        EntityType neighbor = Dune::Fem::make_entity( intersection.outside() );
+        typename GridPartType::IndexSetType::IndexType nbIndex = gridPart.indexSet().index( neighbor );
         if ( nbIndex >= index.size() )
         {
           std::cout << "An index on neighbor is too large" << std::endl;
@@ -186,7 +193,7 @@ try
   // check entity seed
   typedef Dune::DefaultFailureHandler FailureHandlerType;
   FailureHandlerType failureHandler;
-  Dune::Fem::CheckEntitySeed< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+  Dune::Fem::CheckEntitySeed< GridPartType >::check( gridPart );
   Dune::Fem::CheckGeometry< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
   Dune::Fem::CheckIndexSet< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
   Dune::Fem::CheckIntersections< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );

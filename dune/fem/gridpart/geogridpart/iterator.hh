@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_ITERATOR_HH
 #define DUNE_FEM_GRIDPART_GEOGRIDPART_ITERATOR_HH
 
+#include <type_traits>
+
 #include <dune/geometry/referenceelements.hh>
 
 #include <dune/grid/common/entityiterator.hh>
@@ -40,19 +42,17 @@ namespace Dune
       typedef typename Base::HostIteratorType HostIteratorType;
 
       using Base::hostIterator_;
-      using Base::releaseEntity;
 
     public:
       typedef typename Base::CoordFunctionType CoordFunctionType;
 
-      GeoIterator ( const CoordFunctionType &coordFunction, const HostIteratorType &hostIterator )
+      GeoIterator ( const CoordFunctionType &coordFunction, HostIteratorType hostIterator )
       : Base( coordFunction, hostIterator )
       {}
 
       void increment ()
       {
         ++hostIterator_;
-        releaseEntity();
       }
     };
 

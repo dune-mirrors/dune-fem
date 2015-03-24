@@ -49,7 +49,7 @@ namespace Dune
       static const int mydimension = dimension - codimension;
 
       typedef typename Traits::template Codim< codimension >::LocalGeometry LocalGeometry;
-      typedef typename Traits::template Codim< codimension >::EntityPointer EntityPointer;
+      typedef typename Traits::template Codim< codimension >::Entity Entity;
 
       typedef typename Traits::HierarchicIterator HierarchicIterator;
 
@@ -63,7 +63,7 @@ namespace Dune
         DUNE_THROW( InvalidStateException, "Trying to access hierarchy information from a grid part." );
       }
 
-      EntityPointer father () const
+      Entity father () const
       {
         DUNE_THROW( InvalidStateException, "Trying to access hierarchy information from a grid part." );
       }

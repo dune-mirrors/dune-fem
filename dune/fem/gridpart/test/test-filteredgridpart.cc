@@ -22,6 +22,7 @@
 #include <dune/fem/gridpart/test/checkseed.hh>
 #include <dune/fem/gridpart/test/checkgeometry.hh>
 #include <dune/fem/gridpart/test/checkintersections.hh>
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/test/testgrid.hh>
 
 
@@ -133,7 +134,7 @@ void testIntersectionIterator( const GridPartType & gridPart )
     {
       if (inter->neighbor())
       {
-        typename GridPartType::IndexSetType::IndexType nbIndex = gridPart.indexSet().index( *(inter->outside()) );
+        typename GridPartType::IndexSetType::IndexType nbIndex = gridPart.indexSet().index( Dune::Fem::make_entity(inter->outside() ) );
         if ( nbIndex >= index.size() )
         {
           std::cout << "An index on neighbor is too large" << std::endl;
@@ -195,7 +196,7 @@ int main ( int argc, char ** argv )
       typedef Dune::DefaultFailureHandler FailureHandlerType;
       FailureHandlerType failureHandler;
       std::cout << "Testing entity seeds" << std::endl;
-      Dune::Fem::CheckEntitySeed< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+      Dune::Fem::CheckEntitySeed< GridPartType >::check( gridPart );
       std::cout << "Testing geometies" << std::endl;
       Dune::Fem::CheckGeometry< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
       std::cout << "Testing intersections" << std::endl;
@@ -225,7 +226,7 @@ int main ( int argc, char ** argv )
       typedef Dune::DefaultFailureHandler FailureHandlerType;
       FailureHandlerType failureHandler;
       std::cout << "Testing entity seeds" << std::endl;
-      Dune::Fem::CheckEntitySeed< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+      Dune::Fem::CheckEntitySeed< GridPartType >::check( gridPart );
       std::cout << "Testing geometies" << std::endl;
       Dune::Fem::CheckGeometry< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
       std::cout << "Testing intersections" << std::endl;

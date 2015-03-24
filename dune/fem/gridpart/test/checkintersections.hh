@@ -38,10 +38,8 @@ namespace Dune
       typedef typename IntersectionType::Geometry GeometryType;
       /** \brief loal geometry type */
       typedef typename IntersectionType::LocalGeometry LocalGeometryType;
-      /** \brief entity pointer type */
-      typedef typename IntersectionType::EntityPointer EntityPointerType;
       /** \brief entity type */
-      typedef typename EntityPointerType::Entity EntityType;
+      typedef typename IntersectionType::Entity EntityType;
 
       /** \brief failure type */
       struct AssignmentFailure;

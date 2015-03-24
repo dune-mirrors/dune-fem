@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_ENTITYPOINTER_HH
 #define DUNE_FEM_GRIDPART_IDGRIDPART_ENTITYPOINTER_HH
 
+#include <type_traits>
+#include <utility>
+
 #include <dune/grid/common/entitypointer.hh>
 
 namespace Dune
@@ -72,50 +75,39 @@ namespace Dune
       typedef typename Traits::EntityImpl EntityImpl;
 
     public:
-      IdEntityPointer ( ExtraData data, const HostIteratorType &hostIterator )
-      : entity_( EntityImpl( data ) ),
-        hostIterator_( hostIterator )
+      IdEntityPointer ( ExtraData data, HostIteratorType hostIterator )
+      : data_( std::move( data ) ),
+        hostIterator_( std::move( hostIterator ) )
       {}
 
       IdEntityPointer ( const EntityImpl &entity )
-      : entity_( EntityImpl( entity.data() ) ),
+      : data_( entity.data() ),
         hostIterator_( entity.hostEntity() )
-      {}
-
-      IdEntityPointer ( const ThisType &other )
-      : entity_( EntityImpl( other.data() ) ),
-        hostIterator_( other.hostIterator_ )
       {}
 
       template< class T >
       explicit IdEntityPointer ( const IdEntityPointer< T > &other )
-      : entity_( EntityImpl( other.data() ) ),
+      : data_( other.data() ),
         hostIterator_( other.hostIterator_ )
       {}
 
-      ThisType &operator= ( const ThisType &other )
-      {
-        entity_.impl() = EntityImpl( other.data() );
-        hostIterator_  = other.hostIterator_;
-        return *this;
-      }
+      IdEntityPointer ( const ThisType & ) = default;
 
-      operator const EntityPointerImp & () const
-      {
-        return reinterpret_cast< const EntityPointerImp & >( *this );
-      }
+      IdEntityPointer ( ThisType && ) = default;
+
+      ThisType &operator= ( const ThisType & ) = default;
+
+      ThisType &operator= ( ThisType && ) = default;
 
       template< class T >
       bool equals ( const IdEntityPointer< T > &other ) const
       {
-        return (hostIterator() == other.hostIterator());
+        return hostIterator() == other.hostIterator();
       }
 
-      Entity &dereference () const
+      Entity dereference () const
       {
-        if( !entity_.impl() )
-          entity_.impl() = EntityImpl( data(), *hostIterator() );
-        return entity_;
+        return EntityImpl( data(), *hostIterator() );
       }
 
       int level () const
@@ -123,21 +115,17 @@ namespace Dune
         return hostIterator().level();
       }
 
+      const ExtraData &data () const { return data_; }
+
       const HostIteratorType &hostIterator() const
       {
         return hostIterator_;
       }
 
-    protected:
-      void releaseEntity ()
-      {
-        entity_.impl() = EntityImpl( data() );
-      }
-
-      ExtraData data () const { return entity_.impl().data(); }
+    private:
+      ExtraData data_;
 
     protected:
-      mutable Entity entity_;
       HostIteratorType hostIterator_;
     };
 

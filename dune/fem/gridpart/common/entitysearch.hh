@@ -10,6 +10,7 @@
 #include <dune/grid/utility/hierarchicsearch.hh>
 
 #include <dune/fem/gridpart/common/capabilities.hh>
+#include <dune/fem/misc/compatibility.hh>
 
 namespace Dune
 {
@@ -40,7 +41,6 @@ namespace Dune
       typedef GridPart GridPartType;
 
       typedef typename GridPart::template Codim< codimension >::EntityType EntityType;
-      typedef typename GridPart::template Codim< codimension >::EntityPointerType EntityPointerType;
 
       typedef typename GeometryType::GlobalCoordinate GlobalCoordinateType;
 
@@ -48,7 +48,7 @@ namespace Dune
       : gridPart_( gridPart )
       {}
 
-      EntityPointerType operator() ( const GlobalCoordinateType &x ) const
+      EntityType operator() ( const GlobalCoordinateType &x ) const
       {
         const IteratorType end = gridPart_.template end< codimension, partition >();
         for( IteratorType it = gridPart_.template begin< codimension, partition >(); it != end; ++it )
@@ -61,7 +61,7 @@ namespace Dune
             continue;
 
           if( ReferenceElements< ctype, mydimension >::general( geo.type() ).checkInside( z ) )
-            return EntityPointerType( it );
+            return *it;
         }
         DUNE_THROW( GridError, "Coordinate " << x << " is outside the grid." );
       }
@@ -106,7 +106,6 @@ namespace Dune
       typedef GridPart GridPartType;
 
       typedef typename GridPart::template Codim< codimension >::EntityType EntityType;
-      typedef typename GridPart::template Codim< codimension >::EntityPointerType EntityPointerType;
 
       typedef typename GeometryType::GlobalCoordinate GlobalCoordinateType;
 
@@ -114,9 +113,9 @@ namespace Dune
       : hierarchicSearch_( gridPart.grid(), gridPart.indexSet() )
       {}
 
-      EntityPointerType operator() ( const GlobalCoordinateType &x ) const
+      EntityType operator() ( const GlobalCoordinateType &x ) const
       {
-        return hierarchicSearch_.template findEntity< partition >( x );
+        return make_entity( hierarchicSearch_.template findEntity< partition >( x ) );
       }
 
     private:

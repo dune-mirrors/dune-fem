@@ -1,8 +1,12 @@
 #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_INTERSECTION_HH
 #define DUNE_FEM_GRIDPART_IDGRIDPART_INTERSECTION_HH
 
+#include <type_traits>
+#include <utility>
+
 #include <dune/fem/gridpart/idgridpart/entitypointer.hh>
 #include <dune/fem/gridpart/idgridpart/geometry.hh>
+#include <dune/fem/misc/compatibility.hh>
 
 namespace Dune
 {
@@ -27,38 +31,32 @@ namespace Dune
       static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
 
       typedef typename Traits::template Codim< 0 >::Entity Entity;
-      typedef typename Traits::template Codim< 0 >::EntityPointer EntityPointer;
       typedef typename Traits::template Codim< 1 >::Geometry Geometry;
       typedef typename Traits::template Codim< 1 >::LocalGeometry LocalGeometry;
 
       typedef typename Traits::ExtraData  ExtraData;
 
     private:
-      typedef typename EntityPointer::Implementation EntityPointerImpl;
+      typedef typename Entity::Implementation EntityImpl;
 
       typedef typename HostGridPartType::IntersectionType HostIntersectionType;
 
     public:
-      explicit IdIntersection ( ExtraData data )
-      : hostIntersection_( nullptr ),
-        data_( data )
+      IdIntersection () = default;
+
+      IdIntersection ( ExtraData data, HostIntersectionType hostIntersection )
+      : data_( std::move( data ) ),
+        hostIntersection_( std::move( hostIntersection ) )
       {}
 
-      explicit IdIntersection ( ExtraData data, const HostIntersectionType &hostIntersection )
-      : hostIntersection_( &hostIntersection ),
-        data_( data )
-      {}
-
-      operator bool () const { return bool( hostIntersection_ ); }
-
-      EntityPointer inside () const
+      Entity inside () const
       {
-        return EntityPointerImpl( data(), hostIntersection().inside() );
+        return EntityImpl( data(), make_entity( hostIntersection().inside() ) );
       }
 
-      EntityPointer outside () const
+      Entity outside () const
       {
-        return EntityPointerImpl( data(), hostIntersection().outside() );
+        return EntityImpl( data(), make_entity( hostIntersection().outside() ) );
       }
 
       bool boundary () const
@@ -149,17 +147,16 @@ namespace Dune
         return hostIntersection().centerUnitOuterNormal();
       }
 
+      const ExtraData &data () const { return data_; }
+
       const HostIntersectionType &hostIntersection () const
       {
-        assert( *this );
-        return *hostIntersection_;
+        return hostIntersection_;
       }
 
-      ExtraData data () const { return data_; }
-
     protected:
-      const HostIntersectionType *hostIntersection_;
       ExtraData data_;
+      HostIntersectionType hostIntersection_;
     };
 
   } // namespace Fem

@@ -2,6 +2,7 @@
 #define DUNE_FEM_GRIDPART_IDGRIDPART_ENTITY_HH
 
 #include <type_traits>
+#include <utility>
 
 //- dune-common includes
 #include <dune/common/nullptr.hh>
@@ -13,6 +14,7 @@
 //- dune-fem includes
 #include <dune/fem/gridpart/common/defaultgridpartentity.hh>
 #include <dune/fem/gridpart/idgridpart/geometry.hh>
+#include <dune/fem/misc/compatibility.hh>
 
 namespace Dune
 {
@@ -69,35 +71,25 @@ namespace Dune
 
       //! type of corresponding host entity
       typedef typename HostGridPartType::template Codim< codimension >::EntityType HostEntityType;
-      //! type of corresponding host entity pointer
-      typedef typename HostGridPartType::template Codim< codimension >::EntityPointerType HostEntityPointerType;
+
       /** \} */
 
       /** \name Construction, Initialization and Destruction
        *  \{ */
 
       /** \brief construct a null entity */
-      explicit IdEntityBasic ( ExtraData data )
-      : hostEntity_( nullptr ),
-        data_ ( data )
-      {}
+      IdEntityBasic () = default;
 
       /** \brief construct an initialized entity
        *
        *  \param[in]  hostEntity  corresponding entity in the host grid
-       *
-       *  \note The reference to the host entity must remain valid  as long as
-       *        this entity is in use.
        */
-      IdEntityBasic ( ExtraData data, const HostEntityType &hostEntity )
-      : hostEntity_( &hostEntity ),
-        data_( data )
+      IdEntityBasic ( ExtraData data, HostEntityType hostEntity )
+      : data_( std::move( data ) ),
+        hostEntity_( std::move( hostEntity ) )
       {}
 
       /** \} */
-
-      /** \brief return true if entity hold a vaild host entity */
-      operator bool () const { return bool( hostEntity_ ); }
 
       /** \name Methods Shared by Entities of All Codimensions
        *  \{ */
@@ -132,6 +124,12 @@ namespace Dune
       /** \brief return EntitySeed of host grid entity */
       EntitySeedType seed () const { return hostEntity().seed(); }
 
+      /** \brief check for equality */
+      bool equals ( const IdEntityBasic &rhs ) const
+      {
+        return hostEntity() == rhs.hostEntity();
+      }
+
       /** \} */
 
 
@@ -140,17 +138,16 @@ namespace Dune
 
       const HostEntityType &hostEntity () const
       {
-        assert( *this );
-        return *hostEntity_;
+        return hostEntity_;
       }
 
-      ExtraData data() const { return data_; }
+      const ExtraData &data () const { return data_; }
 
       /** \} */
 
     protected:
-      const HostEntityType *hostEntity_;
-      ExtraData             data_;
+      ExtraData data_;
+      HostEntityType hostEntity_;
     };
 
 
@@ -183,11 +180,9 @@ namespace Dune
       /** \} */
 
       /** \brief construct a null entity */
-      explicit IdEntity ( ExtraData data )
-      : BaseType( data )
-      {}
+      IdEntity () = default;
 
-      IdEntity ( ExtraData data, const HostEntityType &hostEntity )
+      IdEntity ( ExtraData data, HostEntityType hostEntity )
       : BaseType( data, hostEntity )
       {}
     };
@@ -228,8 +223,6 @@ namespace Dune
 
       //! type of corresponding local geometry
       typedef typename Traits::template Codim< codimension >::LocalGeometry LocalGeometry;
-      //! type of corresponding entity pointer
-      typedef typename Traits::template Codim< codimension >::EntityPointer EntityPointer;
 
       /** \} */
 
@@ -239,19 +232,14 @@ namespace Dune
       /** \brief construct a null entity
        *  \param[in]  data  data pointer (here empty)
        */
-      explicit IdEntity ( ExtraData data )
-      : BaseType( data )
-      {}
+      IdEntity () = default;
 
       /** \brief construct an initialized entity
        *
        *  \param[in]  data        data pointer (here empty)
        *  \param[in]  hostEntity  corresponding entity in the host grid
-       *
-       *  \note The reference to the host entity must remain valid as long as
-       *        this entity is in use.
        */
-      IdEntity ( ExtraData data, const HostEntityType &hostEntity )
+      IdEntity ( ExtraData data, HostEntityType hostEntity )
       : BaseType( data, hostEntity )
       {}
 
@@ -269,11 +257,11 @@ namespace Dune
       }
 
       template< int codim >
-      typename Traits::template Codim< codim >::EntityPointer
+      typename Traits::template Codim< codim >::Entity
       subEntity ( int i ) const
       {
-        typedef typename Traits::template Codim< codim >::EntityPointerImpl EntityPointerImpl;
-        return EntityPointerImpl( data(), hostEntity().template subEntity< codim >( i ) );
+        typedef typename Traits::template Codim< codim >::Entity::Implementation EntityImpl;
+        return EntityImpl( data(), make_entity( hostEntity().template subEntity< codim >( i ) ) );
       }
 
       bool hasBoundaryIntersections () const

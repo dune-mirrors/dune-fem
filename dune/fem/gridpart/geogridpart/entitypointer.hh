@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_ENTITYPOINTER_HH
 #define DUNE_FEM_GRIDPART_GEOGRIDPART_ENTITYPOINTER_HH
 
+#include <type_traits>
+#include <utility>
+
 #include <dune/grid/common/entitypointer.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
 
@@ -72,75 +75,41 @@ namespace Dune
       typedef typename Traits::EntityImpl EntityImpl;
 
     public:
-      GeoEntityPointer ( const CoordFunctionType &coordFunction, const HostIteratorType &hostIterator )
-      : entity_( EntityImpl( coordFunction ) ),
-        hostIterator_( hostIterator )
+      GeoEntityPointer () = default;
+
+      GeoEntityPointer ( const CoordFunctionType &coordFunction, HostIteratorType hostIterator )
+      : coordFunction_( &coordFunction ),
+        hostIterator_( std::move( hostIterator ) )
       {}
 
-      // warning: copying the entity copies the wrong pointer to the host entity!
       GeoEntityPointer ( const EntityImpl &entity )
-      : entity_( entity ),
+      : coordFunction_( &entity.coordFunction() ),
         hostIterator_( entity.hostEntity() )
-      {
-        if( entity_.impl() )
-          entity_.impl().setHostEntity( *hostIterator() );
-      }
+      {}
 
-      // warning: copying the entity copies the wrong pointer to the host entity!
-      template< class LocalFunction >
-      GeoEntityPointer ( const EntityImpl &entity, const LocalFunction &localCoordFunction )
-      : entity_( EntityImpl( entity, localCoordFunction ) ),
-        hostIterator_( entity.hostEntity() )
-      {
-        if( entity_.impl() )
-          entity_.impl().setHostEntity( *hostIterator() );
-      }
-
-      // warning: copying the entity copies the wrong pointer to the host entity!
-      GeoEntityPointer ( const ThisType &other )
-      : entity_( other.entity_.impl() ),
-        hostIterator_( other.hostIterator_ )
-      {
-        if( entity_.impl() )
-          entity_.impl().setHostEntity( *hostIterator() );
-      }
-
-      // warning: copying the entity copies the wrong pointer to the host entity!
       template< class T >
       explicit GeoEntityPointer ( const GeoEntityPointer< T > &other )
-      : entity_( other.entity_.impl() ),
+      : coordFunction_( other.coordFunction_ ),
         hostIterator_( other.hostIterator_ )
-      {
-        if( entity_.impl() )
-         entity_.impl().setHostEntity( *hostIterator() );
-      }
+      {}
 
-      // warning: copying the entity copies the wrong pointer to the host entity!
-      ThisType &operator= ( const ThisType &other )
-      {
-        entity_.impl() = other.entity_.impl();
-        hostIterator_ = other.hostIterator_;
-        if( entity_.impl() )
-          entity_.impl().setHostEntity( *hostIterator() );
-        return *this;
-      }
+      GeoEntityPointer ( const ThisType & ) = default;
 
-      operator const EntityPointerImp & () const
-      {
-        return reinterpret_cast< const EntityPointerImp & >( *this );
-      }
+      GeoEntityPointer ( ThisType && ) = default;
+
+      ThisType &operator= ( const ThisType & ) = default;
+
+      ThisType &operator= ( ThisType && ) = default;
 
       template< class T >
       bool equals ( const GeoEntityPointer< T > &other ) const
       {
-        return (hostIterator() == other.hostIterator());
+        return hostIterator() == other.hostIterator();
       }
 
-      Entity &dereference () const
+      Entity dereference () const
       {
-        if( !entity_.impl() )
-          entity_.impl().setHostEntity( *hostIterator() );
-        return entity_;
+        return EntityImpl( coordFunction(), *hostIterator() );
       }
 
       int level () const
@@ -148,19 +117,19 @@ namespace Dune
         return hostIterator().level();
       }
 
+      const CoordFunctionType &coordFunction () const
+      {
+        assert( coordFunction_ );
+        return *coordFunction_;
+      }
+
       const HostIteratorType &hostIterator() const
       {
         return hostIterator_;
       }
 
-    protected:
-      void releaseEntity ()
-      {
-        entity_.impl() = EntityImpl( entity_.impl().coordFunction() );
-      }
-
     private:
-      mutable Entity entity_;
+      const CoordFunctionType *coordFunction_ = nullptr;
 
     protected:
       HostIteratorType hostIterator_;

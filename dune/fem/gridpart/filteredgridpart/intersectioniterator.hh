@@ -7,6 +7,9 @@
 //- dune-grid includes
 #include <dune/grid/common/intersectioniterator.hh>
 
+//- dune-fem includes
+#include <dune/fem/misc/compatibility.hh>
+
 namespace Dune
 {
 
@@ -38,7 +41,7 @@ namespace Dune
       //! \brief entity type
       typedef typename HostIntersection::Entity Entity;
 
-      //! \brief entity pointer type
+      //! \brief entity type
       typedef typename HostIntersection::EntityPointer EntityPointer;
 
       //! \brief geometry type
@@ -183,15 +186,15 @@ namespace Dune
       }
 
       //! \brief return inside entity
-      EntityPointer inside () const
+      Entity inside () const
       {
-        return hostIterator()->inside();
+        return make_entity( hostIterator()->inside() );
       }
 
       //! \brief return outside entity
-      EntityPointer outside () const
+      Entity outside () const
       {
-        return hostIterator()->outside();
+        return make_entity( hostIterator()->outside() );
       }
 
       //! \brief
@@ -276,7 +279,7 @@ namespace Dune
       }
 
       // hostIntersection method is needed for MetaTwistUtility
-      const HostIntersection& hostIntersection() const
+      HostIntersection hostIntersection() const
       {
         return *hostIterator();
       }

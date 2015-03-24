@@ -246,11 +246,11 @@ namespace Dune
       }
 
       template < class EntitySeed >
-      typename Codim< EntitySeed::codimension >::EntityPointerType
-      entityPointer ( const EntitySeed &seed ) const
+      typename Codim< EntitySeed::codimension >::EntityType
+      entity ( const EntitySeed &seed ) const
       {
-        typedef typename Codim< EntitySeed::codimension >::EntityPointerType::Implementation EntityPointerImp;
-        return EntityPointerImp( data(), hostGridPart().entityPointer( seed ) );
+        typedef typename Codim< EntitySeed::codimension >::EntityType::Implementation EntityImp;
+        return EntityImp( data(), hostGridPart().entity( seed ) );
       }
 
       // convert a grid entity to a grid part entity ("Gurke!")
@@ -309,7 +309,6 @@ namespace Dune
       typedef typename GridPartType::ExtraData  ExtraData;
 
       typedef typename GridPartType::template Codim< codim >::EntityType EntityType;
-      typedef typename GridPartType::template Codim< codim >::EntityPointerType EntityPointerType;
 
       typedef typename EntityType::Geometry::GlobalCoordinate GlobalCoordinateType;
 
@@ -318,10 +317,10 @@ namespace Dune
         data_( gridPart.data() )
       {}
 
-      EntityPointerType operator() ( const GlobalCoordinateType &x ) const
+      EntityType operator() ( const GlobalCoordinateType &x ) const
       {
-        typedef typename EntityPointerType::Implementation EntityPointerImpl;
-        return EntityPointerImpl( data_, hostEntitySearch_( x ) );
+        typedef typename EntityType::Implementation EntityImpl;
+        return EntityImpl( data_, hostEntitySearch_( x ) );
       }
 
     protected:

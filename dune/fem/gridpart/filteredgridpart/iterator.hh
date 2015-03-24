@@ -73,7 +73,7 @@ namespace Dune
       int level () const { return hostIterator_.level(); }
 
       //! return reference to entity object
-      const Entity &dereference () const { return *hostIterator_; }
+      Entity dereference () const { return *hostIterator_; }
 
       /** \brief cast to entity pointer implementation
        *

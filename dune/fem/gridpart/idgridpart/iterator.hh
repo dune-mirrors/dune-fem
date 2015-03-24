@@ -40,17 +40,15 @@ namespace Dune
       typedef typename BaseType::ExtraData        ExtraData;
 
       using BaseType::hostIterator_;
-      using BaseType::releaseEntity;
 
     public:
-      IdIterator ( ExtraData data, const HostIteratorType &hostIterator )
+      IdIterator ( ExtraData data, HostIteratorType hostIterator )
       : BaseType( data, hostIterator )
       {}
 
       void increment ()
       {
         ++hostIterator_;
-        releaseEntity();
       }
     };
 

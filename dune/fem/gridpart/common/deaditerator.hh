@@ -45,17 +45,16 @@ namespace Dune
       static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
 
       typedef typename Traits::template Codim< 0 >::Entity Entity;
-      typedef typename Traits::template Codim< 0 >::EntityPointer EntityPointer;
       typedef typename Traits::template Codim< 1 >::Geometry Geometry;
       typedef typename Traits::template Codim< 1 >::LocalGeometry LocalGeometry;
 
     public:
-      const EntityPointer inside () const
+      Entity inside () const
       {
         DUNE_THROW( InvalidStateException, "Call to inside on dead intersection." );
       }
 
-      EntityPointer outside () const
+      Entity outside () const
       {
         DUNE_THROW( InvalidStateException, "Call to outside on dead intersection." );
       }

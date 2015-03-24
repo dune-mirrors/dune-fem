@@ -210,13 +210,12 @@ namespace Dune
       /** \copydoc Dune::Fem::GridPartInterface::sequence */
       int sequence () const { return dofManager_.sequence(); }
 
-      /** \copydoc Dune::Fem::GridPartInterface::entityPointer */
+      /** \copydoc Dune::Fem::GridPartInterface::entity */
       template < class EntitySeed >
-      DUNE_DEPRECATED
-      typename Codim< EntitySeed::codimension >::EntityPointerType
-      entityPointer ( const EntitySeed &seed ) const
+      typename Codim< EntitySeed::codimension >::EntityType
+      entity ( const EntitySeed &seed ) const
       {
-        return grid().entityPointer( seed );
+        return grid().entity( seed );
       }
 
       /** \copydoc Dune::Fem::GridPartInterface::sequence */

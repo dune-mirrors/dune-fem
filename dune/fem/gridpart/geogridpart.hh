@@ -252,19 +252,19 @@ namespace Dune
       }
 
       template< class LocalFunction >
-      typename Codim< 0 >::EntityPointerType
+      typename Codim< 0 >::EntityType
       exchangeGeometry ( const typename Codim< 0 >::EntityType &entity,
                          const LocalFunction &localCoordFunction ) const
       {
-        return typename Codim< 0 >::EntityPointerType::Implementation( entity.impl(), localCoordFunction );
+        return typename Codim< 0 >::EntityType::Implementation( entity.impl(), localCoordFunction );
       }
 
       template < class EntitySeed >
-      typename Codim< EntitySeed::codimension >::EntityPointerType
-      entityPointer ( const EntitySeed &seed ) const
+      typename Codim< EntitySeed::codimension >::EntityType
+      entity ( const EntitySeed &seed ) const
       {
-        return typename Codim< EntitySeed::codimension >::EntityPointerType
-                 ::Implementation( coordFunction_, hostGridPart().entityPointer( seed ) );
+        return typename Codim< EntitySeed::codimension >::EntityType
+                 ::Implementation( coordFunction_, hostGridPart().entity( seed ) );
       }
 
       // convert a grid entity to a grid part entity ("Gurke!")
