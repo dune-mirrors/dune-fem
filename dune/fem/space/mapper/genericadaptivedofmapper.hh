@@ -810,14 +810,15 @@ namespace Dune
         for( IteratorType it = gridPart_.template begin<0>();
              it != end ; ++it )
         {
+          const ElementType &element = *it;
           if( considerHierarchyOfElements )
           {
             // insert father elements (conforming and hybrid grids only)
-            usedSize += insertFather( *it );
+            usedSize += insertFather( element );
           }
 
           // number of new dofs (not already counted) is returned
-          usedSize += insertEntityDofs( *it );
+          usedSize += insertEntityDofs( element );
         }
 
         //std::cout << "Insert Size = " << size_ << std::endl;

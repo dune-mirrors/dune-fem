@@ -46,8 +46,9 @@ void testGridPart( const GridPartType & gridPart )
   const IteratorType end = gridPart.template end< 0 >();
   for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
   {
+    const typename IteratorType::Entity &element = *it;
     ++count;
-    IndexType index = indexSet.index(*it);
+    IndexType index = indexSet.index(element);
     maxIndex = std::max( index, maxIndex);
 
     if (index >= IndexType(consecutiveIndex[0].size())) isConsecutiveIndex[0] = false;
@@ -55,10 +56,10 @@ void testGridPart( const GridPartType & gridPart )
     for (int c=0;c<=GridPartType::dimension;++c)
     {
       int nSubEn = Dune::ReferenceElements< typename GridPartType::GridType::ctype, GridPartType::dimension >::
-          general( it->type() ).size(c);
+          general( element.type() ).size(c);
       for (int i=0;i<nSubEn;++i)
       {
-        IndexType index = indexSet.subIndex(*it,i,c);
+        IndexType index = indexSet.subIndex(element,i,c);
         if (index >= IndexType(consecutiveIndex[c].size())) isConsecutiveIndex[c] = false;
         else consecutiveIndex[c][index] = true;
       }
@@ -132,12 +133,13 @@ void testIntersectionIterator( const GridPartType & gridPart )
 
   const IteratorType end = gridPart.template end< 0,Dune::All_Partition >();
   for( IteratorType it = gridPart.template begin< 0,Dune::All_Partition >(); it != end; ++it )
-    index[ gridPart.indexSet().index( * it ) ] = 1;
+    index[ gridPart.indexSet().index( *it ) ] = 1;
 
   for( IteratorType it = gridPart.template begin< 0,Dune::All_Partition >(); it != end; ++it )
   {
-    const IntersectionIteratorType iend = gridPart.iend( *it );
-    for ( IntersectionIteratorType inter = gridPart.ibegin( *it ); inter != iend; ++inter )
+    const typename IteratorType::Entity &element = *it;
+    const IntersectionIteratorType iend = gridPart.iend( element );
+    for ( IntersectionIteratorType inter = gridPart.ibegin( element ); inter != iend; ++inter )
     {
       IntersectionType intersection = *inter;
       if( intersection.neighbor() )

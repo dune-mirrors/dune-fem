@@ -135,7 +135,7 @@ namespace Dune
 
         const int map[3] = {1, 2, 4};
         {
-          const Geometry& geo = it->geometry();
+          const Geometry geo = it->geometry();
           if ( ! geo.type().isCube() ) return false;
 
           // calculate grid with
@@ -150,7 +150,7 @@ namespace Dune
             it != endit; ++it)
         {
           const EntityType& en = *it;
-          const Geometry& geo = en.geometry();
+          const Geometry geo = en.geometry();
 
           const FieldVector<ctype, dimworld> enBary =
             geo.global( geoInfo.localCenter( geo.type() ));

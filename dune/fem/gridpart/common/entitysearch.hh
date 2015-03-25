@@ -61,7 +61,7 @@ namespace Dune
             continue;
 
           if( ReferenceElements< ctype, mydimension >::general( geo.type() ).checkInside( z ) )
-            return *it;
+            return entity;
         }
         DUNE_THROW( GridError, "Coordinate " << x << " is outside the grid." );
       }

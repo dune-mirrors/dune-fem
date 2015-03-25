@@ -351,7 +351,7 @@ namespace Dune
                 RangeType& flux = valEnVec_[ l ];
 
                 // eval boundary Flux
-                wspeedS += caller().boundaryFlux( *nit, faceQuadInner, l, flux )
+                wspeedS += caller().boundaryFlux( intersection, faceQuadInner, l, flux )
                          * faceQuadInner.weight(l);
 
                 // apply weights

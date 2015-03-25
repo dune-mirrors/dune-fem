@@ -154,10 +154,11 @@ namespace Dune
               for( IteratorType it = gridPart_.template begin< dimension > ();
                    it != endit; ++it )
               {
-                const IdType id = idSet_.id( *it );
+                const typename IteratorType::Entity &entity = *it;
+                const IdType id = idSet_.id( entity );
                 if( indices_.find( id ) == indices_.end() )
                 {
-                  VertexType vx( it->geometry().corner(0), id, index );
+                  VertexType vx( entity.geometry().corner(0), id, index );
                   indices_[ id ] = vx ;
                   ++index;
                 }
@@ -281,8 +282,9 @@ namespace Dune
         IteratorType it = gridPart_.template begin< 0 > ();
         if( it == endit ) return;
 
-        bool hexahedra = it->type().isHexahedron();
-        if( ! hexahedra && ! it->type().isTetrahedron() )
+        const Entity &entity = *it;
+        bool hexahedra = entity.type().isHexahedron();
+        if( ! hexahedra && ! entity.type().isTetrahedron() )
         {
           DUNE_THROW(InvalidStateException,"Wrong geometry type");
         }

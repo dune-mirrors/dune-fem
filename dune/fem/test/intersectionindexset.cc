@@ -57,7 +57,7 @@ void checkIntersectionIndexSet( const GridPartType& gridPart )
     {
       const IntersectionType&  intersection = *iit ;
 
-      const int index = indexSet.index( *iit );
+      const int index = indexSet.index( intersection );
       std::cout << index << " index of intersection " << std::endl;
       ++ count ;
       if( intersection.boundary() )
