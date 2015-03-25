@@ -9,11 +9,6 @@
 #include <dune/geometry/quadraturerules.hh>
 #include <dune/geometry/referenceelements.hh>
 
-// disable copyiable entity / intersection feature until entities and intersections are copyable
-#ifndef DUNE_GRID_CHECK_USE_DEPRECATED_ENTITY_AND_INTERSECTION_INTERFACE
-#define DUNE_GRID_CHECK_USE_DEPRECATED_ENTITY_AND_INTERSECTION_INTERFACE 1
-#endif
-
 //- dune-grid includes
 #include <dune/grid/test/checkgeometry.hh>
 #include <dune/grid/test/checkintersectionit.hh>
