@@ -37,9 +37,10 @@ namespace Dune
      * @brief Constructor that initializes the data.
      * @param mat The matrix to convert.
      */
-    explicit ColCompMatrix(const Matrix& mat) :
-      N_(mat.rows()), M_(mat.cols()), Nnz_(mat.numNonZeros()*N_)
-    {}
+    explicit ColCompMatrix(const Matrix& mat)
+    {
+      setMatrix(mat);
+    }
 
     /** @brief Empty constructor. */
     ColCompMatrix() :
