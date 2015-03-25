@@ -102,7 +102,8 @@ template <class GridPart>
 void checkAdaptiveIndexSet( const GridPart& gridPart )
 {
   // call check index set from the DUNE grid test suite
-  Dune :: checkIndexSet( gridPart.grid(), gridPart.gridView(), Dune :: dvverb );
+  auto gridView = static_cast< typename GridPart::GridViewType >( gridPart );
+  Dune :: checkIndexSet( gridView.grid(), gridView, Dune :: dvverb );
 }
 
 using namespace Dune;
