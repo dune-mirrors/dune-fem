@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_GRIDPART_COMMON_INDEXSETWRAPPER_HH
 #define DUNE_FEM_GRIDPART_COMMON_INDEXSETWRAPPER_HH
 
-#warning "Using Dune::Fem::NonAdaptiveIndexSet wrapper around grid part index sets"
+// #warning "Using Dune::Fem::NonAdaptiveIndexSet wrapper around grid part index sets"
 
 #include <vector>
 
@@ -124,7 +124,7 @@ namespace Dune
 
       /** \copydoc Dune::Fem::ConsecutiveIndexSet::consecutive */
       static constexpr bool consecutive () noexcept
-      DUNE_DEPRECATED_MSG("IndexSet::consecutive() is deprecated, use Capabilities::isConsecutiveIndexSet<IndexSet>::v instead")
+      // DUNE_DEPRECATED_MSG("IndexSet::consecutive() is deprecated, use Capabilities::isConsecutiveIndexSet<IndexSet>::v instead")
       {
         return false;
       }

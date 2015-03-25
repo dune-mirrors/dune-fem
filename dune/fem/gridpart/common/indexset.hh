@@ -224,7 +224,7 @@ namespace Dune
 
       /** \brief please doc me */
       static constexpr bool consecutive () noexcept
-      DUNE_DEPRECATED_MSG("IndexSet::consecutive() is deprecated, use Capabilities::isConsecutiveIndexSet<IndexSet>::v instead")
+      // DUNE_DEPRECATED_MSG("IndexSet::consecutive() is deprecated, use Capabilities::isConsecutiveIndexSet<IndexSet>::v instead")
       {
         return true;
       }
