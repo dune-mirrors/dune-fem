@@ -129,32 +129,32 @@ namespace Dune
         return false;
       }
 
-      /** \copydoc Dune::Fem::ConsecutiveIndexSet::consecutive */
+      /** \copydoc Dune::Fem::ConsecutiveIndexSet::resize */
       static void resize () {}
 
-      /** \copydoc Dune::Fem::ConsecutiveIndexSet::consecutive */
+      /** \copydoc Dune::Fem::ConsecutiveIndexSet::compress */
       static constexpr bool compress () noexcept { return false; }
 
-      /** \copydoc Dune::Fem::ConsecutiveIndexSet::consecutive */
+      /** \copydoc Dune::Fem::ConsecutiveIndexSet::insertEntity */
       static void insertEntity ( const typename BaseType::template Codim< 0 >::Entity & )
       {}
 
-      /** \copydoc Dune::Fem::ConsecutiveIndexSet::consecutive */
+      /** \copydoc Dune::Fem::ConsecutiveIndexSet::removeEntity */
       static void removeEntity ( const typename BaseType::template Codim< 0 >::Entity & )
       {}
 
-      /** \copydoc Dune::Fem::ConsecutiveIndexSet::consecutive */
+      /** \copydoc Dune::Fem::ConsecutiveIndexSet::backup */
       void backup () const {}
 
-      /** \copydoc Dune::Fem::ConsecutiveIndexSet::consecutive */
+      /** \copydoc Dune::Fem::ConsecutiveIndexSet::restore */
       void restore () {}
 
-      /** \copydoc Dune::Fem::ConsecutiveIndexSet::consecutive */
+      /** \copydoc Dune::Fem::ConsecutiveIndexSet::write */
       template< class T >
       void write ( OutStreamInterface< T > &stream ) const
       {}
 
-      /** \copydoc Dune::Fem::ConsecutiveIndexSet::consecutive */
+      /** \copydoc Dune::Fem::ConsecutiveIndexSet::read */
       template< class T >
       void read ( InStreamInterface< T > &stream )
       {}
