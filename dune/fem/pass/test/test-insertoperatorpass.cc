@@ -21,7 +21,6 @@
 #include <dune/fem/pass/insertoperator.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/interpolate.hh>
-#include <dune/fem/space/common/interpolation.hh>
 #include <dune/fem/space/finitevolume.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/test/exactsolution.hh>
