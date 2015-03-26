@@ -85,8 +85,8 @@ namespace Dune
         }
 
       private:
-        Functor functor_;
         SizeType offset_;
+        Functor functor_;
       };
 
       typedef typename Traits::MapperType MapperType;
