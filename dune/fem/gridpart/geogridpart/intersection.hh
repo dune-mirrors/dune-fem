@@ -5,7 +5,6 @@
 #include <utility>
 
 #include <dune/fem/gridpart/geogridpart/cornerstorage.hh>
-#include <dune/fem/gridpart/geogridpart/entitypointer.hh>
 #include <dune/fem/misc/compatibility.hh>
 
 namespace Dune

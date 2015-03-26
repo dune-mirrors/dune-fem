@@ -4,7 +4,6 @@
 #include <type_traits>
 #include <utility>
 
-#include <dune/fem/gridpart/idgridpart/entitypointer.hh>
 #include <dune/fem/gridpart/idgridpart/geometry.hh>
 #include <dune/fem/misc/compatibility.hh>
 

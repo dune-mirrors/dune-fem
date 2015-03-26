@@ -76,22 +76,22 @@ namespace Dune
 
 
 
-    // EntityPointerGridTypeGetter
-    // ---------------------------
+    // EntityGridTypeGetter
+    // --------------------
 
-    template< class EntityPointer >
-    struct EntityPointerGridTypeGetter;
+    template< class Entity >
+    struct EntityGridTypeGetter;
 
-    template< class Grid, class Iterator >
-    struct EntityPointerGridTypeGetter< Dune::EntityPointer< Grid, Iterator > >
+    template< int codim, int dim, class Grid, template< int, int, class > class Impl >
+    struct EntityGridTypeGetter< Dune::Entity< codim, dim, Grid, Impl > >
     {
       typedef Grid Type;
     };
 
-    template< class EntityPointer >
-    struct EntityPointerGridTypeGetter< const EntityPointer >
+    template< class Entity >
+    struct EntityGridTypeGetter< const Entity >
     {
-      typedef typename EntityPointerGridTypeGetter< EntityPointer >::Type Type;
+      typedef typename EntityGridTypeGetter< Entity >::Type Type;
     };
 
 
@@ -149,7 +149,7 @@ namespace Dune
         template< PartitionIteratorType pitype >
         struct Partition
         {
-          typedef Dune::EntityIterator< codim, typename EntityPointerGridTypeGetter< EntityPointerType >::Type, FilteredGridPartIterator< codim, pitype, GridPartType > > IteratorType;
+          typedef Dune::EntityIterator< codim, typename EntityGridTypeGetter< EntityType >::Type, FilteredGridPartIterator< codim, pitype, GridPartType > > IteratorType;
         };
 
         typedef typename Partition< InteriorBorder_Partition >::IteratorType IteratorType;

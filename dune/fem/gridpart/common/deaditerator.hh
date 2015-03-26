@@ -14,17 +14,26 @@ namespace Dune
     // DeadIterator
     // ------------
 
-    template< class EntityPointer >
+    template< class E >
     struct DeadIterator
-    : public EntityPointer
     {
-      explicit DeadIterator ( const EntityPointer &entityPointer )
-      : EntityPointer( entityPointer )
-      {}
+      typedef E Entity;
+
+      static const int codimension = Entity::codimension;
 
       void increment ()
       {
         DUNE_THROW( InvalidStateException, "Trying to increment a dead iterator." );
+      }
+
+      Entity dereference () const
+      {
+        DUNE_THROW( InvalidStateException, "Trying to dereference a dead iterator." );
+      }
+
+      bool equals ( const DeadIterator & ) const
+      {
+        DUNE_THROW( InvalidStateException, "Trying to compare a dead iterator." );
       }
     };
 

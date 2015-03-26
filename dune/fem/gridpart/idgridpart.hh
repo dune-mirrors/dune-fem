@@ -8,13 +8,13 @@
 #include <dune/grid/common/gridview.hh>
 
 #include <dune/fem/gridpart/common/deaditerator.hh>
+#include <dune/fem/gridpart/common/defaultentitypointer.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/idgridpart/capabilities.hh>
 #include <dune/fem/gridpart/idgridpart/datahandle.hh>
 #include <dune/fem/gridpart/idgridpart/entity.hh>
-#include <dune/fem/gridpart/idgridpart/entitypointer.hh>
 #include <dune/fem/gridpart/idgridpart/geometry.hh>
 #include <dune/fem/gridpart/idgridpart/indexset.hh>
 #include <dune/fem/gridpart/idgridpart/intersection.hh>
@@ -69,11 +69,9 @@ namespace Dune
             typedef Dune::Geometry< dimension - codim, dimensionworld, const GridFamily, IdGeometry > Geometry;
             typedef Dune::Geometry< dimension - codim, dimension, const GridFamily, IdLocalGeometry > LocalGeometry;
 
-            typedef IdEntityPointer< IdEntityPointerTraits< codim, const GridFamily > > EntityPointerImpl;
-            typedef Dune::EntityPointer< const GridFamily, EntityPointerImpl > EntityPointer;
-
             typedef Dune::Entity< codim, dimension, const GridFamily, IdEntity > Entity;
             typedef typename HostGridPartType::GridType::template Codim< codim >::EntitySeed EntitySeed;
+            typedef DefaultEntityPointer< Entity > EntityPointer;
           };
 
           typedef DeadIntersection< const GridFamily > IntersectionImplType;
@@ -85,7 +83,7 @@ namespace Dune
           typedef Dune::IntersectionIterator< const GridFamily, IntersectionIteratorImplType, IntersectionImplType > LeafIntersectionIterator;
           typedef Dune::IntersectionIterator< const GridFamily, IntersectionIteratorImplType, IntersectionImplType > LevelIntersectionIterator;
 
-          typedef Dune::EntityIterator< 0, const GridFamily, DeadIterator< typename Codim< 0 >::EntityPointerImpl > > HierarchicIterator;
+          typedef Dune::EntityIterator< 0, const GridFamily, DeadIterator< typename Codim< 0 >::Entity > > HierarchicIterator;
         };
 
         template< int codim >

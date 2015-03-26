@@ -8,6 +8,8 @@
 int main () { return 0; }
 #else
 
+#define DISABLE_DEPRECATED_METHOD_CHECK 1
+
 #include <dune/common/exceptions.hh>
 
 #include <dune/geometry/referenceelements.hh>

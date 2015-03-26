@@ -1,13 +1,12 @@
 #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_ITERATOR_HH
 #define DUNE_FEM_GRIDPART_GEOGRIDPART_ITERATOR_HH
 
+#include <cassert>
+
 #include <type_traits>
+#include <utility>
 
-#include <dune/geometry/referenceelements.hh>
-
-#include <dune/grid/common/entityiterator.hh>
-
-#include <dune/fem/gridpart/geogridpart/entitypointer.hh>
+#include <dune/grid/common/gridenums.hh>
 
 namespace Dune
 {
@@ -15,45 +14,60 @@ namespace Dune
   namespace Fem
   {
 
-    // GeoIteratorTraits
-    // -----------------
-
-    template< int codim, PartitionIteratorType pitype, class GridFamily >
-    struct GeoIteratorTraits
-    : public GeoEntityPointerTraits< codim, GridFamily >
-    {
-      typedef typename remove_const< GridFamily >::type::Traits::HostGridPartType HostGridPartType;
-
-      typedef typename HostGridPartType::template Codim< codim >::template Partition< pitype >::IteratorType HostIteratorType;
-    };
-
-
-
     // GeoIterator
     // -----------
 
     template< int codim, PartitionIteratorType pitype, class GridFamily >
     class GeoIterator
-    : public GeoEntityPointer< GeoIteratorTraits< codim, pitype, GridFamily > >
     {
-      typedef GeoEntityPointer< GeoIteratorTraits< codim, pitype, GridFamily > > Base;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
-    protected:
-      typedef typename Base::HostIteratorType HostIteratorType;
-
-      using Base::hostIterator_;
+      typedef typename Traits::HostGridPartType HostGridPartType;
 
     public:
-      typedef typename Base::CoordFunctionType CoordFunctionType;
+      typedef typename Traits::CoordFunctionType CoordFunctionType;
+      typedef typename HostGridPartType::template Codim< codim >::template Partition< pitype >::IteratorType HostIteratorType;
+
+      static const int codimension = HostIteratorType::codimension;
+
+      typedef typename Traits::template Codim< codimension >::Entity Entity;
+
+      GeoIterator () = default;
 
       GeoIterator ( const CoordFunctionType &coordFunction, HostIteratorType hostIterator )
-      : Base( coordFunction, hostIterator )
+      : coordFunction_( &coordFunction ),
+        hostIterator_( std::move( hostIterator ) )
       {}
 
       void increment ()
       {
         ++hostIterator_;
       }
+
+      Entity dereference () const
+      {
+        return typename Entity::Implementation( coordFunction(), *hostIterator_ );
+      }
+
+      bool equals ( const GeoIterator &rhs ) const
+      {
+        return hostIterator_ == rhs.hostIterator_;
+      }
+
+      int level () const
+      {
+        return hostIterator_.level();
+      }
+
+    private:
+      const CoordFunctionType &coordFunction () const
+      {
+        assert( coordFunction_ );
+        return *coordFunction_;
+      }
+
+      const CoordFunctionType *coordFunction_ = nullptr;
+      HostIteratorType hostIterator_;
     };
 
   } // namespace Fem

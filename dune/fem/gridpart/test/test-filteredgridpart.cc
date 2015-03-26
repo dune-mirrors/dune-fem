@@ -1,5 +1,7 @@
 #include<config.h>
 
+#define DISABLE_DEPRECATED_METHOD_CHECK 1
+
 //- system includes
 #include <cassert>
 #include <iostream>
