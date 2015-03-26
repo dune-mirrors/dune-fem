@@ -176,12 +176,11 @@ namespace Dune
                 const int count = entity.subEntities( dimension );
                 for( int i = 0; i<count; ++i)
                 {
-                  typedef typename GridType :: template Codim< dimension > :: EntityPointer  EntityPointer;
-                  EntityPointer vertex = entity.template subEntity< dimension > ( i );
-                  const int id = gridPart_.indexSet().index( *vertex );
+                  auto vertex = make_entity( entity.template subEntity< dimension > ( i ) );
+                  const int id = gridPart_.indexSet().index( vertex );
                   if( indices_.find( id ) == indices_.end() )
                   {
-                    VertexType vx( vertex->geometry().corner(0), id, -1);
+                    VertexType vx( vertex.geometry().corner(0), id, -1);
                     indices_[ id ] = vx ;
                     ++ index ;
                   }
@@ -337,9 +336,7 @@ namespace Dune
 
       int getIndex( const Entity& entity, const int i ) const
       {
-        typedef typename GridType :: template Codim< dimension > :: EntityPointer  EntityPointer;
-        EntityPointer vx = entity.template subEntity< dimension > ( i );
-        return indexSet_.index( *vx );
+        return indexSet_.subIndex( entity, i, dimension );
       }
 
       template <class ElementTopo>
@@ -428,9 +425,7 @@ namespace Dune
               {
                 const int j = ElementTopo :: faceVertex( aluFace, i );
                 const int k = ElementTopo :: alu2genericVertex( j );
-                typedef typename GridType :: template Codim< dimension > :: EntityPointer  EntityPointer;
-                EntityPointer vx = entity.template subEntity< dimension > ( k );
-                out << "  " << indexSet_.index( *vx );
+                out << "  " << indexSet_.subIndex( entity, k, dimension );
               }
               out << std::endl;
             }
