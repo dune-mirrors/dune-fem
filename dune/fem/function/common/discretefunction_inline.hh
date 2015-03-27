@@ -44,7 +44,7 @@ namespace Dune
 
     template< class Impl >
     inline typename DiscreteFunctionDefault< Impl > :: RangeFieldType *
-    DiscreteFunctionDefault< Impl > :: allocDofPointer()
+    DiscreteFunctionDefault< Impl > :: allocDofPointer() const
     {
       dofPointerLock_.lock();
 
@@ -52,8 +52,8 @@ namespace Dune
       RangeFieldType *dofPointer = new RangeFieldType[ size ];
 
       unsigned int i = 0;
-      const DofIteratorType end = BaseType :: dend();
-      for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it )
+      const ConstDofIteratorType end = BaseType :: dend();
+      for( ConstDofIteratorType it = BaseType :: dbegin(); it != end; ++it )
         dofPointer[ i++ ] = *it;
       assert( i == size );
 

@@ -283,7 +283,7 @@ namespace Dune
        *
        *  \returns a pointer to a consecutive copy of the DoF vector
        */
-      inline RangeFieldType *allocDofPointer ()
+      inline RangeFieldType *allocDofPointer () const
       {
         return asImp().allocDofPointer();
       }
@@ -645,7 +645,7 @@ namespace Dune
        *  \note The default implementation make a copy of the DoF vector using
        *        the DoF iterators.
        */
-      inline RangeFieldType *allocDofPointer ();
+      inline RangeFieldType *allocDofPointer () const;
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::freeDofPointer
        *
@@ -850,7 +850,7 @@ namespace Dune
       // the local function storage
       mutable LocalDofVectorAllocatorType ldvAllocator_;
 
-      DebugLock dofPointerLock_;
+      mutable DebugLock dofPointerLock_;
 
     protected:
       std::string name_;
