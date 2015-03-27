@@ -47,7 +47,7 @@ void testGridPart( const GridPartType & gridPart )
     IndexType index = indexSet.index(element);
     maxIndex = std::max( index, maxIndex);
 
-    if (index >= consecutiveIndex[0].size()) isConsecutiveIndex[0] = false;
+    if (static_cast<std::size_t>(index) >= consecutiveIndex[0].size()) isConsecutiveIndex[0] = false;
     else consecutiveIndex[0][index] = true;
     for (int c=0;c<=GridPartType::dimension;++c)
     {
@@ -56,7 +56,7 @@ void testGridPart( const GridPartType & gridPart )
       for (int i=0;i<nSubEn;++i)
       {
         IndexType index = indexSet.subIndex(element,i,c);
-        if (index >= consecutiveIndex[c].size()) isConsecutiveIndex[c] = false;
+        if (static_cast<std::size_t>(index) >= consecutiveIndex[c].size()) isConsecutiveIndex[c] = false;
         else consecutiveIndex[c][index] = true;
       }
     }
