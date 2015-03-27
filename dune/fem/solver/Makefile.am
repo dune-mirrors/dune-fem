@@ -14,7 +14,8 @@ solver_HEADERS = cginverseoperator.hh \
 		 preconditionedinverseoperator.hh \
                  rungekutta.hh \
                  timeprovider.hh \
-                 umfpacksolver.hh
+                 umfpacksolver.hh \
+								 spqrsolver.hh
 
 SUBDIRS = ode oemsolver rungekutta test
 
