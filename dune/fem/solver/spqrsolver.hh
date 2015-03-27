@@ -13,7 +13,7 @@
 #include <dune/fem/operator/matrix/colcompspmatrix.hh>
 
 #if HAVE_SPQR
-#include<SuiteSparseQR.hpp>
+#include <SuiteSparseQR.hpp>
 
 namespace Dune
 {
@@ -31,8 +31,8 @@ namespace Fem
 
 /** \class SPQROp
  *  \ingroup DirectSolver
- *  \brief The %SPQR direct sparse solver for matrices of type Matrix
- *  %SPQR will always go double precision and supports complex numbers (not implemented).
+ *  \brief The %SPQR direct sparse solver
+ *  %SPQR will always go double precision and supports complex numbers.
  *  Details on SPQR can be found on http://www.cise.ufl.edu/research/sparse/spqr/
  *  \note This will only work if dune-fem has been configured to use SPQR
  */
