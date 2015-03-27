@@ -514,7 +514,6 @@ namespace Dune
     void hierarchicProlong ( const EntityType &entity, ProlongOperatorType & prolop ) const
     {
       typedef typename EntityType::HierarchicIterator HierarchicIterator;
-      typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
 
       // NOTE: initialize not working here
       // because we call hierarchically

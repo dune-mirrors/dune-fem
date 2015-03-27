@@ -100,7 +100,6 @@ namespace Dune
       static inline bool doCheck(const GridType& grid, const IndexSetType& indexSet)
       {
         typedef typename GridType :: template Codim<0> :: LevelIterator MacroIteratorType;
-        typedef typename GridType :: template Codim<0> :: EntityPointer  EntityPointerType;
         typedef typename GridType :: template Codim<0> :: Entity  EntityType;
         typedef typename GridType :: template Codim<0> :: Geometry Geometry;
 
