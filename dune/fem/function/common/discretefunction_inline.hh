@@ -78,6 +78,15 @@ namespace Dune
 
     template< class Impl >
     inline void DiscreteFunctionDefault< Impl >
+      :: freeDofPointerNoCopy( const RangeFieldType *dofPointer ) const
+    {
+      delete[] dofPointer;
+      dofPointerLock_.unlock();
+    }
+
+
+    template< class Impl >
+    inline void DiscreteFunctionDefault< Impl >
       ::axpy ( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g )
     {
       assert( BaseType::size() == g.size() );

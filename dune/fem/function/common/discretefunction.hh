@@ -308,6 +308,25 @@ namespace Dune
         asImp().freeDofPointer( dofPointer );
       }
 
+      /** \brief allocate a pointer to a consecutive array storing the DoFs
+       *
+       *  This method serves sincet the user cannot know, if the DoF array
+       *  returned by allocDofPointer has to be freed.
+       *
+       *  \note The pointer must have been allocated by allocDofPointer.
+       *
+       *  \note Only one DoF pointer may be allocated at a time.
+       *
+       *  \note DoFs are NOT stored back into the discrete function.
+       *
+       *  \param[in]  dofPointer  pointer to the dof array previously allocated
+       *                          by allocDofPointer
+       */
+      inline void freeDofPointerNoCopy( const RangeFieldType *dofPointer ) const
+      {
+        asImp().freeDofPointerNoCopy( dofPointer );
+      }
+
       /** \brief axpy operation
        *
        *  Adds s * g to this discrete function.
@@ -653,6 +672,13 @@ namespace Dune
        *        the DoF iterators.
        */
       inline void freeDofPointer( RangeFieldType *dofPointer );
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::freeDofPointerNoCopy
+       *
+       *  \note The default implementation make a copy of the DoF vector using
+       *        the DoF iterators.
+       */
+      inline void freeDofPointerNoCopy( const RangeFieldType *dofPointer ) const;
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::axpy(const RangeFieldType &s,const DiscreteFunctionInterfaceType &g) */
       void axpy ( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g );
