@@ -1018,31 +1018,6 @@ namespace Dune
     void SparseRowMatrix<T>::solveUMF(const T* b, T* x)
     {
 #ifdef ENABLE_UMFPACK
-#if 0 // LDL at the moment leads to unresolved symbols during linking
-      int n = dim_[0];
-      int nAll = n * nz_ ;
-      int* Ap = new int [n+1];
-      int* Ai = new int [ nAll ];
-      T*   Ax = new   T [ nAll ];
-      int ANZ,LNZ;
-      setupUMF(n,nAll,Ap,Ai,Ax,ANZ,LNZ);
-
-      double Lx [LNZ], D [n], Y [n] ;
-      int Li [LNZ], Lp [n+1], Parent [n], Lnz [n], Flag [n], Pattern [n];
-      /* factorize A into LDL’ (P and Pinv not used) */
-      ldl_symbolic (n, Ap, Ai, Lp, Parent, Lnz, Flag, NULL, NULL) ;
-      ldl_numeric (n, Ap, Ai, Ax, Lp, Parent, Lnz, Li, Lx, D, Y, Pattern, Flag, NULL, NULL) ;
-      /* solve Ax=b, overwriting b with the solution x so start with x=b*/
-      for (int i=0;i<n;++i) x[i]=b[i];
-      ldl_lsolve (n, x, Lp, Li, Lx) ;
-      ldl_dsolve (n, x, D) ;
-      ldl_ltsolve (n, x, Lp, Li, Lx) ;
-
-      // delete temp memory
-      delete [] Ap;
-      delete [] Ax;
-      delete [] Ai;
-#else // want to use LDL but use umfpack at the moment
       const int n = dim_[0];
       const int nAll = n * nz_ ;
 
@@ -1115,7 +1090,6 @@ namespace Dune
       delete [] Ap;
       delete [] Ax;
       delete [] Ai;
-#endif
 #endif // ENABLE_UMFPACK
     }
     template <class T>
