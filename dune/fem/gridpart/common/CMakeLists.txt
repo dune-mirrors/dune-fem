@@ -1,7 +1,6 @@
 dune_install(
   capabilities.hh
   deaditerator.hh
-  defaultentitypointer.hh
   defaultgridpartentity.hh
   entitysearch.hh
   gridpart.hh

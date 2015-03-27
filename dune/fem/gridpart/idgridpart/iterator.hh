@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <utility>
 
+#include <dune/grid/common/entitypointer.hh>
 #include <dune/grid/common/gridenums.hh>
 
 namespace Dune
@@ -55,6 +56,16 @@ namespace Dune
       int level () const
       {
         return hostIterator_.level();
+      }
+
+      operator Dune::DefaultEntityPointer< Entity > () const
+      {
+        return Dune::DefaultEntityPointer< Entity >( dereference() );
+      }
+      
+      bool equals ( const Dune::DefaultEntityPointer< Entity > &rhs ) const
+      {
+        return dereference() == rhs.dereference();
       }
 
     private:

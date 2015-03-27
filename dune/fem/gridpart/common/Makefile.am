@@ -2,7 +2,6 @@ commondir = $(includedir)/dune/fem/gridpart/common
 common_HEADERS = \
 	capabilities.hh \
 	deaditerator.hh \
-	defaultentitypointer.hh \
 	defaultgridpartentity.hh \
 	entitysearch.hh \
 	gridpart.hh \

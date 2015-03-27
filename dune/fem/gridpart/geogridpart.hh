@@ -8,7 +8,6 @@
 #include <dune/grid/common/gridview.hh>
 
 #include <dune/fem/gridpart/common/deaditerator.hh>
-#include <dune/fem/gridpart/common/defaultentitypointer.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
@@ -65,7 +64,7 @@ namespace Dune
 
           typedef Dune::Entity< codim, dimension, const GridPartFamily, GeoEntity > Entity;
           typedef typename HostGridPartType::GridType::template Codim< codim >::EntitySeed EntitySeed;
-          typedef DefaultEntityPointer< Entity > EntityPointer;
+          typedef Dune::EntityPointer< const GridPartFamily, DefaultEntityPointer< Entity > > EntityPointer;
         };
 
         typedef DeadIntersection< const GridPartFamily > IntersectionImplType;
