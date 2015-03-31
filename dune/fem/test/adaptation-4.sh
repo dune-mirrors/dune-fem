@@ -10,5 +10,9 @@ export MPIEXEC_PARAMETER=parameter
 if [ -e ../../../scripts/mpiexec.sh ] ; then
   exec ../../../scripts/mpiexec.sh 4 $*
 else
-  mpiexec -np 4 ./adaptation 
+  if [ "$MPIEXEC" == "" ]; then
+    mpiexec -np 4 ./adaptation
+  else
+    $MPIEXEC -np 4 ./adaptation
+  fi
 fi
