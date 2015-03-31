@@ -2,134 +2,245 @@
 #define DUNE_FEM_UMFPACKSOLVER_HH
 
 #include <limits>
+#include <iostream>
+#include <type_traits>
+
+#include <dune/fem/function/adaptivefunction/adaptivefunction.hh>
+#include <dune/fem/function/blockvectorfunction/blockvectorfunction.hh>
 
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/operator/matrix/colcompspmatrix.hh>
 
-#ifdef ENABLE_UMFPACK
-#include <umfpack.h>
-#endif
+
+#if HAVE_DUNE_ISTL
+#include <dune/istl/umfpack.hh>
 
 namespace Dune
 {
+namespace Fem
+{
 
-  namespace Fem
+/** @addtogroup DirectSolver
+ *
+ *  In this section implementations of direct solvers
+ *  for solving linear systems of the from
+ *  \f$A x = b\f$, where \f$A\f$ is a Mapping or
+ *  Operator and \f$x\f$ and \f$b\f$ are discrete functions
+ *  (see DiscreteFunctionInterface) can be found.
+ */
+
+/** \class SPQROp
+ *  \ingroup DirectSolver
+ *  \brief The %UMFPack direct sparse solver
+ *  %UMFPack will always go double precision and supports complex numbers.
+ *  Details on UMFPack can be found on http://www.cise.ufl.edu/research/sparse/umfpack/
+ *  \note This will only work if dune-fem has been configured to use UMFPACK
+ */
+template<class DF, class Op, bool symmetric=false>
+class UMFPACKOp:public Operator<DF, DF>
+{
+  public:
+  typedef DF DiscreteFunctionType;
+  typedef Op OperatorType;
+
+  // \brief The column-compressed matrix type.
+  typedef ColCompMatrix<typename OperatorType::MatrixType> CCSMatrixType;
+  typedef typename DiscreteFunctionType::DofType DofType;
+  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+
+  /** \brief Constructor.
+   *  \param[in] op Operator to invert
+   *  \param[in] redEps relative tolerance for residual (not used here)
+   *  \param[in] absLimit absolut solving tolerance for residual (not used here)
+   *  \param[in] maxIter maximal number of iterations performed (not used here)
+   *  \param[in] verbose verbosity
+   */
+  UMFPACKOp(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose) :
+    op_(op), verbose_(verbose), ccsmat_(), isloaded_(false)
   {
+    Caller::defaults(UMF_Control);
+    if(verbose_)
+      UMF_Control[UMFPACK_PRL] = 2;
+  }
 
-    /** @addtogroup DirectSolver
+  /** \brief Constructor.
+   *  \param[in] op Operator to invert
+   *  \param[in] redEps relative tolerance for residual (not used here)
+   *  \param[in] absLimit absolut solving tolerance for residual (not used here)
+   *  \param[in] maxIter maximal number of iterations performed (not used here)
+   */
+  UMFPACKOp(const OperatorType& op, const double& redEps=0.0, const double& absLimit=0.0,
+            const int& maxIter=std::numeric_limits<int>::max()) :
+    op_(op), verbose_(Parameter::getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
+  {
+    Caller::defaults(UMF_Control);
+    if(verbose_)
+      UMF_Control[UMFPACK_PRL] = 2;
+  }
 
-        In this section implementations of direct solvers
-        for solving linear systems of the from
-        \f$A x = b\f$, where \f$A\f$ is a Mapping or
-        Operator and \f$x\f$ and \f$b\f$ are discrete functions
-        (see DiscreteFunctionInterface) can be found.
-     **/
+  // \brief Destructor.
+  ~UMFPACKOp()
+  {}
 
+  /** \brief Solve the system
+   *  \param[in] arg right hand side
+   *  \param[out] dest solution
+   */
+  void operator()(const DiscreteFunctionType& arg, DiscreteFunctionType& dest) const
+  {
+    prepare();
+    apply(arg,dest);
+    finalize();
+  }
 
-    /** \class UMFPACKOp
-     *  \ingroup DirectSolver
-     *  \brief UMFPACK direct solver
-     */
-    template< class DF, class Op, bool symmetric=false >
-    struct UMFPACKOp
-    : public Operator< DF, DF >
+  // \brief Decompose matrix.
+  template<typename... A>
+  void prepare(A... ) const
+  {
+    if(!isloaded_)
     {
-      typedef DF DiscreteFunctionType;
-      typedef Op OperatorType;
+      ccsmat_ = op_.systemMatrix().matrix();
+      decompose();
+      isloaded_ = true;
+    }
+  }
 
-      /** \brief constructor of UMFPACKOp
-          \param[in] op Operator to invert
-          \param[in] redEps realative tolerance for residual (not used here)
-          \param[in] absLimit absolut solving tolerance for residual (not used here)
-          \param[in] maxIter maximal number of iterations performed (not used here)
-          \param[in] verbose verbosity
-      */
-      UMFPACKOp ( const OperatorType &op,
-                  double redEps,
-                  double absLimit,
-                  int maxIter,
-                  bool verbose )
-      : op_( op ),
-        epsilon_( absLimit ),
-        maxIter_( maxIter ),
-        verbose_( verbose )
-      {}
+  // \brief Free allocated memory.
+  inline void finalize() const
+  {
+    if(isloaded_)
+    {
+      ccsmat_.free();
+      Caller::free_symbolic(&UMF_Symbolic);
+      Caller::free_numeric(&UMF_Numeric);
+      isloaded_ = false;
+    }
+  }
 
-      UMFPACKOp ( const OperatorType &op,
-                  double redEps,
-                  double absLimit,
-                  int maxIter = std::numeric_limits< int >::max() )
-      : op_( op ),
-        epsilon_( absLimit ),
-        maxIter_( maxIter ),
-        verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) )
-      {}
+  /** \brief Solve the system.
+   *  \param[in] arg right hand side
+   *  \param[out] dest solution
+   *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
+   *   and you have free the decompistion when is not needed anymore (using the method finalize).
+   */
+  void apply(const DofType*& arg, DofType*& dest) const
+  {
+    double UMF_Apply_Info[UMFPACK_INFO];
+    Caller::solve(UMFPACK_A, ccsmat_.getColStart(), ccsmat_.getRowIndex(), ccsmat_.getValues(),
+                  dest, const_cast<DofType*>(arg), UMF_Numeric, UMF_Control, UMF_Apply_Info);
+    printOnApply(UMF_Apply_Info);
+  }
 
+  /** \brief Solve the system.
+   *  \param[in] arg right hand side
+   *  \param[out] dest solution
+   *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
+   *   and you have free the decompistion when is not needed anymore (using the method finalize).
+   */
+  void apply(const AdaptiveDiscreteFunction<DiscreteFunctionSpaceType>& arg,
+             AdaptiveDiscreteFunction<DiscreteFunctionSpaceType>& dest) const
+  {
+    const DofType* argPtr(arg.leakPointer());
+    DofType* destPtr(dest.leakPointer());
+    apply(argPtr,destPtr);
+  }
 
-      void prepare ( const DiscreteFunctionType &, DiscreteFunctionType & ) const
-      {}
+  /** \brief Solve the system.
+   *  \param[in] arg right hand side
+   *  \param[out] dest solution
+   *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
+   *   and you have free the decompistion when is not needed anymore (using the method finalize).
+   */
+  void apply(const ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& arg,
+             ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& dest) const
+  {
+    const DofType* argPtr(arg.allocDofPointer());
+    DofType* destPtr(dest.allocDofPointer());
+    apply(argPtr,destPtr);
+    arg.freeDofPointerNoCopy(argPtr);
+    dest.freeDofPointer(destPtr);
+  }
 
-      void finalize () const
-      {}
+  inline void printTexInfo(std::ostream& out) const
+  {
+    out<<"Solver: UMFPACK direct solver";
+    out<<"\\\\ \n";
+  }
 
-      /** \brief solve the system
-          \param[in] arg right hand side
-          \param[out] dest solution
-      */
-      void apply ( const DiscreteFunctionType &arg, DiscreteFunctionType &dest ) const
-      {
-        // prepare operator
-        prepare( arg, dest );
+  inline double averageCommTime() const
+  {
+    return 0.0;
+  }
 
-#ifdef ENABLE_UMFPACK
-        // call UMF solve method on SparseRowMatrix
-        if (symmetric)
-          op_.systemMatrix().solveUMF( arg, dest );
-        else
-          op_.systemMatrix().solveUMFNonSymmetric( arg, dest );
-#else
-        DUNE_THROW( InvalidStateException, "UMFPACK was not found, reconfigure or use other solver!" );
-#endif
+  inline int iterations() const
+  {
+    return 0;
+  }
 
-        // finalize operator
-        finalize ();
-      }
+  /** \brief Get CCS matrix of the operator to solve.
+   *  \warning It is up to the user to preserve consistency.
+   */
+  inline CCSMatrixType& getCCSMatrix()
+  {
+    return ccsmat_;
+  }
 
-      /** \brief solve the system
-          \param[in] arg right hand side
-          \param[out] dest solution
-      */
-      void operator() ( const DiscreteFunctionType &arg, DiscreteFunctionType &dest ) const
-      {
-        apply( arg, dest );
-      }
+  private:
+  const OperatorType& op_;
+  const bool verbose_;
+  mutable CCSMatrixType ccsmat_;
+  mutable bool isloaded_;
+  mutable void *UMF_Symbolic;
+  mutable void *UMF_Numeric;
+  mutable double UMF_Control[UMFPACK_CONTROL];
 
-      void printTexInfo(std::ostream& out) const
-      {
-        out << "Solver: UMFPACK direct solver ";
-        out  << "\\\\ \n";
-      }
+  typedef typename Dune::UMFPackMethodChooser<DofType> Caller;
 
-      double averageCommTime() const
-      {
-        return 0.0;
-      }
+  void printOnApply(double* UMF_Info) const
+  {
+    Caller::report_status(UMF_Control, UMF_Info[UMFPACK_STATUS]);
+    if(verbose_)
+    {
+      std::cout <<"[UMFPack Solve]" << std::endl;
+      std::cout << "Wallclock Time: " << UMF_Info[UMFPACK_SOLVE_WALLTIME]
+                << " (CPU Time: " << UMF_Info[UMFPACK_SOLVE_TIME] << ")" << std::endl;
+      std::cout << "Flops Taken: " << UMF_Info[UMFPACK_SOLVE_FLOPS] << std::endl;
+      std::cout << "Iterative Refinement steps taken: " << UMF_Info[UMFPACK_IR_TAKEN] << std::endl;
+      std::cout << "Error Estimate: " << UMF_Info[UMFPACK_OMEGA1] << " resp. " << UMF_Info[UMFPACK_OMEGA2] << std::endl;
+    }
+  }
 
-      int iterations() const
-      {
-        return 0;
-      }
+  // /brief Computes the UMFPACK decomposition.
+  void decompose() const
+  {
+    const std::size_t dimMat(ccsmat_.N());
+    double UMF_Decomposition_Info[UMFPACK_INFO];
+    Caller::symbolic(static_cast<int>(dimMat), static_cast<int>(dimMat), ccsmat_.getColStart(), ccsmat_.getRowIndex(),
+                     reinterpret_cast<double*>(ccsmat_.getValues()), &UMF_Symbolic, UMF_Control, UMF_Decomposition_Info);
+    Caller::numeric(ccsmat_.getColStart(), ccsmat_.getRowIndex(), reinterpret_cast<double*>(ccsmat_.getValues()),
+                    UMF_Symbolic, &UMF_Numeric, UMF_Control, UMF_Decomposition_Info);
+    Caller::report_status(UMF_Control,UMF_Decomposition_Info[UMFPACK_STATUS]);
+    if(verbose_)
+    {
+      std::cout << "[UMFPack Decomposition]" << std::endl;
+      std::cout << "Wallclock Time taken: " << UMF_Decomposition_Info[UMFPACK_NUMERIC_WALLTIME]
+                << " (CPU Time: " << UMF_Decomposition_Info[UMFPACK_NUMERIC_TIME] << ")" << std::endl;
+      std::cout << "Flops taken: " << UMF_Decomposition_Info[UMFPACK_FLOPS] << std::endl;
+      std::cout << "Peak Memory Usage: " << UMF_Decomposition_Info[UMFPACK_PEAK_MEMORY]*UMF_Decomposition_Info[UMFPACK_SIZE_OF_UNIT]
+                << " bytes" << std::endl;
+      std::cout << "Condition number estimate: " << 1./UMF_Decomposition_Info[UMFPACK_RCOND] << std::endl;
+      std::cout << "Numbers of non-zeroes in decomposition: L: " << UMF_Decomposition_Info[UMFPACK_LNZ]
+                << " U: " << UMF_Decomposition_Info[UMFPACK_UNZ] << std::endl;
 
-    private:
-      // note: the matrix is changed by this operator!
-      const OperatorType &op_;
-      typename DiscreteFunctionType::RangeFieldType epsilon_;
-      int maxIter_;
-      bool verbose_ ;
-    };
+      Caller::report_info(UMF_Control,UMF_Decomposition_Info);
+    }
+  }
+};
 
-  } // namespace Fem
+}
+}
 
-} // namespace Dune
+#endif // #if HAVE_UMFPACK
 
 #endif // #ifndef DUNE_FEM_UMFPACKSOLVER_HH
