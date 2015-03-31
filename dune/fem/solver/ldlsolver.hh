@@ -49,13 +49,11 @@ class LDLOp:public Operator<DF, DF>
   typedef DF DiscreteFunctionType;
   typedef Op OperatorType;
 
-  private:
   // \brief The column-compressed matrix type.
   typedef ColCompMatrix<typename OperatorType::MatrixType> CCSMatrixType;
   typedef typename DiscreteFunctionType::DofType DofType;
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
-  public:
   /** \brief Constructor.
    *  \param[in] op Operator to invert
    *  \param[in] redEps relative tolerance for residual (not used here)
@@ -186,7 +184,7 @@ class LDLOp:public Operator<DF, DF>
   /** \brief Get factorization diagonal matrix D.
    *  \warning It is up to the user to preserve consistency.
    */
-  inline double*& getD()
+  inline DofType*& getD()
   {
     return D_;
   }
@@ -210,9 +208,17 @@ class LDLOp:public Operator<DF, DF>
   /** \brief Get factorization Lx.
    *  \warning It is up to the user to preserve consistency.
    */
-  inline double*& getLx()
+  inline DofType*& getLx()
   {
     return Lx_;
+  }
+
+  /** \brief Get CCS matrix of the operator to solve.
+   *  \warning It is up to the user to preserve consistency.
+   */
+  inline CCSMatrixType& getCCSMatrix()
+  {
+    return ccsmat_;
   }
 
   private:
@@ -227,9 +233,9 @@ class LDLOp:public Operator<DF, DF>
   mutable int* Pattern_;
   mutable int* P_;
   mutable int* Pinv_;
-  mutable double* D_;
-  mutable double* Y_;
-  mutable double* Lx_;
+  mutable DofType* D_;
+  mutable DofType* Y_;
+  mutable DofType* Lx_;
   mutable int* Li_;
 
   // /brief Computes the LDL decomposition.
@@ -237,8 +243,8 @@ class LDLOp:public Operator<DF, DF>
   {
     // allocate vectors
     const std::size_t dimMat(ccsmat_.N());
-    D_ = new double [dimMat];
-    Y_ = new double [dimMat];
+    D_ = new DofType [dimMat];
+    Y_ = new DofType [dimMat];
     Lp_ = new int [dimMat + 1];
     Parent_ = new int [dimMat];
     Lnz_ = new int [dimMat];
@@ -248,14 +254,14 @@ class LDLOp:public Operator<DF, DF>
     Pinv_ = new int [dimMat];
 
     double Info [AMD_INFO];
-    if(amd_order (dimMat, ccsmat_.getColStart(), ccsmat_.getRowIndex(), P_, (double *) NULL, Info) < AMD_OK)
+    if(amd_order (dimMat, ccsmat_.getColStart(), ccsmat_.getRowIndex(), P_, (DofType *) NULL, Info) < AMD_OK)
       std::cout<<"WARNING: call to AMD failed."<<std::endl;
     if(verbose_)
       amd_info (Info);
     // compute the symbolic factorisation
     ldl_symbolic(dimMat, ccsmat_.getColStart(), ccsmat_.getRowIndex(), Lp_, Parent_, Lnz_, Flag_, P_, Pinv_);
     // initialise those entries of additionalVectors_ whose dimension is known only now
-    Lx_ = new double [Lp_[dimMat]];
+    Lx_ = new DofType [Lp_[dimMat]];
     Li_ = new int [Lp_[dimMat]];
     // compute the numeric factorisation
     const int rank(ldl_numeric(dimMat, ccsmat_.getColStart(), ccsmat_.getRowIndex(), ccsmat_.getValues(),

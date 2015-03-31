@@ -43,13 +43,11 @@ class SPQROp:public Operator<DF, DF>
   typedef DF DiscreteFunctionType;
   typedef Op OperatorType;
 
-  private:
   // \brief The column-compressed matrix type.
   typedef ColCompMatrix<typename OperatorType::MatrixType> CCSMatrixType;
   typedef typename DiscreteFunctionType::DofType DofType;
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
-  public:
   /** \brief Constructor.
    *  \param[in] op Operator to invert
    *  \param[in] redEps relative tolerance for residual (not used here)
@@ -204,6 +202,14 @@ class SPQROp:public Operator<DF, DF>
   inline SuiteSparseQR_factorization<DofType>*& getFactorization()
   {
     return spqrfactorization_;
+  }
+
+  /** \brief Get CCS matrix of the operator to solve.
+   *  \warning It is up to the user to preserve consistency.
+   */
+  inline CCSMatrixType& getCCSMatrix()
+  {
+    return ccsmat_;
   }
 
   private:
