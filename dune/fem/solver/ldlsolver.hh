@@ -130,7 +130,7 @@ class LDLOp:public Operator<DF, DF>
   void apply(const DofType*& arg, DofType*& dest) const
   {
     const std::size_t dimMat(ccsmat_.N());
-    ldl_perm(dimMat, Y_, arg, P_);
+    ldl_perm(dimMat, Y_, const_cast<DofType*>(arg), P_);
     ldl_lsolve(dimMat, Y_, Lp_, Li_, Lx_);
     ldl_dsolve(dimMat, Y_, D_);
     ldl_ltsolve(dimMat, Y_, Lp_, Li_, Lx_);
