@@ -16,6 +16,8 @@
 #if HAVE_DUNE_ISTL
 #include <dune/istl/umfpack.hh>
 
+#ifdef ENABLE_UMFPACK
+
 namespace Dune
 {
 namespace Fem
@@ -240,6 +242,8 @@ class UMFPACKOp:public Operator<DF, DF>
 
 }
 }
+
+#endif // #if HAVE_DUNE_ISTL
 
 #endif // #if HAVE_UMFPACK
 
