@@ -96,7 +96,7 @@ namespace Dune
       struct HoldReference
       {
         explicit HoldReference ( const Function &function )
-          : function_( function_ )
+          : function_( function )
         {}
 
         const Function &get () const noexcept { return function_.get(); }
