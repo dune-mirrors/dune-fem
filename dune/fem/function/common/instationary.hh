@@ -152,10 +152,10 @@ namespace Dune
     template< class Function,
               template< class > class StoragePolicy = __InstationaryFunction::HoldCopy >
     class InstationaryFunction
-      : public BasicInstationaryFunction< typename Function::FunctionSpaceType, InstationaryFunction< Function > >,
+      : public BasicInstationaryFunction< typename Function::FunctionSpaceType, InstationaryFunction< Function, StoragePolicy > >,
         private StoragePolicy< Function >
     {
-      typedef BasicInstationaryFunction< typename Function::FunctionSpaceType, InstationaryFunction< Function > > BaseType;
+      typedef BasicInstationaryFunction< typename Function::FunctionSpaceType, InstationaryFunction< Function, StoragePolicy > > BaseType;
       typedef StoragePolicy< Function > StoragePolicyType;
 
     public:
