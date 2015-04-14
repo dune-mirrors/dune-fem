@@ -5,9 +5,9 @@
 #include <dune/geometry/referenceelements.hh>
 
 // dune-fem includes
-#include <dune/fem/space/dofmapper/code.hh>
-#include <dune/fem/space/dofmapper/compile.hh>
-#include <dune/fem/space/dofmapper/indexsetdofmapper.hh>
+#include <dune/fem/space/mapper/code.hh>
+#include <dune/fem/space/mapper/compile.hh>
+#include <dune/fem/space/mapper/indexsetdofmapper.hh>
 
 
 namespace Dune

@@ -6,7 +6,6 @@ using namespace Dune;
 
 #include <dune/fem/function/adaptivefunction.hh>
 //#include <dune/fem/function/vectorfunction.hh>
-//#include <dune/fem/function/attachedfunction.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 
 #if USE_COMBINED_SPACE
@@ -79,7 +78,6 @@ typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FunctionSpaceTyp
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 //typedef ManagedDiscreteFunction< VectorDiscreteFunction< DiscreteFunctionSpaceType, DynamicVector< double > > > DiscreteFunctionType;
-//typedef AttachedDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
 typedef DofManager< MyGridType > DofManagerType;
 
@@ -111,7 +109,6 @@ struct ExactSolution
 // ********************************************************************
 void adapt( MyGridType &grid, DiscreteFunctionType &solution, int step )
 {
-  typedef DiscreteFunctionType::DiscreteFunctionSpaceType::IteratorType Iterator;
   const DiscreteFunctionType::DiscreteFunctionSpaceType &space = solution.space();
   RestrictProlongDefault<DiscreteFunctionType> rp(solution);
   rp.setFatherChildWeight(DGFGridInfo< MyGridType >::refineWeight());
@@ -139,9 +136,8 @@ void adapt( MyGridType &grid, DiscreteFunctionType &solution, int step )
 
   for( int i = 0; i < count; ++i )
   {
-    const Iterator end = space.end();
-    for( Iterator it = space.begin(); it != end ; ++it )
-      grid.mark( mark, *it );
+    for( const auto& entity : space)
+      grid.mark( mark, entity );
     adop.adapt();
     std::cout << message << std::endl;
   }

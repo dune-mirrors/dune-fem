@@ -14,7 +14,6 @@ SUBDIRS = \
 	combinedspace \
 	common \
 	discontinuousgalerkin \
-	dofmapper \
 	finitevolume \
 	fourier \
 	lagrange \

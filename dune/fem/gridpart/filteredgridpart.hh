@@ -6,6 +6,7 @@
 
 //- dune-grid includes
 #include <dune/grid/common/datahandleif.hh>
+#include <dune/grid/common/gridview.hh>
 
 //- dune-fem includes
 #include <dune/fem/gridpart/adaptiveleafindexset.hh>
@@ -75,22 +76,22 @@ namespace Dune
 
 
 
-    // EntityPointerGridTypeGetter
-    // ---------------------------
+    // EntityGridTypeGetter
+    // --------------------
 
-    template< class EntityPointer >
-    struct EntityPointerGridTypeGetter;
+    template< class Entity >
+    struct EntityGridTypeGetter;
 
-    template< class Grid, class Iterator >
-    struct EntityPointerGridTypeGetter< Dune::EntityPointer< Grid, Iterator > >
+    template< int codim, int dim, class Grid, template< int, int, class > class Impl >
+    struct EntityGridTypeGetter< Dune::Entity< codim, dim, Grid, Impl > >
     {
       typedef Grid Type;
     };
 
-    template< class EntityPointer >
-    struct EntityPointerGridTypeGetter< const EntityPointer >
+    template< class Entity >
+    struct EntityGridTypeGetter< const Entity >
     {
-      typedef typename EntityPointerGridTypeGetter< EntityPointer >::Type Type;
+      typedef typename EntityGridTypeGetter< Entity >::Type Type;
     };
 
 
@@ -148,7 +149,7 @@ namespace Dune
         template< PartitionIteratorType pitype >
         struct Partition
         {
-          typedef Dune::EntityIterator< codim, typename EntityPointerGridTypeGetter< EntityPointerType >::Type, FilteredGridPartIterator< codim, pitype, GridPartType > > IteratorType;
+          typedef Dune::EntityIterator< codim, typename EntityGridTypeGetter< EntityType >::Type, FilteredGridPartIterator< codim, pitype, GridPartType > > IteratorType;
         };
 
         typedef typename Partition< InteriorBorder_Partition >::IteratorType IteratorType;
@@ -219,9 +220,6 @@ namespace Dune
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
       typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
-
-      //! \brief grid view
-      typedef GridView< GridPartViewTraits< ThisType > > GridViewType;
 
       //! \brief grid part typedefs, use those of traits
       template< int codim >
@@ -344,12 +342,12 @@ namespace Dune
         hostGridPart().communicate( handleWrapper, iftype, dir );
       }
 
-      /** \copydoc GridPartInterface::entityPointer(const EntitySeed &seed) const */
+      /** \copydoc GridPartInterface::entity(const EntitySeed &seed) const */
       template < class EntitySeed >
-      typename Codim< EntitySeed::codimension >::EntityPointerType
-      entityPointer ( const EntitySeed &seed ) const
+      typename Codim< EntitySeed::codimension >::EntityType
+      entity ( const EntitySeed &seed ) const
       {
-        return hostGridPart().entityPointer( seed );
+        return hostGridPart().entity( seed );
       }
 
       //! \brief return reference to filter

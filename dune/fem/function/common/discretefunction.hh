@@ -12,13 +12,12 @@
 #include <dune/fem/function/common/function.hh>
 #include <dune/fem/function/common/functor.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
-#include <dune/fem/function/localfunction/functor.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/debug.hh>
 #include <dune/fem/misc/functor.hh>
-#include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/version.hh>
 
@@ -284,7 +283,7 @@ namespace Dune
        *
        *  \returns a pointer to a consecutive copy of the DoF vector
        */
-      inline RangeFieldType *allocDofPointer ()
+      inline RangeFieldType *allocDofPointer () const
       {
         return asImp().allocDofPointer();
       }
@@ -307,6 +306,25 @@ namespace Dune
       inline void freeDofPointer( RangeFieldType *dofPointer )
       {
         asImp().freeDofPointer( dofPointer );
+      }
+
+      /** \brief allocate a pointer to a consecutive array storing the DoFs
+       *
+       *  This method serves sincet the user cannot know, if the DoF array
+       *  returned by allocDofPointer has to be freed.
+       *
+       *  \note The pointer must have been allocated by allocDofPointer.
+       *
+       *  \note Only one DoF pointer may be allocated at a time.
+       *
+       *  \note DoFs are NOT stored back into the discrete function.
+       *
+       *  \param[in]  dofPointer  pointer to the dof array previously allocated
+       *                          by allocDofPointer
+       */
+      inline void freeDofPointerNoCopy( const RangeFieldType *dofPointer ) const
+      {
+        asImp().freeDofPointerNoCopy( dofPointer );
       }
 
       /** \brief axpy operation
@@ -549,6 +567,55 @@ namespace Dune
       : public BaseType :: template CommDataHandle< Operation >
       {};
 
+    private:
+      struct LocalFunctionEvaluateFunctor
+      {
+        typedef typename LocalFunctionType::LocalCoordinateType LocalCoordinateType;
+        typedef typename LocalFunctionType::RangeType RangeType;
+
+        LocalFunctionEvaluateFunctor ( RangeType &value ) : value_( value ) {}
+
+        void operator() ( const LocalCoordinateType &x, const LocalFunctionType &localFunction )
+        {
+          localFunction.evaluate( x, value_ );
+        }
+
+      private:
+        RangeType &value_;
+      };
+
+      struct LocalFunctionJacobianFunctor
+      {
+        typedef typename LocalFunctionType::LocalCoordinateType LocalCoordinateType;
+        typedef typename LocalFunctionType::JacobianRangeType JacobianRangeType;
+
+        LocalFunctionJacobianFunctor ( JacobianRangeType &jacobian ) : jacobian_( jacobian ) {}
+
+        void operator() ( const LocalCoordinateType &x, const LocalFunctionType &localFunction )
+        {
+          localFunction.jacobian( x, jacobian_);
+        }
+
+      private:
+        JacobianRangeType &jacobian_;
+      };
+
+      struct LocalFunctionHessianFunctor
+      {
+        typedef typename LocalFunctionType::LocalCoordinateType LocalCoordinateType;
+        typedef typename LocalFunctionType::HessianRangeType HessianRangeType;
+
+        LocalFunctionHessianFunctor ( HessianRangeType &hessian ) : hessian_( hessian ) {}
+
+        void operator() ( const LocalCoordinateType &x, const LocalFunctionType &localFunction )
+        {
+          localFunction.hessian( x, hessian_ );
+        }
+
+      private:
+        HessianRangeType &hessian_;
+      };
+
     protected:
       using BaseType :: asImp;
 
@@ -597,7 +664,7 @@ namespace Dune
        *  \note The default implementation make a copy of the DoF vector using
        *        the DoF iterators.
        */
-      inline RangeFieldType *allocDofPointer ();
+      inline RangeFieldType *allocDofPointer () const;
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::freeDofPointer
        *
@@ -605,6 +672,13 @@ namespace Dune
        *        the DoF iterators.
        */
       inline void freeDofPointer( RangeFieldType *dofPointer );
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::freeDofPointerNoCopy
+       *
+       *  \note The default implementation make a copy of the DoF vector using
+       *        the DoF iterators.
+       */
+      inline void freeDofPointerNoCopy( const RangeFieldType *dofPointer ) const;
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::axpy(const RangeFieldType &s,const DiscreteFunctionInterfaceType &g) */
       void axpy ( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g );
@@ -637,21 +711,21 @@ namespace Dune
       /** \copydoc Dune::Fem::Function::evaluate(const DomainType &x,RangeType &value) const */
       inline void evaluate ( const DomainType &x, RangeType &value ) const
       {
-        LocalFunctionEvaluateFunctor< LocalFunctionType > functor( value );
+        LocalFunctionEvaluateFunctor functor( value );
         asImp().evaluateGlobal( x, functor );
       }
 
       /** \copydoc Dune::Fem::Function::jacobian(const DomainType &x,JacobianRangeType &jacobian) const */
       inline void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
       {
-        LocalFunctionJacobianFunctor< LocalFunctionType > functor( jacobian );
+        LocalFunctionJacobianFunctor functor( jacobian );
         asImp().evaluateGlobal( x, functor );
       }
 
       /** \copydoc Dune::Fem::Function::hessian (const DomainType &x,HessianRangeType &hessian) const */
       inline void hessian ( const DomainType &x, HessianRangeType &hessian ) const
       {
-        LocalFunctionHessianFunctor< LocalFunctionType > functor( hessian );
+        LocalFunctionHessianFunctor functor( hessian );
         asImp().evaluateGlobal( x, functor );
       }
 
@@ -802,7 +876,7 @@ namespace Dune
       // the local function storage
       mutable LocalDofVectorAllocatorType ldvAllocator_;
 
-      DebugLock dofPointerLock_;
+      mutable DebugLock dofPointerLock_;
 
     protected:
       std::string name_;

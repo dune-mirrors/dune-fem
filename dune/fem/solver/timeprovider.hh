@@ -8,8 +8,9 @@
 
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/parameter.hh>
-#include <dune/fem/misc/commhelper.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+
+#include <dune/fem/misc/mpimanager.hh>
 
 namespace Dune
 {
@@ -293,9 +294,8 @@ namespace Dune
                       (for testing only);
                       defaults to 1
      */
-    template< class CommProvider = DefaultCollectiveCommunicationType >
-    class TimeProvider {
-    };
+    template< class CommProvider >
+    class TimeProvider {};
 
     /** \ingroup ODESolver
      *  \brief   the basic Dune::TimeProvider implementation.
@@ -316,17 +316,16 @@ namespace Dune
       typedef CollectiveCommunication< C > CollectiveCommunicationType;
 
     protected:
-      typedef CollectiveCommunicationHelper< CollectiveCommunicationType >
-        CollectiveCommHelperType;
-
       double getCflFactor() const
       {
-        return Parameter::getValidValue( "fem.timeprovider.factor", (double)1.0, ValidateGreater< double >( 0.0 ) );
+        return Parameter::getValidValue( "fem.timeprovider.factor", (double)1.0,
+            [] ( double val ) { return val > 0.0; } );
       }
 
       int getUpdateStep () const
       {
-        return Parameter::getValidValue( "fem.timeprovider.updatestep", (int)1, ValidateGreater< int >( 0 ) );
+        return Parameter::getValidValue( "fem.timeprovider.updatestep", (int)1,
+            [] ( int step ) { return step > 0; } );
       }
 
     public:
@@ -335,8 +334,7 @@ namespace Dune
        *  \param[in]  comm  collective communication (optional)
        */
       explicit
-      TimeProvider ( const CollectiveCommunicationType &comm
-                       = CollectiveCommHelperType::defaultCommunication() )
+      TimeProvider ( const CollectiveCommunicationType &comm )
       : BaseType(),
         comm_( comm ),
         cfl_( getCflFactor() ),
@@ -352,8 +350,7 @@ namespace Dune
        */
       explicit
       TimeProvider ( const double startTime,
-                     const CollectiveCommunicationType &comm
-                       = CollectiveCommHelperType::defaultCommunication() )
+                     const CollectiveCommunicationType &comm )
       : BaseType( startTime ),
         comm_( comm ),
         cfl_( getCflFactor() ),
@@ -369,8 +366,7 @@ namespace Dune
        */
       TimeProvider ( const double startTime,
                      const double cfl,
-                     const CollectiveCommunicationType &comm
-                       = CollectiveCommHelperType :: defaultCommunication() )
+                     const CollectiveCommunicationType &comm )
       : BaseType( startTime ),
         comm_( comm ),
         cfl_( cfl ),
@@ -490,11 +486,62 @@ namespace Dune
       using BaseType::valid_;
       using BaseType::timeStep_;
 
-      const CollectiveCommunicationType &comm_;
+      const CollectiveCommunicationType& comm_;
       const double cfl_;
       const int updateStep_;
       int counter_;
     };
+
+    /** \class   DefaultTimeProvider
+     *  \ingroup ODESolver
+     *  \brief   the same functionality as the Dune::TimeProvider.
+     *
+     *  This implementation of a timeprovider uses the CollectiveCommunicate
+     *  from a Fem::MPIManager.
+     */
+    class DefaultTimeProvider
+    : public TimeProvider< typename MPIManager::CollectiveCommunication >
+    {
+      typedef TimeProvider< typename MPIManager::CollectiveCommunication > BaseType;
+    public:
+      typedef typename MPIManager::CollectiveCommunication CollectiveCommunicationType ;
+
+      /** \brief constructor taking start time
+       *
+       *  \param[in]  comm       collective communication (default = MPIManager::comm())
+       */
+      explicit
+      DefaultTimeProvider ( const CollectiveCommunicationType& comm = MPIManager::comm() )
+      : BaseType( comm )
+      {}
+
+      /** \brief constructor taking start time
+       *
+       *  \param[in]  startTime  initial time
+       *  \param[in]  comm       collective communication (default = MPIManager::comm())
+       */
+      explicit
+      DefaultTimeProvider ( const double startTime,
+                            const CollectiveCommunicationType& comm = MPIManager::comm() )
+      : BaseType( startTime, comm )
+      {}
+
+      /** \brief constructor taking start time and CFL constant
+       *
+       *  \param[in]  startTime  initial time
+       *  \param[in]  cfl        CFL constant
+       *  \param[in]  comm       collective communication (default = MPIManager::comm())
+       */
+      DefaultTimeProvider ( const double startTime,
+                            const double cfl,
+                            const CollectiveCommunicationType &comm = MPIManager::comm() )
+      : BaseType( startTime, cfl, comm )
+      {}
+
+      virtual ~DefaultTimeProvider() {}
+    };
+
+
 
     /** \class   GridTimeProvider
      *  \ingroup ODESolver

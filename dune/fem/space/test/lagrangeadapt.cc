@@ -94,12 +94,19 @@ int main ( int argc, char **argv )
 #ifndef DISABLE_DEPRECATED_METHOD_CHECK
 #define DISABLE_DEPRECATED_METHOD_CHECK 1
 #endif
-#include <dune/grid/test/checkindexset.cc>
+
+// use deprecated interface check unit ALUGrid returns entities instead of entity pointers
+#ifndef DUNE_GRID_CHECK_USE_DEPRECATED_ENTITY_AND_INTERSECTION_INTERFACE
+#define DUNE_GRID_CHECK_USE_DEPRECATED_ENTITY_AND_INTERSECTION_INTERFACE 1
+#endif
+
+#include <dune/grid/test/checkindexset.hh>
 template <class GridPart>
 void checkAdaptiveIndexSet( const GridPart& gridPart )
 {
   // call check index set from the DUNE grid test suite
-  Dune :: checkIndexSet( gridPart.grid(), gridPart.gridView(), Dune :: dvverb );
+  auto gridView = static_cast< typename GridPart::GridViewType >( gridPart );
+  Dune :: checkIndexSet( gridView.grid(), gridView, Dune :: dvverb );
 }
 
 using namespace Dune;
@@ -199,8 +206,6 @@ typedef AdaptationManager< MyGridType, RestrictProlongOperatorType >
 void adapt ( MyGridType &grid, DiscreteFunctionType &solution, int step,
              const bool locallyAdaptive )
 {
-  typedef DiscreteFunctionSpaceType :: IteratorType IteratorType;
-
   const DiscreteFunctionSpaceType &discreteFunctionSpace = solution.space();
 
   RestrictProlongOperatorType rp( solution );
@@ -220,15 +225,12 @@ void adapt ( MyGridType &grid, DiscreteFunctionType &solution, int step,
       numElements = std::max( numElements, 1 );
     }
 
-    IteratorType it = discreteFunctionSpace.begin();
-    const IteratorType endit = discreteFunctionSpace.end();
     int elementNumber = 0;
-    for( ; it != endit; ++it, ++elementNumber )
+    for( const auto& entity : discreteFunctionSpace )
     {
       if( elementNumber < numElements )
-      {
-        grid.mark( mark, *it );
-      }
+        grid.mark( mark, entity );
+      ++elementNumber;
     }
 
     // adapt grid

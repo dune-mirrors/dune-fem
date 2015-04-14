@@ -19,7 +19,7 @@
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/space/dofmapper/indexsetdofmapper.hh>
+#include <dune/fem/space/mapper/indexsetdofmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/space/shapefunctionset/proxy.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>

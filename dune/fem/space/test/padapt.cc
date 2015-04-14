@@ -25,6 +25,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 #include <dune/fem/space/padaptivespace.hh>
@@ -195,8 +196,6 @@ void gridAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step,
       grape.dataDisplay( solution );
     }
   #endif
-
-  typedef DiscreteFunctionSpaceType :: IteratorType IteratorType;
   const DiscreteFunctionSpaceType &discreteFunctionSpace = solution.space();
 
   RestrictProlongOperatorType rp( solution );
@@ -216,15 +215,12 @@ void gridAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step,
       numElements = std::max( numElements, 1 );
     }
 
-    IteratorType it = discreteFunctionSpace.begin();
-    const IteratorType endit = discreteFunctionSpace.end();
     int elemNo = 0;
-    for( ; it != endit; ++it, ++elemNo )
+    for( const auto& entity : discreteFunctionSpace)
     {
       if( elemNo < numElements )
-      {
-        grid.mark( mark, *it );
-      }
+        grid.mark( mark, entity );
+      ++elemNo;
     }
 
     // adapt grid
@@ -246,15 +242,11 @@ bool checkContinuous( DiscreteFunctionType &solution )
   double ret = 0;
   typedef DiscreteFunctionType :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef DiscreteFunctionSpaceType :: GridPartType GridPartType;
-  typedef DiscreteFunctionSpaceType :: IteratorType IteratorType ;
-  typedef IteratorType :: Entity  EntityType ;
   typedef GridPartType :: IntersectionIteratorType IntersectionIteratorType;
   typedef GridPartType :: IntersectionType         IntersectionType;
 
-  const IteratorType endit = solution.space().end();
-  for( IteratorType it = solution.space().begin(); it != endit; ++it )
+  for( const auto& entity : solution.space() )
   {
-    const EntityType& entity = *it;
     const IntersectionIteratorType endiit = solution.space().gridPart().iend( entity );
     for( IntersectionIteratorType iit = solution.space().gridPart().ibegin( entity ); iit != endiit ; ++ iit )
     {
@@ -271,7 +263,9 @@ bool checkContinuous( DiscreteFunctionType &solution )
 	      {
           DiscreteFunctionType::RangeType uIn,uOut;
           solution.localFunction(entity).evaluate(quadInside[qp], uIn);
-          solution.localFunction(*(intersection.outside())).evaluate(quadOutside[qp], uOut);
+
+          auto nb = make_entity(intersection.outside());
+          solution.localFunction(nb).evaluate(quadOutside[qp], uOut);
           ret = std::max(ret, (uIn-uOut).two_norm());
         }
       }

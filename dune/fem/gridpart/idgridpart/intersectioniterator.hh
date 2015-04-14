@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_INTERSECTIONITERATOR_HH
 #define DUNE_FEM_GRIDPART_IDGRIDPART_INTERSECTIONITERATOR_HH
 
+#include <type_traits>
+#include <utility>
+
 #include <dune/grid/common/intersectioniterator.hh>
 
 #include <dune/fem/gridpart/idgridpart/intersection.hh>
@@ -27,49 +30,34 @@ namespace Dune
 
     public:
       typedef Dune::Intersection< const GridFamily, IntersectionImplType > Intersection;
+      typedef typename Traits::ExtraData  ExtraData;
 
-      IdIntersectionIterator ( const HostIntersectionIteratorType &hostIterator )
-      : intersection_( IntersectionImplType() ),
-        hostIterator_( hostIterator )
+      IdIntersectionIterator () = default;
+
+      IdIntersectionIterator ( ExtraData data, HostIntersectionIteratorType hostIterator )
+      : data_( std::move( data ) ),
+        hostIterator_( std::move( hostIterator ) )
       {}
-
-      IdIntersectionIterator ( const ThisType &other )
-      : intersection_( IntersectionImplType() ),
-        hostIterator_( other.hostIterator_ )
-      {}
-
-      const ThisType &operator= ( const ThisType &other )
-      {
-        intersectionImpl() = IntersectionImplType();
-        hostIterator_ = other.hostIterator_;
-        return *this;
-      }
 
       bool equals ( const ThisType &other ) const
       {
-        return (hostIterator_ == other.hostIterator_);
+        return hostIterator_ == other.hostIterator_;
       }
 
       void increment ()
       {
         ++hostIterator_;
-        intersectionImpl() = IntersectionImplType();
       }
 
-      const Intersection &dereference () const
+      Intersection dereference () const
       {
-        if( !intersectionImpl() )
-          intersectionImpl() = IntersectionImplType( *hostIterator_ );
-        return intersection_;
+        return IntersectionImplType( data(), *hostIterator_ );
       }
 
-    private:
-      IntersectionImplType &intersectionImpl () const
-      {
-        return intersection_.impl();
-      }
+      const ExtraData &data () const { return data_; }
 
-      mutable Intersection intersection_;
+    protected:
+      ExtraData data_;
       HostIntersectionIteratorType hostIterator_;
     };
 

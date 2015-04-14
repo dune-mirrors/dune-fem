@@ -6,41 +6,12 @@
 
 //- Dune includes
 #include <dune/fem/space/common/arrays.hh>
-#include <dune/fem/gridpart/defaultindexsets.hh>
 
 #include <dune/grid/utility/persistentcontainer.hh>
 
 #include <dune/grid/utility/persistentcontainervector.hh>
 #include <dune/grid/utility/persistentcontainerwrapper.hh>
 #include <dune/grid/utility/persistentcontainermap.hh>
-
-#ifdef ENABLE_ADAPTIVELEAFINDEXSET_FOR_YASPGRID
-#include <dune/grid/yaspgrid.hh>
-
-namespace Dune
-{
-
-  // PersistentContainer for YaspGrid
-  // --------------------------------
-
-  template< int dim, class CoordCont, class Data >
-  class PersistentContainer< YaspGrid< dim, CoordCont >, Data >
-  : public PersistentContainerVector< YaspGrid< dim, CoordCont >,
-                                      typename YaspGrid< dim, CoordCont >::LeafIndexSet,
-                                      std::vector<Data> >
-  {
-    typedef YaspGrid< dim, CoordCont > Grid;
-    typedef PersistentContainerVector< Grid, typename Grid::LeafIndexSet, std::vector<Data> > BaseType;
-
-  public:
-    //! Constructor filling the container with values using the default constructor
-    //! Depending on the implementation this could be achieved without allocating memory
-    PersistentContainer ( const Grid &grid, const int codim, const Data& value = Data() )
-    : BaseType( grid.leafIndexSet(), codim, value )
-    {}
-  };
-}
-#endif
 
 
 namespace Dune

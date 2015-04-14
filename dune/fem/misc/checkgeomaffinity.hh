@@ -4,6 +4,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/gridenums.hh>
 
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
 
 namespace Dune
@@ -99,7 +100,6 @@ namespace Dune
       static inline bool doCheck(const GridType& grid, const IndexSetType& indexSet)
       {
         typedef typename GridType :: template Codim<0> :: LevelIterator MacroIteratorType;
-        typedef typename GridType :: template Codim<0> :: EntityPointer  EntityPointerType;
         typedef typename GridType :: template Codim<0> :: Entity  EntityType;
         typedef typename GridType :: template Codim<0> :: Geometry Geometry;
 
@@ -134,7 +134,7 @@ namespace Dune
 
         const int map[3] = {1, 2, 4};
         {
-          const Geometry& geo = it->geometry();
+          const Geometry geo = it->geometry();
           if ( ! geo.type().isCube() ) return false;
 
           // calculate grid with
@@ -149,7 +149,7 @@ namespace Dune
             it != endit; ++it)
         {
           const EntityType& en = *it;
-          const Geometry& geo = en.geometry();
+          const Geometry geo = en.geometry();
 
           const FieldVector<ctype, dimworld> enBary =
             geo.global( geoInfo.localCenter( geo.type() ));
@@ -174,9 +174,8 @@ namespace Dune
 
             if( inter.neighbor() )
             {
-              EntityPointerType ep = inter.outside();
-              const EntityType& nb = *ep;
-              const Geometry& nbGeo = nb.geometry();
+              EntityType nb = make_entity( inter.outside() );
+              Geometry nbGeo = nb.geometry();
 
               FieldVector<ctype, dimworld> diff = nbGeo.global( geoInfo.localCenter( nbGeo.type() ));
               diff -= enBary;

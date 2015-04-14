@@ -1,9 +1,12 @@
-LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS)
-AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS)
+LDADD=$(ALL_PKG_LIBS) $(LOCAL_LIBS)
+AM_LDFLAGS= $(ALL_PKG_LDFLAGS)
+AM_CPPFLAGS += $(ALL_PKG_CPPFLAGS)
 
-check_PROGRAMS = odetest odesystemtest
+TESTS = odetest
+check_PROGRAMS = odetest
 
 odetest_SOURCES = odetest.cc
-odesystemtest_SOURCES = odesystemtest.cc
+
+EXTRA_DIST = parameter
 
 include $(top_srcdir)/am/global-rules

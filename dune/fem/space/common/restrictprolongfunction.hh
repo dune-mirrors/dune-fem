@@ -37,15 +37,12 @@ namespace Dune
       {
         typedef typename CoarseFunction::LocalFunctionType CoarseLocalFunction;
         typedef typename CoarseFunction::DiscreteFunctionSpaceType CoarseSpace;
-        typedef typename CoarseSpace::IteratorType CoarseIterator;
 
         typedef typename FineFunction::LocalFunctionType FineLocalFunction;
 
         const CoarseSpace &coarseSpace = coarseFunction.space();
-        const CoarseIterator end = coarseSpace.end();
-        for( CoarseIterator it = coarseSpace.begin(); it != end; ++it )
+        for( const auto& entity : coarseSpace )
         {
-          const typename CoarseIterator::Entity &entity = *it;
           CoarseLocalFunction coarseLocalFunction = coarseFunction.localFunction( entity );
 
           if( isDefinedOn( fineFunction, entity ) )
@@ -125,15 +122,12 @@ namespace Dune
       {
         typedef typename CoarseFunction::LocalFunctionType CoarseLocalFunction;
         typedef typename CoarseFunction::DiscreteFunctionSpaceType CoarseSpace;
-        typedef typename CoarseSpace::IteratorType CoarseIterator;
 
         typedef typename FineFunction::LocalFunctionType FineLocalFunction;
 
         const CoarseSpace &coarseSpace = coarseFunction.space();
-        const CoarseIterator end = coarseSpace.end();
-        for( CoarseIterator it = coarseSpace.begin(); it != end; ++it )
+        for( const auto& entity : coarseSpace )
         {
-          const typename CoarseIterator::Entity &entity = *it;
           CoarseLocalFunction coarseLocalFunction = coarseFunction.localFunction( entity );
 
           if( isDefinedOn( fineFunction, entity ) )

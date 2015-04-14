@@ -5,9 +5,9 @@
 
 #include <dune/geometry/referenceelements.hh>
 
-#include <dune/fem/gridpart/dunefemindexsets.hh>
+#include <dune/fem/gridpart/common/persistentindexset.hh>
 #include <dune/fem/io/streams/streams.hh>
-#include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
 
 #include "discretefunction.hh"
 
@@ -44,7 +44,7 @@ namespace Dune
 
     template< class Impl >
     inline typename DiscreteFunctionDefault< Impl > :: RangeFieldType *
-    DiscreteFunctionDefault< Impl > :: allocDofPointer()
+    DiscreteFunctionDefault< Impl > :: allocDofPointer() const
     {
       dofPointerLock_.lock();
 
@@ -52,8 +52,8 @@ namespace Dune
       RangeFieldType *dofPointer = new RangeFieldType[ size ];
 
       unsigned int i = 0;
-      const DofIteratorType end = BaseType :: dend();
-      for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it )
+      const ConstDofIteratorType end = BaseType :: dend();
+      for( ConstDofIteratorType it = BaseType :: dbegin(); it != end; ++it )
         dofPointer[ i++ ] = *it;
       assert( i == size );
 
@@ -78,6 +78,15 @@ namespace Dune
 
     template< class Impl >
     inline void DiscreteFunctionDefault< Impl >
+      :: freeDofPointerNoCopy( const RangeFieldType *dofPointer ) const
+    {
+      delete[] dofPointer;
+      dofPointerLock_.unlock();
+    }
+
+
+    template< class Impl >
+    inline void DiscreteFunctionDefault< Impl >
       ::axpy ( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g )
     {
       assert( BaseType::size() == g.size() );
@@ -88,13 +97,10 @@ namespace Dune
     }
 
 
-
     template< class Impl >
     inline void DiscreteFunctionDefault<Impl >
       :: print ( std::ostream &out ) const
     {
-      out << BaseType :: name() << std::endl;
-
       const ConstDofIteratorType end = BaseType :: dend();
       for( ConstDofIteratorType dit = BaseType :: dbegin(); dit != end; ++dit )
         out << (*dit) << std::endl;
@@ -143,11 +149,9 @@ namespace Dune
       ::evaluateGlobal ( const DomainType &x, Functor functor ) const
     {
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-
       EntitySearch< GridPartType, EntityType::codimension > entitySearch( BaseType::space().gridPart() );
-      const typename EntityType::EntityPointer entityPtr = entitySearch( x );
 
-      const EntityType &entity = *entityPtr;
+      const EntityType & entity(entitySearch( x ));
       const typename EntityType::Geometry geometry = entity.geometry();
       functor( geometry.local( x ), BaseType::localFunction( entity ) );
     }
@@ -277,13 +281,16 @@ namespace Dune
     void DiscreteFunctionDefault< Impl >
       :: insertSubData()
     {
-      // if indexset is persistent it must be
-      // derived from PersistentIndexSetInterface
-      if( space().indexSet().persistent() )
+      typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
+      IndexSetType &indexSet = (IndexSetType &)space().indexSet();
+      if( Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::v )
       {
+        PersistentIndexSetInterface* persistentIndexSet
+          = Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::map( indexSet );
+
         // this marks the index set in the DofManager's list of index set as persistent
-        PersistentIndexSetInterface& indexSet = (PersistentIndexSetInterface &) space().indexSet();
-        indexSet.addBackupRestore();
+        if( persistentIndexSet )
+          persistentIndexSet->addBackupRestore();
       }
     }
 
@@ -291,13 +298,16 @@ namespace Dune
     void DiscreteFunctionDefault< Impl >
       :: removeSubData()
     {
-      // if indexset is persistent it must be
-      // derived from PersistentIndexSetInterface
-      if( space().indexSet().persistent() )
+      typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
+      IndexSetType &indexSet = (IndexSetType &)space().indexSet();
+      if( Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::v )
       {
+        PersistentIndexSetInterface* persistentIndexSet
+          = Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::map( indexSet );
+
         // this unmarks the index set in the DofManager's list of index set as persistent
-        PersistentIndexSetInterface& indexSet = (PersistentIndexSetInterface &) space().indexSet();
-        indexSet.removeBackupRestore();
+        if( persistentIndexSet )
+          persistentIndexSet->removeBackupRestore();
       }
     }
 

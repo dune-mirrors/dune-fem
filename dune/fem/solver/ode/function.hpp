@@ -10,7 +10,7 @@ namespace pardg
 class Function
 {
 public:
-  Function(int num_of_parameters = 0);
+  Function();
   virtual ~Function();
 
   virtual void operator()(const double *u, double *f, int i = 0) = 0;
@@ -26,13 +26,9 @@ public:
   int& flag();
   int flag() const;
 
-  double& parameter(int i);
-  double parameter(int i) const;
-
 private:
-  const int num_of_parameters;
   int _flag;
-  double _time, *_parameter;
+  double _time;
 };
 
 
@@ -43,18 +39,15 @@ private:
 // class Function inline implementation
 
 inline
-pardg::Function::Function(int num_of_parameters) :
-  num_of_parameters(num_of_parameters), _flag(0), _time(0.0),
-  _parameter(new double[num_of_parameters])
+pardg::Function::Function() :
+   _flag(0), _time(0.0)
 {
-  assert(_parameter);
 }
 
 
 inline
 pardg::Function::~Function()
 {
-  delete[] _parameter;
 }
 
 
@@ -92,26 +85,5 @@ int& pardg::Function::flag()
 {
   return _flag;
 }
-
-
-inline
-double pardg::Function::parameter(int i) const
-{
-  assert(i >= 0 && i < num_of_parameters);
-  return _parameter[i];
-}
-
-
-inline
-double& pardg::Function::parameter(int i)
-{
-  assert(i >= 0 && i < num_of_parameters);
-  return _parameter[i];
-}
-
-
-
-
-
 
 #endif

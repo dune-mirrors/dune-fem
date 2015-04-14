@@ -9,10 +9,9 @@
 #include <dune/grid/utility/persistentcontainer.hh>
 
 #include <dune/fem/misc/capabilities.hh>
-#include <dune/fem/misc/codimmap.hh>
 #include <dune/fem/misc/metaprogramming.hh>
 #include <dune/fem/space/common/dofmanager.hh>
-#include <dune/fem/space/dofmapper/localkey.hh>
+#include <dune/fem/space/mapper/localkey.hh>
 #include <dune/fem/space/lagrange/lagrangepoints.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
@@ -775,11 +774,8 @@ namespace Dune
       {
         if( entity.hasFather() )
         {
-          typedef typename ElementType :: EntityPointer ElementPointerType;
-          ElementPointerType father = entity.father();
-          const ElementType& dad = *father ;
-
           // if father is a new element, insert it
+          ElementType dad = make_entity( entity.father() );
           if( dad.isNew() )
           {
             unsigned int usedSize = insertEntityDofs( dad );
@@ -814,14 +810,15 @@ namespace Dune
         for( IteratorType it = gridPart_.template begin<0>();
              it != end ; ++it )
         {
+          const ElementType &element = *it;
           if( considerHierarchyOfElements )
           {
             // insert father elements (conforming and hybrid grids only)
-            usedSize += insertFather( *it );
+            usedSize += insertFather( element );
           }
 
           // number of new dofs (not already counted) is returned
-          usedSize += insertEntityDofs( *it );
+          usedSize += insertEntityDofs( element );
         }
 
         //std::cout << "Insert Size = " << size_ << std::endl;

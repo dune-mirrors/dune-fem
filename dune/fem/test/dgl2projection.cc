@@ -21,8 +21,6 @@ int main () { return 0;}
 #elif defined USE_VECTORFUNCTION
 #include <dune/fem/storage/vector.hh>
 #include <dune/fem/function/vectorfunction.hh>
-#elif defined USE_ATTACHEDFUNCTION
-#include <dune/fem/function/attachedfunction/function.hh>
 #elif defined USE_BLOCKVECTORDISCRETEFUNCTION
 #include <dune/fem/function/blockvectordiscretefunction.hh>
 #include <dune/fem/function/blockvectors/referenceblockvector.hh>
@@ -86,9 +84,6 @@ typedef Fem :: ManagedDiscreteFunction
         Fem :: DynamicVector< FunctionSpaceType :: RangeFieldType >
   #endif
   > >  DiscreteFunctionType;
-#elif defined USE_ATTACHEDFUNCTION
-typedef Fem :: AttachedDiscreteFunction< DiscreteFunctionSpaceType >
-  DiscreteFunctionType;
 #elif defined USE_BLOCKVECTORDISCRETEFUNCTION
 typedef Dune::Fem::ReferenceBlockVector< double, DiscreteFunctionSpaceType::localBlockSize >
   BlockVectorType;

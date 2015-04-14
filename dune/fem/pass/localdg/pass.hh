@@ -3,6 +3,7 @@
 
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
 #include <dune/fem/pass/common/local.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
@@ -57,7 +58,6 @@ namespace Dune
 
       // Types from the base class
       typedef typename BaseType::Entity EntityType;
-      typedef typename EntityType :: EntityPointer EntityPointerType;
       typedef typename BaseType::ArgumentType ArgumentType;
 
       // Types from the traits
@@ -299,8 +299,7 @@ namespace Dune
             if (intersection.neighbor())
             {
               // get neighbor
-              EntityPointerType ep = intersection.outside();
-              const EntityType &nb = *ep;
+              EntityType nb = make_entity( intersection.outside() );
 
               const bool canUpdateNeighbor = nbChecker( en, nb );
 
@@ -352,7 +351,7 @@ namespace Dune
                 RangeType& flux = valEnVec_[ l ];
 
                 // eval boundary Flux
-                wspeedS += caller().boundaryFlux( *nit, faceQuadInner, l, flux )
+                wspeedS += caller().boundaryFlux( intersection, faceQuadInner, l, flux )
                          * faceQuadInner.weight(l);
 
                 // apply weights

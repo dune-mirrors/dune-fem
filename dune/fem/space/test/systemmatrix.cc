@@ -1,6 +1,8 @@
 #ifndef ELLIPTIC_HH
 #define ELLIPTIC_HH
 
+#error "This file seems to be unused and will be removed!!!"
+
 #include <dune/common/fmatrix.hh>
 
 #include <dune/fem/quadrature/cachingquadrature.hh>
@@ -22,10 +24,7 @@ protected:
   typedef typename LocalFunctionType::RangeType RangeType;
   typedef typename LocalFunctionType::JacobianRangeType JacobianRangeType;
 
-  typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-  // typedef typename IteratorType::EntityPointer EntityPointerType;
-  typedef typename IteratorType::Entity EntityType;
-  typedef typename EntityType::Geometry GeometryType;
+  typedef typename DiscreteFunctionSpaceType::IteratorType::Entity::Geometry GeometryType;
 
   typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
   typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
@@ -36,8 +35,6 @@ protected:
 
   typedef Dune::CachingQuadrature< GridPartType, 1 > FaceQuadratureType;
   typedef Dune::CachingQuadrature< GridPartType, 0 > QuadratureType;
-
-  typedef typename GridPartType :: GridType :: template Codim< 0 > :: EntityPointer EntityPointerType;
 
 public:
   explicit EllipticOperator ( const ModelType &model = Model() )
@@ -61,11 +58,8 @@ void EllipticOperator< DiscreteFunction, Model >
   w.clear();
 
   const DiscreteFunctionSpaceType &dfSpace = w.space();
-
-  const IteratorType end = dfSpace.end();
-  for( IteratorType it = dfSpace.begin(); it != end; ++it )
+  for( const auto& entity : dfSpace )
   {
-    const EntityType &entity = *it;
     const GeometryType &geometry = entity.geometry();
 
     const LocalFunctionType uLocal = u.localFunction( entity );
@@ -136,9 +130,7 @@ void assembleRHS ( const Function &function, DiscreteFunction &rhs )
   typedef typename DiscreteFunction::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef typename DiscreteFunction::LocalFunctionType LocalFunctionType;
 
-  typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-  typedef typename IteratorType::Entity EntityType;
-  typedef typename EntityType::Geometry GeometryType;
+  typedef typename DiscreteFunctionSpaceType::IteratorType::Entity::Geometry GeometryType;
 
   typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
   typedef Dune::CachingQuadrature< GridPartType, 0 > QuadratureType;
@@ -146,11 +138,8 @@ void assembleRHS ( const Function &function, DiscreteFunction &rhs )
   rhs.clear();
 
   const DiscreteFunctionSpaceType &dfSpace = rhs.space();
-
-  const IteratorType end = dfSpace.end();
-  for( IteratorType it = dfSpace.begin(); it != end; ++it )
+  for( const auto& entity : dfSpace )
   {
-    const EntityType &entity = *it;
     const GeometryType &geometry = entity.geometry();
 
     typename Function::LocalFunctionType localFunction =
@@ -193,10 +182,8 @@ void EllipticOperator< DiscreteFunction, Model >
   std::vector< typename LocalFunctionType::RangeType > phi( dfSpace.mapper().maxNumDofs() );
   std::vector< typename LocalFunctionType::JacobianRangeType > dphi( dfSpace.mapper().maxNumDofs() );
 
-  const IteratorType end = dfSpace.end();
-  for( IteratorType it = dfSpace.begin(); it != end; ++it )
+  for( const auto& entity : dfSpace )
   {
-    const EntityType &entity = *it;
     const GeometryType &geometry = entity.geometry();
 
     LocalMatrixType jLocal = jOp.localMatrix( entity, entity );

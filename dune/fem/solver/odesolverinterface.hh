@@ -18,12 +18,15 @@ namespace DuneODE
     {
       double odeSolveTime_;
       double operatorTime_;
+      double error_;
+
       std::size_t numberOfElements_;
 
       int newtonIterations_;
       int linearSolverIterations_;
       int maxNewtonIterations_;
       int maxLinearSolverIterations_;
+      int spaceOperatorCalls_;
 
       Monitor() { reset(); }
 
@@ -32,11 +35,13 @@ namespace DuneODE
       {
         odeSolveTime_ = 0;
         operatorTime_ = 0;
+        error_ = 0;
         numberOfElements_ = 0;
         newtonIterations_ = 0;
         linearSolverIterations_ = 0;
         maxNewtonIterations_ = 0;
         maxLinearSolverIterations_ = 0;
+        spaceOperatorCalls_ = 0;
       }
     };
 

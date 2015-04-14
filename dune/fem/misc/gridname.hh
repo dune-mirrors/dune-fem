@@ -22,7 +22,7 @@ namespace Dune
     // Internal forward declaration
     // ----------------------------
 
-    template< class Grid > class GridName;
+    template< class Grid > struct GridName;
 
 
 

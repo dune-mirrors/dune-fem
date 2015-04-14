@@ -1,8 +1,11 @@
 #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_INTERSECTION_HH
 #define DUNE_FEM_GRIDPART_GEOGRIDPART_INTERSECTION_HH
 
+#include <type_traits>
+#include <utility>
+
 #include <dune/fem/gridpart/geogridpart/cornerstorage.hh>
-#include <dune/fem/gridpart/geogridpart/entitypointer.hh>
+#include <dune/fem/misc/compatibility.hh>
 
 namespace Dune
 {
@@ -25,7 +28,6 @@ namespace Dune
       static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
 
       typedef typename Traits::template Codim< 0 >::Entity Entity;
-      typedef typename Traits::template Codim< 0 >::EntityPointer EntityPointer;
       typedef typename Traits::template Codim< 0 >::Geometry ElementGeometry;
       typedef typename Traits::template Codim< 1 >::Geometry Geometry;
       typedef typename Traits::template Codim< 1 >::LocalGeometry LocalGeometry;
@@ -33,7 +35,7 @@ namespace Dune
       typedef typename Traits::CoordFunctionType CoordFunctionType;
 
     private:
-      typedef typename EntityPointer::Implementation EntityPointerImplType;
+      typedef typename Entity::Implementation EntityImplType;
       typedef typename ElementGeometry::Implementation ElementGeometryImplType;
       typedef typename Geometry::Implementation GeometryImplType;
 
@@ -43,22 +45,20 @@ namespace Dune
       typedef GeoIntersectionCoordVector< GridFamily > CoordVectorType;
 
     public:
-      GeoIntersection ( const CoordFunctionType &coordFunction, const ElementGeometry &insideGeo )
+      GeoIntersection ( const CoordFunctionType &coordFunction, const ElementGeometry &insideGeo, HostIntersectionType hostIntersection )
       : coordFunction_( &coordFunction ),
         insideGeo_( insideGeo.impl() ),
-        hostIntersection_( 0 )
+        hostIntersection_( std::move( hostIntersection ) )
       {}
 
-      operator bool () const { return bool( hostIntersection_ ); }
-
-      EntityPointer inside () const
+      Entity inside () const
       {
-        return EntityPointerImplType( coordFunction(), hostIntersection().inside() );
+        return EntityImplType( coordFunction(), make_entity( hostIntersection().inside() ) );
       }
 
-      EntityPointer outside () const
+      Entity outside () const
       {
-        return EntityPointerImplType( coordFunction(), hostIntersection().outside() );
+        return EntityImplType( coordFunction(), make_entity( hostIntersection().outside() ) );
       }
 
       bool boundary () const
@@ -166,33 +166,21 @@ namespace Dune
         return unitOuterNormal( refFace.position( 0, 0 ) );
       }
 
-      const HostIntersectionType &hostIntersection () const
-      {
-        assert( *this );
-        return *hostIntersection_;
-      }
-
-      void invalidate ()
-      {
-        hostIntersection_ = 0;
-      }
-
-      void initialize ( const HostIntersectionType &hostIntersection )
-      {
-        assert( !(*this) );
-        hostIntersection_ = &hostIntersection;
-      }
-
       const CoordFunctionType &coordFunction () const
       {
         assert( coordFunction_ );
         return *coordFunction_;
       }
 
+      const HostIntersectionType &hostIntersection () const
+      {
+        return hostIntersection_;
+      }
+
     private:
-      const CoordFunctionType *coordFunction_;
+      const CoordFunctionType *coordFunction_ = nullptr;
       ElementGeometryImplType insideGeo_;
-      const HostIntersectionType *hostIntersection_;
+      HostIntersectionType hostIntersection_;
     };
 
   } // namespace Fem

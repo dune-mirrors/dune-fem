@@ -47,10 +47,30 @@ namespace Dune
       enum ReadWriteType { readData , writeData };
     };
 
-#define PARAM_CLASSNAME CombinedLocalDataCollect
-#define PARAM_INHERIT LocalInlinePlus
-#define PARAM_FUNC_1 apply
-#include <dune/fem/operator/common/combine.inc>
+    template <class A, class B >
+    class CombinedLocalDataCollect
+      : public LocalInlinePlus< CombinedLocalDataCollect< A, B >, typename A::Traits::ParamType >
+    {
+    protected:
+      const A& a_;
+      const B& b_;
+    public:
+      CombinedLocalDataCollect( const A& a, const B& b ) : a_( a ), b_( b ) {}
+
+      template <class Arg>
+      void apply(Arg & arg) const
+      {
+        a_.apply( arg );
+        b_.apply( arg );
+      }
+
+      template <class Arg1, class Arg2>
+      void apply(Arg1 & arg1, Arg2 & arg2) const
+      {
+        a_.apply( arg1, arg2 );
+        b_.apply( arg1, arg2 );
+      }
+    };
 
     template <class ParamT>
     class LocalInterface : public ObjPointerStorage
@@ -199,7 +219,6 @@ namespace Dune
 
     private:
       mutable ListType vec_;
-      //ReadWriteType rwType_ ;
     };
 
     template <class LocalOp, class ParamT>
@@ -531,17 +550,9 @@ namespace Dune
       //! else xtractData is called
       void apply ( ObjectStreamType & str, const EntityType & entity ) const
       {
-#if HAVE_DUNE_ALUGRID
         ParamType p( &str , &entity );
         // apply local operators
         ldc_.apply( p );
-#else
-        // old version with dune-grid ALUGrid version
-        if( writeData() )
-          inlineData(str, entity );
-        else
-          xtractData(str, entity );
-#endif
       }
 
       //! write all data of all entities blowe this Entity to the stream
@@ -654,34 +665,26 @@ namespace Dune
     };
 
 
-    /** \brief ???
-     * \todo Please doc me!
-     */
+    /** \brief Inline DiscreteFunction data during load balancing */
     template< class DiscreteFunctionType,
               class ContainsCheck >
     class LocalDataInliner
     : public LocalInlinePlus< LocalDataInliner< DiscreteFunctionType, ContainsCheck >,
                               typename LocalDataInlinerTraits< DiscreteFunctionType >::ParamType >
     {
-      typedef LocalDataInliner< DiscreteFunctionType, ContainsCheck > ThisType;
-      typedef LocalInlinePlus< ThisType, typename LocalDataInlinerTraits< DiscreteFunctionType >::ParamType > BaseType;
-
     public:
       typedef LocalDataInlinerTraits< DiscreteFunctionType > Traits;
       typedef typename Traits::ObjectStreamType ObjectStreamType;
 
-      typedef typename Traits :: DofManagerType  DofManagerType;
+      typedef typename Traits::DofManagerType   DofManagerType;
 
-      typedef typename Traits::EntityType     EntityType;
-      typedef typename Traits::GridEntityType GridEntityType;
-      typedef typename Traits::ParamType ParamType;
+      typedef typename Traits::EntityType       EntityType;
+      typedef typename Traits::GridEntityType   GridEntityType;
+      typedef typename Traits::ParamType        ParamType;
 
       typedef LocalInterface<ParamType> LocalInterfaceType;
 
       typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
-
-      typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
-      typedef typename DiscreteFunctionType::DomainType DomainType;
 
       //! constructor
       LocalDataInliner ( const DiscreteFunctionType & df,
@@ -753,31 +756,26 @@ namespace Dune
     };
 
 
+    /** \brief Inline DiscreteFunction data during load balancing */
     template< class DiscreteFunctionType,
               class ContainsCheck >
     class LocalDataXtractor
     : public LocalInlinePlus< LocalDataXtractor< DiscreteFunctionType, ContainsCheck >,
                               typename LocalDataXtractorTraits< DiscreteFunctionType >::ParamType >
     {
-      typedef LocalDataXtractor< DiscreteFunctionType, ContainsCheck > ThisType;
-      typedef LocalInlinePlus< ThisType, typename LocalDataXtractorTraits< DiscreteFunctionType >::ParamType > BaseType;
-
     public:
       typedef LocalDataXtractorTraits< DiscreteFunctionType > Traits;
       typedef typename Traits::ObjectStreamType ObjectStreamType;
 
-      typedef typename Traits :: DofManagerType  DofManagerType;
+      typedef typename Traits::DofManagerType   DofManagerType;
 
-      typedef typename Traits::EntityType     EntityType;
-      typedef typename Traits::GridEntityType GridEntityType;
-      typedef typename Traits::ParamType ParamType;
+      typedef typename Traits::EntityType       EntityType;
+      typedef typename Traits::GridEntityType   GridEntityType;
+      typedef typename Traits::ParamType        ParamType;
 
-      typedef LocalInterface<ParamType> LocalInterfaceType;
+      typedef typename Traits::LocalInterfaceType LocalInterfaceType;
 
       typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
-
-      typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
-      typedef typename DiscreteFunctionType::DomainType DomainType;
 
       //! constructor
       LocalDataXtractor ( DiscreteFunctionType & df,

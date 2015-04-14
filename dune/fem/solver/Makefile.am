@@ -9,12 +9,14 @@ solver_HEADERS = cginverseoperator.hh \
                  multistep.hh \
                  newtoninverseoperator.hh \
                  pardg.hh \
-		 pardginverseoperators.hh \
+		 						 pardginverseoperators.hh \
                  petscsolver.hh \
-		 preconditionedinverseoperator.hh \
+		 						 preconditionedinverseoperator.hh \
                  rungekutta.hh \
                  timeprovider.hh \
-                 umfpacksolver.hh
+                 umfpacksolver.hh \
+								 spqrsolver.hh \
+								 ldlsolver.hh
 
 SUBDIRS = ode oemsolver rungekutta test
 

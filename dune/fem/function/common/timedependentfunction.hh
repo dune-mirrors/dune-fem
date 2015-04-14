@@ -1,59 +1,54 @@
 #ifndef DUNE_FEM_TIMEDEPENDENTFUNCTION_HH
 #define DUNE_FEM_TIMEDEPENDENTFUNCTION_HH
 
-// dune-fem includes
-#include <dune/fem/function/common/function.hh>
+#include <dune/common/deprecated.hh>
+
+#include <dune/fem/function/common/instationary.hh>
 
 namespace Dune
 {
 
   namespace Fem
   {
-    /** @addtogroup Functions
-        \remark The interface is given by Function.
-        @{
-    **/
 
-    /*! \brief
-        Abstract class representing a function f(t,.)
+    // TimeDependentFunction
+    // ---------------------
 
-        Template parameters are:
-        -  F   type of the time dependent function that we want turn into a function by fixing time
-
-        @interfaceclass
-    **/
-    template <class F>
+    template< class Function >
     class TimeDependentFunction
-      : public Function< typename F :: FunctionSpaceType,
-                         TimeDependentFunction< F > >
+      : public InstationaryFunction< Function, __InstationaryFunction::HoldReference >
     {
-      typedef F FunctionType ;
-    public:
-      typedef typename FunctionType :: FunctionSpaceType FunctionSpaceType;
-
-      typedef typename FunctionSpaceType :: DomainType                   DomainType;
-      typedef typename FunctionSpaceType :: RangeType                    RangeType;
-      typedef typename FunctionSpaceType :: DomainFieldType              DomainFieldType;
-      typedef typename FunctionSpaceType :: RangeFieldType               RangeFieldType;
-      typedef typename FunctionSpaceType :: JacobianRangeType            JacobianRangeType;
+      typedef InstationaryFunction< Function, __InstationaryFunction::HoldReference > BaseType;
 
     public:
-      TimeDependentFunction( const FunctionType& f, const double time )
-        : function_( f ), time_( time )
+      TimeDependentFunction ( const Function &function, double time )
+        : BaseType( function, time )
       {}
 
-      //! forward call to internal time dependent function
-      void evaluate( const DomainType& x, RangeType& result ) const
+      /** \copydoc Dune::Fem::Function::evaluate */
+      void evaluate ( const typename BaseType::DomainType &x,
+                      typename BaseType::RangeType &value ) const
+      DUNE_DEPRECATED_MSG( "Dune::Fem::TimeDependentFunction has been deprecated, use Dune::Fem::InstationaryFunction instead" )
       {
-        function_.evaluate(x, time_, result );
+        BaseType::evaluate( x, value );
       }
 
-    protected:
-      const FunctionType& function_;
-      const double time_;
-    };
+      /** \copydoc Dune::Fem::Function::jacobian */
+      void jacobian ( const typename BaseType::DomainType &x,
+                      typename BaseType::JacobianRangeType &jacobian ) const
+      DUNE_DEPRECATED_MSG( "Dune::Fem::TimeDependentFunction has been deprecated, use Dune::Fem::InstationaryFunction instead" )
+      {
+        BaseType::jacobian( x, jacobian );
+      }
 
-    ///@}
+      /** \copydoc Dune::Fem::Function::hessian */
+      void hessian ( const typename BaseType::DomainType &x,
+                     typename BaseType::HessianRangeType &hessian ) const
+      DUNE_DEPRECATED_MSG( "Dune::Fem::TimeDependentFunction has been deprecated, use Dune::Fem::InstationaryFunction instead" )
+      {
+        BaseType::hessian( x, hessian );
+      }
+    };
 
   } // namespace Fem
 

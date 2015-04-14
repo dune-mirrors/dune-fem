@@ -15,7 +15,7 @@
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
 
-#include <dune/fem/misc/threadmanager.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/storage/envelope.hh>
 
 namespace Dune

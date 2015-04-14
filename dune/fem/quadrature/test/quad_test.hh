@@ -1,15 +1,13 @@
 #ifndef DUNE_FEM_QUAD_TEST_HH
 #define DUNE_FEM_QUAD_TEST_HH
 
-#include "../../misc/test.hh"
-
 #include "../quadrature.hh"
 //#include <dune/quadrature/fixedorder.hh>
 
 namespace Dune {
   namespace Fem {
 
-  class Quad_Test : public Test
+  class Quad_Test
   {
   public:
     virtual void run();

@@ -20,7 +20,7 @@
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/space/common/interpolation.hh>
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 
 #include "../../test/exactsolution.hh"
@@ -94,12 +94,8 @@ double algorithm ( GridType &grid, const int step )
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
   solution.clear();
 
-  // interpolation operator
-  typedef Dune::Fem::Interpolation< DiscreteFunctionType > InterpolationType;
-  InterpolationType interpolation;
-
   // perform the interpolation
-  interpolation( gridExactSolution, solution );
+  interpolate( gridExactSolution, solution );
 
   typedef Dune::Capabilities::hasSingleGeometryType< GridType > HasSingleGeometryType;
   if( dimDomain == 2 && HasSingleGeometryType::v && HasSingleGeometryType::topologyId == 0 )

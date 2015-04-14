@@ -169,63 +169,6 @@ namespace Dune
 #endif
       {}
 
-#if 0
-      // return row
-      RowType operator[] ( const size_t row )
-      {
-        assert( mutableVec_ );
-        return RowType( (&vec_[ row * cols ]) );
-      }
-
-      // return row
-      RowType operator[] ( const size_t row ) const
-      {
-        return RowType( (&vec_[ row * cols ]) );
-      }
-
-      template< class X, class Y >
-      void mv ( const X &x, Y &y ) const
-      {
-        for( size_type i = 0; i < n; ++i )
-          y[ i ] = (*this)[ i ] * x;
-      }
-
-      template< class X, class Y >
-      void umv ( const X &x, Y &y ) const
-      {
-        for( size_type i = 0; i < n; ++i )
-          y[ i ] += (*this)[ i ] * x;
-      }
-
-      template< class X, class Y >
-      void mtv ( const X &x, Y &y ) const
-      {
-        for( size_type i = 0; i < cols; ++i )
-        {
-          y[ i ] = 0;
-          for( size_type j = 0; j < rows; ++j )
-            y[ i ] += (*this)[ j ][ i ] * x[ j ];
-        }
-      }
-
-      template< class X, class Y >
-      void umtv ( const X &x, Y &y ) const
-      {
-        for( size_type i = 0; i < cols; ++i )
-          for( size_type j = 0; j < rows; ++j )
-            y[ i ] += (*this)[ j ][ i ] * x[ j ];
-      }
-
-      K frobenius_norm () const
-      {
-        K ret( 0 );
-        for( size_type i = 0; i < cols; ++i )
-          for( size_type j = 0; j < rows; ++j )
-            ret += (*this)[ i ][ j ] * (*this)[ i ][ j ];
-        return std::sqrt( ret );
-      }
-#endif
-
       FieldMatrixConverter &operator= ( const FieldMatrixConverter &other )
       {
         assert( mutableVec_ );

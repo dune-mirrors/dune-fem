@@ -105,7 +105,6 @@ namespace Dune
         typedef typename DiscreteFunctionImp::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
         typedef typename DiscreteFunctionImp::LocalFunctionType LocalFuncType;
         typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-        typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
 
         typedef typename FunctionImp::LocalFunctionType LocalFType;
 
@@ -124,15 +123,11 @@ namespace Dune
         // clear destination
         discFunc.clear();
 
-        // extract types from grid part
+        // extract type from grid part
         typedef typename GridPartType::template Codim<0>::GeometryType Geometry;
-        typedef typename GridPartType::template Codim<0>::EntityType  EntityType ;
 
-        const Iterator endit = space.end();
-        for(Iterator it = space.begin(); it != endit ; ++it)
+        for(const auto & en : space)
         {
-          // get entity
-          const EntityType& en = *it;
           // get geometry
           const Geometry& geo = en.geometry();
 

@@ -64,9 +64,7 @@ namespace Dune
 
       typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
       typedef typename SpaceType :: LagrangePointSetType LagrangePointSetType;
-      typedef typename SpaceType :: IteratorType IteratorType;
-      typedef typename IteratorType :: Entity EntityType;
-      typedef typename EntityType :: Geometry GeometryType;
+      typedef typename SpaceType :: IteratorType :: Entity :: Geometry GeometryType;
       static const int dimworld = SpaceType::GridPartType::GridType::dimensionworld;
 
 
@@ -90,10 +88,8 @@ namespace Dune
                   << "Setting each DoF of a discrete function to its global "
                   << "coordinate..." << std :: endl;
 
-      const IteratorType eit = space.end();
-      for( IteratorType it = space.begin(); it != eit; ++it )
+      for( const auto& entity : space )
       {
-        const EntityType &entity = *it;
         const GeometryType &geometry = entity.geometry();
 
         const LagrangePointSetType &lagrangePoints
@@ -128,9 +124,8 @@ namespace Dune
                   << "Verifying that each DoF of the discrete function "
                   << "containts its global" << std :: endl
                   << "          coordinate..." << std :: endl;
-      for( IteratorType it = space.begin(); it != eit; ++it )
+      for( const auto& entity : space )
       {
-        const EntityType &entity = *it;
         const GeometryType &geometry = entity.geometry();
 
         const LagrangePointSetType &lagrangePoints

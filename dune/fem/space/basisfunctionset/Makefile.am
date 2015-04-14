@@ -8,6 +8,7 @@ basisfunctionset_HEADERS = basisfunctionset.hh \
 			   proxy.hh \
 			   simple.hh \
 			   transformation.hh \
+				 tuple.hh \
 			   vectorial.hh
 
 SUBDIRS = test

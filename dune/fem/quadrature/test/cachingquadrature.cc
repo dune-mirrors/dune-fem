@@ -2,15 +2,13 @@
 #include <iostream>
 
 #include <dune/grid/common/gridinfo.hh>
-
-#include <dune/fem/gridpart/leafgridpart.hh>
-
-#include <dune/fem/quadrature/elementquadrature.hh>
-#include <dune/fem/quadrature/cachingquadrature.hh>
-
 #include <dune/grid/io/visual/grapegriddisplay.hh>
 
+#include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/misc/compatibility.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/quadrature/elementquadrature.hh>
 
 #include "checkleafcodim1.hh"
 
@@ -39,7 +37,6 @@ private:
   typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType;
   typedef typename GridPartType :: IndexSetType  IndexSetType ;
   typedef typename IteratorType :: Entity EntityType;
-  typedef typename EntityType :: EntityPointer EntityPointerType;
   typedef typename EntityType :: Geometry  Geometry;
   typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
   typedef typename IntersectionIteratorType :: Intersection IntersectionType;
@@ -123,13 +120,11 @@ public:
         const IntersectionType &intersection = *iit;
         if (intersection.neighbor() && intersection.conforming())
         {
-          EntityPointerType epInside = intersection.inside();
-          const EntityType & inside = *epInside;
+          EntityType inside = make_entity(intersection.inside());
           FaceQuadratureType faceQuadInner(gridPart_, intersection, order_,
               FaceQuadratureType::INSIDE);
 
-          EntityPointerType epOutside = intersection.outside();
-          const EntityType & outside = *epOutside;
+          EntityType outside = make_entity(intersection.outside());
           FaceQuadratureType faceQuadOuter(gridPart_, intersection, order_,
               FaceQuadratureType::OUTSIDE);
 

@@ -4,7 +4,6 @@
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/function/common/gridfunctionadapter.hh>
-#include <dune/fem/misc/iteratorprovider.hh>
 #include <dune/fem/operator/common/operator.hh>
 
 namespace Dune
@@ -16,8 +15,7 @@ namespace Dune
     /** \class LagrangeInterpolation
      *  \brief Generates the Lagrange Interpolation of an analytic function
      */
-    template< class Function, class DiscreteFunction,
-              class IteratorProvider = Fem::IteratorProvider< typename DiscreteFunction::DiscreteFunctionSpaceType > >
+    template< class Function, class DiscreteFunction >
     class LagrangeInterpolation : public Operator< Function, DiscreteFunction >
     {
       typedef LagrangeInterpolation< Function, DiscreteFunction > ThisType;
@@ -113,15 +111,14 @@ namespace Dune
 
 
 
-    template< class Function, class DiscreteFunction, class IteratorProvider >
+    template< class Function, class DiscreteFunction >
     template< class GridFunction >
-    inline void LagrangeInterpolation< Function, DiscreteFunction, IteratorProvider >
+    inline void LagrangeInterpolation< Function, DiscreteFunction >
       ::interpolateDiscreteFunction ( const GridFunction &function,
                                       DiscreteFunctionType &discreteFunction )
     {
       typedef typename DiscreteFunctionType::DofType DofType;
       typedef typename DiscreteFunctionType::DofIteratorType DofIteratorType;
-      typedef typename IteratorProvider::IteratorType IteratorType;
       static const int dimRange = DiscreteFunctionSpaceType::dimRange;
 
       typedef typename GridFunction::LocalFunctionType FunctionLocalFunctionType;
@@ -132,17 +129,13 @@ namespace Dune
         *dit = std::numeric_limits< DofType >::infinity();
 
       const DiscreteFunctionSpaceType &dfSpace = discreteFunction.space();
-
-      IteratorProvider iteratorProvider( dfSpace );
-
-      const IteratorType end = iteratorProvider.end();
-      for( IteratorType it = iteratorProvider.begin(); it != end; ++it )
+      for( const typename DiscreteFunctionSpaceType::EntityType &entity : dfSpace )
       {
         const LagrangePointSetType &lagrangePointSet
-          = dfSpace.lagrangePointSet( *it );
+          = dfSpace.lagrangePointSet( entity );
 
-        FunctionLocalFunctionType f_local = function.localFunction( *it );
-        LocalFunctionType df_local = discreteFunction.localFunction( *it );
+        FunctionLocalFunctionType f_local = function.localFunction( entity );
+        LocalFunctionType df_local = discreteFunction.localFunction( entity );
 
         // assume point based local dofs
         const int nop = lagrangePointSet.nop();

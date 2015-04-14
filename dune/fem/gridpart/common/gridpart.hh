@@ -13,7 +13,7 @@
 //- dune-fem includes
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
-#include <dune/fem/gridpart/common/gridpartview.hh>
+#include <dune/fem/gridpart/common/policies.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 
 namespace Dune
@@ -73,8 +73,11 @@ namespace Dune
     //! GridParts are used to parametrize spaces (see DiscreteFunctionSpaceDefault [in dune-fem]).
     template< class GridPartTraits >
     class GridPartInterface
+      : public GridPartPolicies< GridPartTraits >
     {
       typedef GridPartInterface< GridPartTraits > ThisType;
+
+      typedef GridPartPolicies< GridPartTraits > PoliciesType;
 
     public:
       //! \brief Type of the Traits
@@ -107,7 +110,7 @@ namespace Dune
       //! \brief type of Intersection
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
-      typedef GridView< Fem::GridPartViewTraits< GridPartType > > GridViewType;
+      typedef typename PoliciesType::GridViewType GridViewType;
 
       typedef typename GridType::ctype ctype;
 
@@ -151,9 +154,9 @@ namespace Dune
 
       //! \brief convert grid part into a dune grid view
       GridViewType gridView () const
+      DUNE_DEPRECATED_MSG("gridPart.gridView() is deprecated, use direct cast to GridPart::GridViewType instead")
       {
-        typedef typename GridViewType::GridViewImp Impl;
-        return GridViewType( Impl( asImp() ) );
+        return static_cast< GridViewType >( asImp() );
       }
 
       //! \brief Returns reference to index set of the underlying grid
@@ -259,11 +262,11 @@ namespace Dune
 
       //! \brief obtain entity pointer from entity seed
       template < class EntitySeed >
-      typename Codim< EntitySeed::codimension >::EntityPointerType
-      entityPointer ( const EntitySeed &seed ) const
+      typename Codim< EntitySeed::codimension >::EntityType
+      entity ( const EntitySeed &seed ) const
       {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().entityPointer( seed ) );
-        return asImp().entityPointer( seed );
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().entity( seed ) );
+        return asImp().entity( seed );
       }
 
       /*! \brief convert the grid's entity to a grid part entity
@@ -351,18 +354,18 @@ namespace Dune
         return grid().comm();
       }
 
-      /** \brief \copydoc GridPartInterface::entityPointer
+      /** \brief \copydoc GridPartInterface::entity
        *
-       * \tparam  EntitySeed  entity seed from which to create entity pointer
+       * \tparam  EntitySeed  entity seed from which to create entity
        *
        * The default implementation simply forwards to the corresponding
        * method on the grid.
        */
       template < class EntitySeed >
-      typename Traits::template Codim< EntitySeed::codimension >::EntityPointerType
-      entityPointer ( const EntitySeed &seed ) const
+      typename Traits::template Codim< EntitySeed::codimension >::EntityType
+      entity ( const EntitySeed &seed ) const
       {
-        return grid().entityPointer( seed );
+        return grid().entity( seed );
       }
 
       /** \brief \copydoc GridPartInterface::convert

@@ -31,7 +31,7 @@ namespace DuneODE
     int order () const { return order_; }
     int stages () const { return stages_; }
 
-  private:
+  protected:
     static Dune::DynamicMatrix< FieldType > makeMatrix ( int m, int n, const FieldType *data )
     {
       Dune::DynamicMatrix< FieldType > A( m, n );
@@ -74,6 +74,31 @@ namespace DuneODE
   SimpleButcherTable< double > semiImplicitARK46ButcherTable ( bool expl );
   SimpleButcherTable< double > semiImplicitIERK45ButcherTable ( bool expl );
 
+  // ROW butcher tables
+  // -----------------------
+
+  template< class Field >
+  class ROWSimpleButcherTable : public SimpleButcherTable<Field>
+  {
+    typedef ROWSimpleButcherTable< Field > This;
+    typedef SimpleButcherTable< Field > Base;
+
+  public:
+    typedef Field FieldType;
+
+    ROWSimpleButcherTable ( int stages, int order, const FieldType *a, const FieldType *b, const FieldType *c, const FieldType *a2 )
+    : Base(stages,order,a,b,c)
+    , a2_(a2)
+    {}
+
+    Dune::DynamicMatrix< FieldType > B () const { return Base::makeMatrix( stages_, stages_, a2_ ); }
+
+  private:
+    using Base::stages_;
+    const FieldType *a2_;
+  };
+  ROWSimpleButcherTable< double > row2ButcherTable ();
+  ROWSimpleButcherTable< double > row3ButcherTable ();
 } // namespace DuneODE
 
 #endif // #ifndef DUNE_FEM_SOLVER_RUNGEKUTTA_BUTCHERTABLE_HH

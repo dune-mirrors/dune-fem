@@ -9,6 +9,7 @@
 
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
+#include <dune/fem/misc/compatibility.hh>
 
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/3d/alugrid.hh>
@@ -184,9 +185,7 @@ protected:
       const IntersectionType& intersection = *nit;
       if(intersection.neighbor())
       {
-        EntityPointerType ep = intersection.outside();
-        const EntityType& nb = *ep;
-
+        EntityType nb = make_entity( intersection.outside() );
         if( nb.partitionType() == InteriorEntity )
         {
           const int eid = getIndex( en );

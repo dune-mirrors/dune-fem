@@ -6,7 +6,6 @@
 #include <utility>
 
 //- Dune includes
-#include <dune/fem/storage/objectstack.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
 
 namespace Dune

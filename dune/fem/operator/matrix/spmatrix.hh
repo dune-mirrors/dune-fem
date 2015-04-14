@@ -19,6 +19,7 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/matrix/columnobject.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
+#include <dune/fem/storage/objectstack.hh>
 
 #ifdef ENABLE_UMFPACK
 #include <umfpack.h>
@@ -85,9 +86,9 @@ namespace Dune
       // omega for ssor preconditioning
       const double omega_;
 
-      //! Copy Constructor prohibited
-      SparseRowMatrix(const SparseRowMatrix<T> &S);
     public:
+      SparseRowMatrix(const SparseRowMatrix<T> &S) = delete;
+
       //! makes Matrix of zero length, omega is 1.1 by default
       SparseRowMatrix(double omega = 1.1);
 
@@ -299,9 +300,6 @@ namespace Dune
 
       //! print matrix
       void print (std::ostream& s, unsigned int offset=0) const;
-
-      //! dump matrix on file
-      void print(const std::string& filename, unsigned int offset=0) const;
 
       //! print values
       void printReal (std::ostream& s) const;
@@ -824,11 +822,8 @@ namespace Dune
       {
       }
 
-    private:
-      // prohibit copying
-      LocalMatrix( const LocalMatrix & );
+      LocalMatrix( const LocalMatrix & ) = delete;
 
-    public:
       void init( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
       {
         /*******************************************************************

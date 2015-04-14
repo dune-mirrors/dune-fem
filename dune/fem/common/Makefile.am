@@ -7,7 +7,8 @@ femcommon_HEADERS = \
 	subvector.hh \
 	tupletypetraits.hh \
 	tupleutility.hh \
-	typeindexedtuple.hh
+	typeindexedtuple.hh \
+	utility.hh
 
 SUBDIRS =
 

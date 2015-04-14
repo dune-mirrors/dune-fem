@@ -5,10 +5,11 @@
 #include <dune/geometry/referenceelements.hh>
 
 //- Dune-fem includes
-#include <dune/fem/quadrature/caching/twistutility.hh>
-#include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh>
 #include <dune/fem/operator/matrix/blockmatrix.hh>
+#include <dune/fem/quadrature/caching/twistutility.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/combinedspace.hh>
 
 // make sure higher order Lagrange works (define USE_TWISTFREE_MAPPER)
@@ -208,9 +209,7 @@ namespace Dune
       {
         typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
         typedef typename IntersectionIteratorType :: Intersection IntersectionType;
-        typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
         typedef typename GridType :: template Codim<0> :: Entity EntityType;
-        typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
         typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType;
 
         enum { dim = GridType::dimension };
@@ -231,10 +230,8 @@ namespace Dune
 
         const LocalIdSetType &idSet = gridPart.grid().localIdSet();
 
-        Iterator endit = space.end();
-        for(Iterator it = space.begin(); it != endit ; ++it)
+        for(const auto & en : space)
         {
-          EntityType & en = *it;
           const LocalFuncType lf = discFunc.localFunction(en);
 
           double localValue = 0.0;
@@ -247,8 +244,7 @@ namespace Dune
             // only interior faces are considered
             if(inter.neighbor() )
             {
-              EntityPointerType neighEp = inter.outside();
-              EntityType&            nb = *neighEp;
+              EntityType nb = make_entity( inter.outside() );
 
               if(idSet.id( en ) < idSet.id( nb ))
               {
@@ -596,7 +592,6 @@ namespace Dune
         typedef typename FunctionSpaceType::IteratorType Iterator;
         typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
         typedef typename GridType :: template Codim<0> :: Entity EntityType;
-        typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
         typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType;
 
         typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
@@ -727,12 +722,8 @@ namespace Dune
         RowType fakeRhs(numDofs,0.0);
 
         // iterate over grid
-        Iterator endit = space.end();
-        for(Iterator it = space.begin(); it != endit ; ++it)
+        for(const auto & en : space)
         {
-          // get entity
-          const EntityType& en = *it;
-
           if( nonSymetric )
           {
             // reset values
@@ -822,7 +813,6 @@ namespace Dune
       {
         typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
         typedef typename IntersectionIteratorType::Intersection IntersectionType;
-        typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
 
         typedef typename FaceDiscreteSpaceType :: BaseFunctionSetType FaceBSetType  ;
         typedef typename FaceDiscreteSpaceType :: RangeType FaceRangeType;
@@ -857,9 +847,8 @@ namespace Dune
           // only interior faces are considered
           if(inter.neighbor())
           {
-            EntityPointerType neighEp = inter.outside();
             // get neighbor entity
-            const EntityType&   nb = *neighEp;
+            EntityType nb = make_entity( inter.outside() );
 
             // get local function of neighbor
             const LocalFuncType uNeighLf = uDG.localFunction(nb);
@@ -1083,10 +1072,8 @@ namespace Dune
       {
         typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
         typedef typename GridType :: Traits :: LocalIdSet LocalIdSetType;
-        typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
 
         enum { dim = GridType :: dimension };
-        typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
         typedef typename GridType :: template Codim<0> :: Entity EntityType;
 
         const DiscreteFunctionSpaceType& space = velo.space();
@@ -1099,11 +1086,8 @@ namespace Dune
         // define type of face quadrature
         typedef CachingQuadrature<GridPartType,1> FaceQuadratureType;
 
-        IteratorType endit = space.end();
-        for(IteratorType it = space.begin(); it != endit ; ++it)
+        for(const auto & en : space)
         {
-          const EntityType & en = *it;
-
           const LocalFuncType uLF = velo.localFunction(en);
           const double enVol = en.geometry().volume();
 
@@ -1118,8 +1102,7 @@ namespace Dune
             // only interior faces are considered
             if(inter.neighbor())
             {
-              EntityPointerType neighEp = inter.outside();
-              EntityType&            nb = *neighEp;
+              EntityType nb = make_entity( inter.outside() );
               const double enVol_nbVol = 0.5 * (enVol + nb.geometry().volume());
 
 #if HAVE_MPI

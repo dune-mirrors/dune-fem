@@ -118,15 +118,16 @@ namespace Dune
         clear();
       }
 
-      void print( std::ostream& out ) const
+      void print( std::ostream& s ) const
       {
+        s.precision( 6 );
         for( unsigned int row = 0; row < rows(); ++row )
         {
           const Field *fields = fields_ + row*cols();
           for( unsigned int col = 0; col < cols(); ++col )
-            out << fields[ col ] << " ";
+            s << fields[ col ] << " ";
 
-          out << std::endl;
+          s << std::endl;
         }
       }
 

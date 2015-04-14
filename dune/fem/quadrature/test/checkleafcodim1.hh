@@ -1,18 +1,14 @@
 #ifndef DUNE_CHECKLEAFCODIM1_HH
 #define DUNE_CHECKLEAFCODIM1_HH
 
-#include <dune/fem/misc/suite.hh>
-#include <dune/fem/misc/test.hh>
-#include <dune/fem/misc/test.cc>
-#include <dune/fem/misc/suite.cc>
 #include <dune/fem/io/parameter.hh>
-
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 namespace Dune {
   namespace Fem {
 
-struct CachingQuadratureTest : public Test
+struct CachingQuadratureTest
 {
   template <class GridPartType>
   static void checkLeafsCodimOne(GridPartType& gridPart,
@@ -20,6 +16,24 @@ struct CachingQuadratureTest : public Test
   {
     CachingQuadratureTest tester;
     tester.checkLeafsCodim1( gridPart, quadOrd );
+  }
+
+  static void doTest( const double& a, const double& b )
+  {
+    if( std::abs( a - b ) > 1e-12 )
+    {
+      assert( false );
+      std::abort();
+    }
+  }
+
+  static void doTest( const bool value )
+  {
+    if( ! value )
+    {
+      assert( false );
+      std::abort();
+    }
   }
 
   void run (){};
@@ -118,37 +132,35 @@ protected:
     typedef PointProvider<ctype, dim, codim> PointProviderType;
     typedef typename PointProviderType::GlobalPointVectorType PointVectorType;
     typedef typename Intersection::LocalGeometry LocalGeometryType;
-    typedef typename Intersection::Geometry GlobalGeometryType;
-    typedef FieldVector<ctype,dim> DomainType;
+    typedef typename  GridPartType :: template Codim<0> :: EntityType EntityType;
 
     IteratorType enditer = gridPart.template end<0> ();
     for(IteratorType eiter = gridPart.template begin<0> ();
         eiter != enditer; ++eiter)
     {
-      const GeometryType geomType = eiter->geometry().type();
+      const EntityType& entity = (*eiter);
+      const GeometryType geomType = entity.geometry().type();
       const Dune::ReferenceElement< ctype, dim > & refElem =
                     Dune::ReferenceElements< ctype, dim >::general(geomType);
       const int numFaces = refElem.size(codim);
       //std::cout << "For type " << geomType << " got " << numFaces << " numFaces\n";
 
       //int twist = -4;
-      const IntersectionIterator endit = gridPart.iend( *eiter );
-      for (IntersectionIterator it = gridPart.ibegin( *eiter );
+      const IntersectionIterator endit = gridPart.iend( entity );
+      for (IntersectionIterator it = gridPart.ibegin( entity );
            it != endit; ++it)
       {
         const Intersection& inter=*it;
         typedef typename GridPartType::TwistUtilityType TwistUtilityType;
-
-        if( inter.boundary() ) continue ;
 
         // set this flag to true for output of twists that have been calculated
         const bool output = Parameter :: verbose() ;
 
         if( dim > 2 )
         {
-          //const int twistFound = checkLocalIntersectionConsistency( *inter.inside(),
+          //const int twistFound = checkLocalIntersectionConsistency( entity,
           //                      inter.geometryInInside(), inter.indexInInside() , false, false);
-          const int twistFound = aluTwistCheck( *inter.inside(),
+          const int twistFound = aluTwistCheck( entity,
                                 inter.geometryInInside(), inter.indexInInside() , false, false);
           const int twistInside = TwistUtilityType::twistInSelf( gridPart.grid(), inter);
           if( output && twistFound != twistInside )
@@ -158,9 +170,10 @@ protected:
 
           if( inter.neighbor() )
           {
-            //const int twstF = checkLocalIntersectionConsistency( *inter.outside(),
+            EntityType neighbor = make_entity( inter.outside() );
+            //const int twstF = checkLocalIntersectionConsistency( neighbor,
             //              inter.geometryInOutside(), inter.indexInOutside(), true, false);
-            const int twstF = aluTwistCheck( *inter.outside(),
+            const int twstF = aluTwistCheck( neighbor,
                           inter.geometryInOutside(), inter.indexInOutside(), true, false);
 
             const int twistOutside = TwistUtilityType::twistInNeighbor( gridPart.grid(), inter);
@@ -178,7 +191,7 @@ protected:
         const PointVectorType& points =
           PointProviderType::getPoints(quad.id(), geomType);
 
-        _test( points.size() == numFaces * quad.nop());
+        doTest( points.size() == numFaces * quad.nop());
         if ( output )
         {
           std::cout << points.size() << " ps | qnop " << numFaces * quad.nop() << "\n";
@@ -187,23 +200,29 @@ protected:
           std::cout << TwistUtilityType :: twistInNeighbor( gridPart.grid(), inter) << "\n";
         }
 
-        for (size_t i = 0; i < quad.nop(); ++i)
+        // this check is only ok if we are on the inside of
+        // the smaller element of the non-conforming intersection
+        // or if the intersection is conforming
+        if( inter.conforming() ||
+            (inter.neighbor() && entity.level() > inter.outside().level()) )
         {
-          typedef typename PointVectorType :: value_type PointType;
-          for (int d = 0; d < dim; ++d)
+          for (size_t i = 0; i < quad.nop(); ++i)
           {
-            assert( quad.cachingPoint(i) < points.size() );
-            _floatTest(points[quad.cachingPoint(i)][d],
-                       geo.global(quad.localPoint(i))[d]);
-          }
+            /*
+            {
+              std::cout << "nis: " << inter.indexInInside();
+              std::cout << " pt " << i << ": " << points[quad.cachingPoint(i)]
+                        << " == " << geo.global(quad.localPoint(i)) << std::endl;
+            }
+            */
+            for (int d = 0; d < dim; ++d)
+            {
+              assert( quad.cachingPoint(i) < points.size() );
+              doTest(points[quad.cachingPoint(i)][d],
+                     geo.global(quad.localPoint(i))[d]);
+            }
 
-          /*
-          {
-            std::cout << "nis: " << inter.indexInInside();
-            std::cout << " pt " << i << ": " << points[quad.cachingPoint(i)]
-                      << " == " << geo.global(quad.localPoint(i)) << std::endl;
           }
-          */
         }
 
         if( inter.neighbor ())
@@ -218,7 +237,7 @@ protected:
               for (int d = 0; d < dim; ++d)
               {
                 assert( outerQuad.cachingPoint(i) < points.size() );
-                _floatTest(points[outerQuad.cachingPoint(i)][d],
+                doTest(points[outerQuad.cachingPoint(i)][d],
                            nGeo.global(outerQuad.localPoint(i))[d]);
               }
 

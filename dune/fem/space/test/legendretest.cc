@@ -87,9 +87,9 @@ struct ExactSolution
   {
     ret = 1.; // maximum of function is 2
 
-       for(int i=0; i<DomainType::dimension; i++)
-	ret *=sin(x[i]) ;
-     }
+    for(int i=0; i<DomainType::dimension; i++)
+	    ret *=sin(x[i]) ;
+  }
 
   void evaluate (const DomainType & x , RangeFieldType time , RangeType & ret) const
   {
@@ -98,41 +98,34 @@ struct ExactSolution
 
   void jacobian(const DomainType & x,JacobianRangeType & ret) const
   {
-
     for(int i=0; i<DomainType::dimension; i++)
+    {
+	    double prod=1.0;
+	    for(int j=0;j<DomainType::dimension;j++)
       {
-	double prod=1.0;
-	for(int j=0;j<DomainType::dimension;j++){
-	  if(j==i)
-	    prod*=cos(x[j]);
-	  else
-	    prod*=sin(x[j]);
-	}
-
-	ret[0][i]=prod;
-      }
-
+	      if(j==i)
+	        prod*=cos(x[j]);
+	      else
+	        prod*=sin(x[j]);
+	    }
+      ret[0][i]=prod;
+    }
   }
-
-
-
-
 };
 
-// ********************************************************************
+
+
 template <class DiscreteFunctionType>
 class L2Projection
 {
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
 
- public:
+public:
   template <class FunctionType>
   static void project (const FunctionType &f, DiscreteFunctionType &discFunc, int polOrd)
   {
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType::IteratorType Iterator;
-
     const DiscreteFunctionSpaceType& space =  discFunc.space();
 
     discFunc.clear();
@@ -146,40 +139,40 @@ class L2Projection
     DiscreteFunctionType mass("mass",space);
     mass.clear();
 
-    Iterator endit = space.end();
-    for(Iterator it = space.begin(); it != endit ; ++it)
+    for(const auto& entity : space)
     {
       // Get quadrature rule
-      CachingQuadrature<GridPartType,0> quad(*it, polOrd);
+      CachingQuadrature<GridPartType,0> quad(entity, polOrd);
 
-      LocalFuncType lf = discFunc.localFunction(*it);
-      LocalFuncType tmp = mass.localFunction(*it);
+      LocalFuncType lf = discFunc.localFunction(entity);
+      LocalFuncType tmp = mass.localFunction(entity);
 
       //! Note: basis functions must be ortho-normal!!!!
       typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType ;
       const BasisFunctionSetType & basisSet = lf.basisFunctionSet();
 
       const typename HGridType::template Codim<0>::Entity::Geometry&
-        itGeom = (*it).geometry();
+        itGeom = entity.geometry();
 
       const int quadNop = quad.nop();
       const int numDofs = lf.numDofs();
       phi.resize( numDofs );
 
       for(int qP = 0; qP < quadNop ; ++qP)
-      {// double det = (*it).geometry().integrationElement( quad.point(qP) );
+      {
+        // double det = entity.geometry().integrationElement( quad.point(qP) );
         f.evaluate(itGeom.global(quad.point(qP)), ret);
 
         basisSet.evaluateAll( quad[ qP ], phi );
 
         for(int i=0; i<numDofs; ++i)
         {
-	  //	  tmp[i]+=quad.weight(qP)*SQR(phi)*det ;
+	        //tmp[i]+=quad.weight(qP)*SQR(phi)*det ;
           lf[i] += quad.weight(qP) * (ret * phi[i])/*det*/ ;
         }
       }
-//       for(int i=0; i<numDofs; ++i) {
-// 	lf[i]/=tmp[i];}
+      // for(int i=0; i<numDofs; ++i)
+      //   lf[i]/=tmp[i];
    }
   }
 
@@ -191,6 +184,7 @@ class L2Projection
     project(f,discFunc,polOrd);
   }
 };
+
 
 
 // calculates || u-u_h ||_H1
@@ -210,7 +204,6 @@ public:
     const DiscreteFunctionSpaceType & space = discFunc.space();
 
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
 
     RangeType ret (0.0);
@@ -220,29 +213,25 @@ public:
     JacobianRangeType psi(0.0);
     JacobianRangeType xi(0.0);
 
-
-
     RangeType error(0.0);
 
     enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
     enum { dimDomain =DiscreteFunctionSpaceType :: DimDomain};
-    IteratorType endit = space.end();
-    for(IteratorType it = space.begin(); it != endit ; ++it)
+    for(const auto& entity : space)
     {
-      CachingQuadrature<GridPartType,0> quad(*it, polOrd);
-      LocalFuncType lf = discFunc.localFunction(*it);
+      CachingQuadrature<GridPartType,0> quad(entity, polOrd);
+      LocalFuncType lf = discFunc.localFunction(entity);
       const int quadNop = quad.nop();
       for(int qP = 0; qP < quadNop; ++qP)
       {
-        double weight = quad.weight(qP) * (*it).geometry().integrationElement(quad.point(qP));
-        f.evaluate((*it).geometry().global(quad.point(qP)),time, ret);
-	f.jacobian((*it).geometry().global(quad.point(qP)),psi);
+        double weight = quad.weight(qP) * entity.geometry().integrationElement(quad.point(qP));
+        f.evaluate(entity.geometry().global(quad.point(qP)),time, ret);
+	      f.jacobian(entity.geometry().global(quad.point(qP)),psi);
         lf.evaluate(quad[qP],phi);
-	lf.jacobian(quad[qP],xi);
+	      lf.jacobian(quad[qP],xi);
 
-	tmp=0.0;
-
-	for( int i = 0; i < dimDomain; ++i )
+	      tmp=0.0;
+	      for( int i = 0; i < dimDomain; ++i )
         {
           for( int j = 0; j < dimRange; ++j )
             tmp[ j ] += (xi[ j ][ i ] - psi[ j ][ i ])*(xi[ j ][ i ] - psi[ j ][ i ]);
@@ -253,21 +242,19 @@ public:
       }
     }
 
-
     for(int i=0; i< dimRange; ++i)
       error[i] = sqrt(error[i]);
 
     return error;
   }
 
-template <class FunctionType>
+  template <class FunctionType>
   RangeType norm (const FunctionType &f, DiscreteFunctionType &discFunc,
       double time, int polOrd) const
   {
     const DiscreteFunctionSpaceType & space = discFunc.space();
 
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
     typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
 
     RangeType ret (0.0);
@@ -276,19 +263,17 @@ template <class FunctionType>
     RangeType error(0.0);
 
     enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
-
-    IteratorType endit = space.end();
-    for(IteratorType it = space.begin(); it != endit ; ++it)
+    for(const auto& entity : space)
     {
-      CachingQuadrature<GridPartType,0> quad(*it, polOrd);
-      LocalFuncType lf = discFunc.localFunction(*it);
+      CachingQuadrature<GridPartType,0> quad(entity, polOrd);
+      LocalFuncType lf = discFunc.localFunction(entity);
       const int quadNop = quad.nop();
       for(int qP = 0; qP < quadNop; ++qP)
       {
-        double weight = quad.weight(qP) * (*it).geometry().integrationElement(quad.point(qP));
-        f.evaluate((*it).geometry().global(quad.point(qP)),time, ret);
+        double weight = quad.weight(qP) * entity.geometry().integrationElement(quad.point(qP));
+        f.evaluate(entity.geometry().global(quad.point(qP)),time, ret);
 
-	lf.evaluate(quad[qP],phi);
+	      lf.evaluate(quad[qP],phi);
 
         for( int i = 0; i < dimRange; ++i )
           error[ i ] += weight * ((ret[ i ] - phi[ i ])*(ret[ i ] - phi[ i ]));
@@ -301,8 +286,6 @@ template <class FunctionType>
     return error;
   }
 
-
-
   template <class FunctionType>
   RangeType h1norm (const FunctionType &f, DiscreteFunctionType &discFunc,
 		    double time) const
@@ -311,14 +294,6 @@ template <class FunctionType>
     int polOrd = 2 * space.order() + 2;
     return h1norm(f,discFunc,time,polOrd);
   }
-
-
-
-
-
-
-
-
 
   template <class FunctionType>
   RangeType norm (const FunctionType &f, DiscreteFunctionType &discFunc,
@@ -329,7 +304,9 @@ template <class FunctionType>
     return norm(f,discFunc,time,polOrd);
   }
 };
-// ********************************************************************
+
+
+
 double algorithm (HGridType& grid, DiscreteFunctionType& solution  , int turn )
 {
    GridPartType part ( grid );
@@ -348,10 +325,10 @@ double algorithm (HGridType& grid, DiscreteFunctionType& solution  , int turn )
    RangeType error = l2err.norm(f ,solution, 0.0);
    RangeType h1error= l2err.h1norm(f,solution,0.0);
    for(int i=0; i<RangeType::dimension; ++i)
-     {
-       std::cout << "\nL2 Error["<<i<<"] : " << error[i] << "\n\n";
-        std::cout << "\nH1 Error["<<i<<"] : " << h1error[i] << "\n\n";
-     }
+   {
+     std::cout << "\nL2 Error["<<i<<"] : " << error[i] << "\n\n";
+      std::cout << "\nH1 Error["<<i<<"] : " << h1error[i] << "\n\n";
+   }
 #if HAVE_GRAPE
    // if Grape was found, then display last solution
    if(0 && turn > 0)
@@ -384,8 +361,8 @@ int main (int argc, char **argv)
   int ml = atoi( argv[1] );
   double* error = new double[ml];
   // char tmp[16]; sprintf(tmp,"%d",dimw);
-//   std::string macroGridName (tmp);
-//   macroGridName += "dgrid.dgf";
+  // std::string macroGridName (tmp);
+  // macroGridName += "dgrid.dgf";
 
 #if S_GRID
   Dune::FieldVector<int,dimw> N(2);
@@ -406,12 +383,11 @@ int main (int argc, char **argv)
   }
 
   HGridType grid(lang,anz,per,1);
-
 #endif
 
 
  //  GridPtr<HGridType> gridptr(macroGridName);
-//   HGridType& grid=*gridptr;
+ //  HGridType& grid=*gridptr;
  //  const int step = Dune::DGFGridInfo<HGridType>::refineStepsForHalf();
 
   const int step =1;

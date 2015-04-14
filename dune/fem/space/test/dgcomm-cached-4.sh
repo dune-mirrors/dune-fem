@@ -10,6 +10,10 @@ export MPIEXEC_PARAMETER=parameter
 if [ -e ../../../../scripts/mpiexec.sh ] ; then
   exec ../../../../scripts/mpiexec.sh 4
 else
-  mpiexec -np 4 ./dgcomm_cached
+  if [ "$MPIEXEC" == "" ]; then
+    mpiexec -np 4 ./dgcomm_cached
+  else
+    $MPIEXEC -np 4 ./dgcomm_cached
+  fi
 fi
 

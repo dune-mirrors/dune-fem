@@ -74,8 +74,7 @@ int main( int argc, char **argv )
     DiscreteFunctionSpace dFspace( gridPart );
     DiscreteFunction solution("testSolution", dFspace);
 
-    typedef DiscreteFunctionSpace :: IteratorType IteratorType;
-    typedef IteratorType :: Entity EntityType;
+    typedef DiscreteFunctionSpace :: IteratorType :: Entity :: Geometry Geometry;
 
     typedef DiscreteFunctionSpace :: LagrangePointSetType LagrangePointSetType;
 
@@ -104,15 +103,12 @@ int main( int argc, char **argv )
 
       solution.clear();
 
-      const IteratorType endit = dFspace.end();
-      for( IteratorType it = dFspace.begin(); it != endit; ++it )
+      for( const auto& entity : dFspace )
       {
-        const EntityType &entity = *it;
         typedef DiscreteFunction :: LocalFunctionType LocalFunctionType;
 
         LocalFunctionType solutionLocal = solution.localFunction( entity );
 
-        typedef EntityType :: Geometry Geometry;
         const Geometry& geo = entity.geometry();
 
         const LagrangePointSetType &lagrangePointSet = dFspace.lagrangePointSet( entity );

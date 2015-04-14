@@ -1,100 +1,98 @@
-#ifndef DUNE_FEM_GRIDPART_IDGRIDPART_DATAHANDLE_HH
-#define DUNE_FEM_GRIDPART_IDGRIDPART_DATAHANDLE_HH
+#ifndef DUNE_IDGRID_DATAHANDLE_HH
+#define DUNE_IDGRID_DATAHANDLE_HH
 
+//- dune-common includes
 #include <dune/common/typetraits.hh>
 
+//- dune-grid includes
 #include <dune/grid/common/datahandleif.hh>
 
-#include <dune/fem/gridpart/idgridpart/entity.hh>
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/common/ldbhandleif.hh>
+#endif
 
 namespace Dune
 {
 
-  namespace Fem
+  // IdDataHandle
+  // ------------
+
+  template< class WrappedHandle, class GridFamily >
+  class IdDataHandle
+    : public CommDataHandleIF< IdDataHandle< WrappedHandle, GridFamily >, typename WrappedHandle::DataType >
   {
+  protected:
+    typedef IdDataHandle< WrappedHandle, GridFamily > ThisType;
 
-    // IdDataHandle
-    // ------------
+    // type of traits
+    typedef typename remove_const< GridFamily >::type::Traits Traits;
 
-    template< class GridFamily, class WrappedHandle >
-    class IdDataHandle
-    : public CommDataHandleIF< IdDataHandle< GridFamily, WrappedHandle >, typename WrappedHandle::DataType >
+    typedef typename Traits :: ExtraData ExtraData ;
+
+    template< int codim >
+    struct Codim
     {
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
-
-      template< class HostEntity >
-      class EntityProxy;
-
-    public:
-      IdDataHandle ( WrappedHandle &handle )
-      : wrappedHandle_( handle )
-      {}
-
-      bool contains ( int dim, int codim ) const
-      {
-        return wrappedHandle_.contains( dim, codim );
-      }
-
-      bool fixedsize ( int dim, int codim ) const
-      {
-        return wrappedHandle_.fixedsize( dim, codim );
-      }
-
-      template< class HostEntity >
-      size_t size ( const HostEntity &hostEntity ) const
-      {
-        EntityProxy< HostEntity > proxy( hostEntity );
-        return wrappedHandle_.size( *proxy );
-      }
-
-      template< class MessageBuffer, class HostEntity >
-      void gather ( MessageBuffer &buffer, const HostEntity &hostEntity ) const
-      {
-        EntityProxy< HostEntity > proxy( hostEntity );
-        wrappedHandle_.gather( buffer, *proxy );
-      }
-
-      template< class MessageBuffer, class HostEntity >
-      void scatter ( MessageBuffer &buffer, const HostEntity &hostEntity, size_t size )
-      {
-        EntityProxy< HostEntity > proxy( hostEntity );
-        wrappedHandle_.scatter( buffer, *proxy, size );
-      }
-
-    private:
-      WrappedHandle &wrappedHandle_;
+      // type of entity
+      typedef typename Traits::template Codim< codim >::Entity EntityType;
     };
 
+  public:
+    // type of data to be communicated
+    typedef typename WrappedHandle::DataType DataType;
 
+    typedef CommDataHandleIF< ThisType, DataType > DataHandleIFType;
 
-    template< class GridFamily, class WrappedHandle >
+  private:
+    // prohibit copying
+    IdDataHandle ( const ThisType & );
+
+  public:
+    IdDataHandle ( ExtraData data, WrappedHandle &wrappedHandle )
+    : wrappedHandle_( wrappedHandle ),
+      data_( data )
+    {}
+
+    bool contains ( int dim, int codim ) const
+    {
+      return wrappedHandle_.contains( dim, codim );
+    }
+
+    bool fixedsize ( int dim, int codim ) const
+    {
+      return wrappedHandle_.fixedsize( dim, codim );
+    }
+
     template< class HostEntity >
-    struct IdDataHandle< GridFamily, WrappedHandle >::EntityProxy
+    size_t size ( const HostEntity &hostEntity ) const
     {
-      static const int dimension = HostEntity::dimension;
-      static const int codimension = HostEntity::codimension;
+      typedef typename Codim< HostEntity::codimension >::EntityType EntityType;
+      const EntityType entity( typename EntityType::Implementation( data(), hostEntity ) );
+      return wrappedHandle_.size( entity );
+    }
 
-      typedef Dune::Entity< codimension, dimension, const GridFamily, IdEntity > Entity;
+    template< class MessageBuffer, class HostEntity >
+    void gather ( MessageBuffer &buffer, const HostEntity &hostEntity ) const
+    {
+      typedef typename Codim< HostEntity::codimension >::EntityType EntityType;
+      const EntityType entity( typename EntityType::Implementation( data(), hostEntity ) );
+      wrappedHandle_.gather( buffer, entity );
+    }
 
-    private:
-      typedef IdEntity< codimension, dimension, const GridFamily > EntityImpl;
+    template< class MessageBuffer, class HostEntity >
+    void scatter ( MessageBuffer &buffer, const HostEntity &hostEntity, size_t size )
+    {
+      typedef typename Codim< HostEntity::codimension >::EntityType EntityType;
+      const EntityType entity( typename EntityType::Implementation( data(), hostEntity ) );
+      wrappedHandle_.scatter( buffer, entity, size );
+    }
 
-    public:
-      EntityProxy ( const HostEntity &hostEntity )
-      : entity_( EntityImpl( hostEntity ) )
-      {}
+    ExtraData data() const { return data_; }
 
-      const Entity &operator* () const
-      {
-        return entity_;
-      }
-
-    private:
-      Entity entity_;
-    };
-
-  } // namespace Fem
+  protected:
+    WrappedHandle &wrappedHandle_;
+    ExtraData data_;
+  };
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_DATAHANDLE_HH
+#endif // #ifndef DUNE_IDGRID_DATAHANDLE_HH

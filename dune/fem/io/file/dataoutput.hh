@@ -368,8 +368,6 @@ namespace Dune
       }
 
     protected:
-      //void grapeDisplay ( Dune::Nil &data ) const {}
-
       //! display data with grape
       template< class OutputTupleType >
       void grapeDisplay ( OutputTupleType &data ) const;
@@ -955,11 +953,12 @@ namespace Dune
       IteratorType end = gridPart.template end< 0 >();
       for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
       {
-        CachingQuadrature< GridPartType, 0 > quad( *it, 1 );
+        typedef typename IteratorType::Entity Entity;
+        const Entity &entity = *it;
+
+        CachingQuadrature< GridPartType, 0 > quad( entity, 1 );
         for( size_t i = 0; i < quad.nop(); ++i )
         {
-          typedef typename IteratorType::Entity Entity;
-          const Entity &entity = *it;
           const typename Entity::Geometry::GlobalCoordinate x
             = entity.geometry().global( quad.point( i ) );
           for( int k = 0; k < x.dimension; ++k )

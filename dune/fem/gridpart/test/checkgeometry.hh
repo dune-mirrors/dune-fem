@@ -7,11 +7,12 @@
 #include <dune/common/stdstreams.hh>
 
 //- dune-grid includes
-#include <dune/grid/test/checkgeometry.cc>
+#include <dune/grid/test/checkgeometry.hh>
 
 //- dune-fem includes
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/gridpart/test/failure.hh>
+#include <dune/fem/misc/compatibility.hh>
 
 
 /** \brief Check geometries for all entities in the
@@ -49,14 +50,13 @@ namespace Dune
           const int subEntities = entity.subEntities( codim );
           for ( int i = 0; i < subEntities; ++i )
           {
-            typedef typename Entity::template Codim< codim >::EntityPointer SubEP;
-            const SubEP subEP = entity.template subEntity< codim >( i );
-            const typename SubEP::Entity &subEn = *subEP;
-            const typename SubEP::Entity::Geometry &subGeo = subEn.geometry();
+            typedef typename Entity::template Codim< codim >::Entity SubEntity;
+            SubEntity subEntity = make_entity( entity.template subEntity< codim >( i ) );
 
-            if( subEn.type() != subGeo.type() )
+            typename SubEntity::Geometry geometry = subEntity.geometry();
+            if( subEntity.type() != geometry.type() )
               std::cerr << "Error: Entity and geometry report different geometry types on codimension " << codim << "." << std::endl;
-            Dune::checkGeometry( subGeo );
+            Dune::checkGeometry( geometry );
           }
         }
       };

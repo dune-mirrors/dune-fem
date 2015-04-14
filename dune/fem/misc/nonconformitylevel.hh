@@ -5,8 +5,9 @@
 #include <cstdlib>
 #include <iostream>
 
-//- Dune includes
 #include <dune/common/timer.hh>
+
+#include <dune/fem/misc/compatibility.hh>
 
 namespace Dune
 {
@@ -97,10 +98,9 @@ namespace Dune
             if(intersec.neighbor())
             {
               assert( enMarker <= 0 );
-              EntityPointerType ep = intersec.outside();
-              const EntityType &nb = *ep;
+              EntityType nb = make_entity( intersec.outside() );
               const int nbMarker = grid.getMark(nb);
-              const int levelDiff = ep->level() - en.level();
+              const int levelDiff = nb.level() - en.level();
 
               // if level difference and refine on neighbor also refine here
               if(levelDiff > levelAllowed)

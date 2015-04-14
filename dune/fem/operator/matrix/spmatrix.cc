@@ -267,13 +267,13 @@ namespace Dune
     void SparseRowMatrix<T>::clear()
     {
       T init = 0;
-      for(register int i=0; i<dim_[0]*nz_; ++i)
+      for(int i=0; i<dim_[0]*nz_; ++i)
       {
         values_ [i] = init;
         col_[i] = defaultCol;
       }
 
-      for(register int i=0; i<dim_[0]; ++i)
+      for(int i=0; i<dim_[0]; ++i)
       {
         nonZeros_[i] = 0;
       }
@@ -466,7 +466,7 @@ namespace Dune
     template <class T> template <class VECtype>
     void SparseRowMatrix<T>::multOEM(const VECtype *x, VECtype *ret) const
     {
-      for(register int row=0; row<dim_[0]; ++row)
+      for(int row=0; row<dim_[0]; ++row)
       {
         ret[row] = multOEMRow( x, row );
       }
@@ -476,7 +476,7 @@ namespace Dune
     template <class T> template <class VECtype>
     void SparseRowMatrix<T>::multOEMAdd(const VECtype *x, VECtype *ret) const
     {
-      for(register int row=0; row<dim_[0]; ++row)
+      for(int row=0; row<dim_[0]; ++row)
       {
         ret[row] += multOEMRow( x, row );
       }
@@ -486,15 +486,15 @@ namespace Dune
     template <class T> template <class VECtype>
     void SparseRowMatrix<T>::multOEM_t(const VECtype *x, VECtype *ret) const
     {
-      for(register int col=0; col<dim_[1]; ++col)
+      for(int col=0; col<dim_[1]; ++col)
       {
         ret[col] = 0.0;
       }
 
-      for(register int row=0; row<dim_[0]; ++row)
+      for(int row=0; row<dim_[0]; ++row)
       {
         const int nonZero = nonZeros_[row];
-        for(register int col=0; col<nonZero; ++col)
+        for(int col=0; col<nonZero; ++col)
         {
           int thisCol = row*nz_ + col;
           int realCol = col_[ thisCol ];
@@ -584,7 +584,6 @@ namespace Dune
     template <class T>
     void SparseRowMatrix<T>::print(std::ostream& s, unsigned int offset) const
     {
-      std::cout << "Print SparseRowMatrix" << std::endl;
       s.precision( 6 );
       for(int row=0; row<dim_[0]; ++row)
       {
@@ -595,18 +594,6 @@ namespace Dune
             s << row+offset << " " << col+offset << " " << val <<std::endl;
         }
       }
-    }
-
-    template <class T>
-    void SparseRowMatrix<T>::print(const std::string& filename, unsigned int offset) const
-    {
-      std::ofstream ofs;
-      ofs.open(filename.c_str());
-      if(ofs.is_open())
-        this->print(ofs,offset);
-      else
-        std::cout << "Not able to open the file " << filename << std::endl;
-      ofs.close();
     }
 
     template <class T>
@@ -788,7 +775,7 @@ namespace Dune
         int thisCol = row*nz_;
         const T * localValues = &values_[thisCol];
         const int nZeros = nonZeros_[row];
-        for(register int col=0; col<nZeros; ++col)
+        for(int col=0; col<nZeros; ++col)
         {
           int realCol = col_[ thisCol ];
           assert( realCol != defaultCol );
@@ -819,7 +806,7 @@ namespace Dune
       for(int row=0; row<this->size(0); row++)
       {
         T sum = 0.0;
-        for(register int col=0; col<nz_; ++col)
+        for(int col=0; col<nz_; ++col)
         {
           int thisCol = row*nz_ + col;
           int realCol = col_[ thisCol ];
@@ -906,7 +893,7 @@ namespace Dune
       assert( this->size(0) == B.size(0) );
       assert( nz_ == B.nz_ );
 
-      for(register int i=0; i<dim_[0]*nz_; ++i)
+      for(int i=0; i<dim_[0]*nz_; ++i)
       {
         assert( col_ [i] == B.col_ [i] );
         values_ [i] += B.values_[i];
@@ -918,7 +905,7 @@ namespace Dune
     void SparseRowMatrix<T>::scale(const T& factor)
     {
       if (checkNonConstMethods) assert(checkConsistency());
-      for(register int i=0; i<dim_[0]*nz_; ++i)
+      for(int i=0; i<dim_[0]*nz_; ++i)
       {
         values_ [i] *= factor;
       }
@@ -1031,31 +1018,6 @@ namespace Dune
     void SparseRowMatrix<T>::solveUMF(const T* b, T* x)
     {
 #ifdef ENABLE_UMFPACK
-#if 0 // LDL at the moment leads to unresolved symbols during linking
-      int n = dim_[0];
-      int nAll = n * nz_ ;
-      int* Ap = new int [n+1];
-      int* Ai = new int [ nAll ];
-      T*   Ax = new   T [ nAll ];
-      int ANZ,LNZ;
-      setupUMF(n,nAll,Ap,Ai,Ax,ANZ,LNZ);
-
-      double Lx [LNZ], D [n], Y [n] ;
-      int Li [LNZ], Lp [n+1], Parent [n], Lnz [n], Flag [n], Pattern [n];
-      /* factorize A into LDL’ (P and Pinv not used) */
-      ldl_symbolic (n, Ap, Ai, Lp, Parent, Lnz, Flag, NULL, NULL) ;
-      ldl_numeric (n, Ap, Ai, Ax, Lp, Parent, Lnz, Li, Lx, D, Y, Pattern, Flag, NULL, NULL) ;
-      /* solve Ax=b, overwriting b with the solution x so start with x=b*/
-      for (int i=0;i<n;++i) x[i]=b[i];
-      ldl_lsolve (n, x, Lp, Li, Lx) ;
-      ldl_dsolve (n, x, D) ;
-      ldl_ltsolve (n, x, Lp, Li, Lx) ;
-
-      // delete temp memory
-      delete [] Ap;
-      delete [] Ax;
-      delete [] Ai;
-#else // want to use LDL but use umfpack at the moment
       const int n = dim_[0];
       const int nAll = n * nz_ ;
 
@@ -1128,7 +1090,6 @@ namespace Dune
       delete [] Ap;
       delete [] Ax;
       delete [] Ai;
-#endif
 #endif // ENABLE_UMFPACK
     }
     template <class T>

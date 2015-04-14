@@ -1,145 +1,254 @@
 #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_ENTITY_HH
 #define DUNE_FEM_GRIDPART_IDGRIDPART_ENTITY_HH
 
+#include <type_traits>
+#include <utility>
+
+//- dune-common includes
+#include <dune/common/nullptr.hh>
+
+//- dune-grid includes
 #include <dune/grid/common/entity.hh>
 #include <dune/grid/common/gridenums.hh>
 
+//- dune-fem includes
 #include <dune/fem/gridpart/common/defaultgridpartentity.hh>
 #include <dune/fem/gridpart/idgridpart/geometry.hh>
-
+#include <dune/fem/misc/compatibility.hh>
 
 namespace Dune
 {
+  namespace Fem {
 
-  namespace Fem
-  {
-
-    // IdEntity
-    // --------
+    // IdEntityBasic
+    // -------------
 
     template< int codim, int dim, class GridFamily >
-    class IdEntity
-    : public DefaultGridPartEntity < codim, dim, GridFamily >
+    class IdEntityBasic
+      : public DefaultGridPartEntity < codim, dim, GridFamily >
     {
+    protected:
       typedef typename remove_const< GridFamily >::type::Traits Traits;
 
     public:
-      static const int codimension = codim;
-      static const int dimension = remove_const< GridFamily >::type::dimension;
-      static const int mydimension = dimension - codimension;
-      static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
+      /** \name Attributes
+       *  \{ */
 
+      //! codimensioon of the entity
+      static const int codimension = codim;
+      //! dimension of the grid
+      static const int dimension = std::remove_const< GridFamily >::type::dimension;
+      //! dimension of the entity
+      static const int mydimension = dimension - codimension;
+      //! dimension of the world
+      static const int dimensionworld = std::remove_const< GridFamily >::type::dimensionworld;
+
+      /** \} */
+
+      /** \name Types Required by DUNE
+       *  \{ */
+
+      //! coordinate type of the grid
       typedef typename remove_const< GridFamily >::type::ctype ctype;
 
-      typedef typename Traits::template Codim< codimension >::EntitySeed EntitySeed;
+      //! type of corresponding entity seed
+      typedef typename GridFamily::template Codim< codimension >::EntitySeed EntitySeedType;
+      //! type of corresponding geometry
       typedef typename Traits::template Codim< codimension >::Geometry Geometry;
 
-    private:
-      typedef typename Traits::HostGridPartType HostGridPartType;
+      /** \} */
+
+    protected:
+      // type of the host grid
+      typedef typename Traits::HostGridPartType  HostGridPartType;
+
+      // type of extra data, e.g. a pointer to grid (here empty)
+      typedef typename Traits::ExtraData ExtraData;
 
     public:
+      /** \name Host Types
+       *  \{ */
+
+      //! type of corresponding host entity
       typedef typename HostGridPartType::template Codim< codimension >::EntityType HostEntityType;
-      typedef typename HostGridPartType::template Codim< codimension >::EntityPointerType HostEntityPointerType;
 
-      IdEntity ()
-      : hostEntity_( 0 )
+      /** \} */
+
+      /** \name Construction, Initialization and Destruction
+       *  \{ */
+
+      /** \brief construct a null entity */
+      IdEntityBasic () = default;
+
+      /** \brief construct an initialized entity
+       *
+       *  \param[in]  hostEntity  corresponding entity in the host grid
+       */
+      IdEntityBasic ( ExtraData data, HostEntityType hostEntity )
+      : data_( std::move( data ) ),
+        hostEntity_( std::move( hostEntity ) )
       {}
 
-      explicit IdEntity ( const HostEntityType &hostEntity )
-      : hostEntity_( &hostEntity )
-      {}
+      /** \} */
 
-      operator bool () const { return bool( hostEntity_ ); }
+      /** \name Methods Shared by Entities of All Codimensions
+       *  \{ */
 
+      /** \brief obtain the name of the corresponding reference element
+       *
+       *  This type can be used to access the DUNE reference element.
+       */
       GeometryType type () const
       {
         return hostEntity().type();
       }
 
+      /** \brief obtain the level of this entity */
+      int level () const
+      {
+        return hostEntity().level();
+      }
+
+      /** \brief obtain the partition type of this entity */
       PartitionType partitionType () const
       {
         return hostEntity().partitionType();
       }
 
+      /** obtain the geometry of this entity */
       Geometry geometry () const
       {
         return Geometry( hostEntity().geometry() );
       }
 
-      EntitySeed seed () const { return EntitySeed( hostEntity().seed() ); }
+      /** \brief return EntitySeed of host grid entity */
+      EntitySeedType seed () const { return hostEntity().seed(); }
+
+      /** \brief check for equality */
+      bool equals ( const IdEntityBasic &rhs ) const
+      {
+        return hostEntity() == rhs.hostEntity();
+      }
+
+      /** \} */
+
+
+      /** \name Methods Supporting the GridPart Implementation
+       *  \{ */
 
       const HostEntityType &hostEntity () const
       {
-        assert( *this );
-        return *hostEntity_;
+        return hostEntity_;
       }
 
-    private:
-      const HostEntityType *hostEntity_;
+      const ExtraData &data () const { return data_; }
+
+      /** \} */
+
+    protected:
+      ExtraData data_;
+      HostEntityType hostEntity_;
     };
 
 
 
-    // IdEntity for codimension 0
-    // --------------------------
+    // IdGridEntity
+    // ------------
 
-    template< int dim, class GridFamily >
-    class IdEntity< 0, dim, GridFamily >
-    : public DefaultGridPartEntity < 0, dim, GridFamily >
+    template< int codim, int dim, class GridFamily >
+    class IdEntity : public IdEntityBasic< codim, dim, GridFamily >
     {
+      typedef IdEntityBasic< codim, dim, GridFamily > BaseType ;
+    protected:
       typedef typename remove_const< GridFamily >::type::Traits Traits;
 
-    public:
-      static const int codimension = 0;
-      static const int dimension = remove_const< GridFamily >::type::dimension;
-      static const int mydimension = dimension - codimension;
-      static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
+    protected:
+      // type of the host grid
+      typedef typename Traits::HostGridPartType  HostGridPartType;
 
-      typedef typename remove_const< GridFamily >::type::ctype ctype;
-
-      typedef typename Traits::template Codim< codimension >::EntitySeed EntitySeed;
-      typedef typename Traits::template Codim< codimension >::Geometry Geometry;
-      typedef typename Traits::template Codim< codimension >::LocalGeometry LocalGeometry;
-      typedef typename Traits::template Codim< codimension >::EntityPointer EntityPointer;
-
-      typedef typename Traits::HierarchicIterator HierarchicIterator;
-      typedef typename Traits::LeafIntersectionIterator LeafIntersectionIterator;
-      typedef typename Traits::LevelIntersectionIterator LevelIntersectionIterator;
-
-    private:
-      typedef typename Traits::HostGridPartType HostGridPartType;
+      // type of extra data, e.g. a pointer to grid (here empty)
+      typedef typename Traits::ExtraData ExtraData;
 
     public:
+      using BaseType :: codimension ;
+
+      /** \name Host Types
+       *  \{ */
+
+      //! type of corresponding host entity
       typedef typename HostGridPartType::template Codim< codimension >::EntityType HostEntityType;
-      typedef typename HostGridPartType::template Codim< codimension >::EntityPointerType HostEntityPointerType;
+      /** \} */
+
+      /** \brief construct a null entity */
+      IdEntity () = default;
+
+      IdEntity ( ExtraData data, HostEntityType hostEntity )
+      : BaseType( data, hostEntity )
+      {}
+    };
+
+
+    // IdGridEntity for codimension 0
+    // ----------------------------------
+
+    /** \copydoc IdGridEntity
+     *
+     *  \nosubgrouping
+     */
+    template< int dim, class GridFamily >
+    class IdEntity< 0, dim, GridFamily > : public IdEntityBasic< 0, dim, GridFamily >
+    {
+      typedef IdEntityBasic< 0, dim, GridFamily > BaseType ;
+    protected:
+      typedef typename BaseType::Traits Traits;
+      typedef typename BaseType::HostGridPartType HostGridPartType;
+
+      // type of extra data, e.g. a pointer to grid (here empty)
+      typedef typename BaseType::ExtraData ExtraData;
 
     public:
-      IdEntity ()
-      : hostEntity_( 0 )
+      using BaseType::codimension ;
+      using BaseType::data ;
+      using BaseType::hostEntity ;
+      /** \name Host Types
+       *  \{ */
+
+      //! type of corresponding host entity
+      typedef typename HostGridPartType::template Codim< codimension >::EntityType HostEntityType;
+      /** \} */
+
+    public:
+      /** \name Types Required by DUNE
+       *  \{ */
+
+      //! type of corresponding local geometry
+      typedef typename Traits::template Codim< codimension >::LocalGeometry LocalGeometry;
+
+      /** \} */
+
+      /** \name Construction, Initialization and Destruction
+       *  \{ */
+
+      /** \brief construct a null entity
+       *  \param[in]  data  data pointer (here empty)
+       */
+      IdEntity () = default;
+
+      /** \brief construct an initialized entity
+       *
+       *  \param[in]  data        data pointer (here empty)
+       *  \param[in]  hostEntity  corresponding entity in the host grid
+       */
+      IdEntity ( ExtraData data, HostEntityType hostEntity )
+      : BaseType( data, hostEntity )
       {}
 
-      explicit IdEntity ( const HostEntityType &hostEntity )
-      : hostEntity_( &hostEntity )
-      {}
+      /** \} */
 
-      operator bool () const { return bool( hostEntity_ ); }
-
-      GeometryType type () const
+      unsigned int subEntities( const unsigned int codim ) const
       {
-        return hostEntity().type();
+        return hostEntity().subEntities( codim );
       }
-
-      PartitionType partitionType () const
-      {
-        return hostEntity().partitionType();
-      }
-
-      Geometry geometry () const
-      {
-        return Geometry( hostEntity().geometry() );
-      }
-
-      EntitySeed seed () const { return EntitySeed( hostEntity().seed() ); }
 
       template< int codim >
       int count () const
@@ -147,14 +256,12 @@ namespace Dune
         return hostEntity().template count< codim >();
       }
 
-      unsigned int subEntities ( unsigned int codim ) const { return hostEntity().subEntities(codim); }
-
       template< int codim >
-      typename Traits::template Codim< codim >::EntityPointer
+      typename Traits::template Codim< codim >::Entity
       subEntity ( int i ) const
       {
-        typedef typename Traits::template Codim< codim >::EntityPointerImpl EntityPointerImpl;
-        return EntityPointerImpl( hostEntity().template subEntity< codim >( i ) );
+        typedef typename Traits::template Codim< codim >::Entity::Implementation EntityImpl;
+        return EntityImpl( data(), make_entity( hostEntity().template subEntity< codim >( i ) ) );
       }
 
       bool hasBoundaryIntersections () const
@@ -162,18 +269,12 @@ namespace Dune
         return hostEntity().hasBoundaryIntersections();
       }
 
-      const HostEntityType &hostEntity () const
-      {
-        assert( *this );
-        return *hostEntity_;
-      }
+      /** \} */
 
-    private:
-      const HostEntityType *hostEntity_;
     };
 
   } // namespace Fem
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_ENTITY_HH
+#endif // #ifndef DUNE_IDGRID_ENTITY_HH

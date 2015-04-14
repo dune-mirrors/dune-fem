@@ -1,5 +1,7 @@
 #include<config.h>
 
+#define DISABLE_DEPRECATED_METHOD_CHECK 1
+
 //- system includes
 #include <cassert>
 #include <iostream>
@@ -22,6 +24,7 @@
 #include <dune/fem/gridpart/test/checkseed.hh>
 #include <dune/fem/gridpart/test/checkgeometry.hh>
 #include <dune/fem/gridpart/test/checkintersections.hh>
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/test/testgrid.hh>
 
 
@@ -42,20 +45,21 @@ void testGridPart( const GridPartType & gridPart )
   const IteratorType end = gridPart.template end< 0 >();
   for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
   {
+    const typename IteratorType::Entity &element = *it;
     ++count;
-    IndexType index = indexSet.index(*it);
+    IndexType index = indexSet.index(element);
     maxIndex = std::max( index, maxIndex);
 
-    if (index >= consecutiveIndex[0].size()) isConsecutiveIndex[0] = false;
+    if (static_cast<std::size_t>(index) >= consecutiveIndex[0].size()) isConsecutiveIndex[0] = false;
     else consecutiveIndex[0][index] = true;
     for (int c=0;c<=GridPartType::dimension;++c)
     {
       int nSubEn = Dune::ReferenceElements< typename GridPartType::GridType::ctype, GridPartType::dimension >::
-          general( it->type() ).size(c);
+          general( element.type() ).size(c);
       for (int i=0;i<nSubEn;++i)
       {
-        IndexType index = indexSet.subIndex(*it,i,c);
-        if (index >= consecutiveIndex[c].size()) isConsecutiveIndex[c] = false;
+        IndexType index = indexSet.subIndex(element,i,c);
+        if (static_cast<std::size_t>(index) >= consecutiveIndex[c].size()) isConsecutiveIndex[c] = false;
         else consecutiveIndex[c][index] = true;
       }
     }
@@ -105,8 +109,9 @@ void testSubEntities( const GridPartType & gridPart )
   const IteratorType end = gridPart.template end< codim >();
   for( IteratorType it = gridPart.template begin< codim >(); it != end; ++it )
   {
+    const typename IteratorType::Entity &entity = *it;
     ++count;
-    IndexType index = indexSet.index(*it);
+    IndexType index = indexSet.index(entity);
     maxIndex = std::max( index, maxIndex);
   }
 
@@ -123,18 +128,20 @@ void testIntersectionIterator( const GridPartType & gridPart )
   typedef typename GridPartType::template Codim< 0 >::template Partition<Dune::All_Partition>::IteratorType IteratorType;
   const IteratorType end = gridPart.template end< 0,Dune::All_Partition >();
   for( IteratorType it = gridPart.template begin< 0,Dune::All_Partition >(); it != end; ++it )
-    index[ gridPart.indexSet().index( * it ) ] = 1;
+    index[ gridPart.indexSet().index( *it ) ] = 1;
   for( IteratorType it = gridPart.template begin< 0,Dune::All_Partition >(); it != end; ++it )
   {
+    const typename IteratorType::Entity &element = *it;
     typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
-    const IntersectionIteratorType iend = gridPart.iend( *it );
-    for ( IntersectionIteratorType inter = gridPart.ibegin( *it );
+    const IntersectionIteratorType iend = gridPart.iend( element );
+    for ( IntersectionIteratorType inter = gridPart.ibegin( element );
           inter != iend; ++inter )
     {
-      if (inter->neighbor())
+      const typename IntersectionIteratorType::Intersection &intersection = *inter;
+      if (intersection.neighbor())
       {
-        typename GridPartType::IndexSetType::IndexType nbIndex = gridPart.indexSet().index( *(inter->outside()) );
-        if ( nbIndex >= index.size() )
+        typename GridPartType::IndexSetType::IndexType nbIndex = gridPart.indexSet().index( Dune::Fem::make_entity( intersection.outside() ) );
+        if ( static_cast<std::size_t>(nbIndex) >= index.size() )
         {
           std::cout << "An index on neighbor is too large" << std::endl;
           continue;
@@ -195,7 +202,7 @@ int main ( int argc, char ** argv )
       typedef Dune::DefaultFailureHandler FailureHandlerType;
       FailureHandlerType failureHandler;
       std::cout << "Testing entity seeds" << std::endl;
-      Dune::Fem::CheckEntitySeed< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+      Dune::Fem::CheckEntitySeed< GridPartType >::check( gridPart );
       std::cout << "Testing geometies" << std::endl;
       Dune::Fem::CheckGeometry< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
       std::cout << "Testing intersections" << std::endl;
@@ -225,7 +232,7 @@ int main ( int argc, char ** argv )
       typedef Dune::DefaultFailureHandler FailureHandlerType;
       FailureHandlerType failureHandler;
       std::cout << "Testing entity seeds" << std::endl;
-      Dune::Fem::CheckEntitySeed< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+      Dune::Fem::CheckEntitySeed< GridPartType >::check( gridPart );
       std::cout << "Testing geometies" << std::endl;
       Dune::Fem::CheckGeometry< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
       std::cout << "Testing intersections" << std::endl;

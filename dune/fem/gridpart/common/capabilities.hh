@@ -82,7 +82,6 @@ namespace Dune
       };
 
 
-
       /*
        * forward
        *   GridPartCapabilities::Something< const GridPartType >

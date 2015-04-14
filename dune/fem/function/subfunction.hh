@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include <dune/fem/space/combinedspace.hh>
+#include <dune/fem/space/combinedspace/combineddofstorage.hh>
 #include <dune/fem/storage/subarray.hh>
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
 

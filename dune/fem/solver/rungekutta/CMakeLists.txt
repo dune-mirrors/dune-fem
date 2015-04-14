@@ -1,2 +1,10 @@
-dune_install(basicimplicit.hh butchertable.hh explicit.hh
-             implicit.hh semiimplicit.hh timestepcontrol.hh)
+dune_install(
+  basicimplicit.hh
+  basicrow.hh
+  butchertable.hh
+  explicit.hh
+  implicit.hh
+  row.hh
+  semiimplicit.hh
+  timestepcontrol.hh
+)

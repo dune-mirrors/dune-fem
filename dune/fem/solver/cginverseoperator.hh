@@ -438,7 +438,8 @@ namespace Dune
       RangeFunctionType s (q);
 
       RangeFieldType prevResiduum = 0;
-      RangeFieldType residuum = p.scalarProductDofs( q );//<p,Bp>
+      // RangeFieldType residuum = p.scalarProductDofs( q );//<p,Bp>
+      double residuum = p.scalarProductDofs( q );//<p,Bp>
 
       for( realCount_ = 0; (residuum > tolerance) && (realCount_ < maxIterations_); ++realCount_ )
       {

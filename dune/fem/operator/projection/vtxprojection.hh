@@ -1,10 +1,12 @@
 #ifndef DUNE_FEM_VTXPROJECTION_HH
 #define DUNE_FEM_VTXPROJECTION_HH
 
-#include <dune/fem/space/lagrange.hh>
 // #include <dune/grid/utility/twistutility.hh>
+
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
+#include <dune/fem/space/lagrange.hh>
 
 namespace Dune
 {
@@ -36,13 +38,11 @@ namespace Dune
         typedef typename DiscreteFunction::LocalFunctionType LocalDiscreteFunctionType;
 
         typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-        typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
         typedef typename DiscreteFunctionSpaceType::LagrangePointSetType LagrangePointSetType;
 
         typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
         typedef typename GridPartType::IntersectionType IntersectionType;
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
-        typedef typename GridPartType::template Codim< 0 >::EntityPointerType EntityPointerType;
         typedef typename GridPartType::template Codim< 0 >::GeometryType GeometryType;;
 
         typedef typename LagrangePointSetType::template Codim< 1 >::SubEntityIteratorType FaceDofIteratorType;
@@ -58,10 +58,8 @@ namespace Dune
         DiscreteFunction w ( "weight", space );
         w.clear();
 
-        const IteratorType end = space.end();
-        for ( IteratorType it = space.begin(); it != end; ++it )
+        for ( const auto& entity : space )
         {
-          const EntityType &entity = *it;
           weight.setEntity( entity );
 
           LocalDiscreteFunctionType lw = w.localFunction( entity );
@@ -105,10 +103,8 @@ namespace Dune
         if( !GridPartType::Traits::conforming && Fem::GridPartCapabilities::hasGrid< GridPartType >::v)
         {
           const GridPartType &gridPart =  space.gridPart();
-          for( IteratorType it = space.begin(); it != end; ++it )
+          for( const auto& entity : space )
           {
-            const EntityType &entity = *it;
-
             const LagrangePointSetType &lagrangePointSet = space.lagrangePointSet( entity );
 
             const IntersectionIteratorType iend = gridPart.iend( entity );
@@ -119,8 +115,7 @@ namespace Dune
               if( intersection.neighbor() )
               {
                 // get neighbor
-                EntityPointerType outside = intersection.outside();
-                const EntityType &neighbor = *outside;
+                EntityType neighbor = make_entity( intersection.outside() );
 
                 // if non-conforming situation
                 if( entity.level() > neighbor.level() )

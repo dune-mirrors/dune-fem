@@ -14,17 +14,26 @@ namespace Dune
     // DeadIterator
     // ------------
 
-    template< class EntityPointer >
+    template< class E >
     struct DeadIterator
-    : public EntityPointer
     {
-      explicit DeadIterator ( const EntityPointer &entityPointer )
-      : EntityPointer( entityPointer )
-      {}
+      typedef E Entity;
+
+      static const int codimension = Entity::codimension;
 
       void increment ()
       {
         DUNE_THROW( InvalidStateException, "Trying to increment a dead iterator." );
+      }
+
+      Entity dereference () const
+      {
+        DUNE_THROW( InvalidStateException, "Trying to dereference a dead iterator." );
+      }
+
+      bool equals ( const DeadIterator & ) const
+      {
+        DUNE_THROW( InvalidStateException, "Trying to compare a dead iterator." );
       }
     };
 
@@ -45,17 +54,16 @@ namespace Dune
       static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
 
       typedef typename Traits::template Codim< 0 >::Entity Entity;
-      typedef typename Traits::template Codim< 0 >::EntityPointer EntityPointer;
       typedef typename Traits::template Codim< 1 >::Geometry Geometry;
       typedef typename Traits::template Codim< 1 >::LocalGeometry LocalGeometry;
 
     public:
-      const EntityPointer inside () const
+      Entity inside () const
       {
         DUNE_THROW( InvalidStateException, "Call to inside on dead intersection." );
       }
 
-      EntityPointer outside () const
+      Entity outside () const
       {
         DUNE_THROW( InvalidStateException, "Call to outside on dead intersection." );
       }

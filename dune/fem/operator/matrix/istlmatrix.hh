@@ -25,6 +25,7 @@
 #include <dune/fem/operator/matrix/preconditionerwrapper.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/matrix/columnobject.hh>
+#include <dune/fem/storage/objectstack.hh>
 
 #include <dune/fem/operator/matrix/istlmatrixadapter.hh>
 
@@ -364,7 +365,6 @@ namespace Dune
         //! print matrix
         void print(std::ostream& s, unsigned int offset=0) const
         {
-          std::cout << "Print ISTLMatrix" << std::endl;
           s.precision( 6 );
           ConstRowIterator endi=this->end();
           for (ConstRowIterator i=this->begin(); i!=endi; ++i)
@@ -376,18 +376,6 @@ namespace Dune
                 s << i.index()+offset << " " << j.index()+offset << " " << *j << std::endl;
             }
           }
-        }
-
-        //! dump matrix on file
-        void print(const std::string& filename, unsigned int offset=0) const
-        {
-          std::ofstream ofs;
-          ofs.open(filename.c_str());
-          if(ofs.is_open())
-            print(ofs,offset);
-          else
-            std::cout << "Not able to open the file " << filename << std::endl;
-          ofs.close();
         }
     };
 
@@ -1516,9 +1504,9 @@ namespace Dune
       // overflow fraction for implicit build mode
       const double overflowFraction_;
 
-      // prohibit copy constructor
-      ISTLMatrixObject(const ISTLMatrixObject&);
     public:
+      ISTLMatrixObject(const ISTLMatrixObject&) = delete;
+
       //! constructor
       //! \param rowSpace space defining row structure
       //! \param colSpace space defining column structure

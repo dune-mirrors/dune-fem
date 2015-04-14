@@ -64,8 +64,7 @@ typedef LagrangeDiscontinuousGalerkinSpace<FuncSpace2, GridPartType,
 
 typedef CombinedDiscreteFunctionSpace< DiscreteFunctionSpaceType1, DiscreteFunctionSpaceType2 > DiscreteFunctionSpaceType;
 
-typedef DiscreteFunctionSpaceType::IteratorType IteratorType;
-typedef IteratorType::Entity EntityType;
+typedef DiscreteFunctionSpaceType::IteratorType::Entity EntityType;
 
 typedef DiscreteFunctionSpaceType::FunctionSpaceType FuncSpace;
 typedef FuncSpace::RangeType RangeType;
@@ -210,7 +209,8 @@ int checkBasisSet ( const EntityType &entity, const DiscreteFunctionSpaceType &s
           std::cout<< jacs2[i-nrBasis1]<<std::endl;
       }
 
-      hessian -= hessians[i];
+      for( int r = 0; r < dimRange; ++r )
+        hessian[ r ] -= hessians[i][ r ];
 
       double val = 0;
       for( int r = 0; r< dimRange; ++r )
@@ -229,16 +229,8 @@ int checkBasisSet ( const EntityType &entity, const DiscreteFunctionSpaceType &s
 int checkSpace( const DiscreteFunctionSpaceType & space )
 {
   int checksum = 0;
-
-  const IteratorType endit = space.end();
-  for( IteratorType it = space.begin(); it != endit; ++it )
-  {
-    const EntityType &entity = *it;
-
-    // check basisSet
+  for( const auto& entity : space )
     checksum += checkBasisSet( entity, space );
-  }
-
   return checksum;
 }
 

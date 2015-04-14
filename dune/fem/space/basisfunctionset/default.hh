@@ -69,6 +69,9 @@ namespace Dune
       //! \brief type of function space
       typedef typename ToNewDimDomainFunctionSpace< LocalFunctionSpaceType, EntityType :: Geometry :: coorddimension >::Type FunctionSpaceType;
 
+      //! \brief domain type
+      typedef typename FunctionSpaceType::DomainType DomainType;
+
       //! \brief range type
       typedef typename FunctionSpaceType::RangeType RangeType;
       //! \brief jacobian range type

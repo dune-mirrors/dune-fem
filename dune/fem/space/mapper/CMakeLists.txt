@@ -1,2 +1,12 @@
-dune_install(codimensionmapper.hh dofmapper.hh genericdofmapper.hh
-             nonblockmapper.hh genericadaptivedofmapper.hh)
+dune_install(
+  code.hh
+  codimensionmapper.hh
+  compile.hh
+  dofmapper.hh
+  exceptions.hh
+  genericadaptivedofmapper.hh
+  genericdofmapper.hh
+  indexsetdofmapper.hh
+  localkey.hh
+  nonblockmapper.hh
+)

@@ -5,14 +5,15 @@
 #error "Experimental grid extensions required for GeoGridPart. Reconfigure with --enable-experimental-grid-extensions to enable GeoGridPart."
 #else
 
-#include <dune/fem/gridpart/common/gridpart.hh>
+#include <dune/grid/common/gridview.hh>
+
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
+#include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/geogridpart/capabilities.hh>
 #include <dune/fem/gridpart/geogridpart/datahandle.hh>
 #include <dune/fem/gridpart/geogridpart/entity.hh>
-#include <dune/fem/gridpart/geogridpart/entitypointer.hh>
 #include <dune/fem/gridpart/geogridpart/geometry.hh>
 #include <dune/fem/gridpart/geogridpart/intersection.hh>
 #include <dune/fem/gridpart/geogridpart/intersectioniterator.hh>
@@ -61,11 +62,9 @@ namespace Dune
           typedef Dune::Geometry< dimension - codim, dimensionworld, const GridPartFamily, GeoGeometry > Geometry;
           typedef typename HostGridPartType::template Codim< codim >::LocalGeometryType LocalGeometry;
 
-          typedef GeoEntityPointer< GeoEntityPointerTraits< codim, const GridPartFamily > > EntityPointerImpl;
-          typedef Dune::EntityPointer< const GridPartFamily, EntityPointerImpl > EntityPointer;
-
           typedef Dune::Entity< codim, dimension, const GridPartFamily, GeoEntity > Entity;
           typedef typename HostGridPartType::GridType::template Codim< codim >::EntitySeed EntitySeed;
+          typedef Dune::EntityPointer< const GridPartFamily, DefaultEntityPointer< Entity > > EntityPointer;
         };
 
         typedef DeadIntersection< const GridPartFamily > IntersectionImplType;
@@ -77,7 +76,7 @@ namespace Dune
         typedef Dune::IntersectionIterator< const GridPartFamily, IntersectionIteratorImplType, IntersectionImplType > LeafIntersectionIterator;
         typedef Dune::IntersectionIterator< const GridPartFamily, IntersectionIteratorImplType, IntersectionImplType > LevelIntersectionIterator;
 
-        typedef Dune::EntityIterator< 0, const GridPartFamily, DeadIterator< typename Codim< 0 >::EntityPointerImpl > > HierarchicIterator;
+        typedef Dune::EntityIterator< 0, const GridPartFamily, DeadIterator< typename Codim< 0 >::Entity > > HierarchicIterator;
       };
 
       template< int codim >
@@ -107,7 +106,7 @@ namespace Dune
       //! type of twist utility
       typedef MetaTwistUtility< typename HostGridPartType :: TwistUtilityType >  TwistUtilityType;
 
-      typedef IdIndexSet< typename HostGridPartType::IndexSetType > IndexSetType;
+      typedef IdIndexSet< const GridPartFamily > IndexSetType;
 
       static const PartitionIteratorType indexSetPartitionType = HostGridPartType::indexSetPartitionType;
       static const InterfaceType indexSetInterfaceType = HostGridPartType::indexSetInterfaceType;
@@ -250,19 +249,19 @@ namespace Dune
       }
 
       template< class LocalFunction >
-      typename Codim< 0 >::EntityPointerType
+      typename Codim< 0 >::EntityType
       exchangeGeometry ( const typename Codim< 0 >::EntityType &entity,
                          const LocalFunction &localCoordFunction ) const
       {
-        return typename Codim< 0 >::EntityPointerType::Implementation( entity.impl(), localCoordFunction );
+        return typename Codim< 0 >::EntityType::Implementation( entity.impl(), localCoordFunction );
       }
 
       template < class EntitySeed >
-      typename Codim< EntitySeed::codimension >::EntityPointerType
-      entityPointer ( const EntitySeed &seed ) const
+      typename Codim< EntitySeed::codimension >::EntityType
+      entity ( const EntitySeed &seed ) const
       {
-        return typename Codim< EntitySeed::codimension >::EntityPointerType
-                 ::Implementation( coordFunction_, hostGridPart().entityPointer( seed ) );
+        return typename Codim< EntitySeed::codimension >::EntityType
+                 ::Implementation( coordFunction_, hostGridPart().entity( seed ) );
       }
 
       // convert a grid entity to a grid part entity ("Gurke!")

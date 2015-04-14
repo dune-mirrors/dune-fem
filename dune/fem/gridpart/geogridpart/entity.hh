@@ -1,11 +1,15 @@
 #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_ENTITY_HH
 #define DUNE_FEM_GRIDPART_GEOGRIDPART_ENTITY_HH
 
+#include <type_traits>
+#include <utility>
+
 #include <dune/grid/common/entity.hh>
 #include <dune/grid/common/gridenums.hh>
 
 #include <dune/fem/gridpart/common/defaultgridpartentity.hh>
 #include <dune/fem/gridpart/geogridpart/cornerstorage.hh>
+#include <dune/fem/misc/compatibility.hh>
 
 namespace Dune
 {
@@ -43,19 +47,13 @@ namespace Dune
 
     public:
       typedef typename HostGridPartType::template Codim< codimension >::EntityType HostEntityType;
-      typedef typename HostGridPartType::template Codim< codimension >::EntityPointerType HostEntityPointerType;
 
-      explicit GeoEntity ( const CoordFunctionType &coordFunction )
+      GeoEntity () = default;
+
+      GeoEntity ( const CoordFunctionType &coordFunction, HostEntityType hostEntity )
       : coordFunction_( &coordFunction ),
-        hostEntity_( 0 )
+        hostEntity_( std::move( hostEntity ) )
       {}
-
-      GeoEntity ( const CoordFunctionType &coordFunction, const HostEntityType &hostEntity )
-      : coordFunction_( &coordFunction ),
-        hostEntity_( &hostEntity )
-      {}
-
-      operator bool () const { return bool( hostEntity_ ); }
 
       GeometryType type () const
       {
@@ -79,10 +77,9 @@ namespace Dune
 
       EntitySeed seed () const { return EntitySeed( hostEntity().seed() ); }
 
-      const HostEntityType &hostEntity () const
+      bool equals ( const GeoEntity &rhs ) const
       {
-        assert( *this );
-        return *hostEntity_;
+        return hostEntity() == rhs.hostEntity();
       }
 
       const CoordFunctionType &coordFunction () const
@@ -91,14 +88,15 @@ namespace Dune
         return *coordFunction_;
       }
 
-      void setHostEntity ( const HostEntityType &hostEntity )
+      const HostEntityType &hostEntity () const
       {
-        hostEntity_ = &hostEntity;
+        return hostEntity_;
       }
 
     private:
-      const CoordFunctionType *coordFunction_;
-      const HostEntityType *hostEntity_;
+      const CoordFunctionType *coordFunction_ = nullptr;
+      HostEntityType hostEntity_;
+
       mutable GeometryImplType geo_;
     };
 
@@ -124,7 +122,6 @@ namespace Dune
       typedef typename Traits::template Codim< codimension >::EntitySeed EntitySeed;
       typedef typename Traits::template Codim< codimension >::Geometry Geometry;
       typedef typename Traits::template Codim< codimension >::LocalGeometry LocalGeometry;
-      typedef typename Traits::template Codim< codimension >::EntityPointer EntityPointer;
 
       typedef typename Traits::HierarchicIterator HierarchicIterator;
       typedef typename Traits::LeafIntersectionIterator LeafIntersectionIterator;
@@ -140,16 +137,12 @@ namespace Dune
 
     public:
       typedef typename HostGridPartType::template Codim< codimension >::EntityType HostEntityType;
-      typedef typename HostGridPartType::template Codim< codimension >::EntityPointerType HostEntityPointerType;
 
-      explicit GeoEntity ( const CoordFunctionType &coordFunction )
-      : coordFunction_( &coordFunction ),
-        hostEntity_( 0 )
-      {}
+      GeoEntity () = default;
 
-      GeoEntity ( const CoordFunctionType &coordFunction, const HostEntityType &hostEntity )
+      GeoEntity ( const CoordFunctionType &coordFunction, HostEntityType hostEntity )
       : coordFunction_( &coordFunction ),
-        hostEntity_( &hostEntity )
+        hostEntity_( std::move( hostEntity ) )
       {}
 
       template< class LocalFunction >
@@ -160,8 +153,6 @@ namespace Dune
         GeoLocalCoordVector< mydimension, GridFamily, LocalFunction > coords( localCoordFunction );
         geo_ = GeometryImplType( type(), coords );
       }
-
-      operator bool () const { return bool( hostEntity_ ); }
 
       GeometryType type () const
       {
@@ -194,11 +185,11 @@ namespace Dune
       unsigned int subEntities ( unsigned int codim ) const { return hostEntity().subEntities( codim ); }
 
       template< int codim >
-      typename Traits::template Codim< codim >::EntityPointer
+      typename Traits::template Codim< codim >::Entity
       subEntity ( int i ) const
       {
-        typedef typename Traits::template Codim< codim >::EntityPointerImpl EntityPointerImpl;
-        return EntityPointerImpl( *coordFunction_, hostEntity().template subEntity< codim >( i ) );
+        typedef typename Traits::template Codim< codim >::Entity::Implementation EntityImpl;
+        return EntityImpl( *coordFunction_, make_entity( hostEntity().template subEntity< codim >( i ) ) );
       }
 
       bool hasBoundaryIntersections () const
@@ -206,10 +197,9 @@ namespace Dune
         return hostEntity().hasBoundaryIntersections();
       }
 
-      const HostEntityType &hostEntity () const
+      bool equals ( const GeoEntity &rhs ) const
       {
-        assert( *this );
-        return *hostEntity_;
+        return hostEntity() == rhs.hostEntity();
       }
 
       const CoordFunctionType &coordFunction () const
@@ -218,14 +208,20 @@ namespace Dune
         return *coordFunction_;
       }
 
+      const HostEntityType &hostEntity () const
+      {
+        return hostEntity_;
+      }
+
       void setHostEntity ( const HostEntityType &hostEntity )
       {
         hostEntity_ = &hostEntity;
       }
 
     private:
-      const CoordFunctionType *coordFunction_;
-      const HostEntityType *hostEntity_;
+      const CoordFunctionType *coordFunction_ = nullptr;
+      HostEntityType hostEntity_;
+
       mutable GeometryImplType geo_;
     };
 

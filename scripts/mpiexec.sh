@@ -6,6 +6,11 @@ EXECHOST=localhost
 # current path
 PWD=`pwd`
 
+# check if MPIEXEC was set
+if [ "$MPIEXEC" == "" ]; then
+  MPIEXEC=mpiexec
+fi
+
 # your specific parameters, use export PARAMETER=...
 if [ "$MPIEXEC_PARAMETER" == "" ]; then 
   MPIEXEC_PARAMETER="parameter"
@@ -44,9 +49,9 @@ else
     echo "Start in Debug Mode"
     echo "run $PARAMETER" > run.gdb 
     # start mpi program (will go into first if 
-    nice mpiexec -n $1 -host $EXECHOST "$0" 
+    nice $MPIEXEC -n $1 -host $EXECHOST "$0"
   else    
     # start mpi program (will go into first if 
-    nice mpiexec -n $1 "$0"
+    nice $MPIEXEC -n $1 "$0"
   fi  
 fi  

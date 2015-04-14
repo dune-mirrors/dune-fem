@@ -82,24 +82,15 @@ namespace Dune
       typedef typename DF :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
       typedef typename GridPartType :: GridType  GridType;
-      typedef typename DiscreteFunctionSpaceType :: IteratorType  IteratorType;
 
       DiscreteFunctionSpaceType& newSpace = const_cast< DiscreteFunctionSpaceType& > (df.space());
-
       DiscreteFunctionSpaceType oldSpace( df.space().gridPart() );
 
       typedef DofManager< GridType > DofManagerType;
-
-      typedef typename IteratorType :: Entity  EntityType;
-
       DofManagerType& dm = DofManagerType :: instance( newSpace.grid() );
 
-      const IteratorType endit = newSpace.end();
-      for( IteratorType it = newSpace.begin(); it != endit; ++it )
-      {
-        const EntityType& entity = *it;
+      for( const auto& entity : newSpace )
         oldSpace.blockMapper().setPolynomOrder( entity, newSpace.blockMapper().polynomOrder( entity ) );
-      }
 
       dm.resize();
       dm.compress();
@@ -109,9 +100,8 @@ namespace Dune
       newSpace.adapt( tmp )
       tmp.assign( df );
 
-      for( IteratorType it = newSpace.begin(); it != endit; ++it )
+      for( const auto& entity : newSpace )
       {
-        const EntityType& entity = *it;
         const int polOrder = polynomialOrders[ newSpace.indexSet().index( entity ) ] + polOrderShift ;
         newSpace.blockMapper().setPolynomOrder( entity, polOrder );
       }

@@ -26,7 +26,7 @@ namespace Dune
       // for simplex twist is 0
       // for cube twist is 1 for side 0 and 3
       // for 1 and 2 is 0
-      if( it.inside()->type().isCube() )
+      if( it.inside().type().isCube() )
       {
         const int face = it.indexInInside();
         return ((face == 1) || (face == 2) ? 0 : 1);
@@ -41,7 +41,7 @@ namespace Dune
       // for simplex twist is 0
       // for cube twist is 1 for side 0 and 3
       // for 1 and 2 is 0
-      if( it.inside()->type().isCube() )
+      if( it.inside().type().isCube() )
       {
         const int face = it.indexInInside();
         return ((face == 1) || (face == 2) ? 0 : 1);
@@ -54,7 +54,7 @@ namespace Dune
     int TwistUtility< UGGrid< 2 > >::twistInNeighbor ( const GridType &grid, const LeafIntersection &it )
     {
       assert( it.neighbor() );
-      if( it.outside()->type().isCube() )
+      if( it.outside().type().isCube() )
       {
         const int face = it.indexInOutside();
         return ((face == 1) || (face == 2) ? 1 : 0);
@@ -67,7 +67,7 @@ namespace Dune
     int TwistUtility< UGGrid< 2 > >::twistInNeighbor ( const GridType &grid, const LevelIntersection &it )
     {
       assert( it.neighbor() );
-      if( it.outside()->type().isCube() )
+      if( it.outside().type().isCube() )
       {
         const int face = it.indexInOutside();
         return ((face == 1) || (face == 2) ? 1 : 0);
@@ -96,7 +96,6 @@ namespace Dune
           assert( localGeom.type().isCube() );
 
           enum { dim = 3 };
-          typedef typename LocalGeometry :: ctype ctype;
 
           typedef FaceTopologyMapping<hexa>  CubeFaceMapping;
 
@@ -222,14 +221,14 @@ namespace Dune
     template<>
     int TwistUtility< UGGrid< 3 > >::twistInSelf ( const GridType &grid, const LeafIntersection &it )
     {
-      if( it.inside()->type().isSimplex() )
+      if( it.inside().type().isSimplex() )
       {
         // inside twist for simplices is zero
         return 0;
       }
       else
       {
-        assert( it.inside()->type().isCube() );
+        assert( it.inside().type().isCube() );
         return UG3::CubeTwists::twistInSelf( it.indexInInside() );
       }
     }
@@ -237,14 +236,14 @@ namespace Dune
     template<>
     int TwistUtility< UGGrid< 3 > >::twistInSelf ( const GridType &grid, const LevelIntersection &it )
     {
-      if( it.inside()->type().isSimplex() )
+      if( it.inside().type().isSimplex() )
       {
         // inside twist for simplices is zero
         return 0;
       }
       else
       {
-        assert( it.inside()->type().isCube() );
+        assert( it.inside().type().isCube() );
         return UG3::CubeTwists::twistInSelf( it.indexInInside() );
       }
     }
@@ -253,17 +252,17 @@ namespace Dune
     int TwistUtility< UGGrid< 3 > >::twistInNeighbor ( const GridType &grid, const LeafIntersection &it )
     {
       assert( it.neighbor() );
-      if( it.outside()->type().isSimplex() )
+      if( it.outside().type().isSimplex() )
       {
         return UG3::calculateSimplexTwistInNeighbor
-          ( grid.leafIndexSet(), *it.inside(), it.indexInInside(), *it. outside(), it.indexInOutside() );
+          ( grid.leafIndexSet(), it.inside(), it.indexInInside(), it.outside(), it.indexInOutside() );
       }
       else
       {
-        assert( it.outside()->type().isCube() );
+        assert( it.outside().type().isCube() );
         typedef UGGrid< 3 > :: ctype ctype ;
         static const Dune::ReferenceElement< ctype, 3 > &refElem =
-                Dune::ReferenceElements< ctype, 3 >::general( it.outside()->type() );
+                Dune::ReferenceElements< ctype, 3 >::general( it.outside().type() );
 
         //return UG3::CubeTwists::twistInNeighbor( it.indexInOutside() );
         return UG3::CubeTwists::twistInNeighbor( refElem, it.geometryInOutside(), it.indexInOutside() );
@@ -274,17 +273,17 @@ namespace Dune
     int TwistUtility< UGGrid< 3 > >::twistInNeighbor ( const GridType &grid, const LevelIntersection &it )
     {
       assert( it.neighbor() );
-      if( it.outside()->type().isSimplex() )
+      if( it.outside().type().isSimplex() )
       {
         return UG3::calculateSimplexTwistInNeighbor
-          ( grid.leafIndexSet(), *it.inside(), it.indexInInside(), *it. outside(), it.indexInOutside() );
+          ( grid.leafIndexSet(), it.inside(), it.indexInInside(), it.outside(), it.indexInOutside() );
       }
       else
       {
-        assert( it.outside()->type().isCube() );
+        assert( it.outside().type().isCube() );
         typedef UGGrid< 3 > :: ctype ctype ;
         static const Dune::ReferenceElement< ctype, 3 > &refElem =
-                Dune::ReferenceElements< ctype, 3 >::general( it.outside()->type() );
+                Dune::ReferenceElements< ctype, 3 >::general( it.outside().type() );
 
         //return UG3::CubeTwists::twistInNeighbor( it.indexInOutside() );
         return UG3::CubeTwists::twistInNeighbor( refElem, it.geometryInOutside(), it.indexInOutside() );

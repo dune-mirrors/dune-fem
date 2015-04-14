@@ -163,8 +163,9 @@ namespace Dune
             //std::cout << counter << " for thread " << thread-1 << std::endl;
             while( (i < counter) && (it != endit) )
             {
-              assert( std::size_t( indexSet_.index( *it ) ) < std::size_t( threadNum_.size() ) );
-              threadNum_[ indexSet_.index( *it ) ] = thread - 1;
+              const EntityType &entity = *it;
+              assert( std::size_t( indexSet_.index( entity ) ) < std::size_t( threadNum_.size() ) );
+              threadNum_[ indexSet_.index( entity ) ] = thread - 1;
               ++i;
               ++it;
             }

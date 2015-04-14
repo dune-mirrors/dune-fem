@@ -3,9 +3,6 @@
 #define SKIP_TEST
 #endif
 
-// without this define this code won't compile for Yasp
-#define ENABLE_ADAPTIVELEAFINDEXSET_FOR_YASPGRID
-
 #include <config.h>
 #include <iostream>
 
@@ -60,7 +57,7 @@ void checkIntersectionIndexSet( const GridPartType& gridPart )
     {
       const IntersectionType&  intersection = *iit ;
 
-      const int index = indexSet.index( *iit );
+      const int index = indexSet.index( intersection );
       std::cout << index << " index of intersection " << std::endl;
       ++ count ;
       if( intersection.boundary() )

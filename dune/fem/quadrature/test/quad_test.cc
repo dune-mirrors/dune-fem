@@ -6,6 +6,26 @@
 namespace Dune {
   namespace Fem {
 
+  namespace {
+    static void doTest( const double& a, const double& b )
+    {
+      if( std::abs( a - b ) > 1e-12 )
+      {
+        assert( false );
+        std::abort();
+      }
+    }
+
+    static void doTest( const bool value )
+    {
+      if( ! value )
+      {
+        assert( false );
+        std::abort();
+      }
+    }
+  }
+
   void Quad_Test::run() {
 
     // 1d types
@@ -150,23 +170,23 @@ namespace Dune {
     indicesTest();
 
     std::set<int> ids;
-    _test(ids.insert(quadCube1d1.id()).second);
-    _test(ids.insert(quadLine1d3.id()).second);
-    _test(ids.insert(quadLine1d10.id()).second);
-    _test(ids.insert(quadCube2d1.id()).second);
-    _test(ids.insert(quadCube2d3.id()).second);
-    _test(ids.insert(quadCube2d9.id()).second);
-    _test(ids.insert(quadSimplex2d1.id()).second);
-    _test(ids.insert(quadSimplex2d4.id()).second);
-    _test(ids.insert(quadSimplex2d11.id()).second);
-    _test(ids.insert(quadCube3d1.id()).second);
-    _test(ids.insert(quadCube3d2.id()).second);
-    _test(ids.insert(quadCube3d11.id()).second);
-    _test(ids.insert(quadSimplex3d1.id()).second);
-    _test(ids.insert(quadSimplex3d4.id()).second);
-    _test(ids.insert(quadSimplex3d7.id()).second);
-    _test(ids.insert(quadPrism3d1.id()).second);
-    _test(ids.insert(quadPyramid3d1.id()).second);
+    doTest(ids.insert(quadCube1d1.id()).second);
+    doTest(ids.insert(quadLine1d3.id()).second);
+    doTest(ids.insert(quadLine1d10.id()).second);
+    doTest(ids.insert(quadCube2d1.id()).second);
+    doTest(ids.insert(quadCube2d3.id()).second);
+    doTest(ids.insert(quadCube2d9.id()).second);
+    doTest(ids.insert(quadSimplex2d1.id()).second);
+    doTest(ids.insert(quadSimplex2d4.id()).second);
+    doTest(ids.insert(quadSimplex2d11.id()).second);
+    doTest(ids.insert(quadCube3d1.id()).second);
+    doTest(ids.insert(quadCube3d2.id()).second);
+    doTest(ids.insert(quadCube3d11.id()).second);
+    doTest(ids.insert(quadSimplex3d1.id()).second);
+    doTest(ids.insert(quadSimplex3d4.id()).second);
+    doTest(ids.insert(quadSimplex3d7.id()).second);
+    doTest(ids.insert(quadPrism3d1.id()).second);
+    doTest(ids.insert(quadPyramid3d1.id()).second);
 
   }
 
@@ -175,9 +195,9 @@ namespace Dune {
   {
     for (int i = 0; i < quad.nop(); ++i) {
       for (int j = 0; j < Quad::dimension; ++j) {
-        _floatTest(quad.point(i)[j], fixed.point(i)[j]);
+        doTest(quad.point(i)[j], fixed.point(i)[j]);
       }
-      _floatTest(quad.weight(i), fixed.weight(i));
+      doTest(quad.weight(i), fixed.weight(i));
     }
   }
 
@@ -192,29 +212,29 @@ namespace Dune {
     const GeometryType geom = quad.geometry();
     if ( geom.isCube())
     {
-      _floatTest(sum, 1.0);
+      doTest(sum, 1.0);
     }
     else if ( geom.isSimplex())
     {
       switch(Quad::dimension) {
       case 1:
-        _floatTest(sum, 1.0);
+        doTest(sum, 1.0);
         break;
       case 2:
-        _floatTest(sum, 0.5);
+        doTest(sum, 0.5);
         break;
       case 3:
-        _floatTestTol(sum, 0.16666666666666666667, 1e-04);
+        doTestTol(sum, 0.16666666666666666667, 1e-04);
         break;
       }
     }
     else if( geom.isPrism() )
     {
-      _floatTest(sum, 0.5);
+      doTest(sum, 0.5);
     }
     else if ( geom.isPyramid() )
     {
-      _floatTestTol(sum, 0.3333333333333333, 1e-04);
+      doTestTol(sum, 0.3333333333333333, 1e-04);
     }
     else
     {
@@ -233,22 +253,22 @@ namespace Dune {
 
     switch (Quad::dimension) {
     case 1:
-      _floatTest(result, -0.25);
+      doTest(result, -0.25);
       break;
     case 2:
       if (quad.geometry().isCube() ) {
-        _floatTest(result, -0.2708333333);
+        doTest(result, -0.2708333333);
       }
       else {
-        _floatTest(result, -0.0333333333);
+        doTest(result, -0.0333333333);
       }
       break;
     case 3:
       if (quad.geometry().isCube()) {
-        _floatTest(result, -0.03854166666);
+        doTest(result, -0.03854166666);
       }
       else {
-        _floatTestTol(result, -0.00551388888, 1e-05);
+        doTestTol(result, -0.00551388888, 1e-05);
       }
       break;
     default:
@@ -259,13 +279,13 @@ namespace Dune {
   template <class Quad>
   void Quad_Test::orderExec(Quad& quad, int order)
   {
-    _test(quad.order() >= order);
+    doTest(quad.order() >= order);
   }
 
   template <class Quad>
   void Quad_Test::sameGeometryExec(Quad& quad1, Quad& quad2)
   {
-    _test(quad1.id() == quad2.id());
+    doTest(quad1.id() == quad2.id());
   }
 
   void Quad_Test::indicesTest()
@@ -277,7 +297,7 @@ namespace Dune {
       id = quadTemp.id();
     }
     Quadrature<double, 1> quadTemp(line, 5);
-    _test(quadTemp.id() == id);
+    doTest(quadTemp.id() == id);
   }
   } // end namespace Fem
 } // end namespace Dune

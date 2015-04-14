@@ -451,12 +451,12 @@ namespace Dune
       };
 
 #if HAVE_DUNE_SPGRID
-      template< class ct, int dim, SPRefinementStrategy strategy, class Comm >
-      struct SaveParallelCartesianGrid< SPGrid< ct, dim, strategy, Comm > >
+      template< class ct, int dim, template< int > class Strategy, class Comm >
+      struct SaveParallelCartesianGrid< SPGrid< ct, dim, Strategy, Comm > >
       {
         static const bool saveMacroGrid = true;
 
-        typedef SPGrid< ct, dim, strategy, Comm > Grid;
+        typedef SPGrid< ct, dim, Strategy, Comm > Grid;
         typedef FieldVector< int, dim > iTupel;
 
         static void getCoordinates( const Grid &grid, const iTupel &anz,

@@ -20,12 +20,12 @@ namespace DuneODE
   // ------------------------
 
   /** \brief Implicit RungeKutta ODE solver. */
-  template< class HelmholtzOperator, class NonlinearSolver >
+  template< class HelmholtzOperator, class NonlinearSolver, class TimeStepControl = ImplicitRungeKuttaTimeStepControl >
   class ImplicitRungeKuttaSolver
-  : public BasicImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, ImplicitRungeKuttaTimeStepControl >
+  : public BasicImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, TimeStepControl >
   {
-    typedef ImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver > ThisType;
-    typedef BasicImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, ImplicitRungeKuttaTimeStepControl > BaseType;
+    typedef ImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, TimeStepControl > ThisType;
+    typedef BasicImplicitRungeKuttaSolver< HelmholtzOperator, NonlinearSolver, TimeStepControl > BaseType;
 
   public:
     typedef HelmholtzOperator HelmholtzOperatorType;
@@ -45,13 +45,15 @@ namespace DuneODE
                                TimeProviderType &timeProvider,
                                int order = 1,
                                const ParametersType &parameters = ParametersType() )
-    : BaseType( helmholtzOp, butcherTable( order ), TimeStepControlType( timeProvider, parameters ) )
+    : BaseType( helmholtzOp, butcherTable( order, parameters ), TimeStepControlType( timeProvider, parameters ) )
     {}
 
   protected:
-    static SimpleButcherTable< double > butcherTable ( int order )
+    static SimpleButcherTable< double > butcherTable ( const int order, const ParametersType& parameters )
     {
-      switch( order )
+      const int solverId = parameters.selectedSolver( order );
+
+      switch( solverId )
       {
       case 1:
         return implicitEulerButcherTable();
@@ -62,7 +64,7 @@ namespace DuneODE
       case 4:
         return implicit34ButcherTable();
       default:
-        DUNE_THROW( NotImplemented, "Implicit Runge-Kutta method of order " << order << " not implemented." );
+        DUNE_THROW( NotImplemented, "Implicit Runge-Kutta method with id " << solverId << " not implemented." );
       }
     }
   };

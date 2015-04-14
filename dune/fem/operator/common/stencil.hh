@@ -7,6 +7,7 @@
 #include <map>
 
 #include <dune/grid/common/gridenums.hh>
+#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/misc/functor.hh>
 
 namespace Dune
@@ -204,13 +205,8 @@ namespace Dune
       DiagonalStencil(const DomainSpace &dSpace, const RangeSpace &rSpace)
         : BaseType( dSpace, rSpace )
       {
-        typedef typename DomainSpace::IteratorType IteratorType;
-        const IteratorType end = dSpace.end();
-        for (IteratorType it = dSpace.begin(); it!=end; ++it)
-        {
-          const DomainEntityType &entity = *it;
+        for (const auto& entity : dSpace)
           BaseType::fill(entity,entity);
-        }
       }
     };
 
@@ -239,16 +235,12 @@ namespace Dune
                                  bool onlyNonContinuousNeighbors = false)
         : BaseType( dSpace, rSpace )
       {
-        typedef typename DomainSpace::IteratorType IteratorType;
-        const IteratorType end = dSpace.end();
-        for (IteratorType it = dSpace.begin(); it!=end; ++it)
+        for (const auto & entity: dSpace)
         {
-          const DomainEntityType &entity = *it;
           BaseType::fill(entity,entity);
           typedef typename DomainSpace::GridPartType GridPart;
           typedef typename GridPart :: IntersectionIteratorType IntersectionIteratorType;
           typedef typename IntersectionIteratorType :: Intersection IntersectionType;
-          typedef typename GridPart :: template Codim<0> :: EntityPointerType EntityPointer;
 
           const IntersectionIteratorType endit = dSpace.gridPart().iend( entity );
           for( IntersectionIteratorType it = dSpace.gridPart().ibegin( entity );
@@ -260,8 +252,7 @@ namespace Dune
               continue;
             if( intersection.neighbor() )
             {
-              EntityPointer ep = intersection.outside();
-              const DomainEntityType& neighbor = *ep;
+              DomainEntityType neighbor = make_entity( intersection.outside() );
               BaseType::fill(neighbor,entity);
             }
           }
