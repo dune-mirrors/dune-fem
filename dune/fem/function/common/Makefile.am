@@ -7,6 +7,7 @@ common_HEADERS = discretefunction.hh \
                  functionset.hh \
 								 functor.hh \
                  gridfunctionadapter.hh \
+                 instationary.hh \
                  localfunctionadapter.hh \
                  scalarproducts.hh \
 								 timedependentfunction.hh

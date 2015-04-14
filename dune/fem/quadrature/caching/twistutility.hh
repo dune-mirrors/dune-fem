@@ -365,7 +365,7 @@ namespace Dune
       static GeometryType
       elementGeometry ( const Intersection &intersection, const bool inside )
       {
-        return (inside ? intersection.inside()->type() : intersection.outside()->type());
+        return (inside ? intersection.inside().type() : intersection.outside().type());
       }
     };
 #endif // #ifdef ENABLE_UG
