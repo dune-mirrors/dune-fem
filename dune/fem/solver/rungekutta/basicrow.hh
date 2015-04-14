@@ -145,14 +145,6 @@ namespace DuneODE
       alpha_.invert();
       alpha_.mtv( butcherTable.b(), beta_ );
       alpha2_.rightmultiply( alpha_ );
-/*
-      for( int i = 0; i < stages(); ++i )
-      {
-        for( int j = 0; j < stages(); ++j )
-          alpha_[i][j] = -alpha_[i][j];
-        alpha_[i][i] += 1./gamma_[i];
-      }
- */
     }
 
     /** \brief destructor */
@@ -209,8 +201,13 @@ namespace DuneODE
         // solve the system
         const double stageTime = time + c_[ s ]*timeStepSize;
         helmholtzOp_.setTime( stageTime );
-        helmholtzOp_.setLambda( gamma_[ s ]*timeStepSize );
-        helmholtzOp_.jacobian( U, jOp );
+        // compute jacobian if the diagonal entry in the butcher tableau changes
+        if (s==0 | gamma_[s-1] != gamma_[s])
+        {
+          // std::cout << "lambda=" << gamma_[ s ]*timeStepSize << std::endl;
+          helmholtzOp_.setLambda( gamma_[ s ]*timeStepSize );
+          helmholtzOp_.jacobian( U, jOp );
+        }
         const int remLinearIts = maxLinearIterations_;
         if (preconditioner_)
         {
