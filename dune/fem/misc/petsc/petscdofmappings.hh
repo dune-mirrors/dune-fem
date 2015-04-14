@@ -54,8 +54,8 @@ namespace Dune
       typedef DynamicVector< GlobalDofType >           GlobalDofMappingType ;
 
       PetscDofMappings ( SlaveDofs *slaveDofs )
-        : BaseType( slaveDofs->space().gridPart().grid() ),
-          slaveDofs_( *slaveDofs ),
+        // : BaseType( slaveDofs->space().gridPart().grid() ),
+      :   slaveDofs_( *slaveDofs ),
           numOwnedDofBlocks_( 0 ),
           numSlaveBlocks_( 0 ),
           processStartIndex_( 0 ),
