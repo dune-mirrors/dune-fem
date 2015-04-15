@@ -375,13 +375,13 @@ namespace Dune
        ...
        femTimer.start(id,1);
        f1(); // call to a first function
-       femTimer.end(id,1);
+       femTimer.stop(id,1);
        ...
        femTimer.start(id,2);
        f2(); // call to a second function
-       femTimer.end(id,2);
+       femTimer.stop(id,2);
        ...
-       femTimer.end(id);
+       femTimer.stop(id);
        \endcode
        Using \c femTimer.print(out,"test");
        the result of all timings is printed to
