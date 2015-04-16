@@ -37,7 +37,8 @@ namespace Dune
       typedef typename FunctionSpaceType :: RangeType RangeType;
 
       typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-      typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+      // typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+      typedef double RangeFieldType;
 
     private:
       const LagrangePointType lagrangePoint_;
@@ -112,7 +113,8 @@ namespace Dune
       typedef typename FunctionSpaceType :: RangeType RangeType;
 
       typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-      typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+      // typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+      typedef double RangeFieldType;
 
     private:
       const LagrangePointType lagrangePoint_;
@@ -217,7 +219,8 @@ namespace Dune
       typedef typename FunctionSpaceType :: RangeType RangeType;
 
       typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-      typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+      // typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+      typedef double RangeFieldType;
 
     private:
       typedef GenericLagrangeBaseFunction
@@ -438,7 +441,8 @@ namespace Dune
       typedef typename FunctionSpaceType :: RangeType RangeType;
 
       typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-      typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+      // typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+      typedef double RangeFieldType;
 
     private:
       typedef GenericLagrangeBaseFunction
