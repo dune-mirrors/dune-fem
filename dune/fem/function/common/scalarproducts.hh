@@ -690,7 +690,7 @@ namespace Dune
        */
       virtual double norm (const BlockVectorType& x)
       {
-        return std::sqrt( const_cast<ThisType&> (*this).scalarProductDofs(x,x) );
+        return std::real( std::sqrt( const_cast<ThisType&> (*this).scalarProductDofs(x,x) ) );
       }
 
       //! delete slave values (for debugging)

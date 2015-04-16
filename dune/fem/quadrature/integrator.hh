@@ -73,7 +73,7 @@ namespace Dune
                                  typename Function :: RangeType &ret ) const
       {
         typedef typename Function :: RangeType RangeType;
-        typedef typename Function :: RangeFieldType RangeFieldType;
+        // typedef typename Function :: RangeFieldType RangeFieldType;
 
         const GeometryType &geometry = entity.geometry();
         const QuadratureType quadrature( entity, order_ );
@@ -86,7 +86,8 @@ namespace Dune
           function.evaluate( quadrature[ pt ], phi );
 
           // calculate the weight of the quadrature point
-          const RangeFieldType weight
+          // const RangeFieldType weight
+          const double weight
             = geometry.integrationElement( quadrature.point( pt ) )
               * quadrature.weight( pt );
 

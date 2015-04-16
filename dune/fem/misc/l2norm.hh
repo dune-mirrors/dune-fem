@@ -44,11 +44,13 @@ namespace Dune
       explicit L2Norm ( const GridPartType &gridPart, const unsigned int order = 0 );
 
       template< class DiscreteFunctionType >
-      typename DiscreteFunctionType::RangeFieldType
+      // typename DiscreteFunctionType::RangeFieldType
+      double
       norm ( const DiscreteFunctionType &u ) const;
 
       template< class UDiscreteFunctionType, class VDiscreteFunctionType >
-      typename UDiscreteFunctionType::RangeFieldType
+      // typename UDiscreteFunctionType::RangeFieldType
+      double
       distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
 
       template< class UDiscreteFunctionType,
@@ -81,11 +83,13 @@ namespace Dune
 
     template< class GridPart >
     template< class DiscreteFunctionType >
-    inline typename DiscreteFunctionType::RangeFieldType
+    // inline typename DiscreteFunctionType::RangeFieldType
+    double
     L2Norm< GridPart >::norm ( const DiscreteFunctionType &u ) const
     {
-      typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
-      typedef FieldVector< RangeFieldType, 1 > ReturnType ;
+      // typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
+      // typedef FieldVector< RangeFieldType, 1 > ReturnType ;
+      typedef FieldVector< double, 1 > ReturnType ;
 
       // calculate integral over each element
       ReturnType sum = BaseType :: forEach( u, ReturnType(0), order_ );
@@ -97,12 +101,14 @@ namespace Dune
 
     template< class GridPart >
     template< class UDiscreteFunctionType, class VDiscreteFunctionType >
-    inline typename UDiscreteFunctionType::RangeFieldType
+    // inline typename UDiscreteFunctionType::RangeFieldType
+    double
     L2Norm< GridPart >
       ::distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const
     {
-      typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
-      typedef FieldVector< RangeFieldType, 1 > ReturnType ;
+      // typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
+      // typedef FieldVector< RangeFieldType, 1 > ReturnType ;
+      typedef FieldVector< double, 1 > ReturnType ;
 
       // calculate integral over each element
       ReturnType sum = BaseType :: forEach( u, v, ReturnType(0), order_ );
@@ -163,8 +169,9 @@ namespace Dune
     {
       typedef Function FunctionType;
 
-      typedef typename FunctionType::RangeFieldType RangeFieldType;
-      typedef FieldVector< RangeFieldType, 1 > RangeType;
+      // typedef typename FunctionType::RangeFieldType RangeFieldType;
+      // typedef FieldVector< RangeFieldType, 1 > RangeType;
+      typedef FieldVector< double, 1 > RangeType;
 
       explicit FunctionSquare ( const FunctionType &function )
       : function_( function )
@@ -175,7 +182,7 @@ namespace Dune
       {
         typename FunctionType::RangeType phi;
         function_.evaluate( x, phi );
-        ret = phi * phi;
+        ret = real( phi * phi );
       }
 
     private:
@@ -190,7 +197,7 @@ namespace Dune
       typedef UFunction UFunctionType;
       typedef VFunction VFunctionType;
 
-      typedef typename UFunctionType::RangeFieldType RangeFieldType;
+      // typedef typename UFunctionType::RangeFieldType RangeFieldType;
       typedef typename UFunctionType::RangeType RangeType;
       typedef typename UFunctionType::JacobianRangeType JacobianRangeType;
 
@@ -352,8 +359,9 @@ namespace Dune
     {
       typedef Function FunctionType;
 
-      typedef typename FunctionType::RangeFieldType RangeFieldType;
-      typedef FieldVector< RangeFieldType, 1 > RangeType;
+      // typedef typename FunctionType::RangeFieldType RangeFieldType;
+      // typedef FieldVector< RangeFieldType, 1 > RangeType;
+      typedef FieldVector< double, 1 > RangeType;
 
       WeightedFunctionSquare ( const LocalWeightFunctionType &weightFunction,
                                const FunctionType &function )

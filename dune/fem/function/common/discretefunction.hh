@@ -358,6 +358,23 @@ namespace Dune
         return asImp().scalarProductDofs( other );
       }
 
+      /** \brief Squared small l^2 norm of all dofs 
+       *
+       *  \note This is already parallel, so do not sum over all
+       *        processes after calling scalarProductDofs!
+       *
+       *  \note It is assumed that the discrete function has been communicated
+       *        (i.e., every local DoF hat the value of the corresponding global
+       *        DoF).
+       *
+       *  \returns the squared norm of the DoF-vectors
+       */
+      inline double
+      normSquaredDofs ( ) const 
+      {
+        return asImp().normSquaredDofs( );
+      }
+
       /** \brief print all DoFs to a stream (for debugging purposes)
        *
        *  \param[in]  out  stream to print to
@@ -686,6 +703,10 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::scalarProductDofs */
       inline RangeFieldType
       scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const { return scalarProduct_.scalarProductDofs( *this, other ); }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::normSquaredDofs */
+      inline double
+      normSquaredDofs ( ) const { return std::real( (*this).scalarProductDofs( *this )); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::print */
       void print ( std :: ostream &out ) const;

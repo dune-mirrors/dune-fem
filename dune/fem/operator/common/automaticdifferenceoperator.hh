@@ -137,7 +137,7 @@ namespace Dune
       if( eps <= RangeFieldType( 0 ) )
       {
         const RangeFieldType machine_eps = std::numeric_limits< RangeFieldType >::epsilon();
-        const RangeFieldType norm_p_sq = arg.scalarProductDofs( arg );
+        const double norm_p_sq = arg.normSquaredDofs( );
         if( norm_p_sq > machine_eps )
           eps = std::sqrt( (RangeFieldType( 1 ) + norm_u_) * machine_eps / norm_p_sq );
         else

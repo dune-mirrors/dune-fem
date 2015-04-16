@@ -82,9 +82,9 @@ namespace Dune
         RangeType val;
         lf.evaluate(xi,val);
         if (vector_)
-          return (comp > dimDomain ? 0.0 : static_cast< double >( val[ comp + component_ ] ));
+          return (comp > dimDomain ? 0.0 : std::real( val[ comp + component_ ] ));
         else
-          return static_cast< double >( val[ component_ ] );
+          return std::real( val[ component_ ] );
       }
 
       //! get name

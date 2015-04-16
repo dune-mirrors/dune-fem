@@ -76,6 +76,16 @@ namespace Dune
       return out;
     }
 
+    template< class Traits, class T >
+    inline OutStreamInterface< Traits > &
+      operator<< ( OutStreamInterface< Traits > &out,
+                   const std::complex<T> value )
+    {
+      out.writeDouble( std::real(value) );
+      out.writeDouble( std::imag(value) );
+      return out;
+    }
+
     template <class ulongint, class uint64>
     struct SelectUnsignedLongInteger
     {
@@ -251,6 +261,18 @@ namespace Dune
     {
       for( std::size_t i = 0; i < N; ++i )
         in >> value[ i ];
+      return in;
+    }
+
+    template< class Traits, class T >
+    inline InStreamInterface< Traits > &
+      operator>> ( InStreamInterface< Traits > &in,
+                   std::complex<T> &value )
+    {
+      T r,i;
+      in.readDouble( r );
+      in.readDouble( i );
+      value = std::complex<T>(r,i);
       return in;
     }
 

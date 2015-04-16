@@ -93,6 +93,13 @@ namespace Dune
       static double &convert ( double  &val, int idx ) { return val; }
     };
 
+    template< >
+    struct DofTypeWrapper< std::complex<double> >
+    {
+      enum { blockSize = 1 };
+      static std::complex<double> &convert ( std::complex<double>  &val, int idx ) { return val; }
+    };
+
     template< class BlockVectorImp, class DofImp >
     class StraightenBlockVector
     {

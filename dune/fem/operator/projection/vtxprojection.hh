@@ -47,7 +47,7 @@ namespace Dune
 
         typedef typename LagrangePointSetType::template Codim< 1 >::SubEntityIteratorType FaceDofIteratorType;
 
-        typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+        // typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
         typedef typename FunctionSpaceType::RangeType RangeType;
         typedef typename GeometryType::LocalCoordinate LocalCoordinateType;
 
@@ -94,8 +94,10 @@ namespace Dune
         DofIteratorType wdit = w.dbegin();
         for( ; udit != udend; ++udit, ++wdit )
         {
-          assert( (*wdit > 0) || (*udit == 0) );
-          *udit /= (*wdit > 0 ? *wdit : RangeFieldType( 1 ));
+          // assert( (*wdit > 0.) || (*udit == 0.) );
+          double weight = std::abs( *wdit );
+          if ( weight > 1e-12 )
+            *udit /= weight;
         }
 
         // make function continuous over hanging nodes

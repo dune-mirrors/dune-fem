@@ -57,7 +57,7 @@ namespace Dune
        *  \param[in]  maxIterations  maximum number of CG iterations
        *  \param[in]  verbose        verbose output
        */
-      ConjugateGradientSolver ( const RangeFieldType &epsilon,
+      ConjugateGradientSolver ( const double &epsilon,
                                 unsigned int maxIterations,
                                 bool verbose )
       : epsilon_( epsilon ),
@@ -73,7 +73,7 @@ namespace Dune
        *  \param[in]  epsilon        tolerance
        *  \param[in]  maxIterations  maximum number of CG iterations
        */
-      ConjugateGradientSolver ( RangeFieldType epsilon,
+      ConjugateGradientSolver ( double epsilon,
                                 unsigned int maxIterations )
       : epsilon_( epsilon ),
         maxIterations_( maxIterations ),
@@ -128,7 +128,7 @@ namespace Dune
       }
 
     protected:
-      const RangeFieldType epsilon_;
+      const double epsilon_;
       const unsigned int maxIterations_;
       const bool verbose_;
       mutable double averageCommTime_;
@@ -359,7 +359,7 @@ namespace Dune
     {
       const bool verbose = (verbose_ && (b.space().gridPart().comm().rank() == 0));
 
-      const RangeFieldType tolerance = (epsilon_ * epsilon_) * b.scalarProductDofs( b );
+      const double tolerance = (epsilon_ * epsilon_) * b.normSquaredDofs( );
 
       averageCommTime_ = 0.0;
 
@@ -372,8 +372,8 @@ namespace Dune
       RangeFunctionType p( b );
       p -= h;
 
-      RangeFieldType prevResiduum = 0;
-      RangeFieldType residuum = r.scalarProductDofs( r );
+      double prevResiduum = 0;
+      double residuum = r.normSquaredDofs( );
 
       for( realCount_ = 0; (residuum > tolerance) && (realCount_ < maxIterations_); ++realCount_ )
       {
@@ -386,14 +386,14 @@ namespace Dune
 
         op( p, h );
 
-        double pdoth = p.scalarProductDofs( h );
+        RangeFieldType pdoth = p.scalarProductDofs( h );
         const RangeFieldType alpha = residuum / pdoth;
         assert( alpha == alpha );
         x.axpy( alpha, p );
         r.axpy( alpha, h );
 
         prevResiduum = residuum;
-        residuum = r.scalarProductDofs( r );
+        residuum = r.normSquaredDofs( );
 
         double exchangeTime = h.space().communicator().exchangeTime();
         if( verbose )
@@ -415,7 +415,7 @@ namespace Dune
     {
       const bool verbose = (verbose_ && (b.space().gridPart().comm().rank() == 0));
 
-      const RangeFieldType tolerance = (epsilon_ * epsilon_) * b.scalarProductDofs( b );
+      const double tolerance = (epsilon_ * epsilon_) * b.normSquaredDofs( );
 
       averageCommTime_ = 0.0;
 
@@ -437,23 +437,22 @@ namespace Dune
 
       RangeFunctionType s (q);
 
-      RangeFieldType prevResiduum = 0;
-      // RangeFieldType residuum = p.scalarProductDofs( q );//<p,Bp>
-      double residuum = p.scalarProductDofs( q );//<p,Bp>
+      double prevResiduum = 0;
+      RangeFieldType residuum = p.scalarProductDofs( q );//<p,Bp>
 
       for( realCount_ = 0; (residuum > tolerance) && (realCount_ < maxIterations_); ++realCount_ )
       {
         if( realCount_ > 0 )
         {
           assert( residuum/prevResiduum == residuum/prevResiduum );
-          const RangeFieldType beta=residuum/prevResiduum;
+          const double beta=residuum/prevResiduum;
           q*=beta;
           q+=(s);
         }
 
         op( q, h );
 
-        double qdoth = q.scalarProductDofs( h );
+        RangeFieldType qdoth = q.scalarProductDofs( h );
         const RangeFieldType alpha = residuum / qdoth;//<p,Bp>/<q,Aq>
         assert( alpha == alpha );
         x.axpy( alpha, q );
@@ -464,7 +463,7 @@ namespace Dune
 
         prevResiduum = residuum;//<rk-1,B*rk-1>
 
-        residuum = p.scalarProductDofs( s );//<rk,B*rk>
+        residuum = std::pow( p.scalarProductDofs( s ) , 2);//<rk,B*rk>  // !!!!!!
 
         double exchangeTime = h.space().communicator().exchangeTime();
         if( verbose )
