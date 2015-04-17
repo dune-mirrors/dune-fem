@@ -36,6 +36,7 @@ namespace Dune
       typedef VTKFunctionWrapper< DF > ThisType;
 
     public:
+      enum TypeOfField { real, complex_real, complex_imag };
       typedef DF DiscreteFunctionType;
 
       typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
@@ -57,10 +58,11 @@ namespace Dune
       //! constructor taking discrete function
       VTKFunctionWrapper ( const DiscreteFunctionType& df,
                            const std::string& dataName,
-                           int component, bool vector )
+                           int component, bool vector, TypeOfField typeOfField )
       : discFunc_( df ),
         name_( ( dataName.size() > 0 ) ? dataName : df.name() ),
         vector_( vector ),
+        typeOfField_( typeOfField ),
         component_( component )
       {}
 
@@ -78,25 +80,34 @@ namespace Dune
       //! the entity
       virtual double evaluate ( int comp, const EntityType &e, const LocalCoordinateType &xi ) const
       {
+        typedef typename LocalFunctionType::RangeFieldType RangeFieldType;
         const LocalFunctionType lf = discFunc_.localFunction(e);
         RangeType val;
         lf.evaluate(xi,val);
+        RangeFieldType outVal;
         if (vector_)
-          return (comp > dimDomain ? 0.0 : std::real( val[ comp + component_ ] ));
+          outVal = (comp > dimDomain ? 0.0 : val[ comp + component_ ] );
         else
-          return std::real( val[ component_ ] );
+          outVal = val[ component_ ] ;
+        if (typeOfField_ == TypeOfField::real || typeOfField_ == TypeOfField::complex_real )
+          return std::real( outVal );
+        else 
+          return std::imag( outVal );
       }
 
       //! get name
       virtual std::string name () const
       {
-        if (vector_) {
-          std::stringstream ret_vec;
-          ret_vec << name_ << "_vec" << component_;
-          return ret_vec.str();
-        }
         std::stringstream ret;
-        ret << name_ << component_;
+        ret << name_;
+        if (typeOfField_ == TypeOfField::complex_real)
+          ret << "_real_";
+        if (typeOfField_ == TypeOfField::complex_imag)
+          ret << "_imag_";
+        if (vector_) 
+          ret << "_vec" << component_;
+        else
+          ret << component_;
         return ret.str();
       }
 
@@ -104,6 +115,7 @@ namespace Dune
       const DiscreteFunctionType &discFunc_;
       const std::string name_ ;
       const bool vector_;
+      const TypeOfField typeOfField_;
       const int component_;
     };
 
@@ -258,6 +270,14 @@ namespace Dune
         }
       }
 
+      template < class DF >
+      static bool notComplex() 
+      {
+        typedef typename DF::RangeFieldType RangeFieldType;
+        typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
+        return ! std::is_same< RangeFieldType, std::complex<real_type> >::value; 
+      }
+
     public:
       ~VTKIOBase ()
       {
@@ -276,8 +296,21 @@ namespace Dune
         static const int dimRange = DF::FunctionSpaceType::dimRange;
         for( int i = 0;i < dimRange; ++i )
         {
-          std::shared_ptr<VTKFunctionWrapper< DF > > ptr( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i, false) );
-          vtkWriter_->addCellData( ptr );
+          if ( notComplex<DF>() )
+          {
+            std::shared_ptr<VTKFunctionWrapper< DF > > ptr( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i, 
+                  false, VTKFunctionWrapper<DF>::TypeOfField::real) );
+            vtkWriter_->addCellData( ptr );
+          }
+          else
+          {
+            std::shared_ptr<VTKFunctionWrapper< DF > > ptrR( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i, 
+                  false, VTKFunctionWrapper<DF>::TypeOfField::complex_real) );
+            vtkWriter_->addCellData( ptrR );
+            std::shared_ptr<VTKFunctionWrapper< DF > > ptrI( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i, 
+                  false, VTKFunctionWrapper<DF>::TypeOfField::complex_imag) );
+            vtkWriter_->addCellData( ptrI );
+          }
         }
       }
 
@@ -286,8 +319,21 @@ namespace Dune
                               const std::string& dataName = "" ,
                               int startPoint = 0 )
       {
-        std::shared_ptr<VTKFunctionWrapper< DF > > ptr( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, startPoint, true) );
-        vtkWriter_->addCellData( ptr );
+        if ( notComplex<DF>() )
+        {
+          std::shared_ptr<VTKFunctionWrapper< DF > > ptr( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, startPoint,
+                  true, VTKFunctionWrapper<DF>::TypeOfField::real) );
+          vtkWriter_->addCellData( ptr );
+        }
+        else
+        {
+          std::shared_ptr<VTKFunctionWrapper< DF > > ptrR( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, startPoint,
+                  true, VTKFunctionWrapper<DF>::TypeOfField::complex_real) );
+          vtkWriter_->addCellData( ptrR );
+          std::shared_ptr<VTKFunctionWrapper< DF > > ptrI( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, startPoint,
+                  true, VTKFunctionWrapper<DF>::TypeOfField::complex_imag) );
+          vtkWriter_->addCellData( ptrI );
+        }
       }
 
       template< class DF >
@@ -297,8 +343,21 @@ namespace Dune
         std::string name = ( dataName.size() > 0 ) ? dataName : df.name() ;
         for( int i = 0;i < dimRange; ++i )
         {
-          std::shared_ptr<VTKFunctionWrapper< DF > > ptr( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i, false) );
-          vtkWriter_->addVertexData( ptr );
+          if ( notComplex<DF>() )
+          {
+            std::shared_ptr<VTKFunctionWrapper< DF > > ptr( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i,
+                  false, VTKFunctionWrapper<DF>::TypeOfField::real) );
+            vtkWriter_->addVertexData( ptr );
+          }
+          else
+          {
+            std::shared_ptr<VTKFunctionWrapper< DF > > ptrR( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i,
+                  false, VTKFunctionWrapper<DF>::TypeOfField::complex_real) );
+            vtkWriter_->addVertexData( ptrR );
+            std::shared_ptr<VTKFunctionWrapper< DF > > ptrI( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i,
+                  false, VTKFunctionWrapper<DF>::TypeOfField::complex_imag) );
+            vtkWriter_->addVertexData( ptrI );
+          }
         }
       }
 
@@ -307,8 +366,21 @@ namespace Dune
                                 const std::string& dataName = "" ,
                                 int startPoint = 0 )
       {
-        std::shared_ptr<VTKFunctionWrapper< DF > > ptr( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, startPoint, true) );
-        vtkWriter_->addVertexData( ptr );
+        if ( notComplex<DF>() )
+        {
+          std::shared_ptr<VTKFunctionWrapper< DF > > ptr( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, startPoint,
+                  true, VTKFunctionWrapper<DF>::TypeOfField::real) );
+          vtkWriter_->addVertexData( ptr );
+        }
+        else
+        {
+          std::shared_ptr<VTKFunctionWrapper< DF > > ptrR( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, startPoint,
+                  true, VTKFunctionWrapper<DF>::TypeOfField::complex_real) );
+          vtkWriter_->addVertexData( ptrR );
+          std::shared_ptr<VTKFunctionWrapper< DF > > ptrI( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, startPoint,
+                  true, VTKFunctionWrapper<DF>::TypeOfField::complex_imag) );
+          vtkWriter_->addVertexData( ptrI );
+        }
       }
 
       void clear ()
