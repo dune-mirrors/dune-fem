@@ -209,6 +209,7 @@ namespace Dune
     template< class FunctionSpace >
     class LegendreShapeFunctionSet
     {
+    protected:
       typedef LegendreShapeFunction< FunctionSpace > ShapeFunctionType;
 
     public:
