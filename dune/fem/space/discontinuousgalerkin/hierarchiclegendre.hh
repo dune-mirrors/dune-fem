@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_HLEGENDRE_HH
 #define DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_HLEGENDRE_HH
 
+#include <cassert>
+
 #include <dune/common/power.hh>
 
 #include <dune/geometry/type.hh>
@@ -13,12 +15,10 @@
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/shapefunctionset/legendre.hh>
-#include <dune/fem/space/shapefunctionset/mapped.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
 
 #include "basisfunctionsets.hh"
 #include "generic.hh"
-#include "hierarchiclegendremap.hh"
 #include "interpolation.hh"
 #include "shapefunctionsets.hh"
 
@@ -46,16 +46,14 @@ namespace Dune
            GridPartType::dimension, 1
         > ScalarShapeFunctionSpaceType;
 
-      typedef LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType > HostShapeFunctionSetType;
-      typedef HierarchicLegendreMap< polOrder, GridPartType::dimension> MappingType;
       struct ScalarShapeFunctionSet
-      : public MappedShapeFunctionSet< HostShapeFunctionSetType, MappingType >
+        : public Dune::Fem::HierarchicLegendreShapeFunctionSet< ScalarShapeFunctionSpaceType >
       {
-        typedef MappedShapeFunctionSet< HostShapeFunctionSetType, MappingType > BaseType;
+        typedef Dune::Fem::HierarchicLegendreShapeFunctionSet< ScalarShapeFunctionSpaceType > BaseType;
 
       public:
         explicit ScalarShapeFunctionSet ( Dune::GeometryType type )
-          : BaseType( HostShapeFunctionSetType( polOrder ) )
+          : BaseType( polOrder )
         {
           assert( type.isCube() );
         }
