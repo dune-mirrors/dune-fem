@@ -369,7 +369,7 @@ namespace Dune
        *
        *  \returns the squared norm of the DoF-vectors
        */
-      inline double
+      inline typename Dune::FieldTraits< RangeFieldType >::real_type
       normSquaredDofs ( ) const 
       {
         return asImp().normSquaredDofs( );
@@ -705,7 +705,7 @@ namespace Dune
       scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const { return scalarProduct_.scalarProductDofs( *this, other ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::normSquaredDofs */
-      inline double
+      inline typename Dune::FieldTraits< RangeFieldType >::real_type
       normSquaredDofs ( ) const { return std::real( (*this).scalarProductDofs( *this )); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::print */

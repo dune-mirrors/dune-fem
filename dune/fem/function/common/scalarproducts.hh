@@ -688,9 +688,10 @@ namespace Dune
       /*! \brief Norm of a right-hand side vector.
         The vector must be consistent on the interior+border partition
        */
-      virtual double norm (const BlockVectorType& x)
+      virtual typename Dune::FieldTraits< RangeFieldType >::real_type
+        norm (const BlockVectorType& x)
       {
-        return std::real( std::sqrt( const_cast<ThisType&> (*this).scalarProductDofs(x,x) ) );
+        return std::abs( std::sqrt( const_cast<ThisType&> (*this).scalarProductDofs(x,x) ) );
       }
 
       //! delete slave values (for debugging)
