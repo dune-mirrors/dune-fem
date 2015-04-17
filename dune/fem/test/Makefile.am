@@ -19,7 +19,8 @@ EXTRA_DIST = 2dgrid.dgf \
 # linker flags
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(DUNEMPILIBS) $(LOCAL_LIBS)
 # preprocessor flags
-AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS)
+AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS) 
+     # add -DUSE_COMPLEXX to have all tests run with complex numbers
 
 TESTPROGS = combinedspaceadaptation \
 						dgl2projection_filtered \

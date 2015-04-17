@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_TEST_EXACTSOLUTION_HH
 #define DUNE_FEM_TEST_EXACTSOLUTION_HH
 
+#include <complex>
 // dune-fem includes
 #include <dune/fem/function/common/function.hh>
 
@@ -39,6 +40,9 @@ namespace Dune
         for(int r = 0; r < RangeType :: dimension; ++r )
           for( int i = 0; i < DomainType :: dimension; ++i )
             phi[ r ] += pow(sin( M_PI * x[ i ] ),double(r+1));
+#if defined USE_COMPLEX
+        phi *= std::complex<double>( 1 , -2. );
+#endif
       }
 
       void evaluate( const DomainType &x, RangeFieldType t, RangeType &phi ) const
@@ -54,6 +58,9 @@ namespace Dune
             for( int j = 0; j < DomainType :: dimension; ++j )
               Dphi[ r ][ j ] += double(r+1)*pow(sin( M_PI * x[ i ] ),double(r))*
                 ((i != j) ? 0 : M_PI * cos( M_PI * x[ i ] ));
+#if defined USE_COMPLEX
+        Dphi *= std::complex<double>( 1 , -2. );
+#endif
       }
 
       void jacobian( const DomainType &x, RangeFieldType t, JacobianRangeType &Dphi ) const
@@ -73,6 +80,9 @@ namespace Dune
               ( r * std::pow( s, double( r-1 ) )  - ( r+1 ) * std::pow( s, double( r+1 ) ) );
            }
         }
+#if defined USE_COMPLEX
+        H *= std::complex<double>( 1 , -2. );
+#endif
       }
 
       void hessian( const DomainType &x, RangeFieldType t, HessianRangeType &H ) const
