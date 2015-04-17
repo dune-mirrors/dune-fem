@@ -161,6 +161,12 @@ namespace Dune
         static const bool v = true;
       };
 
+      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+      struct isHierarchic< DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
+      {
+        static const bool v = true;
+      };
+
     } // namespace Capabilities
 
   } // namespace Fem

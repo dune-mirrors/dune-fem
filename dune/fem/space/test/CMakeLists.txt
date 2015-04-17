@@ -45,6 +45,10 @@ add_executable(interpolation interpolation.cc)
 dune_target_link_libraries(interpolation "${DUNE_LIBS};${LOCAL_LIBS}")
 set_property(TARGET interpolation APPEND PROPERTY 
              COMPILE_DEFINITIONS "GRIDDIM=${GRIDDIM}" )
+add_executable(hierarchicspace hierarchicspace.cc)
+dune_target_link_libraries(hierarchicspace "${DUNE_LIBS};${LOCAL_LIBS}")
+set_property(TARGET hierarchicspace APPEND PROPERTY 
+             COMPILE_DEFINITIONS "GRIDDIM=${GRIDDIM}" )
 add_executable(lagrangeadapt lagrangeadapt.cc)
 dune_target_link_libraries(lagrangeadapt "${DUNE_LIBS};${LOCAL_LIBS}")
 set_property(TARGET lagrangeadapt APPEND PROPERTY 
@@ -71,7 +75,7 @@ set_property(TARGET dgcomm_cached APPEND PROPERTY
              COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3" )
 
 dune_add_test(lagrangeadapt adapt padapt
-              arraytest combinedspacetest interpolation
+              arraytest combinedspacetest interpolation hierarchicspace
               l2projection lagrangeglobalrefine lagrangeinterpolation
               legendretest
               NO_DEPENDENCY dgcomm_4.sh dgcomm_cached_4.sh 
