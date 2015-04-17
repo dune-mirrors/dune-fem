@@ -4,7 +4,6 @@ discontinuousgalerkin_HEADERS = \
 	declaration.hh \
 	generic.hh \
 	hierarchiclegendre.hh \
-	hierarchiclegendremap.hh \
 	interpolation.hh \
 	lagrange.hh \
 	legendre.hh \
