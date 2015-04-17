@@ -41,7 +41,8 @@ TESTPROGS = combinedspaceadaptation \
 						dgl2projection_idgridpart \
 						dgl2projection_petscdiscretefunction \
 						intersectionindexset \
-						vtxprojection_adaptive
+						vtxprojection_adaptive \
+						l2projection_complex_istl
 
 TESTS = $(TESTPROGS) adaptation-4.sh
 check_PROGRAMS = $(TESTPROGS) adaptation
@@ -111,5 +112,8 @@ lagrangeinterpolation_quadratic_SOURCES = lagrangeinterpolation.cc
 
 vtxprojection_adaptive_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
 vtxprojection_adaptive_SOURCES = vtxprojection.cc
+
+l2projection_complex_istl_CPPFLAGS = $(AM_CPPFLAGS) -DCOUNT_FLOPS -DPOLORDER=1 -DUSE_BLOCKVECTORFUNCTION -DUSE_COMPLEX
+l2projection_complex_istl_SOURCES = l2projection.cc
 
 include $(top_srcdir)/am/global-rules
