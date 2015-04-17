@@ -13,7 +13,6 @@
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/shapefunctionset/legendre.hh>
-#include <dune/fem/space/shapefunctionset/mapped.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
 
 #include "basisfunctionsets.hh"
@@ -47,18 +46,40 @@ namespace Dune
         > ScalarShapeFunctionSpaceType;
 
       typedef LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType > HostShapeFunctionSetType;
+      // type of mapping of basis functions from original Legendre to Hierarchical Legendre
       typedef HierarchicLegendreMap< polOrder, GridPartType::dimension> MappingType;
+
       struct ScalarShapeFunctionSet
-      : public MappedShapeFunctionSet< HostShapeFunctionSetType, MappingType >
+        : public Dune::Fem::LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType >
       {
-        typedef MappedShapeFunctionSet< HostShapeFunctionSetType, MappingType > BaseType;
+        typedef Dune::Fem::LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType > BaseType;
+      protected:
+        typedef typename BaseType :: ShapeFunctionType  ShapeFunctionType;
+        using BaseType :: shapeFunctions_;
+
+        static const int numberShapeFunctions =
+            StaticPower<polOrder+1,ScalarShapeFunctionSpaceType::dimDomain>::power;
 
       public:
         explicit ScalarShapeFunctionSet ( Dune::GeometryType type )
-          : BaseType( HostShapeFunctionSetType( polOrder ) )
+          : BaseType( polOrder )
         {
-          assert( type.isCube() );
+          // remap the order of the basis functions such that
+          // the basis functions fullfil the isHierarchic capability
+          std::vector< ShapeFunctionType > legendreShapeFunctions( shapeFunctions_ );
+          MappingType map;
+
+          assert( size() == shapeFunctions_.size() );
+
+          // reorder the shape functions
+          for( int i=0; i<size(); ++i )
+          {
+            shapeFunctions_[ i ] = legendreShapeFunctions[ map[ i ] ];
+          }
         }
+
+        // overload size method because it's a static value
+        unsigned int size() const { return numberShapeFunctions; }
       };
 
       typedef SelectCachingShapeFunctionSets< GridPartType, ScalarShapeFunctionSet, Storage > ScalarShapeFunctionSetsType;

@@ -51,13 +51,19 @@ namespace Dune
         : public Dune::Fem::LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType >
       {
         typedef Dune::Fem::LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType > BaseType;
+        static const int numberShapeFunctions =
+            StaticPower<polOrder+1,ScalarShapeFunctionSpaceType::dimDomain>::power;
 
       public:
         explicit ScalarShapeFunctionSet ( Dune::GeometryType type )
           : BaseType( polOrder )
         {
           assert( type.isCube() );
+          assert( size() == BaseType::size() );
         }
+
+        // overload size method because it's a static value
+        unsigned int size() const { return numberShapeFunctions; }
       };
 
       typedef SelectCachingShapeFunctionSets< GridPartType, ScalarShapeFunctionSet, Storage > ScalarShapeFunctionSetsType;

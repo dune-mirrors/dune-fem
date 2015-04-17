@@ -5,7 +5,6 @@ shapefunctionset_HEADERS = \
 	legendre.hh \
 	legendrepolynomials.hh \
 	localfunctions.hh \
-	mapped.hh \
 	orthonormal.hh \
 	proxy.hh \
 	selectcaching.hh \
