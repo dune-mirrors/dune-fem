@@ -42,6 +42,7 @@ namespace Dune
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFieldType RangeFieldType;
       typedef typename BaseType::DomainFieldType DomainFieldType;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
 
       typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeSpaceType;
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainSpaceType;
@@ -58,7 +59,7 @@ namespace Dune
       virtual void operator() ( const DomainFunctionType &arg, RangeFunctionType &dest ) const;
 
     protected:
-      void set ( const DomainFunctionType &u, const OperatorType &op, const RangeFieldType &eps );
+      void set ( const DomainFunctionType &u, const OperatorType &op, const real_type &eps );
       const std::string name_;
       const OperatorType *op_;
       const DomainFunctionType *u_;
@@ -93,6 +94,7 @@ namespace Dune
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFieldType RangeFieldType;
       typedef typename BaseType::DomainFieldType DomainFieldType;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
 
       typedef typename BaseType::JacobianOperatorType JacobianOperatorType;
 
@@ -113,7 +115,7 @@ namespace Dune
       }
 
     private:
-      const RangeFieldType eps_;
+      const real_type eps_;
     };
 
 
@@ -133,13 +135,13 @@ namespace Dune
       // eps is chosen dynamically, the same way as in
       // dune-fem/dune/fem/solver/ode/quasi_exact_newton.cpp, see also
       // http://www.freidok.uni-freiburg.de/volltexte/3762/pdf/diss.pdf, page 137
-      RangeFieldType eps = eps_;
-      if( eps <= RangeFieldType( 0 ) )
+      real_type eps = eps_;
+      if( eps <= real_type( 0. ) )
       {
-        const RangeFieldType machine_eps = std::numeric_limits< RangeFieldType >::epsilon();
-        const double norm_p_sq = arg.normSquaredDofs( );
+        const real_type machine_eps = std::numeric_limits< real_type >::epsilon();
+        const real_type norm_p_sq = arg.normSquaredDofs( );
         if( norm_p_sq > machine_eps )
-          eps = std::sqrt( (RangeFieldType( 1 ) + norm_u_) * machine_eps / norm_p_sq );
+          eps = std::sqrt( (real_type( 1 ) + norm_u_) * machine_eps / norm_p_sq );
         else
           eps = std::sqrt( machine_eps );
       }
@@ -148,20 +150,20 @@ namespace Dune
       b_.axpy( eps, arg );
       (*op_)( b_, dest );
       dest -= op_u_;
-      dest *= RangeFieldType( 1 ) / eps;
+      dest *= real_type( 1 ) / eps;
     }
 
 
     template< class DomainFunction, class RangeFunction >
     inline void AutomaticDifferenceLinearOperator< DomainFunction, RangeFunction >
-      ::set ( const DomainFunctionType &u, const OperatorType &op, const RangeFieldType &eps )
+      ::set ( const DomainFunctionType &u, const OperatorType &op, const real_type &eps )
     {
       u_ = &u;
       op_ = &op;
       (*op_)( *u_, op_u_ );
 
       eps_ = eps;
-      if( eps_ <= RangeFieldType( 0 ) )
+      if( eps_ <= real_type( 0 ) )
         norm_u_ = std::sqrt( u_->scalarProductDofs( *u_ ) );
     }
 

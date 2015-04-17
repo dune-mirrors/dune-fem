@@ -64,6 +64,7 @@ namespace Dune
       typedef OperatorImp        OperatorType;
 
       typedef typename DiscreteFunctionType :: DofType DofType;
+      typedef typename Dune::FieldTraits< DofType >::real_type real_type;
       typedef typename DiscreteFunctionType :: DofIteratorType DofIteratorType;
       typedef typename DiscreteFunctionType :: ConstDofIteratorType ConstDofIteratorType;
 
@@ -84,7 +85,7 @@ namespace Dune
         //
         // note: We set near-zero entries to 1 to avoid NaNs. Such entries occur
         //       if DoFs are excluded from matrix setup
-        const double eps = 16.*std::numeric_limits< double >::epsilon();
+        const real_type eps = 16.*std::numeric_limits< real_type >::epsilon();
         const DofIteratorType dend = diagonalInv_.dend();
         for( DofIteratorType dit = diagonalInv_.dbegin(); dit != dend; ++dit )
           *dit = (std::abs( *dit ) < eps ? DofType( 1. ) : DofType( 1. ) / *dit);

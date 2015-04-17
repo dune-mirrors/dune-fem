@@ -37,8 +37,8 @@ namespace Dune
       typedef typename FunctionSpaceType :: RangeType RangeType;
 
       typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-      // typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
-      typedef double RangeFieldType;
+      typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
 
     private:
       const LagrangePointType lagrangePoint_;
@@ -113,8 +113,8 @@ namespace Dune
       typedef typename FunctionSpaceType :: RangeType RangeType;
 
       typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-      // typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
-      typedef double RangeFieldType;
+      typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
 
     private:
       const LagrangePointType lagrangePoint_;
@@ -219,8 +219,8 @@ namespace Dune
       typedef typename FunctionSpaceType :: RangeType RangeType;
 
       typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-      // typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
-      typedef double RangeFieldType;
+      typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
 
     private:
       typedef GenericLagrangeBaseFunction
@@ -247,7 +247,7 @@ namespace Dune
       {
         const DomainFieldType divisor = DomainFieldType( 1 ) / ((DomainFieldType)polynomialOrder);
         const DomainFieldType myfactor = porder * divisor;
-        const RangeFieldType myshift = (porder - polynomialOrder) * divisor;
+        const real_type myshift = (porder - polynomialOrder) * divisor;
 
         if( LagrangePointType :: useDimReduction( dofCoordinate ) )
         {
@@ -269,7 +269,7 @@ namespace Dune
           --(*dofCoordinate);
           OrderReductionType::template evaluate< porder >( dofCoordinate, diffVariable, factor, x, phi );
           ++(*dofCoordinate);
-          phi[ 0 ] *= (polynomialOrder / ((RangeFieldType)(*dofCoordinate)))
+          phi[ 0 ] *= (polynomialOrder / ((real_type)(*dofCoordinate)))
                     * (myfactor * factor * (*x) - myshift);
         }
       }
@@ -293,7 +293,7 @@ namespace Dune
       {
         const DomainFieldType divisor = polynomialOrder;
         const DomainFieldType myfactor = porder / divisor;
-        const RangeFieldType myshift = (porder - polynomialOrder) / divisor;
+        const real_type myshift = (porder - polynomialOrder) / divisor;
 
         FieldVector< int, 0 > dv;
 
@@ -328,7 +328,7 @@ namespace Dune
             phi.axpy( myfactor * factor, psi );
           }
           ++(*dofCoordinate);
-          phi *= (polynomialOrder) / ((RangeFieldType)(*dofCoordinate));
+          phi *= (polynomialOrder) / ((real_type)(*dofCoordinate));
         }
       }
 
@@ -351,7 +351,7 @@ namespace Dune
       {
         const DomainFieldType divisor = polynomialOrder;
         const DomainFieldType myfactor = porder / divisor;
-        const RangeFieldType myshift = (porder - polynomialOrder) / divisor;
+        const real_type myshift = (porder - polynomialOrder) / divisor;
 
         FieldVector< int, 1 > dv0( diffVariable[ 0 ] );
         FieldVector< int, 1 > dv1( diffVariable[ 1 ] );
@@ -394,7 +394,7 @@ namespace Dune
           }
 
           ++(*dofCoordinate);
-          phi *= (polynomialOrder) / ((RangeFieldType)(*dofCoordinate));
+          phi *= (polynomialOrder) / ((real_type)(*dofCoordinate));
         }
       }
 
@@ -441,8 +441,8 @@ namespace Dune
       typedef typename FunctionSpaceType :: RangeType RangeType;
 
       typedef typename FunctionSpaceType :: DomainFieldType DomainFieldType;
-      // typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
-      typedef double RangeFieldType;
+      typedef typename FunctionSpaceType :: RangeFieldType RangeFieldType;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
 
     private:
       typedef GenericLagrangeBaseFunction

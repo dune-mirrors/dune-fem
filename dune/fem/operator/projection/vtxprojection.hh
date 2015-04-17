@@ -47,7 +47,8 @@ namespace Dune
 
         typedef typename LagrangePointSetType::template Codim< 1 >::SubEntityIteratorType FaceDofIteratorType;
 
-        // typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+        typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+        typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
         typedef typename FunctionSpaceType::RangeType RangeType;
         typedef typename GeometryType::LocalCoordinate LocalCoordinateType;
 
@@ -74,7 +75,7 @@ namespace Dune
             RangeType val;
             lf.evaluate( lagrangePointSet[ pt ], val );
 
-            double wght = weight( lagrangePointSet.point( pt ) );
+            real_type wght = weight( lagrangePointSet.point( pt ) );
 
             for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate )
             {
@@ -95,7 +96,7 @@ namespace Dune
         for( ; udit != udend; ++udit, ++wdit )
         {
           // assert( (*wdit > 0.) || (*udit == 0.) );
-          double weight = std::abs( *wdit );
+          real_type weight = std::abs( *wdit );
           if ( weight > 1e-12 )
             *udit /= weight;
         }
@@ -167,6 +168,7 @@ namespace Dune
       typedef RType RangeType;
       typedef typename DomainType :: RangeFieldType DomainFieldType;
       typedef typename RType :: RangeFieldType  RangeFieldType;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
       typedef typename RType :: DiscreteFunctionSpaceType :: GridPartType GridPartType;
       //! Constructor
       VtxProjection() {}
