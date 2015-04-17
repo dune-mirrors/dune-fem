@@ -447,7 +447,7 @@ namespace Dune
       RangeFieldType prevResiduum = 0;    // note that these will be real_type but require scalar product evaluation
       RangeFieldType residuum = p.scalarProductDofs( q );//<p,Bp>
 
-      for( realCount_ = 0; std::real((residuum) > tolerance) && (realCount_ < maxIterations_); ++realCount_ )
+      for( realCount_ = 0; (std::real(residuum) > tolerance) && (realCount_ < maxIterations_); ++realCount_ )
       {
         if( realCount_ > 0 )
         {
