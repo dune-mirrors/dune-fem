@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_HLEGENDRE_HH
 #define DUNE_FEM_SPACE_DISCONTINUOUSGALERKIN_HLEGENDRE_HH
 
+#include <cassert>
+
 #include <dune/common/power.hh>
 
 #include <dune/geometry/type.hh>
@@ -17,7 +19,6 @@
 
 #include "basisfunctionsets.hh"
 #include "generic.hh"
-#include "hierarchiclegendremap.hh"
 #include "interpolation.hh"
 #include "shapefunctionsets.hh"
 
@@ -45,37 +46,19 @@ namespace Dune
            GridPartType::dimension, 1
         > ScalarShapeFunctionSpaceType;
 
-      typedef LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType > HostShapeFunctionSetType;
-      // type of mapping of basis functions from original Legendre to Hierarchical Legendre
-      typedef HierarchicLegendreMap< polOrder, GridPartType::dimension> MappingType;
-
       struct ScalarShapeFunctionSet
-        : public Dune::Fem::LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType >
+        : public Dune::Fem::HierarchicLegendreShapeFunctionSet< ScalarShapeFunctionSpaceType >
       {
-        typedef Dune::Fem::LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType > BaseType;
-      protected:
-        typedef typename BaseType :: ShapeFunctionType  ShapeFunctionType;
-        using BaseType :: shapeFunctions_;
+        typedef Dune::Fem::HierarchicLegendreShapeFunctionSet< ScalarShapeFunctionSpaceType > BaseType;
 
         static const int numberShapeFunctions =
             StaticPower<polOrder+1,ScalarShapeFunctionSpaceType::dimDomain>::power;
-
       public:
         explicit ScalarShapeFunctionSet ( Dune::GeometryType type )
           : BaseType( polOrder )
         {
-          // remap the order of the basis functions such that
-          // the basis functions fullfil the isHierarchic capability
-          std::vector< ShapeFunctionType > legendreShapeFunctions( shapeFunctions_ );
-          MappingType map;
-
-          assert( size() == shapeFunctions_.size() );
-
-          // reorder the shape functions
-          for( int i=0; i<size(); ++i )
-          {
-            shapeFunctions_[ i ] = legendreShapeFunctions[ map[ i ] ];
-          }
+          assert( type.isCube() );
+          assert( size() == BaseType::size() );
         }
 
         // overload size method because it's a static value
