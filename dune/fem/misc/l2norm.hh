@@ -176,7 +176,7 @@ namespace Dune
       {
         typename FunctionType::RangeType phi;
         function_.evaluate( x, phi );
-        ret = real( phi * phi );
+        ret = phi.two_norm2();
       }
 
     private:

@@ -13,6 +13,7 @@
 #include <dune/common/exceptions.hh>
 
 #include <dune/common/genericiterator.hh>
+#include <dune/common/ftraits.hh>
 #include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/datahandleif.hh>
 

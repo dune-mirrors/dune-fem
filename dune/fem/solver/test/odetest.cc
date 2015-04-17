@@ -99,6 +99,11 @@ public:
     return scp;
   }
 
+  double normSquaredDofs() const
+  {
+    return scalarProductDofs( *this );
+  }
+
 };
 
 // implement right hand side F(y,t)
