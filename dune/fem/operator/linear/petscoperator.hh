@@ -18,6 +18,8 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/stencil.hh>
 
+#include <dune/fem/storage/objectstack.hh>
+
 #if defined HAVE_PETSC
 
 #include "petscmat.h"
