@@ -444,15 +444,15 @@ namespace Dune
 
       RangeFunctionType s (q);
 
-      real_type prevResiduum = 0;
+      RangeFieldType prevResiduum = 0;    // note that these will be real_type but require scalar product evaluation
       RangeFieldType residuum = p.scalarProductDofs( q );//<p,Bp>
 
-      for( realCount_ = 0; (residuum > tolerance) && (realCount_ < maxIterations_); ++realCount_ )
+      for( realCount_ = 0; std::real((residuum) > tolerance) && (realCount_ < maxIterations_); ++realCount_ )
       {
         if( realCount_ > 0 )
         {
           assert( residuum/prevResiduum == residuum/prevResiduum );
-          const real_type beta=residuum/prevResiduum;
+          const RangeFieldType beta=residuum/prevResiduum;
           q*=beta;
           q+=(s);
         }
@@ -470,7 +470,7 @@ namespace Dune
 
         prevResiduum = residuum;//<rk-1,B*rk-1>
 
-        residuum = std::pow( p.scalarProductDofs( s ) , 2);//<rk,B*rk>  // !!!!!!
+        residuum = p.scalarProductDofs( s );//<rk,B*rk> 
 
         double exchangeTime = h.space().communicator().exchangeTime();
         if( verbose )
