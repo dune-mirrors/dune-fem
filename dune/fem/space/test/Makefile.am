@@ -14,7 +14,7 @@ GRIDDIM=3
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(LOCAL_LIBS) $(MPI_LDFLAGS)
 AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DDIMRANGE=$(DIMRANGE) -DWANT_GRAPE=$(WANT_GRAPE)
 
-ADAPTPROG = adapt adapt_combinedspace_pointbased adapt_combinedspace_variablebased lagrangeadapt functiontupleadapt padapt
+ADAPTPROG = adapt adapt_combinedspace_pointbased adapt_combinedspace_variablebased hierarchicspace lagrangeadapt functiontupleadapt padapt
 
 # programs run during make check 
 TESTS = $(ADAPTPROG) dgcomm-4.sh dgcomm-cached-4.sh
@@ -28,6 +28,7 @@ check_PROGRAMS = $(ADAPTPROG) \
 		 dgcomm \
 		 dgcomm_cached \
 		 interpolation \
+		 hierarchicspace \
 		 l2projection \
 		 lagrangeglobalrefine \
 		 lagrangeinterpolation \
@@ -43,6 +44,7 @@ padapt_SOURCES = padapt.cc
 combinedspacetest_SOURCES = combinedspacetest.cc
 lagrangeinterpolation_SOURCES = lagrangeinterpolation.cc
 interpolation_SOURCES = interpolation.cc
+hierarchicspace_SOURCES = hierarchicspace.cc
 lagrangeadapt_SOURCES = lagrangeadapt.cc
 functiontupleadapt_SOURCES = functiontupleadapt.cc
 lagrangeglobalrefine_SOURCES = lagrangeglobalrefine.cc

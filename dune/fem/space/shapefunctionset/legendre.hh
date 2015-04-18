@@ -80,8 +80,14 @@ namespace Dune
         return *std::max_element( multiIndex_.begin(), multiIndex_.end() );
       }
 
+      /** \brief return monomial orders of this function */
+      const std::array< int, FunctionSpaceType::dimDomain > &orders () const noexcept
+      {
+        return multiIndex_;
+      }
+
       /** \copydoc Dune::Fem::Function::evaluate */
-      void evaluate ( const DomainType &x, RangeType &value ) const
+      void evaluate ( const DomainType &x, RangeType &value ) const noexcept
       {
         value[ 0 ] = RangeFieldType( 1 );
         for( int i = 0; i < dimDomain; ++i )
@@ -89,7 +95,7 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::Function::jacobian */
-      void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
+      void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const noexcept
       {
         jacobian = JacobianRangeType( 1 );
         for( int k = 0; k < dimDomain; ++k )
@@ -102,7 +108,7 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::Function::hessian */
-      void hessian ( const DomainType &x, HessianRangeType &hessian ) const
+      void hessian ( const DomainType &x, HessianRangeType &hessian ) const noexcept
       {
         hessian = HessianRangeType( typename HessianRangeType::value_type( 1 ) );
         for( int k = 0; k < dimDomain; ++k )
@@ -209,6 +215,7 @@ namespace Dune
     template< class FunctionSpace >
     class LegendreShapeFunctionSet
     {
+    protected:
       typedef LegendreShapeFunction< FunctionSpace > ShapeFunctionType;
 
     public:
@@ -270,14 +277,14 @@ namespace Dune
       /** \} */
 
       /** \copydoc Dune::Fem::ShapeFunctionSet::order */
-      int order () const { return order_; }
+      int order () const noexcept { return order_; }
 
       /** \copydoc Dune::Fem::ShapeFunctionSet::size */
-      std::size_t size () const { return shapeFunctions_.size(); }
+      std::size_t size () const noexcept { return shapeFunctions_.size(); }
 
       /** \copydoc Dune::Fem::ShapeFunctionSet::evaluateEach */
       template< class Point, class Functor >
-      void evaluateEach ( const Point &x, Functor functor ) const
+      void evaluateEach ( const Point &x, Functor functor ) const noexcept
       {
         RangeType value;
         std::size_t i = 0u;
@@ -290,7 +297,7 @@ namespace Dune
 
       /** \copydoc Dune::Fem::ShapeFunctionSet::jacobianEach */
       template< class Point, class Functor >
-      void jacobianEach ( const Point &x, Functor functor ) const
+      void jacobianEach ( const Point &x, Functor functor ) const noexcept
       {
         JacobianRangeType jacobian;
         std::size_t i = 0u;
@@ -303,7 +310,7 @@ namespace Dune
 
       /** \copydoc Dune::Fem::ShapeFunctionSet::hessianEach */
       template< class Point, class Functor >
-      void hessianEach ( const Point &x, Functor functor ) const
+      void hessianEach ( const Point &x, Functor functor ) const noexcept
       {
         HessianRangeType hessian;
         std::size_t i = 0u;
@@ -317,6 +324,62 @@ namespace Dune
     protected:
       std::vector< ShapeFunctionType > shapeFunctions_;
       int order_;
+    };
+
+
+
+    // HierarchicLegendreShapeFunctionSet
+    // ----------------------------------
+
+    /** \brief please doc me
+     *
+     *  \note The range field type used in the evaluation is fixed to `double`.
+     *
+     *  \note This shape function set can only be used with cubic reference elements.
+     *
+     *  \tparam  FunctionSpace  (scalar) function space
+     */
+    template< class FunctionSpace >
+    class HierarchicLegendreShapeFunctionSet
+      : public LegendreShapeFunctionSet< FunctionSpace >
+    {
+      typedef LegendreShapeFunctionSet< FunctionSpace > BaseType;
+
+    protected:
+      typedef typename BaseType:: ShapeFunctionType ShapeFunctionType;
+
+      struct Compare
+      {
+        bool operator() ( const ShapeFunctionType &lhs, const ShapeFunctionType &rhs ) noexcept
+        {
+          if( lhs.order() != rhs.order() )
+            return lhs.order() < rhs.order();
+          else
+          {
+            const auto &a = lhs.orders();
+            const auto &b = rhs.orders();
+            return std::lexicographical_compare( a.begin(), a.end(), b.begin(), b.end() );
+          }
+        }
+      };
+
+    public:
+      /** \name Construction
+       *  \{
+       */
+
+      HierarchicLegendreShapeFunctionSet () = default;
+
+      HierarchicLegendreShapeFunctionSet ( int order )
+        : BaseType( order )
+      {
+        std::sort( shapeFunctions_.begin(), shapeFunctions_.end(), Compare() );
+      }
+
+      /** \} */
+
+    protected:
+      using BaseType::shapeFunctions_;
     };
 
   } // namespace Fem

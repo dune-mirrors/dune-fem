@@ -119,6 +119,18 @@ namespace Dune
       };
 
 
+      /** \class isHierarchic
+       *
+       *  \brief specialize with \b true if for a space the basis functions are
+       *         sorted by the polynomial order, starting with the lowest order
+       */
+      template< class DiscreteFunctionSpace >
+      struct isHierarchic
+      {
+        static const bool v = false;
+      };
+
+
 
       // const specialization
       // --------------------
@@ -170,6 +182,12 @@ namespace Dune
       struct viewThreadSafe< const DiscreteFunctionSpace >
       {
         static const bool v = viewThreadSafe< DiscreteFunctionSpace >::v;
+      };
+
+      template< class DiscreteFunctionSpace >
+      struct isHierarchic< const DiscreteFunctionSpace >
+      {
+        static const bool v = isHierarchic< DiscreteFunctionSpace >::v;
       };
 
     } // namespace Capabilities

@@ -202,7 +202,7 @@ namespace DuneODE
         const double stageTime = time + c_[ s ]*timeStepSize;
         helmholtzOp_.setTime( stageTime );
         // compute jacobian if the diagonal entry in the butcher tableau changes
-        if (s==0 | gamma_[s-1] != gamma_[s])
+        // if ( s==0 || (gamma_[s-1] != gamma_[s]) )
         {
           // std::cout << "lambda=" << gamma_[ s ]*timeStepSize << std::endl;
           helmholtzOp_.setLambda( gamma_[ s ]*timeStepSize );

@@ -301,7 +301,7 @@ namespace Dune
    /** \class   FemTimer
        \ingroup HelperClasses
        \brief   class with singleton instance managing
-                timming for parts of program.
+                timing for parts of program.
 
        The simplest way of timing one line of
        code is to enclose it with the
@@ -323,9 +323,11 @@ namespace Dune
        The singleton instance can either be accessed
        through FemTimer::instance or through the
        reference femTimer.
-       Note that the following usage is only
-       available if \c FEMTIMER is defined
-       otherwise all methods of the class
+       In order to use the timer, it is necessary to
+       define the preprocessor variable \c FEMTIMER
+       or in the Makefile or in the main file before
+       including the FemTimer header. If \c FEMTIMER
+       is not defined all methods of the class
        FemTimer with the exception of \c start
        and \c stop used for the \c TIMEDEXECUTION
        macro are empty.
@@ -334,7 +336,7 @@ namespace Dune
        of a code, first get a unique id from the
        FemTimer by calling
        \code
-       id = femTimer.addTo(name,subMarkers);
+       unsigned int id = FemTimer::addTo(name,subMarkers);
        \endcode
        where \c name is a string used for output
        and subMarkers is an integer value greaten
@@ -344,22 +346,22 @@ namespace Dune
        Remember to return the id to the FemTimer
        by calling
        \code
-       femTimer.removeFrom(id);
+       FemTimer::removeFrom(id);
        \endcode
 
        To start and stop the time keeping for a given program
        write
        \code
-       femTimer.start(id);
-       ...
-       femTimer.stop(id);
+       FemTimer::start(id);
+       // do something
+       FemTimer::stop(id);
        \endcode
        Execution time is summed up over all calls
        to start and stop. It is possible to pass an operation
        argument which changes this behavior; \c sum and \c max are
        implemented Using
        \code
-       femTimer.reset(id);
+       FemTimer::reset(id);
        \endcode
        the main timer (and all its subtimings)
        are set back to zero. Calling \c reset
@@ -369,21 +371,28 @@ namespace Dune
        The use of sub timers works as shown in
        the following example:
        \code
-       unsigned int id = femTimer.addTo("test",2);
-       ...
-       femTimer.start(id);
-       ...
-       femTimer.start(id,1);
-       f1(); // call to a first function
-       femTimer.end(id,1);
-       ...
-       femTimer.start(id,2);
-       f2(); // call to a second function
-       femTimer.end(id,2);
-       ...
-       femTimer.end(id);
+       #define FEMTIMER
+       #include <config>
+       #include <dune/fem/misc/femtimer.hh>
+
+       int main ()
+       {
+       unsigned int id = FemTimer::addTo("test",2);
+
+       FemTimer::start(id);
+
+       FemTimer::start(id,1);
+       // do something
+       FemTimer::stop(id,1);
+
+       FemTimer::start(id,2);
+       // do something
+       FemTimer::stop(id,2);
+
+       FemTimer::stop(id);
+       }
        \endcode
-       Using \c femTimer.print(out,"test");
+       Using \c FemTimer::print(out,"test");
        the result of all timings is printed to
        an \c ostream. Subtimings are given
        relative to the main timing, i.e.,
@@ -392,7 +401,7 @@ namespace Dune
        of the algorithm.
        In the same manner the timing information
        can be stored in a file using
-       \c printFile(filename).
+       \c FemTimer::printFile(filename).
        The first call opens the file and prints
        the string identifying each timing;
        each successive call prints one line containing
