@@ -385,6 +385,12 @@ namespace Dune
     {
       typedef LagrangeParallelMatrixAdapter<MatrixImp> Type;
     };
+    template< class MatrixImp, class ... DiscreteFunctionSpaces >
+    struct ISTLParallelMatrixAdapter<MatrixImp, TupleDiscreteFunctionSpace< DiscreteFunctionSpaces ... > >
+    {
+      typedef LagrangeParallelMatrixAdapter<MatrixImp> Type;
+    };
+
 
   } // end namespace Fem
 } // end namespace Dune
