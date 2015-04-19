@@ -593,7 +593,7 @@ namespace Dune
 
       // axpy with range and jacobian range type
       template< class Point, class DofVector, class Tuple >
-      static void apply ( const Point &x, const RangeType &rangeFactor, const JacobianRangeType &jacobianFactor, const OffsetType &offset, DofVector &dofVector, const Tuple &tuple )
+      static void apply ( const Point &x, const RangeType &rangeFactor, const JacobianRangeType &jacobianFactor, DofVector &dofVector, const OffsetType &offset, const Tuple &tuple )
       {
         std::size_t size = std::get< i >( tuple ).size();
         SubRangeType subRangeFactor( rangeFactor );
