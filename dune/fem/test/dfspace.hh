@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_TEST_DFSPACE_HH
 #define DUNE_FEM_TEST_DFSPACE_HH
 
+#include <complex>
+
 #include <dune/fem/misc/double.hh>
 
 #include <dune/fem/space/discontinuousgalerkin.hh>
@@ -31,9 +33,19 @@ namespace Dune
   namespace Fem
   {
 
+// complex range type not yet working with petsc
+#if defined USE_PETSCDISCRETEFUNCTION && defined USE_COMPLEX
+#warning PETSC does not work yet with complex numbers - undefining USE_COMPLEX for now
+#undef USE_COMPLEX
+#endif
+
+#if not defined USE_COMPLEX
   typedef FunctionSpace< double, double, GridSelector::dimworld, DIMRANGE >
     TestFunctionSpace;
-
+#else
+  typedef FunctionSpace< double, std::complex<double>, GridSelector::dimworld, DIMRANGE >
+    TestFunctionSpace;
+#endif
 
   template< class GridPart >
   struct TestDiscreteFunctionSpaceTraits

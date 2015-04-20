@@ -48,6 +48,7 @@ namespace Dune
         typedef typename LagrangePointSetType::template Codim< 1 >::SubEntityIteratorType FaceDofIteratorType;
 
         typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+        typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
         typedef typename FunctionSpaceType::RangeType RangeType;
         typedef typename GeometryType::LocalCoordinate LocalCoordinateType;
 
@@ -74,7 +75,7 @@ namespace Dune
             RangeType val;
             lf.evaluate( lagrangePointSet[ pt ], val );
 
-            double wght = weight( lagrangePointSet.point( pt ) );
+            RealType wght = weight( lagrangePointSet.point( pt ) );
 
             for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate )
             {
@@ -94,8 +95,10 @@ namespace Dune
         DofIteratorType wdit = w.dbegin();
         for( ; udit != udend; ++udit, ++wdit )
         {
-          assert( (*wdit > 0) || (*udit == 0) );
-          *udit /= (*wdit > 0 ? *wdit : RangeFieldType( 1 ));
+          // assert( (*wdit > 0.) || (*udit == 0.) );
+          RealType weight = std::abs( *wdit );
+          if ( weight > 1e-12 )
+            *udit /= weight;
         }
 
         // make function continuous over hanging nodes
@@ -165,6 +168,7 @@ namespace Dune
       typedef RType RangeType;
       typedef typename DomainType :: RangeFieldType DomainFieldType;
       typedef typename RType :: RangeFieldType  RangeFieldType;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
       typedef typename RType :: DiscreteFunctionSpaceType :: GridPartType GridPartType;
       //! Constructor
       VtxProjection() {}

@@ -19,7 +19,8 @@ EXTRA_DIST = 2dgrid.dgf \
 # linker flags
 LDADD = $(ALL_PKG_LDFLAGS) $(ALL_PKG_LIBS) $(DUNEMPILIBS) $(LOCAL_LIBS)
 # preprocessor flags
-AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS)
+AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) $(DUNEMPICPPFLAGS) 
+     # add -DUSE_COMPLEXX to have all tests run with complex numbers
 
 TESTPROGS = combinedspaceadaptation \
 						dgl2projection_filtered \
@@ -40,7 +41,8 @@ TESTPROGS = combinedspaceadaptation \
 						dgl2projection_idgridpart \
 						dgl2projection_petscdiscretefunction \
 						intersectionindexset \
-						vtxprojection_adaptive
+						vtxprojection_adaptive \
+						l2projection_complex_istl
 
 TESTS = $(TESTPROGS) adaptation-4.sh
 check_PROGRAMS = $(TESTPROGS) adaptation
@@ -110,5 +112,8 @@ lagrangeinterpolation_quadratic_SOURCES = lagrangeinterpolation.cc
 
 vtxprojection_adaptive_CPPFLAGS = -DPOLORDER=1 -DCOUNT_FLOPS $(AM_CPPFLAGS)
 vtxprojection_adaptive_SOURCES = vtxprojection.cc
+
+l2projection_complex_istl_CPPFLAGS = $(AM_CPPFLAGS) -DCOUNT_FLOPS -DPOLORDER=1 -DUSE_BLOCKVECTORFUNCTION -DUSE_COMPLEX
+l2projection_complex_istl_SOURCES = l2projection.cc
 
 include $(top_srcdir)/am/global-rules
