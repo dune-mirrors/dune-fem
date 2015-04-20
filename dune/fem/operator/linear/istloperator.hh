@@ -47,10 +47,6 @@ namespace Dune
       {
         return *this;
       }
-      const typename Base::MatrixType::BaseType & matrix() const
-      {
-        return Base::matrix();
-      }
 
       Base &systemMatrix ()
       {
@@ -58,53 +54,6 @@ namespace Dune
       }
     };
 
-#if 0
-    template< class Function >
-    class ISTLLinearOperator<Function,Function>
-    : public ISTLMatrixObject< typename Function::DiscreteFunctionSpaceType, typename Function::DiscreteFunctionSpaceType >,
-      public AssembledOperator< Function, Function >
-    {
-      typedef Function DomainFunction;
-      typedef Function RangeFunction;
-      typedef ISTLLinearOperator< DomainFunction, RangeFunction > This;
-      typedef ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType > Base;
-
-    public:
-      typedef typename Base::DomainSpaceType DomainSpaceType;
-      typedef typename Base::RangeSpaceType RangeSpaceType;
-
-      /** \copydoc Operator::assembled */
-      static const bool assembled = true ;
-
-      using Base::apply;
-      using Base::communicate;
-
-      ISTLLinearOperator ( const std::string &name,
-                           const DomainSpaceType &domainSpace,
-                           const RangeSpaceType &rangeSpace )
-      : Base( domainSpace, rangeSpace )
-      {}
-
-      virtual void operator() ( const DomainFunction &arg, RangeFunction &dest ) const
-      {
-        Base::apply( arg, dest );
-      }
-
-      const Base &systemMatrix () const
-      {
-        return *this;
-      }
-      const typename Base::MatrixType::BaseType & matrix() const
-      {
-        return Base::matrix();
-      }
-
-      Base &systemMatrix ()
-      {
-        return *this;
-      }
-    };
-#endif
   } // namespace Fem
 
 } // namespace Dune
