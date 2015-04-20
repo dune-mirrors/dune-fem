@@ -160,23 +160,28 @@ try {
   Dune::Fem::Parameter :: append( argc , argv );
   Dune::Fem::Parameter :: append( paramFile );
 
-  std::ostringstream gridFilenameStream;
-  gridFilenameStream << MyGridType::dimensionworld << "dgrid.dgf";
-  Dune::GridPtr< MyGridType > grid( gridFilenameStream.str() );
+  if( Dune::Capabilities::hasSingleGeometryType< MyGridType >::v &&
+      Dune::GeometryType( Dune::Capabilities::hasSingleGeometryType< MyGridType
+        >::topologyId, MyGridType::dimension ).isCube() )
+  {
+    std::ostringstream gridFilenameStream;
+    gridFilenameStream << MyGridType::dimensionworld << "dgrid.dgf";
+    Dune::GridPtr< MyGridType > grid( gridFilenameStream.str() );
 
-  GridPartType part ( *grid );
-  {
-    std::cout << "Check DiscontinuousGalerkinSpace... ";
-    DGSpaceType space( part );
-    CheckSpace< DGSpaceType, Dune::Fem::Capabilities::isHierarchic< DGSpaceType >::v >::check( space );
-    std::cout << "successful! " << std::endl;
-  }
-  {
-    std::cout << "Check HierarchicLegendreDiscontinuousGalerkinSpace... ";
-    HierarchicLegendreSpaceType space( part );
-    CheckSpace< HierarchicLegendreSpaceType,
-                Dune::Fem::Capabilities::isHierarchic< HierarchicLegendreSpaceType >::v >::check( space );
-    std::cout << "successful! " << std::endl;
+    GridPartType part ( *grid );
+    {
+      std::cout << "Check DiscontinuousGalerkinSpace... ";
+      DGSpaceType space( part );
+      CheckSpace< DGSpaceType, Dune::Fem::Capabilities::isHierarchic< DGSpaceType >::v >::check( space );
+      std::cout << "successful! " << std::endl;
+    }
+    {
+      std::cout << "Check HierarchicLegendreDiscontinuousGalerkinSpace... ";
+      HierarchicLegendreSpaceType space( part );
+      CheckSpace< HierarchicLegendreSpaceType,
+                  Dune::Fem::Capabilities::isHierarchic< HierarchicLegendreSpaceType >::v >::check( space );
+      std::cout << "successful! " << std::endl;
+    }
   }
   return 0;
 }
