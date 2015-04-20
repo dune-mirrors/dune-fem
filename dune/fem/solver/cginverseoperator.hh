@@ -36,7 +36,7 @@ namespace Dune
       typedef typename OperatorType::DomainFieldType DomainFieldType;
       //! field type of the operator's range vectors
       typedef typename OperatorType::RangeFieldType RangeFieldType;
-      typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
 
       //! type of the operator's domain vectors
       typedef typename OperatorType::DomainFunctionType DomainFunctionType;
@@ -58,7 +58,7 @@ namespace Dune
        *  \param[in]  maxIterations  maximum number of CG iterations
        *  \param[in]  verbose        verbose output
        */
-      ConjugateGradientSolver ( const real_type &epsilon,
+      ConjugateGradientSolver ( const RealType &epsilon,
                                 unsigned int maxIterations,
                                 bool verbose )
       : epsilon_( epsilon ),
@@ -74,7 +74,7 @@ namespace Dune
        *  \param[in]  epsilon        tolerance
        *  \param[in]  maxIterations  maximum number of CG iterations
        */
-      ConjugateGradientSolver ( real_type epsilon,
+      ConjugateGradientSolver ( RealType epsilon,
                                 unsigned int maxIterations )
       : epsilon_( epsilon ),
         maxIterations_( maxIterations ),
@@ -129,7 +129,7 @@ namespace Dune
       }
 
     protected:
-      const real_type epsilon_;
+      const RealType epsilon_;
       const unsigned int maxIterations_;
       const bool verbose_;
       mutable double averageCommTime_;
@@ -161,7 +161,7 @@ namespace Dune
         typedef Fem::Operator< RangeFunctionType, DomainFunctionType > PreconditionerType;
 
         typedef typename OperatorType::RangeFieldType RangeFieldType;
-        typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
+        typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
 
       private:
         typedef ConjugateGradientSolver< OperatorType > SolverType;
@@ -176,7 +176,7 @@ namespace Dune
          *  \param[in]  verbose  verbosity
          */
         CGInverseOperator ( const OperatorType &op,
-                            real_type redEps, real_type absLimit,
+                            RealType redEps, RealType absLimit,
                             unsigned int maxIter, bool verbose )
           : operator_( op ),
             preconditioner_ ( 0 ),
@@ -191,7 +191,7 @@ namespace Dune
          *  \param[in]  maxIter  maximum number of iteration steps
          */
         CGInverseOperator ( const OperatorType &op,
-                            real_type redEps, real_type absLimit,
+                            RealType redEps, RealType absLimit,
                             unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
           : operator_( op ),
             preconditioner_ ( 0 ),
@@ -208,7 +208,7 @@ namespace Dune
          */
         CGInverseOperator ( const OperatorType &op,
                             const PreconditionerType &precond,
-                            real_type redEps, real_type absLimit,
+                            RealType redEps, RealType absLimit,
                             unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
           : operator_( op ),
             preconditioner_( &precond ),
@@ -277,7 +277,7 @@ namespace Dune
       typedef Op OperatorType;
 
       typedef typename OperatorType::RangeFieldType RangeFieldType;
-      typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
 
       // Preconditioner is to approximate op^-1 !
       typedef Fem::Operator< RangeFunctionType,DomainFunctionType > PreconditioningType;
@@ -292,7 +292,7 @@ namespace Dune
        */
       template <class LinearOperator>
       CGInverseOperator ( const LinearOperator &op,
-                          real_type redEps, real_type absLimit,
+                          RealType redEps, RealType absLimit,
                           unsigned int maxIter, bool verbose )
       : BaseType( op, redEps, absLimit, maxIter, verbose ),
         precondObj_( 0 )
@@ -309,7 +309,7 @@ namespace Dune
        */
       template <class LinearOperator>
       CGInverseOperator ( const LinearOperator &op,
-                          real_type redEps, real_type absLimit,
+                          RealType redEps, RealType absLimit,
                           unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
       : BaseType( op, redEps, absLimit, maxIter ),
         precondObj_( 0 )
@@ -327,7 +327,7 @@ namespace Dune
        */
       CGInverseOperator ( const OperatorType &op,
                           const PreconditioningType &precond,
-                          real_type redEps, real_type absLimit,
+                          RealType redEps, RealType absLimit,
                           unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
       : BaseType( op, precond, redEps, absLimit, maxIter ),
         precondObj_( 0 )
@@ -366,7 +366,7 @@ namespace Dune
     {
       const bool verbose = (verbose_ && (b.space().gridPart().comm().rank() == 0));
 
-      const real_type tolerance = (epsilon_ * epsilon_) * b.normSquaredDofs( );
+      const RealType tolerance = (epsilon_ * epsilon_) * b.normSquaredDofs( );
 
       averageCommTime_ = 0.0;
 
@@ -379,8 +379,8 @@ namespace Dune
       RangeFunctionType p( b );
       p -= h;
 
-      real_type prevResiduum = 0;
-      real_type residuum = r.normSquaredDofs( );
+      RealType prevResiduum = 0;
+      RealType residuum = r.normSquaredDofs( );
 
       for( realCount_ = 0; (residuum > tolerance) && (realCount_ < maxIterations_); ++realCount_ )
       {
@@ -422,7 +422,7 @@ namespace Dune
     {
       const bool verbose = (verbose_ && (b.space().gridPart().comm().rank() == 0));
 
-      const real_type tolerance = (epsilon_ * epsilon_) * b.normSquaredDofs( );
+      const RealType tolerance = (epsilon_ * epsilon_) * b.normSquaredDofs( );
 
       averageCommTime_ = 0.0;
 

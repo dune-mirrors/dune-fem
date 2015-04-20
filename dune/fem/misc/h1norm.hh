@@ -82,8 +82,8 @@ namespace Dune
       typedef Function FunctionType;
 
       typedef typename FunctionType::RangeFieldType RangeFieldType;
-      typedef typename Dune::FieldTraits< typename FunctionType::RangeFieldType >::real_type real_type;
-      typedef FieldVector< real_type, 1 > RangeType;
+      typedef typename Dune::FieldTraits< typename FunctionType::RangeFieldType >::real_type RealType;
+      typedef FieldVector< RealType, 1 > RangeType;
 
     public:
       explicit FunctionJacobianSquare ( const FunctionType &function )
@@ -135,8 +135,8 @@ namespace Dune
     H1Norm< GridPart >::norm ( const DiscreteFunctionType &u ) const
     {
       typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
-      typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
-      typedef FieldVector< real_type, 1 > ReturnType ;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
+      typedef FieldVector< RealType, 1 > ReturnType ;
 
       ReturnType sum = BaseType :: forEach( u, ReturnType( 0 ), order_ );
 
@@ -151,8 +151,8 @@ namespace Dune
                                    const VDiscreteFunctionType &v ) const
     {
       typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
-      typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
-      typedef FieldVector< real_type, 1 > ReturnType ;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
+      typedef FieldVector< RealType, 1 > ReturnType ;
 
       ReturnType sum = BaseType :: forEach( u, v, ReturnType( 0 ), order_ );
 

@@ -274,8 +274,8 @@ namespace Dune
       static bool notComplex() 
       {
         typedef typename DF::RangeFieldType RangeFieldType;
-        typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
-        return ! std::is_same< RangeFieldType, std::complex<real_type> >::value; 
+        typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
+        return ! std::is_same< RangeFieldType, std::complex<RealType> >::value; 
       }
 
     public:

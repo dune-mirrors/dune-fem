@@ -84,8 +84,8 @@ namespace Dune
     L1Norm< GridPart >::norm ( const DiscreteFunctionType &u ) const
     {
       typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
-      typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
-      typedef FieldVector< real_type, 1 > ReturnType ;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
+      typedef FieldVector< RealType, 1 > ReturnType ;
 
       // calculate integral over each element
       ReturnType sum = BaseType :: forEach( u, ReturnType(0), order_ );
@@ -102,8 +102,8 @@ namespace Dune
       ::distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const
     {
       typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
-      typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
-      typedef FieldVector< real_type, 1 > ReturnType ;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
+      typedef FieldVector< RealType, 1 > ReturnType ;
 
       // calculate integral over each element
       ReturnType sum = BaseType :: forEach( u, v, ReturnType(0), order_ );
@@ -163,8 +163,8 @@ namespace Dune
       typedef Function FunctionType;
 
       typedef typename FunctionType::RangeFieldType RangeFieldType;
-      typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
-      typedef FieldVector< real_type, 1 > RangeType;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
+      typedef FieldVector< RealType, 1 > RangeType;
 
       explicit FunctionAbs ( const FunctionType &function )
       : function_( function )
