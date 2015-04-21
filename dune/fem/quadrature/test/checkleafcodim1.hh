@@ -196,8 +196,10 @@ protected:
         {
           std::cout << points.size() << " ps | qnop " << numFaces * quad.nop() << "\n";
           std::cout << "New Intersection: Twists: ";
-          std::cout << TwistUtilityType :: twistInSelf( gridPart.grid(), inter) << " ";
-          std::cout << TwistUtilityType :: twistInNeighbor( gridPart.grid(), inter) << "\n";
+          std::cout << TwistUtilityType :: twistInSelf( gridPart.grid(), inter);
+          if( inter.neighbor() )
+            std::cout << " " << TwistUtilityType :: twistInNeighbor( gridPart.grid(), inter);
+          std::cout << std::endl;
         }
 
         // this check is only ok if we are on the inside of
