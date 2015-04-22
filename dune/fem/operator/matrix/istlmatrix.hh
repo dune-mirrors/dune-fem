@@ -385,8 +385,8 @@ namespace Dune
     template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
     struct ISTLMatrixTraits
     {
-      typedef RowSpaceImp DomainSpaceType;
-      typedef ColSpaceImp RangeSpaceType;
+      typedef RowSpaceImp RangeSpaceType;
+      typedef ColSpaceImp DomainSpaceType;
       typedef ISTLMatrixTraits<DomainSpaceType,RangeSpaceType> ThisType;
 
       typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType> MatrixObjectType;
@@ -397,6 +397,737 @@ namespace Dune
     class ISTLMatrixObject
     {
     public:
+      //! type of space defining row structure
+      typedef DomainSpaceImp DomainSpaceType;
+      //! type of space defining column structure
+      typedef RangeSpaceImp RangeSpaceType;
+
+      //! type of this pointer
+      typedef ISTLMatrixObject<DomainSpaceType,RangeSpaceType> ThisType;
+
+      typedef typename DomainSpaceType::GridType GridType;
+
+      typedef typename RangeSpaceType :: EntityType  RowEntityType ;
+      typedef typename DomainSpaceType :: EntityType ColumnEntityType ;
+
+      enum { littleCols = DomainSpaceType :: localBlockSize };
+      enum { littleRows = RangeSpaceType :: localBlockSize };
+
+      typedef typename DomainSpaceType :: RangeFieldType RangeFieldType;
+
+      typedef FieldMatrix<RangeFieldType, littleRows, littleCols> LittleBlockType;
+
+      typedef ISTLBlockVectorDiscreteFunction< RangeSpaceType >      RowDiscreteFunctionType;
+      typedef typename RowDiscreteFunctionType :: LeakPointerType    RowLeakPointerType;
+      typedef ISTLBlockVectorDiscreteFunction< DomainSpaceType >     ColumnDiscreteFunctionType;
+      typedef typename ColumnDiscreteFunctionType :: LeakPointerType ColumnLeakPointerType;
+
+    protected:
+      typedef typename RowDiscreteFunctionType :: DofStorageType    RowBlockVectorType;
+      typedef typename ColumnDiscreteFunctionType :: DofStorageType ColumnBlockVectorType;
+
+      typedef typename RangeSpaceType :: BlockMapperType  RowMapperType;
+      typedef typename DomainSpaceType :: BlockMapperType ColMapperType;
+
+    public:
+      //! type of used matrix
+      typedef ImprovedBCRSMatrix< LittleBlockType ,
+                                  ColumnDiscreteFunctionType ,
+                                  RowDiscreteFunctionType > MatrixType;
+      typedef typename ISTLParallelMatrixAdapter<MatrixType,RangeSpaceType>::Type MatrixAdapterType;
+      typedef typename MatrixAdapterType :: ParallelScalarProductType ParallelScalarProductType;
+
+      template <class MatrixObjectImp>
+      class LocalMatrix;
+
+      struct LocalMatrixTraits
+      {
+        typedef DomainSpaceImp DomainSpaceType;
+        typedef RangeSpaceImp  RangeSpaceType;
+        typedef typename DomainSpaceType :: RangeFieldType RangeFieldType;
+        typedef LocalMatrix<ThisType> LocalMatrixType;
+        typedef typename MatrixType:: block_type LittleBlockType;
+      };
+
+      //! LocalMatrix
+      template <class MatrixObjectImp>
+      class LocalMatrix : public LocalMatrixDefault<LocalMatrixTraits>
+      {
+      public:
+        //! type of base class
+        typedef LocalMatrixDefault<LocalMatrixTraits> BaseType;
+
+        //! type of matrix object
+        typedef MatrixObjectImp MatrixObjectType;
+        //! type of matrix
+        typedef typename MatrixObjectImp :: MatrixType MatrixType;
+        //! type of little blocks
+        typedef typename MatrixType:: block_type LittleBlockType;
+        //! type of entries of little blocks
+        typedef typename DomainSpaceType :: RangeFieldType DofType;
+
+        typedef typename MatrixType::row_type RowType;
+
+        //! type of row mapper
+        typedef typename MatrixObjectType :: RowMapperType RowMapperType;
+        //! type of col mapper
+        typedef typename MatrixObjectType :: ColMapperType ColMapperType;
+
+      private:
+        // special mapper omiting block size
+        const RowMapperType& rowMapper_;
+        const ColMapperType& colMapper_;
+
+        // number of local matrices
+        int numRows_;
+        int numCols_;
+
+        // vector with pointers to local matrices
+        typedef std::vector< LittleBlockType* >            LittleMatrixRowStorageType ;
+        typedef std::vector< LittleMatrixRowStorageType >  VecLittleMatrixRowStorageType;
+        VecLittleMatrixRowStorageType matrices_;
+
+        // matrix to build
+        const MatrixObjectType& matrixObj_;
+
+       template <class RowGlobalKey>
+       struct ColFunctor
+       {
+         ColFunctor(LittleMatrixRowStorageType& localMatRow,
+                    MatrixType& matrix,
+                    const RowGlobalKey &globalRowKey)
+         : localMatRow_(localMatRow),
+           matRow_( matrix[ globalRowKey ] ),
+           globalRowKey_(globalRowKey)
+         {
+         }
+         template< class GlobalKey >
+         void operator() ( const int localDoF, const GlobalKey &globalDoF )
+         {
+           localMatRow_[ localDoF ] = &matRow_[ globalDoF ];
+         }
+         private:
+         LittleMatrixRowStorageType& localMatRow_;
+         RowType& matRow_;
+         const RowGlobalKey &globalRowKey_;
+       };
+
+       template <class RowGlobalKey>
+       struct ColFunctorImplicitBuildMode
+       {
+         ColFunctorImplicitBuildMode(LittleMatrixRowStorageType& localMatRow,
+                                     MatrixType& matrix,
+                                     const RowGlobalKey &globalRowKey)
+         : localMatRow_(localMatRow),
+           matrix_( matrix ),
+           globalRowKey_(globalRowKey)
+         {
+         }
+         template< class GlobalKey >
+         void operator() ( const int localDoF, const GlobalKey &globalDoF )
+         {
+           localMatRow_[ localDoF ] = &matrix_.entry( globalRowKey_, globalDoF );
+         }
+         private:
+         LittleMatrixRowStorageType& localMatRow_;
+         MatrixType& matrix_;
+         const RowGlobalKey &globalRowKey_;
+       };
+
+       template <template <class> class ColFunctorImpl>
+       struct RowFunctor
+       {
+         RowFunctor(const ColumnEntityType &colEntity,
+                    const ColMapperType &colMapper,
+                    MatrixType &matrix,
+                    VecLittleMatrixRowStorageType &matrices,
+                    int numCols)
+         : colEntity_(colEntity),
+           colMapper_(colMapper),
+           matrix_(matrix),
+           matrices_(matrices),
+           numCols_(numCols)
+         {}
+         template< class GlobalKey >
+         void operator() ( const int localDoF, const GlobalKey &globalDoF )
+         {
+           LittleMatrixRowStorageType& localMatRow = matrices_[ localDoF ];
+           localMatRow.resize( numCols_ );
+           ColFunctorImpl< GlobalKey > colFunctor( localMatRow, matrix_, globalDoF );
+           colMapper_.mapEach( colEntity_, colFunctor );
+         }
+         private:
+         const ColumnEntityType & colEntity_;
+         const ColMapperType & colMapper_;
+         MatrixType &matrix_;
+         VecLittleMatrixRowStorageType &matrices_;
+         int numCols_;
+       };
+
+      public:
+        LocalMatrix(const MatrixObjectType & mObj,
+                    const DomainSpaceType & colSpace,
+                    const RangeSpaceType & rowSpace)
+          : BaseType( colSpace, rowSpace )
+          , rowMapper_(mObj.rowMapper())
+          , colMapper_(mObj.colMapper())
+          , numRows_( rowMapper_.maxNumDofs() )
+          , numCols_( colMapper_.maxNumDofs() )
+          , matrixObj_(mObj)
+        {
+        }
+
+        void init(const RowEntityType & rowEntity,
+                  const ColumnEntityType & colEntity)
+        {
+          // initialize base functions sets
+          BaseType :: init ( rowEntity , colEntity );
+
+          numRows_  = rowMapper_.numDofs(colEntity);
+          numCols_  = colMapper_.numDofs(rowEntity);
+          matrices_.resize( numRows_ );
+
+          if( matrixObj_.implicitModeActive() )
+          {
+            // implicit access via matrix.entry( i, j )
+            RowFunctor< ColFunctorImplicitBuildMode >
+              rowFunctor(colEntity, colMapper_, matrixObj_.matrix(), matrices_, numCols_);
+            rowMapper_.mapEach(rowEntity, rowFunctor);
+          }
+          else
+          {
+            // normal access to matrix via operator [i][j]
+            RowFunctor< ColFunctor > rowFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
+            colMapper_.mapEach(colEntity, rowFunctor);
+          }
+        }
+
+        LocalMatrix(const LocalMatrix& org)
+          : BaseType( org )
+          , rowMapper_(org.rowMapper_)
+          , colMapper_(org.colMapper_)
+          , numRows_( org.numRows_ )
+          , numCols_( org.numCols_ )
+          , matrices_(org.matrices_)
+          , matrixObj_(org.matrixObj_)
+        {
+        }
+
+      private:
+        // check whether given (row,col) pair is valid
+        void check(int localRow, int localCol) const
+        {
+          const size_t row = (int) localRow / littleRows;
+          const size_t col = (int) localCol / littleCols;
+          const int lRow = localRow%littleRows;
+          const int lCol = localCol%littleCols;
+          assert( row < matrices_.size() ) ;
+          assert( col < matrices_[row].size() );
+          assert( lRow < littleRows );
+          assert( lCol < littleCols );
+        }
+
+        DofType& getValue(const int localRow, const int localCol)
+        {
+          const int row = (int) localRow / littleRows;
+          const int col = (int) localCol / littleCols;
+          const int lRow = localRow%littleRows;
+          const int lCol = localCol%littleCols;
+          return (*matrices_[row][col])[lRow][lCol];
+        }
+
+      public:
+        const DofType get(const int localRow, const int localCol) const
+        {
+          const int row = (int) localRow / littleRows;
+          const int col = (int) localCol / littleCols;
+          const int lRow = localRow%littleRows;
+          const int lCol = localCol%littleCols;
+          return (*matrices_[row][col])[lRow][lCol];
+        }
+
+        void scale (const DofType& scalar)
+        {
+          for(size_t i=0; i<matrices_.size(); ++i)
+            for(size_t j=0; j<matrices_[i].size(); ++j)
+              (*matrices_[i][j]) *= scalar;
+        }
+
+        void add(const int localRow, const int localCol , const DofType value)
+        {
+#ifndef NDEBUG
+          check(localRow,localCol);
+#endif
+          getValue(localRow,localCol) += value;
+        }
+
+        void set(const int localRow, const int localCol , const DofType value)
+        {
+#ifndef NDEBUG
+          check(localRow,localCol);
+#endif
+          getValue(localRow,localCol) = value;
+        }
+
+        //! make unit row (all zero, diagonal entry 1.0 )
+        void unitRow(const int localRow)
+        {
+          const int row = (int) localRow / littleRows;
+          const int lRow = localRow%littleRows;
+
+          // clear row
+          doClearRow( row, lRow );
+
+          // set diagonal entry to 1
+          (*matrices_[row][row])[lRow][lRow] = 1;
+        }
+
+        //! clear all entries belonging to local matrix
+        void clear ()
+        {
+          for(int i=0; i<matrices_.size(); ++i)
+            for(int j=0; j<matrices_[i].size(); ++j)
+              (*matrices_[i][j]) = (DofType) 0;
+        }
+
+        //! set matrix row to zero
+        void clearRow ( const int localRow )
+        {
+          const int row = (int) localRow / littleRows;
+          const int lRow = localRow%littleRows;
+
+          // clear the row
+          doClearRow( row, lRow );
+        }
+
+        //! empty as the little matrices are already sorted
+        void resort ()
+        {}
+
+    protected:
+        //! set matrix row to zero
+        void doClearRow ( const int row, const int lRow )
+        {
+          // get number of columns
+          const int col = this->columns();
+          for(int localCol=0; localCol<col; ++localCol)
+          {
+            const int col = (int) localCol / littleCols;
+            const int lCol = localCol%littleCols;
+            (*matrices_[row][col])[lRow][lCol] = 0;
+          }
+        }
+
+      }; // end of class LocalMatrix
+
+    public:
+      //! type of local matrix
+      typedef LocalMatrix<ThisType> ObjectType;
+      typedef ThisType LocalMatrixFactoryType;
+      typedef ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
+      //! type of local matrix
+      typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
+      typedef ColumnObject< ThisType > LocalColumnObjectType;
+
+    protected:
+      const DomainSpaceType & domainSpace_;
+      const RangeSpaceType & rangeSpace_;
+
+      // sepcial row mapper
+      RowMapperType& rowMapper_;
+      // special col mapper
+      ColMapperType& colMapper_;
+
+      int size_;
+
+      int sequence_;
+
+      mutable MatrixType* matrix_;
+
+      // ParallelScalarProductType scp_;
+
+      mutable LocalMatrixStackType localMatrixStack_;
+
+      mutable MatrixAdapterType* matrixAdap_;
+      mutable ColumnBlockVectorType* Arg_;
+      mutable RowBlockVectorType*    Dest_;
+      // overflow fraction for implicit build mode
+      const double overflowFraction_;
+
+      // prohibit copy constructor
+      ISTLMatrixObject(const ISTLMatrixObject&);
+    public:
+      //! constructor
+      //! \param rowSpace space defining row structure
+      //! \param colSpace space defining column structure
+      ISTLMatrixObject ( const DomainSpaceType &domainSpace,
+                         const RangeSpaceType &rangeSpace,
+                         const std :: string &paramfile = "" )
+        : domainSpace_(domainSpace)
+        , rangeSpace_(rangeSpace)
+        // create scp to have at least one instance
+        // otherwise instance will be deleted during setup
+        // get new mappers with number of dofs without considerung block size
+        , rowMapper_( rangeSpace.blockMapper() )
+        , colMapper_( domainSpace.blockMapper() )
+        , size_(-1)
+        , sequence_(-1)
+        , matrix_(0)
+        // , scp_(rangeSpace())
+        , localMatrixStack_( *this )
+        , matrixAdap_(0)
+        , Arg_(0)
+        , Dest_(0)
+        , overflowFraction_( Parameter::getValue( "istl.matrix.overflowfraction", 1.0 ) )
+      {
+      }
+
+      /** \copydoc Dune::Fem::Operator::assembled */
+      static const bool assembled = true ;
+
+      const ThisType& systemMatrix() const { return *this; }
+      ThisType& systemMatrix() { return *this; }
+    public:
+      //! destructor
+      ~ISTLMatrixObject()
+      {
+        removeObj( true );
+      }
+
+      //! return reference to system matrix
+      MatrixType & matrix() const
+      {
+        assert( matrix_ );
+        return *matrix_;
+      }
+
+      void printTexInfo(std::ostream& out) const
+      {
+        out << "ISTL MatrixObj: ";
+        out  << "\\\\ \n";
+      }
+
+      //! return matrix adapter object
+      std::string preconditionName() const
+      {
+        return "";
+      }
+
+      /*
+      MatrixAdapterType createMatrixAdapter() const
+      {
+        // typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
+        // PreConType preconAdapter(matrix(), numIterations, relaxFactor_, preconditioning );
+        return MatrixAdapterType(matrix(), domainSpace(), rangeSpace() ); // , preconAdapter );
+      }
+      */
+      void createMatrixAdapter () const
+      {
+        if( ! matrixAdap_ )
+        {
+          matrixAdap_ = new MatrixAdapterType(matrixAdapter());
+        }
+      }
+
+      //! return matrix adapter object
+      const MatrixAdapterType& matrixAdapter() const
+      {
+        if( matrixAdap_ == 0 )
+          matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
+        return *matrixAdap_;
+      }
+      MatrixAdapterType& matrixAdapter()
+      {
+        if( matrixAdap_ == 0 )
+          matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
+        return *matrixAdap_;
+      }
+
+    protected:
+      MatrixAdapterType matrixAdapterObject() const
+      {
+        // need some precondition object - empty here
+        typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
+        return MatrixAdapterType(matrix(), domainSpace(), rangeSpace(), PreConType() );
+      }
+
+    public:
+      bool implicitModeActive() const
+      {
+        // implicit build mode is only active when the
+        // build mode of the matrix is implicit and the
+        // matrix is currently being build
+        if( matrix().buildMode()  == MatrixType::implicit &&
+            matrix().buildStage() == MatrixType::building )
+          return true;
+
+        return false;
+      }
+
+      // compress matrix if not already done before and only in implicit build mode
+      void communicate( )
+      {
+        if( implicitModeActive() )
+          matrix().compress();
+      }
+
+      //! return true, because in case of no preconditioning we have empty
+      //! preconditioner (used by OEM methods)
+      bool hasPreconditionMatrix() const { return true; }
+
+      //! set all matrix entries to zero
+      void clear()
+      {
+        matrix().clear();
+        // clean matrix adapter and other helper classes
+        removeObj( false );
+      }
+
+      //! reserve memory for assemble based on the provided stencil
+      template <class Stencil>
+      void reserve(const Stencil &stencil,
+                   const bool implicit = true )
+      {
+        // if grid sequence number changed, rebuild matrix
+        if(sequence_ != domainSpace().sequence())
+        {
+          removeObj( true );
+
+          if( implicit )
+          {
+            size_t nnz = stencil.maxNonZerosEstimate();
+            if( nnz == 0 )
+            {
+              Stencil tmpStencil( stencil );
+              tmpStencil.fill( *(domainSpace_.begin()), *(rangeSpace_.begin()) );
+              nnz = tmpStencil.maxNonZerosEstimate();
+            }
+            matrix_ = new MatrixType( rowMapper_.size(), colMapper_.size(), nnz, overflowFraction_ );
+          }
+          else
+          {
+            matrix_ = new MatrixType( rowMapper_.size(), colMapper_.size() );
+            matrix().createEntries( stencil.globalStencil() );
+          }
+
+          sequence_ = domainSpace().sequence();
+        }
+      }
+
+      //! setup new matrix with hanging nodes taken into account
+      template <class HangingNodesType>
+      void changeHangingNodes(const HangingNodesType& hangingNodes)
+      {
+        // create new matrix
+        MatrixType* newMatrix = new MatrixType(rowMapper_.size(), colMapper_.size());
+
+        // setup with hanging rows
+        newMatrix->setup( *matrix_ , hangingNodes );
+
+        // remove old matrix
+        removeObj( true );
+        // store new matrix
+        matrix_ = newMatrix;
+      }
+
+      //! extract diagonal entries of the matrix to a discrete function of type
+      //! BlockVectorDiscreteFunction
+      void extractDiagonal( ColumnDiscreteFunctionType& diag ) const
+      {
+        // extract diagonal entries
+        matrix().extractDiagonal( diag.blockVector() );
+      }
+
+      //! we only have right precondition
+      bool rightPrecondition() const { return false; }
+
+      //! mult method for OEM Solver
+      void multOEM(const double* arg, double* dest) const
+      {
+        createBlockVectors();
+
+        assert( Arg_ );
+        assert( Dest_ );
+
+        RowBlockVectorType& Arg = *Arg_;
+        ColumnBlockVectorType & Dest = *Dest_;
+
+        // copy from double
+        double2Block(arg, Arg);
+
+        // call mult of matrix adapter
+        assert( matrixAdap_ );
+        matrixAdap_->apply( Arg, Dest );
+
+        //  copy back
+        block2Double( Dest , dest);
+      }
+
+      //! apply with discrete functions
+      void apply(const RowDiscreteFunctionType& arg,
+                 ColumnDiscreteFunctionType& dest) const
+      {
+        createMatrixAdapter();
+        assert( matrixAdap_ );
+        matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
+      }
+
+      //! apply with arbitrary discrete functions calls multOEM
+      template <class RowDFType, class ColDFType>
+      void apply(const RowDFType& arg, ColDFType& dest) const
+      {
+        multOEM( arg.leakPointer(), dest.leakPointer ());
+      }
+
+      //! mult method of matrix object used by oem solver
+      void multOEM(const ColumnLeakPointerType& arg, RowLeakPointerType& dest) const
+      {
+        createMatrixAdapter();
+        assert( matrixAdap_ );
+        matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
+      }
+
+      //! dot method for OEM Solver
+      double ddotOEM(const double* v, const double* w) const
+      {
+        createBlockVectors();
+
+        assert( Arg_ );
+        assert( Dest_ );
+
+        RowBlockVectorType&    V = *Arg_;
+        ColumnBlockVectorType& W = *Dest_;
+
+        // copy from double
+        double2Block(v, V);
+        double2Block(w, W);
+
+#if HAVE_MPI
+        // in parallel use scalar product of discrete functions
+        ISTLBlockVectorDiscreteFunction< DomainSpaceType > vF("ddotOEM:vF", domainSpace(), V );
+        ISTLBlockVectorDiscreteFunction< RangeSpaceType  > wF("ddotOEM:wF", rangeSpace(), W );
+        return vF.scalarProductDofs( wF );
+#else
+        return V * W;
+#endif
+      }
+
+      //! resort row numbering in matrix to have ascending numbering
+      void resort()
+      {
+      }
+
+      //! create precondition matrix does nothing because preconditioner is
+      //! created only when requested
+      void createPreconditionMatrix()
+      {
+      }
+
+      //! print matrix
+      void print(std::ostream & s) const
+      {
+        matrix().print(std::cout);
+      }
+
+      const DomainSpaceType& domainSpace() const { return domainSpace_; }
+      const RangeSpaceType&  rangeSpace() const  { return rangeSpace_; }
+
+      const RowMapperType& rowMapper() const { return rowMapper_; }
+      const ColMapperType& colMapper() const { return colMapper_; }
+
+      //! interface method from LocalMatrixFactory
+      ObjectType* newObject() const
+      {
+        return new ObjectType(*this,
+                              domainSpace(),
+                              rangeSpace());
+      }
+
+      //! return local matrix object
+      LocalMatrixType localMatrix(const RowEntityType& rowEntity,
+                                  const ColumnEntityType& colEntity) const
+      {
+        return LocalMatrixType( localMatrixStack_, rowEntity, colEntity );
+      }
+      LocalColumnObjectType localColumn( const ColumnEntityType &colEntity ) const
+      {
+        return LocalColumnObjectType ( *this, colEntity );
+      }
+
+    protected:
+      void preConErrorMsg(int preCon) const
+      {
+        exit(1);
+      }
+
+      void removeObj( const bool alsoClearMatrix )
+      {
+        delete Dest_; Dest_ = 0;
+        delete Arg_;  Arg_ = 0;
+        delete matrixAdap_; matrixAdap_ = 0;
+
+        if( alsoClearMatrix )
+        {
+          delete matrix_;
+          matrix_ = 0;
+        }
+      }
+
+      // copy double to block vector
+      void double2Block(const double* arg, RowBlockVectorType& dest) const
+      {
+        typedef typename RowBlockVectorType :: block_type BlockType;
+        const size_t blocks = dest.size();
+        int idx = 0;
+        for(size_t i=0; i<blocks; ++i)
+        {
+          BlockType& block = dest[i];
+          enum { blockSize = BlockType :: dimension };
+          for(int j=0; j<blockSize; ++j, ++idx)
+          {
+            block[j] = arg[idx];
+          }
+        }
+      }
+
+      // copy block vector to double
+      void block2Double(const ColumnBlockVectorType& arg, double* dest) const
+      {
+        typedef typename ColumnBlockVectorType :: block_type BlockType;
+        const size_t blocks = arg.size();
+        int idx = 0;
+        for(size_t i=0; i<blocks; ++i)
+        {
+          const BlockType& block = arg[i];
+          enum { blockSize = BlockType :: dimension };
+          for(int j=0; j<blockSize; ++j, ++idx)
+          {
+            dest[idx] = block[j];
+          }
+        }
+      }
+
+      void createBlockVectors() const
+      {
+        if( ! Arg_ || ! Dest_ )
+        {
+          delete Arg_; delete Dest_;
+          Arg_  = new RowBlockVectorType( rowMapper_.size() );
+          Dest_ = new ColumnBlockVectorType( colMapper_.size() );
+        }
+
+        createMatrixAdapter ();
+      }
+
+    };
+
+    //! MatrixObject handling an istl matrix
+    template <class SpaceImp>
+    class ISTLMatrixObject<SpaceImp,SpaceImp>
+    {
+    public:
+      typedef SpaceImp DomainSpaceImp;
+      typedef SpaceImp RangeSpaceImp;
       //! type of space defining row structure
       typedef DomainSpaceImp DomainSpaceType;
       //! type of space defining column structure

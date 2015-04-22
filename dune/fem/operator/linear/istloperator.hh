@@ -14,7 +14,6 @@ namespace Dune
 
     // ISTLMatrixOperator
     // ------------------
-
     template< class DomainFunction, class RangeFunction >
     class ISTLLinearOperator
     : public ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
@@ -48,6 +47,7 @@ namespace Dune
       {
         return *this;
       }
+
       Base &systemMatrix ()
       {
         return *this;

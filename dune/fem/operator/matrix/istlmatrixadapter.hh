@@ -123,7 +123,7 @@ namespace Dune
 
       virtual double residuum(const Y& rhs, X& x) const
       {
-        X tmp (x);
+        Y tmp( rhs );
 
         this->apply(x,tmp);
         tmp -= rhs;

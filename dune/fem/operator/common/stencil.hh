@@ -131,7 +131,7 @@ namespace Dune
         LocalStencilType *localStencil_;
         bool fill_;
       };
-        const DomainBlockMapper &domainBlockMapper_;
+      const DomainBlockMapper &domainBlockMapper_;
       const RangeBlockMapper &rangeBlockMapper_;
       GlobalStencilType globalStencil_;
     };

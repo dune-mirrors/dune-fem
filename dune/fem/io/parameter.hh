@@ -509,7 +509,7 @@ namespace Dune
       template< class T >
       static T getValue ( const std::string &key, const T &defaultValue )
       {
-        T value;
+        T value = defaultValue;
         get( key, defaultValue, value );
         return value;
       }
