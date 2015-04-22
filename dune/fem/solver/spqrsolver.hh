@@ -44,7 +44,7 @@ class SPQROp:public Operator<DF, DF>
   typedef Op OperatorType;
 
   // \brief The column-compressed matrix type.
-  typedef ColCompMatrix<typename OperatorType::MatrixType> CCSMatrixType;
+  typedef ColCompMatrix<typename OperatorType::MatrixType::MatrixBaseType> CCSMatrixType;
   typedef typename DiscreteFunctionType::DofType DofType;
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 

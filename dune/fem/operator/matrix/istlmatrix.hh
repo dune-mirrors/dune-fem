@@ -48,6 +48,8 @@ namespace Dune
         typedef ColDiscreteFunctionImp ColDiscreteFunctionType;
 
         typedef BCRSMatrix<LittleBlockType> BaseType;
+        //! type of the base matrix
+        typedef BaseType MatrixBaseType;
         typedef typename BaseType :: RowIterator RowIteratorType ;
         typedef typename BaseType :: ColIterator ColIteratorType ;
 

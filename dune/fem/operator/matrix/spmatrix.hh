@@ -63,6 +63,8 @@ namespace Dune
       typedef T Ttype;  //! remember the value type
 
       typedef SparseRowMatrix<T> ThisType;
+      //! type of the base matrix (for consistency with ISTLMatrixObject)
+      typedef ThisType MatrixBaseType;
 
       enum { defaultCol = -1 };
       enum { firstCol = defaultCol + 1 };
