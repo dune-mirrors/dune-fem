@@ -19,7 +19,7 @@ namespace Dune
     // --------------------------
 
     template< class BasisFunctionSet, class Quadrature >
-    Dune::FieldVector< typename BasisFunctionSet::RangeType::value_type, 5 >
+    Dune::FieldVector< typename BasisFunctionSet::RangeType::value_type, 6 >
     checkQuadratureConsistency ( const BasisFunctionSet &basisFunctionSet, const Quadrature &quadrature,
                                  bool supportsHessians = false )
     {
@@ -67,7 +67,7 @@ namespace Dune
           jacobianFactor[ j ][ k ] = random();
 
       // return value
-      Dune::FieldVector< RangeFieldType, 5 > ret;
+      Dune::FieldVector< RangeFieldType, 6 > ret;
 
       const std::size_t nop = quadrature.nop();
       for( std::size_t qp = 0; qp < nop; ++qp )
@@ -161,6 +161,34 @@ namespace Dune
             error += std::abs( r2[ i ] - r1[ i ] );
 
           ret[ 4 ] = std::max( ret[ 4 ], error );
+        }
+
+        // check value, jacobian axpy method
+        {
+          DomainType x = coordinate( quadrature[ qp ] );
+          std::vector< RangeFieldType > r1( dofs );
+          std::vector< RangeFieldType > r2( dofs );
+
+          basisFunctionSet.axpy( x, valueFactor, jacobianFactor, r1 );
+
+          std::vector< RangeType > values( basisFunctionSet.size() );
+          std::vector< JacobianRangeType > jacobians( basisFunctionSet.size() );
+
+          basisFunctionSet.evaluateAll( x, values );
+          basisFunctionSet.jacobianAll( x, jacobians );
+
+          for( std::size_t i = 0; i < values.size(); ++i )
+          {
+            r2[ i ] += valueFactor * values[ i ];
+            for( int j = 0; j < JacobianRangeType::rows; ++j )
+              r2[ i ] += jacobianFactor[ j ] * jacobians[ i ][ j ];
+          }
+
+          RangeFieldType error = 0;
+          for( std::size_t i = 0; i < values.size(); ++i )
+            error += std::abs( r2[ i ] - r1[ i ] );
+
+          ret[ 5 ] = std::max( ret[ 5 ], error );
         }
       }
 

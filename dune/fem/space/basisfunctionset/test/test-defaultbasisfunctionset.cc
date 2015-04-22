@@ -55,7 +55,7 @@ void traverse ( GridPartType &gridPart )
   typedef Dune::Fem::OrthonormalShapeFunctionSet< ScalarFunctionSpaceType, polorder > ScalarOrthonormalShapeFunctionSetType;
 
   // type of error
-  typedef Dune::FieldVector< double, 5 > ErrorType;
+  typedef Dune::FieldVector< double, 6 > ErrorType;
 
   // prepare shapefunctions
   ScalarLagrangeShapeFunctionSetType scalarLagrangeShapeFunctionSet( entity.type() );
