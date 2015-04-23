@@ -56,6 +56,8 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
+      TensorProductShapeFunctionSet () = default;
+
       explicit TensorProductShapeFunctionSet ( const ShapeFunctionSetTupleType &shapeFunctionSetTuple );
       ~TensorProductShapeFunctionSet ();
 
