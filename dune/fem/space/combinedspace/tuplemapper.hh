@@ -230,7 +230,7 @@ namespace Dune
       SizeType oldIndex ( const int hole, const int block ) const
       {
         int comp = -1;
-        SizeType oIndex;
+        SizeType oIndex = 0;
         ForLoop< OldIndex, 0, mapperTupleSize - 1 >::apply( oIndex, comp, hole, block, mapperTuple_ );
         assert( comp >= 0 );
         return oIndex + globalOffset_[ comp ];
@@ -256,7 +256,7 @@ namespace Dune
       SizeType oldOffSet ( const int block ) const
       {
         int comp = -1;
-        SizeType oOffset;
+        SizeType oOffset = 0;
         ForLoop< OldOffset, 0, mapperTupleSize - 1 >::apply( oOffset, comp, block, mapperTuple_ );
         assert( comp >= 0 );
         return oOffset + oldGlobalOffset_[ comp ];
@@ -266,7 +266,7 @@ namespace Dune
       SizeType offSet ( const int block ) const
       {
         int comp = -1;
-        SizeType offset;
+        SizeType offset = 0;
         ForLoop< Offset, 0, mapperTupleSize - 1 >::apply( offset, comp, block, mapperTuple_ );
         assert( comp >= 0 );
         return offset + globalOffset_[ comp ];
