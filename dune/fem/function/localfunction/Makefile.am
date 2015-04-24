@@ -2,6 +2,7 @@ localfunctiondir =  $(includedir)/dune/fem/function/localfunction
 
 localfunction_HEADERS = average.hh \
 			const.hh \
+			converter.hh \
 			localfunction.hh \
 			localfunctionsetadapter.hh \
 			localfunctionset.hh \
