@@ -21,11 +21,6 @@
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/storage/objectstack.hh>
 
-#ifdef ENABLE_UMFPACK
-#include <umfpack.h>
-// #include <ldl.h>
-#endif
-
 namespace Dune
 {
 
@@ -82,8 +77,6 @@ namespace Dune
       // temporary mem for resort
       std::vector<int> newIndices_;
       std::vector<T> newValues_;
-
-      std::set< int > clearedRows_;
 
       // omega for ssor preconditioning
       const double omega_;
@@ -359,12 +352,10 @@ namespace Dune
       //! apply preconditioning, calls ssorPreconditioning at the moment
       void precondition (const T*u , T*x) const {  ssorPrecondition(u,x); }
 
-      //! solve A x = b using the UMFPACK direct solver
       void solveUMF(const T* b, T* x);
       void solveUMFNonSymmetric(const T* b, T* x);
 
     private:
-      void setupUMF(int n, int nAll, int* Ap, int* Ai, T* Ax, int &ANZ, int &LNZ);
       //! delete memory
       void removeObj();
     };
@@ -429,7 +420,6 @@ namespace Dune
     public:
       typedef MatrixType PreconditionMatrixType;
 
-    public:
       //! type of local matrix
       typedef LocalMatrix<ThisType> ObjectType;
       typedef ThisType LocalMatrixFactoryType;
@@ -562,27 +552,14 @@ namespace Dune
         }
       }
 
-      //! solve A dest = arg using the UMFPACK direct solver
       template< class DomainFunction, class RangeFunction >
       void solveUMF( const DomainFunction &arg, RangeFunction &dest ) const
       {
-        DUNE_THROW(NotImplemented,"solveUMF only implemented for AdaptiveDiscreteFunctions");
-      }
-      template< class DomainFunction, class RangeFunction >
-      void solveUMFNonSymmetric( const DomainFunction &arg, RangeFunction &dest ) const
-      {
-        DUNE_THROW(NotImplemented,"solveUMF only implemented for AdaptiveDiscreteFunctions");
+         matrix_.solveUMF( arg.leakPointer(), dest.leakPointer() );
       }
 
-      //! solve A dest = arg using the UMFPACK direct solver
-      void solveUMF ( const AdaptiveDiscreteFunction< DomainSpaceType > &arg,
-                      AdaptiveDiscreteFunction< RangeSpaceType> &dest ) const
-      {
-        matrix_.solveUMF( arg.leakPointer(), dest.leakPointer() );
-      }
-      //! solve A dest = arg using the UMFPACK direct solver
-      void solveUMFNonSymmetric ( const AdaptiveDiscreteFunction< DomainSpaceType > &arg,
-                                  AdaptiveDiscreteFunction< RangeSpaceType> &dest ) const
+      template< class DomainFunction, class RangeFunction >
+      void solveUMFNonSymmetric( const DomainFunction &arg, RangeFunction &dest ) const
       {
         matrix_.solveUMFNonSymmetric( arg.leakPointer(), dest.leakPointer() );
       }

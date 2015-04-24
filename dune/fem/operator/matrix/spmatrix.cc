@@ -4,10 +4,6 @@ namespace Dune
   namespace Fem
   {
 
-    // where is the following used??
-    // it is not used in this class => commented out
-    // #define EPS 1.0E-15
-
     /*****************************/
     /*  Constructor(s)           */
     /*****************************/
@@ -23,7 +19,6 @@ namespace Dune
       nonZeros_ = 0;
       if (checkNonConstMethods) assert(checkConsistency());
     }
-
 
     template <class T>
     SparseRowMatrix<T>::SparseRowMatrix(int rows, int cols, int nz,
@@ -58,7 +53,6 @@ namespace Dune
       values_ = 0;
       col_ = 0;
       nonZeros_ = 0;
-      clearedRows_.clear();
       if (checkNonConstMethods) assert(checkConsistency());
     }
 
@@ -203,14 +197,12 @@ namespace Dune
       return 0;
     }
 
-
     template< class T >
     inline T SparseRowMatrix<T>
       ::operator() ( const unsigned int row, const unsigned int col ) const
     {
       return (*this)( int( row ), int( col ) );
     }
-
 
     template <class T>
     int SparseRowMatrix<T>::colIndex(int row, int col)
@@ -278,8 +270,6 @@ namespace Dune
         nonZeros_[i] = 0;
       }
 
-      clearedRows_.clear();
-
       if (checkNonConstMethods) assert(checkConsistency());
     }
 
@@ -301,12 +291,8 @@ namespace Dune
         ++col;
       }
 
-      // store row number (for UMFPACK solver)
-      clearedRows_.insert( row );
-
       if (checkNonConstMethods) assert(checkConsistency());
     }
-
 
     template <class T>
     void SparseRowMatrix<T>::clearCol( int col )
@@ -322,8 +308,6 @@ namespace Dune
 
       if (checkNonConstMethods) assert(checkConsistency());
     }
-
-
 
     template <class T>
     void SparseRowMatrix<T>::scaleRow(int row, const T& val )
@@ -437,6 +421,7 @@ namespace Dune
       col_[row*nz_ + whichCol] = col;
       if (checkNonConstMethods) assert(checkConsistency());
     }
+
     /***************************************/
     /*  Matrix-MV_Vector multiplication    */
     /***************************************/
@@ -508,7 +493,6 @@ namespace Dune
     /***************************************/
     /*  Matrix-MV_Vector multiplication    */
     /***************************************/
-
     template <class T> template <class ArgDFType, class DestDFType>
     void SparseRowMatrix<T>::apply(const ArgDFType &f, DestDFType &ret) const
     {
@@ -659,22 +643,20 @@ namespace Dune
           }
 
           for (int fakeCol =0; fakeCol < nonZeros_[row]; fakeCol++)
-              if ((realCol(row,fakeCol)<0) || (realCol(row,fakeCol)>=dim_[1]))
-              {
-
-                std::cout << "error in consistency of row " << row <<
-                    ": NonZeros_[row] = "<< nonZeros_[row] <<
-                    ", fakeCol = " << fakeCol << ", realCol(fakeCol) = "
-                          << realCol(row,fakeCol) << "\n" ;
-                consistent = false;
-                return(consistent);
-              }
+            if ((realCol(row,fakeCol)<0) || (realCol(row,fakeCol)>=dim_[1]))
+            {
+              std::cout << "error in consistency of row " << row <<
+                ": NonZeros_[row] = "<< nonZeros_[row] <<
+                ", fakeCol = " << fakeCol << ", realCol(fakeCol) = "
+                << realCol(row,fakeCol) << "\n" ;
+              consistent = false;
+              return(consistent);
+            }
         }
-
         return(consistent);
       }
 
-    //  std::cout << "consistent = " << consistent << "\n";
+      //  std::cout << "consistent = " << consistent << "\n";
 
       assert(consistent);
 
@@ -712,9 +694,6 @@ namespace Dune
       values_[row*nz_] = 1.0;
       col_[row*nz_] = row;
       nonZeros_[row] = 1;
-
-      // store row number (for UMFPACK solver)
-      clearedRows_.insert( row );
 
       if (checkNonConstMethods) assert(checkConsistency());
     }
@@ -973,214 +952,15 @@ namespace Dune
     }
 
     template <class T>
-    void SparseRowMatrix<T>::setupUMF(int n, int nAll, int* Ap, int* Ai, T* Ax,int &ANZ, int &LNZ)
-    {
-      // clear all columns that have been cleared from unitRow
-      typedef typename std::set<int> :: iterator iterator ;
-      const iterator end = clearedRows_.end();
-      // needed for Lagrange dirichlet nodes
-      if( clearedRows_.size() > 0 )
-      {
-        for(int row = 0; row < dim_[0]; ++ row)
-        {
-          if( clearedRows_.find( row ) != end )
-          {
-            unitCol( row );
-          }
-        }
-      }
-
-      int nZ = 0;
-      unsigned int row = 0;
-      for(int i=0; i<nAll; ++i)
-      {
-        if( i % nz_ == 0 )
-        {
-          const int row = (int)i / nz_ ;
-          Ap[ row ] = nZ;
-        }
-        if( col_[i] != defaultCol && values_[i] != 0 )
-        {
-          Ai[ nZ ] = col_   [ i ];
-          Ax[ nZ ] = values_[ i ];
-          ++ nZ ;
-          if (col_[i]<(int)row)
-            ++ LNZ;
-          else
-            ++ ANZ;
-        }
-      }
-      Ap[ n ] = nZ;
-    }
-
-    // use new method with symmetric/nonsymmetric flag
-    template <class T>
     void SparseRowMatrix<T>::solveUMF(const T* b, T* x)
     {
-#ifdef ENABLE_UMFPACK
-      const int n = dim_[0];
-      const int nAll = n * nz_ ;
-
-      int* Ap = new int [n+1];
-      int* Ai = new int [ nAll ];
-      T*   Ax = new   T [ nAll ];
-
-      int ANZ,LNZ;
-      setupUMF(n,nAll,Ap,Ai,Ax,ANZ,LNZ);
-
-      int status;
-
-      void *Symbolic, *Numeric;
-      // symbolic analysis
-      status = umfpack_di_symbolic(n, n, Ap, Ai, Ax, &Symbolic, NULL, NULL);
-      if (status != UMFPACK_OK)
-      {
-        if (status == UMFPACK_WARNING_singular_matrix)
-          fprintf(stderr, "matrix is singluar!\n");
-        else if(status == UMFPACK_ERROR_invalid_matrix)
-          fprintf(stderr, "Number of entries in the matrix is negative, Ap [0] is nonzero, a column has a negative number of entries, a row index is out of bounds, or the columns of input matrix were jumbled (unsorted columns or duplicate entries).\n");
-        else if(status == UMFPACK_ERROR_out_of_memory)
-          fprintf(stderr, "Insufficient memory to perform the symbolic analysis.  If the analysis requires more than 2GB of memory and you are using the 32-bit (\"int\") version of UMFPACK, then you are guaranteed   to run out of memory.  Try using the 64-bit version of UMFPACK.\n");
-        else if(status == UMFPACK_ERROR_argument_missing)
-          fprintf(stderr, "One or more required arguments is missing.\n");
-        else if(status == UMFPACK_ERROR_internal_error)
-          fprintf(stderr, "omething very serious went wrong.  This is a bug.  Please contact the author (DrTimothyAldenDavis@gmail.com).\n");
-        else
-          fprintf(stderr, "umfpack_di_numeric() failed, %d\n", status);
-      }
-      // numeric analysis
-      status = umfpack_di_numeric(Ap, Ai, Ax, Symbolic, &Numeric, NULL, NULL);
-      if (status != UMFPACK_OK) {
-        if (status == UMFPACK_WARNING_singular_matrix)
-          fprintf(stderr, "matrix is singluar!\n");
-        else if(status == UMFPACK_ERROR_invalid_matrix)
-          fprintf(stderr, "Number of entries in the matrix is negative, Ap [0] is nonzero, a column has a negative number of entries, a row index is out of bounds, or the columns of input matrix were jumbled (unsorted columns or duplicate entries).\n");
-        else if(status == UMFPACK_ERROR_out_of_memory)
-          fprintf(stderr, "Insufficient memory to perform the symbolic analysis.  If the analysis requires more than 2GB of memory and you are using the 32-bit (\"int\") version of UMFPACK, then you are guaranteed     to run out of memory.  Try using the 64-bit version of UMFPACK.\n");
-        else if(status == UMFPACK_ERROR_argument_missing)
-          fprintf(stderr, "One or more required arguments is missing.\n");
-        else if(status == UMFPACK_ERROR_internal_error)
-          fprintf(stderr, "omething very serious went wrong.  This is a bug. Please contact the author (DrTimothyAldenDavis@gmail.com).\n");
-        else
-          fprintf(stderr, "umfpack_di_numeric() failed, %d\n", status);
-      }
-      umfpack_di_free_symbolic (&Symbolic) ;
-
-      // solve Ax = b
-      // solve A^T x = b (since UMFPACK needs column wise storage, we got
-      // row wise storage )
-      status = umfpack_di_solve(UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, NULL, NULL);
-      if (status != UMFPACK_OK) {
-        if (status == UMFPACK_WARNING_singular_matrix)
-          fprintf(stderr, "matrix is singluar!\n");
-        else if(status == UMFPACK_ERROR_invalid_matrix)
-          fprintf(stderr, "Number of entries in the matrix is negative, Ap [0] is nonzero, a column has a negative number of entries, a row index is out of bounds, or the columns of input matrix were jumbled (unsorted columns or duplicate entries).\n");
-        else if(status == UMFPACK_ERROR_out_of_memory)
-          fprintf(stderr, "Insufficient memory to perform the symbolic analysis.  If the analysis requires more than 2GB of memory and you are using the 32-bit (\"int\") version of UMFPACK, then you are guaranteed     to run out of memory.  Try using the 64-bit version of UMFPACK.\n");
-        else if(status == UMFPACK_ERROR_argument_missing)
-          fprintf(stderr, "One or more required arguments is missing.\n");
-        else if(status == UMFPACK_ERROR_internal_error)
-          fprintf(stderr, "omething very serious went wrong.  This is a bug.  Please contact the author (DrTimothyAldenDavis@gmail.com).\n");
-        else
-          fprintf(stderr, "umfpack_di_numeric() failed, %d\n", status);
-      }
-      umfpack_di_free_numeric (&Numeric) ;
-
-      // delete temp memory
-      delete [] Ap;
-      delete [] Ax;
-      delete [] Ai;
-#endif // ENABLE_UMFPACK
+       DUNE_THROW(NotImplemented,"solveUMF is not implemented and will be removed!Please use directly Dune::Fem::UMFPACKOp.");
     }
+
     template <class T>
     void SparseRowMatrix<T>::solveUMFNonSymmetric(const T* b, T* x)
     {
-#ifdef ENABLE_UMFPACK
-      const int n = dim_[0];
-      const int nAll = n * nz_ ;
-
-      int* Ap = new int [n+1];
-      int* Ai = new int [ nAll ];
-      T*   Ax = new   T [ nAll ];
-
-      int ANZ,LNZ;
-      setupUMF(n,nAll,Ap,Ai,Ax,ANZ,LNZ);
-
-      int status;
-
-      // for nonsymmetric matrix we need to transpose A (column vs. row storagei)
-      int* Cp = Ap;
-      int* Ci = Ai;
-      T* Cx = Ax;
-      Ap = new int [n+1];
-      Ai = new int [ nAll ];
-      Ax = new   T [ nAll ];
-      status = umfpack_di_transpose (n, n, Cp, Ci, Cx, (int *) NULL, (int *) NULL, Ap, Ai, Ax) ;
-      delete [] Cx;
-      delete [] Ci;
-      delete [] Cp;
-
-      void *Symbolic, *Numeric;
-      // symbolic analysis
-      status = umfpack_di_symbolic(n, n, Ap, Ai, Ax, &Symbolic, NULL, NULL);
-      if (status != UMFPACK_OK)
-      {
-        if (status == UMFPACK_WARNING_singular_matrix)
-          fprintf(stderr, "matrix is singluar!\n");
-        else if(status == UMFPACK_ERROR_invalid_matrix)
-          fprintf(stderr, "Number of entries in the matrix is negative, Ap [0] is nonzero, a column has a negative number of entries, a row index is out of bounds, or the columns of input matrix were jumbled (unsorted columns or duplicate entries).\n");
-        else if(status == UMFPACK_ERROR_out_of_memory)
-          fprintf(stderr, "Insufficient memory to perform the symbolic analysis.  If the analysis requires more than 2GB of memory and you are using the 32-bit (\"int\") version of UMFPACK, then you are guaranteed   to run out of memory.  Try using the 64-bit version of UMFPACK.\n");
-        else if(status == UMFPACK_ERROR_argument_missing)
-          fprintf(stderr, "One or more required arguments is missing.\n");
-        else if(status == UMFPACK_ERROR_internal_error)
-          fprintf(stderr, "omething very serious went wrong.  This is a bug.  Please contact the author (DrTimothyAldenDavis@gmail.com).\n");
-        else
-          fprintf(stderr, "umfpack_di_numeric() failed, %d\n", status);
-      }
-      // numeric analysis
-      status = umfpack_di_numeric(Ap, Ai, Ax, Symbolic, &Numeric, NULL, NULL);
-      if (status != UMFPACK_OK) {
-        if (status == UMFPACK_WARNING_singular_matrix)
-          fprintf(stderr, "matrix is singluar!\n");
-        else if(status == UMFPACK_ERROR_invalid_matrix)
-          fprintf(stderr, "Number of entries in the matrix is negative, Ap [0] is nonzero, a column has a negative number of entries, a row index is out of bounds, or the columns of input matrix were jumbled (unsorted columns or duplicate entries).\n");
-        else if(status == UMFPACK_ERROR_out_of_memory)
-          fprintf(stderr, "Insufficient memory to perform the symbolic analysis.  If the analysis requires more than 2GB of memory and you are using the 32-bit (\"int\") version of UMFPACK, then you are guaranteed     to run out of memory.  Try using the 64-bit version of UMFPACK.\n");
-        else if(status == UMFPACK_ERROR_argument_missing)
-          fprintf(stderr, "One or more required arguments is missing.\n");
-        else if(status == UMFPACK_ERROR_internal_error)
-          fprintf(stderr, "omething very serious went wrong.  This is a bug. Please contact the author (DrTimothyAldenDavis@gmail.com).\n");
-        else
-          fprintf(stderr, "umfpack_di_numeric() failed, %d\n", status);
-      }
-      umfpack_di_free_symbolic (&Symbolic) ;
-
-      // solve Ax = b
-      // solve A^T x = b (since UMFPACK needs column wise storage, we got
-      // row wise storage )
-      status = umfpack_di_solve(UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, NULL, NULL);
-      if (status != UMFPACK_OK) {
-        if (status == UMFPACK_WARNING_singular_matrix)
-          fprintf(stderr, "matrix is singluar!\n");
-        else if(status == UMFPACK_ERROR_invalid_matrix)
-          fprintf(stderr, "Number of entries in the matrix is negative, Ap [0] is nonzero, a column has a negative number of entries, a row index is out of bounds, or the columns of input matrix were jumbled (unsorted columns or duplicate entries).\n");
-        else if(status == UMFPACK_ERROR_out_of_memory)
-          fprintf(stderr, "Insufficient memory to perform the symbolic analysis.  If the analysis requires more than 2GB of memory and you are using the 32-bit (\"int\") version of UMFPACK, then you are guaranteed     to run out of memory.  Try using the 64-bit version of UMFPACK.\n");
-        else if(status == UMFPACK_ERROR_argument_missing)
-          fprintf(stderr, "One or more required arguments is missing.\n");
-        else if(status == UMFPACK_ERROR_internal_error)
-          fprintf(stderr, "omething very serious went wrong.  This is a bug.  Please contact the author (DrTimothyAldenDavis@gmail.com).\n");
-        else
-          fprintf(stderr, "umfpack_di_numeric() failed, %d\n", status);
-      }
-      umfpack_di_free_numeric (&Numeric) ;
-
-      // delete temp memory
-      delete [] Ap;
-      delete [] Ax;
-      delete [] Ai;
-#endif
+      DUNE_THROW(NotImplemented,"solveUMFNonSymmetric is not implemented and will be removed!Please use directly Dune::Fem::UMFPACKOp.");
     }
 
   } // namespace Fem
