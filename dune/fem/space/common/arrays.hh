@@ -170,6 +170,9 @@ namespace Dune
     //! make compatible with std::vector
     typedef ConstDofIteratorType const_iterator ;
 
+    //! type of unsigned integral type of indexing
+    typedef size_t  size_type;
+
     //! create array of length size and store vec as pointer to memory
     explicit StaticArray(const size_t size, T* vec)
       : vec_(vec)

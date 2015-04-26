@@ -46,6 +46,15 @@ namespace Dune
       //! type of (non-constant) iterator
       typedef typename Traits::IteratorType IteratorType;
 
+      //! type of constant iterator
+      typedef ConstIteratorType const_iterator;
+
+      //! type of (non-constant) iterator
+      typedef IteratorType iterator;
+
+      //! type of unsigned integral type of indexing
+      typedef unsigned int  size_type;
+
     protected:
       using BaseType::asImp;
 
