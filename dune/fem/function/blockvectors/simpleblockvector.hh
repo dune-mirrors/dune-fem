@@ -66,32 +66,9 @@ namespace Fem {
      *
      *  \param[in]  size         Number of blocks
      */
-    explicit SimpleBlockVector ( SizeType size )
-    : array_( size*blockSize ),
-      size_( size )
+    explicit SimpleBlockVector ( ArrayType& array )
+    : array_( array )
     {}
-
-    /** \brief Constructor; use this to create a block vector with 'size' blocks.
-     *
-     *  All the dofs are set to 'initialValue'.
-     *
-     *  \param[in]  size          Number of blocks
-     *  \param[in]  initialValue  This is the value to which each dof is set
-     */
-    SimpleBlockVector ( SizeType size, const FieldType& initialValue )
-    : array_( size*blockSize, initialValue ),
-      size_( size )
-    {}
-
-    /** \brief Copy constructor
-     */
-    SimpleBlockVector ( const ThisType &other )
-    : array_( other.size()*blockSize ),
-      size_( other.size() ),
-      sequence_( other.sequence_ )
-    {
-      assign( other );
-    }
 
     /*
      * ########## operators ##############################
@@ -138,8 +115,10 @@ namespace Fem {
     const ThisType &operator+= ( const ThisType &other )
     {
       assert( size() == other.size() );
-      for( SizeType i=0; i < size(); ++i )
-        (*this)[ i ] += other[ i ];
+      const IteratorType endit = end();
+      ConstIteratorType oit = other.begin();
+      for( IteratorType it = begin(); it != endit; ++it, ++oit )
+        *it += *oit;
 
       ++sequence_;
       return *this;
@@ -153,8 +132,10 @@ namespace Fem {
     const ThisType &operator-= ( const ThisType &other )
     {
       assert( size() == other.size() );
-      for( SizeType i=0; i < size(); ++i )
-        (*this)[ i ] -= other[ i ];
+      const IteratorType endit = end();
+      ConstIteratorType oit = other.begin();
+      for( IteratorType it = begin(); it != endit; ++it, ++oit )
+        *it -= *oit;
 
       ++sequence_;
       return *this;
@@ -169,8 +150,10 @@ namespace Fem {
     {
       assert( size() == other.size() );
       FieldType sum( 0 );
-      for( SizeType i=0; i < size(); ++i )
-        sum += (*this)[ i ] * other[ i ];
+      const IteratorType endit = end();
+      ConstIteratorType oit = other.begin();
+      for( IteratorType it = begin(); it != endit; ++it, ++oit )
+        sum += (*it * *oit);
 
       return sum;
     }
@@ -182,8 +165,9 @@ namespace Fem {
      */
     const ThisType &operator*= ( const FieldType &scalar )
     {
-      for( SizeType i=0; i < size(); ++i )
-        (*this)[ i ] *= scalar;
+      const IteratorType endit = end();
+      for( IteratorType it = begin(); it != endit; ++it )
+        *it *= scalar;
 
       ++sequence_;
       return *this;
@@ -203,15 +187,12 @@ namespace Fem {
     void addScaled ( const ThisType &v, const FieldType &scalar )
     {
       assert( size() == v.size() );
-      for( SizeType i=0; i < size(); ++i )
-      {
-        DofBlockType thisBlock = (*this)[ i ];
-        ConstDofBlockType otherBlock = v[ i ];
-        for ( unsigned int bi=0; bi < blockSize; ++bi )
-        {
-          thisBlock[bi] += scalar*otherBlock[bi];
-        }
-      }
+      FieldType sum( 0 );
+      const IteratorType endit = end();
+      ConstIteratorType vit = v.begin();
+      for( IteratorType it = begin(); it != endit; ++it, ++vit )
+        *it += scalar * (*vit);
+
       ++sequence_;
     }
 
@@ -247,33 +228,11 @@ namespace Fem {
      */
     ConstIteratorType end() const { return array().end(); }
 
-    /** \brief Reserve memory.
-     *
-     *  This method is a no-op. It is defined here to make the block vector
-     *  compatible to the managed dof storage mechanisms used by
-     *  Dune::Fem::BlockVectorDiscreteFunction
-     *
-     *  \param[in] size  Number of blocks
-     */
-    void reserve ( const int size )
-    {}
-
-    /** \brief Resize the block vector
-     *
-     *  \param[in] size  New number of blocks
-     */
-    void resize ( SizeType size )
-    {
-      size_ = size;
-      array().resize( size_*blockSize );
-      ++sequence_;
-    }
-
     /** \brief Returns the number of blocks
      *
      *  \return Number of blocks
      */
-    SizeType size () const { return size_; }
+    SizeType size () const { return array().size() / blockSize; }
 
   protected:
 
@@ -281,10 +240,7 @@ namespace Fem {
      *
      *  \return Number of dofs
      */
-    unsigned int numDofs() const { return size() * blockSize; }
-
-
-  private:
+    SizeType numDofs() const { return array().size(); }
 
     // Copy block vectors.
     //    Note: No '++sequence_' here, sequence_ is only changed in public methods
@@ -300,8 +256,7 @@ namespace Fem {
     /*
      * data fields
      */
-    ArrayType array_;
-    SizeType size_;
+    ArrayType& array_;
     mutable CounterType sequence_; // for consistency checks...
   };
 
@@ -489,6 +444,74 @@ namespace Fem {
     BlockVectorType &blockVector_;
     const unsigned int blockBegin_;
     mutable CounterType sequence_;
+  };
+
+  /** \class SimpleBlockVector
+  *   \brief This is the reference implementation of a block vector as it is expected
+  *      as the second template parameter to Dune::Fem::BlockVectorDiscreteFunction
+  *
+  *   \tparam  F           The ground fields. All dofs are elements of this field.
+  *   \tparam  BlockSize   Size of the blocks
+  */
+  template< class Container, unsigned int BlockSize >
+  class MutableBlockVector
+  : public SimpleBlockVector< Container, BlockSize >
+  {
+    typedef MutableBlockVector< Container, BlockSize > ThisType;
+    typedef SimpleBlockVector< Container, BlockSize >  BaseType;
+    typedef Container                                  ArrayType;
+    using BaseType :: array_;
+    using BaseType :: array;
+    using BaseType :: sequence_;
+  public:
+    using BaseType :: blockSize ;
+    typedef typename BaseType :: SizeType SizeType;
+
+    /** \brief Constructor; use this to create a block vector with 'size' blocks.
+     *
+     *  The dofs are not initialized.
+     *
+     *  \param[in]  size         Number of blocks
+     */
+    explicit MutableBlockVector ( SizeType size )
+    : BaseType( *(new Container( size*blockSize ) ) )
+    {}
+
+    /** \brief Copy constructor
+     */
+    MutableBlockVector ( const ThisType &other )
+    : BaseType( *(new Container( other.array().size() ) ) )
+    {
+      assign( other );
+    }
+
+    ~MutableBlockVector()
+    {
+      delete &array_;
+    }
+
+    /** \brief Reserve memory.
+     *
+     *  This method is a no-op. It is defined here to make the block vector
+     *  compatible to the managed dof storage mechanisms used by
+     *  Dune::Fem::BlockVectorDiscreteFunction
+     *
+     *  \param[in] size  Number of blocks
+     */
+    void reserve ( const int size )
+    {
+      array().reserve( size*blockSize );
+    }
+
+    /** \brief Resize the block vector
+     *
+     *  \param[in] size  New number of blocks
+     */
+    void resize ( SizeType size )
+    {
+      array().resize( size*blockSize );
+      ++sequence_;
+    }
   };
 
 } // namespace Fem

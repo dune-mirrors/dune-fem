@@ -86,7 +86,7 @@ int main(int argc, char ** argv)
     checkFunction( bdf, istldf );
     checkFunction( bdf, vdf );
 
-    typedef Dune::Fem::SimpleBlockVector< Dune::Fem::MutableArray< FunctionSpaceType::RangeFieldType >,
+    typedef Dune::Fem::MutableBlockVector< Dune::Fem::MutableArray< FunctionSpaceType::RangeFieldType >,
             DiscreteFunctionSpaceType::localBlockSize >   BVType;
     Dune::Fem::BlockVectorDiscreteFunction< DiscreteFunctionSpaceType, BVType > bvdf( "simpleblock", space );
     checkFunction( bvdf, ref );

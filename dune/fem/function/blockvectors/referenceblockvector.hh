@@ -23,9 +23,9 @@ namespace Fem {
   *   \tparam  BlockSize   Size of the blocks
   */
   template< typename F, unsigned int BlockSize >
-  class ReferenceBlockVector : public SimpleBlockVector< std::vector< F >, BlockSize >
+  class ReferenceBlockVector : public MutableBlockVector< std::vector< F >, BlockSize >
   {
-    typedef SimpleBlockVector< std::vector< F >, BlockSize > BaseType;
+    typedef MutableBlockVector< std::vector< F >, BlockSize > BaseType;
 
   public:
     typedef typename BaseType::SizeType  SizeType;
@@ -38,18 +38,9 @@ namespace Fem {
      */
     explicit ReferenceBlockVector ( SizeType size )
     : BaseType( size )
-    {}
+    {
+    }
 
-    /** \brief Constructor; use this to create a block vector with 'size' blocks.
-     *
-     *  All the dofs are set to 'initialValue'.
-     *
-     *  \param[in]  size          Number of blocks
-     *  \param[in]  initialValue  This is the value to which each dof is set
-     */
-    ReferenceBlockVector ( SizeType size, const F& initialValue )
-    : BaseType( size, initialValue )
-    {}
   };
 
 } // namespace Fem

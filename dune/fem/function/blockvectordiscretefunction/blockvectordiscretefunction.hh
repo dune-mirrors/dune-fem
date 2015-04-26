@@ -241,7 +241,7 @@ namespace Dune
        */
       DofBlockPtrType block ( unsigned int index )
       {
-        return DofBlockPtrType( memPair_.second->operator[]( index ) );
+        return DofBlockPtrType( dofVector()[ index ] );
       }
 
       /** \brief Obtain the (constant) 'index'-th block
@@ -251,7 +251,7 @@ namespace Dune
        */
       ConstDofBlockPtrType block ( unsigned int index ) const
       {
-        return ConstDofBlockPtrType( memPair_.second->operator[]( index ) );
+        return ConstDofBlockPtrType( dofVector()[ index ] );
       }
 
       /** \brief Set each dof to zero
