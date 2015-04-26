@@ -12,6 +12,7 @@
 #include <dune/fem/function/vectorfunction.hh>
 #include <dune/fem/function/blockvectordiscretefunction.hh>
 #include <dune/fem/function/blockvectors/referenceblockvector.hh>
+#include <dune/fem/function/blockvectors/simpleblockvector.hh>
 #if HAVE_PETSC
 #include <dune/fem/function/petscdiscretefunction.hh>
 #endif
@@ -63,6 +64,10 @@ int main(int argc, char ** argv)
     Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > adf ("adaptive", space);
     checkFunction( adf, ref );
 
+    std::vector< double > advec( space.size() );
+    Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > adfp ("pointer", space, advec.data() );
+    checkFunction( adfp, ref );
+
     Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType > istldf ("istl", space);
     checkFunction( istldf, ref );
 
@@ -75,13 +80,18 @@ int main(int argc, char ** argv)
     checkFunction( vdf, istldf );
 
     typedef Dune::Fem::ReferenceBlockVector< FunctionSpaceType::RangeFieldType,
-            DiscreteFunctionSpaceType::localBlockSize >
-                BlockVectorType;
+            DiscreteFunctionSpaceType::localBlockSize >   BlockVectorType;
     Dune::Fem::BlockVectorDiscreteFunction< DiscreteFunctionSpaceType, BlockVectorType > bdf( "block", space );
-
     checkFunction( bdf, ref );
     checkFunction( bdf, istldf );
     checkFunction( bdf, vdf );
+
+    typedef Dune::Fem::SimpleBlockVector< Dune::Fem::MutableArray< FunctionSpaceType::RangeFieldType >,
+            DiscreteFunctionSpaceType::localBlockSize >   BVType;
+    Dune::Fem::BlockVectorDiscreteFunction< DiscreteFunctionSpaceType, BVType > bvdf( "simpleblock", space );
+    checkFunction( bvdf, ref );
+    checkFunction( bvdf, istldf );
+    checkFunction( bvdf, vdf );
 
     return 0;
   }

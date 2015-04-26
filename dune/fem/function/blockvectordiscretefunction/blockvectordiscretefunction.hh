@@ -139,7 +139,6 @@ namespace Dune
       // methods from DiscreteFunctionDefault
       using BaseType::space;
       using BaseType::name;
-
       using BaseType::assign;
       using BaseType::operator+=;
       using BaseType::operator-=;
@@ -266,25 +265,25 @@ namespace Dune
        *
        *  \return Constant iterator pointing to the first dof
        */
-      ConstDofIteratorType dbegin () const { return dofVector().dbegin(); }
+      ConstDofIteratorType dbegin () const { return dofVector().begin(); }
 
       /** \brief Obtain the non-constant iterator pointing to the first dof
        *
        *  \return Non-Constant iterator pointing to the first dof
        */
-      DofIteratorType dbegin () { return dofVector().dbegin(); }
+      DofIteratorType dbegin () { return dofVector().begin(); }
 
       /** \brief Obtain the constant iterator pointing to the last dof
        *
        *  \return Constant iterator pointing to the last dof
        */
-      ConstDofIteratorType dend () const { return dofVector().dend(); }
+      ConstDofIteratorType dend () const { return dofVector().end(); }
 
       /** \brief Obtain the non-constant iterator pointing to the last dof
        *
        *  \return Non-Constant iterator pointing to the last dof
        */
-      DofIteratorType dend () { return dofVector().dend(); }
+      DofIteratorType dend () { return dofVector().end(); }
 
       /** \brief Obtain constant reference to the dof vector
        *
