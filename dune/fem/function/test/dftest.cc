@@ -29,6 +29,7 @@ typedef Dune::Fem::FiniteVolumeSpace< FunctionSpaceType, GridPartType, 0 > Discr
 template <class DiscreteFunction, class OtherDiscreteFunction>
 void checkFunction( DiscreteFunction& df, const OtherDiscreteFunction& other )
 {
+  std::cout << "Checking (" << df.name() << "," << other.name() << ")....";
   typedef typename DiscreteFunction :: DofType DofType;
   std::fill( df.dbegin(), df.dend(), DofType( 0 ) );
 
@@ -39,6 +40,7 @@ void checkFunction( DiscreteFunction& df, const OtherDiscreteFunction& other )
 
   df *= 2.0;
   df /= 2.0;
+  std::cout << "done!" << std::endl;
 }
 
 // main program
@@ -61,10 +63,25 @@ int main(int argc, char ** argv)
     Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > adf ("adaptive", space);
     checkFunction( adf, ref );
 
-    Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType > istldf ("adaptive", space);
+    Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType > istldf ("istl", space);
     checkFunction( istldf, ref );
 
     checkFunction( adf, istldf );
+
+    Dune::Fem :: DynamicVector< double > vec( space.size() );
+    Dune::Fem::VectorDiscreteFunction< DiscreteFunctionSpaceType, Dune::Fem :: DynamicVector< double > > vdf ("vector", space, vec);
+
+    checkFunction( vdf, ref );
+    checkFunction( vdf, istldf );
+
+    typedef Dune::Fem::ReferenceBlockVector< FunctionSpaceType::RangeFieldType,
+            DiscreteFunctionSpaceType::localBlockSize >
+                BlockVectorType;
+    Dune::Fem::BlockVectorDiscreteFunction< DiscreteFunctionSpaceType, BlockVectorType > bdf( "block", space );
+
+    checkFunction( bdf, ref );
+    checkFunction( bdf, istldf );
+    checkFunction( bdf, vdf );
 
     return 0;
   }

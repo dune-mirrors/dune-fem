@@ -114,7 +114,8 @@ namespace Dune
       using BaseType::axpy;
       using BaseType::space;
       using BaseType::asImp;
-
+      using BaseType :: operator+=;
+      using BaseType :: operator-=;
 
     public:
       //- Typedefs and enums

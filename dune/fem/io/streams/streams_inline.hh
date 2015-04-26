@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <dune/common/array.hh>
+#include <dune/common/fvector.hh>
 
 #include "streams.hh"
 
@@ -162,6 +163,15 @@ namespace Dune
       return out;
     }
 
+    template< class Traits, class T, int N >
+    inline OutStreamInterface< Traits > &
+    operator<< ( OutStreamInterface< Traits > &out, const Dune::FieldVector< T, N > &value )
+    {
+      for( int i = 0; i < N; ++i )
+        out << value[ i ];
+      return out;
+    }
+
     template< class Traits, class T, class A >
     inline OutStreamInterface< Traits > &
       operator<< ( OutStreamInterface< Traits > &out,
@@ -257,9 +267,18 @@ namespace Dune
 
     template< class Traits, class T, std::size_t N >
     inline InStreamInterface< Traits > &
-    operator<< ( InStreamInterface< Traits > &in, Dune::array< T, N > &value )
+    operator>> ( InStreamInterface< Traits > &in, Dune::array< T, N > &value )
     {
       for( std::size_t i = 0; i < N; ++i )
+        in >> value[ i ];
+      return in;
+    }
+
+    template< class Traits, class T, int N >
+    inline InStreamInterface< Traits > &
+    operator>> ( InStreamInterface< Traits > &in, Dune::FieldVector< T, N > &value )
+    {
+      for( int i = 0; i < N; ++i )
         in >> value[ i ];
       return in;
     }

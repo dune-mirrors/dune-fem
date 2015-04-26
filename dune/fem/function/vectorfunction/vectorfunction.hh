@@ -155,6 +155,10 @@ namespace Dune
       ThisType &operator= ( const ThisType & );
 
     public:
+      using BaseType :: assign ;
+      using BaseType :: operator+=;
+      using BaseType :: operator-=;
+
       ThisType &operator+= ( const ThisType &u )
       {
         dofVector() += u.dofVector();

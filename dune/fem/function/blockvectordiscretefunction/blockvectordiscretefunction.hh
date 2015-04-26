@@ -140,6 +140,10 @@ namespace Dune
       using BaseType::space;
       using BaseType::name;
 
+      using BaseType::assign;
+      using BaseType::operator+=;
+      using BaseType::operator-=;
+
       //! size of the dof blocks
       enum { blockSize = BlockVectorType::blockSize };
 
@@ -358,7 +362,7 @@ namespace Dune
        *
        *  \return Number of block in the block vector
        */
-      SizeType size () const { return dofVector().size(); }
+      SizeType size () const { return dofVector().size() * blockSize; }
 
     protected:
       /*

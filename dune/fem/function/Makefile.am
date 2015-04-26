@@ -9,7 +9,8 @@ SUBDIRS = common \
           vectorfunction \
 				  blockvectordiscretefunction \
 				  blockvectors \
-					petscdiscretefunction
+					petscdiscretefunction \
+          test
 
 functiondir =  $(includedir)/dune/fem/function
 function_HEADERS = adaptivefunction.hh \

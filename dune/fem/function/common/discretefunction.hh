@@ -358,7 +358,7 @@ namespace Dune
         return asImp().scalarProductDofs( other );
       }
 
-      /** \brief Squared small l^2 norm of all dofs 
+      /** \brief Squared small l^2 norm of all dofs
        *
        *  \note This is already parallel, so do not sum over all
        *        processes after calling scalarProductDofs!
@@ -370,7 +370,7 @@ namespace Dune
        *  \returns the squared norm of the DoF-vectors
        */
       inline typename Dune::FieldTraits< RangeFieldType >::real_type
-      normSquaredDofs ( ) const 
+      normSquaredDofs ( ) const
       {
         return asImp().normSquaredDofs( );
       }
@@ -396,7 +396,8 @@ namespace Dune
        *
        *  \param[in]  g  discrete function which is copied
        */
-      void assign( const DiscreteFunctionInterfaceType &g )
+      template < class DFType >
+      void assign( const DiscreteFunctionInterface< DFType > &g )
       {
         asImp().assign( g );
       }
@@ -423,17 +424,18 @@ namespace Dune
        *
        *  \returns a reference to this discrete function (i.e. *this)
        */
-      DiscreteFunctionType &operator+= ( const DiscreteFunctionInterfaceType &g )
+      template < class DFType >
+      DiscreteFunctionType &operator+=(const DiscreteFunctionInterface< DFType > &g)
       {
-        return asImp() += g;
+        return asImp().operator+=( g );
       }
 
       /** \brief substract all degrees of freedom from given discrete function using the dof iterators
           \param[in] g discrete function which is substracted from this discrete function
           \return reference to this (i.e. *this)
       */
-      template <class DFType>
-      DiscreteFunctionType& operator -= (const DFType& g)
+      template < class DFType >
+      DiscreteFunctionType& operator-=(const DiscreteFunctionInterface< DFType > &g)
       {
         return asImp().operator-=( g );
       }
@@ -715,7 +717,8 @@ namespace Dune
       inline bool dofsValid () const;
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
-      void assign ( const DiscreteFunctionInterfaceType &g );
+      template <class DFType>
+      void assign ( const DiscreteFunctionInterface< DFType > &g );
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dataHandle */
       template< class Operation >
@@ -750,15 +753,13 @@ namespace Dune
         asImp().evaluateGlobal( x, functor );
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
-      DiscreteFunctionType &operator+= ( const DiscreteFunctionInterfaceType &g );
-
-      /** \brief substract all degrees of freedom from given discrete function using the dof iterators
-          \param[in] g discrete function which is substracted from this discrete function
-          \return reference to this (i.e. *this)
-      */
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterface< DFType > &g) */
       template <class DFType>
-      DiscreteFunctionType& operator -= (const DFType& g);
+      DiscreteFunctionType &operator+=(const DiscreteFunctionInterface< DFType > &g);
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator-=(const DiscreteFunctionInterface< DFType > &g) */
+      template <class DFType>
+      DiscreteFunctionType& operator-=(const DiscreteFunctionInterface< DFType > &g);
 
       /** \brief multiply all DoFs with a scalar factor
        *
@@ -795,9 +796,11 @@ namespace Dune
       // Non-Interface Methods
       // ---------------------
 
-      inline bool operator== ( const DiscreteFunctionType &g ) const;
+      template <class DFType>
+      inline bool operator== ( const DiscreteFunctionInterface< DFType>  &g ) const;
 
-      inline bool operator!= ( const DiscreteFunctionType &g ) const { return !(operator==( g )); }
+      template <class DFType>
+      inline bool operator!= ( const DiscreteFunctionInterface< DFType > &g ) const { return !(operator==( g )); }
 
       /** \brief obtain the local function storage
        *

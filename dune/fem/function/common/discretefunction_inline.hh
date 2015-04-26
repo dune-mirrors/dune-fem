@@ -113,21 +113,25 @@ namespace Dune
     {
       const ConstDofIteratorType end = BaseType :: dend();
       for( ConstDofIteratorType it = BaseType :: dbegin(); it != end; ++it )
-        if( *it != *it )
-          return false;
+      {
+        if( ! std::isfinite( *it ) )
+          return false ;
+      }
 
       return true;
     }
 
 
     template< class Impl >
+    template< class DFType >
     inline void DiscreteFunctionDefault< Impl >
-      ::assign ( const DiscreteFunctionInterfaceType &g )
+      ::assign ( const DiscreteFunctionInterface< DFType > &g )
     {
       assert( BaseType::size() == g.size() );
 
+      // copy all dofs from g to this
       const DofIteratorType end = BaseType::dend();
-      ConstDofIteratorType git = g.dbegin();
+      typename DFType :: ConstDofIteratorType git = g.dbegin();
       for( DofIteratorType it = BaseType::dbegin(); it != end; ++it, ++git )
         *it = *git;
     }
@@ -158,14 +162,15 @@ namespace Dune
 
 
     template< class Impl >
+    template< class DFType >
     inline typename DiscreteFunctionDefault< Impl > :: DiscreteFunctionType &
     DiscreteFunctionDefault< Impl >
-      ::operator+= ( const DiscreteFunctionInterfaceType &g )
+      ::operator+= ( const DiscreteFunctionInterface< DFType > &g )
     {
       assert( BaseType::size() == g.size() );
 
       const DofIteratorType end = BaseType::dend();
-      ConstDofIteratorType git = g.dbegin();
+      typename DFType :: ConstDofIteratorType git = g.dbegin();
       for( DofIteratorType it = BaseType::dbegin(); it != end; ++it, ++git )
         *it += *git;
       return asImp();
@@ -176,7 +181,7 @@ namespace Dune
     template< class DFType >
     inline typename DiscreteFunctionDefault< Impl > :: DiscreteFunctionType &
     DiscreteFunctionDefault< Impl >
-      :: operator-= ( const DFType &g )
+      ::operator-= ( const DiscreteFunctionInterface< DFType > &g )
     {
       assert( BaseType :: size() == g.size() );
 
@@ -313,8 +318,9 @@ namespace Dune
 
 
     template< class Impl >
+    template< class DFType >
     inline bool DiscreteFunctionDefault< Impl >
-      :: operator== ( const DiscreteFunctionType &g ) const
+      :: operator== ( const DiscreteFunctionInterface< DFType > &g ) const
     {
       if( BaseType :: size() != g.size() )
         return false;
@@ -322,10 +328,12 @@ namespace Dune
       const ConstDofIteratorType end = BaseType :: dend();
 
       ConstDofIteratorType fit = BaseType :: dbegin();
-      ConstDofIteratorType git = g.dbegin();
+      typename DFType :: ConstDofIteratorType git = g.dbegin();
       for( ; fit != end; ++fit, ++git )
-        if( *fit != *git )
+      {
+        if( std::abs( *fit - *git ) > 1e-15 )
           return false;
+      }
 
       return true;
     }
