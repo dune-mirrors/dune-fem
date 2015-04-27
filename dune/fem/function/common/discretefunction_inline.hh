@@ -127,7 +127,8 @@ namespace Dune
     inline void DiscreteFunctionDefault< Impl >
       ::assign ( const DiscreteFunctionInterface< DFType > &g )
     {
-      assert( BaseType::size() == g.size() );
+      if( BaseType::size() != g.size() )
+        DUNE_THROW(InvalidStateException,"DiscreteFunctionDefault: sizes do not match in assign");
 
       // copy all dofs from g to this
       const DofIteratorType end = BaseType::dend();
@@ -167,7 +168,8 @@ namespace Dune
     DiscreteFunctionDefault< Impl >
       ::operator+= ( const DiscreteFunctionInterface< DFType > &g )
     {
-      assert( BaseType::size() == g.size() );
+      if( BaseType::size() != g.size() )
+        DUNE_THROW(InvalidStateException,"DiscreteFunctionDefault: sizes do not match in operator +=");
 
       const DofIteratorType end = BaseType::dend();
       typename DFType :: ConstDofIteratorType git = g.dbegin();
@@ -183,7 +185,8 @@ namespace Dune
     DiscreteFunctionDefault< Impl >
       ::operator-= ( const DiscreteFunctionInterface< DFType > &g )
     {
-      assert( BaseType :: size() == g.size() );
+      if( BaseType::size() != g.size() )
+        DUNE_THROW(InvalidStateException,"DiscreteFunctionDefault: sizes do not match in operator -=");
 
       const DofIteratorType end = BaseType :: dend();
       typename DFType :: ConstDofIteratorType git = g.dbegin();
