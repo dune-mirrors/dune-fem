@@ -164,7 +164,7 @@ class LDLOp:public Operator<DF, DF>
     AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> adaptiveArg(arg.name(),arg.space(),vecArg.data());
     adaptiveArg.assign(arg);
     std::vector<DofType> vecDest(dest.size());
-    AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> adaptiveDest(dest.name(),dest.space(),destArg.data());
+    AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> adaptiveDest(dest.name(),dest.space(),vecDest.data());
     adaptiveDest.assign(dest);
 
     apply(adaptiveArg,adaptiveDest);
