@@ -11,6 +11,8 @@
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 
 #include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/function/blockvectordiscretefunction/discretefunction.hh>
+#include <dune/fem/function/blockvectors/simpleblockvector.hh>
 #include <dune/fem/storage/subarray.hh>
 
 //- Local includes
@@ -25,6 +27,7 @@ namespace Dune
   namespace Fem
   {
 
+#if 0
     //- Forward declarations
     template <class DiscreteFunctionSpaceImp>
     class AdaptiveDiscreteFunction;
@@ -267,7 +270,144 @@ namespace Dune
 
       friend class SubFunctionStorage < ThisType >;
     }; // end class AdaptiveDiscreteFunction
+#else
 
+    //! @ingroup AdaptiveDFunction
+    //! An adaptive discrete function
+    //! This class is comparable to DFAdapt, except that it provides a
+    //! specialisation for CombinedSpace objects which provides enriched
+    //! functionality (access to subfunctions) and runtime optimisations
+    template <class DiscreteFunctionSpaceImp>
+    class AdaptiveDiscreteFunction
+    : public DiscreteFunction< DiscreteFunctionSpaceImp,
+                               SimpleBlockVector<
+                                    StaticArray< typename DiscreteFunctionSpaceImp::RangeFieldType >, DiscreteFunctionSpaceImp::localBlockSize > >
+    {
+      typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceImp > ThisType;
+      typedef DiscreteFunction< DiscreteFunctionSpaceImp,
+                               SimpleBlockVector<
+                                    StaticArray< typename DiscreteFunctionSpaceImp::RangeFieldType >, DiscreteFunctionSpaceImp::localBlockSize > > BaseType;
+
+    public:
+      typedef typename BaseType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+      typedef typename BaseType :: DofVectorType              DofVectorType;
+      typedef typename BaseType :: DofType                    DofType;
+
+      using BaseType::assign;
+
+      typedef MutableBlockVector< MutableArray< DofType >, DiscreteFunctionSpaceImp::localBlockSize > MutableDofVectorType;
+
+      AdaptiveDiscreteFunction( const std::string &name,
+                                const DiscreteFunctionSpaceType &space )
+        : BaseType( name, space, allocateDofStorage( space ) )
+      {
+      }
+
+      AdaptiveDiscreteFunction( const std::string &name,
+                                const DiscreteFunctionSpaceType &space,
+                                const DofType* data )
+        : BaseType( name, space,
+                    allocateDofStorageWrapper( space.blockMapper().size() * DofVectorType::blockSize, data ) )
+      {
+      }
+
+      AdaptiveDiscreteFunction( const std::string &name,
+                                const DiscreteFunctionSpaceType &space,
+                                DofVectorType& dofVector )
+        : BaseType( name, space, dofVector )
+      {
+        // in this case we have no allocated mem object
+        memObject_ = 0;
+      }
+
+      AdaptiveDiscreteFunction( const AdaptiveDiscreteFunction& other )
+        : BaseType( "copy of " + other.name(), other.space(), allocateDofStorage( other.space() ) )
+      {
+        assign( other );
+      }
+
+      ~AdaptiveDiscreteFunction()
+      {
+        if( memObject_ )
+        {
+          delete memObject_;
+          memObject_ = 0;
+        }
+      }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression()
+       */
+      void enableDofCompression ()
+      {
+        if( memObject_ )
+          memObject_->enableDofCompression();
+      }
+
+    protected:
+
+      //! wrapper class to create fake DofStorage from DofType*
+      class DofStorageWrapper : public DofStorageInterface
+      {
+        StaticArray< DofType > array_;
+        DofVectorType dofVector_;
+        typedef typename DofVectorType :: SizeType SizeType;
+
+        std::string name_;
+
+      public:
+        DofStorageWrapper ( const SizeType size,
+                            const DofType *v )
+          : array_( size, const_cast< DofType* >(v)),
+            dofVector_( array_ ),
+            name_("deprecated")
+        {}
+
+        const std::string& name () const { return name_; }
+
+        //! return array
+        DofVectorType &getArray () { return dofVector_; }
+
+        //! do nothing here
+        void enableDofCompression () {}
+
+        //! return array's size
+        int size () const { return dofVector_.size(); }
+      };
+
+    protected:
+      // allocate unmanaged dof storage
+      DofVectorType&
+      allocateDofStorageWrapper ( const size_t size,
+                                  const DofType *v )
+      {
+        DofStorageWrapper *dsw = new DofStorageWrapper( size, v );
+        assert( dsw );
+
+        // save pointer to object
+        memObject_ = dsw;
+        // return array
+        return dsw->getArray();
+      }
+
+
+      // allocate managed dof storage
+      DofVectorType& allocateDofStorage ( const DiscreteFunctionSpaceType &space )
+      {
+        std::string name("deprecated");
+        // create memory object
+        std::pair< DofStorageInterface*, DofVectorType* > memPair
+          = allocateManagedDofStorage( space.gridPart().grid(), space.blockMapper(),
+                                       name, (MutableDofVectorType *) 0 );
+
+        // save pointer
+        memObject_ = memPair.first;
+        return *(memPair.second);
+      }
+
+      // pointer to allocated DofVector
+      DofStorageInterface* memObject_;
+    };
+#endif
 
   } // end namespace Fem
 

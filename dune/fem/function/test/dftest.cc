@@ -37,10 +37,21 @@ void checkFunction( DiscreteFunction& df, const OtherDiscreteFunction& other )
   df += other;
   df -= other;
 
+  // check copy constructor
+  DiscreteFunction copydf( df );
+  if( ! (copydf == df) )
+  {
+    assert( false );
+    DUNE_THROW(Dune::InvalidStateException,"Copying did not work");
+  }
+
   df.assign( other );
 
   df *= 2.0;
   df /= 2.0;
+
+  df.enableDofCompression();
+
   std::cout << "done!" << std::endl;
 }
 
@@ -79,6 +90,7 @@ int main(int argc, char ** argv)
     checkFunction( vdf, ref );
     checkFunction( vdf, istldf );
 
+    /*
     typedef Dune::Fem::ReferenceBlockVector< FunctionSpaceType::RangeFieldType,
             DiscreteFunctionSpaceType::localBlockSize >   BlockVectorType;
     Dune::Fem::BlockVectorDiscreteFunction< DiscreteFunctionSpaceType, BlockVectorType > bdf( "block", space );
@@ -92,6 +104,7 @@ int main(int argc, char ** argv)
     checkFunction( bvdf, ref );
     checkFunction( bvdf, istldf );
     checkFunction( bvdf, vdf );
+    */
 
     return 0;
   }

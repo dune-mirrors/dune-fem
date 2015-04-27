@@ -54,7 +54,7 @@ namespace Fem {
     //! Type of one (mutable) block
     typedef SimpleBlockVectorBlock< ThisType >        DofBlockType;
     //! Type of one constant block
-    typedef SimpleBlockVectorBlock< const ThisType >  ConstDofBlockType;
+    typedef SimpleBlockVectorBlock< ThisType >  ConstDofBlockType;
 
     //! Size of each block
     enum { blockSize = BlockSize };
@@ -274,17 +274,18 @@ namespace Fem {
     typedef typename BlockVectorType :: FieldType      FieldType;
     typedef typename BlockVectorType::CounterType  CounterType;
 
-    typedef typename std::remove_const< BlockVectorType >::type NonConstBlockVectorType;
-    typedef SimpleBlockVectorBlock< const NonConstBlockVectorType > ConstBlockType;
-    typedef SimpleBlockVectorBlock<       NonConstBlockVectorType > NonConstBlockType;
+    //typedef typename std::remove_const< BlockVectorType >::type NonConstBlockVectorType;
+    //typedef SimpleBlockVectorBlock< const NonConstBlockVectorType > ConstBlockType;
+    //typedef SimpleBlockVectorBlock<       NonConstBlockVectorType > NonConstBlockType;
+    typedef SimpleBlockVectorBlock< BlockVectorType > ConstBlockType;
 
     typedef SimpleBlockVectorBlock< BlockVectorType > ThisType;
 
     /*
      * friends
      */
-    friend class SimpleBlockVectorBlock< const NonConstBlockVectorType >;
-    friend class SimpleBlockVectorBlock<       NonConstBlockVectorType >;
+    //friend class SimpleBlockVectorBlock< const NonConstBlockVectorType >;
+    //friend class SimpleBlockVectorBlock<       NonConstBlockVectorType >;
 
   public:
     //! The block size
@@ -295,8 +296,8 @@ namespace Fem {
      *  \param[in]  blockVector   The block vector in which this block lives
      *  \param[in]  blockBegin    Beginning index of this block in the block vector's array (implementation detail)
      */
-    SimpleBlockVectorBlock ( BlockVectorType &blockVector, unsigned int blockBegin )
-    : blockVector_( blockVector ),
+    SimpleBlockVectorBlock ( const BlockVectorType &blockVector, unsigned int blockBegin )
+    : blockVector_( const_cast< BlockVectorType& > (blockVector) ),
       blockBegin_( blockBegin ),
       sequence_( blockVector_.sequence_ )
     {}
@@ -304,7 +305,7 @@ namespace Fem {
     /** \brief Copy constructor
      */
     SimpleBlockVectorBlock ( const SimpleBlockVectorBlock< BlockVectorType > &other )
-    : blockVector_( other.blockVector_),
+    : blockVector_( const_cast< BlockVectorType& > (other.blockVector_)),
       blockBegin_( other.blockBegin_ ),
       sequence_( other.sequence_ )
     {}
@@ -314,20 +315,7 @@ namespace Fem {
      *  \param[in] other  Other block (constant) which should be assigned to *this
      *  \return  Constant reference to *this
      */
-    const ThisType &operator= ( const ConstBlockType &other )
-    {
-      assert( sequence_ == blockVector_.sequence_ );
-      copy( other );
-      sequence_ = other.sequence_;
-      return *this;
-    }
-
-    /** \brief Copy assignment operator non-constant blocks
-     *
-     *  \param[in] other  Other block (non-constant) which should be assigned to *this
-     *  \return  Constant reference to *this
-     */
-    const ThisType &operator= ( const NonConstBlockType &other )
+    ThisType &operator= ( const ConstBlockType &other )
     {
       assert( sequence_ == blockVector_.sequence_ );
       copy( other );
@@ -340,7 +328,7 @@ namespace Fem {
      *  \param[in] other  Other block to add
      *  \return Constant reference to *this
      */
-    const ThisType& operator+= ( const ConstBlockType& other )
+    ThisType& operator+= ( const ConstBlockType& other )
     {
       assert( sequence_ == blockVector_.sequence_ );
       for ( unsigned int i = 0; i < blockSize; ++i )
@@ -356,7 +344,7 @@ namespace Fem {
      *  \param[in] other  Other block to subtract
      *  \return Constant reference to *this
      */
-    const ThisType& operator-= ( const ConstBlockType& other )
+    ThisType& operator-= ( const ConstBlockType& other )
     {
       assert( sequence_ == blockVector_.sequence_ );
       for ( unsigned int i = 0; i < blockSize; ++i )
@@ -388,7 +376,7 @@ namespace Fem {
      *  \param[in] scalar   Scalar to use for the scaling
      *  \return Constant reference to *this
      */
-    const ThisType& operator*= ( const FieldType& scalar )
+    ThisType& operator*= ( const FieldType& scalar )
     {
       assert( sequence_ == blockVector_.sequence_ );
       for ( unsigned int i = 0; i < blockSize; ++i )
@@ -511,6 +499,84 @@ namespace Fem {
     {
       array().resize( size*blockSize );
       ++sequence_;
+    }
+  };
+
+  /** \class SimpleBlockVector
+  *   \brief This is the reference implementation of a block vector as it is expected
+  *      as the second template parameter to Dune::Fem::BlockVectorDiscreteFunction
+  *
+  *   \tparam  F           The ground fields. All dofs are elements of this field.
+  *   \tparam  BlockSize   Size of the blocks
+  */
+  template< class F, unsigned int BlockSize >
+  class MutableBlockVector< MutableArray< F >, BlockSize >
+  : public SimpleBlockVector< StaticArray< F >, BlockSize >
+  {
+    typedef StaticArray< F >          StaticContainer ;
+    typedef MutableArray< F >         MutableContainer ;
+    typedef SimpleBlockVector< StaticContainer, BlockSize >   BaseType;
+    typedef MutableBlockVector< MutableContainer, BlockSize > ThisType;
+
+  protected:
+    using BaseType :: sequence_;
+
+    MutableContainer* container_;
+  public:
+    using BaseType :: blockSize ;
+    typedef typename BaseType :: SizeType SizeType;
+
+    /** \brief Constructor; use this to create a block vector with 'size' blocks.
+     *
+     *  The dofs are not initialized.
+     *
+     *  \param[in]  size         Number of blocks
+     */
+    explicit MutableBlockVector ( SizeType size )
+    : BaseType( allocateContainer( size*blockSize ) )
+    {}
+
+    /** \brief Copy constructor
+     */
+    MutableBlockVector ( const ThisType &other )
+    : BaseType( allocateContainer( other.array().size() ) )
+    {
+      assign( other );
+    }
+
+    ~MutableBlockVector()
+    {
+      delete container_;
+    }
+
+    /** \brief Reserve memory.
+     *
+     *  This method is a no-op. It is defined here to make the block vector
+     *  compatible to the managed dof storage mechanisms used by
+     *  Dune::Fem::BlockVectorDiscreteFunction
+     *
+     *  \param[in] size  Number of blocks
+     */
+    void reserve ( const int size )
+    {
+      container_->reserve( size*blockSize );
+    }
+
+    /** \brief Resize the block vector
+     *
+     *  \param[in] size  New number of blocks
+     */
+    void resize ( SizeType size )
+    {
+      container_->resize( size*blockSize );
+      ++sequence_;
+    }
+
+  protected:
+    StaticContainer& allocateContainer( const SizeType size )
+    {
+      container_ = new MutableContainer( size );
+      return *container_;
     }
   };
 
