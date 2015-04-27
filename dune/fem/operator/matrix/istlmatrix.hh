@@ -415,9 +415,7 @@ namespace Dune
       enum { littleCols = DomainSpaceType :: localBlockSize };
       enum { littleRows = RangeSpaceType :: localBlockSize };
 
-      typedef typename DomainSpaceType :: RangeFieldType RangeFieldType;
-
-      typedef FieldMatrix<RangeFieldType, littleRows, littleCols> LittleBlockType;
+      typedef FieldMatrix<typename DomainSpaceType :: RangeFieldType, littleRows, littleCols> LittleBlockType;
 
       typedef ISTLBlockVectorDiscreteFunction< RangeSpaceType >      RowDiscreteFunctionType;
       typedef typename RowDiscreteFunctionType :: LeakPointerType    RowLeakPointerType;
@@ -1146,9 +1144,7 @@ namespace Dune
       enum { littleRows = DomainSpaceType :: localBlockSize };
       enum { littleCols = RangeSpaceType :: localBlockSize };
 
-      typedef typename DomainSpaceType :: RangeFieldType RangeFieldType;
-
-      typedef FieldMatrix<RangeFieldType, littleRows, littleCols> LittleBlockType;
+      typedef FieldMatrix<typename DomainSpaceType :: RangeFieldType, littleRows, littleCols> LittleBlockType;
 
       typedef ISTLBlockVectorDiscreteFunction< DomainSpaceType >     RowDiscreteFunctionType;
       typedef typename RowDiscreteFunctionType :: LeakPointerType  RowLeakPointerType;
