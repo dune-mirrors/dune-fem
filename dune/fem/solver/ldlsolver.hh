@@ -158,11 +158,16 @@ class LDLOp:public Operator<DF, DF>
   void apply(const ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& arg,
              ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& dest) const
   {
-    const DofType* argPtr(arg.allocDofPointer());
-    DofType* destPtr(dest.allocDofPointer());
-    apply(argPtr,destPtr);
-    arg.freeDofPointerNoCopy(argPtr);
-    dest.freeDofPointer(destPtr);
+    // convert ISTLBlockVectorDiscreteFunction to AdaptiveDiscreteFunction in order to have a DOF*
+    AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> adaptiveArg(arg.name(),arg.space());
+    adaptiveArg.assign(arg);
+    AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> adaptiveDest(dest.name(),dest.space());
+    adaptiveDest.assign(dest);
+
+    apply(adaptiveArg,adaptiveDest);
+
+    // copy solution into dest
+    dest.assign(adaptiveDest);
   }
 
   inline void printTexInfo(std::ostream& out) const
