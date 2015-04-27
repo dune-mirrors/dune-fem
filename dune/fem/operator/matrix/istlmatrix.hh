@@ -364,6 +364,36 @@ namespace Dune
           }
         }
 
+        //! return value of entry (row,col) where row and col are global indices not block wise
+        //! in order to be consistent with SparseRowMatrix.
+        field_type operator()(const std::size_t row, const std::size_t col) const
+        {
+          const std::size_t blockRow(row/(LittleBlockType :: rows));
+          const std::size_t localRowIdx(row%(LittleBlockType :: rows));
+          const std::size_t blockCol(col/(LittleBlockType :: cols));
+          const std::size_t localColIdx(col%(LittleBlockType :: cols));
+
+          const row_type& matrixRow(this->operator[](blockRow));
+          ConstColIterator entry = matrixRow.find( blockCol );
+          const LittleBlockType& block = (*entry);
+          return block[localRowIdx][localColIdx];
+        }
+
+        //! set entry to value (row,col) where row and col are global indices not block wise
+        //! in order to be consistent with SparseRowMatrix.
+        void set(const std::size_t row, const std::size_t col, field_type value)
+        {
+          const std::size_t blockRow(row/(LittleBlockType :: rows));
+          const std::size_t localRowIdx(row%(LittleBlockType :: rows));
+          const std::size_t blockCol(col/(LittleBlockType :: cols));
+          const std::size_t localColIdx(col%(LittleBlockType :: cols));
+
+          row_type& matrixRow(this->operator[](blockRow));
+          ColIterator entry = matrixRow.find( blockCol );
+          LittleBlockType& block = (*entry);
+          block[localRowIdx][localColIdx] = value;
+        }
+
         //! print matrix
         void print(std::ostream& s, unsigned int offset=0) const
         {
