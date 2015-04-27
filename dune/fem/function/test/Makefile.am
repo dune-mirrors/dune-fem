@@ -16,4 +16,8 @@ TESTS = $(DFPROG)
 check_PROGRAMS = $(DFPROG)
 dftest_SOURCES = dftest.cc
 
+EXTRA_DIST =  1dgrid.dgf \
+							2dgrid.dgf \
+							3dgrid.dgf
+
 include $(top_srcdir)/am/global-rules
