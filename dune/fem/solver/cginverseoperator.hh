@@ -83,11 +83,8 @@ namespace Dune
         realCount_( 0 )
       {}
 
-    private:
-      // prohibit copying
-      ConjugateGradientSolver ( const ThisType & );
+      ConjugateGradientSolver ( const ThisType & )=delete;
 
-    public:
       /** \brief solve \f$op( x ) = b\f$
        *
        *  \note The CG algorithm also works for positive semidefinite operators.
@@ -218,17 +215,39 @@ namespace Dune
         /** \brief application operator
          *
          *  The application operator actually solves the linear system
-         *  \f$op(w) = u\f$ using the CG method.
+         *  \f$op(dest) = arg\f$ using the CG method.
          *
-         *  \param[in]   u  argument discrete function
-         *  \param[out]  w  destination discrete function
+         *  \param[in]   arg  argument discrete function
+         *  \param[out]  dest  destination discrete function
          */
-        virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
+        virtual void operator()( const DomainFunctionType &arg, RangeFunctionType &dest ) const
+        {
+          prepare();
+          apply(arg,dest);
+          finalize();
+        }
+
+        template<typename... A>
+        inline void prepare(A... ) const
+        {}
+
+        inline void finalize() const
+        {}
+
+        /** \brief application operator
+         *
+         *  The application operator actually solves the linear system
+         *  \f$op(dest) = arg\f$ using the CG method.
+         *
+         *  \param[in]   arg  argument discrete function
+         *  \param[out]  dest  destination discrete function
+         */
+        virtual void apply( const DomainFunctionType &arg, RangeFunctionType &dest ) const
         {
           if(preconditioner_)
-            solver_.solve( operator_, *preconditioner_, u, w );
+            solver_.solve( operator_, *preconditioner_, arg, dest );
           else
-            solver_.solve(operator_,u,w);
+            solver_.solve(operator_,arg,dest);
         }
 
         //! number of iterations needed for last solve
@@ -470,7 +489,7 @@ namespace Dune
 
         prevResiduum = residuum;//<rk-1,B*rk-1>
 
-        residuum = p.scalarProductDofs( s );//<rk,B*rk> 
+        residuum = p.scalarProductDofs( s );//<rk,B*rk>
 
         double exchangeTime = h.space().communicator().exchangeTime();
         if( verbose )
