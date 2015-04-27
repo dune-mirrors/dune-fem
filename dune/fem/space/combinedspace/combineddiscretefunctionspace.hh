@@ -49,10 +49,17 @@ namespace Dune
       template< int newDimRange >
       struct ToNewDimRange
       {
-        typedef typename conditional< (newDimRange == 1),
-                                      typename DiscreteFunctionSpaceType1::template ToNewDimRange< 1 >::Type,
-                                      typename BaseType::template ToNewDimRange< newDimRange >::Type
-                                      >::type Type;
+        typedef typename ToNewDimRangeFunctionSpace< typename BaseType::FunctionSpaceType, newDimRange > :: Type NewFunctionSpaceType;
+        typedef typename ThisType::template ToNewFunctionSpace< NewFunctionSpaceType > :: Type  Type;
+      };
+
+      template< class NewFunctionSpace >
+      struct ToNewFunctionSpace
+      {
+        typedef typename std::conditional< (NewFunctionSpace::dimRange == 1),
+                typename DiscreteFunctionSpaceType1::template ToNewDimRange< 1 >::Type,
+                typename DifferentDiscreteFunctionSpace< ThisType, NewFunctionSpace >::Type
+                >::type Type;
       };
 
       // type of gridPart
@@ -96,7 +103,7 @@ namespace Dune
     template< class DFunctionSpaceImp1,
               class DFunctionSpaceImp2,
               class NewFunctionSpace >
-    struct DifferentDiscreteFunctionSpace< Fem::CombinedDiscreteFunctionSpace<
+    struct DifferentDiscreteFunctionSpace< CombinedDiscreteFunctionSpace<
                                              DFunctionSpaceImp1, DFunctionSpaceImp2 >, NewFunctionSpace >
     {
     private:
