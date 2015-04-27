@@ -4,6 +4,7 @@
 #include <limits>
 #include <iostream>
 #include <type_traits>
+#include <vector>
 
 #include <dune/fem/function/adaptivefunction/adaptivefunction.hh>
 #include <dune/fem/function/blockvectorfunction/blockvectorfunction.hh>
@@ -158,9 +159,11 @@ class UMFPACKOp:public Operator<DF, DF>
              ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& dest) const
   {
     // convert ISTLBlockVectorDiscreteFunction to AdaptiveDiscreteFunction in order to have a DOF*
-    AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> adaptiveArg(arg.name(),arg.space());
+    std::vector<DofType> vecArg(arg.size());
+    AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> adaptiveArg(arg.name(),arg.space(),vecArg.data());
     adaptiveArg.assign(arg);
-    AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> adaptiveDest(dest.name(),dest.space());
+    std::vector<DofType> vecDest(dest.size());
+    AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> adaptiveDest(dest.name(),dest.space(),vecDest.data());
     adaptiveDest.assign(dest);
 
     apply(adaptiveArg,adaptiveDest);
