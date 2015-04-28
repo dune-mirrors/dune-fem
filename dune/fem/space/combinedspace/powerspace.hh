@@ -168,10 +168,10 @@ namespace Dune
     {
       typedef PowerDiscreteFunctionSpace< DiscreteFunctionSpace, N > ThisType;
       typedef GenericCombinedDiscreteFunctionSpace< PowerDiscreteFunctionSpaceTraits< DiscreteFunctionSpace, N > > BaseType;
-      typedef PowerDiscreteFunctionSpaceTraits< DiscreteFunctionSpace, N > Traits;
       typedef CombinedSpaceHelper::LagrangePointSetExporter< DiscreteFunctionSpace > LagrangePointSetExporterType;
 
     public:
+      typedef PowerDiscreteFunctionSpaceTraits< DiscreteFunctionSpace, N > Traits;
       //! extract grid informations, it is assumed the both spaces are living on the
       //! same gridPart
       typedef typename Traits::GridPartType GridPartType;
