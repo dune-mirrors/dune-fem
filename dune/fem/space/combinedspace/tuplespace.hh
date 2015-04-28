@@ -123,7 +123,7 @@ namespace Dune
       // type functionspace
       typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
 
-      static constexpr int polynomialOrder = Std::max( DiscreteFunctionSpaces::polynomialOrder ... );
+      static constexpr int polynomialOrder = Std::max( (int)DiscreteFunctionSpaces::polynomialOrder ... );
 
       // review to make it work for all kind of combinations
       template< class DiscreteFunction,
