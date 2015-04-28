@@ -5,4 +5,4 @@ dune_install(adaptivefunction.hh blockvectorfunction.hh
 dune_add_subdirs(common localfunction adaptivefunction
                  combinedfunction blockvectorfunction
                  vectorfunction blockvectordiscretefunction
-                 blockvectors petscdiscretefunction)
+                 blockvectors petscdiscretefunction test)
