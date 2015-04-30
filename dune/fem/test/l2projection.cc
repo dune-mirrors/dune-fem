@@ -25,7 +25,7 @@
 #elif HAVE_DUNE_ISTL && defined USE_BLOCKVECTORFUNCTION
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/operator/linear/istloperator.hh>
-#include <dune/fem/solver/istlinverseoperators.hh>
+#include <dune/fem/solver/istlsolver.hh>
 #else
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/linear/spoperator.hh>
@@ -63,7 +63,7 @@ typedef Dune::Fem::PetscInverseOperator< DiscreteFunctionType, LinearOperatorTyp
 #elif HAVE_DUNE_ISTL && defined USE_BLOCKVECTORFUNCTION
 typedef Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
 typedef Dune::Fem::ISTLLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
-typedef Dune::Fem::ISTLInverseOperator< DiscreteFunctionType, Dune::Fem::ISTLCGSolver > InverseOperatorType;
+typedef Dune::Fem::ISTLCGOp< DiscreteFunctionType, LinearOperatorType > InverseOperatorType;
 #else
 typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
 typedef Dune::Fem::SparseRowLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
