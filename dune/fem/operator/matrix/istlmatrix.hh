@@ -855,7 +855,7 @@ namespace Dune
       {
         if( ! matrixAdap_ )
         {
-          matrixAdap_ = new MatrixAdapterType(matrixAdapter());
+          matrixAdap_ = new MatrixAdapterType(matrixAdapterObject());
         }
       }
 
@@ -2091,7 +2091,7 @@ namespace Dune
       {
         if( ! matrixAdap_ )
         {
-          matrixAdap_ = new MatrixAdapterType(matrixAdapter());
+          matrixAdap_ = new MatrixAdapterType(matrixAdapterObject());
         }
       }
 
