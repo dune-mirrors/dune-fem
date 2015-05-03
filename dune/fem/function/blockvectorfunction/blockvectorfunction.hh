@@ -16,6 +16,10 @@
 #include <dune/fem/space/common/arrays.hh>
 #endif
 
+#include <dune/fem/function/blockvectordiscretefunction/discretefunction.hh>
+#include <dune/fem/function/blockvectors/simpleblockvector.hh>
+
+
 #include <dune/fem/common/referencevector.hh>
 #include <dune/fem/common/stackallocator.hh>
 #include <dune/fem/function/common/discretefunction.hh>
@@ -28,6 +32,7 @@ namespace Dune
   namespace Fem
   {
 
+#if 0
     // forward declarations
     template< class DiscreteFunctionSpaceType >
     class ISTLBlockVectorDiscreteFunction;
@@ -458,10 +463,98 @@ namespace Dune
       //! \brief Constructor makes Discrete Function from copy
       ManagedDiscreteFunction ( const ThisType &df ) : BaseType( df ) {}
     };
+#else
 
+    /*
+#if HAVE_DUNE_ISTL
+    typedef BlockVector< DofBlockType > DofStorageType;
+#else
+    typedef MutableArray< DofBlockType > DofStorageType;
+#endif
+*/
+
+    //! @ingroup AdaptiveDFunction
+    //! An adaptive discrete function
+    //! This class is comparable to DFAdapt, except that it provides a
+    //! specialisation for CombinedSpace objects which provides enriched
+    //! functionality (access to subfunctions) and runtime optimisations
+    template <class DiscreteFunctionSpace>
+    class ISTLBlockVectorDiscreteFunction
+    : public DiscreteFunction< DiscreteFunctionSpace,
+                               ISTLBlockVector< typename DiscreteFunctionSpace::RangeType > >
+    {
+      typedef ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace > ThisType;
+      typedef DiscreteFunction< DiscreteFunctionSpace,
+                                ISTLBlockVector< typename DiscreteFunctionSpace::RangeType > > BaseType;
+
+    public:
+      typedef typename BaseType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+      typedef typename BaseType :: DofVectorType              DofVectorType;
+      typedef typename BaseType :: DofType                    DofType;
+
+      using BaseType::assign;
+
+      ISTLBlockVectorDiscreteFunction( const std::string &name,
+                                       const DiscreteFunctionSpaceType &space )
+        : BaseType( name, space, allocateDofStorage( space ) )
+      {
+      }
+
+      ISTLBlockVectorDiscreteFunction( const std::string &name,
+                                       const DiscreteFunctionSpaceType &space,
+                                       DofVectorType& dofVector )
+        : BaseType( name, space, dofVector )
+      {
+        // in this case we have no allocated mem object
+        memObject_ = 0;
+      }
+
+      ISTLBlockVectorDiscreteFunction( const ISTLBlockVectorDiscreteFunction& other )
+        : BaseType( "copy of " + other.name(), other.space(), allocateDofStorage( other.space() ) )
+      {
+        assign( other );
+      }
+
+      ~ISTLBlockVectorDiscreteFunction()
+      {
+        if( memObject_ )
+        {
+          delete memObject_;
+          memObject_ = 0;
+        }
+      }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression()
+       */
+      void enableDofCompression ()
+      {
+        if( memObject_ )
+          memObject_->enableDofCompression();
+      }
+
+    protected:
+      // allocate managed dof storage
+      DofVectorType& allocateDofStorage ( const DiscreteFunctionSpaceType &space )
+      {
+        std::string name("deprecated");
+        // create memory object
+        std::pair< DofStorageInterface*, DofVectorType* > memPair
+          = allocateManagedDofStorage( space.gridPart().grid(), space.blockMapper(),
+                                       name, (DofVectorType *) 0 );
+
+        // save pointer
+        memObject_ = memPair.first;
+        return *(memPair.second);
+      }
+
+      // pointer to allocated DofVector
+      DofStorageInterface* memObject_;
+    };
+
+#endif
   } // namespace Fem
 
 } // namespace Dune
 
-#include "blockvectorfunction_inline.hh"
+//#include "blockvectorfunction_inline.hh"
 #endif // #ifndef DUNE_FEM_BLOCKVECTORFUNCTION_HH

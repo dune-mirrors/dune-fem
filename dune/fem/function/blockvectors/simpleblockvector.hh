@@ -23,10 +23,163 @@ namespace Fem {
   *   \tparam  F           The ground fields. All dofs are elements of this field.
   *   \tparam  BlockSize   Size of the blocks
   */
-  template< class Container, unsigned int BlockSize >
-  class SimpleBlockVector
+  template< class Imp, class Field >
+  class BlockVectorInterface
   : public IsBlockVector
   {
+  protected:
+    typedef DebugCounter<size_t>                      CounterType;
+
+    BlockVectorInterface () {}
+
+    //! Type of derived class (implementation)
+    typedef Imp    ThisType;
+  public:
+    //! Type of the field the dofs lie in
+    typedef Field  FieldType;
+
+    /*
+     * ########## operators ##############################
+     */
+    /** \brief Copy assignment operator
+     */
+    const ThisType& operator= ( const ThisType &other )
+    {
+      if( this != &other )
+      {
+        assign( other );
+        sequence_ = other.sequence_;
+      }
+      return asImp();
+    }
+
+    /** \brief Add another block vector to *this
+     *
+     *  \param[in] other    Other block vector to add
+     *  \return Constant reference to *this
+     */
+    const ThisType &operator+= ( const ThisType &other )
+    {
+      assert( asImp().size() == other.size() );
+      const auto endit = asImp().end();
+      auto oit = other.begin();
+      for( auto it = asImp().begin(); it != endit; ++it, ++oit )
+        *it += *oit;
+
+      ++sequence_;
+      return asImp();
+    }
+
+    /** \brief Subtract another block vector from *this
+     *
+     *  \param[in] other    Other block vector to subtract
+     *  \return Constant reference to *this
+     */
+    const ThisType &operator-= ( const ThisType &other )
+    {
+      assert( asImp().size() == other.size() );
+      const auto endit = asImp().end();
+      auto oit = other.begin();
+      for( auto it = asImp().begin(); it != endit; ++it, ++oit )
+        *it -= *oit;
+
+      ++sequence_;
+      return asImp();
+    }
+
+    /** \brief Scalar product *this with another block vector
+     *
+     *  \param[in] other  Other block vector
+     *  \return Returns the scalar product " (*this)*other"
+     */
+    FieldType operator* ( const ThisType &other ) const
+    {
+      assert( asImp().size() == other.size() );
+      FieldType sum( 0 );
+      const auto endit = asImp().end();
+      auto oit = other.asImp().begin();
+      for( auto it = asImp().begin(); it != endit; ++it, ++oit )
+        sum += (*it * *oit);
+
+      return sum;
+    }
+
+    /** \brief  Scale this block vector
+     *
+     *  \param[in] scalar   Factor for the scaling
+     *  \return   Constant reference to *this
+     */
+    const ThisType &operator*= ( const FieldType &scalar )
+    {
+      const auto endit = asImp().end();
+      for( auto it = asImp().begin(); it != endit; ++it )
+        *it *= scalar;
+
+      ++sequence_;
+      return asImp();
+    }
+
+    /*
+     * ########## methods ##############################
+     */
+
+    /** \brief Add a scalar multiple of another block vector to this block vector.
+     *
+     *    Semantic in pseudocode: " *this = *this + scalar*v "
+     *
+     *  \param[in] v       The other block vector
+     *  \param[in] scalar  Scalar factor by which v is multiplied before it is added to *this
+     */
+    void addScaled ( const ThisType &other, const FieldType &scalar )
+    {
+      assert( asImp().size() == other.size() );
+      const auto endit = asImp().end();
+      auto oit = other.begin();
+      // TODO: revise
+      for( auto it = asImp().begin(); it != endit; ++it, ++oit )
+      {
+        *it += scalar * (*oit);
+      }
+
+      ++sequence_;
+    }
+
+    /** \brief Clear this block vector, i.e. set each dof to 0
+     */
+    void clear ()
+    {
+      std::fill( asImp().begin(), asImp().end(), FieldType( 0 ) );
+      ++sequence_;
+    }
+
+  protected:
+    // Copy block vectors.
+    //    Note: No '++sequence_' here, sequence_ is only changed in public methods
+    void assign ( const ThisType &other )
+    {
+      assert( asImp().size() == other.size() );
+      std::copy( other.begin(), other.end(), asImp().begin() );
+    }
+
+    ThisType& asImp() { return static_cast< ThisType& > (*this); }
+    const ThisType& asImp() const { return static_cast< ThisType& > (*this); }
+
+    mutable CounterType sequence_; // for consistency checks...
+  };
+
+
+  /** \class SimpleBlockVector
+  *   \brief This is the reference implementation of a block vector as it is expected
+  *      as the second template parameter to Dune::Fem::BlockVectorDiscreteFunction
+  *
+  *   \tparam  F           The ground fields. All dofs are elements of this field.
+  *   \tparam  BlockSize   Size of the blocks
+  */
+  template< class Container, int BlockSize >
+  class SimpleBlockVector
+  : public BlockVectorInterface< SimpleBlockVector< Container, BlockSize>, typename Container::value_type >
+  {
+    typedef BlockVectorInterface< SimpleBlockVector< Container, BlockSize>, typename Container::value_type > BaseType;
     typedef SimpleBlockVector< Container, BlockSize > ThisType;
     typedef Container                                 ArrayType;
 
@@ -75,13 +228,9 @@ namespace Fem {
      */
     /** \brief Copy assignment operator
      */
-    const ThisType& operator= ( const ThisType &other )
+    const ThisType& operator= ( const ThisType& other )
     {
-      if( this != &other )
-      {
-        assign( other );
-        sequence_ = other.sequence_;
-      }
+      BaseType::operator=( other );
       return *this;
     }
 
@@ -105,103 +254,6 @@ namespace Fem {
     {
       assert( i < size() );
       return DofBlockType( *this, i*blockSize );
-    }
-
-    /** \brief Add another block vector to *this
-     *
-     *  \param[in] other    Other block vector to add
-     *  \return Constant reference to *this
-     */
-    const ThisType &operator+= ( const ThisType &other )
-    {
-      assert( size() == other.size() );
-      const IteratorType endit = end();
-      ConstIteratorType oit = other.begin();
-      for( IteratorType it = begin(); it != endit; ++it, ++oit )
-        *it += *oit;
-
-      ++sequence_;
-      return *this;
-    }
-
-    /** \brief Subtract another block vector from *this
-     *
-     *  \param[in] other    Other block vector to subtract
-     *  \return Constant reference to *this
-     */
-    const ThisType &operator-= ( const ThisType &other )
-    {
-      assert( size() == other.size() );
-      const IteratorType endit = end();
-      ConstIteratorType oit = other.begin();
-      for( IteratorType it = begin(); it != endit; ++it, ++oit )
-        *it -= *oit;
-
-      ++sequence_;
-      return *this;
-    }
-
-    /** \brief Scalar product *this with another block vector
-     *
-     *  \param[in] other  Other block vector
-     *  \return Returns the scalar product " (*this)*other"
-     */
-    FieldType operator* ( const ThisType &other ) const
-    {
-      assert( size() == other.size() );
-      FieldType sum( 0 );
-      const IteratorType endit = end();
-      ConstIteratorType oit = other.begin();
-      for( IteratorType it = begin(); it != endit; ++it, ++oit )
-        sum += (*it * *oit);
-
-      return sum;
-    }
-
-    /** \brief  Scale this block vector
-     *
-     *  \param[in] scalar   Factor for the scaling
-     *  \return   Constant reference to *this
-     */
-    const ThisType &operator*= ( const FieldType &scalar )
-    {
-      const IteratorType endit = end();
-      for( IteratorType it = begin(); it != endit; ++it )
-        *it *= scalar;
-
-      ++sequence_;
-      return *this;
-    }
-
-    /*
-     * ########## methods ##############################
-     */
-
-    /** \brief Add a scalar multiple of another block vector to this block vector.
-     *
-     *    Semantic in pseudocode: " *this = *this + scalar*v "
-     *
-     *  \param[in] v       The other block vector
-     *  \param[in] scalar  Scalar factor by which v is multiplied before it is added to *this
-     */
-    void addScaled ( const ThisType &v, const FieldType &scalar )
-    {
-      assert( size() == v.size() );
-      FieldType sum( 0 );
-      const IteratorType endit = end();
-      ConstIteratorType vit = v.begin();
-      for( IteratorType it = begin(); it != endit; ++it, ++vit )
-        *it += scalar * (*vit);
-
-      ++sequence_;
-    }
-
-    /** \brief Clear this block vector, i.e. set each dof to 0
-     */
-    void clear ()
-    {
-      std::fill( begin(), end(), FieldType( 0 ) );
-      ++sequence_;
     }
 
     /** \brief Iterator pointing to the first dof
@@ -234,22 +286,13 @@ namespace Fem {
      */
     SizeType size () const { return array().size() / blockSize; }
 
-  protected:
-
     /** \brief Returns the number of dofs in the block vector
      *
      *  \return Number of dofs
      */
     SizeType numDofs() const { return array().size(); }
 
-    // Copy block vectors.
-    //    Note: No '++sequence_' here, sequence_ is only changed in public methods
-    void assign ( const ThisType &other )
-    {
-      assert( size() == other.size() );
-      std::copy( other.begin(), other.end(), begin() );
-    }
-
+  protected:
     const ArrayType &array () const { return array_; }
     ArrayType &array () { return array_; }
 
@@ -257,7 +300,6 @@ namespace Fem {
      * data fields
      */
     ArrayType& array_;
-    mutable CounterType sequence_; // for consistency checks...
   };
 
 
@@ -578,6 +620,132 @@ namespace Fem {
       container_ = new MutableContainer( size );
       return *container_;
     }
+  };
+
+  /** \class SimpleBlockVector
+  *   \brief This is the reference implementation of a block vector as it is expected
+  *      as the second template parameter to Dune::Fem::BlockVectorDiscreteFunction
+  *
+  *   \tparam  F           The ground fields. All dofs are elements of this field.
+  *   \tparam  BlockSize   Size of the blocks
+  */
+  template< class DofBlock >
+  class ISTLBlockVector
+  : public BlockVectorInterface< ISTLBlockVector< DofBlock >, typename DofBlock :: value_type >
+  {
+    typedef ISTLBlockVector< DofBlock>                            ThisType;
+    typedef BlockVector< DofBlock >                               ArrayType;
+    typedef BlockVectorInterface< ISTLBlockVector< DofBlock >, typename DofBlock :: value_type  >  BaseType;
+
+
+    using BaseType :: sequence_;
+  public:
+    enum { blockSize = DofBlock :: dimension };
+
+    typedef typename DofBlock :: value_type FieldType;
+  protected:
+    template <class EmbeddedIterator, class V>
+    class Iterator
+      : public ForwardIteratorFacade< Iterator< EmbeddedIterator,V >, V >
+    {
+    public:
+      typedef V FieldType;
+    protected:
+      mutable EmbeddedIterator it_;
+      int index_;
+    public:
+      //! Default constructor
+      Iterator( const EmbeddedIterator& it )
+        : it_( it ), index_(0)
+      {}
+
+      //! return dof
+      FieldType& dereference () const
+      {
+        assert( index_ < blockSize );
+        return (*it_)[ index_ ];
+      }
+
+      //! go to next dof
+      void increment ()
+      {
+        ++index_;
+        if( index_ >= blockSize )
+        {
+          index_ = 0;
+          ++it_;
+        }
+      }
+
+      //! compare
+      bool equals ( const Iterator &other ) const
+      {
+        return (it_ == other.it_) && (index_ == other.index_);
+      }
+
+    }; // end DofIteratorBlockVectorDiscreteFunction
+
+  public:
+    typedef Iterator< typename ArrayType::Iterator, FieldType >            IteratorType;
+    typedef Iterator< typename ArrayType::ConstIterator, const FieldType > ConstIteratorType;
+
+    typedef DofBlock DofBlockType;
+    typedef const DofBlock ConstDofBlockType;
+
+    typedef typename ArrayType::size_type   SizeType;
+    //! Typedef to make this class STL-compatible
+    typedef typename ArrayType::value_type  value_type;
+
+    /** \brief Constructor; use this to create a block vector with 'size' blocks.
+     *
+     *  The dofs are not initialized.
+     *
+     *  \param[in]  size         Number of blocks
+     */
+    explicit ISTLBlockVector ( SizeType size )
+    : array_( size )
+    {}
+
+    DofBlockType operator[] (const unsigned int i ) { return array()[ i ]; }
+    ConstDofBlockType operator[] (const unsigned int i ) const { return array()[ i ]; }
+
+    IteratorType begin() { return IteratorType( array().begin() ); }
+    ConstIteratorType begin() const  { return ConstIteratorType( array().begin() ); }
+
+    IteratorType end() { return IteratorType( array().end() ); }
+    ConstIteratorType end() const  { return ConstIteratorType( array().end() ); }
+
+    SizeType size() const { return array().size(); }
+
+    /** \brief Reserve memory.
+     *
+     *  This method is a no-op. It is defined here to make the block vector
+     *  compatible to the managed dof storage mechanisms used by
+     *  Dune::Fem::BlockVectorDiscreteFunction
+     *
+     *  \param[in] size  Number of blocks
+     */
+    void reserve ( const int size )
+    {
+      array().reserve( size );
+    }
+
+    /** \brief Resize the block vector
+     *
+     *  \param[in] size  New number of blocks
+     */
+    void resize ( SizeType size )
+    {
+      array().resize( size );
+      ++sequence_;
+    }
+
+    ArrayType& array() { return array_; }
+    const ArrayType& array() const { return array_; }
+
+  protected:
+    // ISTL BlockVector
+    ArrayType array_;
   };
 
 } // namespace Fem
