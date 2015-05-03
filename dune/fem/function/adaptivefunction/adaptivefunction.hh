@@ -277,16 +277,16 @@ namespace Dune
     //! This class is comparable to DFAdapt, except that it provides a
     //! specialisation for CombinedSpace objects which provides enriched
     //! functionality (access to subfunctions) and runtime optimisations
-    template <class DiscreteFunctionSpaceImp>
+    template <class DiscreteFunctionSpace>
     class AdaptiveDiscreteFunction
-    : public DiscreteFunction< DiscreteFunctionSpaceImp,
+    : public DiscreteFunction< DiscreteFunctionSpace,
                                SimpleBlockVector<
-                                    StaticArray< typename DiscreteFunctionSpaceImp::RangeFieldType >, DiscreteFunctionSpaceImp::localBlockSize > >
+                                    StaticArray< typename DiscreteFunctionSpace::RangeFieldType >, DiscreteFunctionSpace::localBlockSize > >
     {
-      typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceImp > ThisType;
-      typedef DiscreteFunction< DiscreteFunctionSpaceImp,
+      typedef AdaptiveDiscreteFunction< DiscreteFunctionSpace > ThisType;
+      typedef DiscreteFunction< DiscreteFunctionSpace,
                                SimpleBlockVector<
-                                    StaticArray< typename DiscreteFunctionSpaceImp::RangeFieldType >, DiscreteFunctionSpaceImp::localBlockSize > > BaseType;
+                                    StaticArray< typename DiscreteFunctionSpace::RangeFieldType >, DiscreteFunctionSpace::localBlockSize > > BaseType;
 
     public:
       typedef typename BaseType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
@@ -295,7 +295,7 @@ namespace Dune
 
       using BaseType::assign;
 
-      typedef MutableBlockVector< MutableArray< DofType >, DiscreteFunctionSpaceImp::localBlockSize > MutableDofVectorType;
+      typedef MutableBlockVector< MutableArray< DofType >, DiscreteFunctionSpaceType::localBlockSize > MutableDofVectorType;
 
       AdaptiveDiscreteFunction( const std::string &name,
                                 const DiscreteFunctionSpaceType &space )
@@ -357,7 +357,7 @@ namespace Dune
       public:
         DofStorageWrapper ( const SizeType size,
                             const DofType *v )
-          : array_( size, const_cast< DofType* >(v)),
+          : array_( size, const_cast< DofType* >(v) ),
             dofVector_( array_ ),
             name_("deprecated")
         {}
@@ -367,7 +367,7 @@ namespace Dune
         //! return array
         DofVectorType &getArray () { return dofVector_; }
 
-        //! do nothing here
+        //! do nothing here since we are using StaticArray
         void enableDofCompression () {}
 
         //! return array's size
