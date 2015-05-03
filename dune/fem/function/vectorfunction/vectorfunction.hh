@@ -11,6 +11,8 @@
 #include <dune/fem/storage/envelope.hh>
 #include <dune/fem/storage/vector.hh>
 
+#include <dune/fem/function/blockvectordiscretefunction/discretefunction.hh>
+#include <dune/fem/function/blockvectors/simpleblockvector.hh>
 
 namespace Dune
 {
@@ -18,6 +20,8 @@ namespace Dune
   namespace Fem
   {
 
+
+#if 0
     // Internal Forward Declarations
     // -----------------------------
 
@@ -269,6 +273,70 @@ namespace Dune
       DofVectorType *const dofVector_;
       const bool freeDofVector_;
     };
+#else
+
+    //! @ingroup AdaptiveDFunction
+    //! An adaptive discrete function
+    //! This class is comparable to DFAdapt, except that it provides a
+    //! specialisation for CombinedSpace objects which provides enriched
+    //! functionality (access to subfunctions) and runtime optimisations
+    template < class DiscreteFunctionSpace, class Vector >
+    class VectorDiscreteFunction
+    : public DiscreteFunction< DiscreteFunctionSpace,
+                               SimpleBlockVector< Vector, DiscreteFunctionSpace::localBlockSize > >
+    {
+      typedef VectorDiscreteFunction< DiscreteFunctionSpace, Vector > ThisType;
+      typedef DiscreteFunction< DiscreteFunctionSpace,
+                                SimpleBlockVector< Vector, DiscreteFunctionSpace::localBlockSize > > BaseType;
+
+      typedef Vector VectorType;
+    public:
+      typedef typename BaseType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+      typedef typename BaseType :: DofVectorType              DofVectorType;
+      typedef typename BaseType :: DofType                    DofType;
+
+      using BaseType::assign;
+
+      VectorDiscreteFunction( const std::string &name,
+                              const DiscreteFunctionSpaceType &space,
+                              VectorType& vector )
+        : BaseType( name, space, createDofVector( vector ) )
+      {
+      }
+
+      VectorDiscreteFunction( const VectorDiscreteFunction& other )
+        : BaseType( "copy of " + other.name(), other.space(), allocateDofVector( other.space() ) )
+      {
+        assign( other );
+      }
+
+      ~VectorDiscreteFunction ()
+      {
+        delete vec_;    vec_ = 0;
+        delete dofVec_; dofVec_ = 0;
+      }
+
+    protected:
+      DofVectorType& createDofVector( VectorType& vector )
+      {
+        dofVec_ = new DofVectorType( vector );
+        vec_ = 0;
+        return *dofVec_;
+      }
+
+      // allocate managed dof storage
+      DofVectorType& allocateDofVector ( const DiscreteFunctionSpaceType& space )
+      {
+        vec_    = new VectorType( space.size() );
+        dofVec_ = new DofVectorType( *vec_ );
+        return *dofVec_;
+      }
+
+      // pointer to dof vector
+      DofVectorType* dofVec_;
+      VectorType*    vec_;
+    };
+#endif
 
     // Capabilibies
     // ------------

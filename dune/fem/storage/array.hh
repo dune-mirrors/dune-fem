@@ -3,6 +3,8 @@
 
 #include <cassert>
 
+#include <dune/common/iteratorfacades.hh>
+
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 #include <dune/fem/misc/metaprogramming.hh>
 
@@ -168,6 +170,7 @@ namespace Dune
 
     template< class Element, class Array >
     class ArrayDefaultIterator
+      : public ForwardIteratorFacade< ArrayDefaultIterator< Element, Array >, Element >
     {
       typedef ArrayDefaultIterator< Element, Array > ThisType;
 
@@ -199,28 +202,22 @@ namespace Dune
         index_ = other.index_;
       }
 
-      ElementType &operator* ()
+      ElementType& dereference() const
       {
         assert( index_ < array_.size() );
         return array_[ index_ ];
       }
 
-      ThisType &operator++ ()
+      void increment()
       {
         assert( index_ < array_.size() );
         ++index_;
-        return *this;
       }
 
-      bool operator== ( const ThisType &other ) const
+      bool equals( const ThisType &other ) const
       {
         assert( &(other.array_) == &array_ );
         return index_ == other.index_;
-      }
-
-      bool operator!= ( const ThisType &other ) const
-      {
-        return !(*this == other);
       }
 
       unsigned int index () const

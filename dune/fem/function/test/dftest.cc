@@ -32,10 +32,19 @@ void checkFunction( DiscreteFunction& df, const OtherDiscreteFunction& other )
 {
   std::cout << "Checking (" << df.name() << "," << other.name() << ")....";
   typedef typename DiscreteFunction :: DofType DofType;
+
+  // fill df with zeros
+  df.clear();
+
+  // fill df with zeros
   std::fill( df.dbegin(), df.dend(), DofType( 0 ) );
 
   df += other;
   df -= other;
+
+  // copy to std::vector, sometimes needed for solver interfaces
+  std::vector< double > vec( df.size() );
+  std::copy( df.dbegin(), df.dend(), vec.begin() );
 
   // check copy constructor
   DiscreteFunction copydf( df );
@@ -79,16 +88,17 @@ int main(int argc, char ** argv)
     Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > adfp ("pointer", space, advec.data() );
     checkFunction( adfp, ref );
 
+    Dune::Fem::DynamicVector< double > vec( space.size() );
+    Dune::Fem::VectorDiscreteFunction< DiscreteFunctionSpaceType, Dune::Fem :: DynamicVector< double > > vdf ("vector", space, vec);
+    checkFunction( vdf, ref );
+
+#if HAVE_DUNE_ISTL
     Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType > istldf ("istl", space);
     checkFunction( istldf, ref );
 
     checkFunction( adf, istldf );
-
-    Dune::Fem :: DynamicVector< double > vec( space.size() );
-    Dune::Fem::VectorDiscreteFunction< DiscreteFunctionSpaceType, Dune::Fem :: DynamicVector< double > > vdf ("vector", space, vec);
-
-    checkFunction( vdf, ref );
     checkFunction( vdf, istldf );
+#endif
 
     /*
     typedef Dune::Fem::ReferenceBlockVector< FunctionSpaceType::RangeFieldType,
@@ -109,6 +119,7 @@ int main(int argc, char ** argv)
 #if HAVE_PETSC
     Dune::Fem::PetscDiscreteFunction< DiscreteFunctionSpaceType > petscdf ("petsc", space);
     checkFunction( petscdf, ref );
+    checkFunction( petscdf, vdf );
 #endif
 
     return 0;
