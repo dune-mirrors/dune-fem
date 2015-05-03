@@ -42,7 +42,7 @@ namespace Dune
       typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
       typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-      typedef DiscreteFunction< DiscreteFunctionSpace, DofVector >   DiscreteFunctionType;
+      typedef DiscreteFunction< DiscreteFunctionSpaceType, DofVectorType >   DiscreteFunctionType;
 
       typedef typename DofVectorType::IteratorType DofIteratorType;
       typedef typename DofVectorType::ConstIteratorType ConstDofIteratorType;

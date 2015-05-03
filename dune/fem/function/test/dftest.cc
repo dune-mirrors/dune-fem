@@ -106,6 +106,11 @@ int main(int argc, char ** argv)
     checkFunction( bvdf, vdf );
     */
 
+#if HAVE_PETSC
+    Dune::Fem::PetscDiscreteFunction< DiscreteFunctionSpaceType > petscdf ("petsc", space);
+    checkFunction( petscdf, ref );
+#endif
+
     return 0;
   }
   catch( const Dune::Exception& e )

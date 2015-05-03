@@ -136,6 +136,11 @@ namespace Dune
       typedef Envelope< ConstDofBlockType >                   ConstDofBlockPtrType;
       typedef typename DofBlockType::IndexType                IndexType;
 
+      typedef DofIteratorType       IteratorType;
+      typedef ConstDofIteratorType  ConstIteratorType;
+      typedef typename DFSpace::RangeFieldType FieldType;
+      typedef int  SizeType;
+
       typedef typename DFSpace::template CommDataHandle<void>::OperationType CommunicationOperationType;
 
       PetscVector ( const DFSpace& dfSpace )
@@ -172,7 +177,8 @@ namespace Dune
         removeObj();
       }
 
-      size_t size () const { return static_cast< size_t >( localSize_ + numGhosts_ ); }
+      size_t size () const { return dofMapping().size(); }
+     //     static_cast< size_t >( localSize_ + numGhosts_ ) / blockSize; }
 
       void resize( const size_t newsize )
       {
@@ -252,8 +258,8 @@ namespace Dune
         communicateIfNecessary();
       }
 
-      //DofBlockPtrType operator [] ( const IndexType index ) { return block( index ); }
-      //ConstDofBlockPtrType operator [] const ( const IndexType index ) { return block( index ); }
+      DofBlockType operator[] ( const IndexType index ) { return DofBlockType( *this,index ); }
+      ConstDofBlockType operator[] ( const IndexType index ) const { return DofBlockType( *this,index ); }
 
       DofBlockPtrType block ( IndexType index )
       {
@@ -271,6 +277,11 @@ namespace Dune
       ConstDofIteratorType dbegin () const { return ConstDofIteratorType( *this, 0, 0 ); }
       DofIteratorType dend() { return DofIteratorType( *this, dofMapping().size() ); }
       ConstDofIteratorType dend() const { return ConstDofIteratorType( *this, dofMapping().size() ); }
+
+      DofIteratorType begin () { return DofIteratorType( *this, 0, 0 ); }
+      ConstDofIteratorType begin () const { return ConstDofIteratorType( *this, 0, 0 ); }
+      DofIteratorType end() { return DofIteratorType( *this, dofMapping().size() ); }
+      ConstDofIteratorType end() const { return ConstDofIteratorType( *this, dofMapping().size() ); }
 
       void clear ()
       {
@@ -365,6 +376,11 @@ namespace Dune
         updateGhostRegions();
       }
 
+      PetscVector& operator= ( const ThisType& other )
+      {
+        assign( other );
+        return *this;
+      }
     protected:
       // setup vector according to mapping sizes
       void init()
@@ -400,7 +416,6 @@ namespace Dune
       }
 
       PetscVector ();
-      PetscVector& operator= ( const ThisType& );
 
       PetscDofMappingType& dofMapping () { return petscSlaveDofs_.dofMapping(); }
       const PetscDofMappingType& dofMapping () const { return petscSlaveDofs_.dofMapping(); }
