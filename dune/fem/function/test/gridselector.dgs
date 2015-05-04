@@ -1,0 +1,4 @@
+{
+  "grid" : "YaspGrid",
+  "parameters" : [ "dimgrid=2" ]
+}

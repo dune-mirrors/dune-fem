@@ -1,0 +1,9 @@
+{
+  "SPGrid" :
+  {
+    "type"      : "Dune::SPGrid< $(ctype), $(dimgrid), $(refinement) >",
+    "default"   : [ "ctype=double", "refinement=isotropic" ],
+    "translate" : { "refinement" : [ "isotropic=Dune::SPIsotropicRefinement", "anisotropic=Dune::SPAnisotropicRefinement", "bisection=Dune::SPBisectionRefinement", "arbitrary=Dune::SPArbitraryRefinement" ] },
+    "include"   : [ "dune/grid/spgrid.hh", "dune/grid/spgrid/dgf.hh" ]
+  }
+}

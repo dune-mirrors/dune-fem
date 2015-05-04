@@ -185,3 +185,14 @@ include(CommandLineHacks)
 # check SuiteSparse support
 find_package(SuiteSparse OPTIONAL_COMPONENTS UMFPACK SPQR LDL)
 include(AddSuiteSparseFlags)
+
+# grid selector
+include( GridSelector )
+add_dune_grid_selector_definitions( dune-fem dune-grid )
+message( "adding grid defs..." )
+if( dune-alugrid_FOUND )
+  add_dune_grid_selector_definitions( dune-fem dune-alugrid )
+endif()
+if( dune-spgrid_FOUND )
+  add_dune_grid_selector_definitions( dune-fem dune-spgrid )
+endif()
