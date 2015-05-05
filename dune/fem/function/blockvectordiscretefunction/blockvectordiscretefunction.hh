@@ -155,8 +155,7 @@ namespace Dune
       BlockVectorDiscreteFunction ( const std::string &name,
                                     const DiscreteFunctionSpaceType &dfSpace,
                                     BlockVectorType &blockVector )
-        : BaseType( name, dfSpace, LocalDofVectorAllocatorType( &ldvStack_ ) ),
-          ldvStack_( std::max( sizeof( DofType ), sizeof( DofType* ) ) * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
+        : BaseType( name, dfSpace ),
           memPair_( static_cast< DofStorageInterface * >( 0 ), &blockVector )
       {}
 
@@ -167,8 +166,7 @@ namespace Dune
        */
       BlockVectorDiscreteFunction ( const std::string &name,
                                     const DiscreteFunctionSpaceType &dfSpace )
-        : BaseType( name, dfSpace, LocalDofVectorAllocatorType( &ldvStack_ ) ),
-          ldvStack_( std::max( sizeof( DofType ), sizeof( DofType* ) ) * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
+        : BaseType( name, dfSpace ),
           memPair_( allocateManagedDofStorage< BlockVectorType >( space().gridPart().grid(), space().blockMapper(), name ) )
       {}
 
@@ -176,8 +174,7 @@ namespace Dune
       /** \brief Copy constructor
        */
       BlockVectorDiscreteFunction ( const ThisType &other )
-        : BaseType( "copy of "+other.name(), other.space(), LocalDofVectorAllocatorType( &ldvStack_ ) ),
-          ldvStack_( other.ldvStack_ ),
+        : BaseType( "copy of "+other.name(), other.space() ),
           memPair_( allocateManagedDofStorage< BlockVectorType >( space().gridPart().grid(), space().blockMapper(), name() ) )
       {
         // copy dof vector content
@@ -368,7 +365,6 @@ namespace Dune
       /*
        * ============================== data fields ====================
        */
-      typename Traits :: LocalDofVectorStackType ldvStack_;
       std::pair< DofStorageInterface *, BlockVectorType * > memPair_;
     };
 
