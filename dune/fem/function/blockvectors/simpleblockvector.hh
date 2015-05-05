@@ -225,6 +225,9 @@ namespace Fem {
     //! Type of one constant block
     typedef SimpleBlockVectorBlock< ThisType >  ConstDofBlockType;
 
+    typedef Fem::Envelope< DofBlockType >       DofBlockPtrType;
+    typedef Fem::Envelope< ConstDofBlockType >  ConstDofBlockPtrType;
+
     //! Size of each block
     enum { blockSize = BlockSize };
 
@@ -270,6 +273,26 @@ namespace Fem {
     {
       assert( i < size() );
       return DofBlockType( *this, i*blockSize );
+    }
+
+    /** \brief Accessor for a constant block
+     *
+     *  \param[in]  i         Index of the block
+     *  \return   The i-th block, constant
+     */
+    ConstDofBlockPtrType blockPtr( const unsigned int i ) const
+    {
+      return ConstDofBlockPtrType( this->operator[] ( i ) );
+    }
+
+    /** \brief Accessor for a block
+     *
+     *  \param[in]  i         Index of the block
+     *  \return   The i-th block
+     */
+    DofBlockPtrType blockPtr( const unsigned int i )
+    {
+      return DofBlockPtrType( this->operator[] ( i ) );
     }
 
     /** \brief Iterator pointing to the first dof
@@ -716,6 +739,9 @@ namespace Fem {
     typedef DofBlock DofBlockType;
     typedef const DofBlock ConstDofBlockType;
 
+    typedef DofBlockType*  DofBlockPtrType;
+    typedef ConstDofBlockType*  ConstDofBlockPtrType;
+
     typedef typename ArrayType::size_type   SizeType;
     //! Typedef to make this class STL-compatible
     typedef typename ArrayType::value_type  value_type;
@@ -747,8 +773,9 @@ namespace Fem {
       return *this;
     }
 
-    //DofBlockType* operator[] (const unsigned int i ) { return &array()[ i ]; }
-    //ConstDofBlockType* operator[] (const unsigned int i ) const { return &array()[ i ]; }
+    DofBlockPtrType blockPtr(const unsigned int i ) { return &array()[ i ]; }
+    ConstDofBlockPtrType blockPtr(const unsigned int i ) const { return &array()[ i ]; }
+
     DofBlockType& operator[] (const unsigned int i ) { return array()[ i ]; }
     ConstDofBlockType& operator[] (const unsigned int i ) const { return array()[ i ]; }
 

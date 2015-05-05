@@ -480,19 +480,6 @@ namespace Dune
             ISTLBlockVector< Dune::FieldVector< typename DiscreteFunctionSpace::RangeFieldType, DiscreteFunctionSpace::localBlockSize > > >
     {
       typedef ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace >  DiscreteFunctionType;
-
-      typedef ISTLBlockVector< Dune::FieldVector< typename  DiscreteFunctionSpace::RangeFieldType, DiscreteFunctionSpace::localBlockSize > >
-        DofVectorType;
-
-      typedef typename DofVectorType::DofBlockType        DofBlockType;
-      typedef typename DofVectorType::ConstDofBlockType   ConstDofBlockType;
-
-      typedef Fem::Envelope< DofBlockType, DofBlockType& >             DofBlockPtrType;
-      typedef Fem::Envelope< ConstDofBlockType, ConstDofBlockType& >   ConstDofBlockPtrType;
-
-      //typedef DofBlockType*                               DofBlockPtrType;
-      //typedef const DofBlockType*                         ConstDofBlockPtrType;
-
       typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
     };
 

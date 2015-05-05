@@ -708,7 +708,7 @@ namespace Dune
        */
       DofBlockPtrType block ( unsigned int index )
       {
-        return DofBlockPtrType( dofVector()[ index ] );
+        return dofVector().blockPtr( index );
       }
 
       /** \brief Obtain the (constant) 'index'-th block
@@ -718,7 +718,7 @@ namespace Dune
        */
       ConstDofBlockPtrType block ( unsigned int index ) const
       {
-        return ConstDofBlockPtrType( dofVector()[ index ] );
+        return dofVector().blockPtr( index );
       }
 
       /** \brief Return the number of blocks in the block vector
@@ -1015,9 +1015,8 @@ namespace Dune
       typedef typename DofVectorType::ConstIteratorType       ConstDofIteratorType;
       typedef typename DofVectorType::DofBlockType            DofBlockType;
       typedef typename DofVectorType::ConstDofBlockType       ConstDofBlockType;
-
-      typedef Fem::Envelope< DofBlockType >                   DofBlockPtrType;
-      typedef Fem::Envelope< ConstDofBlockType >              ConstDofBlockPtrType;
+      typedef typename DofVectorType::DofBlockPtrType         DofBlockPtrType;
+      typedef typename DofVectorType::ConstDofBlockPtrType    ConstDofBlockPtrType;
 
       typedef typename DiscreteFunctionSpaceType::BlockMapperType MapperType;
       typedef typename DofVectorType::FieldType DofType;
