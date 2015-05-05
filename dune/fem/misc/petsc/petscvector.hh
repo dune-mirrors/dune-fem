@@ -120,10 +120,12 @@ namespace Dune
       typedef PetscVector< DFSpace > ThisType;
       friend class PetscDofBlock< ThisType >;
       friend class PetscDofBlock< const ThisType >;
-
+      friend class PetscDofProxy< ThisType >;
+      friend class PetscDofProxy< const ThisType >;
     public:
       typedef PetscSlaveDofProvider< DFSpace > PetscSlaveDofsType;
       typedef PetscScalar  value_type ;
+      typedef Vec  DofContainerType;
 
       static const int blockSize = DFSpace :: localBlockSize;
       typedef typename PetscSlaveDofsType :: PetscDofMappingType  PetscDofMappingType;
@@ -236,6 +238,19 @@ namespace Dune
       {
         communicateIfNecessary();
         return &vec_;
+      }
+
+      // accessors for the underlying PETSc vectors
+      Vec& array ()
+      {
+        communicateIfNecessary();
+        return vec_;
+      }
+
+      const Vec& array () const
+      {
+        communicateIfNecessary();
+        return vec_;
       }
 
       Vec* getGhostedVector ()

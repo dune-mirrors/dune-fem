@@ -2,6 +2,8 @@
 #ifndef DUNE_FEM_PETSCDOFBLOCK_HH
 #define DUNE_FEM_PETSCDOFBLOCK_HH
 
+#include <algorithm>
+
 #include <dune/fem/storage/envelope.hh>
 
 #if HAVE_PETSC
@@ -16,85 +18,32 @@ namespace Dune
 
   namespace Fem
   {
-
-
-    // TODO: give this the same interface as Dune::Fem::ReferenceBlockVectorBlock?
-    /* ========================================
-     * class PetscDofBlock
-     * =======================================
-     */
-    template< typename PVector >
-    class PetscDofBlock
-    {
-      typedef PetscDofBlock< PVector > ThisType;
-
-    public:
-      typedef PVector PetscVectorType;
-      typedef typename PetscVectorType::PetscDofMappingType PetscDofMappingType;
-      typedef typename PetscDofMappingType::IndexType IndexType;
-
-      static const unsigned int blockSize = PetscVectorType::blockSize;
-
-      class DofProxy;
-      class DofIterator;
-
-      // Needed so that we can put this class in a Dune::Envelope
-      typedef std::pair< PetscVectorType&, IndexType > UnaryConstructorParamType;
-
-      // this is the ctor to be used
-      PetscDofBlock ( PetscVectorType &petscVector, IndexType blockIndex )
-      : petscVector_( petscVector ),
-        blockIndex_( blockIndex )
-      {}
-
-      // ..or this one, which is semantically equivalent to the above ctor
-      explicit PetscDofBlock ( UnaryConstructorParamType arg )
-      : petscVector_( arg.first ),
-        blockIndex_( arg.second )
-      {}
-
-    private:
-      PetscDofBlock ();
-      // The standard copy ctor is okay... and needed.
-
-    public:
-      DofProxy operator[] ( unsigned int index )
-      {
-        assert( index < blockSize );
-        return DofProxy( petscVector_, blockIndex_, index );
-      }
-
-    private:
-      /*
-       * data fields
-       */
-      PetscVectorType &petscVector_;
-      IndexType blockIndex_;
-
-    };
+    template < class PVector >
+    class PetscDofBlock;
 
     /* ========================================
      * class PetscDofBlock::DofProxy
      * =======================================
      */
-    template< typename PVector >
-    class PetscDofBlock< PVector >::DofProxy
+    template< class PVector >
+    class PetscDofProxy
     {
-      typedef PVector PetscVectorType;
-      typedef typename PetscDofBlock< PetscVectorType >::DofProxy ThisType;
+    public:
+      typedef PVector  PetscVectorType;
+      typedef typename PetscDofBlock< PetscVectorType >::DofProxy  ThisType;
       typedef typename PetscDofBlock< PetscVectorType >::IndexType IndexType;
 
-    public:
+      static const unsigned int blockSize = PetscVectorType::blockSize;
 
       // This is needed to put DofProxies in STL (or STL-like) containers...
-      DofProxy ()
+      PetscDofProxy ( PetscScalar s = 0 )
       : petscVector_( 0 ),
         blockIndex_( 0 ),
         indexInBlock_( 0 )
       {}
 
       // this is called by a friend
-      DofProxy ( PetscVectorType &petscVector, IndexType blockIndex, PetscInt indexInBlock )
+      PetscDofProxy ( PetscVectorType &petscVector, IndexType blockIndex, PetscInt indexInBlock )
       : petscVector_( &petscVector ),
         blockIndex_( blockIndex ),
         indexInBlock_( indexInBlock )
@@ -159,12 +108,17 @@ namespace Dune
       }
 
       // conversion operators
-      operator PetscScalar () const { return getValue(); }
+      operator PetscScalar () const
+      {
+        return valid() ? getValue() : PetscScalar( 0 );
+      }
 
-    private:
+      bool valid() const { return bool( petscVector_ ); }
 
+    protected:
       PetscScalar getValue () const
       {
+        assert( valid() );
         PetscInt index = blockSize*petscVector().dofMapping().localSlaveMapping( blockIndex_ ) + indexInBlock_;
         PetscScalar ret;
         ::Dune::Petsc::VecGetValues( *petscVector().getGhostedVector(), 1, &index, &ret );
@@ -198,21 +152,104 @@ namespace Dune
     };
 
 
-    // TODO: to be revised
+    // TODO: give this the same interface as Dune::Fem::ReferenceBlockVectorBlock?
+    /* ========================================
+     * class PetscDofBlock
+     * =======================================
+     */
+    template< class PVector >
+    class PetscDofBlock
+    {
+      typedef PetscDofBlock< PVector > ThisType;
+
+    public:
+      typedef PVector PetscVectorType;
+      typedef typename PetscVectorType::PetscDofMappingType PetscDofMappingType;
+      typedef typename PetscDofMappingType::IndexType IndexType;
+
+      static const unsigned int blockSize = PetscVectorType::blockSize;
+
+      typedef PetscDofProxy< PVector > DofProxy;
+      class DofIterator;
+
+      // Needed so that we can put this class in a Dune::Envelope
+      typedef std::pair< PetscVectorType&, IndexType > UnaryConstructorParamType;
+
+      // this is the ctor to be used
+      PetscDofBlock ( PetscVectorType &petscVector, IndexType blockIndex )
+      : petscVector_( petscVector ),
+        blockIndex_( blockIndex )
+      {}
+
+      // this is the ctor to be used
+      PetscDofBlock ( const PetscDofBlock& other )
+      : petscVector_( other.petscVector_ ),
+        blockIndex_( other.blockIndex_ )
+      {}
+
+      // ..or this one, which is semantically equivalent to the above ctor
+      explicit PetscDofBlock ( UnaryConstructorParamType arg )
+      : petscVector_( arg.first ),
+        blockIndex_( arg.second )
+      {}
+
+      const PetscDofBlock& operator*= ( const PetscScalar value )
+      {
+        for( int i=0; i<blockSize; ++i )
+          (*this)[ i ] *= value ;
+      }
+
+    private:
+      PetscDofBlock ();
+      // The standard copy ctor is okay... and needed.
+
+    public:
+      IndexType size() const { return blockSize; }
+
+      DofProxy operator [] ( unsigned int index )
+      {
+        assert( index < blockSize );
+        return DofProxy( petscVector_, blockIndex_, index );
+      }
+
+      const DofProxy operator [] ( unsigned int index ) const
+      {
+        assert( index < blockSize );
+        return DofProxy( petscVector_, blockIndex_, index );
+      }
+
+    private:
+      /*
+       * data fields
+       */
+      PetscVectorType &petscVector_;
+      IndexType blockIndex_;
+    };
+
     //! proper implementation for InStreamInterface of the DofProxy
     //template< class Traits,  class PVector >
-    template< class Traits,  class T >
-    inline InStreamInterface< Traits > &
-    operator>> ( InStreamInterface< Traits > &in,
-                 //const typename PetscDofBlock< PVector >::DofProxy& value )
-                 const T& value )
+    template< class Traits,  class PVector >
+    inline OutStreamInterface< Traits >&
+      operator<< ( OutStreamInterface< Traits > &out,
+                   const PetscDofProxy< PVector >& value )
     {
-      DUNE_THROW(NotImplemented,"operator>> not implemented for PetscDofBlock< PVector >::DofProxy");
-/*
+      // write to stream
+      out << PetscScalar( value );
+      return out;
+    }
+
+    //! proper implementation for InStreamInterface of the DofProxy
+    //template< class Traits,  class PVector >
+    template< class Traits,  class PVector >
+    inline InStreamInterface< Traits >&
+      operator>> ( InStreamInterface< Traits > &in,
+                   PetscDofProxy< PVector > value )
+    {
       PetscScalar val;
+      // get value from stream
       in >> val;
+      // write value to discrete function
       value = val;
-*/
       return in;
     }
 
@@ -226,7 +263,7 @@ namespace Dune
      * class PetscDofBlock::DofIterator
      * =======================================
      */
-    template< typename PVector >
+    template< class PVector >
     class PetscDofBlock< PVector >::DofIterator
     : public std::iterator< std::input_iterator_tag, PetscScalar >
     {
