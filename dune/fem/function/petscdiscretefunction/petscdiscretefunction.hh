@@ -62,6 +62,7 @@ namespace Dune
       Vector &vector_;
     };
 
+#if 1
     /** \class DiscreteFunctionTraits
      *  \brief Traits class for a DiscreteFunction
      *
@@ -72,18 +73,20 @@ namespace Dune
     struct DiscreteFunctionTraits< DiscreteFunction< DiscreteFunctionSpace, PetscVector< DiscreteFunctionSpace > > >
     {
       typedef PetscVector< DiscreteFunctionSpace >  DofVectorType;
+      typedef typename DofVectorType::DofContainerType DofContainerType;
+
 
       typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
       typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
       typedef DiscreteFunction< DiscreteFunctionSpace, DofVectorType >   DiscreteFunctionType;
 
-      typedef typename DofVectorType::IteratorType DofIteratorType;
-      typedef typename DofVectorType::ConstIteratorType ConstDofIteratorType;
-      typedef typename DofVectorType::DofBlockType DofBlockType;
-      typedef typename DofVectorType::ConstDofBlockType ConstDofBlockType;
-      typedef Fem::Envelope< DofBlockType >                          DofBlockPtrType;
-      typedef Fem::Envelope< ConstDofBlockType >                     ConstDofBlockPtrType;
+      typedef typename DofVectorType::IteratorType          DofIteratorType;
+      typedef typename DofVectorType::ConstIteratorType     ConstDofIteratorType;
+      typedef typename DofVectorType::DofBlockType          DofBlockType;
+      typedef typename DofVectorType::ConstDofBlockType     ConstDofBlockType;
+      typedef typename DofVectorType::DofBlockPtrType       DofBlockPtrType;
+      typedef typename DofVectorType::ConstDofBlockPtrType  ConstDofBlockPtrType;
       typedef typename DiscreteFunctionSpaceType::BlockMapperType MapperType;
       typedef typename DofVectorType::FieldType DofType;
 
@@ -95,6 +98,7 @@ namespace Dune
 
       typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
     };
+#endif
 
 
 #if 0
@@ -340,6 +344,7 @@ namespace Dune
       typedef typename BaseType :: DofType                    DofType;
 
       using BaseType::assign;
+      using BaseType::dofVector;
 
       PetscDiscreteFunction( const std::string &name,
                              const DiscreteFunctionSpaceType &space )
@@ -379,6 +384,19 @@ namespace Dune
           memObject_->enableDofCompression();
       }
 
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::communicate() */
+      void communicate ()
+      {
+        dofVector().communicateNow();
+      }
+
+
+      /** \brief obtain a constand pointer to the underlying PETSc Vec */
+      const Vec* petscVec () const { return dofVector().getVector(); }
+
+      /** \brief obtain a pointer to the underlying PETSc Vec */
+      Vec* petscVec () { return dofVector().getVector(); }
+
     protected:
       typedef typename DiscreteFunctionSpaceType :: BlockMapperType  BlockMapperType;
       typedef PetscManagedDofStorage< DiscreteFunctionSpaceType, BlockMapperType > PetscManagedDofStorageType;
@@ -398,7 +416,6 @@ namespace Dune
     };
 
 #endif
-
 
   } // namespace Fem
 

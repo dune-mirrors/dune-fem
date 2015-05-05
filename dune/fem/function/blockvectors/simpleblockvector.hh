@@ -6,12 +6,27 @@
 
 #include <dune/fem/misc/debug.hh> // for DebugCounter
 
-namespace Dune {
-namespace Fem {
+#if HAVE_DUNE_ISTL
+#include <dune/istl/bvector.hh>
+#endif
 
-  // Forward declaration
+namespace Dune {
+  namespace Fem {
+    // Forward declaration
+    template< class BlockVector >
+    class SimpleBlockVectorBlock;
+  }
+
   template< class BlockVector >
-  class SimpleBlockVectorBlock;
+  struct DenseMatVecTraits< Fem::SimpleBlockVectorBlock< BlockVector > >
+  {
+    typedef Fem::SimpleBlockVectorBlock< BlockVector > derived_type;
+    typedef Fem::SimpleBlockVectorBlock< BlockVector > container_type;
+    typedef typename BlockVector :: FieldType     value_type;
+    typedef typename BlockVector :: SizeType      size_type;
+  };
+
+namespace Fem {
 
   // tag for block vectors
   struct IsBlockVector {};
@@ -45,7 +60,7 @@ namespace Fem {
      */
     const ThisType& operator= ( const ThisType &other )
     {
-      if( this != &other )
+      if( &asImp() != &other )
       {
         assign( other );
         sequence_ = other.sequence_;
@@ -189,6 +204,7 @@ namespace Fem {
     friend class SimpleBlockVectorBlock< const ThisType >;
 
   public:
+    typedef ArrayType DofContainerType;
 
     //! Type of the field the dofs lie in
     typedef typename ArrayType::value_type                  FieldType;
@@ -292,16 +308,18 @@ namespace Fem {
      */
     SizeType numDofs() const { return array().size(); }
 
-  protected:
+    FieldType* data() { return array().data(); }
+    const FieldType* data() const { return array().data(); }
+
     const ArrayType &array () const { return array_; }
     ArrayType &array () { return array_; }
 
+  protected:
     /*
      * data fields
      */
     ArrayType& array_;
   };
-
 
   /** \class SimpleBlockVectorBlock
   *   \brief This is the implementation of a block of SimpleBlockVector
@@ -310,26 +328,18 @@ namespace Fem {
   *   \tparam  BlockSize   Size of the blocks
   */
   template< class BlockVector >
-  class SimpleBlockVectorBlock
+  class SimpleBlockVectorBlock : public Dune::DenseVector< SimpleBlockVectorBlock< BlockVector > >
   {
     typedef BlockVector  BlockVectorType;
-    typedef typename BlockVectorType :: FieldType      FieldType;
-    typedef typename BlockVectorType::CounterType  CounterType;
+    typedef typename BlockVectorType :: FieldType     FieldType;
+    typedef typename BlockVectorType::CounterType     CounterType;
 
-    //typedef typename std::remove_const< BlockVectorType >::type NonConstBlockVectorType;
-    //typedef SimpleBlockVectorBlock< const NonConstBlockVectorType > ConstBlockType;
-    //typedef SimpleBlockVectorBlock<       NonConstBlockVectorType > NonConstBlockType;
     typedef SimpleBlockVectorBlock< BlockVectorType > ConstBlockType;
-
     typedef SimpleBlockVectorBlock< BlockVectorType > ThisType;
 
-    /*
-     * friends
-     */
-    //friend class SimpleBlockVectorBlock< const NonConstBlockVectorType >;
-    //friend class SimpleBlockVectorBlock<       NonConstBlockVectorType >;
-
   public:
+    typedef typename BlockVectorType :: SizeType size_type;
+
     //! The block size
     static const unsigned int blockSize = BlockVector :: blockSize ;
 
@@ -340,17 +350,18 @@ namespace Fem {
      */
     SimpleBlockVectorBlock ( const BlockVectorType &blockVector, unsigned int blockBegin )
     : blockVector_( const_cast< BlockVectorType& > (blockVector) ),
-      blockBegin_( blockBegin ),
-      sequence_( blockVector_.sequence_ )
+      blockBegin_( blockBegin )
     {}
 
     /** \brief Copy constructor
      */
     SimpleBlockVectorBlock ( const SimpleBlockVectorBlock< BlockVectorType > &other )
     : blockVector_( const_cast< BlockVectorType& > (other.blockVector_)),
-      blockBegin_( other.blockBegin_ ),
-      sequence_( other.sequence_ )
+      blockBegin_( other.blockBegin_ )
     {}
+
+    size_type size () const { return blockSize; }
+    size_type vec_size () const { return blockSize; }
 
     /** \brief Copy assignment operator for constant blocks
      *
@@ -359,11 +370,10 @@ namespace Fem {
      */
     ThisType &operator= ( const ConstBlockType &other )
     {
-      assert( sequence_ == blockVector_.sequence_ );
       copy( other );
-      sequence_ = other.sequence_;
       return *this;
     }
+#if 0
 
     /** \brief Add another block to *this
      *
@@ -428,15 +438,15 @@ namespace Fem {
       ++sequence_;
       return *this;
     }
+#endif
 
     /** \brief Obtain a dof inside this block
      *
      *  \param[in] index   Index of the dof
      *  \return Reference to the dof
      */
-    FieldType& operator[] (unsigned int index)
+    FieldType& vec_access(unsigned int index)
     {
-      assert( sequence_ == blockVector_.sequence_ );
       assert(index < blockSize);
       return blockVector_.array()[blockBegin_ + index];
     }
@@ -446,9 +456,8 @@ namespace Fem {
      *  \param[in] index   Index of the dof
      *  \return Constant reference to the dof
      */
-    const FieldType& operator[] (unsigned int index) const
+    const FieldType& vec_access(unsigned int index) const
     {
-      assert( sequence_ == blockVector_.sequence_ );
       assert(index < blockSize);
       return blockVector_.array()[blockBegin_ + index];
     }
@@ -473,7 +482,6 @@ namespace Fem {
     // data fields
     BlockVectorType &blockVector_;
     const unsigned int blockBegin_;
-    mutable CounterType sequence_;
   };
 
   /** \class SimpleBlockVector
@@ -491,9 +499,10 @@ namespace Fem {
     typedef SimpleBlockVector< Container, BlockSize >  BaseType;
     typedef Container                                  ArrayType;
     using BaseType :: array_;
-    using BaseType :: array;
     using BaseType :: sequence_;
   public:
+
+    using BaseType :: array;
     using BaseType :: blockSize ;
     typedef typename BaseType :: SizeType SizeType;
 
@@ -633,6 +642,7 @@ namespace Fem {
   class ISTLBlockVector
   : public BlockVectorInterface< ISTLBlockVector< DofBlock >, typename DofBlock :: value_type >
   {
+    ISTLBlockVector ( const ISTLBlockVector& );
     typedef ISTLBlockVector< DofBlock>                            ThisType;
     typedef BlockVector< DofBlock >                               ArrayType;
     typedef BlockVectorInterface< ISTLBlockVector< DofBlock >, typename DofBlock :: value_type  >  BaseType;
@@ -640,6 +650,8 @@ namespace Fem {
 
     using BaseType :: sequence_;
   public:
+    typedef ArrayType DofContainerType;
+
     enum { blockSize = DofBlock :: dimension };
 
     typedef typename DofBlock :: value_type FieldType;
@@ -652,16 +664,28 @@ namespace Fem {
       typedef V FieldType;
     protected:
       mutable EmbeddedIterator it_;
+#ifndef NDEBUG
+      const   EmbeddedIterator end_;
+#endif
       int index_;
     public:
       //! Default constructor
-      Iterator( const EmbeddedIterator& it )
-        : it_( it ), index_(0)
+      Iterator( const EmbeddedIterator& it
+#ifndef NDEBUG
+              , const EmbeddedIterator& end = EmbeddedIterator()
+#endif
+              )
+        : it_( it ),
+#ifndef NDEBUG
+          end_( end ),
+#endif
+          index_(0)
       {}
 
       //! return dof
       FieldType& dereference () const
       {
+        assert( it_ != end_ );
         assert( index_ < blockSize );
         return (*it_)[ index_ ];
       }
@@ -702,15 +726,44 @@ namespace Fem {
      *
      *  \param[in]  size         Number of blocks
      */
-    explicit ISTLBlockVector ( SizeType size )
-    : array_( size )
+    explicit ISTLBlockVector ( ArrayType& array )
+    : array_( &array )
     {}
 
-    DofBlockType operator[] (const unsigned int i ) { return array()[ i ]; }
-    ConstDofBlockType operator[] (const unsigned int i ) const { return array()[ i ]; }
+    ISTLBlockVector () : array_( 0 )
+    {}
 
-    IteratorType begin() { return IteratorType( array().begin() ); }
-    ConstIteratorType begin() const  { return ConstIteratorType( array().begin() ); }
+    /*
+     * ########## operators ##############################
+     */
+    /** \brief Copy assignment operator
+     */
+    const ThisType& operator= ( const ThisType& other )
+    {
+      if( this != &other )
+      {
+        array() = other.array();
+      }
+      return *this;
+    }
+
+    //DofBlockType* operator[] (const unsigned int i ) { return &array()[ i ]; }
+    //ConstDofBlockType* operator[] (const unsigned int i ) const { return &array()[ i ]; }
+    DofBlockType& operator[] (const unsigned int i ) { return array()[ i ]; }
+    ConstDofBlockType& operator[] (const unsigned int i ) const { return array()[ i ]; }
+
+    IteratorType begin() { return IteratorType( array().begin()
+#ifndef NDEBUG
+                                              , array().end()
+#endif
+                                              ); }
+    ConstIteratorType begin() const
+    {
+      return ConstIteratorType( array().begin()
+#ifndef NDEBUG
+                              , array().end()
+#endif
+                              ); }
 
     IteratorType end() { return IteratorType( array().end() ); }
     ConstIteratorType end() const  { return ConstIteratorType( array().end() ); }
@@ -740,12 +793,12 @@ namespace Fem {
       ++sequence_;
     }
 
-    ArrayType& array() { return array_; }
-    const ArrayType& array() const { return array_; }
+    ArrayType& array() { assert( array_ ); return *array_; }
+    const ArrayType& array() const { assert( array_ ); return *array_; }
 
   protected:
     // ISTL BlockVector
-    ArrayType array_;
+    ArrayType* array_;
   };
 
 } // namespace Fem

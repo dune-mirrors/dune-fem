@@ -289,8 +289,8 @@ namespace Dune
       typedef DiscreteFunction< DiscreteFunctionSpace,
                                 SimpleBlockVector< Vector, DiscreteFunctionSpace::localBlockSize > > BaseType;
 
-      typedef Vector VectorType;
     public:
+      typedef Vector VectorType;
       typedef typename BaseType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
       typedef typename BaseType :: DofVectorType              DofVectorType;
       typedef typename BaseType :: DofType                    DofType;
@@ -300,41 +300,32 @@ namespace Dune
       VectorDiscreteFunction( const std::string &name,
                               const DiscreteFunctionSpaceType &space,
                               VectorType& vector )
-        : BaseType( name, space, createDofVector( vector ) )
+        : BaseType( name, space, dofVector_ ),
+          vec_(),
+          dofVector_( vector )
       {
       }
 
       VectorDiscreteFunction( const VectorDiscreteFunction& other )
-        : BaseType( "copy of " + other.name(), other.space(), allocateDofVector( other.space() ) )
+        : BaseType( "copy of " + other.name(), other.space(), dofVector_ ),
+          vec_(),
+          dofVector_( allocateDofVector( other.space() ) )
       {
         assign( other );
       }
 
-      ~VectorDiscreteFunction ()
-      {
-        delete vec_;    vec_ = 0;
-        delete dofVec_; dofVec_ = 0;
-      }
-
     protected:
-      DofVectorType& createDofVector( VectorType& vector )
-      {
-        dofVec_ = new DofVectorType( vector );
-        vec_ = 0;
-        return *dofVec_;
-      }
-
       // allocate managed dof storage
-      DofVectorType& allocateDofVector ( const DiscreteFunctionSpaceType& space )
+      VectorType& allocateDofVector ( const DiscreteFunctionSpaceType& space )
       {
-        vec_    = new VectorType( space.size() );
-        dofVec_ = new DofVectorType( *vec_ );
-        return *dofVec_;
+        vec_.reset( new VectorType( space.size() ) );
+        return *vec_;
       }
 
+      // pointer to DofContainer
+      std::unique_ptr< VectorType > vec_;
       // pointer to dof vector
-      DofVectorType* dofVec_;
-      VectorType*    vec_;
+      DofVectorType dofVector_;
     };
 #endif
 

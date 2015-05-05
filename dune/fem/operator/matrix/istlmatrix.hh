@@ -448,9 +448,9 @@ namespace Dune
       typedef FieldMatrix<typename DomainSpaceType :: RangeFieldType, littleRows, littleCols> LittleBlockType;
 
       typedef ISTLBlockVectorDiscreteFunction< RangeSpaceType >      RowDiscreteFunctionType;
-      typedef typename RowDiscreteFunctionType :: LeakPointerType    RowLeakPointerType;
+      //typedef typename RowDiscreteFunctionType :: LeakPointerType    RowLeakPointerType;
       typedef ISTLBlockVectorDiscreteFunction< DomainSpaceType >     ColumnDiscreteFunctionType;
-      typedef typename ColumnDiscreteFunctionType :: LeakPointerType ColumnLeakPointerType;
+      //typedef typename ColumnDiscreteFunctionType :: LeakPointerType ColumnLeakPointerType;
 
     protected:
       typedef typename RowDiscreteFunctionType :: DofStorageType    RowBlockVectorType;
@@ -1010,11 +1010,15 @@ namespace Dune
       }
 
       //! mult method of matrix object used by oem solver
+      template <class ColumnLeakPointerType, class RowLeakPointerType>
       void multOEM(const ColumnLeakPointerType& arg, RowLeakPointerType& dest) const
       {
+        DUNE_THROW(NotImplemented,"Method has been removed");
+        /*
         createMatrixAdapter();
         assert( matrixAdap_ );
         matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
+        */
       }
 
       //! dot method for OEM Solver
@@ -1177,13 +1181,13 @@ namespace Dune
       typedef FieldMatrix<typename DomainSpaceType :: RangeFieldType, littleRows, littleCols> LittleBlockType;
 
       typedef ISTLBlockVectorDiscreteFunction< DomainSpaceType >     RowDiscreteFunctionType;
-      typedef typename RowDiscreteFunctionType :: LeakPointerType  RowLeakPointerType;
+      //typedef typename RowDiscreteFunctionType :: LeakPointerType  RowLeakPointerType;
       typedef ISTLBlockVectorDiscreteFunction< RangeSpaceType >  ColumnDiscreteFunctionType;
-      typedef typename ColumnDiscreteFunctionType :: LeakPointerType  ColumnLeakPointerType;
+      //typedef typename ColumnDiscreteFunctionType :: LeakPointerType  ColumnLeakPointerType;
 
     protected:
-      typedef typename RowDiscreteFunctionType :: DofStorageType    RowBlockVectorType;
-      typedef typename ColumnDiscreteFunctionType :: DofStorageType ColumnBlockVectorType;
+      typedef typename RowDiscreteFunctionType    :: DofContainerType  RowBlockVectorType;
+      typedef typename ColumnDiscreteFunctionType :: DofContainerType  ColumnBlockVectorType;
 
       typedef typename DomainSpaceType :: BlockMapperType RowMapperType;
       typedef typename RangeSpaceType :: BlockMapperType ColMapperType;
@@ -1937,11 +1941,15 @@ namespace Dune
       }
 
       //! mult method of matrix object used by oem solver
+      template <class RowLeakPointerType, class ColumnLeakPointerType>
       void multOEM(const RowLeakPointerType& arg, ColumnLeakPointerType& dest) const
       {
+        DUNE_THROW(NotImplemented,"Method has been removed");
+        /*
         createMatrixAdapter();
         assert( matrixAdap_ );
         matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
+        */
       }
 
       //! dot method for OEM Solver

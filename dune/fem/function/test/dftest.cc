@@ -6,10 +6,12 @@
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/finitevolume.hh>
+#include <dune/fem/space/discontinuousgalerkin.hh>
 
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/storage/vector.hh>
 #include <dune/fem/function/vectorfunction.hh>
+#include <dune/fem/function/vectorfunction/managedvectorfunction.hh>
 #include <dune/fem/function/blockvectordiscretefunction.hh>
 #include <dune/fem/function/blockvectors/referenceblockvector.hh>
 #include <dune/fem/function/blockvectors/simpleblockvector.hh>
@@ -20,27 +22,38 @@
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/combinedfunction.hh>
 
+#include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/misc/mpimanager.hh>
 
 typedef Dune:: GridSelector::GridType HGridType;
 typedef Dune::Fem::DGAdaptiveLeafGridPart< HGridType > GridPartType;
 typedef Dune::Fem::FunctionSpace< double, double, HGridType::dimension, HGridType::dimension+2 > FunctionSpaceType;
-typedef Dune::Fem::FiniteVolumeSpace< FunctionSpaceType, GridPartType, 0 > DiscreteFunctionSpaceType;
+typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 > DiscreteFunctionSpaceType;
 
 template <class DiscreteFunction, class OtherDiscreteFunction>
-void checkFunction( DiscreteFunction& df, const OtherDiscreteFunction& other )
+void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
 {
-  std::cout << "Checking (" << df.name() << "," << other.name() << ")....";
+  std::cout << "Checking (" << df.name() << "," << other.name()
+            << "), size = ("<<df.size()<< "," << other.size() << ")....";
   typedef typename DiscreteFunction :: DofType DofType;
 
   // fill df with zeros
-  df.clear();
+  df.clear(); other.clear();
 
   // fill df with zeros
   std::fill( df.dbegin(), df.dend(), DofType( 0 ) );
 
   df += other;
   df -= other;
+
+  for( auto it = df.space().begin(), end = df.space().end();
+       it != end; ++it )
+  {
+    auto lf = df.localFunction( *it );
+    lf.clear();
+    for( int i=0; i<lf.numDofs(); ++i )
+      lf[ i ] = 1.0;
+  }
 
   // copy to std::vector, sometimes needed for solver interfaces
   std::vector< double > vec( df.size() );
@@ -54,12 +67,22 @@ void checkFunction( DiscreteFunction& df, const OtherDiscreteFunction& other )
     DUNE_THROW(Dune::InvalidStateException,"Copying did not work");
   }
 
+  (*df.block( 0 )) *= 1.0;
+  (*df.block( 0 ))[ 0 ] = 1.0;
+  (*df.block( 0 ))[ HGridType::dimension-1 ] = 1.0;
+
   df.assign( other );
 
   df *= 2.0;
   df /= 2.0;
 
   df.enableDofCompression();
+
+  std::stringstream stream;
+  Dune::Fem::StandardOutStream out( stream );
+  df.write( out );
+  Dune::Fem::StandardInStream in( stream );
+  df.read( in );
 
   std::cout << "done!" << std::endl;
 }
@@ -82,6 +105,8 @@ int main(int argc, char ** argv)
     Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > ref ("ref", space);
 
     Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > adf ("adaptive", space);
+    std::cout << "dofs = " << adf.size() << std::endl;
+
     checkFunction( adf, ref );
 
     std::vector< double > advec( space.size() );
@@ -89,8 +114,13 @@ int main(int argc, char ** argv)
     checkFunction( adfp, ref );
 
     Dune::Fem::DynamicVector< double > vec( space.size() );
-    Dune::Fem::VectorDiscreteFunction< DiscreteFunctionSpaceType, Dune::Fem :: DynamicVector< double > > vdf ("vector", space, vec);
+    typedef Dune::Fem::VectorDiscreteFunction< DiscreteFunctionSpaceType, Dune::Fem :: DynamicVector< double > > VectorDiscreteFunctionType;
+    VectorDiscreteFunctionType vdf ("vector", space, vec);
     checkFunction( vdf, ref );
+
+
+    Dune::Fem::ManagedDiscreteFunction< VectorDiscreteFunctionType > mdf ("managed", space);
+    checkFunction( mdf, ref );
 
 #if HAVE_DUNE_ISTL
     Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType > istldf ("istl", space);
@@ -100,27 +130,20 @@ int main(int argc, char ** argv)
     checkFunction( vdf, istldf );
 #endif
 
-    /*
-    typedef Dune::Fem::ReferenceBlockVector< FunctionSpaceType::RangeFieldType,
-            DiscreteFunctionSpaceType::localBlockSize >   BlockVectorType;
-    Dune::Fem::BlockVectorDiscreteFunction< DiscreteFunctionSpaceType, BlockVectorType > bdf( "block", space );
-    checkFunction( bdf, ref );
-    checkFunction( bdf, istldf );
-    checkFunction( bdf, vdf );
-
-    typedef Dune::Fem::MutableBlockVector< Dune::Fem::MutableArray< FunctionSpaceType::RangeFieldType >,
-            DiscreteFunctionSpaceType::localBlockSize >   BVType;
-    Dune::Fem::BlockVectorDiscreteFunction< DiscreteFunctionSpaceType, BVType > bvdf( "simpleblock", space );
-    checkFunction( bvdf, ref );
-    checkFunction( bvdf, istldf );
-    checkFunction( bvdf, vdf );
-    */
-
 #if HAVE_PETSC
     Dune::Fem::PetscDiscreteFunction< DiscreteFunctionSpaceType > petscdf ("petsc", space);
     checkFunction( petscdf, ref );
     checkFunction( petscdf, vdf );
 #endif
+
+    // refine grid
+    Dune::Fem::GlobalRefine::apply( grid, 1 );
+
+    std::cout << "dofs = " << adf.size() << std::endl;
+    std::cout << "dofs = " << istldf.size() << std::endl;
+    checkFunction( adf, istldf );
+    checkFunction( istldf, ref );
+    checkFunction( mdf, ref );
 
     return 0;
   }

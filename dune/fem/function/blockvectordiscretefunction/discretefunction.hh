@@ -44,12 +44,15 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
       typedef DiscreteFunction< DiscreteFunctionSpaceType, DofVectorType >   DiscreteFunctionType;
 
-      typedef typename DofVectorType::IteratorType DofIteratorType;
+      typedef typename DofVectorType::IteratorType      DofIteratorType;
       typedef typename DofVectorType::ConstIteratorType ConstDofIteratorType;
-      typedef typename DofVectorType::DofBlockType DofBlockType;
+      typedef typename DofVectorType::DofBlockType      DofBlockType;
       typedef typename DofVectorType::ConstDofBlockType ConstDofBlockType;
-      typedef Fem::Envelope< DofBlockType >                          DofBlockPtrType;
-      typedef Fem::Envelope< ConstDofBlockType >                     ConstDofBlockPtrType;
+      typedef typename DofVectorType::DofContainerType  DofContainerType;
+
+      typedef Fem::Envelope< DofBlockType >             DofBlockPtrType;
+      typedef Fem::Envelope< ConstDofBlockType >        ConstDofBlockPtrType;
+
       typedef typename DiscreteFunctionSpaceType::BlockMapperType MapperType;
       typedef typename DofVectorType::FieldType DofType;
 
@@ -91,6 +94,9 @@ namespace Dune
       typedef DofVector DofVectorType;
       //! type for the mapper which maps local to global indices
       typedef typename Traits::MapperType MapperType;
+      //! type for the mapper which maps local to global indices
+      typedef typename Traits::DofContainerType DofContainerType;
+
       //! type of the fields the dofs live in
       typedef typename BaseType::DofType DofType;
       //! pointer to a block of dofs
@@ -140,7 +146,9 @@ namespace Dune
                          const DiscreteFunctionSpaceType &dfSpace,
                          DofVectorType &dofVector )
         : BaseType( name, dfSpace, LocalDofVectorAllocatorType( &ldvStack_ ) ),
-          ldvStack_( std::max( sizeof( DofType ), sizeof( DofType* ) ) * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
+          ldvStack_( std::max( std::max( sizeof( DofType ), sizeof( DofType* ) ),
+                               sizeof(typename LocalDofVectorType::value_type) ) // for PetscDiscreteFunction
+                        * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
           dofVector_( dofVector )
       {}
 
@@ -251,6 +259,24 @@ namespace Dune
       DofVectorType &dofVector ()
       {
         return dofVector_;
+      }
+
+      /** \brief Obtain constant reference to the dof vector
+       *
+       *  \return Constant reference to the block vector
+       */
+      const DofContainerType &dofContainer () const
+      {
+        return dofVector().array();
+      }
+
+      /** \brief Obtain reference to the dof vector
+       *
+       *  \return Reference to the block vector
+       */
+      DofContainerType &dofContainer ()
+      {
+        return dofVector().array();
       }
 
       /** \brief Add another discrete function to this one

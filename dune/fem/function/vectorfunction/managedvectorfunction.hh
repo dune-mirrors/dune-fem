@@ -12,12 +12,12 @@ namespace Dune
   {
 
     template< class DiscreteFunctionSpace,
-              class DofVector >
+              class Vector >
     class ManagedDiscreteFunction
-      < VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > >
-    : public VectorDiscreteFunction< DiscreteFunctionSpace, DofVector >
+      < VectorDiscreteFunction< DiscreteFunctionSpace, Vector > >
+    : public VectorDiscreteFunction< DiscreteFunctionSpace, Vector >
     {
-      typedef VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > BaseType;
+      typedef VectorDiscreteFunction< DiscreteFunctionSpace, Vector > BaseType;
       typedef ManagedDiscreteFunction< BaseType > ThisType;
 
     public:
@@ -25,7 +25,8 @@ namespace Dune
 
       typedef typename BaseType :: DiscreteFunctionSpaceType
         DiscreteFunctionSpaceType;
-      typedef typename BaseType :: DofVectorType DofVectorType;
+      typedef typename BaseType :: DofVectorType    DofVectorType;
+      typedef typename BaseType :: DofContainerType DofContainerType;
 
     protected:
       typedef typename DiscreteFunctionSpaceType :: GridPartType :: GridType
@@ -35,26 +36,22 @@ namespace Dune
       typedef NonBlockMapper< BlockMapperType,
                               DiscreteFunctionSpaceType::localBlockSize > NonBlockingMapperType ;
 
-    protected:
-      NonBlockingMapperType* mapper_ ;
-      DofStorageInterface *memObject_;
-
     public:
       inline ManagedDiscreteFunction ( const std :: string &name,
                                        const DiscreteFunctionSpaceType &dfSpace )
-      : BaseType( name, dfSpace, allocDofVector( name, dfSpace ) )
+      : BaseType( name, dfSpace, allocDofContainer( name, dfSpace ) )
       {}
 
       inline explicit ManagedDiscreteFunction ( const BaseType &other )
       : BaseType( other.name(), other.space(),
-                  allocDofVector( other.name(), other.space() ) )
+                  allocDofContainer( other.name(), other.space() ) )
       {
         BaseType :: assign ( other );
       }
 
       inline ManagedDiscreteFunction ( const ThisType &other )
       : BaseType( other.name(), other.space(),
-                  allocDofVector( other.name(), other.space() ) )
+                  allocDofContainer( other.name(), other.space() ) )
       {
         BaseType :: assign ( other );
       }
@@ -64,8 +61,6 @@ namespace Dune
         if( memObject_ )
           delete memObject_ ;
         memObject_ = 0;
-
-        delete mapper_ ; mapper_ = 0;
       }
 
       inline void enableDofCompression ()
@@ -74,18 +69,23 @@ namespace Dune
           memObject_->enableDofCompression();
       }
 
-    private:
-      inline DofVectorType &
-      allocDofVector ( const std :: string &name,
-                       const DiscreteFunctionSpaceType &dfSpace )
+    protected:
+      inline DofContainerType &
+      allocDofContainer ( const std :: string &name,
+                          const DiscreteFunctionSpaceType &space )
       {
-        mapper_ = new NonBlockingMapperType( dfSpace.blockMapper() );
+        typedef MutableBlockVector< DofContainerType,
+                                    DiscreteFunctionSpaceType::localBlockSize > MutableDofVectorType;
+
         // allocate managed dof storage
-        std::pair< DofStorageInterface *, DofVectorType * > memPair
-          = allocateManagedDofStorage( dfSpace.gridPart().grid(), *mapper_, name, (DofVectorType *)0 );
+        std::pair< DofStorageInterface *, MutableDofVectorType* > memPair
+          = allocateManagedDofStorage( space.gridPart().grid(), space.blockMapper(), name, (MutableDofVectorType *)0 );
         memObject_ = memPair.first;
-        return *(memPair.second);
+        return memPair.second->array();
       }
+
+      // pointer to memory if allocated locally
+      DofStorageInterface *memObject_;
     };
 
   } // namespace Fem

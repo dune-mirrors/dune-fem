@@ -332,6 +332,11 @@ namespace Dune
     //! return leak pointer for usage in BLAS routines
     const T* leakPointer() const { return vec_; }
 
+    //! return leak pointer for usage in BLAS routines
+    T* data() { return vec_; }
+    //! return leak pointer for usage in BLAS routines
+    const T* data() const { return vec_; }
+
     //! write to  stream
     template <class StreamTraits>
     bool write(OutStreamInterface< StreamTraits >& out) const

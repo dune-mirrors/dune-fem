@@ -294,6 +294,7 @@ namespace Dune
       typedef typename BaseType :: DofType                    DofType;
 
       using BaseType::assign;
+      using BaseType::dofVector;
 
       typedef MutableBlockVector< MutableArray< DofType >, DiscreteFunctionSpaceType::localBlockSize > MutableDofVectorType;
 
@@ -334,6 +335,9 @@ namespace Dune
           memObject_ = 0;
         }
       }
+
+      DofType* leakPointer() { return dofVector().data(); }
+      const DofType* leakPointer() const { return dofVector().data(); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression()
        */
