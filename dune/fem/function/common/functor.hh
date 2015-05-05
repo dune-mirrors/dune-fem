@@ -105,9 +105,9 @@ namespace Dune
       void operator () ( const std::size_t local, const GlobalKey& globalKey )
       {
         DofBlockPtrType blockPtr = df_.block( globalKey );
-        //DofBlockType &block = *( blockPtr );
+        DofBlockType &block = *( blockPtr );
         for( int i = 0; i < blockSize; ++i )
-          functor_( local*blockSize + i, (*blockPtr)[ i ] );
+          functor_( local*blockSize + i, block[ i ] );
       }
     private:
       DiscreteFunction &df_;
