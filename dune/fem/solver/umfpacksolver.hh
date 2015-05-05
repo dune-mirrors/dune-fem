@@ -63,8 +63,7 @@ class UMFPACKOp:public Operator<DF, DF>
     op_(op), verbose_(verbose), ccsmat_(), isloaded_(false)
   {
     Caller::defaults(UMF_Control);
-    if(verbose_)
-      UMF_Control[UMFPACK_PRL] = 2;
+    UMF_Control[UMFPACK_PRL] = 4;
   }
 
   /** \brief Constructor.
@@ -78,8 +77,7 @@ class UMFPACKOp:public Operator<DF, DF>
     op_(op), verbose_(Parameter::getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
   {
     Caller::defaults(UMF_Control);
-    if(verbose_)
-      UMF_Control[UMFPACK_PRL] = 2;
+    UMF_Control[UMFPACK_PRL] = 4;
   }
 
   // \brief Destructor.
@@ -132,7 +130,16 @@ class UMFPACKOp:public Operator<DF, DF>
     double UMF_Apply_Info[UMFPACK_INFO];
     Caller::solve(UMFPACK_A, ccsmat_.getColStart(), ccsmat_.getRowIndex(), ccsmat_.getValues(),
                   dest, const_cast<DofType*>(arg), UMF_Numeric, UMF_Control, UMF_Apply_Info);
-    printOnApply(UMF_Apply_Info);
+    if(verbose_)
+    {
+      Caller::report_status(UMF_Control, UMF_Apply_Info[UMFPACK_STATUS]);
+      std::cout <<"[UMFPack Solve]" << std::endl;
+      std::cout << "Wallclock Time: " << UMF_Apply_Info[UMFPACK_SOLVE_WALLTIME]
+                << " (CPU Time: " << UMF_Apply_Info[UMFPACK_SOLVE_TIME] << ")" << std::endl;
+      std::cout << "Flops Taken: " << UMF_Apply_Info[UMFPACK_SOLVE_FLOPS] << std::endl;
+      std::cout << "Iterative Refinement steps taken: " << UMF_Apply_Info[UMFPACK_IR_TAKEN] << std::endl;
+      std::cout << "Error Estimate: " << UMF_Apply_Info[UMFPACK_OMEGA1] << " resp. " << UMF_Apply_Info[UMFPACK_OMEGA2] << std::endl;
+    }
   }
 
   /** \brief Solve the system.
@@ -196,6 +203,12 @@ class UMFPACKOp:public Operator<DF, DF>
     return ccsmat_;
   }
 
+  // /brief Print some statistics about the UMFPACK decomposition.
+  inline void printDecompositionInfo() const
+  {
+    Caller::report_info(UMF_Control,UMF_Decomposition_Info);
+  }
+
   private:
   const OperatorType& op_;
   const bool verbose_;
@@ -204,35 +217,21 @@ class UMFPACKOp:public Operator<DF, DF>
   mutable void *UMF_Symbolic;
   mutable void *UMF_Numeric;
   mutable double UMF_Control[UMFPACK_CONTROL];
+  mutable double UMF_Decomposition_Info[UMFPACK_INFO];
 
   typedef typename Dune::UMFPackMethodChooser<DofType> Caller;
-
-  void printOnApply(double* UMF_Info) const
-  {
-    Caller::report_status(UMF_Control, UMF_Info[UMFPACK_STATUS]);
-    if(verbose_)
-    {
-      std::cout <<"[UMFPack Solve]" << std::endl;
-      std::cout << "Wallclock Time: " << UMF_Info[UMFPACK_SOLVE_WALLTIME]
-                << " (CPU Time: " << UMF_Info[UMFPACK_SOLVE_TIME] << ")" << std::endl;
-      std::cout << "Flops Taken: " << UMF_Info[UMFPACK_SOLVE_FLOPS] << std::endl;
-      std::cout << "Iterative Refinement steps taken: " << UMF_Info[UMFPACK_IR_TAKEN] << std::endl;
-      std::cout << "Error Estimate: " << UMF_Info[UMFPACK_OMEGA1] << " resp. " << UMF_Info[UMFPACK_OMEGA2] << std::endl;
-    }
-  }
 
   // /brief Computes the UMFPACK decomposition.
   void decompose() const
   {
     const std::size_t dimMat(ccsmat_.N());
-    double UMF_Decomposition_Info[UMFPACK_INFO];
     Caller::symbolic(static_cast<int>(dimMat), static_cast<int>(dimMat), ccsmat_.getColStart(), ccsmat_.getRowIndex(),
                      reinterpret_cast<double*>(ccsmat_.getValues()), &UMF_Symbolic, UMF_Control, UMF_Decomposition_Info);
     Caller::numeric(ccsmat_.getColStart(), ccsmat_.getRowIndex(), reinterpret_cast<double*>(ccsmat_.getValues()),
                     UMF_Symbolic, &UMF_Numeric, UMF_Control, UMF_Decomposition_Info);
-    Caller::report_status(UMF_Control,UMF_Decomposition_Info[UMFPACK_STATUS]);
     if(verbose_)
     {
+      Caller::report_status(UMF_Control,UMF_Decomposition_Info[UMFPACK_STATUS]);
       std::cout << "[UMFPack Decomposition]" << std::endl;
       std::cout << "Wallclock Time taken: " << UMF_Decomposition_Info[UMFPACK_NUMERIC_WALLTIME]
                 << " (CPU Time: " << UMF_Decomposition_Info[UMFPACK_NUMERIC_TIME] << ")" << std::endl;
@@ -242,8 +241,6 @@ class UMFPACKOp:public Operator<DF, DF>
       std::cout << "Condition number estimate: " << 1./UMF_Decomposition_Info[UMFPACK_RCOND] << std::endl;
       std::cout << "Numbers of non-zeroes in decomposition: L: " << UMF_Decomposition_Info[UMFPACK_LNZ]
                 << " U: " << UMF_Decomposition_Info[UMFPACK_UNZ] << std::endl;
-
-      Caller::report_info(UMF_Control,UMF_Decomposition_Info);
     }
   }
 };
