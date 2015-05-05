@@ -6,14 +6,15 @@ namespace Dune
   namespace Fem
   {
 
-    template< class Object >
+    template< class Object, class Storage = Object >
     class Envelope
     {
     public:
-      typedef Object ObjectType;
+      typedef Object  ObjectType;
+      typedef Storage StorageType;
 
     protected:
-      ObjectType object_;
+      StorageType object_;
 
     public:
       template< class ParamType >
@@ -25,22 +26,22 @@ namespace Dune
       : object_( other.object_ )
       {}
 
-      inline const ObjectType &operator* () const
+      inline const ObjectType& operator* () const
       {
         return object_;
       }
 
-      inline ObjectType &operator* ()
+      inline ObjectType& operator* ()
       {
         return object_;
       }
 
-      inline const ObjectType *operator-> () const
+      inline const ObjectType* operator-> () const
       {
         return &object_;
       }
 
-      inline ObjectType *operator-> ()
+      inline ObjectType* operator-> ()
       {
         return &object_;
       }
