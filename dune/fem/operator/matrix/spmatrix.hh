@@ -352,8 +352,8 @@ namespace Dune
       //! apply preconditioning, calls ssorPreconditioning at the moment
       void precondition (const T*u , T*x) const {  ssorPrecondition(u,x); }
 
-      void solveUMF(const T* b, T* x);
-      void solveUMFNonSymmetric(const T* b, T* x);
+      void DUNE_DEPRECATED_MSG("Use directly Dune::Fem::UMFPACKOp instead of solveUMF") solveUMF(const T* b, T* x);
+      void DUNE_DEPRECATED_MSG("Use directly Dune::Fem::UMFPACKOp instead of solveUMFNonSymmetric") solveUMFNonSymmetric(const T* b, T* x);
 
     private:
       //! delete memory
@@ -553,13 +553,15 @@ namespace Dune
       }
 
       template< class DomainFunction, class RangeFunction >
-      void solveUMF( const DomainFunction &arg, RangeFunction &dest ) const
+      void DUNE_DEPRECATED_MSG("Use directly Dune::Fem::UMFPACKOp instead of solveUMF")
+      solveUMF( const DomainFunction &arg, RangeFunction &dest ) const
       {
          matrix_.solveUMF( arg.leakPointer(), dest.leakPointer() );
       }
 
       template< class DomainFunction, class RangeFunction >
-      void solveUMFNonSymmetric( const DomainFunction &arg, RangeFunction &dest ) const
+      void DUNE_DEPRECATED_MSG("Use directly Dune::Fem::UMFPACKOp instead of solveUMFNonSymmetric")
+      solveUMFNonSymmetric( const DomainFunction &arg, RangeFunction &dest ) const
       {
         matrix_.solveUMFNonSymmetric( arg.leakPointer(), dest.leakPointer() );
       }
