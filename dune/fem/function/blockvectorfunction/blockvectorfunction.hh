@@ -465,6 +465,9 @@ namespace Dune
     };
 #else
 
+    template <class DiscreteFunctionSpace>
+    class ISTLBlockVectorDiscreteFunction;
+
     /** \class DiscreteFunctionTraits
      *  \brief Traits class for a DiscreteFunction
      *
@@ -472,20 +475,15 @@ namespace Dune
      *  \tparam  DofVector             implementation class of the block vector
      */
     template< typename DiscreteFunctionSpace >
-    struct DiscreteFunctionTraits<
-              DiscreteFunction< DiscreteFunctionSpace,
-                                ISTLBlockVector< Dune::FieldVector< typename DiscreteFunctionSpace::RangeFieldType, DiscreteFunctionSpace::localBlockSize > > > >
+    struct DiscreteFunctionTraits< ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace > >
+      : public DefaultDiscreteFunctionTraits< DiscreteFunctionSpace,
+            ISTLBlockVector< Dune::FieldVector< typename DiscreteFunctionSpace::RangeFieldType, DiscreteFunctionSpace::localBlockSize > > >
     {
-      typedef ISTLBlockVector< Dune::FieldVector< typename DiscreteFunctionSpace::RangeFieldType, DiscreteFunctionSpace::localBlockSize > >  DofVectorType;
-      typedef typename DofVectorType::DofContainerType DofContainerType;
+      typedef ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace >  DiscreteFunctionType;
 
-      typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
-      typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
-      typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-      typedef DiscreteFunction< DiscreteFunctionSpace, DofVectorType >   DiscreteFunctionType;
+      typedef ISTLBlockVector< Dune::FieldVector< typename  DiscreteFunctionSpace::RangeFieldType, DiscreteFunctionSpace::localBlockSize > >
+        DofVectorType;
 
-      typedef typename DofVectorType::IteratorType        DofIteratorType;
-      typedef typename DofVectorType::ConstIteratorType   ConstDofIteratorType;
       typedef typename DofVectorType::DofBlockType        DofBlockType;
       typedef typename DofVectorType::ConstDofBlockType   ConstDofBlockType;
 
@@ -494,13 +492,6 @@ namespace Dune
 
       //typedef DofBlockType*                               DofBlockPtrType;
       //typedef const DofBlockType*                         ConstDofBlockPtrType;
-
-      typedef typename DiscreteFunctionSpaceType::BlockMapperType MapperType;
-      typedef typename DofVectorType::FieldType DofType;
-
-      typedef ThreadSafeValue< UninitializedObjectStack > LocalDofVectorStackType;
-      typedef StackAllocator< DofType, LocalDofVectorStackType* > LocalDofVectorAllocatorType;
-      typedef DynamicReferenceVector< DofType, LocalDofVectorAllocatorType > LocalDofVectorType;
 
       typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
     };
@@ -513,29 +504,24 @@ namespace Dune
     //! functionality (access to subfunctions) and runtime optimisations
     template <class DiscreteFunctionSpace>
     class ISTLBlockVectorDiscreteFunction
-    : public DiscreteFunction< DiscreteFunctionSpace,
-                               ISTLBlockVector< Dune::FieldVector< typename DiscreteFunctionSpace::RangeFieldType, DiscreteFunctionSpace::localBlockSize > > >
+    : public DiscreteFunctionDefault< ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace > >
     {
       typedef ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace > ThisType;
-      typedef DiscreteFunction< DiscreteFunctionSpace,
-                                ISTLBlockVector< Dune::FieldVector< typename DiscreteFunctionSpace::RangeFieldType, DiscreteFunctionSpace::localBlockSize > > >
-                           BaseType;
+      typedef DiscreteFunctionDefault< ThisType > BaseType;
 
     public:
       typedef typename BaseType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
       typedef typename BaseType :: DofVectorType              DofVectorType;
       typedef typename BaseType :: DofType                    DofType;
-      typedef typename BaseType :: DofContainerType           DofContainerType;
+      typedef typename DofVectorType :: DofContainerType      DofContainerType;
       typedef DofContainerType                                DofStorageType;
 
       using BaseType::assign;
-      using BaseType::dofContainer;
-      using BaseType::dofVector;
 
       ISTLBlockVectorDiscreteFunction( const std::string &name,
                                        const DiscreteFunctionSpaceType &space )
-        : BaseType( name, space, dofVector_ ),
-          memObject_( 0 ),
+        : BaseType( name, space ),
+          memObject_(),
           dofVector_( allocateDofStorage( space ) )
       {
       }
@@ -543,27 +529,18 @@ namespace Dune
       ISTLBlockVectorDiscreteFunction( const std::string &name,
                                        const DiscreteFunctionSpaceType &space,
                                        const DofContainerType& dofContainer )
-        : BaseType( name, space, dofVector_ ),
-          memObject_( 0 ), // in this case we have no allocated mem object
+        : BaseType( name, space ),
+          memObject_(),
           dofVector_( const_cast< DofContainerType& > (dofContainer) )
       {
       }
 
       ISTLBlockVectorDiscreteFunction( const ISTLBlockVectorDiscreteFunction& other )
-        : BaseType( "copy of " + other.name(), other.space(), dofVector_ ),
-          memObject_( 0 ),
+        : BaseType( "copy of " + other.name(), other.space() ),
+          memObject_(),
           dofVector_( allocateDofStorage( other.space() ) )
       {
         assign( other );
-      }
-
-      ~ISTLBlockVectorDiscreteFunction()
-      {
-        if( memObject_ )
-        {
-          delete memObject_;
-          memObject_ = 0;
-        }
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression()
@@ -574,8 +551,11 @@ namespace Dune
           memObject_->enableDofCompression();
       }
 
-      DofContainerType& blockVector() { return dofContainer(); }
-      const DofContainerType& blockVector() const { return dofContainer(); }
+      DofContainerType& blockVector() { return dofVector().array(); }
+      const DofContainerType& blockVector() const { return dofVector().array(); }
+
+      DofVectorType& dofVector() { return dofVector_; }
+      const DofVectorType& dofVector() const { return dofVector_; }
 
     protected:
       // allocate managed dof storage
@@ -588,12 +568,12 @@ namespace Dune
                                        name, (DofContainerType *) 0 );
 
         // save pointer
-        memObject_ = memPair.first;
+        memObject_.reset( memPair.first );
         return *(memPair.second);
       }
 
       // pointer to allocated DofVector
-      DofStorageInterface* memObject_;
+      std::unique_ptr< DofStorageInterface > memObject_;
 
       // DofVector object holds pointer to dof container
       DofVectorType dofVector_;

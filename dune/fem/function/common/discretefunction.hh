@@ -20,6 +20,8 @@
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/version.hh>
+#include <dune/fem/storage/envelope.hh>
+#include <dune/fem/common/referencevector.hh>
 
 
 namespace Dune
@@ -116,6 +118,9 @@ namespace Dune
       //! type of local functions
       typedef typename Traits :: LocalFunctionType LocalFunctionType;
 
+      //! Type of the dof vector used in the discrete function implementation.
+      typedef typename Traits :: DofVectorType  DofVectorType;
+
       //! Type of the dof iterator used in the discrete function implementation.
       typedef typename Traits :: DofIteratorType DofIteratorType;
 
@@ -130,6 +135,9 @@ namespace Dune
 
       //! type of mapping base class for this discrete function
       typedef typename BaseType :: MappingType MappingType;
+
+      //! size of the dof blocks
+      enum { blockSize = DiscreteFunctionSpaceType::localBlockSize };
 
       template< class Operation >
       struct CommDataHandle
@@ -155,6 +163,9 @@ namespace Dune
       ThisType &operator= ( const ThisType &other );
 
     public:
+      DofVectorType& dofVector() { return asImp().dofVector(); }
+      const DofVectorType& dofVector() const { return asImp().dofVector(); }
+
       /** \brief obtain the name of the discrete function
        *
        *  \returns string holding name of discrete function
@@ -564,6 +575,9 @@ namespace Dune
       //! type of the const dof iterator
       typedef typename Traits :: ConstDofIteratorType ConstDofIteratorType;
 
+      //! type of DofVector
+      typedef typename Traits :: DofVectorType     DofVectorType;
+
       //! type of LocalDofVector
       typedef typename Traits :: LocalDofVectorType LocalDofVectorType;
       //! type of LocalDofVector
@@ -580,6 +594,12 @@ namespace Dune
       typedef typename BaseType :: EntityType EntityType ;
 
       typedef typename BaseType :: DofType DofType;
+
+      //! size type of the block vector
+      typedef typename DofVectorType::SizeType SizeType;
+
+      //! size of the dof blocks
+      enum { blockSize = BaseType::blockSize };
 
       template< class Operation >
       struct CommDataHandle
@@ -649,8 +669,8 @@ namespace Dune
        *  \param[in]  lfFactory  local function factory
        */
       DiscreteFunctionDefault ( const std::string &name,
-                                const DiscreteFunctionSpaceType &dfSpace,
-                                const LocalDofVectorAllocatorType &ldvAllocator );
+                                const DiscreteFunctionSpaceType &dfSpace );
+
     private:
       // prohibit copying and assignment
       inline DiscreteFunctionDefault ( const ThisType & );
@@ -676,7 +696,60 @@ namespace Dune
       const LocalFunctionType localFunction ( const EntityType &entity ) const { return LocalFunctionType( asImp(), entity ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::clear() */
-      void clear();
+      void clear() { dofVector().clear(); }
+
+      DofVectorType& dofVector() { return asImp().dofVector(); }
+      const DofVectorType& dofVector() const { return asImp().dofVector(); }
+
+      /** \brief Obtain the (modifiable) 'index'-th block
+       *
+       *  \param[in]  index   index of the block
+       *  \return The (modifiable) 'index'-th block
+       */
+      DofBlockPtrType block ( unsigned int index )
+      {
+        return DofBlockPtrType( dofVector()[ index ] );
+      }
+
+      /** \brief Obtain the (constant) 'index'-th block
+       *
+       *  \param[in]  index   index of the block
+       *  \return The (constant) 'index'-th block
+       */
+      ConstDofBlockPtrType block ( unsigned int index ) const
+      {
+        return ConstDofBlockPtrType( dofVector()[ index ] );
+      }
+
+      /** \brief Return the number of blocks in the block vector
+       *
+       *  \return Number of block in the block vector
+       */
+      SizeType size () const { return dofVector().size() * blockSize; }
+
+      /** \brief Obtain the constant iterator pointing to the first dof
+       *
+       *  \return Constant iterator pointing to the first dof
+       */
+      ConstDofIteratorType dbegin () const { return dofVector().begin(); }
+
+      /** \brief Obtain the non-constant iterator pointing to the first dof
+       *
+       *  \return Non-Constant iterator pointing to the first dof
+       */
+      DofIteratorType dbegin () { return dofVector().begin(); }
+
+      /** \brief Obtain the constant iterator pointing to the last dof
+       *
+       *  \return Constant iterator pointing to the last dof
+       */
+      ConstDofIteratorType dend () const { return dofVector().end(); }
+
+      /** \brief Obtain the non-constant iterator pointing to the last dof
+       *
+       *  \return Non-Constant iterator pointing to the last dof
+       */
+      DofIteratorType dend () { return dofVector().end(); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::allocDofPointer
        *
@@ -700,7 +773,13 @@ namespace Dune
       inline void freeDofPointerNoCopy( const RangeFieldType *dofPointer ) const;
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::axpy(const RangeFieldType &s,const DiscreteFunctionInterfaceType &g) */
-      void axpy ( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g );
+      template <class DFType>
+      void axpy ( const RangeFieldType &s, const DiscreteFunctionInterface< DFType > &g );
+
+      void axpy ( const RangeFieldType &s, const DiscreteFunctionInterfaceType& g )
+      {
+        dofVector().addScaled( g.dofVector(), s );
+      }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::scalarProductDofs */
       inline RangeFieldType
@@ -719,6 +798,12 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
       template <class DFType>
       void assign ( const DiscreteFunctionInterface< DFType > &g );
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::assign(const DiscreteFunctionInterfaceType &g) */
+      void assign ( const DiscreteFunctionType &g )
+      {
+        dofVector() = g.dofVector();
+      }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dataHandle */
       template< class Operation >
@@ -755,11 +840,25 @@ namespace Dune
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterface< DFType > &g) */
       template <class DFType>
-      DiscreteFunctionType &operator+=(const DiscreteFunctionInterface< DFType > &g);
+      DiscreteFunctionType& operator+=(const DiscreteFunctionInterface< DFType > &g);
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterface< DFType > &g) */
+      DiscreteFunctionType& operator+=(const DiscreteFunctionType& g)
+      {
+        dofVector() += g.dofVector();
+        return asImp();
+      }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator-=(const DiscreteFunctionInterface< DFType > &g) */
       template <class DFType>
       DiscreteFunctionType& operator-=(const DiscreteFunctionInterface< DFType > &g);
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator-=(const DiscreteFunctionInterface< DFType > &g) */
+      DiscreteFunctionType& operator-=(const DiscreteFunctionType& g)
+      {
+        dofVector() -= g.dofVector();
+        return asImp();
+      }
 
       /** \brief multiply all DoFs with a scalar factor
        *
@@ -879,25 +978,11 @@ namespace Dune
       // only PersistenceManager should call backup and restore
       friend class PersistenceManager;
 
-    private:
-      // Unimplemented Interface Methods
-      // -------------------------------
-
-      int size () const;
-
-      ConstDofBlockPtrType block ( unsigned int index ) const;
-      DofBlockPtrType block ( unsigned int index );
-
-      ConstDofIteratorType dbegin () const;
-      ConstDofIteratorType dend () const;
-
-      DofIteratorType dbegin ();
-      DofIteratorType dend ();
-
-    private:
+    protected:
       const DiscreteFunctionSpaceType &dfSpace_;
 
       // the local function storage
+      typename Traits :: LocalDofVectorStackType ldvStack_;
       mutable LocalDofVectorAllocatorType ldvAllocator_;
 
       mutable DebugLock dofPointerLock_;
@@ -910,6 +995,40 @@ namespace Dune
 
     template< class DiscreteFunction >
     class ManagedDiscreteFunction;
+
+    /** \class DiscreteFunctionTraits
+     *  \brief Traits class for a DiscreteFunction
+     *
+     *  \tparam  DiscreteFunctionSpace   space the discrete function lives in
+     *  \tparam  DofVector             implementation class of the block vector
+     */
+    template< typename DiscreteFunctionSpace, typename DofVector >
+    struct DefaultDiscreteFunctionTraits
+    {
+      typedef DofVector DofVectorType;
+
+      typedef DiscreteFunctionSpace                           DiscreteFunctionSpaceType;
+      typedef typename DiscreteFunctionSpaceType::DomainType  DomainType;
+      typedef typename DiscreteFunctionSpaceType::RangeType   RangeType;
+
+      typedef typename DofVectorType::IteratorType            DofIteratorType;
+      typedef typename DofVectorType::ConstIteratorType       ConstDofIteratorType;
+      typedef typename DofVectorType::DofBlockType            DofBlockType;
+      typedef typename DofVectorType::ConstDofBlockType       ConstDofBlockType;
+
+      typedef Fem::Envelope< DofBlockType >                   DofBlockPtrType;
+      typedef Fem::Envelope< ConstDofBlockType >              ConstDofBlockPtrType;
+
+      typedef typename DiscreteFunctionSpaceType::BlockMapperType MapperType;
+      typedef typename DofVectorType::FieldType DofType;
+
+      typedef ThreadSafeValue< UninitializedObjectStack >         LocalDofVectorStackType;
+      typedef StackAllocator< DofType, LocalDofVectorStackType* > LocalDofVectorAllocatorType;
+      typedef DynamicReferenceVector< DofType, LocalDofVectorAllocatorType > LocalDofVectorType;
+
+      //typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
+    };
+
 
   ///@}
 

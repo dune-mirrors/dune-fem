@@ -272,6 +272,18 @@ namespace Dune
     }; // end class AdaptiveDiscreteFunction
 #else
 
+    template <class DiscreteFunctionSpace>
+    class AdaptiveDiscreteFunction;
+
+    template< typename DiscreteFunctionSpace >
+    struct DiscreteFunctionTraits< AdaptiveDiscreteFunction< DiscreteFunctionSpace > >
+      : public DefaultDiscreteFunctionTraits< DiscreteFunctionSpace,
+         SimpleBlockVector< StaticArray< typename DiscreteFunctionSpace::RangeFieldType > , DiscreteFunctionSpace::localBlockSize > >
+    {
+      typedef AdaptiveDiscreteFunction< DiscreteFunctionSpace > DiscreteFunctionType;
+      typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
+    };
+
     //! @ingroup AdaptiveDFunction
     //! An adaptive discrete function
     //! This class is comparable to DFAdapt, except that it provides a
@@ -279,14 +291,10 @@ namespace Dune
     //! functionality (access to subfunctions) and runtime optimisations
     template <class DiscreteFunctionSpace>
     class AdaptiveDiscreteFunction
-    : public DiscreteFunction< DiscreteFunctionSpace,
-                               SimpleBlockVector<
-                                    StaticArray< typename DiscreteFunctionSpace::RangeFieldType >, DiscreteFunctionSpace::localBlockSize > >
+    : public DiscreteFunctionDefault< AdaptiveDiscreteFunction< DiscreteFunctionSpace > >
     {
       typedef AdaptiveDiscreteFunction< DiscreteFunctionSpace > ThisType;
-      typedef DiscreteFunction< DiscreteFunctionSpace,
-                               SimpleBlockVector<
-                                    StaticArray< typename DiscreteFunctionSpace::RangeFieldType >, DiscreteFunctionSpace::localBlockSize > > BaseType;
+      typedef DiscreteFunctionDefault< ThisType > BaseType;
 
     public:
       typedef typename BaseType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
@@ -294,50 +302,48 @@ namespace Dune
       typedef typename BaseType :: DofType                    DofType;
 
       using BaseType::assign;
-      using BaseType::dofVector;
 
       typedef MutableBlockVector< MutableArray< DofType >, DiscreteFunctionSpaceType::localBlockSize > MutableDofVectorType;
 
       AdaptiveDiscreteFunction( const std::string &name,
                                 const DiscreteFunctionSpaceType &space )
-        : BaseType( name, space, allocateDofStorage( space ) )
+        : BaseType( name, space ),
+          memObject_(),
+          dofVector_( allocateDofStorage( space ) )
       {
       }
 
       AdaptiveDiscreteFunction( const std::string &name,
                                 const DiscreteFunctionSpaceType &space,
                                 const DofType* data )
-        : BaseType( name, space,
-                    allocateDofStorageWrapper( space.blockMapper().size() * DofVectorType::blockSize, data ) )
+        : BaseType( name, space ),
+          memObject_(),
+          dofVector_( allocateDofStorageWrapper( space.blockMapper().size() * DofVectorType::blockSize, data ) )
       {
       }
 
       AdaptiveDiscreteFunction( const std::string &name,
                                 const DiscreteFunctionSpaceType &space,
                                 DofVectorType& dofVector )
-        : BaseType( name, space, dofVector )
+        : BaseType( name, space ),
+          memObject_(),
+          dofVector_( dofVector )
       {
-        // in this case we have no allocated mem object
-        memObject_ = 0;
       }
 
       AdaptiveDiscreteFunction( const AdaptiveDiscreteFunction& other )
-        : BaseType( "copy of " + other.name(), other.space(), allocateDofStorage( other.space() ) )
+        : BaseType( "copy of " + other.name(), other.space() ),
+          memObject_(),
+          dofVector_( allocateDofStorage( other.space() ) )
       {
         assign( other );
       }
 
-      ~AdaptiveDiscreteFunction()
-      {
-        if( memObject_ )
-        {
-          delete memObject_;
-          memObject_ = 0;
-        }
-      }
-
       DofType* leakPointer() { return dofVector().data(); }
       const DofType* leakPointer() const { return dofVector().data(); }
+
+      DofVectorType& dofVector() { return dofVector_; }
+      const DofVectorType& dofVector() const { return dofVector_; }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression()
        */
@@ -388,7 +394,7 @@ namespace Dune
         assert( dsw );
 
         // save pointer to object
-        memObject_ = dsw;
+        memObject_.reset( dsw );
         // return array
         return dsw->getArray();
       }
@@ -404,12 +410,14 @@ namespace Dune
                                        name, (MutableDofVectorType *) 0 );
 
         // save pointer
-        memObject_ = memPair.first;
+        memObject_.reset( memPair.first );
         return *(memPair.second);
       }
 
       // pointer to allocated DofVector
-      DofStorageInterface* memObject_;
+      std::unique_ptr< DofStorageInterface > memObject_;
+
+      DofVectorType& dofVector_;
     };
 #endif
 

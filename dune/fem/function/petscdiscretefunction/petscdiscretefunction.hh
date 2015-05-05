@@ -62,45 +62,6 @@ namespace Dune
       Vector &vector_;
     };
 
-#if 1
-    /** \class DiscreteFunctionTraits
-     *  \brief Traits class for a DiscreteFunction
-     *
-     *  \tparam  DiscreteFunctionSpace   space the discrete function lives in
-     *  \tparam  DofVector             implementation class of the block vector
-     */
-    template< typename DiscreteFunctionSpace >
-    struct DiscreteFunctionTraits< DiscreteFunction< DiscreteFunctionSpace, PetscVector< DiscreteFunctionSpace > > >
-    {
-      typedef PetscVector< DiscreteFunctionSpace >  DofVectorType;
-      typedef typename DofVectorType::DofContainerType DofContainerType;
-
-
-      typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
-      typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
-      typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-      typedef DiscreteFunction< DiscreteFunctionSpace, DofVectorType >   DiscreteFunctionType;
-
-      typedef typename DofVectorType::IteratorType          DofIteratorType;
-      typedef typename DofVectorType::ConstIteratorType     ConstDofIteratorType;
-      typedef typename DofVectorType::DofBlockType          DofBlockType;
-      typedef typename DofVectorType::ConstDofBlockType     ConstDofBlockType;
-      typedef typename DofVectorType::DofBlockPtrType       DofBlockPtrType;
-      typedef typename DofVectorType::ConstDofBlockPtrType  ConstDofBlockPtrType;
-      typedef typename DiscreteFunctionSpaceType::BlockMapperType MapperType;
-      typedef typename DofVectorType::FieldType DofType;
-
-      typedef typename DofBlockType::DofProxy DofProxyType;
-
-      typedef ThreadSafeValue< UninitializedObjectStack > LocalDofVectorStackType;
-      typedef StackAllocator< DofProxyType, LocalDofVectorStackType* > LocalDofVectorAllocatorType;
-      typedef Dune::DynamicVector< DofProxyType, LocalDofVectorAllocatorType > LocalDofVectorType;
-
-      typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
-    };
-#endif
-
-
 #if 0
     /* ========================================
      * struct PetscDiscreteFunctionTraits
@@ -324,6 +285,36 @@ namespace Dune
     };
 #else
 
+    template <class DiscreteFunctionSpace>
+    class PetscDiscreteFunction;
+
+    /** \class DiscreteFunctionTraits
+     *  \brief Traits class for a DiscreteFunction
+     *
+     *  \tparam  DiscreteFunctionSpace   space the discrete function lives in
+     *  \tparam  DofVector             implementation class of the block vector
+     */
+    template< typename DiscreteFunctionSpace >
+    struct DiscreteFunctionTraits< PetscDiscreteFunction< DiscreteFunctionSpace > >
+      : public DefaultDiscreteFunctionTraits< DiscreteFunctionSpace, PetscVector< DiscreteFunctionSpace > >
+    {
+      typedef PetscVector< DiscreteFunctionSpace >  DofVectorType;
+      typedef PetscDiscreteFunction< DiscreteFunctionSpace > DiscreteFunctionType;
+
+      typedef typename DofVectorType::DofBlockType          DofBlockType;
+      typedef typename DofVectorType::DofBlockPtrType       DofBlockPtrType;
+      typedef typename DofVectorType::ConstDofBlockPtrType  ConstDofBlockPtrType;
+
+      typedef typename DofBlockType::DofProxy DofProxyType;
+
+      typedef ThreadSafeValue< UninitializedObjectStack > LocalDofVectorStackType;
+      typedef StackAllocator< DofProxyType, LocalDofVectorStackType* > LocalDofVectorAllocatorType;
+      typedef Dune::DynamicVector< DofProxyType, LocalDofVectorAllocatorType > LocalDofVectorType;
+
+      typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
+    };
+
+
     //! @ingroup AdaptiveDFunction
     //! An adaptive discrete function
     //! This class is comparable to DFAdapt, except that it provides a
@@ -331,12 +322,10 @@ namespace Dune
     //! functionality (access to subfunctions) and runtime optimisations
     template <class DiscreteFunctionSpace>
     class PetscDiscreteFunction
-    : public DiscreteFunction< DiscreteFunctionSpace,
-                               PetscVector< DiscreteFunctionSpace > >
+    : public DiscreteFunctionDefault< PetscDiscreteFunction< DiscreteFunctionSpace > >
     {
-      typedef ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace > ThisType;
-      typedef DiscreteFunction< DiscreteFunctionSpace,
-                                PetscVector< DiscreteFunctionSpace > > BaseType;
+      typedef PetscDiscreteFunction< DiscreteFunctionSpace > ThisType;
+      typedef DiscreteFunctionDefault< ThisType > BaseType;
 
     public:
       typedef typename BaseType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
@@ -344,36 +333,30 @@ namespace Dune
       typedef typename BaseType :: DofType                    DofType;
 
       using BaseType::assign;
-      using BaseType::dofVector;
 
       PetscDiscreteFunction( const std::string &name,
                              const DiscreteFunctionSpaceType &space )
-        : BaseType( name, space, allocateDofStorage( space ) )
+        : BaseType( name, space ),
+          memObject_(),
+          dofVector_( allocateDofStorage( space ) )
       {
       }
 
       PetscDiscreteFunction( const std::string &name,
                              const DiscreteFunctionSpaceType &space,
                              DofVectorType& dofVector )
-        : BaseType( name, space, dofVector )
+        : BaseType( name, space ),
+          memObject_(),
+          dofVector_( dofVector )
       {
-        // in this case we have no allocated mem object
-        memObject_ = 0;
       }
 
       PetscDiscreteFunction( const PetscDiscreteFunction& other )
-        : BaseType( "copy of " + other.name(), other.space(), allocateDofStorage( other.space() ) )
+        : BaseType( "copy of " + other.name(), other.space() ),
+          memObject_(),
+          dofVector_( allocateDofStorage( other.space() ) )
       {
         assign( other );
-      }
-
-      ~PetscDiscreteFunction()
-      {
-        if( memObject_ )
-        {
-          delete memObject_;
-          memObject_ = 0;
-        }
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression()
@@ -390,6 +373,8 @@ namespace Dune
         dofVector().communicateNow();
       }
 
+      DofVectorType& dofVector() { return dofVector_; }
+      const DofVectorType& dofVector() const { return dofVector_; }
 
       /** \brief obtain a constand pointer to the underlying PETSc Vec */
       const Vec* petscVec () const { return dofVector().getVector(); }
@@ -406,13 +391,16 @@ namespace Dune
       {
         std::string name("deprecated");
 
-        memObject_ = new PetscManagedDofStorageType( space, space.blockMapper(), name ) ;
+        memObject_.reset( new PetscManagedDofStorageType( space, space.blockMapper(), name ) );
 
         return memObject_->getArray();
       }
 
       // pointer to allocated DofVector
-      PetscManagedDofStorageType* memObject_;
+      std::unique_ptr< PetscManagedDofStorageType > memObject_;
+
+      // dof vector impl
+      DofVectorType& dofVector_;
     };
 
 #endif

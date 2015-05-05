@@ -162,87 +162,6 @@ namespace Dune
 
     public:
 
-      /** \brief Copy other's dof vector to *this
-       *
-       *  \param[in]  other   reference to the other dof vector
-       *  \return Reference to this
-       */
-      void assign ( const ThisType &other )
-      {
-        dofVector() = other.dofVector();
-      }
-
-      /** \brief Add scalar*v to *this
-       *
-       *  \param[in]  scalar  scalar by which v has to be multiplied before adding it to *this
-       *  \param[in]  v       the other discrete function which has to be scaled and added
-       */
-      void axpy ( const RangeFieldType &scalar, const ThisType &v )
-      {
-        dofVector().addScaled( v.dofVector(), scalar );
-      }
-
-      /** \brief Add scalar*v to *this
-       *
-       *  \param[in]  scalar  scalar by which v has to be multiplied before adding it to *this
-       *  \param[in]  v       the other discrete function which has to be scaled and added
-       */
-      void axpy ( const ThisType &v, const RangeFieldType &scalar )
-      {
-        dofVector().addScaled( v.dofVector(), scalar );
-      }
-
-      /** \brief Obtain the (modifiable) 'index'-th block
-       *
-       *  \param[in]  index   index of the block
-       *  \return The (modifiable) 'index'-th block
-       */
-      DofBlockPtrType block ( unsigned int index )
-      {
-        return DofBlockPtrType( dofVector()[ index ] );
-      }
-
-      /** \brief Obtain the (constant) 'index'-th block
-       *
-       *  \param[in]  index   index of the block
-       *  \return The (constant) 'index'-th block
-       */
-      ConstDofBlockPtrType block ( unsigned int index ) const
-      {
-        return ConstDofBlockPtrType( dofVector()[ index ] );
-      }
-
-      /** \brief Set each dof to zero
-       */
-      void clear ()
-      {
-        dofVector().clear();
-      }
-
-      /** \brief Obtain the constant iterator pointing to the first dof
-       *
-       *  \return Constant iterator pointing to the first dof
-       */
-      ConstDofIteratorType dbegin () const { return dofVector().begin(); }
-
-      /** \brief Obtain the non-constant iterator pointing to the first dof
-       *
-       *  \return Non-Constant iterator pointing to the first dof
-       */
-      DofIteratorType dbegin () { return dofVector().begin(); }
-
-      /** \brief Obtain the constant iterator pointing to the last dof
-       *
-       *  \return Constant iterator pointing to the last dof
-       */
-      ConstDofIteratorType dend () const { return dofVector().end(); }
-
-      /** \brief Obtain the non-constant iterator pointing to the last dof
-       *
-       *  \return Non-Constant iterator pointing to the last dof
-       */
-      DofIteratorType dend () { return dofVector().end(); }
-
       /** \brief Obtain constant reference to the dof vector
        *
        *  \return Constant reference to the block vector
@@ -277,50 +196,6 @@ namespace Dune
       DofContainerType &dofContainer ()
       {
         return dofVector().array();
-      }
-
-      /** \brief Add another discrete function to this one
-       *
-       *  \param[in]  other   discrete function to add
-       *  \return  constant reference to *this
-       */
-      const ThisType &operator+= ( const ThisType &other )
-      {
-        dofVector() += other.dofVector();
-        return *this;
-      }
-
-      /** \brief Subtract another discrete function from this one
-       *
-       *  \param[in]  other   Discrete function to subtract
-       *  \return Constand reference to this
-       */
-      const ThisType &operator-= ( const ThisType &other )
-      {
-        dofVector() -= other.dofVector();
-        return *this;
-      }
-
-      /** \brief Scale this
-       *
-       *  \param[in] scalar   scalar factor for the scaling
-       *  \return Constant reference to *this
-       */
-      const ThisType &operator*= ( const DofType &scalar )
-      {
-        dofVector() *= scalar;
-        return *this;
-      }
-
-      /** \brief Divide each dof by a scalar
-       *
-       *  \param[in] scalar   Scalar to divide each dof by
-       *  \return Constant reference to *this
-       */
-      const ThisType &operator/= ( const DofType &scalar )
-      {
-        dofVector() *= 1./scalar;
-        return *this;
       }
 
       /** \brief Return the number of blocks in the block vector

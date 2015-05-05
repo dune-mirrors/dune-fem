@@ -23,22 +23,15 @@ namespace Dune
     template< class Impl >
     inline DiscreteFunctionDefault< Impl >
       :: DiscreteFunctionDefault ( const std::string &name,
-                                   const DiscreteFunctionSpaceType &dfSpace,
-                                   const LocalDofVectorAllocatorType &ldvAllocator )
+                                   const DiscreteFunctionSpaceType &dfSpace )
     : dfSpace_( dfSpace ),
-      ldvAllocator_( ldvAllocator ),
+      ldvStack_( std::max( std::max( sizeof( DofType ), sizeof( DofType* ) ),
+                           sizeof(typename LocalDofVectorType::value_type) ) // for PetscDiscreteFunction
+                 * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
+      ldvAllocator_( &ldvStack_ ),
       name_( name ),
       scalarProduct_( dfSpace )
     {
-    }
-
-
-    template< class Impl >
-    inline void DiscreteFunctionDefault< Impl > :: clear ()
-    {
-      const DofIteratorType end = BaseType :: dend();
-      for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it )
-        *it = 0;
     }
 
 
@@ -82,18 +75,6 @@ namespace Dune
     {
       delete[] dofPointer;
       dofPointerLock_.unlock();
-    }
-
-
-    template< class Impl >
-    inline void DiscreteFunctionDefault< Impl >
-      ::axpy ( const RangeFieldType &s, const DiscreteFunctionInterfaceType &g )
-    {
-      assert( BaseType::size() == g.size() );
-      const DofIteratorType end = BaseType::dend();
-      ConstDofIteratorType git = g.dbegin();
-      for( DofIteratorType it = BaseType::dbegin(); it != end; ++it, ++git )
-        (*it) += s * (*git);
     }
 
 
