@@ -7,12 +7,12 @@ datadispdir =  $(includedir)/dune/fem/io/visual/grape/datadisp
 datadisp_HEADERS = dataconvert.cc \
 		   datadisp.cc \
 		   errordisplay.hh \
-		   grcommon.hh \
-                   printhelp.cc \
+       grcommon.hh \
+       printhelp.cc \
 		   programtemplate.cc \
 		   readiotupledata.cc \
-                   readioparams.cc \
-		   readtupledata.cc
+       readioparams.cc \
+       readtupledata.cc
 
 include $(top_srcdir)/am/global-rules
 
