@@ -122,6 +122,11 @@ int main(int argc, char ** argv)
     Dune::Fem::ManagedDiscreteFunction< VectorDiscreteFunctionType > mdf ("managed", space);
     checkFunction( mdf, ref );
 
+    typedef Dune::Fem::ReferenceBlockVector< FunctionSpaceType::RangeFieldType, DiscreteFunctionSpaceType::localBlockSize >
+      BlockVectorType;
+    Dune::Fem::BlockVectorDiscreteFunction< DiscreteFunctionSpaceType, BlockVectorType > bdf( "block", space );
+    checkFunction( bdf, ref );
+
 #if HAVE_DUNE_ISTL
     Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType > istldf ("istl", space);
     checkFunction( istldf, ref );
@@ -142,6 +147,7 @@ int main(int argc, char ** argv)
     std::cout << "dofs = " << adf.size() << std::endl;
     std::cout << "dofs = " << istldf.size() << std::endl;
     checkFunction( adf, istldf );
+    checkFunction( bdf, istldf );
     checkFunction( istldf, ref );
     checkFunction( mdf, ref );
 

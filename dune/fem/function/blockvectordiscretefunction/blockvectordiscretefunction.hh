@@ -49,27 +49,9 @@ namespace Dune
      */
     template< typename DiscreteFunctionSpace, typename BlockVector >
     struct DiscreteFunctionTraits< BlockVectorDiscreteFunction< DiscreteFunctionSpace, BlockVector > >
+      : public DefaultDiscreteFunctionTraits< DiscreteFunctionSpace, BlockVector >
     {
-      typedef BlockVector DofVectorType;
-
-      typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
-      typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
-      typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
       typedef BlockVectorDiscreteFunction< DiscreteFunctionSpace, BlockVector >   DiscreteFunctionType;
-
-      typedef typename DofVectorType::IteratorType DofIteratorType;
-      typedef typename DofVectorType::ConstIteratorType ConstDofIteratorType;
-      typedef typename DofVectorType::DofBlockType DofBlockType;
-      typedef typename DofVectorType::ConstDofBlockType ConstDofBlockType;
-      typedef Fem::Envelope< DofBlockType >                          DofBlockPtrType;
-      typedef Fem::Envelope< ConstDofBlockType >                     ConstDofBlockPtrType;
-      typedef typename DiscreteFunctionSpaceType::BlockMapperType MapperType;
-      typedef typename DofVectorType::FieldType DofType;
-
-      typedef ThreadSafeValue< UninitializedObjectStack > LocalDofVectorStackType;
-      typedef StackAllocator< DofType, LocalDofVectorStackType* > LocalDofVectorAllocatorType;
-      typedef DynamicReferenceVector< DofType, LocalDofVectorAllocatorType > LocalDofVectorType;
-
       typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
     };
 
@@ -90,61 +72,22 @@ namespace Dune
           void print ( std :: ostream &out ) const;
        */
       typedef BlockVectorDiscreteFunction< DiscreteFunctionSpace, BlockVector >   ThisType;
-      typedef DiscreteFunctionDefault< BlockVectorDiscreteFunction< DiscreteFunctionSpace, BlockVector > > BaseType;
+      typedef DiscreteFunctionDefault< ThisType > BaseType;
 
       typedef ParallelScalarProduct< ThisType >                                   ScalarProductType;
 
     public:
       // ==================== Types
 
-      //! the traits of ThisType
-      typedef DiscreteFunctionTraits< ThisType > Traits;
       //! type for the discrete function space this function lives in
       typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
       //! type for the class which implements the block vector
       typedef BlockVector BlockVectorType;
       //! type for the class which implements the block vector (which is the dof vector)
       typedef BlockVectorType DofVectorType;
-      //! type for the mapper which maps local to global indices
-      typedef typename Traits::MapperType MapperType;
-      //! type of the fields the dofs live in
-      typedef typename BaseType::DofType DofType;
-      //! pointer to a block of dofs
-      typedef typename BaseType::DofBlockPtrType DofBlockPtrType;
-      //! pointer to a block of dofs, const version
-      typedef typename BaseType::ConstDofBlockPtrType ConstDofBlockPtrType;
-      //! type of a block of dofs
-      typedef typename BaseType::DofBlockType DofBlockType;
-      //! iterator type for iterate over the dofs
-      typedef typename BaseType::DofIteratorType DofIteratorType;
-      //! iterator type for iterate over the dofs, const verision
-      typedef typename BaseType::ConstDofIteratorType ConstDofIteratorType;
-      //! type of the range field
-      typedef typename BaseType::RangeFieldType RangeFieldType;
-      //! type of the domain field
-      typedef typename BaseType::DomainFieldType DomainFieldType;
-      //! type of the local functions
-      typedef typename BaseType::LocalFunctionType LocalFunctionType;
-      //! type of LocalDofVector
-      typedef typename BaseType::LocalDofVectorType LocalDofVectorType;
-      //! type of LocalDofVector StackAllocator
-      typedef typename BaseType::LocalDofVectorAllocatorType LocalDofVectorAllocatorType;
-      //! type of the discrete functions's domain
-      typedef typename BaseType::DomainType DomainType;
-      //! type of the discrete functions's range
-      typedef typename BaseType::RangeType RangeType;
-      //! size type of the block vector
-      typedef typename BlockVectorType::SizeType SizeType;
 
       // methods from DiscreteFunctionDefault
-      using BaseType::space;
-      using BaseType::name;
       using BaseType::assign;
-      using BaseType::operator+=;
-      using BaseType::operator-=;
-
-      //! size of the dof blocks
-      enum { blockSize = BlockVectorType::blockSize };
 
       /** \brief Constructor to use if the vector storing the dofs (which is a block vector) already exists
        *
@@ -154,9 +97,10 @@ namespace Dune
        */
       BlockVectorDiscreteFunction ( const std::string &name,
                                     const DiscreteFunctionSpaceType &dfSpace,
-                                    BlockVectorType &blockVector )
+                                    DofVectorType &dofVector )
         : BaseType( name, dfSpace ),
-          memPair_( static_cast< DofStorageInterface * >( 0 ), &blockVector )
+          memObject_(),
+          dofVector_( dofVector )
       {}
 
       /** \brief Constructor to use if the vector storing the dofs does not exist yet
@@ -167,7 +111,8 @@ namespace Dune
       BlockVectorDiscreteFunction ( const std::string &name,
                                     const DiscreteFunctionSpaceType &dfSpace )
         : BaseType( name, dfSpace ),
-          memPair_( allocateManagedDofStorage< BlockVectorType >( space().gridPart().grid(), space().blockMapper(), name ) )
+          memObject_(),
+          dofVector_( allocateDofStorage( dfSpace ) )
       {}
 
 
@@ -175,25 +120,14 @@ namespace Dune
        */
       BlockVectorDiscreteFunction ( const ThisType &other )
         : BaseType( "copy of "+other.name(), other.space() ),
-          memPair_( allocateManagedDofStorage< BlockVectorType >( space().gridPart().grid(), space().blockMapper(), name() ) )
+          memObject_(),
+          dofVector_( allocateDofStorage( other.space() ) )
       {
         // copy dof vector content
         assign( other );
-        //dofVector() = other.dofVector();
-      }
-
-      /** \brief Destructor deleting DoF storage
-       */
-      ~BlockVectorDiscreteFunction ()
-      {
-        // TODO: use a smart pointer for this?
-        // No need for a null check here. Stroustrup: "Applying delete to zero has no effect."
-        delete memPair_.first;
-        memPair_.first = 0;
       }
 
     private:
-
       // an empty constructor would not make sense for a discrete function
       BlockVectorDiscreteFunction ();
 
@@ -201,171 +135,48 @@ namespace Dune
       ThisType &operator= ( const ThisType &other );
 
     public:
-
-      /** \brief Copy other's dof vector to *this
-       *
-       *  \param[in]  other   reference to the other dof vector
-       *  \return Reference to this
-       */
-      void assign ( const ThisType &other )
-      {
-        dofVector() = other.dofVector();
-      }
-
-      /** \brief Add scalar*v to *this
-       *
-       *  \param[in]  scalar  scalar by which v has to be multiplied before adding it to *this
-       *  \param[in]  v       the other discrete function which has to be scaled and added
-       */
-      void axpy ( const RangeFieldType &scalar, const ThisType &v )
-      {
-        dofVector().addScaled( v.dofVector(), scalar );
-      }
-
-      /** \brief Add scalar*v to *this
-       *
-       *  \param[in]  scalar  scalar by which v has to be multiplied before adding it to *this
-       *  \param[in]  v       the other discrete function which has to be scaled and added
-       */
-      void axpy ( const ThisType &v, const RangeFieldType &scalar )
-      {
-        dofVector().addScaled( v.dofVector(), scalar );
-      }
-
-      /** \brief Obtain the (modifiable) 'index'-th block
-       *
-       *  \param[in]  index   index of the block
-       *  \return The (modifiable) 'index'-th block
-       */
-      DofBlockPtrType block ( unsigned int index )
-      {
-        return DofBlockPtrType( dofVector()[ index ] );
-      }
-
-      /** \brief Obtain the (constant) 'index'-th block
-       *
-       *  \param[in]  index   index of the block
-       *  \return The (constant) 'index'-th block
-       */
-      ConstDofBlockPtrType block ( unsigned int index ) const
-      {
-        return ConstDofBlockPtrType( dofVector()[ index ] );
-      }
-
-      /** \brief Set each dof to zero
-       */
-      void clear ()
-      {
-        dofVector().clear();
-      }
-
-      /** \brief Obtain the constant iterator pointing to the first dof
-       *
-       *  \return Constant iterator pointing to the first dof
-       */
-      ConstDofIteratorType dbegin () const { return dofVector().begin(); }
-
-      /** \brief Obtain the non-constant iterator pointing to the first dof
-       *
-       *  \return Non-Constant iterator pointing to the first dof
-       */
-      DofIteratorType dbegin () { return dofVector().begin(); }
-
-      /** \brief Obtain the constant iterator pointing to the last dof
-       *
-       *  \return Constant iterator pointing to the last dof
-       */
-      ConstDofIteratorType dend () const { return dofVector().end(); }
-
-      /** \brief Obtain the non-constant iterator pointing to the last dof
-       *
-       *  \return Non-Constant iterator pointing to the last dof
-       */
-      DofIteratorType dend () { return dofVector().end(); }
-
       /** \brief Obtain constant reference to the dof vector
        *
        *  \return Constant reference to the block vector
        */
-      const BlockVectorType &dofVector () const
+      const DofVectorType &dofVector () const
       {
-        assert( memPair_.second );
-        return *memPair_.second;
+        return dofVector_;
       }
 
       /** \brief Obtain reference to the dof vector
        *
        *  \return Reference to the block vector
        */
-      BlockVectorType &dofVector ()
+      DofVectorType &dofVector ()
       {
-        assert( memPair_.second );
-        return *memPair_.second;
+        return dofVector_;
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression()
        */
       void enableDofCompression ()
       {
-        if( memPair_.first )
-          memPair_.first->enableDofCompression();
+        if( memObject_ )
+          memObject_->enableDofCompression();
       }
-
-      /** \brief Add another discrete function to this one
-       *
-       *  \param[in]  other   discrete function to add
-       *  \return  constant reference to *this
-       */
-      const ThisType &operator+= ( const ThisType &other )
-      {
-        dofVector() += other.dofVector();
-        return *this;
-      }
-
-      /** \brief Subtract another discrete function from this one
-       *
-       *  \param[in]  other   Discrete function to subtract
-       *  \return Constand reference to this
-       */
-      const ThisType &operator-= ( const ThisType &other )
-      {
-        dofVector() -= other.dofVector();
-        return *this;
-      }
-
-      /** \brief Scale this
-       *
-       *  \param[in] scalar   scalar factor for the scaling
-       *  \return Constant reference to *this
-       */
-      const ThisType &operator*= ( const DofType &scalar )
-      {
-        dofVector() *= scalar;
-        return *this;
-      }
-
-      /** \brief Divide each dof by a scalar
-       *
-       *  \param[in] scalar   Scalar to divide each dof by
-       *  \return Constant reference to *this
-       */
-      const ThisType &operator/= ( const DofType &scalar )
-      {
-        dofVector() *= 1./scalar;
-        return *this;
-      }
-
-      /** \brief Return the number of blocks in the block vector
-       *
-       *  \return Number of block in the block vector
-       */
-      SizeType size () const { return dofVector().size() * blockSize; }
 
     protected:
+      DofVectorType& allocateDofStorage( const DiscreteFunctionSpaceType& space )
+      {
+        std::string name("deprecated");
+        std::pair< DofStorageInterface*, DofVectorType* > memPair(
+          allocateManagedDofStorage< DofVectorType >( space.gridPart().grid(), space.blockMapper(), name ) );
+
+        memObject_.reset( memPair.first );
+        return *memPair.second;
+      }
+
       /*
        * ============================== data fields ====================
        */
-      std::pair< DofStorageInterface *, BlockVectorType * > memPair_;
+      std::unique_ptr< DofStorageInterface > memObject_;
+      DofVectorType& dofVector_;
     };
 
   } // namespace Fem
