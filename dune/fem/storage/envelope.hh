@@ -6,15 +6,14 @@ namespace Dune
   namespace Fem
   {
 
-    template< class Object, class Storage = Object >
+    template< class Object >
     class Envelope
     {
     public:
       typedef Object  ObjectType;
-      typedef Storage StorageType;
 
     protected:
-      StorageType object_;
+      ObjectType object_;
 
     public:
       template< class ParamType >
