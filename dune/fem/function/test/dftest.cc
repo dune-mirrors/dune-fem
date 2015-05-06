@@ -118,6 +118,10 @@ int main(int argc, char ** argv)
     VectorDiscreteFunctionType vdf ("vector", space, vec);
     checkFunction( vdf, ref );
 
+    std::vector<double> vec1( space.size() );
+    typedef Dune::Fem::VectorDiscreteFunction< DiscreteFunctionSpaceType, std::vector<double> > StdVectorDiscreteFunctionType;
+    StdVectorDiscreteFunctionType vdf1 ("vector", space, vec1);
+    checkFunction( vdf1, ref );
 
     Dune::Fem::ManagedDiscreteFunction< VectorDiscreteFunctionType > mdf ("managed", space);
     checkFunction( mdf, ref );
