@@ -7,6 +7,7 @@
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/finitevolume.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
+#include <dune/fem/space/common/adaptmanager.hh>
 
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/storage/vector.hh>
@@ -88,6 +89,15 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
   spd = other.scalarProductDofs( df );
 
   std::cout << "done!" << std::endl;
+
+  typedef Dune::Fem::RestrictProlongDefault<DiscreteFunction> RPDefaultType;
+  typedef Dune::Fem::AdaptationManager< HGridType, RPDefaultType >
+    AdaptationManagerType;
+
+  RPDefaultType rp( df );
+  rp.setFatherChildWeight(Dune::DGFGridInfo< HGridType >::refineWeight());
+
+  //AdaptationManagerType adop(grid,rp);
 }
 
 // main program
