@@ -18,6 +18,8 @@
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/storage/envelope.hh>
 
+#include <dune/fem/function/blockvectors/referenceblockvector.hh>
+
 namespace Dune
 {
 
