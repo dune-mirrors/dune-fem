@@ -1,1 +1,1 @@
-dune_install(blockvectorfunction.hh blockvectorfunction_inline.hh)
+dune_install(blockvectorfunction.hh)

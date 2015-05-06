@@ -14,7 +14,6 @@
 #include <dune/fem/function/vectorfunction/managedvectorfunction.hh>
 #include <dune/fem/function/blockvectordiscretefunction.hh>
 #include <dune/fem/function/blockvectors/referenceblockvector.hh>
-#include <dune/fem/function/blockvectors/simpleblockvector.hh>
 #if HAVE_PETSC
 #include <dune/fem/function/petscdiscretefunction.hh>
 #endif
@@ -83,6 +82,10 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
   df.write( out );
   Dune::Fem::StandardInStream in( stream );
   df.read( in );
+
+  double spd = df.scalarProductDofs( other );
+  spd = df.scalarProductDofs( df );
+  spd = other.scalarProductDofs( df );
 
   std::cout << "done!" << std::endl;
 }

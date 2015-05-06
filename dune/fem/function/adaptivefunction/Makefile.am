@@ -1,8 +1,6 @@
 adaptivefunctiondir =  $(includedir)/dune/fem/function/adaptivefunction
 
-adaptivefunction_HEADERS = adaptivefunction.hh \
-                           adaptiveimp.cc \
-                           adaptiveimp.hh
+adaptivefunction_HEADERS = adaptivefunction.hh
 
 include $(top_srcdir)/am/global-rules
 

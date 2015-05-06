@@ -1,1 +1,1 @@
-dune_install(referenceblockvector.hh)
+dune_install(defaultblockvectors.hh referenceblockvector.hh)

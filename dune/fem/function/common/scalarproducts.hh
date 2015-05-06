@@ -521,10 +521,13 @@ namespace Dune
       using BaseType :: space;
 
     public:
+      template < class OtherDiscreteFunctionType >
       //! evaluate scalar product and omit slave nodes
       inline RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x,
-                                                const DiscreteFunctionType &y ) const
+                                                const OtherDiscreteFunctionType &y ) const
       {
+        typedef typename OtherDiscreteFunctionType :: ConstDofBlockPtrType
+          OtherConstDofBlockPtrType;
         SlaveDofsType &slaveDofs = this->slaveDofs();
 
         RangeFieldType scp = 0;
@@ -535,8 +538,8 @@ namespace Dune
           const int nextSlave = slaveDofs[ slave ];
           for(; i < nextSlave; ++i )
           {
-            ConstDofBlockPtrType xPtr = x.block( i );
-            ConstDofBlockPtrType yPtr = y.block( i );
+            ConstDofBlockPtrType xPtr      = x.block( i );
+            OtherConstDofBlockPtrType yPtr = y.block( i );
             for( unsigned int j = 0; j < blockSize; ++j )
               scp += (*xPtr)[ j ] * (*yPtr)[ j ];
           }
@@ -584,15 +587,19 @@ namespace Dune
       ParallelScalarProduct( const ThisType & );
 
     public:
+      template < class OtherDiscreteFunctionType >
       //! return scalar product of dofs
       inline RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x,
-                                                const DiscreteFunctionType &y ) const
+                                                const OtherDiscreteFunctionType &y ) const
       {
         RangeFieldType scp = 0;
 
         ConstDofIteratorType endit = x.dend ();
         ConstDofIteratorType xit = x.dbegin ();
-        ConstDofIteratorType yit = y.dbegin();
+
+        typedef typename OtherDiscreteFunctionType :: ConstDofIteratorType
+          OtherConstDofIteratorType;
+        OtherConstDofIteratorType yit = y.dbegin();
 
         for( ; xit != endit; ++xit, ++yit )
           scp += (*xit) * (*yit);
@@ -673,6 +680,7 @@ namespace Dune
       RangeFieldType scalarProductDofs(const DiscreteFunctionType& x,
                                        const DiscreteFunctionType& y) const
       {
+        std::cout << "ISTL prod" << std::endl;
         return scalarProductDofs(x.blockVector(),y.blockVector());
       }
 

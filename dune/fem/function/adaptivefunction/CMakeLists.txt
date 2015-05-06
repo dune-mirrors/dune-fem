@@ -1,1 +1,1 @@
-dune_install(adaptivefunction.hh adaptiveimp.cc adaptiveimp.hh)
+dune_install(adaptivefunction.hh)

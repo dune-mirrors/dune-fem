@@ -294,6 +294,7 @@ namespace Dune
        *
        *  \returns a pointer to a consecutive copy of the DoF vector
        */
+      DUNE_VERSION_DEPRECATED(1,6,remove)
       inline RangeFieldType *allocDofPointer () const
       {
         return asImp().allocDofPointer();
@@ -314,6 +315,7 @@ namespace Dune
        *  \param[in]  dofPointer  pointer to the dof array previously allocated
        *                          by allocDofPointer
        */
+      DUNE_VERSION_DEPRECATED(1,6,remove)
       inline void freeDofPointer( RangeFieldType *dofPointer )
       {
         asImp().freeDofPointer( dofPointer );
@@ -333,6 +335,7 @@ namespace Dune
        *  \param[in]  dofPointer  pointer to the dof array previously allocated
        *                          by allocDofPointer
        */
+      DUNE_VERSION_DEPRECATED(1,6,remove)
       inline void freeDofPointerNoCopy( const RangeFieldType *dofPointer ) const
       {
         asImp().freeDofPointerNoCopy( dofPointer );
@@ -363,8 +366,9 @@ namespace Dune
        *
        *  \returns the scalar product of the DoF-vectors
        */
+      template <class DFType>
       inline RangeFieldType
-      scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const
+      scalarProductDofs ( const DiscreteFunctionInterface< DFType > &other ) const
       {
         return asImp().scalarProductDofs( other );
       }
@@ -776,14 +780,19 @@ namespace Dune
       template <class DFType>
       void axpy ( const RangeFieldType &s, const DiscreteFunctionInterface< DFType > &g );
 
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::axpy(const RangeFieldType &s,const DiscreteFunctionInterfaceType &g) */
       void axpy ( const RangeFieldType &s, const DiscreteFunctionInterfaceType& g )
       {
-        dofVector().addScaled( g.dofVector(), s );
+        dofVector().axpy( s, g.dofVector() );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::scalarProductDofs */
+      template <class DFType>
       inline RangeFieldType
-      scalarProductDofs ( const DiscreteFunctionInterfaceType &other ) const { return scalarProduct_.scalarProductDofs( *this, other ); }
+      scalarProductDofs ( const DiscreteFunctionInterface< DFType > &other ) const
+      {
+        return scalarProduct_.scalarProductDofs( *this, other );
+      }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::normSquaredDofs */
       inline typename Dune::FieldTraits< RangeFieldType >::real_type

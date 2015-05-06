@@ -6,7 +6,7 @@
 #include <cassert>
 #include <vector>
 
-#include <dune/fem/function/blockvectors/simpleblockvector.hh>
+#include <dune/fem/function/blockvectors/defaultblockvectors.hh>
 
 namespace Dune {
 namespace Fem {
