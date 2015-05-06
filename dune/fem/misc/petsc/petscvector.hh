@@ -21,6 +21,7 @@ namespace Dune
 
     // forward declarations
     template< typename >      class PetscDofBlock;
+    template< typename >      class PetscDofProxy;
     template< class DFSpace > class PetscVector;
 
     /*! ManagedDofStorage for PetscDiscreteFunction using PetscVector */
