@@ -343,7 +343,7 @@ namespace Dune
   struct ContainsType
   {
     static const bool value = ( Dune::is_same< typename Dune::tuple_element< N-1, Tuple >::type, Type >::value
-                                || ContainsType< Tuple, Type, N-1 >::position );
+                                || ContainsType< Tuple, Type, N-1 >::value );
   };
 
   template< class Tuple,
