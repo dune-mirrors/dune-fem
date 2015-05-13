@@ -87,7 +87,7 @@ namespace Dune
 
       // pointer to DofContainer
       std::unique_ptr< VectorType > vec_;
-      // pointer to dof vector
+      // dof vector that stores referenc to vector
       DofVectorType dofVector_;
     };
 
