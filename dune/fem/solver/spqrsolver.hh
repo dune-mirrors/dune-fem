@@ -5,6 +5,7 @@
 #include <iostream>
 #include <type_traits>
 #include <vector>
+#include <algorithm>
 
 #include <dune/fem/function/adaptivefunction/adaptivefunction.hh>
 #include <dune/fem/function/blockvectorfunction/blockvectorfunction.hh>
@@ -174,18 +175,16 @@ class SPQROp:public Operator<DF, DF>
   void apply(const ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& arg,
              ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& dest) const
   {
-    // convert ISTLBlockVectorDiscreteFunction to AdaptiveDiscreteFunction in order to have a DOF*
+    // copy DOF arg into a consecutive vector
     std::vector<DofType> vecArg(arg.size());
-    AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> adaptiveArg(arg.name(),arg.space(),vecArg.data());
-    adaptiveArg.assign(arg);
+    std::copy(arg.dbegin(),arg.dend(),vecArg.begin());
     std::vector<DofType> vecDest(dest.size());
-    AdaptiveDiscreteFunction<DiscreteFunctionSpaceType> adaptiveDest(dest.name(),dest.space(),vecDest.data());
-    adaptiveDest.assign(dest);
-
-    apply(adaptiveArg,adaptiveDest);
-
-    // copy solution into dest
-    dest.assign(adaptiveDest);
+    // apply operator
+    const DofType* argDataPtr(vecArg.data());
+    DofType* destDataPtr(vecDest.data());
+    apply(argDataPtr,destDataPtr);
+    // copy back solution into dest
+    std::copy(vecDest.begin(),vecDest.end(),dest.dbegin());
   }
 
   inline void printTexInfo(std::ostream& out) const
