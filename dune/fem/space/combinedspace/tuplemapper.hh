@@ -315,6 +315,22 @@ namespace Dune
       }
       /***** Methods need from the DofManager < end > *****/
 
+
+      /*** NonInterface Methods ***/
+
+      //! brief return global offset for the i-th component
+      SizeType offset ( int i ) const
+      {
+        return globalOffset_[ i ];
+      }
+
+      //! brief return size of i-th sub mapper
+      template< int i >
+      SizeType subSize () const
+      {
+        return std::get< i >( mapperTuple_ ).size();
+      }
+
     protected:
 
       void update ()
