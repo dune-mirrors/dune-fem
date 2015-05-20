@@ -31,6 +31,8 @@ namespace Dune
       typedef typename BlockMapper::ElementType ElementType;
 
       typedef typename BlockMapper::SizeType  SizeType;
+
+      typedef typename BlockMapper::GlobalKeyType GlobalKeyType;
     };
 
 
@@ -52,6 +54,8 @@ namespace Dune
       typedef NonBlockMapperTraits< BlockMapper, blockSize > Traits ;
     public:
       typedef typename Traits :: SizeType SizeType ;
+
+      typedef typename Traits :: GlobalKeyType GlobalKeyType ;
 
     private:
       template< class Functor >
