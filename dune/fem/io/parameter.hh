@@ -7,6 +7,8 @@
 #include <map>
 #include <queue>
 #include <sstream>
+#include <string>
+#include <type_traits>
 
 #include <dune/common/exceptions.hh>
 
@@ -186,6 +188,8 @@ namespace Dune
       {
         std::istringstream in( s );
         in >> value;
+        if( std::is_same<T,std::string>::value && s.empty() )
+          return true;
         if( in.fail() )
           return false;
         char eof;
