@@ -34,7 +34,7 @@ namespace Fem
  *  (see DiscreteFunctionInterface) can be found.
  */
 
-/** \class SPQROp
+/** \class UMFPACKOp
  *  \ingroup DirectSolver
  *  \brief The %UMFPack direct sparse solver
  *  %UMFPack will always go double precision and supports complex numbers.
