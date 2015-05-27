@@ -38,7 +38,8 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
   typedef typename DiscreteFunction :: DofType DofType;
 
   // fill df with zeros
-  df.clear(); other.clear();
+  df.clear();
+  other.clear();
 
   // fill df with zeros
   std::fill( df.dbegin(), df.dend(), DofType( 0 ) );
@@ -46,17 +47,27 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
   df += other;
   df -= other;
 
-  for( auto it = df.space().begin(), end = df.space().end();
-       it != end; ++it )
+  // fill with increasing values
+  int cont(0);
+  for( const auto entity : df.space() )
   {
-    auto lf = df.localFunction( *it );
+    auto lf = df.localFunction( entity );
     lf.clear();
-    for( int i=0; i<lf.numDofs(); ++i )
-      lf[ i ] = 1.0;
+    for( int i=0; i<lf.numDofs(); ++i,++cont )
+      lf[ i ] = static_cast<DofType>(cont);
   }
 
+  // check block access
+  const std::size_t localBlockSize(DiscreteFunctionSpaceType::localBlockSize);
+  const std::size_t numBlocks(df.size()/localBlockSize);
+  typename DiscreteFunction::DofIteratorType dfDofIt(df.dbegin());
+  for(std::size_t i=0;i!=numBlocks;++i)
+    for(std::size_t j=0;j!=localBlockSize;++j,++dfDofIt)
+      if((*df.block(i))[j]!=*dfDofIt)
+        DUNE_THROW(Dune::InvalidStateException,"Block access did not work");
+
   // copy to std::vector, sometimes needed for solver interfaces
-  std::vector< double > vec( df.size() );
+  std::vector< DofType > vec( df.size() );
   std::copy( df.dbegin(), df.dend(), vec.begin() );
 
   // check copy constructor
@@ -84,19 +95,17 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
   Dune::Fem::StandardInStream in( stream );
   df.read( in );
 
-  double spd = df.scalarProductDofs( other );
-  spd = df.scalarProductDofs( df );
-  spd = other.scalarProductDofs( df );
+  df.scalarProductDofs( other );
+  df.scalarProductDofs( df );
+  other.scalarProductDofs( df );
 
   std::cout << "done!" << std::endl;
 
   typedef Dune::Fem::RestrictProlongDefault<DiscreteFunction> RPDefaultType;
-  typedef Dune::Fem::AdaptationManager< HGridType, RPDefaultType >
-    AdaptationManagerType;
-
   RPDefaultType rp( df );
   rp.setFatherChildWeight(Dune::DGFGridInfo< HGridType >::refineWeight());
 
+  //typedef Dune::Fem::AdaptationManager< HGridType, RPDefaultType > AdaptationManagerType;
   //AdaptationManagerType adop(grid,rp);
 }
 
