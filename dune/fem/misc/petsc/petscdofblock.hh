@@ -197,6 +197,7 @@ namespace Dune
       {
         for( int i=0; i<blockSize; ++i )
           (*this)[ i ] *= value ;
+        return *this;
       }
 
     private:
