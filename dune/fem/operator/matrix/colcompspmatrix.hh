@@ -6,9 +6,11 @@
 #if HAVE_DUNE_ISTL
 #include <dune/istl/colcompmatrix.hh>
 #else
-template<class M>
-struct ColCompMatrix
-{};
+namespace Dune
+{
+  template<class M>
+  struct ColCompMatrix {};
+} // namespace Dune
 #endif
 
 #include <dune/fem/operator/matrix/spmatrix.hh>
