@@ -13,6 +13,7 @@
 #include <dune/fem/function/common/functor.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
+#include <dune/fem/function/common/rangegenerators.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/debug.hh>

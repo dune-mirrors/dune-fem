@@ -47,9 +47,13 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
   df += other;
   df -= other;
 
+  // fill df with zeros
+  for( auto&& dof : dofs(df) )
+    dof=static_cast<DofType>(0);
+
   // fill with increasing values
   int cont(0);
-  for( const auto entity : df.space() )
+  for( auto&& entity : entities(df) )
   {
     auto lf = df.localFunction( entity );
     lf.clear();
