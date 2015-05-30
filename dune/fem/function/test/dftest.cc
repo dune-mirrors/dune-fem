@@ -67,7 +67,7 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
   typename DiscreteFunction::DofIteratorType dfDofIt(df.dbegin());
   for(std::size_t i=0;i!=numBlocks;++i)
     for(std::size_t j=0;j!=localBlockSize;++j,++dfDofIt)
-      if((*df.block(i))[j]!=*dfDofIt)
+      if( std::abs( (*df.block(i))[j] - *dfDofIt ) > 1e-12 )
         DUNE_THROW(Dune::InvalidStateException,"Block access did not work");
 
   // copy to std::vector, sometimes needed for solver interfaces
