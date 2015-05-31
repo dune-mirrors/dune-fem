@@ -400,72 +400,6 @@ namespace Fem {
       copy( other );
       return *this;
     }
-#if 0
-
-    /** \brief Add another block to *this
-     *
-     *  \param[in] other  Other block to add
-     *  \return Constant reference to *this
-     */
-    ThisType& operator+= ( const ConstBlockType& other )
-    {
-      assert( sequence_ == blockVector_.sequence_ );
-      for ( unsigned int i = 0; i < blockSize; ++i )
-      {
-        (*this)[i] += other[i];
-      }
-      ++sequence_;
-      return *this;
-    }
-
-    /** \brief Subtract another block from *this
-     *
-     *  \param[in] other  Other block to subtract
-     *  \return Constant reference to *this
-     */
-    ThisType& operator-= ( const ConstBlockType& other )
-    {
-      assert( sequence_ == blockVector_.sequence_ );
-      for ( unsigned int i = 0; i < blockSize; ++i )
-      {
-        (*this)[i] -= other[i];
-      }
-      ++sequence_;
-      return *this;
-    }
-
-    /** \brief Calculate the scalar product of this block with another block
-     *
-     *  \param[in] other  Other block to scalar-multiply this block by
-     *  \return The value of the scalar product
-     */
-    FieldType operator* ( const ConstBlockType& other ) const
-    {
-      assert( sequence_ == blockVector_.sequence_ );
-      FieldType sum( 0 );
-      for ( unsigned int i = 0; i < blockSize; ++i )
-      {
-        sum += (*this)[i] * other[i];
-      }
-      return sum;
-    }
-
-    /** \brief Scale this block
-     *
-     *  \param[in] scalar   Scalar to use for the scaling
-     *  \return Constant reference to *this
-     */
-    ThisType& operator*= ( const FieldType& scalar )
-    {
-      assert( sequence_ == blockVector_.sequence_ );
-      for ( unsigned int i = 0; i < blockSize; ++i )
-      {
-        (*this)[i] *= scalar;
-      }
-      ++sequence_;
-      return *this;
-    }
-#endif
 
     /** \brief Obtain a dof inside this block
      *
@@ -493,8 +427,7 @@ namespace Fem {
      */
     int dim() const { return blockSize; }
 
-  private:
-
+  protected:
     // An empty constructor does not make sense in this case
     SimpleBlockVectorBlock();
 

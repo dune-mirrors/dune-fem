@@ -63,7 +63,10 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
 
   // check block access
   const std::size_t localBlockSize(DiscreteFunctionSpaceType::localBlockSize);
-  const std::size_t numBlocks(df.size()/localBlockSize);
+  const std::size_t numBlocks(df.blocks());
+  if( df.size() / localBlockSize != numBlocks )
+    DUNE_THROW(Dune::InvalidStateException,"number of blocks not correct!");
+
   typename DiscreteFunction::DofIteratorType dfDofIt(df.dbegin());
   for(std::size_t i=0;i!=numBlocks;++i)
     for(std::size_t j=0;j!=localBlockSize;++j,++dfDofIt)

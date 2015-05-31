@@ -228,6 +228,18 @@ namespace Dune
         return asImp().size();
       }
 
+      /** \brief obtain total number of blocks, i.e. size / blockSize.
+       *
+       *  The number of blocks of DoFs (degrees of freedom) can also be seen
+       *  as the size of the discrete function divided by the blockSize.
+       *
+       *  \returns total number of DoFs blocks
+       */
+      inline int blocks() const
+      {
+        return asImp().blocks();
+      }
+
       /** \brief obtain pointer to block of discrete function with block number index
        *
        *  \returns a DoFBlockPtrType pointing to block index
@@ -706,21 +718,16 @@ namespace Dune
       DofVectorType& dofVector() { return asImp().dofVector(); }
       const DofVectorType& dofVector() const { return asImp().dofVector(); }
 
-      /** \brief Obtain the (modifiable) 'index'-th block
-       *
-       *  \param[in]  index   index of the block
-       *  \return The (modifiable) 'index'-th block
-       */
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::blocks() */
+      int blocks() const { return dofVector().size(); }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::block( unsigned int index ) */
       DofBlockPtrType block ( unsigned int index )
       {
         return dofVector().blockPtr( index );
       }
 
-      /** \brief Obtain the (constant) 'index'-th block
-       *
-       *  \param[in]  index   index of the block
-       *  \return The (constant) 'index'-th block
-       */
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::block( unsigned int index ) const */
       ConstDofBlockPtrType block ( unsigned int index ) const
       {
         return dofVector().blockPtr( index );
