@@ -66,16 +66,25 @@ namespace Dune
     /** \brief LocalFunctionAdapter wrapped a class with a local evaluate method
      *         into a grid function.
      *
-     *  The class takes one template argument
-     *  EvalImp which holds the evaluate method for the local function:
-     *    template< class PointType >
-     *    EvalImp::evaluate(const PointType& x,RangeType& val)
+     *  The class takes one template argument LocalFunctionImpl which holds the
+     *  method evaluate(...) to evaluate the local function
+     *
+     *    template<class PointType>
+     *    LocalFunctionImpl::evaluate(const PointType& x,RangeType& val)
+     *
+     *  and a method init(...) to set the entity
+     *
+     *    LocalFunctionImpl::init(const EntityType& entity)
+     *
      *  Required type in LocalFunctionImpl are:
-     *  FunctionSpaceType which is derived from the functionspace interface provides
-     *                    and provides the RangeType
-     *  GridPartType providing the EntityType
-     *  An instance of the EvalImp class is passed to the constructor of the
-     *  wrapper and the entity to process is passed to a method init on EvalImp.
+     *
+     *  FunctionSpaceType
+     *  GridPartType
+     *  EntityType
+     *  DomainType
+     *  RangeType
+     *
+     *  An instance of the LocalFunctionImpl class is passed to the constructor.
      */
     template< class LocalFunctionImpl >
     class LocalFunctionAdapter
@@ -139,12 +148,8 @@ namespace Dune
       {
         static void init( const ArgumentType& arg, LocalFunctionListType& lfList)
         {
-          typedef typename LocalFunctionListType :: iterator iterator ;
-          const iterator endit = lfList.end();
-          for( iterator it = lfList.begin(); it != endit; ++it )
-          {
-            arg.initialize( (*it) );
-          }
+          for( auto& localFunctionPtr : lfList )
+            arg.initialize( localFunctionPtr );
         }
       };
 
@@ -182,11 +187,11 @@ namespace Dune
     public:
       //! constructer taking instance of EvalImp class
       LocalFunctionAdapter ( const std::string &name,
-                             LocalFunctionImplType &eval,
+                             LocalFunctionImplType &localFunctionImpl,
                              const GridPartType &gridPart,
                              unsigned int order = DiscreteFunctionSpaceType::polynomialOrder )
       : space_( gridPart, order ),
-        localFunctionImpl_( eval ),
+        localFunctionImpl_( localFunctionImpl ),
         lfList_(),
         argInitializer_( 0 ),
         name_( name )
