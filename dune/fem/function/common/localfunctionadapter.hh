@@ -72,9 +72,31 @@ namespace Dune
      *    template<class PointType>
      *    LocalFunctionImpl::evaluate(const PointType& x,RangeType& val)
      *
-     *  and a method init(...) to set the entity
+     *  and a method init(...)
      *
      *    LocalFunctionImpl::init(const EntityType& entity)
+     *
+     *  to set the entity.
+     *
+     *  It is important to know that the point x it is not necessary of type DomainType.
+     *  More precisely, if the evaluate(...) is used with a caching quadrature point the
+     *  type is different. Indeed floating point coordinates are not very well suited to
+     *  address the cache therefore quadrature[i] return a QuadraturePointWrapper
+     *  (which simply stores a reference to the quadrature and the index i).
+     *
+     *  In order to be sure that the point x is of type DomainType, you can use the function
+     *  coordinate(x) which can be also called with a DomainType.
+     *
+     *  Therefore, the local implementation should be something like
+     *
+     *    template<class PointType>
+     *    LocalFunctionImpl::evaluate(const PointType& x,RangeType& val)
+     *    {
+     *      const DomainType xDomain(coordiante(x));
+     *      // do stuff with xDomain
+     *    }
+     *
+     *  to avoid type conflicts.
      *
      *  Required type in LocalFunctionImpl are:
      *
