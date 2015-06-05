@@ -233,6 +233,12 @@ namespace Dune
         delete argInitializer_ ;
       }
 
+      //! return the order of the space
+      inline unsigned int order() const
+      {
+        return DiscreteFunctionSpaceType::polynomialOrder;
+      }
+
       //! evaluate function on local coordinate local
       void evaluate(const DomainType& global, RangeType& result) const
       {
@@ -427,6 +433,12 @@ namespace Dune
       {
         // remove local function from list
         adapter_.deleteLocalFunction( this );
+      }
+
+      //! return order of the space
+      inline unsigned int order() const
+      {
+        return adapter_.order();
       }
 
       //! evaluate local function
