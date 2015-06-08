@@ -220,7 +220,8 @@ namespace Dune
         localFunctionImpl_( localFunctionImpl ),
         lfList_(),
         argInitializer_( 0 ),
-        name_( name )
+        name_( name ),
+        order_( order )
       {}
 
       // reference to function this local belongs to
@@ -229,7 +230,8 @@ namespace Dune
         localFunctionImpl_( other.localFunctionImpl_ ),
         lfList_(),
         argInitializer_( 0 ),
-        name_( other.name_ )
+        name_( other.name_ ),
+        order_( other.order_ )
       {}
 
       ~LocalFunctionAdapter()
@@ -240,7 +242,7 @@ namespace Dune
       //! return the order of the space
       inline unsigned int order() const
       {
-        return DiscreteFunctionSpaceType::polynomialOrder;
+        return order_;
       }
 
       //! evaluate function on local coordinate local
@@ -358,6 +360,7 @@ namespace Dune
       mutable LocalFunctionListType lfList_;
       const ArgumentIF* argInitializer_ ;
       const std::string name_;
+      const unsigned int order_;
     };
 
 
