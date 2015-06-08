@@ -15,10 +15,7 @@
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
-#include <dune/fem/space/lagrange.hh>
 #include <dune/fem/space/common/interpolate.hh>
-
-#define USE_DISCONTINUOS_SPACE 1
 
 int main ( int argc, char **argv )
 {
@@ -43,11 +40,7 @@ int main ( int argc, char **argv )
   typedef typename FunctionSpaceType::RangeType RangeType;
 
   // create discrete function space
-  #if USE_DISCONTINUOS_SPACE
   typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
-  #else
-  typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
-  #endif
   DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
   typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
 
@@ -73,7 +66,7 @@ int main ( int argc, char **argv )
         return ret;
       });
   typedef Dune::Fem::LocalFunctionAdapter<LocalAnalyticalFunctionType> LocalAdaptedFunctionType;
-  LocalAdaptedFunctionType localAdapted("local adapted function",localAnalyticalFunction,gridPart);
+  LocalAdaptedFunctionType localAdapted("local adapted function",localAnalyticalFunction,gridPart,5);
 
   // interpolate local adpated function over discrete function
   Dune::Fem::interpolate(localAdapted,dfLocalAdapted);
