@@ -108,8 +108,8 @@ namespace Dune
      *
      *  An instance of the LocalFunctionImpl class is passed to the constructor.
      *
-     *  In order to pass to adapt a lamda or a plain c++ function, simple use
-     *  the LocalAnalyticalFunctionBinder which already provides all the necessary
+     *  In order to adapt a lambda or a plain C++ function, you can directly use
+     *  the LocalAnalyticalFunctionBinder which provides all the necessary
      *  types and methods.
      */
     template< class LocalFunctionImpl >
