@@ -16,7 +16,7 @@ AM_CPPFLAGS = $(ALL_PKG_CPPFLAGS) -DPOLORDER=$(POLORDER) -DDIMRANGE=$(DIMRANGE) 
 
 ADAPTPROG = adapt adapt_combinedspace_pointbased adapt_combinedspace_variablebased hierarchicspace lagrangeadapt functiontupleadapt padapt
 
-# programs run during make check 
+# programs run during make check
 TESTS = $(ADAPTPROG) dgcomm-4.sh dgcomm-cached-4.sh
 
 check_PROGRAMS = $(ADAPTPROG) \
@@ -32,7 +32,8 @@ check_PROGRAMS = $(ADAPTPROG) \
 		 l2projection \
 		 lagrangeglobalrefine \
 		 lagrangeinterpolation \
-		 legendretest
+		 legendretest \
+		 localadapter
 
 EXTRA_DIST = systemmatrix.cc dgcomm-4.sh dgcomm-cached-4.sh parameter *.dgf
 
@@ -49,11 +50,12 @@ lagrangeadapt_SOURCES = lagrangeadapt.cc
 functiontupleadapt_SOURCES = functiontupleadapt.cc
 lagrangeglobalrefine_SOURCES = lagrangeglobalrefine.cc
 legendretest_SOURCES = legendretest.cc
+localadapter_SOURCES = localadapter.cc
 arraytest_SOURCES = arraytest.cc
 dgcomm_SOURCES = dgcomm.cc
 dgcomm_cached_SOURCES = dgcomm.cc
 dgcomm_CPPFLAGS = $(AM_CPPFLAGS) -UGRIDDIM -DGRIDDIM=3 -UWORLDDIM -DWORLDDIM=3 -DWANT_CACHED_COMM_MANAGER=0
-dgcomm_cached_CPPFLAGS = $(AM_CPPFLAGS) -UGRIDDIM -DGRIDDIM=3 -UWORLDDIM -DWORLDDIM=3 
+dgcomm_cached_CPPFLAGS = $(AM_CPPFLAGS) -UGRIDDIM -DGRIDDIM=3 -UWORLDDIM -DWORLDDIM=3
 adapt_combinedspace_pointbased_CPPFLAGS = $(AM_CPPFLAGS) -DUSE_COMBINED_SPACE -DPOINTBASED
 adapt_combinedspace_variablebased_CPPFLAGS = $(AM_CPPFLAGS) -DUSE_COMBINED_SPACE
 

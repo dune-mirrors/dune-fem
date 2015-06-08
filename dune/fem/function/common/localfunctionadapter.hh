@@ -2,7 +2,7 @@
 #define DUNE_FEM_LOCALFUNCTIONADAPTER_HH
 
 #include <set>
-
+#include <functional>
 #include <dune/fem/function/common/discretefunction.hh>
 
 namespace Dune
@@ -107,6 +107,10 @@ namespace Dune
      *  RangeType
      *
      *  An instance of the LocalFunctionImpl class is passed to the constructor.
+     *
+     *  In order to pass to adapt a lamda or a plain c++ function, simple use
+     *  the LocalAnalyticalFunctionBinder which already provides all the necessary
+     *  types and methods.
      */
     template< class LocalFunctionImpl >
     class LocalFunctionAdapter
@@ -357,6 +361,7 @@ namespace Dune
     };
 
 
+
     template< class LocalFunctionImpl >
     class LocalFunctionAdapterLocalFunction
     {
@@ -381,7 +386,6 @@ namespace Dune
       typedef typename Traits::JacobianRangeType JacobianRangeType;
       //! hessian type
       typedef typename Traits::HessianRangeType HessianRangeType;
-
 
       typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
       typedef typename Traits::EntityType EntityType;
@@ -504,6 +508,107 @@ namespace Dune
       const DiscreteFunctionType &adapter_;
       typedef typename LocalFuncType< 0, Traits::localFunctionHasInitialize >::Type LocalFuncStorageType;
       LocalFuncStorageType localFunctionImpl_;
+    };
+
+
+
+    /** \brief LocalAnalyticalFunctionBinder binds a C++ local analytical function (and also its Jacobian
+     *  and Hessian) to an object which provides all the methods and types needed by the LocalFunctionAdapter.
+     *
+     *  Therefore, in order to transform the function
+     *
+     *    RangeType f(const DomainType& x,const double& t,const EntityType& entity)
+     *    {
+     *      // do stuff
+     *    }
+     *
+     *  into a grid function, it is sufficient to pass it to the LocalAnalyticalFucntionBinder
+     *
+     *    typedef LocalAnalyticalFunctionBinder<DiscreteFunctionSpaceType> LocalAnalyticalFunctionType;
+     *    LocalAnalyticalFunctionType localAnalyticalFunction(f);
+     *
+     *  and create the LocalFunctionAdapter
+     *
+     *    typedef LocalFunctionAdapter<LocalAnalyticalFunctionType> AdaptedFunctionType;
+     *    AdaptedFunctionType fAdapted("adapted function",localAnalyticalFunction,gridPart);
+     */
+    template<class DiscreteFunctionSpaceImpl,class AnalyticalFunctionImpl=std::function<
+      typename DiscreteFunctionSpaceImpl::FunctionSpaceType::RangeType(
+      const typename DiscreteFunctionSpaceImpl::FunctionSpaceType::DomainType&,
+      const double&,const typename DiscreteFunctionSpaceImpl::EntityType&)> >
+    class LocalAnalyticalFunctionBinder
+    {
+    public:
+      typedef DiscreteFunctionSpaceImpl DiscreteFunctionSpaceType;
+      typedef AnalyticalFunctionImpl AnalyticalFunctionType;
+      typedef LocalAnalyticalFunctionBinder<DiscreteFunctionSpaceType,AnalyticalFunctionType> ThisType;
+
+      typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
+      typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+      typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
+
+      typedef typename FunctionSpaceType::DomainType DomainType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+
+      //! constructor (without jacobian and without hessian)
+      LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f):
+        f_(&f),j_(nullptr),h_(nullptr),t_(0.0)
+      {}
+
+      //! constructor
+      LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f,const AnalyticalFunctionType& j,
+                                    const AnalyticalFunctionType& h):
+        f_(&f),j_(&j),h_(&h),t_(0.0)
+      {}
+
+      //! evaluate local function
+      template<class PointType>
+      inline void evaluate(const PointType& x,RangeType& ret) const
+      {
+        ret=(*f_)(entity().geometry().global(coordinate(x)),t_,entity());
+      }
+
+      //! evaluate jacobian local function
+      template<class PointType>
+      inline void jacobian(const PointType &x,JacobianRangeType &ret) const
+      {
+        ret=(*j_)(entity().geometry().global(coordinate(x)),t_,entity());
+      }
+
+      //! evaluate hessian local function
+      template<class PointType>
+      inline void hessian(const PointType &x,HessianRangeType &ret ) const
+      {
+        ret=(*h_)(entity().geometry().global(coordinate(x)),t_,entity());
+      }
+
+      //! initialize to new entity
+      inline void init(const EntityType& entity)
+      {
+        entity_=&entity;
+      }
+
+      //! set time
+      template<typename... Args>
+      inline void initialize(const Args&... ,const double& time)
+      {
+        t_=time;
+      }
+
+      //! get entity
+      inline const EntityType& entity() const
+      {
+        return *entity_;
+      }
+
+    private:
+      EntityType const* entity_;
+      AnalyticalFunctionType const * f_;
+      AnalyticalFunctionType const * j_;
+      AnalyticalFunctionType const * h_;
+      double t_;
     };
 
   } // namespace Fem
