@@ -560,6 +560,11 @@ namespace Dune
         f_(&f),j_(nullptr),h_(nullptr),t_(0.0)
       {}
 
+      //! constructor (without hessian)
+      LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f, const AnalyticalFunctionType &j):
+        f_(&f),j_(&j),h_(nullptr),t_(0.0)
+      {}
+
       //! constructor
       LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f,const AnalyticalFunctionType& j,
                                     const AnalyticalFunctionType& h):
@@ -570,6 +575,7 @@ namespace Dune
       template<class PointType>
       inline void evaluate(const PointType& x,RangeType& ret) const
       {
+        assert( f_ );
         ret=(*f_)(entity().geometry().global(coordinate(x)),t_,entity());
       }
 
@@ -577,6 +583,7 @@ namespace Dune
       template<class PointType>
       inline void jacobian(const PointType &x,JacobianRangeType &ret) const
       {
+        assert( j_ );
         ret=(*j_)(entity().geometry().global(coordinate(x)),t_,entity());
       }
 
@@ -584,6 +591,7 @@ namespace Dune
       template<class PointType>
       inline void hessian(const PointType &x,HessianRangeType &ret ) const
       {
+        assert( h_ );
         ret=(*h_)(entity().geometry().global(coordinate(x)),t_,entity());
       }
 
@@ -603,6 +611,7 @@ namespace Dune
       //! get entity
       inline const EntityType& entity() const
       {
+        assert( entity_ );
         return *entity_;
       }
 
