@@ -23,43 +23,34 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
 
+#include <dune/fem/function/blockvectorfunction/declaration.hh>
+
 namespace Dune
 {
 
   namespace Fem
   {
-    //**********************************************************************
-    //! @ingroup BlockVectorDFunction
-    //  --ISTLBlockVectorDiscreteFunction
-    //
-    //! this is one special implementation of a discrete function using an
-    //! array for storing the dofs.
-    //!
-    //**********************************************************************
-    template <class DiscreteFunctionSpace>
-    class ISTLBlockVectorDiscreteFunction;
-
     /** \class DiscreteFunctionTraits
      *  \brief Traits class for a DiscreteFunction
      *
      *  \tparam  DiscreteFunctionSpace   space the discrete function lives in
      *  \tparam  DofVector             implementation class of the block vector
      */
-    template< typename DiscreteFunctionSpace >
-    struct DiscreteFunctionTraits< ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace > >
-      : public DefaultDiscreteFunctionTraits< DiscreteFunctionSpace,
-            ISTLBlockVector< Dune::FieldVector< typename DiscreteFunctionSpace::RangeFieldType, DiscreteFunctionSpace::localBlockSize > > >
+    template< class DiscreteFunctionSpace,
+              class Block >
+    struct DiscreteFunctionTraits< ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace, Block > >
+      : public DefaultDiscreteFunctionTraits< DiscreteFunctionSpace, ISTLBlockVector< Block > >
     {
-      typedef ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace >  DiscreteFunctionType;
+      typedef ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace, Block >  DiscreteFunctionType;
       typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
     };
 
 
-    template <class DiscreteFunctionSpace>
+    template < class DiscreteFunctionSpace, class Block >
     class ISTLBlockVectorDiscreteFunction
-    : public DiscreteFunctionDefault< ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace > >
+    : public DiscreteFunctionDefault< ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace, Block > >
     {
-      typedef ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace > ThisType;
+      typedef ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace, Block > ThisType;
       typedef DiscreteFunctionDefault< ThisType > BaseType;
 
     public:

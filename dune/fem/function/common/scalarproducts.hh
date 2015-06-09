@@ -28,16 +28,13 @@
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/common/commindexmap.hh>
 
+#include <dune/fem/function/blockvectorfunction/declaration.hh>
+
 namespace Dune
 {
 
   namespace Fem
   {
-
-#if HAVE_DUNE_ISTL
-    template< class DiscreteFunctionSpaceImp >
-    class ISTLBlockVectorDiscreteFunction;
-#endif
 
   /** @addtogroup Communication Communication
       @{
