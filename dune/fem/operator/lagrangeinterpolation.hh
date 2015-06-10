@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_LAGRANGEINTERPOLATION_HH
 #define DUNE_FEM_LAGRANGEINTERPOLATION_HH
 
+#include <type_traits>
+
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/function/common/gridfunctionadapter.hh>
@@ -80,7 +82,7 @@ namespace Dune
       static void interpolateFunction ( const Function &function, DiscreteFunctionType &discreteFunction )
       {
         const bool hasLocalFunction = Conversion< Function, HasLocalFunction >::exists;
-        interpolateFunction( function, discreteFunction, integral_constant< bool, hasLocalFunction >() );
+        interpolateFunction( function, discreteFunction, std::integral_constant< bool, hasLocalFunction >() );
       }
 
       //! \copydoc interpolateFunction
@@ -91,12 +93,12 @@ namespace Dune
       }
 
     private:
-      static void interpolateFunction ( const Function &function, DiscreteFunctionType &discreteFunction, integral_constant< bool, true > )
+      static void interpolateFunction ( const Function &function, DiscreteFunctionType &discreteFunction, std::integral_constant< bool, true > )
       {
         interpolateDiscreteFunction( function, discreteFunction );
       }
 
-      static void interpolateFunction ( const Function &function, DiscreteFunctionType &discreteFunction, integral_constant< bool, false > )
+      static void interpolateFunction ( const Function &function, DiscreteFunctionType &discreteFunction, std::integral_constant< bool, false > )
       {
         typedef GridFunctionAdapter< Function, GridPartType > GridFunctionType;
 

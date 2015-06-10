@@ -3,6 +3,7 @@
 #define DUNE_FEM_PETSCDOFBLOCK_HH
 
 #include <algorithm>
+#include <memory>
 
 #include <dune/fem/storage/envelope.hh>
 
@@ -274,7 +275,7 @@ namespace Dune
       typedef std::iterator< std::input_iterator_tag, PetscScalar > BaseType;
 
       // TODO: get rid of this! we don't like shared pointers. Own a real instance instead!
-      typedef Dune::shared_ptr< DofBlockType > DofBlockSharedPointer;
+      typedef std::shared_ptr< DofBlockType > DofBlockSharedPointer;
 
     public:
       typedef PVector PetscVectorType;

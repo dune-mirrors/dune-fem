@@ -33,15 +33,15 @@ namespace Dune
     template< class ... Mapper >
     struct TupleMapperTraits
     {
-      typedef Dune::tuple< Mapper ... > MapperTupleType;
+      typedef std::tuple< Mapper ... > MapperTupleType;
 
       // we still need entities of codimension 0 here
       static_assert( Std::are_all_same< typename Mapper::ElementType ... >::value,
                      "TupleMapper needs common ElementType" );
-      typedef typename Dune::tuple_element< 0, MapperTupleType >::type::ElementType ElementType;
+      typedef typename std::tuple_element< 0, MapperTupleType >::type::ElementType ElementType;
 
       // type of Size's
-      typedef typename Dune::tuple_element< 0, MapperTupleType >::type::SizeType SizeType;
+      typedef typename std::tuple_element< 0, MapperTupleType >::type::SizeType SizeType;
 
       // type of dofmanager
       typedef TupleMapper< Mapper ... > DofMapperType;

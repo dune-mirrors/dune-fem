@@ -15,11 +15,11 @@ namespace
 
   template< class Tuple,
             template< class > class Predicate,
-            int N = Dune::tuple_size< Tuple >::value
+            int N = std::tuple_size< Tuple >::value
           >
   struct CheckAllElements
   {
-    static const bool value = ( Predicate< typename Dune::tuple_element< N-1, Tuple >::type >::value
+    static const bool value = ( Predicate< typename std::tuple_element< N-1, Tuple >::type >::value
                                 && CheckAllElements< Tuple, Predicate, (N-1) >::value );
   };
 
@@ -46,7 +46,7 @@ namespace Dune
    */
   template< class T,
             int size,
-            class Seed = Dune::tuple<>,
+            class Seed = std::tuple<>,
             int index = 0
           >
   struct SingleTypeTuple
@@ -116,7 +116,7 @@ namespace Dune
 
     typedef typename Dune::conditional< isPointerTuple,
                                         typename Dune::ForEachType< PointeeTypeEvaluator, Tuple >::Type,
-                                        EmptyTuple< Dune::tuple_size< Tuple >::value >
+                                        EmptyTuple< std::tuple_size< Tuple >::value >
                                       >::type PointeeTupleType;
 
     static const bool isReferenceTuple = CheckAllElements< Tuple, IsReference >::value;
@@ -279,15 +279,15 @@ namespace Dune
    * \brief Dereference pointer tuple.
    */
   template< class Tuple,
-            class Seed = Dune::tuple<>,
+            class Seed = std::tuple<>,
             int index = 0,
-            int size = Dune::tuple_size< Tuple >::value
+            int size = std::tuple_size< Tuple >::value
           >
   class DereferenceTuple
   {
     template< class, class, int, int > friend class DereferenceTuple;
 
-    typedef typename Dune::TypeTraits< typename Dune::tuple_element< index, Tuple >::type >::PointeeType & AppendType;
+    typedef typename Dune::TypeTraits< typename std::tuple_element< index, Tuple >::type >::PointeeType & AppendType;
     typedef typename Dune::PushBackTuple< Seed, AppendType >::type AccumulatedType;
 
     typedef DereferenceTuple< Tuple, AccumulatedType, (index+1), size > NextType;
@@ -306,7 +306,7 @@ namespace Dune
   private:
     static Type append ( Tuple &tuple, Seed &seed )
     {
-      typename Dune::tuple_element< index, Tuple >::type pointer = Dune::get< index >( tuple );
+      typename std::tuple_element< index, Tuple >::type pointer = std::get< index >( tuple );
       AppendType append = *pointer;
       AccumulatedType next = Dune::tuple_push_back< AppendType >( seed, append );
       return NextType::append( tuple, next );
@@ -326,7 +326,7 @@ namespace Dune
         typename Dune::TupleTypeTraits< Tuple >::PointeeTupleType
       >::Type Type;
 
-    static_assert( (Dune::is_same< Seed, Type >::value), "Failed to dereference pointer tuple." );
+    static_assert( (std::is_same< Seed, Type >::value), "Failed to dereference pointer tuple." );
 
     static Type apply ( Tuple & )
     {

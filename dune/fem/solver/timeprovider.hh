@@ -75,14 +75,14 @@ namespace Dune
 
       void backup() const
       {
-        Dune::tuple<const double&,const int&,const double&,const bool&,const double&>
+        std::tuple<const double&,const int&,const double&,const bool&,const double&>
           values(time_,timeStep_,dt_,valid_,dtEstimate_);
         PersistenceManager::backupValue("timeprovider",values);
       }
 
       void restore()
       {
-        Dune::tuple<double&,int&,double&,bool&,double&>
+        std::tuple<double&,int&,double&,bool&,double&>
           values(time_,timeStep_,dt_,valid_,dtEstimate_);
         PersistenceManager::restoreValue("timeprovider",values);
         dtEstimateValid_ = true;

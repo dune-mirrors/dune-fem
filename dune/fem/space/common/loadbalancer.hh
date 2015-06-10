@@ -235,14 +235,14 @@ namespace Dune
       //! backup internal data
       void backup() const
       {
-        Dune::tuple<const int& > value( balanceCounter_ );
+        std::tuple<const int& > value( balanceCounter_ );
         PersistenceManager::backupValue("loadbalancer",value);
       }
 
       //! retore internal data
       void restore()
       {
-        Dune::tuple< int& > value( balanceCounter_ );
+        std::tuple< int& > value( balanceCounter_ );
         PersistenceManager::restoreValue("loadbalancer",value);
       }
 

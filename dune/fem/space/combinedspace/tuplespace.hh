@@ -39,7 +39,7 @@ namespace Dune
                      "You should provide at least one space to the TupleDiscreteFunctionSpace" );
 
       // we need to store pointer to the spaces in the SpaceTuple, since space can not be copied.
-      typedef Dune::tuple< DiscreteFunctionSpaces * ... > DiscreteFunctionSpaceTupleType;
+      typedef std::tuple< DiscreteFunctionSpaces * ... > DiscreteFunctionSpaceTupleType;
 
     protected:
       // helper struct to create and delete each entry in the tuple
@@ -49,7 +49,7 @@ namespace Dune
         template< class Tuple, class ... Args >
         static void apply ( Tuple &tuple, Args && ... args )
         {
-          typedef typename std::remove_pointer< typename Dune::tuple_element< i, Tuple >::type >::type Element;
+          typedef typename std::remove_pointer< typename std::tuple_element< i, Tuple >::type >::type Element;
           std::get< i >( tuple ) = new Element( std::forward< Args >( args ) ... );
         }
       };
@@ -68,7 +68,7 @@ namespace Dune
       struct SubDiscreteFunctionSpace
       {
         // type of i-th sub space
-        typedef typename std::remove_pointer< typename Dune::tuple_element< i, DiscreteFunctionSpaceTupleType >::type >::type Type;
+        typedef typename std::remove_pointer< typename std::tuple_element< i, DiscreteFunctionSpaceTupleType >::type >::type Type;
 
         // type of i-th sub BlockMapper
         typedef typename Type::BlockMapperType BlockMapperType;
@@ -251,16 +251,16 @@ namespace Dune
       ThisType &operator= ( const ThisType & ) = delete;
 
       //! return tuple of const References to the contained sub spaces
-      Dune::tuple< const DiscreteFunctionSpaces & ... > spaceTuple () const
+      std::tuple< const DiscreteFunctionSpaces & ... > spaceTuple () const
       {
         return spaceTuple( Std::index_sequence_for< DiscreteFunctionSpaces ... >() );
       }
 
     protected:
       template< std::size_t ... i >
-      Dune::tuple< const DiscreteFunctionSpaces & ... > spaceTuple ( Std::index_sequence< i ... > ) const
+      std::tuple< const DiscreteFunctionSpaces & ... > spaceTuple ( Std::index_sequence< i ... > ) const
       {
-        return Dune::tuple< const DiscreteFunctionSpaces & ... >( BaseType::template subDiscreteFunctionSpace< i >() ... );
+        return std::tuple< const DiscreteFunctionSpaces & ... >( BaseType::template subDiscreteFunctionSpace< i >() ... );
       }
     };
 

@@ -43,9 +43,9 @@ namespace Dune
 
     private:
       // static tests
-      static_assert( ( is_same< typename IntersectionType::ctype,
-                                 typename GridPartType::ctype
-                               >::value
+      static_assert( ( std::is_same< typename IntersectionType::ctype,
+                                     typename GridPartType::ctype
+                                   >::value
                       ), "Conflicting types for Intersection" );
 
       static_assert( ( static_cast< int>( IntersectionType::dimension )

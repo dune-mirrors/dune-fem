@@ -3,6 +3,8 @@
 
 #if HAVE_DUNE_LOCALFUNCTIONS
 
+#include <type_traits>
+
 #include <dune/geometry/referenceelements.hh>
 
 #include <dune/grid/common/indexidset.hh>
@@ -600,8 +602,8 @@ namespace Dune
       typedef typename DofMapperType::EntityType EntityType;
       typedef typename DofMapperType::IndexSetType IndexSetType;
 
-      typedef integral_constant<int, 0 > Begin;
-      typedef integral_constant<int, 1 > End;
+      typedef std::integral_constant<int, 0 > Begin;
+      typedef std::integral_constant<int, 1 > End;
 
     private:
       typedef typename DofMapperType::SubEntityInfo SubEntityInfo;

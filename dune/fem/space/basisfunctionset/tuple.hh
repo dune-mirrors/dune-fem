@@ -47,7 +47,7 @@ namespace Dune
       struct Indices
       {
         template< int j >
-        static constexpr int size () { return Dune::tuple_element< j, Dune::tuple< std::integral_constant< int, i > ... > >::type::value; }
+        static constexpr int size () { return std::tuple_element< j, std::tuple< std::integral_constant< int, i > ... > >::type::value; }
 
         template< int ... j >
         static constexpr Std::integer_sequence< int, size< j >() ... > sizes ( Std::integer_sequence< int, j ... > )
@@ -78,12 +78,12 @@ namespace Dune
       typedef Indices< BasisFunctionSets::FunctionSpaceType::dimRange ... > RangeIndices;
 
       //! type of tuple
-      typedef Dune::tuple< BasisFunctionSets ... > BasisFunctionSetTupleType;
+      typedef std::tuple< BasisFunctionSets ... > BasisFunctionSetTupleType;
 
       static_assert( Std::are_all_same< typename BasisFunctionSets::DomainType ... >::value,
           "TupleBasisFunctionSet needs common DomainType" );
       //! get type of first function space, to obtain dimDomain and Field Types
-      typedef typename Dune::tuple_element< 0, BasisFunctionSetTupleType >::type::FunctionSpaceType ContainedFunctionSpaceType;
+      typedef typename std::tuple_element< 0, BasisFunctionSetTupleType >::type::FunctionSpaceType ContainedFunctionSpaceType;
 
       //! number of BasisFunctionsSets in the tuple
       static const int setSize = sizeof ... ( BasisFunctionSets );
@@ -95,22 +95,22 @@ namespace Dune
       // storage for i-th sub basisfunction
       struct Storage
       {
-        typedef Dune::tuple< std::vector< typename BasisFunctionSets::RangeType > ... > RangeStorageTupleType;
-        typedef Dune::tuple< std::vector< typename BasisFunctionSets::JacobianRangeType > ... > JacobianStorageTupleType;
-        typedef Dune::tuple< std::vector< typename BasisFunctionSets::HessianRangeType > ... > HessianStorageTupleType;
+        typedef std::tuple< std::vector< typename BasisFunctionSets::RangeType > ... > RangeStorageTupleType;
+        typedef std::tuple< std::vector< typename BasisFunctionSets::JacobianRangeType > ... > JacobianStorageTupleType;
+        typedef std::tuple< std::vector< typename BasisFunctionSets::HessianRangeType > ... > HessianStorageTupleType;
 
         Storage () {}
 
         template< int i >
-        typename Dune::tuple_element< i, RangeStorageTupleType >::type
+        typename std::tuple_element< i, RangeStorageTupleType >::type
         & rangeStorage() const { return std::get< i >( rangeStorage_ ); }
 
         template< int i >
-        typename Dune::tuple_element< i, JacobianStorageTupleType >::type
+        typename std::tuple_element< i, JacobianStorageTupleType >::type
         & jacobianStorage() const { return std::get< i >( jacobianStorage_ ); }
 
         template< int i >
-        typename Dune::tuple_element< i, HessianStorageTupleType >::type
+        typename std::tuple_element< i, HessianStorageTupleType >::type
         & hessianStorage() const { return std::get< i >( hessianStorage_ ); }
 
       private:
@@ -125,7 +125,7 @@ namespace Dune
       template< int i >
       struct SubBasisFunctionSet
       {
-        typedef typename Dune::tuple_element< i, BasisFunctionSetTupleType >::type type;
+        typedef typename std::tuple_element< i, BasisFunctionSetTupleType >::type type;
       };
 
       //! size of domian space
@@ -156,12 +156,12 @@ namespace Dune
       static_assert( Std::are_all_same< typename BasisFunctionSets::EntityType ... >::value,
           "TupleBasisFunctionSet needs common EntityType" );
       //! type of Entity the basis function set is initialized on
-      typedef typename Dune::tuple_element< 0, BasisFunctionSetTupleType >::type::EntityType EntityType;
+      typedef typename std::tuple_element< 0, BasisFunctionSetTupleType >::type::EntityType EntityType;
 
       static_assert( Std::are_all_same< typename BasisFunctionSets::ReferenceElementType ... >::value,
           "TupleBasisFunctionSet needs ReferenceElementType" );
       //! type of reference element for this BasisFunctionSet
-      typedef typename Dune::tuple_element< 0, BasisFunctionSetTupleType >::type::ReferenceElementType ReferenceElementType;
+      typedef typename std::tuple_element< 0, BasisFunctionSetTupleType >::type::ReferenceElementType ReferenceElementType;
 
       // default constructor, needed by localmatrix
       TupleBasisFunctionSet () {}
@@ -399,7 +399,7 @@ namespace Dune
         std::size_t size = std::get< i >( tuple ).size();
         // get size of this basisFunctionSet
         typedef typename DofVector::value_type DofType;
-        typename Dune::tuple_element< i, BasisFunctionSetTupleType >::type::RangeType thisRange;
+        typename std::tuple_element< i, BasisFunctionSetTupleType >::type::RangeType thisRange;
 
         SubDofVector< const DofVector, const DofType > subDofVector( dofVector, size, offset[ i ] );
         // evaluateAll for this BasisFunctionSet, with View on DofVector
@@ -425,7 +425,7 @@ namespace Dune
         // get size of this basisFunctionSet
         std::size_t size = std::get< i >( tuple ).size();
         typedef typename DofVector::value_type DofType;
-        typename Dune::tuple_element< i, BasisFunctionSetTupleType >::type::JacobianRangeType thisJacobian;
+        typename std::tuple_element< i, BasisFunctionSetTupleType >::type::JacobianRangeType thisJacobian;
 
         SubDofVector< const DofVector, const DofType > subDofVector( dofVector, size, offset[ i ] );
         // jacobianAll for this BasisFunctionSet, with View on DofVector
@@ -451,7 +451,7 @@ namespace Dune
         // get size of this basisFunctionSet
         std::size_t size = std::get< i >( tuple ).size();
         typedef typename DofVector::value_type DofType;
-        typename Dune::tuple_element< i, BasisFunctionSetTupleType >::type::HessianRangeType thisHessian;
+        typename std::tuple_element< i, BasisFunctionSetTupleType >::type::HessianRangeType thisHessian;
 
         SubDofVector< const DofVector, const DofType > subDofVector( dofVector, size, offset[ i ] );
         // hessianAll for this BasisFunctionSet, with View on DofVector
@@ -469,8 +469,8 @@ namespace Dune
     struct TupleBasisFunctionSet< BasisFunctionSets ... >::
     EvaluateAllRanges
     {
-      typedef typename Dune::tuple_element< i, typename Storage::RangeStorageTupleType >::type ThisStorage;
-      static const int thisDimRange = Dune::tuple_element< i, BasisFunctionSetTupleType >::type::FunctionSpaceType::dimRange;
+      typedef typename std::tuple_element< i, typename Storage::RangeStorageTupleType >::type ThisStorage;
+      static const int thisDimRange = std::tuple_element< i, BasisFunctionSetTupleType >::type::FunctionSpaceType::dimRange;
       static const int rangeOffset = RangeIndices::template offset< i >();
 
       template< class Point, class RangeArray, class Tuple >
@@ -501,8 +501,8 @@ namespace Dune
     struct TupleBasisFunctionSet< BasisFunctionSets ... >::
     JacobianAllRanges
     {
-      typedef typename Dune::tuple_element< i, typename Storage::JacobianStorageTupleType >::type ThisStorage;
-      static const int thisDimRange = Dune::tuple_element< i, BasisFunctionSetTupleType >::type::FunctionSpaceType::dimRange;
+      typedef typename std::tuple_element< i, typename Storage::JacobianStorageTupleType >::type ThisStorage;
+      static const int thisDimRange = std::tuple_element< i, BasisFunctionSetTupleType >::type::FunctionSpaceType::dimRange;
       static const int rangeOffset = RangeIndices::template offset< i >();
 
       template< class Point, class RangeArray, class Tuple >
@@ -532,8 +532,8 @@ namespace Dune
     struct TupleBasisFunctionSet< BasisFunctionSets ... >::
     HessianAllRanges
     {
-      typedef typename Dune::tuple_element< i, typename Storage::HessianStorageTupleType >::type ThisStorage;
-      static const int thisDimRange = Dune::tuple_element< i, BasisFunctionSetTupleType >::type::FunctionSpaceType::dimRange;
+      typedef typename std::tuple_element< i, typename Storage::HessianStorageTupleType >::type ThisStorage;
+      static const int thisDimRange = std::tuple_element< i, BasisFunctionSetTupleType >::type::FunctionSpaceType::dimRange;
       static const int rangeOffset = RangeIndices::template offset< i >();
 
       template< class Point, class RangeArray, class Tuple >
@@ -563,8 +563,8 @@ namespace Dune
     struct TupleBasisFunctionSet< BasisFunctionSets ... >::
     Axpy
     {
-      typedef typename Dune::tuple_element< i, BasisFunctionSetTupleType >::type::RangeType ThisRangeType;
-      typedef typename Dune::tuple_element< i, BasisFunctionSetTupleType >::type::JacobianRangeType ThisJacobianRangeType;
+      typedef typename std::tuple_element< i, BasisFunctionSetTupleType >::type::RangeType ThisRangeType;
+      typedef typename std::tuple_element< i, BasisFunctionSetTupleType >::type::JacobianRangeType ThisJacobianRangeType;
 
       static const int rangeOffset = RangeIndices::template offset< i >();
 

@@ -150,13 +150,13 @@ namespace Dune
       typedef DataOutput< GridImp, DataImp > ThisType;
 
     protected:
-      template< class Grid, class OutputTuple, int N = tuple_size< OutputTuple >::value >
+      template< class Grid, class OutputTuple, int N = std::tuple_size< OutputTuple >::value >
       struct GridPartGetter;
 
     template< class Grid, class OutputTuple, int N >
     struct GridPartGetter
     {
-      typedef typename TypeTraits< typename tuple_element< 0, OutputTuple >::type >::PointeeType DFType;
+      typedef typename TypeTraits< typename std::tuple_element< 0, OutputTuple >::type >::PointeeType DFType;
       typedef typename DFType :: DiscreteFunctionSpaceType :: GridPartType GridPartType;
 
       GridPartGetter ( const Grid &, const OutputTuple &data )
@@ -168,7 +168,7 @@ namespace Dune
     protected:
       static const GridPartType &getGridPart( const OutputTuple& data )
       {
-        const DFType *df = Dune::get< 0 >( data );
+        const DFType *df = std::get< 0 >( data );
         assert( df );
         return df->space().gridPart();
       }

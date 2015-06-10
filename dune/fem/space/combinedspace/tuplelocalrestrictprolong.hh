@@ -33,7 +33,7 @@ namespace Dune
     {
       typedef TupleLocalRestrictProlong< DiscreteFunctionSpaces ... > ThisType;
 
-      typedef Dune::tuple< DefaultLocalRestrictProlong< DiscreteFunctionSpaces > ... > LocalRestrictProlongTupleType;
+      typedef std::tuple< DefaultLocalRestrictProlong< DiscreteFunctionSpaces > ... > LocalRestrictProlongTupleType;
 
       static const int setSize = sizeof...( DiscreteFunctionSpaces )-1;
 
@@ -43,10 +43,10 @@ namespace Dune
       template< int > struct ProlongLocal;
 
     public:
-      static_assert( Std::are_all_same< typename DiscreteFunctionSpaces::DomainFieldType ... >::value, 
+      static_assert( Std::are_all_same< typename DiscreteFunctionSpaces::DomainFieldType ... >::value,
           "TupleLocalRestrictProlong needs common DomainFieldType in the Spaces!" );
 
-      typedef typename Dune::tuple_element< 0, LocalRestrictProlongTupleType >::type::DomainFieldType DomainFieldType;
+      typedef typename std::tuple_element< 0, LocalRestrictProlongTupleType >::type::DomainFieldType DomainFieldType;
 
       TupleLocalRestrictProlong ( const DiscreteFunctionSpaces & ...spaces )
         : localRestrictProlongTuple_( spaces ... )
@@ -73,9 +73,9 @@ namespace Dune
         ForLoop< ProlongLocal, 0, setSize >::apply( lfFather, lfSon, geometryInFather, initialize, localRestrictProlongTuple_ );
       }
 
-      bool needCommunication () const 
+      bool needCommunication () const
       {
-        return needCommunication( Std::index_sequence_for< DiscreteFunctionSpaces ... >() ); 
+        return needCommunication( Std::index_sequence_for< DiscreteFunctionSpaces ... >() );
       }
 
     protected:
@@ -115,12 +115,12 @@ namespace Dune
     ProlongLocal
     {
       template< class LFFather, class LFSon, class LocalGeometry, class Tuple >
-      static void apply ( const LFFather &lfFather, LFSon &lfSon, const LocalGeometry &geometryInFather, bool initialize, 
+      static void apply ( const LFFather &lfFather, LFSon &lfSon, const LocalGeometry &geometryInFather, bool initialize,
           const Tuple &tuple )
       {
         typedef DenseSubVector< const typename LFFather::LocalDofVectorType > SubDofVectorTypeFather;
         typedef DenseSubVector< typename LFSon::LocalDofVectorType > SubDofVectorTypeSon;
-        
+
         typedef typename LFFather::BasisFunctionSetType::template SubBasisFunctionSet< i >::type SubFatherBasisFunctionSetType;
         typedef typename LFSon::BasisFunctionSetType::template SubBasisFunctionSet< i >::type SubSonBasisFunctionSetType;
 
@@ -133,9 +133,9 @@ namespace Dune
         SubDofVectorTypeFather fatherSubDofVector( lfFather.localDofVector(), subFatherBasisFunctionSet.size(), fatherBasisSetOffset );
         SubDofVectorTypeSon sonSubDofVector( lfSon.localDofVector(), subSonBasisFunctionSet.size(), sonBasisSetOffset );
 
-        BasicConstLocalFunction< SubFatherBasisFunctionSetType, SubDofVectorTypeFather > 
+        BasicConstLocalFunction< SubFatherBasisFunctionSetType, SubDofVectorTypeFather >
           subLFFather( subFatherBasisFunctionSet, fatherSubDofVector );
-        LocalFunction< SubSonBasisFunctionSetType, SubDofVectorTypeSon > 
+        LocalFunction< SubSonBasisFunctionSetType, SubDofVectorTypeSon >
           subLFSon( subSonBasisFunctionSet, sonSubDofVector );
 
         std::get< i >( tuple ).prolongLocal( subLFFather, subLFSon, geometryInFather, initialize );
@@ -152,12 +152,12 @@ namespace Dune
     RestrictLocal
     {
       template< class LFFather, class LFSon, class LocalGeometry, class Tuple >
-      static void apply ( LFFather &lfFather, const LFSon &lfSon, const LocalGeometry &geometryInFather, bool initialize, 
+      static void apply ( LFFather &lfFather, const LFSon &lfSon, const LocalGeometry &geometryInFather, bool initialize,
           const Tuple &tuple )
       {
         typedef DenseSubVector< typename LFFather::LocalDofVectorType > SubDofVectorTypeFather;
         typedef DenseSubVector< const typename LFSon::LocalDofVectorType > SubDofVectorTypeSon;
-        
+
         typedef typename LFFather::BasisFunctionSetType::template SubBasisFunctionSet< i >::type SubFatherBasisFunctionSetType;
         typedef typename LFSon::BasisFunctionSetType::template SubBasisFunctionSet< i >::type SubSonBasisFunctionSetType;
 

@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <sstream>
 #include <vector>
+#include <tuple>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/tuples.hh>
@@ -66,7 +67,7 @@ namespace Dune
       typename Value< DataTuple >::Type get ( const DataTuple &data ) const
       throw ()
       {
-        return Dune::get< N >( data );
+        return std::get< N >( data );
       }
     };
 

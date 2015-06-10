@@ -28,7 +28,7 @@ namespace Dune
     template< class T >
     struct Value
     {
-      typedef typename Dune::tuple_element< Position< T >::value, Tuple >::type Type;
+      typedef typename std::tuple_element< Position< T >::value, Tuple >::type Type;
     };
 
     explicit TypeIndexedTuple ( const Tuple &tuple = Tuple() )

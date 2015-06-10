@@ -6,6 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <tuple>
 
 #include <dune/common/fvector.hh>
 #include <dune/fem/io/io.hh>
@@ -49,7 +50,7 @@ namespace Dune
       // level, h, size, time, counter, errors,
       // [avgTimeStep, minTimeStep, maxTimeStep],
       // [newton_iterations, ils_iterations, max_newton_iterations, max_ils_iterations]
-      typedef tuple< int, double, double, double, int, std::vector< double >,
+      typedef std::tuple< int, double, double, double, int, std::vector< double >,
                      array< double, 3 >, array< int, 4 > >
         DataTuple;
 
@@ -429,7 +430,7 @@ namespace Dune
     protected:
       double error ( const FemEoc::DataTuple &data ) const
       {
-        return Dune::get< 5 >( data )[ index_ ];
+        return std::get< 5 >( data )[ index_ ];
       }
 
       std::string toString ( const double &error ) const
@@ -459,7 +460,7 @@ namespace Dune
 
       std::string entry ( const DataTuple &data ) const
       {
-        const double h = Dune::get< 1 >( data );
+        const double h = std::get< 1 >( data );
         const double e = BaseType::error( data );
 
         std::string entry = "---";

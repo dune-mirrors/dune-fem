@@ -175,7 +175,7 @@ namespace Dune
           // set sizes of the matrix
           ::Dune::Petsc::MatSetSizes( petscMatrix_, localRows, localCols, PETSC_DETERMINE, PETSC_DETERMINE );
 
-          if (is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value)
+          if (std::is_same< StencilType,SimpleStencil<DomainSpaceType,RangeSpaceType> >::value)
             ::Dune::Petsc::MatSetUp( petscMatrix_, bs, stencil.maxNonZerosEstimate() );
           else
           {

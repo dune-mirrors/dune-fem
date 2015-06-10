@@ -3,6 +3,7 @@
 
 //- system includes
 #include <string>
+#include <tuple>
 
 //- Dune includes
 #include <dune/common/forloop.hh>
@@ -303,7 +304,7 @@ namespace Dune
       {
         GridPart *gridPart = new GridPart( grid );
         DiscreteFunctionSpace *space = new DiscreteFunctionSpace( *gridPart );
-        Dune::get< N >( tuple ) = new DiscreteFunction( "", *space );
+        std::get< N >( tuple ) = new DiscreteFunction( "", *space );
       }
     };
 
@@ -316,7 +317,7 @@ namespace Dune
       template< class StreamTraits >
       static void apply ( InStreamInterface< StreamTraits > &inStream, Tuple &tuple )
       {
-        DiscreteFunction *df = Dune::get< N >( tuple );
+        DiscreteFunction *df = std::get< N >( tuple );
         bool readDF = false ;
         inStream >> readDF ;
         // if discrete function was written, we can read it
@@ -340,7 +341,7 @@ namespace Dune
       template< class StreamTraits >
       static void apply ( OutStreamInterface< StreamTraits > &outStream, const Tuple &tuple )
       {
-        const DiscreteFunction *df = Dune::get< N >( tuple );
+        const DiscreteFunction *df = std::get< N >( tuple );
         const bool writeDF = ( df != 0 );
 
         // write flag whether discrete function was written, for later restore
@@ -366,7 +367,7 @@ namespace Dune
       template< class Disp, class DINFO >
       static void apply ( Disp &disp, const DINFO *&dinf, const double &time, Tuple &tuple )
       {
-        DiscreteFunction *df = Dune::get< pos >( tuple );
+        DiscreteFunction *df = std::get< pos >( tuple );
         if( df )
         {
           assert( dinf->comp );
@@ -378,7 +379,7 @@ namespace Dune
       template< class Disp >
       static void apply ( Disp &disp, Tuple &tuple )
       {
-        DiscreteFunction *df = Dune::get< pos >( tuple );
+        DiscreteFunction *df = std::get< pos >( tuple );
         if( df )
         {
           disp.addData( *df );
@@ -415,7 +416,7 @@ namespace Dune
 
       static void apply ( Tuple &tuple )
       {
-        DiscreteFunction *&df = Dune::get< pos >( tuple );
+        DiscreteFunction *&df = std::get< pos >( tuple );
         if( df )
         {
           const DiscreteFunctionSpace *space = &(df->space());

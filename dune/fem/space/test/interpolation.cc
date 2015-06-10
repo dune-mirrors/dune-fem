@@ -118,7 +118,7 @@ double algorithm ( GridType &grid, const int step )
 
 #if 0
   // prepare output
-  typedef Dune::tuple< const DiscreteFunctionType *, GridExactSolutionType * > IOTupleType;
+  typedef std::tuple< const DiscreteFunctionType *, GridExactSolutionType * > IOTupleType;
   IOTupleType ioTuple( &solution, &gridExactSolution );
 
   // data output

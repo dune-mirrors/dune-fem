@@ -244,7 +244,7 @@ double algorithm ( HGridType &grid, const int step )
   typedef Dune::Fem::GridFunctionAdapter< FunctionType, GridPartType > GridExactSolutionType;
   GridExactSolutionType gridExactSolution("exact solution", f, gridPart, 5 );
   //! input/output tuple and setup datawritter
-  typedef Dune::tuple< const typename SchemeType::DiscreteFunctionType *, GridExactSolutionType * > IOTupleType;
+  typedef std::tuple< const typename SchemeType::DiscreteFunctionType *, GridExactSolutionType * > IOTupleType;
   typedef Dune::Fem::DataOutput< HGridType, IOTupleType > DataOutputType;
   IOTupleType ioTuple( &(scheme.solution()), &gridExactSolution) ; // tuple with pointers
   DataOutputType dataOutput( grid, ioTuple, DataOutputParameters( step ) );

@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <type_traits>
 
 #include <dune/common/forloop.hh>
 
@@ -142,7 +143,7 @@ namespace Dune
         static void apply ( const ThisType &indexSet, const GeometryType &type, IndexType& count )
         {
           if( type.dim() == dimension - codim )
-            count = indexSet.template countElements< codim >( type, integral_constant<bool,true>() );
+            count = indexSet.template countElements< codim >( type, std::integral_constant<bool,true>() );
         }
       };
 
@@ -152,7 +153,7 @@ namespace Dune
         static void apply ( const ThisType &indexSet, const GeometryType &type, IndexType& count )
         {
           if( type.dim() == dimension - codim )
-            count = indexSet.template countElements< codim >( type, integral_constant<bool,false>() );
+            count = indexSet.template countElements< codim >( type, std::integral_constant<bool,false>() );
         }
       };
 
@@ -232,7 +233,7 @@ namespace Dune
           if( ! indexSet.codimAvailable( codim ) ) return ;
 
           if( cd == codim )
-            indexSet.template setupCodimSet< codim >(integral_constant<bool,true>());
+            indexSet.template setupCodimSet< codim >(std::integral_constant<bool,true>());
         }
       };
 
@@ -242,7 +243,7 @@ namespace Dune
         static void apply ( const int cd, const ThisType &indexSet )
         {
           if( cd == codim )
-            indexSet.template setupCodimSet< codim >(integral_constant<bool,false>());
+            indexSet.template setupCodimSet< codim >(std::integral_constant<bool,false>());
         }
       };
 
@@ -557,7 +558,7 @@ namespace Dune
         if( codimAvailable( codim ) )
         {
           if( (codim != 0) && ! codimUsed_[ codim ] )
-            setupCodimSet< codim >(integral_constant<bool,true>());
+            setupCodimSet< codim >(std::integral_constant<bool,true>());
 
           return codimLeafSet( codim ).index( entity );
         }
@@ -731,9 +732,9 @@ namespace Dune
 
       // mark indices that are still used (and give new indices to new elements)
       template< int codim >
-      void setupCodimSet (const integral_constant<bool,true> &hasEntities) const;
+      void setupCodimSet (const std::integral_constant<bool,true> &hasEntities) const;
       template< int codim >
-      void setupCodimSet (const integral_constant<bool,false> &hasEntities) const;
+      void setupCodimSet (const std::integral_constant<bool,false> &hasEntities) const;
 
       // mark indices that are still used (and give new indices to new intersections)
       void setupIntersections () const;
@@ -741,9 +742,9 @@ namespace Dune
       // count elements by iterating over grid and compare
       // entities of given codim with given type
       template< int codim >
-      inline IndexType countElements ( GeometryType type, const integral_constant<bool,true> &hasEntities ) const;
+      inline IndexType countElements ( GeometryType type, const std::integral_constant<bool,true> &hasEntities ) const;
       template< int codim >
-      inline IndexType countElements ( GeometryType type, const integral_constant<bool,false> &hasEntities ) const;
+      inline IndexType countElements ( GeometryType type, const std::integral_constant<bool,false> &hasEntities ) const;
 
     public:
       //! \copydoc Dune::Fem::ConsecutiveIndexSet::write */
@@ -1053,7 +1054,7 @@ namespace Dune
     template< class TraitsImp >
     template< int codim >
     inline void
-    AdaptiveIndexSetBase< TraitsImp >::setupCodimSet (const integral_constant<bool,true>&) const
+    AdaptiveIndexSetBase< TraitsImp >::setupCodimSet (const std::integral_constant<bool,true>&) const
     {
       // if codim is not available do nothing
       if( ! codimAvailable( codim ) ) return ;
@@ -1076,7 +1077,7 @@ namespace Dune
     template< class TraitsImp >
     template< int codim >
     inline void
-    AdaptiveIndexSetBase< TraitsImp >::setupCodimSet (const integral_constant<bool,false>&) const
+    AdaptiveIndexSetBase< TraitsImp >::setupCodimSet (const std::integral_constant<bool,false>&) const
     {
       // if codim is not available do nothing
       if( ! codimAvailable( codim ) ) return ;
@@ -1135,7 +1136,7 @@ namespace Dune
     template< class TraitsImp >
     template< int codim >
     inline typename AdaptiveIndexSetBase< TraitsImp >::IndexType
-    AdaptiveIndexSetBase< TraitsImp >::countElements ( GeometryType type, const integral_constant<bool,true>& ) const
+    AdaptiveIndexSetBase< TraitsImp >::countElements ( GeometryType type, const std::integral_constant<bool,true>& ) const
     {
       typedef typename GridPartType
         ::template Codim< codim > :: template Partition< pitype > :: IteratorType Iterator;
@@ -1156,7 +1157,7 @@ namespace Dune
     template< class TraitsImp >
     template< int codim >
     inline typename AdaptiveIndexSetBase< TraitsImp >::IndexType
-    AdaptiveIndexSetBase< TraitsImp >::countElements ( GeometryType type, const integral_constant<bool,false>& ) const
+    AdaptiveIndexSetBase< TraitsImp >::countElements ( GeometryType type, const std::integral_constant<bool,false>& ) const
     {
       // make sure codimension is enabled
       assert( codimAvailable( codim ) );

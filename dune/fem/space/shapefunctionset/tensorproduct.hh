@@ -4,6 +4,7 @@
 // C++ includes
 #include <algorithm>
 #include <cstddef>
+#include <tuple>
 
 // dune-common includes
 #include <dune/common/array.hh>
@@ -29,7 +30,7 @@ namespace Dune
     {
       typedef TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple > ThisType;
 
-      static_assert( (FunctionSpace::dimDomain == Dune::tuple_size< ShapeFunctionSetTuple >::value),
+      static_assert( (FunctionSpace::dimDomain == std::tuple_size< ShapeFunctionSetTuple >::value),
                      "dimDomain of FunctionSpace must coincide with length of ShapeFunctionSetTuple." );
       static_assert( (FunctionSpace::dimRange == 1),
                      "FunctionSpace must be scalar (i.e., dimRange = 1)." );
@@ -153,7 +154,7 @@ namespace Dune
     {
       static void apply ( const ShapeFunctionSetTuple &tuple, array< std::size_t, FunctionSpace::dimDomain > &size )
       {
-        size[ i ] = Dune::get< i >( tuple ).size();
+        size[ i ] = std::get< i >( tuple ).size();
       }
     };
 
@@ -169,8 +170,8 @@ namespace Dune
       static void apply ( const ShapeFunctionSetTuple &tuple, const DomainType &x, RangeFieldType *&it )
       {
         Dune::FieldVector< DomainFieldType, 1 > xi( x[ i ] );
-        Dune::get< i >( tuple ).evaluateEach( xi, Assign( it ) );
-        it += Dune::get< i >( tuple ).size();
+        std::get< i >( tuple ).evaluateEach( xi, Assign( it ) );
+        it += std::get< i >( tuple ).size();
       }
     };
 
@@ -186,9 +187,9 @@ namespace Dune
       static void apply ( const ShapeFunctionSetTuple &tuple, const DomainType &x, RangeFieldType *&it )
       {
         Dune::FieldVector< DomainFieldType, 1 > xi( x[ i ] );
-        const std::size_t size = Dune::get< i >( tuple ).size();
-        Dune::get< i >( tuple ).evaluateEach( xi, Assign( it ) );
-        Dune::get< i >( tuple ).jacobianEach( xi, Assign( it+size ) );
+        const std::size_t size = std::get< i >( tuple ).size();
+        std::get< i >( tuple ).evaluateEach( xi, Assign( it ) );
+        std::get< i >( tuple ).jacobianEach( xi, Assign( it+size ) );
         it += 2*size;
       }
     };
@@ -205,10 +206,10 @@ namespace Dune
       static void apply ( const ShapeFunctionSetTuple &tuple, const DomainType &x, RangeFieldType *&it )
       {
         Dune::FieldVector< DomainFieldType, 1 > xi( x[ i ] );
-        const std::size_t size = Dune::get< i >( tuple ).size();
-        Dune::get< i >( tuple ).evaluateEach( xi, Assign( it ) );
-        Dune::get< i >( tuple ).jacobianEach( xi, Assign( it+size ) );
-        Dune::get< i >( tuple ).hessianEach( xi, Assign( it+2*size ) );
+        const std::size_t size = std::get< i >( tuple ).size();
+        std::get< i >( tuple ).evaluateEach( xi, Assign( it ) );
+        std::get< i >( tuple ).jacobianEach( xi, Assign( it+size ) );
+        std::get< i >( tuple ).hessianEach( xi, Assign( it+2*size ) );
         it += 3*size;
       }
     };

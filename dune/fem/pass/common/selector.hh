@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_PASS_COMMON_SELECTOR_HH
 #define DUNE_FEM_PASS_COMMON_SELECTOR_HH
 
+#include <type_traits>
+#include <tuple>
+
 #include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
 #include <dune/common/typetraits.hh>
@@ -17,7 +20,7 @@ namespace
    * \brief A helper class that transforms a number of integers to a tuple.
    *        Result type is:
    *  \code
-  Dune::tuple< Dune::integral_constant< int, N1 >, ..., Dune::integral_constant< int, Nk > >
+   *  std::tuple< Dune::integral_constant< int, N1 >, ..., Dune::integral_constant< int, Nk > >
    *  \endcode
    *
    *  \note Terminatory integer values (-1) are cut off from tuple
@@ -31,11 +34,11 @@ namespace
             int N7,
             int N8,
             int N9,
-            class Seed = Dune::tuple<>
+            class Seed = std::tuple<>
           >
   class ElementTuple
   {
-    typedef typename Dune::PushBackTuple< Seed, Dune::integral_constant< int, N1 > >::type AccumulatedType;
+    typedef typename Dune::PushBackTuple< Seed, std::integral_constant< int, N1 > >::type AccumulatedType;
 
   public:
     typedef typename ElementTuple< N2, N3, N4, N5, N6, N7, N8, N9, -1, AccumulatedType >::Type Type;
@@ -80,13 +83,13 @@ namespace Dune
       typedef typename ElementTuple< N1, N2, N3, N4, N5, N6, N7, N8, N9 >::Type Type;
 
       // \brief number of elements in selector
-      static const int size = Dune::tuple_size< Type >::value;
+      static const int size = std::tuple_size< Type >::value;
 
       //! \brief check, whether integer N is contained in selector
       template< int N >
       struct Contains
       {
-        static const bool v = ( Dune::ContainsType< Type, Dune::integral_constant< int, N > >::value );
+        static const bool v = ( Dune::ContainsType< Type, std::integral_constant< int, N > >::value );
       };
 
     private:

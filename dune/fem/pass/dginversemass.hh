@@ -4,6 +4,7 @@
 #include <cassert>
 #include <iosfwd>
 #include <sstream>
+#include <type_traits>
 
 #include <dune/common/typetraits.hh>
 
@@ -33,8 +34,8 @@ namespace Dune
 
     public:
       static const std::size_t functionalPosition
-        = Dune::FirstTypeIndex< PassIds, Dune::integral_constant< int, functionalId > >::type::value;
-      typedef typename Dune::tuple_element< functionalPosition, TotalArgumentType >::type DestinationPtrType;
+        = Dune::FirstTypeIndex< PassIds, std::integral_constant< int, functionalId > >::type::value;
+      typedef typename std::tuple_element< functionalPosition, TotalArgumentType >::type DestinationPtrType;
 
       struct Traits
       {
@@ -151,7 +152,7 @@ namespace Dune
         assert( arg_ );
         assert( dest_ );
         typename DestinationType::LocalFunctionType localDestination = dest_->localFunction( entity );
-        localDestination.assign( Dune::get< functionalPosition >( *arg_ )->localFunction( entity ) );
+        localDestination.assign( std::get< functionalPosition >( *arg_ )->localFunction( entity ) );
         localMassMatrix_.applyInverse( entity, localDestination );
       }
 

@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <map>
+#include <type_traits>
 
 #include <dune/common/math.hh>
 #include <dune/common/version.hh>
@@ -186,7 +187,7 @@ namespace Dune
 
         if( it == mappers_.end() )
         {
-          integral_constant< bool, hasTwists > i2t;
+          std::integral_constant< bool, hasTwists > i2t;
           it = CacheProvider<GridPart, 1>::createMapper( quad, elementGeometry, i2t );
         }
 
@@ -202,10 +203,10 @@ namespace Dune
 
     private:
       static MapperIteratorType
-      createMapper ( const QuadratureType &quad, GeometryType elementGeometry, integral_constant< bool, true > );
+      createMapper ( const QuadratureType &quad, GeometryType elementGeometry, std::integral_constant< bool, true > );
 
       static MapperIteratorType
-      createMapper ( const QuadratureType &quad, GeometryType elementGeometry, integral_constant< bool, false > );
+      createMapper ( const QuadratureType &quad, GeometryType elementGeometry, std::integral_constant< bool, false > );
 
     private:
       static MapperContainerType mappers_;

@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <tuple>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/forloop.hh>
@@ -125,7 +126,7 @@ namespace Dune
       template< int i >
       struct Get
       {
-        typedef typename Dune::tuple_element< i, LocalFunctionTupleType >::type Type;
+        typedef typename std::tuple_element< i, LocalFunctionTupleType >::type Type;
       };
 
       template< class Factory >
@@ -145,7 +146,7 @@ namespace Dune
       /** \brief return entity */
       const EntityType &entity () const
       {
-        return Dune::get< 0 >( localFunctions() ).entity();
+        return std::get< 0 >( localFunctions() ).entity();
       }
 
       /** \brief evaluate local functions
@@ -195,11 +196,11 @@ namespace Dune
 
       //! \brief get i-th tuple element
       template< int i >
-      typename Get< i >::Type &get () { return Dune::get< i >( localFunctions() ); }
+      typename Get< i >::Type &get () { return std::get< i >( localFunctions() ); }
 
       //! \brief get i-th tuple element
       template< int i >
-      const typename Get< i >::Type &get () const { return Dune::get< i >( localFunctions() ); }
+      const typename Get< i >::Type &get () const { return std::get< i >( localFunctions() ); }
 
     protected:
       LocalFunctionTupleType &localFunctions () { return localFunctionTuple_; }
@@ -223,9 +224,9 @@ namespace Dune
       typedef DiscreteFunctionTuple DiscreteFunctionTupleType;
       typedef Entity EntityType;
 
-      typedef Dune::tuple<> RangeTupleType;
-      typedef Dune::tuple<> JacobianRangeTupleType;
-      typedef Dune::tuple<> HessianRangeTupleType;
+      typedef std::tuple<> RangeTupleType;
+      typedef std::tuple<> JacobianRangeTupleType;
+      typedef std::tuple<> HessianRangeTupleType;
 
       template< class Factory >
       LocalFunctionTuple ( Factory factory )
@@ -274,7 +275,7 @@ namespace Dune
       static void apply ( LocalFunctionTupleType &localFunctions,
                           const EntityType &entity )
       {
-        Dune::get< pos >( localFunctions ).init( entity );
+        std::get< pos >( localFunctions ).init( entity );
       }
     };
 
@@ -292,7 +293,7 @@ namespace Dune
                           const Point &x,
                           RangeTupleType &values )
       {
-        Dune::get< pos >( localFunctions ).evaluate( x, Dune::get< pos >( values ) );
+        std::get< pos >( localFunctions ).evaluate( x, std::get< pos >( values ) );
       }
     };
 
@@ -311,7 +312,7 @@ namespace Dune
                           VectorOfTuples &vectorOfTuples )
       {
         TupleToVectorConverter< VectorOfTuples, pos > vector( vectorOfTuples );
-        Dune::get< pos >( localFunctions ).evaluateQuadrature( quadrature, vector );
+        std::get< pos >( localFunctions ).evaluateQuadrature( quadrature, vector );
       }
     };
 
@@ -329,7 +330,7 @@ namespace Dune
                           const Point &x,
                           JacobianRangeTupleType &jacobians )
       {
-        Dune::get< pos >( localFunctions ).jacobian( x, Dune::get< pos >( jacobians ) );
+        std::get< pos >( localFunctions ).jacobian( x, std::get< pos >( jacobians ) );
       }
     };
 
@@ -347,7 +348,7 @@ namespace Dune
                           const Point &x,
                           HessianRangeTupleType &hessians )
       {
-        Dune::get< pos >( localFunctions ).hessian( x, Dune::get< pos >( hessians ) );
+        std::get< pos >( localFunctions ).hessian( x, std::get< pos >( hessians ) );
       }
     };
 

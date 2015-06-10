@@ -12,7 +12,7 @@ namespace Dune
     typename CacheProvider<GridPart, 1>::MapperIteratorType
     CacheProvider<GridPart, 1>::createMapper(const QuadratureType& quad,
                                              GeometryType elementGeometry,
-                                             integral_constant< bool, true > )
+                                             std::integral_constant< bool, true > )
     {
       typedef TwistProvider<ct, dim-codim> TwistProviderType;
       typedef typename TwistProviderType::TwistStorageType TwistStorageType;
@@ -51,7 +51,7 @@ namespace Dune
     typename CacheProvider<GridPart, 1>::MapperIteratorType
     CacheProvider<GridPart, 1>::createMapper(const QuadratureType& quad,
                                              GeometryType elementGeometry,
-                                             integral_constant< bool, false > )
+                                             std::integral_constant< bool, false > )
     {
       const MapperVectorType pointMappers =
         PointProvider<ct, dim, codim>::getMappers(quad, elementGeometry);

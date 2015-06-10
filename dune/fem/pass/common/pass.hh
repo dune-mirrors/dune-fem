@@ -3,6 +3,8 @@
 
 #include <limits>
 #include <string>
+#include <tuple>
+#include <type_traits>
 
 #include <dune/common/deprecated.hh>
 #include <dune/common/timer.hh>
@@ -51,12 +53,12 @@ namespace Dune
       static const int passId = passIdImp;
 
       //! pass ids up to here (tuple of integral constants)
-      typedef Dune::tuple< integral_constant< int, passIdImp > > PassIds;
+      typedef std::tuple< std::integral_constant< int, passIdImp > > PassIds;
 
       //! The argument (and destination) type of the overall operator
       typedef ArgumentImp GlobalArgumentType;
       //! End marker for tuple of return types of the passes
-      typedef Dune::tuple<> NextArgumentType;
+      typedef std::tuple<> NextArgumentType;
 
     public:
       //! empty constructor
@@ -152,7 +154,7 @@ namespace Dune
       static const int passId  = passIdImp;
 
       //! pass ids up to here (tuple of integral constants)
-      typedef typename Dune::PushBackTuple< typename PreviousPassType::PassIds, integral_constant< int, passIdImp > >::type PassIds;
+      typedef typename Dune::PushBackTuple< typename PreviousPassType::PassIds, std::integral_constant< int, passIdImp > >::type PassIds;
 
       //! Type of the discrete function which stores the result of this pass'
       //! computations.

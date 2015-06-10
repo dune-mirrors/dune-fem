@@ -23,13 +23,13 @@ namespace
   template< class Tuple,
             int begin,
             int length,
-            class StartType = Dune::tuple<>
+            class StartType = std::tuple<>
           >
   class CutOutTuple
   {
-    static_assert( (begin+length <= Dune::tuple_size< Tuple >::value),
+    static_assert( (begin+length <= std::tuple_size< Tuple >::value),
                     "Can not cut out tuple of given length" );
-    typedef typename Dune::PushBackTuple< StartType, Dune::tuple_element< begin, Tuple > >::type NextType;
+    typedef typename Dune::PushBackTuple< StartType, std::tuple_element< begin, Tuple > >::type NextType;
 
   public:
     typedef typename CutOutTuple< Tuple, (begin+1), (length-1), NextType >::type type;
@@ -51,15 +51,15 @@ namespace Dune
   // PopFrontTuple
   // -------------
 
-  template< class Tuple, int size = Dune::tuple_size< Tuple >::value >
+  template< class Tuple, int size = std::tuple_size< Tuple >::value >
   struct PopFrontTuple
   {
-    static_assert( (size == Dune::tuple_size< Tuple >::value),
+    static_assert( (size == std::tuple_size< Tuple >::value),
                     "The \"size\" template parameter of PopFrontTuple "
                     "is an implementation detail and should never be "
                     "set explicitly!" );
 
-    typedef typename CutOutTuple< Tuple, 1, (Dune::tuple_size< Tuple >::value - 1) >::type type;
+    typedef typename CutOutTuple< Tuple, 1, (std::tuple_size< Tuple >::value - 1) >::type type;
   };
 
   template< class Tuple >
@@ -73,15 +73,15 @@ namespace Dune
   // PopBackTuple
   // ------------
 
-  template< class Tuple, int size = Dune::tuple_size< Tuple >::value >
+  template< class Tuple, int size = std::tuple_size< Tuple >::value >
   struct PopBackTuple
   {
-    static_assert( (size == Dune::tuple_size< Tuple >::value),
+    static_assert( (size == std::tuple_size< Tuple >::value),
                     "The \"size\" template parameter of PopBackTuple "
                     "is an implementation detail and should never be "
                     "set explicitly!" );
 
-    typedef typename CutOutTuple< Tuple, 0, (Dune::tuple_size< Tuple >::value - 1) >::type type;
+    typedef typename CutOutTuple< Tuple, 0, (std::tuple_size< Tuple >::value - 1) >::type type;
   };
 
   template< class Tuple >
@@ -163,11 +163,11 @@ namespace Dune
    */
   template< class Tuple,
             class Type,
-            int N = Dune::tuple_size< Tuple >::value
+            int N = std::tuple_size< Tuple >::value
           >
   struct ContainsType
   {
-    static const bool value = ( Dune::is_same< typename Dune::tuple_element< N-1, Tuple >::type, Type >::value
+    static const bool value = ( std::is_same< typename std::tuple_element< N-1, Tuple >::type, Type >::value
                                 || ContainsType< Tuple, Type, N-1 >::value );
   };
 
@@ -189,19 +189,19 @@ namespace Dune
    */
   template< class Tuple,
             class SubTuple,
-            class Seed = Dune::tuple<>,
+            class Seed = std::tuple<>,
             int index = 0,
-            int size = Dune::tuple_size< SubTuple >::value
+            int size = std::tuple_size< SubTuple >::value
           >
   class FirstTypeIndexTuple
   {
-    static_assert( (index == Dune::tuple_size< Seed >::value),
+    static_assert( (index == std::tuple_size< Seed >::value),
                     "The \"index\" template parameter of FirstTypeIndexTuple"
                     "is an implementation detail and should never be "
                     "set explicitly!" );
 
     // get element from selector
-    typedef typename Dune::tuple_element< index, SubTuple >::type Element;
+    typedef typename std::tuple_element< index, SubTuple >::type Element;
     // find element in pass id tuple
     typedef typename Dune::FirstTypeIndex< Tuple, Element >::type Position;
     // add value to seed
@@ -232,19 +232,19 @@ namespace Dune
    */
   template< class Tuple,
             class Positions,
-            class Seed = Dune::tuple<>,
+            class Seed = std::tuple<>,
             int index = 0,
-            int size = Dune::tuple_size< Positions >::value
+            int size = std::tuple_size< Positions >::value
           >
   class MakeSubTuple
   {
     template< class, class, class, int, int > friend class MakeSubTuple;
 
     // get pass number for element to append from mapping
-    static const int position = Dune::tuple_element< index, Positions >::type::value;
+    static const int position = std::tuple_element< index, Positions >::type::value;
 
     // add type to seed
-    typedef typename Dune::tuple_element< position, Tuple >::type AppendType;
+    typedef typename std::tuple_element< position, Tuple >::type AppendType;
 
     typedef typename Dune::PushBackTuple< Seed, AppendType >::type AccumulatedType;
 
@@ -349,8 +349,8 @@ namespace Dune
    */
   template< class Tuple,
             class Key,
-            class Seed = Dune::tuple<>,
-            int len = Dune::tuple_size< Tuple >::value
+            class Seed = std::tuple<>,
+            int len = std::tuple_size< Tuple >::value
           >
   struct InstantiateTuple
   {
@@ -369,9 +369,9 @@ namespace Dune
 
     static Tuple append ( const Key &key, Seed &seed )
     {
-      static const int index = Dune::tuple_size< Tuple >::value - len;
+      static const int index = std::tuple_size< Tuple >::value - len;
 
-      typedef typename Dune::tuple_element< index, Tuple >::type AppendType;
+      typedef typename std::tuple_element< index, Tuple >::type AppendType;
       typedef typename Dune::PushBackTuple< Seed, AppendType >::type AccumulatedType;
 
       AccumulatedType next = Dune::tuple_push_back< AppendType >( seed, AppendType( key ) );
