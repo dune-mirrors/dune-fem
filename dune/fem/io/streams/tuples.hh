@@ -93,170 +93,40 @@ namespace Dune
 
 
 
-    // Dune::tuple to InStream
-    // -----------------------
+    // std::tuple to InStream
+    // ----------------------
 
     template< class StreamTraits >
     inline InStreamInterface< StreamTraits > &
-      operator>> ( InStreamInterface< StreamTraits > &in, Dune::tuple<> &tuple )
+      operator>> ( InStreamInterface< StreamTraits > &in, std::tuple<> &tuple )
     {
       return in;
     }
 
-    template< class StreamTraits, class T1 >
+    template< class StreamTraits, class... Args >
     inline InStreamInterface< StreamTraits > &
-      operator>> ( InStreamInterface< StreamTraits > &in, Dune::tuple< T1 > &tuple )
+      operator>> ( InStreamInterface< StreamTraits > &in, std::tuple< Args... > &tuple )
     {
-      typedef Dune::tuple< T1 > Tuple;
-      return TupleToInStream< InStreamInterface< StreamTraits > >::template apply< Tuple >( in, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2 >
-    inline InStreamInterface< StreamTraits > &
-      operator>> ( InStreamInterface< StreamTraits > &in, Dune::tuple< T1, T2 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2 > Tuple;
-      return TupleToInStream< InStreamInterface< StreamTraits > >::template apply< Tuple >( in, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2, class T3 >
-    inline InStreamInterface< StreamTraits > &
-      operator>> ( InStreamInterface< StreamTraits > &in, Dune::tuple< T1, T2, T3 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2, T3 > Tuple;
-      return TupleToInStream< InStreamInterface< StreamTraits > >::template apply< Tuple >( in, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2, class T3, class T4 >
-    inline InStreamInterface< StreamTraits > &
-      operator>> ( InStreamInterface< StreamTraits > &in, Dune::tuple< T1, T2, T3, T4 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2, T3, T4 > Tuple;
-      return TupleToInStream< InStreamInterface< StreamTraits > >::template apply< Tuple >( in, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2, class T3, class T4, class T5 >
-    inline InStreamInterface< StreamTraits > &
-      operator>> ( InStreamInterface< StreamTraits > &in, Dune::tuple< T1, T2, T3, T4, T5 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2, T3, T4, T5 > Tuple;
-      return TupleToInStream< InStreamInterface< StreamTraits > >::template apply< Tuple >( in, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2, class T3, class T4, class T5, class T6 >
-    inline InStreamInterface< StreamTraits > &
-      operator>> ( InStreamInterface< StreamTraits > &in, Dune::tuple< T1, T2, T3, T4, T5, T6 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2, T3, T4, T5, T6 > Tuple;
-      return TupleToInStream< InStreamInterface< StreamTraits > >::template apply< Tuple >( in, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2, class T3, class T4, class T5, class T6, class T7 >
-    inline InStreamInterface< StreamTraits > &
-      operator>> ( InStreamInterface< StreamTraits > &in, Dune::tuple< T1, T2, T3, T4, T5, T6, T7 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2, T3, T4, T5, T6, T7 > Tuple;
-      return TupleToInStream< InStreamInterface< StreamTraits > >::template apply< Tuple >( in, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8 >
-    inline InStreamInterface< StreamTraits > &
-      operator>> ( InStreamInterface< StreamTraits > &in, Dune::tuple< T1, T2, T3, T4, T5, T6, T7, T8 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2, T3, T4, T5, T6, T7, T8 > Tuple;
-      return TupleToInStream< InStreamInterface< StreamTraits > >::template apply< Tuple >( in, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8, class T9 >
-    inline InStreamInterface< StreamTraits > &
-      operator>> ( InStreamInterface< StreamTraits > &in, Dune::tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > Tuple;
-      return TupleToInStream< InStreamInterface< StreamTraits > >::template apply< Tuple >( in, tuple );
+      return TupleToInStream< InStreamInterface< StreamTraits > >::template apply< std::tuple< Args... > >( in, tuple );
     }
 
 
 
-    // Dune::tuple to OutStream
-    // ------------------------
+    // std::tuple to OutStream
+    // -----------------------
 
     template< class StreamTraits >
     inline OutStreamInterface< StreamTraits > &
-      operator<< ( OutStreamInterface< StreamTraits > &out, const Dune::tuple<> &tuple )
+      operator<< ( OutStreamInterface< StreamTraits > &out, const std::tuple<> &tuple )
     {
       return out;
     }
 
-    template< class StreamTraits, class T1 >
+    template< class StreamTraits, class... Args >
     inline OutStreamInterface< StreamTraits > &
-      operator<< ( OutStreamInterface< StreamTraits > &out, const Dune::tuple< T1 > &tuple )
+      operator<< ( OutStreamInterface< StreamTraits > &out, const std::tuple< Args... > &tuple )
     {
-      typedef Dune::tuple< T1 > Tuple;
-      return TupleToOutStream< OutStreamInterface< StreamTraits > >::template apply< Tuple >( out, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2 >
-    inline OutStreamInterface< StreamTraits > &
-      operator<< ( OutStreamInterface< StreamTraits > &out, const Dune::tuple< T1, T2 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2 > Tuple;
-      return TupleToOutStream< OutStreamInterface< StreamTraits > >::template apply< Tuple >( out, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2, class T3 >
-    inline OutStreamInterface< StreamTraits > &
-      operator<< ( OutStreamInterface< StreamTraits > &out, const Dune::tuple< T1, T2, T3 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2, T3 > Tuple;
-      return TupleToOutStream< OutStreamInterface< StreamTraits > >::template apply< Tuple >( out, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2, class T3, class T4 >
-    inline OutStreamInterface< StreamTraits > &
-      operator<< ( OutStreamInterface< StreamTraits > &out, const Dune::tuple< T1, T2, T3, T4 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2, T3, T4 > Tuple;
-      return TupleToOutStream< OutStreamInterface< StreamTraits > >::template apply< Tuple >( out, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2, class T3, class T4, class T5 >
-    inline OutStreamInterface< StreamTraits > &
-      operator<< ( OutStreamInterface< StreamTraits > &out, const Dune::tuple< T1, T2, T3, T4, T5 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2, T3, T4, T5 > Tuple;
-      return TupleToOutStream< OutStreamInterface< StreamTraits > >::template apply< Tuple >( out, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2, class T3, class T4, class T5, class T6 >
-    inline OutStreamInterface< StreamTraits > &
-      operator<< ( OutStreamInterface< StreamTraits > &out, const Dune::tuple< T1, T2, T3, T4, T5, T6 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2, T3, T4, T5, T6 > Tuple;
-      return TupleToOutStream< OutStreamInterface< StreamTraits > >::template apply< Tuple >( out, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2, class T3, class T4, class T5, class T6, class T7 >
-    inline OutStreamInterface< StreamTraits > &
-      operator<< ( OutStreamInterface< StreamTraits > &out, const Dune::tuple< T1, T2, T3, T4, T5, T6, T7 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2, T3, T4, T5, T6, T7 > Tuple;
-      return TupleToOutStream< OutStreamInterface< StreamTraits > >::template apply< Tuple >( out, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8 >
-    inline OutStreamInterface< StreamTraits > &
-      operator<< ( OutStreamInterface< StreamTraits > &out, const Dune::tuple< T1, T2, T3, T4, T5, T6, T7, T8 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2, T3, T4, T5, T6, T7, T8 > Tuple;
-      return TupleToOutStream< OutStreamInterface< StreamTraits > >::template apply< Tuple >( out, tuple );
-    }
-
-    template< class StreamTraits, class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8, class T9 >
-    inline OutStreamInterface< StreamTraits > &
-      operator<< ( OutStreamInterface< StreamTraits > &out, const Dune::tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > &tuple )
-    {
-      typedef Dune::tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > Tuple;
-      return TupleToOutStream< OutStreamInterface< StreamTraits > >::template apply< Tuple >( out, tuple );
+      return TupleToOutStream< OutStreamInterface< StreamTraits > >::template apply< std::tuple < Args... > >( out, tuple );
     }
 
   } // namespace Fem
