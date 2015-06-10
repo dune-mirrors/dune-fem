@@ -3,6 +3,7 @@
 
 #include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
+#include <dune/common/std/utility.hh>
 
 #ifdef HAVE_TR1_TUPLE // #ifdef HAVE_TUPLE
 #define DUNE_OPEN_TUPLE_NAMESPACE namespace std { namespace tr1 {
@@ -93,136 +94,60 @@ namespace Dune
 
   // tuple_push_back
   // ---------------
-  template< class T, typename... Args >
+
+  template< typename T, typename... Args >
   inline std::tuple< Args..., T > tuple_push_back ( const std::tuple< Args... > &tup, T t )
   {
-    return std::tuple_cat( tup, std::tuple<T>(t) );
+    return std::tuple_cat( tup, std::tuple< T > ( t ) );
   }
+
 
 
   // tuple_push_front
   // ----------------
-  template< class T, typename... Args >
+
+  template< typename T, typename... Args >
   inline std::tuple< T, Args... > tuple_push_front ( const std::tuple< Args... > &tup, T t )
   {
-    return std::tuple_cat( std::tuple<T>(t), tup );
+    return std::tuple_cat( std::tuple< T > ( t ), tup );
   }
+
 
 
   // tuple_pop_back
-  // ----------------
+  // --------------
 
-  template< class T1 >
-  inline tuple<> tuple_pop_back ( const tuple< T1 > &t )
+  template< typename Tup, std::size_t... I >
+  inline auto tuple_pop_back_impl ( const Tup &tup, const Std::index_sequence< I... >& ) ->
+    decltype ( std::make_tuple( std::get< I > ( tup )... ) )
   {
-    return tuple<>();
+    return std::make_tuple ( std::get< I > ( tup )... );
   }
 
-  template< class T1, class T2 >
-  inline tuple< T1 > tuple_pop_back ( const tuple< T1, T2 > &t )
+  template< typename T, typename... Args >
+  inline auto tuple_pop_back ( const std::tuple< T, Args... > &tup ) ->
+    decltype ( tuple_pop_back_impl ( tup , Std::make_index_sequence< sizeof...( Args ) > ( ) ) )
   {
-    return tuple< T1 >( get< 0 >( t ) );
-  }
-
-  template< class T1, class T2, class T3 >
-  inline tuple< T1, T2 > tuple_pop_back ( const tuple< T1, T2, T3 > &t )
-  {
-    return tuple< T1, T2 >( get< 0 >( t ), get< 1 >( t ) );
-  }
-
-  template< class T1, class T2, class T3, class T4 >
-  inline tuple< T1, T2, T3 > tuple_pop_back ( const tuple< T1, T2, T3, T4 > &t )
-  {
-    return tuple< T1, T2, T3 >( get< 0 >( t ), get< 1 >( t ), get< 2 >( t ) );
-  }
-
-  template< class T1, class T2, class T3, class T4, class T5 >
-  inline tuple< T1, T2, T3, T4 > tuple_pop_back ( const tuple< T1, T2, T3, T4, T5 > &t )
-  {
-    return tuple< T1, T2, T3, T4 >( get< 0 >( t ), get< 1 >( t ), get< 2 >( t ), get< 3 >( t ) );
-  }
-
-  template< class T1, class T2, class T3, class T4, class T5, class T6 >
-  inline tuple< T1, T2, T3, T4, T5 > tuple_pop_back ( const tuple< T1, T2, T3, T4, T5, T6 > &t )
-  {
-    return tuple< T1, T2, T3, T4, T5 >( get< 0 >( t ), get< 1 >( t ), get< 2 >( t ), get< 3 >( t ), get< 4 >( t ) );
-  }
-
-  template< class T1, class T2, class T3, class T4, class T5, class T6, class T7 >
-  inline tuple< T1, T2, T3, T4, T5, T6 > tuple_pop_back ( const tuple< T1, T2, T3, T4, T5, T6, T7 > &t )
-  {
-    return tuple< T1, T2, T3, T4, T5, T6 >( get< 0 >( t ), get< 1 >( t ), get< 2 >( t ), get< 3 >( t ), get< 4 >( t ), get< 5 >( t ) );
-  }
-
-  template< class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8 >
-  inline tuple< T1, T2, T3, T4, T5, T6, T7 > tuple_pop_back ( const tuple< T1, T2, T3, T4, T5, T6, T7, T8 > &t )
-  {
-    return tuple< T1, T2, T3, T4, T5, T6, T7 >( get< 0 >( t ), get< 1 >( t ), get< 2 >( t ), get< 3 >( t ), get< 4 >( t ), get< 5 >( t ), get< 6 >( t ) );
-  }
-
-  template< class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8, class T9 >
-  inline tuple< T1, T2, T3, T4, T5, T6, T7, T8 > tuple_pop_back ( const tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > &t )
-  {
-    return tuple< T1, T2, T3, T4, T5, T6, T7, T8 >( get< 0 >( t ), get< 1 >( t ), get< 2 >( t ), get< 3 >( t ), get< 4 >( t ), get< 5 >( t ), get< 6 >( t ), get< 7 >( t ) );
+    return tuple_pop_back_impl ( tup , Std::make_index_sequence< sizeof... ( Args ) > ( ) );
   }
 
 
 
   // tuple_pop_front
-  // ----------------
+  // ---------------
 
-  template< class T1 >
-  inline tuple<> tuple_pop_front ( const tuple< T1 > &t )
+  template< typename Tup, std::size_t... I >
+  inline auto tuple_pop_front_impl ( const Tup &tup, const Std::index_sequence< I... >& ) ->
+    decltype ( std::make_tuple( std::get< I > ( tup )... ) )
   {
-    return tuple<>();
+    return std::make_tuple ( std::get< I + 1 > ( tup )... );
   }
 
-  template< class T1, class T2 >
-  inline tuple< T2 > tuple_pop_front ( const tuple< T1, T2 > &t )
+  template< typename T, typename... Args >
+  inline auto tuple_pop_front ( const std::tuple< T, Args... > &tup ) ->
+    decltype ( tuple_pop_front_impl ( tup , Std::make_index_sequence< sizeof...( Args ) > ( ) ) )
   {
-    return tuple< T2 >( get< 1 >( t ) );
-  }
-
-  template< class T1, class T2, class T3 >
-  inline tuple< T2, T3 > tuple_pop_front ( const tuple< T1, T2, T3 > &t )
-  {
-    return tuple< T2, T3 >( get< 1 >( t ), get< 2 >( t ) );
-  }
-
-  template< class T1, class T2, class T3, class T4 >
-  inline tuple< T2, T3, T4 > tuple_pop_front ( const tuple< T1, T2, T3, T4 > &t )
-  {
-    return tuple< T2, T3, T4 >( get< 1 >( t ), get< 2 >( t ), get< 3 >( t ) );
-  }
-
-  template< class T1, class T2, class T3, class T4, class T5 >
-  inline tuple< T2, T3, T4, T5 > tuple_pop_front ( const tuple< T1, T2, T3, T4, T5 > &t )
-  {
-    return tuple< T2, T3, T4, T5 >( get< 1 >( t ), get< 2 >( t ), get< 3 >( t ), get< 4 >( t ) );
-  }
-
-  template< class T1, class T2, class T3, class T4, class T5, class T6 >
-  inline tuple< T2, T3, T4, T5, T6 > tuple_pop_front ( const tuple< T1, T2, T3, T4, T5, T6 > &t )
-  {
-    return tuple< T2, T3, T4, T5, T6 >( get< 1 >( t ), get< 2 >( t ), get< 3 >( t ), get< 4 >( t ), get< 5 >( t ) );
-  }
-
-  template< class T1, class T2, class T3, class T4, class T5, class T6, class T7 >
-  inline tuple< T2, T3, T4, T5, T6, T7 > tuple_pop_front ( const tuple< T1, T2, T3, T4, T5, T6, T7 > &t )
-  {
-    return tuple< T2, T3, T4, T5, T6, T7 >( get< 1 >( t ), get< 2 >( t ), get< 3 >( t ), get< 4 >( t ), get< 5 >( t ), get< 6 >( t ) );
-  }
-
-  template< class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8 >
-  inline tuple< T2, T3, T4, T5, T6, T7, T8 > tuple_pop_front ( const tuple< T1, T2, T3, T4, T5, T6, T7, T8 > &t )
-  {
-    return tuple< T2, T3, T4, T5, T6, T7, T8 >( get< 1 >( t ), get< 2 >( t ), get< 3 >( t ), get< 4 >( t ), get< 5 >( t ), get< 6 >( t ), get< 7 >( t ) );
-  }
-
-  template< class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8, class T9 >
-  inline tuple< T2, T3, T4, T5, T6, T7, T8, T9 > tuple_pop_front ( const tuple< T1, T2, T3, T4, T5, T6, T7, T8, T9 > &t )
-  {
-    return tuple< T2, T3, T4, T5, T6, T7, T8, T9 >( get< 1 >( t ), get< 2 >( t ), get< 3 >( t ), get< 4 >( t ), get< 5 >( t ), get< 6 >( t ), get< 7 >( t ), get< 8 >( t ) );
+    return tuple_pop_front_impl ( tup , Std::make_index_sequence< sizeof... ( Args )  > ( ) );
   }
 
 
