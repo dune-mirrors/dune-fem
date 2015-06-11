@@ -196,7 +196,7 @@ namespace Dune
 
       const PetscDofBlock& operator*= ( const PetscScalar value )
       {
-        for( int i=0; i<blockSize; ++i )
+        for( unsigned int i=0; i<blockSize; ++i )
           (*this)[ i ] *= value ;
         return *this;
       }
