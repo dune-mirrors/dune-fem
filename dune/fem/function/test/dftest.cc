@@ -94,6 +94,8 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
   df *= 2.0;
   df /= 2.0;
 
+  df.axpy( 0.5, other );
+
   df.enableDofCompression();
 
   std::stringstream stream;

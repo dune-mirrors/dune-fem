@@ -106,6 +106,22 @@ namespace Dune
     template< class Impl >
     template< class DFType >
     inline void DiscreteFunctionDefault< Impl >
+      ::axpy ( const RangeFieldType &s, const DiscreteFunctionInterface< DFType > &g )
+    {
+      if( BaseType::size() != g.size() )
+        DUNE_THROW(InvalidStateException,"DiscreteFunctionDefault: sizes do not match in axpy");
+
+      // apply axpy to all dofs from g
+      const DofIteratorType end = BaseType::dend();
+      typename DFType :: ConstDofIteratorType git = g.dbegin();
+      for( DofIteratorType it = BaseType::dbegin(); it != end; ++it, ++git )
+        *it += s * (*git );
+    }
+
+
+    template< class Impl >
+    template< class DFType >
+    inline void DiscreteFunctionDefault< Impl >
       ::assign ( const DiscreteFunctionInterface< DFType > &g )
     {
       if( BaseType::size() != g.size() )
