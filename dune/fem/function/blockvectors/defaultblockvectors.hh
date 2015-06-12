@@ -591,7 +591,6 @@ namespace Fem {
     }
   };
 
-#if HAVE_DUNE_ISTL
   /** \class SimpleBlockVector
   *   \brief This is the reference implementation of a block vector as it is expected
   *      as the second template parameter to Dune::Fem::BlockVectorDiscreteFunction
@@ -605,7 +604,12 @@ namespace Fem {
   {
     ISTLBlockVector ( const ISTLBlockVector& );
     typedef ISTLBlockVector< DofBlock>                            ThisType;
+#if HAVE_DUNE_ISTL
     typedef BlockVector< DofBlock >                               ArrayType;
+#else
+    // fallback in case dune-istl is not present
+    typedef DynamicVector< DofBlock >                             ArrayType;
+#endif
     typedef BlockVectorInterface< ISTLBlockVector< DofBlock >, typename DofBlock :: value_type  >  BaseType;
 
 
@@ -765,7 +769,6 @@ namespace Fem {
     // ISTL BlockVector
     ArrayType* array_;
   };
-#endif // #if HAVE_DUNE_ISTL
 
 } // namespace Fem
 } // namespace Dune

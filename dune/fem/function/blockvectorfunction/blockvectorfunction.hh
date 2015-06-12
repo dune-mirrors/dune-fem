@@ -10,12 +10,6 @@
 #include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
-#if HAVE_DUNE_ISTL
-#include <dune/istl/bvector.hh>
-#else
-#include <dune/fem/space/common/arrays.hh>
-#endif
-
 #include <dune/fem/function/blockvectors/defaultblockvectors.hh>
 
 #include <dune/fem/common/referencevector.hh>

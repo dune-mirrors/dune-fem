@@ -162,13 +162,11 @@ int main(int argc, char ** argv)
     Dune::Fem::BlockVectorDiscreteFunction< DiscreteFunctionSpaceType, BlockVectorType > bdf( "block", space );
     checkFunction( bdf, ref );
 
-#if HAVE_DUNE_ISTL
     Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType > istldf ("istl", space);
     checkFunction( istldf, ref );
 
     checkFunction( adf, istldf );
     checkFunction( vdf, istldf );
-#endif
 
 #if HAVE_PETSC
     Dune::Fem::PetscDiscreteFunction< DiscreteFunctionSpaceType > petscdf ("petsc", space);

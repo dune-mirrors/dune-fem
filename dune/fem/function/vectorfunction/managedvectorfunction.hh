@@ -33,8 +33,6 @@ namespace Dune
         GridType;
 
       typedef typename DiscreteFunctionSpaceType::BlockMapperType BlockMapperType;
-      typedef NonBlockMapper< BlockMapperType,
-                              DiscreteFunctionSpaceType::localBlockSize > NonBlockingMapperType ;
 
     public:
       inline ManagedDiscreteFunction ( const std :: string &name,
