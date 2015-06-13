@@ -5,6 +5,7 @@
 #include <cassert>
 
 #include <dune/common/densevector.hh>
+#include <dune/common/dynvector.hh>
 
 #include <dune/fem/misc/debug.hh> // for DebugCounter
 #include <dune/fem/storage/envelope.hh>
