@@ -81,7 +81,7 @@ namespace Dune
       typedef VectorialBasisFunctionSet< ScalarBasisFunctionSetType, FieldVector< RangeFieldType, N >, VerticalDofAlignment > BasisFunctionSetType;
 
       // type of block mapper
-      typedef PowerMapper< typename DiscreteFunctionSpace::BlockMapperType, N > BlockMapperType;
+      typedef PowerMapper< GridPartType, typename DiscreteFunctionSpace::BlockMapperType, N > BlockMapperType;
 
       // in the most general case we will unroll all local blockings
       enum { localBlockSize = DiscreteFunctionSpace::localBlockSize };
@@ -108,7 +108,7 @@ namespace Dune
       // construct new instance of blockMapper
       static BlockMapperType *getBlockMapper ( const DiscreteFunctionSpaceTupleType &spaceTuple )
       {
-        return new BlockMapperType( spaceTuple->blockMapper() );
+        return new BlockMapperType( spaceTuple->gridPart(), spaceTuple->blockMapper() );
       }
 
       // delete instance of BlockMapper
