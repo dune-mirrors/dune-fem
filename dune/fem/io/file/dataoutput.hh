@@ -107,7 +107,7 @@ namespace Dune
         return Parameter::getValue< int >( "fem.io.savecount", 0 );
       }
 
-      //! save data every savecount calls to write method (fem.io.savecount)
+      //! save data every subsamplingLevel (fem.io.subsamplinglevel)
       virtual int subsamplingLevel() const
       {
         return Parameter::getValue< int >( "fem.io.subsamplinglevel", 1 );
