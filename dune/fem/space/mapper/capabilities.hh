@@ -18,7 +18,7 @@ namespace Dune
        **/
 
       template< class Mapper >
-      struct isAdaptiveDofeMapper
+      struct isAdaptiveDofMapper
       {
         static const bool v = false;
       };
@@ -28,9 +28,9 @@ namespace Dune
       // --------------------
 
       template< class Mapper >
-      struct isAdaptiveDofeMapper< const Mapper >
+      struct isAdaptiveDofMapper< const Mapper >
       {
-        static const bool v = isAdaptiveDofeMapper< Mapper >::v;
+        static const bool v = isAdaptiveDofMapper< Mapper >::v;
       };
 
     } // namespace Capabilities
