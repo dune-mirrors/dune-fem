@@ -1,4 +1,5 @@
 dune_install(
+  capabilities.hh
   code.hh
   codimensionmapper.hh
   compile.hh
