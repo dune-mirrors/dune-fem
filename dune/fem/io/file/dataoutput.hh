@@ -59,19 +59,19 @@ namespace Dune
     : public LocalParameter< DataOutputParameters, DataOutputParameters >
 #endif
     {
-      //! path where the data is stored (path are always relative to fem.commonOutputPath)
+      //! \brief path where the data is stored (path are always relative to fem.commonOutputPath)
       virtual std::string path() const
       {
         return Parameter::getValue< std::string >( "fem.io.path", "./" );
       }
 
-      //! base of file name for data file (fem.io.datafileprefix)
+      //! \brief base of file name for data file (fem.io.datafileprefix)
       virtual std::string prefix () const
       {
         return Parameter::getValue< std::string >( "fem.io.datafileprefix" );
       }
 
-      //! format of output (fem.io.outputformat)
+      //! \brief format of output (fem.io.outputformat)
       virtual int outputformat () const
       {
         static const std::string formatTable[]
@@ -85,7 +85,7 @@ namespace Dune
         return Parameter::getValue< bool >( "fem.io.conforming", false );
       }
 
-      //! use online grape display (fem.io.grapedisplay)
+      //! \brief use online grape display (fem.io.grapedisplay)
       virtual bool grapedisplay () const
       {
 #if USE_GRAPE
@@ -95,25 +95,25 @@ namespace Dune
 #endif
       }
 
-      //! save data every savestep interval (fem.io.savestep)
+      //! \brief save data every savestep interval (fem.io.savestep)
       virtual double savestep () const
       {
         return Parameter::getValue< double >( "fem.io.savestep", 0 );
       }
 
-      //! save data every savecount calls to write method (fem.io.savecount)
+      //! \brief save data every savecount calls to write method (fem.io.savecount)
       virtual int savecount () const
       {
         return Parameter::getValue< int >( "fem.io.savecount", 0 );
       }
 
-      //! save data every subsamplingLevel (fem.io.subsamplinglevel)
+      //! \brief save data every subsamplingLevel (fem.io.subsamplinglevel)
       virtual int subsamplingLevel() const
       {
         return Parameter::getValue< int >( "fem.io.subsamplinglevel", 1 );
       }
 
-      //! number for first data file (no parameter available)
+      //! \brief number for first data file (no parameter available)
       virtual int startcounter () const
       {
         return 0;
@@ -250,10 +250,10 @@ namespace Dune
 
       void consistentSaveStep ( const TimeProviderBase &tp ) const;
 
-      //! destructor
+      //! \brief destructor
       virtual ~DataOutput()
       {
-  delete param_;
+        delete param_;
 
         if( pvd_ )
         {
@@ -265,12 +265,11 @@ namespace Dune
       }
 
     protected:
-      //! initialize data writer
+      //! \brief initialize data writer
       void init ( const DataOutputParameters &parameter );
 
     public:
-      /** \brief returns true if data will be written on next write call
-      */
+      //! \brief returns true if data will be written on next write call
       virtual bool willWrite ( const TimeProviderBase &tp ) const
       {
         // make save step consistent
@@ -282,8 +281,7 @@ namespace Dune
         return param_->willWrite( writeStep || writeCount );
       }
 
-      /** \brief returns true if data will be written on next write call
-      */
+      //! \brief returns true if data will be written on next write call
       virtual bool willWrite () const
       {
         return param_->willWrite( (saveCount_ > 0) && (writeCalls_ % saveCount_ == 0) );
@@ -299,8 +297,7 @@ namespace Dune
         ++writeCalls_;
       }
 
-      /** \brief write given data to disc, evaluates parameter savecount
-      */
+      //! \brief write given data to disc, evaluates parameter savecount
       void write() const
       {
         if( willWrite() )
@@ -341,11 +338,14 @@ namespace Dune
         writeData( sequenceStamp, "" );
       }
 
-      //! print class name
+      //! \brief print class name
       virtual const char* myClassName () const { return "DataOutput"; }
 
-      /** Return output path name */
+      //! \brief return output path name
       const std::string &path () const { return path_; }
+
+      //! \brief return write step
+      int writeStep() const { return writeStep_; }
 
     protected:
 #if USE_VTKWRITER
@@ -354,13 +354,13 @@ namespace Dune
 
       std::string writeGnuPlotOutput () const;
 
-      //! write binary data
+      //! \brief write binary data
       virtual void writeBinaryData ( const double ) const
       {
         DUNE_THROW(NotImplemented, "Format 'binary' not supported by DataOutput, use DataWriter instead." );
       }
 
-      //! display data with grape
+      //! \brief display data with grape
       virtual void display () const
       {
         if( grapeDisplay_ )
@@ -368,7 +368,7 @@ namespace Dune
       }
 
     protected:
-      //! display data with grape
+      //! \brief display data with grape
       template< class OutputTupleType >
       void grapeDisplay ( OutputTupleType &data ) const;
 
