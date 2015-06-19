@@ -367,6 +367,23 @@ namespace Dune
       }
     };
 
+
+    // Capabilities
+    // ------------
+
+    namespace Capabilities
+    {
+      // isAdaptiveDofMapper
+      // -------------------
+
+      template< class GridPart, int codim >
+      struct isAdaptiveDofMapper< CodimensionMapper< GridPart, codim > >
+      {
+        static const bool v = Capabilities::isAdaptiveIndexSet< typename GridPart::IndexSetType >::v;
+      };
+
+    } // namespace Capabilities
+
   } // namespace Fem
 
 } // namespace Dune
