@@ -51,7 +51,10 @@ namespace Dune
         template< class, template< class > class >
         friend class DofMapper;
 
+
+      public:
         typedef typename BaseType::Traits Traits;
+      protected:
 
         typedef typename Traits::BlockMapperType BlockMapperType;
         static const int blockSize = Traits::blockSize;
@@ -153,6 +156,9 @@ namespace Dune
           DUNE_THROW( NotImplemented, "Method offSet() called on non-adaptive block mapper" );
         }
 
+      protected:
+        const BlockMapperType &blockMapper () const { return blockMapper_; }
+
       private:
         BlockMapperType &blockMapper_;
       };
@@ -170,12 +176,14 @@ namespace Dune
         template< class >
         friend class AdaptiveDofMapper;
 
+      public:
         typedef typename BaseType::Traits Traits;
+      protected:
 
         typedef typename Traits::BlockMapperType BlockMapperType;
         static const int blockSize = Traits::blockSize;
 
-        using BaseType::blockMapper_;
+        using BaseType::blockMapper;
 
       public:
         typedef typename Traits::ElementType ElementType;
@@ -186,29 +194,29 @@ namespace Dune
           : BaseType( blockMapper )
         {}
 
-        bool consecutive () const { return blockMapper_.consecutive(); }
+        bool consecutive () const { return blockMapper().consecutive(); }
 
-        SizeType numBlocks () const { return blockMapper_.numBlocks(); }
+        SizeType numBlocks () const { return blockMapper().numBlocks(); }
 
-        SizeType numberOfHoles ( const int block ) const { return blockSize * blockMapper_.numberOfHoles( block ); }
+        SizeType numberOfHoles ( const int block ) const { return blockSize * blockMapper().numberOfHoles( block ); }
 
         GlobalKeyType oldIndex ( const int hole, const int block ) const
         {
           const int i = hole % blockSize;
           const int blockHole = hole / blockSize;
-          return blockMapper_.oldIndex( blockHole, block ) * blockSize + i;
+          return blockMapper().oldIndex( blockHole, block ) * blockSize + i;
         }
 
         GlobalKeyType newIndex ( const int hole, const int block ) const
         {
           const int i = hole % blockSize;
           const int blockHole = hole / blockSize;
-          return blockMapper_.newIndex( blockHole, block ) * blockSize + i;
+          return blockMapper().newIndex( blockHole, block ) * blockSize + i;
         }
 
-        SizeType oldOffSet ( const int block ) const { return blockMapper_.oldOffSet( block ) * blockSize; }
+        SizeType oldOffSet ( const int block ) const { return blockMapper().oldOffSet( block ) * blockSize; }
 
-        SizeType offSet ( const int block ) const { return blockMapper_.offSet( block ) * blockSize; }
+        SizeType offSet ( const int block ) const { return blockMapper().offSet( block ) * blockSize; }
       };
 
 
