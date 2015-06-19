@@ -295,7 +295,7 @@ namespace Dune
       // Implementation
       // --------------
 
-      template< class GridPart, class Mapper, int N, bool adapative = Capabilities::isAdaptiveIndexSet< typename Mapper::GridPart::IndexSetType >::v >
+      template< class GridPart, class Mapper, int N, bool adapative = Capabilities::isAdaptiveDofMapper< Mapper >::v >
       class Implementation
       {
         typedef __PowerMapper::Traits< GridPart, Mapper, N > Traits;
@@ -321,8 +321,8 @@ namespace Dune
      *  \tparam  N  number of containd components
      *
      *  \note This mapper is adaptve (cf. AdaptiveDofMapper) if and only if the
-     *        grid part's index set is adaptive, i.e. if
-     *        Capabilities::isAdaptiveIndexSet< GridPart::IndexSetType >::v is \b true
+     *        underlaying mapper is adaptiv, too.
+     *        Capabilities::isAdaptiveDofMapper< Mapper >::v is \b true
      */
 
     template< class GridPart, class Mapper, int N >
@@ -337,7 +337,20 @@ namespace Dune
       {}
     };
 
-    /** @} **/
+
+    // Capabilities
+    // ------------
+
+    namespace Capabilities
+    {
+      template< class GridPart, class Mapper, int N >
+      struct isAdaptiveDofMapper< PowerMapper< GridPart, Mapper, N > >
+      {
+        static const bool v = isAdaptiveDofMapper< Mapper >::v;
+      };
+
+    } // namespace Capabilities
+      /** @} **/
 
   } // namespace Fem
 
