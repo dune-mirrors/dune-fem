@@ -3,6 +3,7 @@
 
 //- Dune includes
 #include <dune/fem/misc/bartonnackmaninterface.hh>
+#include <dune/fem/space/mapper/capabilities.hh>
 
 namespace Dune
 {
