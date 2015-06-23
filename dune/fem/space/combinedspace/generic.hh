@@ -86,9 +86,7 @@ namespace Dune
         : BaseType( gridPart, commInterface, commDirection ),
           spaceTuple_( Traits::createSpaces( gridPart, commInterface, commDirection ) ),
           blockMapper_( Traits::getBlockMapper( spaceTuple_ ) )
-      {
-        DofManagerType::instance( gridPart.grid() ).addIndexSet( *blockMapper_ );
-      }
+      {}
 
       // prohibit copy constructor and copy assignment
       GenericCombinedDiscreteFunctionSpace ( const ThisType & ) = delete;
@@ -99,7 +97,6 @@ namespace Dune
        **/
       ~GenericCombinedDiscreteFunctionSpace ()
       {
-        DofManagerType::instance( gridPart().grid() ).removeIndexSet( *blockMapper_ );
         Traits::deleteBlockMapper( blockMapper_ );
         Traits::deleteSpaces( spaceTuple_ );
       }
