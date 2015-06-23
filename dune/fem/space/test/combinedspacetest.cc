@@ -90,8 +90,8 @@ int checkBasisSet ( const EntityType &entity, const DiscreteFunctionSpaceType &s
   int checkSum = 0;
   BasisFunctionSetType bSet = space.basisFunctionSet( entity );
 
-  BasisFunctionSetType1 bSet1 = space.template subDiscreteFunctionSpace<0>().basisFunctionSet( entity );
-  BasisFunctionSetType2 bSet2 = space.template subDiscreteFunctionSpace<1>().basisFunctionSet( entity );
+  BasisFunctionSetType1 bSet1 = space.subDiscreteFunctionSpace<0>().basisFunctionSet( entity );
+  BasisFunctionSetType2 bSet2 = space.subDiscreteFunctionSpace<1>().basisFunctionSet( entity );
 
   const int nrBasis = bSet.size();
   const int nrBasis1 = bSet1.size();
