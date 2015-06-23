@@ -115,7 +115,7 @@ namespace Dune
       typedef TupleBasisFunctionSet< typename DiscreteFunctionSpaces::BasisFunctionSetType ... > BasisFunctionSetType;
 
       // mapper
-      typedef TupleMapper< NonBlockMapper< typename DiscreteFunctionSpaces::BlockMapperType, DiscreteFunctionSpaces::localBlockSize > ... > BlockMapperType;
+      typedef TupleMapper< GridPartType, NonBlockMapper< typename DiscreteFunctionSpaces::BlockMapperType, DiscreteFunctionSpaces::localBlockSize > ... > BlockMapperType;
 
       // in the most general case we will unroll all local blockings
       enum { localBlockSize = 1 };
@@ -184,7 +184,8 @@ namespace Dune
       template< std::size_t ... i >
       static BlockMapperType *getBlockMapper ( const DiscreteFunctionSpaceTupleType &tuple, Std::index_sequence< i ... > )
       {
-        return new BlockMapperType( SubDiscreteFunctionSpace< i >::subNonBlockMapper( tuple ) ... );
+        return new BlockMapperType( SubDiscreteFunctionSpace< 0 >::subDiscreteFunctionSpace( tuple ).gridPart(),
+            SubDiscreteFunctionSpace< i >::subNonBlockMapper( tuple ) ... );
       }
 
       template< class Entity, std::size_t ... i >
