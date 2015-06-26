@@ -74,7 +74,7 @@ namespace Dune
       explicit CombinedDiscreteFunctionSpace ( GridPartType &gridPart,
                                                const InterfaceType commInterface = InteriorBorder_All_Interface,
                                                const CommunicationDirection commDirection = ForwardCommunication )
-      DUNE_DEPRECATED_MSG( "CommunicationDirection is Deprecated, us the more general TupleDiscreteFunctionSpace instead." )
+      DUNE_DEPRECATED_MSG( "CombinedDiscreteFunctionSpace is Deprecated, us the more general TupleDiscreteFunctionSpace instead." )
         : BaseType( gridPart, commInterface, commDirection )
       {}
 
