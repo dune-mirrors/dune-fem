@@ -1,4 +1,10 @@
-add_executable(odetest odetest.cc)
-dune_target_link_libraries(odetest "${DUNE_LIBS};${LOCAL_LIBS}")
+set( TESTS
+  odetest
+  test-timeprovider
+)
 
-dune_add_test(odetest)
+foreach( test ${TESTS} )
+  add_executable( ${test} EXCLUDE_FROM_ALL ${test}.cc )
+  dune_target_link_libraries( ${test} "${DUNE_LIBS};${LOCAL_LIBS}" )
+  add_test( ${test} ${test} )
+endforeach()
