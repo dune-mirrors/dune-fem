@@ -134,18 +134,18 @@ namespace Dune
       }
 
       /** \brief set time step estimate to minimum of given value and
-       *          internal time step estiamte
-       *  \param[in] dtEstimate time step size estimate
-       */
+                 internal time step estiamte
+           \param[in] dtEstimate time step size estimate
+      */
       inline void provideTimeStepEstimate ( const double dtEstimate )
       {
         dtEstimate_ = std::min( dtEstimate_, dtEstimate );
         dtEstimateValid_ = true;
       }
       /** \brief set upper bound for time step to minimum of given value and
-       *          internal bound
-       *  \param[in] upperBound time step size estimate
-       */
+                 internal bound
+           \param[in] upperBound time step size estimate
+      */
       inline void provideTimeStepUpperBound ( const double upperBound )
       {
         dtUpperBound_ = std::min( dtUpperBound_, upperBound );
@@ -286,9 +286,6 @@ namespace Dune
        \parametername \c fem.timeprovider.starttime \n
                       time used for initializing the starting time
                       defaults to zero.
-       \parametername \c fem.timeprovider.startdt \n
-                      time used for initializing the starting delta t
-                      defaults to zero.
        \parametername \c fem.timeprovider.updatestep \n
                       only do the update of the time step size
                       every 'updatestep' to avoid the
@@ -330,12 +327,7 @@ namespace Dune
         cfl_( getCflFactor() ),
         updateStep_( getUpdateStep() ),
         counter_( updateStep_ )
-      {
-        const double startDt( Parameter :: getValue( "fem.timeprovider.startdt",
-                                                     static_cast<double>(0.0) ) );
-        if( startDt > 0.0 )
-          init( startDt );
-      }
+      {}
 
       /** \brief constructor taking start time
        *
@@ -349,12 +341,7 @@ namespace Dune
         cfl_( getCflFactor() ),
         updateStep_( getUpdateStep() ),
         counter_( updateStep_ )
-      {
-        const double startDt( Parameter :: getValue( "fem.timeprovider.startdt",
-                                                     static_cast<double>(0.0) ) );
-        if( startDt > 0.0 )
-          init( startDt );
-      }
+      {}
 
       /** \brief constructor taking start time and CFL constant
        *
@@ -362,43 +349,17 @@ namespace Dune
        *  \param[in]  cfl        CFL constant
        *  \param[in]  comm       collective communication (default Dune::Fem::MPIManager::comm())
        */
-      explicit TimeProvider ( const double startTime,
-                              const double cfl,
-                              const CollectiveCommunicationType &comm = MPIManager::comm() )
+      TimeProvider ( const double startTime,
+                     const double cfl,
+                     const CollectiveCommunicationType &comm = MPIManager::comm() )
       : BaseType( startTime ),
         comm_( comm ),
         cfl_( cfl ),
         updateStep_( 1 ),
         counter_( updateStep_ )
-      {
-         const double startDt( Parameter :: getValue( "fem.timeprovider.startdt",
-                                                      static_cast<double>(0.0) ) );
-         if( startDt > 0.0 )
-          init( startDt );
-      }
+      {}
 
-      /** \brief constructor taking start time, CFL constant and starting delta t
-       *
-       *  \param[in]  startTime  initial time
-       *  \param[in]  cfl        CFL constant
-       *  \param[in]  startDt    starting delta t
-       *  \param[in]  comm       collective communication (default Dune::Fem::MPIManager::comm())
-       */
-      explicit TimeProvider ( const double startTime,
-                              const double cfl,
-                              const double startDt,
-                              const CollectiveCommunicationType &comm = MPIManager::comm() )
-      : BaseType( startTime ),
-        comm_( comm ),
-        cfl_( cfl ),
-        updateStep_( 1 ),
-        counter_( updateStep_ )
-      {
-         if( startDt > 0.0 )
-          init( startDt );
-      }
-
-      inline virtual ~TimeProvider()
+      virtual ~TimeProvider()
       {}
 
       TimeProvider ( const ThisType & ) = delete;
