@@ -383,10 +383,16 @@ namespace Dune
         initTimeStep( timeStep );
       }
 
-      //! \brief goto next time step with the current time step
+      /** \brief goto next time step
+       *
+       * Sets the size of the next time step to the current time step estimate
+       * and sets the estimate to infinity.
+       */
       inline void next ()
       {
+        assert( this->dtEstimateValid_ );
         advance();
+        initTimeStep( dtEstimate_ );
       }
 
       /** \brief goto next time step
