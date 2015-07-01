@@ -597,6 +597,20 @@ namespace Dune
        */
       static std::string outputPath ();
 
+      /** \brief obtain common input path
+       *
+       *   This common input path could for example be used for the
+       *   determination of the location of parameter and grid files
+       *
+       *  \returns value of parameter 'fem.input.prefix', which defaults to '.'.
+       */
+      static std::string commonInputPath ()
+      {
+        return instance().map( "fem.prefix.input", std::string(".") );
+      }
+
+
+
       /** \brief obtain the cached value for fem.verbose
        */
       static bool verbose ()
