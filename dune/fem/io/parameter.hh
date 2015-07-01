@@ -899,7 +899,7 @@ namespace Dune
            ParameterParser< bool >::parse( actual_value, enableShadows_ );
         }
       else
-        includes.push( value );
+        includes.push( commonInputPath() + "/" + value );
       return true;
     }
 
