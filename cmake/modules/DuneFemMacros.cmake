@@ -137,7 +137,7 @@ if(EXISTS "${PETSC_CMAKE_MODULES}")
       "Determining location of PETSC succeded:\n"
       "Include directory: ${PETSC_INCLUDES}\n"
       "Library directory: ${PETSC_LIBRARIES}\n\n")
-    set(PETSC_DUNE_COMPILE_FLAGS "-I${PETSC_INCLUDES}"
+    set(PETSC_DUNE_COMPILE_FLAGS "-DENABLE_PETSC=1 -I${PETSC_INCLUDES}"
       CACHE STRING "Compile Flags used by DUNE when compiling with PETSc programs")
     set(PETSC_DUNE_LIBRARIES ${PETSC_LIBRARIES}
       CACHE STRING "Libraries used by DUNE when linking PETSc programs")
@@ -145,6 +145,11 @@ if(EXISTS "${PETSC_CMAKE_MODULES}")
       set_property(GLOBAL APPEND PROPERTY ALL_PKG_FLAGS "-I${dir}")
     endforeach()
     set_property(GLOBAL APPEND PROPERTY ALL_PKG_LIBS "${PETSC_LIBRARIES}")
+    # register includes and libs to global flags
+    dune_register_package_flags(COMPILE_DEFINITIONS "ENABLE_PETSC=1"
+                                INCLUDE_DIRS ${PETSC_INCLUDES}
+                                LIBRARIES ${PETSC_LIBRARIES})
+
   else()
     # log errornous result
     file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
