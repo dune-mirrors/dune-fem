@@ -1219,6 +1219,10 @@ namespace Dune
                        const std::string &fileextension,
                        bool writeAll )
     {
+      //create path if it does not exist
+      if( !directoryExists( path ) )
+        createDirectory( path );
+
       std::string fullname( path );
       fullname += "/";
       fullname += filename;
