@@ -8,7 +8,7 @@ static const int dimw = Dune::GridSelector::dimworld;
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/lagrange.hh>
-#include <dune/fem/space/combineddiscretefunctionspace.hh>
+#include <dune/fem/space/combinedspace.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
@@ -62,7 +62,7 @@ typedef LagrangeDiscontinuousGalerkinSpace<FuncSpace1, GridPartType,
 typedef LagrangeDiscontinuousGalerkinSpace<FuncSpace2, GridPartType,
 	polOrd,CachingStorage> DiscreteFunctionSpaceType2;
 
-typedef CombinedDiscreteFunctionSpace< DiscreteFunctionSpaceType1, DiscreteFunctionSpaceType2 > DiscreteFunctionSpaceType;
+typedef TupleDiscreteFunctionSpace< DiscreteFunctionSpaceType1, DiscreteFunctionSpaceType2 > DiscreteFunctionSpaceType;
 
 typedef DiscreteFunctionSpaceType::IteratorType::Entity EntityType;
 
@@ -90,8 +90,8 @@ int checkBasisSet ( const EntityType &entity, const DiscreteFunctionSpaceType &s
   int checkSum = 0;
   BasisFunctionSetType bSet = space.basisFunctionSet( entity );
 
-  BasisFunctionSetType1 bSet1 = space.space1().basisFunctionSet( entity );
-  BasisFunctionSetType2 bSet2 = space.space2().basisFunctionSet( entity );
+  BasisFunctionSetType1 bSet1 = space.subDiscreteFunctionSpace<0>().basisFunctionSet( entity );
+  BasisFunctionSetType2 bSet2 = space.subDiscreteFunctionSpace<1>().basisFunctionSet( entity );
 
   const int nrBasis = bSet.size();
   const int nrBasis1 = bSet1.size();

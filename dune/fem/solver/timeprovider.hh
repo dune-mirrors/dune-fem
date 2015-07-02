@@ -3,8 +3,7 @@
 
 #include <cassert>
 #include <limits>
-
-#include <dune/common/tuples.hh>
+#include <tuple>
 
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/parameter.hh>
@@ -37,20 +36,10 @@ namespace Dune
     {
       typedef TimeProviderBase ThisType;
 
-    protected:
-      double time_;
-      int timeStep_;
-      double dt_;
-      double invdt_;
-      bool valid_;
-      bool dtEstimateValid_;
-      double dtEstimate_;
-      double dtUpperBound_;
-
     public:
       inline TimeProviderBase ()
       : time_( Parameter :: getValue( "fem.timeprovider.starttime",
-                                      (double)0.0 ) ),
+                                      static_cast<double>(0.0) ) ),
         timeStep_( 0 ),
         dt_( 0.0 ),
         invdt_( HUGE_VAL ),
@@ -71,7 +60,8 @@ namespace Dune
         initTimeStepEstimate();
       }
 
-      virtual ~TimeProviderBase() {}
+      inline virtual ~TimeProviderBase()
+      {}
 
       void backup() const
       {
@@ -89,16 +79,17 @@ namespace Dune
         invdt_ = 1.0 / dt_;
       }
 
-    private:
-      TimeProviderBase ( const ThisType & );
-      ThisType &operator= ( const ThisType & );
 
-    public:
+      TimeProviderBase ( const ThisType & ) = delete;
+
+      ThisType &operator= ( const ThisType & ) = delete;
+
+
       /** \brief obtain the current time
        *
        *  \returns the current time
        */
-      double time () const
+      inline double time () const
       {
         return time_;
       }
@@ -107,7 +98,7 @@ namespace Dune
        *
        *  \return the current time step counter
        */
-      int timeStep () const
+      inline int timeStep () const
       {
         assert( timeStepValid() );
         return timeStep_;
@@ -117,7 +108,7 @@ namespace Dune
        *
        *  \returns the size of the current time step
        */
-      double deltaT () const
+      inline double deltaT () const
       {
         assert( timeStepValid() );
         return dt_;
@@ -127,7 +118,7 @@ namespace Dune
        *
        *  \returns the size of the inverse of the current time step
        */
-      double inverseDeltaT () const
+      inline double inverseDeltaT () const
       {
         assert( timeStepValid() );
         return invdt_;
@@ -137,7 +128,7 @@ namespace Dune
        *
        *  \returns the current estimate for the time step
        */
-      double timeStepEstimate () const
+      inline double timeStepEstimate () const
       {
         return dtEstimate_;
       }
@@ -146,7 +137,7 @@ namespace Dune
                  internal time step estiamte
            \param[in] dtEstimate time step size estimate
       */
-      void provideTimeStepEstimate ( const double dtEstimate )
+      inline void provideTimeStepEstimate ( const double dtEstimate )
       {
         dtEstimate_ = std::min( dtEstimate_, dtEstimate );
         dtEstimateValid_ = true;
@@ -155,25 +146,34 @@ namespace Dune
                  internal bound
            \param[in] upperBound time step size estimate
       */
-      void provideTimeStepUpperBound ( const double upperBound )
+      inline void provideTimeStepUpperBound ( const double upperBound )
       {
         dtUpperBound_ = std::min( dtUpperBound_, upperBound );
         dtEstimateValid_ = true;
       }
 
       /** \brief count current time step a not valid */
-      void invalidateTimeStep ()
+      inline void invalidateTimeStep ()
       {
         valid_ = false;
       }
 
       /** \brief return if this time step should be used */
-      bool timeStepValid () const
+      inline bool timeStepValid () const
       {
         return valid_;
       }
 
     protected:
+      double time_;
+      int timeStep_;
+      double dt_;
+      double invdt_;
+      bool valid_;
+      bool dtEstimateValid_;
+      double dtEstimate_;
+      double dtUpperBound_;
+
       void advance ()
       {
         if( timeStepValid() )
@@ -235,7 +235,7 @@ namespace Dune
        loop an upper estimate for the next time step can be supplied;
        to fix the next time step (ignoring the estimates) an optinal
        argument can be passed to the next method on the
-       Dune::TimeProvider.
+       Dune::Fem::TimeProvider.
 
        Obviously, we need to provide an initial estimate. In the above example,
        this is done by the initialize method of the ODE solver. In tp.init(),
@@ -269,15 +269,14 @@ namespace Dune
        the simulation (default is zero).
 
        The most general implementation is given in the class
-       Dune::TimeProvider< CollectiveCommunication< C > >  which
+       Dune::Fem::TimeProvider< CollectiveCommunication< C > >  which
        takes a Dune::CollectiveCommunication instance in the
        constructor which is used in parallel computations is
        syncronize the time step. It defaults to
-       Dune::CollectiveCommHelperType :: defaultCommunication()
-       and also works for seriell runs where the template argument
-       does not have to be prescribed.
+       Dune::Fem::MPIManager::comm() and also works for serial runs.
+
        If the communication manager from a given grid is to be used
-       the class Dune::GridTimeProvider using the GridType as
+       the class Dune::Fem::GridTimeProvider using the GridType as
        template argument can be used instead, with the same
        functionality.
 
@@ -294,47 +293,35 @@ namespace Dune
                       (for testing only);
                       defaults to 1
      */
-    template< class CommProvider >
-    class TimeProvider {};
-
-    /** \ingroup ODESolver
-     *  \brief   the basic Dune::TimeProvider implementation.
-     *
-     *  This implementation of a timeprovider takes a CollectiveCommunicate
-     *  for parallel runs which default to a default communicator
-     *  which also works for serial simulations.
-     *
-     */
-    template< class C >
-    class TimeProvider< CollectiveCommunication< C > >
+    template< class C = typename MPIManager::CollectiveCommunication >
+    class TimeProvider
     : public TimeProviderBase
     {
-      typedef TimeProvider< CollectiveCommunication< C > > ThisType;
+      typedef TimeProvider< C > ThisType;
       typedef TimeProviderBase BaseType;
 
     public:
       typedef CollectiveCommunication< C > CollectiveCommunicationType;
 
     protected:
-      double getCflFactor() const
+      inline double getCflFactor() const
       {
-        return Parameter::getValidValue( "fem.timeprovider.factor", (double)1.0,
+        return Parameter::getValidValue( "fem.timeprovider.factor", static_cast<double>(1.0),
             [] ( double val ) { return val > 0.0; } );
       }
 
-      int getUpdateStep () const
+      inline int getUpdateStep () const
       {
-        return Parameter::getValidValue( "fem.timeprovider.updatestep", (int)1,
+        return Parameter::getValidValue( "fem.timeprovider.updatestep", static_cast<int>(1),
             [] ( int step ) { return step > 0; } );
       }
 
     public:
       /** \brief default constructor
        *
-       *  \param[in]  comm  collective communication (optional)
+       *  \param[in]  comm  collective communication (default Dune::Fem::MPIManager::comm())
        */
-      explicit
-      TimeProvider ( const CollectiveCommunicationType &comm )
+      explicit TimeProvider ( const CollectiveCommunicationType &comm =  MPIManager::comm() )
       : BaseType(),
         comm_( comm ),
         cfl_( getCflFactor() ),
@@ -345,12 +332,10 @@ namespace Dune
       /** \brief constructor taking start time
        *
        *  \param[in]  startTime  initial time
-       *  \param[in]  comm       collective communication (optional)
-
+       *  \param[in]  comm       collective communication (default Dune::Fem::MPIManager::comm())
        */
-      explicit
-      TimeProvider ( const double startTime,
-                     const CollectiveCommunicationType &comm )
+      explicit TimeProvider ( const double startTime,
+                              const CollectiveCommunicationType &comm = MPIManager::comm() )
       : BaseType( startTime ),
         comm_( comm ),
         cfl_( getCflFactor() ),
@@ -362,11 +347,11 @@ namespace Dune
        *
        *  \param[in]  startTime  initial time
        *  \param[in]  cfl        CFL constant
-       *  \param[in]  comm       collective communication (optional)
+       *  \param[in]  comm       collective communication (default Dune::Fem::MPIManager::comm())
        */
       TimeProvider ( const double startTime,
                      const double cfl,
-                     const CollectiveCommunicationType &comm )
+                     const CollectiveCommunicationType &comm = MPIManager::comm() )
       : BaseType( startTime ),
         comm_( comm ),
         cfl_( cfl ),
@@ -374,16 +359,16 @@ namespace Dune
         counter_( updateStep_ )
       {}
 
-      virtual~TimeProvider() {}
+      virtual ~TimeProvider()
+      {}
 
-    private:
-      TimeProvider ( const ThisType & );
-      ThisType &operator= ( const ThisType & );
+      TimeProvider ( const ThisType & ) = delete;
 
-    public:
+      ThisType &operator= ( const ThisType & ) = delete;
+
       /** \brief init dt with time step estimate
        */
-      void init ()
+      inline void init ()
       {
         initTimeStep( dtEstimate_ );
       }
@@ -393,7 +378,7 @@ namespace Dune
        *  \param[in]  timeStep  value of the first time step (is multiplied with
        *                        factor)
        */
-      void init ( const double timeStep )
+      inline void init ( const double timeStep )
       {
         initTimeStep( timeStep );
       }
@@ -403,7 +388,7 @@ namespace Dune
        * Sets the size of the next time step to the current time step estimate
        * and sets the estimate to infinity.
        */
-      void next ()
+      inline void next ()
       {
         assert( this->dtEstimateValid_ );
         advance();
@@ -418,7 +403,7 @@ namespace Dune
        *  \param[in]  timeStep  value of the next time step (is multiplied with
        *                        factor)
        */
-      void next ( const double timeStep )
+      inline void next ( const double timeStep )
       {
         advance();
         initTimeStep(timeStep);
@@ -427,7 +412,7 @@ namespace Dune
       /** \brief  return the global factor number
           \return time step factor
       */
-      double factor () const
+      inline double factor () const
       {
         return cfl_;
       }
@@ -461,18 +446,18 @@ namespace Dune
            \param[in] time new time
            \param[in] timeStep new time step counter
       */
-      void restore ( const double time, const int timeStep )
+      inline void restore ( const double time, const int timeStep )
       {
         time_ = time;
         timeStep_ = timeStep;
       }
 
-      virtual void backup () const
+      inline virtual void backup () const
       {
         BaseType::backup();
       }
 
-      virtual void restore ()
+      inline virtual void restore ()
       {
         BaseType::restore();
         const_cast< double & >( cfl_ ) = getCflFactor();
@@ -492,54 +477,10 @@ namespace Dune
       int counter_;
     };
 
-    /** \class   DefaultTimeProvider
-     *  \ingroup ODESolver
-     *  \brief   the same functionality as the Dune::TimeProvider.
-     *
-     *  This implementation of a timeprovider uses the CollectiveCommunicate
-     *  from a Fem::MPIManager.
-     */
-    class DefaultTimeProvider
-    : public TimeProvider< typename MPIManager::CollectiveCommunication >
-    {
-      typedef TimeProvider< typename MPIManager::CollectiveCommunication > BaseType;
-    public:
-      typedef typename MPIManager::CollectiveCommunication CollectiveCommunicationType ;
 
-      /** \brief constructor taking start time
-       *
-       *  \param[in]  comm       collective communication (default = MPIManager::comm())
-       */
-      explicit
-      DefaultTimeProvider ( const CollectiveCommunicationType& comm = MPIManager::comm() )
-      : BaseType( comm )
-      {}
 
-      /** \brief constructor taking start time
-       *
-       *  \param[in]  startTime  initial time
-       *  \param[in]  comm       collective communication (default = MPIManager::comm())
-       */
-      explicit
-      DefaultTimeProvider ( const double startTime,
-                            const CollectiveCommunicationType& comm = MPIManager::comm() )
-      : BaseType( startTime, comm )
-      {}
-
-      /** \brief constructor taking start time and CFL constant
-       *
-       *  \param[in]  startTime  initial time
-       *  \param[in]  cfl        CFL constant
-       *  \param[in]  comm       collective communication (default = MPIManager::comm())
-       */
-      DefaultTimeProvider ( const double startTime,
-                            const double cfl,
-                            const CollectiveCommunicationType &comm = MPIManager::comm() )
-      : BaseType( startTime, cfl, comm )
-      {}
-
-      virtual ~DefaultTimeProvider() {}
-    };
+    // TODO : remove!
+    typedef TimeProvider<> DefaultTimeProvider;
 
 
 
