@@ -47,11 +47,14 @@ namespace Dune
      */
     class FemEoc
     {
+      typedef std::pair< std::string, double > DoublePairType;
+      typedef std::pair< std::string, int >    IntPairType;
+
       // level, h, size, time, counter, errors,
       // [avgTimeStep, minTimeStep, maxTimeStep],
       // [newton_iterations, ils_iterations, max_newton_iterations, max_ils_iterations]
       typedef std::tuple< int, double, double, double, int, std::vector< double >,
-                     array< double, 3 >, array< int, 4 > >
+                          std::vector< double >, std::vector< int > >
         DataTuple;
 
       typedef Fem::LatexTableWriter< DataTuple > TableWriter;
@@ -210,9 +213,13 @@ namespace Dune
 
       void writeerr ( double h, double size, double time, int counter );
       void writeerr(double h,double size,double time,int counter,
-                    double avgTimeStep,double minTimeStep,double maxTimeStep,
-        const int newton_iterations, const int ils_iterations,
-        const int max_newton_iterations, const int max_ils_iterations);
+                    const std::vector< DoublePairType>& doubleValues,
+                    const std::vector< IntPairType>& intValues);
+
+      void writeerr(double h,double size,double time,int counter,
+                    double avgTimeStep,double minTimeStep,double maxTimeStep ,
+                    const int newton_iterations, const int ils_iterations,
+                    const int max_newton_iterations, const int max_ils_iterations);
 
       // do the same calculations as in write, but don't overwrite status
       void printerr(const double h,
@@ -224,13 +231,8 @@ namespace Dune
                     const double size,
                     const double time,
                     const int counter,
-                    const double avgTimeStep,
-                    const double minTimeStep,
-                    const double maxTimeStep,
-        const int newton_iterations,
-        const int ils_iterations,
-        const int max_newton_iterations,
-        const int max_ils_iterations,
+                    const std::vector< DoublePairType>& doubleValues,
+                    const std::vector< IntPairType>& intValues,
                     std::ostream& out);
 
     public:
@@ -376,12 +378,35 @@ namespace Dune
                         const int max_newton_iterations,
                         const int max_ils_iterations)
       {
+        std::vector< DoublePairType > doubleValues;
+        doubleValues.push_back( DoublePairType( "avg dt", avgTimeStep ) );
+        doubleValues.push_back( DoublePairType( "min dt", minTimeStep ) );
+        doubleValues.push_back( DoublePairType( "max dt", maxTimeStep ) );
+
+        std::vector< IntPairType > intValues;
+        intValues.push_back( IntPairType( "Newton", newton_iterations ) );
+        intValues.push_back( IntPairType( "ILS", ils_iterations ) );
+        intValues.push_back( IntPairType( "max{Newton/linS}", max_newton_iterations ) );
+        intValues.push_back( IntPairType( "max{ILS/linS}", max_ils_iterations ) );
+
         // now write to file
-        instance().writeerr(h,size,time,counter,avgTimeStep,minTimeStep,
-                            maxTimeStep,newton_iterations,ils_iterations,
-          max_newton_iterations, max_ils_iterations);
+        instance().writeerr(h,size,time,counter, doubleValues, intValues );
       }
 
+      /** \brief commit a line to the eoc file
+       *
+       *  \param  h                      grid width (e.g. given by GridWith utility class)
+       *  \param  size                   number of grid elements
+       *  \param  time                   computational time
+       *  \param  counter                number of time steps
+       *  \param  avgTimeStep            average time step for the ODE solver
+       *  \param  minTimeStep            minimal time step for the ODE solver
+       *  \param  maxTimeStep            maximal time step for the ODE solver
+       *  \param  newton_iterations      number of newton iterations
+       *  \param  ils_iterations         number of iteration of the iterative linear solver
+       *  \param  max_newton_iterations  maximal number of newton iterations
+       *  \param  max_ils_iterations     maximal number of iteration of the iterative linear solver
+       */
       static void write(const double h,
                         const double size,
                         const double time,
@@ -395,15 +420,22 @@ namespace Dune
                         const int max_ils_iterations,
                         std::ostream& out)
       {
+        std::vector< DoublePairType > doubleValues;
+        doubleValues.push_back( DoublePairType( "avg dt", avgTimeStep ) );
+        doubleValues.push_back( DoublePairType( "min dt", minTimeStep ) );
+        doubleValues.push_back( DoublePairType( "max dt", maxTimeStep ) );
+
+        std::vector< IntPairType > intValues;
+        intValues.push_back( IntPairType( "Newton", newton_iterations ) );
+        intValues.push_back( IntPairType( "ILS", ils_iterations ) );
+        intValues.push_back( IntPairType( "max{Newton/linS}", max_newton_iterations ) );
+        intValues.push_back( IntPairType( "max{ILS/linS}", max_ils_iterations ) );
+
         // print last line to out
-        instance().printerr( h, size, time, counter, avgTimeStep, minTimeStep,
-                             maxTimeStep, newton_iterations, ils_iterations,
-           max_newton_iterations, max_ils_iterations, out );
+        instance().printerr( h, size, time, counter, doubleValues, intValues, out );
 
         // now write to file
-        instance().writeerr(h,size,time,counter,avgTimeStep,minTimeStep,
-                            maxTimeStep,newton_iterations,ils_iterations,
-          max_newton_iterations, max_ils_iterations);
+        instance().writeerr(h,size,time,counter, doubleValues, intValues );
       }
 
     }; // end class FemEoc
@@ -486,40 +518,16 @@ namespace Dune
     inline void FemEoc
       ::writeerr ( double h, double size, double time, int counter )
     {
-      if( MPIManager::rank() != 0 )
-        return;
-
-      if( !tableWriter_ )
-      {
-        TableWriter::ColumnWriterVectorType columns;
-        columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 0 > >( "level" ) );
-        columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 1 > >( "h" ) );
-        columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 2 > >( "size" ) );
-        columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 3 > >( "CPU-time" ) );
-        columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 4 > >( "counter" ) );
-        eocColumns_.resize( error_.size(), (const EOCColumnWriter *)0 );
-        for( unsigned int i = 0; i < error_.size(); ++i )
-        {
-          columns.push_back( (const TableWriter::ColumnWriterType *)0 );
-          columns.push_back( new ErrorColumnWriter( description_[ i ], i ) );
-          eocColumns_[ i ] = new EOCColumnWriter( i );
-          columns.push_back( eocColumns_[ i ] );
-        }
-
-        tableWriter_ = new TableWriter( filename_, columns );
-      }
-
-      DataTuple data( level_, h, size, time, counter, error_, array< double, 3 >(), array< int, 4 >() );
-      tableWriter_->writeRow( data );
-      ++level_;
+      std::vector< DoublePairType > doubleValues;
+      std::vector< IntPairType > intValues;
+      writeerr( h, size, time, counter, doubleValues, intValues);
     }
 
 
     inline void FemEoc
       ::writeerr(double h,double size,double time,int counter,
-                  double avgTimeStep,double minTimeStep,double maxTimeStep,
-                  const int newton_iterations, const int ils_iterations,
-                  const int max_newton_iterations, const int max_ils_iterations)
+                 const std::vector< DoublePairType >& doubleValues,
+                 const std::vector< IntPairType >& intValues )
     {
       if( MPIManager::rank() != 0 )
         return;
@@ -533,16 +541,19 @@ namespace Dune
         columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 3 > >( "CPU-time" ) );
         columns.push_back( new Fem::NumberColumnWriter< DataTuple, Fem::TupleDataSource< 4 > >( "counter" ) );
         columns.push_back( (const TableWriter::ColumnWriterType *)0 );
-        typedef Fem::ArrayDataSource< Fem::TupleDataSource< 6 > > TimeStepSource;
-        columns.push_back( new Fem::NumberColumnWriter< DataTuple, TimeStepSource >( "avg dt", TimeStepSource( 0 ) ) );
-        columns.push_back( new Fem::NumberColumnWriter< DataTuple, TimeStepSource >( "min dt", TimeStepSource( 1 ) ) );
-        columns.push_back( new Fem::NumberColumnWriter< DataTuple, TimeStepSource >( "max dt", TimeStepSource( 2 ) ) );
-        columns.push_back( (const TableWriter::ColumnWriterType *)0 );
-        typedef Fem::ArrayDataSource< Fem::TupleDataSource< 7 > > NewtonILSSource;
-        columns.push_back( new Fem::NumberColumnWriter< DataTuple, NewtonILSSource >( "Newton", NewtonILSSource( 0 ) ) );
-        columns.push_back( new Fem::NumberColumnWriter< DataTuple, NewtonILSSource >( "ILS", NewtonILSSource( 1 ) ) );
-        columns.push_back( new Fem::NumberColumnWriter< DataTuple, NewtonILSSource >( "max{Newton/linS}", NewtonILSSource( 2 ) ) );
-        columns.push_back( new Fem::NumberColumnWriter< DataTuple, NewtonILSSource >( "max{ILS/linS}", NewtonILSSource( 3 ) ) );
+
+        typedef Fem::ArrayDataSource< Fem::TupleDataSource< 6 > > DoubleValueSource;
+        for( unsigned int i = 0; i < doubleValues.size(); ++i )
+        {
+          columns.push_back( new Fem::NumberColumnWriter< DataTuple, DoubleValueSource >( doubleValues[ i ].first, DoubleValueSource( i ) ) );
+        }
+
+        typedef Fem::ArrayDataSource< Fem::TupleDataSource< 7 > > IntValueSource;
+        for( unsigned int i = 0; i < intValues.size(); ++i )
+        {
+          columns.push_back( new Fem::NumberColumnWriter< DataTuple, IntValueSource >( intValues[ i ].first, IntValueSource( i ) ) );
+        }
+
         eocColumns_.resize( error_.size(), (const EOCColumnWriter *)0 );
         for( unsigned int i = 0; i < error_.size(); ++i )
         {
@@ -555,18 +566,15 @@ namespace Dune
         tableWriter_ = new TableWriter( filename_, columns );
       }
 
-      array< double, 3 > dt;
-      dt[ 0 ] = avgTimeStep;
-      dt[ 1 ] = minTimeStep;
-      dt[ 2 ] = maxTimeStep;
+      std::vector< double > doubleVals( doubleValues.size() );
+      for( unsigned int i=0; i<doubleValues.size(); ++i )
+        doubleVals[ i ] =  doubleValues[ i ].second;
 
-      array< int, 4 > newton_ils;
-      newton_ils[ 0 ] = newton_iterations;
-      newton_ils[ 1 ] = ils_iterations;
-      newton_ils[ 2 ] = max_newton_iterations;
-      newton_ils[ 3 ] = max_ils_iterations;
+      std::vector< int > intVals( intValues.size() );
+      for( unsigned int i=0; i<intValues.size(); ++i )
+        intVals[ i ] =  intValues[ i ].second;
 
-      DataTuple data( level_, h, size, time, counter, error_, dt, newton_ils );
+      DataTuple data( level_, h, size, time, counter, error_, doubleVals, intVals );
       tableWriter_->writeRow( data );
       ++level_;
     }
@@ -579,23 +587,9 @@ namespace Dune
                   const int counter,
                   std::ostream& out)
     {
-      if (!Parameter::verbose()) return;
-            out << "level:   " << level_  << std::endl;
-            out << "h        " << h << std::endl;
-            out << "size:    " << size << std::endl;
-            out << "time:    " << time << " sec. " << std::endl;
-            out << "counter: " << counter << std::endl;
-
-      for (unsigned int i=0;i<error_.size();++i)
-      {
-        out << description_[i] << ":       " << error_[i] << std::endl;
-        if( tableWriter_ )
-        {
-          const double eoc = eocColumns_[ i ]->eoc( h, error_[ i ] );
-          out << "EOC (" <<description_[i] << "): " << eoc << std::endl;
-        }
-        out << std::endl;
-      }
+      std::vector< DoublePairType > doubleValues;
+      std::vector< IntPairType >    intValues;
+      printerr( h, size, time, counter, doubleValues, intValues, out );
     }
 
     inline void FemEoc
@@ -603,28 +597,25 @@ namespace Dune
                   const double size,
                   const double time,
                   const int counter,
-                  const double avgTimeStep,
-                  const double minTimeStep,
-                  const double maxTimeStep,
-                  const int newton_iterations,
-                  const int ils_iterations,
-                  const int max_newton_iterations,
-                  const int max_ils_iterations,
+                  const std::vector< DoublePairType >& doubleValues,
+                  const std::vector< IntPairType >& intValues,
                   std::ostream& out)
     {
       if (!Parameter::verbose()) return;
-            out << "level:   " << level_  << std::endl;
-            out << "h        " << h << std::endl;
-            out << "size:    " << size << std::endl;
-            out << "time:    " << time << " sec. " << std::endl;
-            out << "counter: " << counter << std::endl;
-            out << "avg. time step: " << avgTimeStep << std::endl;
-            out << "min. time step: " << minTimeStep << std::endl;
-            out << "max. time step: " << maxTimeStep << std::endl;
-            out << "Newton iter.: " << newton_iterations << std::endl;
-            out << "ILS iter.: " << ils_iterations << std::endl;
-            out << "max{Newton/dt}: " << max_newton_iterations << std::endl;
-            out << "max{ILS/linS}: " << max_ils_iterations << std::endl;
+
+      out << "level:   " << level_  << std::endl;
+      out << "h        " << h << std::endl;
+      out << "size:    " << size << std::endl;
+      out << "time:    " << time << " sec. " << std::endl;
+      out << "counter: " << counter << std::endl;
+      for( unsigned int i=0; i<doubleValues.size(); ++i )
+      {
+        out << doubleValues[ i ].first << ": " << doubleValues[ i ].second << std::endl;
+      }
+      for( unsigned int i=0; i<intValues.size(); ++i )
+      {
+        out << intValues[ i ].first << ": " << intValues[ i ].second << std::endl;
+      }
 
       for (unsigned int i=0;i<error_.size();++i)
       {
