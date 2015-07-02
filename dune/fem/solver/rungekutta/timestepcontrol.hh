@@ -25,6 +25,9 @@ namespace DuneODE
            cflVerbosity = 2, fullVerbosity = 3 };
 
   protected:
+    // key prefix, default is fem.ode (can be overloaded by user)
+    const std::string keyPrefix_;
+
     // number of minimal iterations that the linear solver should do
     // if the number of iterations done is smaller then the cfl number is increased
     const int minIter_;
@@ -35,10 +38,11 @@ namespace DuneODE
     const double sigma_;
 
   public:
-    ImplicitRungeKuttaSolverParameters ()
-    : minIter_( Dune::Fem::Parameter::getValue< int >( "fem.ode.miniterations" , 14 ) ),
-      maxIter_( Dune::Fem::Parameter::getValue< int >( "fem.ode.maxiterations" , 16 ) ),
-      sigma_( Dune::Fem::Parameter::getValue< double >( "fem.ode.cflincrease" , 1.1 ) )
+    ImplicitRungeKuttaSolverParameters ( const std::string keyPrefix = "fem.ode" )
+    : keyPrefix_( keyPrefix + "." ),
+      minIter_( Dune::Fem::Parameter::getValue< int >( keyPrefix_ + "miniterations", 14 ) ),
+      maxIter_( Dune::Fem::Parameter::getValue< int >( keyPrefix_ + "maxiterations" , 16 ) ),
+      sigma_( Dune::Fem::Parameter::getValue< double >( keyPrefix_ + "cflincrease" , 1.1 ) )
     {}
 
     // destructor (virtual)
@@ -48,34 +52,34 @@ namespace DuneODE
                the linear solver */
     virtual double tolerance () const
     {
-      return Dune::Fem::Parameter::getValue< double >( "fem.ode.tolerance" , 1e-6 );
+      return Dune::Fem::Parameter::getValue< double >( keyPrefix_ + "tolerance" , 1e-6 );
     }
 
     virtual int iterations() const
     {
-      return Dune::Fem::Parameter::getValue< int >( "fem.ode.iterations" , 1000 );
+      return Dune::Fem::Parameter::getValue< int >( keyPrefix_ + "iterations" , 1000 );
     }
 
     /** \brief verbosity level ( none, noconv, cfl, full )  */
     virtual int verbose () const
     {
       static const std::string verboseTypeTable[] = { "none", "noconv", "cfl", "full" };
-      return Dune::Fem::Parameter::getEnum( "fem.ode.verbose", verboseTypeTable, 0 );
+      return Dune::Fem::Parameter::getEnum( keyPrefix_ + "verbose", verboseTypeTable, 0 );
     }
 
     virtual double cflStart () const
     {
-      return Dune::Fem::Parameter::getValue< double >( "fem.ode.cflStart", 1 );
+      return Dune::Fem::Parameter::getValue< double >( keyPrefix_ + "cflStart", 1 );
     }
 
     virtual double cflMax () const
     {
-      return Dune::Fem::Parameter::getValue< double >( "fem.ode.cflMax" , std::numeric_limits< double >::max() );
+      return Dune::Fem::Parameter::getValue< double >( keyPrefix_ + "cflMax" , std::numeric_limits< double >::max() );
     }
 
     double initialDeltaT ( double dt ) const
     {
-      return std::min( Dune::Fem::Parameter::getValue< double >( "fem.ode.initialdt", 987654321 ), dt );
+      return std::min( Dune::Fem::Parameter::getValue< double >( keyPrefix_ + "initialdt", 987654321 ), dt );
     }
 
     /** \brief return multiplication factor for the current cfl number
@@ -140,7 +144,7 @@ namespace DuneODE
     {
       const std::string names [] = { "ImplicitEuler", "CrankNicolson", "DIRK23", "DIRK34", "SDIRK22" };
       // by default select according to order
-      return Dune::Fem::Parameter::getEnum( "fem.ode.solvername", names, order-1 ) + 1;
+      return Dune::Fem::Parameter::getEnum( keyPrefix_ + "solvername", names, order-1 ) + 1;
     }
   };
 
