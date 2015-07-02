@@ -399,6 +399,26 @@ namespace Dune
        *  \param  size                   number of grid elements
        *  \param  time                   computational time
        *  \param  counter                number of time steps
+       *  \param  doubleValues           list of extra double values to be written
+       *  \param  intValues              list of extra int values to be written
+       */
+      static void write(const double h,
+                        const double size,
+                        const double time,
+                        const int counter,
+                        const std::vector< DoublePairType >& doubleValues,
+                        const std::vector< IntPairType >& intValues )
+      {
+        // now write to file
+        instance().writeerr(h,size,time,counter, doubleValues, intValues );
+      }
+
+      /** \brief commit a line to the eoc file
+       *
+       *  \param  h                      grid width (e.g. given by GridWith utility class)
+       *  \param  size                   number of grid elements
+       *  \param  time                   computational time
+       *  \param  counter                number of time steps
        *  \param  avgTimeStep            average time step for the ODE solver
        *  \param  minTimeStep            minimal time step for the ODE solver
        *  \param  maxTimeStep            maximal time step for the ODE solver
@@ -431,6 +451,35 @@ namespace Dune
         intValues.push_back( IntPairType( "max{Newton/linS}", max_newton_iterations ) );
         intValues.push_back( IntPairType( "max{ILS/linS}", max_ils_iterations ) );
 
+        // print last line to out
+        instance().printerr( h, size, time, counter, doubleValues, intValues, out );
+
+        // now write to file
+        instance().writeerr(h,size,time,counter, doubleValues, intValues );
+      }
+
+      /** \brief commit a line to the eoc file
+       *
+       *  \param  h                      grid width (e.g. given by GridWith utility class)
+       *  \param  size                   number of grid elements
+       *  \param  time                   computational time
+       *  \param  counter                number of time steps
+       *  \param  avgTimeStep            average time step for the ODE solver
+       *  \param  minTimeStep            minimal time step for the ODE solver
+       *  \param  maxTimeStep            maximal time step for the ODE solver
+       *  \param  newton_iterations      number of newton iterations
+       *  \param  ils_iterations         number of iteration of the iterative linear solver
+       *  \param  max_newton_iterations  maximal number of newton iterations
+       *  \param  max_ils_iterations     maximal number of iteration of the iterative linear solver
+       */
+      static void write(const double h,
+                        const double size,
+                        const double time,
+                        const int counter,
+                        const std::vector< DoublePairType >& doubleValues,
+                        const std::vector< IntPairType >& intValues,
+                        std::ostream& out)
+      {
         // print last line to out
         instance().printerr( h, size, time, counter, doubleValues, intValues, out );
 
