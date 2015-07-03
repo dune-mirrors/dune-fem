@@ -17,7 +17,7 @@ namespace Dune {
  *
  *  If data is to be visualized during a computation
  *  the Dune::DataWriter can also be used by
- *  setting the parameter \b fem.grapedisplay
+ *  setting the parameter \b fem.io.grapedisplay
  *  to 1. Each time a file is written to disk,
  *  the data is simultaneously displayed in
  *  GraPE. By pressing the exit button in GraPE

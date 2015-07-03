@@ -296,7 +296,6 @@ try
     Dune::Fem::Parameter::append( argv[ i ] );
   // make sure output parameters are added
   Dune::Fem::Parameter::append( "fem.prefix","output" );
-  Dune::Fem::Parameter::append( "fem.io.savetime", "0.0" );
   Dune::Fem::Parameter::append( "fem.io.savecount", "1" );
   Dune::Fem::Parameter::append( "fem.io.outputformat", "vtk-cell" );
   Dune::Fem::Parameter::append( "fem.io.partitioning", "rank" );
