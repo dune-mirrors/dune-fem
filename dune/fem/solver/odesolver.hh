@@ -39,7 +39,7 @@ namespace DuneODE
   {
     using ImplicitRungeKuttaSolverParameters :: keyPrefix_;
 
-    ODEParameters( const std::string keyPrefix = "fem.ode" )
+    ODEParameters( const std::string keyPrefix = "fem.ode." )
       : ImplicitRungeKuttaSolverParameters( keyPrefix )
     {}
 
