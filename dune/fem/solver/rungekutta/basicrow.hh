@@ -48,7 +48,7 @@ namespace DuneODE
   };
 
   struct ROWSolverParameter
-    : public Dune::Fem::LocalParameter< NewtonParameter, NewtonParameter >
+    : public Dune::Fem::LocalParameter< ROWSolverParameter, ROWSolverParameter >
   {
     protected:
       // key prefix, default is fem.solver.row. (can be overloaded by user)
