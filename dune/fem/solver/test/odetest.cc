@@ -274,7 +274,7 @@ void solve(OdeFactory factory, const bool verbose)
   exact -= U;
   exact /= U.two_norm();
 
-  std::cout << "Zwo norm: " << exact.two_norm() << std::endl;
+  std::cout << "Two norm: " << exact.two_norm() << std::endl;
   if( exact.two_norm() > 1e-2 )
   {
     std::cerr << "ERROR: ode solver did not converge!" << std::endl;
