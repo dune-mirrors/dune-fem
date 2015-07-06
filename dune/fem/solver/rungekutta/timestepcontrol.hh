@@ -38,8 +38,8 @@ namespace DuneODE
     const double sigma_;
 
   public:
-    ImplicitRungeKuttaSolverParameters ( const std::string keyPrefix = "fem.ode" )
-    : keyPrefix_( keyPrefix + "." ),
+    ImplicitRungeKuttaSolverParameters ( const std::string keyPrefix = "fem.ode." )
+    : keyPrefix_( keyPrefix ),
       minIter_( Dune::Fem::Parameter::getValue< int >( keyPrefix_ + "miniterations", 14 ) ),
       maxIter_( Dune::Fem::Parameter::getValue< int >( keyPrefix_ + "maxiterations" , 16 ) ),
       sigma_( Dune::Fem::Parameter::getValue< double >( keyPrefix_ + "cflincrease" , 1.1 ) )
