@@ -10,6 +10,7 @@ solver_HEADERS = cginverseoperator.hh \
                  newtoninverseoperator.hh \
                  pardg.hh \
 		 						 pardginverseoperators.hh \
+								 parameter.hh \
                  petscsolver.hh \
 		 						 preconditionedinverseoperator.hh \
                  rungekutta.hh \

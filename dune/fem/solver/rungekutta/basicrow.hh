@@ -14,6 +14,7 @@
 
 //- dune-fem includes
 #include <dune/fem/solver/odesolver.hh>
+#include <dune/fem/solver/parameter.hh>
 
 namespace DuneODE
 {
@@ -47,30 +48,36 @@ namespace DuneODE
   };
 
   struct ROWSolverParameter
-#ifndef DOXYGEN
-  : public LocalParameter< ROWSolverParameter, ROWSolverParameter >
-#endif
+    : public Dune::Fem::LocalParameter< NewtonParameter, NewtonParameter >
   {
-    ROWSolverParameter () {}
+    protected:
+      // key prefix, default is fem.solver.row. (can be overloaded by user)
+      const std::string keyPrefix_;
+
+
+    public:
+    ROWSolverParameter( const std::string keyPrefix = "fem.solver.row." )
+      : keyPrefix_( keyPrefix )
+    {}
 
     virtual double linAbsTolParameter ( )  const
     {
-      return Parameter::getValue< double >( "fem.solver.row.linabstol", 1e-6 );
+      return Parameter::getValue< double >( keyPrefix_ + "linabstol", 1e-6 );
     }
 
     virtual double linReductionParameter ( ) const
     {
-      return Parameter::getValue< double >( "fem.solver.row.linreduction", 1e-4  );
+      return Parameter::getValue< double >( keyPrefix_ + "linreduction", 1e-4  );
     }
 
     virtual bool linearSolverVerbose () const
     {
-      return Parameter::getValue< bool >( "fem.solver.row.linear.verbose", false );
+      return Parameter::getValue< bool >( keyPrefix_ + "verbose", false );
     }
 
     virtual int maxLinearIterationsParameter () const
     {
-      return Parameter::getValue< int >( "fem.solver.row.maxlineariterations", std::numeric_limits< int >::max() );
+      return Parameter::getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
     }
   };
 

@@ -5,6 +5,7 @@
 #include <cfloat>
 #include <iostream>
 
+#include <dune/fem/solver/parameter.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/differentiableoperator.hh>
@@ -19,48 +20,62 @@ namespace Dune
     // ---------------
 
     struct NewtonParameter
-#ifndef DOXYGEN
-    : public LocalParameter< NewtonParameter, NewtonParameter >
-#endif
+      : public Dune::Fem::LocalParameter< NewtonParameter, NewtonParameter >
     {
-      NewtonParameter () {}
+      protected:
+
+      std::shared_ptr<SolverParameter> baseParam_;
+      // key prefix, default is fem.ode.newton. (can be overloaded by user)
+      const std::string keyPrefix_;
+
+      public:
+      NewtonParameter( const SolverParameter& baseParameter, const std::string keyPrefix = "fem.solver.newton." )
+        : baseParam_( baseParameter.clone() ),
+          keyPrefix_( keyPrefix )
+      {}
+
+      NewtonParameter( const std::string keyPrefix = "fem.solver.newton." )
+        : baseParam_( nullptr ),
+          keyPrefix_( keyPrefix )
+      {}
 
       virtual double toleranceParameter () const
       {
-        return Parameter::getValue< double >( "fem.solver.newton.tolerance", 1e-6 );
+        return Parameter::getValue< double >( keyPrefix_ + "tolerance", 1e-6 );
       }
 
       virtual double linAbsTolParameter ( const double &tolerance )  const
       {
-        return Parameter::getValue< double >( "fem.solver.newton.linabstol", tolerance / 8 );
+        return Parameter::getValue< double >(keyPrefix_ +  "linabstol", tolerance / 8 );
       }
 
       virtual double linReductionParameter ( const double &tolerance ) const
       {
-        return Parameter::getValue< double >( "fem.solver.newton.linreduction", tolerance / 8 );
+        return Parameter::getValue< double >( keyPrefix_ + "linreduction", tolerance / 8 );
       }
 
-      virtual bool verbose () const
+      virtual bool newtonVerbose () const
       {
-        const bool v = Parameter::getValue< bool >( "fem.solver.verbose", false );
-        return Parameter::getValue< bool >( "fem.solver.newton.verbose", v );
+        const bool v = baseParam_? baseParam_->verbose() : false;
+        return Parameter::getValue< bool >(keyPrefix_ +  "verbose", v );
       }
 
       virtual bool linearSolverVerbose () const
       {
-        const bool v = Parameter::getValue< bool >( "fem.solver.verbose", false );
-        return Parameter::getValue< bool >( "fem.solver.newton.linear.verbose", v );
+        const bool v = baseParam_? baseParam_->verbose() : false;
+        return Parameter::getValue< bool >( keyPrefix_ + "linear.verbose", v );
       }
 
       virtual int maxIterationsParameter () const
       {
-        return Parameter::getValue< int >( "fem.solver.newton.maxiterations", std::numeric_limits< int >::max() );
+        return Parameter::getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
       }
 
       virtual int maxLinearIterationsParameter () const
       {
-        return Parameter::getValue< int >( "fem.solver.newton.maxlineariterations", std::numeric_limits< int >::max() );
+        return Parameter::getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
       }
+
     };
 
 
@@ -113,7 +128,7 @@ namespace Dune
         tolerance_( parameter.toleranceParameter() ),
         linAbsTol_( parameter.linAbsTolParameter( tolerance_ ) ),
         linReduction_( parameter.linReductionParameter( tolerance_ ) ),
-        verbose_( parameter.verbose() && MPIManager::rank () == 0 ),
+        verbose_( parameter.newtonVerbose() && MPIManager::rank () == 0 ),
         linVerbose_( parameter.linearSolverVerbose() ),
         maxIterations_( parameter.maxIterationsParameter() ),
         maxLinearIterations_( parameter.maxLinearIterationsParameter() )
@@ -130,7 +145,7 @@ namespace Dune
         tolerance_( epsilon ),
         linAbsTol_( parameter.linAbsTolParameter( tolerance_ ) ),
         linReduction_( parameter.linReductionParameter( tolerance_ ) ),
-        verbose_( parameter.verbose() ),
+        verbose_( parameter.newtonVerbose() ),
         linVerbose_( parameter.linearSolverVerbose() ),
         maxIterations_( parameter.maxIterationsParameter() ),
         maxLinearIterations_( parameter.maxLinearIterationsParameter() )
