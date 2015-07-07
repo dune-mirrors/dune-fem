@@ -115,6 +115,8 @@ namespace Dune
 
       typedef typename BaseType::DomainFieldType DomainFieldType;
 
+      typedef NewtonParameter ParametersType;
+
       /** constructor
        *
        *  \param[in]  op       operator to invert

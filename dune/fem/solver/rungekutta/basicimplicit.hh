@@ -66,6 +66,9 @@ namespace DuneODE
 
     typedef Dune::Fem::TimeProviderBase TimeProviderType;
 
+    typedef typename TimeStepControlType::ParametersType ParametersType;
+    typedef typename NonlinearSolver::ParametersType     NonlinearSolverParametersType;
+
     /** \brief constructor
      *
      *  \param[in]  helmholtzOp      Helmholtz operator \f$L\f$
@@ -77,9 +80,10 @@ namespace DuneODE
     BasicImplicitRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
                                     const ButcherTable &butcherTable,
                                     const TimeStepControlType &timeStepControl = TimeStepControl(),
-                                    const SourceTermType &sourceTerm = SourceTermType() )
+                                    const SourceTermType &sourceTerm = SourceTermType(),
+                                    const NonlinearSolverParametersType& parameters = NonlinearSolverParametersType() )
     : helmholtzOp_( helmholtzOp ),
-      nonlinearSolver_( helmholtzOp_ ),
+      nonlinearSolver_( helmholtzOp_, parameters ),
       timeStepControl_( timeStepControl ),
       sourceTerm_( sourceTerm ),
       stages_( butcherTable.stages() ),
@@ -89,6 +93,38 @@ namespace DuneODE
       c_( butcherTable.c() ),
       rhs_( "RK rhs", helmholtzOp_.space() ),
       update_( stages(), nullptr )
+    {
+      setup( butcherTable );
+    }
+
+    /** \brief constructor
+     *
+     *  \param[in]  helmholtzOp      Helmholtz operator \f$L\f$
+     *  \param[in]  butcherTable     butcher table to use
+     *  \param[in]  timeStepControl  time step controller
+     */
+    template< class ButcherTable >
+    BasicImplicitRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
+                                    const ButcherTable &butcherTable,
+                                    const TimeStepControlType &timeStepControl = TimeStepControl(),
+                                    const NonlinearSolverParametersType& parameters = NonlinearSolverParametersType() )
+    : helmholtzOp_( helmholtzOp ),
+      nonlinearSolver_( helmholtzOp_, parameters ),
+      timeStepControl_( timeStepControl ),
+      sourceTerm_( SourceTermType() ),
+      stages_( butcherTable.stages() ),
+      alpha_( butcherTable.A() ),
+      gamma_( stages() ),
+      beta_( stages() ),
+      c_( butcherTable.c() ),
+      rhs_( "RK rhs", helmholtzOp_.space() ),
+      update_( stages(), nullptr )
+    {
+      setup( butcherTable );
+    }
+
+    template< class ButcherTable >
+    void setup( const ButcherTable& butcherTable )
     {
       // create intermediate functions
       for( int i = 0; i < stages(); ++i )
@@ -123,7 +159,10 @@ namespace DuneODE
       delta_ = 1.0;
       for( int i = 0; i < stages(); ++i )
         delta_ -= beta_[ i ];
+
     }
+
+
 
     /** \brief destructor */
     ~BasicImplicitRungeKuttaSolver ()

@@ -119,24 +119,50 @@ namespace DuneODE
     typedef typename BaseType::SourceTermType SourceTermType;
 
     typedef typename TimeStepControlType::TimeProviderType TimeProviderType;
-    typedef typename TimeStepControlType::ParametersType ParametersType;
+    typedef typename BaseType::ParametersType                  ParametersType;
+    typedef typename BaseType::NonlinearSolverParametersType   NonlinearSolverParametersType;
 
     /** \brief constructor
      *
      *  \param[in]  explicitOp    explicit operator
      *  \param[in]  helmholtzOp   Helmholtz operator \f$L\f$
      *  \param[in]  timeProvider  time provider
-     *  \param[in]  butcherTable  butcher table to use
-     *  \param[in]  traits        additional traits
+     *  \param[in]  order         order of butcher table to use
+     *  \param[in]  tscParam      parameters for implicit time step control
+     *  \param[in]  nlsParam      parameters for non linear solver control
      */
     SemiImplicitRungeKuttaSolver ( ExplicitOperatorType &explicitOp,
                                    HelmholtzOperatorType &helmholtzOp,
                                    TimeProviderType &timeProvider,
                                    int order = 1,
-                                   const ParametersType &parameters = ParametersType() )
-    : BaseType( helmholtzOp, butcherTable( order, false ), TimeStepControlType( timeProvider, parameters ), SourceTermType( explicitOp, butcherTable( order, true ), butcherTable( order, false ).A() ) )
+                                   const ParametersType& tscParams = ParametersType(),
+                                   const NonlinearSolverParametersType& nlsParams = NonlinearSolverParametersType() )
+    : BaseType( helmholtzOp,
+                butcherTable( order, false ),
+                TimeStepControlType( timeProvider, tscParams ),
+                SourceTermType( explicitOp, butcherTable( order, true ), butcherTable( order, false ).A() ),
+                nlsParams )
     {}
 
+    /** \brief constructor
+     *
+     *  \param[in]  explicitOp    explicit operator
+     *  \param[in]  helmholtzOp   Helmholtz operator \f$L\f$
+     *  \param[in]  timeProvider  time provider
+     *  \param[in]  tscParam      parameters for implicit time step control
+     *  \param[in]  nlsParam      parameters for non linear solver control
+     */
+    SemiImplicitRungeKuttaSolver ( ExplicitOperatorType &explicitOp,
+                                   HelmholtzOperatorType &helmholtzOp,
+                                   TimeProviderType &timeProvider,
+                                   const ParametersType& tscParams = ParametersType(),
+                                   const NonlinearSolverParametersType& nlsParams = NonlinearSolverParametersType() )
+    : BaseType( helmholtzOp,
+                butcherTable( -1, false ),
+                TimeStepControlType( timeProvider, tscParams ),
+                SourceTermType( explicitOp, butcherTable( -1, true ), butcherTable( -1, false ).A() ),
+                nlsParams )
+    {}
   protected:
     static SimpleButcherTable< double > butcherTable ( int order, bool expl )
     {

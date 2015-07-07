@@ -100,6 +100,9 @@ namespace DuneODE
     typedef TimeStepControl TimeStepControlType;
     typedef SourceTerm SourceTermType;
 
+    typedef ROWSolverParameter                           ParametersType;
+    typedef typename NonlinearSolver::ParametersType     NonlinearSolverParametersType;
+
     typedef typename HelmholtzOperator::SpaceOperatorType::PreconditionOperatorType PreconditionOperatorType;
 
     typedef Dune::Fem::TimeProviderBase TimeProviderType;
@@ -113,12 +116,13 @@ namespace DuneODE
      */
     template< class ButcherTable >
     BasicROWRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
-                                    const ButcherTable &butcherTable,
-                                    const TimeStepControlType &timeStepControl = TimeStepControl(),
-                                    const SourceTermType &sourceTerm = SourceTermType(),
-                                    const ROWSolverParameter &parameter = ROWSolverParameter() )
+                               const ButcherTable &butcherTable,
+                               const TimeStepControlType &timeStepControl = TimeStepControl(),
+                               const SourceTermType &sourceTerm = SourceTermType(),
+                               const ParametersType& parameter = ParametersType(),
+                               const NonlinearSolverParametersType& nlsParam = NonlinearSolverParametersType() )
     : helmholtzOp_( helmholtzOp ),
-      nonlinearSolver_( helmholtzOp_ ),
+      nonlinearSolver_( helmholtzOp_, nlsParam ),
       timeStepControl_( timeStepControl ),
       sourceTerm_( sourceTerm ),
       stages_( butcherTable.stages() ),
@@ -135,6 +139,80 @@ namespace DuneODE
       linVerbose_( parameter.linearSolverVerbose() ),
       maxLinearIterations_( parameter.maxLinearIterationsParameter() ),
       preconditioner_(helmholtzOp.spaceOperator().preconditioner())
+    {
+      setup( butcherTable );
+    }
+
+    /** \brief constructor
+     *
+     *  \param[in]  helmholtzOp      Helmholtz operator \f$L\f$
+     *  \param[in]  butcherTable     butcher table to use
+     *  \param[in]  timeStepControl  time step controller
+     */
+    template< class ButcherTable >
+    BasicROWRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
+                               const ButcherTable &butcherTable,
+                               const TimeStepControlType &timeStepControl = TimeStepControl(),
+                               const ParametersType& parameter = ParametersType(),
+                               const NonlinearSolverParametersType& nlsParam = NonlinearSolverParametersType() )
+    : helmholtzOp_( helmholtzOp ),
+      nonlinearSolver_( helmholtzOp_, nlsParam ),
+      timeStepControl_( timeStepControl ),
+      sourceTerm_( SourceTermType() ),
+      stages_( butcherTable.stages() ),
+      alpha_( butcherTable.A() ),
+      alpha2_( butcherTable.B() ),
+      gamma_( stages() ),
+      beta_( stages() ),
+      c_( butcherTable.c() ),
+      rhs_( "RK rhs", helmholtzOp_.space() ),
+      temp_( "RK temp", helmholtzOp_.space() ),
+      update_( stages(), nullptr ),
+      linAbsTol_( parameter.linAbsTolParameter( ) ),
+      linReduction_( parameter.linReductionParameter( ) ),
+      linVerbose_( parameter.linearSolverVerbose() ),
+      maxLinearIterations_( parameter.maxLinearIterationsParameter() ),
+      preconditioner_(helmholtzOp.spaceOperator().preconditioner())
+    {
+      setup( butcherTable );
+    }
+
+    /** \brief constructor
+     *
+     *  \param[in]  helmholtzOp      Helmholtz operator \f$L\f$
+     *  \param[in]  butcherTable     butcher table to use
+     */
+    template< class ButcherTable >
+    BasicROWRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
+                               const ButcherTable &butcherTable,
+                               const ParametersType& parameter = ParametersType(),
+                               const NonlinearSolverParametersType& nlsParam = NonlinearSolverParametersType() )
+    : helmholtzOp_( helmholtzOp ),
+      nonlinearSolver_( helmholtzOp_, nlsParam ),
+      timeStepControl_( TimeStepControl() ),
+      sourceTerm_( SourceTermType() ),
+      stages_( butcherTable.stages() ),
+      alpha_( butcherTable.A() ),
+      alpha2_( butcherTable.B() ),
+      gamma_( stages() ),
+      beta_( stages() ),
+      c_( butcherTable.c() ),
+      rhs_( "RK rhs", helmholtzOp_.space() ),
+      temp_( "RK temp", helmholtzOp_.space() ),
+      update_( stages(), nullptr ),
+      linAbsTol_( parameter.linAbsTolParameter( ) ),
+      linReduction_( parameter.linReductionParameter( ) ),
+      linVerbose_( parameter.linearSolverVerbose() ),
+      maxLinearIterations_( parameter.maxLinearIterationsParameter() ),
+      preconditioner_(helmholtzOp.spaceOperator().preconditioner())
+    {
+      setup( butcherTable );
+    }
+
+
+
+    template< class ButcherTable >
+    void setup( const ButcherTable& butcherTable )
     {
       std::cout << "ROW method of order=" << butcherTable.order() << " with " << stages_ << " stages" << std::endl;
       // create intermediate functions

@@ -53,7 +53,15 @@ namespace DuneODE
       switch( method )
       {
       case 0:
-        solver = new PARDG::GMRES( comm, Parameter::getValue< int >( keyPrefix_ + "gmrescycles" , 15 ) );
+        int cycles;
+        if( Fem :: Parameter :: exists( keyPrefix_ + "gmres.cycles" ) )
+          cycles = Parameter::getValue< int >( keyPrefix_ + "gmres.cycles", 15 );
+        else
+        {
+          std::cerr << "WARNING: deprecated key, use '" << keyPrefix_ << "gmres.cycles' instead!" << std::endl;
+          cycles = Parameter::getValue< int >( keyPrefix_ + "gmrescycles", 15 );
+        }
+        solver = new PARDG::GMRES( comm, cycles );
         break;
 
       case 1:
