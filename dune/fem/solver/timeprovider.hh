@@ -293,15 +293,15 @@ namespace Dune
                       (for testing only);
                       defaults to 1
      */
-    template< class C = typename MPIManager::CollectiveCommunication >
+    template< class CollectiveCommunication = typename MPIManager::CollectiveCommunication >
     class TimeProvider
     : public TimeProviderBase
     {
-      typedef TimeProvider< C > ThisType;
+      typedef TimeProvider< CollectiveCommunication > ThisType;
       typedef TimeProviderBase BaseType;
 
     public:
-      typedef CollectiveCommunication< C > CollectiveCommunicationType;
+      typedef CollectiveCommunication CollectiveCommunicationType;
 
     protected:
       inline double getCflFactor() const
