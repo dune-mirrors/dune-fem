@@ -243,9 +243,11 @@ namespace Dune
       createAMGPreconditioner(const CollectiveCommunictionType& comm,
                 int iter, field_type relax, const Smoother* )
       {
+        typedef typename Dune::FieldTraits< field_type>::real_type real_type;
+        typedef typename std::conditional< std::is_convertible<field_type,real_type>::value, 
+                         Dune::Amg::FirstDiagonal, Dune::Amg::RowSum >::type Norm;
         typedef Dune::Amg::CoarsenCriterion<
-          Dune::Amg::UnSymmetricCriterion<ISTLMatrixType,
-                                    Dune::Amg::FirstDiagonal> > Criterion;
+                Dune::Amg::UnSymmetricCriterion<ISTLMatrixType, Norm > > Criterion;
 
         typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
 
