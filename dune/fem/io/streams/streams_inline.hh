@@ -2,6 +2,7 @@
 #define DUNE_FEM_STREAMS_INLINE_HH
 
 #include <vector>
+#include <array>
 
 #include <dune/common/array.hh>
 #include <dune/common/fvector.hh>
@@ -156,7 +157,7 @@ namespace Dune
 
     template< class Traits, class T, std::size_t N >
     inline OutStreamInterface< Traits > &
-    operator<< ( OutStreamInterface< Traits > &out, const Dune::array< T, N > &value )
+    operator<< ( OutStreamInterface< Traits > &out, const std::array< T, N > &value )
     {
       for( std::size_t i = 0; i < N; ++i )
         out << value[ i ];
@@ -267,7 +268,7 @@ namespace Dune
 
     template< class Traits, class T, std::size_t N >
     inline InStreamInterface< Traits > &
-    operator>> ( InStreamInterface< Traits > &in, Dune::array< T, N > &value )
+    operator>> ( InStreamInterface< Traits > &in, std::array< T, N > &value )
     {
       for( std::size_t i = 0; i < N; ++i )
         in >> value[ i ];

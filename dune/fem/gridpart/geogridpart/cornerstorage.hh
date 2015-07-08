@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_CORNERSTORAGE_HH
 #define DUNE_FEM_GRIDPART_GEOGRIDPART_CORNERSTORAGE_HH
 
+#include <array>
+
 #include <dune/common/typetraits.hh>
 
 #include <dune/grid/geometrygrid/hostcorners.hh>
@@ -170,7 +172,7 @@ namespace Dune
       {}
 
       template< std::size_t size >
-      void calculate ( Dune::array< Coordinate, size > &corners ) const
+      void calculate ( std::array< Coordinate, size > &corners ) const
       {
         const std::size_t numCorners = coordFunctionCaller_.numCorners();
         for( std::size_t i = 0; i < numCorners; ++i )
@@ -208,7 +210,7 @@ namespace Dune
       {}
 
       template< std::size_t size >
-      void calculate ( Dune::array< Coordinate, size > &corners ) const
+      void calculate ( std::array< Coordinate, size > &corners ) const
       {
         assert( (localCoordFunction_.numDofs() % dimensionworld) == 0 );
         const std::size_t numCorners = localCoordFunction_.numDofs() / dimensionworld;
@@ -258,7 +260,7 @@ namespace Dune
       {}
 
       template< std::size_t size >
-      void calculate ( Dune::array< Coordinate, size > &corners ) const
+      void calculate ( std::array< Coordinate, size > &corners ) const
       {
         const std::size_t numCorners = hostLocalGeometry_.corners();
         assert( size >= numCorners );
@@ -283,7 +285,7 @@ namespace Dune
 
       typedef FieldVector< ctype, cdim > Coordinate;
 
-      typedef Dune::array< Coordinate, (1 << mydim) > Coords;
+      typedef std::array< Coordinate, (1 << mydim) > Coords;
 
     public:
       typedef typename Coords::const_iterator const_iterator;

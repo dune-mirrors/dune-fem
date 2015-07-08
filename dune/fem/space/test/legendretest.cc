@@ -1,6 +1,7 @@
 #include <config.h>
 
 #include <iostream>
+#include <array>
 
 // #include <dune/grid/io/file/dgfparser/gridtype.hh>
 // static const int dimw = dimworld;
@@ -373,7 +374,7 @@ int main (int argc, char **argv)
 
 #if YGRID
   FieldVector<double, dimw> lang;
-  Dune::array<int, dimw> anz;
+  std:::array<int, dimw> anz;
   std::bitset< dimw > per;
   for(int i=0;i<dimw;i++)
   {

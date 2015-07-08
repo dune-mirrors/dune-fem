@@ -5,9 +5,9 @@
 #include <algorithm>
 #include <cstddef>
 #include <tuple>
+#include <array>
 
 // dune-common includes
-#include <dune/common/array.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/forloop.hh>
 #include <dune/common/fvector.hh>
@@ -87,7 +87,7 @@ namespace Dune
       void doHessianEach ( int d, HessianRangeType hessian, std::size_t &index, const RangeFieldType *buffer, Functor functor ) const;
 
       ShapeFunctionSetTuple shapeFunctionSetTuple_;
-      array< std::size_t, dimension > sizes_;
+      std::array< std::size_t, dimension > sizes_;
       RangeFieldType *buffer_;
     };
 
@@ -152,7 +152,7 @@ namespace Dune
     template< int i >
     struct TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >::Size
     {
-      static void apply ( const ShapeFunctionSetTuple &tuple, array< std::size_t, FunctionSpace::dimDomain > &size )
+      static void apply ( const ShapeFunctionSetTuple &tuple, std::array< std::size_t, FunctionSpace::dimDomain > &size )
       {
         size[ i ] = std::get< i >( tuple ).size();
       }
