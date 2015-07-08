@@ -1,9 +1,10 @@
 #ifndef DUNE_FEM_COMMON_FMATRIXCOL_HH
 #define DUNE_FEM_COMMON_FMATRIXCOL_HH
 
+#include <type_traits>
+
 #include <dune/common/densevector.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/common/typetraits.hh>
 
 namespace Dune
 {
@@ -24,8 +25,8 @@ namespace Dune
   {
     typedef FieldMatrixColumn< FieldMatrix > derived_type;
 
-    typedef typename DenseMatVecTraits< typename remove_const< FieldMatrix >::type >::value_type value_type;
-    typedef typename DenseMatVecTraits< typename remove_const< FieldMatrix >::type >::size_type size_type;
+    typedef typename DenseMatVecTraits< typename std::remove_const< FieldMatrix >::type >::value_type value_type;
+    typedef typename DenseMatVecTraits< typename std::remove_const< FieldMatrix >::type >::size_type size_type;
   };
 
 

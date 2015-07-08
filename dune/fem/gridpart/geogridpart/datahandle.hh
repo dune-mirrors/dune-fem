@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_DATAHANDLE_HH
 #define DUNE_FEM_GRIDPART_GEOGRIDPART_DATAHANDLE_HH
 
-#include <dune/common/typetraits.hh>
+#include <type_traits>
 
 #include <dune/grid/common/datahandleif.hh>
 
@@ -20,7 +20,7 @@ namespace Dune
     class GeoDataHandle
     : public CommDataHandleIF< GeoDataHandle< GridFamily, WrappedHandle >, typename WrappedHandle::DataType >
     {
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
       template< class HostEntity >
       class EntityProxy;

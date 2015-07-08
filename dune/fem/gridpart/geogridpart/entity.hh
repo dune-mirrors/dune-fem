@@ -24,15 +24,15 @@ namespace Dune
     class GeoEntity
     : public DefaultGridPartEntity < codim, dim, GridFamily >
     {
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
     public:
       static const int codimension = codim;
-      static const int dimension = remove_const< GridFamily >::type::dimension;
+      static const int dimension = std::remove_const< GridFamily >::type::dimension;
       static const int mydimension = dimension - codimension;
-      static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
+      static const int dimensionworld = std::remove_const< GridFamily >::type::dimensionworld;
 
-      typedef typename remove_const< GridFamily >::type::ctype ctype;
+      typedef typename std::remove_const< GridFamily >::type::ctype ctype;
 
       typedef typename Traits::template Codim< codimension >::EntitySeed EntitySeed;
       typedef typename Traits::template Codim< codimension >::Geometry Geometry;
@@ -109,15 +109,15 @@ namespace Dune
     class GeoEntity< 0, dim, GridFamily >
     : public DefaultGridPartEntity < 0, dim, GridFamily >
     {
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
     public:
       static const int codimension = 0;
-      static const int dimension = remove_const< GridFamily >::type::dimension;
+      static const int dimension = std::remove_const< GridFamily >::type::dimension;
       static const int mydimension = dimension - codimension;
-      static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
+      static const int dimensionworld = std::remove_const< GridFamily >::type::dimensionworld;
 
-      typedef typename remove_const< GridFamily >::type::ctype ctype;
+      typedef typename std::remove_const< GridFamily >::type::ctype ctype;
 
       typedef typename Traits::template Codim< codimension >::EntitySeed EntitySeed;
       typedef typename Traits::template Codim< codimension >::Geometry Geometry;

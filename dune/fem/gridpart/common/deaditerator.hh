@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDPART_COMMON_DEADINTERSECTIONITERATOR_HH
 #define DUNE_FEM_GRIDPART_COMMON_DEADINTERSECTIONITERATOR_HH
 
+#include <type_traits>
+
 #include <dune/grid/common/entityiterator.hh>
 #include <dune/grid/common/intersection.hh>
 #include <dune/grid/common/intersectioniterator.hh>
@@ -45,19 +47,18 @@ namespace Dune
     template< class GridFamily >
     class DeadIntersection
     {
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
     public:
-      typedef typename remove_const< GridFamily >::type::ctype ctype;
+      typedef typename std::remove_const< GridFamily >::type::ctype ctype;
 
-      static const int dimension = remove_const< GridFamily >::type::dimension;
-      static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
+      static const int dimension = std::remove_const< GridFamily >::type::dimension;
+      static const int dimensionworld = std::remove_const< GridFamily >::type::dimensionworld;
 
       typedef typename Traits::template Codim< 0 >::Entity Entity;
       typedef typename Traits::template Codim< 1 >::Geometry Geometry;
       typedef typename Traits::template Codim< 1 >::LocalGeometry LocalGeometry;
 
-    public:
       Entity inside () const
       {
         DUNE_THROW( InvalidStateException, "Call to inside on dead intersection." );

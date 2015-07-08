@@ -2,8 +2,7 @@
 #define DUNE_FEM_GRIDPART_GEOGRIDPART_CORNERSTORAGE_HH
 
 #include <array>
-
-#include <dune/common/typetraits.hh>
+#include <type_traits>
 
 #include <dune/grid/geometrygrid/hostcorners.hh>
 #include <dune/grid/geometrygrid/coordfunction.hh>
@@ -147,14 +146,14 @@ namespace Dune
     template< int mydim, class GridFamily >
     class GeoCoordVector
     {
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
-      typedef typename remove_const< GridFamily >::type::ctype ctype;
+      typedef typename std::remove_const< GridFamily >::type::ctype ctype;
 
-      static const int dimension = remove_const< GridFamily >::type::dimension;
+      static const int dimension = std::remove_const< GridFamily >::type::dimension;
       static const int mydimension = mydim;
       static const int codimension = dimension - mydimension;
-      static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
+      static const int dimensionworld = std::remove_const< GridFamily >::type::dimensionworld;
 
       typedef FieldVector< ctype, dimensionworld > Coordinate;
 
@@ -191,14 +190,14 @@ namespace Dune
     template< int mydim, class GridFamily, class LocalFunction >
     class GeoLocalCoordVector
     {
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
-      typedef typename remove_const< GridFamily >::type::ctype ctype;
+      typedef typename std::remove_const< GridFamily >::type::ctype ctype;
 
-      static const int dimension = remove_const< GridFamily >::type::dimension;
+      static const int dimension = std::remove_const< GridFamily >::type::dimension;
       static const int mydimension = mydim;
       static const int codimension = dimension - mydimension;
-      static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
+      static const int dimensionworld = std::remove_const< GridFamily >::type::dimensionworld;
 
       typedef FieldVector< ctype, dimensionworld > Coordinate;
 
@@ -236,14 +235,14 @@ namespace Dune
     template< class GridFamily >
     class GeoIntersectionCoordVector
     {
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
-      typedef typename remove_const< GridFamily >::type::ctype ctype;
+      typedef typename std::remove_const< GridFamily >::type::ctype ctype;
 
-      static const int dimension = remove_const< GridFamily >::type::dimension;
+      static const int dimension = std::remove_const< GridFamily >::type::dimension;
       static const int codimension = 1;
       static const int mydimension = dimension-codimension;
-      static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
+      static const int dimensionworld = std::remove_const< GridFamily >::type::dimensionworld;
 
       typedef FieldVector< ctype, dimensionworld > Coordinate;
 
@@ -281,7 +280,7 @@ namespace Dune
     template< int mydim, int cdim, class GridFamily >
     class GeoCornerStorage
     {
-      typedef typename remove_const< GridFamily >::type::ctype ctype;
+      typedef typename std::remove_const< GridFamily >::type::ctype ctype;
 
       typedef FieldVector< ctype, cdim > Coordinate;
 
