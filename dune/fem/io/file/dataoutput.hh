@@ -63,7 +63,7 @@ namespace Dune
       const std::string keyPrefix_;
 
       public:
-      DataOutputParameters( const std::string keyPrefix = "fem.io" )
+      DataOutputParameters( const std::string keyPrefix = "fem.io." )
         : keyPrefix_( keyPrefix )
       {}
 
