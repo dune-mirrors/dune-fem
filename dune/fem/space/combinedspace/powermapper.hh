@@ -97,7 +97,7 @@ namespace Dune
         DofMapper ( GridPartType &gridPart, MapperType &mapper )
           : gridPart_( gridPart ),
           mapper_( mapper ),
-          offset_( mapper().size() )
+          offset_( mapper_.size() )
         {}
 
         SizeType size () const {  return mapper().size() * numComponents; }
@@ -164,9 +164,8 @@ namespace Dune
         MapperType &mapper () { return mapper_; }
         const MapperType &mapper () const { return mapper_; }
 
-      private:
-        MapperType &mapper_;
         GridPartType &gridPart_;
+        MapperType &mapper_;
         SizeType offset_;
       };
 
@@ -283,7 +282,7 @@ namespace Dune
       protected:
         void update ()
         {
-          oldOffSet = offset_;
+          oldOffset_ = offset_;
           offset_ = mapper().size();
         }
 
