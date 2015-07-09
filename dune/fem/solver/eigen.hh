@@ -1,0 +1,61 @@
+#ifndef DUNE_FEM_SOLVER_EIGEN_HH
+#define DUNE_FEM_SOLVER_EIGEN_HH
+
+#include <Eigen/IterativeLinearSolvers>
+
+namespace Dune
+{
+
+  namespace Fem
+  {
+    template< class DiscreteFunction >
+    class EigenCGInverseOperator
+      : public Fem::Operator< DiscreteFunction, DiscreteFunction >
+    {
+      typedef Fem::Operator< DiscreteFunction, DiscreteFunction > Base;
+
+    public:
+      typedef typename Base::DomainFunctionType DomainFunction;
+      typedef typename Base::RangeFunctionType RangeFunction;
+
+      typedef Fem::EigenLinearOperator< RangeFunction, DomainFunction > OperatorType;
+
+    private:
+      typedef typename OperatorType::MatrixType::MatrixStorageType Matrix;
+
+      typedef typename OperatorType::MatrixType::Ttype Field;
+
+    public:
+      EigenCGInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter, bool verbose )
+        : op_(op)
+        , solver_()
+      {
+      }
+
+      EigenCGInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
+        : op_(op)
+        , solver_()
+      {
+        solver_.setTolerance(absLimit);
+        solver_.analyzePattern( op_.matrix().data() );
+        solver_.factorize( op_.matrix().data() );
+      }
+
+      virtual void operator() ( const DomainFunction &u, RangeFunction &w ) const
+      {
+        std::cout << "starting to solve using eigen" << std::endl;
+        w.dofVector().array().coefficients() 
+           = solver_.solve( u.dofVector().array().coefficients() );
+      }
+
+      unsigned int iterations () const { return solver_.iterations(); }
+
+    protected:
+      const OperatorType &op_;
+      Eigen::ConjugateGradient<Matrix> solver_;
+    };
+  } // namespace Fem
+
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEM_SOLVER_VIENNACL_HH

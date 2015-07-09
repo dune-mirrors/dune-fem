@@ -53,11 +53,11 @@ namespace Dune
     template <class T>
     class SparseRowMatrix
     {
-      typedef T Ttype;  //! remember the value type
       enum { defaultCol = -1 };
       enum { firstCol = defaultCol + 1 };
 
     public:
+      typedef T Ttype;  //! remember the value type
       typedef SparseRowMatrix<T> ThisType;
       //! type of the base matrix (for consistency with ISTLMatrixObject)
       typedef ThisType MatrixBaseType;
@@ -71,20 +71,13 @@ namespace Dune
       //! make matrix with 'rows' rows and 'cols' columns,
       //! maximum 'nz' non zero values in each row
       //! and intialize all values with 'val' 
-      SparseRowMatrix(int rows, int cols, int nz, const T& val = 0);
+      SparseRowMatrix(int rows, int cols, int nz );
 
       //! free memory for values_ and col_
       ~SparseRowMatrix();
 
       //! reserve memory for given rows, and number of non zeros,
-      //! set all entries to value dummy.... What is the use of this value?
-      //! only initializing with 0 makes sense, so this argument is renamed
-      //! 'dummy', by the way, nothing is happening with this argument, so
-      //! might be completely removed.
-      void reserve(int rows, int cols, int nz, const T& dummy);
-
-      //! resize keeping old values if possible
-      void resize ( int newRow, int newCol , int newNz = -1 );
+      void reserve(int rows, int cols, int nz);
 
       //! return number of rows
       int rows() const {return dim_[0];}
@@ -124,7 +117,7 @@ namespace Dune
       void clear();
 
       //! return max number of non zeros
-      //! used in BaseSparseRowMatrixObject::reserve
+      //! used in SparseRowMatrixObject::reserve
       int numNonZeros() const {return nz_;}
 
       //! return number of non zeros in row
@@ -143,6 +136,9 @@ namespace Dune
       }
 
     private:
+      //! resize keeping old values if possible
+      void resize ( int newRow, int newCol, int newNz );
+
       //! returns local col index for given global (row,col)
       int colIndex(int row, int col);
 
@@ -282,8 +278,8 @@ namespace Dune
       //! return range space (i.e. space that builds the columns)
       const RangeSpaceType& rangeSpace() const { return rangeSpace_; }
 
-      //! return reference to stability matrix
-      inline MatrixType &matrix () const
+      //! return reference to storage object
+      MatrixType &matrix () const
       {
         return matrix_;
       }
@@ -341,7 +337,7 @@ namespace Dune
             const static size_t domainLocalBlockSize = DomainSpaceType::localBlockSize;
             const int nonZeros = std::max( (int)(stencil.maxNonZerosEstimate()*domainLocalBlockSize), 
                                            matrix_.numNonZeros() );
-            matrix_.reserve( rangeSpace_.size(), domainSpace_.size(), nonZeros, 0.0 );
+            matrix_.reserve( rangeSpace_.size(), domainSpace_.size(), nonZeros );
           }
           sequence_ = domainSpace_.sequence();
         }
@@ -621,7 +617,7 @@ namespace Dune
     }
 
     template <class T>
-    SparseRowMatrix<T>::SparseRowMatrix(int rows, int cols, int nz, const T& dummy)
+    SparseRowMatrix<T>::SparseRowMatrix(int rows, int cols, int nz)
     {
       // standard settings as above
       values_ = 0;
@@ -633,7 +629,7 @@ namespace Dune
       nonZeros_ = 0;
 
       // resize and get storage
-      reserve(rows,cols,nz,dummy);
+      reserve(rows,cols,nz);
 
       // fill with value
       clear();
@@ -667,7 +663,7 @@ namespace Dune
     /***********************************/
     template <class T>
     void SparseRowMatrix<T>::
-    reserve(int rows, int cols, int nz,const T& dummy )
+    reserve(int rows, int cols, int nz)
     {
     // if (checkNonConstMethods) assert(checkConsistency());
       if( (rows == dim_[0]) && (cols == dim_[1]) && (nz == nz_))
@@ -722,7 +718,6 @@ namespace Dune
         int memHalf = (int) memSize_/2;
         if((newMemSize > memSize_) || (newMemSize < memHalf))
         {
-          T tmp = 0;
           T * oldValues = values_;       values_ = 0;
           int * oldCol  = col_;          col_ = 0;
           int * oldNonZeros = nonZeros_; nonZeros_ = 0;
@@ -731,7 +726,7 @@ namespace Dune
           const int oldSize = dim_[0];
 
           // reserve new memory
-          reserve(newRow,newCol,newNz,tmp);
+          reserve(newRow,newCol,newNz);
 
           if( (oldSize > 0) && (oldNz > 0 ))
           {
