@@ -374,7 +374,7 @@ int main (int argc, char **argv)
 
 #if YGRID
   FieldVector<double, dimw> lang;
-  std:::array<int, dimw> anz;
+  std::array<int, dimw> anz;
   std::bitset< dimw > per;
   for(int i=0;i<dimw;i++)
   {
