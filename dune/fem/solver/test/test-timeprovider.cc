@@ -18,6 +18,16 @@ try
   // start and end time for time loop and maximum time step
   const double start = 0., end = 1., maxStep = 0.2;
 
+  // test fixed step time provider
+  Dune::Fem::FixedStepTimeProvider<> fixedStepTimeProvider(start,maxStep);
+  for( ; fixedStepTimeProvider.time() < end; fixedStepTimeProvider.next())
+  {
+    // print some info
+    std::cerr << "FixedStepTimeProvider<>: time step = " << fixedStepTimeProvider.timeStep() << ", "
+              << "time = " << fixedStepTimeProvider.time() << ", "
+              << "dt = " << fixedStepTimeProvider.deltaT() << std::endl;
+
+  }
   // create random number generator
   const unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::default_random_engine engine( seed );
@@ -30,8 +40,7 @@ try
   };
 
   // create time provider and provide initial time step estimate
-  typedef Dune::Fem::TimeProvider< Dune::Fem::MPIManager::CollectiveCommunication > TimeProviderType;
-  TimeProviderType timeProvider( start, Dune::Fem::MPIManager::comm() );
+  Dune::Fem::TimeProvider<> timeProvider( start );
   timeProvider.provideTimeStepEstimate( timeStepEstimate() );
 
   for( timeProvider.init(); timeProvider.time() < end; timeProvider.next() )
@@ -47,7 +56,7 @@ try
     }
 
     // print some info
-    std::cerr << "time step = " << timeProvider.timeStep() << ", "
+    std::cerr << "TimeProvider<>: time step = " << timeProvider.timeStep() << ", "
               << "time = " << timeProvider.time() << ", "
               << "dt = " << timeProvider.deltaT() << std::endl;
   }
