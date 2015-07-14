@@ -192,6 +192,93 @@ namespace Dune
     };
 
 
+    /** \class   FixedStepTimerProvider
+     *  \ingroup ODESolver
+     *  \brief   simple time provider for constant time steps
+     *
+     *  An example of a time loop could look as follows:
+     *  \code
+     *  // create time provider
+     *  FixedStepTimeProvider tp( startTime, timeStepSize );
+     *
+     *  // time loop
+     *  for( ; tp.time() < endTime; tp.next() )
+     *  {
+     *    // do stuff
+     *  }
+     *  \endcode
+     *
+     */
+    template< class CollectiveCommunication = typename MPIManager::CollectiveCommunication >
+    class FixedStepTimeProvider
+    : public TimeProviderBase
+    {
+      typedef FixedStepTimeProvider< CollectiveCommunication > ThisType;
+      typedef TimeProviderBase BaseType;
+
+    public:
+      typedef CollectiveCommunication CollectiveCommunicationType;
+
+      /** \brief constructor
+       *
+       *  \param[in]  startTime     initial time
+       *  \param[in]  timeStepSize  time step size
+       *  \param[in]  comm          collective communication (default Dune::Fem::MPIManager::comm())
+       */
+      explicit FixedStepTimeProvider ( const double startTime, const double timeStepSize,
+                                       const CollectiveCommunicationType &comm = MPIManager::comm())
+        : BaseType( startTime ), comm_( comm )
+      {
+        dt_ = timeStepSize;
+        initTimeStep();
+      }
+
+      /** \brief constructor
+       *
+       *  \param[in]  comm  collective communication (default Dune::Fem::MPIManager::comm())
+       *
+       *  The initial time need to be provided using the parameter fem.timeprovider.starttime while
+       *  the time step size need to be provided using the parameter fem.timeprovider.fixedtimestep.
+       */
+      explicit FixedStepTimeProvider ( const CollectiveCommunicationType &comm = MPIManager::comm())
+        : BaseType( Parameter::getValue< double>( "fem.timeprovider.starttime", 0.0 ) ), comm_( comm )
+      {
+        dt_ = Parameter::getValidValue< double >("fem.timeprovider.fixedtimestep", [] ( double v ) { return v > 0.0;} );
+        initTimeStep();
+      }
+
+      virtual ~FixedStepTimeProvider () {}
+
+      FixedStepTimeProvider ( const ThisType & ) = delete;
+      FixedStepTimeProvider ( ThisType && ) = delete;
+      ThisType &operator= ( const ThisType & ) = delete;
+      ThisType &operator= ( ThisType && ) = delete;
+
+      /** \brief goto next time step */
+      void next ()
+      {
+        if( !timeStepValid() )
+          DUNE_THROW( InvalidStateException, "Invalid Time Step in FixedStepTimeProvider" );
+        advance();
+        initTimeStep();
+      }
+
+    protected:
+      using BaseType::advance;
+      using BaseType::initTimeStepEstimate;
+      using BaseType::time_;
+      using BaseType::dt_;
+      using BaseType::valid_;
+
+      inline void initTimeStep ()
+      {
+        valid_ = true;
+        initTimeStepEstimate();
+      }
+
+      const CollectiveCommunicationType &comm_;
+    };
+
 
     /**
        \ingroup ODESolver
