@@ -314,13 +314,13 @@ namespace Dune
       //! \brief return twist for inner face
       static inline int twistInSelf(const GridType & grid, const LeafIntersection& intersection)
       {
-        return grid.getRealIntersection( intersection ).twistInInside();
+        return (dim == 2) ? std::abs(grid.getRealIntersection( intersection ).twistInInside()) : grid.getRealIntersection( intersection ).twistInInside();
       }
 
       //! \brief return twist for outer face
       static inline int twistInNeighbor(const GridType &grid, const LeafIntersection& intersection )
       {
-        return grid.getRealIntersection( intersection ).twistInOutside();
+        return (dim == 2) ? std::abs(grid.getRealIntersection( intersection ).twistInOutside()) : grid.getRealIntersection( intersection ).twistInOutside();
       }
 
       /** \brief return element geometry type of inside or outside entity
