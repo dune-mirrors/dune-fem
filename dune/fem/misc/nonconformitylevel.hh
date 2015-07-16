@@ -34,7 +34,6 @@ namespace Dune
       typedef typename GridPartType :: GridType  GridType;
       typedef typename GridPartType :: template Codim<0>::IteratorType IteratorType;
       typedef typename GridPartType :: GridType :: template Codim<0>:: Entity EntityType;
-      typedef typename GridPartType :: GridType :: template Codim<0>:: EntityPointer EntityPointerType;
       typedef typename GridPartType :: IntersectionIteratorType IntersectionIteratorType;
 
       // end iterator
