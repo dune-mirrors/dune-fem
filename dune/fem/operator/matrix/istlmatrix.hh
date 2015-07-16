@@ -404,8 +404,10 @@ namespace Dune
             ConstColIterator endj = (*i).end();
             for (ConstColIterator j=(*i).begin(); j!=endj; ++j)
             {
-              if(std::abs( *j ) > 1.e-15)
+              if( (*j).infinity_norm() > 1.e-15)
+              {
                 s << i.index()+offset << " " << j.index()+offset << " " << *j << std::endl;
+              }
             }
           }
         }
