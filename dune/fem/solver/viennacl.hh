@@ -2,8 +2,8 @@
 #define DUNE_FEM_SOLVER_VIENNACL_HH
 
 #define VIENNACL_WITH_EIGEN 
-#define VIENNACL_WITH_OPENCL 
-// #define VIENNACL_WITH_OPENMP 
+// #define VIENNACL_WITH_OPENCL 
+#define VIENNACL_WITH_OPENMP 
 
 #include <viennacl/linalg/bicgstab.hpp>
 #include <viennacl/linalg/cg.hpp>
@@ -11,6 +11,8 @@
 #include <viennacl/linalg/ilu.hpp>
 #include <viennacl/compressed_matrix.hpp>
 #include <viennacl/vector.hpp>
+
+#include <dune/fem/operator/linear/eigenoperator.hh>
 
 namespace Dune
 {
@@ -103,16 +105,22 @@ namespace Dune
 
       virtual void operator() ( const DomainFunction &u, RangeFunction &w ) const
       {
-        /*
-        viennacl::vector< Field > vclU( u.size() ), vclW( w.size() );
-        viennacl::copy( u.dbegin(), u.dend(), vclU.begin() );
-        vclW = viennacl::linalg::solve( matrix_, vclU, tag_ );
-        viennacl::copy( vclW.begin(), vclW.end(), w.dbegin() );
-        */
         std::cout << "starting to solve" << std::endl;
-        w.dofVector().array().coefficients() 
-           = viennacl::linalg::solve( op_.matrix().data(), 
-                                      u.dofVector().array().coefficients(), tag_ );
+#if 1
+        viennacl::vector< Field > vclU( u.size() ), vclW( w.size() );
+        viennacl::copy( u.dofVector().array().coefficients(), vclU );
+        for (int i=0;i<100;++i)
+        {
+          std::cout << "starting to solve" << std::endl;
+          vclW = viennacl::linalg::solve( matrix_, vclU, tag_ );
+        }
+
+        viennacl::copy(  vclW,w.dofVector().array().coefficients() );
+#else
+        w.dofVector().array().coefficients() = viennacl::linalg::solve(
+                 op_.matrix().data(), u.dofVector().array().coefficients(), tag_);
+#endif
+                                                 
       }
 
       unsigned int iterations () const { return tag_.iters(); }
