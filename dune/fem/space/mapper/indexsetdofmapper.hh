@@ -258,9 +258,10 @@ namespace Dune
           const unsigned int codim = info.codim ;
 
           const unsigned int numDofs = info.numDofs ;
-          // for non-Cartesian grids check twist if on codim 1 noDofs > 1
-          // this should be the case for polOrder > 2
-          if( ! isCartesian && dimension == 2 && codim == 1 && numDofs > 1 )
+          // for non-Cartesian grids check twist if on edges with noDofs > 1
+          // this should be the case for polOrder > 2.
+          // Note that in 3d this only solves the twist problem up to polOrder = 3
+          if( ! isCartesian && codim == dimension-1 && numDofs > 1 )
           {
             typedef typename GridPart::ctype FieldType ;
             const Dune::ReferenceElement< FieldType, dimension > &refElem
