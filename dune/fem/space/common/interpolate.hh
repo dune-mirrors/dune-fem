@@ -4,6 +4,7 @@
 #include <dune/common/dynvector.hh>
 
 #include <dune/grid/common/partitionset.hh>
+#include <dune/grid/common/rangegenerators.hh>
 
 namespace Dune
 {
@@ -15,27 +16,18 @@ namespace Dune
     // -----------
 
     template< class GridFunction, class DiscreteFunction, unsigned int partitions >
-    static inline void interpolate ( const GridFunction &u, DiscreteFunction &v, PartitionSet< partitions > pset )
+    static inline void interpolate ( const GridFunction &u, DiscreteFunction &v, PartitionSet< partitions > ps )
     {
-      // obtain type of partition to iterator over
-      const PartitionIteratorType pitype = derive_partition_iterator_type< partitions >::value;
-
-      // obtain types
-      typedef typename DiscreteFunction::GridPartType::template Codim< 0 >::EntityType EntityType;
-      typedef typename DiscreteFunction::GridPartType::template Codim< 0 >::template Partition< pitype >::IteratorType IteratorType;
-      typedef typename DiscreteFunction::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      // obtain grid view
+      const auto& gv = static_cast< typename DiscreteFunction::GridPartType::GridViewType >( v.gridPart() );
 
       // reserve memory for local dof vector
       Dune::DynamicVector< typename DiscreteFunction::RangeFieldType > ldv;
-      ldv.reserve( v.space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize );
+      ldv.reserve( v.space().blockMapper().maxNumDofs() * DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize );
 
-      // iterate over selected partition of grid part
-      const IteratorType end = v.gridPart().template end< 0, pitype >();
-      for( IteratorType it = v.gridPart().template begin< 0, pitype >(); it != end; ++it )
+      // iterate over selected partition
+      for( const auto entity : elements( gv, ps ) )
       {
-        // obtain entity
-        const EntityType &entity = *it;
-
         // obtain local interpolation
         const auto interpolation = v.space().interpolation( entity );
 
