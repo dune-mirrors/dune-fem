@@ -48,16 +48,38 @@ namespace Dune
         };
 
         enum CodimType { CodimEmpty, CodimFixedSize, CodimVariableSize };
+        static const int dimension = GridPart::dimension;
+        typedef Dune::ReferenceElement< typename GridPart::ctype, dimension > RefElementType;
+        typedef Dune::ReferenceElements< typename GridPart::ctype, dimension > RefElementsType;
 
         struct BuildFunctor;
 
+        struct SubEntityFilter
+        {
+          SubEntityFilter(const RefElementType &refElement, int subEntity, int codim)
+          : active_(dimension+1), size_(0)
+          {
+            for (int c=0;c<=dimension;++c)
+            {
+              std::vector<bool> &a = active_[c];
+              a.resize( refElement.size( c ), false );
+              if (c<codim) continue;
+              if (c==codim) { a[subEntity]=true; ++size_; continue; }
+              for (int i=0;i<refElement.size(subEntity, codim, c);++i)
+              {
+                a[refElement.subEntity(subEntity, codim, i, c)] = true;
+                ++size_;
+              }
+            }
+          }
+          bool operator()(int i,int c) const { return active_[c][i]; }
+          private:
+          std::vector< std::vector< bool > > active_;
+          int size_;
+        };
         template< class Functor >
         struct MapFunctor;
-
-        static const int dimension = GridPart::dimension;
-
-        typedef Dune::ReferenceElement< typename GridPart::ctype, dimension > RefElementType;
-        typedef Dune::ReferenceElements< typename GridPart::ctype, dimension > RefElementsType;
+        struct SubEntityFilterFunctor;
 
       public:
         typedef SizeType GlobalKeyType;
@@ -95,6 +117,17 @@ namespace Dune
 
         void map ( const ElementType &element, std::vector< GlobalKeyType > &indices ) const;
 
+        /** \brief fills a vector of bools with true indicating that the corresponding 
+         *  local degree of freedom is attached to the subentity specified by the (c,i)
+         *  pair.
+         *  A local dof is attached to a subentity S if it is attached either to that 
+         *  subentity or to a subentity S'<S i.e. S' has codimension greater than c 
+         *  which and lies within S. For example all dofs are attached to the element itself
+         *  and dofs are attached to an edge also in the case where they are attached to 
+         *  the vertices of that edge.
+         **/ 
+        void onSubEntity( const ElementType &element, int i, int c, std::vector< bool > &indices ) const;
+
         unsigned int maxNumDofs () const { return maxNumDofs_; }
         unsigned int numDofs ( const ElementType &element ) const { return code( element ).numDofs(); }
 
@@ -107,7 +140,6 @@ namespace Dune
 
         template< class Entity >
         unsigned int numEntityDofs ( const Entity &entity ) const;
-
 
         // global information
 
@@ -218,15 +250,12 @@ namespace Dune
         std::vector< SubEntityInfo > &subEntityInfo_;
       };
 
-
-
       // DofMapper::MapFunctor
       // ---------------------
 
       // The functor maps all DoFs for a given entity. Intentially, it
       // is passed as argument to DofMapperCode::operator() which then
       // calls the apply()-method for each sub-entity with DoFs in turn.
-
       template< class GridPart >
       template< class Functor >
       struct DofMapper< GridPart >::MapFunctor
@@ -258,9 +287,10 @@ namespace Dune
           const unsigned int codim = info.codim ;
 
           const unsigned int numDofs = info.numDofs ;
-          // for non-Cartesian grids check twist if on codim 1 noDofs > 1
-          // this should be the case for polOrder > 2
-          if( ! isCartesian && dimension == 2 && codim == 1 && numDofs > 1 )
+          // for non-Cartesian grids check twist if on edges with noDofs > 1
+          // this should be the case for polOrder > 2.
+          // Note that in 3d this only solves the twist problem up to polOrder = 3
+          if( ! isCartesian && codim == dimension-1 && numDofs > 1 )
           {
             typedef typename GridPart::ctype FieldType ;
             const Dune::ReferenceElement< FieldType, dimension > &refElem
@@ -315,7 +345,90 @@ namespace Dune
         Functor functor_;
       };
 
+      template< class GridPart >
+      struct DofMapper< GridPart >::SubEntityFilterFunctor
+      {
+        static const bool isCartesian = Dune::Capabilities::
+          isCartesian< typename GridPart :: GridType > :: v ;
 
+        SubEntityFilterFunctor( const GridPart &gridPart, const std::vector< SubEntityInfo > &subEntityInfo, 
+                                const ElementType &element, int i, int c,
+                                std::vector<bool> &vec )
+        : gridPart_( gridPart ),
+          subEntityInfo_( subEntityInfo ),
+          element_( element ),
+          vec_(vec),
+          filter_(RefElementsType::general( element.type() ), i,c)  
+        {}
+
+        template< class Iterator >
+        void operator() ( unsigned int gtIndex, unsigned int subEntity, Iterator it, Iterator end )
+        {
+          enum { dimension = GridPart :: dimension };
+
+          const SubEntityInfo &info = subEntityInfo_[ gtIndex ];
+
+          const unsigned int codim = info.codim ;
+
+          const unsigned int numDofs = info.numDofs ;
+
+          bool active = filter_(subEntity,codim);
+
+          // for non-Cartesian grids check twist if on codim 1 noDofs > 1
+          // this should be the case for polOrder > 2
+          if( ! isCartesian && codim == dimension-1 && numDofs > 1 )
+          {
+            typedef typename GridPart::ctype FieldType ;
+            const Dune::ReferenceElement< FieldType, dimension > &refElem
+                = Dune::ReferenceElements< FieldType, dimension >::general( element_.type() );
+
+#ifndef NDEBUG
+            const int vxSize = refElem.size( subEntity, codim, dimension );
+            // two vertices per edge in 2d
+            assert( vxSize == 2 );
+#endif
+            const int vx[ 2 ] = { refElem.subEntity ( subEntity, codim, 0, dimension ),
+                                  refElem.subEntity ( subEntity, codim, 1, dimension ) };
+
+            // flip index if face is twisted
+            if( gridPart_.grid().localIdSet().subId( gridEntity( element_ ), vx[ 1 ], dimension )
+                < gridPart_.grid().localIdSet().subId( gridEntity( element_ ), vx[ 0 ], dimension ) )
+            {
+              std::vector< unsigned int > global( numDofs );
+              std::vector< unsigned int > local ( numDofs );
+
+              unsigned int count = 0 ;
+              while( it != end )
+              {
+                local [ count ] = *(it++);
+                ++count ;
+              }
+
+              unsigned int reverse = numDofs - 1;
+              for( unsigned int i=0; i<numDofs; ++ i, --reverse )
+              {
+                vec_[ local[i] ] = active;
+              }
+
+              // already did mapping, then return
+              return ;
+            }
+          }
+
+          // standard mapping
+          while( it != end )
+          {
+            vec_[ *(it++) ] = active;
+          }
+        }
+
+      private:
+        const GridPart& gridPart_;
+        const std::vector< SubEntityInfo > &subEntityInfo_;
+        const ElementType &element_;
+        std::vector<bool> &vec_;
+        SubEntityFilter filter_;
+      };
 
       // Implementation of DofMapper
       // ---------------------------
@@ -395,7 +508,6 @@ namespace Dune
         mapEach( element, AssignFunctor< std::vector< SizeType > >( indices ) );
       }
 
-
       template< class GridPart >
       template< class Entity, class Functor >
       inline void DofMapper< GridPart >
@@ -418,6 +530,13 @@ namespace Dune
         mapEachEntityDof( entity, AssignFunctor< std::vector< SizeType > >( indices ) );
       }
 
+      template< class GridPart >
+      inline void DofMapper< GridPart >
+        ::onSubEntity( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
+      {
+        indices.resize( numEntityDofs( element ) );
+        code( element )( SubEntityFilterFunctor( gridPart_, subEntityInfo_, element, i,c , indices ) );
+      }
 
       template< class GridPart >
       template< class Entity >
