@@ -147,6 +147,8 @@ int main(int argc, char ** argv)
     typedef GridFunctionAdapter< WeightFunctionType, GridPartType>
       DiscreteWeightFunctionType;
 
+    typedef DiscreteFunctionType::RangeFieldType RangeFieldType ;
+
     DiscreteWeightFunctionType weightFunction( "weight", weightFunctionExact, gridPart );
 
     WeightedLPNorm< DiscreteWeightFunctionType > wLpnorm( weightFunction, 2.0 );
@@ -155,13 +157,13 @@ int main(int argc, char ** argv)
     // check all norms
     {
       // check lp norm
-      double lperror  = lpnorm.distance( exactSolution, solution );
-      double lperror2 = lpnorm.distance( solution, exactSolution );
+      RangeFieldType lperror  = lpnorm.distance( exactSolution, solution );
+      RangeFieldType lperror2 = lpnorm.distance( solution, exactSolution );
       assert( std::abs( lperror - lperror2 ) < 1e-10 );
 
       // check l2 norm
-      double error  = l2norm.distance( exactSolution, solution );
-      double error2 = l2norm.distance( solution, exactSolution );
+      RangeFieldType error  = l2norm.distance( exactSolution, solution );
+      RangeFieldType error2 = l2norm.distance( solution, exactSolution );
       assert( std::abs( error - error2 ) < 1e-10 );
 
       // compare lp(p=2) and l2 norm
@@ -170,28 +172,28 @@ int main(int argc, char ** argv)
 
     // check l1 norm
     {
-      double error  = l1norm.distance( exactSolution, solution );
-      double error2 = l1norm.distance( solution, exactSolution );
+      RangeFieldType error  = l1norm.distance( exactSolution, solution );
+      RangeFieldType error2 = l1norm.distance( solution, exactSolution );
       assert( std::abs( error - error2 ) < 1e-10 );
     }
 
     // check h1 norm
     {
-      double error  = h1norm.distance( exactSolution, solution );
-      double error2 = h1norm.distance( solution, exactSolution );
+      RangeFieldType error  = h1norm.distance( exactSolution, solution );
+      RangeFieldType error2 = h1norm.distance( solution, exactSolution );
       assert( std::abs( error - error2 ) < 1e-10 );
     }
 
     // check weighted lp norm
     {
       // check lp norm
-      double lperror  = wLpnorm.distance( exactSolution, solution );
-      double lperror2 = wLpnorm.distance( solution, exactSolution );
+      RangeFieldType lperror  = wLpnorm.distance( exactSolution, solution );
+      RangeFieldType lperror2 = wLpnorm.distance( solution, exactSolution );
       assert( std::abs( lperror - lperror2 ) < 1e-10 );
 
       // check l2 norm
-      double error  = wL2norm.distance( exactSolution, solution );
-      double error2 = wL2norm.distance( solution, exactSolution );
+      RangeFieldType error  = wL2norm.distance( exactSolution, solution );
+      RangeFieldType error2 = wL2norm.distance( solution, exactSolution );
       assert( std::abs( error - error2 ) < 1e-10 );
 
       // compare lp(p=2) and l2 norm

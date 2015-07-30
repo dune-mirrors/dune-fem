@@ -39,11 +39,17 @@ namespace Dune
 #undef USE_COMPLEX
 #endif
 
+#ifdef COUNT_FLOPS
+  typedef Dune::Fem::Double  RangeFieldType ;
+#else
+  typedef double RangeFieldType;
+#endif
+
 #if not defined USE_COMPLEX
-  typedef FunctionSpace< double, double, GridSelector::dimworld, DIMRANGE >
+  typedef FunctionSpace< double, RangeFieldType, GridSelector::dimworld, DIMRANGE >
     TestFunctionSpace;
 #else
-  typedef FunctionSpace< double, std::complex<double>, GridSelector::dimworld, DIMRANGE >
+  typedef FunctionSpace< double, std::complex<RangeFieldType>, GridSelector::dimworld, DIMRANGE >
     TestFunctionSpace;
 #endif
 
