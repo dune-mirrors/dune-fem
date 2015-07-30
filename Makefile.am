@@ -1,7 +1,7 @@
 SUBDIRS = dune lib m4 doc
 
 # we need the module file to be able to build via dunecontrol
-EXTRA_DIST = dune.module ChangeLog modules
+EXTRA_DIST = dune.module modules
 
 DISTCHECK_CONFIGURE_FLAGS = --with-dune="$(DUNEROOT)" CXX="$(CXX)" CC="$(CC)"
 
