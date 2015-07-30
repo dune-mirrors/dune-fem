@@ -84,14 +84,17 @@ namespace Dune
         const LocalFunctionType lf = discFunc_.localFunction(e);
         RangeType val;
         lf.evaluate(xi,val);
-        RangeFieldType outVal;
+        RangeFieldType outVal( 0 );
         if (vector_)
-          outVal = (comp > dimDomain ? 0.0 : val[ comp + component_ ] );
+        {
+          if( comp <= dimDomain )
+            outVal = val[ comp + component_ ] ;
+        }
         else
           outVal = val[ component_ ] ;
         if (typeOfField_ == TypeOfField::real || typeOfField_ == TypeOfField::complex_real )
           return std::real( outVal );
-        else 
+        else
           return std::imag( outVal );
       }
 
@@ -104,7 +107,7 @@ namespace Dune
           ret << "_real_";
         if (typeOfField_ == TypeOfField::complex_imag)
           ret << "_imag_";
-        if (vector_) 
+        if (vector_)
           ret << "_vec" << component_;
         else
           ret << component_;
@@ -271,11 +274,11 @@ namespace Dune
       }
 
       template < class DF >
-      static bool notComplex() 
+      static bool notComplex()
       {
         typedef typename DF::RangeFieldType RangeFieldType;
         typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
-        return ! std::is_same< typename std::remove_cv<RangeFieldType>::type, std::complex<RealType> >::value; 
+        return ! std::is_same< typename std::remove_cv<RangeFieldType>::type, std::complex<RealType> >::value;
       }
 
     public:
@@ -298,16 +301,16 @@ namespace Dune
         {
           if ( notComplex<DF>() )
           {
-            std::shared_ptr<VTKFunctionWrapper< DF > > ptr( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i, 
+            std::shared_ptr<VTKFunctionWrapper< DF > > ptr( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i,
                   false, VTKFunctionWrapper<DF>::TypeOfField::real) );
             vtkWriter_->addCellData( ptr );
           }
           else
           {
-            std::shared_ptr<VTKFunctionWrapper< DF > > ptrR( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i, 
+            std::shared_ptr<VTKFunctionWrapper< DF > > ptrR( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i,
                   false, VTKFunctionWrapper<DF>::TypeOfField::complex_real) );
             vtkWriter_->addCellData( ptrR );
-            std::shared_ptr<VTKFunctionWrapper< DF > > ptrI( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i, 
+            std::shared_ptr<VTKFunctionWrapper< DF > > ptrI( std::make_shared<VTKFunctionWrapper< DF > >( df, dataName, i,
                   false, VTKFunctionWrapper<DF>::TypeOfField::complex_imag) );
             vtkWriter_->addCellData( ptrI );
           }
