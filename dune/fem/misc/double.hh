@@ -280,24 +280,14 @@ namespace Dune
     public:
       operator double ()
       {
-        flOp();
         return value_;
       }
       operator const double () const
       {
-        flOp();
         return value_;
       }
 
       inline Double ()
-      {}
-
-      inline Double ( const int value )
-      : value_( value )
-      {}
-
-      inline Double ( const unsigned int value )
-      : value_( value )
       {}
 
       inline Double ( const double value )
@@ -308,13 +298,9 @@ namespace Dune
       : value_( other.value_ )
       {}
 
-      inline operator int () const
-      {
-        return (int)value_;
-      }
-
       inline ThisType &operator= ( const ThisType other )
       {
+        // flOp();
         value_ = other.value_;
         return *this;
       }
