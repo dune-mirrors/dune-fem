@@ -110,14 +110,12 @@ namespace Dune
         ImprovedBCRSMatrix(size_type rows, size_type cols,
                            size_type nnz, double overflowFraction)
           : BaseType (rows, cols, nnz, overflowFraction, BaseType::implicit)
-        {
-        }
+        {}
 
         //! constuctor using old row_wise assembly (and used by ILU preconditioner)
         ImprovedBCRSMatrix(size_type rows, size_type cols, size_type nz = 0 )
           : BaseType (rows, cols, BaseType :: row_wise)
-        {
-        }
+        {}
 
         //! copy constructor, needed by ISTL preconditioners
         ImprovedBCRSMatrix( )
@@ -172,8 +170,7 @@ namespace Dune
 
         //! setup like the old matrix but remove rows with hanging nodes
         template <class HangingNodesType>
-        void setup(ThisType& oldMatrix,
-                   const HangingNodesType& hangingNodes)
+        void setup(ThisType& oldMatrix, const HangingNodesType& hangingNodes)
         {
           // necessary because element traversal not necessaryly is in
           // ascending order
@@ -242,8 +239,7 @@ namespace Dune
             RowIteratorType rowit  = oldMatrix.begin();
 
             RowIteratorType endcreate = this->end();
-            for(RowIteratorType create = this->begin();
-                create != endcreate; ++create, ++rowit )
+            for(RowIteratorType create = this->begin(); create != endcreate; ++create, ++rowit )
             {
               assert( rowit != oldMatrix.end() );
 
@@ -290,8 +286,7 @@ namespace Dune
 
                 {
                   ColIteratorType colend = (*rowit).end();
-                  for(ColIteratorType colit = (*rowit).begin(); colit !=
-                      colend; ++colit)
+                  for(ColIteratorType colit = (*rowit).begin(); colit != colend; ++colit)
                   {
                     oldCols[ colit.index() ] = 0;
                   }
@@ -312,8 +307,7 @@ namespace Dune
 
                 {
                   ColIteratorType colend = (*rowit).end();
-                  for(ColIteratorType colit = (*rowit).begin(); colit !=
-                      colend; ++colit)
+                  for(ColIteratorType colit = (*rowit).begin(); colit != colend; ++colit)
                   {
                     oldCols[ colit.index() ] += (*colit);
                   }
@@ -451,9 +445,7 @@ namespace Dune
       typedef FieldMatrix<typename DomainSpaceType :: RangeFieldType, littleRows, littleCols> LittleBlockType;
 
       typedef ISTLBlockVectorDiscreteFunction< RangeSpaceType >      RowDiscreteFunctionType;
-      //typedef typename RowDiscreteFunctionType :: LeakPointerType    RowLeakPointerType;
       typedef ISTLBlockVectorDiscreteFunction< DomainSpaceType >     ColumnDiscreteFunctionType;
-      //typedef typename ColumnDiscreteFunctionType :: LeakPointerType ColumnLeakPointerType;
 
     protected:
       typedef typename RowDiscreteFunctionType :: DofStorageType    RowBlockVectorType;
@@ -643,8 +635,7 @@ namespace Dune
           , numCols_( org.numCols_ )
           , matrices_(org.matrices_)
           , matrixObj_(org.matrixObj_)
-        {
-        }
+        {}
 
       private:
         // check whether given (row,col) pair is valid
@@ -805,12 +796,12 @@ namespace Dune
         , colMapper_( domainSpace.blockMapper() )
         , size_(-1)
         , sequence_(-1)
-        , matrix_(0)
+        , matrix_(nullptr)
         // , scp_(rangeSpace())
         , localMatrixStack_( *this )
-        , matrixAdap_(0)
-        , Arg_(0)
-        , Dest_(0)
+        , matrixAdap_(nullptr)
+        , Arg_(nullptr)
+        , Dest_(nullptr)
         , overflowFraction_( Parameter::getValue( "istl.matrix.overflowfraction", 1.0 ) )
       {
       }
@@ -846,32 +837,22 @@ namespace Dune
         return "";
       }
 
-      /*
-      MatrixAdapterType createMatrixAdapter() const
-      {
-        // typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-        // PreConType preconAdapter(matrix(), numIterations, relaxFactor_, preconditioning );
-        return MatrixAdapterType(matrix(), domainSpace(), rangeSpace() ); // , preconAdapter );
-      }
-      */
       void createMatrixAdapter () const
       {
-        if( ! matrixAdap_ )
-        {
+        if( matrixAdap_ == nullptr )
           matrixAdap_ = new MatrixAdapterType(matrixAdapterObject());
-        }
       }
 
       //! return matrix adapter object
       const MatrixAdapterType& matrixAdapter() const
       {
-        if( matrixAdap_ == 0 )
+        if( matrixAdap_ == nullptr )
           matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
         return *matrixAdap_;
       }
       MatrixAdapterType& matrixAdapter()
       {
-        if( matrixAdap_ == 0 )
+        if( matrixAdap_ == nullptr )
           matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
         return *matrixAdap_;
       }
@@ -918,8 +899,7 @@ namespace Dune
 
       //! reserve memory for assemble based on the provided stencil
       template <class Stencil>
-      void reserve(const Stencil &stencil,
-                   const bool implicit = true )
+      void reserve(const Stencil &stencil, const bool implicit = true )
       {
         // if grid sequence number changed, rebuild matrix
         if(sequence_ != domainSpace().sequence())
@@ -995,8 +975,7 @@ namespace Dune
       }
 
       //! apply with discrete functions
-      void apply(const RowDiscreteFunctionType& arg,
-                 ColumnDiscreteFunctionType& dest) const
+      void apply(const RowDiscreteFunctionType& arg, ColumnDiscreteFunctionType& dest) const
       {
         createMatrixAdapter();
         assert( matrixAdap_ );
@@ -1015,11 +994,6 @@ namespace Dune
       void multOEM(const ColumnLeakPointerType& arg, RowLeakPointerType& dest) const
       {
         DUNE_THROW(NotImplemented,"Method has been removed");
-        /*
-        createMatrixAdapter();
-        assert( matrixAdap_ );
-        matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
-        */
       }
 
       //! dot method for OEM Solver
@@ -1048,14 +1022,12 @@ namespace Dune
 
       //! resort row numbering in matrix to have ascending numbering
       void resort()
-      {
-      }
+      {}
 
       //! create precondition matrix does nothing because preconditioner is
       //! created only when requested
       void createPreconditionMatrix()
-      {
-      }
+      {}
 
       //! print matrix
       void print(std::ostream & s) const
@@ -1072,14 +1044,11 @@ namespace Dune
       //! interface method from LocalMatrixFactory
       ObjectType* newObject() const
       {
-        return new ObjectType(*this,
-                              domainSpace(),
-                              rangeSpace());
+        return new ObjectType(*this, domainSpace(), rangeSpace());
       }
 
       //! return local matrix object
-      LocalMatrixType localMatrix(const RowEntityType& rowEntity,
-                                  const ColumnEntityType& colEntity) const
+      LocalMatrixType localMatrix(const RowEntityType& rowEntity,const ColumnEntityType& colEntity) const
       {
         return LocalMatrixType( localMatrixStack_, rowEntity, colEntity );
       }
@@ -1096,14 +1065,17 @@ namespace Dune
 
       void removeObj( const bool alsoClearMatrix )
       {
-        delete Dest_; Dest_ = 0;
-        delete Arg_;  Arg_ = 0;
-        delete matrixAdap_; matrixAdap_ = 0;
+        delete Dest_;
+        Dest_ = nullptr;
+        delete Arg_;
+        Arg_ = nullptr;
+        delete matrixAdap_;
+        matrixAdap_ = nullptr;
 
         if( alsoClearMatrix )
         {
           delete matrix_;
-          matrix_ = 0;
+          matrix_ = nullptr;
         }
       }
 
@@ -1147,9 +1119,7 @@ namespace Dune
       typedef FieldMatrix<typename DomainSpaceType :: RangeFieldType, littleRows, littleCols> LittleBlockType;
 
       typedef ISTLBlockVectorDiscreteFunction< DomainSpaceType >     RowDiscreteFunctionType;
-      //typedef typename RowDiscreteFunctionType :: LeakPointerType  RowLeakPointerType;
       typedef ISTLBlockVectorDiscreteFunction< RangeSpaceType >  ColumnDiscreteFunctionType;
-      //typedef typename ColumnDiscreteFunctionType :: LeakPointerType  ColumnLeakPointerType;
 
     protected:
       typedef typename RowDiscreteFunctionType    :: DofContainerType  RowBlockVectorType;
@@ -1305,8 +1275,7 @@ namespace Dune
           , numRows_( rowMapper_.maxNumDofs() )
           , numCols_( colMapper_.maxNumDofs() )
           , matrixObj_(mObj)
-        {
-        }
+        {}
 
         void init(const RowEntityType & rowEntity,
                   const ColumnEntityType & colEntity)
@@ -1341,8 +1310,7 @@ namespace Dune
           , numCols_( org.numCols_ )
           , matrices_(org.matrices_)
           , matrixObj_(org.matrixObj_)
-        {
-        }
+        {}
 
       private:
         // check whether given (row,col) pair is valid
@@ -1524,15 +1492,15 @@ namespace Dune
         , colMapper_( colSpace.blockMapper() )
         , size_(-1)
         , sequence_(-1)
-        , matrix_(0)
+        , matrix_(nullptr)
         , scp_(rangeSpace())
         , numIterations_(5)
         , relaxFactor_(1.1)
         , preconditioning_(none)
         , localMatrixStack_( *this )
-        , matrixAdap_(0)
-        , Arg_(0)
-        , Dest_(0)
+        , matrixAdap_(nullptr)
+        , Arg_(nullptr)
+        , Dest_(nullptr)
         , overflowFraction_( Parameter::getValue( "istl.matrix.overflowfraction", 1.0 ) )
       {
         int preCon = 0;
@@ -1601,17 +1569,13 @@ namespace Dune
         }
 
         if( preconditioning_ != ilu_0 )
-        {
           tmp << " n=" << numIterations_;
-        }
         tmp << " relax=" << relaxFactor_ ;
         return tmp.str();
       }
 
       template <class PreconditionerType>
-      MatrixAdapterType
-      createMatrixAdapter(const PreconditionerType* preconditioning,
-                          size_t numIterations) const
+      MatrixAdapterType createMatrixAdapter(const PreconditionerType* preconditioning, size_t numIterations) const
       {
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
         PreConType preconAdapter(matrix(), numIterations, relaxFactor_, preconditioning );
@@ -1619,9 +1583,7 @@ namespace Dune
       }
 
       template <class PreconditionerType>
-      MatrixAdapterType
-      createAMGMatrixAdapter(const PreconditionerType* preconditioning,
-                             size_t numIterations) const
+      MatrixAdapterType createAMGMatrixAdapter(const PreconditionerType* preconditioning, size_t numIterations) const
       {
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
         PreConType preconAdapter(matrix(), numIterations, relaxFactor_, preconditioning, domainSpace().gridPart().comm() );
@@ -1631,13 +1593,13 @@ namespace Dune
       //! return matrix adapter object
       const MatrixAdapterType& matrixAdapter() const
       {
-        if( matrixAdap_ == 0 )
+        if( matrixAdap_ == nullptr )
           matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
         return *matrixAdap_;
       }
       MatrixAdapterType& matrixAdapter()
       {
-        if( matrixAdap_ == 0 )
+        if( matrixAdap_ == nullptr )
           matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
         return *matrixAdap_;
       }
@@ -1662,7 +1624,7 @@ namespace Dune
             DUNE_THROW(InvalidStateException,"ISTL::SeqSSOR not working in parallel computations");
 
           typedef SeqSSOR<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-          return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+          return createMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
         }
         // SOR
         else if(preconditioning_ == sor )
@@ -1671,7 +1633,7 @@ namespace Dune
             DUNE_THROW(InvalidStateException,"ISTL::SeqSOR not working in parallel computations");
 
           typedef SeqSOR<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-          return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+          return createMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
         }
         // ILU-0
         else if(preconditioning_ == ilu_0)
@@ -1680,7 +1642,7 @@ namespace Dune
             DUNE_THROW(InvalidStateException,"ISTL::SeqILU0 not working in parallel computations");
 
           typedef FemSeqILU0<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-          return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+          return createMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
         }
         // ILU-n
         else if(preconditioning_ == ilu_n)
@@ -1689,7 +1651,7 @@ namespace Dune
             DUNE_THROW(InvalidStateException,"ISTL::SeqILUn not working in parallel computations");
 
           typedef SeqILUn<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-          return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+          return createMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
         }
         // Gauss-Seidel
         else if(preconditioning_ == gauss_seidel)
@@ -1698,7 +1660,7 @@ namespace Dune
             DUNE_THROW(InvalidStateException,"ISTL::SeqGS not working in parallel computations");
 
           typedef SeqGS<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-          return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+          return createMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
         }
         // Jacobi
         else if(preconditioning_ == jacobi)
@@ -1713,7 +1675,7 @@ namespace Dune
           else if ( procs == 1 )
           {
             typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-            return createMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+            return createMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
           }
           else
           {
@@ -1725,19 +1687,19 @@ namespace Dune
         {
           // use original SeqILU0 because of some AMG traits classes.
           typedef SeqILU0<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-          return createAMGMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+          return createAMGMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
         }
         // AMG ILU-n
         else if(preconditioning_ == amg_ilu_n)
         {
           typedef SeqILUn<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-          return createAMGMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+          return createAMGMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
         }
         // AMG Jacobi
         else if(preconditioning_ == amg_jacobi)
         {
           typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType,1> PreconditionerType;
-          return createAMGMatrixAdapter( (PreconditionerType*)0, numIterations_ );
+          return createAMGMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
         }
         else
         {
@@ -1785,8 +1747,7 @@ namespace Dune
 
       //! reserve memory for assemble based on the provided stencil
       template <class Stencil>
-      void reserve(const Stencil &stencil,
-                   const bool implicit = true )
+      void reserve( const Stencil &stencil, const bool implicit = true )
       {
         // if grid sequence number changed, rebuild matrix
         if(sequence_ != domainSpace().sequence())
@@ -1887,8 +1848,7 @@ namespace Dune
       }
 
       //! apply with discrete functions
-      void apply(const RowDiscreteFunctionType& arg,
-                 ColumnDiscreteFunctionType& dest) const
+      void apply(const RowDiscreteFunctionType& arg, ColumnDiscreteFunctionType& dest) const
       {
         createMatrixAdapter();
         assert( matrixAdap_ );
@@ -1900,18 +1860,6 @@ namespace Dune
       void apply(const RowDFType& arg, ColDFType& dest) const
       {
         multOEM( arg.leakPointer(), dest.leakPointer ());
-      }
-
-      //! mult method of matrix object used by oem solver
-      template <class RowLeakPointerType, class ColumnLeakPointerType>
-      void multOEM(const RowLeakPointerType& arg, ColumnLeakPointerType& dest) const
-      {
-        DUNE_THROW(NotImplemented,"Method has been removed");
-        /*
-        createMatrixAdapter();
-        assert( matrixAdap_ );
-        matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
-        */
       }
 
       //! dot method for OEM Solver
@@ -1940,14 +1888,11 @@ namespace Dune
 
       //! resort row numbering in matrix to have ascending numbering
       void resort()
-      {
-      }
+      {}
 
-      //! create precondition matrix does nothing because preconditioner is
-      //! created only when requested
+      //! create precondition matrix does nothing because preconditioner is created only when requested
       void createPreconditionMatrix()
-      {
-      }
+      {}
 
       //! print matrix
       void print(std::ostream & s) const
@@ -1964,14 +1909,11 @@ namespace Dune
       //! interface method from LocalMatrixFactory
       ObjectType* newObject() const
       {
-        return new ObjectType(*this,
-                              domainSpace(),
-                              rangeSpace());
+        return new ObjectType(*this, domainSpace(), rangeSpace());
       }
 
       //! return local matrix object
-      LocalMatrixType localMatrix(const RowEntityType& rowEntity,
-                                  const ColumnEntityType& colEntity) const
+      LocalMatrixType localMatrix(const RowEntityType& rowEntity, const ColumnEntityType& colEntity) const
       {
         return LocalMatrixType( localMatrixStack_, rowEntity, colEntity );
       }
@@ -1999,14 +1941,17 @@ namespace Dune
 
       void removeObj( const bool alsoClearMatrix )
       {
-        delete Dest_; Dest_ = 0;
-        delete Arg_;  Arg_ = 0;
-        delete matrixAdap_; matrixAdap_ = 0;
+        delete Dest_;
+        Dest_ = nullptr;
+        delete Arg_;
+        Arg_ = nullptr;
+        delete matrixAdap_;
+        matrixAdap_ = nullptr;
 
         if( alsoClearMatrix )
         {
           delete matrix_;
-          matrix_ = 0;
+          matrix_ = nullptr;
         }
       }
 
@@ -2024,10 +1969,8 @@ namespace Dune
 
       void createMatrixAdapter () const
       {
-        if( ! matrixAdap_ )
-        {
+        if( matrixAdap_ == nullptr )
           matrixAdap_ = new MatrixAdapterType(matrixAdapterObject());
-        }
       }
 
     };
