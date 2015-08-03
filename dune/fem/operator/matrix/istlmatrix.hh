@@ -7,6 +7,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 //- Dune common includes
 #include <dune/common/exceptions.hh>
@@ -984,15 +985,13 @@ namespace Dune
         RowBlockVectorType& Arg = *Arg_;
         ColumnBlockVectorType & Dest = *Dest_;
 
-        // copy from double
-        double2Block(arg, Arg);
+        std::copy( std::begin(arg), std::end(arg), Arg.dbegin() );
 
         // call mult of matrix adapter
         assert( matrixAdap_ );
         matrixAdap_->apply( Arg, Dest );
 
-        //  copy back
-        block2Double( Dest , dest);
+        std::copy( Dest.dbegin(), Dest.dend(), std::begin(dest) );
       }
 
       //! apply with discrete functions
@@ -1034,9 +1033,8 @@ namespace Dune
         RowBlockVectorType&    V = *Arg_;
         ColumnBlockVectorType& W = *Dest_;
 
-        // copy from double
-        double2Block(v, V);
-        double2Block(w, W);
+        std::copy( std::begin(v), std::end(v), V.dbegin() );
+        std::copy( std::begin(w), std::end(w), W.dbegin() );
 
 #if HAVE_MPI
         // in parallel use scalar product of discrete functions
@@ -1106,40 +1104,6 @@ namespace Dune
         {
           delete matrix_;
           matrix_ = 0;
-        }
-      }
-
-      // copy double to block vector
-      void double2Block(const double* arg, RowBlockVectorType& dest) const
-      {
-        typedef typename RowBlockVectorType :: block_type BlockType;
-        const size_t blocks = dest.size();
-        int idx = 0;
-        for(size_t i=0; i<blocks; ++i)
-        {
-          BlockType& block = dest[i];
-          enum { blockSize = BlockType :: dimension };
-          for(int j=0; j<blockSize; ++j, ++idx)
-          {
-            block[j] = arg[idx];
-          }
-        }
-      }
-
-      // copy block vector to double
-      void block2Double(const ColumnBlockVectorType& arg, double* dest) const
-      {
-        typedef typename ColumnBlockVectorType :: block_type BlockType;
-        const size_t blocks = arg.size();
-        int idx = 0;
-        for(size_t i=0; i<blocks; ++i)
-        {
-          const BlockType& block = arg[i];
-          enum { blockSize = BlockType :: dimension };
-          for(int j=0; j<blockSize; ++j, ++idx)
-          {
-            dest[idx] = block[j];
-          }
         }
       }
 
@@ -1890,8 +1854,7 @@ namespace Dune
         RowBlockVectorType& Arg = *Arg_;
         ColumnBlockVectorType & Dest = *Dest_;
 
-        // copy from double
-        double2Block(arg, Arg);
+        std::copy( std::begin(arg), std::end(arg), Arg.dbegin());
 
         // set Dest to zero
         Dest = 0;
@@ -1900,8 +1863,7 @@ namespace Dune
         // not parameter swaped for preconditioner
         matrixAdap_->preconditionAdapter().apply(Dest , Arg);
 
-        // copy back
-        block2Double( Dest , dest);
+        std::copy( Dest.dbegin(), Dest.dend(), std::begin(dest) );
       }
 
       //! mult method for OEM Solver
@@ -1915,15 +1877,13 @@ namespace Dune
         RowBlockVectorType& Arg = *Arg_;
         ColumnBlockVectorType & Dest = *Dest_;
 
-        // copy from double
-        double2Block(arg, Arg);
+        std::copy( std::begin(arg), std::end(arg), Arg.dbegin() );
 
         // call mult of matrix adapter
         assert( matrixAdap_ );
         matrixAdap_->apply( Arg, Dest );
 
-        //  copy back
-        block2Double( Dest , dest);
+        std::copy( Dest.dbegin(), Dest.dend(), std::begin(dest) );
       }
 
       //! apply with discrete functions
@@ -1965,9 +1925,8 @@ namespace Dune
         RowBlockVectorType&    V = *Arg_;
         ColumnBlockVectorType& W = *Dest_;
 
-        // copy from double
-        double2Block(v, V);
-        double2Block(w, W);
+        std::copy( std::begin(v), std::end(v), V.dbegin() );
+        std::copy( std::begin(w), std::end(w), W.dbegin() );
 
 #if HAVE_MPI
         // in parallel use scalar product of discrete functions
@@ -2048,40 +2007,6 @@ namespace Dune
         {
           delete matrix_;
           matrix_ = 0;
-        }
-      }
-
-      // copy double to block vector
-      void double2Block(const double* arg, RowBlockVectorType& dest) const
-      {
-        typedef typename RowBlockVectorType :: block_type BlockType;
-        const size_t blocks = dest.size();
-        int idx = 0;
-        for(size_t i=0; i<blocks; ++i)
-        {
-          BlockType& block = dest[i];
-          enum { blockSize = BlockType :: dimension };
-          for(int j=0; j<blockSize; ++j, ++idx)
-          {
-            block[j] = arg[idx];
-          }
-        }
-      }
-
-      // copy block vector to double
-      void block2Double(const ColumnBlockVectorType& arg, double* dest) const
-      {
-        typedef typename ColumnBlockVectorType :: block_type BlockType;
-        const size_t blocks = arg.size();
-        int idx = 0;
-        for(size_t i=0; i<blocks; ++i)
-        {
-          const BlockType& block = arg[i];
-          enum { blockSize = BlockType :: dimension };
-          for(int j=0; j<blockSize; ++j, ++idx)
-          {
-            dest[idx] = block[j];
-          }
         }
       }
 
