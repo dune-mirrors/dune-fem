@@ -34,9 +34,9 @@ namespace Dune
     /** @addtogroup DiscreteFunction
         The DiscreteFunction is responsible for the dof storage. This can be
         done in various ways an is left to the user. The user has to derive his
-        own implementation from the DiscreteFunctionDefault class. If some of
-        the implementations in the default class are for ineffecient for the
-        dof storage in the derived class these functions can be overloaded.
+        own implementation from the DiscreteFunctionDefault class. The implementations
+        in the default class which are ineffecient for the dof storage in the derived
+        class can be overloaded.
 
         \remarks
         The interface for using a DiscreteFunction is defined by
@@ -534,8 +534,8 @@ namespace Dune
     //
     //  --DiscreteFunctionDefault
     //
-    //! Default implementation of the discrete function. This class provides
-    //! is responsible for the dof storage. Different implementations of the
+    //! Default implementation of the discrete function. This class is
+    //! responsible for the dof storage. Different implementations of the
     //! discrete function use different dof storage.
     //! The default implementation provides +=, -= and so on operators and
     //! a DofIterator access, which can run over all dofs in an efficient way.
