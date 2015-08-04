@@ -924,6 +924,17 @@ namespace Dune
        */
       inline LocalDofVectorAllocatorType &localDofVectorAllocator () const { return ldvAllocator_; }
 
+      //! add scaled local Dofs to dof vector
+      template< class LocalDofs >
+      void addScaledLocalDofs ( const EntityType &entity, const RangeFieldType &s, const LocalDofs &localDofs )
+      {
+        typedef LeftAddScaled< const LocalDofs, const RangeFieldType > AssignFunctorType;
+        AssignFunctorType assignFunctor( localDofs, s );
+
+        DofBlockFunctor< DiscreteFunctionType, AssignFunctorType > functor( asImp(), assignFunctor );
+        space().blockMapper().mapEach( entity, functor );
+      }
+
       //! add local Dofs to dof vector
       template< class LocalDofs >
       void addLocalDofs ( const EntityType &entity, const LocalDofs &localDofs )
