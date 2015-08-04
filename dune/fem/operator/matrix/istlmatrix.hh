@@ -889,13 +889,13 @@ namespace Dune
         RowBlockVectorType& Arg = *Arg_;
         ColumnBlockVectorType & Dest = *Dest_;
 
-        std::copy( std::begin(arg), std::end(arg), Arg.dbegin() );
+        std::copy_n( arg, Arg.size(), Arg.dbegin() );
 
         // call mult of matrix adapter
         assert( matrixAdap_ );
         matrixAdap_->apply( Arg, Dest );
 
-        std::copy( Dest.dbegin(), Dest.dend(), std::begin(dest) );
+        std::copy( Dest.dbegin(), Dest.dend(), dest );
       }
 
       //! apply with discrete functions
@@ -931,8 +931,8 @@ namespace Dune
         RowBlockVectorType&    V = *Arg_;
         ColumnBlockVectorType& W = *Dest_;
 
-        std::copy( std::begin(v), std::end(v), V.dbegin() );
-        std::copy( std::begin(w), std::end(w), W.dbegin() );
+        std::copy_n( v, V.size(), V.dbegin() );
+        std::copy_n( w, W.size(), W.dbegin() );
 
 #if HAVE_MPI
         // in parallel use scalar product of discrete functions
@@ -1729,7 +1729,7 @@ namespace Dune
         RowBlockVectorType& Arg = *Arg_;
         ColumnBlockVectorType & Dest = *Dest_;
 
-        std::copy( std::begin(arg), std::end(arg), Arg.dbegin());
+        std::copy_n( arg, Arg.size(), Arg.dbegin());
 
         // set Dest to zero
         Dest = 0;
@@ -1738,7 +1738,7 @@ namespace Dune
         // not parameter swaped for preconditioner
         matrixAdap_->preconditionAdapter().apply(Dest , Arg);
 
-        std::copy( Dest.dbegin(), Dest.dend(), std::begin(dest) );
+        std::copy( Dest.dbegin(), Dest.dend(), dest );
       }
 
       //! mult method for OEM Solver
@@ -1752,13 +1752,13 @@ namespace Dune
         RowBlockVectorType& Arg = *Arg_;
         ColumnBlockVectorType & Dest = *Dest_;
 
-        std::copy( std::begin(arg), std::end(arg), Arg.dbegin() );
+        std::copy_n( arg, Arg.size(), Arg.dbegin() );
 
         // call mult of matrix adapter
         assert( matrixAdap_ );
         matrixAdap_->apply( Arg, Dest );
 
-        std::copy( Dest.dbegin(), Dest.dend(), std::begin(dest) );
+        std::copy( Dest.dbegin(), Dest.dend(), dest );
       }
 
       //! apply with discrete functions
@@ -1787,8 +1787,8 @@ namespace Dune
         RowBlockVectorType&    V = *Arg_;
         ColumnBlockVectorType& W = *Dest_;
 
-        std::copy( std::begin(v), std::end(v), V.dbegin() );
-        std::copy( std::begin(w), std::end(w), W.dbegin() );
+        std::copy_n( v, V.size(), V.dbegin() );
+        std::copy_n( w, W.size(), W.dbegin() );
 
 #if HAVE_MPI
         // in parallel use scalar product of discrete functions
