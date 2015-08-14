@@ -106,6 +106,8 @@ namespace Dune
 
       typedef typename TraitsImp :: CodimIndexSetType  CodimIndexSetType ;
 
+      typedef typename GridType::template Codim< 0 >::Entity GridElementType;
+
     public:
       //! \copydoc Dune::Fem::IndexSet::dimension */
       static const int dimension = BaseType::dimension;
@@ -159,7 +161,7 @@ namespace Dune
 
       template< int codim >
       struct CountElements
-        : public CountElementsBase< codim, Dune::Capabilities::hasEntity < GridType, codim > :: v >
+        : public CountElementsBase< codim, Dune::Fem::GridPartCapabilities::hasEntity< GridPartType, codim > :: v >
       {
       };
 
@@ -167,7 +169,7 @@ namespace Dune
       template< int codim >
       struct InsertSubEntities
       {
-        static void apply ( ThisType &indexSet, const ElementType &element )
+        static void apply ( ThisType &indexSet, const GridElementType &element )
         {
           // if codimension is not available return
           if( ! indexSet.codimAvailable( codim ) ) return ;
@@ -188,9 +190,7 @@ namespace Dune
       template< int codim , bool gridHasCodim >
       struct InsertGhostSubEntitiesBase
       {
-        typedef typename GridPartType::template Codim< codim >::EntityType         EntityType;
-
-        static void apply ( ThisType &indexSet, const ElementType &entity ,
+        static void apply ( ThisType &indexSet, const GridElementType &element,
                             const bool skipGhosts )
         {
           // if codimension is not available return
@@ -201,11 +201,10 @@ namespace Dune
 
           CodimIndexSetType &codimSet = indexSet.codimLeafSet( codim );
 
-          for( unsigned int i = 0; i < entity.subEntities( codim ); ++i )
+          for( unsigned int i = 0; i < element.subEntities( codim ); ++i )
           {
-            EntityType subentity = make_entity( entity.template subEntity< codim >( i ) );
-            if( !skipGhosts || (entity.partitionType() != GhostEntity) )
-              codimSet.insertGhost( subentity );
+            if( !skipGhosts || (element.partitionType() != GhostEntity) )
+              codimSet.insertGhost( make_entity( element.template subEntity< codim >( i ) ) );
           }
         }
       };
@@ -213,7 +212,7 @@ namespace Dune
       template< int codim >
       struct InsertGhostSubEntitiesBase< codim, false >
       {
-        static void apply ( ThisType &indexSet, const ElementType &entity ,
+        static void apply ( ThisType &indexSet, const GridElementType &element,
                             const bool skipGhosts )
         {}
       };
@@ -466,7 +465,7 @@ namespace Dune
         if( codimAvailable( codim ) )
         {
           assert( codimUsed_[codim] );
-          return codimLeafSet( codim ).exists( en );
+          return codimLeafSet( codim ).exists( gridEntity( en ) );
         }
         else
           return false;
@@ -479,7 +478,7 @@ namespace Dune
       //****************************************************************
 
       //! \copydoc Dune::Fem::ConsecutiveIndexSet::insertEntity */
-      void insertEntity( const ElementType &entity )
+      void insertEntity( const GridElementType &entity )
       {
         // here we have to add the support of higher codims
         resizeVectors();
@@ -487,7 +486,7 @@ namespace Dune
       }
 
       //! \copydoc Dune::Fem::ConsecutiveIndexSet::removeEntity */
-      void removeEntity( const ElementType &entity )
+      void removeEntity( const GridElementType &entity )
       {
         removeIndex( entity );
       }
@@ -553,14 +552,14 @@ namespace Dune
       //! \copydoc Dune::Fem::IndexSet::size */
       template< int codim >
       IndexType
-      index ( const typename GridType :: template Codim< codim > :: Entity &entity ) const
+      index ( const typename GridPartType::template Codim< codim >::EntityType &entity ) const
       {
         if( codimAvailable( codim ) )
         {
           if( (codim != 0) && ! codimUsed_[ codim ] )
             setupCodimSet< codim >(std::integral_constant<bool,true>());
 
-          return codimLeafSet( codim ).index( entity );
+          return codimLeafSet( codim ).index( gridEntity( entity ) );
         }
         else
         {
@@ -581,7 +580,7 @@ namespace Dune
           // get corresponding face entity pointer
           FaceType face = getIntersectionFace( intersection );
 
-          return codimLeafSet( codim ).index( face );
+          return codimLeafSet( codim ).index( gridEntity( face ) );
         }
         else
         {
@@ -697,20 +696,27 @@ namespace Dune
       }
 
     protected:
+      // Note: The following methods forward to Dune::Fem::CodimIndexSet, which
+      // expects a Dune::Grid as template argument; all arguments passed to
+      // members of Dune::Fem::CodimIndexSet must be compatible with the
+      // template grid type. If entities returned by the grid and the grid part
+      // respectively differ in type, Dune::Fem::AdaptiveLeafIndexSetBase will
+      // call the necessary operations from grid part entities to grid entites.
+
       // memorise index
-      void insertIndex ( const ElementType &entity );
+      void insertIndex ( const GridElementType &entity );
 
       // memorise indices for all intersections
-      void insertIntersections ( const ElementType &entity ) const;
+      void insertIntersections ( const GridElementType &entity ) const;
 
       // insert index temporarily
-      void insertTemporary ( const ElementType &entity );
+      void insertTemporary ( const GridElementType &entity );
 
       // set indices to unsed so that they are cleaned on compress
-      void removeIndex ( const ElementType &entity );
+      void removeIndex ( const GridElementType &entity );
 
       // check whether entity can be inserted or not
-      void checkHierarchy ( const ElementType &entity, bool wasNew );
+      void checkHierarchy ( const GridElementType &entity, bool wasNew );
 
       // mark indices that are still used (and give new indices to new elements)
       template <PartitionIteratorType pt>
@@ -841,7 +847,7 @@ namespace Dune
 
     template< class TraitsImp >
     inline void
-    AdaptiveIndexSetBase< TraitsImp >::insertIndex ( const ElementType &entity )
+    AdaptiveIndexSetBase< TraitsImp >::insertIndex ( const GridElementType &entity )
     {
 #if HAVE_MPI
       // we need special treatment for ghosts
@@ -878,28 +884,29 @@ namespace Dune
 
     template< class TraitsImp >
     inline void
-    AdaptiveIndexSetBase< TraitsImp >::insertIntersections ( const ElementType &entity ) const
+    AdaptiveIndexSetBase< TraitsImp >::insertIntersections ( const GridElementType &gridElement ) const
     {
       codimLeafSet( intersectionCodimension ).resize();
 
-      const IntersectionIteratorType endiit = gridPart_.iend( entity );
-      for( IntersectionIteratorType iit = gridPart_.ibegin( entity );
+      const ElementType &element = gridPart_.convert( gridElement );
+      const IntersectionIteratorType endiit = gridPart_.iend( element );
+      for( IntersectionIteratorType iit = gridPart_.ibegin( element );
            iit != endiit ; ++ iit )
       {
         // get intersection
         const IntersectionType& intersection = *iit ;
 
         // get correct face pointer
-        FaceType face = getIntersectionFace( intersection, entity );
+        FaceType face = getIntersectionFace( intersection, element );
 
         // insert face into index set
-        codimLeafSet( intersectionCodimension ).insert( face );
+        codimLeafSet( intersectionCodimension ).insert( gridEntity( face ) );
       }
     }
 
     template< class TraitsImp >
     inline void
-    AdaptiveIndexSetBase< TraitsImp >::insertTemporary( const ElementType &entity )
+    AdaptiveIndexSetBase< TraitsImp >::insertTemporary( const GridElementType &entity )
     {
       insertIndex( entity );
       codimLeafSet( 0 ).markForRemoval( entity );
@@ -907,7 +914,7 @@ namespace Dune
 
     template< class TraitsImp >
     inline void
-    AdaptiveIndexSetBase< TraitsImp >::removeIndex( const ElementType &entity )
+    AdaptiveIndexSetBase< TraitsImp >::removeIndex( const GridElementType &entity )
     {
       // remove entities (only mark them as unused)
       codimLeafSet( 0 ).markForRemoval( entity );
@@ -922,10 +929,10 @@ namespace Dune
     template< class TraitsImp >
     inline void
     AdaptiveIndexSetBase< TraitsImp >
-      ::checkHierarchy ( const ElementType &entity, bool wasNew )
+      ::checkHierarchy ( const GridElementType &entity, bool wasNew )
     {
       bool isNew = wasNew ;
-      typedef typename ElementType::HierarchicIterator HierarchicIterator;
+      typedef typename GridType::HierarchicIterator HierarchicIterator;
 
       // for leaf entites, just insert the index
       if( entity.isLeaf() )
@@ -974,7 +981,7 @@ namespace Dune
 
       const Iterator end  = gridPart_.template end< 0, pt >();
       for( Iterator it = gridPart_.template begin< 0, pt >(); it != end; ++it )
-        insertIndex( *it );
+        insertIndex( gridEntity( *it ) );
     }
 
     template< class TraitsImp >
@@ -1037,13 +1044,10 @@ namespace Dune
       }
 
       // get macro iterator
-      typedef typename GridType
-        ::template Codim< 0 >::template Partition< pt >::LevelIterator
-        Iterator;
-
       typedef typename GridType :: template Partition< All_Partition > :: LevelGridView LevelGridView ;
       LevelGridView macroView = grid_.levelGridView( 0 );
 
+      typedef typename LevelGridView::template Codim< 0 >::template Partition< pt >::Iterator Iterator;
       const Iterator macroend = macroView.template end< 0, pt >();
       for( Iterator macroit = macroView.template begin< 0, pt >();
            macroit != macroend; ++macroit )
@@ -1068,7 +1072,7 @@ namespace Dune
 
       const Iterator end = gridPart_.template end< codim, pitype >();
       for( Iterator it = gridPart_.template begin< codim, pitype >(); it != end; ++it )
-        codimLeafSet( codim ).insert( *it );
+        codimLeafSet( codim ).insert( gridEntity( *it ) );
 
       // mark codimension as used
       codimUsed_[ codim ] = true;
@@ -1092,11 +1096,12 @@ namespace Dune
       for( Iterator it = gridPart_.template begin< 0, pitype >(); it != end; ++it )
       {
         const ElementType& element = *it ;
-        const int subEntities = element.subEntities( codim );
+        const GridElementType &gridElement = gridEntity( element );
+        const int subEntities = gridElement.subEntities( codim );
         for (int i = 0; i < subEntities; ++i )
         {
-          if (! codimLeafSet( codim ).exists( element, i) )
-            codimLeafSet( codim ).insertSubEntity( element, i );
+          if (! codimLeafSet( codim ).exists( gridElement, i) )
+            codimLeafSet( codim ).insertSubEntity( gridElement, i );
         }
       }
 
@@ -1126,7 +1131,7 @@ namespace Dune
       for( Iterator it = gridPart_.template begin< 0, pitype >(); it != end; ++it )
       {
         // insert all intersections of this entity
-        insertIntersections( *it );
+        insertIntersections( gridEntity( *it ) );
       }
 
       // mark codimension as used
@@ -1175,14 +1180,15 @@ namespace Dune
       for( Iterator it = gridPart_.template begin< 0, pitype >(); it != end; ++it )
       {
         const ElementType& element = *it ;
-        const int subEntities = element.subEntities( codim );
+        const GridElementType &gridElement = gridEntity( element );
+        const int subEntities = gridElement.subEntities( codim );
         for (int i=0; i < subEntities; ++i)
         {
-          if (! codimLeafSet( codim ).exists( element, i) )
+          if (! codimLeafSet( codim ).exists( gridElement, i) )
           {
-            codimLeafSet( codim ).insertSubEntity( element,i );
+            codimLeafSet( codim ).insertSubEntity( gridElement,i );
             if ( Dune::ReferenceElements< ctype, dimension >::
-               general( element.type() ).type( i, codim ) == type )
+               general( gridElement.type() ).type( i, codim ) == type )
             {
               ++count;
             }
