@@ -173,7 +173,10 @@ namespace Dune
         return space_;
       }
 
-      const GridPartType &gridPart () const { return space().gridPart(); }
+      const GridPartType &gridPart () const
+      {
+        return space().gridPart();
+      }
 
     protected:
       DiscreteFunctionSpaceType space_;
@@ -238,9 +241,8 @@ namespace Dune
       template< class PointType >
       void evaluate ( const PointType &x, RangeType &ret ) const
       {
-        typedef typename EntityType::Geometry GeometryType;
-        const GeometryType geometry = entity().geometry();
-        DomainType global = geometry.global( coordinate( x ) );
+        const auto geometry = entity().geometry();
+        auto global = geometry.global( coordinate( x ) );
         function().evaluate( global, ret );
       }
 
@@ -248,11 +250,8 @@ namespace Dune
       template< class PointType >
       void jacobian ( const PointType &x, JacobianRangeType &ret ) const
       {
-        typedef typename EntityType::Geometry GeometryType;
-        const GeometryType geometry = entity().geometry();
-
-        const typename GeometryType::LocalCoordinate cx = coordinate( x );
-        DomainType global = geometry.global( cx );
+        const auto geometry = entity().geometry();
+        auto global = geometry.global( coordinate( x ) );
         function().jacobian( global, ret );
 
         if( dimLocal != dimDomain )
@@ -263,11 +262,11 @@ namespace Dune
           // tangential space of the reference elment, and then
           // projecting back to the ambient space.
 
-          const typename GeometryType::JacobianTransposed gjt = geometry.jacobianTransposed( cx );
-          const typename GeometryType::JacobianInverseTransposed gjit = geometry.jacobianInverseTransposed( cx );
+          const auto gjt = geometry.jacobianTransposed( coordinate( x ) );
+          const auto gjit = geometry.jacobianInverseTransposed( coordinate( x ) );
 
           FieldVector< RangeFieldType, dimLocal > tmp;
-          for( int i = 0; i < dimRange; ++i )
+          for( auto i = 0; i < dimRange; ++i )
           {
             gjit.mtv( ret[ i ], tmp );
             gjt.mtv( tmp, ret[ i ] );
@@ -308,21 +307,17 @@ namespace Dune
       template < class QuadratureType, class VectorType >
       void evaluateQuadratureImp( const QuadratureType& quadrature, VectorType& values, const RangeType& ) const
       {
-        const unsigned int nop = quadrature.nop();
-        for( unsigned int qp = 0; qp < nop; ++qp )
-        {
+        const auto nop = quadrature.nop();
+        for( auto qp = 0; qp < nop; ++qp )
           evaluate( quadrature[ qp ], values[ qp ] );
-        }
       }
 
       template < class QuadratureType, class VectorType >
       void evaluateQuadratureImp( const QuadratureType& quadrature, VectorType& values, const JacobianRangeType& ) const
       {
-        const unsigned int nop = quadrature.nop();
-        for( unsigned int qp = 0; qp < nop; ++qp )
-        {
+        const auto nop = quadrature.nop();
+        for( auto qp = 0; qp < nop; ++qp )
           jacobian( quadrature[ qp ], values[ qp ] );
-        }
       }
 
       const FunctionType &function () const
@@ -338,49 +333,54 @@ namespace Dune
 
     namespace
     {
-
       template <class FunctionImp,class GridPartType,bool>
       struct ConvertDFTypeHelper;
+
       template <class FunctionImp,class GridPartType>
       struct ConvertDFTypeHelper<FunctionImp,GridPartType,true>
       {
-        typedef ConvertDFTypeHelper<FunctionImp,GridPartType,true>
-          ThisType;
-        enum {compatible =
-          Dune::Conversion<GridPartType,typename
-            FunctionImp::DiscreteFunctionSpaceType::GridPartType>::exists};
+        typedef ConvertDFTypeHelper<FunctionImp,GridPartType,true> ThisType;
+        enum {compatible = Dune::Conversion<GridPartType,typename FunctionImp::DiscreteFunctionSpaceType::GridPartType>::exists};
         typedef FunctionImp FunctionType;
         typedef typename FunctionType::DiscreteFunctionSpaceType DFSType;
         ConvertDFTypeHelper(const std::string& name,const FunctionImp& func,const GridPartType& gp) :
-          func_(func) {}
+          func_(func)
+        {}
         ConvertDFTypeHelper(const ConvertDFTypeHelper& other) :
-          func_(other.func_) {}
-        const FunctionType& function() const {
+          func_(other.func_)
+        {}
+        const FunctionType& function() const
+        {
           return func_;
         }
-        const DFSType& space() const {
+        const DFSType& space() const
+        {
           return func_.space();
         }
         private:
         const FunctionImp& func_;
       };
+
       template <class FunctionImp,class GridPartType>
-      struct ConvertDFTypeHelper<FunctionImp,GridPartType,false> :
-        GridFunctionAdapter<FunctionImp,GridPartType>
+      struct ConvertDFTypeHelper<FunctionImp,GridPartType,false>
+        : GridFunctionAdapter<FunctionImp,GridPartType>
       {
-        typedef ConvertDFTypeHelper<FunctionImp,GridPartType,false>
-          ThisType;
+        typedef ConvertDFTypeHelper<FunctionImp,GridPartType,false> ThisType;
         typedef GridFunctionAdapter<FunctionImp,GridPartType> BaseType;
         typedef BaseType FunctionType;
         typedef typename FunctionType::DiscreteFunctionSpaceType DFSType;
         ConvertDFTypeHelper(const std::string& name,const FunctionImp& func,const GridPartType& gp) :
-          BaseType(name,func,gp) {}
+          BaseType(name,func,gp)
+        {}
         ConvertDFTypeHelper(const ConvertDFTypeHelper& other) :
-          BaseType(other) {}
-        const FunctionType& function() const {
+          BaseType(other)
+        {}
+        const FunctionType& function() const
+        {
           return *this;
         }
-        const DFSType& space() const {
+        const DFSType& space() const
+        {
           return BaseType::space();
         }
       };
@@ -394,12 +394,8 @@ namespace Dune
     {
       typedef ConvertToGridFunction< FunctionImp, GridPartImp > ThisType;
       typedef Function< typename FunctionImp::FunctionSpaceType, ThisType > BaseType;
-
-      static const bool hasLocalFunction
-        = Dune::Conversion< FunctionImp, HasLocalFunction >::exists;
-
-      typedef ConvertDFTypeHelper< FunctionImp, GridPartImp, hasLocalFunction >
-        Helper;
+      static const bool hasLocalFunction = Dune::Conversion< FunctionImp, HasLocalFunction >::exists;
+      typedef ConvertDFTypeHelper< FunctionImp, GridPartImp, hasLocalFunction > Helper;
       typedef typename Helper::FunctionType ConvertedType;
 
     public:
