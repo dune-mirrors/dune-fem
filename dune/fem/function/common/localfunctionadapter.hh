@@ -245,6 +245,18 @@ namespace Dune
         return order_;
       }
 
+      //! return local function implementation
+      inline const LocalFunctionImplType& localFunctionImpl() const
+      {
+        return localFunctionImpl_;
+      }
+
+      //! return local function implementation
+      inline LocalFunctionImplType& localFunctionImpl()
+      {
+        return localFunctionImpl_;
+      }
+
       //! evaluate function on local coordinate local
       void evaluate(const DomainType& global, RangeType& result) const
       {
@@ -601,9 +613,16 @@ namespace Dune
         entity_=&entity;
       }
 
+      //! initialize to new entity and to new time
+      inline void init(const EntityType& entity, double time)
+      {
+        entity_=&entity;
+        t_=time;
+      }
+
       //! set time
       template<typename... Args>
-      inline void initialize(const Args&... ,const double& time)
+      inline void initialize(const Args&... ,double time)
       {
         t_=time;
       }
