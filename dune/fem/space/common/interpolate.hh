@@ -1,10 +1,10 @@
 #ifndef DUNE_FEM_SPACE_COMMON_INTERPOLATE_HH
 #define DUNE_FEM_SPACE_COMMON_INTERPOLATE_HH
 
-#include <dune/common/dynvector.hh>
-
 #include <dune/grid/common/partitionset.hh>
 #include <dune/grid/common/rangegenerators.hh>
+
+#include <vector>
 
 namespace Dune
 {
@@ -22,7 +22,7 @@ namespace Dune
       const auto& gv = static_cast< typename DiscreteFunction::GridPartType::GridViewType >( v.gridPart() );
 
       // reserve memory for local dof vector
-      Dune::DynamicVector< typename DiscreteFunction::RangeFieldType > ldv;
+      std::vector< typename DiscreteFunction::RangeFieldType > ldv;
       ldv.reserve( v.space().blockMapper().maxNumDofs() * DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize );
 
       // iterate over selected partition
