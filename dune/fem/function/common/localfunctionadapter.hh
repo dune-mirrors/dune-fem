@@ -529,6 +529,7 @@ namespace Dune
 
     /** \brief LocalAnalyticalFunctionBinder binds a C++ local analytical function (and also its Jacobian
      *  and Hessian) to an object which provides all the methods and types needed by the LocalFunctionAdapter.
+     *  It stores a copy to the local analytical function.
      *
      *  Therefore, in order to transform the function
      *
@@ -569,42 +570,39 @@ namespace Dune
 
       //! constructor (without jacobian and without hessian)
       LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f):
-        f_(&f),j_(nullptr),h_(nullptr),t_(0.0)
+        f_(f),j_(),h_(),t_(0.0)
       {}
 
       //! constructor (without hessian)
       LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f, const AnalyticalFunctionType &j):
-        f_(&f),j_(&j),h_(nullptr),t_(0.0)
+        f_(f),j_(j),h_(),t_(0.0)
       {}
 
       //! constructor
       LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f,const AnalyticalFunctionType& j,
                                     const AnalyticalFunctionType& h):
-        f_(&f),j_(&j),h_(&h),t_(0.0)
+        f_(f),j_(j),h_(h),t_(0.0)
       {}
 
       //! evaluate local function
       template<class PointType>
       inline void evaluate(const PointType& x,RangeType& ret) const
       {
-        assert( f_ );
-        ret=(*f_)(entity().geometry().global(coordinate(x)),t_,entity());
+        ret=f_(entity().geometry().global(coordinate(x)),t_,entity());
       }
 
       //! evaluate jacobian local function
       template<class PointType>
       inline void jacobian(const PointType &x,JacobianRangeType &ret) const
       {
-        assert( j_ );
-        ret=(*j_)(entity().geometry().global(coordinate(x)),t_,entity());
+        ret=j_(entity().geometry().global(coordinate(x)),t_,entity());
       }
 
       //! evaluate hessian local function
       template<class PointType>
       inline void hessian(const PointType &x,HessianRangeType &ret ) const
       {
-        assert( h_ );
-        ret=(*h_)(entity().geometry().global(coordinate(x)),t_,entity());
+        ret=h_(entity().geometry().global(coordinate(x)),t_,entity());
       }
 
       //! initialize to new entity
@@ -636,9 +634,9 @@ namespace Dune
 
     private:
       EntityType const* entity_;
-      AnalyticalFunctionType const * f_;
-      AnalyticalFunctionType const * j_;
-      AnalyticalFunctionType const * h_;
+      AnalyticalFunctionType f_;
+      AnalyticalFunctionType j_;
+      AnalyticalFunctionType h_;
       double t_;
     };
 
