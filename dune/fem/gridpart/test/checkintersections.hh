@@ -141,7 +141,7 @@ namespace Dune
                             const GridPartType &gridPart,
                             FailureHandler &failureHandler )
     {
-      if (!entity.geometry().affine() && (int)entity.geometry().dimensionworld>(int)entity.dimension)
+      if (!entity.geometry().affine() && (int)entity.geometry().coorddimension>(int)entity.dimension)
         // this test is wrong in the case of a non affine embedded surface
         return;
       // global coordinate type
