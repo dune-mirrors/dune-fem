@@ -6,7 +6,6 @@ CONFIGURE_FLAGS="\
 --enable-parallel \
 --without-gmp \
 --prefix=/hosts/gandalf/raid5/morgoth/dune/src/dune \
---with-grape=$MODULEDIR/grape \
 --disable-dependency-tracking "
 
 # These flags are necessary to perform grid specific checks!
