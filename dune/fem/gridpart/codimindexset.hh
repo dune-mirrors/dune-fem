@@ -275,11 +275,6 @@ namespace Dune
                   indexState_[ i ] == UNUSED ||
                   indexState_[ i ] == NEW );
 
-        // make sure that the leaf size of the grid
-        // is the same the size of the codim=0 index set
-        if( grid_.comm().size() == 1 && myCodim_ == 0 )
-          assert( grid_.size( 0 ) == actSize );
-
         checkConsecutive();
 #endif
         return haveToCopy;

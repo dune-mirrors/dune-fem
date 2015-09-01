@@ -1315,18 +1315,34 @@ namespace Dune
     : public AdaptiveIndexSetBase< AdaptiveLeafIndexSetTraits< GridPartImp > >
     {
       typedef AdaptiveIndexSetBase< AdaptiveLeafIndexSetTraits< GridPartImp > > BaseType;
+      typedef AdaptiveLeafIndexSetTraits< GridPartImp > Traits;
+
     public:
       typedef typename BaseType :: GridPartType GridPartType;
       //! Constructor
       AdaptiveLeafIndexSet (const GridPartType & gridPart)
         : BaseType(gridPart)
-      {
-      }
+      {}
 
       //! return name of index set
       virtual std::string name () const
       {
         return "AdaptiveLeafIndexSet";
+      }
+
+      bool compress ()
+      {
+        const bool compressed = BaseType::compress();
+
+#ifndef NDEBUG
+        if( this->grid_.comm().size() == 1 )
+        {
+          for( int codim = Traits::startingCodimension; codim < Traits::numCodimensions; ++codim )
+            assert( this->size( codim ) == this->grid_.size( codim ) );
+        }
+#endif // #ifndef NDEBUG
+
+        return compressed;
       }
     };
 
@@ -1365,18 +1381,35 @@ namespace Dune
     : public AdaptiveIndexSetBase< IntersectionAdaptiveLeafIndexSetTraits< GridPartImp > >
     {
       typedef AdaptiveIndexSetBase< IntersectionAdaptiveLeafIndexSetTraits< GridPartImp > > BaseType;
+      typedef IntersectionAdaptiveLeafIndexSetTraits< GridPartImp > Traits;
+
     public:
       typedef typename BaseType :: GridPartType GridPartType;
       //! Constructor
       IntersectionAdaptiveLeafIndexSet (const GridPartType & gridPart)
         : BaseType(gridPart)
-      {
-      }
+      {}
 
       //! return name of index set
       virtual std::string name () const
       {
         return "IntersectionAdaptiveLeafIndexSet";
+      }
+
+      bool compress ()
+      {
+        const bool compressed = BaseType::compress();
+
+#ifndef NDEBUG
+        if( this->grid_.comm().size() == 1 )
+        {
+          for( int codim = Traits::startingCodimension; codim < Traits::numCodimensions; ++codim )
+            if( codim != Traits::intersectionCodimension )
+              assert( this->size( codim ) == this->grid_.size( codim ) );
+        }
+#endif // #ifndef NDEBUG
+
+        return compressed;
       }
     };
 
@@ -1413,18 +1446,31 @@ namespace Dune
     : public AdaptiveIndexSetBase< DGAdaptiveLeafIndexSetTraits< GridPartImp > >
     {
       typedef AdaptiveIndexSetBase< DGAdaptiveLeafIndexSetTraits< GridPartImp > > BaseType;
+      typedef DGAdaptiveLeafIndexSetTraits< GridPartImp > Traits;
+
     public:
       typedef typename BaseType :: GridPartType GridPartType;
       //! Constructor
       DGAdaptiveLeafIndexSet (const GridPartType & gridPart)
         : BaseType(gridPart)
-      {
-      }
+      {}
 
       //! return name of index set
       virtual std::string name () const
       {
         return "DGAdaptiveLeafIndexSet";
+      }
+
+      bool compress ()
+      {
+        const bool compressed = BaseType::compress();
+
+#ifndef NDEBUG
+        if( this->grid_.comm().size() == 1 )
+          assert( this->size( 0 ) == this->grid_.size( 0 ) );
+#endif // #ifndef NDEBUG
+
+        return compressed;
       }
     };
 
