@@ -74,6 +74,22 @@ namespace Dune
     }
 
 
+    // min
+    // ---
+
+    template< class T >
+    static constexpr T min ( T a )
+    {
+      return a;
+    }
+
+    template< class T, class ... U >
+    static constexpr T min ( T a, U ... b )
+    {
+      return a < min( b ... )? a : min( b ... );
+    }
+
+
     // Logical operations
 
     // Or
