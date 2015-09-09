@@ -278,6 +278,9 @@ namespace Dune
         return EntityObj( Implementation( coordFunction_, entity ) );
       }
 
+      // return reference to the coordfunction
+      const CoordFunctionType &coordfunction () const { return coordFunction_; }
+
     private:
       const HostGridPartType &hostGridPart () const
       {
