@@ -279,7 +279,7 @@ namespace Dune
       }
 
       // return reference to the coordfunction
-      const CoordFunctionType &coordfunction () const { return coordFunction_; }
+      const CoordFunctionType &coordFunction () const { return coordFunction_; }
 
     private:
       const HostGridPartType &hostGridPart () const
