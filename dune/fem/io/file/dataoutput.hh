@@ -133,6 +133,12 @@ namespace Dune
         return 0;
       }
 
+      //! \brief value of first save time (no parameter available)
+      virtual double startsavetime () const
+      {
+        return 0.0;
+      }
+
       //! method used for conditional data output - default
       //! value passed as argument.
       virtual bool willWrite ( bool write ) const
@@ -382,6 +388,12 @@ namespace Dune
       int writeCalls() const
       {
         return writeCalls_;
+      }
+
+      //! \brief return save time
+      double saveTime() const
+      {
+        return saveTime_;
       }
 
     protected:
@@ -656,7 +668,7 @@ namespace Dune
       data_( data ),
       writeStep_(0),
       writeCalls_(0),
-      saveTime_(0.0),
+      saveTime_(0),
       saveStep_(-1),
       saveCount_(-1),
       outputFormat_(vtkvtx),
@@ -750,8 +762,10 @@ namespace Dune
       saveStep_ = parameter.savestep();
       saveCount_ = parameter.savecount();
 
+      // set initial quantities
       writeStep_ = parameter.startcounter();
       writeCalls_ =  parameter.startcall();
+      saveTime_ = parameter.startsavetime();
 
       if( writeMode )
       {
