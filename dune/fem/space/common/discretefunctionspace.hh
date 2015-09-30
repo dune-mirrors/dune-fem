@@ -687,6 +687,7 @@ namespace Dune
 
           \returns a local function backed by a small, fast array
        */
+      DUNE_VERSION_DEPRECATED(3,0,remove)
       LocalFunctionType localFunction ( const EntityType &entity ) const
       {
         if( static_cast< const UninitializedObjectStack& >(ldvStack_).objectSize() == 0 )
