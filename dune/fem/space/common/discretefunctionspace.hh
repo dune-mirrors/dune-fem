@@ -648,7 +648,7 @@ namespace Dune
       // communication manager
       const InterfaceType commInterface_;
       const CommunicationDirection commDirection_;
-      mutable CommunicationManagerType *communicator_;
+      mutable std::unique_ptr< CommunicationManagerType > communicator_;
 
     public:
       //! constructor
@@ -662,18 +662,9 @@ namespace Dune
         allGeomTypes_( gridPart.indexSet() ),
         dofManager_( DofManagerType :: instance( gridPart.grid() ) ),
         commInterface_( commInterface ),
-        commDirection_( commDirection ),
-        communicator_( 0 )
+        commDirection_( commDirection )
       {}
 
-    protected:
-      ~DiscreteFunctionSpaceDefault ()
-      {
-        if( communicator_ != 0 )
-          delete communicator_;
-      }
-
-    public:
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::sequence */
       inline int sequence () const
       {
@@ -802,11 +793,8 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::communicator() */
       const CommunicationManagerType& communicator() const
       {
-        if( communicator_ == 0 )
-        {
-          communicator_
-            = new CommunicationManagerType( asImp(), commInterface_, commDirection_ );
-        }
+        if( !communicator_ )
+          communicator_.reset( new CommunicationManagerType( asImp(), commInterface_, commDirection_ ) );
         assert( communicator_ != 0 );
         return *communicator_;
       }
