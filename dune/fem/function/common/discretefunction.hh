@@ -307,7 +307,7 @@ namespace Dune
        *
        *  \returns a pointer to a consecutive copy of the DoF vector
        */
-      DUNE_VERSION_DEPRECATED(1,6,remove)
+      DUNE_VERSION_DEPRECATED(3,0,remove)
       inline RangeFieldType *allocDofPointer () const
       {
         return asImp().allocDofPointer();
@@ -328,7 +328,7 @@ namespace Dune
        *  \param[in]  dofPointer  pointer to the dof array previously allocated
        *                          by allocDofPointer
        */
-      DUNE_VERSION_DEPRECATED(1,6,remove)
+      DUNE_VERSION_DEPRECATED(3,0,remove)
       inline void freeDofPointer( RangeFieldType *dofPointer )
       {
         asImp().freeDofPointer( dofPointer );
@@ -348,7 +348,7 @@ namespace Dune
        *  \param[in]  dofPointer  pointer to the dof array previously allocated
        *                          by allocDofPointer
        */
-      DUNE_VERSION_DEPRECATED(1,6,remove)
+      DUNE_VERSION_DEPRECATED(3,0,remove)
       inline void freeDofPointerNoCopy( const RangeFieldType *dofPointer ) const
       {
         asImp().freeDofPointerNoCopy( dofPointer );

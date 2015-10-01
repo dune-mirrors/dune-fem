@@ -1,5 +1,5 @@
 Module: dune-fem
-Version: 1.5.0
+Version: 2.4.0
 Maintainer: dune@mathematik.uni-freiburg.de
 Depends: dune-grid (>= 2.4)
 Suggests: dune-alugrid (>= 2.4) dune-istl (>= 2.4) dune-localfunctions (>= 2.4) dune-spgrid (>= 2013.13)
