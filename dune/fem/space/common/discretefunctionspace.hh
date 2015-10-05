@@ -18,6 +18,7 @@
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/storage/singletonlist.hh>
+#include <dune/fem/version.hh>
 
 // local includes
 #include "allgeomtypes.hh"
