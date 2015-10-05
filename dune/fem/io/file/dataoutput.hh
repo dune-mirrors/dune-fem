@@ -987,7 +987,7 @@ namespace Dune
       for( const auto entity : elements( static_cast<GridViewType>( gridPart ) ) )
       {
         CachingQuadrature< GridPartType, 0 > quad( entity, 1 );
-        for( auto i = 0; i < quad.nop(); ++i )
+        for( decltype(quad.nop()) i = 0; i < quad.nop(); ++i )
         {
           const auto x = entity.geometry().global( quad.point( i ) );
           for( auto k = 0; k < x.dimension; ++k )
