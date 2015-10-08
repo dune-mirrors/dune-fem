@@ -370,7 +370,7 @@ namespace Dune
       bool restr = grid_.preAdapt();
 
       // get macro grid view
-      typedef typename GridType::template Partition< All_Partition > :: LevelGridView  MacroGridView ;
+      typedef typename GridType::LevelGridView MacroGridView;
       typedef typename MacroGridView :: template Codim<0>::
               template Partition<pitype> :: Iterator MacroIterator;
 
