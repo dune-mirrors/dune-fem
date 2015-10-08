@@ -33,7 +33,7 @@ namespace Dune
     class GeoGridPart;
 
     template< class CoordFunction >
-    class GeoGridPartFamily;
+    struct GeoGridPartFamily;
 
 
 

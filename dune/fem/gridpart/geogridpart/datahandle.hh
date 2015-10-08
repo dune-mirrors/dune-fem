@@ -23,7 +23,7 @@ namespace Dune
       typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
       template< class HostEntity >
-      class EntityProxy;
+      struct EntityProxy;
 
     public:
       typedef typename Traits::CoordFunctionType CoordFunctionType;

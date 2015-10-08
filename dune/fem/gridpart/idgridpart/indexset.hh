@@ -254,7 +254,7 @@ namespace Dune
     {
       typedef typename __IdIndexSet::Implementation< GridFamily >::Type BaseType;
 
-      friend class Capabilities::isPersistentIndexSet< IdIndexSet< GridFamily > >;
+      friend struct Capabilities::isPersistentIndexSet< IdIndexSet< GridFamily > >;
 
     public:
       explicit IdIndexSet ( const typename BaseType::HostIndexSetType &hostIndexSet )
