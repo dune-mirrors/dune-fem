@@ -1044,7 +1044,7 @@ namespace Dune
       }
 
       // get macro iterator
-      typedef typename GridType :: template Partition< All_Partition > :: LevelGridView LevelGridView ;
+      typedef typename GridType::LevelGridView LevelGridView;
       LevelGridView macroView = grid_.levelGridView( 0 );
 
       typedef typename LevelGridView::template Codim< 0 >::template Partition< pt >::Iterator Iterator;
