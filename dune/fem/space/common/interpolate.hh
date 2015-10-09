@@ -18,15 +18,12 @@ namespace Dune
     template< class GridFunction, class DiscreteFunction, unsigned int partitions >
     static inline void interpolate ( const GridFunction &u, DiscreteFunction &v, PartitionSet< partitions > ps )
     {
-      // obtain grid view
-      const auto& gv = static_cast< typename DiscreteFunction::GridPartType::GridViewType >( v.gridPart() );
-
       // reserve memory for local dof vector
       std::vector< typename DiscreteFunction::RangeFieldType > ldv;
       ldv.reserve( v.space().blockMapper().maxNumDofs() * DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize );
 
       // iterate over selected partition
-      for( const auto entity : elements( gv, ps ) )
+      for( const auto entity : elements( v.gridPart(), ps ) )
       {
         // obtain local interpolation
         const auto interpolation = v.space().interpolation( entity );
