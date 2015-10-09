@@ -11,6 +11,7 @@ shapefunctionset_HEADERS = \
 	shapefunctionset.hh \
 	simple.hh \
 	tensorproduct.hh \
+	tuple.hh \
 	vectorial.hh \
 	wrapper.hh
 
