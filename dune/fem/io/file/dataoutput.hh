@@ -76,7 +76,7 @@ namespace Dune
       //! \brief base of file name for data file (fem.io.datafileprefix)
       virtual std::string prefix () const
       {
-        return Parameter::getValue< std::string >( keyPrefix_ + "datafileprefix" );
+        return Parameter::getValue< std::string >( keyPrefix_ + "datafileprefix", "" );
       }
 
       //! \brief format of output (fem.io.outputformat)
