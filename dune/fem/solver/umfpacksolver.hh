@@ -18,7 +18,7 @@
 #if HAVE_DUNE_ISTL
 #include <dune/istl/umfpack.hh>
 
-#ifdef ENABLE_UMFPACK
+#ifdef HAVE_UMFPACK
 
 namespace Dune
 {
