@@ -3,6 +3,7 @@
 
 #include <dune/geometry/type.hh>
 
+#include <dune/common/forloop.hh>
 #include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
 #include <dune/fem/common/utility.hh>
