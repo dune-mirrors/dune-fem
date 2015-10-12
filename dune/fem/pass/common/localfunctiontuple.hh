@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cstddef>
 #include <tuple>
+#include <utility>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/forloop.hh>
@@ -131,7 +132,7 @@ namespace Dune
 
       template< class Factory >
       LocalFunctionTuple ( Factory factory )
-      : localFunctionTuple_( Dune::transformTuple< LocalFunctionEvaluator, Factory >( factory ) )
+      : localFunctionTuple_( Dune::transformTuple< LocalFunctionEvaluator, Factory >( std::move(factory) ) )
       {}
 
       /** \brief set local functions to given entity
