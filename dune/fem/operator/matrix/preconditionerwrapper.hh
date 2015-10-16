@@ -2,8 +2,6 @@
 #define DUNE_FEM_PRECONDITIONERWRAPPER_HH
 
 #include <memory>
-#include <dune/common/shared_ptr.hh>
-
 // standard diagonal preconditioner
 #include <dune/fem/solver/diagonalpreconditioner.hh>
 
@@ -244,7 +242,7 @@ namespace Dune
                 int iter, field_type relax, const Smoother* )
       {
         typedef typename Dune::FieldTraits< field_type>::real_type real_type;
-        typedef typename std::conditional< std::is_convertible<field_type,real_type>::value, 
+        typedef typename std::conditional< std::is_convertible<field_type,real_type>::value,
                          Dune::Amg::FirstDiagonal, Dune::Amg::RowSum >::type Norm;
         typedef Dune::Amg::CoarsenCriterion<
                 Dune::Amg::UnSymmetricCriterion<ISTLMatrixType, Norm > > Criterion;

@@ -23,7 +23,7 @@ namespace Dune
      * \brief A helper class that transforms a number of integers to a tuple.
      *        Result type is:
      *  \code
-     *  std::tuple< Dune::integral_constant< int, N1 >, ..., Dune::integral_constant< int, Nk > >
+     *  std::tuple< std::integral_constant< int, N1 >, ..., std::integral_constant< int, Nk > >
      *  \endcode
      *
      *  \note Terminatory integer values (-1) are cut off from tuple
@@ -67,7 +67,7 @@ namespace Dune
     template< class ElementTupleImp >
     struct SelectorBase
     {
-      //! \brief tuple consisting of Dune::integral_constant< int, N_i >
+      //! \brief tuple consisting of std::integral_constant< int, N_i >
       typedef typename ElementTupleImp :: Type Type;
 
       // \brief number of elements in selector

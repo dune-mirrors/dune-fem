@@ -114,7 +114,7 @@ namespace Dune
   public:
     static const bool isPointerTuple = CheckAllElements< Tuple, IsPointer >::value;
 
-    typedef typename Dune::conditional< isPointerTuple,
+    typedef typename std::conditional< isPointerTuple,
                                         typename Dune::ForEachType< PointeeTypeEvaluator, Tuple >::Type,
                                         EmptyTuple< std::tuple_size< Tuple >::value >
                                       >::type PointeeTupleType;
