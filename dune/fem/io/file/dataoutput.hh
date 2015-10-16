@@ -641,7 +641,7 @@ namespace Dune
           typename DFType::DiscreteFunctionSpaceType::RangeType u;
           lf.evaluate( quad_[ i_ ], u );
 
-          DUNE_CONSTEXPR int dimRange = DFType::DiscreteFunctionSpaceType::dimRange;
+          constexpr int dimRange = DFType::DiscreteFunctionSpaceType::dimRange;
           for( auto k = 0; k < dimRange; ++k )
             out_ << "  " << u[ k ];
         }
