@@ -951,18 +951,6 @@ namespace Dune
       }
     }
 
-    template <class T>
-    void SparseRowMatrix<T>::solveUMF(const T* b, T* x)
-    {
-       DUNE_THROW(NotImplemented,"solveUMF is not implemented and will be removed!Please use directly Dune::Fem::UMFPACKOp.");
-    }
-
-    template <class T>
-    void SparseRowMatrix<T>::solveUMFNonSymmetric(const T* b, T* x)
-    {
-      DUNE_THROW(NotImplemented,"solveUMFNonSymmetric is not implemented and will be removed!Please use directly Dune::Fem::UMFPACKOp.");
-    }
-
   } // namespace Fem
 
 } // namespace Dune
