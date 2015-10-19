@@ -241,7 +241,7 @@ void solve(OdeFactory factory, const bool verbose)
   const int order = Dune::Fem::Parameter::getValue("fem.ode.order", int(2));
 
   // create solver
-  Dune::Fem::DefaultTimeProvider tp( startTime, cfl );
+  Dune::Fem::TimeProvider<> tp( startTime, cfl );
   typedef typename OdeFactory :: OdeSolverType OdeSolverType;
   std::unique_ptr< OdeSolverType > odeSolver;
   odeSolver.reset( factory.create( spaceOperator, tp, order ) );
