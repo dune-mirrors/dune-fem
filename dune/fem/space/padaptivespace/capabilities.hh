@@ -47,13 +47,6 @@ namespace Dune
 
 
       template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
-      struct isParallel< PAdaptiveDGSpace< FunctionSpace, GridPart, polOrder, Storage > >
-      {
-        static const bool v = Dune::Fem::GridPartCapabilities::isParallel< GridPart >::v;
-      };
-
-
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
       struct isAdaptive< PAdaptiveDGSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
@@ -104,13 +97,6 @@ namespace Dune
       struct isLocalized< PAdaptiveLagrangeSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;
-      };
-
-
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
-      struct isParallel< PAdaptiveLagrangeSpace< FunctionSpace, GridPart, polOrder, Storage > >
-      {
-        static const bool v = Dune::Fem::GridPartCapabilities::isParallel< GridPart >::v;
       };
 
 

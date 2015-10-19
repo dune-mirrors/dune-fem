@@ -82,11 +82,6 @@ namespace Dune
        : public Dune::Capabilities::hasEntity< Grid, codim >
       {};
 
-      template< class Grid >
-      struct isParallel< LevelGridPart< Grid > >
-       : public Dune::Capabilities::isParallel< Grid >
-      {};
-
       template< class Grid, int codim  >
       struct canCommunicate< LevelGridPart< Grid >, codim >
        : public Dune::Capabilities::canCommunicate< Grid, codim >

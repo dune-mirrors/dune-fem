@@ -138,12 +138,6 @@ namespace Dune
       };
 
       template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
-      struct isParallel< DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
-      {
-        static const bool v = Dune::Fem::GridPartCapabilities::isParallel< GridPart >::v;
-      };
-
-      template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
       struct isAdaptive< DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >
       {
         static const bool v = true;

@@ -443,12 +443,6 @@ namespace Dune
         static const bool v = Dune::Capabilities::hasEntity< Grid, codim >::v;
       };
 
-      template< class Grid, PartitionIteratorType idxpitype, bool onlyCodimensionZero >
-      struct isParallel< AdaptiveLeafGridPart< Grid, idxpitype, onlyCodimensionZero > >
-      {
-        static const bool v = Dune::Capabilities::isParallel< Grid >::v;
-      };
-
       template< class Grid, PartitionIteratorType idxpitype, bool onlyCodimensionZero, int codim >
       struct canCommunicate< AdaptiveLeafGridPart< Grid, idxpitype, onlyCodimensionZero >, codim >
       {
@@ -491,12 +485,6 @@ namespace Dune
         static const bool v = Dune::Capabilities::hasEntity< Grid, codim >::v;
       };
 
-      template< class Grid, PartitionIteratorType idxpitype >
-      struct isParallel< DGAdaptiveLeafGridPart< Grid, idxpitype > >
-      {
-        static const bool v = Dune::Capabilities::isParallel< Grid >::v;
-      };
-
       template< class Grid, PartitionIteratorType idxpitype, int codim >
       struct canCommunicate< DGAdaptiveLeafGridPart< Grid, idxpitype >, codim >
       {
@@ -537,12 +525,6 @@ namespace Dune
       struct hasEntity< IntersectionAdaptiveLeafGridPart< Grid, idxpitype >, codim >
       {
         static const bool v = Dune::Capabilities::hasEntity< Grid, codim >::v;
-      };
-
-      template< class Grid, PartitionIteratorType idxpitype >
-      struct isParallel< IntersectionAdaptiveLeafGridPart< Grid, idxpitype > >
-      {
-        static const bool v = Dune::Capabilities::isParallel< Grid >::v;
       };
 
       template< class Grid, PartitionIteratorType idxpitype, int codim >

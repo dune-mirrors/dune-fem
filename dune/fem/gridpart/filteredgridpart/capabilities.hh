@@ -56,13 +56,6 @@ namespace Dune
       };
 
 
-      template< class HostGridPartImp, class FilterImp, bool useFilteredIndexSet >
-      struct isParallel< FilteredGridPart< HostGridPartImp, FilterImp, useFilteredIndexSet > >
-      {
-        static const bool v = isParallel< HostGridPartImp >::v;
-      };
-
-
       template< class HostGridPartImp, class FilterImp, bool useFilteredIndexSet, int codim >
       struct canCommunicate< FilteredGridPart< HostGridPartImp, FilterImp, useFilteredIndexSet >, codim >
       {

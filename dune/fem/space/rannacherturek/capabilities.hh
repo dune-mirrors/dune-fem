@@ -44,13 +44,6 @@ namespace Dune
 
 
       template< class FunctionSpace, class GridPart, template< class > class Storage >
-      struct isParallel< RannacherTurekDiscreteFunctionSpace< FunctionSpace, GridPart, Storage > >
-      {
-        static const bool v = Dune::Fem::GridPartCapabilities::isParallel< GridPart >::v;
-      };
-
-
-      template< class FunctionSpace, class GridPart, template< class > class Storage >
       struct isAdaptive< RannacherTurekDiscreteFunctionSpace< FunctionSpace, GridPart, Storage > >
       {
         static const bool v = true;
