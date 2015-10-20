@@ -4,7 +4,6 @@
 #include <cassert>
 
 #include <dune/common/fmatrix.hh>
-#include <dune/common/nullptr.hh>
 
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/common/localmatrix.hh>

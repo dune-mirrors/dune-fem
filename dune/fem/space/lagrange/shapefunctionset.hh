@@ -5,7 +5,6 @@
 #include <cstdlib>
 
 #include <dune/common/fvector.hh>
-#include <dune/common/nullptr.hh>
 
 #include <dune/geometry/genericgeometry/topologytypes.hh>
 #include <dune/geometry/type.hh>

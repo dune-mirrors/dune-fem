@@ -4,8 +4,6 @@
 #include <cassert>
 #include <cstddef>
 
-#include <dune/common/nullptr.hh>
-
 #include <dune/fem/space/common/functionspace.hh>
 
 namespace Dune

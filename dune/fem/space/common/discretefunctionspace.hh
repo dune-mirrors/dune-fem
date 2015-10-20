@@ -7,7 +7,6 @@
 // dune-common includes
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/common/dynvector.hh>
-#include <dune/common/nullptr.hh>
 
 // dune-fem includes
 #include <dune/fem/common/stackallocator.hh>

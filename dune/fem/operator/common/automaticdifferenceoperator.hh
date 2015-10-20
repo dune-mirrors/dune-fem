@@ -4,8 +4,6 @@
 
 #include <limits>
 
-#include <dune/common/nullptr.hh>
-
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/common/differentiableoperator.hh>
 

@@ -7,7 +7,6 @@
 #include <type_traits>
 
 // dune-common includes
-#include <dune/common/nullptr.hh>
 #include <dune/common/typetraits.hh>
 
 // dune-fem includes

@@ -1,8 +1,6 @@
 #ifndef DUNE_FEM_SOLVER_ISTLINVERSEOPERATORS_HH
 #define DUNE_FEM_SOLVER_ISTLINVERSEOPERATORS_HH
 
-#include <dune/common/nullptr.hh>
-
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/common/operator.hh>
