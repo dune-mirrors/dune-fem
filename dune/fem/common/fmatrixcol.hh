@@ -53,9 +53,9 @@ namespace Dune
 
     using Base::operator=;
 
-    DUNE_CONSTEXPR size_type size () const { return vec_size(); }
+    constexpr size_type size () const { return vec_size(); }
 
-    DUNE_CONSTEXPR size_type vec_size () const { return dimension; }
+    constexpr size_type vec_size () const { return dimension; }
     const value_type &vec_access ( size_type i ) const { return fieldMatrix_[ i ][ column_ ]; }
     value_type &vec_access ( size_type i ) { return fieldMatrix_[ i ][ column_ ]; }
 
@@ -83,9 +83,9 @@ namespace Dune
 
     using Base::operator=;
 
-    DUNE_CONSTEXPR size_type size () const { return vec_size(); }
+    constexpr size_type size () const { return vec_size(); }
 
-    DUNE_CONSTEXPR size_type vec_size () const { return dimension; }
+    constexpr size_type vec_size () const { return dimension; }
     const value_type &vec_access ( size_type i ) const { return fieldMatrix_[ i ][ column_ ]; }
 
   private:

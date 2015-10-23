@@ -52,16 +52,6 @@ namespace Dune
       };
 
 
-      /** \brief specialize with 'true' if implementation supports
-       *         parallelism (default=false)
-       */
-      template< class GridPartType >
-      struct isParallel
-      {
-        static const bool v = false;
-      };
-
-
       /** \brief specialize with 'true' for all codims that a
        *         grid can communicate data on (default=false)
        */
@@ -116,13 +106,6 @@ namespace Dune
       struct hasEntity< const GridPartType, codim >
       {
         static const bool v = Dune::Fem::GridPartCapabilities::hasEntity< GridPartType, codim >::v;
-      };
-
-
-      template< class GridPartType >
-      struct isParallel< const GridPartType >
-      {
-        static const bool v = Dune::Fem::GridPartCapabilities::isParallel< GridPartType >::v;
       };
 
 

@@ -56,13 +56,6 @@ namespace Dune
       };
 
 
-      template< class HostGridPartType >
-      struct isParallel< IdGridPart< HostGridPartType > >
-      {
-        static const bool v = isParallel< HostGridPartType >::v;
-      };
-
-
       template< class HostGridPartType, int codim >
       struct canCommunicate< IdGridPart< HostGridPartType >, codim >
       {

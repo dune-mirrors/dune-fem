@@ -8,7 +8,7 @@
 #include <vector>
 #include <iterator>
 #include <utility>
-
+#include <memory>
 
 #if HAVE_PETSC
 
@@ -17,7 +17,6 @@
 #include <dune/fem/misc/petsc/petscvector.hh>
 #include <dune/fem/misc/petsc/petscslavedofprovider.hh>
 
-
 #include <dune/common/fvector.hh>
 #include <dune/common/dynvector.hh>
 
@@ -25,8 +24,6 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/functor.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
-
-#include <dune/common/shared_ptr.hh>
 
 namespace Dune
 {

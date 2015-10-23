@@ -12,7 +12,6 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/densevector.hh>
-#include <dune/common/nullptr.hh>
 
 namespace Dune
 {

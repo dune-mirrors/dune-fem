@@ -5,9 +5,6 @@
 #include <cassert>
 #include <cstddef>
 
-// dune-common includes
-#include <dune/common/nullptr.hh>
-
 /**
   @file
   @author Christoph Gersbacher

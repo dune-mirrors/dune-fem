@@ -12,9 +12,6 @@
 #include <cassert>
 #include <sys/times.h>
 
-//- dune-common includes
-#include <dune/common/nullptr.hh>
-
 //- dune-fem includes
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/misc/mpimanager.hh>

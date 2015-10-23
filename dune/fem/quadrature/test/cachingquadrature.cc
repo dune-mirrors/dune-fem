@@ -1,8 +1,8 @@
 #include <config.h>
 #include <iostream>
+#include <set>
 
 #include <dune/grid/common/gridinfo.hh>
-#include <dune/grid/io/visual/grapegriddisplay.hh>
 
 #include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/io/parameter.hh>
@@ -191,12 +191,6 @@ int main(int argc, char ** argv)
     int maxlevel = Parameter::getValue<int>("fem.maxlevel");
     //grid.globalRefine( maxlevel );
     //Dune::gridinfo(grid);
-
-    if( Parameter::getValue<bool>("fem.io.grapedisplay", false ))
-    {
-      Dune::GrapeGridDisplay< GridType > grape( grid ) ;
-      grape.display();
-    }
 
     int quadOrder = Parameter::getValue<int>("fem.quadorder");
 

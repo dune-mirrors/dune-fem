@@ -4,9 +4,6 @@
 #include <type_traits>
 #include <utility>
 
-//- dune-common includes
-#include <dune/common/nullptr.hh>
-
 //- dune-grid includes
 #include <dune/grid/common/entity.hh>
 #include <dune/grid/common/gridenums.hh>

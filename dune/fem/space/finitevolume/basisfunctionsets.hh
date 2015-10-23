@@ -1,8 +1,6 @@
 #ifndef DUNE_FEM_SPACE_FINITEVOLUME_BASISFUNCTIONSETS_HH
 #define DUNE_FEM_SPACE_FINITEVOLUME_BASISFUNCTIONSETS_HH
 
-#include <dune/common/std/constexpr.hh>
-
 #include "basisfunctionset.hh"
 
 namespace Dune
@@ -48,10 +46,10 @@ namespace Dune
        */
 
       /** \copydoc Dune::Fem::BasisFunctionSets::order */
-      static DUNE_CONSTEXPR int order () { return 0; }
+      static constexpr int order () { return 0; }
 
       /** \copydoc Dune::Fem::BasisFunctionSets::order */
-      static DUNE_CONSTEXPR int order ( const EntityType & ) { return 0; }
+      static constexpr int order ( const EntityType & ) { return 0; }
 
       /** \copydoc Dune::Fem::BasisFunctionSets::basisFunctionSet */
       static BasisFunctionSetType basisFunctionSet ( const EntityType &entity )

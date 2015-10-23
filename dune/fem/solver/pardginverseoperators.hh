@@ -1,8 +1,6 @@
 #ifndef DUNE_FEM_SOLVER_PARDGINVERSEOPERATORS_HH
 #define DUNE_FEM_SOLVER_PARDGINVERSEOPERATORS_HH
 
-#include <dune/common/nullptr.hh>
-
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/solver/pardg.hh>

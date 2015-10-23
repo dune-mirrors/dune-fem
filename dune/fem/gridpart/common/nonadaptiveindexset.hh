@@ -69,12 +69,6 @@ namespace Dune
         return indexSet().types( codim );
       }
 
-      /** \copydoc Dune::Fem::ConsecutiveIndexSet::geomTypes */
-      const std::vector< GeometryType > &geomTypes ( int codim ) const
-      {
-        return indexSet().geomTypes( codim );
-      }
-
       /** \copydoc Dune::Fem::ConsecutiveIndexSet::contains */
       template< class Entity >
       bool contains ( const Entity &entity ) const

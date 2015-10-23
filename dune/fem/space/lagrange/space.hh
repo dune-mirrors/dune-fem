@@ -7,7 +7,6 @@
 // dune-common includes
 #include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
-#include <dune/common/nullptr.hh>
 
 // dune-geometry includes
 #include <dune/geometry/type.hh>

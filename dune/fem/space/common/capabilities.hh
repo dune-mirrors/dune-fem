@@ -68,18 +68,6 @@ namespace Dune
 
 
 
-      /** \class isParallel
-       *
-       *  \brief specialize with \b true if space can be used in parallel
-       */
-      template< class DiscreteFunctionSpace >
-      struct isParallel
-      {
-        static const bool v = false;
-      };
-
-
-
       /** \class isAdaptive
        *
        *  \brief specialize with \b true if space can be used with
@@ -158,12 +146,6 @@ namespace Dune
       struct isLocalized< const DiscreteFunctionSpace >
       {
         static const bool v = isLocalized< DiscreteFunctionSpace >::v;
-      };
-
-      template< class DiscreteFunctionSpace >
-      struct isParallel< const DiscreteFunctionSpace >
-      {
-        static const bool v = isParallel< DiscreteFunctionSpace >::v;
       };
 
       template< class DiscreteFunctionSpace >

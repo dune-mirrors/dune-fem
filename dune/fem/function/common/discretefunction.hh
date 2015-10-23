@@ -4,9 +4,6 @@
 // C++ includes
 #include <string>
 
-// dune-common inlcudes
-#include <dune/common/version.hh>
-
 // dune-fem includes
 #include <dune/fem/function/common/dofiterator.hh>
 #include <dune/fem/function/common/function.hh>
@@ -293,65 +290,6 @@ namespace Dune
       inline DofIteratorType dend ()
       {
         return asImp().dend ();
-      }
-
-      /** \brief allocate a pointer to a consecutive array storing the DoFs
-       *
-       *  To support external packages, it is often required to have the DoFs
-       *  in a consecutive array. This function ensures this, making a copy if
-       *  necessary.
-       *
-       *  \note The allocated pointer has to be freed by freeDofPointer.
-       *
-       *  \note Only one DoF pointer may be allocated at a time.
-       *
-       *  \returns a pointer to a consecutive copy of the DoF vector
-       */
-      DUNE_VERSION_DEPRECATED(1,6,remove)
-      inline RangeFieldType *allocDofPointer () const
-      {
-        return asImp().allocDofPointer();
-      }
-
-      /** \brief allocate a pointer to a consecutive array storing the DoFs
-       *
-       *  This method serves two purposes:
-       *  - The user cannot know, if the DoF array returned by allocDofPointer
-       *    has to be freed.
-       *  - If the DoF array is just a copy, the DoFs shall be stored back into
-       *    the discrete function.
-       *
-       *  \note The pointer must have been allocated by allocDofPointer.
-       *
-       *  \note Only one DoF pointer may be allocated at a time.
-       *
-       *  \param[in]  dofPointer  pointer to the dof array previously allocated
-       *                          by allocDofPointer
-       */
-      DUNE_VERSION_DEPRECATED(1,6,remove)
-      inline void freeDofPointer( RangeFieldType *dofPointer )
-      {
-        asImp().freeDofPointer( dofPointer );
-      }
-
-      /** \brief allocate a pointer to a consecutive array storing the DoFs
-       *
-       *  This method serves sincet the user cannot know, if the DoF array
-       *  returned by allocDofPointer has to be freed.
-       *
-       *  \note The pointer must have been allocated by allocDofPointer.
-       *
-       *  \note Only one DoF pointer may be allocated at a time.
-       *
-       *  \note DoFs are NOT stored back into the discrete function.
-       *
-       *  \param[in]  dofPointer  pointer to the dof array previously allocated
-       *                          by allocDofPointer
-       */
-      DUNE_VERSION_DEPRECATED(1,6,remove)
-      inline void freeDofPointerNoCopy( const RangeFieldType *dofPointer ) const
-      {
-        asImp().freeDofPointerNoCopy( dofPointer );
       }
 
       /** \brief axpy operation
@@ -762,27 +700,6 @@ namespace Dune
        *  \return Non-Constant iterator pointing to the last dof
        */
       DofIteratorType dend () { return dofVector().end(); }
-
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::allocDofPointer
-       *
-       *  \note The default implementation make a copy of the DoF vector using
-       *        the DoF iterators.
-       */
-      inline RangeFieldType *allocDofPointer () const;
-
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::freeDofPointer
-       *
-       *  \note The default implementation make a copy of the DoF vector using
-       *        the DoF iterators.
-       */
-      inline void freeDofPointer( RangeFieldType *dofPointer );
-
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::freeDofPointerNoCopy
-       *
-       *  \note The default implementation make a copy of the DoF vector using
-       *        the DoF iterators.
-       */
-      inline void freeDofPointerNoCopy( const RangeFieldType *dofPointer ) const;
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::axpy(const RangeFieldType &s,const DiscreteFunctionInterfaceType &g) */
       template <class DFType>

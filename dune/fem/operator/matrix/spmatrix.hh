@@ -164,6 +164,40 @@ namespace Dune
         return col_[pos];
       }
 
+      //! make row a row with 1 on diagonal and all other entries 0
+      void unitRow(int row);
+
+      //! make column a column with 1 on diagonal and all other entries 0
+      void unitCol(int col);
+
+      //! check symetry
+      void checkSym ();
+
+      // res = this * B
+      void multiply(const ThisType & B, ThisType & res) const;
+
+      //! multiply this matrix with scalar
+      void scale(const T& factor);
+
+      //! add other matrix to this matrix
+      void add(const ThisType & B );
+
+      //! resort to have ascending column numbering
+      void resort();
+
+      //! resort row to have ascending column numbering
+      void resortRow(const int row);
+
+      //! SSOR preconditioning
+      void ssorPrecondition (const T*, T*) const;
+
+      //! returns true if preconditioing is called before matrix multiply
+      bool rightPrecondition() const { return true; }
+
+      //! apply preconditioning, calls ssorPreconditioning at the moment
+      void precondition (const T*u , T*x) const {  ssorPrecondition(u,x); }
+
+    private:
       //! delete memory
       void removeObj();
 
@@ -965,6 +999,92 @@ namespace Dune
       return(consistent);
     }
 
+    template <class T>
+    void SparseRowMatrix<T>::ssorPrecondition(const T* u, T* x) const
+    {
+      const double omega = omega_;
+
+      // (D - omega E) x = x_old (=u)
+      for(int row=0; row<dim_[0]; ++row)
+      {
+        double diag=1.0, dot=0.0;
+        // get row stuff
+        int thisCol = row*nz_ + firstCol ;
+        const T * localValues = &values_[thisCol];
+        const int nonZero = nonZeros_[row];
+        for(int col = firstCol ; col<nonZero; ++col)
+        {
+          const int realCol = col_[ thisCol ];
+          assert( realCol > defaultCol );
+
+          if (realCol < row)
+          {
+            dot += localValues[col] * x[realCol];
+          }
+          else if (realCol == row)
+          {
+            diag = localValues[col];
+            assert( std::abs(diag) > 0.0 );
+          }
+          ++thisCol;
+        }
+
+        x[row] = (u[row] - omega*dot) / diag;
+      }
+
+      // D^{-1} (D - omega F) x = x_old (=x)
+      for(int row=dim_[0]-1; row>=0; --row)
+      {
+        double diag=1.0, dot=0.0;
+        int thisCol = row*nz_ + firstCol ;
+        const T * localValues = &values_[thisCol];
+        const int nonZero = nonZeros_[row];
+        for(int col = firstCol ; col<nonZero; ++col)
+        {
+          const int realCol = col_[ thisCol ];
+          assert( realCol > defaultCol );
+
+          if (realCol > row)
+          {
+            dot += localValues[col] * x[realCol];
+          }
+          else if (realCol == row)
+          {
+            diag = localValues[col];
+            assert( std::abs(diag) > 0.0 );
+          }
+          ++thisCol;
+        }
+
+        x[row] = (u[row] - omega*dot) / diag;
+      }
+
+      // D^{-1} (D - omega F) x = x_old (=x)
+      for(int row=dim_[0]-1; row>=0; --row)
+      {
+        double diag=1.0, dot=0.0;
+        int thisCol = row*nz_ + firstCol ;
+        const T * localValues = &values_[thisCol];
+        const int nonZero = nonZeros_[row];
+        for(int col = firstCol ; col<nonZero; ++col)
+        {
+          const int realCol = col_[ thisCol ];
+          assert( realCol > defaultCol );
+
+          if (realCol > row)
+          {
+            dot += localValues[col] * x[realCol];
+          }
+          else if (realCol == row)
+          {
+            diag = localValues[col];
+            assert( std::abs(diag) > 0.0 );
+          }
+          ++thisCol;
+        }
+        x[row] -= omega * dot / diag;
+      }
+    }
   } // namespace Fem
 
 } // namespace Dune

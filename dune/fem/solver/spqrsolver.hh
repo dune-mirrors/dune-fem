@@ -14,7 +14,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/matrix/colcompspmatrix.hh>
 
-#if HAVE_SPQR
+#if HAVE_SUITESPARSE
 #include <SuiteSparseQR.hpp>
 
 namespace Dune
@@ -257,6 +257,6 @@ class SPQROp:public Operator<DF, DF>
 }
 }
 
-#endif // #if HAVE_SPQR
+#endif // #if HAVE_SUITESPARSE
 
 #endif // #ifndef DUNE_FEM_SPQRSOLVER_HH

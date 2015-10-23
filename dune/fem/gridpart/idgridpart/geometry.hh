@@ -26,10 +26,8 @@ namespace Dune
     {
       typedef typename Traits::HostGeometryType HostGeometryType;
 
-      static const int dimension = HostGeometryType::dimension;
       static const int mydimension = HostGeometryType::mydimension;
       static const int coorddimension = HostGeometryType::coorddimension;
-      static const int dimensionworld = HostGeometryType::dimensionworld;
 
       typedef typename HostGeometryType::ctype ctype;
       typedef FieldVector< ctype, mydimension > LocalVector;

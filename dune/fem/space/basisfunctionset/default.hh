@@ -5,9 +5,6 @@
 #include <cassert>
 #include <cstddef>
 
-// dune-common includes
-#include <dune/common/nullptr.hh>
-
 // dune-geometry includes
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>

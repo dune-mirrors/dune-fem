@@ -4,8 +4,6 @@
 #include <cassert>
 #include <cstddef>
 
-#include <dune/common/std/constexpr.hh>
-
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 
@@ -60,10 +58,10 @@ namespace Dune
        */
 
       /** \copydoc Dune::Fem::BasisFunctionSet::order */
-      static DUNE_CONSTEXPR int order () { return 0; }
+      static constexpr int order () { return 0; }
 
       /** \copydoc Dune::Fem::BasisFunctionSet::size */
-      static DUNE_CONSTEXPR std::size_t size () { return RangeType::dimension; }
+      static constexpr std::size_t size () { return RangeType::dimension; }
 
       /** \copydoc Dune::Fem::BasisFunctionSet::axpy */
       template< class Quadrature, class Vector, class DofVector >

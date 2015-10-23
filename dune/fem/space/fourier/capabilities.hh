@@ -44,13 +44,6 @@ namespace Dune
 
 
       template< class FunctionSpace, class GridPart, int Order >
-      struct isParallel< FourierDiscreteFunctionSpace< FunctionSpace, GridPart, Order > >
-      {
-        static const bool v = false;
-      };
-
-
-      template< class FunctionSpace, class GridPart, int Order >
       struct isAdaptive< FourierDiscreteFunctionSpace< FunctionSpace, GridPart, Order > >
       {
         static const bool v = true;

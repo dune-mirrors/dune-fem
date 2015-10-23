@@ -4,7 +4,6 @@
 #include <utility>
 
 #include <dune/common/deprecated.hh>
-#include <dune/common/std/constexpr.hh>
 
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
@@ -104,10 +103,10 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
-      static DUNE_CONSTEXPR bool continuous () { return false; }
+      static constexpr bool continuous () { return false; }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
-      static DUNE_CONSTEXPR bool continuous ( const IntersectionType &intersection ) { return false; }
+      static constexpr bool continuous ( const IntersectionType &intersection ) { return false; }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
       int order () const { return basisFunctionSets_.order(); }

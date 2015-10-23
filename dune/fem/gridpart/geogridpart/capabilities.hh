@@ -58,13 +58,6 @@ namespace Dune
       };
 
 
-      template< class CoordFunction >
-      struct isParallel< GeoGridPart< CoordFunction > >
-      {
-        static const bool v = isParallel< typename CoordFunction::GridPartType >::v;
-      };
-
-
       template< class CoordFunction, int codim >
       struct canCommunicate< GeoGridPart< CoordFunction >, codim >
       {

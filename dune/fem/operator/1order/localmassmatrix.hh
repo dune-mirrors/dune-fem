@@ -4,7 +4,6 @@
 //- dune-common includes
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/common/nullptr.hh>
 
 //- dune-geometry includes
 #include <dune/geometry/typeindex.hh>

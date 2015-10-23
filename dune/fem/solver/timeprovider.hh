@@ -566,11 +566,6 @@ namespace Dune
 
 
 
-    // TODO : remove!
-    typedef TimeProvider<> DefaultTimeProvider;
-
-
-
     /** \class   GridTimeProvider
      *  \ingroup ODESolver
      *  \brief   the same functionality as the Dune::TimeProvider.

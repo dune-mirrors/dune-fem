@@ -193,11 +193,8 @@ namespace Dune
 
       for( int cd = 0; cd <= dimension; ++cd )
       {
-        if( !std::equal( geomTypes[ cd ].begin(), geomTypes[ cd ].end(),
-                         indexSet.geomTypes( cd ).begin() ) )
-        {
-          abort();
-        }
+        if( !std::equal( geomTypes[ cd ].begin(), geomTypes[ cd ].end(), indexSet.types( cd ).begin() ) )
+          std::abort();
       }
     }
 

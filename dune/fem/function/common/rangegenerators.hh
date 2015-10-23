@@ -7,8 +7,6 @@ namespace Dune
 {
   namespace Fem
   {
-    // only make the implementations available on new compilers
-    #if HAVE_RANGE_BASED_FOR
     /**
      * \brief Iterator ranges for entities and DOFs to support iteration with range-based for loops.
      *
@@ -100,9 +98,6 @@ namespace Dune
       return ReturnType(df.dbegin(),df.dend());
     }
     //! \}
-
-
-    #endif // HAVE_RANGE_BASED_FOR
 
   } // end namespace Fem
 

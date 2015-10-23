@@ -76,7 +76,7 @@ namespace Dune
       //! \brief base of file name for data file (fem.io.datafileprefix)
       virtual std::string prefix () const
       {
-        return Parameter::getValue< std::string >( keyPrefix_ + "datafileprefix" );
+        return Parameter::getValue< std::string >( keyPrefix_ + "datafileprefix", "" );
       }
 
       //! \brief format of output (fem.io.outputformat)
@@ -127,6 +127,18 @@ namespace Dune
         return 0;
       }
 
+      //! \brief number of first call (no parameter available)
+      virtual int startcall () const
+      {
+        return 0;
+      }
+
+      //! \brief value of first save time (no parameter available)
+      virtual double startsavetime () const
+      {
+        return 0.0;
+      }
+
       //! method used for conditional data output - default
       //! value passed as argument.
       virtual bool willWrite ( bool write ) const
@@ -171,7 +183,10 @@ namespace Dune
       : gridPart_( getGridPart( data ) )
       {}
 
-      const GridPartType &gridPart () const { return gridPart_; }
+      const GridPartType &gridPart () const
+      {
+        return gridPart_;
+      }
 
     protected:
       static const GridPartType &getGridPart( const OutputTuple& data )
@@ -194,7 +209,10 @@ namespace Dune
       : gridPart_( const_cast< Grid & >( grid ) )
       {}
 
-      const GridPartType &gridPart () const { return gridPart_; }
+      const GridPartType &gridPart () const
+      {
+        return gridPart_;
+      }
 
     protected:
       const GridPartType gridPart_;
@@ -205,11 +223,13 @@ namespace Dune
       template< class VTKIOType >
       struct VTKListEntry
       {
-        virtual ~VTKListEntry () {}
+        virtual ~VTKListEntry ()
+        {}
         virtual void add ( VTKIOType & ) const = 0;
 
       protected:
-        VTKListEntry () {}
+        VTKListEntry ()
+        {}
       };
 
 #if ENABLE_VTXPROJECTION
@@ -347,13 +367,34 @@ namespace Dune
       }
 
       //! \brief print class name
-      virtual const char* myClassName () const { return "DataOutput"; }
+      virtual const char* myClassName () const
+      {
+        return "DataOutput";
+      }
 
       //! \brief return output path name
-      const std::string &path () const { return path_; }
+      const std::string &path () const
+      {
+        return path_;
+      }
 
       //! \brief return write step
-      int writeStep() const { return writeStep_; }
+      int writeStep() const
+      {
+        return writeStep_;
+      }
+
+      //! \brief return write calls
+      int writeCalls() const
+      {
+        return writeCalls_;
+      }
+
+      //! \brief return save time
+      double saveTime() const
+      {
+        return saveTime_;
+      }
 
     protected:
 #if USE_VTKWRITER
@@ -532,10 +573,10 @@ namespace Dune
       //! destructor, delete entries of list
       ~VTKOutputerLagrange ()
       {
-        for( size_t i = 0; i < vec_.size(); ++i )
+        for( auto& entry : vec_ )
         {
-          delete vec_[ i ];
-          vec_[ i ] = 0;
+          delete entry;
+          entry = nullptr;
         }
       }
 
@@ -545,8 +586,7 @@ namespace Dune
       {
         if( df )
         {
-          typedef VTKFunc< VTKOut, DFType > EntryType;
-          EntryType *entry = new EntryType( vtkOut_.gridPart(), *df );
+          auto entry = new VTKFunc< VTKOut, DFType >( vtkOut_.gridPart(), *df );
           entry->add( vtkOut_ );
           vec_.push_back( entry );
         }
@@ -597,19 +637,13 @@ namespace Dune
       {
         if( df )
         {
-          typedef typename DFType::LocalFunctionType LocalFunctionType;
-          typedef typename DFType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-          typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+          auto lf = df->localFunction(en_);
+          typename DFType::DiscreteFunctionSpaceType::RangeType u;
+          lf.evaluate( quad_[ i_ ], u );
 
-          static const int dimRange = DiscreteFunctionSpaceType::dimRange;
-
-          LocalFunctionType lf = df->localFunction(en_);
-          {
-            RangeType u;
-            lf.evaluate( quad_[ i_ ], u );
-            for( int k = 0; k < dimRange; ++k )
-              out_ << "  " << u[ k ];
-          }
+          constexpr int dimRange = DFType::DiscreteFunctionSpaceType::dimRange;
+          for( auto k = 0; k < dimRange; ++k )
+            out_ << "  " << u[ k ];
         }
       }
 
@@ -634,7 +668,7 @@ namespace Dune
       data_( data ),
       writeStep_(0),
       writeCalls_(0),
-      saveTime_(0.0),  // why 0.0?
+      saveTime_(0),
       saveStep_(-1),
       saveCount_(-1),
       outputFormat_(vtkvtx),
@@ -673,10 +707,10 @@ namespace Dune
     inline void DataOutput< GridImp, DataImp >
       ::consistentSaveStep ( const TimeProviderBase &tp ) const
     {
-      const double oldTime = tp.time() - saveStep_;
       // set old values according to new time
       if( saveStep_ > 0 )
       {
+        const auto oldTime = tp.time() - saveStep_;
         while( saveTime_ <= oldTime )
         {
           ++writeStep_;
@@ -690,26 +724,24 @@ namespace Dune
     inline void DataOutput< GridImp, DataImp >::
     init ( const DataOutputParameters &parameter )
     {
-      const bool writeMode = parameter.writeMode();
+      const auto writeMode = parameter.writeMode();
       if( writeMode )
         IOInterface :: createGlobalPath ( grid_.comm(), Parameter::commonOutputPath() );
 
       path_ = Parameter::commonOutputPath() + "/";
 
-      std::string paramPath = parameter.path();
+      auto paramPath = parameter.path();
       if( paramPath != "./" )
         path_ += paramPath;
 
+      // create path if not already exists
       if( writeMode )
-      {
-        // create path if not already exists
         IOInterface :: createGlobalPath ( grid_.comm(), path_ );
-      }
 
       // add prefix for data file
       datapref_ += parameter.prefix();
 
-      int outputFormat = parameter.outputformat();
+      auto outputFormat = parameter.outputformat();
       switch( outputFormat )
       {
         case 0: outputFormat_ = vtk; break;
@@ -730,7 +762,10 @@ namespace Dune
       saveStep_ = parameter.savestep();
       saveCount_ = parameter.savecount();
 
+      // set initial quantities
       writeStep_ = parameter.startcounter();
+      writeCalls_ =  parameter.startcall();
+      saveTime_ = parameter.startsavetime();
 
       if( writeMode )
       {
@@ -777,26 +812,22 @@ namespace Dune
       display();
       switch( outputFormat_ )
       {
-      // if no output was chosen just return
-      case none: break ;
-      case binary:
-        writeBinaryData( sequenceStamp );
-        break;
-      case vtk :
-      case vtkvtx :
-      case subvtk :
+        // if no output was chosen just return
+        case none: break ;
+        case binary: writeBinaryData( sequenceStamp ); break;
+        case vtk :
+        case vtkvtx :
+        case subvtk :
 #if USE_VTKWRITER
-        // write data in vtk output format
-        filename = writeVTKOutput();
-        break;
+          // write data in vtk output format
+          filename = writeVTKOutput();
+          break;
 #else
-        DUNE_THROW(NotImplemented,"DataOutput::write: VTKWriter was disabled by USE_VTKWRITER 0");
+          DUNE_THROW(NotImplemented,"DataOutput::write: VTKWriter was disabled by USE_VTKWRITER 0");
 #endif // #if USE_VTKWRITER
-      case gnuplot :
-        filename = writeGnuPlotOutput();
-        break;
-      default:
-        DUNE_THROW(NotImplemented,"DataOutput::write: wrong output format = " << outputFormat_);
+        case gnuplot : filename = writeGnuPlotOutput(); break;
+        default:
+          DUNE_THROW(NotImplemented,"DataOutput::write: wrong output format = " << outputFormat_);
       }
 
       if( outputFormat_ != none )
@@ -814,10 +845,9 @@ namespace Dune
           // prepend the leading path correctly, if the pvd-file
           // resides in the same directory as the data files.
           std::string basefilename;
-          size_t pos = filename.find_last_of( '/' );
-          if (pos == filename.npos) {
+          auto pos = filename.find_last_of( '/' );
+          if (pos == filename.npos)
             pos = -1;
-          }
           basefilename = filename.substr( pos+1, filename.npos );
           pvd_ << "    <DataSet timestep=\"" << sequenceStamp << "\" "
                << "group=\"\" part=\"0\" "
@@ -853,7 +883,7 @@ namespace Dune
       const bool parallel = (grid_.comm().size() > 1);
 
       // generate filename, with path only for serial run
-      std::string name = generateFilename( (parallel ? datapref_ : path_ + "/" + datapref_ ), writeStep_ );
+      auto name = generateFilename( (parallel ? datapref_ : path_ + "/" + datapref_ ), writeStep_ );
 
       if( vertexData )
       {
@@ -861,13 +891,10 @@ namespace Dune
         // get gridpart from first discrete function in tuple
         typedef GridPartGetter< GridType, OutPutDataType > GridPartGetterType;
         GridPartGetterType gp( grid_, data_ );
-
-        typedef typename GridPartGetterType::GridPartType GridPartType;
-        const GridPartType &gridPart = gp.gridPart();
-
+        const auto &gridPart = gp.gridPart();
 
         // create vtk output handler
-        typedef VTKIO < GridPartType > VTKIOType;
+        typedef VTKIO < typename GridPartGetterType::GridPartType > VTKIOType;
         VTKIOType vtkio ( gridPart, VTK::conforming );
 
         // add all functions
@@ -945,31 +972,25 @@ namespace Dune
     inline std::string DataOutput< GridImp, DataImp >::writeGnuPlotOutput () const
     {
       // generate filename
-      std::string name = generateFilename( path_ + "/" + datapref_, writeStep_ );
+      auto name = generateFilename( path_ + "/" + datapref_, writeStep_ );
       name += ".gnu";
       std::ofstream gnuout(name.c_str());
       gnuout << std::scientific << std::setprecision( 16 );
 
       typedef GridPartGetter< GridType, OutPutDataType > GridPartGetterType;
       GridPartGetterType gp( grid_, data_ );
-
-      typedef typename GridPartGetterType::GridPartType GridPartType;
-      const GridPartType &gridPart = gp.gridPart();
+      const auto &gridPart = gp.gridPart();
 
       // start iteration
-      typedef typename GridPartType::template Codim<0>::IteratorType IteratorType;
-      IteratorType end = gridPart.template end< 0 >();
-      for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
+      typedef typename GridPartGetterType::GridPartType GridPartType;
+      typedef typename GridPartType::GridViewType GridViewType;
+      for( const auto entity : elements( static_cast<GridViewType>( gridPart ) ) )
       {
-        typedef typename IteratorType::Entity Entity;
-        const Entity &entity = *it;
-
         CachingQuadrature< GridPartType, 0 > quad( entity, 1 );
-        for( size_t i = 0; i < quad.nop(); ++i )
+        for( decltype(quad.nop()) i = 0; i < quad.nop(); ++i )
         {
-          const typename Entity::Geometry::GlobalCoordinate x
-            = entity.geometry().global( quad.point( i ) );
-          for( int k = 0; k < x.dimension; ++k )
+          const auto x = entity.geometry().global( quad.point( i ) );
+          for( auto k = 0; k < x.dimension; ++k )
             gnuout << (k > 0 ? " " : "") << x[ k ];
           GnuplotOutputer< GridPartType > io( gnuout, quad, i, entity );
           io.forEach( data_ );

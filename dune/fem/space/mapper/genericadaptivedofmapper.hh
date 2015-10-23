@@ -2,7 +2,6 @@
 #define DUNE_FEM_GENERICPADAPTIVEDOFMAPPER_HH
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/nullptr.hh>
 
 #include <dune/geometry/type.hh>
 

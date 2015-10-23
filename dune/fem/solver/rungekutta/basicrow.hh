@@ -10,7 +10,6 @@
 //- dune-common includes
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/dynvector.hh>
-#include <dune/common/nullptr.hh>
 
 //- dune-fem includes
 #include <dune/fem/solver/odesolver.hh>

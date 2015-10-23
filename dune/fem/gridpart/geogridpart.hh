@@ -33,7 +33,7 @@ namespace Dune
     class GeoGridPart;
 
     template< class CoordFunction >
-    class GeoGridPartFamily;
+    struct GeoGridPartFamily;
 
 
 
@@ -277,6 +277,9 @@ namespace Dune
         // here, grid part information can be passed, if necessary
         return EntityObj( Implementation( coordFunction_, entity ) );
       }
+
+      // return reference to the coordfunction
+      const CoordFunctionType &coordFunction () const { return coordFunction_; }
 
     private:
       const HostGridPartType &hostGridPart () const
