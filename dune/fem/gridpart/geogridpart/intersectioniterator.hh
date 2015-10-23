@@ -22,7 +22,7 @@ namespace Dune
     {
       typedef GeoIntersectionIterator< GridFamily > ThisType;
 
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
       typedef typename Traits::CoordFunctionType CoordFunctionType;
       typedef typename Traits::template Codim< 0 >::Geometry ElementGeometryType;

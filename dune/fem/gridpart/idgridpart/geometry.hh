@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_GEOMETRY_HH
 #define DUNE_FEM_GRIDPART_IDGRIDPART_GEOMETRY_HH
 
+#include <type_traits>
+
 #include <dune/grid/common/geometry.hh>
 
 namespace Dune
@@ -15,12 +17,6 @@ namespace Dune
     template< int, int, class > class IdGeometry;
     template< int, int, class > class IdLocalGeometry;
 
-  } // namespace Fem
-
-
-
-  namespace Fem
-  {
 
     // IdBasicGeometry
     // ---------------
@@ -83,7 +79,7 @@ namespace Dune
     template< int mydim, class GridFamily >
     struct IdGeometryTraits
     {
-      typedef typename remove_const< GridFamily >::type::Traits::HostGridPartType HostGridPartType;
+      typedef typename std::remove_const< GridFamily >::type::Traits::HostGridPartType HostGridPartType;
 
       static const int dimension = HostGridPartType::dimension;
       static const int mydimension = mydim;
@@ -122,7 +118,7 @@ namespace Dune
     template< int mydim, class GridFamily >
     struct IdLocalGeometryTraits
     {
-      typedef typename remove_const< GridFamily >::type::Traits::HostGridPartType HostGridPartType;
+      typedef typename std::remove_const< GridFamily >::type::Traits::HostGridPartType HostGridPartType;
 
       static const int dimension = HostGridPartType::dimension;
       static const int mydimension = mydim;

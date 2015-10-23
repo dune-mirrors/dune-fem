@@ -4,8 +4,8 @@
 #include <cassert>
 #include <cstddef>
 #include <limits>
+#include <array>
 
-#include <dune/common/array.hh>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/power.hh>
@@ -255,7 +255,7 @@ namespace Dune
     private:
       int order_;
       // cache for evaluation of basis functions
-      mutable array< array< RangeFieldType, 3*buffer_size>, dimDomain > buffer_;
+      mutable std::array< std::array< RangeFieldType, 3*buffer_size>, dimDomain > buffer_;
     };
 
 

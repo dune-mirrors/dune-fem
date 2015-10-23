@@ -1,11 +1,11 @@
 #ifndef DUNE_FEM_SUBOBJECTS_HH
 #define DUNE_FEM_SUBOBJECTS_HH
 
+#include <type_traits>
+
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 
-
-/**************************************/
 
 namespace Dune
 {
@@ -109,9 +109,9 @@ namespace Dune
         return Dune::Fem::RowType< RangeObject > :: size;
       }
 
-      operator typename remove_const< RangeObjectType >::type () const
+      operator typename std::remove_const< RangeObjectType >::type () const
       {
-        typename remove_const< RangeObjectType >::type y;
+        typename std::remove_const< RangeObjectType >::type y;
         for( int i = 0; i < size(); ++i )
           y[ i ] = (*this)[ i ];
         return y;
@@ -126,7 +126,7 @@ namespace Dune
 
   // cast into fieldMatrix
   template<class DomainObj, class RangeObj, int offset>
-  void istl_assign_to_fmatrix( DenseMatrix< typename remove_const< RangeObj > :: type >& fm,
+  void istl_assign_to_fmatrix( DenseMatrix< typename std::remove_const< RangeObj > :: type >& fm,
                                const Fem::SubObject<DomainObj, RangeObj, offset>& s)
   {
     for( int i = 0; i < s.size(); ++i )

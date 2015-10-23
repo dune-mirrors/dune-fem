@@ -28,7 +28,7 @@ namespace Dune
       : public DefaultGridPartEntity < codim, dim, GridFamily >
     {
     protected:
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
     public:
       /** \name Attributes
@@ -49,7 +49,7 @@ namespace Dune
        *  \{ */
 
       //! coordinate type of the grid
-      typedef typename remove_const< GridFamily >::type::ctype ctype;
+      typedef typename std::remove_const< GridFamily >::type::ctype ctype;
 
       //! type of corresponding entity seed
       typedef typename GridFamily::template Codim< codimension >::EntitySeed EntitySeedType;
@@ -160,7 +160,7 @@ namespace Dune
     {
       typedef IdEntityBasic< codim, dim, GridFamily > BaseType ;
     protected:
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
     protected:
       // type of the host grid

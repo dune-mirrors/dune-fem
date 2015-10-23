@@ -2,8 +2,7 @@
 #define DUNE_FEM_DOFBLOCK_HH
 
 #include <utility>
-
-#include <dune/common/typetraits.hh>
+#include <type_traits>
 
 #include <dune/fem/storage/envelope.hh>
 
@@ -42,7 +41,7 @@ namespace Dune
       friend class Fem :: Envelope< ThisType >;
 
       typedef DofBlockProxy< const DiscreteFunction, const Dof, Size > ConstDofBlockProxy;
-      typedef DofBlockProxy< typename remove_const< DiscreteFunction >::type, typename remove_const< Dof >::type, Size > NonConstDofBlockProxy;
+      typedef DofBlockProxy< typename std::remove_const< DiscreteFunction >::type, typename std::remove_const< Dof >::type, Size > NonConstDofBlockProxy;
 
     public:
       typedef DiscreteFunction DiscreteFunctionType;

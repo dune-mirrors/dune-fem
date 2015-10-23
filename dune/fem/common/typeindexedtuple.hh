@@ -24,44 +24,83 @@ namespace Dune
       static const int value = Dune::FirstTypeIndex< Types, T >::value;
     };
 
-  public:
-    template< class T >
-    struct Value
+    // value selector for types that are contained
+    template< class T, bool contained >
+    struct ValueBase
     {
       typedef typename std::tuple_element< Position< T >::value, Tuple >::type Type;
+      static Type& at( Tuple& tuple )
+      {
+        return Dune::get< Position< T >::value >( tuple );
+      }
+      static const Type& at( const Tuple& tuple )
+      {
+        return Dune::get< Position< T >::value >( tuple );
+      }
+    };
+
+    // value selector for types that are not contained
+    template< class T >
+    struct ValueBase< T, false > // T is not contained in Tuple
+    {
+      typedef Tuple Type;
+      static Type& at( Tuple& tuple )
+      {
+        return tuple;
+      }
+      static const Type& at( const Tuple& tuple )
+      {
+        return tuple;
+      }
+    };
+
+  public:
+    template <class T>
+    struct Contains
+    {
+      static const bool value = ContainsType< Types, T >::value;
+    };
+
+    template< class T >
+    struct Value : public ValueBase< T, Contains< T >::value >
+    {
     };
 
     explicit TypeIndexedTuple ( const Tuple &tuple = Tuple() )
     : tuple_( tuple )
     {}
 
-    //! \brief please doc me
+    //! \brief return reference to tuple member associated with type T
     template< class T >
     typename Value< T >::Type &at ()
     {
-      return Dune::get< Position< T >::value >( tuple_ );
+      return Value< T >::at( tuple_ );
     }
 
-    //! \brief please doc me
+    //! \brief return reference to tuple member associated with type T
     template< class T >
     const typename Value< T >::Type &at () const
     {
-      return Dune::get< Position< T >::value >( tuple_ );
+      return Value< T >::at( tuple_ );
     }
 
-    //! \brief please doc me
+    //! \brief return reference to tuple member associated with type T (integral_constant)
     template< class T >
     typename Value< T >::Type &operator[] ( const T & )
     {
       return at< T >();
     }
 
-    //! \brief please doc me
+    //! \brief return reference to tuple member associated with type T (integral_constant)
     template< class T >
     const typename Value< T >::Type &operator[] ( const T & ) const
     {
       return at< T >();
     }
+
+    //! \brief return true if type T is contained in the tuple
+    template< class T >
+    const bool active( const T& ) const { return Contains< T >::value; }
 
     //! \brief cast to Tuple
     operator Tuple & () { return tuple_; }

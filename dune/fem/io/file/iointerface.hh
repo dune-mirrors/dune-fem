@@ -105,7 +105,7 @@ namespace Dune
        with the file prefix chosen via the parameter
        \b fem.io.datafileprefix. The data to be
        saved to disk is given to the Dune::DataWriter instance
-       through a reference to a Dune::Tuple of
+       through a reference to a std::tuple of
        discrete function pointer.
 
        For a time series, data can be either written for a fixed
@@ -123,7 +123,7 @@ namespace Dune
        The following code snippet demonstrated the
        general usage of the Dune::DataWriter:
        \code
-       typedef Dune::Tuple< DestinationType > IOTupleType;
+       typedef std::tuple< DestinationType > IOTupleType;
        IOTupleType dataTup ( &U );
        typedef DataWriter< GridType, IOTupleType > DataWriterType;
        DataWriterType dataWriter( grid,gridfilename,dataTup,startTime,endTime );
@@ -133,7 +133,7 @@ namespace Dune
        }
        \endcode
 
-        \femparam{fem.prefix, path used for all file output, ./}
+        \femparam{fem.prefix, path used for all file output, .}
         \femparam{fem.io.datafileprefix, prefix used for all data files}
         \femparam{fem.io.outputformat, output format, vtk-vertex}
                   values are:

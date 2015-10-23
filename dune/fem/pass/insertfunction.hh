@@ -146,6 +146,16 @@ namespace Dune
         assert( destination_ == 0 );
       }
 
+      /** default constructor
+       *  \note This constructor creates and instance of previous pass
+       */
+      InsertFunctionPass ( const DestinationType* destination, const std::shared_ptr< PreviousPassType >& previousPass )
+      : BaseType( *previousPass ),
+        prevPassPtr_( previousPass )
+      {
+        destination_ = const_cast< DestinationType * >( destination );
+      }
+
       //! destructor
       ~InsertFunctionPass ()
       {
@@ -180,6 +190,7 @@ namespace Dune
         LocalFunctionInitializer< DestinationType >::init( arg, time(), dest );
       }
 
+      std::shared_ptr< PreviousPassType > prevPassPtr_;
       using BaseType::destination_;
     }; // end class InsertFunctionPass
 

@@ -29,6 +29,14 @@ namespace Dune
 
     struct DataWriterParameters : public DataOutputParameters
     {
+      protected:
+      using DataOutputParameters::keyPrefix_;
+
+      public:
+      DataWriterParameters( const std::string keyPrefix = "fem.io." )
+        : DataOutputParameters( keyPrefix )
+      {}
+
       //! base of file name for data file (fem.io.macroGridFile)
       virtual std::string macroGridName (const int dim) const
       {
@@ -151,10 +159,17 @@ namespace Dune
     {
     protected:
       bool writeMode_;
+      using DataWriterParameters::keyPrefix_;
 
     public:
-      explicit CheckPointerParameters( const bool writeMode = true ) :
+      CheckPointerParameters( const bool writeMode, const std::string keyPrefix = "fem.io." ) :
+        DataWriterParameters( keyPrefix ),
         writeMode_( writeMode )
+      {}
+
+      explicit CheckPointerParameters( const std::string keyPrefix = "fem.io." ) :
+        DataWriterParameters( keyPrefix ),
+        writeMode_( true )
       {}
 
       //! base of file name for data file (fem.io.datafileprefix)
@@ -166,19 +181,19 @@ namespace Dune
       //! return number of timestep to be passed until next checkpoint in written
       virtual int checkPointStep() const
       {
-        return Parameter::getValue< int > ("fem.io.checkpointstep", 500 );
+        return Parameter::getValue< int > ( keyPrefix_ + "checkpointstep", 500 );
       }
 
       //! maximal number of checkpoint stages written (default = 2)
       virtual int maxNumberOfCheckPoints() const
       {
-        return Parameter :: getValue< int > ("fem.io.checkpointmax", 2 );
+        return Parameter :: getValue< int > ( keyPrefix_ + "checkpointmax", 2 );
       }
 
       //! return default value for check point prefix
-      static std::string checkPointPrefix()
+      virtual std::string checkPointPrefix() const
       {
-        return Parameter :: getValue< std::string > (  "fem.io.checkpointfile", "checkpoint" );
+        return Parameter :: getValue< std::string > ( keyPrefix_ +  "checkpointfile", "checkpoint" );
       }
 
       //! writeMode, true when checkpointer is in backup mode
@@ -435,7 +450,8 @@ namespace Dune
         // do not display
         grapeDisplay_ = false ;
 
-        datapref_ = CheckPointerParameters :: checkPointPrefix();
+        CheckPointerParameters parameter( checkFile == 0 );
+        datapref_ = parameter.checkPointPrefix();
 
         if( checkFile )
         {
@@ -450,7 +466,7 @@ namespace Dune
             // read name of check point file
             checkPointFile_ = path_;
             checkPointFile_ += "/";
-            checkPointFile_ += CheckPointerParameters :: checkPointPrefix();
+            checkPointFile_ += parameter.checkPointPrefix();
 
             ok = readCheckPoint();
             if( ! ok )

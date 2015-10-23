@@ -185,7 +185,7 @@ protected:
       const IntersectionType& intersection = *nit;
       if(intersection.neighbor())
       {
-        EntityType nb = make_entity( intersection.outside() );
+        EntityType nb = Dune::Fem::make_entity( intersection.outside() );
         if( nb.partitionType() == InteriorEntity )
         {
           const int eid = getIndex( en );

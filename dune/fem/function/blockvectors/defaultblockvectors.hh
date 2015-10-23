@@ -435,7 +435,6 @@ namespace Fem {
     template< class Block >
     void copy ( const Block &other )
     {
-      assert( &blockVector_ == &other.blockVector_ );
       for( unsigned int i=0; i < blockSize; ++i )
         (*this)[ i ] = other[ i ];
     }

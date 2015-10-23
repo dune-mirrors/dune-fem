@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDPART_COMMON_DEFAULTGRIDPARTENTITY_HH
 #define DUNE_FEM_GRIDPART_COMMON_DEFAULTGRIDPARTENTITY_HH
 
+#include <type_traits>
+
 #include <dune/common/exceptions.hh>
 
 #include <dune/grid/common/entity.hh>
@@ -19,7 +21,7 @@ namespace Dune
     class DefaultGridPartEntity
     {
     protected:
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
     public:
       static const int codimension = codim;
@@ -41,7 +43,7 @@ namespace Dune
     class DefaultGridPartEntity< 0, dim, GridFamily >
     {
     protected:
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
     public:
       static const int codimension = 0;

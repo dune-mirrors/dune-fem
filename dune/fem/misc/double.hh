@@ -43,7 +43,6 @@ namespace Dune
                     << count_ << std :: endl;
       }
 
-
       inline ThisType &operator++ ()
       {
         ++count_;
@@ -132,8 +131,6 @@ namespace Dune
 
     //- forward declaration
     class Double;
-    // wrap of std power
-    static double pow (const Double& v, const double p);
     // wrap of std log
     static double log (const Double& v);
     // wrap of std sqrt
@@ -142,8 +139,6 @@ namespace Dune
     static double cos (const Double& v);
     // wrap of std cos
     static double sin(const Double& v);
-    // wrap of std power
-    static double pow (const Double& v, const double p);
 
     // wrap of std min
     static inline double min (const Double& v, const double p);
@@ -265,6 +260,11 @@ namespace Dune
       friend double max(const Double&, const double);
       friend double max(const double,  const Double&);
 
+      friend double real( const std::complex<Double>& );
+      friend double real( const Double& );
+      friend double imag( const std::complex<Double>& );
+      friend double imag( const Double& );
+
 #if DUNE_FEM_COMPATIBILITY
       friend struct XdrIO< Double >;
 #endif
@@ -278,6 +278,15 @@ namespace Dune
       double value_;
 
     public:
+      operator double ()
+      {
+        return value_;
+      }
+      operator const double () const
+      {
+        return value_;
+      }
+
       inline Double ()
       {}
 
@@ -289,15 +298,9 @@ namespace Dune
       : value_( other.value_ )
       {}
 
-  /*
-      inline operator int () const
-      {
-        return (int)value_;
-      }
-  */
-
       inline ThisType &operator= ( const ThisType other )
       {
+        // flOp();
         value_ = other.value_;
         return *this;
       }
@@ -842,11 +845,6 @@ namespace Dune
       return Double( std::abs( a.value_ ) );
     }
 
-    static inline double pow (const Double& v, const double p)
-    {
-      return std::pow(v.value_,p);
-    }
-
     static inline double log (const Double& v)
     {
       return std::log(v.value_);
@@ -872,6 +870,25 @@ namespace Dune
       f2 = f1.value_;
     }
 
+    inline double real (const std::complex<Double>& x)
+    {
+      return x.real().value_;
+    }
+
+    inline double real (const Double& x)
+    {
+      return x.value_;
+    }
+
+    inline double imag (const std::complex<Double>& x)
+    {
+      return x.imag().value_;
+    }
+
+    inline double imag (const Double& x)
+    {
+      return x.value_;
+    }
 
   } // namespace Fem
 
@@ -882,7 +899,6 @@ using Fem :: Double ;
 
 namespace std
 {
-
   inline Dune::Fem::Double abs ( const Dune::Fem::Double &a )
   {
     return Dune::Fem::abs( a );
@@ -910,6 +926,36 @@ namespace std
   inline double max (const double v, const Dune::Fem::Double& p)
   {
     return Dune::Fem::max(v,p);
+  }
+
+  // wrap of std power
+  inline double sqrt( const Dune::Fem::Double& v )
+  {
+    return Dune::Fem::sqrt( v );
+  }
+
+  // wrap of std real
+  inline double real (const complex<Dune::Fem::Double>& x)
+  {
+    return Dune::Fem::real( x );
+  }
+
+  // wrap of std real
+  inline double real (const Dune::Fem::Double& x)
+  {
+    return Dune::Fem::real( x );
+  }
+
+  // wrap of std real
+  inline double imag (const complex<Dune::Fem::Double>& x)
+  {
+    return Dune::Fem::imag( x );
+  }
+
+  // wrap of std real
+  inline double imag (const Dune::Fem::Double& x)
+  {
+    return Dune::Fem::imag( x );
   }
 
 

@@ -2,6 +2,7 @@
 #define DUNE_FEM_FUNCTION_COMMON_FUNCTOR_HH
 
 #include <dune/fem/misc/functor.hh>
+#include <dune/fem/space/basisfunctionset/functor.hh>
 
 namespace Dune
 {
@@ -27,6 +28,29 @@ namespace Dune
     private:
       const Vector &vector_;
     };
+
+
+    // LeftAddScaled
+    // -------------
+
+    template< class Vector, class Scalar >
+    struct LeftAddScaled
+    {
+      LeftAddScaled ( const Vector &vector, const Scalar &s )
+      : vector_( vector ),
+        s_( s )
+      {}
+
+      template< class Value >
+      void operator() ( const std::size_t index, Value &value ) const
+      {
+        axpy( s_, vector_[ index ], value );
+      }
+    private:
+      const Vector &vector_;
+      const Scalar &s_;
+    };
+
 
     // LeftAssign
     // ----------

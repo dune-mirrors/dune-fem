@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_GRIDPART_GEOGRIDPART_GEOMETRY_HH
 #define DUNE_FEM_GRIDPART_GEOGRIDPART_GEOMETRY_HH
 
-#include <dune/common/typetraits.hh>
+#include <type_traits>
 
 #include <dune/geometry/multilineargeometry.hh>
 
@@ -22,14 +22,14 @@ namespace Dune
     template< class GridFamily >
     class GeoGeometryTraits
     {
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
       typedef typename Traits::HostGridPartType HostGridPartType;
 
-      static const int dimension = remove_const< GridFamily >::type::dimension;
+      static const int dimension = std::remove_const< GridFamily >::type::dimension;
 
     public:
-      typedef typename remove_const< GridFamily >::type::ctype ctype;
+      typedef typename std::remove_const< GridFamily >::type::ctype ctype;
 
       typedef GenericGeometry::MatrixHelper< GenericGeometry::DuneCoordTraits< ctype > > MatrixHelper;
 
@@ -58,11 +58,11 @@ namespace Dune
       typedef GeoGeometry< mydim, cdim, GridFamily > ThisType;
 
     public:
-      typedef typename remove_const< GridFamily >::type::ctype ctype;
+      typedef typename std::remove_const< GridFamily >::type::ctype ctype;
 
       static const int mydimension = mydim;
       static const int coorddimension = cdim;
-      static const int dimension = remove_const< GridFamily >::type::dimension;
+      static const int dimension = std::remove_const< GridFamily >::type::dimension;
       static const int codimension = dimension - mydimension;
 
     protected:

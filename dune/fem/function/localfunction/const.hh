@@ -2,6 +2,7 @@
 #define DUNE_FEM_FUNCTION_LOCALFUNCTION_CONST_HH
 
 #include <utility>
+#include <type_traits>
 
 #include <dune/common/dynvector.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
@@ -112,20 +113,20 @@ namespace Dune
     class ConstLocalFunction
     : public BasicConstLocalFunction<
       typename DiscreteFunctionTraits<
-      typename remove_const< DiscreteFunction > :: type >::DiscreteFunctionSpaceType::BasisFunctionSetType,
-      Dune::DynamicVector< typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction > :: type >::DofType,
-        typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction > :: type >::LocalDofVectorAllocatorType
-      :: template rebind< typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction >::type > ::DofType > ::other > >
+      typename std::remove_const< DiscreteFunction > :: type >::DiscreteFunctionSpaceType::BasisFunctionSetType,
+      Dune::DynamicVector< typename DiscreteFunctionTraits< typename std::remove_const< DiscreteFunction > :: type >::DofType,
+        typename DiscreteFunctionTraits< typename std::remove_const< DiscreteFunction > :: type >::LocalDofVectorAllocatorType
+      :: template rebind< typename DiscreteFunctionTraits< typename std::remove_const< DiscreteFunction >::type > ::DofType > ::other > >
     {
       typedef ConstLocalFunction< DiscreteFunction > ThisType;
-      typedef BasicConstLocalFunction< typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction > :: type >::DiscreteFunctionSpaceType::BasisFunctionSetType,
-              Dune::DynamicVector< typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction > :: type >::DofType,
-              typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction > :: type > :: LocalDofVectorAllocatorType
-              :: template rebind< typename DiscreteFunctionTraits< typename remove_const< DiscreteFunction >::type >::DofType >::other  > >
+      typedef BasicConstLocalFunction< typename DiscreteFunctionTraits< typename std::remove_const< DiscreteFunction > :: type >::DiscreteFunctionSpaceType::BasisFunctionSetType,
+              Dune::DynamicVector< typename DiscreteFunctionTraits< typename std::remove_const< DiscreteFunction > :: type >::DofType,
+              typename DiscreteFunctionTraits< typename std::remove_const< DiscreteFunction > :: type > :: LocalDofVectorAllocatorType
+              :: template rebind< typename DiscreteFunctionTraits< typename std::remove_const< DiscreteFunction >::type >::DofType >::other  > >
           BaseType;
 
     public:
-      typedef typename remove_const< DiscreteFunction >::type DiscreteFunctionType;
+      typedef typename std::remove_const< DiscreteFunction >::type DiscreteFunctionType;
       typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
       typedef typename BaseType::DofType DofType;

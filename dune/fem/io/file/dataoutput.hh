@@ -59,16 +59,24 @@ namespace Dune
     : public LocalParameter< DataOutputParameters, DataOutputParameters >
 #endif
     {
+      protected:
+      const std::string keyPrefix_;
+
+      public:
+      DataOutputParameters( const std::string keyPrefix = "fem.io." )
+        : keyPrefix_( keyPrefix )
+      {}
+
       //! \brief path where the data is stored (path are always relative to fem.commonOutputPath)
       virtual std::string path() const
       {
-        return Parameter::getValue< std::string >( "fem.io.path", "./" );
+        return Parameter::getValue< std::string >( keyPrefix_ + "path", "./" );
       }
 
       //! \brief base of file name for data file (fem.io.datafileprefix)
       virtual std::string prefix () const
       {
-        return Parameter::getValue< std::string >( "fem.io.datafileprefix" );
+        return Parameter::getValue< std::string >( keyPrefix_ + "datafileprefix" );
       }
 
       //! \brief format of output (fem.io.outputformat)
@@ -76,20 +84,20 @@ namespace Dune
       {
         static const std::string formatTable[]
           = { "vtk-cell", "vtk-vertex", "sub-vtk-cell", "binary" , "gnuplot" , "none" };
-        int format = Parameter::getEnum( "fem.io.outputformat", formatTable, 1 );
+        int format = Parameter::getEnum( keyPrefix_ + "outputformat", formatTable, 1 );
         return format;
       }
 
       virtual bool conformingoutput () const
       {
-        return Parameter::getValue< bool >( "fem.io.conforming", false );
+        return Parameter::getValue< bool >( keyPrefix_ + "conforming", false );
       }
 
       //! \brief use online grape display (fem.io.grapedisplay)
       virtual bool grapedisplay () const
       {
 #if USE_GRAPE
-        return (Parameter::getValue( "fem.io.grapedisplay", 0 ) == 1);
+        return (Parameter::getValue( keyPrefix_ + "grapedisplay", 0 ) == 1);
 #else
         return false;
 #endif
@@ -98,19 +106,19 @@ namespace Dune
       //! \brief save data every savestep interval (fem.io.savestep)
       virtual double savestep () const
       {
-        return Parameter::getValue< double >( "fem.io.savestep", 0 );
+        return Parameter::getValue< double >( keyPrefix_ + "savestep", 0 );
       }
 
       //! \brief save data every savecount calls to write method (fem.io.savecount)
       virtual int savecount () const
       {
-        return Parameter::getValue< int >( "fem.io.savecount", 0 );
+        return Parameter::getValue< int >( keyPrefix_ + "savecount", 0 );
       }
 
       //! \brief save data every subsamplingLevel (fem.io.subsamplinglevel)
       virtual int subsamplingLevel() const
       {
-        return Parameter::getValue< int >( "fem.io.subsamplinglevel", 1 );
+        return Parameter::getValue< int >( keyPrefix_ + "subsamplinglevel", 1 );
       }
 
       //! \brief number for first data file (no parameter available)

@@ -1,5 +1,9 @@
 #include <config.h>
+
 #include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cstdlib>
 
 #include <dune/fem/test/testgrid.hh>
 #include <dune/fem/misc/gridwidth.hh>
@@ -22,7 +26,6 @@
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/combinedfunction.hh>
 
-#include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/misc/mpimanager.hh>
 
 typedef Dune:: GridSelector::GridType HGridType;
@@ -57,19 +60,19 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
   {
     auto lf = df.localFunction( entity );
     lf.clear();
-    for( int i=0; i<lf.numDofs(); ++i,++cont )
+    for( auto i=0; i<lf.numDofs(); ++i,++cont )
       lf[ i ] = static_cast<DofType>(cont);
   }
 
   // check block access
-  const std::size_t localBlockSize(DiscreteFunctionSpaceType::localBlockSize);
-  const std::size_t numBlocks(df.blocks());
+  const auto localBlockSize(DiscreteFunctionSpaceType::localBlockSize);
+  const auto numBlocks(df.blocks());
   if( df.size() / localBlockSize != numBlocks )
     DUNE_THROW(Dune::InvalidStateException,"number of blocks not correct!");
 
-  typename DiscreteFunction::DofIteratorType dfDofIt(df.dbegin());
-  for(std::size_t i=0;i!=numBlocks;++i)
-    for(std::size_t j=0;j!=localBlockSize;++j,++dfDofIt)
+  auto dfDofIt(df.dbegin());
+  for(auto i=0;i!=numBlocks;++i)
+    for(auto j=0;j!=localBlockSize;++j,++dfDofIt)
       if( std::abs( (*df.block(i))[j] - *dfDofIt ) > 1e-12 )
         DUNE_THROW(Dune::InvalidStateException,"Block access did not work");
 

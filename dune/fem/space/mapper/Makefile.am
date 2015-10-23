@@ -1,5 +1,6 @@
 mapperdir =  $(includedir)/dune/fem/space/mapper
 mapper_HEADERS = \
+	capabilities.hh \
 	code.hh \
 	codimensionmapper.hh \
 	compile.hh \
