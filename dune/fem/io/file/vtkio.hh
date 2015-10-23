@@ -278,7 +278,7 @@ namespace Dune
       {
         typedef typename DF::RangeFieldType RangeFieldType;
         typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
-        return ! std::is_same< typename std::remove_cv<RangeFieldType>::type, std::complex<RealType> >::value;
+        return ! std::is_same< typename std::remove_cv<RangeFieldType>::type, std::complex<RealType> >::value; 
       }
 
     public:
