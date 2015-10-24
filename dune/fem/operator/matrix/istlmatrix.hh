@@ -899,7 +899,7 @@ namespace Dune
       }
 
       //! apply with discrete functions
-      void apply(const RowDiscreteFunctionType& arg, ColumnDiscreteFunctionType& dest) const
+      void apply(const ColumnDiscreteFunctionType& arg, RowDiscreteFunctionType& dest) const
       {
         createMatrixAdapter();
         assert( matrixAdap_ );
