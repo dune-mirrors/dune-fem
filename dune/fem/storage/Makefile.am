@@ -12,7 +12,9 @@ storage_HEADERS = arrayallocator.hh \
             		  singletonlist.hh \
 		              subarray.hh \
     		          vector.hh \
-        		      vector_inline.hh
+        		      vector_inline.hh \
+                  eigenvector.hh
+
 
 include $(top_srcdir)/am/global-rules
 

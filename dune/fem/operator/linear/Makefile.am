@@ -4,6 +4,7 @@ linear_HEADERS = \
 	istladapter.hh \
 	istloperator.hh \
 	petscoperator.hh \
-	spoperator.hh
+	spoperator.hh \
+	eigenoperator.hh
 
 include $(top_srcdir)/am/global-rules

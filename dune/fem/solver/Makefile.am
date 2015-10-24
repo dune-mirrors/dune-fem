@@ -17,7 +17,8 @@ solver_HEADERS = cginverseoperator.hh \
                  timeprovider.hh \
                  umfpacksolver.hh \
 								 spqrsolver.hh \
-								 ldlsolver.hh
+								 ldlsolver.hh \
+								 eigen.hh  viennacl.hh
 
 SUBDIRS = ode oemsolver rungekutta test
 
