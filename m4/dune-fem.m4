@@ -25,7 +25,7 @@ AC_DEFUN([DUNE_FEM_CHECKS],[
   AC_REQUIRE([DUNE_FEM_CHECK_COMPATIBILITY])
 
   AS_IF([test "x$HAVE_DUNE_SPGRID" != "x"],
-        [DUNE_DEFINE_GRIDTYPE([SPGRID_COUNT_FLOPS],[GRIDDIM == WORLDDIM],[Dune::SPGrid< Dune::Fem::Double, dimgrid >],[dune/grid/spgrid.hh],[dune/grid/spgrid/dgfparser.hh],[dune/fem/misc/double.hh])
+        [DUNE_DEFINE_GRIDTYPE([SPGRID_COUNT_FLOPS],[GRIDDIM == WORLDDIM],[Dune::SPGrid< Dune::Fem::Double, dimgrid >],[dune/grid/spgrid.hh],[dune/grid/spgrid/dgfparser.hh])
        ],[])
 ])
 
