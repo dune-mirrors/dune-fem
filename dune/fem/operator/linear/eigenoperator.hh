@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_EIGENOPERATOR_HH
 #define DUNE_FEM_EIGENOPERATOR_HH
 
+#ifdef HAVE_EIGEN
+
 #include <dune/fem/operator/matrix/eigenmatrix.hh>
 
 namespace Dune
@@ -52,5 +54,7 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
+
+#endif
 
 #endif // #ifndef DUNE_FEM_SPLINEAR_HH

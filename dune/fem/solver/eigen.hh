@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SOLVER_EIGEN_HH
 #define DUNE_FEM_SOLVER_EIGEN_HH
 
+#ifdef HAVE_EIGEN
+
 #include <Eigen/IterativeLinearSolvers>
 
 namespace Dune
@@ -62,4 +64,5 @@ namespace Dune
 
 } // namespace Dune
 
+#endif
 #endif // #ifndef DUNE_FEM_SOLVER_VIENNACL_HH

@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SOLVER_VIENNACL_HH
 #define DUNE_FEM_SOLVER_VIENNACL_HH
 
+#ifdef HAVE_VIENNACL
+
 #define VIENNACL_WITH_EIGEN 
 // #define VIENNACL_WITH_OPENCL 
 #define VIENNACL_WITH_OPENMP 
@@ -189,5 +191,7 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
+
+#endif
 
 #endif // #ifndef DUNE_FEM_SOLVER_VIENNACL_HH

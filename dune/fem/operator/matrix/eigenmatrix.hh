@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_EIGENMATRIX_HH
 #define DUNE_FEM_EIGENMATRIX_HH
 
+#ifdef HAVE_EIGEN
+
 //- system includes
 #include <vector>
 #include <set>
@@ -177,5 +179,7 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
+
+#endif
 
 #endif // #ifndef DUNE_FEM_SPMATRIX_HH
