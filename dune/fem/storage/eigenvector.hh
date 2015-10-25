@@ -1,6 +1,8 @@
 #ifndef EIGENVECTOR_HH
 #define EIGENVECTOR_HH
 
+#if HAVE_EIGEN
+
 #include <dune/fem/storage/vector.hh>
 #include <Eigen/Dense>
 
@@ -19,7 +21,7 @@ namespace Dune
       typedef Field FieldType;
 
       using BaseType :: assign;
-      
+
     protected:
       typedef Eigen::Matrix<Field, Eigen::Dynamic, 1> DofStorageType;
       DofStorageType fields_;
@@ -79,12 +81,12 @@ namespace Dune
       {
         return fields_( index );
       }
-      
+
       inline FieldType &operator[] ( unsigned int index )
       {
         return fields_( index );
       }
-      
+
       /*
       template< class T >
       inline void assign ( const VectorInterface< T > &v )
@@ -111,7 +113,7 @@ namespace Dune
       {
         return fields_.memptr();
       }
-      
+
       inline void reserve ( unsigned int newSize )
       {
         fields_.resize( newSize );
@@ -135,5 +137,7 @@ namespace Dune
     };
   }
 }
+#endif
+
 #endif // EIGENVECTOR_HH
 

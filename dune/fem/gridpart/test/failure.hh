@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDPART_TEST_FAILURE_HH
 #define DUNE_FEM_GRIDPART_TEST_FAILURE_HH
 
+#include <cassert>
+
 //- dune-common includes
 #include <dune/common/stdstreams.hh>
 
