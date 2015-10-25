@@ -8,4 +8,4 @@ configure_file(param_NavierStokes ${CMAKE_CURRENT_BINARY_DIR}/param_NavierStokes
 configure_file(bc.sh ${CMAKE_CURRENT_BINARY_DIR}/bc.sh COPYONLY)
 configure_file(date.sh ${CMAKE_CURRENT_BINARY_DIR}/date.sh COPYONLY)
 
-dune_add_test(parametertest)
+dune_fem_add_test(parametertest)

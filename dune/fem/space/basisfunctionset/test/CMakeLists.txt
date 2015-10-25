@@ -30,5 +30,5 @@ add_executable(test_tuplebasisfunctionset test-tuplebasisfunctionset.cc)
 dune_target_link_libraries(test_tuplebasisfunctionset "${DUNE_LIBS};${LOCAL_LIBS}")
 add_dune_mpi_flags(test_tuplebasisfunctionset )
 
-dune_add_test(test_vectorialbasisfunctionset test_defaultbasisfunctionset test_simplebasisfunctionset test_tuplebasisfunctionset)
+dune_fem_add_test(test_vectorialbasisfunctionset test_defaultbasisfunctionset test_simplebasisfunctionset test_tuplebasisfunctionset)
 dune_install(checkbasisfunctionset.hh)

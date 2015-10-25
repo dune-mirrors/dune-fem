@@ -5,7 +5,7 @@ project("dune-fem" C CXX)
 set(BUILD_DOCS 1)
 
 # general stuff
-cmake_minimum_required(VERSION 2.8.6)
+cmake_minimum_required(VERSION 2.8.12)
 
 if(NOT (dune-common_DIR OR dune-common_ROOT OR
         "${CMAKE_PREFIX_PATH}" MATCHES ".*dune-common.*"))

@@ -78,7 +78,7 @@ dune_target_link_libraries(dgcomm_cached "${DUNE_LIBS};${LOCAL_LIBS}")
 set_property(TARGET dgcomm_cached APPEND PROPERTY
              COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3" )
 
-dune_add_test(lagrangeadapt adapt padapt
+dune_fem_add_test(lagrangeadapt adapt padapt
               arraytest combinedspacetest interpolation hierarchicspace
               l2projection lagrangeglobalrefine lagrangeinterpolation
               legendretest localadapter

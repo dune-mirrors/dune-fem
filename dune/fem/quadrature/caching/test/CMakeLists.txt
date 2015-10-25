@@ -9,4 +9,4 @@ add_definitions( "-DGRIDDIM=${GRIDDIM}" )
 add_executable(quad_tester main.cc refelem_test.cc cache_test.cc twist_test.cc point_test.cc)
 dune_target_link_libraries(quad_tester "${DUNE_LIBS};${LOCAL_LIBS}")
 
-dune_add_test(quad_tester)
+dune_fem_add_test(quad_tester)

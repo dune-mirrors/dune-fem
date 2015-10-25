@@ -18,5 +18,5 @@ configure_file(parameter ${CMAKE_CURRENT_BINARY_DIR}/parameter COPYONLY)
 add_executable(cachingquadrature cachingquadrature.cc)
 dune_target_link_libraries(cachingquadrature "${DUNE_LIBS};${LOCAL_LIBS}")
 
-dune_add_test(cachingquadrature)
+dune_fem_add_test(cachingquadrature)
 

@@ -7,4 +7,4 @@ dune_target_link_libraries( odetest "${DUNE_LIBS};${LOCAL_LIBS}")
 add_executable( test_timeprovider test-timeprovider.cc)
 dune_target_link_libraries( test_timeprovider "${DUNE_LIBS};${LOCAL_LIBS}")
 
-dune_add_test( odetest test_timeprovider )
+dune_fem_add_test( odetest test_timeprovider )

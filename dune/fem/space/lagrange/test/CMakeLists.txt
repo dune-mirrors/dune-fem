@@ -24,4 +24,4 @@ dune_target_link_libraries( generic "${DUNE_LIBS};${LOCAL_LIBS}")
 add_executable(testnonscalarmapper testnonscalarmapper.cc)
 dune_target_link_libraries( testnonscalarmapper "${DUNE_LIBS};${LOCAL_LIBS}" )
 
-dune_add_test(tester generic testnonscalarmapper)
+dune_fem_add_test(tester generic testnonscalarmapper)

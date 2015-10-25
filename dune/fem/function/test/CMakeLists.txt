@@ -15,4 +15,4 @@ add_executable( dftest EXCLUDE_FROM_ALL dftest.cc )
 dune_target_link_libraries( dftest "${DUNE_LIBS};${LOCAL_LIBS}" )
 target_compile_definitions( dftest PRIVATE "${GRIDTYPE}" "GRIDDIM=${GRIDDIM}" )
 
-dune_add_test( dftest )
+dune_fem_add_test( dftest )

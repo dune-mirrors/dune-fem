@@ -86,7 +86,7 @@ dune_target_link_libraries(adaptation "${DUNE_LIBS};${LOCAL_LIBS}")
 set_property(TARGET adaptation APPEND PROPERTY 
   COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE}" )
 
-dune_add_test(lagrangeinterpolation_linear lagrangeinterpolation_quadratic dgl2projection_adaptive
+dune_fem_add_test(lagrangeinterpolation_linear lagrangeinterpolation_quadratic dgl2projection_adaptive
               dgl2projection_blockvector dgl2projection_vector dgl2projection_vector_int
               dgl2projection_hierarchiclegendre
               dgl2projection_blockvectordiscretefunction dgl2projection_fv dgl2projection_idgridpart

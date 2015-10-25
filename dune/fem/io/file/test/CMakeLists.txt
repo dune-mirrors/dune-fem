@@ -18,4 +18,4 @@ dune_target_link_libraries(persistencemanagertest "${DUNE_LIBS};${LOCAL_LIBS}")
 add_executable(dataoutputtest dataoutputtest.cc)
 dune_target_link_libraries(dataoutputtest "${DUNE_LIBS};${LOCAL_LIBS}")
 
-dune_add_test(persistencemanagertest dataoutputtest)
+dune_fem_add_test(persistencemanagertest dataoutputtest)

@@ -23,6 +23,6 @@ set_property(TARGET gp_lagrangeinterpolation APPEND PROPERTY
 set_property(TARGET test_filteredgridpart APPEND PROPERTY 
              COMPILE_DEFINITIONS "COUNT_FLOPS;USE_FILTEREDGRIDPART" )
 
-dune_add_test(gp_lagrangeinterpolation test_idgridpart test_geogridpart
+dune_fem_add_test(gp_lagrangeinterpolation test_idgridpart test_geogridpart
               test_filteredgridpart)
 
