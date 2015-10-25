@@ -39,9 +39,9 @@ endfunction(dune_add_subdirs)
 #
 # simple version:
 #
-# dune_add_test( <test1> [<test2>...]
-#                [FAILTEST <ftest1> ...]
-#                [COMPILEFAILTEST <cftest1> ... ] )
+# dune_fem_add_test( <test1> [<test2>...]
+#                    [FAILTEST <ftest1> ...]
+#                    [COMPILEFAILTEST <cftest1> ... ] )
 #
 # Simply adds all test to the cmake testing framework.
 #
@@ -52,11 +52,11 @@ endfunction(dune_add_subdirs)
 #
 # advanced version (needed in dune-fem):
 #
-# dune_add_test( <test1> [<test2>...]
-#                [NO_DEPENDENCY] <ntest1> [<ntest2>...]
-#                [FAILTEST [NO_DEPENDENCY] <ftest1> ...]
-#                [COMPILEFAILTEST <cftest1> ... ]
-#                [DEPENDENCY_ONLY <dep1> [dep_2] ] )
+# dune_fem_add_test( <test1> [<test2>...]
+#                    [NO_DEPENDENCY] <ntest1> [<ntest2>...]
+#                    [FAILTEST [NO_DEPENDENCY] <ftest1> ...]
+#                    [COMPILEFAILTEST <cftest1> ... ]
+#                    [DEPENDENCY_ONLY <dep1> [dep_2] ] )
 #
 # arguments as above and:
 #
