@@ -3,7 +3,7 @@ project("dune-fem" C CXX)
 
 #circumvent not building docs
 set(BUILD_DOCS 1)
-set(REENABLE_ADD_TEST TRUE)
+set(DUNE_REENABLE_ADD_TEST TRUE)
 
 # general stuff
 cmake_minimum_required(VERSION 2.8.12)
