@@ -62,15 +62,14 @@ namespace Dune
       //! type of the base matrix (for consistency with ISTLMatrixObject)
       typedef ThisType MatrixBaseType;
 
-    public:
-      SparseRowMatrix(const SparseRowMatrix<T> &S) = delete;
+      SparseRowMatrix(const SparseRowMatrix<T> & ) = delete;
 
-      //! makes Matrix of zero length
-      explicit SparseRowMatrix(double omege = 1.1);
+      //! make matrix of zero length
+      explicit SparseRowMatrix(double omega = 1.1);
 
       //! make matrix with 'rows' rows and 'cols' columns,
       //! maximum 'nz' non zero values in each row
-      //! and intialize all values with 'val' 
+      //! and intialize all values with 'val'
       SparseRowMatrix(int rows, int cols, int nz, const T& val = 0, double omega = 1.1 );
 
       //! free memory for values_ and col_
@@ -84,7 +83,7 @@ namespace Dune
 
       //! return number of columns
       int cols() const {return dim_[1];}
-      
+
       //! set entry to value
       //! note, that every entry is performed into the matrix!
       //! also setting of value 0 will result in an entry. So these
@@ -216,7 +215,7 @@ namespace Dune
       double omega_;
     };
 
-    template< class DomainSpace, class RangeSpace, 
+    template< class DomainSpace, class RangeSpace,
               class Matrix = SparseRowMatrix< typename DomainSpace :: RangeFieldType > >
     class SparseRowMatrixObject
     {
@@ -246,7 +245,6 @@ namespace Dune
 
     protected:
       typedef typename DomainSpaceType :: GridType GridType;
-
 
       template< class MatrixObject >
       struct LocalMatrixTraits;
@@ -369,7 +367,7 @@ namespace Dune
 
             // upper estimate for number of non-zeros
             const static size_t domainLocalBlockSize = DomainSpaceType::localBlockSize;
-            const int nonZeros = std::max( (int)(stencil.maxNonZerosEstimate()*domainLocalBlockSize), 
+            const int nonZeros = std::max( (int)(stencil.maxNonZerosEstimate()*domainLocalBlockSize),
                                            matrix_.numNonZeros() );
             matrix_.reserve( rangeSpace_.size(), domainSpace_.size(), nonZeros, 0.0 );
           }
@@ -638,7 +636,7 @@ namespace Dune
     /*  Constructor(s)           */
     /*****************************/
     template <class T>
-    SparseRowMatrix<T>::SparseRowMatrix(double omega) : omega_(omega) 
+    SparseRowMatrix<T>::SparseRowMatrix(double omega) : omega_(omega)
     {
       values_ = 0;
       col_ = 0;
@@ -651,7 +649,7 @@ namespace Dune
     }
 
     template <class T>
-    SparseRowMatrix<T>::SparseRowMatrix(int rows, int cols, int nz, 
+    SparseRowMatrix<T>::SparseRowMatrix(int rows, int cols, int nz,
                                         const T& dummy, double omega)
     : omega_(omega)
     {
