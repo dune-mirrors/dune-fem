@@ -42,11 +42,8 @@ namespace Dune
     //
     //  --SparseRowMatrix
     //
-    //! Compressed row sparse matrix, where only the nonzeros of a row are
-    //! keeped
-    //! (except if you "set" a single element explicitly
-    //! with the value 0, which is not forbidden and an element entry is
-    //! created)
+    //! Compressed row sparse matrix, where only the nonzeros of a row are keeped
+    //! (except if you "set" a single element explicitly with the value 0)
     //!
     //*****************************************************************
 
@@ -57,9 +54,11 @@ namespace Dune
       enum { firstCol = defaultCol + 1 };
 
     public:
-      typedef T Ttype;  //! remember the value type
+      //! matrix field type
+      typedef T Ttype;
       typedef SparseRowMatrix<T> ThisType;
-      //! type of the base matrix (for consistency with ISTLMatrixObject)
+      //! type of the base matrix
+      //! for consistency with ISTLMatrixObject
       typedef ThisType MatrixBaseType;
 
       SparseRowMatrix(const SparseRowMatrix<T> & ) = delete;
@@ -72,22 +71,25 @@ namespace Dune
       //! and intialize all values with 'val'
       SparseRowMatrix(int rows, int cols, int nz, const T& val = 0, double omega = 1.1 );
 
-      //! free memory for values_ and col_
+      //! free memory
       ~SparseRowMatrix();
 
-      //! reserve memory for given rows, and number of non zeros,
+      //! reserve memory for given rows, and number of non zeros
       void reserve(int rows, int cols, int nz,const T& dummy);
 
       //! return number of rows
-      int rows() const {return dim_[0];}
+      int rows() const
+      {
+        return dim_[0];
+      }
 
       //! return number of columns
-      int cols() const {return dim_[1];}
+      int cols() const
+      {
+        return dim_[1];
+      }
 
-      //! set entry to value
-      //! note, that every entry is performed into the matrix!
-      //! also setting of value 0 will result in an entry. So these
-      //! calls should be ommited on a higher level
+      //! set entry to value (also setting 0 will result in an entry)
       void set(int row, int col, T val);
 
       //! add value to row,col entry
@@ -98,12 +100,12 @@ namespace Dune
       void apply(const DiscFType &f, DiscFuncType &ret) const;
 
       //! return value of entry (row,col)
-      T operator() ( const int row, const int col ) const;
-      T operator() ( const unsigned int row, const unsigned int col ) const
+      T operator()( const int row, const int col ) const;
+      T operator()( const unsigned int row, const unsigned int col ) const
       {
         return (*this)( int( row ), int( col ) );
       }
-      T operator() ( const long unsigned int row, const long unsigned int col ) const
+      T operator()( const long unsigned int row, const long unsigned int col ) const
       {
         return this->operator()((unsigned int)(row), (unsigned int)(col) );
       }
@@ -111,8 +113,7 @@ namespace Dune
       //! set all entries in row to zero
       void clearRow (int row);
 
-      //! set all matrix entries to zero, no other value makes sense for
-      //! sparse matrix
+      //! set all matrix entries to zero
       void clear();
 
       //! return max number of non zeros
@@ -127,8 +128,8 @@ namespace Dune
         return nonZeros_[i];
       }
 
-      //! return pair< value, column >, used by BlockMatrix
-      //! needed in ColCompMatrix::setMatrix
+      //! return pair< value, column >
+      //! used in ColCompMatrix::setMatrix
       std::pair < const T , int > realValue(int index) const
       {
         return std::pair< const T, int > (values_[index], col_[index]);
@@ -136,26 +137,22 @@ namespace Dune
 
     private:
       //! resize keeping old values if possible
-      void resize ( int newRow, int newCol, int newNz );
+      void resize( int newRow, int newCol, int newNz );
 
       //! returns local col index for given global (row,col)
       int colIndex(int row, int col);
 
-      ////////////////////////////////////////////////////////////////////////
-      // Need for debuging
-      ////////////////////////////////////////////////////////////////////////
-      //! check consistency, i.e. whether number of stored nonzeros
-      //! corresponds to the counters in nonZeros[] and check, whether all
-      //! columns within this range have reasonable values
-      //! true == consistent
-      //! false == non consistent
+      //! check whether number of stored nonzeros corresponds to the counters in nonZeros[]
+      //! and check, whether all columns within this range have reasonable values
+      //! return true if consistent and false if not consistent
       //! an assert(checkConsistency()) can be called at entry and exit of
       //! non-const sparsematrix operations for ensuring maintaining of
       //! consistence. This can be made conditional by the member variable
       //! checkNonConstMethods
       bool checkConsistency() const;
+
       //! return real column number for (row,localCol)
-      int realCol (int row, int fakeCol) const
+      int realCol(int row, int fakeCol) const
       {
         assert(fakeCol<dim_[1]);
         assert( row < dim_[0] );
@@ -170,7 +167,7 @@ namespace Dune
       void unitCol(int col);
 
       //! check symetry
-      void checkSym ();
+      void checkSym();
 
       // res = this * B
       void multiply(const ThisType & B, ThisType & res) const;
@@ -188,13 +185,19 @@ namespace Dune
       void resortRow(const int row);
 
       //! SSOR preconditioning
-      void ssorPrecondition (const T*, T*) const;
+      void ssorPrecondition(const T* , T* ) const;
 
       //! returns true if preconditioing is called before matrix multiply
-      bool rightPrecondition() const { return true; }
+      bool rightPrecondition() const
+      {
+        return true;
+      }
 
       //! apply preconditioning, calls ssorPreconditioning at the moment
-      void precondition (const T*u , T*x) const {  ssorPrecondition(u,x); }
+      void precondition(const T *u , T *x) const
+      {
+        ssorPrecondition(u,x);
+      }
 
     private:
       //! delete memory
@@ -232,15 +235,10 @@ namespace Dune
       typedef typename RangeSpaceType  :: EntityType  RowEntityType ;
 
       typedef typename DomainSpaceType :: BlockMapperType DomainBlockMapperType ;
-      typedef NonBlockMapper< DomainBlockMapperType,
-                              DomainSpaceType :: localBlockSize > DomainMapperType;
+      typedef NonBlockMapper< DomainBlockMapperType, DomainSpaceType :: localBlockSize > DomainMapperType;
       typedef typename RangeSpaceType :: BlockMapperType RangeBlockMapperType ;
-      typedef NonBlockMapper< RangeBlockMapperType,
-                              RangeSpaceType :: localBlockSize > RangeMapperType;
-
-      typedef Matrix  MatrixType ;
-
-    private:
+      typedef NonBlockMapper< RangeBlockMapperType, RangeSpaceType :: localBlockSize > RangeMapperType;
+      typedef Matrix MatrixType ;
       typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, MatrixType > ThisType;
 
     protected:
@@ -305,19 +303,25 @@ namespace Dune
       }
 
       //! return domain space (i.e. space that builds the rows)
-      const DomainSpaceType& domainSpace() const { return domainSpace_; }
+      const DomainSpaceType& domainSpace() const
+      {
+        return domainSpace_;
+      }
 
       //! return range space (i.e. space that builds the columns)
-      const RangeSpaceType& rangeSpace() const { return rangeSpace_; }
+      const RangeSpaceType& rangeSpace() const
+      {
+        return rangeSpace_;
+      }
 
       //! return reference to storage object
-      MatrixType &matrix () const
+      MatrixType &matrix() const
       {
         return matrix_;
       }
 
       //! interface method from LocalMatrixFactory
-      inline ObjectType *newObject () const
+      inline ObjectType *newObject() const
       {
         return new ObjectType( *this, domainSpace_, rangeSpace_, domainMapper_, rangeMapper_ );
       }
@@ -326,19 +330,16 @@ namespace Dune
       inline LocalMatrixType localMatrix( const DomainEntityType &domainEntity,
                                           const RangeEntityType &rangeEntity ) const
       {
-        /*******************************************************************
-        *   Rows belong to the DomainSpace and Columns to the RangeSpace   *
-        *******************************************************************/
         return LocalMatrixType( localMatrixStack_, domainEntity, rangeEntity );
       }
 
       LocalColumnObjectType localColumn( const DomainEntityType &domainEntity ) const
       {
-        return LocalColumnObjectType ( *this, domainEntity );
+        return LocalColumnObjectType( *this, domainEntity );
       }
 
       //! resize all matrices and clear them
-      inline void clear ()
+      inline void clear()
       {
         matrix_.clear();
       }
@@ -377,7 +378,7 @@ namespace Dune
 
       //! apply matrix to discrete function
       template< class DomainFunction, class RangeFunction >
-      void apply ( const DomainFunction &arg, RangeFunction &dest ) const
+      void apply( const DomainFunction &arg, RangeFunction &dest ) const
       {
         // do matrix vector multiplication
         matrix_.apply( arg, dest );
@@ -507,8 +508,7 @@ namespace Dune
       using BaseType :: rangeSpace_;
 
     public:
-      //! constructor taking entity and spaces for using mapToGlobal
-      //! class RowSpaceType, class ColSpaceType>
+      //! constructor
       inline LocalMatrix( const MatrixObjectType &matrixObject,
                           const DomainSpaceType &domainSpace,
                           const RangeSpaceType &rangeSpace,
@@ -525,10 +525,6 @@ namespace Dune
 
       void init( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
       {
-        /*******************************************************************
-        *   Rows belong to the DomainSpace and Columns to the RangeSpace   *
-        *******************************************************************/
-
         // initialize base functions sets
         BaseType::init( domainEntity, rangeEntity );
 
@@ -542,13 +538,13 @@ namespace Dune
       }
 
       //! return number of rows
-      int rows () const
+      int rows() const
       {
         return rowIndices_.size();
       }
 
       //! return number of columns
-      int columns () const
+      int columns() const
       {
         return columnIndices_.size();
       }
@@ -596,14 +592,14 @@ namespace Dune
       }
 
       //! set matrix column to zero
-      void clearCol ( const int localCol )
+      void clearCol( const int localCol )
       {
         assert( (localCol >= 0) && (localCol < columns()) );
         matrix_.clearCol( columnIndices_[localCol] );
       }
 
       //! clear all entries belonging to local matrix
-      void clear ()
+      void clear()
       {
         const int row = rows();
         for( int i = 0; i < row; ++i )
@@ -611,7 +607,7 @@ namespace Dune
       }
 
       //! scale local matrix with a certain value
-      void scale ( const DofType& value )
+      void scale( const DofType& value )
       {
         const int row = rows();
         for( int i = 0; i < row; ++i )
@@ -619,7 +615,7 @@ namespace Dune
       }
 
       //! resort all global rows of matrix to have ascending numbering
-      void resort ()
+      void resort()
       {
         const int row = rows();
         for( int i = 0; i < row; ++i )
@@ -645,7 +641,8 @@ namespace Dune
       memSize_ = 0;
       nz_ = 0;
       nonZeros_ = 0;
-      if (checkNonConstMethods) assert(checkConsistency());
+      if(checkNonConstMethods)
+        assert(checkConsistency());
     }
 
     template <class T>
@@ -665,41 +662,47 @@ namespace Dune
       // resize and get storage
       reserve(rows,cols,nz,dummy);
 
-      // fill with value
+      // set all values to default value
       clear();
 
-      if (checkNonConstMethods) assert(checkConsistency());
+      if(checkNonConstMethods)
+        assert(checkConsistency());
     }
 
     template <class T>
     void SparseRowMatrix<T>::removeObj()
     {
-      if (checkNonConstMethods) assert(checkConsistency());
-      if(values_) delete [] values_;
-      if(col_) delete [] col_;
-      if(nonZeros_) delete [] nonZeros_;
+      if(checkNonConstMethods)
+        assert(checkConsistency());
+      if(values_)
+        delete [] values_;
+      if(col_)
+        delete [] col_;
+      if(nonZeros_)
+        delete [] nonZeros_;
       values_ = 0;
       col_ = 0;
       nonZeros_ = 0;
-      if (checkNonConstMethods) assert(checkConsistency());
+      if(checkNonConstMethods)
+        assert(checkConsistency());
     }
 
     template <class T>
     SparseRowMatrix<T>::~SparseRowMatrix()
     {
-      if (checkNonConstMethods) assert(checkConsistency());
+      if(checkNonConstMethods)
+        assert(checkConsistency());
       removeObj();
-      if (checkNonConstMethods) assert(checkConsistency());
+      if(checkNonConstMethods)
+        assert(checkConsistency());
     }
 
     /***********************************/
     /*  Construct from storage vectors */
     /***********************************/
     template <class T>
-    void SparseRowMatrix<T>::
-    reserve(int rows, int cols, int nz,const T& dummy)
+    void SparseRowMatrix<T>::reserve(int rows, int cols, int nz,const T& dummy)
     {
-    // if (checkNonConstMethods) assert(checkConsistency());
       if( (rows == dim_[0]) && (cols == dim_[1]) && (nz == nz_))
       {
         clear();
@@ -733,19 +736,21 @@ namespace Dune
       // only reserve for indices
       newIndices_.reserve( nz_ );
 
-      // set all values to default values
+      // set all values to default value
       clear();
-      if (checkNonConstMethods) assert(checkConsistency());
 
+      if(checkNonConstMethods)
+        assert(checkConsistency());
     }
 
     // resize matrix
     template <class T>
-    void SparseRowMatrix<T>::resize (int newRow, int newCol, int newNz )
+    void SparseRowMatrix<T>::resize(int newRow, int newCol, int newNz )
     {
       if(newRow != this->rows() || newNz > nz_ )
       {
-        if( newNz < 0 ) newNz = nz_;
+        if( newNz < 0 )
+          newNz = nz_;
 
         int newMemSize = newRow * newNz ;
 
@@ -793,7 +798,7 @@ namespace Dune
     }
 
     template< class T >
-    inline T SparseRowMatrix<T>::operator() ( const int row, const int col ) const
+    inline T SparseRowMatrix<T>::operator()( const int row, const int col ) const
     {
       assert( row >= 0 );
       assert( (row < dim_[0]) ? 1 : (std::cout << row << " bigger " << dim_[0] <<"\n", 0));
@@ -814,16 +819,17 @@ namespace Dune
     template <class T>
     int SparseRowMatrix<T>::colIndex(int row, int col)
     {
-      if (checkNonConstMethods) assert(checkConsistency());
+      if(checkNonConstMethods)
+        assert(checkConsistency());
       assert( row >= 0 );
       assert( row < dim_[0] );
 
       int i = 0;
       while ( i < nz_ && col_[row*nz_+i] < col && col_[row*nz_+i] != defaultCol )
         ++i;
-      if (col_[row*nz_+i] == col)
+      if(col_[row*nz_+i] == col)
         return i;  // column already in matrix
-      else if ( col_[row*nz_+i] == defaultCol )
+      else if( col_[row*nz_+i] == defaultCol )
       { // add this column at end of this row
         ++nonZeros_[row];
         return i;
@@ -838,7 +844,7 @@ namespace Dune
           resize( rows(), cols(), (2 * nz_) );
           j++;
         }
-        for (;j>i;--j)
+        for(;j>i;--j)
         {
           col_[row*nz_+j] = col_[row*nz_+j-1];
           values_[row*nz_+j] = values_[row*nz_+j-1];
@@ -864,13 +870,15 @@ namespace Dune
         nonZeros_[i] = 0;
       }
 
-      if (checkNonConstMethods) assert(checkConsistency());
+      if(checkNonConstMethods)
+        assert(checkConsistency());
     }
 
     template <class T>
     void SparseRowMatrix<T>::clearRow(int row)
     {
-      if (checkNonConstMethods) assert(checkConsistency());
+      if(checkNonConstMethods)
+        assert(checkConsistency());
       assert( nonZeros_ );
       assert( values_ );
       assert( col_ );
@@ -885,26 +893,28 @@ namespace Dune
         ++col;
       }
 
-      if (checkNonConstMethods) assert(checkConsistency());
+      if(checkNonConstMethods)
+        assert(checkConsistency());
     }
 
     template <class T>
     void SparseRowMatrix<T>::set(int row, int col, T val)
     {
-      if (checkNonConstMethods) assert(checkConsistency());
+      if(checkNonConstMethods)
+        assert(checkConsistency());
       assert((col>=0) && (col <= dim_[1]));
       assert((row>=0) && (row <= dim_[0]));
 
       int whichCol = colIndex(row,col);
       assert( whichCol != defaultCol );
 
-      {
-        values_[row*nz_ + whichCol] = val;
-        if (whichCol >= nonZeros_[row])
-            nonZeros_[row]++;
-        col_[row*nz_ + whichCol] = col;
-      }
-      if (checkNonConstMethods) assert(checkConsistency());
+      values_[row*nz_ + whichCol] = val;
+      if(whichCol >= nonZeros_[row])
+        nonZeros_[row]++;
+      col_[row*nz_ + whichCol] = col;
+
+      if(checkNonConstMethods)
+        assert(checkConsistency());
     }
 
     template <class T>
@@ -915,7 +925,8 @@ namespace Dune
       assert( whichCol != defaultCol );
       values_[row*nz_ + whichCol] += val;
       col_[row*nz_ + whichCol] = col;
-      if (checkNonConstMethods) assert(checkConsistency());
+      if(checkNonConstMethods)
+        assert(checkConsistency());
     }
 
     /***************************************/
@@ -943,7 +954,8 @@ namespace Dune
           const int thisCol = row*nz_ + col;
           const int realCol = col_[thisCol];
 
-          if( realCol == defaultCol ) continue;
+          if( realCol == defaultCol )
+            continue;
 
           const int blockNr = realCol / blockSize ;
           const int dofNr = realCol % blockSize ;
@@ -953,51 +965,46 @@ namespace Dune
 
         ++ret_it;
       }
-      return;
     }
 
     template <class T>
     bool SparseRowMatrix<T>::checkConsistency() const
     {
-      // check, whether nonzeros per row indeed correspond to reasonable
-      // column-entries
-
       bool consistent = true;
 
       // only perform check, if there is any data:
-      if (nonZeros_ || values_ || col_)
+      if(nonZeros_ || values_ || col_)
       {
         for(int row=0; row<dim_[0]; row++)
         {
-          if (nonZeros_[row]<0 || nonZeros_[row]> dim_[1])
+          if(nonZeros_[row]<0 || nonZeros_[row]> dim_[1])
           {
-            std::cout << "error in consistency of row " << row <<
-                ": NonZeros_[row] = "<< nonZeros_[row] <<
-                " is not within reasonable range "
-                      << " of dim = (" << dim_[0]<<","<< dim_[1]<< ")\n";
+            std::cout << "error in consistency of row " << row
+              << ": NonZeros_[row] = "<< nonZeros_[row]
+              << " is not within reasonable range "
+              << " of dim = (" << dim_[0]<<","<< dim_[1]<< ")"
+              << std::endl;
             consistent = false;
-            return(consistent);
+            return consistent;
           }
 
           for (int fakeCol =0; fakeCol < nonZeros_[row]; fakeCol++)
             if ((realCol(row,fakeCol)<0) || (realCol(row,fakeCol)>=dim_[1]))
             {
-              std::cout << "error in consistency of row " << row <<
-                ": NonZeros_[row] = "<< nonZeros_[row] <<
-                ", fakeCol = " << fakeCol << ", realCol(fakeCol) = "
-                << realCol(row,fakeCol) << "\n" ;
+              std::cout << "error in consistency of row " << row
+                << ": NonZeros_[row] = "<< nonZeros_[row]
+                << ", fakeCol = " << fakeCol << ", realCol(fakeCol) = "
+                << realCol(row,fakeCol) << std::endl;
               consistent = false;
-              return(consistent);
+              return consistent;
             }
         }
-        return(consistent);
+        return consistent;
       }
-
-      //  std::cout << "consistent = " << consistent << "\n";
 
       assert(consistent);
 
-      return(consistent);
+      return consistent;
     }
 
     template <class T>
@@ -1018,11 +1025,9 @@ namespace Dune
           const int realCol = col_[ thisCol ];
           assert( realCol > defaultCol );
 
-          if (realCol < row)
-          {
+          if(realCol < row)
             dot += localValues[col] * x[realCol];
-          }
-          else if (realCol == row)
+          else if(realCol == row)
           {
             diag = localValues[col];
             assert( std::abs(diag) > 0.0 );
@@ -1045,11 +1050,9 @@ namespace Dune
           const int realCol = col_[ thisCol ];
           assert( realCol > defaultCol );
 
-          if (realCol > row)
-          {
+          if(realCol > row)
             dot += localValues[col] * x[realCol];
-          }
-          else if (realCol == row)
+          else if(realCol == row)
           {
             diag = localValues[col];
             assert( std::abs(diag) > 0.0 );
@@ -1072,11 +1075,9 @@ namespace Dune
           const int realCol = col_[ thisCol ];
           assert( realCol > defaultCol );
 
-          if (realCol > row)
-          {
+          if(realCol > row)
             dot += localValues[col] * x[realCol];
-          }
-          else if (realCol == row)
+          else if(realCol == row)
           {
             diag = localValues[col];
             assert( std::abs(diag) > 0.0 );
