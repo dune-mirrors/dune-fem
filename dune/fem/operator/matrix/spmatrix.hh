@@ -1,14 +1,15 @@
 #ifndef DUNE_FEM_SPMATRIX_HH
 #define DUNE_FEM_SPMATRIX_HH
 
-//- system includes
+// C++ includes
 #include <vector>
 #include <set>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <array>
 
-//- local includes
+// DUNE-FEM includes
 #include <dune/fem/function/adaptivefunction/adaptivefunction.hh>
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
@@ -201,11 +202,11 @@ namespace Dune
       //! delete memory
       void removeObj();
 
-      T* values_ ;      //! data values (nz_ * dim_[0] elements)
-      int* col_;        //! row_ptr (dim_[0]+1 elements)
-      int* nonZeros_;   //! row_ptr (dim_[0]+1 elements)
-      int dim_[2];      //! dim_[0] x dim_[1] Matrix
-      int nz_;          //! number of nonzeros per row
+      T* values_ ;             //! data values (nz_ * dim_[0] elements)
+      int* col_;               //! row_ptr (dim_[0]+1 elements)
+      int* nonZeros_;          //! row_ptr (dim_[0]+1 elements)
+      std::array<int,2> dim_;  //! dim_[0] x dim_[1] Matrix
+      int nz_;                 //! number of nonzeros per row
 
       int memSize_;
       bool sorted_;
@@ -506,8 +507,7 @@ namespace Dune
         matrix_( matrixObject.matrix() ),
         domainMapper_( domainMapper ),
         rangeMapper_( rangeMapper )
-      {
-      }
+      {}
 
       LocalMatrix( const LocalMatrix & ) = delete;
 
@@ -609,40 +609,25 @@ namespace Dune
         for( auto i = 0; i < row; ++i )
           matrix_.resortRow( rowIndices_[ i ] );
       }
-
     };
 
 
 
     template <class T>
-    SparseRowMatrix<T>::SparseRowMatrix(double omega)
-    : omega_(omega)
+    SparseRowMatrix<T>::SparseRowMatrix(double omega) :
+      values_(nullptr), col_(nullptr), nonZeros_(nullptr),
+      dim_({0,0}), nz_(0), memSize_(0), omega_(omega)
     {
-      values_ = nullptr;
-      col_ = nullptr;
-      dim_[0] = 0;
-      dim_[1] = 0;
-      memSize_ = 0;
-      nz_ = 0;
-      nonZeros_ = nullptr;
       if(checkNonConstMethods)
         assert(checkConsistency());
     }
 
     template <class T>
     SparseRowMatrix<T>::SparseRowMatrix(int rows, int cols, int nz,
-                                        const T& dummy, double omega)
-    : omega_(omega)
+                                        const T& dummy, double omega) :
+      values_(nullptr), col_(nullptr), nonZeros_(nullptr),
+      dim_({0,0}), nz_(0), memSize_(0), omega_(omega)
     {
-      // standard settings as above
-      values_ = nullptr;
-      col_ = nullptr;
-      dim_[0] = 0;
-      dim_[1] = 0;
-      memSize_ = 0;
-      nz_ = 0;
-      nonZeros_ = nullptr;
-
       // resize and get storage
       reserve(rows,cols,nz,dummy);
 
@@ -660,12 +645,12 @@ namespace Dune
         assert(checkConsistency());
       if(values_)
         delete [] values_;
+      values_ = nullptr;
       if(col_)
         delete [] col_;
+      col_ = nullptr;
       if(nonZeros_)
         delete [] nonZeros_;
-      values_ = nullptr;
-      col_ = nullptr;
       nonZeros_ = nullptr;
       if(checkNonConstMethods)
         assert(checkConsistency());
