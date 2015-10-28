@@ -75,8 +75,6 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
-      static const int numShapeFunctions = Std::sum( static_cast< int >( ShapeFunctionSets::numShapeFunctions ) ... );
-
       TupleShapeFunctionSet ( GeometryType type )
         : shapeFunctionSetTuple_( makeGeometryTypeTuple( type, Std::index_sequence_for< ShapeFunctionSets ... >() ) )
       {
