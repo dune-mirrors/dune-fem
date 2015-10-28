@@ -27,20 +27,6 @@ namespace Dune
   namespace Fem
   {
 
-    //! anonymous namespace, such that variable is only known within
-    //! SparseRowMatrix and other classes located here
-    namespace
-    {
-      //! If you have problems with this sparsematrix class, this might be due to
-      //! inconsistencies produced in some methods.
-      //! In this case, you should turn on the consistencycheck of all non-const
-      //! methods by setting the following variable to 1 / 0 and by this locate the
-      //! buggy member method. Default is 0 = Check Off
-      const int checkNonConstMethods = 0;
-    }
-
-
-
     //! Compressed row sparse matrix, where only the nonzeros of a row are keeped
     //! (except if you "set" a single element explicitly with the value 0)
     template <class T>
@@ -143,12 +129,8 @@ namespace Dune
 
       //! check whether number of stored nonzeros corresponds to the counters in nonZeros[]
       //! and check, whether all columns within this range have reasonable values
-      //! return true if consistent and false if not consistent
-      //! an assert(checkConsistency()) can be called at entry and exit of
-      //! non-const sparsematrix operations for ensuring maintaining of
-      //! consistence. This can be made conditional by the member variable
-      //! checkNonConstMethods
-      bool checkConsistency() const;
+      //! note: needs to be enabled directly in the function body
+      void checkConsistency() const;
 
       //! return real column number for (row,localCol)
       int realCol(int row, int fakeCol) const
@@ -618,8 +600,7 @@ namespace Dune
       values_(nullptr), col_(nullptr), nonZeros_(nullptr),
       dim_({0,0}), nz_(0), memSize_(0), omega_(omega)
     {
-      if(checkNonConstMethods)
-        assert(checkConsistency());
+      checkConsistency();
     }
 
     template <class T>
@@ -634,15 +615,14 @@ namespace Dune
       // set all values to default value
       clear();
 
-      if(checkNonConstMethods)
-        assert(checkConsistency());
+      checkConsistency();
     }
 
     template <class T>
     void SparseRowMatrix<T>::removeObj()
     {
-      if(checkNonConstMethods)
-        assert(checkConsistency());
+      checkConsistency();
+
       if(values_)
         delete [] values_;
       values_ = nullptr;
@@ -652,18 +632,18 @@ namespace Dune
       if(nonZeros_)
         delete [] nonZeros_;
       nonZeros_ = nullptr;
-      if(checkNonConstMethods)
-        assert(checkConsistency());
+
+      checkConsistency();
     }
 
     template <class T>
     SparseRowMatrix<T>::~SparseRowMatrix()
     {
-      if(checkNonConstMethods)
-        assert(checkConsistency());
+      checkConsistency();
+
       removeObj();
-      if(checkNonConstMethods)
-        assert(checkConsistency());
+
+      checkConsistency();
     }
 
     template <class T>
@@ -705,8 +685,7 @@ namespace Dune
       // set all values to default value
       clear();
 
-      if(checkNonConstMethods)
-        assert(checkConsistency());
+      checkConsistency();
     }
 
     //! resize matrix
@@ -786,8 +765,8 @@ namespace Dune
     template <class T>
     int SparseRowMatrix<T>::colIndex(int row, int col)
     {
-      if(checkNonConstMethods)
-        assert(checkConsistency());
+      checkConsistency();
+
       assert( row >= 0 );
       assert( row < dim_[0] );
 
@@ -837,15 +816,14 @@ namespace Dune
         nonZeros_[i] = 0;
       }
 
-      if(checkNonConstMethods)
-        assert(checkConsistency());
+      checkConsistency();
     }
 
     template <class T>
     void SparseRowMatrix<T>::clearRow(int row)
     {
-      if(checkNonConstMethods)
-        assert(checkConsistency());
+      checkConsistency();
+
       assert( nonZeros_ );
       assert( values_ );
       assert( col_ );
@@ -860,15 +838,14 @@ namespace Dune
         ++col;
       }
 
-      if(checkNonConstMethods)
-        assert(checkConsistency());
+      checkConsistency();
     }
 
     template <class T>
     void SparseRowMatrix<T>::set(int row, int col, T val)
     {
-      if(checkNonConstMethods)
-        assert(checkConsistency());
+      checkConsistency();
+
       assert((col>=0) && (col <= dim_[1]));
       assert((row>=0) && (row <= dim_[0]));
 
@@ -880,21 +857,20 @@ namespace Dune
         nonZeros_[row]++;
       col_[row*nz_ + whichCol] = col;
 
-      if(checkNonConstMethods)
-        assert(checkConsistency());
+      checkConsistency();
     }
 
     template <class T>
     void SparseRowMatrix<T>::add(int row, int col, T val)
     {
-      if(checkNonConstMethods)
-        assert(checkConsistency());
+      checkConsistency();
+
       auto whichCol = colIndex(row,col);
       assert( whichCol != defaultCol );
       values_[row*nz_ + whichCol] += val;
       col_[row*nz_ + whichCol] = col;
-      if(checkNonConstMethods)
-        assert(checkConsistency());
+
+      checkConsistency();
     }
 
     //! matrix-vector multiplication
@@ -929,10 +905,10 @@ namespace Dune
     }
 
     template <class T>
-    bool SparseRowMatrix<T>::checkConsistency() const
+    void SparseRowMatrix<T>::checkConsistency() const
     {
+#if 0
       bool consistent = true;
-
       // only perform check if there is any data
       if(nonZeros_ || values_ || col_)
       {
@@ -946,9 +922,7 @@ namespace Dune
               << " of dim = (" << dim_[0]<<","<< dim_[1]<< ")"
               << std::endl;
             consistent = false;
-            return consistent;
           }
-
           for(auto fakeCol =0; fakeCol < nonZeros_[row]; fakeCol++)
             if((realCol(row,fakeCol)<0) || (realCol(row,fakeCol)>=dim_[1]))
             {
@@ -957,15 +931,11 @@ namespace Dune
                 << ", fakeCol = " << fakeCol << ", realCol(fakeCol) = "
                 << realCol(row,fakeCol) << std::endl;
               consistent = false;
-              return consistent;
             }
         }
-        return consistent;
       }
-
       assert(consistent);
-
-      return consistent;
+#endif
     }
 
     template <class T>
