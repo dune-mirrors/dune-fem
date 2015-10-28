@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_DATAOUTPUT_HH
 #define DUNE_FEM_DATAOUTPUT_HH
 
+#include <tuple>
+
 #ifndef USE_VTKWRITER
 #define USE_VTKWRITER 1
 #endif
@@ -170,10 +172,7 @@ namespace Dune
       typedef DataOutput< GridImp, DataImp > ThisType;
 
     protected:
-      template< class Grid, class OutputTuple, int N = std::tuple_size< OutputTuple >::value >
-      struct GridPartGetter;
-
-    template< class Grid, class OutputTuple, int N >
+    template< class Grid, class OutputTuple, int N = std::tuple_size< OutputTuple >::value >
     struct GridPartGetter
     {
       typedef typename TypeTraits< typename std::tuple_element< 0, OutputTuple >::type >::PointeeType DFType;
