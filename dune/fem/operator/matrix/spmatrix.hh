@@ -27,8 +27,9 @@ namespace Dune
   namespace Fem
   {
 
-    //! Compressed row sparse matrix, where only the nonzeros of a row are keeped
-    //! (except if you "set" a single element explicitly with the value 0)
+
+
+    //! SparseRowMatrix
     template <class T>
     class SparseRowMatrix
     {
@@ -43,21 +44,29 @@ namespace Dune
       //! for consistency with ISTLMatrixObject
       typedef ThisType MatrixBaseType;
 
-      SparseRowMatrix(const SparseRowMatrix<T> & ) = delete;
+      SparseRowMatrix(const ThisType& ) = delete;
 
-      //! make matrix of zero length
-      explicit SparseRowMatrix(double omega = 1.1);
+      //! construct matrix of zero size
+      explicit SparseRowMatrix(double omega = 1.1) :
+        values_(0), col_(0), nonZeros_(0), dim_({0,0}), nz_(0), omega_(omega)
+      {}
 
-      //! make matrix with 'rows' rows and 'cols' columns,
+      //! construct matrix with 'rows' rows and 'cols' columns,
       //! maximum 'nz' non zero values in each row
       //! and intialize all values with 'val'
-      SparseRowMatrix(int rows, int cols, int nz, const T& val = 0, double omega = 1.1 );
+      SparseRowMatrix(int rows, int cols, int nz, const T& val = 0, double omega = 1.1) :
+      values_(0), col_(0), nonZeros_(0), dim_({0,0}), nz_(0), omega_(omega)
+      {
+        reserve(rows,cols,nz,val);
+      }
 
-      //! free memory
-      ~SparseRowMatrix();
-
-      //! reserve memory for given rows, and number of non zeros
-      void reserve(int rows, int cols, int nz,const T& dummy);
+      //! reserve memory for given rows, columns and number of non zeros
+      void reserve(int rows, int cols, int nz, const T& )
+      {
+        if( (rows != dim_[0]) || (cols != dim_[1]) || (nz != nz_))
+          resize(rows,cols,nz);
+        clear();
+      }
 
       //! return number of rows
       int rows() const
@@ -72,31 +81,103 @@ namespace Dune
       }
 
       //! set entry to value (also setting 0 will result in an entry)
-      void set(int row, int col, T val);
+      void set(int row, int col, T val)
+      {
+        assert((col>=0) && (col <= dim_[1]));
+        assert((row>=0) && (row <= dim_[0]));
+
+        auto whichCol = colIndex(row,col);
+        assert( whichCol != defaultCol );
+
+        values_[row*nz_ + whichCol] = val;
+        if(whichCol >= nonZeros_[row])
+          nonZeros_[row]++;
+        col_[row*nz_ + whichCol] = col;
+      }
 
       //! add value to row,col entry
-      void add(int row, int col, T val);
+      void add(int row, int col, T val)
+      {
+        assert((col>=0) && (col <= dim_[1]));
+        assert((row>=0) && (row <= dim_[0]));
 
-      //! A(f) = ret, same as mult
-      template <class DiscFType, class DiscFuncType>
-      void apply(const DiscFType &f, DiscFuncType &ret) const;
+        auto whichCol = colIndex(row,col);
+        assert( whichCol != defaultCol );
+
+        values_[row*nz_ + whichCol] += val;
+        col_[row*nz_ + whichCol] = col;
+      }
+
+      //! ret = A*f
+      template<class ArgDFType, class DestDFType>
+      void apply(const ArgDFType& f, DestDFType& ret) const
+      {
+        constexpr auto blockSize = ArgDFType :: DiscreteFunctionSpaceType :: localBlockSize;
+        auto ret_it = ret.dbegin();
+
+        for(auto row=0; row<dim_[0]; ++row)
+        {
+          (*ret_it) = 0.0;
+          for(auto col=firstCol; col<nz_; ++col)
+          {
+            const auto thisCol = row*nz_ + col;
+            const auto realCol = col_[thisCol];
+
+            if( realCol == defaultCol )
+              continue;
+
+            const auto blockNr = realCol / blockSize ;
+            const auto dofNr = realCol % blockSize ;
+            auto fBlock = f.block( blockNr );
+            (*ret_it) += values_[thisCol] * (*fBlock)[ dofNr ];
+          }
+
+          ++ret_it;
+        }
+      }
 
       //! return value of entry (row,col)
-      T operator()( const int row, const int col ) const;
-      T operator()( const unsigned int row, const unsigned int col ) const
+      T operator()(int row, int col) const
       {
-        return (*this)( int( row ), int( col ) );
+        assert((col>=0) && (col <= dim_[1]));
+        assert((row>=0) && (row <= dim_[0]));
+
+        const auto nonZ = nonZeros_[row];
+        auto thisCol = row*nz_;
+        for(auto i=firstCol; i<nonZ; ++i)
+        {
+          if(col_[thisCol] == col)
+            return values_[thisCol];
+          ++thisCol;
+        }
+        return 0;
       }
-      T operator()( const long unsigned int row, const long unsigned int col ) const
+
+      //! set all matrix entries to zero
+      void clear()
       {
-        return this->operator()((unsigned int)(row), (unsigned int)(col) );
+        for(auto& entry : values_)
+          entry = 0;
+        for(auto& entry : col_)
+          entry = defaultCol;
+        for(auto& entry : nonZeros_)
+          entry = 0;
       }
 
       //! set all entries in row to zero
-      void clearRow(int row);
+      void clearRow(int row)
+      {
+        assert((row>=0) && (row <= dim_[0]));
 
-      //! set all matrix entries to zero
-      void clear();
+        nonZeros_[row] = firstCol;
+        auto col = row * nz_;
+        for(auto i=0; i<nz_; ++i)
+        {
+          values_ [col] = 0;
+          col_[col] = defaultCol;
+          ++col;
+        }
+      }
 
       //! return max number of non zeros
       //! used in SparseRowMatrixObject::reserve
@@ -109,61 +190,102 @@ namespace Dune
       //! used in ColCompMatrix::setMatrix
       int numNonZeros(int i) const
       {
-        assert( nonZeros_ );
         return nonZeros_[i];
       }
 
-      //! return pair< value, column >
+      //! return pair (value,column)
       //! used in ColCompMatrix::setMatrix
-      std::pair < const T , int > realValue(int index) const
+      std::pair<const T, int> realValue(int index) const
       {
-        return std::pair< const T, int > (values_[index], col_[index]);
+        return std::pair<const T, int>(values_[index], col_[index]);
       }
 
     private:
-      //! resize keeping old values if possible
-      void resize( int newRow, int newCol, int newNz );
+      //! resize matrix
+      void resize(int rows, int cols, int nz)
+      {
+        constexpr auto colVal(defaultCol);
+        values_.resize( rows*nz , 0 );
+        col_.resize( rows*nz , colVal );
+        nonZeros_.resize( rows , 0 );
+        dim_[0] = rows;
+        dim_[1] = cols;
+        nz_ = nz+firstCol;
+      }
 
       //! returns local col index for given global (row,col)
-      int colIndex(int row, int col);
+      int colIndex(int row, int col)
+      {
+        assert((col>=0) && (col <= dim_[1]));
+        assert((row>=0) && (row <= dim_[0]));
+
+        int i = 0;
+        while( i < nz_ && col_[row*nz_+i] < col && col_[row*nz_+i] != defaultCol )
+          ++i;
+        if(col_[row*nz_+i] == col)
+          return i;  // column already in matrix
+        else if( col_[row*nz_+i] == defaultCol )
+        { // add this column at end of this row
+          ++nonZeros_[row];
+          return i;
+        }
+        else
+        {
+          ++nonZeros_[row];
+          // must shift this row to add col at the position i
+          auto j = nz_-1; // last column
+          if (col_[row*nz_+j] != defaultCol)
+          { // new space available - so resize
+            resize( rows(), cols(), (2 * nz_) );
+            j++;
+          }
+          for(;j>i;--j)
+          {
+            col_[row*nz_+j] = col_[row*nz_+j-1];
+            values_[row*nz_+j] = values_[row*nz_+j-1];
+          }
+          col_[row*nz_+i] = col;
+          values_[row*nz_+i] = 0;
+          return i;
+        }
+      }
 
       //! check whether number of stored nonzeros corresponds to the counters in nonZeros[]
       //! and check, whether all columns within this range have reasonable values
-      //! note: needs to be enabled directly in the function body
       void checkConsistency() const;
 
       //! return real column number for (row,localCol)
       int realCol(int row, int fakeCol) const
       {
-        assert(fakeCol<dim_[1]);
+        assert( fakeCol < dim_[1] );
         assert( row < dim_[0] );
         auto pos = row*nz_ + fakeCol;
         return col_[pos];
       }
 
       //! make row a row with 1 on diagonal and all other entries 0
-      void unitRow(int row);
+      //void unitRow(int row);
 
       //! make column a column with 1 on diagonal and all other entries 0
-      void unitCol(int col);
+      //void unitCol(int col);
 
       //! check symetry
-      void checkSym();
+      //void checkSym();
 
       // res = this * B
-      void multiply(const ThisType & B, ThisType & res) const;
+      //void multiply(const ThisType& B, ThisType& res) const;
 
       //! multiply this matrix with scalar
-      void scale(const T& factor);
+      //void scale(const T& factor);
 
       //! add other matrix to this matrix
-      void add(const ThisType & B );
+      //void add(const ThisType& B);
 
       //! resort to have ascending column numbering
-      void resort();
+      //void resort();
 
       //! resort row to have ascending column numbering
-      void resortRow(const int row);
+      //void resortRow(const int row);
 
       //! SSOR preconditioning
       void ssorPrecondition(const T* , T* ) const;
@@ -174,31 +296,23 @@ namespace Dune
         return true;
       }
 
-      //! apply preconditioning, calls ssorPreconditioning at the moment
-      void precondition(const T *u , T *x) const
+      //! apply SSOR preconditioning
+      void precondition(const T* u , T* x) const
       {
         ssorPrecondition(u,x);
       }
 
-    private:
-      //! delete memory
-      void removeObj();
-
-      T* values_ ;             //! data values (nz_ * dim_[0] elements)
-      int* col_;               //! row_ptr (dim_[0]+1 elements)
-      int* nonZeros_;          //! row_ptr (dim_[0]+1 elements)
-      std::array<int,2> dim_;  //! dim_[0] x dim_[1] Matrix
-      int nz_;                 //! number of nonzeros per row
-
-      int memSize_;
-      bool sorted_;
-
-      // temporary mem for resort
-      std::vector<int> newIndices_;
-      std::vector<T> newValues_;
+      std::vector<T> values_;
+      std::vector<int> col_;
+      std::vector<int> nonZeros_;
+      std::array<int,2> dim_;
+      int nz_;
       double omega_;
     };
 
+
+
+    //! SparseRowMatrixObject
     template< class DomainSpace, class RangeSpace,
               class Matrix = SparseRowMatrix< typename DomainSpace :: RangeFieldType > >
     class SparseRowMatrixObject
@@ -254,7 +368,6 @@ namespace Dune
       mutable LocalMatrixStackType localMatrixStack_;
 
     public:
-      //! setup matrix handler
       inline SparseRowMatrixObject( const DomainSpaceType &domainSpace,
                                     const RangeSpaceType &rangeSpace,
                                     const std::string &paramfile = "" )
@@ -335,8 +448,8 @@ namespace Dune
               const auto rowMaxNumbers = rangeMapper_.maxNumDofs();
               const auto colMaxNumbers = domainMapper_.maxNumDofs();
 
-              std::cout << "Reserve Matrix with (" << rangeSpace_.size() << "," << domainSpace_.size()<< ")\n";
-              std::cout << "Max number of base functions = (" << rowMaxNumbers << "," << colMaxNumbers << ")\n";
+              std::cout << "Reserve Matrix with (" << rangeSpace_.size() << "," << domainSpace_.size()<< ")" << std::endl;
+              std::cout << "Max number of base functions = (" << rowMaxNumbers << "," << colMaxNumbers << ")" << std::endl;
             }
 
             // upper estimate for number of non-zeros
@@ -360,10 +473,6 @@ namespace Dune
         dest.communicate();
       }
 
-      ///////////////////////////////////////////////////
-      // Method used for the diagonal preconditioning of the dune fem
-      // inbuild solvers
-      ///////////////////////////////////////////////////
       //! extract diagonal entries from matrix into discrete function
       template < class DiscreteFunctionType >
       void extractDiagonal( DiscreteFunctionType& diag ) const
@@ -371,10 +480,10 @@ namespace Dune
         // this only works for matrices with same number of rows,cols
         assert( matrix_.rows() == matrix_.cols() );
         const auto dofEnd = diag.dend();
-        unsigned int row = 0;
+        int row = 0;
         for( auto dofIt = diag.dbegin(); dofIt != dofEnd; ++dofIt, ++row )
         {
-          assert( row < static_cast<unsigned int>(matrix_.rows()) );
+          assert( row < matrix_.rows() );
           (*dofIt) = matrix_( row, row );
         }
       }
@@ -408,6 +517,7 @@ namespace Dune
 
 
 
+    //! LocalMatrixTraits
     template< class DomainSpace, class RangeSpace, class Matrix >
     template< class MatrixObject >
     struct SparseRowMatrixObject< DomainSpace, RangeSpace, Matrix >::LocalMatrixTraits
@@ -520,7 +630,7 @@ namespace Dune
       }
 
       //! add value to matrix entry
-      void add( int localRow, int localCol, const DofType value )
+      void add(int localRow, int localCol, DofType value)
       {
         assert( value == value );
         assert( (localRow >= 0) && (localRow < rows()) );
@@ -530,7 +640,7 @@ namespace Dune
       }
 
       //! get matrix entry
-      DofType get( int localRow, int localCol ) const
+      DofType get(int localRow, int localCol) const
       {
         assert( (localRow >= 0) && (localRow < rows()) );
         assert( (localCol >= 0) && (localCol < columns()) );
@@ -539,7 +649,7 @@ namespace Dune
       }
 
       //! set matrix entry to value
-      void set( int localRow, int localCol, const DofType value )
+      void set(int localRow, int localCol, DofType value)
       {
         assert( (localRow >= 0) && (localRow < rows()) );
         assert( (localCol >= 0) && (localCol < columns()) );
@@ -548,21 +658,21 @@ namespace Dune
       }
 
       //! set matrix row to zero except diagonla entry
-      void unitRow( const int localRow )
+      void unitRow(int localRow)
       {
         assert( (localRow >= 0) && (localRow < rows()) );
         matrix_.unitRow( rowIndices_[ localRow ] );
       }
 
       //! set matrix row to zero
-      void clearRow( const int localRow )
+      void clearRow( int localRow )
       {
         assert( (localRow >= 0) && (localRow < rows()) );
         matrix_.clearRow( rowIndices_[localRow]);
       }
 
       //! set matrix column to zero
-      void clearCol( const int localCol )
+      void clearCol( int localCol )
       {
         assert( (localCol >= 0) && (localCol < columns()) );
         matrix_.clearCol( columnIndices_[localCol] );
@@ -596,346 +706,31 @@ namespace Dune
 
 
     template <class T>
-    SparseRowMatrix<T>::SparseRowMatrix(double omega) :
-      values_(nullptr), col_(nullptr), nonZeros_(nullptr),
-      dim_({0,0}), nz_(0), memSize_(0), omega_(omega)
-    {
-      checkConsistency();
-    }
-
-    template <class T>
-    SparseRowMatrix<T>::SparseRowMatrix(int rows, int cols, int nz,
-                                        const T& dummy, double omega) :
-      values_(nullptr), col_(nullptr), nonZeros_(nullptr),
-      dim_({0,0}), nz_(0), memSize_(0), omega_(omega)
-    {
-      // resize and get storage
-      reserve(rows,cols,nz,dummy);
-
-      // set all values to default value
-      clear();
-
-      checkConsistency();
-    }
-
-    template <class T>
-    void SparseRowMatrix<T>::removeObj()
-    {
-      checkConsistency();
-
-      if(values_)
-        delete [] values_;
-      values_ = nullptr;
-      if(col_)
-        delete [] col_;
-      col_ = nullptr;
-      if(nonZeros_)
-        delete [] nonZeros_;
-      nonZeros_ = nullptr;
-
-      checkConsistency();
-    }
-
-    template <class T>
-    SparseRowMatrix<T>::~SparseRowMatrix()
-    {
-      checkConsistency();
-
-      removeObj();
-
-      checkConsistency();
-    }
-
-    template <class T>
-    void SparseRowMatrix<T>::reserve(int rows, int cols, int nz,const T& dummy)
-    {
-      if( (rows == dim_[0]) && (cols == dim_[1]) && (nz == nz_))
-      {
-        clear();
-        return;
-      }
-
-      removeObj();
-
-      values_ = new T [ rows*nz ];
-      col_    = new int [ rows*nz ];
-      nonZeros_ = new int [ rows ];
-
-      assert( values_ );
-      assert( col_ );
-      assert( nonZeros_ );
-
-      dim_[0] = rows;
-      dim_[1] = cols;
-
-      memSize_ = rows * nz;
-      nz_ = nz;
-      // add first col for offset
-      nz_ += firstCol ;
-
-      assert( dim_[0] > 0 );
-      assert( dim_[1] > 0 );
-
-      // make resize
-      newValues_.resize( nz_ );
-
-      // only reserve for indices
-      newIndices_.reserve( nz_ );
-
-      // set all values to default value
-      clear();
-
-      checkConsistency();
-    }
-
-    //! resize matrix
-    template <class T>
-    void SparseRowMatrix<T>::resize(int newRow, int newCol, int newNz )
-    {
-      if(newRow != this->rows() || newNz > nz_ )
-      {
-        if( newNz < 0 )
-          newNz = nz_;
-
-        auto newMemSize = newRow * newNz ;
-
-        int memHalf = (int) memSize_/2;
-        if((newMemSize > memSize_) || (newMemSize < memHalf))
-        {
-          T tmp = 0;
-          auto oldValues = values_;
-          values_ = nullptr;
-          auto oldCol  = col_;
-          col_ = nullptr;
-          auto oldNonZeros = nonZeros_;
-          nonZeros_ = nullptr;
-          const auto oldNz = nz_;
-          const auto copySize = std::min( dim_[0] , newRow );
-          const auto oldSize = dim_[0];
-
-          // reserve new memory
-          reserve(newRow,newCol,newNz,tmp);
-
-          if( (oldSize > 0) && (oldNz > 0 ))
-          {
-            std::memset( col_ , -1 , newRow * newNz * sizeof(int));
-            for( auto row = 0; row < copySize; ++ row )
-            {
-              const auto newLoc = row * newNz ;
-              const auto oldLoc = row * oldNz ;
-              std::memcpy( values_ + newLoc , oldValues + oldLoc , oldNz * sizeof(T) );
-              std::memcpy( col_ + newLoc    , oldCol + oldLoc   , oldNz * sizeof(int) );
-            }
-            std::memcpy(nonZeros_, oldNonZeros, copySize * sizeof(int) );
-          }
-
-          delete [] oldValues;
-          delete [] oldCol;
-          delete [] oldNonZeros;
-        }
-        else
-        {
-          assert(newRow > 0);
-          dim_[0] = newRow;
-          dim_[1] = newCol;
-        }
-      }
-
-      assert( this->rows()  == newRow );
-      assert( this->cols()  == newCol );
-    }
-
-    template< class T >
-    inline T SparseRowMatrix<T>::operator()( const int row, const int col ) const
-    {
-      assert( row >= 0 );
-      assert( (row < dim_[0]) ? 1 : (std::cout << row << " bigger " << dim_[0] << std::endl, 0));
-
-      const auto nonZ = nonZeros_[row];
-      auto thisCol = row*nz_;
-      for(auto i=firstCol; i<nonZ; ++i)
-      {
-        if(col_[thisCol] == col)
-          return values_[thisCol];
-        ++thisCol;
-      }
-      return 0;
-    }
-
-    template <class T>
-    int SparseRowMatrix<T>::colIndex(int row, int col)
-    {
-      checkConsistency();
-
-      assert( row >= 0 );
-      assert( row < dim_[0] );
-
-      int i = 0;
-      while( i < nz_ && col_[row*nz_+i] < col && col_[row*nz_+i] != defaultCol )
-        ++i;
-      if(col_[row*nz_+i] == col)
-        return i;  // column already in matrix
-      else if( col_[row*nz_+i] == defaultCol )
-      { // add this column at end of this row
-        ++nonZeros_[row];
-        return i;
-      }
-      else
-      {
-        ++nonZeros_[row];
-        // must shift this row to add col at the position i
-        auto j = nz_-1; // last column
-        if (col_[row*nz_+j] != defaultCol)
-        { // new space available - so resize
-          resize( rows(), cols(), (2 * nz_) );
-          j++;
-        }
-        for(;j>i;--j)
-        {
-          col_[row*nz_+j] = col_[row*nz_+j-1];
-          values_[row*nz_+j] = values_[row*nz_+j-1];
-        }
-        col_[row*nz_+i] = col;
-        values_[row*nz_+i] = 0;
-        return i;
-      }
-    }
-
-    template <class T>
-    void SparseRowMatrix<T>::clear()
-    {
-      T init = 0;
-      for(auto i=0; i<dim_[0]*nz_; ++i)
-      {
-        values_ [i] = init;
-        col_[i] = defaultCol;
-      }
-
-      for(auto i=0; i<dim_[0]; ++i)
-      {
-        nonZeros_[i] = 0;
-      }
-
-      checkConsistency();
-    }
-
-    template <class T>
-    void SparseRowMatrix<T>::clearRow(int row)
-    {
-      checkConsistency();
-
-      assert( nonZeros_ );
-      assert( values_ );
-      assert( col_ );
-
-      nonZeros_[row] = firstCol;
-
-      auto col = row * nz_;
-      for(auto i=0; i<nz_; ++i)
-      {
-        values_ [col] = 0;
-        col_[col] = defaultCol;
-        ++col;
-      }
-
-      checkConsistency();
-    }
-
-    template <class T>
-    void SparseRowMatrix<T>::set(int row, int col, T val)
-    {
-      checkConsistency();
-
-      assert((col>=0) && (col <= dim_[1]));
-      assert((row>=0) && (row <= dim_[0]));
-
-      auto whichCol = colIndex(row,col);
-      assert( whichCol != defaultCol );
-
-      values_[row*nz_ + whichCol] = val;
-      if(whichCol >= nonZeros_[row])
-        nonZeros_[row]++;
-      col_[row*nz_ + whichCol] = col;
-
-      checkConsistency();
-    }
-
-    template <class T>
-    void SparseRowMatrix<T>::add(int row, int col, T val)
-    {
-      checkConsistency();
-
-      auto whichCol = colIndex(row,col);
-      assert( whichCol != defaultCol );
-      values_[row*nz_ + whichCol] += val;
-      col_[row*nz_ + whichCol] = col;
-
-      checkConsistency();
-    }
-
-    //! matrix-vector multiplication
-    template <class T> template <class ArgDFType, class DestDFType>
-    void SparseRowMatrix<T>::apply(const ArgDFType &f, DestDFType &ret) const
-    {
-      constexpr auto blockSize = ArgDFType :: DiscreteFunctionSpaceType :: localBlockSize;
-
-      //! we assume that the dimension of the functionspace of f is the same as
-      //! the size of the matrix
-      auto ret_it = ret.dbegin();
-
-      for(auto row=0; row<dim_[0]; ++row)
-      {
-        (*ret_it) = 0.0;
-        for(auto col=firstCol; col<nz_; ++col)
-        {
-          const auto thisCol = row*nz_ + col;
-          const auto realCol = col_[thisCol];
-
-          if( realCol == defaultCol )
-            continue;
-
-          const int blockNr = realCol / blockSize ;
-          const int dofNr = realCol % blockSize ;
-          auto fBlock = f.block( blockNr );
-          (*ret_it) += values_[thisCol] * (*fBlock)[ dofNr ];
-        }
-
-        ++ret_it;
-      }
-    }
-
-    template <class T>
     void SparseRowMatrix<T>::checkConsistency() const
     {
-#if 0
       bool consistent = true;
-      // only perform check if there is any data
-      if(nonZeros_ || values_ || col_)
+      for(auto row=0; row<dim_[0]; row++)
       {
-        for(auto row=0; row<dim_[0]; row++)
+        if(nonZeros_[row]<0 || nonZeros_[row]> dim_[1])
         {
-          if(nonZeros_[row]<0 || nonZeros_[row]> dim_[1])
+          std::cout << "error in consistency of row " << row
+            << ": NonZeros_[row] = "<< nonZeros_[row]
+            << " is not within reasonable range "
+            << " of dim = (" << dim_[0]<<","<< dim_[1]<< ")"
+            << std::endl;
+          consistent = false;
+        }
+        for(auto fakeCol =0; fakeCol < nonZeros_[row]; fakeCol++)
+          if((realCol(row,fakeCol)<0) || (realCol(row,fakeCol)>=dim_[1]))
           {
             std::cout << "error in consistency of row " << row
               << ": NonZeros_[row] = "<< nonZeros_[row]
-              << " is not within reasonable range "
-              << " of dim = (" << dim_[0]<<","<< dim_[1]<< ")"
-              << std::endl;
+              << ", fakeCol = " << fakeCol << ", realCol(fakeCol) = "
+              << realCol(row,fakeCol) << std::endl;
             consistent = false;
           }
-          for(auto fakeCol =0; fakeCol < nonZeros_[row]; fakeCol++)
-            if((realCol(row,fakeCol)<0) || (realCol(row,fakeCol)>=dim_[1]))
-            {
-              std::cout << "error in consistency of row " << row
-                << ": NonZeros_[row] = "<< nonZeros_[row]
-                << ", fakeCol = " << fakeCol << ", realCol(fakeCol) = "
-                << realCol(row,fakeCol) << std::endl;
-              consistent = false;
-            }
-        }
       }
       assert(consistent);
-#endif
     }
 
     template <class T>
