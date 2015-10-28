@@ -331,6 +331,24 @@ namespace Dune
     };
 
 
+    // gridFunctionAdapter
+    // -------------------
+
+    template< class Function, class GridPart >
+    GridFunctionAdapter< Function, GridPart >
+    gridFunctionAdapter ( const std::string &name, const Function &function, const GridPart &gridPart, unsigned int order = 111 )
+    {
+      return GridFunctionAdapter< Function, GridPart >( name, function, gridPart, order );
+    }
+
+    template< class Function, class GridPart >
+    GridFunctionAdapter< Function, GridPart >
+    gridFunctionAdapter ( const Function &function, const GridPart &gridPart, unsigned int order = 111 )
+    {
+      return GridFunctionAdapter< Function, GridPart >( "", function, gridPart, order );
+    }
+
+
     namespace
     {
       template <class FunctionImp,class GridPartType,bool>
