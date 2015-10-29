@@ -194,8 +194,7 @@ namespace Dune
                          const IntersectionType &intersection,
                          int order, const typename Base :: Side side )
         : Base( getPointList( intersection, order, side ) ),
-          twist_( getTwist( gridPart, intersection, side ) ),
-          mapper_( CacheProviderType::getMapper( quadImp(), elementGeometry(), localFaceIndex(), twist_ ) ),
+          mapper_( CacheProviderType::getMapper( quadImp(), elementGeometry(), localFaceIndex(), getTwist( gridPart, intersection, side ) ) ),
           points_( PointProviderType::getPoints( quadImp().ipList().id(), elementGeometry() ) )
       {
       }
@@ -271,7 +270,6 @@ namespace Dune
       }
 
     private:
-      int twist_;
       const MapperType &mapper_;
       const PointVectorType &points_;
     };
