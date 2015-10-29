@@ -598,7 +598,7 @@ namespace Dune
     template <class T>
     SparseRowMatrix<T>::SparseRowMatrix(double omega) :
       values_(nullptr), col_(nullptr), nonZeros_(nullptr),
-      dim_({0,0}), nz_(0), memSize_(0), omega_(omega)
+      dim_({{0,0}}), nz_(0), memSize_(0), omega_(omega)
     {
       checkConsistency();
     }
@@ -607,7 +607,7 @@ namespace Dune
     SparseRowMatrix<T>::SparseRowMatrix(int rows, int cols, int nz,
                                         const T& dummy, double omega) :
       values_(nullptr), col_(nullptr), nonZeros_(nullptr),
-      dim_({0,0}), nz_(0), memSize_(0), omega_(omega)
+      dim_({{0,0}}), nz_(0), memSize_(0), omega_(omega)
     {
       // resize and get storage
       reserve(rows,cols,nz,dummy);
