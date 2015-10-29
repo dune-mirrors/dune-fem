@@ -47,21 +47,20 @@ namespace Dune
       SparseRowMatrix(const ThisType& ) = delete;
 
       //! construct matrix of zero size
-      explicit SparseRowMatrix(double omega = 1.1) :
-        values_(0), col_(0), nonZeros_(0), dim_({{0,0}}), nz_(0), omega_(omega)
+      explicit SparseRowMatrix() :
+        values_(0), col_(0), nonZeros_(0), dim_({{0,0}}), nz_(0)
       {}
 
       //! construct matrix with 'rows' rows and 'cols' columns,
       //! maximum 'nz' non zero values in each row
-      //! and intialize all values with 'val'
-      SparseRowMatrix(int rows, int cols, int nz, const T& val = 0, double omega = 1.1) :
-      values_(0), col_(0), nonZeros_(0), dim_({{0,0}}), nz_(0), omega_(omega)
+      SparseRowMatrix(int rows, int cols, int nz) :
+      values_(0), col_(0), nonZeros_(0), dim_({{0,0}}), nz_(0)
       {
-        reserve(rows,cols,nz,val);
+        reserve(rows,cols,nz);
       }
 
       //! reserve memory for given rows, columns and number of non zeros
-      void reserve(int rows, int cols, int nz, const T& )
+      void reserve(int rows, int cols, int nz, T&& )
       {
         if( (rows != dim_[0]) || (cols != dim_[1]) || (nz != nz_))
           resize(rows,cols,nz);
@@ -250,10 +249,6 @@ namespace Dune
         }
       }
 
-      //! check whether number of stored nonzeros corresponds to the counters in nonZeros[]
-      //! and check, whether all columns within this range have reasonable values
-      void checkConsistency() const;
-
       //! return real column number for (row,localCol)
       int realCol(int row, int fakeCol) const
       {
@@ -263,51 +258,11 @@ namespace Dune
         return col_[pos];
       }
 
-      //! make row a row with 1 on diagonal and all other entries 0
-      //void unitRow(int row);
-
-      //! make column a column with 1 on diagonal and all other entries 0
-      //void unitCol(int col);
-
-      //! check symetry
-      //void checkSym();
-
-      // res = this * B
-      //void multiply(const ThisType& B, ThisType& res) const;
-
-      //! multiply this matrix with scalar
-      //void scale(const T& factor);
-
-      //! add other matrix to this matrix
-      //void add(const ThisType& B);
-
-      //! resort to have ascending column numbering
-      //void resort();
-
-      //! resort row to have ascending column numbering
-      //void resortRow(const int row);
-
-      //! SSOR preconditioning
-      void ssorPrecondition(const T* , T* ) const;
-
-      //! returns true if preconditioing is called before matrix multiply
-      bool rightPrecondition() const
-      {
-        return true;
-      }
-
-      //! apply SSOR preconditioning
-      void precondition(const T* u , T* x) const
-      {
-        ssorPrecondition(u,x);
-      }
-
       std::vector<T> values_;
       std::vector<int> col_;
       std::vector<int> nonZeros_;
       std::array<int,2> dim_;
       int nz_;
-      double omega_;
     };
 
 
@@ -703,36 +658,7 @@ namespace Dune
       }
     };
 
-
-
-    template <class T>
-    void SparseRowMatrix<T>::checkConsistency() const
-    {
-      bool consistent = true;
-      for(auto row=0; row<dim_[0]; row++)
-      {
-        if(nonZeros_[row]<0 || nonZeros_[row]> dim_[1])
-        {
-          std::cout << "error in consistency of row " << row
-            << ": NonZeros_[row] = "<< nonZeros_[row]
-            << " is not within reasonable range "
-            << " of dim = (" << dim_[0]<<","<< dim_[1]<< ")"
-            << std::endl;
-          consistent = false;
-        }
-        for(auto fakeCol =0; fakeCol < nonZeros_[row]; fakeCol++)
-          if((realCol(row,fakeCol)<0) || (realCol(row,fakeCol)>=dim_[1]))
-          {
-            std::cout << "error in consistency of row " << row
-              << ": NonZeros_[row] = "<< nonZeros_[row]
-              << ", fakeCol = " << fakeCol << ", realCol(fakeCol) = "
-              << realCol(row,fakeCol) << std::endl;
-            consistent = false;
-          }
-      }
-      assert(consistent);
-    }
-
+#if 0
     template <class T>
     void SparseRowMatrix<T>::ssorPrecondition(const T* u, T* x) const
     {
@@ -815,6 +741,8 @@ namespace Dune
         x[row] -= omega * dot / diag;
       }
     }
+#endif
+
   } // namespace Fem
 
 } // namespace Dune
