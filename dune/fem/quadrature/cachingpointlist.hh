@@ -193,7 +193,8 @@ namespace Dune
       CachingPointList ( const GridPartType &gridPart,
                          const IntersectionType &intersection,
                          int order, const typename Base :: Side side )
-        : Base( getPointList( gridPart, intersection, order, side ) ),
+        : Base( getPointList( intersection, order, side ) ),
+          twist_( getTwist( gridPart, intersection, side ) ),
           mapper_( CacheProviderType::getMapper( quadImp(), elementGeometry(), localFaceIndex(), twist_ ) ),
           points_( PointProviderType::getPoints( quadImp().ipList().id(), elementGeometry() ) )
       {
@@ -233,22 +234,36 @@ namespace Dune
       }
 
     protected:
-      Base getPointList ( const GridPartType &gridPart,
-                          const IntersectionType &intersection,
+      Base getPointList ( const IntersectionType &intersection,
                           const int order,
                           const typename Base :: Side side )
       {
         switch( side )
         {
           case Base :: INSIDE:
-            twist_ = TwistUtilityType::twistInSelf( gridPart.grid(), intersection );
             return Base( TwistUtilityType::elementGeometry( intersection, true ),
                          intersection.indexInInside(), order );
 
           case Base :: OUTSIDE:
-            twist_ = TwistUtilityType::twistInNeighbor( gridPart.grid(), intersection );
             return Base( TwistUtilityType::elementGeometry( intersection, false ),
                          intersection.indexInOutside(), order );
+
+          default:
+            DUNE_THROW( InvalidStateException, "ElementIntegrationPointList: side must either be INSIDE or OUTSIDE." );
+        }
+      }
+
+      int getTwist ( const GridPartType &gridPart,
+                     const IntersectionType &intersection,
+                     const typename Base :: Side side )
+      {
+        switch( side )
+        {
+          case Base :: INSIDE:
+            return TwistUtilityType::twistInSelf( gridPart.grid(), intersection );
+
+          case Base :: OUTSIDE:
+            return TwistUtilityType::twistInNeighbor( gridPart.grid(), intersection );
 
           default:
             DUNE_THROW( InvalidStateException, "ElementIntegrationPointList: side must either be INSIDE or OUTSIDE." );
