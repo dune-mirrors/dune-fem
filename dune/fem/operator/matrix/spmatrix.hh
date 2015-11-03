@@ -3,11 +3,10 @@
 
 // C++ includes
 #include <vector>
-#include <set>
 #include <algorithm>
 #include <iostream>
-#include <fstream>
 #include <array>
+#include <string>
 
 // DUNE-FEM includes
 #include <dune/fem/function/adaptivefunction/adaptivefunction.hh>
@@ -26,8 +25,6 @@ namespace Dune
 
   namespace Fem
   {
-
-
 
     //! SparseRowMatrix
     template <class T>
@@ -657,91 +654,6 @@ namespace Dune
           matrix_.resortRow( rowIndices_[ i ] );
       }
     };
-
-#if 0
-    template <class T>
-    void SparseRowMatrix<T>::ssorPrecondition(const T* u, T* x) const
-    {
-      const auto omega = omega_;
-
-      // (D - omega E) x = x_old (=u)
-      for(auto row=0; row<dim_[0]; ++row)
-      {
-        double diag=1.0;
-        double dot=0.0;
-        auto thisCol = row*nz_ + firstCol ;
-        const auto localValues = &values_[thisCol];
-        const auto nonZero = nonZeros_[row];
-        for(auto col = firstCol ; col<nonZero; ++col)
-        {
-          const auto realCol = col_[ thisCol ];
-          assert( realCol > defaultCol );
-
-          if(realCol < row)
-            dot += localValues[col] * x[realCol];
-          else if(realCol == row)
-          {
-            diag = localValues[col];
-            assert( std::abs(diag) > 0.0 );
-          }
-          ++thisCol;
-        }
-
-        x[row] = (u[row] - omega*dot) / diag;
-      }
-
-      // D^{-1} (D - omega F) x = x_old (=x)
-      for(auto row=dim_[0]-1; row>=0; --row)
-      {
-        double diag=1.0;
-        double dot=0.0;
-        auto thisCol = row*nz_ + firstCol ;
-        const auto localValues = &values_[thisCol];
-        const auto nonZero = nonZeros_[row];
-        for(auto col = firstCol ; col<nonZero; ++col)
-        {
-          const auto realCol = col_[ thisCol ];
-          assert( realCol > defaultCol );
-
-          if(realCol > row)
-            dot += localValues[col] * x[realCol];
-          else if(realCol == row)
-          {
-            diag = localValues[col];
-            assert( std::abs(diag) > 0.0 );
-          }
-          ++thisCol;
-        }
-
-        x[row] = (u[row] - omega*dot) / diag;
-      }
-
-      // D^{-1} (D - omega F) x = x_old (=x)
-      for(auto row=dim_[0]-1; row>=0; --row)
-      {
-        double diag=1.0;
-        double dot=0.0;
-        auto thisCol = row*nz_ + firstCol ;
-        const auto localValues = &values_[thisCol];
-        const auto nonZero = nonZeros_[row];
-        for(auto col = firstCol ; col<nonZero; ++col)
-        {
-          const auto realCol = col_[ thisCol ];
-          assert( realCol > defaultCol );
-
-          if(realCol > row)
-            dot += localValues[col] * x[realCol];
-          else if(realCol == row)
-          {
-            diag = localValues[col];
-            assert( std::abs(diag) > 0.0 );
-          }
-          ++thisCol;
-        }
-        x[row] -= omega * dot / diag;
-      }
-    }
-#endif
 
   } // namespace Fem
 
