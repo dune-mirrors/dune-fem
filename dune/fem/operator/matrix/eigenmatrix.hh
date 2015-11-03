@@ -4,11 +4,9 @@
 #ifdef HAVE_EIGEN
 
 //- system includes
-#include <vector>
-#include <set>
-#include <algorithm>
 #include <iostream>
-#include <fstream>
+#include <utility>
+#include <string>
 
 //- local includes
 #include <dune/fem/function/adaptivefunction/adaptivefunction.hh>
@@ -30,45 +28,39 @@ namespace Dune
   namespace Fem
   {
 
+    //! EigenMatrix
     template <class T>
     class EigenMatrix
     {
-      enum { defaultCol = -1 };
-      enum { firstCol = defaultCol + 1 };
+      static constexpr int defaultCol = -1;
+      static constexpr int firstCol = defaultCol + 1;
 
     public:
       typedef Eigen::SparseMatrix<T,Eigen::RowMajor> MatrixStorageType;
-      typedef T Ttype;  //! remember the value type
+      //! matrix field type
+      typedef T Ttype;
       typedef EigenMatrix<T> ThisType;
-      //! type of the base matrix (for consistency with ISTLMatrixObject)
+      //! type of the base matrix
+      //! for consistency with ISTLMatrixObject
       typedef ThisType MatrixBaseType;
 
-    protected:
-      MatrixStorageType matrix_;
+      EigenMatrix(const ThisType& ) = delete;
 
-    public:
-      EigenMatrix(const EigenMatrix<T> &S) = delete;
-
-      //! makes Matrix of zero length
-      explicit EigenMatrix()
-        : matrix_()
+      //! construct matrix of zero size
+      explicit EigenMatrix() :
+        matrix_()
       {}
 
-      //! make matrix with 'rows' rows and 'cols' columns,
+      //! construct matrix with 'rows' rows and 'cols' columns,
       //! maximum 'nz' non zero values in each row
-      //! and intialize all values with 'val' 
-      EigenMatrix(int rows, int cols, int nz) // , const T& val = 0)
-        : matrix_(rows,cols)
+      EigenMatrix(int rows, int cols, int nz) :
+        matrix_(rows,cols)
       {
         reserve(rows,cols,nz);
       }
 
-      //! free memory for values_ and col_
-      ~EigenMatrix()
-      {}
-
-      //! reserve memory for given rows, and number of non zeros,
-      void reserve(int rows, int cols, int nz) 
+      //! reserve memory for given rows, columns and number of non zeros
+      void reserve(int rows, int cols, int nz)
       {
         matrix_.resize(rows,cols);
         matrix_.reserve(Eigen::VectorXi::Constant(cols,nz));;
@@ -85,11 +77,8 @@ namespace Dune
       {
         return matrix_.cols();
       }
-      
-      //! set entry to value
-      //! note, that every entry is performed into the matrix!
-      //! also setting of value 0 will result in an entry. So these
-      //! calls should be ommited on a higher level
+
+      //! set entry to value (also setting 0 will result in an entry)
       void set(int row, int col, T val)
       {
         matrix_.coeffRef(row,col) = val;
@@ -101,27 +90,24 @@ namespace Dune
         matrix_.coeffRef(row,col) += val;
       }
 
-      //! A(f) = ret, same as mult
-      template <class DiscFType, class DiscFuncType>
-      void apply(const DiscFType &f, DiscFuncType &ret) const
+      //! ret = A*f
+      template<class ArgDFType, class DestDFType>
+      void apply(const ArgDFType& f, DestDFType& ret) const
       {
-        ret.dofVector().array().coefficients() = 
+        ret.dofVector().array().coefficients() =
           matrix_ * f.dofVector().array().coefficients();
       }
 
       //! return value of entry (row,col)
-      T operator() ( const int row, const int col ) const
+      T operator()(int row, int col) const
       {
-        T& val = const_cast<MatrixStorageType&>(matrix_).coeffRef(row,col);
-        return val;
+        return matrix_.coeffRef(row,col);
       }
-      T operator() ( const unsigned int row, const unsigned int col ) const
+
+      //! set all matrix entries to zero
+      void clear()
       {
-        return (*this)( int( row ), int( col ) );
-      }
-      T operator() ( const long unsigned int row, const long unsigned int col ) const
-      {
-        return this->operator()((unsigned int)(row), (unsigned int)(col) );
+        matrix_.setZero();
       }
 
       //! set all entries in row to zero
@@ -129,13 +115,6 @@ namespace Dune
       {
         std::cout << "EigenMatrix::clearRow not yet implemented" << std::endl;
         abort();
-      }
-
-      //! set all matrix entries to zero, no other value makes sense for
-      //! sparse matrix
-      void clear()
-      {
-        matrix_.setZero();
       }
 
       //! return max number of non zeros
@@ -147,24 +126,36 @@ namespace Dune
 
       //! return number of non zeros in row
       //! used in ColCompMatrix::setMatrix
-      // int numNonZeros(int i) const
+      int numNonZeros(int i) const
+      {
+        std::cout << "EigenMatrix::numNonZeros not yet implemented" << std::endl;
+        abort();
+      }
 
-      //! return pair< value, column >, used by BlockMatrix
-      //! needed in ColCompMatrix::setMatrix
-      // std::pair < const T , int > realValue(int index) const
+      //! return pair (value,column)
+      //! used in ColCompMatrix::setMatrix
+      std::pair<const T, int> realValue(int index) const
+      {
+        std::cout << "EigenMatrix::realValue not yet implemented" << std::endl;
+        abort();
+      }
 
-      MatrixStorageType& data() 
+      MatrixStorageType& data()
       {
         return matrix_;
       }
-      const MatrixStorageType& data() const 
+
+      const MatrixStorageType& data() const
       {
         return matrix_;
       }
+
+    protected:
+      MatrixStorageType matrix_;
     };
 
     template< class DomainSpace, class RangeSpace >
-    struct EigenMatrixObject 
+    struct EigenMatrixObject
        : public SparseRowMatrixObject< DomainSpace, RangeSpace, EigenMatrix< typename DomainSpace :: RangeFieldType > >
     {
       typedef EigenMatrix< typename DomainSpace :: RangeFieldType > MatrixType;
