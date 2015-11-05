@@ -70,6 +70,9 @@ namespace Dune
       //! The type of the coordinates in the codim-0 reference element.
       typedef typename BaseType :: CoordinateType CoordinateType;
 
+      //! type of the quadrature point
+      typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+
       // for compatibility
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
@@ -106,6 +109,11 @@ namespace Dune
       CachingQuadrature( const ThisType &org )
       : BaseType( org )
       {}
+
+      QuadraturePointWrapperType operator[] ( std::size_t i ) const
+      {
+        return QuadraturePointWrapperType( *this, i );
+      }
 
       /** \copydoc Dune::Fem::ElementQuadrature<GridPartImp,0>::weight */
       const RealType &weight ( size_t i ) const
@@ -150,6 +158,9 @@ namespace Dune
       //! element
       typedef typename BaseType::CoordinateType CoordinateType;
 
+      //! type of the quadrature point
+      typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+
       //! Type of the intersection iterator
       typedef typename BaseType :: IntersectionIteratorType IntersectionIteratorType;
       typedef typename IntersectionIteratorType :: Intersection IntersectionType;
@@ -184,6 +195,11 @@ namespace Dune
       CachingQuadrature( const ThisType& org )
       : BaseType( org )
       {}
+
+      QuadraturePointWrapperType operator[] ( std::size_t i ) const
+      {
+        return QuadraturePointWrapperType( *this, i );
+      }
 
       /** \copydoc Dune::Fem::ElementQuadrature<GridPartImp,1>::weight */
       const RealType &weight( size_t i ) const

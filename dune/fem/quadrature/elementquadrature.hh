@@ -95,6 +95,9 @@ namespace Dune
       //! type for coordinates in the codim-0 reference element
       typedef typename IntegrationTraits :: CoordinateType CoordinateType;
 
+      //! type of the quadrature point
+      typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+
       // for compatibility
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
@@ -129,6 +132,11 @@ namespace Dune
       ElementQuadrature( const ThisType &org )
       : BaseType( org )
       {}
+
+      QuadraturePointWrapperType operator[] ( std::size_t i ) const
+      {
+        return QuadraturePointWrapperType( *this, i );
+      }
 
       /** \copydoc Dune::Fem::Quadrature::weight */
       const RealType &weight( size_t i ) const
@@ -176,6 +184,9 @@ namespace Dune
       //! type of coordinates in codim-0 reference element
       typedef typename IntegrationTraits :: CoordinateType CoordinateType;
 
+      //! type of the quadrature point
+      typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+
       //! type of coordinate in codim-1 reference element
       typedef typename IntegrationTraits :: IntegrationPointListType :: CoordinateType
         LocalCoordinateType;
@@ -206,6 +217,11 @@ namespace Dune
       ElementQuadrature( const ElementQuadrature &org )
       : BaseType( org )
       {
+      }
+
+      QuadraturePointWrapperType operator[] ( std::size_t i ) const
+      {
+        return QuadraturePointWrapperType( *this, i );
       }
 
       /*! obtain the weight of the i-th quadrature point

@@ -62,6 +62,7 @@ namespace Dune
       //! type for coordinates in the codim-0 reference element
       typedef typename Base::CoordinateType CoordinateType;
 
+      //! type of the quadrature point
       typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
 
     public:
@@ -111,6 +112,7 @@ namespace Dune
       typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
+      //! type of the quadrature point
       typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
 
       //! type quadrature for use on non-conforming intersections
