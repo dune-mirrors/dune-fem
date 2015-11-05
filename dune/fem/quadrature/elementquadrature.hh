@@ -97,6 +97,8 @@ namespace Dune
 
       //! type of the quadrature point
       typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+      //! type of iterator
+      typedef QuadraturePointIterator< ThisType > IteratorType;
 
       // for compatibility
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
@@ -105,6 +107,8 @@ namespace Dune
       using BaseType::quadImp;
 
     public:
+      using BaseType::nop;
+
       /*! \brief constructor
        *
        *  \param[in]  entity  entity, on whose reference element the quadratre
@@ -137,6 +141,9 @@ namespace Dune
       {
         return QuadraturePointWrapperType( *this, i );
       }
+
+      IteratorType begin () const noexcept { return IteratorType( *this, 0 ); }
+      IteratorType end () const noexcept { return IteratorType( *this, nop() ); }
 
       /** \copydoc Dune::Fem::Quadrature::weight */
       const RealType &weight( size_t i ) const
@@ -186,6 +193,8 @@ namespace Dune
 
       //! type of the quadrature point
       typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+      //! type of iterator
+      typedef QuadraturePointIterator< ThisType > IteratorType;
 
       //! type of coordinate in codim-1 reference element
       typedef typename IntegrationTraits :: IntegrationPointListType :: CoordinateType
@@ -195,6 +204,8 @@ namespace Dune
       typedef ThisType NonConformingQuadratureType;
 
     public:
+      using BaseType::nop;
+
       /*! \brief constructor
        *
        *  \param[in]  gridPart      grid partition (a dummy here)
@@ -223,6 +234,9 @@ namespace Dune
       {
         return QuadraturePointWrapperType( *this, i );
       }
+
+      IteratorType begin () const noexcept { return IteratorType( *this, 0 ); }
+      IteratorType end () const noexcept { return IteratorType( *this, nop() ); }
 
       /*! obtain the weight of the i-th quadrature point
        *

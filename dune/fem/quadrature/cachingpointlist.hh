@@ -93,12 +93,15 @@ namespace Dune
 
       //! the type of the quadrature point
       typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
+      //! type of iterator
+      typedef QuadraturePointIterator< This > IteratorType;
 
     protected:
       using Base::quadImp;
 
     public:
       using Base::localPoint;
+      using Base::nop;
 
       /** \copydoc Dune::Fem::ElementIntegrationPointList<GridPartImp,0,IntegrationTraits>::ElementIntegrationPointList(const GeometryType &geometry,int order)
        */
@@ -112,6 +115,9 @@ namespace Dune
       {
         return QuadraturePointWrapperType( *this, i );
       }
+
+      IteratorType begin () const noexcept { return IteratorType( *this, 0 ); }
+      IteratorType end () const noexcept { return IteratorType( *this, nop() ); }
 
       /** \copydoc Dune::Fem::IntegrationPointList::point */
       const CoordinateType &point ( const size_t i ) const
@@ -153,6 +159,8 @@ namespace Dune
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
       typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
+      //! type of iterator
+      typedef QuadraturePointIterator< This > IteratorType;
 
       //! type of quadrature used for non-conforming intersections
       typedef ElementIntegrationPointList< GridPartType, codimension, IntegrationTraits >
@@ -203,6 +211,9 @@ namespace Dune
       {
         return QuadraturePointWrapperType( *this, i );
       }
+
+      IteratorType begin () const noexcept { return IteratorType( *this, 0 ); }
+      IteratorType end () const noexcept { return IteratorType( *this, nop() ); }
 
       /** \copydoc Dune::Fem::IntegrationPointList::point
        */

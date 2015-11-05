@@ -4,12 +4,15 @@
 //#include <vector>
 #include <cassert>
 
+#include <iterator>
+
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/grid.hh>
 
 #include <dune/fem/common/coordinate.hh>
 #include <dune/fem/storage/array.hh>
+#include <dune/fem/storage/envelope.hh>
 
 // quadrature storage classes
 #include <dune/fem/quadrature/quadprovider.hh>
@@ -99,6 +102,50 @@ namespace Dune
   {
     return x.quadrature().point( x.point() );
   }
+
+
+
+  /**
+   * \class   QuadraturePointIterator
+   * \ingroup Quadrature
+   * \brief   iterator over quadrature points
+   */
+  template< class Quadrature >
+  class QuadraturePointIterator
+    : public std::iterator< std::forward_iterator_tag, QuadraturePointWrapper< Quadrature >,
+                            std::ptrdiff_t, Envelope< QuadraturePointWrapper< Quadrature > >, QuadraturePointWrapper< Quadrature > >
+  {
+    typedef QuadraturePointIterator< Quadrature > ThisType;
+    typedef std::iterator< std::forward_iterator_tag, QuadraturePointWrapper< Quadrature >,
+                           std::ptrdiff_t, Envelope< QuadraturePointWrapper< Quadrature > >, QuadraturePointWrapper< Quadrature > >
+      BaseType;
+
+  public:
+    typedef typename BaseType::value_type value_type;
+    typedef typename BaseType::pointer pointer;
+    typedef typename BaseType::reference reference;
+
+    QuadraturePointIterator () noexcept = default;
+
+    QuadraturePointIterator ( const Quadrature &quadrature, std::size_t point ) noexcept
+      : quadrature_( &quadrature ), point_( point  )
+    {}
+
+    reference operator* () const noexcept { return value_type( quadrature(), point_ ); }
+    pointer operator-> () const noexcept { return pointer( value_type( quadrature(), point_ ) ); }
+
+    bool operator== ( const ThisType &other ) const noexcept { return (point_ == other.point_); }
+    bool operator!= ( const ThisType &other ) const noexcept { return (point_ != other.point_); }
+
+    ThisType &operator++ () noexcept { ++point_; return *this; }
+    ThisType operator++ ( int ) noexcept { ThisType copy( *this ); ++(*this); return copy; }
+
+    const Quadrature &quadrature () const noexcept { assert( quadrature_ ); return *quadrature_; }
+
+  protected:
+    const Quadrature *quadrature_ = nullptr;
+    std::size_t point_ = 0;
+  };
 
 
 
