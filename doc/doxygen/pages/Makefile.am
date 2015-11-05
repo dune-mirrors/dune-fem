@@ -1,1 +1,1 @@
-EXTRA_DIST = main.page changelog.page
+EXTRA_DIST = main.txt changelog.txt

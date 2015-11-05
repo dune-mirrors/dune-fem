@@ -1,7 +1,8 @@
 # Where to search and which files to use
-INPUT                 += @srcdir@/modules \
+INPUT                 += @srcdir@/pages/main.txt \
+                         @srcdir@/modules.txt \
                          @srcdir@/pages/ \
-                         @top_srcdir@/modules \
+                         @top_srcdir@/modules.txt \
                          @top_srcdir@/dune/fem  \
                          @top_srcdir@/dune/fem/io/visual/grape/datadisp/datadisp.cc
 
@@ -35,6 +36,6 @@ ALIASES              += notcleardoc="\xrefitem notcleardoc \"documentation will 
                         interfaceclass="\xrefitem interfaceclass \"An interface class\" \"Main interface classes\"" \
                         newimplementation="\xrefitem newimplementation \"Newly added\" \"New interface implementation and other gadgets\"" 
 
-FILE_PATTERNS       += *.hh *.dist *.dev *.page
+FILE_PATTERNS       += *.hh *.dist *.dev *.txt
 
 EXAMPLE_PATH        +=  @top_srcdir@/dune/fem/misc
