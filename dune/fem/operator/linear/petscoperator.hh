@@ -20,7 +20,7 @@
 
 #include <dune/fem/storage/objectstack.hh>
 
-#if defined HAVE_PETSC
+#if HAVE_PETSC
 
 #include "petscmat.h"
 
@@ -517,6 +517,6 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #if defined HAVE_PETSC
+#endif // #if HAVE_PETSC
 
 #endif // #ifndef DUNE_FEM_PETSCLINEAROPERATOR_HH
