@@ -65,23 +65,22 @@ void MassOperator< DiscreteFunction, LinearOperator >
 
     // run over quadrature points
     QuadratureType quadrature( entity, 2*dfSpace_.order()+1 );
-    const unsigned int numQuadraturePoints = quadrature.nop();
-    for( unsigned int qp = 0; qp < numQuadraturePoints; ++qp )
+    for( const auto qp : quadrature )
     {
       // evaluate u
-      const typename QuadratureType::CoordinateType &x = quadrature.point( qp );
+      const typename QuadratureType::CoordinateType &x = qp.position();
 
       RangeType uValue;
       u.evaluate( geometry.global( x ), uValue );
 
       // put all things together and don't forget quadrature weights
-      const FieldType weight = quadrature.weight( qp )*geometry.integrationElement( x );
+      const FieldType weight = qp.weight()*geometry.integrationElement( x );
 
       // apply weight
       uValue *= weight;
 
       // add to local function
-      localFunction.axpy( quadrature[ qp ], uValue );
+      localFunction.axpy( qp, uValue );
     }
 
   }
@@ -121,15 +120,14 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
 
     // run over quadrature points
     QuadratureType quadrature( entity, 2*dfSpace_.order() );
-    const unsigned int numQuadraturePoints = quadrature.nop();
-    for( unsigned int qp = 0; qp < numQuadraturePoints; ++qp )
+    for( const auto qp : quadrature )
     {
       // evaluate base functions
-      basis.evaluateAll( quadrature[ qp ], values );
+      basis.evaluateAll( qp, values );
 
       // get quadrature weight
-      const typename QuadratureType::CoordinateType &x = quadrature.point( qp );
-      const FieldType weight = quadrature.weight( qp )
+      const typename QuadratureType::CoordinateType &x = qp.position();
+      const FieldType weight = qp.weight()
                                   * geometry.integrationElement( x );
 
       // update system matrix
