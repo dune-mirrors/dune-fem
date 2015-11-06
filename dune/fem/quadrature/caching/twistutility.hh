@@ -156,149 +156,14 @@ namespace Dune
                              dimension );
       }
     };
-#endif
+#endif // #if HAVE_ALBERTA
 
 
 
     // Specialization for ALUGrid
     // --------------------------
 
-#if HAVE_ALUGRID
-    /** \brief Specialization of TwistUtility for ALUGridSimplex.
-    */
-    template< int dim, int dimw >
-    struct TwistUtility< ALUSimplexGrid< dim, dimw > >
-    {
-      typedef ALUSimplexGrid< dim, dimw > GridType;
-
-      typedef typename GridType::Traits::LeafIntersectionIterator
-        LeafIntersectionIterator;
-      typedef typename LeafIntersectionIterator::Intersection LeafIntersection;
-
-      typedef typename GridType::Traits::LevelIntersectionIterator
-        LevelIntersectionIterator;
-      typedef typename LevelIntersectionIterator::Intersection LevelIntersection;
-
-      static const int dimension = GridType::dimension;
-
-    public:
-      //! \brief return twist for inner face
-      template <class Intersection>
-      static inline int twistInSelf(const GridType & grid,
-                                    const Intersection& intersection)
-      {
-        return grid.getRealIntersection( intersection ).twistInInside();
-      }
-
-      //! \brief return twist for outer face
-      template <class Intersection>
-      static inline int twistInNeighbor(const GridType & grid,
-                                        const Intersection& intersection)
-      {
-        return grid.getRealIntersection( intersection ).twistInOutside();
-      }
-
-      /** \brief return element geometry type of inside or outside entity
-      */
-      template <class Intersection>
-      static inline GeometryType
-      elementGeometry(const Intersection& intersection,
-                      const bool inside)
-      {
-        return GeometryType( GenericGeometry::SimplexTopology< dim >::type::id,
-                             dim );
-      }
-    private:
-      TwistUtility(const TwistUtility&);
-      TwistUtility& operator=(const TwistUtility&);
-    };
-
-    /** \brief Specialization of TwistUtility for ALUSimplexGrid.
-    */
-    template< int dim, int dimw >
-    struct TwistUtility< ALUCubeGrid< dim, dimw > >
-    {
-      typedef ALUCubeGrid< dim, dimw > GridType;
-      typedef typename GridType::Traits::LeafIntersectionIterator LeafIntersectionIterator;
-      typedef typename LeafIntersectionIterator::Intersection LeafIntersection;
-      typedef typename GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
-      typedef typename LevelIntersectionIterator::Intersection LevelIntersection;
-
-    public:
-      //! \brief return twist for inner face
-      template <class Intersection>
-      static inline int twistInSelf(const GridType & grid,
-                                    const Intersection& intersection)
-      {
-        return grid.getRealIntersection( intersection ).twistInInside();
-      }
-
-      //! \brief return twist for outer face
-      template <class Intersection>
-      static inline int twistInNeighbor(const GridType & grid,
-                                        const Intersection& intersection)
-      {
-        return grid.getRealIntersection( intersection ).twistInOutside();
-      }
-
-      /** \brief return element geometry type of inside or outside entity
-      */
-      template <class Intersection>
-      static inline GeometryType
-      elementGeometry(const Intersection& intersection,
-                      const bool inside)
-      {
-        return GeometryType( GenericGeometry::CubeTopology< dim >::type::id,
-                             dim );
-      }
-
-    private:
-      TwistUtility(const TwistUtility&);
-      TwistUtility& operator=(const TwistUtility&);
-    };
-
-    /** \brief Specialization of TwistUtility for ALUConformGrid.
-    */
-    template< int dim, int dimw >
-    struct TwistUtility< ALUConformGrid< dim, dimw > >
-    {
-      typedef ALUConformGrid< dim, dimw > GridType;
-      typedef typename GridType::Traits::LeafIntersectionIterator LeafIntersectionIterator;
-      typedef typename LeafIntersectionIterator::Intersection LeafIntersection;
-      typedef typename GridType::Traits::LevelIntersectionIterator LevelIntersectionIterator;
-      typedef typename LevelIntersectionIterator::Intersection LevelIntersection;
-
-    public:
-      //! \brief return twist for inner face
-      static inline int twistInSelf(const GridType & grid, const LeafIntersection& intersection)
-      {
-        return grid.getRealIntersection( intersection ).twistInInside();
-      }
-
-      //! \brief return twist for outer face
-      static inline int twistInNeighbor(const GridType &grid, const LeafIntersection& intersection )
-      {
-        return grid.getRealIntersection( intersection ).twistInOutside();
-      }
-
-      /** \brief return element geometry type of inside or outside entity
-      */
-      template <class Intersection>
-      static inline GeometryType
-      elementGeometry(const Intersection& intersection,
-                      const bool inside)
-      {
-        return GeometryType( GenericGeometry::SimplexTopology< dim >::type::id,
-                             dim );
-      }
-
-    private:
-      TwistUtility(const TwistUtility&);
-      TwistUtility& operator=(const TwistUtility&);
-    };
-#endif // #if HAVE_ALUGRID
-
-#if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
     /** \brief Specialization of TwistUtility for ALUGrid.
     */
     template< int dim, int dimw, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
@@ -342,7 +207,8 @@ namespace Dune
       TwistUtility(const TwistUtility&);
       TwistUtility& operator=(const TwistUtility&);
     };
-#endif // #if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
+#endif // #if HAVE_DUNE_ALUGRID
+
 
 
     // Specialization for UGGrid

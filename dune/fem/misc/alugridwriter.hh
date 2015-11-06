@@ -9,7 +9,10 @@
 
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/grid.hh>
-#include <dune/grid/alugrid/3d/topology.hh>
+
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/3d/topology.hh>
+#endif
 
 #include <dune/fem/misc/compatibility.hh>
 

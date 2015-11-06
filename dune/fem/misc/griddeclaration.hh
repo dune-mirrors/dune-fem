@@ -5,8 +5,6 @@
 
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/common/declaration.hh>
-#else // #if HAVE_DUNE_ALUGRID
-#include <dune/grid/alugrid/common/declaration.hh>
 #endif // #if HAVE_DUNE_ALUGRID
 
 #if HAVE_DUNE_SPGRID

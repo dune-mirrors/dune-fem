@@ -16,10 +16,7 @@
 
 // include ALUGrid to check whether the
 // parallel version is avaiable
-#if defined ENABLE_ALUGRID
-// we only need the 3d version here.
-#include <dune/grid/alugrid/3d/alugrid.hh>
-#elif HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/3d/alugrid.hh>
 #endif
 

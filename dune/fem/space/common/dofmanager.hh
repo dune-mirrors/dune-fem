@@ -9,7 +9,9 @@
 #include <dune/common/stdstreams.hh>
 #include <dune/common/version.hh>
 
-#include <dune/grid/alugrid/common/interfaces.hh>
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/common/interfaces.hh>
+#endif
 
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
@@ -1217,30 +1219,6 @@ namespace Dune
       {
         DUNE_THROW(NotImplemented,"DofManager::scatter( entity ) with codim > 0 not implemented");
       }
-
-#if HAVE_ALUGRID
-      ///////////////////////////////////////////////////////////////////////////////
-      // old implementation for convenience, when using dune-grid ALUGrid version
-      ///////////////////////////////////////////////////////////////////////////////
-      //! packs all data attached to this entity
-      void inlineData( InlineStreamImplType& str, ConstElementType& element ) const
-      {
-        InlineStreamType buffer( str );
-        dataInliner_.apply( buffer, element);
-      }
-
-      //! unpacks all data attached of this entity from message buffer
-      void xtractData( XtractStreamImplType& str, ConstElementType& element, size_t newElements )
-      {
-        // reserve memory for elements to be read
-        reserveMemory( newElements );
-
-        XtractStreamType buffer( str );
-        // here the elements already have been created
-        // that means we can xtract data
-        dataXtractor_.apply( buffer, element);
-      }
-#endif
 
       //********************************************************
       // Interface for PersistentObjects

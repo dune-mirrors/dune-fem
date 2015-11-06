@@ -32,8 +32,10 @@ using namespace Dune;
 #endif
 
 #ifdef COMPILE_TEST
-#include <dune/grid/alugrid.hh>
-#include <dune/grid/io/file/dgfparser/dgfalu.hh>
+#if HAVE_DUNE_ALUGRID
+#include <dune/alugrid/grid.hh>
+#include <dune/alugrid/dgf.hh>
+#endif
   typedef Dune :: GridSelector :: GridType MyGridType;
 
   // typedef AdaptiveLeafGridPart< MyGridType > HostGridPartType;

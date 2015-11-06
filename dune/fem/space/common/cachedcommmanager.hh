@@ -17,9 +17,7 @@
 #include <dune/grid/utility/entitycommhelper.hh>
 
 // include alugrid headers to have to communicator class from ALUGrid
-#if HAVE_ALUGRID
-#include <dune/grid/alugrid/3d/alu3dinclude.hh>
-#elif HAVE_DUNE_ALUGRID
+#if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/3d/alu3dinclude.hh>
 #endif
 
@@ -44,7 +42,7 @@ namespace Dune
      **/
 
 // only if ALUGrid found and was build for parallel runs
-// if HAVE_ALUGRID is not defined, ALU3DGRID_PARALLEL shouldn't be either
+// if HAVE_DUNE_ALUGRID is not defined, ALU3DGRID_PARALLEL shouldn't be either
 #if ALU3DGRID_PARALLEL
 
     //! class to build up a map of all dofs of entities to be exchanged
@@ -123,7 +121,7 @@ namespace Dune
       {
         typedef DependencyCache < Space > DependencyCacheType ;
 
-#if HAVE_DUNE_ALUGRID && ! HAVE_ALUGRID
+#if HAVE_DUNE_ALUGRID
         typedef MPAccessInterfaceType :: NonBlockingExchange  NonBlockingExchange;
 
         template <class DiscreteFunction>
@@ -265,7 +263,7 @@ namespace Dune
           // resize buffer vector
           buffer_.resize( nLinks );
 
-#if HAVE_DUNE_ALUGRID && ! HAVE_ALUGRID
+#if HAVE_DUNE_ALUGRID
           // get non-blocking exchange object from mpAccess including message tag
           nonBlockingExchange_ = dependencyCache_.mpAccess().nonBlockingExchange( getMessageTag() );
 
@@ -310,7 +308,7 @@ namespace Dune
           // take time
           Dune::Timer recvTimer ;
 
-#if HAVE_DUNE_ALUGRID && ! HAVE_ALUGRID
+#if HAVE_DUNE_ALUGRID
           // unpack data object
           Unpack< DiscreteFunction, Operation > unpackData( *this, discreteFunction );
 
@@ -333,7 +331,7 @@ namespace Dune
           // store time needed for sending
           exchangeTime_ += recvTimer.elapsed();
 
-#if HAVE_DUNE_ALUGRID && ! HAVE_ALUGRID
+#if HAVE_DUNE_ALUGRID
           delete nonBlockingExchange_;
           nonBlockingExchange_ = 0;
 #endif
