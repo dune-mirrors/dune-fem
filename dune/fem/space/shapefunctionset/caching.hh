@@ -71,7 +71,7 @@ namespace Dune
       void evaluateEach ( const QuadraturePointWrapper< Quadrature > &x, Functor functor ) const
       {
         const bool cacheable = Conversion< Quadrature, CachingInterface >::exists;
-        evaluateEach( x.quadrature(), x.point(), functor, std::integral_constant< bool, cacheable >() );
+        evaluateEach( x.quadrature(), x.index(), functor, std::integral_constant< bool, cacheable >() );
       }
 
       template< class Point, class Functor >
@@ -84,7 +84,7 @@ namespace Dune
       void jacobianEach ( const QuadraturePointWrapper< Quadrature > &x, Functor functor ) const
       {
         const bool cacheable = Conversion< Quadrature, CachingInterface >::exists;
-        jacobianEach( x.quadrature(), x.point(), functor, std::integral_constant< bool, cacheable >() );
+        jacobianEach( x.quadrature(), x.index(), functor, std::integral_constant< bool, cacheable >() );
       }
 
       template< class Point, class Functor >

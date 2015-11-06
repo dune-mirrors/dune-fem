@@ -13,6 +13,7 @@
 #include <dune/fem/common/coordinate.hh>
 #include <dune/fem/storage/array.hh>
 #include <dune/fem/storage/envelope.hh>
+#include <dune/fem/version.hh>
 
 // quadrature storage classes
 #include <dune/fem/quadrature/quadprovider.hh>
@@ -53,15 +54,12 @@ namespace Dune
 
   protected:
     const QuadratureType &quadrature_;
-    const unsigned int quadPoint_;
+    const unsigned int index_;
 
   public:
-    inline QuadraturePointWrapper ( const QuadratureType &quadrature,
-                                    const unsigned int quadPoint )
-    : quadrature_( quadrature ),
-      quadPoint_( quadPoint )
-    {
-    }
+    QuadraturePointWrapper ( const QuadratureType &quadrature, unsigned int index )
+      : quadrature_( quadrature ), index_( index )
+    {}
 
   private:
     // forbid assignment
@@ -73,13 +71,12 @@ namespace Dune
       return quadrature_;
     }
 
-    inline unsigned int point () const
-    {
-      return quadPoint_;
-    }
+    DUNE_VERSION_DEPRECATED_3_0( "index" ) unsigned int point () const { return index(); }
 
-    const CoordinateType &position () const { return quadrature().point( point() ); }
-    const RealType &weight () const { return quadrature().weight( point() ); }
+    unsigned int index () const { return index_; }
+
+    const CoordinateType &position () const { return quadrature().point( index() ); }
+    const RealType &weight () const { return quadrature().weight( index() ); }
   };
 
 
@@ -100,7 +97,7 @@ namespace Dune
   static inline typename Quadrature::CoordinateType
   coordinate ( const QuadraturePointWrapper< Quadrature > &x )
   {
-    return x.quadrature().point( x.point() );
+    return x.position();
   }
 
 
