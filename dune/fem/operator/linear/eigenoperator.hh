@@ -3,6 +3,10 @@
 
 #ifdef HAVE_EIGEN
 
+// system includes
+#include <string>
+
+// local includes
 #include <dune/fem/operator/matrix/eigenmatrix.hh>
 
 namespace Dune
@@ -11,44 +15,42 @@ namespace Dune
   namespace Fem
   {
 
-    // EigenLinearOperator
-    // -----------------------
-
+    //! EigenLinearOperator
     template< class DomainFunction, class RangeFunction >
-    class EigenLinearOperator
+    struct EigenLinearOperator
     : public EigenMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
       public Fem::AssembledOperator< DomainFunction, RangeFunction >
     {
-      typedef EigenMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType > Base;
+      typedef typename DomainFunction::DiscreteFunctionSpaceType DomainSpaceType;
+      typedef typename RangeFunction::DiscreteFunctionSpaceType RangeSpaceType;
+      typedef EigeninearOperator< DomainFunction, RangeFunction > ThisType;
+      typedef EigenMatrixObject< DomainSpaceType, RangeSpaceType > BaseType;
 
-    public:
-      typedef typename Base::DomainSpaceType DomainSpaceType;
-      typedef typename Base::RangeSpaceType RangeSpaceType;
+      static constexpr bool assembled = true ;
 
-      /** \copydoc Fem::Operator::assembled */
-      static const bool assembled = true ;
+      using BaseType::apply;
+      using BaseType::communicate
 
-      using Base::apply;
-
-      EigenLinearOperator ( const std::string &name,
-                                const DomainSpaceType &domainSpace,
-                                const RangeSpaceType &rangeSpace,
-                                const std::string &paramfile = "" )
-      : Base( domainSpace, rangeSpace, paramfile )
+      EigenLinearOperator( const std::string & ,
+                           const DomainSpaceType &domainSpace,
+                           const RangeSpaceType &rangeSpace,
+                           const std::string &paramfile = "" ) :
+        BaseType( domainSpace, rangeSpace, paramfile )
       {}
 
-      virtual void operator() ( const DomainFunction &arg, RangeFunction &dest ) const
+      virtual void operator()( const DomainFunction &arg, RangeFunction &dest ) const
       {
-        Base::apply( arg, dest );
+        apply( arg, dest );
       }
 
-      const Base &systemMatrix () const
+      const BaseType &systemMatrix() const
       {
         return *this;
       }
 
-      void communicate () const
+      BaseType &systemMatrix()
       {
+        return *this;
       }
     };
   } // namespace Fem

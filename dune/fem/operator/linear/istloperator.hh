@@ -3,7 +3,10 @@
 
 #if HAVE_DUNE_ISTL
 
-//- Dune fem includes
+// system includes
+#include <string>
+
+// local includes
 #include <dune/fem/operator/matrix/istlmatrix.hh>
 
 namespace Dune
@@ -12,43 +15,39 @@ namespace Dune
   namespace Fem
   {
 
-    // ISTLMatrixOperator
-    // ------------------
+    //! ISTLMatrixOperator
     template< class DomainFunction, class RangeFunction >
-    class ISTLLinearOperator
+    struct ISTLLinearOperator
     : public ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
       public AssembledOperator< DomainFunction, RangeFunction >
     {
-      typedef ISTLLinearOperator< DomainFunction, RangeFunction > This;
-      typedef ISTLMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType > Base;
+      typedef typename DomainFunction::DiscreteFunctionSpaceType DomainSpaceType;
+      typedef typename RangeFunction::DiscreteFunctionSpaceType RangeSpaceType;
+      typedef ISTLLinearOperator< DomainFunction, RangeFunction > ThisType;
+      typedef ISTLMatrixObject< DomainSpaceType, RangeSpaceType > BaseType;
 
-    public:
-      typedef typename Base::DomainSpaceType DomainSpaceType;
-      typedef typename Base::RangeSpaceType RangeSpaceType;
+      static constexpr bool assembled = true;
 
-      /** \copydoc Operator::assembled */
-      static const bool assembled = true ;
+      using BaseType::apply;
+      using BaseType::communicate;
 
-      using Base::apply;
-      using Base::communicate;
-
-      ISTLLinearOperator ( const std::string &name,
-                           const DomainSpaceType &domainSpace,
-                           const RangeSpaceType &rangeSpace )
-      : Base( domainSpace, rangeSpace )
+      ISTLLinearOperator( const std::string & ,
+                          const DomainSpaceType &domainSpace,
+                          const RangeSpaceType &rangeSpace ) :
+        BaseType( domainSpace, rangeSpace )
       {}
 
-      virtual void operator() ( const DomainFunction &arg, RangeFunction &dest ) const
+      virtual void operator()( const DomainFunction &arg, RangeFunction &dest ) const
       {
-        Base::apply( arg, dest );
+        apply( arg, dest );
       }
 
-      const Base &systemMatrix () const
+      const BaseType &systemMatrix() const
       {
         return *this;
       }
 
-      Base &systemMatrix ()
+      BaseType &systemMatrix()
       {
         return *this;
       }
