@@ -3,12 +3,12 @@
 
 #ifdef HAVE_EIGEN
 
-//- system includes
+// system includes
 #include <iostream>
-#include <utility>
 #include <string>
+#include <utility>
 
-//- local includes
+// local includes
 #include <dune/fem/function/adaptivefunction/adaptivefunction.hh>
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
@@ -36,10 +36,12 @@ namespace Dune
       static constexpr int firstCol = defaultCol + 1;
 
     public:
-      typedef Eigen::SparseMatrix<T,Eigen::RowMajor> MatrixStorageType;
       //! matrix field type
-      typedef T Ttype;
-      typedef EigenMatrix<T> ThisType;
+      typedef T field_type;
+      //! matrix index type
+      typedef unsigned int size_type;
+      typedef Eigen::SparseMatrix<field_type,Eigen::RowMajor> MatrixStorageType;
+      typedef EigenMatrix<field_type,size_type> ThisType;
       //! type of the base matrix
       //! for consistency with ISTLMatrixObject
       typedef ThisType MatrixBaseType;
@@ -53,39 +55,39 @@ namespace Dune
 
       //! construct matrix with 'rows' rows and 'cols' columns,
       //! maximum 'nz' non zero values in each row
-      EigenMatrix(int rows, int cols, int nz) :
+      EigenMatrix(size_type rows, size_type cols, size_type nz) :
         matrix_(rows,cols)
       {
         reserve(rows,cols,nz);
       }
 
       //! reserve memory for given rows, columns and number of non zeros
-      void reserve(int rows, int cols, int nz)
+      void reserve(size_type rows, size_type cols, size_type nz)
       {
         matrix_.resize(rows,cols);
         matrix_.reserve(Eigen::VectorXi::Constant(cols,nz));;
       }
 
       //! return number of rows
-      int rows() const
+      size_type rows() const
       {
         return matrix_.rows();
       }
 
       //! return number of columns
-      int cols() const
+      size_type cols() const
       {
         return matrix_.cols();
       }
 
       //! set entry to value (also setting 0 will result in an entry)
-      void set(int row, int col, T val)
+      void set(size_type row, size_type col, field_type val)
       {
         matrix_.coeffRef(row,col) = val;
       }
 
       //! add value to row,col entry
-      void add(int row, int col, T val)
+      void add(size_type row, size_type col, field_type val)
       {
         matrix_.coeffRef(row,col) += val;
       }
@@ -99,7 +101,7 @@ namespace Dune
       }
 
       //! return value of entry (row,col)
-      T operator()(int row, int col) const
+      field_type operator()(size_type row, size_type col) const
       {
         return matrix_.coeffRef(row,col);
       }
@@ -111,7 +113,7 @@ namespace Dune
       }
 
       //! set all entries in row to zero
-      void clearRow (int row)
+      void clearRow (size_type row)
       {
         std::cout << "EigenMatrix::clearRow not yet implemented" << std::endl;
         abort();
@@ -119,14 +121,14 @@ namespace Dune
 
       //! return max number of non zeros
       //! used in EigenMatrixObject::reserve
-      int numNonZeros() const
+      size_type numNonZeros() const
       {
         return matrix_.nonZeros();
       }
 
       //! return number of non zeros in row
       //! used in ColCompMatrix::setMatrix
-      int numNonZeros(int i) const
+      size_type numNonZeros(size_type i) const
       {
         std::cout << "EigenMatrix::numNonZeros not yet implemented" << std::endl;
         abort();
@@ -134,7 +136,7 @@ namespace Dune
 
       //! return pair (value,column)
       //! used in ColCompMatrix::setMatrix
-      std::pair<const T, int> realValue(int index) const
+      std::pair<const field_type, size_type> realValue(size_type index) const
       {
         std::cout << "EigenMatrix::realValue not yet implemented" << std::endl;
         abort();
@@ -156,9 +158,9 @@ namespace Dune
 
     template< class DomainSpace, class RangeSpace >
     struct EigenMatrixObject
-       : public SparseRowMatrixObject< DomainSpace, RangeSpace, EigenMatrix< typename DomainSpace :: RangeFieldType > >
+       : public SparseRowMatrixObject< DomainSpace, RangeSpace, EigenMatrix< typename DomainSpace::RangeFieldType> >
     {
-      typedef EigenMatrix< typename DomainSpace :: RangeFieldType > MatrixType;
+      typedef EigenMatrix< typename DomainSpace::RangeFieldType > MatrixType;
       typedef SparseRowMatrixObject< DomainSpace, RangeSpace, MatrixType > BaseType;
       inline EigenMatrixObject( const DomainSpace &domainSpace,
                                 const RangeSpace &rangeSpace,

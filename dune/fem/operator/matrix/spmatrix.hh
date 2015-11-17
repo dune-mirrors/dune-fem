@@ -1,14 +1,15 @@
 #ifndef DUNE_FEM_SPMATRIX_HH
 #define DUNE_FEM_SPMATRIX_HH
 
-// C++ includes
-#include <vector>
+// system includes
 #include <algorithm>
-#include <iostream>
 #include <array>
+#include <iostream>
 #include <string>
+#include <utility>
+#include <vector>
 
-// DUNE-FEM includes
+// local includes
 #include <dune/fem/function/adaptivefunction/adaptivefunction.hh>
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
@@ -35,8 +36,10 @@ namespace Dune
 
     public:
       //! matrix field type
-      typedef T Ttype;
-      typedef SparseRowMatrix<T> ThisType;
+      typedef T field_type;
+      //! matrix index type
+      typedef unsigned int size_type;
+      typedef SparseRowMatrix<field_type> ThisType;
       //! type of the base matrix
       //! for consistency with ISTLMatrixObject
       typedef ThisType MatrixBaseType;
@@ -50,14 +53,14 @@ namespace Dune
 
       //! construct matrix with 'rows' rows and 'cols' columns,
       //! maximum 'nz' non zero values in each row
-      SparseRowMatrix(int rows, int cols, int nz) :
-      values_(0), col_(0), nonZeros_(0), dim_({{0,0}}), nz_(0)
+      SparseRowMatrix(size_type rows, size_type cols, size_type nz) :
+        values_(0), col_(0), nonZeros_(0), dim_({{0,0}}), nz_(0)
       {
         reserve(rows,cols,nz);
       }
 
       //! reserve memory for given rows, columns and number of non zeros
-      void reserve(int rows, int cols, int nz, T&& )
+      void reserve(size_type rows, size_type cols, size_type nz)
       {
         if( (rows != dim_[0]) || (cols != dim_[1]) || (nz != nz_))
           resize(rows,cols,nz);
@@ -65,19 +68,19 @@ namespace Dune
       }
 
       //! return number of rows
-      int rows() const
+      size_type rows() const
       {
         return dim_[0];
       }
 
       //! return number of columns
-      int cols() const
+      size_type cols() const
       {
         return dim_[1];
       }
 
       //! set entry to value (also setting 0 will result in an entry)
-      void set(int row, int col, T val)
+      void set(size_type row, size_type col, field_type val)
       {
         assert((col>=0) && (col <= dim_[1]));
         assert((row>=0) && (row <= dim_[0]));
@@ -92,7 +95,7 @@ namespace Dune
       }
 
       //! add value to row,col entry
-      void add(int row, int col, T val)
+      void add(size_type row, size_type col, field_type val)
       {
         assert((col>=0) && (col <= dim_[1]));
         assert((row>=0) && (row <= dim_[0]));
@@ -111,7 +114,7 @@ namespace Dune
         constexpr auto blockSize = ArgDFType::DiscreteFunctionSpaceType::localBlockSize;
         auto ret_it = ret.dbegin();
 
-        for(decltype(dim_[0]) row=0; row<dim_[0]; ++row)
+        for(auto row=decltype(dim_[0]){0}; row<dim_[0]; ++row)
         {
           (*ret_it) = 0.0;
           for(auto col=firstCol; col<nz_; ++col)
@@ -133,7 +136,7 @@ namespace Dune
       }
 
       //! return value of entry (row,col)
-      T operator()(int row, int col) const
+      field_type operator()(size_type row, size_type col) const
       {
         assert((col>=0) && (col <= dim_[1]));
         assert((row>=0) && (row <= dim_[0]));
@@ -161,13 +164,13 @@ namespace Dune
       }
 
       //! set all entries in row to zero
-      void clearRow(int row)
+      void clearRow(size_type row)
       {
         assert((row>=0) && (row <= dim_[0]));
 
         nonZeros_[row] = firstCol;
         auto col = row * nz_;
-        for(decltype(nz_) i=0; i<nz_; ++i)
+        for(auto i=decltype(nz_){0}; i<nz_; ++i)
         {
           values_ [col] = 0;
           col_[col] = defaultCol;
@@ -177,28 +180,28 @@ namespace Dune
 
       //! return max number of non zeros
       //! used in SparseRowMatrixObject::reserve
-      int numNonZeros() const
+      size_type numNonZeros() const
       {
         return nz_;
       }
 
       //! return number of non zeros in row
       //! used in ColCompMatrix::setMatrix
-      int numNonZeros(int i) const
+      size_type numNonZeros(size_type i) const
       {
         return nonZeros_[i];
       }
 
       //! return pair (value,column)
       //! used in ColCompMatrix::setMatrix
-      std::pair<const T, int> realValue(int index) const
+      std::pair<const field_type, size_type> realValue(size_type index) const
       {
-        return std::pair<const T, int>(values_[index], col_[index]);
+        return std::pair<const field_type, size_type>(values_[index], col_[index]);
       }
 
     private:
       //! resize matrix
-      void resize(int rows, int cols, int nz)
+      void resize(size_type rows, size_type cols, size_type nz)
       {
         constexpr auto colVal = defaultCol;
         values_.resize( rows*nz , 0 );
@@ -210,12 +213,12 @@ namespace Dune
       }
 
       //! returns local col index for given global (row,col)
-      int colIndex(int row, int col)
+      size_type colIndex(size_type row, size_type col)
       {
         assert((col>=0) && (col <= dim_[1]));
         assert((row>=0) && (row <= dim_[0]));
 
-        int i = 0;
+        size_type i = 0;
         while( i < nz_ && col_[row*nz_+i] < col && col_[row*nz_+i] != defaultCol )
           ++i;
         if(col_[row*nz_+i] == col)
@@ -247,7 +250,7 @@ namespace Dune
       }
 
       //! return real column number for (row,localCol)
-      int realCol(int row, int fakeCol) const
+      size_type realCol(size_type row, size_type fakeCol) const
       {
         assert( fakeCol < dim_[1] );
         assert( row < dim_[0] );
@@ -255,35 +258,20 @@ namespace Dune
         return col_[pos];
       }
 
-      std::vector<T> values_;
-      std::vector<int> col_;
-      std::vector<int> nonZeros_;
-      std::array<int,2> dim_;
-      int nz_;
+      std::vector<field_type> values_;
+      std::vector<size_type> col_;
+      std::vector<size_type> nonZeros_;
+      std::array<size_type,2> dim_;
+      size_type nz_;
     };
 
 
 
     //! SparseRowMatrixObject
     template< class DomainSpace, class RangeSpace,
-              class Matrix = SparseRowMatrix< typename DomainSpace :: RangeFieldType > >
+              class Matrix = SparseRowMatrix< typename DomainSpace::RangeFieldType > >
     class SparseRowMatrixObject
     {
-    public:
-      typedef DomainSpace DomainSpaceType;
-      typedef RangeSpace RangeSpaceType;
-      typedef typename DomainSpaceType :: EntityType  DomainEntityType ;
-      typedef typename RangeSpaceType  :: EntityType  RangeEntityType ;
-      typedef typename DomainSpaceType :: EntityType  ColumnEntityType ;
-      typedef typename RangeSpaceType  :: EntityType  RowEntityType ;
-
-      typedef typename DomainSpaceType :: BlockMapperType DomainBlockMapperType ;
-      typedef NonBlockMapper< DomainBlockMapperType, DomainSpaceType :: localBlockSize > DomainMapperType;
-      typedef typename RangeSpaceType :: BlockMapperType RangeBlockMapperType ;
-      typedef NonBlockMapper< RangeBlockMapperType, RangeSpaceType :: localBlockSize > RangeMapperType;
-      typedef Matrix MatrixType ;
-      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, MatrixType > ThisType;
-
     protected:
       template< class MatrixObject >
       struct LocalMatrixTraits;
@@ -292,17 +280,31 @@ namespace Dune
       class LocalMatrix;
 
     public:
+      typedef DomainSpace DomainSpaceType;
+      typedef RangeSpace RangeSpaceType;
+      typedef typename DomainSpaceType::EntityType DomainEntityType;
+      typedef typename RangeSpaceType::EntityType RangeEntityType;
+      typedef typename DomainSpaceType::EntityType ColumnEntityType;
+      typedef typename RangeSpaceType::EntityType RowEntityType;
+
+      typedef typename DomainSpaceType::BlockMapperType DomainBlockMapperType;
+      typedef NonBlockMapper< DomainBlockMapperType, DomainSpaceType::localBlockSize > DomainMapperType;
+      typedef typename RangeSpaceType::BlockMapperType RangeBlockMapperType;
+      typedef NonBlockMapper< RangeBlockMapperType, RangeSpaceType::localBlockSize > RangeMapperType;
+      typedef Matrix MatrixType;
+      typedef typename MatrixType::size_type size_type;
+      typedef typename MatrixType::field_type field_type;
+      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, MatrixType > ThisType;
+
       typedef MatrixType PreconditionMatrixType;
 
-      //! type of local matrix
       typedef LocalMatrix<ThisType> ObjectType;
       typedef ThisType LocalMatrixFactoryType;
       typedef Fem::ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
-      //! type of local matrix
       typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
-
       typedef ColumnObject< ThisType > LocalColumnObjectType;
 
+      //! construct matrix object
       inline SparseRowMatrixObject( const DomainSpaceType &domainSpace,
                                     const RangeSpaceType &rangeSpace,
                                     const std::string &paramfile = "" )
@@ -323,19 +325,19 @@ namespace Dune
         preconditioning_ = (precon > 0) ? true : false;
       }
 
-      //! return domain space (i.e. space that builds the rows)
+      //! get domain space (i.e. space that builds the rows)
       const DomainSpaceType& domainSpace() const
       {
         return domainSpace_;
       }
 
-      //! return range space (i.e. space that builds the columns)
+      //! get range space (i.e. space that builds the columns)
       const RangeSpaceType& rangeSpace() const
       {
         return rangeSpace_;
       }
 
-      //! return reference to storage object
+      //! get reference to storage object
       MatrixType &matrix() const
       {
         return matrix_;
@@ -347,51 +349,45 @@ namespace Dune
         return new ObjectType( *this, domainSpace_, rangeSpace_, domainMapper_, rangeMapper_ );
       }
 
-      //! return local matrix
+      //! get local matrix
       inline LocalMatrixType localMatrix( const DomainEntityType &domainEntity,
                                           const RangeEntityType &rangeEntity ) const
       {
         return LocalMatrixType( localMatrixStack_, domainEntity, rangeEntity );
       }
 
+      //! get local column
       LocalColumnObjectType localColumn( const DomainEntityType &domainEntity ) const
       {
         return LocalColumnObjectType( *this, domainEntity );
       }
 
-      //! resize all matrices and clear them
+      //! clear matrix
       inline void clear()
       {
         matrix_.clear();
       }
 
-      //! reserve memory for assemble based on the provided stencil
+      //! reserve memory
       template <class Stencil>
       inline void reserve(const Stencil &stencil, bool verbose = false )
       {
         if( sequence_ != domainSpace_.sequence() )
         {
-#ifndef DUNE_FEM_DONT_CHECKITERATORS_OF_SPACE
           // if empty grid do nothing (can appear in parallel runs)
-          if( (domainSpace_.begin() != domainSpace_.end())
-              && (rangeSpace_.begin() != rangeSpace_.end()) )
-#endif
+          if( (domainSpace_.begin() != domainSpace_.end()) && (rangeSpace_.begin() != rangeSpace_.end()) )
           {
-
+            // output some info
             if( verbose )
             {
-              const auto rowMaxNumbers = rangeMapper_.maxNumDofs();
-              const auto colMaxNumbers = domainMapper_.maxNumDofs();
-
               std::cout << "Reserve Matrix with (" << rangeSpace_.size() << "," << domainSpace_.size()<< ")" << std::endl;
-              std::cout << "Max number of base functions = (" << rowMaxNumbers << "," << colMaxNumbers << ")" << std::endl;
+              std::cout << "Max number of base functions = (" << rangeMapper_.maxNumDofs() << ","
+                << domainMapper_.maxNumDofs() << ")" << std::endl;
             }
-
-            // upper estimate for number of non-zeros
-            constexpr auto domainLocalBlockSize = DomainSpaceType::localBlockSize;
-            const int nonZeros = std::max( (int)(stencil.maxNonZerosEstimate()*domainLocalBlockSize),
-                                           matrix_.numNonZeros() );
-            matrix_.reserve( rangeSpace_.size(), domainSpace_.size(), nonZeros, 0.0 );
+            // reserve matrix
+            const auto nonZeros = std::max( static_cast<size_type>(stencil.maxNonZerosEstimate()*DomainSpaceType::localBlockSize),
+                                            matrix_.numNonZeros() );
+            matrix_.reserve( rangeSpace_.size(), domainSpace_.size(), nonZeros );
           }
           sequence_ = domainSpace_.sequence();
         }
@@ -403,19 +399,18 @@ namespace Dune
       {
         // do matrix vector multiplication
         matrix_.apply( arg, dest );
-
         // communicate data
         dest.communicate();
       }
 
       //! extract diagonal entries from matrix into discrete function
+      //! this only works for square matrices
       template < class DiscreteFunctionType >
       void extractDiagonal( DiscreteFunctionType& diag ) const
       {
-        // this only works for matrices with same number of rows,cols
         assert( matrix_.rows() == matrix_.cols() );
         const auto dofEnd = diag.dend();
-        int row = 0;
+        size_type row = 0;
         for( auto dofIt = diag.dbegin(); dofIt != dofEnd; ++dofIt, ++row )
         {
           assert( row < matrix_.rows() );
@@ -430,7 +425,7 @@ namespace Dune
       }
 
       //! mult method of matrix object used by oem solver
-      double ddotOEM( const double *v, const double *w ) const
+      field_type ddotOEM( const field_type *v, const field_type *w ) const
       {
         typedef AdaptiveDiscreteFunction< DomainSpace > DomainFunctionType;
         DomainFunctionType V( "ddot V", domainSpace_, v );
@@ -439,7 +434,7 @@ namespace Dune
       }
 
       //! mult method of matrix object used by oem solver
-      void multOEM( const double *arg, double *dest ) const
+      void multOEM( const field_type *arg, field_type *dest ) const
       {
         typedef AdaptiveDiscreteFunction< DomainSpace > DomainFunctionType;
         typedef AdaptiveDiscreteFunction< RangeSpace > RangeFunctionType;
@@ -517,23 +512,9 @@ namespace Dune
       //! type of nonblocked domain mapper
       typedef typename Traits::RangeMapperType RangeMapperType;
 
-    protected:
-      MatrixType &matrix_;
-      const DomainMapperType& domainMapper_;
-      const RangeMapperType& rangeMapper_;
-
       typedef std::vector< typename RangeMapperType::SizeType > RowIndicesType;
-      //! global index in the DomainSpace
-      RowIndicesType rowIndices_;
-
       typedef std::vector< typename DomainMapperType::SizeType > ColumnIndicesType;
-      //! global index in the RangeSpace
-      ColumnIndicesType columnIndices_;
 
-      using BaseType::domainSpace_;
-      using BaseType::rangeSpace_;
-
-    public:
       //! constructor
       inline LocalMatrix( const MatrixObjectType &matrixObject,
                           const DomainSpaceType &domainSpace,
@@ -552,72 +533,67 @@ namespace Dune
       {
         // initialize base functions sets
         BaseType::init( domainEntity, rangeEntity );
-
         // rows are determined by the range space
         rowIndices_.resize( rangeMapper_.numDofs( rangeEntity ) );
         rangeMapper_.mapEach( rangeEntity, AssignFunctor< RowIndicesType >( rowIndices_ ) );
-
         // columns are determind by the domain space
         columnIndices_.resize( domainMapper_.numDofs( domainEntity ) );
         domainMapper_.mapEach( domainEntity, AssignFunctor< ColumnIndicesType >( columnIndices_ ) );
       }
 
       //! return number of rows
-      int rows() const
+      size_type rows() const
       {
         return rowIndices_.size();
       }
 
       //! return number of columns
-      int columns() const
+      size_type columns() const
       {
         return columnIndices_.size();
       }
 
       //! add value to matrix entry
-      void add(int localRow, int localCol, DofType value)
+      void add(size_type localRow, size_type localCol, DofType value)
       {
         assert( value == value );
         assert( (localRow >= 0) && (localRow < rows()) );
         assert( (localCol >= 0) && (localCol < columns()) );
-
         matrix_.add( rowIndices_[ localRow ], columnIndices_[ localCol ], value );
       }
 
       //! get matrix entry
-      DofType get(int localRow, int localCol) const
+      DofType get(size_type localRow, size_type localCol) const
       {
         assert( (localRow >= 0) && (localRow < rows()) );
         assert( (localCol >= 0) && (localCol < columns()) );
-
         return matrix_( rowIndices_[ localRow ], columnIndices_[ localCol ] );
       }
 
       //! set matrix entry to value
-      void set(int localRow, int localCol, DofType value)
+      void set(size_type localRow, size_type localCol, DofType value)
       {
         assert( (localRow >= 0) && (localRow < rows()) );
         assert( (localCol >= 0) && (localCol < columns()) );
-
         matrix_.set( rowIndices_[ localRow ], columnIndices_[ localCol ], value );
       }
 
       //! set matrix row to zero except diagonla entry
-      void unitRow(int localRow)
+      void unitRow(size_type localRow)
       {
         assert( (localRow >= 0) && (localRow < rows()) );
         matrix_.unitRow( rowIndices_[ localRow ] );
       }
 
       //! set matrix row to zero
-      void clearRow( int localRow )
+      void clearRow( size_type localRow )
       {
         assert( (localRow >= 0) && (localRow < rows()) );
         matrix_.clearRow( rowIndices_[localRow]);
       }
 
       //! set matrix column to zero
-      void clearCol( int localCol )
+      void clearCol( size_type localCol )
       {
         assert( (localCol >= 0) && (localCol < columns()) );
         matrix_.clearCol( columnIndices_[localCol] );
@@ -627,7 +603,7 @@ namespace Dune
       void clear()
       {
         const auto row = rows();
-        for( decltype(row) i = 0; i < row; ++i )
+        for(auto i=decltype(row){0}; i < row; ++i )
           matrix_.clearRow( rowIndices_[ i ] );
       }
 
@@ -635,7 +611,7 @@ namespace Dune
       void scale( const DofType& value )
       {
         const auto row = rows();
-        for( decltype(row) i = 0; i < row; ++i )
+        for(auto i=decltype(row){0}; i < row; ++i )
           matrix_.scaleRow( rowIndices_[ i ] , value );
       }
 
@@ -643,9 +619,16 @@ namespace Dune
       void resort()
       {
         const auto row = rows();
-        for( decltype(row) i = 0; i < row; ++i )
+        for(auto i=decltype(row){0}; i < row; ++i )
           matrix_.resortRow( rowIndices_[ i ] );
       }
+
+    protected:
+      MatrixType &matrix_;
+      const DomainMapperType& domainMapper_;
+      const RangeMapperType& rangeMapper_;
+      RowIndicesType rowIndices_;
+      ColumnIndicesType columnIndices_;
     };
 
   } // namespace Fem
