@@ -1,10 +1,13 @@
 #ifndef DUNE_FEM_OPERATOR_LINEAR_BLOCKDIAGONAL_HH
 #define DUNE_FEM_OPERATOR_LINEAR_BLOCKDIAGONAL_HH
 
+// system includes
 #include <cassert>
+#include <string>
+#include <vector>
 
+// local includes
 #include <dune/common/fmatrix.hh>
-
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
@@ -18,9 +21,7 @@ namespace Dune
   namespace Fem
   {
 
-    // BlockDiagonalLinearOperator
-    // ---------------------------
-
+    //! BlockDiagonalLinearOperator
     template< class DiscreteFunctionSpace,
               class LocalBlock = Dune::FieldMatrix< typename DiscreteFunctionSpace ::
                 RangeFieldType, DiscreteFunctionSpace::localBlockSize, DiscreteFunctionSpace::localBlockSize > >
@@ -102,15 +103,13 @@ namespace Dune
       void multiply( const AdaptiveDiscreteFunction< DomainSpace > &u,
                      AdaptiveDiscreteFunction< RangeSpace > &w ) const
       {
-        typedef typename std::vector< LocalBlockType >::const_iterator Iterator;
-        const typename DomainSpace :: RangeFieldType *uit = u.leakPointer();
-        typename RangeSpace :: RangeFieldType *wit = w.leakPointer();
-        const Iterator dend = diagonal_.end();
-        for( Iterator dit = diagonal_.begin(); dit != dend; ++dit )
+        const auto uit = u.leakPointer();
+        auto wit = w.leakPointer();
+        for( auto& entry : diagonal_ )
         {
-          dit->mv( uit, wit );
-          uit += dit->M();
-          wit += dit->N();
+          entry.mv( uit, wit );
+          uit += entry.M();
+          wit += entry.N();
         }
         assert( uit == u.leakPointer() + u.size() );
         assert( wit == w.leakPointer() + w.size() );
@@ -118,64 +117,54 @@ namespace Dune
 
       void clear ()
       {
-        typedef typename std::vector< LocalBlockType >::iterator Iterator;
-        const Iterator dend = diagonal_.end();
-        for( Iterator dit = diagonal_.begin(); dit != dend; ++dit )
-          *dit = RangeFieldType( 0 );
+        for( auto& entry : diagonal_ )
+          entry = RangeFieldType( 0 );
       }
 
       template< class Functor >
       void forEach ( const Functor &functor )
       {
-        typedef typename std::vector< LocalBlockType >::iterator Iterator;
-        const Iterator dend = diagonal_.end();
-        for( Iterator dit = diagonal_.begin(); dit != dend; ++dit )
-          functor( *dit );
+        for( auto& entry : diagonal_ )
+          functor( entry );
       }
 
       void invert ()
       {
-        typedef typename std::vector< LocalBlockType >::iterator Iterator;
-        const Iterator dend = diagonal_.end();
-        for( Iterator dit = diagonal_.begin(); dit != dend; ++dit )
-          dit->invert();
+        for( auto& entry : diagonal_ )
+          entry.invert();
       }
 
       void rightmultiply( const ThisType& other )
       {
         assert( other.diagonal_.size() == diagonal_.size() );
-        typedef typename std::vector< LocalBlockType >::iterator Iterator;
-        typedef typename std::vector< LocalBlockType >::const_iterator ConstIterator;
-        ConstIterator otherIt = other.diagonal_.begin();
-        const Iterator dend = diagonal_.end();
-        for( Iterator dit = diagonal_.begin(); dit != dend; ++dit, ++otherIt )
+        auto it = other.diagonal_.begin();
+        for( auto& entry : diagonal_ )
         {
-          (*dit).rightmultiply( *otherIt );
+          entry.rightmultiply( *it );
+          ++it;
         }
       }
 
       void leftmultiply( const ThisType& other )
       {
         assert( other.diagonal_.size() == diagonal_.size() );
-        typedef typename std::vector< LocalBlockType >::iterator Iterator;
-        typedef typename std::vector< LocalBlockType >::const_iterator ConstIterator;
-        ConstIterator otherIt = other.diagonal_.begin();
-        const Iterator dend = diagonal_.end();
-        for( Iterator dit = diagonal_.begin(); dit != dend; ++dit, ++otherIt )
+        auto it = other.diagonal_.begin();
+        for( auto& entry : diagonal_ )
         {
-          (*dit).leftmultiply( *otherIt );
+          entry.leftmultiply( *it );
+          ++it;
         }
       }
 
       //! return block matrix for given block number (== entity number)
-      DofBlockPtrType block( const size_t block )
+      DofBlockPtrType block( const std::size_t block )
       {
         assert( block < diagonal_.size() );
         return &diagonal_[ block ];
       }
 
       //! return block matrix for given block number (== entity number)
-      ConstDofBlockPtrType block( const size_t block ) const
+      ConstDofBlockPtrType block( const std::size_t block ) const
       {
         assert( block < diagonal_.size() );
         return &diagonal_[ block ];
@@ -214,19 +203,30 @@ namespace Dune
 
       LocalMatrixType localMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity ) const;
 
-      const DomainSpaceType &domainSpace () const { return space_; }
-      const RangeSpaceType &rangeSpace () const { return space_; }
+      const DomainSpaceType &domainSpace () const
+      {
+        return space_;
+      }
+      const RangeSpaceType &rangeSpace () const
+      {
+        return space_;
+      }
 
       /** \brief return reference to space (needed to make this class work with CommunicationManager) */
-      const DomainSpaceType &space () const { return space_; }
+      const DomainSpaceType &space () const
+      {
+        return space_;
+      }
 
-      const std::string &name () const { return name_; }
+      const std::string &name () const
+      {
+        return name_;
+      }
 
     protected:
       std::string name_;
       const RangeSpaceType &space_;
       std::vector< LocalBlockType > diagonal_;
-
       LocalMatrixFactory localMatrixFactory_;
       mutable LocalMatrixStackType localMatrixStack_;
     };
@@ -324,14 +324,32 @@ namespace Dune
         }
       }
 
-      void clear () { localBlock() = RangeFieldType( 0 ); }
-      void scale ( const RangeFieldType &a ) { localBlock() *= a; }
+      void clear ()
+      {
+        localBlock() = RangeFieldType( 0 );
+      }
+      void scale ( const RangeFieldType &a )
+      {
+        localBlock() *= a;
+      }
 
-      RangeFieldType get ( int i, int j ) const { return localBlock()[ i ][ j ]; }
-      void add ( int i, int j, const RangeFieldType &value ) { localBlock()[ i ][ j ] += value; }
-      void set ( int i, int j, const RangeFieldType &value ) { localBlock()[ i ][ j ] = value; }
+      RangeFieldType get ( int i, int j ) const
+      {
+        return localBlock()[ i ][ j ];
+      }
+      void add ( int i, int j, const RangeFieldType &value )
+      {
+        localBlock()[ i ][ j ] += value;
+      }
+      void set ( int i, int j, const RangeFieldType &value )
+      {
+        localBlock()[ i ][ j ] = value;
+      }
 
-      void clearRow ( int i ) { localBlock()[ i ] = RangeFieldType( 0 ); }
+      void clearRow ( int i )
+      {
+        localBlock()[ i ] = RangeFieldType( 0 );
+      }
 
       void clearCol ( int j )
       {
@@ -345,24 +363,57 @@ namespace Dune
         localBlock().umv( x, y );
       }
 
-      void finalize () {}
-      void resort () {}
+      void finalize ()
+      {}
+      void resort ()
+      {}
 
-      int rows () const { return localBlock().N(); }
-      int columns () const { return localBlock().M(); }
+      int rows () const
+      {
+        return localBlock().N();
+      }
+      int columns () const
+      {
+        return localBlock().M();
+      }
 
-      const DomainSpaceType &domainSpace () const { return op_->domainSpace(); }
-      const RangeSpaceType &rangeSpace () const { return op_->rangeSpace(); }
+      const DomainSpaceType &domainSpace () const
+      {
+        return op_->domainSpace();
+      }
+      const RangeSpaceType &rangeSpace () const
+      { return op_->rangeSpace();
+      }
 
-      const DomainBasisFunctionSetType &domainBasisFunctionSet () const { return basisFunctionSet_; }
-      const RangeBasisFunctionSetType &rangeBasisFunctionSet () const { return basisFunctionSet_; }
+      const DomainBasisFunctionSetType &domainBasisFunctionSet () const
+      {
+        return basisFunctionSet_;
+      }
+      const RangeBasisFunctionSetType &rangeBasisFunctionSet () const
+      {
+        return basisFunctionSet_;
+      }
 
-      const DomainEntityType &domainEntity () const { return domainBasisFunctionSet().entity(); }
-      const RangeEntityType &rangeEntity () const { return rangeBasisFunctionSet().entity(); }
+      const DomainEntityType &domainEntity () const
+      {
+        return domainBasisFunctionSet().entity();
+      }
+      const RangeEntityType &rangeEntity () const
+      {
+        return rangeBasisFunctionSet().entity();
+      }
 
     private:
-      const LocalBlockType &localBlock () const { assert( localBlock_ ); return *localBlock_; }
-      LocalBlockType &localBlock () { assert( localBlock_ ); return *localBlock_; }
+      const LocalBlockType &localBlock () const
+      {
+        assert( localBlock_ );
+        return *localBlock_;
+      }
+      LocalBlockType &localBlock ()
+      {
+        assert( localBlock_ );
+        return *localBlock_;
+      }
 
       OperatorType *op_;
       BasisFunctionSetType basisFunctionSet_;
@@ -384,7 +435,10 @@ namespace Dune
       : op_( &op )
       {}
 
-      ObjectType *newObject () const { return new ObjectType( *op_ ); }
+      ObjectType *newObject () const
+      {
+        return new ObjectType( *op_ );
+      }
 
     private:
       OperatorType *op_;

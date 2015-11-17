@@ -34,7 +34,8 @@ namespace Dune
       /** \brief field type of the operator's range */
       typedef typename RangeFunction::RangeFieldType RangeFieldType;
 
-      virtual ~Operator () {}
+      virtual ~Operator ()
+      {}
 
       /** \brief application operator
        *
@@ -70,14 +71,15 @@ namespace Dune
     struct LinearOperator
       : public virtual Operator<DomainFunction, RangeFunction>
     {
-
       /**Return @c true if the Operator is symmetric. */
-      virtual bool symmetric() const {
-	return false;
+      virtual bool symmetric() const
+      {
+	      return false;
       }
       /**Return @c true if the Operator is positive definite. */
-      virtual bool positiveDefinite() const {
-	return false;
+      virtual bool positiveDefinite() const
+      {
+	      return false;
       }
     };
 
@@ -105,8 +107,7 @@ namespace Dune
     template< class DomainFunction, class RangeFunction = DomainFunction >
     struct AssembledOperator
       : public virtual LinearOperator<DomainFunction, RangeFunction>
-    {
-    };
+    {};
 
   } // namespace Fem
 
@@ -150,15 +151,6 @@ namespace Dune
     typedef RFieldType RangeFieldType;
 
     using BaseType::operator();
-
-#if 0
-    /** \brief Application operator
-        \param[in] arg argument
-        \param[out] dest destination
-        \note This method has to be implemented by all derived classes.
-    */
-    virtual void operator() (const DomainType& arg, RangeType& dest) const = 0;
-#endif
 
   protected:
     /** \brief The method apply calls the application operator. The method

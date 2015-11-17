@@ -197,14 +197,14 @@ namespace Dune
         : _a ( a ) , _b ( b ) , printMSG_ ( printMsg )
       {
         if(printMSG_)
-          std::cout << "Create CombinedLocalOperator " << this << "\n";
+          std::cout << "Create CombinedLocalOperator " << this << std::endl;
       }
 
       //! Destructor
       ~CombinedLocalOperator ()
       {
         if(printMSG_)
-          std::cout << "Delete CombinedLocalOperator " << this << "\n";
+          std::cout << "Delete CombinedLocalOperator " << this << std::endl;
       }
 
       //! method to scale the belonging operators
@@ -378,13 +378,13 @@ namespace Dune
           printMSG_ ( printMsg )
       {
         if(printMSG_)
-          std::cout << "Create ScaledLocalOperator " << this << "\n";
+          std::cout << "Create ScaledLocalOperator " << this << std::endl;
       }
 
       ~ScaledLocalOperator ()
       {
         if(printMSG_)
-          std::cout << "Delete ScaledLocalOperator " << this << "\n";
+          std::cout << "Delete ScaledLocalOperator " << this << std::endl;
       }
       // scale this operator from outside
       void scaleIt ( const ScalarType & scalar);
