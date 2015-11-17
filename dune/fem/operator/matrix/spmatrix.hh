@@ -108,10 +108,10 @@ namespace Dune
       template<class ArgDFType, class DestDFType>
       void apply(const ArgDFType& f, DestDFType& ret) const
       {
-        constexpr auto blockSize = ArgDFType :: DiscreteFunctionSpaceType :: localBlockSize;
+        constexpr auto blockSize = ArgDFType::DiscreteFunctionSpaceType::localBlockSize;
         auto ret_it = ret.dbegin();
 
-        for(auto row=0; row<dim_[0]; ++row)
+        for(decltype(dim_[0]) row=0; row<dim_[0]; ++row)
         {
           (*ret_it) = 0.0;
           for(auto col=firstCol; col<nz_; ++col)
@@ -167,7 +167,7 @@ namespace Dune
 
         nonZeros_[row] = firstCol;
         auto col = row * nz_;
-        for(auto i=0; i<nz_; ++i)
+        for(decltype(nz_) i=0; i<nz_; ++i)
         {
           values_ [col] = 0;
           col_[col] = defaultCol;
@@ -200,7 +200,7 @@ namespace Dune
       //! resize matrix
       void resize(int rows, int cols, int nz)
       {
-        constexpr auto colVal(defaultCol);
+        constexpr auto colVal = defaultCol;
         values_.resize( rows*nz , 0 );
         col_.resize( rows*nz , colVal );
         nonZeros_.resize( rows , 0 );
@@ -285,8 +285,6 @@ namespace Dune
       typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, MatrixType > ThisType;
 
     protected:
-      typedef typename DomainSpaceType :: GridType GridType;
-
       template< class MatrixObject >
       struct LocalMatrixTraits;
 
@@ -299,27 +297,12 @@ namespace Dune
       //! type of local matrix
       typedef LocalMatrix<ThisType> ObjectType;
       typedef ThisType LocalMatrixFactoryType;
-      typedef Fem :: ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
+      typedef Fem::ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
       //! type of local matrix
       typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
 
       typedef ColumnObject< ThisType > LocalColumnObjectType;
 
-    protected:
-      const DomainSpaceType &domainSpace_;
-      const RangeSpaceType &rangeSpace_;
-
-      DomainMapperType domainMapper_ ;
-      RangeMapperType  rangeMapper_ ;
-
-      int sequence_;
-
-      mutable MatrixType matrix_;
-      bool preconditioning_;
-
-      mutable LocalMatrixStackType localMatrixStack_;
-
-    public:
       inline SparseRowMatrixObject( const DomainSpaceType &domainSpace,
                                     const RangeSpaceType &rangeSpace,
                                     const std::string &paramfile = "" )
@@ -465,6 +448,16 @@ namespace Dune
         RangeFunctionType fdest( "multOEM dest", rangeSpace_, dest );
         apply( farg, fdest );
       }
+
+    protected:
+      const DomainSpaceType &domainSpace_;
+      const RangeSpaceType &rangeSpace_;
+      DomainMapperType domainMapper_ ;
+      RangeMapperType rangeMapper_ ;
+      int sequence_;
+      mutable MatrixType matrix_;
+      bool preconditioning_;
+      mutable LocalMatrixStackType localMatrixStack_;
     };
 
 
@@ -479,9 +472,9 @@ namespace Dune
 
       typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType, Matrix > SparseRowMatrixObjectType;
 
-      typedef typename SparseRowMatrixObjectType :: template LocalMatrix< MatrixObject > LocalMatrixType;
+      typedef typename SparseRowMatrixObjectType::template LocalMatrix< MatrixObject > LocalMatrixType;
 
-      typedef typename RangeSpaceType :: RangeFieldType RangeFieldType;
+      typedef typename RangeSpaceType::RangeFieldType RangeFieldType;
       typedef RangeFieldType LittleBlockType;
 
       typedef typename SparseRowMatrixObjectType::DomainMapperType  DomainMapperType;
@@ -493,7 +486,7 @@ namespace Dune
     //! LocalMatrix
     template< class DomainSpace, class RangeSpace, class Matrix >
     template< class MatrixObject >
-    class SparseRowMatrixObject< DomainSpace, RangeSpace, Matrix > :: LocalMatrix
+    class SparseRowMatrixObject< DomainSpace, RangeSpace, Matrix >::LocalMatrix
     : public LocalMatrixDefault< LocalMatrixTraits< MatrixObject > >
     {
     public:
@@ -508,37 +501,37 @@ namespace Dune
 
     public:
       //! type of matrix
-      typedef typename MatrixObjectType :: MatrixType MatrixType;
+      typedef typename MatrixObjectType::MatrixType MatrixType;
 
       //! type of entries of little blocks
-      typedef typename Traits :: RangeFieldType RangeFieldType;
+      typedef typename Traits::RangeFieldType RangeFieldType;
 
       //! type of the DoFs
       typedef RangeFieldType DofType;
 
       //! type of little blocks
-      typedef typename Traits :: LittleBlockType LittleBlockType;
+      typedef typename Traits::LittleBlockType LittleBlockType;
 
       //! type of nonblocked domain mapper
-      typedef typename Traits :: DomainMapperType DomainMapperType;
+      typedef typename Traits::DomainMapperType DomainMapperType;
       //! type of nonblocked domain mapper
-      typedef typename Traits :: RangeMapperType RangeMapperType;
+      typedef typename Traits::RangeMapperType RangeMapperType;
 
     protected:
       MatrixType &matrix_;
       const DomainMapperType& domainMapper_;
-      const RangeMapperType&  rangeMapper_;
+      const RangeMapperType& rangeMapper_;
 
-      typedef std :: vector< typename RangeMapperType :: SizeType > RowIndicesType ;
+      typedef std::vector< typename RangeMapperType::SizeType > RowIndicesType;
       //! global index in the DomainSpace
       RowIndicesType rowIndices_;
 
-      typedef std :: vector< typename DomainMapperType :: SizeType > ColumnIndicesType ;
+      typedef std::vector< typename DomainMapperType::SizeType > ColumnIndicesType;
       //! global index in the RangeSpace
       ColumnIndicesType columnIndices_;
 
-      using BaseType :: domainSpace_;
-      using BaseType :: rangeSpace_;
+      using BaseType::domainSpace_;
+      using BaseType::rangeSpace_;
 
     public:
       //! constructor
@@ -634,7 +627,7 @@ namespace Dune
       void clear()
       {
         const auto row = rows();
-        for( auto i = 0; i < row; ++i )
+        for( decltype(row) i = 0; i < row; ++i )
           matrix_.clearRow( rowIndices_[ i ] );
       }
 
@@ -642,7 +635,7 @@ namespace Dune
       void scale( const DofType& value )
       {
         const auto row = rows();
-        for( auto i = 0; i < row; ++i )
+        for( decltype(row) i = 0; i < row; ++i )
           matrix_.scaleRow( rowIndices_[ i ] , value );
       }
 
@@ -650,7 +643,7 @@ namespace Dune
       void resort()
       {
         const auto row = rows();
-        for( auto i = 0; i < row; ++i )
+        for( decltype(row) i = 0; i < row; ++i )
           matrix_.resortRow( rowIndices_[ i ] );
       }
     };
