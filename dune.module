@@ -1,6 +1,7 @@
 Module: dune-fem
 Version: 3.0.0
 Maintainer: dune@mathematik.uni-freiburg.de
+Whitespace-Hook: Yes
 Depends: dune-grid (>= 3.0)
 Suggests: dune-alugrid (>= 2.4) dune-istl (>= 3.0) dune-localfunctions (>= 3.0) dune-spgrid (>= 3.0)
 Sources: dune
