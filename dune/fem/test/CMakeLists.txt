@@ -86,10 +86,23 @@ dune_target_link_libraries(adaptation "${DUNE_LIBS};${LOCAL_LIBS}")
 set_property(TARGET adaptation APPEND PROPERTY 
   COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE}" )
 
+add_executable( l2projection_adaptive l2projection.cc )
+dune_target_link_libraries( l2projection_adaptive "${DUNE_LIBS};${LOCAL_LIBS}" )
+target_compile_definitions( l2projection_adaptive PRIVATE "COUNT_FLOPS;POLORDER=1;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+
+add_executable( l2projection_istl l2projection.cc )
+dune_target_link_libraries( l2projection_istl "${DUNE_LIBS};${LOCAL_LIBS}" )
+target_compile_definitions( l2projection_istl PRIVATE "COUNT_FLOPS;POLORDER=1;USE_BLOCKVECTORFUNCTION;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+
+add_executable( l2projection_petsc l2projection.cc )
+dune_target_link_libraries( l2projection_petsc "${DUNE_LIBS};${LOCAL_LIBS}" )
+target_compile_definitions( l2projection_petsc PRIVATE "COUNT_FLOPS;POLORDER=1;USE_PETSCVECTORFUNCTION;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+
 dune_fem_add_test(lagrangeinterpolation_linear lagrangeinterpolation_quadratic dgl2projection_adaptive
               dgl2projection_blockvector dgl2projection_vector dgl2projection_vector_int
               dgl2projection_hierarchiclegendre
               dgl2projection_blockvectordiscretefunction dgl2projection_fv dgl2projection_idgridpart
               vtxprojection_adaptive intersectionindexset dgl2projection_filtered
+              l2projection_adaptive l2projection_istl l2projection_petsc
               NO_DEPENDENCY adaptation_4.sh 
               DEPENDENCY_ONLY adaptation)

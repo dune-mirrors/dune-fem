@@ -177,9 +177,6 @@ namespace Dune
       typedef typename IntegrationTraits::CoordinateType CoordinateType;
       typedef typename IntegrationPointListType::CoordinateType LocalCoordinateType;
 
-      //! the type of the quadrature point
-      typedef QuadraturePointWrapper< This > QuadraturePointWrapperType;
-
       /** \brief constructor
        *
        *  \param[in]  elementGeo      geometry type of the element
@@ -209,11 +206,6 @@ namespace Dune
         elementGeometry_( elementGeo ),
         localFaceIndex_( localFaceIndex )
       {}
-
-      const QuadraturePointWrapperType operator[] ( size_t i ) const
-      {
-        return QuadraturePointWrapperType( *this, i );
-      }
 
       /** \copydoc Dune::Fem::IntegrationPointList::nop
        */
