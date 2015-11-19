@@ -1,7 +1,0 @@
-USE_CMAKE=no
-CONFIGURE_FLAGS="--disable-documentation \
---enable-fieldvector-size-is-method \
---without-gmp \
---enable-experimental-grid-extensions \
---disable-dependency-tracking "
-MAKE_FLAGS=-j8
