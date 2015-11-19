@@ -353,13 +353,10 @@ int main (int argc, char **argv)
 {
   MPIManager::initialize( argc, argv );
 
-  if(argc != 2)
-  {
-    fprintf(stderr,"usage: %s <maxlevel> \n",argv[0]);
-    exit(1);
-  }
+  int ml = 2;
+  if( argc > 1 )
+    ml = atoi( argv[1] );
 
-  int ml = atoi( argv[1] );
   double* error = new double[ml];
   // char tmp[16]; sprintf(tmp,"%d",dimw);
   // std::string macroGridName (tmp);

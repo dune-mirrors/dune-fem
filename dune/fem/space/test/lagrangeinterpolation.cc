@@ -421,13 +421,10 @@ try
   std :: cout << "L2 projection test for polynomial order " << polOrder
               << std :: endl;
 
-  if( argc != 2)
-  {
-    std :: cerr << "Usage: " << argv[ 0 ] << " <maxlevel>" << std :: endl;
-    exit( 1 );
-  }
+  int ml = 2;
+  if( argc > 1 )
+    ml = atoi( argv[1] );
 
-  int ml = atoi( argv[1] );
   std::vector< double > error( ml );
 
   std::ostringstream gridFilenameStream;

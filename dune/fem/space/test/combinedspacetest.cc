@@ -258,8 +258,6 @@ int main (int argc, char **argv)
     GridPtr< MyGridType > gridptr( macroGridName );
     MyGridType &grid = *gridptr;
 
-    GlobalRefine::apply(grid,2);
-
     GridPartType part ( grid );
     DiscreteFunctionSpaceType space ( part );
 
