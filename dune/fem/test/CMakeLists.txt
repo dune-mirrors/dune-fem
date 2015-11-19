@@ -1,108 +1,115 @@
-set( GRIDTYPE YASPGRID )
-#set( GRIDTYPE ALUGRID_CONFORM )
-set(GRIDDIM 2 )
-#set( GRIDDIM 3 )
+# if no grid type is specified during configuration time we choose yaspgrid
+if( NOT GRIDTYPE )
+  set( GRIDTYPE YASPGRID )
+endif()
+
+# same as for GridType, we set the default grid dimension to 2
+if( NOT GRIDDIM )
+  set( GRIDDIM 2 )
+endif()
 
 # copy data to build source to make tests work
-configure_file(1dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/1dgrid.dgf COPYONLY)
-configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
-configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
-configure_file(parameter ${CMAKE_CURRENT_BINARY_DIR}/parameter COPYONLY)
-configure_file(adaptation-4.sh ${CMAKE_CURRENT_BINARY_DIR}/adaptation_4.sh COPYONLY)
+set( TESTDATAFILES 1dgrid.dgf 2dgrid.dgf 3dgrid.dgf parameter )
+foreach( file ${TESTDATAFILES} )
+  configure_file( ${file} ${CMAKE_CURRENT_BINARY_DIR}/${file} COPYONLY )
+endforeach()
 
-add_executable(lagrangeinterpolation_linear lagrangeinterpolation.cc)
-dune_target_link_libraries(lagrangeinterpolation_linear "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET lagrangeinterpolation_linear APPEND PROPERTY 
-             COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+# some default flags needed very often
+set( DEFAULTFLAGS "COUNT_FLOPS;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
 
-add_executable(lagrangeinterpolation_quadratic lagrangeinterpolation.cc)
-dune_target_link_libraries(lagrangeinterpolation_quadratic "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET lagrangeinterpolation_quadratic APPEND PROPERTY 
-             COMPILE_DEFINITIONS "POLORDER=2;COUNT_FLOPS;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+# variable which gathers all test targets
+set( TESTS )
 
-add_executable(dgl2projection_adaptive dgl2projection.cc)
-dune_target_link_libraries(dgl2projection_adaptive "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET dgl2projection_adaptive APPEND PROPERTY 
-             COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+# lagrangeinterpolation tests
+if( ${GRIDDIM} LESS 3 )
+  set( MAXORDER 4 )
+else()
+  set( MAXORDER 2 )
+endif()
+
+foreach( order RANGE 1 ${MAXORDER} )
+  dune_add_test( NAME lagrangeinterpolation_p${order} SOURCES lagrangeinterpolation.cc
+                 COMPILE_DEFINITIONS "POLORDER=${order};${DEFAULTFLAGS}" )
+  set( TESTS ${TESTS} lagrangeinterpolation_p${order} )
+endforeach()
+
+# dgl2projection tests for different discrete functions
+dune_add_test( NAME dgl2projection_adaptive SOURCES dgl2projection.cc
+COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} dgl2projection_adaptive )
+
+set( DFS blockvectorfunction vectorfunction blockvectordiscretefunction )
+foreach( df ${DFS} )
+  string( TOUPPER ${df} DF )
+  dune_add_test( NAME dgl2projection_${df} SOURCES dgl2projection.cc
+                 COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_${DF};${DEFAULTFLAGS}" )
+  set( TESTS ${TESTS} dgl2projection_${df} )
+endforeach()
+
+dune_add_test( NAME dgl2projection_vector_int SOURCES dgl2projection.cc
+               COMPILE_DEFINITIONS "POLORDER=1;USE_VECTORFUNCTION;USE_DOFTYPE_INT;${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} dgl2projection_vector_int )
 
 # only run this test for YaspGrid
-add_executable(dgl2projection_legendre dgl2projection.cc)
-dune_target_link_libraries(dgl2projection_legendre "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET dgl2projection_legendre APPEND PROPERTY 
-             COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_LEGENDRESPACE;YASPGRID;GRIDDIM=${GRIDDIM}" )
+dune_add_test( NAME dgl2projection_legendre SOURCES dgl2projection.cc
+               COMPILE_DEFINITIONS "POLORDER=1;YASPGRID;USE_LEGENDRESPACE;GRIDDIM=${GRIDDIM}" )
+set( TESTS ${TESTS} dgl2projection_legendre )
 
-add_executable(dgl2projection_hierarchiclegendre dgl2projection.cc)
-dune_target_link_libraries(dgl2projection_hierarchiclegendre "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET dgl2projection_hierarchiclegendre APPEND PROPERTY 
-  COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_HIERARCHICLEGENDRESPACE;YASPGRID;GRIDDIM=${GRIDDIM}" )
+dune_add_test( NAME dgl2projection_hierarchiclegendre SOURCES dgl2projection.cc
+COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_HIERARCHICLEGENDRESPACE;YASPGRID;GRIDDIM=${GRIDDIM}" )
+set( TESTS ${TESTS} dgl2projection_hierarchiclegendre )
 
-add_executable(dgl2projection_filtered dgl2projection.cc)
-dune_target_link_libraries(dgl2projection_filtered "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET dgl2projection_filtered APPEND PROPERTY 
-             COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_FILTEREDGRID;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+dune_add_test( NAME dgl2projection_fv SOURCES dgl2projection.cc
+COMPILE_DEFINITIONS "USE_FVSPACE;${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} dgl2projection_fv )
 
-add_executable(dgl2projection_fv dgl2projection.cc)
-dune_target_link_libraries(dgl2projection_fv "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET dgl2projection_fv APPEND PROPERTY 
-             COMPILE_DEFINITIONS "COUNT_FLOPS;USE_FVSPACE;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
 
-add_executable(dgl2projection_blockvector dgl2projection.cc)
-dune_target_link_libraries(dgl2projection_blockvector "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET dgl2projection_blockvector APPEND PROPERTY 
-             COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_BLOCKVECTORFUNCTION;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+dune_add_test( NAME dgl2projection_filtered SOURCES dgl2projection.cc
+COMPILE_DEFINITIONS "POLORDER=1;USE_FILTEREDGRID;${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} dgl2projection_filtered )
 
-add_executable(dgl2projection_vector dgl2projection.cc)
-dune_target_link_libraries(dgl2projection_vector "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET dgl2projection_vector  APPEND PROPERTY 
-             COMPILE_DEFINITIONS "POLORDER=1;USE_VECTORFUNCTION;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+dune_add_test( NAME dgl2projection_idgridpart SOURCES dgl2projection.cc
+COMPILE_DEFINITIONS "POLORDER=1;USE_IDGRIDPART;${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} dgl2projection_idgridpart )
 
-add_executable(dgl2projection_vector_int dgl2projection.cc)
-dune_target_link_libraries(dgl2projection_vector_int "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET dgl2projection_vector_int APPEND PROPERTY 
-             COMPILE_DEFINITIONS "POLORDER=1;USE_VECTORFUNCTION;USE_DOFTYPE_INT;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
 
-add_executable(dgl2projection_blockvectordiscretefunction dgl2projection.cc)
-dune_target_link_libraries(dgl2projection_blockvectordiscretefunction "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET dgl2projection_blockvectordiscretefunction APPEND PROPERTY 
-             COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORDISCRETEFUNCTION;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+dune_add_test( NAME vtxprojection_adaptive SOURCES vtxprojection.cc
+COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} vtxprojection_adaptive )
 
-add_executable(dgl2projection_idgridpart dgl2projection.cc)
-dune_target_link_libraries(dgl2projection_idgridpart "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET dgl2projection_idgridpart APPEND PROPERTY 
-             COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_IDGRIDPART;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+dune_add_test( NAME intersectionindexset SOURCES intersectionindexset.cc
+COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} intersectionindexset )
 
-add_executable(vtxprojection_adaptive vtxprojection.cc)
-dune_target_link_libraries(vtxprojection_adaptive "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET vtxprojection_adaptive APPEND PROPERTY 
-             COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+dune_add_test( NAME combinedspaceadaptation SOURCES adaptation.cc
+COMPILE_DEFINITIONS "COMBINEDSPACE;GRIDDIM=3;WORLDDIM=3;${GRIDTYPE}" )
+set( TESTS ${TESTS} combinedspaceadaptation )
 
-add_executable(intersectionindexset intersectionindexset.cc)
-dune_target_link_libraries(intersectionindexset "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET intersectionindexset APPEND PROPERTY 
-             COMPILE_DEFINITIONS "${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+dune_add_test( NAME adaptation SOURCES adaptation.cc
+COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE}" MPI_RANKS 1 3 4 TIMEOUT 9999999 )
+set( TESTS ${TESTS} adaptation )
 
-add_executable(adaptation adaptation.cc)
-dune_target_link_libraries(adaptation "${DUNE_LIBS};${LOCAL_LIBS}")
-set_property(TARGET adaptation APPEND PROPERTY 
-  COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE}" )
 
-add_executable( l2projection_adaptive l2projection.cc )
-dune_target_link_libraries( l2projection_adaptive "${DUNE_LIBS};${LOCAL_LIBS}" )
-target_compile_definitions( l2projection_adaptive PRIVATE "COUNT_FLOPS;POLORDER=1;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+if( HAVE_PETSC )
+  dune_add_test( NAME l2projection_petsc SOURCES l2projection.cc
+  COMPILE_DEFINITIONS "POLORDER=1;USE_PETSCDISCRETEFUNCTION;${DEFAULTFLAGS}" )
+  set( TESTS ${TESTS} l2projection_petsc )
+endif()
 
-add_executable( l2projection_istl l2projection.cc )
-dune_target_link_libraries( l2projection_istl "${DUNE_LIBS};${LOCAL_LIBS}" )
-target_compile_definitions( l2projection_istl PRIVATE "COUNT_FLOPS;POLORDER=1;USE_BLOCKVECTORFUNCTION;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+dune_add_test( NAME l2projection_adaptive SOURCES l2projection.cc
+COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} l2projection_adaptive )
 
-add_executable( l2projection_petsc l2projection.cc )
-dune_target_link_libraries( l2projection_petsc "${DUNE_LIBS};${LOCAL_LIBS}" )
-target_compile_definitions( l2projection_petsc PRIVATE "COUNT_FLOPS;POLORDER=1;USE_PETSCVECTORFUNCTION;${GRIDTYPE};GRIDDIM=${GRIDDIM}" )
+dune_add_test( NAME l2projection_istl SOURCES l2projection.cc
+COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} l2projection_istl )
 
-dune_fem_add_test(lagrangeinterpolation_linear lagrangeinterpolation_quadratic dgl2projection_adaptive
-              dgl2projection_blockvector dgl2projection_vector dgl2projection_vector_int
-              dgl2projection_hierarchiclegendre
-              dgl2projection_blockvectordiscretefunction dgl2projection_fv dgl2projection_idgridpart
-              vtxprojection_adaptive intersectionindexset dgl2projection_filtered
-              l2projection_adaptive l2projection_istl l2projection_petsc
-              NO_DEPENDENCY adaptation_4.sh 
-              DEPENDENCY_ONLY adaptation)
+dune_add_test( NAME l2projection_istl_complex SOURCES l2projection.cc
+COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;USE_COMPLEX;${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} l2projection_istl_complex )
+
+#finally add all pkg flags and local libs to tests
+foreach( test ${TESTS} )
+  target_link_dune_default_libraries( ${test} )
+  dune_target_link_libraries( ${test} "${LOCAL_LIBS}" )
+endforeach()

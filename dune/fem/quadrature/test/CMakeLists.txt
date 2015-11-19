@@ -1,22 +1,25 @@
 # set default grid type for make all
-set(GRIDTYPE YASPGRID)
-#set(GRIDTYPE ALUGRID_SIMPLEX)
-#set(GRIDTYPE ALUGRID_CUBE)
-#set(GRIDTYPE UGGRID)
-set(GRIDDIM 3)
 
-add_definitions( "-D${GRIDTYPE}" )
-add_definitions( "-DGRIDDIM=${GRIDDIM}" ) 
+if( NOT GRIDTYPE )
+  set(GRIDTYPE YASPGRID)
+endif()
+
+if( NOT GRIDDIM )
+  set(GRIDDIM 3)
+endif()
+
 
 # copy data to build source to make tests work         
-configure_file(1dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/1dgrid.dgf COPYONLY)
-configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
-configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
-configure_file(3dcubesimp.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dcubesimp.dgf COPYONLY)
-configure_file(parameter ${CMAKE_CURRENT_BINARY_DIR}/parameter COPYONLY)
+set( TESTFILES 1dgrid.dgf 2dgrid.dgf 3dgrid.dgf  3dcubesimp.dgf parameter )
+foreach( file ${TESTFILES} )
+  configure_file(${file} ${CMAKE_CURRENT_BINARY_DIR}/${file} COPYONLY)
+endforeach()
 
-add_executable(cachingquadrature cachingquadrature.cc)
-dune_target_link_libraries(cachingquadrature "${DUNE_LIBS};${LOCAL_LIBS}")
 
-dune_fem_add_test(cachingquadrature)
+dune_add_test( NAME cachingquadrature SOURCES cachingquadrature.cc
+COMPILE_DEFINITIONS "${GRIDTYPE};GRIDDIM=${GRIDDIM}"
+LINK_LIBRARIES dunefem )
 
+dune_add_test( NAME elementquadrature SOURCES elementquadrature.cc
+COMPILE_DEFINITIONS "${GRIDTYPE};GRIDDIM=${GRIDDIM}"
+LINK_LIBRARIES dunefem )
