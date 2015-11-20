@@ -35,11 +35,13 @@ namespace Dune
       static const bool v = false;
     };
 
+#ifdef HAVE_DUNE_ALUGRID
     template< int dim, int dimw, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
     struct hasHierarchicIndexSet< ALUGrid< dim, dimw, elType, refineType, Comm > >
     {
       static const bool v = true;
     };
+#endif // #ifdef HAVE_DUNE_ALUGRID
 
     template<>
     struct hasHierarchicIndexSet< OneDGrid >
@@ -117,11 +119,13 @@ namespace Dune
         static const bool v = Dune::Fem::Capabilities::supportsCallbackAdaptation< Grid > :: v;
       };
 
+#ifdef HAVE_DUNE_ALUGRID
       template< int dim, int dimworld, ALUGridElementType elType, ALUGridRefinementType refineType, class Comm >
       struct supportsCallbackAdaptation< ALUGrid< dim, dimworld, elType, refineType, Comm > >
       {
         static const bool v = true;
       };
+#endif // #ifdef HAVE_DUNE_ALUGRID
 
       template< int dim, int dimworld >
       struct supportsCallbackAdaptation< AlbertaGrid< dim, dimworld > >
