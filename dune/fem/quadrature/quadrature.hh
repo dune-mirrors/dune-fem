@@ -48,6 +48,7 @@ namespace Dune
 
     typedef typename QuadratureType::CoordinateType CoordinateType;
     typedef typename QuadratureType::RealType RealType;
+    typedef typename QuadratureType::LocalCoordinateType LocalCoordinateType;
 
   private:
     typedef QuadraturePointWrapper< QuadratureType > ThisType;
@@ -77,6 +78,7 @@ namespace Dune
 
     const CoordinateType &position () const { return quadrature().point( index() ); }
     const RealType &weight () const { return quadrature().weight( index() ); }
+    const LocalCoordinateType &localPosition () const { return quadrature().localPoint( index() ); }
   };
 
 
