@@ -1,124 +1,53 @@
 #!/bin/bash
 
-PROJECTDIR=`pwd`
-cd `dirname $0`
-SCRIPTSDIR=`pwd`
+# check for parameter pointing to DUNE build directory
+# ----------------------------------------------------
 
-if test ! -f $PROJECTDIR/dune.module ; then
-  echo "This script can only be executed from a DUNE project directory."
+if test \( $# -lt 3 \) ; then
+  echo "Usage: $0 <build-dir-base> <module-name> <MAKE_FLAGS>"
   exit 1
 fi
 
-compile=1
-for arg in $@ ; do
-  if test "x$arg" == "xfast" ; then
-    compile=0
-    continue
-  fi
+# set up some variables
+# ---------------------
 
-  echo "Usage: $0 [fast]"
-  exit 1
-done
+WORKINGDIR=$(pwd)
+cd $1
+BUILDDIR=$(pwd)
+MODULENAME=$2
+MAKE_FLAGS=$3
 
-cd $PROJECTDIR
-sourcedirs=`grep "^[[:space:]]*Sources:" dune.module | cut -s -d ':' -f2`
-if test "x$sourcedirs" = "x" ; then
-  echo -n "[.] "
-  echo "Warning: 'Sources' not found in dune.module, assuming 'dune'."
-  sourcedirs="dune"
-fi
-
-files=""
-for directory in $sourcedirs ; do
-  dirfiles=`find -H $directory -type d | sed "/$directory.*\/\..*/ d"`
-  files="$files $dirfiles"
-done
 
 errors=0
-for directory in $files ; do
-  makefile=$directory/Makefile.am
-  headerfiles=`ls -1 $directory | sed '/.*\.hh$/ p ; d'`
 
-  if test ! -f $makefile ; then
-    if test "x$headerfiles" != "x" ; then
-      echo -n "[$directory] "
-      echo "Warning: No 'Makefile.am' found."
-    fi
-    continue
-  fi
-
-  extradist=`cat $makefile | sed 'H ; s/.*//g ; x ; s/\n/ /g ; s/[ \t][ \t]*/ /g ; /\\\\$/! { p ; d } ; s/\\\\$// ; x ; d' | grep '^[ \t]*EXTRA_DIST' | sed 's/^.*EXTRA_DIST.*=//'`
-  for pattern in $extradist ; do
-    if test x`echo $pattern | grep '^[$]'` != x ; then
-      echo -n "[$directory] "
-      echo "Warning: Skipping check for variable '$pattern' in EXTRA_DIST."
-      continue
-    fi
-    for file in $directory/$pattern ; do
-      if test ! -f $file ; then
-        echo -n "[$directory] "
-        echo "Error: Distributed file does not exists: $file"
-        errors=$((errors+1))
-      fi
-    done
-  done
-
-  # IGNORE_HEADERS fem headercheck ignore
-  ignore=`grep "IGNORE_HEADERS" $makefile`
-  if test "x$ignore" != "x" ; then
-    continue
-  fi
-
-  # headercheck_IGNORE core headercheck ignore
-  ignore=`grep "headercheck_IGNORE" $makefile`
-  if test "x$ignore" != "x" ; then
-    continue
-  fi
- 
-  headers=`cat $makefile | sed 'H ; s/.*//g ; x ; s/\n/ /g ; s/[ \t][ \t]*/ /g ; /\\\\$/! { p ; d } ; s/\\\\$// ; x ; d' | grep '_HEADERS' | sed 's/^.*_HEADERS.*=//'`
-
-  for header in $headers ; do
-    if test x`echo $header | grep '^[$]'` != x ; then
-      echo -n "[$directory] "
-      echo "Warning: Skipping check for variable '$header' in headers declaration."
-      continue
-    fi
-    if test ! -e $directory/$header ; then
-      echo -n "[$directory] "
-      echo "Error: Header does not exist: $header"
-      errors=$((errors+1))
-    fi
-  done
-
-  for filename in $headerfiles ; do
-    found="false"
-    for header in $headers ; do
-      if test "x$header" = "x$filename" ; then
-        found="true"
-      fi
-    done
-    if test "x$found" = "xfalse" ; then
-      echo -n "[$directory] "
-      echo "Warning: Header is not included in Makefile.am: $filename"
-    fi
-  done
-
-  if test $compile -ne 0 ; then
-    for filename in $headerfiles ; do
-      if ! $SHELL $SCRIPTSDIR/check-header.sh $directory/$filename &>/dev/null ; then
-        echo -n "[$directory] "
-        echo "Error: Header does not compile: $filename"
-        errors=$((errors+1))
-      fi
-    done
-  fi
-
-#  for filename in `ls $directory | sed "/.*.hh/ p ; d"` ; do
-#     echo $directory : $filename
-#   done
+MODULES=""
+for modctrl in $(ls -d */); do
+  MODULES+=" $(basename $modctrl)"
 done
 
-if [ $errors -gt 0 ] ; then
-  echo "Number of errors: $errors"
+for module in $MODULES; do
+  cd $module
+  echo
+  echo "Checking headers in $module ..."
+  CHECKLOG=$WORKINGDIR/headercheck-$module.log
+  make headercheck -i $MAKE_FLAGS &> $CHECKLOG
+  hc_errors=$(grep error: $CHECKLOG)
+  if test -z "$hc_errors"; then
+    rm $CHECKLOG
+  else
+    if "$module" = "$MODULENAME" ; then
+      echo "Error: headercheck for module $module failed (see headercheck-$module.log)"
+      errors=$((errors+1))
+    else
+      echo "Warning: headercheck for module $module failed (see headercheck-$module.log)"
+    fi
+  fi
+  cd $BUILDDIR
+done
+
+
+if test $errors -gt 0 ; then
   exit 1
+else
+  exit 0
 fi
