@@ -801,8 +801,9 @@ namespace Dune
     */
     // --DofManager
     template< class Grid >
-    class DofManager : public IsDofManager,
+    class DofManager :
 #if HAVE_DUNE_ALUGRID
+      public IsDofManager,
       public LoadBalanceHandleWithReserveAndCompress,
 #endif
       // DofManager behaves like a communication data handle for load balancing
