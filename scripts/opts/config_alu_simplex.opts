@@ -7,7 +7,7 @@ CC=${CC:-cc}
 CXX=${CXX:-c++}
 F77=${F77:-gfortran}
 
-BUILD_DIR=build-alberta
+BUILD_DIR=build-alu-simplex
 
 CMAKE_FLAGS="
   -DCMAKE_SYSTEM_PREFIX_PATH=\"${SYSTEM_PREFIX_PATH}\" \
@@ -18,9 +18,11 @@ CMAKE_FLAGS="
   -DCMAKE_EXE_LINKER_FLAGS=\"${LDFLAGS}\" \
   -DENABLE_HEADERCHECK=TRUE \
   -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE \
-  -DALBERTA_ROOT=\"${MODULEDIR}/alberta\" \
-  -DGRIDTYPE=\"ALBERTAGRID\" \
-  -DGRIDDIM=\"2\" \
+  -DGRIDTYPE=\"ALUGRID_SIMPLEX\" \
+  -DGRIDDIM=\"2\"
 "
- 
+
+# These flags are necessary to perform grid specific checks!
+MAKE_CHECK_DEPS="dune-alugrid"
+
 MAKE_FLAGS=-j8

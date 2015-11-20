@@ -1,12 +1,22 @@
-USE_CMAKE=no
-CONFIGURE_FLAGS="\
---disable-documentation \
---enable-experimental-grid-extensions \
---without-gmp \
---prefix=/hosts/gandalf/raid5/morgoth/dune/src/dune \
---disable-dependency-tracking "
+USE_CMAKE=yes
 
-# These flags are necessary to perform grid specific checks!
-MAKE_CHECK_FLAGS="GRIDTYPE=YASPGRID GRIDDIM=2"
+CC=${CC:-cc}
+CXX=${CXX:-c++}
+F77=${F77:-gfortran}
+
+BUILD_DIR=build-none
+
+CMAKE_FLAGS="
+  -DCMAKE_SYSTEM_PREFIX_PATH=\"${SYSTEM_PREFIX_PATH}\" \
+  -DCMAKE_CXX_FLAGS=\"-Wall -Winit-self -O1 -g \" \
+  -DCMAKE_CXX_COMPILER=\"$(which ${CXX})\" \
+  -DCMAKE_C_COMPILER=\"$(which ${CC})\" \
+  -DCMAKE_Fortran_COMPILER=\"$(which ${F77} )\" \
+  -DCMAKE_EXE_LINKER_FLAGS=\"${LDFLAGS}\" \
+  -DENABLE_HEADERCHECK=YES \
+  -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE \
+  -DGRIDTYPE=\"YASPGRID\" \
+  -DGRIDDIM=\"2\" \
+"
 
 MAKE_FLAGS=-j8
