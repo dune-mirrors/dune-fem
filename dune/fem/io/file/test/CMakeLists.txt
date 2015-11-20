@@ -1,21 +1,21 @@
-set(POLORDER  2)
-set(WANT_GRAPE  0)
-set(GRIDTYPE YASPGRID)
-set(GRIDDIM 2)
+# if no grid type is specified during configuration time we choose yaspgrid
+if( NOT GRIDTYPE )
+  set( GRIDTYPE YASPGRID )
+endif()
 
-add_definitions( "-D${GRIDTYPE}" )
-add_definitions( "-DGRIDDIM=${GRIDDIM}" ) 
-add_definitions( "-DPOLORDER=${POLORDER}" )
-add_definitions( "-DWANT_GRAPE=${WANT_GRAPE}" )
+# same as for GridType, we set the default grid dimension to 2
+if( NOT GRIDDIM )
+  set( GRIDDIM 2 )
+endif()
 
-# copy data to build source to make tests work         
-configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
-configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
-configure_file(parameter ${CMAKE_CURRENT_BINARY_DIR}/parameter COPYONLY)
+# copy data to build source to make tests work
+set( TESTDATAFILES 2dgrid.dgf 3dgrid.dgf parameter )
+foreach( file ${TESTDATAFILES} )
+  configure_file( ${file} ${CMAKE_CURRENT_BINARY_DIR}/${file} COPYONLY )
+endforeach()
 
-add_executable(persistencemanagertest persistencemanagertest.cc)
-dune_target_link_libraries(persistencemanagertest "${DUNE_LIBS};${LOCAL_LIBS}")
-add_executable(dataoutputtest dataoutputtest.cc)
-dune_target_link_libraries(dataoutputtest "${DUNE_LIBS};${LOCAL_LIBS}")
+dune_add_test( NAME persistencemanagertest SOURCES persistencemanagertest.cc
+COMPILE_DEFINITIONS "POLORDER=2;WANT_GRAPE=0;${GRIDTYPE};GRIDDIM=${GRIDDIM}" LINK_LIBRARIES dunefem )
 
-dune_fem_add_test(persistencemanagertest dataoutputtest)
+dune_add_test( NAME dataoutputtest SOURCES dataoutputtest.cc
+COMPILE_DEFINITIONS "POLORDER=2;WANT_GRAPE=0;${GRIDTYPE};GRIDDIM=${GRIDDIM}" LINK_LIBRARIES dunefem )

@@ -150,12 +150,10 @@ int main (int argc, char **argv)
   try
   {
 
-  if(argc != 2)
-  {
-    fprintf(stderr,"usage: %s <maxlevel> \n",argv[0]);
-    exit(1);
-  }
-  int ml = atoi( argv[1] );
+  int ml = 2;
+  if( argc > 1 )
+    ml = atoi( argv[1] );
+
   std::vector< double> error(ml);
   std::stringstream tmp;
   tmp << dimw;

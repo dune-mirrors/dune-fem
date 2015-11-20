@@ -1,12 +1,11 @@
-# IGNORE_HEADERS
-# set default grid type for make all
-set(GRIDTYPE YASPGRID)
-set(GRIDDIM 2)
+if( NOT GRIDTYPE )
+  set(GRIDTYPE YASPGRID)
+endif()
 
-add_definitions( "-D${GRIDTYPE}" )
-add_definitions( "-DGRIDDIM=${GRIDDIM}" ) 
+if( NOT GRIDDIM )
+  set(GRIDDIM 2)
+endif()
 
-add_executable(quad_tester main.cc refelem_test.cc cache_test.cc twist_test.cc point_test.cc)
-dune_target_link_libraries(quad_tester "${DUNE_LIBS};${LOCAL_LIBS}")
-
-dune_fem_add_test(quad_tester)
+dune_add_test( NAME quad_tester SOURCES main.cc refelem_test.cc cache_test.cc twist_test.cc point_test.cc
+COMPILE_DEFINITIONS "${GRIDTYPE};GRIDDIM=${GRIDDIM}"
+LINK_LIBRARIES dunefem )
