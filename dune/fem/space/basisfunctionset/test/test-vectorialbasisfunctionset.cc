@@ -368,8 +368,18 @@ void traverse ( GridPartType &gridPart )
       error[ i ] = std::max( error[ i ], localError[ i ] );
   }
 
+
+  const double eps = 1e-8;
   // print error
-  std::cout << "Error (evaluateAll, jacobianAll, hessianAll ) = " << error << std::endl;
+  if( error.two_norm() > eps )
+  {
+    std::cerr << "Errors( evaluateAll, jacobianAll, hessianAll ): " << error << std::endl;
+#if USE_VERTICAL_DOF_ALIGNMENT == 1
+    DUNE_THROW( Dune::InvalidStatException, "VectorialBasisFunctionSet< VerticalDofAlignment > test failed." )
+#else
+    DUNE_THROW( Dune::InvalidStatException, "VectorialBasisFunctionSet< HorizontalDofAlignment > test failed." )
+#endif
+  }
 }
 
 
