@@ -1,5 +1,10 @@
-set( GRIDTYPE YASPGRID )
-set( GRIDDIM 2 )
+if( NOT GRIDTYPE )
+  set( GRIDTYPE YASPGRID )
+endif()
+
+if( NOT GRIDDIM )
+  set( GRIDDIM 2 )
+endif()
 
 set( DATAFILES
   1dgrid.dgf
@@ -11,8 +16,6 @@ foreach( datafile ${DATAFILES} )
   configure_file( ${datafile} ${CMAKE_CURRENT_BINARY_DIR}/${datafile} COPYONLY )
 endforeach()
 
-add_executable( dftest EXCLUDE_FROM_ALL dftest.cc )
-dune_target_link_libraries( dftest "${DUNE_LIBS};${LOCAL_LIBS}" )
-target_compile_definitions( dftest PRIVATE "${GRIDTYPE}" "GRIDDIM=${GRIDDIM}" )
-
-dune_fem_add_test( dftest )
+dune_add_test( NAME dftest SOURCES dftest.cc
+COMPILE_DEFINITIONS "${GRIDTYPE}" "GRIDDIM=${GRIDDIM}"
+LINK_LIBRARIES dunefem )
