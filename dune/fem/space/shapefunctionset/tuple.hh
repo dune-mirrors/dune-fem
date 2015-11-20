@@ -187,6 +187,20 @@ namespace Dune
         functor_( offset_[ I ]  + i, value );
       }
 
+      template< class K >
+      void operator () ( const std::size_t i, const Dune::FieldVector< K, 1 > &subValue )
+      {
+        MakeVectorialExpression< Dune::FieldVector< K, 1 >, Value > value( rangeOffset, subValue[ 0 ] );
+        functor_( offset_[ I ]  + i, value );
+      }
+
+      template< class K, int n >
+      void operator () ( const std::size_t i, const Dune::FieldMatrix< K, 1, n > &subValue )
+      {
+        MakeVectorialExpression< Dune::FieldMatrix< K, 1, n >, Value > value( rangeOffset, subValue[ 0 ] );
+        functor_( offset_[ I ]  + i, value );
+      }
+
       template< class Scalar, class Vectorial >
       void operator() ( const std::size_t i, const MakeVectorialExpression< Scalar, Vectorial > &subValue )
       {
