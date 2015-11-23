@@ -37,7 +37,7 @@ if test $urefs -gt 0 ; then
 fi
 
 # if a test has faild this file is writen
-if test -e $BUILDDIR/Testing/Temporary/LastTestsFailed.log;
+if test -e $BUILDDIR/Testing/Temporary/LastTestsFailed.log ; then
   retvalue=1
 fi
 

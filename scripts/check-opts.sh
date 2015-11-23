@@ -114,9 +114,9 @@ echo "Timings for $opts are stored in ${OPTS%.opts}-timings.txt"
 echo
 
 # copy files
-mv $WORKINGDIR/check-tests.log $CHECKLOG
-mv $WORKINGDIR/LastTest.log $TESTLOG
-mv $WORKINGDIR/CTestCostData.txt $TIMINGS
+mv $WORKINGDIR/check-tests.log $CHECKLOG &>/dev/null
+mv $WORKINGDIR/LastTest.log $TESTLOG &>/dev/null
+mv $WORKINGDIR/CTestCostData.txt $TIMINGS &>/dev/null
 
 
 if test $errors -gt 0 ; then
