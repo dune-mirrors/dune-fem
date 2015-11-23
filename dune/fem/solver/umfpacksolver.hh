@@ -18,7 +18,7 @@
 #if HAVE_DUNE_ISTL
 #include <dune/istl/umfpack.hh>
 
-#if defined(HAVE_UMFPACK) || HAVE_SUITESPARSE == 1
+#if HAVE_SUITESPARSE_UMFPACK
 
 namespace Dune
 {
@@ -247,7 +247,7 @@ class UMFPACKOp:public Operator<DF, DF>
 }
 }
 
-#endif // #if defined(HAVE_UMFPACK) || HAVE_SUITESPARSE == 1
+#endif // #if HAVE_SUITESPARSE_UMFPACK
 
 #endif // #if HAVE_DUNE_ISTL
 

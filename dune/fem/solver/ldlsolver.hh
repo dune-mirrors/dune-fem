@@ -14,7 +14,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/matrix/colcompspmatrix.hh>
 
-#if HAVE_SUITESPARSE
+#if HAVE_SUITESPARSE_LDL
 
 #ifdef __cplusplus
 extern "C"
@@ -288,6 +288,6 @@ class LDLOp:public Operator<DF, DF>
 }
 }
 
-#endif // #if HAVE_SUITESPARSE
+#endif // #if HAVE_SUITESPARSE_LDL
 
 #endif // #ifndef DUNE_FEM_LDLSOLVER_HH
