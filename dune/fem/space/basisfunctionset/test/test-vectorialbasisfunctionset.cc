@@ -375,9 +375,9 @@ void traverse ( GridPartType &gridPart )
   {
     std::cerr << "Errors( evaluateAll, jacobianAll, hessianAll ): " << error << std::endl;
 #if USE_VERTICAL_DOF_ALIGNMENT == 1
-    DUNE_THROW( Dune::InvalidStatException, "VectorialBasisFunctionSet< VerticalDofAlignment > test failed." )
+    DUNE_THROW( Dune::InvalidStateException, "VectorialBasisFunctionSet< VerticalDofAlignment > test failed." );
 #else
-    DUNE_THROW( Dune::InvalidStatException, "VectorialBasisFunctionSet< HorizontalDofAlignment > test failed." )
+    DUNE_THROW( Dune::InvalidStateException, "VectorialBasisFunctionSet< HorizontalDofAlignment > test failed." );
 #endif
   }
 }
