@@ -94,7 +94,7 @@ fi
 cd $WORKINGDIR
 CHECKLOG="$WORKINGDIR/${OPTS%.opts}-check.log"
 TESTLOG="$WORKINGDIR/${OPTS%.opts}-test.log"
-TIMINGS="$WORKINGDIR/${OPTS%.opts}-timings.txt"
+TIMINGS="$WORKINGDIR/${OPTS%.opts}-timings.log"
 
 if ! $SCRIPTSDIR/check-tests.sh $BUILDDIR/dune-fem "$MAKE_CHECK_FLAGS"; then
   build_test_errors=$(grep error: $WORKINGDIR/check-tests.log | wc -l)
@@ -103,14 +103,14 @@ if ! $SCRIPTSDIR/check-tests.sh $BUILDDIR/dune-fem "$MAKE_CHECK_FLAGS"; then
   fi
 
   if test -e $WORKINGDIR/LastTestsFailed.log; then
-    failed_tests=$(cat WORKINGDIR/LastTestsFailed.log | cut -d ':' -f2 | tr '\n' ' ' )
+    failed_tests=$(cat $WORKINGDIR/LastTestsFailed.log | cut -d ':' -f2 | tr '\n' ' ' )
     echo "Error: For $OPTS the following tests failed: $failed_tests"
     echo "       see ${OPTS%.opts}-test.log for details."
     rm $WORKINGDIR/LastTestsFailed.log
   fi
   errors=$((errors+1))
 fi
-echo "Timings for $opts are stored in ${OPTS%.opts}-timings.txt" 
+echo "Timings for $opts are stored in ${OPTS%.opts}-timings.log"
 echo
 
 # copy files
