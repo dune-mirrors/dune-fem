@@ -62,7 +62,7 @@ namespace Dune
 
         // the following initalization is only enabled for
         // MPI-thread parallel programs
-#if HAVE_MPI && MPI_2
+#if HAVE_MPI
 #ifdef USE_SMP_PARALLEL
         int provided;
         // use MPI_Init_thread for hybrid parallel programs
@@ -85,7 +85,7 @@ namespace Dune
 #endif // end NDEBUG
 
 #endif // end USE_SMP_PARALLEL
-#endif // end HAVE_MPI && MPI_2
+#endif // end HAVE_MPI
 
         if( (helper != 0) || (comm != 0) )
           DUNE_THROW( InvalidStateException, "MPIManager has already been initialized." );
