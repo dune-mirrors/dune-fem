@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <set>
 #include <queue>
 #include <sstream>
 #include <string>
@@ -166,6 +167,15 @@ namespace Dune
           Dune::Fem::Parameter::write( "parameter.log" );
         }
         \endcode
+
+        \b Parameter deprecation \b
+        Sometimes parameter names are changed and it can be difficult to find all occurrences of the old parameter
+        in the code. To help with the transition it is possible to deprecate parameters by adding the line
+        \code
+        deprecated: old_name
+        \endcode
+        This will cause an exception to be thrown by any attempt in the code to access the value of the parameter
+        using the old name.
      */
 
     class ParameterNotFound
@@ -658,6 +668,7 @@ namespace Dune
       std::string curFileName_;
       int curLineNumber_;
       ParameterMapType params_;
+      std::set< std::string > depParameters_;
       int verboseRank_;
       bool enableShadows_;
     };
@@ -685,6 +696,9 @@ namespace Dune
 
     inline Parameter::Value *Parameter::find ( const std::string &key )
     {
+      auto depIt = depParameters_.find( key );
+      if ( depIt !=depParameters_.end() )
+        DUNE_THROW( ParameterInvalid, "Parameter '" << key << "' deprecated." );
       ParameterMapType::iterator it = params_.find( key );
       return (it != params_.end()) ? &(it->second) : 0;
     }
@@ -859,7 +873,7 @@ namespace Dune
       std::string key = s.substr( key_start, key_end - key_start );
       std::string value = s.substr( value_start, value_end - value_start );
 
-      if( key != "paramfile" )
+      if( key != "paramfile" && key != "deprecated" )
       {
         const std::string &actual_value = insert( key, value );
         if( key == "fem.verbose" )
@@ -880,9 +894,15 @@ namespace Dune
           }
         }
         if( key == "fem.resolvevariables" )
-           ParameterParser< bool >::parse( actual_value, enableShadows_ );
+        {
+          ParameterParser< bool >::parse( actual_value, enableShadows_ );
         }
-      else
+      }
+      else if( key == "deprecated" )
+      {
+        depParameters_.insert(value);
+      }
+      else // paramfile
         includes.push( commonInputPath() + "/" + value );
       return true;
     }
