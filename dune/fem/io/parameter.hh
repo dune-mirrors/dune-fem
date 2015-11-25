@@ -915,9 +915,7 @@ namespace Dune
       }
       else if( key == "deprecated" )
       {
-        std::string depParam;
-        ParameterParser< std::string >::parse( actual_value, depParam );
-        depParameters_.insert(depParam);
+        depParameters_.insert(value);
       }
       else // paramfile
         includes.push( commonInputPath() + "/" + value );
