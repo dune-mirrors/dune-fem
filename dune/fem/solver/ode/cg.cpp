@@ -38,7 +38,8 @@ bool CG::solve(Function &op, double *x, const double *b)
   new_size(dim);
   int iterations = 0;
   double _tolerance = tolerance;
-  if (relative_tolerance){
+  if (relative_tolerance == 1 )
+  {
     double global_dot;
     double local_dot = cblas_ddot(dim, b, 1, b, 1);
     comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
@@ -46,10 +47,20 @@ bool CG::solve(Function &op, double *x, const double *b)
   }
 
   // preconditioned CG
-  if (preconditioner){
+  if (preconditioner)
+  {
     // init
     op(x, r);
     cblas_daxpy(dim, -1.0, b, 1, r, 1);
+    // scale tolerance with initial residual
+    if( relative_tolerance == 2 )
+    {
+      double local_dot = cblas_ddot(dim, r, 1, r, 1);
+      double global_dot;
+      comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
+      _tolerance *= std::sqrt( global_dot );
+    }
+
     (*preconditioner)(r, h);
     cblas_daxpy(dim, -1.0, h, 1, d, 1);
     double local_dot = cblas_ddot(dim, r, 1, h, 1);
@@ -87,6 +98,15 @@ bool CG::solve(Function &op, double *x, const double *b)
     // init
     op(x, r);
     cblas_daxpy(dim, -1.0, b, 1, r, 1);
+    // scale tolerance with initial residual
+    if( relative_tolerance == 2 )
+    {
+      double local_dot = cblas_ddot(dim, r, 1, r, 1);
+      double global_dot;
+      comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
+      _tolerance *= std::sqrt( global_dot );
+    }
+
     cblas_daxpy(dim, -1.0, r, 1, d, 1);
     double local_dot = cblas_ddot(dim, r, 1, r, 1);
     double global_dot;
