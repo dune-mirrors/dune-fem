@@ -160,7 +160,7 @@ namespace Dune
 
       void setupSolver ( double redEps, double absLimit, unsigned int maxIterations, bool verbose )
       {
-        PARDG::set_tolerance(solver_,redEps, absLimit, "fem.solver.errormeasure" );
+        PARDG::set_tolerance(solver_, redEps, absLimit, "fem.solver.errormeasure" );
 
         maxIterations = std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations );
         solver_.set_max_number_of_iterations( int( maxIterations ) );
