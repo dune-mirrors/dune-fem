@@ -45,7 +45,7 @@ namespace Fem
  *   http://www.cise.ufl.edu/research/sparse/ldl/
  *  \note This will only work if dune-fem has been configured to use LDL
  */
-template<class DF, class Op>
+template<class DF, class Op, bool symmetric=false>
 class LDLOp:public Operator<DF, DF>
 {
   public:
