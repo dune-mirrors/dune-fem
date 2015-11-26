@@ -74,10 +74,7 @@ namespace DuneODE
 
       // tolerance for the linear solver
       double tol = Parameter::getValue< double >( keyPrefix_ + "solver.tolerance" , 1e-8 );
-      static const std::string errorTypeTable[] = { "absolute", "relative" };
-      // errormeassure used in the linear solver
-      int errorType = Parameter::getEnum( keyPrefix_ + "solver.errormeasure", errorTypeTable, 0 );
-      solver->set_tolerance(tol,(errorType==1));
+      PARDG::set_tolerance(*solver,tol,keyPrefix_ + "solver.errormeasure" );
       // max iterations that the linear solver should do
       int maxIter = Parameter::getValue< int >( keyPrefix_ + "solver.iterations" , 1000 );
       solver->set_max_number_of_iterations(maxIter);

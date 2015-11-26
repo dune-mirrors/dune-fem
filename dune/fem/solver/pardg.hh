@@ -50,6 +50,23 @@ namespace pardg {
 #include "ode/function.hpp"
 #include "ode/ode_solver.hpp"
 #include "ode/linear_solver.hpp"
+  void set_tolerance(IterativeSolver &solver,
+      double redEps, double absLimit, std::string &paramName)
+  {
+    static const std::string errorTypeTable[] =
+      { "absolute", "relative", "residuumReduction" };
+    int errorType = Parameter::getEnum( paramName, errorTypeTable, 0 );
+    switch (errorType)
+    {
+      case 1: solver.set_tolerance(absLimit, ToleranceCriteria::absolute); break;
+      case 2: solver.set_tolerance(redEps, ToleranceCriteria::relative); break;
+      case 3: solver.set_tolerance(redEps, ToleranceCriteria::residuumReduction); break;
+    }
+  }
+  void set_tolerance(IterativeSolver &solver, double tol, std::string &paramName)
+  {
+    set_tolerance(solver,tol,tol,paramName);
+  }
 } // end namespace PARDG_NS
 
 #endif // end USE_PARDG_ODE_SOLVER

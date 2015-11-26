@@ -38,7 +38,7 @@ bool CG::solve(Function &op, double *x, const double *b)
   new_size(dim);
   int iterations = 0;
   double _tolerance = tolerance;
-  if (relative_tolerance){
+  if (toleranceCriteria == ToleranceCriteria::relative){
     double global_dot;
     double local_dot = cblas_ddot(dim, b, 1, b, 1);
     comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
@@ -56,7 +56,9 @@ bool CG::solve(Function &op, double *x, const double *b)
     double global_dot;
     comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
     double nu = global_dot;
-
+    if (toleranceCriteria == ToleranceCriteria::residualReduction){
+      _tolerance *= sqrt(nu);
+    }
     // iterate
     while (true){
       op(d, h);
@@ -92,6 +94,9 @@ bool CG::solve(Function &op, double *x, const double *b)
     double global_dot;
     comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
     double nu = global_dot;
+    if (toleranceCriteria == ToleranceCriteria::residualReduction){
+      _tolerance *= sqrt(nu);
+    }
 
     // iterate
     while (true){

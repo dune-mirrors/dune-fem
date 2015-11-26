@@ -1,3 +1,4 @@
+
 #include "iterative_solver.hpp"
 
 
@@ -5,18 +6,15 @@ IterativeSolver::IterativeSolver() : num_of_iterations(0), os(NULL)
 {
   // set this to some useful? values
   tolerance = 1.0e-6;
-  relative_tolerance = true;
+  toleranceCriteria = ToleranceCriteria::relative;
   max_num_of_iterations = 500;
 }
 
-
-
-void IterativeSolver::set_tolerance(double tol, bool relative)
+void IterativeSolver::set_tolerance(double tol, ToleranceCriteria criteria)
 {
   tolerance = tol;
-  relative_tolerance = relative;
+  toleranceCriteria = criteria;
 }
-
 
 
 void IterativeSolver::set_output(std::ostream &os)

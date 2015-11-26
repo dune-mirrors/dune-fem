@@ -52,7 +52,7 @@ bool BICGSTAB::solve(Function &op, double *x, const double *b)
   // relative or absolute tolerance
   double local_dot[5], global_dot[5];
   double _tolerance = tolerance;
-  if (relative_tolerance){
+  if (toleranceCriteria == ToleranceCriteria::relative){
     local_dot[0] = cblas_ddot(dim, b, 1, b, 1);
     comm.allreduce(1, local_dot, global_dot, MPI_SUM);
     _tolerance *= sqrt(global_dot[0]);
@@ -73,7 +73,9 @@ bool BICGSTAB::solve(Function &op, double *x, const double *b)
   local_dot[0] = cblas_ddot(dim, r, 1, r_star, 1);
   comm.allreduce(1, local_dot, global_dot, MPI_SUM);
   double nu = global_dot[0];
-
+  if (toleranceCriteria == ToleranceCriteria::residualReduction){
+    _tolerance *= sqrt(nu);
+  }
 
   // iterate
   int iterations = 0;
@@ -165,7 +167,7 @@ bool BICGSTAB::solve_old(Function &op, double *x, const double *b)
   // relative or absolute tolerance
   double local_dot[5], global_dot[5];
   double _tolerance = tolerance;
-  if (relative_tolerance){
+  if (toleranceCriteria == ToleranceCriteria::relative){
     local_dot[0] = cblas_ddot(dim, b, 1, b, 1);
     comm.allreduce(1, local_dot, global_dot, MPI_SUM);
     _tolerance *= sqrt(global_dot[0]);
