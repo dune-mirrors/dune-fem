@@ -54,7 +54,7 @@ bool FGMRES::solve(Function &op, double *u, const double *b)
   new_size(dim);
 
   double _tolerance = tolerance;
-  if (relative_tolerance){
+  if (toleranceCriteria == ToleranceCriteria::relative){
     local_dot[0] = cblas_ddot(dim, b, 1, b, 1);
     comm.allreduce(1, local_dot, global_dot, MPI_SUM);
     _tolerance *= sqrt(global_dot[0]);
@@ -68,6 +68,9 @@ bool FGMRES::solve(Function &op, double *u, const double *b)
     local_dot[0] = cblas_ddot(dim, v, 1, v, 1);
     comm.allreduce(1, local_dot, global_dot, MPI_SUM);
     double res = sqrt(global_dot[0]);
+    if (toleranceCriteria == ToleranceCriteria::residualReduction && iterations==0){
+      _tolerance *= res;
+    }
     if (res < tolerance) break;
     g[0] = -res;
     for(int i=1; i<=m; i++) g[i] = 0.0;

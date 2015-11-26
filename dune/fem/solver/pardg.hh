@@ -12,6 +12,8 @@
 #include <cstring>
 #include <iostream>
 
+#include <dune/fem/io/parameter.hh>
+
 #define USE_PARDG_ODE_SOLVER
 
 // use different namespaces in case of MPI or not
@@ -50,6 +52,25 @@ namespace pardg {
 #include "ode/function.hpp"
 #include "ode/ode_solver.hpp"
 #include "ode/linear_solver.hpp"
+namespace pardg {
+  void set_tolerance(IterativeSolver &solver,
+      double redEps, double absLimit, const char *paramName)
+  {
+    static const std::string errorTypeTable[] =
+      { "absolute", "relative", "residualreduction" };
+    int errorType = Dune::Fem::Parameter::getEnum( paramName, errorTypeTable, 0 );
+    switch (errorType)
+    {
+      case 0: solver.set_tolerance(absLimit, IterativeSolver::ToleranceCriteria::absolute); break;
+      case 1: solver.set_tolerance(redEps, IterativeSolver::ToleranceCriteria::relative); break;
+      case 2: solver.set_tolerance(redEps, IterativeSolver::ToleranceCriteria::residualReduction); break;
+    }
+  }
+  void set_tolerance(IterativeSolver &solver, double tol, const char *paramName)
+  {
+    set_tolerance(solver,tol,tol,paramName);
+  }
+} // end namespace pardg
 } // end namespace PARDG_NS
 
 #endif // end USE_PARDG_ODE_SOLVER
