@@ -81,8 +81,7 @@ bool GMRES::solve(Function &op, double *u, const double *b)
 
   // relative or absolute tolerance
   double _tolerance = tolerance;
-  if (relative_tolerance == 1 )
-  {
+  if (relative_tolerance){
     local_dot[0] = cblas_ddot(dim, b, 1, b, 1);
     comm.allreduce(1, local_dot, global_dot, MPI_SUM);
     _tolerance *= sqrt(global_dot[0]);
@@ -96,13 +95,6 @@ bool GMRES::solve(Function &op, double *u, const double *b)
     local_dot[0] = cblas_ddot(dim, v, 1, v, 1);
     comm.allreduce(1, local_dot, global_dot, MPI_SUM);
     double res = sqrt(global_dot[0]);
-
-    // scale tolerance with initial residual
-    if( relative_tolerance == 2 && iterations == 0 )
-    {
-      _tolerance *= res ;
-    }
-
     if (IterativeSolver::os)
     {
       *IterativeSolver::os << "GMRES "<< comm.id() << " outer iteration : " << res << std::endl;

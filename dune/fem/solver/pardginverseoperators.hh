@@ -160,11 +160,13 @@ namespace Dune
 
       void setupSolver ( double redEps, double absLimit, unsigned int maxIterations, bool verbose )
       {
-        static const std::string errorTypeTable[] = { "absolute", "relative", "residual" };
+        static const std::string errorTypeTable[] = { "absolute", "relative" };
         // errormeassure used in the linear solver
         int errorType = Parameter::getEnum( "fem.solver.errormeasure", errorTypeTable, 0 );
-        double tolerance = ( errorType == 0 ) ? absLimit : redEps ;
-        solver_.set_tolerance( tolerance, errorType);
+        if (errorType == 1)
+          solver_.set_tolerance( redEps, true);
+        else
+          solver_.set_tolerance( absLimit, false );
 
         maxIterations = std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations );
         solver_.set_max_number_of_iterations( int( maxIterations ) );
@@ -265,11 +267,13 @@ namespace Dune
     private:
       void setupSolver ( double redEps, double absLimit, unsigned int maxIterations, bool verbose )
       {
-        static const std::string errorTypeTable[] = { "absolute", "relative", "residual" };
+        static const std::string errorTypeTable[] = { "absolute", "relative" };
         // errormeassure used in the linear solver
         int errorType = Parameter::getEnum( "fem.solver.errormeasure", errorTypeTable, 0 );
-        double tolerance = ( errorType == 0 ) ? absLimit : redEps ;
-        solver_.set_tolerance( tolerance, errorType);
+        if (errorType == 1)
+          solver_.set_tolerance( redEps, true);
+        else
+          solver_.set_tolerance( absLimit, false );
 
         maxIterations = std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations );
         solver_.set_max_number_of_iterations( int( maxIterations ) );

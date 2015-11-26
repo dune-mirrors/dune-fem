@@ -52,8 +52,7 @@ bool BICGSTAB::solve(Function &op, double *x, const double *b)
   // relative or absolute tolerance
   double local_dot[5], global_dot[5];
   double _tolerance = tolerance;
-  if ( relative_tolerance == 1 )
-  {
+  if (relative_tolerance){
     local_dot[0] = cblas_ddot(dim, b, 1, b, 1);
     comm.allreduce(1, local_dot, global_dot, MPI_SUM);
     _tolerance *= sqrt(global_dot[0]);
@@ -64,19 +63,7 @@ bool BICGSTAB::solve(Function &op, double *x, const double *b)
     (*preconditioner)(x, z); // z = M^{-1} x
     op(z, r);                // r = A z
   }
-  else
-  {
-    op(x, r);             // r = A x
-  }
-
-  // scale tolerance with initial residual
-  if( relative_tolerance == 2 )
-  {
-    double local_dot = cblas_ddot(dim, r, 1, r, 1);
-    double global_dot;
-    comm.allreduce(1, &local_dot, &global_dot, MPI_SUM);
-    _tolerance *= std::sqrt( global_dot );
-  }
+  else op(x, r);             // r = A x
 
   for(int k=0; k<dim; k++){
     r[k] = b[k] - r[k];
@@ -178,8 +165,7 @@ bool BICGSTAB::solve_old(Function &op, double *x, const double *b)
   // relative or absolute tolerance
   double local_dot[5], global_dot[5];
   double _tolerance = tolerance;
-  if (relative_tolerance == 1 )
-  {
+  if (relative_tolerance){
     local_dot[0] = cblas_ddot(dim, b, 1, b, 1);
     comm.allreduce(1, local_dot, global_dot, MPI_SUM);
     _tolerance *= sqrt(global_dot[0]);
