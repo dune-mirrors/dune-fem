@@ -53,8 +53,16 @@ namespace pardg {
 #include "ode/ode_solver.hpp"
 #include "ode/linear_solver.hpp"
 namespace pardg {
+
+  /** \brief set tolerance for PerDG linear solvers
+   *  \param solver      linear solver object
+   *  \param redEps      relative reduction tolerance
+   *  \param absLimit    absolute error tolerance
+   *  \param paramName   parameter key for Fem::Parameter
+   */
+  inline
   void set_tolerance(IterativeSolver &solver,
-      double redEps, double absLimit, const char *paramName)
+                     double redEps, double absLimit, const char *paramName)
   {
     static const std::string errorTypeTable[] =
       { "absolute", "relative", "residualreduction" };
@@ -66,6 +74,13 @@ namespace pardg {
       case 2: solver.set_tolerance(redEps, IterativeSolver::ToleranceCriteria::residualReduction); break;
     }
   }
+
+  /** \brief set tolerance for PerDG linear solvers
+   *  \param solver      linear solver object
+   *  \param tol         solver tolerance
+   *  \param paramName   parameter key for Fem::Parameter
+   */
+  inline
   void set_tolerance(IterativeSolver &solver, double tol, const char *paramName)
   {
     set_tolerance(solver,tol,tol,paramName);
