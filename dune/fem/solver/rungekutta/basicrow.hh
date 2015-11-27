@@ -213,7 +213,11 @@ namespace DuneODE
     template< class ButcherTable >
     void setup( const ButcherTable& butcherTable )
     {
-      std::cout << "ROW method of order=" << butcherTable.order() << " with " << stages_ << " stages" << std::endl;
+      if( Dune::Fem::Parameter::verbose() )
+      {
+        std::cout << "ROW method of order=" << butcherTable.order() << " with " << stages_ << " stages" << std::endl;
+      }
+
       // create intermediate functions
       for( int i = 0; i < stages(); ++i )
       {
