@@ -50,7 +50,7 @@ namespace DuneODE
                           const ParametersType& param = ParametersType(),
                           const TimeStepControlParametersType& tscParam = TimeStepControlParametersType(),
                           const NonlinearSolverParametersType& nlsParam = NonlinearSolverParametersType() )
-    : BaseType( helmholtzOp, butcherTable( order ), TimeStepControlType( timeProvider, tscParam ), param, nlsParam )
+    : BaseType( helmholtzOp, timeProvider, butcherTable( order ), TimeStepControlType( timeProvider, tscParam ), param, nlsParam )
     {}
 
     /** \brief constructor
@@ -65,7 +65,7 @@ namespace DuneODE
                           const ParametersType& param = ParametersType(),
                           const TimeStepControlParametersType& tscParam = TimeStepControlParametersType(),
                           const NonlinearSolverParametersType& nlsParam = NonlinearSolverParametersType() )
-    : BaseType( helmholtzOp, butcherTable( -3 ), TimeStepControlType( timeProvider, tscParam ), param, nlsParam )
+    : BaseType( helmholtzOp, timeProvider, butcherTable( -3 ), TimeStepControlType( timeProvider, tscParam ), param, nlsParam )
     {}
 
 
