@@ -74,7 +74,8 @@ namespace DuneODE
 
       // tolerance for the linear solver
       double tol = Parameter::getValue< double >( keyPrefix_ + "solver.tolerance" , 1e-8 );
-      PARDG::set_tolerance(*solver,tol,keyPrefix_ + "solver.errormeasure" );
+      std::string key( keyPrefix_ + "solver.errormeasure" );
+      PARDG::set_tolerance(*solver,tol, key.c_str() );
       // max iterations that the linear solver should do
       int maxIter = Parameter::getValue< int >( keyPrefix_ + "solver.iterations" , 1000 );
       solver->set_max_number_of_iterations(maxIter);
