@@ -132,6 +132,10 @@ class CachingLumpingQuadrature<GridPart, 0>
   typedef typename BaseType::RealType RealType;
   //! The type of the coordinates in the codim-0 reference element.
   typedef typename BaseType::CoordinateType CoordinateType;
+  //! type of the quadrature point
+  typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+  //! type of iterator
+  typedef QuadraturePointIterator< ThisType > IteratorType;
 
   // for compatibility
   typedef typename GridPartType::template Codim<0>::EntityType EntityType;
@@ -140,6 +144,8 @@ class CachingLumpingQuadrature<GridPart, 0>
   using BaseType::quadImp;
 
  public:
+  using BaseType::nop;
+
   /** \brief constructor
    *
    *  \param[in]  entity  entity, on whose reference element the quadratre
@@ -162,7 +168,15 @@ class CachingLumpingQuadrature<GridPart, 0>
    */
   CachingLumpingQuadrature(const ThisType &org) : BaseType(org) {}
 
-  const RealType &weight (std::size_t i) const
+  QuadraturePointWrapperType operator[] ( std::size_t i ) const
+  {
+    return QuadraturePointWrapperType( *this, i );
+  }
+
+  IteratorType begin () const noexcept { return IteratorType( *this, 0 ); }
+  IteratorType end () const noexcept { return IteratorType( *this, nop() ); }
+
+  const RealType &weight (std::size_t ) const
   {
     // All weights should have the same value.
     return quadImp().weight(0);
@@ -201,6 +215,13 @@ class CachingLumpingQuadrature<GridPart, 1>
   typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
   typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
+  //! type of the quadrature point
+  typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+  //! type of iterator
+  typedef QuadraturePointIterator< ThisType > IteratorType;
+
+  using BaseType::nop;
+
  protected:
   using BaseType::quadImp;
 
@@ -226,9 +247,17 @@ class CachingLumpingQuadrature<GridPart, 1>
    */
   CachingLumpingQuadrature(const ThisType &org) : BaseType(org) {}
 
-  const RealType &weight (std::size_t i) const
+  QuadraturePointWrapperType operator[] ( std::size_t i ) const
   {
-    // All weights should have the same value.
+    return QuadraturePointWrapperType( *this, i );
+  }
+
+  IteratorType begin () const noexcept { return IteratorType( *this, 0 ); }
+  IteratorType end () const noexcept { return IteratorType( *this, nop() ); }
+
+  const RealType &weight (std::size_t ) const
+  {
+    // all weights should have the same value
     return quadImp().weight(0);
   }
 };
