@@ -1,5 +1,5 @@
-#ifndef __DUNE_FEM_LUMPING_QUADRATURE_HH__
-#define __DUNE_FEM_LUMPING_QUADRATURE_HH__
+#ifndef DUNE_FEM_LUMPING_QUADRATURE_HH
+#define DUNE_FEM_LUMPING_QUADRATURE_HH
 
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
@@ -44,17 +44,15 @@ class LumpingQuadrature
  public:
   /** \brief constructor filling the list of points and weights.
    *
-   *  \param[in]  gemoetry  geometry type for which a quadrature is desired
-   *  \param[in]  ignored   order is ignored
+   *  \param[in]  geometry  geometry type for which a quadrature is desired
+   *  \param[in]  order     order, ignored
    *  \param[in]  id        unique identifier, ignored
    */
-  LumpingQuadrature(const GeometryType& geometry, int ignored, int id)
+  LumpingQuadrature(const GeometryType& geometry, int order, int id)
     : BaseType(id)
   {
-    // make sure that we only use orders that are available
-    assert(ignored == 1);
-
-    for (unsigned i = 0; i < ReferenceDomain::numCorners; ++i) {
+    for (unsigned i = 0; i < ReferenceDomain::numCorners; ++i)
+    {
       CoordinateType pt;
       ReferenceDomain::corner(i, pt);
       this->addQuadraturePoint(pt, ReferenceDomain::template volume<FieldType>() / ReferenceDomain::numCorners);
@@ -69,7 +67,7 @@ class LumpingQuadrature
   virtual int order () const { return 1; }
 
   //! maximal order of available quadratures
-  static size_t maxOrder () { return 1; }
+  static std::size_t maxOrder () { return 1; }
 };
 
 template<class FieldType, int dimension>
@@ -147,14 +145,14 @@ class CachingLumpingQuadrature<GridPart, 0>
    *  \param[in]  entity  entity, on whose reference element the quadratre
    *                      lives
    *
-   *  \param[in] ignored desired minimal order of the quadrature,
+   *  \param[in] order   desired minimal order of the quadrature,
    *                     which is of course fixed at 1. But we allow
    *                     for this parameter in order to plug the
    *                     LumpingQuadrature into generic code which
    *                     normally passes the quadrature order as
    *                     second parameter.
    */
-  CachingLumpingQuadrature(const EntityType &entity, int ignored = 1)
+  CachingLumpingQuadrature(const EntityType &entity, int order = 1)
     : BaseType(entity.type(), 1)
   {}
 
@@ -164,7 +162,7 @@ class CachingLumpingQuadrature<GridPart, 0>
    */
   CachingLumpingQuadrature(const ThisType &org) : BaseType(org) {}
 
-  const RealType &weight (size_t i) const
+  const RealType &weight (std::size_t i) const
   {
     // All weights should have the same value.
     return quadImp().weight(0);
@@ -228,7 +226,7 @@ class CachingLumpingQuadrature<GridPart, 1>
    */
   CachingLumpingQuadrature(const ThisType &org) : BaseType(org) {}
 
-  const RealType &weight (size_t i) const
+  const RealType &weight (std::size_t i) const
   {
     // All weights should have the same value.
     return quadImp().weight(0);
@@ -240,4 +238,4 @@ class CachingLumpingQuadrature<GridPart, 1>
 } // Dune
 
 
-#endif // __DUNE_FEM_LUMPING_QUADRATURE_HH__
+#endif // DUNE_FEM_LUMPING_QUADRATURE_HH
