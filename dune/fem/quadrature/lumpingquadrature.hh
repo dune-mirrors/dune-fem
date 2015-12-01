@@ -28,7 +28,7 @@ class LumpingQuadrature
  public:
   typedef FieldImp FieldType;
   typedef Topology TopologyType;
-  enum { dimension = TopologyType::dimension };
+  static constexpr auto dimension = TopologyType::dimension;
 
  private:
   typedef LumpingQuadrature<FieldType, TopologyType> ThisType;
@@ -38,7 +38,7 @@ class LumpingQuadrature
   typedef typename BaseType::CoordinateType CoordinateType;
 
  protected:
-  static const unsigned int topologyId = TopologyType::id;
+  static constexpr auto topologyId = TopologyType::id;
   typedef Dune::GenericGeometry::ReferenceDomain<TopologyType> ReferenceDomain;
 
  public:
@@ -90,10 +90,10 @@ struct LumpingQuadratureTraits
   typedef typename GridPartImp::ctype ctype;
 
   // dimension of the quadrature
-  enum { dimension = GridPartImp::dimension };
+  static constexpr auto dimension = GridPartImp::dimension;
 
   // codimension
-  enum { codimension = codim };
+  static constexpr auto codimension = codim;
 
   typedef Quadrature<ctype, dimension-codim, DefaultLumpingQuadratureTraits> IntegrationPointListType;
 
@@ -113,18 +113,17 @@ class CachingLumpingQuadrature<GridPart, 0>
   typedef GridPart GridPartType;
 
   //! codimension of the element quadrature
-  enum { codimension = 0 };
+  static constexpr auto codimension = 0;
 
  private:
   typedef LumpingQuadratureTraits<GridPartType, codimension> IntegrationTraits;
 
   typedef CachingLumpingQuadrature<GridPartType, codimension> ThisType;
-  typedef CachingPointList<GridPartType, codimension, IntegrationTraits>
-  BaseType;
+  typedef CachingPointList<GridPartType, codimension, IntegrationTraits> BaseType;
 
  public:
   //! dimension of the world
-  enum { dimension = BaseType::dimension };
+  static constexpr auto dimension = BaseType::dimension;
 
   //! just another name for double
   typedef typename BaseType::RealType RealType;
@@ -190,7 +189,7 @@ class CachingLumpingQuadrature<GridPart, 1>
   typedef GridPart GridPartType;
 
   //! codimension of the element quadrature
-  enum { codimension = 1 };
+  static constexpr auto codimension = 1;
 
  private:
   typedef LumpingQuadratureTraits<GridPartType, codimension> IntegrationTraits;
@@ -200,7 +199,7 @@ class CachingLumpingQuadrature<GridPart, 1>
 
  public:
   //! dimension of the world
-  enum { dimension = BaseType::dimension };
+  static constexpr auto dimension = BaseType::dimension;
 
   //! just another name for double
   typedef typename BaseType::RealType RealType;

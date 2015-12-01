@@ -49,18 +49,17 @@ namespace Dune
       typedef GridPart GridPartType;
 
       //! codimension of the element quadrature
-      enum { codimension = 0 };
+      static constexpr auto codimension = 0;
 
     private:
       typedef ElementQuadratureTraits< GridPartType, codimension > IntegrationTraits;
 
       typedef CachingQuadrature< GridPartType, codimension > ThisType;
-      typedef CachingPointList< GridPartType, codimension, IntegrationTraits >
-        BaseType;
+      typedef CachingPointList< GridPartType, codimension, IntegrationTraits > BaseType;
 
     public:
       //! dimension of the world
-      enum { dimension = BaseType::dimension };
+      static constexpr auto dimension = BaseType::dimension;
 
       //! just another name for double
       typedef typename BaseType :: RealType RealType;
@@ -87,8 +86,7 @@ namespace Dune
        *                      lives
        *  \param[in]  order   desired minimal order of the quadrature
        */
-      CachingQuadrature( const EntityType &entity,
-                         int order )
+      CachingQuadrature( const EntityType &entity, int order )
       : BaseType( entity.type(), order )
       {}
 
@@ -98,8 +96,7 @@ namespace Dune
        *                      lives
        *  \param[in]  order   desired minimal order of the quadrature
        */
-      CachingQuadrature( const GeometryType &type,
-                         int order )
+      CachingQuadrature( const GeometryType &type, int order )
       : BaseType( type, order )
       {}
 
@@ -120,7 +117,7 @@ namespace Dune
       IteratorType end () const noexcept { return IteratorType( *this, nop() ); }
 
       /** \copydoc Dune::Fem::ElementQuadrature<GridPartImp,0>::weight */
-      const RealType &weight ( size_t i ) const
+      const RealType &weight ( std::size_t i ) const
       {
         return quadImp().weight( i );
       }
@@ -139,21 +136,20 @@ namespace Dune
       typedef GridPartImp GridPartType;
 
       //! codimension of the element quadrature
-      enum { codimension = 1 };
+      static constexpr auto codimension = 1;
 
     private:
       typedef ElementQuadratureTraits< GridPartType, codimension > IntegrationTraits;
 
       typedef CachingQuadrature< GridPartType, codimension > ThisType;
-      typedef CachingPointList< GridPartType, codimension, IntegrationTraits >
-        BaseType;
+      typedef CachingPointList< GridPartType, codimension, IntegrationTraits > BaseType;
 
     protected:
       using BaseType :: quadImp;
 
     public:
       //! dimeinsion of the world
-      enum { dimension = BaseType::dimension };
+      static constexpr auto dimension = BaseType::dimension;
 
       //! just another name for double
       typedef typename BaseType::RealType RealType;
@@ -187,10 +183,8 @@ namespace Dune
        *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for
        *                            which the ElementQuadrature shall be created
        */
-      CachingQuadrature( const GridPartType &gridPart,
-                         const IntersectionType &intersection,
-                         int order,
-                         typename BaseType::Side side )
+      CachingQuadrature( const GridPartType &gridPart, const IntersectionType &intersection,
+                         int order, typename BaseType::Side side )
       : BaseType( gridPart, intersection, order, side )
       {}
 
@@ -211,7 +205,7 @@ namespace Dune
       IteratorType end () const noexcept { return IteratorType( *this, nop() ); }
 
       /** \copydoc Dune::Fem::ElementQuadrature<GridPartImp,1>::weight */
-      const RealType &weight( size_t i ) const
+      const RealType &weight( std::size_t i ) const
       {
         return quadImp().weight(i);
       }
