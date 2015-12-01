@@ -86,21 +86,19 @@ struct DefaultLumpingQuadratureTraits
 template<class GridPartImp, int codim>
 struct LumpingQuadratureTraits
 {
-  // Type of a single coordinate.
+  // type of a single coordinate
   typedef typename GridPartImp::ctype ctype;
 
-  // Dimension of the quadrature.
+  // dimension of the quadrature
   enum { dimension = GridPartImp::dimension };
 
-  // Co-dimension.
+  // codimension
   enum { codimension = codim };
 
   typedef Quadrature<ctype, dimension-codim, DefaultLumpingQuadratureTraits> IntegrationPointListType;
 
-  // type of local coordinate (with respect to the codim-0 entity). Mind the difference in the dimension!
-  typedef typename
-  Quadrature<ctype, dimension, DefaultQuadratureTraits>::CoordinateType
-  CoordinateType;
+  // type of local coordinate
+  typedef typename Quadrature<ctype, dimension, DefaultQuadratureTraits>::CoordinateType CoordinateType;
 };
 
 template<class GridPartImp, int codim>
@@ -125,12 +123,12 @@ class CachingLumpingQuadrature<GridPart, 0>
   BaseType;
 
  public:
-  //! Dimension of the world.
+  //! dimension of the world
   enum { dimension = BaseType::dimension };
 
-  //! Just another name for double...
+  //! just another name for double
   typedef typename BaseType::RealType RealType;
-  //! The type of the coordinates in the codim-0 reference element.
+  //! type of the coordinates in the codim-0 reference element
   typedef typename BaseType::CoordinateType CoordinateType;
   //! type of the quadrature point
   typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
@@ -178,7 +176,7 @@ class CachingLumpingQuadrature<GridPart, 0>
 
   const RealType &weight (std::size_t ) const
   {
-    // All weights should have the same value.
+    // all weights have the same value
     return quadImp().weight(0);
   }
 };
@@ -198,20 +196,19 @@ class CachingLumpingQuadrature<GridPart, 1>
   typedef LumpingQuadratureTraits<GridPartType, codimension> IntegrationTraits;
 
   typedef CachingLumpingQuadrature<GridPartType, codimension> ThisType;
-  typedef CachingPointList<GridPartType, codimension, IntegrationTraits>
-  BaseType;
+  typedef CachingPointList<GridPartType, codimension, IntegrationTraits> BaseType;
 
  public:
-  //! Dimension of the world.
+  //! dimension of the world
   enum { dimension = BaseType::dimension };
 
-  //! Just another name for double...
+  //! just another name for double
   typedef typename BaseType::RealType RealType;
 
-  //! The type of the coordinates in the codim-0 reference element.
+  //! type of the coordinates in the codim-0 reference element
   typedef typename BaseType::CoordinateType CoordinateType;
 
-  //! Type of the intersection iterator
+  //! type of the intersection iterator
   typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
   typedef typename IntersectionIteratorType::Intersection IntersectionType;
 

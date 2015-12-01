@@ -1,9 +1,6 @@
 #ifndef DUNE_FEM_CACHINGQUADRATURE_HH
 #define DUNE_FEM_CACHINGQUADRATURE_HH
 
-//- Dune includes
-#include <dune/common/math.hh>
-
 //- Local includes
 #include "elementquadrature.hh"
 #include "caching/twistutility.hh"
@@ -62,12 +59,12 @@ namespace Dune
         BaseType;
 
     public:
-      //! Dimension of the world.
+      //! dimension of the world
       enum { dimension = BaseType::dimension };
 
-      //! Just another name for double...
+      //! just another name for double
       typedef typename BaseType :: RealType RealType;
-      //! The type of the coordinates in the codim-0 reference element.
+      //! type of the coordinates in the codim-0 reference element
       typedef typename BaseType :: CoordinateType CoordinateType;
 
       //! type of the quadrature point
@@ -155,14 +152,13 @@ namespace Dune
       using BaseType :: quadImp;
 
     public:
-      //! Dimeinsion of the world
+      //! dimeinsion of the world
       enum { dimension = BaseType::dimension };
 
-      //! A double... or whatever your grid wants
+      //! just another name for double
       typedef typename BaseType::RealType RealType;
 
-      //! The coordinates of the quadrature points in the codim-0 reference
-      //! element
+      //! the coordinates of the quadrature points in the codim-0 reference element
       typedef typename BaseType::CoordinateType CoordinateType;
 
       //! type of the quadrature point
@@ -170,14 +166,13 @@ namespace Dune
       //! type of iterator
       typedef QuadraturePointIterator< ThisType > IteratorType;
 
-      //! Type of the intersection iterator
+      //! type of the intersection iterator
       typedef typename BaseType :: IntersectionIteratorType IntersectionIteratorType;
       typedef typename IntersectionIteratorType :: Intersection IntersectionType;
 
       //! type of quadrature used for non-conforming intersections
       typedef ElementQuadrature< GridPartImp, codimension > NonConformingQuadratureType;
 
-    public:
       using BaseType::nop;
 
       /** \brief constructor
