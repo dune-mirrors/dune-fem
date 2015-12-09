@@ -35,6 +35,7 @@ namespace DuneODE
   struct ODEParameters : public ImplicitRungeKuttaSolverParameters
   {
     using ImplicitRungeKuttaSolverParameters :: keyPrefix_;
+    using ImplicitRungeKuttaSolverParameters :: tolerance ;
 
     ODEParameters( const std::string keyPrefix = "fem.ode." )
       : ImplicitRungeKuttaSolverParameters( keyPrefix )
@@ -73,7 +74,8 @@ namespace DuneODE
         DUNE_THROW( InvalidStateException, "Unable to create linear solver." );
 
       // tolerance for the linear solver
-      double tol = Parameter::getValue< double >( keyPrefix_ + "solver.tolerance" , 1e-8 );
+      const double defaulTol = tolerance() * 1e-2 ;
+      double tol = Parameter::getValue< double >( keyPrefix_ + "solver.tolerance" , defaulTol );
       std::string key( keyPrefix_ + "solver.errormeasure" );
       PARDG::set_tolerance(*solver,tol, key.c_str() );
       // max iterations that the linear solver should do
