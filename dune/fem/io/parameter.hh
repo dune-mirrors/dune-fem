@@ -743,7 +743,7 @@ namespace Dune
       if ( info.second )
       {
         if ( verbose() )
-          std::cout << "Adding default: " << key << " = " << value << std::endl;
+          std::cout << "Adding default: " << key << " = " << insVal.value << std::endl;
         val.isDefault = true;
       }
       else if ( val.used )
