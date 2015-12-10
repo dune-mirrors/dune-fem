@@ -389,7 +389,6 @@ namespace Fem {
     {}
 
     size_type size () const { return blockSize; }
-    size_type vec_size () const { return blockSize; }
 
     /** \brief Copy assignment operator for constant blocks
      *
@@ -407,7 +406,7 @@ namespace Fem {
      *  \param[in] index   Index of the dof
      *  \return Reference to the dof
      */
-    FieldType& vec_access(unsigned int index)
+    FieldType& operator[] (unsigned int index)
     {
       assert(index < blockSize);
       return blockVector_.array()[blockBegin_ + index];
@@ -418,7 +417,7 @@ namespace Fem {
      *  \param[in] index   Index of the dof
      *  \return Constant reference to the dof
      */
-    const FieldType& vec_access(unsigned int index) const
+    const FieldType& operator[] (unsigned int index) const
     {
       assert(index < blockSize);
       return blockVector_.array()[blockBegin_ + index];

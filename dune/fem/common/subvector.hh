@@ -80,10 +80,10 @@ namespace Dune
       void resize ( size_type ) {}
 
       //==== make this thing a vector
-      size_type vec_size () const { return size_; }
+      size_type size () const { return size_; }
 
-      value_type &vec_access ( size_type i ) { return v_[ i + offset_ ]; }
-      const value_type &vec_access ( size_type i ) const { return v_[ i + offset_ ]; }
+      value_type &operator[] ( size_type i ) { return v_[ i + offset_ ]; }
+      const value_type &operator[] ( size_type i ) const { return v_[ i + offset_ ]; }
     private:
       typename DenseMatVecTraits< This > :: container_type &v_;
       const size_type size_, offset_;

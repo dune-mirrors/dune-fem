@@ -53,11 +53,10 @@ namespace Dune
 
     using Base::operator=;
 
-    constexpr size_type size () const { return vec_size(); }
+    constexpr size_type size () const { return dimension; }
 
-    constexpr size_type vec_size () const { return dimension; }
-    const value_type &vec_access ( size_type i ) const { return fieldMatrix_[ i ][ column_ ]; }
-    value_type &vec_access ( size_type i ) { return fieldMatrix_[ i ][ column_ ]; }
+    const value_type &operator[] ( size_type i ) const { return fieldMatrix_[ i ][ column_ ]; }
+    value_type &operator[] ( size_type i ) { return fieldMatrix_[ i ][ column_ ]; }
 
   private:
     FieldMatrix< K, m, n > &fieldMatrix_;
@@ -83,10 +82,8 @@ namespace Dune
 
     using Base::operator=;
 
-    constexpr size_type size () const { return vec_size(); }
-
-    constexpr size_type vec_size () const { return dimension; }
-    const value_type &vec_access ( size_type i ) const { return fieldMatrix_[ i ][ column_ ]; }
+    constexpr size_type size () const { return dimension; }
+    const value_type &operator[] ( size_type i ) const { return fieldMatrix_[ i ][ column_ ]; }
 
   private:
     const FieldMatrix< K, m, n > &fieldMatrix_;

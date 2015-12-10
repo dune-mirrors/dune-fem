@@ -124,10 +124,10 @@ namespace Dune
       void unbind ( size_type i ) { asssert( i < data_.size() ); data_[ i ] = nullptr; }
 
       //==== make this thing a vector
-      size_type vec_size () const { return data_.size(); }
+      size_type size () const { return data_.size(); }
 
-      K &vec_access ( size_type i ) { return *data_[ i ]; }
-      const K &vec_access ( size_type i ) const { return *data_[ i ]; }
+      K &operator[] ( size_type i ) { return *data_[ i ]; }
+      const K &operator[] ( size_type i ) const { return *data_[ i ]; }
     };
 
     /** @} end documentation */

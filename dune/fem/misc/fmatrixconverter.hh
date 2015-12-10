@@ -76,34 +76,34 @@ namespace Dune
 
       FieldMatrixConverterRow &operator= ( const This &other )
       {
-        for( size_t i = 0; i < vec_size(); ++i )
-          vec_access( i ) = other[ i ];
+        for( size_t i = 0; i < size(); ++i )
+          ptr_[ i ] = other[ i ];
         return *this;
       }
 
       template< class Impl >
       FieldMatrixConverterRow &operator= ( const DenseVector< Impl > &other )
       {
-        assert( other.size() == vec_size() );
-        for( size_t i = 0; i < vec_size(); ++i )
-          vec_access( i ) = other[ i ];
+        assert( other.size() == size() );
+        for( size_t i = 0; i < size(); ++i )
+          ptr_[ i ] = other[ i ];
         return *this;
       }
 
       template< class V >
       K operator* ( const DenseVector< V > &x ) const
       {
-        assert( vec_size() == x.size() );
+        assert( size() == x.size() );
         K result( 0 );
-        for( size_type i = 0; i < vec_size(); ++i )
-          result += vec_access( i ) * x[ i ];
+        for( size_type i = 0; i < size(); ++i )
+          result += ptr_[ i ] * x[ i ];
         return result;
       }
 
       // make this thing a vector
-      size_t vec_size () const { return m; }
-      K &vec_access ( size_t i ) { assert( i < vec_size() ); return ptr_[ i ]; }
-      const K &vec_access ( size_t i ) const { assert( i < vec_size() ); return ptr_[ i ]; }
+      size_t size () const { return m; }
+      K &operator[] ( size_t i ) { assert( i < size() ); return ptr_[ i ]; }
+      const K &operator[] ( size_t i ) const { assert( i < size() ); return ptr_[ i ]; }
 
     private:
       K *ptr_;
