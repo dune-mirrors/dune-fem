@@ -4,6 +4,7 @@
 
 #include <cfloat>
 #include <iostream>
+#include <memory>
 
 #include <dune/fem/solver/parameter.hh>
 #include <dune/fem/io/parameter.hh>
@@ -209,6 +210,16 @@ namespace Dune
         return finite && (iterations_ < maxIterations_) && (linearIterations_ < maxLinearIterations_);
       }
 
+    protected:
+      // hold pointer to jacobian operator, if memory reallocation is needed, the operator should know how to handle this.
+      template< class ... Args>
+      JacobianOperatorType& jacobian ( Args && ... args ) const
+      {
+        if( !jOp_ )
+          jOp_.reset( new JacobianOperatorType( std::forward< Args >( args ) ... ) );
+        return *jOp_;
+      }
+
     private:
       const OperatorType &op_;
       const NewtonParameter *parameters_;
@@ -222,6 +233,7 @@ namespace Dune
       mutable DomainFieldType delta_;
       mutable int iterations_;
       mutable int linearIterations_;
+      mutable std::unique_ptr< JacobianOperatorType > jOp_;
     };
 
 
@@ -235,7 +247,7 @@ namespace Dune
     {
       DomainFunctionType residual( u );
       RangeFunctionType dw( w );
-      JacobianOperatorType jOp( "jacobianOperator", dw.space(), u.space() );
+      JacobianOperatorType& jOp = jacobian( "jacobianOperator", dw.space(), u.space() );
 
       // compute initial residual
       op_( w, residual );
