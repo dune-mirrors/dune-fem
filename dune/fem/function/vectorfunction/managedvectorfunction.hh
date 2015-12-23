@@ -28,9 +28,9 @@ namespace Dune
       typedef typename BaseType :: DofVectorType    DofVectorType;
       typedef typename BaseType :: DofContainerType DofContainerType;
 
-    protected:
       typedef typename DiscreteFunctionSpaceType :: GridPartType :: GridType
         GridType;
+    protected:
 
       typedef typename DiscreteFunctionSpaceType::BlockMapperType BlockMapperType;
 
