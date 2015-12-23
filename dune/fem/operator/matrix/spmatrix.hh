@@ -41,6 +41,50 @@ namespace Dune
       const int checkNonConstMethods = 0;
     }
 
+    //! SparseRowMatrixParameter
+    struct SparseRowMatrixParameter
+      : public Dune::Fem::LocalParameter< SparseRowMatrixParameter, SparseRowMatrixParameter >
+    {
+
+      enum PreconditionerId{ none  = 0  // no preconditioner
+      };
+
+      SparseRowMatrixParameter( const std::string keyPrefix = "spmatrix." )
+        : keyPrefix_( keyPrefix )
+      {}
+
+      virtual double overflowFraction () const
+      {
+        return Parameter::getValue< double >( keyPrefix_ + "matrix.overflowfraction", 1.0 );
+      }
+
+      virtual int numIterations () const
+      {
+        return Parameter::getValue< int >( keyPrefix_ + "preconditioning.iterations", 5 );
+      }
+
+      virtual double relaxation () const
+      {
+        return Parameter::getValue< int >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
+      }
+
+      virtual PreconditionerId method () const
+      {
+        static const std::string preConTable[] = { "none" };
+        return (PreconditionerId) Parameter::getEnum(  keyPrefix_ + "preconditioning.method", preConTable, 0 );
+      }
+
+      virtual std::string preconditionName() const
+      {
+        return "None";
+      }
+
+     private:
+      std::string keyPrefix_;
+
+    };
+
+
     //*****************************************************************
     //
     //  --SparseRowMatrix
@@ -53,6 +97,8 @@ namespace Dune
     //!
     //*****************************************************************
 
+
+    //! SparseRowMatrix
     template <class T>
     class SparseRowMatrix
     {
@@ -446,10 +492,13 @@ namespace Dune
       mutable LocalMatrixStackType localMatrixStack_;
 
     public:
-      //! setup matrix handler
+      typedef SparseRowMatrixParameter::PreconditionerId PreconditionerId;
+
+      //! construct matrix object
       inline SparseRowMatrixObject( const DomainSpaceType &domainSpace,
                                     const RangeSpaceType &rangeSpace,
-                                    const std::string &paramfile = "" )
+                                    const std::string& paramfile )
+        DUNE_DEPRECATED_MSG("SparseRowMatrixObject(...,string) is deprecated. Use SparseRowMatrixObject(string,DomainSpace,RangeSpace,SparseRowMatrixParameter) instead")
       : domainSpace_( domainSpace ),
         rangeSpace_( rangeSpace ),
         domainMapper_( domainSpace_.blockMapper() ),
@@ -461,15 +510,26 @@ namespace Dune
       {
         int precon = 0;
         if( paramfile != "" )
-        {
           readParameter( paramfile, "Preconditioning", precon );
-        }
         else
-        {
           precon = Parameter :: getValue("Preconditioning", precon );
-        }
         preconditioning_ = (precon > 0) ? true : false;
       }
+
+
+      //! construct matrix object
+      inline SparseRowMatrixObject( const DomainSpaceType &domainSpace,
+                                    const RangeSpaceType &rangeSpace,
+                                    const SparseRowMatrixParameter& param = SparseRowMatrixParameter() )
+      : domainSpace_( domainSpace ),
+        rangeSpace_( rangeSpace ),
+        domainMapper_( domainSpace_.blockMapper() ),
+        rangeMapper_( rangeSpace_.blockMapper() ),
+        sequence_( -1 ),
+        matrix_(),
+        preconditioning_( param.method() != PreconditionerId::none ),
+        localMatrixStack_( *this )
+      {}
 
       //! return domain space (i.e. space that builds the rows)
       const DomainSpaceType& domainSpace() const { return domainSpace_; }

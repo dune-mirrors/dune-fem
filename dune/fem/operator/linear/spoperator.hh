@@ -28,11 +28,19 @@ namespace Dune
 
       using Base::apply;
 
-      SparseRowLinearOperator ( const std::string &name,
-                                const DomainSpaceType &domainSpace,
-                                const RangeSpaceType &rangeSpace,
-                                const std::string &paramfile = "" )
-      : Base( domainSpace, rangeSpace, paramfile )
+      SparseRowLinearOperator( const std::string & ,
+                               const DomainSpaceType &domainSpace,
+                               const RangeSpaceType &rangeSpace,
+                               const std::string &paramfile )
+        DUNE_DEPRECATED_MSG("SparseRowLinearOperator(...,string) is deprecated. Use SparseRowLinearOperator(string,DomainSpace,RangeSpace,SparseRowMatrixParameter) instead")
+        : BaseType( domainSpace, rangeSpace )
+      {}
+
+      SparseRowLinearOperator( const std::string & ,
+                               const DomainSpaceType &domainSpace,
+                               const RangeSpaceType &rangeSpace,
+                               const SparseRowMatrixParameter& param = SparseRowMatrixParameter() ) :
+        BaseType( domainSpace, rangeSpace, param )
       {}
 
       virtual void operator() ( const DomainFunction &arg, RangeFunction &dest ) const
