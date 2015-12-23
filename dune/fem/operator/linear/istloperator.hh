@@ -33,8 +33,9 @@ namespace Dune
 
       ISTLLinearOperator( const std::string & ,
                           const DomainSpaceType &domainSpace,
-                          const RangeSpaceType &rangeSpace ) :
-        BaseType( domainSpace, rangeSpace )
+                          const RangeSpaceType &rangeSpace,
+                          const ISTLMatrixParameter& param = ISTLMatrixParameter() )
+        : BaseType( domainSpace, rangeSpace, param )
       {}
 
       virtual void operator()( const DomainFunction &arg, RangeFunction &dest ) const

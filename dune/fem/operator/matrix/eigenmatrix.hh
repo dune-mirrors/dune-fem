@@ -28,6 +28,17 @@ namespace Dune
   namespace Fem
   {
 
+    struct EigenMatrixParameter
+      : public SparseRowMatrixParameter
+    {
+      typedef SparseRowMatrixParameter BaseType;
+
+      EigenMatrixParameter( const std::string keyPrefix = "eigenmatrix." )
+        : BaseType( keyPrefix )
+      {}
+
+    };
+
     //! EigenMatrix
     template <class T>
     class EigenMatrix
@@ -164,8 +175,15 @@ namespace Dune
       typedef SparseRowMatrixObject< DomainSpace, RangeSpace, MatrixType > BaseType;
       inline EigenMatrixObject( const DomainSpace &domainSpace,
                                 const RangeSpace &rangeSpace,
-                                const std::string &paramfile = "" )
-        : BaseType( domainSpace, rangeSpace, paramfile )
+                                const std::string &paramfile )
+       DUNE_DEPRECATED_MSG("EigenMatrixObject(...,string) is deprecated. Use EigenMatrixObject(string,DomainSpace,RangeSpace,EigenMatrixParameter) instead")
+        : BaseType( domainSpace, rangeSpace )
+      {}
+
+      inline EigenMatrixObject( const DomainSpace &domainSpace,
+                                const RangeSpace &rangeSpace,
+                                const EigenMatrixParameter& param = EigenMatrixParameter() )
+        : BaseType( domainSpace, rangeSpace, param )
       {}
     };
 
