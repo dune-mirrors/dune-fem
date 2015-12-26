@@ -31,6 +31,9 @@
 /* Define if we have papi */
 #cmakedefine HAVE_PAPI 1
 
+/* Define if we have eigen */
+#cmakedefine HAVE_EIGEN 1
+
 /* Define if we have sionlib */
 #cmakedefine HAVE_SIONLIB 1
 

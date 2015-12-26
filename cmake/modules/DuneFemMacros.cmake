@@ -159,6 +159,20 @@ if(EXISTS "${PETSC_CMAKE_MODULES}")
   endif()
 endif()
 
+# check eigen
+pkg_check_modules(EIGEN eigen3)
+if(EIGEN_FOUND)
+  foreach( ARG ${EIGEN_INCLUDE_DIRS} )
+    if(IS_DIRECTORY ${ARG} )
+      add_definitions("-isystem${ARG}")
+      include_directories(${ARG})
+    else()
+      message( STATUS "Include directory ${EIGEN_INCLUDE_DIRS} (needed for eigen) does not exist" )
+    endif()
+  endforeach()
+  set( HAVE_EIGEN 1 )
+endif(EIGEN_FOUND)
+
 # check for XDR (deprecated)
 find_package(XDR)
 
