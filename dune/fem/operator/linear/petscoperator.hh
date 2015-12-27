@@ -17,6 +17,7 @@
 
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/stencil.hh>
+#include <dune/fem/operator/matrix/spmatrix.hh>
 
 #include <dune/fem/storage/objectstack.hh>
 
@@ -29,6 +30,17 @@ namespace Dune
 {
   namespace Fem
   {
+
+    struct PetscMatrixParameter
+      : public MatrixParameter
+    {
+      typedef MatrixParameter BaseType;
+
+      PetscMatrixParameter( const std::string keyPrefix = "petscmatrix." )
+        : BaseType( keyPrefix )
+      {}
+
+    };
 
     /* ========================================
      * class PetscLinearOperator
@@ -88,7 +100,8 @@ namespace Dune
       /*
        * ctors, dtor, methods...
        */
-      PetscLinearOperator ( const std::string &, const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace )
+      PetscLinearOperator ( const std::string &, const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace,
+                            const MatrixParameter& param = PetscMatrixParameter() )
       : domainSpace_( domainSpace ),
         rangeSpace_( rangeSpace ),
         colSlaveDofs_( rangeSpace_ ),
@@ -98,7 +111,8 @@ namespace Dune
         status_(statNothing)
       {
       }
-      PetscLinearOperator ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace )
+      PetscLinearOperator ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace,
+                            const MatrixParameter& param = PetscMatrixParameter() )
       : domainSpace_( domainSpace ),
         rangeSpace_( rangeSpace ),
         colSlaveDofs_( rangeSpace_ ),
