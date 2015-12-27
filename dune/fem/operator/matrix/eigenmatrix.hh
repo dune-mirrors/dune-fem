@@ -52,7 +52,7 @@ namespace Dune
       //! matrix index type
       typedef int size_type;
       typedef Eigen::SparseMatrix<field_type,Eigen::RowMajor> MatrixStorageType;
-      typedef EigenMatrix<field_type,size_type> ThisType;
+      typedef EigenMatrix<field_type>     ThisType;
       //! type of the base matrix
       //! for consistency with ISTLMatrixObject
       typedef ThisType MatrixBaseType;
@@ -176,13 +176,13 @@ namespace Dune
       inline EigenMatrixObject( const DomainSpace &domainSpace,
                                 const RangeSpace &rangeSpace,
                                 const std::string &paramfile )
-       DUNE_DEPRECATED_MSG("EigenMatrixObject(...,string) is deprecated. Use EigenMatrixObject(string,DomainSpace,RangeSpace,EigenMatrixParameter) instead")
+       DUNE_DEPRECATED_MSG("EigenMatrixObject(...,string) is deprecated. Use EigenMatrixObject(string,DomainSpace,RangeSpace,MatrixParameter) instead")
         : BaseType( domainSpace, rangeSpace )
       {}
 
       inline EigenMatrixObject( const DomainSpace &domainSpace,
                                 const RangeSpace &rangeSpace,
-                                const EigenMatrixParameter& param = EigenMatrixParameter() )
+                                const MatrixParameter& param = EigenMatrixParameter() )
         : BaseType( domainSpace, rangeSpace, param )
       {}
     };
