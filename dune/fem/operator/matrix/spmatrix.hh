@@ -248,6 +248,22 @@ namespace Dune
         return std::pair<const field_type, size_type>(values_[index], col_[index]);
       }
 
+      //! print matrix
+      void print(std::ostream& s = std::cout, unsigned int offset=0) const
+      {
+        s.precision( 6 );
+        for( size_t row = 0; row < dim_[0]; row++ )
+        {
+          for(size_t col=0; col<nonZeros_[row]; ++col)
+          {
+            auto pos = row*nz_ + col;
+            if( std::abs( values_[pos] ) > 1.e-15)
+              s << row << " " << realCol(row,col) << " " << values_[pos] << std::endl;
+          }
+        }
+      }
+
+
     private:
       //! resize matrix
       void resize(size_type rows, size_type cols, size_type nz)
@@ -508,7 +524,6 @@ namespace Dune
         RangeFunctionType fdest( "multOEM dest", rangeSpace_, dest );
         apply( farg, fdest );
       }
-
     protected:
       const DomainSpaceType &domainSpace_;
       const RangeSpaceType &rangeSpace_;
