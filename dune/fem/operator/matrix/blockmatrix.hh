@@ -286,7 +286,7 @@ namespace Dune
       }
 
       //! print matrix
-      void print(std::ostream & s) const
+      void print(std::ostream & s=std::cout) const
       {
         for(int i=0; i<rows(); ++i)
         {

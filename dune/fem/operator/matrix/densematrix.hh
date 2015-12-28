@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_DENSEMATRIX_HH
 #define DUNE_FEM_DENSEMATRIX_HH
 
+#include <iostream>
 #include <dune/fem/storage/objectstack.hh>
 #include <dune/fem/solver/oemsolver.hh>
 #include <dune/fem/function/adaptivefunction.hh>
@@ -118,7 +119,7 @@ namespace Dune
         clear();
       }
 
-      void print( std::ostream& s ) const
+      void print( std::ostream& s=std::cout ) const
       {
         s.precision( 6 );
         for( unsigned int row = 0; row < rows(); ++row )

@@ -391,7 +391,7 @@ namespace Dune
         }
 
         //! print matrix
-        void print(std::ostream& s, unsigned int offset=0) const
+        void print(std::ostream& s=std::cout, unsigned int offset=0) const
         {
           s.precision( 6 );
           const auto endi=this->end();
