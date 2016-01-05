@@ -5,6 +5,8 @@
 
 #include <Eigen/IterativeLinearSolvers>
 
+#include <dune/fem/operator/linear/eigenoperator.hh>
+
 namespace Dune
 {
 
