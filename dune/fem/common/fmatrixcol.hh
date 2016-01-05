@@ -30,6 +30,17 @@ namespace Dune
   };
 
 
+  // FieldTraits for FieldMatrixColumn
+  // ---------------------------------
+
+  template< class FieldMatrix >
+  struct FieldTraits< FieldMatrixColumn< FieldMatrix > >
+  {
+    typedef typename FieldTraits< typename std::remove_const< FieldMatrix >::type >::field_type field_type;
+    typedef typename FieldTraits< typename std::remove_const< FieldMatrix >::type >::real_type real_type;
+  };
+
+
 
   // FieldMatrixColumn
   // -----------------
