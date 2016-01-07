@@ -45,13 +45,8 @@ namespace Dune
 
       virtual void operator() ( const DomainFunction &u, RangeFunction &w ) const
       {
-        std::cout << "starting to solve using eigen" << std::endl;
-        for (int i=0;i<100;++i)
-        {
-          std::cout << "starting to solve" << std::endl;
-          w.dofVector().array().coefficients()
-             = solver_.solve( u.dofVector().array().coefficients() );
-        }
+        w.dofVector().array().coefficients()
+           = solver_.solve( u.dofVector().array().coefficients() );
       }
 
       unsigned int iterations () const { return solver_.iterations(); }
