@@ -17,6 +17,7 @@
 
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/stencil.hh>
+#include <dune/fem/operator/matrix/functor.hh>
 
 #include <dune/fem/storage/objectstack.hh>
 
@@ -248,6 +249,85 @@ namespace Dune
         return LocalColumnObjectType ( *this, colEntity );
       }
 
+      template< class LocalMatrix >
+      void addLocalMatrix ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity, const LocalMatrix &localMat )
+      {
+        assert( status_==statAssembled || status_==statAdd );
+        setStatus( statAdd );
+
+        std::vector< PetscInt > r, c;
+        setupIndices( rangeSpace_.blockMapper(), rowDofMapping(), rangeEntity, rangeLocalBlockSize, r);
+        setupIndices( domainSpace_.blockMapper(), colDofMapping(), domainEntity, domainLocalBlockSize, c);
+
+        std::vector< PetscScalar > v( r.size() * c.size() );
+        for( std::size_t i =0 ; i< r.size(); ++i )
+          for( std::size_t j =0; j< c.size(); ++j )
+            v[ i * c.size() +j ] = localMat.get( i, j );
+
+        ::Dune::Petsc::MatSetValues( petscMatrix_, r.size(), r.data(), c.size(), c.data(), v.data(), ADD_VALUES );
+        setStatus( statAssembled );
+      }
+
+      template< class LocalMatrix, class Scalar >
+      void addScaledLocalMatrix ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity, const LocalMatrix &localMat, const Scalar &s )
+      {
+        assert( status_==statAssembled || status_==statAdd );
+        setStatus( statAdd );
+
+        std::vector< PetscInt > r, c;
+        setupIndices( rangeSpace_.blockMapper(), rowDofMapping(), rangeEntity, rangeLocalBlockSize, r);
+        setupIndices( domainSpace_.blockMapper(), colDofMapping(), domainEntity, domainLocalBlockSize, c);
+
+        std::vector< PetscScalar > v( r.size() * c.size() );
+        for( std::size_t i =0 ; i< r.size(); ++i )
+          for( std::size_t j =0; j< c.size(); ++j )
+            v[ i * c.size() +j ] = s * localMat.get( i, j );
+
+        ::Dune::Petsc::MatSetValues( petscMatrix_, r.size(), r.data(), c.size(), c.data(), v.data(), ADD_VALUES );
+        setStatus( statAssembled );
+      }
+
+      template< class LocalMatrix >
+      void setLocalMatrix ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity, const LocalMatrix &localMat )
+      {
+        assert( status_==statAssembled || status_==statInsert );
+        setStatus( statInsert );
+
+        std::vector< PetscInt > r, c;
+        setupIndices( rangeSpace_.blockMapper(), rowDofMapping(), rangeEntity, rangeLocalBlockSize, r);
+        setupIndices( domainSpace_.blockMapper(), colDofMapping(), domainEntity, domainLocalBlockSize, c);
+
+        std::vector< PetscScalar > v( r.size() * c.size() );
+        for( std::size_t i =0 ; i< r.size(); ++i )
+          for( std::size_t j =0; j< c.size(); ++j )
+            v[ i * c.size() +j ] = localMat.get( i, j );
+
+        ::Dune::Petsc::MatSetValues( petscMatrix_, r.size(), r.data(), c.size(), c.data(), v.data(), INSERT_VALUES );
+
+        setStatus( statAssembled );
+      }
+
+
+      template< class LocalMatrix >
+      void getLocalMatrix ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity, LocalMatrix &localMat ) const
+      {
+        assert( status_==statAssembled || status_==statGet );
+        setStatus( statGet );
+
+        std::vector< PetscInt > r, c;
+        setupIndices( rangeSpace_.blockMapper(), rowDofMapping(), rangeEntity, rangeLocalBlockSize, r);
+        setupIndices( domainSpace_.blockMapper(), colDofMapping(), domainEntity, domainLocalBlockSize, c);
+
+        std::vector< PetscScalar > v( r.size() * c.size() );
+        ::Dune::Petsc::MatGetValues( petscMatrix_, r.size(), r.data(), c.size(), c.data(), v.data() );
+
+        for( std::size_t i =0 ; i< r.size(); ++i )
+          for( std::size_t j =0; j< c.size(); ++j )
+            localMat.set( i, j, v[ i * c.size() +j ] );
+
+        setStatus( statAssembled );
+      }
+
       // just here for debugging
       void view () const
       {
@@ -282,6 +362,29 @@ namespace Dune
 #endif
         status_ = newstatus;
       }
+
+      // Used to setup row/column indices. DofMapper is the DUNE DoF mapper
+      template< typename DofMapper, typename PetscMapping, typename Entity >
+      static void setupIndices ( const DofMapper &dofMapper, const PetscMapping &petscMapping, const Entity &entity,
+          PetscInt blockSize, std::vector< PetscInt > &indices )
+      {
+        const int blockDofs = dofMapper.numDofs( entity );
+        const int numDofs   = blockDofs * blockSize;
+
+        indices.resize( numDofs );
+
+        auto functor = [ &petscMapping, blockSize, &indices  ] ( PetscInt local, PetscInt global )
+        {
+          const PetscInt block = petscMapping.globalMapping( global );
+          for( PetscInt b = 0; b < blockSize; ++b )
+            indices[ local *blockSize + b ] = block * blockSize + b;
+
+        };
+
+        // map global dofs (blocked)
+        dofMapper.mapEach( entity, functor );
+      }
+
 
       /*
        * data fields
@@ -461,28 +564,6 @@ namespace Dune
       Mat& petscMatrix () { return petscLinearOperator_.petscMatrix_; }
       const Mat& petscMatrix () const { return petscLinearOperator_.petscMatrix_; }
 
-      // Used to setup row/column indices. DofMapper is the DUNE DoF mapper
-      template< typename DofMapper, typename PetscMapping, typename Entity >
-      void setupIndices ( const DofMapper &dofMapper, const PetscMapping &petscMapping, const Entity &entity,
-                          const int blockSize, IndexVectorType &indices )
-      {
-        const int blockDofs = dofMapper.numDofs( entity ) ;
-        const int numDofs   = blockDofs * blockSize ;
-        blockIndices_.resize( blockDofs );
-        indices.resize( numDofs );
-        // map global dofs (blocked)
-        dofMapper.mapEach( entity, PetscAssignFunctor< PetscMapping >( petscMapping, blockIndices_ ) );
-        // compute non blocked dofs
-        for( int b=0, dof=0; b<blockDofs; ++ b)
-        {
-          int globalDof = blockIndices_[ b ] * blockSize ;
-          for( int d=0; d<blockSize; ++d, ++dof, ++globalDof )
-          {
-            indices[ dof ] = globalDof;
-          }
-        }
-      }
-
     public:
       const int rows()    const { return rowIndices_.size(); }
       const int columns() const { return colIndices_.size(); }
@@ -505,7 +586,6 @@ namespace Dune
        * data fields
        */
       const PetscLinearOperatorType &petscLinearOperator_;
-      IndexVectorType blockIndices_;
       IndexVectorType rowIndices_;
       IndexVectorType colIndices_;
       std::vector<RangeFieldType> values_;

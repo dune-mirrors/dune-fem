@@ -21,6 +21,8 @@
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/storage/objectstack.hh>
 
+#include <dune/fem/operator/matrix/functor.hh>
+
 namespace Dune
 {
 
@@ -500,6 +502,57 @@ namespace Dune
       LocalColumnObjectType localColumn( const DomainEntityType &domainEntity ) const
       {
         return LocalColumnObjectType ( *this, domainEntity );
+      }
+
+      template< class LocalMatrix >
+      void addLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< Index, Index >& global )
+        {
+          matrix_.add( global.first, global.second, localMat.get( local.first, local.second ) );
+        };
+
+        rangeMapper_.mapEach( rangeEntity, makePairFunctor( domainMapper_, domainEntity, functor ) );
+      }
+
+
+      template< class LocalMatrix, class Scalar >
+      void addScaledLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat, const Scalar &s )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto functor = [ &localMat, &s, this ] ( std::pair< int, int > local, const std::pair< Index, Index >& global )
+        {
+          matrix_.add( global.first, global.second, s * localMat.get( local.first, local.second ) );
+        };
+
+        rangeMapper_.mapEach( rangeEntity, makePairFunctor( domainMapper_, domainEntity, functor ) );
+      }
+
+
+      template< class LocalMatrix >
+      void setLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< Index, Index >& global )
+        {
+          matrix_.set( global.first, global.second, localMat.get( local.first, local.second ) );
+        };
+
+        rangeMapper_.mapEach( rangeEntity, makePairFunctor( domainMapper_, domainEntity, functor ) );
+      }
+
+
+      template< class LocalMatrix >
+      void getLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, LocalMatrix &localMat ) const
+      {
+        typedef typename MatrixType::size_type Index;
+        auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< Index, Index >& global )
+        {
+          localMat.set( local.first, local.second, matrix_( global.first, global.second ) );
+        };
+
+        rangeMapper_.mapEach( rangeEntity, makePairFunctor( domainMapper_, domainEntity, functor ) );
       }
 
       //! resize all matrices and clear them
