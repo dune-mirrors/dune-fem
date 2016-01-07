@@ -26,6 +26,11 @@
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/operator/linear/istloperator.hh>
 #include <dune/fem/solver/istlsolver.hh>
+#elif HAVE_EIGEN && defined USE_EIGEN
+#include <dune/fem/storage/eigenvector.hh>
+#include <dune/fem/function/vectorfunction.hh>
+#include <dune/fem/operator/linear/eigenoperator.hh>
+#include <dune/fem/solver/eigen.hh>
 #else
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/linear/spoperator.hh>
@@ -64,6 +69,11 @@ typedef Dune::Fem::PetscInverseOperator< DiscreteFunctionType, LinearOperatorTyp
 typedef Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
 typedef Dune::Fem::ISTLLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
 typedef Dune::Fem::ISTLCGOp< DiscreteFunctionType, LinearOperatorType > InverseOperatorType;
+#elif HAVE_EIGEN && defined USE_EIGEN
+typedef Dune::Fem::EigenVector< double > DofVectorType;
+typedef Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< DiscreteSpaceType, DofVectorType > > DiscreteFunctionType;
+typedef Dune::Fem::EigenLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
+typedef Dune::Fem::EigenCGInverseOperator< DiscreteFunctionType > InverseOperatorType;
 #else
 typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
 typedef Dune::Fem::SparseRowLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
