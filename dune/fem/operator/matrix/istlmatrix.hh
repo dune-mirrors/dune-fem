@@ -33,12 +33,21 @@
 #include <dune/fem/storage/objectstack.hh>
 
 #include <dune/fem/operator/matrix/istlmatrixadapter.hh>
+#include <dune/fem/operator/matrix/functor.hh>
 
 namespace Dune
 {
 
   namespace Fem
   {
+
+
+    //! forward declrations
+    template< class MatrixObject >
+    class ISTLLocalMatrix;
+
+    template< class RowSpaceImp, class ColSpaceImp >
+    class ISTLMatrixObject;
 
     struct ISTLMatrixParameter
       : public MatrixParameter
@@ -60,7 +69,7 @@ namespace Dune
 
       virtual double relaxation () const
       {
-        return Parameter::getValue< int >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
+        return Parameter::getValue< double >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
       }
 
       virtual int method () const
@@ -198,7 +207,7 @@ namespace Dune
         void clear()
         {
           for (auto& row : *this)
-            for (auto&  entry : row)
+            for (auto& entry : row)
               entry = 0;
         }
 
@@ -405,8 +414,229 @@ namespace Dune
         }
     };
 
-    template <class RowSpaceImp, class ColSpaceImp>
-    class ISTLMatrixObject;
+
+
+    // ISTLLocalMatrixTraits
+    // ---------------------
+
+    template< class MatrixObject >
+    struct ISTLLocalMatrixTraits
+    {
+      typedef typename MatrixObject::DomainSpaceType DomainSpaceType;
+      typedef typename MatrixObject::RangeSpaceType RangeSpaceType;
+      typedef typename DomainSpaceType::RangeFieldType RangeFieldType;
+
+      typedef ISTLLocalMatrix< MatrixObject > LocalMatrixType;
+      typedef typename MatrixObject::MatrixType::block_type LittleBlockType;
+    };
+
+
+    // ISTLLocalMatrix
+    // ---------------
+
+    template< class MatrixObject >
+    class ISTLLocalMatrix
+    : public LocalMatrixDefault< ISTLLocalMatrixTraits< MatrixObject > >
+    {
+    public:
+      //! type of base class
+      typedef LocalMatrixDefault< ISTLLocalMatrixTraits< MatrixObject > > BaseType;
+
+      //! type of matrix object
+      typedef MatrixObject MatrixObjectType;
+      //! type of matrix
+      typedef typename MatrixObjectType::MatrixType MatrixType;
+      //! type of little blocks
+      typedef typename MatrixType::block_type LittleBlockType;
+
+      typedef typename MatrixObjectType::DomainSpaceType DomainSpaceType;
+      typedef typename MatrixObjectType::RangeSpaceType RangeSpaceType;
+
+      typedef typename MatrixObjectType::ColumnEntityType ColumnEntityType;
+      typedef typename MatrixObjectType::RowEntityType RowEntityType;
+
+      //! type of entries of little blocks
+      typedef typename DomainSpaceType::RangeFieldType DofType;
+      typedef typename MatrixType::row_type RowType;
+
+      //! type of row mapper
+      typedef typename DomainSpaceType::BlockMapperType ColMapperType;
+      //! type of col mapper
+      typedef typename RangeSpaceType::BlockMapperType RowMapperType;
+
+      static const int littleCols = MatrixObjectType::littleCols;
+      static const int littleRows = MatrixObjectType::littleRows;
+
+      ISTLLocalMatrix ( const MatrixObjectType& mObj, const DomainSpaceType& domainSpace, const RangeSpaceType& rangeSpace )
+        : BaseType( domainSpace, rangeSpace ),
+          rowMapper_( rangeSpace.blockMapper() ),
+          colMapper_( domainSpace.blockMapper() ),
+          numRows_( rowMapper_.maxNumDofs() ),
+          numCols_( colMapper_.maxNumDofs() ),
+          matrixObj_( mObj )
+      {}
+
+      ISTLLocalMatrix ( const ISTLLocalMatrix& org )
+        : BaseType( org ),
+          rowMapper_(org.rowMapper_),
+          colMapper_(org.colMapper_),
+          numRows_( org.numRows_ ),
+          numCols_( org.numCols_ ),
+          matrices_(org.matrices_),
+          matrixObj_(org.matrixObj_)
+      {}
+
+
+      //! initialize this local Matrix to (colEntity, rowEntity)
+      void init ( const ColumnEntityType& colEntity, const RowEntityType& rowEntity)
+      {
+        // initialize base functions sets
+        BaseType :: init ( rowEntity , colEntity );
+
+        numRows_  = rowMapper_.numDofs( rowEntity );
+        numCols_  = colMapper_.numDofs( colEntity );
+        matrices_.resize( numRows_, numCols_, nullptr );
+
+        typedef typename MatrixType::size_type Index;
+        auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
+        {
+          if( matrixObj_.implicitModeActive() )
+            return matrixObj_.matrix().entry( index.first, index.second );
+          else
+            return matrixObj_.matrix()[ index.first ][  index.second ];
+        };
+
+        auto functor = [ this, blockAccess ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
+        {
+          matrices_[ local.first ][ local.second ] = &blockAccess( index );
+        };
+
+        rowMapper_.mapEach( rowEntity, makePairFunctor( colMapper_, colEntity, functor ) );
+      }
+
+
+    private:
+      // check whether given (row,col) pair is valid
+      void check(int localRow, int localCol) const
+      {
+        const std::size_t row = (int) localRow / littleRows;
+        const std::size_t col = (int) localCol / littleCols;
+        const int lRow = localRow%littleRows;
+        const int lCol = localCol%littleCols;
+        assert( row < matrices_.size() ) ;
+        assert( col < matrices_[row].size() );
+        assert( lRow < littleRows );
+        assert( lCol < littleCols );
+      }
+
+      DofType& getValue(const int localRow, const int localCol)
+      {
+        const int row = (int) localRow / littleRows;
+        const int col = (int) localCol / littleCols;
+        const int lRow = localRow%littleRows;
+        const int lCol = localCol%littleCols;
+        return (*matrices_[row][col])[lRow][lCol];
+      }
+
+    public:
+      const DofType get(const int localRow, const int localCol) const
+      {
+        const int row = (int) localRow / littleRows;
+        const int col = (int) localCol / littleCols;
+        const int lRow = localRow%littleRows;
+        const int lCol = localCol%littleCols;
+        return (*matrices_[row][col])[lRow][lCol];
+      }
+
+      void scale (const DofType& scalar)
+      {
+        for(auto i=0; i<matrices_.size(); ++i)
+          for(auto j=0; j<matrices_[i].size(); ++j)
+            (*matrices_[i][j]) *= scalar;
+      }
+
+      void add(const int localRow, const int localCol , const DofType value)
+      {
+#ifndef NDEBUG
+        check(localRow,localCol);
+#endif
+        getValue(localRow,localCol) += value;
+      }
+
+      void set(const int localRow, const int localCol , const DofType value)
+      {
+#ifndef NDEBUG
+        check(localRow,localCol);
+#endif
+        getValue(localRow,localCol) = value;
+      }
+
+      //! make unit row (all zero, diagonal entry 1.0 )
+      void unitRow(const int localRow)
+      {
+        const int row = (int) localRow / littleRows;
+        const int lRow = localRow%littleRows;
+
+        // clear row
+        doClearRow( row, lRow );
+
+        // set diagonal entry to 1
+        (*matrices_[row][row])[lRow][lRow] = 1;
+      }
+
+      //! clear all entries belonging to local matrix
+      void clear ()
+      {
+        for(auto i=0; i<matrices_.size(); ++i)
+          for(auto j=0; j<matrices_[i].size(); ++j)
+            (*matrices_[i][j]) = (DofType) 0;
+      }
+
+      //! set matrix row to zero
+      void clearRow ( const int localRow )
+      {
+        const int row = (int) localRow / littleRows;
+        const int lRow = localRow%littleRows;
+
+        // clear the row
+        doClearRow( row, lRow );
+      }
+
+      //! empty as the little matrices are already sorted
+      void resort ()
+      {}
+
+    protected:
+      //! set matrix row to zero
+      void doClearRow ( const int row, const int lRow )
+      {
+        // get number of columns
+        const auto col = this->columns();
+        for(auto localCol=0; localCol<col; ++localCol)
+        {
+          const int col = (int) localCol / littleCols;
+          const int lCol = localCol%littleCols;
+          (*matrices_[row][col])[lRow][lCol] = 0;
+        }
+      }
+
+    private:
+      // special mapper omiting block size
+      const RowMapperType& rowMapper_;
+      const ColMapperType& colMapper_;
+
+      // number of local matrices
+      int numRows_;
+      int numCols_;
+
+      // dynamic matrix with pointers to block matrices
+      Dune::DynamicMatrix< LittleBlockType* > matrices_;
+
+      // matrix to build
+      const MatrixObjectType& matrixObj_;
+    };
+
+
 
     template <class RowSpaceImp, class ColSpaceImp = RowSpaceImp>
     struct ISTLMatrixTraits
@@ -436,6 +666,9 @@ namespace Dune
       typedef typename RangeSpaceType :: EntityType  RowEntityType ;
       typedef typename DomainSpaceType :: EntityType ColumnEntityType ;
 
+      typedef ColumnEntityType DomainEntityType;
+      typedef RowEntityType RangeEntityType;
+
       enum { littleCols = DomainSpaceType :: localBlockSize };
       enum { littleRows = RangeSpaceType :: localBlockSize };
 
@@ -457,260 +690,8 @@ namespace Dune
       typedef typename ISTLParallelMatrixAdapter<MatrixType,RangeSpaceType>::Type MatrixAdapterType;
       typedef typename MatrixAdapterType :: ParallelScalarProductType ParallelScalarProductType;
 
-      template <class MatrixObjectImp>
-      class LocalMatrix;
-
-      struct LocalMatrixTraits
-      {
-        typedef DomainSpaceImp DomainSpaceType;
-        typedef RangeSpaceImp  RangeSpaceType;
-        typedef typename DomainSpaceType :: RangeFieldType RangeFieldType;
-        typedef LocalMatrix<ThisType> LocalMatrixType;
-        typedef typename MatrixType:: block_type LittleBlockType;
-      };
-
-      //! LocalMatrix
-      template <class MatrixObjectImp>
-      class LocalMatrix : public LocalMatrixDefault<LocalMatrixTraits>
-      {
-      public:
-        //! type of base class
-        typedef LocalMatrixDefault<LocalMatrixTraits> BaseType;
-
-        //! type of matrix object
-        typedef MatrixObjectImp MatrixObjectType;
-        //! type of matrix
-        typedef typename MatrixObjectImp :: MatrixType MatrixType;
-        //! type of little blocks
-        typedef typename MatrixType:: block_type LittleBlockType;
-        //! type of entries of little blocks
-        typedef typename DomainSpaceType :: RangeFieldType DofType;
-
-        typedef typename MatrixType::row_type RowType;
-
-        //! type of row mapper
-        typedef typename MatrixObjectType :: RowMapperType RowMapperType;
-        //! type of col mapper
-        typedef typename MatrixObjectType :: ColMapperType ColMapperType;
-
-      private:
-        // special mapper omiting block size
-        const RowMapperType& rowMapper_;
-        const ColMapperType& colMapper_;
-
-        // number of local matrices
-        int numRows_;
-        int numCols_;
-
-        // vector with pointers to local matrices
-        typedef std::vector< LittleBlockType* >            LittleMatrixRowStorageType ;
-        typedef std::vector< LittleMatrixRowStorageType >  VecLittleMatrixRowStorageType;
-        VecLittleMatrixRowStorageType matrices_;
-
-        // matrix to build
-        const MatrixObjectType& matrixObj_;
-
-       template <class RowGlobalKey>
-       struct ColFunctor
-       {
-         ColFunctor(LittleMatrixRowStorageType& localMatRow, MatrixType& matrix, const RowGlobalKey &globalRowKey) :
-           localMatRow_(localMatRow), matRow_( matrix[ globalRowKey ] ), globalRowKey_(globalRowKey)
-         {}
-         template< class GlobalKey >
-         void operator() ( const int localDoF, const GlobalKey &globalDoF )
-         {
-           localMatRow_[ localDoF ] = &matRow_[ globalDoF ];
-         }
-         private:
-         LittleMatrixRowStorageType& localMatRow_;
-         RowType& matRow_;
-         const RowGlobalKey &globalRowKey_;
-       };
-
-       template <class RowGlobalKey>
-       struct ColFunctorImplicitBuildMode
-       {
-         ColFunctorImplicitBuildMode(LittleMatrixRowStorageType& localMatRow, MatrixType& matrix, const RowGlobalKey &globalRowKey) :
-           localMatRow_(localMatRow), matrix_( matrix ), globalRowKey_(globalRowKey)
-         {}
-         template< class GlobalKey >
-         void operator() ( const int localDoF, const GlobalKey &globalDoF )
-         {
-           localMatRow_[ localDoF ] = &matrix_.entry( globalRowKey_, globalDoF );
-         }
-         private:
-         LittleMatrixRowStorageType& localMatRow_;
-         MatrixType& matrix_;
-         const RowGlobalKey &globalRowKey_;
-       };
-
-       template <template <class> class ColFunctorImpl>
-       struct RowFunctor
-       {
-         RowFunctor(const ColumnEntityType &colEntity, const ColMapperType &colMapper, MatrixType &matrix,
-                    VecLittleMatrixRowStorageType &matrices, int numCols) :
-           colEntity_(colEntity), colMapper_(colMapper), matrix_(matrix), matrices_(matrices), numCols_(numCols)
-         {}
-         template< class GlobalKey >
-         void operator() ( const int localDoF, const GlobalKey &globalDoF )
-         {
-           auto& localMatRow = matrices_[ localDoF ];
-           localMatRow.resize( numCols_ );
-           ColFunctorImpl< GlobalKey > colFunctor( localMatRow, matrix_, globalDoF );
-           colMapper_.mapEach( colEntity_, colFunctor );
-         }
-         private:
-         const ColumnEntityType & colEntity_;
-         const ColMapperType & colMapper_;
-         MatrixType &matrix_;
-         VecLittleMatrixRowStorageType &matrices_;
-         int numCols_;
-       };
-
-      public:
-        LocalMatrix(const MatrixObjectType & mObj, const DomainSpaceType & colSpace, const RangeSpaceType & rowSpace) :
-          BaseType( colSpace, rowSpace ), rowMapper_(mObj.rowMapper()), colMapper_(mObj.colMapper()), numRows_( rowMapper_.maxNumDofs() ),
-          numCols_( colMapper_.maxNumDofs() ), matrixObj_(mObj)
-        {}
-
-        void init(const RowEntityType & rowEntity, const ColumnEntityType & colEntity)
-        {
-          // initialize base functions sets
-          BaseType :: init ( rowEntity , colEntity );
-
-          numRows_  = rowMapper_.numDofs(colEntity);
-          numCols_  = colMapper_.numDofs(rowEntity);
-          matrices_.resize( numRows_ );
-
-          if( matrixObj_.implicitModeActive() )
-          {
-            // implicit access via matrix.entry( i, j )
-            RowFunctor< ColFunctorImplicitBuildMode > rowFunctor(colEntity, colMapper_, matrixObj_.matrix(), matrices_, numCols_);
-            rowMapper_.mapEach(rowEntity, rowFunctor);
-          }
-          else
-          {
-            // normal access to matrix via operator [i][j]
-            RowFunctor< ColFunctor > rowFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
-            colMapper_.mapEach(colEntity, rowFunctor);
-          }
-        }
-
-        LocalMatrix(const LocalMatrix& org) :
-          BaseType( org ), rowMapper_(org.rowMapper_), colMapper_(org.colMapper_), numRows_( org.numRows_ ), numCols_( org.numCols_ ),
-          matrices_(org.matrices_), matrixObj_(org.matrixObj_)
-        {}
-
-      private:
-        // check whether given (row,col) pair is valid
-        void check(int localRow, int localCol) const
-        {
-          const std::size_t row = (int) localRow / littleRows;
-          const std::size_t col = (int) localCol / littleCols;
-          const int lRow = localRow%littleRows;
-          const int lCol = localCol%littleCols;
-          assert( row < matrices_.size() ) ;
-          assert( col < matrices_[row].size() );
-          assert( lRow < littleRows );
-          assert( lCol < littleCols );
-        }
-
-        DofType& getValue(const int localRow, const int localCol)
-        {
-          const int row = (int) localRow / littleRows;
-          const int col = (int) localCol / littleCols;
-          const int lRow = localRow%littleRows;
-          const int lCol = localCol%littleCols;
-          return (*matrices_[row][col])[lRow][lCol];
-        }
-
-      public:
-        const DofType get(const int localRow, const int localCol) const
-        {
-          const int row = (int) localRow / littleRows;
-          const int col = (int) localCol / littleCols;
-          const int lRow = localRow%littleRows;
-          const int lCol = localCol%littleCols;
-          return (*matrices_[row][col])[lRow][lCol];
-        }
-
-        void scale (const DofType& scalar)
-        {
-          for(auto i=0; i<matrices_.size(); ++i)
-            for(auto j=0; j<matrices_[i].size(); ++j)
-              (*matrices_[i][j]) *= scalar;
-        }
-
-        void add(const int localRow, const int localCol , const DofType value)
-        {
-#ifndef NDEBUG
-          check(localRow,localCol);
-#endif
-          getValue(localRow,localCol) += value;
-        }
-
-        void set(const int localRow, const int localCol , const DofType value)
-        {
-#ifndef NDEBUG
-          check(localRow,localCol);
-#endif
-          getValue(localRow,localCol) = value;
-        }
-
-        //! make unit row (all zero, diagonal entry 1.0 )
-        void unitRow(const int localRow)
-        {
-          const int row = (int) localRow / littleRows;
-          const int lRow = localRow%littleRows;
-
-          // clear row
-          doClearRow( row, lRow );
-
-          // set diagonal entry to 1
-          (*matrices_[row][row])[lRow][lRow] = 1;
-        }
-
-        //! clear all entries belonging to local matrix
-        void clear ()
-        {
-          for(auto i=0; i<matrices_.size(); ++i)
-            for(auto j=0; j<matrices_[i].size(); ++j)
-              (*matrices_[i][j]) = (DofType) 0;
-        }
-
-        //! set matrix row to zero
-        void clearRow ( const int localRow )
-        {
-          const int row = (int) localRow / littleRows;
-          const int lRow = localRow%littleRows;
-
-          // clear the row
-          doClearRow( row, lRow );
-        }
-
-        //! empty as the little matrices are already sorted
-        void resort ()
-        {}
-
-    protected:
-        //! set matrix row to zero
-        void doClearRow ( const int row, const int lRow )
-        {
-          // get number of columns
-          const auto col = this->columns();
-          for(auto localCol=0; localCol<col; ++localCol)
-          {
-            const int col = (int) localCol / littleCols;
-            const int lCol = localCol%littleCols;
-            (*matrices_[row][col])[lRow][lCol] = 0;
-          }
-        }
-
-      }; // end of class LocalMatrix
-
-    public:
       //! type of local matrix
-      typedef LocalMatrix<ThisType> ObjectType;
+      typedef ISTLLocalMatrix<ThisType> ObjectType;
       typedef ThisType LocalMatrixFactoryType;
       typedef ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
       //! type of local matrix
@@ -730,15 +711,13 @@ namespace Dune
 
       int sequence_;
 
-      mutable MatrixType* matrix_;
-
-      // ParallelScalarProductType scp_;
+      mutable std::unique_ptr< MatrixType > matrix_;
 
       mutable LocalMatrixStackType localMatrixStack_;
 
-      mutable MatrixAdapterType* matrixAdap_;
-      mutable ColumnBlockVectorType* Arg_;
-      mutable RowBlockVectorType*    Dest_;
+      mutable std::unique_ptr< MatrixAdapterType > matrixAdap_;
+      mutable std::unique_ptr< ColumnBlockVectorType > Arg_;
+      mutable std::unique_ptr< RowBlockVectorType >    Dest_;
       // overflow fraction for implicit build mode
       const double overflowFraction_;
 
@@ -753,12 +732,7 @@ namespace Dune
         , colMapper_( domainSpace.blockMapper() )
         , size_(-1)
         , sequence_(-1)
-        , matrix_(nullptr)
-        // , scp_(rangeSpace())
         , localMatrixStack_( *this )
-        , matrixAdap_(nullptr)
-        , Arg_(nullptr)
-        , Dest_(nullptr)
         , overflowFraction_( Parameter::getValue( "istl.matrix.overflowfraction", 1.0 ) )
       {}
 
@@ -768,39 +742,16 @@ namespace Dune
       ISTLMatrixObject ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace, const MatrixParameter& param = ISTLMatrixParameter() ) :
         domainSpace_(domainSpace)
         , rangeSpace_(rangeSpace)
-        // create scp to have at least one instance
-        // otherwise instance will be deleted during setup
-        // get new mappers with number of dofs without considerung block size
         , rowMapper_( rangeSpace.blockMapper() )
         , colMapper_( domainSpace.blockMapper() )
         , size_(-1)
         , sequence_(-1)
-        , matrix_(nullptr)
-        // , scp_(rangeSpace())
         , localMatrixStack_( *this )
-        , matrixAdap_(nullptr)
-        , Arg_(nullptr)
-        , Dest_(nullptr)
         , overflowFraction_( param.overflowFraction() )
       {}
 
-      /** \copydoc Dune::Fem::Operator::assembled */
-      static const bool assembled = true ;
-
-      const ThisType& systemMatrix() const
-      {
-        return *this;
-      }
-      ThisType& systemMatrix()
-      {
-        return *this;
-      }
-    public:
-      //! destructor
-      ~ISTLMatrixObject()
-      {
-        removeObj( true );
-      }
+      ThisType &systemMatrix () { return *this; }
+      const ThisType &systemMatrix () const { return *this; }
 
       //! return reference to system matrix
       MatrixType & matrix() const
@@ -823,21 +774,20 @@ namespace Dune
 
       void createMatrixAdapter () const
       {
-        if( matrixAdap_ == nullptr )
-          matrixAdap_ = new MatrixAdapterType(matrixAdapterObject());
+        if( !matrixAdap_ )
+          matrixAdap_.reset( new MatrixAdapterType( matrixAdapterObject() ) );
+        assert( matrixAdap_ );
       }
 
       //! return matrix adapter object
       const MatrixAdapterType& matrixAdapter() const
       {
-        if( matrixAdap_ == nullptr )
-          matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
+        createMatrixAdapter();
         return *matrixAdap_;
       }
       MatrixAdapterType& matrixAdapter()
       {
-        if( matrixAdap_ == nullptr )
-          matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
+        createMatrixAdapter();
         return *matrixAdap_;
       }
 
@@ -846,7 +796,7 @@ namespace Dune
       {
         // need some precondition object - empty here
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
-        return MatrixAdapterType(matrix(), domainSpace(), rangeSpace(), PreConType() );
+        return MatrixAdapterType( matrix(), domainSpace(), rangeSpace(), PreConType() );
       }
 
     public:
@@ -891,7 +841,7 @@ namespace Dune
         // if grid sequence number changed, rebuild matrix
         if(sequence_ != domainSpace().sequence())
         {
-          removeObj( true );
+          removeObj();
 
           if( implicit )
           {
@@ -902,11 +852,11 @@ namespace Dune
               tmpStencil.fill( *(domainSpace_.begin()), *(rangeSpace_.begin()) );
               nnz = tmpStencil.maxNonZerosEstimate();
             }
-            matrix_ = new MatrixType( rowMapper_.size(), colMapper_.size(), nnz, overflowFraction_ );
+            matrix_.reset( new MatrixType( rowMapper_.size(), colMapper_.size(), nnz, overflowFraction_ ) );
           }
           else
           {
-            matrix_ = new MatrixType( rowMapper_.size(), colMapper_.size() );
+            matrix_.reset( new MatrixType( rowMapper_.size(), colMapper_.size() ) );
             matrix().createEntries( stencil.globalStencil() );
           }
 
@@ -925,10 +875,10 @@ namespace Dune
         newMatrix->setup( *matrix_ , hangingNodes );
 
         // remove old matrix
-        removeObj( true );
+        removeObj();
 
         // store new matrix
-        matrix_ = newMatrix;
+        matrix_.reset( newMatrix );
       }
 
       //! extract diagonal entries of the matrix to a discrete function of type
@@ -950,17 +900,13 @@ namespace Dune
       {
         createBlockVectors();
 
-        assert( Arg_ );
-        assert( Dest_ );
-
         RowBlockVectorType& Arg = *Arg_;
-        ColumnBlockVectorType & Dest = *Dest_;
+        ColumnBlockVectorType &Dest = *Dest_;
 
         std::copy_n( arg, Arg.size(), Arg.dbegin() );
 
         // call mult of matrix adapter
-        assert( matrixAdap_ );
-        matrixAdap_->apply( Arg, Dest );
+        matrixAdapter().apply( Arg, Dest );
 
         std::copy( Dest.dbegin(), Dest.dend(), dest );
       }
@@ -968,9 +914,7 @@ namespace Dune
       //! apply with discrete functions
       void apply(const ColumnDiscreteFunctionType& arg, RowDiscreteFunctionType& dest) const
       {
-        createMatrixAdapter();
-        assert( matrixAdap_ );
-        matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
+        matrixAdapter().apply( arg.blockVector(), dest.blockVector() );
       }
 
       //! apply with arbitrary discrete functions calls multOEM
@@ -991,9 +935,6 @@ namespace Dune
       double ddotOEM(const double* v, const double* w) const
       {
         createBlockVectors();
-
-        assert( Arg_ );
-        assert( Dest_ );
 
         RowBlockVectorType&    V = *Arg_;
         ColumnBlockVectorType& W = *Dest_;
@@ -1060,41 +1001,117 @@ namespace Dune
         return LocalColumnObjectType ( *this, colEntity );
       }
 
+      template< class LocalMatrix >
+      void addLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
+        {
+          if( implicitModeActive() )
+            return matrix().entry( index.first, index.second );
+          else
+            return matrix()[ index.first ][  index.second ];
+        };
+
+        auto functor = [ &localMat, this, blockAccess ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
+        {
+          LittleBlockType& block = blockAccess( index );
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              matrix.getBlock< i, i >
+              block[ i ][ j ] += localMat.get( local.first * littleRows + i, local.second *littleCols + j );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
+      }
+
+
+      template< class LocalMatrix >
+      void setLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
+        {
+          if( implicitModeActive() )
+            return matrix().entry( index.first, index.second );
+          else
+            return matrix()[ index.first ][  index.second ];
+        };
+
+        auto functor = [ &localMat, this, blockAccess ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
+        {
+          LittleBlockType& block = blockAccess( index );
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              block[ i ][ j ] = localMat.get( local.first * littleRows + i, local.second *littleCols + j );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
+      }
+
+      template< class LocalMatrix, class Scalar >
+      void addScaledLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat, const Scalar &s  )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
+        {
+          if( implicitModeActive() )
+            return matrix().entry( index.first, index.second );
+          else
+            return matrix()[ index.first ][  index.second ];
+        };
+
+        auto functor = [ &localMat, &s, this, blockAccess ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
+        {
+          LittleBlockType& block = blockAccess( index );
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              block[ i ][ j ] += s * localMat.get( local.first * littleRows + i, local.second *littleCols + j );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
+      }
+
+      template< class LocalMatrix >
+      void getLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, LocalMatrix &localMat ) const
+      {
+        typedef typename MatrixType::size_type Index;
+        auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< Index, Index > &global )
+        {
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              localMat.set( local.first * littleRows + i, local.second *littleCols + j,
+                matrix()[ global.first ][ global.second ][i][j] );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
+      }
+
     protected:
       void preConErrorMsg(int preCon) const
       {
         exit(1);
       }
 
-      void removeObj( const bool alsoClearMatrix )
+      void removeObj ()
       {
-        delete Dest_;
-        Dest_ = nullptr;
-        delete Arg_;
-        Arg_ = nullptr;
-        delete matrixAdap_;
-        matrixAdap_ = nullptr;
-
-        if( alsoClearMatrix )
-        {
-          delete matrix_;
-          matrix_ = nullptr;
-        }
+        Dest_.reset( nullptr );
+        Arg_.reset( nullptr );
+        matrixAdap_.reset( nullptr );
       }
 
-      void createBlockVectors() const
+      void createBlockVectors () const
       {
-        if( Arg_ == nullptr || Dest_ == nullptr )
-        {
-          delete Arg_;
-          delete Dest_;
-          Arg_  = new RowBlockVectorType( rowMapper_.size() );
-          Dest_ = new ColumnBlockVectorType( colMapper_.size() );
-        }
+        if( !Arg_  )
+          Arg_.reset( new RowBlockVectorType( rowMapper_.size() ) );
+        if( !Dest_ )
+          Dest_.reset( new ColumnBlockVectorType( colMapper_.size() ) );
+
         createMatrixAdapter ();
       }
-
     };
+
+
 
     //! MatrixObject handling an istl matrix
     template <class SpaceImp>
@@ -1115,6 +1132,9 @@ namespace Dune
 
       typedef typename RangeSpaceType :: EntityType ColumnEntityType ;
       typedef typename DomainSpaceType :: EntityType RowEntityType ;
+
+      typedef ColumnEntityType DomainEntityType;
+      typedef RowEntityType RangeEntityType;
 
       enum { littleRows = DomainSpaceType :: localBlockSize };
       enum { littleCols = RangeSpaceType :: localBlockSize };
@@ -1139,260 +1159,8 @@ namespace Dune
       typedef ThisType PreconditionMatrixType;
       typedef typename MatrixAdapterType :: ParallelScalarProductType ParallelScalarProductType;
 
-      template <class MatrixObjectImp>
-      class LocalMatrix;
-
-      struct LocalMatrixTraits
-      {
-        typedef DomainSpaceImp DomainSpaceType ;
-        typedef RangeSpaceImp  RangeSpaceType;
-        typedef typename DomainSpaceType :: RangeFieldType RangeFieldType;
-        typedef LocalMatrix<ThisType> LocalMatrixType;
-        typedef typename MatrixType:: block_type LittleBlockType;
-      };
-
-      //! LocalMatrix
-      template <class MatrixObjectImp>
-      class LocalMatrix : public LocalMatrixDefault<LocalMatrixTraits>
-      {
-      public:
-        //! type of base class
-        typedef LocalMatrixDefault<LocalMatrixTraits> BaseType;
-
-        //! type of matrix object
-        typedef MatrixObjectImp MatrixObjectType;
-        //! type of matrix
-        typedef typename MatrixObjectImp :: MatrixType MatrixType;
-        //! type of little blocks
-        typedef typename MatrixType:: block_type LittleBlockType;
-        //! type of entries of little blocks
-        typedef typename DomainSpaceType :: RangeFieldType DofType;
-
-        typedef typename MatrixType::row_type RowType;
-
-        //! type of row mapper
-        typedef typename MatrixObjectType :: RowMapperType RowMapperType;
-        //! type of col mapper
-        typedef typename MatrixObjectType :: ColMapperType ColMapperType;
-
-      private:
-        // special mapper omiting block size
-        const RowMapperType& rowMapper_;
-        const ColMapperType& colMapper_;
-
-        // number of local matrices
-        int numRows_;
-        int numCols_;
-
-        // vector with pointers to local matrices
-        typedef std::vector< LittleBlockType* >            LittleMatrixRowStorageType ;
-        typedef std::vector< LittleMatrixRowStorageType >  VecLittleMatrixRowStorageType;
-        VecLittleMatrixRowStorageType matrices_;
-
-        // matrix to build
-        const MatrixObjectType& matrixObj_;
-
-       template <class RowGlobalKey>
-       struct ColFunctor
-       {
-         ColFunctor(LittleMatrixRowStorageType& localMatRow, MatrixType& matrix, const RowGlobalKey &globalRowKey) :
-           localMatRow_(localMatRow), matRow_( matrix[ globalRowKey ] ), globalRowKey_(globalRowKey)
-         {}
-         template< class GlobalKey >
-         void operator() ( const int localDoF, const GlobalKey &globalDoF )
-         {
-           localMatRow_[ localDoF ] = &matRow_[ globalDoF ];
-         }
-         private:
-         LittleMatrixRowStorageType& localMatRow_;
-         RowType& matRow_;
-         const RowGlobalKey &globalRowKey_;
-       };
-
-       template <class RowGlobalKey>
-       struct ColFunctorImplicitBuildMode
-       {
-         ColFunctorImplicitBuildMode(LittleMatrixRowStorageType& localMatRow, MatrixType& matrix, const RowGlobalKey &globalRowKey) :
-           localMatRow_(localMatRow), matrix_( matrix ), globalRowKey_(globalRowKey)
-         {}
-         template< class GlobalKey >
-         void operator() ( const int localDoF, const GlobalKey &globalDoF )
-         {
-           localMatRow_[ localDoF ] = &matrix_.entry( globalRowKey_, globalDoF );
-         }
-         private:
-         LittleMatrixRowStorageType& localMatRow_;
-         MatrixType& matrix_;
-         const RowGlobalKey &globalRowKey_;
-       };
-
-       template <template <class> class ColFunctorImpl>
-       struct RowFunctor
-       {
-         RowFunctor(const RowEntityType &rowEntity, const RowMapperType &rowMapper, MatrixType &matrix,
-                    VecLittleMatrixRowStorageType &matrices, int numCols) :
-           rowEntity_(rowEntity), rowMapper_(rowMapper), matrix_(matrix), matrices_(matrices), numCols_(numCols)
-         {}
-         template< class GlobalKey >
-         void operator() ( const int localDoF, const GlobalKey &globalDoF )
-         {
-           auto& localMatRow = matrices_[ localDoF ];
-           localMatRow.resize( numCols_ );
-           ColFunctorImpl< GlobalKey > colFunctor( localMatRow, matrix_, globalDoF );
-           rowMapper_.mapEach( rowEntity_, colFunctor );
-         }
-         private:
-         const RowEntityType & rowEntity_;
-         const RowMapperType & rowMapper_;
-         MatrixType &matrix_;
-         VecLittleMatrixRowStorageType &matrices_;
-         int numCols_;
-       };
-
-      public:
-        LocalMatrix(const MatrixObjectType & mObj, const DomainSpaceType & rowSpace, const RangeSpaceType & colSpace) :
-          BaseType( rowSpace, colSpace ), rowMapper_(mObj.rowMapper()), colMapper_(mObj.colMapper()), numRows_( rowMapper_.maxNumDofs() ),
-          numCols_( colMapper_.maxNumDofs() ), matrixObj_(mObj)
-        {}
-
-        void init(const RowEntityType & rowEntity, const ColumnEntityType & colEntity)
-        {
-          // initialize base functions sets
-          BaseType :: init ( rowEntity , colEntity );
-
-          numRows_  = rowMapper_.numDofs(colEntity);
-          numCols_  = colMapper_.numDofs(rowEntity);
-          matrices_.resize( numRows_ );
-
-          if( matrixObj_.implicitModeActive() )
-          {
-            // implicit access via matrix.entry( i, j )
-            RowFunctor< ColFunctorImplicitBuildMode > rowFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
-            colMapper_.mapEach(colEntity, rowFunctor);
-          }
-          else
-          {
-            // normal access to matrix via operator [i][j]
-            RowFunctor< ColFunctor > rowFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
-            colMapper_.mapEach(colEntity, rowFunctor);
-          }
-        }
-
-        LocalMatrix(const LocalMatrix& org) :
-          BaseType( org ), rowMapper_(org.rowMapper_), colMapper_(org.colMapper_), numRows_( org.numRows_ ), numCols_( org.numCols_ ),
-          matrices_(org.matrices_), matrixObj_(org.matrixObj_)
-        {}
-
-      private:
-        // check whether given (row,col) pair is valid
-        void check(int localRow, int localCol) const
-        {
-          const std::size_t row = (int) localRow / littleRows;
-          const std::size_t col = (int) localCol / littleCols;
-          const int lRow = localRow%littleRows;
-          const int lCol = localCol%littleCols;
-          assert( row < matrices_.size() ) ;
-          assert( col < matrices_[row].size() );
-          assert( lRow < littleRows );
-          assert( lCol < littleCols );
-        }
-
-        DofType& getValue(const int localRow, const int localCol)
-        {
-          const int row = (int) localRow / littleRows;
-          const int col = (int) localCol / littleCols;
-          const int lRow = localRow%littleRows;
-          const int lCol = localCol%littleCols;
-          return (*matrices_[row][col])[lRow][lCol];
-        }
-
-      public:
-        const DofType get(const int localRow, const int localCol) const
-        {
-          const int row = (int) localRow / littleRows;
-          const int col = (int) localCol / littleCols;
-          const int lRow = localRow%littleRows;
-          const int lCol = localCol%littleCols;
-          return (*matrices_[row][col])[lRow][lCol];
-        }
-
-        void scale (const DofType& scalar)
-        {
-          for(auto i=0; i<matrices_.size(); ++i)
-            for(auto j=0; j<matrices_[i].size(); ++j)
-              (*matrices_[i][j]) *= scalar;
-        }
-
-        void add(const int localRow, const int localCol , const DofType value)
-        {
-#ifndef NDEBUG
-          check(localRow,localCol);
-#endif
-          getValue(localRow,localCol) += value;
-        }
-
-        void set(const int localRow, const int localCol , const DofType value)
-        {
-#ifndef NDEBUG
-          check(localRow,localCol);
-#endif
-          getValue(localRow,localCol) = value;
-        }
-
-        //! make unit row (all zero, diagonal entry 1.0 )
-        void unitRow(const int localRow)
-        {
-          const int row = (int) localRow / littleRows;
-          const int lRow = localRow%littleRows;
-
-          // clear row
-          doClearRow( row, lRow );
-
-          // set diagonal entry to 1
-          (*matrices_[row][row])[lRow][lRow] = 1;
-        }
-
-        //! clear all entries belonging to local matrix
-        void clear ()
-        {
-          for(auto i=0; i<matrices_.size(); ++i)
-            for(auto j=0; j<matrices_[i].size(); ++j)
-              (*matrices_[i][j]) = (DofType) 0;
-        }
-
-        //! set matrix row to zero
-        void clearRow ( const int localRow )
-        {
-          const int row = (int) localRow / littleRows;
-          const int lRow = localRow%littleRows;
-
-          // clear the row
-          doClearRow( row, lRow );
-        }
-
-        //! empty as the little matrices are already sorted
-        void resort ()
-        {}
-
-    protected:
-        //! set matrix row to zero
-        void doClearRow ( const int row, const int lRow )
-        {
-          // get number of columns
-          const auto col = this->columns();
-          for(auto localCol=0; localCol<col; ++localCol)
-          {
-            const int col = (int) localCol / littleCols;
-            const int lCol = localCol%littleCols;
-            (*matrices_[row][col])[lRow][lCol] = 0;
-          }
-        }
-
-      }; // end of class LocalMatrix
-
-    public:
       //! type of local matrix
-      typedef LocalMatrix<ThisType> ObjectType;
+      typedef ISTLLocalMatrix<ThisType> ObjectType;
       typedef ThisType LocalMatrixFactoryType;
       typedef ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
       //! type of local matrix
@@ -1412,7 +1180,7 @@ namespace Dune
 
       int sequence_;
 
-      mutable MatrixType* matrix_;
+      mutable std::unique_ptr< MatrixType > matrix_;
 
       ParallelScalarProductType scp_;
 
@@ -1435,9 +1203,9 @@ namespace Dune
 
       mutable LocalMatrixStackType localMatrixStack_;
 
-      mutable MatrixAdapterType* matrixAdap_;
-      mutable RowBlockVectorType* Arg_;
-      mutable ColumnBlockVectorType* Dest_;
+      mutable std::unique_ptr< MatrixAdapterType > matrixAdap_;
+      mutable std::unique_ptr< RowBlockVectorType > Arg_;
+      mutable std::unique_ptr< ColumnBlockVectorType > Dest_;
       // overflow fraction for implicit build mode
       const double overflowFraction_;
       const MatrixParameter& param_;
@@ -1452,15 +1220,11 @@ namespace Dune
          , colMapper_( colSpace.blockMapper() )
          , size_(-1)
          , sequence_(-1)
-         , matrix_(nullptr)
          , scp_(rangeSpace())
          , numIterations_(5)
          , relaxFactor_(1.1)
          , preconditioning_(none)
          , localMatrixStack_( *this )
-         , matrixAdap_(nullptr)
-         , Arg_(nullptr)
-         , Dest_(nullptr)
          , overflowFraction_( Parameter::getValue( "istl.matrix.overflowfraction", 1.0 ) )
        {
          int preCon = 0;
@@ -1500,38 +1264,19 @@ namespace Dune
         , colMapper_( colSpace.blockMapper() )
         , size_(-1)
         , sequence_(-1)
-        , matrix_(nullptr)
         , scp_(rangeSpace())
         , numIterations_( param.numIterations() )
         , relaxFactor_( param.relaxation() )
         , preconditioning_( (ISTLPreConder_Id)param.method() )
         , localMatrixStack_( *this )
-        , matrixAdap_(nullptr)
-        , Arg_(nullptr)
-        , Dest_(nullptr)
         , overflowFraction_( param.overflowFraction() )
         , param_( param )
       {
         assert( rowMapper_.size() == colMapper_.size() );
       }
 
-      /** \copydoc Dune::Fem::Operator::assembled */
-      static const bool assembled = true ;
-
-      const ThisType& systemMatrix() const
-      {
-        return *this;
-      }
-      ThisType& systemMatrix()
-      {
-        return *this;
-      }
-    public:
-      //! destructor
-      ~ISTLMatrixObject()
-      {
-        removeObj( true );
-      }
+      ThisType &systemMatrix () { return *this; }
+      const ThisType &systemMatrix () const { return *this; }
 
       //! return reference to system matrix
       MatrixType & matrix() const
@@ -1572,14 +1317,14 @@ namespace Dune
       //! return matrix adapter object
       const MatrixAdapterType& matrixAdapter() const
       {
-        if( matrixAdap_ == nullptr )
-          matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
+        if( !matrixAdap_ )
+          matrixAdap_.reset( new MatrixAdapterType( matrixAdapterObject() ) );
         return *matrixAdap_;
       }
       MatrixAdapterType& matrixAdapter()
       {
-        if( matrixAdap_ == nullptr )
-          matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
+        if( !matrixAdap_ )
+          matrixAdap_.reset( new MatrixAdapterType( matrixAdapterObject() ) );
         return *matrixAdap_;
       }
 
@@ -1726,7 +1471,7 @@ namespace Dune
       {
         matrix().clear();
         // clean matrix adapter and other helper classes
-        removeObj( false );
+        removeObj();
       }
 
       //! reserve memory for assemble based on the provided stencil
@@ -1736,7 +1481,7 @@ namespace Dune
         // if grid sequence number changed, rebuild matrix
         if(sequence_ != domainSpace().sequence())
         {
-          removeObj( true );
+          removeObj();
 
           if( implicit )
           {
@@ -1747,11 +1492,11 @@ namespace Dune
               tmpStencil.fill( *(domainSpace_.begin()), *(rangeSpace_.begin()) );
               nnz = tmpStencil.maxNonZerosEstimate();
             }
-            matrix_ = new MatrixType( rowMapper_.size(), colMapper_.size(), nnz, overflowFraction_ );
+            matrix_.reset( new MatrixType( rowMapper_.size(), colMapper_.size(), nnz, overflowFraction_ ) );
           }
           else
           {
-            matrix_ = new MatrixType( rowMapper_.size(), colMapper_.size() );
+            matrix_.reset( new MatrixType( rowMapper_.size(), colMapper_.size() ) );
             matrix().createEntries( stencil.globalStencil() );
           }
 
@@ -1770,10 +1515,10 @@ namespace Dune
         newMatrix->setup( *matrix_ , hangingNodes );
 
         // remove old matrix
-        removeObj( true );
+        removeObj();
 
         // store new matrix
-        matrix_ = newMatrix;
+        matrix_.reset( newMatrix );
       }
 
       //! extract diagonal entries of the matrix to a discrete function of type
@@ -1888,23 +1633,11 @@ namespace Dune
         matrix().print(s);
       }
 
-      const DomainSpaceType& domainSpace() const
-      {
-        return domainSpace_;
-      }
-      const RangeSpaceType&  rangeSpace() const
-      {
-        return rangeSpace_;
-      }
+      const DomainSpaceType& domainSpace() const { return domainSpace_; }
+      const RangeSpaceType&  rangeSpace() const { return rangeSpace_; }
 
-      const RowMapperType& rowMapper() const
-      {
-        return rowMapper_;
-      }
-      const ColMapperType& colMapper() const
-      {
-        return colMapper_;
-      }
+      const RowMapperType& rowMapper() const { return rowMapper_; }
+      const ColMapperType& colMapper() const { return colMapper_; }
 
       //! interface method from LocalMatrixFactory
       ObjectType* newObject() const
@@ -1920,6 +1653,91 @@ namespace Dune
       LocalColumnObjectType localColumn( const ColumnEntityType &colEntity ) const
       {
         return LocalColumnObjectType ( *this, colEntity );
+      }
+
+      template< class LocalMatrix >
+      void addLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
+        {
+          if( implicitModeActive() )
+            return matrix().entry( index.first, index.second );
+          else
+            return matrix()[ index.first ][  index.second ];
+        };
+
+        auto functor = [ &localMat, this, blockAccess ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
+        {
+          LittleBlockType& block = blockAccess( index );
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              block[ i ][ j ] += localMat.get( local.first * littleRows + i, local.second *littleCols + j );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
+      }
+
+
+      template< class LocalMatrix >
+      void setLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
+        {
+          if( implicitModeActive() )
+            return matrix().entry( index.first, index.second );
+          else
+            return matrix()[ index.first ][  index.second ];
+        };
+
+        auto functor = [ &localMat, this, blockAccess ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
+        {
+          LittleBlockType& block = blockAccess( index );
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              block[ i ][ j ] = localMat.get( local.first * littleRows + i, local.second *littleCols + j );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
+      }
+
+      template< class LocalMatrix, class Scalar >
+      void addScaledLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat, const Scalar &s  )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
+        {
+          if( implicitModeActive() )
+            return matrix().entry( index.first, index.second );
+          else
+            return matrix()[ index.first ][  index.second ];
+        };
+
+        auto functor = [ &localMat, &s, this, blockAccess ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
+        {
+          LittleBlockType& block = blockAccess( index );
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              block[ i ][ j ] += s * localMat.get( local.first * littleRows + i, local.second *littleCols + j );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
+      }
+
+      template< class LocalMatrix >
+      void getLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, LocalMatrix &localMat ) const
+      {
+        typedef typename MatrixType::size_type Index;
+        auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< Index, Index > &global )
+        {
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              localMat.set( local.first * littleRows + i, local.second *littleCols + j,
+                matrix()[ global.first ][ global.second ][i][j] );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
       }
 
     protected:
@@ -1939,30 +1757,19 @@ namespace Dune
         exit(1);
       }
 
-      void removeObj( const bool alsoClearMatrix )
+      void removeObj ()
       {
-        delete Dest_;
-        Dest_ = nullptr;
-        delete Arg_;
-        Arg_ = nullptr;
-        delete matrixAdap_;
-        matrixAdap_ = nullptr;
-
-        if( alsoClearMatrix )
-        {
-          delete matrix_;
-          matrix_ = nullptr;
-        }
+        Dest_.reset( nullptr );
+        Arg_.reset( nullptr );
+        matrixAdap_.reset( nullptr );
       }
 
       void createBlockVectors() const
       {
-        if( Arg_ == nullptr || Dest_ == nullptr )
+        if( !Arg_ || !Dest_ )
         {
-          delete Arg_;
-          delete Dest_;
-          Arg_  = new RowBlockVectorType( rowMapper_.size() );
-          Dest_ = new ColumnBlockVectorType( colMapper_.size() );
+          Arg_.reset( new RowBlockVectorType( rowMapper_.size() ) );
+          Dest_.reset( new ColumnBlockVectorType( colMapper_.size() ) );
         }
 
         createMatrixAdapter ();
@@ -1970,8 +1777,8 @@ namespace Dune
 
       void createMatrixAdapter () const
       {
-        if( matrixAdap_ == nullptr )
-          matrixAdap_ = new MatrixAdapterType(matrixAdapterObject());
+        if( !matrixAdap_ )
+          matrixAdap_.reset( new MatrixAdapterType(matrixAdapterObject()) );
       }
 
     };
