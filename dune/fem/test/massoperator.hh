@@ -3,7 +3,8 @@
 
 #include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/operator/common/operator.hh>
-#include <dune/fem/operator/linear/petscoperator.hh>
+#include <dune/fem/operator/common/temporarylocalmatrix.hh>
+
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 
@@ -97,12 +98,15 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
   typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
   typedef typename DiscreteFunctionSpaceType::RangeFieldType FieldType;
 
-  typedef typename BaseType::LocalMatrixType LocalMatrixType;
   typedef typename IteratorType::Entity EntityType;
   typedef typename EntityType::Geometry GeometryType;
 
+  typedef Dune::Fem::TemporaryLocalMatrix< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > LocalMatrixType;
+
   BaseType::reserve( Dune::Fem::DiagonalStencil<DiscreteFunctionSpaceType,DiscreteFunctionSpaceType>( dfSpace_, dfSpace_ ) );
   BaseType::clear();
+
+  LocalMatrixType localMatrix( dfSpace_, dfSpace_ );
 
   std::vector< typename DiscreteFunctionSpaceType::RangeType > values;
 
@@ -113,7 +117,8 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
     const EntityType &entity = *it;
     const GeometryType &geometry = entity.geometry();
 
-    LocalMatrixType localMatrix = BaseType::localMatrix( entity, entity );
+    localMatrix.init( entity, entity );
+    localMatrix.clear();
 
     const BasisFunctionSetType &basis = localMatrix.domainBasisFunctionSet();
     const unsigned int numBasisFunctions = basis.size();
@@ -140,6 +145,9 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
         localMatrix.column( i ).axpy( values, value, weight );
       }
     }
+
+    // add to global matrix
+    BaseType::addLocalMatrix( entity, entity, localMatrix );
   }
   BaseType::communicate();
 }
