@@ -92,49 +92,39 @@ namespace Dune
       Vector &vector_;
     };
 
-    // DofBlockTraits
-    // --------------
-
-    template<class DiscreteFunction >
-    struct DofBlockTraits
-    {
-      typedef typename DiscreteFunction::DofBlockPtrType DofBlockPtrType;
-      typedef typename DiscreteFunction::DofBlockType DofBlockType;
-    };
-
-    template<class DiscreteFunction >
-    struct DofBlockTraits<const DiscreteFunction>
-    {
-      typedef typename DiscreteFunction::ConstDofBlockPtrType DofBlockPtrType;
-      typedef typename DiscreteFunction::ConstDofBlockType DofBlockType;
-    };
-
 
     // DofBlockFunctor
     // ---------------
 
-    template< class DiscreteFunction, class Functor >
+    template< class DofVector, class Functor >
     struct DofBlockFunctor
     {
-      typedef typename DofBlockTraits< DiscreteFunction >::DofBlockPtrType DofBlockPtrType;
-      typedef typename DofBlockTraits< DiscreteFunction >::DofBlockType DofBlockType;
+      static const int blockSize = DofVector::blockSize;
 
-      static const int blockSize = DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize;
-
-      DofBlockFunctor ( DiscreteFunction &df, Functor &functor )
-      : df_( df ), functor_( functor )
+      DofBlockFunctor ( DofVector &dofVector, Functor functor )
+      : dofVector_( dofVector ), functor_( functor )
       {}
 
       template < class GlobalKey >
-      void operator () ( const std::size_t local, const GlobalKey& globalKey )
+      void operator () ( std::size_t local, const GlobalKey& globalKey )
       {
         for( int i = 0; i < blockSize; ++i )
-          functor_( local*blockSize + i, df_.dofVector()[ globalKey ][ i ] );
+          functor_( local*blockSize + i, dofVector_[ globalKey ][ i ] );
       }
     private:
-      DiscreteFunction &df_;
-      Functor &functor_;
+      DofVector &dofVector_;
+      Functor functor_;
     };
+
+
+    // dofBlockFunctor
+    // ---------------
+
+    template< class DofVector, class Functor >
+    static inline DofBlockFunctor< DofVector, Functor > dofBlockFunctor ( DofVector &dofVector, Functor functor )
+    {
+      return DofBlockFunctor< DofVector, Functor >( dofVector, std::move( functor ) );
+    }
 
   } // namespace Fem
 

@@ -846,54 +846,39 @@ namespace Dune
       template< class LocalDofs >
       void addScaledLocalDofs ( const EntityType &entity, const RangeFieldType &s, const LocalDofs &localDofs )
       {
-        typedef LeftAddScaled< const LocalDofs, const RangeFieldType > AssignFunctorType;
-        AssignFunctorType assignFunctor( localDofs, s );
-
-        DofBlockFunctor< DiscreteFunctionType, AssignFunctorType > functor( asImp(), assignFunctor );
-        space().blockMapper().mapEach( entity, functor );
+        LeftAddScaled< const LocalDofs, const RangeFieldType > assignFunctor( localDofs, s );
+        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
       //! add local Dofs to dof vector
       template< class LocalDofs >
       void addLocalDofs ( const EntityType &entity, const LocalDofs &localDofs )
       {
-        typedef LeftAdd< const LocalDofs > AssignFunctorType;
-        AssignFunctorType assignFunctor( localDofs );
-
-        DofBlockFunctor< DiscreteFunctionType, AssignFunctorType > functor( asImp(), assignFunctor );
-        space().blockMapper().mapEach( entity, functor );
+        LeftAdd< const LocalDofs > assignFunctor( localDofs );
+        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
       //! set local Dofs to dof vector
       template< class LocalDofs >
       void setLocalDofs ( const EntityType &entity, const LocalDofs &localDofs )
       {
-        typedef LeftAssign< const LocalDofs > AssignFunctorType;
-        AssignFunctorType assignFunctor( localDofs );
-
-        DofBlockFunctor< DiscreteFunctionType, AssignFunctorType > functor( asImp(), assignFunctor );
-        space().blockMapper().mapEach( entity, functor );
+        LeftAssign< const LocalDofs > assignFunctor( localDofs );
+        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
       //! get local Dofs and store a reference to it in the LocalDofVector
       void getLocalDofs ( const EntityType &entity, LocalDofVectorType &localDofs )
       {
-        typedef AssignVectorReference< LocalDofVectorType > AssignFunctorType;
-        AssignFunctorType assignFunctor( localDofs );
-
-        DofBlockFunctor< DiscreteFunctionType, AssignFunctorType > functor( asImp(), assignFunctor );
-        space().blockMapper().mapEach( entity, functor );
+        AssignVectorReference< LocalDofVectorType > assignFunctor( localDofs );
+        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
       //! get local Dofs and store the values  in LocalDofVector
       template< class A >
       void getLocalDofs ( const EntityType &entity, Dune::DynamicVector< DofType, A > &localDofs ) const
       {
-        typedef AssignFunctor< Dune::DynamicVector< DofType, A > > AssignFunctorType;
-        AssignFunctorType assignFunctor( localDofs );
-
-        DofBlockFunctor< const DiscreteFunctionType, AssignFunctorType > functor( asImp(), assignFunctor );
-        space().blockMapper().mapEach( entity, functor );
+        AssignFunctor< Dune::DynamicVector< DofType, A > > assignFunctor( localDofs );
+        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
     protected:
