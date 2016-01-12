@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_VTKIO_HH
 #define DUNE_FEM_VTKIO_HH
 
+#include <type_traits>
+
 #include <dune/common/typetraits.hh>
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
@@ -139,7 +141,7 @@ namespace Dune
       class VTKWriter;
       class SubsamplingVTKWriter;
 
-      typedef typename conditional< subsampling, SubsamplingVTKWriter, VTKWriter >::type
+      typedef typename std::conditional< subsampling, SubsamplingVTKWriter, VTKWriter >::type
         VTKWriterType;
 
     public:
@@ -278,7 +280,7 @@ namespace Dune
       {
         typedef typename DF::RangeFieldType RangeFieldType;
         typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
-        return ! std::is_same< typename std::remove_cv<RangeFieldType>::type, std::complex<RealType> >::value; 
+        return ! std::is_same< typename std::remove_cv<RangeFieldType>::type, std::complex<RealType> >::value;
       }
 
     public:

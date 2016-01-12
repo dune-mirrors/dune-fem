@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDPART_ENTITYSEARCH_HH
 #define DUNE_FEM_GRIDPART_ENTITYSEARCH_HH
 
+#include <type_traits>
+
 #include <dune/common/typetraits.hh>
 
 #include <dune/geometry/referenceelements.hh>
@@ -129,10 +131,10 @@ namespace Dune
 
     template< class GridPart, int codim = 0, PartitionIteratorType partition = All_Partition >
     class EntitySearch
-    : public conditional< GridPartCapabilities::hasGrid< GridPart >::v, GridEntitySearch< GridPart, codim, partition >, DefaultEntitySearch< GridPart, codim, partition > >::type
+    : public std::conditional< GridPartCapabilities::hasGrid< GridPart >::v, GridEntitySearch< GridPart, codim, partition >, DefaultEntitySearch< GridPart, codim, partition > >::type
     {
       typedef EntitySearch< GridPart, codim, partition > ThisType;
-      typedef typename conditional< GridPartCapabilities::hasGrid< GridPart >::v, GridEntitySearch< GridPart, codim, partition >, DefaultEntitySearch< GridPart, codim, partition > >::type BaseType;
+      typedef typename std::conditional< GridPartCapabilities::hasGrid< GridPart >::v, GridEntitySearch< GridPart, codim, partition >, DefaultEntitySearch< GridPart, codim, partition > >::type BaseType;
 
     public:
       typedef typename BaseType::GridPartType GridPartType;

@@ -2,6 +2,7 @@
 #define DUNE_FEM_COMBINEDDISCRETFUNCTIONSPACE_HH
 
 #include <algorithm>
+#include <type_traits>
 
 #include <dune/common/math.hh>
 #include <dune/common/typetraits.hh>
@@ -119,7 +120,7 @@ namespace Dune
       typedef typename DFunctionSpaceImp2::template ToNewDimRange< newDimRange2 >::Type Type2;
 
     public:
-      typedef typename conditional< (newDimRange == 1), Type1,
+      typedef typename std::conditional< (newDimRange == 1), Type1,
               CombinedDiscreteFunctionSpace< Type1, Type2 > >::type Type;
     };
 

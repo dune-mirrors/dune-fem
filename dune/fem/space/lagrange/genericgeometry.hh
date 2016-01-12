@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SPACE_LAGRANGE_GENERICGEOMETRY_HH
 #define DUNE_FEM_SPACE_LAGRANGE_GENERICGEOMETRY_HH
 
+#include <type_traits>
+
 // dune-common includes
 #include <dune/common/fvector.hh>
 
@@ -195,7 +197,7 @@ namespace Dune
     public:
       static const unsigned int dimension = dim;
 
-      typedef typename conditional< isPrism, Prism< true >, Pyramid< false > >::type::GenericGeometryType
+      typedef typename std::conditional< isPrism, Prism< true >, Pyramid< false > >::type::GenericGeometryType
         GenericGeometryType;
     };
 
