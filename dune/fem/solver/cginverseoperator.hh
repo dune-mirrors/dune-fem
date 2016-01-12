@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_CGINVERSEOPERATOR_HH
 #define DUNE_FEM_CGINVERSEOPERATOR_HH
 
+#include <type_traits>
+
 #include <dune/common/typetraits.hh>
 
 #include <dune/fem/function/common/discretefunction.hh>
@@ -364,7 +366,7 @@ namespace Dune
       void checkPreconditioning( const LinearOperator &linearOp )
       {
         const bool preconditioning = Parameter::getValue< bool >( "fem.preconditioning", false );
-        if( preconditioning && IsBaseOf< AssembledOperator< DomainFunctionType, DomainFunctionType > ,LinearOperator > :: value )
+        if( preconditioning && std::is_base_of< AssembledOperator< DomainFunctionType, DomainFunctionType > ,LinearOperator > :: value )
         {
           // create diagonal preconditioner
           precondObj_ = new DiagonalPreconditioner< DomainFunctionType, LinearOperator >( linearOp );

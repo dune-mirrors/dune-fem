@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_DIAGONALPRECONDITIONER_HH
 #define DUNE_FEM_DIAGONALPRECONDITIONER_HH
 
+#include <type_traits>
+
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
 
@@ -146,9 +148,9 @@ namespace Dune
       */
     template< class DFImp, class Operator>
     class DiagonalPreconditioner
-      : public DiagonalPreconditionerBase< DFImp, Operator, IsBaseOf< AssembledOperator< DFImp, DFImp >, Operator > :: value >
+      : public DiagonalPreconditionerBase< DFImp, Operator, std::is_base_of< AssembledOperator< DFImp, DFImp >, Operator > :: value >
     {
-      typedef DiagonalPreconditionerBase< DFImp, Operator, IsBaseOf< AssembledOperator< DFImp, DFImp >, Operator > :: value >
+      typedef DiagonalPreconditionerBase< DFImp, Operator, std::is_base_of< AssembledOperator< DFImp, DFImp >, Operator > :: value >
         BaseType;
     public:
       typedef Operator   OperatorType;
