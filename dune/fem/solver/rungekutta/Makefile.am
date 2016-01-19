@@ -1,4 +1,4 @@
-rungekuttadir =  $(includedir)/dune/fem/rungekutta
+rungekuttadir =  $(includedir)/dune/fem/solver/rungekutta
 rungekutta_HEADERS = \
 	basicimplicit.hh \
 	basicrow.hh \
