@@ -165,7 +165,7 @@ namespace Dune
 
       //! please doc me
       template< class Quadrature, class DofVector, class JacobianRangeArray >
-      void jacobainAll ( const Quadrature &quad, const DofVector &dofs, JacobianRangeArray &jacobians ) const
+      void jacobianAll ( const Quadrature &quad, const DofVector &dofs, JacobianRangeArray &jacobians ) const
       {
         const unsigned int nop = quad.nop();
         for( unsigned int qp = 0; qp < nop; ++qp )
