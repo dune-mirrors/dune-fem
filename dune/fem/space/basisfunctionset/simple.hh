@@ -20,7 +20,10 @@ namespace Dune
 
     /** \class SimpleBasisFunctionSet
      *
-     *  \brief Please doc me.
+     *  \brief This class is a simple basis function set which is needed for
+     *  global basis functions sets (Fourier space etc.).
+     *
+     *  \note For localized basis function sets use the DefaultBasisFunctionSet.
      *
      *  \tparam  LocalFunctionSet  set of basis functions
      */
