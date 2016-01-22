@@ -49,14 +49,6 @@ namespace Dune
       //! type of BasisFunctionSet
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
-      //! cast from ConstLocalFunction
-      MutableLocalFunction( const ConstLocalFunction< DiscreteFunctionType > &constLocalFunction ) DUNE_DEPRECATED
-      : BaseType( constLocalFunction.basisFunctionSet(), LocalDofVectorType( constLocalFunction.discreteFunction_.localDofVectorAllocator() ) ),
-        discreteFunction_( &const_cast< DiscreteFunctionType& >( constLocalFunction.discreteFunction() ) )
-      {
-        discreteFunction().getLocalDofs( constLocalFunction.entity(), localDofVector() );
-      }
-
       //! Constructor creating empty local function from given discrete function
       explicit MutableLocalFunction ( DiscreteFunctionType &discreteFunction )
       : BaseType( LocalDofVectorType( discreteFunction.localDofVectorAllocator() ) ),

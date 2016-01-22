@@ -6,7 +6,6 @@
 #include <tuple>
 #include <type_traits>
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/timer.hh>
 #include <dune/common/tuples.hh>
 
