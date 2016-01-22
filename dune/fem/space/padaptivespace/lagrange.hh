@@ -189,23 +189,7 @@ namespace Dune
       template< class EntityType >
       const CompiledLocalKeyType &lagrangePointSet ( const EntityType &entity ) const
       {
-        return compiledLocalKey( entity.type(),
-                                 blockMapper().polynomOrder( entity ) );
-      }
-
-      /** \brief provide access to the Lagrange point set for a geometry type
-       *
-       *  \note This method is not part of the DiscreteFunctionSpaceInterface. It
-       *        is unique to the LagrangeDiscreteFunctionSpace.
-       *
-       *  \param[in]  type  type of geometry the Lagrange point set is requested for
-       *  \param[in]  order polynomial order the Lagrange point set is requested for
-       *
-       *  \returns LagrangePointSetType
-       */
-      const CompiledLocalKeyType &lagrangePointSet ( const GeometryType &type, const int order = BaseType::polynomialOrder ) const DUNE_DEPRECATED
-      {
-        return compiledLocalKey( type, order );
+        return compiledLocalKey( entity.type(), blockMapper().polynomOrder( entity ) );
       }
 
       /** \brief add function to discrete function space for p-adaptation

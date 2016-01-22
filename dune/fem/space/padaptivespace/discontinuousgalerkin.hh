@@ -127,15 +127,6 @@ namespace Dune
       }
 
       /** \brief Please doc me. */
-      template< class EntityType >
-      DUNE_DEPRECATED
-      inline const CompiledLocalKeyType &lagrangePointSet( const EntityType &entity ) const
-      {
-        return compiledLocalKey( entity.type(),
-                                 blockMapper().polynomOrder( entity ) );
-      }
-
-      /** \brief Please doc me. */
       inline const CompiledLocalKeyType &lagrangePointSet( const GeometryType &type, const int order = BaseType::polynomialOrder ) const
       {
         return compiledLocalKey( type, order );

@@ -10,9 +10,6 @@
 #include <cassert>
 #include <vector>
 
-// dune-common includes
-#include <dune/common/deprecated.hh>
-
 // dune-geometry types
 #include <dune/geometry/type.hh>
 
@@ -243,24 +240,10 @@ namespace Dune
         return InterpolationType( basisFunctionSet( entity ) );
       }
 
-      /** \brief interpolate a function locally
-       *
-       *  \param[in]  localFunction  local function to interpolate
-       *  \param[out] dofs  local degrees of freedom of the interpolion
-       */
-      template< class LocalFunction, class LocalDofVector >
-      DUNE_DEPRECATED
-      void interpolate ( const LocalFunction &localFunction, LocalDofVector &dofs ) const
-      {
-        const EntityType &entity = localFunction.entity();
-        InterpolationType interpolation = this->interpolation( entity );
-        interpolation( localFunction, dofs );
-      }
+      RannacherTurekDiscreteFunctionSpace ( const ThisType & ) = delete;
+      ThisType &operator= ( const ThisType & ) = delete;
 
     private:
-      RannacherTurekDiscreteFunctionSpace ( const ThisType & );
-      ThisType &operator= ( const ThisType & );
-
       ScalarShapeFunctionSetType *scalarShapeFunctionSet_;
       BlockMapperType *blockMapper_;
     };

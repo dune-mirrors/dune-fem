@@ -13,7 +13,6 @@ solver_HEADERS = cginverseoperator.hh \
 								 parameter.hh \
                  petscsolver.hh \
 		 						 preconditionedinverseoperator.hh \
-                 rungekutta.hh \
                  timeprovider.hh \
                  umfpacksolver.hh \
 								 spqrsolver.hh \

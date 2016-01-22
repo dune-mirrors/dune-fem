@@ -24,7 +24,6 @@ misc_HEADERS = alugridwriter.hh \
 	       gridsolution.hh \
 	       gridwidth.hh \
 	       h1norm.hh \
-	       iteratorprovider.hh \
 	       l1norm.hh \
 	       l2norm.hh \
 	       linesegmentsampler.hh \
@@ -32,8 +31,7 @@ misc_HEADERS = alugridwriter.hh \
 	       mapgeomtype.hh \
 	       metaprogramming.hh \
 	       mpimanager.hh \
-	       nonconformitylevel.hh \
-	       validator.hh
+	       nonconformitylevel.hh
 
 noinst_LTLIBRARIES = libmisc.la
 libmisc_la_SOURCES = femtimer.cc

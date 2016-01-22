@@ -93,10 +93,6 @@ int main ( int argc, char **argv )
   return CheckGridEnabled< Dune::GridSelector::GridType >::CallMain( argc, argv );
 }
 
-#ifndef DISABLE_DEPRECATED_METHOD_CHECK
-#define DISABLE_DEPRECATED_METHOD_CHECK 1
-#endif
-
 // use deprecated interface check unit ALUGrid returns entities instead of entity pointers
 #ifndef DUNE_GRID_CHECK_USE_DEPRECATED_ENTITY_AND_INTERSECTION_INTERFACE
 #define DUNE_GRID_CHECK_USE_DEPRECATED_ENTITY_AND_INTERSECTION_INTERFACE 1

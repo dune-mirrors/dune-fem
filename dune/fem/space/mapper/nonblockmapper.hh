@@ -104,13 +104,6 @@ namespace Dune
           blockMapper_.mapEach( element, BlockFunctor< Functor >( f ) );
         }
 
-        void map ( const ElementType &element, std::vector< std::size_t > &indices ) const
-        DUNE_DEPRECATED_MSG( "This function is out dated and will be deleted in version 1.5" )
-        {
-          indices.resize( numDofs( element ) );
-          mapEach( element, AssignFunctor< std::vector< std::size_t > >( indices ) );
-        }
-
         template< class Entity, class Functor >
         void mapEachEntityDof ( const Entity &entity, Functor f ) const
         {

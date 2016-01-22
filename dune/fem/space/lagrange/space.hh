@@ -5,7 +5,6 @@
 #include <vector>
 
 // dune-common includes
-#include <dune/common/deprecated.hh>
 #include <dune/common/exceptions.hh>
 
 // dune-geometry includes
@@ -257,20 +256,6 @@ namespace Dune
       InterpolationType interpolation ( const EntityType &entity ) const
       {
         return InterpolationType( lagrangePointSet( entity ), basisFunctionSet( entity ) );
-      }
-
-      /** \brief interpolate a function locally
-       *
-       *  \param[in]  loalFunction  local function to interpolate
-       *  \param[out]  localDofVector local degrees of freedom of the interpolion
-       */
-      template< class LocalFunction, class LocalDofVector >
-      DUNE_DEPRECATED
-      void interpolate ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
-      {
-        const EntityType &entity = localFunction.entity();
-        const auto interpolation = this->interpolation( entity );
-        interpolation( localFunction, localDofVector );
       }
 
       /** \brief return shape function set for given entity

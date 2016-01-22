@@ -139,14 +139,7 @@ namespace Dune
       int getBalanceStep( int balanceCounter ) const
       {
         int step = balanceCounter;
-        if( Parameter :: exists("BalanceStep") )
-        {
-          std::cout << "Warning: deprecated parameter 'BalanceStep', please use 'fem.loadbalancing.step' instead!" << std::endl;
-          step = Parameter::getValue< int >( "BalanceStep", balanceCounter );
-        }
-        else
-          step = Parameter::getValue< int >( "fem.loadbalancing.step", balanceCounter );
-
+        step = Parameter::getValue< int >( "fem.loadbalancing.step", balanceCounter );
         return step;
       }
 

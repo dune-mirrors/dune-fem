@@ -1,8 +1,6 @@
 #ifndef DUNE_FEM_SPACE_FINITEVOLUME_SPACE_HH
 #define DUNE_FEM_SPACE_FINITEVOLUME_SPACE_HH
 
-#include <dune/common/deprecated.hh>
-
 #include <dune/grid/common/gridenums.hh>
 
 #include <dune/fem/function/localfunction/average.hh>

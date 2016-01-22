@@ -11,7 +11,7 @@
 
 //- Dune includes
 #include <dune/fem/solver/timeprovider.hh>
-#include <dune/fem/solver/rungekutta.hh>
+#include <dune/fem/solver/rungekutta/explicit.hh>
 
 namespace DuneODE
 {
