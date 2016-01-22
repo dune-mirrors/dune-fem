@@ -724,18 +724,6 @@ namespace Dune
     public:
       ISTLMatrixObject(const ISTLMatrixObject&) = delete;
 
-      ISTLMatrixObject ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace, const std::string& paramfile )
-        DUNE_DEPRECATED_MSG("ISTLMatrixObject(...,string) is deprecated. Use ISTLMatrixObject(DomainSpace,RangeSpace,MatrixParameter) instead")
-        : domainSpace_(domainSpace)
-        , rangeSpace_(rangeSpace)
-        , rowMapper_( rangeSpace.blockMapper() )
-        , colMapper_( domainSpace.blockMapper() )
-        , size_(-1)
-        , sequence_(-1)
-        , localMatrixStack_( *this )
-        , overflowFraction_( Parameter::getValue( "istl.matrix.overflowfraction", 1.0 ) )
-      {}
-
       //! constructor
       //! \param rowSpace space defining row structure
       //! \param colSpace space defining column structure
@@ -1212,40 +1200,6 @@ namespace Dune
 
     public:
       ISTLMatrixObject(const ISTLMatrixObject&) = delete;
-
-      ISTLMatrixObject ( const DomainSpaceType &rowSpace, const RangeSpaceType &colSpace, const std :: string &paramfile )
-        DUNE_DEPRECATED_MSG("ISTLMatrixObject(...,string) is deprecated. Use ISTLMatrixObject(DomainSpace,RangeSpace,ISTLMatrixParameter) instead")
-         : domainSpace_(rowSpace)
-         , rangeSpace_(colSpace)
-         , colMapper_( colSpace.blockMapper() )
-         , size_(-1)
-         , sequence_(-1)
-         , scp_(rangeSpace())
-         , numIterations_(5)
-         , relaxFactor_(1.1)
-         , preconditioning_(none)
-         , localMatrixStack_( *this )
-         , overflowFraction_( Parameter::getValue( "istl.matrix.overflowfraction", 1.0 ) )
-       {
-         int preCon = 0;
-         if(paramfile != "")
-           DUNE_THROW(InvalidStateException,"ISTLMatrixObject: old parameter method disabled");
-         else
-         {
-           static const std::string preConTable[]
-             = { "none", "ssor", "sor", "ilu-0", "ilu-n", "gauss-seidel", "jacobi", "amg-ilu-0", "amg-ilu-n", "amg-jacobi" };
-           preCon         = Parameter::getEnum( "istl.preconditioning.method", preConTable, preCon );
-           numIterations_ = Parameter::getValue( "istl.preconditioning.iterations", numIterations_ );
-           relaxFactor_   = Parameter::getValue( "istl.preconditioning.relaxation", relaxFactor_ );
-         }
-
-         if( preCon >= 0 && preCon <= 9)
-           preconditioning_ = (ISTLPreConder_Id) preCon;
-         else
-           preConErrorMsg(preCon);
-
-          assert( rowMapper_.size() == colMapper_.size() );
-       }
 
       //! constructor
       //! \param rowSpace space defining row structure

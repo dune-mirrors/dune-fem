@@ -173,12 +173,6 @@ namespace Dune
     {
       typedef EigenMatrix< typename DomainSpace::RangeFieldType > MatrixType;
       typedef SparseRowMatrixObject< DomainSpace, RangeSpace, MatrixType > BaseType;
-      inline EigenMatrixObject( const DomainSpace &domainSpace,
-                                const RangeSpace &rangeSpace,
-                                const std::string &paramfile )
-       DUNE_DEPRECATED_MSG("EigenMatrixObject(...,string) is deprecated. Use EigenMatrixObject(string,DomainSpace,RangeSpace,MatrixParameter) instead")
-        : BaseType( domainSpace, rangeSpace )
-      {}
 
       inline EigenMatrixObject( const DomainSpace &domainSpace,
                                 const RangeSpace &rangeSpace,

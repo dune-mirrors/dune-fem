@@ -372,29 +372,6 @@ namespace Dune
       //! construct matrix object
       inline SparseRowMatrixObject( const DomainSpaceType &domainSpace,
                                     const RangeSpaceType &rangeSpace,
-                                    const std::string& paramfile )
-        DUNE_DEPRECATED_MSG("SparseRowMatrixObject(...,string) is deprecated. Use SparseRowMatrixObject(string,DomainSpace,RangeSpace,MatrixParameter) instead")
-      : domainSpace_( domainSpace ),
-        rangeSpace_( rangeSpace ),
-        domainMapper_( domainSpace_.blockMapper() ),
-        rangeMapper_( rangeSpace_.blockMapper() ),
-        sequence_( -1 ),
-        matrix_(),
-        preconditioning_( false ),
-        localMatrixStack_( *this )
-        {
-          int precon = 0;
-          if( paramfile != "" )
-            readParameter( paramfile, "Preconditioning", precon );
-          else
-            precon = Parameter :: getValue("Preconditioning", precon );
-          preconditioning_ = (precon > 0) ? true : false;
-        }
-
-
-      //! construct matrix object
-      inline SparseRowMatrixObject( const DomainSpaceType &domainSpace,
-                                    const RangeSpaceType &rangeSpace,
                                     const MatrixParameter& param = SparseRowMatrixParameter() )
       : domainSpace_( domainSpace ),
         rangeSpace_( rangeSpace ),

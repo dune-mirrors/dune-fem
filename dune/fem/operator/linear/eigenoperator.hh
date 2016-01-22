@@ -30,15 +30,6 @@ namespace Dune
 
       using BaseType::apply;
 
-      //old constructor
-      EigenLinearOperator( const std::string &,
-                           const DomainSpaceType &domainSpace,
-                           const RangeSpaceType &rangeSpace,
-                           const std::string &paramfile )
-        DUNE_DEPRECATED_MSG("EigenLinearOperator(string,DomainSpace,RangeSpace,string is deprecated. Use EigenLinearOperator(string,DomainSpace,RangeSpace,MatrixParameter) instead")
-        : BaseType( domainSpace, rangeSpace )
-      {}
-
       EigenLinearOperator( const std::string & ,
                            const DomainSpaceType &domainSpace,
                            const RangeSpaceType &rangeSpace,
