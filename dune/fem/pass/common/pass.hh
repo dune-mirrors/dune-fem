@@ -85,9 +85,6 @@ namespace Dune
         nonBlockingComm_.finalizeComm( arg );
       }
 
-      // dummy printTexInfo method
-      void printTexInfo(std::ostream& out) const DUNE_DEPRECATED {}
-
       //! Returns the closure of the destination tuple.
       NextArgumentType localArgument() const { return NextArgumentType(); }
 
