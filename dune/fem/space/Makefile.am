@@ -1,6 +1,5 @@
 spacedir = $(includedir)/dune/fem/space
 space_HEADERS =  \
-	combineddiscretefunctionspace.hh \
 	combinedspace.hh \
 	discontinuousgalerkin.hh \
 	finitevolume.hh \

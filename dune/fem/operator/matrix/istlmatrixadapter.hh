@@ -11,7 +11,7 @@
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/padaptivespace/lagrange.hh>
 #include <dune/fem/space/padaptivespace/discontinuousgalerkin.hh>
-#include <dune/fem/space/combinedspace/combineddiscretefunctionspace.hh>
+#include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/matrix/preconditionerwrapper.hh>
 
@@ -378,12 +378,6 @@ namespace Dune
     struct ISTLParallelMatrixAdapter< MatrixImp, PAdaptiveDGSpace< FunctionSpace,GridPart,polOrder,Storage> >
     {
       typedef DGParallelMatrixAdapter<MatrixImp> Type ;
-    };
-
-    template<class MatrixImp, class Space1, class Space2>
-    struct ISTLParallelMatrixAdapter<MatrixImp, CombinedDiscreteFunctionSpace<Space1, Space2> >
-    {
-      typedef LagrangeParallelMatrixAdapter<MatrixImp> Type;
     };
     template< class MatrixImp, class ... DiscreteFunctionSpaces >
     struct ISTLParallelMatrixAdapter<MatrixImp, TupleDiscreteFunctionSpace< DiscreteFunctionSpaces ... > >
