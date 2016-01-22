@@ -116,13 +116,6 @@ namespace Dune
         return indexSet().template subIndex< codim >( entity, i, cd );
       }
 
-      /** \copydoc Dune::Fem::ConsecutiveIndexSet::consecutive */
-      static constexpr bool consecutive () noexcept
-      // DUNE_DEPRECATED_MSG("IndexSet::consecutive() is deprecated, use Capabilities::isConsecutiveIndexSet<IndexSet>::v instead")
-      {
-        return false;
-      }
-
       /** \copydoc Dune::Fem::ConsecutiveIndexSet::resize */
       static void resize () {}
 
