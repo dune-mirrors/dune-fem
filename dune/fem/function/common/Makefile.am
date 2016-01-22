@@ -10,8 +10,6 @@ common_HEADERS = discretefunction.hh \
                  instationary.hh \
                  localfunctionadapter.hh \
 								 rangegenerators.hh \
-                 scalarproducts.hh \
-								 timedependentfunction.hh
+                 scalarproducts.hh
 
 include $(top_srcdir)/am/global-rules
-
