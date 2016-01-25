@@ -252,12 +252,13 @@ namespace Dune
       //! print matrix
       void print(std::ostream& s=std::cout, unsigned int offset=0) const
       {
+        std::size_t pos(0);
         for(std::size_t row=0; row<dim_[0]; ++row)
-          for(std::size_t col=0; col<nonZeros_[row]; ++col)
+          for(std::size_t col=0; col<nonZeros_[row]; ++col, ++pos)
           {
-            auto pos = row*nz_ + col;
-            if( std::abs( values_[pos] ) > 1.e-15)
-              s << row << " " << realCol(row,col) << " " << values_[pos] << std::endl;
+            const auto rv(realValue(pos));
+            if((std::abs(rv.first) > 1.e-15) && (rv.second != defaultCol))
+              s << row+offset << " " << rv.second+offset << " " << rv.first << std::endl;
           }
       }
 
