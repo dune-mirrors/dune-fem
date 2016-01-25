@@ -312,15 +312,6 @@ namespace Dune
         }
       }
 
-      //! return real column number for (row,localCol)
-      size_type realCol(size_type row, size_type fakeCol) const
-      {
-        assert( fakeCol < dim_[1] );
-        assert( row < dim_[0] );
-        auto pos = row*nz_ + fakeCol;
-        return col_[pos];
-      }
-
       std::vector<field_type> values_;
       std::vector<size_type> col_;
       std::vector<size_type> nonZeros_;
