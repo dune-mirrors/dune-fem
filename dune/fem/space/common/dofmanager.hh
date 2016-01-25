@@ -23,6 +23,7 @@
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/storage/singletonlist.hh>
+#include <dune/fem/gridpart/common/indexset.hh>
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -219,7 +220,7 @@ namespace Dune
         this->setPtr_ = (void *) &indexSet_;
 
         indexSetList_ += *this;
-        if( indexSet_.consecutive() )
+        if( Capabilities::isConsecutiveIndexSet<IndexSetType>::v )
         {
           insertList_ += insertIdxObj_;
           removeList_ += removeIdxObj_;
@@ -230,7 +231,7 @@ namespace Dune
       ~ManagedIndexSet ()
       {
         indexSetList_.remove( *this );
-        if( indexSet_.consecutive() )
+        if( Capabilities::isConsecutiveIndexSet<IndexSetType>::v )
         {
           insertList_.remove( insertIdxObj_ );
           removeList_.remove( removeIdxObj_ );
