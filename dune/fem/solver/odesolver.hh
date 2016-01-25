@@ -51,10 +51,7 @@ namespace DuneODE
       switch( method )
       {
       case 0:
-        int cycles;
-        if( Fem::Parameter::exists( "fem.ode.gmrescycles" ) )
-        cycles = Parameter::getValue< int >( keyPrefix_ + "gmres.cycles", 15 );
-        solver = new PARDG::GMRES( comm, cycles );
+        solver = new PARDG::GMRES( comm, Parameter::getValue< int >( keyPrefix_ + "gmres.cycles", 15 ) );
         break;
 
       case 1:
