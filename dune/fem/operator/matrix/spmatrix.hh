@@ -254,11 +254,14 @@ namespace Dune
       {
         std::size_t pos(0);
         for(std::size_t row=0; row<dim_[0]; ++row)
-          for(std::size_t col=0; col<nonZeros_[row]; ++col, ++pos)
+          while(pos < (nz_*(row+1)))
           {
             const auto rv(realValue(pos));
-            if((std::abs(rv.first) > 1.e-15) && (rv.second != defaultCol))
-              s << row+offset << " " << rv.second+offset << " " << rv.first << std::endl;
+            const auto column(rv.second);
+            const auto value(rv.first);
+            if((std::abs(value) > 1.e-15) && (column != defaultCol))
+              s << row+offset << " " << column+offset << " " << value << std::endl;
+            ++pos;
           }
       }
 
