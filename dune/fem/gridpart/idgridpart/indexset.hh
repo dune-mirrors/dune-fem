@@ -135,8 +135,6 @@ namespace Dune
           : BaseType ( hostIndexSet )
         {}
 
-        bool consecutive () const { return hostIndexSet().consecutive(); }
-
         void resize () { hostIndexSet().resize(); }
 
         bool compress () { return hostIndexSet().compress(); }
