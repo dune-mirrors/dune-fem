@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_LPNORM_HH
 #define DUNE_FEM_LPNORM_HH
 
-#include <dune/common/typetraits.hh>
+#include <type_traits>
 
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/integrator.hh>
@@ -167,7 +167,7 @@ namespace Dune
                 const ReturnType& initialValue,
                 const unsigned int order = 0 ) const
       {
-        static_assert( (IsBaseOf<Fem::HasLocalFunction, DiscreteFunctionType>::value),
+        static_assert( (std::is_base_of<Fem::HasLocalFunction, DiscreteFunctionType>::value),
                             "Norm only implemented for quantities implementing a local function!" );
 
         typedef NormOnEntityFunctor< ReturnType, DiscreteFunctionType, DiscreteFunctionType >
