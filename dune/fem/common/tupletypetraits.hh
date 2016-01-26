@@ -90,25 +90,25 @@ namespace Dune
     template< class T >
     struct IsPointer
     {
-      static const bool value = Dune::TypeTraits< T >::isPointer;
+      static const bool value = std::is_pointer<T>::value;
     };
 
     template< class T >
     struct IsReference
     {
-      static const bool value = Dune::TypeTraits< T >::isReference;
+      static const bool value = std::is_lvalue_reference<T>::value;
     };
 
     template< class T >
     struct PointeeTypeEvaluator
     {
-      typedef typename Dune::TypeTraits< T >::PointeeType Type;
+      typedef typename std::remove_pointer<T>::type Type;
     };
 
     template< class T >
     struct ReferredTypeEvaluator
     {
-      typedef typename Dune::TypeTraits< T >::ReferredType Type;
+      typedef typename std::remove_reference<T>::type Type;
     };
 
   public:
@@ -140,7 +140,7 @@ namespace Dune
     template< class T >
     struct PointerEvaluator
     {
-      typedef typename Dune::TypeTraits< T >::PointeeType * Type;
+      typedef typename std::remove_pointer<T>::type * Type;
     };
 
   public:
@@ -163,7 +163,7 @@ namespace Dune
     template< class T >
     struct ReferenceEvaluator
     {
-      typedef typename Dune::TypeTraits< T >::ReferredType & Type;
+      typedef typename std::remove_reference<T>::type & Type;
     };
 
   public:
@@ -287,7 +287,7 @@ namespace Dune
   {
     template< class, class, int, int > friend class DereferenceTuple;
 
-    typedef typename Dune::TypeTraits< typename std::tuple_element< index, Tuple >::type >::PointeeType & AppendType;
+    typedef typename std::remove_pointer< typename std::tuple_element< index, Tuple >::type >::type & AppendType;
     typedef typename Dune::PushBackTuple< Seed, AppendType >::type AccumulatedType;
 
     typedef DereferenceTuple< Tuple, AccumulatedType, (index+1), size > NextType;

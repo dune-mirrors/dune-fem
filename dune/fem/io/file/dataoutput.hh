@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_DATAOUTPUT_HH
 #define DUNE_FEM_DATAOUTPUT_HH
 
+#include <type_traits>
 #include <tuple>
 
 #ifndef USE_VTKWRITER
@@ -175,7 +176,7 @@ namespace Dune
     template< class Grid, class OutputTuple, int N = std::tuple_size< OutputTuple >::value >
     struct GridPartGetter
     {
-      typedef typename TypeTraits< typename std::tuple_element< 0, OutputTuple >::type >::PointeeType DFType;
+      typedef typename std::remove_pointer< typename std::tuple_element< 0, OutputTuple >::type >::type DFType;
       typedef typename DFType :: DiscreteFunctionSpaceType :: GridPartType GridPartType;
 
       GridPartGetter ( const Grid &, const OutputTuple &data )

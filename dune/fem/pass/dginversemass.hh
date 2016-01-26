@@ -39,7 +39,7 @@ namespace Dune
 
       struct Traits
       {
-        typedef typename Dune::TypeTraits< DestinationPtrType >::PointeeType DestinationType;
+        typedef typename std::remove_pointer< DestinationPtrType >::type DestinationType;
         typedef typename DestinationType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
         typedef CachingQuadrature< typename DiscreteFunctionSpaceType::GridPartType, 0 > VolumeQuadratureType;
         typedef CachingQuadrature< typename DiscreteFunctionSpaceType::GridPartType, 1 > FaceQuadratureType;
