@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_COMMON_TYPEINDEXEDTUPLE_HH
 #define DUNE_FEM_COMMON_TYPEINDEXEDTUPLE_HH
 
+#include <tuple>
+
 #include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
 
@@ -118,37 +120,19 @@ namespace Dune
   // ------------------------
 
   template< int i, class Tuple, class Types >
-  typename tuple_element< i, Tuple >::type &
+  typename std::tuple_element< i, Tuple >::type &
   get ( Dune::TypeIndexedTuple< Tuple, Types > &tuple )
   {
     return get< i >( static_cast< Tuple & >( tuple ) );
   }
 
   template< int i, class Tuple, class Types >
-  const typename tuple_element< i, Tuple >::type &
+  const typename std::tuple_element< i, Tuple >::type &
   get ( const Dune::TypeIndexedTuple< Tuple, Types > &tuple )
   {
     return get< i >( static_cast< const Tuple & >( tuple ) );
   }
 
 } // namespace Dune
-
-
-
-// Some Specializations for Tuple Access
-// -------------------------------------
-
-DUNE_OPEN_TUPLE_NAMESPACE
-
-  // tuple_element for TypeIndexedTuple
-  // ----------------------------------
-
-  template< size_t i, class Tuple, class Types >
-  struct tuple_element< i, Dune::TypeIndexedTuple< Tuple, Types > >
-  {
-    typedef typename tuple_element< i, Tuple >::type type;
-  };
-
-DUNE_CLOSE_TUPLE_NAMESPACE
 
 #endif // #ifndef DUNE_FEM_COMMON_TYPEINDEXEDTUPLE_HH

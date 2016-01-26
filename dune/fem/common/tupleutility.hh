@@ -1,18 +1,11 @@
 #ifndef DUNE_FEM_COMMON_TUPLEUTILITY_HH
 #define DUNE_FEM_COMMON_TUPLEUTILITY_HH
 
+#include <tuple>
+
 #include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
 #include <dune/common/std/utility.hh>
-
-#ifdef HAVE_TR1_TUPLE // #ifdef HAVE_TUPLE
-#define DUNE_OPEN_TUPLE_NAMESPACE namespace std { namespace tr1 {
-#define DUNE_CLOSE_TUPLE_NAMESPACE } }
-#else // #if defined HAVE_TR1_TUPLE
-#define DUNE_OPEN_TUPLE_NAMESPACE namespace std {
-#define DUNE_CLOSE_TUPLE_NAMESPACE }
-#endif // #ifdef HAVE_TR1_TUPLE
-
 
 namespace
 {
@@ -299,7 +292,7 @@ namespace Dune
 
   public:
     typedef typename VectorTupleType::value_type TupleType;
-    typedef typename tuple_element< pos, TupleType >::type ValueType;
+    typedef typename std::tuple_element< pos, TupleType >::type ValueType;
     typedef ValueType value_type;
 
     //! constructor

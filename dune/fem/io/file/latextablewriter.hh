@@ -61,7 +61,7 @@ namespace Dune
     struct TupleDataSource
     {
       template< class DataTuple >
-      struct Value { typedef typename tuple_element< N, DataTuple >::type Type; };
+      struct Value { typedef typename std::tuple_element< N, DataTuple >::type Type; };
 
       template< class DataTuple >
       typename Value< DataTuple >::Type get ( const DataTuple &data ) const

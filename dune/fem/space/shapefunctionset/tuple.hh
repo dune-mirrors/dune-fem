@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SPACE_SHAPEFUNCTIONSET_TUPLE_HH
 #define DUNE_FEM_SPACE_SHAPEFUNCTIONSET_TUPLE_HH
 
+#include <tuple>
+
 #include <dune/geometry/type.hh>
 
 #include <dune/common/forloop.hh>
@@ -31,7 +33,7 @@ namespace Dune
         typedef tuple< std::integral_constant< int, I > ... > RangeSizeTuple;
 
         template< int j >
-        static constexpr int size () { return tuple_element< j, RangeSizeTuple >::type::value; }
+        static constexpr int size () { return std::tuple_element< j, RangeSizeTuple >::type::value; }
 
         template< int ... j >
         static constexpr Std::integer_sequence< int, size< j >() ... > sizes ( Std::integer_sequence< int, j ... > )
@@ -68,7 +70,7 @@ namespace Dune
 
     public:
       typedef tuple< ShapeFunctionSets ... > ShapeFunctionSetTupleType;
-      typedef typename ToNewDimRangeFunctionSpace< typename tuple_element< 0, ShapeFunctionSetTupleType >::type::FunctionSpaceType, dimRange >::Type FunctionSpaceType;
+      typedef typename ToNewDimRangeFunctionSpace< typename std::tuple_element< 0, ShapeFunctionSetTupleType >::type::FunctionSpaceType, dimRange >::Type FunctionSpaceType;
 
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
