@@ -201,19 +201,13 @@ void checkLinearOperator ( LinearOperator &linOp, const Range &range, const std:
     auto rangeEntity = entry.second;
 
     {
-      // check {add,set,get,addScaled}LocalMatrix
+      // check {add,set,addScaled}LocalMatrix
       temp.init( domainEntity, rangeEntity );
       temp.clear();
       for( const auto &p : permutation )
         temp.set( p.first, p.second, 1.0 );
 
       linOp.setLocalMatrix( domainEntity, rangeEntity, temp );
-      temp.clear();
-      linOp.getLocalMatrix( domainEntity, rangeEntity, temp );
-
-      for( const auto &p : permutation )
-        if( temp.get( p.first, p.second ) != 1.0 )
-          DUNE_THROW( Dune::NotImplemented, "LocalMatrix not set correctly" );
 
       linOp.addLocalMatrix( domainEntity, rangeEntity, temp );
       linOp.addScaledLocalMatrix( domainEntity, rangeEntity, temp, -1.0 );
@@ -236,6 +230,22 @@ void checkLinearOperator ( LinearOperator &linOp, const Range &range, const std:
 
   // finalize assamble
   linOp.communicate();
+
+
+  // test getLocalMatrix
+  for( const auto &entry : range )
+  {
+    auto domainEntity = entry.first;
+    auto rangeEntity = entry.second;
+    temp.init( domainEntity, rangeEntity );
+    temp.clear();
+    linOp.getLocalMatrix( domainEntity, rangeEntity, temp );
+
+    for( const auto &p : permutation )
+      if( temp.get( p.first, p.second ) != 1.0 )
+        DUNE_THROW( Dune::NotImplemented, "LocalMatrix not set correctly" );
+  }
+
 
   domainFunction.clear();
   int minNumDofs = std::min( domainFunction.blocks(), rangeFunction1.blocks() );
