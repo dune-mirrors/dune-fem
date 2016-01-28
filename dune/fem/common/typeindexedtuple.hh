@@ -135,4 +135,19 @@ namespace Dune
 
 } // namespace Dune
 
+
+// Some Specializations for Tuple Access
+// -------------------------------------
+
+// \todo please check this construction, later.
+// At the moment it is needed to make dune-fem-dg compile!
+namespace std
+{
+  template< size_t i, class Tuple, class Types >
+  struct tuple_element< i, Dune::TypeIndexedTuple< Tuple, Types > >
+  {
+    typedef typename tuple_element< i, Tuple >::type type;
+  };
+}
+
 #endif // #ifndef DUNE_FEM_COMMON_TYPEINDEXEDTUPLE_HH
