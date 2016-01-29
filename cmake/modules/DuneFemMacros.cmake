@@ -111,11 +111,11 @@ find_package(PAPI)
 include(AddPAPIFlags)
 
 # download PETSc cmake files
-set(PETSC_CMAKE_MODULES "${PROJECT_SOURCE_DIR}/cmake/modules/petsc/")
+set(PETSC_CMAKE_MODULES "${CMAKE_CURRENT_LIST_DIR}/petsc/")
 if(NOT EXISTS "${PETSC_CMAKE_MODULES}")
   message (STATUS "Downloading cmake-modules from Jed Brown into ${PETSC_CMAKE_MODULES}")
   execute_process(COMMAND git clone https://github.com/jedbrown/cmake-modules.git ${PETSC_CMAKE_MODULES}
-                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/modules/)
+                  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 else()
   message (STATUS "Updating cmake-modules from Jed Brown into ${PETSC_CMAKE_MODULES}")
   execute_process(COMMAND git pull
