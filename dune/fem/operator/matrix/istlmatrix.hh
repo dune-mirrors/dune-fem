@@ -1006,7 +1006,6 @@ namespace Dune
           LittleBlockType& block = blockAccess( index );
           for( std::size_t i  = 0; i < littleRows; ++i )
             for( std::size_t j = 0; j < littleCols; ++j )
-              matrix.getBlock< i, i >
               block[ i ][ j ] += localMat.get( local.first * littleRows + i, local.second *littleCols + j );
         };
 
