@@ -6,9 +6,6 @@
 #include <vector>
 #include <type_traits>
 
-// dune-common includes
-#include <dune/common/typetraits.hh>
-
 // dune-fem includes
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/quadrature/caching/registry.hh>
@@ -70,7 +67,7 @@ namespace Dune
       template< class Quadrature, class Functor >
       void evaluateEach ( const QuadraturePointWrapper< Quadrature > &x, Functor functor ) const
       {
-        const bool cacheable = Conversion< Quadrature, CachingInterface >::exists;
+        const bool cacheable = std::is_convertible< Quadrature, CachingInterface >::value;
         evaluateEach( x.quadrature(), x.index(), functor, std::integral_constant< bool, cacheable >() );
       }
 
@@ -83,7 +80,7 @@ namespace Dune
       template< class Quadrature, class Functor >
       void jacobianEach ( const QuadraturePointWrapper< Quadrature > &x, Functor functor ) const
       {
-        const bool cacheable = Conversion< Quadrature, CachingInterface >::exists;
+        const bool cacheable = std::is_convertible< Quadrature, CachingInterface >::value;
         jacobianEach( x.quadrature(), x.index(), functor, std::integral_constant< bool, cacheable >() );
       }
 
@@ -98,14 +95,14 @@ namespace Dune
       template < class QuadratureType >
       const RangeType* rangeCache( const QuadratureType& quadrature ) const
       {
-        return ReturnCache< QuadratureType, Conversion< QuadratureType, CachingInterface >::exists > ::
+        return ReturnCache< QuadratureType, std::is_convertible< QuadratureType, CachingInterface >::value > ::
           ranges( *this, quadrature, valueCaches_, localRangeCache_ );
       }
 
       template < class QuadratureType >
       const JacobianRangeType* jacobianCache( const QuadratureType& quadrature ) const
       {
-        return ReturnCache< QuadratureType, Conversion< QuadratureType, CachingInterface >::exists > ::
+        return ReturnCache< QuadratureType, std::is_convertible< QuadratureType, CachingInterface >::value > ::
           jacobians( *this, quadrature, jacobianCaches_, localJacobianCache_ );
       }
 

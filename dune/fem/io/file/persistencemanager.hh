@@ -5,8 +5,6 @@
 #include <list>
 #include <type_traits>
 
-#include <dune/common/typetraits.hh>
-
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/binarystreams.hh>
@@ -124,7 +122,7 @@ namespace Dune
     template< class ObjectType >
     struct IsPersistent
     {
-      static const bool value = Dune::Conversion< ObjectType *, PersistentObject * >::exists;
+      static const bool value = std::is_convertible< ObjectType *, PersistentObject * >::value;
     };
 
 

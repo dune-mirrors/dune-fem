@@ -191,8 +191,8 @@ namespace Dune
                 const ReturnType& initialValue,
                 const unsigned int order = 0 ) const
       {
-        enum { uDiscrete = Conversion<UDiscreteFunctionType, HasLocalFunction>::exists };
-        enum { vDiscrete = Conversion<VDiscreteFunctionType, HasLocalFunction>::exists };
+        enum { uDiscrete = std::is_convertible<UDiscreteFunctionType, HasLocalFunction>::value };
+        enum { vDiscrete = std::is_convertible<VDiscreteFunctionType, HasLocalFunction>::value };
 
         // call forEach depending on which argument is a grid function,
         // i.e. has a local function

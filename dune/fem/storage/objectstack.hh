@@ -39,9 +39,6 @@ namespace Dune
       typedef ObjectStackEntry< ObjectFactoryType > ThisType;
       typedef ReferenceCounterDefault< Traits > BaseType;
 
-      template< class, class >
-      friend class Conversion;
-
       friend class ObjectStack< ObjectFactoryType >;
 
     protected:

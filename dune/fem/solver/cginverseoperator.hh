@@ -3,11 +3,8 @@
 
 #include <type_traits>
 
-#include <dune/common/typetraits.hh>
-
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
-
 #include <dune/fem/solver/diagonalpreconditioner.hh>
 
 namespace Dune
@@ -50,7 +47,7 @@ namespace Dune
 
 
     private:
-      static_assert( (Conversion< DomainFunctionType, RangeFunctionType >::sameType),
+      static_assert( (std::is_same< DomainFunctionType, RangeFunctionType >::value),
                           "DomainFunctionType must equal RangeFunctionType." );
 
     public:

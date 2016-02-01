@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDFUNCTIONADAPTER_HH
 #define DUNE_FEM_GRIDFUNCTIONADAPTER_HH
 
+#include <type_traits>
+
 #include <dune/common/exceptions.hh>
 
 //- local includes
@@ -77,7 +79,7 @@ namespace Dune
       typedef Function< typename FunctionImp::FunctionSpaceType, ThisType > BaseType;
 
       // Make sure the function is not a discrete functon
-      static_assert( !(Dune::Conversion< FunctionImp, HasLocalFunction >::exists),
+      static_assert( !(std::is_convertible< FunctionImp, HasLocalFunction >::value),
                      "FunctionType may not be a discrete function type." );
 
     public:
@@ -358,7 +360,7 @@ namespace Dune
       struct ConvertDFTypeHelper<FunctionImp,GridPartType,true>
       {
         typedef ConvertDFTypeHelper<FunctionImp,GridPartType,true> ThisType;
-        enum {compatible = Dune::Conversion<GridPartType,typename FunctionImp::DiscreteFunctionSpaceType::GridPartType>::exists};
+        enum {compatible = std::is_convertible<GridPartType,typename FunctionImp::DiscreteFunctionSpaceType::GridPartType>::value};
         typedef FunctionImp FunctionType;
         typedef typename FunctionType::DiscreteFunctionSpaceType DFSType;
         ConvertDFTypeHelper(const std::string& name,const FunctionImp& func,const GridPartType& gp) :
@@ -412,7 +414,7 @@ namespace Dune
     {
       typedef ConvertToGridFunction< FunctionImp, GridPartImp > ThisType;
       typedef Function< typename FunctionImp::FunctionSpaceType, ThisType > BaseType;
-      static const bool hasLocalFunction = Dune::Conversion< FunctionImp, HasLocalFunction >::exists;
+      static const bool hasLocalFunction = std::is_convertible< FunctionImp, HasLocalFunction >::value;
       typedef ConvertDFTypeHelper< FunctionImp, GridPartImp, hasLocalFunction > Helper;
       typedef typename Helper::FunctionType ConvertedType;
 

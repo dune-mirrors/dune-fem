@@ -1,9 +1,9 @@
-#include <dune/common/bartonnackmanifcheck.hh>
-
 #ifndef DUNE_FEM_BARTONNACKMANINTERFACE_HH
 #define DUNE_FEM_BARTONNACKMANINTERFACE_HH
 
-#include <dune/common/typetraits.hh>
+#include <type_traits>
+
+#include <dune/common/bartonnackmanifcheck.hh>
 
 namespace Dune
 {
@@ -19,8 +19,7 @@ namespace Dune
     public:
       BartonNackmanInterface ()
       {
-        static_assert( (Conversion< Interface, ThisType >::exists), "Interface must be derived from BartonNackmanInterface." );
-        //static_assert( (Conversion< Implementation, Interface >::exists), "Implementation must be derived from its interface." );
+        static_assert( (std::is_convertible< Interface, ThisType >::value), "Interface must be derived from BartonNackmanInterface." );
       }
 
     protected:

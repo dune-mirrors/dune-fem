@@ -6,8 +6,6 @@
 #include <sstream>
 #include <type_traits>
 
-#include <dune/common/typetraits.hh>
-
 #include <dune/fem/common/tupleutility.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
 #include <dune/fem/pass/common/local.hh>

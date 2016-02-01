@@ -3,8 +3,6 @@
 
 #include <type_traits>
 
-#include <dune/common/typetraits.hh>
-
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/operator/common/operator.hh>
 
@@ -81,7 +79,7 @@ namespace Dune
        */
       static void interpolateFunction ( const Function &function, DiscreteFunctionType &discreteFunction )
       {
-        const bool hasLocalFunction = Conversion< Function, HasLocalFunction >::exists;
+        const bool hasLocalFunction = std::is_convertible< Function, HasLocalFunction >::value;
         interpolateFunction( function, discreteFunction, std::integral_constant< bool, hasLocalFunction >() );
       }
 

@@ -3,8 +3,6 @@
 
 #include <type_traits>
 
-#include <dune/common/typetraits.hh>
-
 #include <dune/geometry/referenceelements.hh>
 
 #include <dune/grid/common/gridenums.hh>

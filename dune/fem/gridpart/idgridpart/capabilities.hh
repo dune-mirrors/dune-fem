@@ -1,9 +1,6 @@
 #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_CAPABILITIES_HH
 #define DUNE_FEM_GRIDPART_IDGRIDPART_CAPABILITIES_HH
 
-//- dune-common includes
-#include <dune/common/typetraits.hh>
-
 //- dune-geometry includes
 #include <dune/geometry/genericgeometry/topologytypes.hh>
 

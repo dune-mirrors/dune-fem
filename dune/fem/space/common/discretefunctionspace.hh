@@ -3,6 +3,7 @@
 
 // C++ includes
 #include <cassert>
+#include <type_traits>
 
 // dune-common includes
 #include <dune/common/bartonnackmanifcheck.hh>
@@ -245,9 +246,8 @@ namespace Dune
       };
 
     private:
-      static_assert( (Conversion<typename BaseType::DomainFieldType,
-                                      typename GridType::ctype>::sameType),
-                          "Domain field type of function space must equal field type of grid." );
+      static_assert( std::is_same<typename BaseType::DomainFieldType, typename GridType::ctype>::value,
+                     "Domain field type of function space must equal field type of grid." );
 
     protected:
       DiscreteFunctionSpaceInterface ()

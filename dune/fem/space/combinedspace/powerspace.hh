@@ -5,7 +5,7 @@
 #include <type_traits>
 
 #include <dune/common/math.hh>
-#include <dune/common/typetraits.hh>
+
 #include <dune/grid/common/grid.hh>
 
 #include <dune/fem/common/utility.hh>

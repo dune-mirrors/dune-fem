@@ -3,6 +3,8 @@
 
 #include <set>
 #include <functional>
+#include <type_traits>
+
 #include <dune/fem/function/common/discretefunction.hh>
 
 namespace Dune
@@ -39,7 +41,7 @@ namespace Dune
       typedef typename LocalFunctionImpl::FunctionSpaceType FunctionSpaceType;
       typedef typename LocalFunctionImpl::GridPartType GridPartType;
 
-      static const bool localFunctionHasInitialize = Conversion< LocalFunctionImpl, LocalFunctionAdapterHasInitialize >::exists;
+      static const bool localFunctionHasInitialize = std::is_convertible< LocalFunctionImpl, LocalFunctionAdapterHasInitialize >::value;
 
       typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
       typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;

@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_ARRAY_HH
 #define DUNE_FEM_ARRAY_HH
 
+#include <type_traits>
 #include <cassert>
 
 #include <dune/common/iteratorfacades.hh>
@@ -164,7 +165,7 @@ namespace Dune
     struct SupportsArrayInterface
     {
       typedef ArrayInterface< typename Array::Traits > ArrayInterfaceType;
-      static const bool v = Conversion< Array, ArrayInterfaceType >::exists;
+      static const bool v = std::is_convertible< Array, ArrayInterfaceType >::value;
     };
 
 

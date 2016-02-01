@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_PASS_COMMON_TUPLETYPETRAITS_HH
 #define DUNE_FEM_PASS_COMMON_TUPLETYPETRAITS_HH
 
+#include <type_traits>
+
 #include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
 #include <dune/common/typetraits.hh>
@@ -186,7 +188,7 @@ namespace Dune
     template< class T >
     struct ConstEvaluator
     {
-      typedef typename Dune::ConstantVolatileTraits< T >::ConstType Type;
+      typedef typename std::add_const<typename std::remove_cv<T>::type>::type Type;
     };
 
   public:
@@ -207,7 +209,7 @@ namespace Dune
     template< class T >
     struct RemoveConstEvaluator
     {
-      typedef typename Dune::ConstantVolatileTraits< T >::UnqualifiedType Type;
+      typedef typename std::remove_cv< T >::type Type;
     };
 
   public:

@@ -8,7 +8,6 @@
 
 //- Dune includes
 #include <dune/common/forloop.hh>
-#include <dune/common/typetraits.hh>
 #include <dune/common/tuples.hh>
 
 //- Dune grid includes

@@ -1,16 +1,16 @@
 #ifndef DUNE_FEM_VECTORFUNCTION_HH
 #define DUNE_FEM_VECTORFUNCTION_HH
 
-#include <dune/common/typetraits.hh>
+#include <memory>
+#include <string>
 
 #include <dune/fem/common/referencevector.hh>
 #include <dune/fem/common/stackallocator.hh>
+#include <dune/fem/function/blockvectors/defaultblockvectors.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
 #include <dune/fem/storage/envelope.hh>
 #include <dune/fem/storage/vector.hh>
-
-#include <dune/fem/function/blockvectors/defaultblockvectors.hh>
 
 namespace Dune
 {

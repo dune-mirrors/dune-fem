@@ -2,11 +2,11 @@
 #define DUNE_FEM_ADAPTIVEFUNCTION_HH
 
 //- System includes
+#include <memory>
 #include <string>
-#include <vector>
+#include <utility>
 
 //- Dune includes
-#include <dune/common/typetraits.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 
