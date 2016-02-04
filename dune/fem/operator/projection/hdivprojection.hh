@@ -664,7 +664,6 @@ namespace Dune
         // number of dofs on faces
         const int numFaceDofs = faceSet.size();
 
-
         const GradientBaseSetType gradSet = gradSpace_.baseFunctionSet(*start);
         // in case of linear space the is zero
         const int numGradDofs = gradientBaseFct( gradSet );
@@ -684,13 +683,6 @@ namespace Dune
 
         // number of columns
         const int cols = numDofs;
-
-#if 0
-        std::cout << numBubbleDofs << " bubbleDofs | bubbleP = " << bubblePolOrd << "\n";
-        std::cout << numGradDofs << " numGradDofs \n";
-        std::cout << overallFaceDofs << " allFAceDofs \n";
-        std::cout << "cols " << cols << " | rows " << rows << "\n";
-#endif
 
         MutableArray< RangeFieldType > rets(numDofs);
         MutableArray< RangeType > uRets(numDofs);
@@ -777,15 +769,10 @@ namespace Dune
           // set new values to new velocity function
           {
             LocalFuncType veloLF = velo.localFunction( en );
-#if 0
-            VectorType x( 0 );
 
-            inv.solve(x, fRhs);
-#else
             // solve linear system
             luSolve( inv, fRhs );
             const VectorType& x = fRhs ;
-#endif
 
             for(int i=0; i<localBlockSize; ++i)
             {

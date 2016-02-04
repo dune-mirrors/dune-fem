@@ -367,13 +367,6 @@ namespace Dune
 
       void setStatus(const Status &newstatus) const
       {
-#if 0
-        if (status_ != statAssembled && status_ != newstatus)
-        {
-          ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FLUSH_ASSEMBLY );
-          ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FLUSH_ASSEMBLY );
-        }
-#endif
         status_ = newstatus;
       }
 

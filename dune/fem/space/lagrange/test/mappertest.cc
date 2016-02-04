@@ -68,13 +68,6 @@ namespace Dune
       static const int dimworld = SpaceType::GridPartType::GridType::dimensionworld;
 
 
-#if 0
-      typedef typename SpaceType :: GridType GridType;
-      for( unsigned int i = 0; i <= GridType :: dimension; ++i )
-        std :: cout << "size of codimension " << i << ": "
-                    << space.grid().size( i ) << std :: endl;
-#endif
-
       std :: cout << "size of space: " << space.size() << " (= "
                   << (space.size() / dimworld) << " * " << dimworld << ")"
                   << std :: endl;

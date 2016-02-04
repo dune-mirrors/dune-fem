@@ -368,18 +368,6 @@ namespace Dune
         return asImp().grid();
       }
 
-#if 0
-      /** \brief get a reference to the associated grid partition
-
-         \returns constant reference to the grid partition
-       */
-      inline const GridPartType &gridPart () const
-      {
-        CHECK_INTERFACE_IMPLEMENTATION( asImp().gridPart() );
-        return asImp().gridPart();
-      }
-#endif
-
       /** \brief get a reference to the associated grid partition
 
           \returns reference to the grid partition

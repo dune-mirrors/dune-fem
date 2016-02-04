@@ -1,15 +1,8 @@
 #include <config.h>
 
-
-#include <dune/common/fvector.hh>
-
-// DGF gridtype
-// #include <dgfgridtype.hh>
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-// adaptation classes
 #include <dune/fem/space/common/adaptmanager.hh>
-// lagrange space
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/io/file/vtkio.hh>
@@ -54,10 +47,7 @@ int main( int argc, char **argv )
     // get grid reference
     GridType& grid = *gridptr ;
 
-
     GlobalRefine::apply(grid, minLevel);
-//    grid.globalRefine(minLevel);
-
 
     typedef AdaptiveLeafGridPart<GridType> GridPartType;
     GridPartType gridPart (grid);
@@ -67,20 +57,13 @@ int main( int argc, char **argv )
     typedef FunctionSpace::DomainType DomainType;
     typedef FunctionSpace::RangeType RangeType;
 
-
     typedef LagrangeDiscreteFunctionSpace < FunctionSpace, GridPartType, PolynomialOrder, CachingStorage > DiscreteFunctionSpace;
     typedef AdaptiveDiscreteFunction< DiscreteFunctionSpace > DiscreteFunction;
 
     DiscreteFunctionSpace dFspace( gridPart );
     DiscreteFunction solution("testSolution", dFspace);
 
-    typedef DiscreteFunctionSpace :: IteratorType :: Entity :: Geometry Geometry;
-
-    typedef DiscreteFunctionSpace :: LagrangePointSetType LagrangePointSetType;
-
     const int faceCodim = 0;
-    typedef LagrangePointSetType :: Codim< faceCodim > :: SubEntityIteratorType
-      FaceDofIteratorType;
 
 #if SCALAR
     DomainType v;
@@ -90,8 +73,6 @@ int main( int argc, char **argv )
 
     Parameter :: get( "test.velocity", v, v);
 #endif
-
-
 
     for(int i= 0;i<times;++i)
     {
@@ -105,55 +86,35 @@ int main( int argc, char **argv )
 
       for( const auto& entity : dFspace )
       {
-        typedef DiscreteFunction :: LocalFunctionType LocalFunctionType;
+        auto solutionLocal = solution.localFunction( entity );
 
-        LocalFunctionType solutionLocal = solution.localFunction( entity );
+        const auto& geo = entity.geometry();
 
-        const Geometry& geo = entity.geometry();
+        const auto& lagrangePointSet = dFspace.lagrangePointSet( entity );
 
-        const LagrangePointSetType &lagrangePointSet = dFspace.lagrangePointSet( entity );
+        const int face =0;
 
-#if 0
-        typedef GridPartType :: IntersectionIteratorType IntersectionIteratorType;
-        typedef IntersectionIteratorType::Intersection IntersectionType;
+        auto faceIt = lagrangePointSet.beginSubEntity< faceCodim >( face );
+        const auto faceEndIt = lagrangePointSet.endSubEntity< faceCodim >( face  );
 
-        IntersectionIteratorType iIt = gridPart.ibegin( entity );
-        const IntersectionIteratorType endiIt = gridPart.iend( entity );
-
-        for( ; iIt != endiIt; ++iIt )
+        for( ; faceIt != faceEndIt; ++faceIt )
         {
-          const IntersectionType &intersection = *iIt;
-          const int face = intersection.indexInInside();
-#endif
-          const int face =0;
+          const auto& local = lagrangePointSet.point( *faceIt );
+          const auto global = geo.global( local );
 
-
-          FaceDofIteratorType faceIt
-            = lagrangePointSet.beginSubEntity< faceCodim >( face );
-          const FaceDofIteratorType faceEndIt
-            = lagrangePointSet.endSubEntity< faceCodim >( face  );
-
-          for( ; faceIt != faceEndIt; ++faceIt )
+          for(int r=0;r<dimRange;++r)
           {
-            const DomainType &local = lagrangePointSet.point( *faceIt );
-            const DomainType global = geo.global( local );
-
-            for(int r=0;r<dimRange;++r)
-            {
-              const int localDof = (*faceIt)*dimRange + r;
-              RangeType phi, phiLocal;
+            const int localDof = (*faceIt)*dimRange + r;
+            RangeType phi, phiLocal;
 #if SCALAR
-              phi = global * v;
+            phi = global * v;
 #else
-              phi = global;
+            phi = global;
 #endif
-
-              const double value = phi[ i ];
-
-              solutionLocal[localDof] = value;
+            const double value = phi[ i ];
+            solutionLocal[localDof] = value;
             }
           }
-//      }
       }
 
       SubsamplingVTKIO<GridPartType> vtkio(gridPart, 1);

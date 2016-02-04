@@ -77,16 +77,7 @@ namespace Dune
           FieldMatrixColumn< FieldMatrix< K, dimGlobal, dimGlobal > > bi( b[ r ], i );
           gjit.mv( ci, bi );
         }
-#if 0
-        b[ r ] = K( 0 );
-        for( int k = 0; k < GeometryJacobianInverseTransposed::cols; ++k )
-        {
-          FieldVector< K, GeometryJacobianInverseTransposed::rows > c;
-          gjit.mv( a[ r ][ k ], c );
-          for( int j = 0; j < GeometryJacobianInverseTransposed::rows; ++j )
-            b[ r ][ j ].axpy( gjit[ j ][ k ], c );
-        }
-#endif
+
       }
     }
 

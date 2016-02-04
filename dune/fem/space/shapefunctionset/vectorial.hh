@@ -369,15 +369,6 @@ namespace Dune
         gjit.umv( ci, bi );
       }
 
-#if 0
-      for( int k = 0; k < GeometryJacobianInverseTransposed::cols; ++k )
-      {
-        FieldVector< K, GeometryJacobianInverseTransposed::rows > c;
-        gjit.mv( Traits::access( a.scalar() )[ k ], c );
-        for( int j = 0; j < GeometryJacobianInverseTransposed::rows; ++j )
-          RgTraits::access( b, a.component() )[ j ].axpy( gjit[ j ][ k ], c );
-      }
-#endif
     }
 
     template< class Scalar, class Vectorial >
