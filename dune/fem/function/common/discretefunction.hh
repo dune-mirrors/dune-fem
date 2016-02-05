@@ -5,6 +5,7 @@
 #include <string>
 
 // dune-fem includes
+#include <dune/fem/version.hh>
 #include <dune/fem/function/common/dofiterator.hh>
 #include <dune/fem/function/common/function.hh>
 #include <dune/fem/function/common/functor.hh>
@@ -241,7 +242,7 @@ namespace Dune
        *
        *  \returns a DoFBlockPtrType pointing to block index
        */
-      inline ConstDofBlockPtrType block ( unsigned int index ) const
+      DUNE_VERSION_DEPRECATED_3_0( "dofVector" ) inline ConstDofBlockPtrType block ( unsigned int index ) const
       {
         return asImp().block( index );
       }
@@ -250,7 +251,7 @@ namespace Dune
        *
        *  \returns a DoFBlockPtrType pointing to block index (read-only)
        */
-      inline DofBlockPtrType block ( unsigned int index )
+      DUNE_VERSION_DEPRECATED_3_0( "dofVector" ) inline DofBlockPtrType block ( unsigned int index )
       {
         return asImp().block( index );
       }
