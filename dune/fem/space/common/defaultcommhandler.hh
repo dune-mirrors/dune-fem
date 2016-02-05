@@ -38,8 +38,6 @@ namespace Dune
     protected:
       typedef typename DiscreteFunctionSpaceType::BlockMapperType BlockMapperType;
 
-      typedef typename DiscreteFunctionType::DofBlockPtrType DofBlockPtrType;
-
       static const unsigned int blockSize = DiscreteFunctionSpaceType::localBlockSize;
 
     public:
@@ -53,10 +51,10 @@ namespace Dune
         blockMapper_( other.blockMapper_ )
       {}
 
-    private:
       //! cannot be implemented because of the reference
-      DefaultCommunicationHandler &operator= ( const DefaultCommunicationHandler & );
+      DefaultCommunicationHandler &operator= ( const DefaultCommunicationHandler & ) = delete;
 
+    private:
       template < class Buffer >
       struct GatherFunctor
       {
@@ -64,19 +62,14 @@ namespace Dune
         DiscreteFunctionType *const function_;
 
         GatherFunctor( Buffer& buffer, DiscreteFunctionType* function )
-          : buffer_( buffer ),
-            function_( function )
-        {
-        }
+          : buffer_( buffer ), function_( function )
+        {}
 
         template <class GlobalKey>
         void operator () ( const size_t local, const GlobalKey& globalKey )
         {
-          DofBlockPtrType blockPtr = function_->block( globalKey );
           for( unsigned int j = 0; j < blockSize; ++j )
-          {
-            buffer_.write( (*blockPtr)[ j ] );
-          }
+            buffer_.write( function_->dofVector()[globalKey][j] );
         }
       };
 
@@ -87,21 +80,17 @@ namespace Dune
         DiscreteFunctionType *const function_;
 
         ScatterFunctor( Buffer& buffer, DiscreteFunctionType* function )
-          : buffer_( buffer ),
-            function_( function )
-        {
-        }
+          : buffer_( buffer ), function_( function )
+        {}
 
         template <class GlobalKey>
         void operator () ( const size_t local, const GlobalKey& globalKey )
         {
-          DofBlockPtrType blockPtr = function_->block( globalKey );
           for( unsigned int j = 0; j < blockSize; ++j )
           {
             DataType value;
             buffer_.read( value );
-
-            Operation :: apply( value, (*blockPtr)[ j ] );
+            Operation :: apply( value, function_->dofVector()[globalKey][j] );
           }
         }
       };

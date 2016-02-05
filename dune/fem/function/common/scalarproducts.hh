@@ -523,9 +523,7 @@ namespace Dune
       inline RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x,
                                                 const OtherDiscreteFunctionType &y ) const
       {
-        typedef typename OtherDiscreteFunctionType :: ConstDofBlockPtrType
-          OtherConstDofBlockPtrType;
-        SlaveDofsType &slaveDofs = this->slaveDofs();
+        auto &slaveDofs = this->slaveDofs();
 
         RangeFieldType scp = 0;
 
@@ -534,12 +532,8 @@ namespace Dune
         {
           const int nextSlave = slaveDofs[ slave ];
           for(; i < nextSlave; ++i )
-          {
-            ConstDofBlockPtrType xPtr      = x.block( i );
-            OtherConstDofBlockPtrType yPtr = y.block( i );
             for( unsigned int j = 0; j < blockSize; ++j )
-              scp += (*xPtr)[ j ] * (*yPtr)[ j ];
-          }
+              scp += x.dofVector()[ i ][ j ] * y.dofVector()[ i ][ j ];
 
           // skip the slave dof
           ++i;

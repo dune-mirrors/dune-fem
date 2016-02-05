@@ -73,7 +73,7 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
   auto dfDofIt(df.dbegin());
   for(auto i=0;i!=numBlocks;++i)
     for(auto j=0;j!=localBlockSize;++j,++dfDofIt)
-      if( std::abs( (*df.block(i))[j] - *dfDofIt ) > 1e-12 )
+      if( std::abs( df.dofVector()[i][j] - *dfDofIt ) > 1e-12 )
         DUNE_THROW(Dune::InvalidStateException,"Block access did not work");
 
   // copy to std::vector, sometimes needed for solver interfaces
@@ -88,9 +88,9 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
     DUNE_THROW(Dune::InvalidStateException,"Copying did not work");
   }
 
-  (*df.block( 0 )) *= 1.0;
-  (*df.block( 0 ))[ 0 ] = 1.0;
-  (*df.block( 0 ))[ HGridType::dimension-1 ] = 1.0;
+  df.dofVector()[0] *= 1.0;
+  df.dofVector()[0][0] = 1.0;
+  df.dofVector()[0][HGridType::dimension-1] = 1.0;
 
   df.assign( other );
 

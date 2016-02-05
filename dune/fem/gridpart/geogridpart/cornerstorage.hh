@@ -57,11 +57,8 @@ namespace Dune
         const int index = coordFunction_.gridPart().indexSet().subIndex( hostEntity_, i, dimension );
         assert( (index >= 0) && (index < (int)(coordFunction_.space().blockMapper().size())) );
 
-        typedef typename CoordFunctionType::ConstDofBlockPtrType ConstDofBlockPtrType;
-        ConstDofBlockPtrType block = coordFunction_.block( index );
-
         for( int k = 0; k < dimRange; ++k )
-          y[ k ] = (*block)[ k ];
+          y[ k ] = coordFunction_.dofVector()[ index ][ k ];
       }
 
       GeometryType type () const

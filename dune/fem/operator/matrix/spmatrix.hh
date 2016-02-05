@@ -177,8 +177,7 @@ namespace Dune
 
             const auto blockNr = realCol / blockSize ;
             const auto dofNr = realCol % blockSize ;
-            auto fBlock = f.block( blockNr );
-            (*ret_it) += values_[thisCol] * (*fBlock)[ dofNr ];
+            (*ret_it) += values_[thisCol] * f.dofVector()[ blockNr ][ dofNr ];
           }
 
           ++ret_it;

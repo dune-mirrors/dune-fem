@@ -387,7 +387,6 @@ namespace Dune
       //  end NonBlockingCommunication
       /////////////////////////////////////////////////////////////////
 
-    public:
       //! constructor taking space
       DependencyCache ( const SpaceType &space,
                         const InterfaceType interface,
@@ -408,13 +407,10 @@ namespace Dune
         nonBlockingObjects_( 0 )
       {}
 
-    private:
-      // prohibit copying
-      DependencyCache ( const DependencyCache & );
+      DependencyCache( const DependencyCache & ) = delete;
 
-    public:
       //! destrcutor removeing mpAccess
-      inline ~DependencyCache ()
+      ~DependencyCache()
       {
         delete mpAccess_;
         mpAccess_ = 0;
@@ -426,9 +422,9 @@ namespace Dune
         recvIndexMap_ = 0;
       }
 
-    public:
       //! return communication interface
-      InterfaceType communicationInterface() const {
+      InterfaceType communicationInterface() const
+      {
         return interface_;
       }
 
@@ -561,33 +557,23 @@ namespace Dune
       // write data of DataImp& vector to object stream
       // --writeBuffer
       template< class DiscreteFunction >
-      inline void writeBuffer ( const int link,
-                                ObjectStreamType &str,
-                                const DiscreteFunction &discreteFunction ) const
+      inline void writeBuffer( const int link,
+                               ObjectStreamType &str,
+                               const DiscreteFunction &discreteFunction ) const
       {
         assert( sequence_ == space_.sequence() );
-        const IndexMapType &indexMap = sendIndexMap_[ dest( link ) ];
+        const auto &indexMap = sendIndexMap_[ dest( link ) ];
         const int size = indexMap.size();
 
         typedef typename DiscreteFunction :: DofType DofType;
-        typedef typename DiscreteFunction :: ConstDofBlockPtrType ConstDofBlockPtrType;
 
-        enum { blockSize = DiscreteFunction ::
-                       DiscreteFunctionSpaceType :: localBlockSize } ;
+        enum { blockSize = DiscreteFunction :: DiscreteFunctionSpaceType :: localBlockSize } ;
 
         // reserve write buffer for storage of dofs
         str.reserve( (size * blockSize * sizeof( DofType )) );
         for( int i = 0; i < size; ++i )
-        {
-          // get dof block
-          ConstDofBlockPtrType blockPtr = discreteFunction.block( indexMap[i] );
-
-          // write dof block to stream
           for( int k = 0; k < blockSize; ++k )
-          {
-            str.writeUnchecked( ((*blockPtr)[ k ]) );
-          }
-        }
+            str.writeUnchecked( discreteFunction.dofVector()[indexMap[i]][k] );
       }
 
       // read data from object stream to DataImp& data vector
@@ -611,13 +597,11 @@ namespace Dune
       {
         assert( sequence_ == space_.sequence() );
         typedef typename DiscreteFunction :: DofType DofType;
-        typedef typename DiscreteFunction :: DofBlockPtrType DofBlockPtrType;
 
-        enum { blockSize = DiscreteFunction ::
-                DiscreteFunctionSpaceType :: localBlockSize } ;
+        enum { blockSize = DiscreteFunction :: DiscreteFunctionSpaceType :: localBlockSize } ;
 
         // get index map of rank belonging to link
-        const IndexMapType &indexMap = recvIndexMap_[ dest( link ) ];
+        const auto &indexMap = recvIndexMap_[ dest( link ) ];
 
         const int size = indexMap.size();
         // make sure that the receive buffer has the correct size
@@ -626,10 +610,6 @@ namespace Dune
         DofType value;
         for( int i = 0; i < size; ++i )
         {
-          // get dof block
-          DofBlockPtrType blockPtr = discreteFunction.block( indexMap[i] );
-
-          // read block
           for( int k = 0; k < blockSize; ++k )
           {
 #if HAVE_DUNE_ALUGRID
@@ -637,7 +617,7 @@ namespace Dune
 #else
             str.read( value );
 #endif
-            Operation :: apply( value, ((*blockPtr)[ k ]) );
+            Operation :: apply( value, discreteFunction.dofVector()[indexMap[i]][k] );
           }
         }
       }
@@ -685,8 +665,7 @@ namespace Dune
         recvIndexMap_( recvIdxMap ),
         space_( space ),
         blockMapper_( space.blockMapper() )
-      {
-      }
+      {}
 
     protected:
       void sendBackSendMaps()
@@ -715,18 +694,14 @@ namespace Dune
 
         // write all send maps to buffer
         for(int link=0; link<nlinks; ++link)
-        {
           sendIndexMap_[ dest[link] ].writeToBuffer( osv[link] );
-        }
 
         // exchange data
         osv = mpAccess.exchange( osv );
 
         // read all send maps from buffer
         for(int link=0; link<nlinks; ++link)
-        {
           sendIndexMap_[ dest[link] ].readFromBuffer( osv[link] );
-        }
       }
 
     public:
@@ -750,11 +725,10 @@ namespace Dune
 
       //! read buffer and apply operation
       template< class MessageBuffer, class Entity >
-      void gather ( MessageBuffer &buffer,
-                    const Entity &entity ) const
+      void gather ( MessageBuffer &buffer, const Entity &entity ) const
       {
         // check whether we are a sending entity
-        const PartitionType myPartitionType = entity.partitionType();
+        const auto myPartitionType = entity.partitionType();
         const bool send = EntityCommHelper< CommInterface > :: send( myPartitionType );
 
         // if we send data then send rank and dofs
@@ -774,9 +748,7 @@ namespace Dune
 
           // write global keys to message buffer
           for( int i = 0; i < numDofs; ++i )
-          {
             buffer.write( indices[ i ] );
-          }
         }
       }
 
@@ -795,7 +767,7 @@ namespace Dune
           assert( (rank >= 0) && (rank < mySize_) );
 
           // check whether we are a sending entity
-          const PartitionType myPartitionType = entity.partitionType();
+          const auto myPartitionType = entity.partitionType();
           const bool receive = EntityCommHelper< CommInterface > :: receive( myPartitionType );
 
           // insert rank of link into set of links
@@ -805,9 +777,7 @@ namespace Dune
           typedef std::vector< GlobalKeyType >  IndicesType ;
           IndicesType indices( dataSize - 1 );
           for(size_t i=0; i<dataSize-1; ++i)
-          {
             buffer.read( indices[i] );
-          }
 
           // if we are a receiving entity
           if( receive )
@@ -830,10 +800,6 @@ namespace Dune
 
             // map each entity dof and store in indices
             blockMapper_.mapEachEntityDof( entity, AssignFunctor< IndicesType > ( indices ) );
-            //for( int i = 0; i < numDofs; ++i )
-            //{
-             // indices[ i ] = blockMapper_.mapEntityDofToGlobal( entity, i );
-            //}
 
             // insert receiving dofs
             recvIndexMap_[ rank ].insert( indices );
@@ -925,9 +891,7 @@ namespace Dune
         const int sendSize = sendIndexMap_[ dest( l ) ].size();
         buffer[l].write( sendSize );
         for(int i=0; i<sendSize; ++i)
-        {
           buffer[l].write( i );
-        }
       }
 
       // exchange data to other procs
@@ -1300,7 +1264,7 @@ namespace Dune
         // delete all entries
         while( !objList_.empty() )
         {
-          CommObjInterfaceType * obj = objList_.back();
+          auto obj = objList_.back();
           objList_.pop_back();
           delete obj;
         }
@@ -1338,37 +1302,26 @@ namespace Dune
         // exchange data
         if(objList_.size() > 0)
         {
-          typedef CommObjListType :: iterator iterator;
           // rebuild cahce if grid has changed
-          {
-            iterator end = objList_.end();
-            for(iterator it = objList_.begin(); it != end; ++it)
-            {
-              (*it)->rebuildCache();
-            }
-          }
+          for(auto& elem : objList_)
+            elem->rebuildCache();
 
           // get ALUGrid communicator
-          MPAccessInterfaceType& mpAccess = objList_.front()->mpAccess();
+          auto& mpAccess = objList_.front()->mpAccess();
 
           // create buffer
           ObjectStreamVectorType osv( mpAccess.nlinks() );
 
           // fill buffers
-          iterator end  = objList_.end();
-          for(iterator it = objList_.begin(); it != end; ++it)
-          {
-            (*it)->writeBuffer(osv);
-          }
+          for(auto& elem : objList_)
+            elem->writeBuffer(osv);
 
           // exchange data
           osv = mpAccess.exchange (osv);
 
           // read buffers
-          for(iterator it = objList_.begin(); it != end; ++it)
-          {
-            (*it)->readBuffer(osv);
-          }
+          for(auto& elem : objList_)
+            elem->readBuffer(osv);
         }
       }
     };
