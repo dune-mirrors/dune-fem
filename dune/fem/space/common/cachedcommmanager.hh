@@ -35,7 +35,7 @@ namespace Dune
   namespace Fem
   {
     // forward declaration to disable caching for PetscDiscreteFunction
-    template <class DiscreteFunctionSpace> class PetscDiscreteFunction ;
+    template <class DiscreteFunctionSpace> class PetscDiscreteFunction;
 
     /** @addtogroup Communication Communication
         @{
@@ -68,7 +68,7 @@ namespace Dune
       typedef IndexMapType *IndexMapVectorType;
 
       // type of set of links
-      typedef std :: set< int >  LinkStorageType;
+      typedef std :: set< int > LinkStorageType;
 
       // ALUGrid send/recv buffers
       typedef ALU3DSPACE ObjectStream ObjectStreamType;
@@ -119,23 +119,21 @@ namespace Dune
 
       class NonBlockingCommunication
       {
-        typedef DependencyCache < Space > DependencyCacheType ;
+        typedef DependencyCache < Space > DependencyCacheType;
 
 #if HAVE_DUNE_ALUGRID
-        typedef MPAccessInterfaceType :: NonBlockingExchange  NonBlockingExchange;
+        typedef MPAccessInterfaceType :: NonBlockingExchange NonBlockingExchange;
 
         template <class DiscreteFunction>
         class Pack : public NonBlockingExchange :: DataHandleIF
         {
         protected:
           NonBlockingCommunication& commObj_;
-          const DiscreteFunction&    discreteFunction_;
+          const DiscreteFunction& discreteFunction_;
 
         public:
-          Pack( NonBlockingCommunication& commObj,
-                const DiscreteFunction& df )
-          : commObj_( commObj ),
-            discreteFunction_( df )
+          Pack( NonBlockingCommunication& commObj, const DiscreteFunction& df )
+          : commObj_( commObj ), discreteFunction_( df )
           {}
 
           void pack( const int link, ObjectStreamType& buffer )
@@ -149,24 +147,19 @@ namespace Dune
           }
         };
 
-        template <class DiscreteFunction,
-                  class Operation>
-        class Unpack
-        : public NonBlockingExchange :: DataHandleIF
+        template <class DiscreteFunction, class Operation>
+        class Unpack : public NonBlockingExchange :: DataHandleIF
         {
         protected:
           NonBlockingCommunication& commObj_;
-          DiscreteFunction&    discreteFunction_;
+          DiscreteFunction& discreteFunction_;
 
           // communication operation (ADD or COPY)
           const Operation* operation_;
 
         public:
-          Unpack( NonBlockingCommunication& commObj,
-                  DiscreteFunction& df )
-          : commObj_( commObj ),
-            discreteFunction_( df ),
-            operation_( 0 )
+          Unpack( NonBlockingCommunication& commObj, DiscreteFunction& df )
+          : commObj_( commObj ), discreteFunction_( df ), operation_( 0 )
           {}
 
           void pack( const int link, ObjectStreamType& buffer )
@@ -201,8 +194,7 @@ namespace Dune
         }
 
       public:
-        NonBlockingCommunication( DependencyCacheType& dependencyCache,
-                                  const int mySize )
+        NonBlockingCommunication( DependencyCacheType& dependencyCache, const int mySize )
           : dependencyCache_( dependencyCache ),
             nonBlockingExchange_( 0 ),
             buffer_(),
@@ -275,9 +267,7 @@ namespace Dune
 #else
           // write buffers
           for( int link = 0; link < nLinks; ++link )
-          {
             pack( link, buffer_[ link ], discreteFunction );
-          }
 #endif
 
           // store time needed for sending
@@ -290,7 +280,7 @@ namespace Dune
                         const Operation* operation )
         {
           // take time
-          Dune::Timer exchTimer ;
+          Dune::Timer exchTimer;
 
           // PetscDiscreteFunction has it's own communication
           discreteFunction.communicate();
@@ -323,9 +313,7 @@ namespace Dune
 
           // read buffers and store to discrete function
           for( int link = 0; link < nLinks; ++link )
-          {
             unpack( link, buffer_[ link ], discreteFunction, operation );
-          }
 #endif
 
           // store time needed for sending
@@ -375,10 +363,10 @@ namespace Dune
       };
 
     public:
-      typedef NonBlockingCommunication  NonBlockingCommunicationType;
+      typedef NonBlockingCommunication NonBlockingCommunicationType;
 
       //! return object for non-blocking communication
-      NonBlockingCommunicationType nonBlockingCommunication ()
+      NonBlockingCommunicationType nonBlockingCommunication()
       {
         // create non-blocking communication object
         return NonBlockingCommunicationType( *this, mySize_ );
@@ -388,9 +376,7 @@ namespace Dune
       /////////////////////////////////////////////////////////////////
 
       //! constructor taking space
-      DependencyCache ( const SpaceType &space,
-                        const InterfaceType interface,
-                        const CommunicationDirection dir)
+      DependencyCache( const SpaceType &space, const InterfaceType interface, const CommunicationDirection dir )
       : space_( space ),
         gridPart_( space_.gridPart() ),
         interface_( interface ),
@@ -435,13 +421,19 @@ namespace Dune
       }
 
       //! return time needed for last build
-      double buildTime() const { return buildTime_; }
+      double buildTime() const
+      {
+        return buildTime_;
+      }
 
       //! return time needed for last exchange
-      double exchangeTime() const { return exchangeTime_; }
+      double exchangeTime() const
+      {
+        return exchangeTime_;
+      }
 
       // build linkage and index maps
-      inline void buildMaps ();
+      inline void buildMaps();
 
       // notify for open non-blocking communications
       void attachComm()
@@ -458,14 +450,14 @@ namespace Dune
 
       bool noOpenCommunications() const
       {
-        return true ; //nonBlockingObjects_ == 0;
+        return true ;
       }
     protected:
       // check consistency of maps
-      inline void checkConsistency ();
+      inline void checkConsistency();
 
       template< class LS, class IMV, InterfaceType CI >
-      inline void buildMaps ( LinkBuilder< LS, IMV, CI > &handle );
+      inline void buildMaps( LinkBuilder< LS, IMV, CI > &handle );
 
     public:
       //! return MPI rank of link
@@ -475,19 +467,19 @@ namespace Dune
       }
 
       //! return number of links
-      inline int nlinks () const
+      inline int nlinks() const
       {
         return mpAccess().nlinks();
       }
 
       //! check if grid has changed and rebuild cache if necessary
-      inline void rebuild ()
+      inline void rebuild()
       {
         // only in parallel we have to do something
         if( mySize_ <= 1 ) return;
 
         // make sure all non-blocking communications have been finished by now
-        assert( noOpenCommunications () );
+        assert( noOpenCommunications() );
 #ifndef NDEBUG
         // make sure buildMaps is called on every process
         // otherwise the programs wait here until forever
@@ -516,29 +508,27 @@ namespace Dune
 
       //! exchange data of discrete function
       template< class DiscreteFunction, class Operation >
-      inline void exchange ( DiscreteFunction &discreteFunction,
-                             const Operation *operation );
+      inline void exchange( DiscreteFunction &discreteFunction, const Operation *operation );
 
       //! write data of discrete function to buffer
       template< class DiscreteFunction >
-      inline void writeBuffer ( ObjectStreamVectorType &osv,
-                                const DiscreteFunction &discreteFunction ) const;
+      inline void writeBuffer( ObjectStreamVectorType &osv, const DiscreteFunction &discreteFunction ) const;
 
       //! read data of discrete function from buffer
       template< class DiscreteFunctionType, class Operation >
-      inline void readBuffer ( ObjectStreamVectorType &osv,
-                               DiscreteFunctionType &discreteFunction,
-                               const Operation *operation ) const;
+      inline void readBuffer( ObjectStreamVectorType &osv,
+                              DiscreteFunctionType &discreteFunction,
+                              const Operation *operation ) const;
 
       //! return reference to mpAccess object
-      inline MPAccessInterfaceType &mpAccess ()
+      inline MPAccessInterfaceType &mpAccess()
       {
         assert( mpAccess_ );
         return *mpAccess_;
       }
 
       //! return reference to mpAccess object
-      inline const MPAccessInterfaceType &mpAccess () const
+      inline const MPAccessInterfaceType &mpAccess() const
       {
         assert( mpAccess_ );
         return *mpAccess_;
@@ -547,9 +537,9 @@ namespace Dune
     protected:
       // specialization for PetscDiscreteFunction doing nothing
       template< class DiscreteFunctionSpace >
-      inline void writeBuffer ( const int link,
-                                ObjectStreamType &str,
-                                const PetscDiscreteFunction< DiscreteFunctionSpace > &discreteFunction ) const
+      inline void writeBuffer( const int link,
+                               ObjectStreamType &str,
+                               const PetscDiscreteFunction< DiscreteFunctionSpace > &discreteFunction ) const
       {
         DUNE_THROW(NotImplemented,"writeBuffer not implemented for PetscDiscteteFunction" );
       }
@@ -579,10 +569,10 @@ namespace Dune
       // read data from object stream to DataImp& data vector
       // specialization for PetscDiscreteFunction doing nothing
       template< class DiscreteFunctionSpace, class Operation >
-      inline void readBuffer ( const int link,
-                               ObjectStreamType &str,
-                               PetscDiscreteFunction< DiscreteFunctionSpace > &discreteFunction,
-                               const Operation * ) const
+      inline void readBuffer( const int link,
+                              ObjectStreamType &str,
+                              PetscDiscreteFunction< DiscreteFunctionSpace > &discreteFunction,
+                              const Operation * ) const
       {
         DUNE_THROW(NotImplemented,"readBuffer not implemented for PetscDiscteteFunction" );
       }
@@ -590,10 +580,10 @@ namespace Dune
       // read data from object stream to DataImp& data vector
       // --readBuffer
       template< class DiscreteFunction, class Operation >
-      inline void readBuffer ( const int link,
-                               ObjectStreamType &str,
-                               DiscreteFunction &discreteFunction,
-                               const Operation * ) const
+      inline void readBuffer( const int link,
+                              ObjectStreamType &str,
+                              DiscreteFunction &discreteFunction,
+                              const Operation * ) const
       {
         assert( sequence_ == space_.sequence() );
         typedef typename DiscreteFunction :: DofType DofType;
@@ -654,10 +644,10 @@ namespace Dune
       const BlockMapperType &blockMapper_;
 
     public:
-      LinkBuilder ( LinkStorageType &linkStorage,
-                    IndexMapVectorType &sendIdxMap,
-                    IndexMapVectorType &recvIdxMap,
-                    const SpaceType &space )
+      LinkBuilder( LinkStorageType &linkStorage,
+                   IndexMapVectorType &sendIdxMap,
+                   IndexMapVectorType &recvIdxMap,
+                   const SpaceType &space )
       : myRank_( space.gridPart().comm().rank() ),
         mySize_( space.gridPart().comm().size() ),
         linkStorage_( linkStorage ),
@@ -671,7 +661,7 @@ namespace Dune
       void sendBackSendMaps()
       {
         // create ALU communicator
-        MPAccessImplType mpAccess ( MPIHelper::getCommunicator() );
+        MPAccessImplType mpAccess( MPIHelper::getCommunicator() );
 
         // build linkage
         mpAccess.removeLinkage();
@@ -712,20 +702,20 @@ namespace Dune
       }
 
       //! returns true if combination is contained
-      bool contains ( int dim, int codim ) const
+      bool contains( int dim, int codim ) const
       {
         return space_.blockMapper().contains( codim );
       }
 
       //! return whether we have a fixed size
-      bool fixedsize ( int dim, int codim ) const
+      bool fixedsize( int dim, int codim ) const
       {
         return false;
       }
 
       //! read buffer and apply operation
       template< class MessageBuffer, class Entity >
-      void gather ( MessageBuffer &buffer, const Entity &entity ) const
+      void gather( MessageBuffer &buffer, const Entity &entity ) const
       {
         // check whether we are a sending entity
         const auto myPartitionType = entity.partitionType();
@@ -754,9 +744,7 @@ namespace Dune
 
       //! read buffer and apply operation
       template< class MessageBuffer, class Entity >
-      void scatter ( MessageBuffer &buffer,
-                     const Entity &entity,
-                     const size_t dataSize )
+      void scatter( MessageBuffer &buffer, const Entity &entity, const size_t dataSize )
       {
         // if data size > 0 then other side is sender
         if( dataSize > 0 )
@@ -799,7 +787,7 @@ namespace Dune
             indices.resize( numDofs );
 
             // map each entity dof and store in indices
-            blockMapper_.mapEachEntityDof( entity, AssignFunctor< IndicesType > ( indices ) );
+            blockMapper_.mapEachEntityDof( entity, AssignFunctor< IndicesType >( indices ) );
 
             // insert receiving dofs
             recvIndexMap_[ rank ].insert( indices );
@@ -809,7 +797,7 @@ namespace Dune
 
       //! return local dof size to be communicated
       template< class Entity >
-      size_t size ( const Entity &entity ) const
+      size_t size( const Entity &entity ) const
       {
         const PartitionType myPartitionType = entity.partitionType();
         const bool send = EntityCommHelper< CommInterface > :: send( myPartitionType );
@@ -820,7 +808,7 @@ namespace Dune
 
 
     template< class Space >
-    inline void DependencyCache< Space > :: buildMaps ()
+    inline void DependencyCache< Space > :: buildMaps()
     {
       if( interface_ == InteriorBorder_All_Interface )
       {
@@ -843,8 +831,7 @@ namespace Dune
         buildMaps( handle );
       }
       else
-        DUNE_THROW( NotImplemented, "DependencyCache for the given interface has"
-                                    " not been implemented, yet." );
+        DUNE_THROW( NotImplemented, "DependencyCache for the given interface has not been implemented, yet." );
 #ifndef NDEBUG
       // checks that sizes of index maps are equal on sending and receiving proc
       checkConsistency();
@@ -854,8 +841,7 @@ namespace Dune
 
     template< class Space >
     template< class LS, class IMV, InterfaceType CI >
-    inline void DependencyCache< Space >
-      :: buildMaps ( LinkBuilder< LS, IMV, CI > &handle )
+    inline void DependencyCache< Space > :: buildMaps( LinkBuilder< LS, IMV, CI > &handle )
     {
       linkStorage_.clear();
       for( int i = 0; i < mySize_; ++i )
@@ -870,16 +856,12 @@ namespace Dune
       // remove old linkage
       mpAccess().removeLinkage();
       // create new linkage
-      mpAccess().insertRequestSymetric ( linkStorage_ );
+      mpAccess().insertRequestSymetric( linkStorage_ );
     }
 
     template< class Space >
-    inline void DependencyCache< Space >
-      :: checkConsistency ()
+    inline void DependencyCache< Space > :: checkConsistency()
     {
-      /////////////////////////////
-      // consistency check
-      /////////////////////////////
       const int nLinks = nlinks();
 
       ObjectStreamVectorType buffer( nLinks );
@@ -926,9 +908,7 @@ namespace Dune
 
     template< class Space >
     template< class DiscreteFunction, class Operation >
-    inline void DependencyCache< Space >
-      :: exchange ( DiscreteFunction &discreteFunction,
-                    const Operation *operation )
+    inline void DependencyCache< Space > :: exchange( DiscreteFunction &discreteFunction, const Operation *operation )
     {
       // on serial runs: do nothing
       if( mySize_ <= 1 ) return;
@@ -943,34 +923,25 @@ namespace Dune
       exchangeTime_ = nbc.receive( discreteFunction, operation );
     }
 
-
     template< class Space >
     template< class DiscreteFunction >
-    inline void DependencyCache< Space >
-      :: writeBuffer ( ObjectStreamVectorType &osv,
-                       const DiscreteFunction &discreteFunction ) const
+    inline void DependencyCache< Space > :: writeBuffer( ObjectStreamVectorType &osv,
+                                                         const DiscreteFunction &discreteFunction ) const
     {
       const int numLinks = nlinks();
-      // write buffers
       for( int link = 0; link < numLinks; ++link )
         writeBuffer( link, osv[ link ], discreteFunction );
     }
 
-
     template< class Space >
     template< class DiscreteFunction, class Operation >
-    inline void DependencyCache< Space >
-      :: readBuffer ( ObjectStreamVectorType &osv,
-                      DiscreteFunction &discreteFunction,
-                      const Operation *operation ) const
+    inline void DependencyCache< Space > :: readBuffer( ObjectStreamVectorType &osv, DiscreteFunction &discreteFunction,
+                                                        const Operation *operation ) const
     {
       const int numLinks = nlinks();
-      // write buffers
       for( int link = 0; link < numLinks; ++link )
         readBuffer( link, osv[ link ], discreteFunction, operation );
     }
-
-
 
     //! Key for CommManager singleton list
     template <class SpaceImp>
@@ -984,11 +955,14 @@ namespace Dune
       CommManagerSingletonKey(const SpaceImp & space,
                               const InterfaceType interface,
                               const CommunicationDirection dir)
-        : space_(space), interface_(interface), dir_(dir) {}
+        : space_(space), interface_(interface), dir_(dir)
+      {}
 
       //! copy constructor
       CommManagerSingletonKey(const CommManagerSingletonKey & org)
-        : space_(org.space_), interface_(org.interface_), dir_(org.dir_) {}
+        : space_(org.space_), interface_(org.interface_), dir_(org.dir_)
+      {}
+
       //! returns true if indexSet pointer and numDofs are equal
       bool operator == (const CommManagerSingletonKey & otherKey) const
       {
@@ -997,11 +971,22 @@ namespace Dune
       }
 
       //! return reference to index set
-      const SpaceImp & space() const { return space_; }
+      const SpaceImp & space() const
+      {
+        return space_;
+      }
+
       //! return communication interface
-      InterfaceType interface() const { return interface_; }
+      InterfaceType interface() const
+      {
+        return interface_;
+      }
+
       //! return communication direction
-      CommunicationDirection direction() const { return dir_; }
+      CommunicationDirection direction() const
+      {
+        return dir_;
+      }
     };
 
     //! Factory class for SingletonList to tell how objects are created and
@@ -1013,9 +998,7 @@ namespace Dune
       //! create new communiaction manager
       static ObjectImp * createObject( const KeyImp & key )
       {
-        return new ObjectImp(key.space(),
-                             key.interface(),
-                             key.direction());
+        return new ObjectImp(key.space(), key.interface(), key.direction());
       }
 
       //! delete comm manager
@@ -1068,9 +1051,7 @@ namespace Dune
       //! constructor taking space and communication interface/direction
       CommunicationManager(const SpaceType & space)
         : space_(space)
-        , key_(space_,
-               space.communicationInterface(),
-               space.communicationDirection())
+        , key_(space_, space.communicationInterface(), space.communicationDirection())
         , mySize_(space_.gridPart().comm().size())
         , cache_(CommunicationProviderType::getObject(key_))
       {}
@@ -1082,7 +1063,8 @@ namespace Dune
       }
 
       //! return communication interface
-      InterfaceType communicationInterface() const {
+      InterfaceType communicationInterface() const
+      {
         return cache_.communicationInterface();
       }
 
@@ -1093,12 +1075,21 @@ namespace Dune
       }
 
       //! return time needed for last build
-      double buildTime() const { return cache_.buildTime(); }
+      double buildTime() const
+      {
+        return cache_.buildTime();
+      }
 
       //! return time needed for last exchange
-      double exchangeTime() const { return cache_.exchangeTime(); }
+      double exchangeTime() const
+      {
+        return cache_.exchangeTime();
+      }
 
-      MPAccessInterfaceType& mpAccess() { return cache_.mpAccess(); }
+      MPAccessInterfaceType& mpAccess()
+      {
+        return cache_.mpAccess();
+      }
 
       //! return object for non-blocking communication
       NonBlockingCommunicationType nonBlockingCommunication() const
@@ -1128,16 +1119,14 @@ namespace Dune
 
       //! write given df to given buffer
       template <class ObjectStreamVectorType, class DiscreteFunctionType>
-      void writeBuffer(ObjectStreamVectorType& osv,
-                       const DiscreteFunctionType & df) const
+      void writeBuffer(ObjectStreamVectorType& osv, const DiscreteFunctionType & df) const
       {
         cache_.writeBuffer(osv, df );
       }
 
       // read given df from given buffer
       template <class ObjectStreamVectorType, class DiscreteFunctionType>
-      void readBuffer(ObjectStreamVectorType& osv,
-                      DiscreteFunctionType & df) const
+      void readBuffer(ObjectStreamVectorType& osv, DiscreteFunctionType & df) const
       {
         typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
           :: template CommDataHandle<DiscreteFunctionType> :: OperationType OperationType;
@@ -1145,17 +1134,14 @@ namespace Dune
       }
 
       // read given df from given buffer
-      template <class ObjectStreamVectorType, class DiscreteFunctionType,
-                class OperationType>
-      void readBuffer(ObjectStreamVectorType& osv,
-                      DiscreteFunctionType & df,
-                      const OperationType* op) const
+      template <class ObjectStreamVectorType, class DiscreteFunctionType, class OperationType>
+      void readBuffer(ObjectStreamVectorType& osv, DiscreteFunctionType & df, const OperationType* op) const
       {
         cache_.readBuffer(osv, df , op);
       }
 
       //! rebuild underlying cache if necessary
-      void rebuildCache ()
+      void rebuildCache()
       {
         cache_.rebuild();
       }
@@ -1169,14 +1155,16 @@ namespace Dune
       class DiscreteFunctionCommunicatorInterface
       {
       protected:
-        DiscreteFunctionCommunicatorInterface () {}
+        DiscreteFunctionCommunicatorInterface()
+        {}
       public:
-        virtual ~DiscreteFunctionCommunicatorInterface () {}
+        virtual ~DiscreteFunctionCommunicatorInterface()
+        {}
 
         virtual MPAccessType& mpAccess() = 0;
         virtual void writeBuffer(ObjectStreamVectorType&) const = 0;
         virtual void readBuffer(ObjectStreamVectorType&) = 0;
-        virtual void rebuildCache () = 0;
+        virtual void rebuildCache() = 0;
       };
 
       //! communicated object implementation
@@ -1205,7 +1193,10 @@ namespace Dune
         {}
 
         //! return ALUGrid communicator
-        virtual MPAccessType& mpAccess() { return comm_.mpAccess(); }
+        virtual MPAccessType& mpAccess()
+        {
+          return comm_.mpAccess();
+        }
 
         //! write discrete function to all buffers
         virtual void writeBuffer(ObjectStreamVectorType& osv) const
@@ -1220,9 +1211,9 @@ namespace Dune
         }
 
         //! rebuild cache if grid changed
-        virtual void rebuildCache ()
+        virtual void rebuildCache()
         {
-          comm_.rebuildCache ();
+          comm_.rebuildCache();
         }
       };
 
@@ -1317,7 +1308,7 @@ namespace Dune
             elem->writeBuffer(osv);
 
           // exchange data
-          osv = mpAccess.exchange (osv);
+          osv = mpAccess.exchange(osv);
 
           // read buffers
           for(auto& elem : objList_)
