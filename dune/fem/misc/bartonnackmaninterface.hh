@@ -1,9 +1,10 @@
+#include <dune/common/bartonnackmanifcheck.hh>
+
 #ifndef DUNE_FEM_BARTONNACKMANINTERFACE_HH
 #define DUNE_FEM_BARTONNACKMANINTERFACE_HH
 
 #include <type_traits>
 
-#include <dune/common/bartonnackmanifcheck.hh>
 
 namespace Dune
 {
