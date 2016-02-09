@@ -51,7 +51,7 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
   df -= other;
 
   // fill df with zeros
-  for( auto& dof : dofs(df) )
+  for( auto&& dof : dofs(df) )
     dof=static_cast<DofType>(0);
 
   // fill with increasing values
