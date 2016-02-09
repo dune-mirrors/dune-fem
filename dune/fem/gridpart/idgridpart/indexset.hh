@@ -111,6 +111,9 @@ namespace Dune
           return hostIndexSet_;
         }
 
+      protected:
+        HostIndexSetType &hostIndexSet () { return const_cast< HostIndexSetType & >( hostIndexSet_); }
+
       private:
         const HostIndexSetType &hostIndexSet_;
       };
