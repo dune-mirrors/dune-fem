@@ -35,7 +35,7 @@ for module in $MODULES; do
   if test -z "$hc_errors"; then
     rm $CHECKLOG
   else
-    if "x$module" == "x$MODULENAME" ; then
+    if test "x$module" = "x$MODULENAME" ; then
       echo "Error: headercheck for module $module failed (see headercheck-$module.log)"
       errors=$((errors+1))
     else
