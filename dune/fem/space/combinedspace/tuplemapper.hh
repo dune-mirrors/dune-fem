@@ -618,6 +618,12 @@ namespace Dune
         static const bool v = Std::And( isAdaptiveDofMapper< Mapper >::v ... );
       };
 
+      template< class GridPart, class ... Mapper >
+      struct isConsecutiveIndexSet< __TupleMapper::AdaptiveDofMapper< __TupleMapper::Traits< GridPart, Mapper... > > >
+      {
+        static const bool v = true;
+      };
+
     } // namespace Capabilities
 
   }   // namespace Fem

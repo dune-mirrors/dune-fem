@@ -1012,6 +1012,20 @@ namespace Dune
       int sequence_ ;
     }; // class GenericAdaptiveDofMapper
 
+
+    namespace Capabilities
+    {
+      // isConsecutiveIndexSet
+      // ---------------------
+
+      template< class Traits >
+      struct isConsecutiveIndexSet< GenericAdaptiveDofMapper< Traits > >
+      {
+        static const bool v = true;
+      };
+
+    } // namespace Capabilities
+
   } // namespace Fem
 
 } // namespace Dune

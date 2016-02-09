@@ -145,6 +145,25 @@ namespace Dune
       {}
     };
 
+    namespace Capabilities
+    {
+      // isConsecutiveIndexSet
+      // ---------------------
+
+      template< class GridPart, int polOrder >
+      struct isConsecutiveIndexSet< PAdaptiveDGMapper< GridPart, polOrder > >
+      {
+        static const bool v = true;
+      };
+
+      template< class GridPart, int polOrder >
+      struct isConsecutiveIndexSet< PAdaptiveLagrangeMapper< GridPart, polOrder > >
+      {
+        static const bool v = true;
+      };
+
+    } // namespace Capabilities
+
   } // namespace Fem
 
 } // namespace Dune

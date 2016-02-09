@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include <dune/fem/gridpart/common/indexset.hh>
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 
@@ -274,6 +275,12 @@ namespace Dune
       struct isAdaptiveDofMapper< NonBlockMapper< BlockMapper, blockSize > >
       {
         static const bool v = isAdaptiveDofMapper< BlockMapper >::v;
+      };
+
+      template< class BlockMapper, int blockSize >
+      struct isConsecutiveIndexSet< __NonBlockMapper::AdaptiveDofMapper< __NonBlockMapper::Traits< BlockMapper, blockSize > > >
+      {
+        static const bool v = isConsecutiveIndexSet< BlockMapper >::v;
       };
 
     } // namespace Capabilities
