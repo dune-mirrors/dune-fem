@@ -1,6 +1,10 @@
 #ifndef DUNE_FEM_SPOPERATOR_HH
 #define DUNE_FEM_SPOPERATOR_HH
 
+// system includes
+#include <string>
+
+// local includes
 #include <dune/fem/operator/matrix/spmatrix.hh>
 
 namespace Dune
@@ -9,48 +13,57 @@ namespace Dune
   namespace Fem
   {
 
-    // SparseRowLinearOperator
-    // -----------------------
-
+    //! SparseRowLinearOperator
     template< class DomainFunction, class RangeFunction >
-    class SparseRowLinearOperator
+    struct SparseRowLinearOperator
     : public SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType >,
       public Fem::AssembledOperator< DomainFunction, RangeFunction >
     {
-      typedef SparseRowMatrixObject< typename DomainFunction::DiscreteFunctionSpaceType, typename RangeFunction::DiscreteFunctionSpaceType > Base;
+      typedef typename DomainFunction::DiscreteFunctionSpaceType DomainSpaceType;
+      typedef typename RangeFunction::DiscreteFunctionSpaceType RangeSpaceType;
+      typedef SparseRowLinearOperator< DomainFunction, RangeFunction > ThisType;
+      typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType > BaseType;
 
-    public:
-      typedef typename Base::DomainSpaceType DomainSpaceType;
-      typedef typename Base::RangeSpaceType RangeSpaceType;
+      static constexpr bool assembled = true;
 
-      /** \copydoc Fem::Operator::assembled */
-      static const bool assembled = true ;
+      using BaseType::apply;
 
-      using Base::apply;
-
-      SparseRowLinearOperator ( const std::string &name,
-                                const DomainSpaceType &domainSpace,
-                                const RangeSpaceType &rangeSpace,
-                                const std::string &paramfile = "" )
-      : Base( domainSpace, rangeSpace, paramfile )
+      SparseRowLinearOperator( const std::string & ,
+                               const DomainSpaceType &domainSpace,
+                               const RangeSpaceType &rangeSpace,
+                               const std::string &paramfile )
+        DUNE_DEPRECATED_MSG("SparseRowLinearOperator(...,string) is deprecated. Use SparseRowLinearOperator(string,DomainSpace,RangeSpace,SparseRowMatrixParameter) instead")
+        : BaseType( domainSpace, rangeSpace )
       {}
 
-      virtual void operator() ( const DomainFunction &arg, RangeFunction &dest ) const
+      SparseRowLinearOperator( const std::string & ,
+                               const DomainSpaceType &domainSpace,
+                               const RangeSpaceType &rangeSpace,
+                               const SparseRowMatrixParameter& param = SparseRowMatrixParameter() ) :
+        BaseType( domainSpace, rangeSpace, param )
+      {}
+
+      virtual void operator()( const DomainFunction &arg, RangeFunction &dest ) const
       {
-        Base::apply( arg, dest );
+        apply( arg, dest );
       }
 
-      const Base &systemMatrix () const
+      const BaseType &systemMatrix() const
       {
         return *this;
       }
 
-      void communicate () const
+      BaseType &systemMatrix()
       {
+        return *this;
       }
+
+      void communicate()
+      {}
     };
+
   } // namespace Fem
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_SPLINEAR_HH
+#endif // #ifndef DUNE_FEM_SPOPERATOR_HH

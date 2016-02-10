@@ -39,6 +39,78 @@ namespace Dune
   namespace Fem
   {
 
+    struct ISTLMatrixParameter
+      : public Dune::Fem::LocalParameter< ISTLMatrixParameter, ISTLMatrixParameter >
+    {
+
+      enum PreconditionerId { none  = 0 ,      // no preconditioner
+                              ssor  = 1 ,      // SSOR preconditioner
+                              sor   = 2 ,      // SOR preconditioner
+                              ilu_0 = 3 ,      // ILU-0 preconditioner
+                              ilu_n = 4 ,      // ILU-n preconditioner
+                              gauss_seidel= 5, // Gauss-Seidel preconditioner
+                              jacobi = 6,      // Jacobi preconditioner
+                              amg_ilu_0 = 7,   // AMG with ILU-0 smoother
+                              amg_ilu_n = 8,   // AMG with ILU-n smoother
+                              amg_jacobi = 9   // AMG with Jacobi smoother
+      };
+
+      ISTLMatrixParameter( const std::string keyPrefix = "istl." )
+        : keyPrefix_( keyPrefix )
+      {}
+
+      virtual double overflowFraction () const
+      {
+        return Parameter::getValue< double >( keyPrefix_ + "matrix.overflowfraction", 1.0 );
+      }
+
+      virtual int numIterations () const
+      {
+        return Parameter::getValue< int >( keyPrefix_ + "preconditioning.iterations", 5 );
+      }
+
+      virtual double relaxation () const
+      {
+        return Parameter::getValue< int >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
+      }
+
+      virtual PreconditionerId method () const
+      {
+        static const std::string preConTable[]
+          = { "none", "ssor", "sor", "ilu-0", "ilu-n", "gauss-seidel", "jacobi", "amg-ilu-0", "amg-ilu-n", "amg-jacobi" };
+        return (PreconditionerId) Parameter::getEnum(  keyPrefix_ + "preconditioning.method", preConTable, 0 );
+      }
+
+      virtual std::string preconditionName() const
+      {
+        PreconditionerId precond = method();
+        std::stringstream tmp;
+        // no preconditioner
+        switch (precond)
+        {
+          case ssor : tmp << "SSOR"; break;
+          case sor  : tmp << "SOR"; break;
+          case ilu_0: tmp << "ILU-0"; break;
+          case ilu_n: tmp << "ILU-n"; break;
+          case gauss_seidel : tmp << "Gauss-Seidel"; break;
+          case jacobi: tmp << "Jacobi"; break;
+          case amg_ilu_0: tmp << "AMG-ILU-0"; break;
+          case amg_ilu_n: tmp << "AMG-ILU-n"; break;
+          case amg_jacobi: tmp << "AMG-Jacobi"; break;
+          default: tmp << "None"; break;
+        }
+
+        if( precond != ilu_0 )
+          tmp << " n=" << numIterations();
+        tmp << " relax=" << relaxation();
+        return tmp.str();
+      }
+
+     private:
+      std::string keyPrefix_;
+
+    };
+
     ///////////////////////////////////////////////////////
     // --ISTLMatrixHandle
     //////////////////////////////////////////////////////
@@ -692,13 +764,30 @@ namespace Dune
       // overflow fraction for implicit build mode
       const double overflowFraction_;
 
-      // prohibit copy constructor
-      ISTLMatrixObject(const ISTLMatrixObject&);
     public:
+      ISTLMatrixObject(const ISTLMatrixObject&) = delete;
+
+      ISTLMatrixObject ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace, const std::string& paramfile )
+        DUNE_DEPRECATED_MSG("ISTLMatrixObject(...,string) is deprecated. Use ISTLMatrixObject(DomainSpace,RangeSpace,ISTLMatrixParameter) instead")
+        : domainSpace_(domainSpace)
+        , rangeSpace_(rangeSpace)
+        , rowMapper_( rangeSpace.blockMapper() )
+        , colMapper_( domainSpace.blockMapper() )
+        , size_(-1)
+        , sequence_(-1)
+        , matrix_(nullptr)
+        // , scp_(rangeSpace())
+        , localMatrixStack_( *this )
+        , matrixAdap_(nullptr)
+        , Arg_(nullptr)
+        , Dest_(nullptr)
+        , overflowFraction_( Parameter::getValue( "istl.matrix.overflowfraction", 1.0 ) )
+      {}
+
       //! constructor
       //! \param rowSpace space defining row structure
       //! \param colSpace space defining column structure
-      ISTLMatrixObject ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace, const std :: string &paramfile = "" ) :
+      ISTLMatrixObject ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace, const ISTLMatrixParameter& param = ISTLMatrixParameter() ) :
         domainSpace_(domainSpace)
         , rangeSpace_(rangeSpace)
         // create scp to have at least one instance
@@ -714,7 +803,7 @@ namespace Dune
         , matrixAdap_(nullptr)
         , Arg_(nullptr)
         , Dest_(nullptr)
-        , overflowFraction_( Parameter::getValue( "istl.matrix.overflowfraction", 1.0 ) )
+        , overflowFraction_( param.overflowFraction() )
       {}
 
       /** \copydoc Dune::Fem::Operator::assembled */
@@ -1352,18 +1441,7 @@ namespace Dune
       int numIterations_;
       double relaxFactor_;
 
-      enum ISTLPreConder_Id { none  = 0 ,      // no preconditioner
-                              ssor  = 1 ,      // SSOR preconditioner
-                              sor   = 2 ,      // SOR preconditioner
-                              ilu_0 = 3 ,      // ILU-0 preconditioner
-                              ilu_n = 4 ,      // ILU-n preconditioner
-                              gauss_seidel= 5, // Gauss-Seidel preconditioner
-                              jacobi = 6,      // Jacobi preconditioner
-                              amg_ilu_0 = 7,   // AMG with ILU-0 smoother
-                              amg_ilu_n = 8,   // AMG with ILU-n smoother
-                              amg_jacobi = 9   // AMG with Jacobi smoother
-      };
-
+      typedef ISTLMatrixParameter::PreconditionerId ISTLPreConder_Id;
       ISTLPreConder_Id preconditioning_;
 
       mutable LocalMatrixStackType localMatrixStack_;
@@ -1373,18 +1451,57 @@ namespace Dune
       mutable ColumnBlockVectorType* Dest_;
       // overflow fraction for implicit build mode
       const double overflowFraction_;
+      const ISTLMatrixParameter& param_;
 
     public:
       ISTLMatrixObject(const ISTLMatrixObject&) = delete;
 
+      ISTLMatrixObject ( const DomainSpaceType &rowSpace, const RangeSpaceType &colSpace, const std :: string &paramfile )
+        DUNE_DEPRECATED_MSG("ISTLMatrixObject(...,string) is deprecated. Use ISTLMatrixObject(DomainSpace,RangeSpace,ISTLMatrixParameter) instead")
+         : domainSpace_(rowSpace)
+         , rangeSpace_(colSpace)
+         , colMapper_( colSpace.blockMapper() )
+         , size_(-1)
+         , sequence_(-1)
+         , matrix_(nullptr)
+         , scp_(rangeSpace())
+         , numIterations_(5)
+         , relaxFactor_(1.1)
+         , preconditioning_(ISTLPreConder_Id::none)
+         , localMatrixStack_( *this )
+         , matrixAdap_(nullptr)
+         , Arg_(nullptr)
+         , Dest_(nullptr)
+         , overflowFraction_( Parameter::getValue( "istl.matrix.overflowfraction", 1.0 ) )
+       {
+         int preCon = 0;
+         if(paramfile != "")
+           DUNE_THROW(InvalidStateException,"ISTLMatrixObject: old parameter method disabled");
+         else
+         {
+           static const std::string preConTable[]
+             = { "none", "ssor", "sor", "ilu-0", "ilu-n", "gauss-seidel", "jacobi", "amg-ilu-0", "amg-ilu-n", "amg-jacobi" };
+           preCon         = Parameter::getEnum( "istl.preconditioning.method", preConTable, preCon );
+           numIterations_ = Parameter::getValue( "istl.preconditioning.iterations", numIterations_ );
+           relaxFactor_   = Parameter::getValue( "istl.preconditioning.relaxation", relaxFactor_ );
+         }
+
+         if( preCon >= 0 && preCon <= 9)
+           preconditioning_ = (ISTLPreConder_Id) preCon;
+         else
+           preConErrorMsg(preCon);
+
+          assert( rowMapper_.size() == colMapper_.size() );
+       }
+
       //! constructor
       //! \param rowSpace space defining row structure
       //! \param colSpace space defining column structure
-      //! \param paramfile parameter file to read variables
+      //! \param param istl matrix parameters for preconditioning
       //!         - Preconditioning: {0,1,2,3,4,5,6} put -1 to get info
       //!         - Pre-iteration: number of iteration of preconditioner
       //!         - Pre-relaxation: relaxation factor
-      ISTLMatrixObject ( const DomainSpaceType &rowSpace, const RangeSpaceType &colSpace, const std :: string &paramfile = "" )
+      ISTLMatrixObject ( const DomainSpaceType &rowSpace, const RangeSpaceType &colSpace, const ISTLMatrixParameter& param = ISTLMatrixParameter() )
         : domainSpace_(rowSpace)
         , rangeSpace_(colSpace)
         // create scp to have at least one instance
@@ -1396,32 +1513,16 @@ namespace Dune
         , sequence_(-1)
         , matrix_(nullptr)
         , scp_(rangeSpace())
-        , numIterations_(5)
-        , relaxFactor_(1.1)
-        , preconditioning_(none)
+        , numIterations_( param.numIterations() )
+        , relaxFactor_( param.relaxation() )
+        , preconditioning_( param.method() )
         , localMatrixStack_( *this )
         , matrixAdap_(nullptr)
         , Arg_(nullptr)
         , Dest_(nullptr)
-        , overflowFraction_( Parameter::getValue( "istl.matrix.overflowfraction", 1.0 ) )
+        , overflowFraction_( param.overflowFraction() )
+        , param_( param )
       {
-        int preCon = 0;
-        if(paramfile != "")
-          DUNE_THROW(InvalidStateException,"ISTLMatrixObject: old parameter method disabled");
-        else
-        {
-          static const std::string preConTable[]
-            = { "none", "ssor", "sor", "ilu-0", "ilu-n", "gauss-seidel", "jacobi", "amg-ilu-0", "amg-ilu-n", "amg-jacobi" };
-          preCon         = Parameter::getEnum( "istl.preconditioning.method", preConTable, preCon );
-          numIterations_ = Parameter::getValue( "istl.preconditioning.iterations", numIterations_ );
-          relaxFactor_   = Parameter::getValue( "istl.preconditioning.relaxation", relaxFactor_ );
-        }
-
-        if( preCon >= 0 && preCon <= 9)
-          preconditioning_ = (ISTLPreConder_Id) preCon;
-        else
-          preConErrorMsg(preCon);
-
         assert( rowMapper_.size() == colMapper_.size() );
       }
 
@@ -1460,23 +1561,7 @@ namespace Dune
       //! return matrix adapter object
       std::string preconditionName() const
       {
-        std::stringstream tmp ;
-        // no preconditioner
-        switch (preconditioning_)
-        {
-          case ssor : tmp << "SSOR"; break;
-          case sor  : tmp << "SOR"; break;
-          case ilu_0: tmp << "ILU-0"; break;
-          case ilu_n: tmp << "ILU-n"; break;
-          case gauss_seidel : tmp << "Gauss-Seidel"; break;
-          case jacobi: tmp << "Jacobi"; break;
-          default: tmp << "None"; break;
-        }
-
-        if( preconditioning_ != ilu_0 )
-          tmp << " n=" << numIterations_;
-        tmp << " relax=" << relaxFactor_ ;
-        return tmp.str();
+        return param_.preconditionName();
       }
 
       template <class PreconditionerType>
@@ -1515,15 +1600,15 @@ namespace Dune
 #ifndef DISABLE_ISTL_PRECONDITIONING
         const auto procs = domainSpace().gridPart().comm().size();
 
-        typedef typename MatrixType :: BaseType ISTLMatrixType ;
+        typedef typename MatrixType :: BaseType ISTLMatrixType;
         typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
         // no preconditioner
-        if( preconditioning_ == none )
+        if( preconditioning_ == ISTLPreConder_Id::none )
         {
           return MatrixAdapterType(matrix(), domainSpace(),rangeSpace(), PreConType() );
         }
         // SSOR
-        else if( preconditioning_ == ssor )
+        else if( preconditioning_ == ISTLPreConder_Id::ssor )
         {
           if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqSSOR not working in parallel computations");
@@ -1532,7 +1617,7 @@ namespace Dune
           return createMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
         }
         // SOR
-        else if(preconditioning_ == sor )
+        else if(preconditioning_ == ISTLPreConder_Id::sor )
         {
           if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqSOR not working in parallel computations");
@@ -1541,7 +1626,7 @@ namespace Dune
           return createMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
         }
         // ILU-0
-        else if(preconditioning_ == ilu_0)
+        else if(preconditioning_ == ISTLPreConder_Id::ilu_0)
         {
           if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqILU0 not working in parallel computations");
@@ -1550,7 +1635,7 @@ namespace Dune
           return createMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
         }
         // ILU-n
-        else if(preconditioning_ == ilu_n)
+        else if(preconditioning_ == ISTLPreConder_Id::ilu_n)
         {
           if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqILUn not working in parallel computations");
@@ -1559,7 +1644,7 @@ namespace Dune
           return createMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
         }
         // Gauss-Seidel
-        else if(preconditioning_ == gauss_seidel)
+        else if(preconditioning_ == ISTLPreConder_Id::gauss_seidel)
         {
           if( procs > 1 )
             DUNE_THROW(InvalidStateException,"ISTL::SeqGS not working in parallel computations");
@@ -1568,7 +1653,7 @@ namespace Dune
           return createMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
         }
         // Jacobi
-        else if(preconditioning_ == jacobi)
+        else if(preconditioning_ == ISTLPreConder_Id::jacobi)
         {
           if( numIterations_ == 1 ) // diagonal preconditioning
           {
@@ -1588,20 +1673,20 @@ namespace Dune
           }
         }
         // AMG ILU-0
-        else if(preconditioning_ == amg_ilu_0)
+        else if(preconditioning_ == ISTLPreConder_Id::amg_ilu_0)
         {
           // use original SeqILU0 because of some AMG traits classes.
           typedef SeqILU0<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           return createAMGMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
         }
         // AMG ILU-n
-        else if(preconditioning_ == amg_ilu_n)
+        else if(preconditioning_ == ISTLPreConder_Id::amg_ilu_n)
         {
           typedef SeqILUn<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           return createAMGMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
         }
         // AMG Jacobi
-        else if(preconditioning_ == amg_jacobi)
+        else if(preconditioning_ == ISTLPreConder_Id::amg_jacobi)
         {
           typedef SeqJac<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType,1> PreconditionerType;
           return createAMGMatrixAdapter( (PreconditionerType*)nullptr, numIterations_ );
@@ -1638,7 +1723,7 @@ namespace Dune
       //! preconditioner (used by OEM methods)
       bool hasPreconditionMatrix() const
       {
-        return (preconditioning_ != none);
+        return (preconditioning_ != ISTLPreConder_Id::none);
       }
 
       //! return reference to preconditioner object (used by OEM methods)
