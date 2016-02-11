@@ -4,6 +4,8 @@
 #include <dune/common/parallel/mpicollectivecommunication.hh>
 #include <dune/common/parallel/mpihelper.hh>
 
+#include <dune/fem/quadrature/caching/registry.hh>
+
 #if HAVE_PETSC
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #endif
@@ -98,6 +100,9 @@ namespace Dune
         // initialize PETSc if pressent
         PETSc::initialize( rank() == 0, argc, argv );
 #endif
+
+        // initialize static variables of QuadratureStorageRegistry
+        QuadratureStorageRegistry::initialize();
       }
 
       static const CollectiveCommunication &comm ()
