@@ -97,7 +97,11 @@ function(dune_add_test)
   set(DEP_TESTS ${ADD_TEST_UNPARSED_ARGUMENTS_UNPARSED_ARGUMENTS}
                 ${ADD_TEST_FAILTEST_UNPARSED_ARGUMENTS} )
   if(DEP_TESTS)
-    add_directory_test_target(_test_target)
+    #check first, whether target already exists
+    get_directory_test_target(_test_target "${CMAKE_CURRENT_BINARY_DIR}")
+    if( NOT TARGET ${_test_target} )
+      add_directory_test_target(_test_target)
+    endif()
     add_dependencies(${_test_target} ${DEP_TESTS})
   endif()
 
