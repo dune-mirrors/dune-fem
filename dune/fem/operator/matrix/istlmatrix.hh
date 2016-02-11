@@ -434,11 +434,8 @@ namespace Dune
 
       typedef typename DomainSpaceType::GridType GridType;
 
-      typedef typename RangeSpaceType :: EntityType  RowEntityType ;
-      typedef typename DomainSpaceType :: EntityType ColumnEntityType ;
-
-      typedef ColumnEntityType DomainEntityType;
-      typedef RowEntityType RangeEntityType;
+      typedef typename RangeSpaceType :: EntityType  RangeEntityType ;
+      typedef typename DomainSpaceType :: EntityType DomainEntityType ;
 
       enum { littleCols = DomainSpaceType :: localBlockSize };
       enum { littleRows = RangeSpaceType :: localBlockSize };
@@ -491,8 +488,8 @@ namespace Dune
         typedef typename MatrixObjectType::DomainSpaceType DomainSpaceType;
         typedef typename MatrixObjectType::RangeSpaceType RangeSpaceType;
 
-        typedef typename MatrixObjectType::ColumnEntityType ColumnEntityType;
-        typedef typename MatrixObjectType::RowEntityType RowEntityType;
+        typedef typename MatrixObjectType::DomainEntityType DomainEntityType;
+        typedef typename MatrixObjectType::RangeEntityType RangeEntityType;
 
         //! type of entries of little blocks
         typedef typename DomainSpaceType::RangeFieldType DofType;
@@ -527,13 +524,13 @@ namespace Dune
 
 
         //! initialize this local Matrix to (colEntity, rowEntity)
-        void init ( const ColumnEntityType& colEntity, const RowEntityType& rowEntity)
+        void init ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
         {
           // initialize base functions sets
-          BaseType :: init ( rowEntity , colEntity );
+          BaseType :: init ( domainEntity, rangeEntity );
 
-          numRows_  = rowMapper_.numDofs( rowEntity );
-          numCols_  = colMapper_.numDofs( colEntity );
+          numRows_  = rowMapper_.numDofs( rangeEntity );
+          numCols_  = colMapper_.numDofs( domainEntity );
           matrices_.resize( numRows_, numCols_, nullptr );
 
           typedef typename MatrixType::size_type Index;
@@ -550,9 +547,8 @@ namespace Dune
             matrices_[ local.first ][ local.second ] = &blockAccess( index );
           };
 
-          rowMapper_.mapEach( rowEntity, makePairFunctor( colMapper_, colEntity, functor ) );
+          rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
         }
-
 
       private:
         // check whether given (row,col) pair is valid
@@ -1005,13 +1001,13 @@ namespace Dune
       }
 
       //! return local matrix object
-      LocalMatrixType localMatrix(const RowEntityType& rowEntity,const ColumnEntityType& colEntity) const
+      LocalMatrixType localMatrix( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity ) const
       {
-        return LocalMatrixType( localMatrixStack_, rowEntity, colEntity );
+        return LocalMatrixType( localMatrixStack_, domainEntity, rangeEntity );
       }
-      LocalColumnObjectType localColumn( const ColumnEntityType &colEntity ) const
+      LocalColumnObjectType localColumn( const DomainEntityType &domainEntity ) const
       {
-        return LocalColumnObjectType ( *this, colEntity );
+        return LocalColumnObjectType ( *this, domainEntity );
       }
 
       template< class LocalMatrix >
@@ -1152,11 +1148,8 @@ namespace Dune
 
       typedef typename DomainSpaceType::GridType GridType;
 
-      typedef typename RangeSpaceType :: EntityType ColumnEntityType ;
-      typedef typename DomainSpaceType :: EntityType RowEntityType ;
-
-      typedef ColumnEntityType DomainEntityType;
-      typedef RowEntityType RangeEntityType;
+      typedef typename RangeSpaceType :: EntityType RangeEntityType ;
+      typedef typename DomainSpaceType :: EntityType DomainEntityType;
 
       enum { littleRows = DomainSpaceType :: localBlockSize };
       enum { littleCols = RangeSpaceType :: localBlockSize };
@@ -1247,13 +1240,13 @@ namespace Dune
 
 
         //! initialize this local Matrix to (colEntity, rowEntity)
-        void init ( const ColumnEntityType& colEntity, const RowEntityType& rowEntity)
+        void init ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
         {
           // initialize base functions sets
-          BaseType :: init ( rowEntity , colEntity );
+          BaseType :: init ( domainEntity, rangeEntity );
 
-          numRows_  = rowMapper_.numDofs( rowEntity );
-          numCols_  = colMapper_.numDofs( colEntity );
+          numRows_  = rowMapper_.numDofs( rangeEntity );
+          numCols_  = colMapper_.numDofs( domainEntity );
           matrices_.resize( numRows_, numCols_, nullptr );
 
           typedef typename MatrixType::size_type Index;
@@ -1270,9 +1263,8 @@ namespace Dune
             matrices_[ local.first ][ local.second ] = &blockAccess( index );
           };
 
-          rowMapper_.mapEach( rowEntity, makePairFunctor( colMapper_, colEntity, functor ) );
+          rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
         }
-
 
       private:
         // check whether given (row,col) pair is valid
@@ -1905,13 +1897,13 @@ namespace Dune
       }
 
       //! return local matrix object
-      LocalMatrixType localMatrix(const RowEntityType& rowEntity, const ColumnEntityType& colEntity) const
+      LocalMatrixType localMatrix(const DomainEntityType& domainEntity, const RangeEntityType &rangeEntity ) const
       {
-        return LocalMatrixType( localMatrixStack_, rowEntity, colEntity );
+        return LocalMatrixType( localMatrixStack_, domainEntity, rangeEntity );
       }
-      LocalColumnObjectType localColumn( const ColumnEntityType &colEntity ) const
+      LocalColumnObjectType localColumn( const DomainEntityType &domainEntity ) const
       {
-        return LocalColumnObjectType ( *this, colEntity );
+        return LocalColumnObjectType ( *this, domainEntity );
       }
 
       template< class LocalMatrix >
