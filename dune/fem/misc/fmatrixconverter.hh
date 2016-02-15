@@ -238,23 +238,30 @@ namespace Dune
 
   // method that implements the operator= of a FieldMatrix taking a FieldMatrixConverter
   template< class K, int n, int m >
-  inline void istl_assign_to_fmatrix ( FieldMatrix< K, n, m > &A,
-                                       const Fem::FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > &B )
+  struct DenseMatrixAssigner< FieldMatrix< K, n, m >,
+    Fem::FieldMatrixConverter< FieldVector< K, n*m >, FieldMatrix< K, n, m > > >
   {
-    for( size_t i = 0; i < n; ++i )
-      for( size_t j = 0; j < m; ++j )
-        A[ i ][ j ] = B[ i ][ j ];
+    static void apply ( FieldMatrix< K, n, m > &A,
+        const Fem::FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > &B )
+    {
+      for( size_t i = 0; i < n; ++i )
+        for( size_t j = 0; j < m; ++j )
+          A[ i ][ j ] = B[ i ][ j ];
+    }
+  };
 
-  }
   template< class K, int n, int m >
-  inline void istl_assign_to_fmatrix ( DenseMatrix< FieldMatrix< K, n, m > > &A,
-                                       const Fem::FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > &B )
+  struct DenseMatrixAssigner< DenseMatrix< FieldMatrix< K, n, m > >,
+    Fem::FieldMatrixConverter< FieldVector< K, n*m >, FieldMatrix< K, n, m > > >
   {
-    for( size_t i = 0; i < n; ++i )
-      for( size_t j = 0; j < m; ++j )
-        A[ i ][ j ] = B[ i ][ j ];
-
-  }
+    static void apply ( DenseMatrix< FieldMatrix< K, n, m > > &A,
+        const Fem::FieldMatrixConverter< FieldVector< K, n *m >, FieldMatrix< K, n, m > > &B )
+    {
+      for( size_t i = 0; i < n; ++i )
+        for( size_t j = 0; j < m; ++j )
+          A[ i ][ j ] = B[ i ][ j ];
+    }
+  };
 
 } // namespace Dune
 
