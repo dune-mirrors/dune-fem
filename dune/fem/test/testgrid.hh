@@ -1,6 +1,16 @@
 #ifndef DUNE_FEM_TEST_TESTGRID_HH
 #define DUNE_FEM_TEST_TESTGRID_HH
 
+#if !HAVE_GRIDTYPE
+#define DEFAULT_GRID
+#include <dune/grid/yaspgrid.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
+#endif
+
+#ifndef GRIDDIM
+#define GRIDDIM 2
+#endif
+
 // C++ includes
 #include <sstream>
 
@@ -20,7 +30,11 @@ namespace Dune
     class TestGrid
     {
       typedef TestGrid ThisType;
-      typedef Dune::GridSelector::GridType HGridType;
+#ifdef DEFAULT_GRID
+    typedef Dune::YaspGrid< GRIDDIM > HGridType;
+#else
+    typedef Dune::GridSelector::GridType HGridType;
+#endif
 
     protected:
       TestGrid ()

@@ -1,9 +1,20 @@
 #ifndef DUNE_FEM_TEST_DFSPACE_HH
 #define DUNE_FEM_TEST_DFSPACE_HH
 
+#if !HAVE_GRIDTYPE
+#define DEFAULT_GRID
+#include <dune/grid/yaspgrid.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
+#endif
+
+#ifndef GRIDDIM
+#define GRIDDIM 2
+#endif
+
 #include <complex>
 
 #include <dune/fem/misc/double.hh>
+#include <dune/fem/space/common/functionspace.hh>
 
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/common/dofstorage.hh>
@@ -19,12 +30,14 @@
 
 
 #ifndef POLORDER
-#  define POLORDER 2
+#define POLORDER 2
 #endif
 
 #ifndef DIMRANGE
-#  define DIMRANGE 4
+#define DIMRANGE 4
 #endif
+
+
 
 
 namespace Dune
@@ -45,12 +58,22 @@ namespace Dune
   typedef double RangeFieldType;
 //#endif
 
+#ifdef DEFAULT_GRID
+#if not defined USE_COMPLEX
+  typedef FunctionSpace< double, RangeFieldType, GRIDDIM, DIMRANGE >
+    TestFunctionSpace;
+#else
+  typedef FunctionSpace< double, std::complex<RangeFieldType>, GRIDDIM, DIMRANGE >
+    TestFunctionSpace;
+#endif
+#else
 #if not defined USE_COMPLEX
   typedef FunctionSpace< double, RangeFieldType, GridSelector::dimworld, DIMRANGE >
     TestFunctionSpace;
 #else
   typedef FunctionSpace< double, std::complex<RangeFieldType>, GridSelector::dimworld, DIMRANGE >
     TestFunctionSpace;
+#endif
 #endif
 
   template< class GridPart >
