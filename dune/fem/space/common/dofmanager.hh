@@ -835,14 +835,8 @@ namespace Dune
 
     private:
       typedef std::list< ManagedDofStorageInterface* > ListType;
-      typedef typename ListType::iterator ListIteratorType;
-      typedef typename ListType::const_iterator ConstListIteratorType;
-
       typedef LocalInterface< int > MemObjectCheckType;
-
       typedef std::list< ManagedIndexSetInterface * > IndexListType;
-      typedef typename IndexListType::iterator IndexListIteratorType;
-      typedef typename IndexListType::const_iterator ConstIndexListIteratorType;
 
       // list with MemObjects, for each DiscreteFunction we have one MemObject
       ListType memList_;
@@ -1002,11 +996,8 @@ namespace Dune
       size_t usedMemorySize () const
       {
         size_t used = 0;
-        ConstListIteratorType endit = memList_.end();
-        for(ConstListIteratorType it = memList_.begin(); it != endit ; ++it)
-        {
-          used += (*it)->usedMemorySize();
-        }
+        for(auto memObjectPtr : memList_)
+          used += memObjectPtr->usedMemorySize();
         return used;
       }
 
@@ -1040,13 +1031,8 @@ namespace Dune
       */
       void resize()
       {
-        // new number in grid series
-
-        IndexListIteratorType endit = indexList_.end();
-        for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
-        {
-          (*it)->resize();
-        }
+        for(auto indexSetPtr : indexList_)
+          indexSetPtr->resize();
         resizeMemory();
       }
 
@@ -1096,28 +1082,18 @@ namespace Dune
         incrementSequenceNumber ();
 
         // compress indexsets first
-        {
-          IndexListIteratorType endit  = indexList_.end();
-          for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
-          {
-            // reset compressed so the next time compress of index set is called
-            (*it)->compress();
-          }
-        }
+        for(auto indexSetPtr : indexList_)
+          // reset compressed so the next time compress of index set is called
+          indexSetPtr->compress();
 
         // compress all data now
-        {
-          ListIteratorType endit  = memList_.end();
-          for(ListIteratorType it = memList_.begin(); it != endit ; ++it)
-          {
-            // if correponding index was not compressed yet, this is called in
-            // the MemObject dofCompress, if index has not changes, nothing happens
-            // if IndexSet actual needs  no compress, nothing happens to the
-            // data either
-            // also data is resized, which means the vector is getting shorter
-            (*it)->dofCompress () ;
-          }
-        }
+        for(auto memObjectPtr : memList_)
+          // if correponding index was not compressed yet, this is called in
+          // the MemObject dofCompress, if index has not changes, nothing happens
+          // if IndexSet actual needs  no compress, nothing happens to the
+          // data either
+          // also data is resized, which means the vector is getting shorter
+          memObjectPtr->dofCompress ();
       }
 
       //! communicate new sequence number
@@ -1212,23 +1188,15 @@ namespace Dune
       /** \copydoc Dune::PersistentObject :: backup */
       void backup () const
       {
-        // backup all index sets marked as persistent
-        ConstIndexListIteratorType endit = indexList_.end();
-        for(ConstIndexListIteratorType it = indexList_.begin(); it != endit; ++it)
-        {
-          (*it)->backup();
-        }
+        for(auto indexSetPtr : indexList_)
+          indexSetPtr->backup();
       }
 
       /** \copydoc Dune::PersistentObject :: restore */
       void restore ()
       {
-        // restore all index sets marked as persistent
-        IndexListIteratorType endit = indexList_.end();
-        for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
-        {
-          (*it)->restore();
-        }
+        for(auto indexSetPtr : indexList_)
+          indexSetPtr->restore();
 
         // make all index sets consistent
         // before any data is read this can be
@@ -1248,11 +1216,8 @@ namespace Dune
       template < class OutStream >
       void write( OutStream& out ) const
       {
-        ConstIndexListIteratorType endit = indexList_.end();
-        for(ConstIndexListIteratorType it = indexList_.begin(); it != endit; ++it)
-        {
-          (*it)->write( out );
-        }
+        for(auto indexSetPtr : indexList_)
+          indexSetPtr->write( out );
       }
 
       /** \brief read all index sets from a given stream
@@ -1262,11 +1227,8 @@ namespace Dune
       template < class InStream >
       void read( InStream& in )
       {
-        IndexListIteratorType endit = indexList_.end();
-        for(IndexListIteratorType it = indexList_.begin(); it != endit; ++it)
-        {
-          (*it)->read( in );
-        }
+        for(auto indexSetPtr : indexList_)
+          indexSetPtr->read( in );
       }
 
       //********************************************************
@@ -1327,14 +1289,11 @@ namespace Dune
       assert( Fem :: ThreadManager:: singleThreadMode() );
 
       typedef ManagedIndexSet< IndexSetType, ConstElementType > ManagedIndexSetType;
-
-      typedef typename IndexListType::reverse_iterator IndexListIteratorType;
-
       ManagedIndexSetType * indexSet = 0;
 
       // search index set list in reverse order to find latest index sets faster
-      IndexListIteratorType endit = indexList_.rend();
-      for( IndexListIteratorType it = indexList_.rbegin(); it != endit; ++it )
+      auto endit = indexList_.rend();
+      for(auto it = indexList_.rbegin(); it != endit; ++it )
       {
         ManagedIndexSetInterface *set = *it;
         if( set->equals( iset ) )
@@ -1355,15 +1314,13 @@ namespace Dune
 
     template <class GridType>
     template <class IndexSetType>
-    inline void DofManager<GridType>::
-    removeIndexSet ( const IndexSetType &iset )
+    inline void DofManager<GridType>::removeIndexSet ( const IndexSetType &iset )
     {
       assert( Fem :: ThreadManager:: singleThreadMode() );
-      typedef typename IndexListType::reverse_iterator IndexListIteratorType;
 
       // search index set list in reverse order to find latest index sets faster
-      IndexListIteratorType endit = indexList_.rend();
-      for( IndexListIteratorType it = indexList_.rbegin(); it != endit; ++it )
+      auto endit = indexList_.rend();
+      for( auto it = indexList_.rbegin(); it != endit; ++it )
       {
         ManagedIndexSetInterface *set = *it;
         if( set->equals( iset ) )
@@ -1373,7 +1330,7 @@ namespace Dune
             // reverse iterators cannot be erased directly, so erase the base
             // (forward) iterator
             // Note: see, e.g., Stroustrup, section 16.3.2 about the decrement
-            typename IndexListType::iterator fit = it.base();
+            auto fit = it.base();
             indexList_.erase( --fit );
             // delete proxy
             delete set;
@@ -1408,17 +1365,14 @@ namespace Dune
 
     template <class GridType>
     template <class ManagedDofStorageImp>
-    void
-    DofManager<GridType>::
-    removeDofStorage(ManagedDofStorageImp& dofStorage)
+    void DofManager<GridType>::removeDofStorage(ManagedDofStorageImp& dofStorage)
     {
       // make sure we got an ManagedDofStorage
-      ManagedDofStorageInterface* obj = &dofStorage;
+      auto obj = &dofStorage;
 
       // search list starting from tail
-      ListIteratorType endit = memList_.end();
-      for( ListIteratorType it = memList_.begin();
-           it != endit ; ++it)
+      auto endit = memList_.end();
+      for( auto it = memList_.begin();it != endit ; ++it)
       {
         if(*it == obj)
         {

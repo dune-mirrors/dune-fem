@@ -212,23 +212,13 @@ namespace Dune
     template< class Space, class Mapper >
     inline void SlaveDofs< Space, Mapper > :: buildDiscontinuousMaps ()
     {
-      const PartitionIteratorType idxpitype = GridPartType :: indexSetPartitionType;
-
-      typedef typename GridPartType :: template Codim< 0 >
-        :: template Partition< idxpitype > :: IteratorType
-        IteratorType;
-
-      const IteratorType endit = gridPart_.template end< 0, idxpitype >();
-      for( IteratorType it = gridPart_.template begin< 0, idxpitype >(); it != endit; ++it )
+      const auto idxpitype = GridPartType :: indexSetPartitionType;
+      const auto endit = gridPart_.template end< 0, idxpitype >();
+      for( auto it = gridPart_.template begin< 0, idxpitype >(); it != endit; ++it )
       {
-        typedef typename GridPartType :: template Codim< 0 > :: EntityType
-          EntityType;
-
-        const EntityType &entity = *it;
+        const auto& entity = *it;
         if( entity.partitionType() != Dune::InteriorEntity )
-        {
           mapper_.mapEachEntityDof( entity, InsertFunctor< ThisType >( *this ) );
-        }
       }
 
       // insert overall size at the end
@@ -562,13 +552,9 @@ namespace Dune
       {
         RangeFieldType scp = 0;
 
-        ConstDofIteratorType endit = x.dend ();
-        ConstDofIteratorType xit = x.dbegin ();
-
-        typedef typename OtherDiscreteFunctionType :: ConstDofIteratorType
-          OtherConstDofIteratorType;
-        OtherConstDofIteratorType yit = y.dbegin();
-
+        auto endit = x.dend ();
+        auto xit = x.dbegin ();
+        auto yit = y.dbegin();
         for( ; xit != endit; ++xit, ++yit )
           scp += (*xit) * (*yit);
         return scp;
