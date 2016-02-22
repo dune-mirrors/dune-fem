@@ -55,13 +55,15 @@ namespace Dune
           containedSpace_( gridPart, commInterface, commDirection )
       {}
 
-      // prohibit copy constructor and copy assignment opertor
-      CombinedSpace ( const ThisType & ) = delete;
-      ThisType &operator= ( const ThisType & ) = delete;
+      CombinedSpace ( const ThisType& ) = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
 
       //- Additional methods
       //! number of components
-      int numComponents () const { return N; }
+      int numComponents () const
+      {
+        return N;
+      }
 
       //! policy of this space
       DofStoragePolicy myPolicy () const
@@ -99,13 +101,15 @@ namespace Dune
         : BaseType( gridPart, commInterface, commDirection )
       {}
 
-      // prohibit copy constructor and copy assignment opertor
-      CombinedSpace ( const ThisType & ) = delete;
-      ThisType &operator= ( const ThisType & ) = delete;
+      CombinedSpace ( const ThisType& ) = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
 
       //- Additional methods
       //! number of components
-      int numComponents () const { return N; }
+      int numComponents () const
+      {
+        return N;
+      }
 
       //! policy of this space
       DofStoragePolicy myPolicy () const

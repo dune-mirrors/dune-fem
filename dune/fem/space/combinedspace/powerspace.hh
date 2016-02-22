@@ -192,9 +192,8 @@ namespace Dune
           LagrangePointSetExporterType( containedSpace() )
       {}
 
-      // prohibit copy constructor and copy assignment
-      PowerDiscreteFunctionSpace ( const ThisType & ) = delete;
-      ThisType &operator= ( const ThisType & ) = delete;
+      PowerDiscreteFunctionSpace ( const ThisType& ) = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
 
       //! return tuple of const References to the contained sub spaces
       const ContainedDiscreteFunctionSpaceType &containedSpace () const

@@ -79,19 +79,16 @@ namespace Dune
 
       //! copy constructor
       MutableLocalFunction ( const ThisType &other )
-      : BaseType( static_cast< const BaseType& > ( other ) ),
-        discreteFunction_( other.discreteFunction_ )
+      : BaseType( static_cast< const BaseType& > ( other ) ), discreteFunction_( other.discreteFunction_ )
       {}
 
       //! move constructor
       MutableLocalFunction ( ThisType &&other )
-      : BaseType( static_cast< BaseType&& > ( other ) ),
-        discreteFunction_( other.discreteFunction_ )
+      : BaseType( static_cast< BaseType&& > ( other ) ), discreteFunction_( other.discreteFunction_ )
       {}
 
-      // prohibit assignment
-      ThisType &operator= ( const ThisType & ) = delete;
-      ThisType &operator= ( ThisType && ) = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
+      ThisType& operator= ( ThisType&& ) = delete;
 
       using BaseType::localDofVector;
 
@@ -101,8 +98,14 @@ namespace Dune
         discreteFunction().getLocalDofs( entity, localDofVector() );
       }
 
-      const DiscreteFunctionType &discreteFunction () const { return *discreteFunction_; }
-      DiscreteFunctionType &discreteFunction () { return *discreteFunction_; }
+      const DiscreteFunctionType &discreteFunction () const
+      {
+        return *discreteFunction_;
+      }
+      DiscreteFunctionType &discreteFunction ()
+      {
+        return *discreteFunction_;
+      }
 
     private:
       DiscreteFunctionType *discreteFunction_;

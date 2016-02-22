@@ -137,7 +137,7 @@ namespace Dune
       }
 
     public:
-      virtual ~ManagedIndexSetInterface () {}
+      virtual ~ManagedIndexSetInterface () = default;
 
       //! resize of index set
       virtual void resize () = 0;
@@ -286,11 +286,11 @@ namespace Dune
     {
     protected:
       //! do not allow to create explicit instances
-      DofStorageInterface() {}
+      DofStorageInterface() = default;
 
     public:
       //! destructor
-      virtual ~DofStorageInterface() {};
+      virtual ~DofStorageInterface() = default;
 
       //! enable dof compression for dof storage (default is empty)
       virtual void enableDofCompression() { }
@@ -310,11 +310,11 @@ namespace Dune
     {
     protected:
       //! do not allow to create explicit instances
-      ManagedDofStorageInterface() {}
+      ManagedDofStorageInterface() = default;
 
     public:
       //! destructor
-      virtual ~ManagedDofStorageInterface() {};
+      virtual ~ManagedDofStorageInterface() = default;
 
       //! resize memory
       virtual void resize () = 0;
@@ -372,8 +372,9 @@ namespace Dune
       // true if data need to be compressed
       bool dataCompressionEnabled_;
 
-      // prohibit copying
-      ManagedDofStorageImplementation(const ManagedDofStorageImplementation& );
+    public:
+      ManagedDofStorageImplementation(const ManagedDofStorageImplementation& ) = delete;
+
     protected:
       //! Constructor of ManagedDofStorageImplementation, only to call from derived classes
       ManagedDofStorageImplementation ( const GridImp& grid,
@@ -915,26 +916,16 @@ namespace Dune
       {
         // only print memory factor if it deviates from the default value
         if( std::abs( memoryFactor_ - 1.1 ) > 1e-12 )
-      {
-        if( Parameter::verbose() && (grid_.comm().rank() == 0) )
-        {
-          std::cout << "Created DofManager with memory factor "
-                    << memoryFactor_ << "." << std::endl;
-        }
-      }
-      }
-
-      // copy of dofmanagers is forbidden
-      DofManager( const ThisType & )
-      {
-        std::cerr << "DofManager(const DofManager &) not allowed!" << std :: endl;
-        abort();
+          if( Parameter::verbose() && (grid_.comm().rank() == 0) )
+            std::cout << "Created DofManager with memory factor " << memoryFactor_ << "." << std::endl;
       }
 
       //! Desctructor, removes all MemObjects and IndexSetObjects
       ~DofManager ();
 
     public:
+      DofManager( const ThisType& ) = delete;
+
       //! return factor to over estimate new memory allocation
       double memoryFactor() const { return memoryFactor_; }
 
@@ -968,12 +959,6 @@ namespace Dune
        */
       template <class IndexSetType>
       inline void removeIndexSet (const IndexSetType &iset );
-
-    public:
-      /** \brief add a managed dof storage to the dof manager.
-          \param dofStorage  dof storage to add which must fulfill the
-                 ManagedDofStorageInterface
-      */
 
       /** \brief add a managed dof storage to the dof manager.
           \param dofStorage  dof storage to add which must fulfill the
@@ -1050,7 +1035,6 @@ namespace Dune
       */
       int sequence () const { return sequence_; }
 
-      //- --resize
       /** \brief Resize index sets and memory due to what the mapper has as new size.
           \note This will increase the sequence counter by 1.
       */
@@ -1090,7 +1074,6 @@ namespace Dune
         resizeMemObjs_.apply ( dummy );
       }
 
-    public:
       /** \brief increase the DofManagers internal sequence number
           \note  This will increase the sequence counter by 1.
       */
@@ -1405,9 +1388,7 @@ namespace Dune
 
     template <class GridType>
     template <class ManagedDofStorageImp>
-    void
-    DofManager<GridType>::
-    addDofStorage(ManagedDofStorageImp& dofStorage)
+    void DofManager<GridType>::addDofStorage(ManagedDofStorageImp& dofStorage)
     {
       dverb << "Adding '" << dofStorage.name() << "' to DofManager! \n";
 

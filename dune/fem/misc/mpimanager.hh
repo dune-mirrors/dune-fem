@@ -32,10 +32,11 @@ namespace Dune
         delete comm_;
       }
 
-      // prohibit copying and assignment
-      MPIManager ( const MPIManager & );
-      MPIManager &operator= ( const MPIManager & );
+    public:
+      MPIManager ( const MPIManager& ) = delete;
+      MPIManager& operator= ( const MPIManager& ) = delete;
 
+    private:
       static MPIManager &instance ()
       {
         static MPIManager instance;

@@ -73,14 +73,11 @@ namespace Dune
          I didn't implement these methods of DiscreteFunctionDefault (deliberately):
           void print ( std :: ostream &out ) const;
        */
-      typedef BlockVectorDiscreteFunction< DiscreteFunctionSpace, BlockVector >   ThisType;
+      typedef BlockVectorDiscreteFunction< DiscreteFunctionSpace, BlockVector > ThisType;
       typedef DiscreteFunctionDefault< ThisType > BaseType;
-
-      typedef ParallelScalarProduct< ThisType >                                   ScalarProductType;
+      typedef ParallelScalarProduct< ThisType > ScalarProductType;
 
     public:
-      // ==================== Types
-
       //! type for the discrete function space this function lives in
       typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
       //! type for the class which implements the block vector
@@ -129,14 +126,9 @@ namespace Dune
         assign( other );
       }
 
-    private:
-      // an empty constructor would not make sense for a discrete function
-      BlockVectorDiscreteFunction ();
+      BlockVectorDiscreteFunction () = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
 
-      // TODO: un-disallow this??
-      ThisType &operator= ( const ThisType &other );
-
-    public:
       /** \brief Obtain constant reference to the dof vector
        *
        *  \return Constant reference to the block vector

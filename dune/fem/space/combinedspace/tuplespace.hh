@@ -246,9 +246,8 @@ namespace Dune
         : BaseType( gridPart, commInterface, commDirection )
       {}
 
-      // prohibit copy constructor and copy assignment
-      TupleDiscreteFunctionSpace ( const ThisType & ) = delete;
-      ThisType &operator= ( const ThisType & ) = delete;
+      TupleDiscreteFunctionSpace ( const ThisType& ) = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
 
       //! return tuple of const References to the contained sub spaces
       std::tuple< const DiscreteFunctionSpaces & ... > spaceTuple () const

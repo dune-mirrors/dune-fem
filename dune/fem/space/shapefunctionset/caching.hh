@@ -50,8 +50,13 @@ namespace Dune
       }
 
       ~CachingShapeFunctionSet ();
+      CachingShapeFunctionSet ( const ThisType& ) = delete;
+      const ThisType& operator= ( const ThisType& ) = delete;
 
-      int order () const { return shapeFunctionSet_.order(); }
+      int order () const
+      {
+        return shapeFunctionSet_.order();
+      }
 
       std::size_t size () const
       {
@@ -206,18 +211,12 @@ namespace Dune
       template< class PointVector >
       void cachePoints ( std::size_t id, const PointVector &points );
 
-      // prohibit copying and assignment
-      CachingShapeFunctionSet ( const ThisType & );
-      const ThisType &operator= ( const ThisType & );
-
       GeometryType type_;
       ShapeFunctionSet shapeFunctionSet_;
       ValueCacheVectorType valueCaches_;
       JacobianCacheVectorType jacobianCaches_;
-
       mutable RangeVectorType          localRangeCache_ ;
       mutable JacobianRangeVectorType  localJacobianCache_;
-
     };
 
 

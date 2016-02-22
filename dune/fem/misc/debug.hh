@@ -155,14 +155,9 @@ namespace Dune
       {
       }
 
-    private:
-      // prohibit copying
-      DebugLock ( const ThisType & );
+      DebugLock ( const ThisType& ) = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
 
-      // prohibit copying
-      ThisType &operator= ( const ThisType & );
-
-    public:
       inline bool operator ! () const
       {
 #ifdef USE_DEBUG_CNT

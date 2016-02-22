@@ -178,12 +178,9 @@ namespace Dune
       : refcount_( refcount )
       {}
 
-    private:
-      // prohibit copying
-      ReferenceCounterDefault ( const ThisType & );
-      ThisType &operator= ( const ThisType &other );
+      ReferenceCounterDefault ( const ThisType& ) = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
 
-    public:
       /** \copydoc Dune :: ReferenceCounterInterface :: addReference */
       void addReference () const
       {

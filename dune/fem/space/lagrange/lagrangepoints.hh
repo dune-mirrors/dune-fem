@@ -42,7 +42,6 @@ namespace Dune
       static const unsigned int polynomialOrder = BaseType::polynomialOrder;
       static const unsigned int numLagrangePoints = BaseType::numLagrangePoints;
 
-    public:
       template< unsigned int codim >
       struct Codim
       {
@@ -52,7 +51,6 @@ namespace Dune
         }
       };
 
-    public:
       LagrangePoint ( unsigned int index )
       : BaseType( index )
       {}
@@ -83,7 +81,7 @@ namespace Dune
     {
       typedef LagrangePointInterface< dim, maxPolOrder > ThisType;
     protected:
-      LagrangePointInterface() {}
+      LagrangePointInterface() = default;
 
     public:
       static const unsigned int dimension = dim;
@@ -91,7 +89,7 @@ namespace Dune
       static const unsigned int maxPolynomialOrder = maxPolOrder;
 
       //! destructor
-      virtual ~LagrangePointInterface() {}
+      virtual ~LagrangePointInterface() = default;
 
       virtual unsigned int entityDofNumber ( unsigned int codim,
                                              unsigned int subEntity,
@@ -141,9 +139,9 @@ namespace Dune
     {
       typedef LagrangePoint< topologyId, dim, polOrder > LagrangePointType;
     public:
-      LagrangePointImplementation() {}
+      LagrangePointImplementation() = default;
 
-      virtual ~LagrangePointImplementation() {}
+      virtual ~LagrangePointImplementation() = default;
 
       virtual unsigned int
       entityDofNumber ( unsigned int codim, unsigned int subEntity, unsigned int dofNumber ) const
@@ -233,11 +231,8 @@ namespace Dune
         delete lagrangePointImpl_;
       }
 
-    private:
-      // prohibit copy construction
-      LagrangePointListInterface ( const ThisType &other );
+      LagrangePointListInterface ( const ThisType& ) = delete;
 
-    public:
       void setLagrangePointImpl ( const LagrangePointInterfaceType* lpImpl )
       {
         assert( lagrangePointImpl_ == 0 );
@@ -396,8 +391,7 @@ namespace Dune
         assert( geo == this->geometryType() );
       }
 
-    private:
-      LagrangePointListImplementation ( const ThisType &other );
+      LagrangePointListImplementation ( const ThisType& ) = delete;
     };
 
 
@@ -716,25 +710,16 @@ namespace Dune
     public:
       //! constructor
       LagrangePointSet ( const GeometryType &geometry, const int order )
-      : BaseType( geometry, order ),
-        lagrangePointList_( this->quadImp().ipList() )
+      : BaseType( geometry, order ), lagrangePointList_( this->quadImp().ipList() )
       {}
 
       //! copy constructor
       LagrangePointSet ( const ThisType &other )
-      : BaseType( other ),
-        lagrangePointList_( this->quadImp().ipList() )
+      : BaseType( other ), lagrangePointList_( this->quadImp().ipList() )
       {}
 
-    private:
-      // kill the assignment operator
-      ThisType& operator=( const ThisType &other )
-      {
-        assert( false );
-        abort();
-      }
+      ThisType& operator=( const ThisType& ) = delete;
 
-    public:
       const LocalKey &localKey ( unsigned int index ) const
       {
         return lagrangePointList_.dofInfo( index );

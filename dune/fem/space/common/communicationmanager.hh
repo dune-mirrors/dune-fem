@@ -174,11 +174,8 @@ namespace Dune
         exchangeTime_(0.0)
       {}
 
-    private:
-      // prohibit copying
-      DefaultCommunicationManager ( const DefaultCommunicationManager & );
+      DefaultCommunicationManager ( const DefaultCommunicationManager& ) = delete;
 
-    public:
       /** \brief return communication interface */
       InterfaceType communicationInterface() const {
         return interface_;
@@ -285,9 +282,9 @@ namespace Dune
       class DiscreteFunctionCommunicatorInterface
       {
       protected:
-        DiscreteFunctionCommunicatorInterface () {}
+        DiscreteFunctionCommunicatorInterface () = default;
       public:
-        virtual ~DiscreteFunctionCommunicatorInterface () {}
+        virtual ~DiscreteFunctionCommunicatorInterface () = default;
         virtual void exchange () const = 0;
       };
 

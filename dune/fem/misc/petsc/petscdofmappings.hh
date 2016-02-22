@@ -118,17 +118,11 @@ namespace Dune
       void resize () { update (); }
       bool compress() { return update (); }
 
-    private:
-      ////////////////////////////////
-      // forbidden methods
-      ////////////////////////////////
-      PetscDofMappings ();
-      PetscDofMappings ( const ThisType& );
-      PetscDofMappings& operator= ( const ThisType& );
+      PetscDofMappings () = delete;
+      PetscDofMappings ( const ThisType& ) = delete;
+      PetscDofMappings& operator= ( const ThisType& ) = delete;
 
-      /*
-       * private methods
-       */
+    private:
       template< typename SlaveDofProvider >
       void initializeMappings ( SlaveDofProvider& slaveDofs )
       {

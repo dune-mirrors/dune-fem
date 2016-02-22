@@ -70,7 +70,6 @@ namespace Dune
     protected:
       typedef Fem :: CommunicationIndexMap IndexMapType;
 
-    protected:
       const SpaceType &space_;
       const GridPartType &gridPart_;
       const MapperType &mapper_;
@@ -87,7 +86,7 @@ namespace Dune
 
     public:
       //! constructor taking space
-      inline SlaveDofs ( const SingletonKey &key )
+      SlaveDofs ( const SingletonKey &key )
       : space_( key.space() ),
         gridPart_( space_.gridPart() ),
         mapper_( key.mapper() ),
@@ -97,11 +96,8 @@ namespace Dune
         sequence_( -1 )
       {}
 
-    private:
-      // prohibit copying
-      SlaveDofs ( const SlaveDofs & );
+      SlaveDofs ( const SlaveDofs& ) = delete;
 
-    public:
       //! return dof number of salve with index
       int operator [] ( const int index ) const
       {
@@ -124,15 +120,14 @@ namespace Dune
                                   index);
       }
 
-    public:
       //! insert index
-      inline void insert( const int index )
+      void insert( const int index )
       {
         slaveSet_.insert( index );
       }
 
       //! initialize
-      inline void initialize ()
+      void initialize ()
       {
         sequence_ = -1;
         slaveSet_.clear();
@@ -140,7 +135,7 @@ namespace Dune
       }
 
       //! finalize
-      inline void finalize ()
+      void finalize ()
       {
         // insert slaves
         slaves_.set( slaveSet_ );
@@ -153,7 +148,7 @@ namespace Dune
       }
 
       //! check if grid has changed and rebuild cache if necessary
-      inline void rebuild ()
+      void rebuild ()
       {
         // check whether grid has changed.
         if( sequence_ != space_.sequence() )
@@ -165,11 +160,14 @@ namespace Dune
       }
 
       //! return reference to discrete function space
-      const SpaceType& space () const { return space_; }
+      const SpaceType& space () const
+      {
+        return space_;
+      }
 
     protected:
       // build linkage and index maps
-      inline void buildMaps ()
+      void buildMaps ()
       {
         if( !space_.continuous() )
           buildDiscontinuousMaps();
@@ -192,7 +190,9 @@ namespace Dune
     template< class Map >
     struct SlaveDofs< Space, Mapper >::InsertFunctor
     {
-      explicit InsertFunctor ( Map &map ) : map_( map ) {}
+      explicit InsertFunctor ( Map &map )
+      : map_( map )
+      {}
 
       template< class Value >
       void operator() ( const int, const Value &value )
@@ -282,16 +282,13 @@ namespace Dune
 
     public:
       //! constructor taking space
-      inline SingletonKey ( const SpaceType &space,
-                            const MapperType &mapper )
-      : space_( space ),
-        mapper_( &mapper )
+      SingletonKey ( const SpaceType &space, const MapperType &mapper )
+      : space_( space ), mapper_( &mapper )
       {}
 
       //! copy constructor
-      inline SingletonKey ( const SingletonKey &other )
-      : space_( other.space_ ),
-        mapper_( other.mapper_ )
+      SingletonKey ( const SingletonKey &other )
+      : space_( other.space_ ), mapper_( other.mapper_ )
       {}
 
       //! returns true if indexSet pointer and numDofs are equal
@@ -325,7 +322,6 @@ namespace Dune
 
       enum { nCodim = SpaceType :: GridType :: dimension + 1 };
 
-    public:
       typedef int DataType;
 
       const int myRank_;
@@ -337,17 +333,10 @@ namespace Dune
       const SpaceType &space_;
       const MapperType &mapper_;
 
-    public:
-      LinkBuilder( IndexMapType &slaves,
-                   const SpaceType &space,
-                   const MapperType& mapper )
-      : myRank_( space.gridPart().comm().rank() ),
-        mySize_( space.gridPart().comm().size() ),
-        slaves_( slaves ),
-        space_( space ),
-        mapper_( mapper )
-      {
-      }
+      LinkBuilder( IndexMapType &slaves, const SpaceType &space, const MapperType& mapper )
+      : myRank_( space.gridPart().comm().rank() ), mySize_( space.gridPart().comm().size() ),
+        slaves_( slaves ), space_( space ), mapper_( mapper )
+      {}
 
       bool contains ( int dim, int codim ) const
       {
@@ -361,11 +350,11 @@ namespace Dune
 
       //! read buffer and apply operation
       template< class MessageBuffer, class Entity >
-      inline void gather ( MessageBuffer &buffer,
-                           const Entity &entity ) const
+      void gather ( MessageBuffer &buffer, const Entity &entity ) const
       {
         // for sending ranks write rank
-        if( sendRank( entity ) ) buffer.write( myRank_ );
+        if( sendRank( entity ) )
+          buffer.write( myRank_ );
       }
 
       //! read buffer and apply operation
@@ -373,9 +362,7 @@ namespace Dune
       //! several times depending on how much data
       //! was gathered
       template< class MessageBuffer, class EntityType >
-      inline void scatter ( MessageBuffer &buffer,
-                            const EntityType &entity,
-                            size_t n )
+      void scatter ( MessageBuffer &buffer, const EntityType &entity, size_t n )
       {
         // ERROR: An overlap cell may be overlay cell in another process
         //assert( ( ! sendRank( entity ) ) ? (n > 0) : true);
@@ -441,27 +428,25 @@ namespace Dune
 
     public:
       //! constructor taking space
-      inline SlaveDofsProvider ( const DiscreteFunctionSpaceType &space )
-      : space_( space ),
-        slaveDofs_( getSlaveDofs( space_ ) )
+      SlaveDofsProvider ( const DiscreteFunctionSpaceType &space )
+      : space_( space ), slaveDofs_( getSlaveDofs( space_ ) )
+      {}
+
+      SlaveDofsProvider( const ThisType& ) = delete;
+
+      //! return discrete function space
+      const DiscreteFunctionSpaceType& space() const
       {
+        return space_;
       }
 
-    private:
-      // prohibit copying
-      SlaveDofsProvider( const ThisType & );
-
-    public:
-      //! return discrete function space
-      const DiscreteFunctionSpaceType& space() const { return space_; }
-
       //! remove object comm
-      inline ~SlaveDofsProvider ()
+      ~SlaveDofsProvider ()
       {
         SlaveDofsProviderType :: removeObject( *slaveDofs_ );
       }
 
-      inline SlaveDofsType &slaveDofs () const
+      SlaveDofsType &slaveDofs () const
       {
         // rebuild slave dofs if grid was changed
         slaveDofs_->rebuild();
@@ -469,7 +454,7 @@ namespace Dune
       }
 
     protected:
-      inline static SlaveDofsType *getSlaveDofs ( const DiscreteFunctionSpaceType &space )
+      static SlaveDofsType *getSlaveDofs ( const DiscreteFunctionSpaceType &space )
       {
         SlaveDofsKeyType key( space, space.blockMapper() );
         return &(SlaveDofsProviderType :: getObject( key ));
@@ -510,18 +495,15 @@ namespace Dune
         ConstDofBlockPtrType;
 
       //! constructor taking space
-      inline ParallelScalarProduct ( const DiscreteFunctionSpaceType &space )
+      ParallelScalarProduct ( const DiscreteFunctionSpaceType &space )
       : BaseType( space )
-      {
-      }
+      {}
 
       using BaseType :: space;
 
-    public:
-      template < class OtherDiscreteFunctionType >
       //! evaluate scalar product and omit slave nodes
-      inline RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x,
-                                                const OtherDiscreteFunctionType &y ) const
+      template < class OtherDiscreteFunctionType >
+      RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x, const OtherDiscreteFunctionType &y ) const
       {
         auto &slaveDofs = this->slaveDofs();
 
@@ -567,21 +549,16 @@ namespace Dune
       typedef typename DiscreteFunctionType :: ConstDofIteratorType
         ConstDofIteratorType;
 
-    public:
       //! constructor taking space
-      inline ParallelScalarProduct ( const DiscreteFunctionSpaceType & )
-      {
-      }
+      ParallelScalarProduct ( const DiscreteFunctionSpaceType& )
+      {}
 
-    private:
-      // prohibit copying
-      ParallelScalarProduct( const ThisType & );
+      ParallelScalarProduct( const ThisType& ) = delete;
 
-    public:
-      template < class OtherDiscreteFunctionType >
       //! return scalar product of dofs
-      inline RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x,
-                                                const OtherDiscreteFunctionType &y ) const
+      template < class OtherDiscreteFunctionType >
+      RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x,
+                                         const OtherDiscreteFunctionType &y ) const
       {
         RangeFieldType scp = 0;
 
@@ -630,7 +607,6 @@ namespace Dune
       typedef SlaveDofsProvider< DiscreteFunctionSpaceType > SlaveDofsProviderType;
       typedef typename SlaveDofsProviderType :: SlaveDofsType SlaveDofsType;
 
-    public:
       //! export types
       typedef BlockVectorType domain_type;
       typedef typename BlockVectorType :: block_type :: field_type field_type;
@@ -646,13 +622,11 @@ namespace Dune
     public:
       //! constructor taking space
       ParallelScalarProduct ( const DiscreteFunctionSpaceType &space )
-      : space_( space ),
-        slaveDofProvider_( space )
+      : space_( space ), slaveDofProvider_( space )
       {}
 
       //! remove object comm
-      ~ParallelScalarProduct ()
-      {}
+      ~ParallelScalarProduct () = default;
 
       SlaveDofsType& slaveDofs ()
       {
@@ -710,9 +684,7 @@ namespace Dune
           // don't delete the last since this is the overall Size
           const int slaveSize = slaveDofs.size() - 1;
           for(int slave = 0; slave<slaveSize; ++slave)
-          {
             x[ slaveDofs[slave] ] = 0;
-          }
         }
 #endif
       }
