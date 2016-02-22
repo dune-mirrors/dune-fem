@@ -4,6 +4,8 @@
 #ifdef HAVE_EIGEN
 
 #include <Eigen/IterativeLinearSolvers>
+#include <dune/fem/operator/linear/eigenoperator.hh>
+#include <dune/fem/operator/common/operator.hh>
 
 namespace Dune
 {
