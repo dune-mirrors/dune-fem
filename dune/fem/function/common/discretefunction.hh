@@ -2,6 +2,8 @@
 #define DUNE_FEM_DISCRETEFUNCTION_HH
 
 // C++ includes
+#include <complex>
+#include <ostream>
 #include <string>
 
 // dune-fem includes
@@ -155,10 +157,10 @@ namespace Dune
       /** \brief default constructor */
       DiscreteFunctionInterface () = default;
 
+    public:
       DiscreteFunctionInterface ( const ThisType& ) = delete;
       ThisType& operator= ( const ThisType& ) = delete;
 
-    public:
       DofVectorType& dofVector()
       {
         return asImp().dofVector();
@@ -915,7 +917,6 @@ namespace Dune
       // only PersistenceManager should call backup and restore
       friend class PersistenceManager;
 
-    protected:
       const DiscreteFunctionSpaceType &dfSpace_;
 
       // the local function storage
