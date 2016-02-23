@@ -53,9 +53,9 @@ namespace Dune
         const auto end = gridPart_.template end< codimension, partition >();
         for( auto it = gridPart_.template begin< codimension, partition >(); it != end; ++it )
         {
-          const auto geo = it->geometry();
-
-          const auto& z = geo.local( x );
+          const auto& entity = *it;
+          const auto geo = entity.geometry();
+          const auto z = geo.local( x );
           if( (mydimension < dimensionworld) && ((geo.global( z ) - x).two_norm() > 1e-8 ) )
             continue;
 

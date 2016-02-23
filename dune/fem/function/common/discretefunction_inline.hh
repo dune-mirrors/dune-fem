@@ -243,8 +243,8 @@ namespace Dune
     void DiscreteFunctionDefault< Impl >
       :: insertSubData()
     {
-      auto& indexSet = space().indexSet();
       typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
+      IndexSetType& indexSet = (IndexSetType&)space().indexSet();
       if( Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::v )
       {
         auto persistentIndexSet = Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::map( indexSet );
@@ -259,8 +259,8 @@ namespace Dune
     void DiscreteFunctionDefault< Impl >
       :: removeSubData()
     {
-      auto& indexSet = space().indexSet();
       typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
+      IndexSetType& indexSet = (IndexSetType&)space().indexSet();
       if( Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::v )
       {
         auto persistentIndexSet = Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::map( indexSet );
