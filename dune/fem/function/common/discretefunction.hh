@@ -155,11 +155,10 @@ namespace Dune
       /** \brief default constructor */
       DiscreteFunctionInterface () = default;
 
-    public:
       DiscreteFunctionInterface ( const ThisType& ) = delete;
       ThisType& operator= ( const ThisType& ) = delete;
 
-    protected:
+    public:
       DofVectorType& dofVector()
       {
         return asImp().dofVector();
