@@ -1,7 +1,5 @@
 #include <config.h>
 
-#include "gridselector.hh"
-
 #include <iostream>
 #include <vector>
 #include <algorithm>

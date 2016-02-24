@@ -3,8 +3,7 @@
 
 #include <fstream>
 #include <list>
-
-#include <dune/common/typetraits.hh>
+#include <type_traits>
 
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/parameter.hh>
@@ -123,7 +122,7 @@ namespace Dune
     template< class ObjectType >
     struct IsPersistent
     {
-      static const bool value = Dune::Conversion< ObjectType *, PersistentObject * >::exists;
+      static const bool value = std::is_convertible< ObjectType *, PersistentObject * >::value;
     };
 
 
@@ -484,7 +483,7 @@ namespace Dune
     inline PersistenceManager &
     operator<< ( PersistenceManager &pm, ObjectType &object )
     {
-      static_assert( !TypeTraits< ObjectType >::isPointer, "Do not add pointers to PersistenceManager." );
+      static_assert( !std::is_pointer< ObjectType >::value, "Do not add pointers to PersistenceManager." );
       pm.insertObject( object );
       return pm;
     }

@@ -3,11 +3,11 @@
 
 //- system includes
 #include <string>
+#include <type_traits>
 #include <tuple>
 
 //- Dune includes
 #include <dune/common/forloop.hh>
-#include <dune/common/typetraits.hh>
 #include <dune/common/tuples.hh>
 
 //- Dune grid includes
@@ -295,7 +295,7 @@ namespace Dune
     template< int N >
     struct IOTuple< Tuple >::CreateData
     {
-      typedef typename TypeTraits< typename tuple_element< N, Tuple >::type >::PointeeType DiscreteFunction;
+      typedef typename std::remove_pointer< typename std::tuple_element< N, Tuple >::type >::type DiscreteFunction;
       typedef typename DiscreteFunction::DiscreteFunctionSpaceType DiscreteFunctionSpace;
       typedef typename DiscreteFunctionSpace::GridPartType GridPart;
 
@@ -312,7 +312,7 @@ namespace Dune
     template< int N >
     struct IOTuple< Tuple >::RestoreStream
     {
-      typedef typename TypeTraits< typename tuple_element< N, Tuple >::type >::PointeeType DiscreteFunction;
+      typedef typename std::remove_pointer< typename std::tuple_element< N, Tuple >::type >::type DiscreteFunction;
 
       template< class StreamTraits >
       static void apply ( InStreamInterface< StreamTraits > &inStream, Tuple &tuple )
@@ -335,7 +335,7 @@ namespace Dune
     template< int N >
     struct IOTuple< Tuple >::OutputStream
     {
-      typedef typename TypeTraits< typename tuple_element< N, Tuple >::type >::PointeeType DiscreteFunction;
+      typedef typename std::remove_pointer< typename std::tuple_element< N, Tuple >::type >::type DiscreteFunction;
 
       //! apply function writing to stream
       template< class StreamTraits >
@@ -362,7 +362,7 @@ namespace Dune
       // revert tuple order to reverse deletion to creation
       static const int pos = tuple_size< Tuple >::value - 1 - N;
 
-      typedef typename TypeTraits< typename tuple_element< pos, Tuple >::type >::PointeeType DiscreteFunction;
+      typedef typename std::remove_pointer< typename std::tuple_element< pos, Tuple >::type >::type DiscreteFunction;
 
       template< class Disp, class DINFO >
       static void apply ( Disp &disp, const DINFO *&dinf, const double &time, Tuple &tuple )
@@ -410,7 +410,7 @@ namespace Dune
     {
       // revert tuple order to reverse deletion to creation
       static const int pos = tuple_size< Tuple >::value - 1 - N;
-      typedef typename TypeTraits< typename tuple_element< pos, Tuple >::type >::PointeeType DiscreteFunction;
+      typedef typename std::remove_pointer< typename std::tuple_element< pos, Tuple >::type >::type DiscreteFunction;
       typedef typename DiscreteFunction::DiscreteFunctionSpaceType DiscreteFunctionSpace;
       typedef typename DiscreteFunctionSpace::GridPartType GridPart;
 
