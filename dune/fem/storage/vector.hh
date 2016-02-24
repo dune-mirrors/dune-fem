@@ -1,8 +1,9 @@
 #ifndef DUNE_FEM_VECTOR_HH
 #define DUNE_FEM_VECTOR_HH
 
+#include <type_traits>
+
 #include <dune/common/math.hh>
-#include <dune/common/typetraits.hh>
 #include <dune/common/bartonnackmanifcheck.hh>
 #include <dune/common/fvector.hh>
 
@@ -134,7 +135,7 @@ namespace Dune
     struct SupportsVectorInterface
     {
       typedef VectorInterface< typename Vector::Traits > VectorInterfaceType;
-      static const bool v = Conversion< Vector, VectorInterfaceType >::exists;
+      static const bool v = std::is_convertible< Vector, VectorInterfaceType >::value;
     };
 
 
@@ -144,7 +145,7 @@ namespace Dune
       typedef typename V::FieldType FieldType;
 
     private:
-      static_assert( (Conversion< FieldType, typename W::FieldType >::sameType),
+      static_assert( (std::is_same< FieldType, typename W::FieldType >::value),
                      "FieldType must be identical." );
     };
 

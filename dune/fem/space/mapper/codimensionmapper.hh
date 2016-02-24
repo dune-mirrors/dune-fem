@@ -382,6 +382,16 @@ namespace Dune
         static const bool v = Capabilities::isAdaptiveIndexSet< typename GridPart::IndexSetType >::v;
       };
 
+
+      // isConsecutiveIndexSet
+      // ---------------------
+
+      template< class GridPart, int codim >
+      struct isConsecutiveIndexSet< __CodimensionMapper::AdaptiveDofMapper< __CodimensionMapper::Traits< GridPart, codim > > >
+      {
+        static const bool v = true;
+      };
+
     } // namespace Capabilities
 
   } // namespace Fem

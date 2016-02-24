@@ -3,7 +3,6 @@
 
 //- dune-common includes
 #include <dune/common/bartonnackmanifcheck.hh>
-#include <dune/common/deprecated.hh>
 
 //- dune-grid includes
 #include <dune/grid/common/datahandleif.hh>
@@ -150,13 +149,6 @@ namespace Dune
       {
         CHECK_INTERFACE_IMPLEMENTATION((asImp().grid()));
         return asImp().grid();
-      }
-
-      //! \brief convert grid part into a dune grid view
-      GridViewType gridView () const
-      DUNE_DEPRECATED_MSG("gridPart.gridView() is deprecated, use direct cast to GridPart::GridViewType instead")
-      {
-        return static_cast< GridViewType >( asImp() );
       }
 
       //! \brief Returns reference to index set of the underlying grid

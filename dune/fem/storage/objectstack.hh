@@ -39,9 +39,6 @@ namespace Dune
       typedef ObjectStackEntry< ObjectFactoryType > ThisType;
       typedef ReferenceCounterDefault< Traits > BaseType;
 
-      template< class, class >
-      friend class Conversion;
-
       friend class ObjectStack< ObjectFactoryType >;
 
     protected:
@@ -60,7 +57,6 @@ namespace Dune
       // next object on the stack
       ThisType *next_;
 
-    protected:
       inline explicit ObjectStackEntry ( ObjectStackType &stack )
       : BaseType( 0 ),
         stack_( stack ),
@@ -68,21 +64,16 @@ namespace Dune
       {
       }
 
-    private:
-      // prohibit copying
-      ObjectStackEntry ( const ThisType & );
-
     public:
+      ObjectStackEntry ( const ThisType& ) = delete;
+
       inline ~ObjectStackEntry ()
       {
         delete object_;
       }
 
-    private:
-      // prohivit assignment
-      ThisType &operator= ( const ThisType & );
+      ThisType& operator= ( const ThisType& ) = delete;
 
-    public:
       inline operator const ObjectType& () const
       {
         return *object_;
@@ -151,11 +142,8 @@ namespace Dune
       {
       }
 
-    private:
-      // Disallow copying
-      ObjectStack ( const ThisType & );
+      ObjectStack ( const ThisType& ) = delete;
 
-    public:
       //! delete all objects on stack
       ~ObjectStack ()
       {
@@ -175,11 +163,8 @@ namespace Dune
         }
       }
 
-    private:
-      // Disallow copying
-      ThisType &operator= ( const ThisType & );
+      ThisType& operator= ( const ThisType& ) = delete;
 
-    public:
       //! get an object pointer to a storage object
       inline PointerType getObject ()
       {

@@ -4,7 +4,6 @@
 #include <vector>
 #include <array>
 
-#include <dune/common/array.hh>
 #include <dune/common/fvector.hh>
 
 #include "streams.hh"

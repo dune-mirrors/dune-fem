@@ -1,9 +1,6 @@
 #ifndef DUNE_FEM_ADAPTIVELEAFGRIDPART_HH
 #define DUNE_FEM_ADAPTIVELEAFGRIDPART_HH
 
-//- dune-common includes
-#include <dune/common/typetraits.hh>
-
 //- dune-grid includes
 #include <dune/grid/common/gridview.hh>
 

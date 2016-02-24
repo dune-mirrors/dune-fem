@@ -126,9 +126,7 @@ namespace Dune
         return inside().weight( qp );
       }
 
-    private:
-      // prohibit copying
-      IntersectionQuadrature( const IntersectionQuadrature & );
+      IntersectionQuadrature( const IntersectionQuadrature& ) = delete;
 
     protected:
       const FaceQuadratureType inside_;

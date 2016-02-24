@@ -28,11 +28,8 @@ namespace Dune
         indices_.setMemoryFactor( 1.1 );
       }
 
-    private:
-      // prohibit copying
-      CommunicationIndexMap( const CommunicationIndexMap &i );
+      CommunicationIndexMap( const CommunicationIndexMap& ) = delete;
 
-    public:
       //! return index map for entry i
       const IndexType& operator [] ( const size_t i ) const
       {

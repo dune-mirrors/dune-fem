@@ -1,13 +1,11 @@
-#include<config.h>
-
-#define DISABLE_DEPRECATED_METHOD_CHECK 1
+#include <config.h>
 
 //- system includes
 #include <cassert>
 #include <iostream>
 
 //- dune-common includes
-#include<dune/common/exceptions.hh>
+#include <dune/common/exceptions.hh>
 
 //- dune-geometry includes
 #include <dune/geometry/referenceelements.hh>

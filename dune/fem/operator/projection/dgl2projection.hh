@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_DGL2PROJECTION_HH
 #define DUNE_FEM_DGL2PROJECTION_HH
 
+#include <type_traits>
+
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/function/common/discretefunction.hh>
@@ -81,7 +83,7 @@ namespace Dune
       static void project(const FunctionImp& f, DiscreteFunctionImp& discFunc,
                           const int quadOrd = -1, const bool communicate = true )
       {
-        ProjectChooser<0, Conversion<FunctionImp, HasLocalFunction> ::exists > :: project(f,discFunc,quadOrd);
+        ProjectChooser<0, std::is_convertible<FunctionImp, HasLocalFunction>::value > :: project(f,discFunc,quadOrd);
 
         // do communication in parallel cases
         if( communicate )

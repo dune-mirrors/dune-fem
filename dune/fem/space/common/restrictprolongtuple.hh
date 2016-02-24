@@ -4,7 +4,6 @@
 #include <tuple>
 #include <utility>
 
-#include <dune/common/deprecated.hh>
 #include <dune/common/forloop.hh>
 #include <dune/common/tupleutility.hh>
 
@@ -280,31 +279,6 @@ namespace Dune
     {
       typedef RestrictProlongDefaultTuple<DiscreteFunctions...> Type;
     };
-    
-    // makeRestrictProlongDefault
-    // --------------------------
-
-    /** \fn makeRestrictProlongDefault
-     *
-     *  \brief conveniently set up a tuple of Dune::Fem::RestrictProlongDefault
-     *         restriction/prolongation objects created from a variadic list of
-     *         discrete functions
-     *
-     *  \param[in]  discreteFunctions  a variadic list of discrete function types
-     */
-    template< class... DiscreteFunctions >
-    static inline RestrictProlongDefaultTuple< DiscreteFunctions... >
-    DUNE_DEPRECATED makeRestrictProlongDefault ( DiscreteFunctions &... discreteFunctions )
-    {
-      return RestrictProlongDefaultTuple< DiscreteFunctions... >( discreteFunctions... );
-    }
-
-    template< class... DiscreteFunctions >
-    static inline RestrictProlongDefaultTuple< DiscreteFunctions... >
-    DUNE_DEPRECATED makeRestrictProlongDefault ( std::tuple< DiscreteFunctions &... > tuple )
-    {
-      return RestrictProlongDefaultTuple< DiscreteFunctions ... >( tuple );
-    }
 
     /** \} */
 

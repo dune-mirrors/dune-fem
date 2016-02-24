@@ -111,6 +111,9 @@ namespace Dune
           return hostIndexSet_;
         }
 
+      protected:
+        HostIndexSetType &hostIndexSet () { return const_cast< HostIndexSetType & >( hostIndexSet_); }
+
       private:
         const HostIndexSetType &hostIndexSet_;
       };
@@ -134,8 +137,6 @@ namespace Dune
         explicit ConsecutiveIndexSet ( const HostIndexSetType &hostIndexSet )
           : BaseType ( hostIndexSet )
         {}
-
-        bool consecutive () const { return hostIndexSet().consecutive(); }
 
         void resize () { hostIndexSet().resize(); }
 

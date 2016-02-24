@@ -5,7 +5,7 @@
 #include <type_traits>
 
 #include <dune/common/math.hh>
-#include <dune/common/typetraits.hh>
+
 #include <dune/grid/common/grid.hh>
 
 #include <dune/fem/space/common/discretefunctionspace.hh>
@@ -88,13 +88,10 @@ namespace Dune
           blockMapper_( Traits::getBlockMapper( spaceTuple_ ) )
       {}
 
-      // prohibit copy constructor and copy assignment
-      GenericCombinedDiscreteFunctionSpace ( const ThisType & ) = delete;
-      ThisType &operator= ( const ThisType & ) = delete;
+      GenericCombinedDiscreteFunctionSpace ( const ThisType& ) = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
 
-      /** \brief Destructor (freeing base functions and mapper)
-          \return
-       **/
+      //! destructor (freeing base functions and mapper)
       ~GenericCombinedDiscreteFunctionSpace ()
       {
         Traits::deleteBlockMapper( blockMapper_ );

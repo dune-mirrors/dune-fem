@@ -76,7 +76,7 @@ namespace Dune
       void reserve(size_type rows, size_type cols, size_type nz)
       {
         matrix_.resize(rows,cols);
-        matrix_.reserve(Eigen::VectorXi::Constant(cols,nz));;
+        matrix_.reserve(Eigen::VectorXi::Constant(rows,nz));;
       }
 
       //! return number of rows
@@ -114,7 +114,7 @@ namespace Dune
       //! return value of entry (row,col)
       field_type operator()(size_type row, size_type col) const
       {
-        return matrix_.coeffRef(row,col);
+        return matrix_.coeff(row,col);
       }
 
       //! set all matrix entries to zero
@@ -173,12 +173,6 @@ namespace Dune
     {
       typedef EigenMatrix< typename DomainSpace::RangeFieldType > MatrixType;
       typedef SparseRowMatrixObject< DomainSpace, RangeSpace, MatrixType > BaseType;
-      inline EigenMatrixObject( const DomainSpace &domainSpace,
-                                const RangeSpace &rangeSpace,
-                                const std::string &paramfile )
-       DUNE_DEPRECATED_MSG("EigenMatrixObject(...,string) is deprecated. Use EigenMatrixObject(string,DomainSpace,RangeSpace,MatrixParameter) instead")
-        : BaseType( domainSpace, rangeSpace )
-      {}
 
       inline EigenMatrixObject( const DomainSpace &domainSpace,
                                 const RangeSpace &rangeSpace,

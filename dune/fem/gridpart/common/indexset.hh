@@ -5,8 +5,6 @@
 #include <utility>
 #include <vector>
 
-#include <dune/common/deprecated.hh>
-
 #include <dune/geometry/type.hh>
 
 #include <dune/fem/io/streams/streams.hh>
@@ -19,15 +17,12 @@ namespace Dune
 
     // Internal forward declaration
     // ----------------------------
-
-
     template< class Traits >
     class IndexSet;
     template< class Traits >
     class ConsecutiveIndexSet;
     template< class Traits >
     class AdaptiveIndexSet;
-
 
 
     namespace Capabilities
@@ -53,7 +48,6 @@ namespace Dune
       public:
         static const bool v = decltype( __isConsecutive( std::declval< IndexSet >() ) )::value;
       };
-
 
 
       // isAdaptiveIndexSet
@@ -135,13 +129,6 @@ namespace Dune
         return impl().types( codim );
       }
 
-      /** \brief return vector of geometry types used of given codimension */
-      const std::vector< GeometryType > &geomTypes ( int codim ) const
-      DUNE_DEPRECATED_MSG("IndexSet::geomTypes(codim) is deprecated, use IndexSet::types(codim) instead")
-      {
-        return impl().geomTypes( codim );
-      }
-
       /** \brief return \b true if entity has index */
       template< class Entity >
       bool contains ( const Entity &entity ) const
@@ -221,13 +208,6 @@ namespace Dune
       /** \name Adaptation
        *  \{
        */
-
-      /** \brief please doc me */
-      static constexpr bool consecutive () noexcept
-      // DUNE_DEPRECATED_MSG("IndexSet::consecutive() is deprecated, use Capabilities::isConsecutiveIndexSet<IndexSet>::v instead")
-      {
-        return true;
-      }
 
       /** \brief please doc me */
       void resize () { impl().resize(); }
@@ -323,27 +303,6 @@ namespace Dune
 
       /** \} */
 
-#ifndef DOXYGEN
-
-      int numberOfHoles ( int codim ) const
-      DUNE_DEPRECATED_MSG("AdaptiveIndexSet::numberOfHoles(int) is deprecated, use AdaptiveIndexSet::numberOfHoles(type) instead")
-      {
-        return impl().numberOfHoles( codim );
-      }
-
-      int oldIndex ( int hole, int codim ) const
-      DUNE_DEPRECATED_MSG("AdaptiveIndexSet::oldIndex(int, int) is deprecated, use AdaptiveIndexSet::oldIndex(int, type) instead")
-      {
-        return impl().oldIndex( hole, codim );
-      }
-
-      int newIndex ( int hole, int codim ) const
-      DUNE_DEPRECATED_MSG("AdaptiveIndexSet::newIndex(int) is deprecated, use AdaptiveIndexSet::newIndex(int, type) instead")
-      {
-        return impl().numberOfHoles( hole, codim );
-      }
-
-#endif // #ifndef DOXYGEN
     };
 
   } // namespace Fem

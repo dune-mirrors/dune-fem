@@ -2,6 +2,7 @@
 #define DUNE_FEM_REFERENCECOUNTER_HH
 
 #include <cassert>
+#include <type_traits>
 
 #include <dune/fem/misc/bartonnackmaninterface.hh>
 
@@ -35,9 +36,6 @@ namespace Dune
     {
       typedef ReferenceCounterInterface< RCT > ThisType;
       typedef BartonNackmanInterface< ThisType, typename RCT::ReferenceCounterType > BaseType;
-
-      template< class, class >
-      friend class Conversion;
 
     public:
       //! type of the traits
@@ -134,7 +132,7 @@ namespace Dune
     struct SupportsReferenceCounterInterface
     {
       typedef ReferenceCounterInterface< typename ReferenceCounter::Traits > ReferenceCounterInterfaceType;
-      static const bool v = Conversion< ReferenceCounter, ReferenceCounterInterfaceType >::exists;
+      static const bool v = std::is_convertible< ReferenceCounter, ReferenceCounterInterfaceType >::value;
     };
 
 
@@ -156,9 +154,6 @@ namespace Dune
     {
       typedef ReferenceCounterDefault< RCT > ThisType;
       typedef ReferenceCounterInterface< RCT > BaseType;
-
-      template< class, class >
-      friend class Conversion;
 
     public:
       //! type of the implementation (Barton-Nackman)
@@ -183,12 +178,9 @@ namespace Dune
       : refcount_( refcount )
       {}
 
-    private:
-      // prohibit copying
-      ReferenceCounterDefault ( const ThisType & );
-      ThisType &operator= ( const ThisType &other );
+      ReferenceCounterDefault ( const ThisType& ) = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
 
-    public:
       /** \copydoc Dune :: ReferenceCounterInterface :: addReference */
       void addReference () const
       {

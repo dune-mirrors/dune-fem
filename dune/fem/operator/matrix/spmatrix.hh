@@ -4,6 +4,7 @@
 // system includes
 #include <algorithm>
 #include <array>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 #include <utility>
@@ -20,6 +21,8 @@
 #include <dune/fem/operator/matrix/columnobject.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 #include <dune/fem/storage/objectstack.hh>
+
+#include <dune/fem/operator/matrix/functor.hh>
 
 namespace Dune
 {
@@ -174,8 +177,7 @@ namespace Dune
 
             const auto blockNr = realCol / blockSize ;
             const auto dofNr = realCol % blockSize ;
-            auto fBlock = f.block( blockNr );
-            (*ret_it) += values_[thisCol] * (*fBlock)[ dofNr ];
+            (*ret_it) += values_[thisCol] * f.dofVector()[ blockNr ][ dofNr ];
           }
 
           ++ret_it;
@@ -247,20 +249,20 @@ namespace Dune
       }
 
       //! print matrix
-      void print(std::ostream& s = std::cout, unsigned int offset=0) const
+      void print(std::ostream& s=std::cout, unsigned int offset=0) const
       {
-        s.precision( 6 );
-        for( size_t row = 0; row < dim_[0]; row++ )
-        {
-          for(size_t col=0; col<nonZeros_[row]; ++col)
+        std::size_t pos(0);
+        for(std::size_t row=0; row<dim_[0]; ++row)
+          while(pos < (nz_*(row+1)))
           {
-            auto pos = row*nz_ + col;
-            if( std::abs( values_[pos] ) > 1.e-15)
-              s << row << " " << realCol(row,col) << " " << values_[pos] << std::endl;
+            const auto rv(realValue(pos));
+            const auto column(rv.second);
+            const auto value(rv.first);
+            if((std::abs(value) > 1.e-15) && (column != defaultCol))
+              s << row+offset << " " << column+offset << " " << value << std::endl;
+            ++pos;
           }
-        }
       }
-
 
     private:
       //! resize matrix
@@ -312,15 +314,6 @@ namespace Dune
         }
       }
 
-      //! return real column number for (row,localCol)
-      size_type realCol(size_type row, size_type fakeCol) const
-      {
-        assert( fakeCol < dim_[1] );
-        assert( row < dim_[0] );
-        auto pos = row*nz_ + fakeCol;
-        return col_[pos];
-      }
-
       std::vector<field_type> values_;
       std::vector<size_type> col_;
       std::vector<size_type> nonZeros_;
@@ -366,29 +359,6 @@ namespace Dune
       typedef Fem::ObjectStack< LocalMatrixFactoryType > LocalMatrixStackType;
       typedef LocalMatrixWrapper< LocalMatrixStackType > LocalMatrixType;
       typedef ColumnObject< ThisType > LocalColumnObjectType;
-
-      //! construct matrix object
-      inline SparseRowMatrixObject( const DomainSpaceType &domainSpace,
-                                    const RangeSpaceType &rangeSpace,
-                                    const std::string& paramfile )
-        DUNE_DEPRECATED_MSG("SparseRowMatrixObject(...,string) is deprecated. Use SparseRowMatrixObject(string,DomainSpace,RangeSpace,MatrixParameter) instead")
-      : domainSpace_( domainSpace ),
-        rangeSpace_( rangeSpace ),
-        domainMapper_( domainSpace_.blockMapper() ),
-        rangeMapper_( rangeSpace_.blockMapper() ),
-        sequence_( -1 ),
-        matrix_(),
-        preconditioning_( false ),
-        localMatrixStack_( *this )
-        {
-          int precon = 0;
-          if( paramfile != "" )
-            readParameter( paramfile, "Preconditioning", precon );
-          else
-            precon = Parameter :: getValue("Preconditioning", precon );
-          preconditioning_ = (precon > 0) ? true : false;
-        }
-
 
       //! construct matrix object
       inline SparseRowMatrixObject( const DomainSpaceType &domainSpace,
@@ -439,6 +409,58 @@ namespace Dune
       LocalColumnObjectType localColumn( const DomainEntityType &domainEntity ) const
       {
         return LocalColumnObjectType( *this, domainEntity );
+      }
+
+
+      template< class LocalMatrix >
+      void addLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< Index, Index >& global )
+        {
+          matrix_.add( global.first, global.second, localMat.get( local.first, local.second ) );
+        };
+
+        rangeMapper_.mapEach( rangeEntity, makePairFunctor( domainMapper_, domainEntity, functor ) );
+      }
+
+
+      template< class LocalMatrix, class Scalar >
+      void addScaledLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat, const Scalar &s )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto functor = [ &localMat, &s, this ] ( std::pair< int, int > local, const std::pair< Index, Index >& global )
+        {
+          matrix_.add( global.first, global.second, s * localMat.get( local.first, local.second ) );
+        };
+
+        rangeMapper_.mapEach( rangeEntity, makePairFunctor( domainMapper_, domainEntity, functor ) );
+      }
+
+
+      template< class LocalMatrix >
+      void setLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< Index, Index >& global )
+        {
+          matrix_.set( global.first, global.second, localMat.get( local.first, local.second ) );
+        };
+
+        rangeMapper_.mapEach( rangeEntity, makePairFunctor( domainMapper_, domainEntity, functor ) );
+      }
+
+
+      template< class LocalMatrix >
+      void getLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, LocalMatrix &localMat ) const
+      {
+        typedef typename MatrixType::size_type Index;
+        auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< Index, Index >& global )
+        {
+          localMat.set( local.first, local.second, matrix_( global.first, global.second ) );
+        };
+
+        rangeMapper_.mapEach( rangeEntity, makePairFunctor( domainMapper_, domainEntity, functor ) );
       }
 
       //! clear matrix

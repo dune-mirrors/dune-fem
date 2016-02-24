@@ -16,7 +16,6 @@ common_HEADERS = adaptmanager.hh \
      functionspace.hh \
      functionspaceinterface.hh \
      interpolate.hh \
-     interpolation.hh \
      loadbalancer.hh \
      localrestrictprolong.hh \
      restrictprolongfunction.hh \
@@ -25,4 +24,3 @@ common_HEADERS = adaptmanager.hh \
      adaptcallbackhandle.hh
 
 include $(top_srcdir)/am/global-rules
-

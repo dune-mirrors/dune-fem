@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_SUBARRAY_HH
 #define DUNE_FEM_SUBARRAY_HH
 
-#include <dune/common/typetraits.hh>
+#include <type_traits>
 
 #include <dune/fem/storage/array.hh>
 #include <dune/fem/storage/vector.hh>
@@ -54,7 +54,7 @@ namespace Dune
     struct SupportsIndexMapperInterface
     {
       typedef IndexMapperInterface< IndexMapper > IndexMapperInterfaceType;
-      static const bool v = Conversion< IndexMapper, IndexMapperInterfaceType >::exists;
+      static const bool v = std::is_convertible< IndexMapper, IndexMapperInterfaceType >::value;
     };
 
 

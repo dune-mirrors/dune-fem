@@ -454,15 +454,6 @@ namespace Dune
         maxNumDofs_( 0 ),
         sequence_( dm_.sequence() )
       {
-        /*
-        PolynomOrderStorage p;
-        std::cout << sizeof( p ) << " size of polStorage" << std::endl;
-        EntityDofStorage en;
-        std::cout << sizeof( en ) << " size of enStorage" << std::endl;
-        GeometryType type;
-        std::cout << sizeof( type) << " size of GeomType " << std::endl;
-        */
-
         for( int codim = 0; codim <= highestDimension; ++codim )
           dofContainer_[ codim ] = new DofContainerType( gridPart.grid(), codim );
 
@@ -988,10 +979,10 @@ namespace Dune
       void write ( OutStream &out )
       {}
 
+      GenericAdaptiveDofMapper ( const ThisType& ) = delete;
+      ThisType& operator=( const ThisType& ) = delete;
+
     private:
-      // prohibit copying and assignment
-      GenericAdaptiveDofMapper ( const ThisType & );
-      ThisType &operator=( const ThisType & );
 
       const GridPartType& gridPart_;
       // reference to dof manager
@@ -1011,6 +1002,20 @@ namespace Dune
       unsigned int maxNumDofs_;
       int sequence_ ;
     }; // class GenericAdaptiveDofMapper
+
+
+    namespace Capabilities
+    {
+      // isConsecutiveIndexSet
+      // ---------------------
+
+      template< class Traits >
+      struct isConsecutiveIndexSet< GenericAdaptiveDofMapper< Traits > >
+      {
+        static const bool v = true;
+      };
+
+    } // namespace Capabilities
 
   } // namespace Fem
 

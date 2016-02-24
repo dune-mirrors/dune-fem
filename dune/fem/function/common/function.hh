@@ -79,17 +79,13 @@ namespace Dune
       using BaseType::asImp;
 
       /** \brief default constructor */
-      Function ()
-      {}
+      Function () = default;
 
-      // Disallow copying of function, but allow copying of derived classes
-      Function ( const ThisType &other ) {}
-
-    private:
-      // Disallow assignment
-      ThisType &operator= ( const ThisType & );
+      Function ( const ThisType& ) = default;
 
     public:
+      ThisType& operator= ( const ThisType& ) = delete;
+
       //! destructor
       virtual ~Function ()
       {}

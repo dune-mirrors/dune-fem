@@ -58,66 +58,6 @@ namespace Dune
 
 
 
-    // First Order Lagrange Mapper
-    // ---------------------------
-
-#if 0
-    template< class GridPart >
-    class PAdaptiveLagrangeMapper< GridPart, 1 >
-    : public CodimensionMapper< GridPart, GridPart::GridType::dimension >
-    {
-      typedef PAdaptiveLagrangeMapper< GridPart, 1 > ThisType;
-      typedef CodimensionMapper< GridPart, GridPart::GridType::dimension > BaseType;
-
-    public:
-      //! type of the grid part
-      typedef typename BaseType::GridPartType GridPartType;
-
-      //! type of entities (codim 0)
-      typedef typename BaseType::ElementType ElementType;
-
-      //! type of the underlying grid
-      typedef typename GridPartType::GridType GridType;
-
-      //! type of coordinates within the grid
-      typedef typename GridType::ctype FieldType;
-
-      //! dimension of the grid
-      static const int dimension = GridType::dimension;
-
-      //! order of the Lagrange polynoms
-      static const int polynomialOrder = 1;
-
-      // my traits class
-      typedef PAdaptiveLagrangeMapperTraits< GridPart, polynomialOrder > Traits;
-
-      typedef typename Traits :: CompiledLocalKeyVectorType  CompiledLocalKeyVectorType;
-
-    public:
-      //! constructor
-      PAdaptiveLagrangeMapper ( const GridPartType &gridPart, CompiledLocalKeyVectorType& )
-      : BaseType( gridPart )
-      {}
-
-      bool fixedDataSize ( const int codim ) const
-      {
-        return true;
-      }
-
-      int polynomOrder( const ElementType& entity ) const
-      {
-        return 1;
-      }
-
-      void setPolynomOrder( const ElementType& entity, const int polOrd )
-      {
-      }
-
-      void adapt() {}
-    };
-#endif
-
-
     // Higher Order Lagrange Mapper
     // ----------------------------
 
@@ -140,13 +80,11 @@ namespace Dune
       //! type of compiled local keys vector
       typedef typename Traits :: CompiledLocalKeyVectorType  CompiledLocalKeyVectorType;
 
-    public:
       //! constructor
       PAdaptiveLagrangeMapper ( const GridPartType &gridPart,
                                 CompiledLocalKeyVectorType &compiledLocalKeys )
         : BaseType( gridPart, compiledLocalKeys )
-      {
-      }
+      {}
 
       //! sort of copy constructor
       PAdaptiveLagrangeMapper ( const ThisType& other,
@@ -194,7 +132,6 @@ namespace Dune
       //! type of compiled local keys vector
       typedef typename Traits :: CompiledLocalKeyVectorType  CompiledLocalKeyVectorType;
 
-    public:
       //! constructor
       PAdaptiveDGMapper ( const GridPartType &gridPart,
                           CompiledLocalKeyVectorType &compiledLocalKeys )
@@ -207,6 +144,25 @@ namespace Dune
         : BaseType( other, compiledLocalKeys )
       {}
     };
+
+    namespace Capabilities
+    {
+      // isConsecutiveIndexSet
+      // ---------------------
+
+      template< class GridPart, int polOrder >
+      struct isConsecutiveIndexSet< PAdaptiveDGMapper< GridPart, polOrder > >
+      {
+        static const bool v = true;
+      };
+
+      template< class GridPart, int polOrder >
+      struct isConsecutiveIndexSet< PAdaptiveLagrangeMapper< GridPart, polOrder > >
+      {
+        static const bool v = true;
+      };
+
+    } // namespace Capabilities
 
   } // namespace Fem
 

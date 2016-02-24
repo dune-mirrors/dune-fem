@@ -3,8 +3,6 @@
 
 #include <type_traits>
 
-#include <dune/common/typetraits.hh>
-
 #include <dune/geometry/referenceelements.hh>
 
 #include <dune/grid/common/gridenums.hh>
@@ -52,13 +50,12 @@ namespace Dune
 
       EntityType operator() ( const GlobalCoordinateType &x ) const
       {
-        const IteratorType end = gridPart_.template end< codimension, partition >();
-        for( IteratorType it = gridPart_.template begin< codimension, partition >(); it != end; ++it )
+        const auto end = gridPart_.template end< codimension, partition >();
+        for( auto it = gridPart_.template begin< codimension, partition >(); it != end; ++it )
         {
-          const EntityType &entity = *it;
-          const GeometryType geo = entity.geometry();
-
-          const LocalCoordinateType &z = geo.local( x );
+          const auto& entity = *it;
+          const auto geo = entity.geometry();
+          const auto z = geo.local( x );
           if( (mydimension < dimensionworld) && ((geo.global( z ) - x).two_norm() > 1e-8 ) )
             continue;
 

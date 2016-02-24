@@ -57,7 +57,7 @@ namespace Dune
       typedef PreviousPassImp PreviousPassType;
 
       // Types from the base class
-      typedef typename BaseType::Entity EntityType;
+      typedef typename BaseType::EntityType EntityType;
       typedef typename BaseType::ArgumentType ArgumentType;
 
       // Types from the traits

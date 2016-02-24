@@ -3,8 +3,6 @@
 
 #include <utility>
 
-#include <dune/common/deprecated.hh>
-
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/storage/singletonlist.hh>
@@ -116,25 +114,6 @@ namespace Dune
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
       BlockMapperType &blockMapper () const { return blockMapper_; }
-
-      /** \} */
-
-      /** \name Non-interface methods
-       *  \{
-       */
-
-      /** \brief local interpolation using discontinuous L2-projection
-       *
-       *  \param[in]  localFunction  local function to interpolate
-       *  \param[in]  localDofVector  local degrees of freedom of the interpolation
-       */
-      template< class LocalFunction, class LocalDofVector >
-      DUNE_DEPRECATED
-      void interpolate ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
-      {
-        const EntityType &entity = localFunction.entity();
-        asImp().interpolation( entity )( localFunction, localDofVector );
-      }
 
       /** \} */
 

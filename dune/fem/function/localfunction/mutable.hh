@@ -49,14 +49,6 @@ namespace Dune
       //! type of BasisFunctionSet
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
-      //! cast from ConstLocalFunction
-      MutableLocalFunction( const ConstLocalFunction< DiscreteFunctionType > &constLocalFunction ) DUNE_DEPRECATED
-      : BaseType( constLocalFunction.basisFunctionSet(), LocalDofVectorType( constLocalFunction.discreteFunction_.localDofVectorAllocator() ) ),
-        discreteFunction_( &const_cast< DiscreteFunctionType& >( constLocalFunction.discreteFunction() ) )
-      {
-        discreteFunction().getLocalDofs( constLocalFunction.entity(), localDofVector() );
-      }
-
       //! Constructor creating empty local function from given discrete function
       explicit MutableLocalFunction ( DiscreteFunctionType &discreteFunction )
       : BaseType( LocalDofVectorType( discreteFunction.localDofVectorAllocator() ) ),
@@ -87,19 +79,16 @@ namespace Dune
 
       //! copy constructor
       MutableLocalFunction ( const ThisType &other )
-      : BaseType( static_cast< const BaseType& > ( other ) ),
-        discreteFunction_( other.discreteFunction_ )
+      : BaseType( static_cast< const BaseType& > ( other ) ), discreteFunction_( other.discreteFunction_ )
       {}
 
       //! move constructor
       MutableLocalFunction ( ThisType &&other )
-      : BaseType( static_cast< BaseType&& > ( other ) ),
-        discreteFunction_( other.discreteFunction_ )
+      : BaseType( static_cast< BaseType&& > ( other ) ), discreteFunction_( other.discreteFunction_ )
       {}
 
-      // prohibit assignment
-      ThisType &operator= ( const ThisType & ) = delete;
-      ThisType &operator= ( ThisType && ) = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
+      ThisType& operator= ( ThisType&& ) = delete;
 
       using BaseType::localDofVector;
 
@@ -109,8 +98,14 @@ namespace Dune
         discreteFunction().getLocalDofs( entity, localDofVector() );
       }
 
-      const DiscreteFunctionType &discreteFunction () const { return *discreteFunction_; }
-      DiscreteFunctionType &discreteFunction () { return *discreteFunction_; }
+      const DiscreteFunctionType &discreteFunction () const
+      {
+        return *discreteFunction_;
+      }
+      DiscreteFunctionType &discreteFunction ()
+      {
+        return *discreteFunction_;
+      }
 
     private:
       DiscreteFunctionType *discreteFunction_;

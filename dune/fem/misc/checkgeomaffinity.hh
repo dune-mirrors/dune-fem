@@ -103,7 +103,7 @@ namespace Dune
         typedef typename GridType :: template Codim<0> :: Entity  EntityType;
         typedef typename GridType :: template Codim<0> :: Geometry Geometry;
 
-        typedef typename GridType :: template Partition< All_Partition > :: LevelGridView  MacroGridView ;
+        typedef typename GridType :: LevelGridView  MacroGridView ;
 
         // get macro grid view
         MacroGridView macroView = grid.levelGridView( 0 );

@@ -348,6 +348,12 @@ namespace Dune
         static const bool v = isAdaptiveDofMapper< Mapper >::v;
       };
 
+      template< class GridPart, class Mapper, int N >
+      struct isConsecutiveIndexSet< __PowerMapper::AdaptiveDofMapper< __PowerMapper::Traits< GridPart, Mapper, N > > >
+      {
+        static const bool v = true;
+      };
+
     } // namespace Capabilities
       /** @} **/
 

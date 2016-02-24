@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <type_traits>
 #include <tuple>
 #include <utility>
 
@@ -31,9 +32,7 @@ namespace Dune
     template< class DiscreteFunction >
     struct LocalFunctionEvaluator
     {
-      typedef typename Dune::Fem::LocalFunctionSelector<
-          typename Dune::TypeTraits< DiscreteFunction >::ReferredType
-        >::Type Type;
+      typedef typename Dune::Fem::LocalFunctionSelector< typename std::remove_reference< DiscreteFunction >::type >::Type Type;
 
       static Type apply ( const DiscreteFunction &discreteFunction )
       {
@@ -374,21 +373,5 @@ namespace Dune
   }
 
 } // namespace Dune
-
-
-
-// Some Specializations for Tuple Access
-// -------------------------------------
-
-DUNE_OPEN_TUPLE_NAMESPACE
-  // tuple_element for LocalFunctionTuple
-  // ------------------------------------
-
-  template< size_t i, class DiscreteFunctionTuple, class Entity, size_t TupleSize >
-  struct tuple_element< i, Dune::Fem::LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize > >
-  {
-    typedef typename Dune::Fem::LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize >::template Get< i >::Type type;
-  };
-DUNE_CLOSE_TUPLE_NAMESPACE
 
 #endif // #ifndef DUNE_FEM_PASS_COMMON_LOCALFUNCTIONTUPLE_HH

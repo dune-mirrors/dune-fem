@@ -2,9 +2,12 @@
 #define DUNE_FEM_DISCRETEFUNCTION_HH
 
 // C++ includes
+#include <complex>
+#include <ostream>
 #include <string>
 
 // dune-fem includes
+#include <dune/fem/version.hh>
 #include <dune/fem/function/common/dofiterator.hh>
 #include <dune/fem/function/common/function.hh>
 #include <dune/fem/function/common/functor.hh>
@@ -152,17 +155,20 @@ namespace Dune
       using BaseType::asImp;
 
       /** \brief default constructor */
-      DiscreteFunctionInterface ()
-      {}
-
-    private:
-      // prohibit copying and assignment
-      DiscreteFunctionInterface ( const ThisType &other );
-      ThisType &operator= ( const ThisType &other );
+      DiscreteFunctionInterface () = default;
 
     public:
-      DofVectorType& dofVector() { return asImp().dofVector(); }
-      const DofVectorType& dofVector() const { return asImp().dofVector(); }
+      DiscreteFunctionInterface ( const ThisType& ) = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
+
+      DofVectorType& dofVector()
+      {
+        return asImp().dofVector();
+      }
+      const DofVectorType& dofVector() const
+      {
+        return asImp().dofVector();
+      }
 
       /** \brief obtain the name of the discrete function
        *
@@ -207,7 +213,7 @@ namespace Dune
 
       /** \brief set all degrees of freedom to zero
        */
-      inline void clear()
+      void clear()
       {
         asImp().clear();
       }
@@ -220,7 +226,7 @@ namespace Dune
        *
        *  \returns total number of DoFs for this discrete function
        */
-      inline int size() const
+      int size() const
       {
         return asImp().size();
       }
@@ -232,7 +238,7 @@ namespace Dune
        *
        *  \returns total number of DoFs blocks
        */
-      inline int blocks() const
+      int blocks() const
       {
         return asImp().blocks();
       }
@@ -241,7 +247,7 @@ namespace Dune
        *
        *  \returns a DoFBlockPtrType pointing to block index
        */
-      inline ConstDofBlockPtrType block ( unsigned int index ) const
+      DUNE_VERSION_DEPRECATED_3_0( "dofVector" ) ConstDofBlockPtrType block ( unsigned int index ) const
       {
         return asImp().block( index );
       }
@@ -250,7 +256,7 @@ namespace Dune
        *
        *  \returns a DoFBlockPtrType pointing to block index (read-only)
        */
-      inline DofBlockPtrType block ( unsigned int index )
+      DUNE_VERSION_DEPRECATED_3_0( "dofVector" ) DofBlockPtrType block ( unsigned int index )
       {
         return asImp().block( index );
       }
@@ -259,7 +265,7 @@ namespace Dune
        *
        *  \returns a DoF iterator pointing to first DoF (degre of freedom)
        */
-      inline ConstDofIteratorType dbegin () const
+      ConstDofIteratorType dbegin () const
       {
         return asImp().dbegin ();
       }
@@ -268,7 +274,7 @@ namespace Dune
        *
        *  \returns a DoF iterator pointing behind the last DoF (degree of freedom)
        */
-      inline ConstDofIteratorType dend () const
+      ConstDofIteratorType dend () const
       {
         return asImp().dend ();
       }
@@ -278,7 +284,7 @@ namespace Dune
        *
        *  \returns a DoF iterator pointing to first DoF (degre of freedom)
        */
-      inline DofIteratorType dbegin ()
+      DofIteratorType dbegin ()
       {
         return asImp().dbegin ();
       }
@@ -287,7 +293,7 @@ namespace Dune
        *
        *  \returns a DoF iterator pointing behind the last DoF (degree of freedom)
        */
-      inline DofIteratorType dend ()
+      DofIteratorType dend ()
       {
         return asImp().dend ();
       }
@@ -318,8 +324,7 @@ namespace Dune
        *  \returns the scalar product of the DoF-vectors
        */
       template <class DFType>
-      inline RangeFieldType
-      scalarProductDofs ( const DiscreteFunctionInterface< DFType > &other ) const
+      RangeFieldType scalarProductDofs ( const DiscreteFunctionInterface< DFType > &other ) const
       {
         return asImp().scalarProductDofs( other );
       }
@@ -335,8 +340,7 @@ namespace Dune
        *
        *  \returns the squared norm of the DoF-vectors
        */
-      inline typename Dune::FieldTraits< RangeFieldType >::real_type
-      normSquaredDofs ( ) const
+      typename Dune::FieldTraits< RangeFieldType >::real_type normSquaredDofs ( ) const
       {
         return asImp().normSquaredDofs( );
       }
@@ -345,7 +349,7 @@ namespace Dune
        *
        *  \param[in]  out  stream to print to
        */
-      inline void print( std :: ostream &out ) const
+      void print( std :: ostream &out ) const
       {
         asImp().print( out );
       }
@@ -370,8 +374,7 @@ namespace Dune
 
       /** \brief return reference to data handle object */
       template< class Operation >
-      typename CommDataHandle< Operation > :: Type
-      dataHandle( const Operation *operation )
+      typename CommDataHandle< Operation >::Type dataHandle( const Operation *operation )
       {
         return asImp().dataHandle( operation );
       }
@@ -412,7 +415,7 @@ namespace Dune
        *
        *  \returns a reference to this discrete function (i.e. *this)
        */
-      inline DiscreteFunctionType &operator*= ( const RangeFieldType &scalar )
+      DiscreteFunctionType &operator*= ( const RangeFieldType &scalar )
       {
         return asImp() *= scalar;
       }
@@ -423,7 +426,7 @@ namespace Dune
        *
        *  \returns a reference to this discrete function (i.e. *this)
        */
-      inline DiscreteFunctionType &operator/= ( const RangeFieldType &scalar )
+      DiscreteFunctionType &operator/= ( const RangeFieldType &scalar )
       {
         return asImp() /= scalar;
       }
@@ -433,7 +436,7 @@ namespace Dune
        *  \param[in]  in  stream to read the discrete function from
        */
       template< class StreamTraits >
-      inline void read ( InStreamInterface< StreamTraits > &in )
+      void read ( InStreamInterface< StreamTraits > &in )
       {
         asImp().read( in );
       }
@@ -443,7 +446,7 @@ namespace Dune
        *  \param[in]  out  stream to write the discrete function to
        */
       template< class StreamTraits >
-      inline void write ( OutStreamInterface< StreamTraits > &out ) const
+      void write ( OutStreamInterface< StreamTraits > &out ) const
       {
         asImp().write( out );
       }
@@ -452,7 +455,7 @@ namespace Dune
            i.e. during grdi changes a dof compression
            is done when the DofManagers compress is called.
       */
-      inline void enableDofCompression()
+      void enableDofCompression()
       {
         asImp().enableDofCompression();
       }
@@ -460,7 +463,7 @@ namespace Dune
       // this needs to be revised, the definition should be in GridPart
       // further discussion needed
       typedef LoadBalanceLeafData< ThisType > DefaultLoadBalanceContainsCheckType;
-      inline DefaultLoadBalanceContainsCheckType defaultLoadBalanceContainsCheck() const
+      DefaultLoadBalanceContainsCheckType defaultLoadBalanceContainsCheck() const
       {
         return DefaultLoadBalanceContainsCheckType( *this );
       }
@@ -623,15 +626,12 @@ namespace Dune
        *  \param[in]  dfSpace    discrete function space
        *  \param[in]  lfFactory  local function factory
        */
-      DiscreteFunctionDefault ( const std::string &name,
-                                const DiscreteFunctionSpaceType &dfSpace );
-
-    private:
-      // prohibit copying and assignment
-      inline DiscreteFunctionDefault ( const ThisType & );
-      ThisType &operator= ( const ThisType & );
+      DiscreteFunctionDefault ( const std::string &name, const DiscreteFunctionSpaceType &dfSpace );
 
     public:
+      DiscreteFunctionDefault ( const ThisType& ) = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
+
       // Default Implementations
       // -----------------------
 
@@ -713,15 +713,16 @@ namespace Dune
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::scalarProductDofs */
       template <class DFType>
-      inline RangeFieldType
-      scalarProductDofs ( const DiscreteFunctionInterface< DFType > &other ) const
+      RangeFieldType scalarProductDofs ( const DiscreteFunctionInterface< DFType > &other ) const
       {
         return scalarProduct_.scalarProductDofs( *this, other );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::normSquaredDofs */
-      inline typename Dune::FieldTraits< RangeFieldType >::real_type
-      normSquaredDofs ( ) const { return std::real( (*this).scalarProductDofs( *this )); }
+      typename Dune::FieldTraits< RangeFieldType >::real_type normSquaredDofs ( ) const
+      {
+        return std::real( (*this).scalarProductDofs( *this ));
+      }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::print */
       void print ( std :: ostream &out ) const;
@@ -741,8 +742,7 @@ namespace Dune
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dataHandle */
       template< class Operation >
-      typename CommDataHandle< Operation > :: Type
-      dataHandle ( const Operation *operation );
+      typename CommDataHandle< Operation >::Type dataHandle ( const Operation *operation );
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::communicate() */
       void communicate()
@@ -752,21 +752,21 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::Function::evaluate(const DomainType &x,RangeType &value) const */
-      inline void evaluate ( const DomainType &x, RangeType &value ) const
+      void evaluate ( const DomainType &x, RangeType &value ) const
       {
         LocalFunctionEvaluateFunctor functor( value );
         asImp().evaluateGlobal( x, functor );
       }
 
       /** \copydoc Dune::Fem::Function::jacobian(const DomainType &x,JacobianRangeType &jacobian) const */
-      inline void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
+      void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
       {
         LocalFunctionJacobianFunctor functor( jacobian );
         asImp().evaluateGlobal( x, functor );
       }
 
       /** \copydoc Dune::Fem::Function::hessian (const DomainType &x,HessianRangeType &hessian) const */
-      inline void hessian ( const DomainType &x, HessianRangeType &hessian ) const
+      void hessian ( const DomainType &x, HessianRangeType &hessian ) const
       {
         LocalFunctionHessianFunctor functor( hessian );
         asImp().evaluateGlobal( x, functor );
@@ -808,7 +808,10 @@ namespace Dune
        *
        *  \returns reference to this discrete function (i.e. *this)
        */
-      inline DiscreteFunctionType &operator/= ( const RangeFieldType &scalar ) { return BaseType :: operator*=( RangeFieldType(1 ) / scalar ); }
+      DiscreteFunctionType &operator/= ( const RangeFieldType &scalar )
+      {
+        return BaseType :: operator*=( RangeFieldType(1 ) / scalar );
+      }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::read */
       template< class StreamTraits >
@@ -822,10 +825,10 @@ namespace Dune
        *
        *  \note The default implementation does nothing.
        */
-      inline void enableDofCompression () {}
+      void enableDofCompression ()
+      {}
 
 
-    public:
       // Non-Interface Methods
       // ---------------------
 
@@ -833,66 +836,57 @@ namespace Dune
       inline bool operator== ( const DiscreteFunctionInterface< DFType>  &g ) const;
 
       template <class DFType>
-      inline bool operator!= ( const DiscreteFunctionInterface< DFType > &g ) const { return !(operator==( g )); }
+      bool operator!= ( const DiscreteFunctionInterface< DFType > &g ) const
+      {
+        return !(operator==( g ));
+      }
 
       /** \brief obtain the local function storage
        *
        *  \returns a reference to the local function storage
        */
-      inline LocalDofVectorAllocatorType &localDofVectorAllocator () const { return ldvAllocator_; }
+      LocalDofVectorAllocatorType &localDofVectorAllocator () const
+      {
+        return ldvAllocator_;
+      }
 
       //! add scaled local Dofs to dof vector
       template< class LocalDofs >
       void addScaledLocalDofs ( const EntityType &entity, const RangeFieldType &s, const LocalDofs &localDofs )
       {
-        typedef LeftAddScaled< const LocalDofs, const RangeFieldType > AssignFunctorType;
-        AssignFunctorType assignFunctor( localDofs, s );
-
-        DofBlockFunctor< DiscreteFunctionType, AssignFunctorType > functor( asImp(), assignFunctor );
-        space().blockMapper().mapEach( entity, functor );
+        LeftAddScaled< const LocalDofs, const RangeFieldType > assignFunctor( localDofs, s );
+        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
       //! add local Dofs to dof vector
       template< class LocalDofs >
       void addLocalDofs ( const EntityType &entity, const LocalDofs &localDofs )
       {
-        typedef LeftAdd< const LocalDofs > AssignFunctorType;
-        AssignFunctorType assignFunctor( localDofs );
-
-        DofBlockFunctor< DiscreteFunctionType, AssignFunctorType > functor( asImp(), assignFunctor );
-        space().blockMapper().mapEach( entity, functor );
+        LeftAdd< const LocalDofs > assignFunctor( localDofs );
+        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
       //! set local Dofs to dof vector
       template< class LocalDofs >
       void setLocalDofs ( const EntityType &entity, const LocalDofs &localDofs )
       {
-        typedef LeftAssign< const LocalDofs > AssignFunctorType;
-        AssignFunctorType assignFunctor( localDofs );
-
-        DofBlockFunctor< DiscreteFunctionType, AssignFunctorType > functor( asImp(), assignFunctor );
-        space().blockMapper().mapEach( entity, functor );
+        LeftAssign< const LocalDofs > assignFunctor( localDofs );
+        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
       //! get local Dofs and store a reference to it in the LocalDofVector
       void getLocalDofs ( const EntityType &entity, LocalDofVectorType &localDofs )
       {
-        typedef AssignVectorReference< LocalDofVectorType > AssignFunctorType;
-        AssignFunctorType assignFunctor( localDofs );
-
-        DofBlockFunctor< DiscreteFunctionType, AssignFunctorType > functor( asImp(), assignFunctor );
-        space().blockMapper().mapEach( entity, functor );
+        AssignVectorReference< LocalDofVectorType > assignFunctor( localDofs );
+        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
       //! get local Dofs and store the values  in LocalDofVector
       template< class A >
       void getLocalDofs ( const EntityType &entity, Dune::DynamicVector< DofType, A > &localDofs ) const
       {
-        typedef AssignFunctor< Dune::DynamicVector< DofType, A > > AssignFunctorType;
-        AssignFunctorType assignFunctor( localDofs );
-
-        DofBlockFunctor< const DiscreteFunctionType, AssignFunctorType > functor( asImp(), assignFunctor );
-        space().blockMapper().mapEach( entity, functor );
+        AssignFunctor< Dune::DynamicVector< DofType, A > > assignFunctor( localDofs );
+        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
     protected:
@@ -923,7 +917,6 @@ namespace Dune
       // only PersistenceManager should call backup and restore
       friend class PersistenceManager;
 
-    protected:
       const DiscreteFunctionSpaceType &dfSpace_;
 
       // the local function storage
@@ -932,7 +925,6 @@ namespace Dune
 
       mutable DebugLock dofPointerLock_;
 
-    protected:
       std::string name_;
       ScalarProductType scalarProduct_;
     }; // end class DiscreteFunctionDefault
@@ -969,8 +961,6 @@ namespace Dune
       typedef ThreadSafeValue< UninitializedObjectStack >         LocalDofVectorStackType;
       typedef StackAllocator< DofType, LocalDofVectorStackType* > LocalDofVectorAllocatorType;
       typedef DynamicReferenceVector< DofType, LocalDofVectorAllocatorType > LocalDofVectorType;
-
-      //typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
     };
 
 

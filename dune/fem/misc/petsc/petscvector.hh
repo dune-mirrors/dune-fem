@@ -88,14 +88,10 @@ namespace Dune
       static void assign( ArrayType& array, const int newIndex, const int oldIndex )
       {
         /*
-        typedef typename ArrayType :: DofBlockPtrType DofBlockPtrType;
-        DofBlockPtrType newBlock = array.block( newIndex );
-        DofBlockPtrType oldBlock = array.block( oldIndex );
-
         const unsigned int blockSize = ArrayType :: blockSize;
         for( unsigned int i = 0; i < blockSize; ++i )
-          (*newBlock)[ i ] = (*oldBlock)[ i ];
-          */
+          array.dofVector()[ newIndex][ i ] = array.dofVector()[ oldIndex ][ i ];
+        */
       }
     };
 
@@ -275,7 +271,7 @@ namespace Dune
       }
 
       DofBlockType operator[] ( const IndexType index ) { return DofBlockType( *this,index ); }
-      ConstDofBlockType operator[] ( const IndexType index ) const { return DofBlockType( *this,index ); }
+      ConstDofBlockType operator[] ( const IndexType index ) const { return ConstDofBlockType( *this,index ); }
 
       ConstDofBlockPtrType block ( IndexType index ) const { return blockPtr( index ); }
       DofBlockPtrType block ( IndexType index ) { return blockPtr( index ); }

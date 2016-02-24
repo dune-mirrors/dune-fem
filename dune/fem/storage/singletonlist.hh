@@ -64,14 +64,10 @@ namespace Dune
 
       class SingletonListStorage;
 
-    private:
-      // prohibit creation
-      SingletonList ();
-
-      // prohibit copying
-      SingletonList ( const ThisType & );
-
     public:
+      SingletonList () = delete;
+      SingletonList ( const ThisType& ) = delete;
+
       //! list that store pairs of key/object pointers
       //! singleton list
       inline static ListType & singletonList()
@@ -81,7 +77,6 @@ namespace Dune
         return s.singletonList();
       }
 
-    public:
       //! return reference to the object for given key.
       //! If the object does not exist, then it is created first, otherwise the
       //! reference counter is increased.

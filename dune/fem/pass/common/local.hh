@@ -53,10 +53,6 @@ namespace Dune
       //! \brief the codim 0 entity
       typedef typename DiscreteFunctionSpaceType::EntityType EntityType;
 
-      // deprecated type
-      typedef EntityType  Entity;
-
-    public:
       /** \brief constructor
        *  \param pass Previous pass
        *  \param spc Space belonging to the discrete function of this pass.

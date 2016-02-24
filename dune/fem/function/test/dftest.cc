@@ -58,7 +58,7 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
 
   // fill with increasing values
   int cont(0);
-  for( auto&& entity : entities(df) )
+  for( const auto& entity : entities(df) )
   {
     auto lf = df.localFunction( entity );
     lf.clear();
@@ -67,15 +67,15 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
   }
 
   // check block access
-  const auto localBlockSize(DiscreteFunctionSpaceType::localBlockSize);
-  const auto numBlocks(df.blocks());
+  const size_t localBlockSize = DiscreteFunctionSpaceType::localBlockSize;
+  const size_t numBlocks      = df.blocks();
   if( df.size() / localBlockSize != numBlocks )
     DUNE_THROW(Dune::InvalidStateException,"number of blocks not correct!");
 
   auto dfDofIt(df.dbegin());
-  for(auto i=0;i!=numBlocks;++i)
-    for(auto j=0;j!=localBlockSize;++j,++dfDofIt)
-      if( std::abs( (*df.block(i))[j] - *dfDofIt ) > 1e-12 )
+  for(size_t i=0;i<numBlocks;++i)
+    for(size_t j=0;j<localBlockSize;++j,++dfDofIt)
+      if( std::abs( df.dofVector()[i][j] - *dfDofIt ) > 1e-12 )
         DUNE_THROW(Dune::InvalidStateException,"Block access did not work");
 
   // copy to std::vector, sometimes needed for solver interfaces
@@ -90,9 +90,9 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
     DUNE_THROW(Dune::InvalidStateException,"Copying did not work");
   }
 
-  (*df.block( 0 )) *= 1.0;
-  (*df.block( 0 ))[ 0 ] = 1.0;
-  (*df.block( 0 ))[ HGridType::dimension-1 ] = 1.0;
+  df.dofVector()[0] *= 1.0;
+  df.dofVector()[0][0] = 1.0;
+  df.dofVector()[0][HGridType::dimension-1] = 1.0;
 
   df.assign( other );
 

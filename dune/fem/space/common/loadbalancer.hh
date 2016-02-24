@@ -4,6 +4,8 @@
 #include <cassert>
 #include <iostream>
 #include <set>
+#include <type_traits>
+#include <tuple>
 #include <vector>
 
 #include <dune/common/timer.hh>
@@ -139,14 +141,7 @@ namespace Dune
       int getBalanceStep( int balanceCounter ) const
       {
         int step = balanceCounter;
-        if( Parameter :: exists("BalanceStep") )
-        {
-          std::cout << "Warning: deprecated parameter 'BalanceStep', please use 'fem.loadbalancing.step' instead!" << std::endl;
-          step = Parameter::getValue< int >( "BalanceStep", balanceCounter );
-        }
-        else
-          step = Parameter::getValue< int >( "fem.loadbalancing.step", balanceCounter );
-
+        step = Parameter::getValue< int >( "fem.loadbalancing.step", balanceCounter );
         return step;
       }
 
@@ -264,8 +259,8 @@ namespace Dune
       template <class DiscreteFunctionType, class ContainsCheck >
       void addDiscreteFunction(DiscreteFunctionType& df, const ContainsCheck& containsCheck )
       {
-        static_assert( (Conversion< DiscreteFunctionType, IsDiscreteFunction >::exists),
-                            "Only valid for discrete functions" );
+        static_assert( std::is_convertible< DiscreteFunctionType, IsDiscreteFunction >::value,
+                       "Only valid for discrete functions" );
 
         const IsDiscreteFunction * fct = &df;
 

@@ -3,6 +3,7 @@
 
 //- system includes
 #include <limits>
+#include <type_traits>
 #include <utility>
 
 //- Dune includes
@@ -476,7 +477,7 @@ namespace Dune
                        // check wheter operator has precondition methods
                        // to enable preconditioning derive your operator from
                        // OEMSolver::PreconditionInterface
-                       Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
+                       std::is_convertible<OperatorType, OEMSolver::PreconditionInterface > ::value >::
                          // call solver, see above
                          call(op_,arg,dest,epsilon_,maxIter_,verbose_);
 
@@ -622,7 +623,7 @@ namespace Dune
                        // check wheter operator has precondition methods
                        // to enable preconditioning derive your operator from
                        // OEMSolver::PreconditionInterface
-                       Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
+                       std::is_convertible<OperatorType, OEMSolver::PreconditionInterface > ::value >::
                          // call solver, see above
                          call(op_,arg,dest,epsilon_,maxIter_,verbose_);
 
@@ -889,7 +890,7 @@ namespace Dune
                        // check wheter operator has precondition methods
                        // to enable preconditioning derive your operator from
                        // OEMSolver::PreconditionInterface
-                       Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
+                       std::is_convertible<OperatorType, OEMSolver::PreconditionInterface > ::value >::
                          // call solver, see above
                          call(op_,arg,dest,inner,epsilon_,maxIter_,verbose_);
 
@@ -1074,7 +1075,7 @@ namespace Dune
                        // check wheter operator has precondition methods
                        // to enable preconditioning derive your operator from
                        // OEMSolver::PreconditionInterface
-                       Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
+                       std::is_convertible<OperatorType, OEMSolver::PreconditionInterface > ::value >::
                        // call solver, see above
                        call(solver_,op_.systemMatrix(),arg,dest);
 
@@ -1221,7 +1222,7 @@ namespace Dune
                        // check wheter operator has precondition methods
                        // to enable preconditioning derive your operator from
                        // OEMSolver::PreconditionInterface
-                       Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
+                       std::is_convertible<OperatorType, OEMSolver::PreconditionInterface > ::value >::
                        // call solver, see above
                        call(solver_,op_,arg,dest);
 
@@ -1371,7 +1372,7 @@ namespace Dune
                        // check wheter operator has precondition methods
                        // to enable preconditioning derive your operator from
                        // OEMSolver::PreconditionInterface
-                       Conversion<OperatorType, OEMSolver::PreconditionInterface > ::exists >::
+                       std::is_convertible<OperatorType, OEMSolver::PreconditionInterface > ::value >::
                        // call solver, see above
                        call(solver_,op_,arg,dest);
 

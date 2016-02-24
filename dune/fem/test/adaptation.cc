@@ -33,7 +33,7 @@
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
-#include <dune/fem/space/combineddiscretefunctionspace.hh>
+#include <dune/fem/space/combinedspace.hh>
 
 // adaptation ...
 #include <dune/fem/function/adaptivefunction.hh>
@@ -97,7 +97,7 @@ struct Scheme
 #else
   typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpace, GridPartType, POLORDER > DiscreteFunctionSpaceType1;
   typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpace, GridPartType, POLORDER > DiscreteFunctionSpaceType2;
-  typedef Dune::Fem::CombinedDiscreteFunctionSpace< DiscreteFunctionSpaceType1, DiscreteFunctionSpaceType2 >
+  typedef Dune::Fem::TupleDiscreteFunctionSpace< DiscreteFunctionSpaceType1, DiscreteFunctionSpaceType2 >
     DiscreteFunctionSpaceType;
 
   typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FunctionSpaceType;

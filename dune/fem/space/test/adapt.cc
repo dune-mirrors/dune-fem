@@ -69,8 +69,6 @@ typedef DiscontinuousGalerkinSpace< FunctionSpace < double , double, MyGridType:
                                     GridPartType, polOrd, CachingStorage>  DiscreteFunctionSpaceType;
 #endif
 
-//typedef CombinedDiscreteFunctionSpace< ContainedDiscreteFunctionSpaceType, ContainedDiscreteFunctionSpaceType > CombinedSpaceType ;
-//typedef CombinedDiscreteFunctionSpace< CombinedSpaceType, ContainedDiscreteFunctionSpaceType > DiscreteFunctionSpaceType ;
 
 ////typedef CombinedSpace< ContainedDiscreteFunctionSpaceType, dimRange, PointBased > DiscreteFunctionSpaceType ;
 

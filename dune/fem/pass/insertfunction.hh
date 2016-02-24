@@ -67,7 +67,7 @@ namespace Dune
       typedef InsertFunctionPass< DiscreteFunction, PreviousPass, passId > ThisType;
       typedef Pass< InsertFunctionPassDiscreteModel< DiscreteFunction >, PreviousPass, passId > BaseType;
 
-      static const bool hasLocalFunction = Conversion< DiscreteFunction, HasLocalFunction >::exists;
+      static const bool hasLocalFunction = std::is_convertible< DiscreteFunction, HasLocalFunction >::value;
       static_assert( hasLocalFunction, "InsertFunctionPass can only insert grid functions." );
 
     protected:

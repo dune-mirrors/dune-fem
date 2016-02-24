@@ -20,7 +20,10 @@ namespace Dune
 
     /** \class SimpleBasisFunctionSet
      *
-     *  \brief Please doc me.
+     *  \brief This class is a simple basis function set which is needed for
+     *  global basis functions sets (Fourier space etc.).
+     *
+     *  \note For localized basis function sets use the DefaultBasisFunctionSet.
      *
      *  \tparam  LocalFunctionSet  set of basis functions
      */
@@ -165,7 +168,7 @@ namespace Dune
 
       //! please doc me
       template< class Quadrature, class DofVector, class JacobianRangeArray >
-      void jacobainAll ( const Quadrature &quad, const DofVector &dofs, JacobianRangeArray &jacobians ) const
+      void jacobianAll ( const Quadrature &quad, const DofVector &dofs, JacobianRangeArray &jacobians ) const
       {
         const unsigned int nop = quad.nop();
         for( unsigned int qp = 0; qp < nop; ++qp )

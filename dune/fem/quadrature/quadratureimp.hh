@@ -74,15 +74,10 @@ namespace Dune
       {
       }
 
-    private:
-      // Copying is forbidden
-      IntegrationPointListImp( const IntegrationPointListImp& );
-
     public:
-      // Virtual destructor
-      virtual ~IntegrationPointListImp ()
-      {
-      }
+      IntegrationPointListImp( const IntegrationPointListImp& ) = delete;
+
+      virtual ~IntegrationPointListImp () = default;
 
       /** \brief obtain coordinates of i-th integration point
        *
@@ -216,14 +211,10 @@ namespace Dune
       {
       }
 
-    private:
-      // Copying is forbidden
-      QuadratureImp ( const QuadratureImp& );
-
     public:
-      virtual ~QuadratureImp ()
-      {
-      }
+      QuadratureImp ( const QuadratureImp& ) = delete;
+
+      virtual ~QuadratureImp () = default;
 
       /** \brief obtain weight of i-th integration point
        *

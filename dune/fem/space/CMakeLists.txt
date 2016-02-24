@@ -1,4 +1,4 @@
-dune_install(combineddiscretefunctionspace.hh combinedspace.hh discontinuousgalerkin.hh
+dune_install(combinedspace.hh discontinuousgalerkin.hh
              finitevolume.hh fourier.hh lagrange.hh
              padaptivespace.hh rannacherturek.hh)
 
@@ -8,7 +8,7 @@ dune_add_subdirs(basisfunctionset combinedspace common
                  padaptivespace rannacherturek shapefunctionset
                  test)
 
-dune_add_library(space OBJECT 
+dune_add_library(space OBJECT
     shapefunctionset/legendrepolynomials.cc
     shapefunctionset/orthonormal/orthonormalbase_1d.cc
     shapefunctionset/orthonormal/orthonormalbase_2d.cc

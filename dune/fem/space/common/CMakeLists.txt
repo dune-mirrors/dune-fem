@@ -3,6 +3,6 @@ dune_install(adaptmanager.hh allgeomtypes.hh arrays.hh
              commindexmap.hh commoperations.hh communicationmanager.hh
              datacollector.hh defaultcommhandler.hh discretefunctionspace.hh
              dofmanager.hh dofstorage.hh functionspace.hh
-             functionspaceinterface.hh interpolate.hh interpolation.hh loadbalancer.hh
+             functionspaceinterface.hh interpolate.hh loadbalancer.hh
              localrestrictprolong.hh restrictprolongfunction.hh restrictprolonginterface.hh
              adaptcallbackhandle.hh)

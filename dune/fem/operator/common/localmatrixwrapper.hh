@@ -73,7 +73,6 @@ namespace Dune
     private:
       typedef typename LocalMatrixStackType::PointerType WrappedLocalMatrixPtrType;
 
-    private:
       // ObjectPointer to the actual local matrix
       // (the pointer is required to keep the reference alive)
       WrappedLocalMatrixPtrType localMatrixPtr_;
@@ -117,11 +116,8 @@ namespace Dune
         localMatrix().finalize();
       }
 
-    private:
-      // prohibit assignment
-      ThisType &operator= ( const ThisType & );
+      ThisType& operator= ( const ThisType& ) = delete;
 
-    public:
       /** \copydoc Dune::Fem::LocalMatrixInterface::init */
       void init ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
       {

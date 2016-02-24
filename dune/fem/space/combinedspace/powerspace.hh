@@ -5,7 +5,7 @@
 #include <type_traits>
 
 #include <dune/common/math.hh>
-#include <dune/common/typetraits.hh>
+
 #include <dune/grid/common/grid.hh>
 
 #include <dune/fem/common/utility.hh>
@@ -192,9 +192,8 @@ namespace Dune
           LagrangePointSetExporterType( containedSpace() )
       {}
 
-      // prohibit copy constructor and copy assignment
-      PowerDiscreteFunctionSpace ( const ThisType & ) = delete;
-      ThisType &operator= ( const ThisType & ) = delete;
+      PowerDiscreteFunctionSpace ( const ThisType& ) = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
 
       //! return tuple of const References to the contained sub spaces
       const ContainedDiscreteFunctionSpaceType &containedSpace () const

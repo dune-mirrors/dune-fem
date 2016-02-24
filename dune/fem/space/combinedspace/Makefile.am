@@ -1,6 +1,5 @@
 combinedspacedir =  $(includedir)/dune/fem/space/combinedspace
-combinedspace_HEADERS = combineddiscretefunctionspace.hh  \
-												combineddofstorage.hh \
+combinedspace_HEADERS = combineddofstorage.hh \
 												combinedspace.hh \
 												generic.hh \
 												lagrangepointsetexporter.hh \

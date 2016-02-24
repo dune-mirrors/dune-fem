@@ -6,8 +6,6 @@
 #include <sstream>
 #include <type_traits>
 
-#include <dune/common/typetraits.hh>
-
 #include <dune/fem/common/tupleutility.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
 #include <dune/fem/pass/common/local.hh>
@@ -39,7 +37,7 @@ namespace Dune
 
       struct Traits
       {
-        typedef typename Dune::TypeTraits< DestinationPtrType >::PointeeType DestinationType;
+        typedef typename std::remove_pointer< DestinationPtrType >::type DestinationType;
         typedef typename DestinationType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
         typedef CachingQuadrature< typename DiscreteFunctionSpaceType::GridPartType, 0 > VolumeQuadratureType;
         typedef CachingQuadrature< typename DiscreteFunctionSpaceType::GridPartType, 1 > FaceQuadratureType;

@@ -201,11 +201,8 @@ namespace Dune
         return *this;
       }
 
-    private:
-      PetscDofBlock ();
-      // The standard copy ctor is okay... and needed.
+      PetscDofBlock () = delete;
 
-    public:
       IndexType size() const { return blockSize; }
 
       DofProxy operator [] ( unsigned int index )
@@ -221,9 +218,6 @@ namespace Dune
       }
 
     private:
-      /*
-       * data fields
-       */
       PetscVectorType &petscVector_;
       IndexType blockIndex_;
     };
@@ -314,10 +308,9 @@ namespace Dune
       // prefix decrement
       ThisType& operator-- () { decrement(); return *this; }
 
-    private:
-      // forbidden
-      DofIterator ();
+      DofIterator () = delete;
 
+    private:
       PetscVectorType& petscVector () { return petscVector_; }
 
       void increment ()
@@ -352,9 +345,6 @@ namespace Dune
 
       DofBlockType& block () const { return *blockPtr_.get(); }
 
-      /*
-       * data fields
-       */
       PetscVectorType &petscVector_;
       unsigned int blockIndex_;
       PetscInt indexInBlock_;

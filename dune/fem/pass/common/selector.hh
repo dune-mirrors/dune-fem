@@ -6,7 +6,6 @@
 
 #include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
-#include <dune/common/typetraits.hh>
 
 #include <dune/fem/common/tupleutility.hh>
 

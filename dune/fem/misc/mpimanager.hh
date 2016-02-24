@@ -4,6 +4,8 @@
 #include <dune/common/parallel/mpicollectivecommunication.hh>
 #include <dune/common/parallel/mpihelper.hh>
 
+#include <dune/fem/quadrature/caching/registry.hh>
+
 #if HAVE_PETSC
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #endif
@@ -30,10 +32,11 @@ namespace Dune
         delete comm_;
       }
 
-      // prohibit copying and assignment
-      MPIManager ( const MPIManager & );
-      MPIManager &operator= ( const MPIManager & );
+    public:
+      MPIManager ( const MPIManager& ) = delete;
+      MPIManager& operator= ( const MPIManager& ) = delete;
 
+    private:
       static MPIManager &instance ()
       {
         static MPIManager instance;
@@ -98,6 +101,9 @@ namespace Dune
         // initialize PETSc if pressent
         PETSc::initialize( rank() == 0, argc, argv );
 #endif
+
+        // initialize static variables of QuadratureStorageRegistry
+        QuadratureStorageRegistry::initialize();
       }
 
       static const CollectiveCommunication &comm ()

@@ -138,18 +138,13 @@ namespace Dune
       using BaseType :: axpy;
       using BaseType :: space;
 
-      //- Public methods
       //! Constructor
-      //! WARNING: here we have to use a const cast for the
-      //! function space!
       CombinedDiscreteFunction( const ContainedDiscreteFunctionType& func )
         : BaseType( "combined_"+func.name(), createSpace( func.space().gridPart() ), LocalDofVectorAllocatorType( &ldvStack_ ) ),
           ldvStack_( std::max( sizeof( DofType ), sizeof( DofType* ) ) * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize )
       {
         for (int i=0; i<N; ++i)
-        {
           func_[i] = new ContainedDiscreteFunctionType(func);
-        }
       }
 
       CombinedDiscreteFunction(const std::string &name,
@@ -158,9 +153,7 @@ namespace Dune
           ldvStack_( std::max( sizeof( DofType ), sizeof( DofType* ) ) * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize )
       {
         for (int i=0; i<N; ++i)
-        {
           func_[i] = new ContainedDiscreteFunctionType(name,spc);
-        }
       }
 
       CombinedDiscreteFunction(const std::string &name,
@@ -181,10 +174,7 @@ namespace Dune
           ldvStack_( other.ldvStack_ )
       {
         for (int i=0; i<N; ++i)
-        {
-          func_[i] = new
-            ContainedDiscreteFunctionType(other.subFunction(i));
-        }
+          func_[i] = new ContainedDiscreteFunctionType(other.subFunction(i));
       }
 
       //! Destructor
@@ -196,12 +186,11 @@ namespace Dune
         delete &space();
       }
 
-    private:
-      ThisType &operator= ( const ThisType &other );
+      ThisType& operator= ( const ThisType& ) = delete;
 
-    public:
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::clear */
-      inline void clear() {
+      void clear()
+      {
         for (int i=0; i<N; ++i)
           func_[i]->clear();
       }
@@ -232,11 +221,9 @@ namespace Dune
       using BaseType::operator-=;
       ThisType &operator-= ( const ThisType &g )
       {
-        // std::cout << "     special operator -= in combineddf"
-        //        << std::endl;
         for( int i = 0; i < N; ++i )
           *func_[ i ] -=  g.subFunction( i );
-       return *this;
+        return *this;
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator*=(const RangeFieldType &scalar) */
@@ -295,20 +282,22 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::print(std::ostream &out) const */
-      inline void print( std :: ostream &out ) const {
+      inline void print( std :: ostream &out ) const
+      {
         for (int i=0; i<N; ++i)
           func_[i]->print(out);
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofsValid() const */
-      inline bool dofsValid () const {
+      bool dofsValid () const
+      {
         bool ret = func_[0]->dofsValid();
         for (int i=1;i<N;i++)
           ret |= func_[i]->dofsValid();
         return ret;
       }
 
-      inline ConstDofBlockPtrType block ( unsigned int index ) const
+      ConstDofBlockPtrType block ( unsigned int index ) const
       {
         // This is wrong with the current implementation of CombinedSpace
         const int containedSize = func_[ 0 ]->space().blockMapper().size();
@@ -318,7 +307,7 @@ namespace Dune
         return func.block( containedIndex );
       }
 
-      inline DofBlockPtrType block ( unsigned int index )
+      DofBlockPtrType block ( unsigned int index )
       {
         // This is wrong with the current implementation of CombinedSpace
         const int containedSize = func_[ 0 ]->space().blockMapper().size();
@@ -327,68 +316,61 @@ namespace Dune
         return func_[ component ]->block( containedIndex );
       }
 
-      inline const RangeFieldType &dof(unsigned int index) const
+      const RangeFieldType &dof(unsigned int index) const
       {
-        /*
-        int variable = index % N;
-        int point = index / N;
-        */
         int variable = index / func_[0]->size();
         int point    = index % func_[0]->size();
         return func_[variable]->dof(point);
       }
 
-      inline RangeFieldType &dof ( unsigned int index )
+      RangeFieldType &dof ( unsigned int index )
       {
-        /*
-        int variable = index % N;
-        int point = index / N;
-        */
         int variable = index / func_[0]->size();
         int point    = index % func_[0]->size();
         return func_[variable]->dof(point);
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dbegin() const */
-      inline ConstDofIteratorType dbegin () const
+      ConstDofIteratorType dbegin () const
       {
         return ConstDofIteratorType(DofIteratorType(*this));
       }
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dend() const */
-      inline ConstDofIteratorType dend () const
+      ConstDofIteratorType dend () const
       {
         return ConstDofIteratorType(DofIteratorType(false,*this));
       }
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dbegin() */
-      inline DofIteratorType dbegin ()
+      DofIteratorType dbegin ()
       {
         return DofIteratorType(*this);
       }
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dend() */
-      inline DofIteratorType dend ()
+      DofIteratorType dend ()
       {
         return DofIteratorType(false,*this);
       }
 
-      inline ContainedDiscreteFunctionType& subFunction( const int i )
+      ContainedDiscreteFunctionType& subFunction( const int i )
       {
         return *(func_[i]);
       }
 
-      inline const ContainedDiscreteFunctionType& subFunction( const int i ) const
+      const ContainedDiscreteFunctionType& subFunction( const int i ) const
       {
         return *(func_[i]);
       }
 
-      inline ContainedDiscreteFunctionSpaceType& subSpace()
+      ContainedDiscreteFunctionSpaceType& subSpace()
       {
         return space().containedSpace();
       }
 
-      //- Forbidden members
     private:
-      typedef ThisType MyType;
-      const MyType& interface() const { return *this; }
+      const ThisType& interface() const
+      {
+        return *this;
+      }
 
       DiscreteFunctionSpaceType& createSpace( GridPartType& gp )
       {
@@ -420,32 +402,28 @@ namespace Dune
       typedef typename Traits::DofType DofType;
 
       //! End constructor
-      CombinedDiscreteFunctionDofIterator
-      (bool end,const DiscreteFunctionType& df) :
+      CombinedDiscreteFunctionDofIterator(bool end,const DiscreteFunctionType& df) :
         df_(const_cast<DiscreteFunctionType&>(df)),
         comp_(N-1),
         iter_(df.func_[N-1]->dend()),
         endIter_(df.func_[N-1]->dend())
       {}
       //! Constructor (const)
-      CombinedDiscreteFunctionDofIterator
-      (const DiscreteFunctionType& df) :
+      CombinedDiscreteFunctionDofIterator(const DiscreteFunctionType& df) :
         df_(const_cast<DiscreteFunctionType&>(df)),
         comp_(0),
         iter_(df.func_[0]->dbegin()),
         endIter_(df.func_[0]->dend())
       {}
       //! End constructor
-      CombinedDiscreteFunctionDofIterator
-      (bool end,DiscreteFunctionType& df) :
+      CombinedDiscreteFunctionDofIterator(bool end,DiscreteFunctionType& df) :
         df_(df),
         comp_(N-1),
         iter_(df.func_[N-1]->dend()),
         endIter_(df.func_[N-1]->dend())
       {}
       //! Constructor
-      CombinedDiscreteFunctionDofIterator
-      (DiscreteFunctionType& df) :
+      CombinedDiscreteFunctionDofIterator(DiscreteFunctionType& df) :
         df_(df),
         comp_(0),
         iter_(df.func_[0]->dbegin()),
@@ -460,7 +438,8 @@ namespace Dune
       {}
 
       //! Assignment operator
-      ThisType& operator=(const ThisType& other) {
+      ThisType& operator=(const ThisType& other)
+      {
         df_ = other.df_;
         comp_ = other.comp_;
         iter_ = other.iter_;
@@ -469,15 +448,23 @@ namespace Dune
       }
 
       //! return dof
-      DofType& operator *() { return *iter_; }
+      DofType& operator *()
+      {
+        return *iter_;
+      }
 
       //! return dof read only
-      const DofType& operator * () const { return *iter_; }
+      const DofType& operator * () const
+      {
+        return *iter_;
+      }
 
       //! go to next dof
-      ThisType& operator++ () {
+      ThisType& operator++ ()
+      {
         ++iter_;
-        if (iter_==endIter_ && comp_<N-1) {
+        if (iter_==endIter_ && comp_<N-1)
+        {
           ++comp_;
           iter_ = df_.func_[comp_]->dbegin();
           endIter_ = df_.func_[comp_]->dend();
@@ -486,10 +473,16 @@ namespace Dune
       }
 
       //! compare
-      bool operator == (const ThisType & I ) const { return (comp_ == I.comp_) && (iter_ == I.iter_); }
+      bool operator == (const ThisType & I ) const
+      {
+        return (comp_ == I.comp_) && (iter_ == I.iter_);
+      }
 
       //! compare
-      bool operator != (const ThisType & I ) const { return !((*this) == I); }
+      bool operator != (const ThisType & I ) const
+      {
+        return !((*this) == I);
+      }
 
       void reset()
       {

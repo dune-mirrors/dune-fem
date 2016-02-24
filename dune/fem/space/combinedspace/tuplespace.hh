@@ -5,11 +5,10 @@
 #include <type_traits>
 
 #include <dune/common/math.hh>
-#include <dune/common/typetraits.hh>
+
 #include <dune/grid/common/grid.hh>
 
 #include <dune/fem/common/utility.hh>
-
 #include <dune/fem/space/basisfunctionset/tuple.hh>
 #include <dune/fem/space/combinedspace/generic.hh>
 #include <dune/fem/space/combinedspace/tuplelocalrestrictprolong.hh>
@@ -247,9 +246,8 @@ namespace Dune
         : BaseType( gridPart, commInterface, commDirection )
       {}
 
-      // prohibit copy constructor and copy assignment
-      TupleDiscreteFunctionSpace ( const ThisType & ) = delete;
-      ThisType &operator= ( const ThisType & ) = delete;
+      TupleDiscreteFunctionSpace ( const ThisType& ) = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
 
       //! return tuple of const References to the contained sub spaces
       std::tuple< const DiscreteFunctionSpaces & ... > spaceTuple () const

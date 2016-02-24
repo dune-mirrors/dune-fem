@@ -34,7 +34,7 @@ namespace Dune
     class GeoDiscreteCoordFunctionCaller< codim, CoordFunction, LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, 1, Storage > >
     {
       typedef LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, 1, Storage > DFSpace;
-      static_assert( (Conversion< DFSpace, typename CoordFunction::DiscreteFunctionSpaceType >::sameType), "Invalid use of template argument DFSpace." );
+      static_assert( (std::is_same< DFSpace, typename CoordFunction::DiscreteFunctionSpaceType >::value), "Invalid use of template argument DFSpace." );
 
     public:
       typedef CoordFunction CoordFunctionType;
@@ -57,11 +57,8 @@ namespace Dune
         const int index = coordFunction_.gridPart().indexSet().subIndex( hostEntity_, i, dimension );
         assert( (index >= 0) && (index < (int)(coordFunction_.space().blockMapper().size())) );
 
-        typedef typename CoordFunctionType::ConstDofBlockPtrType ConstDofBlockPtrType;
-        ConstDofBlockPtrType block = coordFunction_.block( index );
-
         for( int k = 0; k < dimRange; ++k )
-          y[ k ] = (*block)[ k ];
+          y[ k ] = coordFunction_.dofVector()[ index ][ k ];
       }
 
       GeometryType type () const
@@ -84,7 +81,7 @@ namespace Dune
     // GeoCoordFunctionCaller
     // ----------------------
 
-    template< int codim, class CoordFunction, bool discrete = Conversion< CoordFunction, IsDiscreteFunction >::exists >
+    template< int codim, class CoordFunction, bool discrete = std::is_convertible< CoordFunction, IsDiscreteFunction >::value >
     class GeoCoordFunctionCaller;
 
     template< int codim, class CoordFunction >

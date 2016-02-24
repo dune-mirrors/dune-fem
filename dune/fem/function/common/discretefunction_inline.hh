@@ -39,8 +39,8 @@ namespace Dune
     inline void DiscreteFunctionDefault<Impl >
       :: print ( std::ostream &out ) const
     {
-      const ConstDofIteratorType end = BaseType :: dend();
-      for( ConstDofIteratorType dit = BaseType :: dbegin(); dit != end; ++dit )
+      const auto end = BaseType :: dend();
+      for( auto dit = BaseType :: dbegin(); dit != end; ++dit )
         out << (*dit) << std::endl;
     }
 
@@ -49,8 +49,8 @@ namespace Dune
     inline bool DiscreteFunctionDefault< Impl >
       :: dofsValid () const
     {
-      const ConstDofIteratorType end = BaseType :: dend();
-      for( ConstDofIteratorType it = BaseType :: dbegin(); it != end; ++it )
+      const auto end = BaseType :: dend();
+      for( auto it = BaseType :: dbegin(); it != end; ++it )
       {
         if( ! std::isfinite( *it ) )
           return false ;
@@ -69,9 +69,9 @@ namespace Dune
         DUNE_THROW(InvalidStateException,"DiscreteFunctionDefault: sizes do not match in axpy");
 
       // apply axpy to all dofs from g
-      const DofIteratorType end = BaseType::dend();
-      typename DFType :: ConstDofIteratorType git = g.dbegin();
-      for( DofIteratorType it = BaseType::dbegin(); it != end; ++it, ++git )
+      const auto end = BaseType::dend();
+      auto git = g.dbegin();
+      for( auto it = BaseType::dbegin(); it != end; ++it, ++git )
         *it += s * (*git );
     }
 
@@ -85,9 +85,9 @@ namespace Dune
         DUNE_THROW(InvalidStateException,"DiscreteFunctionDefault: sizes do not match in assign");
 
       // copy all dofs from g to this
-      const DofIteratorType end = BaseType::dend();
-      typename DFType :: ConstDofIteratorType git = g.dbegin();
-      for( DofIteratorType it = BaseType::dbegin(); it != end; ++it, ++git )
+      const auto end = BaseType::dend();
+      auto git = g.dbegin();
+      for( auto it = BaseType::dbegin(); it != end; ++it, ++git )
         *it = *git;
     }
 
@@ -110,8 +110,8 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
       EntitySearch< GridPartType, EntityType::codimension > entitySearch( BaseType::space().gridPart() );
 
-      const EntityType & entity(entitySearch( x ));
-      const typename EntityType::Geometry geometry = entity.geometry();
+      const auto& entity(entitySearch( x ));
+      const auto geometry = entity.geometry();
       functor( geometry.local( x ), BaseType::localFunction( entity ) );
     }
 
@@ -125,9 +125,9 @@ namespace Dune
       if( BaseType::size() != g.size() )
         DUNE_THROW(InvalidStateException,"DiscreteFunctionDefault: sizes do not match in operator +=");
 
-      const DofIteratorType end = BaseType::dend();
-      typename DFType :: ConstDofIteratorType git = g.dbegin();
-      for( DofIteratorType it = BaseType::dbegin(); it != end; ++it, ++git )
+      const auto end = BaseType::dend();
+      auto git = g.dbegin();
+      for( auto it = BaseType::dbegin(); it != end; ++it, ++git )
         *it += *git;
       return asImp();
     }
@@ -142,9 +142,9 @@ namespace Dune
       if( BaseType::size() != g.size() )
         DUNE_THROW(InvalidStateException,"DiscreteFunctionDefault: sizes do not match in operator -=");
 
-      const DofIteratorType end = BaseType :: dend();
-      typename DFType :: ConstDofIteratorType git = g.dbegin();
-      for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it, ++git )
+      const auto end = BaseType :: dend();
+      auto git = g.dbegin();
+      for( auto it = BaseType :: dbegin(); it != end; ++it, ++git )
         *it -= *git;
       return asImp();
     }
@@ -155,8 +155,8 @@ namespace Dune
     DiscreteFunctionDefault< Impl >
       :: operator*= ( const RangeFieldType &scalar )
     {
-      const DofIteratorType end = BaseType :: dend();
-      for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it )
+      const auto end = BaseType :: dend();
+      for( auto it = BaseType :: dbegin(); it != end; ++it )
         *it *= scalar;
       return asImp();
     }
@@ -167,7 +167,7 @@ namespace Dune
     inline void DiscreteFunctionDefault< Impl >
       :: read ( InStreamInterface< StreamTraits > &in )
     {
-      unsigned int versionId = in.readUnsignedInt();
+      auto versionId = in.readUnsignedInt();
       if( versionId < DUNE_VERSION_ID(0,9,1) )
         DUNE_THROW( IOError, "Trying to read outdated file." );
       else if( versionId > DUNE_MODULE_VERSION_ID(DUNE_FEM) )
@@ -179,10 +179,10 @@ namespace Dune
       {
         // make sure that space of discrete function matches the space
         // of the data that was written
-        const DFSpaceIdentifier spaceId = space().type();
+        const auto spaceId = space().type();
         int mySpaceIdInt;
         in >> mySpaceIdInt;
-        const DFSpaceIdentifier mySpaceId = (DFSpaceIdentifier) mySpaceIdInt;
+        const auto mySpaceId = static_cast<DFSpaceIdentifier>(mySpaceIdInt);
 
         if( spaceId != mySpaceId )
           DUNE_THROW( IOError, "Trying to read discrete function from different space: DFSpace (" << spaceName( spaceId ) << ") != DataSpace (" << spaceName( mySpaceId ) << ")" );
@@ -203,8 +203,8 @@ namespace Dune
       }
 
       // read all dofs
-      const DofIteratorType end = BaseType :: dend();
-      for( DofIteratorType it = BaseType :: dbegin(); it != end; ++it )
+      const auto end = BaseType :: dend();
+      for( auto it = BaseType :: dbegin(); it != end; ++it )
         in >> *it;
     }
 
@@ -218,7 +218,7 @@ namespace Dune
       out << versionId ;
 
       // write space id to for testing when function is read
-      int spaceId = space().type();
+      auto spaceId = space().type();
       out << spaceId ;
 
       // write name
@@ -229,12 +229,12 @@ namespace Dune
         DUNE_THROW(InvalidStateException,"Writing DiscreteFunction in uncompressed state!");
 
       // write size as integer
-      const int mysize = BaseType :: size();
+      const auto mysize = BaseType :: size();
       out << mysize;
 
       // write all dofs
-      const ConstDofIteratorType end = BaseType :: dend();
-      for( ConstDofIteratorType it = BaseType :: dbegin(); it != end; ++it )
+      const auto end = BaseType :: dend();
+      for( auto it = BaseType :: dbegin(); it != end; ++it )
         out << *it;
     }
 
@@ -244,11 +244,10 @@ namespace Dune
       :: insertSubData()
     {
       typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
-      IndexSetType &indexSet = (IndexSetType &)space().indexSet();
+      IndexSetType& indexSet = (IndexSetType&)space().indexSet();
       if( Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::v )
       {
-        PersistentIndexSetInterface* persistentIndexSet
-          = Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::map( indexSet );
+        auto persistentIndexSet = Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::map( indexSet );
 
         // this marks the index set in the DofManager's list of index set as persistent
         if( persistentIndexSet )
@@ -261,11 +260,10 @@ namespace Dune
       :: removeSubData()
     {
       typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
-      IndexSetType &indexSet = (IndexSetType &)space().indexSet();
+      IndexSetType& indexSet = (IndexSetType&)space().indexSet();
       if( Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::v )
       {
-        PersistentIndexSetInterface* persistentIndexSet
-          = Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::map( indexSet );
+        auto persistentIndexSet = Dune::Fem::Capabilities::isPersistentIndexSet< IndexSetType >::map( indexSet );
 
         // this unmarks the index set in the DofManager's list of index set as persistent
         if( persistentIndexSet )
@@ -282,10 +280,10 @@ namespace Dune
       if( BaseType :: size() != g.size() )
         return false;
 
-      const ConstDofIteratorType end = BaseType :: dend();
+      const auto end = BaseType :: dend();
 
-      ConstDofIteratorType fit = BaseType :: dbegin();
-      typename DFType :: ConstDofIteratorType git = g.dbegin();
+      auto fit = BaseType :: dbegin();
+      auto git = g.dbegin();
       for( ; fit != end; ++fit, ++git )
       {
         if( std::abs( *fit - *git ) > 1e-15 )

@@ -35,7 +35,6 @@ namespace Dune
       using BaseType::gridPart;
       using BaseType::comm;
 
-    public:
       explicit H1Norm ( const GridPartType &gridPart, const unsigned int order = 0 );
       H1Norm ( const ThisType &other );
 
@@ -63,10 +62,9 @@ namespace Dune
                       const UDiscreteFunctionType &u,
                       ReturnType& sum ) const ;
 
-    private:
-      // prohibit assignment
-      ThisType operator= ( const ThisType &other );
+      ThisType operator= ( const ThisType& ) = delete;
 
+    private:
       const unsigned int order_;
     };
 
