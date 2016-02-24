@@ -4,16 +4,6 @@ set(LOCAL_LIBS "${PROJECT_BINARY_DIR}/lib/libdunefem.a"
   CACHE FILEPATH "path to local libs in dune-fem" )
   mark_as_advanced(LOCAL_LIBS)
 
-set(USE_OPENMP OFF CACHE BOOL "whether we are using OpenMP.")
-# if open mp should be used perform cmake check
-if(USE_OPENMP)
-  include(FindOpenMP)
-  if(OPENMP_FOUND)
-    # add flags to compiler flags
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  endif(OPENMP_FOUND)
-endif(USE_OPENMP)
-
 #find endian headers
 set(ENDIAN_HEADER_ROOT "" CACHE STRING "path of endian header")
 check_include_file_cxx(endian.h HAVE_ENDIAN_HEADER_HH)
@@ -43,6 +33,17 @@ endif(HAVE_ENDIAN_HEADER_HH)
 mark_as_advanced(ENDIAN_HEADER_ROOT SYSTEM_ENDIAN_HEADER_PATH)
 
 include(CheckCXXSourceCompiles)
+
+# check for OpenMP
+set(USE_OPENMP OFF CACHE BOOL "whether we are using OpenMP.")
+# if open mp should be used perform cmake check
+if(USE_OPENMP)
+  include(FindOpenMP)
+  if(OPENMP_FOUND)
+    # add flags to compiler flags
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  endif(OPENMP_FOUND)
+endif(USE_OPENMP)
 
 # check for phtreads
 include(FindPThreads)
