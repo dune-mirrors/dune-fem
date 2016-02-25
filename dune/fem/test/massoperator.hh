@@ -1,6 +1,7 @@
 #ifndef MASSOPERATOR_HH
 #define MASSOPERATOR_HH
 
+#include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/temporarylocalmatrix.hh>
@@ -48,9 +49,10 @@ void MassOperator< DiscreteFunction, LinearOperator >
   typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
   typedef typename DiscreteFunctionSpaceType::RangeFieldType FieldType;
 
-  typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
   typedef typename IteratorType::Entity EntityType;
   typedef typename EntityType::Geometry GeometryType;
+
+  Dune::Fem::TemporaryLocalFunction< DiscreteFunctionSpaceType > local( dfSpace_ );
 
   w.clear();
 
@@ -62,7 +64,8 @@ void MassOperator< DiscreteFunction, LinearOperator >
     const EntityType &entity = *it;
     const GeometryType &geometry = entity.geometry();
 
-    LocalFunctionType localFunction = w.localFunction( entity );
+    local.init( entity );
+    local.clear();
 
     // run over quadrature points
     QuadratureType quadrature( entity, 2*dfSpace_.order()+1 );
@@ -81,9 +84,10 @@ void MassOperator< DiscreteFunction, LinearOperator >
       uValue *= weight;
 
       // add to local function
-      localFunction.axpy( qp, uValue );
+      local.axpy( qp, uValue );
     }
 
+    w.addLocalDofs( entity, local.localDofVector() );
   }
 
   w.communicate();
