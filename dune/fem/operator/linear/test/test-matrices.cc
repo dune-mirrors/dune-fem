@@ -212,20 +212,6 @@ void checkLinearOperator ( LinearOperator &linOp, const Range &range, const std:
       linOp.addLocalMatrix( domainEntity, rangeEntity, temp );
       linOp.addScaledLocalMatrix( domainEntity, rangeEntity, temp, -1.0 );
     }
-
-    {
-      // check old localMatrix implementation
-      LocalMatrixType localMatrix = linOp.localMatrix( domainEntity, rangeEntity );
-
-      for( const auto &p : permutation )
-      {
-        double val = localMatrix.get( p.first, p.second );
-        if( val != 1.0 )
-          DUNE_THROW( Dune::NotImplemented, "LocalMatrix not set correctly" );
-      }
-
-    }
-
   }
 
   // finalize assamble
@@ -244,6 +230,16 @@ void checkLinearOperator ( LinearOperator &linOp, const Range &range, const std:
     for( const auto &p : permutation )
       if( temp.get( p.first, p.second ) != 1.0 )
         DUNE_THROW( Dune::NotImplemented, "LocalMatrix not set correctly" );
+
+    // check old localMatrix implementation
+    LocalMatrixType localMatrix = linOp.localMatrix( domainEntity, rangeEntity );
+
+    for( const auto &p : permutation )
+    {
+      double val = localMatrix.get( p.first, p.second );
+      if( val != 1.0 )
+        DUNE_THROW( Dune::NotImplemented, "LocalMatrix not set correctly" );
+    }
   }
 
 
@@ -337,6 +333,7 @@ try
     checkLinearOperator( linOp, diagonalRange( space, testSpace ), permutation );
   }
 
+#if not USE_PETSC && HAVE_PETSC
   {
     // check for different space sizes, but same grid
     typename LinearOperator< DiscreteSpaceType, P2DiscreteSpaceType >::type
@@ -366,6 +363,7 @@ try
     };
     checkLinearOperator( linOp, diagonalRange( testSpace, p2Space ), permutation );
   }
+#endif // #if not USE_PETSC
 
   return 0;
 }
