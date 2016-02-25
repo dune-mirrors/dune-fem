@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_FUNCTION_COMMON_FUNCTOR_HH
 #define DUNE_FEM_FUNCTION_COMMON_FUNCTOR_HH
 
+#include <utility>
+
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/space/basisfunctionset/functor.hh>
 
@@ -21,7 +23,7 @@ namespace Dune
       {}
 
       template< class Value >
-      void operator() ( const std::size_t index, Value &value ) const
+      void operator() ( const std::size_t index, Value &&value ) const
       {
         value += vector_[ index ];
       }
@@ -42,9 +44,9 @@ namespace Dune
       {}
 
       template< class Value >
-      void operator() ( const std::size_t index, Value &value ) const
+      void operator() ( const std::size_t index, Value &&value ) const
       {
-        axpy( s_, vector_[ index ], value );
+        axpy( s_, vector_[ index ], std::forward< Value >( value ) );
       }
     private:
       const Vector &vector_;
@@ -63,7 +65,7 @@ namespace Dune
       {}
 
       template< class Value >
-      void operator() ( const std::size_t index, Value &value ) const
+      void operator() ( const std::size_t index, Value &&value ) const
       {
         value = vector_[ index ];
       }
@@ -83,9 +85,9 @@ namespace Dune
       {}
 
       template< class Value >
-      void operator() ( const std::size_t index, Value &value )
+      void operator() ( const std::size_t index, Value &&value ) const
       {
-        vector_.bind( index, value );
+        vector_.bind( index, std::forward< Value > ( value ) );
       }
 
     protected:
