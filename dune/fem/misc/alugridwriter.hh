@@ -12,7 +12,6 @@
 
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/3d/topology.hh>
-#endif
 
 #include <dune/fem/misc/compatibility.hh>
 
@@ -453,4 +452,5 @@ namespace Dune
 
 } // namespace Dune
 
+#endif // #if HAVE_DUNE_ALUGRID
 #endif // #ifndef DUNE_FEM_ALUGRIDWRITER_HH
