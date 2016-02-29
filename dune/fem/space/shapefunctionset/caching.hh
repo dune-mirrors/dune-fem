@@ -232,8 +232,7 @@ namespace Dune
     template< class ShapeFunctionSet >
     inline CachingShapeFunctionSet< ShapeFunctionSet >::~CachingShapeFunctionSet ()
     {
-      //TODO: the following line may lead to a double free
-      //QuadratureStorageRegistry::unregisterStorage( *this );
+      QuadratureStorageRegistry::unregisterStorage( *this );
       for( typename ValueCacheVectorType::iterator it = valueCaches_.begin(); it != valueCaches_.end(); ++it )
         delete [] *it;
       for( typename JacobianCacheVectorType::iterator it = jacobianCaches_.begin(); it != jacobianCaches_.end(); ++it )
