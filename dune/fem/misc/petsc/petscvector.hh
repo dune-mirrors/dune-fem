@@ -275,7 +275,7 @@ namespace Dune
       }
 
       DofBlockType operator[] ( const IndexType index ) { return DofBlockType( *this,index ); }
-      ConstDofBlockType operator[] ( const IndexType index ) const { return DofBlockType( *this,index ); }
+      ConstDofBlockType operator[] ( const IndexType index ) const { return ConstDofBlockType( *this,index ); }
 
       ConstDofBlockPtrType block ( IndexType index ) const { return blockPtr( index ); }
       DofBlockPtrType block ( IndexType index ) { return blockPtr( index ); }

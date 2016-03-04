@@ -23,7 +23,7 @@
 #cmakedefine HAVE_PTHREAD_TLS 1
 
 /* Define if we have pthreads */
-#define HAVE_PTHREAD ${HAVE_PTHREAD}
+#cmakedefine HAVE_PTHREAD 1
 
 /* Define if we want to use pthreads */
 #cmakedefine USE_PTHREADS 1
