@@ -33,7 +33,7 @@ namespace Dune
 
     template< class DF >
     class VTKFunctionWrapper
-    : public VTKFunction< typename DF::DiscreteFunctionSpaceType::GridPartType::GridViewType >
+    : public VTKFunction< typename DF::GridPartType::GridViewType >
     {
       typedef VTKFunctionWrapper< DF > ThisType;
 
@@ -42,20 +42,18 @@ namespace Dune
       typedef DF DiscreteFunctionType;
 
       typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
-      typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
-        DiscreteFunctionSpaceType;
+      typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
 
-      static const int dimRange = DiscreteFunctionSpaceType::dimRange;
-      static const int dimDomain = DiscreteFunctionSpaceType::dimDomain;
+      static const int dimRange = FunctionSpaceType::dimRange;
+      static const int dimDomain = FunctionSpaceType::dimDomain;
 
-      typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
-      typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::DomainType DomainType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
 
-      typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-      typedef typename DiscreteFunctionSpaceType::GridPartType::template Codim< 0 >::EntityType EntityType;
+      typedef typename DiscreteFunctionType::GridPartType GridPartType;
+      typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
-
 
       //! constructor taking discrete function
       VTKFunctionWrapper ( const DiscreteFunctionType& df,
