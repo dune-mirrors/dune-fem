@@ -1300,7 +1300,7 @@ namespace Dune
 
       virtual ParamDefault *clone () const
       {
-        return new ParamDefault();
+        return new ParamDefault( static_cast< const ParamDefault & >( *this ) );
       }
     };
 
