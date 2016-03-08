@@ -3,7 +3,7 @@ iodir =  $(includedir)/dune/fem/io
 io_HEADERS = io.hh  parameter.hh
 
 # do everything in the subdirs
-SUBDIRS = file streams visual test
+SUBDIRS = file parameter streams visual test
 
 # build io library
 noinst_LTLIBRARIES = libio.la

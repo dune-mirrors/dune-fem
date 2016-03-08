@@ -450,7 +450,7 @@ namespace Dune
           }
 
           // restore parameter
-          Parameter::clear();
+          Parameter::container().clear();
           Parameter::append(path_ + "parameter");
         }
       }
