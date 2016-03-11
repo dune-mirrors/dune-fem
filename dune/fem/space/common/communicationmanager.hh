@@ -286,6 +286,7 @@ namespace Dune
       public:
         virtual ~DiscreteFunctionCommunicatorInterface () = default;
         virtual void exchange () const = 0;
+        virtual bool handles ( IsDiscreteFunction &df ) const = 0;
       };
 
       //! communicated object implementation
@@ -312,6 +313,8 @@ namespace Dune
         {
           comm_.exchange(df_);
         }
+
+        bool handles ( IsDiscreteFunction &df ) const { return (&df_ == &df); }
       };
 
       typedef DiscreteFunctionCommunicatorInterface CommObjIFType;
@@ -346,6 +349,17 @@ namespace Dune
         typedef DiscreteFunctionCommunicator<DiscreteFunctionImp> CommObjType;
         CommObjType* obj = new CommObjType(df);
         objList_.push_back(obj);
+      }
+
+      template< class DiscreteFunction >
+      void removeFromList ( DiscreteFunction &df )
+      {
+        const auto handles = [ &df ] ( const CommObjIFType *commObj ) { return commObj->handles( df ); };
+        CommObjListType::reverse_iterator pos = std::find_if( objList_.rbegin(), objList_.rend(), handles );
+        if( pos != objList_.rend() )
+          objList_.erase( pos.base() );
+        else
+          DUNE_THROW( RangeError, "Trying to remove discrete function that was never added" );
       }
 
       //! exchange discrete function to all procs we share data with
