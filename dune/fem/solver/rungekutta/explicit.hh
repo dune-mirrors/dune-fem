@@ -8,6 +8,7 @@
 #include <cassert>
 
 //- Dune includes
+#include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh>
 #include <dune/fem/solver/odesolverinterface.hh>
 #include <dune/fem/solver/timeprovider.hh>
@@ -86,7 +87,7 @@ namespace DuneODE
     ExplicitRungeKuttaSolver(OperatorType& op,
                              TimeProviderBase& tp,
                              const int pord,
-                             bool verbose = true ) :
+                             bool verbose ) :
       a(0),b(0),c(0), Upd(0),
       ord_(pord),
       op_(op),
@@ -142,6 +143,14 @@ namespace DuneODE
       }
       Upd.push_back(new DestinationType("Ustep",op_.space()) );
     }
+
+
+    ExplicitRungeKuttaSolver(OperatorType& op,
+                             TimeProviderBase& tp,
+                             const int pord,
+                             const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+      : ExplicitRungeKuttaSolver( op, tp, pord, true )
+    {}
 
     //! destructor
     ~ExplicitRungeKuttaSolver()

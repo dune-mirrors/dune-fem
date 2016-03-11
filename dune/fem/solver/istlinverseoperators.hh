@@ -6,6 +6,7 @@
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/common/operator.hh>
+#include <dune/fem/io/parameter.hh>
 
 #if HAVE_DUNE_ISTL
 #include <dune/fem/operator/linear/istladapter.hh>
@@ -115,7 +116,8 @@ namespace Dune
       typedef typename SolverType::domain_type domain_type;
       typedef typename SolverType::range_type range_type;
 
-      ISTLSolverAdapter ( const ReductionType &reduction, unsigned int maxIterations, int verbose )
+      ISTLSolverAdapter ( const ReductionType &reduction, unsigned int maxIterations, int verbose,
+          const ParameterReader &parameter = Parameter::container() )
         : reduction_( reduction ),
           maxIterations_( maxIterations ),
           verbose_( verbose )
@@ -147,16 +149,18 @@ namespace Dune
       typedef typename SolverType::domain_type domain_type;
       typedef typename SolverType::range_type range_type;
 
-      ISTLSolverAdapter ( const ReductionType &reduction, unsigned int restart, unsigned int maxIterations, int verbose )
+      ISTLSolverAdapter ( const ReductionType &reduction, unsigned int restart, unsigned int maxIterations, int verbose,
+          const ParameterReader &parameter = Parameter::container() )
         : reduction_( reduction ),
           restart_( restart ),
           maxIterations_( maxIterations ),
           verbose_( verbose )
       {}
 
-      ISTLSolverAdapter ( const Reduction &reduction, unsigned int maxIterations, int verbose )
+      ISTLSolverAdapter ( const Reduction &reduction, unsigned int maxIterations, int verbose,
+          const ParameterReader &parameter = Parameter::container() )
         : reduction_( reduction ),
-          restart_( Parameter::getValue< int >( "fem.solver.gmres.restart", 20 ) ),
+          restart_( parameter.getValue< int >( "fem.solver.gmres.restart", 20 ) ),
           maxIterations_( maxIterations ),
           verbose_( verbose )
       {}
@@ -229,39 +233,35 @@ namespace Dune
       typedef typename SolverAdapterType::SolverType SolverType;
 
       ISTLInverseOperator ( const OperatorType &op,
-                            double redEps, double absLimit,
-                            unsigned int maxIterations, bool verbose )
-      : operator_( op ),
-        preconditioner_( nullptr ),
-        solverAdapter_( ReductionType( redEps, absLimit ), maxIterations, (Parameter::verbose() && verbose) ? 2 : 0 )
-      {}
+                            double redEps, double absLimit, unsigned int maxIterations, bool verbose,
+                            const ParameterReader &parameter = Parameter::container() )
+        : ISTLInverseOperator( op, nullptr, redEps, absLimit, maxIterations, verbose, parameter ) {}
 
       ISTLInverseOperator ( const OperatorType &op,
                             double redEps, double absLimit,
-                            unsigned int maxIterations = std::numeric_limits< unsigned int >::max() )
-      : operator_( op ),
-        preconditioner_( nullptr ),
-        solverAdapter_( ReductionType( redEps, absLimit ), maxIterations, 0 )
-      {}
-
+                            const ParameterReader &parameter = Parameter::container() )
+        : ISTLInverseOperator( op, nullptr, redEps, absLimit, std::numeric_limits< unsigned int >::max(), false, parameter ) {}
 
       ISTLInverseOperator ( const OperatorType &op,
-                            PreconditionerType &preconditioner,
-                            double redEps, double absLimit,
-                            unsigned int maxIterations, bool verbose )
-      : operator_( op ),
-        preconditioner_( &preconditioner ),
-        solverAdapter_( ReductionType( redEps, absLimit ), maxIterations, (Parameter::verbose() && verbose) ? 2 : 0 )
-      {}
+                            double redEps, double absLimit, unsigned int maxIterations,
+                            const ParameterReader &parameter = Parameter::container() )
+        : ISTLInverseOperator( op, nullptr, redEps, absLimit, maxIterations, false, parameter ) {}
 
-      ISTLInverseOperator ( const OperatorType &op,
-                            PreconditionerType &preconditioner,
+
+      ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
+                            double redEps, double absLimit, unsigned int maxIterations, bool verbose,
+                            const ParameterReader &parameter = Parameter::container() )
+        : ISTLInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, verbose, parameter ) {}
+
+      ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
                             double redEps, double absLimit,
-                            unsigned int maxIterations = std::numeric_limits< unsigned int >::max() )
-      : operator_( op ),
-        preconditioner_( &preconditioner ),
-        solverAdapter_( ReductionType( redEps, absLimit ), maxIterations, 0 )
-      {}
+                            const ParameterReader &parameter = Parameter::container() )
+        : ISTLInverseOperator( op, &preconditioner, redEps, absLimit, std::numeric_limits< unsigned int >::max(), false, parameter ) {}
+
+      ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
+                            double redEps, double absLimit, unsigned int maxIterations,
+                            const ParameterReader &parameter = Parameter::container() )
+        : ISTLInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, false, parameter ) {}
 
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
@@ -281,6 +281,14 @@ namespace Dune
       unsigned int iterations () const { return result_.iterations; }
 
     private:
+      ISTLInverseOperator ( const OperatorType &op, PreconditionerType *preconditioner,
+                            double redEps, double absLimit, unsigned int maxIterations, bool verbose,
+                            const ParameterReader &parameter )
+        : operator_( op ),
+          preconditioner_( &preconditioner ),
+          solverAdapter_( ReductionType( redEps, absLimit ), maxIterations, (Parameter::verbose() && verbose) ? 2 : 0, parameter )
+      {}
+
       void solve ( ISTLOperatorType &istlOperator, ParallelScalarProductType &scp,
                    const OperatorType &preconditioner,
                    const DomainFunctionType &u, RangeFunctionType &w ) const

@@ -101,8 +101,8 @@ namespace Dune
       typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeSpaceType;
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainSpaceType;
 
-      AutomaticDifferenceOperator ()
-      : eps_( Parameter::getValue< RangeFieldType >( "fem.differenceoperator.eps", RangeFieldType( 0 ) ) )
+      AutomaticDifferenceOperator ( const ParameterReader &parameter = Parameter::container() )
+      : eps_( parameter.getValue< RangeFieldType >( "fem.differenceoperator.eps", RangeFieldType( 0 ) ) )
       {}
 
       explicit AutomaticDifferenceOperator ( const RangeFieldType &eps )
