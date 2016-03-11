@@ -37,49 +37,58 @@ namespace DuneODE
     // factor for cfl number on increase (decrease is 0.5)
     const double sigma_;
 
+    Dune::Fem::ParameterReader parameter_;
+
   public:
-    ImplicitRungeKuttaSolverParameters ( const std::string keyPrefix = "fem.ode." )
-    : keyPrefix_( keyPrefix ),
-      minIter_( Dune::Fem::Parameter::getValue< int >( keyPrefix_ + "miniterations", 14 ) ),
-      maxIter_( Dune::Fem::Parameter::getValue< int >( keyPrefix_ + "maxiterations" , 16 ) ),
-      sigma_( Dune::Fem::Parameter::getValue< double >( keyPrefix_ + "cflincrease" , 1.1 ) )
+    ImplicitRungeKuttaSolverParameters ( const std::string keyPrefix, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+      : keyPrefix_( keyPrefix ),
+        minIter_( parameter.getValue< int >( keyPrefix_ + "miniterations", 14 ) ),
+        maxIter_( parameter.getValue< int >( keyPrefix_ + "maxiterations" , 16 ) ),
+        sigma_( parameter.getValue< double >( keyPrefix_ + "cflincrease" , 1.1 ) ),
+        parameter_( parameter )
+    {}
+
+    ImplicitRungeKuttaSolverParameters ( const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+      : ImplicitRungeKuttaSolverParameters( "fem.ode.", parameter )
     {}
 
     // destructor (virtual)
     virtual ~ImplicitRungeKuttaSolverParameters() {}
 
+    const Dune::Fem::ParameterReader &parameter () const { return parameter_; }
+
     /** \brief tolerance for the non-linear solver (should be larger than the tolerance for
                the linear solver */
     virtual double tolerance () const
     {
-      return Dune::Fem::Parameter::getValue< double >( keyPrefix_ + "tolerance" , 1e-6 );
+      return parameter().getValue< double >( keyPrefix_ + "tolerance" , 1e-6 );
     }
 
     virtual int iterations() const
     {
-      return Dune::Fem::Parameter::getValue< int >( keyPrefix_ + "iterations" , 1000 );
+      return parameter().getValue< int >( keyPrefix_ + "iterations" , 1000 );
     }
 
     /** \brief verbosity level ( none, noconv, cfl, full )  */
     virtual int verbose () const
     {
       static const std::string verboseTypeTable[] = { "none", "noconv", "cfl", "full" };
-      return Dune::Fem::Parameter::getEnum( keyPrefix_ + "verbose", verboseTypeTable, 0 );
+      return parameter().getEnum( keyPrefix_ + "verbose", verboseTypeTable, 0 );
     }
 
     virtual double cflStart () const
     {
-      return Dune::Fem::Parameter::getValue< double >( keyPrefix_ + "cflStart", 1 );
+      return parameter().getValue< double >( keyPrefix_ + "cflStart", 1 );
     }
 
     virtual double cflMax () const
     {
-      return Dune::Fem::Parameter::getValue< double >( keyPrefix_ + "cflMax" , std::numeric_limits< double >::max() );
+      return parameter().getValue< double >( keyPrefix_ + "cflMax" , std::numeric_limits< double >::max() );
     }
 
     double initialDeltaT ( double dt ) const
     {
-      return std::min( Dune::Fem::Parameter::getValue< double >( keyPrefix_ + "initialdt", 987654321 ), dt );
+      return std::min( parameter().getValue< double >( keyPrefix_ + "initialdt", 987654321 ), dt );
     }
 
     /** \brief return multiplication factor for the current cfl number
@@ -144,7 +153,7 @@ namespace DuneODE
     {
       const std::string names [] = { "ImplicitEuler", "CrankNicolson", "DIRK23", "DIRK34", "SDIRK22" };
       // by default select according to order
-      return Dune::Fem::Parameter::getEnum( keyPrefix_ + "solvername", names, order-1 ) + 1;
+      return parameter().getEnum( keyPrefix_ + "solvername", names, order-1 ) + 1;
     }
   };
 
@@ -161,10 +170,18 @@ namespace DuneODE
     typedef Dune::Fem::TimeProviderBase TimeProviderType;
     typedef ImplicitRungeKuttaSolverParameters ParametersType;
 
-    explicit ImplicitRungeKuttaTimeStepControl ( TimeProviderType &timeProvider,
-                                                 const ParametersType &parameters = ParametersType() )
+    ImplicitRungeKuttaTimeStepControl ( TimeProviderType &timeProvider, const ParametersType &parameters )
     : timeProvider_( timeProvider ),
       parameters_( parameters.clone() ),
+      cfl_( parameters_->cflStart() ),
+      cflMax_( parameters_->cflMax() ),
+      verbose_( parameters_->verbose() ),
+      initialized_( false )
+    {}
+
+    explicit ImplicitRungeKuttaTimeStepControl ( TimeProviderType &timeProvider, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+    : timeProvider_( timeProvider ),
+      parameters_( std::make_shared<ParametersType>( parameter ) ),
       cfl_( parameters_->cflStart() ),
       cflMax_( parameters_->cflMax() ),
       verbose_( parameters_->verbose() ),
@@ -278,17 +295,28 @@ namespace DuneODE
     using BaseType :: parameters ;
   public:
     typedef Dune::Fem::TimeProviderBase TimeProviderType;
-    typedef ImplicitRungeKuttaSolverParameters ParametersType;
+    typedef typename BaseType::ParametersType ParametersType;
 
-    explicit PIDTimeStepControl ( TimeProviderType &timeProvider,
-                                  const ParametersType &parameters = ParametersType() )
+    PIDTimeStepControl ( TimeProviderType &timeProvider, const ParametersType &parameters )
     : BaseType( timeProvider, parameters ),
       errors_(),
       tol_( 1e-3 )
     {
-      if( Dune::Fem::Parameter::getValue("fem.ode.pidcontrol", bool(false) ) )
+      if( parameters.parameter().getValue("fem.ode.pidcontrol", bool(false) ) )
       {
-        tol_ = Dune::Fem::Parameter::getValue("fem.ode.pidtolerance", tol_ );
+        tol_ = parameters.parameter().getValue("fem.ode.pidtolerance", tol_ );
+        errors_.resize( 3, tol_ );
+      }
+    }
+
+    PIDTimeStepControl ( TimeProviderType &timeProvider, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+    : BaseType( timeProvider, parameter ),
+      errors_(),
+      tol_( 1e-3 )
+    {
+      if( parameter.getValue("fem.ode.pidcontrol", bool(false) ) )
+      {
+        tol_ = parameter.getValue("fem.ode.pidtolerance", tol_ );
         errors_.resize( 3, tol_ );
       }
     }

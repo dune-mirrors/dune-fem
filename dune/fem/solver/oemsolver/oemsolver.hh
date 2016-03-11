@@ -425,30 +425,35 @@ namespace Dune
           \param[in] maxIter maximal number of iterations performed
           \param[in] verbose verbosity
       */
-      OEMCGOp( OperatorType &op,
-               double redEps,
-               double absLimit,
-               int maxIter,
-               bool verbose )
+      OEMCGOp ( OperatorType &op,
+                double redEps, double absLimit, int maxIter, bool verbose,
+                const ParameterReader &parameter = Parameter::container() )
       : op_(op),
         epsilon_( absLimit ),
         maxIter_( maxIter ),
         verbose_( verbose ),
         iterations_( 0 )
-      {
-      }
+      {}
 
-      OEMCGOp( OperatorType &op,
-               double redEps,
-               double absLimit,
-               int maxIter = std::numeric_limits< int >::max() )
+      OEMCGOp ( OperatorType &op,
+                double redEps, double absLimit, int maxIter,
+                const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
         epsilon_( absLimit ),
         maxIter_( maxIter ),
-        verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
         iterations_( 0 )
-      {
-      }
+      {}
+
+      OEMCGOp ( OperatorType &op,
+                double redEps, double absLimit,
+                const ParameterReader &parameter = Parameter::container() )
+      : op_( op ),
+        epsilon_( absLimit ),
+        maxIter_( std::numeric_limits< int >::max() ),
+        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
+        iterations_( 0 )
+      {}
 
       void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
       {
@@ -570,11 +575,9 @@ namespace Dune
           \param[in] maxIter maximal number of iterations performed
           \param[in] verbose verbosity
       */
-      OEMBICGSTABOp( OperatorType& op,
-                     double redEps,
-                     double absLimit,
-                     int maxIter,
-                     bool verbose )
+      OEMBICGSTABOp ( OperatorType& op,
+                      double redEps, double absLimit, int maxIter, bool verbose,
+                      const ParameterReader &parameter = Parameter::container() )
       : op_(op),
         epsilon_( absLimit ),
         maxIter_( maxIter ),
@@ -583,18 +586,27 @@ namespace Dune
       {
       }
 
-      OEMBICGSTABOp( OperatorType &op,
-                     double redEps,
-                     double absLimit,
-                     int maxIter = std::numeric_limits< int >::max() )
+      OEMBICGSTABOp ( OperatorType &op,
+                      double redEps, double absLimit, int maxIter,
+                      const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
         epsilon_( absLimit ),
         maxIter_( maxIter ),
-        verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
         iterations_( 0 )
       {
       }
 
+      OEMBICGSTABOp ( OperatorType &op,
+                      double redEps, double absLimit,
+                      const ParameterReader &parameter = Parameter::container() )
+      : op_( op ),
+        epsilon_( absLimit ),
+        maxIter_( std::numeric_limits< int >::max() ),
+        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
+        iterations_( 0 )
+      {
+      }
       void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
       {
       }
@@ -676,11 +688,9 @@ namespace Dune
           \param[in] maxIter maximal number of iterations performed
           \param[in] verbose verbosity
       */
-      OEMBICGSQOp( OperatorType &op,
-                   double redEps,
-                   double absLimit,
-                   int maxIter,
-                   bool verbose )
+      OEMBICGSQOp ( OperatorType &op,
+                    double redEps, double absLimit, int maxIter, bool verbose,
+                    const ParameterReader &parameter = Parameter::container() )
       : op_(op),
         epsilon_( absLimit ),
         maxIter_( maxIter ),
@@ -689,14 +699,24 @@ namespace Dune
       {
       }
 
-      OEMBICGSQOp( OperatorType &op,
-                   double redEps,
-                   double absLimit,
-                   int maxIter =  std::numeric_limits< int >::max() )
+      OEMBICGSQOp ( OperatorType &op,
+                    double redEps, double absLimit,
+                    const ParameterReader &parameter = Parameter::container() )
+      : op_( op ),
+        epsilon_( absLimit ),
+        maxIter_( std::numeric_limits< int >::max() ),
+        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
+        iterations_( 0 )
+      {
+      }
+
+      OEMBICGSQOp ( OperatorType &op,
+                    double redEps, double absLimit, int maxIter,
+                    const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
         epsilon_( absLimit ),
         maxIter_( maxIter ),
-        verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
         iterations_( 0 )
       {
       }
@@ -836,27 +856,35 @@ namespace Dune
           \param[in] verbose verbosity
       */
       OEMGMRESOp ( OperatorType &op,
-                   double redEps,
-                   double absLimit,
-                   int maxIter,
-                   bool verbose )
+                   double redEps, double absLimit, int maxIter, bool verbose,
+                   const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
         epsilon_( absLimit ),
         maxIter_( maxIter ),
-        restart_( Parameter::getValue< int >( "oemsolver.gmres.restart", 20 ) ),
+        restart_( parameter.getValue< int >( "oemsolver.gmres.restart", 20 ) ),
         verbose_( verbose ),
         iterations_( 0 )
       {}
 
       OEMGMRESOp ( OperatorType &op,
-                   double redEps,
-                   double absLimit,
-                   int maxIter = std::numeric_limits< int >::max() )
+                   double redEps, double absLimit, int maxIter,
+                   const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
         epsilon_( absLimit ),
         maxIter_( maxIter ),
-        restart_( Parameter::getValue< int >( "oemsolver.gmres.restart", 20 ) ),
-        verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+        restart_( parameter.getValue< int >( "oemsolver.gmres.restart", 20 ) ),
+        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
+        iterations_( 0 )
+      {}
+
+      OEMGMRESOp ( OperatorType &op,
+                   double redEps, double absLimit,
+                   const ParameterReader &parameter = Parameter::container() )
+      : op_( op ),
+        epsilon_( absLimit ),
+        maxIter_( std::numeric_limits< int >::max() ),
+        restart_( parameter.getValue< int >( "oemsolver.gmres.restart", 20 ) ),
+        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
         iterations_( 0 )
       {}
 
@@ -1032,8 +1060,9 @@ namespace Dune
       mutable int iterations_;
 
     public:
-      GMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
-          : solver_(PARDG::Communicator::instance(), Parameter::getValue< int >( "oemsolver.gmres.restart", 20 ) )
+      GMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose,
+          const ParameterReader &parameter = Parameter::container() )
+          : solver_(PARDG::Communicator::instance(), parameter.getValue< int >( "oemsolver.gmres.restart", 20 ) )
           , op_(op) , epsilon_ ( absLimit )
           , maxIter_ (maxIter ) , verbose_ ( verbose )
           , iterations_ ( 0 )
@@ -1182,8 +1211,9 @@ namespace Dune
       mutable int iterations_;
 
     public:
-      FGMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
-          : solver_(PARDG::Communicator::instance(), Parameter::getValue< int >( "oemsolver.gmres.restart", 20 ) )
+      FGMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose,
+          const ParameterReader &parameter = Parameter::container() )
+          : solver_(PARDG::Communicator::instance(), parameter.getValue< int >( "oemsolver.gmres.restart", 20 ) )
           , op_(op) , epsilon_ ( absLimit )
           , maxIter_ (maxIter ) , verbose_ ( verbose )
           , iterations_( 0 )
@@ -1332,7 +1362,8 @@ namespace Dune
       mutable int iterations_;
 
     public:
-      BICGSTABOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose )
+      BICGSTABOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose ,
+          const ParameterReader &parameter = Parameter::container() )
           : solver_(PARDG::Communicator::instance())
           , op_(op), epsilon_ ( absLimit )
           , maxIter_ (maxIter ) , verbose_ ( verbose )

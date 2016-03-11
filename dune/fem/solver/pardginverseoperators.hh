@@ -4,6 +4,7 @@
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/solver/pardg.hh>
+#include <dune/fem/io/parameter.hh>
 
 #ifdef USE_PARDG_ODE_SOLVER
 
@@ -92,46 +93,37 @@ namespace Dune
       typedef Operator< DiscreteFunction, DiscreteFunction > PreconditionerType;
 
       ParDGGeneralizedMinResInverseOperator ( const OperatorType &op,
-                                              double redEps, double absLimit,
-                                              unsigned int maxIterations, bool verbose )
-      : solver_( PARDG::Communicator::instance(), paramRestart() ),
-        operator_( op ),
-        preconditioner_( nullptr )
-      {
-        setupSolver( redEps, absLimit, maxIterations, verbose );
-      }
+                                              double redEps, double absLimit, unsigned int maxIterations, bool verbose,
+                                              const ParameterReader &parameter = Parameter::container() )
+      : ParDGGeneralizedMinResInverseOperator( op, nullptr, redEps, absLimit, maxIterations, verbose, parameter ) {}
 
-      ParDGGeneralizedMinResInverseOperator ( const OperatorType &op,
-                                              double redEps, double absLimit,
-                                              unsigned int maxIterations = std::numeric_limits< unsigned int >::max() )
-      : solver_( PARDG::Communicator::instance(), paramRestart() ),
-        operator_( op ),
-        preconditioner_( nullptr )
-      {
-        setupSolver( redEps, absLimit, maxIterations, false );
-      }
+      ParDGGeneralizedMinResInverseOperator ( const OperatorType &op, double redEps, double absLimit,
+                                              const ParameterReader &parameter = Parameter::container() )
+      : ParDGGeneralizedMinResInverseOperator( op, nullptr, redEps, absLimit, std::numeric_limits< unsigned int >::max(), false, parameter )
+      {}
 
-      ParDGGeneralizedMinResInverseOperator ( const OperatorType &op,
-                                              const PreconditionerType &preconditioner,
-                                              double redEps, double absLimit,
-                                              unsigned int maxIterations, bool verbose )
-      : solver_( PARDG::Communicator::instance(), paramRestart() ),
-        operator_( op ),
-        preconditioner_( &preconditioner )
-      {
-        setupSolver( redEps, absLimit, maxIterations, verbose );
-      }
+      ParDGGeneralizedMinResInverseOperator ( const OperatorType &op, double redEps, double absLimit,
+                                              unsigned int maxIterations,
+                                              const ParameterReader &parameter = Parameter::container() )
+      : ParDGGeneralizedMinResInverseOperator( op, nullptr, redEps, absLimit, maxIterations, false, parameter ) {}
 
-      ParDGGeneralizedMinResInverseOperator ( const OperatorType &op,
-                                              const PreconditionerType &preconditioner,
+
+      ParDGGeneralizedMinResInverseOperator ( const OperatorType &op, const PreconditionerType &preconditioner,
+                                              double redEps, double absLimit, unsigned int maxIterations, bool verbose,
+                                              const ParameterReader &parameter = Parameter::container() )
+      : ParDGGeneralizedMinResInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, verbose, parameter ) {}
+
+      ParDGGeneralizedMinResInverseOperator ( const OperatorType &op, const PreconditionerType &preconditioner,
                                               double redEps, double absLimit,
-                                              unsigned int maxIterations = std::numeric_limits< unsigned int >::max() )
-      : solver_( PARDG::Communicator::instance(), paramRestart() ),
-        operator_( op ),
-        preconditioner_( &preconditioner )
-      {
-        setupSolver( redEps, absLimit, maxIterations, false );
-      }
+                                              const ParameterReader &parameter = Parameter::container() )
+      : ParDGGeneralizedMinResInverseOperator( op, &preconditioner, redEps, absLimit, std::numeric_limits< unsigned int >::max(), false, parameter )
+      {}
+
+      ParDGGeneralizedMinResInverseOperator ( const OperatorType &op, const PreconditionerType &preconditioner,
+                                              double redEps, double absLimit, unsigned int maxIterations,
+                                              const ParameterReader &parameter = Parameter::container() )
+      : ParDGGeneralizedMinResInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, false, parameter ) {}
+
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
@@ -153,14 +145,16 @@ namespace Dune
       }
 
     private:
-      static int paramRestart ()
+      ParDGGeneralizedMinResInverseOperator ( const OperatorType &op,
+                                              const PreconditionerType *preconditioner,
+                                              double redEps, double absLimit,
+                                              unsigned int maxIterations, bool verbose,
+                                              const ParameterReader &parameter = Parameter::container() )
+      : solver_( PARDG::Communicator::instance(), parameter.getValue< int >( "fem.solver.gmres.restart", 20 ) ),
+        operator_( op ),
+        preconditioner_( preconditioner )
       {
-        return Parameter::getValue< int >( "fem.solver.gmres.restart", 20 );
-      }
-
-      void setupSolver ( double redEps, double absLimit, unsigned int maxIterations, bool verbose )
-      {
-        PARDG::set_tolerance(solver_, redEps, absLimit, "fem.solver.errormeasure" );
+        PARDG::set_tolerance( parameter, solver_, redEps, absLimit, "fem.solver.errormeasure" );
 
         maxIterations = std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations );
         solver_.set_max_number_of_iterations( int( maxIterations ) );
@@ -179,8 +173,8 @@ namespace Dune
       const PreconditionerType *preconditioner_;
     };
 
-    // ParDGBICGStabInverseOperator
-    // -------------------------------------
+    // ParDGBiCGStabInverseOperator
+    // ----------------------------
 
     template< class DiscreteFunction >
     class ParDGBiCGStabInverseOperator
@@ -198,46 +192,35 @@ namespace Dune
       typedef Operator< DiscreteFunction, DiscreteFunction > PreconditionerType;
 
       ParDGBiCGStabInverseOperator ( const OperatorType &op,
-                                     double redEps, double absLimit,
-                                     unsigned int maxIterations, bool verbose )
-      : solver_( PARDG::Communicator::instance() ),
-        operator_( op ),
-        preconditioner_( nullptr )
-      {
-        setupSolver( redEps, absLimit, maxIterations, verbose );
-      }
+                                     double redEps, double absLimit, unsigned int maxIterations, bool verbose,
+                                     const ParameterReader &parameter = Parameter::container() )
+      : ParDGBiCGStabInverseOperator( op, nullptr, redEps, absLimit, maxIterations, verbose, parameter ) {}
 
       ParDGBiCGStabInverseOperator ( const OperatorType &op,
                                      double redEps, double absLimit,
-                                     unsigned int maxIterations = std::numeric_limits< unsigned int >::max() )
-      : solver_( PARDG::Communicator::instance() ),
-        operator_( op ),
-        preconditioner_( nullptr )
-      {
-        setupSolver( redEps, absLimit, maxIterations, false );
-      }
+                                     const ParameterReader &parameter = Parameter::container() )
+      : ParDGBiCGStabInverseOperator( op, nullptr, redEps, absLimit, std::numeric_limits< unsigned int >::max(), false, parameter ) {}
 
       ParDGBiCGStabInverseOperator ( const OperatorType &op,
-                                     const PreconditionerType &preconditioner,
-                                     double redEps, double absLimit,
-                                     unsigned int maxIterations, bool verbose )
-      : solver_( PARDG::Communicator::instance() ),
-        operator_( op ),
-        preconditioner_( &preconditioner )
-      {
-        setupSolver( redEps, absLimit, maxIterations, verbose );
-      }
+                                     double redEps, double absLimit, unsigned int maxIterations,
+                                     const ParameterReader &parameter = Parameter::container() )
+      : ParDGBiCGStabInverseOperator( op, nullptr, redEps, absLimit, maxIterations, false, parameter ) {}
 
-      ParDGBiCGStabInverseOperator ( const OperatorType &op,
-                                     const PreconditionerType &preconditioner,
+
+      ParDGBiCGStabInverseOperator ( const OperatorType &op, const PreconditionerType &preconditioner,
+                                     double redEps, double absLimit, unsigned int maxIterations, bool verbose,
+                                     const ParameterReader &parameter = Parameter::container() )
+      : ParDGBiCGStabInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, verbose, parameter ) {}
+
+      ParDGBiCGStabInverseOperator ( const OperatorType &op, const PreconditionerType &preconditioner,
                                      double redEps, double absLimit,
-                                     unsigned int maxIterations = std::numeric_limits< unsigned int >::max() )
-      : solver_( PARDG::Communicator::instance() ),
-        operator_( op ),
-        preconditioner_( &preconditioner )
-      {
-        setupSolver( redEps, absLimit, maxIterations, false );
-      }
+                                     const ParameterReader &parameter = Parameter::container() )
+      : ParDGBiCGStabInverseOperator( op, &preconditioner, redEps, absLimit, std::numeric_limits< unsigned int >::max(), false, parameter ) {}
+
+      ParDGBiCGStabInverseOperator ( const OperatorType &op, const PreconditionerType &preconditioner,
+                                     double redEps, double absLimit, unsigned int maxIterations,
+                                     const ParameterReader &parameter = Parameter::container() )
+      : ParDGBiCGStabInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, false, parameter ) {}
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
@@ -259,9 +242,14 @@ namespace Dune
       }
 
     private:
-      void setupSolver ( double redEps, double absLimit, unsigned int maxIterations, bool verbose )
+      ParDGBiCGStabInverseOperator ( const OperatorType &op, const PreconditionerType *preconditioner,
+                                     double redEps, double absLimit, unsigned int maxIterations, bool verbose,
+                                     const ParameterReader &parameter )
+      : solver_( PARDG::Communicator::instance() ),
+        operator_( op ),
+        preconditioner_( preconditioner )
       {
-        PARDG::set_tolerance(solver_,redEps, absLimit, "fem.solver.errormeasure" );
+        PARDG::set_tolerance( parameter, solver_,redEps, absLimit, "fem.solver.errormeasure" );
 
         maxIterations = std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations );
         solver_.set_max_number_of_iterations( int( maxIterations ) );
