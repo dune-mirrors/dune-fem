@@ -166,7 +166,6 @@ double algorithm (GridType& grid, DiscreteFunctionType& solution,double time=0)
    // calculation L2 error
    // pol ord for calculation the error chould by higher than
    // pol for evaluation the basefunctions
-   typedef DiscreteFunctionSpaceType :: RangeType RangeType;
    double error = l2norm.distance( f ,solution );
    std::cout << "\nL2 Error: " << error << std::endl;
    return sqrt(error*error);
