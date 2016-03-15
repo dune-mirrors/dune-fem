@@ -57,11 +57,20 @@ namespace Dune
 
   namespace Fem
   {
-    template <class DiscreteFunctionSpace> class PetscDiscreteFunction ;
 
-  /** @addtogroup Communication Communication
-      @{
-  **/
+    // External Forward Declarations
+    // -----------------------------
+
+    template< class DiscreteFunctionSpace >
+    class PetscDiscreteFunction;
+
+    class IsDiscreteFunction;
+
+
+
+    /** @addtogroup Communication Communication
+        @{
+    **/
 
     /** \class DefaultCommunicationManager
      *  \ingroup Communication
