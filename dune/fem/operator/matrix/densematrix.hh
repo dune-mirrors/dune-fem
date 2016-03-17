@@ -106,6 +106,40 @@ namespace Dune
         }
       }
 
+      /**
+       * \brief calculate eigenvalues
+       *
+       * \returns  eigen values in ascending order
+       *
+       * \note LAPACK::dgeev is used to compute the eigen values.
+       */
+      std::vector< std::complex< double > > eigenValues () const
+      {
+        if( rows() != cols() )
+          DUNE_THROW( InvalidStateException, "Requiring square matrix for eigenvalue computation" );
+
+        const long int N = rows();
+        const char jobvl = 'n';
+        const char jobvr = 'n';
+
+        // working memory
+        std::unique_ptr< double[] > work = Std::make_unique< double[] >( 5*N );
+
+        // return value information
+        long int info = 0;
+        long int lwork = 3*N;
+
+        // call LAPACK routine (see fmatrixev_ext.cc)
+        DynamicMatrixHelp::eigenValuesNonsymLapackCall( &jobvl, &jobvr, &N, fields_, &N, work.get(), work.get()+N, 0, &N, 0, &N, work.get()+2*N, &lwork, &info );
+
+        if( info != 0 )
+          DUNE_THROW( MathError, "DenseRowMatrix: Eigenvalue computation failed" );
+
+        std::vector< std::complex< double > > eigenValues( N );
+        std::transform( work.get(), work.get()+N, work.get()+N, eigenValues.begin(), [] ( double r, double i ) { return std::complex< double >( r, i ); } );
+        return eigenValues;
+      }
+
       void reserve ( unsigned int rows, unsigned int cols )
       {
         if( (rows != rows_) || (cols != cols_) )
@@ -208,6 +242,13 @@ namespace Dune
 
       typedef typename RangeSpaceType::RangeFieldType Field;
 
+      typedef typename DomainSpaceType::BlockMapperType DomainBlockMapperType;
+      typedef NonBlockMapper< DomainBlockMapperType, DomainSpaceType::localBlockSize > DomainMapperType;
+      typedef typename RangeSpaceType::BlockMapperType RangeBlockMapperType;
+      typedef NonBlockMapper< RangeBlockMapperType, RangeSpaceType::localBlockSize > RangeMapperType;
+
+      typedef typename DomainSpaceType::EntityType DomainEntityType;
+      typedef typename RangeSpaceType::EntityType RangeEntityType;
       typedef typename DomainSpace::GridType::template Codim< 0 >::Entity ColEntityType;
       typedef typename RangeSpace::GridType::template Codim< 0 >::Entity RowEntityType;
 
@@ -227,6 +268,8 @@ namespace Dune
                              const RangeSpaceType &rangeSpace )
       : domainSpace_( domainSpace ),
         rangeSpace_( rangeSpace ),
+        domainMapper_( domainSpace.blockMapper() ),
+        rangeMapper_( rangeSpace.blockMapper() ),
         domainSequence_( -1 ),
         rangeSequence_( -1 ),
         localMatrixFactory_( *this ),
@@ -284,19 +327,27 @@ namespace Dune
         rangeSpace().communicate( wFunction );
       }
 
-      const DomainSpace &domainSpace () const
+      template< class DiscreteFunctionType >
+      void extractDiagonal( DiscreteFunctionType &diag ) const
       {
-        return domainSpace_;
+        assert( matrix_.rows() == matrix_.cols() );
+        const auto dofEnd = diag.dend();
+        unsigned int row = 0;
+        for( auto dofIt = diag.dbegin(); dofIt != dofEnd; ++dofIt, ++row )
+        {
+          assert( row < matrix_.rows() );
+          (*dofIt) = matrix_( row, row );
+        }
       }
 
-      const RangeSpace &rangeSpace () const
-      {
-        return rangeSpace_;
-      }
+      const DomainSpace &domainSpace () const { return domainSpace_; }
+      const RangeSpace &rangeSpace () const { return rangeSpace_; }
 
     private:
       const DomainSpaceType &domainSpace_;
       const RangeSpaceType &rangeSpace_;
+      DomainMapperType domainMapper_;
+      RangeMapperType rangeMapper_;
 
       int domainSequence_;
       int rangeSequence_;
@@ -350,35 +401,28 @@ namespace Dune
       typedef typename Traits::LittleBlockType LittleBlockType;
       typedef RangeFieldType DofType;
 
-      LocalMatrix ( MatrixType &matrix,
-                    const DomainSpaceType &domainSpace,
-                    const RangeSpaceType &rangeSpace )
-      : BaseType( domainSpace, rangeSpace ),
-        matrix_( matrix )
+      LocalMatrix ( MatrixType &matrix, const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace, const DomainMapperType &domainMapper, const RangeMapperType &rangeMapper )
+        : BaseType( domainSpace, rangeSpace ),
+          matrix_( matrix ),
+          domainMapper_( domainMapper ),
+          rangeMapper_( rangeMapper )
       {}
 
-    private:
-      LocalMatrix ( const ThisType & );
-      ThisType &operator= ( const ThisType & );
+      LocalMatrix ( const ThisType & ) = delete;
+      ThisType &operator= ( const ThisType & ) = delete;
 
-    public:
-      void init ( const RowEntityType &rowEntity, const ColEntityType &colEntity )
+      void init ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
       {
-        BaseType::init( rowEntity, colEntity );
+        BaseType::init( domainEntity, rangeEntity );
 
-        map( rangeSpace().mapper(), rowEntity, rowIndices_ );
-        map( domainSpace().mapper(), colEntity, colIndices_ );
+        rowIndices_.resize( rangeMapper_.numDofs( rangeEntity ) );
+        rangeMapper_.mapEach( rangeEntity, Fem::AssignFunctor< std::vector< unsigned int > >( rowIndices_ ) );
+        colIndices_.resize( domainMapper_.numDofs( domainEntity ) );
+        domainMapper_.mapEach( domainEntity, Fem::AssignFunctor< std::vector< unsigned int > >( colIndices_ ) );
       }
 
-      int rows () const
-      {
-        return rowIndices_.size();
-      }
-
-      int cols () const
-      {
-        return colIndices_.size();
-      }
+      int rows () const { return rowIndices_.size(); }
+      int cols () const { return colIndices_.size(); }
 
       void add ( const int row, const int col, const DofType &value )
       {
@@ -438,21 +482,14 @@ namespace Dune
         }
       }
 
-    private:
-      template< class Mapper, class Entity >
-      void map ( const Mapper &mapper, const Entity &entity, std::vector< unsigned int > &indices )
-      {
-        indices.resize( mapper.numDofs( entity ) );
-        mapper.mapEach( entity, Fem::AssignFunctor< std::vector< unsigned int > >( indices ) );
-      }
-
     protected:
       using BaseType::domainSpace_;
       using BaseType::rangeSpace_;
 
     private:
       MatrixType &matrix_;
-
+      const DomainMapperType &domainMapper_;
+      const RangeMapperType &rangeMapper_;
       std::vector< unsigned int > rowIndices_;
       std::vector< unsigned int > colIndices_;
     };
@@ -471,12 +508,12 @@ namespace Dune
       typedef LocalMatrix ObjectType;
 
       LocalMatrixFactory ( MatrixObject &matrixObject )
-      : matrixObject_( &matrixObject )
+        : matrixObject_( &matrixObject )
       {}
 
       ObjectType *newObject () const
       {
-        return new ObjectType( matrixObject_->matrix_, matrixObject_->domainSpace_, matrixObject_->rangeSpace_ );
+        return new ObjectType( matrixObject_->matrix_, matrixObject_->domainSpace_, matrixObject_->rangeSpace_, matrixObject_->domainMapper_, matrixObject_->rangeMapper_ );
       }
 
     private:
