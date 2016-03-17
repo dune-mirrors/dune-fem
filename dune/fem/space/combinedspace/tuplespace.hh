@@ -11,6 +11,7 @@
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/space/basisfunctionset/tuple.hh>
 #include <dune/fem/space/combinedspace/generic.hh>
+#include <dune/fem/space/combinedspace/interpolation.hh>
 #include <dune/fem/space/combinedspace/tuplelocalrestrictprolong.hh>
 #include <dune/fem/space/combinedspace/tuplemapper.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
@@ -124,6 +125,8 @@ namespace Dune
 
       static constexpr int polynomialOrder = Std::max( (int)DiscreteFunctionSpaces::polynomialOrder ... );
 
+      typedef TupleSpaceInterpolation< DiscreteFunctionSpaces ... > InterpolationType;
+
       // review to make it work for all kind of combinations
       template< class DiscreteFunction,
                 class Operation = DFCommunicationOperation::Copy >
@@ -234,6 +237,9 @@ namespace Dune
       //! same gridPart
       typedef typename Traits::GridPartType GridPartType;
 
+      typedef typename Traits::InterpolationType InterpolationType;
+      typedef typename Traits::EntityType EntityType;
+
       /** \brief constructor
        *
        *  \param[in]  gridPart       grid part for the Lagrange space
@@ -255,11 +261,22 @@ namespace Dune
         return spaceTuple( Std::index_sequence_for< DiscreteFunctionSpaces ... >() );
       }
 
+      InterpolationType interpolation ( const EntityType &entity ) const
+      {
+        return interpolation( entity, Std::index_sequence_for< DiscreteFunctionSpaces ... >() );
+      }
+
     protected:
       template< std::size_t ... i >
       std::tuple< const DiscreteFunctionSpaces & ... > spaceTuple ( Std::index_sequence< i ... > ) const
       {
         return std::tuple< const DiscreteFunctionSpaces & ... >( BaseType::template subDiscreteFunctionSpace< i >() ... );
+      }
+
+      template< std::size_t ... i >
+      InterpolationType interpolation ( const EntityType &entity, Std::index_sequence< i ... > ) const
+      {
+        return InterpolationType( std::get< i >( spaceTuple() ) ..., entity );
       }
     };
 

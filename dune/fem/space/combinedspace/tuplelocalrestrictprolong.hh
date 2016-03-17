@@ -42,14 +42,20 @@ namespace Dune
       template< int > struct RestrictLocal;
       template< int > struct ProlongLocal;
 
+      template< std::size_t  ... i >
+      static LocalRestrictProlongTupleType localRestrictProlongTuple ( std::tuple< const DiscreteFunctionSpaces &... > tuple, Std::index_sequence< i ... > )
+      {
+        return std::make_tuple( typename std::tuple_element< i, LocalRestrictProlongTupleType >::type( std::get< i >( tuple ) ) ...);
+      }
+
     public:
       static_assert( Std::are_all_same< typename DiscreteFunctionSpaces::DomainFieldType ... >::value,
           "TupleLocalRestrictProlong needs common DomainFieldType in the Spaces!" );
 
       typedef typename std::tuple_element< 0, LocalRestrictProlongTupleType >::type::DomainFieldType DomainFieldType;
 
-      TupleLocalRestrictProlong ( const DiscreteFunctionSpaces & ...spaces )
-        : localRestrictProlongTuple_( spaces ... )
+      TupleLocalRestrictProlong ( std::tuple< const DiscreteFunctionSpaces & ... > tuple )
+        : localRestrictProlongTuple_( localRestrictProlongTuple( tuple, Std::index_sequence_for< DiscreteFunctionSpaces ... >() ) )
       {}
 
       void setFatherChildWeight ( const DomainFieldType &weight )
