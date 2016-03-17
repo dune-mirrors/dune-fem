@@ -1,13 +1,14 @@
-#ifndef DUNE_FEM_DENSEMATRIX_HH
-#define DUNE_FEM_DENSEMATRIX_HH
+#ifndef DUNE_FEM_OPERATOR_MATRIX_DENSEMATRIX_HH
+#define DUNE_FEM_OPERATOR_MATRIX_DENSEMATRIX_HH
 
 #include <iostream>
-#include <dune/fem/storage/objectstack.hh>
-#include <dune/fem/solver/oemsolver.hh>
+
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/operator/common/localmatrixwrapper.hh>
+#include <dune/fem/solver/oemsolver.hh>
+#include <dune/fem/storage/objectstack.hh>
 
 namespace Dune
 {
@@ -29,77 +30,54 @@ namespace Dune
       template< class RF >
       class Row;
 
-      DenseRowMatrix ()
-      : rows_( 0 ),
-        cols_( 0 ),
-        fields_( 0 )
-      {}
+      DenseRowMatrix () : rows_( 0 ), cols_( 0 ) {}
 
       DenseRowMatrix ( unsigned int rows, unsigned int cols )
-      : rows_( 0 ),
-        cols_( 0 ),
-        fields_( 0 )
+        : rows_( 0 ), cols_( 0 )
       {
         reserve( rows, cols );
       }
 
-      ~DenseRowMatrix ()
-      {
-        delete[] fields_;
-      }
+      unsigned int rows () const { return rows_; }
+      unsigned int cols () const { return cols_; }
 
-      unsigned int rows () const
-      {
-        return rows_;
-      }
-
-      unsigned int cols () const
-      {
-        return cols_;
-      }
-
-      const Field &operator() ( const unsigned int row, const unsigned int col ) const
+      const Field &operator() ( unsigned int row, unsigned int col ) const
       {
         assert( (row < rows()) && (col < cols()) );
         return fields_[ row*cols() + col ];
       }
 
-      Field &operator() ( const unsigned int row, const unsigned int col )
+      Field &operator() ( unsigned int row, unsigned int col )
       {
         assert( (row < rows()) && (col < cols()) );
         return fields_[ row*cols() + col ];
       }
 
-      void add(const unsigned int row, const unsigned int col, const Field& value )
+      void add ( unsigned int row, unsigned int col, const Field &value )
       {
         assert( (row < rows()) && (col < cols()) );
         fields_[ row*cols() + col ] += value;
       }
 
-      Row< const Field > operator[] ( const unsigned int row ) const
+      Row< const Field > operator[] ( unsigned int row ) const
       {
         assert( row < rows() );
-        return Row< const Field >( cols(), fields_ + row*cols() );
+        return Row< const Field >( cols(), fields_.get() + row*cols() );
       }
 
-      Row< Field > operator[] ( const unsigned int row )
+      Row< Field > operator[] ( unsigned int row )
       {
         assert( row < rows() );
-        return Row< Field >( cols(), fields_ + row*cols() );
+        return Row< Field >( cols(), fields_.get() + row*cols() );
       }
 
-      void clear ()
-      {
-        Field *end = fields_ + (rows_*cols_);
-        for( Field *it = fields_; it != end; ++it )
-          *it = Field( 0 );
-      }
+      void clear () { std::fill( fields_.get(), fields_.get() + (rows()*cols()), Field( 0 ) ); }
 
       void multiply ( const Field *x, Field *y ) const
       {
         for( unsigned int row = 0; row < rows(); ++row )
         {
-          const Field *fields = fields_ + row*cols();
+          const Field *fields = fields_.get() + row*cols();
           y[ row ] = Field( 0 );
           for( unsigned int col = 0; col < cols(); ++col )
             y[ row ] += fields[ col ] * x[ col ];
@@ -112,8 +90,10 @@ namespace Dune
        * \returns  eigen values in ascending order
        *
        * \note LAPACK::dgeev is used to compute the eigen values.
+       *
+       * \note The matrix is destroyed.
        */
-      std::vector< std::complex< double > > eigenValues () const
+      std::vector< std::complex< double > > eigenValues ()
       {
         if( rows() != cols() )
           DUNE_THROW( InvalidStateException, "Requiring square matrix for eigenvalue computation" );
@@ -144,8 +124,7 @@ namespace Dune
       {
         if( (rows != rows_) || (cols != cols_) )
         {
-          delete[] fields_;
-          fields_ = new Field[ rows*cols ];
+          fields_.reset( new Field[ rows*cols ] );
           rows_ = rows;
           cols_ = cols;
         }
@@ -167,9 +146,8 @@ namespace Dune
       }
 
     private:
-      unsigned int rows_;
-      unsigned int cols_;
-      Field *fields_;
+      unsigned int rows_, cols_;
+      std::unique_ptr< Field[] > fields_;
     };
 
 
@@ -524,4 +502,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_DENSEMATRIX_HH
+#endif // #ifndef DUNE_FEM_OPERATOR_MATRIX_DENSEMATRIX_HH
