@@ -86,7 +86,7 @@ namespace Dune
     typedef typename Base::size_type size_type;
     typedef typename Base::value_type value_type;
 
-    FieldMatrixColumn ( FieldMatrix< K, m, n > &fieldMatrix, int column )
+    FieldMatrixColumn ( const FieldMatrix< K, m, n > &fieldMatrix, int column )
       : fieldMatrix_( fieldMatrix ),
         column_( column )
     {}
