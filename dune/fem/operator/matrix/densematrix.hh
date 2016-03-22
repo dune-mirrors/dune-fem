@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_OPERATOR_MATRIX_DENSEMATRIX_HH
 #define DUNE_FEM_OPERATOR_MATRIX_DENSEMATRIX_HH
 
+#include <memory>
 #include <iostream>
 
 #include <dune/fem/function/adaptivefunction.hh>
@@ -103,7 +104,7 @@ namespace Dune
         const char jobvr = 'n';
 
         // working memory
-        std::unique_ptr< double[] > work = Std::make_unique< double[] >( 5*N );
+        std::unique_ptr< double[] > work = std::make_unique< double[] >( 5*N );
 
         // return value information
         long int info = 0;
