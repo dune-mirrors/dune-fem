@@ -32,26 +32,24 @@ namespace Dune
   {
 
     /** @addtogroup DiscreteFunction
-        The DiscreteFunction is responsible for the dof storage. This can be
-        done in various ways an is left to the user. The user has to derive his
-        own implementation from the DiscreteFunctionDefault class. The implementations
-        in the default class which are ineffecient for the dof storage in the derived
-        class can be overloaded.
+     *  The DiscreteFunction is responsible for the dof storage. This can be
+     *  done in various ways an is left to the user. The user has to derive his
+     *  own implementation from the DiscreteFunctionDefault class. The implementations
+     *  in the default class which are ineffecient for the dof storage in the derived
+     *  class can be overloaded.
+     *
+     *  \remarks
+     *  The interface for using a DiscreteFunction is defined by
+     *  the class DiscreteFunctionInterface.
+     *
+     *  @{
+     */
 
-        \remarks
-        The interface for using a DiscreteFunction is defined by
-        the class DiscreteFunctionInterface.
-
-        @{
-    */
-
-    /** Base class for determing whether a class is a discrete function or not.
-    */
+    /** \brief base class for determing whether a class is a discrete function or not */
     class IsDiscreteFunction
     {};
 
-    /** Base class for determing whether a function has local functions or not.
-    */
+    /** \brief base class for determing whether a function has local functions or not */
     class HasLocalFunction
     {};
 
@@ -68,15 +66,15 @@ namespace Dune
     //-
     //----------------------------------------------------------------------
     /** This is the interface of a discrete function which describes the
-        features of a discrete function.
-        It contains a local function and a dof iterator which can
-        iterate over all dofs of one level. Via the method access the local
-        dofs and basis functions can be accessed for a given entity.
-        The DOF-Iterators are STL-like Iterators, i.e. they can be dereferenced
-        giving the corresponding DOF.
-
-        \interfaceclass
-    */
+     *  features of a discrete function.
+     *  It contains a local function and a dof iterator which can
+     *  iterate over all dofs of one level. Via the method access the local
+     *  dofs and basis functions can be accessed for a given entity.
+     *  The DOF-Iterators are STL-like Iterators, i.e. they can be dereferenced
+     *  giving the corresponding DOF.
+     *
+     *  \interfaceclass
+     */
     template< class Impl >
     class DiscreteFunctionInterface
     : public Function< typename DiscreteFunctionTraits< Impl >::DiscreteFunctionSpaceType::FunctionSpaceType, Impl >,
@@ -96,7 +94,7 @@ namespace Dune
       //! type of associated discrete function space
       typedef typename Traits :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
-       //! type of the discrete function interface (this type)
+      //! type of the discrete function interface (this type)
       typedef DiscreteFunctionInterface< Impl > DiscreteFunctionInterfaceType;
 
       //! type of domain field, i.e. type of coordinate component
@@ -113,19 +111,19 @@ namespace Dune
       //! type of the underlying grid part
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
 
-      //! Type of the underlying grid
+      //! type of the underlying grid
       typedef typename DiscreteFunctionSpaceType :: GridType GridType;
 
       //! type of local functions
       typedef typename Traits :: LocalFunctionType LocalFunctionType;
 
-      //! Type of the dof vector used in the discrete function implementation.
+      //! type of the dof vector used in the discrete function implementation
       typedef typename Traits :: DofVectorType  DofVectorType;
 
-      //! Type of the dof iterator used in the discrete function implementation.
+      //! type of the dof iterator used in the discrete function implementation
       typedef typename Traits :: DofIteratorType DofIteratorType;
 
-      //! Type of the constantdof iterator used in the discrete function implementation
+      //! type of the constantdof iterator used in the discrete function implementation
       typedef typename Traits :: ConstDofIteratorType ConstDofIteratorType;
 
       typedef typename Traits :: DofType DofType;
@@ -154,18 +152,18 @@ namespace Dune
     protected:
       using BaseType::asImp;
 
-      /** \brief default constructor */
+      //! default constructor
       DiscreteFunctionInterface () = default;
 
     public:
       DiscreteFunctionInterface ( const ThisType& ) = delete;
-      ThisType& operator= ( const ThisType& ) = delete;
+      ThisType &operator= ( const ThisType& ) = delete;
 
-      DofVectorType& dofVector()
+      DofVectorType &dofVector()
       {
         return asImp().dofVector();
       }
-      const DofVectorType& dofVector() const
+      const DofVectorType &dofVector() const
       {
         return asImp().dofVector();
       }
@@ -211,8 +209,7 @@ namespace Dune
         return asImp().localFunction( entity );
       }
 
-      /** \brief set all degrees of freedom to zero
-       */
+      /** \brief set all degrees of freedom to zero */
       void clear()
       {
         asImp().clear();
@@ -278,7 +275,6 @@ namespace Dune
       {
         return asImp().dend ();
       }
-
 
       /** \brief obtain an iterator pointing to the first DoF (read-write)
        *
@@ -379,9 +375,7 @@ namespace Dune
         return asImp().dataHandle( operation );
       }
 
-      /** \brief do default communication of space for this discrete
-                 function
-      */
+      /** \brief do default communication of space for this discrete function */
       inline void communicate()
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().communicate() );
@@ -400,11 +394,13 @@ namespace Dune
       }
 
       /** \brief substract all degrees of freedom from given discrete function using the dof iterators
-          \param[in] g discrete function which is substracted from this discrete function
-          \return reference to this (i.e. *this)
-      */
+       *
+       *  \param[in] g discrete function which is substracted from this discrete function
+       *
+       *  \returns reference to this (i.e. *this)
+       */
       template < class DFType >
-      DiscreteFunctionType& operator-=(const DiscreteFunctionInterface< DFType > &g)
+      DiscreteFunctionType &operator-=(const DiscreteFunctionInterface< DFType > &g)
       {
         return asImp().operator-=( g );
       }
@@ -452,16 +448,15 @@ namespace Dune
       }
 
       /** \brief Enable this discrete function for dof compression,
-           i.e. during grdi changes a dof compression
-           is done when the DofManagers compress is called.
-      */
+       *   i.e. during grid changes a dof compression
+       *   is done when the DofManagers compress is called.
+       */
       void enableDofCompression()
       {
         asImp().enableDofCompression();
       }
 
-      // this needs to be revised, the definition should be in GridPart
-      // further discussion needed
+      //TODO: this needs to be revised, the definition should be in GridPart
       typedef LoadBalanceLeafData< ThisType > DefaultLoadBalanceContainsCheckType;
       DefaultLoadBalanceContainsCheckType defaultLoadBalanceContainsCheck() const
       {
@@ -528,7 +523,7 @@ namespace Dune
       //! type of range field (usually a float type)
       typedef typename DiscreteFunctionSpaceType :: RangeFieldType RangeFieldType;
 
-       //! type of the dof iterator
+      //! type of the dof iterator
       typedef typename Traits :: DofIteratorType DofIteratorType;
       //! type of the const dof iterator
       typedef typename Traits :: ConstDofIteratorType ConstDofIteratorType;
@@ -630,7 +625,7 @@ namespace Dune
 
     public:
       DiscreteFunctionDefault ( const ThisType& ) = delete;
-      ThisType& operator= ( const ThisType& ) = delete;
+      ThisType &operator= ( const ThisType& ) = delete;
 
       // Default Implementations
       // -----------------------
@@ -653,8 +648,8 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::clear() */
       void clear() { dofVector().clear(); }
 
-      DofVectorType& dofVector() { return asImp().dofVector(); }
-      const DofVectorType& dofVector() const { return asImp().dofVector(); }
+      DofVectorType &dofVector() { return asImp().dofVector(); }
+      const DofVectorType &dofVector() const { return asImp().dofVector(); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::blocks() */
       int blocks() const { return dofVector().size(); }
@@ -774,10 +769,10 @@ namespace Dune
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterface< DFType > &g) */
       template <class DFType>
-      DiscreteFunctionType& operator+=(const DiscreteFunctionInterface< DFType > &g);
+      DiscreteFunctionType &operator+=(const DiscreteFunctionInterface< DFType > &g);
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterface< DFType > &g) */
-      DiscreteFunctionType& operator+=(const DiscreteFunctionType& g)
+      DiscreteFunctionType &operator+=(const DiscreteFunctionType &g)
       {
         dofVector() += g.dofVector();
         return asImp();
@@ -785,10 +780,10 @@ namespace Dune
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator-=(const DiscreteFunctionInterface< DFType > &g) */
       template <class DFType>
-      DiscreteFunctionType& operator-=(const DiscreteFunctionInterface< DFType > &g);
+      DiscreteFunctionType &operator-=(const DiscreteFunctionInterface< DFType > &g);
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator-=(const DiscreteFunctionInterface< DFType > &g) */
-      DiscreteFunctionType& operator-=(const DiscreteFunctionType& g)
+      DiscreteFunctionType &operator-=(const DiscreteFunctionType& g)
       {
         dofVector() -= g.dofVector();
         return asImp();
