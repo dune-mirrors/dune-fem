@@ -53,7 +53,7 @@ namespace Dune
                                const VDiscreteFunctionType& v ) const
         {
           const unsigned int uorder = u.space().order();
-          const unsigned int vorder = v.space().order();
+          const unsigned int vorder = uorder; // v.space().order();
           const unsigned int order = 2 * std::max( uorder, vorder );
           return order;
         }
@@ -191,8 +191,10 @@ namespace Dune
                 const ReturnType& initialValue,
                 const unsigned int order = 0 ) const
       {
-        enum { uDiscrete = Conversion<UDiscreteFunctionType, HasLocalFunction>::exists };
-        enum { vDiscrete = Conversion<VDiscreteFunctionType, HasLocalFunction>::exists };
+        // enum { uDiscrete = Conversion<UDiscreteFunctionType, HasLocalFunction>::exists };
+        // enum { vDiscrete = Conversion<VDiscreteFunctionType, HasLocalFunction>::exists };
+        enum { uDiscrete = std::is_base_of<HasLocalFunction, UDiscreteFunctionType>::value };
+        enum { vDiscrete = std::is_base_of<HasLocalFunction, VDiscreteFunctionType>::value };
 
         // call forEach depending on which argument is a grid function,
         // i.e. has a local function
