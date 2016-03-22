@@ -60,5 +60,5 @@ Links
  [5]: http://lists.dune-project.org/mailman/listinfo/dune-fem
  [6]: http://gitlab.dune-project.org/dune-fem/dune-fem/issues
  [7]: LICENSE
- [8]: http://users.dune-project.org/projects/dune-alugrid
+ [8]: http://gitlab.dune-project.org/extensions/dune-alugrid
  [9]: http://gitlab.dune-project.org/extensions/dune-spgrid
