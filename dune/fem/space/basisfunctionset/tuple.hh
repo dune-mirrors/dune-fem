@@ -74,9 +74,6 @@ namespace Dune
         }
       };
 
-      //! helper class to compute static rangeoffsets
-      typedef Indices< BasisFunctionSets::FunctionSpaceType::dimRange ... > RangeIndices;
-
       //! type of tuple
       typedef std::tuple< BasisFunctionSets ... > BasisFunctionSetTupleType;
 
@@ -120,6 +117,8 @@ namespace Dune
       };
 
     public:
+      //! helper class to compute static rangeoffsets
+      typedef Indices< BasisFunctionSets::FunctionSpaceType::dimRange ... > RangeIndices;
 
       // export type of i-th subbasisfunction set
       template< int i >

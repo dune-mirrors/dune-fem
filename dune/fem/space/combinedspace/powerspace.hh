@@ -12,6 +12,7 @@
 
 #include <dune/fem/space/basisfunctionset/vectorial.hh>
 #include <dune/fem/space/combinedspace/generic.hh>
+#include <dune/fem/space/combinedspace/interpolation.hh>
 #include <dune/fem/space/combinedspace/lagrangepointsetexporter.hh>
 #include <dune/fem/space/combinedspace/powerlocalrestrictprolong.hh>
 #include <dune/fem/space/combinedspace/powermapper.hh>
@@ -90,6 +91,9 @@ namespace Dune
       typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
 
       static constexpr int polynomialOrder = DiscreteFunctionSpace::polynomialOrder;
+
+      // type of local Interpolation
+      typedef PowerSpaceInterpolation< DiscreteFunctionSpace, N > InterpolationType;
 
       // review to make it work for all kind of combinations
       template< class DiscreteFunction,
@@ -179,6 +183,11 @@ namespace Dune
       //! type of contained discrete function space
       typedef DiscreteFunctionSpace ContainedDiscreteFunctionSpaceType;
 
+      //! type of interpolation
+      typedef typename Traits::InterpolationType InterpolationType;
+
+      typedef typename Traits::EntityType EntityType;
+
       /** \brief constructor
        *
        *  \param[in]  gridPart       grid part for the Lagrange space
@@ -199,6 +208,11 @@ namespace Dune
       const ContainedDiscreteFunctionSpaceType &containedSpace () const
       {
         return BaseType::template subDiscreteFunctionSpace< 0 >();
+      }
+
+      InterpolationType interpolation ( const EntityType &entity ) const
+      {
+        return InterpolationType( entity );
       }
     };
 
