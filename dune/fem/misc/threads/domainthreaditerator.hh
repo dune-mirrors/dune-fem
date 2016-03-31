@@ -76,17 +76,17 @@ namespace Dune {
 
     protected:
 #ifdef USE_SMP_PARALLEL
-      PartitioningMethodType getMethod() const
+      static PartitioningMethodType getMethod ( const ParameterReader &parameter )
       {
         // default is recursive
         const std::string methodNames[] = { "recursive", "kway", "sfc" };
-        return (PartitioningMethodType ) Parameter::getEnum("fem.threads.partitioningmethod", methodNames, 0 );
+        return (PartitioningMethodType ) parameter.getEnum("fem.threads.partitioningmethod", methodNames, 0 );
       }
 #endif // #ifdef USE_SMP_PARALLEL
 
     public:
       //! contructor creating thread iterators
-      explicit DomainDecomposedIterator( const GridPartType& gridPart )
+      explicit DomainDecomposedIterator( const GridPartType& gridPart, const ParameterReader &parameter = Parameter::container() )
         : gridPart_( gridPart ),
           dofManager_( DofManagerType :: instance( gridPart_.grid() ) ),
           indexSet_( gridPart_.indexSet() )
@@ -96,12 +96,12 @@ namespace Dune {
 #endif
         , masterRatio_( 1.0 )
 #ifdef USE_SMP_PARALLEL
-        , method_( getMethod() )
+        , method_( getMethod( parameter ) )
 #endif // #ifdef USE_SMP_PARALLEL
-        , communicationThread_( Parameter::getValue<bool>("fem.threads.communicationthread", false)
+        , communicationThread_( parameter.getValue<bool>("fem.threads.communicationthread", false)
                     &&  Fem :: ThreadManager :: maxThreads() > 1 ) // only possible if maxThreads > 1
         , verbose_( Parameter::verbose() &&
-                    Parameter::getValue<bool>("fem.threads.verbose", false ) )
+                    parameter.getValue<bool>("fem.threads.verbose", false ) )
       {
 #ifdef USE_SMP_PARALLEL
         for(int thread=0; thread < Fem :: ThreadManager :: maxThreads(); ++thread )
