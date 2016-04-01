@@ -54,3 +54,5 @@ LINK_LIBRARIES dunefem )
 dune_add_test( NAME adapt_combinedspace_variablebased SOURCES adapt.cc
 COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE"
 LINK_LIBRARIES dunefem )
+
+dune_add_test( SOURCES test-localadaptation.cc COMPILE_DEFINITIONS "${DEFAULTFLAGS}" LINK_LIBRARIES dunefem MPI_RANKS 1 3 4 TIMEOUT 9999999 )
