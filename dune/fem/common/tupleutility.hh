@@ -5,13 +5,13 @@
 #include <dune/common/tupleutility.hh>
 #include <dune/common/std/utility.hh>
 
-#ifdef HAVE_TR1_TUPLE // #ifdef HAVE_TUPLE
-#define DUNE_OPEN_TUPLE_NAMESPACE namespace std { namespace tr1 {
-#define DUNE_CLOSE_TUPLE_NAMESPACE } }
-#else // #if defined HAVE_TR1_TUPLE
+//#ifdef HAVE_TR1_TUPLE // #ifdef HAVE_TUPLE
+//#define DUNE_OPEN_TUPLE_NAMESPACE namespace std { namespace tr1 {
+//#define DUNE_CLOSE_TUPLE_NAMESPACE } }
+//#else // #if defined HAVE_TR1_TUPLE
 #define DUNE_OPEN_TUPLE_NAMESPACE namespace std {
 #define DUNE_CLOSE_TUPLE_NAMESPACE }
-#endif // #ifdef HAVE_TR1_TUPLE
+//#endif // #ifdef HAVE_TR1_TUPLE
 
 
 namespace

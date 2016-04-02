@@ -983,9 +983,12 @@ namespace Dune
 
       // start iteration
       typedef typename GridPartGetterType::GridPartType GridPartType;
-      typedef typename GridPartType::GridViewType GridViewType;
-      for( const auto entity : elements( static_cast<GridViewType>( gridPart ) ) )
+      //typedef typename GridPartType :: GridViewType  GridViewType;
+      const auto end = gridPart.template end<0>();
+      for( auto it = gridPart.template begin<0>(); it != end; ++it )
+      //for( const auto& entity : Dune::elements( static_cast<GridViewType>( gridPart ) ) )
       {
+        const auto& entity = *it ;
         CachingQuadrature< GridPartType, 0 > quad( entity, 1 );
         for( unsigned int i = 0; i < quad.nop(); ++i )
         {
