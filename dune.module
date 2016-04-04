@@ -1,5 +1,5 @@
 Module: dune-fem
-Version: 2.4.0
+Version: 2.4.1-rc
 Maintainer: dune@mathematik.uni-freiburg.de
 Whitespace-Hook: Yes
 Depends: dune-grid (>= 2.4)

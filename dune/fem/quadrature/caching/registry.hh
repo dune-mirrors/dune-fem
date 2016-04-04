@@ -59,6 +59,13 @@ namespace Dune
       }
 
     public:
+      /** \brief initialize static variables */
+      static void initialize ()
+      {
+        storageList();
+        quadratureInfoList();
+      }
+
       static void registerStorage ( StorageInterface &storage )
       {
         assert( ThreadManager::singleThreadMode() );

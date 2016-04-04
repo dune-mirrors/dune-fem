@@ -232,7 +232,7 @@ public:
           partition_ = db_.repartition( mpAccess_, DataBaseType :: METIS_PartGraphKway, pSize_ );
         else if( method == sfc )
         {
-          partition_ = db_.repartition( mpAccess_, DataBaseType :: ALUGRID_SpaceFillingCurve, pSize_ );
+          partition_ = db_.repartition( mpAccess_, DataBaseType :: ALUGRID_SpaceFillingCurveSerial, pSize_ );
         }
         else
           DUNE_THROW(InvalidStateException,"ThreadPartitioner::serialPartition: wrong method");
