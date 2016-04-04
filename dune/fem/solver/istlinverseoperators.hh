@@ -283,7 +283,7 @@ namespace Dune
                             double redEps, double absLimit, unsigned int maxIterations, bool verbose,
                             const ParameterReader &parameter )
         : operator_( op ),
-          preconditioner_( &preconditioner ),
+          preconditioner_( preconditioner ),
           solverAdapter_( ReductionType( redEps, absLimit ), maxIterations, (Parameter::verbose() && verbose) ? 2 : 0, parameter )
       {}
 
