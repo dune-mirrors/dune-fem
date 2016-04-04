@@ -285,7 +285,7 @@ int main ( int argc, char **argv )
     GridPartType part( grid );
     DiscreteFunctionSpaceType space( part );
 
-    const EntityType &entity = *(++space.begin());
+    EntityType entity = *(++space.begin());
 
     checkBasisSet( entity, space );
     checkInterpolation( entity, space );
