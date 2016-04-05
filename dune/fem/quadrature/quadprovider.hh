@@ -310,7 +310,7 @@ namespace Dune
                                                             const GeometryType &elementGeometry,
                                                             int order )
       {
-        assert( geometry.isCube() || geometry.isSimplex() );
+        assert( geometry.isCube() || geometry.isSimplex() || geometry.isNone() );
         assert( order >= 0 );
 
         // if geometry is simplex return simplex quadrature
@@ -342,6 +342,12 @@ namespace Dune
             return QuadCreator< 7 > :: template provideQuad< CubeQuadratureType > ( geometry, order ) ;
           else
             DUNE_THROW( RangeError, "Element type not available for dimension 3" );
+        }
+
+        if( geometry.isNone() )
+        {
+          // dummy return
+          return QuadCreator< 0 > ::template provideQuad< SimplexQuadratureType >( geometry, 0 );
         }
 
         DUNE_THROW( RangeError, "Element type not available for dimension 2" );
@@ -396,7 +402,7 @@ namespace Dune
                                                             int order )
       {
         assert( geometry.isCube() || geometry.isSimplex()
-                || geometry.isPrism() || geometry.isPyramid() );
+                || geometry.isPrism() || geometry.isPyramid() || geometry.isNone() );
         assert( order >= 0 );
 
         if( geometry.isSimplex() )
@@ -412,6 +418,13 @@ namespace Dune
         if( geometry.isPyramid() )
           return QuadCreator< 3 > :: template provideQuad< PyramidQuadratureType >
             ( geometry, order );
+
+        if( geometry.isNone() )
+        {
+          // dummy return
+          return QuadCreator< 0 > :: template provideQuad< SimplexQuadratureType >
+            ( geometry, 0 );
+        }
 
         DUNE_THROW( RangeError, "Element type not available for dimension 3" );
         // dummy return
