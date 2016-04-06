@@ -163,9 +163,7 @@ typedef AdaptationManager< MyGridType, RestrictProlongOperatorType >
 void setPolOrder( const DiscreteFunctionSpaceType &space, bool increase )
 {
   const int maxPol = POLORDER;
-  //const int maxPol = 2;
-  const int minPol = 2;
-  //const int minPol = 1;
+  const int minPol = 1;
   const int size = space.indexSet().size( 0 );
 
   const int p = increase ? minPol : maxPol ;
