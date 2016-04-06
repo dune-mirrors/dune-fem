@@ -39,17 +39,17 @@ namespace Dune
     // PAdaptiveLagrangeSpaceTraits
     // ----------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int maxPolOrder, template< class > class Storage >
     struct PAdaptiveLagrangeSpaceTraits
     {
-      static_assert((polOrder > 0), "LagrangeSpace only defined for polOrder > 0" );
+      static_assert((maxPolOrder > 0), "LagrangeSpace only defined for maxPolOrder > 0" );
 
-      typedef PAdaptiveLagrangeSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
+      typedef PAdaptiveLagrangeSpace< FunctionSpace, GridPart, maxPolOrder, Storage > DiscreteFunctionSpaceType;
 
       typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;
 
-      static const int polynomialOrder = polOrder;
+      static const int polynomialOrder = maxPolOrder;
 
       static const bool continuousSpace = true ;
       static const int localBlockSize = FunctionSpaceType::dimRange;
@@ -80,8 +80,8 @@ namespace Dune
         {
           static ScalarShapeFunctionSetType *createObject ( const GeometryType &type )
           {
-            typedef LagrangeShapeFunctionFactory< ShapeFunctionSpaceType, polOrder > SimpleShapeFunctionSetFactoryType;
-            return new ScalarShapeFunctionSetType( type, SimpleShapeFunctionSetType( SimpleShapeFunctionSetFactoryType( type ) ) );
+            typedef LagrangeShapeFunctionFactory< ShapeFunctionSpaceType, maxPolOrder > SimpleShapeFunctionSetFactoryType;
+            return new ScalarShapeFunctionSetType( type, SimpleShapeFunctionSetType( SimpleShapeFunctionSetFactoryType( type, pOrd ) ) );
           }
 
           static void deleteObject ( ScalarShapeFunctionSetType *object ) { delete object; }
@@ -112,12 +112,12 @@ namespace Dune
      *
      *  \brief   Lagrange discrete function space
      */
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
+    template< class FunctionSpace, class GridPart, int maxPolOrder, template< class > class Storage = CachingStorage >
     class PAdaptiveLagrangeSpace
-    : public GenericDiscreteFunctionSpace< PAdaptiveLagrangeSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
+    : public GenericDiscreteFunctionSpace< PAdaptiveLagrangeSpaceTraits< FunctionSpace, GridPart, maxPolOrder, Storage > >
     {
-      typedef PAdaptiveLagrangeSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
-      typedef GenericDiscreteFunctionSpace< PAdaptiveLagrangeSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
+      typedef PAdaptiveLagrangeSpace< FunctionSpace, GridPart, maxPolOrder, Storage > ThisType;
+      typedef GenericDiscreteFunctionSpace< PAdaptiveLagrangeSpaceTraits< FunctionSpace, GridPart, maxPolOrder, Storage > > BaseType;
 
     public:
       typedef ThisType PAdaptiveLagrangeSpaceType;
