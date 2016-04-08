@@ -117,15 +117,15 @@ namespace Dune {
 
     // Test twists
     const MapperType& m_3 = storage.getMapper(-3);
-    doTest(m_3[0] == 2);
-    doTest(m_3[1] == 1);
-    doTest(m_3[2] == 0);
+    doTest(m_3[0] == 1);
+    doTest(m_3[1] == 0);
+    doTest(m_3[2] == 2);
     //std::cout << "(" << m_3[0] << ", " << m_3[1] << ", " << m_3[2] << ")\n";
 
     const MapperType& m_2 = storage.getMapper(-2);
-    doTest(m_2[0] == 1);
-    doTest(m_2[1] == 0);
-    doTest(m_2[2] == 2);
+    doTest(m_2[0] == 2);
+    doTest(m_2[1] == 1);
+    doTest(m_2[2] == 0);
     //std::cout << "(" << m_2[0] << ", " << m_2[1] << ", " << m_2[2] << ")\n";
 
     const MapperType& m_1 = storage.getMapper(-1);
@@ -141,15 +141,15 @@ namespace Dune {
     //std::cout << "(" << m0[0] << ", " << m0[1] << ", " << m0[2] << ")\n";
 
     const MapperType& m1 = storage.getMapper(1);
-    doTest(m1[0] == 1);
-    doTest(m1[1] == 2);
-    doTest(m1[2] == 0);
+    doTest(m1[0] == 2);
+    doTest(m1[1] == 0);
+    doTest(m1[2] == 1);
     //std::cout << "(" << m1[0] << ", " << m1[1] << ", " << m1[2] << ")\n";
 
     const MapperType& m2 = storage.getMapper(2);
-    doTest(m2[0] == 2);
-    doTest(m2[1] == 0);
-    doTest(m2[2] == 1);
+    doTest(m2[0] == 1);
+    doTest(m2[1] == 2);
+    doTest(m2[2] == 0);
     //std::cout << "(" << m2[0] << ", " << m2[1] << ", " << m2[2] << ")\n";
   }
 
