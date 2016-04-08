@@ -413,12 +413,24 @@ try
   Parameter :: append( argc , argv );
   Parameter :: append( paramFile );
 
-  int ml = 2 ; // default value = 2
-  //ml = Parameter :: getValue ("lagrangeadapt.maxlevel", ml);
+  int ml = 2 ; // default value = 1
+  ml = Parameter :: getValue ("lagrangeadapt.maxlevel", ml);
 
-  std::ostringstream gridName;
-  gridName << MyGridType::dimensionworld << "dgrid.dgf";
-  GridPtr< MyGridType > gridptr( gridName.str().c_str() );
+  std::stringstream gridFile;
+  gridFile << "DGF" << std::endl;
+  gridFile << "Interval" << std::endl;
+  for( int d=0; d<MyGridType::dimensionworld; ++d )
+    gridFile << "0 ";
+  gridFile << std::endl;
+  for( int d=0; d<MyGridType::dimensionworld; ++d )
+    gridFile << "1 ";
+  gridFile << std::endl;
+  for( int d=0; d<MyGridType::dimensionworld; ++d )
+    gridFile << "1 ";
+  gridFile << std::endl;
+  gridFile << "#" <<  std::endl;
+
+  GridPtr< MyGridType > gridptr( gridFile );
 
   const int step = 2;
 
@@ -435,7 +447,7 @@ try
   const bool locallyAdaptive = Parameter :: getValue< bool >("adapt.locallyadaptive", false );
 
   interpolate( f, solution );
-  for ( int r = 0; r < 4; ++r )
+  for ( int r = 0; r < step; ++r )
   {
     std :: cout << std :: endl << "Refining: " << std :: endl;
     for( int i = 0; i < ml; ++i )
