@@ -3,6 +3,8 @@
 
 #include <type_traits>
 
+#include <dune/common/deprecated.hh>
+
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/io/file/vtk/subsamplingvtkwriter.hh>
 
@@ -226,22 +228,22 @@ namespace Dune
         }
       };
 
-      int getPartitionParameter() const
+      int getPartitionParameter ( const ParameterReader &parameter = Parameter::container() ) const
       {
         // 0 = none, 1 = MPI ranks only, 2 = ranks + threads, 3 = like 1 and also threads only
         const std::string names[] = { "none", "rank", "rank+thread", "rank/thread" };
-        return Parameter :: getEnum ("fem.io.partitioning", names, 0 );
+        return parameter.getEnum( "fem.io.partitioning", names, 0 );
       }
 
     protected :
-      VTKIOBase ( const GridPartType &gridPart, VTKWriterType *vtkWriter )
+      VTKIOBase ( const GridPartType &gridPart, VTKWriterType *vtkWriter, const ParameterReader &parameter = Parameter::container() )
       : gridPart_( gridPart ),
         vtkWriter_( vtkWriter ),
-        addPartition_( getPartitionParameter() )
+        addPartition_( getPartitionParameter( parameter ) )
       {
         static const std::string typeTable[] = { "ascii", "base64", "appended-raw", "appended-base64" };
         static const VTK::OutputType typeValue[] = { VTK::ascii, VTK::base64, VTK::appendedraw, VTK::appendedbase64 };
-        type_ = typeValue[ Parameter::getEnum( "fem.io.vtk.type", typeTable, 2 ) ];
+        type_ = typeValue[ parameter.getEnum( "fem.io.vtk.type", typeTable, 2 ) ];
       }
 
       void addPartitionData( const int myRank = -1 )
@@ -508,9 +510,12 @@ namespace Dune
     public:
       typedef typename BaseType::GridPartType GridPartType;
 
-      explicit VTKIO ( const GridPartType &gridPart,
-                       VTK::DataMode dm = VTK::conforming )
-      : BaseType( gridPart, new VTKWriterType( gridPart, dm ) )
+      VTKIO ( const GridPartType &gridPart, VTK::DataMode dm, const ParameterReader &parameter = Parameter::container() )
+        : BaseType( gridPart, new VTKWriterType( gridPart, dm ), parameter )
+      {}
+
+      explicit VTKIO ( const GridPartType &gridPart, const ParameterReader &parameter = Parameter::container() )
+        : VTKIO( gridPart, VTK::conforming, parameter )
       {}
     };
 
@@ -531,11 +536,26 @@ namespace Dune
     public:
       typedef typename BaseType::GridPartType GridPartType;
 
-      explicit VTKIO ( const GridPartType &gridPart,
-                       unsigned int level = 0,
-                       bool coerceToSimplex = false )
-      : BaseType( gridPart, new VTKWriterType( gridPart, level, coerceToSimplex ) )
+      explicit VTKIO ( const GridPartType &gridPart, unsigned int level, bool coerceToSimplex, const ParameterReader &parameter = Parameter::container() )
+        : BaseType( gridPart, new VTKWriterType( gridPart, level, coerceToSimplex ), parameter )
       {}
+
+      VTKIO ( const GridPartType &gridPart, unsigned int level, const ParameterReader &parameter = Parameter::container() )
+        : VTKIO( gridPart, level, false, parameter )
+      {}
+
+      VTKIO ( const GridPartType &gridPart, int level, const ParameterReader &parameter = Parameter::container() ) DUNE_DEPRECATED_MSG( "pass level as unsigned int" )
+        : VTKIO( gridPart, level, false, parameter )
+      {}
+
+      VTKIO ( const GridPartType &gridPart, const ParameterReader &parameter = Parameter::container() )
+        : VTKIO( gridPart, 0, false, parameter )
+      {}
+
+      VTKIO ( const GridPartType &gridPart, bool coerceToSimplex, const ParameterReader &parameter = Parameter::container() )
+        : VTKIO( gridPart, 0, coerceToSimplex, parameter )
+      {}
+
     };
 
 
@@ -544,21 +564,7 @@ namespace Dune
     // ----------------
 
     template< class GridPart >
-    class SubsamplingVTKIO
-    : public VTKIO< GridPart, true >
-    {
-      typedef SubsamplingVTKIO< GridPart > ThisType;
-      typedef VTKIO< GridPart, true > BaseType;
-
-    public:
-      typedef typename BaseType::GridPartType GridPartType;
-
-      explicit SubsamplingVTKIO ( const GridPartType &gridPart,
-                                  unsigned int level = 0,
-                                  bool coerceToSimplex = false )
-      : BaseType( gridPart, level, coerceToSimplex )
-      {}
-    };
+    using SubsamplingVTKIO = VTKIO< GridPart, true >;
 
   } // namespace Fem
 

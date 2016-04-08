@@ -38,7 +38,8 @@ namespace Dune
       static std::pair< int, double >
       call ( const OperatorImp &op,
              const DiscreteFunction &arg, DiscreteFunction &dest,
-             double reduction, double absLimit, int maxIter, bool verbose )
+             double reduction, double absLimit, int maxIter, bool verbose,
+             const ParameterReader &parameter )
       {
         typedef typename OperatorImp :: MatrixAdapterType MatrixAdapterType;
         MatrixAdapterType matrix = op.systemMatrix().matrixAdapter();
@@ -98,17 +99,16 @@ namespace Dune
        *  \note ISTL BiCG-stab only uses the relative reduction.
        */
       ISTLInverseOp ( const OperatorType &op,
-                      double  reduction,
-                      double absLimit,
-                      int maxIter,
-                      bool verbose )
+                      double reduction, double absLimit, int maxIter, bool verbose,
+                      const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
         reduction_( reduction ),
         absLimit_( absLimit ),
         maxIter_( maxIter ),
         verbose_( verbose ),
         iterations_( 0 ),
-        averageCommTime_( 0.0 )
+        averageCommTime_( 0.0 ),
+        parameter_( parameter )
       {}
 
       /** \brief constructor
@@ -119,16 +119,29 @@ namespace Dune
        *  \param[in] maxIter   maximal iteration steps
        */
       ISTLInverseOp ( const OperatorType &op,
-                      double reduction,
-                      double absLimit,
-                      int maxIter = std::numeric_limits< int >::max() )
+                      double reduction, double absLimit, int maxIter,
+                      const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
         reduction_( reduction ),
         absLimit_ ( absLimit ),
         maxIter_( maxIter ),
-        verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
         iterations_( 0 ),
-        averageCommTime_( 0.0 )
+        averageCommTime_( 0.0 ),
+        parameter_( parameter )
+      {}
+
+      ISTLInverseOp ( const OperatorType &op,
+                      double reduction, double absLimit,
+                      const ParameterReader &parameter = Parameter::container() )
+      : op_( op ),
+        reduction_( reduction ),
+        absLimit_ ( absLimit ),
+        maxIter_( std::numeric_limits< int >::max() ),
+        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
+        iterations_( 0 ),
+        averageCommTime_( 0.0 ),
+        parameter_( parameter )
       {}
 
       void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
@@ -150,7 +163,7 @@ namespace Dune
       void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
       {
         std::pair< int, double > info
-          = SolverCallerType::call( op_, arg, dest, reduction_, absLimit_, maxIter_, verbose_ );
+          = SolverCallerType::call( op_, arg, dest, reduction_, absLimit_, maxIter_, verbose_, parameter_ );
 
         iterations_ = info.first;
         averageCommTime_ = info.second;
@@ -185,6 +198,7 @@ namespace Dune
       bool verbose_ ;
       mutable int iterations_;
       mutable double averageCommTime_;
+      ParameterReader parameter_;
     };
 
 
@@ -216,22 +230,9 @@ namespace Dune
     {
       typedef ISTLInverseOp< DF, Op, LoopSolverCaller< Op, DF > > BaseType;
     public:
-      typedef DF DiscreteFunctionType;
-      typedef DiscreteFunctionType  DestinationType;
-      typedef Op OperatorType;
 
-      ISTLLoopOp ( const OperatorType &op,
-                   double  reduction,
-                   double absLimit,
-                   int maxIter,
-                   bool verbose )
-      : BaseType( op, reduction, absLimit, maxIter, verbose ) {}
-
-      ISTLLoopOp ( const OperatorType &op,
-                   double reduction,
-                   double absLimit,
-                   int maxIter = std::numeric_limits< int >::max() )
-      : BaseType( op, reduction, absLimit, maxIter ) {}
+      template< class ... Args >
+      ISTLLoopOp ( Args && ... args ) : BaseType( std::forward< Args >( args ) ... )  {}
     };
 
 
@@ -263,22 +264,8 @@ namespace Dune
     {
       typedef ISTLInverseOp< DF, Op, MINResSolverCaller< Op, DF > > BaseType;
     public:
-      typedef DF DiscreteFunctionType;
-      typedef DiscreteFunctionType  DestinationType;
-      typedef Op OperatorType;
-
-      ISTLMINResOp ( const OperatorType &op,
-                     double  reduction,
-                     double absLimit,
-                     int maxIter,
-                     bool verbose )
-      : BaseType( op, reduction, absLimit, maxIter, verbose ) {}
-
-      ISTLMINResOp ( const OperatorType &op,
-                     double reduction,
-                     double absLimit,
-                     int maxIter = std::numeric_limits< int >::max() )
-      : BaseType( op, reduction, absLimit, maxIter ) {}
+      template< class ... Args >
+      ISTLMINResOp ( Args && ... args ) : BaseType( std::forward< Args >( args ) ... )  {}
     };
 
 
@@ -310,22 +297,8 @@ namespace Dune
     {
       typedef ISTLInverseOp< DF, Op, BiCGSTABSolverCaller< Op, DF > > BaseType;
     public:
-      typedef DF DiscreteFunctionType;
-      typedef DiscreteFunctionType  DestinationType;
-      typedef Op OperatorType;
-
-      ISTLBICGSTABOp ( const OperatorType &op,
-                       double  reduction,
-                       double absLimit,
-                       int maxIter,
-                       bool verbose )
-      : BaseType( op, reduction, absLimit, maxIter, verbose ) {}
-
-      ISTLBICGSTABOp ( const OperatorType &op,
-                       double reduction,
-                       double absLimit,
-                       int maxIter = std::numeric_limits< int >::max() )
-      : BaseType( op, reduction, absLimit, maxIter ) {}
+      template< class ... Args >
+      ISTLBICGSTABOp ( Args && ... args ) : BaseType( std::forward< Args >( args ) ... )  {}
     };
 
 
@@ -339,9 +312,10 @@ namespace Dune
       static std::pair< int, double >
       call ( const OperatorImp &op,
              const DiscreteFunction &arg, DiscreteFunction &dest,
-             double reduction, double absLimit, int maxIter, bool verbose )
+             double reduction, double absLimit, int maxIter, bool verbose,
+             const ParameterReader &parameter )
       {
-        int restart = Parameter::getValue< int >( "istl.gmres.restart", 5 );
+        int restart = parameter.getValue< int >( "istl.gmres.restart", 5 );
         typedef typename OperatorImp :: MatrixAdapterType MatrixAdapterType;
         MatrixAdapterType matrix = op.systemMatrix().matrixAdapter();
 
@@ -393,22 +367,8 @@ namespace Dune
     {
       typedef ISTLInverseOp< DF, Op, GMResSolverCaller< Op, DF > > BaseType;
     public:
-      typedef DF DiscreteFunctionType;
-      typedef Op OperatorType;
-      typedef DiscreteFunctionType  DestinationType;
-
-      ISTLGMResOp ( const OperatorType &op,
-                    double  reduction,
-                    double absLimit,
-                    int maxIter,
-                    bool verbose )
-      : BaseType( op, reduction, absLimit, maxIter, verbose ) {}
-
-      ISTLGMResOp ( const OperatorType &op,
-                    double reduction,
-                    double absLimit,
-                    int maxIter = std::numeric_limits< int >::max() )
-      : BaseType( op, reduction, absLimit, maxIter ) {}
+      template< class ... Args >
+      ISTLGMResOp ( Args && ... args ) : BaseType( std::forward< Args >( args ) ... )  {}
     };
 
 
@@ -440,22 +400,8 @@ namespace Dune
     {
       typedef ISTLInverseOp< DF, Op, CGSolverCaller< Op, DF > > BaseType;
     public:
-      typedef DF DiscreteFunctionType;
-      typedef Op OperatorType;
-      typedef DiscreteFunctionType  DestinationType;
-
-      ISTLCGOp ( const OperatorType &op,
-                 double  reduction,
-                 double absLimit,
-                 int maxIter,
-                 bool verbose )
-      : BaseType( op, reduction, absLimit, maxIter, verbose ) {}
-
-      ISTLCGOp ( const OperatorType &op,
-                 double reduction,
-                 double absLimit,
-                 int maxIter = std::numeric_limits< int >::max() )
-      : BaseType( op, reduction, absLimit, maxIter ) {}
+      template< class ... Args >
+      ISTLCGOp ( Args && ... args ) : BaseType( std::forward< Args >( args ) ... )  {}
     };
 
 
@@ -515,21 +461,8 @@ namespace Dune
     {
       typedef ISTLInverseOp< DF, Op, SuperLUSolverCaller< Op, DF > > BaseType;
     public:
-      typedef DF DiscreteFunctionType;
-      typedef Op OperatorType;
-
-      ISTLSuperLU ( const OperatorType &op,
-                    double  reduction,
-                    double absLimit,
-                    int maxIter,
-                    bool verbose )
-      : BaseType( op, reduction, absLimit, maxIter, verbose ) {}
-
-      ISTLSuperLU ( const OperatorType &op,
-                    double reduction,
-                    double absLimit,
-                    int maxIter = std::numeric_limits< int >::max() )
-      : BaseType( op, reduction, absLimit, maxIter ) {}
+      template< class ... Args >
+      ISTLSuperLU ( Args && ... args ) : BaseType( std::forward< Args >( args ) ... )  {}
     };
 
 

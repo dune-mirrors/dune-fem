@@ -37,25 +37,27 @@ namespace Dune
       typedef TimeProviderBase ThisType;
 
     public:
-      inline TimeProviderBase ()
-      : time_( Parameter :: getValue( "fem.timeprovider.starttime",
+      inline TimeProviderBase ( const ParameterReader &parameter = Parameter::container() )
+      : time_( parameter.getValue( "fem.timeprovider.starttime",
                                       static_cast<double>(0.0) ) ),
         timeStep_( 0 ),
         dt_( 0.0 ),
         invdt_( HUGE_VAL ),
         valid_( false ),
-        dtEstimateValid_( false )
+        dtEstimateValid_( false ),
+        parameter_( parameter )
       {
         initTimeStepEstimate();
       }
 
-      inline explicit TimeProviderBase ( const double startTime )
+      inline explicit TimeProviderBase ( const double startTime, const ParameterReader &parameter = Parameter::container() )
       : time_( startTime ),
         timeStep_( 0 ),
         dt_( 0.0 ),
         invdt_( HUGE_VAL ),
         valid_( false ),
-        dtEstimateValid_( false )
+        dtEstimateValid_( false ),
+        parameter_( parameter )
       {
         initTimeStepEstimate();
       }
@@ -173,6 +175,7 @@ namespace Dune
       bool dtEstimateValid_;
       double dtEstimate_;
       double dtUpperBound_;
+      ParameterReader parameter_;
 
       void advance ()
       {
@@ -226,8 +229,17 @@ namespace Dune
        *  \param[in]  comm          collective communication (default Dune::Fem::MPIManager::comm())
        */
       explicit FixedStepTimeProvider ( const double startTime, const double timeStepSize,
-                                       const CollectiveCommunicationType &comm = MPIManager::comm())
-        : BaseType( startTime ), comm_( comm )
+                                       const CollectiveCommunicationType &comm,
+                                       const ParameterReader &parameter = Parameter::container() )
+        : BaseType( startTime, parameter ), comm_( comm )
+      {
+        dt_ = timeStepSize;
+        initTimeStep();
+      }
+
+      explicit FixedStepTimeProvider ( const double startTime, const double timeStepSize,
+                                       const ParameterReader &parameter = Parameter::container() )
+        : BaseType( startTime, parameter ), comm_( MPIManager::comm() )
       {
         dt_ = timeStepSize;
         initTimeStep();
@@ -240,13 +252,20 @@ namespace Dune
        *  The initial time need to be provided using the parameter fem.timeprovider.starttime while
        *  the time step size need to be provided using the parameter fem.timeprovider.fixedtimestep.
        */
-      explicit FixedStepTimeProvider ( const CollectiveCommunicationType &comm = MPIManager::comm())
-        : BaseType( Parameter::getValue< double>( "fem.timeprovider.starttime", 0.0 ) ), comm_( comm )
+      explicit FixedStepTimeProvider ( const ParameterReader &parameter = Parameter::container() )
+        : BaseType( parameter.getValue< double>( "fem.timeprovider.starttime", 0.0 ), parameter ), comm_( MPIManager::comm() )
       {
-        dt_ = Parameter::getValidValue< double >("fem.timeprovider.fixedtimestep", [] ( double v ) { return v > 0.0;} );
+        dt_ = parameter.getValidValue< double >("fem.timeprovider.fixedtimestep", [] ( double v ) { return v > 0.0;} );
         initTimeStep();
       }
 
+      explicit FixedStepTimeProvider ( const CollectiveCommunicationType &comm,
+                                       const ParameterReader &parameter = Parameter::container() )
+        : BaseType( parameter.getValue< double>( "fem.timeprovider.starttime", 0.0 ), parameter ), comm_( comm )
+      {
+        dt_ = parameter.getValidValue< double >("fem.timeprovider.fixedtimestep", [] ( double v ) { return v > 0.0;} );
+        initTimeStep();
+      }
       virtual ~FixedStepTimeProvider () {}
 
       FixedStepTimeProvider ( const ThisType & ) = delete;
@@ -391,15 +410,18 @@ namespace Dune
       typedef CollectiveCommunication CollectiveCommunicationType;
 
     protected:
+
+      using BaseType::parameter_;
+
       inline double getCflFactor() const
       {
-        return Parameter::getValidValue( "fem.timeprovider.factor", static_cast<double>(1.0),
+        return parameter_.getValidValue( "fem.timeprovider.factor", static_cast<double>(1.0),
             [] ( double val ) { return val > 0.0; } );
       }
 
       inline int getUpdateStep () const
       {
-        return Parameter::getValidValue( "fem.timeprovider.updatestep", static_cast<int>(1),
+        return parameter_.getValidValue( "fem.timeprovider.updatestep", static_cast<int>(1),
             [] ( int step ) { return step > 0; } );
       }
 
@@ -408,8 +430,16 @@ namespace Dune
        *
        *  \param[in]  comm  collective communication (default Dune::Fem::MPIManager::comm())
        */
-      explicit TimeProvider ( const CollectiveCommunicationType &comm =  MPIManager::comm() )
-      : BaseType(),
+      explicit TimeProvider ( const ParameterReader &parameter = Parameter::container() )
+      : BaseType( parameter ),
+        comm_( MPIManager::comm() ),
+        cfl_( getCflFactor() ),
+        updateStep_( getUpdateStep() ),
+        counter_( updateStep_ )
+      {}
+
+      explicit TimeProvider ( const CollectiveCommunicationType &comm, const ParameterReader &parameter = Parameter::container() )
+      : BaseType( parameter ),
         comm_( comm ),
         cfl_( getCflFactor() ),
         updateStep_( getUpdateStep() ),

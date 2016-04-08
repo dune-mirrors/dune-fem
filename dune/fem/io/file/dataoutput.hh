@@ -62,24 +62,38 @@ namespace Dune
     : public LocalParameter< DataOutputParameters, DataOutputParameters >
 #endif
     {
-      protected:
+    protected:
       const std::string keyPrefix_;
+      ParameterReader parameter_;
 
-      public:
-      DataOutputParameters( const std::string keyPrefix = "fem.io." )
-        : keyPrefix_( keyPrefix )
+    public:
+      explicit DataOutputParameters ( std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
+        : keyPrefix_( std::move( keyPrefix ) ), parameter_( parameter )
       {}
 
-      //! \brief path where the data is stored (path are always relative to fem.commonOutputPath)
+      explicit DataOutputParameters ( const ParameterReader &parameter = Parameter::container() )
+        : keyPrefix_( "fem.io" ), parameter_( parameter )
+      {}
+
+      //! \brief path where the data is stored (always relative to fem.prefix)
       virtual std::string path() const
       {
-        return Parameter::getValue< std::string >( keyPrefix_ + "path", "./" );
+        return parameter().getValue< std::string >( keyPrefix_ + "path", "./" );
+      }
+
+      virtual std::string absolutePath () const
+      {
+        std::string absPath = parameter().getValue< std::string >( "fem.prefix", "." ) + "/";
+        const std::string relPath = path();
+        if( relPath != "./" )
+          absPath += relPath;
+        return absPath;
       }
 
       //! \brief base of file name for data file (fem.io.datafileprefix)
       virtual std::string prefix () const
       {
-        return Parameter::getValue< std::string >( keyPrefix_ + "datafileprefix", "" );
+        return parameter().getValue< std::string >( keyPrefix_ + "datafileprefix", "" );
       }
 
       //! \brief format of output (fem.io.outputformat)
@@ -87,20 +101,20 @@ namespace Dune
       {
         static const std::string formatTable[]
           = { "vtk-cell", "vtk-vertex", "sub-vtk-cell", "binary" , "gnuplot" , "none" };
-        int format = Parameter::getEnum( keyPrefix_ + "outputformat", formatTable, 1 );
+        int format = parameter().getEnum( keyPrefix_ + "outputformat", formatTable, 1 );
         return format;
       }
 
       virtual bool conformingoutput () const
       {
-        return Parameter::getValue< bool >( keyPrefix_ + "conforming", false );
+        return parameter().getValue< bool >( keyPrefix_ + "conforming", false );
       }
 
       //! \brief use online grape display (fem.io.grapedisplay)
       virtual bool grapedisplay () const
       {
 #if USE_GRAPE
-        return (Parameter::getValue( keyPrefix_ + "grapedisplay", 0 ) == 1);
+        return (parameter().getValue( keyPrefix_ + "grapedisplay", 0 ) == 1);
 #else
         return false;
 #endif
@@ -109,19 +123,19 @@ namespace Dune
       //! \brief save data every savestep interval (fem.io.savestep)
       virtual double savestep () const
       {
-        return Parameter::getValue< double >( keyPrefix_ + "savestep", 0 );
+        return parameter().getValue< double >( keyPrefix_ + "savestep", 0 );
       }
 
       //! \brief save data every savecount calls to write method (fem.io.savecount)
       virtual int savecount () const
       {
-        return Parameter::getValue< int >( keyPrefix_ + "savecount", 0 );
+        return parameter().getValue< int >( keyPrefix_ + "savecount", 0 );
       }
 
       //! \brief save data every subsamplingLevel (fem.io.subsamplinglevel)
       virtual int subsamplingLevel() const
       {
-        return Parameter::getValue< int >( keyPrefix_ + "subsamplinglevel", 1 );
+        return parameter().getValue< int >( keyPrefix_ + "subsamplinglevel", 1 );
       }
 
       //! \brief number for first data file (no parameter available)
@@ -155,6 +169,8 @@ namespace Dune
       {
         return true ;
       }
+
+      const ParameterReader &parameter () const noexcept { return parameter_; }
     };
 
 
@@ -262,8 +278,11 @@ namespace Dune
         \param parameter structure for tuning the behavior of the Dune::DataOutput
                          defaults to Dune::DataOutputParameters
       */
-      DataOutput ( const GridType &grid, OutPutDataType &data,
-                   const DataOutputParameters &parameter = DataOutputParameters() );
+      DataOutput ( const GridType &grid, OutPutDataType &data, const DataOutputParameters &parameter );
+
+      DataOutput ( const GridType &grid, OutPutDataType &data, const ParameterReader &parameter = Parameter::container() )
+        : DataOutput( grid, data, DataOutputParameters( parameter ) )
+      {}
 
       /** \brief Constructor creating data writer
         \param grid corresponding grid
@@ -272,9 +291,11 @@ namespace Dune
         \param parameter structure for tuning the behavior of the Dune::DataOutput
                          defaults to Dune::DataOutputParameters
       */
-      DataOutput ( const GridType &grid, OutPutDataType &data,
-                   const TimeProviderBase &tp,
-                   const DataOutputParameters &parameter = DataOutputParameters() );
+      DataOutput ( const GridType &grid, OutPutDataType &data, const TimeProviderBase &tp, const DataOutputParameters &parameter );
+
+      DataOutput ( const GridType &grid, OutPutDataType &data, const TimeProviderBase &tp, const ParameterReader &parameter = Parameter::container() )
+        : DataOutput( grid, data, tp, DataOutputParameters( parameter ) )
+      {}
 
       void consistentSaveStep ( const TimeProviderBase &tp ) const;
 
@@ -724,15 +745,8 @@ namespace Dune
     inline void DataOutput< GridImp, DataImp >::
     init ( const DataOutputParameters &parameter )
     {
-      const auto writeMode = parameter.writeMode();
-      if( writeMode )
-        IOInterface :: createGlobalPath ( grid_.comm(), Parameter::commonOutputPath() );
-
-      path_ = Parameter::commonOutputPath() + "/";
-
-      auto paramPath = parameter.path();
-      if( paramPath != "./" )
-        path_ += paramPath;
+      const bool writeMode = parameter.writeMode();
+      path_ = parameter.absolutePath();
 
       // create path if not already exists
       if( writeMode )
@@ -895,7 +909,7 @@ namespace Dune
 
         // create vtk output handler
         typedef VTKIO < typename GridPartGetterType::GridPartType > VTKIOType;
-        VTKIOType vtkio ( gridPart, VTK::conforming );
+        VTKIOType vtkio ( gridPart, VTK::conforming, param_->parameter() );
 
         // add all functions
         VTKOutputerLagrange< VTKIOType > io( vtkio );
@@ -920,7 +934,7 @@ namespace Dune
 
         // create vtk output handler
         typedef VTKIO< typename GridPartGetterType::GridPartType > VTKIOType;
-        VTKIOType vtkio( gp.gridPart(), conformingOutput_ ? VTK::conforming : VTK::nonconforming );
+        VTKIOType vtkio( gp.gridPart(), conformingOutput_ ? VTK::conforming : VTK::nonconforming, param_->parameter() );
 
         // add all functions
         VTKOutputerDG< VTKIOType > io( vtkio, conformingOutput_ );
@@ -945,7 +959,7 @@ namespace Dune
 
         // create vtk output handler
         typedef SubsamplingVTKIO < typename GridPartGetterType :: GridPartType > VTKIOType;
-        VTKIOType vtkio ( gp.gridPart(), param_->subsamplingLevel() );
+        VTKIOType vtkio ( gp.gridPart(), static_cast< unsigned int >( param_->subsamplingLevel() ), param_->parameter() );
 
         // add all functions
         VTKOutputerDG< VTKIOType > io( vtkio, conformingOutput_ );

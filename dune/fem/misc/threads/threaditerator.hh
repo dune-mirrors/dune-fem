@@ -57,7 +57,7 @@ namespace Dune
 
     public:
       //! contructor creating thread iterators
-      explicit ThreadIterator( const GridPartType& gridPart )
+      explicit ThreadIterator( const GridPartType& gridPart, const ParameterReader &parameter = Parameter::container() )
         : gridPart_( gridPart )
         , dofManager_( DofManagerType :: instance( gridPart_.grid() ) )
         , indexSet_( gridPart_.indexSet() )
@@ -66,10 +66,10 @@ namespace Dune
         , iterators_( ThreadManager::maxThreads() + 1 , gridPart_.template end< 0, pitype >() )
         , threadId_( ThreadManager::maxThreads() )
 #endif
-        , communicationThread_( Parameter::getValue<bool>("fem.threads.communicationthread", false)
+        , communicationThread_( parameter.getValue<bool>("fem.threads.communicationthread", false)
                     &&  Fem :: ThreadManager :: maxThreads() > 1 ) // only possible if maxThreads > 1
         , verbose_( Parameter::verbose() &&
-                    Parameter::getValue<bool>("fem.threads.verbose", false ) )
+                    parameter.getValue<bool>("fem.threads.verbose", false ) )
       {
 #ifdef USE_SMP_PARALLEL
         threadNum_.setMemoryFactor( 1.1 );

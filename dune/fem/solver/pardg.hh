@@ -61,12 +61,12 @@ namespace pardg {
    *  \param paramName   parameter key for Fem::Parameter
    */
   inline
-  void set_tolerance(IterativeSolver &solver,
+  void set_tolerance(const Dune::Fem::ParameterReader &parameter, IterativeSolver &solver,
                      double redEps, double absLimit, const char *paramName)
   {
     static const std::string errorTypeTable[] =
       { "absolute", "relative", "residualreduction" };
-    int errorType = Dune::Fem::Parameter::getEnum( paramName, errorTypeTable, 0 );
+    int errorType = parameter.getEnum( paramName, errorTypeTable, 0 );
     switch (errorType)
     {
       case 0: solver.set_tolerance(absLimit, IterativeSolver::ToleranceCriteria::absolute); break;
@@ -81,9 +81,9 @@ namespace pardg {
    *  \param paramName   parameter key for Fem::Parameter
    */
   inline
-  void set_tolerance(IterativeSolver &solver, double tol, const char *paramName)
+  void set_tolerance(const Dune::Fem::ParameterReader &parameter, IterativeSolver &solver, double tol, const char *paramName)
   {
-    set_tolerance(solver,tol,tol,paramName);
+    set_tolerance(parameter,solver,tol,tol,paramName);
   }
 } // end namespace pardg
 } // end namespace PARDG_NS

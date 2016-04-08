@@ -20,10 +20,12 @@ namespace Dune
       // key prefix, default is fem.solver (can be overloaded by user)
       const std::string keyPrefix_;
 
+      ParameterReader parameter_;
+
       public:
 
-      SolverParameter ( const std::string keyPrefix = "fem.solver." )
-        : keyPrefix_( keyPrefix )
+      SolverParameter ( const std::string keyPrefix = "fem.solver.", const ParameterReader &parameter = Parameter::container() )
+        : keyPrefix_( keyPrefix ), parameter_( parameter )
       {}
 
       virtual bool verbose() const
@@ -34,7 +36,7 @@ namespace Dune
       virtual int errorMeasure() const
       {
         static const std::string errorTypeTable[] = { "absolute", "relative" };
-        return Parameter::getEnum( keyPrefix_ + "errormeasure", errorTypeTable, 0 );
+        return parameter_.getEnum( keyPrefix_ + "errormeasure", errorTypeTable, 0 );
       }
 
     };

@@ -3,6 +3,7 @@
 
 #include <type_traits>
 
+#include <dune/fem/io/parameter.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/solver/diagonalpreconditioner.hh>
@@ -59,7 +60,8 @@ namespace Dune
        */
       ConjugateGradientSolver ( const RealType &epsilon,
                                 unsigned int maxIterations,
-                                bool verbose )
+                                bool verbose,
+                                const ParameterReader &parameter = Parameter::container() )
       : epsilon_( epsilon ),
         maxIterations_( maxIterations ),
         verbose_( verbose ),
@@ -74,10 +76,11 @@ namespace Dune
        *  \param[in]  maxIterations  maximum number of CG iterations
        */
       ConjugateGradientSolver ( RealType epsilon,
-                                unsigned int maxIterations )
+                                unsigned int maxIterations,
+                                const ParameterReader &parameter = Parameter::container() )
       : epsilon_( epsilon ),
         maxIterations_( maxIterations ),
-        verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
         averageCommTime_( 0.0 ),
         realCount_( 0 )
       {}
@@ -173,11 +176,14 @@ namespace Dune
          */
         CGInverseOperator ( const OperatorType &op,
                             RealType redEps, RealType absLimit,
-                            unsigned int maxIter, bool verbose )
+                            unsigned int maxIter, bool verbose,
+                            const ParameterReader &parameter = Parameter::container() )
           : operator_( op ),
             preconditioner_ ( 0 ),
-            solver_( absLimit, maxIter, verbose )
+            solver_( absLimit, maxIter, verbose, parameter ),
+            parameter_( parameter )
         {}
+
 
         /** \brief constructor of CGInverseOperator
          *
@@ -188,10 +194,21 @@ namespace Dune
          */
         CGInverseOperator ( const OperatorType &op,
                             RealType redEps, RealType absLimit,
-                            unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
+                            unsigned int maxIter,
+                            const ParameterReader &parameter = Parameter::container() )
           : operator_( op ),
             preconditioner_ ( 0 ),
-            solver_( absLimit, maxIter )
+            solver_( absLimit, maxIter, parameter ),
+            parameter_( parameter )
+        {}
+
+        CGInverseOperator ( const OperatorType &op,
+                            RealType redEps, RealType absLimit,
+                            const ParameterReader &parameter = Parameter::container() )
+          : operator_( op ),
+            preconditioner_ ( 0 ),
+            solver_( absLimit, std::numeric_limits< unsigned int >::max(), parameter ),
+            parameter_( parameter )
         {}
 
         /** \brief constructor of CGInverseOperator
@@ -205,10 +222,22 @@ namespace Dune
         CGInverseOperator ( const OperatorType &op,
                             const PreconditionerType &precond,
                             RealType redEps, RealType absLimit,
-                            unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
+                            const ParameterReader &parameter = Parameter::container() )
           : operator_( op ),
             preconditioner_( &precond ),
-            solver_( absLimit, maxIter )
+            solver_( absLimit, std::numeric_limits< unsigned int >::max(), parameter ),
+            parameter_( parameter )
+        {}
+
+        CGInverseOperator ( const OperatorType &op,
+                            const PreconditionerType &precond,
+                            RealType redEps, RealType absLimit,
+                            unsigned int maxIter,
+                            const ParameterReader &parameter = Parameter::container() )
+          : operator_( op ),
+            preconditioner_( &precond ),
+            solver_( absLimit, maxIter, parameter ),
+            parameter_( parameter )
         {}
 
         /** \brief application operator
@@ -265,6 +294,7 @@ namespace Dune
         const OperatorType &operator_;
         const PreconditionerType *preconditioner_;
         SolverType solver_;
+        ParameterReader parameter_;
       };
     }
 
@@ -311,8 +341,9 @@ namespace Dune
       template <class LinearOperator>
       CGInverseOperator ( const LinearOperator &op,
                           RealType redEps, RealType absLimit,
-                          unsigned int maxIter, bool verbose )
-      : BaseType( op, redEps, absLimit, maxIter, verbose ),
+                          unsigned int maxIter, bool verbose,
+                          const ParameterReader &parameter = Parameter::container() )
+      : BaseType( op, redEps, absLimit, maxIter, verbose, parameter ),
         precondObj_( 0 )
       {
         checkPreconditioning( op );
@@ -328,8 +359,19 @@ namespace Dune
       template <class LinearOperator>
       CGInverseOperator ( const LinearOperator &op,
                           RealType redEps, RealType absLimit,
-                          unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
-      : BaseType( op, redEps, absLimit, maxIter ),
+                          unsigned int maxIter,
+                          const ParameterReader &parameter = Parameter::container() )
+      : BaseType( op, redEps, absLimit, maxIter, parameter ),
+        precondObj_( 0 )
+      {
+        checkPreconditioning( op );
+      }
+
+      template <class LinearOperator>
+      CGInverseOperator ( const LinearOperator &op,
+                          RealType redEps, RealType absLimit,
+                          const ParameterReader &parameter = Parameter::container() )
+      : BaseType( op, redEps, absLimit, std::numeric_limits< unsigned int >::max(), parameter ),
         precondObj_( 0 )
       {
         checkPreconditioning( op );
@@ -346,8 +388,17 @@ namespace Dune
       CGInverseOperator ( const OperatorType &op,
                           const PreconditioningType &precond,
                           RealType redEps, RealType absLimit,
-                          unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
-      : BaseType( op, precond, redEps, absLimit, maxIter ),
+                          unsigned int maxIter,
+                          const ParameterReader &parameter = Parameter::container() )
+      : BaseType( op, precond, redEps, absLimit, maxIter, parameter ),
+        precondObj_( 0 )
+      {}
+
+      CGInverseOperator ( const OperatorType &op,
+                          const PreconditioningType &precond,
+                          RealType redEps, RealType absLimit,
+                          const ParameterReader &parameter = Parameter::container() )
+      : BaseType( op, precond, redEps, absLimit, std::numeric_limits< unsigned int >::max(), parameter ),
         precondObj_( 0 )
       {}
 
@@ -362,7 +413,7 @@ namespace Dune
       template< class LinearOperator >
       void checkPreconditioning( const LinearOperator &linearOp )
       {
-        const bool preconditioning = Parameter::getValue< bool >( "fem.preconditioning", false );
+        const bool preconditioning = parameter_.template getValue< bool >( "fem.preconditioning", false );
         if( preconditioning && std::is_base_of< AssembledOperator< DomainFunctionType, DomainFunctionType > ,LinearOperator > :: value )
         {
           // create diagonal preconditioner
@@ -372,6 +423,7 @@ namespace Dune
       }
 
       using BaseType::preconditioner_;
+      using BaseType::parameter_;
       PreconditioningType *precondObj_;
     };
 

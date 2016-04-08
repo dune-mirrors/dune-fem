@@ -145,13 +145,13 @@ namespace Dune
        \param grid Grid that adaptation method is read for
 
     */
-    AdaptationMethod(const GridType & grid)
+    AdaptationMethod ( const GridType &grid, const ParameterReader &parameter = Parameter::container() )
       : adaptationMethod_(generic)
     {
       const bool output = ( Parameter :: verbose() );
       int am = 1;
       const std::string methodNames [] = { "none", "generic", "callback" };
-      am = Parameter::getEnum("fem.adaptation.method", methodNames, am);
+      am = parameter.getEnum("fem.adaptation.method", methodNames, am);
       init(am,output);
     }
   private:
@@ -289,8 +289,8 @@ namespace Dune
         user data is projected to other grid levels
           the following two lines:
     */
-    AdaptationManagerBase ( GridType &grid, RestProlOperatorImp &rpOp )
-    : BaseType( grid ),
+    AdaptationManagerBase ( GridType &grid, RestProlOperatorImp &rpOp, const ParameterReader &parameter = Parameter::container() )
+    : BaseType( grid, parameter ),
       grid_( grid ),
       dm_( DofManagerType::instance( grid_ ) ),
       rpOp_( rpOp ),
@@ -623,20 +623,26 @@ namespace Dune
         user data is projected to other grid levels
        \param balanceCounter start counter for balance cycle (default = 0)
     */
-    AdaptationManager(GridType & grid,
-                      RestProlOperatorImp & rpOp,
-                      int balanceCounter = 0 )
-      : BaseType(grid,rpOp)
-      , Base2Type( grid , rpOp , balanceCounter )
+    AdaptationManager ( GridType &grid, RestProlOperatorImp &rpOp, int balanceCounter, const ParameterReader &parameter = Parameter::container() )
+      : BaseType(grid,rpOp, parameter)
+      , Base2Type( grid, rpOp, balanceCounter, parameter )
       , commList_(rpOp)
       , balanceTime_( 0.0 )
       , referenceCounter_( ProviderType :: getObject( &grid ) )
     {
-      ++ referenceCounter_;
-      if( referenceCounter_ > 1 )
-      {
+      if( ++referenceCounter_ > 1 )
         DUNE_THROW(InvalidStateException,"Only one instance of AdaptationManager allowed per grid instance");
-      }
+    }
+
+    AdaptationManager ( GridType &grid, RestProlOperatorImp &rpOp, const ParameterReader &parameter = Parameter::container() )
+      : BaseType(grid,rpOp, parameter)
+      , Base2Type( grid, rpOp, parameter )
+      , commList_(rpOp)
+      , balanceTime_( 0.0 )
+      , referenceCounter_( ProviderType :: getObject( &grid ) )
+    {
+      if( ++referenceCounter_ > 1 )
+        DUNE_THROW(InvalidStateException,"Only one instance of AdaptationManager allowed per grid instance");
     }
 
     //! destructor decreasing reference counter
