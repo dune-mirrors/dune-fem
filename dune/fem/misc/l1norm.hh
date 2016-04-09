@@ -33,8 +33,7 @@ namespace Dune
       template< class UFunction, class VFunction >
       struct FunctionDistance;
 
-      typedef typename GridPartType::template Codim< 0 >::IteratorType GridIteratorType;
-      typedef typename GridIteratorType::Entity EntityType;
+      typedef typename BaseType::EntityType EntityType;
       typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 
       const unsigned int order_;

@@ -34,8 +34,7 @@ namespace Dune
       struct FunctionDistance;
 
     protected:
-      typedef typename GridPartType::template Codim< 0 >::IteratorType GridIteratorType;
-      typedef typename GridIteratorType::Entity EntityType;
+      typedef typename BaseType::EntityType EntityType;
       typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
       typedef Integrator< QuadratureType > IntegratorType;
 
@@ -247,10 +246,8 @@ namespace Dune
       typedef typename WeightFunctionType::LocalFunctionType LocalWeightFunctionType;
       typedef typename WeightFunctionType::RangeType WeightType;
 
-      typedef typename BaseType::GridIteratorType GridIteratorType;
+      typedef typename BaseType::EntityType EntityType;
       typedef typename BaseType::IntegratorType IntegratorType;
-
-      typedef typename GridIteratorType::Entity EntityType;
 
       using BaseType::gridPart;
       using BaseType::comm;

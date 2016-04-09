@@ -3,6 +3,8 @@
 
 #include <type_traits>
 
+#include <dune/grid/common/rangegenerators.hh>
+
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/integrator.hh>
 
@@ -35,89 +37,22 @@ namespace Dune
     protected:
       using BaseType :: asImp ;
 
-      typedef typename GridPartType::template Codim< 0 >::IteratorType GridIteratorType;
-      typedef typename GridIteratorType::Entity EntityType;
-
-      template < class ReturnType,
-                 class UDiscreteFunctionType,
-                 class VDiscreteFunctionType >
-      struct NormOnEntityFunctor
-      {
-        const ThisType& norm_;
-        const UDiscreteFunctionType& u_;
-        const VDiscreteFunctionType* v_;
-        const unsigned int order_ ;
-        ReturnType sum_;
-
-        unsigned int getOrder( const UDiscreteFunctionType& u,
-                               const VDiscreteFunctionType& v ) const
-        {
-          const unsigned int uorder = u.space().order();
-          const unsigned int vorder = v.space().order();
-          const unsigned int order = 2 * std::max( uorder, vorder );
-          return order;
-        }
-
-        NormOnEntityFunctor( const ThisType& norm,
-                      const UDiscreteFunctionType& u,
-                      const unsigned int order = 0 )
-          : norm_( norm ),
-            u_( u ),
-            v_( 0 ),
-            order_( ( order == 0 ) ? ( getOrder( u, u ) ) : order ),
-            sum_( 0 )
-        {}
-
-        NormOnEntityFunctor( const ThisType& norm,
-                      const UDiscreteFunctionType& u,
-                      const VDiscreteFunctionType& v,
-                      const unsigned int order = 0 )
-          : norm_( norm ),
-            u_( u ),
-            v_( &v ),
-            order_( ( order == 0 ) ? ( getOrder( u, v ) ) : order ),
-            sum_( 0 )
-        {
-        }
-
-        // apply norm operation on entity
-        void operator() ( const EntityType& entity )
-        {
-          // if v is not zero apply distance
-          if( v_ )
-            norm_.distanceLocal( entity, order_, u_, *v_, sum_ );
-          else
-            norm_.normLocal( entity, order_, u_, sum_ );
-        }
-
-        const ReturnType& result() const { return sum_; }
-      };
+      typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
       template <bool uDiscrete, bool vDiscrete>
       struct ForEachCaller
       {
-        template <class UDiscreteFunctionType,
-                  class VDiscreteFunctionType,
-                  class ReturnType>
-        static
-        ReturnType forEach ( const ThisType& norm,
-                             const UDiscreteFunctionType& u,
-                             const VDiscreteFunctionType& v,
-                             const ReturnType& initialValue,
-                             const unsigned int order )
+        template <class UDiscreteFunctionType, class VDiscreteFunctionType, class ReturnType>
+        static ReturnType forEach ( const ThisType &norm, const UDiscreteFunctionType &u, const VDiscreteFunctionType &v, const ReturnType &initialValue, unsigned int order )
         {
           static_assert( uDiscrete && vDiscrete, "Distance can only be calculated between GridFunctions" );
 
-          typedef NormOnEntityFunctor< ReturnType, UDiscreteFunctionType, VDiscreteFunctionType >
-            ForEachFunctorType;
+          order = (order == 0 ? 2*std::max( u.space().order(), v.space().order() ) : order);
 
-          // create functor
-          ForEachFunctorType normOnEntity( norm, u, v, order );
-
-          // do grid part traversal and apply action on entity
-          u.space().forEach( normOnEntity );
-
-          return normOnEntity.result();
+          ReturnType sum( 0 );
+          for( const EntityType &entity : elements( norm.gridPart_, Partitions::interior ) )
+            norm.distanceLocal( entity, order, u, v, sum );
+          return sum;
         }
       };
 
@@ -161,35 +96,22 @@ namespace Dune
         }
       };
 
-      template <class DiscreteFunctionType, class ReturnType>
-      ReturnType
-      forEach ( const DiscreteFunctionType& u,
-                const ReturnType& initialValue,
-                const unsigned int order = 0 ) const
+      template< class DiscreteFunctionType, class ReturnType >
+      ReturnType forEach ( const DiscreteFunctionType &u, const ReturnType &initialValue, unsigned int order = 0 ) const
       {
         static_assert( (std::is_base_of<Fem::HasLocalFunction, DiscreteFunctionType>::value),
                             "Norm only implemented for quantities implementing a local function!" );
 
-        typedef NormOnEntityFunctor< ReturnType, DiscreteFunctionType, DiscreteFunctionType >
-          ForEachFunctorType;
+        order = (order == 0 ? 2*u.space().order() : order);
 
-        // create functor
-        ForEachFunctorType normOnEntity( *this, u, order );
-
-        // do grid part traversal and apply action on entity
-        u.space().forEach( normOnEntity );
-
-        return normOnEntity.result();
+        ReturnType sum( 0 );
+        for( const EntityType &entity : elements( gridPart_, Partitions::interior ) )
+          normLocal( entity, order, u, sum );
+        return sum;
       }
 
-      template <class UDiscreteFunctionType,
-                class VDiscreteFunctionType,
-                class ReturnType>
-      ReturnType
-      forEach ( const UDiscreteFunctionType& u,
-                const VDiscreteFunctionType& v,
-                const ReturnType& initialValue,
-                const unsigned int order = 0 ) const
+      template< class UDiscreteFunctionType, class VDiscreteFunctionType, class ReturnType >
+      ReturnType forEach ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v, const ReturnType &initialValue, unsigned int order = 0 ) const
       {
         enum { uDiscrete = std::is_convertible<UDiscreteFunctionType, HasLocalFunction>::value };
         enum { vDiscrete = std::is_convertible<VDiscreteFunctionType, HasLocalFunction>::value };
@@ -291,8 +213,7 @@ namespace Dune
       template< class UFunction, class VFunction >
       struct FunctionDistance;
 
-      typedef typename GridPartType::template Codim< 0 >::IteratorType GridIteratorType;
-      typedef typename GridIteratorType::Entity EntityType;
+      typedef typename BaseType::EntityType EntityType;
       typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
       typedef Integrator< QuadratureType > IntegratorType;
 
@@ -357,10 +278,8 @@ namespace Dune
       typedef typename WeightFunctionType::LocalFunctionType LocalWeightFunctionType;
       typedef typename WeightFunctionType::RangeType WeightType;
 
-      typedef typename BaseType::GridIteratorType GridIteratorType;
+      typedef typename BaseType::EntityType EntityType;
       typedef typename BaseType::IntegratorType IntegratorType;
-
-      typedef typename GridIteratorType::Entity EntityType;
 
       using BaseType::gridPart;
       using BaseType::comm;
