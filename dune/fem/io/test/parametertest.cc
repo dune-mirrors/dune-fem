@@ -1,15 +1,24 @@
 #ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
+#include "config.h"
+#endif // #ifdef HAVE_CONFIG_H
+
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 
-#include <dune/common/exceptions.hh> // We use exceptions
-#include <dune/common/fvector.hh>  // definition of field vectors
+#include <dune/common/exceptions.hh>
+#include <dune/common/fvector.hh>
+#include <dune/common/parametertreeparser.hh>
 
-#include <dune/fem/io/parameter.hh> // include parameters
+#include <dune/fem/io/parameter.hh>
+#include <dune/fem/io/parameter/parametertree.hh>
 
+// small ini data structure for testing the parameter tree reader
+const char iniTree[]
+  = "[test]\n"
+    "string = Hello\n"
+    "integer = 42\n";
 
 // main programm
 int main(int argc, char** argv)
@@ -93,6 +102,19 @@ int main(int argc, char** argv)
 
     // finallay write the parameter log
     Dune::Fem::Parameter::write("parameter.log");
+
+    // test reading from a dune-common parameter tree
+    std::cout << ">>> Testing parameter reader for ParameterTree..." << std::endl;
+    Dune::ParameterTree parameterTree;
+    std::istringstream iniStream( iniTree );
+    Dune::ParameterTreeParser::readINITree( iniStream, parameterTree );
+    const auto parameterReader = Dune::Fem::parameterReader( parameterTree );
+    if( parameterReader.getValue< std::string >( "test.string" ) != "Hello" )
+      DUNE_THROW( Dune::Exception, "Unable to read string parameter from parameter tree" );
+    if( parameterReader.getValue< int >( "test.integer" ) != 42 )
+      DUNE_THROW( Dune::Exception, "Unable to read integer parameter from parameter tree" );
+    if( parameterReader.getValue< int >( "undefined.integer", 123 ) != 123 )
+      DUNE_THROW( Dune::Exception, "Unable to read default integer parameter from parameter tree" );
 
     return 0;
   }
