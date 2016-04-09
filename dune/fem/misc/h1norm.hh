@@ -44,21 +44,11 @@ namespace Dune
       typename Dune::FieldTraits< typename UDiscreteFunctionType::RangeFieldType >::real_type
       distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
 
-      template< class UDiscreteFunctionType,
-                class VDiscreteFunctionType,
-                class ReturnType >
-      inline void
-      distanceLocal ( const EntityType& entity, const unsigned int order,
-                      const UDiscreteFunctionType &u,
-                      const VDiscreteFunctionType &v,
-                      ReturnType& sum ) const ;
+      template< class LocalFunctionType, class ReturnType >
+      void normLocal ( const EntityType &entity, unsigned int order, const LocalFunctionType &uLocal, ReturnType &sum ) const;
 
-      template< class UDiscreteFunctionType,
-                class ReturnType >
-      inline void
-      normLocal ( const EntityType& entity, const unsigned int order,
-                      const UDiscreteFunctionType &u,
-                      ReturnType& sum ) const ;
+      template< class ULocalFunctionType, class VLocalFunctionType, class ReturnType >
+      void distanceLocal ( const EntityType &entity, unsigned int order, const ULocalFunctionType &uLocal, const VLocalFunctionType &vLocal, ReturnType &sum ) const;
 
       ThisType operator= ( const ThisType& ) = delete;
 
@@ -157,26 +147,15 @@ namespace Dune
     }
 
     template< class GridPart >
-    template< class UDiscreteFunctionType,
-              class VDiscreteFunctionType,
-              class ReturnType >
+    template< class ULocalFunctionType, class VLocalFunctionType, class ReturnType >
     inline void
-    H1Norm< GridPart >::distanceLocal ( const EntityType& entity, const unsigned int order,
-                                        const UDiscreteFunctionType &u,
-                                        const VDiscreteFunctionType &v,
-                                        ReturnType& sum ) const
+    H1Norm< GridPart >::distanceLocal ( const EntityType &entity, unsigned int order, const ULocalFunctionType &uLocal, const VLocalFunctionType &vLocal, ReturnType &sum ) const
     {
-      typedef typename UDiscreteFunctionType::LocalFunctionType ULocalFunctionType;
-      typedef typename VDiscreteFunctionType::LocalFunctionType VLocalFunctionType;
-      ULocalFunctionType ulocal = u.localFunction( entity );
-      VLocalFunctionType vlocal = v.localFunction( entity );
-
-      typedef typename L2Norm< GridPart >::template FunctionDistance< ULocalFunctionType, VLocalFunctionType >
-        LocalDistanceType;
+      typedef typename L2Norm< GridPart >::template FunctionDistance< ULocalFunctionType, VLocalFunctionType > LocalDistanceType;
 
       IntegratorType integrator( order );
 
-      LocalDistanceType dist( ulocal, vlocal );
+      LocalDistanceType dist( uLocal, vLocal );
       FunctionJacobianSquare< LocalDistanceType > dist2( dist );
 
       integrator.integrateAdd( entity, dist2, sum );
@@ -184,21 +163,16 @@ namespace Dune
 
 
     template< class GridPart >
-    template< class DiscreteFunctionType, class ReturnType >
+    template< class LocalFunctionType, class ReturnType >
     inline void
-    H1Norm< GridPart >::normLocal ( const EntityType& entity, const unsigned int order,
-                                    const DiscreteFunctionType &u,
-                                    ReturnType& sum ) const
+    H1Norm< GridPart >::normLocal ( const EntityType &entity, unsigned int order, const LocalFunctionType &uLocal, ReturnType &sum ) const
     {
-      typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
       // evaluate norm locally
-
       IntegratorType integrator( order );
 
-      LocalFunctionType ulocal = u.localFunction( entity );
-      FunctionJacobianSquare< LocalFunctionType > ulocal2( ulocal );
+      FunctionJacobianSquare< LocalFunctionType > uLocal2( uLocal );
 
-      integrator.integrateAdd( entity, ulocal2, sum );
+      integrator.integrateAdd( entity, uLocal2, sum );
     }
 
   } // namespace Fem
