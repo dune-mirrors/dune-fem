@@ -48,21 +48,11 @@ namespace Dune
       typename Dune::FieldTraits< typename UDiscreteFunctionType::RangeFieldType >::real_type
       distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
 
-      template< class UDiscreteFunctionType,
-                class VDiscreteFunctionType,
-                class ReturnType >
-      inline void
-      distanceLocal ( const EntityType& entity, const unsigned int order,
-                      const UDiscreteFunctionType &u,
-                      const VDiscreteFunctionType &v,
-                      ReturnType& sum ) const ;
+      template< class LocalFunctionType, class ReturnType >
+      void normLocal ( const EntityType &entity, unsigned int order, const LocalFunctionType &uLocal, ReturnType &sum ) const;
 
-      template< class UDiscreteFunctionType,
-                class ReturnType >
-      inline void
-      normLocal ( const EntityType& entity, const unsigned int order,
-                      const UDiscreteFunctionType &u,
-                      ReturnType& sum ) const ;
+      template< class ULocalFunctionType, class VLocalFunctionType, class ReturnType >
+      void distanceLocal ( const EntityType &entity, unsigned int order, const ULocalFunctionType &uLocal, const VLocalFunctionType &vLocal, ReturnType &sum ) const;
     };
 
 
@@ -112,43 +102,27 @@ namespace Dune
     }
 
     template< class GridPart >
-    template< class DiscreteFunctionType, class ReturnType >
+    template< class LocalFunctionType, class ReturnType >
     inline void
-    L1Norm< GridPart >::normLocal ( const EntityType& entity, const unsigned int order,
-                                    const DiscreteFunctionType &u,
-                                    ReturnType& sum ) const
+    L1Norm< GridPart >::normLocal ( const EntityType &entity, unsigned int order, const LocalFunctionType &uLocal, ReturnType &sum ) const
     {
-      typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
       Integrator< QuadratureType > integrator( order );
 
-      LocalFunctionType ulocal = u.localFunction( entity );
-      FunctionAbs< LocalFunctionType > ulocalAbs( ulocal );
+      FunctionAbs< LocalFunctionType > uLocalAbs( uLocal );
 
-      integrator.integrateAdd( entity, ulocalAbs, sum );
+      integrator.integrateAdd( entity, uLocalAbs, sum );
     }
 
     template< class GridPart >
-    template< class UDiscreteFunctionType,
-              class VDiscreteFunctionType,
-              class ReturnType >
+    template< class ULocalFunctionType, class VLocalFunctionType, class ReturnType >
     inline void
-    L1Norm< GridPart >::distanceLocal ( const EntityType& entity, const unsigned int order,
-                                        const UDiscreteFunctionType &u,
-                                        const VDiscreteFunctionType &v,
-                                        ReturnType& sum ) const
+    L1Norm< GridPart >::distanceLocal ( const EntityType &entity, unsigned int order, const ULocalFunctionType &uLocal, const VLocalFunctionType &vLocal, ReturnType &sum ) const
     {
-      typedef typename UDiscreteFunctionType::LocalFunctionType ULocalFunctionType;
-      typedef typename VDiscreteFunctionType::LocalFunctionType VLocalFunctionType;
-
       Integrator< QuadratureType > integrator( order );
 
-      ULocalFunctionType ulocal = u.localFunction( entity );
-      VLocalFunctionType vlocal = v.localFunction( entity );
+      typedef FunctionDistance< ULocalFunctionType, VLocalFunctionType > LocalDistanceType;
 
-      typedef FunctionDistance< ULocalFunctionType, VLocalFunctionType >
-        LocalDistanceType;
-
-      LocalDistanceType dist( ulocal, vlocal );
+      LocalDistanceType dist( uLocal, vLocal );
       FunctionAbs< LocalDistanceType > distAbs( dist );
 
       integrator.integrateAdd( entity, distAbs, sum );
