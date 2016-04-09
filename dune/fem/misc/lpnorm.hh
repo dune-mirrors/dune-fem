@@ -47,14 +47,13 @@ namespace Dune
         {
           static_assert( uDiscrete && vDiscrete, "Distance can only be calculated between GridFunctions" );
 
-          order = (order == 0 ? 2*std::max( u.space().order(), v.space().order() ) : order);
-
           ReturnType sum( 0 );
           for( const EntityType &entity : elements( norm.gridPart_, Partitions::interior ) )
           {
             const typename UDiscreteFunctionType::LocalFunctionType uLocal = u.localFunction( entity );
             const typename VDiscreteFunctionType::LocalFunctionType vLocal = v.localFunction( entity );
-            norm.distanceLocal( entity, order, uLocal, vLocal, sum );
+            const unsigned int orderLocal = (order == 0 ? 2*std::max( uLocal.order(), vLocal.order() ) : order);
+            norm.distanceLocal( entity, orderLocal, uLocal, vLocal, sum );
           }
           return sum;
         }
@@ -106,13 +105,12 @@ namespace Dune
         static_assert( (std::is_base_of<Fem::HasLocalFunction, DiscreteFunctionType>::value),
                             "Norm only implemented for quantities implementing a local function!" );
 
-        order = (order == 0 ? 2*u.space().order() : order);
-
         ReturnType sum( 0 );
         for( const EntityType &entity : elements( gridPart_, Partitions::interior ) )
         {
-          typename DiscreteFunctionType::LocalFunctionType uLocal = u.localFunction( entity );
-          normLocal( entity, order, uLocal, sum );
+          const typename DiscreteFunctionType::LocalFunctionType uLocal = u.localFunction( entity );
+          const unsigned int orderLocal = (order == 0 ? 2*uLocal.order() : order);
+          normLocal( entity, orderLocal, uLocal, sum );
         }
         return sum;
       }
