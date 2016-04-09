@@ -23,9 +23,7 @@ namespace Dune
       struct FunctionJacobianSquare;
 
     protected:
-      typedef typename BaseType::GridIteratorType GridIteratorType;
-
-      typedef typename GridIteratorType::Entity EntityType;
+      typedef typename BaseType::EntityType EntityType;
 
       typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
     public:
