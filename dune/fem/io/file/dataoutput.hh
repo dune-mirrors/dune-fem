@@ -72,7 +72,7 @@ namespace Dune
       {}
 
       explicit DataOutputParameters ( const ParameterReader &parameter = Parameter::container() )
-        : keyPrefix_( "fem.io" ), parameter_( parameter )
+        : keyPrefix_( "fem.io." ), parameter_( parameter )
       {}
 
       //! \brief path where the data is stored (always relative to fem.prefix)

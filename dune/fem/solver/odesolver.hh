@@ -39,7 +39,7 @@ namespace DuneODE
     using ImplicitRungeKuttaSolverParameters::parameter_;
 
     ODEParameters( const ParameterReader &parameter = Parameter::container() )
-      : ImplicitRungeKuttaSolverParameters( "fem.ode", parameter )
+      : ImplicitRungeKuttaSolverParameters( "fem.ode.", parameter )
     {}
 
     ODEParameters( const std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
