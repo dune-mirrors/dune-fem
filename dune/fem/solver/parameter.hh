@@ -24,7 +24,11 @@ namespace Dune
 
       public:
 
-      SolverParameter ( const std::string keyPrefix = "fem.solver.", const ParameterReader &parameter = Parameter::container() )
+      explicit SolverParameter ( const ParameterReader &parameter = Parameter::container() )
+        : keyPrefix_( "fem.solver." ), parameter_( parameter )
+      {}
+
+      explicit SolverParameter ( const std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
         : keyPrefix_( keyPrefix ), parameter_( parameter )
       {}
 
