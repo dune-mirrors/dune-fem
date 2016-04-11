@@ -56,15 +56,22 @@ namespace Dune
        *
        *  \note The filename must be the same on all ranks.
        */
-      SIONlibOutStream ( const std::string &filename,
-                         const int rank = MPIManager::rank(),
-                         MPICommunicatorType mpiComm = MPIHelper :: getCommunicator() )
+      SIONlibOutStream ( const std::string &filename, const int rank,
+                         MPICommunicatorType mpiComm, ParameterReader parameter = Parameter::container() )
         : BaseType( dataStream() ),
           filename_( filename ),
           mpiComm_( mpiComm ),
           rank_( rank )
-          numFiles_( std::min( MPIManager::size(), Parameter::getValue< int >( "fem.io.sionlib.numfiles", 1 ) ) ),
-          blockSize_( Parameter :: getValue< int >( "fem.io.sionlib.blocksize", -1 ) )
+          numFiles_( std::min( MPIManager::size(), parameter.getValue< int >( "fem.io.sionlib.numfiles", 1 ) ) ),
+          blockSize_( parameter.getValue< int >( "fem.io.sionlib.blocksize", -1 ) )
+      {}
+
+      SIONlibOutStream ( const std::string &filename, ParameterReader parameter = Parameter::container() )
+        : SIONlibOutStream( filename, MPIManager::rank(), MPIHelper :: getCommunicator(), parameter )
+      {}
+
+      SIONlibOutStream ( const std::string &filename, const int rank, ParameterReader parameter = Parameter::container() )
+        : SIONlibOutStream( filename, rank, MPIHelper :: getCommunicator(), parameter )
       {}
 
       /** \brief destructor writing internal data buffer to the file via SIONlib */
