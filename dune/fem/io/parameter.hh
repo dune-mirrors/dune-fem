@@ -337,10 +337,6 @@ namespace Dune
       void resolveShadows( const std::string &key, Value &val );
       std::string getShadowKey( const std::string key, const char delimter, std::string &value );
 
-#if 0
-      void replace ( const std::string &key, const std::string &value );
-#endif
-
     public:
       /** \brief add parameters from the command line
           RangeType gRight;
@@ -397,16 +393,6 @@ namespace Dune
       {
         instance().params_.clear();
       }
-
-#if 0
-      template <class T>
-      static void replaceKey ( const std::string& key, const T& value )
-      {
-        std::stringstream valueStr;
-        valueStr << value;
-        instance().replace( key,valueStr.str() );
-      }
-#endif
 
       /** \brief find out, whether a parameter is defined in the container
        *
@@ -608,8 +594,6 @@ namespace Dune
       {
         return instance().map( "fem.prefix.input", std::string(".") );
       }
-
-
 
       /** \brief obtain the cached value for fem.verbose
        */
@@ -986,17 +970,6 @@ namespace Dune
         processFile( val.value );
       }
     }
-
-#if 0
-    inline void
-    Parameter::replace ( const std::string &key, const std::string &value )
-    {
-      if( verbose() )
-        std::cout << "Parameter: Replacing " << key << " = " << value
-                    << std::endl;
-      params_[ key ] = value;
-    }
-#endif
 
 
     // Public methods
