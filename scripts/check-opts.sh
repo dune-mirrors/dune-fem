@@ -22,6 +22,8 @@ OPTSDIR="$SCRIPTSDIR/opts"
 OPTS=$2
 HEADERCHECK=$3
 
+errors=0
+
 if ! test -e $OPTSDIR/$OPTS; then 
   echo "Error: $OPTS file not found in $OPTSDIR."
   exit 1
