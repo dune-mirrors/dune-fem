@@ -79,7 +79,7 @@ namespace Dune {
 
     protected:
 #ifdef USE_THREADPARTITIONER
-      static PartitioningMethodType getMethod ( const ParameterReader &parameter ) const
+      static PartitioningMethodType getMethod ( const ParameterReader &parameter )
       {
         // default is recursive
         const std::string methodNames[] = { "recursive", "kway", "sfc" };
