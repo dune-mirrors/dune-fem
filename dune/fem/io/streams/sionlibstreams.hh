@@ -61,7 +61,7 @@ namespace Dune
         : BaseType( dataStream() ),
           filename_( filename ),
           mpiComm_( mpiComm ),
-          rank_( rank )
+          rank_( rank ),
           numFiles_( std::min( MPIManager::size(), parameter.getValue< int >( "fem.io.sionlib.numfiles", 1 ) ) ),
           blockSize_( parameter.getValue< int >( "fem.io.sionlib.blocksize", -1 ) )
       {}
