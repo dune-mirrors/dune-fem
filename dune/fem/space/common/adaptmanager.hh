@@ -604,7 +604,6 @@ namespace Dune
     typedef LoadBalancer<GridType> Base2Type;
 
     mutable CommunicationManagerList commList_;
-    double balanceTime_ ;
 
     // reference counter to ensure only one instance per grid exists
     ObjectType& referenceCounter_;
@@ -626,7 +625,6 @@ namespace Dune
       : BaseType(grid,rpOp, parameter)
       , Base2Type( grid, rpOp, balanceCounter, parameter )
       , commList_(rpOp)
-      , balanceTime_( 0.0 )
       , referenceCounter_( ProviderType :: getObject( &grid ) )
     {
       if( ++referenceCounter_ > 1 )
@@ -637,7 +635,6 @@ namespace Dune
       : BaseType(grid,rpOp, parameter)
       , Base2Type( grid, rpOp, parameter )
       , commList_(rpOp)
-      , balanceTime_( 0.0 )
       , referenceCounter_( ProviderType :: getObject( &grid ) )
     {
       if( ++referenceCounter_ > 1 )
@@ -667,7 +664,7 @@ namespace Dune
     /** @copydoc LoadBalancerInterface::loadBalanceTime */
     virtual double loadBalanceTime() const
     {
-      return balanceTime_;
+      return Base2Type::loadBalanceTime();
     }
 
     /** @copydoc AdaptationManagerInterface::adapt */
@@ -679,9 +676,6 @@ namespace Dune
       // if adaptation is enabled
       if( this->adaptive() )
       {
-        // get stopwatch
-        Dune::Timer timer;
-
         // do load balancing
         loadBalance ();
 
@@ -689,9 +683,6 @@ namespace Dune
         // this also rebuilds the dependecy cache of the
         // cached communication manager if used
         commList_.exchange();
-
-        // get time
-        this->balanceTime_ = timer.elapsed();
       }
     }
   };
