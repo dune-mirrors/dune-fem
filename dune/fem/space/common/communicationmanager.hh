@@ -332,6 +332,8 @@ namespace Dune
 
       CommunicationManagerList(const CommunicationManagerList&);
     public:
+      CommunicationManagerList () = default;
+
       //! constructor
       template <class CombinedObjectType>
       CommunicationManagerList(CombinedObjectType& cObj)

@@ -107,6 +107,7 @@ namespace Dune
         balanceCounter_( balanceCounter ),
         localList_(),
         collList_(),
+        commList_(rpOp),
         balanceTime_( 0.0 )
       {
         rpOp.addToLoadBalancer( *this );
@@ -122,6 +123,7 @@ namespace Dune
         balanceCounter_( 0 ),
         localList_(),
         collList_(),
+        commList_(rpOp),
         balanceTime_( 0.0 )
       {
         rpOp.addToLoadBalancer( *this );
@@ -144,6 +146,7 @@ namespace Dune
         balanceCounter_( balanceCounter ),
         localList_(),
         collList_(),
+        commList_(),
         balanceTime_( 0.0 )
       {
         if( Parameter::verbose() )
@@ -157,6 +160,7 @@ namespace Dune
         balanceCounter_( 0 ),
         localList_(),
         collList_(),
+        commList_(),
         balanceTime_( 0.0 )
       {
         if( Parameter::verbose() )
@@ -233,6 +237,7 @@ namespace Dune
             std::cout << "P[" << grid_.comm().rank() << "] : Caught an exepction during load balance" << std::endl;
             abort();
           }
+
           // reset balance counter
           balanceCounter_ = 0;
         }
@@ -242,6 +247,11 @@ namespace Dune
 
         // get time
         balanceTime_ = timer.elapsed();
+
+        // exchange all modified data
+        // this also rebuilds the dependecy cache of the
+        // cached communication manager if used
+        commList_.exchange();
 
         return changed;
       }
@@ -354,6 +364,8 @@ namespace Dune
 
       // list of already added discrete functions
       std::set< const IsDiscreteFunction * > listOfFcts_;
+
+      mutable CommunicationManagerList commList_;
 
       // time for last load balance call
       double balanceTime_;

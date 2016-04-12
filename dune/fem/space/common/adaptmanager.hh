@@ -603,8 +603,6 @@ namespace Dune
     typedef AdaptationManagerBase<GridType,RestProlOperatorImp> BaseType;
     typedef LoadBalancer<GridType> Base2Type;
 
-    mutable CommunicationManagerList commList_;
-
     // reference counter to ensure only one instance per grid exists
     ObjectType& referenceCounter_;
 
@@ -624,7 +622,6 @@ namespace Dune
     AdaptationManager ( GridType &grid, RestProlOperatorImp &rpOp, int balanceCounter, const ParameterReader &parameter = Parameter::container() )
       : BaseType(grid,rpOp, parameter)
       , Base2Type( grid, rpOp, balanceCounter, parameter )
-      , commList_(rpOp)
       , referenceCounter_( ProviderType :: getObject( &grid ) )
     {
       if( ++referenceCounter_ > 1 )
@@ -634,7 +631,6 @@ namespace Dune
     AdaptationManager ( GridType &grid, RestProlOperatorImp &rpOp, const ParameterReader &parameter = Parameter::container() )
       : BaseType(grid,rpOp, parameter)
       , Base2Type( grid, rpOp, parameter )
-      , commList_(rpOp)
       , referenceCounter_( ProviderType :: getObject( &grid ) )
     {
       if( ++referenceCounter_ > 1 )
@@ -678,11 +674,6 @@ namespace Dune
       {
         // do load balancing
         loadBalance ();
-
-        // exchange all modified data
-        // this also rebuilds the dependecy cache of the
-        // cached communication manager if used
-        commList_.exchange();
       }
     }
   };
