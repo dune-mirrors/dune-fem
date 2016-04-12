@@ -230,7 +230,7 @@ namespace Dune
           }
           catch (...)
           {
-            std::cout << "P[" << grid_.comm().rank() << "] : Cought an exepction during load balance" << std::endl;
+            std::cout << "P[" << grid_.comm().rank() << "] : Caught an exepction during load balance" << std::endl;
             abort();
           }
           // reset balance counter
