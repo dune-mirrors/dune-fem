@@ -91,7 +91,7 @@ namespace Dune
      *        (see dune/fem/function/localfunction/localfunction.hh).
      */
     template< class DiscreteFunctionTuple, class Entity,
-              size_t TupleSize = tuple_size< DiscreteFunctionTuple >::value >
+              size_t TupleSize = std::tuple_size< DiscreteFunctionTuple >::value >
     class LocalFunctionTuple
     {
       typedef LocalFunctionTuple< DiscreteFunctionTuple, Entity, TupleSize > ThisType;

@@ -8,6 +8,7 @@
 #include <string>
 #include <sys/types.h>
 #include <dirent.h>
+#include <tuple>
 
 //- Dune includes
 #include <dune/fem/io/file/iointerface.hh>
@@ -186,7 +187,7 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
     info[n].name = solprefix.c_str();
     info[n].datinf = 0;
     info[n].fix_mesh = 0;
-    const int tupleSize = tuple_size<GR_DiscFuncType>::value ;
+    const int tupleSize = std::tuple_size<GR_DiscFuncType>::value ;
     for (int df = 0; df < tupleSize; ++df )
     {
       DATAINFO * dinf = (DATAINFO *) std::malloc(sizeof(DATAINFO));
@@ -254,7 +255,7 @@ inline int readParameterList (int argc, char **argv, bool displayData = true )
       info[n].name = argv[i+1];
       info[n].datinf = 0;
       info[n].fix_mesh = 0;
-      const int tupleSize = tuple_size<GR_DiscFuncType>::value ;
+      const int tupleSize = std::tuple_size<GR_DiscFuncType>::value ;
       for (int df = 0; df < tupleSize; ++df )
       {
         DATAINFO * dinf = (DATAINFO *) std::malloc(sizeof(DATAINFO));

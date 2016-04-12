@@ -163,9 +163,8 @@ namespace Dune
       template< int N > struct RemoveData;
 
     public:
-      static const int length = tuple_size< Tuple >::value;
+      static const int length = std::tuple_size< Tuple >::value;
 
-    public:
       typedef Tuple ReturnType ;
 
       template < class GridType >
@@ -360,7 +359,7 @@ namespace Dune
     struct IOTuple< Tuple >::AddToDisplay
     {
       // revert tuple order to reverse deletion to creation
-      static const int pos = tuple_size< Tuple >::value - 1 - N;
+      static const int pos = std::tuple_size< Tuple >::value - 1 - N;
 
       typedef typename std::remove_pointer< typename std::tuple_element< pos, Tuple >::type >::type DiscreteFunction;
 
@@ -409,7 +408,7 @@ namespace Dune
     struct IOTuple< Tuple >::RemoveData
     {
       // revert tuple order to reverse deletion to creation
-      static const int pos = tuple_size< Tuple >::value - 1 - N;
+      static const int pos = std::tuple_size< Tuple >::value - 1 - N;
       typedef typename std::remove_pointer< typename std::tuple_element< pos, Tuple >::type >::type DiscreteFunction;
       typedef typename DiscreteFunction::DiscreteFunctionSpaceType DiscreteFunctionSpace;
       typedef typename DiscreteFunctionSpace::GridPartType GridPart;
