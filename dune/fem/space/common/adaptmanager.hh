@@ -17,6 +17,7 @@
 
 #include <dune/fem/space/common/adaptcallbackhandle.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 
 
@@ -588,7 +589,8 @@ namespace Dune
   template <class GridType, class RestProlOperatorImp>
   class AdaptationManager :
     public AdaptationManagerBase<GridType,RestProlOperatorImp> ,
-    public LoadBalancer<GridType>
+    public LoadBalancer<GridType>,
+    public AutoPersistentObject
   {
     // type of key
     typedef const GridType* KeyType;
@@ -610,28 +612,42 @@ namespace Dune
     AdaptationManager(const AdaptationManager&);
 
   public:
-    /** \brief constructor of AdaptationManager
-       The following optional parameters from the Dune::Parameter class are used
-          # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)
-          fem.adaptation.method: 1 # default value
+    /**
+       \brief constructor of AdaptationManager
+
+       The following optional parameters are used:
+       \code
+         # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)
+         fem.adaptation.method: 1 # default value
+
+         # balance every x-th call to adapt, 0 means no balancing
+         fem.loadbalancing.step: 0 # default value
+       \endcode
+
        \param grid Grid that adaptation is done for
        \param rpOp restriction and prlongation operator that describes how the
         user data is projected to other grid levels
        \param balanceCounter start counter for balance cycle (default = 0)
-    */
+    **/
     AdaptationManager ( GridType &grid, RestProlOperatorImp &rpOp, int balanceCounter, const ParameterReader &parameter = Parameter::container() )
       : BaseType(grid,rpOp, parameter)
-      , Base2Type( grid, rpOp, balanceCounter, parameter )
+      , Base2Type( grid, rpOp )
       , referenceCounter_( ProviderType :: getObject( &grid ) )
+      , balanceStep_( parameter.getValue< int >( "fem.loadbalancing.step", balanceCounter ) )
+      , balanceCounter_( balanceCounter )
     {
       if( ++referenceCounter_ > 1 )
         DUNE_THROW(InvalidStateException,"Only one instance of AdaptationManager allowed per grid instance");
+      if( Parameter::verbose() )
+        std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
     }
 
     AdaptationManager ( GridType &grid, RestProlOperatorImp &rpOp, const ParameterReader &parameter = Parameter::container() )
       : BaseType(grid,rpOp, parameter)
-      , Base2Type( grid, rpOp, parameter )
+      , Base2Type( grid, rpOp )
       , referenceCounter_( ProviderType :: getObject( &grid ) )
+      , balanceStep_( parameter.getValue< int >( "fem.loadbalancing.step", 0 ) )
+      , balanceCounter_( 0 )
     {
       if( ++referenceCounter_ > 1 )
         DUNE_THROW(InvalidStateException,"Only one instance of AdaptationManager allowed per grid instance");
@@ -651,12 +667,6 @@ namespace Dune
       return Base2Type :: loadBalance();
     }
 
-    /** @copydoc LoadBalancerInterface::balanceCounter */
-    virtual int balanceCounter () const
-    {
-      return Base2Type :: balanceCounter ();
-    }
-
     /** @copydoc LoadBalancerInterface::loadBalanceTime */
     virtual double loadBalanceTime() const
     {
@@ -670,12 +680,58 @@ namespace Dune
       BaseType :: adapt ();
 
       // if adaptation is enabled
-      if( this->adaptive() )
+      if( this->adaptive() && (balanceStep_ > 0) )
       {
-        // do load balancing
-        loadBalance ();
+        // if balance counter has readed balanceStep do load balance
+        const bool callBalance = (++balanceCounter_ >= balanceStep_);
+
+#ifndef NDEBUG
+        // make sure load balance is called on every process
+        int willCall = (callBalance) ? 1 : 0;
+        const int iCall = willCall;
+
+        // send info from rank 0 to all other
+        Base2Type::grid_.comm().broadcast(&willCall, 1 , 0);
+
+        assert( willCall == iCall );
+#endif
+
+        if( callBalance )
+        {
+          // balance work load and restore consistency in the data
+          loadBalance();
+          balanceCounter_ = 0;
+        }
+        else
+        {
+          // only restore consistency in the data
+          Base2Type::communicate();
+        }
       }
     }
+
+    //! returns actual balanceCounter for checkpointing
+    int balanceCounter () const { return balanceCounter_; }
+
+    //! backup internal data
+    void backup() const
+    {
+      std::tuple<const int& > value( balanceCounter_ );
+      PersistenceManager::backupValue("loadbalancer",value);
+    }
+
+    //! retore internal data
+    void restore()
+    {
+      std::tuple< int& > value( balanceCounter_ );
+      PersistenceManager::restoreValue("loadbalancer",value);
+    }
+
+  private:
+    // call loadBalance ervery balanceStep_ step
+    const int balanceStep_ ;
+    // count actual balance call
+    int balanceCounter_;
   };
 
   /** \brief A class with one static method apply to globally refine a grid.

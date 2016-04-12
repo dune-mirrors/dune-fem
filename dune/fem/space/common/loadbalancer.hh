@@ -12,7 +12,6 @@
 #include <dune/common/tuples.hh>
 
 #include <dune/fem/function/common/discretefunction.hh>
-#include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/space/common/datacollector.hh>
@@ -50,11 +49,6 @@ namespace Dune
       */
       virtual bool loadBalance () = 0;
 
-      /** \brief return number of cycles since last application of load balance
-        \return number of cycles since last application of load balance
-      */
-      virtual int balanceCounter () const = 0;
-
       /** \brief time that last load balance cycle took */
       virtual double loadBalanceTime () const
       {
@@ -69,8 +63,7 @@ namespace Dune
      */
     template <class GridType>
     class LoadBalancer
-    : virtual public LoadBalancerInterface ,
-      public AutoPersistentObject
+    : virtual public LoadBalancerInterface
     {
       // type of this
       typedef LoadBalancer<GridType> ThisType;
@@ -91,88 +84,27 @@ namespace Dune
       typedef std::pair< LocalDataInlinerInterfaceType*, LocalDataXtractorInterfaceType*  >  LocalDataCollectorPairType;
       typedef std::pair< DataInlinerType* , DataXtractorType* > DataCollectorPairType;
     protected:
-      /** \brief constructor of LoadBalancer
-         The following optional parameter is used from the Parameter class:
-         # BalanceStep, balancing is done every x-th step, 0 means no balancing
-         BalanceStep: 1 # (do balancing every step)
-         \param grid Grid that load balancing is done for
-         \param rpOp restrict prolong tpye
-         \param balanceCounter actual counter, default is zero
-      */
+      /** \brief constructor of LoadBalancer **/
       template< class RestrictProlongOperator >
-      LoadBalancer ( GridType &grid, RestrictProlongOperator &rpOp, int balanceCounter, const ParameterReader &parameter = Parameter::container() )
+      LoadBalancer ( GridType &grid, RestrictProlongOperator &rpOp )
       : grid_( grid ),
         dm_ ( DofManagerType::instance( grid_ ) ),
-        balanceStep_( getBalanceStep( balanceCounter, parameter ) ),
-        balanceCounter_( balanceCounter ),
         localList_(),
         collList_(),
         commList_(rpOp),
         balanceTime_( 0.0 )
       {
         rpOp.addToLoadBalancer( *this );
-        if( Parameter::verbose() )
-          std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
       }
 
-      template< class RestrictProlongOperator >
-      LoadBalancer ( GridType &grid, RestrictProlongOperator &rpOp, const ParameterReader &parameter = Parameter::container() )
+      explicit LoadBalancer ( GridType &grid )
       : grid_( grid ),
         dm_ ( DofManagerType::instance( grid_ ) ),
-        balanceStep_( getBalanceStep( 0, parameter ) ),
-        balanceCounter_( 0 ),
-        localList_(),
-        collList_(),
-        commList_(rpOp),
-        balanceTime_( 0.0 )
-      {
-        rpOp.addToLoadBalancer( *this );
-        if( Parameter::verbose() )
-          std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
-      }
-
-      /** \brief constructor of LoadBalancer
-         The following optional parameter is used from the Parameter class:
-         # BalanceStep, balancing is done every x-th step, 0 means no balancing
-         BalanceStep: 1 # (do balancing every step)
-         \param grid Grid that load balancing is done for
-         BalanceStep: 1 # (do balancing every step)
-         \param balanceCounter actual counter, default is zero
-      */
-      explicit LoadBalancer ( GridType &grid, int balanceCounter, const ParameterReader &parameter = Parameter::container() )
-      : grid_( grid ),
-        dm_ ( DofManagerType::instance( grid_ ) ),
-        balanceStep_( getBalanceStep( balanceCounter, parameter) ),
-        balanceCounter_( balanceCounter ),
         localList_(),
         collList_(),
         commList_(),
         balanceTime_( 0.0 )
-      {
-        if( Parameter::verbose() )
-          std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
-      }
-
-      explicit LoadBalancer ( GridType &grid, const ParameterReader &parameter = Parameter::container() )
-      : grid_( grid ),
-        dm_ ( DofManagerType::instance( grid_ ) ),
-        balanceStep_( getBalanceStep( 0, parameter) ),
-        balanceCounter_( 0 ),
-        localList_(),
-        collList_(),
-        commList_(),
-        balanceTime_( 0.0 )
-      {
-        if( Parameter::verbose() )
-          std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
-      }
-
-      int getBalanceStep( int balanceCounter, const ParameterReader &parameter = Parameter::container() ) const
-      {
-        int step = balanceCounter;
-        step = parameter.getValue< int >( "fem.loadbalancing.step", balanceCounter );
-        return step;
-      }
+      {}
 
     public:
       //! destructor
@@ -197,10 +129,15 @@ namespace Dune
         }
       }
 
-      //! returns actual balanceCounter for checkpointing
-      int balanceCounter () const { return balanceCounter_; }
+      void communicate () const
+      {
+        // exchange all modified data
+        // this also rebuilds the dependecy cache of the
+        // cached communication manager if used
+        commList_.exchange();
+      }
 
-      //! do load balance every balanceStep_ step
+      //! do load balance
       bool loadBalance ()
       {
         // make sure this is only called in single thread mode
@@ -211,47 +148,21 @@ namespace Dune
 
         bool changed = false;
 
-        // if balance counter has readed balanceStep do load balance
-        const bool callBalance = ( (balanceCounter_ >= balanceStep_) && (balanceStep_ > 0) );
-
-#ifndef NDEBUG
-        // make sure load balance is called on every process
-        int willCall = (callBalance) ? 1 : 0;
-        const int iCall = willCall;
-
-        // send info from rank 0 to all other
-        grid_.comm().broadcast(&willCall, 1 , 0);
-
-        assert( willCall == iCall );
-#endif
-
-        // if balance counter has reached balanceStep do load balance
-        if( callBalance )
-        {
-          try {
-            // call grids load balance, only implemented in ALUGrid right now
-            changed = grid_.loadBalance( dm_ );
-          }
-          catch (...)
-          {
-            std::cout << "P[" << grid_.comm().rank() << "] : Caught an exepction during load balance" << std::endl;
-            abort();
-          }
-
-          // reset balance counter
-          balanceCounter_ = 0;
+        try {
+          // call grids load balance, only implemented in ALUGrid right now
+          changed = grid_.loadBalance( dm_ );
         }
-
-        // increase balanceCounter if balancing is enabled
-        if( balanceStep_ > 0 ) ++balanceCounter_;
+        catch (...)
+        {
+          std::cout << "P[" << grid_.comm().rank() << "] : Caught an exepction during load balance" << std::endl;
+          abort();
+        }
 
         // get time
         balanceTime_ = timer.elapsed();
 
-        // exchange all modified data
-        // this also rebuilds the dependecy cache of the
-        // cached communication manager if used
-        commList_.exchange();
+        // restore data consistency
+        communicate();
 
         return changed;
       }
@@ -260,20 +171,6 @@ namespace Dune
       virtual double loadBalanceTime() const
       {
         return balanceTime_;
-      }
-
-      //! backup internal data
-      void backup() const
-      {
-        std::tuple<const int& > value( balanceCounter_ );
-        PersistenceManager::backupValue("loadbalancer",value);
-      }
-
-      //! retore internal data
-      void restore()
-      {
-        std::tuple< int& > value( balanceCounter_ );
-        PersistenceManager::restoreValue("loadbalancer",value);
       }
 
       //! add discrete function to data inliner/xtractor list
@@ -352,11 +249,6 @@ namespace Dune
 
       //! DofManager corresponding to grid
       DofManagerType & dm_;
-
-      // call loadBalance ervery balanceStep_ step
-      const int balanceStep_ ;
-      // count actual balance call
-      int balanceCounter_;
 
       // list of created local data collectors
       std::vector< LocalDataCollectorPairType > localList_;
