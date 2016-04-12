@@ -66,7 +66,7 @@ namespace Dune
       //! return volume of reference element for geometry of type type
       double referenceVolume ( const GeometryType &type ) const
       {
-        return referenceElement( type ).volume();
+        return type.isNone() ? 1.0 : referenceElement( type ).volume();
       }
 
       //! return reference element for type
