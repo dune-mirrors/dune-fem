@@ -307,7 +307,7 @@ namespace Dune
       IndexType subIndex ( const EntityType& entity,
                            const int subNumber ) const
       {
-        assert( 0 == EntityType :: codimension );
+        //assert( 0 == EntityType :: codimension );
         assert( checkValidIndex( leafIndex_( entity, subNumber ) ) );
         return leafIndex_( entity, subNumber );
       }
