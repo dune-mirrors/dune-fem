@@ -31,7 +31,6 @@ namespace Dune
       typedef typename GridPartType :: GridType  GridType;
       typedef typename GridPartType :: template Codim< 0 > :: template Partition< pitype > :: IteratorType       IteratorType ;
       typedef typename GridPartType :: template Codim< 0 > :: EntityType         EntityType ;
-      typedef typename GridPartType :: template Codim< 0 > :: EntityPointerType  EntityPointerType ;
       typedef typename GridPartType :: IndexSetType IndexSetType ;
       typedef DofManager< GridType > DofManagerType;
 

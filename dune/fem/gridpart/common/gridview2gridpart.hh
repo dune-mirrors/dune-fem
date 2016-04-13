@@ -47,9 +47,7 @@ namespace Dune
       template< int codim >
       struct Codim
       {
-        typedef typename GridViewType::template Codim< codim >::EntityPointer EntityPointerType;
         typedef typename GridViewType::template Codim< codim >::Entity EntityType;
-
         typedef typename GridType::template Codim< codim >::EntitySeed EntitySeedType;
 
         typedef typename GridViewType::template Codim< codim >::Geometry GeometryType;

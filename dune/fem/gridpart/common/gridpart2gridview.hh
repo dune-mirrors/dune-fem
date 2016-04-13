@@ -34,7 +34,6 @@ namespace Dune
       : public Grid::Traits::template Codim< codim >
       {
         typedef typename GridPart::template Codim< codim >::EntityType Entity;
-        typedef typename GridPart::template Codim< codim >::EntityPointerType EntityPointer;
 
         typedef typename GridPart::template Codim< codim >::GeometryType Geometry;
         typedef typename GridPart::template Codim< codim >::LocalGeometryType LocalGeometry;

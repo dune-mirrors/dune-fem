@@ -25,8 +25,6 @@ namespace Dune
       typedef typename GridPartType::HostGridPartType HostGridPartType;
       typedef typename HostGridPartType::template Codim< codim >::template Partition< pitype >::IteratorType HostIteratorType;
 
-      typedef typename GridPartType::template Codim< codim >::EntityPointerType EntityPointerType;
-
     public:
       // type of entity
       typedef typename HostIteratorType::Entity Entity;
@@ -74,12 +72,6 @@ namespace Dune
 
       //! return reference to entity object
       Entity dereference () const { return *hostIterator_; }
-
-      /** \brief cast to entity pointer implementation
-       *
-       *  This cast allows to cast the iterator into an entity pointer.
-       */
-      operator typename EntityPointerType::Implementation () const { return hostIterator_.impl(); }
 
       //! \brief check for equality
       bool equals ( const ThisType &other ) const

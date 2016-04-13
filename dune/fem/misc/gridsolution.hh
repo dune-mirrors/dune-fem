@@ -38,7 +38,6 @@ namespace Dune
       typedef typename GridPartType :: IndexSetType IndexSetType;
       typedef CheckPointer< GridType >   CheckPointerType;
 
-      typedef typename GridType :: template Codim<0> :: EntityPointer EntityPointerType;
       typedef typename GridType :: template Codim<0> :: Entity        EntityType;
 
       typedef HierarchicSearch< GridType, IndexSetType > HierarchicSearchType;
@@ -96,8 +95,7 @@ namespace Dune
       void evaluate(const DomainType& x, RangeType& result) const
       {
         // search entity
-        EntityPointerType ep = hierarchicSearch_.findEntity( x );
-        const EntityType& entity = *ep ;
+        EntityType entity = hierarchicSearch_.findEntity( x );
 
         typedef typename EntityType :: Geometry Geometry;
         const Geometry& geo = entity.geometry();

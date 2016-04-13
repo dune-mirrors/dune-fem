@@ -58,16 +58,6 @@ namespace Dune
         return hostIterator_.level();
       }
 
-      operator Dune::DefaultEntityPointer< Entity > () const
-      {
-        return Dune::DefaultEntityPointer< Entity >( dereference() );
-      }
-      
-      bool equals ( const Dune::DefaultEntityPointer< Entity > &rhs ) const
-      {
-        return dereference() == rhs.dereference();
-      }
-
     private:
       ExtraData data_;
       HostIteratorType hostIterator_;

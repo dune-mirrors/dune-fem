@@ -122,9 +122,7 @@ namespace Dune
         typedef typename Traits::template Codim< codim >::GeometryType       GeometryType;
         typedef typename Traits::template Codim< codim >::LocalGeometryType  LocalGeometryType;
 
-        typedef typename Traits::template Codim< codim >::EntityPointerType  EntityPointerType;
         typedef typename Traits::template Codim< codim >::EntityType         EntityType;
-
         typedef typename Traits::template Codim< codim >::EntitySeedType     EntitySeedType;
 
         template< PartitionIteratorType pitype >

@@ -298,9 +298,7 @@ namespace Dune
         typedef typename GridType::template Codim< codim >::Geometry      GeometryType;
         typedef typename GridType::template Codim< codim >::LocalGeometry LocalGeometryType;
 
-        typedef typename GridType::template Codim< codim >::EntityPointer EntityPointerType;
         typedef typename GridType::template Codim< codim >::Entity        EntityType;
-
         typedef typename GridType::template Codim< codim >::EntitySeed    EntitySeedType;
 
         template< PartitionIteratorType pitype >

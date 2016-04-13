@@ -142,8 +142,6 @@ namespace Dune
         typedef typename HostGridPartType::template Codim< codim >::LocalGeometryType LocalGeometryType;
 
         typedef typename HostGridPartType::template Codim< codim >::EntityType EntityType;
-        typedef typename HostGridPartType::template Codim< codim >::EntityPointerType EntityPointerType;
-
         typedef typename HostGridPartType::template Codim< codim >::EntitySeedType EntitySeedType;
 
         template< PartitionIteratorType pitype >

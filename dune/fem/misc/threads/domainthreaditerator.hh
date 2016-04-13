@@ -42,8 +42,6 @@ namespace Dune {
 #endif
 
       typedef typename IteratorType :: Entity EntityType ;
-      typedef typename GridPartType :: template Codim<0> ::
-        EntityPointerType EntityPointer ;
 
       typedef DofManager< GridType > DofManagerType;
 

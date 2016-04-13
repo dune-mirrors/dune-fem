@@ -70,7 +70,6 @@ namespace Dune
 
             typedef Dune::Entity< codim, dimension, const GridFamily, IdEntity > Entity;
             typedef typename HostGridPartType::GridType::template Codim< codim >::EntitySeed EntitySeed;
-            typedef Dune::EntityPointer< const GridFamily, DefaultEntityPointer< Entity > > EntityPointer;
           };
 
           typedef DeadIntersection< const GridFamily > IntersectionImplType;
@@ -113,9 +112,7 @@ namespace Dune
         typedef typename GridFamily::Traits::template Codim< codim >::Geometry GeometryType;
         typedef typename GridFamily::Traits::template Codim< codim >::LocalGeometry LocalGeometryType;
 
-        typedef typename GridFamily::Traits::template Codim< codim >::EntityPointer EntityPointerType;
         typedef typename GridFamily::Traits::template Codim< codim >::Entity EntityType;
-
         typedef typename GridFamily::Traits::template Codim< codim >::EntitySeed EntitySeedType;
 
         template< PartitionIteratorType pitype >

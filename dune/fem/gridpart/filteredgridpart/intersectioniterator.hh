@@ -41,9 +41,6 @@ namespace Dune
       //! \brief entity type
       typedef typename HostIntersection::Entity Entity;
 
-      //! \brief entity type
-      typedef typename HostIntersection::EntityPointer EntityPointer;
-
       //! \brief geometry type
       typedef typename HostIntersection::Geometry Geometry;
 
