@@ -3,10 +3,9 @@
 
 #include <utility>
 
-// #include <dune/common/deprecated.hh>
-
 #include <dune/grid/common/entity.hh>
 #include <dune/grid/common/entitypointer.hh>
+#include <dune/fem/version.hh>
 
 namespace Dune
 {
@@ -18,7 +17,7 @@ namespace Dune
     // -----------
 
     template< class Grid, class Implementation >
-    // DUNE_DEPRECATED_MSG("Still using compatiblity method make_entity()")
+    DUNE_VERSION_DEPRECATED_3_0("make_entity")
     typename Dune::EntityPointer< Grid, Implementation >::Entity
     make_entity ( const Dune::EntityPointer< Grid, Implementation > &entityPointer )
     {
@@ -26,7 +25,7 @@ namespace Dune
     }
 
     template< int codim, int dim, class Grid, template< int, int, class > class Implementation >
-    // DUNE_DEPRECATED_MSG("Still using compatiblity method make_entity()")
+    DUNE_VERSION_DEPRECATED_3_0("make_entity")
     typename Dune::Entity< codim, dim, Grid, Implementation >
     make_entity ( Dune::Entity< codim, dim, Grid, Implementation > entity )
     {
