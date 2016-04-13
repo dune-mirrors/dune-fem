@@ -12,7 +12,6 @@
 //- dune-fem includes
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/gridpart/test/failure.hh>
-#include <dune/fem/misc/compatibility.hh>
 
 
 /** \brief Check geometries for all entities in the
@@ -51,7 +50,7 @@ namespace Dune
           for ( int i = 0; i < subEntities; ++i )
           {
             typedef typename Entity::template Codim< codim >::Entity SubEntity;
-            SubEntity subEntity = make_entity( entity.template subEntity< codim >( i ) );
+            SubEntity subEntity = entity.template subEntity< codim >( i );
 
             typename SubEntity::Geometry geometry = subEntity.geometry();
             if( subEntity.type() != geometry.type() )

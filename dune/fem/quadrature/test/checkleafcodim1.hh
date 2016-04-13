@@ -2,7 +2,6 @@
 #define DUNE_CHECKLEAFCODIM1_HH
 
 #include <dune/fem/io/parameter.hh>
-#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 namespace Dune {
@@ -170,7 +169,7 @@ protected:
 
           if( inter.neighbor() )
           {
-            EntityType neighbor = make_entity( inter.outside() );
+            EntityType neighbor = inter.outside();
             //const int twstF = checkLocalIntersectionConsistency( neighbor,
             //              inter.geometryInOutside(), inter.indexInOutside(), true, false);
             const int twstF = aluTwistCheck( neighbor,

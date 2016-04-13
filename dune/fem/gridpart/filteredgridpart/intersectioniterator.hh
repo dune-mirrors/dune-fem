@@ -7,9 +7,6 @@
 //- dune-grid includes
 #include <dune/grid/common/intersectioniterator.hh>
 
-//- dune-fem includes
-#include <dune/fem/misc/compatibility.hh>
-
 namespace Dune
 {
 
@@ -185,13 +182,13 @@ namespace Dune
       //! \brief return inside entity
       Entity inside () const
       {
-        return make_entity( hostIterator()->inside() );
+        return hostIterator()->inside();
       }
 
       //! \brief return outside entity
       Entity outside () const
       {
-        return make_entity( hostIterator()->outside() );
+        return hostIterator()->outside();
       }
 
       //! \brief

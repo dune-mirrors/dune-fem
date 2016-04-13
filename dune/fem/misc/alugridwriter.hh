@@ -13,8 +13,6 @@
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/3d/topology.hh>
 
-#include <dune/fem/misc/compatibility.hh>
-
 namespace Dune
 {
 
@@ -178,7 +176,7 @@ namespace Dune
                 const int count = entity.subEntities( dimension );
                 for( int i = 0; i<count; ++i)
                 {
-                  auto vertex = make_entity( entity.template subEntity< dimension > ( i ) );
+                  auto vertex = entity.template subEntity< dimension > ( i );
                   const int id = gridPart_.indexSet().index( vertex );
                   if( indices_.find( id ) == indices_.end() )
                   {
@@ -382,7 +380,7 @@ namespace Dune
             if( inter.boundary() )
               ++bndFaces;
             else if( inter.neighbor() &&
-                     make_entity( inter.outside() ).partitionType() != InteriorEntity )
+                     inter.outside().partitionType() != InteriorEntity )
              ++bndFaces;
           }
         }
@@ -409,7 +407,7 @@ namespace Dune
               bndId = inter.boundaryId();
             }
             else if( inter.neighbor() &&
-                     make_entity( inter.outside() ).partitionType() != InteriorEntity )
+                     inter.outside().partitionType() != InteriorEntity )
             {
               bndId = 111;
             }

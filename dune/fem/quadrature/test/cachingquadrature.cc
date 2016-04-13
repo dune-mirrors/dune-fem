@@ -6,7 +6,6 @@
 
 #include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/io/parameter.hh>
-#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/elementquadrature.hh>
 
@@ -120,11 +119,11 @@ public:
         const IntersectionType &intersection = *iit;
         if (intersection.neighbor() && intersection.conforming())
         {
-          EntityType inside = make_entity(intersection.inside());
+          EntityType inside = intersection.inside();
           FaceQuadratureType faceQuadInner(gridPart_, intersection, order_,
               FaceQuadratureType::INSIDE);
 
-          EntityType outside = make_entity(intersection.outside());
+          EntityType outside = intersection.outside();
           FaceQuadratureType faceQuadOuter(gridPart_, intersection, order_,
               FaceQuadratureType::OUTSIDE);
 

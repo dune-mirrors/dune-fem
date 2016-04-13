@@ -4,7 +4,6 @@
 #include <dune/common/fvector.hh>
 #include <dune/grid/common/gridenums.hh>
 
-#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
 
 namespace Dune
@@ -174,7 +173,7 @@ namespace Dune
 
             if( inter.neighbor() )
             {
-              EntityType nb = make_entity( inter.outside() );
+              EntityType nb = inter.outside();
               Geometry nbGeo = nb.geometry();
 
               FieldVector<ctype, dimworld> diff = nbGeo.global( geoInfo.localCenter( nbGeo.type() ));

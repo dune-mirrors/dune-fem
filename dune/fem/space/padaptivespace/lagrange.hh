@@ -1,7 +1,6 @@
 #ifndef DUNE_FEM_SPACE_PADAPTIVE_LAGRANGE_HH
 #define DUNE_FEM_SPACE_PADAPTIVE_LAGRANGE_HH
 
-#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/lagrange/shapefunctionset.hh>
@@ -170,7 +169,7 @@ namespace Dune
         {
           return true;
           if (intersection.neighbor())
-            return (order(make_entity(intersection.inside())) == order(make_entity(intersection.outside())));
+            return (order(intersection.inside()) == order(intersection.outside()));
           else
             return true;
         }

@@ -15,7 +15,6 @@
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/persistentindexset.hh>
 #include <dune/fem/io/file/iointerface.hh>
-#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/version.hh>
 
 namespace Dune
@@ -204,7 +203,7 @@ namespace Dune
           for( unsigned int i = 0; i < element.subEntities( codim ); ++i )
           {
             if( !skipGhosts || (element.partitionType() != GhostEntity) )
-              codimSet.insertGhost( make_entity( element.template subEntity< codim >( i ) ) );
+              codimSet.insertGhost( element.template subEntity< codim >( i ) );
           }
         }
       };
@@ -263,7 +262,7 @@ namespace Dune
         typedef typename GridPartType :: template Codim< codim > :: EntityType  Entity;
         static Entity subEntity( const ElementType& element, const int subEn )
         {
-          return make_entity( element.template subEntity< codim > ( subEn ) );
+          return element.template subEntity< codim > ( subEn );
         }
       };
 
@@ -764,7 +763,7 @@ namespace Dune
     protected:
       FaceType getIntersectionFace( const IntersectionType& intersection ) const
       {
-        ElementType inside = make_entity( intersection.inside() );
+        ElementType inside = intersection.inside();
         return getIntersectionFace( intersection, inside );
       }
 
@@ -773,7 +772,7 @@ namespace Dune
       {
         if( ! intersection.conforming() && intersection.neighbor() )
         {
-          ElementType outside = make_entity( intersection.outside() );
+          ElementType outside = intersection.outside();
           // only if outside is more refined then inside
           if( inside.level() < outside.level() )
             return GetFaceEntity :: subEntity( outside, intersection.indexInOutside() );

@@ -11,7 +11,6 @@
 //- dune-fem includes
 #include <dune/fem/gridpart/common/defaultgridpartentity.hh>
 #include <dune/fem/gridpart/idgridpart/geometry.hh>
-#include <dune/fem/misc/compatibility.hh>
 
 namespace Dune
 {
@@ -258,7 +257,7 @@ namespace Dune
       subEntity ( int i ) const
       {
         typedef typename Traits::template Codim< codim >::Entity::Implementation EntityImpl;
-        return EntityImpl( data(), make_entity( hostEntity().template subEntity< codim >( i ) ) );
+        return EntityImpl( data(), hostEntity().template subEntity< codim >( i ) );
       }
 
       bool hasBoundaryIntersections () const

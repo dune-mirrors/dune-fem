@@ -7,8 +7,6 @@
 
 #include <dune/common/timer.hh>
 
-#include <dune/fem/misc/compatibility.hh>
-
 namespace Dune
 {
 
@@ -97,7 +95,7 @@ namespace Dune
             if(intersec.neighbor())
             {
               assert( enMarker <= 0 );
-              EntityType nb = make_entity( intersec.outside() );
+              EntityType nb = intersec.outside();
               const int nbMarker = grid.getMark(nb);
               const int levelDiff = nb.level() - en.level();
 

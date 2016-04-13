@@ -10,7 +10,6 @@
 #include <dune/grid/utility/hierarchicsearch.hh>
 
 #include <dune/fem/gridpart/common/capabilities.hh>
-#include <dune/fem/misc/compatibility.hh>
 
 namespace Dune
 {
@@ -114,7 +113,7 @@ namespace Dune
 
       EntityType operator() ( const GlobalCoordinateType &x ) const
       {
-        return make_entity( hierarchicSearch_.template findEntity< partition >( x ) );
+        return hierarchicSearch_.template findEntity< partition >( x );
       }
 
     private:

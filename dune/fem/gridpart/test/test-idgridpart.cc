@@ -15,7 +15,6 @@ int main () { return 0; }
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/gridpart/idgridpart.hh>
-#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/misc/gridwidth.hh>
 
 #include "./failure.hh"
@@ -140,7 +139,7 @@ void testIntersectionIterator( const GridPartType & gridPart )
       IntersectionType intersection = *inter;
       if( intersection.neighbor() )
       {
-        EntityType neighbor = Dune::Fem::make_entity( intersection.outside() );
+        EntityType neighbor = intersection.outside();
         typename GridPartType::IndexSetType::IndexType nbIndex = gridPart.indexSet().index( neighbor );
         if ( nbIndex >= index.size() )
         {

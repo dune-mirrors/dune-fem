@@ -5,7 +5,6 @@
 #include <utility>
 
 #include <dune/fem/gridpart/geogridpart/cornerstorage.hh>
-#include <dune/fem/misc/compatibility.hh>
 
 namespace Dune
 {
@@ -53,12 +52,12 @@ namespace Dune
 
       Entity inside () const
       {
-        return EntityImplType( coordFunction(), make_entity( hostIntersection().inside() ) );
+        return EntityImplType( coordFunction(), hostIntersection().inside() );
       }
 
       Entity outside () const
       {
-        return EntityImplType( coordFunction(), make_entity( hostIntersection().outside() ) );
+        return EntityImplType( coordFunction(), hostIntersection().outside() );
       }
 
       bool boundary () const

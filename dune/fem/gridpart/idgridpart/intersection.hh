@@ -5,7 +5,6 @@
 #include <utility>
 
 #include <dune/fem/gridpart/idgridpart/geometry.hh>
-#include <dune/fem/misc/compatibility.hh>
 
 namespace Dune
 {
@@ -50,12 +49,12 @@ namespace Dune
 
       Entity inside () const
       {
-        return EntityImpl( data(), make_entity( hostIntersection().inside() ) );
+        return EntityImpl( data(), hostIntersection().inside() );
       }
 
       Entity outside () const
       {
-        return EntityImpl( data(), make_entity( hostIntersection().outside() ) );
+        return EntityImpl( data(), hostIntersection().outside() );
       }
 
       bool boundary () const

@@ -22,7 +22,6 @@
 #include <dune/fem/gridpart/test/checkseed.hh>
 #include <dune/fem/gridpart/test/checkgeometry.hh>
 #include <dune/fem/gridpart/test/checkintersections.hh>
-#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/test/testgrid.hh>
 
 
@@ -138,7 +137,7 @@ void testIntersectionIterator( const GridPartType & gridPart )
       const typename IntersectionIteratorType::Intersection &intersection = *inter;
       if (intersection.neighbor())
       {
-        typename GridPartType::IndexSetType::IndexType nbIndex = gridPart.indexSet().index( Dune::Fem::make_entity( intersection.outside() ) );
+        typename GridPartType::IndexSetType::IndexType nbIndex = gridPart.indexSet().index( intersection.outside() );
         if ( static_cast<std::size_t>(nbIndex) >= index.size() )
         {
           std::cout << "An index on neighbor is too large" << std::endl;

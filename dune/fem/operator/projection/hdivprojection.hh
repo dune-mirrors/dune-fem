@@ -5,7 +5,6 @@
 #include <dune/geometry/referenceelements.hh>
 
 //- Dune-fem includes
-#include <dune/fem/misc/compatibility.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh>
 #include <dune/fem/operator/matrix/blockmatrix.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
@@ -244,7 +243,7 @@ namespace Dune
             // only interior faces are considered
             if(inter.neighbor() )
             {
-              EntityType nb = make_entity( inter.outside() );
+              EntityType nb = inter.outside();
 
               if(idSet.id( en ) < idSet.id( nb ))
               {
@@ -835,7 +834,7 @@ namespace Dune
           if(inter.neighbor())
           {
             // get neighbor entity
-            EntityType nb = make_entity( inter.outside() );
+            EntityType nb = inter.outside();
 
             // get local function of neighbor
             const LocalFuncType uNeighLf = uDG.localFunction(nb);
@@ -1089,7 +1088,7 @@ namespace Dune
             // only interior faces are considered
             if(inter.neighbor())
             {
-              EntityType nb = make_entity( inter.outside() );
+              EntityType nb = inter.outside();
               const double enVol_nbVol = 0.5 * (enVol + nb.geometry().volume());
 
 #if HAVE_MPI

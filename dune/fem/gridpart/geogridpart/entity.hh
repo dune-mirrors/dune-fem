@@ -9,7 +9,6 @@
 
 #include <dune/fem/gridpart/common/defaultgridpartentity.hh>
 #include <dune/fem/gridpart/geogridpart/cornerstorage.hh>
-#include <dune/fem/misc/compatibility.hh>
 
 namespace Dune
 {
@@ -189,7 +188,7 @@ namespace Dune
       subEntity ( int i ) const
       {
         typedef typename Traits::template Codim< codim >::Entity::Implementation EntityImpl;
-        return EntityImpl( *coordFunction_, make_entity( hostEntity().template subEntity< codim >( i ) ) );
+        return EntityImpl( *coordFunction_, hostEntity().template subEntity< codim >( i ) );
       }
 
       bool hasBoundaryIntersections () const
