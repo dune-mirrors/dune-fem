@@ -79,9 +79,7 @@ namespace Dune
         static const bool v = ( Dune::ContainsType< Type, std::integral_constant< int, N > >::value );
       };
 
-    private:
-      // Selector is a mere traits class, forbid construction
-      SelectorBase();
+      SelectorBase() = delete;
     };
 
     /**

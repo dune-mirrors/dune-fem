@@ -62,11 +62,8 @@ namespace Dune
       : quadrature_( quadrature ), index_( index )
     {}
 
-  private:
-    // forbid assignment
-    ThisType &operator= ( const ThisType & );
+    ThisType &operator= ( const ThisType & ) = delete;
 
-  public:
     inline const QuadratureType &quadrature () const
     {
       return quadrature_;
@@ -75,7 +72,6 @@ namespace Dune
     DUNE_VERSION_DEPRECATED_3_0( "index" ) unsigned int point () const { return index(); }
 
     unsigned int index () const { return index_; }
-
     const CoordinateType &position () const { return quadrature().point( index() ); }
     const RealType &weight () const { return quadrature().weight( index() ); }
     const LocalCoordinateType &localPosition () const { return quadrature().localPoint( index() ); }

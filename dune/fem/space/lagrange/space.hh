@@ -311,12 +311,10 @@ namespace Dune
         return lagrangePointSetContainer_.compiledLocalKey( type, polynomialOrder );
       }
 
-    private:
-      // forbid copying
-      LagrangeDiscreteFunctionSpace ( const ThisType & );
-      // forbid assignment
-      ThisType &operator= ( const ThisType & );
+      LagrangeDiscreteFunctionSpace ( const ThisType & ) = delete;
+      ThisType &operator= ( const ThisType & ) = delete;
 
+    private:
       BlockMapperType *blockMapper_;
       ScalarShapeFunctionSetStorageType scalarShapeFunctionSets_;
       LagrangePointSetContainerType lagrangePointSetContainer_;

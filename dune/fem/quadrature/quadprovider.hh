@@ -135,15 +135,9 @@ namespace Dune
         return getQuadrature( geometry, order );
       }
 
-    private:
-      // forbid creation
-      QuadratureProvider();
-
-      // forbid copying
-      QuadratureProvider( const ThisType& );
-
-      // forbid assignment
-      QuadratureProvider &operator=( const ThisType& );
+      QuadratureProvider() = delete;
+      QuadratureProvider( const ThisType& ) = delete;
+      QuadratureProvider &operator=( const ThisType& ) = delete;
     };
 
 
@@ -169,7 +163,6 @@ namespace Dune
       //! type of integration point list implementation
       typedef typename QuadratureTraitsType :: IntegrationPointListType IntegrationPointListType;
 
-    public:
       //! Access to the quadrature implementations.
       static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
                                                             int order )
@@ -191,15 +184,9 @@ namespace Dune
         return getQuadrature(geometry, order);
       }
 
-    private:
-      // forbid creation
-      QuadratureProvider();
-
-      // forbid copying
-      QuadratureProvider( const ThisType& );
-
-      // forbid assignment
-      QuadratureProvider &operator=( const ThisType& );
+      QuadratureProvider() = delete;
+      QuadratureProvider( const ThisType& ) = delete;
+      QuadratureProvider &operator=( const ThisType& ) = delete;
     };
 
 
@@ -225,7 +212,6 @@ namespace Dune
       //! type of integration point list implementation
       typedef typename QuadratureTraitsType :: IntegrationPointListType IntegrationPointListType;
 
-    public:
       //! Access to the quadrature implementations.
       static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
                                                             int order )
@@ -249,15 +235,9 @@ namespace Dune
           QuadCreator< 1 > :: template provideQuad< LineQuadratureType > ( geometry, order ) ;
       }
 
-    private:
-      // forbid creation
-      QuadratureProvider();
-
-      // forbid copying
-      QuadratureProvider( const ThisType& );
-
-      // forbid assignment
-      QuadratureProvider &operator=( const ThisType& );
+      QuadratureProvider() = delete;
+      QuadratureProvider( const ThisType& ) = delete;
+      QuadratureProvider &operator=( const ThisType& ) = delete;
     };
 
 
@@ -285,7 +265,6 @@ namespace Dune
       //! type of integration point list implementation
       typedef typename QuadratureTraitsType :: IntegrationPointListType IntegrationPointListType;
 
-    public:
       //! Access to the quadrature implementations.
       static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
                                                             int order )
@@ -350,15 +329,9 @@ namespace Dune
           template provideQuad< SimplexQuadratureType >( geometry, 0 );
       }
 
-    private:
-      // forbid creation
-      QuadratureProvider();
-
-      // forbid copying
-      QuadratureProvider( const ThisType& );
-
-      // forbid assignment
-      QuadratureProvider &operator=( const ThisType& );
+      QuadratureProvider() = delete;
+      QuadratureProvider( const ThisType& ) = delete;
+      QuadratureProvider &operator=( const ThisType& ) = delete;
     };
 
 
@@ -390,7 +363,6 @@ namespace Dune
       //! type of integration point list implementation
       typedef typename QuadratureTraitsType :: IntegrationPointListType IntegrationPointListType;
 
-    public:
       //! Access to the quadrature implementations.
       static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
                                                             int order )
@@ -428,15 +400,10 @@ namespace Dune
         return QuadCreator< 0 > :: template provideQuad< SimplexQuadratureType >
           ( geometry, 0 );
       }
-    private:
-      // forbid creation
-      QuadratureProvider();
 
-      // forbid copying
-      QuadratureProvider( const ThisType& );
-
-      // forbid assignment
-      QuadratureProvider &operator=( const ThisType& );
+      QuadratureProvider() = delete;
+      QuadratureProvider( const ThisType& ) = delete;
+      QuadratureProvider &operator=( const ThisType& ) = delete;
     };
 
   } // namespace Fem

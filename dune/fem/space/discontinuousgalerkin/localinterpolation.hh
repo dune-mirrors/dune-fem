@@ -47,13 +47,9 @@ namespace Dune
         massMatrix_( space, (order < 0 ? 2*space.order() : order) )
       {}
 
-    private:
-      // forbid copying
-      DiscontinuousGalerkinLocalInterpolation ( const ThisType &other );
-      // forbid assignment
-      ThisType &operator= ( const ThisType &other );
+      DiscontinuousGalerkinLocalInterpolation ( const ThisType &other ) = delete;
+      ThisType &operator= ( const ThisType &other ) = delete;
 
-    public:
       template< class LocalFunction, class LocalDofVector >
       void operator () ( const LocalFunction &localFunction, LocalDofVector &dofs ) const
       {

@@ -204,18 +204,16 @@ namespace Dune
         discreteModel().mass( entity, time(), quadrature.point( qp ), values_[ qp ], massFactor );
       }
 
+      DGDiscreteModelCaller ( const ThisType & ) = delete;
+      ThisType operator= ( const ThisType & ) = delete;
+
     protected:
       DiscreteModelType &discreteModel () { return discreteModel_; }
       const DiscreteModelType &discreteModel () const { return discreteModel_; }
 
     private:
-      // forbid copying and assignment
-      DGDiscreteModelCaller ( const ThisType & );
-      ThisType operator= ( const ThisType & );
-
       DiscreteModelType &discreteModel_;
       double time_;
-
       DiscreteFunctionPointerTupleType discreteFunctions_;
 
     protected:
