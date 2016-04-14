@@ -20,8 +20,7 @@ namespace
           >
   class CutOutTuple
   {
-    static_assert( (begin+length <= std::tuple_size< Tuple >::value),
-                    "Can not cut out tuple of given length" );
+    static_assert( (begin+length <= std::tuple_size< Tuple >::value), "Can not cut out tuple of given length" );
     typedef typename Dune::PushBackTuple< StartType, std::tuple_element< begin, Tuple > >::type NextType;
 
   public:
@@ -287,10 +286,9 @@ namespace Dune
   template< class VectorTupleType, int pos >
   class TupleToVectorConverter
   {
-    // no copying
-    TupleToVectorConverter ( const TupleToVectorConverter & );
-
   public:
+    TupleToVectorConverter ( const TupleToVectorConverter & ) = delete;
+
     typedef typename VectorTupleType::value_type TupleType;
     typedef typename std::tuple_element< pos, TupleType >::type ValueType;
     typedef ValueType value_type;
@@ -304,14 +302,14 @@ namespace Dune
     ValueType &operator [] ( const size_t i )
     {
       assert( i < size() );
-      return get< pos >( vector_[ i ] );
+      return std::get< pos >( vector_[ i ] );
     }
 
     //! return reference to i-th entry of vector and passId's tuple component
     const ValueType &operator [] ( const size_t i ) const
     {
       assert( i < size() );
-      return get< pos >( vector_[ i ] );
+      return std::get< pos >( vector_[ i ] );
     }
 
     //! return size of vector
