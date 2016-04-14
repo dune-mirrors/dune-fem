@@ -49,7 +49,6 @@ namespace Dune
       typedef DiscreteFunctionType  DestinationType;
       typedef Op OperatorType;
 
-    public:
       /** \brief constructor
        *
        *  \param[in] op Mapping describing operator to invert
@@ -289,8 +288,7 @@ namespace Dune
       }
 
       void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
-      {
-      }
+      {}
 
       void finalize () const
       {}
@@ -343,11 +341,9 @@ namespace Dune
         apply(arg,dest);
       }
 
-    private:
-      // no copying
-      PetscInverseOperator ();
-      PetscInverseOperator( const PetscInverseOperator& ) ;
-      PetscInverseOperator& operator= ( const PetscInverseOperator& );
+      PetscInverseOperator () = delete;
+      PetscInverseOperator( const PetscInverseOperator& ) = delete;
+      PetscInverseOperator& operator= ( const PetscInverseOperator& ) = delete;
 
     protected:
       const OperatorType &op_; // linear operator
