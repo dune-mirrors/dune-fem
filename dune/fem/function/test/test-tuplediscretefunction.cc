@@ -1,25 +1,32 @@
 #include <config.h>
 
-#include <iostream>
-#include <vector>
 #include <algorithm>
 #include <cstdlib>
+#include <iostream>
+#include <vector>
 
-#include <dune/fem/test/testgrid.hh>
 #include <dune/fem/misc/gridwidth.hh>
+#include <dune/fem/test/testgrid.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/space/finitevolume.hh>
-#include <dune/fem/space/discontinuousgalerkin.hh>
-#include <dune/fem/space/lagrange.hh>
 #include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/space/common/interpolate.hh>
+#include <dune/fem/space/discontinuousgalerkin.hh>
+#include <dune/fem/space/finitevolume.hh>
+#include <dune/fem/space/lagrange.hh>
 
-#include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/blockvectorfunction.hh>
+#include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/function/tuplediscretefunction.hh>
 
 #include <dune/fem/misc/mpimanager.hh>
+
+
+#include <dune/fem/misc/h1norm.hh>
+#include <dune/fem/misc/l2norm.hh>
+
 
 typedef Dune::GridSelector::GridType HGridType;
 typedef Dune::Fem::AdaptiveLeafGridPart< HGridType > GridPartType;
@@ -41,124 +48,138 @@ DiscreteFunctionType;
 
 typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
-/*
-template <class DiscreteFunction, class OtherDiscreteFunction>
-void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
+
+template< class FunctionSpace >
+struct MyFunction
 {
-  std::cout << "Checking (" << df.name() << "," << other.name()
-            << "), size = ("<<df.size()<< "," << other.size() << ")....";
-  typedef typename DiscreteFunction :: DofType DofType;
+  typedef FunctionSpace FunctionSpaceType;
 
-  // fill df with zeros
-  df.clear();
-  other.clear();
+  typedef typename FunctionSpaceType::DomainType DomainType;
+  typedef typename FunctionSpaceType::RangeType RangeType;
+  typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-  // fill df with zeros
-  std::fill( df.dbegin(), df.dend(), DofType( 0 ) );
-
-  df += other;
-  df -= other;
-
-  // fill df with zeros
-  for( auto&& dof : dofs(df) )
-    dof=static_cast<DofType>(0);
-
-  // fill with increasing values
-  int cont(0);
-  for( const auto& entity : entities(df) )
+  void evaluate ( const DomainType &x, RangeType &y ) const
   {
-    auto lf = df.localFunction( entity );
-    lf.clear();
-    for( auto i=0; i<lf.numDofs(); ++i,++cont )
-      lf[ i ] = static_cast<DofType>(cont);
+    y = 1.0;
+    for( int k = 0; k < FunctionSpaceType::dimDomain; ++k )
+      y *= std::sin( M_PI * x[ k ] );
   }
 
-  // check block access
-  const size_t localBlockSize = DiscreteFunctionSpaceType::localBlockSize;
-  const size_t numBlocks      = df.blocks();
-  if( df.size() / localBlockSize != numBlocks )
-    DUNE_THROW(Dune::InvalidStateException,"number of blocks not correct!");
-
-  auto dfDofIt(df.dbegin());
-  for(size_t i=0;i<numBlocks;++i)
-    for(size_t j=0;j<localBlockSize;++j,++dfDofIt)
-      if( std::abs( df.dofVector()[i][j] - *dfDofIt ) > 1e-12 )
-        DUNE_THROW(Dune::InvalidStateException,"Block access did not work");
-
-  // copy to std::vector, sometimes needed for solver interfaces
-  std::vector< DofType > vec( df.size() );
-  std::copy( df.dbegin(), df.dend(), vec.begin() );
-
-  // check copy constructor
-  DiscreteFunction copydf( df );
-  if( ! (copydf == df) )
+  void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
   {
-    assert( false );
-    DUNE_THROW(Dune::InvalidStateException,"Copying did not work");
+    for( int j = 0; j < FunctionSpaceType::dimDomain; ++j )
+    {
+      // jacobian has only one row, calc j-th column
+      jacobian[ 0 ][ j ] = M_PI;
+      for( int k = 0; k < FunctionSpaceType::dimDomain; ++k )
+        jacobian[ 0 ][ j ] *= (j == k ? cos( M_PI*x[ k ] ) : sin( M_PI*x[ k ] ));
+    }
+    for( int j = 1; j < FunctionSpaceType::dimRange; ++j )
+      jacobian[ j ] = jacobian[ 0 ];
   }
-
-  df.dofVector()[0] *= 1.0;
-  df.dofVector()[0][0] = 1.0;
-  df.dofVector()[0][HGridType::dimension-1] = 1.0;
-
-  df.assign( other );
-
-  df *= 2.0;
-  df /= 2.0;
-
-  df.axpy( 0.5, other );
-
-  df.enableDofCompression();
-
-  std::stringstream stream;
-  Dune::Fem::StandardOutStream out( stream );
-  df.write( out );
-  Dune::Fem::StandardInStream in( stream );
-  df.read( in );
-
-  df.scalarProductDofs( other );
-  df.scalarProductDofs( df );
-  other.scalarProductDofs( df );
-
-  std::cout << "done!" << std::endl;
-
-  typedef Dune::Fem::RestrictProlongDefault<DiscreteFunction> RPDefaultType;
-  RPDefaultType rp( df );
-  rp.setFatherChildWeight(Dune::DGFGridInfo< HGridType >::refineWeight());
-
-  //typedef Dune::Fem::AdaptationManager< HGridType, RPDefaultType > AdaptationManagerType;
-  //AdaptationManagerType adop(grid,rp);
-}
-*/
+};
 
 // main program
-int main(int argc, char ** argv)
+int main ( int argc, char **argv )
 {
-  Dune::Fem::MPIManager :: initialize( argc, argv );
+  Dune::Fem::MPIManager::initialize( argc, argv );
   try
   {
-    HGridType &grid = Dune::Fem::TestGrid :: grid();
+    HGridType &grid = Dune::Fem::TestGrid::grid();
 
     GridPartType gridPart( grid );
     // add check for grid width
     std::cout << "Grid width: "
-      << Dune::Fem::GridWidth :: calcGridWidth( gridPart ) << std::endl;
+              << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
 
     DiscreteFunctionSpaceType space( gridPart );
 
     DiscreteFunctionType df( "ref", space );
+    df.clear();
+
+    DiscreteFunctionType df2( "ref2", space );
+    df2.clear();
+
+    df2 += df;
+    df.axpy( 0.5, df2 );
+
     std::cout << "dofs = " << df.size() << std::endl;
+    std::cout <<
+    df.template subDiscreteFunction< 0 >().size() +
+    df.template subDiscreteFunction< 1 >().size() +
+    df.template subDiscreteFunction< 2 >().size() +
+    df.template subDiscreteFunction< 3 >().size()
+    << std::endl;
 
     // refine grid
     Dune::Fem::GlobalRefine::apply( grid, 1 );
 
+    df2 += df;
     std::cout << "dofs = " << df.size() << std::endl;
+    std::cout <<
+    df.template subDiscreteFunction< 0 >().size() +
+    df.template subDiscreteFunction< 1 >().size() +
+    df.template subDiscreteFunction< 2 >().size() +
+    df.template subDiscreteFunction< 3 >().size()
+    << std::endl;
+
+    std::stringstream stream;
+    Dune::Fem::StandardOutStream out( stream );
+    df.write( out );
+    Dune::Fem::StandardInStream in( stream );
+    df.read( in );
+
+    Dune::Fem::L2Norm< GridPartType > l2Norm( gridPart, 5 );
+
+    typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FullFunctionSpaceType;
+    typedef MyFunction< FullFunctionSpaceType > FullFunction;
+    typedef MyFunction< BaseFunctionSpaceType > SubFunction;
+
+    std::cout<<"Interpolation tests: "<<std::endl;
+    for( int i = 0; i < 4; ++i )
+    {
+      std::cout<<"Full function interpolation test:" <<std::endl;
+
+      Dune::Fem::interpolate( Dune::Fem::gridFunctionAdapter( FullFunction(), gridPart, 5 ), df );
+      const double fullError = l2Norm.distance( df, FullFunction() );
+      std::cout<< fullError << std::endl;
+      std::cout<< df.name() <<std::endl;
+
+      std::cout<<"Checking for subFunctions:"<<std::endl;
+
+      std::cout<< df.template subDiscreteFunction< 0 >().name() <<std::endl;
+      std::cout<< df.template subDiscreteFunction< 1 >().name() <<std::endl;
+      std::cout<< df.template subDiscreteFunction< 2 >().name() <<std::endl;
+      std::cout<< df.template subDiscreteFunction< 3 >().name() <<std::endl;
+
+      // read access
+      Dune::FieldVector< double, 4 > error =
+      {{
+         l2Norm.distance( df.template subDiscreteFunction< 0 >(), SubFunction() ),
+         l2Norm.distance( df.template subDiscreteFunction< 1 >(), SubFunction() ),
+         l2Norm.distance( df.template subDiscreteFunction< 2 >(), SubFunction() ),
+         l2Norm.distance( df.template subDiscreteFunction< 3 >(), SubFunction() )
+       }};
+      std::cout << error.two_norm() << std::endl;
+
+      assert( std::abs( error.two_norm() - fullError ) < 1e-8 );
+
+      // write access
+      Dune::Fem::interpolate( Dune::Fem::gridFunctionAdapter( SubFunction(), gridPart, 5 ), df.template subDiscreteFunction< 0 >() );
+      Dune::Fem::interpolate( Dune::Fem::gridFunctionAdapter( SubFunction(), gridPart, 5 ), df.template subDiscreteFunction< 1 >() );
+      Dune::Fem::interpolate( Dune::Fem::gridFunctionAdapter( SubFunction(), gridPart, 5 ), df.template subDiscreteFunction< 2 >() );
+      Dune::Fem::interpolate( Dune::Fem::gridFunctionAdapter( SubFunction(), gridPart, 5 ), df.template subDiscreteFunction< 3 >() );
+
+      std::cout<<std::endl;
+
+      Dune::Fem::GlobalRefine::apply( grid, 1 );
+    }
 
     return 0;
   }
-  catch( const Dune::Exception& e )
+  catch( const Dune::Exception &e )
   {
-    std :: cerr << e.what() << std :: endl;
+    std::cerr << e.what() << std::endl;
     return 1;
   }
 }
