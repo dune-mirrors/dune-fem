@@ -47,7 +47,7 @@ namespace Dune
 
     private:
       // vector holding the coordinates for each point
-      DynamicArray< CoordinateType > points_;
+      std::vector< CoordinateType > points_;
 
       // identifier of the integration point list
       const size_t id_;
@@ -151,7 +151,7 @@ namespace Dune
        */
       void addIntegrationPoint( const CoordinateType &point )
       {
-        points_.append( point );
+        points_.push_back( point );
       }
     };
 
@@ -185,7 +185,7 @@ namespace Dune
 
     private:
       // vector holding weights of each integration point
-      DynamicArray< FieldType > weights_;
+      std::vector< FieldType > weights_;
 
     protected:
       /** \brief Constructor
@@ -248,7 +248,7 @@ namespace Dune
       void addQuadraturePoint ( const CoordinateType &point, const FieldType weight )
       {
         addIntegrationPoint( point );
-        weights_.append( weight );
+        weights_.push_back( weight );
       }
     };
 

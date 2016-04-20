@@ -1,7 +1,9 @@
 #ifndef DUNE_FEM_TEMPORARYLOCALMATRIX_HH
 #define DUNE_FEM_TEMPORARYLOCALMATRIX_HH
 
-#include <dune/fem/storage/array.hh>
+#include <algorithm>
+#include <vector>
+
 #include <dune/fem/operator/common/localmatrix.hh>
 
 namespace Dune
@@ -64,21 +66,18 @@ namespace Dune
     public:
       using BaseType :: rows;
       using BaseType :: columns;
-
-    public:
       typedef typename Traits :: DomainFieldType DomainFieldType;
       typedef typename Traits :: RangeFieldType RangeFieldType;
 
     protected:
-      Fem :: DynamicArray< RangeFieldType > fields_;
+      std::vector< RangeFieldType > fields_;
 
     public:
       inline TemporaryLocalMatrix ( const DomainSpaceType &domainSpace,
                                     const RangeSpaceType &rangeSpace )
       : BaseType( domainSpace, rangeSpace ),
         fields_()
-      {
-      }
+      {}
 
       template< class DomainEntityType, class RangeEntityType >
       inline TemporaryLocalMatrix ( const DomainSpaceType &domainSpace,
@@ -87,9 +86,7 @@ namespace Dune
                                     const RangeEntityType &rangeEntity )
       : BaseType( domainSpace, rangeSpace, domainEntity, rangeEntity ),
         fields_( rows() * columns() )
-      {
-      }
-
+      {}
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::init */
       template< class DomainEntityType, class RangeEntityType >
@@ -131,7 +128,7 @@ namespace Dune
       /** \copydoc Dune::Fem::LocalMatrixInterface::clear */
       inline void clear ()
       {
-        fields_.assign( 0 );
+        std::fill( fields_.begin() , fields_.end() , 0 );
       }
     };
 

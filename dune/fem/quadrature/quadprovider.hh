@@ -1,7 +1,8 @@
 #ifndef DUNE_FEM_QUADPROVIDER_HH
 #define DUNE_FEM_QUADPROVIDER_HH
 
-#include <dune/fem/storage/array.hh>
+#include <vector>
+
 #include <dune/fem/quadrature/quadratureimp.hh>
 #include <dune/fem/quadrature/idprovider.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
@@ -35,8 +36,7 @@ namespace Dune
         typedef QuadType *QuadPtr;
 
       protected:
-        DynamicArray< QuadPtr > storage_;
-        //std :: vector< QuadPtr > storage_;
+        std :: vector< QuadPtr > storage_;
 
       public:
         QuadratureStorage ()
