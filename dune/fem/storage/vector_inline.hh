@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_VECTOR_INLINE_HH
 #define DUNE_FEM_VECTOR_INLINE_HH
 
+#include <iostream>
+
 #include "vector.hh"
 
 namespace Dune
@@ -8,149 +10,6 @@ namespace Dune
 
   namespace Fem
   {
-
-    // VectorInterface
-    // ---------------
-
-    template< class Traits >
-    template< class T >
-    inline typename Traits :: VectorType &
-    VectorInterface< Traits > :: operator= ( const VectorInterface< T > &v )
-    {
-      asImp().assign( v );
-      return asImp();
-    }
-
-    template< class Traits >
-    inline typename Traits :: VectorType &
-    VectorInterface< Traits > :: operator= ( const ThisType &v )
-    {
-      asImp().assign( v );
-      return asImp();
-    }
-
-    template< class Traits >
-    inline typename Traits :: VectorType &
-    VectorInterface< Traits > :: operator= ( const FieldType s )
-    {
-      asImp().assign( s );
-      return asImp();
-    }
-
-    template< class Traits >
-    inline const typename Traits :: FieldType &
-    VectorInterface< Traits > :: operator[] ( unsigned int index ) const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
-      return asImp()[ index ];
-    }
-
-    template< class Traits >
-    inline typename Traits :: FieldType &
-    VectorInterface< Traits > :: operator[] ( unsigned int index )
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
-      return asImp()[ index ];
-    }
-
-    template< class Traits >
-    template< class T >
-    inline typename Traits :: VectorType &
-    VectorInterface< Traits > :: operator+= ( const VectorInterface< T > &v )
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator+=( v.asImp() ) );
-      return asImp();
-    }
-
-    template< class Traits >
-    template< class T >
-    inline typename Traits :: VectorType &
-    VectorInterface< Traits > :: operator-= ( const VectorInterface< T > &v )
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator-=( v.asImp() ) );
-      return asImp();
-    }
-
-    template< class Traits >
-    inline typename Traits :: VectorType &
-    VectorInterface< Traits > :: operator*= ( const FieldType s )
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator*=( s ) );
-      return asImp();
-    }
-
-    template< class Traits >
-    template< class T >
-    inline typename Traits :: VectorType &
-    VectorInterface< Traits > :: addScaled ( const FieldType s,
-                                             const VectorInterface< T > &v )
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().add( s, v.asImp() ) );
-      return asImp();
-    }
-
-    template< class Traits >
-    template< class T >
-    inline void VectorInterface< Traits > :: assign ( const VectorInterface< T > &v )
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( v.asImp() ) );
-    }
-
-    template< class Traits >
-    inline void VectorInterface< Traits > :: assign ( const FieldType s )
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( s ) );
-    }
-
-    template< class Traits >
-    inline void VectorInterface< Traits > :: clear ()
-    {
-      CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().clear() );
-    }
-
-    template< class Traits >
-    inline typename Traits :: ConstIteratorType
-    VectorInterface< Traits > :: begin () const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
-      return asImp().begin();
-    }
-
-    template< class Traits >
-    inline typename Traits :: IteratorType
-    VectorInterface< Traits > :: begin ()
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
-      return asImp().begin();
-    }
-
-    template< class Traits >
-    inline typename Traits :: ConstIteratorType
-    VectorInterface< Traits > :: end () const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
-      return asImp().end();
-    }
-
-    template< class Traits >
-    inline typename Traits :: IteratorType
-    VectorInterface< Traits > :: end ()
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
-      return asImp().end();
-    }
-
-    template< class Traits >
-    inline unsigned int VectorInterface< Traits > :: size () const
-    {
-      CHECK_INTERFACE_IMPLEMENTATION( asImp().size() );
-      return asImp().size();
-    }
-
-
-    // other things...
-    // ---------------
-
     //! Scalar product of two vectors
     template< class Traits1, class Traits2 >
     inline typename ExtractCommonFieldType< Traits1, Traits2 > :: FieldType
@@ -169,8 +28,6 @@ namespace Dune
     }
 
 
-    // Stream Operators
-    // ----------------
 
     /** \brief write a vector into an output stream
      *  \relates VectorInterface
@@ -194,6 +51,7 @@ namespace Dune
         out << *it;
       return out;
     }
+
 
 
     /** \brief read a vector from an input stream
@@ -220,6 +78,7 @@ namespace Dune
     }
 
 
+
     /** \brief write a vector into an STL stream
      *  \relates VectorInterface
      *
@@ -244,6 +103,8 @@ namespace Dune
         out << "[]";
       return out;
     }
+
+
 
     inline void match ( std :: istream &in, char excepted )
     {

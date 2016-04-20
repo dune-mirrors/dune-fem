@@ -68,11 +68,9 @@ namespace Dune
        *  \param[in]  id  unique identifier of the integration point list
        *                  (provided by QuadratureProvider)
        */
-      inline explicit IntegrationPointListImp( size_t id )
-      : points_(),
-        id_( id )
-      {
-      }
+      explicit IntegrationPointListImp( size_t id )
+      : points_(), id_( id )
+      {}
 
     public:
       IntegrationPointListImp( const IntegrationPointListImp& ) = delete;
@@ -90,7 +88,7 @@ namespace Dune
        *
        *  \returns reference to i-th integration point
        */
-      inline const CoordinateType &point ( size_t i ) const
+      const CoordinateType &point ( size_t i ) const
       {
         assert( i < nop() );
         return points_[ i ];
@@ -205,11 +203,9 @@ namespace Dune
        *  \param[in]  id  unique identifier of the quadrature (provided by
        *                  QuadratureProvider)
        */
-      inline explicit QuadratureImp( size_t id )
-      : BaseType( id ),
-        weights_()
-      {
-      }
+      explicit QuadratureImp( size_t id )
+      : BaseType( id ), weights_()
+      {}
 
     public:
       QuadratureImp ( const QuadratureImp& ) = delete;
@@ -237,7 +233,7 @@ namespace Dune
 
     private:
       // Disallow use of addIntegrationPoint for quadratures
-      inline void addIntegrationPoint ( const CoordinateType &point )
+      void addIntegrationPoint ( const CoordinateType &point )
       {
         BaseType :: addIntegrationPoint( point );
       }
@@ -249,8 +245,7 @@ namespace Dune
        *  respective weights) to the list. This mehtod should only be used within
        *  the constructor of the derived class.
        */
-      inline void addQuadraturePoint ( const CoordinateType &point,
-                                       const FieldType weight )
+      void addQuadraturePoint ( const CoordinateType &point, const FieldType weight )
       {
         addIntegrationPoint( point );
         weights_.append( weight );

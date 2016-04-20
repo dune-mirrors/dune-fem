@@ -39,30 +39,28 @@ namespace Dune
         //std :: vector< QuadPtr > storage_;
 
       public:
-        inline QuadratureStorage ()
-        : storage_( QuadType :: maxOrder() + 1, (QuadPtr)0 )
+        QuadratureStorage ()
+        : storage_( QuadType :: maxOrder() + 1, nullptr )
+        {}
+
+        ~QuadratureStorage ()
         {
+          for( auto& elem : storage_ )
+            delete elem;
         }
 
-        inline ~QuadratureStorage ()
-        {
-          for( unsigned int i = 0; i < storage_.size(); ++i )
-            delete storage_[ i ];
-        }
-
-        inline QuadImp &getQuadrature( const GeometryType &geometry,
-                                       unsigned int order )
+        QuadImp &getQuadrature( const GeometryType &geometry, unsigned int order )
         {
           assert( order < storage_.size() );
 
           QuadPtr& quadPtr = storage_[ order ];
-          if( quadPtr == 0 )
+          if( quadPtr == nullptr )
           {
             // make sure we work in single thread mode when quadrature is created
             assert( Fem :: ThreadManager:: singleThreadMode() );
             quadPtr = new QuadImp( geometry, order, IdProvider :: instance().newId() );
           }
-          assert( quadPtr != 0 );
+          assert( quadPtr != nullptr );
           return *quadPtr;
         }
       }; // end class QuadratureStorage

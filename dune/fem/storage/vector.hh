@@ -62,38 +62,72 @@ namespace Dune
       //! type of iterator
       typedef typename Traits::IteratorType IteratorType;
 
-    public:
       //! Assign another vector to this one
       template< class T >
-      VectorType& operator= ( const VectorInterface< T > &v );
+      VectorType& operator= ( const VectorInterface< T > &v )
+      {
+        asImp().assign( v );
+        return asImp();
+      }
 
       //! Assign another vector to this one
-      VectorType& operator= ( const ThisType &v );
+      VectorType& operator= ( const ThisType &v )
+      {
+        asImp().assign( v );
+        return asImp();
+      }
 
       //! Initialize all fields of this vector with a scalar
-      VectorType &operator= ( const FieldType s );
+      VectorType &operator= ( const FieldType s )
+      {
+        asImp().assign( s );
+        return asImp();
+      }
 
       //! Returns a const reference to the field indexed by index
-      const FieldType &operator[] ( unsigned int index ) const;
+      const FieldType &operator[] ( unsigned int index ) const
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
+        return asImp()[ index ];
+      }
 
       //! Returns a reference to the field indexed by index
-      FieldType &operator[] ( unsigned int index );
+      FieldType &operator[] ( unsigned int index )
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp()[ index ] );
+        return asImp()[ index ];
+      }
 
       //! Add another vector to this one
       template< class T >
-      VectorType &operator+= ( const VectorInterface< T > &v );
+      VectorType &operator+= ( const VectorInterface< T > &v )
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator+=( v.asImp() ) );
+        return asImp();
+      }
 
       //! Subtract another vector from this one
       template< class T >
-      VectorType &operator-= ( const VectorInterface< T > &v );
+      VectorType &operator-= ( const VectorInterface< T > &v )
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator-=( v.asImp() ) );
+        return asImp();
+      }
 
       //! Multiply this vector by a scalar
-      VectorType &operator*= ( const FieldType s );
+      VectorType &operator*= ( const FieldType s )
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator*=( s ) );
+        return asImp();
+      }
 
       //! Add a multiple of another vector to this one
       template< class T >
-      VectorType &addScaled ( const FieldType s,
-                              const VectorInterface< T > &v );
+      VectorType &addScaled ( const FieldType s, const VectorInterface< T > &v )
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().add( s, v.asImp() ) );
+        return asImp();
+      }
 
       /** \brief copy another vector to this one
        *
@@ -103,28 +137,57 @@ namespace Dune
        *  \param[in]  v  vector to copy
        */
       template< class T >
-      void assign ( const VectorInterface< T > &v );
+      void assign ( const VectorInterface< T > &v )
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( v.asImp() ) );
+      }
 
       //! Initialize all fields of this vector with a scalar
-      void assign ( const FieldType s );
+      void assign ( const FieldType s )
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( s ) );
+      }
 
       /** \brief initialize the vector to 0 */
-      void clear ();
+      void clear ()
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().clear() );
+      }
 
       //! obtain begin iterator
-      ConstIteratorType begin () const;
+      ConstIteratorType begin () const
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
+        return asImp().begin();
+      }
 
       //! obtain begin iterator
-      IteratorType begin ();
+      IteratorType begin ()
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
+        return asImp().begin();
+      }
 
       //! obtain end iterator
-      ConstIteratorType end () const;
+      ConstIteratorType end () const
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
+        return asImp().end();
+      }
 
       //! obtain end iterator
-      IteratorType end ();
+      IteratorType end ()
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
+        return asImp().end();
+      }
 
       //! Returns the vector's size
-      unsigned int size () const;
+      unsigned int size () const
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().size() );
+        return asImp().size();
+      }
 
     protected:
       using BaseType::asImp;
@@ -186,7 +249,6 @@ namespace Dune
       typedef typename BaseType :: ConstIteratorType ConstIteratorType;
       typedef typename BaseType :: IteratorType IteratorType;
 
-    public:
       //! Add another vector to this one
       template< class T >
       VectorType &operator+= ( const VectorInterface< T > &v )
@@ -252,7 +314,6 @@ namespace Dune
       {
         asImp().assign( 0 );
       }
-
 
       //! obtain begin iterator
       ConstIteratorType begin () const
@@ -557,7 +618,7 @@ namespace Dune
 
     public:
       //! Constructor setting up a vector of a specified size
-      inline explicit DynamicVector ( unsigned int size = 0 )
+      explicit DynamicVector ( unsigned int size = 0 )
       : fields_( size )
       {}
 
@@ -571,14 +632,14 @@ namespace Dune
 
       //! Copy constructor setting up a vector with the data of another one
       template< class T >
-      inline DynamicVector ( const VectorInterface< T > &v )
+      DynamicVector ( const VectorInterface< T > &v )
       : fields_()
       {
         assign( v );
       }
 
       //! Copy constructor setting up a vector with the data of another one (of the same type)
-      inline DynamicVector ( const ThisType &v )
+      DynamicVector ( const ThisType &v )
       : fields_()
       {
         assign( v );
@@ -586,70 +647,69 @@ namespace Dune
 
       //! Assign another vector to this one
       template< class T >
-      inline ThisType &operator= ( const VectorInterface< T > &v )
+      ThisType &operator= ( const VectorInterface< T > &v )
       {
         assign( v );
         return *this;
       }
 
       //! Assign another vector (of the same type) to this one
-      inline ThisType &operator= ( const ThisType &v )
+      ThisType &operator= ( const ThisType &v )
       {
         assign( v );
         return *this;
       }
 
       //! Initialize all fields of this vector with a scalar
-      inline ThisType &operator= ( const FieldType s )
+      ThisType &operator= ( const FieldType s )
       {
         assign( s );
         return *this;
       }
 
-      inline const FieldType &operator[] ( unsigned int index ) const
+      const FieldType &operator[] ( unsigned int index ) const
       {
         return fields_[ index ];
       }
 
-      inline FieldType &operator[] ( unsigned int index )
+      FieldType &operator[] ( unsigned int index )
       {
         return fields_[ index ];
       }
 
       /** \copydoc Dune::Fem::VectorInterface::assign(const VectorInterface<T> &v) */
       template< class T >
-      inline void assign ( const VectorInterface< T > &v )
+      void assign ( const VectorInterface< T > &v )
       {
         fields_.assign( v );
       }
 
-      inline const FieldType *leakPointer () const
+      const FieldType *leakPointer () const
       {
         return fields_.leakPointer();
       }
 
-      inline FieldType *leakPointer ()
+      FieldType *leakPointer ()
       {
         return fields_.leakPointer();
       }
 
-      inline void reserve ( unsigned int newSize )
+      void reserve ( unsigned int newSize )
       {
         fields_.reserve( newSize );
       }
 
-      inline void resize ( unsigned int newSize )
+      void resize ( unsigned int newSize )
       {
         fields_.resize( newSize );
       }
 
-      inline void resize ( unsigned int newSize,
-                           const FieldType defaultValue )
+      void resize ( unsigned int newSize, const FieldType defaultValue )
       {
         fields_.resize( newSize, defaultValue );
       }
 
-      inline unsigned int size () const
+      unsigned int size () const
       {
         return fields_.size();
       }
@@ -680,64 +740,62 @@ namespace Dune
 
     public:
       //! Constructor setting up an uninitialized vector
-      inline StaticVector ()
-      {
-      }
+      StaticVector () = default;
 
       //! Constructor setting up a vector initialized to a constant value
-      inline explicit StaticVector ( const FieldType s )
+      explicit StaticVector ( const FieldType s )
       {
         assign( s );
       }
 
       //! Copy constructor setting up a vector with the data of another one
       template< class T >
-      inline StaticVector ( const VectorInterface< T > &v )
+      StaticVector ( const VectorInterface< T > &v )
       {
         assign( v );
       }
 
       //! Copy constructor setting up a vector with the data of another one
-      inline StaticVector ( const ThisType &v )
+      StaticVector ( const ThisType &v )
       {
         assign( v );
       }
 
       //! Assign another vector to this one
       template< class T >
-      inline ThisType &operator= ( const VectorInterface< T > &v )
+      ThisType &operator= ( const VectorInterface< T > &v )
       {
         assign( v );
         return *this;
       }
 
       //! Assign another vector to this one
-      inline ThisType &operator= ( const ThisType &v )
+      ThisType &operator= ( const ThisType &v )
       {
         assign( v );
         return *this;
       }
 
       //! Initialize all fields of this vector with a scalar
-      inline ThisType &operator= ( const FieldType s )
+      ThisType &operator= ( const FieldType s )
       {
         assign( s );
         return *this;
       }
 
-      inline const FieldType &operator[] ( unsigned int index ) const
+      const FieldType &operator[] ( unsigned int index ) const
       {
         assert( index < sz );
         return fields_[ index ];
       }
 
-      inline FieldType &operator[] ( unsigned int index )
+      FieldType &operator[] ( unsigned int index )
       {
         assert( index < sz );
         return fields_[ index ];
       }
 
-      inline unsigned int size () const
+      unsigned int size () const
       {
         return sz;
       }
@@ -796,7 +854,6 @@ namespace Dune
 
     // Capabilities
     // ------------
-
     namespace Capabilities
     {
 

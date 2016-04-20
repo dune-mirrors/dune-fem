@@ -276,9 +276,8 @@ namespace Dune
       //! type of (non-constant) iterator
       typedef typename Traits :: IteratorType IteratorType;
 
-    public:
       /** \copydoc Dune::Fem::ArrayInterface::assign(const ElementType &element) */
-      inline void assign ( const ElementType &element )
+      void assign ( const ElementType &element )
       {
         ArrayType &imp = asImp();
         const unsigned int size = imp.size();
@@ -288,7 +287,7 @@ namespace Dune
 
       /** \copydoc Dune::Fem::ArrayInterface::assign(const ArrayInterface<T> &other) */
       template< class T >
-      inline void assign( const ArrayInterface< T > &other )
+      void assign( const ArrayInterface< T > &other )
       {
         ArrayType &imp = asImp();
         const unsigned int size = imp.size();
@@ -298,25 +297,25 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::ArrayInterface::begin() const */
-      inline ConstIteratorType begin () const
+      ConstIteratorType begin () const
       {
         return ConstIteratorType( asImp(), 0 );
       }
 
       /** \copydoc Dune::Fem::ArrayInterface::begin() */
-      inline IteratorType begin ()
+      IteratorType begin ()
       {
         return IteratorType( asImp(), 0 );
       }
 
       /** \copydoc Dune::Fem::ArrayInterface::end() const */
-      inline ConstIteratorType end () const
+      ConstIteratorType end () const
       {
         return ConstIteratorType( asImp(), size() );
       }
 
       /** \copydoc Dune::Fem::ArrayInterface::end() */
-      inline IteratorType end ()
+      IteratorType end ()
       {
         return IteratorType( asImp(), size() );
       }
