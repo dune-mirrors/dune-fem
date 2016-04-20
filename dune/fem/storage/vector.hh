@@ -716,9 +716,12 @@ namespace Dune
     };
 
 
-    /*! \class StaticVector
-     *  \brief implementation of VectorInterface using a C++ array embedded info
-     *         the class to provide the fields
+
+    /** \class StaticVector
+     *  \brief A vector using a std::array as storage
+     *
+     *  An implementation of VectorInterface using a std::array to provide the
+     *  fields.
      */
     template< class FieldImp, int sz >
     class StaticVector
@@ -736,7 +739,7 @@ namespace Dune
       using BaseType :: assign;
 
     protected:
-      FieldType fields_[ sz ]; //!< The actual vector fields
+      std::array<FieldType,sz> fields_;
 
     public:
       //! Constructor setting up an uninitialized vector
