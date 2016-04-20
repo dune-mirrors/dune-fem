@@ -7,22 +7,21 @@
 #include <string>
 
 // dune-fem includes
-#include <dune/fem/version.hh>
+#include <dune/fem/common/referencevector.hh>
 #include <dune/fem/function/common/dofiterator.hh>
 #include <dune/fem/function/common/function.hh>
 #include <dune/fem/function/common/functor.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
-#include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/function/common/rangegenerators.hh>
+#include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/debug.hh>
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
-#include <dune/fem/version.hh>
 #include <dune/fem/storage/envelope.hh>
-#include <dune/fem/common/referencevector.hh>
+#include <dune/fem/version.hh>
 
 
 namespace Dune
