@@ -21,10 +21,8 @@
 
 namespace Dune
 {
-
   namespace Fem
   {
-
     /** \class VectorInterface
      *  \ingroup Vector
      *  \brief Abstract vector interface
@@ -406,6 +404,9 @@ namespace Dune
       //! Field type of the vector
       typedef Field FieldType;
 
+      //! DOFs storage type
+      typedef std::vector< FieldType, Allocator<FieldType> > DofStorageType;
+
       using BaseType :: assign;
 
       //! Constructor setting up a vector of a specified size
@@ -494,7 +495,7 @@ namespace Dune
       }
 
     private:
-      std::vector< FieldType, Allocator<FieldType> > fields_;
+      DofStorageType fields_;
     };
 
 
@@ -513,6 +514,9 @@ namespace Dune
     public:
       //! Field type of vector
       typedef Field FieldType;
+
+      //! DOFs storage type
+      typedef std::array<FieldType,sz> DofStorageType;
 
       using BaseType :: assign;
 
@@ -578,16 +582,13 @@ namespace Dune
       }
 
     private:
-      std::array<FieldType,sz> fields_;
+      DofStorageType fields_;
     };
 
 
 
-    // Capabilities
-    // ------------
     namespace Capabilities
     {
-
       template< class Array >
       struct HasLeakPointer
       : public MetaBool< false >
@@ -602,11 +603,9 @@ namespace Dune
       struct HasLeakPointer< StaticVector< Field, sz > >
       : public MetaBool< true >
       {};
-
     }
 
   } // namespace Fem
-
 } // namespace Dune
 
 #include "vector_inline.hh"
