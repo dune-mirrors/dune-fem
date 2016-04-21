@@ -2,6 +2,7 @@
 #define DUNE_FEM_VECTOR_INLINE_HH
 
 #include <iostream>
+#include <type_traits>
 
 #include "vector.hh"
 
@@ -12,16 +13,16 @@ namespace Dune
   {
     //! Scalar product of two vectors
     template< class Traits1, class Traits2 >
-    inline typename ExtractCommonFieldType< Traits1, Traits2 > :: FieldType
-    operator* ( const VectorInterface< Traits1 > &u,
-                const VectorInterface< Traits2 > &v )
+    inline typename Traits1 :: FieldType
+    operator* ( const VectorInterface< Traits1 > &u, const VectorInterface< Traits2 > &v )
     {
-      typedef typename ExtractCommonFieldType< Traits1, Traits2 > :: FieldType FieldType;
+      static_assert( (std::is_same< typename Traits1::FieldType, typename Traits2::FieldType >::value),
+                     "FieldType must be identical." );
 
-      const unsigned int size = u.size();
+      const auto size = u.size();
       assert( size == v.size() );
 
-      FieldType result = 0;
+      typename Traits1::FieldType result = 0;
       for( unsigned int i = 0; i < size; ++i )
         result += u[ i ] * v[ i ];
       return result;
@@ -40,15 +41,10 @@ namespace Dune
      */
     template< class StreamTraits, class VectorTraits >
     inline OutStreamInterface< StreamTraits > &
-      operator<< ( OutStreamInterface< StreamTraits > &out,
-                   const VectorInterface< VectorTraits > &v )
+      operator<< ( OutStreamInterface< StreamTraits > &out, const VectorInterface< VectorTraits > &v )
     {
-      typedef typename VectorInterface< VectorTraits > :: ConstIteratorType
-        ConstIteratorType;
-
-      const ConstIteratorType end = v.end();
-      for( ConstIteratorType it = v.begin(); it != end; ++it )
-        out << *it;
+      for( const auto& entry : v )
+        out << entry;
       return out;
     }
 
@@ -65,15 +61,10 @@ namespace Dune
      */
     template< class StreamTraits, class VectorTraits >
     inline InStreamInterface< StreamTraits > &
-      operator>> ( InStreamInterface< StreamTraits > &in,
-                   VectorInterface< VectorTraits > &v )
+      operator>> ( InStreamInterface< StreamTraits > &in, VectorInterface< VectorTraits > &v )
     {
-      typedef typename VectorInterface< VectorTraits > :: IteratorType
-        IteratorType;
-
-      const IteratorType end = v.end();
-      for( IteratorType it = v.begin(); it != end; ++it )
-        in >> *it;
+      for( auto& entry : v )
+        in >> v;
       return in;
     }
 
@@ -88,19 +79,18 @@ namespace Dune
      *  \returns the STL stream (for concatenation)
      */
     template< class Traits >
-    inline std :: ostream &operator<< ( std :: ostream &out,
-                                        const VectorInterface< Traits > &v )
+    inline std :: ostream &operator<< ( std :: ostream &out, const VectorInterface< Traits > &v )
     {
-      const unsigned int size = v.size();
-
-      if( size > 0 ) {
-        out << "[ ";
-        out << v[ 0 ];
-        for( unsigned int i = 1; i < size; ++i )
-          out << ", " << v[ i ];
-        out << " ]";
-      } else
-        out << "[]";
+      out << "[ ";
+      auto it = v.begin();
+      const auto itEnd = v.end();
+      if( it != itEnd )
+      {
+        out << *it;
+        for( ; it != itEnd ; ++it )
+          out << ", " << *it;
+      }
+      out << " ]";
       return out;
     }
 
@@ -129,18 +119,15 @@ namespace Dune
      *  \returns the STL stream (for concatenation)
      */
     template< class Traits >
-    inline std :: istream &operator>> ( std :: istream &in,
-                                        VectorInterface< Traits > &v )
+    inline std :: istream &operator>> ( std :: istream &in, VectorInterface< Traits > &v )
     {
-      const unsigned int size = v.size();
-
-      Fem :: DynamicVector< typename Traits :: FieldType > w( size );
+      DynamicVector< typename Traits :: FieldType > w( v.size() );
 
       char expected = '[';
-      for( unsigned int i = 0; i < size; ++i )
+      for( auto& entry : w )
       {
         match( in, expected );
-        in >> w[ i ];
+        in >> entry;
         expected = ',';
       }
       match( in, ']' );

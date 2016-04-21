@@ -1,5 +1,4 @@
-dune_install(array.hh
-             envelope.hh
+dune_install(envelope.hh
              objectstack.hh
              referencecounter.hh
              singletonlist.hh

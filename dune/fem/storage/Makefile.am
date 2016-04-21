@@ -2,8 +2,7 @@
 AUTOMAKE_OPTIONS = foreign 1.5
 
 storagedir =  $(includedir)/dune/fem/storage
-storage_HEADERS = array.hh \
-                  envelope.hh \
+storage_HEADERS = envelope.hh \
                   objectstack.hh \
                   referencecounter.hh \
                   singletonlist.hh \
