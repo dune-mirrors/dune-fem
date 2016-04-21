@@ -6,7 +6,7 @@ storage_HEADERS = envelope.hh \
                   objectstack.hh \
                   referencecounter.hh \
                   singletonlist.hh \
-                  subarray.hh \
+                  subvector.hh \
                   vector.hh \
                   vector_inline.hh \
                   eigenvector.hh

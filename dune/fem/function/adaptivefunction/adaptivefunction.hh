@@ -12,7 +12,6 @@
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/blockvectors/defaultblockvectors.hh>
-#include <dune/fem/storage/subarray.hh>
 
 //- Local includes
 #include <dune/fem/function/localfunction/mutable.hh>

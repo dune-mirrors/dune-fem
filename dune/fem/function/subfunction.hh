@@ -4,7 +4,7 @@
 #include <vector>
 
 #include <dune/fem/space/combinedspace/combineddofstorage.hh>
-#include <dune/fem/storage/subarray.hh>
+#include <dune/fem/storage/subvector.hh>
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
 
 namespace Dune
