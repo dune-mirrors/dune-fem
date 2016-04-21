@@ -2,13 +2,13 @@
 #define DUNE_FEM_QUADRATUREIMP_HH
 
 #include <cassert>
+#include <vector>
 
 #include <dune/common/fvector.hh>
+
 #include <dune/geometry/type.hh>
 
 #include <dune/fem/version.hh>
-
-#include <dune/fem/storage/array.hh>
 #include <dune/fem/quadrature/idprovider.hh>
 
 namespace Dune
@@ -267,7 +267,6 @@ namespace Dune
       // dummy value
       enum { maxOrder_ = 10 };
 
-    public:
       //! Constructor
       TestQuadrature(const GeometryType& geo, int order);
 

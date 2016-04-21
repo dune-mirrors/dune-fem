@@ -43,46 +43,50 @@ namespace Dune
       typedef VectorInterface< VT > ThisType;
       typedef ArrayInterface< VectorInterfaceArrayTraits< VT > > BaseType;
 
-      template< class > friend class VectorInterface;
-
     public:
+      //! Type of the traits
       typedef VT Traits;
 
-      //! type of this interface
+      //! Type of this interface
       typedef ThisType VectorInterfaceType;
 
-      //! type of the implementation (Barton-Nackman)
+      //! Type of the implementation (Barton-Nackman)
       typedef typename Traits::VectorType VectorType;
 
-      //! field type for the vector
+      //! Field type for the vector
       typedef typename Traits::FieldType FieldType;
       typedef FieldType value_type;
 
-      //! type of constant iterator
+      //! Type of constant iterator
       typedef typename Traits::ConstIteratorType ConstIteratorType;
+      typedef ConstIteratorType const_iterator;
 
-      //! type of iterator
+      //! Type of iterator
       typedef typename Traits::IteratorType IteratorType;
+      typedef IteratorType iterator;
+
+      //! Type of unsigned integral type of indexing
+      typedef unsigned int  size_type;
 
       //! Assign another vector to this one
       template< class T >
       VectorType& operator= ( const VectorInterface< T > &v )
       {
-        asImp().assign( v );
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( v ) );
         return asImp();
       }
 
       //! Assign another vector to this one
       VectorType& operator= ( const ThisType &v )
       {
-        asImp().assign( v );
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( v ) );
         return asImp();
       }
 
       //! Initialize all fields of this vector with a scalar
       VectorType &operator= ( const FieldType &s )
       {
-        asImp().assign( s );
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( s ) );
         return asImp();
       }
 
@@ -131,13 +135,7 @@ namespace Dune
         return asImp();
       }
 
-      /** \brief copy another vector to this one
-       *
-       *  Copies the data from another vector to this one. Both vectors must be of
-       *  the same size.
-       *
-       *  \param[in]  v  vector to copy
-       */
+      //! Copy another vector to this one
       template< class T >
       void assign ( const VectorInterface< T > &v )
       {
@@ -150,41 +148,41 @@ namespace Dune
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( s ) );
       }
 
-      /** \brief initialize the vector to 0 */
+      //! Initialize the vector to 0
       void clear ()
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().clear() );
       }
 
-      //! obtain begin iterator
+      //! Obtain begin iterator
       ConstIteratorType begin () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
         return asImp().begin();
       }
 
-      //! obtain begin iterator
+      //! Obtain begin iterator
       IteratorType begin ()
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
         return asImp().begin();
       }
 
-      //! obtain end iterator
+      //! Obtain end iterator
       ConstIteratorType end () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
         return asImp().end();
       }
 
-      //! obtain end iterator
+      //! Obtain end iterator
       IteratorType end ()
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
         return asImp().end();
       }
 
-      //! Returns the vector's size
+      //! Obtain vector's size
       unsigned int size () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().size() );

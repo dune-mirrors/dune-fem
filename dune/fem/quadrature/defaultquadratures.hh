@@ -8,7 +8,6 @@
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/grid.hh>
 
-#include <dune/fem/storage/array.hh>
 #include <dune/fem/quadrature/idprovider.hh>
 
 // don't use quadratures from dune-grid
