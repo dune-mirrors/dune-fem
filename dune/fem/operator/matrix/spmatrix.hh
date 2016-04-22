@@ -567,7 +567,7 @@ namespace Dune
       template< class LocalMatrix >
       void addLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
       {
-        typedef typename MatrixType::size_type Index;
+        typedef int Index;
         auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< Index, Index >& global )
         {
           matrix_.add( global.first, global.second, localMat.get( local.first, local.second ) );
@@ -580,7 +580,7 @@ namespace Dune
       template< class LocalMatrix, class Scalar >
       void addScaledLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat, const Scalar &s )
       {
-        typedef typename MatrixType::size_type Index;
+        typedef int Index;
         auto functor = [ &localMat, &s, this ] ( std::pair< int, int > local, const std::pair< Index, Index >& global )
         {
           matrix_.add( global.first, global.second, s * localMat.get( local.first, local.second ) );
@@ -593,7 +593,7 @@ namespace Dune
       template< class LocalMatrix >
       void setLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
       {
-        typedef typename MatrixType::size_type Index;
+        typedef int Index;
         auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< Index, Index >& global )
         {
           matrix_.set( global.first, global.second, localMat.get( local.first, local.second ) );
@@ -606,7 +606,7 @@ namespace Dune
       template< class LocalMatrix >
       void getLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, LocalMatrix &localMat ) const
       {
-        typedef typename MatrixType::size_type Index;
+        typedef int Index;
         auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< Index, Index >& global )
         {
           localMat.set( local.first, local.second, matrix_( global.first, global.second ) );
