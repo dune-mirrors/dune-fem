@@ -36,7 +36,7 @@ namespace Dune
                           const DomainSpaceType &domainSpace,
                           const RangeSpaceType &rangeSpace,
                           const MatrixParameter& param = ISTLMatrixParameter() )
-        : BaseType( domainSpace, rangeSpace, param )
+        : Base( domainSpace, rangeSpace, param )
       {}
 
       virtual void operator() ( const DomainFunction &arg, RangeFunction &dest ) const

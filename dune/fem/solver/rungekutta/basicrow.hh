@@ -171,6 +171,7 @@ namespace DuneODE
      */
     template< class ButcherTable >
     BasicROWRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
+                               TimeProviderType& timeProvider,
                                const ButcherTable &butcherTable,
                                const TimeStepControlType &timeStepControl,
                                const ParametersType& parameter,
@@ -195,6 +196,7 @@ namespace DuneODE
      */
     template< class ButcherTable >
     BasicROWRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
+                               TimeProviderType& timeProvider,
                                const ButcherTable &butcherTable,
                                const ParametersType& parameter,
                                const NonlinearSolverParametersType& nlsParam )

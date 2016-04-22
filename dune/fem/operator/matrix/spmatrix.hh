@@ -493,7 +493,6 @@ namespace Dune
       mutable LocalMatrixStackType localMatrixStack_;
 
     public:
-      typedef SparseRowMatrixParameter::PreconditionerId PreconditionerId;
 
       //! construct matrix object
       inline SparseRowMatrixObject( const DomainSpaceType &domainSpace,
