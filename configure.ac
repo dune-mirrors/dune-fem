@@ -76,6 +76,7 @@ AC_CONFIG_FILES([Makefile
      dune/fem/io/test/Makefile
      dune/fem/io/file/Makefile
      dune/fem/io/file/test/Makefile
+     dune/fem/io/parameter/Makefile
      dune/fem/io/streams/Makefile
      dune/fem/io/streams/test/Makefile
      dune/fem/io/visual/Makefile

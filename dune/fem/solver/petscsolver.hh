@@ -64,7 +64,8 @@ namespace Dune
                              double  reduction,
                              double absLimit,
                              int maxIter,
-                             bool verbose )
+                             bool verbose,
+                             const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
         reduction_( reduction ),
         absLimit_( absLimit ),
@@ -74,7 +75,7 @@ namespace Dune
         solverName_("none"),
         precondName_("none")
       {
-        initialize();
+        initialize( parameter );
       }
 
       /** \brief constructor
@@ -87,17 +88,34 @@ namespace Dune
       PetscInverseOperator ( const OperatorType &op,
                              double reduction,
                              double absLimit,
-                             int maxIter = std::numeric_limits< int >::max() )
+                             int maxIter,
+                             const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
         reduction_( reduction ),
         absLimit_ ( absLimit ),
         maxIter_( maxIter ),
-        verbose_( Parameter::getValue< bool >( "fem.solver.verbose", false ) ),
+        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
         iterations_( 0 ),
         solverName_("none"),
         precondName_("none")
       {
-        initialize();
+        initialize( parameter );
+      }
+
+      PetscInverseOperator ( const OperatorType &op,
+                             double reduction,
+                             double absLimit,
+                             const ParameterReader &parameter = Parameter::container() )
+      : op_( op ),
+        reduction_( reduction ),
+        absLimit_ ( absLimit ),
+        maxIter_( std::numeric_limits< int >::max()),
+        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
+        iterations_( 0 ),
+        solverName_("none"),
+        precondName_("none")
+      {
+        initialize( parameter );
       }
 
       //! destructor freeing KSP context
@@ -109,7 +127,7 @@ namespace Dune
         ::Dune::Petsc::KSPDestroy( &ksp_ );
       }
 
-      void initialize ()
+      void initialize ( const ParameterReader &parameter )
       {
         // Create linear solver context
         ::Dune::Petsc::KSPCreate( &ksp_ );
@@ -122,7 +140,7 @@ namespace Dune
 
         // see PETSc docu for more types
         const std::string solverNames [] = { "cg" , "bicg", "bicgstab", "gmres" };
-        PetscSolver solverType = (PetscSolver) Parameter :: getEnum("petsc.kspsolver.method", solverNames, 0 );
+        PetscSolver solverType = (PetscSolver) parameter.getEnum("petsc.kspsolver.method", solverNames, 0 );
 
         //  select linear solver
         if ( solverType == petsc_cg )
@@ -133,7 +151,7 @@ namespace Dune
           ::Dune::Petsc::KSPSetType( ksp_, KSPBCGS ); // this is the BiCG-stab version of PETSc.
         else if ( solverType == petsc_gmres )
         {
-          PetscInt restart = Parameter :: getValue<int>("petsc.gmresrestart", 10 );
+          PetscInt restart = parameter.getValue<int>("petsc.gmresrestart", 10 );
           ::Dune::Petsc::KSPSetType( ksp_, KSPGMRES );
           ::Dune::Petsc::KSPGMRESSetRestart( ksp_, restart );
         }
@@ -176,7 +194,7 @@ namespace Dune
                                                 "hypre", "ml",
                                                 "ilu-n", "lu", "icc",
                                                 "mumps", "superlu" };
-        PetscPcType pcType = (PetscPcType) Parameter :: getEnum("petsc.preconditioning.method", preconNames, 0 );
+        PetscPcType pcType = (PetscPcType) parameter.getEnum("petsc.preconditioning.method", preconNames, 0 );
 
         if( pcType == petsc_none )
           type = PCNONE ;
@@ -226,7 +244,7 @@ namespace Dune
         }
 
         // get level of perconditioner iterations
-        PetscInt pcLevel = 1 + Parameter :: getValue<int>("petsc.preconditioning.iterations", 0 );
+        PetscInt pcLevel = 1 + parameter.getValue<int>("petsc.preconditioning.iterations", 0 );
 
         // create preconditioning context
         ::Dune::Petsc::PCCreate( &pc_ );

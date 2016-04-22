@@ -98,13 +98,26 @@ namespace Dune
          \param balanceCounter actual counter, default is zero
       */
       template< class RestrictProlongOperator >
-      LoadBalancer ( GridType & grid,
-                     RestrictProlongOperator &rpOp,
-                     int balanceCounter = 0 )
+      LoadBalancer ( GridType &grid, RestrictProlongOperator &rpOp, int balanceCounter, const ParameterReader &parameter = Parameter::container() )
       : grid_( grid ),
         dm_ ( DofManagerType::instance( grid_ ) ),
-        balanceStep_( getBalanceStep( balanceCounter ) ),
+        balanceStep_( getBalanceStep( balanceCounter, parameter ) ),
         balanceCounter_( balanceCounter ),
+        localList_(),
+        collList_(),
+        balanceTime_( 0.0 )
+      {
+        rpOp.addToLoadBalancer( *this );
+        if( Parameter::verbose() )
+          std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
+      }
+
+      template< class RestrictProlongOperator >
+      LoadBalancer ( GridType &grid, RestrictProlongOperator &rpOp, const ParameterReader &parameter = Parameter::container() )
+      : grid_( grid ),
+        dm_ ( DofManagerType::instance( grid_ ) ),
+        balanceStep_( getBalanceStep( 0, parameter ) ),
+        balanceCounter_( 0 ),
         localList_(),
         collList_(),
         balanceTime_( 0.0 )
@@ -122,11 +135,10 @@ namespace Dune
          BalanceStep: 1 # (do balancing every step)
          \param balanceCounter actual counter, default is zero
       */
-      explicit LoadBalancer ( GridType &grid,
-                              int balanceCounter = 0 )
+      explicit LoadBalancer ( GridType &grid, int balanceCounter, const ParameterReader &parameter = Parameter::container() )
       : grid_( grid ),
         dm_ ( DofManagerType::instance( grid_ ) ),
-        balanceStep_( getBalanceStep( balanceCounter ) ),
+        balanceStep_( getBalanceStep( balanceCounter, parameter) ),
         balanceCounter_( balanceCounter ),
         localList_(),
         collList_(),
@@ -136,17 +148,29 @@ namespace Dune
           std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
       }
 
-      int getBalanceStep( int balanceCounter ) const
+      explicit LoadBalancer ( GridType &grid, const ParameterReader &parameter = Parameter::container() )
+      : grid_( grid ),
+        dm_ ( DofManagerType::instance( grid_ ) ),
+        balanceStep_( getBalanceStep( 0, parameter) ),
+        balanceCounter_( 0 ),
+        localList_(),
+        collList_(),
+        balanceTime_( 0.0 )
+      {
+        if( Parameter::verbose() )
+          std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
+      }
+
+      int getBalanceStep( int balanceCounter, const ParameterReader &parameter = Parameter::container() ) const
       {
         int step = balanceCounter;
-        if( Parameter :: exists("BalanceStep") )
+        if( parameter.exists("BalanceStep") )
         {
           std::cout << "Warning: deprecated parameter 'BalanceStep', please use 'fem.loadbalancing.step' instead!" << std::endl;
-          step = Parameter::getValue< int >( "BalanceStep", balanceCounter );
+          step = parameter.getValue< int >( "BalanceStep", balanceCounter );
         }
         else
-          step = Parameter::getValue< int >( "fem.loadbalancing.step", balanceCounter );
-
+          step = parameter.getValue< int >( "fem.loadbalancing.step", balanceCounter );
         return step;
       }
 
