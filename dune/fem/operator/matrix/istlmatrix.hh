@@ -32,6 +32,7 @@
 #include <dune/fem/storage/objectstack.hh>
 
 #include <dune/fem/operator/matrix/istlmatrixadapter.hh>
+#include <dune/fem/operator/matrix/functor.hh>
 
 namespace Dune
 {
@@ -386,6 +387,9 @@ namespace Dune
       typedef typename RangeSpaceType :: EntityType  RowEntityType ;
       typedef typename DomainSpaceType :: EntityType ColumnEntityType ;
 
+      typedef ColumnEntityType DomainEntityType;
+      typedef RowEntityType RangeEntityType;
+
       enum { littleCols = DomainSpaceType :: localBlockSize };
       enum { littleRows = RangeSpaceType :: localBlockSize };
 
@@ -432,124 +436,73 @@ namespace Dune
         //! type of matrix
         typedef typename MatrixObjectImp :: MatrixType MatrixType;
         //! type of little blocks
-        typedef typename MatrixType:: block_type LittleBlockType;
-        //! type of entries of little blocks
-        typedef typename DomainSpaceType :: RangeFieldType DofType;
+        typedef typename MatrixType::block_type LittleBlockType;
 
+        typedef typename MatrixObjectType::DomainSpaceType DomainSpaceType;
+        typedef typename MatrixObjectType::RangeSpaceType RangeSpaceType;
+
+        typedef typename MatrixObjectType::ColumnEntityType ColumnEntityType;
+        typedef typename MatrixObjectType::RowEntityType RowEntityType;
+
+        //! type of entries of little blocks
+        typedef typename DomainSpaceType::RangeFieldType DofType;
         typedef typename MatrixType::row_type RowType;
 
         //! type of row mapper
-        typedef typename MatrixObjectType :: RowMapperType RowMapperType;
+        typedef typename DomainSpaceType::BlockMapperType ColMapperType;
         //! type of col mapper
-        typedef typename MatrixObjectType :: ColMapperType ColMapperType;
+        typedef typename RangeSpaceType::BlockMapperType RowMapperType;
 
-      private:
-        // special mapper omiting block size
-        const RowMapperType& rowMapper_;
-        const ColMapperType& colMapper_;
+        static const int littleCols = MatrixObjectType::littleCols;
+        static const int littleRows = MatrixObjectType::littleRows;
 
-        // number of local matrices
-        int numRows_;
-        int numCols_;
-
-        // vector with pointers to local matrices
-        typedef std::vector< LittleBlockType* >            LittleMatrixRowStorageType ;
-        typedef std::vector< LittleMatrixRowStorageType >  VecLittleMatrixRowStorageType;
-        VecLittleMatrixRowStorageType matrices_;
-
-        // matrix to build
-        const MatrixObjectType& matrixObj_;
-
-       template <class RowGlobalKey>
-       struct ColFunctor
-       {
-         ColFunctor(LittleMatrixRowStorageType& localMatRow, MatrixType& matrix, const RowGlobalKey &globalRowKey) :
-           localMatRow_(localMatRow), matRow_( matrix[ globalRowKey ] ), globalRowKey_(globalRowKey)
-         {}
-         template< class GlobalKey >
-         void operator() ( const int localDoF, const GlobalKey &globalDoF )
-         {
-           localMatRow_[ localDoF ] = &matRow_[ globalDoF ];
-         }
-         private:
-         LittleMatrixRowStorageType& localMatRow_;
-         RowType& matRow_;
-         const RowGlobalKey &globalRowKey_;
-       };
-
-       template <class RowGlobalKey>
-       struct ColFunctorImplicitBuildMode
-       {
-         ColFunctorImplicitBuildMode(LittleMatrixRowStorageType& localMatRow, MatrixType& matrix, const RowGlobalKey &globalRowKey) :
-           localMatRow_(localMatRow), matrix_( matrix ), globalRowKey_(globalRowKey)
-         {}
-         template< class GlobalKey >
-         void operator() ( const int localDoF, const GlobalKey &globalDoF )
-         {
-           localMatRow_[ localDoF ] = &matrix_.entry( globalRowKey_, globalDoF );
-         }
-         private:
-         LittleMatrixRowStorageType& localMatRow_;
-         MatrixType& matrix_;
-         const RowGlobalKey &globalRowKey_;
-       };
-
-       template <template <class> class ColFunctorImpl>
-       struct RowFunctor
-       {
-         RowFunctor(const ColumnEntityType &colEntity, const ColMapperType &colMapper, MatrixType &matrix,
-                    VecLittleMatrixRowStorageType &matrices, int numCols) :
-           colEntity_(colEntity), colMapper_(colMapper), matrix_(matrix), matrices_(matrices), numCols_(numCols)
-         {}
-         template< class GlobalKey >
-         void operator() ( const int localDoF, const GlobalKey &globalDoF )
-         {
-           auto& localMatRow = matrices_[ localDoF ];
-           localMatRow.resize( numCols_ );
-           ColFunctorImpl< GlobalKey > colFunctor( localMatRow, matrix_, globalDoF );
-           colMapper_.mapEach( colEntity_, colFunctor );
-         }
-         private:
-         const ColumnEntityType & colEntity_;
-         const ColMapperType & colMapper_;
-         MatrixType &matrix_;
-         VecLittleMatrixRowStorageType &matrices_;
-         int numCols_;
-       };
-
-      public:
-        LocalMatrix(const MatrixObjectType & mObj, const DomainSpaceType & colSpace, const RangeSpaceType & rowSpace) :
-          BaseType( colSpace, rowSpace ), rowMapper_(mObj.rowMapper()), colMapper_(mObj.colMapper()), numRows_( rowMapper_.maxNumDofs() ),
-          numCols_( colMapper_.maxNumDofs() ), matrixObj_(mObj)
+        LocalMatrix ( const MatrixObjectType& mObj, const DomainSpaceType& domainSpace, const RangeSpaceType& rangeSpace )
+          : BaseType( domainSpace, rangeSpace ),
+            rowMapper_( rangeSpace.blockMapper() ),
+            colMapper_( domainSpace.blockMapper() ),
+            numRows_( rowMapper_.maxNumDofs() ),
+            numCols_( colMapper_.maxNumDofs() ),
+            matrixObj_( mObj )
         {}
 
-        void init(const RowEntityType & rowEntity, const ColumnEntityType & colEntity)
+        LocalMatrix ( const LocalMatrix& org )
+          : BaseType( org ),
+            rowMapper_(org.rowMapper_),
+            colMapper_(org.colMapper_),
+            numRows_( org.numRows_ ),
+            numCols_( org.numCols_ ),
+            matrices_(org.matrices_),
+            matrixObj_(org.matrixObj_)
+        {}
+
+
+        //! initialize this local Matrix to (colEntity, rowEntity)
+        void init ( const ColumnEntityType& colEntity, const RowEntityType& rowEntity)
         {
           // initialize base functions sets
           BaseType :: init ( rowEntity , colEntity );
 
-          numRows_  = rowMapper_.numDofs(colEntity);
-          numCols_  = colMapper_.numDofs(rowEntity);
-          matrices_.resize( numRows_ );
+          numRows_  = rowMapper_.numDofs( rowEntity );
+          numCols_  = colMapper_.numDofs( colEntity );
+          matrices_.resize( numRows_, numCols_, nullptr );
 
-          if( matrixObj_.implicitModeActive() )
+          typedef typename MatrixType::size_type Index;
+          auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
           {
-            // implicit access via matrix.entry( i, j )
-            RowFunctor< ColFunctorImplicitBuildMode > rowFunctor(colEntity, colMapper_, matrixObj_.matrix(), matrices_, numCols_);
-            rowMapper_.mapEach(rowEntity, rowFunctor);
-          }
-          else
+            if( matrixObj_.implicitModeActive() )
+              return matrixObj_.matrix().entry( index.first, index.second );
+            else
+              return matrixObj_.matrix()[ index.first ][  index.second ];
+          };
+
+          auto functor = [ this, blockAccess ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
           {
-            // normal access to matrix via operator [i][j]
-            RowFunctor< ColFunctor > rowFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
-            colMapper_.mapEach(colEntity, rowFunctor);
-          }
+            matrices_[ local.first ][ local.second ] = &blockAccess( index );
+          };
+
+          rowMapper_.mapEach( rowEntity, makePairFunctor( colMapper_, colEntity, functor ) );
         }
 
-        LocalMatrix(const LocalMatrix& org) :
-          BaseType( org ), rowMapper_(org.rowMapper_), colMapper_(org.colMapper_), numRows_( org.numRows_ ), numCols_( org.numCols_ ),
-          matrices_(org.matrices_), matrixObj_(org.matrixObj_)
-        {}
 
       private:
         // check whether given (row,col) pair is valid
@@ -656,9 +609,22 @@ namespace Dune
           }
         }
 
+      private:
+        // special mapper omiting block size
+        const RowMapperType& rowMapper_;
+        const ColMapperType& colMapper_;
+
+        // number of local matrices
+        int numRows_;
+        int numCols_;
+
+        // dynamic matrix with pointers to block matrices
+        Dune::DynamicMatrix< LittleBlockType* > matrices_;
+
+        // matrix to build
+        const MatrixObjectType& matrixObj_;
       }; // end of class LocalMatrix
 
-    public:
       //! type of local matrix
       typedef LocalMatrix<ThisType> ObjectType;
       typedef ThisType LocalMatrixFactoryType;
@@ -682,8 +648,6 @@ namespace Dune
 
       mutable MatrixType* matrix_;
 
-      // ParallelScalarProductType scp_;
-
       mutable LocalMatrixStackType localMatrixStack_;
 
       mutable MatrixAdapterType* matrixAdap_;
@@ -701,15 +665,11 @@ namespace Dune
       ISTLMatrixObject ( const DomainSpaceType &domainSpace, const RangeSpaceType &rangeSpace, const std :: string &paramfile = "" ) :
         domainSpace_(domainSpace)
         , rangeSpace_(rangeSpace)
-        // create scp to have at least one instance
-        // otherwise instance will be deleted during setup
-        // get new mappers with number of dofs without considerung block size
         , rowMapper_( rangeSpace.blockMapper() )
         , colMapper_( domainSpace.blockMapper() )
         , size_(-1)
         , sequence_(-1)
         , matrix_(nullptr)
-        // , scp_(rangeSpace())
         , localMatrixStack_( *this )
         , matrixAdap_(nullptr)
         , Arg_(nullptr)
@@ -728,7 +688,7 @@ namespace Dune
       {
         return *this;
       }
-    public:
+
       //! destructor
       ~ISTLMatrixObject()
       {
@@ -756,21 +716,20 @@ namespace Dune
 
       void createMatrixAdapter () const
       {
-        if( matrixAdap_ == nullptr )
-          matrixAdap_ = new MatrixAdapterType(matrixAdapterObject());
+        if( !matrixAdap_ )
+          matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
+        assert( matrixAdap_ );
       }
 
       //! return matrix adapter object
       const MatrixAdapterType& matrixAdapter() const
       {
-        if( matrixAdap_ == nullptr )
-          matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
+        createMatrixAdapter();
         return *matrixAdap_;
       }
       MatrixAdapterType& matrixAdapter()
       {
-        if( matrixAdap_ == nullptr )
-          matrixAdap_ = new MatrixAdapterType( matrixAdapterObject() );
+        createMatrixAdapter();
         return *matrixAdap_;
       }
 
@@ -883,17 +842,13 @@ namespace Dune
       {
         createBlockVectors();
 
-        assert( Arg_ );
-        assert( Dest_ );
-
         RowBlockVectorType& Arg = *Arg_;
-        ColumnBlockVectorType & Dest = *Dest_;
+        ColumnBlockVectorType &Dest = *Dest_;
 
         std::copy_n( arg, Arg.size(), Arg.dbegin() );
 
         // call mult of matrix adapter
-        assert( matrixAdap_ );
-        matrixAdap_->apply( Arg, Dest );
+        matrixAdapter().apply( Arg, Dest );
 
         std::copy( Dest.dbegin(), Dest.dend(), dest );
       }
@@ -901,9 +856,7 @@ namespace Dune
       //! apply with discrete functions
       void apply(const ColumnDiscreteFunctionType& arg, RowDiscreteFunctionType& dest) const
       {
-        createMatrixAdapter();
-        assert( matrixAdap_ );
-        matrixAdap_->apply( arg.blockVector(), dest.blockVector() );
+        matrixAdapter().apply( arg.blockVector(), dest.blockVector() );
       }
 
       //! apply with arbitrary discrete functions calls multOEM
@@ -924,9 +877,6 @@ namespace Dune
       double ddotOEM(const double* v, const double* w) const
       {
         createBlockVectors();
-
-        assert( Arg_ );
-        assert( Dest_ );
 
         RowBlockVectorType&    V = *Arg_;
         ColumnBlockVectorType& W = *Dest_;
@@ -993,6 +943,92 @@ namespace Dune
         return LocalColumnObjectType ( *this, colEntity );
       }
 
+      template< class LocalMatrix >
+      void addLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
+        {
+          if( implicitModeActive() )
+            return matrix().entry( index.first, index.second );
+          else
+            return matrix()[ index.first ][  index.second ];
+        };
+
+        auto functor = [ &localMat, this, blockAccess ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
+        {
+          LittleBlockType& block = blockAccess( index );
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              matrix.getBlock< i, i >
+              block[ i ][ j ] += localMat.get( local.first * littleRows + i, local.second *littleCols + j );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
+      }
+
+
+      template< class LocalMatrix >
+      void setLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
+        {
+          if( implicitModeActive() )
+            return matrix().entry( index.first, index.second );
+          else
+            return matrix()[ index.first ][  index.second ];
+        };
+
+        auto functor = [ &localMat, this, blockAccess ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
+        {
+          LittleBlockType& block = blockAccess( index );
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              block[ i ][ j ] = localMat.get( local.first * littleRows + i, local.second *littleCols + j );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
+      }
+
+      template< class LocalMatrix, class Scalar >
+      void addScaledLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat, const Scalar &s  )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
+        {
+          if( implicitModeActive() )
+            return matrix().entry( index.first, index.second );
+          else
+            return matrix()[ index.first ][  index.second ];
+        };
+
+        auto functor = [ &localMat, &s, this, blockAccess ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
+        {
+          LittleBlockType& block = blockAccess( index );
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              block[ i ][ j ] += s * localMat.get( local.first * littleRows + i, local.second *littleCols + j );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
+      }
+
+      template< class LocalMatrix >
+      void getLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, LocalMatrix &localMat ) const
+      {
+        typedef typename MatrixType::size_type Index;
+        auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< Index, Index > &global )
+        {
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              localMat.set( local.first * littleRows + i, local.second *littleCols + j,
+                matrix()[ global.first ][ global.second ][i][j] );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
+      }
+
     protected:
       void preConErrorMsg(int preCon) const
       {
@@ -1049,6 +1085,9 @@ namespace Dune
       typedef typename RangeSpaceType :: EntityType ColumnEntityType ;
       typedef typename DomainSpaceType :: EntityType RowEntityType ;
 
+      typedef ColumnEntityType DomainEntityType;
+      typedef RowEntityType RangeEntityType;
+
       enum { littleRows = DomainSpaceType :: localBlockSize };
       enum { littleCols = RangeSpaceType :: localBlockSize };
 
@@ -1097,124 +1136,73 @@ namespace Dune
         //! type of matrix
         typedef typename MatrixObjectImp :: MatrixType MatrixType;
         //! type of little blocks
-        typedef typename MatrixType:: block_type LittleBlockType;
-        //! type of entries of little blocks
-        typedef typename DomainSpaceType :: RangeFieldType DofType;
+        typedef typename MatrixType::block_type LittleBlockType;
 
+        typedef typename MatrixObjectType::DomainSpaceType DomainSpaceType;
+        typedef typename MatrixObjectType::RangeSpaceType RangeSpaceType;
+
+        typedef typename MatrixObjectType::ColumnEntityType ColumnEntityType;
+        typedef typename MatrixObjectType::RowEntityType RowEntityType;
+
+        //! type of entries of little blocks
+        typedef typename DomainSpaceType::RangeFieldType DofType;
         typedef typename MatrixType::row_type RowType;
 
         //! type of row mapper
-        typedef typename MatrixObjectType :: RowMapperType RowMapperType;
+        typedef typename DomainSpaceType::BlockMapperType ColMapperType;
         //! type of col mapper
-        typedef typename MatrixObjectType :: ColMapperType ColMapperType;
+        typedef typename RangeSpaceType::BlockMapperType RowMapperType;
 
-      private:
-        // special mapper omiting block size
-        const RowMapperType& rowMapper_;
-        const ColMapperType& colMapper_;
+        static const int littleCols = MatrixObjectType::littleCols;
+        static const int littleRows = MatrixObjectType::littleRows;
 
-        // number of local matrices
-        int numRows_;
-        int numCols_;
-
-        // vector with pointers to local matrices
-        typedef std::vector< LittleBlockType* >            LittleMatrixRowStorageType ;
-        typedef std::vector< LittleMatrixRowStorageType >  VecLittleMatrixRowStorageType;
-        VecLittleMatrixRowStorageType matrices_;
-
-        // matrix to build
-        const MatrixObjectType& matrixObj_;
-
-       template <class RowGlobalKey>
-       struct ColFunctor
-       {
-         ColFunctor(LittleMatrixRowStorageType& localMatRow, MatrixType& matrix, const RowGlobalKey &globalRowKey) :
-           localMatRow_(localMatRow), matRow_( matrix[ globalRowKey ] ), globalRowKey_(globalRowKey)
-         {}
-         template< class GlobalKey >
-         void operator() ( const int localDoF, const GlobalKey &globalDoF )
-         {
-           localMatRow_[ localDoF ] = &matRow_[ globalDoF ];
-         }
-         private:
-         LittleMatrixRowStorageType& localMatRow_;
-         RowType& matRow_;
-         const RowGlobalKey &globalRowKey_;
-       };
-
-       template <class RowGlobalKey>
-       struct ColFunctorImplicitBuildMode
-       {
-         ColFunctorImplicitBuildMode(LittleMatrixRowStorageType& localMatRow, MatrixType& matrix, const RowGlobalKey &globalRowKey) :
-           localMatRow_(localMatRow), matrix_( matrix ), globalRowKey_(globalRowKey)
-         {}
-         template< class GlobalKey >
-         void operator() ( const int localDoF, const GlobalKey &globalDoF )
-         {
-           localMatRow_[ localDoF ] = &matrix_.entry( globalRowKey_, globalDoF );
-         }
-         private:
-         LittleMatrixRowStorageType& localMatRow_;
-         MatrixType& matrix_;
-         const RowGlobalKey &globalRowKey_;
-       };
-
-       template <template <class> class ColFunctorImpl>
-       struct RowFunctor
-       {
-         RowFunctor(const RowEntityType &rowEntity, const RowMapperType &rowMapper, MatrixType &matrix,
-                    VecLittleMatrixRowStorageType &matrices, int numCols) :
-           rowEntity_(rowEntity), rowMapper_(rowMapper), matrix_(matrix), matrices_(matrices), numCols_(numCols)
-         {}
-         template< class GlobalKey >
-         void operator() ( const int localDoF, const GlobalKey &globalDoF )
-         {
-           auto& localMatRow = matrices_[ localDoF ];
-           localMatRow.resize( numCols_ );
-           ColFunctorImpl< GlobalKey > colFunctor( localMatRow, matrix_, globalDoF );
-           rowMapper_.mapEach( rowEntity_, colFunctor );
-         }
-         private:
-         const RowEntityType & rowEntity_;
-         const RowMapperType & rowMapper_;
-         MatrixType &matrix_;
-         VecLittleMatrixRowStorageType &matrices_;
-         int numCols_;
-       };
-
-      public:
-        LocalMatrix(const MatrixObjectType & mObj, const DomainSpaceType & rowSpace, const RangeSpaceType & colSpace) :
-          BaseType( rowSpace, colSpace ), rowMapper_(mObj.rowMapper()), colMapper_(mObj.colMapper()), numRows_( rowMapper_.maxNumDofs() ),
-          numCols_( colMapper_.maxNumDofs() ), matrixObj_(mObj)
+        LocalMatrix ( const MatrixObjectType& mObj, const DomainSpaceType& domainSpace, const RangeSpaceType& rangeSpace )
+          : BaseType( domainSpace, rangeSpace ),
+            rowMapper_( rangeSpace.blockMapper() ),
+            colMapper_( domainSpace.blockMapper() ),
+            numRows_( rowMapper_.maxNumDofs() ),
+            numCols_( colMapper_.maxNumDofs() ),
+            matrixObj_( mObj )
         {}
 
-        void init(const RowEntityType & rowEntity, const ColumnEntityType & colEntity)
+        LocalMatrix ( const LocalMatrix& org )
+          : BaseType( org ),
+            rowMapper_(org.rowMapper_),
+            colMapper_(org.colMapper_),
+            numRows_( org.numRows_ ),
+            numCols_( org.numCols_ ),
+            matrices_(org.matrices_),
+            matrixObj_(org.matrixObj_)
+        {}
+
+
+        //! initialize this local Matrix to (colEntity, rowEntity)
+        void init ( const ColumnEntityType& colEntity, const RowEntityType& rowEntity)
         {
           // initialize base functions sets
           BaseType :: init ( rowEntity , colEntity );
 
-          numRows_  = rowMapper_.numDofs(colEntity);
-          numCols_  = colMapper_.numDofs(rowEntity);
-          matrices_.resize( numRows_ );
+          numRows_  = rowMapper_.numDofs( rowEntity );
+          numCols_  = colMapper_.numDofs( colEntity );
+          matrices_.resize( numRows_, numCols_, nullptr );
 
-          if( matrixObj_.implicitModeActive() )
+          typedef typename MatrixType::size_type Index;
+          auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
           {
-            // implicit access via matrix.entry( i, j )
-            RowFunctor< ColFunctorImplicitBuildMode > rowFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
-            colMapper_.mapEach(colEntity, rowFunctor);
-          }
-          else
+            if( matrixObj_.implicitModeActive() )
+              return matrixObj_.matrix().entry( index.first, index.second );
+            else
+              return matrixObj_.matrix()[ index.first ][  index.second ];
+          };
+
+          auto functor = [ this, blockAccess ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
           {
-            // normal access to matrix via operator [i][j]
-            RowFunctor< ColFunctor > rowFunctor(rowEntity, rowMapper_, matrixObj_.matrix(), matrices_, numCols_);
-            colMapper_.mapEach(colEntity, rowFunctor);
-          }
+            matrices_[ local.first ][ local.second ] = &blockAccess( index );
+          };
+
+          rowMapper_.mapEach( rowEntity, makePairFunctor( colMapper_, colEntity, functor ) );
         }
 
-        LocalMatrix(const LocalMatrix& org) :
-          BaseType( org ), rowMapper_(org.rowMapper_), colMapper_(org.colMapper_), numRows_( org.numRows_ ), numCols_( org.numCols_ ),
-          matrices_(org.matrices_), matrixObj_(org.matrixObj_)
-        {}
 
       private:
         // check whether given (row,col) pair is valid
@@ -1321,9 +1309,22 @@ namespace Dune
           }
         }
 
+      private:
+        // special mapper omiting block size
+        const RowMapperType& rowMapper_;
+        const ColMapperType& colMapper_;
+
+        // number of local matrices
+        int numRows_;
+        int numCols_;
+
+        // dynamic matrix with pointers to block matrices
+        Dune::DynamicMatrix< LittleBlockType* > matrices_;
+
+        // matrix to build
+        const MatrixObjectType& matrixObj_;
       }; // end of class LocalMatrix
 
-    public:
       //! type of local matrix
       typedef LocalMatrix<ThisType> ObjectType;
       typedef ThisType LocalMatrixFactoryType;
@@ -1814,23 +1815,11 @@ namespace Dune
         matrix().print(s);
       }
 
-      const DomainSpaceType& domainSpace() const
-      {
-        return domainSpace_;
-      }
-      const RangeSpaceType&  rangeSpace() const
-      {
-        return rangeSpace_;
-      }
+      const DomainSpaceType& domainSpace() const { return domainSpace_; }
+      const RangeSpaceType&  rangeSpace() const { return rangeSpace_; }
 
-      const RowMapperType& rowMapper() const
-      {
-        return rowMapper_;
-      }
-      const ColMapperType& colMapper() const
-      {
-        return colMapper_;
-      }
+      const RowMapperType& rowMapper() const { return rowMapper_; }
+      const ColMapperType& colMapper() const { return colMapper_; }
 
       //! interface method from LocalMatrixFactory
       ObjectType* newObject() const
@@ -1846,6 +1835,91 @@ namespace Dune
       LocalColumnObjectType localColumn( const ColumnEntityType &colEntity ) const
       {
         return LocalColumnObjectType ( *this, colEntity );
+      }
+
+      template< class LocalMatrix >
+      void addLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
+        {
+          if( implicitModeActive() )
+            return matrix().entry( index.first, index.second );
+          else
+            return matrix()[ index.first ][  index.second ];
+        };
+
+        auto functor = [ &localMat, this, blockAccess ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
+        {
+          LittleBlockType& block = blockAccess( index );
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              block[ i ][ j ] += localMat.get( local.first * littleRows + i, local.second *littleCols + j );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
+      }
+
+
+      template< class LocalMatrix >
+      void setLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
+        {
+          if( implicitModeActive() )
+            return matrix().entry( index.first, index.second );
+          else
+            return matrix()[ index.first ][  index.second ];
+        };
+
+        auto functor = [ &localMat, this, blockAccess ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
+        {
+          LittleBlockType& block = blockAccess( index );
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              block[ i ][ j ] = localMat.get( local.first * littleRows + i, local.second *littleCols + j );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
+      }
+
+      template< class LocalMatrix, class Scalar >
+      void addScaledLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat, const Scalar &s  )
+      {
+        typedef typename MatrixType::size_type Index;
+        auto blockAccess = [ this ] ( const std::pair< Index, Index > &index ) -> LittleBlockType&
+        {
+          if( implicitModeActive() )
+            return matrix().entry( index.first, index.second );
+          else
+            return matrix()[ index.first ][  index.second ];
+        };
+
+        auto functor = [ &localMat, &s, this, blockAccess ] ( std::pair< int, int > local, const std::pair< Index, Index > &index )
+        {
+          LittleBlockType& block = blockAccess( index );
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              block[ i ][ j ] += s * localMat.get( local.first * littleRows + i, local.second *littleCols + j );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
+      }
+
+      template< class LocalMatrix >
+      void getLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, LocalMatrix &localMat ) const
+      {
+        typedef typename MatrixType::size_type Index;
+        auto functor = [ &localMat, this ] ( std::pair< int, int > local, const std::pair< Index, Index > &global )
+        {
+          for( std::size_t i  = 0; i < littleRows; ++i )
+            for( std::size_t j = 0; j < littleCols; ++j )
+              localMat.set( local.first * littleRows + i, local.second *littleCols + j,
+                matrix()[ global.first ][ global.second ][i][j] );
+        };
+
+        rowMapper_.mapEach( rangeEntity, makePairFunctor( colMapper_, domainEntity, functor ) );
       }
 
     protected:
