@@ -275,6 +275,14 @@ namespace Dune
           comm.addToList( discreteFunction_ );
       }
 
+      //! remove discrete function from communicator
+      template< class Communicator >
+      void removeFromList ( Communicator &comm )
+      {
+        if( localRP_.needCommunication() )
+          comm.removeFromList( discreteFunction_ );
+      }
+
       //! add discrete function to load balancer
       template< class LoadBalancer >
       void addToLoadBalancer ( LoadBalancer& lb )
