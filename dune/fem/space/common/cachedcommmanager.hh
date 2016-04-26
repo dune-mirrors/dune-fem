@@ -36,8 +36,16 @@ namespace Dune
 
   namespace Fem
   {
-    // forward declaration to disable caching for PetscDiscreteFunction
-    template <class DiscreteFunctionSpace> class PetscDiscreteFunction ;
+
+    // External Forward Declarations
+    // -----------------------------
+
+    template< class DiscreteFunctionSpace >
+    class PetscDiscreteFunction;
+
+    class IsDiscreteFunction;
+
+
 
     /** @addtogroup Communication Communication
         @{
@@ -1214,7 +1222,9 @@ namespace Dune
         virtual MPAccessType& mpAccess() = 0;
         virtual void writeBuffer(ObjectStreamVectorType&) const = 0;
         virtual void readBuffer(ObjectStreamVectorType&) = 0;
-        virtual void rebuildCache () = 0;
+        virtual void rebuildCache() = 0;
+
+        virtual bool handles ( IsDiscreteFunction &df ) const = 0;
       };
 
       //! communicated object implementation
@@ -1262,6 +1272,8 @@ namespace Dune
         {
           comm_.rebuildCache ();
         }
+
+        virtual bool handles ( IsDiscreteFunction &df ) const { return (&df_ == &df); }
       };
 
       // ALUGrid send/recv buffers
@@ -1328,6 +1340,17 @@ namespace Dune
           // set number of processors
           mySize_ = mpAccess.psize();
         }
+      }
+
+      template< class DiscreteFunction >
+      void removeFromList ( DiscreteFunction &df )
+      {
+        const auto handles = [ &df ] ( const CommObjInterfaceType *commObj ) { return commObj->handles( df ); };
+        CommObjListType::reverse_iterator pos = std::find_if( objList_.rbegin(), objList_.rend(), handles );
+        if( pos != objList_.rend() )
+          objList_.erase( pos.base() );
+        else
+          DUNE_THROW( RangeError, "Trying to remove discrete function that was never added" );
       }
 
       //! exchange the list of discrete functions between processes
