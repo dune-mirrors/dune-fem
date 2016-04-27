@@ -1204,8 +1204,8 @@ namespace Dune
         typedef typename MatrixObjectType::DomainSpaceType DomainSpaceType;
         typedef typename MatrixObjectType::RangeSpaceType RangeSpaceType;
 
-        typedef typename MatrixObjectType::ColumnEntityType ColumnEntityType;
-        typedef typename MatrixObjectType::RowEntityType RowEntityType;
+        typedef typename MatrixObjectType::DomainEntityType DomainEntityType;
+        typedef typename MatrixObjectType::RangeEntityType RangeEntityType;
 
         //! type of entries of little blocks
         typedef typename DomainSpaceType::RangeFieldType DofType;
