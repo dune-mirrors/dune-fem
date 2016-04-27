@@ -9,7 +9,8 @@
 #include <utility>
 #include <iostream>
 
-//-Dune includes#
+//-Dune includes
+#include <dune/common/dynvector.hh>
 #include <dune/common/version.hh>
 
 //- local includes
@@ -35,7 +36,12 @@ namespace Dune
       has to be the same for all local operators you want to combine
     */
 
-    // forward declareation of DofManager
+    // external forward declerations
+    // -----------------------------
+
+    template<class>
+    struct DiscreteFunctionTraits;
+
     template <class GridImp> class DofManager;
 
     template <class LocalOp, class ParamType> class LocalInlinePlus;
@@ -684,7 +690,8 @@ namespace Dune
 
       typedef LocalInterface<ParamType> LocalInterfaceType;
 
-      typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+      typedef typename DiscreteFunctionTraits< DiscreteFunctionType >::DofType DofType;
+      typedef Dune::DynamicVector< DofType, typename DiscreteFunctionTraits< DiscreteFunctionType >::LocalDofVectorAllocatorType::template rebind< DofType >::other > LocalDofVectorType;
 
       //! constructor
       LocalDataInliner ( const DiscreteFunctionType & df,
@@ -721,12 +728,10 @@ namespace Dune
 
         assert( df_.space().indexSet().contains( entity ) );
 
-        const LocalFunctionType lf = df_.localFunction( entity );
-        const int numDofs = lf.numDofs();
-        for(int l=0; l<numDofs; ++l)
-        {
-          str.write( lf[l] );
-        }
+        LocalDofVectorType ldv( df_.space().basisFunctionSet( entity ).size(), df_.localDofVectorAllocator() );
+        df_.getLocalDofs( entity, ldv );
+        for( const DofType &dof : ldv )
+          str.write( dof );
 
         // remove entity from index sets
         dm_.removeEntity( gridEntity );
@@ -775,7 +780,8 @@ namespace Dune
 
       typedef typename Traits::LocalInterfaceType LocalInterfaceType;
 
-      typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+      typedef typename DiscreteFunctionTraits< DiscreteFunctionType >::DofType DofType;
+      typedef Dune::DynamicVector< DofType, typename DiscreteFunctionTraits< DiscreteFunctionType >::LocalDofVectorAllocatorType::template rebind< DofType >::other > LocalDofVectorType;
 
       //! constructor
       LocalDataXtractor ( DiscreteFunctionType & df,
@@ -816,12 +822,10 @@ namespace Dune
         // make sure entity is contained in set
         assert( df_.space().indexSet().contains( entity ) );
 
-        LocalFunctionType lf = df_.localFunction( entity );
-        const int numDofs = lf.numDofs();
-        for(int l=0; l<numDofs; ++l)
-        {
-          str.read( lf[l] );
-        }
+        LocalDofVectorType ldv( df_.space().basisFunctionSet( entity ).size(), df_.localDofVectorAllocator() );
+        for( DofType &dof : ldv )
+          str.read( dof );
+        df_.setLocalDofs( entity, ldv );
       }
 
     protected:
