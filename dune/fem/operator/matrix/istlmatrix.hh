@@ -61,7 +61,7 @@ namespace Dune
 
       virtual double relaxation () const
       {
-        return Parameter::getValue< int >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
+        return Parameter::getValue< double >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
       }
 
       virtual int method () const
