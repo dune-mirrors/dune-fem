@@ -301,15 +301,17 @@ namespace Dune
     //! return reference to i-th entry of vector and pos's tuple component
     ValueType &operator [] ( const size_t i )
     {
+      using std::get;
       assert( i < size() );
-      return std::get< pos >( vector_[ i ] );
+      return get< pos >( vector_[ i ] );
     }
 
     //! return reference to i-th entry of vector and passId's tuple component
     const ValueType &operator [] ( const size_t i ) const
     {
+      using std::get;
       assert( i < size() );
-      return std::get< pos >( vector_[ i ] );
+      return get< pos >( vector_[ i ] );
     }
 
     //! return size of vector
