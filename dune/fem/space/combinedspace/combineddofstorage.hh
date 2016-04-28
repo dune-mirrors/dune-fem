@@ -3,7 +3,7 @@
 
 //- local includes
 #include <dune/fem/space/common/dofstorage.hh>
-#include <dune/fem/storage/subarray.hh>
+#include <dune/fem/storage/subvector.hh>
 
 namespace Dune
 {

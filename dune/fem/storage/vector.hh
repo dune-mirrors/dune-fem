@@ -1,16 +1,19 @@
 #ifndef DUNE_FEM_VECTOR_HH
 #define DUNE_FEM_VECTOR_HH
 
+#include <algorithm>
+#include <array>
+#include <cassert>
 #include <type_traits>
+#include <vector>
 
-#include <dune/common/math.hh>
+#include <dune/common/iteratorfacades.hh>
 #include <dune/common/bartonnackmanifcheck.hh>
-#include <dune/common/fvector.hh>
 
-
-#include <dune/fem/storage/arrayallocator.hh>
-#include <dune/fem/storage/array.hh>
 #include <dune/fem/io/streams/streams.hh>
+#include <dune/fem/misc/metaprogramming.hh>
+#include <dune/fem/misc/bartonnackmaninterface.hh>
+
 
 /*! @addtogroup VectorClasses
     @{
@@ -18,69 +21,63 @@
 
 namespace Dune
 {
-
   namespace Fem
   {
-
-    template< class VT >
-    struct VectorInterfaceArrayTraits
-    {
-      typedef typename VT::VectorType ArrayType;
-      typedef typename VT::FieldType ElementType;
-
-      typedef typename VT::ConstIteratorType ConstIteratorType;
-      typedef typename VT::IteratorType IteratorType;
-    };
-
-
-    //! An abstract vector interface
+    /** \class VectorInterface
+     *  \ingroup Vector
+     *  \brief Abstract vector interface
+     */
     template< class VT >
     class VectorInterface
-    : public ArrayInterface< VectorInterfaceArrayTraits< VT > >
+    : public BartonNackmanInterface< VectorInterface< VT >, typename VT::VectorType >
     {
       typedef VectorInterface< VT > ThisType;
-      typedef ArrayInterface< VectorInterfaceArrayTraits< VT > > BaseType;
-
-      template< class > friend class VectorInterface;
+      typedef BartonNackmanInterface< ThisType, typename VT::VectorType > BaseType;
 
     public:
+      //! Type of the traits
       typedef VT Traits;
 
-      //! type of this interface
+      //! Type of this interface
       typedef ThisType VectorInterfaceType;
 
-      //! type of the implementation (Barton-Nackman)
+      //! Type of the implementation (Barton-Nackman)
       typedef typename Traits::VectorType VectorType;
 
-      //! field type for the vector
+      //! Field type for the vector
       typedef typename Traits::FieldType FieldType;
       typedef FieldType value_type;
 
-      //! type of constant iterator
+      //! Type of constant iterator
       typedef typename Traits::ConstIteratorType ConstIteratorType;
+      typedef ConstIteratorType const_iterator;
 
-      //! type of iterator
+      //! Type of iterator
       typedef typename Traits::IteratorType IteratorType;
+      typedef IteratorType iterator;
+
+      //! Type of unsigned integral type of indexing
+      typedef unsigned int  size_type;
 
       //! Assign another vector to this one
       template< class T >
       VectorType& operator= ( const VectorInterface< T > &v )
       {
-        asImp().assign( v );
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( v ) );
         return asImp();
       }
 
       //! Assign another vector to this one
       VectorType& operator= ( const ThisType &v )
       {
-        asImp().assign( v );
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( v ) );
         return asImp();
       }
 
       //! Initialize all fields of this vector with a scalar
-      VectorType &operator= ( const FieldType s )
+      VectorType &operator= ( const FieldType &s )
       {
-        asImp().assign( s );
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( s ) );
         return asImp();
       }
 
@@ -115,7 +112,7 @@ namespace Dune
       }
 
       //! Multiply this vector by a scalar
-      VectorType &operator*= ( const FieldType s )
+      VectorType &operator*= ( const FieldType &s )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator*=( s ) );
         return asImp();
@@ -123,19 +120,13 @@ namespace Dune
 
       //! Add a multiple of another vector to this one
       template< class T >
-      VectorType &addScaled ( const FieldType s, const VectorInterface< T > &v )
+      VectorType &addScaled ( const FieldType &s, const VectorInterface< T > &v )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().add( s, v.asImp() ) );
         return asImp();
       }
 
-      /** \brief copy another vector to this one
-       *
-       *  Copies the data from another vector to this one. Both vectors must be of
-       *  the same size.
-       *
-       *  \param[in]  v  vector to copy
-       */
+      //! Copy another vector to this one
       template< class T >
       void assign ( const VectorInterface< T > &v )
       {
@@ -143,46 +134,46 @@ namespace Dune
       }
 
       //! Initialize all fields of this vector with a scalar
-      void assign ( const FieldType s )
+      void assign ( const FieldType &s )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().assign( s ) );
       }
 
-      /** \brief initialize the vector to 0 */
+      //! Initialize the vector to 0
       void clear ()
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().clear() );
       }
 
-      //! obtain begin iterator
+      //! Obtain begin iterator
       ConstIteratorType begin () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
         return asImp().begin();
       }
 
-      //! obtain begin iterator
+      //! Obtain begin iterator
       IteratorType begin ()
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().begin() );
         return asImp().begin();
       }
 
-      //! obtain end iterator
+      //! Obtain end iterator
       ConstIteratorType end () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
         return asImp().end();
       }
 
-      //! obtain end iterator
+      //! Obtain end iterator
       IteratorType end ()
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().end() );
         return asImp().end();
       }
 
-      //! Returns the vector's size
+      //! Obtain vector's size
       unsigned int size () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().size() );
@@ -194,22 +185,57 @@ namespace Dune
     };
 
 
-    template< class Vector >
-    struct SupportsVectorInterface
-    {
-      typedef VectorInterface< typename Vector::Traits > VectorInterfaceType;
-      static const bool v = std::is_convertible< Vector, VectorInterfaceType >::value;
-    };
 
-
-    template< class V, class W >
-    struct ExtractCommonFieldType
+    template< class Element, class Vector >
+    class VectorDefaultIterator
+      : public ForwardIteratorFacade< VectorDefaultIterator< Element, Vector >, Element >
     {
-      typedef typename V::FieldType FieldType;
+      typedef VectorDefaultIterator< Element, Vector > ThisType;
+
+    public:
+      typedef Element ElementType;
+      typedef Vector VectorType;
+
+      VectorDefaultIterator ( VectorType &vector, unsigned int index )
+      : vector_( vector ), index_( index )
+      {
+        assert( index <= vector.size() );
+      }
+
+      VectorDefaultIterator( const ThisType &other ) = default;
+
+      ThisType &operator= ( const ThisType &other )
+      {
+        assert( &(other.vector_) == &vector_ );
+        index_ = other.index_;
+      }
+
+      ElementType& dereference() const
+      {
+        assert( index_ < vector_.size() );
+        return vector_[ index_ ];
+      }
+
+      void increment()
+      {
+        assert( index_ < vector_.size() );
+        ++index_;
+      }
+
+      bool equals( const ThisType &other ) const
+      {
+        assert( &(other.vector_) == &vector_ );
+        return index_ == other.index_;
+      }
+
+      unsigned int index () const
+      {
+        return index_;
+      }
 
     private:
-      static_assert( (std::is_same< FieldType, typename W::FieldType >::value),
-                     "FieldType must be identical." );
+      VectorType &vector_;
+      unsigned int index_;
     };
 
 
@@ -220,18 +246,24 @@ namespace Dune
       typedef Field FieldType;
       typedef Vector VectorType;
 
-      typedef ArrayDefaultIterator< FieldType, VectorType > IteratorType;
-      typedef ArrayDefaultIterator< const FieldType, const VectorType > ConstIteratorType;
+      typedef VectorDefaultIterator< FieldType, VectorType > IteratorType;
+      typedef VectorDefaultIterator< const FieldType, const VectorType > ConstIteratorType;
     };
 
 
 
-    // VectorDefault
-    // -------------
+    template< class Vector >
+    struct SupportsVectorInterface
+    {
+      typedef VectorInterface< typename Vector::Traits > VectorInterfaceType;
+      static const bool v = std::is_convertible< Vector, VectorInterfaceType >::value;
+    };
+
+
 
     /** \class VectorDefault
      *  \ingroup Vector
-     *  \brief default implementation of VectorInterface
+     *  \brief Default implementation of VectorInterface
      */
     template< class Field, class Vector >
     class VectorDefault
@@ -249,7 +281,22 @@ namespace Dune
       typedef typename BaseType :: ConstIteratorType ConstIteratorType;
       typedef typename BaseType :: IteratorType IteratorType;
 
-      //! Add another vector to this one
+      /** \copydoc Dune::Fem::VectorInterface::operator=(const FieldType &s) */
+      VectorType &operator= ( const FieldType &s )
+      {
+        asImp().assign( s );
+        return asImp();
+      }
+
+      /** \copydoc Dune::Fem::VectorInterface::operator=(const VectorInterface<T> &v) */
+      template< class T >
+      ThisType &operator= ( const VectorInterface< T > &v )
+      {
+        asImp().assign( v );
+        return asImp();
+      }
+
+      /** \copydoc Dune::Fem::VectorInterface::operator+=(const VectorInterface<T> &v) */
       template< class T >
       VectorType &operator+= ( const VectorInterface< T > &v )
       {
@@ -260,7 +307,7 @@ namespace Dune
         return asImp();
       }
 
-      //! Subtract another vector from this one
+      /** \copydoc Dune::Fem::VectorInterface::operator-=(const VectorInterface<T> &v) */
       template< class T >
       VectorType &operator-= ( const VectorInterface< T > &v )
       {
@@ -271,18 +318,17 @@ namespace Dune
         return asImp();
       }
 
-      //! Multiply this vector by a scalar
-      VectorType &operator*= ( const FieldType s )
+      /** \copydoc Dune::Fem::VectorInterface::operator*=(const FieldType &s) */
+      VectorType &operator*= ( const FieldType &s )
       {
-        const unsigned int size = this->size();
-        for( unsigned int i = 0; i < size; ++i )
-          (*this)[ i ] *= s;
+        for( auto& entry : *this )
+          entry *= s;
         return asImp();
       }
 
-      //! Add a multiple of another vector to this one
+      /** \copydoc Dune::Fem::VectorInterface::addScaled(const FieldType &s,const VectorInterface<T> &v) */
       template< class T >
-      VectorType &addScaled ( const FieldType s, const VectorInterface< T > &v )
+      VectorType &addScaled ( const FieldType &s, const VectorInterface< T > &v )
       {
         const unsigned int size = this->size();
         assert( size == v.size() );
@@ -295,18 +341,14 @@ namespace Dune
       template< class T >
       void assign ( const VectorInterface< T > &v )
       {
-        const unsigned int size = this->size();
-        assert( size == v.size() );
-        for( unsigned int i = 0; i < size; ++i )
-          asImp()[ i ] = v[ i ];
+        assert( this->size() == v.size() );
+        std::copy( v.begin(), v.end(), asImp().begin() );
       }
 
-      //! Initialize all fields of this vector with a scalar
-      void assign ( const FieldType s )
+      /** \copydoc Dune::Fem::VectorInterface::assign(const FieldType &s) */
+      void assign ( const FieldType &s )
       {
-        const unsigned int size = this->size();
-        for( unsigned int i = 0; i < size; ++i )
-          asImp()[ i ] = s;
+        std::fill( asImp().begin(), asImp().end(), s );
       }
 
       /** \copydoc Dune::Fem::VectorInterface::clear() */
@@ -315,25 +357,25 @@ namespace Dune
         asImp().assign( 0 );
       }
 
-      //! obtain begin iterator
+      /** \copydoc Dune::Fem::VectorInterface::begin() */
       ConstIteratorType begin () const
       {
         return ConstIteratorType( asImp(), 0 );
       }
 
-      //! obtain begin iterator
+      /** \copydoc Dune::Fem::VectorInterface::begin() */
       IteratorType begin ()
       {
         return IteratorType( asImp(), 0 );
       }
 
-      //! obtain end iterator
+      /** \copydoc Dune::Fem::VectorInterface::end() */
       ConstIteratorType end () const
       {
         return ConstIteratorType( asImp(), size() );
       }
 
-      //! obtain end iterator
+      /** \copydoc Dune::Fem::VectorInterface::end() */
       IteratorType end ()
       {
         return IteratorType( asImp(), size() );
@@ -347,331 +389,63 @@ namespace Dune
 
 
 
-    // FieldVectorAdapter
-    // ------------------
-
-    template< class FieldVectorImp >
-    class FieldVectorAdapter;
-
-    template< class Field, int sz >
-    class FieldVectorAdapter< FieldVector< Field, sz > >
-    : public VectorDefault< Field, FieldVectorAdapter< FieldVector< Field, sz > > >
-    {
-      typedef FieldVectorAdapter< FieldVector< Field, sz > > ThisType;
-      typedef VectorDefault< Field, ThisType > BaseType;
-
-    public:
-      typedef Field FieldType;
-
-      typedef FieldVector< FieldType, sz > FieldVectorType;
-
-      using BaseType :: operator+=;
-      using BaseType :: operator-=;
-      using BaseType :: addScaled;
-      using BaseType :: assign;
-
-    protected:
-      FieldVectorType fieldVector_;
-
-    public:
-      FieldVectorAdapter ()
-      : fieldVector_()
-      {}
-
-      explicit FieldVectorAdapter ( const FieldType &s )
-      : fieldVector_( s )
-      {}
-
-      explicit FieldVectorAdapter ( const FieldVectorType &v )
-      : fieldVector_( v )
-      {}
-
-      template< class T >
-      FieldVectorAdapter ( const VectorInterface< T > &v )
-      : fieldVector_()
-      {
-        assign( v );
-      }
-
-      FieldVectorAdapter ( const ThisType &other )
-      : fieldVector_( other.fieldVector_ )
-      {}
-
-    public:
-      operator const FieldVectorType & () const
-      {
-        return fieldVector_;
-      }
-
-      operator FieldVectorType & ()
-      {
-        return fieldVector_;
-      }
-
-      template< class T >
-      ThisType &operator= ( const VectorInterface< T > &v )
-      {
-        assign( v );
-        return *this;
-      }
-
-      ThisType &operator= ( const ThisType &v )
-      {
-        assign( v );
-        return *this;
-      }
-
-      ThisType &operator= ( const FieldType &s )
-      {
-        return assign( s );
-      }
-
-      const FieldType &operator[] ( unsigned int index ) const
-      {
-        return fieldVector_[ index ];
-      }
-
-      FieldType &operator[] ( unsigned int index )
-      {
-        return fieldVector_[ index ];
-      }
-
-      ThisType &operator+= ( const ThisType &v )
-      {
-        fieldVector_ += v.fieldVector_;
-        return *this;
-      }
-
-      ThisType &operator+= ( const FieldVectorType &v )
-      {
-        fieldVector_ += v;
-        return *this;
-      }
-
-      ThisType &operator-= ( const ThisType &v )
-      {
-        fieldVector_ -= v.fieldVector_;
-        return *this;
-      }
-
-      ThisType &operator-= ( const FieldVectorType &v )
-      {
-        fieldVector_ -= v;
-        return *this;
-      }
-
-      ThisType &operator*= ( const FieldType &s )
-      {
-        fieldVector_ *= s;
-        return *this;
-      }
-
-      ThisType &addScaled ( const FieldType &s, const ThisType &other )
-      {
-        fieldVector_.axpy( s, other.fieldVector_ );
-        return *this;
-      }
-
-      void assign ( const ThisType &other )
-      {
-        fieldVector_ = other.fieldVector_;
-      }
-
-      void assign ( const FieldType &s )
-      {
-        fieldVector_ = s;
-      }
-
-      unsigned int size () const
-      {
-        return FieldVectorType::dimension;
-      }
-
-      static const ThisType &adapt ( const FieldVectorType &v )
-      {
-        return reinterpret_cast< const ThisType & >( v );
-      }
-
-      static ThisType &adapt ( FieldVectorType &v )
-      {
-        return reinterpret_cast< ThisType & >( v );
-      }
-    };
-
-
-
-    //! An implementation of VectorInterface wrapping a standard C++ array
-    template< class FieldImp >
-    class ArrayWrapperVector
-    : public VectorDefault< FieldImp, ArrayWrapperVector< FieldImp > >
-    {
-    public:
-      //! field type of vector
-      typedef FieldImp FieldType;
-
-    private:
-      typedef ArrayWrapperVector< FieldType > ThisType;
-      typedef VectorDefault< FieldType, ThisType > BaseType;
-
-    public:
-      using BaseType :: assign;
-
-    protected:
-      const unsigned int size_;
-      FieldType *const fields_;
-
-    public:
-      //! Constructor setting up the vector (without initializing the fields)
-      inline ArrayWrapperVector ( const unsigned int size,
-                                  FieldType *const fields )
-      : size_( size ),
-        fields_( fields )
-      {
-      }
-
-      //! Constructor setting up the vector and initializing the fields to a constant value
-      inline ArrayWrapperVector ( const unsigned int size,
-                                  FieldType *const fields,
-                                  const FieldType s )
-      : size_( size ),
-        fields_( fields )
-      {
-        assign( s );
-      }
-
-      //! Copy constructor setting up a vector with the data of another one
-      template< class T >
-      inline ArrayWrapperVector ( const unsigned int size,
-                                  FieldType *const fields,
-                                  const VectorInterface< T > &v )
-      : size_( size ),
-        fields_( fields )
-      {
-        assign( v );
-      }
-
-      //! Assign another vector to this one
-      template< class T >
-      inline ThisType &operator= ( const VectorInterface< T > &v )
-      {
-        assign( v );
-        return *this;
-      }
-
-      //! Assign another vector to this one
-      inline ThisType &operator= ( const ThisType &v )
-      {
-        assign( v );
-        return *this;
-      }
-
-      //! Initialize all fields of this vector with a scalar
-      inline ThisType &operator= ( const FieldType s )
-      {
-        assign( s );
-        return *this;
-      }
-
-      inline const FieldType &operator[] ( unsigned int index ) const
-      {
-        assert( index < size_ );
-        return fields_[ index ];
-      }
-
-      inline FieldType &operator[] ( unsigned int index )
-      {
-        assert( index < size_ );
-        return fields_[ index ];
-      }
-
-      inline unsigned int size () const
-      {
-        return size_;
-      }
-    };
-
-
-
     /** \class DynamicVector
-     *  \brief A vector using a DynamicArray as storage
-     *
-     *  An implementation of VectorInterface using a DynamicArray to provide the
-     *  fields.
+     *  \ingroup Vector
+     *  \brief An implementation of VectorInterface which uses a std::vector to provide the fields.
      */
-
-    template< class Field,
-              template< class > class ArrayAllocator = DefaultArrayAllocator >
+    template< class Field, template< class > class Allocator = std::allocator >
     class DynamicVector
-    : public VectorDefault< Field, DynamicVector< Field, ArrayAllocator > >
+    : public VectorDefault< Field, DynamicVector< Field, Allocator > >
     {
-      typedef DynamicVector< Field, ArrayAllocator > ThisType;
+      typedef DynamicVector< Field, Allocator > ThisType;
       typedef VectorDefault< Field, ThisType > BaseType;
 
     public:
-      //! field type of the vector
+      //! Field type of the vector
       typedef Field FieldType;
+
+      //! DOFs storage type
+      typedef std::vector< FieldType, Allocator<FieldType> > DofStorageType;
 
       using BaseType :: assign;
 
-    protected:
-      DynamicArray< FieldType, ArrayAllocator > fields_;
-
-    public:
       //! Constructor setting up a vector of a specified size
       explicit DynamicVector ( unsigned int size = 0 )
       : fields_( size )
       {}
 
       //! Constructor setting up a vector iniitialized with a constant value
-      inline DynamicVector ( unsigned int size,
-                             const FieldType s )
-      : fields_( size )
-      {
-        assign( s );
-      }
+      DynamicVector ( unsigned int size, const FieldType &s )
+      : fields_( size, s )
+      {}
 
       //! Copy constructor setting up a vector with the data of another one
       template< class T >
       DynamicVector ( const VectorInterface< T > &v )
-      : fields_()
       {
         assign( v );
       }
 
       //! Copy constructor setting up a vector with the data of another one (of the same type)
       DynamicVector ( const ThisType &v )
-      : fields_()
       {
         assign( v );
       }
 
-      //! Assign another vector to this one
-      template< class T >
-      ThisType &operator= ( const VectorInterface< T > &v )
-      {
-        assign( v );
-        return *this;
-      }
-
-      //! Assign another vector (of the same type) to this one
+      /** \copydoc Dune::Fem::VectorInterface::operator=(const ThisType &v) */
       ThisType &operator= ( const ThisType &v )
       {
         assign( v );
         return *this;
       }
 
-      //! Initialize all fields of this vector with a scalar
-      ThisType &operator= ( const FieldType s )
-      {
-        assign( s );
-        return *this;
-      }
-
+      /** \copydoc Dune::Fem::VectorInterface::operator[](unsigned int index) */
       const FieldType &operator[] ( unsigned int index ) const
       {
         return fields_[ index ];
       }
 
+      /** \copydoc Dune::Fem::VectorInterface::operator[](unsigned int index) */
       FieldType &operator[] ( unsigned int index )
       {
         return fields_[ index ];
@@ -681,72 +455,76 @@ namespace Dune
       template< class T >
       void assign ( const VectorInterface< T > &v )
       {
-        fields_.assign( v );
+        fields_.assign( v.begin(), v.end() );
       }
 
+      //! Obtain pointer to data
       const FieldType *leakPointer () const
       {
-        return fields_.leakPointer();
+        return fields_.data();
       }
 
+      //! Obtain pointer to data
       FieldType *leakPointer ()
       {
-        return fields_.leakPointer();
+        return fields_.data();
       }
 
+      //! Allocate memory
       void reserve ( unsigned int newSize )
       {
         fields_.reserve( newSize );
       }
 
+      //! Resize vector
       void resize ( unsigned int newSize )
       {
         fields_.resize( newSize );
       }
 
-      void resize ( unsigned int newSize, const FieldType defaultValue )
+      //! Resize vector and fill with the defaultValue (old values remain the same)
+      void resize ( unsigned int newSize, const FieldType &defaultValue )
       {
         fields_.resize( newSize, defaultValue );
       }
 
+      /** \copydoc Dune::Fem::VectorInterface::size() */
       unsigned int size () const
       {
         return fields_.size();
       }
+
+    private:
+      DofStorageType fields_;
     };
 
 
 
     /** \class StaticVector
-     *  \brief A vector using a std::array as storage
-     *
-     *  An implementation of VectorInterface using a std::array to provide the
-     *  fields.
+     *  \ingroup Vector
+     *  \brief An implementation of VectorInterface which uses a std::array to provide the fields.
      */
-    template< class FieldImp, int sz >
+    template< class Field, int sz >
     class StaticVector
-    : public VectorDefault< FieldImp, StaticVector< FieldImp, sz > >
+    : public VectorDefault< Field, StaticVector< Field, sz > >
     {
-    public:
-      //! field type of vector
-      typedef FieldImp FieldType;
-
-    private:
-      typedef StaticVector< FieldImp, sz > ThisType;
-      typedef VectorDefault< FieldImp, ThisType > BaseType;
+      typedef StaticVector< Field, sz > ThisType;
+      typedef VectorDefault< Field, ThisType > BaseType;
 
     public:
+      //! Field type of vector
+      typedef Field FieldType;
+
+      //! DOFs storage type
+      typedef std::array<FieldType,sz> DofStorageType;
+
       using BaseType :: assign;
 
-    protected:
-      std::array<FieldType,sz> fields_;
-
-    public:
       //! Constructor setting up an uninitialized vector
       StaticVector () = default;
 
       //! Constructor setting up a vector initialized to a constant value
-      explicit StaticVector ( const FieldType s )
+      explicit StaticVector ( const FieldType &s )
       {
         assign( s );
       }
@@ -764,111 +542,70 @@ namespace Dune
         assign( v );
       }
 
-      //! Assign another vector to this one
-      template< class T >
-      ThisType &operator= ( const VectorInterface< T > &v )
-      {
-        assign( v );
-        return *this;
-      }
-
-      //! Assign another vector to this one
+      /** \copydoc Dune::Fem::VectorInterface::operator=(const ThisType &v) */
       ThisType &operator= ( const ThisType &v )
       {
         assign( v );
         return *this;
       }
 
-      //! Initialize all fields of this vector with a scalar
-      ThisType &operator= ( const FieldType s )
-      {
-        assign( s );
-        return *this;
-      }
-
+      /** \copydoc Dune::Fem::VectorInterface::operator[](unsigned int index) */
       const FieldType &operator[] ( unsigned int index ) const
       {
         assert( index < sz );
         return fields_[ index ];
       }
 
+      /** \copydoc Dune::Fem::VectorInterface::operator[](unsigned int index) */
       FieldType &operator[] ( unsigned int index )
       {
         assert( index < sz );
         return fields_[ index ];
       }
 
+      //! Obtain pointer to data
+      const FieldType *leakPointer () const
+      {
+        return fields_.data();
+      }
+
+      //! Obtain pointer to data
+      FieldType *leakPointer ()
+      {
+        return fields_.data();
+      }
+
+      /** \copydoc Dune::Fem::VectorInterface::size() */
       unsigned int size () const
       {
         return sz;
       }
-    };
 
-
-    template< class Vector1Type, class Vector2Type >
-    class CombinedVector
-    : public VectorDefault< typename ExtractCommonFieldType< Vector1Type, Vector2Type >::FieldType,
-                            CombinedVector< Vector1Type, Vector2Type > >
-    {
-      typedef CombinedVector< Vector1Type, Vector2Type > ThisType;
-      typedef VectorDefault< typename ExtractCommonFieldType< Vector1Type, Vector2Type >::FieldType, ThisType > BaseType;
-
-      static_assert( SupportsVectorInterface< Vector1Type >::v, "CombinedVector only works on vectors." );
-      static_assert( SupportsVectorInterface< Vector2Type >::v, "CombinedVector only works on vectors." );
-
-    public:
-      typedef typename ExtractCommonFieldType< Vector1Type, Vector2Type >::FieldType FieldType;
-
-    public:
-      CombinedVector( Vector1Type &v1, Vector2Type &v2 )
-      : vector1_( v1 ),
-        vector2_( v2 )
-      {}
-
-      const FieldType &operator[] ( unsigned int index ) const
-      {
-        const int index2 = index - vector1_.size();
-        if( index2 < 0 )
-          return vector1_[ index ];
-        else
-          return vector2_[ index2 ];
-      }
-
-      FieldType &operator[] ( unsigned int index )
-      {
-        const int index2 = index - vector1_.size();
-        if( index2 < 0 )
-          return vector1_[ index ];
-        else
-          return vector2_[ index2 ];
-      }
-
-      unsigned int size() const
-      {
-        return vector1_.size() + vector2_.size();
-      }
-
-    protected:
-      Vector1Type &vector1_;
-      Vector2Type &vector2_;
+    private:
+      DofStorageType fields_;
     };
 
 
 
-    // Capabilities
-    // ------------
     namespace Capabilities
     {
+      template< class Array >
+      struct HasLeakPointer
+      : public MetaBool< false >
+      {};
 
-      template< class Field, template< class > class ArrayAllocator >
-      struct HasLeakPointer< DynamicVector< Field, ArrayAllocator > >
+      template< class Field, template< class > class Allocator >
+      struct HasLeakPointer< DynamicVector< Field, Allocator > >
       : public MetaBool< true >
       {};
 
+      template< class Field, int sz >
+      struct HasLeakPointer< StaticVector< Field, sz > >
+      : public MetaBool< true >
+      {};
     }
 
   } // namespace Fem
-
 } // namespace Dune
 
 #include "vector_inline.hh"

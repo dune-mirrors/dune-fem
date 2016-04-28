@@ -1,21 +1,17 @@
 #ifndef DUNE_FEM_QUADRATURE_HH
 #define DUNE_FEM_QUADRATURE_HH
 
-//#include <vector>
 #include <cassert>
-
 #include <iterator>
 
 #include <dune/common/fvector.hh>
 #include <dune/common/exceptions.hh>
+
 #include <dune/grid/common/grid.hh>
 
 #include <dune/fem/common/coordinate.hh>
-#include <dune/fem/storage/array.hh>
 #include <dune/fem/storage/envelope.hh>
 #include <dune/fem/version.hh>
-
-// quadrature storage classes
 #include <dune/fem/quadrature/quadprovider.hh>
 #include <dune/fem/quadrature/defaultquadratures.hh>
 
