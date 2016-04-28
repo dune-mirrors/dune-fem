@@ -18,6 +18,8 @@
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/common/interpolate.hh>
+#include <dune/fem/space/common/restrictprolongtuple.hh>
+#include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/lagrange.hh>
 
 
@@ -26,6 +28,7 @@ using Dune::Fem::gridFunctionAdapter;
 
 static const int maxLevel = 8;
 static const int polOrder = 2;
+static const int dgOrder = 2;
 
 const char dgf[]
   = "DGF\n"
@@ -44,10 +47,13 @@ typedef Dune::ALUGrid< 2, 2, Dune::simplex, Dune::conforming > GridType;
 
 typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
 
-typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
-typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > LagrangeSpaceType;
+typedef Dune::Fem::AdaptiveDiscreteFunction< LagrangeSpaceType > LagrangeFunctionType;
 
-typedef Dune::Fem::RestrictProlongDefault< DiscreteFunctionType > RestrictProlongType;
+typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, dgOrder > DGSpaceType;
+typedef Dune::Fem::AdaptiveDiscreteFunction< DGSpaceType > DGFunctionType;
+
+typedef Dune::Fem::RestrictProlongDefaultTuple< LagrangeFunctionType, DGFunctionType > RestrictProlongType;
 typedef Dune::Fem::AdaptationManager< GridType, RestrictProlongType > AdaptationManagerType;
 #endif // #if HAVE_DUNE_ALUGRID
 
@@ -104,22 +110,28 @@ try
   grid->loadBalance();
 
   GridPartType gridPart( *grid );
-  DiscreteFunctionSpaceType dfSpace( gridPart );
+  LagrangeSpaceType lagrangeSpace( gridPart );
+  DGSpaceType dgSpace( gridPart );
 
-  DiscreteFunctionType solution( "solution", dfSpace );
-  interpolate( gridFunctionAdapter( ExactSolution(), gridPart ), solution );
+  LagrangeFunctionType lagrangeSolution( "lagrange-solution", lagrangeSpace );
+  interpolate( gridFunctionAdapter( ExactSolution(), gridPart ), lagrangeSolution );
+
+  DGFunctionType dgSolution( "dg-solution", dgSpace );
+  interpolate( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder ), dgSolution );
 
   // compute initial error
   Dune::Fem::L2Norm< GridPartType > l2Norm( gridPart );
-  const double initialError = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, polOrder ), solution );
+  const double initialLagrangeError = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, polOrder+1 ), lagrangeSolution );
+  const double initialDGError = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder+1 ), dgSolution );
   if( grid->comm().rank() == 0 )
-    std::cout << "initial L2 error: " << std::scientific << std::setprecision( 12 ) << initialError << std::endl;
+    std::cout << "initial L2 error: " << std::scientific << std::setprecision( 12 ) << initialLagrangeError << "    " << initialDGError << std::endl;
 
-  Dune::Fem::VTKIO< GridPartType > output( gridPart );
-  output.addVertexData( solution );
+  Dune::Fem::VTKIO< GridPartType > output( gridPart, Dune::VTK::nonconforming );
+  output.addVertexData( lagrangeSolution );
+  output.addVertexData( dgSolution );
   output.write( "balladapt-initial" );
 
-  RestrictProlongType restrictProlong( solution );
+  RestrictProlongType restrictProlong( lagrangeSolution, dgSolution );
   AdaptationManagerType adaptManager( *grid, restrictProlong );
   adaptManager.loadBalance();
 
@@ -159,11 +171,12 @@ try
   if( grid->maxLevel() > 0 )
     DUNE_THROW( Dune::GridError, "Unable to coarsen back to macro grid" );
 
-  const double finalError = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, polOrder ), solution );
+  const double finalLagrangeError = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, polOrder+1 ), lagrangeSolution );
+  const double finalDGError = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder+1 ), dgSolution );
   if( grid->comm().rank() == 0 )
-    std::cout << "final L2 error:   " << std::scientific << std::setprecision( 12 ) << finalError << std::endl;
+    std::cout << "final L2 error:   " << std::scientific << std::setprecision( 12 ) << finalLagrangeError << "    " << finalDGError << std::endl;
 
-  return (initialError - finalError < 1e-10 ? 0 : 1);
+  return ((std::abs( initialLagrangeError - finalLagrangeError) < 1e-10) && (std::abs( initialDGError - finalDGError ) < 1e-10) ? 0 : 1);
 #else // #if HAVE_DUNE_ALUGRID
   return 77;
 #endif // #else // #if HAVE_DUNE_ALUGRID
