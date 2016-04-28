@@ -112,9 +112,6 @@ namespace Dune
         // here matrix free implementation due to memory savings
         void applyLocalMass(EntityType& en) const
         {
-          //- typedefs
-          typedef typename DiscreteFunctionSpaceType::IndexSetType IndexSetType;
-
           //- statements
           this->caller_.setEntity(en);
           LocalFunctionType updEn = this->dest_->localFunction(en);
