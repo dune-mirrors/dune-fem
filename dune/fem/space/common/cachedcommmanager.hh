@@ -1183,7 +1183,7 @@ namespace Dune
       template <class DiscreteFunctionImp,
                 class MPAccessType,
                 class ObjectStreamVectorType,
-                class OperationType = DFCommunicationOperation :: Copy >
+                class OperationType >
       class DiscreteFunctionCommunicator
       : public DiscreteFunctionCommunicatorInterface<MPAccessType,ObjectStreamVectorType>
       {
@@ -1273,14 +1273,15 @@ namespace Dune
         }
       }
 
-      //! add one discrete function to the list
-      template <class DiscreteFunctionImp>
-      void addToList(DiscreteFunctionImp &df)
+      //! add one discrete function to the list with given unpack operation
+      template <class DiscreteFunctionImp, class Operation>
+      void addToList(DiscreteFunctionImp &df, const Operation* )
       {
         // type of communication object
         typedef DiscreteFunctionCommunicator<DiscreteFunctionImp,
                                              MPAccessInterfaceType,
-                                             ObjectStreamVectorType> CommObj;
+                                             ObjectStreamVectorType,
+                                             Operation > CommObj;
         CommObj * obj = new CommObj(df);
         objList_.push_back(obj);
 
@@ -1293,6 +1294,13 @@ namespace Dune
           // set number of processors
           mySize_ = mpAccess.psize();
         }
+      }
+
+      //! add one discrete function to the list
+      template <class DiscreteFunctionImp>
+      void addToList(DiscreteFunctionImp &df)
+      {
+        addToList( df, ( DFCommunicationOperation::Copy * ) 0 );
       }
 
       template< class DiscreteFunction >

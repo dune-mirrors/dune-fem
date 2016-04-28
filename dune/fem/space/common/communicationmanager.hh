@@ -299,7 +299,7 @@ namespace Dune
       };
 
       //! communicated object implementation
-      template <class DiscreteFunctionImp>
+      template <class DiscreteFunctionImp, class Operation>
       class DiscreteFunctionCommunicator
       : public DiscreteFunctionCommunicatorInterface
       {
@@ -310,6 +310,7 @@ namespace Dune
 
         DiscreteFunctionType& df_;
         CommunicationManagerType comm_;
+
       public:
         //! constructor taking disctete function
         DiscreteFunctionCommunicator(DiscreteFunctionType& df)
@@ -320,7 +321,7 @@ namespace Dune
         // exchange discrete function
         void exchange () const
         {
-          comm_.exchange(df_);
+          comm_.exchange( df_, (Operation * ) 0 );
         }
 
         bool handles ( IsDiscreteFunction &df ) const { return (&df_ == &df); }
@@ -354,12 +355,19 @@ namespace Dune
       }
 
       //! add discrete function to communication list
+      template <class DiscreteFunctionImp, class Operation>
+      void addToList(DiscreteFunctionImp &df, const Operation* )
+      {
+        typedef DiscreteFunctionCommunicator<DiscreteFunctionImp, Operation> CommObjType;
+        CommObjType* obj = new CommObjType(df);
+        objList_.push_back(obj);
+      }
+
+      //! add discrete function to communication list
       template <class DiscreteFunctionImp>
       void addToList(DiscreteFunctionImp &df)
       {
-        typedef DiscreteFunctionCommunicator<DiscreteFunctionImp> CommObjType;
-        CommObjType* obj = new CommObjType(df);
-        objList_.push_back(obj);
+        addToList( df, (DFCommunicationOperation::Copy *) 0 );
       }
 
       template< class DiscreteFunction >

@@ -16,6 +16,7 @@
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/space/common/datacollector.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/common/commoperations.hh>
 
 namespace Dune
 {
