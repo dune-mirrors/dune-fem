@@ -106,6 +106,7 @@ try
 #if HAVE_DUNE_ALUGRID
   std::istringstream gridin( dgf );
   Dune::GridPtr< GridType > grid( gridin );
+
   // bug: this call to load balance is necessary while it should not
   grid->loadBalance();
 
@@ -121,8 +122,10 @@ try
 
   // compute initial error
   Dune::Fem::L2Norm< GridPartType > l2Norm( gridPart );
-  const double initialLagrangeError = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, polOrder+1 ), lagrangeSolution );
-  const double initialDGError = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder+1 ), dgSolution );
+  const double initialLagrangeError =
+    l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, polOrder+1 ), lagrangeSolution, Dune::Partitions::all );
+  const double initialDGError =
+    l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder+1 ), dgSolution, Dune::Partitions::all );
   if( grid->comm().rank() == 0 )
     std::cout << "initial L2 error: " << std::scientific << std::setprecision( 12 ) << initialLagrangeError << "    " << initialDGError << std::endl;
 
@@ -171,8 +174,8 @@ try
   if( grid->maxLevel() > 0 )
     DUNE_THROW( Dune::GridError, "Unable to coarsen back to macro grid" );
 
-  const double finalLagrangeError = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, polOrder+1 ), lagrangeSolution );
-  const double finalDGError = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder+1 ), dgSolution );
+  const double finalLagrangeError = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, polOrder+1 ), lagrangeSolution, Dune::Partitions::all );
+  const double finalDGError = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder+1 ), dgSolution, Dune::Partitions::all );
   if( grid->comm().rank() == 0 )
     std::cout << "final L2 error:   " << std::scientific << std::setprecision( 12 ) << finalLagrangeError << "    " << finalDGError << std::endl;
 
