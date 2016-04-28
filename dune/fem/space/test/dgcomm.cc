@@ -16,12 +16,15 @@
 
 using namespace Dune;
 
+#include <dune/grid/common/rangegenerators.hh>
+
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/vectorfunction.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+#include <dune/fem/misc/l2norm.hh>
 
 #if HAVE_GRAPE && GRIDDIM > 1
 #define USE_GRAPE 1
@@ -140,78 +143,16 @@ class DGL2ProjectionAllPartitionNoComm
   }
 };
 
-// calculates || u-u_h ||_L2
-template <class DiscreteFunctionType>
-class L2ErrorNoComm
-{
-  typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
-    DiscreteFunctionSpaceType;
-
-public:
-  template<class FunctionType >
-  double norm (FunctionType &f, DiscreteFunctionType &discFunc, int polOrd = -1 )
-  {
-    const DiscreteFunctionSpaceType &space = discFunc.space();
-
-    typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-
-    typedef typename GridPartType :: template Codim< 0 > ::
-      template Partition< All_Partition > :: IteratorType IteratorType ;
-    typedef typename IteratorType::Entity EntityType;
-    typedef typename EntityType::Geometry GeometryType;
-
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
-
-    if( polOrd < 0 ) polOrd = 2*space.order() + 4 ;
-
-    RangeType ret (0.0);
-    RangeType phi (0.0);
-
-    double sum = 0.0;
-
-    IteratorType it    = space.gridPart().template begin< 0, All_Partition > ();
-    IteratorType endit = space.gridPart().template end< 0, All_Partition > ();
-    for(; it != endit ; ++it)
-    {
-      const EntityType &entity = *it;
-      const GeometryType &geometry = entity.geometry();
-
-      LocalFuncType lf = discFunc.localFunction(entity);
-
-      CachingQuadrature<GridPartType,0> quad(entity, polOrd);
-      for( size_t qP = 0; qP < quad.nop(); ++qP )
-      {
-        double det = geometry.integrationElement(quad.point(qP));
-        f.evaluate(geometry.global(quad.point(qP)), ret);
-        lf.evaluate(quad[qP],phi);
-        RangeType diff = ret - phi ;
-        sum += det * quad.weight(qP) * ( diff * diff );
-      }
-    }
-    return sqrt(sum);
-  }
-};
-
 void resetNonInterior( DiscreteFunctionType &solution )
 {
   typedef DiscreteFunctionType :: DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
-  typedef DiscreteFunctionSpaceType :: GridPartType GridPartType ;
-  typedef GridPartType :: Codim< 0 > :: Partition< All_Partition > :: IteratorType
-    IteratorType;
-
-  typedef IteratorType :: Entity  EntityType ;
 
   const DiscreteFunctionSpaceType& space = solution.space();
 
-  IteratorType it    = space.gridPart().begin< 0, All_Partition > ();
-  IteratorType endit = space.gridPart().end< 0, All_Partition > ();
-
   int count = 0;
-  for( ; it != endit; ++ it )
+  for( const auto& entity : elements( space.gridPart(), Partitions::all ) )
   {
-    const EntityType& entity = * it ;
     if( entity.partitionType() != InteriorEntity )
     {
       ++count ;
@@ -227,11 +168,12 @@ void resetNonInterior( DiscreteFunctionType &solution )
 double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, int turn )
 {
   ExactSolution f;
-  L2ErrorNoComm< DiscreteFunctionType > l2err;
+
+  L2Norm< typename DiscreteFunctionType::GridPartType > l2norm( solution.space().gridPart(), 2*solution.space().order(), false );
   solution.clear();
 
   DGL2ProjectionAllPartitionNoComm :: project( f, solution );
-  double new_error = l2err.norm(f ,solution);
+  double new_error = l2norm.distance( f ,solution );
   std::cout << "P[" << grid.comm().rank() << "]  start comm: " << new_error << std::endl;
 
   // reset all non-interior entities,
@@ -242,7 +184,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   solution.communicate();
 
   // calculate l2 error again
-  double error = l2err.norm(f ,solution);
+  double error = l2norm.distance( f ,solution );
   std::cout << "P[" << grid.comm().rank() << "]  done comm: " << error << std::endl;
 
   if( std::abs( new_error - error ) > 1e-10 )
@@ -270,7 +212,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   nonBlocking.receive( solution );
 
   // calculate l2 error again
-  double nonBlock = l2err.norm(f ,solution);
+  double nonBlock = l2norm.distance(f ,solution);
   std::cout << "P[" << grid.comm().rank() << "]  non-blocking: " << nonBlock << std::endl;
 
   if( std::abs( new_error - nonBlock ) > 1e-10 )
