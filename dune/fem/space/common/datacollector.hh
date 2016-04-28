@@ -732,9 +732,6 @@ namespace Dune
         df_.getLocalDofs( entity, ldv );
         for( const DofType &dof : ldv )
           str.write( dof );
-
-        // remove entity from index sets
-        dm_.removeEntity( gridEntity );
       }
 
     protected:
@@ -815,9 +812,6 @@ namespace Dune
                        const GridEntityType& gridEntity ) const
       {
         if( ! containsCheck_.contains ( entity ) ) return ;
-
-        // insert entity into index sets
-        dm_.insertEntity( gridEntity );
 
         // make sure entity is contained in set
         assert( df_.space().indexSet().contains( entity ) );

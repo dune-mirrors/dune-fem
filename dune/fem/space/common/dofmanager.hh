@@ -1158,6 +1158,9 @@ namespace Dune
       void gather( InlineStreamType& str, ConstElementType& element ) const
       {
         dataInliner_.apply(str, element);
+
+        // remove entity from index sets
+        const_cast< ThisType & >( *this ).removeEntity( element );
       }
 
       template <class MessageBuffer, class Entity>
@@ -1169,6 +1172,9 @@ namespace Dune
       //! unpacks all data attached of this entity from message buffer
       void scatter ( XtractStreamType& str, ConstElementType& element, size_t )
       {
+        // insert entity into index sets
+        insertEntity( element );
+
         // here the elements already have been created
         // that means we can xtract data
         dataXtractor_.apply(str, element);
