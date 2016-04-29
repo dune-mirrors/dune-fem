@@ -4,7 +4,6 @@
 #include <tuple>
 #include <utility>
 
-#include <dune/fem/common/tupleforeach.hh>
 #include <dune/fem/function/tuplediscretefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
 
@@ -23,18 +22,6 @@ namespace Dune
     namespace __TupleOperatorImp
     {
 
-      // RowTraits
-      // ---------
-
-      template< class ... Operators >
-      struct RowTraits
-      {
-        typedef TupleDiscreteFunction< typename Operators::DomainFunctionType ... > DomainFunctionType;
-        static_assert( Std::are_all_same< typename Operators::RangeFunctionType ... >::value,
-                       "TupleOperator< RowTraits > needs a common RangeFunction Type." );
-        typedef typename std::tuple_element< 0, std::tuple< Operators ... > >::type::RangeFunctionType RangeFunctionType;
-      };
-
       // ColTraits
       // ---------
 
@@ -47,11 +34,17 @@ namespace Dune
         typedef TupleDiscreteFunction< typename Operators::RangeFunctionType ... > RangeFunctionType;
       };
 
-      template< class ... Operators >
-      struct Traits : public RowTraits< Operators ... > {};
+      // RowTraits
+      // ---------
 
       template< class ... Operators >
-      struct Traits< std::tuple< Operators > ... > : public ColTraits< Operators ... > {};
+      struct RowTraits
+      {
+        typedef TupleDiscreteFunction< typename Operators::DomainFunctionType ... > DomainFunctionType;
+        static_assert( Std::are_all_same< typename Operators::RangeFunctionType ... >::value,
+                       "TupleOperator< RowTraits > needs a common RangeFunction Type." );
+        typedef typename std::tuple_element< 0, std::tuple< Operators ... > >::type::RangeFunctionType RangeFunctionType;
+      };
 
     }
 
@@ -61,64 +54,89 @@ namespace Dune
 
     template< class ... Operators >
     class TupleOperator
-      : public Operator< typename __TupleOperatorImp::Traits< Operators ... >::DomainFunctionType,
-                         typename __TupleOperatorImp::Traits< Operators ... >::RangeFunctionType >,
+      : public Operator< typename __TupleOperatorImp::RowTraits< Operators ... >::DomainFunctionType,
+                         typename __TupleOperatorImp::RowTraits< Operators ... >::RangeFunctionType >,
         public std::tuple< Operators ... >
     {
       typedef TupleOperator< Operators ... > ThisType;
-      typedef typename __TupleOperatorImp::Traits< Operators ... > Traits;
+      // Note we have to check the rows of each column for consistency
+      typedef typename __TupleOperatorImp::RowTraits< Operators ... > Traits;
       typedef Operator< typename Traits::DomainFunctionType, typename Traits::RangeFunctionType > BaseType;
+      typedef std::tuple< Operators ... > TupleType;
 
     public:
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
 
       template< class ... Args >
-      TupleOperator ( std::tuple< Args ... > && args )
-        : BaseType( std::forward( args ) )
+      TupleOperator ( Args&& ... args )
+        : TupleType( std::forward< Args >( args ) ... )
       {}
 
       void operator() ( const DomainFunctionType &arg, RangeFunctionType &dest ) const
       {
         dest.clear();
         RangeFunctionType tmp( dest );
-        auto functor = [ &arg, &dest, &tmp ] ( auto &op, auto I )
-        {
-          op( std::get< I >( arg ), tmp );
-          dest += tmp;
-        };
-
-        for_each( *this, functor );
+        apply( arg, dest, tmp, std::integral_constant< std::size_t, 0 >() );
       }
+
+    protected:
+      template< std::size_t I >
+      void apply ( const DomainFunctionType &arg, RangeFunctionType &dest,
+                   RangeFunctionType &tmp, std::integral_constant< std::size_t, I > ) const
+      {
+        std::get< I >( *this )( std::get< I >( arg ), tmp );
+        dest += tmp;
+        apply( arg, dest, tmp, std::integral_constant< std::size_t, I + 1 >() );
+      }
+
+      void apply ( const DomainFunctionType &arg, RangeFunctionType &dest,
+                   RangeFunctionType &tmp, std::integral_constant< std::size_t, sizeof ... (Operators ) > ) const
+      {}
     };
 
 
+
+    // RowTupleOperator
+    // ----------------
+
     template< class ... Operators >
-    class TupleOperator< std::tuple< Operators > ... >
-      : public Operator< typename __TupleOperatorImp::Traits< std::tuple< Operators > ... >::DomainFunctionType,
-                         typename __TupleOperatorImp::Traits< std::tuple< Operators > ... >::RangeFunctionType >,
+    class RowTupleOperator
+      : public Operator< typename __TupleOperatorImp::ColTraits< Operators ... >::DomainFunctionType,
+                         typename __TupleOperatorImp::ColTraits< Operators ... >::RangeFunctionType >,
         public std::tuple< Operators ... >
     {
-      typedef TupleOperator< Operators ... > ThisType;
-      typedef typename __TupleOperatorImp::Traits< std::tuple< Operators > ... > Traits;
+      typedef RowTupleOperator< Operators ... > ThisType;
+      // Note we have to check the columns of each row for consistency
+      typedef typename __TupleOperatorImp::ColTraits< Operators ... > Traits;
       typedef Operator< typename Traits::DomainFunctionType, typename Traits::RangeFunctionType > BaseType;
+      typedef std::tuple< Operators ... > TupleType;
 
     public:
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
 
       template< class ... Args >
-      TupleOperator ( std::tuple< Args ... > && args )
-        : BaseType( std::forward( args ) )
+      RowTupleOperator ( Args&& ... args )
+        : TupleType( std::forward< Args >( args ) ... )
       {}
 
       void operator() ( const DomainFunctionType &arg, RangeFunctionType &dest ) const
       {
         dest.clear();
-        auto functor = [ &arg, &dest ] ( auto &op, auto I ) { op( arg, std::get< I >( dest ) ); };
-
-        for_each( *this, functor );
+        apply( arg, dest, std::integral_constant< std::size_t, 0 >() );
       }
+
+    protected:
+      template< std::size_t I >
+      void apply ( const DomainFunctionType &arg, RangeFunctionType &dest, std::integral_constant< std::size_t, I > ) const
+      {
+        std::get< I >( *this )( arg,  std::get< I >( dest ) );
+        apply( arg, dest, std::integral_constant< std::size_t, I + 1 >() );
+      }
+
+      void apply ( const DomainFunctionType &arg, RangeFunctionType &dest, std::integral_constant< std::size_t, sizeof ... (Operators ) > ) const
+      {}
     };
 
   } // namespace Fem
