@@ -63,8 +63,8 @@ namespace Dune
     class SubVector
     : public VectorDefault< typename BaseVectorImp :: FieldType, SubVector< BaseVectorImp, IndexMapperImp > >
     {
-      typedef SubVector< BaseVectorType, IndexMapperType > ThisType;
-      typedef VectorDefault< FieldType, ThisType > BaseType;
+      typedef SubVector< BaseVectorImp, IndexMapperImp > ThisType;
+      typedef VectorDefault< typename BaseVectorImp :: FieldType, ThisType > BaseType;
 
     public:
       //! type of the base array
