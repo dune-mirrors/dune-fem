@@ -32,10 +32,11 @@ namespace Dune
       using Base::apply;
       using Base::communicate;
 
-      ISTLLinearOperator ( const std::string &name,
-                           const DomainSpaceType &domainSpace,
-                           const RangeSpaceType &rangeSpace )
-      : Base( domainSpace, rangeSpace )
+      ISTLLinearOperator( const std::string & ,
+                          const DomainSpaceType &domainSpace,
+                          const RangeSpaceType &rangeSpace,
+                          const MatrixParameter& param = ISTLMatrixParameter() )
+        : Base( domainSpace, rangeSpace, param )
       {}
 
       virtual void operator() ( const DomainFunction &arg, RangeFunction &dest ) const

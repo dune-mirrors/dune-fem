@@ -4,6 +4,7 @@
 
 #include <cfloat>
 #include <iostream>
+#include <memory>
 
 #include <dune/fem/solver/parameter.hh>
 #include <dune/fem/io/parameter.hh>
@@ -28,52 +29,70 @@ namespace Dune
       // key prefix, default is fem.ode.newton. (can be overloaded by user)
       const std::string keyPrefix_;
 
+      ParameterReader parameter_;
       public:
-      NewtonParameter( const SolverParameter& baseParameter, const std::string keyPrefix = "fem.solver.newton." )
+
+      NewtonParameter( const SolverParameter& baseParameter, const std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
         : baseParam_( baseParameter.clone() ),
-          keyPrefix_( keyPrefix )
+          keyPrefix_( keyPrefix ),
+          parameter_( parameter )
       {}
 
-      NewtonParameter( const std::string keyPrefix = "fem.solver.newton." )
-        : baseParam_( nullptr ),
-          keyPrefix_( keyPrefix )
+      explicit NewtonParameter( const SolverParameter& baseParameter, const ParameterReader &parameter = Parameter::container() )
+        : baseParam_( baseParameter.clone() ),
+          keyPrefix_( "fem.solver.newton." ),
+          parameter_( parameter )
       {}
+
+      NewtonParameter( const ParameterReader &parameter = Parameter::container() )
+        : baseParam_( nullptr ),
+          keyPrefix_( "fem.solver.newton." ),
+          parameter_( parameter )
+      {}
+
+      NewtonParameter( const std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
+        : baseParam_( nullptr ),
+          keyPrefix_( keyPrefix ),
+          parameter_( parameter )
+      {}
+
+      const ParameterReader &parameter () const { return parameter_; }
 
       virtual double toleranceParameter () const
       {
-        return Parameter::getValue< double >( keyPrefix_ + "tolerance", 1e-6 );
+        return parameter_.getValue< double >( keyPrefix_ + "tolerance", 1e-6 );
       }
 
       virtual double linAbsTolParameter ( const double &tolerance )  const
       {
-        return Parameter::getValue< double >(keyPrefix_ +  "linabstol", tolerance / 8 );
+        return parameter_.getValue< double >(keyPrefix_ +  "linabstol", tolerance / 8 );
       }
 
       virtual double linReductionParameter ( const double &tolerance ) const
       {
-        return Parameter::getValue< double >( keyPrefix_ + "linreduction", tolerance / 8 );
+        return parameter_.getValue< double >( keyPrefix_ + "linreduction", tolerance / 8 );
       }
 
       virtual bool newtonVerbose () const
       {
         const bool v = baseParam_? baseParam_->verbose() : false;
-        return Parameter::getValue< bool >(keyPrefix_ +  "verbose", v );
+        return parameter_.getValue< bool >(keyPrefix_ +  "verbose", v );
       }
 
       virtual bool linearSolverVerbose () const
       {
         const bool v = baseParam_? baseParam_->verbose() : false;
-        return Parameter::getValue< bool >( keyPrefix_ + "linear.verbose", v );
+        return parameter_.getValue< bool >( keyPrefix_ + "linear.verbose", v );
       }
 
       virtual int maxIterationsParameter () const
       {
-        return Parameter::getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
+        return parameter_.getValue< int >( keyPrefix_ + "maxiterations", std::numeric_limits< int >::max() );
       }
 
       virtual int maxLinearIterationsParameter () const
       {
-        return Parameter::getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
+        return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
       }
 
     };
@@ -124,9 +143,9 @@ namespace Dune
        *  \note The tolerance is read from the paramter
        *        <b>fem.solver.newton.tolerance</b>
        */
-      explicit NewtonInverseOperator ( const OperatorType &op,
-                                       const NewtonParameter &parameter = NewtonParameter() )
+      NewtonInverseOperator ( const OperatorType &op, const NewtonParameter &parameter )
       : op_( op ),
+        parameters_( parameter.clone() ),
         tolerance_( parameter.toleranceParameter() ),
         linAbsTol_( parameter.linAbsTolParameter( tolerance_ ) ),
         linReduction_( parameter.linReductionParameter( tolerance_ ) ),
@@ -136,14 +155,27 @@ namespace Dune
         maxLinearIterations_( parameter.maxLinearIterationsParameter() )
       {}
 
+      explicit NewtonInverseOperator ( const OperatorType &op, const ParameterReader &parameter = Parameter::container() )
+      : op_( op ),
+        parameters_( new ParametersType( parameter ) ),
+        tolerance_( parameters_->toleranceParameter() ),
+        linAbsTol_( parameters_->linAbsTolParameter( tolerance_ ) ),
+        linReduction_( parameters_->linReductionParameter( tolerance_ ) ),
+        verbose_( parameters_->newtonVerbose() && MPIManager::rank () == 0 ),
+        linVerbose_( parameters_->linearSolverVerbose() ),
+        maxIterations_( parameters_->maxIterationsParameter() ),
+        maxLinearIterations_( parameters_->maxLinearIterationsParameter() )
+      {}
+
       /** constructor
        *
        *  \param[in]  op       operator to invert
        *  \param[in]  epsilon  tolerance for norm of residual
        */
       NewtonInverseOperator ( const OperatorType &op, const DomainFieldType &epsilon,
-                              const NewtonParameter &parameter = NewtonParameter() )
+                              const NewtonParameter &parameter )
       : op_( op ),
+        parameters_( parameter.clone() ),
         tolerance_( epsilon ),
         linAbsTol_( parameter.linAbsTolParameter( tolerance_ ) ),
         linReduction_( parameter.linReductionParameter( tolerance_ ) ),
@@ -151,6 +183,19 @@ namespace Dune
         linVerbose_( parameter.linearSolverVerbose() ),
         maxIterations_( parameter.maxIterationsParameter() ),
         maxLinearIterations_( parameter.maxLinearIterationsParameter() )
+      {}
+
+      NewtonInverseOperator ( const OperatorType &op, const DomainFieldType &epsilon,
+                              const ParameterReader &parameter = Parameter::container() )
+      : op_( op ),
+        parameters_( new ParametersType( parameter ) ),
+        tolerance_( epsilon ),
+        linAbsTol_( parameters_->linAbsTolParameter( tolerance_ ) ),
+        linReduction_( parameters_->linReductionParameter( tolerance_ ) ),
+        verbose_( parameters_->newtonVerbose() && MPIManager::rank () == 0 ),
+        linVerbose_( parameters_->linearSolverVerbose() ),
+        maxIterations_( parameters_->maxIterationsParameter() ),
+        maxLinearIterations_( parameters_->maxLinearIterationsParameter() )
       {}
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const;
@@ -165,8 +210,20 @@ namespace Dune
         return finite && (iterations_ < maxIterations_) && (linearIterations_ < maxLinearIterations_);
       }
 
+    protected:
+      // hold pointer to jacobian operator, if memory reallocation is needed, the operator should know how to handle this.
+      template< class ... Args>
+      JacobianOperatorType& jacobian ( Args && ... args ) const
+      {
+        if( !jOp_ )
+          jOp_.reset( new JacobianOperatorType( std::forward< Args >( args ) ... ) );
+        return *jOp_;
+      }
+
     private:
       const OperatorType &op_;
+      const NewtonParameter *parameters_;
+
       const double tolerance_, linAbsTol_, linReduction_;
       const bool verbose_;
       const bool linVerbose_;
@@ -176,6 +233,7 @@ namespace Dune
       mutable DomainFieldType delta_;
       mutable int iterations_;
       mutable int linearIterations_;
+      mutable std::unique_ptr< JacobianOperatorType > jOp_;
     };
 
 
@@ -189,7 +247,7 @@ namespace Dune
     {
       DomainFunctionType residual( u );
       RangeFunctionType dw( w );
-      JacobianOperatorType jOp( "jacobianOperator", dw.space(), u.space() );
+      JacobianOperatorType& jOp = jacobian( "jacobianOperator", dw.space(), u.space() );
 
       // compute initial residual
       op_( w, residual );
@@ -208,7 +266,7 @@ namespace Dune
         //        rather than the relative error
         //        (see also dune-fem/dune/fem/solver/inverseoperators.hh)
         const int remLinearIts = maxLinearIterations_ - linearIterations_;
-        const LinearInverseOperatorType jInv( jOp, linReduction_, linAbsTol_, remLinearIts, linVerbose_ );
+        const LinearInverseOperatorType jInv( jOp, linReduction_, linAbsTol_, remLinearIts, linVerbose_, parameters_->parameter() );
 
         dw.clear();
         jInv( residual, dw );

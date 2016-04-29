@@ -60,7 +60,8 @@ class UMFPACKOp:public Operator<DF, DF>
    *  \param[in] maxIter maximal number of iterations performed (not used here)
    *  \param[in] verbose verbosity
    */
-  UMFPACKOp(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose) :
+  UMFPACKOp(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
+            const ParameterReader &parameter = Parameter::container() ) :
     op_(op), verbose_(verbose), ccsmat_(), isloaded_(false)
   {
     Caller::defaults(UMF_Control);
@@ -73,9 +74,16 @@ class UMFPACKOp:public Operator<DF, DF>
    *  \param[in] absLimit absolut solving tolerance for residual (not used here)
    *  \param[in] maxIter maximal number of iterations performed (not used here)
    */
-  UMFPACKOp(const OperatorType& op, const double& redEps=0.0, const double& absLimit=0.0,
-            const int& maxIter=std::numeric_limits<int>::max()) :
-    op_(op), verbose_(Parameter::getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
+  UMFPACKOp(const OperatorType& op, const double& redEps, const double& absLimit,
+            const int& maxIter, const ParameterReader& parameter = Parameter::container() ) :
+    op_(op), verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
+  {
+    Caller::defaults(UMF_Control);
+    UMF_Control[UMFPACK_PRL] = 4;
+  }
+
+  UMFPACKOp(const OperatorType& op, const ParameterReader& parameter = Parameter::container() ) :
+    op_(op), verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
   {
     Caller::defaults(UMF_Control);
     UMF_Control[UMFPACK_PRL] = 4;

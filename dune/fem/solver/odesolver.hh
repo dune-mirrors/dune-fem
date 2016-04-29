@@ -37,30 +37,35 @@ namespace DuneODE
   // see rungekutta/timestepcontrol.hh for the adaptive control of the clf for implicit solvers
   struct ODEParameters : public ImplicitRungeKuttaSolverParameters
   {
-    using ImplicitRungeKuttaSolverParameters :: keyPrefix_;
+    using ImplicitRungeKuttaSolverParameters::keyPrefix_;
+    using ImplicitRungeKuttaSolverParameters::parameter_;
 
-    ODEParameters( const std::string keyPrefix = "fem.ode." )
-      : ImplicitRungeKuttaSolverParameters( keyPrefix )
+    ODEParameters( const ParameterReader &parameter = Parameter::container() )
+      : ImplicitRungeKuttaSolverParameters( "fem.ode.", parameter )
+    {}
+
+    ODEParameters( const std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
+      : ImplicitRungeKuttaSolverParameters( keyPrefix, parameter )
     {}
 
     // choice of linear solver for the implicit ODE solver
     virtual PARDG::IterativeLinearSolver *linearSolver(PARDG::Communicator & comm) const
     {
       static const std::string methodTypeTable[] = { "gmres", "cg", "bicgstab" };
-      const int method = Parameter::getEnum( keyPrefix_ + "linearsolver", methodTypeTable, 0 );
+      const int method = parameter_.getEnum( keyPrefix_ + "linearsolver", methodTypeTable, 0 );
 
       PARDG::IterativeLinearSolver *solver = nullptr;
       switch( method )
       {
       case 0:
         int cycles;
-        if( Fem::Parameter::exists( "fem.ode.gmrescycles" ) )
+        if( parameter_.exists( "fem.ode.gmrescycles" ) )
         {
           std::cerr << "WARNING: deprecated key, use '" << keyPrefix_ << "gmres.cycles' instead!" << std::endl;
-          cycles = Parameter::getValue< int >( "fem.ode.gmrescycles", 15 );
+          cycles = parameter_.getValue< int >( "fem.ode.gmrescycles", 15 );
         }
         else
-          cycles = Parameter::getValue< int >( keyPrefix_ + "gmres.cycles", 15 );
+          cycles = parameter_.getValue< int >( keyPrefix_ + "gmres.cycles", 15 );
         solver = new PARDG::GMRES( comm, cycles );
         break;
 
@@ -76,13 +81,13 @@ namespace DuneODE
         DUNE_THROW( InvalidStateException, "Unable to create linear solver." );
 
       // tolerance for the linear solver
-      double tol = Parameter::getValue< double >( keyPrefix_ + "solver.tolerance" , 1e-8 );
+      double tol = parameter_.getValue< double >( keyPrefix_ + "solver.tolerance" , 1e-8 );
       static const std::string errorTypeTable[] = { "absolute", "relative" };
       // errormeassure used in the linear solver
-      int errorType = Parameter::getEnum( keyPrefix_ + "solver.errormeasure", errorTypeTable, 0 );
+      int errorType = parameter_.getEnum( keyPrefix_ + "solver.errormeasure", errorTypeTable, 0 );
       solver->set_tolerance(tol,(errorType==1));
       // max iterations that the linear solver should do
-      int maxIter = Parameter::getValue< int >( keyPrefix_ + "solver.iterations" , 1000 );
+      int maxIter = parameter_.getValue< int >( keyPrefix_ + "solver.iterations" , 1000 );
       solver->set_max_number_of_iterations(maxIter);
       return solver;
     }
@@ -413,14 +418,28 @@ namespace DuneODE
     ImplicitOdeSolver(OperatorType& op,
                       TimeProviderBase& tp,
                       const int order,
-                      const ODEParameters& parameter = ODEParameters() ) :
+                      const ODEParameters& parameter ) :
       BaseType(tp, order),
       impl_( op ),
       linsolver_( 0 ),
       param_( parameter.clone() ),
-      verbose_( parameter.verbose() ),
-      cfl_( parameter.cflStart() ),
-      cflMax_( parameter.cflMax() )
+      verbose_( param_->verbose() ),
+      cfl_( param_->cflStart() ),
+      cflMax_( param_->cflMax() )
+    {
+    }
+
+    ImplicitOdeSolver(OperatorType& op,
+                      TimeProviderBase& tp,
+                      const int order,
+                      const ParameterReader &parameter = Parameter::container() ) :
+      BaseType(tp, order),
+      impl_( op ),
+      linsolver_( 0 ),
+      param_( new ODEParameters( parameter ) ),
+      verbose_( param_->verbose() ),
+      cfl_( param_->cflStart() ),
+      cflMax_( param_->cflMax() )
     {
     }
 

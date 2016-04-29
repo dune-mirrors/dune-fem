@@ -263,6 +263,17 @@ namespace Dune
           rightMultiplyInverseDefault( entity, geo, localMatrix );
       }
 
+      template< class LocalMatrix >
+      void leftMultiplyInverse ( LocalMatrix &localMatrix ) const
+      {
+        const EntityType &entity = localMatrix.domainEntity();
+        Geometry geo = entity.geometry();
+        if( affine() || geo.affine() )
+          leftMultiplyInverseLocally( entity, geo, localMatrix );
+        else
+          leftMultiplyInverseDefault( entity, geo, localMatrix );
+      }
+
       /////////////////////////////////////////////
       // end of public methods
       /////////////////////////////////////////////
@@ -334,6 +345,26 @@ namespace Dune
         }
       }
 
+      template< class LocalMatrix >
+      void leftMultiplyInverseDgOrthoNormalBasis ( LocalMatrix &localMatrix ) const
+      {
+        const EntityType &entity = localMatrix.domainEntity();
+        Geometry geo = entity.geometry();
+        assert( dgNumDofs == localMatrix.columns() );
+
+        // in case of affine mappings we only have to multiply with a factor
+        if( affine() || geo.affine() )
+          localMatrix.scale( getAffineMassFactor( geo ) );
+        else
+        {
+          NoMassDummyCaller caller;
+          buildMatrix( caller, entity, geo, localMatrix.domainBasisFunctionSet(), dgNumDofs, dgMatrix_ );
+          dgMatrix_.invert();
+
+          leftMultiplyScaled( dgMatrix_, localMatrix );
+        }
+      }
+
       //! returns true if the entity has been changed
       bool entityHasChanged( const EntityType& entity ) const
       {
@@ -389,7 +420,7 @@ namespace Dune
         MatrixType &invMassMatrix
           = getLocalInverseMassMatrixDefault ( caller, entity, geo, localMatrix.domainBasisFunctionSet() );
 
-        const int cols = localMatrix.colums();
+        const int cols = localMatrix.columns();
         rhs_.resize( cols );
         row_.resize( cols );
 
@@ -403,6 +434,29 @@ namespace Dune
             localMatrix.set( i, j, row_[ j ] );
         }
       }
+
+      template< class LocalMatrix >
+      void leftMultiplyInverseDefault ( const EntityType &entity, const Geometry &geo, LocalMatrix &localMatrix ) const
+      {
+        NoMassDummyCaller caller;
+        MatrixType &invMassMatrix
+          = getLocalInverseMassMatrixDefault ( caller, entity, geo, localMatrix.rangeBasisFunctionSet() );
+
+        const int cols = localMatrix.columns();
+        rhs_.resize( cols );
+        row_.resize( cols );
+
+        const int rows = localMatrix.rows();
+        for( int i = 0; i < rows; ++i )
+        {
+          for( int j = 0; j < cols; ++j )
+            rhs_[ j ] = localMatrix.get( i, j );
+          invMassMatrix.mv( rhs_, row_ );
+          for( int j = 0; j < cols; ++j )
+            localMatrix.set( i, j, row_[ j ] );
+        }
+      }
+
 
       ///////////////////////////////////////////////////////////
       //  local applyInverse method for affine geometries
@@ -453,6 +507,30 @@ namespace Dune
             localMatrix.set( i, j, row_[ j ] );
         }
       }
+
+      template< class LocalMatrix >
+      void leftMultiplyInverseLocally ( const EntityType &entity, const Geometry &geo, LocalMatrix &localMatrix ) const
+      {
+        const int cols = localMatrix.columns();
+        MatrixType &invMassMatrix =
+          getLocalInverseMassMatrix( entity, geo, localMatrix.rangeBasisFunctionSet(), cols );
+
+        const double massVolInv = getAffineMassFactor( geo );
+
+        rhs_.resize( cols );
+        row_.resize( cols );
+
+        const int rows = localMatrix.rows();
+        for( int i = 0; i < rows; ++i )
+        {
+          for( int j = 0; j < cols; ++j )
+            rhs_[ j ] = localMatrix.get( i, j ) * massVolInv;
+          invMassMatrix.mv( rhs_, row_ );
+          for( int j = 0; j < cols; ++j )
+            localMatrix.set( i, j, row_[ j ] );
+        }
+      }
+
 
       //! setup and return affinity
       bool setup () const

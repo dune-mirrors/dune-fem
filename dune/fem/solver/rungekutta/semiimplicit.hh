@@ -133,15 +133,26 @@ namespace DuneODE
      */
     SemiImplicitRungeKuttaSolver ( ExplicitOperatorType &explicitOp,
                                    HelmholtzOperatorType &helmholtzOp,
-                                   TimeProviderType &timeProvider,
-                                   int order = 1,
-                                   const ParametersType& tscParams = ParametersType(),
-                                   const NonlinearSolverParametersType& nlsParams = NonlinearSolverParametersType() )
+                                   TimeProviderType &timeProvider, int order,
+                                   const ParametersType& tscParams,
+                                   const NonlinearSolverParametersType& nlsParams )
     : BaseType( helmholtzOp,
                 butcherTable( order, false ),
                 TimeStepControlType( timeProvider, tscParams ),
                 SourceTermType( explicitOp, butcherTable( order, true ), butcherTable( order, false ).A() ),
                 nlsParams )
+    {}
+
+    SemiImplicitRungeKuttaSolver ( ExplicitOperatorType &explicitOp,
+                                   HelmholtzOperatorType &helmholtzOp,
+                                   TimeProviderType &timeProvider,
+                                   int order,
+                                   const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+    : BaseType( helmholtzOp,
+                butcherTable( order, false ),
+                TimeStepControlType( timeProvider, parameter ),
+                SourceTermType( explicitOp, butcherTable( order, true ), butcherTable( order, false ).A() ),
+                NonlinearSolverParametersType( parameter ) )
     {}
 
     /** \brief constructor
@@ -155,13 +166,24 @@ namespace DuneODE
     SemiImplicitRungeKuttaSolver ( ExplicitOperatorType &explicitOp,
                                    HelmholtzOperatorType &helmholtzOp,
                                    TimeProviderType &timeProvider,
-                                   const ParametersType& tscParams = ParametersType(),
-                                   const NonlinearSolverParametersType& nlsParams = NonlinearSolverParametersType() )
+                                   const ParametersType& tscParams,
+                                   const NonlinearSolverParametersType& nlsParams )
     : BaseType( helmholtzOp,
-                butcherTable( -1, false ),
+                butcherTable( 1, false ),
                 TimeStepControlType( timeProvider, tscParams ),
-                SourceTermType( explicitOp, butcherTable( -1, true ), butcherTable( -1, false ).A() ),
+                SourceTermType( explicitOp, butcherTable( 1, true ), butcherTable( 1, false ).A() ),
                 nlsParams )
+    {}
+
+    SemiImplicitRungeKuttaSolver ( ExplicitOperatorType &explicitOp,
+                                   HelmholtzOperatorType &helmholtzOp,
+                                   TimeProviderType &timeProvider,
+                                   const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+    : BaseType( helmholtzOp,
+                butcherTable( 1, false ),
+                TimeStepControlType( timeProvider, parameter ),
+                SourceTermType( explicitOp, butcherTable( 1, true ), butcherTable( 1, false ).A() ),
+                NonlinearSolverParametersType( parameter ) )
     {}
   protected:
     static SimpleButcherTable< double > butcherTable ( int order, bool expl )

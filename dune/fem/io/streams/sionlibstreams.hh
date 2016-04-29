@@ -56,15 +56,23 @@ namespace Dune
        *
        *  \note The filename must be the same on all ranks.
        */
-      SIONlibOutStream ( const std::string &filename,
-                         const int rank = MPIManager::rank(),
-                         MPICommunicatorType mpiComm = MPIHelper :: getCommunicator() )
+      SIONlibOutStream ( const std::string &filename, const int rank,
+                         MPICommunicatorType mpiComm, ParameterReader parameter = Parameter::container() )
         : BaseType( dataStream() ),
           filename_( filename ),
           mpiComm_( mpiComm ),
-          rank_( rank )
-      {
-      }
+          rank_( rank ),
+          numFiles_( std::min( MPIManager::size(), parameter.getValue< int >( "fem.io.sionlib.numfiles", 1 ) ) ),
+          blockSize_( parameter.getValue< int >( "fem.io.sionlib.blocksize", -1 ) )
+      {}
+
+      SIONlibOutStream ( const std::string &filename, ParameterReader parameter = Parameter::container() )
+        : SIONlibOutStream( filename, MPIManager::rank(), MPIHelper :: getCommunicator(), parameter )
+      {}
+
+      SIONlibOutStream ( const std::string &filename, const int rank, ParameterReader parameter = Parameter::container() )
+        : SIONlibOutStream( filename, rank, MPIHelper :: getCommunicator(), parameter )
+      {}
 
       /** \brief destructor writing internal data buffer to the file via SIONlib */
       ~SIONlibOutStream ()
@@ -98,13 +106,10 @@ namespace Dune
           const char* fileMode = "wb";
 
           // number of physical files to be created
-          int numFiles = Parameter :: getValue< int >( "fem.io.sionlib.numfiles", 1 );
-          // number of files cannot be bigger than number of tasks
-          if( numFiles > MPIManager::size() )
-            numFiles = MPIManager::size() ;
+          int numFiles = numFiles_;
 
           // block size of filesystem, -1 use system default
-          int blockSize = Parameter :: getValue< int >( "fem.io.sionlib.blocksize", -1 );
+          int blockSize = blockSize_;
 
           // my rank
           int rank = rank_;
@@ -150,6 +155,8 @@ namespace Dune
       MPICommunicatorType mpiComm_;
 
       const int rank_;
+      const int numFiles_;
+      const int blockSize_;
     };
 
     /** \class SIONlibInStream

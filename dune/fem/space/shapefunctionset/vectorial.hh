@@ -443,7 +443,12 @@ namespace Dune
     public:
       typedef typename ToNewRange< ScalarFunctionSpaceType, RangeVector >::Type FunctionSpaceType;
 
-      explicit VectorialShapeFunctionSet ( const ScalarShapeFunctionSetType &scalarShapeFunctionSet = ScalarShapeFunctionSetType() )
+      template< class ... Args >
+      VectorialShapeFunctionSet ( Args&& ... args )
+      : scalarShapeFunctionSet_( std::forward< Args > ( args ) ... )
+      {}
+
+      explicit VectorialShapeFunctionSet ( const ScalarShapeFunctionSetType &scalarShapeFunctionSet )
       : scalarShapeFunctionSet_( scalarShapeFunctionSet )
       {}
 

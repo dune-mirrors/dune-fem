@@ -29,18 +29,18 @@ namespace Dune
 
     struct DataWriterParameters : public DataOutputParameters
     {
-      protected:
-      using DataOutputParameters::keyPrefix_;
+      explicit DataWriterParameters ( std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
+        : DataOutputParameters( keyPrefix, parameter )
+      {}
 
-      public:
-      DataWriterParameters( const std::string keyPrefix = "fem.io." )
-        : DataOutputParameters( keyPrefix )
+      explicit DataWriterParameters ( const ParameterReader &parameter = Parameter::container() )
+        : DataOutputParameters( parameter )
       {}
 
       //! base of file name for data file (fem.io.macroGridFile)
       virtual std::string macroGridName (const int dim) const
       {
-        return Parameter::getValue< std::string >( IOInterface::defaultGridKey( dim ) );
+        return parameter().getValue< std::string >( IOInterface::defaultGridKey( dim, parameter() ) );
       }
 
       //! return true if all data should be written to a spearate path per rank
@@ -155,20 +155,26 @@ namespace Dune
     //
     //////////////////////////////////////////////////////////////////
 
+    /**
+     * \class CheckPointerParameters
+     * \brief local parameter collection for CheckPointer
+     *
+     * \note For now, the CheckPointer only works with the singleton parameter
+     *       class.
+     **/
     struct CheckPointerParameters : public DataWriterParameters
     {
     protected:
       bool writeMode_;
-      using DataWriterParameters::keyPrefix_;
 
     public:
       CheckPointerParameters( const bool writeMode, const std::string keyPrefix = "fem.io." ) :
-        DataWriterParameters( keyPrefix ),
+        DataWriterParameters( keyPrefix, Parameter::container() ),
         writeMode_( writeMode )
       {}
 
       explicit CheckPointerParameters( const std::string keyPrefix = "fem.io." ) :
-        DataWriterParameters( keyPrefix ),
+        DataWriterParameters( keyPrefix, Parameter::container() ),
         writeMode_( true )
       {}
 
@@ -181,19 +187,19 @@ namespace Dune
       //! return number of timestep to be passed until next checkpoint in written
       virtual int checkPointStep() const
       {
-        return Parameter::getValue< int > ( keyPrefix_ + "checkpointstep", 500 );
+        return parameter().getValue< int > ( keyPrefix_ + "checkpointstep", 500 );
       }
 
       //! maximal number of checkpoint stages written (default = 2)
       virtual int maxNumberOfCheckPoints() const
       {
-        return Parameter :: getValue< int > ( keyPrefix_ + "checkpointmax", 2 );
+        return parameter().getValue< int > ( keyPrefix_ + "checkpointmax", 2 );
       }
 
       //! return default value for check point prefix
       virtual std::string checkPointPrefix() const
       {
-        return Parameter :: getValue< std::string > ( keyPrefix_ +  "checkpointfile", "checkpoint" );
+        return parameter().getValue< std::string > ( keyPrefix_ +  "checkpointfile", "checkpoint" );
       }
 
       //! writeMode, true when checkpointer is in backup mode
@@ -411,6 +417,9 @@ namespace Dune
         checkPointFile_ = path_;
         checkPointFile_ += "/";
         checkPointFile_ += parameter.prefix();
+
+        // write parameter file
+        Parameter::write("parameter.log");
       }
 
     protected:

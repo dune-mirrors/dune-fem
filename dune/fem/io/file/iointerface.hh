@@ -6,6 +6,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <utility>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -182,13 +183,23 @@ namespace Dune
       virtual void write() const = 0;
 
       //! return FEM key for macro grid reading
-      static std::string defaultGridKey( const int dimension , const bool  check = true )
+      static std::string defaultGridKey ( int dimension, bool check = true )
       {
-        return defaultGridKey( "fem.io.macroGridFile", dimension,check );
+        return defaultGridKey( dimension, Parameter::container(), check );
       }
+
+      static std::string defaultGridKey ( int dimension, const ParameterReader &parameter, bool check = true )
+      {
+        return defaultGridKey( "fem.io.macroGridFile", dimension, parameter, check );
+      }
+
+      static std::string defaultGridKey ( std::string base, int dimension, bool check = true )
+      {
+        return defaultGridKey( std::move( base ), dimension, Parameter::container(), check );
+      }
+
       //! return FEM key for macro grid reading
-      static std::string defaultGridKey( const std::string base,
-                                         const int dimension , const bool  check = true )
+      static std::string defaultGridKey ( std::string base, int dimension, const ParameterReader &parameter, bool check = true )
       {
         const std::string oldGridKey( base );
 
@@ -197,9 +208,9 @@ namespace Dune
         const std::string newGridKey( gridKeyStream.str() );
 
         // check for old parameter
-        if( Parameter::exists( oldGridKey ) )
+        if( parameter.exists( oldGridKey ) )
         {
-          if( Parameter::exists( newGridKey ) )
+          if( parameter.exists( newGridKey ) )
           {
             std::cerr << "WARNING: ignoring `" << oldGridKey << "' because `"
                       << newGridKey << "' was also found in parameter file." << std::endl;
@@ -214,7 +225,7 @@ namespace Dune
         }
 
         // check for parameter with dimension
-        if( check && !Parameter::exists( newGridKey ) )
+        if( check && !parameter.exists( newGridKey ) )
         {
           std::cerr << "ERROR: Parameter `" << newGridKey << "' not found." << std::endl;
           DUNE_THROW( ParameterNotFound, "Parameter `" << newGridKey << "' not found." );
