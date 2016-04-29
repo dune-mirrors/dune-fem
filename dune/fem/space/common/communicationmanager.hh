@@ -4,6 +4,7 @@
 //- system includes
 #include <iostream>
 #include <map>
+#include <memory>
 #include <vector>
 
 //- Dune includes
@@ -115,7 +116,7 @@ namespace Dune
         //! receive data for discrete function and given operation
         template < class DiscreteFunctionSpace, class Operation >
         double receive( PetscDiscreteFunction< DiscreteFunctionSpace > & discreteFunction,
-                        const Operation* operation )
+                        const Operation& operation )
         {
           // get stopwatch
           Dune::Timer exchangeT;
@@ -128,7 +129,7 @@ namespace Dune
 
         //! receive data for discrete function and given operation
         template < class DiscreteFunction, class Operation >
-        double receive( DiscreteFunction& discreteFunction, const Operation* operation )
+        double receive( DiscreteFunction& discreteFunction, const Operation& operation )
         {
           // get type of data handle from the discrete function space
           typedef typename DiscreteFunction
@@ -157,7 +158,8 @@ namespace Dune
           // get type of default operation
           typedef typename DiscreteFunction :: DiscreteFunctionSpaceType
             :: template CommDataHandle< DiscreteFunction > :: OperationType  DefaultOperationType;
-          return receive( discreteFunction, (DefaultOperationType *) 0 );
+          DefaultOperationType operation;
+          return receive( discreteFunction, operation );
         }
 
       };
@@ -228,7 +230,8 @@ namespace Dune
         typedef typename DiscreteFunction :: DiscreteFunctionSpaceType ::
           template CommDataHandle< DiscreteFunction > :: OperationType DefaultOperationType;
 
-        exchange( discreteFunction, (DefaultOperationType *) 0 );
+        DefaultOperationType operation;
+        exchange( discreteFunction, operation );
       }
 
       /** \brief exchange data for a discrete function using the given operation
@@ -241,7 +244,7 @@ namespace Dune
        */
       template< class DiscreteFunction, class Operation >
       inline void exchange ( DiscreteFunction &discreteFunction,
-                             const Operation *operation ) const
+                             const Operation &operation ) const
       {
         // on serial runs: do nothing
         if( space_.gridPart().comm().size() <= 1 )
@@ -310,25 +313,26 @@ namespace Dune
 
         DiscreteFunctionType& df_;
         CommunicationManagerType comm_;
+        const Operation& operation_;
 
       public:
         //! constructor taking disctete function
-        DiscreteFunctionCommunicator(DiscreteFunctionType& df)
-          : df_(df), comm_(df_.space())
+        DiscreteFunctionCommunicator(DiscreteFunctionType& df, const Operation& op)
+          : df_(df), comm_(df_.space()), operation_( op )
         {
         }
 
         // exchange discrete function
         void exchange () const
         {
-          comm_.exchange( df_, (Operation * ) 0 );
+          comm_.exchange( df_, operation_ );
         }
 
         bool handles ( IsDiscreteFunction &df ) const { return (&df_ == &df); }
       };
 
       typedef DiscreteFunctionCommunicatorInterface CommObjIFType;
-      typedef std::list < DiscreteFunctionCommunicatorInterface * > CommObjListType;
+      typedef std::list < std::unique_ptr< DiscreteFunctionCommunicatorInterface > > CommObjListType;
       CommObjListType objList_;
 
       CommunicationManagerList(const CommunicationManagerList&);
@@ -342,32 +346,21 @@ namespace Dune
         cObj.addToList(*this);
       }
 
-      //! remove object comm
-      ~CommunicationManagerList()
-      {
-        // delete all entries
-        while( objList_.size() > 0 )
-        {
-          CommObjIFType * obj = objList_.back();
-          objList_.pop_back();
-          delete obj;
-        }
-      }
-
       //! add discrete function to communication list
       template <class DiscreteFunctionImp, class Operation>
-      void addToList(DiscreteFunctionImp &df, const Operation* )
+      void addToList(DiscreteFunctionImp &df, const Operation& operation )
       {
         typedef DiscreteFunctionCommunicator<DiscreteFunctionImp, Operation> CommObjType;
-        CommObjType* obj = new CommObjType(df);
-        objList_.push_back(obj);
+        CommObjType* obj = new CommObjType( df, operation );
+        objList_.push_back( std::unique_ptr< DiscreteFunctionCommunicatorInterface> (obj) );
       }
 
       //! add discrete function to communication list
       template <class DiscreteFunctionImp>
       void addToList(DiscreteFunctionImp &df)
       {
-        addToList( df, (DFCommunicationOperation::Copy *) 0 );
+        DFCommunicationOperation::Copy operation;
+        addToList( df, operation );
       }
 
       template< class DiscreteFunction >

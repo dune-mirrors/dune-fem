@@ -41,14 +41,16 @@ namespace Dune
       static const unsigned int blockSize = DiscreteFunctionSpaceType::localBlockSize;
 
     public:
-      DefaultCommunicationHandler( DiscreteFunctionType &function )
+      DefaultCommunicationHandler( DiscreteFunctionType &function, const Operation& operation = Operation() )
       : function_( &function ),
-        blockMapper_( function.space().blockMapper() )
+        blockMapper_( function.space().blockMapper() ),
+        operation_( operation )
       {}
 
       DefaultCommunicationHandler( const DefaultCommunicationHandler &other )
       : function_( other.function_ ),
-        blockMapper_( other.blockMapper_ )
+        blockMapper_( other.blockMapper_ ),
+        operation_( other.operation_ )
       {}
 
       //! cannot be implemented because of the reference
@@ -78,9 +80,10 @@ namespace Dune
       {
         Buffer& buffer_;
         DiscreteFunctionType *const function_;
+        const Operation& operation_;
 
-        ScatterFunctor( Buffer& buffer, DiscreteFunctionType* function )
-          : buffer_( buffer ), function_( function )
+        ScatterFunctor( Buffer& buffer, DiscreteFunctionType* function, const Operation& operation )
+          : buffer_( buffer ), function_( function ), operation_( operation )
         {}
 
         template <class GlobalKey>
@@ -90,7 +93,7 @@ namespace Dune
           {
             DataType value;
             buffer_.read( value );
-            Operation :: apply( value, function_->dofVector()[globalKey][j] );
+            operation_( value, function_->dofVector()[ globalKey ][ j ] );
           }
         }
       };
@@ -118,7 +121,7 @@ namespace Dune
       void scatter ( MessageBuffer &buffer, const Entity &entity, size_t n )
       {
         assert( n == blockSize *  blockMapper_.numEntityDofs( entity ) );
-        ScatterFunctor< MessageBuffer > scatterDofs ( buffer, function_ );
+        ScatterFunctor< MessageBuffer > scatterDofs ( buffer, function_, operation_ );
 
         blockMapper_.mapEachEntityDof( entity, scatterDofs );
       }
@@ -133,6 +136,7 @@ namespace Dune
     protected:
       DiscreteFunctionType *const function_;
       const BlockMapperType &blockMapper_;
+      const Operation operation_;
     };
 
   } // namespace Fem
