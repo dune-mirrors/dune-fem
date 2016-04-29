@@ -1,6 +1,7 @@
 #include <config.h>
 
 //#define WANT_CACHED_COMM_MANAGER 0
+//#define DG_ONLY
 
 #include <cmath>
 
@@ -43,14 +44,16 @@ typedef Dune::ALUGrid< dimension, dimension, Dune::simplex, Dune::conforming > G
 typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
 //typedef Dune::Fem::DGAdaptiveLeafGridPart< GridType > DGGridPartType;
 
-typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > LagrangeSpaceType;
-typedef Dune::Fem::AdaptiveDiscreteFunction< LagrangeSpaceType > LagrangeFunctionType;
-
-//typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, dgOrder > LagrangeSpaceType;
-//typedef Dune::Fem::AdaptiveDiscreteFunction< LagrangeSpaceType > LagrangeFunctionType;
-
 typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, dgOrder > DGSpaceType;
 typedef Dune::Fem::AdaptiveDiscreteFunction< DGSpaceType > DGFunctionType;
+
+#ifndef DG_ONLY
+typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > LagrangeSpaceType;
+typedef Dune::Fem::AdaptiveDiscreteFunction< LagrangeSpaceType > LagrangeFunctionType;
+#else
+typedef DGSpaceType     LagrangeSpaceType;
+typedef DGFunctionType  LagrangeFunctionType;
+#endif
 
 typedef Dune::Fem::RestrictProlongDefaultTuple< LagrangeFunctionType, DGFunctionType > RestrictProlongType;
 typedef Dune::Fem::AdaptationManager< GridType, RestrictProlongType > AdaptationManagerType;
@@ -117,9 +120,6 @@ try
 
   Dune::GridPtr< GridType > grid( gridin );
 
-  // bug: this call to load balance is necessary while it should not
-  grid->loadBalance();
-
   GridPartType   gridPart( *grid );
   LagrangeSpaceType lagrangeSpace( gridPart );
   DGSpaceType dgSpace( gridPart );
@@ -139,12 +139,15 @@ try
   if( grid->comm().rank() == 0 )
     std::cout << "initial L2 error: " << std::scientific << std::setprecision( 12 ) << initialLagrangeError << "    " << initialDGError << std::endl;
 
-  /*
+  const bool doOutput = true ;
+
   Dune::Fem::VTKIO< GridPartType > output( gridPart, Dune::VTK::nonconforming );
-  output.addVertexData( lagrangeSolution );
-  output.addVertexData( dgSolution );
-  output.write( "balladapt-initial" );
-  */
+  if( doOutput )
+  {
+    output.addVertexData( lagrangeSolution );
+    output.addVertexData( dgSolution );
+    output.write( "balladapt-initial" );
+  }
 
   RestrictProlongType restrictProlong( lagrangeSolution, dgSolution );
   AdaptationManagerType adaptManager( *grid, restrictProlong );
@@ -157,8 +160,11 @@ try
   {
     for( const auto &element : elements( gridPart ) )
       grid->mark( marking( element, time ), element );
+
+    // do adaptation and loadBalance
     adaptManager.adapt();
-    adaptManager.loadBalance();
+
+    //adaptManager.loadBalance();
   }
 
   // let the ball rotate
@@ -166,9 +172,15 @@ try
   {
     for( const auto &element : elements( gridPart ) )
       grid->mark( marking( element, time ), element );
+
+    // do adaptation and loadBalance
     adaptManager.adapt();
-    adaptManager.loadBalance();
-    //output.write( "balladapt-" + std::to_string( nr ) );
+
+    //adaptManager.loadBalance();
+    if( doOutput )
+    {
+      output.write( "balladapt-" + std::to_string( nr ) );
+    }
   }
 
   // coarsen up to macro level again
@@ -179,10 +191,17 @@ try
 
     for( const auto &element : elements( gridPart ) )
       grid->mark( -1, element );
+
+    // do adaptation and loadBalance
     adaptManager.adapt();
-    adaptManager.loadBalance();
+
+    //adaptManager.loadBalance();
   }
-  //output.write( "balladapt-final" );
+
+  if( doOutput )
+  {
+    output.write( "balladapt-final" );
+  }
   if( grid->maxLevel() > 0 )
     DUNE_THROW( Dune::GridError, "Unable to coarsen back to macro grid" );
 
