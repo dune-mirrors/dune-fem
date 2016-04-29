@@ -331,6 +331,18 @@ namespace Dune
       }
 
     public:
+      void requestCodimensions ( const std::vector< int >& codimensions )
+      {
+        // enable requested codimensions and rebuild index set
+        for( const auto& codim : codimensions )
+        {
+          codimUsed_[ codim ] = true ;
+        }
+
+        // rebuild index set
+        setupIndexSet();
+      }
+
       //! Constructor
       AdaptiveIndexSetBase (const GridPartType & gridPart)
         : BaseType( gridPart.grid() )

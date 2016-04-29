@@ -117,15 +117,15 @@ namespace Dune
 
         void map ( const ElementType &element, std::vector< GlobalKeyType > &indices ) const;
 
-        /** \brief fills a vector of bools with true indicating that the corresponding 
+        /** \brief fills a vector of bools with true indicating that the corresponding
          *  local degree of freedom is attached to the subentity specified by the (c,i)
          *  pair.
-         *  A local dof is attached to a subentity S if it is attached either to that 
-         *  subentity or to a subentity S'<S i.e. S' has codimension greater than c 
+         *  A local dof is attached to a subentity S if it is attached either to that
+         *  subentity or to a subentity S'<S i.e. S' has codimension greater than c
          *  which and lies within S. For example all dofs are attached to the element itself
-         *  and dofs are attached to an edge also in the case where they are attached to 
+         *  and dofs are attached to an edge also in the case where they are attached to
          *  the vertices of that edge.
-         **/ 
+         **/
         void onSubEntity( const ElementType &element, int i, int c, std::vector< bool > &indices ) const;
 
         unsigned int maxNumDofs () const { return maxNumDofs_; }
@@ -150,6 +150,7 @@ namespace Dune
         SizeType size () const { return size_; }
 
         void update ();
+        void requestCodimensions ();
 
 
         /* \name AdaptiveDofMapper interface methods
@@ -351,14 +352,14 @@ namespace Dune
         static const bool isCartesian = Dune::Capabilities::
           isCartesian< typename GridPart :: GridType > :: v ;
 
-        SubEntityFilterFunctor( const GridPart &gridPart, const std::vector< SubEntityInfo > &subEntityInfo, 
+        SubEntityFilterFunctor( const GridPart &gridPart, const std::vector< SubEntityInfo > &subEntityInfo,
                                 const ElementType &element, int i, int c,
                                 std::vector<bool> &vec )
         : gridPart_( gridPart ),
           subEntityInfo_( subEntityInfo ),
           element_( element ),
           vec_(vec),
-          filter_(RefElementsType::general( element.type() ), i,c)  
+          filter_(RefElementsType::general( element.type() ), i,c)
         {}
 
         template< class Iterator >
@@ -488,6 +489,9 @@ namespace Dune
         }
 
         update();
+
+        // submit request for codimensions to index set
+        requestCodimensions ();
       }
 
 
@@ -547,6 +551,22 @@ namespace Dune
         return subEntityInfo( entity ).numDofs;
       }
 
+
+      template< class GridPart >
+      inline void DofMapper< GridPart >::requestCodimensions ()
+      {
+        std::vector< int > codimensions;
+        codimensions.reserve( dimension+1 );
+
+        for( typename BlockMapType::const_iterator it = blockMap_.begin(); it != blockMap_.end(); ++it )
+        {
+          SubEntityInfo &info = subEntityInfo_[ GlobalGeometryTypeIndex::index( *it ) ];
+          codimensions.push_back( info.codim  );
+        }
+
+        // commit request for codimension to indexSet
+        const_cast< IndexSetType& > (gridPart_.indexSet()).requestCodimensions( codimensions );
+      }
 
       template< class GridPart >
       inline void DofMapper< GridPart >::update ()
