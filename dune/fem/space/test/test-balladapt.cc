@@ -1,5 +1,7 @@
 #include <config.h>
 
+//#define WANT_CACHED_COMM_MANAGER 0
+
 #include <cmath>
 
 #include <iostream>
@@ -26,35 +28,35 @@
 using Dune::elements;
 using Dune::Fem::gridFunctionAdapter;
 
-static const int maxLevel = 8;
 static const int polOrder = 2;
 static const int dgOrder = 2;
 
-const char dgf[]
-  = "DGF\n"
-    "\n"
-    "INTERVAL\n"
-    "0  0\n"
-    "1  1\n"
-    "8  8\n"
-    "#\n";
+static const int dimension = 2;
 
 
-typedef Dune::Fem::FunctionSpace< double, double, 2, 1 > FunctionSpaceType;
+typedef Dune::Fem::FunctionSpace< double, double, dimension, 1 > FunctionSpaceType;
 
 #if HAVE_DUNE_ALUGRID
-typedef Dune::ALUGrid< 2, 2, Dune::simplex, Dune::conforming > GridType;
+typedef Dune::ALUGrid< dimension, dimension, Dune::simplex, Dune::conforming > GridType;
 
+//typedef Dune::Fem::AdaptiveLeafGridPart< GridType, Dune::InteriorBorder_Partition > GridPartType;
 typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
+//typedef Dune::Fem::DGAdaptiveLeafGridPart< GridType > DGGridPartType;
 
 typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > LagrangeSpaceType;
 typedef Dune::Fem::AdaptiveDiscreteFunction< LagrangeSpaceType > LagrangeFunctionType;
+
+//typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, dgOrder > LagrangeSpaceType;
+//typedef Dune::Fem::AdaptiveDiscreteFunction< LagrangeSpaceType > LagrangeFunctionType;
 
 typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, dgOrder > DGSpaceType;
 typedef Dune::Fem::AdaptiveDiscreteFunction< DGSpaceType > DGFunctionType;
 
 typedef Dune::Fem::RestrictProlongDefaultTuple< LagrangeFunctionType, DGFunctionType > RestrictProlongType;
 typedef Dune::Fem::AdaptationManager< GridType, RestrictProlongType > AdaptationManagerType;
+static const int maxLevel = 3 * Dune::DGFGridInfo< GridType > :: refineStepsForHalf();
+#else
+static const int maxLevel = 3;
 #endif // #if HAVE_DUNE_ALUGRID
 
 
@@ -84,7 +86,7 @@ struct ExactSolution
 template< class Element >
 int marking ( const Element &element, double time )
 {
-  Dune::FieldVector< double, 2 > y = element.geometry().center();
+  auto y = element.geometry().center();
   y[ 0 ] -= 0.5 + 0.2*std::cos( time );
   y[ 1 ] -= 0.5 + 0.2*std::sin( time );
   if( y.two_norm2() < 0.1*0.1 )
@@ -104,18 +106,26 @@ try
   Dune::Fem::MPIManager::initialize( argc, argv );
 
 #if HAVE_DUNE_ALUGRID
-  std::istringstream gridin( dgf );
+  std::stringstream gridin;
+  Dune::FieldVector<int, dimension> lower(0), upper(1), cells(8);
+  gridin << "DGF" << std::endl;
+  gridin << "INTERVAL" << std::endl;
+  gridin << lower << std::endl;
+  gridin << upper << std::endl;
+  gridin << cells << std::endl;
+  gridin << "#" << std::endl;
+
   Dune::GridPtr< GridType > grid( gridin );
 
   // bug: this call to load balance is necessary while it should not
   grid->loadBalance();
 
-  GridPartType gridPart( *grid );
+  GridPartType   gridPart( *grid );
   LagrangeSpaceType lagrangeSpace( gridPart );
   DGSpaceType dgSpace( gridPart );
 
   LagrangeFunctionType lagrangeSolution( "lagrange-solution", lagrangeSpace );
-  interpolate( gridFunctionAdapter( ExactSolution(), gridPart ), lagrangeSolution );
+  interpolate( gridFunctionAdapter( ExactSolution(), gridPart, polOrder ), lagrangeSolution );
 
   DGFunctionType dgSolution( "dg-solution", dgSpace );
   interpolate( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder ), dgSolution );
@@ -129,10 +139,12 @@ try
   if( grid->comm().rank() == 0 )
     std::cout << "initial L2 error: " << std::scientific << std::setprecision( 12 ) << initialLagrangeError << "    " << initialDGError << std::endl;
 
+  /*
   Dune::Fem::VTKIO< GridPartType > output( gridPart, Dune::VTK::nonconforming );
   output.addVertexData( lagrangeSolution );
   output.addVertexData( dgSolution );
   output.write( "balladapt-initial" );
+  */
 
   RestrictProlongType restrictProlong( lagrangeSolution, dgSolution );
   AdaptationManagerType adaptManager( *grid, restrictProlong );
@@ -156,7 +168,7 @@ try
       grid->mark( marking( element, time ), element );
     adaptManager.adapt();
     adaptManager.loadBalance();
-    output.write( "balladapt-" + std::to_string( nr ) );
+    //output.write( "balladapt-" + std::to_string( nr ) );
   }
 
   // coarsen up to macro level again
@@ -170,7 +182,7 @@ try
     adaptManager.adapt();
     adaptManager.loadBalance();
   }
-  output.write( "balladapt-final" );
+  //output.write( "balladapt-final" );
   if( grid->maxLevel() > 0 )
     DUNE_THROW( Dune::GridError, "Unable to coarsen back to macro grid" );
 
