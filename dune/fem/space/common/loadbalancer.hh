@@ -132,10 +132,19 @@ namespace Dune
 
       void communicate () const
       {
-        // exchange all modified data
-        // this also rebuilds the dependecy cache of the
-        // cached communication manager if used
-        commList_.exchange();
+        // if overlap or ghost elements are available
+        // these need to be synchronized here
+        if( (grid_.overlapSize( 0 ) > 0) || (grid_.ghostSize( 0 ) > 0) )
+        {
+          // exchange all modified data
+          // this also rebuilds the dependecy cache of the
+          // cached communication manager if used
+          commList_.exchange();
+        }
+#ifndef NDEBUG
+        // make sure every process is on the same page
+        grid_.comm().barrier();
+#endif
       }
 
       //! do load balance

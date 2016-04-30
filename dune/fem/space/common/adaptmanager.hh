@@ -621,19 +621,20 @@ namespace Dune
          fem.adaptation.method: 1 # default value
 
          # balance every x-th call to adapt, 0 means no balancing
-         fem.loadbalancing.step: 0 # default value
+         fem.loadbalancing.step: 1 # default value
        \endcode
 
        \param grid Grid that adaptation is done for
        \param rpOp restriction and prlongation operator that describes how the
         user data is projected to other grid levels
        \param balanceCounter start counter for balance cycle (default = 0)
+       \param parameter  Parameter class holding parameters
     **/
     AdaptationManager ( GridType &grid, RestProlOperatorImp &rpOp, int balanceCounter, const ParameterReader &parameter = Parameter::container() )
       : BaseType(grid,rpOp, parameter)
       , Base2Type( grid, rpOp )
       , referenceCounter_( ProviderType :: getObject( &grid ) )
-      , balanceStep_( parameter.getValue< int >( "fem.loadbalancing.step", balanceCounter ) )
+      , balanceStep_( parameter.getValue< int >( "fem.loadbalancing.step", 1 ) )
       , balanceCounter_( balanceCounter )
     {
       if( ++referenceCounter_ > 1 )
@@ -642,11 +643,28 @@ namespace Dune
         std::cout << "Created LoadBalancer: balanceStep = " << balanceStep_ << std::endl;
     }
 
+    /**
+       \brief constructor of AdaptationManager
+
+       The following optional parameters are used:
+       \code
+         # 0 == none, 1 == generic, 2 == call back (only AlbertaGrid and ALUGrid)
+         fem.adaptation.method: 1 # default value
+
+         # balance every x-th call to adapt, 0 means no balancing
+         fem.loadbalancing.step: 1 # default value
+       \endcode
+
+       \param grid Grid that adaptation is done for
+       \param rpOp restriction and prlongation operator that describes how the
+                   user data is projected to other grid levels
+       \param parameter  Parameter class holding parameters
+    **/
     AdaptationManager ( GridType &grid, RestProlOperatorImp &rpOp, const ParameterReader &parameter = Parameter::container() )
       : BaseType(grid,rpOp, parameter)
       , Base2Type( grid, rpOp )
       , referenceCounter_( ProviderType :: getObject( &grid ) )
-      , balanceStep_( parameter.getValue< int >( "fem.loadbalancing.step", 0 ) )
+      , balanceStep_( parameter.getValue< int >( "fem.loadbalancing.step", 1 ) )
       , balanceCounter_( 0 )
     {
       if( ++referenceCounter_ > 1 )
