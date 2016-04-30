@@ -39,6 +39,7 @@ typedef Dune::Fem::FunctionSpace< double, double, dimension, 1 > FunctionSpaceTy
 
 #if HAVE_DUNE_ALUGRID
 typedef Dune::ALUGrid< dimension, dimension, Dune::simplex, Dune::conforming > GridType;
+//typedef Dune::ALUGrid< dimension, dimension, Dune::simplex, Dune::nonconforming > GridType;
 
 //typedef Dune::Fem::AdaptiveLeafGridPart< GridType, Dune::InteriorBorder_Partition > GridPartType;
 typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
@@ -47,12 +48,12 @@ typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
 typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, dgOrder > DGSpaceType;
 typedef Dune::Fem::AdaptiveDiscreteFunction< DGSpaceType > DGFunctionType;
 
-#ifndef DG_ONLY
-typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > LagrangeSpaceType;
-typedef Dune::Fem::AdaptiveDiscreteFunction< LagrangeSpaceType > LagrangeFunctionType;
-#else
+#ifdef DG_ONLY
 typedef DGSpaceType     LagrangeSpaceType;
 typedef DGFunctionType  LagrangeFunctionType;
+#else
+typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > LagrangeSpaceType;
+typedef Dune::Fem::AdaptiveDiscreteFunction< LagrangeSpaceType > LagrangeFunctionType;
 #endif
 
 typedef Dune::Fem::RestrictProlongDefaultTuple< LagrangeFunctionType, DGFunctionType > RestrictProlongType;
@@ -128,18 +129,45 @@ try
   interpolate( gridFunctionAdapter( ExactSolution(), gridPart, polOrder ), lagrangeSolution );
 
   DGFunctionType dgSolution( "dg-solution", dgSpace );
-  interpolate( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder ), dgSolution );
+  interpolate( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder ), dgSolution  );
 
   // compute initial error
   Dune::Fem::L2Norm< GridPartType > l2Norm( gridPart );
+
+  // compute initial error
+  const double initialLagrangeErrorBefore =
+    l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, polOrder+1 ), lagrangeSolution );
+  const double initialDGErrorBefore =
+    l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder+1 ), dgSolution );
+
+  // redistribute the grid before initializing the
+  RestrictProlongType restrictProlong( lagrangeSolution, dgSolution );
+  AdaptationManagerType adaptManager( *grid, restrictProlong );
+
+  // compute initial error
   const double initialLagrangeError =
     l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, polOrder+1 ), lagrangeSolution, Dune::Partitions::all );
   const double initialDGError =
     l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder+1 ), dgSolution, Dune::Partitions::all );
+
+  {
+    const double lagrangeErrorGhosts = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, polOrder+1 ), lagrangeSolution, Dune::Partitions::ghost );
+    const double dgErrorGhosts = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder+1 ), dgSolution, Dune::Partitions::ghost );
+
+    // substract error on ghost cells from initial error
+    const double lagrangeError = std::sqrt( initialLagrangeError*initialLagrangeError - lagrangeErrorGhosts*lagrangeErrorGhosts );
+    if( std::abs( initialLagrangeErrorBefore - lagrangeError ) > 1e-12 )
+      DUNE_THROW(Dune::ParallelError,"Lagrange error does not match after load balance");
+    const double dgError = std::sqrt( initialDGErrorBefore*initialDGErrorBefore - dgErrorGhosts*dgErrorGhosts );
+    if( std::abs( initialDGErrorBefore - dgError ) > 1e-12 )
+      DUNE_THROW(Dune::ParallelError,"DG error does not match after load balance");
+  }
+
+
   if( grid->comm().rank() == 0 )
     std::cout << "initial L2 error: " << std::scientific << std::setprecision( 12 ) << initialLagrangeError << "    " << initialDGError << std::endl;
 
-  const bool doOutput = true ;
+  const bool doOutput = argc > 1 ;
 
   Dune::Fem::VTKIO< GridPartType > output( gridPart, Dune::VTK::nonconforming );
   if( doOutput )
@@ -148,10 +176,6 @@ try
     output.addVertexData( dgSolution );
     output.write( "balladapt-initial" );
   }
-
-  RestrictProlongType restrictProlong( lagrangeSolution, dgSolution );
-  AdaptationManagerType adaptManager( *grid, restrictProlong );
-  adaptManager.loadBalance();
 
   double time = 0;
 
@@ -163,7 +187,6 @@ try
 
     // do adaptation and loadBalance
     adaptManager.adapt();
-
     //adaptManager.loadBalance();
   }
 
@@ -175,8 +198,8 @@ try
 
     // do adaptation and loadBalance
     adaptManager.adapt();
-
     //adaptManager.loadBalance();
+
     if( doOutput )
     {
       output.write( "balladapt-" + std::to_string( nr ) );
@@ -194,7 +217,6 @@ try
 
     // do adaptation and loadBalance
     adaptManager.adapt();
-
     //adaptManager.loadBalance();
   }
 
@@ -207,8 +229,34 @@ try
 
   const double finalLagrangeError = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, polOrder+1 ), lagrangeSolution, Dune::Partitions::all );
   const double finalDGError = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder+1 ), dgSolution, Dune::Partitions::all );
+
   if( grid->comm().rank() == 0 )
     std::cout << "final L2 error:   " << std::scientific << std::setprecision( 12 ) << finalLagrangeError << "    " << finalDGError << std::endl;
+
+  if( grid->ghostSize( 0 ) > 0 )
+  {
+    const double lagrangeErrorGhosts = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, polOrder+1 ), lagrangeSolution, Dune::Partitions::ghost );
+    const double dgErrorGhosts = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder+1 ), dgSolution, Dune::Partitions::ghost );
+
+    // compare errors with "correct" errors
+    interpolate( gridFunctionAdapter( ExactSolution(), gridPart, polOrder ), lagrangeSolution );
+    interpolate( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder ), dgSolution  );
+
+    const double trueLagrangeErrorGhosts = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, polOrder+1 ), lagrangeSolution, Dune::Partitions::ghost );
+    const double trueDGErrorGhosts = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder+1 ), dgSolution, Dune::Partitions::ghost );
+
+    if( grid->comm().rank() == 0 )
+    {
+      std::cout << "Ghosts (projected - observed) "
+                << std::abs( lagrangeErrorGhosts - trueLagrangeErrorGhosts ) << " "
+                << std::abs( dgErrorGhosts - trueDGErrorGhosts ) << std::endl;
+    }
+
+    if( std::abs( lagrangeErrorGhosts - trueLagrangeErrorGhosts ) > 1e-12 || lagrangeErrorGhosts < 1e-10 )
+      DUNE_THROW(Dune::ParallelError,"Lagrange error on ghost cells does not match after load balance");
+    if( std::abs( dgErrorGhosts - trueDGErrorGhosts ) > 1e-12 || dgErrorGhosts < 1e-10 )
+      DUNE_THROW(Dune::ParallelError,"DG error on ghost cells does not match after load balance");
+  }
 
   return ((std::abs( initialLagrangeError - finalLagrangeError) < 1e-10) && (std::abs( initialDGError - finalDGError ) < 1e-10) ? 0 : 1);
 #else // #if HAVE_DUNE_ALUGRID
