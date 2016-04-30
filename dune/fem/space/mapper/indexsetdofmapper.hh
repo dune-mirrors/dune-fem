@@ -149,9 +149,8 @@ namespace Dune
 
         SizeType size () const { return size_; }
 
+        //! update mapper offsets
         void update ();
-        void requestCodimensions ();
-
 
         /* \name AdaptiveDofMapper interface methods
          * \{
@@ -204,6 +203,9 @@ namespace Dune
         /* \} */
 
       protected:
+        //! submit request for codimensions used to index set
+        void requestCodimensions ();
+
         typedef typename GridPartType::IndexSetType IndexSetType;
         typedef std::vector< GeometryType > BlockMapType;
 
@@ -555,6 +557,7 @@ namespace Dune
       template< class GridPart >
       inline void DofMapper< GridPart >::requestCodimensions ()
       {
+        // collect all available codimensions
         std::vector< int > codimensions;
         codimensions.reserve( dimension+1 );
 
@@ -564,8 +567,8 @@ namespace Dune
           codimensions.push_back( info.codim  );
         }
 
-        // commit request for codimension to indexSet
-        const_cast< IndexSetType& > (gridPart_.indexSet()).requestCodimensions( codimensions );
+        // submit request for codimension to indexSet
+        gridPart_.indexSet().requestCodimensions( codimensions );
       }
 
       template< class GridPart >

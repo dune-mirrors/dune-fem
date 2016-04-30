@@ -331,16 +331,13 @@ namespace Dune
       }
 
     public:
-      void requestCodimensions ( const std::vector< int >& codimensions )
+      void requestCodimensions ( const std::vector< int >& codimensions ) const
       {
         // enable requested codimensions and rebuild index set
         for( const auto& codim : codimensions )
         {
-          codimUsed_[ codim ] = true ;
+          ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
         }
-
-        // rebuild index set
-        setupIndexSet();
       }
 
       //! Constructor
@@ -626,7 +623,9 @@ namespace Dune
           DUNE_THROW( NotImplemented, (name() + " does not support indices for codim = ") << codim );
 
         if( (codim != 0) && ! codimUsed_[ codim ] )
+        {
           ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
+        }
 
         const CodimIndexSetType &codimSet = codimLeafSet( codim );
         const IndexType idx = codimSet.subIndex( gridEntity( entity ), subNumber );
