@@ -50,8 +50,10 @@ namespace Dune
           order = (order == 0 ? 2*std::max( u.space().order(), v.space().order() ) : order);
 
           ReturnType sum( 0 );
-          for( const EntityType &entity : elements( norm.gridPart_, Partitions::interior ) )
+          const auto end = norm.gridPart_.template end<0>();
+          for (auto it = norm.gridPart_.template begin<0>(); it!=end; ++it)
           {
+            const auto entity = *it;
             const typename UDiscreteFunctionType::LocalFunctionType uLocal = u.localFunction( entity );
             const typename VDiscreteFunctionType::LocalFunctionType vLocal = v.localFunction( entity );
             norm.distanceLocal( entity, order, uLocal, vLocal, sum );
@@ -120,8 +122,8 @@ namespace Dune
       template< class UDiscreteFunctionType, class VDiscreteFunctionType, class ReturnType >
       ReturnType forEach ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v, const ReturnType &initialValue, unsigned int order = 0 ) const
       {
-        enum { uDiscrete = Conversion<UDiscreteFunctionType, HasLocalFunction>::exists };
-        enum { vDiscrete = Conversion<VDiscreteFunctionType, HasLocalFunction>::exists };
+        enum { uDiscrete = std::is_convertible<UDiscreteFunctionType, HasLocalFunction>::value };
+        enum { vDiscrete = std::is_convertible<VDiscreteFunctionType, HasLocalFunction>::value };
 
         // call forEach depending on which argument is a grid function,
         // i.e. has a local function
