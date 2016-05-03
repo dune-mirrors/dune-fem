@@ -61,6 +61,8 @@ namespace Dune
     // scalarProduct
     // -------------
 
+    inline double scalarProduct ( const double &a, const double &b ) { return a * b; }
+
     template< class T >
     inline typename T::field_type scalarProduct ( const T &a, const T &b )
     {
@@ -89,7 +91,8 @@ namespace Dune
         value_( value )
       {}
 
-      void operator() ( const std::size_t i, const Value &v )
+      template< class V >
+      void operator() ( const std::size_t i, const V &v )
       {
         axpy( vector_[ i ], v, value_ );
       }
@@ -112,7 +115,8 @@ namespace Dune
         vector_( vector )
       {}
 
-      void operator() ( const std::size_t i, const Value &v )
+      template< class V >
+      void operator() ( const std::size_t i, const V &v )
       {
         vector_[ i ] += scalarProduct( v, value_ );
       }
