@@ -1,0 +1,5 @@
+SET(MODULES
+  DuneFempyMacros.cmake
+)
+
+install(FILES ${MODULES} DESTINATION ${DUNE_INSTALL_MODULEDIR})
