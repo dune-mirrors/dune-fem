@@ -1,0 +1,24 @@
+{
+  "AlbertaGrid" :
+  {
+    "type"      : "Dune::AlbertaGrid< $(dimgrid) >",
+    "include"   : [ "dune/grid/albertagrid.hh", "dune/grid/albertagrid/dgfparser.hh" ]
+  },
+  "OneDGrid" :
+  {
+    "type"      : "Dune::OneDGrid",
+    "include"   : [ "dune/grid/onedgrid.hh", "dune/grid/io/file/dgfparser/dgfoned.hh" ]
+  },
+  "UGGrid" :
+  {
+    "type"      : "Dune::UGGrid< $(dimgrid) >",
+    "include"   : [ "dune/grid/uggrid.hh", "dune/grid/io/file/dgfparser/dgfug.hh" ]
+  },
+  "YaspGrid" :
+  {
+    "type"      : "Dune::YaspGrid< $(dimgrid), $(coordinates)< $(ctype), $(dimgrid) > >",
+    "default"   : [ "ctype=double", "coordinates=equidistant" ],
+    "translate" : { "coordinates" : [ "equidistant=Dune::EquidistantCoordinates", "tensorproduct=Dune::TensorProductCoordinates" ] },
+    "include"   : [ "dune/grid/yaspgrid.hh", "dune/grid/io/file/dgfparser/dgfyasp.hh" ]
+  }
+}
