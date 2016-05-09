@@ -267,9 +267,17 @@ namespace Dune
         localRP_.prolongLocal( constLf_, lfSon, geometryInFather, initialize );
       }
 
+      //! add discrete function to communicator with given unpack operation
+      template< class Communicator, class Operation >
+      void addToList ( Communicator &comm, const Operation* op)
+      {
+        if( localRP_.needCommunication() )
+          comm.addToList( discreteFunction_, op );
+      }
+
       //! add discrete function to communicator
       template< class Communicator >
-      void addToList ( Communicator &comm )
+      void addToList ( Communicator &comm  )
       {
         if( localRP_.needCommunication() )
           comm.addToList( discreteFunction_ );

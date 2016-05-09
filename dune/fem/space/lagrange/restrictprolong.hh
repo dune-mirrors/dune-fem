@@ -103,7 +103,7 @@ namespace Dune
         }
       }
 
-      bool needCommunication () const { return false; }
+      bool needCommunication () const { return true; }
 
     protected:
       template< class Entity >

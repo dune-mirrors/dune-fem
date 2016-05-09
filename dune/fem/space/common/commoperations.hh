@@ -258,7 +258,8 @@ namespace Dune
     //! enum of all avialable operations
     struct DFCommunicationOperation
     {
-      enum dfCommunicationOperation {copy,add,sub,min,max};
+      enum dfCommunicationOperation { copy, add, sub, min, max };
+
       //! just copy data
       struct Copy
       {
@@ -269,11 +270,12 @@ namespace Dune
         }
 
         template <class DataType>
-        static inline void apply(const DataType & arg, DataType & dest)
+        inline void operator () (const DataType & arg, DataType & dest) const
         {
           dest = arg;
         }
       };
+
 
       //! sum up data
       struct Add
@@ -285,7 +287,7 @@ namespace Dune
         }
 
         template <class DataType>
-        static inline void apply(const DataType & arg, DataType & dest)
+        inline void operator () (const DataType & arg, DataType & dest) const
         {
           dest += arg;
         }
@@ -301,7 +303,7 @@ namespace Dune
         }
 
         template <class DataType>
-        static inline void apply(const DataType & arg, DataType & dest)
+        inline void operator () (const DataType & arg, DataType & dest) const
         {
           dest -= arg;
         }
@@ -317,7 +319,7 @@ namespace Dune
         }
 
         template <class DataType>
-        static inline void apply(const DataType & arg, DataType & dest)
+        inline void operator () (const DataType & arg, DataType & dest) const
         {
           dest = std::min(dest,arg);
         }
@@ -333,7 +335,7 @@ namespace Dune
         }
 
         template <class DataType>
-        static inline void apply(const DataType & arg, DataType & dest)
+        inline void operator () (const DataType & arg, DataType & dest) const
         {
           dest = std::max(dest,arg);
         }

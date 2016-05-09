@@ -796,15 +796,18 @@ namespace Dune
         typedef typename DiscreteFunction :: DiscreteFunctionSpaceType :: template
           CommDataHandle< DiscreteFunction > :: OperationType  DefaultOperationType;
 
+        // default communication operation
+        DefaultOperationType operation;
+
         // exchange data
-        communicate( discreteFunction, (DefaultOperationType*) 0);
+        communicate( discreteFunction, operation );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::communicate(DiscreteFunction &discreteFunction, const Operation *) const */
       template <class DiscreteFunction, class Operation>
-      void communicate(DiscreteFunction& discreteFunction, const Operation *op ) const
+      void communicate(DiscreteFunction& discreteFunction, const Operation& op ) const
       {
-        communicator().exchange( discreteFunction, (Operation *) 0);
+        communicator().exchange( discreteFunction, op );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::createDataHandle(DiscreteFunction &discreteFunction.const Operation *operation) const
@@ -818,11 +821,11 @@ namespace Dune
       inline typename BaseType
         :: template CommDataHandle< DiscreteFunction, Operation > :: Type
       createDataHandle( DiscreteFunction &discreteFunction,
-                        const Operation *operation ) const
+                        const Operation& operation ) const
       {
         return typename BaseType
           :: template CommDataHandle< DiscreteFunction, Operation >
-          :: Type( discreteFunction );
+          :: Type( discreteFunction, operation );
       }
 
       /** \brief default implementation of addFunction does nothing at the moment */

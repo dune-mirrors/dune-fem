@@ -176,6 +176,11 @@ namespace Dune
         return impl().template subIndex< codim >( entity, i, cd );
       }
 
+      /** \brief receive request for codimension support in case index set is adaptive */
+      void requestCodimensions ( const std::vector< int >& codimensions ) const
+      {
+      }
+
     protected:
       const typename Traits::IndexSetType &impl () const
       {

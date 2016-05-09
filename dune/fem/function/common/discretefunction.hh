@@ -369,7 +369,7 @@ namespace Dune
 
       /** \brief return reference to data handle object */
       template< class Operation >
-      typename CommDataHandle< Operation >::Type dataHandle( const Operation *operation )
+      typename CommDataHandle< Operation >::Type dataHandle( const Operation &operation )
       {
         return asImp().dataHandle( operation );
       }
@@ -688,7 +688,7 @@ namespace Dune
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dataHandle */
       template< class Operation >
-      typename CommDataHandle< Operation >::Type dataHandle ( const Operation *operation );
+      typename CommDataHandle< Operation >::Type dataHandle ( const Operation &operation );
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::communicate() */
       void communicate()

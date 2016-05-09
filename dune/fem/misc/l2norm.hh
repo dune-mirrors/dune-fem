@@ -39,16 +39,44 @@ namespace Dune
       typedef Integrator< QuadratureType > IntegratorType;
 
       const unsigned int order_;
+      const bool communicate_;
     public:
-      explicit L2Norm ( const GridPartType &gridPart, const unsigned int order = 0 );
+      /** \brief constructor
+       *    \param gridPart     specific gridPart for selection of entities
+       *    \param order        order of integration quadrature (default = 2*space.order())
+       *    \param communicate  if true global (over all ranks) norm is computed (default = true)
+       */
+      explicit L2Norm ( const GridPartType &gridPart,
+                        const unsigned int order = 0,
+                        const bool communicate = true );
 
+      //! || u ||_L2 on given set of entities (partition set)
+      template< class DiscreteFunctionType, class PartitionSet >
+      typename Dune::FieldTraits< typename DiscreteFunctionType::RangeFieldType >::real_type
+      norm ( const DiscreteFunctionType &u, const PartitionSet& partitionSet ) const;
+
+      //! || u ||_L2 on interior partition entities
       template< class DiscreteFunctionType >
       typename Dune::FieldTraits< typename DiscreteFunctionType::RangeFieldType >::real_type
-      norm ( const DiscreteFunctionType &u ) const;
+      norm ( const DiscreteFunctionType &u ) const
+      {
+        return norm( u, Partitions::interior );
+      }
 
+      //! || u - v ||_L2 on given set of entities (partition set)
+      template< class UDiscreteFunctionType, class VDiscreteFunctionType, class PartitionSet >
+      typename Dune::FieldTraits< typename UDiscreteFunctionType::RangeFieldType >::real_type
+      distance ( const UDiscreteFunctionType &u,
+                 const VDiscreteFunctionType &v,
+                 const PartitionSet& partitionSet ) const;
+
+      //! || u - v ||_L2 on interior partition entities
       template< class UDiscreteFunctionType, class VDiscreteFunctionType >
       typename Dune::FieldTraits< typename UDiscreteFunctionType::RangeFieldType >::real_type
-      distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
+      distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const
+      {
+        return distance( u, v, Partitions::interior );
+      }
 
       template< class ULocalFunctionType, class VLocalFunctionType, class ReturnType >
       void distanceLocal ( const EntityType &entity, unsigned int order, const ULocalFunctionType &uLocal, const VLocalFunctionType &vLocal, ReturnType &sum ) const;
@@ -62,42 +90,58 @@ namespace Dune
     // ------------------------
 
     template< class GridPart >
-    inline L2Norm< GridPart >::L2Norm ( const GridPartType &gridPart, const unsigned int order )
+    inline L2Norm< GridPart >::L2Norm ( const GridPartType &gridPart, const unsigned int order, const bool communicate )
     : BaseType( gridPart ),
-      order_( order )
-    {}
+      order_( order ),
+      communicate_( BaseType::checkCommunicateFlag( communicate ) )
+    {
+    }
 
 
     template< class GridPart >
-    template< class DiscreteFunctionType >
+    template< class DiscreteFunctionType, class PartitionSet >
     typename Dune::FieldTraits< typename DiscreteFunctionType::RangeFieldType >::real_type
-    L2Norm< GridPart >::norm ( const DiscreteFunctionType &u ) const
+    L2Norm< GridPart >::norm ( const DiscreteFunctionType &u, const PartitionSet& partitionSet ) const
     {
       typedef typename Dune::FieldTraits< typename DiscreteFunctionType::RangeFieldType >::real_type RealType;
       typedef FieldVector< RealType, 1 > ReturnType ;
 
       // calculate integral over each element
-      ReturnType sum = BaseType :: forEach( u, ReturnType(0), order_ );
+      ReturnType sum = BaseType :: forEach( u, ReturnType(0), partitionSet, order_ );
+
+      // communicate_ indicates global norm
+      if( communicate_ )
+      {
+        sum[ 0 ] = comm().sum( sum[ 0 ] );
+      }
 
       // return result, e.g. sqrt of calculated sum
-      return sqrt( comm().sum( sum[ 0 ] ) );
+      return std::sqrt( sum[ 0 ] );
     }
 
 
     template< class GridPart >
-    template< class UDiscreteFunctionType, class VDiscreteFunctionType >
+    template< class UDiscreteFunctionType, class VDiscreteFunctionType, class PartitionSet >
     typename Dune::FieldTraits< typename UDiscreteFunctionType::RangeFieldType >::real_type
     L2Norm< GridPart >
-      ::distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const
+      ::distance ( const UDiscreteFunctionType &u,
+                   const VDiscreteFunctionType &v,
+                   const PartitionSet& partitionSet ) const
     {
       typedef typename Dune::FieldTraits< typename UDiscreteFunctionType::RangeFieldType >::real_type RealType;
       typedef FieldVector< RealType, 1 > ReturnType ;
 
       // calculate integral over each element
-      ReturnType sum = BaseType :: forEach( u, v, ReturnType(0), order_ );
+      ReturnType sum = BaseType :: forEach( u, v, ReturnType(0), partitionSet, order_ );
+
+      // communicate_ indicates global norm
+      if( communicate_ )
+      {
+        sum[ 0 ] = comm().sum( sum[ 0 ] );
+      }
 
       // return result, e.g. sqrt of calculated sum
-      return sqrt( comm().sum( sum[ 0 ] ) );
+      return std::sqrt( sum[ 0 ] );
     }
 
     template< class GridPart >
@@ -230,7 +274,7 @@ namespace Dune
       using BaseType::norm;
       using BaseType::distance;
 
-      explicit WeightedL2Norm ( const WeightFunctionType &weightFunction, const unsigned int order = 0 );
+      explicit WeightedL2Norm ( const WeightFunctionType &weightFunction, const unsigned int order = 0, const bool communicate = true );
 
       template< class LocalFunctionType, class ReturnType >
       void normLocal ( const EntityType &entity, unsigned int order, const LocalFunctionType &uLocal, ReturnType &sum ) const;
@@ -250,8 +294,8 @@ namespace Dune
 
     template< class WeightFunction >
     inline WeightedL2Norm< WeightFunction >
-      ::WeightedL2Norm ( const WeightFunctionType &weightFunction, const unsigned int order )
-    : BaseType( weightFunction.space().gridPart(), order ),
+      ::WeightedL2Norm ( const WeightFunctionType &weightFunction, const unsigned int order, const bool communicate )
+    : BaseType( weightFunction.space().gridPart(), order, communicate ),
       weightFunction_( weightFunction )
     {
       static_assert( (WeightFunctionSpaceType::dimRange == 1),

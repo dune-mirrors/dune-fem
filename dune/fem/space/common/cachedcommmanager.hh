@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 #include <queue>
+#include <memory>
 #include <vector>
 
 //- dune-common includes
@@ -162,12 +163,12 @@ namespace Dune
           NonBlockingCommunication& commObj_;
           DiscreteFunction& discreteFunction_;
 
-          // communication operation (ADD or COPY)
-          const Operation* operation_;
+          // communication operation (usually ADD or COPY)
+          const Operation operation_;
 
         public:
           Unpack( NonBlockingCommunication& commObj, DiscreteFunction& df )
-          : commObj_( commObj ), discreteFunction_( df ), operation_( 0 )
+          : commObj_( commObj ), discreteFunction_( df ), operation_()
           {}
 
           void pack( const int link, ObjectStreamType& buffer )
@@ -204,7 +205,7 @@ namespace Dune
       public:
         NonBlockingCommunication( DependencyCacheType& dependencyCache, const int mySize )
           : dependencyCache_( dependencyCache ),
-            nonBlockingExchange_( 0 ),
+            nonBlockingExchange_(),
             buffer_(),
             exchangeTime_( 0.0 ),
             mySize_( mySize )
@@ -219,7 +220,7 @@ namespace Dune
         // copy constructor
         NonBlockingCommunication( const NonBlockingCommunication& other )
           : dependencyCache_( other.dependencyCache_ ),
-            nonBlockingExchange_( 0 ),
+            nonBlockingExchange_(),
             buffer_(),
             exchangeTime_( 0.0 ),
             mySize_( other.mySize_ )
@@ -234,7 +235,7 @@ namespace Dune
         ~NonBlockingCommunication()
         {
           // if this assertion fails some communication has not been finished
-          assert( nonBlockingExchange_ == 0  );
+          assert( ! nonBlockingExchange_ );
           // notify dependency cache that comm is finished
           dependencyCache_.detachComm() ;
         }
@@ -249,7 +250,7 @@ namespace Dune
         void send( const DiscreteFunction& discreteFunction )
         {
           // check that object is in non-sent state
-          assert( nonBlockingExchange_ == 0 );
+          assert( ! nonBlockingExchange_ );
 
           // on serial runs: do nothing
           if( mySize_ <= 1 ) return;
@@ -265,7 +266,7 @@ namespace Dune
 
 #if HAVE_DUNE_ALUGRID
           // get non-blocking exchange object from mpAccess including message tag
-          nonBlockingExchange_ = dependencyCache_.mpAccess().nonBlockingExchange( getMessageTag() );
+          nonBlockingExchange_.reset( dependencyCache_.mpAccess().nonBlockingExchange( getMessageTag() ) );
 
           // pack data object
           Pack< DiscreteFunction > packData( *this, discreteFunction );
@@ -285,7 +286,7 @@ namespace Dune
         //! receive data for discrete function and given operation
         template < class DiscreteFunctionSpace, class Operation >
         double receive( PetscDiscreteFunction< DiscreteFunctionSpace >& discreteFunction,
-                        const Operation* operation )
+                        const Operation& operation )
         {
           // take time
           Dune::Timer exchTimer;
@@ -298,7 +299,7 @@ namespace Dune
 
         //! receive data for discrete function and given operation
         template < class DiscreteFunction, class Operation >
-        double receive( DiscreteFunction& discreteFunction, const Operation* operation )
+        double receive( DiscreteFunction& discreteFunction, const Operation& operation )
         {
           // on serial runs: do nothing
           if( mySize_ <= 1 ) return 0.0;
@@ -328,8 +329,8 @@ namespace Dune
           exchangeTime_ += recvTimer.elapsed();
 
 #if HAVE_DUNE_ALUGRID
-          delete nonBlockingExchange_;
-          nonBlockingExchange_ = 0;
+          // clear nonBlockingExchange object
+          nonBlockingExchange_.reset();
 #endif
           return exchangeTime_;
         }
@@ -341,7 +342,8 @@ namespace Dune
           // get type of default operation
           typedef typename DiscreteFunction :: DiscreteFunctionSpaceType
             :: template CommDataHandle< DiscreteFunction > :: OperationType  DefaultOperationType;
-          return receive( discreteFunction, (DefaultOperationType *) 0 );
+          DefaultOperationType operation;
+          return receive( discreteFunction, operation );
         }
 
       protected:
@@ -356,7 +358,7 @@ namespace Dune
 
         template <class DiscreteFunction, class Operation>
         void unpack( const int link, ObjectStreamType& buffer,
-                     DiscreteFunction& discreteFunction, const Operation* operation )
+                     DiscreteFunction& discreteFunction, const Operation& operation )
         {
           // read data of discrete function from message buffer
           dependencyCache_.readBuffer( link, buffer, discreteFunction, operation );
@@ -364,7 +366,7 @@ namespace Dune
 
       protected:
         DependencyCacheType& dependencyCache_;
-        NonBlockingExchange* nonBlockingExchange_ ;
+        std::unique_ptr< NonBlockingExchange > nonBlockingExchange_ ;
         ObjectStreamVectorType buffer_;
         double exchangeTime_ ;
         const int mySize_;
@@ -516,7 +518,7 @@ namespace Dune
 
       //! exchange data of discrete function
       template< class DiscreteFunction, class Operation >
-      inline void exchange( DiscreteFunction &discreteFunction, const Operation *operation );
+      inline void exchange( DiscreteFunction &discreteFunction, const Operation& operation );
 
       //! write data of discrete function to buffer
       template< class DiscreteFunction >
@@ -526,7 +528,7 @@ namespace Dune
       template< class DiscreteFunctionType, class Operation >
       inline void readBuffer( ObjectStreamVectorType &osv,
                               DiscreteFunctionType &discreteFunction,
-                              const Operation *operation ) const;
+                              const Operation& operation ) const;
 
       //! return reference to mpAccess object
       inline MPAccessInterfaceType &mpAccess()
@@ -580,7 +582,7 @@ namespace Dune
       inline void readBuffer( const int link,
                               ObjectStreamType &str,
                               PetscDiscreteFunction< DiscreteFunctionSpace > &discreteFunction,
-                              const Operation * ) const
+                              const Operation& ) const
       {
         DUNE_THROW(NotImplemented,"readBuffer not implemented for PetscDiscteteFunction" );
       }
@@ -591,7 +593,7 @@ namespace Dune
       inline void readBuffer( const int link,
                               ObjectStreamType &str,
                               DiscreteFunction &discreteFunction,
-                              const Operation * ) const
+                              const Operation& operation ) const
       {
         assert( sequence_ == space_.sequence() );
         typedef typename DiscreteFunction :: DofType DofType;
@@ -615,7 +617,8 @@ namespace Dune
 #else
             str.read( value );
 #endif
-            Operation :: apply( value, discreteFunction.dofVector()[indexMap[i]][k] );
+            // apply given operation (e.g. Add or Copy) to received data
+            operation( value, discreteFunction.dofVector()[indexMap[i]][k] );
           }
         }
       }
@@ -916,7 +919,7 @@ namespace Dune
 
     template< class Space >
     template< class DiscreteFunction, class Operation >
-    inline void DependencyCache< Space > :: exchange( DiscreteFunction &discreteFunction, const Operation *operation )
+    inline void DependencyCache< Space > :: exchange( DiscreteFunction &discreteFunction, const Operation& operation )
     {
       // on serial runs: do nothing
       if( mySize_ <= 1 ) return;
@@ -944,7 +947,7 @@ namespace Dune
     template< class Space >
     template< class DiscreteFunction, class Operation >
     inline void DependencyCache< Space > :: readBuffer( ObjectStreamVectorType &osv, DiscreteFunction &discreteFunction,
-                                                        const Operation *operation ) const
+                                                        const Operation& operation ) const
     {
       const int numLinks = nlinks();
       for( int link = 0; link < numLinks; ++link )
@@ -1138,14 +1141,18 @@ namespace Dune
       {
         typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
           :: template CommDataHandle<DiscreteFunctionType> :: OperationType OperationType;
-        readBuffer( osv, df, (OperationType *) 0 );
+
+        // communication operation to be performed on the received data
+        OperationType operation;
+
+        readBuffer( osv, df, operation );
       }
 
       // read given df from given buffer
       template <class ObjectStreamVectorType, class DiscreteFunctionType, class OperationType>
-      void readBuffer(ObjectStreamVectorType& osv, DiscreteFunctionType & df, const OperationType* op) const
+      void readBuffer(ObjectStreamVectorType& osv, DiscreteFunctionType & df, const OperationType& operation) const
       {
-        cache_.readBuffer(osv, df , op);
+        cache_.readBuffer(osv, df , operation);
       }
 
       //! rebuild underlying cache if necessary
@@ -1183,7 +1190,7 @@ namespace Dune
       template <class DiscreteFunctionImp,
                 class MPAccessType,
                 class ObjectStreamVectorType,
-                class OperationType = DFCommunicationOperation :: Copy >
+                class OperationType >
       class DiscreteFunctionCommunicator
       : public DiscreteFunctionCommunicatorInterface<MPAccessType,ObjectStreamVectorType>
       {
@@ -1196,10 +1203,13 @@ namespace Dune
         DiscreteFunctionType& df_;
         //! communicator manager
         CommunicationManagerType comm_;
+
+        //! operation performed on received data
+        const OperationType operation_;
       public:
         //! constructor taking disctete function
-        DiscreteFunctionCommunicator(DiscreteFunctionType& df)
-          : df_(df), comm_(df_.space())
+        DiscreteFunctionCommunicator(DiscreteFunctionType& df, const OperationType& op )
+          : df_(df), comm_(df_.space()), operation_( op )
         {}
 
         //! return ALUGrid communicator
@@ -1217,7 +1227,7 @@ namespace Dune
         //! read discrete function from all buffers
         virtual void readBuffer(ObjectStreamVectorType& osv)
         {
-          comm_.readBuffer(osv,df_, (OperationType *) 0);
+          comm_.readBuffer(osv, df_, operation_ );
         }
 
         //! rebuild cache if grid changed
@@ -1243,7 +1253,7 @@ namespace Dune
         CommObjInterfaceType;
 
       // list of communicated objects
-      typedef std::list < CommObjInterfaceType * > CommObjListType;
+      typedef std::list < std::unique_ptr< CommObjInterfaceType > > CommObjListType;
       CommObjListType objList_;
 
       // number of processors
@@ -1261,28 +1271,17 @@ namespace Dune
         cObj.addToList(*this);
       }
 
-      //! remove object comm
-      ~CommunicationManagerList()
-      {
-        // delete all entries
-        while( !objList_.empty() )
-        {
-          auto obj = objList_.back();
-          objList_.pop_back();
-          delete obj;
-        }
-      }
-
-      //! add one discrete function to the list
-      template <class DiscreteFunctionImp>
-      void addToList(DiscreteFunctionImp &df)
+      //! add one discrete function to the list with given unpack operation
+      template <class DiscreteFunctionImp, class Operation>
+      void addToList(DiscreteFunctionImp &df, const Operation& operation )
       {
         // type of communication object
         typedef DiscreteFunctionCommunicator<DiscreteFunctionImp,
                                              MPAccessInterfaceType,
-                                             ObjectStreamVectorType> CommObj;
-        CommObj * obj = new CommObj(df);
-        objList_.push_back(obj);
+                                             ObjectStreamVectorType,
+                                             Operation > CommObj;
+        CommObj * obj = new CommObj(df, operation);
+        objList_.push_back( std::unique_ptr< CommObjInterfaceType > (obj) );
 
         // if mySize wasn't set, set to number of processors
         if( mySize_ < 0 )
@@ -1293,6 +1292,14 @@ namespace Dune
           // set number of processors
           mySize_ = mpAccess.psize();
         }
+      }
+
+      //! add one discrete function to the list
+      template <class DiscreteFunctionImp>
+      void addToList(DiscreteFunctionImp &df)
+      {
+        DFCommunicationOperation::Copy operation;
+        addToList( df, operation );
       }
 
       template< class DiscreteFunction >

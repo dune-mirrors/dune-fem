@@ -96,7 +96,7 @@ namespace Dune
     template< class Operation >
     inline typename DiscreteFunctionDefault< Impl >
       :: template CommDataHandle< Operation > :: Type
-    DiscreteFunctionDefault< Impl > :: dataHandle ( const Operation *operation )
+    DiscreteFunctionDefault< Impl > :: dataHandle ( const Operation &operation )
     {
       return BaseType :: space().createDataHandle( asImp(), operation );
     }
