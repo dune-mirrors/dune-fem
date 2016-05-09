@@ -70,6 +70,7 @@ namespace Dune
     template< class Grid >
     void registerHierarchicalGrid ( pybind11::module module )
     {
+      static auto common = pybind11::module::import( "dune.common" );
       static auto femmpi = pybind11::module::import( "dune.femmpi" );
 
       registerGridEntities< Grid >( module, Std::make_integer_sequence< int, Grid::dimension+1 >() );
