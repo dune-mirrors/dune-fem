@@ -32,18 +32,10 @@ from types import ModuleType
 from ..generator import generator
 from . import gridfunction
 
-class GridGenerator(generator.Generator):
+class Generator(generator.Generator):
     def modifyTypeName(self,typeName):
-        return "Dune::Fem::AdaptiveLeafGridPart<"+typeName+">";
-myGenerator = GridGenerator("Grid")
-
-def addToBoostDoc(func,newdoc):
-    PY3 = sys.version_info[0] == 3
-    if PY3:
-      func.__doc__ = func.__doc__[1:] + " :\n" + newdoc
-    else:
-      func.im_func.__doc__ = func.im_func.__doc__[1:] + " :\n" + newdoc
-
+        return "Dune::Fem::AdaptiveLeafGridPart<" + typeName + ">";
+myGenerator = Generator("Grid")
 
 def getGlobalGridFunction(m,name,func):
     """NEW
@@ -109,7 +101,10 @@ def addMethodsToGridModule(module):
 def get(grid, **parameters):
     """Create a grid module using the grid-database.
 
-    This function creates a python module called gridxxx.py where xxx is a number derived from the grid type. It does this by fetching the typedef and includes from the grid-database using the given arguments.
+    This function creates a python module called grid_xxx.py where xxx is a
+    number derived from the grid type.
+    It does this by fetching the typedef and includes from the grid-database
+    using the given arguments.
 
     Example
         A generated grid module::
