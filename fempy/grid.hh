@@ -34,6 +34,7 @@ namespace Dune
         \ingroup Grids
     */
 
+#if 0
     // CornerIterator
     // --------------
 
@@ -92,6 +93,7 @@ namespace Dune
       const Geometry *geometry_ = nullptr;
       int index_ = 0;
     };
+#endif
 
 
 

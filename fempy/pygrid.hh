@@ -19,6 +19,7 @@ namespace Dune
   namespace FemPy
   {
 
+#if 0
     // registerIteratorRange
     // ---------------------
 
@@ -28,6 +29,47 @@ namespace Dune
       pybind11::class_< IteratorRange > cls( scope, name );
       cls.def( "__iter__", [] ( const IteratorRange &rg ) { return pybind11::make_iterator( rg.begin(), rg.end() ); }, pybind11::keep_alive< 0, 1 >() );
     }
+#endif
+
+
+
+    // PyCornerRange
+    // -------------
+
+    template< class Geometry >
+    struct PyCorners
+    {
+      PyCorners ( const Geometry &geometry, pybind11::object ref )
+        : geometry_( geometry ), ref_( ref )
+      {}
+
+      const Geometry &geometry () { return geometry_; }
+
+    private:
+      const Geometry &geometry_;
+      pybind11::object ref_;
+    };
+
+
+    // PyCornerIterator
+    // ----------------
+
+    template< class Geometry >
+    struct PyCornerIterator
+    {
+      PyCornerIterator ( const PyCorners< Geometry > corners ) : corners_( corners ) {}
+
+      typename Geometry::GlobalCoordinate next ()
+      {
+        if( index_ == corners_.geometry().corners() )
+          throw pybind11::stop_iteration();
+        return corners_.geometry().corner( index_++ );
+      }
+
+    private:
+      PyCorners< Geometry > corners_;
+      int index_ = 0;
+    };
 
 
 
@@ -40,15 +82,19 @@ namespace Dune
       typedef typename Geometry::LocalCoordinate LocalCoordinate;
       typedef typename Geometry::ctype ctype;
 
-      typedef FemPy::CornerIterator< Geometry > CornerIterator;
-
       static const std::string clsName = "Geometry" + std::to_string( Geometry::mydimension );
       pybind11::class_< Geometry > cls( module, clsName.c_str() );
 
-      registerIteratorRange< IteratorRange< CornerIterator > >( cls, "Corners" );
-      cls.def_property_readonly( "corners", [] ( const Geometry &geo ) {
-          return IteratorRange< CornerIterator >( CornerIterator( geo, 0 ), CornerIterator( geo ) );
-        }, pybind11::keep_alive< 0, 1 >() );
+      pybind11::class_< PyCornerIterator< Geometry > > itCls( cls, "CornerIterator" );
+      itCls.def( "__iter__", [] ( PyCornerIterator< Geometry > &it ) -> PyCornerIterator< Geometry > & { return it; } );
+      itCls.def( "__next__", &PyCornerIterator< Geometry >::next );
+
+      pybind11::class_< PyCorners< Geometry > > cCls( cls, "Corners" );
+      cCls.def( "__iter__", [] ( const PyCorners< Geometry > &c ) { return PyCornerIterator< Geometry >( c ); } );
+
+      cls.def_property_readonly( "corners", [] ( pybind11::object geo ) {
+          return PyCorners< Geometry >( geo.cast< const Geometry & >(), geo );
+        } );
 
       cls.def_property_readonly( "center", &Geometry::center );
       cls.def_property_readonly( "volume", &Geometry::volume );
