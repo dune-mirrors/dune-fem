@@ -121,6 +121,16 @@ namespace Dune
         assign( other );
       }
 
+      /** \brief Move constructor */
+      PetscDiscreteFunction( ThisType&& other )
+        : BaseType( other.name(), other.space() ),
+          memObject_( std::move( other.memObject_ ) ),
+          dofVector_( other.dofVector_ )
+      {}
+
+      PetscDiscreteFunction () = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
+
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression() */
       void enableDofCompression ()
       {

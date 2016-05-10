@@ -72,6 +72,17 @@ namespace Dune
         assign( other );
       }
 
+      /** \brief Move constructor */
+      VectorDiscreteFunction( ThisType&& other )
+        : BaseType( other.name(), other.space() ),
+          vec_( std::move( other.vec_ ) ),
+          dofVector_( other.dofVector_ )
+      {}
+
+      VectorDiscreteFunction () = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       DofVectorType& dofVector() { return dofVector_; }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */

@@ -105,6 +105,13 @@ namespace Dune
         assign( other );
       }
 
+      /** \brief Move constructor */
+      AdaptiveDiscreteFunction( ThisType&& other )
+        : BaseType( other.name(), other.space() ),
+          memObject_( std::move( other.memObject_ ) ),
+          dofVector_( other.dofVector_ )
+      {}
+
       DofType* leakPointer() { return dofVector().data(); }
       const DofType* leakPointer() const { return dofVector().data(); }
 

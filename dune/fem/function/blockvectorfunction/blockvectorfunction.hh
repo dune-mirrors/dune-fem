@@ -85,6 +85,17 @@ namespace Dune
         assign( other );
       }
 
+      /** \brief Move constructor */
+      ISTLBlockVectorDiscreteFunction( ThisType&& other )
+        : BaseType( other.name(), other.space() ),
+          memObject_( std::move( other.memObject_ ) ),
+          dofVector_( other.dofVector_ )
+      {}
+
+      ISTLBlockVectorDiscreteFunction () = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression() */
       void enableDofCompression ()
       {
         if( memObject_ )
