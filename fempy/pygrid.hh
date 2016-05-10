@@ -12,6 +12,7 @@
 #include <dune/fempy/pybind11/pybind11.h>
 #include <dune/fempy/pybind11/stl.h>
 #include <dune/fempy/pygridfunction.hh>
+#include <dune/fempy/vtk.hh>
 
 namespace Dune
 {

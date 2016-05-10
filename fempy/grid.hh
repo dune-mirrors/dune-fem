@@ -1,7 +1,8 @@
-#ifndef PYTHON_DUNEGRID_HH
-#define PYTHON_DUNEGRID_HH
+#ifndef DUNE_FEMPY_GRID_HH
+#define DUNE_FEMPY_GRID_HH
 
 #include <cassert>
+#include <cstddef>
 
 #include <memory>
 #include <string>
@@ -12,13 +13,10 @@
 
 #include <dune/grid/common/rangegenerators.hh>
 
-#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/gridpart/leafgridpart.hh>
-#include <dune/fem/io/file/vtkio.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
-#include <dune/fem/storage/envelope.hh>
+//#include <dune/fem/storage/envelope.hh>
 
 #include <dune/fempy/gridfunction.hh>
 
@@ -512,35 +510,8 @@ namespace Dune
       std::shared_ptr< GridPart > gridPart_;
     };
 
-
-
-    // VTKOutput
-    // ---------
-
-    template< class GridPart >
-    struct VTKOutput
-    {
-      explicit VTKOutput ( const LeafGrid< GridPart > &grid )
-        : gridPart_( grid.gridPart() ), vtk_( *gridPart_ )
-      {}
-
-      template< int R >
-      void add ( std::shared_ptr< GridFunction< GridPart, R > > gf )
-      {
-        gfVector_.push_back( gf );
-        vtk_.addCellData( *gf );
-      }
-
-      void write ( const char *name ) { vtk_.write( name ); }
-
-    private:
-      std::shared_ptr< GridPart > gridPart_;
-      Fem::VTKIO< GridPart > vtk_;
-      std::vector< std::shared_ptr< GridFunctionBase<GridPart> > > gfVector_;
-    };
-
   } // namespace FemPy
 
 } // namespace Dune
 
-#endif // #ifndef PYTHON_DUNEGRID_HH
+#endif // #ifndef DUNE_FEMPY_GRID_HH
