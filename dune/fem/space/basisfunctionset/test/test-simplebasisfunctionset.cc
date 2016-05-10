@@ -28,10 +28,8 @@ template< class GridPartType, int polorder >
 void traverse ( GridPartType &gridPart )
 {
   static const int dimDomain = GridPartType::dimensionworld;
-  static const int dimRange = DIMRANGE;
 
   typedef Dune::Fem::FunctionSpace< typename GridPartType::ctype, double, dimDomain, 1 > ScalarFunctionSpaceType;
-  typedef Dune::Fem::FunctionSpace< typename GridPartType::ctype, double, dimDomain, dimRange > FunctionSpaceType;
 
   typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
   auto iterator = gridPart.template begin< 0 >();
