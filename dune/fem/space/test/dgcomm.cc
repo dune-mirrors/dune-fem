@@ -169,11 +169,13 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 {
   ExactSolution f;
 
+  // create L2 Norm, no communication
   L2Norm< typename DiscreteFunctionType::GridPartType > l2norm( solution.space().gridPart(), 2*solution.space().order(), false );
   solution.clear();
 
   DGL2ProjectionAllPartitionNoComm :: project( f, solution );
-  double new_error = l2norm.distance( f ,solution );
+  // compute l2 error on all elements
+  double new_error = l2norm.distance( f ,solution, Partitions::all );
   std::cout << "P[" << grid.comm().rank() << "]  start comm: " << new_error << std::endl;
 
   // reset all non-interior entities,
@@ -183,8 +185,8 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   // do communication
   solution.communicate();
 
-  // calculate l2 error again
-  double error = l2norm.distance( f ,solution );
+  // calculate l2 error again on all elements
+  double error = l2norm.distance( f ,solution, Partitions::all );
   std::cout << "P[" << grid.comm().rank() << "]  done comm: " << error << std::endl;
 
   if( std::abs( new_error - error ) > 1e-10 )
@@ -212,7 +214,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
   nonBlocking.receive( solution );
 
   // calculate l2 error again
-  double nonBlock = l2norm.distance(f ,solution);
+  double nonBlock = l2norm.distance(f ,solution, Partitions::all );
   std::cout << "P[" << grid.comm().rank() << "]  non-blocking: " << nonBlock << std::endl;
 
   if( std::abs( new_error - nonBlock ) > 1e-10 )
