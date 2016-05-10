@@ -111,6 +111,11 @@ namespace Dune
           return hostIndexSet_;
         }
 
+        void requestCodimensions( const std::vector< int >& codimensions ) const
+        {
+          hostIndexSet().requestCodimensions( codimensions );
+        }
+
       protected:
         HostIndexSetType &hostIndexSet () { return const_cast< HostIndexSetType & >( hostIndexSet_); }
 
@@ -195,7 +200,7 @@ namespace Dune
         {
           return this->hostIndexSet().numberOfHoles( type );
         }
-        
+
         int numberOfHoles ( int codim ) const
         {
           return this->hostIndexSet().numberOfHoles( codim );
@@ -205,7 +210,7 @@ namespace Dune
         {
           return this->hostIndexSet().oldIndex( hole, type );
         }
-        
+
         int oldIndex ( int hole, int codim ) const
         {
           return this->hostIndexSet().oldIndex( hole, codim );
