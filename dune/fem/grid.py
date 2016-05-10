@@ -33,7 +33,9 @@ from ..generator import generator
 from . import gridfunction
 
 class Generator(generator.Generator):
-    def modifyTypeName(self,typeName):
+    def modifyIncludes(self, includes):
+        return includes + "#include <dune/fem/gridpart/adaptiveleafgridpart.hh>\n"
+    def modifyTypeName(self, typeName):
         return "Dune::Fem::AdaptiveLeafGridPart<" + typeName + ">";
 myGenerator = Generator("Grid")
 
