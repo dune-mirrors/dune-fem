@@ -19,26 +19,58 @@ namespace Dune
   namespace FemPy
   {
 
+    // registerIteratorRange
+    // ---------------------
+
+    template< class IteratorRange >
+    void registerIteratorRange ( pybind11::handle scope, const char *name )
+    {
+      pybind11::class_< IteratorRange > cls( scope, name );
+      cls.def( "__iter__", [] ( const IteratorRange &rg ) { return pybind11::make_iterator( rg.begin(), rg.end() ); }, pybind11::keep_alive< 0, 1 >() );
+    }
+
+
+
+    // registerGridGeometry
+    // --------------------
+
     template< class Geometry >
     void registerGridGeometry ( pybind11::module module )
     {
       typedef typename Geometry::LocalCoordinate LocalCoordinate;
       typedef typename Geometry::ctype ctype;
 
-      static const std::string geometryName = "Geometry" + std::to_string( Geometry::mydimension );
-      pybind11::class_< Geometry > geometry( module, geometryName.c_str() );
+      typedef FemPy::CornerIterator< Geometry > CornerIterator;
 
-      geometry.def_property_readonly( "center", &Geometry::center );
+      static const std::string clsName = "Geometry" + std::to_string( Geometry::mydimension );
+      pybind11::class_< Geometry > cls( module, clsName.c_str() );
 
-      geometry.def( "affine", &Geometry::affine );
-      geometry.def( "global", &Geometry::global );
+      registerIteratorRange< IteratorRange< CornerIterator > >( cls, "Corners" );
+      cls.def_property_readonly( "corners", [] ( const Geometry &geo ) {
+          return IteratorRange< CornerIterator >( CornerIterator( geo, 0 ), CornerIterator( geo ) );
+        }, pybind11::keep_alive< 0, 1 >() );
 
-      geometry.def( "global", [] ( const Geometry &geo, const pybind11::list &x ) {
+      cls.def_property_readonly( "center", &Geometry::center );
+      cls.def_property_readonly( "volume", &Geometry::volume );
+
+      cls.def_property_readonly( "affine", &Geometry::affine );
+
+      cls.def( "global", &Geometry::global );
+      cls.def( "global", [] ( const Geometry &geo, const pybind11::list &x ) {
           LocalCoordinate y( 0 );
           const std::size_t size = x.size();
           for( std::size_t i = 0; i < size; ++i )
             y[ i ] = x[ i ].template cast< ctype >();
           return geo.global( y );
+        } );
+
+      cls.def( "integrationElement", &Geometry::integrationElement );
+      cls.def( "integrationElement", [] ( const Geometry &geo, const pybind11::list &x ) {
+          LocalCoordinate y( 0 );
+          const std::size_t size = x.size();
+          for( std::size_t i = 0; i < size; ++i )
+            y[ i ] = x[ i ].template cast< ctype >();
+          return geo.integrationElement( y );
         } );
     }
 
@@ -50,6 +82,8 @@ namespace Dune
 
       static const std::string entityName = "Entity" + std::to_string( Entity::codimension );
       pybind11::class_< Entity > entity( module, entityName.c_str() );
+
+      entity.def_property_readonly_static( "codimension", [] () { return  Entity::codimension; } );
 
       entity.def_property_readonly( "geometry", &Entity::geometry );
       entity.def_property_readonly( "level", &Entity::level );
@@ -131,12 +165,20 @@ namespace Dune
       typedef LeafGrid< GridPart > G;
       pybind11::class_< G > grid( module, "LeafGrid" );
       grid.def( pybind11::init< std::string >() );
+
+      registerIteratorRange< decltype( elements( std::declval< GridPart >(), Partitions::interiorBorder ) ) >( grid, "Elements" );
+      grid.def_property_readonly( "elements", [] ( const G &grid ) { return elements( *grid.gridPart(), Partitions::interiorBorder ); }, pybind11::keep_alive< 0, 1 >() );
+
+      registerIteratorRange< decltype( vertices( std::declval< GridPart >(), Partitions::interiorBorder ) ) >( grid, "Vertices" );
+      grid.def_property_readonly( "vertices", [] ( const G &grid ) { return vertices( *grid.gridPart(), Partitions::interiorBorder ); }, pybind11::keep_alive< 0, 1 >() );
+
       grid.def( "__repr__", [] ( const G &grid ) -> std::string {
           return "LeafGrid with " + std::to_string( grid.size( 0 ) ) + " elements";
         } );
-      grid.def( "size", &G::size );
 
       grid.def_property_readonly( "hierarchicalGrid", &G::hierarchicalGrid );
+
+      grid.def( "size", &G::size );
 
       registerGridFunctionInterface< GridPart >( module, Std::make_integer_sequence< int, 10 >() );
 //      registerGridFunctionExpression< GridPart >( Std::make_integer_sequence< int, 10 >() );

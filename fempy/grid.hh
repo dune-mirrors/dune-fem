@@ -1,6 +1,8 @@
 #ifndef PYTHON_DUNEGRID_HH
 #define PYTHON_DUNEGRID_HH
 
+#include <cassert>
+
 #include <memory>
 #include <string>
 #include <utility>
@@ -10,12 +12,13 @@
 
 #include <dune/grid/common/rangegenerators.hh>
 
-#include <dune/fem/space/common/adaptmanager.hh>
-#include <dune/fem/space/common/communicationmanager.hh>
-#include <dune/fem/space/common/restrictprolonginterface.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/io/file/vtkio.hh>
+#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/space/common/communicationmanager.hh>
+#include <dune/fem/space/common/restrictprolonginterface.hh>
+#include <dune/fem/storage/envelope.hh>
 
 #include <dune/fempy/gridfunction.hh>
 
@@ -30,6 +33,67 @@ namespace Dune
         @brief Contains C++ template classes for grids.
         \ingroup Grids
     */
+
+    // CornerIterator
+    // --------------
+
+    template< class Geometry >
+    class CornerIterator
+      : public std::iterator< std::random_access_iterator_tag, typename Geometry::GlobalCoordinate, int, Fem::Envelope< typename Geometry::GlobalCoordinate >, typename Geometry::GlobalCoordinate >
+    {
+      typedef std::iterator< std::random_access_iterator_tag, typename Geometry::GlobalCoordinate, int, Fem::Envelope< typename Geometry::GlobalCoordinate >, typename Geometry::GlobalCoordinate > Base;
+
+    public:
+      typedef typename Base::reference reference;
+      typedef typename Base::pointer pointer;
+
+      CornerIterator () = default;
+
+      CornerIterator ( const Geometry &geometry, int index )
+        : geometry_( &geometry ), index_( index )
+      {}
+
+      CornerIterator ( const Geometry &geometry )
+        : geometry_( &geometry ), index_( geometry.corners() )
+      {}
+
+      reference operator* () const { return geometry().corner( index_ ); }
+      pointer operator-> () const { return pointer( geometry().corner( index_ ) ); }
+
+      reference operator[] ( int n ) { return geometry().corner( index_ + n ); }
+
+      CornerIterator &operator++ () { ++index_; return *this; }
+      CornerIterator &operator-- () { --index_; return *this; }
+
+      CornerIterator &operator+= ( int n ) { index_ += n; return *this; }
+      CornerIterator &operator-= ( int n ) { index_ -= n; return *this; }
+
+      CornerIterator operator++ ( int ) { CornerIterator copy( *this ); ++(*this); return copy; }
+      CornerIterator operator-- ( int ) { CornerIterator copy( *this ); --(*this); return copy; }
+
+      CornerIterator operator+ ( int n ) const { CornerIterator copy( *this ); copy += n; return copy; }
+      CornerIterator operator- ( int n ) const { CornerIterator copy( *this ); copy -= n; return copy; }
+
+      int operator- ( const CornerIterator &other ) const { return (index_ - other.index_); }
+
+      friend CornerIterator operator+ ( int n, const CornerIterator &it ) { CornerIterator copy( it ); copy += n; return copy; }
+
+      bool operator== ( const CornerIterator &other ) const { return (index_ == other.index_); }
+      bool operator!= ( const CornerIterator &other ) const { return (index_ != other.index_); }
+
+      bool operator< ( const CornerIterator &other ) const { return (index_ < other.index_); }
+      bool operator<= ( const CornerIterator &other ) const { return (index_ <= other.index_); }
+      bool operator> ( const CornerIterator &other ) const { return (index_ > other.index_); }
+      bool operator>= ( const CornerIterator &other ) const { return (index_ >= other.index_); }
+
+      const Geometry &geometry () const { assert( geometry_ ); return *geometry_; }
+
+    private:
+      const Geometry *geometry_ = nullptr;
+      int index_ = 0;
+    };
+
+
 
     // noParameter
     // -----------
