@@ -1,4 +1,3 @@
-// vim: set expandtab ts=2 sw=2 sts=2:
 #ifndef DUNE_FEM_REFERENCEBLOCKVECTOR_HH
 #define DUNE_FEM_REFERENCEBLOCKVECTOR_HH
 
@@ -38,8 +37,7 @@ namespace Fem {
      */
     explicit ReferenceBlockVector ( SizeType size )
     : BaseType( size )
-    {
-    }
+    {}
 
   };
 

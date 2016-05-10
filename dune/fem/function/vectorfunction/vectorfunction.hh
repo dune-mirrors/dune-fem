@@ -14,18 +14,13 @@
 
 namespace Dune
 {
-
   namespace Fem
   {
-
-    // Internal Forward Declarations
-    // -----------------------------
 
     template < class DiscreteFunctionSpace, class Vector >
     class VectorDiscreteFunction;
 
-    // VectorDiscreteFunctionTraits
-    // ----------------------------
+
 
     template< typename DiscreteFunctionSpace, typename Vector >
     struct DiscreteFunctionTraits< VectorDiscreteFunction< DiscreteFunctionSpace, Vector > >
@@ -37,8 +32,6 @@ namespace Dune
     };
 
 
-    // VectorDiscreteFunction
-    // ----------------------
 
     template < class DiscreteFunctionSpace, class Vector >
     class VectorDiscreteFunction
@@ -57,16 +50,22 @@ namespace Dune
 
       using BaseType::assign;
 
-      VectorDiscreteFunction( const std::string &name,
-                              const DiscreteFunctionSpaceType &space,
-                              VectorType& vector )
+      /** \brief Constructor to use if the vector storing the dofs already exists
+       *
+       *  \param[in]  name         name of the discrete function
+       *  \param[in]  space        space the discrete function lives in
+       *  \param[in]  dofVector    reference to the dof vector
+       */
+      VectorDiscreteFunction( const std::string& name,
+                              const DiscreteFunctionSpaceType& space,
+                              VectorType& dofVector )
         : BaseType( name, space ),
           vec_(),
-          dofVector_( vector )
-      {
-      }
+          dofVector_( dofVector )
+      {}
 
-      VectorDiscreteFunction( const VectorDiscreteFunction& other )
+      /** \brief Copy constructor */
+      VectorDiscreteFunction( const ThisType& other )
         : BaseType( "copy of " + other.name(), other.space() ),
           vec_(),
           dofVector_( allocateDofVector( other.space() ) )
@@ -75,6 +74,8 @@ namespace Dune
       }
 
       DofVectorType& dofVector() { return dofVector_; }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       const DofVectorType& dofVector() const { return dofVector_; }
 
     protected:
@@ -87,12 +88,11 @@ namespace Dune
 
       // pointer to DofContainer
       std::unique_ptr< VectorType > vec_;
-      // dof vector that stores referenc to vector
+      // dof vector that stores reference to vector
       DofVectorType dofVector_;
     };
 
-    // Capabilibies
-    // ------------
+
 
     namespace Capabilities
     {
@@ -106,7 +106,6 @@ namespace Dune
     }
 
   } // namespace Fem
-
 } // namespace Dune
 
 #include "managedvectorfunction.hh"

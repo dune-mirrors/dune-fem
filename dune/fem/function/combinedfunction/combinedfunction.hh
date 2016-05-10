@@ -1,8 +1,9 @@
 #ifndef DUNE_FEM_FUNCTION_COMBINEDFUNCTION_COMBINEDFUNCTION_HH
 #define DUNE_FEM_FUNCTION_COMBINEDFUNCTION_COMBINEDFUNCTION_HH
 
+#include <algorithm>
+#include <iostream>
 #include <string>
-#include <vector>
 
 #include <dune/fem/common/referencevector.hh>
 #include <dune/fem/common/stackallocator.hh>

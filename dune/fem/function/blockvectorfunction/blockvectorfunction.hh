@@ -1,27 +1,21 @@
 #ifndef DUNE_FEM_BLOCKVECTORFUNCTION_HH
 #define DUNE_FEM_BLOCKVECTORFUNCTION_HH
 
-//- system includes
-#include <fstream>
-#include <iostream>
-
-//- Dune inlcudes
-#include <dune/common/exceptions.hh>
-#include <dune/fem/space/common/arrays.hh>
-#include <dune/fem/space/common/dofmanager.hh>
-
-#include <dune/fem/function/blockvectors/defaultblockvectors.hh>
+#include <memory>
+#include <string>
+#include <utility>
 
 #include <dune/fem/common/referencevector.hh>
 #include <dune/fem/common/stackallocator.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
-
 #include <dune/fem/function/blockvectorfunction/declaration.hh>
+#include <dune/fem/function/blockvectors/defaultblockvectors.hh>
+#include <dune/fem/space/common/arrays.hh>
+#include <dune/fem/space/common/dofmanager.hh>
 
 namespace Dune
 {
-
   namespace Fem
   {
     /** \class DiscreteFunctionTraits
@@ -40,6 +34,7 @@ namespace Dune
     };
 
 
+
     template < class DiscreteFunctionSpace, class Block >
     class ISTLBlockVectorDiscreteFunction
     : public DiscreteFunctionDefault< ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace, Block > >
@@ -56,24 +51,34 @@ namespace Dune
 
       using BaseType::assign;
 
-      ISTLBlockVectorDiscreteFunction( const std::string &name,
-                                       const DiscreteFunctionSpaceType &space )
+      /** \brief Constructor to use if the vector storing the dofs does not exist yet
+       *
+       *  \param[in]  name         name of the discrete function
+       *  \param[in]  space        space the discrete function lives in
+       */
+      ISTLBlockVectorDiscreteFunction( const std::string& name,
+                                       const DiscreteFunctionSpaceType& space )
         : BaseType( name, space ),
           memObject_(),
           dofVector_( allocateDofStorage( space ) )
-      {
-      }
+      {}
 
-      ISTLBlockVectorDiscreteFunction( const std::string &name,
-                                       const DiscreteFunctionSpaceType &space,
-                                       const DofContainerType& dofContainer )
+      /** \brief Constructor to use if the vector storing the dofs already exists
+       *
+       *  \param[in]  name         name of the discrete function
+       *  \param[in]  space        space the discrete function lives in
+       *  \param[in]  dofVector    reference to the dof vector
+       */
+      ISTLBlockVectorDiscreteFunction( const std::string& name,
+                                       const DiscreteFunctionSpaceType& space,
+                                       const DofContainerType& dofVector )
         : BaseType( name, space ),
           memObject_(),
-          dofVector_( const_cast< DofContainerType& > (dofContainer) )
-      {
-      }
+          dofVector_( const_cast< DofContainerType& > (dofVector) )
+      {}
 
-      ISTLBlockVectorDiscreteFunction( const ISTLBlockVectorDiscreteFunction& other )
+      /** \brief Copy constructor */
+      ISTLBlockVectorDiscreteFunction( const ThisType& other )
         : BaseType( "copy of " + other.name(), other.space() ),
           memObject_(),
           dofVector_( allocateDofStorage( other.space() ) )
@@ -89,10 +94,14 @@ namespace Dune
 
       //! convenience method for usage with ISTL solvers
       DofContainerType& blockVector() { return dofVector().array(); }
+
       //! convenience method for usage with ISTL solvers
       const DofContainerType& blockVector() const { return dofVector().array(); }
 
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       DofVectorType& dofVector() { return dofVector_; }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       const DofVectorType& dofVector() const { return dofVector_; }
 
     protected:
@@ -118,7 +127,6 @@ namespace Dune
     };
 
   } // namespace Fem
-
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_BLOCKVECTORFUNCTION_HH

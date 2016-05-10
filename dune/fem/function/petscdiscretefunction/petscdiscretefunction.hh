@@ -1,44 +1,31 @@
-// vim: set expandtab ts=2 sw=2 sts=2:
 #ifndef DUNE_FEM_PETSCDISCRETEFUNCTION_HH
 #define DUNE_FEM_PETSCDISCRETEFUNCTION_HH
 
-#include <string>
-#include <algorithm>
-#include <map>
-#include <vector>
-#include <iterator>
-#include <utility>
 #include <memory>
+#include <string>
+#include <utility>
 
 #if HAVE_PETSC
 
+#include <dune/common/dynvector.hh>
+#include <dune/fem/common/stackallocator.hh>
+#include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/function/common/functor.hh>
+#include <dune/fem/function/localfunction/mutable.hh>
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/misc/petsc/petscdofmappings.hh>
 #include <dune/fem/misc/petsc/petscvector.hh>
 #include <dune/fem/misc/petsc/petscslavedofprovider.hh>
 
-#include <dune/common/fvector.hh>
-#include <dune/common/dynvector.hh>
-
-#include <dune/fem/common/stackallocator.hh>
-#include <dune/fem/function/common/discretefunction.hh>
-#include <dune/fem/function/common/functor.hh>
-#include <dune/fem/function/localfunction/mutable.hh>
-
 namespace Dune
 {
-
   namespace Fem
   {
 
+    template< class DiscreteFunctionSpace >
+    class PetscDiscreteFunction;
 
-    /* ==============================
-     * forward declarations
-     */
-    template< class DiscreteFunctionSpace > class PetscDiscreteFunction;
 
-    // AssignVectorReference
-    // ---------------------
 
     template< class DofProxy, class Allocator >
     struct AssignVectorReference< Dune::DynamicVector< DofProxy, Allocator >  >
@@ -59,11 +46,7 @@ namespace Dune
       Vector &vector_;
     };
 
-    // Internal Forward Declaration
-    //-----------------------------
 
-    template <class DiscreteFunctionSpace>
-    class PetscDiscreteFunction;
 
     /** \class DiscreteFunctionTraits for PetscDiscreteFunction
      *  \brief Traits class for a DiscreteFunction
@@ -89,8 +72,6 @@ namespace Dune
     };
 
 
-    // PetscDiscreteFunction
-    //----------------------
 
     template <class DiscreteFunctionSpace>
     class PetscDiscreteFunction
@@ -105,24 +86,34 @@ namespace Dune
 
       using BaseType::assign;
 
-      PetscDiscreteFunction( const std::string &name,
-                             const DiscreteFunctionSpaceType &space )
+      /** \brief Constructor to use if the vector storing the dofs does not exist yet
+       *
+       *  \param[in]  name         name of the discrete function
+       *  \param[in]  space        space the discrete function lives in
+       */
+      PetscDiscreteFunction( const std::string& name,
+                             const DiscreteFunctionSpaceType& space )
         : BaseType( name, space ),
           memObject_(),
           dofVector_( allocateDofStorage( space ) )
-      {
-      }
+      {}
 
-      PetscDiscreteFunction( const std::string &name,
-                             const DiscreteFunctionSpaceType &space,
+      /** \brief Constructor to use if the vector storing the dofs already exists
+       *
+       *  \param[in]  name         name of the discrete function
+       *  \param[in]  space        space the discrete function lives in
+       *  \param[in]  dofVector    reference to the dof vector
+       */
+      PetscDiscreteFunction( const std::string& name,
+                             const DiscreteFunctionSpaceType& space,
                              DofVectorType& dofVector )
         : BaseType( name, space ),
           memObject_(),
           dofVector_( dofVector )
-      {
-      }
+      {}
 
-      PetscDiscreteFunction( const PetscDiscreteFunction& other )
+      /** \brief Copy constructor */
+      PetscDiscreteFunction( const ThisType& other )
         : BaseType( "copy of " + other.name(), other.space() ),
           memObject_(),
           dofVector_( allocateDofStorage( other.space() ) )
@@ -130,8 +121,7 @@ namespace Dune
         assign( other );
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression()
-       */
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression() */
       void enableDofCompression ()
       {
         if( memObject_ )
@@ -177,7 +167,6 @@ namespace Dune
     };
 
   } // namespace Fem
-
 } // namespace Dune
 
 #endif // #if HAVE_PETSC

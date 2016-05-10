@@ -1,34 +1,28 @@
-// vim: set expandtab ts=2 sw=2 sts=2:
 #ifndef DUNE_FEM_BLOCKVECTORDISCRETEFUNCTION_HH
 #define DUNE_FEM_BLOCKVECTORDISCRETEFUNCTION_HH
 
+#include <memory>
 #include <string>
-
-#include <dune/common/exceptions.hh>
-#include <dune/common/fvector.hh>
-
-#include <dune/geometry/referenceelements.hh>
+#include <utility>
 
 #include <dune/fem/common/referencevector.hh>
 #include <dune/fem/common/stackallocator.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
-
+#include <dune/fem/function/blockvectors/referenceblockvector.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/storage/envelope.hh>
 
-#include <dune/fem/function/blockvectors/referenceblockvector.hh>
-
 namespace Dune
 {
-
   namespace Fem
   {
 
-    // forward declaration
     template< typename DiscreteFunctionSpace, typename BlockVector >
     class BlockVectorDiscreteFunction;
+
+
 
     /** \class IsBlockVectorDiscreteFunction
      *  \brief Tag for discrete functions using block vectors
@@ -41,6 +35,7 @@ namespace Dune
      *
      */
     struct IsBlockVectorDiscreteFunction {};
+
 
 
     /** \class BlockVectorDiscreteFunctionTraits
@@ -57,6 +52,9 @@ namespace Dune
       typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
     };
 
+
+
+
     /** \class BlockVectorDiscreteFunctionTraits
      *  \brief A discrete function which uses block vectors for its dof storage and dof calculations
      *
@@ -68,11 +66,6 @@ namespace Dune
       : public DiscreteFunctionDefault< BlockVectorDiscreteFunction< DiscreteFunctionSpace, BlockVector > >,
         public IsBlockVectorDiscreteFunction
     {
-
-      /*
-         I didn't implement these methods of DiscreteFunctionDefault (deliberately):
-          void print ( std :: ostream &out ) const;
-       */
       typedef BlockVectorDiscreteFunction< DiscreteFunctionSpace, BlockVector > ThisType;
       typedef DiscreteFunctionDefault< ThisType > BaseType;
       typedef ParallelScalarProduct< ThisType > ScalarProductType;
@@ -85,19 +78,18 @@ namespace Dune
       //! type for the class which implements the block vector (which is the dof vector)
       typedef BlockVectorType DofVectorType;
 
-      // methods from DiscreteFunctionDefault
       using BaseType::assign;
 
       /** \brief Constructor to use if the vector storing the dofs (which is a block vector) already exists
        *
        *  \param[in]  name         name of the discrete function
-       *  \param[in]  dfSpace      space the discrete function lives in
+       *  \param[in]  space        space the discrete function lives in
        *  \param[in]  blockVector  reference to the blockVector
        */
-      BlockVectorDiscreteFunction ( const std::string &name,
-                                    const DiscreteFunctionSpaceType &dfSpace,
-                                    DofVectorType &dofVector )
-        : BaseType( name, dfSpace ),
+      BlockVectorDiscreteFunction ( const std::string& name,
+                                    const DiscreteFunctionSpaceType& space,
+                                    DofVectorType& dofVector )
+        : BaseType( name, space ),
           memObject_(),
           dofVector_( dofVector )
       {}
@@ -105,50 +97,40 @@ namespace Dune
       /** \brief Constructor to use if the vector storing the dofs does not exist yet
        *
        *  \param[in]  name         name of the discrete function
-       *  \param[in]  dfSpace      space the discrete function lives in
+       *  \param[in]  space        space the discrete function lives in
        */
-      BlockVectorDiscreteFunction ( const std::string &name,
-                                    const DiscreteFunctionSpaceType &dfSpace )
-        : BaseType( name, dfSpace ),
+      BlockVectorDiscreteFunction ( const std::string& name,
+                                    const DiscreteFunctionSpaceType& space )
+        : BaseType( name, space ),
           memObject_(),
-          dofVector_( allocateDofStorage( dfSpace ) )
+          dofVector_( allocateDofStorage( space ) )
       {}
 
-
-      /** \brief Copy constructor
-       */
-      BlockVectorDiscreteFunction ( const ThisType &other )
+      /** \brief Copy constructor */
+      BlockVectorDiscreteFunction ( const ThisType& other )
         : BaseType( "copy of "+other.name(), other.space() ),
           memObject_(),
           dofVector_( allocateDofStorage( other.space() ) )
       {
-        // copy dof vector content
         assign( other );
       }
 
       BlockVectorDiscreteFunction () = delete;
       ThisType& operator= ( const ThisType& ) = delete;
 
-      /** \brief Obtain constant reference to the dof vector
-       *
-       *  \return Constant reference to the block vector
-       */
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       const DofVectorType &dofVector () const
       {
         return dofVector_;
       }
 
-      /** \brief Obtain reference to the dof vector
-       *
-       *  \return Reference to the block vector
-       */
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       DofVectorType &dofVector ()
       {
         return dofVector_;
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression()
-       */
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression() */
       void enableDofCompression ()
       {
         if( memObject_ )
@@ -166,15 +148,11 @@ namespace Dune
         return *memPair.second;
       }
 
-      /*
-       * ============================== data fields ====================
-       */
       std::unique_ptr< DofStorageInterface > memObject_;
       DofVectorType& dofVector_;
     };
 
   } // namespace Fem
-
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEM_BLOCKVECTORDISCRETEFUNCTION_HH

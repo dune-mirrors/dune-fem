@@ -1,36 +1,27 @@
 #ifndef DUNE_FEM_ADAPTIVEFUNCTION_HH
 #define DUNE_FEM_ADAPTIVEFUNCTION_HH
 
-//- System includes
 #include <memory>
 #include <string>
 #include <utility>
 
-//- Dune includes
+#include <dune/fem/common/referencevector.hh>
+#include <dune/fem/common/stackallocator.hh>
+#include <dune/fem/function/common/discretefunction.hh>
+#include <dune/fem/function/blockvectors/defaultblockvectors.hh>
+#include <dune/fem/function/localfunction/mutable.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 
-#include <dune/fem/function/common/discretefunction.hh>
-#include <dune/fem/function/blockvectors/defaultblockvectors.hh>
-
-//- Local includes
-#include <dune/fem/function/localfunction/mutable.hh>
-#include <dune/fem/common/referencevector.hh>
-#include <dune/fem/common/stackallocator.hh>
-
 namespace Dune
 {
-
   namespace Fem
   {
 
-    //! @ingroup AdaptiveDFunction
-    //! An adaptive discrete function
-    //! This class is comparable to DFAdapt, except that it provides a
-    //! specialisation for CombinedSpace objects which provides enriched
-    //! functionality (access to subfunctions) and runtime optimisations
     template <class DiscreteFunctionSpace>
     class AdaptiveDiscreteFunction;
+
+
 
     template< typename DiscreteFunctionSpace >
     struct DiscreteFunctionTraits< AdaptiveDiscreteFunction< DiscreteFunctionSpace > >
@@ -41,6 +32,13 @@ namespace Dune
       typedef MutableLocalFunction< DiscreteFunctionType > LocalFunctionType;
     };
 
+
+
+    //! @ingroup AdaptiveDFunction
+    //! An adaptive discrete function
+    //! This class is comparable to DFAdapt, except that it provides a
+    //! specialisation for CombinedSpace objects which provides enriched
+    //! functionality (access to subfunctions) and runtime optimisations
     template <class DiscreteFunctionSpace>
     class AdaptiveDiscreteFunction
     : public DiscreteFunctionDefault< AdaptiveDiscreteFunction< DiscreteFunctionSpace > >
@@ -57,33 +55,48 @@ namespace Dune
 
       typedef MutableBlockVector< MutableArray< DofType >, DiscreteFunctionSpaceType::localBlockSize > MutableDofVectorType;
 
-      AdaptiveDiscreteFunction( const std::string &name,
-                                const DiscreteFunctionSpaceType &space )
+      /** \brief Constructor to use if the vector storing the dofs does not exist yet
+       *
+       *  \param[in]  name         name of the discrete function
+       *  \param[in]  space        space the discrete function lives in
+       */
+      AdaptiveDiscreteFunction( const std::string& name,
+                                const DiscreteFunctionSpaceType& space )
         : BaseType( name, space ),
           memObject_(),
           dofVector_( allocateDofStorage( space ) )
-      {
-      }
+      {}
 
-      AdaptiveDiscreteFunction( const std::string &name,
-                                const DiscreteFunctionSpaceType &space,
+      /** \brief Constructor to use if the vector storing the dofs already exists
+       *
+       *  \param[in]  name         name of the discrete function
+       *  \param[in]  space        space the discrete function lives in
+       *  \param[in]  data         pointer to data
+       */
+      AdaptiveDiscreteFunction( const std::string& name,
+                                const DiscreteFunctionSpaceType& space,
                                 const DofType* data )
         : BaseType( name, space ),
           memObject_(),
           dofVector_( allocateDofStorageWrapper( space.blockMapper().size() * DofVectorType::blockSize, data ) )
-      {
-      }
+      {}
 
-      AdaptiveDiscreteFunction( const std::string &name,
-                                const DiscreteFunctionSpaceType &space,
+      /** \brief Constructor to use if the vector storing the dofs already exists
+       *
+       *  \param[in]  name         name of the discrete function
+       *  \param[in]  space        space the discrete function lives in
+       *  \param[in]  dofVector    reference to the dof vector
+       */
+      AdaptiveDiscreteFunction( const std::string& name,
+                                const DiscreteFunctionSpaceType& space,
                                 DofVectorType& dofVector )
         : BaseType( name, space ),
           memObject_(),
           dofVector_( dofVector )
-      {
-      }
+      {}
 
-      AdaptiveDiscreteFunction( const AdaptiveDiscreteFunction& other )
+      /** \brief Copy constructor */
+      AdaptiveDiscreteFunction( const ThisType& other )
         : BaseType( "copy of " + other.name(), other.space() ),
           memObject_(),
           dofVector_( allocateDofStorage( other.space() ) )
@@ -94,11 +107,13 @@ namespace Dune
       DofType* leakPointer() { return dofVector().data(); }
       const DofType* leakPointer() const { return dofVector().data(); }
 
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       DofVectorType& dofVector() { return dofVector_; }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       const DofVectorType& dofVector() const { return dofVector_; }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression()
-       */
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression() */
       void enableDofCompression ()
       {
         if( memObject_ )
@@ -166,13 +181,11 @@ namespace Dune
         return *(memPair.second);
       }
 
-      // pointer to allocated DofVector
       std::unique_ptr< DofStorageInterface > memObject_;
-
       DofVectorType& dofVector_;
     };
 
   } // end namespace Fem
-
 } // end namespace Dune
+
 #endif // #ifndef DUNE_FEM_ADAPTIVEFUNCTION_HH
