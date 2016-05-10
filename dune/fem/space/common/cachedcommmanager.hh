@@ -1117,22 +1117,25 @@ namespace Dune
         typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
           :: template CommDataHandle< DiscreteFunctionType > :: OperationType  DefaultOperationType;
 
-        cache_.exchange( df, (DefaultOperationType *) 0 );
+        // create default operation
+        DefaultOperationType operation;
+
+        exchange( df, operation );
       }
 
       //! exchange discrete function to all procs we share data
       //! using the given operation
-      template <class DiscreteFunctionType, class OperationImp>
-      void exchange(DiscreteFunctionType & df, const OperationImp* ) const
+      template <class DiscreteFunctionType, class Operation>
+      void exchange(DiscreteFunctionType & df, const Operation& operation ) const
       {
-        cache_.exchange( df, (OperationImp*) 0 );
+        cache_.exchange( df, operation );
       }
 
       //! write given df to given buffer
       template <class ObjectStreamVectorType, class DiscreteFunctionType>
       void writeBuffer(ObjectStreamVectorType& osv, const DiscreteFunctionType & df) const
       {
-        cache_.writeBuffer(osv, df );
+        cache_.writeBuffer( osv, df );
       }
 
       // read given df from given buffer
@@ -1152,7 +1155,7 @@ namespace Dune
       template <class ObjectStreamVectorType, class DiscreteFunctionType, class OperationType>
       void readBuffer(ObjectStreamVectorType& osv, DiscreteFunctionType & df, const OperationType& operation) const
       {
-        cache_.readBuffer(osv, df , operation);
+        cache_.readBuffer( osv, df , operation);
       }
 
       //! rebuild underlying cache if necessary
