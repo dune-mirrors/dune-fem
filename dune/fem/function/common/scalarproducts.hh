@@ -1,7 +1,6 @@
 #ifndef DUNE_FEM_SCALARPRODURCTS_HH
 #define DUNE_FEM_SCALARPRODURCTS_HH
 
-//- system includes
 #include <iostream>
 #include <memory>
 #include <set>
@@ -9,25 +8,19 @@
 #include <limits>
 #include <algorithm>
 
-//- Dune includes
 #include <dune/common/exceptions.hh>
-
 #include <dune/common/genericiterator.hh>
 #include <dune/common/ftraits.hh>
 #include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/datahandleif.hh>
 
-// in case of ISTL found include some more headers
 #if HAVE_DUNE_ISTL
 #include <dune/istl/scalarproducts.hh>
 #endif
 
-//- Dune-fem includes
-//#include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/common/commindexmap.hh>
-
 #include <dune/fem/function/blockvectorfunction/declaration.hh>
 
 namespace Dune
@@ -49,9 +42,6 @@ namespace Dune
       class SingletonKey;
 
     private:
-      template< class Map >
-      struct InsertFunctor;
-
       class LinkBuilder;
 
     public:
@@ -166,95 +156,51 @@ namespace Dune
       }
 
     protected:
-      // build linkage and index maps
       void buildMaps ()
       {
+        // build linkage and index maps
         if( !space_.continuous() )
           buildDiscontinuousMaps();
         else
           buildCommunicatedMaps();
       }
 
-      // for discontinuous spaces we don't have to communicate
-      inline void buildDiscontinuousMaps ();
-
-      inline void buildCommunicatedMaps ();
-    };
-
-
-
-    // SlaveDofs::InsertFunctor
-    // ------------------------
-
-    template< class Space, class Mapper >
-    template< class Map >
-    struct SlaveDofs< Space, Mapper >::InsertFunctor
-    {
-      explicit InsertFunctor ( Map &map )
-      : map_( map )
-      {}
-
-      template< class Value >
-      void operator() ( const int, const Value &value )
+      void buildDiscontinuousMaps ()
       {
-        map_.insert( value );
-      }
-
-    private:
-      Map &map_;
-    };
-
-
-
-    // Implementation of SlaveDofs
-    // ---------------------------
-
-    template< class Space, class Mapper >
-    inline void SlaveDofs< Space, Mapper > :: buildDiscontinuousMaps ()
-    {
-      const auto idxpitype = GridPartType :: indexSetPartitionType;
-      const auto endit = gridPart_.template end< 0, idxpitype >();
-      for( auto it = gridPart_.template begin< 0, idxpitype >(); it != endit; ++it )
-      {
-        const auto& entity = *it;
-        if( entity.partitionType() != Dune::InteriorEntity )
-          mapper_.mapEachEntityDof( entity, InsertFunctor< ThisType >( *this ) );
-      }
-
-      // insert overall size at the end
-      insert( mapper_.size() );
-    }
-
-
-
-    template< class Space, class Mapper >
-    inline void SlaveDofs< Space, Mapper > :: buildCommunicatedMaps ()
-    {
-      // we have to skip communication when parallel program is
-      // executed only on one processor
-      // otherwise YaspGrid and Lagrange polorder=2 fails :(
-      if( gridPart_.comm().size() > 1 )
-      {
-        try
+        // for discontinuous spaces we don't have to communicate
+        const auto idxpitype = GridPartType :: indexSetPartitionType;
+        const auto endit = gridPart_.template end< 0, idxpitype >();
+        for( auto it = gridPart_.template begin< 0, idxpitype >(); it != endit; ++it )
         {
-          typedef LinkBuilder LinkBuilderHandleType;
-          LinkBuilderHandleType handle( *this, space_ , mapper_ );
-
-          gridPart_.communicate
-            ( handle, GridPartType::indexSetInterfaceType, ForwardCommunication );
+          const auto& entity = *it;
+          if( entity.partitionType() != Dune::InteriorEntity )
+            mapper_.mapEachEntityDof( entity, [this]( const int, const auto& value ){this->insert( value );} );
         }
-        // catch possible exceptions here to have a clue where it happend
-        catch( const Exception &e )
-        {
-          std::cerr << e << std::endl;
-          std::cerr << "Exception thrown in: " << __FILE__ << " line:" << __LINE__ << std::endl;
-          abort();
-        }
+        // insert overall size at the end
+        insert( mapper_.size() );
       }
 
-      // insert overall size at the end
-      insert( mapper_.size() );
-    }
+      void buildCommunicatedMaps ()
+      {
+        // we have to skip communication when parallel program is executed only on one processor
+        // otherwise YaspGrid and Lagrange polorder=2 fails :(
+        if( gridPart_.comm().size() > 1 )
+        {
+          try
+          {
+            LinkBuilder handle( *this, space_ , mapper_ );
+            gridPart_.communicate( handle, GridPartType::indexSetInterfaceType, ForwardCommunication );
+          }
+          catch( const Exception &e )
+          {
+            std::cerr << e << std::endl << "Exception thrown in: " << __FILE__ << " line:" << __LINE__ << std::endl;
+            abort();
+          }
+        }
+        // insert overall size at the end
+        insert( mapper_.size() );
+      }
+    };
 
 
 
@@ -354,8 +300,6 @@ namespace Dune
       template< class MessageBuffer, class EntityType >
       void scatter ( MessageBuffer &buffer, const EntityType &entity, size_t n )
       {
-        // ERROR: An overlap cell may be overlay cell in another process
-        //assert( ( ! sendRank( entity ) ) ? (n > 0) : true);
         if( n == 1 )
         {
           int rank;
@@ -365,7 +309,7 @@ namespace Dune
 
           // if entity in not interiorBorder insert anyway
           if ( rank < myRank_ || ! sendRank( entity ) )
-            mapper_.mapEachEntityDof( entity, InsertFunctor< IndexMapType >( slaves_ ) );
+            mapper_.mapEachEntityDof( entity, [this]( const int , const auto& value ){slaves_.insert( value );} );
         }
       }
 
