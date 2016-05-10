@@ -36,15 +36,14 @@ typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 
 template <class DiscreteFunction, class OtherDiscreteFunction>
 void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
 {
-  std::cout << "Checking (" << df.name() << "," << other.name()
-            << "), size = ("<<df.size()<< "," << other.size() << ")....";
-  typedef typename DiscreteFunction :: DofType DofType;
+  std::cout << "Checking (" << df.name() << "," << other.name() << "), size = ("<<df.size()<< "," << other.size() << ")....";
 
   // fill df with zeros
   df.clear();
   other.clear();
 
   // fill df with zeros
+  typedef typename DiscreteFunction :: DofType DofType;
   std::fill( df.dbegin(), df.dend(), DofType( 0 ) );
 
   df += other;
@@ -65,14 +64,14 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
   }
 
   // check block access
-  const size_t localBlockSize = DiscreteFunctionSpaceType::localBlockSize;
-  const size_t numBlocks      = df.blocks();
+  const std::size_t localBlockSize = DiscreteFunctionSpaceType::localBlockSize;
+  const std::size_t numBlocks      = df.blocks();
   if( df.size() / localBlockSize != numBlocks )
-    DUNE_THROW(Dune::InvalidStateException,"number of blocks not correct!");
+    DUNE_THROW(Dune::InvalidStateException,"Number of blocks not correct");
 
   auto dfDofIt(df.dbegin());
-  for(size_t i=0;i<numBlocks;++i)
-    for(size_t j=0;j<localBlockSize;++j,++dfDofIt)
+  for(std::size_t i=0;i<numBlocks;++i)
+    for(std::size_t j=0;j<localBlockSize;++j,++dfDofIt)
       if( std::abs( df.dofVector()[i][j] - *dfDofIt ) > 1e-12 )
         DUNE_THROW(Dune::InvalidStateException,"Block access did not work");
 
@@ -113,12 +112,9 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
 
   std::cout << "done!" << std::endl;
 
-  typedef Dune::Fem::RestrictProlongDefault<DiscreteFunction> RPDefaultType;
-  RPDefaultType rp( df );
+  Dune::Fem::RestrictProlongDefault<DiscreteFunction> rp( df );
   rp.setFatherChildWeight(Dune::DGFGridInfo< HGridType >::refineWeight());
-
-  //typedef Dune::Fem::AdaptationManager< HGridType, RPDefaultType > AdaptationManagerType;
-  //AdaptationManagerType adop(grid,rp);
+  //Dune::Fem::AdaptationManager< HGridType, RPDefaultType > adop(grid,rp);
 }
 
 // main program
@@ -130,9 +126,7 @@ int main(int argc, char ** argv)
     HGridType &grid = Dune::Fem::TestGrid :: grid();
 
     GridPartType gridPart( grid );
-    // add check for grid width
-    std::cout << "Grid width: "
-      << Dune::Fem::GridWidth :: calcGridWidth( gridPart ) << std::endl;
+    std::cout << "Grid width: " << Dune::Fem::GridWidth :: calcGridWidth( gridPart ) << std::endl;
 
     DiscreteFunctionSpaceType space( gridPart );
 
@@ -160,8 +154,7 @@ int main(int argc, char ** argv)
     Dune::Fem::ManagedDiscreteFunction< VectorDiscreteFunctionType > mdf ("managed", space);
     checkFunction( mdf, ref );
 
-    typedef Dune::Fem::ReferenceBlockVector< FunctionSpaceType::RangeFieldType, DiscreteFunctionSpaceType::localBlockSize >
-      BlockVectorType;
+    typedef Dune::Fem::ReferenceBlockVector< FunctionSpaceType::RangeFieldType, DiscreteFunctionSpaceType::localBlockSize > BlockVectorType;
     Dune::Fem::BlockVectorDiscreteFunction< DiscreteFunctionSpaceType, BlockVectorType > bdf( "block", space );
     checkFunction( bdf, ref );
 

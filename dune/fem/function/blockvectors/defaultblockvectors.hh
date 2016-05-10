@@ -7,7 +7,7 @@
 #include <dune/common/densevector.hh>
 #include <dune/common/dynvector.hh>
 
-#include <dune/fem/misc/debug.hh> // for DebugCounter
+#include <dune/fem/misc/debug.hh>
 #include <dune/fem/storage/envelope.hh>
 #include <dune/fem/space/common/arrays.hh>
 
@@ -21,6 +21,8 @@ namespace Dune {
     template< class BlockVector >
     class SimpleBlockVectorBlock;
   }
+
+
 
   template< class BlockVector >
   struct DenseMatVecTraits< Fem::SimpleBlockVectorBlock< BlockVector > >
@@ -36,19 +38,21 @@ namespace Fem {
   // tag for block vectors
   struct IsBlockVector {};
 
+
+
   /** \class SimpleBlockVector
   *   \brief This is the reference implementation of a block vector as it is expected
   *      as the second template parameter to Dune::Fem::BlockVectorDiscreteFunction
   *
-  *   \tparam  F           The ground fields. All dofs are elements of this field.
-  *   \tparam  BlockSize   Size of the blocks
+  *   \tparam  Imp     Implementation
+  *   \tparam  Field   Field type of all dofs
   */
   template< class Imp, class Field >
   class BlockVectorInterface
   : public IsBlockVector
   {
   protected:
-    typedef DebugCounter<size_t>                      CounterType;
+    typedef DebugCounter<size_t> CounterType;
 
     BlockVectorInterface () {}
 
@@ -58,11 +62,7 @@ namespace Fem {
     //! Type of the field the dofs lie in
     typedef Field  FieldType;
 
-    /*
-     * ########## operators ##############################
-     */
-    /** \brief Copy assignment operator
-     */
+    /** \brief Copy assignment operator */
     const ThisType& operator= ( const ThisType &other )
     {
       if( &asImp() != &other )
@@ -73,11 +73,7 @@ namespace Fem {
       return asImp();
     }
 
-    /** \brief Add another block vector to *this
-     *
-     *  \param[in] other    Other block vector to add
-     *  \return Constant reference to *this
-     */
+    /** \brief Add another block vector to *this */
     const ThisType &operator+= ( const ThisType &other )
     {
       assert( asImp().size() == other.size() );
@@ -90,11 +86,7 @@ namespace Fem {
       return asImp();
     }
 
-    /** \brief Subtract another block vector from *this
-     *
-     *  \param[in] other    Other block vector to subtract
-     *  \return Constant reference to *this
-     */
+    /** \brief Subtract another block vector from *this */
     const ThisType &operator-= ( const ThisType &other )
     {
       assert( asImp().size() == other.size() );
@@ -107,11 +99,7 @@ namespace Fem {
       return asImp();
     }
 
-    /** \brief Scalar product *this with another block vector
-     *
-     *  \param[in] other  Other block vector
-     *  \return Returns the scalar product " (*this)*other"
-     */
+    /** \brief Scalar product between *this and another block vector */
     FieldType operator* ( const ThisType &other ) const
     {
       assert( asImp().size() == other.size() );
@@ -139,10 +127,6 @@ namespace Fem {
       return asImp();
     }
 
-    /*
-     * ########## methods ##############################
-     */
-
     /** \brief Add a scalar multiple of another block vector to this block vector.
      *
      *    Semantic in pseudocode: " *this = *this + scalar*v "
@@ -155,17 +139,13 @@ namespace Fem {
       assert( asImp().size() == other.size() );
       const auto endit = asImp().end();
       auto oit = other.begin();
-      // TODO: revise
       for( auto it = asImp().begin(); it != endit; ++it, ++oit )
-      {
         *it += scalar * (*oit);
-      }
 
       ++sequence_;
     }
 
-    /** \brief Clear this block vector, i.e. set each dof to 0
-     */
+    /** \brief  Clear this block vector, i.e. set each dof to 0 */
     void clear ()
     {
       std::fill( asImp().begin(), asImp().end(), FieldType( 0 ) );
@@ -188,11 +168,12 @@ namespace Fem {
   };
 
 
+
   /** \class SimpleBlockVector
   *   \brief This is the reference implementation of a block vector as it is expected
   *      as the second template parameter to Dune::Fem::BlockVectorDiscreteFunction
   *
-  *   \tparam  F           The ground fields. All dofs are elements of this field.
+  *   \tparam  Container   Container type
   *   \tparam  BlockSize   Size of the blocks
   */
   template< class Container, int BlockSize >
@@ -236,104 +217,60 @@ namespace Fem {
     //! Size of each block
     enum { blockSize = BlockSize };
 
-
-    /** \brief Constructor; use this to create a block vector with 'size' blocks.
-     *
-     *  The dofs are not initialized.
-     *
-     *  \param[in]  size         Number of blocks
-     */
+    /** \brief Constructor */
     explicit SimpleBlockVector ( ArrayType& array )
     : array_( array )
     {}
 
-    /*
-     * ########## operators ##############################
-     */
-    /** \brief Copy assignment operator
-     */
+    /** \brief Copy assignment operator */
     const ThisType& operator= ( const ThisType& other )
     {
       BaseType::operator=( other );
       return *this;
     }
 
-    /** \brief Accessor for a constant block
-     *
-     *  \param[in]  i         Index of the block
-     *  \return   The i-th block, constant
-     */
+    /** \brief Constant access the i-th block */
     ConstDofBlockType operator[] ( const unsigned int i ) const
     {
       assert( i < size() );
       return ConstDofBlockType( *this, i*blockSize );
     }
 
-    /** \brief Accessor for a block
-     *
-     *  \param[in]  i         Index of the block
-     *  \return   The i-th block
-     */
+    /** \brief Access the i-th block */
     DofBlockType operator[] ( const unsigned int i )
     {
       assert( i < size() );
       return DofBlockType( *this, i*blockSize );
     }
 
-    /** \brief Accessor for a constant block
-     *
-     *  \param[in]  i         Index of the block
-     *  \return   The i-th block, constant
-     */
+    /** \brief Constant access for the i-th block */
     ConstDofBlockPtrType blockPtr( const unsigned int i ) const
     {
       return ConstDofBlockPtrType( this->operator[] ( i ) );
     }
 
-    /** \brief Accessor for a block
-     *
-     *  \param[in]  i         Index of the block
-     *  \return   The i-th block
-     */
+    /** \brief Access the i-th block */
     DofBlockPtrType blockPtr( const unsigned int i )
     {
       return DofBlockPtrType( this->operator[] ( i ) );
     }
 
-    /** \brief Iterator pointing to the first dof
-     *
-     *  \return Iterator pointing to the first dof
-     */
+    /** \brief Iterator pointing to the first dof */
     IteratorType begin() { return array().begin(); }
 
-    /** \brief Const-iterator pointing to the first dof
-     *
-     *  \return Const-iterator pointing to the first dof
-     */
+    /** \brief Const-iterator pointing to the first dof */
     ConstIteratorType begin() const { return array().begin(); }
 
-    /** \brief Iterator pointing to the last dof
-     *
-     *  \return Iterator pointing to the last dof
-     */
+    /** \brief Iterator pointing to the last dof */
     IteratorType end() { return array().end(); }
 
-    /** \brief Const-iterator pointing to the last dof
-     *
-     *  \return Const-iterator pointing to the last dof
-     */
+    /** \brief Const-iterator pointing to the last dof */
     ConstIteratorType end() const { return array().end(); }
 
-    /** \brief Returns the number of blocks
-     *
-     *  \return Number of blocks
-     */
+    /** \brief Number of blocks */
     SizeType size () const { return array().size() / blockSize; }
 
-    /** \brief Returns the number of dofs in the block vector
-     *
-     *  \return Number of dofs
-     */
+    /** \brief Number of dofs in the block vector */
     SizeType numDofs() const { return array().size(); }
 
     FieldType* data() { return array().data(); }
@@ -343,17 +280,15 @@ namespace Fem {
     ArrayType &array () { return array_; }
 
   protected:
-    /*
-     * data fields
-     */
     ArrayType& array_;
   };
+
+
 
   /** \class SimpleBlockVectorBlock
   *   \brief This is the implementation of a block of SimpleBlockVector
   *
-  *   \tparam  F           The ground fields. All dofs are elements of this field.
-  *   \tparam  BlockSize   Size of the blocks
+  *   \tparam  BlockVector BlockVector type
   */
   template< class BlockVector >
   class SimpleBlockVectorBlock : public Dune::DenseVector< SimpleBlockVectorBlock< BlockVector > >
@@ -381,8 +316,7 @@ namespace Fem {
       blockBegin_( blockBegin )
     {}
 
-    /** \brief Copy constructor
-     */
+    /** \brief Copy constructor */
     SimpleBlockVectorBlock ( const SimpleBlockVectorBlock< BlockVectorType > &other )
     : blockVector_( const_cast< BlockVectorType& > (other.blockVector_)),
       blockBegin_( other.blockBegin_ )
@@ -423,8 +357,7 @@ namespace Fem {
       return blockVector_.array()[blockBegin_ + index];
     }
 
-    /** \brief Returns the size of the block
-     */
+    /** \brief Returns the size of the block */
     int dim() const { return blockSize; }
 
   protected:
@@ -438,16 +371,17 @@ namespace Fem {
         (*this)[ i ] = other[ i ];
     }
 
-    // data fields
     BlockVectorType &blockVector_;
     const unsigned int blockBegin_;
   };
+
+
 
   /** \class SimpleBlockVector
   *   \brief This is the reference implementation of a block vector as it is expected
   *      as the second template parameter to Dune::Fem::BlockVectorDiscreteFunction
   *
-  *   \tparam  F           The ground fields. All dofs are elements of this field.
+  *   \tparam  Container   Container type
   *   \tparam  BlockSize   Size of the blocks
   */
   template< class Container, unsigned int BlockSize >
@@ -465,18 +399,12 @@ namespace Fem {
     using BaseType :: blockSize ;
     typedef typename BaseType :: SizeType SizeType;
 
-    /** \brief Constructor; use this to create a block vector with 'size' blocks.
-     *
-     *  The dofs are not initialized.
-     *
-     *  \param[in]  size         Number of blocks
-     */
+    /** \brief Construct a block vector with 'size' blocks (not initialized) */
     explicit MutableBlockVector ( SizeType size )
     : BaseType( *(new Container( size*blockSize ) ) )
     {}
 
-    /** \brief Copy constructor
-     */
+    /** \brief Copy constructor */
     MutableBlockVector ( const ThisType &other )
     : BaseType( *(new Container( other.array().size() ) ) )
     {
@@ -501,10 +429,7 @@ namespace Fem {
       array().reserve( size*blockSize );
     }
 
-    /** \brief Resize the block vector
-     *
-     *  \param[in] size  New number of blocks
-     */
+    /** \brief Resize the block vector */
     void resize ( SizeType size )
     {
       array().resize( size*blockSize );
@@ -512,19 +437,21 @@ namespace Fem {
     }
   };
 
+
+
   /** \class SimpleBlockVector
   *   \brief This is the reference implementation of a block vector as it is expected
   *      as the second template parameter to Dune::Fem::BlockVectorDiscreteFunction
   *
-  *   \tparam  F           The ground fields. All dofs are elements of this field.
+  *   \tparam  Field       Field type of all dofs
   *   \tparam  BlockSize   Size of the blocks
   */
-  template< class F, unsigned int BlockSize >
-  class MutableBlockVector< MutableArray< F >, BlockSize >
-  : public SimpleBlockVector< StaticArray< F >, BlockSize >
+  template< class Field, unsigned int BlockSize >
+  class MutableBlockVector< MutableArray< Field >, BlockSize >
+  : public SimpleBlockVector< StaticArray< Field >, BlockSize >
   {
-    typedef StaticArray< F >          StaticContainer ;
-    typedef MutableArray< F >         MutableContainer ;
+    typedef StaticArray< Field >          StaticContainer ;
+    typedef MutableArray< Field >         MutableContainer ;
     typedef SimpleBlockVector< StaticContainer, BlockSize >   BaseType;
     typedef MutableBlockVector< MutableContainer, BlockSize > ThisType;
 
@@ -536,18 +463,12 @@ namespace Fem {
     using BaseType :: blockSize ;
     typedef typename BaseType :: SizeType SizeType;
 
-    /** \brief Constructor; use this to create a block vector with 'size' blocks.
-     *
-     *  The dofs are not initialized.
-     *
-     *  \param[in]  size         Number of blocks
-     */
+    /** \brief Construct a block vector with 'size' blocks (not initialized) */
     explicit MutableBlockVector ( SizeType size )
     : BaseType( allocateContainer( size*blockSize ) )
     {}
 
-    /** \brief Copy constructor
-     */
+    /** \brief Copy constructor */
     MutableBlockVector ( const ThisType &other )
     : BaseType( allocateContainer( other.array().size() ) )
     {
@@ -572,10 +493,7 @@ namespace Fem {
       container_->reserve( size*blockSize );
     }
 
-    /** \brief Resize the block vector
-     *
-     *  \param[in] size  New number of blocks
-     */
+    /** \brief Resize the block vector */
     void resize ( SizeType size )
     {
       container_->resize( size*blockSize );
@@ -590,12 +508,11 @@ namespace Fem {
     }
   };
 
+
+
   /** \class SimpleBlockVector
   *   \brief This is the reference implementation of a block vector as it is expected
   *      as the second template parameter to Dune::Fem::BlockVectorDiscreteFunction
-  *
-  *   \tparam  F           The ground fields. All dofs are elements of this field.
-  *   \tparam  BlockSize   Size of the blocks
   */
   template< class DofBlock >
   class ISTLBlockVector
@@ -687,12 +604,7 @@ namespace Fem {
     //! Typedef to make this class STL-compatible
     typedef typename ArrayType::value_type  value_type;
 
-    /** \brief Constructor; use this to create a block vector with 'size' blocks.
-     *
-     *  The dofs are not initialized.
-     *
-     *  \param[in]  size         Number of blocks
-     */
+    /** \brief Constructor */
     explicit ISTLBlockVector ( ArrayType& array )
     : array_( &array )
     {}
@@ -700,11 +612,7 @@ namespace Fem {
     ISTLBlockVector () : array_( 0 )
     {}
 
-    /*
-     * ########## operators ##############################
-     */
-    /** \brief Copy assignment operator
-     */
+    /** \brief Copy assignment operator */
     const ThisType& operator= ( const ThisType& other )
     {
       if( this != &other )
@@ -751,10 +659,7 @@ namespace Fem {
       array().reserve( size );
     }
 
-    /** \brief Resize the block vector
-     *
-     *  \param[in] size  New number of blocks
-     */
+    /** \brief Resize the block vector */
     void resize ( SizeType size )
     {
       array().resize( size );
