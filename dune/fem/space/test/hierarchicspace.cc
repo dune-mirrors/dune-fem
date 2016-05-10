@@ -67,7 +67,7 @@ void checkHierarchicSpace ( const Space& space, const SpaceOneOrderMore& spaceOn
       const int nop = quad.nop();
       for( int qp=0; qp<nop; ++qp )
       {
-        const int size = baseSet.size();
+        const unsigned int size = baseSet.size();
         phi.clear();
         phi.resize( size, RangeType(0) );
         baseSet.evaluateAll( quad[ qp ], phi );
@@ -82,7 +82,7 @@ void checkHierarchicSpace ( const Space& space, const SpaceOneOrderMore& spaceOn
         }
 
         bool ok = true;
-        for( int i=0; i<size; ++i )
+        for( unsigned int i=0; i<size; ++i )
         {
           if( (phi[ i ] - phiMore[ i ]).two_norm() > 1e-12 )
           {
