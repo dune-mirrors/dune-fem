@@ -33,16 +33,40 @@ namespace Dune
       using BaseType::gridPart;
       using BaseType::comm;
 
-      explicit H1Norm ( const GridPartType &gridPart, const unsigned int order = 0 );
-      H1Norm ( const ThisType &other );
+      /** \brief constructor
+       *    \param gridPart     specific gridPart for selection of entities
+       *    \param order        order of integration quadrature (default = 2*space.order())
+       *    \param communicate  if true global (over all ranks) norm is computed (default = true)
+       */
+      explicit H1Norm ( const GridPartType &gridPart,
+                        const unsigned int order = 0,
+                        const bool communicate = true );
 
+      //! || u ||_H1 on given set of entities (partition set)
+      template< class DiscreteFunctionType, class PartitionSet >
+      typename Dune::FieldTraits< typename DiscreteFunctionType::RangeFieldType >::real_type
+      norm ( const DiscreteFunctionType &u, const PartitionSet& partitionSet ) const;
+
+      //! || u ||_H1 on interior partition entities
       template< class DiscreteFunctionType >
       typename Dune::FieldTraits< typename DiscreteFunctionType::RangeFieldType >::real_type
-      norm ( const DiscreteFunctionType &u ) const;
+      norm ( const DiscreteFunctionType &u ) const
+      {
+        return norm( u, Partitions::interior );
+      }
 
+      //! || u - v ||_H1 on given set of entities (partition set)
+      template< class UDiscreteFunctionType, class VDiscreteFunctionType, class PartitionSet >
+      typename Dune::FieldTraits< typename UDiscreteFunctionType::RangeFieldType >::real_type
+      distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v, const PartitionSet& partitionSet ) const;
+
+      //! || u - v ||_H1 on interior partition entities
       template< class UDiscreteFunctionType, class VDiscreteFunctionType >
       typename Dune::FieldTraits< typename UDiscreteFunctionType::RangeFieldType >::real_type
-      distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const;
+      distance ( const UDiscreteFunctionType &u, const VDiscreteFunctionType &v ) const
+      {
+        return distance( u, v, Partitions::interior );
+      }
 
       template< class LocalFunctionType, class ReturnType >
       void normLocal ( const EntityType &entity, unsigned int order, const LocalFunctionType &uLocal, ReturnType &sum ) const;
@@ -52,8 +76,9 @@ namespace Dune
 
       ThisType operator= ( const ThisType& ) = delete;
 
-    private:
+    protected:
       const unsigned int order_;
+      const bool communicate_;
     };
 
 
@@ -101,49 +126,55 @@ namespace Dune
     // -------------------------
 
     template< class GridPart >
-    inline H1Norm< GridPart >::H1Norm ( const GridPartType &gridPart, const unsigned int order )
+    inline H1Norm< GridPart >::H1Norm ( const GridPartType &gridPart, const unsigned int order, const bool communicate )
     : BaseType( gridPart ),
-      order_( order )
-    {}
-
-
-
-    template< class GridPart >
-    inline H1Norm< GridPart >::H1Norm ( const ThisType &other )
-    : BaseType( other ),
-      order_( other.order_ )
+      order_( order ),
+      communicate_( communicate )
     {}
 
 
     template< class GridPart >
-    template< class DiscreteFunctionType >
+    template< class DiscreteFunctionType, class PartitionSet >
     inline typename Dune::FieldTraits< typename DiscreteFunctionType::RangeFieldType >::real_type
-    H1Norm< GridPart >::norm ( const DiscreteFunctionType &u ) const
+    H1Norm< GridPart >::norm ( const DiscreteFunctionType &u, const PartitionSet& partitionSet ) const
     {
       typedef typename DiscreteFunctionType::RangeFieldType RangeFieldType;
       typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
       typedef FieldVector< RealType, 1 > ReturnType ;
 
-      ReturnType sum = BaseType :: forEach( u, ReturnType( 0 ), order_ );
+      ReturnType sum = BaseType :: forEach( u, ReturnType( 0 ), partitionSet, order_ );
+
+      // communicate_ indicates global norm
+      if( communicate_ )
+      {
+        sum = comm().sum( sum[ 0 ] );
+      }
 
       // return result, e.g. sqrt of calculated sum
-      return sqrt( comm().sum( sum[ 0 ] ) );
+      return sqrt( sum[ 0 ] );
     }
 
     template< class GridPart >
-    template< class UDiscreteFunctionType, class VDiscreteFunctionType >
+    template< class UDiscreteFunctionType, class VDiscreteFunctionType, class PartitionSet >
     inline typename Dune::FieldTraits< typename UDiscreteFunctionType::RangeFieldType >::real_type
     H1Norm< GridPart >::distance ( const UDiscreteFunctionType &u,
-                                   const VDiscreteFunctionType &v ) const
+                                   const VDiscreteFunctionType &v,
+                                   const PartitionSet& partitionSet ) const
     {
       typedef typename UDiscreteFunctionType::RangeFieldType RangeFieldType;
       typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
       typedef FieldVector< RealType, 1 > ReturnType ;
 
-      ReturnType sum = BaseType :: forEach( u, v, ReturnType( 0 ), order_ );
+      ReturnType sum = BaseType :: forEach( u, v, ReturnType( 0 ), partitionSet, order_ );
+
+      // communicate_ indicates global norm
+      if( communicate_ )
+      {
+        sum = comm().sum( sum[ 0 ] );
+      }
 
       // return result, e.g. sqrt of calculated sum
-      return sqrt( comm().sum( sum[ 0 ] ) );
+      return sqrt( sum[ 0 ] );
     }
 
     template< class GridPart >
