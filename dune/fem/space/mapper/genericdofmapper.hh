@@ -691,5 +691,3 @@ namespace Dune
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS
 
 #endif // #ifndef DUNE_FEM_GENERICDOFMAPPER_HH
-
-/* vim: set sw=2 et: */
