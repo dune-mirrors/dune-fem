@@ -15,6 +15,57 @@ namespace Dune
   namespace FemPy
   {
 
+    // registerLocalFunction
+    // ---------------------
+
+    template< class LocalFunction >
+    pybind11::class_< LocalFunction > registerLocalFunction ( pybind11::handle scope, const char *clsName = "LocalFunction" )
+    {
+      typedef typename LocalFunction::LocalCoordinateType LocalCoordinate;
+
+      pybind11::class_< LocalFunction > cls( scope, clsName );
+
+      cls.def_property_readonly_static( "dimRange", [] () { return LocalFunction::RangeType::dimension; } );
+      cls.def( "evaluate", [] ( const LocalFunction &lf, const LocalCoordinate &x ) {
+          typename LocalFunction::RangeType value;
+          lf.evaluate( x, value );
+          return value;
+        } );
+      cls.def( "jacobian", [] ( const LocalFunction &lf, const LocalCoordinate &x ) {
+          typename LocalFunction::JacobianRangeType jacobian;
+          lf.jacobian( x, jacobian );
+          return jacobian;
+        } );
+
+      return cls;
+    }
+
+
+
+    // registerGridFunction
+    // --------------------
+
+    template< class GridFunction >
+    pybind11::class_< GridFunction > registerGridFunction ( pybind11::handle scope, const char *clsName = "GridFunction" )
+    {
+      typedef typename GridFunction::LocalFunctionType LocalFunction;
+      typedef typename LocalFunction::EntityType Entity;
+
+      pybind11::class_< GridFunction > cls( scope, clsName );
+
+      registerLocalFunction< LocalFunction >( cls );
+
+      cls.def_property_readonly_statc( "dimRange", [] () { return GridFunction::RangeType::dimension; } );
+      cls.def( "localFunction", [] ( const GridFunction &gf, const Entity &entity ) -> LocalFunction {
+          return gf.localFunction( entity );
+        }, pybind11::keep_alive< 0, 1 >(), pybind11::keep_alive< 0, 2 >() );
+
+      return cls;
+    }
+
+
+    /***********************************************************************/
+
     template< class GridFunction >
     struct RegisterGridFunction;
 
@@ -66,12 +117,6 @@ namespace Dune
       template< int dimR >
       using GridFunction = GF< GridPart, dimR, RF >;
     };
-
-    template< class GridFunction, class... Args >
-    void registerGridFunction ( Args &&... args )
-    {
-      RegisterGridFunction< GridFunction >::apply( std::forward< Args >( args )... );
-    }
 
     template< class GridPart, int... i >
     void registerGridFunctionInterface ( pybind11::module module, Std::integer_sequence< int, i... >, const std::string &name = "GridFunction" )

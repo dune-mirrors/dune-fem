@@ -6,6 +6,7 @@ set(HEADERS
   pygrid.hh
   pygridfunction.hh
   pyspace.hh
+  pyvtk.hh
   vtk.hh
 )
 

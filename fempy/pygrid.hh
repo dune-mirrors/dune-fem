@@ -7,11 +7,14 @@
 
 #include <dune/common/std/utility.hh>
 
+#include <dune/grid/io/file/vtk/vtkwriter.hh>
+
 #include <dune/fempy/grid.hh>
 #include <dune/fempy/pybind11/functional.h>
 #include <dune/fempy/pybind11/pybind11.h>
 #include <dune/fempy/pybind11/stl.h>
 #include <dune/fempy/pygridfunction.hh>
+#include <dune/fempy/pyvtk.hh>
 #include <dune/fempy/vtk.hh>
 
 namespace Dune
@@ -306,6 +309,11 @@ namespace Dune
       registerGridFunctionInterface< GridPart >( module, Std::make_integer_sequence< int, 10 >() );
 //      registerGridFunctionExpression< GridPart >( Std::make_integer_sequence< int, 10 >() );
 //      registerLocalGridFunctionExpression< GridPart >( Std::make_integer_sequence< int, 10 >() );
+
+      registerVTKWriter< VTKWriter< typename GridPart::GridViewType > >( module );
+      grid.def( "vtkWriter", [] ( const G &grid ) {
+          return new VTKWriter< typename GridPart::GridViewType >( static_cast< typename GridPart::GridViewType >( *grid.gridPart() ) );
+        }, pybind11::keep_alive< 0, 1 >() );
 
       typedef VTKOutput< GridPart > VTK;
 
