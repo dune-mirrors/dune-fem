@@ -23,15 +23,12 @@ namespace Dune
     class CombinedDofConversionUtility< ContainedMapper, N, PointBased >
     : public PointBasedDofConversionUtility< N >
     {
-    public:
-      typedef ContainedMapper ContainedMapperType;
-
-    private:
       typedef PointBasedDofConversionUtility< N >  BaseType;
 
     public:
-      inline CombinedDofConversionUtility ( const ContainedMapperType & mapper,
-                                            const int numComponents )
+      typedef ContainedMapper ContainedMapperType;
+
+      CombinedDofConversionUtility ( const ContainedMapperType & mapper, const int numComponents )
       : BaseType( numComponents )
       {}
     };
@@ -43,28 +40,23 @@ namespace Dune
     public:
       typedef ContainedMapper ContainedMapperType;
 
-    protected:
-      const ContainedMapperType &mapper_;
-
-    public:
       /** \brief constructor
        *
        *  \param[in]  mapper  mapper of the contained space
        *  \param[in]  size    number of global DoFs per component
        */
-      inline CombinedDofConversionUtility ( const ContainedMapperType &mapper,
-                                            int size )
+      CombinedDofConversionUtility ( const ContainedMapperType &mapper, int size )
       : mapper_( mapper )
       {}
 
       //! Find out what type of policy this is.
-      inline static DofStoragePolicy policy ()
+      static DofStoragePolicy policy ()
       {
         return VariableBased;
       }
 
       //! Set new size after adaptation.
-      inline void newSize ( int size )
+      void newSize ( int size )
       {}
 
       //! Component which the actual base function index gives a contribution
@@ -88,7 +80,9 @@ namespace Dune
       }
 
     protected:
-      inline int containedSize () const
+      const ContainedMapperType &mapper_;
+
+      int containedSize () const
       {
         return mapper_.size();
       }
@@ -100,53 +94,43 @@ namespace Dune
     class CombinedSubMapper
     : public Fem :: IndexMapperInterface< CombinedSubMapper< MapperImp, N, policy > >
     {
+      typedef CombinedSubMapper< MapperImp, N , policy > ThisType;
+
     public:
-      //- original mapper
+      // original mapper
       typedef MapperImp ContainedMapperType;
+      typedef CombinedDofConversionUtility< ContainedMapperType, N, policy > DofConversionType;
 
-    private:
-      typedef CombinedSubMapper< ContainedMapperType, N , policy > ThisType;
-
-    public:
-      typedef CombinedDofConversionUtility< ContainedMapperType, N, policy >   DofConversionType;
-
-    public:
-      //- Public methods
-      CombinedSubMapper ( const ContainedMapperType& mapper,
-                          const unsigned int component )
+      CombinedSubMapper ( const ContainedMapperType& mapper, const unsigned int component )
       : mapper_( mapper ),
         component_( component ),
-        utilGlobal_(mapper_,
-                    policy  == PointBased ?
-                    N :  mapper.size() )
+        utilGlobal_(mapper_, policy  == PointBased ? N : mapper.size() )
       {
         assert(component_ < N);
       }
 
-      CombinedSubMapper(const ThisType& other) :
-        mapper_(other.mapper_),
-        component_(other.component_),
-        utilGlobal_(other.utilGlobal_)
-      {
-        assert(component_ < N);
-      }
+      CombinedSubMapper(const ThisType& ) = default;
+
+      ThisType& operator=(const ThisType& ) = delete;
 
       //! Total number of degrees of freedom
-      inline unsigned int size () const {
+      unsigned int size () const
+      {
         return mapper_.size();
       }
-      inline unsigned int range () const {
+
+      unsigned int range () const
+      {
         return size() * N;
       }
-      inline const unsigned int operator[] ( unsigned int index ) const
+
+      const unsigned int operator[] ( unsigned int index ) const
       {
         utilGlobal_.newSize( mapper_.size() );
         return utilGlobal_.combinedDof(index, component_);
       }
 
     private:
-      ThisType& operator=(const ThisType& other);
-      //- Data members
       const ContainedMapperType& mapper_;
       const unsigned int component_;
       mutable DofConversionType utilGlobal_;

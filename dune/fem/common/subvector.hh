@@ -1,16 +1,8 @@
 #ifndef DUNE_FEM_COMMON_SUBVECTOR_HH
 #define DUNE_FEM_COMMON_SUBVECTOR_HH
 
-#include <cmath>
-#include <complex>
-#include <cstddef>
-#include <cstdlib>
-#include <cstring>
-#include <limits>
-#include <vector>
-
-#include <dune/common/exceptions.hh>
 #include <dune/common/densevector.hh>
+#include <dune/common/ftraits.hh>
 
 namespace Dune
 {
@@ -42,15 +34,11 @@ namespace Dune
   namespace Fem
   {
 
-    // DenseSubVector
-    // ---------
-
     template< class V >
     class DenseSubVector : public DenseVector< DenseSubVector< V > >
     {
       typedef DenseSubVector< V > This;
       typedef DenseVector< DenseSubVector < V > > Base;
-
 
     public:
       typedef typename Base::size_type size_type;
@@ -71,29 +59,19 @@ namespace Dune
 
       using Base::operator=;
 
-      //==== forward some methods of std::vector
-      /** \brief Number of elements for which memory has been allocated.
-
-          capacity() is always greater than or equal to size().
-       */
-
       void resize ( size_type ) {}
 
-      //==== make this thing a vector
       size_type size () const { return size_; }
 
       value_type &operator[] ( size_type i ) { return v_[ i + offset_ ]; }
       const value_type &operator[] ( size_type i ) const { return v_[ i + offset_ ]; }
+
     private:
       typename DenseMatVecTraits< This > :: container_type &v_;
       const size_type size_, offset_;
     };
 
-    /** @} end documentation */
-
   } // namespace Fem
-
-
 } // namespace Dune
 
 #endif //#ifndef DUNE_FEM_COMMON_SUBVECTOR_HH
