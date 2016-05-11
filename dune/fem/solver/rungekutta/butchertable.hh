@@ -1,7 +1,8 @@
 #ifndef DUNE_FEM_SOLVER_RUNGEKUTTA_BUTCHERTABLE_HH
 #define DUNE_FEM_SOLVER_RUNGEKUTTA_BUTCHERTABLE_HH
 
-//- dune-common includes
+#include <algorithm>
+
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/dynvector.hh>
 

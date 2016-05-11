@@ -2,6 +2,7 @@
 #define DUNE_FEM_LOCALMASSMATRIX_HH
 
 //- dune-common includes
+#include <dune/common/dynvector.hh>
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/fmatrix.hh>
 

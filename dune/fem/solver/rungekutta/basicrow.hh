@@ -2,9 +2,12 @@
 #define DUNE_FEM_SOLVER_RUNGEKUTTA_BASICROW_HH
 
 //- system includes
+#include <algorithm>
+#include <cmath>
 #include <cassert>
 #include <limits>
 #include <sstream>
+#include <string>
 #include <vector>
 
 //- dune-common includes

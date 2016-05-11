@@ -3,6 +3,7 @@
 
 //- system includes
 #include <cassert>
+#include <cmath>
 #include <limits>
 #include <sstream>
 #include <vector>

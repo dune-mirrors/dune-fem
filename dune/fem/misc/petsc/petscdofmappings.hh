@@ -1,21 +1,19 @@
 #ifndef DUNE_FEM_PETSCDOFMAPPING_HH
 #define DUNE_FEM_PETSCDOFMAPPING_HH
 
-#include <vector>
-#include <utility>
-#include <algorithm>
 #include <iostream>
+#include <map>
+#include <vector>
 
+#include <dune/common/dynvector.hh>
 
 #include <dune/fem/space/finitevolume.hh>
-#include <dune/fem/storage/vector.hh>
 #include <dune/fem/function/vectorfunction.hh>
 #include <dune/fem/misc/mpimanager.hh>
 
 #if HAVE_PETSC
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
-// #include <dune/fem/gridpart/common/persistentindexset.hh>
 
 namespace Dune
 {
@@ -37,10 +35,8 @@ namespace Dune
      */
     template< class SlaveDofs >
     class PetscDofMappings
-      // : public PersistentIndexSetBase< typename SlaveDofs::GridPartType::GridType, PetscDofMappings<  SlaveDofs > >
     {
       typedef PetscDofMappings< SlaveDofs > ThisType;
-      // typedef PersistentIndexSetBase< typename SlaveDofs::GridPartType::GridType, PetscDofMappings<  SlaveDofs > > BaseType;
 
     public:
       typedef SlaveDofs  SlaveDofsType;
@@ -50,10 +46,9 @@ namespace Dune
       typedef typename DofMappingType::value_type      DofType;
 
       typedef PetscInt  GlobalDofType ;
-      typedef DynamicVector< GlobalDofType >           GlobalDofMappingType ;
+      typedef Dune::DynamicVector< GlobalDofType >           GlobalDofMappingType ;
 
       PetscDofMappings ( SlaveDofs *slaveDofs )
-        // : BaseType( slaveDofs->space().gridPart().grid() ),
       :   slaveDofs_( *slaveDofs ),
           numOwnedDofBlocks_( 0 ),
           numSlaveBlocks_( 0 ),

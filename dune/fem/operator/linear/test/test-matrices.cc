@@ -2,23 +2,20 @@
 #include <config.h>
 #endif
 
-// Includes from the IOStream Library
-// ----------------------------------
-
+#include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <sstream>
+#include <utility>
+#include <vector>
 
+#include <dune/common/dynvector.hh>
 
-// Includes from DUNE-FEM
-// ----------------------
-
-// include Lagrange discrete function space
 #include <dune/fem/gridpart/idgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
-#include <dune/fem/space/lagrange.hh>
-
 #include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/operator/common/temporarylocalmatrix.hh>
+#include <dune/fem/space/lagrange.hh>
 
 typedef Dune::GridSelector::GridType GridType;
 

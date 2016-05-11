@@ -6,6 +6,8 @@
 #include <ostream>
 #include <string>
 
+#include <dune/common/dynvector.hh>
+
 // dune-fem includes
 #include <dune/fem/common/referencevector.hh>
 #include <dune/fem/function/common/dofiterator.hh>

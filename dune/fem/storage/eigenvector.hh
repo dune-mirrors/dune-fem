@@ -136,16 +136,6 @@ namespace Dune
       DofStorageType fields_;
     };
 
-
-
-    namespace Capabilities
-    {
-      template< class Field >
-      struct HasLeakPointer< EigenVector< Field > >
-      : public MetaBool< true >
-      {};
-    }
-
   }
 }
 #endif

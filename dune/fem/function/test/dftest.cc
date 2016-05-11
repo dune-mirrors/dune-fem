@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cstdlib>
 
+#include <dune/common/dynvector.hh>
+
 #include <dune/fem/test/testgrid.hh>
 #include <dune/fem/misc/gridwidth.hh>
 
@@ -14,7 +16,6 @@
 #include <dune/fem/space/common/adaptmanager.hh>
 
 #include <dune/fem/function/blockvectorfunction.hh>
-#include <dune/fem/storage/vector.hh>
 #include <dune/fem/function/vectorfunction.hh>
 #include <dune/fem/function/vectorfunction/managedvectorfunction.hh>
 #include <dune/fem/function/blockvectordiscretefunction.hh>
@@ -141,8 +142,8 @@ int main(int argc, char ** argv)
     Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > adfp ("pointer", space, advec.data() );
     checkFunction( adfp, ref );
 
-    Dune::Fem::DynamicVector< double > vec( space.size() );
-    typedef Dune::Fem::VectorDiscreteFunction< DiscreteFunctionSpaceType, Dune::Fem :: DynamicVector< double > > VectorDiscreteFunctionType;
+    Dune::DynamicVector< double > vec( space.size() );
+    typedef Dune::Fem::VectorDiscreteFunction< DiscreteFunctionSpaceType, Dune::DynamicVector< double > > VectorDiscreteFunctionType;
     VectorDiscreteFunctionType vdf ("vector", space, vec);
     checkFunction( vdf, ref );
 

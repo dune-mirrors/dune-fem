@@ -524,7 +524,7 @@ namespace Fem {
     typedef BlockVector< DofBlock >                               ArrayType;
 #else
     // fallback in case dune-istl is not present
-    typedef DynamicVector< DofBlock >                             ArrayType;
+    typedef Dune::DynamicVector< DofBlock >                       ArrayType;
 #endif
     typedef BlockVectorInterface< ISTLBlockVector< DofBlock >, typename DofBlock :: value_type  >  BaseType;
 

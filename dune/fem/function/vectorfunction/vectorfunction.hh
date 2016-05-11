@@ -10,7 +10,6 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
 #include <dune/fem/storage/envelope.hh>
-#include <dune/fem/storage/vector.hh>
 
 namespace Dune
 {
@@ -91,19 +90,6 @@ namespace Dune
       // dof vector that stores reference to vector
       DofVectorType dofVector_;
     };
-
-
-
-    namespace Capabilities
-    {
-
-      template< class DiscreteFunctionSpace, class DofVector >
-      struct HasLeakPointer
-        < Fem :: VectorDiscreteFunction< DiscreteFunctionSpace, DofVector > >
-      : public HasLeakPointer< DofVector >
-      {};
-
-    }
 
   } // namespace Fem
 } // namespace Dune

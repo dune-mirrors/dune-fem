@@ -2,10 +2,11 @@
 #define DUNE_FEM_SOLVER_RUNGEKUTTA_SEMIIMPLICIT_HH
 
 //- system includes
-#include <sstream>
 #include <vector>
 
 //- dune-common includes
+#include <dune/common/dynmatrix.hh>
+#include <dune/common/dynvector.hh>
 #include <dune/common/exceptions.hh>
 
 //- dune-fem includes

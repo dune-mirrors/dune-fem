@@ -19,7 +19,7 @@ int main () { return 0;}
 #if defined USE_BLOCKVECTORFUNCTION
 #include <dune/fem/function/blockvectorfunction.hh>
 #elif defined USE_VECTORFUNCTION
-#include <dune/fem/storage/vector.hh>
+#include <dune/common/dynvector.hh>
 #include <dune/fem/function/vectorfunction.hh>
 #elif defined USE_BLOCKVECTORDISCRETEFUNCTION
 #include <dune/fem/function/blockvectordiscretefunction.hh>
@@ -79,9 +79,9 @@ typedef Fem :: ManagedDiscreteFunction
   < Fem :: VectorDiscreteFunction
     < DiscreteFunctionSpaceType,
   #if defined USE_DOFTYPE_INT && not defined USE_COMPLEX   // note: no conversion from int to std::complex implemented in std
-        Fem :: DynamicVector< int >
+        Dune :: DynamicVector< int >
   #else
-        Fem :: DynamicVector< FunctionSpaceType :: RangeFieldType >
+        Dune :: DynamicVector< FunctionSpaceType :: RangeFieldType >
   #endif
   > >  DiscreteFunctionType;
 #elif defined USE_BLOCKVECTORDISCRETEFUNCTION

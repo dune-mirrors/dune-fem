@@ -71,7 +71,6 @@ typedef DiscontinuousGalerkinSpace<FuncSpace, GridPartType,
 
 //! define the type of discrete function we are using , see
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
-//typedef ManagedDiscreteFunction< VectorDiscreteFunction< DiscreteFunctionSpaceType, DynamicVector< double > > > DiscreteFunctionType;
 
 typedef DofManager< MyGridType > DofManagerType;
 

@@ -11,7 +11,7 @@
 #if defined USE_BLOCKVECTORFUNCTION
 #include <dune/fem/function/blockvectorfunction.hh>
 #elif defined USE_VECTORFUNCTION
-#include <dune/fem/storage/vector.hh>
+#include <dune/common/dynvector.hh>
 #include <dune/fem/function/vectorfunction.hh>
 #else
 #include <dune/fem/function/adaptivefunction.hh>
@@ -40,7 +40,7 @@ typedef Fem :: ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType >
 typedef Fem :: ManagedDiscreteFunction
   < Fem::VectorDiscreteFunction
     < DiscreteFunctionSpaceType,
-      Fem::DynamicVector< FunctionSpaceType :: RangeFieldType > > >
+      Dune::DynamicVector< FunctionSpaceType :: RangeFieldType > > >
   DiscreteFunctionType;
 #else
 typedef Fem :: AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
