@@ -3,144 +3,167 @@
 
 #if HAVE_EIGEN
 
-#include <dune/fem/misc/metaprogramming.hh>
-#include <dune/fem/storage/vector.hh>
+#include <algorithm>
+#include <iostream>
+
+#include <dune/common/densevector.hh>
+#include <dune/common/ftraits.hh>
 
 #include <Eigen/Dense>
-
-
-/*! @addtogroup VectorClasses
-    @{
-*/
 
 namespace Dune
 {
   namespace Fem
   {
-    /** \class EigenVector
-     *  \ingroup Vector
-     *  \brief An implementation of VectorInterface which uses Eigen::Matrix<Field, Eigen::Dynamic, 1> to provide the fields.
-     */
-    template< class Field >
-    class EigenVector
-    : public VectorDefault< Field, EigenVector< Field > >
+
+    template< class K > class EigenVector;
+    template< class K >
+    struct DenseMatVecTraits< EigenVector< K > >
     {
-      typedef EigenVector< Field > ThisType;
-      typedef VectorDefault< Field, ThisType > BaseType;
+      typedef EigenVector< K > derived_type;
+      typedef Eigen::Matrix< K, Eigen::Dynamic, 1 > container_type;
+      typedef K value_type;
+      typedef unsigned int size_type;
+    };
+
+    template< class K >
+    struct FieldTraits< EigenVector< K > >
+    {
+      typedef typename FieldTraits< K >::field_type field_type;
+      typedef typename FieldTraits< K >::real_type real_type;
+    };
+
+    /** \brief An implementation of DenseVector which uses Eigen::Matrix<K, Eigen::Dynamic, 1> to provide the fields
+     *
+     * \tparam K is the field type (use float, double, complex, etc)
+     */
+    template< class K >
+    class EigenVector : public DenseVector< EigenVector< K > >
+    {
+      typedef DenseVector< EigenVector< K > > Base;
 
     public:
-      //! Field type of the vector
-      typedef Field FieldType;
+      typedef typename Base::size_type size_type;
+      typedef typename Base::value_type value_type;
 
-      //! DOFs storage type
-      typedef Eigen::Matrix<Field, Eigen::Dynamic, 1> DofStorageType;
-
-      using BaseType :: assign;
+      typedef typename value_type FieldType;
+      typedef typename Base::container_type DofStorageType;
 
       //! Constructor setting up a vector of a specified size
-      explicit EigenVector ( unsigned int size = 0 )
-      : fields_( size )
+      explicit EigenVector( size_type size = 0 )
+      : data_( size )
       {}
 
-      //! Constructor setting up a vector iniitialized with a constant value
-      EigenVector ( unsigned int size, const FieldType &s )
-      : fields_( size )
+      //! Constructor setting up a vector initialized with a constant value
+      EigenVector( size_type size, const value_type& s )
+      : data_( size )
       {
-        assign( s );
+        std::fill( data_.begin(), data_.end(), s );
       }
 
       //! Copy constructor setting up a vector with the data of another one
       template< class T >
-      EigenVector ( const VectorInterface< T > &v )
-      : fields_()
+      EigenVector( const DenseVector< T >& v )
+      : data_( v.size() )
       {
-        assign( v );
+        std::copy( v.begin(), v.end(), data_.begin() );
       }
 
-      //! Copy constructor setting up a vector with the data of another one (of the same type)
-      EigenVector ( const ThisType &v )
-      : fields_()
+      //! Copy assignment operator
+      EigenVector &operator=( const EigenVector& other )
       {
-        assign( v );
-      }
-
-      /** \copydoc Dune::Fem::VectorInterface::operator=(const ThisType &v) */
-      ThisType &operator= ( const ThisType &v )
-      {
-        assign( v );
+        data_.resize( other.size() );
+        std::copy( other.begin(), other.end(), data_.begin() );
         return *this;
       }
 
-      /** \copydoc Dune::Fem::VectorInterface::operator[](unsigned int index) */
-      const FieldType &operator[] ( unsigned int index ) const
+      const value_type& operator[]( size_type index ) const
       {
-        return fields_( index );
+        return data_( index );
       }
 
-      /** \copydoc Dune::Fem::VectorInterface::operator[](unsigned int index) */
-      FieldType &operator[] ( unsigned int index )
+      value_type &operator[]( size_type index )
       {
-        return fields_( index );
-      }
-
-      //! Obtain coefficients
-      const DofStorageType &coefficients () const
-      {
-        return fields_;
+        return data_( index );
       }
 
       //! Obtain coefficients
-      DofStorageType &coefficients ()
+      const DofStorageType& coefficients() const
       {
-        return fields_;
+        return data_;
+      }
+
+      //! Obtain coefficients
+      DofStorageType& coefficients()
+      {
+        return data_;
       }
 
       //! Obtain pointer to data
-      const FieldType *leakPointer () const
+      const value_type* leakPointer() const
       {
-        return fields_.memptr();
+        return data_.memptr();
       }
 
       //! Obtain pointer to data
-      FieldType *leakPointer ()
+      value_type* leakPointer()
       {
-        return fields_.memptr();
+        return data_.memptr();
       }
 
       //! Allocate memory
-      void reserve ( unsigned int newSize )
+      void reserve( size_type newSize )
       {
-        fields_.resize( newSize );
+        data_.resize( newSize );
       }
 
       //! Resize vector
-      void resize ( unsigned int newSize )
+      void resize( size_type newSize )
       {
-        fields_.resize( newSize );
+        data_.resize( newSize );
       }
 
-      //! Resize vector and fill with the defaultValue
-      void resize ( unsigned int newSize, const FieldType &defaultValue )
+      //! Resize vector and initialize
+      void resize( size_type newSize, const value_type& s )
       {
-        fields_.resize( newSize );
-        assign( defaultValue );
+        data_.resize( newSize );
+        std::fill( data_.begin(), data_.end(), s );
       }
 
-      /** \copydoc Dune::Fem::VectorInterface::size() */
-      unsigned int size () const
+      size_type size() const
       {
-        return fields_.size();
+        return data_.size();
       }
 
     private:
-      DofStorageType fields_;
+      DofStorageType data_;
     };
+
+    /** \brief Read a EigenVector from an input stream
+     *  \relates EigenVector
+     *
+     *  \note This operator is STL compilant, i.e., the content of v is only
+     *        changed if the read operation is successful.
+     *
+     *  \param[in]  in  std::istream to read from
+     *  \param[out] v   EigenVector to be read
+     *
+     *  \returns the input stream (in)
+     */
+    template< class K >
+    inline std::istream& operator>>( std::istream& in, EigenVector< K >& v )
+    {
+      EigenVector< K > w(v);
+      for( typename EigenVector< K >::size_type i = 0; i < w.size(); ++i )
+        in >> w[ i ];
+      if(in)
+        v = w;
+      return in;
+    }
 
   }
 }
+
 #endif
 
-//! @}
-
-#endif // EIGENVECTOR_HH
-
+#endif
