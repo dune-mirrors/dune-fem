@@ -55,7 +55,7 @@ namespace Dune
 
       registerLocalFunction< LocalFunction >( cls );
 
-      cls.def_property_readonly_statc( "dimRange", [] () { return GridFunction::RangeType::dimension; } );
+      cls.def_property_readonly_static( "dimRange", [] () { return GridFunction::RangeType::dimension; } );
       cls.def( "localFunction", [] ( const GridFunction &gf, const Entity &entity ) -> LocalFunction {
           return gf.localFunction( entity );
         }, pybind11::keep_alive< 0, 1 >(), pybind11::keep_alive< 0, 2 >() );
@@ -63,6 +63,42 @@ namespace Dune
       return cls;
     }
 
+
+
+    // PyFunction
+    // ----------
+
+    template< class Domain, class Range >
+    struct PyFunction;
+
+    template< class DF, int dimD, class RF, int dimR >
+    struct PyFunction< FieldVector< DF, dimD >, FieldVector< RF, dimR > >
+    {
+      typedef Fem::FunctionSpace< DF, RF, dimD, dimR > FunctionSpaceType;
+
+      typedef typename FunctionSpaceType::DomainType DomainType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+      explicit PyFunction ( pybind11::function evaluate )
+        : evaluate_( std::move( evaluate ) )
+      {}
+
+      void evaluate ( const DomainType &x, RangeType &value ) const
+      {
+        pybind11::gil_scoped_acquire acq;
+        pybind11::object v( evaluate_.call( x ) );
+        value = v.template cast< RangeType >();
+      }
+
+      void jacobian ( const DomainType &x, JacobianRangeType &value ) const
+      {
+        DUNE_THROW( NotImplemented, "PyFunction::jacobian not implemented, yet." );
+      }
+
+    private:
+      pybind11::function evaluate_;
+    };
 
     /***********************************************************************/
 
