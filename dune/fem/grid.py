@@ -10,7 +10,6 @@ Examples:
     >>> import pydunefem
     >>> print("import this module"); import grid
     import this module...
-    >>> import gridfunction as gf
 
     >>> # just get the grid (only for testing - not used)
     >>> grid1 = dune.grid.leafGrid(str("../data/unitcube-1d.dgf"), str("OneDGrid") )
@@ -25,12 +24,9 @@ __metaclass__ = type
 
 import sys
 
-from functools import partial
-from functools import update_wrapper
 from types import ModuleType
 
 from ..generator import generator
-from . import gridfunction
 
 class Generator(generator.Generator):
     def modifyIncludes(self, includes):
@@ -39,66 +35,10 @@ class Generator(generator.Generator):
         return "Dune::Fem::AdaptiveLeafGridPart<" + typeName + ">";
 myGenerator = Generator("Grid")
 
-def getGlobalGridFunction(m,name,func):
-    """NEW
-       Define a global grid function.
-    """
-    funcR = { 1: m.GridFunctionExpression1,
-              2: m.GridFunctionExpression2,
-              3: m.GridFunctionExpression3,
-              4: m.GridFunctionExpression4,
-              5: m.GridFunctionExpression5,
-              6: m.GridFunctionExpression6,
-              7: m.GridFunctionExpression7,
-              8: m.GridFunctionExpression8,
-              9: m.GridFunctionExpression9 };
-    dimR = func.dimR
-    return funcR[dimR](name,func)
-def getLocalGridFunction(m,name,func):
-    """NEW
-       Define a local grid function.
-    """
-    funcR = { 1: m.LocalGridFunctionExpression1,
-              2: m.LocalGridFunctionExpression2,
-              3: m.LocalGridFunctionExpression3,
-              4: m.LocalGridFunctionExpression4,
-              5: m.LocalGridFunctionExpression5,
-              6: m.LocalGridFunctionExpression6,
-              7: m.LocalGridFunctionExpression7,
-              8: m.LocalGridFunctionExpression8,
-              9: m.LocalGridFunctionExpression9 };
-    dimR = func.dimR
-    return funcR[dimR](name,func)
-def getGlobal(self,name,func):
-    return getGlobalGridFunction(self._module,name,func)
-def getLocal(self,name,func):
-    return getLocalGridFunction(self._module,name,func)
-update_wrapper(getGlobal,getGlobalGridFunction)
-update_wrapper(getLocal,getLocalGridFunction)
-
-def vtkOutput(self):
-  return self._module.VTKOutput(self)
-
-#def interpolate(self, gridfunction, name, **parameters):
-#    """NEW
-#       Interpolates a grid function and returns it."""
-#    from . import scheme
-#
-#    interScheme = scheme.scheme("InterpolationScheme", self, gridfunction, name, **parameters)
-#    interScheme.solve()
-#    return interScheme.solution()
-
 def getGridType(grid, **parameters):
     """Return the grid type (using a function from database.py).
     """
     return myGenerator.getTypeName(grid, **parameters)
-
-def addMethodsToGridModule(module):
-    bind_getGlobal = partial(getGlobalGridFunction,module)
-    bind_getLocal  = partial(getLocalGridFunction,module)
-    setattr(module, "getGlobal", bind_getGlobal)
-    setattr(module, "getLocal", bind_getLocal)
-
 
 def get(grid, **parameters):
     """Create a grid module using the grid-database.
@@ -133,16 +73,10 @@ def get(grid, **parameters):
 
     """
     module = myGenerator.getModule(grid, **parameters)
-    addMethodsToGridModule(module)
     return module
 
 def addMethodsToLeafGrid(module,obj):
-    #setattr(obj, "gridTypeName", "LeafGrid< " + module.gridPartTypeName + " >")
     setattr(obj, "_module", module)
-    obj.getGlobal = getGlobal
-    obj.getLocal = getLocal
-    #obj.interpolate = interpolate
-    obj.vtkOutput = vtkOutput
 
 def leafGrid(dgf, grid, **parameters):
     """Get a LeafGrid
