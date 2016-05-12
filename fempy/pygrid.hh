@@ -274,6 +274,25 @@ namespace Dune
 
 
 
+    // makePyLocalGridFunction
+    // -----------------------
+
+    template< class GridPart, int dimRange >
+    auto makePyLocalGridFunction ( const GridPart &gridPart, std::string name, pybind11::function evaluate, std::integral_constant< int, dimRange > )
+    {
+      typedef typename GridPart::template Codim< 0 >::EntityType Entity;
+      typedef typename GridPart::template Codim< 0 >::GeometryType::LocalCoordinate Coordinate;
+      // Warning: do not pass entity by reference, here. It shares the address
+      //          with the local function and will be passed as a local function in Python
+      return simpleGridFunction( std::move( name ), gridPart, [ evaluate ] ( Entity entity, const Coordinate &x ) {
+          pybind11::gil_scoped_acquire acq;
+          pybind11::object v( evaluate.call( entity, x ) );
+          return v.template cast< FieldVector< double, dimRange > >();
+        } );
+    }
+
+
+
     // registerPyGlobalGridFunction
     // ----------------------------
 
@@ -289,6 +308,25 @@ namespace Dune
     void registerPyGlobalGridFunction ( pybind11::handle scope, const std::string &name, std::integer_sequence< int, dimRange... > )
     {
       std::ignore = std::make_tuple( (registerPyGlobalGridFunction< GridPart >( scope, name, std::integral_constant< int, dimRange >() ), dimRange)... );
+    };
+
+
+
+    // registerPyLocalGridFunction
+    // ---------------------------
+
+    template< class GridPart, int dimRange >
+    void registerPyLocalGridFunction ( pybind11::handle scope, const std::string &name, std::integral_constant< int, dimRange > )
+    {
+      typedef decltype( makePyLocalGridFunction( std::declval< GridPart >(), std::declval< std::string >(), std::declval< pybind11::function >(), std::integral_constant< int, dimRange >() ) ) GridFunction;
+      static const std::string clsName = name + std::to_string( dimRange );
+      registerGridFunction< GridFunction >( scope, clsName.c_str() );
+    };
+
+    template< class GridPart, int... dimRange >
+    void registerPyLocalGridFunction ( pybind11::handle scope, const std::string &name, std::integer_sequence< int, dimRange... > )
+    {
+      std::ignore = std::make_tuple( (registerPyLocalGridFunction< GridPart >( scope, name, std::integral_constant< int, dimRange >() ), dimRange)... );
     };
 
 
@@ -337,24 +375,51 @@ namespace Dune
       grid.def( "size", &G::size );
 
       const int maxDimRange = 10;
-      registerPyGlobalGridFunction< GridPart >( grid, "GlobalFunction", std::make_integer_sequence< int, maxDimRange+1 >() );
+      registerPyGlobalGridFunction< GridPart >( grid, "GlobalGridFunction", std::make_integer_sequence< int, maxDimRange+1 >() );
+      registerPyLocalGridFunction< GridPart >( grid, "LocalGridFunction", std::make_integer_sequence< int, maxDimRange+1 >() );
 
-      typedef std::function< pybind11::object( pybind11::object, std::string, pybind11::function ) > DispatchGlobalGridFunction;
+      typedef std::function< pybind11::object( const GridPart &, std::string, pybind11::function, pybind11::object ) > DispatchGridFunction;
       auto makeDispatchGlobalGridFunction = [] ( auto dimRange ) {
-          return [ dimRange ] ( pybind11::object g, std::string name, pybind11::function evaluate ) {
-              const GridPart &gridPart = *g.cast< const G & >().gridPart();
-              return pybind11::cast( makePyGlobalGridFunction( gridPart, std::move( name ), std::move( evaluate ), dimRange ), pybind11::return_value_policy::move, g );
+          return [ dimRange ] ( const GridPart &gridPart, std::string name, pybind11::function evaluate, pybind11::object parent ) {
+              return pybind11::cast( makePyGlobalGridFunction( gridPart, std::move( name ), std::move( evaluate ), dimRange ), pybind11::return_value_policy::move, parent );
             };
         };
-      auto dispatchGlobalGridFunction = arrayFromIntegerSequence< DispatchGlobalGridFunction >( makeDispatchGlobalGridFunction, std::make_integer_sequence< int, maxDimRange+1 >() );
+      auto dispatchGlobalGridFunction = arrayFromIntegerSequence< DispatchGridFunction >( makeDispatchGlobalGridFunction, std::make_integer_sequence< int, maxDimRange+1 >() );
 
-      grid.def( "globalFunction", [ dispatchGlobalGridFunction ] ( pybind11::object g, std::string name, pybind11::function evaluate ) {
+      grid.def( "globalGridFunction", [ dispatchGlobalGridFunction ] ( pybind11::object g, std::string name, pybind11::function evaluate ) {
+          const GridPart &gridPart = *g.cast< const G & >().gridPart();
           typename GridPart::template Codim< 0 >::GeometryType::GlobalCoordinate x( 0 );
+          pybind11::gil_scoped_acquire acq;
           pybind11::object v( evaluate.call( x ) );
           const int dimRange = len( v );
           if( (dimRange > maxDimRange) )
-            DUNE_THROW( NotImplemented, "globalFunction not implemented for dimRange = " + std::to_string( dimRange ) );
-          return dispatchGlobalGridFunction[ dimRange ]( std::move( g ), std::move( name ), std::move( evaluate ) );
+            DUNE_THROW( NotImplemented, "globalGridFunction not implemented for dimRange = " + std::to_string( dimRange ) );
+          return dispatchGlobalGridFunction[ dimRange ]( gridPart, std::move( name ), std::move( evaluate ), std::move( g ) );
+        } );
+
+      auto makeDispatchLocalGridFunction = [] ( auto dimRange ) {
+          return [ dimRange ] ( const GridPart &gridPart, std::string name, pybind11::function evaluate, pybind11::object parent ) {
+              return pybind11::cast( makePyLocalGridFunction( gridPart, std::move( name ), std::move( evaluate ), dimRange ), pybind11::return_value_policy::move, parent );
+            };
+        };
+      auto dispatchLocalGridFunction = arrayFromIntegerSequence< DispatchGridFunction >( makeDispatchLocalGridFunction, std::make_integer_sequence< int, maxDimRange+1 >() );
+
+      grid.def( "localGridFunction", [ dispatchLocalGridFunction ] ( pybind11::object g, std::string name, pybind11::function evaluate ) {
+          const GridPart &gridPart = *g.cast< const G & >().gridPart();
+          int dimRange = -1;
+          if( gridPart.template begin< 0 >() != gridPart.template end< 0 >() )
+          {
+            typename GridPart::template Codim< 0 >::GeometryType::LocalCoordinate x( 0 );
+            pybind11::gil_scoped_acquire acq;
+            pybind11::object v( evaluate.call( *gridPart.template begin< 0 >(), x ) );
+            dimRange = len( v );
+          }
+          dimRange = gridPart.comm().max( dimRange );
+          if( dimRange < 0 )
+            DUNE_THROW( InvalidStateException, "Cannot create local grid function on empty grid" );
+          if( dimRange > maxDimRange )
+            DUNE_THROW( NotImplemented, "localGridFunction not implemented for dimRange = " + std::to_string( dimRange ) );
+          return dispatchLocalGridFunction[ dimRange ]( gridPart, std::move( name ), std::move( evaluate ), std::move( g ) );
         } );
 
       registerGridFunctionInterface< GridPart >( module, Std::make_integer_sequence< int, 10 >() );
