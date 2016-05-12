@@ -25,10 +25,6 @@
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/gridpart/common/indexset.hh>
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 #include <dune/grid/common/datahandleif.hh>
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/common/ldbhandleif.hh>
