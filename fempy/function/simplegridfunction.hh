@@ -75,7 +75,7 @@ namespace Dune
       const EntityType &entity () const { return entity_; }
 
     private:
-      EntityType entity_;
+      const EntityType &entity_;
       LocalEvaluator localEvaluator_;
       int order_;
     };

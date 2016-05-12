@@ -282,9 +282,7 @@ namespace Dune
     {
       typedef typename GridPart::template Codim< 0 >::EntityType Entity;
       typedef typename GridPart::template Codim< 0 >::GeometryType::LocalCoordinate Coordinate;
-      // Warning: do not pass entity by reference, here. It shares the address
-      //          with the local function and will be passed as a local function in Python
-      return simpleGridFunction( std::move( name ), gridPart, [ evaluate ] ( Entity entity, const Coordinate &x ) {
+      return simpleGridFunction( std::move( name ), gridPart, [ evaluate ] ( const Entity &entity, const Coordinate &x ) {
           pybind11::gil_scoped_acquire acq;
           pybind11::object v( evaluate.call( entity, x ) );
           return v.template cast< FieldVector< double, dimRange > >();
