@@ -1,12 +1,38 @@
-#ifndef DUNE_FEM_SUBARRAY_HH
-#define DUNE_FEM_SUBARRAY_HH
+#ifndef DUNE_FEM_SUBVECTOR_HH
+#define DUNE_FEM_SUBVECTOR_HH
 
-#include <type_traits>
+#include <dune/common/densevector.hh>
+#include <dune/common/ftraits.hh>
 
-#include <dune/fem/storage/vector.hh>
+#include <dune/fem/misc/bartonnackmaninterface.hh>
 
 namespace Dune
 {
+
+  namespace Fem
+  {
+    // forward declaration
+    template< class K, class M > class SubVector;
+  }
+
+  // specialization of DenseMatVecTraits for SubVector
+  template< class K, class M >
+  struct DenseMatVecTraits< Fem::SubVector< K, M > >
+  {
+    typedef Fem::SubVector< K, M > derived_type;
+    typedef K container_type;
+
+    typedef typename K::value_type value_type;
+    typedef typename K::size_type size_type;
+  };
+
+  template< class K, class M >
+  struct FieldTraits< Fem::SubVector< K, M > >
+  {
+    typedef typename FieldTraits< typename K::value_type >::field_type field_type;
+    typedef typename FieldTraits< typename K::value_type >::real_type real_type;
+  };
+
   namespace Fem
   {
 
@@ -19,10 +45,10 @@ namespace Dune
       typedef BartonNackmanInterface< ThisType, IM > BaseType;
 
     public:
-      //! type of the implementation (Barton-Nackman)
+      //! Type of the implementation (Barton-Nackman)
       typedef IM IndexMapperType;
 
-      //! type of the interface
+      //! Type of the interface
       typedef ThisType IndexMapperInterfaceType;
 
       //! Maps an index onto another one
@@ -49,65 +75,101 @@ namespace Dune
 
 
 
-    template< class IndexMapper >
-    struct SupportsIndexMapperInterface
+    //! Index mapper interface which simply adds an offset to the index
+    class OffsetSubMapper
+    : public IndexMapperInterface< OffsetSubMapper >
     {
-      typedef IndexMapperInterface< IndexMapper > IndexMapperInterfaceType;
-      static const bool v = std::is_convertible< IndexMapper, IndexMapperInterfaceType >::value;
+      typedef OffsetSubMapper ThisType;
+      typedef IndexMapperInterface< OffsetSubMapper > BaseType;
+
+    public:
+      OffsetSubMapper( unsigned int size, unsigned int offset )
+      : size_( size ), offset_( offset )
+
+      OffsetSubMapper( const ThisType& ) = default;
+      ThisType& operator=( const ThisType& ) = default;
+
+      unsigned int size() const
+      {
+        return size_;
+      }
+
+      unsigned int range() const
+      {
+        return size_;
+      }
+
+      unsigned int operator[]( unsigned int i) const
+      {
+        return i+offset_;
+      }
+
+    private:
+      const unsigned int size_;
+      const unsigned int offset_;
     };
 
 
 
-    // SubVector
+    /** \brief An implementation of DenseVector to extract a portion, not necessarly contiguos, of a vector
+     *
+     * \tparam BaseVectorImp The base vector
+     * \tparam IndexMapperImp The index mapper
+     */
     template< class BaseVectorImp, class IndexMapperImp >
-    class SubVector
-    : public VectorDefault< typename BaseVectorImp :: FieldType, SubVector< BaseVectorImp, IndexMapperImp > >
+    class SubVector : public DenseVector< SubVector< BaseVectorImp, IndexMapperImp > >
     {
       typedef SubVector< BaseVectorImp, IndexMapperImp > ThisType;
-      typedef VectorDefault< typename BaseVectorImp :: FieldType, ThisType > BaseType;
+      typedef DenseVector< SubVector < BaseVectorImp, IndexMapperImp > > BaseType;
 
     public:
-      //! type of the base array
+      typedef typename BaseType::size_type size_type;
+      typedef typename BaseType::value_type value_type;
+
+      //! Type of the base vector
       typedef BaseVectorImp BaseVectorType;
 
-      //! type of the index mapper
+      //! Type of the index mapper
       typedef IndexMapperImp IndexMapperType;
 
-      //! type of array elements
-      typedef typename BaseVectorType :: FieldType FieldType;
+      //! Type of vector elements
+      typedef value_type FieldType;
 
-      SubVector( BaseVectorType &baseVector, const IndexMapperType &indexMapper )
+      //! Constructor
+      explicit SubVector( BaseVectorType& baseVector, const IndexMapperType& indexMapper )
       : baseVector_( baseVector ), indexMapper_( indexMapper )
+      {}
+
+      SubVector( const ThisType & ) = default;
+
+      ThisType& operator=( const ThisType & ) = default;
+
+      void resize( size_type )
+      {}
+
+      const value_type& operator[]( size_type i ) const
       {
-        assert( (unsigned int)baseVector_.size() == indexMapper_.range() );
+        return baseVector_[ indexMapper_[ i ] ];
       }
 
-      SubVector ( const ThisType & ) = delete;
-
-      ThisType &operator= ( const ThisType & ) = delete;
-
-      const FieldType &operator[] ( unsigned int index ) const
+      value_type& operator[]( size_type i )
       {
-        return baseVector_[ indexMapper_[ index ] ];
+        return baseVector_[ indexMapper_[ i ] ];
       }
 
-      FieldType &operator[] ( unsigned int index )
-      {
-        return baseVector_[ indexMapper_[ index ] ];
-      }
-
-      unsigned int size () const
+      size_type size() const
       {
         return indexMapper_.size();
       }
 
     private:
-      BaseVectorType &baseVector_;
-      const IndexMapperType &indexMapper_;
+      BaseVectorType& baseVector_;
+      const IndexMapperType& indexMapper_;
     };
+
 
   } // namespace Fem
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_SUBARRAY_HH
+#endif

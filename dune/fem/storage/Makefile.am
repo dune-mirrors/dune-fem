@@ -7,8 +7,6 @@ storage_HEADERS = envelope.hh \
                   referencecounter.hh \
                   singletonlist.hh \
                   subvector.hh \
-                  vector.hh \
-                  vector_inline.hh \
                   eigenvector.hh
 
 include $(top_srcdir)/am/global-rules

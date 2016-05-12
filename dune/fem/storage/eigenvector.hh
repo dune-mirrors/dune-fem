@@ -20,7 +20,7 @@ namespace Dune
     template< class K > class EigenVector;
   }
 
-  // sepcialization of DenseMatVecTraits for EigenVector
+  // specialization of DenseMatVecTraits for EigenVector
   template< class K >
   struct DenseMatVecTraits< Fem::EigenVector< K > >
   {
