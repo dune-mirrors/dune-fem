@@ -10,6 +10,7 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 #include <dune/fempy/function/simplegridfunction.hh>
+#include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/grid.hh>
 #include <dune/fempy/pybind11/functional.h>
 #include <dune/fempy/pybind11/pybind11.h>
@@ -291,6 +292,25 @@ namespace Dune
 
 
 
+    // registerVirtualizedGridFunction
+    // -------------------------------
+
+    template< class GridPart, int dimRange >
+    void registerVirtualizedGridFunction ( pybind11::handle scope, const std::string &name, std::integral_constant< int, dimRange > )
+    {
+      typedef VirtualizedGridFunction< GridPart, FieldVector< double, dimRange > > GridFunction;
+      static const std::string clsName = name + std::to_string( dimRange );
+      registerGridFunction< GridFunction >( scope, clsName.c_str() );
+    };
+
+    template< class GridPart, int... dimRange >
+    void registerVirtualizedGridFunction ( pybind11::handle scope, const std::string &name, std::integer_sequence< int, dimRange... > )
+    {
+      std::ignore = std::make_tuple( (registerVirtualizedGridFunction< GridPart >( scope, name, std::integral_constant< int, dimRange >() ), dimRange)... );
+    };
+
+
+
     // registerPyGlobalGridFunction
     // ----------------------------
 
@@ -300,6 +320,8 @@ namespace Dune
       typedef decltype( makePyGlobalGridFunction( std::declval< GridPart >(), std::declval< std::string >(), std::declval< pybind11::function >(), std::integral_constant< int, dimRange >() ) ) GridFunction;
       static const std::string clsName = name + std::to_string( dimRange );
       registerGridFunction< GridFunction >( scope, clsName.c_str() );
+
+      pybind11::implicitly_convertible< GridFunction, VirtualizedGridFunction< GridPart, typename GridFunction::RangeType > >();
     };
 
     template< class GridPart, int... dimRange >
@@ -319,6 +341,8 @@ namespace Dune
       typedef decltype( makePyLocalGridFunction( std::declval< GridPart >(), std::declval< std::string >(), std::declval< pybind11::function >(), std::integral_constant< int, dimRange >() ) ) GridFunction;
       static const std::string clsName = name + std::to_string( dimRange );
       registerGridFunction< GridFunction >( scope, clsName.c_str() );
+
+      pybind11::implicitly_convertible< GridFunction, VirtualizedGridFunction< GridPart, typename GridFunction::RangeType > >();
     };
 
     template< class GridPart, int... dimRange >
@@ -373,6 +397,7 @@ namespace Dune
       grid.def( "size", &G::size );
 
       const int maxDimRange = 10;
+      registerVirtualizedGridFunction< GridPart >( grid, "VirtualizedGridFunction", std::make_integer_sequence< int, maxDimRange+1 >() );
       registerPyGlobalGridFunction< GridPart >( grid, "GlobalGridFunction", std::make_integer_sequence< int, maxDimRange+1 >() );
       registerPyLocalGridFunction< GridPart >( grid, "LocalGridFunction", std::make_integer_sequence< int, maxDimRange+1 >() );
 
