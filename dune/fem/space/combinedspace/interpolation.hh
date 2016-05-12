@@ -4,7 +4,7 @@
 #include <tuple>
 #include <utility>
 
-#include <dune/fem/common/subvector.hh>
+#include <dune/fem/storage/subvector.hh>
 #include <dune/fem/function/localfunction/converter.hh>
 #include <dune/fem/space/basisfunctionset/tuple.hh>
 #include <dune/fem/space/basisfunctionset/vectorial.hh>
@@ -153,7 +153,8 @@ namespace Dune
       template< class Tuple, class LocalFunction, class LocalDofVector >
       static void apply ( const Tuple &tuple, const BasisFunctionSetType &basisSet, const LocalFunction &lv, LocalDofVector &ldv )
       {
-        DenseSubVector< LocalDofVector > subLdv( ldv, basisSet.template subBasisFunctionSet< i >().size(), basisSet.offset( i ) );
+        SubVector< LocalDofVector, OffsetSubMapper >
+          subLdv( ldv, OffsetSubMapper( basisSet.template subBasisFunctionSet< i >().size(), basisSet.offset( i ) ) );
         std::get< i >( tuple ) ( localFunctionConverter( lv, RangeConverter() ), subLdv );
       }
     };

@@ -12,12 +12,10 @@
 #include <dune/common/tuples.hh>
 
 #include <dune/fem/common/utility.hh>
-#include <dune/fem/common/subvector.hh>
 #include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
-
 #include <dune/fem/space/common/localrestrictprolong.hh>
-
+#include <dune/fem/storage/subvector.hh>
 
 namespace Dune
 {
@@ -124,8 +122,8 @@ namespace Dune
       static void apply ( const LFFather &lfFather, LFSon &lfSon, const LocalGeometry &geometryInFather, bool initialize,
           const Tuple &tuple )
       {
-        typedef DenseSubVector< const typename LFFather::LocalDofVectorType > SubDofVectorTypeFather;
-        typedef DenseSubVector< typename LFSon::LocalDofVectorType > SubDofVectorTypeSon;
+        typedef SubVector< const typename LFFather::LocalDofVectorType, OffsetSubMapper > SubDofVectorTypeFather;
+        typedef SubVector< typename LFSon::LocalDofVectorType, OffsetSubMapper > SubDofVectorTypeSon;
 
         typedef typename LFFather::BasisFunctionSetType::template SubBasisFunctionSet< i >::type SubFatherBasisFunctionSetType;
         typedef typename LFSon::BasisFunctionSetType::template SubBasisFunctionSet< i >::type SubSonBasisFunctionSetType;
@@ -136,8 +134,10 @@ namespace Dune
         std::size_t fatherBasisSetOffset = lfFather.basisFunctionSet().offset( i );
         std::size_t sonBasisSetOffset = lfSon.basisFunctionSet().offset(i);
 
-        SubDofVectorTypeFather fatherSubDofVector( lfFather.localDofVector(), subFatherBasisFunctionSet.size(), fatherBasisSetOffset );
-        SubDofVectorTypeSon sonSubDofVector( lfSon.localDofVector(), subSonBasisFunctionSet.size(), sonBasisSetOffset );
+        SubDofVectorTypeFather fatherSubDofVector( lfFather.localDofVector(),
+                                                   OffsetSubMapper( subFatherBasisFunctionSet.size(), fatherBasisSetOffset ) );
+        SubDofVectorTypeSon sonSubDofVector( lfSon.localDofVector(),
+                                             OffsetSubMapper( subSonBasisFunctionSet.size(), sonBasisSetOffset ) );
 
         BasicConstLocalFunction< SubFatherBasisFunctionSetType, SubDofVectorTypeFather >
           subLFFather( subFatherBasisFunctionSet, fatherSubDofVector );
@@ -161,8 +161,8 @@ namespace Dune
       static void apply ( LFFather &lfFather, const LFSon &lfSon, const LocalGeometry &geometryInFather, bool initialize,
           const Tuple &tuple )
       {
-        typedef DenseSubVector< typename LFFather::LocalDofVectorType > SubDofVectorTypeFather;
-        typedef DenseSubVector< const typename LFSon::LocalDofVectorType > SubDofVectorTypeSon;
+        typedef SubVector< typename LFFather::LocalDofVectorType, OffsetSubMapper > SubDofVectorTypeFather;
+        typedef SubVector< const typename LFSon::LocalDofVectorType, OffsetSubMapper > SubDofVectorTypeSon;
 
         typedef typename LFFather::BasisFunctionSetType::template SubBasisFunctionSet< i >::type SubFatherBasisFunctionSetType;
         typedef typename LFSon::BasisFunctionSetType::template SubBasisFunctionSet< i >::type SubSonBasisFunctionSetType;
@@ -173,8 +173,10 @@ namespace Dune
         std::size_t fatherBasisSetOffset = lfFather.basisFunctionSet().offset(i);
         std::size_t sonBasisSetOffset = lfSon.basisFunctionSet().offset(i);
 
-        SubDofVectorTypeFather fatherSubDofVector( lfFather.localDofVector(), subFatherBasisFunctionSet.size(), fatherBasisSetOffset );
-        SubDofVectorTypeSon sonSubDofVector( lfSon.localDofVector(), subSonBasisFunctionSet.size(), sonBasisSetOffset );
+        SubDofVectorTypeFather fatherSubDofVector( lfFather.localDofVector(),
+                                                   OffsetSubMapper( subFatherBasisFunctionSet.size(), fatherBasisSetOffset ) );
+        SubDofVectorTypeSon sonSubDofVector( lfSon.localDofVector(),
+                                             OffsetSubMapper( subSonBasisFunctionSet.size(), sonBasisSetOffset ) );
 
         LocalFunction< SubFatherBasisFunctionSetType, SubDofVectorTypeFather > subLFFather( subFatherBasisFunctionSet, fatherSubDofVector );
         BasicConstLocalFunction< SubSonBasisFunctionSetType, SubDofVectorTypeSon > subLFSon( subSonBasisFunctionSet, sonSubDofVector );

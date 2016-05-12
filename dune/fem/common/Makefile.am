@@ -4,7 +4,6 @@ femcommon_HEADERS = \
 	fmatrixcol.hh \
 	referencevector.hh \
 	stackallocator.hh \
-	subvector.hh \
 	tupletypetraits.hh \
 	tupleutility.hh \
 	typeindexedtuple.hh \
