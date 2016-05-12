@@ -1,3 +1,4 @@
+add_subdirectory(function)
 add_subdirectory(pybind11)
 
 set(HEADERS

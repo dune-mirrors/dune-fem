@@ -25,7 +25,7 @@ namespace Dune
 
       pybind11::class_< LocalFunction > cls( scope, clsName );
 
-      cls.def_property_readonly_static( "dimRange", [] () { return LocalFunction::RangeType::dimension; } );
+      cls.def_property_readonly( "dimRange", [] ( const LocalFunction & ) -> int { return LocalFunction::RangeType::dimension; } );
       cls.def( "evaluate", [] ( const LocalFunction &lf, const LocalCoordinate &x ) {
           typename LocalFunction::RangeType value;
           lf.evaluate( x, value );
@@ -55,7 +55,10 @@ namespace Dune
 
       registerLocalFunction< LocalFunction >( cls );
 
-      cls.def_property_readonly_static( "dimRange", [] () { return GridFunction::RangeType::dimension; } );
+      cls.def_property_readonly( "dimRange", [] ( const GridFunction &gf ) -> int { return GridFunction::RangeType::dimension; } );
+
+      cls.def_property_readonly( "name", [] ( const GridFunction &gf ) -> std::string { return gf.name(); } );
+
       cls.def( "localFunction", [] ( const GridFunction &gf, const Entity &entity ) -> LocalFunction {
           return gf.localFunction( entity );
         }, pybind11::keep_alive< 0, 1 >(), pybind11::keep_alive< 0, 2 >() );
