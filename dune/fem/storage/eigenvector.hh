@@ -49,11 +49,11 @@ namespace Dune
     class EigenVector : public DenseVector< EigenVector< K > >
     {
       typedef EigenVector< K > ThisType;
-      typedef DenseVector< EigenVector< K > > Base;
+      typedef DenseVector< EigenVector< K > > BaseType;
 
     public:
-      typedef typename Base::size_type size_type;
-      typedef typename Base::value_type value_type;
+      typedef typename BaseType::size_type size_type;
+      typedef typename BaseType::value_type value_type;
 
       typedef value_type FieldType;
       typedef typename DenseMatVecTraits< ThisType >::container_type DofStorageType;
@@ -91,7 +91,7 @@ namespace Dune
         return data_( index );
       }
 
-      value_type &operator[]( size_type index )
+      value_type& operator[]( size_type index )
       {
         return data_( index );
       }
