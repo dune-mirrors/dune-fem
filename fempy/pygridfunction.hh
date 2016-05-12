@@ -55,6 +55,10 @@ namespace Dune
 
       registerLocalFunction< LocalFunction >( cls );
 
+      cls.def( "__repr__", [] ( GridFunction &gf ) -> std::string {
+          return "GridFunction< " + std::to_string( GridFunction::RangeType::dimension ) + " >(name = " + gf.name() + ")";
+        } );
+
       cls.def_property_readonly( "dimRange", [] ( GridFunction &gf ) -> int { return GridFunction::RangeType::dimension; } );
 
       cls.def_property_readonly( "name", [] ( GridFunction &gf ) -> std::string { return gf.name(); } );
