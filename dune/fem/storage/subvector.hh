@@ -85,6 +85,7 @@ namespace Dune
     public:
       OffsetSubMapper( unsigned int size, unsigned int offset )
       : size_( size ), offset_( offset )
+      {}
 
       OffsetSubMapper( const ThisType& ) = default;
       ThisType& operator=( const ThisType& ) = default;
