@@ -1,6 +1,8 @@
 #ifndef DUNE_FEMPY_FUNCTION_SIMPLEGRIDFUNCTION_HH
 #define DUNE_FEMPY_FUNCTION_SIMPLEGRIDFUNCTION_HH
 
+#include <cassert>
+
 #include <limits>
 #include <type_traits>
 #include <utility>
@@ -40,9 +42,16 @@ namespace Dune
       typedef typename FunctionSpaceType::RangeType RangeType;
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-      SimpleLocalFunction ( const EntityType &entity, LocalEvaluator localEvaluator, int order )
-        : entity_( entity ), localEvaluator_( std::move( localEvaluator ) ), order_( order )
+      template< class GridFunction, std::enable_if_t< std::is_same< This, typename GridFunction::LocalFunctionType >::value, int > = 0 >
+      SimpleLocalFunction ( const GridFunction &gridFunction )
+        : localEvaluator_( gridFunction.localEvaluator() ), order_( gridFunction.order() )
       {}
+
+      SimpleLocalFunction ( const EntityType &entity, LocalEvaluator localEvaluator, int order )
+        : entity_( &entity ), localEvaluator_( std::move( localEvaluator ) ), order_( order )
+      {}
+
+      void init ( const EntityType &entity ) { entity_ = &entity; }
 
       template< class Point >
       void evaluate ( const Point &x, RangeType &value ) const
@@ -72,10 +81,10 @@ namespace Dune
 
       int order () const { return order_; }
 
-      const EntityType &entity () const { return entity_; }
+      const EntityType &entity () const { assert( entity_ ); return *entity_; }
 
     private:
-      const EntityType &entity_;
+      const EntityType *entity_ = nullptr;
       LocalEvaluator localEvaluator_;
       int order_;
     };
@@ -154,6 +163,10 @@ namespace Dune
         const auto geometry = entity.geometry();
         localFunction( entity ).jacobian( geometry.local( x ), jacobian );
       }
+
+      int order () const { return order(); }
+
+      const LocalEvaluator &localEvaluator () const { return localEvaluator_; }
 
     protected:
       std::string name_;

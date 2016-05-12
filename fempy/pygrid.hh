@@ -396,6 +396,11 @@ namespace Dune
 
       grid.def( "size", &G::size );
 
+      registerVTKWriter< typename GridPart::GridViewType >( module );
+      grid.def( "vtkWriter", [] ( const G &grid ) {
+          return new VTKWriter< typename GridPart::GridViewType >( static_cast< typename GridPart::GridViewType >( *grid.gridPart() ) );
+        }, pybind11::keep_alive< 0, 1 >() );
+
       const int maxDimRange = 10;
       registerVirtualizedGridFunction< GridPart >( grid, "VirtualizedGridFunction", std::make_integer_sequence< int, maxDimRange+1 >() );
       registerPyGlobalGridFunction< GridPart >( grid, "GlobalGridFunction", std::make_integer_sequence< int, maxDimRange+1 >() );
@@ -448,11 +453,6 @@ namespace Dune
       registerGridFunctionInterface< GridPart >( module, Std::make_integer_sequence< int, 10 >() );
 //      registerGridFunctionExpression< GridPart >( Std::make_integer_sequence< int, 10 >() );
 //      registerLocalGridFunctionExpression< GridPart >( Std::make_integer_sequence< int, 10 >() );
-
-      registerVTKWriter< VTKWriter< typename GridPart::GridViewType > >( module );
-      grid.def( "vtkWriter", [] ( const G &grid ) {
-          return new VTKWriter< typename GridPart::GridViewType >( static_cast< typename GridPart::GridViewType >( *grid.gridPart() ) );
-        }, pybind11::keep_alive< 0, 1 >() );
 
       typedef VTKOutput< GridPart > VTK;
 

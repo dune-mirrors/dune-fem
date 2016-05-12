@@ -8,6 +8,7 @@
 
 #include <dune/fempy/gridfunction.hh>
 #include <dune/fempy/pybind11/pybind11.h>
+#include <dune/fempy/pyvtk.hh>
 
 namespace Dune
 {
@@ -66,6 +67,8 @@ namespace Dune
       cls.def( "localFunction", [] ( const GridFunction &gf, const Entity &entity ) -> LocalFunction {
           return gf.localFunction( entity );
         }, pybind11::keep_alive< 0, 1 >(), pybind11::keep_alive< 0, 2 >() );
+
+      pybind11::implicitly_convertible< GridFunction, PyVTKWriteable< typename GridFunction::GridPartType::GridViewType > >();
 
       return cls;
     }

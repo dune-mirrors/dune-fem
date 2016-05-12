@@ -1,4 +1,5 @@
 set(HEADERS
+  gridfunctionview.hh
   simplegridfunction.hh
   virtualizedgridfunction.hh
 )
