@@ -13,25 +13,33 @@
 
 namespace Dune
 {
+
   namespace Fem
   {
-
+    // forward declaration
     template< class K > class EigenVector;
-    template< class K >
-    struct DenseMatVecTraits< EigenVector< K > >
-    {
-      typedef EigenVector< K > derived_type;
-      typedef Eigen::Matrix< K, Eigen::Dynamic, 1 > container_type;
-      typedef K value_type;
-      typedef unsigned int size_type;
-    };
+  }
 
-    template< class K >
-    struct FieldTraits< EigenVector< K > >
-    {
-      typedef typename FieldTraits< K >::field_type field_type;
-      typedef typename FieldTraits< K >::real_type real_type;
-    };
+  // sepcialization of DenseMatVecTraits for EigenVector
+  template< class K >
+  struct DenseMatVecTraits< Fem::EigenVector< K > >
+  {
+    typedef Fem::EigenVector< K > derived_type;
+    typedef Eigen::Matrix< K, Eigen::Dynamic, 1 > container_type;
+    typedef K value_type;
+    typedef unsigned int size_type;
+  };
+
+  template< class K >
+  struct FieldTraits< Fem::EigenVector< K > >
+  {
+    typedef typename FieldTraits< K >::field_type field_type;
+    typedef typename FieldTraits< K >::real_type real_type;
+  };
+
+
+  namespace Fem
+  {
 
     /** \brief An implementation of DenseVector which uses Eigen::Matrix<K, Eigen::Dynamic, 1> to provide the fields
      *
@@ -40,14 +48,15 @@ namespace Dune
     template< class K >
     class EigenVector : public DenseVector< EigenVector< K > >
     {
+      typedef EigenVector< K > ThisType;
       typedef DenseVector< EigenVector< K > > Base;
 
     public:
       typedef typename Base::size_type size_type;
       typedef typename Base::value_type value_type;
 
-      typedef typename value_type FieldType;
-      typedef typename Base::container_type DofStorageType;
+      typedef value_type FieldType;
+      typedef typename DenseMatVecTraits< ThisType >::container_type DofStorageType;
 
       //! Constructor setting up a vector of a specified size
       explicit EigenVector( size_type size = 0 )
@@ -161,9 +170,10 @@ namespace Dune
       return in;
     }
 
-  }
-}
+  } // namespace Fem
+
+} // namespace Dune
 
 #endif
 
-#endif
+#endif // #ifndef EIGENVECTOR_HH
