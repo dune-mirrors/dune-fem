@@ -268,7 +268,7 @@ namespace Dune
       typedef typename GridPart::template Codim< 0 >::GeometryType::GlobalCoordinate Coordinate;
       return simpleGridFunction( std::move( name ), gridPart, [ evaluate ] ( const Coordinate &x ) {
           pybind11::gil_scoped_acquire acq;
-          pybind11::object v( evaluate.call( x ) );
+          pybind11::object v( evaluate( x ) );
           return v.template cast< FieldVector< double, dimRange > >();
         } );
     }
@@ -285,7 +285,7 @@ namespace Dune
       typedef typename GridPart::template Codim< 0 >::GeometryType::LocalCoordinate Coordinate;
       return simpleGridFunction( std::move( name ), gridPart, [ evaluate ] ( const Entity &entity, const Coordinate &x ) {
           pybind11::gil_scoped_acquire acq;
-          pybind11::object v( evaluate.call( entity, x ) );
+          pybind11::object v( evaluate( entity, x ) );
           return v.template cast< FieldVector< double, dimRange > >();
         } );
     }
@@ -413,7 +413,7 @@ namespace Dune
           const GridPart &gridPart = *g.cast< const G & >().gridPart();
           typename GridPart::template Codim< 0 >::GeometryType::GlobalCoordinate x( 0 );
           pybind11::gil_scoped_acquire acq;
-          pybind11::object v( evaluate.call( x ) );
+          pybind11::object v( evaluate( x ) );
           const int dimRange = len( v );
           if( (dimRange > maxDimRange) )
             DUNE_THROW( NotImplemented, "globalGridFunction not implemented for dimRange = " + std::to_string( dimRange ) );
@@ -434,7 +434,7 @@ namespace Dune
           {
             typename GridPart::template Codim< 0 >::GeometryType::LocalCoordinate x( 0 );
             pybind11::gil_scoped_acquire acq;
-            pybind11::object v( evaluate.call( *gridPart.template begin< 0 >(), x ) );
+            pybind11::object v( evaluate( *gridPart.template begin< 0 >(), x ) );
             dimRange = len( v );
           }
           dimRange = gridPart.comm().max( dimRange );
