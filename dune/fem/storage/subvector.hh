@@ -141,7 +141,9 @@ namespace Dune
       : baseVector_( baseVector ), indexMapper_( indexMapper )
       {}
 
-      SubVector( const ThisType & ) = default;
+      SubVector( const ThisType & other )
+        : baseVector_( other.baseVector_ ), indexMapper_( other.indexMapper_ )
+      {}
 
       ThisType& operator=( const ThisType & ) = default;
 
