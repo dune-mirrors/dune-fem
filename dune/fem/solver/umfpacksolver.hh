@@ -1,19 +1,18 @@
 #ifndef DUNE_FEM_UMFPACKSOLVER_HH
 #define DUNE_FEM_UMFPACKSOLVER_HH
 
-#include <limits>
-#include <iostream>
-#include <type_traits>
-#include <vector>
 #include <algorithm>
+#include <iostream>
+#include <vector>
 
-#include <dune/fem/function/adaptivefunction/adaptivefunction.hh>
-#include <dune/fem/function/blockvectorfunction/blockvectorfunction.hh>
+#include <dune/fem/common/tupleforeach.hh>
 
-#include <dune/fem/operator/common/operator.hh>
+#include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/blockvectorfunction.hh>
+#include <dune/fem/function/tuplediscretefunction.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/matrix/colcompspmatrix.hh>
-
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/umfpack.hh>
@@ -134,7 +133,7 @@ class UMFPACKOp:public Operator<DF, DF>
    *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
    *   and you have free the decompistion when is not needed anymore (using the method finalize).
    */
-  void apply(const DofType*& arg, DofType*& dest) const
+  void apply(const DofType* arg, DofType* dest) const
   {
     double UMF_Apply_Info[UMFPACK_INFO];
     Caller::solve(UMFPACK_A, ccsmat_.getColStart(), ccsmat_.getRowIndex(), ccsmat_.getValues(),
@@ -160,9 +159,7 @@ class UMFPACKOp:public Operator<DF, DF>
   void apply(const AdaptiveDiscreteFunction<DiscreteFunctionSpaceType>& arg,
              AdaptiveDiscreteFunction<DiscreteFunctionSpaceType>& dest) const
   {
-    const DofType* argPtr(arg.leakPointer());
-    DofType* destPtr(dest.leakPointer());
-    apply(argPtr,destPtr);
+    apply(arg.leakPointer(),dest.leakPointer());
   }
 
   /** \brief Solve the system.
@@ -174,30 +171,48 @@ class UMFPACKOp:public Operator<DF, DF>
   void apply(const ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& arg,
              ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceType>& dest) const
   {
-    // copy DOF arg into a consecutive vector
+    // copy DOF's arg into a consecutive vector
     std::vector<DofType> vecArg(arg.size());
     std::copy(arg.dbegin(),arg.dend(),vecArg.begin());
     std::vector<DofType> vecDest(dest.size());
     // apply operator
-    const DofType* argDataPtr(vecArg.data());
-    DofType* destDataPtr(vecDest.data());
-    apply(argDataPtr,destDataPtr);
+    apply(vecArg.data(),vecDest.data());
     // copy back solution into dest
     std::copy(vecDest.begin(),vecDest.end(),dest.dbegin());
   }
 
-  inline void printTexInfo(std::ostream& out) const
+  /** \brief Solve the system.
+   *  \param[in] arg right hand side
+   *  \param[out] dest solution
+   *  \warning You have to decompose the matrix before calling the apply (using the method prepare)
+   *   and you have free the decompistion when is not needed anymore (using the method finalize).
+   */
+  template<typename... DFs>
+  void apply(const TupleDiscreteFunction<DFs...>& arg,TupleDiscreteFunction<DFs...>& dest) const
   {
-    out<<"Solver: UMFPACK direct solver";
-    out<<"\\\\ \n";
+    // copy DOF's arg into a consecutive vector
+    std::vector<DofType> vecArg(arg.size());
+    auto vecArgIt(vecArg.begin());
+    for_each(arg,[&vecArgIt](const auto& block,auto I){vecArgIt=std::copy(block.dbegin(),block.dend(),vecArgIt);});
+    std::vector<DofType> vecDest(dest.size());
+    // apply operator
+    apply(vecArg.data(),vecDest.data());
+    // copy back solution into dest
+    auto vecDestIt(vecDest.begin());
+    for_each(dest,[&vecDestIt](auto& block,auto I){for(auto& dof:dofs(block)) dof=(*(vecDestIt++));});
   }
 
-  inline double averageCommTime() const
+  void printTexInfo(std::ostream& out) const
+  {
+    out<<"Solver: UMFPACK direct solver"<<std::endl;
+  }
+
+  double averageCommTime() const
   {
     return 0.0;
   }
 
-  inline int iterations() const
+  int iterations() const
   {
     return 0;
   }
@@ -205,13 +220,13 @@ class UMFPACKOp:public Operator<DF, DF>
   /** \brief Get CCS matrix of the operator to solve.
    *  \warning It is up to the user to preserve consistency.
    */
-  inline CCSMatrixType& getCCSMatrix()
+  CCSMatrixType& getCCSMatrix()
   {
     return ccsmat_;
   }
 
   // /brief Print some statistics about the UMFPACK decomposition.
-  inline void printDecompositionInfo() const
+  void printDecompositionInfo() const
   {
     Caller::report_info(UMF_Control,UMF_Decomposition_Info);
   }
