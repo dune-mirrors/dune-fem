@@ -68,7 +68,7 @@ namespace Dune
           return gf.localFunction( entity );
         }, pybind11::keep_alive< 0, 1 >(), pybind11::keep_alive< 0, 2 >() );
 
-      pybind11::implicitly_convertible< GridFunction, PyVTKWriteable< typename GridFunction::GridPartType::GridViewType > >();
+      cls.def( "addToVTKWriter", &addToVTKWriter< GridFunction >, pybind11::keep_alive< 1, 2 >() );
 
       return cls;
     }

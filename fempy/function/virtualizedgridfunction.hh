@@ -42,6 +42,7 @@ namespace Dune
       struct Interface
       {
         virtual ~Interface () = default;
+        virtual void init ( const EntityType &entity ) = 0;
         virtual void evaluate ( const LocalCoordinateType &x, RangeType &value ) const = 0;
         virtual void jacobian ( const LocalCoordinateType &x, JacobianRangeType &jacobian ) const = 0;
         virtual int order () const = 0;
@@ -50,8 +51,11 @@ namespace Dune
 
       template< class Impl >
       struct Implementation final
+        : public Interface
       {
         Implementation ( Impl impl ) : impl_( std::move( impl ) ) {}
+
+        virtual void init ( const EntityType &entity ) override { impl().init( entity ); }
 
         virtual void evaluate ( const LocalCoordinateType &x, RangeType &value ) const override { impl().evaluate( x, value ); }
         virtual void jacobian ( const LocalCoordinateType &x, JacobianRangeType &jacobian ) const override { impl().jacobian( x, jacobian ); }
@@ -59,16 +63,24 @@ namespace Dune
         virtual const EntityType &entity () const override { return impl().entity(); }
 
       private:
-        auto impl () const { return std::ref( impl_ ).get(); }
+        const auto &impl () const { return std::cref( impl_ ).get(); }
+        auto &impl () { return std::ref( impl_ ).get(); }
 
         Impl impl_;
       };
 
     public:
-      template< class Impl >
+      template< class Impl, std::enable_if_t< !std::is_base_of< Fem::HasLocalFunction, Impl >::value, int > = 0 >
       VirtualizedLocalFunction ( Impl impl )
         : impl_( new Implementation< Impl >( std::move( impl ) ) )
       {}
+
+      template< class GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, GF >::value, int > = 0 >
+      VirtualizedLocalFunction ( const GF &gf )
+        : impl_( new Implementation< typename GF::LocalFunctionType >( typename GF::LocalFunctionType( gf ) ) )
+      {}
+
+      void init ( const EntityType &entity ) { impl_->init( entity ); }
 
       template< class Point >
       void evaluate ( const Point &x, RangeType &value ) const

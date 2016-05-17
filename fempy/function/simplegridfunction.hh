@@ -164,7 +164,7 @@ namespace Dune
         localFunction( entity ).jacobian( geometry.local( x ), jacobian );
       }
 
-      int order () const { return order(); }
+      int order () const { return order_; }
 
       const LocalEvaluator &localEvaluator () const { return localEvaluator_; }
 

@@ -15,52 +15,34 @@ namespace Dune
   namespace FemPy
   {
 
-    // PyVTKWriteable
+    // VTKDataType
+    // -----------
+
+    enum class VTKDataType { CellData, PointData };
+
+
+
+    // addToVTKWriter
     // --------------
 
-    template< class GridView >
-    struct PyVTKWriteable
+    template< class GridFunction >
+    void addToVTKWriter ( const GridFunction &gf, VTKWriter< typename GridFunction::GridPartType::GridViewType > &vtkWriter, VTKDataType dataType )
     {
-      typedef VTKWriter< GridView > Writer;
-
-    private:
-      typedef VTK::FieldInfo Info;
-
-      struct Interface
+      VTK::FieldInfo info( gf.name(), VTK::FieldInfo::Type::scalar, GridFunction::RangeType::dimension );
+      switch( dataType )
       {
-        virtual ~Interface () = default;
-        virtual void addAsCellData ( Writer &writer ) = 0;
-        virtual void addAsPointData ( Writer &writer ) = 0;
-      };
+      case VTKDataType::CellData:
+        vtkWriter.addCellData( gf, info );
+        break;
 
-      template< class View >
-      struct Implementation
-      {
-        Implementation ( View &&view, Info info ) : view_( std::move( view ) ), info_( std::move( info ) ) {}
+      case VTKDataType::PointData:
+        vtkWriter.addVertexData( gf, info );
+        break;
 
-        virtual void addAsCellData ( Writer &writer ) { writer.addCellData( view_, info_ ); }
-        virtual void addAsPointData ( Writer &writer ) { writer.addVertexData( view_, info_ ); }
-
-      private:
-        View view_;
-        Info info_;
-      };
-
-    public:
-      template< class GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, GF >::value, int > = 0 >
-      PyVTKWriteable ( const GF &gf )
-      {
-        typedef GridFunctionView< GF > View;
-        Info info( gf.name(), Info::Type::scalar, GF::RangeType::dimension );
-        impl_.reset( new Implementation< View >( gf, info ) );
+      default:
+        DUNE_THROW( InvalidStateException, "Invalid vtk data type" );
       }
-
-      void addAsCellData ( Writer &writer ) { impl_->addAsCellData( writer ); }
-      void addAsPointData ( Writer &writer ) { impl_->addAsPointData( writer ); }
-
-    private:
-      std::unique_ptr< Interface > impl_;
-    };
+    }
 
 
 
@@ -71,14 +53,13 @@ namespace Dune
     void registerVTKWriter ( pybind11::handle scope, const char *clsName = "VTKWriter" )
     {
       typedef VTKWriter< GridView > Writer;
-      typedef PyVTKWriteable< GridView > Writeable;
-
-      pybind11::class_< Writeable > clsWriteable( scope, "VTKWriteable" );
 
       pybind11::class_< Writer > cls( scope, clsName );
-      cls.def( "addCellData", [] ( Writer &writer, Writeable &writeable ) { writeable.addAsCellData( writer ); } );
-      cls.def( "addPointData", [] ( Writer &writer, Writeable &writeable ) { writeable.addAsPointData( writer ); } );
       cls.def( "write", [] ( Writer &writer, const std::string &name ) { writer.write( name ); } );
+
+      pybind11::enum_< VTKDataType > vtkDataType( cls, "DataType" );
+      vtkDataType.value( "CellData", VTKDataType::CellData );
+      vtkDataType.value( "PointData", VTKDataType::PointData );
     }
 
   } // namespace FemPy

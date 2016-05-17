@@ -1,6 +1,8 @@
 #ifndef DUNE_FEMPY_FUNCTION_GRIDFUNCTIONVIEW_HH
 #define DUNE_FEMPY_FUNCTION_GRIDFUNCTIONVIEW_HH
 
+#include <dune/fem/function/common/discretefunction.hh>
+
 namespace Dune
 {
 
@@ -31,8 +33,19 @@ namespace Dune
       void unbind () {}
 
     private:
-      typename GF::LocalFunction localFunction_;
+      typename GF::LocalFunctionType localFunction_;
     };
+
+
+
+    // localFunction
+    // -------------
+
+    template< class GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, GF >::value, int > = 0 >
+    inline static GridFunctionView< GF > localFunction ( const GF &gf )
+    {
+      return GridFunctionView< GF >( gf );
+    }
 
   } // FemPy
 
