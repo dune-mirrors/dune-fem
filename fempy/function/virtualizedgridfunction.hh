@@ -169,7 +169,7 @@ namespace Dune
       };
 
     public:
-      template< class Impl >
+      template< class Impl, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, Impl >::value, int > = 0 >
       VirtualizedGridFunction ( Impl impl )
         : impl_( new Implementation< Impl >( std::move( impl ) ) )
       {}
