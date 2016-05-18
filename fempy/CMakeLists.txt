@@ -8,7 +8,6 @@ set(HEADERS
   pygridfunction.hh
   pyspace.hh
   pyvtk.hh
-  vtk.hh
 )
 
 install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/fempy)

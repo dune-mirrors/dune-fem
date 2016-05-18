@@ -17,7 +17,6 @@
 #include <dune/fempy/pybind11/stl.h>
 #include <dune/fempy/pygridfunction.hh>
 #include <dune/fempy/pyvtk.hh>
-#include <dune/fempy/vtk.hh>
 
 namespace Dune
 {
@@ -449,34 +448,6 @@ namespace Dune
             DUNE_THROW( NotImplemented, "localGridFunction not implemented for dimRange = " + std::to_string( dimRange ) );
           return dispatchLocalGridFunction[ dimRange ]( gridPart, std::move( name ), std::move( evaluate ), std::move( g ) );
         } );
-
-      registerGridFunctionInterface< GridPart >( module, Std::make_integer_sequence< int, 10 >() );
-//      registerGridFunctionExpression< GridPart >( Std::make_integer_sequence< int, 10 >() );
-//      registerLocalGridFunctionExpression< GridPart >( Std::make_integer_sequence< int, 10 >() );
-
-      typedef VTKOutput< GridPart > VTK;
-
-      void (VTK::*add1)( std::shared_ptr< GridFunction<GridPart,1> > ) = &VTK::template add<1>;
-      void (VTK::*add2)( std::shared_ptr< GridFunction<GridPart,2> > ) = &VTK::template add<2>;
-      void (VTK::*add3)( std::shared_ptr< GridFunction<GridPart,3> > ) = &VTK::template add<3>;
-      void (VTK::*add4)( std::shared_ptr< GridFunction<GridPart,4> > ) = &VTK::template add<4>;
-      void (VTK::*add5)( std::shared_ptr< GridFunction<GridPart,5> > ) = &VTK::template add<5>;
-      void (VTK::*add6)( std::shared_ptr< GridFunction<GridPart,6> > ) = &VTK::template add<6>;
-      void (VTK::*add7)( std::shared_ptr< GridFunction<GridPart,7> > ) = &VTK::template add<7>;
-      void (VTK::*add8)( std::shared_ptr< GridFunction<GridPart,8> > ) = &VTK::template add<8>;
-      void (VTK::*add9)( std::shared_ptr< GridFunction<GridPart,9> > ) = &VTK::template add<9>;
-      pybind11::class_< VTK > vtk( module, "VTKOutput" );
-      vtk.def( pybind11::init< G >() );
-      vtk.def( "write", &VTK::write );
-      vtk.def( "add", add1 );
-      vtk.def( "add", add2 );
-      vtk.def( "add", add3 );
-      vtk.def( "add", add4 );
-      vtk.def( "add", add5 );
-      vtk.def( "add", add6 );
-      vtk.def( "add", add7 );
-      vtk.def( "add", add8 );
-      vtk.def( "add", add9 );
     }
 
   } // namespace FemPy
