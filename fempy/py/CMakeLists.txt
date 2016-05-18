@@ -1,3 +1,5 @@
+add_subdirectory(grid)
+
 set(HEADERS
   grid.hh
   gridfunction.hh
