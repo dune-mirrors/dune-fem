@@ -1,5 +1,5 @@
-#ifndef DUNE_FEMPY_PYGRID_HH
-#define DUNE_FEMPY_PYGRID_HH
+#ifndef DUNE_FEMPY_PY_GRID_HH
+#define DUNE_FEMPY_PY_GRID_HH
 
 #include <list>
 #include <memory>
@@ -12,11 +12,11 @@
 #include <dune/fempy/function/simplegridfunction.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/grid.hh>
+#include <dune/fempy/py/gridfunction.hh>
+#include <dune/fempy/py/vtk.hh>
 #include <dune/fempy/pybind11/functional.h>
 #include <dune/fempy/pybind11/pybind11.h>
 #include <dune/fempy/pybind11/stl.h>
-#include <dune/fempy/pygridfunction.hh>
-#include <dune/fempy/pyvtk.hh>
 
 namespace Dune
 {
@@ -440,4 +440,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEMPY_PYGRID_HH
+#endif // #ifndef DUNE_FEMPY_PY_GRID_HH

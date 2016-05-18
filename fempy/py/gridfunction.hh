@@ -1,10 +1,10 @@
-#ifndef DUNE_FEMPY_PYGRIDFUNCTION_HH
-#define DUNE_FEMPY_PYGRIDFUNCTION_HH
+#ifndef DUNE_FEMPY_PY_GRIDFUNCTION_HH
+#define DUNE_FEMPY_PY_GRIDFUNCTION_HH
 
 #include <string>
 
+#include <dune/fempy/py/vtk.hh>
 #include <dune/fempy/pybind11/pybind11.h>
-#include <dune/fempy/pyvtk.hh>
 
 namespace Dune
 {
@@ -73,4 +73,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEMPY_PYGRIDFUNCTION_HH
+#endif // #ifndef DUNE_FEMPY_PY_GRIDFUNCTION_HH

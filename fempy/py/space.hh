@@ -1,5 +1,5 @@
-#ifndef DUNE_FEMPY_PYSPACE_HH
-#define DUNE_FEMPY_PYSPACE_HH
+#ifndef DUNE_FEMPY_PY_SPACE_HH
+#define DUNE_FEMPY_PY_SPACE_HH
 
 #include <dune/fempy/grid.hh>
 #include <dune/fempy/pybind11/pybind11.h>
@@ -29,4 +29,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEMPY_PYSPACE_HH
+#endif // #ifndef DUNE_FEMPY_PY_SPACE_HH
