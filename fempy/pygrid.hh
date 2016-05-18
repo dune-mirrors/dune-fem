@@ -24,20 +24,6 @@ namespace Dune
   namespace FemPy
   {
 
-#if 0
-    // registerIteratorRange
-    // ---------------------
-
-    template< class IteratorRange >
-    void registerIteratorRange ( pybind11::handle scope, const char *name )
-    {
-      pybind11::class_< IteratorRange > cls( scope, name );
-      cls.def( "__iter__", [] ( const IteratorRange &rg ) { return pybind11::make_iterator( rg.begin(), rg.end() ); }, pybind11::keep_alive< 0, 1 >() );
-    }
-#endif
-
-
-
     // PyCornerRange
     // -------------
 
