@@ -1,85 +1,26 @@
 #ifndef DUNE_FEMPY_PY_GRID_HH
 #define DUNE_FEMPY_PY_GRID_HH
 
-#include <list>
-#include <memory>
+#include <functional>
+#include <string>
 #include <tuple>
-
-#include <dune/common/std/utility.hh>
+#include <utility>
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 #include <dune/fempy/function/simplegridfunction.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/grid.hh>
-#include <dune/fempy/py/grid/entity.hh>
+#include <dune/fempy/py/grid/hierarchical.hh>
 #include <dune/fempy/py/gridfunction.hh>
 #include <dune/fempy/py/vtk.hh>
-#include <dune/fempy/pybind11/functional.h>
 #include <dune/fempy/pybind11/pybind11.h>
-#include <dune/fempy/pybind11/stl.h>
 
 namespace Dune
 {
 
   namespace FemPy
   {
-
-    // registerHierarchicalGrid
-    // ------------------------
-
-    template< class Grid >
-    void registerHierarchicalGrid ( pybind11::module module )
-    {
-      static auto common = pybind11::module::import( "dune.common" );
-      static auto femmpi = pybind11::module::import( "dune.femmpi" );
-
-      registerGridEntities< Grid >( module );
-
-      typedef HierarchicalGrid< Grid > HG;
-      typedef typename HG::Element Element;
-      typedef typename HG::Marker Marker;
-
-      typedef AdaptiveDofVector< Grid, double > GridFunction;
-
-      pybind11::class_< HG > hg( module, "HierarchicalGrid" );
-      hg.def( pybind11::init< std::string >() );
-      hg.def( "__repr__", [] ( const HG &grid ) -> std::string { return "HierarchicalGrid"; } );
-
-      hg.def( "globalRefine", &HG::globalRefine );
-
-      pybind11::enum_< Marker > marker( hg, "marker" );
-      marker.value( "coarsen", HG::Marker::Coarsen );
-      marker.value( "keep", HG::Marker::Keep );
-      marker.value( "refine", HG::Marker::Refine );
-
-      hg.def( "mark", [] ( HG &grid, const std::function< Marker( const Element &e ) > &marker ) {
-          grid.mark( marker );
-        } );
-
-      hg.def( "adapt", [] ( HG &grid ) {
-          std::array< std::shared_ptr< GridFunction >, 0 > dfList;
-          grid.adapt( dfList.begin(), dfList.end() );
-        } );
-
-
-      hg.def( "adapt", [] ( HG &grid, const std::list< std::shared_ptr< GridFunction > > &dfList ) {
-          std::cout << "adapting grid and " << dfList.size() << " functions..." << std::endl;
-          grid.adapt( dfList.begin(), dfList.end() );
-        } );
-
-      hg.def( "loadBalance", [] ( HG &grid ) {
-          std::array< std::shared_ptr< GridFunction >, 0 > dfList;
-          grid.loadBalance( dfList.begin(), dfList.end() );
-        } );
-
-      hg.def( "loadBalance", [] ( HG &grid, const std::list< std::shared_ptr< GridFunction > > &dfList ) {
-          std::cout << "loadbalanding grid and " << dfList.size() << " functions..." << std::endl;
-          grid.loadBalance( dfList.begin(), dfList.end() );
-        } );
-    }
-
-
 
     // PyGridPartRange
     // ---------------
@@ -263,9 +204,12 @@ namespace Dune
     template< class GridPart >
     void registerGrid ( pybind11::module module )
     {
+      static auto common = pybind11::module::import( "dune.common" );
+      static auto femmpi = pybind11::module::import( "dune.femmpi" );
+
       const int dim = GridPart::dimension;
 
-      registerHierarchicalGrid< typename GridPart::GridType >( module );
+      registerHierarchicalGrid< HierarchicalGrid< typename GridPart::GridType > >( module );
 
       typedef LeafGrid< GridPart > G;
       pybind11::class_< G > grid( module, "LeafGrid" );
