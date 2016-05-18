@@ -123,7 +123,7 @@ namespace Dune
 
       /** \brief Move constructor */
       PetscDiscreteFunction( ThisType&& other )
-        : BaseType( other.name(), other.space() ),
+        : BaseType( static_cast< BaseType && >( other ) ),
           memObject_( std::move( other.memObject_ ) ),
           dofVector_( other.dofVector_ )
       {}

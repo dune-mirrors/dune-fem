@@ -87,9 +87,9 @@ namespace Dune
 
       /** \brief Move constructor */
       ISTLBlockVectorDiscreteFunction( ThisType&& other )
-        : BaseType( other.name(), other.space() ),
+        : BaseType( static_cast< BaseType && >( other ) ),
           memObject_( std::move( other.memObject_ ) ),
-          dofVector_( other.dofVector_ )
+          dofVector_( std::move( other.dofVector_ ) )
       {}
 
       ISTLBlockVectorDiscreteFunction () = delete;

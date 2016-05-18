@@ -74,7 +74,7 @@ namespace Dune
 
       /** \brief Move constructor */
       VectorDiscreteFunction( ThisType&& other )
-        : BaseType( other.name(), other.space() ),
+        : BaseType( static_cast< BaseType && >( other ) ),
           vec_( std::move( other.vec_ ) ),
           dofVector_( other.dofVector_ )
       {}
