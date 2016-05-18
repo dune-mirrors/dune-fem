@@ -1,4 +1,5 @@
 set(HEADERS
+  hierarchical.hh
   restrictprolong.hh
 )
 

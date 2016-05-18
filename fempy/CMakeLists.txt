@@ -3,6 +3,7 @@ add_subdirectory(pybind11)
 
 set(HEADERS
   grid.hh
+  parameter.hh
   pygrid.hh
   pygridfunction.hh
   pyspace.hh
