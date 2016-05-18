@@ -18,7 +18,7 @@
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 //#include <dune/fem/storage/envelope.hh>
 
-#include <dune/fempy/gridfunction.hh>
+#include <dune/fempy/grid/restrictprolong.hh>
 
 namespace Dune
 {
@@ -121,11 +121,11 @@ namespace Dune
     // DiscreteFunctionList
     // --------------------
 
-    template< class Grid >
+    template< class Grid, class D = double >
     struct DiscreteFunctionList
       : public Fem::IsDiscreteFunction
     {
-      typedef AdaptiveGridFunction< Grid > DiscreteFunction;
+      typedef AdaptiveDofVector< Grid, D > DiscreteFunction;
 
       typedef typename DiscreteFunction::DofType DofType;
 
@@ -258,10 +258,10 @@ namespace Dune
     // DiscreteFunctionTraits for DiscreteFunctionList
     // -----------------------------------------------
 
-    template< class Grid >
-    struct DiscreteFunctionTraits< FemPy::DiscreteFunctionList< Grid > >
+    template< class Grid, class D >
+    struct DiscreteFunctionTraits< FemPy::DiscreteFunctionList< Grid, D > >
     {
-      typedef typename FemPy::AdaptiveGridFunction< Grid >::DofType DofType;
+      typedef typename FemPy::AdaptiveDofVector< Grid, D >::DofType DofType;
       typedef std::allocator< DofType > LocalDofVectorAllocatorType;
     };
 
@@ -275,11 +275,11 @@ namespace Dune
     // RestrictProlong
     // ---------------
 
-    template< class Grid >
+    template< class Grid, class D = double >
     class RestrictProlong
-      : public Fem::RestrictProlongInterface< Fem::RestrictProlongTraits< RestrictProlong< Grid >, typename Grid::ctype > >
+      : public Fem::RestrictProlongInterface< Fem::RestrictProlongTraits< RestrictProlong< Grid, D >, typename Grid::ctype > >
     {
-      typedef Fem::RestrictProlongInterface< Fem::RestrictProlongTraits< RestrictProlong< Grid >, typename Grid::ctype > > BaseType;
+      typedef Fem::RestrictProlongInterface< Fem::RestrictProlongTraits< RestrictProlong< Grid, D >, typename Grid::ctype > > BaseType;
 
       struct LoadBalanceContainsCheck;
 
@@ -372,7 +372,7 @@ namespace Dune
             df->restrictProlong().removeFromList( *commList_ );
       }
 
-      DiscreteFunctionList< Grid > discreteFunctions_;
+      DiscreteFunctionList< Grid, D > discreteFunctions_;
       Fem::CommunicationManagerList *commList_ = nullptr;
     };
 
@@ -381,10 +381,10 @@ namespace Dune
     // RestrictProlong::LoadBalanceContainsCheck
     // -----------------------------------------
 
-    template< class Grid >
-    struct RestrictProlong< Grid >::LoadBalanceContainsCheck
+    template< class Grid, class D >
+    struct RestrictProlong< Grid, D >::LoadBalanceContainsCheck
     {
-      explicit LoadBalanceContainsCheck ( const DiscreteFunctionList< Grid > &discreteFunctions )
+      explicit LoadBalanceContainsCheck ( const DiscreteFunctionList< Grid, D > &discreteFunctions )
         : discreteFunctions_( discreteFunctions )
       {}
 
@@ -395,7 +395,7 @@ namespace Dune
       }
 
     private:
-      const DiscreteFunctionList< Grid > &discreteFunctions_;
+      const DiscreteFunctionList< Grid, D > &discreteFunctions_;
     };
 
 
@@ -403,9 +403,9 @@ namespace Dune
     // Implementation of RestrictProlong
     // ---------------------------------
 
-    template< class Grid >
+    template< class Grid, class D >
     template< class LoadBalancer >
-    inline void RestrictProlong< Grid >::addToLoadBalancer ( LoadBalancer &loadBalancer )
+    inline void RestrictProlong< Grid, D >::addToLoadBalancer ( LoadBalancer &loadBalancer )
     {
       loadBalancer.addDiscreteFunction( discreteFunctions_, LoadBalanceContainsCheck( discreteFunctions_ ) );
     }

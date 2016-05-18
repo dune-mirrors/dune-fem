@@ -2,11 +2,7 @@
 #define DUNE_FEMPY_PYGRIDFUNCTION_HH
 
 #include <string>
-#include <tuple>
 
-#include <dune/common/std/utility.hh>
-
-#include <dune/fempy/gridfunction.hh>
 #include <dune/fempy/pybind11/pybind11.h>
 #include <dune/fempy/pyvtk.hh>
 

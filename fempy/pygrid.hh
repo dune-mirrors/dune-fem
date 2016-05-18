@@ -146,7 +146,7 @@ namespace Dune
       typedef typename HG::Element Element;
       typedef typename HG::Marker Marker;
 
-      typedef AdaptiveGridFunction< Grid > GridFunction;
+      typedef AdaptiveDofVector< Grid, double > GridFunction;
 
       pybind11::class_< HG > hg( module, "HierarchicalGrid" );
       hg.def( pybind11::init< std::string >() );
