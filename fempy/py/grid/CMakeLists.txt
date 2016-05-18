@@ -1,4 +1,5 @@
 set(HEADERS
+  entity.hh
   geometry.hh
 )
 

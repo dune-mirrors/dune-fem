@@ -12,7 +12,7 @@
 #include <dune/fempy/function/simplegridfunction.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/grid.hh>
-#include <dune/fempy/py/grid/geometry.hh>
+#include <dune/fempy/py/grid/entity.hh>
 #include <dune/fempy/py/gridfunction.hh>
 #include <dune/fempy/py/vtk.hh>
 #include <dune/fempy/pybind11/functional.h>
@@ -25,29 +25,6 @@ namespace Dune
   namespace FemPy
   {
 
-    template< class Entity >
-    void registerGridEntity ( pybind11::module module )
-    {
-      registerGridGeometry< typename Entity::Geometry >( module );
-
-      static const std::string entityName = "Entity" + std::to_string( Entity::codimension );
-      pybind11::class_< Entity > entity( module, entityName.c_str() );
-
-      entity.def_property_readonly_static( "codimension", [] () { return  Entity::codimension; } );
-
-      entity.def_property_readonly( "geometry", &Entity::geometry );
-      entity.def_property_readonly( "level", &Entity::level );
-    }
-
-
-    template< class Grid, int... codim >
-    void registerGridEntities ( pybind11::module module, Std::integer_sequence< int, codim... > )
-    {
-      std::ignore = std::make_tuple( (registerGridEntity< typename Grid::template Codim< codim >::Entity >( module ), codim)... );
-    }
-
-
-
     // registerHierarchicalGrid
     // ------------------------
 
@@ -57,7 +34,7 @@ namespace Dune
       static auto common = pybind11::module::import( "dune.common" );
       static auto femmpi = pybind11::module::import( "dune.femmpi" );
 
-      registerGridEntities< Grid >( module, Std::make_integer_sequence< int, Grid::dimension+1 >() );
+      registerGridEntities< Grid >( module );
 
       typedef HierarchicalGrid< Grid > HG;
       typedef typename HG::Element Element;
