@@ -823,22 +823,24 @@ namespace Dune
         space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
+      //! get local Dofs and store the values  in LocalDofVector
+      template< class Vector >
+      void getLocalDofs ( const EntityType &entity, Vector &localDofs ) const
+      {
+        AssignFunctor< Vector > assignFunctor( localDofs );
+        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
+      }
+
+    protected:
+      friend LocalFunctionType;
+
       //! get local Dofs and store a reference to it in the LocalDofVector
-      void getLocalDofs ( const EntityType &entity, LocalDofVectorType &localDofs )
+      void getLocalDofReferences ( const EntityType &entity, LocalDofVectorType &localDofs )
       {
         AssignVectorReference< LocalDofVectorType > assignFunctor( localDofs );
         space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
-      //! get local Dofs and store the values  in LocalDofVector
-      template< class A >
-      void getLocalDofs ( const EntityType &entity, Dune::DynamicVector< DofType, A > &localDofs ) const
-      {
-        AssignFunctor< Dune::DynamicVector< DofType, A > > assignFunctor( localDofs );
-        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
-      }
-
-    protected:
       /** \copydoc Dune::PersistentObject::backup */
       virtual void backup() const
       {
