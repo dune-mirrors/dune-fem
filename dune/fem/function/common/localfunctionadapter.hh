@@ -242,19 +242,19 @@ namespace Dune
       }
 
       //! return the order of the space
-      inline unsigned int order() const
+      unsigned int order() const
       {
         return order_;
       }
 
       //! return local function implementation
-      inline const LocalFunctionImplType& localFunctionImpl() const
+      const LocalFunctionImplType& localFunctionImpl() const
       {
         return localFunctionImpl_;
       }
 
       //! return local function implementation
-      inline LocalFunctionImplType& localFunctionImpl()
+      LocalFunctionImplType& localFunctionImpl()
       {
         return localFunctionImpl_;
       }
@@ -313,7 +313,7 @@ namespace Dune
        *
        *  \returns reference to this discrete function (i.e. *this)
        */
-      inline DiscreteFunctionType &operator*= ( const RangeFieldType &scalar )
+      DiscreteFunctionType &operator*= ( const RangeFieldType &scalar )
       {
         DUNE_THROW( NotImplemented, "LocalFunctionAdapter::operator *= is not implemented." );
         return *this;
@@ -325,7 +325,7 @@ namespace Dune
        *
        *  \returns reference to this discrete function (i.e. *this)
        */
-      inline DiscreteFunctionType &operator/= ( const RangeFieldType &scalar )
+      DiscreteFunctionType &operator/= ( const RangeFieldType &scalar )
       {
         DUNE_THROW( NotImplemented, "LocalFunctionAdapter::operator /= is not implemented." );
         return *this;
@@ -457,7 +457,7 @@ namespace Dune
       }
 
       //! return order of the space
-      inline unsigned int order() const
+      unsigned int order() const
       {
         return adapter_.order();
       }
@@ -588,33 +588,33 @@ namespace Dune
 
       //! evaluate local function
       template<class PointType>
-      inline void evaluate(const PointType& x,RangeType& ret) const
+      void evaluate(const PointType& x,RangeType& ret) const
       {
         ret=f_(entity().geometry().global(coordinate(x)),t_,entity());
       }
 
       //! evaluate jacobian local function
       template<class PointType>
-      inline void jacobian(const PointType &x,JacobianRangeType &ret) const
+      void jacobian(const PointType &x,JacobianRangeType &ret) const
       {
         ret=j_(entity().geometry().global(coordinate(x)),t_,entity());
       }
 
       //! evaluate hessian local function
       template<class PointType>
-      inline void hessian(const PointType &x,HessianRangeType &ret ) const
+      void hessian(const PointType &x,HessianRangeType &ret ) const
       {
         ret=h_(entity().geometry().global(coordinate(x)),t_,entity());
       }
 
       //! initialize to new entity
-      inline void init(const EntityType& entity)
+      void init(const EntityType& entity)
       {
         entity_=&entity;
       }
 
       //! initialize to new entity and to new time
-      inline void init(const EntityType& entity, double time)
+      void init(const EntityType& entity, double time)
       {
         entity_=&entity;
         t_=time;
@@ -622,13 +622,13 @@ namespace Dune
 
       //! set time
       template<typename... Args>
-      inline void initialize(const Args&... ,double time)
+      void initialize(const Args&... ,double time)
       {
         t_=time;
       }
 
       //! get entity
-      inline const EntityType& entity() const
+      const EntityType& entity() const
       {
         assert( entity_ );
         return *entity_;

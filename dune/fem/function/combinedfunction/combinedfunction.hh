@@ -269,21 +269,21 @@ namespace Dune
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::read */
       template< class StreamTraits >
-      inline void read ( InStreamInterface< StreamTraits >& in)
+      void read ( InStreamInterface< StreamTraits >& in)
       {
         for (int i=0; i<N; ++i)
           func_[i]->read(in);
       }
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::write */
       template< class StreamTraits >
-      inline void write ( OutStreamInterface< StreamTraits >& out) const
+      void write ( OutStreamInterface< StreamTraits >& out) const
       {
         for (int i=0; i<N; ++i)
           func_[i]->write(out);
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::print(std::ostream &out) const */
-      inline void print( std :: ostream &out ) const
+      void print( std :: ostream &out ) const
       {
         for (int i=0; i<N; ++i)
           func_[i]->print(out);

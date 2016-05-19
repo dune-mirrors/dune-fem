@@ -228,7 +228,7 @@ namespace Dune
       {}
 
       //! returns true if indexSet pointer and numDofs are equal
-      inline bool operator== ( const SingletonKey &other ) const
+      bool operator== ( const SingletonKey &other ) const
       {
         return (space_ == other.space_) && (mapper_ == other.mapper_);
       }

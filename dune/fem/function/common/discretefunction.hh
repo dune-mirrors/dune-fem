@@ -377,7 +377,7 @@ namespace Dune
       }
 
       /** \brief do default communication of space for this discrete function */
-      inline void communicate()
+      void communicate()
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().communicate() );
       }
