@@ -142,7 +142,7 @@ NAMESPACE_BEGIN(pybind11)
 typedef Py_ssize_t ssize_t;
 
 /// Approach used to cast a previously unknown C++ instance into a Python object
-enum class return_value_policy : int {
+enum class return_value_policy : uint8_t {
     /** This is the default return value policy, which falls back to the policy
         return_value_policy::take_ownership when the return value is a pointer.
         Otherwise, it uses return_value::move or return_value::copy for rvalue
@@ -305,6 +305,7 @@ NAMESPACE_END(detail)
 class error_already_set : public std::runtime_error { public: error_already_set() : std::runtime_error(detail::error_string())  {} };
 PYBIND11_RUNTIME_EXCEPTION(stop_iteration)
 PYBIND11_RUNTIME_EXCEPTION(index_error)
+PYBIND11_RUNTIME_EXCEPTION(value_error)
 PYBIND11_RUNTIME_EXCEPTION(cast_error) /// Thrown when pybind11::cast or handle::call fail due to a type casting error
 
 [[noreturn]] PYBIND11_NOINLINE inline void pybind11_fail(const char *reason) { throw std::runtime_error(reason); }

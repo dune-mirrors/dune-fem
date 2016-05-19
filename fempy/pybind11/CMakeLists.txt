@@ -11,6 +11,7 @@ SET(HEADERS
   pybind11.h
   pytypes.h
   stl.h
+  stl_bind.h
   typeid.h
 )
 
