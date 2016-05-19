@@ -109,7 +109,7 @@ def leafGrid(dgf, grid, **parameters):
         raise TypeError("leafGrid: 'grid' must be either a string or a module")
     addMethodsToLeafGrid(module,module.LeafGrid)
 
-    ret = module.LeafGrid(dgf)
+    ret = module.LeafGrid(module.HierarchicalGrid(dgf))
     return ret
 
 #############################################
