@@ -4,6 +4,7 @@
 #include <array>
 #include <functional>
 #include <list>
+#include <map>
 #include <memory>
 
 #include <dune/fempy/grid/hierarchical.hh>
@@ -18,11 +19,61 @@ namespace Dune
   namespace FemPy
   {
 
+    namespace detail
+    {
+
+      // hierarchicalGridInstances
+      // -------------------------
+
+      template< class Grid >
+      inline std::map< Grid *, HierarchicalGrid< Grid > > &hierarchicalGridInstances ()
+      {
+        static std::map< Grid *, HierarchicalGrid< Grid > > instances;
+        return instances;
+      }
+
+
+
+      // HierarchicalGridDeleter
+      // -----------------------
+
+      template< class HierarchicalGrid >
+      struct HierarchicalGridDeleter
+      {
+        void operator() ( HierarchicalGrid *ptr )
+        {
+          auto &instances = hierarchicalGridInstances< typename HierarchicalGrid::Grid >();
+          auto it = instances.find( ptr->grid().get() );
+          if( it != instances.end() )
+            instances.erase( it );
+          delete ptr;
+        }
+      };
+
+    } // namespace detail
+
+
+
+    // hierarchicalGrid
+    // ----------------
+
+    template< class Grid >
+    inline HierarchicalGrid< Grid > hierarchicalGrid ( Grid &grid )
+    {
+      const auto &instances = detail::hierarchicalGridInstances< Grid >();
+      auto it = instances.find( &grid );
+      if( it == instances.end() )
+        throw std::invalid_argument( "Unknown hierarchical grid" );
+      return it->second;
+    }
+
+
+
     // registerHierarchicalGrid
     // ------------------------
 
     template< class HierarchicalGrid >
-    pybind11::class_< HierarchicalGrid > registerHierarchicalGrid ( pybind11::handle scope )
+    inline auto registerHierarchicalGrid ( pybind11::handle scope )
     {
       typedef typename HierarchicalGrid::Grid Grid;
 
@@ -33,8 +84,12 @@ namespace Dune
 
       typedef AdaptiveDofVector< Grid, double > GridFunction;
 
-      pybind11::class_< HierarchicalGrid > cls( scope, "HierarchicalGrid" );
-      cls.def( pybind11::init< std::string >() );
+      typedef detail::HierarchicalGridDeleter< HierarchicalGrid > Deleter;
+      pybind11::class_< HierarchicalGrid, std::unique_ptr< HierarchicalGrid, Deleter > > cls( scope, "HierarchicalGrid" );
+      cls.def( "__init__", [] ( HierarchicalGrid &instance, std::string dgf ) {
+          new (&instance) HierarchicalGrid( dgf );
+          detail::hierarchicalGridInstances< Grid >().insert( std::make_pair( instance.grid().get(), instance ) );
+        } );
       cls.def( "__repr__", [] ( const HierarchicalGrid &grid ) -> std::string { return "HierarchicalGrid"; } );
 
       cls.def( "globalRefine", &HierarchicalGrid::globalRefine );
