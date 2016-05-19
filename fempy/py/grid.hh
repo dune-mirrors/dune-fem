@@ -10,7 +10,6 @@
 
 #include <dune/fempy/function/simplegridfunction.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
-#include <dune/fempy/grid.hh>
 #include <dune/fempy/py/grid/hierarchical.hh>
 #include <dune/fempy/py/gridfunction.hh>
 #include <dune/fempy/py/vtk.hh>

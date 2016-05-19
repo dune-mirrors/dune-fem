@@ -1,7 +1,6 @@
 #ifndef DUNE_FEMPY_PY_SPACE_HH
 #define DUNE_FEMPY_PY_SPACE_HH
 
-#include <dune/fempy/grid.hh>
 #include <dune/fempy/pybind11/pybind11.h>
 
 namespace Dune
@@ -16,7 +15,7 @@ namespace Dune
     template< class Space >
     void registerSpace ( pybind11::module module )
     {
-      typedef LeafGrid< typename Space::GridPartType > Grid;
+      typedef typename Space::GridPartType GridPart;
 
       pybind11::class_< Space > cls( module, "Space" );
 
