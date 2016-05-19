@@ -124,6 +124,7 @@ namespace Dune
 
       BlockVectorDiscreteFunction () = delete;
       ThisType& operator= ( const ThisType& ) = delete;
+      ThisType& operator= ( ThisType&& ) = delete;
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       const DofVectorType &dofVector () const

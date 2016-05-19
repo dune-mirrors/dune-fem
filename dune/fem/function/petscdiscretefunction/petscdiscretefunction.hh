@@ -130,6 +130,7 @@ namespace Dune
 
       PetscDiscreteFunction () = delete;
       ThisType& operator= ( const ThisType& ) = delete;
+      ThisType& operator= ( ThisType&& ) = delete;
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression() */
       void enableDofCompression ()

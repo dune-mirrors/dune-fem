@@ -158,6 +158,7 @@ namespace Dune
       DiscreteFunctionInterface ( const ThisType& ) = default;
       DiscreteFunctionInterface ( ThisType && ) = default;
     public:
+      ThisType& operator= ( ThisType&& ) = delete;
       ThisType &operator= ( const ThisType& ) = delete;
 
       DofVectorType &dofVector()
@@ -589,6 +590,7 @@ namespace Dune
       DiscreteFunctionDefault ( ThisType && other );
 
     public:
+      ThisType& operator= ( ThisType&& ) = delete;
       ThisType &operator= ( const ThisType& ) = delete;
 
       // Default Implementations

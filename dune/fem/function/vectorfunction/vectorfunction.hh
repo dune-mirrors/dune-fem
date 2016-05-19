@@ -81,6 +81,7 @@ namespace Dune
 
       VectorDiscreteFunction () = delete;
       ThisType& operator= ( const ThisType& ) = delete;
+      ThisType& operator= ( ThisType&& ) = delete;
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       DofVectorType& dofVector() { return dofVector_; }

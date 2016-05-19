@@ -112,6 +112,10 @@ namespace Dune
           dofVector_( other.dofVector_ )
       {}
 
+      AdaptiveDiscreteFunction () = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
+      ThisType& operator= ( ThisType&& ) = delete;
+
       DofType* leakPointer() { return dofVector().data(); }
       const DofType* leakPointer() const { return dofVector().data(); }
 

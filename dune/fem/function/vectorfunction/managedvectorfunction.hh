@@ -52,6 +52,10 @@ namespace Dune
         BaseType :: assign ( other );
       }
 
+      ManagedDiscreteFunction () = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
+      ThisType& operator= ( ThisType&& ) = delete;
+
       ~ManagedDiscreteFunction ()
       {
         if( memObject_ )
