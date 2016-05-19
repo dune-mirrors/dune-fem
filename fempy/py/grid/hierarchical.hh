@@ -10,6 +10,7 @@
 #include <dune/fempy/grid/hierarchical.hh>
 #include <dune/fempy/py/grid/entity.hh>
 #include <dune/fempy/pybind11/functional.h>
+#include <dune/fempy/pybind11/numpy.h>
 #include <dune/fempy/pybind11/pybind11.h>
 #include <dune/fempy/pybind11/stl.h>
 
@@ -65,6 +66,57 @@ namespace Dune
       if( it == instances.end() )
         throw std::invalid_argument( "Unknown hierarchical grid" );
       return it->second;
+    }
+
+
+
+    // makeSimplexGrid
+    // ---------------
+
+    template< class HierarchicalGrid, class float_t = typename HierarchicalGrid::Grid::ctype >
+    inline HierarchicalGrid makeSimplexGrid ( pybind11::array_t< float_t > points, pybind11::array_t< int > simplices )
+    {
+      typedef typename HierarchicalGrid::Grid Grid;
+      typedef typename Grid::ctype ctype;
+
+      GridFactory< Grid > factory;
+
+      // insert points into factory
+
+      pybind11::buffer_info bufPoints = points.request();
+      if( (bufPoints.ndim != 2) || (bufPoints.shape[ 1 ] != Grid::dimensionworld) )
+        throw std::invalid_argument( "points array must be of shape (*, " + std::to_string( Grid::dimensionworld ) + ")" );
+
+      for( std::size_t i = 0; i < bufPoints.shape[ 0 ]; ++i )
+      {
+        const std::size_t offset = i * (bufPoints.strides[ 0 ] / sizeof( float_t ));
+        FieldVector< ctype, Grid::dimensionworld > x;
+        for( int j = 0; j < Grid::dimensionworld; ++j )
+          x[ j ] = static_cast< ctype >( static_cast< float_t * >( bufPoints.ptr )[ offset + j * (bufPoints.strides[ 1 ] / sizeof( float_t )) ] );
+        factory.insertVertex( x );
+      }
+
+      // insert simplices into factory
+
+      pybind11::buffer_info bufSimplices = simplices.request();
+      if( (bufSimplices.ndim != 2) || (bufSimplices.shape[ 1 ] != Grid::dimension+1) )
+        throw std::invalid_argument( "simplices array must be of shape (*, " + std::to_string( Grid::dimension+1 ) + ")" );
+
+      GeometryType type( GeometryType::simplex, Grid::dimension );
+      std::vector< unsigned int > vertices( Grid::dimension+1 );
+      for( std::size_t i = 0; i < bufSimplices.shape[ 0 ]; ++i )
+      {
+        const std::size_t offset = i * (bufSimplices.strides[ 0 ] / sizeof( int ));
+        for( int j = 0; j <= Grid::dimension; ++j )
+          vertices[ j ] = static_cast< int * >( bufSimplices.ptr )[ offset + j * (bufSimplices.strides[ 1 ] / sizeof( int )) ];
+        factory.insertElement( type, vertices );
+      }
+
+      // create and register hierarchical grid
+
+      HierarchicalGrid hGrid( HierarchicalGrid( factory.createGrid() ) );
+      detail::hierarchicalGridInstances< Grid >().insert( std::make_pair( hGrid.grid().get(), hGrid ) );
+      return hGrid;
     }
 
 

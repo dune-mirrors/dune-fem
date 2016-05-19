@@ -207,6 +207,7 @@ namespace Dune
       static auto femmpi = pybind11::module::import( "dune.femmpi" );
 
       registerHierarchicalGrid< HierarchicalGrid< typename GridPart::GridType > >( module );
+      module.def( "makeSimplexGrid", &makeSimplexGrid< HierarchicalGrid< typename GridPart::GridType > > );
 
       const int dim = GridPart::dimension;
 

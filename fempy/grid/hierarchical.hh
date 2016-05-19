@@ -358,6 +358,12 @@ namespace Dune
           adaptationManager_( new AdaptationManager( *grid_, *restrictProlong_, noParameter() ) )
       {}
 
+      explicit HierarchicalGrid ( Grid *grid )
+        : grid_( grid ),
+          restrictProlong_( new RestrictProlong< Grid >( grid_ ) ),
+          adaptationManager_( new AdaptationManager( *grid_, *restrictProlong_, noParameter() ) )
+      {}
+
       template< class Marking >
       void mark ( Marking marking )
       {
