@@ -8,4 +8,7 @@ class MathExpression(object):
         x0 = x[0]
         x1 = 0 if dimD < 2 else x[1]
         x2 = 0 if dimD < 3 else x[2]
-        return [eval(e) for e in self.expr]
+        y = []
+        for e in self.expr:
+            y += [eval(e)]
+        return y
