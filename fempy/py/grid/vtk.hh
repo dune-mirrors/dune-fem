@@ -1,5 +1,5 @@
-#ifndef DUNE_FEMPY_PY_VTK_HH
-#define DUNE_FEMPY_PY_VTK_HH
+#ifndef DUNE_FEMPY_PY_GRID_VTK_HH
+#define DUNE_FEMPY_PY_GRID_VTK_HH
 
 #include <type_traits>
 #include <utility>
@@ -66,4 +66,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEMPY_PY_VTK_HH
+#endif // #ifndef DUNE_FEMPY_PY_GRID_VTK_HH
