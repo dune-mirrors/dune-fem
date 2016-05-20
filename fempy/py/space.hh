@@ -16,6 +16,26 @@ namespace Dune
   namespace FemPy
   {
 
+    // interpolant
+    // -----------
+
+    template< class DF, class GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, GF >::value, int > = 0 >
+    DF interpolant ( const typename DF::DiscreteFunctionSpaceType &space, std::string name, const GF &gf )
+    {
+      using Fem::interpolate;
+      DF df( std::move( name ), space );
+      interpolate( gf, df );
+      return df;
+    }
+
+    template< class DF >
+    DF interpolant ( const typename DF::DiscreteFunctionSpaceType &space, std::string name, typename DF::RangeType value )
+    {
+      return interpolant< DF >( space, std::move( name ), simpleGridFunction( space.gridPart(), [ value ] ( typename DF::DomainType ) { return value; }, 0 ) );
+    }
+
+
+
     // registerSpace
     // -------------
 
@@ -37,18 +57,13 @@ namespace Dune
       registerDiscreteFunction< DiscreteFunction >( module );
 
       typedef VirtualizedGridFunction< GridPart, typename Space::RangeType > GridFunction;
+
       cls.def( "interpolate", [] ( const Space &space, const GridFunction &gf ) {
-          using Fem::interpolate;
-          DiscreteFunction df( gf.name(), space );
-          interpolate( gf, df );
-          return df;
+          return interpolant< DiscreteFunction >( space, gf.name(), gf );
         }, pybind11::keep_alive< 0, 1 >() );
 
       cls.def( "interpolate", [] ( const Space &space, typename Space::RangeType value ) {
-          using Fem::interpolate;
-          DiscreteFunction df( "constant", space );
-          interpolate( simpleGridFunction( space.gridPart(), [ value ] ( typename Space::DomainType ) { return value; }, 0 ), df );
-          return df;
+          return interpolant< DiscreteFunction >( space, "constant", value );
         }, pybind11::keep_alive< 0, 1 >() );
     }
 
