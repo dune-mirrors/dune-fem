@@ -1,6 +1,7 @@
 set(HEADERS
   entity.hh
   function.hh
+  gridpart.hh
   geometry.hh
   hierarchical.hh
   range.hh
