@@ -52,6 +52,13 @@ namespace Dune
         BaseType :: assign ( other );
       }
 
+      ManagedDiscreteFunction ( ThisType && other )
+      : BaseType( static_cast< BaseType && >( other ) ),
+        memObject_( other.memObject_ )
+      {
+        other.memObject_ = nullptr;
+      }
+
       ManagedDiscreteFunction () = delete;
       ThisType& operator= ( const ThisType& ) = delete;
       ThisType& operator= ( ThisType&& ) = delete;
