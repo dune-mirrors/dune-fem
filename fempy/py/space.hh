@@ -31,19 +31,23 @@ namespace Dune
         }, pybind11::keep_alive< 1, 2 >() );
 
       //typedef Fem::ManagedDiscreteFunction< Fem::VectorDiscreteFunction< Space, NumPyVector< double > > > DiscreteFunction;
-      typedef Fem::ManagedDiscreteFunction< Fem::VectorDiscreteFunction< Space, DynamicVector< double > > > DiscreteFunction;
-      //typedef Fem::AdaptiveDiscreteFunction< Space > DiscreteFunction;
+      //typedef Fem::ManagedDiscreteFunction< Fem::VectorDiscreteFunction< Space, DynamicVector< double > > > DiscreteFunction;
+      typedef Fem::AdaptiveDiscreteFunction< Space > DiscreteFunction;
 
       registerDiscreteFunction< DiscreteFunction >( module );
 
       typedef VirtualizedGridFunction< GridPart, typename Space::RangeType > GridFunction;
       cls.def( "interpolate", [] ( const Space &space, const GridFunction &gf ) {
           using Fem::interpolate;
-          std::cout << "creating discrete function..." << std::endl;
           DiscreteFunction df( gf.name(), space );
-          std::cout << "interpolating grid function" << std::endl;
           interpolate( gf, df );
-          std::cout << "done" << std::endl;
+          return df;
+        }, pybind11::keep_alive< 0, 1 >() );
+
+      cls.def( "interpolate", [] ( const Space &space, typename Space::RangeType value ) {
+          using Fem::interpolate;
+          DiscreteFunction df( "constant", space );
+          interpolate( simpleGridFunction( space.gridPart(), [ value ] ( typename Space::DomainType ) { return value; }, 0 ), df );
           return df;
         }, pybind11::keep_alive< 0, 1 >() );
     }
