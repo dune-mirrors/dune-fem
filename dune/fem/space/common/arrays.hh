@@ -2,23 +2,20 @@
 #define DUNE_FEM_ARRAYS_HH
 
 //- System includes
+#include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
 #include <iostream>
-
+#include <memory>
 #include <string>
+#include <type_traits>
 
 //- Dune includes
 #include <dune/common/genericiterator.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/version.hh>
-
-#if HAVE_BLAS
-// include BLAS for daxpy operation
-#include <dune/fem/solver/oemsolver/cblas.h>
-#endif
 
 #include <dune/fem/io/streams/streams.hh>
 
@@ -27,46 +24,36 @@ namespace Dune
 
   namespace Fem
   {
-
-  // forward declarations
-  template <class T>
-  class DefaultDofAllocator;
-
-  template <class T, class AllocatorType = DefaultDofAllocator<T> >
-  class MutableArray;
-
-  template<class ArrayType>
-  struct SpecialArrayFeatures;
-
+  // forward declaration
+  template< class K > class StaticArray;
 
   //! oriented to the STL Allocator funtionality
-  template <class T>
-  class DefaultDofAllocator {
+  template <typename T>
+  class StandardArrayAllocator
+    : public std::allocator< T >
+  {
+    typedef std::allocator< T > BaseType;
   public:
-    //! allocate array of nmemb objects of type T
-    static T* malloc (size_t nmemb)
+    typedef typename BaseType :: pointer    pointer ;
+    typedef typename BaseType :: size_type  size_type;
+
+    pointer allocate( size_type n )
     {
-      assert(nmemb > 0);
-      T* p = new T [ nmemb ] ;
-      assert( p );
-      return p;
+      return new T[ n ];
     }
 
-    //! release memory previously allocated with malloc member
-    static void free (T* p)
+    void deallocate( pointer p, size_type n )
     {
       delete [] p;
     }
 
-    //! allocate array of nmemb objects of type T
-    static T* realloc (T* oldMem, size_t oldSize , size_t nmemb)
+    pointer reallocate ( pointer oldMem, size_type oldSize, size_type n )
     {
       assert(oldMem);
-      assert(nmemb > 0);
-      T* p = malloc(nmemb);
-      const size_t copySize = std::min( oldSize, nmemb );
+      pointer p = allocate( n );
+      const size_type copySize = std::min( oldSize, n );
       std::copy( oldMem, oldMem+copySize, p );
-      free (oldMem);
+      deallocate( oldMem, oldSize );
       return p;
     }
   };
@@ -74,336 +61,180 @@ namespace Dune
   //! allocator for simple structures like int, double and float
   //! using the C malloc,free, and realloc
   template <typename T>
-  struct SimpleDofAllocator
+  class PODArrayAllocator : public std::allocator< T >
   {
+    static_assert( std::is_pod< T > :: value, "T is not POD" );
+    typedef std::allocator< T > BaseType;
+  public:
+    PODArrayAllocator() = default;
+
+    typedef typename BaseType :: pointer    pointer ;
+    typedef typename BaseType :: size_type  size_type;
+    typedef typename BaseType :: value_type value_type;
+
     //! allocate array of nmemb objects of type T
-    static T* malloc (size_t nmemb)
+    pointer allocate( size_type n )
     {
-      assert(nmemb > 0);
-      T* p = (T *) std::malloc(nmemb * sizeof(T));
+      pointer p = static_cast< pointer > (std::malloc(n * sizeof(value_type)));
       assert(p);
       return p;
     }
 
     //! release memory previously allocated with malloc member
-    static void free (T* p)
+    void deallocate( pointer p, size_type n )
     {
       assert(p);
       std::free(p);
     }
 
     //! allocate array of nmemb objects of type T
-    static T* realloc (T* oldMem, size_t oldSize , size_t nmemb)
+    pointer reallocate (pointer oldMem, size_type oldSize , size_type n)
     {
-      assert(nmemb > 0);
       assert(oldMem);
-      T * p = (T *) std::realloc(oldMem , nmemb*sizeof(T));
+      pointer p = static_cast< pointer > (std::realloc(oldMem , n*sizeof(value_type)));
       assert(p);
       return p;
     }
   };
 
-  template <>
-  struct DefaultDofAllocator<double> : public SimpleDofAllocator< double >
+  template <class T, class AllocatorType = typename std::conditional< std::is_pod< T > :: value,
+                                             PODArrayAllocator< T >,
+                                             StandardArrayAllocator< T > > :: type >
+  class MutableArray;
+
+  } // end namespace Fem
+
+  // specialization of DenseMatVecTraits for StaticArray
+  template< class K >
+  struct DenseMatVecTraits< Fem::StaticArray< K > >
+  {
+    typedef Fem::StaticArray< K > derived_type;
+    typedef K* container_type;
+    typedef K value_type;
+    typedef std::size_t size_type;
+  };
+
+  template< class K >
+  struct FieldTraits< Fem::StaticArray< K > >
+  {
+    typedef typename FieldTraits< K >::field_type field_type;
+    typedef typename FieldTraits< K >::real_type real_type;
+  };
+
+  // specialization of DenseMatVecTraits for MutablecArray
+  template< class K >
+  struct DenseMatVecTraits< Fem::MutableArray< K > > : public DenseMatVecTraits< Fem::StaticArray< K > >
   {
   };
 
-  template <>
-  struct DefaultDofAllocator< float > : public SimpleDofAllocator< float >
+  template< class K >
+  struct FieldTraits< Fem::MutableArray< K > > : public FieldTraits< Fem::StaticArray< K > >
   {
   };
 
-  template <>
-  struct DefaultDofAllocator< int > : public SimpleDofAllocator< int >
+  namespace Fem
   {
-  };
 
-  template <>
-  struct DefaultDofAllocator< size_t > : public SimpleDofAllocator< size_t >
-  {
-  };
 
-  template <>
-  struct DefaultDofAllocator< char > : public SimpleDofAllocator< char >
-  {
-  };
-
-  template <>
-  struct DefaultDofAllocator< bool > : public SimpleDofAllocator< bool >
-  {
-  };
+  template<class ArrayType>
+  struct SpecialArrayFeatures;
 
   /** \brief Static Array Wrapper for simple C Vectors like double* and
     int*. This also works as base class for the MutableArray which is used
     to store the degrees of freedom.
   */
   template <class T>
-  class StaticArray
+  class StaticArray : public DenseVector< StaticArray< T > >
   {
-  protected:
-    typedef StaticArray<T> ThisType;
-
-    // pointer to mem
-    T * vec_;
-
-    // size of array
-    size_t size_;
-
-    StaticArray(const StaticArray&);
-  public:
-    typedef T FieldType;
-    //! definition conforming to STL
-    typedef T value_type;
-
-    //! definition conforming to ISTL
-    typedef T block_type;
-
-    //! DofIterator
-    typedef GenericIterator<ThisType, T> DofIteratorType;
-
-    //! make compatible with std::vector
-    typedef DofIteratorType iterator ;
-
-    //! Const DofIterator
-    typedef GenericIterator<const ThisType, const T> ConstDofIteratorType;
-
-    //! make compatible with std::vector
-    typedef ConstDofIteratorType const_iterator ;
-
-    //! type of unsigned integral type of indexing
-    typedef size_t  size_type;
-
-    //! create array of length size and store vec as pointer to memory
-    explicit StaticArray(const size_t size, T* vec)
-      : vec_(vec)
-      , size_(size)
-    {
-      //assert( size_ >= 0 );
-    }
-
-    //! create array of length size and store vec as pointer to memory
-    explicit StaticArray(const size_t size, const T* vec)
-      : vec_( const_cast< T * > (vec) )
-      , size_(size)
-    {
-      //assert( size_ >= 0 );
-    }
-
-    //! iterator pointing to begin of array
-    DofIteratorType begin() {
-      return DofIteratorType(*this, 0);
-    }
-
-    //! const iterator pointing to begin of array
-    ConstDofIteratorType begin() const {
-      return ConstDofIteratorType(*this, 0);
-    }
-
-    //! iterator pointing to end of array
-    DofIteratorType end() {
-      return DofIteratorType(*this, size_);
-    }
-
-    //! const iterator pointing to end of array
-    ConstDofIteratorType end() const {
-      return ConstDofIteratorType(*this, size_);
-    }
-
-    //! return number of enties of array
-    size_t size () const { return size_; }
-
-  private:
-    void assertIndex ( const size_t i ) const
-    {
-#ifndef NDEBUG
-      if( i >= size() )
-      {
-        std::cerr << std::endl;
-        std::cerr << "Error in StaticArray: Index out of Range: " << i << std::endl;
-        std::cerr << "                      Size of array: " << size() << std::endl;
-        abort();
-      }
-#endif
-    }
+    typedef StaticArray< T > ThisType;
+    typedef DenseVector< ThisType > BaseType;
 
   public:
-    //! return reference to entry i
-    T& operator [] ( const size_t i )
+    typedef typename BaseType::size_type size_type;
+
+    typedef typename BaseType::value_type value_type;
+    typedef value_type FieldType;
+
+    typedef typename DenseMatVecTraits< ThisType >::container_type DofStorageType;
+
+    StaticArray(const ThisType&) = delete;
+
+    //! create array of length size and store vec as pointer to memory
+    explicit StaticArray(size_type size, const value_type* vec)
+      : vec_( const_cast< DofStorageType > (vec) )
+      , size_(size)
     {
-      assertIndex( i );
+    }
+
+    //! return size of array
+    size_type size () const
+    {
+      return size_;
+    }
+
+    //! \brief random access operator
+    value_type& operator [] ( size_type i )
+    {
+      assert( i < size_ );
       return vec_[i];
     }
 
-    //! return reference to const entry i
-    const T& operator [] ( const size_t i ) const
+    //! \brief random access operator
+    const value_type& operator [] ( size_type i ) const
     {
-      assertIndex( i );
+      assert( i < size_ );
       return vec_[i];
     }
 
-    //! assign arrays
+    //! copy assignament
     ThisType& operator= (const ThisType & org)
     {
       assert(org.size_ >= size() );
-      assert( ( size_ > 0 ) ? vec_ != 0 : true );
-      // copy the entries
+      assert( ( size_ > 0 ) ? vec_ != nullptr : true );
       std::copy(org.vec_, org.vec_ + size_, vec_ );
       return *this;
     }
 
-    //! operator +=
-    ThisType& operator += (const ThisType & org)
-    {
-      assert(org.size_ >= size() );
-      const size_t s = size();
-      const T * ov = org.vec_;
-      for(size_t i=0; i<s; ++i) vec_[i] += ov[i];
-      return *this;
-    }
-
-    //! operator -=
-    ThisType& operator -= (const ThisType& org)
-    {
-      assert(org.size() >= size() );
-      const size_t s = size();
-      const T * ov = org.vec_;
-      for(size_t i=0; i<s; ++i) vec_[i] -= ov[i];
-      return *this;
-    }
-
-    //! operator *= multiplies array with a scalar
-    ThisType& operator *= (const T scalar)
-    {
-      const size_t s = size();
-      for(size_t i=0; i<s; ++i) vec_[i] *= scalar;
-      return *this;
-    }
-
-    //! operator /= divides array with a scalar
-    ThisType& operator /= (const T scalar)
-    {
-      const T scalar_1 = (((T) 1)/scalar);
-      const size_t s = size();
-      for(size_t i=0; i<s; ++i) vec_[i] *= scalar_1;
-      return *this;
-    }
-
-    //! operator = assign all entrys to given scalar value
-    ThisType& operator= (const T scalar)
-    {
-      const size_t s = size();
-      for(size_t i=0; i<s; ++i) vec_[i] = scalar;
-      return *this;
-    }
-
-    //! axpy operation
-    void axpy (const ThisType& org, const T scalar)
-    {
-      const size_t s = size();
-      const T * ov = org.vec_;
-      for(size_t i=0; i<s; ++i) vec_[i] += scalar*ov[i];
-    }
-
-    //! set all entries to zero
+    //! set all entries to 0
     void clear ()
     {
-      const size_t s = size();
-      for(size_t i=0; i<s; ++i) vec_[i] = 0;
+      std::fill( vec_, vec_+size_, value_type(0) );
     }
 
     //! move memory from old to new destination
-    void memmove(const int length, const int oldStartIdx, const int newStartIdx)
+    void memmove(size_type length, size_type oldStartIdx, size_type newStartIdx)
     {
       void * dest = ((void *) (&vec_[newStartIdx]));
       const void * src = ((const void *) (&vec_[oldStartIdx]));
-      std::memmove(dest, src, length * sizeof(T));
+      std::memmove(dest, src, length * sizeof(value_type));
     }
 
-    //! Comparison operator
-    //! The comparison operator checks for object identity, i.e. if this and
+    //! comparison operator: checks for object identity, i.e. if this and
     //! other are the same objects in memory rather than containing the same data
     bool operator==(const ThisType& other) const
     {
       return vec_ == other.vec_;
     }
 
-    //! return leak pointer for usage in BLAS routines
-    T* leakPointer() { return vec_; }
-    //! return leak pointer for usage in BLAS routines
-    const T* leakPointer() const { return vec_; }
-
-    //! return leak pointer for usage in BLAS routines
-    T* data() { return vec_; }
-    //! return leak pointer for usage in BLAS routines
-    const T* data() const { return vec_; }
-
-    //! write to  stream
-    template <class StreamTraits>
-    bool write(OutStreamInterface< StreamTraits >& out) const
+    //! return pointer to data
+    value_type* data()
     {
-      const uint64_t len = size_;
-      out << len;
-      for(size_t i=0; i<size_; ++i)
-      {
-        out << vec_[i];
-      }
-      return true;
+      return vec_;
     }
 
-    //! write to  stream
-    template <class StreamTraits>
-    bool read(InStreamInterface< StreamTraits >& in)
+    //! return pointer to data
+    const value_type* data() const
     {
-      uint64_t len;
-      in >> len;
-      // when read check size
-      if( size_ != len )
-      {
-        DUNE_THROW(InvalidStateException,"StaticArray::read: internal size " << size_ << " and size to read " << len << " not equal!");
-      }
-
-      for(size_t i=0; i<size_; ++i)
-      {
-        in >> vec_[i];
-      }
-      return true;
+      return vec_;
     }
 
-    //! print array
-    void print(std::ostream& s) const
-    {
-      s << "Print StaticArray(addr = "<< this << ") (size = " << size_ << ")\n";
-      for(size_t i=0; i<size(); ++i)
-      {
-        s << vec_[i] << "\n";
-      }
-    }
+  protected:
+    // pointer to memory
+    DofStorageType vec_;
+
+    // size of array
+    size_type size_;
   };
-
-  // specialisations of axpy
-  template <>
-  inline void StaticArray<double>::axpy(const ThisType& org, const double scalar)
-  {
-#if HAVE_BLAS
-    DuneCBlas :: daxpy( size() , scalar, org.vec_, 1 , vec_, 1);
-#else
-    const size_t s = size();
-    const double* ov = org.vec_;
-    for(size_t i=0; i<s; ++i) vec_[i] += scalar * ov[i];
-#endif
-  }
-
-  // specialisations of clear
-  template <>
-  inline void StaticArray<int>::clear()
-  {
-    std::memset(vec_, 0 , size() * sizeof(int));
-  }
-  template <>
-  inline void StaticArray<double>::clear()
-  {
-    std::memset(vec_, 0 , size() * sizeof(double));
-  }
 
   /*!
    MutableArray is the array that a discrete functions sees. If a discrete
@@ -414,9 +245,11 @@ namespace Dune
    the type of the dofs only the size of one dof.
    Therefore we have this wrapper class for cast to the right type.
   */
-  template <class T, class AllocatorType>
+  template <class T, class Allocator>
   class MutableArray : public StaticArray<T>
   {
+  public:
+    typedef Allocator  AllocatorType;
   protected:
     typedef MutableArray<T, AllocatorType> ThisType;
     typedef StaticArray<T> BaseType;
@@ -424,71 +257,100 @@ namespace Dune
     using BaseType :: size_ ;
     using BaseType :: vec_ ;
 
-    // make new memory memFactor larger
-    double memoryFactor_;
-
-    // actual capacity of array
-    size_t memSize_;
-
   public:
     using BaseType :: size ;
 
-    //! create array of length 0
-    MutableArray()
-      : BaseType(0, (T *) 0)
-      , memoryFactor_(1.0)
-      , memSize_(0)
-    {
-    }
+    typedef typename BaseType::size_type size_type;
+    typedef typename BaseType::value_type value_type;
 
     //! copy constructor
-    MutableArray(const MutableArray& other)
-      : BaseType(0, (T *) 0),
-        memoryFactor_(1.0),
-        memSize_(0)
+    MutableArray(const ThisType& other)
+      : BaseType(0, nullptr)
+      , memoryFactor_(1.0)
+      , memSize_(0)
+      , allocator_( other.allocator_ )
     {
-      // assign vector
-      *this = other;
+      assign( other );
     }
 
-    //! create array of length size
-    MutableArray(const size_t size)
-      : BaseType(size,
-                 // only alloc memory if size > 0
-                 ((T *) (size == 0) ? 0 : AllocatorType :: malloc (size)))
+    //! create array of length size with initialized values
+    explicit MutableArray(size_type size,
+                          const value_type& value,
+                          AllocatorType allocator = AllocatorType() )
+      : BaseType(size, (size == 0) ? nullptr : allocator.allocate(size) )
       , memoryFactor_(1.0)
       , memSize_(size)
+      , allocator_( allocator )
+    {
+      if( size_ > 0 )
+      {
+        std::fill( vec_, vec_+size_, value );
+      }
+    }
+
+    //! create array of length size without initializing the values
+    explicit MutableArray(size_type size = 0,
+                          AllocatorType allocator = AllocatorType() )
+      : BaseType(size, (size == 0) ? nullptr : allocator.allocate(size) )
+      , memoryFactor_(1.0)
+      , memSize_(size)
+      , allocator_( allocator )
     {
     }
 
     //! set memory factor
-    void setMemoryFactor(const double memFactor)
+    void setMemoryFactor(double memFactor)
     {
       memoryFactor_ = memFactor;
+      assert( memoryFactor_ >= 1.0 );
     }
 
-    //! Destructor
+    //! destructor
     ~MutableArray()
     {
       freeMemory();
     }
 
     //! return number of total enties of array
-    size_t capacity () const { return memSize_; }
+    size_type capacity () const
+    {
+      return memSize_;
+    }
+
+    //! assign arrays
+    void assign (const ThisType & org)
+    {
+      memoryFactor_ = org.memoryFactor_;
+      assert( memoryFactor_ >= 1.0 );
+
+      resize( org.size_ );
+      assert( ( size_ > 0 ) ? vec_ != nullptr : true );
+      std::copy(org.vec_, org.vec_ + size_, vec_ );
+    }
 
     //! assign arrays
     ThisType& operator= (const ThisType & org)
     {
-      resize( org.size_ );
-      memoryFactor_ = org.memoryFactor_;
-      assert( ( size_ > 0 ) ? vec_ != 0 : true );
-      std::copy(org.vec_, org.vec_ + size_, vec_ );
+      assign( org );
       return *this;
     }
 
     //! resize vector with new size nsize
     //! if nsize is smaller then actual memSize, size is just set to new value
-    void resize ( size_t nsize )
+    void resize ( size_type nsize )
+    {
+      // only initialize value if we are not using a POD type
+      doResize( nsize, ! std::is_pod< value_type >::value );
+    }
+
+    //! resize vector with new size nsize
+    //! if nsize is smaller then actual memSize, size is just set to new value
+    void resize ( size_type nsize, const value_type& value )
+    {
+      doResize( nsize, true, value );
+    }
+
+    void doResize( size_type nsize, bool initializeNewValues, const value_type& value = value_type() )
     {
       // just set size if nsize is smaller than memSize but larger the
       // half of memSize
@@ -506,7 +368,7 @@ namespace Dune
       }
 
       // reserve or shrink to memory + overestimate
-      adjustMemory( nsize );
+      adjustMemory( nsize, initializeNewValues, value );
       // set new size
       size_ = nsize;
     }
@@ -514,7 +376,7 @@ namespace Dune
     //! reserve vector size with new mSize
     //! if mSize is smaller then actual memSize,
     //! then nothing is done
-    void reserve ( size_t mSize )
+    void reserve ( size_type mSize )
     {
       // check whether we already have the mem size
       // and if just do nothing
@@ -524,28 +386,32 @@ namespace Dune
       }
 
       // adjust memory accordingly
-      adjustMemory( mSize );
+      adjustMemory( mSize, false );
     }
 
     //! return size of vector in bytes
-    size_t usedMemorySize() const
+    size_type usedMemorySize() const
     {
-      return memSize_ * sizeof(T) + sizeof(ThisType);
+      return memSize_ * sizeof(value_type) + sizeof(ThisType);
     }
 
   protected:
     //! adjust the memory
-    void adjustMemory( size_t mSize )
+    void adjustMemory( size_type mSize, bool initializeNewValues, const value_type& value = value_type() )
     {
       assert( memoryFactor_ >= 1.0 );
       const double overEstimate = memoryFactor_ * mSize;
-      const size_t nMemSize = (size_t) std::ceil( overEstimate );
+      const size_type nMemSize = (size_type) std::ceil( overEstimate );
       assert( nMemSize >= mSize );
 
-      if( !vec_ )
+      if( vec_ == nullptr )
       {
         // allocate new memory
-        vec_ = AllocatorType :: malloc(nMemSize);
+        vec_ = allocator_.allocate( nMemSize );
+        if( initializeNewValues )
+        {
+          std::fill( vec_, vec_+nMemSize, value );
+        }
       }
       else
       {
@@ -556,7 +422,11 @@ namespace Dune
         assert( vec_ );
 
         // reallocate memory
-        vec_ = AllocatorType :: realloc (vec_,memSize_,nMemSize);
+        vec_ = allocator_.reallocate (vec_, memSize_, nMemSize);
+        if( nMemSize > memSize_ && initializeNewValues )
+        {
+          std::fill( vec_+memSize_, vec_+nMemSize, value );
+        }
       }
 
       // set new mem size
@@ -566,14 +436,22 @@ namespace Dune
     // free memory and reset sizes
     void freeMemory()
     {
-      if( vec_ )
+      if( vec_ != nullptr )
       {
-        AllocatorType :: free ( vec_ );
-        vec_ = 0;
+        allocator_.deallocate( vec_, memSize_ );
+        vec_ = nullptr;
       }
       size_ = 0;
       memSize_ = 0;
     }
+
+    // make new memory memFactor larger
+    double memoryFactor_;
+
+    // actual capacity of array
+    size_type memSize_;
+
+    AllocatorType allocator_;
   };
 
   /** \brief Specialization of SpecialArrayFeatures for MutableArray */
@@ -581,60 +459,47 @@ namespace Dune
   struct SpecialArrayFeatures<MutableArray<ValueType> >
   {
     typedef MutableArray<ValueType> ArrayType;
-    static size_t used(const ArrayType & array)
+    typedef typename ArrayType::size_type size_type;
+
+    static size_type used(const ArrayType & array)
     {
       return array.usedMemorySize();
     }
-    static inline void setMemoryFactor(ArrayType & array, const double memFactor)
+
+    static void setMemoryFactor(ArrayType & array, double memFactor)
     {
       array.setMemoryFactor(memFactor);
     }
 
-    static inline void memMoveBackward(ArrayType& array,
-                                       const size_t length,
-                                       const size_t oldStartIdx,
-                                       const size_t newStartIdx)
+    static void memMoveBackward(ArrayType& array, size_type length, size_type oldStartIdx, size_type newStartIdx)
     {
       assert( newStartIdx >= oldStartIdx );
-      //array.memmove(length,oldStartIdx,newStartIdx);
       // get new end of block which is offSet + (length of block - 1)
-      size_t newIdx = newStartIdx + length - 1;
+      size_type newIdx = newStartIdx + length - 1;
       assert( newIdx < array.size() );
       // copy all entries backwards
-      for(size_t oldIdx = oldStartIdx + length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
+      for(size_type oldIdx = oldStartIdx + length-1; oldIdx >= oldStartIdx; --oldIdx, --newIdx )
       {
         assert( oldIdx < array.size() );
         // move value to new location
         array[newIdx] = array[oldIdx];
-#ifndef NDEBUG
-        // for debugging purpose
-        array[oldIdx ] = 0.0;
-#endif
-      }
-    }
-    static inline void memMoveForward(ArrayType& array,
-                                      const size_t length,
-                                      const size_t oldStartIdx,
-                                      const size_t newStartIdx)
-    {
-      assert( newStartIdx <= oldStartIdx );
-      //array.memmove(length,oldStartIdx,newStartIdx);
-      const size_t upperBound = oldStartIdx + length;
-      // get new off set that should be smaller then old one
-      size_t newIdx = newStartIdx;
-      for(size_t oldIdx = oldStartIdx; oldIdx<upperBound; ++oldIdx, ++newIdx )
-      {
-        // copy to new location
-        array[newIdx] = array[oldIdx];
-#ifndef NDEBUG
-        // for debugging issues only
-        array[oldIdx] = 0.0;
-#endif
       }
     }
 
-    static inline
-    void assign( ArrayType& array, const int newIndex, const int oldIndex )
+    static void memMoveForward(ArrayType& array, size_type length, size_type oldStartIdx, size_type newStartIdx)
+    {
+      assert( newStartIdx <= oldStartIdx );
+      const size_type upperBound = oldStartIdx + length;
+      // get new off set that should be smaller then old one
+      size_type newIdx = newStartIdx;
+      for(size_type oldIdx = oldStartIdx; oldIdx<upperBound; ++oldIdx, ++newIdx )
+      {
+        // copy to new location
+        array[newIdx] = array[oldIdx];
+      }
+    }
+
+    static void assign( ArrayType& array, size_type newIndex, size_type oldIndex )
     {
       array[ newIndex ] = array[ oldIndex ];
     }

@@ -1,28 +1,27 @@
 #include <config.h>
 
+#include <algorithm>
 #include <iostream>
+#include <type_traits>
+
 #include <dune/common/stdstreams.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 
-using namespace Dune;
-
 #include <dune/fem/space/common/arrays.hh>
 
-using namespace Fem;
-
 template <class Vector>
-void checkVector( Vector& vector , const size_t rows, const size_t cols )
+void checkVector( Vector& vector , std::size_t rows, std::size_t cols )
 {
   std::cout << "Start Vector check: " << std::endl;
   vector.resize( rows );
   std::cout << "vector: capacity " << vector.capacity() << "  size " << vector.size() << std::endl;
-  for( size_t i=0; i<rows; ++i )
+  for( std::size_t i=0; i<rows; ++i )
   {
     vector[ i ].resize( cols );
     std::cout << "vector["<<i<<"]: capacity " << vector[ i ].capacity() << "  size " << vector[ i ].size() << std::endl;
     typedef typename Vector :: value_type :: value_type value_type;
-    for( size_t j=0; j<cols; ++j )
+    for( std::size_t j=0; j<cols; ++j )
     {
       vector[ i ][ j ] = value_type( j );
     }
@@ -30,25 +29,54 @@ void checkVector( Vector& vector , const size_t rows, const size_t cols )
   std::cout << "End Vector check!" << std::endl << std::endl;
 }
 
-//**************************************************
-//
-//  main programm, run algorithm twice to calc EOC
-//
-//**************************************************
+template <class Vector>
+void checkPODVector( Vector& vector , std::size_t rows)
+{
+  typedef typename Vector :: value_type  value_type;
+  if( std::is_same< Dune::Fem::PODArrayAllocator< value_type >, typename Vector::AllocatorType > :: value )
+  {
+    std::cout << "Using POD allocator for array memory management" << std::endl;
+  }
+
+  std::cout << "Start Vector check: " << std::endl;
+  vector.resize( rows );
+  std::cout << "vector: capacity " << vector.capacity() << "  size " << vector.size() << std::endl;
+  std::fill( vector.begin(), vector.end(), value_type( 1 ) );
+  std::cout << "End Vector check!" << std::endl << std::endl;
+}
+
 int main( int argc, char *argv[] )
 try {
-  typedef FieldVector< double , 1 > ValueType;
+  typedef Dune::FieldVector< double , 1 > ValueType;
 
-  MutableArray< MutableArray< ValueType > > vector;
-  vector.setMemoryFactor( 1.1 );
+  {
+    Dune::Fem::MutableArray< Dune::Fem::MutableArray< ValueType > > vector;
+    vector.setMemoryFactor( 1.1 );
 
-  checkVector( vector, 10, 4 );
-  checkVector( vector, 7, 6 );
-  checkVector( vector, 20, 9 );
-  checkVector( vector, 2, 5 );
+    checkVector( vector, 10, 4 );
+    checkVector( vector, 7, 6 );
+    checkVector( vector, 20, 9 );
+    checkVector( vector, 2, 5 );
+  }
+
+  {
+    Dune::Fem::MutableArray< ValueType > vector;
+    checkPODVector( vector, 10 );
+    checkPODVector( vector, 7  );
+    checkPODVector( vector, 20 );
+    checkPODVector( vector, 2  );
+  }
+
+  {
+    Dune::Fem::MutableArray< double > vector;
+    checkPODVector( vector, 10 );
+    checkPODVector( vector, 7  );
+    checkPODVector( vector, 20 );
+    checkPODVector( vector, 2  );
+  }
   return 0;
 }
-catch( const Dune :: Exception &exception )
+catch( const Dune::Exception & exception )
 {
   std :: cerr << exception << std :: endl;
   return 1;
