@@ -47,8 +47,16 @@ namespace Dune
       return GridFunctionView< GF >( gf );
     }
 
-  } // FemPy
+  } // namespace FemPy
 
-} // Dune
+
+  namespace Fem
+  {
+
+    using FemPy::localFunction;
+
+  } // namespace Fem
+
+} // namespace Dune
 
 #endif // #ifndef DUNE_FEMPY_FUNCTION_GRIDFUNCTIONVIEW_HH

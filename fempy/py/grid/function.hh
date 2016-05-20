@@ -67,6 +67,7 @@ namespace Dune
         cls.def_property_readonly( "dimRange", [] ( GridFunction &gf ) -> int { return GridFunction::RangeType::dimension; } );
 
         cls.def_property_readonly( "name", [] ( GridFunction &gf ) -> std::string { return gf.name(); } );
+        cls.def_property_readonly( "grid", &GridFunction::gridPart );
 
         cls.def( "localFunction", [] ( const GridFunction &gf, const Entity &entity ) -> LocalFunction {
             return gf.localFunction( entity );

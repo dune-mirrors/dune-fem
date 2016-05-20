@@ -85,7 +85,8 @@ namespace Dune
       template< class Point >
       void evaluate ( const Point &x, RangeType &value ) const
       {
-        impl_->evaluate( static_cast< LocalCoordinateType >( x ), value );
+        using Fem::coordinate;
+        impl_->evaluate( coordinate( x ), value );
       }
 
       template< class Quadrature, class Values >
@@ -98,7 +99,8 @@ namespace Dune
       template< class Point >
       void jacobian ( const Point &x, JacobianRangeType &jacobian ) const
       {
-        impl_->jacobian( static_cast< LocalCoordinateType >( x ), jacobian );
+        using Fem::coordinate;
+        impl_->jacobian( coordinate( x ), jacobian );
       }
 
       template< class Quadrature, class Jacobians >
