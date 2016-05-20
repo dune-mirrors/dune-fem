@@ -20,9 +20,6 @@ namespace Dune
     template< class GridPart >
     void registerGrid ( pybind11::module module )
     {
-      static auto common = pybind11::module::import( "dune.common" );
-      static auto femmpi = pybind11::module::import( "dune.femmpi" );
-
       registerHierarchicalGrid< HierarchicalGrid< typename GridPart::GridType > >( module );
       module.def( "makeSimplexGrid", &makeSimplexGrid< HierarchicalGrid< typename GridPart::GridType > > );
 
