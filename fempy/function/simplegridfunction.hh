@@ -56,7 +56,8 @@ namespace Dune
       template< class Point >
       void evaluate ( const Point &x, RangeType &value ) const
       {
-        value = localEvaluator_( entity(), static_cast< LocalCoordinateType >( x ) );
+        using Fem::coordinate;
+        value = localEvaluator_( entity(), coordinate( x ) );
       }
 
       template< class Quadrature, class Values >
@@ -250,14 +251,14 @@ namespace Dune
     // ------------------
 
     template< class GridPart, class LocalEvaluator >
-    inline static typename std::enable_if< IsLocalEvaluator< GridPart, LocalEvaluator >::value, SimpleGridFunction< GridPart, LocalEvaluator > >::type
+    inline static std::enable_if_t< IsLocalEvaluator< GridPart, LocalEvaluator >::value, SimpleGridFunction< GridPart, LocalEvaluator > >
     simpleGridFunction ( std::string name, const GridPart &gridPart, LocalEvaluator localEvaluator, int order = std::numeric_limits< int >::max() )
     {
       return SimpleGridFunction< GridPart, LocalEvaluator >( std::move( name ), gridPart, std::move( localEvaluator ), order );
     }
 
     template< class GridPart, class LocalEvaluator >
-    inline static typename std::enable_if< IsLocalEvaluator< GridPart, LocalEvaluator >::value, SimpleGridFunction< GridPart, LocalEvaluator > >::type
+    inline static std::enable_if_t< IsLocalEvaluator< GridPart, LocalEvaluator >::value, SimpleGridFunction< GridPart, LocalEvaluator > >
     simpleGridFunction ( const GridPart &gridPart, LocalEvaluator localEvaluator, int order = std::numeric_limits< int >::max() )
     {
       return SimpleGridFunction< GridPart, LocalEvaluator >( gridPart, std::move( localEvaluator ), order );
@@ -268,14 +269,14 @@ namespace Dune
     // ------------------
 
     template< class GridPart, class Evaluator >
-    inline static typename std::enable_if< IsEvaluator< GridPart, Evaluator >::value, SimpleGlobalGridFunction< GridPart, Evaluator > >::type
+    inline static std::enable_if_t< IsEvaluator< GridPart, Evaluator >::value, SimpleGlobalGridFunction< GridPart, Evaluator > >
     simpleGridFunction ( std::string name, const GridPart &gridPart, Evaluator evaluator, int order = std::numeric_limits< int >::max() )
     {
       return SimpleGlobalGridFunction< GridPart, Evaluator >( std::move( name ), gridPart, std::move( evaluator ), order );
     }
 
     template< class GridPart, class Evaluator >
-    inline static typename std::enable_if< IsEvaluator< GridPart, Evaluator >::value, SimpleGlobalGridFunction< GridPart, Evaluator > >::type
+    inline static std::enable_if_t< IsEvaluator< GridPart, Evaluator >::value, SimpleGlobalGridFunction< GridPart, Evaluator > >
     simpleGridFunction ( const GridPart &gridPart, Evaluator evaluator, int order = std::numeric_limits< int >::max() )
     {
       return SimpleGlobalGridFunction< GridPart, Evaluator >( gridPart, std::move( evaluator ), order );
