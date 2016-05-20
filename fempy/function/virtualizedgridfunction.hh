@@ -153,6 +153,7 @@ namespace Dune
 
       template< class Impl >
       struct Implementation final
+        : public Interface
       {
         Implementation ( Impl impl ) : impl_( std::move( impl ) ) {}
 
