@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __metaclass__ = type
 
 from ..generator import generator
-from . import gridfunction
 
 myGenerator = generator.Generator("Space")
 
