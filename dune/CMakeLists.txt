@@ -1,6 +1,7 @@
 add_subdirectory(fem)
 add_subdirectory(generated)
 add_subdirectory(generator)
+add_subdirectory(models)
 
 add_library(common SHARED common.cc)
 set_target_properties(common PROPERTIES PREFIX "")

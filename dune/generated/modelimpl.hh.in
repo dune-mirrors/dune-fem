@@ -1,0 +1,63 @@
+#include <boost/python.hpp>
+#include <boost/version.hpp>
+
+#include <dune/fem/gridpart/leafgridpart.hh>
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+
+// #include <dune/fempy/gridfunction.hh>
+
+#include <dune/fem/schemes/diffusionmodel.hh>
+#include "ModelTmp.hh"
+
+typedef #GRIDPARTCHOICE GridPart;
+namespace ModelTmp
+{
+  struct PyModel : public Model< GridPart#PYTEMPLATE >
+  {
+    typedef PyModel This;
+    typedef DiffusionModelWrapper<This> Wrapper;
+    typedef typename Wrapper::Base BaseModel;
+    PyModel()
+    {}
+    ~PyModel()
+    {
+      std::cout << "In PyModel destructor" << std::endl;
+    }
+    int getDimRange()
+    {
+      return #DIMRANGE;
+    }
+  };
+
+  typedef DiffusionModelWrapper<PyModel> ModelWrapperType;
+  std::shared_ptr<ModelWrapperType> wrap(std::shared_ptr<PyModel> &model)
+  {
+    return make_shared<ModelWrapperType>(model);
+  }
+
+  int getDimRange()
+  {
+    return #DIMRANGE;
+  }
+}
+BOOST_PYTHON_MODULE(#MODELNAME) {
+  using namespace boost::python;
+  using namespace ModelTmp;
+  typedef typename ModelWrapperType::Base ModelBase;
+  class_< PyModel, std::shared_ptr<PyModel> >("get")
+  .def("getDimRange",&PyModel::getDimRange)
+  .def("wrap",&wrap)
+  #PYSETCOEFFICIENT
+  ;
+  class_< ModelBase, std::shared_ptr<ModelBase>, boost::noncopyable >("ModelBase", no_init);
+  class_< ModelWrapperType, std::shared_ptr<ModelWrapperType>, bases<ModelBase> >("ModelWrapper",no_init);
+  def("getDimRange",&getDimRange);
+  if ( BOOST_VERSION == 106000 ) // apparently a bug in 1.60 that is being worked on - boost version not found for 1.49...
+  {
+    boost::python::register_ptr_to_python<std::shared_ptr<PyModel>>();
+    boost::python::register_ptr_to_python<std::shared_ptr<ModelBase>>();
+    boost::python::register_ptr_to_python<std::shared_ptr<ModelWrapperType>>();
+  }
+  implicitly_convertible<std::shared_ptr<ModelWrapperType>,          // Source
+                         std::shared_ptr<ModelBase> >(); // Target
+}
