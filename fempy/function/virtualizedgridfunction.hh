@@ -1,6 +1,7 @@
 #ifndef DUNE_FEMPY_FUNCTION_VIRTUALIZEDGRIDFUNCTION_HH
 #define DUNE_FEMPY_FUNCTION_VIRTUALIZEDGRIDFUNCTION_HH
 
+#include <functional>
 #include <type_traits>
 #include <utility>
 
@@ -8,6 +9,8 @@
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/space/common/functionspace.hh>
+
+#include <dune/fempy/pybind11/reference_wrapper.h>
 
 namespace Dune
 {
@@ -39,6 +42,9 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     private:
+      template< class T > static auto _ref ( T &t ) { using std::ref; return ref( t ); }
+      template< class T > static auto _cref ( T &t ) { using std::cref; return cref( t ); }
+
       struct Interface
       {
         virtual ~Interface () = default;
@@ -63,19 +69,19 @@ namespace Dune
         virtual const EntityType &entity () const override { return impl().entity(); }
 
       private:
-        const auto &impl () const { return std::cref( impl_ ).get(); }
-        auto &impl () { return std::ref( impl_ ).get(); }
+        const auto &impl () const { return _cref( impl_ ).get(); }
+        auto &impl () { return _ref( impl_ ).get(); }
 
         Impl impl_;
       };
 
     public:
-      template< class Impl, std::enable_if_t< !std::is_base_of< Fem::HasLocalFunction, Impl >::value, int > = 0 >
+      template< class Impl, std::enable_if_t< !std::is_base_of< Fem::HasLocalFunction, std::decay_t< decltype( _cref( std::declval< const Impl & >() ).get() ) > >::value, int > = 0 >
       VirtualizedLocalFunction ( Impl impl )
         : impl_( new Implementation< Impl >( std::move( impl ) ) )
       {}
 
-      template< class GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, GF >::value, int > = 0 >
+      template< class GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, std::decay_t< decltype( _cref( std::declval< const GF & >() ).get() ) > >::value, int > = 0 >
       VirtualizedLocalFunction ( const GF &gf )
         : impl_( new Implementation< typename GF::LocalFunctionType >( typename GF::LocalFunctionType( gf ) ) )
       {}
@@ -143,6 +149,9 @@ namespace Dune
       typedef typename Base::JacobianRangeType JacobianRangeType;
 
     private:
+      template< class T > static auto _ref ( T &t ) { using std::ref; return ref( t ); }
+      template< class T > static auto _cref ( T &t ) { using std::cref; return cref( t ); }
+
       struct Interface
       {
         virtual ~Interface () = default;
@@ -166,13 +175,14 @@ namespace Dune
         virtual void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const override { impl().jacobian( x, jacobian ); }
 
       private:
-        auto impl () const { return std::ref( impl_ ).get(); }
+        auto impl () const { return _cref( impl_ ).get(); }
 
         Impl impl_;
       };
 
     public:
-      template< class Impl, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, Impl >::value, int > = 0 >
+      //template< class Impl, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, std::decay_t< decltype( _cref( std::declval< const Impl & >() ).get() ) > >::value, int > = 0 >
+      template< class Impl >
       VirtualizedGridFunction ( Impl impl )
         : impl_( new Implementation< Impl >( std::move( impl ) ) )
       {}

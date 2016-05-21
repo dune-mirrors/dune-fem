@@ -10,6 +10,7 @@ SET(HEADERS
   operators.h
   pybind11.h
   pytypes.h
+  reference_wrapper.h
   stl.h
   stl_bind.h
   typeid.h
