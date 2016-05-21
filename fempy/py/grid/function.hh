@@ -153,7 +153,7 @@ namespace Dune
       {
         typedef decltype( makePyGlobalGridFunction( std::declval< GridPart >(), std::declval< std::string >(), std::declval< pybind11::function >(), std::integral_constant< int, dimRange >() ) ) GridFunction;
         static const std::string clsName = name + std::to_string( dimRange );
-        return registerGridFunction< GridFunction >( scope, clsName.c_str() );
+        return FemPy::registerGridFunction< GridFunction >( scope, clsName.c_str() );
       };
 
 
@@ -222,7 +222,7 @@ namespace Dune
       {
         typedef decltype( makePyLocalGridFunction( std::declval< GridPart >(), std::declval< std::string >(), std::declval< pybind11::function >(), std::integral_constant< int, dimRange >() ) ) GridFunction;
         static const std::string clsName = name + std::to_string( dimRange );
-        return registerGridFunction< GridFunction >( scope, clsName.c_str() );
+        return FemPy::registerGridFunction< GridFunction >( scope, clsName.c_str() );
       };
 
 
