@@ -181,8 +181,7 @@ namespace Dune
       };
 
     public:
-      //template< class Impl, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, std::decay_t< decltype( _cref( std::declval< const Impl & >() ).get() ) > >::value, int > = 0 >
-      template< class Impl >
+      template< class Impl, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, std::decay_t< decltype( _cref( std::declval< const Impl & >() ).get() ) > >::value, int > = 0 >
       VirtualizedGridFunction ( Impl impl )
         : impl_( new Implementation< Impl >( std::move( impl ) ) )
       {}
