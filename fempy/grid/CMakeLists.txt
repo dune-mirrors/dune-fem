@@ -1,5 +1,5 @@
 set(HEADERS
-  hierarchical.hh
+  adaptation.hh
   restrictprolong.hh
 )
 

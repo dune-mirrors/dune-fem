@@ -6,7 +6,6 @@
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
-#include <dune/fempy/grid/hierarchical.hh>
 #include <dune/fempy/py/grid/range.hh>
 #include <dune/fempy/py/grid/function.hh>
 #include <dune/fempy/py/grid/vtk.hh>
@@ -24,11 +23,13 @@ namespace Dune
     template< class GridPart >
     pybind11::class_< GridPart > registerGridPart ( pybind11::handle scope, const char *name )
     {
+      typedef typename GridPart::GridType Grid;
+
       const int dim = GridPart::dimension;
 
       pybind11::class_< GridPart > cls( scope, name );
-      cls.def( "__init__", [] ( GridPart &instance, HierarchicalGrid< typename GridPart::GridType > &hGrid ) {
-          new (&instance) GridPart( *hGrid.grid() );
+      cls.def( "__init__", [] ( GridPart &instance, Grid &grid ) {
+          new (&instance) GridPart( grid );
         }, pybind11::keep_alive< 1, 2 >() );
 
       registerPyGridPartRange< GridPart, 0 >( cls, "Elements" );
@@ -45,7 +46,7 @@ namespace Dune
           return std::string( name ) + " with " + std::to_string( gridPart.indexSet().size( 0 ) ) + " elements";
         } );
 
-      cls.def_property_readonly( "hierarchicalGrid", [] ( GridPart &gridPart ) { return hierarchicalGrid( gridPart.grid() ); } );
+      cls.def_property_readonly( "hierarchicalGrid", [] ( GridPart &gridPart ) -> Grid & { return gridPart.grid(); } );
 
       cls.def( "size", [] ( const GridPart &gridPart, int codim ) { return gridPart.indexSet().size( codim ); } );
 

@@ -1,5 +1,5 @@
-#ifndef DUNE_FEMPY_GRID_HIERARCHICAL_HH
-#define DUNE_FEMPY_GRID_HIERARCHICAL_HH
+#ifndef DUNE_FEMPY_GRID_ADAPTATION_HH
+#define DUNE_FEMPY_GRID_ADAPTATION_HH
 
 #include <cstddef>
 
@@ -25,25 +25,6 @@ namespace Dune
   namespace FemPy
   {
 
-    /*!
-        @file
-        @brief Contains C++ template classes for grids.
-        \ingroup Grids
-    */
-
-    // readDGF
-    // -------
-
-    template< class Grid >
-    static std::shared_ptr< Grid > readDGF ( const std::string &dgf )
-    {
-      GridPtr< Grid > gridPtr( dgf );
-      gridPtr->loadBalance();
-      return std::shared_ptr< Grid >( gridPtr.release() );
-    }
-
-
-
     // DiscreteFunctionList
     // --------------------
 
@@ -59,7 +40,7 @@ namespace Dune
 
       struct GridPartType
       {
-        explicit GridPartType ( std::shared_ptr< Grid > grid ) : grid_( std::move( grid ) ) {}
+        explicit GridPartType ( Grid &grid ) : grid_( grid ) {}
 
         struct IndexSetType
         {
@@ -68,12 +49,12 @@ namespace Dune
 
         typedef Grid GridType;
 
-        const Grid &grid () const { return *grid_; }
+        Grid &grid () const { return grid_; }
 
         const ElementType &convert ( const ElementType &entity ) const { return entity; }
 
       private:
-        std::shared_ptr< Grid > grid_;
+        Grid &grid_;
       };
 
       struct DiscreteFunctionSpaceType
@@ -125,8 +106,8 @@ namespace Dune
 
       typedef std::allocator< DofType > LocalDofVectorAllocatorType;
 
-      explicit DiscreteFunctionList ( std::shared_ptr< Grid > grid )
-        : space_( GridPartType( std::move( grid ) ) )
+      explicit DiscreteFunctionList ( Grid &grid )
+        : space_( GridPartType( grid ) )
       {}
 
       const GridPartType &gridPart () const { return space_.gridPart(); }
@@ -215,8 +196,8 @@ namespace Dune
       typedef typename Grid::template Codim< 0 >::Entity ElementType;
       typedef typename Grid::template Codim< 0 >::LocalGeometry LocalGeometryType;
 
-      explicit RestrictProlong ( std::shared_ptr< Grid > grid )
-        : discreteFunctions_( std::move( grid ) )
+      explicit RestrictProlong ( Grid &grid )
+        : discreteFunctions_( grid )
       {}
 
       void setFatherChildWeight ( const DomainFieldType &weight ) const
@@ -283,6 +264,8 @@ namespace Dune
         addToCommList();
       }
 
+      Grid &grid () const { return discreteFunctions_.gridPart().grid(); }
+
     private:
       void addToCommList ()
       {
@@ -338,11 +321,11 @@ namespace Dune
 
 
 
-    // HierarchicalGrid
-    // ----------------
+    // GridAdaptation
+    // --------------
 
     template< class G >
-    struct HierarchicalGrid
+    struct GridAdaptation
     {
       typedef G Grid;
 
@@ -352,59 +335,51 @@ namespace Dune
 
       typedef typename Grid::template Codim< 0 >::Entity Element;
 
-      explicit HierarchicalGrid ( const std::string &dgf )
-        : grid_( readDGF< Grid >( dgf ) ),
-          restrictProlong_( new RestrictProlong< Grid >( grid_ ) ),
-          adaptationManager_( new AdaptationManager( *grid_, *restrictProlong_, noParameter() ) )
-      {}
-
-      explicit HierarchicalGrid ( Grid *grid )
-        : grid_( grid ),
-          restrictProlong_( new RestrictProlong< Grid >( grid_ ) ),
-          adaptationManager_( new AdaptationManager( *grid_, *restrictProlong_, noParameter() ) )
+      explicit GridAdaptation ( Grid &grid )
+        : restrictProlong_( grid ),
+          adaptationManager_( grid, restrictProlong_, noParameter() )
       {}
 
       template< class Marking >
       void mark ( Marking marking )
       {
-        for( const Element &element : elements( grid_->leafGridView() ) )
+        for( const Element &element : elements( grid().leafGridView() ) )
         {
           Marker marker = marking( element );
-          grid_->mark( static_cast< int >( marker ), element );
+          grid().mark( static_cast< int >( marker ), element );
         }
       }
 
       template< class Iterator >
       void adapt ( Iterator begin, Iterator end )
       {
-        restrictProlong_->assign( begin, end );
-        adaptationManager_->adapt();
-        restrictProlong_->assign();
+        restrictProlong_.assign( begin, end );
+        adaptationManager_.adapt();
+        restrictProlong_.assign();
       }
 
       void globalRefine ( int level )
       {
-        Fem::GlobalRefine::apply( *grid_, level );
+        Fem::GlobalRefine::apply( grid(), level );
       }
 
       template< class Iterator >
       void loadBalance ( Iterator begin, Iterator end )
       {
-        restrictProlong_->assign( begin, end );
-        adaptationManager_->loadBalance();
-        restrictProlong_->assign();
+        restrictProlong_.assign( begin, end );
+        adaptationManager_.loadBalance();
+        restrictProlong_.assign();
       }
 
-      std::shared_ptr< Grid > grid () const { return grid_; }
+      Grid &grid () const { return restrictProlong_.grid(); }
 
     private:
-      std::shared_ptr< Grid > grid_;
-      std::shared_ptr< RestrictProlong< Grid > > restrictProlong_;
-      std::shared_ptr< AdaptationManager > adaptationManager_;
+      RestrictProlong< Grid > restrictProlong_;
+      AdaptationManager adaptationManager_;
     };
 
   } // namespace FemPy
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEMPY_GRID_HIERARCHICAL_HH
+#endif // #ifndef DUNE_FEMPY_GRID_ADAPTATION_HH
