@@ -66,7 +66,7 @@ namespace Dune
       : BaseType( discreteFunction.space().basisFunctionSet( entity ), LocalDofVectorType( discreteFunction.localDofVectorAllocator() ) ),
         discreteFunction_( &discreteFunction )
       {
-        discreteFunction.getLocalDofs( entity, localDofVector() );
+        discreteFunction.getLocalDofReferences( entity, localDofVector() );
       }
 
       //! Constructor creating local function from given discrete function and entity, not empty
@@ -74,7 +74,7 @@ namespace Dune
       : BaseType( dFunction.space().basisFunctionSet( entity ), LocalDofVectorType( dFunction.localDofVectorAllocator() ) ),
         discreteFunction_( &const_cast<DiscreteFunctionType &>( dFunction ) )
       {
-        discreteFunction().getLocalDofs( entity, localDofVector() );
+        discreteFunction().getLocalDofReferences( entity, localDofVector() );
       }
 
       //! copy constructor
