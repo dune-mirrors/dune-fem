@@ -7,7 +7,6 @@ mapper_HEADERS = \
 	dofmapper.hh \
 	exceptions.hh \
 	genericadaptivedofmapper.hh \
-	genericdofmapper.hh \
 	indexsetdofmapper.hh \
 	localkey.hh \
 	nonblockmapper.hh
