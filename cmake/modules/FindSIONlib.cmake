@@ -26,13 +26,13 @@ mark_as_advanced(SIONLIB_ROOT SIONLIB_SUFFIX SIONLIB_INCLUDEDIR SIONLIB_LIBDIR)
 find_path(SIONLIB_INCLUDE_DIR
   NAMES "sion.h"
   PATHS ${SIONLIB_ROOT} ${SIONLIB_INCLUDEDIR}
-  PATH_SUFFIXES "include" 
+  PATH_SUFFIXES "include"
   NO_DEFAULT_PATH
 )
 #now also look for default paths
 find_path(SIONLIB_INCLUDE_DIR
   NAMES "sion.h"
-  PATH_SUFFIXES "include" 
+  PATH_SUFFIXES "include"
 )
 
 # check header usability
@@ -41,6 +41,7 @@ cmake_push_check_state()
 set(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS} ${MPI_DUNE_COMPILE_FLAGS} -DENABLE_SIONLIB")
 set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} ${MPI_DUNE_INCLUDE_PATH} ${SIONLIB_INCLUDE_DIR})
 set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${MPI_DUNE_LIBRARIES})
+include(CheckIncludeFiles)
 check_include_files(sion.h SIONLIB_HEADER_USABLE)
 
 
@@ -94,7 +95,7 @@ if(SIONLIB_FOUND)
     "Library directory: ${SIONLIB_LIBRARIES}\n\n")
   set(SIONLIB_DUNE_COMPILE_FLAGS "-I${SIONLIB_INCLUDE_DIRS} -DENABLE_SIONLIB=1"
     CACHE STRING "Compile Flags used by DUNE when compiling with SIONLIB programs")
-  set(SIONLIB_DUNE_LIBRARIES ${SIONLIB_LIBRARIES} 
+  set(SIONLIB_DUNE_LIBRARIES ${SIONLIB_LIBRARIES}
     CACHE STRING "Libraries used by DUNE when linking SIONLIB programs")
 else(SIONLIB_FOUND)
   # log errornous result
