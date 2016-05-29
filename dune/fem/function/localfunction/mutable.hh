@@ -95,7 +95,7 @@ namespace Dune
       void init ( const EntityType &entity )
       {
         BaseType::init( discreteFunction().space().basisFunctionSet( entity ) );
-        discreteFunction().getLocalDofs( entity, localDofVector() );
+        discreteFunction().getLocalDofReferences( entity, localDofVector() );
       }
 
       const DiscreteFunctionType &discreteFunction () const
