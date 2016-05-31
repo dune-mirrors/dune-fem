@@ -535,7 +535,7 @@ namespace Dune
      *
      *  Therefore, in order to transform the function
      *
-     *    RangeType f(const DomainType& x,const double& t,const EntityType& entity)
+     *    RangeType f(const DomainType& x,double t,const EntityType& entity)
      *    {
      *      // do stuff
      *    }
@@ -553,7 +553,7 @@ namespace Dune
     template<class DiscreteFunctionSpaceImpl,class AnalyticalFunctionImpl=std::function<
       typename DiscreteFunctionSpaceImpl::FunctionSpaceType::RangeType(
       const typename DiscreteFunctionSpaceImpl::FunctionSpaceType::DomainType&,
-      const double&,const typename DiscreteFunctionSpaceImpl::EntityType&)> >
+      double,const typename DiscreteFunctionSpaceImpl::EntityType&)> >
     class LocalAnalyticalFunctionBinder
     {
     public:
