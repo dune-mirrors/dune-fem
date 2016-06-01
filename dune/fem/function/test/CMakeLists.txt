@@ -16,6 +16,10 @@ foreach( datafile ${DATAFILES} )
   configure_file( ${datafile} ${CMAKE_CURRENT_BINARY_DIR}/${datafile} COPYONLY )
 endforeach()
 
+dune_add_test( NAME test_tuplediscretefunction SOURCES test-tuplediscretefunction.cc
+COMPILE_DEFINITIONS "${GRIDTYPE}" "GRIDDIM=${GRIDDIM}"
+LINK_LIBRARIES dunefem )
+
 dune_add_test( NAME dftest SOURCES dftest.cc
 COMPILE_DEFINITIONS "${GRIDTYPE}" "GRIDDIM=${GRIDDIM}"
 LINK_LIBRARIES dunefem )

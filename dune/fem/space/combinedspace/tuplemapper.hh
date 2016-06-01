@@ -50,6 +50,26 @@ namespace Dune
         typedef TupleMapper< GridPart, Mapper ... > DofMapperType;
       };
 
+      // CombinedIndex
+      // -------------
+
+      template< class Index, class Int, Int i >
+      struct CombinedIndex
+      {
+        constexpr CombinedIndex ( Index index, Index offset ) : index_( index ), offset_( offset ) {}
+
+        static constexpr Int component () { return i; }
+
+        constexpr operator Index () const { return index_ + offset_; }
+
+        constexpr Index index () const { return index_; }
+
+        constexpr Index offset () const { return offset_; }
+
+      private:
+        Index index_, offset_;
+      };
+
 
       // DofMapper
       // ---------
@@ -74,25 +94,25 @@ namespace Dune
         // FunctorWrapper
         // --------------
 
-        template< class Functor >
+        template< class Functor, int i >
         struct FunctorWrapper
         {
           FunctorWrapper ( Functor functor, int localOffset, int globalOffset )
             : functor_( functor ),
-            localOffset_( localOffset ),
-            globalOffset_( globalOffset )
+              localOffset_( localOffset ),
+              globalOffset_( globalOffset )
           {}
 
           template< class GlobalKey >
           void operator() ( int localDof, const GlobalKey &globalKey )
           {
-            functor_( localDof + localOffset_, globalKey + globalOffset_ );
+            functor_( localDof + localOffset_, CombinedIndex< GlobalKey, int, i >( globalKey, globalOffset_ ) );
           }
 
           template< class GlobalKey >
           void operator() ( const GlobalKey &globalKey )
           {
-            functor_( globalKey + globalOffset_ );
+            functor_( CombinedIndex< GlobalKey, int, i >( globalKey, globalOffset_ ) );
           }
 
         private:
@@ -115,14 +135,14 @@ namespace Dune
 
         DofMapper ( GridPartType &gridPart, Mapper & ... mapper )
           : gridPart_( gridPart ),
-          mapperTuple_( mapper ... )
+            mapperTuple_( mapper ... )
         {
           init();
         }
 
         DofMapper ( GridPartType &gridPart, Mapper && ... mapper )
           : gridPart_( gridPart ),
-          mapperTuple_( std::move( mapper ) ... )
+            mapperTuple_( std::move( mapper ) ... )
         {
           init();
         }
@@ -273,7 +293,7 @@ namespace Dune
         template< class Entity, class Functor, class Tuple >
         static void apply ( OffsetType &localOffset, const OffsetType &globalOffset, const Entity &entity, Functor f, const Tuple &tuple )
         {
-          FunctorWrapper< Functor > wrappedFunctor( f, localOffset[ i ], globalOffset[ i ] );
+          FunctorWrapper< Functor, i > wrappedFunctor( f, localOffset[ i ], globalOffset[ i ] );
           std::get< i >( tuple ).mapEachEntityDof( entity, wrappedFunctor );
           localOffset[ i + 1 ] = localOffset[ i ] + std::get< i >( tuple ).numEntityDofs( entity );
         }
@@ -291,7 +311,7 @@ namespace Dune
         template< class Functor, class Tuple >
         static void apply ( OffsetType &localOffset, const OffsetType &globalOffset, const ElementType &element, Functor f, const Tuple &tuple )
         {
-          FunctorWrapper< Functor > wrappedFunctor( f, localOffset[ i ], globalOffset[ i ] );
+          FunctorWrapper< Functor, i > wrappedFunctor( f, localOffset[ i ], globalOffset[ i ] );
           std::get< i >( tuple ).mapEach( element, wrappedFunctor );
           localOffset[ i + 1 ] = localOffset[ i ] + std::get< i >( tuple ).numDofs( element );
         }
@@ -346,7 +366,7 @@ namespace Dune
         }
 
         AdaptiveDofMapper ( GridPartType &gridPart, Mapper && ... mapper )
-          : BaseType( gridPart, std::move( mapper ) ... )        
+          : BaseType( gridPart, std::move( mapper ) ... )
         {
           DofManager< typename GridPartType::GridType >::instance( gridPart_.grid() ).addIndexSet( *this );
         }
@@ -572,9 +592,9 @@ namespace Dune
       struct Implementation
       {
         typedef typename std::conditional<
-            Std::And( Capabilities::isAdaptiveDofMapper< Mapper >::v ... ),
-            AdaptiveDofMapper< Traits< GridPart, Mapper ... > >,
-            DofMapper< Traits< GridPart, Mapper ... > > >::type Type;
+          Std::And( Capabilities::isAdaptiveDofMapper< Mapper >::v ... ),
+          AdaptiveDofMapper< Traits< GridPart, Mapper ... > >,
+          DofMapper< Traits< GridPart, Mapper ... > > >::type Type;
       };
 
 
@@ -619,7 +639,7 @@ namespace Dune
       };
 
       template< class GridPart, class ... Mapper >
-      struct isConsecutiveIndexSet< __TupleMapper::AdaptiveDofMapper< __TupleMapper::Traits< GridPart, Mapper... > > >
+      struct isConsecutiveIndexSet< __TupleMapper::AdaptiveDofMapper< __TupleMapper::Traits< GridPart, Mapper ... > > >
       {
         static const bool v = true;
       };
