@@ -20,6 +20,7 @@ namespace Dune
 
       typedef typename Entity::Geometry::LocalCoordinate LocalCoordinate;
 
+#if 0
       GridFunctionView ( const GF &gf ) : localFunction_( gf ) {}
 
       Value operator() ( const LocalCoordinate &x ) const
@@ -34,6 +35,23 @@ namespace Dune
 
     private:
       typename GF::LocalFunctionType localFunction_;
+#endif
+
+      GridFunctionView ( const GF &gf ) : gf_( gf ) {}
+
+      Value operator() ( const LocalCoordinate &x ) const
+      {
+        Value value;
+        gf_.localFunction( *entity_ ).evaluate( x, value );
+        return value;
+      }
+
+      void bind ( const Entity &entity ) { entity_ = &entity; }
+      void unbind () { entity_ = nullptr; }
+
+    private:
+      const GF &gf_;
+      const Entity *entity_ = nullptr;
     };
 
 
