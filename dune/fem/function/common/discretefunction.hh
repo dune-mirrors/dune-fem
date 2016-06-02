@@ -178,6 +178,15 @@ namespace Dune
         return asImp().name();
       }
 
+      /** \brief obtain the name of the discrete function
+       *
+       *  \returns string holding name of discrete function
+       */
+      std::string &name ()
+      {
+        return asImp().name();
+      }
+
       /** \brief obtain a reference to the corresponding DiscreteFunctionSpace */
       const DiscreteFunctionSpaceType &space () const
       {
@@ -585,6 +594,9 @@ namespace Dune
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::name() const */
       const std::string &name () const { return name_; }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::name() */
+      std::string &name () { return name_; }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::space() const */
       const DiscreteFunctionSpaceType &space () const { return dfSpace_; }
