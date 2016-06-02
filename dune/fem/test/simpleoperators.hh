@@ -53,7 +53,7 @@ public:
     Dune::Fem::ConstLocalFunction< DomainFunctionType > argLocal( arg );
     Dune::Fem::TemporaryLocalFunction< typename RangeFunctionType::DiscreteFunctionSpaceType > local( dest.space() );
 
-    for( auto &entity : arg.space() )
+    for( const auto &entity : arg.space() )
     {
       auto geometry = entity.geometry();
 
@@ -116,7 +116,7 @@ public:
     Dune::Fem::ConstLocalFunction< DomainFunctionType > argLocal( arg );
     Dune::Fem::TemporaryLocalFunction< typename RangeFunctionType::DiscreteFunctionSpaceType > local( dest.space() );
 
-    for( auto &entity : arg.space() )
+    for( const auto &entity : arg.space() )
     {
       auto geometry = entity.geometry();
 
