@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <cassert>
 #include <iostream>
+#include <dune/common/unused.hh>
 
 
 extern "C"{

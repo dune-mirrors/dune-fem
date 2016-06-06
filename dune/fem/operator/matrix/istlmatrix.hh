@@ -519,6 +519,7 @@ namespace Dune
       // check whether given (row,col) pair is valid
       void check(int localRow, int localCol) const
       {
+#ifndef NDEBUG
         const std::size_t row = (int) localRow / littleRows;
         const std::size_t col = (int) localCol / littleCols;
         const int lRow = localRow%littleRows;
@@ -527,6 +528,7 @@ namespace Dune
         assert( col < matrices_[row].size() );
         assert( lRow < littleRows );
         assert( lCol < littleCols );
+#endif
       }
 
       DofType& getValue(const int localRow, const int localCol)
