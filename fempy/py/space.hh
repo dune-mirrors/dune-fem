@@ -20,16 +20,16 @@ namespace Dune
     // -----------
 
     template< class DF, class GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, GF >::value, int > = 0 >
-    DF interpolant ( const typename DF::DiscreteFunctionSpaceType &space, std::string name, const GF &gf )
+    std::unique_ptr<DF> interpolant ( const typename DF::DiscreteFunctionSpaceType &space, std::string name, const GF &gf )
     {
       using Fem::interpolate;
-      DF df( std::move( name ), space );
-      interpolate( gf, df );
+      std::unique_ptr<DF> df( new DF(std::move( name ), space) );
+      interpolate( gf, *df );
       return df;
     }
 
     template< class DF >
-    DF interpolant ( const typename DF::DiscreteFunctionSpaceType &space, std::string name, typename DF::RangeType value )
+    std::unique_ptr<DF> interpolant ( const typename DF::DiscreteFunctionSpaceType &space, std::string name, typename DF::RangeType value )
     {
       return interpolant< DF >( space, std::move( name ), simpleGridFunction( space.gridPart(), [ value ] ( typename DF::DomainType ) { return value; }, 0 ) );
     }

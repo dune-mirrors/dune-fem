@@ -175,7 +175,7 @@ namespace Dune
         virtual void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const override { impl().jacobian( x, jacobian ); }
 
       private:
-        auto impl () const { return _cref( impl_ ).get(); }
+        auto& impl () const { return _cref( impl_ ).get(); }
 
         Impl impl_;
       };
