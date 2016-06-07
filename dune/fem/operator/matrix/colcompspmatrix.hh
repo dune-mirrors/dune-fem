@@ -150,12 +150,11 @@ namespace Dune
       for(size_type i=0;i!=N_;++i)
       {
         Nnz_+=mat.numNonZeros(i);
-        while(count<(mat.numNonZeros()*(i+1)))
+        for(;count<(mat.numNonZeros()*(i+1));++count)
         {
           const auto pairIdx(mat.realValue(count));
           if(pairIdx.second!=Matrix::defaultCol)
             ++(colstart_[pairIdx.second+1]);
-          ++count;
         }
       }
 
@@ -173,8 +172,7 @@ namespace Dune
       count=0;
       for(size_type i=0;i!=N_;++i)
       {
-        size_type localCount(0);
-        while(localCount<mat.numNonZeros())
+        for(size_type localCount=0;localCount<mat.numNonZeros();++localCount,++count)
         {
           const auto pairIdx(mat.realValue(count));
           if(pairIdx.second!=Matrix::defaultCol)
@@ -183,8 +181,6 @@ namespace Dune
             rowindex_[tempPos[pairIdx.second]]=i;
             ++(tempPos[pairIdx.second]);
           }
-          ++localCount;
-          ++count;
         }
       }
 
