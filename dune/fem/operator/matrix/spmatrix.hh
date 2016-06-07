@@ -6,6 +6,7 @@
 #include <array>
 #include <cstdlib>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <utility>
 #include <vector>
@@ -81,18 +82,18 @@ namespace Dune
     template <class T>
     class SparseRowMatrix
     {
-      static constexpr int defaultCol = -1;
-      static constexpr int firstCol = defaultCol + 1;
-
     public:
       //! matrix field type
       typedef T field_type;
       //! matrix index type
-      typedef int size_type;
+      typedef std::size_t size_type;
       typedef SparseRowMatrix<field_type> ThisType;
       //! type of the base matrix
       //! for consistency with ISTLMatrixObject
       typedef ThisType MatrixBaseType;
+
+      static constexpr size_type defaultCol = std::numeric_limits<size_type>::max();
+      static constexpr size_type firstCol = 0;
 
       SparseRowMatrix(const ThisType& ) = delete;
 
