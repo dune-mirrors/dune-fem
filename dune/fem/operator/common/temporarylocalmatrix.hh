@@ -137,10 +137,13 @@ namespace Dune
       /** \copydoc Dune::Fem::LocalMatrixInterface::clearRow */
       void clearRow( const int localRow )
       {
+        assert( (localRow >= 0) && (localRow < rows()) );
         const int col = columns();
-        auto start = fields_.begin() + localRow * col;
-        auto end   = start + col;
-        std::fill( start, end, 0 );
+        int start = localRow * col;
+        const int end = start + col;
+        for(int i = start; i < end; ++i) {
+          fields_[i] = 0;
+        }
       }
 
     };
