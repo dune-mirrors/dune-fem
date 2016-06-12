@@ -10,8 +10,6 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/space/common/functionspace.hh>
 
-#include <dune/fempy/pybind11/reference_wrapper.h>
-
 namespace Dune
 {
 
