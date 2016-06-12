@@ -1,4 +1,5 @@
 add_subdirectory(common)
+add_subdirectory(function)
 add_subdirectory(grid)
 
 set(HEADERS
