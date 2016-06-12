@@ -12,15 +12,17 @@ namespace Dune
     // GridFunctionView
     // ----------------
 
+    template< class GF, bool isDiscreteFunction = std::is_base_of< Fem::IsDiscreteFunction, GF >::value >
+    struct GridFunctionView;
+
     template< class GF >
-    struct GridFunctionView
+    struct GridFunctionView< GF, false >
     {
       typedef typename GF::EntityType Entity;
       typedef typename GF::RangeType Value;
 
       typedef typename Entity::Geometry::LocalCoordinate LocalCoordinate;
 
-#if 0
       GridFunctionView ( const GF &gf ) : localFunction_( gf ) {}
 
       Value operator() ( const LocalCoordinate &x ) const
@@ -35,23 +37,53 @@ namespace Dune
 
     private:
       typename GF::LocalFunctionType localFunction_;
-#endif
+    };
 
-      GridFunctionView ( const GF &gf ) : gf_( gf ) {}
+    template< class GF >
+    struct GridFunctionView< GF, true >
+    {
+      typedef typename GF::EntityType Entity;
+      typedef typename GF::RangeType Value;
+
+      typedef typename Entity::Geometry::LocalCoordinate LocalCoordinate;
+
+    private:
+      typedef typename GF::DiscreteFunctionSpaceType DiscreteFunctionSpace;
+      typedef typename DiscreteFunctionSpace::BasisFunctionSetType BasisFunctionSet;
+
+    public:
+      GridFunctionView ( const GF &gf )
+        : gf_( gf )
+      {
+        localDofVector_.reserve( DiscreteFunctionSpace::localBlockSize * space().blockMapper().maxNumDofs() );
+      }
 
       Value operator() ( const LocalCoordinate &x ) const
       {
         Value value;
-        gf_.localFunction( *entity_ ).evaluate( x, value );
+        basisFunctionSet_.evaluateAll( x, localDofVector_, value );
         return value;
       }
 
-      void bind ( const Entity &entity ) { entity_ = &entity; }
-      void unbind () { entity_ = nullptr; }
+      void bind ( const Entity &entity )
+      {
+        basisFunctionSet_ = space().basisFunctionSet( entity );
+        localDofVector_.resize( basisFunctionSet_.size() );
+        gf_.getLocalDofs( entity, localDofVector_ );
+      }
+
+      void unbind ()
+      {
+        basisFunctionSet_ = BasisFunctionSet();
+        localDofVector_.resize( 0u );
+      }
 
     private:
+      const DiscreteFunctionSpace &space () const { return gf_.space(); }
+
       const GF &gf_;
-      const Entity *entity_ = nullptr;
+      BasisFunctionSet basisFunctionSet_;
+      DynamicVector< typename GF::DofType > localDofVector_;
     };
 
 
