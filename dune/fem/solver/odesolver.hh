@@ -114,6 +114,14 @@ namespace DuneODE
       op_( u, f );
     }
 
+    void activateLinear() {
+      op_.activateLinear();
+    }
+
+    void deactivateLinear() {
+      op_.deactivateLinear();
+    }
+
     //! return size of argument
     int dim_of_argument(int i = 0) const
     {

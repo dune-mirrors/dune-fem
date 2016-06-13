@@ -16,6 +16,8 @@ public:
   virtual void operator()(const double *u, double *f, int i = 0) = 0;
   virtual int dim_of_argument(int i = 0) const = 0;
   virtual int dim_of_value(int i = 0) const = 0;
+  virtual void activateLinear () {}
+  virtual void deactivateLinear () {}
 
   // for time dependent functions
   void operator()(double t, const double *u, double *f, int i = 0);
