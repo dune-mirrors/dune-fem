@@ -362,9 +362,9 @@ namespace Dune
       typedef ColumnObject< ThisType > LocalColumnObjectType;
 
       //! construct matrix object
-      inline SparseRowMatrixObject( const DomainSpaceType &domainSpace,
-                                    const RangeSpaceType &rangeSpace,
-                                    const MatrixParameter& param = SparseRowMatrixParameter() )
+      SparseRowMatrixObject( const DomainSpaceType &domainSpace,
+                             const RangeSpaceType &rangeSpace,
+                             const MatrixParameter& param = SparseRowMatrixParameter() )
       : domainSpace_( domainSpace ),
         rangeSpace_( rangeSpace ),
         domainMapper_( domainSpace_.blockMapper() ),
@@ -394,14 +394,13 @@ namespace Dune
       }
 
       //! interface method from LocalMatrixFactory
-      inline ObjectType *newObject() const
+      ObjectType *newObject() const
       {
         return new ObjectType( *this, domainSpace_, rangeSpace_, domainMapper_, rangeMapper_ );
       }
 
       //! get local matrix
-      inline LocalMatrixType localMatrix( const DomainEntityType &domainEntity,
-                                          const RangeEntityType &rangeEntity ) const
+      LocalMatrixType localMatrix( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity ) const
       {
         return LocalMatrixType( localMatrixStack_, domainEntity, rangeEntity );
       }
@@ -411,7 +410,6 @@ namespace Dune
       {
         return LocalColumnObjectType( *this, domainEntity );
       }
-
 
       template< class LocalMatrix >
       void addLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
@@ -425,7 +423,6 @@ namespace Dune
         rangeMapper_.mapEach( rangeEntity, makePairFunctor( domainMapper_, domainEntity, functor ) );
       }
 
-
       template< class LocalMatrix, class Scalar >
       void addScaledLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat, const Scalar &s )
       {
@@ -438,7 +435,6 @@ namespace Dune
         rangeMapper_.mapEach( rangeEntity, makePairFunctor( domainMapper_, domainEntity, functor ) );
       }
 
-
       template< class LocalMatrix >
       void setLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, const LocalMatrix &localMat )
       {
@@ -450,7 +446,6 @@ namespace Dune
 
         rangeMapper_.mapEach( rangeEntity, makePairFunctor( domainMapper_, domainEntity, functor ) );
       }
-
 
       template< class LocalMatrix >
       void getLocalMatrix ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity, LocalMatrix &localMat ) const
@@ -465,14 +460,14 @@ namespace Dune
       }
 
       //! clear matrix
-      inline void clear()
+      void clear()
       {
         matrix_.clear();
       }
 
       //! reserve memory
       template <class Stencil>
-      inline void reserve(const Stencil &stencil, bool verbose = false )
+      void reserve(const Stencil &stencil, bool verbose = false )
       {
         if( sequence_ != domainSpace_.sequence() )
         {
@@ -617,11 +612,11 @@ namespace Dune
       typedef std::vector< typename DomainMapperType::SizeType > ColumnIndicesType;
 
       //! constructor
-      inline LocalMatrix( const MatrixObjectType &matrixObject,
-                          const DomainSpaceType &domainSpace,
-                          const RangeSpaceType &rangeSpace,
-                          const DomainMapperType& domainMapper,
-                          const RangeMapperType& rangeMapper )
+      LocalMatrix( const MatrixObjectType &matrixObject,
+                   const DomainSpaceType &domainSpace,
+                   const RangeSpaceType &rangeSpace,
+                   const DomainMapperType& domainMapper,
+                   const RangeMapperType& rangeMapper )
       : BaseType( domainSpace, rangeSpace),
         matrix_( matrixObject.matrix() ),
         domainMapper_( domainMapper ),
