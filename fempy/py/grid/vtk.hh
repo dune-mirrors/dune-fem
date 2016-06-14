@@ -9,18 +9,13 @@
 #include <dune/fempy/function/gridfunctionview.hh>
 #include <dune/fempy/pybind11/pybind11.h>
 
+#include <dune/fempy/py/base.hh>
+
 namespace Dune
 {
 
   namespace FemPy
   {
-
-    // VTKDataType
-    // -----------
-
-    enum class VTKDataType { CellData, PointData };
-
-
 
     // addToVTKWriter
     // --------------
@@ -57,9 +52,8 @@ namespace Dune
       pybind11::class_< Writer > cls( scope, clsName );
       cls.def( "write", [] ( Writer &writer, const std::string &name ) { writer.write( name ); } );
 
-      pybind11::enum_< VTKDataType > vtkDataType( cls, "DataType" );
-      vtkDataType.value( "CellData", VTKDataType::CellData );
-      vtkDataType.value( "PointData", VTKDataType::PointData );
+      cls.attr("CellData") = pybind11::cast(VTKDataType::CellData);
+      cls.attr("PointData") = pybind11::cast(VTKDataType::PointData);
     }
 
   } // namespace FemPy
