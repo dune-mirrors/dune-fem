@@ -17,11 +17,14 @@ namespace Dune
     template< class Scheme >
     void registerScheme ( pybind11::module module )
     {
+        typedef typename Scheme::DiscreteFunctionSpaceType Space;
         typedef typename Scheme::GridPartType GridPart;
         typedef typename Scheme::ModelType ModelType;
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
 
-        >> Export discrete function <<
+        //registerDiscreteFunction< DiscreteFunction >( module );
+
+        //typedef VirtualizedGridFunction< GridPart, typename Space::RangeType > GridFunction;
 
         pybind11::class_< Scheme > cls( module, "Scheme" );
 
