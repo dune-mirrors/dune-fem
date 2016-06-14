@@ -8,7 +8,6 @@ import hashlib
 import os.path
 import re
 
-from .. import dunefemmpi
 from ..generator import generator
 
 myGenerator = generator.Generator("Scheme")
