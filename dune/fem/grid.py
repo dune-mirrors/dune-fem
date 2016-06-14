@@ -56,13 +56,20 @@ def get(grid, **parameters):
 
             #include <dune/grid/yaspgrid.hh>
             #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
+            #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
-            typedef Dune::YaspGrid< 2, Dune::EquidistantCoordinates< double, 2 > > Grid;
-            typedef Dune::Fem::AdaptiveLeafGridPart< Dune::YaspGrid< 2, Dune::EquidistantCoordinates< double, 2 > > > GridPart;
+            #include <dune/fempy/py/grid.hh>
 
-            BOOST_PYTHON_MODULE( gridc98ee9ab86a59240870d35a5c32ed4ab ) { registerDuneGrid(); }
+            typedef Dune::Fem::AdaptiveLeafGridPart<Dune::YaspGrid< 2, Dune::EquidistantCoordinates< double, 2 > >> DuneType;
 
-    This would correspond to calling get("YaspGrid", dimgrid = 2). It also binds some functions to the created module.
+            PYBIND11_PLUGIN( grid_9f32040d49116df0211fc90ec9c908db )
+            {
+              pybind11::module module( "grid_9f32040d49116df0211fc90ec9c908db" );
+              Dune::FemPy::registerGrid< DuneType >( module );
+              return module.ptr();
+            }
+
+    This would correspond to calling yaspgrid = grid.leafGrid("../data/unitcube-2d.dgf", "YaspGrid", dimgrid=2). It also binds some functions to the created module.
 
     Args:
         grid (string): the identifier for the grid type to use
@@ -82,7 +89,7 @@ def get(grid, **parameters):
 def leafGrid(dgf, grid, **parameters):
     """Get a LeafGrid
 
-    Do get() and create a C++ grid class (see grid.hh).
+    Call get() and create a C++ grid class (see grid.hh).
 
     Notes:
         This is equivalent to::

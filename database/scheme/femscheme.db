@@ -1,0 +1,9 @@
+{
+  "FemScheme" :
+  {
+    "type"      : "FemScheme< $(space), DiffusionModel< $(gridpart), $(dimRange) > , $(polorder), $(solver) >",
+    "default"   : [ "polorder=1", "solver=fem" ],
+    "checks"    : [ "$(polorder) >= 1", "'$(solver)' == 'fem' or '$(solver)' == 'femoem' or '$(solver)' == 'istl' or '$(solver)' == 'umfpack' or '$(solver)' == 'petsc'" ], 
+    "include"   : [ "dune/fem/schemes/femscheme.hh" ]
+  }
+}

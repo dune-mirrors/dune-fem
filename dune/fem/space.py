@@ -35,7 +35,7 @@ def get(space, gridModule, **parameters):
 def create(space, grid, **parameters):
     """Get a Space
 
-    Do get() and create a C++ space class.
+    Call get() and create a C++ space class.
 
     Notes:
         This is equivalent to::
