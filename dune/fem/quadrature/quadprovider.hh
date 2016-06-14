@@ -290,7 +290,7 @@ namespace Dune
       static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
                                                             int order )
       {
-        assert( geometry.isCube() || geometry.isSimplex() );
+        //assert( geometry.isCube() || geometry.isSimplex() );
         assert( order >= 0 );
 
         if( geometry.isSimplex() )
@@ -298,11 +298,20 @@ namespace Dune
           return QuadCreator< 0 > ::
             template provideQuad< SimplexQuadratureType > ( geometry, order );
         }
-        else
+        else if( geometry.isCube() )
         {
           return QuadCreator< 1 > ::
             template provideQuad< CubeQuadratureType >    ( geometry, order ) ;
         }
+
+        if( geometry.isNone() )
+        {
+          return QuadCreator< 0 > ::
+            template provideQuad< SimplexQuadratureType > ( geometry, order );
+        }
+        else
+          DUNE_THROW( RangeError, "Element type not available for dimension 2" );
+
       }
 
       //! Access to the quadrature implementations.
