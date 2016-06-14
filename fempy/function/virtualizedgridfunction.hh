@@ -40,12 +40,18 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
     private:
-      template< class T > static auto _ref ( T &t ) { using std::ref; return ref( t ); }
-      template< class T > static auto _cref ( T &t ) { using std::cref; return cref( t ); }
+      template< class GF >
+      static constexpr bool isGridFunction ()
+      {
+        using std::cref;
+        return std::is_base_of< Fem::HasLocalFunction, std::decay_t< decltype( cref( std::declval< const GF & >() ).get() ) > >::value;
+      }
 
       struct Interface
       {
         virtual ~Interface () = default;
+        virtual Interface *clone () const = 0;
+
         virtual void init ( const EntityType &entity ) = 0;
         virtual void evaluate ( const LocalCoordinateType &x, RangeType &value ) const = 0;
         virtual void jacobian ( const LocalCoordinateType &x, JacobianRangeType &jacobian ) const = 0;
@@ -58,6 +64,7 @@ namespace Dune
         : public Interface
       {
         Implementation ( Impl impl ) : impl_( std::move( impl ) ) {}
+        virtual Interface *clone () const override { return new Implementation( *this ); }
 
         virtual void init ( const EntityType &entity ) override { impl().init( entity ); }
 
@@ -67,22 +74,25 @@ namespace Dune
         virtual const EntityType &entity () const override { return impl().entity(); }
 
       private:
-        const auto &impl () const { return _cref( impl_ ).get(); }
-        auto &impl () { return _ref( impl_ ).get(); }
+        const auto &impl () const { using std::cref; return cref( impl_ ).get(); }
+        auto &impl () { using std::ref; return ref( impl_ ).get(); }
 
         Impl impl_;
       };
 
     public:
-      template< class Impl, std::enable_if_t< !std::is_base_of< Fem::HasLocalFunction, std::decay_t< decltype( _cref( std::declval< const Impl & >() ).get() ) > >::value, int > = 0 >
+      template< class Impl, std::enable_if_t< !isGridFunction< Impl >() && !std::is_base_of< VirtualizedLocalFunction, Impl >::value, int > = 0 >
       VirtualizedLocalFunction ( Impl impl )
         : impl_( new Implementation< Impl >( std::move( impl ) ) )
       {}
 
-      template< class GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, std::decay_t< decltype( _cref( std::declval< const GF & >() ).get() ) > >::value, int > = 0 >
+      template< class GF, std::enable_if_t< isGridFunction< GF >(), int > = 0 >
       VirtualizedLocalFunction ( const GF &gf )
         : impl_( new Implementation< typename GF::LocalFunctionType >( typename GF::LocalFunctionType( gf ) ) )
       {}
+
+      VirtualizedLocalFunction ( const VirtualizedLocalFunction &other ) : impl_( other.impl_->clone() ) {}
+      VirtualizedLocalFunction ( VirtualizedLocalFunction && ) = default;
 
       void init ( const EntityType &entity ) { impl_->init( entity ); }
 
@@ -147,8 +157,12 @@ namespace Dune
       typedef typename Base::JacobianRangeType JacobianRangeType;
 
     private:
-      template< class T > static auto _ref ( T &t ) { using std::ref; return ref( t ); }
-      template< class T > static auto _cref ( T &t ) { using std::cref; return cref( t ); }
+      template< class GF >
+      static constexpr bool isGridFunction ()
+      {
+        using std::cref;
+        return std::is_base_of< Fem::HasLocalFunction, std::decay_t< decltype( cref( std::declval< const GF & >() ).get() ) > >::value;
+      }
 
       struct Interface
       {
@@ -173,13 +187,13 @@ namespace Dune
         virtual void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const override { impl().jacobian( x, jacobian ); }
 
       private:
-        auto& impl () const { return _cref( impl_ ).get(); }
+        auto& impl () const { using std::cref; return cref( impl_ ).get(); }
 
         Impl impl_;
       };
 
     public:
-      template< class Impl, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, std::decay_t< decltype( _cref( std::declval< const Impl & >() ).get() ) > >::value, int > = 0 >
+      template< class Impl, std::enable_if_t< isGridFunction< Impl >(), int > = 0 >
       VirtualizedGridFunction ( Impl impl )
         : impl_( new Implementation< Impl >( std::move( impl ) ) )
       {}
