@@ -32,6 +32,12 @@ def get(space, gridModule, **parameters):
     """
     return myGenerator.getModule(space, extra_includes=gridModule._includes, gridpart=gridModule._typeName, **parameters)
 
+def interpolate( self, func, **kwargs ):
+    try:
+      return self.interpol(func,kwargs['name'])
+    except:
+      return self.interpol(func)
+
 def create(space, grid, **parameters):
     """Get a Space
 
@@ -56,6 +62,7 @@ def create(space, grid, **parameters):
 
     """
     module=get(space, grid._module, **parameters)
+    setattr(module.Space, "interpolate", interpolate )
     return module.Space(grid)
 
 
