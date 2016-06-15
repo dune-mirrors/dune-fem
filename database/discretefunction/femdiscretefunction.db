@@ -1,0 +1,18 @@
+{
+  "Adaptive" :
+  {
+    "type"      : "Dune::Fem::AdaptiveDiscreteFunction< $(space) >",
+    "include"   : [ "dune/fem/function/adaptivefunction.hh" ]
+  },
+  "Istl" :
+  {
+    "type"      : "Dune::Fem::ISTLBlockVectorDiscreteFunction< $(space) >",
+    "include"   : [ "dune/fem/function/blockvectorfunction.hh" ]
+  },
+  "Numpy" :
+  {
+    "type"      : "Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< $(space), Dune::FemPy::NumPyVector< double > > >",
+    "include"   : [ "dune/fem/function/vectorfunction.hh", "dune/fempy/py/common/numpyvector.hh" ]
+
+  }
+}
