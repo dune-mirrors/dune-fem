@@ -41,15 +41,16 @@ namespace ModelTmp
 }
 
 PYBIND11_PLUGIN(#MODELNAME) {
-  using namespace pybind11;
+  namespace py = pybind11;
   using namespace ModelTmp;
+  py::module m("model", "pybind model plugin");
   typedef typename ModelWrapperType::Base ModelBase;
-  class_< PyModel > ( std::shared_ptr< PyModel >, "get" )
+  py::class_< PyModel >( m, "get" )
   .def( "getDimRange", &PyModel::getDimRange )
-  .def("wrap",&wrap)
+  .def( "wrap", &wrap )
   #PYSETCOEFFICIENT
   ;
-  class_< ModelBase> ( std::shared_ptr<ModelBase>, "ModelBase" );
-  class_< ModelWrapperType > ( std::shared_ptr< ModelWrapperType >, "ModelWrapper", base<ModelBase>)
+  py::class_< ModelBase>( m, "ModelBase" );
+  py::class_< std::shared_ptr<ModelWrapperType> >( m, "ModelWrapper", py::base<ModelBase>() )
   .def("getDimRange", &getDimRange);
 }
