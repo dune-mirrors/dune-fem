@@ -36,20 +36,21 @@ def getModule(scheme, **parameters):
 
     return myGenerator.getModule(scheme, **parameters)
 
-def get(scheme, grid, dimR, **parameters):
+def get(scheme, space, grid, dimR, **parameters):
     """Call getModule() by passing in keyword arguments.
     """
-    return getModule(scheme, gridpart=grid._module._typeName, dimRange=dimR, **parameters)
+    return getModule(scheme, space=space._module._typeName, gridpart=grid._module._typeName, dimRange=dimR, **parameters)
 
 def addMethodsToScheme(module, obj):
     setattr(obj, "_module", module)
-def scheme(scheme, grid, model, name, **parameters):
+def scheme(scheme, space, grid, model, name, **parameters):
     """Get a Scheme.
 
     Call get() and create a C++ scheme class (see dune/fempy/dunescheme.hh).
 
     Args:
         scheme (string): the identifier for the scheme type to use
+        space (Space): a space class generated from dune.fem.space
         grid (LeafGrid): a LeafGrid class generated from dune.fem.grid
         model (DiffusionModel) : a model class generated from dune.models.femufl
         name (string): the python name for the scheme
@@ -60,10 +61,10 @@ def scheme(scheme, grid, model, name, **parameters):
     Returns:
         Scheme: the constructed scheme
     """
-    module = get(scheme, grid, model.getDimRange(), **parameters)
+    module = get(scheme, space, grid, model.getDimRange(), **parameters)
     if hasattr(model, 'wrap'):
-        scheme = module.Scheme(grid, model.wrap(), name)
+        scheme = module.Scheme(space, grid, model.wrap(), name)
     else:
-        scheme = module.Scheme(grid, model, name)
+        scheme = module.Scheme(space, grid, model, name)
     addMethodsToScheme(module, scheme)
     return scheme
