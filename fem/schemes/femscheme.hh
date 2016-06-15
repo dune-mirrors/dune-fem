@@ -71,12 +71,12 @@
  * - Model: description of the data functions and methods required for the
  *          elliptic operator (massFlux, diffusionFlux)
  *******************************************************************************/
-template < class Space, class Model, int polOrder, SolverType solver >
+template < class Model, int polOrder, SolverType solver >
 class FemScheme
 {
 public:
   //! type of the mathematical model
-  typedef Model ModelType;
+  typedef Model ModelType ;
   typedef typename ModelType::ExactSolutionType ExactSolutionType;
 
   //! grid view (e.g. leaf grid view) provided in the template argument list
@@ -86,10 +86,10 @@ public:
   typedef typename GridPartType::GridType GridType;
 
   //! type of function space (scalar functions, \f$ f: \Omega -> R) \f$
-  typedef typename ModelType::FunctionSpaceType FunctionSpaceType;
+  typedef typename ModelType :: FunctionSpaceType   FunctionSpaceType;
 
   //! choose type of discrete function space
-  typedef Space DiscreteFunctionSpaceType;
+  typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
 
   // choose type of discrete function, Matrix implementation and solver implementation
   typedef Solvers<DiscreteFunctionSpaceType,solver,false> UsedSolverType;
@@ -106,7 +106,7 @@ public:
   typedef Dune::Fem::AdaptationManager< GridType, RestrictionProlongationType > AdaptationManagerType;
 
   //! type of error estimator
-  typedef Estimator< DiscreteFunctionType, Model > EstimatorType;
+  typedef Estimator< DiscreteFunctionType, Model > EstimatorType ;
 
   static const int dimRange = FunctionSpaceType::dimRange;
   typedef DiscreteFunctionType SolutionType;
@@ -153,8 +153,8 @@ protected:
 // DataOutputParameters
 // --------------------
 
-template < class Space, class Model, int polOrder, SolverType solver >
-FemScheme<Space, Model, polOrder, solver>::
+template < class Model, int polOrder, SolverType solver >
+FemScheme<Model, polOrder, solver>::
 FemScheme( GridPartType &gridPart,
            const ModelType& implicitModel,
            const std::string &prefix)
@@ -178,8 +178,8 @@ FemScheme( GridPartType &gridPart,
   // set all DoF to zero
   solution_.clear();
 }
-template < class Space, class Model, int polOrder, SolverType solver >
-FemScheme<Space, Model, polOrder, solver>::
+template < class Model, int polOrder, SolverType solver >
+FemScheme<Model,polOrder, solver>::
 ~FemScheme()
 {
   std::cout << "in FemScheme destructor" << std::endl;
@@ -188,8 +188,8 @@ FemScheme<Space, Model, polOrder, solver>::
 }
 
   //! setup the right hand side
-template < class Space, class Model, int polOrder, SolverType solver >
-void FemScheme<Space, Model, polOrder, solver>::
+template < class Model, int polOrder, SolverType solver >
+void FemScheme<Model,polOrder, solver>::
 prepare()
 {
   typedef DifferentiableEllipticOperator< LinearOperatorType, ModelType > OperatorType;
@@ -201,8 +201,8 @@ prepare()
   dynamic_cast<OperatorType&>(*implicitOperator_).prepare( implicitModel_.dirichletBoundary(gridPart_), rhs_ );
 }
 
-template < class Space, class Model, int polOrder, SolverType solver >
-void FemScheme<Space, Model, polOrder, solver>::
+template < class Model, int polOrder, SolverType solver >
+void FemScheme<Model,polOrder, solver>::
 solve ( bool assemble )
 {
   typedef DifferentiableEllipticOperator< LinearOperatorType, ModelType > OperatorType;
