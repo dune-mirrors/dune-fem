@@ -12,7 +12,6 @@
   "Numpy" :
   {
     "type"      : "Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< $(space), Dune::FemPy::NumPyVector< double > > >",
-    "include"   : [ "dune/fem/function/vectorfunction.hh", "dune/fempy/py/common/numpyvector.hh" ]
-
+    "include"   : [ "dune/fem/function/vectorfunction/managedvectorfunction.hh", "dune/fempy/py/common/numpyvector.hh" ]
   }
 }
