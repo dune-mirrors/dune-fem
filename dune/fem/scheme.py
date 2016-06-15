@@ -8,6 +8,7 @@ import hashlib
 import os.path
 import re
 
+from .. import femmpi
 from ..generator import generator
 
 myGenerator = generator.Generator("Scheme")
