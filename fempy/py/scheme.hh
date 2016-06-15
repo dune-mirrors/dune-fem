@@ -28,11 +28,11 @@ namespace Dune
 
         pybind11::class_< Scheme > cls( module, "Scheme" );
 
-        cls.def( "__init__", [] ( Scheme &instance, GridPartType &gridPart, const ModelType& model, const std::string &prefix ) {
+        cls.def( "__init__", [] ( Scheme &instance, GridPart &gridPart, const ModelType& model, const std::string &prefix ) {
           new( &instance ) Scheme( gridPart, model, prefix );
         }, pybind11::keep_alive< 1, 3 >() );
         cls.def("solve",  &Scheme::solve);
-        cls.def("solution", &Scheme::solution);
+        //cls.def("solution", &Scheme::solution);
     }
   }
 }
