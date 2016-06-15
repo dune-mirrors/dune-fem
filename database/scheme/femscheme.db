@@ -1,9 +1,22 @@
 {
   "FemScheme" :
   {
-    "type"      : "FemScheme< $(space), DiffusionModel< $(gridpart), $(dimRange) > , $(polorder), $(solver) >",
+    "type"      : "FemScheme< DiffusionModel< $(gridpart), $(dimRange) > , $(polorder), $(solver) >",
     "default"   : [ "polorder=1", "solver=fem" ],
     "checks"    : [ "$(polorder) >= 1", "'$(solver)' == 'fem' or '$(solver)' == 'femoem' or '$(solver)' == 'istl' or '$(solver)' == 'umfpack' or '$(solver)' == 'petsc'" ], 
     "include"   : [ "dune/fem/schemes/femscheme.hh" ]
+  },
+  "DGFemScheme" :
+  {
+    "type"      : "DGFemScheme< DiffusionModel< $(gridpart), $(dimRange) > , $(polorder), $(solver) >",
+    "default"   : [ "polorder=1", "solver=fem" ],
+    "checks"    : [ "$(polorder) >= 1", "'$(solver)' == 'fem' or '$(solver)' == 'femoem' or '$(solver)' == 'istl' or '$(solver)' == 'umfpack' or '$(solver)' == 'petsc'" ], 
+    "include"   : [ "dune/fem/schemes/dgfemscheme.hh" ]
+  },
+  "InterpolationScheme" :
+  {
+    "type"      : "InterpolationScheme< GridFunction< $(gridpart), $(dimRange) > , $(polorder), $(solver) >",
+    "default"   : [ "polorder=1", "solver=fem" ],
+    "include"   : [ "dune/fem/schemes/interpolationscheme.hh", "dune/fempy/gridfunction.hh" ]
   }
 }
