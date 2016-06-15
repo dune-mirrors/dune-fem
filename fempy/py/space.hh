@@ -58,12 +58,19 @@ namespace Dune
 
       typedef VirtualizedGridFunction< GridPart, typename Space::RangeType > GridFunction;
 
-      cls.def( "interpolate", [] ( const Space &space, const GridFunction &gf ) {
-          return interpolant< DiscreteFunction >( space, gf.name(), gf );
+      cls.def( "interpolate", [] ( const Space &space, const GridFunction &gf, std::string name ) {
+          return interpolant< DiscreteFunction >( space, name, gf );
         }, pybind11::keep_alive< 0, 1 >() );
-
+      cls.def( "interpolate", [] ( const Space &space, typename Space::RangeType value, std::string name ) {
+          return interpolant< DiscreteFunction >( space, name, value );
+        }, pybind11::keep_alive< 0, 1 >() );
+      cls.def( "interpolate", [] ( const Space &space, const GridFunction &gf ) {
+          std::string name = gf.name();
+          return interpolant< DiscreteFunction >( space, name, gf );
+        }, pybind11::keep_alive< 0, 1 >() );
       cls.def( "interpolate", [] ( const Space &space, typename Space::RangeType value ) {
-          return interpolant< DiscreteFunction >( space, "constant", value );
+          std::string name = "constant";
+          return interpolant< DiscreteFunction >( space, name, value );
         }, pybind11::keep_alive< 0, 1 >() );
     }
 
