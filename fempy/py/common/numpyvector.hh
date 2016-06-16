@@ -92,6 +92,14 @@ namespace Dune
       {
         return static_cast< T * >( bufferInfo_.ptr )[ index * bufferInfo_.strides[ 0 ] ];
       }
+      value_type &vec_access ( size_type index )
+      {
+        return static_cast< T * >( bufferInfo_.ptr )[ index * bufferInfo_.strides[ 0 ] ];
+      }
+      const value_type &vec_access ( size_type index ) const
+      {
+        return static_cast< T * >( bufferInfo_.ptr )[ index * bufferInfo_.strides[ 0 ] ];
+      }
 
       void reserve ( size_type newCapacity ) {}
 
@@ -109,6 +117,10 @@ namespace Dune
       }
 
       size_type size () const
+      {
+        return bufferInfo_.shape[ 0 ];
+      }
+      size_type vec_size () const
       {
         return bufferInfo_.shape[ 0 ];
       }

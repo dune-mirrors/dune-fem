@@ -167,6 +167,8 @@ namespace Dune
       struct Interface
       {
         virtual ~Interface () = default;
+        virtual Interface *clone () const = 0;
+
         virtual LocalFunctionType localFunction ( const EntityType &entity ) const = 0;
         virtual std::string name () const = 0;
         virtual const GridPartType &gridPart () const = 0;
@@ -179,6 +181,7 @@ namespace Dune
         : public Interface
       {
         Implementation ( Impl impl ) : impl_( std::move( impl ) ) {}
+        virtual Interface *clone () const override { return new Implementation( *this ); }
 
         virtual LocalFunctionType localFunction ( const EntityType &entity ) const override { return impl().localFunction( entity ); }
         virtual std::string name () const override { return impl().name(); }
@@ -193,10 +196,13 @@ namespace Dune
       };
 
     public:
-      template< class Impl, std::enable_if_t< isGridFunction< Impl >(), int > = 0 >
+      template< class Impl, std::enable_if_t< isGridFunction< Impl >() && !std::is_base_of< VirtualizedGridFunction, Impl >::value, int > = 0 >
       VirtualizedGridFunction ( Impl impl )
         : impl_( new Implementation< Impl >( std::move( impl ) ) )
       {}
+
+      VirtualizedGridFunction ( const VirtualizedGridFunction &other ) : impl_( other.impl_->clone() ) {}
+      VirtualizedGridFunction ( VirtualizedGridFunction && ) = default;
 
       LocalFunctionType localFunction ( const EntityType &entity ) const { return impl_->localFunction( entity ); }
 
