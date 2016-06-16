@@ -11,6 +11,19 @@ def getSpaceType(space, **parameters):
     """
     return myGenerator.getTypeName(space, **parameters)
 
+def interpolate( self, func, **kwargs ):
+    try:
+        storage=kwargs['storage']
+    except:
+        storage="Adaptive"
+
+    try:
+        df = discretefunction.create(storage,self,name=func.name, **kwargs)
+    except:
+        df = discretefunction.create(storage,self, **kwargs)
+    df.interpolate(func)
+    return df
+
 def get(space, gridModule, **parameters):
     """Create a space module using the space-database.
 
@@ -33,6 +46,7 @@ def get(space, gridModule, **parameters):
     """
     module=myGenerator.getModule(space, extra_includes=gridModule._includes, gridpart=gridModule._typeName, **parameters)
     setattr(module.Space, "_module", module)
+    setattr(module.Space, "interpolate", interpolate )
     return module
 
 def interpolate( self, func, **kwargs ):
@@ -68,7 +82,6 @@ def create(space, grid, **parameters):
 
     """
     module=get(space, grid._module, **parameters)
-    setattr(module.Space, "interpolate", interpolate )
     return module.Space(grid)
 
 
