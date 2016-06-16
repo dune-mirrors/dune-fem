@@ -81,6 +81,8 @@ public:
 
   //! grid view (e.g. leaf grid view) provided in the template argument list
   typedef typename ModelType::GridPartType GridPartType;
+  static_assert( std::is_same< typename Space::GridPartType, GridPartType >::value,
+        "GridPart of Space has to be identical to GridPart of Model class" );
 
   //! type of underyling hierarchical grid needed for data output
   typedef typename GridPartType::GridType GridType;
