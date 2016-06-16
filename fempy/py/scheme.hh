@@ -22,7 +22,7 @@ namespace Dune
         typedef typename Scheme::ModelType ModelType;
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
 
-        //registerDiscreteFunction< DiscreteFunction >( module );
+        registerDiscreteFunction< DiscreteFunction >( module );
 
         //typedef VirtualizedGridFunction< GridPart, typename Space::RangeType > GridFunction;
 
@@ -32,7 +32,8 @@ namespace Dune
           new( &instance ) Scheme( gridPart, model, prefix );
         }, pybind11::keep_alive< 1, 3 >() );
         cls.def("solve",  &Scheme::solve);
-        //cls.def("solution", &Scheme::solution);
+        cls.def("solution", [] (Scheme &scheme) { return scheme.solution(); },
+            pybind11::keep_alive<0,1>()  );
     }
   }
 }
