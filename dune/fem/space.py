@@ -36,11 +36,7 @@ def get(space, gridModule, **parameters):
     return module
 
 def interpolate( self, func, **kwargs ):
-    try:
-        storage=kwargs['storage']
-    except:
-        storage="Adaptive"
-
+    storage=kwargs.pop('a',"Adaptive")
     try:
         df = discretefunction.create(storage,self,name=func.name, **kwargs)
     except:
