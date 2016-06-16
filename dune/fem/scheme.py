@@ -33,7 +33,6 @@ def getModule(scheme, **parameters):
 
     This would correspond to calling get("FemScheme", grid2d, 2), where grid2d is a python grid module.
     """
-
     return myGenerator.getModule(scheme, **parameters)
 
 def get(scheme, space, grid, dimR, **parameters):
@@ -41,9 +40,7 @@ def get(scheme, space, grid, dimR, **parameters):
     """
     return getModule(scheme, space=space._module._typeName, gridpart=grid._module._typeName, dimRange=dimR, **parameters)
 
-def addMethodsToScheme(module, obj):
-    setattr(obj, "_module", module)
-def scheme(scheme, space, grid, model, name, **parameters):
+def create(scheme, space, grid, model, name, **parameters):
     """Get a Scheme.
 
     Call get() and create a C++ scheme class (see dune/fempy/dunescheme.hh).
@@ -66,5 +63,4 @@ def scheme(scheme, space, grid, model, name, **parameters):
         scheme = module.Scheme(space, grid, model.wrap(), name)
     else:
         scheme = module.Scheme(space, grid, model, name)
-    addMethodsToScheme(module, scheme)
     return scheme

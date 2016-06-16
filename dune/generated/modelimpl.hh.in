@@ -34,7 +34,7 @@ namespace ModelTmp
     return make_shared<ModelWrapperType>(model);
   }
 
-  int getDimRange()
+  int getDimRange(std::shared_ptr<PyModel> &model)
   {
     return #DIMRANGE;
   }
@@ -45,14 +45,15 @@ PYBIND11_PLUGIN(#MODELNAME) {
   using namespace ModelTmp;
   py::module m("#MODELNAME", "pybind model plugin");
   typedef typename ModelWrapperType::Base ModelBase;
-  py::class_< PyModel >( m, "get" )
+  py::class_< std::shared_ptr< PyModel > >( m, "get" )
   .def( py::init() )
-  .def( "getDimRange", &PyModel::getDimRange )
+  .def( "getDimRange", &getDimRange )
   .def( "wrap", &wrap )
   #PYSETCOEFFICIENT
   ;
-  py::class_< ModelBase>( m, "ModelBase" );
-  py::class_< ModelWrapperType >( m, "ModelWrapper", py::base<ModelBase>() )
+  py::class_< std::shared_ptr< ModelBase > >( m, "ModelBase" );
+  py::class_< std::shared_ptr< ModelWrapperType > >( m, "ModelWrapper", py::base< std::shared_ptr< ModelBase > >() )
   .def("getDimRange", &getDimRange);
+  py::implicitly_convertible< std::shared_ptr< ModelWrapperType >, std::shared_ptr< ModelBase > >();
   return m.ptr();
 }

@@ -40,9 +40,6 @@ def getGridType(grid, **parameters):
     """
     return myGenerator.getTypeName(grid, **parameters)
 
-def addMethodsToLeafGrid(module,obj):
-    setattr(obj, "_module", module)
-
 def get(grid, **parameters):
     """Create a grid module using the grid-database.
 
@@ -83,7 +80,7 @@ def get(grid, **parameters):
 
     """
     module = myGenerator.getModule(grid, **parameters)
-    addMethodsToLeafGrid(module,module.LeafGrid)
+    setattr(module.LeafGrid, "_module", module)
     return module
 
 def leafGrid(dgf, grid, **parameters):

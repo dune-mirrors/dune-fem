@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __metaclass__ = type
 
 from ..generator import generator
+from . import discretefunction
 
 myGenerator = generator.Generator("Space")
 
@@ -30,13 +31,18 @@ def get(space, gridModule, **parameters):
         module: the newly created space module
 
     """
-    return myGenerator.getModule(space, extra_includes=gridModule._includes, gridpart=gridModule._typeName, **parameters)
+    module=myGenerator.getModule(space, extra_includes=gridModule._includes, gridpart=gridModule._typeName, **parameters)
+    setattr(module.Space, "_module", module)
+    return module
 
 def interpolate( self, func, **kwargs ):
+    storage=kwargs.pop('a',"Adaptive")
     try:
-      return self.interpol(func,kwargs['name'])
+        df = discretefunction.create(storage,self,name=func.name, **kwargs)
     except:
-      return self.interpol(func)
+        df = discretefunction.create(storage,self, **kwargs)
+    df.interpolate(func)
+    return df
 
 def create(space, grid, **parameters):
     """Get a Space
