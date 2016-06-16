@@ -48,11 +48,6 @@ def interpolate( self, func, **kwargs ):
     df.interpolate(func)
     return df
 
-    # try:
-    #     return self.interpol(func,kwargs['name'])
-    # except:
-    #     return self.interpol(func)
-
 def create(space, grid, **parameters):
     """Get a Space
 
