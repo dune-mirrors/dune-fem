@@ -8,6 +8,9 @@
 #include <dune/fem/schemes/diffusionmodel.hh>
 #include "ModelTmp.hh"
 
+// see pybind11 documentation on smart pointers
+PYBIND11_DECLARE_HOLDER_TYPE(T, std::shared_ptr<T>);
+
 typedef #GRIDPARTCHOICE GridPart;
 namespace ModelTmp
 {
@@ -45,15 +48,15 @@ PYBIND11_PLUGIN(#MODELNAME) {
   using namespace ModelTmp;
   py::module m("#MODELNAME", "pybind model plugin");
   typedef typename ModelWrapperType::Base ModelBase;
-  py::class_< std::shared_ptr< PyModel > >( m, "get" )
+  py::class_< PyModel, std::shared_ptr< PyModel > >( m, "get" )
   .def( py::init() )
   .def( "getDimRange", &getDimRange )
   .def( "wrap", &wrap )
   #PYSETCOEFFICIENT
   ;
-  py::class_< std::shared_ptr< ModelBase > >( m, "ModelBase" );
-  py::class_< std::shared_ptr< ModelWrapperType > >( m, "ModelWrapper", py::base< std::shared_ptr< ModelBase > >() )
+  py::class_< ModelBase, std::shared_ptr< ModelBase > >( m, "ModelBase" );
+  py::class_< ModelWrapperType, std::shared_ptr< ModelWrapperType > >( m, "ModelWrapper", py::base< ModelBase >() )
   .def("getDimRange", &getDimRange);
-  py::implicitly_convertible< std::shared_ptr< ModelWrapperType >, std::shared_ptr< ModelBase > >();
+  // py::implicitly_convertible< std::shared_ptr< ModelWrapperType >, std::shared_ptr< ModelBase > >();
   return m.ptr();
 }
