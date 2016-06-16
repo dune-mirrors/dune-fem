@@ -1,6 +1,8 @@
 #ifndef DUNE_FEMPY_PY_SCHEME_HH
 #define DUNE_FEMPY_PY_SCHEME_HH
 
+#include <dune/fem/misc/l2norm.hh>
+
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/py/common/numpyvector.hh>
 #include <dune/fempy/py/function/discrete.hh>
@@ -30,6 +32,12 @@ namespace Dune
           new( &instance ) Scheme( gridPart, model, prefix );
         }, pybind11::keep_alive< 1, 3 >() );
         cls.def("solve",  &Scheme::solve);
+        cls.def("error",[] (Scheme &scheme)
+        {
+          const auto& gridExactSolution = scheme.exactSolution();
+          Dune::Fem::L2Norm< GridPart > norm( scheme.solution().space().gridPart() );
+          return norm.distance( scheme.solution(), scheme.exactSolution() );
+        } );
         cls.def("solution", [] (Scheme &scheme) { return scheme.solution(); },
             pybind11::keep_alive< 0, 1 >()  );
     }
