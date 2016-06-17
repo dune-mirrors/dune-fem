@@ -38,8 +38,9 @@ namespace Dune
           Dune::Fem::L2Norm< GridPart > norm( scheme.solution().space().gridPart() );
           return norm.distance( scheme.solution(), scheme.exactSolution() );
         } );
-        cls.def("solution", [] (Scheme &scheme) { return scheme.solution(); },
-            pybind11::keep_alive< 0, 1 >()  );
+        cls.def("solution", [] (Scheme &scheme) -> DiscreteFunction& { return scheme.solution(); },
+            pybind11::return_value_policy::reference_internal );
+        //    pybind11::keep_alive< 0, 1 >()  );
     }
   }
 }

@@ -207,6 +207,8 @@ template < class Space, class Model, int polOrder, SolverType solver >
 void FemScheme<Space, Model, polOrder, solver>::
 solve ( bool assemble )
 {
+  solution_.clear();
+  prepare();
   typedef DifferentiableEllipticOperator< LinearOperatorType, ModelType > OperatorType;
   typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
   typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
