@@ -96,6 +96,7 @@ class DuneUFLModel:
         self.initCoef = ''
         self.pyTemplate = ''
         self.pySetCoef = ''
+        self.coefDim = '1'
         # ... and the sympy equivalents
         self.matCodeSrc = sympy.zeros(self.dimR, 1)
         self.matCodeFlux = sympy.zeros(self.dimR, self.dimD)
@@ -668,6 +669,7 @@ class DuneUFLModel:
                              + coef + 'Local_->init(entity);'
             self.pyTemplate += ', Dune::FemPy::VirtualizedGridFunction< GridPart, RangeType >'
             self.pySetCoef += '.def( "set' + coef + '", &PyModel::set' + coef + ' ) \\'
+            self.coefDim = str(dim)
             if not (i + 1) == len(self.unsetCoefficients):
                 self.setCoef += '\n    '
                 self.initCoef += '\n      '
@@ -819,11 +821,14 @@ class DuneUFLModel:
                             line = line.replace('#PYTEMPLATE', self.pyTemplate)
                         if '#DIMRANGE' in line:
                             line = line.replace('#DIMRANGE', str(self.dimR))
-                        elif '#PYSETCOEFFICIENT' in line:
+                        if '#PYSETCOEFFICIENT' in line:
                             if self.unsetCoefficients:
                                 line = line.replace('#PYSETCOEFFICIENT', self.pySetCoef)
                             else:
                                 line = ''
+                        elif '#COEFDIM' in line:
+                            print('OVER HERE', self.coefDim)
+                            line = line.replace('#COEFDIM', self.coefDim)
                         fout.write(line)
             print("modelimpl.hh has been changed")
 
