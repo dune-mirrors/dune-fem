@@ -60,7 +60,7 @@ def create(scheme, space, grid, model, name, **parameters):
     """
     module = get(scheme, space, grid, model.getDimRange(), **parameters)
     if hasattr(model, 'wrap'):
-        scheme = module.Scheme(space, grid, model.wrap(), name)
+        scheme = module.Scheme(grid, model.wrap(), name)
     else:
-        scheme = module.Scheme(space, grid, model, name)
+        scheme = module.Scheme(grid, model, name)
     return scheme
