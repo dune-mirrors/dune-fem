@@ -12,10 +12,7 @@
 PYBIND11_DECLARE_HOLDER_TYPE(T, std::shared_ptr<T>);
 
 typedef #GRIDPARTCHOICE GridPart;
-static const int dimRange = #COEFDIM;
-static const int dimDomain = GridPart::dimensionworld;
-typedef Dune::Fem::FunctionSpace< double, double, dimDomain, dimRange > FunctionSpaceType;
-typedef typename FunctionSpaceType::RangeType RangeType;
+#PYRANGETYPE
 
 namespace ModelTmp
 {

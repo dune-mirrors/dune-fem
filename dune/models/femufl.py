@@ -96,7 +96,7 @@ class DuneUFLModel:
         self.initCoef = ''
         self.pyTemplate = ''
         self.pySetCoef = ''
-        self.coefDim = '1'
+        self.pyRangeType = ''
         # ... and the sympy equivalents
         self.matCodeSrc = sympy.zeros(self.dimR, 1)
         self.matCodeFlux = sympy.zeros(self.dimR, self.dimD)
@@ -667,13 +667,17 @@ class DuneUFLModel:
             self.initCoef += 'if (!' + coef + 'Local_)\n      {\n        std::cout << "' + coef + ' not initialized -' \
                              ' call set' + coef + ' first" << std::endl;\n        abort();\n      }\n      ' \
                              + coef + 'Local_->init(entity);'
-            self.pyTemplate += ', Dune::FemPy::VirtualizedGridFunction< GridPart, RangeType >'
+            self.pyTemplate += ', Dune::FemPy::VirtualizedGridFunction< GridPart, ' + coef + 'RangeType >'
             self.pySetCoef += '.def( "set' + coef + '", &PyModel::set' + coef + ' ) \\'
-            self.coefDim = str(dim)
+            self.pyRangeType += 'static const int ' + coef + 'dimRange = ' + str(dim) + ';\nstatic const int ' + coef +'dimDomain = ' \
+                           'GridPart::dimensionworld;\ntypedef Dune::Fem::FunctionSpace< double, double, ' + coef + 'dimDomain, ' \
+                           + coef + 'dimRange > ' + coef + 'FunctionSpaceType;\ntypedef typename ' + coef + 'FunctionSpaceType::RangeType ' \
+                           + coef + 'RangeType;'
             if not (i + 1) == len(self.unsetCoefficients):
                 self.setCoef += '\n    '
                 self.initCoef += '\n      '
                 self.pySetCoef += '\n  '
+                self.pyRangeType += '\n'
 
     def uflToStrong(self):
         """Calculate strong form of an expression from the weak form.
@@ -826,9 +830,8 @@ class DuneUFLModel:
                                 line = line.replace('#PYSETCOEFFICIENT', self.pySetCoef)
                             else:
                                 line = ''
-                        elif '#COEFDIM' in line:
-                            print('OVER HERE', self.coefDim)
-                            line = line.replace('#COEFDIM', self.coefDim)
+                        elif '#PYRANGETYPE' in line:
+                            line = line.replace('#PYRANGETYPE', self.pyRangeType)
                         fout.write(line)
             print("modelimpl.hh has been changed")
 
