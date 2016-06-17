@@ -666,8 +666,8 @@ class DuneUFLModel:
             self.initCoef += 'if (!' + coef + 'Local_)\n      {\n        std::cout << "' + coef + ' not initialized -' \
                              ' call set' + coef + ' first" << std::endl;\n        abort();\n      }\n      ' \
                              + coef + 'Local_->init(entity);'
-            self.pyTemplate += ', GridFunction<GridPart,' + str(dim) + '>'
-            self.pySetCoef += '.def("set' + coef + '",&PyModel::set' + coef + ' ) \\'
+            self.pyTemplate += ', Dune::FemPy::VirtualizedGridFunction< GridPart, RangeType >'
+            self.pySetCoef += '.def( "set' + coef + '", &PyModel::set' + coef + ' ) \\'
             if not (i + 1) == len(self.unsetCoefficients):
                 self.setCoef += '\n    '
                 self.initCoef += '\n      '

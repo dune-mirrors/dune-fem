@@ -3,7 +3,7 @@
 #include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
-// #include <dune/fempy/gridfunction.hh>
+#include <dune/fempy/function/virtualizedgridfunction.hh>
 
 #include <dune/fem/schemes/diffusionmodel.hh>
 #include "ModelTmp.hh"
@@ -12,6 +12,11 @@
 PYBIND11_DECLARE_HOLDER_TYPE(T, std::shared_ptr<T>);
 
 typedef #GRIDPARTCHOICE GridPart;
+static const int dimRange = #DIMRANGE;
+static const int dimDomain = GridPart::dimensionworld;
+typedef Dune::Fem::FunctionSpace< double, double, dimDomain, dimRange > FunctionSpaceType;
+typedef typename FunctionSpaceType::RangeType RangeType;
+
 namespace ModelTmp
 {
   struct PyModel : public Model< GridPart#PYTEMPLATE >
@@ -30,13 +35,11 @@ namespace ModelTmp
       return #DIMRANGE;
     }
   };
-
   typedef DiffusionModelWrapper<PyModel> ModelWrapperType;
   std::shared_ptr<ModelWrapperType> wrap(std::shared_ptr<PyModel> &model)
   {
     return make_shared<ModelWrapperType>(model);
   }
-
   int getDimRange(std::shared_ptr<PyModel> &model)
   {
     return #DIMRANGE;
