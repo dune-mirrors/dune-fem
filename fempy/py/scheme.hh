@@ -5,7 +5,7 @@
 
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/py/common/numpyvector.hh>
-#include <dune/fempy/py/function/discrete.hh>
+#include <dune/fempy/py/discretefunction.hh>
 #include <dune/fempy/pybind11/pybind11.h>
 
 namespace Dune
@@ -23,9 +23,6 @@ namespace Dune
         typedef typename Scheme::GridPartType GridPart;
         typedef typename Scheme::ModelType ModelType;
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
-
-        if (!pybind11::already_registered< DiscreteFunction >)
-          registerDiscreteFunction< DiscreteFunction >( module, (typeid(Scheme).name()+std::string("DF")).c_str() );
 
         pybind11::class_< Scheme > cls( module, "Scheme" );
 
