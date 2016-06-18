@@ -10,6 +10,7 @@ import re
 
 from .. import femmpi
 from ..generator import generator
+from . import discretefunction
 
 myGenerator = generator.Generator("Scheme")
 
@@ -38,6 +39,8 @@ def getModule(scheme, **parameters):
 def get(scheme, space, grid, dimR, **parameters):
     """Call getModule() by passing in keyword arguments.
     """
+    storage = parameters.get('storage', "Adaptive")
+    discretefunction.get(storage, space._module, **parameters)
     return getModule(scheme, space=space._module._typeName, gridpart=grid._module._typeName, dimRange=dimR, **parameters)
 
 def create(scheme, space, grid, model, name, **parameters):

@@ -56,10 +56,7 @@ def create(df, space, **parameters):
 
     """
     module=get(df, space._module, **parameters)
-    try:
-        name=parameters['name']
-    except:
-        name="default"
+    name = parameters.get("name","default")
     return module.DiscreteFunction(space,name)
 
 
