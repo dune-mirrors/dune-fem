@@ -140,7 +140,11 @@ namespace Dune
       std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value >
       evaluate ( const Fem::QuadraturePointWrapper< Quadrature > &x, RangeType &value ) const
       {
+#if DUNE_VERSION_NEWER_REV(DUNE_FEM,2,5,0)
         impl_->evaluate( x.position(), value );
+#else
+        impl_->evaluate( x.quadrature().point( x.point() ), value);
+#endif
       }
 
       template< class Quadrature, class Values >
@@ -171,7 +175,12 @@ namespace Dune
       std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value >
       jacobian ( const Fem::QuadraturePointWrapper< Quadrature > &x, JacobianRangeType &jacobian ) const
       {
+#if DUNE_VERSION_NEWER_REV(DUNE_FEM,2,5,0)
         impl_->jacobian( x.position(), jacobian );
+#else
+        impl_->jacobian( x.quadrature().point( x.point() ), jacobian );
+#endif
+
       }
 
       template< class Quadrature, class Jacobians >
