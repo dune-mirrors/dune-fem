@@ -1255,6 +1255,9 @@ inline function get_overload(const void *this_ptr, const char *name)  {
 #define PYBIND11_OVERLOAD_PURE(ret_type, cname, fn, ...) \
     PYBIND11_OVERLOAD_PURE_NAME(ret_type, cname, #fn, fn, __VA_ARGS__)
 
+template <class T>
+const bool already_registered = static_cast< bool >( detail::get_type_info( typeid( T ) ) );
+
 NAMESPACE_END(pybind11)
 
 #if defined(_MSC_VER)

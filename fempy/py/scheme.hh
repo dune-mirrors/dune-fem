@@ -24,7 +24,8 @@ namespace Dune
         typedef typename Scheme::ModelType ModelType;
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
 
-        registerDiscreteFunction< DiscreteFunction >( module );
+        if (!pybind11::already_registered< DiscreteFunction >)
+          registerDiscreteFunction< DiscreteFunction >( module, (typeid(Scheme).name()+std::string("DF")).c_str() );
 
         pybind11::class_< Scheme > cls( module, "Scheme" );
 
