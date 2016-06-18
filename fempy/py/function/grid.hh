@@ -48,7 +48,7 @@ namespace Dune
         typedef typename FunctionSpaceType::RangeType RangeType;
         typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
 
-        explicit LocalFunctionType ( const PyGridFunction &gf ) : impl_( gf.impl_ ), pyObj_( gf.pyObj_ ) {}
+        explicit LocalFunctionType ( const PyGridFunction &gf ) : impl_( *gf.impl_ ), pyObj_( gf.pyObj_ ) {}
 
         LocalFunctionType ( Impl impl, pybind11::object pyObj ) : impl_( std::move( impl ) ), pyObj_( std::move( pyObj ) ) {}
 
