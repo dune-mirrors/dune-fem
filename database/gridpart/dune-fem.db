@@ -1,0 +1,7 @@
+{
+  "Geometry" :
+  {
+    "type"      : "Dune::Fem::GeometryGridPart< $(gf) >",
+    "include"   : [ "dune/fem/gridpart/geometrygridpart.hh" ]
+  }
+}
