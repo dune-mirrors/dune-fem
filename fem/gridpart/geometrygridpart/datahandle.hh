@@ -1,0 +1,103 @@
+#ifndef DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_DATAHANDLE_HH
+#define DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_DATAHANDLE_HH
+
+#include <dune/common/typetraits.hh>
+
+#include <dune/grid/common/datahandleif.hh>
+
+#include <dune/fem/gridpart/geometrygridpart/entity.hh>
+
+namespace Dune
+{
+
+  namespace Fem
+  {
+
+    // GeometryGridPartDataHandle
+    // ------------
+
+    template< class GridFamily, class WrappedHandle >
+    class GeometryGridPartDataHandle
+    : public CommDataHandleIF< GeometryGridPartDataHandle< GridFamily, WrappedHandle >, typename WrappedHandle::DataType >
+    {
+      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename GridFamily::GridFunctionType GridFunctionType;
+
+      template< class HostEntity >
+      class EntityProxy;
+
+    public:
+      GeometryGridPartDataHandle ( WrappedHandle &handle, const GridFunctionType &gridFunction  )
+      : wrappedHandle_( handle ),
+        gridFunction_( gridFunction )
+      {}
+
+      bool contains ( int dim, int codim ) const
+      {
+        return wrappedHandle_.contains( dim, codim );
+      }
+
+      bool fixedsize ( int dim, int codim ) const
+      {
+        return wrappedHandle_.fixedsize( dim, codim );
+      }
+
+      template< class HostEntity >
+      size_t size ( const HostEntity &hostEntity ) const
+      {
+        EntityProxy< HostEntity > proxy( hostEntity );
+        return wrappedHandle_.size( *proxy );
+      }
+
+      template< class MessageBuffer, class HostEntity >
+      void gather ( MessageBuffer &buffer, const HostEntity &hostEntity ) const
+      {
+        EntityProxy< HostEntity > proxy( hostEntity );
+        wrappedHandle_.gather( buffer, *proxy );
+      }
+
+      template< class MessageBuffer, class HostEntity >
+      void scatter ( MessageBuffer &buffer, const HostEntity &hostEntity, size_t size )
+      {
+        EntityProxy< HostEntity > proxy( hostEntity );
+        wrappedHandle_.scatter( buffer, *proxy, size );
+      }
+
+    private:
+      WrappedHandle &wrappedHandle_;
+      const GridFunctionType &gridFunction_;
+    };
+
+
+
+    template< class GridFamily, class WrappedHandle >
+    template< class HostEntity >
+    struct GeometryGridPartDataHandle< GridFamily, WrappedHandle >::EntityProxy
+    {
+      static const int dimension = HostEntity::dimension;
+      static const int codimension = HostEntity::codimension;
+
+      typedef Dune::Entity< codimension, dimension, const GridFamily, GeometryGridPartEntity > Entity;
+
+    private:
+      typedef GeometryGridPartEntity< codimension, dimension, const GridFamily > EntityImpl;
+
+    public:
+      EntityProxy ( const HostEntity &hostEntity )
+      : entity_( EntityImpl( hostEntity ) )
+      {}
+
+      const Entity &operator* () const
+      {
+        return entity_;
+      }
+
+    private:
+      Entity entity_;
+    };
+
+  } // namespace Fem
+
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_DATAHANDLE_HH
