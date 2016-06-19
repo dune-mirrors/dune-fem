@@ -668,11 +668,12 @@ class DuneUFLModel:
                              ' call set' + coef + ' first" << std::endl;\n        abort();\n      }\n      ' \
                              + coef + 'Local_->init(entity);'
             self.pyTemplate += ', Dune::FemPy::VirtualizedGridFunction< GridPart, ' + coef + 'RangeType >'
-            self.pySetCoef += '.def( "set' + coef + '", &PyModel::set' + coef + ' ) \\'
+            self.pySetCoef += '.def( "set' + coef + '", [](PyModel &m, Dune::FemPy::VirtualizedGridFunction< GridPart, ' \
+                              + coef + 'RangeType > &gf) {m.set' + coef + '(gf);} ) \\'
             self.pyRangeType += 'static const int ' + coef + 'dimRange = ' + str(dim) + ';\nstatic const int ' + coef +'dimDomain = ' \
-                           'GridPart::dimensionworld;\ntypedef Dune::Fem::FunctionSpace< double, double, ' + coef + 'dimDomain, ' \
-                           + coef + 'dimRange > ' + coef + 'FunctionSpaceType;\ntypedef typename ' + coef + 'FunctionSpaceType::RangeType ' \
-                           + coef + 'RangeType;'
+                             'GridPart::dimensionworld;\ntypedef Dune::Fem::FunctionSpace< double, double, ' + coef + 'dimDomain, ' \
+                             + coef + 'dimRange > ' + coef + 'FunctionSpaceType;\ntypedef typename ' + coef \
+                             + 'FunctionSpaceType::RangeType ' + coef + 'RangeType;'
             if not (i + 1) == len(self.unsetCoefficients):
                 self.setCoef += '\n    '
                 self.initCoef += '\n      '
