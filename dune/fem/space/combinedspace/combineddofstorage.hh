@@ -101,7 +101,7 @@ namespace Dune
       typedef MapperImp ContainedMapperType;
       typedef CombinedDofConversionUtility< ContainedMapperType, N, policy > DofConversionType;
 
-      CombinedSubMapper ( const ContainedMapperType& mapper, const unsigned int component )
+      CombinedSubMapper ( const ContainedMapperType& mapper, unsigned int component )
       : mapper_( mapper ),
         component_( component ),
         utilGlobal_(mapper_, policy  == PointBased ? N : mapper.size() )
@@ -110,8 +110,9 @@ namespace Dune
       }
 
       CombinedSubMapper(const ThisType& ) = default;
-
+      CombinedSubMapper(ThisType&& ) = default;
       ThisType& operator=(const ThisType& ) = delete;
+      ThisType& operator=(ThisType&& ) = delete;
 
       //! Total number of degrees of freedom
       unsigned int size () const
@@ -124,7 +125,7 @@ namespace Dune
         return size() * N;
       }
 
-      const unsigned int operator[] ( unsigned int index ) const
+      unsigned int operator[] ( unsigned int index ) const
       {
         utilGlobal_.newSize( mapper_.size() );
         return utilGlobal_.combinedDof(index, component_);

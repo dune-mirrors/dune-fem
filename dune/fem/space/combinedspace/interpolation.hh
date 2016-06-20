@@ -153,8 +153,8 @@ namespace Dune
       template< class Tuple, class LocalFunction, class LocalDofVector >
       static void apply ( const Tuple &tuple, const BasisFunctionSetType &basisSet, const LocalFunction &lv, LocalDofVector &ldv )
       {
-        OffsetSubMapper mapper( basisSet.template subBasisFunctionSet< i >().size(), basisSet.offset( i ) );
-        SubVector< LocalDofVector, OffsetSubMapper > subLdv( ldv, mapper );
+        SubVector< LocalDofVector, OffsetSubMapper >
+          subLdv( ldv, OffsetSubMapper( basisSet.template subBasisFunctionSet< i >().size(), basisSet.offset( i ) ) );
         std::get< i >( tuple ) ( localFunctionConverter( lv, RangeConverter() ), subLdv );
       }
     };
