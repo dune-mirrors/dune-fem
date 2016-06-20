@@ -25,7 +25,7 @@ namespace Dune
 
       typedef std::tuple< ParallelScalarProduct< DiscreteFunctions > ... > ParallelScalarProductTuple;
 
-      typedef decltype ( Std::index_sequence_for< DiscreteFunctions ... >() ) Sequence;
+      typedef decltype ( std::index_sequence_for< DiscreteFunctions ... >() ) Sequence;
 
     public:
       typedef TupleDiscreteFunction< DiscreteFunctions ... > DiscreteFunctionType;

@@ -53,7 +53,7 @@ namespace Dune
       typedef typename std::tuple_element< 0, LocalRestrictProlongTupleType >::type::DomainFieldType DomainFieldType;
 
       TupleLocalRestrictProlong ( std::tuple< const DiscreteFunctionSpaces & ... > tuple )
-        : localRestrictProlongTuple_( localRestrictProlongTuple( tuple, Std::index_sequence_for< DiscreteFunctionSpaces ... >() ) )
+        : localRestrictProlongTuple_( localRestrictProlongTuple( tuple, std::index_sequence_for< DiscreteFunctionSpaces ... >() ) )
       {}
 
       void setFatherChildWeight ( const DomainFieldType &weight )
@@ -79,7 +79,7 @@ namespace Dune
 
       bool needCommunication () const
       {
-        return needCommunication( Std::index_sequence_for< DiscreteFunctionSpaces ... >() );
+        return needCommunication( std::index_sequence_for< DiscreteFunctionSpaces ... >() );
       }
 
     protected:

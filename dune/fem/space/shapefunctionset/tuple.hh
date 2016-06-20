@@ -80,7 +80,7 @@ namespace Dune
       TupleShapeFunctionSet () {}
 
       TupleShapeFunctionSet ( GeometryType type )
-        : shapeFunctionSetTuple_( makeGeometryTypeTuple( type, Std::index_sequence_for< ShapeFunctionSets ... >() ) )
+        : shapeFunctionSetTuple_( makeGeometryTypeTuple( type, std::index_sequence_for< ShapeFunctionSets ... >() ) )
       {
         offset_[ 0 ] = 0;
         ForLoop< Offsets, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_ );
@@ -101,9 +101,9 @@ namespace Dune
         ForLoop< Offsets, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_ );
       }
 
-      int order () const { return order( Std::index_sequence_for< ShapeFunctionSets ... >() ); }
+      int order () const { return order( std::index_sequence_for< ShapeFunctionSets ... >() ); }
 
-      std::size_t size () const { return size( Std::index_sequence_for< ShapeFunctionSets ... >() ); }
+      std::size_t size () const { return size( std::index_sequence_for< ShapeFunctionSets ... >() ); }
 
       template< class Point, class Functor >
       void evaluateEach ( const Point &x, Functor functor ) const

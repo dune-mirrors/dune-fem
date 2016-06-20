@@ -187,13 +187,13 @@ namespace Dune
       //! \brief return order of basis function set, maximal order in the tupleset
       int order () const
       {
-        return order( Std::index_sequence_for< BasisFunctionSets ... >() );
+        return order( std::index_sequence_for< BasisFunctionSets ... >() );
       }
 
       //! \brief return size of basis function set
       std::size_t size () const
       {
-        return size( Std::index_sequence_for< BasisFunctionSets ... >() );
+        return size( std::index_sequence_for< BasisFunctionSets ... >() );
       }
 
       //! \copydoc BasisFunctionSet::type

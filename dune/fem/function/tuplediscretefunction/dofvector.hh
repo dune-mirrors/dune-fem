@@ -35,7 +35,7 @@ namespace Dune
 
       typedef std::tuple< DofVectors ... > DofVectorTuple;
 
-      typedef decltype ( Std::index_sequence_for< DofVectors ... >() ) Sequence;
+      typedef decltype ( std::index_sequence_for< DofVectors ... >() ) Sequence;
 
     public:
       static_assert( Std::are_all_same< typename DofVectors::FieldType ... >::value, "All blocks need to have the same FieldType." );

@@ -142,7 +142,7 @@ namespace Dune
       // construct new instance of blockMapper
       static BlockMapperType *getBlockMapper ( const DiscreteFunctionSpaceTupleType &spaceTuple )
       {
-        return getBlockMapper( spaceTuple, Std::index_sequence_for< DiscreteFunctionSpaces ... >() );
+        return getBlockMapper( spaceTuple, std::index_sequence_for< DiscreteFunctionSpaces ... >() );
       }
 
       // delete instance of BlockMapper
@@ -169,17 +169,17 @@ namespace Dune
       template< class Entity >
       static BasisFunctionSetType getBasisFunctionSet ( const Entity &entity, const DiscreteFunctionSpaceTupleType &tuple )
       {
-        return getBasisFunctionSet( entity, tuple, Std::index_sequence_for< DiscreteFunctionSpaces ... >() );
+        return getBasisFunctionSet( entity, tuple, std::index_sequence_for< DiscreteFunctionSpaces ... >() );
       }
 
       static bool continuous ( const DiscreteFunctionSpaceTupleType &tuple )
       {
-        return continuous( tuple, Std::index_sequence_for< DiscreteFunctionSpaces ... >() );
+        return continuous( tuple, std::index_sequence_for< DiscreteFunctionSpaces ... >() );
       }
 
       static bool continuous ( const IntersectionType &intersection, const DiscreteFunctionSpaceTupleType &tuple )
       {
-        return continuous( tuple, intersection, Std::index_sequence_for< DiscreteFunctionSpaces ... >() );
+        return continuous( tuple, intersection, std::index_sequence_for< DiscreteFunctionSpaces ... >() );
       }
 
     protected:
@@ -258,12 +258,12 @@ namespace Dune
       //! return tuple of const References to the contained sub spaces
       std::tuple< const DiscreteFunctionSpaces & ... > spaceTuple () const
       {
-        return spaceTuple( Std::index_sequence_for< DiscreteFunctionSpaces ... >() );
+        return spaceTuple( std::index_sequence_for< DiscreteFunctionSpaces ... >() );
       }
 
       InterpolationType interpolation ( const EntityType &entity ) const
       {
-        return interpolation( entity, Std::index_sequence_for< DiscreteFunctionSpaces ... >() );
+        return interpolation( entity, std::index_sequence_for< DiscreteFunctionSpaces ... >() );
       }
 
     protected:

@@ -147,11 +147,11 @@ namespace Dune
           init();
         }
 
-        SizeType size () const { return size( Std::index_sequence_for< Mapper ... >() ); }
+        SizeType size () const { return size( std::index_sequence_for< Mapper ... >() ); }
 
-        bool contains ( const int codim ) const { return contains( codim, Std::index_sequence_for< Mapper ... >() ); }
+        bool contains ( const int codim ) const { return contains( codim, std::index_sequence_for< Mapper ... >() ); }
 
-        bool fixedDataSize ( int codim ) const { return fixedDataSize( codim, Std::index_sequence_for< Mapper ... >() ); }
+        bool fixedDataSize ( int codim ) const { return fixedDataSize( codim, std::index_sequence_for< Mapper ... >() ); }
 
         template< class Functor >
         void mapEach ( const ElementType &element, Functor f ) const
@@ -169,12 +169,12 @@ namespace Dune
           ForLoop< MapEachEntityDof, 0, mapperTupleSize - 1 >::apply( localOffset, globalOffset_, entity, f, mapperTuple_ );
         }
 
-        int maxNumDofs () const { return maxNumDofs( Std::index_sequence_for< Mapper ... >() ); }
+        int maxNumDofs () const { return maxNumDofs( std::index_sequence_for< Mapper ... >() ); }
 
-        SizeType numDofs ( const ElementType &element ) const { return numDofs( element, Std::index_sequence_for< Mapper ... >() ); }
+        SizeType numDofs ( const ElementType &element ) const { return numDofs( element, std::index_sequence_for< Mapper ... >() ); }
 
         template< class Entity >
-        SizeType numEntityDofs ( const Entity &entity ) const { return numEntityDofs( entity, Std::index_sequence_for< Mapper ... >() ); }
+        SizeType numEntityDofs ( const Entity &entity ) const { return numEntityDofs( entity, std::index_sequence_for< Mapper ... >() ); }
 
 
         static constexpr bool consecutive () noexcept { return false; }
@@ -378,7 +378,7 @@ namespace Dune
 
         static constexpr bool consecutive () noexcept { return true; }
 
-        SizeType numBlocks () const { return numBlocks( Std::index_sequence_for< Mapper ... >() ); }
+        SizeType numBlocks () const { return numBlocks( std::index_sequence_for< Mapper ... >() ); }
 
         SizeType numberOfHoles ( int block ) const
         {
