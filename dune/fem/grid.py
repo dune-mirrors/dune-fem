@@ -30,14 +30,17 @@ from ..generator import generator
 
 from . import space
 
-def interpolate(grid, func, **kwargs):
-    try:
-        R = func.dimRange
-    except:
-        R = len(func)
-    spaceName = kwargs.pop('space')
-    mySpace=space.create(spaceName, grid, dimrange=R, **kwargs)
-    return mySpace.interpolate(func, **kwargs)
+def interpolate(grid, func, variant=None, **kwargs):
+    if variant == "global":
+      return interpolate(grid,grid.globalGridFunction("gf", func), **kwargs)
+    else:
+      try:
+          R = func.dimRange
+      except:
+          R = len(func)
+      spaceName = kwargs.pop('space')
+      mySpace=space.create(spaceName, grid, dimrange=R, **kwargs)
+      return mySpace.interpolate(func, **kwargs)
 
 class Generator(generator.Generator):
     def modifyIncludes(self, includes):
