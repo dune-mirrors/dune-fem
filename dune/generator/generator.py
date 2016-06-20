@@ -103,6 +103,7 @@ class Generator(object):
         setattr(module, "_typeHash", myTypeHash)
         setattr(module, "_includes", includes)
         setattr(module, "_moduleBase", moduleBase)
+        setattr(module, "_selector", selector)
         return module
 
     def modifyIncludes(self, includes):

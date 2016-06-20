@@ -40,7 +40,9 @@ def get(scheme, space, dimR, **parameters):
     """Call getModule() by passing in keyword arguments.
     """
     storage = parameters.get('storage', "Adaptive")
-    discretefunction.get(storage, space._module, **parameters)
+    dfmodule = discretefunction.get(storage, space._module, **parameters)
+    storage = dfmodule.DiscreteFunction._storage
+
     return getModule(scheme, space=space._module._typeName, gridpart=space.grid._module._typeName, storage=storage, dimRange=dimR, **parameters)
 
 def create(scheme, space, model, name, **parameters):
