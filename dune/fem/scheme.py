@@ -50,6 +50,7 @@ def getModule(scheme, **parameters):
     module = myGenerator.getModule(scheme, **parameters)
     setattr(module.Scheme,"solve", solve)
     setattr(module.Scheme, "_storage", module._selector.parameters["storage"])
+    setattr(module.Scheme, "target", None)
     return module
 
 def get(scheme, space, dimR, **parameters):
