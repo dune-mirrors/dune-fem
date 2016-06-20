@@ -218,37 +218,37 @@ namespace Dune
 
       protected:
         template< std::size_t ... i >
-        SizeType size ( Std::index_sequence< i ... > ) const
+        SizeType size ( std::index_sequence< i ... > ) const
         {
           return Std::sum( std::get< i >( mapperTuple_ ).size() ... );
         }
 
         template< std::size_t ... i >
-        bool fixedDataSize ( const int codim, Std::index_sequence< i ... > ) const
+        bool fixedDataSize ( const int codim, std::index_sequence< i ... > ) const
         {
           return Std::And( std::get< i >( mapperTuple_ ).fixedDataSize( codim ) ... );
         }
 
         template< std::size_t ... i >
-        bool contains ( const int codim, Std::index_sequence< i ... > ) const
+        bool contains ( const int codim, std::index_sequence< i ... > ) const
         {
           return Std::Or( std::get< i >( mapperTuple_ ).contains( codim ) ... );
         }
 
         template< std::size_t ... i >
-        int maxNumDofs ( Std::index_sequence< i ... > ) const
+        int maxNumDofs ( std::index_sequence< i ... > ) const
         {
           return Std::sum( std::get< i >( mapperTuple_ ).maxNumDofs() ... );
         }
 
         template< std::size_t ... i >
-        SizeType numDofs ( const ElementType &element, Std::index_sequence< i ... > ) const
+        SizeType numDofs ( const ElementType &element, std::index_sequence< i ... > ) const
         {
           return Std::sum( std::get< i >( mapperTuple_ ).numDofs( element ) ... );
         }
 
         template< class Entity, std::size_t ... i >
-        SizeType numEntityDofs ( const Entity &entity, Std::index_sequence< i ... > ) const
+        SizeType numEntityDofs ( const Entity &entity, std::index_sequence< i ... > ) const
         {
           return Std::sum( std::get< i >( mapperTuple_ ).numEntityDofs( entity ) ... );
         }
@@ -458,7 +458,7 @@ namespace Dune
         }
 
         template< std::size_t ... i >
-        SizeType numBlocks ( Std::index_sequence< i ... > ) const
+        SizeType numBlocks ( std::index_sequence< i ... > ) const
         {
           return Std::sum( std::get< i >( mapperTuple_ ).numBlocks() ... );
         }

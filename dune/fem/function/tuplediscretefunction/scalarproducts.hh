@@ -52,13 +52,13 @@ namespace Dune
 
     protected:
       template< std::size_t ... I >
-      RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x, const DiscreteFunctionType &y, Std::index_sequence< I ... > ) const
+      RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x, const DiscreteFunctionType &y, std::index_sequence< I ... > ) const
       {
         return Std::sum( std::get< I >( tuple_ ).scalarProductDofs( x.template subDiscreteFunction< I >(), y.template subDiscreteFunction< I >() ) ... );
       }
 
       template< std::size_t ... I >
-      static ParallelScalarProductTuple createTuple ( const DiscreteFunctionSpaceType &space, Std::index_sequence< I ... > )
+      static ParallelScalarProductTuple createTuple ( const DiscreteFunctionSpaceType &space, std::index_sequence< I ... > )
       {
         return std::make_tuple( std::tuple_element< I, ParallelScalarProductTuple >::type( space.template subDiscreteFunctionSpace< I >() ) ... );
       }

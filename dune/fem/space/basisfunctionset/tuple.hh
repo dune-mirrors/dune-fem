@@ -345,14 +345,14 @@ namespace Dune
     protected:
       // unroll index sequence and take maxmial order
       template< std::size_t ... i >
-      int order ( Std::index_sequence< i ... > ) const
+      int order ( std::index_sequence< i ... > ) const
       {
         return Std::max( std::get< i >( basisFunctionSetTuple_ ).order() ... );
       }
 
       // unroll index sequence and sum up sizes
       template< std::size_t ... i >
-      std::size_t size ( Std::index_sequence< i ... > ) const
+      std::size_t size ( std::index_sequence< i ... > ) const
       {
         return Std::sum( std::get< i >( basisFunctionSetTuple_ ).size() ... );
       }

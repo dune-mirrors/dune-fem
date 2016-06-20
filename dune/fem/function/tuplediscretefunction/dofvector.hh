@@ -156,32 +156,32 @@ namespace Dune
 
     protected:
       template< std::size_t ... i >
-      void scale ( FieldType scale, Std::index_sequence< i ... > )
+      void scale ( FieldType scale, std::index_sequence< i ... > )
       {
         std::ignore = std::make_tuple( (std::get< i >( *this ) *= scale, i ) ... );
       }
 
       template< std::size_t ... i >
-      void axpy ( FieldType a, const ThisType &other, Std::index_sequence< i ... > )
+      void axpy ( FieldType a, const ThisType &other, std::index_sequence< i ... > )
       {
         std::ignore = std::make_tuple( ( std::get< i >( *this ).axpy( a, std::get< i >( other ) ), i ) ... );
       }
 
       template< std::size_t ... i >
-      void assign ( const ThisType &other, Std::index_sequence< i ... > )
+      void assign ( const ThisType &other, std::index_sequence< i ... > )
       {
         std::ignore = std::make_tuple( ( std::get< i >( *this ) = std::get< i >( other ), i ) ... );
       }
 
       template< std::size_t ... i >
-      SizeType size ( Std::index_sequence< i ... > ) const
+      SizeType size ( std::index_sequence< i ... > ) const
       {
         return Std::sum( std::get< i >( *this ).size() *
                          std::tuple_element< i, DofVectorTuple >::type::blockSize ... );
       }
 
       template< std::size_t ... I >
-      void clear ( Std::index_sequence< I ... > )
+      void clear ( std::index_sequence< I ... > )
       {
         std::ignore = std::make_tuple( ( std::get< I >( *this ).clear(), I ) ... );
       }

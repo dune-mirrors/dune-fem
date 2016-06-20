@@ -184,7 +184,7 @@ namespace Dune
 
     protected:
       template< std::size_t ... i >
-      static BlockMapperType *getBlockMapper ( const DiscreteFunctionSpaceTupleType &tuple, Std::index_sequence< i ... > )
+      static BlockMapperType *getBlockMapper ( const DiscreteFunctionSpaceTupleType &tuple, std::index_sequence< i ... > )
       {
         return new BlockMapperType( SubDiscreteFunctionSpace< 0 >::subDiscreteFunctionSpace( tuple ).gridPart(),
             SubDiscreteFunctionSpace< i >::subNonBlockMapper( tuple ) ... );
@@ -192,19 +192,19 @@ namespace Dune
 
       template< class Entity, std::size_t ... i >
       static BasisFunctionSetType getBasisFunctionSet ( const Entity &entity, const DiscreteFunctionSpaceTupleType &tuple,
-                                                        Std::index_sequence< i ... > )
+                                                        std::index_sequence< i ... > )
       {
         return BasisFunctionSetType( SubDiscreteFunctionSpace< i >::subDiscreteFunctionSpace( tuple ).basisFunctionSet( entity ) ... );
       }
 
       template< std::size_t ... i >
-      static bool continuous ( const DiscreteFunctionSpaceTupleType &tuple, Std::index_sequence< i ... > )
+      static bool continuous ( const DiscreteFunctionSpaceTupleType &tuple, std::index_sequence< i ... > )
       {
         return Std::And( SubDiscreteFunctionSpace< i >::subDiscreteFunctionSpace( tuple ).continuous() ... );
       }
 
       template< std::size_t ... i >
-      static bool continuous ( const DiscreteFunctionSpaceTupleType &tuple, const IntersectionType &intersection, Std::index_sequence< i ... > )
+      static bool continuous ( const DiscreteFunctionSpaceTupleType &tuple, const IntersectionType &intersection, std::index_sequence< i ... > )
       {
         return Std::And( SubDiscreteFunctionSpace< i >::subDiscreteFunctionSpace( tuple ).continuous( intersection ) ... );
       }
@@ -268,13 +268,13 @@ namespace Dune
 
     protected:
       template< std::size_t ... i >
-      std::tuple< const DiscreteFunctionSpaces & ... > spaceTuple ( Std::index_sequence< i ... > ) const
+      std::tuple< const DiscreteFunctionSpaces & ... > spaceTuple ( std::index_sequence< i ... > ) const
       {
         return std::tuple< const DiscreteFunctionSpaces & ... >( BaseType::template subDiscreteFunctionSpace< i >() ... );
       }
 
       template< std::size_t ... i >
-      InterpolationType interpolation ( const EntityType &entity, Std::index_sequence< i ... > ) const
+      InterpolationType interpolation ( const EntityType &entity, std::index_sequence< i ... > ) const
       {
         return InterpolationType( std::get< i >( spaceTuple() ) ..., entity );
       }

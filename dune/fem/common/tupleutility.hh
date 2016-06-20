@@ -110,7 +110,7 @@ namespace Dune
   // --------------
 
   template< typename Tup, std::size_t... I >
-  inline auto tuple_pop_back_impl ( const Tup &tup, const Std::index_sequence< I... >& ) ->
+  inline auto tuple_pop_back_impl ( const Tup &tup, const std::index_sequence< I... >& ) ->
     decltype ( std::make_tuple( std::get< I > ( tup )... ) )
   {
     return std::make_tuple ( std::get< I > ( tup )... );
@@ -129,7 +129,7 @@ namespace Dune
   // ---------------
 
   template< typename Tup, std::size_t... I >
-  inline auto tuple_pop_front_impl ( const Tup &tup, const Std::index_sequence< I... >& ) ->
+  inline auto tuple_pop_front_impl ( const Tup &tup, const std::index_sequence< I... >& ) ->
     decltype ( std::make_tuple( std::get< I > ( tup )... ) )
   {
     return std::make_tuple ( std::get< I + 1 > ( tup )... );

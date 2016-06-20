@@ -41,7 +41,7 @@ namespace Dune
       template< int > struct ProlongLocal;
 
       template< std::size_t  ... i >
-      static LocalRestrictProlongTupleType localRestrictProlongTuple ( std::tuple< const DiscreteFunctionSpaces &... > tuple, Std::index_sequence< i ... > )
+      static LocalRestrictProlongTupleType localRestrictProlongTuple ( std::tuple< const DiscreteFunctionSpaces &... > tuple, std::index_sequence< i ... > )
       {
         return std::make_tuple( typename std::tuple_element< i, LocalRestrictProlongTupleType >::type( std::get< i >( tuple ) ) ...);
       }
@@ -84,7 +84,7 @@ namespace Dune
 
     protected:
       template< std::size_t ... i >
-      bool needCommunication ( Std::index_sequence< i...> ) const
+      bool needCommunication ( std::index_sequence< i...> ) const
       {
         return Std::Or( std::get< i >( localRestrictProlongTuple_ ).needCommunication() ... );
       }

@@ -125,13 +125,13 @@ namespace Dune
 
     protected:
       template< std::size_t ... I >
-      int order ( Std::index_sequence< I ... > ) const
+      int order ( std::index_sequence< I ... > ) const
       {
         return Std::max( std::get< I >( shapeFunctionSetTuple_ ).order() ... );
       }
 
       template< std::size_t ... I >
-      std::size_t size ( Std::index_sequence< I ... > ) const
+      std::size_t size ( std::index_sequence< I ... > ) const
       {
         return Std::sum( std::get< I >( shapeFunctionSetTuple_ ).size() ... );
       }
@@ -144,7 +144,7 @@ namespace Dune
 
       template< std::size_t ... I >
       static tuple< decltype( makeGeometryType< I >( std::declval< GeometryType >() ) ) ... >
-      makeGeometryTypeTuple ( GeometryType type, Std::index_sequence< I ... > )
+      makeGeometryTypeTuple ( GeometryType type, std::index_sequence< I ... > )
       {
         return std::make_tuple( makeGeometryType< I >( type ) ... );
       }
