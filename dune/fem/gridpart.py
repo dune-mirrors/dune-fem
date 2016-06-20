@@ -23,7 +23,7 @@ def getGridPartType(gridpart, **parameters):
     """
     return myGenerator.getTypeName(gridpart, **parameters)
 
-def get(gridpart, dfmodule, **parameters):
+def get(gp, **parameters):
     """Create a gridpart module using the gridpart-database.
 
     This function creates a python module called gridpart_xxx.py where xxx is a
@@ -35,12 +35,12 @@ def get(gridpart, dfmodule, **parameters):
         module: the newly created gridpart module
 
     """
-    module = myGenerator.getModule(gridpart, gf=dfmodule._typeName, extra_includes=dfmodule._includes, **parameters)
+    module = myGenerator.getModule(gp, **parameters)
     setattr(module.GridPart, "_module", module)
     setattr(module.GridPart, "interpolate", interpolate )
     return module
 
-def create(gridpart, gf, **parameters):
+def create(gp, gf, **parameters):
     """Get a GridPart.
 
     Call get() and create a C++ gridpart class
@@ -51,7 +51,13 @@ def create(gridpart, gf, **parameters):
     Returns:
         GridPart: the constructed GridPart
     """
-    module = get(gridpart, gf._module, **parameters)
+    if gp=="Geometry":
+        try:
+            module = get(gp, discfunc=gf._module._typeName, extra_includes=gf._module._includes, **parameters)
+        except:
+            gp  = "Hallo"
+            val = "Dune::FieldVector<double,"+str(gf.dimRange)+">"
+            module = get("GeometryVirtual", gridpart=gp, value=val, **parameters)
     return module.GridPart(gf)
 
 #############################################

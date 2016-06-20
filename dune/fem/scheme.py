@@ -14,6 +14,19 @@ from . import discretefunction
 
 myGenerator = generator.Generator("Scheme")
 
+def solve( scheme, target=None, dfname=None ):
+    print( "dimrange = ", scheme.dimRange )
+    if dfname == None:
+        dfname = scheme.name
+    if target == None:
+        if scheme.target == None:
+            target = discretefunction.create(scheme._storage, scheme.space, name=dfname)
+            target.interpolate( [0,]*scheme.dimRange )
+        else:
+            target = scheme.target
+    scheme._solve(target)
+    return target
+
 def getModule(scheme, **parameters):
     """Create a scheme module using the scheme-database.
 
@@ -34,7 +47,10 @@ def getModule(scheme, **parameters):
 
     This would correspond to calling get("FemScheme", grid2d, 2), where grid2d is a python grid module.
     """
-    return myGenerator.getModule(scheme, **parameters)
+    module = myGenerator.getModule(scheme, **parameters)
+    setattr(module.Scheme,"solve", solve)
+    setattr(module.Scheme, "_storage", module._selector.parameters["storage"])
+    return module
 
 def get(scheme, space, dimR, **parameters):
     """Call getModule() by passing in keyword arguments.
@@ -43,9 +59,10 @@ def get(scheme, space, dimR, **parameters):
     dfmodule = discretefunction.get(storage, space._module, **parameters)
     storage = dfmodule.DiscreteFunction._storage
 
-    return getModule(scheme, space=space._module._typeName, gridpart=space.grid._module._typeName, storage=storage, dimRange=dimR, **parameters)
+    module = getModule(scheme, space=space._module._typeName, gridpart=space.grid._module._typeName, storage=storage, dimRange=dimR, **parameters)
+    return module
 
-def create(scheme, space, model, name, **parameters):
+def create(scheme, space_or_target, model, name, **parameters):
     """Get a Scheme.
 
     Call get() and create a C++ scheme class (see dune/fempy/dunescheme.hh).
@@ -63,9 +80,23 @@ def create(scheme, space, model, name, **parameters):
     Returns:
         Scheme: the constructed scheme
     """
+    try:
+        space = space_or_target.space
+        target = space_or_target
+    except:
+        space = space_or_target
+        target = None
+
     module = get(scheme, space, model.dimRange, **parameters)
+
+    class ExtendedScheme(module.Scheme):
+        def __init__(self,space,model,name,target=None):
+            module.Scheme.__init__(self,space,model,name)
+            self.target = target
+
     if hasattr(model, 'wrap'):
-        scheme = module.Scheme(space, model.wrap(), name)
+        ret = ExtendedScheme(space, model.wrap(), name, target)
     else:
-        scheme = module.Scheme(space, model, name)
-    return scheme
+        ret = ExtendedScheme(space, model, name, target)
+
+    return ret
