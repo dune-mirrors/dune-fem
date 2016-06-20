@@ -36,14 +36,14 @@ def getModule(scheme, **parameters):
     """
     return myGenerator.getModule(scheme, **parameters)
 
-def get(scheme, space, grid, dimR, **parameters):
+def get(scheme, space, dimR, **parameters):
     """Call getModule() by passing in keyword arguments.
     """
     storage = parameters.get('storage', "Adaptive")
     discretefunction.get(storage, space._module, **parameters)
-    return getModule(scheme, space=space._module._typeName, gridpart=grid._module._typeName, dimRange=dimR, **parameters)
+    return getModule(scheme, space=space._module._typeName, gridpart=space.grid._module._typeName, storage=storage, dimRange=dimR, **parameters)
 
-def create(scheme, space, grid, model, name, **parameters):
+def create(scheme, space, model, name, **parameters):
     """Get a Scheme.
 
     Call get() and create a C++ scheme class (see dune/fempy/dunescheme.hh).
@@ -61,9 +61,9 @@ def create(scheme, space, grid, model, name, **parameters):
     Returns:
         Scheme: the constructed scheme
     """
-    module = get(scheme, space, grid, model.getDimRange(), **parameters)
+    module = get(scheme, space, model.dimRange, **parameters)
     if hasattr(model, 'wrap'):
-        scheme = module.Scheme(grid, model.wrap(), name)
+        scheme = module.Scheme(space, model.wrap(), name)
     else:
-        scheme = module.Scheme(grid, model, name)
+        scheme = module.Scheme(space, model, name)
     return scheme

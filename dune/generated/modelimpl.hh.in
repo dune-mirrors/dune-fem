@@ -50,13 +50,12 @@ PYBIND11_PLUGIN(#MODELNAME) {
   typedef typename ModelWrapperType::Base ModelBase;
   py::class_< PyModel, std::shared_ptr< PyModel > >( m, "get" )
   .def( py::init() )
-  .def( "getDimRange", &getDimRange )
+  .def_property_readonly( "dimRange", &getDimRange )
   .def( "wrap", &wrap )
   #PYSETCOEFFICIENT
   ;
   py::class_< ModelBase, std::shared_ptr< ModelBase > >( m, "ModelBase" );
   py::class_< ModelWrapperType, std::shared_ptr< ModelWrapperType > >( m, "ModelWrapper", py::base< ModelBase >() )
-  .def("getDimRange", &getDimRange);
-  // py::implicitly_convertible< std::shared_ptr< ModelWrapperType >, std::shared_ptr< ModelBase > >();
+  .def_property_readonly( "dimRange", &getDimRange );
   return m.ptr();
 }
