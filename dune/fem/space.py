@@ -12,11 +12,7 @@ def getSpaceType(space, **parameters):
     return myGenerator.getTypeName(space, **parameters)
 
 def interpolate( self, func, **kwargs ):
-    try:
-        storage=kwargs['storage']
-    except:
-        storage="Adaptive"
-
+    storage = kwargs.pop('storage', "Adaptive")
     try:
         df = discretefunction.create(storage,self,name=func.name, **kwargs)
     except:

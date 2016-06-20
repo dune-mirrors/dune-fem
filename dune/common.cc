@@ -9,6 +9,8 @@
 #include <dune/fempy/pybind11/pybind11.h>
 #include <dune/fempy/pybind11/operators.h>
 
+#include "fmatrix.hh"
+
 template< class K, int size >
 static void registerFieldVector ( pybind11::handle scope, std::integral_constant< int, size > )
 {
@@ -89,6 +91,7 @@ PYBIND11_PLUGIN( common )
   pybind11::module module( "common" );
 
   registerFieldVector( module, std::make_integer_sequence< int, 10 >() );
+  registerFieldMatrix<double>( module, std::make_integer_sequence< int, 10 >() );
 
   return module.ptr();
 }

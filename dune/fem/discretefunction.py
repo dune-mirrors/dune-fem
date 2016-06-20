@@ -31,7 +31,9 @@ def get(df, spaceModule, **parameters):
         module: the newly created discrete function module
 
     """
-    return myGenerator.getModule(df, extra_includes=spaceModule._includes, space=spaceModule._typeName, **parameters)
+    module = myGenerator.getModule(df, extra_includes=spaceModule._includes, space=spaceModule._typeName, **parameters)
+    setattr(module.DiscreteFunction, "_module", module)
+    return module
 
 def create(df, space, **parameters):
     """Get a discrete function
@@ -56,10 +58,7 @@ def create(df, space, **parameters):
 
     """
     module=get(df, space._module, **parameters)
-    try:
-        name=parameters['name']
-    except:
-        name="default"
+    name = parameters.get("name","default")
     return module.DiscreteFunction(space,name)
 
 

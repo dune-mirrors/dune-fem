@@ -96,6 +96,7 @@ class DuneUFLModel:
         self.initCoef = ''
         self.pyTemplate = ''
         self.pySetCoef = ''
+        self.pyRangeType = ''
         # ... and the sympy equivalents
         self.matCodeSrc = sympy.zeros(self.dimR, 1)
         self.matCodeFlux = sympy.zeros(self.dimR, self.dimD)
@@ -666,12 +667,18 @@ class DuneUFLModel:
             self.initCoef += 'if (!' + coef + 'Local_)\n      {\n        std::cout << "' + coef + ' not initialized -' \
                              ' call set' + coef + ' first" << std::endl;\n        abort();\n      }\n      ' \
                              + coef + 'Local_->init(entity);'
-            self.pyTemplate += ', GridFunction<GridPart,' + str(dim) + '>'
-            self.pySetCoef += '.def("set' + coef + '",&PyModel::set' + coef + ' ) \\'
+            self.pyTemplate += ', Dune::FemPy::VirtualizedGridFunction< GridPart, ' + coef + 'RangeType >'
+            self.pySetCoef += '.def( "set' + coef + '", [](PyModel &m, Dune::FemPy::VirtualizedGridFunction< GridPart, ' \
+                              + coef + 'RangeType > &gf) {m.set' + coef + '(gf);} ) \\'
+            self.pyRangeType += 'static const int ' + coef + 'dimRange = ' + str(dim) + ';\nstatic const int ' + coef +'dimDomain = ' \
+                             'GridPart::dimensionworld;\ntypedef Dune::Fem::FunctionSpace< double, double, ' + coef + 'dimDomain, ' \
+                             + coef + 'dimRange > ' + coef + 'FunctionSpaceType;\ntypedef typename ' + coef \
+                             + 'FunctionSpaceType::RangeType ' + coef + 'RangeType;'
             if not (i + 1) == len(self.unsetCoefficients):
                 self.setCoef += '\n    '
                 self.initCoef += '\n      '
                 self.pySetCoef += '\n  '
+                self.pyRangeType += '\n'
 
     def uflToStrong(self):
         """Calculate strong form of an expression from the weak form.
@@ -819,11 +826,13 @@ class DuneUFLModel:
                             line = line.replace('#PYTEMPLATE', self.pyTemplate)
                         if '#DIMRANGE' in line:
                             line = line.replace('#DIMRANGE', str(self.dimR))
-                        elif '#PYSETCOEFFICIENT' in line:
+                        if '#PYSETCOEFFICIENT' in line:
                             if self.unsetCoefficients:
                                 line = line.replace('#PYSETCOEFFICIENT', self.pySetCoef)
                             else:
                                 line = ''
+                        elif '#PYRANGETYPE' in line:
+                            line = line.replace('#PYRANGETYPE', self.pyRangeType)
                         fout.write(line)
             print("modelimpl.hh has been changed")
 
