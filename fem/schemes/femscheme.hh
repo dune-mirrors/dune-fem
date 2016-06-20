@@ -135,8 +135,19 @@ public:
     return 0; // estimator_.estimate( this->implicitModel_.rightHandSide(gridPart_) );
   }
 
+  const std::string &name()
+  {
+    return prefix_;
+  }
+
+  const DiscreteFunctionSpaceType &space() const
+  {
+    return discreteSpace_;
+  }
+
 protected:
   const ModelType& implicitModel_;   // the mathematical model
+  const std::string prefix_;
   GridPartType  &gridPart_;         // grid part(view), e.g. here the leaf grid the discrete space is build with
   const DiscreteFunctionSpaceType& discreteSpace_; // discrete function space
   DiscreteFunctionType rhs_;        // the right hand side
@@ -157,6 +168,7 @@ FemScheme( const DiscreteFunctionSpaceType &space,
            const ModelType& implicitModel,
            const std::string &prefix)
     : implicitModel_( implicitModel ),
+      prefix_( prefix ),
       gridPart_( space.gridPart() ),
       discreteSpace_( space ),
       rhs_( "rhs", discreteSpace_ ),
