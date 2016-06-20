@@ -55,6 +55,7 @@ namespace Dune
       {
         typedef typename GridFunction::LocalFunctionType LocalFunction;
         typedef typename LocalFunction::EntityType Entity;
+        typedef typename GridFunction::GridPartType GridPartType;
 
         pybind11::class_< GridFunction > cls( scope, clsName );
 
@@ -67,7 +68,7 @@ namespace Dune
         cls.def_property_readonly( "dimRange", [] ( GridFunction &gf ) -> int { return GridFunction::RangeType::dimension; } );
 
         cls.def_property_readonly( "name", [] ( GridFunction &gf ) -> std::string { return gf.name(); } );
-        cls.def_property_readonly( "grid", &GridFunction::gridPart );
+        cls.def_property_readonly( "grid", [](GridFunction &gf) -> const GridPartType& {return gf.gridPart();} );
 
         cls.def( "localFunction", [] ( const GridFunction &gf, const Entity &entity ) -> LocalFunction {
             return gf.localFunction( entity );

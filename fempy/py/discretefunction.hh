@@ -44,7 +44,7 @@ namespace Dune
         } );
       pybind11::implicitly_convertible< DF, VirtualizedGridFunction< GridPart, Value > >();
 
-      cls.def_property_readonly( "space", &DF::space );
+      cls.def_property_readonly( "space", [](DF &df) -> const typename DF::DiscreteFunctionSpaceType& {return df.space();} );
       cls.def("clear", [] (DF &instance) { instance.clear(); } );
 
       cls.def( "__init__", [] ( DF &instance, Space &space, const std::string &name ) {

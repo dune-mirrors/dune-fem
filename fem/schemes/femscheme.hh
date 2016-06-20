@@ -71,7 +71,7 @@
  * - Model: description of the data functions and methods required for the
  *          elliptic operator (massFlux, diffusionFlux)
  *******************************************************************************/
-template < class Space, class Model, int polOrder, SolverType solver >
+template < class Space, class Model, SolverType solver >
 class FemScheme
 {
 public:
@@ -114,7 +114,7 @@ public:
   typedef DiscreteFunctionType SolutionType;
   /*********************************************************/
 
-  FemScheme( GridPartType &gridPart,
+  FemScheme( const DiscreteFunctionSpaceType &space,
              const ModelType& implicitModel,
              const std::string &prefix);
   ~FemScheme();
@@ -140,7 +140,7 @@ public:
 protected:
   const ModelType& implicitModel_;   // the mathematical model
   GridPartType  &gridPart_;         // grid part(view), e.g. here the leaf grid the discrete space is build with
-  DiscreteFunctionSpaceType discreteSpace_; // discrete function space
+  const DiscreteFunctionSpaceType& discreteSpace_; // discrete function space
   DiscreteFunctionType solution_;   // the unknown
   DiscreteFunctionType rhs_;        // the right hand side
   Dune::Fem::DifferentiableOperator< LinearOperatorType > *implicitOperator_;
@@ -155,14 +155,14 @@ protected:
 // DataOutputParameters
 // --------------------
 
-template < class Space, class Model, int polOrder, SolverType solver >
-FemScheme<Space, Model, polOrder, solver>::
-FemScheme( GridPartType &gridPart,
+template < class Space, class Model, SolverType solver >
+FemScheme<Space, Model, solver>::
+FemScheme( const DiscreteFunctionSpaceType &space,
            const ModelType& implicitModel,
            const std::string &prefix)
     : implicitModel_( implicitModel ),
-      gridPart_( gridPart ),
-      discreteSpace_( gridPart_ ),
+      gridPart_( space.gridPart() ),
+      discreteSpace_( space ),
       solution_( prefix.c_str(), discreteSpace_ ),
       rhs_( "rhs", discreteSpace_ ),
       // the elliptic operator (implicit)
@@ -180,8 +180,8 @@ FemScheme( GridPartType &gridPart,
   // set all DoF to zero
   solution_.clear();
 }
-template < class Space, class Model, int polOrder, SolverType solver >
-FemScheme<Space, Model, polOrder, solver>::
+template < class Space, class Model, SolverType solver >
+FemScheme<Space, Model, solver>::
 ~FemScheme()
 {
   std::cout << "in FemScheme destructor" << std::endl;
@@ -190,8 +190,8 @@ FemScheme<Space, Model, polOrder, solver>::
 }
 
   //! setup the right hand side
-template < class Space, class Model, int polOrder, SolverType solver >
-void FemScheme<Space, Model, polOrder, solver>::
+template < class Space, class Model, SolverType solver >
+void FemScheme<Space, Model, solver>::
 prepare()
 {
   typedef DifferentiableEllipticOperator< LinearOperatorType, ModelType > OperatorType;
@@ -203,8 +203,8 @@ prepare()
   dynamic_cast<OperatorType&>(*implicitOperator_).prepare( implicitModel_.dirichletBoundary(gridPart_), rhs_ );
 }
 
-template < class Space, class Model, int polOrder, SolverType solver >
-void FemScheme<Space, Model, polOrder, solver>::
+template < class Space, class Model, SolverType solver >
+void FemScheme<Space, Model, solver>::
 solve ( bool assemble )
 {
   solution_.clear();
