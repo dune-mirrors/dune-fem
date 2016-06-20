@@ -118,36 +118,32 @@ public:
              const ModelType& implicitModel,
              const std::string &prefix);
   ~FemScheme();
-  SolutionType &solution() { return solution_; }
-  const DiscreteFunctionType &solution() const { return solution_; }
   const ExactSolutionType& exactSolution() const { return exactSolution_; }
 
   void prepare();
-  void solve ( bool assemble );
+  void solve ( DiscreteFunctionType &solution, bool assemble );
 
   //! mark elements for adaptation
   bool mark ( const double tolerance )
   {
-    return estimator_.mark( tolerance );
+    return true; // estimator_.mark( tolerance );
   }
 
   //! calculate error estimator
   double estimate()
   {
-    return estimator_.estimate( this->implicitModel_.rightHandSide(gridPart_) );
+    return 0; // estimator_.estimate( this->implicitModel_.rightHandSide(gridPart_) );
   }
 
 protected:
   const ModelType& implicitModel_;   // the mathematical model
   GridPartType  &gridPart_;         // grid part(view), e.g. here the leaf grid the discrete space is build with
   const DiscreteFunctionSpaceType& discreteSpace_; // discrete function space
-  DiscreteFunctionType solution_;   // the unknown
   DiscreteFunctionType rhs_;        // the right hand side
   Dune::Fem::DifferentiableOperator< LinearOperatorType > *implicitOperator_;
   Dune::Fem::Operator<DiscreteFunctionType,DiscreteFunctionType> *linearOperator_;  // the linear operator (i.e. jacobian of the implicit)
   const double solverEps_ ; // eps for linear solver
-  EstimatorType estimator_; // estimator for residual error
-  RestrictionProlongationType restrictProlong_ ; // local restriction/prolongation object
+  // EstimatorType estimator_; // estimator for residual error
   const ExactSolutionType exactSolution_;
 };
 
@@ -163,7 +159,6 @@ FemScheme( const DiscreteFunctionSpaceType &space,
     : implicitModel_( implicitModel ),
       gridPart_( space.gridPart() ),
       discreteSpace_( space ),
-      solution_( prefix.c_str(), discreteSpace_ ),
       rhs_( "rhs", discreteSpace_ ),
       // the elliptic operator (implicit)
       implicitOperator_(
@@ -173,12 +168,9 @@ FemScheme( const DiscreteFunctionSpaceType &space,
       linearOperator_( new LinearOperatorType( "assembled elliptic operator", discreteSpace_, discreteSpace_ ) ),
       // tolerance for iterative solver
       solverEps_( Dune::Fem::Parameter::getValue< double >( "poisson.solvereps", 1e-8 ) ),
-      estimator_( solution_, implicitModel ),
-      restrictProlong_( solution_ ),
+      // estimator_( solution_, implicitModel ),
       exactSolution_( implicitModel_.exactSolution(gridPart_) )
 {
-  // set all DoF to zero
-  solution_.clear();
 }
 template < class Space, class Model, SolverType solver >
 FemScheme<Space, Model, solver>::
@@ -205,15 +197,15 @@ prepare()
 
 template < class Space, class Model, SolverType solver >
 void FemScheme<Space, Model, solver>::
-solve ( bool assemble )
+solve ( DiscreteFunctionType &solution, bool assemble )
 {
-  solution_.clear();
+  solution.clear();
   prepare();
   typedef DifferentiableEllipticOperator< LinearOperatorType, ModelType > OperatorType;
   typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
   typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
   InverseOperatorType invOp( dynamic_cast<OperatorType&>(*implicitOperator_) );
-  invOp( rhs_, solution_ );
+  invOp( rhs_, solution );
 }
 
 #endif // end #if ELLIPT_FEMSCHEME_HH
