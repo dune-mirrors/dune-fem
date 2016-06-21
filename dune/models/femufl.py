@@ -63,7 +63,7 @@ compilePath = os.path.join(os.path.dirname(__file__), "../generated")
 class DuneUFLModel:
     """Model class that contains all of the following code, and is typically defined at the start of a UFL file.
     """
-    def __init__(self, dimDomain, dimRange, modelName):
+    def __init__(self, dimDomain, dimRange, modelName=None):
         """Initialise the model class.
 
         Args:
@@ -426,7 +426,7 @@ class DuneUFLModel:
         self.diricCheck = 0
         self.storeDiric()
 
-    def modelPrint(self, exact):
+    def modelPrint(self, exact=None):
         """Write expression strings into model file.
         """
         inputfile = self.path + '/model.hh.in'
@@ -462,21 +462,27 @@ class DuneUFLModel:
                         if self.diric:
                             fout.write(self.diric)
                         else:
-                            for i in range(0, self.dimR):
-                                fout.write('      value['+str(i)+'] = ' \
-                                           + self.sympyToString(self.ccode(exact[i])) + ';\n')
+                            if exact == None:
+                                fout.write('      value = RangeType(0);\n')
+                            else:
+                                for i in range(0, self.dimR):
+                                    fout.write('      value['+str(i)+'] = ' \
+                                               + self.sympyToString(self.ccode(exact[i])) + ';\n')
                     elif '#NEUMANDATA' in line:
                         fout.write(self.rhsBound)
                     elif "#JACOBIANEXACT" in line:
-                        for i in range(0, self.dimR):
-                            fout.write('      value['+str(i)+'][0] = ' \
-                                       + self.sympyToString(self.ccode(sympy.diff(exact[i], self.x0))) + ';\n')
-                            if self.dimD > 1:
-                                fout.write('      value['+str(i)+'][1] = ' \
-                                           + self.sympyToString(self.ccode(sympy.diff(exact[i], self.x1))) + ';\n')
-                            if self.dimD > 2:
-                                fout.write('      value['+str(i)+'][2] = ' \
-                                           + self.sympyToString(self.ccode(sympy.diff(exact[i], self.x2))) + ';\n')
+                        if exact == None:
+                            fout.write('      value = JacobianRangeType(0);\n')
+                        else:
+                            for i in range(0, self.dimR):
+                                fout.write('      value['+str(i)+'][0] = ' \
+                                           + self.sympyToString(self.ccode(sympy.diff(exact[i], self.x0))) + ';\n')
+                                if self.dimD > 1:
+                                    fout.write('      value['+str(i)+'][1] = ' \
+                                               + self.sympyToString(self.ccode(sympy.diff(exact[i], self.x1))) + ';\n')
+                                if self.dimD > 2:
+                                    fout.write('      value['+str(i)+'][2] = ' \
+                                               + self.sympyToString(self.ccode(sympy.diff(exact[i], self.x2))) + ';\n')
                     elif '#RESIDUAL' in line:
                         value = sympy.IndexedBase('value')
                         jacobian = sympy.IndexedBase('jacobian')
@@ -727,7 +733,7 @@ class DuneUFLModel:
         """
         self.coefficients[name] = expr
 
-    def generateFromExact(self, a, exact, *args):
+    def generateFromExact(self, a, exact, modelName=None, *args):
         """Generate a DUNE model file using a UFL expression (this version uses 'exact' to calculate RHS).
 
         Args:
@@ -738,6 +744,8 @@ class DuneUFLModel:
         Returns:
             Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
         """
+        if modelName != None:
+            self.modelName = modelName
         # dirichlet conditions
         self.diricOutput(args)
         # define variables
@@ -767,7 +775,7 @@ class DuneUFLModel:
         # output model
         self.modelPrint(exact)
 
-    def generate(self, a, L, exact, *args):
+    def generate(self, a, L, exact, modelName=None, *args):
         """Generate a DUNE model file using a UFL expression.
 
         Args:
@@ -779,6 +787,8 @@ class DuneUFLModel:
         Returns:
             Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
         """
+        if modelName != None:
+            self.modelName = modelName
         # dirichlet conditions
         self.diricOutput(args)
         # calculate strong form
@@ -797,6 +807,34 @@ class DuneUFLModel:
             self.storeCoef()
         # output model
         self.modelPrint(exact)
+
+    def generate(self, a, modelName=None, *args):
+        """Generate a DUNE model file using a UFL expression with zero forcing and no exact solution
+
+        Args:
+            a : UFL expression for the bilinear form.
+            *g : (optional) UFL expression for any Dirichlet conditions.
+
+        Returns:
+            Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
+        """
+        if modelName != None:
+            self.modelName = modelName
+        # dirichlet conditions
+        self.diricOutput(args)
+        # calculate strong form
+        self.uflToStrong()
+        # store form a
+        self.formOutput(a)
+        self.storeSrc()
+        # define linearization
+        F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
+        self.formOutput(F)
+        self.storeLin()
+        if self.unsetCoefficients:
+            self.storeCoef()
+        # output model
+        self.modelPrint()
 
     def make(self, grid):
         """Create wrapper file.

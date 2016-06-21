@@ -54,7 +54,8 @@ PYBIND11_PLUGIN(#MODELNAME) {
   .def( "wrap", &wrap )
   #PYSETCOEFFICIENT
   ;
-  py::class_< ModelBase, std::shared_ptr< ModelBase > >( m, "ModelBase" );
+  if (!pybind11::already_registered<ModelBase>)
+    py::class_< ModelBase, std::shared_ptr< ModelBase > >( m, "ModelBase" );
   py::class_< ModelWrapperType, std::shared_ptr< ModelWrapperType > >( m, "ModelWrapper", py::base< ModelBase >() )
   .def_property_readonly( "dimRange", &getDimRange );
   return m.ptr();

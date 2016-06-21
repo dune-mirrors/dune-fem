@@ -14,7 +14,7 @@ from . import discretefunction
 
 myGenerator = generator.Generator("Scheme")
 
-def solve( scheme, target=None, dfname=None ):
+def solve( scheme, rhs=None, target=None, dfname=None ):
     print( "dimrange = ", scheme.dimRange )
     if dfname == None:
         dfname = scheme.name
@@ -24,6 +24,10 @@ def solve( scheme, target=None, dfname=None ):
             target.interpolate( [0,]*scheme.dimRange )
         else:
             target = scheme.target
+    if rhs == None:
+        scheme._prepare()
+    else:
+        scheme._prepare(rhs)
     scheme._solve(target)
     return target
 
@@ -60,7 +64,9 @@ def get(scheme, space, dimR, **parameters):
     dfmodule = discretefunction.get(storage, space._module, **parameters)
     storage = dfmodule.DiscreteFunction._storage
 
-    module = getModule(scheme, space=space._module._typeName, gridpart=space.grid._module._typeName, storage=storage, dimRange=dimR, **parameters)
+    module = getModule(scheme, space=space._module._typeName,\
+            extra_includes=space._module._includes + dfmodule._includes,\
+            gridpart=space.grid._module._typeName, storage=storage, dimRange=dimR, **parameters)
     return module
 
 def create(scheme, space_or_target, model, name, **parameters):
