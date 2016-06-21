@@ -3,6 +3,7 @@
 
 #include <cstddef>
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <utility>
@@ -26,6 +27,84 @@ namespace Dune
   namespace FemPy
   {
 
+    // FakeGridPart
+    // ------------
+
+    template< class Grid >
+    class FakeGridPart
+    {
+      typedef typename Grid::template Codim< 0 >::Entity Element;
+
+    public:
+      explicit FakeGridPart ( Grid &grid ) : grid_( grid ) {}
+
+      struct IndexSetType
+      {
+        bool contains ( const Element & ) const { return true; }
+      };
+
+      typedef Grid GridType;
+
+      Grid &grid () const { return grid_; }
+
+      const Element &convert ( const Element &entity ) const { return entity; }
+
+    private:
+      Grid &grid_;
+    };
+
+
+
+    // FakeDiscreteFunctionSpace
+    // -------------------------
+
+    template< class Grid, class NumLocalDofs = std::function< std::size_t( typename Grid::template Codim< 0 >::Entity ) > >
+    struct FakeDiscreteFunctionSpace
+    {
+      typedef FakeGridPart< Grid > GridPartType;
+
+      typedef typename GridPartType::IndexSetType IndexSetType;
+      typedef typename GridPartType::GridType GridType;
+
+      typedef typename GridType::template Codim< 0 >::Entity EntityType;
+
+      struct BasisFunctionSetType
+      {
+        BasisFunctionSetType ( NumLocalDofs numLocalDofs, const EntityType &entity ) : numLocalDofs_( std::move( numLocalDofs ) ), entity_( entity ) {}
+
+        std::size_t size () const { return numLocalDofs_( entity_ ); }
+
+      private:
+        NumLocalDofs numLocalDofs_;
+        const EntityType &entity_;
+      };
+
+      explicit FakeDiscreteFunctionSpace ( GridType &grid, NumLocalDofs numLocalDofs ) : gridPart_( grid ), numLocalDofs_( std::move( numLocalDofs ) ) {}
+      explicit FakeDiscreteFunctionSpace ( GridPartType gridPart, NumLocalDofs numLocalDofs ) : gridPart_( std::move( gridPart ) ), numLocalDofs_( std::move( numLocalDofs ) ) {}
+
+      const GridPartType &gridPart () const { return gridPart_; }
+      IndexSetType indexSet () const { return IndexSetType(); }
+
+      BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const { return BasisFunctionSetType( numLocalDofs_, entity ); }
+
+    private:
+      GridPartType gridPart_;
+      NumLocalDofs numLocalDofs_;
+    };
+
+
+
+    // fakeDiscreteFunctionSpace
+    // -------------------------
+
+    template< class Grid, class NumLocalDofs >
+    inline static FakeDiscreteFunctionSpace< Grid, NumLocalDofs > fakeDiscreteFunctionSpace ( const Grid &grid, NumLocalDofs numLocalDofs )
+    {
+      return FakeDiscreteFunctionSpace< Grid, NumLocalDofs >( grid, std::move( numLocalDofs ) );
+    }
+
+
+
     // DiscreteFunctionList
     // --------------------
 
@@ -37,78 +116,25 @@ namespace Dune
 
       typedef typename DiscreteFunction::DofType DofType;
 
-      typedef typename Grid::template Codim< 0 >::Entity ElementType;
+      typedef FakeDiscreteFunctionSpace< Grid > DiscreteFunctionSpaceType;
 
-      struct GridPartType
-      {
-        explicit GridPartType ( Grid &grid ) : grid_( grid ) {}
+      typedef typename DiscreteFunctionSpaceType::EntityType ElementType;
+      typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
 
-        struct IndexSetType
-        {
-          bool contains ( const ElementType & ) const { return true; }
-        };
+      typedef std::vector< std::shared_ptr< DiscreteFunction > > DiscreteFunctions;
 
-        typedef Grid GridType;
-
-        Grid &grid () const { return grid_; }
-
-        const ElementType &convert ( const ElementType &entity ) const { return entity; }
-
-      private:
-        Grid &grid_;
-      };
-
-      struct DiscreteFunctionSpaceType
-      {
-        typedef std::vector< std::shared_ptr< DiscreteFunction > > DiscreteFunctions;
-
-        typedef DiscreteFunctionList::GridPartType GridPartType;
-
-        typedef typename GridPartType::IndexSetType IndexSetType;
-        typedef typename GridPartType::GridType GridType;
-        typedef ElementType EntityType;
-
-        struct BasisFunctionSetType
-        {
-          BasisFunctionSetType ( const DiscreteFunctions &discreteFunctions, const ElementType &entity )
-            : discreteFunctions_( discreteFunctions ), entity_( entity )
-          {}
-
-          std::size_t size () const
-          {
-            std::size_t size = 0;
-            for( const auto &df : discreteFunctions_ )
-              size += df->numLocalDofs( entity_ );
-            return size;
-          }
-
-        private:
-          const DiscreteFunctions &discreteFunctions_;
-          const ElementType &entity_;
-        };
-
-        explicit DiscreteFunctionSpaceType ( GridPartType gridPart ) : gridPart_( std::move( gridPart ) ) {}
-
-        const GridPartType &gridPart () const { return gridPart_; }
-        IndexSetType indexSet () const { return IndexSetType(); }
-
-        BasisFunctionSetType basisFunctionSet ( const ElementType &entity ) const { return BasisFunctionSetType( discreteFunctions_, entity ); }
-
-        const DiscreteFunctions &discreteFunctions () const { return discreteFunctions_; }
-        DiscreteFunctions &discreteFunctions () { return discreteFunctions_; }
-
-      private:
-        GridPartType gridPart_;
-        DiscreteFunctions discreteFunctions_;
-      };
-
-      typedef typename DiscreteFunctionSpaceType::DiscreteFunctions::const_iterator ConstIterator;
-      typedef typename DiscreteFunctionSpaceType::DiscreteFunctions::iterator Iterator;
+      typedef typename DiscreteFunctions::const_iterator ConstIterator;
+      typedef typename DiscreteFunctions::iterator Iterator;
 
       typedef std::allocator< DofType > LocalDofVectorAllocatorType;
 
       explicit DiscreteFunctionList ( Grid &grid )
-        : space_( GridPartType( grid ) )
+        : space_( grid, [ this ] ( const ElementType &element ) {
+              std::size_t size = 0;
+              for( const auto &df : discreteFunctions_ )
+                size += df->numLocalDofs( element );
+              return size;
+            } )
       {}
 
       const GridPartType &gridPart () const { return space_.gridPart(); }
@@ -117,22 +143,22 @@ namespace Dune
 
       void enableDofCompression ()
       {
-        for( const auto &df : space_.discreteFunctions() )
+        for( const auto &df : discreteFunctions_ )
           df->enableDofCompression();
       }
 
-      void assign () { space_.discreteFunctions().clear(); }
+      void assign () { discreteFunctions_.clear(); }
 
       template< class Iterator >
       void assign ( Iterator begin, Iterator end )
       {
-        space_.discreteFunctions().assign( begin, end );
+        discreteFunctions_.assign( begin, end );
       }
 
-      ConstIterator begin () const { return space_.discreteFunctions().begin(); }
-      Iterator begin () { return space_.discreteFunctions().begin(); }
-      ConstIterator end () const { return space_.discreteFunctions().end(); }
-      Iterator end () { return space_.discreteFunctions().end(); }
+      ConstIterator begin () const { return discreteFunctions_.begin(); }
+      Iterator begin () { return discreteFunctions_.begin(); }
+      ConstIterator end () const { return discreteFunctions_.end(); }
+      Iterator end () { return discreteFunctions_.end(); }
 
       LocalDofVectorAllocatorType localDofVectorAllocator () const { return LocalDofVectorAllocatorType(); }
 
@@ -140,7 +166,7 @@ namespace Dune
       void getLocalDofs ( const ElementType &entity, DynamicVector< DofType, A > &localDofs ) const
       {
         DofType *it = &localDofs[ 0 ];
-        for( const auto &df : space_.discreteFunctions() )
+        for( const auto &df : discreteFunctions_ )
           it = df->getLocalDofs( entity, it );
       }
 
@@ -148,12 +174,13 @@ namespace Dune
       void setLocalDofs ( const ElementType &entity, const DynamicVector< DofType, A > &localDofs )
       {
         const DofType *it = &localDofs[ 0 ];
-        for( auto &df : space_.discreteFunctions() )
+        for( auto &df : discreteFunctions_ )
           it = df->setLocalDofs( entity, it );
       }
 
     private:
       DiscreteFunctionSpaceType space_;
+      DiscreteFunctions discreteFunctions_;
     };
 
   } // namespace FemPy
