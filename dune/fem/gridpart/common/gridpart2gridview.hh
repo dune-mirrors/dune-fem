@@ -88,6 +88,8 @@ namespace Dune
       enum { dimension = GridPartType::dimension };
       enum { dimensionworld = GridPartType::dimensionworld };
 
+      typedef typename GridPartType::ctype ctype;
+
       explicit GridPart2GridViewImpl ( const GridPartType &gridPart )
       : gridPart_( gridPart )
       {}
