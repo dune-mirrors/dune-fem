@@ -5,6 +5,11 @@
 
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/gridpart/common/gridpart2gridview.hh>
+
+#if ! DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
+#error "Experimental grid extensions required for GeometryGridPart. Add -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE to your CMAKE_FLAGS."
+#else // #if ! DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
+
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
@@ -321,5 +326,7 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
+
+#endif // #else // #if ! DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
 
 #endif // #ifndef DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_HH
