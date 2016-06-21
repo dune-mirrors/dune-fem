@@ -75,13 +75,18 @@ class DuneUFLModel:
         self.dimR = dimRange
         self.modelName = modelName
 
+        self.path = os.path.join(os.path.dirname(__file__), "../generated")
         # ufl variables needed to define the forms
-        self.cell = triangle # later add here something that depends on dimDomain
+        if dimDomain==1:
+            self.cell = interval
+        elif dimDomain==2:
+            self.cell = triangle # later add here something that depends on dimDomain
+        elif dimDomain==3:
+            self.cell = tetrahedron
         self.element = VectorElement("Lagrange", self.cell, 1, self.dimR)
         self.vector = VectorElement("Lagrange", self.cell, 1, self.dimD)
         self.u_ = Coefficient(self.element)
 
-        self.path = os.path.join(os.path.dirname(__file__), "../generated")
         self.clear()
 
     def clear(self):
@@ -111,6 +116,7 @@ class DuneUFLModel:
         # ... and the sympy equivalents
         self.matCodeSrc = sympy.zeros(self.dimR, 1)
         self.matCodeFlux = sympy.zeros(self.dimR, self.dimD)
+
         # sympy symbols needed for translating to sympy expressions
         self.u0 = sympy.IndexedBase('uBar')
         self.du0 = sympy.IndexedBase('gradientBar')
