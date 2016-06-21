@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SUBVECTOR_HH
 #define DUNE_FEM_SUBVECTOR_HH
 
+#include <algorithm>
+
 #include <dune/common/densevector.hh>
 #include <dune/common/ftraits.hh>
 
@@ -147,7 +149,12 @@ namespace Dune
         : baseVector_( other.baseVector_ ), indexMapper_( other.indexMapper_ )
       {}
 
-      ThisType& operator=( const ThisType & ) = default;
+      //! Copy entries
+      ThisType& operator=( const ThisType & other)
+      {
+        std::copy( other.begin(), other.end(), this->begin() );
+        return *this;
+      }
 
       void resize( size_type )
       {}
