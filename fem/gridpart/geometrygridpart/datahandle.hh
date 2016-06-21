@@ -45,21 +45,21 @@ namespace Dune
       template< class HostEntity >
       size_t size ( const HostEntity &hostEntity ) const
       {
-        EntityProxy< HostEntity > proxy( hostEntity );
+        EntityProxy< HostEntity > proxy( gridFunction_, hostEntity );
         return wrappedHandle_.size( *proxy );
       }
 
       template< class MessageBuffer, class HostEntity >
       void gather ( MessageBuffer &buffer, const HostEntity &hostEntity ) const
       {
-        EntityProxy< HostEntity > proxy( hostEntity );
+        EntityProxy< HostEntity > proxy( gridFunction_, hostEntity );
         wrappedHandle_.gather( buffer, *proxy );
       }
 
       template< class MessageBuffer, class HostEntity >
       void scatter ( MessageBuffer &buffer, const HostEntity &hostEntity, size_t size )
       {
-        EntityProxy< HostEntity > proxy( hostEntity );
+        EntityProxy< HostEntity > proxy( gridFunction_, hostEntity );
         wrappedHandle_.scatter( buffer, *proxy, size );
       }
 
@@ -83,8 +83,8 @@ namespace Dune
       typedef GeometryGridPartEntity< codimension, dimension, const GridFamily > EntityImpl;
 
     public:
-      EntityProxy ( const HostEntity &hostEntity )
-      : entity_( EntityImpl( hostEntity ) )
+      EntityProxy ( const GridFunctionType &gridFunction_, const HostEntity &hostEntity )
+      : entity_( EntityImpl( gridFunction_, hostEntity ) )
       {}
 
       const Entity &operator* () const

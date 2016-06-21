@@ -97,8 +97,8 @@ namespace Dune
 
       const GridPartType &gridPart () const { return impl_->gridPart(); }
 
-      void evaluate ( const DomainType &x, RangeType &value ) const { return impl_->evaluate( x, value ); }
-      void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const { return impl_->jacobian( x, jacobian ); }
+      // !!!! void evaluate ( const DomainType &x, RangeType &value ) const { return impl_->evaluate( x, value ); }
+      // !!!! void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const { return impl_->jacobian( x, jacobian ); }
 
     protected:
       const GridFunction *impl_;

@@ -45,11 +45,11 @@
 #include <type_traits>
 
 // include discrete function space
-#include <dune/fem/space/lagrange.hh>
-#include <dune/fem/space/discontinuousgalerkin.hh>
+// #include <dune/fem/space/lagrange.hh>
+// #include <dune/fem/space/discontinuousgalerkin.hh>
 
 // adaptation ...
-#include <dune/fem/space/common/adaptmanager.hh>
+// #include <dune/fem/space/common/adaptmanager.hh>
 
 // include discrete function
 #include <dune/fem/function/adaptivefunction.hh>
@@ -81,7 +81,7 @@
 
 #include <dune/fem/solver/newtoninverseoperator.hh>
 
-#include <dune/fem/operator/lagrangeinterpolation.hh>
+// #include <dune/fem/operator/lagrangeinterpolation.hh>
 
 /*********************************************************/
 

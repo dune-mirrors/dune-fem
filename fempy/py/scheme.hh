@@ -29,7 +29,10 @@ namespace Dune
         cls.def( "__init__", [] ( Scheme &instance, Space &space, const ModelType& model, const std::string &prefix ) {
           new( &instance ) Scheme( space, model, prefix );
         }, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
-        cls.def("_solve", [] (Scheme &scheme, DiscreteFunction &solution) { return scheme.solve(solution, true); });
+        cls.def("_prepare", [] (Scheme &scheme, const DiscreteFunction &add) { scheme.prepare(add); });
+        cls.def("_prepare", [] (Scheme &scheme) { scheme.prepare(); });
+        cls.def("_solve", [] (Scheme &scheme, DiscreteFunction &solution) { scheme.solve(solution, true); });
+        cls.def("__call__", [] (Scheme &scheme, const DiscreteFunction &arg, DiscreteFunction &dest) { scheme(arg,dest); });
         cls.def("error", [] (Scheme &scheme, DiscreteFunction &solution)
         {
           const auto& gridExactSolution = scheme.exactSolution();

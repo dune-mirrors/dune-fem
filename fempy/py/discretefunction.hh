@@ -51,6 +51,8 @@ namespace Dune
           new( &instance ) DF( std::move(name), space );
         }, pybind11::keep_alive< 1, 2 >() );
 
+      cls.def( "assign", [] ( DF &instance, const DF &other ) { instance.assign(other); } );
+
       typedef VirtualizedGridFunction< GridPart, typename Space::RangeType > GridFunction;
       cls.def( "interpolate", [] ( DF &df, const GridFunction &gf ) {
           Fem::interpolate( gf, df );
@@ -60,6 +62,13 @@ namespace Dune
                 simpleGridFunction( df.space().gridPart(), [ value ] ( typename DF::DomainType ) { return value; }
           ), df );
         } );
+
+      typedef typename DF::DofVectorType DofVector;
+      std::cout << "added dofVector\n";
+      cls.def( "dofVector", [] ( DF &instance ) { return instance.dofVector(); } );
+      cls.def( "assign", [] ( DF &instance, const DofVector &other ) { instance.dofVector() = other; } );
+
+      auto clsDof = pybind11::class_<DofVector>( module, "DofVector");
     }
 
   } // namespace FemPy

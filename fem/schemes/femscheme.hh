@@ -121,6 +121,9 @@ public:
   const ExactSolutionType& exactSolution() const { return exactSolution_; }
 
   void prepare();
+  void prepare(const DiscreteFunctionType &add);
+  void operator()(const DiscreteFunctionType &arg, DiscreteFunctionType &dest)
+  { (*implicitOperator_)(arg,dest); }
   void solve ( DiscreteFunctionType &solution, bool assemble );
 
   //! mark elements for adaptation
@@ -193,7 +196,7 @@ FemScheme<Space, Model, solver>::
   delete linearOperator_;
 }
 
-  //! setup the right hand side
+//! setup the right hand side
 template < class Space, class Model, SolverType solver >
 void FemScheme<Space, Model, solver>::
 prepare()
@@ -206,13 +209,18 @@ prepare()
   // abstract base type we need to cast here
   dynamic_cast<OperatorType&>(*implicitOperator_).prepare( implicitModel_.dirichletBoundary(gridPart_), rhs_ );
 }
+template < class Space, class Model, SolverType solver >
+void FemScheme<Space, Model, solver>::
+prepare(const DiscreteFunctionType &add)
+{
+  prepare();
+  rhs_ += add;
+}
 
 template < class Space, class Model, SolverType solver >
 void FemScheme<Space, Model, solver>::
 solve ( DiscreteFunctionType &solution, bool assemble )
 {
-  solution.clear();
-  prepare();
   typedef DifferentiableEllipticOperator< LinearOperatorType, ModelType > OperatorType;
   typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
   typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;

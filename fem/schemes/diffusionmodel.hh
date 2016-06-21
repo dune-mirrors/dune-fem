@@ -148,7 +148,7 @@ public:
   VirtualDiffusionModelMethods(ElementPoint)
   VirtualDiffusionModelMethods(IntersectionPoint)
   VirtualDiffusionModelMethods(ElementIntersectionPoint)
-  VirtualDiffusionModelMethods(DomainType)
+  VirtualDiffusionModelMethods(LocalDomainType)
 
   virtual bool hasDirichletBoundary () const = 0;
   virtual bool hasNeumanBoundary () const = 0;
@@ -278,7 +278,7 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   WrapperDiffusionModelMethods(ElementPoint);
   WrapperDiffusionModelMethods(IntersectionPoint);
   WrapperDiffusionModelMethods(ElementIntersectionPoint);
-  WrapperDiffusionModelMethods(DomainType);
+  WrapperDiffusionModelMethods(LocalDomainType);
 
   // other virtual functions
   virtual std::string name() const
