@@ -16,7 +16,7 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 
-#include <dune/fempy/grid/restrictprolong.hh>
+#include <dune/fempy/grid/adaptivedofvector.hh>
 #include <dune/fempy/parameter.hh>
 
 namespace Dune
