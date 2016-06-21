@@ -9,6 +9,7 @@
 
 #include <dune/fem/misc/debug.hh>
 #include <dune/fem/storage/envelope.hh>
+#include <dune/fem/storage/subvector.hh>
 #include <dune/fem/space/common/arrays.hh>
 
 #if HAVE_DUNE_ISTL
@@ -16,24 +17,8 @@
 #endif
 
 namespace Dune {
+
   namespace Fem {
-    // Forward declaration
-    template< class BlockVector >
-    class SimpleBlockVectorBlock;
-  }
-
-
-
-  template< class BlockVector >
-  struct DenseMatVecTraits< Fem::SimpleBlockVectorBlock< BlockVector > >
-  {
-    typedef Fem::SimpleBlockVectorBlock< BlockVector > derived_type;
-    typedef Fem::SimpleBlockVectorBlock< BlockVector > container_type;
-    typedef typename BlockVector :: FieldType     value_type;
-    typedef typename BlockVector :: SizeType      size_type;
-  };
-
-namespace Fem {
 
   // tag for block vectors
   struct IsBlockVector {};
@@ -186,9 +171,6 @@ namespace Fem {
 
     typedef DebugCounter<size_t>                      CounterType;
 
-    friend class SimpleBlockVectorBlock< ThisType >;
-    friend class SimpleBlockVectorBlock< const ThisType >;
-
   public:
     typedef ArrayType DofContainerType;
 
@@ -207,9 +189,9 @@ namespace Fem {
     typedef SizeType            size_type;
 
     //! Type of one (mutable) block
-    typedef SimpleBlockVectorBlock< ThisType >        DofBlockType;
+    typedef SubVector< DofContainerType, OffsetSubMapper > DofBlockType;
     //! Type of one constant block
-    typedef SimpleBlockVectorBlock< ThisType >  ConstDofBlockType;
+    typedef DofBlockType ConstDofBlockType;
 
     typedef Fem::Envelope< DofBlockType >       DofBlockPtrType;
     typedef Fem::Envelope< ConstDofBlockType >  ConstDofBlockPtrType;
@@ -233,14 +215,14 @@ namespace Fem {
     ConstDofBlockType operator[] ( const unsigned int i ) const
     {
       assert( i < size() );
-      return ConstDofBlockType( *this, i*blockSize );
+      return ConstDofBlockType( array_, OffsetSubMapper( blockSize, i*blockSize ) );
     }
 
     /** \brief Access the i-th block */
     DofBlockType operator[] ( const unsigned int i )
     {
       assert( i < size() );
-      return DofBlockType( *this, i*blockSize );
+      return DofBlockType( array_, OffsetSubMapper( blockSize, i*blockSize ) );
     }
 
     /** \brief Constant access for the i-th block */
@@ -281,98 +263,6 @@ namespace Fem {
 
   protected:
     ArrayType& array_;
-  };
-
-
-
-  /** \class SimpleBlockVectorBlock
-  *   \brief This is the implementation of a block of SimpleBlockVector
-  *
-  *   \tparam  BlockVector BlockVector type
-  */
-  template< class BlockVector >
-  class SimpleBlockVectorBlock : public Dune::DenseVector< SimpleBlockVectorBlock< BlockVector > >
-  {
-    typedef BlockVector  BlockVectorType;
-    typedef typename BlockVectorType :: FieldType     FieldType;
-    typedef typename BlockVectorType::CounterType     CounterType;
-
-    typedef SimpleBlockVectorBlock< BlockVectorType > ConstBlockType;
-    typedef SimpleBlockVectorBlock< BlockVectorType > ThisType;
-
-  public:
-    typedef typename BlockVectorType :: SizeType size_type;
-
-    //! The block size
-    static const unsigned int blockSize = BlockVector :: blockSize ;
-
-    /** \brief Standard constructor for SimpleBlockVectorBlocks
-     *
-     *  \param[in]  blockVector   The block vector in which this block lives
-     *  \param[in]  blockBegin    Beginning index of this block in the block vector's array (implementation detail)
-     */
-    SimpleBlockVectorBlock ( const BlockVectorType &blockVector, unsigned int blockBegin )
-    : blockVector_( const_cast< BlockVectorType& > (blockVector) ),
-      blockBegin_( blockBegin )
-    {}
-
-    /** \brief Copy constructor */
-    SimpleBlockVectorBlock ( const SimpleBlockVectorBlock< BlockVectorType > &other )
-    : blockVector_( const_cast< BlockVectorType& > (other.blockVector_)),
-      blockBegin_( other.blockBegin_ )
-    {}
-
-    size_type size () const { return blockSize; }
-
-    /** \brief Copy assignment operator for constant blocks
-     *
-     *  \param[in] other  Other block (constant) which should be assigned to *this
-     *  \return  Constant reference to *this
-     */
-    ThisType &operator= ( const ConstBlockType &other )
-    {
-      copy( other );
-      return *this;
-    }
-
-    /** \brief Obtain a dof inside this block
-     *
-     *  \param[in] index   Index of the dof
-     *  \return Reference to the dof
-     */
-    FieldType& operator[] (unsigned int index)
-    {
-      assert(index < blockSize);
-      return blockVector_.array()[blockBegin_ + index];
-    }
-
-    /** \brief Obtain a dof inside this block
-     *
-     *  \param[in] index   Index of the dof
-     *  \return Constant reference to the dof
-     */
-    const FieldType& operator[] (unsigned int index) const
-    {
-      assert(index < blockSize);
-      return blockVector_.array()[blockBegin_ + index];
-    }
-
-    /** \brief Returns the size of the block */
-    int dim() const { return blockSize; }
-
-  protected:
-    // An empty constructor does not make sense in this case
-    SimpleBlockVectorBlock();
-
-    template< class Block >
-    void copy ( const Block &other )
-    {
-      for( unsigned int i=0; i < blockSize; ++i )
-        (*this)[ i ] = other[ i ];
-    }
-
-    BlockVectorType &blockVector_;
-    const unsigned int blockBegin_;
   };
 
 
