@@ -26,10 +26,6 @@ namespace Dune
 
       typedef VirtualizedRestrictProlong< Grid > RestrictProlong;
 
-      explicit AdaptiveDofVector ( RestrictProlong restrictProlong )
-        : restrictProlong_( std::move( restrictProlong ) )
-      {}
-
       virtual ~AdaptiveDofVector () = default;
 
       virtual void enableDofCompression () = 0;
@@ -39,11 +35,7 @@ namespace Dune
       virtual DofType *getLocalDofs ( const Element &element, DofType *localDofs ) const = 0;
       virtual const DofType *setLocalDofs ( const Element &element, const DofType *localDofs ) = 0;
 
-      const RestrictProlong &restrictProlong () const { return restrictProlong_; }
-      RestrictProlong &restrictProlong () { return restrictProlong_; }
-
-    private:
-      RestrictProlong restrictProlong_;
+      virtual RestrictProlong restrictProlong () = 0;
     };
 
   } // namespace FemPy

@@ -17,6 +17,7 @@
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 
 #include <dune/fempy/grid/adaptivedofvector.hh>
+#include <dune/fempy/grid/virtualizedrestrictprolong.hh>
 #include <dune/fempy/parameter.hh>
 
 namespace Dune
@@ -202,32 +203,32 @@ namespace Dune
 
       void setFatherChildWeight ( const DomainFieldType &weight ) const
       {
-        for( const auto &df : discreteFunctions_ )
-          df->restrictProlong().setFatherChildWeight( weight );
+        for( const auto &rp : restrictProlongs_ )
+          rp.setFatherChildWeight( weight );
       }
 
       void restrictLocal ( const ElementType &father, const ElementType &child, bool initialize ) const
       {
-        for( const auto &df : discreteFunctions_ )
-          df->restrictProlong().restrictLocal( father, child, initialize );
+        for( const auto &rp : restrictProlongs_ )
+          rp.restrictLocal( father, child, initialize );
       }
 
       void restrictLocal ( const ElementType &father, const ElementType &child, const LocalGeometryType &geometryInFather, bool initialize ) const
       {
-        for( const auto &df : discreteFunctions_ )
-          df->restrictProlong().restrictLocal( father, child, geometryInFather, initialize );
+        for( const auto &rp : restrictProlongs_ )
+          rp.restrictLocal( father, child, geometryInFather, initialize );
       }
 
       void prolongLocal ( const ElementType &father, const ElementType &child, bool initialize ) const
       {
-        for( const auto &df : discreteFunctions_ )
-          df->restrictProlong().prolongLocal( father, child, initialize );
+        for( const auto &rp : restrictProlongs_ )
+          rp.prolongLocal( father, child, initialize );
       }
 
       void prolongLocal ( const ElementType &father, const ElementType &child, const LocalGeometryType &geometryInFather, bool initialize ) const
       {
-        for( const auto &df : discreteFunctions_ )
-          df->restrictProlong().prolongLocal( father, child, geometryInFather, initialize );
+        for( const auto &rp : restrictProlongs_ )
+          rp.prolongLocal( father, child, geometryInFather, initialize );
       }
 
       void addToList ( Fem::CommunicationManagerList &commList )
@@ -252,6 +253,7 @@ namespace Dune
       void assign ()
       {
         removeFromCommList();
+        restrictProlongs_.clear();
         discreteFunctions_.assign();
         // no need to add to comm list; discrete functions is empty
       }
@@ -260,7 +262,10 @@ namespace Dune
       void assign ( Iterator begin, Iterator end )
       {
         removeFromCommList();
+        restrictProlongs_.clear();
         discreteFunctions_.assign( std::move( begin ), std::move( end ) );
+        for( const auto &df : discreteFunctions_ )
+          restrictProlongs_.push_back( df->restrictProlong() );
         addToCommList();
       }
 
@@ -270,18 +275,19 @@ namespace Dune
       void addToCommList ()
       {
         if( commList_ )
-          for( const auto &df : discreteFunctions_ )
-            df->restrictProlong().addToList( *commList_ );
+          for( auto &rp : restrictProlongs_ )
+            rp.addToList( *commList_ );
       }
 
       void removeFromCommList ()
       {
         if( commList_ )
-          for( const auto &df : discreteFunctions_ )
-            df->restrictProlong().removeFromList( *commList_ );
+          for( auto &rp : restrictProlongs_ )
+            rp.removeFromList( *commList_ );
       }
 
       DiscreteFunctionList< Grid, D > discreteFunctions_;
+      std::vector< VirtualizedRestrictProlong< Grid > > restrictProlongs_;
       Fem::CommunicationManagerList *commList_ = nullptr;
     };
 
