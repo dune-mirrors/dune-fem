@@ -6,7 +6,7 @@
   },
   "GeometryVirtual" :
   {
-    "type"      : "Dune::Fempy::GeometryGridPart< Dune::FemPy::VirtualizedGridFunction< $(gridpart), $(value) >",
+    "type"      : "Dune::Fem::GeometryGridPart< Dune::FemPy::VirtualizedGridFunction< $(gridpart), $(value) >",
     "include"   : [ "dune/fem/gridpart/geometrygridpart.hh", "dune/fempy/function/virtualizedgridfunction.hh" ]
   }
 }
