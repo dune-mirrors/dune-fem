@@ -1,8 +1,9 @@
 #ifndef DUNE_FEMPY_PY_DISCRETEFUNCTION_HH
 #define DUNE_FEMPY_PY_DISCRETEFUNCTION_HH
+#include <dune/fempy/pybind11/pybind11.h>
+#include <dune/fempy/pybind11/extensions.h>
 
 #include <dune/fem/space/common/interpolate.hh>
-#include <dune/fempy/pybind11/pybind11.h>
 #include <dune/fempy/py/function/grid.hh>
 #include <dune/fempy/py/grid/function.hh>
 
@@ -63,12 +64,15 @@ namespace Dune
           ), df );
         } );
 
+
       typedef typename DF::DofVectorType DofVector;
-      std::cout << "added dofVector\n";
+      if (!pybind11::already_registered<DofVector>())
+      {
+        auto clsDof = pybind11::class_<DofVector>( module, "DofVector");
+      }
       cls.def( "dofVector", [] ( DF &instance ) { return instance.dofVector(); } );
       cls.def( "assign", [] ( DF &instance, const DofVector &other ) { instance.dofVector() = other; } );
 
-      auto clsDof = pybind11::class_<DofVector>( module, "DofVector");
     }
 
   } // namespace FemPy
