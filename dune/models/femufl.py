@@ -74,6 +74,17 @@ class DuneUFLModel:
         self.dimD = dimDomain
         self.dimR = dimRange
         self.modelName = modelName
+
+        # ufl variables needed to define the forms
+        self.cell = triangle # later add here something that depends on dimDomain
+        self.element = VectorElement("Lagrange", self.cell, 1, self.dimR)
+        self.vector = VectorElement("Lagrange", self.cell, 1, self.dimD)
+        self.u_ = Coefficient(self.element)
+
+        self.path = os.path.join(os.path.dirname(__file__), "../generated")
+        self.clear()
+
+    def clear(self):
         # variables to later store the parsed ufl expression
         self.massCheck = 1
         self.boundCheck = 0
@@ -100,13 +111,6 @@ class DuneUFLModel:
         # ... and the sympy equivalents
         self.matCodeSrc = sympy.zeros(self.dimR, 1)
         self.matCodeFlux = sympy.zeros(self.dimR, self.dimD)
-
-        # ufl variables needed to define the forms
-        self.cell = triangle # later add here something that depends on dimDomain
-        self.element = VectorElement("Lagrange", self.cell, 1, self.dimR)
-        self.vector = VectorElement("Lagrange", self.cell, 1, self.dimD)
-        self.u_ = Coefficient(self.element)
-
         # sympy symbols needed for translating to sympy expressions
         self.u0 = sympy.IndexedBase('uBar')
         self.du0 = sympy.IndexedBase('gradientBar')
@@ -120,7 +124,6 @@ class DuneUFLModel:
         self.residual = sympy.zeros(self.dimR, 1)
         self.coefficients = {}
         self.unsetCoefficients = {}
-        self.path = os.path.join(os.path.dirname(__file__), "../generated")
 
     ########################
     # sympy helpers
@@ -746,6 +749,7 @@ class DuneUFLModel:
         """
         if modelName != None:
             self.modelName = modelName
+        self.clear()
         # dirichlet conditions
         self.diricOutput(args)
         # define variables
@@ -789,6 +793,7 @@ class DuneUFLModel:
         """
         if modelName != None:
             self.modelName = modelName
+        self.clear()
         # dirichlet conditions
         self.diricOutput(args)
         # calculate strong form
@@ -820,6 +825,7 @@ class DuneUFLModel:
         """
         if modelName != None:
             self.modelName = modelName
+        self.clear()
         # dirichlet conditions
         self.diricOutput(args)
         # calculate strong form
