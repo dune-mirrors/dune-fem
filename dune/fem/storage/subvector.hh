@@ -88,7 +88,9 @@ namespace Dune
       {}
 
       OffsetSubMapper( const ThisType& ) = default;
+      OffsetSubMapper( ThisType&& ) = default;
       ThisType& operator=( const ThisType& ) = default;
+      ThisType& operator=( ThisType&& ) = default;
 
       unsigned int size() const
       {
@@ -137,7 +139,7 @@ namespace Dune
       typedef value_type FieldType;
 
       //! Constructor
-      explicit SubVector( BaseVectorType& baseVector, const IndexMapperType& indexMapper )
+      explicit SubVector( BaseVectorType& baseVector, IndexMapperType&& indexMapper )
       : baseVector_( baseVector ), indexMapper_( indexMapper )
       {}
 
@@ -167,7 +169,7 @@ namespace Dune
 
     private:
       BaseVectorType& baseVector_;
-      const IndexMapperType& indexMapper_;
+      IndexMapperType indexMapper_;
     };
 
 
