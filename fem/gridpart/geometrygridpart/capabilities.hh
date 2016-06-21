@@ -1,9 +1,9 @@
 #ifndef DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_CAPABILITIES_HH
 #define DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_CAPABILITIES_HH
 
-//- dune-fem includes
-#include <dune/fem/gridpart/common/capabilities.hh>
+#include <dune/common/version.hh>
 
+#include <dune/fem/gridpart/common/capabilities.hh>
 
 namespace Dune
 {
@@ -60,12 +60,14 @@ namespace Dune
       };
 
 
+#if ! DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
       template< class GridFunctionType >
       struct isParallel< GeometryGridPart< GridFunctionType > >
       {
         typedef typename GridFunctionType::GridPartType HostGridPartType;
         static const bool v = isParallel< HostGridPartType >::v;
       };
+#endif // #if ! DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
 
 
       template< class GridFunctionType, int codim  >

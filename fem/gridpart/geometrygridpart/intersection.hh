@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_INTERSECTION_HH
 #define DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_INTERSECTION_HH
 
+#include <dune/common/version.hh>
+
 #include <dune/fem/gridpart/geometrygridpart/geometry.hh>
 #include <dune/geometry/affinegeometry.hh>
 #include <dune/geometry/genericgeometry/matrixhelper.hh>
@@ -12,7 +14,7 @@ namespace Dune
   {
 
     // GeometryGridPartIntersection
-    // --------------
+    // ----------------------------
 
     template< class GridFamily >
     class GeometryGridPartIntersection
@@ -26,7 +28,9 @@ namespace Dune
       static const int dimensionworld = remove_const< GridFamily >::type::dimensionworld;
 
       typedef typename Traits::template Codim< 0 >::Entity Entity;
+#if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
       typedef typename Traits::template Codim< 0 >::EntityPointer EntityPointer;
+#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
       typedef typename Traits::template Codim< 0 >::Geometry ElementGeometry;
       typedef typename Traits::template Codim< 1 >::Geometry Geometry;
       typedef typename Traits::template Codim< 1 >::LocalGeometry LocalGeometry;
@@ -36,7 +40,9 @@ namespace Dune
       typedef Dune::AffineGeometry< ctype, 1, GridFamily::dimension > AffineGeometryType;
 
     private:
+#if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
       typedef typename EntityPointer::Implementation EntityPointerImplType;
+#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
       typedef typename ElementGeometry::Implementation ElementGeometryImplType;
       typedef typename Geometry::Implementation GeometryImplType;
 
@@ -52,6 +58,10 @@ namespace Dune
 
       operator bool () const { return bool( hostIntersection_ ); }
 
+#if DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
+      Entity inside () const { return EntityImplType( hostIntersection().inside(), gridFunction() ); }
+      Entity outside () const { return EntityImplType( hostIntersection().outside(), gridFunction() ); }
+#else // #if DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
       EntityPointer inside () const
       {
         return EntityPointerImplType( hostIntersection().inside(), gridFunction() );
@@ -61,6 +71,7 @@ namespace Dune
       {
         return EntityPointerImplType( hostIntersection().outside(), gridFunction() );
       }
+#endif // #else // #if DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
 
       bool boundary () const
       {

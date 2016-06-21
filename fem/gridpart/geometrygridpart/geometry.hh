@@ -21,34 +21,10 @@ namespace Dune
     template< int, int, class > class GeometryGridPartGeometry;
     template< int, int, class > class GeometryGridPartLocalGeometry;
 
-  } // namespace Fem
 
-
-#if 0
-  namespace FacadeOptions
-  {
-
-    template< int mydim, int cdim, class GridFamily >
-    struct StoreGeometryReference< mydim, cdim, GridFamily, Fem::GeometryGridPartGeometry >
-    {
-      static const bool v = false;
-    };
-
-    template< int mydim, int cdim, class GridFamily >
-    struct StoreGeometryReference< mydim, cdim, GridFamily, Fem::GeometryGridPartLocalGeometry >
-    {
-      static const bool v = false;
-    };
-
-  } // namespace FacadeOptions
-#endif
-
-
-  namespace Fem
-  {
 
     // GeometryGridPartBasicGeometry
-    // ---------------
+    // -----------------------------
 
     template< class Traits >
     struct GeometryGridPartBasicGeometry
@@ -104,7 +80,7 @@ namespace Dune
 
 
     // GeometryGridPartGeometryTraits
-    // ----------------
+    // ------------------------------
 
     template< int mydim, class GridFamily >
     struct GeometryGridPartGeometryTraits
@@ -148,7 +124,6 @@ namespace Dune
       typedef Dune::Fem::CachingQuadrature< HostGridPartType, 0 > ElementQuadratureType;
 
       typedef typename HostGridPartType::template Codim< 0 >::EntityType HostEntityType;
-      typedef typename HostGridPartType::template Codim< 0 >::EntityPointerType HostEntityPointerType;
 
       typedef Dune::AffineGeometry< ctype, mydim, GridFamily::dimension > AffineGeometryType;
       typedef typename HostGridPartType::IntersectionType HostIntersectionType;
@@ -275,7 +250,6 @@ namespace Dune
       typedef typename Traits::HostGridPartType HostGridPartType;
       typedef Dune::Fem::CachingQuadrature< HostGridPartType, 0 > ElementQuadratureType;
       typedef typename HostGridPartType::template Codim< 0 >::EntityType HostEntityType;
-      typedef typename HostGridPartType::template Codim< 0 >::EntityPointerType HostEntityPointerType;
 
       typedef typename HostGridPartType::IntersectionType HostIntersectionType;
 
@@ -293,6 +267,7 @@ namespace Dune
       {
         localFunction_.init(hostEntity);
       }
+
       MyGeometryImpl ( const HostEntityType &hostEntity,
                        const GridFunctionType *gridFunction )
       : hostGeometry_(hostEntity.geometry()),
@@ -424,7 +399,6 @@ namespace Dune
 
       typedef typename Base::GridFunctionType GridFunctionType;
       typedef typename Base::HostEntityType HostEntityType;
-      typedef typename HostEntityType::EntityPointer HostEntityPointerType;
 
       typedef typename Base::HostGridPartType HostGridPartType;
 
@@ -457,7 +431,7 @@ namespace Dune
 
 
     // GeometryGridPartLocalGeometryTraits
-    // ---------------------
+    // -----------------------------------
 
     template< int mydim, class GridFamily >
     struct GeometryGridPartLocalGeometryTraits

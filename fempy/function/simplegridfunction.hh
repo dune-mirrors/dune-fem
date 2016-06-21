@@ -152,18 +152,18 @@ namespace Dune
       void evaluate ( const DomainType &x, RangeType &value ) const
       {
         Fem::EntitySearch< GridPartType, 0 > entitySearch( gridPart() );
-        // const EntityType entity = entitySearch( x );  // !!!!
-        // const auto geometry = entity.geometry();
-        // localFunction( entity ).evaluate( geometry.local( x ), value );
+        const EntityType entity = entitySearch( x );
+        const auto geometry = entity.geometry();
+        localFunction( entity ).evaluate( geometry.local( x ), value );
         value = RangeType(0);
       }
 
       void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
       {
         Fem::EntitySearch< GridPartType, 0 > entitySearch( gridPart() );
-        // const EntityType entity = entitySearch( x ); // !!!!
-        // const auto geometry = entity.geometry();
-        // localFunction( entity ).jacobian( geometry.local( x ), jacobian );
+        const EntityType entity = entitySearch( x );
+        const auto geometry = entity.geometry();
+        localFunction( entity ).jacobian( geometry.local( x ), jacobian );
         jacobian = JacobianRangeType(0);
       }
 
