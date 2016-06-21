@@ -44,12 +44,41 @@ static void registerFieldVector ( pybind11::handle scope, std::integral_constant
 
   cls.def( "__len__", [] ( const FV &x ) -> std::size_t { return size; } );
 
-  cls.def( pybind11::self + pybind11::self );
-  cls.def( pybind11::self += pybind11::self );
-  cls.def( pybind11::self - pybind11::self );
-  cls.def( pybind11::self -= pybind11::self );
-  cls.def( pybind11::self *= K() );
-  cls.def( pybind11::self /= K() );
+  cls.def(pybind11::self +  pybind11::self);
+  cls.def(pybind11::self += pybind11::self);
+  cls.def(pybind11::self -  pybind11::self);
+  cls.def(pybind11::self -= pybind11::self);
+  cls.def(pybind11::self *  pybind11::self);
+
+  cls.def(pybind11::self == pybind11::self);
+  cls.def(pybind11::self != pybind11::self);
+
+  cls.def(pybind11::self += K());
+  cls.def(pybind11::self -= K());
+  cls.def(pybind11::self *= K());
+  cls.def(pybind11::self /= K());
+
+  cls.def("__mul__", [](const FV &a, K b) {
+    FV ret(a); ret *= b; return ret;
+  });
+  cls.def("__div__", [](const FV &a, K b) {
+    FV ret(a); ret /= b; return ret;
+  });
+  cls.def("__rmul__", [](const FV &a, K b) {
+    FV ret(a); ret *= b; return ret;
+  });
+
+  // cls.def(pybind11::self * K());
+  // cls.def(pybind11::self / K());
+  // cls.def(K() * pybind11::self);
+
+  cls.def("__radd__", [] (FV& x, py::list l) { return x + l.cast<FV>(); });
+  cls.def("__rsub__", [] (FV& x, py::list l) { return l.cast<FV>() - x; });
+  cls.def("__rmul__", [] (FV& x, py::list l) { return x * l.cast<FV>(); });
+  cls.def("__add__", [] (FV& x, py::list l) { return x + l.cast<FV>(); });
+  cls.def("__sub__", [] (FV& x, py::list l) { return l.cast<FV>() - x; });
+  cls.def("__mul__", [] (FV& x, py::list l) { return x * l.cast<FV>(); });
+
 
   cls.def( "__repr__", [] ( const FV &x ) {
       std::string repr = "DUNE FieldVector: (";

@@ -130,6 +130,7 @@ class DuneUFLModel:
         self.residual = sympy.zeros(self.dimR, 1)
         self.coefficients = {}
         self.unsetCoefficients = {}
+        self.addCode = {}
 
     ########################
     # sympy helpers
@@ -446,10 +447,12 @@ class DuneUFLModel:
                 for line in fin:
                     if '#SOURCE' in line:
                         fout.write(self.source)
+                        fout.write( self.addCode.get("SOURCE","") )
                     elif '#DIFFUSIVEFLUX' in line:
                         fout.write(self.flux)
                     elif '#LINSOURCE' in line:
                         fout.write(self.linSource)
+                        fout.write( self.addCode.get("LINSOURCE","") )
                     elif '#LINDIFFUSIVEFLUX' in line:
                         fout.write(self.linFlux)
                     elif '#ALPHA' in line:
@@ -742,6 +745,16 @@ class DuneUFLModel:
         """
         self.coefficients[name] = expr
 
+    def add2Source( self, source, linsource=None ):
+        self.addCode["SOURCE"] = source
+        if linsource == None:
+            self.addCode["LINSOURCE"] = source
+        else:
+            self.addCode["LINSOURCE"] = linsource
+
+    def addCoefficient( self, name, dimR ):
+        self.unsetCoefficients[name] = dimR
+
     def generateFromExact(self, a, exact, modelName=None, *args):
         """Generate a DUNE model file using a UFL expression (this version uses 'exact' to calculate RHS).
 
@@ -780,10 +793,10 @@ class DuneUFLModel:
         F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
         self.formOutput(F)
         self.storeLin()
-        if self.unsetCoefficients:
-            self.storeCoef()
+        # if self.unsetCoefficients:
+        #     self.storeCoef()
         # output model
-        self.modelPrint(exact)
+        # self.modelPrint(exact)
 
     def generate(self, a, L, exact, modelName=None, *args):
         """Generate a DUNE model file using a UFL expression.
@@ -814,10 +827,10 @@ class DuneUFLModel:
         F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
         self.formOutput(F)
         self.storeLin()
-        if self.unsetCoefficients:
-            self.storeCoef()
+        # if self.unsetCoefficients:
+        #     self.storeCoef()
         # output model
-        self.modelPrint(exact)
+        # self.modelPrint(exact)
 
     def generate(self, a, modelName=None, *args):
         """Generate a DUNE model file using a UFL expression with zero forcing and no exact solution
@@ -843,14 +856,17 @@ class DuneUFLModel:
         F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
         self.formOutput(F)
         self.storeLin()
-        if self.unsetCoefficients:
-            self.storeCoef()
+        # if self.unsetCoefficients:
+        #     self.storeCoef()
         # output model
-        self.modelPrint()
+        # self.modelPrint()
 
     def make(self, grid):
         """Create wrapper file.
         """
+        if self.unsetCoefficients:
+            self.storeCoef()
+        self.modelPrint()
         startTime = timeit.default_timer()
 
         inputfile = self.path + '/modelimpl.hh.in'
@@ -898,6 +914,9 @@ class DuneUFLModel:
         print("Building model took ", timeit.default_timer() - startTime, "s")
 
         return name
+
+    def write(self):
+        self.modelPrint(exact)
 
     def makeAndImport(self, grid):
         """Does make and imports the module.
