@@ -35,7 +35,6 @@ namespace Dune
         cls.def("__call__", [] (Scheme &scheme, const DiscreteFunction &arg, DiscreteFunction &dest) { scheme(arg,dest); });
         cls.def("error", [] (Scheme &scheme, DiscreteFunction &solution)
         {
-          const auto& gridExactSolution = scheme.exactSolution();
           Dune::Fem::L2Norm< GridPart > norm( solution.space().gridPart() );
           return norm.distance( solution, scheme.exactSolution() );
         } );
