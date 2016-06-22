@@ -19,9 +19,32 @@
 
 namespace Dune
 {
-
   namespace FemPy
   {
+    template< class DofVector, class Functor >
+    struct DofBlockFunctor
+    {
+      static const int blockSize = DofVector::blockSize;
+
+      DofBlockFunctor ( DofVector &dofVector, Functor functor )
+      : dofVector_( dofVector ), functor_( functor )
+      {}
+
+      template < class GlobalKey >
+      void operator () ( std::size_t local, const GlobalKey& globalKey )
+      {
+        for( int i = 0; i < blockSize; ++i )
+          functor_( local*blockSize + i, dofVector_[ globalKey ][ i ] );
+      }
+    private:
+      DofVector &dofVector_;
+      Functor functor_;
+    };
+    template< class DofVector, class Functor >
+    static inline DofBlockFunctor< DofVector, Functor > dofBlockFunctor ( DofVector &dofVector, Functor functor )
+    {
+      return DofBlockFunctor< DofVector, Functor >( dofVector, std::move( functor ) );
+    }
 
     // LoadBalanceContainsCheck
     // ------------------------
