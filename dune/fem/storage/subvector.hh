@@ -136,12 +136,12 @@ namespace Dune
 
       static constexpr unsigned int size()
       {
-        return size_;
+        return dim;
       }
 
       static constexpr unsigned int range()
       {
-        return size_;
+        return dim;
       }
 
       unsigned int operator[]( unsigned int i) const
@@ -150,7 +150,6 @@ namespace Dune
       }
 
     private:
-      static constexpr unsigned int size_ = dim;
       const unsigned int offset_;
     };
 
