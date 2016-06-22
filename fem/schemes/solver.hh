@@ -44,6 +44,9 @@
 #include <iostream>
 #include <type_traits>
 
+#include <dune/common/dynvector.hh>
+#include <dune/common/version.hh>
+
 // include discrete function space
 // #include <dune/fem/space/lagrange.hh>
 // #include <dune/fem/space/discontinuousgalerkin.hh>
@@ -53,7 +56,9 @@
 
 // include discrete function
 #include <dune/fem/function/adaptivefunction.hh>
+#if ! DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
 #include <dune/fem/storage/vector.hh>
+#endif // #if ! DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
 #include <dune/fem/function/vectorfunction/managedvectorfunction.hh>
 
 // include linear operators
@@ -106,7 +111,11 @@ struct Solvers
   typedef DFSpace DiscreteFunctionSpaceType;
   // choose type of discrete function, Matrix implementation and solver implementation
   // this should work with any discrete function implementation
+#if DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
+  typedef Dune::DynamicVector< double > DofVectorType;
+#else // #if DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
   typedef Dune::Fem::DynamicVector<double> DofVectorType;
+#endif // #else // #if DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
   typedef Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< DiscreteFunctionSpaceType, DofVectorType > > DiscreteFunctionType;
   typedef Dune::Fem::SparseRowLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
   typedef Dune::Fem::CGInverseOperator< DiscreteFunctionType > LinearInverseOperatorType;
