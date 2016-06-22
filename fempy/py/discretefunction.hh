@@ -70,7 +70,8 @@ namespace Dune
       {
         auto clsDof = pybind11::class_<DofVector>( module, "DofVector");
       }
-      cls.def( "dofVector", [] ( DF &instance ) { return instance.dofVector(); } );
+      cls.def( "dofVector", [] ( DF &instance ) -> DofVector&{ return instance.dofVector(); },
+               pybind11::return_value_policy::reference_internal );
       cls.def( "assign", [] ( DF &instance, const DofVector &other ) { instance.dofVector() = other; } );
 
     }
