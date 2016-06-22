@@ -15,7 +15,6 @@ from . import discretefunction
 myGenerator = generator.Generator("Scheme")
 
 def solve( scheme, rhs=None, target=None, dfname=None ):
-    print( "dimrange = ", scheme.dimRange )
     if dfname == None:
         dfname = scheme.name
     if target == None:
