@@ -169,6 +169,7 @@ class DuneUFLModel:
                     replace("x0", "self.x0").replace("x1", "self.x1").replace("x2", "self.x2").\
                     replace("x[0]", "self.x0").replace("x[1]", "self.x1").replace("x[2]", "self.x2").\
                     replace("cos", "sympy.cos").replace("sin", "sympy.sin"). \
+                    replace("atan", "sympy.atan"). \
                     replace("sqrt", "sympy.sqrt")  # this is stupid and has to be improved!
                 for ii in range(0, self.dimR):
                     if i == ii:
@@ -205,6 +206,7 @@ class DuneUFLModel:
                     replace("x0", "self.x0").replace("x1", "self.x1").replace("x2", "self.x2").\
                     replace("x[0]", "self.x0").replace("x[1]", "self.x1").replace("x[2]", "self.x2").\
                     replace("cos", "sympy.cos").replace("sin", "sympy.sin"). \
+                    replace("atan", "sympy.atan"). \
                     replace("sqrt", "sympy.sqrt")  # this is stupid and has to be improved!
             for ii in range(0, self.dimR):
                 if i == ii:
@@ -319,6 +321,16 @@ class DuneUFLModel:
                 arguments += cosStack.peek()
                 cosStack.pop()
             string = "cos(" + arguments + ")"
+            stack.push(string)
+        elif str(expr._ufl_class_.__name__) == "Atan":
+            arguments = ""
+            atanStack = self.Stack()
+            for op in expr.ufl_operands:
+                self.stack_maker(op, atanStack)
+            while atanStack.isEmpty() == False:
+                arguments += atanStack.peek()
+                atanStack.pop()
+            string = "atan(" + arguments + ")"
             stack.push(string)
         elif str(expr._ufl_class_.__name__) == "Sqrt":
             arguments = ""
@@ -963,10 +975,13 @@ class DuneUFLModel:
         """
         return SpatialCoordinate(triangle)
 
-    def coefficient(self, name):
+    def coefficient(self, name, dimR=0):
         """Initialise named coefficient (e.g. "velocity" or "diffusion).
         """
-        return self.NamedCoefficient(self.element, self.dimR, name)
+        if dimR==0:
+            return self.NamedCoefficient(self.element, self.dimR, name)
+        else:
+            return self.NamedCoefficient(self.element, dimR, name)
 
 #############################################
 if __name__ == "__main__":
