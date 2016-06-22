@@ -366,7 +366,7 @@ namespace Dune
       template< class DiscreteFunction >
       void removeFromList ( DiscreteFunction &df )
       {
-        const auto handles = [ &df ] ( const CommObjIFType *commObj ) { return commObj->handles( df ); };
+        const auto handles = [ &df ] ( const std::unique_ptr< DiscreteFunctionCommunicatorInterface > &commObj ) { return commObj->handles( df ); };
         CommObjListType::reverse_iterator pos = std::find_if( objList_.rbegin(), objList_.rend(), handles );
         if( pos != objList_.rend() )
           objList_.erase( pos.base() );
