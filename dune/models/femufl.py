@@ -86,7 +86,6 @@ class DuneUFLModel:
         self.element = VectorElement("Lagrange", self.cell, 1, self.dimR)
         self.vector = VectorElement("Lagrange", self.cell, 1, self.dimD)
         self.u_ = Coefficient(self.element)
-
         self.clear()
 
     def clear(self):
@@ -113,6 +112,7 @@ class DuneUFLModel:
         self.pyTemplate = ''
         self.pySetCoef = ''
         self.pyRangeType = ''
+        self.exact = None
         # ... and the sympy equivalents
         self.matCodeSrc = sympy.zeros(self.dimR, 1)
         self.matCodeFlux = sympy.zeros(self.dimR, self.dimD)
@@ -755,7 +755,7 @@ class DuneUFLModel:
     def addCoefficient( self, name, dimR ):
         self.unsetCoefficients[name] = dimR
 
-    def generateFromExact(self, a, exact, modelName=None, *args):
+    def generateFromExact(self, a, exact, *args):
         """Generate a DUNE model file using a UFL expression (this version uses 'exact' to calculate RHS).
 
         Args:
@@ -766,9 +766,6 @@ class DuneUFLModel:
         Returns:
             Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
         """
-        if modelName != None:
-            self.modelName = modelName
-        self.clear()
         # dirichlet conditions
         self.diricOutput(args)
         # define variables
@@ -793,12 +790,13 @@ class DuneUFLModel:
         F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
         self.formOutput(F)
         self.storeLin()
+        self.exact = exact
         # if self.unsetCoefficients:
         #     self.storeCoef()
         # output model
         # self.modelPrint(exact)
 
-    def generate(self, a, L, exact, modelName=None, *args):
+    def generateFull(self, a, L, exact, *args):
         """Generate a DUNE model file using a UFL expression.
 
         Args:
@@ -810,9 +808,6 @@ class DuneUFLModel:
         Returns:
             Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
         """
-        if modelName != None:
-            self.modelName = modelName
-        self.clear()
         # dirichlet conditions
         self.diricOutput(args)
         # calculate strong form
@@ -827,12 +822,13 @@ class DuneUFLModel:
         F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
         self.formOutput(F)
         self.storeLin()
+        self.exact = exact
         # if self.unsetCoefficients:
         #     self.storeCoef()
         # output model
         # self.modelPrint(exact)
 
-    def generate(self, a, modelName=None, *args):
+    def generateZeroRHS(self, a, *args):
         """Generate a DUNE model file using a UFL expression with zero forcing and no exact solution
 
         Args:
@@ -842,9 +838,6 @@ class DuneUFLModel:
         Returns:
             Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
         """
-        if modelName != None:
-            self.modelName = modelName
-        self.clear()
         # dirichlet conditions
         self.diricOutput(args)
         # calculate strong form
@@ -861,12 +854,26 @@ class DuneUFLModel:
         # output model
         # self.modelPrint()
 
+    def generate(self, a, L=None, exact=None, name=None, *args):
+        if name != None:
+            self.modelName = name
+        if L == None:
+            if exact == None:
+                self.generateZeroRHS(a, *args)
+            else:
+                self.generateFromExact(a, exact, *args)
+        else:
+            self.generateFull(a, L, exact, *args)
+
     def make(self, grid):
         """Create wrapper file.
         """
         if self.unsetCoefficients:
             self.storeCoef()
-        self.modelPrint()
+        if self.exact == None:
+            self.modelPrint()
+        else:
+            self.modelPrint(self.exact)
         startTime = timeit.default_timer()
 
         inputfile = self.path + '/modelimpl.hh.in'

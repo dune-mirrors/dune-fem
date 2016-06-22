@@ -23,6 +23,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __metaclass__ = type
 
 import sys
+import inspect
 
 from types import ModuleType
 
@@ -30,16 +31,22 @@ from ..generator import generator
 
 from . import space
 
-def interpolate(grid, func, variant=None, **kwargs):
-    if variant == "global":
-      return interpolate(grid,grid.globalGridFunction("gf", func), **kwargs)
-    else:
+def interpolate(grid, func, **kwargs):
+    try:
+        gl = len(inspect.getargspec(func)[0])
+    except:
+        gl = 0
+    if gl == 1:   # global function
+        return interpolate(grid, grid.globalGridFunction("gf", func), **kwargs)
+    elif gl == 2: # local function
+        return interpolate(grid, grid.localGridFunction("gf", func), **kwargs)
+    elif gl == 0: # already a grid function
       try:
           R = func.dimRange
       except:
           R = len(func)
       spaceName = kwargs.pop('space')
-      mySpace=space.create(spaceName, grid, dimrange=R, **kwargs)
+      mySpace = space.create(spaceName, grid, dimrange=R, **kwargs)
       return mySpace.interpolate(func, **kwargs)
 
 class Generator(generator.Generator):
