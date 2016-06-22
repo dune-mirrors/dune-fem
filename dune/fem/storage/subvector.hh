@@ -77,7 +77,7 @@ namespace Dune
 
 
 
-    //! Index mapper interface which simply adds an offset to the index
+    //! Index mapper which simply adds an offset to the index
     class OffsetSubMapper
     : public IndexMapperInterface< OffsetSubMapper >
     {
@@ -111,6 +111,46 @@ namespace Dune
 
     private:
       const unsigned int size_;
+      const unsigned int offset_;
+    };
+
+
+
+    //! Index mapper with static size which simply adds an offset to the index
+    template<unsigned int dim>
+    class StaticOffsetSubMapper
+    : public IndexMapperInterface< StaticOffsetSubMapper< dim > >
+    {
+      typedef StaticOffsetSubMapper< dim > ThisType;
+      typedef IndexMapperInterface< StaticOffsetSubMapper< dim > > BaseType;
+
+    public:
+      StaticOffsetSubMapper( unsigned int offset )
+      : offset_( offset )
+      {}
+
+      StaticOffsetSubMapper( const ThisType& ) = default;
+      StaticOffsetSubMapper( ThisType&& ) = default;
+      ThisType& operator=( const ThisType& ) = default;
+      ThisType& operator=( ThisType&& ) = default;
+
+      static constexpr unsigned int size()
+      {
+        return size_;
+      }
+
+      static constexpr unsigned int range()
+      {
+        return size_;
+      }
+
+      unsigned int operator[]( unsigned int i) const
+      {
+        return i+offset_;
+      }
+
+    private:
+      static constexpr unsigned int size_ = dim;
       const unsigned int offset_;
     };
 
