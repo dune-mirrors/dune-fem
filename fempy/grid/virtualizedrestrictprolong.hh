@@ -14,21 +14,35 @@ namespace Dune
   namespace FemPy
   {
 
-    // VirtualizedRestrictProlong
-    // --------------------------
+    // External Forward Declarations
+    // -----------------------------
 
     template< class Grid >
-    struct VirtualizedRestrictProlong
+    class DiscreteFunctionManager;
+
+
+
+    template< class T >
+    using DefaultUniquePtr = std::unique_ptr< T >;
+
+
+
+    // BasicVirtualizedRestrictProlong
+    // -------------------------------
+
+    template< class Grid, template< class > class Holder >
+    struct BasicVirtualizedRestrictProlong
     {
       typedef typename Grid::ctype ctype;
 
       typedef typename Grid::template Codim< 0 >::Entity Element;
       typedef typename Grid::template Codim< 0 >::LocalGeometry LocalGeometry;
 
-    private:
+    protected:
       struct Interface
       {
         virtual ~Interface () = default;
+        virtual Interface *clone () const = 0;
 
         virtual void setFatherChildWeight ( const ctype &weight ) const = 0;
 
@@ -42,6 +56,7 @@ namespace Dune
         virtual void removeFromList ( Fem::CommunicationManagerList &commList ) = 0;
 
         virtual void addToLoadBalancer ( Fem::LoadBalancer< Grid > &lb ) = 0;
+        virtual void addToLoadBalancer ( DiscreteFunctionManager< Grid > &lb ) = 0;
       };
 
       template< class Impl >
@@ -51,6 +66,8 @@ namespace Dune
         Implementation ( Args &&... args )
           : impl_( std::forward< Args >( args )... )
         {}
+
+        virtual Interface *clone () const override { return new Implementation( *this ); }
 
         virtual void setFatherChildWeight ( const ctype &weight ) const override { impl().setFatherChildWeight( weight ); }
 
@@ -64,6 +81,7 @@ namespace Dune
         virtual void removeFromList ( Fem::CommunicationManagerList &commList ) override { impl().removeFromList( commList ); }
 
         virtual void addToLoadBalancer ( Fem::LoadBalancer< Grid > &lb ) override { impl().addToLoadBalancer( lb ); }
+        virtual void addToLoadBalancer ( DiscreteFunctionManager< Grid > &lb ) override { impl().addToLoadBalancer( lb ); }
 
       private:
         const auto &impl () const { using std::cref; return cref( impl_ ).get(); }
@@ -72,9 +90,12 @@ namespace Dune
         Impl impl_;
       };
 
+    protected:
+      BasicVirtualizedRestrictProlong ( Interface *impl ) : impl_( impl ) {}
+
     public:
       template< class DF, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DF >::value, int > = 0 >
-      explicit VirtualizedRestrictProlong ( DF &df )
+      explicit BasicVirtualizedRestrictProlong ( DF &df )
         : impl_( new Implementation< Fem::RestrictProlongDefault< DF > >( df ) )
       {}
 
@@ -90,10 +111,52 @@ namespace Dune
       void removeFromList ( Fem::CommunicationManagerList &commList ) { impl_->removeFromList( commList ); }
 
       void addToLoadBalancer ( Fem::LoadBalancer< Grid > &lb ) { impl_->addToLoadBalancer( lb ); }
+      void addToLoadBalancer ( DiscreteFunctionManager< Grid > &lb ) { impl_->addToLoadBalancer( lb ); }
 
-    private:
-      std::unique_ptr< Interface > impl_;
+    protected:
+      Holder< Interface > impl_;
     };
+
+
+
+    // VirtualizedRestrictProlong
+    // --------------------------
+
+    template< class Grid, bool shared = false >
+    class VirtualizedRestrictProlong;
+
+    template< class Grid >
+    class VirtualizedRestrictProlong< Grid, false >
+      : public BasicVirtualizedRestrictProlong< Grid, DefaultUniquePtr >
+    {
+      typedef BasicVirtualizedRestrictProlong< Grid, DefaultUniquePtr > Base;
+
+    public:
+      template< class DF, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DF >::value, int > = 0 >
+      explicit VirtualizedRestrictProlong ( DF &df )
+        : Base( df )
+      {}
+
+      VirtualizedRestrictProlong ( const VirtualizedRestrictProlong &other ) : Base( other.impl_->clone() ) {}
+      VirtualizedRestrictProlong ( VirtualizedRestrictProlong && ) = default;
+
+      VirtualizedRestrictProlong &operator= ( const VirtualizedRestrictProlong &other ) { Base::impl_.reset( other.impl_->clone() ); return *this; }
+      VirtualizedRestrictProlong &operator= ( VirtualizedRestrictProlong && ) = default;
+    };
+
+    template< class Grid >
+    class VirtualizedRestrictProlong< Grid, true >
+      : public BasicVirtualizedRestrictProlong< Grid, std::shared_ptr >
+    {
+      typedef BasicVirtualizedRestrictProlong< Grid, std::shared_ptr > Base;
+
+    public:
+      template< class DF, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DF >::value, int > = 0 >
+      explicit VirtualizedRestrictProlong ( DF &df )
+        : Base( df )
+      {}
+    };
+
 
   } // namespace FemPy
 

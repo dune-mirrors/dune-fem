@@ -1,6 +1,5 @@
 set(HEADERS
   adaptation.hh
-  adaptivedofvector.hh
   virtualizedrestrictprolong.hh
 )
 

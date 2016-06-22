@@ -5,6 +5,7 @@ set(HEADERS
   geometry.hh
   hierarchical.hh
   range.hh
+  restrictprolong.hh
   vtk.hh
 )
 
