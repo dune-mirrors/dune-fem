@@ -68,7 +68,7 @@ class Generator(object):
             includes = includes + "#include <" + include + ">\n"
         includes = self.modifyIncludes(includes)
         # remove duplicate
-        includes = list(set( includes ))
+        # includes = list(set( includes ))
 
         if femmpi.comm.rank == 0:
             if not os.path.isfile(os.path.join(compilePath, moduleName + ".so")):
