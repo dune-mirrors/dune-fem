@@ -189,7 +189,7 @@ namespace Dune {
     typedef SizeType            size_type;
 
     //! Type of one (mutable) block
-    typedef SubVector< DofContainerType, OffsetSubMapper > DofBlockType;
+    typedef SubVector< DofContainerType, StaticOffsetSubMapper< BlockSize > > DofBlockType;
     //! Type of one constant block
     typedef DofBlockType ConstDofBlockType;
 
@@ -215,14 +215,14 @@ namespace Dune {
     ConstDofBlockType operator[] ( const unsigned int i ) const
     {
       assert( i < size() );
-      return ConstDofBlockType( array_, OffsetSubMapper( blockSize, i*blockSize ) );
+      return ConstDofBlockType( array_, StaticOffsetSubMapper< blockSize >( i*blockSize ) );
     }
 
     /** \brief Access the i-th block */
     DofBlockType operator[] ( const unsigned int i )
     {
       assert( i < size() );
-      return DofBlockType( array_, OffsetSubMapper( blockSize, i*blockSize ) );
+      return DofBlockType( array_, StaticOffsetSubMapper< blockSize >( i*blockSize ) );
     }
 
     /** \brief Constant access for the i-th block */
