@@ -6,21 +6,16 @@
 #include <type_traits>
 #include <utility>
 
+#include <dune/fem/space/common/loadbalancer.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
+
+#include <dune/fempy/grid/discretefunctionmanager.hh>
 
 namespace Dune
 {
 
   namespace FemPy
   {
-
-    // External Forward Declarations
-    // -----------------------------
-
-    template< class Grid >
-    class DiscreteFunctionManager;
-
-
 
     template< class T >
     using DefaultUniquePtr = std::unique_ptr< T >;
@@ -61,6 +56,7 @@ namespace Dune
 
       template< class Impl >
       struct Implementation final
+        : public Interface
       {
         template< class... Args >
         Implementation ( Args &&... args )
@@ -77,8 +73,8 @@ namespace Dune
         virtual void prolongLocal ( const Element &father, const Element &child, bool initialize ) const override { impl().prolongLocal( father, child, initialize ); }
         virtual void prolongLocal ( const Element &father, const Element &child, const LocalGeometry &geometryInFather, bool initialize ) const override { impl().prolongLocal( father, child, geometryInFather, initialize ); }
 
-        virtual void addToList ( Fem::CommunicationManagerList &commList ) override { impl().addToList( commList ); }
-        virtual void removeFromList ( Fem::CommunicationManagerList &commList ) override { impl().removeFromList( commList ); }
+        virtual void addToList ( Fem::CommunicationManagerList &commList ) override { /*impl().addToList( commList );*/ }
+        virtual void removeFromList ( Fem::CommunicationManagerList &commList ) override { /*impl().removeFromList( commList );*/ }
 
         virtual void addToLoadBalancer ( Fem::LoadBalancer< Grid > &lb ) override { impl().addToLoadBalancer( lb ); }
         virtual void addToLoadBalancer ( DiscreteFunctionManager< Grid > &lb ) override { impl().addToLoadBalancer( lb ); }
@@ -156,7 +152,6 @@ namespace Dune
         : Base( df )
       {}
     };
-
 
   } // namespace FemPy
 

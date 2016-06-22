@@ -1,5 +1,6 @@
 set(HEADERS
   adaptation.hh
+  discretefunctionmanager.hh
   virtualizedrestrictprolong.hh
 )
 

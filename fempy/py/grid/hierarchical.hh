@@ -8,7 +8,6 @@
 #include <memory>
 
 #include <dune/fempy/grid/adaptation.hh>
-#include <dune/fempy/grid/virtualizedrestrictprolong.hh>
 #include <dune/fempy/py/grid/entity.hh>
 #include <dune/fempy/py/grid/restrictprolong.hh>
 #include <dune/fempy/pybind11/functional.h>
@@ -156,7 +155,7 @@ namespace Dune
       cls.def( "globalRefine", [] ( Grid &grid ) { gridAdaptation( grid ).globalRefine( 1 ); } );
       cls.def( "globalRefine", [] ( Grid &grid, int level ) { gridAdaptation( grid ).globalRefine( level ); } );
 
-      registerRestrictProlong< RestrictProlong >( cls );
+      detail::clsVirtualizedRestrictProlong< Grid >( cls );
 
       pybind11::enum_< Marker > marker( cls, "marker" );
       marker.value( "coarsen", Marker::Coarsen );
