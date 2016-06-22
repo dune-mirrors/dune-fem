@@ -1,0 +1,14 @@
+{
+ "StokesScheme"  :
+  {
+    "type"      : "UzawaScheme< $(gridpart) >",
+    "include"   : [ "navierstokes/stokes.cc" ],
+    "extension"  : "yes"
+  },
+  "BurgersScheme"   :
+  {
+    "type"      : "PRPScheme< $(gridpart) >",
+    "include"   : [ "navierstokes/burgers.cc" ],
+    "extension"  : "yes"
+  }
+}

@@ -131,6 +131,14 @@ class DataBase:
             for test in defs["checks"]:
                 self.check(test, selector.parameters, self.get_defaults(selector.grid))
 
+    def uses_extension(self, selector):
+        defs = self.defs[selector.grid]
+        if "extension" in defs:
+            if "extension" == "yes":
+                return True
+        else:
+            return False
+
     # private methods
 
     def replace(self, string, parameters, defaults, translations):
