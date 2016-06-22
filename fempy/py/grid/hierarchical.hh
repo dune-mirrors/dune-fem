@@ -8,7 +8,9 @@
 #include <memory>
 
 #include <dune/fempy/grid/adaptation.hh>
+#include <dune/fempy/grid/virtualizedrestrictprolong.hh>
 #include <dune/fempy/py/grid/entity.hh>
+#include <dune/fempy/py/grid/restrictprolong.hh>
 #include <dune/fempy/pybind11/functional.h>
 #include <dune/fempy/pybind11/numpy.h>
 #include <dune/fempy/pybind11/pybind11.h>
@@ -145,7 +147,7 @@ namespace Dune
       typedef typename Adaptation::Element Element;
       typedef typename Adaptation::Marker Marker;
 
-      typedef AdaptiveDofVector< Grid, double > GridFunction;
+      typedef VirtualizedRestrictProlong< Grid > RestrictProlong;
 
       typedef detail::HierarchicalGridDeleter< Grid > Deleter;
       pybind11::class_< Grid, std::unique_ptr< Grid, Deleter > > cls( scope, "HierarchicalGrid" );
@@ -153,6 +155,8 @@ namespace Dune
 
       cls.def( "globalRefine", [] ( Grid &grid ) { gridAdaptation( grid ).globalRefine( 1 ); } );
       cls.def( "globalRefine", [] ( Grid &grid, int level ) { gridAdaptation( grid ).globalRefine( level ); } );
+
+      registerRestrictProlong< RestrictProlong >( cls );
 
       pybind11::enum_< Marker > marker( cls, "marker" );
       marker.value( "coarsen", Marker::Coarsen );
@@ -164,24 +168,24 @@ namespace Dune
         } );
 
       cls.def( "adapt", [] ( Grid &grid ) {
-          std::array< std::shared_ptr< GridFunction >, 0 > dfList;
-          gridAdaptation( grid ).adapt( dfList.begin(), dfList.end() );
+          std::array< RestrictProlong, 0 > rpList;
+          gridAdaptation( grid ).adapt( rpList.begin(), rpList.end() );
         } );
 
 
-      cls.def( "adapt", [] ( Grid &grid, const std::list< std::shared_ptr< GridFunction > > &dfList ) {
-          std::cout << "adapting grid and " << dfList.size() << " functions..." << std::endl;
-          gridAdaptation( grid ).adapt( dfList.begin(), dfList.end() );
+      cls.def( "adapt", [] ( Grid &grid, const std::list< RestrictProlong > &rpList ) {
+          std::cout << "adapting grid and " << rpList.size() << " functions..." << std::endl;
+          gridAdaptation( grid ).adapt( rpList.begin(), rpList.end() );
         } );
 
       cls.def( "loadBalance", [] ( Grid &grid ) {
-          std::array< std::shared_ptr< GridFunction >, 0 > dfList;
-          gridAdaptation( grid ).loadBalance( dfList.begin(), dfList.end() );
+          std::array< RestrictProlong, 0 > rpList;
+          gridAdaptation( grid ).loadBalance( rpList.begin(), rpList.end() );
         } );
 
-      cls.def( "loadBalance", [] ( Grid &grid, const std::list< std::shared_ptr< GridFunction > > &dfList ) {
-          std::cout << "loadbalanding grid and " << dfList.size() << " functions..." << std::endl;
-          gridAdaptation( grid ).loadBalance( dfList.begin(), dfList.end() );
+      cls.def( "loadBalance", [] ( Grid &grid, const std::list< RestrictProlong > &rpList ) {
+          std::cout << "loadbalanding grid and " << rpList.size() << " functions..." << std::endl;
+          gridAdaptation( grid ).loadBalance( rpList.begin(), rpList.end() );
         } );
 
       return cls;

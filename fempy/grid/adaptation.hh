@@ -6,7 +6,9 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <typeindex>
 #include <utility>
+#include <unordered_map>
 #include <vector>
 
 #include <dune/common/dynvector.hh>
@@ -17,7 +19,6 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 
-#include <dune/fempy/grid/adaptivedofvector.hh>
 #include <dune/fempy/grid/virtualizedrestrictprolong.hh>
 #include <dune/fempy/parameter.hh>
 
@@ -26,6 +27,38 @@ namespace Dune
 
   namespace FemPy
   {
+
+    // LoadBalanceContainsCheck
+    // ------------------------
+
+    template< class Grid, class Predicate >
+    struct LoadBalanceContainsCheck
+    {
+      explicit LoadBalanceContainsCheck ( Predicate predicate )
+        : predicate_( std::move( predicate ) )
+      {}
+
+      bool contains ( const typename Grid::template Codim< 0 >::Entity &element ) const
+      {
+        return predicate_( element );
+      }
+
+    private:
+      Predicate predicate_;
+    };
+
+
+
+    // loadBalanceContainsCheck
+    // ------------------------
+
+    template< class Grid, class Predicate >
+    inline static LoadBalanceContainsCheck< Grid, Predicate > loadBalanceContainsCheck ( Predicate predicate ) noexcept
+    {
+      return LoadBalanceContainsCheck< Grid, Predicate >( std::move( predicate ) );
+    }
+
+
 
     // FakeGridPart
     // ------------
@@ -112,27 +145,73 @@ namespace Dune
     struct DiscreteFunctionList
       : public Fem::IsDiscreteFunction
     {
-      typedef AdaptiveDofVector< Grid, D > DiscreteFunction;
-
-      typedef typename DiscreteFunction::DofType DofType;
+      typedef D DofType;
 
       typedef FakeDiscreteFunctionSpace< Grid > DiscreteFunctionSpaceType;
 
-      typedef typename DiscreteFunctionSpaceType::EntityType ElementType;
+      typedef typename DiscreteFunctionSpaceType::ElementType ElementType;
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-
-      typedef std::vector< std::shared_ptr< DiscreteFunction > > DiscreteFunctions;
-
-      typedef typename DiscreteFunctions::const_iterator ConstIterator;
-      typedef typename DiscreteFunctions::iterator Iterator;
 
       typedef std::allocator< DofType > LocalDofVectorAllocatorType;
 
+    private:
+      struct DofVector
+      {
+        virtual ~DofVector () = default;
+
+        virtual void enableDofCompression () = 0;
+
+        virtual std::size_t numLocalDofs ( const ElementType &element ) const = 0;
+
+        virtual DofType *getLocalDofs ( const ElementType &element, DofType *localDofs ) const = 0;
+        virtual const DofType *setLocalDofs ( const ElementType &element, const DofType *localDofs ) = 0;
+      };
+
+      template< class Impl >
+      struct DiscreteFunction final
+        : public DofVector
+      {
+        DiscreteFunction ( Impl &impl ) : impl_( impl ) {}
+
+        virtual void enableDofCompression () override { impl_.enableDofCompression(); }
+
+        virtual std::size_t numLocalDofs ( const ElementType &element ) const override
+        {
+          return blockMapper().numDofs( element ) * Impl::DiscreteFunctionSpaceType::localBlockSize;
+        }
+
+        virtual DofType *getLocalDofs ( const ElementType &element, DofType *localDofs ) const override
+        {
+          //using Fem::dofBlockFunctor;
+
+          Fem::AssignFunctor< DofType * > assignFunctor( localDofs );
+          blockMapper().mapEach( element, dofBlockFunctor( impl_.dofVector(), assignFunctor ) );
+
+          return localDofs + numLocalDofs( element );
+        }
+
+        virtual const DofType *setLocalDofs ( const ElementType &element, const DofType *localDofs ) override
+        {
+          //using Fem::dofBlockFunctor;
+
+          Fem::LeftAssign< const DofType * > assignFunctor( localDofs );
+          blockMapper().mapEach( element, dofBlockFunctor( impl_.dofVector(), assignFunctor ) );
+
+          return localDofs + numLocalDofs( element );
+        }
+
+      private:
+        const typename Impl::DiscreteFunctionSpaceType::BlockMapperType &blockMapper () const { return impl_.space().blockMapper(); }
+
+        Impl &impl_;
+      };
+
+    public:
       explicit DiscreteFunctionList ( Grid &grid )
         : space_( grid, [ this ] ( const ElementType &element ) {
               std::size_t size = 0;
-              for( const auto &df : discreteFunctions_ )
-                size += df->numLocalDofs( element );
+              for( const auto &dv : dofVectors_ )
+                size += dv->numLocalDofs( element );
               return size;
             } )
       {}
@@ -143,22 +222,9 @@ namespace Dune
 
       void enableDofCompression ()
       {
-        for( const auto &df : discreteFunctions_ )
-          df->enableDofCompression();
+        for( const auto &dv : dofVectors_ )
+          dv->enableDofCompression();
       }
-
-      void assign () { discreteFunctions_.clear(); }
-
-      template< class Iterator >
-      void assign ( Iterator begin, Iterator end )
-      {
-        discreteFunctions_.assign( begin, end );
-      }
-
-      ConstIterator begin () const { return discreteFunctions_.begin(); }
-      Iterator begin () { return discreteFunctions_.begin(); }
-      ConstIterator end () const { return discreteFunctions_.end(); }
-      Iterator end () { return discreteFunctions_.end(); }
 
       LocalDofVectorAllocatorType localDofVectorAllocator () const { return LocalDofVectorAllocatorType(); }
 
@@ -166,21 +232,29 @@ namespace Dune
       void getLocalDofs ( const ElementType &entity, DynamicVector< DofType, A > &localDofs ) const
       {
         DofType *it = &localDofs[ 0 ];
-        for( const auto &df : discreteFunctions_ )
-          it = df->getLocalDofs( entity, it );
+        for( const auto &dv : dofVectors_ )
+          it = dv->getLocalDofs( entity, it );
       }
 
       template< class A >
       void setLocalDofs ( const ElementType &entity, const DynamicVector< DofType, A > &localDofs )
       {
         const DofType *it = &localDofs[ 0 ];
-        for( auto &df : discreteFunctions_ )
-          it = df->setLocalDofs( entity, it );
+        for( const auto &dv : dofVectors_ )
+          it = dv->setLocalDofs( entity, it );
+      }
+
+      void clear () { dofVectors_.clear(); }
+
+      template< class DF >
+      void add ( DF &df )
+      {
+        dofVectors_.push_back( new DiscreteFunction< DF >( df ) );
       }
 
     private:
       DiscreteFunctionSpaceType space_;
-      DiscreteFunctions discreteFunctions_;
+      std::vector< std::unique_ptr< DofVector > > dofVectors_;
     };
 
   } // namespace FemPy
@@ -196,7 +270,7 @@ namespace Dune
     template< class Grid, class D >
     struct DiscreteFunctionTraits< FemPy::DiscreteFunctionList< Grid, D > >
     {
-      typedef typename FemPy::AdaptiveDofVector< Grid, D >::DofType DofType;
+      typedef D DofType;
       typedef std::allocator< DofType > LocalDofVectorAllocatorType;
     };
 
@@ -207,16 +281,103 @@ namespace Dune
   namespace FemPy
   {
 
+    // DiscreteFunctionManager
+    // -----------------------
+
+    template< class Grid >
+    class DiscreteFunctionManager
+    {
+      struct DFList
+      {
+        virtual ~DFList () = default;
+        virtual void clear () = 0;
+        virtual void registerToLoadBalancer ( Fem::LoadBalancer< Grid > &loadBalancer ) = 0;
+      };
+
+      template< class D >
+      struct DFListImpl final
+        : public DFList
+      {
+        DFListImpl ( Grid &grid ) : list( grid ) {}
+
+        virtual void clear () override { list.clear(); }
+
+        virtual void registerToLoadBalancer ( Fem::LoadBalancer< Grid > &loadBalancer ) override
+        {
+          // todo: implement this check
+          auto contains = [] ( const typename Grid::template Codim< 0 >::Entity &e ) { return false; };
+          loadBalancer.addDiscreteFunction( list, loadBalanceContainsCheck< Grid >( contains ) );
+        }
+
+        DiscreteFunctionList< Grid, D > list;
+      };
+
+    public:
+      DiscreteFunctionManager ( Grid &grid ) : grid_( grid ) {}
+
+      void clear ()
+      {
+        for( auto &dfList : dfLists_ )
+          dfList.second->clear();
+      }
+
+      template< class DF >
+      void addDiscreteFunction ( DF &df )
+      {
+        dfList< typename DF::DofType >.add( df );
+      }
+
+      template< class DF, class ContainsCheck >
+      void addDiscreteFunction ( DF &df, const ContainsCheck &containsCheck )
+      {
+        addDiscreteFunction( df );
+      }
+
+      template< class DF >
+      void addToLoadBalancer ( DF &df )
+      {
+        addDiscreteFunction( df );
+      }
+
+      const Grid &grid () const { return grid_; }
+      Grid &grid () { return grid_; }
+
+      void registerToLoadBalancer ( Fem::LoadBalancer< Grid > &loadBalancer )
+      {
+        loadBalancer_ = &loadBalancer;
+        for( auto &dfList : dfLists_ )
+          dfList.second->registerToLoadBalancer( loadBalancer );
+      }
+
+    private:
+      template< class D >
+      DiscreteFunctionList< Grid, D > &dfList ()
+      {
+        auto result = dfLists_.insert( std::make_pair( std::type_index( typeid( D ) ), nullptr ) );
+        if( result.second )
+        {
+          result.first->second.reset( new DFListImpl< D >( grid() ) );
+          if( loadBalancer_ )
+            result.first->second->registerToLoadBalancer( *loadBalancer_ );
+        }
+        return static_cast< DFListImpl< D > * >( result.first->second )->list;
+      }
+
+      Grid &grid_;
+      Fem::LoadBalancer< Grid > *loadBalancer_ = nullptr;
+      std::unordered_map< std::type_index, std::unique_ptr< DFList > > dfLists_;
+    };
+
+
+
     // RestrictProlong
     // ---------------
 
-    template< class Grid, class D = double >
+    template< class Grid >
     class RestrictProlong
-      : public Fem::RestrictProlongInterface< Fem::RestrictProlongTraits< RestrictProlong< Grid, D >, typename Grid::ctype > >
+      : public Fem::RestrictProlongInterface< Fem::RestrictProlongTraits< RestrictProlong< Grid >, typename Grid::ctype > >
     {
-      typedef Fem::RestrictProlongInterface< Fem::RestrictProlongTraits< RestrictProlong< Grid, D >, typename Grid::ctype > > BaseType;
-
-      struct LoadBalanceContainsCheck;
+      typedef Fem::RestrictProlongInterface< Fem::RestrictProlongTraits< RestrictProlong< Grid >, typename Grid::ctype > > BaseType;
 
     public:
       typedef typename BaseType::DomainFieldType DomainFieldType;
@@ -225,7 +386,7 @@ namespace Dune
       typedef typename Grid::template Codim< 0 >::LocalGeometry LocalGeometryType;
 
       explicit RestrictProlong ( Grid &grid )
-        : discreteFunctions_( grid )
+        : discreteFunctionManager_( grid )
       {}
 
       void setFatherChildWeight ( const DomainFieldType &weight ) const
@@ -274,29 +435,28 @@ namespace Dune
         commList_ = nullptr;
       }
 
-      template< class LoadBalancer >
-      void addToLoadBalancer ( LoadBalancer &loadBalancer );
+      void addToLoadBalancer ( Fem::LoadBalancer< Grid > &loadBalancer ) { discreteFunctionManager_.registerToLoadBalancer( loadBalancer ); }
 
-      void assign ()
+      void clear ()
       {
+        discreteFunctionManager_.clear();
         removeFromCommList();
         restrictProlongs_.clear();
-        discreteFunctions_.assign();
-        // no need to add to comm list; discrete functions is empty
       }
 
       template< class Iterator >
       void assign ( Iterator begin, Iterator end )
       {
+        discreteFunctionManager_.clear();
         removeFromCommList();
-        restrictProlongs_.clear();
-        discreteFunctions_.assign( std::move( begin ), std::move( end ) );
-        for( const auto &df : discreteFunctions_ )
-          restrictProlongs_.push_back( df->restrictProlong() );
+        restrictProlongs_.assign( std::move( begin ), std::move( end ) );
         addToCommList();
+        for( auto &rp : restrictProlongs_ )
+          rp.addToLoadBalancer( discreteFunctionManager_ );
       }
 
-      Grid &grid () const { return discreteFunctions_.gridPart().grid(); }
+      const Grid &grid () const { return discreteFunctionManager_.grid(); }
+      Grid &grid () { return discreteFunctionManager_.grid(); }
 
     private:
       void addToCommList ()
@@ -313,44 +473,10 @@ namespace Dune
             rp.removeFromList( *commList_ );
       }
 
-      DiscreteFunctionList< Grid, D > discreteFunctions_;
       std::vector< VirtualizedRestrictProlong< Grid > > restrictProlongs_;
+      DiscreteFunctionManager< Grid > discreteFunctionManager_;
       Fem::CommunicationManagerList *commList_ = nullptr;
     };
-
-
-
-    // RestrictProlong::LoadBalanceContainsCheck
-    // -----------------------------------------
-
-    template< class Grid, class D >
-    struct RestrictProlong< Grid, D >::LoadBalanceContainsCheck
-    {
-      explicit LoadBalanceContainsCheck ( const DiscreteFunctionList< Grid, D > &discreteFunctions )
-        : discreteFunctions_( discreteFunctions )
-      {}
-
-      bool contains ( const ElementType &element ) const
-      {
-        // todo: implement this predicate
-        return false;
-      }
-
-    private:
-      const DiscreteFunctionList< Grid, D > &discreteFunctions_;
-    };
-
-
-
-    // Implementation of RestrictProlong
-    // ---------------------------------
-
-    template< class Grid, class D >
-    template< class LoadBalancer >
-    inline void RestrictProlong< Grid, D >::addToLoadBalancer ( LoadBalancer &loadBalancer )
-    {
-      loadBalancer.addDiscreteFunction( discreteFunctions_, LoadBalanceContainsCheck( discreteFunctions_ ) );
-    }
 
 
 
@@ -388,7 +514,7 @@ namespace Dune
       {
         restrictProlong_.assign( begin, end );
         adaptationManager_.adapt();
-        restrictProlong_.assign();
+        restrictProlong_.clear();
       }
 
       void globalRefine ( int level )
@@ -401,10 +527,11 @@ namespace Dune
       {
         restrictProlong_.assign( begin, end );
         adaptationManager_.loadBalance();
-        restrictProlong_.assign();
+        restrictProlong_.clear();
       }
 
-      Grid &grid () const { return restrictProlong_.grid(); }
+      const Grid &grid () const { return restrictProlong_.grid(); }
+      Grid &grid () { return restrictProlong_.grid(); }
 
     private:
       RestrictProlong< Grid > restrictProlong_;
