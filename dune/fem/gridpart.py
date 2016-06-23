@@ -7,14 +7,37 @@ from types import ModuleType
 from ..generator import generator
 from . import space
 
+import inspect
+
+
 def interpolate(grid, func, **kwargs):
     try:
-        R = func.dimRange
+        gl = len(inspect.getargspec(func)[0])
     except:
-        R = len(func)
-    spaceName = kwargs.pop('space')
-    mySpace=space.create(spaceName, grid, dimrange=R, **kwargs)
-    return mySpace.interpolate(func, **kwargs)
+        gl = 0
+    if gl == 1:   # global function
+        return interpolate(grid, grid.globalGridFunction("gf", func), **kwargs)
+    elif gl == 2: # local function
+        return interpolate(grid, grid.localGridFunction("gf", func), **kwargs)
+    elif gl == 0: # already a grid function
+      try:
+          R = func.dimRange
+      except:
+          R = len(func)
+      spaceName = kwargs.pop('space')
+      mySpace = space.create(spaceName, grid, dimrange=R, **kwargs)
+      return mySpace.interpolate(func, **kwargs)
+
+def writeVTK(grid,  name, celldata=[], pointdata=[], number=None):
+    vtk = grid.vtkWriter()
+    for df in celldata:
+        df.addToVTKWriter(vtk, vtk.CellData)
+    for df in pointdata:
+        df.addToVTKWriter(vtk, vtk.PointData)
+    if number == None:
+        vtk.write( name )
+    else:
+        vtk.write( name + str(number).zfill(4) )
 
 myGenerator = generator.Generator("GridPart")
 
@@ -22,6 +45,11 @@ def getGridPartType(gridpart, **parameters):
     """Return the gridpart type (using a function from database.py).
     """
     return myGenerator.getTypeName(gridpart, **parameters)
+
+def addAttr(module, cls):
+    setattr(cls, "_module", module)
+    setattr(cls, "interpolate", interpolate )
+    setattr(cls, "writeVTK", writeVTK )
 
 def get(gp, **parameters):
     """Create a gridpart module using the gridpart-database.
@@ -36,8 +64,7 @@ def get(gp, **parameters):
 
     """
     module = myGenerator.getModule(gp, **parameters)
-    setattr(module.GridPart, "_module", module)
-    setattr(module.GridPart, "interpolate", interpolate )
+    addAttr(module, module.GridPart)
     return module
 
 def create(gp, gf, **parameters):
@@ -52,12 +79,12 @@ def create(gp, gf, **parameters):
         GridPart: the constructed GridPart
     """
     if gp=="Geometry":
-        try:
+        # try:
             module = get(gp, discfunc=gf._module._typeName, extra_includes=gf._module._includes, **parameters)
-        except:
-            gp  = "Hallo"
-            val = "Dune::FieldVector<double,"+str(gf.dimRange)+">"
-            module = get("GeometryVirtual", gridpart=gp, value=val, **parameters)
+        # except:
+        #     gp  = "Hallo"
+        #     val = "Dune::FieldVector<double,"+str(gf.dimRange)+">"
+        #     module = get("GeometryVirtual", gridpart=gp, value=val, **parameters)
     return module.GridPart(gf)
 
 #############################################

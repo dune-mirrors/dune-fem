@@ -14,7 +14,7 @@ from . import discretefunction
 
 myGenerator = generator.Generator("Scheme")
 
-def solve( scheme, rhs=None, target=None, dfname=None ):
+def solve( scheme, rhs=None, target=None, dfname=None, assemble=True ):
     if dfname == None:
         dfname = scheme.name
     if target == None:
@@ -27,7 +27,7 @@ def solve( scheme, rhs=None, target=None, dfname=None ):
         scheme._prepare()
     else:
         scheme._prepare(rhs)
-    scheme._solve(target)
+    scheme._solve(target,assemble)
     return target
 
 def getModule(scheme, **parameters):

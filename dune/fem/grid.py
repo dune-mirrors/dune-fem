@@ -29,31 +29,16 @@ from types import ModuleType
 
 from ..generator import generator
 
+from . import gridpart
 from . import space
 
-def interpolate(grid, func, **kwargs):
-    try:
-        gl = len(inspect.getargspec(func)[0])
-    except:
-        gl = 0
-    if gl == 1:   # global function
-        return interpolate(grid, grid.globalGridFunction("gf", func), **kwargs)
-    elif gl == 2: # local function
-        return interpolate(grid, grid.localGridFunction("gf", func), **kwargs)
-    elif gl == 0: # already a grid function
-      try:
-          R = func.dimRange
-      except:
-          R = len(func)
-      spaceName = kwargs.pop('space')
-      mySpace = space.create(spaceName, grid, dimrange=R, **kwargs)
-      return mySpace.interpolate(func, **kwargs)
 
 class Generator(generator.Generator):
     def modifyIncludes(self, includes):
         return includes + "#include <dune/fem/gridpart/adaptiveleafgridpart.hh>\n"
     def modifyTypeName(self, typeName):
         return "Dune::Fem::AdaptiveLeafGridPart<" + typeName + ">";
+
 myGenerator = Generator("Grid")
 
 def getGridType(grid, **parameters):
@@ -101,8 +86,7 @@ def get(grid, **parameters):
 
     """
     module = myGenerator.getModule(grid, **parameters)
-    setattr(module.LeafGrid, "_module", module)
-    setattr(module.LeafGrid, "interpolate", interpolate )
+    gridpart.addAttr(module, module.LeafGrid)
     return module
 
 def leafGrid(dgf, grid, **parameters):

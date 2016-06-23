@@ -453,6 +453,7 @@ class DuneUFLModel:
         """
         inputfile = self.path + '/model.hh.in'
         outputfile = self.path + '/' + self.modelName + "Model.hh"
+        self.exact = exact
         with open(outputfile, "wt") as fout:
 
             with open(inputfile, "rt") as fin:
@@ -749,23 +750,32 @@ class DuneUFLModel:
                 if string[i-1].isalpha() == 0:
                     return True
 
-    ########################
-    # Main methods
-    ########################
-    def setCoefficient(self, name, expr):
-        """For setting a named coefficient.
+    def generateFull(self, a, L, *args):
+        """Generate a DUNE model file using a UFL expression.
+
+        Args:
+            a : UFL expression for the bilinear form.
+            L : UFL expression for the RHS
+            exact : Sympy expression for the exact solution (used for error analysis).
+            *g : (optional) UFL expression for any Dirichlet conditions.
+
+        Returns:
+            Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
         """
-        self.coefficients[name] = expr
-
-    def add2Source( self, source, linsource=None ):
-        self.addCode["SOURCE"] = source
-        if linsource == None:
-            self.addCode["LINSOURCE"] = source
-        else:
-            self.addCode["LINSOURCE"] = linsource
-
-    def addCoefficient( self, name, dimR ):
-        self.unsetCoefficients[name] = dimR
+        # dirichlet conditions
+        self.diricOutput(args)
+        # calculate strong form
+        self.uflToStrong()
+        # store form a
+        self.formOutput(a)
+        self.storeSrc()
+        # print (forcing)
+        self.formOutput(L)
+        self.storeRhs()
+        # define linearization
+        F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
+        self.formOutput(F)
+        self.storeLin()
 
     def generateFromExact(self, a, exact, *args):
         """Generate a DUNE model file using a UFL expression (this version uses 'exact' to calculate RHS).
@@ -802,43 +812,6 @@ class DuneUFLModel:
         F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
         self.formOutput(F)
         self.storeLin()
-        self.exact = exact
-        # if self.unsetCoefficients:
-        #     self.storeCoef()
-        # output model
-        # self.modelPrint(exact)
-
-    def generateFull(self, a, L, exact, *args):
-        """Generate a DUNE model file using a UFL expression.
-
-        Args:
-            a : UFL expression for the bilinear form.
-            L : UFL expression for the RHS
-            exact : Sympy expression for the exact solution (used for error analysis).
-            *g : (optional) UFL expression for any Dirichlet conditions.
-
-        Returns:
-            Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
-        """
-        # dirichlet conditions
-        self.diricOutput(args)
-        # calculate strong form
-        self.uflToStrong()
-        # store form a
-        self.formOutput(a)
-        self.storeSrc()
-        # print (forcing)
-        self.formOutput(L)
-        self.storeRhs()
-        # define linearization
-        F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
-        self.formOutput(F)
-        self.storeLin()
-        self.exact = exact
-        # if self.unsetCoefficients:
-        #     self.storeCoef()
-        # output model
-        # self.modelPrint(exact)
 
     def generateZeroRHS(self, a, *args):
         """Generate a DUNE model file using a UFL expression with zero forcing and no exact solution
@@ -861,31 +834,57 @@ class DuneUFLModel:
         F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
         self.formOutput(F)
         self.storeLin()
-        # if self.unsetCoefficients:
-        #     self.storeCoef()
-        # output model
-        # self.modelPrint()
 
-    def generate(self, a, L=None, exact=None, name=None, *args):
-        if name != None:
-            self.modelName = name
+    ########################
+    # Main methods
+    ########################
+
+    def setCoefficient(self, name, expr):
+        """For setting a named coefficient.
+        """
+        self.coefficients[name] = expr
+
+    def add2Source( self, source, linsource=None ):
+        self.addCode["SOURCE"] = source
+        if linsource == None:
+            self.addCode["LINSOURCE"] = source
+        else:
+            self.addCode["LINSOURCE"] = linsource
+
+    def addCoefficient( self, name, dimR ):
+        self.unsetCoefficients[name] = dimR
+
+    def generate(self, a, L=None, exact=None, *args):
         if L == None:
             if exact == None:
                 self.generateZeroRHS(a, *args)
             else:
                 self.generateFromExact(a, exact, *args)
         else:
-            self.generateFull(a, L, exact, *args)
+            self.generateFull(a, L, *args)
 
-    def make(self, grid):
+    def write(self, exact=None, name=None):
+        if name != None:
+            self.modelName = name
+        self.modelPrint(exact)
+
+    def makeAndImport(self, grid, exact=None, name=None):
+        """Does make and imports the module.
+        """
+        name = self.make(grid,exact,name)
+        return importlib.import_module("dune.generated."+name)
+
+    def make(self, grid, exact=None, name=None):
         """Create wrapper file.
         """
+        if name != None:
+            self.modelName = name
+        if exact != None:
+            self.exact = exact
         if self.unsetCoefficients:
             self.storeCoef()
-        if self.exact == None:
-            self.modelPrint()
-        else:
-            self.modelPrint(self.exact)
+
+        self.modelPrint(self.exact)
         startTime = timeit.default_timer()
 
         inputfile = self.path + '/modelimpl.hh.in'
@@ -929,19 +928,8 @@ class DuneUFLModel:
 
             print(self.modelName + 'Model.cc and ' + self.modelName + 'Model.hh have been created')
         femmpi.comm.barrier()
-
         print("Building model took ", timeit.default_timer() - startTime, "s")
-
         return name
-
-    def write(self):
-        self.modelPrint(exact)
-
-    def makeAndImport(self, grid):
-        """Does make and imports the module.
-        """
-        name = self.make(grid)
-        return importlib.import_module("dune.generated."+name)
 
     def exportTodot(self, a):
         """Draw Graph of a UFL expression into PDF format.
