@@ -31,7 +31,7 @@ namespace Dune
         }, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
         cls.def("_prepare", [] (Scheme &scheme, const DiscreteFunction &add) { scheme.prepare(add); });
         cls.def("_prepare", [] (Scheme &scheme) { scheme.prepare(); });
-        cls.def("_solve", [] (Scheme &scheme, DiscreteFunction &solution) { scheme.solve(solution, true); });
+        cls.def("_solve", [] (Scheme &scheme, DiscreteFunction &solution,bool assemble) { scheme.solve(solution, assemble); });
         cls.def("__call__", [] (Scheme &scheme, const DiscreteFunction &arg, DiscreteFunction &dest) { scheme(arg,dest); });
         cls.def("error", [] (Scheme &scheme, DiscreteFunction &solution)
         {
