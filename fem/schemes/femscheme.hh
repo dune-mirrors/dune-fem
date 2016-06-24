@@ -129,13 +129,13 @@ public:
   //! mark elements for adaptation
   bool mark ( const double tolerance )
   {
-    return true; // estimator_.mark( tolerance );
+    return estimator_.mark( tolerance );
   }
 
   //! calculate error estimator
-  double estimate()
+  double estimate(const DiscreteFunctionType &solution)
   {
-    return 0; // estimator_.estimate( this->implicitModel_.rightHandSide(gridPart_) );
+    return estimator_.estimate( solution );
   }
 
   const std::string &name()
@@ -157,7 +157,7 @@ protected:
   Dune::Fem::DifferentiableOperator< LinearOperatorType > *implicitOperator_;
   Dune::Fem::Operator<DiscreteFunctionType,DiscreteFunctionType> *linearOperator_;  // the linear operator (i.e. jacobian of the implicit)
   const double solverEps_ ; // eps for linear solver
-  // EstimatorType estimator_; // estimator for residual error
+  EstimatorType estimator_; // estimator for residual error
   const ExactSolutionType exactSolution_;
 };
 
@@ -183,7 +183,7 @@ FemScheme( const DiscreteFunctionSpaceType &space,
       linearOperator_( new LinearOperatorType( "assembled elliptic operator", discreteSpace_, discreteSpace_ ) ),
       // tolerance for iterative solver
       solverEps_( Dune::Fem::Parameter::getValue< double >( "poisson.solvereps", 1e-8 ) ),
-      // estimator_( solution_, implicitModel ),
+      estimator_( discreteSpace_, implicitModel ),
       exactSolution_( implicitModel_.exactSolution(gridPart_) )
 {
 }

@@ -98,7 +98,6 @@ public:
   typedef Model ModelType;
 
 private:
-  const DiscreteFunctionType &uh_;
   const DiscreteFunctionSpaceType &dfSpace_;
   GridPartType &gridPart_;
   const IndexSetType &indexSet_;
@@ -110,9 +109,8 @@ public:
   static_assert( static_cast< unsigned int >( GridType::dimension ) == static_cast< unsigned int >( GridType::dimensionworld ),
                  "the estimator is not implemented for surfaces problems" );
 
-  explicit Estimator ( const DiscreteFunctionType &uh, const ModelType& model )
-  : uh_( uh ),
-    dfSpace_( uh.space() ),
+  explicit Estimator ( const DiscreteFunctionSpaceType &dfSpace, const ModelType& model )
+  : dfSpace_( dfSpace ),
     gridPart_( dfSpace_.gridPart() ),
     indexSet_( gridPart_.indexSet() ),
     grid_( gridPart_.grid() ),
@@ -120,18 +118,20 @@ public:
     model_(model)
   {}
 
+
   //! calculate estimator
-  template< class RHSFunctionType >
-  double estimate ( const RHSFunctionType &rhs )
+  double estimate ( const DiscreteFunctionType &uh )
   {
     // clear all local estimators
     clear();
+
+    const auto &rhs = model_.rightHandSide(gridPart_);
 
     //! [Error estimator]
     // calculate local estimator
     const IteratorType end = dfSpace_.end();
     for( IteratorType it = dfSpace_.begin(); it != end; ++it )
-      estimateLocal( rhs, *it );
+      estimateLocal( rhs, uh, *it );
 
     double error = 0.0;
 
@@ -155,7 +155,7 @@ public:
     enum Strategy { none=0, maximum=1, equiv=2, uniform=3 };
     static const std::string strategyNames []
           = { "none", "maximum", "equidistribution", "uniform" };
-    Strategy strategy = (Strategy) Dune::Fem::Parameter :: getEnum("adaptation.strategy", strategyNames );
+    Strategy strategy = (Strategy) Dune::Fem::Parameter :: getEnum("adaptation.strategy", strategyNames, 2 );
 
     double localTol2 = 0;
     switch( strategy )
@@ -232,14 +232,14 @@ protected:
 
   //! caclulate error on element
   template< class RHSFunctionType >
-  void estimateLocal ( const RHSFunctionType &rhs, const ElementType &entity )
+  void estimateLocal ( const RHSFunctionType &rhs, const DiscreteFunctionType &uh, const ElementType &entity )
   {
     const typename ElementType :: Geometry &geometry = entity.geometry();
 
     const double volume = geometry.volume();
     const double h2 = (dimension == 2 ? volume : std :: pow( volume, 2.0 / (double)dimension ));
     const int index = indexSet_.index( entity );
-    const LocalFunctionType uLocal = uh_.localFunction( entity );
+    const LocalFunctionType uLocal = uh.localFunction( entity );
     typename RHSFunctionType::LocalFunctionType localRhs = rhs.localFunction( entity );
 
     ElementQuadratureType quad( entity, 2*(dfSpace_.order() + 1) );
@@ -280,12 +280,13 @@ protected:
       const IntersectionType &intersection = *it;
       // if we got an element neighbor
       if( intersection.neighbor() )
-        estimateIntersection( intersection, entity, uLocal );
+        estimateIntersection( uh, intersection, entity, uLocal );
     }
   }
 
   //! caclulate error on boundary intersections
-  void estimateIntersection ( const IntersectionType &intersection,
+  void estimateIntersection ( const DiscreteFunctionType &uh,
+                              const IntersectionType &intersection,
                               const ElementType &inside,
                               const LocalFunctionType &uInside )
   {
@@ -300,7 +301,7 @@ protected:
     const bool isOutsideInterior = (outside.partitionType() == Dune::InteriorEntity);
     if( !isOutsideInterior || (insideIndex < outsideIndex) )
     {
-      const LocalFunctionType uOutside = uh_.localFunction( outside );
+      const LocalFunctionType uOutside = uh.localFunction( outside );
 
       double error;
 

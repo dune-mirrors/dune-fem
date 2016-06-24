@@ -38,6 +38,11 @@ namespace Dune
           Dune::Fem::L2Norm< GridPart > norm( solution.space().gridPart() );
           return norm.distance( solution, scheme.exactSolution() );
         } );
+        cls.def("mark", [] (Scheme &scheme, const DiscreteFunction &solution, double tolerance )
+        {
+          double est = scheme.estimate(solution);
+          return std::make_tuple(est,scheme.mark(tolerance));
+        });
         cls.def_property_readonly( "name", &Scheme::name );
         cls.def_property_readonly( "dimRange", [](Scheme&) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
         cls.def_property_readonly( "space", &Scheme::space );
