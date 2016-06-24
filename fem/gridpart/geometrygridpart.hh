@@ -272,7 +272,7 @@ namespace Dune
         typedef typename EntityType::Implementation Implementation;
         typedef MakeableInterfaceObject< EntityType > EntityObj;
         // here, grid part information can be passed, if necessary
-        return EntityObj( Implementation( entity, gridFunction_ ) );
+        return EntityObj( Implementation( gridFunction_, entity ) );
       }
 
     private:
