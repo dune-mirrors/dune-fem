@@ -868,13 +868,13 @@ class DuneUFLModel:
             self.modelName = name
         self.modelPrint(exact)
 
-    def makeAndImport(self, grid, exact=None, name=None):
+    def makeAndImport(self, grid, exact=None, name=None, header=None):
         """Does make and imports the module.
         """
-        name = self.make(grid,exact,name)
+        name = self.make(grid,exact,name,header)
         return importlib.import_module("dune.generated."+name)
 
-    def make(self, grid, exact=None, name=None):
+    def make(self, grid, exact=None, name=None, header=None):
         """Create wrapper file.
         """
         if name != None:
@@ -884,9 +884,10 @@ class DuneUFLModel:
         if self.unsetCoefficients:
             self.storeCoef()
 
-        self.modelPrint(self.exact)
-        startTime = timeit.default_timer()
+        if header == None:
+            self.modelPrint(self.exact)
 
+        startTime = timeit.default_timer()
         inputfile = self.path + '/modelimpl.hh.in'
         outputfile = self.path + '/modelimpl.hh'
         if isinstance(grid, ModuleType):
@@ -901,6 +902,8 @@ class DuneUFLModel:
                 with open(inputfile, "rt") as fin:
                     fout.write(module._includes)
                     for line in fin:
+                        if header != None and '#include "ModelTmp.hh"' in line:
+                            line = '#include "'+header+'"'
                         line = line.replace('ModelTmp', self.modelName + "Model")
                         if '#MODELNAME' in line:
                             line = line.replace('#MODELNAME', name)
