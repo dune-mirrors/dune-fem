@@ -31,7 +31,6 @@ namespace Dune
       typedef typename Grid::ctype ctype;
 
       typedef typename Grid::template Codim< 0 >::Entity Element;
-      typedef typename Grid::template Codim< 0 >::LocalGeometry LocalGeometry;
 
     protected:
       struct Interface
@@ -42,10 +41,7 @@ namespace Dune
         virtual void setFatherChildWeight ( const ctype &weight ) const = 0;
 
         virtual void restrictLocal ( const Element &father, const Element &child, bool initialize ) const = 0;
-        virtual void restrictLocal ( const Element &father, const Element &child, const LocalGeometry &geometryInFather, bool initialize ) const = 0;
-
         virtual void prolongLocal ( const Element &father, const Element &child, bool initialize ) const = 0;
-        virtual void prolongLocal ( const Element &father, const Element &child, const LocalGeometry &geometryInFather, bool initialize ) const = 0;
 
         virtual void addToList ( Fem::CommunicationManagerList &commList ) = 0;
         virtual void removeFromList ( Fem::CommunicationManagerList &commList ) = 0;
@@ -68,10 +64,7 @@ namespace Dune
         virtual void setFatherChildWeight ( const ctype &weight ) const override { impl().setFatherChildWeight( weight ); }
 
         virtual void restrictLocal ( const Element &father, const Element &child, bool initialize ) const override { impl().restrictLocal( father, child, initialize ); }
-        virtual void restrictLocal ( const Element &father, const Element &child, const LocalGeometry &geometryInFather, bool initialize ) const override { impl().restrictLocal( father, child, geometryInFather, initialize ); }
-
         virtual void prolongLocal ( const Element &father, const Element &child, bool initialize ) const override { impl().prolongLocal( father, child, initialize ); }
-        virtual void prolongLocal ( const Element &father, const Element &child, const LocalGeometry &geometryInFather, bool initialize ) const override { impl().prolongLocal( father, child, geometryInFather, initialize ); }
 
         virtual void addToList ( Fem::CommunicationManagerList &commList ) override { /*impl().addToList( commList );*/ }
         virtual void removeFromList ( Fem::CommunicationManagerList &commList ) override { /*impl().removeFromList( commList );*/ }
@@ -98,10 +91,7 @@ namespace Dune
       void setFatherChildWeight ( const ctype &weight ) const { impl_->setFatherChildWeight( weight ); }
 
       void restrictLocal ( const Element &father, const Element &child, bool initialize ) const { impl_->restrictLocal( father, child, initialize ); }
-      void restrictLocal ( const Element &father, const Element &child, const LocalGeometry &geometryInFather, bool initialize ) const { impl_->restrictLocal( father, child, geometryInFather, initialize ); }
-
       void prolongLocal ( const Element &father, const Element &child, bool initialize ) const { impl_->prolongLocal( father, child, initialize ); }
-      void prolongLocal ( const Element &father, const Element &child, const LocalGeometry &geometryInFather, bool initialize ) const { impl_->prolongLocal( father, child, geometryInFather, initialize ); }
 
       void addToList ( Fem::CommunicationManagerList &commList ) { impl_->addToList( commList ); }
       void removeFromList ( Fem::CommunicationManagerList &commList ) { impl_->removeFromList( commList ); }

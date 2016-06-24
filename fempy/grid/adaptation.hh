@@ -51,22 +51,10 @@ namespace Dune
           rp.restrictLocal( father, child, initialize );
       }
 
-      void restrictLocal ( const ElementType &father, const ElementType &child, const LocalGeometryType &geometryInFather, bool initialize ) const
-      {
-        for( const auto &rp : restrictProlongs_ )
-          rp.restrictLocal( father, child, geometryInFather, initialize );
-      }
-
       void prolongLocal ( const ElementType &father, const ElementType &child, bool initialize ) const
       {
         for( const auto &rp : restrictProlongs_ )
           rp.prolongLocal( father, child, initialize );
-      }
-
-      void prolongLocal ( const ElementType &father, const ElementType &child, const LocalGeometryType &geometryInFather, bool initialize ) const
-      {
-        for( const auto &rp : restrictProlongs_ )
-          rp.prolongLocal( father, child, geometryInFather, initialize );
       }
 
       void addToList ( Fem::CommunicationManagerList &commList )

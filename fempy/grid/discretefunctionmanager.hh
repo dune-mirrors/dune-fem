@@ -204,7 +204,7 @@ namespace Dune
 
         virtual std::size_t numLocalDofs ( const ElementType &element ) const override
         {
-          return blockMapper().numDofs( element ) * Impl::DiscreteFunctionSpaceType::localBlockSize;
+          return blockMapper().numDofs( impl_.gridPart().convert( element ) ) * Impl::DiscreteFunctionSpaceType::localBlockSize;
         }
 
         virtual DofType *getLocalDofs ( const ElementType &element, DofType *localDofs ) const override
@@ -212,7 +212,7 @@ namespace Dune
           //using Fem::dofBlockFunctor;
 
           Fem::AssignFunctor< DofType * > assignFunctor( localDofs );
-          blockMapper().mapEach( element, dofBlockFunctor( impl_.dofVector(), assignFunctor ) );
+          blockMapper().mapEach( impl_.gridPart().convert( element ), dofBlockFunctor( impl_.dofVector(), assignFunctor ) );
 
           return localDofs + numLocalDofs( element );
         }
@@ -222,7 +222,7 @@ namespace Dune
           //using Fem::dofBlockFunctor;
 
           Fem::LeftAssign< const DofType * > assignFunctor( localDofs );
-          blockMapper().mapEach( element, dofBlockFunctor( impl_.dofVector(), assignFunctor ) );
+          blockMapper().mapEach( impl_.gridPart().convert( element ), dofBlockFunctor( impl_.dofVector(), assignFunctor ) );
 
           return localDofs + numLocalDofs( element );
         }
