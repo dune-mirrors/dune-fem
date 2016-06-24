@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_DATAHANDLE_HH
 #define DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_DATAHANDLE_HH
 
-#include <dune/common/typetraits.hh>
+#include <type_traits>
 
 #include <dune/grid/common/datahandleif.hh>
 
@@ -20,7 +20,7 @@ namespace Dune
     class GeometryGridPartDataHandle
     : public CommDataHandleIF< GeometryGridPartDataHandle< GridFamily, WrappedHandle >, typename WrappedHandle::DataType >
     {
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
       typedef typename GridFamily::GridFunctionType GridFunctionType;
 
       template< class HostEntity >
@@ -28,8 +28,7 @@ namespace Dune
 
     public:
       GeometryGridPartDataHandle ( WrappedHandle &handle, const GridFunctionType &gridFunction  )
-      : wrappedHandle_( handle ),
-        gridFunction_( gridFunction )
+        : wrappedHandle_( handle ), gridFunction_( gridFunction )
       {}
 
       bool contains ( int dim, int codim ) const

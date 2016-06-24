@@ -3,9 +3,14 @@
 #ifndef DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_GEOMETRY_HH
 #define DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_GEOMETRY_HH
 
-#include <dune/grid/common/geometry.hh>
+#include <type_traits>
+
 #include <dune/common/fmatrix.hh>
+
 #include <dune/geometry/genericgeometry/matrixhelper.hh>
+
+#include <dune/grid/common/geometry.hh>
+
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 
@@ -85,7 +90,7 @@ namespace Dune
     template< int mydim, class GridFamily >
     struct GeometryGridPartGeometryTraits
     {
-      typedef typename remove_const< GridFamily >::type::Traits::HostGridPartType HostGridPartType;
+      typedef typename std::remove_const< GridFamily >::type::Traits::HostGridPartType HostGridPartType;
 
       static const int dimension = HostGridPartType::dimension;
       static const int mydimension = mydim;
@@ -436,7 +441,7 @@ namespace Dune
     template< int mydim, class GridFamily >
     struct GeometryGridPartLocalGeometryTraits
     {
-      typedef typename remove_const< GridFamily >::type::Traits::HostGridPartType HostGridPartType;
+      typedef typename std::remove_const< GridFamily >::type::Traits::HostGridPartType HostGridPartType;
 
       static const int dimension = HostGridPartType::dimension;
       static const int mydimension = mydim;

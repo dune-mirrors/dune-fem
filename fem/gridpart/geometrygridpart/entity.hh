@@ -48,8 +48,7 @@ namespace Dune
       GeometryGridPartEntity () = default;
 
       GeometryGridPartEntity ( const GridFunctionType &gridFunction, HostEntityType hostEntity )
-      : hostEntity_( std::move( hostEntity ) )
-      , gridFunction_( &gridFunction )
+        : hostEntity_( std::move( hostEntity ) ), gridFunction_( &gridFunction )
       {}
 
       GeometryType type () const
