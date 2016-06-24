@@ -7,6 +7,8 @@
 #include <map>
 #include <memory>
 
+#include <dune/common/stringutility.hh>
+
 #include <dune/fempy/grid/adaptation.hh>
 #include <dune/fempy/py/grid/entity.hh>
 #include <dune/fempy/py/grid/restrictprolong.hh>
@@ -77,10 +79,19 @@ namespace Dune
     template< class Grid >
     inline Grid *readDGF ( std::string dgf )
     {
-      GridPtr< Grid > gridPtr( dgf );
-      gridPtr->loadBalance();
-      Grid *grid = gridPtr.release();
-      return grid;
+      if( hasSuffix( dgf, ".dgf" ) )
+      {
+        GridPtr< Grid > gridPtr( dgf );
+        gridPtr->loadBalance();
+        return gridPtr.release();
+      }
+      else
+      {
+        std::istringstream in( dgf );
+        GridPtr< Grid > gridPtr( in );
+        gridPtr->loadBalance();
+        return gridPtr.release();
+      }
     }
 
 
@@ -150,6 +161,10 @@ namespace Dune
 
       typedef detail::HierarchicalGridDeleter< Grid > Deleter;
       pybind11::class_< Grid, std::unique_ptr< Grid, Deleter > > cls( scope, "HierarchicalGrid" );
+
+      cls.attr( "dimGrid" ) = pybind11::int_( static_cast< int >( Grid::dimension ) );
+      cls.attr( "dimWorld" ) = pybind11::int_( static_cast< int >( Grid::dimensionworld ) );
+
       cls.def( "__repr__", [] ( const Grid &grid ) -> std::string { return "HierarchicalGrid"; } );
 
       cls.def( "globalRefine", [] ( Grid &grid ) { gridAdaptation( grid ).globalRefine( 1 ); } );
