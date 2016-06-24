@@ -72,6 +72,7 @@ class Generator(object):
 
         if femmpi.comm.rank == 0:
             if not os.path.isfile(os.path.join(compilePath, moduleName + ".so")):
+                print("Compiling " + self.typeName + " module for " + myTypeName)
                 start_time = timeit.default_timer()
                 out = open(os.path.join(compilePath, "generated_module.hh"), 'w')
                 print(includes, file=out)
