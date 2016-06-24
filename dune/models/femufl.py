@@ -515,7 +515,7 @@ class DuneUFLModel:
                     elif '#FORCING' in line:
                         fout.write(self.rhs)
                     elif '#DIRICHLETDATA' in line:
-                        if self.diric:
+                        if 0: # self.diric:
                             fout.write(self.diric)
                         else:
                             if exact == None:
@@ -817,11 +817,11 @@ class DuneUFLModel:
         """
         # dirichlet conditions
         self.diricOutput(args)
-        # calculate strong form
-        self.uflToStrong()
         # store form a
         self.formOutput(a)
         self.storeSrc()
+        # calculate strong form
+        self.uflToStrong()
         # print (forcing)
         self.formOutput(L)
         self.storeRhs()
