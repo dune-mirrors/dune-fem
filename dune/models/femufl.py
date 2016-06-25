@@ -875,6 +875,9 @@ class DuneUFLModel:
         Returns:
             Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
         """
+        # no volume or neuman bnd forcing
+        self.rhs = '      phi = RangeType(0);\n'
+        self.rhsBound = '      value = RangeType(0);\n'
         # dirichlet conditions
         self.diricOutput(args)
         # calculate strong form
