@@ -138,7 +138,7 @@ protected:
   const std::string name_;
   const DiscreteFunctionSpaceType &space_; // discrete function space
   DiscreteFunctionType rhs_;        // the right hand side
-  std::unqiue_ptr< Dune::Fem::DifferentiableOperator< LinearOperatorType > > implicitOperator_;
+  std::unique_ptr< Dune::Fem::DifferentiableOperator< LinearOperatorType > > implicitOperator_;
   std::unique_ptr< Dune::Fem::Operator< DiscreteFunctionType,DiscreteFunctionType > > linearOperator_;
   EstimatorType estimator_; // estimator for residual error
   const ExactSolutionType exactSolution_;
