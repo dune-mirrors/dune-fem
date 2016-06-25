@@ -5,6 +5,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/std/utility.hh>
+#include <dune/fempy/py/referenceelements.hh>
 
 #include <dune/fempy/pybind11/pybind11.h>
 #include <dune/fempy/pybind11/operators.h>
@@ -121,6 +122,9 @@ PYBIND11_PLUGIN( common )
 
   registerFieldVector( module, std::make_integer_sequence< int, 10 >() );
   registerFieldMatrix<double>( module, std::make_integer_sequence< int, 10 >() );
+  Dune::FemPy::registerReferenceElement<double>( module, std::make_integer_sequence<int, 3+1>());
+  Dune::FemPy::registerReferenceElements<double>( module, std::make_integer_sequence<int, 3+1>());
+
 
   return module.ptr();
 }
