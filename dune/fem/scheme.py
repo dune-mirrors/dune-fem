@@ -14,12 +14,12 @@ from . import discretefunction
 
 myGenerator = generator.Generator("Scheme")
 
-def solve( scheme, rhs=None, target=None, dfname=None, assemble=True ):
-    if dfname == None:
-        dfname = scheme.name
+def solve( scheme, rhs=None, target=None, name=None, assemble=True ):
+    if name == None:
+        name = scheme.name
     if target == None:
         if scheme.target == None:
-            target = discretefunction.create(scheme._storage, scheme.space, name=dfname)
+            target = discretefunction.create(scheme._storage, scheme.space, name=name)
             target.interpolate( [0,]*scheme.dimRange )
         else:
             target = scheme.target
