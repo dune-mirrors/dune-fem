@@ -18,7 +18,7 @@ class Levels:
         return [en.level]
 
 class Partition:
-    def __init__(rank):
+    def __init__(self,rank):
         self.rank = rank
     def __call__(self,en,x):
         return [self.rank]
