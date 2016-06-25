@@ -84,7 +84,6 @@ class DuneUFLModel:
         elif dimDomain==3:
             self.cell = tetrahedron
         self.element = VectorElement("Lagrange", self.cell, 1, self.dimR)
-        self.vector = VectorElement("Lagrange", self.cell, 1, self.dimD)
         self.u_ = Coefficient(self.element)
         self.clear()
 
@@ -925,7 +924,9 @@ class DuneUFLModel:
         """Does make and imports the module.
         """
         name = self.make(grid,exact,name,header)
-        return importlib.import_module("dune.generated."+name)
+        module = importlib.import_module("dune.generated."+name)
+        # reload(module)
+        return module
 
     def make(self, grid, exact=None, name=None, header=None):
         """Create wrapper file.
@@ -1017,7 +1018,7 @@ class DuneUFLModel:
     def spatialCoordinate(self):
         """Initialise spatial coordinate (typically "x").
         """
-        return SpatialCoordinate(triangle)
+        return SpatialCoordinate(self.cell)
 
     def coefficient(self, name, dimR=0):
         """Initialise named coefficient (e.g. "velocity" or "diffusion).
