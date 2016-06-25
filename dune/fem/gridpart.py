@@ -6,6 +6,8 @@ from types import ModuleType
 
 from ..generator import generator
 from . import space
+from . import function
+from .. import femmpi
 
 import inspect
 
@@ -35,9 +37,15 @@ def writeVTK(grid,  name, celldata=[], pointdata=[], number=None):
     for df in pointdata:
         df.addToVTKWriter(vtk, vtk.PointData)
     if number == None:
-        vtk.write( name )
+        vtk.write(name)
     else:
-        vtk.write( name + str(number).zfill(4) )
+        vtk.write( name, number )
+    return vtk
+
+def levelFunction(self):
+    return self.localGridFunction("level", function.Levels())
+def partitionFunction(self):
+    return self.localGridFunction("rank", function.Partition(femmpi.comm.rank))
 
 myGenerator = generator.Generator("GridPart")
 
@@ -50,6 +58,8 @@ def addAttr(module, cls):
     setattr(cls, "_module", module)
     setattr(cls, "interpolate", interpolate )
     setattr(cls, "writeVTK", writeVTK )
+    setattr(cls, "levelFunction", levelFunction )
+    setattr(cls, "partitionFunction", partitionFunction )
 
 def get(gp, **parameters):
     """Create a gridpart module using the gridpart-database.
