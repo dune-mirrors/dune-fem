@@ -37,8 +37,10 @@
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 **************************************************************************/
-#ifndef ELLIPTIC_HH
-#define ELLIPTIC_HH
+#ifndef DUNE_FEM_SCHEMES_ELLIPTIC_HH
+#define DUNE_FEM_SCHEMES_ELLIPTIC_HH
+
+#include <cstddef>
 
 #include <dune/common/fmatrix.hh>
 
@@ -68,6 +70,8 @@ struct NoConstraints
   void applyToOperator( LinearOperator& linearOperator ) const
   {}
 };
+
+
 
 //! [Class for elliptic operator]
 template< class DomainDiscreteFunction, class RangeDiscreteFunction, class Model,
@@ -104,11 +108,8 @@ protected:
   typedef Dune::Fem::CachingQuadrature< GridPartType, 1 > FaceQuadratureType;
 
 public:
-  //! contructor
-  EllipticOperator ( const ModelType &model,
-                     const RangeDiscreteFunctionSpaceType &rangeSpace )
-  : model_( model )
-  , constraints_( model, rangeSpace )
+  EllipticOperator ( const ModelType &model, const RangeDiscreteFunctionSpaceType &rangeSpace )
+    : model_( model ) , constraints_( model, rangeSpace )
   {}
 
   // prepare the solution vector
@@ -120,8 +121,7 @@ public:
   }
 
   //! application operator
-  virtual void
-  operator() ( const DomainDiscreteFunctionType &u, RangeDiscreteFunctionType &w ) const;
+  virtual void operator() ( const DomainDiscreteFunctionType &u, RangeDiscreteFunctionType &w ) const;
 
 protected:
   const ModelType &model () const { return model_; }
@@ -132,8 +132,11 @@ private:
   ConstraintsType constraints_;
 };
 
+
+
 // DifferentiableEllipticOperator
 // ------------------------------
+
 //! [Class for linearizable elliptic operator]
 template< class JacobianOperator, class Model,
           class Constraints = Dune::DirichletConstraints< Model, typename JacobianOperator::RangeFunctionType::DiscreteFunctionSpaceType > >
@@ -187,6 +190,8 @@ protected:
   using BaseType::constraints;
 };
 
+
+
 // Implementation of EllipticOperator
 // ----------------------------------
 
@@ -199,14 +204,9 @@ void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model, Con
   const RangeDiscreteFunctionSpaceType &dfSpace = w.space();
 
   // iterate over grid
-  const IteratorType end = dfSpace.end();
-  for( IteratorType it = dfSpace.begin(); it != end; ++it )
+  for( const EntityType &entity : dfSpace )
   {
-    // get entity (here element)
-    const EntityType &entity = *it;
-
-    bool needsCalculation = model().init( entity );
-    if (! needsCalculation )
+    if( !model().init( entity ) )
       continue;
 
     // get elements geometry
@@ -249,35 +249,34 @@ void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model, Con
         //! [Compute local contribution of operator]
       }
     }
-    if (model().hasNeumanBoundary())
-    {
-      if ( !entity.hasBoundaryIntersections() )
-        continue;
 
+    if( model().hasNeumanBoundary() && entity.hasBoundaryIntersections() )
+    {
       const IntersectionIteratorType iitend = dfSpace.gridPart().iend( entity );
-      for( IntersectionIteratorType iit = dfSpace.gridPart().ibegin( entity ); iit != iitend; ++iit ) // looping over intersections
+      for( IntersectionIteratorType iit = dfSpace.gridPart().ibegin( entity ); iit != iitend; ++iit )
       {
         const IntersectionType &intersection = *iit;
-        if ( ! intersection.boundary() )
+        if( !intersection.boundary() )
           continue;
-        Dune::FieldVector<bool,RangeRangeType::dimension> components(true);
-        bool hasDirichletComponent = model().isDirichletIntersection( intersection, components);
 
-        const typename IntersectionType::Geometry &intersectionGeometry = intersection.geometry();
+        Dune::FieldVector<bool,RangeRangeType::dimension> components(true);
+        const bool hasDirichletComponent = model().isDirichletIntersection( intersection, components );
+
+        const auto &intersectionGeometry = intersection.geometry();
         FaceQuadratureType quadInside( dfSpace.gridPart(), intersection, quadOrder, FaceQuadratureType::INSIDE );
-        const size_t numQuadraturePoints = quadInside.nop();
-        for( size_t pt = 0; pt < numQuadraturePoints; ++pt )
+        const std::size_t numQuadraturePoints = quadInside.nop();
+        for( std::size_t pt = 0; pt < numQuadraturePoints; ++pt )
         {
-          const typename FaceQuadratureType::LocalCoordinateType &x = quadInside.localPoint( pt );
+          const auto &x = quadInside.localPoint( pt );
           double weight = quadInside.weight( pt ) * intersectionGeometry.integrationElement( x );
           DomainRangeType vu;
           uLocal.evaluate( quadInside[ pt ], vu );
           RangeRangeType alpha( 0 );
           model().alpha( quadInside[ pt ], vu, alpha );
           alpha *= weight;
-          for(int k = 0; k < RangeRangeType::dimension; ++k)
-            if ( hasDirichletComponent && components[k] )
-              alpha[k] = 0;
+          for( int k = 0; k < RangeRangeType::dimension; ++k )
+            if( hasDirichletComponent && components[ k ] )
+              alpha[ k ] = 0;
           wLocal.axpy( quadInside[ pt ], alpha );
         }
       }
@@ -288,6 +287,8 @@ void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model, Con
   // apply constraints, e.g. Dirichlet contraints, to the result
   constraints()( u, w );
 }
+
+
 
 // Implementation of DifferentiableEllipticOperator
 // ------------------------------------------------
@@ -303,8 +304,7 @@ void DifferentiableEllipticOperator< JacobianOperator, Model, Constraints >
   const DomainDiscreteFunctionSpaceType &domainSpace = jOp.domainSpace();
   const RangeDiscreteFunctionSpaceType  &rangeSpace = jOp.rangeSpace();
 
-  Dune::Fem::DiagonalStencil<DomainDiscreteFunctionSpaceType,RangeDiscreteFunctionSpaceType>
-    stencil( domainSpace, rangeSpace );
+  Dune::Fem::DiagonalStencil<DomainDiscreteFunctionSpaceType,RangeDiscreteFunctionSpaceType> stencil( domainSpace, rangeSpace );
   jOp.reserve(stencil);
   jOp.clear();
 
@@ -315,13 +315,9 @@ void DifferentiableEllipticOperator< JacobianOperator, Model, Constraints >
   std::vector< typename RangeLocalFunctionType::RangeType >         rphi( rangeSpace.blockMapper().maxNumDofs()*rangeBlockSize );
   std::vector< typename RangeLocalFunctionType::JacobianRangeType > rdphi( rangeSpace.blockMapper().maxNumDofs()*rangeBlockSize );
 
-  const IteratorType end = rangeSpace.end();
-  for( IteratorType it = rangeSpace.begin(); it != end; ++it )
+  for( const EntityType &entity : rangeSpace )
   {
-    const EntityType &entity = *it;
-
-    bool needsCalculation = model().init( entity );
-    if (! needsCalculation )
+    if( !model().init( entity ) )
       continue;
 
     const GeometryType &geometry = entity.geometry();
@@ -331,7 +327,7 @@ void DifferentiableEllipticOperator< JacobianOperator, Model, Constraints >
 
     const DomainBasisFunctionSetType &domainBaseSet = jLocal.domainBasisFunctionSet();
     const RangeBasisFunctionSetType &rangeBaseSet  = jLocal.rangeBasisFunctionSet();
-    const unsigned int domainNumBasisFunctions = domainBaseSet.size();
+    const std::size_t domainNumBasisFunctions = domainBaseSet.size();
 
     QuadratureType quadrature( entity, domainSpace.order()+rangeSpace.order() );
     const size_t numQuadraturePoints = quadrature.nop();
@@ -357,7 +353,7 @@ void DifferentiableEllipticOperator< JacobianOperator, Model, Constraints >
 
       RangeRangeType aphi( 0 );
       RangeJacobianRangeType adphi( 0 );
-      for( unsigned int localCol = 0; localCol < domainNumBasisFunctions; ++localCol )
+      for( std::size_t localCol = 0; localCol < domainNumBasisFunctions; ++localCol )
       {
         // if mass terms or right hand side is present
         model().linSource( u0, jacU0, quadrature[ pt ], phi[ localCol ], dphi[localCol], aphi );
@@ -371,37 +367,35 @@ void DifferentiableEllipticOperator< JacobianOperator, Model, Constraints >
       //! [Assembling the local matrix]
     }
 
-    if (model().hasNeumanBoundary())
+    if( model().hasNeumanBoundary() && entity.hasBoundaryIntersections() )
     {
-      if ( !entity.hasBoundaryIntersections() )
-        continue;
-
       const IntersectionIteratorType iitend = rangeSpace.gridPart().iend( entity );
       for( IntersectionIteratorType iit = rangeSpace.gridPart().ibegin( entity ); iit != iitend; ++iit ) // looping over intersections
       {
         const IntersectionType &intersection = *iit;
-        if ( ! intersection.boundary() )
+        if( !intersection.boundary() )
           continue;
-        Dune::FieldVector<bool,RangeRangeType::dimension> components(true);
-        bool hasDirichletComponent = model().isDirichletIntersection( intersection, components);
 
-        const typename IntersectionType::Geometry &intersectionGeometry = intersection.geometry();
+        Dune::FieldVector<bool,RangeRangeType::dimension> components(true);
+        bool hasDirichletComponent = model().isDirichletIntersection( intersection, components );
+
+        const auto &intersectionGeometry = intersection.geometry();
         FaceQuadratureType quadInside( rangeSpace.gridPart(), intersection, domainSpace.order()+rangeSpace.order(), FaceQuadratureType::INSIDE );
-        const size_t numQuadraturePoints = quadInside.nop();
-        for( size_t pt = 0; pt < numQuadraturePoints; ++pt )
+        const std::size_t numQuadraturePoints = quadInside.nop();
+        for( std::size_t pt = 0; pt < numQuadraturePoints; ++pt )
         {
-          const typename FaceQuadratureType::LocalCoordinateType &x = quadInside.localPoint( pt );
-          double weight = quadInside.weight( pt ) * intersectionGeometry.integrationElement( x );
+          const auto &x = quadInside.localPoint( pt );
+          const double weight = quadInside.weight( pt ) * intersectionGeometry.integrationElement( x );
           DomainRangeType u0;
           uLocal.evaluate( quadInside[ pt ], u0 );
           domainBaseSet.evaluateAll( quadInside[ pt ], phi );
-          for( unsigned int localCol = 0; localCol < domainNumBasisFunctions; ++localCol )
+          for( std::size_t localCol = 0; localCol < domainNumBasisFunctions; ++localCol )
           {
             RangeRangeType alpha( 0 );
             model().linAlpha( u0,quadInside[ pt ], phi[ localCol ], alpha );
-            for(int k = 0; k < RangeRangeType::dimension; ++k)
-              if ( hasDirichletComponent && components[k] )
-                alpha[k] = 0;
+            for( int k = 0; k < RangeRangeType::dimension; ++k )
+              if( hasDirichletComponent && components[ k ] )
+                alpha[ k ] = 0;
             jLocal.column( localCol ).axpy( phi, alpha, weight );
           }
         }
@@ -414,4 +408,4 @@ void DifferentiableEllipticOperator< JacobianOperator, Model, Constraints >
   jOp.communicate();
 }
 
-#endif // #ifndef ELLIPTIC_HH
+#endif // #ifndef DUNE_FEM_SCHEMES_ELLIPTIC_HH
