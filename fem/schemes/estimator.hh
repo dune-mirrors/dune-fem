@@ -80,8 +80,6 @@ public:
   typedef typename IntersectionIteratorType :: Intersection IntersectionType;
 
   typedef typename GridType :: template Codim< 0 > :: Entity ElementType;
-  typedef typename GridType :: template Codim< 0 > :: EntityPointer
-    ElementPointerType;
   typedef typename ElementType::Geometry GeometryType;
   static const int dimension = GridType :: dimension;
 
@@ -290,7 +288,11 @@ protected:
                               const ElementType &inside,
                               const LocalFunctionType &uInside )
   {
+#if DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
+    const ElementType &outside = intersection.outside();
+#else // #if DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
     const ElementType outside = Dune::Fem::make_entity( intersection.outside() );
+#endif // #else // #if DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
 
     const int insideIndex = indexSet_.index( inside );
     const int outsideIndex = indexSet_.index( outside );
