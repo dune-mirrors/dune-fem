@@ -37,11 +37,11 @@
   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 **************************************************************************/
-#ifndef ELLIPT_FEMSCHEME_HH
-#define ELLIPT_FEMSCHEME_HH
+#ifndef DUNE_FEM_SCHEMES_FEMSCHEME_HH
+#define DUNE_FEM_SCHEMES_FEMSCHEME_HH
 
-// iostream includes
 #include <iostream>
+#include <memory>
 
 // include discrete function space
 #include <dune/fem/space/lagrange.hh>
@@ -71,7 +71,7 @@
  * - Model: description of the data functions and methods required for the
  *          elliptic operator (massFlux, diffusionFlux)
  *******************************************************************************/
-template < class Space, class Model, SolverType solver >
+template< class Space, class Model, SolverType solver >
 class FemScheme
 {
 public:
@@ -104,9 +104,6 @@ public:
   //! (use default here, i.e. LagrangeInterpolation)
   typedef Dune::Fem::RestrictProlongDefault< DiscreteFunctionType >  RestrictionProlongationType;
 
-  //! type of adaptation manager handling adapation and DoF compression
-  typedef Dune::Fem::AdaptationManager< GridType, RestrictionProlongationType > AdaptationManagerType;
-
   //! type of error estimator
   typedef Estimator< DiscreteFunctionType, Model > EstimatorType;
 
@@ -114,49 +111,35 @@ public:
   typedef DiscreteFunctionType SolutionType;
   /*********************************************************/
 
-  FemScheme( const DiscreteFunctionSpaceType &space,
-             const ModelType& implicitModel,
-             const std::string &prefix);
-  ~FemScheme();
-  const ExactSolutionType& exactSolution() const { return exactSolution_; }
+  FemScheme ( const DiscreteFunctionSpaceType &space, const ModelType &model, const std::string &name );
 
-  void prepare();
-  void prepare(const DiscreteFunctionType &add);
-  void operator()(const DiscreteFunctionType &arg, DiscreteFunctionType &dest)
-  { (*implicitOperator_)(arg,dest); }
+  const ExactSolutionType &exactSolution() const { return exactSolution_; }
+
+  void prepare ();
+  void prepare ( const DiscreteFunctionType &add );
+
+  void operator() ( const DiscreteFunctionType &arg, DiscreteFunctionType &dest ) { (*implicitOperator_)( arg, dest ); }
+
   void solve ( DiscreteFunctionType &solution, bool assemble );
 
   //! mark elements for adaptation
-  bool mark ( const double tolerance )
-  {
-    return estimator_.mark( tolerance );
-  }
+  bool mark ( double tolerance ) { return estimator_.mark( tolerance ); }
 
   //! calculate error estimator
-  double estimate(const DiscreteFunctionType &solution)
-  {
-    return estimator_.estimate( solution );
-  }
+  double estimate ( const DiscreteFunctionType &solution ) { return estimator_.estimate( solution ); }
 
-  const std::string &name()
-  {
-    return prefix_;
-  }
+  const std::string &name () { return name_; }
 
-  const DiscreteFunctionSpaceType &space() const
-  {
-    return discreteSpace_;
-  }
+  const GridPartType &gridPart () const { return space().gridPart(); }
+  const DiscreteFunctionSpaceType &space( ) const { return space_; }
 
 protected:
-  const ModelType& implicitModel_;   // the mathematical model
-  const std::string prefix_;
-  GridPartType  &gridPart_;         // grid part(view), e.g. here the leaf grid the discrete space is build with
-  const DiscreteFunctionSpaceType& discreteSpace_; // discrete function space
+  const ModelType &model_;   // the mathematical model
+  const std::string name_;
+  const DiscreteFunctionSpaceType &space_; // discrete function space
   DiscreteFunctionType rhs_;        // the right hand side
-  Dune::Fem::DifferentiableOperator< LinearOperatorType > *implicitOperator_;
-  Dune::Fem::Operator<DiscreteFunctionType,DiscreteFunctionType> *linearOperator_;  // the linear operator (i.e. jacobian of the implicit)
-  const double solverEps_ ; // eps for linear solver
+  std::unqiue_ptr< Dune::Fem::DifferentiableOperator< LinearOperatorType > > implicitOperator_;
+  std::unique_ptr< Dune::Fem::Operator< DiscreteFunctionType,DiscreteFunctionType > > linearOperator_;
   EstimatorType estimator_; // estimator for residual error
   const ExactSolutionType exactSolution_;
 };
@@ -165,67 +148,51 @@ protected:
 // DataOutputParameters
 // --------------------
 
-template < class Space, class Model, SolverType solver >
-FemScheme<Space, Model, solver>::
-FemScheme( const DiscreteFunctionSpaceType &space,
-           const ModelType& implicitModel,
-           const std::string &prefix)
-    : implicitModel_( implicitModel ),
-      prefix_( prefix ),
-      gridPart_( space.gridPart() ),
-      discreteSpace_( space ),
-      rhs_( "rhs", discreteSpace_ ),
-      // the elliptic operator (implicit)
-      implicitOperator_(
-          new DifferentiableEllipticOperator< LinearOperatorType, ModelType >
-              ( implicitModel_, discreteSpace_ ) ),
-      // create linear operator (domainSpace,rangeSpace)
-      linearOperator_( new LinearOperatorType( "assembled elliptic operator", discreteSpace_, discreteSpace_ ) ),
-      // tolerance for iterative solver
-      solverEps_( Dune::Fem::Parameter::getValue< double >( "poisson.solvereps", 1e-8 ) ),
-      estimator_( discreteSpace_, implicitModel ),
-      exactSolution_( implicitModel_.exactSolution(gridPart_) )
-{
-}
-template < class Space, class Model, SolverType solver >
-FemScheme<Space, Model, solver>::
-~FemScheme()
-{
-  std::cout << "in FemScheme destructor" << std::endl;
-  delete implicitOperator_;
-  delete linearOperator_;
-}
+template< class Space, class Model, SolverType solver >
+FemScheme< Space, Model, solver >::FemScheme ( const DiscreteFunctionSpaceType &space, const ModelType &model, const std::string &name )
+  : model_( model ),
+    name_( name ),
+    space_( space ),
+    rhs_( "rhs", space_ ),
+    // the elliptic operator (implicit)
+    implicitOperator_( new DifferentiableEllipticOperator< LinearOperatorType, ModelType >( model_, space_ ) ),
+    // create linear operator (domainSpace,rangeSpace)
+    linearOperator_( new LinearOperatorType( "assembled elliptic operator", space_, space_ ) ),
+    estimator_( space_, model ),
+    exactSolution_( model_.exactSolution( gridPart() ) )
+{}
+
 
 //! setup the right hand side
-template < class Space, class Model, SolverType solver >
-void FemScheme<Space, Model, solver>::
-prepare()
+template< class Space, class Model, SolverType solver >
+void FemScheme< Space, Model, solver >::prepare ()
 {
   typedef DifferentiableEllipticOperator< LinearOperatorType, ModelType > OperatorType;
   // assemble rhs
-  assembleRHS ( implicitModel_, implicitModel_.rightHandSide(gridPart_), implicitModel_.neumanBoundary(gridPart_), rhs_ );
+  assembleRHS( model_, model_.rightHandSide( gridPart() ), model_.neumanBoundary( gridPart() ), rhs_ );
 
   // set boundary values to the rhs - since implicitOperator is of
   // abstract base type we need to cast here
-  dynamic_cast<OperatorType&>(*implicitOperator_).prepare( implicitModel_.dirichletBoundary(gridPart_), rhs_ );
+  dynamic_cast< OperatorType & >( *implicitOperator_ ).prepare( model_.dirichletBoundary( gridPart() ), rhs_ );
 }
-template < class Space, class Model, SolverType solver >
-void FemScheme<Space, Model, solver>::
-prepare(const DiscreteFunctionType &add)
+
+
+template< class Space, class Model, SolverType solver >
+void FemScheme< Space, Model, solver >::prepare ( const DiscreteFunctionType &add )
 {
   prepare();
   rhs_ += add;
 }
 
+
 template < class Space, class Model, SolverType solver >
-void FemScheme<Space, Model, solver>::
-solve ( DiscreteFunctionType &solution, bool assemble )
+void FemScheme< Space, Model, solver >::solve ( DiscreteFunctionType &solution, bool assemble )
 {
   typedef DifferentiableEllipticOperator< LinearOperatorType, ModelType > OperatorType;
   typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
   typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
-  InverseOperatorType invOp( dynamic_cast<OperatorType&>(*implicitOperator_) );
+  InverseOperatorType invOp( dynamic_cast< OperatorType & >( *implicitOperator_ ) );
   invOp( rhs_, solution );
 }
 
-#endif // end #if ELLIPT_FEMSCHEME_HH
+#endif // #ifndef DUNE_FEM_SCHEMES_FEMSCHEME_HH
