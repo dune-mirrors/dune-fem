@@ -79,6 +79,11 @@ namespace Dune
       cls.def( "position", &Geometry::global );
       cls.def( "integrationElement", &Geometry::integrationElement );
 
+      cls.def_property_readonly( "domain", [](Geometry &geo) ->
+          const decltype(Dune::ReferenceElements<typename Geometry::ctype,Geometry::dimension>::general(geo.type()))&
+        { return Dune::ReferenceElements<typename Geometry::ctype,Geometry::dimension>::general(geo.type()); },
+        pybind11::return_value_policy::reference);
+
       return cls;
     }
 
