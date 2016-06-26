@@ -100,9 +100,6 @@ def create(scheme, space_or_target, model, name, **parameters):
             module.Scheme.__init__(self,space,model,name)
             self.target = target
 
-    if hasattr(model, 'wrap'):
-        ret = ExtendedScheme(space, model.wrap(), name, target)
-    else:
-        ret = ExtendedScheme(space, model, name, target)
+    ret = ExtendedScheme(space, model, name, target)
 
     return ret
