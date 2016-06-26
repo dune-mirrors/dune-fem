@@ -9,55 +9,24 @@
 #include <dune/fem/schemes/diffusionmodel.hh>
 #include "ModelTmp.hh"
 
-// see pybind11 documentation on smart pointers
-PYBIND11_DECLARE_HOLDER_TYPE(T, std::shared_ptr<T>);
-
 typedef #GRIDPARTCHOICE GridPart;
 #PYRANGETYPE
 
-namespace ModelTmp
-{
-  struct PyModel : public Model< GridPart#PYTEMPLATE >
-  {
-    typedef PyModel This;
-    typedef DiffusionModelWrapper<This> Wrapper;
-    typedef typename Wrapper::Base BaseModel;
-    PyModel()
-    {}
-    ~PyModel()
-    {
-      std::cout << "In PyModel destructor" << std::endl;
-    }
-    int getDimRange()
-    {
-      return #DIMRANGE;
-    }
-  };
-  typedef DiffusionModelWrapper<PyModel> ModelWrapperType;
-  std::shared_ptr<ModelWrapperType> wrap(std::shared_ptr<PyModel> &model)
-  {
-    return make_shared<ModelWrapperType>(model);
-  }
-  int getDimRange(std::shared_ptr<PyModel> &model)
-  {
-    return #DIMRANGE;
-  }
-}
-
 PYBIND11_PLUGIN(#MODELNAME) {
-  namespace py = pybind11;
-  using namespace ModelTmp;
-  py::module m("#MODELNAME", "pybind model plugin");
+  typedef ModelTmp::Model< GridPart#PYTEMPLATE > ModelType;
+  typedef DiffusionModelWrapper<ModelType> ModelWrapperType;
   typedef typename ModelWrapperType::Base ModelBase;
-  py::class_< PyModel, std::shared_ptr< PyModel > >( m, "get" )
+  namespace py = pybind11;
+  py::module m("#MODELNAME", "pybind model plugin");
+  // export abstract base class
+  if (!pybind11::already_registered<ModelBase>())
+    py::class_< ModelBase >( m, "ModelBase" );
+  // actual wrapper class for model derived from abstract base
+  py::class_< ModelWrapperType >( m, "get", py::base< ModelBase >() )
   .def( py::init() )
-  .def_property_readonly( "dimRange", &getDimRange )
-  .def( "wrap", &wrap )
+  .def_property_readonly( "dimRange", [](ModelWrapperType&) { return #DIMRANGE; } )
   #PYSETCOEFFICIENT
   ;
-  if (!pybind11::already_registered<ModelBase>())
-    py::class_< ModelBase, std::shared_ptr< ModelBase > >( m, "ModelBase" );
-  py::class_< ModelWrapperType, std::shared_ptr< ModelWrapperType > >( m, "ModelWrapper", py::base< ModelBase >() )
-  .def_property_readonly( "dimRange", &getDimRange );
+
   return m.ptr();
 }
