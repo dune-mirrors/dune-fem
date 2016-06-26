@@ -89,7 +89,7 @@ def get(grid, **parameters):
     gridpart.addAttr(module, module.LeafGrid)
     return module
 
-def leafGrid(dgf, grid, **parameters):
+def leafGrid(constructor, grid, **parameters):
     """Get a LeafGrid
 
     Call get() and create a C++ grid class (see grid.hh).
@@ -119,7 +119,7 @@ def leafGrid(dgf, grid, **parameters):
     else:
         raise TypeError("leafGrid: 'grid' must be either a string or a module")
 
-    ret = module.LeafGrid(module.readDGF(dgf))
+    ret = module.LeafGrid(module.reader(constructor))
     return ret
 
 #############################################

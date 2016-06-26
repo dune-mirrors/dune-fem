@@ -6,6 +6,7 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/std/utility.hh>
 #include <dune/fempy/py/referenceelements.hh>
+#include <dune/fempy/py/common/common.hh>
 
 #include <dune/fempy/pybind11/pybind11.h>
 #include <dune/fempy/pybind11/operators.h>
@@ -115,7 +116,6 @@ static void registerFieldVector ( pybind11::handle scope, std::integer_sequence<
   std::ignore = std::make_tuple( (registerFieldVector( scope, std::integral_constant< int, size >() ), size)... );
 }
 
-
 PYBIND11_PLUGIN( common )
 {
   pybind11::module module( "common" );
@@ -125,6 +125,10 @@ PYBIND11_PLUGIN( common )
   Dune::FemPy::registerReferenceElement<double>( module, std::make_integer_sequence<int, 3+1>());
   Dune::FemPy::registerReferenceElements<double>( module, std::make_integer_sequence<int, 3+1>());
 
+  pybind11::enum_< Dune::FemPy::Reader > reader( module, "reader" );
+  reader.value( "dgf", Dune::FemPy::Reader::dgf );
+  reader.value( "dgfString", Dune::FemPy::Reader::dgfString );
+  reader.value( "gmsh", Dune::FemPy::Reader::gmsh );
 
   return module.ptr();
 }
