@@ -53,10 +53,21 @@
 
 // Estimator
 // ---------
-template< class DiscreteFunction, class Model >
+template< class DiscreteFunction, class Model, bool>
 class Estimator
 {
-  typedef Estimator< DiscreteFunction, Model > ThisType;
+  public:
+  explicit Estimator ( const typename DiscreteFunction::DiscreteFunctionSpaceType &dfSpace, const Model& model )
+  {}
+  double estimate ( const DiscreteFunction &uh )
+  { return 0.; }
+  bool mark ( const double tolerance ) const
+  { return false; }
+};
+template< class DiscreteFunction, class Model >
+class Estimator< DiscreteFunction, Model, true >
+{
+  typedef Estimator< DiscreteFunction, Model, true > ThisType;
 
 public:
   typedef DiscreteFunction DiscreteFunctionType;
@@ -105,7 +116,7 @@ private:
 
 public:
   static_assert( static_cast< unsigned int >( GridType::dimension ) == static_cast< unsigned int >( GridType::dimensionworld ),
-                 "the estimator is not implemented for surfaces problems" );
+                  "the estimator is not implemented for surfaces problems" );
 
   explicit Estimator ( const DiscreteFunctionSpaceType &dfSpace, const ModelType& model )
   : dfSpace_( dfSpace ),

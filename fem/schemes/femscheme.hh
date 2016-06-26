@@ -105,7 +105,7 @@ public:
   typedef Dune::Fem::RestrictProlongDefault< DiscreteFunctionType >  RestrictionProlongationType;
 
   //! type of error estimator
-  typedef Estimator< DiscreteFunctionType, Model > EstimatorType;
+  typedef Estimator< DiscreteFunctionType, Model, GridPartType::dimension == GridPartType::dimensionworld > EstimatorType;
 
   static const int dimRange = FunctionSpaceType::dimRange;
   typedef DiscreteFunctionType SolutionType;
