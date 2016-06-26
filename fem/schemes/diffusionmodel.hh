@@ -268,7 +268,7 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   typedef typename Base::EntityType EntityType;
   typedef typename Base::IntersectionType IntersectionType;
 
-  DiffusionModelWrapper(const std::shared_ptr<ModelImpl> &impl) : impl_(impl) {}
+  DiffusionModelWrapper() : impl_() {}
   ~DiffusionModelWrapper()
   {
     std::cout << "In DiffusionModelWrapper destructor" << std::endl;
@@ -317,12 +317,16 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   {
     return impl().init(entity);
   }
-  private:
   const ModelImpl &impl() const
   {
-    return *impl_;
+    return impl_;
   }
-  const std::shared_ptr<ModelImpl> impl_;
+  ModelImpl &impl()
+  {
+    return impl_;
+  }
+  private:
+  ModelImpl impl_;
 };
 
 #endif // #ifndef ELLIPTC_MODEL_HH
