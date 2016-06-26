@@ -14,6 +14,25 @@ from . import discretefunction
 
 myGenerator = generator.Generator("Scheme")
 
+def solve( scheme, rhs=None, target=None, name=None, assemble=True ):
+    if name == None:
+        if hasattr(scheme, 'name'):
+            name = scheme.name
+        else:
+            name == "no name"
+    if target == None:
+        if scheme.target == None:
+            target = discretefunction.create(scheme._storage, scheme.space, name=name)
+            target.interpolate( [0,]*scheme.dimRange )
+        else:
+            target = scheme.target
+    if rhs == None:
+        scheme._prepare()
+    else:
+        scheme._prepare(rhs)
+    scheme._solve(target,assemble)
+    return target
+
 def getModule(scheme, **parameters):
     """Create a scheme module using the scheme-database.
 
@@ -34,6 +53,8 @@ def getModule(scheme, **parameters):
 
     This would correspond to calling get("FemScheme", grid2d, 2), where grid2d is a python grid module.
     """
+    module = myGenerator.getModule(scheme, **parameters)
+    setattr(module.Scheme, "solve", solve)
     return myGenerator.getModule(scheme, **parameters)
 
 def get(scheme, space, grid, dimR, **parameters):
