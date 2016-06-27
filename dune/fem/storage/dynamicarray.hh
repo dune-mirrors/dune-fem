@@ -53,7 +53,7 @@ namespace Dune
   };
 
   //! allocator for simple structures like int, double and float
-  //! using the C malloc,free, and realloc
+  //! using the C malloc, free and realloc
   template <typename T>
   class PODArrayAllocator : public std::allocator< T >
   {
@@ -133,10 +133,10 @@ namespace Dune
   template<class ArrayType>
   struct SpecialArrayFeatures;
 
-  /** \brief Static Array Wrapper for simple C Vectors like double* and
-    int*. This also works as base class for the DynamicArray which is used
-    to store the degrees of freedom.
-  */
+  /** \brief An implementation of DenseVector which uses a C-array of fixed size as storage
+    *
+    * \tparam T is the field type (use float, double, complex, etc)
+    */
   template <class T>
   class StaticArray : public DenseVector< StaticArray< T > >
   {
@@ -166,14 +166,14 @@ namespace Dune
       return size_;
     }
 
-    //! \brief random access operator
+    //! random access operator
     value_type& operator [] ( size_type i )
     {
       assert( i < size_ );
       return vec_[i];
     }
 
-    //! \brief random access operator
+    //! random access operator
     const value_type& operator [] ( size_type i ) const
     {
       assert( i < size_ );
@@ -223,22 +223,16 @@ namespace Dune
     }
 
   protected:
-    // pointer to memory
     DofStorageType vec_;
-
-    // size of array
     size_type size_;
   };
 
-  /*!
-   DynamicArray is the array that a discrete functions sees. If a discrete
-   function is created, then it is signed in by the function space and the
-   return value is a MemObject. This MemObject contains a DynamicArrayMemory
-   which is then as reference given to the DynamicArray of the DiscreteFunction.
-   The DynamicArray is only a wrapper class for DynamicArrayMemory where we dont know
-   the type of the dofs only the size of one dof.
-   Therefore we have this wrapper class for cast to the right type.
-  */
+
+  /** \brief An implementation of DenseVector which uses a C-array of dynamic size as storage
+    *
+    * \tparam T is the field type (use float, double, complex, etc)
+    * \tparam Allocator is the allocator type
+    */
   template <class T, class Allocator>
   class DynamicArray : public StaticArray<T>
   {
@@ -346,8 +340,7 @@ namespace Dune
 
     void doResize( size_type nsize, bool initializeNewValues, const value_type& value = value_type() )
     {
-      // just set size if nsize is smaller than memSize but larger the
-      // half of memSize
+      // just set size if nsize is smaller than memSize but larger the half of memSize
       if( (nsize <= memSize_) && (nsize >= (memSize_/2)) )
       {
         size_ = nsize;
@@ -367,13 +360,11 @@ namespace Dune
       size_ = nsize;
     }
 
-    //! reserve vector size with new mSize
-    //! if mSize is smaller then actual memSize,
-    //! then nothing is done
+    //! reserve vector size with new mSizeif
+    //! if mSize is smaller then actual memSize, then nothing is done
     void reserve ( size_type mSize )
     {
-      // check whether we already have the mem size
-      // and if just do nothing
+      // check whether we already have the mem size and if just do nothing
       if( mSize <= memSize_ )
       {
         return ;
@@ -410,9 +401,6 @@ namespace Dune
       else
       {
         assert( nMemSize > 0 );
-        // nsize is the minimum needed size of the vector
-        // we double this size to reserve some memory and minimize
-        // reallocations
         assert( vec_ );
 
         // reallocate memory
@@ -439,16 +427,12 @@ namespace Dune
       memSize_ = 0;
     }
 
-    // make new memory memFactor larger
     double memoryFactor_;
-
-    // actual capacity of array
     size_type memSize_;
-
     AllocatorType allocator_;
   };
 
-  /** \brief Specialization of SpecialArrayFeatures for DynamicArray */
+  //! Specialization of SpecialArrayFeatures for DynamicArray
   template<class ValueType>
   struct SpecialArrayFeatures<DynamicArray<ValueType> >
   {
