@@ -1,7 +1,6 @@
-#ifndef DUNE_FEM_ARRAYS_HH
-#define DUNE_FEM_ARRAYS_HH
+#ifndef DUNE_FEM_DYNAMICARRAY_HH
+#define DUNE_FEM_DYNAMICARRAY_HH
 
-//- System includes
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -9,15 +8,10 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
-#include <string>
 #include <type_traits>
 
-//- Dune includes
-#include <dune/common/genericiterator.hh>
-#include <dune/common/exceptions.hh>
-#include <dune/common/version.hh>
-
-#include <dune/fem/io/streams/streams.hh>
+#include <dune/common/densevector.hh>
+#include <dune/common/ftraits.hh>
 
 namespace Dune
 {
@@ -100,7 +94,7 @@ namespace Dune
   template <class T, class AllocatorType = typename std::conditional< std::is_pod< T > :: value,
                                              PODArrayAllocator< T >,
                                              StandardArrayAllocator< T > > :: type >
-  class MutableArray;
+  class DynamicArray;
 
   } // end namespace Fem
 
@@ -121,14 +115,14 @@ namespace Dune
     typedef typename FieldTraits< K >::real_type real_type;
   };
 
-  // specialization of DenseMatVecTraits for MutablecArray
+  // specialization of DenseMatVecTraits for DynamicArray
   template< class K >
-  struct DenseMatVecTraits< Fem::MutableArray< K > > : public DenseMatVecTraits< Fem::StaticArray< K > >
+  struct DenseMatVecTraits< Fem::DynamicArray< K > > : public DenseMatVecTraits< Fem::StaticArray< K > >
   {
   };
 
   template< class K >
-  struct FieldTraits< Fem::MutableArray< K > > : public FieldTraits< Fem::StaticArray< K > >
+  struct FieldTraits< Fem::DynamicArray< K > > : public FieldTraits< Fem::StaticArray< K > >
   {
   };
 
@@ -140,7 +134,7 @@ namespace Dune
   struct SpecialArrayFeatures;
 
   /** \brief Static Array Wrapper for simple C Vectors like double* and
-    int*. This also works as base class for the MutableArray which is used
+    int*. This also works as base class for the DynamicArray which is used
     to store the degrees of freedom.
   */
   template <class T>
@@ -237,21 +231,21 @@ namespace Dune
   };
 
   /*!
-   MutableArray is the array that a discrete functions sees. If a discrete
+   DynamicArray is the array that a discrete functions sees. If a discrete
    function is created, then it is signed in by the function space and the
-   return value is a MemObject. This MemObject contains a MutableArrayMemory
-   which is then as reference given to the MutableArray of the DiscreteFunction.
-   The MutableArray is only a wrapper class for MutableArrayMemory where we dont know
+   return value is a MemObject. This MemObject contains a DynamicArrayMemory
+   which is then as reference given to the DynamicArray of the DiscreteFunction.
+   The DynamicArray is only a wrapper class for DynamicArrayMemory where we dont know
    the type of the dofs only the size of one dof.
    Therefore we have this wrapper class for cast to the right type.
   */
   template <class T, class Allocator>
-  class MutableArray : public StaticArray<T>
+  class DynamicArray : public StaticArray<T>
   {
   public:
     typedef Allocator  AllocatorType;
   protected:
-    typedef MutableArray<T, AllocatorType> ThisType;
+    typedef DynamicArray<T, AllocatorType> ThisType;
     typedef StaticArray<T> BaseType;
 
     using BaseType :: size_ ;
@@ -264,7 +258,7 @@ namespace Dune
     typedef typename BaseType::value_type value_type;
 
     //! copy constructor
-    MutableArray(const ThisType& other)
+    DynamicArray(const ThisType& other)
       : BaseType(0, nullptr)
       , memoryFactor_(1.0)
       , memSize_(0)
@@ -274,7 +268,7 @@ namespace Dune
     }
 
     //! create array of length size with initialized values
-    explicit MutableArray(size_type size,
+    explicit DynamicArray(size_type size,
                           const value_type& value,
                           AllocatorType allocator = AllocatorType() )
       : BaseType(size, (size == 0) ? nullptr : allocator.allocate(size) )
@@ -289,7 +283,7 @@ namespace Dune
     }
 
     //! create array of length size without initializing the values
-    explicit MutableArray(size_type size = 0,
+    explicit DynamicArray(size_type size = 0,
                           AllocatorType allocator = AllocatorType() )
       : BaseType(size, (size == 0) ? nullptr : allocator.allocate(size) )
       , memoryFactor_(1.0)
@@ -306,7 +300,7 @@ namespace Dune
     }
 
     //! destructor
-    ~MutableArray()
+    ~DynamicArray()
     {
       freeMemory();
     }
@@ -454,11 +448,11 @@ namespace Dune
     AllocatorType allocator_;
   };
 
-  /** \brief Specialization of SpecialArrayFeatures for MutableArray */
+  /** \brief Specialization of SpecialArrayFeatures for DynamicArray */
   template<class ValueType>
-  struct SpecialArrayFeatures<MutableArray<ValueType> >
+  struct SpecialArrayFeatures<DynamicArray<ValueType> >
   {
-    typedef MutableArray<ValueType> ArrayType;
+    typedef DynamicArray<ValueType> ArrayType;
     typedef typename ArrayType::size_type size_type;
 
     static size_type used(const ArrayType & array)
@@ -508,4 +502,4 @@ namespace Dune
   } // namespace Fem
 
 } // namespace Dune
-#endif // #ifndef DUNE_FEM_ARRAYS_HH
+#endif // #ifndef DUNE_FEM_DYNAMICARRAY_HH

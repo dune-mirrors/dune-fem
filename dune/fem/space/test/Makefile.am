@@ -23,7 +23,6 @@ check_PROGRAMS = $(ADAPTPROG) \
 		 adapt \
 		 adapt_combinedspace_pointbased \
 		 adapt_combinedspace_variablebased \
-		 arraytest \
 		 combinedspacetest \
 		 dgcomm \
 		 dgcomm_cached \
@@ -51,7 +50,6 @@ functiontupleadapt_SOURCES = functiontupleadapt.cc
 lagrangeglobalrefine_SOURCES = lagrangeglobalrefine.cc
 legendretest_SOURCES = legendretest.cc
 localadapter_SOURCES = localadapter.cc
-arraytest_SOURCES = arraytest.cc
 dgcomm_SOURCES = dgcomm.cc
 dgcomm_cached_SOURCES = dgcomm.cc
 dgcomm_CPPFLAGS = $(AM_CPPFLAGS) -UGRIDDIM -DGRIDDIM=3 -UWORLDDIM -DWORLDDIM=3 -DWANT_CACHED_COMM_MANAGER=0

@@ -16,7 +16,6 @@ set( DEFAULTFLAGS "GRIDDIM=${GRIDDIM};${GRIDTYPE};DIMRANGE=3;POLORDER=2;WANT_GRA
 
 set( TESTS
   adapt
-  arraytest
   combinedspacetest
   functiontupleadapt
   hierarchicspace

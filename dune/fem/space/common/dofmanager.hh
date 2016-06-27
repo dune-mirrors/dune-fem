@@ -13,17 +13,17 @@
 #include <dune/alugrid/common/interfaces.hh>
 #endif
 
+#include <dune/fem/gridpart/common/indexset.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/io/streams/standardstreams.hh>
 #include <dune/fem/misc/gridobjectstreams.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
-#include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/datacollector.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
+#include <dune/fem/storage/dynamicarray.hh>
 #include <dune/fem/storage/singletonlist.hh>
-#include <dune/fem/gridpart/common/indexset.hh>
 
 #include <dune/grid/common/datahandleif.hh>
 #if HAVE_DUNE_ALUGRID
@@ -47,7 +47,7 @@ namespace Dune
 
     /** \brief SpecialArrayFeatures is a wrapper class to extend some array
         classes with some special features needed for the MemObject.
-        There exsist a specialization for MutableArray and PetscVector.
+        There exsist a specialization for DynamicArray and PetscVector.
      */
     template<class ArrayType>
     struct SpecialArrayFeatures

@@ -4,11 +4,10 @@
 #include <iostream>
 #include <type_traits>
 
-#include <dune/common/stdstreams.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/fmatrix.hh>
 
-#include <dune/fem/space/common/arrays.hh>
+#include <dune/fem/storage/dynamicarray.hh>
 
 template <class Vector>
 void checkVector( Vector& vector , std::size_t rows, std::size_t cols )
@@ -50,7 +49,7 @@ try {
   typedef Dune::FieldVector< double , 1 > ValueType;
 
   {
-    Dune::Fem::MutableArray< Dune::Fem::MutableArray< ValueType > > vector;
+    Dune::Fem::DynamicArray< Dune::Fem::DynamicArray< ValueType > > vector;
     vector.setMemoryFactor( 1.1 );
 
     checkVector( vector, 10, 4 );
@@ -60,7 +59,7 @@ try {
   }
 
   {
-    Dune::Fem::MutableArray< ValueType > vector;
+    Dune::Fem::DynamicArray< ValueType > vector;
     checkPODVector( vector, 10 );
     checkPODVector( vector, 7  );
     checkPODVector( vector, 20 );
@@ -68,7 +67,7 @@ try {
   }
 
   {
-    Dune::Fem::MutableArray< double > vector;
+    Dune::Fem::DynamicArray< double > vector;
     checkPODVector( vector, 10 );
     checkPODVector( vector, 7  );
     checkPODVector( vector, 20 );
@@ -81,4 +80,3 @@ catch( const Dune::Exception & exception )
   std :: cerr << exception << std :: endl;
   return 1;
 }
-

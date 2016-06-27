@@ -1,19 +1,18 @@
 #ifndef DUNE_FEM_COMMUNICATION_MANAGER_HH
 #define DUNE_FEM_COMMUNICATION_MANAGER_HH
 
-//- system includes
 #include <iostream>
 #include <map>
 #include <memory>
 #include <vector>
 
-//- Dune includes
 #include <dune/common/timer.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/grid.hh>
 
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/common/commoperations.hh>
+#include <dune/fem/storage/singletonlist.hh>
 
 // include ALUGrid to check whether the
 // parallel version is avaiable
@@ -47,11 +46,6 @@
 #ifdef USE_CACHED_COMM_MANAGER
 #include "cachedcommmanager.hh"
 #endif
-
-//- Dune-fem includes
-#include <dune/fem/storage/singletonlist.hh>
-#include <dune/fem/space/common/commoperations.hh>
-#include <dune/fem/space/common/arrays.hh>
 
 namespace Dune
 {
