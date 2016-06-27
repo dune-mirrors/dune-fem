@@ -1,7 +1,7 @@
 {
  "StokesScheme"  :
   {
-    "type"      : "UzawaScheme< $(gridpart) >",
+    "type"      : "UzawaScheme< $(spaceA), $(spaceB) >",
     "include"   : [ "navierstokes/stokes.cc" ],
     "extension"  : "yes"
   },
