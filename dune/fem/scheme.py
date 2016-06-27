@@ -78,13 +78,13 @@ def get(scheme, space, **parameters):
       parameters['space'] = space._module._typeName
       extra_includes=space._module._includes + dfmodule._includes
 
-    module = getModule(scheme, 
+    module = getModule(scheme,
                        storage=storage,
                        extra_includes=extra_includes,
                        **parameters)
     return module
 
-def create(scheme, space_or_target, model, name, **parameters):
+def create(scheme, space_or_target, model, name, *param, **parameters):
     """Get a Scheme.
 
     Call get() and create a C++ scheme class (see dune/fempy/dunescheme.hh).
@@ -109,11 +109,11 @@ def create(scheme, space_or_target, model, name, **parameters):
         space = space_or_target
         target = None
 
-    module = get(scheme, space, model.dimRange, **parameters)
+    module = get(scheme, space, **parameters)
 
     class ExtendedScheme(module.Scheme):
         def __init__(self,space,model,name,target=None):
-            module.Scheme.__init__(self,space,model,name)
+            module.Scheme.__init__(self,space,model,name, *param, **parameters)
             self.target = target
 
     ret = ExtendedScheme(space, model, name, target)
