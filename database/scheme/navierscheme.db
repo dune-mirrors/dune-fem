@@ -7,7 +7,7 @@
   },
   "BurgersScheme"   :
   {
-    "type"      : "PRPScheme< $(gridpart) >",
+    "type"      : "PRPScheme< $(spaceA), $(spaceB) >",
     "include"   : [ "navierstokes/burgers.cc" ],
     "extension"  : "yes"
   }

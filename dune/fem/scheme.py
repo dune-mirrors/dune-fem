@@ -57,12 +57,20 @@ def getModule(scheme, **parameters):
     setattr(module.Scheme, "solve", solve)
     return myGenerator.getModule(scheme, **parameters)
 
-def get(scheme, space, grid, dimR, **parameters):
+def get(scheme, space, **parameters):
     """Call getModule() by passing in keyword arguments.
     """
     storage = parameters.get('storage', "Adaptive")
-    discretefunction.get(storage, space._module, **parameters)
-    return getModule(scheme, space=space._module._typeName, gridpart=grid._module._typeName, dimRange=dimR, **parameters)
+    try:
+      nr = 65
+      for s in space:
+        discretefunction.get(storage, s._module, **parameters)
+        parameters['space'+chr(nr)] = s._module._typeName
+        nr += 1
+      return getModule(scheme, **parameters)
+    except:
+      discretefunction.get(storage, space._module, **parameters)
+      return getModule(scheme, space=space._module._typeName, **parameters)
 
 def create(scheme, space, grid, model, name, **parameters):
     """Get a Scheme.
