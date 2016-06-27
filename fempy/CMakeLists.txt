@@ -4,8 +4,9 @@ add_subdirectory(pybind11)
 add_subdirectory(quadrature)
 
 set(HEADERS
-  grid.hh
   parameter.hh
+  python.hh
+  pytuple.hh
 )
 
 install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/fempy)
