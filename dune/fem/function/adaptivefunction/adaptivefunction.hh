@@ -12,6 +12,7 @@
 #include <dune/fem/function/localfunction/mutable.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
+#include <dune/fem/storage/dynamicarray.hh>
 
 namespace Dune
 {
@@ -53,7 +54,7 @@ namespace Dune
 
       using BaseType::assign;
 
-      typedef MutableBlockVector< MutableArray< DofType >, DiscreteFunctionSpaceType::localBlockSize > MutableDofVectorType;
+      typedef MutableBlockVector< DynamicArray< DofType >, DiscreteFunctionSpaceType::localBlockSize > MutableDofVectorType;
 
       /** \brief Constructor to use if the vector storing the dofs does not exist yet
        *

@@ -1,12 +1,10 @@
 #ifndef DUNE_FEM_COMMINDEXMAP_HH
 #define DUNE_FEM_COMMINDEXMAP_HH
 
-//- system includes
 #include <set>
 #include <vector>
 
-//- Dune includes
-#include <dune/fem/space/common/arrays.hh>
+#include <dune/fem/storage/dynamicarray.hh>
 
 namespace Dune
 {
@@ -18,7 +16,7 @@ namespace Dune
     {
       typedef int IndexType ;
     private:
-      MutableArray< IndexType > indices_;
+      DynamicArray< IndexType > indices_;
 
     public:
       //! constructor creating empty map

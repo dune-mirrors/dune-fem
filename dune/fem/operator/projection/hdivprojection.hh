@@ -10,6 +10,7 @@
 #include <dune/fem/quadrature/caching/twistutility.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/combinedspace.hh>
+#include <dune/fem/storage/dynamicarray.hh>
 
 // make sure higher order Lagrange works (define USE_TWISTFREE_MAPPER)
 #include <dune/fem/space/discontinuousgalerkin.hh>
@@ -683,8 +684,8 @@ namespace Dune
         // number of columns
         const int cols = numDofs;
 
-        MutableArray< RangeFieldType > rets(numDofs);
-        MutableArray< RangeType > uRets(numDofs);
+        DynamicArray< RangeFieldType > rets(numDofs);
+        DynamicArray< RangeType > uRets(numDofs);
 
         typedef FieldMatrix<RangeFieldType,localBlockSize,localBlockSize> FieldMatrixType;
 

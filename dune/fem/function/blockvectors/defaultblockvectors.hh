@@ -3,14 +3,15 @@
 
 #include <algorithm>
 #include <cassert>
+#include <memory>
 
 #include <dune/common/densevector.hh>
 #include <dune/common/dynvector.hh>
 
 #include <dune/fem/misc/debug.hh>
+#include <dune/fem/storage/dynamicarray.hh>
 #include <dune/fem/storage/envelope.hh>
 #include <dune/fem/storage/subvector.hh>
-#include <dune/fem/space/common/arrays.hh>
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/bvector.hh>
@@ -279,7 +280,8 @@ namespace Dune {
   : public SimpleBlockVector< Container, BlockSize >
   {
     typedef MutableBlockVector< Container, BlockSize > ThisType;
-    typedef SimpleBlockVector< Container, BlockSize >  BaseType;
+    typedef SimpleBlockVector < Container, BlockSize > BaseType;
+
     typedef Container                                  ArrayType;
     using BaseType :: array_;
     using BaseType :: sequence_;
@@ -337,37 +339,35 @@ namespace Dune {
   *   \tparam  BlockSize   Size of the blocks
   */
   template< class Field, unsigned int BlockSize >
-  class MutableBlockVector< MutableArray< Field >, BlockSize >
+  class MutableBlockVector< DynamicArray< Field >, BlockSize >
   : public SimpleBlockVector< StaticArray< Field >, BlockSize >
   {
     typedef StaticArray< Field >          StaticContainer ;
-    typedef MutableArray< Field >         MutableContainer ;
+    typedef DynamicArray< Field >         MutableContainer ;
     typedef SimpleBlockVector< StaticContainer, BlockSize >   BaseType;
     typedef MutableBlockVector< MutableContainer, BlockSize > ThisType;
 
   protected:
+    using BaseType :: array_;
     using BaseType :: sequence_;
 
-    MutableContainer* container_;
+    std::unique_ptr< MutableContainer > container_;
   public:
     using BaseType :: blockSize ;
     typedef typename BaseType :: SizeType SizeType;
 
     /** \brief Construct a block vector with 'size' blocks (not initialized) */
     explicit MutableBlockVector ( SizeType size )
-    : BaseType( allocateContainer( size*blockSize ) )
+    : BaseType( allocateContainer( size*blockSize ) ),
+      container_( static_cast< MutableContainer* > (&array_) )
     {}
 
     /** \brief Copy constructor */
     MutableBlockVector ( const ThisType &other )
-    : BaseType( allocateContainer( other.array().size() ) )
+    : BaseType( allocateContainer( other.array().size() ) ),
+      container_( static_cast< MutableContainer* > (&array_) )
     {
       assign( other );
-    }
-
-    ~MutableBlockVector()
-    {
-      delete container_;
     }
 
     /** \brief Reserve memory.
@@ -380,12 +380,14 @@ namespace Dune {
      */
     void reserve ( const int size )
     {
+      assert( container_ );
       container_->reserve( size*blockSize );
     }
 
     /** \brief Resize the block vector */
     void resize ( SizeType size )
     {
+      assert( container_ );
       container_->resize( size*blockSize );
       ++sequence_;
     }
@@ -393,8 +395,8 @@ namespace Dune {
   protected:
     StaticContainer& allocateContainer( const SizeType size )
     {
-      container_ = new MutableContainer( size );
-      return *container_;
+      MutableContainer* container = new MutableContainer( size );
+      return *container;
     }
   };
 

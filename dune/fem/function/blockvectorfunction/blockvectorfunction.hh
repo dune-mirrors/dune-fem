@@ -11,7 +11,6 @@
 #include <dune/fem/function/localfunction/mutable.hh>
 #include <dune/fem/function/blockvectorfunction/declaration.hh>
 #include <dune/fem/function/blockvectors/defaultblockvectors.hh>
-#include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 
 namespace Dune
