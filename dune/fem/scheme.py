@@ -16,7 +16,10 @@ myGenerator = generator.Generator("Scheme")
 
 def solve( scheme, rhs=None, target=None, name=None, assemble=True ):
     if name == None:
-        name = scheme.name
+        if hasattr(scheme, 'name'):
+            name = scheme.name
+        else:
+            name == "default"
     if target == None:
         if scheme.target == None:
             target = discretefunction.create(scheme._storage, scheme.space, name=name)
@@ -56,19 +59,32 @@ def getModule(scheme, **parameters):
     setattr(module.Scheme, "target", None)
     return module
 
-def get(scheme, space, dimR, **parameters):
+def get(scheme, space, **parameters):
     """Call getModule() by passing in keyword arguments.
     """
     storage = parameters.get('storage', "Adaptive")
-    dfmodule = discretefunction.get(storage, space._module, **parameters)
-    storage = dfmodule.DiscreteFunction._storage
+    try:
+      nr = 65
+      extra_includes=""
+      for s in space:
+        dfmodule = discretefunction.get(storage, s._module, **parameters)
+        storage  = dfmodule.DiscreteFunction._storage
+        parameters['space'+chr(nr)] = s._module._typeName
+        extra_includes += s._module._includes + dfmodule._includes
+        nr += 1
+    except:
+      dfmodule = discretefunction.get(storage, space._module, **parameters)
+      storage = dfmodule.DiscreteFunction._storage
+      parameters['space'] = space._module._typeName
+      extra_includes=space._module._includes + dfmodule._includes
 
-    module = getModule(scheme, space=space._module._typeName,\
-            extra_includes=space._module._includes + dfmodule._includes,\
-            gridpart=space.grid._module._typeName, storage=storage, dimRange=dimR, **parameters)
+    module = getModule(scheme,
+                       storage=storage,
+                       extra_includes=extra_includes,
+                       **parameters)
     return module
 
-def create(scheme, space_or_target, model, name, **parameters):
+def create(scheme, space_or_target, model, name, *param, **parameters):
     """Get a Scheme.
 
     Call get() and create a C++ scheme class (see dune/fempy/dunescheme.hh).
@@ -93,11 +109,11 @@ def create(scheme, space_or_target, model, name, **parameters):
         space = space_or_target
         target = None
 
-    module = get(scheme, space, model.dimRange, **parameters)
+    module = get(scheme, space, **parameters)
 
     class ExtendedScheme(module.Scheme):
         def __init__(self,space,model,name,target=None):
-            module.Scheme.__init__(self,space,model,name)
+            module.Scheme.__init__(self,space,model,name, *param, **parameters)
             self.target = target
 
     ret = ExtendedScheme(space, model, name, target)
