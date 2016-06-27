@@ -1,7 +1,7 @@
 {
   "FemScheme" :
   {
-    "type"      : "FemScheme< $(space), DiffusionModel< $(gridpart), $(dimRange) >, $(storage) >",
+    "type"      : "FemScheme< $(space), DiffusionModel< typename $(space)::GridPartType, $(space)::dimRange >, $(storage) >",
     "translate" : { "storage" : [ "Adaptive=fem", "Istl=istl" ] },
     "include"   : [ "dune/fem/schemes/femscheme.hh" ]
   },
