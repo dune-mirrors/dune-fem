@@ -28,6 +28,10 @@ namespace Dune
       const int dim = GridPart::dimension;
 
       pybind11::class_< GridPart > cls( scope, name );
+
+      cls.attr( "dimGrid" ) = pybind11::int_( GridPart::dimension );
+      cls.attr( "dimWorld" ) = pybind11::int_( GridPart::dimensionworld );
+
       cls.def( "__init__", [] ( GridPart &instance, Grid &grid ) {
           new (&instance) GridPart( grid );
         }, pybind11::keep_alive< 1, 2 >() );

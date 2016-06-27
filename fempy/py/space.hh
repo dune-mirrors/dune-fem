@@ -19,6 +19,8 @@ namespace Dune
 
       pybind11::class_< Space > cls( module, "Space" );
 
+      cls.def_property_readonly( "grid", [](Space &sp) -> const GridPart& {return sp.gridPart();} );
+
       cls.def( "__init__", [] ( Space &instance, GridPart &grid ) {
           new( &instance ) Space( grid );
         }, pybind11::keep_alive< 1, 2 >() );

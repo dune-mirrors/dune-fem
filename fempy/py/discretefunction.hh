@@ -2,9 +2,13 @@
 #define DUNE_FEMPY_PY_DISCRETEFUNCTION_HH
 
 #include <dune/fem/space/common/interpolate.hh>
+
 #include <dune/fempy/pybind11/pybind11.h>
+#include <dune/fempy/pybind11/extensions.h>
+
 #include <dune/fempy/py/function/grid.hh>
 #include <dune/fempy/py/grid/function.hh>
+#include <dune/fempy/py/grid/restrictprolong.hh>
 
 namespace Dune
 {
@@ -36,6 +40,7 @@ namespace Dune
       typedef typename DF::DiscreteFunctionSpaceType Space;
       typedef typename DF::GridPartType GridPart;
       typedef typename DF::RangeType Value;
+      typedef typename GridPart::GridType Grid;
 
       auto cls = detail::registerGridFunction< DF >( module, "DiscreteFunction" );
 
@@ -44,12 +49,19 @@ namespace Dune
         } );
       pybind11::implicitly_convertible< DF, VirtualizedGridFunction< GridPart, Value > >();
 
-      cls.def_property_readonly( "space", &DF::space );
+      detail::clsVirtualizedRestrictProlong< Grid >( module ).def( "__init__", [] ( VirtualizedRestrictProlong< Grid > &instance, DF &df ) {
+          new (&instance) VirtualizedRestrictProlong< Grid >( df );
+        }, pybind11::keep_alive< 1, 2 >() );
+      pybind11::implicitly_convertible< DF, VirtualizedRestrictProlong< Grid > >();
+
+      cls.def_property_readonly( "space", [](DF &df) -> const typename DF::DiscreteFunctionSpaceType& {return df.space();} );
       cls.def("clear", [] (DF &instance) { instance.clear(); } );
 
       cls.def( "__init__", [] ( DF &instance, Space &space, const std::string &name ) {
           new( &instance ) DF( std::move(name), space );
         }, pybind11::keep_alive< 1, 2 >() );
+
+      cls.def( "assign", [] ( DF &instance, const DF &other ) { instance.assign(other); } );
 
       typedef VirtualizedGridFunction< GridPart, typename Space::RangeType > GridFunction;
       cls.def( "interpolate", [] ( DF &df, const GridFunction &gf ) {
@@ -60,6 +72,17 @@ namespace Dune
                 simpleGridFunction( df.space().gridPart(), [ value ] ( typename DF::DomainType ) { return value; }
           ), df );
         } );
+
+
+      typedef typename DF::DofVectorType DofVector;
+      if (!pybind11::already_registered<DofVector>())
+      {
+        auto clsDof = pybind11::class_<DofVector>( module, "DofVector");
+      }
+      cls.def( "dofVector", [] ( DF &instance ) -> DofVector&{ return instance.dofVector(); },
+               pybind11::return_value_policy::reference_internal );
+      cls.def( "assign", [] ( DF &instance, const DofVector &other ) { instance.dofVector() = other; } );
+
     }
 
   } // namespace FemPy

@@ -29,6 +29,7 @@ namespace Dune
 
       cls.def_property_readonly( "geometry", &Entity::geometry );
       cls.def_property_readonly( "level", &Entity::level );
+      cls.def_property_readonly( "type", &Entity::type );
 
       return cls;
     }

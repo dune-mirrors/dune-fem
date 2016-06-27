@@ -26,19 +26,30 @@ namespace Dune
 
         pybind11::class_< Scheme > cls( module, "Scheme" );
 
-        cls.def( "__init__", [] ( Scheme &instance, GridPart &gridPart, const ModelType& model, const std::string &prefix ) {
-          new( &instance ) Scheme( gridPart, model, prefix );
+        cls.def( "__init__", [] ( Scheme &instance, Space &space, const ModelType& model, const std::string &prefix ) {
+          new( &instance ) Scheme( space, model, prefix );
         }, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
-        cls.def("solve", [] (Scheme &scheme) { return scheme.solve(true); });
-        cls.def("error", [] (Scheme &scheme)
+        cls.def("_prepare", [] (Scheme &scheme, const DiscreteFunction &add) { scheme.prepare(add); });
+        cls.def("_prepare", [] (Scheme &scheme) { scheme.prepare(); });
+        cls.def("_solve", [] (Scheme &scheme, DiscreteFunction &solution,bool assemble) { scheme.solve(solution, assemble); });
+        cls.def("__call__", [] (Scheme &scheme, const DiscreteFunction &arg, DiscreteFunction &dest) { scheme(arg,dest); });
+        cls.def("error", [] (Scheme &scheme, DiscreteFunction &solution)
         {
-          const auto& gridExactSolution = scheme.exactSolution();
-          Dune::Fem::L2Norm< GridPart > norm( scheme.solution().space().gridPart() );
-          return norm.distance( scheme.solution(), scheme.exactSolution() );
+          Dune::Fem::L2Norm< GridPart > norm( solution.space().gridPart() );
+          return norm.distance( solution, scheme.exactSolution() );
         } );
+        cls.def("mark", [] (Scheme &scheme, const DiscreteFunction &solution, double tolerance )
+        {
+          double est = scheme.estimate(solution);
+          return std::make_tuple(est,scheme.mark(tolerance));
+        });
+        cls.def_property_readonly( "name", &Scheme::name );
+        cls.def_property_readonly( "dimRange", [](Scheme&) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
+        cls.def_property_readonly( "space", &Scheme::space );
+        /*
         cls.def("solution", [] (Scheme &scheme) -> DiscreteFunction& { return scheme.solution(); },
             pybind11::return_value_policy::reference_internal );
-        //    pybind11::keep_alive< 0, 1 >()  );
+        */
     }
   }
 }

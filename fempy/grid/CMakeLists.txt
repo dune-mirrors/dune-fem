@@ -1,6 +1,7 @@
 set(HEADERS
   adaptation.hh
-  restrictprolong.hh
+  discretefunctionmanager.hh
+  virtualizedrestrictprolong.hh
 )
 
 install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/fempy/grid)

@@ -51,6 +51,10 @@ namespace Dune
 
       pybind11::class_< Writer > cls( scope, clsName );
       cls.def( "write", [] ( Writer &writer, const std::string &name ) { writer.write( name ); } );
+      cls.def( "write", [] ( Writer &writer, const std::string &name, int number ) {
+            std::stringstream s; s << name << std::setw(5) << std::setfill('0') << number;
+            writer.write( s.str() );
+          } );
 
       cls.attr("CellData") = pybind11::cast(VTKDataType::CellData);
       cls.attr("PointData") = pybind11::cast(VTKDataType::PointData);

@@ -4,6 +4,7 @@ SET(HEADERS
   common.h
   complex.h
   descr.h
+  extensions.h
   eigen.h
   functional.h
   numpy.h

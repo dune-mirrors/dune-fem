@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_INTERSECTIONITERATOR_HH
 #define DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_INTERSECTIONITERATOR_HH
 
+#include <type_traits>
+
 #include <dune/grid/common/intersectioniterator.hh>
 
 #include <dune/fem/gridpart/geometrygridpart/intersection.hh>
@@ -19,7 +21,7 @@ namespace Dune
     {
       typedef GeometryGridPartIntersectionIterator< GridFamily > ThisType;
 
-      typedef typename remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
       typedef typename Traits::HostGridPartType::IntersectionIteratorType HostIntersectionIteratorType;
 

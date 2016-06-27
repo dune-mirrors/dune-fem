@@ -1,8 +1,17 @@
 #ifndef DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_HH
 #define DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_HH
 
+#include <dune/common/version.hh>
+
 #include <dune/fem/gridpart/common/gridpart.hh>
+#include <dune/fem/gridpart/common/gridpart2gridview.hh>
+
+#if ! DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
+#error "Experimental grid extensions required for GeometryGridPart. Add -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE to your CMAKE_FLAGS."
+#else // #if ! DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
+
 #include <dune/fem/gridpart/common/deaditerator.hh>
+#include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/geometrygridpart/capabilities.hh>
 #include <dune/fem/gridpart/geometrygridpart/datahandle.hh>
@@ -26,8 +35,9 @@ namespace Dune
     class GeometryGridPart;
 
 
+
     // GeometryGridPartFamily
-    // -----------------
+    // ----------------------
 
     template< class GridFunction >
     struct GeometryGridPartFamily
@@ -53,7 +63,9 @@ namespace Dune
 
           typedef Dune::Entity< codim, dimension, const GridPartFamily, GeometryGridPartEntity > Entity;
           typedef typename HostGridPartType::GridType::template Codim< codim >::EntitySeed EntitySeed;
+#if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
           typedef Dune::EntityPointer< const GridPartFamily, DefaultEntityPointer< Entity > > EntityPointer;
+#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
         };
 
         typedef DeadIntersection< const GridPartFamily > IntersectionImplType;
@@ -80,7 +92,7 @@ namespace Dune
     };
 
     // GeometryGridPartTraits
-    // ----------------
+    // ----------------------
 
     template< class GridFunction >
     struct GeometryGridPartTraits
@@ -90,6 +102,8 @@ namespace Dune
       typedef GeometryGridPart< GridFunction > GridPartType;
       typedef GeometryGridPartFamily< GridFunction > GridPartFamily;
       typedef GeometryGridPartFamily< GridFunction > GridFamily;
+
+      typedef GridPart2GridViewImpl< GridPartType > GridViewType;
 
       static const int dimension = GridFunction::GridPartType::dimension;
       static const int dimensionworld = GridFunction::FunctionSpaceType::dimRange;
@@ -238,6 +252,7 @@ namespace Dune
         hostGridPart().communicate( handleWrapper, iftype, dir );
       }
 
+#if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
       template < class EntitySeed >
       typename Codim< EntitySeed::codimension >::EntityPointerType
       entityPointer ( const EntitySeed &seed ) const
@@ -245,6 +260,7 @@ namespace Dune
         typedef typename Codim< EntitySeed::codimension >::EntityPointerType::Implementation EntityPointerImp;
         return EntityPointerImp( hostGridPart().entityPointer( seed ), gridFunction_ );
       }
+#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
 
       // convert a grid entity to a grid part entity ("Gurke!")
       template< class Entity >
@@ -256,7 +272,7 @@ namespace Dune
         typedef typename EntityType::Implementation Implementation;
         typedef MakeableInterfaceObject< EntityType > EntityObj;
         // here, grid part information can be passed, if necessary
-        return EntityObj( Implementation( entity, gridFunction_ ) );
+        return EntityObj( Implementation( gridFunction_, entity ) );
       }
 
     private:
@@ -264,6 +280,7 @@ namespace Dune
       {
         return gridFunction_.gridPart();
       }
+
       const GridFunctionType &gridFunction_;
       IndexSetType indexSet_;
     };
@@ -271,7 +288,7 @@ namespace Dune
 
 
     // GridEntityAccess for GeometryGridPartEntity
-    // -----------------------------
+    // -------------------------------------------
 
     template< int codim, int dim, class GridFamily >
     struct GridEntityAccess< Dune::Entity< codim, dim, GridFamily, GeometryGridPartEntity > >
@@ -286,8 +303,30 @@ namespace Dune
       }
     };
 
+
+
+    // EntitySearch for GeometryGridPart
+    // ---------------------------------
+
+    template< class GridFunction, int codim, PartitionIteratorType partition >
+    class EntitySearch< GeometryGridPart< GridFunction >, codim, partition >
+      : public DefaultEntitySearch< GeometryGridPart< GridFunction >, codim, partition >
+    {
+      typedef EntitySearch< GeometryGridPart< GridFunction >, codim, partition > ThisType;
+      typedef DefaultEntitySearch< GeometryGridPart< GridFunction >, codim, partition > BaseType;
+
+    public:
+      typedef typename BaseType::GridPartType GridPartType;
+
+      explicit EntitySearch ( const GridPartType &gridPart )
+        : BaseType( gridPart )
+      {}
+    };
+
   } // namespace Fem
 
 } // namespace Dune
+
+#endif // #else // #if ! DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
 
 #endif // #ifndef DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_HH

@@ -17,14 +17,23 @@ namespace Dune
     // registerGrid
     // ------------
 
+
+
     template< class GridPart >
     void registerGrid ( pybind11::module module )
     {
-      registerHierarchicalGrid< typename GridPart::GridType >( module );
-      module.def( "readDGF", &readDGF< typename GridPart::GridType > );
-      module.def( "makeSimplexGrid", &makeSimplexGrid< typename GridPart::GridType > );
+      typedef  typename GridPart::GridType HGrid;
+      registerHierarchicalGrid< HGrid >( module );
 
-      registerGridPart< GridPart >( module, "LeafGrid" );
+      module.def( "reader", [](const std::tuple<Reader,std::string> &constructor)
+          { return reader<HGrid>(constructor); } );
+      module.def( "reader", [](const std::string &constructor)
+          { return reader<HGrid>(std::make_tuple(Reader::dgf,constructor)); } );
+      module.def( "reader", [](const pybind11::dict &constructor)
+          { return reader<HGrid>(constructor); } );
+
+
+      auto grid = registerGridPart< GridPart >( module, "LeafGrid" );
     }
 
   } // namespace FemPy
