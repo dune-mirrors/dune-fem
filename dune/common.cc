@@ -5,6 +5,8 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/std/utility.hh>
+#include <dune/fempy/py/referenceelements.hh>
+#include <dune/fempy/py/common/common.hh>
 
 #include <dune/fempy/pybind11/pybind11.h>
 #include <dune/fempy/pybind11/operators.h>
@@ -44,12 +46,41 @@ static void registerFieldVector ( pybind11::handle scope, std::integral_constant
 
   cls.def( "__len__", [] ( const FV &x ) -> std::size_t { return size; } );
 
-  cls.def( pybind11::self + pybind11::self );
-  cls.def( pybind11::self += pybind11::self );
-  cls.def( pybind11::self - pybind11::self );
-  cls.def( pybind11::self -= pybind11::self );
-  cls.def( pybind11::self *= K() );
-  cls.def( pybind11::self /= K() );
+  cls.def(pybind11::self +  pybind11::self);
+  cls.def(pybind11::self += pybind11::self);
+  cls.def(pybind11::self -  pybind11::self);
+  cls.def(pybind11::self -= pybind11::self);
+  cls.def(pybind11::self *  pybind11::self);
+
+  cls.def(pybind11::self == pybind11::self);
+  cls.def(pybind11::self != pybind11::self);
+
+  cls.def(pybind11::self += K());
+  cls.def(pybind11::self -= K());
+  cls.def(pybind11::self *= K());
+  cls.def(pybind11::self /= K());
+
+  cls.def("__mul__", [](const FV &a, K b) {
+    FV ret(a); ret *= b; return ret;
+  });
+  cls.def("__div__", [](const FV &a, K b) {
+    FV ret(a); ret /= b; return ret;
+  });
+  cls.def("__rmul__", [](const FV &a, K b) {
+    FV ret(a); ret *= b; return ret;
+  });
+
+  // cls.def(pybind11::self * K());
+  // cls.def(pybind11::self / K());
+  // cls.def(K() * pybind11::self);
+
+  cls.def("__radd__", [] (FV& x, py::list l) { return x + l.cast<FV>(); });
+  cls.def("__rsub__", [] (FV& x, py::list l) { return l.cast<FV>() - x; });
+  cls.def("__rmul__", [] (FV& x, py::list l) { return x * l.cast<FV>(); });
+  cls.def("__add__", [] (FV& x, py::list l) { return x + l.cast<FV>(); });
+  cls.def("__sub__", [] (FV& x, py::list l) { return l.cast<FV>() - x; });
+  cls.def("__mul__", [] (FV& x, py::list l) { return x * l.cast<FV>(); });
+
 
   cls.def( "__repr__", [] ( const FV &x ) {
       std::string repr = "DUNE FieldVector: (";
@@ -85,13 +116,19 @@ static void registerFieldVector ( pybind11::handle scope, std::integer_sequence<
   std::ignore = std::make_tuple( (registerFieldVector( scope, std::integral_constant< int, size >() ), size)... );
 }
 
-
 PYBIND11_PLUGIN( common )
 {
   pybind11::module module( "common" );
 
   registerFieldVector( module, std::make_integer_sequence< int, 10 >() );
   registerFieldMatrix<double>( module, std::make_integer_sequence< int, 10 >() );
+  Dune::FemPy::registerReferenceElement<double>( module, std::make_integer_sequence<int, 3+1>());
+  Dune::FemPy::registerReferenceElements<double>( module, std::make_integer_sequence<int, 3+1>());
+
+  pybind11::enum_< Dune::FemPy::Reader > reader( module, "reader" );
+  reader.value( "dgf", Dune::FemPy::Reader::dgf );
+  reader.value( "dgfString", Dune::FemPy::Reader::dgfString );
+  reader.value( "gmsh", Dune::FemPy::Reader::gmsh );
 
   return module.ptr();
 }

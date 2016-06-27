@@ -23,30 +23,22 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __metaclass__ = type
 
 import sys
+import inspect
 
 from types import ModuleType
 
 from ..generator import generator
 
+from . import gridpart
 from . import space
 
-def interpolate(grid, func, variant=None, **kwargs):
-    if variant == "global":
-      return interpolate(grid,grid.globalGridFunction("gf", func), **kwargs)
-    else:
-      try:
-          R = func.dimRange
-      except:
-          R = len(func)
-      spaceName = kwargs.pop('space')
-      mySpace=space.create(spaceName, grid, dimrange=R, **kwargs)
-      return mySpace.interpolate(func, **kwargs)
 
 class Generator(generator.Generator):
     def modifyIncludes(self, includes):
         return includes + "#include <dune/fem/gridpart/adaptiveleafgridpart.hh>\n"
     def modifyTypeName(self, typeName):
         return "Dune::Fem::AdaptiveLeafGridPart<" + typeName + ">";
+
 myGenerator = Generator("Grid")
 
 def getGridType(grid, **parameters):
@@ -94,11 +86,10 @@ def get(grid, **parameters):
 
     """
     module = myGenerator.getModule(grid, **parameters)
-    setattr(module.LeafGrid, "_module", module)
-    setattr(module.LeafGrid, "interpolate", interpolate )
+    gridpart.addAttr(module, module.LeafGrid)
     return module
 
-def leafGrid(dgf, grid, **parameters):
+def leafGrid(constructor, grid, **parameters):
     """Get a LeafGrid
 
     Call get() and create a C++ grid class (see grid.hh).
@@ -128,7 +119,7 @@ def leafGrid(dgf, grid, **parameters):
     else:
         raise TypeError("leafGrid: 'grid' must be either a string or a module")
 
-    ret = module.LeafGrid(module.readDGF(dgf))
+    ret = module.LeafGrid(module.reader(constructor))
     return ret
 
 #############################################

@@ -6,15 +6,46 @@ from types import ModuleType
 
 from ..generator import generator
 from . import space
+from . import function
+from .. import femmpi
+
+import inspect
+
 
 def interpolate(grid, func, **kwargs):
     try:
-        R = func.dimRange
+        gl = len(inspect.getargspec(func)[0])
     except:
-        R = len(func)
-    spaceName = kwargs.pop('space')
-    mySpace=space.create(spaceName, grid, dimrange=R, **kwargs)
-    return mySpace.interpolate(func, **kwargs)
+        gl = 0
+    if gl == 1:   # global function
+        return interpolate(grid, grid.globalGridFunction("gf", func), **kwargs)
+    elif gl == 2: # local function
+        return interpolate(grid, grid.localGridFunction("gf", func), **kwargs)
+    elif gl == 0: # already a grid function
+      try:
+          R = func.dimRange
+      except:
+          R = len(func)
+      spaceName = kwargs.pop('space')
+      mySpace = space.create(spaceName, grid, dimrange=R, **kwargs)
+      return mySpace.interpolate(func, **kwargs)
+
+def writeVTK(grid,  name, celldata=[], pointdata=[], number=None):
+    vtk = grid.vtkWriter()
+    for df in celldata:
+        df.addToVTKWriter(vtk, vtk.CellData)
+    for df in pointdata:
+        df.addToVTKWriter(vtk, vtk.PointData)
+    if number == None:
+        vtk.write(name)
+    else:
+        vtk.write( name, number )
+    return vtk
+
+def levelFunction(self):
+    return self.localGridFunction("level", function.Levels())
+def partitionFunction(self):
+    return self.localGridFunction("rank", function.Partition(femmpi.comm.rank))
 
 myGenerator = generator.Generator("GridPart")
 
@@ -23,7 +54,14 @@ def getGridPartType(gridpart, **parameters):
     """
     return myGenerator.getTypeName(gridpart, **parameters)
 
-def get(gridpart, dfmodule, **parameters):
+def addAttr(module, cls):
+    setattr(cls, "_module", module)
+    setattr(cls, "interpolate", interpolate )
+    setattr(cls, "writeVTK", writeVTK )
+    setattr(cls, "levelFunction", levelFunction )
+    setattr(cls, "partitionFunction", partitionFunction )
+
+def get(gp, **parameters):
     """Create a gridpart module using the gridpart-database.
 
     This function creates a python module called gridpart_xxx.py where xxx is a
@@ -35,12 +73,11 @@ def get(gridpart, dfmodule, **parameters):
         module: the newly created gridpart module
 
     """
-    module = myGenerator.getModule(gridpart, gf=dfmodule._typeName, extra_includes=dfmodule._includes, **parameters)
-    setattr(module.GridPart, "_module", module)
-    setattr(module.GridPart, "interpolate", interpolate )
+    module = myGenerator.getModule(gp, **parameters)
+    addAttr(module, module.GridPart)
     return module
 
-def create(gridpart, gf, **parameters):
+def create(gp, gf, **parameters):
     """Get a GridPart.
 
     Call get() and create a C++ gridpart class
@@ -51,7 +88,13 @@ def create(gridpart, gf, **parameters):
     Returns:
         GridPart: the constructed GridPart
     """
-    module = get(gridpart, gf._module, **parameters)
+    if gp=="Geometry":
+        # try:
+            module = get(gp, discfunc=gf._module._typeName, extra_includes=gf._module._includes, **parameters)
+        # except:
+        #     gp  = "Hallo"
+        #     val = "Dune::FieldVector<double,"+str(gf.dimRange)+">"
+        #     module = get("GeometryVirtual", gridpart=gp, value=val, **parameters)
     return module.GridPart(gf)
 
 #############################################

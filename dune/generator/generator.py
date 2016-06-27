@@ -67,9 +67,12 @@ class Generator(object):
         for include in self.dataBase.get_includes(selector):
             includes = includes + "#include <" + include + ">\n"
         includes = self.modifyIncludes(includes)
+        # remove duplicate
+        # includes = list(set( includes ))
 
         if femmpi.comm.rank == 0:
             if not os.path.isfile(os.path.join(compilePath, moduleName + ".so")):
+                print("Compiling " + self.typeName + " module for " + myTypeName)
                 start_time = timeit.default_timer()
                 out = open(os.path.join(compilePath, "generated_module.hh"), 'w')
                 print(includes, file=out)
@@ -104,6 +107,7 @@ class Generator(object):
         setattr(module, "_typeHash", myTypeHash)
         setattr(module, "_includes", includes)
         setattr(module, "_moduleBase", moduleBase)
+        setattr(module, "_selector", selector)
         return module
 
     def modifyIncludes(self, includes):

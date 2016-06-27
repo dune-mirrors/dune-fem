@@ -19,7 +19,7 @@ def solve( scheme, rhs=None, target=None, name=None, assemble=True ):
         if hasattr(scheme, 'name'):
             name = scheme.name
         else:
-            name == "no name"
+            name == "default"
     if target == None:
         if scheme.target == None:
             target = discretefunction.create(scheme._storage, scheme.space, name=name)
@@ -54,8 +54,10 @@ def getModule(scheme, **parameters):
     This would correspond to calling get("FemScheme", grid2d, 2), where grid2d is a python grid module.
     """
     module = myGenerator.getModule(scheme, **parameters)
-    setattr(module.Scheme, "solve", solve)
-    return myGenerator.getModule(scheme, **parameters)
+    setattr(module.Scheme,"solve", solve)
+    setattr(module.Scheme, "_storage", module._selector.parameters["storage"])
+    setattr(module.Scheme, "target", None)
+    return module
 
 def get(scheme, space, **parameters):
     """Call getModule() by passing in keyword arguments.
@@ -63,16 +65,26 @@ def get(scheme, space, **parameters):
     storage = parameters.get('storage', "Adaptive")
     try:
       nr = 65
+      extra_includes=""
       for s in space:
-        discretefunction.get(storage, s._module, **parameters)
+        dfmodule = discretefunction.get(storage, s._module, **parameters)
+        storage  = dfmodule.DiscreteFunction._storage
         parameters['space'+chr(nr)] = s._module._typeName
+        extra_includes += s._module._includes + dfmodule._includes
         nr += 1
-      return getModule(scheme, **parameters)
     except:
-      discretefunction.get(storage, space._module, **parameters)
-      return getModule(scheme, space=space._module._typeName, **parameters)
+      dfmodule = discretefunction.get(storage, space._module, **parameters)
+      storage = dfmodule.DiscreteFunction._storage
+      parameters['space'] = space._module._typeName
+      extra_includes=space._module._includes + dfmodule._includes
 
-def create(scheme, space, grid, model, name, **parameters):
+    module = getModule(scheme, 
+                       storage=storage,
+                       extra_includes=extra_includes,
+                       **parameters)
+    return module
+
+def create(scheme, space_or_target, model, name, **parameters):
     """Get a Scheme.
 
     Call get() and create a C++ scheme class (see dune/fempy/dunescheme.hh).
@@ -90,9 +102,20 @@ def create(scheme, space, grid, model, name, **parameters):
     Returns:
         Scheme: the constructed scheme
     """
-    module = get(scheme, space, grid, model.getDimRange(), **parameters)
-    if hasattr(model, 'wrap'):
-        scheme = module.Scheme(grid, model.wrap(), name)
-    else:
-        scheme = module.Scheme(grid, model, name)
-    return scheme
+    try:
+        space = space_or_target.space
+        target = space_or_target
+    except:
+        space = space_or_target
+        target = None
+
+    module = get(scheme, space, model.dimRange, **parameters)
+
+    class ExtendedScheme(module.Scheme):
+        def __init__(self,space,model,name,target=None):
+            module.Scheme.__init__(self,space,model,name)
+            self.target = target
+
+    ret = ExtendedScheme(space, model, name, target)
+
+    return ret

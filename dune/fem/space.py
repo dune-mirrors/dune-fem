@@ -1,6 +1,8 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 __metaclass__ = type
 
+import inspect
+
 from ..generator import generator
 from . import discretefunction
 
@@ -12,13 +14,23 @@ def getSpaceType(space, **parameters):
     return myGenerator.getTypeName(space, **parameters)
 
 def interpolate( self, func, **kwargs ):
-    storage = kwargs.pop('storage', "Adaptive")
     try:
-        df = discretefunction.create(storage,self,name=func.name, **kwargs)
+        gl = len(inspect.getargspec(func)[0])
     except:
-        df = discretefunction.create(storage,self, **kwargs)
-    df.interpolate(func)
-    return df
+        gl = 0
+    if gl == 1:   # global function
+        return interpolate(self,self.grid.globalGridFunction("gf", func), **kwargs)
+    elif gl == 2: # local function
+        return interpolate(self,self.grid.localGridFunction("gf", func), **kwargs)
+    elif gl == 0: # already a grid function
+        storage = kwargs.pop('storage', "Adaptive")
+        try:
+            df = discretefunction.create(storage,self,name=func.name, **kwargs)
+        except:
+            df = discretefunction.create(storage,self, **kwargs)
+        df.interpolate(func)
+        return df
+    return None
 
 def get(space, gridModule, **parameters):
     """Create a space module using the space-database.
@@ -44,15 +56,6 @@ def get(space, gridModule, **parameters):
     setattr(module.Space, "_module", module)
     setattr(module.Space, "interpolate", interpolate )
     return module
-
-def interpolate( self, func, **kwargs ):
-    storage=kwargs.pop('a',"Adaptive")
-    try:
-        df = discretefunction.create(storage,self,name=func.name, **kwargs)
-    except:
-        df = discretefunction.create(storage,self, **kwargs)
-    df.interpolate(func)
-    return df
 
 def create(space, grid, **parameters):
     """Get a Space

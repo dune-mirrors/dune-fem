@@ -33,6 +33,7 @@ def get(df, spaceModule, **parameters):
     """
     module = myGenerator.getModule(df, extra_includes=spaceModule._includes, space=spaceModule._typeName, **parameters)
     setattr(module.DiscreteFunction, "_module", module)
+    setattr(module.DiscreteFunction, "_storage", module._selector.grid)
     return module
 
 def create(df, space, **parameters):

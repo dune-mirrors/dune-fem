@@ -63,7 +63,7 @@ compilePath = os.path.join(os.path.dirname(__file__), "../generated")
 class DuneUFLModel:
     """Model class that contains all of the following code, and is typically defined at the start of a UFL file.
     """
-    def __init__(self, dimDomain, dimRange, modelName):
+    def __init__(self, dimDomain, dimRange, modelName=None):
         """Initialise the model class.
 
         Args:
@@ -74,6 +74,20 @@ class DuneUFLModel:
         self.dimD = dimDomain
         self.dimR = dimRange
         self.modelName = modelName
+
+        self.path = os.path.join(os.path.dirname(__file__), "../generated")
+        # ufl variables needed to define the forms
+        if dimDomain==1:
+            self.cell = interval
+        elif dimDomain==2:
+            self.cell = triangle # later add here something that depends on dimDomain
+        elif dimDomain==3:
+            self.cell = tetrahedron
+        self.element = VectorElement("Lagrange", self.cell, 1, self.dimR)
+        self.u_ = Coefficient(self.element)
+        self.clear()
+
+    def clear(self):
         # variables to later store the parsed ufl expression
         self.massCheck = 1
         self.boundCheck = 0
@@ -97,15 +111,10 @@ class DuneUFLModel:
         self.pyTemplate = ''
         self.pySetCoef = ''
         self.pyRangeType = ''
+        self.exact = None
         # ... and the sympy equivalents
         self.matCodeSrc = sympy.zeros(self.dimR, 1)
         self.matCodeFlux = sympy.zeros(self.dimR, self.dimD)
-
-        # ufl variables needed to define the forms
-        self.cell = triangle # later add here something that depends on dimDomain
-        self.element = VectorElement("Lagrange", self.cell, 1, self.dimR)
-        self.vector = VectorElement("Lagrange", self.cell, 1, self.dimD)
-        self.u_ = Coefficient(self.element)
 
         # sympy symbols needed for translating to sympy expressions
         self.u0 = sympy.IndexedBase('uBar')
@@ -120,7 +129,7 @@ class DuneUFLModel:
         self.residual = sympy.zeros(self.dimR, 1)
         self.coefficients = {}
         self.unsetCoefficients = {}
-        self.path = os.path.join(os.path.dirname(__file__), "../generated")
+        self.addCode = {}
 
     ########################
     # sympy helpers
@@ -153,12 +162,15 @@ class DuneUFLModel:
                         for ii in range(0, len(coeff)):
                             exprSubs = exprSubs.replace(
                                 name+"["+str(ii)+"]", "("+str(coeff[ii])+")")
-                exprSubs = exprSubs.replace("value", "self.v0").replace("uBar", "self.u0").\
-                    replace("gradient", "self.dv0").replace("gradBar", "self.du0").\
-                    replace("gradphi", "self.dv1").replace("phi", "self.v1").\
+                exprSubs = exprSubs.\
+                    replace("gradvalue", "self.dv0").replace("graduBar", "self.du0").replace("gradphi", "self.dv1")
+                exprSubs = exprSubs.\
+                    replace("value", "self.v0").replace("uBar", "self.u0").replace("phi", "self.v1").\
                     replace("x0", "self.x0").replace("x1", "self.x1").replace("x2", "self.x2").\
                     replace("x[0]", "self.x0").replace("x[1]", "self.x1").replace("x[2]", "self.x2").\
                     replace("cos", "sympy.cos").replace("sin", "sympy.sin"). \
+                    replace("normtan", "sympy.tan"). \
+                    replace("atan", "sympy.atan"). \
                     replace("sqrt", "sympy.sqrt")  # this is stupid and has to be improved!
                 for ii in range(0, self.dimR):
                     if i == ii:
@@ -189,12 +201,15 @@ class DuneUFLModel:
                 if self.coefficients[name] != "":
                     for ii in range(0, len(coeff)):
                         exprSubs = exprSubs.replace(name+"["+str(ii)+"]", "("+str(coeff[ii])+")")
-            exprSubs = exprSubs.replace("value", "self.v0").replace("uBar", "self.u0").\
-                    replace("gradient", "self.dv0").replace("gradBar", "self.du0").\
-                    replace("gradphi", "self.dv1").replace("phi", "self.v1").\
+            exprSubs = exprSubs.\
+                    replace("gradvalue", "self.dv0").replace("graduBar", "self.du0").replace("gradphi", "self.dv1")
+            exprSubs = exprSubs.\
+                    replace("value", "self.v0").replace("uBar", "self.u0").replace("phi", "self.v1").\
                     replace("x0", "self.x0").replace("x1", "self.x1").replace("x2", "self.x2").\
                     replace("x[0]", "self.x0").replace("x[1]", "self.x1").replace("x[2]", "self.x2").\
                     replace("cos", "sympy.cos").replace("sin", "sympy.sin"). \
+                    replace("normtan", "sympy.tan"). \
+                    replace("atan", "sympy.atan"). \
                     replace("sqrt", "sympy.sqrt")  # this is stupid and has to be improved!
             for ii in range(0, self.dimR):
                 if i == ii:
@@ -220,6 +235,8 @@ class DuneUFLModel:
             self.dimR = dimR
             #self.name_ = sympy.IndexedBase(name)
             command1 = 'global ' + name + '\n' + name + " = sympy.IndexedBase('" + name + "')"
+            exec(command1)
+            command1 = 'global ' + 'grad'+name + '\n' + 'grad'+name + " = sympy.IndexedBase('" + 'grad'+name + "')"
             exec(command1)
         def name(self):
             return self.name_
@@ -310,6 +327,27 @@ class DuneUFLModel:
                 cosStack.pop()
             string = "cos(" + arguments + ")"
             stack.push(string)
+        elif str(expr._ufl_class_.__name__) == "Atan":
+            arguments = ""
+            atanStack = self.Stack()
+            for op in expr.ufl_operands:
+                self.stack_maker(op, atanStack)
+            while atanStack.isEmpty() == False:
+                arguments += atanStack.peek()
+                atanStack.pop()
+            string = "atan(" + arguments + ")"
+            stack.push(string)
+        elif str(expr._ufl_class_.__name__) == "Tan":
+            arguments = ""
+            tanStack = self.Stack()
+            for op in expr.ufl_operands:
+                self.stack_maker(op, tanStack)
+            while tanStack.isEmpty() == False:
+                arguments += tanStack.peek()
+                tanStack.pop()
+            # using 'normtan' to avoid replacement clashes with atan
+            string = "normtan(" + arguments + ")"
+            stack.push(string)
         elif str(expr._ufl_class_.__name__) == "Sqrt":
             arguments = ""
             sqrtStack = self.Stack()
@@ -320,27 +358,20 @@ class DuneUFLModel:
                 sqrtStack.pop()
             string = "sqrt(" + arguments + ")"
             stack.push(string)
-        elif str(expr) == "v_0":
-            stack.push("phi")
-        elif str(expr) == "w_0":
-            stack.push("uBar")
-        elif expr._ufl_class_.__name__ == "Coefficient":
-            if not expr.name() in self.coefficients:
-                stack.push(expr.name())
-                if not expr.name() in self.unsetCoefficients:
-                    self.unsetCoefficients[expr.name()] = expr.dimR
-            else:
-                stack.push(str(self.coefficients[expr.name()]))
-        elif str(expr) == "v_1":
-            stack.push("value")
         elif str(expr) == "x":
             stack.push('x')
-        elif str(expr) == "grad(v_0)":
-            stack.push("gradphi")
-        elif str(expr) == "grad(v_1)":
-            stack.push("gradient")
-        elif str(expr) == "grad(w_0)":
-            stack.push("gradBar")
+        elif str(expr) == "v_0":
+            stack.push("phi")
+        elif str(expr) == "v_1":
+            stack.push("value")
+        elif str(expr) == "w_0":
+            stack.push("uBar")
+        # elif str(expr) == "grad(v_0)":
+        #     stack.push("gradphi")
+        # elif str(expr) == "grad(v_1)":
+        #     stack.push("gradient")
+        # elif str(expr) == "grad(w_0)":
+        #     stack.push("gradBar")
         elif str(expr._ufl_class_.__name__) == "IntValue":
             stack.push(str(expr))
         elif str(expr._ufl_class_.__name__) == "FloatValue":
@@ -382,8 +413,29 @@ class DuneUFLModel:
             self.stack_maker(expr.ufl_operands[0], stack)
         elif  str(expr._ufl_class_.__name__) == "MultiIndex":
             stack.push(str(expr))
-        else:
+        elif expr._ufl_class_.__name__ == "Coefficient":
+            if not expr.name() in self.coefficients:
+                stack.push(expr.name())
+                if not expr.name() in self.unsetCoefficients:
+                    self.unsetCoefficients[expr.name()] = expr.dimR
+            else:
+                stack.push(str(self.coefficients[expr.name()]))
+        elif str(expr._ufl_class_.__name__) == "Grad":
+            arguments = ""
+            gradStack = self.Stack()
             for op in expr.ufl_operands:
+                self.stack_maker(op, gradStack)
+            while gradStack.isEmpty() == False:
+                arguments += gradStack.peek()
+                gradStack.pop()
+            string = "grad" + arguments
+            stack.push(string)
+        else:
+            print('WARNING : possible problem with expression',\
+                    expr, expr._ufl_class_.__name__,\
+                    "!!!!!!!!!!!!!!!!!")
+            for op in expr.ufl_operands:
+                print('    :',op)
                 self.stack_maker(op, stack)
 
     def check(self, expr):
@@ -426,21 +478,24 @@ class DuneUFLModel:
         self.diricCheck = 0
         self.storeDiric()
 
-    def modelPrint(self, exact):
+    def modelPrint(self, exact=None):
         """Write expression strings into model file.
         """
         inputfile = self.path + '/model.hh.in'
         outputfile = self.path + '/' + self.modelName + "Model.hh"
+        self.exact = exact
         with open(outputfile, "wt") as fout:
 
             with open(inputfile, "rt") as fin:
                 for line in fin:
                     if '#SOURCE' in line:
                         fout.write(self.source)
+                        fout.write( self.addCode.get("SOURCE","") )
                     elif '#DIFFUSIVEFLUX' in line:
                         fout.write(self.flux)
                     elif '#LINSOURCE' in line:
                         fout.write(self.linSource)
+                        fout.write( self.addCode.get("LINSOURCE","") )
                     elif '#LINDIFFUSIVEFLUX' in line:
                         fout.write(self.linFlux)
                     elif '#ALPHA' in line:
@@ -459,24 +514,30 @@ class DuneUFLModel:
                     elif '#FORCING' in line:
                         fout.write(self.rhs)
                     elif '#DIRICHLETDATA' in line:
-                        if self.diric:
+                        if 0: # self.diric:
                             fout.write(self.diric)
                         else:
-                            for i in range(0, self.dimR):
-                                fout.write('      value['+str(i)+'] = ' \
-                                           + self.sympyToString(self.ccode(exact[i])) + ';\n')
+                            if exact == None:
+                                fout.write('      value = RangeType(0);\n')
+                            else:
+                                for i in range(0, self.dimR):
+                                    fout.write('      value['+str(i)+'] = ' \
+                                               + self.sympyToString(self.ccode(exact[i])) + ';\n')
                     elif '#NEUMANDATA' in line:
                         fout.write(self.rhsBound)
                     elif "#JACOBIANEXACT" in line:
-                        for i in range(0, self.dimR):
-                            fout.write('      value['+str(i)+'][0] = ' \
-                                       + self.sympyToString(self.ccode(sympy.diff(exact[i], self.x0))) + ';\n')
-                            if self.dimD > 1:
-                                fout.write('      value['+str(i)+'][1] = ' \
-                                           + self.sympyToString(self.ccode(sympy.diff(exact[i], self.x1))) + ';\n')
-                            if self.dimD > 2:
-                                fout.write('      value['+str(i)+'][2] = ' \
-                                           + self.sympyToString(self.ccode(sympy.diff(exact[i], self.x2))) + ';\n')
+                        if exact == None:
+                            fout.write('      value = JacobianRangeType(0);\n')
+                        else:
+                            for i in range(0, self.dimR):
+                                fout.write('      value['+str(i)+'][0] = ' \
+                                           + self.sympyToString(self.ccode(sympy.diff(exact[i], self.x0))) + ';\n')
+                                if self.dimD > 1:
+                                    fout.write('      value['+str(i)+'][1] = ' \
+                                               + self.sympyToString(self.ccode(sympy.diff(exact[i], self.x1))) + ';\n')
+                                if self.dimD > 2:
+                                    fout.write('      value['+str(i)+'][2] = ' \
+                                               + self.sympyToString(self.ccode(sympy.diff(exact[i], self.x2))) + ';\n')
                     elif '#RESIDUAL' in line:
                         value = sympy.IndexedBase('value')
                         jacobian = sympy.IndexedBase('jacobian')
@@ -531,7 +592,9 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.massCoef:
                     self.source += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                   + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                                + coef + 'Local_->evaluate(point,' + coef + ');\n' \
+                                + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
             self.source += cMass + '\n'
         # for diffusiveFlux function
         if not self.fluxCoef:
@@ -543,7 +606,10 @@ class DuneUFLModel:
                     if coef in self.fluxCoef:
                         self.flux = '      DomainType x = entity_->geometry().global( Dune::Fem::coordinate(point) );' \
                                     + '\n      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                    + coef + 'Local_->evaluate(point,' + coef + ');\n' + cFlux + '\n'
+                                    + coef + 'Local_->evaluate(point,' + coef + ');\n' \
+                                    + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                    + coef + 'Local_->jacobian(point,grad' + coef + ');\n' \
+                                    + cFlux + '\n'
                 if str(self.flux) == 'flux':
                     self.flux = '      DomainType x = entity_->geometry().global( Dune::Fem::coordinate(point) );\n' \
                                 + cFlux + '\n'
@@ -551,7 +617,10 @@ class DuneUFLModel:
                 for coef in self.unsetCoefficients:
                     if coef in self.fluxCoef:
                         self.flux = '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                    + coef + 'Local_->evaluate(point,' + coef + ');\n' + cFlux + '\n'
+                                    + coef + 'Local_->evaluate(point,' + coef + ');\n' \
+                                    + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                    + coef + 'Local_->jacobian(point,grad' + coef + ');\n' \
+                                    + cFlux + '\n'
                 if str(self.flux) == 'flux':
                     self.flux = cFlux + '\n'
         # for alpha function
@@ -565,7 +634,9 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.alphaCoef:
                     self.alpha += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                  + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                                  + coef + 'Local_->evaluate(point,' + coef + ');\n' \
+                                  + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                  + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
             self.alpha += cAlpha + '\n'
             self.alpha = self.alpha.replace('flux', 'val')
 
@@ -579,7 +650,9 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.diricCoef:
                     self.diric += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                  + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                                  + coef + 'Local_->evaluate(point,' + coef + ');\n' \
+                                  + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                  + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
             self.diric += cDiric + '\n'
             self.diric = self.diric.replace('flux', 'value')
 
@@ -597,7 +670,9 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.massCoef:
                     self.linSource += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                      + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                                  + coef + 'Local_->evaluate(point,' + coef + ');\n' \
+                                  + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                  + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
             self.linSource += cMass + '\n'
         # for linDiffusiveFlux function
         if not self.fluxCoef:
@@ -609,7 +684,9 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.fluxCoef:
                     self.linFlux += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                    + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                                    + coef + 'Local_->evaluate(point,' + coef + ');\n' \
+                                    + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                    + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
             self.linFlux += cFlux + '\n'
         # for linAlpha function
         if not self.alphaCoef:
@@ -622,7 +699,9 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.alphaCoef:
                     self.linAlpha += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                     + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                                  + coef + 'Local_->evaluate(point,' + coef + ');\n' \
+                                  + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                  + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
             self.linAlpha += cAlpha + '\n'
             self.linAlpha = self.linAlpha.replace('flux', 'val')
 
@@ -637,7 +716,9 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.massCoef:
                     self.rhs += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                                + coef + 'Local_->evaluate(point,' + coef + ');\n' \
+                                + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
             self.rhs += cRhs + '\n'
             self.rhs = self.rhs.replace('flux', 'phi')
         # for n function (neumann data)
@@ -650,8 +731,10 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.alphaCoef:
                     self.rhsBound += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                     + coef + 'Local_->evaluate(point,' + coef + ');\n'
-            self.rhsBound += cNeuman + '\n'
+                                  + coef + 'Local_->evaluate(point,' + coef + ');\n' \
+                                  + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                  + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
+            self.rhsBound += cNeuman + '\n  '
             self.rhsBound = self.rhsBound.replace('flux', 'value')
 
     def storeCoef(self):
@@ -668,8 +751,10 @@ class DuneUFLModel:
                              ' call set' + coef + ' first" << std::endl;\n        abort();\n      }\n      ' \
                              + coef + 'Local_->init(entity);'
             self.pyTemplate += ', Dune::FemPy::VirtualizedGridFunction< GridPart, ' + coef + 'RangeType >'
-            self.pySetCoef += '.def( "set' + coef + '", [](PyModel &m, Dune::FemPy::VirtualizedGridFunction< GridPart, ' \
-                              + coef + 'RangeType > &gf) {m.set' + coef + '(gf);} ) \\'
+            self.pySetCoef += '.def( "set' + coef + '", [](ModelWrapperType &m, Dune::FemPy::VirtualizedGridFunction< GridPart, ' \
+                              + coef + 'RangeType > &gf) {m.impl().set' + coef + '(gf);}' \
+                              + ')'
+                              # + ',pybind11::keep_alive<1,2>()'
             self.pyRangeType += 'static const int ' + coef + 'dimRange = ' + str(dim) + ';\nstatic const int ' + coef +'dimDomain = ' \
                              'GridPart::dimensionworld;\ntypedef Dune::Fem::FunctionSpace< double, double, ' + coef + 'dimDomain, ' \
                              + coef + 'dimRange > ' + coef + 'FunctionSpaceType;\ntypedef typename ' + coef \
@@ -719,13 +804,32 @@ class DuneUFLModel:
                 if string[i-1].isalpha() == 0:
                     return True
 
-    ########################
-    # Main methods
-    ########################
-    def setCoefficient(self, name, expr):
-        """For setting a named coefficient.
+    def generateFull(self, a, L, *args):
+        """Generate a DUNE model file using a UFL expression.
+
+        Args:
+            a : UFL expression for the bilinear form.
+            L : UFL expression for the RHS
+            exact : Sympy expression for the exact solution (used for error analysis).
+            *g : (optional) UFL expression for any Dirichlet conditions.
+
+        Returns:
+            Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
         """
-        self.coefficients[name] = expr
+        # dirichlet conditions
+        self.diricOutput(args)
+        # store form a
+        self.formOutput(a)
+        self.storeSrc()
+        # calculate strong form
+        self.uflToStrong()
+        # print (forcing)
+        self.formOutput(L)
+        self.storeRhs()
+        # define linearization
+        F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
+        self.formOutput(F)
+        self.storeLin()
 
     def generateFromExact(self, a, exact, *args):
         """Generate a DUNE model file using a UFL expression (this version uses 'exact' to calculate RHS).
@@ -762,23 +866,20 @@ class DuneUFLModel:
         F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
         self.formOutput(F)
         self.storeLin()
-        if self.unsetCoefficients:
-            self.storeCoef()
-        # output model
-        self.modelPrint(exact)
 
-    def generate(self, a, L, exact, *args):
-        """Generate a DUNE model file using a UFL expression.
+    def generateZeroRHS(self, a, *args):
+        """Generate a DUNE model file using a UFL expression with zero forcing and no exact solution
 
         Args:
             a : UFL expression for the bilinear form.
-            L : UFL expression for the RHS
-            exact : Sympy expression for the exact solution (used for error analysis).
             *g : (optional) UFL expression for any Dirichlet conditions.
 
         Returns:
             Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
         """
+        # no volume or neuman bnd forcing
+        self.rhs = '      phi = RangeType(0);\n'
+        self.rhsBound = '      value = RangeType(0);\n'
         # dirichlet conditions
         self.diricOutput(args)
         # calculate strong form
@@ -786,23 +887,66 @@ class DuneUFLModel:
         # store form a
         self.formOutput(a)
         self.storeSrc()
-        # print (forcing)
-        self.formOutput(L)
-        self.storeRhs()
         # define linearization
         F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
         self.formOutput(F)
         self.storeLin()
-        if self.unsetCoefficients:
-            self.storeCoef()
-        # output model
+
+    ########################
+    # Main methods
+    ########################
+
+    def setCoefficient(self, name, expr):
+        """For setting a named coefficient.
+        """
+        self.coefficients[name] = expr
+
+    def add2Source( self, source, linsource=None ):
+        self.addCode["SOURCE"] = source
+        if linsource == None:
+            self.addCode["LINSOURCE"] = source
+        else:
+            self.addCode["LINSOURCE"] = linsource
+
+    def addCoefficient( self, name, dimR ):
+        self.unsetCoefficients[name] = dimR
+
+    def generate(self, a, L=None, exact=None, *args):
+        if L == None:
+            if exact == None:
+                self.generateZeroRHS(a, *args)
+            else:
+                self.generateFromExact(a, exact, *args)
+        else:
+            self.generateFull(a, L, *args)
+
+    def write(self, exact=None, name=None):
+        if name != None:
+            self.modelName = name
         self.modelPrint(exact)
 
-    def make(self, grid):
+    def makeAndImport(self, grid, exact=None, name=None, header=None):
+        """Does make and imports the module.
+        """
+        name = self.make(grid,exact,name,header)
+        module = importlib.import_module("dune.generated."+name)
+        # reload(module)
+        return module
+
+    def make(self, grid, exact=None, name=None, header=None):
         """Create wrapper file.
         """
-        startTime = timeit.default_timer()
+        if name != None:
+            self.modelName = name
+        if exact != None:
+            self.exact = exact
+        if self.unsetCoefficients:
+            self.storeCoef()
 
+        if header == None:
+            self.modelPrint(self.exact)
+
+        startTime = timeit.default_timer()
         inputfile = self.path + '/modelimpl.hh.in'
         outputfile = self.path + '/modelimpl.hh'
         if isinstance(grid, ModuleType):
@@ -817,6 +961,8 @@ class DuneUFLModel:
                 with open(inputfile, "rt") as fin:
                     fout.write(module._includes)
                     for line in fin:
+                        if header != None and '#include "ModelTmp.hh"' in line:
+                            line = '#include "'+header+'"'
                         line = line.replace('ModelTmp', self.modelName + "Model")
                         if '#MODELNAME' in line:
                             line = line.replace('#MODELNAME', name)
@@ -844,16 +990,8 @@ class DuneUFLModel:
 
             print(self.modelName + 'Model.cc and ' + self.modelName + 'Model.hh have been created')
         femmpi.comm.barrier()
-
         print("Building model took ", timeit.default_timer() - startTime, "s")
-
         return name
-
-    def makeAndImport(self, grid):
-        """Does make and imports the module.
-        """
-        name = self.make(grid)
-        return importlib.import_module("dune.generated."+name)
 
     def exportTodot(self, a):
         """Draw Graph of a UFL expression into PDF format.
@@ -885,12 +1023,15 @@ class DuneUFLModel:
     def spatialCoordinate(self):
         """Initialise spatial coordinate (typically "x").
         """
-        return SpatialCoordinate(triangle)
+        return SpatialCoordinate(self.cell)
 
-    def coefficient(self, name):
+    def coefficient(self, name, dimR=0):
         """Initialise named coefficient (e.g. "velocity" or "diffusion).
         """
-        return self.NamedCoefficient(self.element, self.dimR, name)
+        if dimR==0:
+            return self.NamedCoefficient(self.element, self.dimR, name)
+        else:
+            return self.NamedCoefficient(self.element, dimR, name)
 
 #############################################
 if __name__ == "__main__":
