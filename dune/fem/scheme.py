@@ -62,9 +62,9 @@ def getModule(scheme, **parameters):
 def get(scheme, space, **parameters):
     """Call getModule() by passing in keyword arguments.
     """
-    storage = parameters.get('storage', "Adaptive")
+    storage = parameters.pop('storage', "Adaptive")
     try:
-      nr = 65
+      nr = 65    # look for spaceA,spaceB,...
       extra_includes=""
       for s in space:
         dfmodule = discretefunction.get(storage, s._module, **parameters)
@@ -113,7 +113,7 @@ def create(scheme, space_or_target, model, name, *param, **parameters):
 
     class ExtendedScheme(module.Scheme):
         def __init__(self,space,model,name,target=None):
-            module.Scheme.__init__(self,space,model,name, *param, **parameters)
+            module.Scheme.__init__(self,space,model,name, *param)
             self.target = target
 
     ret = ExtendedScheme(space, model, name, target)
