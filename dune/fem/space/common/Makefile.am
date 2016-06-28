@@ -1,6 +1,7 @@
 commondir =  $(includedir)/dune/fem/space/common
 common_HEADERS = adaptmanager.hh \
      allgeomtypes.hh \
+     arrays.hh \
      basesetlocalkeystorage.hh \
      cachedcommmanager.hh \
      capabilities.hh \
