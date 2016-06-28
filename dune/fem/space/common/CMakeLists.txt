@@ -1,4 +1,4 @@
-dune_install(adaptmanager.hh allgeomtypes.hh
+dune_install(adaptmanager.hh allgeomtypes.hh arrays.hh
              basesetlocalkeystorage.hh cachedcommmanager.hh capabilities.hh
              commindexmap.hh commoperations.hh communicationmanager.hh
              datacollector.hh defaultcommhandler.hh discretefunctionspace.hh
