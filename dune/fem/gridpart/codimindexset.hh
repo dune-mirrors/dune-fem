@@ -9,6 +9,7 @@
 #include <dune/grid/utility/persistentcontainerwrapper.hh>
 #include <dune/grid/utility/persistentcontainermap.hh>
 
+#include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/storage/dynamicarray.hh>
 
 namespace Dune
