@@ -11,8 +11,16 @@
 int main()
 try
 {
-  std::tuple<int,double,std::string> t{1,-0.5,"tuple"};
-  Dune::Fem::for_each(t,[](const auto& entry, auto I){std::cout<<"Entry "<<I<<" : "<<entry<<std::endl;});
+  {
+    std::tuple<int,double,std::string> t{1,-0.5,"tuple"};
+    Dune::Fem::for_each(t,[](const auto& entry, auto I){std::cout<<"Entry "<<I<<" : "<<entry<<std::endl;});
+  }
+
+  {
+    std::tuple<> t;
+    Dune::Fem::for_each(t,[](const auto& entry, auto I){std::cout<<"Entry "<<I<<" : "<<entry<<std::endl;});
+  }
+
   return 0;
 }
 catch(const Dune::Exception& exception)

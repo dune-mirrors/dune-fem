@@ -14,7 +14,7 @@ namespace Dune
       template< typename ... T >
       ForEachImpl( std::tuple< T ... >& t, Functor&& functor)
       {
-        constexpr std::size_t I = sizeof ... ( T ) - R - 1;
+        constexpr std::size_t I = sizeof ... ( T ) - R;
         functor( std::get< I >( t ), I );
         ForEachImpl< Functor, R-1 >( t, std::move( functor ) );
       }
@@ -22,7 +22,7 @@ namespace Dune
       template< typename ... T >
       ForEachImpl( const std::tuple< T ... >& t, Functor&& functor)
       {
-        constexpr std::size_t I = sizeof ... ( T ) - R - 1;
+        constexpr std::size_t I = sizeof ... ( T ) - R;
         functor( std::get< I >( t ), I );
         ForEachImpl< Functor, R-1 >( t, std::move( functor ) );
       }
@@ -34,29 +34,23 @@ namespace Dune
     {
       template< typename ... T >
       ForEachImpl( std::tuple< T ... >& t, Functor&& functor )
-      {
-        constexpr std::size_t I = sizeof ... ( T ) - 1;
-        functor( std::get< I > ( t ), I );
-      }
+      {}
 
       template< typename ... T >
       ForEachImpl( const std::tuple< T ... >& t, Functor&& functor )
-      {
-        constexpr std::size_t I = sizeof ... ( T ) - 1;
-        functor( std::get< I > ( t ), I );
-      }
+      {}
     };
 
     template< typename Functor, typename ... T >
     void for_each( std::tuple< T ... >& t, Functor functor )
     {
-      ForEachImpl< Functor, sizeof ... ( T ) - 1 >( t, std::move( functor ) );
+      ForEachImpl< Functor, sizeof ... ( T ) >( t, std::move( functor ) );
     }
 
     template< typename Functor, typename ... T >
     void for_each( const std::tuple< T ... >& t, Functor functor )
     {
-      ForEachImpl< Functor, sizeof ... ( T ) - 1 >( t, std::move( functor ) );
+      ForEachImpl< Functor, sizeof ... ( T ) >( t, std::move( functor ) );
     }
 
   }
