@@ -8,3 +8,5 @@ dune_install( coordinate.hh
               tupleutility.hh
               typeindexedtuple.hh
               utility.hh )
+
+dune_add_subdirs(test)
