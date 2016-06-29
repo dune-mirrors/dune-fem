@@ -30,12 +30,17 @@ def interpolate(grid, func, **kwargs):
       mySpace = space.create(spaceName, grid, dimrange=R, **kwargs)
       return mySpace.interpolate(func, **kwargs)
 
-def writeVTK(grid,  name, celldata=[], pointdata=[], number=None):
+def writeVTK(grid,  name, celldata=[], pointdata=[], cellvector=[], pointvector=[],
+             number=None):
     vtk = grid.vtkWriter()
     for df in celldata:
         df.addToVTKWriter(vtk, vtk.CellData)
     for df in pointdata:
         df.addToVTKWriter(vtk, vtk.PointData)
+    for df in cellvector:
+        df.addToVTKWriter(vtk, vtk.CellVectorData)
+    for df in pointvector:
+        df.addToVTKWriter(vtk, vtk.PointVectorData)
     if number == None:
         vtk.write(name)
     else:

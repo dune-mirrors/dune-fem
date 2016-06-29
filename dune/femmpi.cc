@@ -32,6 +32,8 @@ PYBIND11_PLUGIN( femmpi )
     pybind11::enum_< Dune::FemPy::VTKDataType > vtkDataType( module, "DataType" );
     vtkDataType.value( "CellData", Dune::FemPy::VTKDataType::CellData );
     vtkDataType.value( "PointData", Dune::FemPy::VTKDataType::PointData );
+    vtkDataType.value( "CellVector", Dune::FemPy::VTKDataType::CellData );
+    vtkDataType.value( "PointVector", Dune::FemPy::VTKDataType::PointData );
     vtkDataType.export_values();
   }
   catch ( const std::exception &e )
