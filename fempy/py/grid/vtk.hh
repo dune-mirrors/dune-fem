@@ -23,16 +23,35 @@ namespace Dune
     template< class GridFunction >
     void addToVTKWriter ( const GridFunction &gf, VTKWriter< typename GridFunction::GridPartType::GridViewType > &vtkWriter, VTKDataType dataType )
     {
-      VTK::FieldInfo info( gf.name(), VTK::FieldInfo::Type::scalar, GridFunction::RangeType::dimension );
       switch( dataType )
       {
       case VTKDataType::CellData:
+      {
+        VTK::FieldInfo info( gf.name(), VTK::FieldInfo::Type::scalar, GridFunction::RangeType::dimension );
         vtkWriter.addCellData( gf, info );
         break;
+      }
 
       case VTKDataType::PointData:
+      {
+        VTK::FieldInfo info( gf.name(), VTK::FieldInfo::Type::scalar, GridFunction::RangeType::dimension );
         vtkWriter.addVertexData( gf, info );
         break;
+      }
+
+      case VTKDataType::CellVector:
+      {
+        VTK::FieldInfo info( gf.name(), VTK::FieldInfo::Type::vector, GridFunction::RangeType::dimension );
+        vtkWriter.addCellData( gf, info );
+        break;
+      }
+
+      case VTKDataType::PointVector:
+      {
+        VTK::FieldInfo info( gf.name(), VTK::FieldInfo::Type::vector, GridFunction::RangeType::dimension );
+        vtkWriter.addVertexData( gf, info );
+        break;
+      }
 
       default:
         DUNE_THROW( InvalidStateException, "Invalid vtk data type" );
@@ -58,6 +77,8 @@ namespace Dune
 
       cls.attr("CellData") = pybind11::cast(VTKDataType::CellData);
       cls.attr("PointData") = pybind11::cast(VTKDataType::PointData);
+      cls.attr("CellVector") = pybind11::cast(VTKDataType::CellVector);
+      cls.attr("PointVector") = pybind11::cast(VTKDataType::PointVector);
     }
 
   } // namespace FemPy

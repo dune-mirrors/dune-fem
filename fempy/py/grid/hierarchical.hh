@@ -95,13 +95,14 @@ namespace Dune
         }
         case gmsh:
         {
+#if 1
           std::cout << "PROBLEM HERE WITH NON STANDARD METHOD BEING USED IN GMSHREADER ON GRIDFACTORY - FAILS WITH YASPGRID"
             << std::endl;
-          /*
+#else
           Dune::GridFactory<Grid> gridFactory;
           Dune::GmshReader<Grid>::read(gridFactory, std::get<1>(constructor), false, false);
           return gridFactory.createGrid();
-          */
+#endif
         }
       }
       return nullptr;

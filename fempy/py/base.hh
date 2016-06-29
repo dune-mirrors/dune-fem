@@ -9,7 +9,7 @@ namespace Dune
     // VTKDataType
     // -----------
 
-    enum class VTKDataType { CellData, PointData };
+    enum class VTKDataType { CellData, PointData, CellVector, PointVector };
 
   }
 
