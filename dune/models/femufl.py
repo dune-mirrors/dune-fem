@@ -468,8 +468,7 @@ class DuneUFLModel:
         """Stores Dirichlet boundary data (from generate) in diric.
         """
         self.diricCheck = 1
-        self.diricCoef = '      int boundaryId = Dune::Fem::BoundaryIdProvider<typename GridPart::GridType>::boundaryId(inter);\n' \
-                         + '      switch (boundaryId)\n      {\n'
+        self.diricCoef = '      switch (boundaryId)\n      {\n'
         for key, value in args.items():
           self.diricCoef += '        case ' + str(key) + ':\n        {\n'
           self.diricIntersect += '        case ' + str(key) + ': return true;\n'
@@ -483,7 +482,7 @@ class DuneUFLModel:
                   self.diricTmp = str(value[i])
               self.diricCoef += '          flux[' + str(i) + '] = ' + self.diricTmp + ';\n'
           self.diricCoef += '        }\n'
-        self.diricCoef += '        default: val = RangeType(0);\n      }'
+        self.diricCoef += '        default: value = RangeType(0);\n      }'
         self.diricCheck = 0
         self.storeDiric()
 
@@ -529,11 +528,16 @@ class DuneUFLModel:
                             if exact == None:
                                 fout.write('      value = RangeType(0);\n')
                             else:
-                                for i in range(0, self.dimR):
-                                    fout.write('      value['+str(i)+'] = ' \
-                                               + self.sympyToString(self.ccode(exact[i])) + ';\n')
+                                fout.write(' exact(entity_->geometry().global(Dune::Fem::coordinate(point)),value);\n')
                     elif '#NEUMANDATA' in line:
                         fout.write(self.rhsBound)
+                    elif "#EXACT" in line:
+                        if exact == None:
+                            fout.write('      value = JacobianRangeType(0);\n')
+                        else:
+                            for i in range(0, self.dimR):
+                                fout.write('      value['+str(i)+'] = ' \
+                                       + self.sympyToString(self.ccode(exact[i])) + ';\n')
                     elif "#JACOBIANEXACT" in line:
                         if exact == None:
                             fout.write('      value = JacobianRangeType(0);\n')

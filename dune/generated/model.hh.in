@@ -92,9 +92,11 @@ namespace ModelTmp
     {
       #HASNEUMAN
     }
-    bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<bool,dimRange> &dirichletComponent ) const
+    bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int,dimRange> &dirichletComponent ) const
     {
       int boundaryId = Dune::Fem::BoundaryIdProvider<typename GridPart::GridType>::boundaryId(inter);
+      dirichletComponent = Dune::FieldVector<int,dimRange>(boundaryId);
+      // std::cout << dirichletComponent << std::endl;
       switch (boundaryId)
       {
         #ISDIRICHLETINTERSECTION
@@ -102,10 +104,11 @@ namespace ModelTmp
       }
     }
     template <class Point>
-    void dirichlet(const intersectionType &inter,
-               const Point &point,
-               RangeType &val) const
+    void dirichlet( int boundaryId, 
+                    const Point &point,
+                    RangeType &value) const
     {
+      // std::cout << boundaryId << std::endl;
       #DIRICHLETDATA
     } 
     void f(const DomainType& x, RangeType& phi) const
@@ -115,6 +118,11 @@ namespace ModelTmp
     void n(const DomainType& x, RangeType& value) const
     {
       #NEUMANDATA
+    }
+    void exact(const DomainType& x, RangeType& value) const
+    {
+      // used for computing L^2 error when solution is provided
+      #EXACT
     }
     void jacobianExact(const DomainType& x, JacobianRangeType& value) const
     {

@@ -75,10 +75,10 @@ class Generator(object):
                 print("Compiling " + self.typeName + " module for " + myTypeName)
                 start_time = timeit.default_timer()
                 out = open(os.path.join(compilePath, "generated_module.hh"), 'w')
-                print(includes, file=out)
                 if self.dataBase.uses_extension(selector) == False:
                     print("#include <dune/fempy/py/" + self.typeName.lower() + ".hh>", file=out)
                     print(file=out)
+                print(includes, file=out)
                 print("typedef " + myTypeName + " DuneType;", file=out)
                 print(file=out)
                 print("PYBIND11_PLUGIN( " + moduleName + " )", file=out)

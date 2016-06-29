@@ -74,7 +74,7 @@ def get(scheme, space, **parameters):
         nr += 1
     except:
       dfmodule = discretefunction.get(storage, space._module, **parameters)
-      storage = dfmodule.DiscreteFunction._storage
+      storage  = dfmodule.DiscreteFunction._storage
       parameters['space'] = space._module._typeName
       extra_includes=space._module._includes + dfmodule._includes
 
