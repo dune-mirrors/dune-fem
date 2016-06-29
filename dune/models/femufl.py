@@ -53,7 +53,7 @@ from .. import femmpi
 
 # Remark: should get rid of the * is apparently bad practice
 from ufl import *
-from ufl.algorithms import expand_compounds, expand_derivatives, expand_indices, ufl2dot
+from ufl.algorithms import expand_compounds, expand_derivatives, expand_indices, ufl2dot, tree_format
 from ufl.algorithms.apply_derivatives import apply_derivatives
 
 compilePath = os.path.join(os.path.dirname(__file__), "../generated")
@@ -95,7 +95,9 @@ class DuneUFLModel:
         self.massCoef = ''
         self.fluxCoef = ''
         self.alphaCoef = ''
+        self.diricTmp = ''
         self.diricCoef = ''
+        self.diricIntersect = ''
         self.linSource = ''
         self.linFlux = ''
         self.linAlpha = ''
@@ -279,10 +281,8 @@ class DuneUFLModel:
             self.check(expr)
             self.stack_maker(expr, stack)
             if self.diricCheck == 1:
-                if self.diricCoef:
-                    self.diricCoef += " + "
                 while stack.isEmpty() == 0:
-                    self.diricCoef += stack.peek()
+                    self.diricTmp += stack.peek()
                     stack.pop()
             elif self.boundCheck == 1:
                 if self.alphaCoef:
@@ -468,13 +468,22 @@ class DuneUFLModel:
         """Stores Dirichlet boundary data (from generate) in diric.
         """
         self.diricCheck = 1
-        for arg in args:
-            if hasattr(args, '_ufl_class_'):
-                self.tree(arg)
-            else:
-                if self.diricCoef:
-                    self.diricCoef += " + "
-                self.diricCoef += str(arg)
+        self.diricCoef = '      int boundaryId = Dune::Fem::BoundaryIdProvider<typename GridPart::GridType>::boundaryId(inter);\n' \
+                         + '      switch (boundaryId)\n      {\n'
+        for key, value in args.items():
+          self.diricCoef += '        case ' + str(key) + ':\n        {\n'
+          self.diricIntersect += '        case ' + str(key) + ': return true;\n'
+          if len(value) != self.dimR:
+              raise Exception('Dirichlet boundary conditions have dimension =', len(value), ', should be dimR =', self.dimR)
+          for i in range(0, self.dimR):
+              self.diricTmp = ''
+              if hasattr(value[i], '_ufl_class_'):
+                  self.tree(value[i])
+              else:
+                  self.diricTmp = str(value[i])
+              self.diricCoef += '          flux[' + str(i) + '] = ' + self.diricTmp + ';\n'
+          self.diricCoef += '        }\n'
+        self.diricCoef += '        default: val = RangeType(0);\n      }'
         self.diricCheck = 0
         self.storeDiric()
 
@@ -510,11 +519,11 @@ class DuneUFLModel:
                     elif '#HASNEUMAN' in line:
                         fout.write('      return true;\n')
                     elif '#ISDIRICHLETINTERSECTION' in line:
-                        fout.write('      return false;\n')
+                        fout.write(self.diricIntersect)
                     elif '#FORCING' in line:
                         fout.write(self.rhs)
                     elif '#DIRICHLETDATA' in line:
-                        if 0: # self.diric:
+                        if self.diric:
                             fout.write(self.diric)
                         else:
                             if exact == None:
@@ -644,7 +653,7 @@ class DuneUFLModel:
         """Store Dirichlet boundary data in diric.
         """
         if self.diricCoef:
-            cDiric = self.stringToCSource(self.diricCoef)
+            cDiric = self.diricCoef
             if self.xTest(cDiric) == 1:
                 self.diric += '      DomainType x = entity_->geometry().global( Dune::Fem::coordinate(point) );\n'
             for coef in self.unsetCoefficients:
@@ -804,7 +813,7 @@ class DuneUFLModel:
                 if string[i-1].isalpha() == 0:
                     return True
 
-    def generateFull(self, a, L, *args):
+    def generateFull(self, a, L, **kwargs):
         """Generate a DUNE model file using a UFL expression.
 
         Args:
@@ -817,7 +826,9 @@ class DuneUFLModel:
             Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
         """
         # dirichlet conditions
-        self.diricOutput(args)
+        if 'diric' in kwargs:
+            dirichlet = kwargs.pop('diric')
+            self.diricOutput(dirichlet)
         # store form a
         self.formOutput(a)
         self.storeSrc()
@@ -831,7 +842,7 @@ class DuneUFLModel:
         self.formOutput(F)
         self.storeLin()
 
-    def generateFromExact(self, a, exact, *args):
+    def generateFromExact(self, a, exact, **kwargs):
         """Generate a DUNE model file using a UFL expression (this version uses 'exact' to calculate RHS).
 
         Args:
@@ -843,7 +854,9 @@ class DuneUFLModel:
             Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
         """
         # dirichlet conditions
-        self.diricOutput(args)
+        if 'diric' in kwargs:
+            dirichlet = kwargs.pop('diric')
+            self.diricOutput(dirichlet)
         # define variables
         # store form a
         self.formOutput(a)
@@ -867,7 +880,7 @@ class DuneUFLModel:
         self.formOutput(F)
         self.storeLin()
 
-    def generateZeroRHS(self, a, *args):
+    def generateZeroRHS(self, a, **kwargs):
         """Generate a DUNE model file using a UFL expression with zero forcing and no exact solution
 
         Args:
@@ -881,7 +894,9 @@ class DuneUFLModel:
         self.rhs = '      phi = RangeType(0);\n'
         self.rhsBound = '      value = RangeType(0);\n'
         # dirichlet conditions
-        self.diricOutput(args)
+        if 'diric' in kwargs:
+            dirichlet = kwargs.pop('diric')
+            self.diricOutput(dirichlet)
         # calculate strong form
         self.uflToStrong()
         # store form a
@@ -911,14 +926,14 @@ class DuneUFLModel:
     def addCoefficient( self, name, dimR ):
         self.unsetCoefficients[name] = dimR
 
-    def generate(self, a, L=None, exact=None, *args):
+    def generate(self, a, L=None, exact=None, **kwargs):
         if L == None:
             if exact == None:
-                self.generateZeroRHS(a, *args)
+                self.generateZeroRHS(a, **kwargs)
             else:
-                self.generateFromExact(a, exact, *args)
+                self.generateFromExact(a, exact, **kwargs)
         else:
-            self.generateFull(a, L, *args)
+            self.generateFull(a, L, **kwargs)
 
     def write(self, exact=None, name=None):
         if name != None:

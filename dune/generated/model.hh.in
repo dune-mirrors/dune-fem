@@ -1,3 +1,5 @@
+#include <dune/fem/misc/boundaryidprovider.hh>
+
 namespace ModelTmp
 {
   using namespace ::std;
@@ -92,16 +94,23 @@ namespace ModelTmp
     }
     bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<bool,dimRange> &dirichletComponent ) const
     {
-      #ISDIRICHLETINTERSECTION
+      int boundaryId = Dune::Fem::BoundaryIdProvider<typename GridPart::GridType>::boundaryId(inter);
+      switch (boundaryId)
+      {
+        #ISDIRICHLETINTERSECTION
+        default: return false;
+      }
     }
+    template <class Point>
+    void dirichlet(const intersectionType &inter,
+               const Point &point,
+               RangeType &val) const
+    {
+      #DIRICHLETDATA
+    } 
     void f(const DomainType& x, RangeType& phi) const
     {
       #FORCING
-    }
-    void g(const DomainType& x, RangeType& value) const
-    {
-      // used both for dirichlet data and possible error computation of L^2 error
-      #DIRICHLETDATA
     }
     void n(const DomainType& x, RangeType& value) const
     {
