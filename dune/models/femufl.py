@@ -551,22 +551,22 @@ class DuneUFLModel:
                         value = sympy.IndexedBase('value')
                         jacobian = sympy.IndexedBase('jacobian')
                         hessian = sympy.IndexedBase('hessian')
-                        fout.write('      DomainType x = entity_->geometry()'
-                                   + '.global( Dune::Fem::coordinate(point) );\n')
-                        for i in range(0, self.dimR):
-                            sympyResidual = self.residual[i]
-                            for r in range(0, self.dimR):
-                                sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x0, self.x0), hessian[r, 0, 0])
-                                sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x0, self.x1), hessian[r, 0, 1])
-                                sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x1, self.x1), hessian[r, 1, 1])
-                                sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x1, self.x2), hessian[r, 1, 2])
-                                sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x2, self.x2), hessian[r, 2, 2])
-                                sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x0), jacobian[r, 0])
-                                sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x1), jacobian[r, 1])
-                                sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x2), jacobian[r, 2])
-                                sympyResidual = sympyResidual.subs(self.U[r], value[r])
-                            result = self.ccode(sympyResidual.simplify())
-                            fout.write('      result['+str(i)+'] = ' + self.sympyToString(result)+';\n')
+                        #fout.write('      DomainType x = entity_->geometry()'
+                        #           + '.global( Dune::Fem::coordinate(point) );\n')
+                        #for i in range(0, self.dimR):
+                        #    sympyResidual = self.residual[i]
+                        #    for r in range(0, self.dimR):
+                        #        sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x0, self.x0), hessian[r, 0, 0])
+                        #        sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x0, self.x1), hessian[r, 0, 1])
+                        #        sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x1, self.x1), hessian[r, 1, 1])
+                        #        sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x1, self.x2), hessian[r, 1, 2])
+                        #        sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x2, self.x2), hessian[r, 2, 2])
+                        #        sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x0), jacobian[r, 0])
+                        #        sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x1), jacobian[r, 1])
+                        #        sympyResidual = sympyResidual.subs(sympy.diff(self.U[r], self.x2), jacobian[r, 2])
+                        #        sympyResidual = sympyResidual.subs(self.U[r], value[r])
+                        #    result = self.ccode(sympyResidual.simplify())
+                        #    fout.write('      result['+str(i)+'] = ' + self.sympyToString(result)+';\n')
                     elif '#MODELTEMPLATE' in line:
                         line = line.replace('#MODELTEMPLATE', self.modelTemplate)
                         fout.write(line)
@@ -601,8 +601,9 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.massCoef:
                     self.source += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                + coef + 'Local_->evaluate(point,' + coef + ');\n' \
-                                + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                if "grad"+coef in self.massCoef:
+                    self.source += '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
                                 + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
             self.source += cMass + '\n'
         # for diffusiveFlux function
@@ -679,8 +680,9 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.massCoef:
                     self.linSource += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                  + coef + 'Local_->evaluate(point,' + coef + ');\n' \
-                                  + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                  + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                if "grad"+coef in self.massCoef:
+                    self.linSource += '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
                                   + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
             self.linSource += cMass + '\n'
         # for linDiffusiveFlux function
