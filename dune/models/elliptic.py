@@ -316,21 +316,28 @@ class FluxExtracter(ufl.algorithms.transformer.Transformer):
 def splitUFLForm(form):
     source = ufl.constantvalue.Zero()
     diffusiveFlux = ufl.constantvalue.Zero()
+    boundarySource = ufl.constantvalue.Zero()
 
     form = ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(form)))
     for integral in form.integrals():
         if integral.integral_type() == 'cell':
             splitIntegrands = FluxExtracter().visit(integral.integrand())
             if not (set(splitIntegrands.keys()) <= { 0, 1 }):
-                raise Exception('Invalid derivatives encountered on test function: ' + repr(set(splitIntegrands.keys())))
+                raise Exception('Invalid derivatives encountered on test function in bulk integral: ' + repr(set(splitIntegrands.keys())))
             if 0 in splitIntegrands:
                 source += splitIntegrands[0]
             if 1 in splitIntegrands:
                 diffusiveFlux += splitIntegrands[1]
+        elif integral.integral_type() == 'exterior_facet':
+            splitIntegrands = FluxExtracter().visit(integral.integrand())
+            if not (set(splitIntegrands.keys()) <= { 0 }):
+                raise Exception('Invalid derivatives encountered on test function in boundary integral: ' + repr(set(splitIntegrands.keys())))
+            if 0 in splitIntegrands:
+                boundarySource += splitIntegrands[0]
         else:
             raise NotImplementedError('Integrals of type ' + integral.integral_type() + ' are not supported.')
 
-    return source, diffusiveFlux
+    return source, diffusiveFlux, boundarySource
 
 
 
@@ -461,7 +468,7 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
                 result += self.translateIndex(component)
             return result
         elif isinstance(index, ufl.core.multiindex.FixedIndex):
-            return '[' + str(index) + ']'
+            return '[ ' + str(index) + ' ]'
         else:
             raise Exception('Index type not supported: ' + repr(index))
 
@@ -472,6 +479,8 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
 # ------------
 
 def generateCode(phi, predefined, expr):
+    if isinstance(expr, ufl.constantvalue.Zero):
+        return ['flux = std::decay_t< decltype( flux ) >( 0 );']
     generator = CodeGenerator(phi, predefined)
     result = generator.visit(expr)
     code = generator.code
@@ -493,7 +502,7 @@ def compileUFL(equation, dimRange):
     if len(form.arguments()) < 2:
         raise Exception("Elliptic model requires from with at least two arguments.")
 
-    source, diffusiveFlux = splitUFLForm( form )
+    source, diffusiveFlux, boundarySource = splitUFLForm( form )
 
     phi = form.arguments()[0]
     dphi = ufl.differentiation.Grad(phi)
@@ -503,7 +512,7 @@ def compileUFL(equation, dimRange):
     dubar = ufl.differentiation.Grad(ubar)
     dform = ufl.algorithms.apply_derivatives.apply_derivatives(ufl.derivative(ufl.action(form, ubar), ubar, u))
 
-    linSource, linDiffusiveFlux = splitUFLForm( dform )
+    linSource, linDiffusiveFlux, linBoundarySource = splitUFLForm( dform )
 
     model = EllipticModel(dimRange)
 
@@ -511,5 +520,7 @@ def compileUFL(equation, dimRange):
     model.diffusiveFlux = generateCode(dphi, { u : 'u', du : 'du' }, diffusiveFlux)
     model.linSource = generateCode(phi, { u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linSource)
     model.linDiffusiveFlux = generateCode(dphi, { u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linDiffusiveFlux)
+    model.alpha = generateCode(phi, { u : 'u' }, boundarySource)
+    model.linAlpha = generateCode(phi, { u : 'u', ubar : 'ubar' }, linBoundarySource)
 
     return model
