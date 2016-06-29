@@ -107,7 +107,7 @@ void assembleRHS ( const Model &model, const Function &function, const Neuman &n
         const IntersectionType &intersection = *iit;
         if ( ! intersection.boundary() )
           continue;
-        Dune::FieldVector<bool,RangeType::dimension> components(true);
+        Dune::FieldVector<int,RangeType::dimension> components(true);
         // if ( model.isDirichletIntersection( intersection, components) )
         //   continue;
         bool hasDirichletComponent = model.isDirichletIntersection( intersection, components);

@@ -173,7 +173,7 @@ void FemScheme< Space, Model, solver >::prepare ()
 
   // set boundary values to the rhs - since implicitOperator is of
   // abstract base type we need to cast here
-  dynamic_cast< OperatorType & >( *implicitOperator_ ).prepare( model_.dirichletBoundary( gridPart() ), rhs_ );
+  dynamic_cast< OperatorType & >( *implicitOperator_ ).prepare( rhs_ );
 }
 
 

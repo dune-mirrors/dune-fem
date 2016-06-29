@@ -116,11 +116,10 @@ public:
   {}
 
   // prepare the solution vector
-  template <class Function>
-  void prepare( const Function &func, RangeDiscreteFunctionType &u )
+  void prepare( RangeDiscreteFunctionType &u )
   {
     // set boundary values for solution
-    constraints()( func, u );
+    constraints()( u );
   }
 
   //! application operator
@@ -262,7 +261,8 @@ void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model, Con
         if( !intersection.boundary() )
           continue;
 
-        Dune::FieldVector<bool,RangeRangeType::dimension> components(true);
+        Dune::FieldVector<int,RangeRangeType::dimension> components(0);
+
         const bool hasDirichletComponent = model().isDirichletIntersection( intersection, components );
 
         const auto &intersectionGeometry = intersection.geometry();
@@ -379,7 +379,7 @@ void DifferentiableEllipticOperator< JacobianOperator, Model, Constraints >
         if( !intersection.boundary() )
           continue;
 
-        Dune::FieldVector<bool,RangeRangeType::dimension> components(true);
+        Dune::FieldVector<int,RangeRangeType::dimension> components(0);
         bool hasDirichletComponent = model().isDirichletIntersection( intersection, components );
 
         const auto &intersectionGeometry = intersection.geometry();

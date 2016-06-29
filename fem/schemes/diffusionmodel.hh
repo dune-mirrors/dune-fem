@@ -42,7 +42,10 @@
   virtual void linAlpha(const RangeType &uBar,\
                 const POINT &x,\
                 const RangeType &value,\
-                RangeType &val) const = 0;
+                RangeType &val) const = 0;\
+  virtual void dirichlet( int bndId, const POINT &x,\
+                RangeType &value) const = 0;
+
 #define WrapperDiffusionModelMethods(POINT) \
   virtual void source ( const POINT &x,\
                 const RangeType &value,\
@@ -82,8 +85,10 @@
                 const POINT &x,\
                 const RangeType &value,\
                 RangeType &val) const \
-  { impl().linAlpha(uBar,x,value,val); }
-
+  { impl().linAlpha(uBar,x,value,val); } \
+  virtual void dirichlet( int bndId, const POINT &x,\
+                RangeType &value) const \
+  { impl().dirichlet(bndId,x,value); }
 
 
 template< class GridPart, int dimR, class RangeField = double >
@@ -122,14 +127,14 @@ struct DiffusionModel
   */
 
 protected:
-  enum FunctionId { rhs, bndD, bndN, exact };
+  enum FunctionId { rhs, bndD, bndN, exactSol };
   template <FunctionId id>
   class FunctionWrapper;
 public:
   typedef Dune::Fem::GridFunctionAdapter< FunctionWrapper<rhs>, GridPartType > RightHandSideType;
   typedef Dune::Fem::GridFunctionAdapter< FunctionWrapper<bndD>, GridPartType > DirichletBoundaryType;
   typedef Dune::Fem::GridFunctionAdapter< FunctionWrapper<bndN>, GridPartType > NeumanBoundaryType;
-  typedef Dune::Fem::GridFunctionAdapter< FunctionWrapper<exact>, GridPartType > ExactSolutionType;
+  typedef Dune::Fem::GridFunctionAdapter< FunctionWrapper<exactSol>, GridPartType > ExactSolutionType;
 
   DiffusionModel( )
     : rhs_(*this),
@@ -152,11 +157,11 @@ public:
 
   virtual bool hasDirichletBoundary () const = 0;
   virtual bool hasNeumanBoundary () const = 0;
-  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<bool,dimRange> &dirichletComponent ) const = 0;
+  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int,dimRange> &dirichletComponent ) const = 0;
 
   virtual void f(const DomainType& x, RangeType& value) const = 0;
-  virtual void g(const DomainType& x, RangeType& value) const = 0;
   virtual void n(const DomainType& x, RangeType& value) const = 0;
+  virtual void exact(const DomainType& x, RangeType& value) const = 0;
   virtual void jacobianExact(const DomainType& x, JacobianRangeType& value) const = 0;
 
   DirichletBoundaryType dirichletBoundary( const GridPart &gp) const
@@ -180,6 +185,26 @@ public:
     return ExactSolutionType( "exact-solution", exact_, gp, 5 );
   }
 
+  class BoundaryWrapper
+  {
+    const ModelType& impl_;
+    int bndId_;
+    public:
+    BoundaryWrapper( const ModelType& impl, int bndId )
+    : impl_( impl ), bndId_(bndId) {}
+
+    //! evaluate function
+    template <class Point>
+    void evaluate( const Point& x, RangeType& ret ) const
+    {
+      impl_.dirichlet(bndId_,Dune::Fem::coordinate(x),ret);
+    }
+    //! jacobian function (only for exact)
+    void jacobian( const DomainType& x, JacobianRangeType& ret ) const
+    {
+      DUNE_THROW(Dune::NotImplemented,"rhs jacobian not implemented");
+    }
+  };
 protected:
   template <FunctionId id>
   class FunctionWrapper : public Dune::Fem::Function< FunctionSpaceType, FunctionWrapper< id > >
@@ -197,20 +222,22 @@ protected:
         // call right hand side of implementation
         impl_.f( x, ret );
       }
+      /*
       else if( id == bndD )
       {
         // call dirichlet boudary data of implementation
-        impl_.g( x, ret );
+        impl_.dirichlet( x, ret );
       }
+      */
       else if( id == bndN )
       {
         // call dirichlet boudary data of implementation
         impl_.n( x, ret );
       }
-      else if( id == exact )
+      else if( id == exactSol )
       {
         // call dirichlet boudary data of implementation
-        impl_.g( x, ret );
+        impl_.exact( x, ret );
       }
       else
       {
@@ -246,7 +273,7 @@ protected:
   FunctionWrapper<rhs> rhs_;
   FunctionWrapper<bndD> bndD_;
   FunctionWrapper<bndN> bndN_;
-  FunctionWrapper<exact> exact_;
+  FunctionWrapper<exactSol> exact_;
 };
 
 template < class ModelImpl >
@@ -293,7 +320,7 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   {
     return impl().hasNeumanBoundary();
   }
-  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<bool,dimRange> &dirichletComponent ) const
+  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int,dimRange> &dirichletComponent ) const
   {
     return impl().isDirichletIntersection(inter, dirichletComponent);
   }
@@ -301,9 +328,9 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   {
     impl().f(x, value);
   }
-  virtual void g(const DomainType& x, RangeType& value) const
+  virtual void exact(const DomainType& x, RangeType& value) const
   {
-    impl().g(x, value);
+    impl().exact(x, value);
   }
   virtual void jacobianExact(const DomainType& x, JacobianRangeType& value) const
   {
