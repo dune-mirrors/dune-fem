@@ -9,4 +9,5 @@ set_target_properties(common PROPERTIES PREFIX "")
 add_library(femmpi SHARED femmpi.cc)
 set_target_properties(femmpi PROPERTIES PREFIX "")
 
+add_python_target(ufl)
 configure_file(__init__.py __init__.py COPYONLY)
