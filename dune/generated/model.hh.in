@@ -104,9 +104,9 @@ namespace ModelTmp
     template <class Point>
     void dirichlet(const intersectionType &inter,
                const Point &point,
-               RangeType &val) const
+               RangeType &value) const
     {
-      #DIRICHLETDATA
+        #DIRICHLETDATA
     } 
     void f(const DomainType& x, RangeType& phi) const
     {
