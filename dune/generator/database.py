@@ -97,7 +97,7 @@ class DataBase:
         variables = []
         string = self.defs[grid]["type"]
         while True:
-            match = re.search(r"\$\(([a-zA-Z]+)\)", string)
+            match = re.search(r"\$\(([a-zA-Z][a-zA-Z0-9]*)\)", string)
             if not match:
                 return variables
             if match.group(1) not in variables:
@@ -143,7 +143,7 @@ class DataBase:
 
     def replace(self, string, parameters, defaults, translations):
         while True:
-            match = re.search(r"\$\(([a-zA-Z]+)\)", string)
+            match = re.search(r"\$\(([a-zA-Z][a-zA-Z0-9]*)\)", string)
             if not match:
                 break
             option = match.group(1)
@@ -165,7 +165,7 @@ class DataBase:
     def check(self, string, parameters, defaults):
         before = string
         while True:
-            match = re.search(r"\$\(([a-zA-Z]+)\)", string)
+            match = re.search(r"\$\(([a-zA-Z][a-zA-Z0-9]*)\)", string)
             if not match:
                 break
             option = match.group(1)
