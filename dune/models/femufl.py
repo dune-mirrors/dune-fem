@@ -1,7 +1,7 @@
 r"""@package femufl
 Provides the translation between a UFL interface file and a DUNE model file.
 
-generate and generateFromExact are the main functions for creating the model. They essentially do the following:
+generate is the main functions for creating the model. They essentially do the following:
 1. Iterate over the expression trees for a, L, and the derivative F (computed using UFL).
 2. 'Translate' the individual terms to strings compatible with DUNE.
 3. Put the forms back together and sort them into variables (e.g. 'source' and 'flux'). This involves simplifying
@@ -27,7 +27,7 @@ Examples:
     >>> x = model.spatialCoordinate()
     >>> dx0 = dx(0)
     >>> a = (inner(u,v) + inner(grad(u),grad(v)))*dx0
-    >>> model.generateFromExact(a,exact)
+    >>> model.generate(a,exact=exact)
     model.hh has been changed
 """
 
@@ -518,7 +518,11 @@ class DuneUFLModel:
                     elif '#HASNEUMAN' in line:
                         fout.write('      return true;\n')
                     elif '#ISDIRICHLETINTERSECTION' in line:
-                        fout.write(self.diricIntersect)
+                        if self.diricIntersect:
+                            fout.write(self.diricIntersect)
+                        else:
+                            if exact != None:
+                                fout.write( '        case 1: return true;\n')
                     elif '#FORCING' in line:
                         fout.write(self.rhs)
                     elif '#DIRICHLETDATA' in line:
@@ -819,14 +823,14 @@ class DuneUFLModel:
                 if string[i-1].isalpha() == 0:
                     return True
 
-    def generateFull(self, a, L, **kwargs):
+    def generate(self, a, **kwargs):
         """Generate a DUNE model file using a UFL expression.
 
         Args:
             a : UFL expression for the bilinear form.
-            L : UFL expression for the RHS
-            exact : Sympy expression for the exact solution (used for error analysis).
-            *g : (optional) UFL expression for any Dirichlet conditions.
+            L : (optional) UFL expression for the RHS
+            exact : (optional) Sympy expression for the exact solution (used for error analysis).
+            diric : (optional) UFL expression for any Dirichlet conditions.
 
         Returns:
             Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
@@ -840,74 +844,27 @@ class DuneUFLModel:
         self.storeSrc()
         # calculate strong form
         self.uflToStrong()
-        # print (forcing)
-        self.formOutput(L)
-        self.storeRhs()
-        # define linearization
-        F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
-        self.formOutput(F)
-        self.storeLin()
-
-    def generateFromExact(self, a, exact, **kwargs):
-        """Generate a DUNE model file using a UFL expression (this version uses 'exact' to calculate RHS).
-
-        Args:
-            a : UFL expression for the bilinear form.
-            exact : Sympy expression for the exact solution (used for error analysis).
-            *g : (optional) UFL expression for any Dirichlet conditions.
-
-        Returns:
-            Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
-        """
-        # dirichlet conditions
-        if 'diric' in kwargs:
-            dirichlet = kwargs.pop('diric')
-            self.diricOutput(dirichlet)
-        # define variables
-        # store form a
-        self.formOutput(a)
-        self.storeSrc()
-        # calculate strong form
-        self.uflToStrong()
-        # define rhs forcing using exact solution and print
-        x = self.spatialCoordinate()
-        forcing = self.computeForcing(exact)
-        #uflForcing = as_vector( [eval(f) for f in forcing] ) # some problem with # python 3.4?
-        # uflForcing = [eval(f) for f in forcing]
-        uflForcing = []
-        for f in forcing:
-            uflForcing.extend([eval(f)])
-        uflForcing = as_vector(uflForcing)
-        L = inner(self.testFunction(), uflForcing)*dx(0)
-        self.formOutput(L)
-        self.storeRhs()
-        # define linearization
-        F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
-        self.formOutput(F)
-        self.storeLin()
-
-    def generateZeroRHS(self, a, **kwargs):
-        """Generate a DUNE model file using a UFL expression with zero forcing and no exact solution
-
-        Args:
-            a : UFL expression for the bilinear form.
-            *g : (optional) UFL expression for any Dirichlet conditions.
-
-        Returns:
-            Generates a DUNE file called Model.hh where "Model" is the name used to initialise DuneUFLModel.
-        """
-        # no volume or neuman bnd forcing
-        self.rhs = '      phi = RangeType(0);\n'
-        self.rhsBound = '      value = RangeType(0);\n'
-        # dirichlet conditions
-        if 'diric' in kwargs:
-            dirichlet = kwargs.pop('diric')
-            self.diricOutput(dirichlet)
-        # calculate strong form
-        self.uflToStrong()
-        # store form a
-        self.formOutput(a)
-        self.storeSrc()
+        # define rhs forcing using L if given
+        if 'L' in kwargs:
+            L = kwargs.pop('L')
+            self.formOutput(L)
+            self.storeRhs()
+        # else define rhs forcing using exact solution if given
+        elif 'exact' in kwargs:
+            exact = kwargs.pop('exact')
+            x = self.spatialCoordinate()
+            forcing = self.computeForcing(exact)
+            uflForcing = []
+            for f in forcing:
+                uflForcing.extend([eval(f)])
+            uflForcing = as_vector(uflForcing)
+            L = inner(self.testFunction(), uflForcing)*dx(0)
+            self.formOutput(L)
+            self.storeRhs()
+        # else set rhs to zero
+        else:
+            self.rhs = '      phi = RangeType(0);\n'
+            self.rhsBound = '      value = RangeType(0);\n'
         # define linearization
         F = apply_derivatives(derivative(action(a, self.u_), self.u_, self.trialFunction()))
         self.formOutput(F)
@@ -931,15 +888,6 @@ class DuneUFLModel:
 
     def addCoefficient( self, name, dimR ):
         self.unsetCoefficients[name] = dimR
-
-    def generate(self, a, L=None, exact=None, **kwargs):
-        if L == None:
-            if exact == None:
-                self.generateZeroRHS(a, **kwargs)
-            else:
-                self.generateFromExact(a, exact, **kwargs)
-        else:
-            self.generateFull(a, L, **kwargs)
 
     def write(self, exact=None, name=None):
         if name != None:
