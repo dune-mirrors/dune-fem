@@ -168,7 +168,7 @@ class EllipticModel:
         sourceWriter.closeConstMethod()
 
         sourceWriter.openConstMethod('std::string name')
-        sourceWriter.emit('return ' + name + ';')
+        sourceWriter.emit('return "' + name + '";')
         sourceWriter.closeConstMethod()
 
         sourceWriter.openConstMethod('void source', targs='class Point', args='const Point &x, const RangeType &u, const JacobianRangeType &du, RangeType &flux')
@@ -236,7 +236,101 @@ class EllipticModel:
 
 
 
-# FluxExtractor
+# ExprTensor
+# ----------
+
+class ExprTensor:
+    def __init__(self, shape, data=None):
+        self.shape = shape
+        if data is None:
+            self.data = self._zero(shape)
+        else:
+            self.data = data
+
+    def __repr__(self):
+        return repr(self.data)
+
+    def __add__(self, other):
+        if not isinstance(other, ExprTensor):
+            raise Exception('Cannot add ' + type(other) + ' to ' + type(self) + '.')
+        if other.shape != self.shape:
+            raise Exception('Cannot add tensors of different shape.')
+        return ExprTensor(self.shape, self._add(self.shape, self.data, other.data))
+
+    def __mul__(self, other):
+        if isinstance(other, ExprTensor):
+            raise Exception('Cannot multiply tensors.')
+        return ExprTensor(self.shape, self._mul(self.shape, self.data, other))
+
+    def __getitem__(self, key):
+        if isinstance(key, ufl.core.multiindex.MultiIndex):
+            if len(key) != len(self.shape):
+                raise Exception('Expect key of length ' + str(len(shape)) + '.')
+            if not all(isinstance(idx, ufl.core.multiindex.FixedIndex) for idx in key):
+                raise Exception('Expect only FixedIndex entries in MultiIndex.')
+            data = self.data
+            key = key.indices()
+            while len(key) > 1:
+                data = data[int(key[0])]
+                key = key[1:]
+            return data[int(key[0])]
+        else:
+            raise Exception('Expect MultiIndex to access component')
+
+    def __setitem__(self, key, value):
+        if isinstance(key, ufl.core.multiindex.MultiIndex):
+            if len(key) != len(self.shape):
+                raise Exception('Expect key of length ' + str(len(shape)) + '.')
+            if not all(isinstance(idx, ufl.core.multiindex.FixedIndex) for idx in key):
+                raise Exception('Expect only FixedIndex entries in MultiIndex.')
+            data = self.data
+            key = key.indices()
+            while len(key) > 1:
+                data = data[int(key[0])]
+                key = key[1:]
+            data[int(key[0])] = value
+        else:
+            raise Exception('Expect MultiIndex to access component')
+
+    def keys(self):
+        return [ufl.core.multiindex.MultiIndex(idx) for idx in self._keys(self.shape)]
+
+    def to_ufl(self):
+        return self._to_ufl(self.shape, self.data)
+
+    def _add(self, shape, left, right):
+        if len(shape) == 1:
+            return [left[i] + right[i] for i in range(0, shape[0])]
+        else:
+            return [self._add(shape[1:], left[i], right[i]) for i in range(0, shape[0])]
+
+    def _keys(self, shape):
+        if len(shape) == 1:
+            return [(ufl.core.multiindex.FixedIndex(i),) for i in range(0, shape[0])]
+        else:
+            return [(ufl.core.multiindex.FixedIndex(i),) + t for i in range(0, shape[0]) for t in self._keys(shape[1:])]
+
+    def _mul(self, shape, tensor, value):
+        if len(shape) == 1:
+            return [tensor[i] * value for i in range(0, shape[0])]
+        else:
+            return [self._mul(shape[1:], tensor[i], value) for i in range(0, shape[0])]
+
+    def _to_ufl(self, shape, data):
+        if len(shape) == 1:
+            return ufl.as_tensor(data)
+        else:
+            return ufl.as_tensor([self._to_ufl(shape[1:], data[i]) for i in range(0, shape[0])])
+
+    def _zero(self, shape):
+        if len(shape) == 1:
+            return [ufl.constantvalue.Zero() for i in range(0, shape[0])]
+        else:
+            return [self._zero(shape[1:]) for i in range(0, shape[0])]
+
+
+
+# FluxExtracter
 # -------------
 
 class FluxExtracter(ufl.algorithms.transformer.Transformer):
@@ -245,95 +339,91 @@ class FluxExtracter(ufl.algorithms.transformer.Transformer):
 
     def argument(self, expr):
         if expr.number() == 0:
-            return { 0 : expr }
+            raise Exception('Test function should only occur in indexed expressions.')
         else:
-            return { None : expr }
+            return expr
 
-    def grad(self, expr, *children):
-        if len(children) != 1:
-            raise Exception('grad expressions must have exactly one child.')
-        child = children[ 0 ]
-        result = dict()
-        for order in child:
-            if order is None:
-                result[None] = self.reuse_if_possible(expr, child[None])
-            else:
-                result[order+1] = self.reuse_if_possible(expr, child[order])
-        return result
+    grad = ufl.algorithms.transformer.Transformer.reuse_if_possible
 
-    def indexed(self, expr, *children):
-        if len(children) != 2:
-            raise Exception('indexed must have exactly two children.')
-        if list(children[1].keys()) != [None]:
-            raise Exception('second child of indexed cannot contain test function.')
-        result = dict()
-        for order in children[0]:
-            result[order] = self.reuse_if_possible(expr, children[0][order], children[1][None])
-        return result
-
-    def product(self, expr, *children):
-        testedChildren = self._testedChildren(*children)
-        if not testedChildren:
-            return { None : expr }
-        elif len(testedChildren) == 1:
-            result = dict()
-            for order in testedChildren[0]:
-                result[order] = self.reuse_if_possible(expr, *[child[order] if child == testedChildren[0] else child[None] for child in children])
-            return result
+    def indexed(self, expr):
+        if len(expr.ufl_operands) != 2:
+            raise Exception('indexed expressions must have exactly two children.')
+        operand = expr.ufl_operands[0]
+        index = expr.ufl_operands[1]
+        if self.isTestFunction(operand):
+            tensor = ExprTensor(operand.ufl_shape)
+            tensor[index] = ufl.constantvalue.IntValue(1)
+            return {operand : tensor}
         else:
-            raise Exception('test function may not appear in nonlinear expression.')
+            return self.reuse_if_possible(expr, self.visit(operand), index)
 
-    def sum(self, expr, *children):
-        orders = set()
-        for child in children:
-            orders |= set(child.keys())
-        result = dict()
-        for order in orders:
-            result[order] = self.reuse_if_possible(expr, *[child[order] if order in child else ufl.constantvalue.Zero() for child in children])
-        return result
+    def product(self, expr, left, right):
+        if isinstance(left, ufl.core.expr.Expr) and isinstance(right, ufl.core.expr.Expr):
+            return self.reuse_if_possible(expr, left, right)
+        elif isinstance(left, dict) and isinstance(right, ufl.core.expr.Expr):
+            return {op : left[op] * right for op in left}
+        elif isinstance(left, ufl.core.expr.Expr) and isinstance(right, dict):
+            return {op : right[op] * left for op in right}
+        else:
+            raise Exception('Only one child of a product may access the test function.')
 
-    def sin(self, expr, *children):
-        if self._testedChildren(*children):
-            raise Exception('test function may not appear in nonlinear expression.')
-        return { None : expr }
+    def sum(self, expr, left, right):
+        if isinstance(left, ufl.core.expr.Expr) and isinstance(right, ufl.core.expr.Expr):
+            return self.reuse_if_possible(expr, left, right)
+        elif isinstance(left, dict) and isinstance(right, dict):
+            for op in right:
+                left[op] = (left[op] + right[op]) if op in left else right[op]
+            return left
+        else:
+            raise Exception('Either both summands must contain test function or none')
+
+    def sin(self, expr, operand):
+        if isinstance(operand, dict):
+            raise Exception('Test function cannot appear in nonlinear expressions.')
+        else:
+            return self.reuse_if_possible(expr, operand)
 
     cos = sin
 
     def terminal(self, expr):
-        return { None : expr }
+        return expr
 
-    def _testedChildren(self, *children):
-        result = []
-        for child in children:
-            if list(child.keys()) != [None]:
-                result += [child]
-        return result
+    def isTestFunction(self, expr):
+        while isinstance(expr, ufl.differentiation.Grad):
+            expr = expr.ufl_operands[0]
+        return isinstance(expr, ufl.argument.Argument) and expr.number() == 0
+
 
 
 # splitUFLForm
 # ------------
 
 def splitUFLForm(form):
-    source = ufl.constantvalue.Zero()
-    diffusiveFlux = ufl.constantvalue.Zero()
-    boundarySource = ufl.constantvalue.Zero()
+    phi = form.arguments()[0]
+    dphi = ufl.differentiation.Grad(phi)
+
+    source = ExprTensor(phi.ufl_shape)
+    diffusiveFlux = ExprTensor(dphi.ufl_shape)
+    boundarySource = ExprTensor(phi.ufl_shape)
 
     form = ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(form)))
     for integral in form.integrals():
         if integral.integral_type() == 'cell':
-            splitIntegrands = FluxExtracter().visit(integral.integrand())
-            if not (set(splitIntegrands.keys()) <= { 0, 1 }):
-                raise Exception('Invalid derivatives encountered on test function in bulk integral: ' + repr(set(splitIntegrands.keys())))
-            if 0 in splitIntegrands:
-                source += splitIntegrands[0]
-            if 1 in splitIntegrands:
-                diffusiveFlux += splitIntegrands[1]
+            fluxExprs = FluxExtracter().visit(integral.integrand())
+            for op in fluxExprs:
+                if op == phi:
+                    source = source + fluxExprs[op]
+                elif op == dphi:
+                    diffusiveFlux = diffusiveFlux + fluxExprs[op]
+                else:
+                    raise Exception('Invalid derivative encountered in bulk integral: ' + op)
         elif integral.integral_type() == 'exterior_facet':
-            splitIntegrands = FluxExtracter().visit(integral.integrand())
-            if not (set(splitIntegrands.keys()) <= { 0 }):
-                raise Exception('Invalid derivatives encountered on test function in boundary integral: ' + repr(set(splitIntegrands.keys())))
-            if 0 in splitIntegrands:
-                boundarySource += splitIntegrands[0]
+            fluxExprs = FluxExtracter().visit(integral.integrand())
+            for op in fluxExprs:
+                if op == phi:
+                    boundarySource = boundarySource + fluxExprs[op]
+                else:
+                    raise Exception('Invalid derivative encountered in boundary integral: ' + op)
         else:
             raise NotImplementedError('Integrals of type ' + integral.integral_type() + ' are not supported.')
 
@@ -345,24 +435,15 @@ def splitUFLForm(form):
 # -------------
 
 class CodeGenerator(ufl.algorithms.transformer.Transformer):
-    class Accessor:
-        def __init__(self, index):
-            self._index = index
-
-        def index(self):
-            return self._index
-
     def __init__(self, phi, predefined):
         ufl.algorithms.transformer.Transformer.__init__(self)
-        self.phi = phi
+        self.using = set()
         self.exprs = predefined
         self.code = []
 
     def argument(self, expr):
         if expr in self.exprs:
             return self.exprs[expr]
-        elif expr == self.phi:
-            raise Exception('Test function should only occur in indexed expressions.')
         else:
             raise Exception('Unknown argument: ' + str(expr.number()))
 
@@ -381,12 +462,8 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
     float_value = int_value
 
     def grad(self, expr):
-        if len(expr.ufl_operands) != 1:
-            raise Exception('grad expressions must have exactly one child.')
         if expr in self.exprs:
             return self.exprs[expr]
-        elif expr == self.phi:
-            raise Exception('Test function should only occur in indexed expressions.')
         else:
             operand = expr.ufl_operands[0]
             if isinstance(operand, ufl.differentiation.Grad):
@@ -396,65 +473,40 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
             else:
                 raise Exception('Cannot compute gradient of ' + repr(expr))
 
-    def indexed(self, expr):
-        if len(expr.ufl_operands) != 2:
-            raise Exception('indexed expressions must have exactly two children.')
-        operand = expr.ufl_operands[0]
-        index = expr.ufl_operands[1]
-        if operand == self.phi:
-            return CodeGenerator.Accessor(index)
-        else:
-            tensor = self.visit(operand)
-            return tensor + self.translateIndex(index)
+    def indexed(self, expr, operand, index):
+        return operand + self.translateIndex(index)
 
     def product(self, expr):
-        if len(expr.ufl_operands) != 2:
-            raise Exception('Product expressions must have exactly two children.')
         if expr in self.exprs:
             return self.exprs[expr]
         else:
             left = self.visit(expr.ufl_operands[0])
             right = self.visit(expr.ufl_operands[1])
-            if not isinstance(left, str):
-                left, right = right, left
-            if not isinstance(left, str):
-                raise Exception('Only one child of a product may access the test function.')
-            if isinstance(right, CodeGenerator.Accessor):
-                return { right.index() : left }
-            if isinstance(right, dict):
-                return { index : '(' + left + ' * ' + right[index] + ')' for index in right }
-            else:
-                self.exprs[expr] = self._makeTmp('(' + left + ' * ' + right + ')')
-                return self.exprs[expr]
+            self.exprs[expr] = self._makeTmp('(' + left + ' * ' + right + ')')
+            return self.exprs[expr]
 
-    def sum(self, expr):
-        if len(expr.ufl_operands) != 2:
-            raise Exception('Sum expressions must have exactly two children.')
-        left = self.visit(expr.ufl_operands[0])
-        right = self.visit(expr.ufl_operands[1])
-        if isinstance(left, str) and isinstance(right, str):
-            return '(' + left + ' + ' + right + ')'
-        elif isinstance(left, dict) and isinstance(right, dict):
-            for index in right:
-                if index in left:
-                    left[index] = '(' + left[index] + ' + ' + right[index] + ')'
-                else:
-                    left[index] = right[index]
-            return left
-        else:
-            raise Exception('Either both summands must contain test function or none')
+    def sum(self, expr, left, right):
+        return '(' + left + ' + ' + right + ')'
+
+    def cos(self, expr):
+        self.using.add('using std::cos;')
+        if expr not in self.exprs:
+            self.exprs[expr] = self._makeTmp('cos( ' + self.visit(expr.ufl_operands[0]) + ' )')
+        return self.exprs[expr]
 
     def sin(self, expr):
-        if len(expr.ufl_operands) != 1:
-            raise Exception('sin expressions must have exactly one child.')
+        self.using.add('using std::sin;')
         if expr not in self.exprs:
-            self.exprs[expr] = self._makeTmp('std::sin( ' + self.visit(expr.ufl_operands[0]) + ' )')
+            self.exprs[expr] = self._makeTmp('sin( ' + self.visit(expr.ufl_operands[0]) + ' )')
         return self.exprs[expr]
 
     def spatial_coordinate(self, expr):
         if expr not in self.exprs:
             self.exprs[expr] = self._makeTmp('entity().geometry().global( x )')
         return self.exprs[expr]
+
+    def zero(self, expr):
+        return '0'
 
     def _makeTmp(self, cexpr):
         var = 'tmp' + str(len(self.code))
@@ -474,21 +526,18 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
 
 
 
-
 # generateCode
 # ------------
 
-def generateCode(phi, predefined, expr):
-    if isinstance(expr, ufl.constantvalue.Zero):
-        return ['flux = std::decay_t< decltype( flux ) >( 0 );']
+def generateCode(phi, predefined, tensor):
+    #if isinstance(expr, ufl.constantvalue.Zero):
+    #    return ['flux = std::decay_t< decltype( flux ) >( 0 );']
     generator = CodeGenerator(phi, predefined)
-    result = generator.visit(expr)
-    code = generator.code
-    if not isinstance(result, dict):
-        raise Exception('Expression did not contain test function.')
-    for index in result:
-        code.append('flux' + generator.translateIndex(index) + ' = ' + result[index] + ';')
-    return code
+    fluxes = []
+    for index in tensor.keys():
+        result = generator.visit(tensor[index])
+        fluxes.append('flux' + generator.translateIndex(index) + ' = ' + result + ';')
+    return list(generator.using) + generator.code + fluxes
 
 
 
@@ -518,9 +567,9 @@ def compileUFL(equation, dimRange):
 
     model.source = generateCode(phi, { u : 'u', du : 'du' }, source)
     model.diffusiveFlux = generateCode(dphi, { u : 'u', du : 'du' }, diffusiveFlux)
+    model.alpha = generateCode(phi, { u : 'u' }, boundarySource)
     model.linSource = generateCode(phi, { u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linSource)
     model.linDiffusiveFlux = generateCode(dphi, { u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linDiffusiveFlux)
-    model.alpha = generateCode(phi, { u : 'u' }, boundarySource)
     model.linAlpha = generateCode(phi, { u : 'u', ubar : 'ubar' }, linBoundarySource)
 
     return model
