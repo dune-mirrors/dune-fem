@@ -295,14 +295,20 @@ class ExprTensor:
     def keys(self):
         return [ufl.core.multiindex.MultiIndex(idx) for idx in self._keys(self.shape)]
 
-    def to_ufl(self):
-        return self._to_ufl(self.shape, self.data)
+    def as_ufl(self):
+        return self._as_ufl(self.shape, self.data)
 
     def _add(self, shape, left, right):
         if len(shape) == 1:
             return [left[i] + right[i] for i in range(0, shape[0])]
         else:
             return [self._add(shape[1:], left[i], right[i]) for i in range(0, shape[0])]
+
+    def _as_ufl(self, shape, data):
+        if len(shape) == 1:
+            return ufl.as_tensor(data)
+        else:
+            return ufl.as_tensor([self._as_ufl(shape[1:], data[i]) for i in range(0, shape[0])])
 
     def _keys(self, shape):
         if len(shape) == 1:
@@ -315,12 +321,6 @@ class ExprTensor:
             return [tensor[i] * value for i in range(0, shape[0])]
         else:
             return [self._mul(shape[1:], tensor[i], value) for i in range(0, shape[0])]
-
-    def _to_ufl(self, shape, data):
-        if len(shape) == 1:
-            return ufl.as_tensor(data)
-        else:
-            return ufl.as_tensor([self._to_ufl(shape[1:], data[i]) for i in range(0, shape[0])])
 
     def _zero(self, shape):
         if len(shape) == 1:
@@ -551,17 +551,19 @@ def compileUFL(equation, dimRange):
     if len(form.arguments()) < 2:
         raise Exception("Elliptic model requires from with at least two arguments.")
 
-    source, diffusiveFlux, boundarySource = splitUFLForm( form )
-
     phi = form.arguments()[0]
     dphi = ufl.differentiation.Grad(phi)
     u = form.arguments()[1]
     du = ufl.differentiation.Grad(u)
+    d2u = ufl.differentiation.Grad(du)
     ubar = ufl.Coefficient(u.ufl_function_space())
     dubar = ufl.differentiation.Grad(ubar)
+
     dform = ufl.algorithms.apply_derivatives.apply_derivatives(ufl.derivative(ufl.action(form, ubar), ubar, u))
 
+    source, diffusiveFlux, boundarySource = splitUFLForm( form )
     linSource, linDiffusiveFlux, linBoundarySource = splitUFLForm( dform )
+    fluxDivergence, _, _ = splitUFLForm(ufl.inner(- ufl.div(diffusiveFlux.as_ufl()), phi) * ufl.dx(0))
 
     model = EllipticModel(dimRange)
 
@@ -571,5 +573,6 @@ def compileUFL(equation, dimRange):
     model.linSource = generateCode(phi, { u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linSource)
     model.linDiffusiveFlux = generateCode(dphi, { u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linDiffusiveFlux)
     model.linAlpha = generateCode(phi, { u : 'u', ubar : 'ubar' }, linBoundarySource)
+    model.fluxDivergence = generateCode(phi, { u : 'u', du : 'du', d2u : 'd2u' }, fluxDivergence)
 
     return model
