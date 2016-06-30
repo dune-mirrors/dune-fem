@@ -30,7 +30,7 @@ class SourceWriter:
         elif isinstance(src, (list, tuple)):
             for srcline in src:
                 self.emit(srcline)
-        elif isinstance(src, basestring):
+        elif isinstance(src, str):
             src = src.strip()
             if src:
                 print('  ' * len(self.blocks) + src, file=self.file)
