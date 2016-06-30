@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 
+#include <dune/fem/common/tupleforeach.hh>
 #include <dune/fem/misc/gridwidth.hh>
 #include <dune/fem/test/testgrid.hh>
 
@@ -43,8 +44,7 @@ typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpace2 > DiscreteFu
 typedef Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace3 > DiscreteFunction3;
 typedef Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace4 > DiscreteFunction4;
 
-typedef Dune::Fem::TupleDiscreteFunction< DiscreteFunction1, DiscreteFunction2, DiscreteFunction3, DiscreteFunction4 >
-DiscreteFunctionType;
+typedef Dune::Fem::TupleDiscreteFunction< DiscreteFunction1, DiscreteFunction2, DiscreteFunction3, DiscreteFunction4 > DiscreteFunctionType;
 
 typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
@@ -85,12 +85,10 @@ int main ( int argc, char **argv )
   Dune::Fem::MPIManager::initialize( argc, argv );
   try
   {
-    HGridType &grid = Dune::Fem::TestGrid::grid();
+    auto& grid = Dune::Fem::TestGrid::grid();
 
     GridPartType gridPart( grid );
-    // add check for grid width
-    std::cout << "Grid width: "
-              << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
+    std::cout << "Grid width: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
 
     DiscreteFunctionSpaceType space( gridPart );
 
@@ -104,24 +102,18 @@ int main ( int argc, char **argv )
     df.axpy( 0.5, df2 );
 
     std::cout << "dofs = " << df.size() << std::endl;
-    std::cout <<
-    df.template subDiscreteFunction< 0 >().size() +
-    df.template subDiscreteFunction< 1 >().size() +
-    df.template subDiscreteFunction< 2 >().size() +
-    df.template subDiscreteFunction< 3 >().size()
-    << std::endl;
+    std::size_t size( 0 );
+    for_each( df, [ &size ]( const auto& sub, auto ){ size += sub.size(); } );
+    std::cout << size << std::endl;
 
     // refine grid
     Dune::Fem::GlobalRefine::apply( grid, 1 );
 
     df2 += df;
     std::cout << "dofs = " << df.size() << std::endl;
-    std::cout <<
-    df.template subDiscreteFunction< 0 >().size() +
-    df.template subDiscreteFunction< 1 >().size() +
-    df.template subDiscreteFunction< 2 >().size() +
-    df.template subDiscreteFunction< 3 >().size()
-    << std::endl;
+    size = 0;
+    for_each( df, [ &size ]( const auto& sub, auto ){ size += sub.size(); } );
+    std::cout << size << std::endl;
 
     std::stringstream stream;
     Dune::Fem::StandardOutStream out( stream );
@@ -135,40 +127,28 @@ int main ( int argc, char **argv )
     typedef MyFunction< FullFunctionSpaceType > FullFunction;
     typedef MyFunction< BaseFunctionSpaceType > SubFunction;
 
-    std::cout<<"Interpolation tests: "<<std::endl;
+    std::cout << "Interpolation tests: " << std::endl;
     for( int i = 0; i < 4; ++i )
     {
-      std::cout<<"Full function interpolation test:" <<std::endl;
+      std::cout << "Full function interpolation test:" << std::endl;
 
       Dune::Fem::interpolate( Dune::Fem::gridFunctionAdapter( FullFunction(), gridPart, 5 ), df );
       const double fullError = l2Norm.distance( df, FullFunction() );
       std::cout<< fullError << std::endl;
       std::cout<< df.name() <<std::endl;
 
-      std::cout<<"Checking for subFunctions:"<<std::endl;
-
-      std::cout<< df.template subDiscreteFunction< 0 >().name() <<std::endl;
-      std::cout<< df.template subDiscreteFunction< 1 >().name() <<std::endl;
-      std::cout<< df.template subDiscreteFunction< 2 >().name() <<std::endl;
-      std::cout<< df.template subDiscreteFunction< 3 >().name() <<std::endl;
+      std::cout << "Checking for subFunctions:" << std::endl;
+      for_each( df, []( const auto& sub, auto ){ std::cout << sub.name() << std::endl; } );
 
       // read access
-      Dune::FieldVector< double, 4 > error =
-      {{
-         l2Norm.distance( df.template subDiscreteFunction< 0 >(), SubFunction() ),
-         l2Norm.distance( df.template subDiscreteFunction< 1 >(), SubFunction() ),
-         l2Norm.distance( df.template subDiscreteFunction< 2 >(), SubFunction() ),
-         l2Norm.distance( df.template subDiscreteFunction< 3 >(), SubFunction() )
-       }};
+      Dune::FieldVector< double, 4 > error;
+      for_each( df, [ & ]( auto& sub, auto i){ error[ i ] = l2Norm.distance( sub, SubFunction() ); } );
       std::cout << error.two_norm() << std::endl;
-
       assert( std::abs( error.two_norm() - fullError ) < 1e-8 );
 
       // write access
-      Dune::Fem::interpolate( Dune::Fem::gridFunctionAdapter( SubFunction(), gridPart, 5 ), df.template subDiscreteFunction< 0 >() );
-      Dune::Fem::interpolate( Dune::Fem::gridFunctionAdapter( SubFunction(), gridPart, 5 ), df.template subDiscreteFunction< 1 >() );
-      Dune::Fem::interpolate( Dune::Fem::gridFunctionAdapter( SubFunction(), gridPart, 5 ), df.template subDiscreteFunction< 2 >() );
-      Dune::Fem::interpolate( Dune::Fem::gridFunctionAdapter( SubFunction(), gridPart, 5 ), df.template subDiscreteFunction< 3 >() );
+      for_each( df,
+        [ & ]( auto& sub, auto i){ Dune::Fem::interpolate( Dune::Fem::gridFunctionAdapter( SubFunction(), gridPart, 5 ), sub ); } );
 
       std::cout<<std::endl;
 
