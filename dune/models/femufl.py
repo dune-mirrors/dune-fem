@@ -539,7 +539,7 @@ class DuneUFLModel:
                         fout.write(self.rhsBound)
                     elif "#EXACT" in line:
                         if exact == None:
-                            fout.write('      value = JacobianRangeType(0);\n')
+                            fout.write('      value = RangeType(0);\n')
                         else:
                             for i in range(0, self.dimR):
                                 fout.write('      value['+str(i)+'] = ' \
