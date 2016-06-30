@@ -3,6 +3,13 @@ from __future__ import print_function
 import ufl
 import ufl.algorithms
 
+import importlib
+import os
+import subprocess
+import types
+import dune.femmpi
+
+
 # SourceWriter
 # ------------
 
@@ -12,13 +19,18 @@ class SourceWriter:
         self.blocks = []
         self.begin = True
 
+    def close(self):
+        if self.blocks:
+            raise Exception("Open blocks left in source file.")
+        self.file.close()
+
     def emit(self, src):
         if src is None:
             return
         elif isinstance(src, (list, tuple)):
             for srcline in src:
                 self.emit(srcline)
-        elif isinstance(src, str):
+        elif isinstance(src, basestring):
             src = src.strip()
             if src:
                 print('  ' * len(self.blocks) + src, file=self.file)
@@ -128,12 +140,12 @@ class EllipticModel:
         self.alpha = "result = RangeType( 0 );"
         self.linAlpha = "result = RangeType( 0 );"
         self.hasDirichletBoundary = False
-        self.hasNeumannBoundary = False
+        self.hasNeumanBoundary = False
         self.isDirichletIntersection = "return false;"
-        self.f = "value = RangeType( 0 );"
-        self.g = "value = RangeType( 0 );"
-        self.n = "value = RangeType( 0 );"
-        self.jacobianExact = "value = JacobianRangeType( 0 );"
+        self.f = "result = RangeType( 0 );"
+        self.g = "result = RangeType( 0 );"
+        self.n = "result = RangeType( 0 );"
+        self.jacobianExact = "result = JacobianRangeType( 0 );"
 
     def write(self, sourceWriter, name='Model', targs=None):
         if targs:
@@ -151,14 +163,14 @@ class EllipticModel:
 
         sourceWriter.typedef("typename GridPart::template Codim< 0 >::EntityType", "EntityType")
         sourceWriter.typedef("typename GridPart::IntersectionType", "IntersectionType")
-        sourceWriter.typedef("Dune::Fem::FunctionSpace< double, RangeFieldTaype, dimDomain, dimRange >", "FunctionSpaceType")
+        sourceWriter.typedef("Dune::Fem::FunctionSpace< double, RangeFieldType, dimDomain, dimRange >", "FunctionSpaceType")
         sourceWriter.typedef("typename FunctionSpaceType::DomainType", "DomainType")
         sourceWriter.typedef("typename FunctionSpaceType::RangeType", "RangeType")
         sourceWriter.typedef("typename FunctionSpaceType::JacobianRangeType", "JacobianRangeType")
         sourceWriter.typedef("typename FunctionSpaceType::HessianRangeType", "HessianRangeType")
 
         sourceWriter.openConstMethod('bool init', args='const EntityType &entity')
-        sourceWriter.emit('entity_ = &entity')
+        sourceWriter.emit('entity_ = &entity;')
         sourceWriter.emit(self.init)
         sourceWriter.emit('return true;')
         sourceWriter.closeConstMethod()
@@ -203,28 +215,28 @@ class EllipticModel:
         sourceWriter.emit('return ' + ('true' if self.hasDirichletBoundary else 'false') + ';')
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('bool hasNeumannBoundary')
-        sourceWriter.emit('return ' + ('true' if self.hasNeumannBoundary else 'false') + ';')
+        sourceWriter.openConstMethod('bool hasNeumanBoundary')
+        sourceWriter.emit('return ' + ('true' if self.hasNeumanBoundary else 'false') + ';')
         sourceWriter.closeConstMethod()
 
         sourceWriter.openConstMethod('bool isDirichletIntersection', args='const IntersectionType &intersection, Dune::FieldVector< bool, dimRange > &dirichletComponent')
         sourceWriter.emit(self.isDirichletIntersection)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void f', args='const DomainType &x, RangeType &value')
+        sourceWriter.openConstMethod('void f', args='const DomainType &x, RangeType &result')
         sourceWriter.emit(self.f)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void g', args='const DomainType &x, RangeType &value')
+        sourceWriter.openConstMethod('void g', args='const DomainType &x, RangeType &result')
         sourceWriter.emit('// used both for dirichlet data and possible computation of L^2 error')
         sourceWriter.emit(self.g)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void n', args='const DomainType &x, RangeType &value')
+        sourceWriter.openConstMethod('void n', args='const DomainType &x, RangeType &result')
         sourceWriter.emit(self.n)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void jacobianExact', args='const DomainType &x, JacobianRangeType &jacobian')
+        sourceWriter.openConstMethod('void jacobianExact', args='const DomainType &x, JacobianRangeType &result')
         sourceWriter.emit('// used for possible computation of H^1 error')
         sourceWriter.emit(self.jacobianExact)
         sourceWriter.closeConstMethod()
@@ -501,8 +513,9 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         return self.exprs[expr]
 
     def spatial_coordinate(self, expr):
+        self.using.add('using Dune::Fem::coordinate;')
         if expr not in self.exprs:
-            self.exprs[expr] = self._makeTmp('entity().geometry().global( x )')
+            self.exprs[expr] = self._makeTmp('entity().geometry().global( coordinate( x ) )')
         return self.exprs[expr]
 
     def zero(self, expr):
@@ -573,3 +586,47 @@ def compileUFL(equation, dimRange):
     model.fluxDivergence = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, fluxDivergence)
 
     return model
+
+
+
+# importModel
+# -----------
+
+def importModel(name, grid, model):
+    compilePath = os.path.join(os.path.dirname(__file__), "../generated")
+
+    if not isinstance(grid, types.ModuleType):
+        grid = grid._module
+    name = 'ellipticmodel_' + name + "_" + grid._typeHash
+
+    if dune.femmpi.comm.rank == 0:
+        writer = SourceWriter(compilePath + '/modelimpl.hh')
+        writer.emit(grid._includes)
+        for line in open(compilePath + '/modelimpl.hh.in', "rt"):
+            if '#include "ModelTmp.hh"' in line:
+                writer.openNameSpace('ModelTmp')
+                model.write(writer)
+                writer.closeNameSpace('ModelTmp')
+            else:
+              if '#MODELNAME' in line:
+                  line = line.replace('#MODELNAME', name)
+              if '#GRIDPARTCHOICE' in line:
+                  line = line.replace('#GRIDPARTCHOICE', grid._typeName)
+              if '#PYTEMPLATE' in line:
+                  line = line.replace('#PYTEMPLATE', '')
+              if '#DIMRANGE' in line:
+                  line = line.replace('#DIMRANGE', str(model.dimRange))
+              if '#PYSETCOEFFICIENT' in line:
+                  line = ''
+              elif '#PYRANGETYPE' in line:
+                  line = line.replace('#PYRANGETYPE', '')
+              writer.emit(line)
+        writer.close()
+
+        # the new model is constructed in the file modelimpl.cc for which make targets exist:
+        cmake = subprocess.Popen(["cmake", "--build", "../../..", "--target", "modelimpl"], cwd=compilePath)
+        cmake.wait()
+        os.rename(os.path.join(compilePath, "modelimpl.so"), os.path.join(compilePath, name + ".so"))
+
+        dune.femmpi.comm.barrier()
+        return importlib.import_module("dune.generated." + name)
