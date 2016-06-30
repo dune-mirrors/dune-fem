@@ -562,7 +562,7 @@ def generateCode(predefined, tensor):
 # compileUFL
 # ----------
 
-def compileUFL(equation, dimRange):
+def compileUFL(equation):
     form = equation.lhs - equation.rhs
     if not isinstance(form, ufl.Form):
         raise Exception("ufl.Form expected.")
@@ -570,6 +570,8 @@ def compileUFL(equation, dimRange):
         raise Exception("Elliptic model requires from with at least two arguments.")
 
     phi = form.arguments()[0]
+    dimRange = phi.ufl_shape[0]
+
     u = form.arguments()[1]
     du = ufl.differentiation.Grad(u)
     d2u = ufl.differentiation.Grad(du)
