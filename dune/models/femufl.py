@@ -481,7 +481,7 @@ class DuneUFLModel:
               else:
                   self.diricTmp = str(value[i])
               self.diricCoef += '          flux[' + str(i) + '] = ' + self.diricTmp + ';\n'
-          self.diricCoef += '        }\n'
+          self.diricCoef += '        } break;\n'
         self.diricCoef += '        default: value = RangeType(0);\n      }'
         self.diricCheck = 0
         self.storeDiric()
