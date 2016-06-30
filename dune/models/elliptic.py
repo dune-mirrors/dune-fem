@@ -120,13 +120,13 @@ class EllipticModel:
         self.dimRange = dimRange
         self.init = None
         self.vars = None
-        self.source = "flux = RangeType( 0 );"
-        self.linSource = "flux = JacobianRangeType( 0 );"
-        self.diffusiveFlux = "flux = RangeType( 0 );"
-        self.linDiffusiveFlux = "flux = JacobianRangeType( 0 );"
-        self.fluxDivergence = "fluxDiv = RangeType( 0 );"
-        self.alpha = "flux = RangeType( 0 );"
-        self.linAlpha = "flux = RangeType( 0 );"
+        self.source = "result = RangeType( 0 );"
+        self.linSource = "result = JacobianRangeType( 0 );"
+        self.diffusiveFlux = "result = RangeType( 0 );"
+        self.linDiffusiveFlux = "result = JacobianRangeType( 0 );"
+        self.fluxDivergence = "result = RangeType( 0 );"
+        self.alpha = "result = RangeType( 0 );"
+        self.linAlpha = "result = RangeType( 0 );"
         self.hasDirichletBoundary = False
         self.hasNeumannBoundary = False
         self.isDirichletIntersection = "return false;"
@@ -171,31 +171,31 @@ class EllipticModel:
         sourceWriter.emit('return "' + name + '";')
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void source', targs='class Point', args='const Point &x, const RangeType &u, const JacobianRangeType &du, RangeType &flux')
+        sourceWriter.openConstMethod('void source', targs='class Point', args='const Point &x, const RangeType &u, const JacobianRangeType &du, RangeType &result')
         sourceWriter.emit(self.source)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void linSource', targs='class Point', args='const RangeType &ubar, const JacobianRangeType &dubar, const Point &x, const RangeType &u, const JacobianRangeType &du, RangeType &flux')
+        sourceWriter.openConstMethod('void linSource', targs='class Point', args='const RangeType &ubar, const JacobianRangeType &dubar, const Point &x, const RangeType &u, const JacobianRangeType &du, RangeType &result')
         sourceWriter.emit(self.linSource)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void diffusiveFlux', targs='class Point', args='const Point &x, const RangeType &u, const JacobianRangeType &du, JacobianRangeType &flux')
+        sourceWriter.openConstMethod('void diffusiveFlux', targs='class Point', args='const Point &x, const RangeType &u, const JacobianRangeType &du, JacobianRangeType &result')
         sourceWriter.emit(self.diffusiveFlux)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void linDiffusiveFlux', targs='class Point', args='const RangeType &ubar, const JacobianRangeType &dubar, const Point &x, const RangeType &u, const JacobianRangeType &du, JacobianRangeType &flux')
+        sourceWriter.openConstMethod('void linDiffusiveFlux', targs='class Point', args='const RangeType &ubar, const JacobianRangeType &dubar, const Point &x, const RangeType &u, const JacobianRangeType &du, JacobianRangeType &result')
         sourceWriter.emit(self.linDiffusiveFlux)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void fluxDivergence', targs='class Point', args='const Point &x, const RangeType &u, const JacobianRangeType &du, const HessianRangeType &d2u, RangeType &fluxDiv')
+        sourceWriter.openConstMethod('void fluxDivergence', targs='class Point', args='const Point &x, const RangeType &u, const JacobianRangeType &du, const HessianRangeType &d2u, RangeType &result')
         sourceWriter.emit(self.fluxDivergence)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void alpha', targs='class Point', args='const Point &x, const RangeType &u, RangeType &flux')
+        sourceWriter.openConstMethod('void alpha', targs='class Point', args='const Point &x, const RangeType &u, RangeType &result')
         sourceWriter.emit(self.alpha)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void linAlpha', targs='class Point', args='const RangeType &ubar, const Point &x, const RangeType &u, RangeType &flux')
+        sourceWriter.openConstMethod('void linAlpha', targs='class Point', args='const RangeType &ubar, const Point &x, const RangeType &u, RangeType &result')
         sourceWriter.emit(self.linAlpha)
         sourceWriter.closeConstMethod()
 
@@ -435,7 +435,7 @@ def splitUFLForm(form):
 # -------------
 
 class CodeGenerator(ufl.algorithms.transformer.Transformer):
-    def __init__(self, phi, predefined):
+    def __init__(self, predefined):
         ufl.algorithms.transformer.Transformer.__init__(self)
         self.using = set()
         self.exprs = predefined
@@ -529,15 +529,13 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
 # generateCode
 # ------------
 
-def generateCode(phi, predefined, tensor):
-    #if isinstance(expr, ufl.constantvalue.Zero):
-    #    return ['flux = std::decay_t< decltype( flux ) >( 0 );']
-    generator = CodeGenerator(phi, predefined)
-    fluxes = []
+def generateCode(predefined, tensor):
+    generator = CodeGenerator(predefined)
+    results = []
     for index in tensor.keys():
         result = generator.visit(tensor[index])
-        fluxes.append('flux' + generator.translateIndex(index) + ' = ' + result + ';')
-    return list(generator.using) + generator.code + fluxes
+        results.append('result' + generator.translateIndex(index) + ' = ' + result + ';')
+    return list(generator.using) + generator.code + results
 
 
 
@@ -552,7 +550,6 @@ def compileUFL(equation, dimRange):
         raise Exception("Elliptic model requires from with at least two arguments.")
 
     phi = form.arguments()[0]
-    dphi = ufl.differentiation.Grad(phi)
     u = form.arguments()[1]
     du = ufl.differentiation.Grad(u)
     d2u = ufl.differentiation.Grad(du)
@@ -567,12 +564,12 @@ def compileUFL(equation, dimRange):
 
     model = EllipticModel(dimRange)
 
-    model.source = generateCode(phi, { u : 'u', du : 'du' }, source)
-    model.diffusiveFlux = generateCode(dphi, { u : 'u', du : 'du' }, diffusiveFlux)
-    model.alpha = generateCode(phi, { u : 'u' }, boundarySource)
-    model.linSource = generateCode(phi, { u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linSource)
-    model.linDiffusiveFlux = generateCode(dphi, { u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linDiffusiveFlux)
-    model.linAlpha = generateCode(phi, { u : 'u', ubar : 'ubar' }, linBoundarySource)
-    model.fluxDivergence = generateCode(phi, { u : 'u', du : 'du', d2u : 'd2u' }, fluxDivergence)
+    model.source = generateCode({ u : 'u', du : 'du' }, source)
+    model.diffusiveFlux = generateCode({ u : 'u', du : 'du' }, diffusiveFlux)
+    model.alpha = generateCode({ u : 'u' }, boundarySource)
+    model.linSource = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linSource)
+    model.linDiffusiveFlux = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linDiffusiveFlux)
+    model.linAlpha = generateCode({ u : 'u', ubar : 'ubar' }, linBoundarySource)
+    model.fluxDivergence = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, fluxDivergence)
 
     return model
