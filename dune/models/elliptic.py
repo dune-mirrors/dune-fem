@@ -389,13 +389,14 @@ class FluxExtracter(ufl.algorithms.transformer.Transformer):
         else:
             raise Exception('Either both summands must contain test function or none')
 
-    def sin(self, expr, operand):
-        if isinstance(operand, dict):
-            raise Exception('Test function cannot appear in nonlinear expressions.')
-        else:
-            return self.reuse_if_possible(expr, operand)
+    def sin(self, expr, *operands):
+        for operand in operands:
+            if isinstance(operand, dict):
+                raise Exception('Test function cannot appear in nonlinear expressions.')
+        return self.reuse_if_possible(expr, *operands)
 
     cos = sin
+    power = sin
 
     def terminal(self, expr):
         return expr
@@ -496,6 +497,12 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
             right = self.visit(expr.ufl_operands[1])
             self.exprs[expr] = self._makeTmp('(' + left + ' * ' + right + ')')
             return self.exprs[expr]
+
+    def power(self, expr):
+        self.using.add('using std::pow;')
+        if expr not in self.exprs:
+            self.exprs[expr] = self._makeTmp('pow( ' + self.visit(expr.ufl_operands[0]) + ', ' + self.visit(expr.ufl_operands[1]) + ' )')
+        return self.exprs[expr]
 
     def sum(self, expr, left, right):
         return '(' + left + ' + ' + right + ')'
