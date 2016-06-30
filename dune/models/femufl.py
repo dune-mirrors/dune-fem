@@ -281,6 +281,8 @@ class DuneUFLModel:
             self.check(expr)
             self.stack_maker(expr, stack)
             if self.diricCheck == 1:
+                if self.diricTmp:
+                    self.diricTmp += " + "
                 while stack.isEmpty() == 0:
                     self.diricTmp += stack.peek()
                     stack.pop()
