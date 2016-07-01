@@ -773,7 +773,7 @@ def importModel(name, grid, model):
             if model.coefficients:
                 writer.emit('model.def( "setCoefficient", defSetCoefficient( std::index_sequence_for< Coefficients >() ) );')
             writer.emit('')
-            writer.emit('module.def( "get", [] () { return ModelWrapper(); } );')
+            writer.emit('module.def( "get", [] () { return new ModelWrapper(); } );')
             writer.closePythonModule(name)
 
             writer.close()
