@@ -6,6 +6,7 @@ import ufl.algorithms
 import importlib
 import os
 import subprocess
+import sys
 import types
 import dune.femmpi
 
@@ -30,7 +31,7 @@ class SourceWriter:
         elif isinstance(src, (list, tuple)):
             for srcline in src:
                 self.emit(srcline)
-        elif isinstance(src, str):
+        elif self._isstring(src):
             src = src.strip()
             if src:
                 print('  ' * len(self.blocks) + src, file=self.file)
@@ -121,6 +122,12 @@ class SourceWriter:
             self.emit('using ' + typeAlias + ' = ' + typeName + ';')
         else:
             self.emit('typedef ' + typeName + ' ' + typeAlias + ';')
+
+    def _isstring(self, obj):
+        if sys.version_info.major == 2:
+            return isinstance(obj, basestring)
+        else:
+            return isinstance(obj, str)
 
 
 
