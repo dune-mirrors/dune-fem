@@ -129,6 +129,18 @@ class SourceWriter:
         self.popBlock('method', typedName)
         self.emit('}')
 
+    def openPythonModule(self, moduleName):
+        self.emit('PYBIND11_PLUGIN( ' + moduleName.strip() + ' )')
+        self.emit('{')
+        self.pushBlock('pybind11 module', moduleName)
+        self.emit('pybind11::module module( "' + moduleName.strip() + '" );')
+
+    def closePythonModule(self, moduleName=None):
+        self.emit('')
+        self.emit('return module.ptr();')
+        self.popBlock('pybind11 module', moduleName)
+        self.emit('}')
+
     def typedef(self, typeName, typeAlias, targs=None):
         if targs:
             self.emit('template< ' + ', '.join([arg.strip() for arg in targs]) + ' >')
@@ -688,25 +700,40 @@ def importModel(name, grid, model):
     if dune.femmpi.comm.rank == 0:
         writer = SourceWriter(compilePath + '/modelimpl.hh')
         writer.emit(grid._includes)
-        for line in open(compilePath + '/modelimpl.hh.in', "rt"):
-            if '#include "ModelTmp.hh"' in line:
-                writer.openNameSpace('ModelTmp')
-                model.write(writer)
-                writer.closeNameSpace('ModelTmp')
-            else:
-              if '#MODELNAME' in line:
-                  line = line.replace('#MODELNAME', name)
-              if '#GRIDPARTCHOICE' in line:
-                  line = line.replace('#GRIDPARTCHOICE', grid._typeName)
-              if '#PYTEMPLATE' in line:
-                  line = line.replace('#PYTEMPLATE', '')
-              if '#DIMRANGE' in line:
-                  line = line.replace('#DIMRANGE', str(model.dimRange))
-              if '#PYSETCOEFFICIENT' in line:
-                  line = ''
-              elif '#PYRANGETYPE' in line:
-                  line = line.replace('#PYRANGETYPE', '')
-              writer.emit(line)
+        writer.emit('')
+        writer.emit('#include <dune/fem/gridpart/leafgridpart.hh>')
+        writer.emit('#include <dune/fem/gridpart/adaptiveleafgridpart.hh>')
+        writer.emit('')
+        writer.emit('#include <dune/fempy/pybind11/pybind11.h>')
+        writer.emit('#include <dune/fempy/pybind11/extensions.h>')
+        writer.emit('')
+        writer.emit('#include <dune/fempy/function/virtualizedgridfunction.hh>')
+        writer.emit('')
+        writer.emit('#include <dune/fem/schemes/diffusionmodel.hh>')
+
+        writer.openNameSpace('ModelImpl')
+        model.write(writer)
+        writer.closeNameSpace('ModelImpl')
+
+        writer.typedef(grid._typeName, 'GridPart')
+
+        writer.openPythonModule(name)
+
+        writer.emit('')
+        writer.typedef('ModelImpl::Model< GridPart >', 'Model;')
+        writer.typedef('DiffusionModelWrapper< Model >', 'ModelWrapper')
+        writer.typedef('typename ModelWrapper::Base', 'ModelBase')
+        writer.emit('')
+        writer.emit('// export abstract base class')
+        writer.emit('if( !pybind11::already_registered< ModelBase >() )')
+        writer.emit('  pybind11::class_< ModelBase >( module, "ModelBase" );')
+        writer.emit('')
+        writer.emit('// actual wrapper class for model derived from abstract base')
+        writer.emit('pybind11::class_< ModelWrapper > model( module, "get", pybind11::base< ModelBase >() );')
+        writer.emit('model.def( pybind11::init() );')
+        writer.emit('model.def_property_readonly( "dimRange", [] ( ModelWrapper & ) { return ' + str(model.dimRange) + '; } );')
+        writer.closePythonModule(name)
+
         writer.close()
 
         # the new model is constructed in the file modelimpl.cc for which make targets exist:
