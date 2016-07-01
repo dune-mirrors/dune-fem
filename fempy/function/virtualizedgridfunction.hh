@@ -124,6 +124,9 @@ namespace Dune
       VirtualizedLocalFunction ( const VirtualizedLocalFunction &other ) : impl_( other ? other.impl_->clone() : nullptr ) {}
       VirtualizedLocalFunction ( VirtualizedLocalFunction && ) = default;
 
+      VirtualizedLocalFunction &operator= ( const VirtualizedLocalFunction &other ) { impl_.reset( other ? other.impl_->clone() : nullptr ); }
+      VirtualizedLocalFunction &operator= ( VirtualizedLocalFunction && ) = default;
+
       explicit operator bool () const { return static_cast< bool >( impl_ ); }
 
       void init ( const EntityType &entity ) { impl_->init( entity ); }
