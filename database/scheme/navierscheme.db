@@ -1,13 +1,13 @@
 {
  "StokesScheme"  :
   {
-    "type"      : "UzawaScheme< $(spaceA), $(spaceB) >",
+    "type"      : "UzawaScheme< $(spaceA), $(spaceB), DiffusionModel< typename $(spaceA)::GridPartType, $(spaceA)::dimRange+1 > >",
     "include"   : [ "navierstokes/stokes.cc" ],
     "extension"  : "yes"
   },
   "BurgersScheme"   :
   {
-    "type"      : "PRPScheme< $(spaceA), $(spaceB) >",
+    "type"      : "PRPScheme< $(spaceA), $(spaceB), DiffusionModel< typename $(spaceA)::GridPartType, $(spaceA)::dimRange+1 > >",
     "include"   : [ "navierstokes/burgers.cc" ],
     "extension"  : "yes"
   }
