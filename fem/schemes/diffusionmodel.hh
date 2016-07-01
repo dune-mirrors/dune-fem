@@ -127,18 +127,16 @@ struct DiffusionModel
   */
 
 protected:
-  enum FunctionId { rhs, bndD, bndN, exactSol };
+  enum FunctionId { rhs, bndN, exactSol };
   template <FunctionId id>
   class FunctionWrapper;
 public:
   typedef Dune::Fem::GridFunctionAdapter< FunctionWrapper<rhs>, GridPartType > RightHandSideType;
-  typedef Dune::Fem::GridFunctionAdapter< FunctionWrapper<bndD>, GridPartType > DirichletBoundaryType;
   typedef Dune::Fem::GridFunctionAdapter< FunctionWrapper<bndN>, GridPartType > NeumanBoundaryType;
   typedef Dune::Fem::GridFunctionAdapter< FunctionWrapper<exactSol>, GridPartType > ExactSolutionType;
 
   DiffusionModel( )
     : rhs_(*this),
-      bndD_(*this),
       bndN_(*this),
       exact_(*this)
   {
@@ -164,10 +162,6 @@ public:
   virtual void exact(const DomainType& x, RangeType& value) const = 0;
   virtual void jacobianExact(const DomainType& x, JacobianRangeType& value) const = 0;
 
-  DirichletBoundaryType dirichletBoundary( const GridPart &gp) const
-  {
-    return DirichletBoundaryType( "boundary function", bndD_, gp, 5 );
-  }
   NeumanBoundaryType neumanBoundary( const GridPart &gp) const
   {
     return NeumanBoundaryType( "boundary function", bndN_, gp, 5 );
@@ -222,13 +216,6 @@ protected:
         // call right hand side of implementation
         impl_.f( x, ret );
       }
-      /*
-      else if( id == bndD )
-      {
-        // call dirichlet boudary data of implementation
-        impl_.dirichlet( x, ret );
-      }
-      */
       else if( id == bndN )
       {
         // call dirichlet boudary data of implementation
@@ -251,10 +238,6 @@ protected:
       {
         DUNE_THROW(Dune::NotImplemented,"rhs jacobian not implemented");
       }
-      else if( id == bndD )
-      {
-        DUNE_THROW(Dune::NotImplemented,"bndD jacobian not implemented");
-      }
       else if( id == bndN )
       {
         DUNE_THROW(Dune::NotImplemented,"bndN jacobian not implemented");
@@ -271,7 +254,6 @@ protected:
   };
 
   FunctionWrapper<rhs> rhs_;
-  FunctionWrapper<bndD> bndD_;
   FunctionWrapper<bndN> bndN_;
   FunctionWrapper<exactSol> exact_;
 };
@@ -355,5 +337,88 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   private:
   ModelImpl impl_;
 };
+
+template < class ModelTraits >
+struct DiffusionModelEngine : public DiffusionModel<typename ModelTraits::GridPartType, ModelTraits::dimRange>
+{
+  typedef typename ModelTraits::GridPartType GridPartType;
+  static const int dimRange  = ModelTraits::dimRange;
+  typedef DiffusionModel<GridPartType, dimRange> Base;
+
+  typedef typename Base::Point Point;
+  typedef typename Base::IntersectionPoint IntersectionPoint;
+  typedef typename Base::ElementPoint ElementPoint;
+  typedef typename Base::ElementIntersectionPoint ElementIntersectionPoint;
+  typedef typename Base::LocalDomainType LocalDomainType;
+  typedef typename Base::DomainType DomainType;
+  typedef typename Base::RangeType RangeType;
+  typedef typename Base::JacobianRangeType JacobianRangeType;
+  typedef typename Base::HessianRangeType HessianRangeType;
+  typedef typename Base::EntityType EntityType;
+  typedef typename Base::IntersectionType IntersectionType;
+
+  typedef typename ModelTraits::ModelType ModelImpl;
+
+  DiffusionModelEngine(ModelImpl &model) : impl_(model) {}
+  ~DiffusionModelEngine()
+  {
+    std::cout << "In DiffusionModelWrapper destructor" << std::endl;
+  }
+
+  WrapperDiffusionModelMethods(Point);
+  WrapperDiffusionModelMethods(ElementPoint);
+  WrapperDiffusionModelMethods(IntersectionPoint);
+  WrapperDiffusionModelMethods(ElementIntersectionPoint);
+  WrapperDiffusionModelMethods(LocalDomainType);
+
+  // other virtual functions
+  virtual std::string name() const
+  {
+    return impl().name();
+  }
+  virtual bool hasDirichletBoundary () const
+  {
+    return impl().hasDirichletBoundary();
+  }
+  virtual bool hasNeumanBoundary () const
+  {
+    return impl().hasNeumanBoundary();
+  }
+  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int,dimRange> &dirichletComponent ) const
+  {
+    return impl().isDirichletIntersection(inter, dirichletComponent);
+  }
+  virtual void f(const DomainType& x, RangeType& value) const
+  {
+    impl().f(x, value);
+  }
+  virtual void exact(const DomainType& x, RangeType& value) const
+  {
+    impl().exact(x, value);
+  }
+  virtual void jacobianExact(const DomainType& x, JacobianRangeType& value) const
+  {
+    impl().jacobianExact(x,value);
+  }
+  virtual void n(const DomainType& x, RangeType& value) const
+  {
+    impl().n(x, value);
+  }
+  virtual bool init( const EntityType &entity) const
+  {
+    return impl().init(entity);
+  }
+  const ModelImpl &impl() const
+  {
+    return impl_;
+  }
+  ModelImpl &impl()
+  {
+    return impl_;
+  }
+  private:
+  ModelImpl &impl_;
+};
+
 
 #endif // #ifndef ELLIPTC_MODEL_HH
