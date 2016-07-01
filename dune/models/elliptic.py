@@ -32,7 +32,7 @@ class SourceWriter:
             for srcline in src:
                 self.emit(srcline)
         elif self._isstring(src):
-            src = src.strip()
+            src = src.rstrip()
             if src:
                 print('  ' * len(self.blocks) + src, file=self.file)
             else:
@@ -129,7 +129,23 @@ class SourceWriter:
         self.popBlock('method', typedName)
         self.emit('}')
 
+    def openFunction(self, typedName, targs=None, args=None):
+        self.emit(None if self.begin else '')
+        if targs:
+            self.emit('template< ' + ', '.join([arg.strip() for arg in targs]) + ' >')
+        if args:
+            self.emit(typedName + ' ( ' + ', '.join([arg.strip() for arg in args]) + ' )')
+        else:
+            self.emit(typedName + ' ()')
+        self.emit('{')
+        self.pushBlock('function', typedName)
+
+    def closeFunction(self, typedName=None):
+        self.popBlock('function', typedName)
+        self.emit('}')
+
     def openPythonModule(self, moduleName):
+        self.emit(None if self.begin else '')
         self.emit('PYBIND11_PLUGIN( ' + moduleName.strip() + ' )')
         self.emit('{')
         self.pushBlock('pybind11 module', moduleName)
@@ -703,8 +719,9 @@ def importModel(name, grid, model):
         writer.emit('#include <dune/fempy/pybind11/pybind11.h>')
         writer.emit('#include <dune/fempy/pybind11/extensions.h>')
         writer.emit('')
-        writer.emit('#include <dune/fempy/function/virtualizedgridfunction.hh>')
-        writer.emit('')
+        if model.coefficients:
+            writer.emit('#include <dune/fempy/function/virtualizedgridfunction.hh>')
+            writer.emit('')
         writer.emit('#include <dune/fem/schemes/diffusionmodel.hh>')
 
         writer.openNameSpace('ModelImpl')
@@ -713,12 +730,35 @@ def importModel(name, grid, model):
 
         writer.typedef(grid._typeName, 'GridPart')
 
-        writer.openPythonModule(name)
+        if model.coefficients:
+            writer.typedef('ModelImpl::Model< GridPart, ' + ', '.join([('Dune::FemPy::VirtualizedLocalFunction< GridPart, Dune::FieldVector< double, ' + str(coefficient['dimRange']) + ' > >') for coefficient in model.coefficients])  + ' >', 'Model;')
+        else:
+            writer.typedef('ModelImpl::Model< GridPart >', 'Model;')
 
-        writer.emit('')
-        writer.typedef('ModelImpl::Model< GridPart >', 'Model;')
         writer.typedef('DiffusionModelWrapper< Model >', 'ModelWrapper')
         writer.typedef('typename ModelWrapper::Base', 'ModelBase')
+
+        if model.coefficients:
+            writer.emit('')
+            writer.typedef('std::tuple< ' + ', '.join([('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< double, ' + str(coefficient['dimRange']) + ' > >') for coefficient in model.coefficients]) + ' >', 'Coefficients')
+
+            writer.openFunction('void setCoefficient', targs=['std::size_t i'], args=['Model &model', 'pybind11::object o'])
+            writer.emit('model.template coefficient< i >() = o.template cast< typename std::tuple_element< i, Coefficients >::type >().localFunction();')
+            writer.closeFunction()
+
+            writer.openFunction('auto defSetCoefficient', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
+            writer.typedef('std::function< void( Model &model, pybind11::object ) >', 'Dispatch')
+            writer.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setCoefficient< i > )... }};')
+            writer.emit('')
+            writer.emit('return [ dispatch ] ( ModelWrapper &model, std::size_t k, pybind11::object o ) {')
+            writer.emit('    if( k >= dispatch.size() )')
+            writer.emit('      throw std::range_error( "No such coefficient." );')
+            writer.emit('    dispatch[ k ]( model.impl(), o );')
+            writer.emit('  };')
+            writer.closeFunction()
+
+        writer.openPythonModule(name)
+        writer.emit('')
         writer.emit('')
         writer.emit('// export abstract base class')
         writer.emit('if( !pybind11::already_registered< ModelBase >() )')
@@ -728,6 +768,8 @@ def importModel(name, grid, model):
         writer.emit('pybind11::class_< ModelWrapper > model( module, "get", pybind11::base< ModelBase >() );')
         writer.emit('model.def( pybind11::init() );')
         writer.emit('model.def_property_readonly( "dimRange", [] ( ModelWrapper & ) { return ' + str(model.dimRange) + '; } );')
+        if model.coefficients:
+            writer.emit('model.def( "setCoefficient", defSetCoefficient( std::index_sequence_for< Coefficients >() ) );')
         writer.closePythonModule(name)
 
         writer.close()
