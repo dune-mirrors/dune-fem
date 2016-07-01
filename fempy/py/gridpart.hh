@@ -21,14 +21,18 @@ namespace Dune
     // ----------------
 
     template< class GridPart >
-    pybind11::class_< GridPart > registerGridPart ( pybind11::handle scope )
+    pybind11::class_< GridPart > registerGridPart ( pybind11::handle scope, const char *name = "GridPart" )
     {
       typedef typename GridPart::GridFunctionType GridFunctionType;
       typedef typename GridPart::GridType Grid;
 
       const int dim = GridPart::dimension;
 
-      pybind11::class_< GridPart > cls( scope, "GridPart" );
+      pybind11::class_< GridPart > cls( scope, name );
+
+      cls.attr( "dimGrid" ) = pybind11::int_( GridPart::dimension );
+      cls.attr( "dimWorld" ) = pybind11::int_( GridPart::dimensionworld );
+
       cls.def( "__init__", [] ( GridPart &instance,  GridFunctionType &gf ) {
           new (&instance) GridPart( gf );
         }, pybind11::keep_alive< 1, 2 >() );
