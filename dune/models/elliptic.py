@@ -176,11 +176,12 @@ class SourceWriter:
 # -------------
 
 class EllipticModel:
-    def __init__(self, dimRange):
+    def __init__(self, dimRange, signature):
         self.dimRange = dimRange
         self.coefficients = []
         self.init = None
         self.vars = None
+        self.signature = signature
         self.source = "result = RangeType( 0 );"
         self.linSource = "result = JacobianRangeType( 0 );"
         self.diffusiveFlux = "result = RangeType( 0 );"
@@ -197,9 +198,7 @@ class EllipticModel:
         self.jacobianExact = "result = JacobianRangeType( 0 );"
 
     def write(self, sourceWriter, name='Model', targs=[]):
-        targs.append('class... Coefficients')
-        targs.insert(0, 'class GridPart')
-        sourceWriter.openStruct(name, targs=targs)
+        sourceWriter.openStruct(name, targs=(['class GridPart'] + targs + ['class... Coefficients']))
 
         sourceWriter.typedef("GridPart", "GridPartType")
         sourceWriter.typedef("double", "RangeFieldType")
@@ -682,7 +681,7 @@ def compileUFL(equation):
     linSource, linDiffusiveFlux, linBoundarySource = splitUFLForm( dform )
     fluxDivergence, _, _ = splitUFLForm(ufl.inner(- ufl.div(diffusiveFlux.as_ufl()), phi) * ufl.dx(0))
 
-    model = EllipticModel(dimRange)
+    model = EllipticModel(dimRange, form.signature())
 
     for coefficient in form.coefficients():
         model.coefficients.append({'dimRange' : coefficient.ufl_shape[0]})
@@ -707,77 +706,82 @@ def importModel(name, grid, model):
 
     if not isinstance(grid, types.ModuleType):
         grid = grid._module
-    name = 'ellipticmodel_' + name + "_" + grid._typeHash
+    name = 'ellipticmodel_' + model.signature + "_" + grid._typeHash
 
     if dune.femmpi.comm.rank == 0:
-        writer = SourceWriter(compilePath + '/modelimpl.hh')
-        writer.emit(grid._includes)
-        writer.emit('')
-        writer.emit('#include <dune/fem/gridpart/leafgridpart.hh>')
-        writer.emit('#include <dune/fem/gridpart/adaptiveleafgridpart.hh>')
-        writer.emit('')
-        writer.emit('#include <dune/fempy/pybind11/pybind11.h>')
-        writer.emit('#include <dune/fempy/pybind11/extensions.h>')
-        writer.emit('')
-        if model.coefficients:
-            writer.emit('#include <dune/fempy/function/virtualizedgridfunction.hh>')
+        print("Importing module for model with signature " + model.signature)
+        if not os.path.isfile(os.path.join(compilePath, name + ".so")):
+            writer = SourceWriter(compilePath + '/modelimpl.hh')
+            writer.emit(grid._includes)
             writer.emit('')
-        writer.emit('#include <dune/fem/schemes/diffusionmodel.hh>')
-
-        writer.openNameSpace('ModelImpl')
-        model.write(writer)
-        writer.closeNameSpace('ModelImpl')
-
-        writer.typedef(grid._typeName, 'GridPart')
-
-        if model.coefficients:
-            writer.typedef('ModelImpl::Model< GridPart, ' + ', '.join([('Dune::FemPy::VirtualizedLocalFunction< GridPart, Dune::FieldVector< double, ' + str(coefficient['dimRange']) + ' > >') for coefficient in model.coefficients])  + ' >', 'Model;')
-        else:
-            writer.typedef('ModelImpl::Model< GridPart >', 'Model;')
-
-        writer.typedef('DiffusionModelWrapper< Model >', 'ModelWrapper')
-        writer.typedef('typename ModelWrapper::Base', 'ModelBase')
-
-        if model.coefficients:
+            writer.emit('#include <dune/fem/gridpart/leafgridpart.hh>')
+            writer.emit('#include <dune/fem/gridpart/adaptiveleafgridpart.hh>')
             writer.emit('')
-            writer.typedef('std::tuple< ' + ', '.join([('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< double, ' + str(coefficient['dimRange']) + ' > >') for coefficient in model.coefficients]) + ' >', 'Coefficients')
-
-            writer.openFunction('void setCoefficient', targs=['std::size_t i'], args=['Model &model', 'pybind11::object o'])
-            writer.emit('model.template coefficient< i >() = o.template cast< typename std::tuple_element< i, Coefficients >::type >().localFunction();')
-            writer.closeFunction()
-
-            writer.openFunction('auto defSetCoefficient', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-            writer.typedef('std::function< void( Model &model, pybind11::object ) >', 'Dispatch')
-            writer.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setCoefficient< i > )... }};')
+            writer.emit('#include <dune/fempy/pybind11/pybind11.h>')
+            writer.emit('#include <dune/fempy/pybind11/extensions.h>')
             writer.emit('')
-            writer.emit('return [ dispatch ] ( ModelWrapper &model, std::size_t k, pybind11::object o ) {')
-            writer.emit('    if( k >= dispatch.size() )')
-            writer.emit('      throw std::range_error( "No such coefficient." );')
-            writer.emit('    dispatch[ k ]( model.impl(), o );')
-            writer.emit('  };')
-            writer.closeFunction()
+            if model.coefficients:
+                writer.emit('#include <dune/fempy/function/virtualizedgridfunction.hh>')
+                writer.emit('')
+            writer.emit('#include <dune/fem/schemes/diffusionmodel.hh>')
 
-        writer.openPythonModule(name)
-        writer.emit('')
-        writer.emit('')
-        writer.emit('// export abstract base class')
-        writer.emit('if( !pybind11::already_registered< ModelBase >() )')
-        writer.emit('  pybind11::class_< ModelBase >( module, "ModelBase" );')
-        writer.emit('')
-        writer.emit('// actual wrapper class for model derived from abstract base')
-        writer.emit('pybind11::class_< ModelWrapper > model( module, "get", pybind11::base< ModelBase >() );')
-        writer.emit('model.def( pybind11::init() );')
-        writer.emit('model.def_property_readonly( "dimRange", [] ( ModelWrapper & ) { return ' + str(model.dimRange) + '; } );')
-        if model.coefficients:
-            writer.emit('model.def( "setCoefficient", defSetCoefficient( std::index_sequence_for< Coefficients >() ) );')
-        writer.closePythonModule(name)
+            modelNameSpace = 'ModelImpl_' + model.signature
 
-        writer.close()
+            writer.openNameSpace(modelNameSpace)
+            model.write(writer)
+            writer.closeNameSpace(modelNameSpace)
 
-        # the new model is constructed in the file modelimpl.cc for which make targets exist:
-        cmake = subprocess.Popen(["cmake", "--build", "../../..", "--target", "modelimpl"], cwd=compilePath)
-        cmake.wait()
-        os.rename(os.path.join(compilePath, "modelimpl.so"), os.path.join(compilePath, name + ".so"))
+            writer.typedef(grid._typeName, 'GridPart')
+
+            if model.coefficients:
+                writer.typedef(modelNameSpace + '::Model< GridPart, ' + ', '.join([('Dune::FemPy::VirtualizedLocalFunction< GridPart, Dune::FieldVector< double, ' + str(coefficient['dimRange']) + ' > >') for coefficient in model.coefficients])  + ' >', 'Model;')
+            else:
+                writer.typedef(modelNameSpace + '::Model< GridPart >', 'Model;')
+
+            writer.typedef('DiffusionModelWrapper< Model >', 'ModelWrapper')
+            writer.typedef('typename ModelWrapper::Base', 'ModelBase')
+
+            if model.coefficients:
+                writer.emit('')
+                writer.typedef('std::tuple< ' + ', '.join([('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< double, ' + str(coefficient['dimRange']) + ' > >') for coefficient in model.coefficients]) + ' >', 'Coefficients')
+
+                writer.openFunction('void setCoefficient', targs=['std::size_t i'], args=['Model &model', 'pybind11::object o'])
+                writer.emit('model.template coefficient< i >() = o.template cast< typename std::tuple_element< i, Coefficients >::type >().localFunction();')
+                writer.closeFunction()
+
+                writer.openFunction('auto defSetCoefficient', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
+                writer.typedef('std::function< void( Model &model, pybind11::object ) >', 'Dispatch')
+                writer.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setCoefficient< i > )... }};')
+                writer.emit('')
+                writer.emit('return [ dispatch ] ( ModelWrapper &model, std::size_t k, pybind11::object o ) {')
+                writer.emit('    if( k >= dispatch.size() )')
+                writer.emit('      throw std::range_error( "No such coefficient." );')
+                writer.emit('    dispatch[ k ]( model.impl(), o );')
+                writer.emit('  };')
+                writer.closeFunction()
+
+            writer.openPythonModule(name)
+            writer.emit('')
+            writer.emit('')
+            writer.emit('// export abstract base class')
+            writer.emit('if( !pybind11::already_registered< ModelBase >() )')
+            writer.emit('  pybind11::class_< ModelBase >( module, "ModelBase" );')
+            writer.emit('')
+            writer.emit('// actual wrapper class for model derived from abstract base')
+            writer.emit('pybind11::class_< ModelWrapper > model( module, "Model", pybind11::base< ModelBase >() );')
+            writer.emit('model.def_property_readonly( "dimRange", [] ( ModelWrapper & ) { return ' + str(model.dimRange) + '; } );')
+            if model.coefficients:
+                writer.emit('model.def( "setCoefficient", defSetCoefficient( std::index_sequence_for< Coefficients >() ) );')
+            writer.emit('')
+            writer.emit('module.def( "get", [] () { return ModelWrapper(); } );')
+            writer.closePythonModule(name)
+
+            writer.close()
+
+            # the new model is constructed in the file modelimpl.cc for which make targets exist:
+            cmake = subprocess.Popen(["cmake", "--build", "../../..", "--target", "modelimpl"], cwd=compilePath)
+            cmake.wait()
+            os.rename(os.path.join(compilePath, "modelimpl.so"), os.path.join(compilePath, name + ".so"))
 
         dune.femmpi.comm.barrier()
         return importlib.import_module("dune.generated." + name)
