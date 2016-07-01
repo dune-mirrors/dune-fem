@@ -117,9 +117,9 @@ class SourceWriter:
     def openMethod(self, typedName, targs=None, args=None):
         self.emit(None if self.begin else '')
         if targs:
-            self.emit(typedName + ' ( ' + ', '.join([arg.strip() for arg in args]) + ' )')
+            self.emit('template< ' + ', '.join([arg.strip() for arg in targs]) + ' >')
         if args:
-            self.emit(typedName + ' ( ' + args.strip() + ' )')
+            self.emit(typedName + ' ( ' + ', '.join([arg.strip() for arg in args]) + ' )')
         else:
             self.emit(typedName + ' ()')
         self.emit('{')
@@ -181,10 +181,7 @@ class EllipticModel:
         self.jacobianExact = "result = JacobianRangeType( 0 );"
 
     def write(self, sourceWriter, name='Model', targs=[]):
-        if self.coefficients:
-            targs.append('class Coefficients')
-        else:
-            targs.append('class Coefficients = std::tuple<>')
+        targs.append('class... Coefficients')
         targs.insert(0, 'class GridPart')
         sourceWriter.openStruct(name, targs=targs)
 
@@ -205,20 +202,19 @@ class EllipticModel:
 
         sourceWriter.section('private')
         if self.coefficients:
-            sourceWriter.emit('typedef std::tuple< ' + ', '.join([('Dune::Fem::FunctionSpace< double, RangeFieldType, dimDomain, ' + str(coefficient['dimRange']) + ' >') for coefficient in self.coefficients]) + ' > CoefficientFunctionSpaceTupleType;')
+            sourceWriter.typedef('std::tuple< ' + ', '.join([('Dune::Fem::FunctionSpace< double, RangeFieldType, dimDomain, ' + str(coefficient['dimRange']) + ' >') for coefficient in self.coefficients]) + ' >', 'CoefficientFunctionSpaceTupleType')
             sourceWriter.section('public')
             sourceWriter.emit('static const std::size_t numCoefficients = std::tuple_size< CoefficientFunctionSpaceTupleType >::value;')
-            sourceWriter.emit('template< std::size_t i >')
-            sourceWriter.emit('using CoefficientFunctionSpaceType = typename std::tuple_element< i, CoefficientFunctionSpaceTupleType >::type;')
-            sourceWriter.emit('template< std::size_t i >')
-            sourceWriter.emit('using CoefficientRangeType = typename CoefficientFunctionSpaceType< i >::RangeType;')
-            sourceWriter.emit('template< std::size_t i >')
-            sourceWriter.emit('using CoefficientJacobianRangeType = typename CoefficientFunctionSpaceType< i >::JacobianRangeType;')
-            sourceWriter.emit('template< std::size_t i >')
-            sourceWriter.emit('using CoefficientHessianRangeType = typename CoefficientFunctionSpaceType< i >::HessianRangeType;')
+            sourceWriter.typedef('typename std::tuple_element< i, CoefficientFunctionSpaceTupleType >::type', 'CoefficientFunctionSpaceType', targs=['std::size_t i'] )
+            sourceWriter.typedef('typename CoefficientFunctionSpaceType< i >::RangeType', 'CoefficientRangeType', targs=['std::size_t i'])
+            sourceWriter.typedef('typename CoefficientFunctionSpaceType< i >::JacobianRangeType', 'CoefficientJacobianRangeType', targs=['std::size_t i'])
+            sourceWriter.typedef('typename CoefficientFunctionSpaceType< i >::HessianRangeType', 'CoefficientHessianRangeType', targs=['std::size_t i'])
         else:
             sourceWriter.emit('static const std::size_t numCoefficients = 0u;')
             sourceWriter.section('public')
+
+        sourceWriter.emit('')
+        sourceWriter.typedef('typename std::tuple_element< i, std::tuple< Coefficients... > >::type', 'CoefficientType', targs=['std::size_t i'])
 
         arg_x = 'const Point &x'
         arg_u = 'const RangeType &u'
@@ -302,20 +298,20 @@ class EllipticModel:
         sourceWriter.emit(self.jacobianExact)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('const Coefficients &coefficients')
-        sourceWriter.emit('return coefficients_;')
+        sourceWriter.openConstMethod('const CoefficientType< i > &coefficient', targs=['std::size_t i'])
+        sourceWriter.emit('return std::get< i >( coefficients_ );')
         sourceWriter.closeConstMethod()
-        sourceWriter.openMethod('Coefficients &coefficients')
-        sourceWriter.emit('return coefficients_;')
+        sourceWriter.openMethod('CoefficientType< i > &coefficient', targs=['std::size_t i'])
+        sourceWriter.emit('return std::get< i >( coefficients_ );')
         sourceWriter.closeMethod()
 
         sourceWriter.section('private')
         sourceWriter.openConstMethod('void initCoefficients', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-        sourceWriter.emit('std::ignore = std::make_tuple( (coefficients_( std::integral_constant< std::size_t, i >() ).init( entity() ), i)... );')
+        sourceWriter.emit('std::ignore = std::make_tuple( (std::get< i >( coefficients_ ).init( entity() ), i)... );')
         sourceWriter.closeConstMethod()
         sourceWriter.emit('')
         sourceWriter.emit('mutable const EntityType *entity_ = nullptr;')
-        sourceWriter.emit('mutable Coefficients coefficients_;')
+        sourceWriter.emit('mutable std::tuple< Coefficients... > coefficients_;')
         sourceWriter.emit(self.vars)
         sourceWriter.closeStruct(name)
 
@@ -537,7 +533,7 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         if expr not in self.exprs:
             idx = str(expr.count())
             self.code.append('CoefficientRangeType< ' + idx + ' > c' + idx + ';')
-            self.code.append('coefficients()( std::integral_constant< std::size_t, ' + idx + ' >() ).evaluate( x, c' + idx + ' );')
+            self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
             self.exprs[expr] = 'c' + idx
         return self.exprs[expr]
 
@@ -555,14 +551,14 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
             if isinstance(operand, ufl.coefficient.Coefficient):
                 idx = str(operand.count())
                 self.code.append('CoefficientJacobianRangeType< ' + idx + ' > dc' + idx + ';')
-                self.code.append('coefficients()( std::integral_constant< std::size_t, ' + idx + ' >() ).jacobian( x, dc' + idx + ' );')
+                self.code.append('coefficient< ' + idx + ' >().jacobian( x, dc' + idx + ' );')
                 self.exprs[expr] = 'dc' + idx
             elif isinstance(operand, ufl.differentiation.Grad):
                 operand = operand.ufl_operands[0]
                 if isinstance(operand, ufl.coefficient.Coefficient):
                     idx = str(operand.count())
                     self.code.append('CoefficientHessianRangeType< ' + idx + ' > d2c' + idx + ';')
-                    self.code.append('coefficients()( std::integral_constant< std::size_t, ' + idx + ' >() ).hessian( x, d2c' + idx + ' );')
+                    self.code.append('coefficient< ' + idx + ' >().hessian( x, d2c' + idx + ' );')
                     self.exprs[expr] = 'd2c' + idx
                 else:
                     raise Exception('Elliptic model does not allow for second derivatives, yet.')
