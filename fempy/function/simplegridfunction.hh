@@ -41,6 +41,7 @@ namespace Dune
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       template< class GridFunction, std::enable_if_t< std::is_same< This, typename GridFunction::LocalFunctionType >::value, int > = 0 >
       SimpleLocalFunction ( const GridFunction &gridFunction )
@@ -78,6 +79,12 @@ namespace Dune
       {
         for( const auto qp : quadrature )
           jacobian( qp, jacobians[ qp.index() ] );
+      }
+
+      template< class Point >
+      void hessian ( const Point &x, HessianRangeType &hessian ) const
+      {
+        DUNE_THROW( NotImplemented, "SimpleLocalFunction::hessian not implemented" );
       }
 
       int order () const { return order_; }
