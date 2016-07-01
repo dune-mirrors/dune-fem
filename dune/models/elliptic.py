@@ -28,7 +28,7 @@ class SourceWriter:
     def emit(self, src):
         if src is None:
             return
-        elif isinstance(src, (list, tuple)):
+        elif isinstance(src, (list, set, tuple)):
             for srcline in src:
                 self.emit(srcline)
         elif self._isstring(src):
@@ -63,11 +63,24 @@ class SourceWriter:
         self.popBlock('namespace', name)
         self.emit('} // namespace ' + name)
 
+    def openClass(self, name, targs=None):
+        self.emit(None if self.begin else ['','',''])
+        self.emit(['// ' + name, '// ' + '-' * len(name), ''])
+        if targs:
+            self.emit('template< ' + ', '.join([arg.strip() for arg in targs]) + ' >')
+        self.emit('class ' + name)
+        self.emit('{')
+        self.pushBlock('class', name)
+
+    def closeClass(self, name=None):
+        self.popBlock('class', name)
+        self.emit('};')
+
     def openStruct(self, name, targs=None):
         self.emit(None if self.begin else ['','',''])
         self.emit(['// ' + name, '// ' + '-' * len(name), ''])
         if targs:
-            self.emit('template< ' + targs.strip() + ' >')
+            self.emit('template< ' + ', '.join([arg.strip() for arg in targs]) + ' >')
         self.emit('struct ' + name)
         self.emit('{')
         self.pushBlock('struct', name)
@@ -89,9 +102,9 @@ class SourceWriter:
     def openConstMethod(self, typedName, targs=None, args=None):
         self.emit(None if self.begin else '')
         if targs:
-            self.emit('template< ' + targs.strip() + ' >')
+            self.emit('template< ' + ', '.join([arg.strip() for arg in targs]) + ' >')
         if args:
-            self.emit(typedName + ' ( ' + args.strip() + ' ) const')
+            self.emit(typedName + ' ( ' + ', '.join([arg.strip() for arg in args]) + ' ) const')
         else:
             self.emit(typedName + ' () const')
         self.emit('{')
@@ -104,7 +117,7 @@ class SourceWriter:
     def openMethod(self, typedName, targs=None, args=None):
         self.emit(None if self.begin else '')
         if targs:
-            self.emit('template< ' + targs.strip() + ' >')
+            self.emit(typedName + ' ( ' + ', '.join([arg.strip() for arg in args]) + ' )')
         if args:
             self.emit(typedName + ' ( ' + args.strip() + ' )')
         else:
@@ -118,7 +131,7 @@ class SourceWriter:
 
     def typedef(self, typeName, typeAlias, targs=None):
         if targs:
-            self.emit('template< ' + targs.strip() + ' >')
+            self.emit('template< ' + ', '.join([arg.strip() for arg in targs]) + ' >')
             self.emit('using ' + typeAlias + ' = ' + typeName + ';')
         else:
             self.emit('typedef ' + typeName + ' ' + typeAlias + ';')
@@ -137,6 +150,7 @@ class SourceWriter:
 class EllipticModel:
     def __init__(self, dimRange):
         self.dimRange = dimRange
+        self.coefficients = []
         self.init = None
         self.vars = None
         self.source = "result = RangeType( 0 );"
@@ -154,11 +168,12 @@ class EllipticModel:
         self.n = "result = RangeType( 0 );"
         self.jacobianExact = "result = JacobianRangeType( 0 );"
 
-    def write(self, sourceWriter, name='Model', targs=None):
-        if targs:
-            targs = 'class GridPart, ' + targs.strip()
+    def write(self, sourceWriter, name='Model', targs=[]):
+        if self.coefficients:
+            targs.append('class Coefficients')
         else:
-            targs = 'class GridPart'
+            targs.append('class Coefficients = std::tuple<>')
+        targs.insert(0, 'class GridPart')
         sourceWriter.openStruct(name, targs=targs)
 
         sourceWriter.typedef("GridPart", "GridPartType")
@@ -176,8 +191,35 @@ class EllipticModel:
         sourceWriter.typedef("typename FunctionSpaceType::JacobianRangeType", "JacobianRangeType")
         sourceWriter.typedef("typename FunctionSpaceType::HessianRangeType", "HessianRangeType")
 
-        sourceWriter.openConstMethod('bool init', args='const EntityType &entity')
+        sourceWriter.section('private')
+        if self.coefficients:
+            sourceWriter.emit('typedef std::tuple< ' + ', '.join([('Dune::Fem::FunctionSpace< double, RangeFieldType, dimDomain, ' + str(coefficient['dimRange']) + ' >') for coefficient in self.coefficients]) + ' > CoefficientFunctionSpaceTupleType;')
+            sourceWriter.section('public')
+            sourceWriter.emit('static const std::size_t numCoefficients = std::tuple_size< CoefficientFunctionSpaceTupleType >::value;')
+            sourceWriter.emit('template< std::size_t i >')
+            sourceWriter.emit('using CoefficientFunctionSpaceType = typename std::tuple_element< i, CoefficientFunctionSpaceTupleType >::type;')
+            sourceWriter.emit('template< std::size_t i >')
+            sourceWriter.emit('using CoefficientRangeType = typename CoefficientFunctionSpaceType< i >::RangeType;')
+            sourceWriter.emit('template< std::size_t i >')
+            sourceWriter.emit('using CoefficientJacobianRangeType = typename CoefficientFunctionSpaceType< i >::JacobianRangeType;')
+            sourceWriter.emit('template< std::size_t i >')
+            sourceWriter.emit('using CoefficientHessianRangeType = typename CoefficientFunctionSpaceType< i >::HessianRangeType;')
+        else:
+            sourceWriter.emit('static const std::size_t numCoefficients = 0u;')
+            sourceWriter.section('public')
+
+        arg_x = 'const Point &x'
+        arg_u = 'const RangeType &u'
+        arg_du = 'const JacobianRangeType &du'
+        arg_d2u = 'const HessianRangeType &d2u'
+        arg_ubar = 'const RangeType &ubar'
+        arg_dubar = 'const JacobianRangeType &dubar'
+        arg_r = 'RangeType &result'
+        arg_dr = 'JacobianRangeType &result'
+
+        sourceWriter.openConstMethod('bool init', args=['const EntityType &entity'])
         sourceWriter.emit('entity_ = &entity;')
+        sourceWriter.emit('initCoefficients( std::make_index_sequence< numCoefficients >() );')
         sourceWriter.emit(self.init)
         sourceWriter.emit('return true;')
         sourceWriter.closeConstMethod()
@@ -190,31 +232,31 @@ class EllipticModel:
         sourceWriter.emit('return "' + name + '";')
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void source', targs='class Point', args='const Point &x, const RangeType &u, const JacobianRangeType &du, RangeType &result')
+        sourceWriter.openConstMethod('void source', targs=['class Point'], args=[arg_x, arg_u, arg_du, arg_r])
         sourceWriter.emit(self.source)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void linSource', targs='class Point', args='const RangeType &ubar, const JacobianRangeType &dubar, const Point &x, const RangeType &u, const JacobianRangeType &du, RangeType &result')
+        sourceWriter.openConstMethod('void linSource', targs=['class Point'], args=[arg_ubar, arg_dubar, arg_x, arg_u, arg_du, arg_r])
         sourceWriter.emit(self.linSource)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void diffusiveFlux', targs='class Point', args='const Point &x, const RangeType &u, const JacobianRangeType &du, JacobianRangeType &result')
+        sourceWriter.openConstMethod('void diffusiveFlux', targs=['class Point'], args=[arg_x, arg_u, arg_du, arg_dr])
         sourceWriter.emit(self.diffusiveFlux)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void linDiffusiveFlux', targs='class Point', args='const RangeType &ubar, const JacobianRangeType &dubar, const Point &x, const RangeType &u, const JacobianRangeType &du, JacobianRangeType &result')
+        sourceWriter.openConstMethod('void linDiffusiveFlux', targs=['class Point'], args=[arg_ubar, arg_dubar, arg_x, arg_u, arg_du, arg_dr])
         sourceWriter.emit(self.linDiffusiveFlux)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void fluxDivergence', targs='class Point', args='const Point &x, const RangeType &u, const JacobianRangeType &du, const HessianRangeType &d2u, RangeType &result')
+        sourceWriter.openConstMethod('void fluxDivergence', targs=['class Point'], args=[arg_x, arg_u, arg_du, arg_d2u, arg_r])
         sourceWriter.emit(self.fluxDivergence)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void alpha', targs='class Point', args='const Point &x, const RangeType &u, RangeType &result')
+        sourceWriter.openConstMethod('void alpha', targs=['class Point'], args=[arg_x, arg_u, arg_r])
         sourceWriter.emit(self.alpha)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void linAlpha', targs='class Point', args='const RangeType &ubar, const Point &x, const RangeType &u, RangeType &result')
+        sourceWriter.openConstMethod('void linAlpha', targs=['class Point'], args=[arg_ubar, arg_x, arg_u, arg_r])
         sourceWriter.emit(self.linAlpha)
         sourceWriter.closeConstMethod()
 
@@ -226,30 +268,42 @@ class EllipticModel:
         sourceWriter.emit('return ' + ('true' if self.hasNeumanBoundary else 'false') + ';')
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('bool isDirichletIntersection', args='const IntersectionType &intersection, Dune::FieldVector< bool, dimRange > &dirichletComponent')
+        sourceWriter.openConstMethod('bool isDirichletIntersection', args=['const IntersectionType &intersection', 'Dune::FieldVector< bool, dimRange > &dirichletComponent'])
         sourceWriter.emit(self.isDirichletIntersection)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void f', args='const DomainType &x, RangeType &result')
+        sourceWriter.openConstMethod('void f', args=['const DomainType &x', arg_r])
         sourceWriter.emit(self.f)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void g', args='const DomainType &x, RangeType &result')
+        sourceWriter.openConstMethod('void g', args=['const DomainType &x', arg_r])
         sourceWriter.emit('// used both for dirichlet data and possible computation of L^2 error')
         sourceWriter.emit(self.g)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void n', args='const DomainType &x, RangeType &result')
+        sourceWriter.openConstMethod('void n', args=['const DomainType &x', arg_r])
         sourceWriter.emit(self.n)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void jacobianExact', args='const DomainType &x, JacobianRangeType &result')
+        sourceWriter.openConstMethod('void jacobianExact', args=['const DomainType &x', arg_dr])
         sourceWriter.emit('// used for possible computation of H^1 error')
         sourceWriter.emit(self.jacobianExact)
         sourceWriter.closeConstMethod()
 
+        sourceWriter.openConstMethod('const Coefficients &coefficients')
+        sourceWriter.emit('return coefficients_;')
+        sourceWriter.closeConstMethod()
+        sourceWriter.openMethod('Coefficients &coefficients')
+        sourceWriter.emit('return coefficients_;')
+        sourceWriter.closeMethod()
+
         sourceWriter.section('private')
+        sourceWriter.openConstMethod('void initCoefficients', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
+        sourceWriter.emit('std::ignore = std::make_tuple( (coefficients_( std::integral_constant< std::size_t, i >() ).init( entity() ), i)... );')
+        sourceWriter.closeConstMethod()
+        sourceWriter.emit('')
         sourceWriter.emit('mutable const EntityType *entity_ = nullptr;')
+        sourceWriter.emit('mutable Coefficients coefficients_;')
         sourceWriter.emit(self.vars)
         sourceWriter.closeStruct(name)
 
@@ -468,10 +522,12 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
             raise Exception('Unknown argument: ' + str(expr.number()))
 
     def coefficient(self, expr):
-        if expr in self.exprs:
-            return self.exprs[expr]
-        else:
-            raise Exception('Unknown coefficient: ' + repr(expr))
+        if expr not in self.exprs:
+            idx = str(expr.count())
+            self.code.append('CoefficientRangeType< ' + idx + ' > c' + idx + ';')
+            self.code.append('coefficients()( std::integral_constant< std::size_t, ' + idx + ' >() ).evaluate( x, c' + idx + ' );')
+            self.exprs[expr] = 'c' + idx
+        return self.exprs[expr]
 
     def int_value(self, expr):
         if expr.value() < 0:
@@ -482,16 +538,27 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
     float_value = int_value
 
     def grad(self, expr):
-        if expr in self.exprs:
-            return self.exprs[expr]
-        else:
+        if expr not in self.exprs:
             operand = expr.ufl_operands[0]
-            if isinstance(operand, ufl.differentiation.Grad):
-                raise Exception('Elliptic model does not allow for second derivatives, yet.')
+            if isinstance(operand, ufl.coefficient.Coefficient):
+                idx = str(operand.count())
+                self.code.append('CoefficientJacobianRangeType< ' + idx + ' > dc' + idx + ';')
+                self.code.append('coefficients()( std::integral_constant< std::size_t, ' + idx + ' >() ).jacobian( x, dc' + idx + ' );')
+                self.exprs[expr] = 'dc' + idx
+            elif isinstance(operand, ufl.differentiation.Grad):
+                operand = operand.ufl_operands[0]
+                if isinstance(operand, ufl.coefficient.Coefficient):
+                    idx = str(operand.count())
+                    self.code.append('CoefficientHessianRangeType< ' + idx + ' > d2c' + idx + ';')
+                    self.code.append('coefficients()( std::integral_constant< std::size_t, ' + idx + ' >() ).hessian( x, d2c' + idx + ' );')
+                    self.exprs[expr] = 'd2c' + idx
+                else:
+                    raise Exception('Elliptic model does not allow for second derivatives, yet.')
             elif isinstance(operand, ufl.argument.Argument):
                 raise Exception('Unknown argument: ' + str(operand.number()))
             else:
                 raise Exception('Cannot compute gradient of ' + repr(expr))
+        return self.exprs[expr]
 
     def indexed(self, expr, operand, index):
         return operand + self.translateIndex(index)
@@ -592,6 +659,9 @@ def compileUFL(equation):
     fluxDivergence, _, _ = splitUFLForm(ufl.inner(- ufl.div(diffusiveFlux.as_ufl()), phi) * ufl.dx(0))
 
     model = EllipticModel(dimRange)
+
+    for coefficient in form.coefficients():
+        model.coefficients.append({'dimRange' : coefficient.ufl_shape[0]})
 
     model.source = generateCode({ u : 'u', du : 'du' }, source)
     model.diffusiveFlux = generateCode({ u : 'u', du : 'du' }, diffusiveFlux)
