@@ -622,12 +622,14 @@ class DuneUFLModel:
         else:
             cFlux = self.stringTocFlux(self.fluxCoef)
             if self.xTest(cFlux) == 1:
+                self.flux = ''
                 for coef in self.unsetCoefficients:
                     if coef in self.fluxCoef:
                         self.flux = '      DomainType x = entity_->geometry().global( Dune::Fem::coordinate(point) );' \
                                     + '\n      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                    + coef + 'Local_->evaluate(point,' + coef + ');\n' \
-                                    + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                    + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                    if "grad"+coef in self.massCoef:
+                        self.flux += '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
                                     + coef + 'Local_->jacobian(point,grad' + coef + ');\n' \
                                     + cFlux + '\n'
                 if str(self.flux) == 'flux':
@@ -635,10 +637,12 @@ class DuneUFLModel:
                                 + cFlux + '\n'
             else:
                 for coef in self.unsetCoefficients:
+                    self.flux = ''
                     if coef in self.fluxCoef:
                         self.flux = '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                    + coef + 'Local_->evaluate(point,' + coef + ');\n' \
-                                    + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                    + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                    if "grad"+coef in self.massCoef:
+                        self.flux += '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      '\
                                     + coef + 'Local_->jacobian(point,grad' + coef + ');\n' \
                                     + cFlux + '\n'
                 if str(self.flux) == 'flux':
@@ -654,8 +658,9 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.alphaCoef:
                     self.alpha += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                  + coef + 'Local_->evaluate(point,' + coef + ');\n' \
-                                  + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                  + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                if "grad"+coef in self.massCoef:
+                    self.alpha += '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
                                   + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
             self.alpha += cAlpha + '\n'
             self.alpha = self.alpha.replace('flux', 'val')
@@ -670,8 +675,9 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.diricCoef:
                     self.diric += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                  + coef + 'Local_->evaluate(point,' + coef + ');\n' \
-                                  + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                  + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                if "grad"+coef in self.massCoef:
+                    self.diric += '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
                                   + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
             self.diric += cDiric + '\n'
             self.diric = self.diric.replace('flux', 'value')
@@ -705,8 +711,9 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.fluxCoef:
                     self.linFlux += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                    + coef + 'Local_->evaluate(point,' + coef + ');\n' \
-                                    + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                    + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                if "grad"+coef in self.massCoef:
+                    self.linFlux += '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
                                     + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
             self.linFlux += cFlux + '\n'
         # for linAlpha function
@@ -720,8 +727,9 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.alphaCoef:
                     self.linAlpha += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                  + coef + 'Local_->evaluate(point,' + coef + ');\n' \
-                                  + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                  + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                if "grad"+coef in self.massCoef:
+                    self.linAlpha += '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
                                   + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
             self.linAlpha += cAlpha + '\n'
             self.linAlpha = self.linAlpha.replace('flux', 'val')
@@ -737,8 +745,9 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.massCoef:
                     self.rhs += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                + coef + 'Local_->evaluate(point,' + coef + ');\n' \
-                                + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                if "grad"+coef in self.massCoef:
+                    self.rhs += '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
                                 + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
             self.rhs += cRhs + '\n'
             self.rhs = self.rhs.replace('flux', 'phi')
@@ -752,8 +761,9 @@ class DuneUFLModel:
             for coef in self.unsetCoefficients:
                 if coef in self.alphaCoef:
                     self.rhsBound += '      typename ' + coef + 'DiscreteFunction::RangeType ' + coef + ';\n      ' \
-                                  + coef + 'Local_->evaluate(point,' + coef + ');\n' \
-                                  + '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
+                                  + coef + 'Local_->evaluate(point,' + coef + ');\n'
+                if "grad"+coef in self.massCoef:
+                    self.rhsBound += '      typename ' + coef + 'DiscreteFunction::JacobianRangeType grad' + coef + ';\n      ' \
                                   + coef + 'Local_->jacobian(point,grad' + coef + ');\n'
             self.rhsBound += cNeuman + '\n  '
             self.rhsBound = self.rhsBound.replace('flux', 'value')
