@@ -488,6 +488,7 @@ class FluxExtracter(ufl.algorithms.transformer.Transformer):
         return self.reuse_if_possible(expr, *operands)
 
     atan = nonlinear
+    atan_2 = nonlinear
     cos = nonlinear
     sin = nonlinear
     power = nonlinear
@@ -559,6 +560,12 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         self.using.add('using std::atan;')
         if expr not in self.exprs:
             self.exprs[expr] = self._makeTmp('atan( ' + self.visit(expr.ufl_operands[0]) + ' )')
+        return self.exprs[expr]
+
+    def atan_2(self, expr):
+        self.using.add('using std::atan2;')
+        if expr not in self.exprs:
+            self.exprs[expr] = self._makeTmp('atan2( ' + self.visit(expr.ufl_operands[0]) + ', ' + self.visit(expr.ufl_operands[1]) + ' )')
         return self.exprs[expr]
 
     def coefficient(self, expr):
