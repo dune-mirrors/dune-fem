@@ -125,7 +125,7 @@ def leafGrid(constructor, grid, **parameters):
             self.marker = self.hierarchicalGrid.marker
 
         def mark(self, marking):
-            self.hierarchicalGrid.mark(marking)
+            return self.hierarchicalGrid.mark(marking)
 
         def adapt(self, *args):
             self.hierarchicalGrid.adapt(*args)
