@@ -734,9 +734,9 @@ def importModel(name, grid, model):
             writer.typedef(grid._typeName, 'GridPart')
 
             if model.coefficients:
-                writer.typedef(modelNameSpace + '::Model< GridPart, ' + ', '.join([('Dune::FemPy::VirtualizedLocalFunction< GridPart, Dune::FieldVector< double, ' + str(coefficient['dimRange']) + ' > >') for coefficient in model.coefficients])  + ' >', 'Model;')
+                writer.typedef(modelNameSpace + '::Model< GridPart, ' + ', '.join([('Dune::FemPy::VirtualizedLocalFunction< GridPart, Dune::FieldVector< double, ' + str(coefficient['dimRange']) + ' > >') for coefficient in model.coefficients])  + ' >', 'Model')
             else:
-                writer.typedef(modelNameSpace + '::Model< GridPart >', 'Model;')
+                writer.typedef(modelNameSpace + '::Model< GridPart >', 'Model')
 
             writer.typedef('DiffusionModelWrapper< Model >', 'ModelWrapper')
             writer.typedef('typename ModelWrapper::Base', 'ModelBase')
