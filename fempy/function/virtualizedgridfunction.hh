@@ -52,6 +52,16 @@ namespace Dune
         return std::is_base_of< Fem::HasLocalFunction, std::decay_t< decltype( cref( std::declval< const GF & >() ).get() ) > >::value;
       }
 
+      template< class LF >
+      static std::true_type isLocalFunctionHelp ( const LF &, decltype( std::declval< const LF & >().evaluate( std::declval< const typename LF::EntityType::Geometry::LocalCoordinate & >(), std::declval< typename LF::RangeType & >() ) ) * = nullptr );
+      static std::false_type isLocalFunctionHelp ( ... );
+
+      template< class LF >
+      static constexpr bool isLocalFunction ()
+      {
+        return (!isGridFunction< LF >() && decltype( isLocalFunctionHelp( std::declval< const LF & >() ) )::value);
+      }
+
       template< class GF >
       static std::true_type canCreateLocalFunctionHelp ( const GF &, std::decay_t< decltype( std::declval< GF >().localFunction() ) > * = nullptr );
       static std::false_type canCreateLocalFunctionHelp ( ... );
@@ -59,7 +69,7 @@ namespace Dune
       template< class GF >
       static constexpr bool canCreateLocalFunction ()
       {
-        return decltype( canCreateLocalFunctionHelp ( std::declval< const GF & >() ) )::value;
+        return decltype( canCreateLocalFunctionHelp( std::declval< const GF & >() ) )::value;
       }
 
       struct Interface
@@ -106,18 +116,18 @@ namespace Dune
     public:
       VirtualizedLocalFunction () = default;
 
-      template< class Impl, std::enable_if_t< !isGridFunction< Impl >() && !std::is_base_of< VirtualizedLocalFunction, Impl >::value, int > = 0 >
-      VirtualizedLocalFunction ( Impl impl )
-        : impl_( new Implementation< Impl >( std::move( impl ) ) )
+      template< class LF, std::enable_if_t< isLocalFunction< LF >() && !std::is_base_of< VirtualizedLocalFunction, LF >::value, int > = 0 >
+      VirtualizedLocalFunction ( LF lf )
+        : impl_( new Implementation< LF >( std::move( lf ) ) )
       {}
 
       template< class GF, std::enable_if_t< isGridFunction< GF >() && canCreateLocalFunction< GF >(), int > = 0 >
-      VirtualizedLocalFunction ( const GF &gf )
+      explicit VirtualizedLocalFunction ( const GF &gf )
         : VirtualizedLocalFunction( gf.localFunction() )
       {}
 
       template< class GF, std::enable_if_t< isGridFunction< GF >() && !canCreateLocalFunction< GF >(), int > = 0 >
-      VirtualizedLocalFunction ( const GF &gf )
+      explicit VirtualizedLocalFunction ( const GF &gf )
         : VirtualizedLocalFunction( typename GF::LocalFunctionType( gf ) )
       {}
 
