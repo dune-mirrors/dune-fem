@@ -138,13 +138,17 @@ namespace Dune
       {}
 
       template< class Marking >
-      void mark ( Marking marking )
+      std::pair< int, int > mark ( Marking marking )
       {
+        std::pair< int, int > marked;
         for( const Element &element : elements( grid().leafGridView() ) )
         {
           Marker marker = marking( element );
+          marked.first += static_cast< int >( marker == Marker::Refine );
+          marked.second += static_cast< int >( marker == Marker::Coarsen );
           grid().mark( static_cast< int >( marker ), element );
         }
+        return marked;
       }
 
       template< class Iterator >

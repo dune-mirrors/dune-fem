@@ -198,7 +198,7 @@ namespace Dune
       marker.value( "refine", Marker::Refine );
 
       cls.def( "mark", [] ( Grid &grid, const std::function< Marker( const Element &e ) > &marker ) {
-          gridAdaptation( grid ).mark( marker );
+          return gridAdaptation( grid ).mark( marker );
         } );
 
       cls.def( "adapt", [] ( Grid &grid ) {
