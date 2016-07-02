@@ -745,6 +745,8 @@ def compileUFL(equation, tempVars = True):
 # -----------
 
 def importModel(grid, model):
+    if isinstance(model, ufl.equation.Equation):
+        model = compileUFL(model)
     compilePath = os.path.join(os.path.dirname(__file__), "../generated")
 
     if not isinstance(grid, types.ModuleType):
