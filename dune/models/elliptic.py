@@ -453,6 +453,14 @@ class FluxExtracter(ufl.algorithms.transformer.Transformer):
         else:
             return self.reuse_if_possible(expr, self.visit(operand), index)
 
+    def division(self, expr, left, right):
+        if isinstance(left, ufl.core.expr.Expr) and isinstance(right, ufl.core.expr.Expr):
+            return self.reuse_if_possible(expr, left, right)
+        elif isinstance(left, dict) and isinstance(right, ufl.core.expr.Expr):
+            return {op : left[op] / right for op in left}
+        else:
+            raise Exception('Only the left child of a division may access the test function.')
+
     def product(self, expr, left, right):
         if isinstance(left, ufl.core.expr.Expr) and isinstance(right, ufl.core.expr.Expr):
             return self.reuse_if_possible(expr, left, right)
@@ -473,14 +481,17 @@ class FluxExtracter(ufl.algorithms.transformer.Transformer):
         else:
             raise Exception('Either both summands must contain test function or none')
 
-    def sin(self, expr, *operands):
+    def nonlinear(self, expr, *operands):
         for operand in operands:
             if isinstance(operand, dict):
                 raise Exception('Test function cannot appear in nonlinear expressions.')
         return self.reuse_if_possible(expr, *operands)
 
-    cos = sin
-    power = sin
+    atan = nonlinear
+    cos = nonlinear
+    sin = nonlinear
+    power = nonlinear
+    tan = nonlinear
 
     def terminal(self, expr):
         return expr
@@ -544,6 +555,12 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         else:
             raise Exception('Unknown argument: ' + str(expr.number()))
 
+    def atan(self, expr):
+        self.using.add('using std::atan;')
+        if expr not in self.exprs:
+            self.exprs[expr] = self._makeTmp('atan( ' + self.visit(expr.ufl_operands[0]) + ' )')
+        return self.exprs[expr]
+
     def coefficient(self, expr):
         if expr not in self.exprs:
             idx = str(expr.count())
@@ -552,13 +569,26 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
             self.exprs[expr] = 'c' + idx
         return self.exprs[expr]
 
-    def int_value(self, expr):
+    def cos(self, expr):
+        self.using.add('using std::cos;')
+        if expr not in self.exprs:
+            self.exprs[expr] = self._makeTmp('cos( ' + self.visit(expr.ufl_operands[0]) + ' )')
+        return self.exprs[expr]
+
+    def division(self, expr):
+        if expr in self.exprs:
+            return self.exprs[expr]
+        else:
+            left = self.visit(expr.ufl_operands[0])
+            right = self.visit(expr.ufl_operands[1])
+            self.exprs[expr] = self._makeTmp('(' + left + ' / ' + right + ')')
+            return self.exprs[expr]
+
+    def float_value(self, expr):
         if expr.value() < 0:
             return '(' + str(expr.value()) + ')'
         else:
             return str(expr.value())
-
-    float_value = int_value
 
     def grad(self, expr):
         if expr not in self.exprs:
@@ -586,6 +616,8 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
     def indexed(self, expr, operand, index):
         return operand + self.translateIndex(index)
 
+    int_value = float_value
+
     def product(self, expr):
         if expr in self.exprs:
             return self.exprs[expr]
@@ -601,15 +633,6 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
             self.exprs[expr] = self._makeTmp('pow( ' + self.visit(expr.ufl_operands[0]) + ', ' + self.visit(expr.ufl_operands[1]) + ' )')
         return self.exprs[expr]
 
-    def sum(self, expr, left, right):
-        return '(' + left + ' + ' + right + ')'
-
-    def cos(self, expr):
-        self.using.add('using std::cos;')
-        if expr not in self.exprs:
-            self.exprs[expr] = self._makeTmp('cos( ' + self.visit(expr.ufl_operands[0]) + ' )')
-        return self.exprs[expr]
-
     def sin(self, expr):
         self.using.add('using std::sin;')
         if expr not in self.exprs:
@@ -620,6 +643,15 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         self.using.add('using Dune::Fem::coordinate;')
         if expr not in self.exprs:
             self.exprs[expr] = self._makeTmp('entity().geometry().global( coordinate( x ) )')
+        return self.exprs[expr]
+
+    def sum(self, expr, left, right):
+        return '(' + left + ' + ' + right + ')'
+
+    def tan(self, expr):
+        self.using.add('using std::tan;')
+        if expr not in self.exprs:
+            self.exprs[expr] = self._makeTmp('tan( ' + self.visit(expr.ufl_operands[0]) + ' )')
         return self.exprs[expr]
 
     def zero(self, expr):
