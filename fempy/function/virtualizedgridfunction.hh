@@ -40,6 +40,7 @@ namespace Dune
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
     private:
       typedef Fem::QuadraturePointWrapper< CachingPoint< LocalCoordinateType > > QuadraturePoint;
@@ -51,6 +52,16 @@ namespace Dune
         return std::is_base_of< Fem::HasLocalFunction, std::decay_t< decltype( cref( std::declval< const GF & >() ).get() ) > >::value;
       }
 
+      template< class LF >
+      static std::true_type isLocalFunctionHelp ( const LF &, decltype( std::declval< const LF & >().evaluate( std::declval< const typename LF::EntityType::Geometry::LocalCoordinate & >(), std::declval< typename LF::RangeType & >() ) ) * = nullptr );
+      static std::false_type isLocalFunctionHelp ( ... );
+
+      template< class LF >
+      static constexpr bool isLocalFunction ()
+      {
+        return (!isGridFunction< LF >() && decltype( isLocalFunctionHelp( std::declval< const LF & >() ) )::value);
+      }
+
       template< class GF >
       static std::true_type canCreateLocalFunctionHelp ( const GF &, std::decay_t< decltype( std::declval< GF >().localFunction() ) > * = nullptr );
       static std::false_type canCreateLocalFunctionHelp ( ... );
@@ -58,7 +69,7 @@ namespace Dune
       template< class GF >
       static constexpr bool canCreateLocalFunction ()
       {
-        return decltype( canCreateLocalFunctionHelp ( std::declval< const GF & >() ) )::value;
+        return decltype( canCreateLocalFunctionHelp( std::declval< const GF & >() ) )::value;
       }
 
       struct Interface
@@ -71,6 +82,8 @@ namespace Dune
         virtual void evaluate ( const QuadraturePoint &x, RangeType &value ) const = 0;
         virtual void jacobian ( const LocalCoordinateType &x, JacobianRangeType &jacobian ) const = 0;
         virtual void jacobian ( const QuadraturePoint &x, JacobianRangeType &jacobian ) const = 0;
+        virtual void hessian ( const LocalCoordinateType &x, HessianRangeType &hessian ) const = 0;
+        virtual void hessian ( const QuadraturePoint &x, HessianRangeType &hessian ) const = 0;
         virtual int order () const = 0;
         virtual const EntityType &entity () const = 0;
       };
@@ -88,6 +101,8 @@ namespace Dune
         virtual void evaluate ( const QuadraturePoint &x, RangeType &value ) const override { impl().evaluate( x, value ); }
         virtual void jacobian ( const LocalCoordinateType &x, JacobianRangeType &jacobian ) const override { impl().jacobian( x, jacobian ); }
         virtual void jacobian ( const QuadraturePoint &x, JacobianRangeType &jacobian ) const override { impl().jacobian( x, jacobian ); }
+        virtual void hessian ( const LocalCoordinateType &x, HessianRangeType &hessian ) const override { impl().hessian( x, hessian ); }
+        virtual void hessian ( const QuadraturePoint &x, HessianRangeType &hessian ) const override { impl().hessian( x, hessian ); }
         virtual int order () const override { return impl().order(); }
         virtual const EntityType &entity () const override { return impl().entity(); }
 
@@ -99,23 +114,30 @@ namespace Dune
       };
 
     public:
-      template< class Impl, std::enable_if_t< !isGridFunction< Impl >() && !std::is_base_of< VirtualizedLocalFunction, Impl >::value, int > = 0 >
-      VirtualizedLocalFunction ( Impl impl )
-        : impl_( new Implementation< Impl >( std::move( impl ) ) )
+      VirtualizedLocalFunction () = default;
+
+      template< class LF, std::enable_if_t< isLocalFunction< LF >() && !std::is_base_of< VirtualizedLocalFunction, LF >::value, int > = 0 >
+      VirtualizedLocalFunction ( LF lf )
+        : impl_( new Implementation< LF >( std::move( lf ) ) )
       {}
 
       template< class GF, std::enable_if_t< isGridFunction< GF >() && canCreateLocalFunction< GF >(), int > = 0 >
-      VirtualizedLocalFunction ( const GF &gf )
+      explicit VirtualizedLocalFunction ( const GF &gf )
         : VirtualizedLocalFunction( gf.localFunction() )
       {}
 
       template< class GF, std::enable_if_t< isGridFunction< GF >() && !canCreateLocalFunction< GF >(), int > = 0 >
-      VirtualizedLocalFunction ( const GF &gf )
+      explicit VirtualizedLocalFunction ( const GF &gf )
         : VirtualizedLocalFunction( typename GF::LocalFunctionType( gf ) )
       {}
 
-      VirtualizedLocalFunction ( const VirtualizedLocalFunction &other ) : impl_( other.impl_->clone() ) {}
+      VirtualizedLocalFunction ( const VirtualizedLocalFunction &other ) : impl_( other ? other.impl_->clone() : nullptr ) {}
       VirtualizedLocalFunction ( VirtualizedLocalFunction && ) = default;
+
+      VirtualizedLocalFunction &operator= ( const VirtualizedLocalFunction &other ) { impl_.reset( other ? other.impl_->clone() : nullptr ); }
+      VirtualizedLocalFunction &operator= ( VirtualizedLocalFunction && ) = default;
+
+      explicit operator bool () const { return static_cast< bool >( impl_ ); }
 
       void init ( const EntityType &entity ) { impl_->init( entity ); }
 
@@ -140,11 +162,11 @@ namespace Dune
       std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value >
       evaluate ( const Fem::QuadraturePointWrapper< Quadrature > &x, RangeType &value ) const
       {
-#if DUNE_VERSION_NEWER_REV(DUNE_FEM,2,5,0)
+#if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
         impl_->evaluate( x.position(), value );
-#else
+#else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
         impl_->evaluate( x.quadrature().point( x.point() ), value);
-#endif
+#endif // #else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
       }
 
       template< class Quadrature, class Values >
@@ -175,12 +197,11 @@ namespace Dune
       std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value >
       jacobian ( const Fem::QuadraturePointWrapper< Quadrature > &x, JacobianRangeType &jacobian ) const
       {
-#if DUNE_VERSION_NEWER_REV(DUNE_FEM,2,5,0)
+#if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
         impl_->jacobian( x.position(), jacobian );
-#else
+#else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
         impl_->jacobian( x.quadrature().point( x.point() ), jacobian );
-#endif
-
+#endif // #else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
       }
 
       template< class Quadrature, class Jacobians >
@@ -190,9 +211,37 @@ namespace Dune
           jacobian( qp, jacobians[ qp.index() ] );
       }
 
+      template< class Point >
+      void hessian ( const Point &x, HessianRangeType &hessian ) const
+      {
+        using Fem::coordinate;
+        impl_->hessian( coordinate( x ), hessian );
+      }
+
+      template< class Quadrature >
+      std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value >
+      hessian ( const Fem::QuadraturePointWrapper< Quadrature > &x, HessianRangeType &hessian ) const
+      {
+        // note: QuadraturePoint will store a reference to QuadratureCacheIdentifier.
+        //       This object must be kept alive until the evaluation returns!
+        CachingPoint< LocalCoordinateType > y( x );
+        impl_->hessian( static_cast< QuadraturePoint >( y ), hessian );
+      }
+
+      template< class Quadrature >
+      std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value >
+      hessian ( const Fem::QuadraturePointWrapper< Quadrature > &x, HessianRangeType &hessian ) const
+      {
+#if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
+        impl_->hessian( x.position(), hessian );
+#else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
+        impl_->hessian( x.quadrature().point( x.point() ), hessian );
+#endif // #else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
+      }
+
       int order () const { return impl_->order(); }
 
-      const EntityType &entity () const { return impl_->entity(); }
+      const EntityType &entity () const { assert( impl_ ); return impl_->entity(); }
 
     private:
       std::unique_ptr< Interface > impl_;

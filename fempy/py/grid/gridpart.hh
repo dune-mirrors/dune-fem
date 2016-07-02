@@ -21,7 +21,7 @@ namespace Dune
     // ----------------
 
     template< class GridPart >
-    pybind11::class_< GridPart > registerGridPart ( pybind11::handle scope, const char *name )
+    pybind11::class_< GridPart > registerGridPart ( pybind11::handle scope, const char *name = "GridPart" )
     {
       typedef typename GridPart::GridType Grid;
 

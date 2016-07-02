@@ -31,6 +31,7 @@ namespace Dune
       typedef typename Base::DomainType DomainType;
       typedef typename Base::RangeType RangeType;
       typedef typename Base::JacobianRangeType JacobianRangeType;
+      typedef typename Base::HessianRangeType HessianRangeType;
 
       class LocalFunctionType
       {
@@ -76,6 +77,12 @@ namespace Dune
         void jacobianQuadrature ( const Quadrature &quadrature, Jacobians &jacobians ) const
         {
           impl_.jacobianQuadrature( quadrature, jacobians );
+        }
+
+        template< class Point >
+        void hessian ( const Point &x, HessianRangeType &hessian ) const
+        {
+          impl_.hessian( x, hessian );
         }
 
         int order () const { return impl_.order(); }
