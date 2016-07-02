@@ -740,7 +740,7 @@ def compileUFL(equation):
 # importModel
 # -----------
 
-def importModel(name, grid, model):
+def importModel(grid, model):
     compilePath = os.path.join(os.path.dirname(__file__), "../generated")
 
     if not isinstance(grid, types.ModuleType):
