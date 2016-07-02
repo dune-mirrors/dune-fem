@@ -119,7 +119,21 @@ def leafGrid(constructor, grid, **parameters):
     else:
         raise TypeError("leafGrid: 'grid' must be either a string or a module")
 
-    ret = module.LeafGrid(module.reader(constructor))
+    class LeafGrid(module.LeafGrid):
+        def __init__(self, reader):
+            module.LeafGrid.__init__(self, reader)
+            self.marker = self.hierarchicalGrid.marker
+
+        def mark(self, marking):
+            return self.hierarchicalGrid.mark(marking)
+
+        def adapt(self, *args):
+            self.hierarchicalGrid.adapt(*args)
+
+        def loadBalance(self, *args):
+            self.hierarchicalGrid.loadBalance(*args)
+
+    ret = LeafGrid(module.reader(constructor))
     return ret
 
 #############################################
