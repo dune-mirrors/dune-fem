@@ -193,7 +193,7 @@ class EllipticModel:
         self.hasNeumanBoundary = False
         self.isDirichletIntersection = "return false;"
         self.f = "result = RangeType( 0 );"
-        self.g = "result = RangeType( 0 );"
+        self.exact = "result = RangeType( 0 );"
         self.n = "result = RangeType( 0 );"
         self.jacobianExact = "result = JacobianRangeType( 0 );"
 
@@ -291,7 +291,7 @@ class EllipticModel:
         sourceWriter.emit('return ' + ('true' if self.hasNeumanBoundary else 'false') + ';')
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('bool isDirichletIntersection', args=['const IntersectionType &intersection', 'Dune::FieldVector< bool, dimRange > &dirichletComponent'])
+        sourceWriter.openConstMethod('bool isDirichletIntersection', args=['const IntersectionType &intersection', 'Dune::FieldVector< int, dimRange > &dirichletComponent'])
         sourceWriter.emit(self.isDirichletIntersection)
         sourceWriter.closeConstMethod()
 
@@ -299,13 +299,12 @@ class EllipticModel:
         sourceWriter.emit(self.f)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void g', args=['const DomainType &x', arg_r])
-        sourceWriter.emit('// used both for dirichlet data and possible computation of L^2 error')
-        sourceWriter.emit(self.g)
-        sourceWriter.closeConstMethod()
-
         sourceWriter.openConstMethod('void n', args=['const DomainType &x', arg_r])
         sourceWriter.emit(self.n)
+        sourceWriter.closeConstMethod()
+
+        sourceWriter.openConstMethod('void exact', args=['const DomainType &x', arg_r])
+        sourceWriter.emit(self.exact)
         sourceWriter.closeConstMethod()
 
         sourceWriter.openConstMethod('void jacobianExact', args=['const DomainType &x', arg_dr])
