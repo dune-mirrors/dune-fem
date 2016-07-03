@@ -88,7 +88,7 @@
   { impl().linAlpha(uBar,x,value,val); } \
   virtual void dirichlet( int bndId, const POINT &x,\
                 RangeType &value) const \
-  {} // impl().dirichlet(bndId,x,value);
+  {impl().dirichlet(bndId,x,value);}
 
 
 template< class GridPart, int dimR, class RangeField = double >
