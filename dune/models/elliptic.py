@@ -543,11 +543,12 @@ def splitUFLForm(form):
 # -------------
 
 class CodeGenerator(ufl.algorithms.transformer.Transformer):
-    def __init__(self, predefined):
+    def __init__(self, predefined, tempVars):
         ufl.algorithms.transformer.Transformer.__init__(self)
         self.using = set()
         self.exprs = predefined
         self.code = []
+        self.tempVars = tempVars
 
     def argument(self, expr):
         if expr in self.exprs:
@@ -664,9 +665,12 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         return '0'
 
     def _makeTmp(self, cexpr):
-        var = 'tmp' + str(len(self.code))
-        self.code.append('const auto ' + var + ' = ' + cexpr + ';')
-        return var
+        if self.tempVars:
+            var = 'tmp' + str(len(self.code))
+            self.code.append('const auto ' + var + ' = ' + cexpr + ';')
+            return var
+        else:
+            return cexpr
 
     def translateIndex(self, index):
         if isinstance(index, ufl.core.multiindex.MultiIndex):
@@ -684,8 +688,8 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
 # generateCode
 # ------------
 
-def generateCode(predefined, tensor):
-    generator = CodeGenerator(predefined)
+def generateCode(predefined, tensor, tempVars = True):
+    generator = CodeGenerator(predefined, tempVars)
     results = []
     for index in tensor.keys():
         result = generator.visit(tensor[index])
@@ -697,7 +701,7 @@ def generateCode(predefined, tensor):
 # compileUFL
 # ----------
 
-def compileUFL(equation):
+def compileUFL(equation, tempVars = True):
     form = equation.lhs - equation.rhs
     if not isinstance(form, ufl.Form):
         raise Exception("ufl.Form expected.")
@@ -724,13 +728,13 @@ def compileUFL(equation):
     for coefficient in form.coefficients():
         model.coefficients.append({'dimRange' : coefficient.ufl_shape[0]})
 
-    model.source = generateCode({ u : 'u', du : 'du' }, source)
-    model.diffusiveFlux = generateCode({ u : 'u', du : 'du' }, diffusiveFlux)
-    model.alpha = generateCode({ u : 'u' }, boundarySource)
-    model.linSource = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linSource)
-    model.linDiffusiveFlux = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linDiffusiveFlux)
-    model.linAlpha = generateCode({ u : 'u', ubar : 'ubar' }, linBoundarySource)
-    model.fluxDivergence = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, fluxDivergence)
+    model.source = generateCode({ u : 'u', du : 'du' }, source, tempVars)
+    model.diffusiveFlux = generateCode({ u : 'u', du : 'du' }, diffusiveFlux, tempVars)
+    model.alpha = generateCode({ u : 'u' }, boundarySource, tempVars)
+    model.linSource = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linSource, tempVars)
+    model.linDiffusiveFlux = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linDiffusiveFlux, tempVars)
+    model.linAlpha = generateCode({ u : 'u', ubar : 'ubar' }, linBoundarySource, tempVars)
+    model.fluxDivergence = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, fluxDivergence, tempVars)
 
     return model
 
@@ -740,6 +744,8 @@ def compileUFL(equation):
 # -----------
 
 def importModel(grid, model):
+    if isinstance(model, ufl.equation.Equation):
+        model = compileUFL(model)
     compilePath = os.path.join(os.path.dirname(__file__), "../generated")
 
     if not isinstance(grid, types.ModuleType):
