@@ -732,7 +732,12 @@ def compileUFL(equation, dirichlet = {}, tempVars = True):
 
     model = EllipticModel(dimRange, form.signature())
 
-    for coefficient in form.coefficients():
+    coefficients = set(form.coefficients())
+    for bndId in dirichlet:
+        for expr in dirichlet[bndId]:
+            _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
+            coefficients |= set(c)
+    for coefficient in coefficients:
         model.coefficients.append({'dimRange' : coefficient.ufl_shape[0]})
 
     model.source = generateCode({ u : 'u', du : 'du' }, source, tempVars)
