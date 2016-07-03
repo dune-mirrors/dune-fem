@@ -133,6 +133,9 @@ def leafGrid(constructor, grid, **parameters):
         def loadBalance(self, *args):
             self.hierarchicalGrid.loadBalance(*args)
 
+        def globalRefine(self, *args):
+            self.hierarchicalGrid.globalRefine(*args)
+
     ret = LeafGrid(module.reader(constructor))
     return ret
 
