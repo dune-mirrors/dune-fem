@@ -192,6 +192,7 @@ class EllipticModel:
         self.hasDirichletBoundary = False
         self.hasNeumanBoundary = False
         self.isDirichletIntersection = "return false;"
+        self.dirichlet = "result = RangeType( 0 );"
         self.f = "result = RangeType( 0 );"
         self.exact = "result = RangeType( 0 );"
         self.n = "result = RangeType( 0 );"
@@ -214,6 +215,8 @@ class EllipticModel:
         sourceWriter.typedef("typename FunctionSpaceType::RangeType", "RangeType")
         sourceWriter.typedef("typename FunctionSpaceType::JacobianRangeType", "JacobianRangeType")
         sourceWriter.typedef("typename FunctionSpaceType::HessianRangeType", "HessianRangeType")
+
+        sourceWriter.typedef("Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >", "BoundaryIdProviderType")
 
         sourceWriter.section('private')
         if self.coefficients:
@@ -310,6 +313,10 @@ class EllipticModel:
         sourceWriter.openConstMethod('void jacobianExact', args=['const DomainType &x', arg_dr])
         sourceWriter.emit('// used for possible computation of H^1 error')
         sourceWriter.emit(self.jacobianExact)
+        sourceWriter.closeConstMethod()
+
+        sourceWriter.openConstMethod('void dirichlet', targs=['class Point'], args=['int id', arg_x, arg_r])
+        sourceWriter.emit(self.dirichlet)
         sourceWriter.closeConstMethod()
 
         sourceWriter.openConstMethod('const CoefficientType< i > &coefficient', targs=['std::size_t i'])
@@ -701,7 +708,7 @@ def generateCode(predefined, tensor, tempVars = True):
 # compileUFL
 # ----------
 
-def compileUFL(equation, tempVars = True):
+def compileUFL(equation, dirichlet = {}, tempVars = True):
     form = equation.lhs - equation.rhs
     if not isinstance(form, ufl.Form):
         raise Exception("ufl.Form expected.")
@@ -736,6 +743,32 @@ def compileUFL(equation, tempVars = True):
     model.linAlpha = generateCode({ u : 'u', ubar : 'ubar' }, linBoundarySource, tempVars)
     model.fluxDivergence = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, fluxDivergence, tempVars)
 
+    if dirichlet:
+        model.isDirichletIntersection = []
+        model.isDirichletIntersection.append('const int bndId = BoundaryIdProviderType::boundaryId( intersection );')
+        model.isDirichletIntersection.append('std::fill( dirichletComponent.begin(), dirichletComponent.end(), bndId );')
+        model.isDirichletIntersection.append('switch( bndId )')
+        model.isDirichletIntersection.append('{')
+        for bndId in dirichlet:
+            model.isDirichletIntersection.append('case ' + str(bndId) + ':')
+        model.isDirichletIntersection.append('  return true;')
+        model.isDirichletIntersection.append('default:')
+        model.isDirichletIntersection.append('  return false;')
+        model.isDirichletIntersection.append('}')
+
+        model.dirichlet = []
+        model.dirichlet.append('switch( id )')
+        model.dirichlet.append('{')
+        for bndId in dirichlet:
+            if len(dirichlet[bndId]) != dimRange:
+                raise Exception('Dirichtlet boundary condition has wrong dimension.')
+            model.dirichlet.append('case ' + str(bndId) + ':')
+            model.dirichlet += ['  ' + line for line in generateCode({}, ExprTensor((dimRange,), dirichlet[bndId]), tempVars)]
+            model.dirichlet.append('  break;')
+        model.dirichlet.append('default:')
+        model.dirichlet.append('  result = RangeType( 0 );')
+        model.dirichlet.append('}')
+
     return model
 
 
@@ -743,9 +776,9 @@ def compileUFL(equation, tempVars = True):
 # importModel
 # -----------
 
-def importModel(grid, model):
+def importModel(grid, model, dirichlet = {}):
     if isinstance(model, ufl.equation.Equation):
-        model = compileUFL(model)
+        model = compileUFL(model, dirichlet)
     compilePath = os.path.join(os.path.dirname(__file__), "../generated")
 
     if not isinstance(grid, types.ModuleType):
