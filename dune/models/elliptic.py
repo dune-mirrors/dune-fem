@@ -780,9 +780,9 @@ def compileUFL(equation, dirichlet = {}, tempVars = True):
 # importModel
 # -----------
 
-def importModel(grid, model, dirichlet = {}):
+def importModel(grid, model, dirichlet = {}, tempVars=True):
     if isinstance(model, ufl.equation.Equation):
-        model = compileUFL(model, dirichlet)
+        model = compileUFL(model, dirichlet, tempVars)
     compilePath = os.path.join(os.path.dirname(__file__), "../generated")
 
     if not isinstance(grid, types.ModuleType):
@@ -795,6 +795,7 @@ def importModel(grid, model, dirichlet = {}):
             writer = SourceWriter(compilePath + '/modelimpl.hh')
             writer.emit(grid._includes)
             writer.emit('')
+            writer.emit('#include <dune/fem/misc/boundaryidprovider.hh>')
             writer.emit('#include <dune/fem/gridpart/leafgridpart.hh>')
             writer.emit('#include <dune/fem/gridpart/adaptiveleafgridpart.hh>')
             writer.emit('')
