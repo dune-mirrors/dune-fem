@@ -744,6 +744,8 @@ def compileUFL(equation, dirichlet = {}, tempVars = True):
     model.fluxDivergence = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, fluxDivergence, tempVars)
 
     if dirichlet:
+        model.hasDirichletBoundary = True
+
         model.isDirichletIntersection = []
         model.isDirichletIntersection.append('const int bndId = BoundaryIdProviderType::boundaryId( intersection );')
         model.isDirichletIntersection.append('std::fill( dirichletComponent.begin(), dirichletComponent.end(), bndId );')
