@@ -763,7 +763,9 @@ def compileUFL(equation, dirichlet = {}, tempVars = True):
             if len(dirichlet[bndId]) != dimRange:
                 raise Exception('Dirichtlet boundary condition has wrong dimension.')
             model.dirichlet.append('case ' + str(bndId) + ':')
-            model.dirichlet += ['  ' + line for line in generateCode({}, ExprTensor((dimRange,), dirichlet[bndId]), tempVars)]
+            model.dirichlet.append('  {')
+            model.dirichlet += ['    ' + line for line in generateCode({}, ExprTensor((dimRange,), dirichlet[bndId]), tempVars)]
+            model.dirichlet.append('  }')
             model.dirichlet.append('  break;')
         model.dirichlet.append('default:')
         model.dirichlet.append('  result = RangeType( 0 );')
