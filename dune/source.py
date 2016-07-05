@@ -24,10 +24,11 @@ class ListWriter:
     def __init__(self):
         self.lines = []
 
-    def emit(self, src)
+    def emit(self, src):
         self.lines.append(src)
 
     def close(self):
+        pass
 
 
 
@@ -185,8 +186,6 @@ class SourceWriter:
     def closeRangeBasedFor(self, typedName=None):
         self.popBlock('range-based for', typedName)
         self.emit('}')
-
-    writer.emit('for( const auto &entity : entities( u.gridPart() ) )')
 
     def openPythonModule(self, moduleName):
         self.emit(None if self.begin else '')
