@@ -5,8 +5,6 @@ add_subdirectory(quadrature)
 
 set(HEADERS
   parameter.hh
-  python.hh
-  pytuple.hh
 )
 
 install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/fempy)
