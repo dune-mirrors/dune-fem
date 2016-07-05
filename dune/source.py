@@ -86,12 +86,17 @@ class SourceWriter:
         self.popBlock('namespace', name)
         self.emit('} // namespace ' + name)
 
-    def openClass(self, name, targs=None):
+    def openClass(self, name, targs=None, bases=None):
         self.emit(None if self.begin else ['','',''])
         self.emit(['// ' + name, '// ' + '-' * len(name), ''])
         if targs:
             self.emit('template< ' + ', '.join([arg.strip() for arg in targs]) + ' >')
         self.emit('class ' + name)
+        if bases:
+            for i in range(0,len(bases)):
+                prefix = '  : ' if i == 0 else '    '
+                postfix = ',' if i+1 < len(bases) else ''
+                self.emit(prefix + base + postfix)
         self.emit('{')
         self.pushBlock('class', name)
 
@@ -99,12 +104,17 @@ class SourceWriter:
         self.popBlock('class', name)
         self.emit('};')
 
-    def openStruct(self, name, targs=None):
+    def openStruct(self, name, targs=None, bases=None):
         self.emit(None if self.begin else ['','',''])
         self.emit(['// ' + name, '// ' + '-' * len(name), ''])
         if targs:
             self.emit('template< ' + ', '.join([arg.strip() for arg in targs]) + ' >')
         self.emit('struct ' + name)
+        if bases:
+            for i in range(0,len(bases)):
+                prefix = '  : ' if i == 0 else '    '
+                postfix = ',' if i+1 < len(bases) else ''
+                self.emit(prefix + base + postfix)
         self.emit('{')
         self.pushBlock('struct', name)
 
@@ -166,6 +176,17 @@ class SourceWriter:
     def closeFunction(self, typedName=None):
         self.popBlock('function', typedName)
         self.emit('}')
+
+    def openRangeBasedFor(self, typedName, container):
+        self.emit('for( ' + typedName.strip() + ' : ' + container.strip() + ' )')
+        self.emit('{')
+        self.pushBlock('range-based for', typedName)
+
+    def closeRangeBasedFor(self, typedName=None):
+        self.popBlock('range-based for', typedName)
+        self.emit('}')
+
+    writer.emit('for( const auto &entity : entities( u.gridPart() ) )')
 
     def openPythonModule(self, moduleName):
         self.emit(None if self.begin else '')
