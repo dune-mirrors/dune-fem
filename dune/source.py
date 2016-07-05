@@ -37,8 +37,8 @@ class ListWriter:
 
 class SourceWriter:
     def __init__(self, writer):
-        if _self._isstring(writer):
-            self.writer = FileWriter(fileName)
+        if self._isstring(writer):
+            self.writer = FileWriter(writer)
         else:
             self.writer = writer
         self.blocks = []
