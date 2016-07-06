@@ -31,8 +31,11 @@ def interpolate(grid, func, **kwargs):
       return mySpace.interpolate(func, **kwargs)
 
 def writeVTK(grid,  name, celldata=[], pointdata=[], cellvector=[], pointvector=[],
-             number=None):
-    vtk = grid.vtkWriter()
+             number=None, subsampling=None):
+    if subsampling == None:
+        vtk = grid.vtkWriter()
+    else:
+        vtk = grid.vtkWriter(subsampling)
     for df in celldata:
         df.addToVTKWriter(vtk, vtk.CellData)
     for df in pointdata:
