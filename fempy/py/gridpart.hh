@@ -61,6 +61,9 @@ namespace Dune
       cls.def( "vtkWriter", [] ( const GridPart &gridPart ) {
           return new VTKWriter< typename GridPart::GridViewType >( static_cast< typename GridPart::GridViewType >( gridPart ) );
         }, pybind11::keep_alive< 0, 1 >() );
+      cls.def( "vtkWriter", [] ( const GridPart &gridPart, int level ) {
+          return new SubsamplingVTKWriter< typename GridPart::GridViewType >( static_cast< typename GridPart::GridViewType >( gridPart ), level );
+        }, pybind11::keep_alive< 0, 1 >() );
 
       cls.def( "globalGridFunction", defGlobalGridFunction< GridPart >( cls, "GlobalGridFunction", std::make_integer_sequence< int, 11 >() ) );
       cls.def( "localGridFunction", defLocalGridFunction< GridPart >( cls, "LocalGridFunction", std::make_integer_sequence< int, 11 >() ) );

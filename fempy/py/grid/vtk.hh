@@ -5,6 +5,7 @@
 #include <utility>
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
+#include <dune/grid/io/file/vtk/subsamplingvtkwriter.hh>
 
 #include <dune/fempy/function/gridfunctionview.hh>
 #include <dune/fempy/pybind11/pybind11.h>
@@ -66,19 +67,33 @@ namespace Dune
     template< class GridView >
     void registerVTKWriter ( pybind11::handle scope, const char *clsName = "VTKWriter" )
     {
-      typedef VTKWriter< GridView > Writer;
-
-      pybind11::class_< Writer > cls( scope, clsName );
-      cls.def( "write", [] ( Writer &writer, const std::string &name ) { writer.write( name ); } );
-      cls.def( "write", [] ( Writer &writer, const std::string &name, int number ) {
-            std::stringstream s; s << name << std::setw(5) << std::setfill('0') << number;
-            writer.write( s.str() );
-          } );
-
-      cls.attr("CellData") = pybind11::cast(VTKDataType::CellData);
-      cls.attr("PointData") = pybind11::cast(VTKDataType::PointData);
-      cls.attr("CellVector") = pybind11::cast(VTKDataType::CellVector);
-      cls.attr("PointVector") = pybind11::cast(VTKDataType::PointVector);
+      {
+        typedef VTKWriter< GridView > Writer;
+        pybind11::class_< Writer > cls( scope, clsName );
+        cls.def( "write", [] ( Writer &writer, const std::string &name ) { writer.write( name ); } );
+        cls.def( "write", [] ( Writer &writer, const std::string &name, int number ) {
+              std::stringstream s; s << name << std::setw(5) << std::setfill('0') << number;
+              writer.write( s.str() );
+            } );
+        cls.attr("CellData") = pybind11::cast(VTKDataType::CellData);
+        cls.attr("PointData") = pybind11::cast(VTKDataType::PointData);
+        cls.attr("CellVector") = pybind11::cast(VTKDataType::CellVector);
+        cls.attr("PointVector") = pybind11::cast(VTKDataType::PointVector);
+      }
+      {
+        typedef SubsamplingVTKWriter< GridView > Writer;
+        pybind11::class_< Writer > cls( scope, (std::string("Subsampling")+std::string(clsName)).c_str(),
+            pybind11::base< VTKWriter< GridView > >() );
+        cls.def( "write", [] ( Writer &writer, const std::string &name ) { writer.write( name ); } );
+        cls.def( "write", [] ( Writer &writer, const std::string &name, int number ) {
+              std::stringstream s; s << name << std::setw(5) << std::setfill('0') << number;
+              writer.write( s.str() );
+            } );
+        cls.attr("CellData") = pybind11::cast(VTKDataType::CellData);
+        cls.attr("PointData") = pybind11::cast(VTKDataType::PointData);
+        cls.attr("CellVector") = pybind11::cast(VTKDataType::CellVector);
+        cls.attr("PointVector") = pybind11::cast(VTKDataType::PointVector);
+      }
     }
 
   } // namespace FemPy
