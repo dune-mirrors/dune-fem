@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_ARRAYS_HH
 #define DUNE_FEM_ARRAYS_HH
 
-#warning("WARNING: MutableArray defined in dune/fem/space/common/arrays.hh is deprecated. Please use directly DynamicArray defined in due/fem/storage/dynamicarray.hh.")
+#warning("WARNING: MutableArray defined in dune/fem/space/common/arrays.hh is deprecated. Please use directly DynamicArray defined in dune/fem/storage/dynamicarray.hh.")
 
 #include <dune/fem/storage/dynamicarray.hh>
 
