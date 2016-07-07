@@ -239,6 +239,9 @@ namespace Dune
         order_( df.space().order() )
       {}
 
+      //! copy constructor
+      LocalFunction ( const LocalFunction &other ) = default;
+
       //! evaluate local function
       template< class PointType >
       void evaluate ( const PointType &x, RangeType &ret ) const
