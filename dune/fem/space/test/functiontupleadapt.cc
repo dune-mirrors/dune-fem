@@ -28,7 +28,7 @@ const int polOrder = POLORDER;
 // #include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
-#include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 
@@ -265,7 +265,7 @@ void algorithm ( GridPartType &gridPart,
   L2Norm< GridPartType > l2norm( gridPart );
   H1Norm< GridPartType > h1norm( gridPart );
 
-  Fem::LagrangeInterpolation< GridExactSolutionType, DiscreteFunctionType > :: interpolateFunction( f, solution );
+  interpolate( f, solution );
   double preL2error = l2norm.distance( f, solution );
   double preH1error = h1norm.distance( f, solution );
 
@@ -274,7 +274,7 @@ void algorithm ( GridPartType &gridPart,
   std::cout << "H1 error before adaptation: " << preH1error << std::endl;
 
   DiscreteFunctionTwoType &second = std::get<1>(functionTuple);
-  Fem::LagrangeInterpolation< GridExactSolutionType, DiscreteFunctionTwoType > :: interpolateFunction( f, second );
+  interpolate( f, second );
 
   adapt( gridPart.grid(), functionTuple, step, locallyAdaptive );
 
@@ -302,7 +302,7 @@ void algorithm ( GridPartType &gridPart,
     }
   #endif
 
-    Fem::LagrangeInterpolation< GridExactSolutionType, DiscreteFunctionType > :: interpolateFunction( f, solution );
+    interpolate( f, solution );
   double newL2error = l2norm.distance( f, solution );
   double newH1error = h1norm.distance( f, solution );
 

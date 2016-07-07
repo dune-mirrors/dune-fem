@@ -18,7 +18,7 @@ int main () { return 0; }
 #include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/gridpart/geogridpart.hh>
 #include <dune/fem/misc/gridwidth.hh>
-#include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/space/lagrange.hh>
 
 #include "./failure.hh"
@@ -241,7 +241,7 @@ try
   DiscreteCoordFunctionSpaceType coordFunctionSpace( hostGridPart );
   CoordFunctionType coordFunction( "coordinate function", coordFunctionSpace );
   typedef Identity< CoordFunctionSpaceType > IdentityType;
-  Dune::Fem::LagrangeInterpolation< IdentityType, CoordFunctionType >::interpolateFunction( IdentityType(), coordFunction );
+  Dune::Fem::interpolate( IdentityType(), coordFunction );
   GridPartType gridPart( coordFunction );
 
   // run test
