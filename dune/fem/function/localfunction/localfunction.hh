@@ -3,7 +3,7 @@
 
 #include <utility>
 
-// dune-common includes
+#include <dune/common/deprecated.hh>
 #include <dune/common/fvector.hh>
 
 
@@ -349,7 +349,7 @@ namespace Dune
        *
        *  \returns number of local DoFs, scalar case
        */
-      int numScalarDofs () const
+      int numScalarDofs () const DUNE_DEPRECATED_MSG( "Replace by numDofs() / dimRange" )
       {
         assert( numDofs() % dimRange == 0 );
         return numDofs() / dimRange;
