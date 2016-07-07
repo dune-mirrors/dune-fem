@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_LAGRANGEINTERPOLATION_HH
 #define DUNE_FEM_LAGRANGEINTERPOLATION_HH
 
-#warning "dune/fem/operator/lagrangeinterpolation.hh is deprecated, please dune/fem/space/interpolate.hh."
+#warning "dune/fem/operator/lagrangeinterpolation.hh is deprecated, please dune/fem/space/common/interpolate.hh."
 
 #include <type_traits>
 
