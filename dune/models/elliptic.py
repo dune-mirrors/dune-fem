@@ -289,7 +289,7 @@ class FluxExtracter(ufl.algorithms.transformer.Transformer):
 
     def indexed(self, expr):
         if len(expr.ufl_operands) != 2:
-            raise Exception('indexed expressions must have exactly two children.')
+            raise Exception('Indexed expressions must have exactly two children.')
         operand = expr.ufl_operands[0]
         index = expr.ufl_operands[1]
         if self.isTestFunction(operand):
@@ -553,7 +553,7 @@ def compileUFL(equation, dirichlet = {}, tempVars = True):
     if not isinstance(form, ufl.Form):
         raise Exception("ufl.Form expected.")
     if len(form.arguments()) < 2:
-        raise Exception("Elliptic model requires from with at least two arguments.")
+        raise Exception("Elliptic model requires form with at least two arguments.")
 
     phi = form.arguments()[0]
     dimRange = phi.ufl_shape[0]
