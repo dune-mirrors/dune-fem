@@ -42,16 +42,24 @@ def getModule(scheme, **parameters):
 
     Example:
         A generated grid module::
-            #include <dune/ufl/femscheme.hh>
+            #include <dune/fempy/py/scheme.hh>
 
-            typedef FemScheme< DiffusionModel< Dune::Fem::AdaptiveLeafGridPart< Dune::YaspGrid< 2,
-            Dune::EquidistantCoordinates< double, 2 > > >, 2 > , 2, fem > SchemeType;
+            #include <dune/alugrid/grid.hh>
+            #include <dune/alugrid/dgf.hh>
+            #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+            #include <dune/fem/space/lagrange.hh>
+            #include <dune/fem/schemes/femscheme.hh>
 
-            void registerDuneScheme ();
+            typedef FemScheme< ... > DuneType;
 
-            BOOST_PYTHON_MODULE( dunescheme649df434446fad25fffcf9739ffb66d2 ) { registerDuneScheme(); }
+            PYBIND11_PLUGIN( scheme_325fb4c39707a927cfd2ab14f477d3fc )
+            {
+              pybind11::module module( "scheme_325fb4c39707a927cfd2ab14f477d3fc" );
+              Dune::FemPy::registerScheme< DuneType >( module );
+              return module.ptr();
+            }
 
-    This would correspond to calling get("FemScheme", grid2d, 2), where grid2d is a python grid module.
+    This would correspond to calling get("FemScheme", space), where space is a python space module.
     """
     module = myGenerator.getModule(scheme, **parameters)
     setattr(module.Scheme,"solve", solve)

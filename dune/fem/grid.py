@@ -72,7 +72,7 @@ def get(grid, **parameters):
               return module.ptr();
             }
 
-    This would correspond to calling yaspgrid = grid.leafGrid("../data/unitcube-2d.dgf", "YaspGrid", dimgrid=2). It also binds some functions to the created module.
+    This would correspond to calling grid = dune.fem.leafGrid("../data/unitcube-2d.dgf", "YaspGrid", dimgrid=2). It also binds some functions to the created module.
 
     Args:
         grid (string): the identifier for the grid type to use
@@ -92,7 +92,7 @@ def get(grid, **parameters):
 def leafGrid(constructor, grid, **parameters):
     """Get a LeafGrid
 
-    Call get() and create a C++ grid class (see grid.hh).
+    Call get() and create a C++ grid class (see dune/fempy/py/grid.hh).
 
     Notes:
         This is equivalent to::
