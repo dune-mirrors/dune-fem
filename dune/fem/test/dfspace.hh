@@ -97,22 +97,7 @@ namespace Dune
 
 
   template< class GridPart >
-  class TestDiscreteFunctionSpace
-  : public TestDiscreteFunctionSpaceTraits< GridPart > :: DiscreteFunctionSpaceType
-  {
-  public:
-    typedef GridPart GridPartType;
-
-  private:
-    typedef typename TestDiscreteFunctionSpaceTraits< GridPartType >
-      :: DiscreteFunctionSpaceType
-      BaseType;
-
-  public:
-    TestDiscreteFunctionSpace ( GridPartType &gridPart )
-    : BaseType( gridPart )
-    {}
-  };
+  using TestDiscreteFunctionSpace = typename TestDiscreteFunctionSpaceTraits< GridPart > :: DiscreteFunctionSpaceType;
 
   }
 }
