@@ -807,7 +807,9 @@ namespace Dune
       template <class DiscreteFunction, class Operation>
       void communicate(DiscreteFunction& discreteFunction, const Operation& op ) const
       {
-        static_assert( std::is_same< DiscreteFunctionSpaceType, typename DiscreteFunction::DiscreteFunctionSpaceType >::value,
+        static_assert( std::is_same< typename DiscreteFunctionSpaceType::BlockMapperType,
+            typename DiscreteFunction::DiscreteFunctionSpaceType::BlockMapperType >::value &&
+            localBlockSize == DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize,
             "DiscreteFunctionSpaceDefault::communicate cannot be called with discrete functions defined over a different space" );
 
         communicator().exchange( discreteFunction, op );
@@ -826,7 +828,9 @@ namespace Dune
       createDataHandle( DiscreteFunction &discreteFunction,
                         const Operation& operation ) const
       {
-        static_assert( std::is_same< DiscreteFunctionSpaceType, typename DiscreteFunction::DiscreteFunctionSpaceType >::value,
+        static_assert( std::is_same< typename DiscreteFunctionSpaceType::BlockMapperType,
+            typename DiscreteFunction::DiscreteFunctionSpaceType::BlockMapperType >::value &&
+            localBlockSize == DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize,
             "DiscreteFunctionSpaceDefault::createDataHandle cannot be called with discrete functions defined over a different space" );
         return typename BaseType
           :: template CommDataHandle< DiscreteFunction, Operation >
