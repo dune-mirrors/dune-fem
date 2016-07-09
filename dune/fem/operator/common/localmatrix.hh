@@ -282,6 +282,11 @@ namespace Dune
       typedef typename BaseType::DomainEntityType DomainEntityType;
       typedef typename BaseType::RangeEntityType RangeEntityType;
 
+      typedef typename DomainSpaceType::RangeType RangeType;
+      typedef typename DomainSpaceType::JacobianRangeType JacobianRangeType;
+
+      typedef typename DomainSpaceType::RangeFieldType RangeFieldType;
+
     protected:
       const DomainSpaceType &domainSpace_;
       const RangeSpaceType &rangeSpace_;
@@ -324,36 +329,25 @@ namespace Dune
         rangeBaseSet_ = rangeSpace_.basisFunctionSet( rangeEntity );
       }
 
-      template< class Point, class MassTensor, class JacobianTensor >
-      void axpy ( const Point &x, std::pair< MassTensor, JacobianTensor > rangeTensor )
+      template<class Point, class Tensor0, class Tensor1, class Tensor2, class Tensor3 >
+      void axpy ( const Point &x, std::pair< Tensor0, Tensor1 > mass, std::pair< Tensor2, Tensor3 > diffusion )
       {
         std::vector< typename DomainBasisFunctionSetType::RangeType > phi( domainBaseSet_.size() );
         domainBaseSet_.evaluateAll( x, phi );
 
+        std::vector< typename DomainBasisFunctionSetType::JacobianRangeType > dphi( domainBaseSet_.size() );
+        domainBaseSet_.jacobianAll( x, dphi );
+
         for( std::size_t i = 0; i < domainBaseSet_.size(); ++i )
         {
-          typename RangeBasisFunctionSetType::RangeType val = rangeTensor.first( phi[ i ] );
-          val += rangeTensor.second( phi[ i ] );
+          typename RangeBasisFunctionSetType::RangeType val = mass.first( phi[ i ] );
+          val += mass.second( dphi[ i ] );
+          typename RangeBasisFunctionSetType::JacobianRangeType dval = diffusion.first( phi[ i ] );
+          dval += diffusion.second( dphi[ i ] );
           auto col = this->column( i );
-          rangeBaseSet_.axpy( x, val, col );
+          rangeBaseSet_.axpy( x, val, dval, col );
         }
       }
-
-      /*
-      template< class Point, class MassTensor >
-      void axpy ( const Point &x, std::pair< MassTensor, ZeroTensor< JacobianRangeType, RangeType > > rangeTensor )
-      {
-        std::vector< typename DomainBasisFunctionSetType::RangeType > phi( domainBaseSet_.size() );
-        domainBaseSet_.evaluateAll( x, phi );
-
-        typedef typename RangeBasisFunctionSetType::RangeType RangeType;
-
-        for( std::size_t i = 0; i < domainBaseSet_.size(); ++i )
-        {
-          rangeBaseSet_.axpy( x, (RangeType) rangeTensor.first( phi[ i ] ), BaseType::column( i ) );
-        }
-      }
-      */
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::resort */
       void resort () {}

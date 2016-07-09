@@ -17,6 +17,7 @@
 // include Lagrange discrete function space
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrange.hh>
+#include <dune/fem/function/common/gridfunctionadapter.hh>
 
 #if HAVE_PETSC && defined USE_PETSCDISCRETEFUNCTION
 #include <dune/fem/function/petscdiscretefunction.hh>
@@ -162,7 +163,7 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step )
 
   // assemble RHS
   DiscreteFunctionType rhs( "rhs", space );
-  massOperator.assembleRHS( function_, rhs );
+  massOperator.assembleRHS( gridFunctionAdapter( function_, space.gridPart(), 5 ) , rhs );
 
   unsigned long maxIter = space.size();
   maxIter = space.gridPart().comm().sum( maxIter );

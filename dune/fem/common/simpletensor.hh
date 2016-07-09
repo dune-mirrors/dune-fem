@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_COMMON_SIMPLETENSOR_HH
 #define DUNE_FEM_COMMON_SIMPLETENSOR_HH
 
-#include <dune/common/ftraits.hh>
+#include <dune/common/fmatrix.hh>
 
 namespace Dune
 {
@@ -9,21 +9,15 @@ namespace Dune
   namespace Fem
   {
 
-    // SimpleTensor
-    // ------------
+    template< class Field, class Arg >
+    Arg scale ( const Field & a, const Arg & arg ) { return a * arg; }
 
-    template< class Arg, class Dest >
-    struct SimpleTensor
+    template< class Field, int i, int j >
+    FieldMatrix< Field, i, j > scale ( const Field &a, const FieldMatrix< Field, i, j > & m )
     {
-      SimpleTensor () = default;
-      SimpleTensor ( const SimpleTensor & ) = default;
-      SimpleTensor ( SimpleTensor && ) = default;
-
-      Dest operator() ( const Arg &arg ) const
-      {
-        return Dest();
-      }
-    };
+      FieldMatrix< Field, i, j > ret( m );
+      return ret *= a;
+    }
 
 
     // IdTensor
@@ -31,12 +25,7 @@ namespace Dune
 
     template< class Arg >
     struct IdTensor
-      : public SimpleTensor< Arg, Arg >
     {
-      IdTensor () = default;
-      IdTensor ( const IdTensor & ) = default;
-      IdTensor ( IdTensor && ) = default;
-
       Arg operator() ( const Arg &arg ) const { return arg; }
     };
 
@@ -44,38 +33,46 @@ namespace Dune
     // ScaledIdTensor
     // --------------
 
-    template< class Arg >
-    struct ScaledIdTensor
-      : public SimpleTensor< Arg, Arg >
+    template< class Arg, class Tensor = IdTensor< Arg > >
+    struct ScaledTensor
     {
       typedef typename FieldTraits< Arg >::field_type FieldType;
-      ScaledIdTensor ( FieldType alpha ) : alpha_( alpha ) {}
-      ScaledIdTensor ( const ScaledIdTensor & ) = default;
-      ScaledIdTensor ( ScaledIdTensor && ) = default;
+      ScaledTensor ( FieldType alpha, const Tensor &tensor = Tensor() ) : alpha_( alpha ), tensor_( tensor ) {}
+      ScaledTensor ( const ScaledTensor & ) = default;
+      ScaledTensor ( ScaledTensor && ) = default;
 
-      Arg operator() ( const Arg &arg ) const
-      {
-        return alpha_ * arg;
-      }
+      Arg operator() ( const Arg &arg ) const { return scale( alpha_, tensor_( arg ) ); }
 
     protected:
       FieldType alpha_;
+      Tensor tensor_;
     };
 
 
-    template< class Arg, class Dest >
-    struct ZeroTensor
-      : public SimpleTensor< Arg, Dest >
+
+    // scaledTensor
+    // ------------
+    template< class Arg, class Tensor >
+    ScaledTensor< Arg, Tensor > scaledTensor ( typename FieldTraits< Arg >::field_type alpha, Tensor tensor )
     {
-      ZeroTensor () {}
-      ZeroTensor ( const ZeroTensor & ) = default;
-      ZeroTensor ( ZeroTensor && ) = default;
+      return ScaledTensor< Arg, Tensor >( alpha, tensor );
+    }
 
-      Dest operator() ( const Arg &arg ) const
-      {
-        return Dest();
-      }
+
+
+    // ZeroTensor
+    // ----------
+
+    template< class Dest >
+    struct ZeroTensor
+    {
+      template< class ... Args >
+      Dest operator() ( Args && ... ) const { return Dest(0); }
     };
+
+
+    template< class Dest >
+    ZeroTensor< Dest > zeroDest () {  return ZeroTensor< Dest >(); }
 
 
   } // namespace Fem

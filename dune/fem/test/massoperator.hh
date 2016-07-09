@@ -53,19 +53,19 @@ void MassOperator< DiscreteFunction, LinearOperator >
   typedef typename EntityType::Geometry GeometryType;
 
   Dune::Fem::TemporaryLocalFunction< DiscreteFunctionSpaceType > local( dfSpace_ );
+  typename Function::LocalFunctionType uLocal( u );
 
   w.clear();
 
   // run over entities
-  const IteratorType end = dfSpace_.end();
-  for( IteratorType it = dfSpace_.begin(); it != end; ++it )
+  for( const EntityType &entity : dfSpace_ )
   {
-
-    const EntityType &entity = *it;
     const GeometryType &geometry = entity.geometry();
 
     local.init( entity );
     local.clear();
+
+    uLocal.init( entity );
 
     // run over quadrature points
     QuadratureType quadrature( entity, 2*dfSpace_.order()+1 );
@@ -75,7 +75,7 @@ void MassOperator< DiscreteFunction, LinearOperator >
       const typename QuadratureType::CoordinateType &x = qp.position();
 
       RangeType uValue;
-      u.evaluate( geometry.global( x ), uValue );
+      uLocal.evaluate( qp, uValue );
 
       // put all things together and don't forget quadrature weights
       const FieldType weight = qp.weight()*geometry.integrationElement( x );
@@ -110,18 +110,12 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
 
   LocalMatrixType localMatrix( dfSpace_, dfSpace_ );
 
-  typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-  typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-  typedef Dune::Fem::ScaledIdTensor< RangeType > MassTensorType;
-  typedef Dune::Fem::ZeroTensor< JacobianRangeType, RangeType > SecondTensorType;
-  SecondTensorType second;
+  typename Dune::Fem::IdTensor< typename DiscreteFunctionSpaceType::RangeType > mass;
+  typename Dune::Fem::IdTensor< typename DiscreteFunctionSpaceType::JacobianRangeType > diffusion;
 
   // run over entities
-  const IteratorType end = dfSpace_.end();
-  for( IteratorType it = dfSpace_.begin(); it != end; ++it )
+  for( const EntityType &entity : dfSpace_ )
   {
-    const EntityType &entity = *it;
     const GeometryType &geometry = entity.geometry();
 
     localMatrix.init( entity, entity );
@@ -133,12 +127,17 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
     {
       // get quadrature weight
       const typename QuadratureType::CoordinateType &x = qp.position();
-      const FieldType weight = qp.weight()
-                                  * geometry.integrationElement( x );
-      MassTensorType mass( weight );
+      const FieldType weight = qp.weight() * geometry.integrationElement( x );
 
       // update system matrix
-      localMatrix.axpy( qp, std::make_pair( mass, second ) );
+      localMatrix.axpy( qp,
+          std::make_pair(
+            Dune::Fem::scaledTensor< typename DiscreteFunctionSpaceType::RangeType > ( weight, mass ),
+            Dune::Fem::ZeroTensor< typename DiscreteFunctionSpaceType::RangeType > () ),
+          std::make_pair(
+            Dune::Fem::ZeroTensor< typename DiscreteFunctionSpaceType::JacobianRangeType > (),
+//            Dune::Fem::ZeroTensor< typename DiscreteFunctionSpaceType::JacobianRangeType > () ) );
+            Dune::Fem::scaledTensor< typename DiscreteFunctionSpaceType::JacobianRangeType >( weight, diffusion ) ) );
     }
 
     // add to global matrix

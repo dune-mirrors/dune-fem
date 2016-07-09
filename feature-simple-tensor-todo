@@ -1,0 +1,12 @@
+massoperator is testbasis for all further ideas
+
+1) simple tensors
+  - ZeroTensor should be actively used.
+  - caching ?
+
+2) lifted quadratures 
+  - Martin will do it, Facade Class + Caching
+
+3) new model interface,
+  - local initialize
+  - chached object testing
