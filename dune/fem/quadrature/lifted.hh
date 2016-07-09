@@ -8,6 +8,10 @@
 
 #include <dune/geometry/type.hh>
 
+#include <dune/grid/common/entity.hh>
+
+#include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/quadrature/elementquadrature.hh>
 #include <dune/fem/quadrature/quadrature.hh>
 
 namespace Dune
@@ -50,10 +54,12 @@ namespace Dune
       typedef LiftedQuadrature< Quadrature > ThisType;
 
     public:
+      typedef typename Quadrature::RealType RealType;
+
       typedef typename Quadrature::CoordinateType CoordinateType;
       typedef typename Quadrature::LocalCoordinateType LocalCoordinateType;
 
-      typedef QuadratureIterator< ThisType > IteratorType;
+      typedef QuadraturePointIterator< ThisType > IteratorType;
       typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
 
       template< class Lifting >
@@ -97,18 +103,19 @@ namespace Dune
     {
       if( geometry.affine() )
       {
-        const auto integrationElement = geometry.integrationElement( CoordinateType( 0 ) );
+        typedef typename Geometry::LocalCoordinate LocalCoordinate;
+        const auto integrationElement = geometry.integrationElement( LocalCoordinate( 0 ) );
         auto lifting = [ integrationElement ] ( const QuadraturePointWrapper< Quadrature > &x ) {
             return x.weight() * integrationElement;
           };
-        return LiftingQuadrature< Quadrature >( std::move( quadrature ), lifting );
+        return LiftedQuadrature< Quadrature >( std::move( quadrature ), lifting );
       }
       else
       {
         auto lifting = [ &geometry ] ( const QuadraturePointWrapper< Quadrature > &x ) {
             return x.weight() * geometry.integrationElement( x.position() );
           };
-        return LiftingQuadrature< Quadrature >( std::move( quadrature ), lifting );
+        return LiftedQuadrature< Quadrature >( std::move( quadrature ), lifting );
       }
     }
 
@@ -117,14 +124,14 @@ namespace Dune
     // liftedCachingQuadrature
     // -----------------------
 
-    template< int dim, int codim, class Grid, class Impl, class Lifting >
+    template< int dim, int codim, class Grid, template< int, int, class > class Impl, class Lifting >
     inline static auto liftedCachingQuadrature ( const Entity< dim, codim, Grid, Impl > &entity, int order, const Lifting &lifting )
     {
       typedef CachingQuadrature< FakeGridPart< dim >, codim > Quadrature;
-      return LiftingQuadrature< Quadrature >( Quadrature( entity, order ), lifting );
+      return LiftedQuadrature< Quadrature >( Quadrature( entity, order ), lifting );
     }
 
-    template< int dim, int codim, class Grid, class Impl >
+    template< int dim, int codim, class Grid, template< int, int, class > class Impl >
     inline static auto liftedCachingQuadrature ( const Entity< dim, codim, Grid, Impl > &entity, int order )
     {
       typedef CachingQuadrature< FakeGridPart< dim >, codim > Quadrature;
@@ -141,6 +148,7 @@ namespace Dune
         return LiftedQuadrature< Quadrature >( Quadrature( gridPart, intersection, order, Quadrature::OUTSIDE ), lifting );
       case IntersectionSide::outside:
         return LiftedQuadrature< Quadrature >( Quadrature( gridPart, intersection, order, Quadrature::OUTSIDE ), lifting );
+      }
     }
 
     template< class GridPart, class Lifting >
@@ -153,6 +161,7 @@ namespace Dune
         return liftedQuadrature( Quadrature( gridPart, intersection, order, Quadrature::OUTSIDE ), intersection.geometry() );
       case IntersectionSide::outside:
         return liftedQuadrature( Quadrature( gridPart, intersection, order, Quadrature::OUTSIDE ), intersection.geometry() );
+      }
     }
 
 
@@ -160,14 +169,14 @@ namespace Dune
     // liftedElementQuadrature
     // -----------------------
 
-    template< int dim, int codim, class Grid, class Impl, class Lifting >
+    template< int dim, int codim, class Grid, template< int, int, class > class Impl, class Lifting >
     inline static auto liftedElementQuadrature ( const Entity< dim, codim, Grid, Impl > &entity, int order, const Lifting &lifting )
     {
       typedef ElementQuadrature< FakeGridPart< dim >, codim > Quadrature;
-      return LiftingQuadrature< Quadrature >( Quadrature( entity, order ), lifting );
+      return LiftedQuadrature< Quadrature >( Quadrature( entity, order ), lifting );
     }
 
-    template< int dim, int codim, class Grid, class Impl >
+    template< int dim, int codim, class Grid, template< int, int, class > class Impl >
     inline static auto liftedElementQuadrature ( const Entity< dim, codim, Grid, Impl > &entity, int order )
     {
       typedef ElementQuadrature< FakeGridPart< dim >, codim > Quadrature;
@@ -184,6 +193,7 @@ namespace Dune
         return LiftedQuadrature< Quadrature >( Quadrature( gridPart, intersection, order, Quadrature::OUTSIDE ), lifting );
       case IntersectionSide::outside:
         return LiftedQuadrature< Quadrature >( Quadrature( gridPart, intersection, order, Quadrature::OUTSIDE ), lifting );
+      }
     }
 
     template< class GridPart, class Lifting >
@@ -196,6 +206,7 @@ namespace Dune
         return liftedQuadrature( Quadrature( gridPart, intersection, order, Quadrature::OUTSIDE ), intersection.geometry() );
       case IntersectionSide::outside:
         return liftedQuadrature( Quadrature( gridPart, intersection, order, Quadrature::OUTSIDE ), intersection.geometry() );
+      }
     }
 
   } // namespace Fem
