@@ -3,6 +3,7 @@
 
 //- Dune includes
 #include <dune/fem/misc/bartonnackmaninterface.hh>
+#include <dune/fem/common/simpletensor.hh>
 
 namespace Dune
 {
@@ -323,6 +324,37 @@ namespace Dune
         rangeBaseSet_ = rangeSpace_.basisFunctionSet( rangeEntity );
       }
 
+      template< class Point, class MassTensor, class JacobianTensor >
+      void axpy ( const Point &x, std::pair< MassTensor, JacobianTensor > rangeTensor )
+      {
+        std::vector< typename DomainBasisFunctionSetType::RangeType > phi( domainBaseSet_.size() );
+        domainBaseSet_.evaluateAll( x, phi );
+
+        for( std::size_t i = 0; i < domainBaseSet_.size(); ++i )
+        {
+          typename RangeBasisFunctionSetType::RangeType val = rangeTensor.first( phi[ i ] );
+          val += rangeTensor.second( phi[ i ] );
+          auto col = this->column( i );
+          rangeBaseSet_.axpy( x, val, col );
+        }
+      }
+
+      /*
+      template< class Point, class MassTensor >
+      void axpy ( const Point &x, std::pair< MassTensor, ZeroTensor< JacobianRangeType, RangeType > > rangeTensor )
+      {
+        std::vector< typename DomainBasisFunctionSetType::RangeType > phi( domainBaseSet_.size() );
+        domainBaseSet_.evaluateAll( x, phi );
+
+        typedef typename RangeBasisFunctionSetType::RangeType RangeType;
+
+        for( std::size_t i = 0; i < domainBaseSet_.size(); ++i )
+        {
+          rangeBaseSet_.axpy( x, (RangeType) rangeTensor.first( phi[ i ] ), BaseType::column( i ) );
+        }
+      }
+      */
+
       /** \copydoc Dune::Fem::LocalMatrixInterface::resort */
       void resort () {}
 
@@ -429,6 +461,8 @@ namespace Dune
 
     public:
 
+      void add ( unsigned int row, const RangeFieldType &v ) { localMatrix_.add( row, column_, v ); }
+
       /** \brief axpy operation for local matrices
        *
        *  Denoting an entry of the local matrix by \f$a_{i,j}\f$ and the base
@@ -518,6 +552,23 @@ namespace Dune
         }
       }
     };
+
+    template< class Value, class Traits >
+    struct FunctionalAxpyFunctor< Value, MatrixColumnObject< Traits > >
+    {
+      FunctionalAxpyFunctor ( const Value &value, MatrixColumnObject< Traits > &col )
+        : value_( value ), col_( col ) {}
+
+      template< class Val >
+      void operator() ( const std::size_t i, const Val &v )
+      {
+        col_.add( i, scalarProduct( value_, v ) );
+      }
+    protected:
+      const Value &value_;
+      MatrixColumnObject< Traits > &col_;
+    };
+
 
 ///@}
 

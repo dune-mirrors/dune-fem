@@ -98,7 +98,6 @@ template< class DiscreteFunction, class LinearOperator >
 void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
 {
   typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-  typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
   typedef typename DiscreteFunctionSpaceType::RangeFieldType FieldType;
 
   typedef typename IteratorType::Entity EntityType;
@@ -111,7 +110,12 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
 
   LocalMatrixType localMatrix( dfSpace_, dfSpace_ );
 
-  std::vector< typename DiscreteFunctionSpaceType::RangeType > values;
+  typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
+  typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
+
+  typedef Dune::Fem::ScaledIdTensor< RangeType > MassTensorType;
+  typedef Dune::Fem::ZeroTensor< JacobianRangeType, RangeType > SecondTensorType;
+  SecondTensorType second;
 
   // run over entities
   const IteratorType end = dfSpace_.end();
@@ -123,29 +127,18 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
     localMatrix.init( entity, entity );
     localMatrix.clear();
 
-    const BasisFunctionSetType &basis = localMatrix.domainBasisFunctionSet();
-    const unsigned int numBasisFunctions = basis.size();
-    values.resize( numBasisFunctions );
-
     // run over quadrature points
     QuadratureType quadrature( entity, 2*dfSpace_.order() );
     for( const auto qp : quadrature )
     {
-      // evaluate base functions
-      basis.evaluateAll( qp, values );
-
       // get quadrature weight
       const typename QuadratureType::CoordinateType &x = qp.position();
       const FieldType weight = qp.weight()
                                   * geometry.integrationElement( x );
+      MassTensorType mass( weight );
 
       // update system matrix
-      for( unsigned int i = 0; i < numBasisFunctions; ++i )
-      {
-        RangeType value = values[ i ];
-        // add column
-        localMatrix.column( i ).axpy( values, value, weight );
-      }
+      localMatrix.axpy( qp, std::make_pair( mass, second ) );
     }
 
     // add to global matrix
