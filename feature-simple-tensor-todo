@@ -10,3 +10,16 @@ massoperator is testbasis for all further ideas
 3) new model interface,
   - local initialize
   - chached object testing
+
+Problems:
+1) LiftedQuadrature cannot be created for each entity, because it contains
+   a std::vector to cache the weights.
+
+   Possible resolutions:
+   - do not cache
+   - revise quadrature interface to use an init technique:
+       CachingQuadrature< GP, 0 > quadrature;
+       quadrature.init( entity, order );
+
+       CachingQuadrature< GP, 1 > quadrature( gridPart, inside );
+       quadrature.init( intersection, order );
