@@ -99,7 +99,7 @@ namespace Dune
     // ----------------
 
     template< class Quadrature, class Geometry >
-    inline static auto liftedQuadrature ( Quadrature quadrature, const Geometry &geometry )
+    inline static LiftedQuadrature< Quadrature > liftedQuadrature ( Quadrature quadrature, const Geometry &geometry )
     {
       if( geometry.affine() )
       {

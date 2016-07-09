@@ -6,7 +6,7 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/temporarylocalmatrix.hh>
 
-#include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/quadrature/lifted.hh>
 
 
 template< class DiscreteFunction, class LinearOperator >
@@ -122,12 +122,10 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
     localMatrix.clear();
 
     // run over quadrature points
-    QuadratureType quadrature( entity, 2*dfSpace_.order() );
-    for( const auto qp : quadrature )
+    for( const auto &qp : liftedQuadrature( QuadratureType( entity, 2*dfSpace_.order() ), geometry ) )
     {
       // get quadrature weight
-      const typename QuadratureType::CoordinateType &x = qp.position();
-      const FieldType weight = qp.weight() * geometry.integrationElement( x );
+      const FieldType weight = qp.weight();
 
       // update system matrix
       localMatrix.axpy( qp,
