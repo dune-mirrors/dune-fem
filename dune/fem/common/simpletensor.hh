@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_COMMON_SIMPLETENSOR_HH
 #define DUNE_FEM_COMMON_SIMPLETENSOR_HH
 
+#include <dune/common/ftraits.hh>
 
 namespace Dune
 {
