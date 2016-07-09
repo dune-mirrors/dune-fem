@@ -58,7 +58,7 @@ namespace Dune
         values_.clear();
         jacobians_.clear();
         hessians_.clear();
-        std::ignore = std::make_tuple( (init( localFunction, quadrature, std::integral_constant< order >() ), order)... );
+        std::ignore = std::make_tuple( (init( localFunction, quadrature, std::integral_constant< int, order >() ), order)... );
       }
 
       /**
@@ -85,7 +85,7 @@ namespace Dune
        * \param[out]  jacobian  Jacobian of the function in the evaluation point
        */
       template< class Quadrature >
-      void jacobian ( const QuadraturePointWrapper< Quadrarture > &x, JacobianRangeType &jacobian ) const
+      void jacobian ( const QuadraturePointWrapper< Quadrature > &x, JacobianRangeType &jacobian ) const
       {
         assert( x.quadrature().id() == quadratureId_ );
         assert( x.index() < jacobians_.size() );
@@ -111,27 +111,28 @@ namespace Dune
 
     protected:
       template< class LocalFunction, class Quadrature >
-      void init ( const LocalFunction &localFunction, const Quadrature &quadrature, std::integral_constant< 0 > )
+      void init ( const LocalFunction &localFunction, const Quadrature &quadrature, std::integral_constant< int, 0 > )
       {
         values_.resize( quadrature.size() );
         localFunction.evaluateQuadrature( quadrature, values_ );
       }
 
       template< class LocalFunction, class Quadrature >
-      void init ( const LocalFunction &localFunction, const Quadrature &quadrature, std::integral_constant< 1 > )
+      void init ( const LocalFunction &localFunction, const Quadrature &quadrature, std::integral_constant< int, 1 > )
       {
         jacobians_.resize( quadrature.size() );
         localFunction.evaluateQuadrature( quadrature, jacobians_ );
       }
 
       template< class LocalFunction, class Quadrature >
-      void init ( const LocalFunction &localFunction, const Quadrature &quadrature, std::integral_constant< 2 > )
+      void init ( const LocalFunction &localFunction, const Quadrature &quadrature, std::integral_constant< int, 2 > )
       {
         hessians_.resize( quadrature.size() );
         for( const auto &qp : quadrature )
           localFunction.hessian( qp, hessians_[ qp.index() ] );
       }
 
+      std::size_t quadratureId_;
       std::vector< RangeType > values_;
       std::vector< JacobianRangeType > jacobians_;
       std::vector< HessianRangeType > hessians_;
