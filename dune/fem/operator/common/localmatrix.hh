@@ -1,9 +1,9 @@
 #ifndef DUNE_FEM_LOCALMATRIX_HH
 #define DUNE_FEM_LOCALMATRIX_HH
 
-//- Dune includes
-#include <dune/fem/misc/bartonnackmaninterface.hh>
 #include <dune/fem/common/simpletensor.hh>
+#include <dune/fem/misc/bartonnackmaninterface.hh>
+#include <dune/fem/space/basisfunctionset/functor.hh>
 
 namespace Dune
 {
