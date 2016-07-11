@@ -58,7 +58,34 @@ namespace Dune
       return ScaledTensor< Arg, Tensor >( alpha, tensor );
     }
 
+    // DiagonalTensor
+    // --------------
+    template< class Arg >
+    struct DiagonalTensor
+    {
+      DiagonalTensor ( const Arg &diag ) : diag_( diag ) {}
+      DiagonalTensor ( const DiagonalTensor & ) = default;
+      DiagonalTensor ( DiagonalTensor && ) = default;
 
+      Arg operator() ( const Arg &arg ) const
+      {
+        Arg result;
+        for (int i=0;i<arg.size();++i)
+          result[i] = arg[i]*diag_[i];
+        return result;
+      }
+
+    protected:
+      Arg diag_;
+    };
+
+    // diagonalTensor
+    // ------------
+    template< class Arg >
+    DiagonalTensor< Arg > diagonalTensor( const Arg &diag )
+    {
+      return DiagonalTensor< Arg >( diag );
+    }
 
     // ZeroTensor
     // ----------

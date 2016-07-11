@@ -111,7 +111,6 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
   LocalMatrixType localMatrix( dfSpace_, dfSpace_ );
 
   typename Dune::Fem::IdTensor< typename DiscreteFunctionSpaceType::RangeType > mass;
-  typename Dune::Fem::IdTensor< typename DiscreteFunctionSpaceType::JacobianRangeType > diffusion;
 
   // run over entities
   for( const EntityType &entity : dfSpace_ )
@@ -130,12 +129,13 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
       // update system matrix
       localMatrix.axpy( qp,
           std::make_pair(
-            Dune::Fem::scaledTensor< typename DiscreteFunctionSpaceType::RangeType > ( weight, mass ),
+            // Dune::Fem::scaledTensor< typename DiscreteFunctionSpaceType::RangeType > ( weight, mass ),
+            mass,
             Dune::Fem::ZeroTensor< typename DiscreteFunctionSpaceType::RangeType > () ),
           std::make_pair(
             Dune::Fem::ZeroTensor< typename DiscreteFunctionSpaceType::JacobianRangeType > (),
-//            Dune::Fem::ZeroTensor< typename DiscreteFunctionSpaceType::JacobianRangeType > () ) );
-            Dune::Fem::scaledTensor< typename DiscreteFunctionSpaceType::JacobianRangeType >( weight, diffusion ) ) );
+            Dune::Fem::ZeroTensor< typename DiscreteFunctionSpaceType::JacobianRangeType > () ) );
+            // Dune::Fem::scaledTensor< typename DiscreteFunctionSpaceType::JacobianRangeType >( weight, diffusion ) ) );
     }
 
     // add to global matrix

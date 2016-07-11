@@ -38,6 +38,7 @@
 #if USE_VTKWRITER
 #include <dune/fem/io/file/vtkio.hh>
 #if ENABLE_VTXPROJECTION
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/operator/projection/vtxprojection.hh>
 #endif // #if ENABLE_VTXPROJECTION
 #endif // #if USE_VTKWRITER

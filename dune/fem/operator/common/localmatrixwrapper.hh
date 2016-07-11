@@ -124,6 +124,11 @@ namespace Dune
         localMatrix().init( domainEntity, rangeEntity );
       }
 
+      template<class Point, class Tensor0, class Tensor1, class Tensor2, class Tensor3 >
+      void axpy ( const Point &x, std::pair< Tensor0, Tensor1 > mass, std::pair< Tensor2, Tensor3 > diffusion )
+      {
+        localMatrix().axpy(x,mass,diffusion);
+      }
       /** \copydoc Dune::Fem::LocalMatrixInterface::add */
       void add ( int localRow, int localCol, const RangeFieldType &value )
       {

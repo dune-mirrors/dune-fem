@@ -337,14 +337,18 @@ namespace Dune
 
         std::vector< typename DomainBasisFunctionSetType::JacobianRangeType > dphi( domainBaseSet_.size() );
         domainBaseSet_.jacobianAll( x, dphi );
+        const double weight = x.weight();
 
         for( std::size_t i = 0; i < domainBaseSet_.size(); ++i )
         {
           typename RangeBasisFunctionSetType::RangeType val = mass.first( phi[ i ] );
           val += mass.second( dphi[ i ] );
+          val *= weight;
           typename RangeBasisFunctionSetType::JacobianRangeType dval = diffusion.first( phi[ i ] );
           dval += diffusion.second( dphi[ i ] );
+          dval *= weight;
           auto col = this->column( i );
+          // could use the weight further down?
           rangeBaseSet_.axpy( x, val, dval, col );
         }
       }
