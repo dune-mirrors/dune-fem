@@ -24,7 +24,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
-#include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 #include <dune/fem/space/padaptivespace.hh>
@@ -276,7 +276,7 @@ void interpolate( const Function &f, DiscreteFunctionType &solution )
 {
 #if 1
   std::cout << "Applying Lagrangeinterpolation:" << std::endl;
-  Fem::LagrangeInterpolation< Function, DiscreteFunctionType > :: interpolateFunction( f, solution );
+  interpolate( f, solution );
 #else
   std::cout << "Applying L2-projection:" << std::endl;
   // define Laplace operator

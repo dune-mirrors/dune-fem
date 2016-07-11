@@ -16,6 +16,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/space/common/loadbalancer.hh>
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
@@ -29,7 +30,6 @@
 #if USE_VTKWRITER
 #include <dune/fem/io/file/vtkio.hh>
 #if ENABLE_VTXPROJECTION
-#include <dune/fem/operator/lagrangeinterpolation.hh>
 #include <dune/fem/operator/projection/vtxprojection.hh>
 #endif // #if ENABLE_VTXPROJECTION
 #endif // #if USE_VTKWRITER
@@ -511,8 +511,7 @@ namespace Dune
         func_ = new NewFunctionType( df_.name()+"vtx-prj" , space_ );
         if( df_.space().continuous() )
         {
-          // vtkio.addVertexData( df_ );
-          LagrangeInterpolation< DFType, NewFunctionType >::interpolateFunction( df_, *func_ );
+          interpolate( df_, *func_ );
         }
         else
         {

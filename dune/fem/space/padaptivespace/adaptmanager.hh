@@ -4,7 +4,7 @@
 #include <dune/grid/common/capabilities.hh>
 
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
 #include <dune/fem/space/discontinuousgalerkin/localrestrictprolong.hh>
 
@@ -109,7 +109,7 @@ namespace Dune
       dm.resize();
       dm.compress();
 
-      LagrangeInterpolation< DF > :: interpolateFunction( tmp, df );
+      interpolate( tmp, df );
       */
     }
 

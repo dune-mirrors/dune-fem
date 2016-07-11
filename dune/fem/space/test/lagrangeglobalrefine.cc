@@ -12,7 +12,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/space/common/restrictprolongfunction.hh>
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 #include <dune/fem/io/parameter.hh>
@@ -109,7 +109,7 @@ void algorithm ( MyGridType &grid, int level )
   Dune::Fem::L2Norm< GridPartType > fatherL2norm( fatherGrid );
   Dune::Fem::H1Norm< GridPartType > fatherH1norm( fatherGrid );
 
-  Dune::Fem::LagrangeInterpolation< GridExactSolutionType, DiscreteFunctionType >::interpolateFunction( fatherExact, fatherFunction );
+  Dune::Fem::interpolate( fatherExact, fatherFunction );
   double fatherL2error = fatherL2norm.distance( fatherExact, fatherFunction );
   double fatherH1error = fatherH1norm.distance( fatherExact, fatherFunction );
 
