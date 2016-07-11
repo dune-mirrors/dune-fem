@@ -114,7 +114,7 @@ namespace Dune
       else
       {
         auto lifting = [ &geometry ] ( const QuadraturePointWrapper< Quadrature > &x ) {
-            return x.weight() * geometry.integrationElement( x.position() );
+            return x.weight() * geometry.integrationElement( x.localPosition() );
           };
         return LiftedQuadrature< Quadrature >( std::move( quadrature ), lifting );
       }

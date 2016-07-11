@@ -70,7 +70,7 @@ namespace Dune
       Arg operator() ( const Arg &arg ) const
       {
         Arg result;
-        for (int i=0;i<arg.size();++i)
+        for (unsigned int i=0;i<arg.size();++i)
           result[i] = arg[i]*diag_[i];
         return result;
       }
