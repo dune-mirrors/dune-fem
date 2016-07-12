@@ -1,0 +1,53 @@
+\documentclass[12pt,a4paper]{article}
+\newcommand{\dirac}{ {\rm dirac} }
+\newcommand{\integral}{ {\rm integral} }
+\begin{document}
+
+A local discrete functional is of the form
+$$ \lambda = \sum_i u_i\lambda_i $$
+where $(u_i)_i$ is the local dof vector and $(\lambda_i)_i$ is the dual
+basis. We introduce addition and other operations on these local
+functionals. We use mostly large latin letters to denote general
+functionals and small letter to denote functions. Special discrete object
+like the above functional will be denoted by greek letters in the
+following.
+
+Assume that $F$ is some other functional that can act at least on the
+local discrete function space. Given a function $f$ we define a new
+functional $f*F$ by the following action:
+$$ f*F(g) = F(f*g) $$
+Addition of functionals is defined as usual
+$$ (F+G)(g) = F(g)+G(g) $$
+
+Now reducing this to the discrete setting we for example want to add a
+functional $F$ to the above local discrete functional $\lambda$. For this
+it is enough to describe the action on the basis set $(\varphi_i)_i$:
+$$ (\lambda+F)(\varphi_i) = \lambda(\varphi_i) + F(\varphi_i)
+   = u_i + F(\varphi_i) $$
+So we need to add the application of $F$ to $\varphi_i$ to the local
+degree of freedom $u_i$. 
+
+Special functonals:
+\begin{itemize}
+\item $\dirac^0_x(g)=g(x)$: 
+  $$ (\lambda + \dirac^0_x)(\varphi_i) = u_i + \varphi_i(x) $$
+  Now taking a function $g$ we can define
+  $$ (\lambda + g*\dirac^0_x)(\varphi_i) = u_i + \alpha g(x)\varphi_i(x) $$
+  This corresponds to the \emph{axpy} method available in Dune-Fem.
+\item $\dirac^k_x(g)=\nabla^k g(x)$: this is a generalization of the above.
+  With this functional the other available \emph{axpy} methods can be
+  defined:
+  $$ (\lambda + g*\dirac^0_x + d*\dirac^1_x)(\varphi_i) =
+     u_i + g(x)\varphi_i(x) + d(x)\grad\varphi_i(x) $$
+  Where $g$ is function into the range space and $d$ and function into the
+  jacobian space. The products (like $g\varphi_i$) have to be understood as inner products. 
+\item $\integral_Q$: this applied to a function $f$ is supposed to
+  approximate the integral over $f$: 
+  $$ \integral_Q(f) = \sum_{q\in Q} \omega_q f(x_q) $$
+  A weighted integral with a weight function $w$ is then for example given
+  by $w*\integral_Q$. Adding this functional to $\lambda$ results in
+  $$ (\lambda + w*\integral_Q)(\varphi_i) = 
+     u_i + \sum_q \omega_q w(x_q)\varphi_i(x_q) $$ 
+  which is implemented in the \emph{axpyQuadrature} methods in Dune-Fem.
+\end{itemize}
+\end{document}
