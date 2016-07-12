@@ -272,7 +272,7 @@ bool checkContinuous( DiscreteFunctionType &solution )
 }
 
 template <class Function>
-void interpolate( const Function &f, DiscreteFunctionType &solution )
+void interpolateSolution( const Function &f, DiscreteFunctionType &solution )
 {
 #if 1
   std::cout << "Applying Lagrangeinterpolation:" << std::endl;
@@ -335,7 +335,7 @@ void algorithm ( GridPartType &gridPart,
   ExactSolutionType fexact;
   GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );
 
-  interpolate( f, solution );
+  interpolateSolution( f, solution );
 
   std::cout << "Unknowns before adaptation: " << solution.space().size() << std::endl;
   polOrderAdapt( gridPart.grid(), solution, step );
@@ -364,7 +364,7 @@ void algorithm ( GridPartType &gridPart,
     }
   #endif
 
-  interpolate( f, solution );
+  interpolateSolution( f, solution );
 
   #if USE_GRAPE && SHOW_INTERPOLATION
     //if( turn > 0 )
@@ -445,7 +445,7 @@ try
 
   const bool locallyAdaptive = Parameter :: getValue< bool >("adapt.locallyadaptive", false );
 
-  interpolate( f, solution );
+  interpolateSolution( f, solution );
   for ( int r = 0; r < step; ++r )
   {
     std :: cout << std :: endl << "Refining: " << std :: endl;
