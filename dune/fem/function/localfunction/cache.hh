@@ -113,21 +113,21 @@ namespace Dune
       template< class LocalFunction, class Quadrature >
       void init ( const LocalFunction &localFunction, const Quadrature &quadrature, std::integral_constant< int, 0 > )
       {
-        values_.resize( quadrature.size() );
+        values_.resize( quadrature.nop() );
         localFunction.evaluateQuadrature( quadrature, values_ );
       }
 
       template< class LocalFunction, class Quadrature >
       void init ( const LocalFunction &localFunction, const Quadrature &quadrature, std::integral_constant< int, 1 > )
       {
-        jacobians_.resize( quadrature.size() );
+        jacobians_.resize( quadrature.nop() );
         localFunction.evaluateQuadrature( quadrature, jacobians_ );
       }
 
       template< class LocalFunction, class Quadrature >
       void init ( const LocalFunction &localFunction, const Quadrature &quadrature, std::integral_constant< int, 2 > )
       {
-        hessians_.resize( quadrature.size() );
+        hessians_.resize( quadrature.nop() );
         for( const auto &qp : quadrature )
           localFunction.hessian( qp, hessians_[ qp.index() ] );
       }

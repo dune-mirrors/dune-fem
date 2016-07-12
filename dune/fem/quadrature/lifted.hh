@@ -81,7 +81,6 @@ namespace Dune
 
       std::size_t id () const { return base().id(); }
       std::size_t nop () const { return base().nop(); }
-      std::size_t size () const { return base().nop(); }
       int order () const { return base().order(); }
       GeometryType type () const { return base().type(); }
 
