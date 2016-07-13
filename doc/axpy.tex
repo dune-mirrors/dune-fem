@@ -1,7 +1,10 @@
 \documentclass[12pt,a4paper]{article}
 \newcommand{\dirac}{ {\rm dirac} }
 \newcommand{\integral}{ {\rm integral} }
+\newcommand{\interpolate}{ {\rm interpolate} }
 \begin{document}
+
+\section{Local Functionals}
 
 A local discrete functional is of the form
 $$ \lambda = \sum_i u_i\lambda_i $$
@@ -38,7 +41,7 @@ Special functonals:
   With this functional the other available \emph{axpy} methods can be
   defined:
   $$ (\lambda + g*\dirac^0_x + d*\dirac^1_x)(\varphi_i) =
-     u_i + g(x)\varphi_i(x) + d(x)\grad\varphi_i(x) $$
+     u_i + g(x)\varphi_i(x) + d(x)\nabla\varphi_i(x) $$
   Where $g$ is function into the range space and $d$ and function into the
   jacobian space. The products (like $g\varphi_i$) have to be understood as inner products. 
 \item $\integral_Q$: this applied to a function $f$ is supposed to
@@ -49,5 +52,57 @@ Special functonals:
   $$ (\lambda + w*\integral_Q)(\varphi_i) = 
      u_i + \sum_q \omega_q w(x_q)\varphi_i(x_q) $$ 
   which is implemented in the \emph{axpyQuadrature} methods in Dune-Fem.
+\end{itemize}
+\emph{Remark:} we could now even define objects like $L^2$ norms using
+these objects, i.e., $\int_K f^2 \approx f*\integral_Q(f)$ 
+
+\section{Local Linear Operators}
+
+We can think of a local linear operator $m$ as a mapping from a local
+discrete function to a local functional. We will use the following notation
+$$ \lambda=m[u]~,\qquad \lambda(v) = m[u](v) $$
+The products of two functionals $FG$ defines a local linear operator, i.e. a mapping
+from local functions to local functionals of the form 
+$$ (FG)[u] = G(u)F~,\qquad (FG)[u](v) = G(u)F(v) $$
+Using this notation a discrete linear operator is given by
+$$ m = \sum_{ij} m_{ij} \lambda_i\lambda_j $$
+So $m[u](v) = \sum_{ij} m_{ij} \lambda_j(u) \lambda_i(v)$ and 
+therefore $m[\varphi_k](\varphi_l) = m_{kl}$.
+As befrore we want to define algebraic operations on (discrete) local
+operator. As above the equals operator is assumed to project the result
+into a discrete local linear operator. So adding a local linear operator to
+a discrete local linear operator and assigning the result to a discrete
+local linear operator $\bar{m} = m + n$ can be defined by the action on a
+pair of basis functions:
+$$ \bar{m}_{kl} = \bar{m}[\varphi_k](\varphi_l) = m_{kl} + n[\varphi_k](\varphi_l) $$
+so as before simply leads to an addition on the level of the coefficients
+of the discrete linear operators. Finally, as above we consider
+multiplication of a linear local operator with a function as:
+$$ (f*m)[u](v) = m[u](fv) $$
+{\bf or should this be $m[fu](v)$?}
+
+As for the functionals we can identify a few special cases that correspond
+to special cases modelled by \emph{axpy} in Dune-Fem:
+\begin{itemize}
+  \item $\dirac^{00}_{xy}=\dirac^0_x\dirac^0_y$: adding and assigning this to a local
+    linear operator $m$ corresponds to the coefficient wise operation:
+    $$ \bar{m}_{kl} = \bar{m}[\varphi_k](\varphi_l) = (m + \dirac^{00}_{xy})[\varphi_k](\varphi_l)
+     = m_{kl} + \varphi_k(x)\varphi_l(y) $$
+    Using this with $y=x$ and multiplying with some function $f$ leads to
+    $$ \bar{m}_{kl} = m_{kl} + f(x)\varphi_k(x)\varphi_l(x) $$
+    so that $\bar{m} = m + f*\dirac^{00}_{xx}$ leads to the simplest
+    \emph{axpy} operation available in Dune-Fem.
+  \item $\dirac^{kl}_{xy}=\dirac^k_x\dirac^l_y$ is the obvious extension to
+    the above and the full \emph{axpy} operation can now be defined as
+    $$ m += s_0*\dirac^{00}_{xx} + s_1*\dirac^{10}_{xx} + 
+            d_0*\dirac^{01}_{xx} + s_2*\dirac^{11}_{xx} $$
+    which is equivalent to
+    $$ m_{kl} += s_0\varphi_k(x)\varphi_l(x) +
+                 s_1\nabla\varphi_k(x)\varphi_l(x) +
+                 d_0\varphi_k(x)\nabla\varphi_l(x) +
+                 d_1\nabla\varphi_k(x)\nabla\varphi_l(x) $$
+    Assuming that the space dimension is $d$ and the range dimension is $r$
+    then $s_0$ is a scalar , $s_1$ maps $R^{r,d}$ to $R^d$, 
+    $d_0$ maps $R^r$ to $R^{r,d}$ and $d_1$ maps $R^{r,d}$ to $R^{r,d}$
 \end{itemize}
 \end{document}
