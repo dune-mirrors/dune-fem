@@ -22,6 +22,7 @@
 // #include "vtxl2projection.hh"
 #include "exactsolution.hh"
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+#include <dune/fem/function/common/gridfunctionadapter.hh>
 
 using namespace Dune;
 using namespace Fem;
@@ -79,7 +80,7 @@ int main(int argc, char ** argv)
     projection(solution,contSolution);
 
     LagrangeFunctionType lagrangeSolution("lagrangeSolution",lagspace);
-    interpolate( exactSolution, lagrangeSolution );
+    interpolate( gridFunctionAdapter( exactSolution, gridPart, lagspace.order()+2 ), lagrangeSolution );
     #if 0
     LagrangeType lagrangeContSolution("lagrnageContSolution",lagspace);
     VtxProjection<double,double,LagrangeType,LagrangeType> projection2;

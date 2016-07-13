@@ -13,6 +13,7 @@
 #include <dune/fem/misc/double.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/io/streams/asciistreams.hh>
@@ -91,7 +92,7 @@ int main(int argc, char ** argv)
     solution.clear();
 
     // interpolate
-    interpolate( f, solution );
+    interpolate( gridFunctionAdapter( f, gridPart, discreteFunctionSpace.order() + 2 ), solution );
 
     // let's check on IO
     DiscreteFunctionType readback( "readback", discreteFunctionSpace );

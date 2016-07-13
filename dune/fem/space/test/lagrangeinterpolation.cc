@@ -23,6 +23,7 @@
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
+#include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/space/common/interpolate.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
@@ -369,7 +370,7 @@ double algorithm( MyGridType &grid, DiscreteFunctionType &solution, int turn )
   ExactSolution f;
 
   //! perform Lagrange interpolation
-  interpolate( f, solution );
+  interpolate( gridFunctionAdapter( f, part, discreteFunctionSpace.order() + 2 ), solution );
 
   #if 0
   DiscreteGradientFunctionSpaceType discreteGradientFunctionSpace( part );
