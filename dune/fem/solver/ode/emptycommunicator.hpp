@@ -1,7 +1,6 @@
 #ifndef EMPTYCOMMUNICATOR_HPP
 #define EMPTYCOMMUNICATOR_HPP
 
-#include "thread.hpp"
 #include <iostream>
 #include <vector>
 #include <cassert>

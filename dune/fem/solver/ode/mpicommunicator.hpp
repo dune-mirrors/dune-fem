@@ -2,7 +2,7 @@
 #ifndef MPICOMMUNICATOR_HPP
 #define MPICOMMUNICATOR_HPP
 
-#include "thread.hpp"
+//#include "thread.hpp"
 #include <iostream>
 #include <vector>
 #include <cassert>
@@ -243,7 +243,7 @@ public:
 };
 
 
-
+#if 0
 // todo: check if the
 // const char *comment
 // can cause a segfault!!!!!!!
@@ -263,6 +263,8 @@ class CommunicatorThreaded : public Communicator, public Thread
  private:
   const char *comment;
 };
+
+#endif
 
 
 
