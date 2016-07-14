@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 
+#include <dune/common/exceptions.hh>
 #include <dune/fem/common/tupleforeach.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/blockvectorfunction.hh>
@@ -283,7 +284,7 @@ class LDLOp:public Operator<DF, DF>
 
     double Info [AMD_INFO];
     if(amd_order (dimMat, ccsmat_.getColStart(), ccsmat_.getRowIndex(), P_, (DofType *) NULL, Info) < AMD_OK)
-      std::cout<<"WARNING: call to AMD failed."<<std::endl;
+      DUNE_THROW(InvalidStateException,"Error: AMD failed!");
     if(verbose_)
       amd_info (Info);
     // compute the symbolic factorisation
@@ -301,7 +302,7 @@ class LDLOp:public Operator<DF, DF>
     delete [] Lnz_;
 
     if(rank!=dimMat)
-      std::cout<<"WARNING: matrix is singular."<<std::endl;
+      DUNE_THROW(InvalidStateException,"Error: LDL factorisation failed!");
   }
 };
 
