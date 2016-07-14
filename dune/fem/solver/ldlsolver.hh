@@ -292,7 +292,7 @@ class LDLOp:public Operator<DF, DF>
     Lx_ = new DofType [Lp_[dimMat]];
     Li_ = new int [Lp_[dimMat]];
     // compute the numeric factorisation
-    const int rank(ldl_numeric(dimMat, ccsmat_.getColStart(), ccsmat_.getRowIndex(), ccsmat_.getValues(),
+    const std::size_t rank(ldl_numeric(dimMat, ccsmat_.getColStart(), ccsmat_.getRowIndex(), ccsmat_.getValues(),
                                Lp_, Parent_, Lnz_, Li_, Lx_, D_, Y_, Pattern_, Flag_, P_, Pinv_));
     // free temporary vectors
     delete [] Flag_;
