@@ -5,6 +5,7 @@
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/lagrange/shapefunctionset.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
+#include <dune/fem/space/lagrange/interpolation.hh>
 
 #include "adaptmanager.hh"
 #include "declaration.hh"
@@ -125,9 +126,13 @@ namespace Dune
 
       typedef typename BaseType::GridPartType GridPartType;
       typedef typename BaseType::IntersectionType IntersectionType;
+      typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
+      typedef typename BaseType::EntityType EntityType;
 
       typedef typename BaseType::CompiledLocalKeyType CompiledLocalKeyType;
       typedef CompiledLocalKeyType LagrangePointSetType;
+
+      typedef LagrangeLocalInterpolation< GridPartType, maxPolOrder, BasisFunctionSetType > InterpolationType;
 
     protected:
       using BaseType::dfList_ ;
@@ -139,6 +144,7 @@ namespace Dune
       using BaseType::continuous;
       using BaseType::gridPart;
       using BaseType::order;
+      using BaseType::basisFunctionSet;
 
       // default communication interface
       static const InterfaceType defaultInterface = InteriorBorder_InteriorBorder_Interface;
@@ -208,6 +214,11 @@ namespace Dune
 
         assert( entry );
         dfList_.push_front( entry );
+      }
+
+      InterpolationType interpolation ( const EntityType &entity ) const
+      {
+        return InterpolationType( lagrangePointSet( entity ), basisFunctionSet( entity ) );
       }
     };
 
