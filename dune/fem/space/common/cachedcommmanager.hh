@@ -1273,6 +1273,11 @@ namespace Dune
         cObj.addToList(*this);
       }
 
+      //! default constructor
+      CommunicationManagerList()
+        : mySize_( -1 )
+      {}
+
       //! add one discrete function to the list with given unpack operation
       template <class DiscreteFunctionImp, class Operation>
       void addToList(DiscreteFunctionImp &df, const Operation& operation )

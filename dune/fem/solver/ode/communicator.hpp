@@ -1,7 +1,7 @@
 #ifndef COMMUNICATOR_HPP
 #define COMMUNICATOR_HPP
 
-#include "thread.hpp"
+//#include "thread.hpp"
 #include <iostream>
 #include <vector>
 #include <cassert>
