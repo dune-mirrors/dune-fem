@@ -8,6 +8,7 @@
 
 #include <dune/fempy/function/simplegridfunction.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
+#include <dune/fempy/py/grid/numpy.hh>
 #include <dune/fempy/py/grid/vtk.hh>
 #include <dune/fempy/pybind11/pybind11.h>
 
@@ -76,6 +77,9 @@ namespace Dune
 
         cls.def( "addToVTKWriter", &addToVTKWriter< GridFunction >,
             pybind11::keep_alive< 2, 1 >() );
+
+        cls.def( "cellData", [] ( const GridFunction &gf ) { return cellData( gf ); } );
+        cls.def( "pointData", [] ( const GridFunction &gf ) { return pointData( gf ); } );
 
         return cls;
       }
