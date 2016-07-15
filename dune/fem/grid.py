@@ -136,6 +136,14 @@ def leafGrid(constructor, grid, **parameters):
         def globalRefine(self, *args):
             self.hierarchicalGrid.globalRefine(*args)
 
+        def triangulation(self):
+            if self.dimGrid != 2 or self.dimWorld != 2:
+                raise Exception("Grid must be 2-dimensional for use as matplotlib triangulation.")
+            from matplotlib.tri import Triangulation
+            x = self.coordinates()
+            triangles = self.tesselate()
+            return Triangulation(x[:,0], x[:,1], triangles)
+
     ret = LeafGrid(module.reader(constructor))
     return ret
 
