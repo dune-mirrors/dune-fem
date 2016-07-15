@@ -8,6 +8,7 @@
 
 #include <dune/fempy/py/grid/range.hh>
 #include <dune/fempy/py/grid/function.hh>
+#include <dune/fempy/py/grid/numpy.hh>
 #include <dune/fempy/py/grid/vtk.hh>
 #include <dune/fempy/pybind11/pybind11.h>
 
@@ -64,6 +65,13 @@ namespace Dune
 
       cls.def( "globalGridFunction", defGlobalGridFunction< GridPart >( cls, "GlobalGridFunction", std::make_integer_sequence< int, 11 >() ) );
       cls.def( "localGridFunction", defLocalGridFunction< GridPart >( cls, "LocalGridFunction", std::make_integer_sequence< int, 11 >() ) );
+
+      cls.def( "coordinates", [] ( const GridPart &gridPart ) {
+          return coordinates( static_cast< typename GridPart::GridViewType >( gridPart ) );
+        } );
+      cls.def( "tesselate", [] ( const GridPart &gridPart ) {
+          return tesselate( static_cast< typename GridPart::GridViewType >( gridPart ) );
+        } );
 
       return cls;
     }
