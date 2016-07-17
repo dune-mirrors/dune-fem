@@ -6,11 +6,14 @@
 #include <tuple>
 #include <utility>
 
+#include <dune/corepy/grid/vtk.hh>
+
+#include <dune/fempy/function/gridfunctionview.hh>
 #include <dune/fempy/function/simplegridfunction.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/py/grid/numpy.hh>
-#include <dune/fempy/py/grid/vtk.hh>
-#include <dune/fempy/pybind11/pybind11.h>
+
+#include <dune/corepy/pybind11/pybind11.h>
 
 namespace Dune
 {
@@ -75,7 +78,7 @@ namespace Dune
             return gf.localFunction( entity );
           }, pybind11::keep_alive< 0, 1 >(), pybind11::keep_alive< 0, 2 >() );
 
-        cls.def( "addToVTKWriter", &addToVTKWriter< GridFunction >,
+        cls.def( "addToVTKWriter", &Dune::CorePy::addToVTKWriter< GridFunction, VTKWriter< typename GridFunction::GridPartType::GridViewType > >,
             pybind11::keep_alive< 2, 1 >() );
 
         cls.def( "cellData", [] ( const GridFunction &gf ) { return cellData( gf ); } );

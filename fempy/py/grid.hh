@@ -6,7 +6,8 @@
 
 #include <dune/fempy/py/grid/gridpart.hh>
 #include <dune/fempy/py/grid/hierarchical.hh>
-#include <dune/fempy/pybind11/pybind11.h>
+
+#include <dune/corepy/pybind11/pybind11.h>
 
 namespace Dune
 {
@@ -24,14 +25,6 @@ namespace Dune
     {
       typedef  typename GridPart::GridType HGrid;
       registerHierarchicalGrid< HGrid >( module );
-
-      module.def( "reader", [](const std::tuple<Reader,std::string> &constructor)
-          { return reader<HGrid>(constructor); } );
-      module.def( "reader", [](const std::string &constructor)
-          { return reader<HGrid>(std::make_tuple(Reader::dgf,constructor)); } );
-      module.def( "reader", [](const pybind11::dict &constructor)
-          { return reader<HGrid>(constructor); } );
-
 
       auto grid = registerGridPart< GridPart >( module, "LeafGrid" );
     }

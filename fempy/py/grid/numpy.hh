@@ -9,8 +9,8 @@
 #include <dune/fem/function/localfunction/average.hh>
 #include <dune/fem/quadrature/cornerpointset.hh>
 
-#include <dune/fempy/pybind11/numpy.h>
-#include <dune/fempy/pybind11/pybind11.h>
+#include <dune/corepy/pybind11/numpy.h>
+#include <dune/corepy/pybind11/pybind11.h>
 
 namespace Dune
 {

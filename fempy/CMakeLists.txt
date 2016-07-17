@@ -1,6 +1,5 @@
 add_subdirectory(function)
 add_subdirectory(py)
-add_subdirectory(pybind11)
 add_subdirectory(quadrature)
 
 set(HEADERS

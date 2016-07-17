@@ -3,8 +3,8 @@
 
 #include <dune/fem/space/common/interpolate.hh>
 
-#include <dune/fempy/pybind11/pybind11.h>
-#include <dune/fempy/pybind11/extensions.h>
+#include <dune/corepy/pybind11/pybind11.h>
+#include <dune/corepy/pybind11/extensions.h>
 
 #include <dune/fempy/py/function/grid.hh>
 #include <dune/fempy/py/grid/function.hh>

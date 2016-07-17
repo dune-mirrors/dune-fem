@@ -6,11 +6,14 @@
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
-#include <dune/fempy/py/grid/range.hh>
+#include <dune/corepy/grid/vtk.hh>
+
+#include <dune/fempy/function/gridfunctionview.hh>
 #include <dune/fempy/py/grid/function.hh>
+#include <dune/fempy/py/grid/range.hh>
 #include <dune/fempy/py/grid/numpy.hh>
-#include <dune/fempy/py/grid/vtk.hh>
-#include <dune/fempy/pybind11/pybind11.h>
+
+#include <dune/corepy/pybind11/pybind11.h>
 
 namespace Dune
 {
@@ -55,7 +58,7 @@ namespace Dune
 
       cls.def( "size", [] ( const GridPart &gridPart, int codim ) { return gridPart.indexSet().size( codim ); } );
 
-      registerVTKWriter< typename GridPart::GridViewType >( cls );
+      Dune::CorePy::registerVTKWriter< typename GridPart::GridViewType >( cls );
       cls.def( "vtkWriter", [] ( const GridPart &gridPart ) {
           return new VTKWriter< typename GridPart::GridViewType >( static_cast< typename GridPart::GridViewType >( gridPart ) );
         }, pybind11::keep_alive< 0, 1 >() );

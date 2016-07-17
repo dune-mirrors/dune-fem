@@ -6,7 +6,7 @@
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/py/common/numpyvector.hh>
 #include <dune/fempy/py/discretefunction.hh>
-#include <dune/fempy/pybind11/pybind11.h>
+#include <dune/corepy/pybind11/pybind11.h>
 
 namespace Dune
 {

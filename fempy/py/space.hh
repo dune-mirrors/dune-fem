@@ -1,7 +1,7 @@
 #ifndef DUNE_FEMPY_PY_SPACE_HH
 #define DUNE_FEMPY_PY_SPACE_HH
 
-#include <dune/fempy/pybind11/pybind11.h>
+#include <dune/corepy/pybind11/pybind11.h>
 
 namespace Dune
 {

@@ -6,10 +6,11 @@
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
-#include <dune/fempy/py/grid/range.hh>
 #include <dune/fempy/py/grid/function.hh>
 #include <dune/fempy/py/grid/vtk.hh>
-#include <dune/fempy/pybind11/pybind11.h>
+
+#include <dune/fempy/py/grid/range.hh>
+#include <dune/corepy/pybind11/pybind11.h>
 
 namespace Dune
 {

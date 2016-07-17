@@ -107,6 +107,13 @@ namespace Dune
 
   } // namespace Fem
 
+  namespace CorePy
+  {
+
+    using FemPy::localFunction;
+
+  } // namespace Fem
+
 } // namespace Dune
 
 #endif // #ifndef DUNE_FEMPY_FUNCTION_GRIDFUNCTIONVIEW_HH
