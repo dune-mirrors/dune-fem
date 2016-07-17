@@ -39,7 +39,8 @@ class Generator(generator.Generator):
     def modifyTypeName(self, typeName):
         return "Dune::Fem::AdaptiveLeafGridPart<" + typeName + ">";
 
-myGenerator = Generator("Grid")
+myGenerator = Generator("Grid",
+    "dune/fempy/py", "Dune::FemPy")
 
 def getGridType(grid, **parameters):
     """Return the grid type (using a function from database.py).
@@ -134,7 +135,7 @@ def leafGrid(constructor, grid, **parameters):
             self.hierarchicalGrid.loadBalance(*args)
 
         def globalRefine(self, *args):
-            self.hierarchicalGrid.globalRefine(*args)
+            self.hierarchicalGrid.femGlobalRefine(*args)
 
         def triangulation(self):
             if self.dimGrid != 2 or self.dimWorld != 2:

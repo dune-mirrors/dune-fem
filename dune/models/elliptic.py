@@ -644,8 +644,8 @@ def importModel(grid, model, dirichlet = {}, tempVars=True):
             writer.emit('#include <dune/fem/gridpart/leafgridpart.hh>')
             writer.emit('#include <dune/fem/gridpart/adaptiveleafgridpart.hh>')
             writer.emit('')
-            writer.emit('#include <dune/fempy/pybind11/pybind11.h>')
-            writer.emit('#include <dune/fempy/pybind11/extensions.h>')
+            writer.emit('#include <dune/corepy/pybind11/pybind11.h>')
+            writer.emit('#include <dune/corepy/pybind11/extensions.h>')
             writer.emit('')
             if model.coefficients:
                 writer.emit('#include <dune/fempy/function/virtualizedgridfunction.hh>')

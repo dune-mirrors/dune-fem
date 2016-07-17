@@ -3,7 +3,8 @@ __metaclass__ = type
 
 from ..generator import generator
 
-myGenerator = generator.Generator("DiscreteFunction")
+myGenerator = generator.Generator("DiscreteFunction",
+        "dune/fempy/py" , "Dune::FemPy")
 
 def getDiscreteFunctionType(df, **parameters):
     """Return the discrete function type (using a function from database.py).

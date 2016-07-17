@@ -6,7 +6,8 @@ import inspect
 from ..generator import generator
 from . import discretefunction
 
-myGenerator = generator.Generator("Space")
+myGenerator = generator.Generator("Space",
+        "dune/fempy/py" , "Dune::FemPy")
 
 def getSpaceType(space, **parameters):
     """Return the space type (using a function from database.py).

@@ -2,9 +2,7 @@
 
 #include <dune/fem/misc/mpimanager.hh>
 
-#include <dune/fempy/py/base.hh>
-
-#include <dune/fempy/pybind11/pybind11.h>
+#include <dune/corepy/pybind11/pybind11.h>
 
 // VTKDataType
 // -----------
@@ -28,13 +26,6 @@ PYBIND11_PLUGIN( femmpi )
     cc.def( "barrier", &Comm::barrier );
 
     module.attr( "comm" ) = pybind11::cast( Dune::Fem::MPIManager::comm() );
-
-    pybind11::enum_< Dune::FemPy::VTKDataType > vtkDataType( module, "DataType" );
-    vtkDataType.value( "CellData", Dune::FemPy::VTKDataType::CellData );
-    vtkDataType.value( "PointData", Dune::FemPy::VTKDataType::PointData );
-    vtkDataType.value( "CellVector", Dune::FemPy::VTKDataType::CellData );
-    vtkDataType.value( "PointVector", Dune::FemPy::VTKDataType::PointData );
-    vtkDataType.export_values();
   }
   catch ( const std::exception &e )
   {

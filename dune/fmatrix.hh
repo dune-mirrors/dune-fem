@@ -7,8 +7,8 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/std/utility.hh>
 
-#include <dune/fempy/pybind11/pybind11.h>
-#include <dune/fempy/pybind11/operators.h>
+#include <dune/corepy/pybind11/pybind11.h>
+#include <dune/corepy/pybind11/operators.h>
 
 namespace py = pybind11;
 

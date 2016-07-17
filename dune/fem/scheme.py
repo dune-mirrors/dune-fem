@@ -12,7 +12,8 @@ from .. import femmpi
 from ..generator import generator
 from . import discretefunction
 
-myGenerator = generator.Generator("Scheme")
+myGenerator = generator.Generator("Scheme",
+        "dune/fempy/py" , "Dune::FemPy")
 
 def solve( scheme, rhs=None, target=None, name=None, assemble=True ):
     if name == None:

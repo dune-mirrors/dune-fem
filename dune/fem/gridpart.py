@@ -55,7 +55,8 @@ def levelFunction(self):
 def partitionFunction(self):
     return self.localGridFunction("rank", function.Partition(femmpi.comm.rank))
 
-myGenerator = generator.Generator("GridPart")
+myGenerator = generator.Generator("GridPart",
+        "dune/fempy/py" , "Dune::FemPy")
 
 def getGridPartType(gridpart, **parameters):
     """Return the gridpart type (using a function from database.py).
