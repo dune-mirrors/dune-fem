@@ -85,27 +85,11 @@ namespace Dune
       typedef detail::HierarchicalGridDeleter< Grid > Deleter;
       auto cls = Dune::CorePy::registerHierarchicalGrid<Grid, std::unique_ptr<Grid,Deleter> >(scope);
 
-#if 0
-      pybind11::class_< Grid, std::unique_ptr< Grid, Deleter > > cls( scope, "HierarchicalGrid" );
-
-      cls.attr( "dimGrid" ) = pybind11::int_( static_cast< int >( Grid::dimension ) );
-      cls.attr( "dimWorld" ) = pybind11::int_( static_cast< int >( Grid::dimensionworld ) );
-      cls.def( "__repr__", [] ( const Grid &grid ) -> std::string { return "HierarchicalGrid"; } );
-
-      module.def( "reader", [](const std::tuple<Reader,std::string> &constructor)
-          { return reader<Grid>(constructor); } );
-      module.def( "reader", [](const std::string &constructor)
-          { return reader<Grid>(std::make_tuple(Reader::dgf,constructor)); } );
-      module.def( "reader", [](const pybind11::dict &constructor)
-          { return reader<Grid>(constructor); } );
-
-      registerGridEntities< Grid >( scope );
-#endif
-
       // we provide extra global refine methods for fem - in grid.py these
       // are called in the globalRefine methods exported on the leafGrid
       cls.def( "femGlobalRefine", [] ( Grid &grid ) { gridAdaptation( grid ).globalRefine( 1 ); } );
-      cls.def( "femGlobalRefine", [] ( Grid &grid, int level ) { std::cout << "RIGHT GLOBALREFINE" << std::endl; gridAdaptation( grid ).globalRefine( level ); } );
+      cls.def( "femGlobalRefine", [] ( Grid &grid, int level ) { gridAdaptation( grid ).globalRefine( level ); } );
+      cls.def( "globalRefine", [] ( Grid &grid, int level ) { std::cout << "RIGHT VERSION" << std::endl; gridAdaptation( grid ).globalRefine( level ); } );
 
       detail::clsVirtualizedRestrictProlong< Grid >( cls );
 
