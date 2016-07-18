@@ -568,7 +568,7 @@ def compileUFL(equation, dirichlet = {}, tempVars = True):
 
     source, diffusiveFlux, boundarySource = splitUFLForm( form )
     linSource, linDiffusiveFlux, linBoundarySource = splitUFLForm( dform )
-    fluxDivergence, _, _ = splitUFLForm(ufl.inner(- ufl.div(diffusiveFlux.as_ufl()), phi) * ufl.dx(0))
+    fluxDivergence, _, _ = splitUFLForm(ufl.inner(source.as_ufl() - ufl.div(diffusiveFlux.as_ufl()), phi) * ufl.dx(0))
 
     model = EllipticModel(dimRange, form.signature())
 
