@@ -1,4 +1,6 @@
+add_subdirectory(common)
 add_subdirectory(function)
+add_subdirectory(grid)
 add_subdirectory(py)
 add_subdirectory(pybind11)
 add_subdirectory(quadrature)
