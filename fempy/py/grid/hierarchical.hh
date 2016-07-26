@@ -83,13 +83,13 @@ namespace Dune
     inline auto registerHierarchicalGrid ( pybind11::module scope )
     {
       typedef detail::HierarchicalGridDeleter< Grid > Deleter;
-      auto cls = Dune::CorePy::registerHierarchicalGrid<Grid, std::unique_ptr<Grid,Deleter> >(scope);
-
+      auto cls = pybind11::class_<Grid, std::unique_ptr<Grid,Deleter>>(scope, "HierarchicGrid");
       // we provide extra global refine methods for fem - in grid.py these
       // are called in the globalRefine methods exported on the leafGrid
-      cls.def( "femGlobalRefine", [] ( Grid &grid ) { gridAdaptation( grid ).globalRefine( 1 ); } );
-      cls.def( "femGlobalRefine", [] ( Grid &grid, int level ) { gridAdaptation( grid ).globalRefine( level ); } );
-      cls.def( "globalRefine", [] ( Grid &grid, int level ) { std::cout << "RIGHT VERSION" << std::endl; gridAdaptation( grid ).globalRefine( level ); } );
+      cls.def( "globalRefine", [] ( Grid &grid ) { gridAdaptation( grid ).globalRefine( 1 ); } );
+      cls.def( "globalRefine", [] ( Grid &grid, int level ) { gridAdaptation( grid ).globalRefine( level ); } );
+
+      Dune::CorePy::registerHierarchicalGrid<Grid>(scope,cls);
 
       detail::clsVirtualizedRestrictProlong< Grid >( cls );
 

@@ -16,15 +16,15 @@ namespace Dune
     // registerScheme
     // -------------
 
-    template< class Scheme >
-    void registerScheme ( pybind11::module module )
+    namespace detail
     {
+      template< class Scheme, class Cls >
+      void registerScheme ( pybind11::module module, Cls &cls )
+      {
         typedef typename Scheme::DiscreteFunctionSpaceType Space;
         typedef typename Scheme::GridPartType GridPart;
         typedef typename Scheme::ModelType ModelType;
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
-
-        pybind11::class_< Scheme > cls( module, "Scheme" );
 
         cls.def( "__init__", [] ( Scheme &instance, Space &space, const ModelType& model, const std::string &prefix ) {
           new( &instance ) Scheme( space, model, prefix );
@@ -46,10 +46,12 @@ namespace Dune
         cls.def_property_readonly( "name", &Scheme::name );
         cls.def_property_readonly( "dimRange", [](Scheme&) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
         cls.def_property_readonly( "space", &Scheme::space );
-        /*
-        cls.def("solution", [] (Scheme &scheme) -> DiscreteFunction& { return scheme.solution(); },
-            pybind11::return_value_policy::reference_internal );
-        */
+      }
+    }
+    template< class Scheme, class Holder, class AliasType >
+    void registerScheme ( pybind11::module module, pybind11::class_<Scheme,Holder,AliasType> &cls )
+    {
+      detail::registerScheme<Scheme>(module,cls);
     }
   }
 }

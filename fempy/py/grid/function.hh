@@ -54,14 +54,12 @@ namespace Dune
       // registerGridFunction
       // --------------------
 
-      template< class GridFunction >
-      pybind11::class_< GridFunction > registerGridFunction ( pybind11::handle scope, const char *clsName = "GridFunction" )
+      template< class GridFunction, class Cls >
+      void registerGridFunction ( pybind11::handle scope, Cls &cls)
       {
         typedef typename GridFunction::LocalFunctionType LocalFunction;
         typedef typename LocalFunction::EntityType Entity;
         typedef typename GridFunction::GridPartType GridPartType;
-
-        pybind11::class_< GridFunction > cls( scope, clsName );
 
         registerLocalFunction< LocalFunction >( cls );
 
@@ -83,7 +81,13 @@ namespace Dune
 
         cls.def( "cellData", [] ( const GridFunction &gf ) { return cellData( gf ); } );
         cls.def( "pointData", [] ( const GridFunction &gf ) { return pointData( gf ); } );
+      }
 
+      template< class GridFunction >
+      pybind11::class_< GridFunction > registerGridFunction ( pybind11::handle scope, const char *clsName = "GridFunction" )
+      {
+        pybind11::class_< GridFunction > cls( scope, clsName );
+        registerGridFunction<GridFunction>(scope, cls);
         return cls;
       }
 

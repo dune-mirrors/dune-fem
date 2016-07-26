@@ -12,18 +12,24 @@ namespace Dune
     // registerSpace
     // -------------
 
-    template< class Space >
-    void registerSpace ( pybind11::module module )
+    namespace detail
     {
-      typedef typename Space::GridPartType GridPart;
+      template< class Space, class Cls >
+      void registerSpace ( pybind11::module module, Cls &cls )
+      {
+        typedef typename Space::GridPartType GridPart;
 
-      pybind11::class_< Space > cls( module, "Space" );
+        cls.def_property_readonly( "grid", [](Space &sp) -> const GridPart& {return sp.gridPart();} );
 
-      cls.def_property_readonly( "grid", [](Space &sp) -> const GridPart& {return sp.gridPart();} );
-
-      cls.def( "__init__", [] ( Space &instance, GridPart &grid ) {
-          new( &instance ) Space( grid );
-        }, pybind11::keep_alive< 1, 2 >() );
+        cls.def( "__init__", [] ( Space &instance, GridPart &grid ) {
+            new( &instance ) Space( grid );
+          }, pybind11::keep_alive< 1, 2 >() );
+      }
+    }
+    template< class Space, class Holder, class AliasType >
+    void registerSpace ( pybind11::module module, pybind11::class_<Space,Holder,AliasType> &cls )
+    {
+      detail::registerSpace<Space>(module,cls);
     }
 
   } // namespace FemPy

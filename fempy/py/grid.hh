@@ -18,15 +18,12 @@ namespace Dune
     // registerGrid
     // ------------
 
-
-
-    template< class GridPart >
-    void registerGrid ( pybind11::module module )
+    template< class GridPart, class Holder, class AliasType >
+    void registerGrid ( pybind11::module module, pybind11::class_<GridPart,Holder,AliasType> &cls )
     {
-      typedef  typename GridPart::GridType HGrid;
+      typedef typename GridPart::GridType HGrid;
       registerHierarchicalGrid< HGrid >( module );
-
-      auto grid = registerGridPart< GridPart >( module, "LeafGrid" );
+      detail::registerGridPart< GridPart >( module, cls );
     }
 
   } // namespace FemPy
