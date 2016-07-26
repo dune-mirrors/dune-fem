@@ -69,15 +69,6 @@ namespace Dune
 
         cls.def( "size", [] ( const GridPart &gridPart, int codim ) { return gridPart.indexSet().size( codim ); } );
 
-        /*
-        cls.def( "coordinates", [] ( const GridPart &gridPart ) {
-            return coordinates( static_cast< typename GridPart::GridViewType >( gridPart ) );
-          } );
-        cls.def( "tesselate", [] ( const GridPart &gridPart ) {
-            return tesselate( static_cast< typename GridPart::GridViewType >( gridPart ) );
-          } );
-        */
-
         Dune::CorePy::registerVTKWriter< typename GridPart::GridViewType >( cls );
 
         cls.def( "vtkWriter", [] ( const GridPart &gridPart ) {

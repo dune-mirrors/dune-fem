@@ -63,7 +63,7 @@ namespace Dune
 
       Geometry geometry () const
       {
-        return Geometry( GeometryGridPartGeometryType( hostEntity().geometry() ) );
+        return Geometry( GeometryGridPartGeometry( hostEntity().geometry() ) );
       }
 
       EntitySeed seed () const { return EntitySeed( hostEntity().seed() ); }

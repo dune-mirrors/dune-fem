@@ -24,6 +24,12 @@ namespace Dune
       typedef typename GridPart::GridType HGrid;
       registerHierarchicalGrid< HGrid >( module );
       detail::registerGridPart< GridPart >( module, cls );
+      cls.def( "coordinates", [] ( const GridPart &gridPart ) {
+          return coordinates( static_cast< typename GridPart::GridViewType >( gridPart ) );
+        } );
+      cls.def( "tesselate", [] ( const GridPart &gridPart ) {
+          return tesselate( static_cast< typename GridPart::GridViewType >( gridPart ) );
+        } );
     }
 
   } // namespace FemPy
