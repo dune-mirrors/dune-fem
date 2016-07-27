@@ -49,7 +49,7 @@ namespace Dune
       void operator() ( const double *u, double *w, int i = 0 )
       {
         DomainFunctionType uFunction( "ParDGOperator u", domainSpace_, u );
-        RangeFunctionType wFunction( "ParDGOperator w", rangeSpace_, w );
+        RangeFunctionType  wFunction( "ParDGOperator w", rangeSpace_ , w );
         operator_( uFunction, wFunction );
       }
 
@@ -81,6 +81,8 @@ namespace Dune
     class ParDGGeneralizedMinResInverseOperator
     : public Operator< DiscreteFunction, DiscreteFunction >
     {
+      static_assert( std::is_same< typename DiscreteFunction::RangeFieldType, double > ::value,
+                     "ParDGGeneralizedMinResInverseOperator only works for double as RangeFieldType" );
       typedef Operator< DiscreteFunction, DiscreteFunction > BaseType;
 
       typedef ParDGOperator< DiscreteFunction, DiscreteFunction > ParDGOperatorType;
@@ -136,7 +138,9 @@ namespace Dune
           solver_.unset_preconditioner();
         }
         else
+        {
           solver_.solve( parDGOperator, w.leakPointer(), u.leakPointer() );
+        }
       }
 
       unsigned int iterations () const
