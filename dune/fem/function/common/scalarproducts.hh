@@ -432,9 +432,6 @@ namespace Dune
       // type of communication manager object which does communication
       typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType > SlaveDofsType;
 
-      typedef typename DiscreteFunctionType :: ConstDofBlockPtrType
-        ConstDofBlockPtrType;
-
       //! constructor taking space
       ParallelScalarProduct ( const DiscreteFunctionSpaceType &space )
       : BaseType( space )
@@ -486,9 +483,6 @@ namespace Dune
 
       //! type of range field
       typedef typename DiscreteFunctionSpaceType :: RangeFieldType  RangeFieldType;
-
-      typedef typename DiscreteFunctionType :: ConstDofIteratorType
-        ConstDofIteratorType;
 
       //! constructor taking space
       ParallelScalarProduct ( const DiscreteFunctionSpaceType& )
