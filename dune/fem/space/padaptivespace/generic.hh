@@ -261,8 +261,6 @@ namespace Dune
         // create a copy of this space (to be improved)
         DiscreteFunctionSpaceType oldSpace( asImp() );
 
-        //std::cout << "Old space size = " << oldSpace.size() << std::endl;
-
         // set new polynomial order for space
         for( IteratorType it = this->begin(); it != endit; ++it )
         {
@@ -274,14 +272,8 @@ namespace Dune
         // adjust mapper
         blockMapper().adapt();
 
-        //std::cout << "New space size = " << blockMapper().size() << std::endl;
-        //for(size_t i=0; i<polynomialOrders.size(); ++i)
-        //  std::cout << "   " << polynomialOrders[ i ] << std::endl;
-
         // Adapt space and then discrete functions
         IntermediateStorageFunctionType tmp( "padapt-temp", oldSpace );
-        //std::cout << "created tmp with size = " << oldSpace.size() << " " << tmp.space().size() << std::endl;
-
         const DFListIteratorType endDF = dfList_.end();
         for( DFListIteratorType it = dfList_.begin(); it != endDF; ++it )
         {
@@ -293,9 +285,6 @@ namespace Dune
         // to this space will be affected ), for convenience
         dm.resize();
         dm.compress();
-
-        //std::cout <<"This spaces size = " << this->size() << std::endl;
-        //std::cout << std::endl;
       }
 
 
@@ -422,12 +411,6 @@ namespace Dune
 
       virtual void adaptFunction ( IntermediateStorageFunctionType &tmp )
       {
-        //const int oldSize = tmp.space().size() ;
-        //const int newSize = df_.space().size() ;
-
-        //std::cout << " Start adaptFct: old size " << tmp.space().size()
-        //          << "                 new size " << df_.space().size() << std::endl;
-
         typedef typename IntermediateStorageFunctionType::DofIteratorType TmpIteratorType;
         typedef typename DF::DofIteratorType  DFIteratorType;
 
@@ -443,9 +426,6 @@ namespace Dune
 
         // adjust size of discrete function
         df_.resize();
-
-        //std::cout << " End adaptFct: old size " << tmp.space().size()
-        //          << "               new size " << df_.space().size() << std::endl;
 
         // interpolate to new space, this can be a
         // Lagrange interpolation or a L2 projection

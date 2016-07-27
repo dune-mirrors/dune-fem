@@ -130,6 +130,16 @@ namespace Dune
       {
         std::fill( fields_.begin() , fields_.end() , 0 );
       }
+
+      /** \copydoc Dune::Fem::LocalMatrixInterface::clearRow */
+      void clearRow( const int localRow )
+      {
+        const int col = columns();
+        auto start = fields_.begin() + localRow * col;
+        auto end   = start + col;
+        std::fill( start, end, 0 );
+      }
+
     };
 
   } // namespace Fem

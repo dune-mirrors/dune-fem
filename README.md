@@ -35,6 +35,8 @@ The following software is optional:
 
 * [Eigen][4]
 
+* [SuiteSparse][15]
+
 License
 -------
 
@@ -64,3 +66,4 @@ the [installation notes][2].
  [12]: http://gitlab.dune-project.org/core/dune-grid
  [13]: http://gitlab.dune-project.org/core/dune-istl
  [14]: http://gitlab.dune-project.org/core/dune-localfunctions
+ [15]: http://faculty.cse.tamu.edu/davis/suitesparse.html

@@ -57,6 +57,8 @@ namespace Dune
       typedef GridPart2GridViewImpl< GridPart > ThisType;
 
     public:
+      typedef typename GridPart::ctype ctype;
+
       typedef GridPart GridPartType;
 
       typedef GridPart2GridViewTraits< GridPartType > Traits;

@@ -40,7 +40,7 @@ namespace Dune
        *
        *  \param[in]  other  DoF iterator to copy
        */
-      inline DofIteratorType &operator= ( const DofIteratorType &other )
+      DofIteratorType &operator= ( const DofIteratorType &other )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().operator=( other ) );
         return asImp();
@@ -50,7 +50,7 @@ namespace Dune
        *
        *  \returns a reference to the current DoF
        */
-      inline DofType &operator* ()
+      DofType &operator* ()
       {
         CHECK_INTERFACE_IMPLEMENTATION( *asImp() );
         return *asImp();
@@ -60,19 +60,19 @@ namespace Dune
        *
        *  \returns a constant reference to the current DoF
        */
-      inline const DofType &operator* () const
+      const DofType &operator* () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( *asImp() );
         return *asImp();
       }
 
-      inline const DofImp &operator[] ( const int n ) const
+      const DofImp &operator[] ( const int n ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp()[ n ] );
         return asImp()[ n ];
       }
 
-      inline DofImp &operator[] ( const int n )
+      DofImp &operator[] ( const int n )
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp()[ n ] );
         return asImp()[ n ];
@@ -84,7 +84,7 @@ namespace Dune
        *
        *  \return reference the the incremented iterator (i.e., *this)
        */
-      inline DofIteratorType &operator++ ()
+      DofIteratorType &operator++ ()
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATON( asImp().operator++() );
         return asImp();
@@ -96,7 +96,7 @@ namespace Dune
        *
        *  \returns \b true if the iterators are the same, \b false otherewise
        */
-      inline bool operator== ( const DofIteratorType &other ) const
+      bool operator== ( const DofIteratorType &other ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().operator==( other ) );
         return asImp().operator==( other );
@@ -108,7 +108,7 @@ namespace Dune
        *
        *  \returns \b true if the iterators are the different, \b false otherewise
        */
-      inline bool operator!= ( const DofIteratorType &other ) const
+      bool operator!= ( const DofIteratorType &other ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().operator!=( other ) );
         return asImp().operator!=( other );
@@ -118,14 +118,14 @@ namespace Dune
        *
        *  \return global number of the current DoF
        */
-      inline int index () const
+      int index () const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().index() );
         return asImp().index();
       }
 
       /** \brief reset iterator to the first position */
-      inline void reset ()
+      void reset ()
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().reset() );
       }
@@ -156,7 +156,7 @@ namespace Dune
       using BaseType :: asImp;
 
     public:
-      inline const DofImp &operator[] ( const int n ) const
+      const DofImp &operator[] ( const int n ) const
       {
         DofIteratorType &it = const_cast< DofIteratorType & >( asImp() );
         it.reset();
@@ -165,7 +165,7 @@ namespace Dune
         return *asImp();
       }
 
-      inline DofType &operator[] ( const int n )
+      DofType &operator[] ( const int n )
       {
         asImp().reset();
         for( int i = 0; i < n; ++i )
@@ -180,13 +180,13 @@ namespace Dune
        *  return !operator==( other );
        *  \endcode
        */
-      inline bool operator!= ( const DofIteratorType &other ) const
+      bool operator!= ( const DofIteratorType &other ) const
       {
         return !asImp().operator==( other );
       }
 
       /** \copydoc Dune::Fem::DofIteratorInterface::index const */
-      inline int index () const
+      int index () const
       {
         DofIteratorType it( asImp() );
         it.reset();
@@ -216,7 +216,6 @@ namespace Dune
       //! type of the DoFs
       typedef typename WrappedDofIteratorType :: DofType DofType;
 
-    public:
       typedef ConstDofIteratorDefault< WrappedDofIteratorType > ThisType;
       typedef DofIteratorDefault< DofType, ThisType > BaseType;
 
@@ -224,18 +223,18 @@ namespace Dune
       WrappedDofIteratorType it_;
 
     public:
-      inline ConstDofIteratorDefault( const WrappedDofIteratorType &it )
+      ConstDofIteratorDefault( const WrappedDofIteratorType &it )
       : it_( it )
       {
       }
 
-      inline ConstDofIteratorDefault( const ThisType &other )
+      ConstDofIteratorDefault( const ThisType &other )
       : it_( other.it_ )
       {
       }
 
       /** \copydoc Dune::Fem::DofIteratorInterface::operator= */
-      inline const ThisType &operator= ( const ThisType &other )
+      const ThisType &operator= ( const ThisType &other )
       {
         it_ = other.it_;
         return *this;
@@ -247,38 +246,38 @@ namespace Dune
         return (*it_);
       }
 
-      inline const DofType &operator[] ( const int n ) const
+      const DofType &operator[] ( const int n ) const
       {
         return it_[ n ];
       }
 
       /** \copydoc Dune::Fem::DofIteratorInterface::index */
-      inline int index () const
+      int index () const
       {
         return it_.index();
       }
 
       /** \copydoc Dune::Fem::DofIteratorInterface::operator++ */
-      inline ThisType &operator++ ()
+      ThisType &operator++ ()
       {
         ++it_;
         return (*this);
       }
 
       /** \copydoc Dune::Fem::DofIteratorInterface::operator== */
-      inline bool operator== ( const ThisType &other ) const
+      bool operator== ( const ThisType &other ) const
       {
         return (it_ == other.it_);
       }
 
       /** \copydoc Dune::Fem::DofIteratorInterface::operator!= */
-      inline bool operator!= ( const ThisType &other ) const
+      bool operator!= ( const ThisType &other ) const
       {
         return (it_ != other.it_);
       }
 
       /** \copydoc Dune::Fem::DofIteratorInterface::reset */
-      inline void reset ()
+      void reset ()
       {
         it_.reset();
       }

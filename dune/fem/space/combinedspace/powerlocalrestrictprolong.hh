@@ -59,15 +59,13 @@ namespace Dune
           std::size_t sonBasisSetSize = subSonBasisFunctionSet.size();
           std::size_t fatherBasisSetsize = subFatherBasisFunctionSet.size();
 
-          OffsetSubMapper sonMapper( sonBasisSetSize, sonBasisSetSize * i );
-          SubDofVectorTypeSon sonSubDofVector( lfSon.localDofVector(), sonMapper );
-          OffsetSubMapper fatherMapper( fatherBasisSetsize, fatherBasisSetsize * i );
-          SubDofVectorTypeFather fatherSubDofVector( lfFather.localDofVector(), fatherMapper );
+          SubDofVectorTypeSon sonSubDofVector( lfSon.localDofVector(), OffsetSubMapper( sonBasisSetSize, sonBasisSetSize * i ) );
+          SubDofVectorTypeFather fatherSubDofVector( lfFather.localDofVector(),
+                                                     OffsetSubMapper( fatherBasisSetsize, fatherBasisSetsize * i ) );
 
-          BasicConstLocalFunction< SubSonBasisFunctionSetType, SubDofVectorTypeSon >
-          subLFSon( subSonBasisFunctionSet, sonSubDofVector );
-          LocalFunction< SubFatherBasisFunctionSetType, SubDofVectorTypeFather >
-          subLFFather( subFatherBasisFunctionSet, fatherSubDofVector );
+          BasicConstLocalFunction< SubSonBasisFunctionSetType, SubDofVectorTypeSon > subLFSon( subSonBasisFunctionSet, sonSubDofVector );
+          LocalFunction< SubFatherBasisFunctionSetType, SubDofVectorTypeFather > subLFFather( subFatherBasisFunctionSet,
+                                                                                              fatherSubDofVector );
 
           localRestrictProlong_.restrictLocal( subLFFather, subLFSon, geometryInFather, initialize );
         }
@@ -92,15 +90,13 @@ namespace Dune
           std::size_t sonBasisSetSize = subSonBasisFunctionSet.size();
           std::size_t fatherBasisSetsize = subFatherBasisFunctionSet.size();
 
-          OffsetSubMapper sonMapper( sonBasisSetSize, sonBasisSetSize * i );
-          SubDofVectorTypeSon sonSubDofVector( lfSon.localDofVector(), sonMapper );
-          OffsetSubMapper fatherMapper( fatherBasisSetsize, fatherBasisSetsize * i );
-          SubDofVectorTypeFather fatherSubDofVector( lfFather.localDofVector(), fatherMapper );
+          SubDofVectorTypeSon sonSubDofVector( lfSon.localDofVector(), OffsetSubMapper( sonBasisSetSize, sonBasisSetSize * i ) );
+          SubDofVectorTypeFather fatherSubDofVector( lfFather.localDofVector(),
+                                                     OffsetSubMapper( fatherBasisSetsize, fatherBasisSetsize * i ) );
 
-          LocalFunction< SubSonBasisFunctionSetType, SubDofVectorTypeSon >
-          subLFSon( subSonBasisFunctionSet, sonSubDofVector );
-          BasicConstLocalFunction< SubFatherBasisFunctionSetType, SubDofVectorTypeFather >
-          subLFFather( subFatherBasisFunctionSet, fatherSubDofVector );
+          LocalFunction< SubSonBasisFunctionSetType, SubDofVectorTypeSon > subLFSon( subSonBasisFunctionSet, sonSubDofVector );
+          BasicConstLocalFunction< SubFatherBasisFunctionSetType, SubDofVectorTypeFather > subLFFather( subFatherBasisFunctionSet,
+                                                                                                        fatherSubDofVector );
 
           localRestrictProlong_.prolongLocal( subLFFather, subLFSon, geometryInFather, initialize );
         }

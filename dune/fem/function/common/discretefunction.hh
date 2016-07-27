@@ -18,7 +18,6 @@
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/streams/streams.hh>
-#include <dune/fem/misc/debug.hh>
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
@@ -156,8 +155,10 @@ namespace Dune
       //! default constructor
       DiscreteFunctionInterface () = default;
 
+      DiscreteFunctionInterface ( const ThisType& ) = default;
+      DiscreteFunctionInterface ( ThisType && ) = default;
     public:
-      DiscreteFunctionInterface ( const ThisType& ) = delete;
+      ThisType& operator= ( ThisType&& ) = delete;
       ThisType &operator= ( const ThisType& ) = delete;
 
       DofVectorType &dofVector()
@@ -174,6 +175,15 @@ namespace Dune
        *  \returns string holding name of discrete function
        */
       const std::string &name () const
+      {
+        return asImp().name();
+      }
+
+      /** \brief obtain the name of the discrete function
+       *
+       *  \returns string holding name of discrete function
+       */
+      std::string &name ()
       {
         return asImp().name();
       }
@@ -377,7 +387,7 @@ namespace Dune
       }
 
       /** \brief do default communication of space for this discrete function */
-      inline void communicate()
+      void communicate()
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().communicate() );
       }
@@ -576,8 +586,11 @@ namespace Dune
        */
       DiscreteFunctionDefault ( const std::string &name, const DiscreteFunctionSpaceType &dfSpace );
 
+      DiscreteFunctionDefault ( const ThisType& ) = default;
+      DiscreteFunctionDefault ( ThisType && other );
+
     public:
-      DiscreteFunctionDefault ( const ThisType& ) = delete;
+      ThisType& operator= ( ThisType&& ) = delete;
       ThisType &operator= ( const ThisType& ) = delete;
 
       // Default Implementations
@@ -585,6 +598,9 @@ namespace Dune
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::name() const */
       const std::string &name () const { return name_; }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::name() */
+      std::string &name () { return name_; }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::space() const */
       const DiscreteFunctionSpaceType &space () const { return dfSpace_; }
@@ -823,22 +839,24 @@ namespace Dune
         space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
+      //! get local Dofs and store the values  in LocalDofVector
+      template< class Vector >
+      void getLocalDofs ( const EntityType &entity, Vector &localDofs ) const
+      {
+        AssignFunctor< Vector > assignFunctor( localDofs );
+        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
+      }
+
+    protected:
+      friend LocalFunctionType;
+
       //! get local Dofs and store a reference to it in the LocalDofVector
-      void getLocalDofs ( const EntityType &entity, LocalDofVectorType &localDofs )
+      void getLocalDofReferences ( const EntityType &entity, LocalDofVectorType &localDofs )
       {
         AssignVectorReference< LocalDofVectorType > assignFunctor( localDofs );
         space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
-      //! get local Dofs and store the values  in LocalDofVector
-      template< class A >
-      void getLocalDofs ( const EntityType &entity, Dune::DynamicVector< DofType, A > &localDofs ) const
-      {
-        AssignFunctor< Dune::DynamicVector< DofType, A > > assignFunctor( localDofs );
-        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
-      }
-
-    protected:
       /** \copydoc Dune::PersistentObject::backup */
       virtual void backup() const
       {
@@ -871,8 +889,6 @@ namespace Dune
       // the local function storage
       typename Traits :: LocalDofVectorStackType ldvStack_;
       mutable LocalDofVectorAllocatorType ldvAllocator_;
-
-      mutable DebugLock dofPointerLock_;
 
       std::string name_;
       ScalarProductType scalarProduct_;

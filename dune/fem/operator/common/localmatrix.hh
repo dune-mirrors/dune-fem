@@ -372,6 +372,26 @@ namespace Dune
           }
         }
       }
+
+      /** \copydoc Dune::Fem::LocalMatrixInterface::clearRow */
+      void clearRow( const int localRow )
+      {
+        const int col = this->columns();
+        for(int j = 0; j < col; ++j)
+        {
+          this->set(localRow, j, 0);
+        }
+      }
+
+      /** \copydoc Dune::Fem::LocalMatrixInterface::clearCol */
+      void clearCol( const int localCol )
+      {
+        const int row = this->rows();
+        for(int i = 0; i < row; ++i)
+        {
+          this->set(i, localCol, 0);
+        }
+      }
     };
 
     template <class Traits>

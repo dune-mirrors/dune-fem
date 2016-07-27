@@ -13,7 +13,8 @@
 #include <dune/fem/misc/double.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/function/common/gridfunctionadapter.hh>
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/io/streams/asciistreams.hh>
 #include <dune/fem/io/streams/virtualstreams.hh>
@@ -90,11 +91,10 @@ int main(int argc, char ** argv)
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
     solution.clear();
 
-    //! perform Lagrange interpolation
-    Fem::LagrangeInterpolation< ExactSolutionType, DiscreteFunctionType >
-      :: interpolateFunction( f, solution );
+    // interpolate
+    interpolate( gridFunctionAdapter( f, gridPart, discreteFunctionSpace.order() + 2 ), solution );
 
-    // Let's check on IO
+    // let's check on IO
     DiscreteFunctionType readback( "readback", discreteFunctionSpace );
 
     XDRFileOutStream xout( "solution-xdr.tmp" );

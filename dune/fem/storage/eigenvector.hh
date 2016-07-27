@@ -53,10 +53,11 @@ namespace Dune
 
     public:
       typedef typename BaseType::size_type size_type;
+      typedef size_type SizeType;
       typedef typename BaseType::value_type value_type;
-
       typedef value_type FieldType;
-      typedef typename DenseMatVecTraits< ThisType >::container_type DofStorageType;
+      typedef typename DenseMatVecTraits< ThisType >::container_type container_type;
+      typedef container_type DofStorageType;
 
       //! Constructor setting up a vector of a specified size
       explicit EigenVector( size_type size = 0 )

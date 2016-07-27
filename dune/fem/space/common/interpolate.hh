@@ -22,6 +22,8 @@ namespace Dune
       std::vector< typename DiscreteFunction::RangeFieldType > ldv;
       ldv.reserve( v.space().blockMapper().maxNumDofs() * DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize );
 
+      typename GridFunction::LocalFunctionType uLocal( u );
+
       // iterate over selected partition
       for( const auto entity : elements( v.gridPart(), ps ) )
       {
@@ -32,7 +34,8 @@ namespace Dune
         ldv.resize( v.space().basisFunctionSet( entity ).size() );
 
         // interpolate u locally
-        interpolation( u.localFunction( entity ), ldv );
+        uLocal.init( entity );
+        interpolation( uLocal, ldv );
 
         // write local dofs into v
         v.setLocalDofs( entity, ldv );

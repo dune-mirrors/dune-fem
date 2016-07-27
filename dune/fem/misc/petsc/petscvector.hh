@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_PETSCVECTOR_HH
 #define DUNE_FEM_PETSCVECTOR_HH
 
+#include <dune/fem/storage/dynamicarray.hh>
 #include <dune/fem/storage/envelope.hh>
 
 #if HAVE_PETSC

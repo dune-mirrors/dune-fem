@@ -1,6 +1,7 @@
 #include <config.h>
 
 #include <dune/common/forloop.hh>
+#include <dune/geometry/genericgeometry/topologytypes.hh>
 
 #include "../shapefunctionset.hh"
 #include "../lagrangepoints.hh"
@@ -18,8 +19,8 @@ using namespace Fem;
 #define POLORDER 2
 #endif
 
-#ifndef GEOMETRYTYPE
-#define GEOMETRYTYPE simplex
+#ifndef TOPOLOGYTYPE
+#define TOPOLOGYTYPE SimplexTopology
 #endif
 
 typedef FunctionSpace< double, double, DIMENSION, 1 > FunctionSpaceType;
@@ -30,10 +31,10 @@ typedef FunctionSpaceType :: RangeType RangeType;
 typedef Fem::LagrangeShapeFunctionFactory< FunctionSpaceType, POLORDER > ShapeFunctionFactoryType;
 typedef ShapeFunctionFactoryType::ShapeFunctionType ShapeFunctionType;
 
-typedef Fem::LagrangePoint< GeometryType :: GEOMETRYTYPE, DIMENSION, POLORDER >
+typedef Fem::LagrangePoint< GenericGeometry::TOPOLOGYTYPE<DIMENSION>::type::id, DIMENSION, POLORDER >
   LagrangePointType;
 typedef Fem::LagrangePointListImplementation
-  < double, GeometryType :: GEOMETRYTYPE, DIMENSION, POLORDER >
+  < double, GenericGeometry::TOPOLOGYTYPE<DIMENSION> ::type::id, DIMENSION, POLORDER >
   LagrangePointListType;
 
 
@@ -52,7 +53,7 @@ struct PrintMaxDofs
 
 int main( int argc, char **argv )
 {
-  GeometryType geometryType( GeometryType::GEOMETRYTYPE, DIMENSION );
+  GeometryType geometryType( GenericGeometry::TOPOLOGYTYPE<DIMENSION> ::type::id, DIMENSION );
   ShapeFunctionFactoryType shapeFunctionFactory ( geometryType );
 
   const unsigned int numShapeFunctions = shapeFunctionFactory.numShapeFunctions();

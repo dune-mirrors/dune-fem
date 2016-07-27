@@ -260,7 +260,7 @@ try
 
   return ((std::abs( initialLagrangeError - finalLagrangeError) < 1e-10) && (std::abs( initialDGError - finalDGError ) < 1e-10) ? 0 : 1);
 #else // #if HAVE_DUNE_ALUGRID
-  return 77;
+  return 0;
 #endif // #else // #if HAVE_DUNE_ALUGRID
 }
 catch( const Dune::Exception &exception )

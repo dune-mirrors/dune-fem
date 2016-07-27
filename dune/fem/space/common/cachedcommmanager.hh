@@ -25,7 +25,6 @@
 //- dune-fem includes
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/space/common/commoperations.hh>
-#include <dune/fem/space/common/arrays.hh>
 #include <dune/fem/space/common/commindexmap.hh>
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/misc/mpimanager.hh>
@@ -1274,6 +1273,11 @@ namespace Dune
         cObj.addToList(*this);
       }
 
+      //! default constructor
+      CommunicationManagerList()
+        : mySize_( -1 )
+      {}
+
       //! add one discrete function to the list with given unpack operation
       template <class DiscreteFunctionImp, class Operation>
       void addToList(DiscreteFunctionImp &df, const Operation& operation )
@@ -1308,7 +1312,7 @@ namespace Dune
       template< class DiscreteFunction >
       void removeFromList ( DiscreteFunction &df )
       {
-        const auto handles = [ &df ] ( const CommObjInterfaceType *commObj ) { return commObj->handles( df ); };
+        const auto handles = [ &df ] ( const std::unique_ptr< CommObjInterfaceType > &commObj ) { return commObj->handles( df ); };
         CommObjListType::reverse_iterator pos = std::find_if( objList_.rbegin(), objList_.rend(), handles );
         if( pos != objList_.rend() )
           objList_.erase( pos.base() );

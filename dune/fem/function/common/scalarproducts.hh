@@ -228,7 +228,7 @@ namespace Dune
       {}
 
       //! returns true if indexSet pointer and numDofs are equal
-      inline bool operator== ( const SingletonKey &other ) const
+      bool operator== ( const SingletonKey &other ) const
       {
         return (space_ == other.space_) && (mapper_ == other.mapper_);
       }
@@ -358,13 +358,19 @@ namespace Dune
       const DiscreteFunctionSpaceType &space_;
 
       // is singleton per space
-      SlaveDofsType *const slaveDofs_;
+      SlaveDofsType *slaveDofs_;
 
     public:
       //! constructor taking space
       SlaveDofsProvider ( const DiscreteFunctionSpaceType &space )
       : space_( space ), slaveDofs_( getSlaveDofs( space_ ) )
       {}
+
+      SlaveDofsProvider ( ThisType && other )
+        : space_( other.space_ ), slaveDofs_( std::move( other.slaveDofs_ ) )
+      {
+        other.slaveDofs_ = nullptr;
+      }
 
       SlaveDofsProvider( const ThisType& ) = delete;
 
@@ -377,10 +383,11 @@ namespace Dune
       //! remove object comm
       ~SlaveDofsProvider ()
       {
-        SlaveDofsProviderType :: removeObject( *slaveDofs_ );
+        if( slaveDofs_ )
+          SlaveDofsProviderType :: removeObject( *slaveDofs_ );
       }
 
-      SlaveDofsType &slaveDofs () const
+      const SlaveDofsType &slaveDofs () const
       {
         // rebuild slave dofs if grid was changed
         slaveDofs_->rebuild();

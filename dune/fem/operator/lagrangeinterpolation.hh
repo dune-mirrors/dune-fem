@@ -1,7 +1,11 @@
 #ifndef DUNE_FEM_LAGRANGEINTERPOLATION_HH
 #define DUNE_FEM_LAGRANGEINTERPOLATION_HH
 
+#warning "dune/fem/operator/lagrangeinterpolation.hh is deprecated, please dune/fem/space/common/interpolate.hh."
+
 #include <type_traits>
+
+#include <dune/common/deprecated.hh>
 
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/operator/common/operator.hh>
@@ -44,7 +48,7 @@ namespace Dune
 
     public:
       //! empty contructor
-      LagrangeInterpolation () {}
+      LagrangeInterpolation () DUNE_DEPRECATED_MSG( "Use interpolate instead." ) {}
 
       //! virtual destructor because of inheritance from Operator
       virtual ~LagrangeInterpolation () {}

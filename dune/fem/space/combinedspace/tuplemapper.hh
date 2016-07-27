@@ -50,6 +50,26 @@ namespace Dune
         typedef TupleMapper< GridPart, Mapper ... > DofMapperType;
       };
 
+      // CombinedIndex
+      // -------------
+
+      template< class Index, class Int, Int i >
+      struct CombinedIndex
+      {
+        constexpr CombinedIndex ( Index index, Index offset ) : index_( index ), offset_( offset ) {}
+
+        static constexpr Int component () { return i; }
+
+        constexpr operator Index () const { return index_ + offset_; }
+
+        constexpr Index index () const { return index_; }
+
+        constexpr Index offset () const { return offset_; }
+
+      private:
+        Index index_, offset_;
+      };
+
 
       // DofMapper
       // ---------
@@ -74,25 +94,25 @@ namespace Dune
         // FunctorWrapper
         // --------------
 
-        template< class Functor >
+        template< class Functor, int i >
         struct FunctorWrapper
         {
           FunctorWrapper ( Functor functor, int localOffset, int globalOffset )
             : functor_( functor ),
-            localOffset_( localOffset ),
-            globalOffset_( globalOffset )
+              localOffset_( localOffset ),
+              globalOffset_( globalOffset )
           {}
 
           template< class GlobalKey >
           void operator() ( int localDof, const GlobalKey &globalKey )
           {
-            functor_( localDof + localOffset_, globalKey + globalOffset_ );
+            functor_( localDof + localOffset_, CombinedIndex< GlobalKey, int, i >( globalKey, globalOffset_ ) );
           }
 
           template< class GlobalKey >
           void operator() ( const GlobalKey &globalKey )
           {
-            functor_( globalKey + globalOffset_ );
+            functor_( CombinedIndex< GlobalKey, int, i >( globalKey, globalOffset_ ) );
           }
 
         private:
@@ -115,23 +135,23 @@ namespace Dune
 
         DofMapper ( GridPartType &gridPart, Mapper & ... mapper )
           : gridPart_( gridPart ),
-          mapperTuple_( mapper ... )
+            mapperTuple_( mapper ... )
         {
           init();
         }
 
         DofMapper ( GridPartType &gridPart, Mapper && ... mapper )
           : gridPart_( gridPart ),
-          mapperTuple_( std::move( mapper ) ... )
+            mapperTuple_( std::move( mapper ) ... )
         {
           init();
         }
 
-        SizeType size () const { return size( Std::index_sequence_for< Mapper ... >() ); }
+        SizeType size () const { return size( std::index_sequence_for< Mapper ... >() ); }
 
-        bool contains ( const int codim ) const { return contains( codim, Std::index_sequence_for< Mapper ... >() ); }
+        bool contains ( const int codim ) const { return contains( codim, std::index_sequence_for< Mapper ... >() ); }
 
-        bool fixedDataSize ( int codim ) const { return fixedDataSize( codim, Std::index_sequence_for< Mapper ... >() ); }
+        bool fixedDataSize ( int codim ) const { return fixedDataSize( codim, std::index_sequence_for< Mapper ... >() ); }
 
         template< class Functor >
         void mapEach ( const ElementType &element, Functor f ) const
@@ -149,12 +169,12 @@ namespace Dune
           ForLoop< MapEachEntityDof, 0, mapperTupleSize - 1 >::apply( localOffset, globalOffset_, entity, f, mapperTuple_ );
         }
 
-        int maxNumDofs () const { return maxNumDofs( Std::index_sequence_for< Mapper ... >() ); }
+        int maxNumDofs () const { return maxNumDofs( std::index_sequence_for< Mapper ... >() ); }
 
-        SizeType numDofs ( const ElementType &element ) const { return numDofs( element, Std::index_sequence_for< Mapper ... >() ); }
+        SizeType numDofs ( const ElementType &element ) const { return numDofs( element, std::index_sequence_for< Mapper ... >() ); }
 
         template< class Entity >
-        SizeType numEntityDofs ( const Entity &entity ) const { return numEntityDofs( entity, Std::index_sequence_for< Mapper ... >() ); }
+        SizeType numEntityDofs ( const Entity &entity ) const { return numEntityDofs( entity, std::index_sequence_for< Mapper ... >() ); }
 
 
         static constexpr bool consecutive () noexcept { return false; }
@@ -198,37 +218,37 @@ namespace Dune
 
       protected:
         template< std::size_t ... i >
-        SizeType size ( Std::index_sequence< i ... > ) const
+        SizeType size ( std::index_sequence< i ... > ) const
         {
           return Std::sum( std::get< i >( mapperTuple_ ).size() ... );
         }
 
         template< std::size_t ... i >
-        bool fixedDataSize ( const int codim, Std::index_sequence< i ... > ) const
+        bool fixedDataSize ( const int codim, std::index_sequence< i ... > ) const
         {
           return Std::And( std::get< i >( mapperTuple_ ).fixedDataSize( codim ) ... );
         }
 
         template< std::size_t ... i >
-        bool contains ( const int codim, Std::index_sequence< i ... > ) const
+        bool contains ( const int codim, std::index_sequence< i ... > ) const
         {
           return Std::Or( std::get< i >( mapperTuple_ ).contains( codim ) ... );
         }
 
         template< std::size_t ... i >
-        int maxNumDofs ( Std::index_sequence< i ... > ) const
+        int maxNumDofs ( std::index_sequence< i ... > ) const
         {
           return Std::sum( std::get< i >( mapperTuple_ ).maxNumDofs() ... );
         }
 
         template< std::size_t ... i >
-        SizeType numDofs ( const ElementType &element, Std::index_sequence< i ... > ) const
+        SizeType numDofs ( const ElementType &element, std::index_sequence< i ... > ) const
         {
           return Std::sum( std::get< i >( mapperTuple_ ).numDofs( element ) ... );
         }
 
         template< class Entity, std::size_t ... i >
-        SizeType numEntityDofs ( const Entity &entity, Std::index_sequence< i ... > ) const
+        SizeType numEntityDofs ( const Entity &entity, std::index_sequence< i ... > ) const
         {
           return Std::sum( std::get< i >( mapperTuple_ ).numEntityDofs( entity ) ... );
         }
@@ -273,7 +293,7 @@ namespace Dune
         template< class Entity, class Functor, class Tuple >
         static void apply ( OffsetType &localOffset, const OffsetType &globalOffset, const Entity &entity, Functor f, const Tuple &tuple )
         {
-          FunctorWrapper< Functor > wrappedFunctor( f, localOffset[ i ], globalOffset[ i ] );
+          FunctorWrapper< Functor, i > wrappedFunctor( f, localOffset[ i ], globalOffset[ i ] );
           std::get< i >( tuple ).mapEachEntityDof( entity, wrappedFunctor );
           localOffset[ i + 1 ] = localOffset[ i ] + std::get< i >( tuple ).numEntityDofs( entity );
         }
@@ -291,7 +311,7 @@ namespace Dune
         template< class Functor, class Tuple >
         static void apply ( OffsetType &localOffset, const OffsetType &globalOffset, const ElementType &element, Functor f, const Tuple &tuple )
         {
-          FunctorWrapper< Functor > wrappedFunctor( f, localOffset[ i ], globalOffset[ i ] );
+          FunctorWrapper< Functor, i > wrappedFunctor( f, localOffset[ i ], globalOffset[ i ] );
           std::get< i >( tuple ).mapEach( element, wrappedFunctor );
           localOffset[ i + 1 ] = localOffset[ i ] + std::get< i >( tuple ).numDofs( element );
         }
@@ -346,7 +366,7 @@ namespace Dune
         }
 
         AdaptiveDofMapper ( GridPartType &gridPart, Mapper && ... mapper )
-          : BaseType( gridPart, std::move( mapper ) ... )        
+          : BaseType( gridPart, std::move( mapper ) ... )
         {
           DofManager< typename GridPartType::GridType >::instance( gridPart_.grid() ).addIndexSet( *this );
         }
@@ -358,7 +378,7 @@ namespace Dune
 
         static constexpr bool consecutive () noexcept { return true; }
 
-        SizeType numBlocks () const { return numBlocks( Std::index_sequence_for< Mapper ... >() ); }
+        SizeType numBlocks () const { return numBlocks( std::index_sequence_for< Mapper ... >() ); }
 
         SizeType numberOfHoles ( int block ) const
         {
@@ -438,7 +458,7 @@ namespace Dune
         }
 
         template< std::size_t ... i >
-        SizeType numBlocks ( Std::index_sequence< i ... > ) const
+        SizeType numBlocks ( std::index_sequence< i ... > ) const
         {
           return Std::sum( std::get< i >( mapperTuple_ ).numBlocks() ... );
         }
@@ -572,9 +592,9 @@ namespace Dune
       struct Implementation
       {
         typedef typename std::conditional<
-            Std::And( Capabilities::isAdaptiveDofMapper< Mapper >::v ... ),
-            AdaptiveDofMapper< Traits< GridPart, Mapper ... > >,
-            DofMapper< Traits< GridPart, Mapper ... > > >::type Type;
+          Std::And( Capabilities::isAdaptiveDofMapper< Mapper >::v ... ),
+          AdaptiveDofMapper< Traits< GridPart, Mapper ... > >,
+          DofMapper< Traits< GridPart, Mapper ... > > >::type Type;
       };
 
 
@@ -619,7 +639,7 @@ namespace Dune
       };
 
       template< class GridPart, class ... Mapper >
-      struct isConsecutiveIndexSet< __TupleMapper::AdaptiveDofMapper< __TupleMapper::Traits< GridPart, Mapper... > > >
+      struct isConsecutiveIndexSet< __TupleMapper::AdaptiveDofMapper< __TupleMapper::Traits< GridPart, Mapper ... > > >
       {
         static const bool v = true;
       };

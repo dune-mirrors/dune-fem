@@ -1,18 +1,12 @@
 #ifndef DUNE_FEM_REFERENCEBLOCKVECTOR_HH
 #define DUNE_FEM_REFERENCEBLOCKVECTOR_HH
 
-#include <algorithm>
-#include <cassert>
 #include <vector>
 
 #include <dune/fem/function/blockvectors/defaultblockvectors.hh>
 
 namespace Dune {
 namespace Fem {
-
-  // Forward declaration
-  template< typename F, unsigned int BlockSize >
-  class ReferenceBlockVectorBlock;
 
   /** \class ReferenceBlockVector
   *   \brief This is the reference implementation of a block vector as it is expected

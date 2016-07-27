@@ -4,15 +4,13 @@
 #include <algorithm>
 #include <set>
 
-//- Dune includes
-#include <dune/fem/space/common/arrays.hh>
-
 #include <dune/grid/utility/persistentcontainer.hh>
-
 #include <dune/grid/utility/persistentcontainervector.hh>
 #include <dune/grid/utility/persistentcontainerwrapper.hh>
 #include <dune/grid/utility/persistentcontainermap.hh>
 
+#include <dune/fem/io/streams/streams.hh>
+#include <dune/fem/storage/dynamicarray.hh>
 
 namespace Dune
 {
@@ -50,8 +48,8 @@ namespace Dune
 
     protected:
       // array type for indices
-      typedef MutableArray< IndexType > IndexArrayType;
-      typedef MutableArray< INDEXSTATE > IndexStateArrayType;
+      typedef DynamicArray< IndexType > IndexArrayType;
+      typedef DynamicArray< INDEXSTATE > IndexStateArrayType;
 
       // use the imporved PersistentContainer
       typedef PersistentContainer< GridType, IndexType > IndexContainerType;

@@ -54,7 +54,7 @@ int main ( int argc, char **argv )
   // create local function adapter
   typedef Dune::Fem::LocalAnalyticalFunctionBinder<DiscreteFunctionSpaceType> LocalAnalyticalFunctionType;
   LocalAnalyticalFunctionType localAnalyticalFunction(
-      [&](const DomainType &x,const double& t,const EntityType& entity)
+      [&](const DomainType &x,double t,const EntityType& entity)
       {
         RangeType ret(1);
         for(int r = 0; r < RangeType :: dimension; ++r )

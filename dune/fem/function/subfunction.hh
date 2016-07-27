@@ -1,8 +1,10 @@
 #ifndef DUNE_FEM_SUBFUNCTION_HH
 #define DUNE_FEM_SUBFUNCTION_HH
 
+#include <memory>
 #include <vector>
 
+#include <dune/common/std/memory.hh>
 #include <dune/fem/space/combinedspace/combineddofstorage.hh>
 #include <dune/fem/storage/subvector.hh>
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
@@ -19,41 +21,28 @@ namespace Dune
     template <class DiscreteFunctionImp>
     class SubFunctionStorage
     {
-      SubFunctionStorage( const SubFunctionStorage& );
     protected:
       typedef DiscreteFunctionImp DiscreteFunctionType;
-      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType  SpaceType;
+      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType SpaceType;
       enum { dimRange = SpaceType :: dimRange };
-      typedef typename DiscreteFunctionType :: DofStorageType            DofStorageType;
+      typedef typename DiscreteFunctionType :: DofStorageType DofStorageType;
     public:
-      typedef typename SpaceType :: template ToNewDimRange < 1 > :: Type  SubSpaceType;
+      typedef typename SpaceType :: template ToNewDimRange < 1 > :: Type SubSpaceType;
 
-      typedef CombinedSubMapper< typename SubSpaceType :: MapperType , dimRange, PointBased >  SubMapperType;
-      typedef Fem :: SubVector< DofStorageType, SubMapperType >                  SubDofVectorType;
-      typedef VectorDiscreteFunction< SubSpaceType, SubDofVectorType >    SubDiscreteFunctionType;
+      typedef CombinedSubMapper< typename SubSpaceType :: MapperType , dimRange, PointBased > SubMapperType;
+      typedef SubVector< DofStorageType, SubMapperType > SubDofVectorType;
+      typedef VectorDiscreteFunction< SubSpaceType, SubDofVectorType > SubDiscreteFunctionType;
 
       //! constructor storing the discrete function
       explicit SubFunctionStorage( DiscreteFunctionType& discreteFunction ) :
         discreteFunction_( discreteFunction ),
         space_( discreteFunction.space() ),
-        subSpace_( space_.gridPart (),
-                         space_.communicationInterface(),
-                         space_.communicationDirection() ),
-        subMapper_( dimRange, (SubMapperType *) 0 ),
-        subVector_( dimRange, (SubDofVectorType *) 0 ),
-        subDiscreteFunction_( dimRange, (SubDiscreteFunctionType *) 0 )
+        subSpace_( space_.gridPart (), space_.communicationInterface(), space_.communicationDirection() ),
+        subVector_( dimRange, nullptr ),
+        subDiscreteFunction_( dimRange, nullptr )
       {}
 
-      //! destructor
-      ~SubFunctionStorage()
-      {
-        for(int i=0; i<dimRange; ++i)
-        {
-          delete subDiscreteFunction_[ i ]; subDiscreteFunction_[ i ] = 0;
-          delete subVector_[ i ];           subVector_[ i ] = 0;
-          delete subMapper_[ i ];           subMapper_[ i ] = 0;
-        }
-      }
+       SubFunctionStorage( const SubFunctionStorage& ) = delete;
 
       /** \brief return a SubDiscreteFunction repsenting only one
           component of the original discrete function
@@ -61,17 +50,15 @@ namespace Dune
 
           \return reference to SubDiscreteFunction for given component
       */
-      SubDiscreteFunctionType& subFunction(const size_t component) const
+      SubDiscreteFunctionType& subFunction(std::size_t component) const
       {
         assert( component < dimRange );
         if( ! subDiscreteFunction_[ component ] )
         {
-          subMapper_[ component ] = new SubMapperType( subSpace_.mapper(), component );
-          subVector_[ component ] = new SubDofVectorType( discreteFunction_.dofStorage(),
-                                                          *subMapper_[component] );
+          subVector_[ component ] =
+            Std::make_unique< SubDofVectorType >( discreteFunction_.dofStorage(), SubMapperType( subSpace_.mapper(), component ) );
           subDiscreteFunction_[ component ] =
-            new SubDiscreteFunctionType( std::string(discreteFunction_.name()+ "_sub"),
-                                         subSpace_, *( subVector_[ component ] ));
+            Std::make_unique< SubDiscreteFunctionType >( discreteFunction_.name()+ "_sub", subSpace_, *( subVector_[ component ] ));
         }
         return *( subDiscreteFunction_[ component ] );
       }
@@ -80,9 +67,8 @@ namespace Dune
       DiscreteFunctionType& discreteFunction_;
       const SpaceType& space_;
       SubSpaceType subSpace_;
-      mutable std::vector< SubMapperType * > subMapper_;
-      mutable std::vector< SubDofVectorType * > subVector_;
-      mutable std::vector< SubDiscreteFunctionType* > subDiscreteFunction_;
+      mutable std::vector< std::unique_ptr< SubDofVectorType > > subVector_;
+      mutable std::vector< std::unique_ptr< SubDiscreteFunctionType > > subDiscreteFunction_;
     };
 
   } // namespace Fem

@@ -27,7 +27,7 @@ dune_project()
 include(DuneMPI)
 
 #add sub_directories
-dune_add_subdirs(dune m4 lib doc cmake/modules)
+dune_add_subdirs(dune lib doc cmake/modules)
 
 # finalize the dune project, e.g. generating config.h etc.
 finalize_dune_project(GENERATE_CONFIG_H_CMAKE)

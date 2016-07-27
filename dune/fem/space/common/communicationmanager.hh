@@ -1,19 +1,18 @@
 #ifndef DUNE_FEM_COMMUNICATION_MANAGER_HH
 #define DUNE_FEM_COMMUNICATION_MANAGER_HH
 
-//- system includes
 #include <iostream>
 #include <map>
 #include <memory>
 #include <vector>
 
-//- Dune includes
 #include <dune/common/timer.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/common/grid.hh>
 
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/common/commoperations.hh>
+#include <dune/fem/storage/singletonlist.hh>
 
 // include ALUGrid to check whether the
 // parallel version is avaiable
@@ -47,11 +46,6 @@
 #ifdef USE_CACHED_COMM_MANAGER
 #include "cachedcommmanager.hh"
 #endif
-
-//- Dune-fem includes
-#include <dune/fem/storage/singletonlist.hh>
-#include <dune/fem/space/common/commoperations.hh>
-#include <dune/fem/space/common/arrays.hh>
 
 namespace Dune
 {
@@ -366,7 +360,7 @@ namespace Dune
       template< class DiscreteFunction >
       void removeFromList ( DiscreteFunction &df )
       {
-        const auto handles = [ &df ] ( const CommObjIFType *commObj ) { return commObj->handles( df ); };
+        const auto handles = [ &df ] ( const std::unique_ptr< DiscreteFunctionCommunicatorInterface > &commObj ) { return commObj->handles( df ); };
         CommObjListType::reverse_iterator pos = std::find_if( objList_.rbegin(), objList_.rend(), handles );
         if( pos != objList_.rend() )
           objList_.erase( pos.base() );

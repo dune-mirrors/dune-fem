@@ -6,7 +6,7 @@
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/operator/projection/vtxprojection.hh>
 #include <dune/fem/operator/projection/l2projection.hh>
-#include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/space/common/interpolate.hh>
 
 #if defined USE_BLOCKVECTORFUNCTION
 #include <dune/fem/function/blockvectorfunction.hh>
@@ -22,6 +22,7 @@
 // #include "vtxl2projection.hh"
 #include "exactsolution.hh"
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+#include <dune/fem/function/common/gridfunctionadapter.hh>
 
 using namespace Dune;
 using namespace Fem;
@@ -79,8 +80,7 @@ int main(int argc, char ** argv)
     projection(solution,contSolution);
 
     LagrangeFunctionType lagrangeSolution("lagrangeSolution",lagspace);
-    Fem::LagrangeInterpolation< ExactSolutionType, LagrangeFunctionType >
-      :: interpolateFunction( exactSolution, lagrangeSolution );
+    interpolate( gridFunctionAdapter( exactSolution, gridPart, lagspace.order()+2 ), lagrangeSolution );
     #if 0
     LagrangeType lagrangeContSolution("lagrnageContSolution",lagspace);
     VtxProjection<double,double,LagrangeType,LagrangeType> projection2;

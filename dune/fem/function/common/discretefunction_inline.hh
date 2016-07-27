@@ -36,6 +36,18 @@ namespace Dune
 
 
     template< class Impl >
+    inline DiscreteFunctionDefault< Impl >
+      :: DiscreteFunctionDefault ( DiscreteFunctionDefault && other )
+    : BaseType( static_cast< BaseType&& >( other ) ),
+      dfSpace_( other.dfSpace_ ),
+      ldvStack_( std::move( other.ldvStack_ ) ),
+      ldvAllocator_( &ldvStack_ ),
+      name_( std::move( other.name_ ) ),
+      scalarProduct_( std::move( other.scalarProduct_ ) )
+    {}
+
+
+    template< class Impl >
     inline void DiscreteFunctionDefault<Impl >
       :: print ( std::ostream &out ) const
     {

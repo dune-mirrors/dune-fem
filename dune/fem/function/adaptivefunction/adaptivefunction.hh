@@ -12,6 +12,7 @@
 #include <dune/fem/function/localfunction/mutable.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
+#include <dune/fem/storage/dynamicarray.hh>
 
 namespace Dune
 {
@@ -53,7 +54,7 @@ namespace Dune
 
       using BaseType::assign;
 
-      typedef MutableBlockVector< MutableArray< DofType >, DiscreteFunctionSpaceType::localBlockSize > MutableDofVectorType;
+      typedef MutableBlockVector< DynamicArray< DofType >, DiscreteFunctionSpaceType::localBlockSize > MutableDofVectorType;
 
       /** \brief Constructor to use if the vector storing the dofs does not exist yet
        *
@@ -103,6 +104,17 @@ namespace Dune
       {
         assign( other );
       }
+
+      /** \brief Move constructor */
+      AdaptiveDiscreteFunction( ThisType&& other )
+        : BaseType( static_cast< BaseType && >( other ) ),
+          memObject_( std::move( other.memObject_ ) ),
+          dofVector_( other.dofVector_ )
+      {}
+
+      AdaptiveDiscreteFunction () = delete;
+      ThisType& operator= ( const ThisType& ) = delete;
+      ThisType& operator= ( ThisType&& ) = delete;
 
       DofType* leakPointer() { return dofVector().data(); }
       const DofType* leakPointer() const { return dofVector().data(); }

@@ -5,11 +5,11 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dune/fem/space/common/arrays.hh>
-#include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/gridpart/filter/threadfilter.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/misc/threads/threaditeratorstorage.hh>
-#include <dune/fem/gridpart/filter/threadfilter.hh>
+#include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/storage/dynamicarray.hh>
 
 namespace Dune
 {
@@ -45,7 +45,7 @@ namespace Dune
 #ifdef USE_SMP_PARALLEL
       int sequence_;
       std::vector< IteratorType > iterators_;
-      MutableArray< int > threadNum_;
+      DynamicArray< int > threadNum_;
       std::vector< std::vector< int > > threadId_;
       std::vector< FilterType* > filters_;
 #endif

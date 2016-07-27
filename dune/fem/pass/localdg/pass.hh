@@ -7,7 +7,7 @@
 #include <dune/fem/pass/common/local.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
 #include <dune/fem/quadrature/intersectionquadrature.hh>
-#include <dune/fem/space/common/arrays.hh>
+#include <dune/fem/storage/dynamicarray.hh>
 
 #include "modelcaller.hh"
 
@@ -587,15 +587,15 @@ namespace Dune
       const IndexSetType& indexSet_;
 
       // indicator for grid walk
-      mutable MutableArray<bool> visited_;
+      mutable DynamicArray<bool> visited_;
 
       mutable TemporaryLocalFunctionType updEn_;
       mutable TemporaryLocalFunctionType updNb_;
 
       //! Some helper variables
-      mutable MutableArray< JacobianRangeType > fMatVec_;
-      mutable MutableArray< RangeType > valEnVec_;
-      mutable MutableArray< RangeType > valNbVec_;
+      mutable DynamicArray< JacobianRangeType > fMatVec_;
+      mutable DynamicArray< RangeType > valEnVec_;
+      mutable DynamicArray< RangeType > valNbVec_;
 
       mutable double dtMin_;
       const double minLimit_;

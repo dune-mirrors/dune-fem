@@ -6,7 +6,7 @@
 
 //- dune-fem includes
 #include <dune/fem/gridpart/filter/filter.hh>
-#include <dune/fem/space/common/arrays.hh>
+#include <dune/fem/storage/dynamicarray.hh>
 
 namespace Dune
 {
@@ -84,7 +84,7 @@ namespace Dune
       //! \brief type of codim 0 entity
       typedef typename Traits::EntityType EntityType;
 
-      typedef MutableArray< int >  ThreadArrayType ;
+      typedef DynamicArray< int >  ThreadArrayType ;
 
       //! \brief constructor
       ThreadFilter ( const GridPartType & gridPart,

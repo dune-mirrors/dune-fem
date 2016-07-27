@@ -3,37 +3,23 @@
 
 #include <algorithm>
 #include <cassert>
+#include <memory>
 
 #include <dune/common/densevector.hh>
 #include <dune/common/dynvector.hh>
 
 #include <dune/fem/misc/debug.hh>
+#include <dune/fem/storage/dynamicarray.hh>
 #include <dune/fem/storage/envelope.hh>
-#include <dune/fem/space/common/arrays.hh>
+#include <dune/fem/storage/subvector.hh>
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/bvector.hh>
 #endif
 
 namespace Dune {
+
   namespace Fem {
-    // Forward declaration
-    template< class BlockVector >
-    class SimpleBlockVectorBlock;
-  }
-
-
-
-  template< class BlockVector >
-  struct DenseMatVecTraits< Fem::SimpleBlockVectorBlock< BlockVector > >
-  {
-    typedef Fem::SimpleBlockVectorBlock< BlockVector > derived_type;
-    typedef Fem::SimpleBlockVectorBlock< BlockVector > container_type;
-    typedef typename BlockVector :: FieldType     value_type;
-    typedef typename BlockVector :: SizeType      size_type;
-  };
-
-namespace Fem {
 
   // tag for block vectors
   struct IsBlockVector {};
@@ -145,7 +131,7 @@ namespace Fem {
       ++sequence_;
     }
 
-    /** \brief  Clear this block vector, i.e. set each dof to 0 */
+    /** \brief Clear this block vector, i.e. set each dof to 0 */
     void clear ()
     {
       std::fill( asImp().begin(), asImp().end(), FieldType( 0 ) );
@@ -186,9 +172,6 @@ namespace Fem {
 
     typedef DebugCounter<size_t>                      CounterType;
 
-    friend class SimpleBlockVectorBlock< ThisType >;
-    friend class SimpleBlockVectorBlock< const ThisType >;
-
   public:
     typedef ArrayType DofContainerType;
 
@@ -207,9 +190,9 @@ namespace Fem {
     typedef SizeType            size_type;
 
     //! Type of one (mutable) block
-    typedef SimpleBlockVectorBlock< ThisType >        DofBlockType;
+    typedef SubVector< DofContainerType, StaticOffsetSubMapper< BlockSize > > DofBlockType;
     //! Type of one constant block
-    typedef SimpleBlockVectorBlock< ThisType >  ConstDofBlockType;
+    typedef DofBlockType ConstDofBlockType;
 
     typedef Fem::Envelope< DofBlockType >       DofBlockPtrType;
     typedef Fem::Envelope< ConstDofBlockType >  ConstDofBlockPtrType;
@@ -233,14 +216,14 @@ namespace Fem {
     ConstDofBlockType operator[] ( const unsigned int i ) const
     {
       assert( i < size() );
-      return ConstDofBlockType( *this, i*blockSize );
+      return ConstDofBlockType( array_, StaticOffsetSubMapper< blockSize >( i*blockSize ) );
     }
 
     /** \brief Access the i-th block */
     DofBlockType operator[] ( const unsigned int i )
     {
       assert( i < size() );
-      return DofBlockType( *this, i*blockSize );
+      return DofBlockType( array_, StaticOffsetSubMapper< blockSize >( i*blockSize ) );
     }
 
     /** \brief Constant access for the i-th block */
@@ -285,98 +268,6 @@ namespace Fem {
 
 
 
-  /** \class SimpleBlockVectorBlock
-  *   \brief This is the implementation of a block of SimpleBlockVector
-  *
-  *   \tparam  BlockVector BlockVector type
-  */
-  template< class BlockVector >
-  class SimpleBlockVectorBlock : public Dune::DenseVector< SimpleBlockVectorBlock< BlockVector > >
-  {
-    typedef BlockVector  BlockVectorType;
-    typedef typename BlockVectorType :: FieldType     FieldType;
-    typedef typename BlockVectorType::CounterType     CounterType;
-
-    typedef SimpleBlockVectorBlock< BlockVectorType > ConstBlockType;
-    typedef SimpleBlockVectorBlock< BlockVectorType > ThisType;
-
-  public:
-    typedef typename BlockVectorType :: SizeType size_type;
-
-    //! The block size
-    static const unsigned int blockSize = BlockVector :: blockSize ;
-
-    /** \brief Standard constructor for SimpleBlockVectorBlocks
-     *
-     *  \param[in]  blockVector   The block vector in which this block lives
-     *  \param[in]  blockBegin    Beginning index of this block in the block vector's array (implementation detail)
-     */
-    SimpleBlockVectorBlock ( const BlockVectorType &blockVector, unsigned int blockBegin )
-    : blockVector_( const_cast< BlockVectorType& > (blockVector) ),
-      blockBegin_( blockBegin )
-    {}
-
-    /** \brief Copy constructor */
-    SimpleBlockVectorBlock ( const SimpleBlockVectorBlock< BlockVectorType > &other )
-    : blockVector_( const_cast< BlockVectorType& > (other.blockVector_)),
-      blockBegin_( other.blockBegin_ )
-    {}
-
-    size_type size () const { return blockSize; }
-
-    /** \brief Copy assignment operator for constant blocks
-     *
-     *  \param[in] other  Other block (constant) which should be assigned to *this
-     *  \return  Constant reference to *this
-     */
-    ThisType &operator= ( const ConstBlockType &other )
-    {
-      copy( other );
-      return *this;
-    }
-
-    /** \brief Obtain a dof inside this block
-     *
-     *  \param[in] index   Index of the dof
-     *  \return Reference to the dof
-     */
-    FieldType& operator[] (unsigned int index)
-    {
-      assert(index < blockSize);
-      return blockVector_.array()[blockBegin_ + index];
-    }
-
-    /** \brief Obtain a dof inside this block
-     *
-     *  \param[in] index   Index of the dof
-     *  \return Constant reference to the dof
-     */
-    const FieldType& operator[] (unsigned int index) const
-    {
-      assert(index < blockSize);
-      return blockVector_.array()[blockBegin_ + index];
-    }
-
-    /** \brief Returns the size of the block */
-    int dim() const { return blockSize; }
-
-  protected:
-    // An empty constructor does not make sense in this case
-    SimpleBlockVectorBlock();
-
-    template< class Block >
-    void copy ( const Block &other )
-    {
-      for( unsigned int i=0; i < blockSize; ++i )
-        (*this)[ i ] = other[ i ];
-    }
-
-    BlockVectorType &blockVector_;
-    const unsigned int blockBegin_;
-  };
-
-
-
   /** \class SimpleBlockVector
   *   \brief This is the reference implementation of a block vector as it is expected
   *      as the second template parameter to Dune::Fem::BlockVectorDiscreteFunction
@@ -389,7 +280,8 @@ namespace Fem {
   : public SimpleBlockVector< Container, BlockSize >
   {
     typedef MutableBlockVector< Container, BlockSize > ThisType;
-    typedef SimpleBlockVector< Container, BlockSize >  BaseType;
+    typedef SimpleBlockVector < Container, BlockSize > BaseType;
+
     typedef Container                                  ArrayType;
     using BaseType :: array_;
     using BaseType :: sequence_;
@@ -447,37 +339,35 @@ namespace Fem {
   *   \tparam  BlockSize   Size of the blocks
   */
   template< class Field, unsigned int BlockSize >
-  class MutableBlockVector< MutableArray< Field >, BlockSize >
+  class MutableBlockVector< DynamicArray< Field >, BlockSize >
   : public SimpleBlockVector< StaticArray< Field >, BlockSize >
   {
     typedef StaticArray< Field >          StaticContainer ;
-    typedef MutableArray< Field >         MutableContainer ;
+    typedef DynamicArray< Field >         MutableContainer ;
     typedef SimpleBlockVector< StaticContainer, BlockSize >   BaseType;
     typedef MutableBlockVector< MutableContainer, BlockSize > ThisType;
 
   protected:
+    using BaseType :: array_;
     using BaseType :: sequence_;
 
-    MutableContainer* container_;
+    std::unique_ptr< MutableContainer > container_;
   public:
     using BaseType :: blockSize ;
     typedef typename BaseType :: SizeType SizeType;
 
     /** \brief Construct a block vector with 'size' blocks (not initialized) */
     explicit MutableBlockVector ( SizeType size )
-    : BaseType( allocateContainer( size*blockSize ) )
+    : BaseType( allocateContainer( size*blockSize ) ),
+      container_( static_cast< MutableContainer* > (&array_) )
     {}
 
     /** \brief Copy constructor */
     MutableBlockVector ( const ThisType &other )
-    : BaseType( allocateContainer( other.array().size() ) )
+    : BaseType( allocateContainer( other.array().size() ) ),
+      container_( static_cast< MutableContainer* > (&array_) )
     {
       assign( other );
-    }
-
-    ~MutableBlockVector()
-    {
-      delete container_;
     }
 
     /** \brief Reserve memory.
@@ -490,12 +380,14 @@ namespace Fem {
      */
     void reserve ( const int size )
     {
+      assert( container_ );
       container_->reserve( size*blockSize );
     }
 
     /** \brief Resize the block vector */
     void resize ( SizeType size )
     {
+      assert( container_ );
       container_->resize( size*blockSize );
       ++sequence_;
     }
@@ -503,8 +395,8 @@ namespace Fem {
   protected:
     StaticContainer& allocateContainer( const SizeType size )
     {
-      container_ = new MutableContainer( size );
-      return *container_;
+      MutableContainer* container = new MutableContainer( size );
+      return *container;
     }
   };
 
@@ -518,7 +410,6 @@ namespace Fem {
   class ISTLBlockVector
   : public BlockVectorInterface< ISTLBlockVector< DofBlock >, typename DofBlock :: value_type >
   {
-    ISTLBlockVector ( const ISTLBlockVector& );
     typedef ISTLBlockVector< DofBlock>                            ThisType;
 #if HAVE_DUNE_ISTL
     typedef BlockVector< DofBlock >                               ArrayType;
@@ -531,6 +422,9 @@ namespace Fem {
 
     using BaseType :: sequence_;
   public:
+
+    ISTLBlockVector ( const ThisType& ) = default;
+
     typedef ArrayType DofContainerType;
 
     enum { blockSize = DofBlock :: dimension };
@@ -609,8 +503,7 @@ namespace Fem {
     : array_( &array )
     {}
 
-    ISTLBlockVector () : array_( 0 )
-    {}
+    ISTLBlockVector () = default;
 
     /** \brief Copy assignment operator */
     const ThisType& operator= ( const ThisType& other )

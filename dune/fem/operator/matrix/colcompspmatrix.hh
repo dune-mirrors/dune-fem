@@ -16,7 +16,6 @@ namespace Dune
 #include <dune/fem/operator/matrix/spmatrix.hh>
 
 #include <vector>
-#include <utility>
 
 namespace Dune
 {
@@ -33,7 +32,7 @@ namespace Dune
     /** @brief The type of the matrix to convert. */
     typedef Fem::SparseRowMatrix<B> Matrix;
 
-    typedef int size_type;
+    typedef typename Matrix::size_type size_type;
 
     /**
      * @brief Constructor that initializes the data.
@@ -110,16 +109,16 @@ namespace Dune
       if(M_>0)
       {
         colstart_=new int[M_+1];
-        for(int i=0; i<=M_; ++i)
+        for(size_type i=0; i<=M_; ++i)
           colstart_[i]=mat.colstart[i];
       }
       if(Nnz_>0)
       {
         values_ = new B[Nnz_];
         rowindex_ = new int[Nnz_];
-        for(int i=0; i<Nnz_; ++i)
+        for(size_type i=0; i<Nnz_; ++i)
           values_[i]=mat.values[i];
-        for(int i=0; i<Nnz_; ++i)
+        for(size_type i=0; i<Nnz_; ++i)
           rowindex_[i]=mat.rowindex[i];
       }
       return *this;
@@ -144,25 +143,24 @@ namespace Dune
 
       // count the number of nonzeros per column
       colstart_=new int[M_+1];
-      for(int i=0;i!=(M_+1);++i)
+      for(size_type i=0;i!=(M_+1);++i)
         colstart_[i]=0;
       Nnz_=0;
-      int count(0);
-      for(int i=0;i!=N_;++i)
+      size_type count(0);
+      for(size_type i=0;i!=N_;++i)
       {
         Nnz_+=mat.numNonZeros(i);
-        while(count<(mat.numNonZeros()*(i+1)))
+        for(;count<(mat.numNonZeros()*(i+1));++count)
         {
-          const std::pair<B,int> pairIdx(mat.realValue(count));
-          if(pairIdx.second>-1)
+          const auto pairIdx(mat.realValue(count));
+          if(pairIdx.second!=Matrix::defaultCol)
             ++(colstart_[pairIdx.second+1]);
-          ++count;
         }
       }
 
       // compute the starting positions and compute colstart
       std::vector<int> tempPos(M_,0);
-      for(int i=1;i!=(M_+1);++i)
+      for(size_type i=1;i!=(M_+1);++i)
       {
         colstart_[i]+=colstart_[i-1];
         tempPos[i-1]=colstart_[i-1];
@@ -172,20 +170,17 @@ namespace Dune
       values_=new B[Nnz_];
       rowindex_=new int[Nnz_];
       count=0;
-      for(int i=0;i!=N_;++i)
+      for(size_type i=0;i!=N_;++i)
       {
-        int localCount(0);
-        while(localCount<mat.numNonZeros())
+        for(size_type localCount=0;localCount<mat.numNonZeros();++localCount,++count)
         {
-          const std::pair<B,int> pairIdx(mat.realValue(count));
-          if(pairIdx.second>-1)
+          const auto pairIdx(mat.realValue(count));
+          if(pairIdx.second!=Matrix::defaultCol)
           {
             values_[tempPos[pairIdx.second]]=pairIdx.first;
             rowindex_[tempPos[pairIdx.second]]=i;
             ++(tempPos[pairIdx.second]);
           }
-          ++localCount;
-          ++count;
         }
       }
 

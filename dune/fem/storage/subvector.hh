@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SUBVECTOR_HH
 #define DUNE_FEM_SUBVECTOR_HH
 
+#include <algorithm>
+
 #include <dune/common/densevector.hh>
 #include <dune/common/ftraits.hh>
 
@@ -75,7 +77,7 @@ namespace Dune
 
 
 
-    //! Index mapper interface which simply adds an offset to the index
+    //! Index mapper which simply adds an offset to the index
     class OffsetSubMapper
     : public IndexMapperInterface< OffsetSubMapper >
     {
@@ -88,7 +90,9 @@ namespace Dune
       {}
 
       OffsetSubMapper( const ThisType& ) = default;
+      OffsetSubMapper( ThisType&& ) = default;
       ThisType& operator=( const ThisType& ) = default;
+      ThisType& operator=( ThisType&& ) = default;
 
       unsigned int size() const
       {
@@ -107,6 +111,45 @@ namespace Dune
 
     private:
       const unsigned int size_;
+      const unsigned int offset_;
+    };
+
+
+
+    //! Index mapper with static size which simply adds an offset to the index
+    template<unsigned int dim>
+    class StaticOffsetSubMapper
+    : public IndexMapperInterface< StaticOffsetSubMapper< dim > >
+    {
+      typedef StaticOffsetSubMapper< dim > ThisType;
+      typedef IndexMapperInterface< StaticOffsetSubMapper< dim > > BaseType;
+
+    public:
+      StaticOffsetSubMapper( unsigned int offset )
+      : offset_( offset )
+      {}
+
+      StaticOffsetSubMapper( const ThisType& ) = default;
+      StaticOffsetSubMapper( ThisType&& ) = default;
+      ThisType& operator=( const ThisType& ) = default;
+      ThisType& operator=( ThisType&& ) = default;
+
+      static constexpr unsigned int size()
+      {
+        return dim;
+      }
+
+      static constexpr unsigned int range()
+      {
+        return dim;
+      }
+
+      unsigned int operator[]( unsigned int i) const
+      {
+        return i+offset_;
+      }
+
+    private:
       const unsigned int offset_;
     };
 
@@ -137,7 +180,7 @@ namespace Dune
       typedef value_type FieldType;
 
       //! Constructor
-      explicit SubVector( BaseVectorType& baseVector, const IndexMapperType& indexMapper )
+      explicit SubVector( BaseVectorType& baseVector, IndexMapperType&& indexMapper )
       : baseVector_( baseVector ), indexMapper_( indexMapper )
       {}
 
@@ -145,7 +188,12 @@ namespace Dune
         : baseVector_( other.baseVector_ ), indexMapper_( other.indexMapper_ )
       {}
 
-      ThisType& operator=( const ThisType & ) = default;
+      //! Copy entries
+      ThisType& operator=( const ThisType & other)
+      {
+        std::copy( other.begin(), other.end(), this->begin() );
+        return *this;
+      }
 
       void resize( size_type )
       {}
@@ -167,7 +215,7 @@ namespace Dune
 
     private:
       BaseVectorType& baseVector_;
-      const IndexMapperType& indexMapper_;
+      IndexMapperType indexMapper_;
     };
 
 

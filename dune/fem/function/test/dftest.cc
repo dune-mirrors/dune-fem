@@ -82,11 +82,13 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
 
   // check copy constructor
   DiscreteFunction copydf( df );
-  if( ! (copydf == df) )
-  {
-    assert( false );
-    DUNE_THROW(Dune::InvalidStateException,"Copying did not work");
-  }
+  if( !(copydf == df) )
+    DUNE_THROW(Dune::InvalidStateException,"Copy constructor did not work");
+
+  // check move constructor
+  DiscreteFunction movedf( std::move( copydf ) );
+  if( !(movedf == df) )
+    DUNE_THROW(Dune::InvalidStateException,"Move constrcutor did not work");
 
   df.dofVector()[0] *= 1.0;
   df.dofVector()[0][0] = 1.0;

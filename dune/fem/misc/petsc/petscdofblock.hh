@@ -152,7 +152,6 @@ namespace Dune
     };
 
 
-    // TODO: give this the same interface as Dune::Fem::ReferenceBlockVectorBlock?
     /* ========================================
      * class PetscDofBlock
      * =======================================

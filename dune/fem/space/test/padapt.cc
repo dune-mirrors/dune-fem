@@ -24,7 +24,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
-#include <dune/fem/operator/lagrangeinterpolation.hh>
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 #include <dune/fem/space/padaptivespace.hh>
@@ -272,11 +272,11 @@ bool checkContinuous( DiscreteFunctionType &solution )
 }
 
 template <class Function>
-void interpolate( const Function &f, DiscreteFunctionType &solution )
+void interpolateSolution( const Function &f, DiscreteFunctionType &solution )
 {
 #if 1
   std::cout << "Applying Lagrangeinterpolation:" << std::endl;
-  Fem::LagrangeInterpolation< Function, DiscreteFunctionType > :: interpolateFunction( f, solution );
+  interpolate( f, solution );
 #else
   std::cout << "Applying L2-projection:" << std::endl;
   // define Laplace operator
@@ -335,7 +335,7 @@ void algorithm ( GridPartType &gridPart,
   ExactSolutionType fexact;
   GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );
 
-  interpolate( f, solution );
+  interpolateSolution( f, solution );
 
   std::cout << "Unknowns before adaptation: " << solution.space().size() << std::endl;
   polOrderAdapt( gridPart.grid(), solution, step );
@@ -364,7 +364,7 @@ void algorithm ( GridPartType &gridPart,
     }
   #endif
 
-  interpolate( f, solution );
+  interpolateSolution( f, solution );
 
   #if USE_GRAPE && SHOW_INTERPOLATION
     //if( turn > 0 )
@@ -445,7 +445,7 @@ try
 
   const bool locallyAdaptive = Parameter :: getValue< bool >("adapt.locallyadaptive", false );
 
-  interpolate( f, solution );
+  interpolateSolution( f, solution );
   for ( int r = 0; r < step; ++r )
   {
     std :: cout << std :: endl << "Refining: " << std :: endl;

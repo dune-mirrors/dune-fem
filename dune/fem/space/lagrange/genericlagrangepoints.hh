@@ -895,21 +895,24 @@ namespace Dune
     {
       static unsigned int maxDofs ()
       {
-        if( i == 0 )
-        {
-          typedef typename FirstReductionType::template Codim< codim > FirstCodim;
-          typedef typename SecondReductionType::template Codim< 0 > SecondCodim;
-          return FirstCodim::maxDofs() * SecondCodim::maxDofs();
-        }
-        else
-        {
-          typedef typename FirstReductionType::template Codim< codim-i > FirstCodim;
-          typedef typename SecondReductionType::template Codim< i > SecondCodim;
-          const unsigned int n = FirstCodim::maxDofs() * SecondCodim::maxDofs();
+        typedef typename FirstReductionType::template Codim< codim-i > FirstCodim;
+        typedef typename SecondReductionType::template Codim< i > SecondCodim;
+        const unsigned int n = FirstCodim::maxDofs() * SecondCodim::maxDofs();
 
-          const unsigned int m = CodimIterator< codim, i-1 >::maxDofs();
-          return std::max( m, n );
-        }
+        const unsigned int m = CodimIterator< codim, i-1 >::maxDofs();
+        return std::max( m, n );
+      }
+    };
+
+    template< class FirstGeometry, class SecondGeometry, unsigned int order, bool bottom >
+    template< unsigned int codim>
+    struct GenericLagrangePoint< ProductGeometry< FirstGeometry, SecondGeometry >, order, bottom >::CodimIterator<codim, 0>
+    {
+      static unsigned int maxDofs ()
+      {
+        typedef typename FirstReductionType::template Codim< codim > FirstCodim;
+        typedef typename SecondReductionType::template Codim< 0 > SecondCodim;
+        return FirstCodim::maxDofs() * SecondCodim::maxDofs();
       }
     };
     /** \endcond */

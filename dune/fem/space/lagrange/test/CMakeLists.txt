@@ -10,7 +10,7 @@ configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
 configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
 
 
-set( DEFAULTFLAGS "-D${GRIDTYPE}" "-DGRIDDIM=${GRIDDIM}" "-DDIMENSION=2" "-DPOLORDER=2" "-DGEOMETRYTYPE=simplex" "-DSCALAR=0" )
+set( DEFAULTFLAGS "-D${GRIDTYPE}" "-DGRIDDIM=${GRIDDIM}" "-DDIMENSION=2" "-DPOLORDER=2" "-DTOPOLOGYTYPE=SimplexTopology" "-DSCALAR=0" )
 
 
 dune_add_test( NAME tester SOURCES main.cc

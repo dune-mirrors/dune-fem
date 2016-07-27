@@ -187,13 +187,13 @@ namespace Dune
       //! \brief return order of basis function set, maximal order in the tupleset
       int order () const
       {
-        return order( Std::index_sequence_for< BasisFunctionSets ... >() );
+        return order( std::index_sequence_for< BasisFunctionSets ... >() );
       }
 
       //! \brief return size of basis function set
       std::size_t size () const
       {
-        return size( Std::index_sequence_for< BasisFunctionSets ... >() );
+        return size( std::index_sequence_for< BasisFunctionSets ... >() );
       }
 
       //! \copydoc BasisFunctionSet::type
@@ -345,14 +345,14 @@ namespace Dune
     protected:
       // unroll index sequence and take maxmial order
       template< std::size_t ... i >
-      int order ( Std::index_sequence< i ... > ) const
+      int order ( std::index_sequence< i ... > ) const
       {
         return Std::max( std::get< i >( basisFunctionSetTuple_ ).order() ... );
       }
 
       // unroll index sequence and sum up sizes
       template< std::size_t ... i >
-      std::size_t size ( Std::index_sequence< i ... > ) const
+      std::size_t size ( std::index_sequence< i ... > ) const
       {
         return Std::sum( std::get< i >( basisFunctionSetTuple_ ).size() ... );
       }

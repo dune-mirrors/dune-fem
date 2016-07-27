@@ -41,7 +41,7 @@ namespace Dune
       template< int > struct ProlongLocal;
 
       template< std::size_t  ... i >
-      static LocalRestrictProlongTupleType localRestrictProlongTuple ( std::tuple< const DiscreteFunctionSpaces &... > tuple, Std::index_sequence< i ... > )
+      static LocalRestrictProlongTupleType localRestrictProlongTuple ( std::tuple< const DiscreteFunctionSpaces &... > tuple, std::index_sequence< i ... > )
       {
         return std::make_tuple( typename std::tuple_element< i, LocalRestrictProlongTupleType >::type( std::get< i >( tuple ) ) ...);
       }
@@ -53,7 +53,7 @@ namespace Dune
       typedef typename std::tuple_element< 0, LocalRestrictProlongTupleType >::type::DomainFieldType DomainFieldType;
 
       TupleLocalRestrictProlong ( std::tuple< const DiscreteFunctionSpaces & ... > tuple )
-        : localRestrictProlongTuple_( localRestrictProlongTuple( tuple, Std::index_sequence_for< DiscreteFunctionSpaces ... >() ) )
+        : localRestrictProlongTuple_( localRestrictProlongTuple( tuple, std::index_sequence_for< DiscreteFunctionSpaces ... >() ) )
       {}
 
       void setFatherChildWeight ( const DomainFieldType &weight )
@@ -79,12 +79,12 @@ namespace Dune
 
       bool needCommunication () const
       {
-        return needCommunication( Std::index_sequence_for< DiscreteFunctionSpaces ... >() );
+        return needCommunication( std::index_sequence_for< DiscreteFunctionSpaces ... >() );
       }
 
     protected:
       template< std::size_t ... i >
-      bool needCommunication ( Std::index_sequence< i...> ) const
+      bool needCommunication ( std::index_sequence< i...> ) const
       {
         return Std::Or( std::get< i >( localRestrictProlongTuple_ ).needCommunication() ... );
       }
@@ -134,15 +134,13 @@ namespace Dune
         std::size_t fatherBasisSetOffset = lfFather.basisFunctionSet().offset( i );
         std::size_t sonBasisSetOffset = lfSon.basisFunctionSet().offset(i);
 
-        OffsetSubMapper sonMapper( subSonBasisFunctionSet.size(), sonBasisSetOffset );
-        SubDofVectorTypeSon sonSubDofVector( lfSon.localDofVector(), sonMapper );
-        OffsetSubMapper fatherMapper( subFatherBasisFunctionSet.size(), fatherBasisSetOffset );
-        SubDofVectorTypeFather fatherSubDofVector( lfFather.localDofVector(), fatherMapper );
+        SubDofVectorTypeSon sonSubDofVector( lfSon.localDofVector(), OffsetSubMapper( subSonBasisFunctionSet.size(), sonBasisSetOffset ) );
+        SubDofVectorTypeFather fatherSubDofVector( lfFather.localDofVector(), OffsetSubMapper( subFatherBasisFunctionSet.size(),
+                                                                                               fatherBasisSetOffset ) );
 
-        BasicConstLocalFunction< SubFatherBasisFunctionSetType, SubDofVectorTypeFather >
-          subLFFather( subFatherBasisFunctionSet, fatherSubDofVector );
-        LocalFunction< SubSonBasisFunctionSetType, SubDofVectorTypeSon >
-          subLFSon( subSonBasisFunctionSet, sonSubDofVector );
+        BasicConstLocalFunction< SubFatherBasisFunctionSetType, SubDofVectorTypeFather > subLFFather( subFatherBasisFunctionSet,
+                                                                                                      fatherSubDofVector );
+        LocalFunction< SubSonBasisFunctionSetType, SubDofVectorTypeSon > subLFSon( subSonBasisFunctionSet, sonSubDofVector );
 
         std::get< i >( tuple ).prolongLocal( subLFFather, subLFSon, geometryInFather, initialize );
       }
@@ -173,10 +171,9 @@ namespace Dune
         std::size_t fatherBasisSetOffset = lfFather.basisFunctionSet().offset(i);
         std::size_t sonBasisSetOffset = lfSon.basisFunctionSet().offset(i);
 
-        OffsetSubMapper sonMapper( subSonBasisFunctionSet.size(), sonBasisSetOffset );
-        SubDofVectorTypeSon sonSubDofVector( lfSon.localDofVector(), sonMapper );
-        OffsetSubMapper fatherMapper( subFatherBasisFunctionSet.size(), fatherBasisSetOffset );
-        SubDofVectorTypeFather fatherSubDofVector( lfFather.localDofVector(), fatherMapper );
+        SubDofVectorTypeSon sonSubDofVector( lfSon.localDofVector(), OffsetSubMapper( subSonBasisFunctionSet.size(), sonBasisSetOffset ) );
+        SubDofVectorTypeFather fatherSubDofVector( lfFather.localDofVector(), OffsetSubMapper( subFatherBasisFunctionSet.size(),
+                                                                                               fatherBasisSetOffset ) );
 
         LocalFunction< SubFatherBasisFunctionSetType, SubDofVectorTypeFather > subLFFather( subFatherBasisFunctionSet, fatherSubDofVector );
         BasicConstLocalFunction< SubSonBasisFunctionSetType, SubDofVectorTypeSon > subLFSon( subSonBasisFunctionSet, sonSubDofVector );
