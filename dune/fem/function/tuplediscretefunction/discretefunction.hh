@@ -104,6 +104,13 @@ namespace Dune
         dofVector_ = other.dofVector();
       }
 
+      // move constructor
+      TupleDiscreteFunction ( ThisType&& other )
+        : BaseType ( static_cast< BaseType && >( other ) ),
+          DiscreteFunctionTuple( std::move( other ) ),
+          dofVector_( std::move( other.dofVector_ ) )
+      {}
+
       TupleDiscreteFunction () = delete;
       ThisType &operator= ( const ThisType & ) = delete;
 

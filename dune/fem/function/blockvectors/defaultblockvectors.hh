@@ -131,7 +131,7 @@ namespace Dune {
       ++sequence_;
     }
 
-    /** \brief  Clear this block vector, i.e. set each dof to 0 */
+    /** \brief Clear this block vector, i.e. set each dof to 0 */
     void clear ()
     {
       std::fill( asImp().begin(), asImp().end(), FieldType( 0 ) );
@@ -410,7 +410,6 @@ namespace Dune {
   class ISTLBlockVector
   : public BlockVectorInterface< ISTLBlockVector< DofBlock >, typename DofBlock :: value_type >
   {
-    ISTLBlockVector ( const ISTLBlockVector& );
     typedef ISTLBlockVector< DofBlock>                            ThisType;
 #if HAVE_DUNE_ISTL
     typedef BlockVector< DofBlock >                               ArrayType;
@@ -423,6 +422,9 @@ namespace Dune {
 
     using BaseType :: sequence_;
   public:
+
+    ISTLBlockVector ( const ThisType& ) = default;
+
     typedef ArrayType DofContainerType;
 
     enum { blockSize = DofBlock :: dimension };
@@ -501,8 +503,7 @@ namespace Dune {
     : array_( &array )
     {}
 
-    ISTLBlockVector () : array_( 0 )
-    {}
+    ISTLBlockVector () = default;
 
     /** \brief Copy assignment operator */
     const ThisType& operator= ( const ThisType& other )

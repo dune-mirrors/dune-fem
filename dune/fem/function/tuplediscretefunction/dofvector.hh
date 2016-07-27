@@ -66,6 +66,7 @@ namespace Dune
       // constructor
       TupleDofVector ( BaseType data ) : BaseType( data ) {}
       TupleDofVector ( const ThisType & ) = default;
+      TupleDofVector ( ThisType && ) = default;
 
       const ThisType &operator= ( const ThisType &other )
       {

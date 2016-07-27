@@ -187,7 +187,9 @@ namespace Dune
         delete &space();
       }
 
+      CombinedDiscreteFunction() = delete;
       ThisType& operator= ( const ThisType& ) = delete;
+      ThisType& operator= ( ThisType&& ) = delete;
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::clear */
       void clear()
