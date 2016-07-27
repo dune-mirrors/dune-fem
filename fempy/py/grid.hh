@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 
+#include <dune/corepy/grid/gridview.hh>
 #include <dune/fempy/py/grid/gridpart.hh>
 #include <dune/fempy/py/grid/hierarchical.hh>
 
@@ -21,9 +22,14 @@ namespace Dune
     template< class GridPart, class Holder, class AliasType >
     void registerGrid ( pybind11::module module, pybind11::class_<GridPart,Holder,AliasType> &cls )
     {
-      typedef typename GridPart::GridType HGrid;
-      registerHierarchicalGrid< HGrid >( module );
+      // register a constructor and some properties that would not be carried over from
+      // the GridView registration
       detail::registerGridPart< GridPart >( module, cls );
+      registerHierarchicalGrid< typename GridPart::GridType >( module );
+      auto clsGW = pybind11::class_<typename GridPart::GridViewType>(module, "GridView");
+      clsGW.def(pybind11::init<GridPart&>());
+      pybind11::implicitly_convertible<GridPart,typename GridPart::GridViewType>();
+      CorePy::registerGridView<typename GridPart::GridViewType>( module, cls );
       cls.def( "coordinates", [] ( const GridPart &gridPart ) {
           return coordinates( static_cast< typename GridPart::GridViewType >( gridPart ) );
         } );

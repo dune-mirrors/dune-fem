@@ -4,13 +4,8 @@
 #include <string>
 #include <utility>
 
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
-
-#include <dune/corepy/grid/vtk.hh>
-
+#include <dune/corepy/grid/gridview.hh>
 #include <dune/fempy/py/grid/gridpart.hh>
-#include <dune/fempy/py/grid/function.hh>
-#include <dune/fempy/py/grid/range.hh>
 
 #include <dune/corepy/pybind11/pybind11.h>
 
@@ -24,15 +19,19 @@ namespace Dune
     // ----------------
 
     template< class Holder, class AliasType, class ...Args >
-    void registerGridPart ( pybind11::handle scope, pybind11::class_<Dune::Fem::GeometryGridPart<Args...>,Holder,AliasType> &cls )
+    void registerGridPart ( pybind11::handle module, pybind11::class_<Dune::Fem::GeometryGridPart<Args...>,Holder,AliasType> &cls )
     {
       typedef Dune::Fem::GeometryGridPart<Args...> GridPart;
       typedef typename GridPart::GridFunctionType GridFunctionType;
-
-      detail::registerGridPart<GridPart>(scope,cls);
       cls.def( "__init__", [] ( GridPart &instance,  GridFunctionType &gf ) {
          new (&instance) GridPart( gf );
       }, pybind11::keep_alive< 1, 2 >() );
+
+      detail::registerGridPart<GridPart>(module,cls);
+      auto clsGW = pybind11::class_<typename GridPart::GridViewType>(module, "GridView");
+      clsGW.def(pybind11::init<GridPart&>());
+      pybind11::implicitly_convertible<GridPart,typename GridPart::GridViewType>();
+      CorePy::registerGridView<typename GridPart::GridViewType>( module, cls );
     }
 
   } // namespace FemPy
