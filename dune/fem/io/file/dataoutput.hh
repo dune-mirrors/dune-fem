@@ -1,27 +1,35 @@
 #ifndef DUNE_FEM_DATAOUTPUT_HH
 #define DUNE_FEM_DATAOUTPUT_HH
 
+#include <fstream>
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <string>
 #include <type_traits>
 #include <tuple>
+#include <utility>
+#include <vector>
 
 #ifndef USE_VTKWRITER
 #define USE_VTKWRITER 1
 #endif
 
-//#define USE_GRAPE 0
-
-//- Dune includes
+#include <dune/fem/common/get.hh>
+#include <dune/fem/common/tupleforeach.hh>
+#include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/file/iotuple.hh>
+#include <dune/fem/io/file/vtkio.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/operator/projection/vtxprojection.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/space/common/loadbalancer.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrange.hh>
-#include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/quadrature/cachingquadrature.hh>
-#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
 #ifndef ENABLE_VTXPROJECTION
 #define ENABLE_VTXPROJECTION 1
@@ -35,7 +43,6 @@
 #endif // #if USE_VTKWRITER
 
 #ifndef USE_GRAPE
-// define whether to use grape of not
 #define USE_GRAPE HAVE_GRAPE
 #endif
 
@@ -188,53 +195,6 @@ namespace Dune
     {
       typedef DataOutput< GridImp, DataImp > ThisType;
 
-    protected:
-    template< class Grid, class OutputTuple, int N = std::tuple_size< OutputTuple >::value >
-    struct GridPartGetter
-    {
-      typedef typename std::remove_pointer< typename std::tuple_element< 0, OutputTuple >::type >::type DFType;
-      typedef typename DFType :: DiscreteFunctionSpaceType :: GridPartType GridPartType;
-
-      GridPartGetter ( const Grid &, const OutputTuple &data )
-      : gridPart_( getGridPart( data ) )
-      {}
-
-      const GridPartType &gridPart () const
-      {
-        return gridPart_;
-      }
-
-    protected:
-      static const GridPartType &getGridPart( const OutputTuple& data )
-      {
-        const DFType *df = std::get< 0 >( data );
-        assert( df );
-        return df->space().gridPart();
-      }
-
-      const GridPartType &gridPart_;
-    };
-
-
-    template< class Grid, class OutputTuple >
-    struct GridPartGetter< Grid, OutputTuple, 0 >
-    {
-      typedef AdaptiveLeafGridPart< Grid > GridPartType;
-
-      GridPartGetter ( const Grid &grid, const OutputTuple & )
-      : gridPart_( const_cast< Grid & >( grid ) )
-      {}
-
-      const GridPartType &gridPart () const
-      {
-        return gridPart_;
-      }
-
-    protected:
-      const GridPartType gridPart_;
-    };
-
-
 #if USE_VTKWRITER
       template< class VTKIOType >
       struct VTKListEntry
@@ -263,7 +223,6 @@ namespace Dune
       template< class GridPartType >
       class GnuplotOutputer;
 
-    protected:
       enum OutputFormat { vtk = 0, vtkvtx = 1, subvtk = 2 , binary = 3, gnuplot = 4, none = 5 };
 
       //! \brief type of grid used
@@ -437,7 +396,6 @@ namespace Dune
           grapeDisplay( data_ );
       }
 
-    protected:
       //! \brief display data with grape
       template< class OutputTupleType >
       void grapeDisplay ( OutputTupleType &data ) const;
@@ -468,12 +426,8 @@ namespace Dune
       mutable std::ofstream sequence_;
       mutable std::ofstream pvd_;
       const DataOutputParameters* param_;
-    }; // end class DataOutput
+    };
 
-
-
-    // DataOutput::GridPartGetter
-    // --------------------------
 
 
     // DataOutput::VTKFunc
@@ -495,20 +449,12 @@ namespace Dune
     public:
       VTKFunc ( const GridPartType &gridPart, const DFType &df )
       : df_( df ),
-        space_( const_cast< GridPartType & >( gridPart ) ),
-        func_( 0 )
-      {
-        // space_.setDescription(df.space().getDescription());
-      }
-
-      ~VTKFunc ()
-      {
-        delete func_;
-      }
+        space_( const_cast< GridPartType & >( gridPart ) )
+      {}
 
       virtual void add ( VTKIOType &vtkio ) const
       {
-        func_ = new NewFunctionType( df_.name()+"vtx-prj" , space_ );
+        func_.reset( new NewFunctionType( df_.name()+"vtx-prj" , space_ ) );
         if( df_.space().continuous() )
         {
           interpolate( df_, *func_ );
@@ -521,12 +467,12 @@ namespace Dune
         vtkio.addVertexData( *func_ );
       }
 
-    private:
-      VTKFunc ( const VTKFunc & );
+      VTKFunc ( const VTKFunc & ) = delete;
 
+    private:
       const DFType& df_;
       LagrangeSpaceType space_;
-      mutable NewFunctionType *func_;
+      mutable std::unique_ptr<NewFunctionType> func_;
     };
 #endif // #if ENABLE_VTXPROJECTION
 #endif // #if USE_VTKWRITER
@@ -547,24 +493,26 @@ namespace Dune
         conforming_( conforming )
       {}
 
-      //! Applies the setting on every DiscreteFunction/LocalFunction pair.
-      template< class DFType >
-      void visit ( DFType *df )
+      template< typename ...  T >
+      void forEach ( std::tuple< T ... >& data )
       {
-        if( df )
-        {
-          if( conforming_ || (df->space().order() == 0) )
-            vtkOut_.addCellData( *df );
-          else
-            vtkOut_.addVertexData( *df );
-        }
+        for_each( data, [&]( auto df, auto )
+                        {
+                          if( df )
+                          {
+                            if( conforming_ || (df->space().order() == 0) )
+                              vtkOut_.addCellData( *df );
+                            else
+                              vtkOut_.addVertexData( *df );
+                          }
+                        });
       }
 
-      template< class OutputTuple >
-      void forEach ( OutputTuple &data )
+      template< typename T >
+      void forEach ( T& data )
       {
-        ForEachValue< OutputTuple > forEach( data );
-        forEach.apply( *this );
+        std::tuple< T > tup( data );
+        forEach( tup );
       }
 
     private:
@@ -590,39 +538,31 @@ namespace Dune
         vec_()
       {}
 
-      //! destructor, delete entries of list
-      ~VTKOutputerLagrange ()
+      template< typename ...  T >
+      void forEach ( std::tuple< T ... >& data )
       {
-        for( auto& entry : vec_ )
-        {
-          delete entry;
-          entry = nullptr;
-        }
+        for_each( data, [&]( auto df, auto )
+                        {
+                          if( df )
+                          {
+                            typedef typename std::remove_pointer< decltype( df ) >::type DFType;
+                            vec_.emplace_back( new VTKFunc< VTKOut, DFType >( vtkOut_.gridPart(), *df ) );
+                            vec_.back()->add( vtkOut_ );
+                          }
+                        });
       }
 
-      //! Applies the setting on every DiscreteFunction/LocalFunction pair.
-      template< class DFType >
-      void visit ( DFType *df )
+      template< typename T >
+      void forEach ( T& data )
       {
-        if( df )
-        {
-          auto entry = new VTKFunc< VTKOut, DFType >( vtkOut_.gridPart(), *df );
-          entry->add( vtkOut_ );
-          vec_.push_back( entry );
-        }
-      }
-
-      template< class OutputTuple >
-      void forEach ( OutputTuple &data )
-      {
-        ForEachValue< OutputTuple > forEach( data );
-        forEach.apply( *this );
+        std::tuple< T > tup( data );
+        forEach( tup );
       }
 
     private:
       VTKOut &vtkOut_;
       typedef VTKListEntry< VTKOut > VTKListEntryType;
-      std::vector< VTKListEntryType * > vec_;
+      std::vector<std::unique_ptr<VTKListEntryType> > vec_;
     };
 #endif // #if ENABLE_VTXPROJECTION
 #endif // #if USE_VTKWRITER
@@ -631,7 +571,6 @@ namespace Dune
 
     // DataOutput::GnuplotOutputer
     // ---------------------------
-
     template< class GridImp, class DataImp >
     template< class GridPartType >
     class DataOutput< GridImp, DataImp >::GnuplotOutputer
@@ -651,35 +590,38 @@ namespace Dune
       : out_(out), quad_(quad), i_(i), en_(en)
       {}
 
-      //! Applies the setting on every DiscreteFunction/LocalFunction pair.
-      template <class DFType>
-      void visit(DFType* df)
+      template< typename ... T >
+      void forEach ( std::tuple< T ... >& data )
       {
-        if( df )
-        {
-          auto lf = df->localFunction(en_);
-          typename DFType::DiscreteFunctionSpaceType::RangeType u;
-          lf.evaluate( quad_[ i_ ], u );
+        for_each( data, [&]( auto df, auto )
+                        {
+                          if( df )
+                          {
+                            auto lf = df->localFunction(en_);
+                            typedef typename std::remove_pointer< decltype( df ) >::type DFType;
+                            typename DFType::DiscreteFunctionSpaceType::RangeType u;
+                            lf.evaluate( quad_[ i_ ], u );
 
-          constexpr int dimRange = DFType::DiscreteFunctionSpaceType::dimRange;
-          for( auto k = 0; k < dimRange; ++k )
-            out_ << "  " << u[ k ];
-        }
+                            constexpr int dimRange = DFType::DiscreteFunctionSpaceType::dimRange;
+                            for( auto k = 0; k < dimRange; ++k )
+                              out_ << "  " << u[ k ];
+                          }
+                        });
       }
 
-      template< class OutputTuple >
-      void forEach ( OutputTuple &data )
+      template< typename T >
+      void forEach ( T& data )
       {
-        ForEachValue< OutputTuple > forEach( data );
-        forEach.apply( *this );
+        std::tuple< T > tup( data );
+        forEach( tup );
       }
+
     };
 
 
 
     // Implementation of DataOutput
     // ----------------------------
-
     template< class GridImp, class DataImp >
     inline DataOutput< GridImp, DataImp >
       ::DataOutput ( const GridType &grid, OutPutDataType &data,
@@ -898,42 +840,34 @@ namespace Dune
       // generate filename, with path only for serial run
       auto name = generateFilename( (parallel ? datapref_ : path_ + "/" + datapref_ ), writeStep_ );
 
+      // get GridPart
+      using std::get;
+      const auto& gridPart = get< 0 >( data_ )->space().gridPart();
+      typedef typename std::decay< decltype( gridPart ) >::type GridPartType;
+
       if( vertexData )
       {
 #if ENABLE_VTXPROJECTION
-        // get gridpart from first discrete function in tuple
-        typedef GridPartGetter< GridType, OutPutDataType > GridPartGetterType;
-        GridPartGetterType gp( grid_, data_ );
-        const auto &gridPart = gp.gridPart();
-
         // create vtk output handler
-        typedef VTKIO < typename GridPartGetterType::GridPartType > VTKIOType;
+        typedef VTKIO < GridPartType > VTKIOType;
         VTKIOType vtkio ( gridPart, VTK::conforming, param_->parameter() );
 
         // add all functions
         VTKOutputerLagrange< VTKIOType > io( vtkio );
         io.forEach( data_ );
 
+        // write all data
         if( parallel )
-        {
-          // write all data for parallel runs
           filename = vtkio.pwrite( name, path_, "." );
-        }
         else
-        {
-          // write all data serial
           filename = vtkio.write( name );
-        }
 #endif
       }
       else if ( outputFormat_ == vtk )
       {
-        typedef GridPartGetter< GridType, OutPutDataType> GridPartGetterType;
-        GridPartGetterType gp( grid_, data_ );
-
         // create vtk output handler
-        typedef VTKIO< typename GridPartGetterType::GridPartType > VTKIOType;
-        VTKIOType vtkio( gp.gridPart(), conformingOutput_ ? VTK::conforming : VTK::nonconforming, param_->parameter() );
+        typedef VTKIO< GridPartType > VTKIOType;
+        VTKIOType vtkio( gridPart, conformingOutput_ ? VTK::conforming : VTK::nonconforming, param_->parameter() );
 
         // add all functions
         VTKOutputerDG< VTKIOType > io( vtkio, conformingOutput_ );
@@ -941,24 +875,15 @@ namespace Dune
 
         // write all data
         if( parallel )
-        {
-          // write all data for parallel runs
           filename = vtkio.pwrite( name, path_, "." );
-        }
         else
-        {
-          // write all data serial
           filename = vtkio.write( name );
-        }
       }
       else if ( outputFormat_ == subvtk )
       {
-        typedef GridPartGetter< GridType, OutPutDataType> GridPartGetterType;
-        GridPartGetterType gp( grid_, data_ );
-
         // create vtk output handler
-        typedef SubsamplingVTKIO < typename GridPartGetterType :: GridPartType > VTKIOType;
-        VTKIOType vtkio ( gp.gridPart(), static_cast< unsigned int >( param_->subsamplingLevel() ), param_->parameter() );
+        typedef SubsamplingVTKIO < GridPartType > VTKIOType;
+        VTKIOType vtkio ( gridPart, static_cast< unsigned int >( param_->subsamplingLevel() ), param_->parameter() );
 
         // add all functions
         VTKOutputerDG< VTKIOType > io( vtkio, conformingOutput_ );
@@ -966,15 +891,9 @@ namespace Dune
 
         // write all data
         if( parallel )
-        {
-          // write all data for parallel runs
           filename = vtkio.pwrite( name, path_, "." );
-        }
         else
-        {
-          // write all data serial
           filename = vtkio.write( name );
-        }
       }
       return filename;
     }
@@ -990,14 +909,11 @@ namespace Dune
       std::ofstream gnuout(name.c_str());
       gnuout << std::scientific << std::setprecision( 16 );
 
-      typedef GridPartGetter< GridType, OutPutDataType > GridPartGetterType;
-      GridPartGetterType gp( grid_, data_ );
-      const auto &gridPart = gp.gridPart();
-
       // start iteration
-      typedef typename GridPartGetterType::GridPartType GridPartType;
-      typedef typename GridPartType::GridViewType GridViewType;
-      for( const auto entity : elements( static_cast<GridViewType>( gridPart ) ) )
+      using std::get;
+      const auto& gridPart = get< 0 >( data_ )->space().gridPart();
+      typedef typename std::decay< decltype( gridPart ) >::type GridPartType;
+      for( const auto& entity : elements( gridPart ) )
       {
         CachingQuadrature< GridPartType, 0 > quad( entity, 1 );
         for( decltype(quad.nop()) i = 0; i < quad.nop(); ++i )
@@ -1023,14 +939,14 @@ namespace Dune
       IOTuple<OutPutDataType>::addToDisplay(grape,data);
       grape.display();
     }
-#else // #if USE_GRAPE
+#else
     template< class GridImp, class DataImp >
     template< class OutputTupleType >
     inline void DataOutput< GridImp, DataImp >::grapeDisplay ( OutputTupleType &data ) const
     {
       std::cerr << "WARNING: HAVE_GRAPE == 0, but grapeDisplay == true, recompile with grape support for online display!" << std::endl;
     }
-#endif // #else // #if USE_GRAPE
+#endif
 
   } // end namespace Fem
 
