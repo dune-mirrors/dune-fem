@@ -115,6 +115,12 @@ namespace Dune
         return indexSet().size( type );
       }
 
+      template<class EntityType>
+      bool contains (const EntityType& e) const
+      {
+        return indexSet().contains(e);
+      }
+
       template< int codim >
       typename Codim< codim >::Iterator begin () const
       {
