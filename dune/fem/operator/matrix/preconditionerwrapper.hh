@@ -67,6 +67,55 @@ namespace Dune
     };
 
 
+    template< class X, class Y >
+    class IdentityPreconditionerWrapper : public Preconditioner<X,Y>
+    {
+      template <class XImp, class YImp>
+      struct Apply
+      {
+        inline static void copy(XImp& v, const YImp& d)
+        {
+        }
+      };
+
+      template <class XImp>
+      struct Apply<XImp,XImp>
+      {
+        inline static void copy(X& v, const Y& d)
+        {
+          v = d;
+        }
+      };
+
+    public:
+      //! \brief The domain type of the preconditioner.
+      typedef X domain_type;
+      //! \brief The range type of the preconditioner.
+      typedef Y range_type;
+      //! \brief The field type of the preconditioner.
+      typedef typename X::field_type field_type;
+
+      enum {
+        //! \brief The category the precondtioner is part of.
+        category=SolverCategory::sequential };
+
+      //! default constructor
+      IdentityPreconditionerWrapper(){}
+
+      //! \copydoc Preconditioner
+      virtual void pre (X& x, Y& b) {}
+
+      //! \copydoc Preconditioner
+      virtual void apply (X& v, const Y& d)
+      {
+        Apply< X, Y> :: copy( v, d );
+      }
+
+      //! \copydoc Preconditioner
+      virtual void post (X& x) {}
+    };
+
+
     //! wrapper class to store perconditioner
     //! as the interface class does not have to category
     //! enum

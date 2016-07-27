@@ -321,7 +321,7 @@ namespace Dune
 
         Dune::Timer commTime;
 
-        // create temporary discretet function object
+        // create temporary discrete function object
         RowDiscreteFunctionType tmp ("DGParallelMatrixAdapter::communicate",
                                      rowSpace_, x );
 
