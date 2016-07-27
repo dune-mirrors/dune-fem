@@ -14,6 +14,8 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/superlu.hh>
 
+#include <dune/fem/operator/linear/istladapter.hh>
+
 namespace Dune
 {
 
@@ -34,16 +36,14 @@ namespace Dune
     template< class OperatorImp, class DiscreteFunction, class SolverCaller >
     struct DefaultSolverCaller
     {
-
+      template <class MatrixAdapter>
       static std::pair< int, double >
       call ( const OperatorImp &op,
+             MatrixAdapter& matrix,
              const DiscreteFunction &arg, DiscreteFunction &dest,
              double reduction, double absLimit, int maxIter, bool verbose,
              const ParameterReader &parameter )
       {
-        typedef typename OperatorImp :: MatrixAdapterType MatrixAdapterType;
-        MatrixAdapterType matrix = op.systemMatrix().matrixAdapter();
-
         typedef typename DiscreteFunction :: DofStorageType BlockVectorType;
 
         // verbose only in verbose mode and for rank 0
@@ -85,8 +85,11 @@ namespace Dune
     public:
       typedef DF DiscreteFunctionType;
       typedef DiscreteFunctionType  DestinationType;
+      typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
       typedef Op OperatorType;
       typedef SolverCaller SolverCallerType;
+
+      typedef Dune::Fem::ISTLMatrixFreeOperatorAdapter< OperatorType >  ISTLMatrixFreeAdapterType;
 
       /** \brief constructor
        *
@@ -162,8 +165,16 @@ namespace Dune
       */
       void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
       {
+        typedef Dune::Fem::AssembledOperator< DiscreteFunctionType, DiscreteFunctionType > AssembledOperatorType;
+        typedef AdapterSelector< ISTLMatrixFreeAdapterType,
+                                 std::is_same< AssembledOperatorType, OperatorType > :: value > Selector;
+
+        std::unique_ptr< ISTLMatrixFreeAdapterType > matrixFreeAdapter;
+
         std::pair< int, double > info
-          = SolverCallerType::call( op_, arg, dest, reduction_, absLimit_, maxIter_, verbose_, parameter_ );
+          = SolverCallerType::call( op_,
+                                    Selector::adapter( op_, arg.space(), matrixFreeAdapter ),
+                                    arg, dest, reduction_, absLimit_, maxIter_, verbose_, parameter_ );
 
         iterations_ = info.first;
         averageCommTime_ = info.second;
@@ -189,6 +200,33 @@ namespace Dune
       {
         apply( arg,dest );
       }
+
+    protected:
+      template <class Adapter, bool isAssembled >
+      struct AdapterSelector
+      {
+        static Adapter& adapter( const OperatorType& op,
+                                 const DiscreteFunctionSpaceType& space,
+                                 std::unique_ptr< Adapter >& matrixFreeAdapter )
+        {
+          if( ! matrixFreeAdapter )
+            matrixFreeAdapter.reset( new Adapter( op, space, space ) );
+
+          return *matrixFreeAdapter;
+        }
+      };
+
+      template <class Adapter>
+      struct AdapterSelector< Adapter, true >
+      {
+        typedef typename OperatorType :: MatrixAdapterType MatrixAdapterType;
+        static MatrixAdapterType& adapter( const OperatorType& op,
+                                           const DiscreteFunctionSpaceType& space,
+                                           std::unique_ptr< Adapter >& matrixFreeAdapter )
+        {
+          return op.systemMatrix().matrixAdapter();
+        }
+      };
 
     private:
       const OperatorType &op_;
@@ -308,16 +346,15 @@ namespace Dune
     template< class OperatorImp, class DiscreteFunction >
     struct GMResSolverCaller
     {
-
+      template <class MatrixAdapter>
       static std::pair< int, double >
       call ( const OperatorImp &op,
+             MatrixAdapter& matrix,
              const DiscreteFunction &arg, DiscreteFunction &dest,
              double reduction, double absLimit, int maxIter, bool verbose,
              const ParameterReader &parameter )
       {
         int restart = parameter.getValue< int >( "istl.gmres.restart", 5 );
-        typedef typename OperatorImp :: MatrixAdapterType MatrixAdapterType;
-        MatrixAdapterType matrix = op.systemMatrix().matrixAdapter();
 
         typedef typename DiscreteFunction :: DofStorageType BlockVectorType;
 
@@ -411,15 +448,19 @@ namespace Dune
     template< class OperatorImp, class DiscreteFunction >
     struct SuperLUSolverCaller
     {
-
+      template <class MatrixAdapterDummy>
       static std::pair< int, double >
       call ( const OperatorImp &op,
+             MatrixAdapterDummy&,
              const DiscreteFunction &arg, DiscreteFunction &dest,
              double reduction, double absLimit, int maxIter, bool verbose,
              const ParameterReader &parameter )
       {
         typedef typename OperatorImp :: MatrixAdapterType MatrixAdapterType;
         MatrixAdapterType matrix  = op.systemMatrix().matrixAdapter();
+
+        static_assert( std::is_same< MatrixAdapterDummy, MatrixAdapterType > :: value,
+                       "SuperLU only works with assembled operators" );
 
         InverseOperatorResult returnInfo;
 #if HAVE_SUPERLU
