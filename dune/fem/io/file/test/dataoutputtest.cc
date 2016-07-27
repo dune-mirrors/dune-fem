@@ -1,7 +1,9 @@
-#include <iostream>
 #include <config.h>
-#include <string>
+
+#include <iostream>
 #include <sstream>
+#include <string>
+#include <tuple>
 
 // #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 static const int dimw = Dune::GridSelector::dimworld;
@@ -327,7 +329,7 @@ int main (int argc, char **argv)
     typedef LocalFunctionAdapter<AddLsgErrType> AddLsgErrFunction;
     AddLsgErrFunction addLsgErr("U",evalAddLsgErr,solution.space().gridPart());
 
-    typedef tuple<AddLsgErrFunction*> OutputType;
+    typedef std::tuple<AddLsgErrFunction*> OutputType;
     OutputType out(&addLsgErr);
 
     {
