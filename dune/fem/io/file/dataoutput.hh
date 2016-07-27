@@ -15,6 +15,8 @@
 #define USE_VTKWRITER 1
 #endif
 
+#include <dune/fem/common/get.hh>
+#include <dune/fem/common/tupleforeach.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/io/file/iointerface.hh>
@@ -491,24 +493,26 @@ namespace Dune
         conforming_( conforming )
       {}
 
-      //! Applies the setting on every DiscreteFunction/LocalFunction pair.
-      template< class DFType >
-      void visit ( DFType *df )
+      template< typename ...  T >
+      void forEach ( std::tuple< T ... >& data )
       {
-        if( df )
-        {
-          if( conforming_ || (df->space().order() == 0) )
-            vtkOut_.addCellData( *df );
-          else
-            vtkOut_.addVertexData( *df );
-        }
+        for_each( data, [&]( auto df, auto )
+                        {
+                          if( df )
+                          {
+                            if( conforming_ || (df->space().order() == 0) )
+                              vtkOut_.addCellData( *df );
+                            else
+                              vtkOut_.addVertexData( *df );
+                          }
+                        });
       }
 
-      template< class OutputTuple >
-      void forEach ( OutputTuple &data )
+      template< typename T >
+      void forEach ( T& data )
       {
-        ForEachValue< OutputTuple > forEach( data );
-        forEach.apply( *this );
+        std::tuple< T > tup( data );
+        forEach( tup );
       }
 
     private:
@@ -534,22 +538,25 @@ namespace Dune
         vec_()
       {}
 
-      //! Applies the setting on every DiscreteFunction/LocalFunction pair.
-      template< class DFType >
-      void visit ( DFType *df )
+      template< typename ...  T >
+      void forEach ( std::tuple< T ... >& data )
       {
-        if( df )
-        {
-          vec_.emplace_back( new VTKFunc< VTKOut, DFType >( vtkOut_.gridPart(), *df ) );
-          vec_.back()->add( vtkOut_ );
-        }
+        for_each( data, [&]( auto df, auto )
+                        {
+                          if( df )
+                          {
+                            typedef typename std::remove_pointer< decltype( df ) >::type DFType;
+                            vec_.emplace_back( new VTKFunc< VTKOut, DFType >( vtkOut_.gridPart(), *df ) );
+                            vec_.back()->add( vtkOut_ );
+                          }
+                        });
       }
 
-      template< class OutputTuple >
-      void forEach ( OutputTuple &data )
+      template< typename T >
+      void forEach ( T& data )
       {
-        ForEachValue< OutputTuple > forEach( data );
-        forEach.apply( *this );
+        std::tuple< T > tup( data );
+        forEach( tup );
       }
 
     private:
@@ -583,28 +590,32 @@ namespace Dune
       : out_(out), quad_(quad), i_(i), en_(en)
       {}
 
-      //! Applies the setting on every DiscreteFunction/LocalFunction pair.
-      template <class DFType>
-      void visit(DFType* df)
+      template< typename ... T >
+      void forEach ( std::tuple< T ... >& data )
       {
-        if( df )
-        {
-          auto lf = df->localFunction(en_);
-          typename DFType::DiscreteFunctionSpaceType::RangeType u;
-          lf.evaluate( quad_[ i_ ], u );
+        for_each( data, [&]( auto df, auto )
+                        {
+                          if( df )
+                          {
+                            auto lf = df->localFunction(en_);
+                            typedef typename std::remove_pointer< decltype( df ) >::type DFType;
+                            typename DFType::DiscreteFunctionSpaceType::RangeType u;
+                            lf.evaluate( quad_[ i_ ], u );
 
-          constexpr int dimRange = DFType::DiscreteFunctionSpaceType::dimRange;
-          for( auto k = 0; k < dimRange; ++k )
-            out_ << "  " << u[ k ];
-        }
+                            constexpr int dimRange = DFType::DiscreteFunctionSpaceType::dimRange;
+                            for( auto k = 0; k < dimRange; ++k )
+                              out_ << "  " << u[ k ];
+                          }
+                        });
       }
 
-      template< class OutputTuple >
-      void forEach ( OutputTuple &data )
+      template< typename T >
+      void forEach ( T& data )
       {
-        ForEachValue< OutputTuple > forEach( data );
-        forEach.apply( *this );
+        std::tuple< T > tup( data );
+        forEach( tup );
       }
+
     };
 
 
