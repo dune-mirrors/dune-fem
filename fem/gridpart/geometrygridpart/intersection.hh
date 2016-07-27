@@ -4,6 +4,7 @@
 #include <type_traits>
 
 #include <dune/common/version.hh>
+#include <dune/fem/misc/compatibility.hh>
 
 #include <dune/fem/gridpart/geometrygridpart/geometry.hh>
 #include <dune/geometry/affinegeometry.hh>
@@ -21,6 +22,7 @@ namespace Dune
     template< class GridFamily >
     class GeometryGridPartIntersection
     {
+      typedef GeometryGridPartIntersection<GridFamily> This;
       typedef typename std::remove_const< GridFamily >::type::Traits Traits;
 
     public:
@@ -30,7 +32,7 @@ namespace Dune
       static const int dimensionworld = std::remove_const< GridFamily >::type::dimensionworld;
 
       typedef typename Traits::template Codim< 0 >::Entity Entity;
-#if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
+#if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
       typedef typename Traits::template Codim< 0 >::EntityPointer EntityPointer;
 #endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
       typedef typename Traits::template Codim< 0 >::Geometry ElementGeometry;
@@ -42,7 +44,7 @@ namespace Dune
       typedef Dune::AffineGeometry< ctype, 1, GridFamily::dimension > AffineGeometryType;
 
     private:
-#if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
+#if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
       typedef typename EntityPointer::Implementation EntityPointerImplType;
 #endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
       typedef typename ElementGeometry::Implementation ElementGeometryImplType;
@@ -60,12 +62,15 @@ namespace Dune
 
       operator bool () const { return bool( hostIntersection_ ); }
 
-#if DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
-      Entity inside () const { return EntityImplType( hostIntersection().inside(), gridFunction() ); }
-      Entity outside () const { return EntityImplType( hostIntersection().outside(), gridFunction() ); }
+#if DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
+      Entity inside () const { return typename Entity::Implementation( gridFunction(), make_entity(hostIntersection().inside()) ); }
+      Entity outside () const { return typename Entity::Implementation( gridFunction(), make_entity(hostIntersection().outside()) ); }
 #else // #if DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
       EntityPointer inside () const
       {
+        EntityPointerImplType impl( hostIntersection().inside(), gridFunction());
+        EntityPointer eptr(impl);
+        return eptr;
         return EntityPointerImplType( hostIntersection().inside(), gridFunction() );
       }
 
@@ -132,6 +137,11 @@ namespace Dune
               gridFunction_, hostIntersection_, affineGeometry) );
       }
 
+      bool equals(const This &other) const
+      {
+        return hostIntersection() == other.hostIntersection();
+      }
+
       GeometryType type () const
       {
         return hostIntersection().type();
@@ -157,7 +167,7 @@ namespace Dune
         FieldVector< ctype, dimension > x( geometryInInside().global( local ) );
 
         const FieldMatrix< ctype, dimensionworld, dimension > &jit = insideGeo_.jacobianInverseTransposed( x );
-        const FieldVector< ctype, dimension > &refNormal = refElement.volumeOuterNormal( indexInInside() );
+        const FieldVector< ctype, dimension > &refNormal = refElement.integrationOuterNormal( indexInInside() );
         jit.mv( refNormal, normal );
         normal *= geometry().integrationElement(local)/normal.two_norm();
         // double det = std::sqrt( GeometryGridPartGeometryType::MatrixHelper::template detATA<dimensionworld,dimension>( jit ) );
