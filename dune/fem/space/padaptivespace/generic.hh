@@ -12,6 +12,7 @@
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/space/shapefunctionset/proxy.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
 #include <dune/fem/space/shapefunctionset/simple.hh>
@@ -95,7 +96,7 @@ namespace Dune
         PAdaptiveDiscreteFunctionEntryInterface () {}
       };
 
-      template < class DF, class LocalInterpolation >
+      template < class DF >
       class PAdaptiveDiscreteFunctionEntry;
 
       typedef std::list< PAdaptiveDiscreteFunctionEntryInterface * > PAdaptiveDiscreteFunctionListType;
@@ -394,7 +395,7 @@ namespace Dune
     // ------------------------------------------------------------------------------
 
     template< class Traits >
-    template < class DF, class LocalInterpolation >
+    template < class DF >
     class GenericDiscreteFunctionSpace< Traits >::PAdaptiveDiscreteFunctionEntry
     : public PAdaptiveDiscreteFunctionEntryInterface
     {
@@ -429,7 +430,7 @@ namespace Dune
 
         // interpolate to new space, this can be a
         // Lagrange interpolation or a L2 projection
-        LocalInterpolation::apply( tmp, df_ );
+        interpolate( tmp, df_ );
       }
     };
 
