@@ -636,7 +636,7 @@ namespace Dune
       {
 #if HAVE_MPI
         // rebuild slave dofs if grid was changed
-        SlaveDofsType &slaveDofs = slaveDofProvider_.slaveDofs();
+        const auto& slaveDofs = slaveDofProvider_.slaveDofs();
 
         RangeFieldType scp = 0;
         int i = 0;
