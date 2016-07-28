@@ -331,7 +331,7 @@ namespace Dune
       template <class DFType>
       RangeFieldType scalarProductDofs ( const DiscreteFunctionInterface< DFType > &other ) const
       {
-        return asImp().scalarProductDofs( other );
+        return asImp().scalarProductDofs( other.asImp() );
       }
 
       /** \brief Squared small l^2 norm of all dofs
@@ -509,6 +509,7 @@ namespace Dune
 
       enum { myId_ = 0 };
 
+    protected:
       typedef ParallelScalarProduct< DiscreteFunctionInterfaceType > ScalarProductType;
 
     public:
