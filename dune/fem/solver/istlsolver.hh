@@ -39,7 +39,7 @@ namespace Dune
       template <class MatrixAdapter>
       static std::pair< int, double >
       call ( const OperatorImp &op,
-             MatrixAdapter& matrix,
+             MatrixAdapter matrix,
              const DiscreteFunction &arg, DiscreteFunction &dest,
              double reduction, double absLimit, int maxIter, bool verbose,
              const ParameterReader &parameter )
@@ -58,7 +58,8 @@ namespace Dune
             std::cout << SolverCaller::name() <<": reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit << std::endl;
         }
 
-        typename SolverCaller :: SolverType solver( matrix, matrix.scp(), matrix.preconditionAdapter(), reduction, maxIter, verb );
+        typename SolverCaller :: SolverType solver( matrix, dest.scalarProduct(),
+                                                    matrix.preconditionAdapter(), reduction, maxIter, verb );
 
         // copy right hand side since ISTL is overwriting it
         BlockVectorType rhs( arg.blockVector() );
@@ -165,15 +166,15 @@ namespace Dune
       */
       void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
       {
-        typedef Dune::Fem::AssembledOperator< DiscreteFunctionType, DiscreteFunctionType > AssembledOperatorType;
+        // depending on the type of Op we select different ISTL linear operator adapters
+        typedef Dune::Fem::ISTLMatrixObject< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > AssembledOperatorType;
         typedef AdapterSelector< ISTLMatrixFreeAdapterType,
-                                 std::is_same< AssembledOperatorType, OperatorType > :: value > Selector;
-
-        std::unique_ptr< ISTLMatrixFreeAdapterType > matrixFreeAdapter;
+                                 std::is_base_of< AssembledOperatorType, OperatorType > :: value
+                               > Selector;
 
         std::pair< int, double > info
           = SolverCallerType::call( op_,
-                                    Selector::adapter( op_, arg.space(), matrixFreeAdapter ),
+                                    Selector::adapter( op_, arg.space() ),
                                     arg, dest, reduction_, absLimit_, maxIter_, verbose_, parameter_ );
 
         iterations_ = info.first;
@@ -205,14 +206,10 @@ namespace Dune
       template <class Adapter, bool isAssembled >
       struct AdapterSelector
       {
-        static Adapter& adapter( const OperatorType& op,
-                                 const DiscreteFunctionSpaceType& space,
-                                 std::unique_ptr< Adapter >& matrixFreeAdapter )
+        static Adapter adapter( const OperatorType& op,
+                                const DiscreteFunctionSpaceType& space )
         {
-          if( ! matrixFreeAdapter )
-            matrixFreeAdapter.reset( new Adapter( op, space, space ) );
-
-          return *matrixFreeAdapter;
+          return Adapter( op, space, space );
         }
       };
 
@@ -220,9 +217,8 @@ namespace Dune
       struct AdapterSelector< Adapter, true >
       {
         typedef typename OperatorType :: MatrixAdapterType MatrixAdapterType;
-        static MatrixAdapterType& adapter( const OperatorType& op,
-                                           const DiscreteFunctionSpaceType& space,
-                                           std::unique_ptr< Adapter >& matrixFreeAdapter )
+        static MatrixAdapterType adapter( const OperatorType& op,
+                                          const DiscreteFunctionSpaceType& space )
         {
           return op.systemMatrix().matrixAdapter();
         }
@@ -349,7 +345,7 @@ namespace Dune
       template <class MatrixAdapter>
       static std::pair< int, double >
       call ( const OperatorImp &op,
-             MatrixAdapter& matrix,
+             MatrixAdapter matrix,
              const DiscreteFunction &arg, DiscreteFunction &dest,
              double reduction, double absLimit, int maxIter, bool verbose,
              const ParameterReader &parameter )
@@ -451,7 +447,7 @@ namespace Dune
       template <class MatrixAdapterDummy>
       static std::pair< int, double >
       call ( const OperatorImp &op,
-             MatrixAdapterDummy&,
+             MatrixAdapterDummy dummy,
              const DiscreteFunction &arg, DiscreteFunction &dest,
              double reduction, double absLimit, int maxIter, bool verbose,
              const ParameterReader &parameter )

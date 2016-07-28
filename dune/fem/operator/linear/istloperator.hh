@@ -31,6 +31,13 @@ namespace Dune
       using BaseType::apply;
       using BaseType::communicate;
 
+      //! constructor
+      //! \param domainSpace space defining domain of operator
+      //! \param rangeSpace  space defining range of operator
+      //! \param param ISTL matrix parameters for preconditioning
+      //!         - Preconditioning: {0,1,2,3,4,5,6} put -1 to get info
+      //!         - Pre-iteration: number of iteration of preconditioner
+      //!         - Pre-relaxation: relaxation factor
       ISTLLinearOperator( const std::string & ,
                           const DomainSpaceType &domainSpace,
                           const RangeSpaceType &rangeSpace,

@@ -94,11 +94,19 @@ namespace Dune
       typedef Fem::ParallelScalarProduct< RangeFunctionType >                 ParallelScalarProductType;
       typedef Fem::IdentityPreconditionerWrapper< domain_type, range_type >   PreconditionAdapterType;
 
+      //! constructor creating matrix free ISTL adapter
       ISTLMatrixFreeOperatorAdapter ( const OperatorType &op,
                                       const DomainFunctionSpaceType &domainSpace,
                                       const RangeFunctionSpaceType &rangeSpace )
         : BaseType( op, domainSpace, rangeSpace ),
           scp_( rangeSpace ),
+          preconditioner_()
+      {}
+
+      //! copy constructor
+      ISTLMatrixFreeOperatorAdapter ( const ISTLMatrixFreeOperatorAdapter& other )
+        : BaseType( other ),
+          scp_( other.rangeSpace_ ),
           preconditioner_()
       {}
 
