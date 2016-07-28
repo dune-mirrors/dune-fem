@@ -38,16 +38,28 @@ PYBIND11_PLUGIN( femmpi )
   {
     pybind11::class_< Dune::Fem::ParameterContainer > param( module, "Parameter" );
     param.def("append", [](const Dune::Fem::ParameterContainer &, const std::string &filename)
-        { Dune::Fem::Parameter::append( filename ); }
+        { // int old = Dune::Fem::Parameter::setVerboseRank(0);
+          Dune::Fem::Parameter::append( filename );
+          // Dune::Fem::Parameter::setVerboseRank( old );
+        }
     );
     param.def("append", [](const Dune::Fem::ParameterContainer &, const std::map<std::string,std::string> &dict)
-        { for ( auto entery : dict ) Dune::Fem::Parameter::append( entery.first, entery.second ); }
+        { // int old = Dune::Fem::Parameter::setVerboseRank(0);
+          for ( auto entery : dict ) Dune::Fem::Parameter::append( entery.first, entery.second );
+          // Dune::Fem::Parameter::setVerboseRank( old );
+        }
     );
     param.def("append", [](const Dune::Fem::ParameterContainer &, const pybind11::dict &dict)
-        { for ( auto entery : dict ) Dune::Fem::Parameter::append( entery.first.str(), entery.second.str() ); }
+        { // int old = Dune::Fem::Parameter::setVerboseRank(0);
+          for ( auto entery : dict ) Dune::Fem::Parameter::append( entery.first.str(), entery.second.str() );
+          // Dune::Fem::Parameter::setVerboseRank( old );
+        }
     );
-    param.def("append", [](const Dune::Fem::ParameterContainer &, const std::string &key, const std::string &val)
-        { Dune::Fem::Parameter::append( key, val ); }
+    param.def("append", [](const Dune::Fem::ParameterContainer &, const std::string &key, const pybind11::handle &val)
+        { // int old = Dune::Fem::Parameter::setVerboseRank(0);
+          Dune::Fem::Parameter::append( key, val.str() );
+          // Dune::Fem::Parameter::setVerboseRank( old );
+        }
     );
     param.def("__str__", [](const Dune::Fem::ParameterContainer &)
         { std::stringstream str; Dune::Fem::Parameter::write( str ); return str.str(); }
