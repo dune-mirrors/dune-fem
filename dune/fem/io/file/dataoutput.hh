@@ -223,6 +223,7 @@ namespace Dune
       template< class GridPartType >
       class GnuplotOutputer;
 
+    public:
       enum OutputFormat { vtk = 0, vtkvtx = 1, subvtk = 2 , binary = 3, gnuplot = 4, none = 5 };
 
       //! \brief type of grid used
@@ -377,6 +378,23 @@ namespace Dune
       }
 
     protected:
+      auto getGridPart() const
+      {
+        static constexpr bool isNotEmpty = std::tuple_size< DataImp >::value > 0;
+        return getGridPart( std::integral_constant< bool, isNotEmpty > () );
+      }
+
+      auto getGridPart( std::integral_constant< bool, false > ) const
+      {
+        typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
+        return GridPartType( const_cast<GridType&> (grid_) );
+      }
+
+      auto getGridPart( std::integral_constant< bool, true > ) const
+      {
+        return std::get< 0 >( data_ )->space().gridPart();
+      }
+
 #if USE_VTKWRITER
       std::string writeVTKOutput () const;
 #endif
@@ -825,7 +843,6 @@ namespace Dune
       ++writeStep_;
     }
 
-
 #if USE_VTKWRITER
     template< class GridImp, class DataImp >
     inline std::string DataOutput< GridImp, DataImp >::writeVTKOutput () const
@@ -841,8 +858,7 @@ namespace Dune
       auto name = generateFilename( (parallel ? datapref_ : path_ + "/" + datapref_ ), writeStep_ );
 
       // get GridPart
-      using std::get;
-      const auto& gridPart = get< 0 >( data_ )->space().gridPart();
+      const auto& gridPart = getGridPart();
       typedef typename std::decay< decltype( gridPart ) >::type GridPartType;
 
       if( vertexData )
@@ -910,8 +926,7 @@ namespace Dune
       gnuout << std::scientific << std::setprecision( 16 );
 
       // start iteration
-      using std::get;
-      const auto& gridPart = get< 0 >( data_ )->space().gridPart();
+      const auto& gridPart = getGridPart();
       typedef typename std::decay< decltype( gridPart ) >::type GridPartType;
       for( const auto& entity : elements( gridPart ) )
       {
