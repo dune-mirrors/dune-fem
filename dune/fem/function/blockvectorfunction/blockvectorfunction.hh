@@ -47,6 +47,8 @@ namespace Dune
       typedef typename DofVectorType :: DofContainerType      DofContainerType;
       typedef DofContainerType                                DofStorageType;
 
+      typedef typename BaseType :: ScalarProductType          ScalarProductType;
+
       using BaseType::assign;
 
       /** \brief Constructor to use if the vector storing the dofs does not exist yet
@@ -114,7 +116,12 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::dofVector() */
       const DofVectorType& dofVector() const { return dofVector_; }
 
+      /** \brief returns ScalarProduct to be used with ISTLInverseOp */
+      ScalarProductType& scalarProduct() { return scalarProduct_ ; }
+
     protected:
+      using BaseType :: scalarProduct_;
+
       // allocate managed dof storage
       DofContainerType& allocateDofStorage ( const DiscreteFunctionSpaceType &space )
       {
