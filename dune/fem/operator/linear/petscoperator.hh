@@ -131,8 +131,7 @@ namespace Dune
       //! destructor deleting PETSc Mat object
       ~PetscLinearOperator ()
       {
-        if( status_ != statNothing )
-          ::Dune::Petsc::MatDestroy( &petscMatrix_ );
+        removeObj();
       }
 
       void communicate ()
@@ -183,9 +182,16 @@ namespace Dune
       {
         if(sequence_ != domainSpace().sequence())
         {
+          // clear Petsc Mat
+          removeObj();
+
           // reset temporary Petsc discrete functions
           petscArg_.reset();
           petscDest_.reset();
+
+          // update dof mappings
+          rowSlaveDofs_.update();
+          colSlaveDofs_.update();
 
           /*
           * initialize the row and column petsc dof mappings
@@ -389,6 +395,13 @@ namespace Dune
 
     private:
       PetscLinearOperator ();
+
+      //! destructor deleting PETSc Mat object
+      void removeObj ()
+      {
+        if( status_ != statNothing )
+          ::Dune::Petsc::MatDestroy( &petscMatrix_ );
+      }
 
       void setStatus(const Status &newstatus) const
       {

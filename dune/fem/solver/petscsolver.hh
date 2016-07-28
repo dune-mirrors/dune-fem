@@ -6,9 +6,11 @@
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/space/common/interpolate.hh>
 
 #if HAVE_PETSC
 #include <dune/fem/misc/petsc/petsccommon.hh>
+#include <dune/fem/function/petscdiscretefunction.hh>
 
 namespace Dune
 {
@@ -312,19 +314,32 @@ namespace Dune
       {
         // copy discrete functions
         PetscDiscreteFunctionType Arg("PetscSolver::arg", arg.space() );
-        Arg.assign( arg );
+        interpolate( arg, Arg );
+        //Arg.assign( arg );
 
         // also copy initial destination in case this is used a solver init value
         PetscDiscreteFunctionType Dest("PetscSolver::dest", dest.space() );
-        Dest.assign( dest );
+        interpolate( dest, Dest );
+        //Dest.assign( dest );
 
         apply( Arg, Dest );
         // copy destination back
-        dest.assign( Dest );
+        interpolate( Dest, dest );
+        //dest.assign( Dest );
       }
 
       void apply( const PetscDiscreteFunctionType& arg, PetscDiscreteFunctionType& dest ) const
       {
+        // get matrix from linear operator
+        Mat& A = const_cast< Mat & > (op_.petscMatrix());
+
+        // set operator to PETSc solver context
+        // ::Dune::Petsc::KSPSetOperators( ksp_, A, A, DIFFERENT_NONZERO_PATTERN);
+#if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 5
+        ::Dune::Petsc::KSPSetOperators( ksp_, A, A, SAME_PRECONDITIONER);
+#else
+        ::Dune::Petsc::KSPSetOperators( ksp_, A, A );
+#endif
         // call PETSc solvers
         ::Dune::Petsc::KSPSolve(ksp_, *arg.petscVec() , *dest.petscVec() );
 
