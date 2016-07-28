@@ -59,6 +59,9 @@ namespace Dune
       typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainSpaceType;
       typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeSpaceType;
 
+      typedef PetscDiscreteFunction< DomainSpaceType > PetscDomainFunctionType;
+      typedef PetscDiscreteFunction< RangeSpaceType  > PetscRangeFunctionType;
+
       typedef typename DomainSpaceType::GridPartType::template Codim< 0 >::EntityType RowEntityType;
       typedef typename RangeSpaceType::GridPartType::template Codim< 0 >::EntityType ColumnEntityType;
 
@@ -142,7 +145,24 @@ namespace Dune
       const DomainSpaceType& domainSpace () const { return domainSpace_; }
       const RangeSpaceType& rangeSpace () const { return rangeSpace_; }
 
-      void apply ( const DomainFunctionType &arg, RangeFunctionType &dest ) const
+      /** \brief application operator for arbitrary DiscreteFunction
+       *  \note This functions needs to make copies of the dof vectors into
+       *  PetscDiscreteFunction */
+      template <class DF, class RF>
+      void apply ( const DF &arg, RF &dest ) const
+      {
+        if( ! petscArg_ )
+          petscArg_.reset( new PetscDomainFunctionType( "PetscOp-arg", domainSpace_ ) );
+        if( ! petscDest_ )
+          petscDest_.reset( new PetscRangeFunctionType( "PetscOp-arg", rangeSpace_ ) );
+
+        petscArg_->assign( arg );
+        ::Dune::Petsc::MatMult( petscMatrix_, *(petscArg_->petscVec()) , *(petscDest_->petscVec()) );
+        dest.assign( *petscDest_ );
+      }
+
+      /** \brief application operator for PetscDiscreteFunction */
+      void apply ( const PetscDomainFunctionType &arg, PetscRangeFunctionType &dest ) const
       {
         ::Dune::Petsc::MatMult( petscMatrix_, *arg.petscVec() , *dest.petscVec() );
       }
@@ -163,6 +183,10 @@ namespace Dune
       {
         if(sequence_ != domainSpace().sequence())
         {
+          // reset temporary Petsc discrete functions
+          petscArg_.reset();
+          petscDest_.reset();
+
           /*
           * initialize the row and column petsc dof mappings
           */
@@ -407,6 +431,9 @@ namespace Dune
 
       mutable LocalMatrixStackType localMatrixStack_;
       mutable Status status_;
+
+      mutable std::unique_ptr< PetscDomainFunctionType > petscArg_;
+      mutable std::unique_ptr< PetscRangeFunctionType  > petscDest_;
     };
 
 

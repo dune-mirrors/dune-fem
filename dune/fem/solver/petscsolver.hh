@@ -47,6 +47,10 @@ namespace Dune
     public:
       typedef DF DiscreteFunctionType;
       typedef DiscreteFunctionType  DestinationType;
+
+      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+      typedef PetscDiscreteFunction< DiscreteFunctionSpaceType > PetscDiscreteFunctionType;
+
       typedef Op OperatorType;
 
       /** \brief constructor
@@ -303,7 +307,23 @@ namespace Dune
           \param[in] arg right hand side
           \param[out] dest solution
       */
-      void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+      template <class DiscreteFunction>
+      void apply( const DiscreteFunction& arg, DiscreteFunction& dest ) const
+      {
+        // copy discrete functions
+        PetscDiscreteFunctionType Arg("PetscSolver::arg", arg.space() );
+        Arg.assign( arg );
+
+        // also copy initial destination in case this is used a solver init value
+        PetscDiscreteFunctionType Dest("PetscSolver::dest", dest.space() );
+        Dest.assign( dest );
+
+        apply( Arg, Dest );
+        // copy destination back
+        dest.assign( Dest );
+      }
+
+      void apply( const PetscDiscreteFunctionType& arg, PetscDiscreteFunctionType& dest ) const
       {
         // call PETSc solvers
         ::Dune::Petsc::KSPSolve(ksp_, *arg.petscVec() , *dest.petscVec() );
