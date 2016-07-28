@@ -7,7 +7,7 @@ from types import ModuleType
 from ..generator import generator
 from . import space
 from . import function
-from .. import femmpi
+from dune.fem import comm
 
 import inspect
 
@@ -53,7 +53,7 @@ def writeVTK(grid,  name, celldata=[], pointdata=[], cellvector=[], pointvector=
 def levelFunction(self):
     return self.localGridFunction("level", function.Levels())
 def partitionFunction(self):
-    return self.localGridFunction("rank", function.Partition(femmpi.comm.rank))
+    return self.localGridFunction("rank", function.Partition(comm.rank))
 
 myGenerator = generator.Generator("GridPart",
         "dune/fempy/py" , "Dune::FemPy")

@@ -1,6 +1,9 @@
 #include <config.h>
 
+#include <sstream>
+
 #include <dune/fem/misc/mpimanager.hh>
+#include <dune/fem/io/parameter.hh>
 
 #include <dune/corepy/pybind11/pybind11.h>
 
@@ -30,6 +33,27 @@ PYBIND11_PLUGIN( femmpi )
   catch ( const std::exception &e )
   {
     std::cout << e.what() << std::endl;
+  }
+
+  {
+    pybind11::class_< Dune::Fem::ParameterContainer > param( module, "Parameter" );
+    param.def("append", [](const Dune::Fem::ParameterContainer &, const std::string &filename)
+        { Dune::Fem::Parameter::append( filename ); }
+    );
+    param.def("append", [](const Dune::Fem::ParameterContainer &, const std::map<std::string,std::string> &dict)
+        { for ( auto entery : dict ) Dune::Fem::Parameter::append( entery.first, entery.second ); }
+    );
+    param.def("append", [](const Dune::Fem::ParameterContainer &, const pybind11::dict &dict)
+        { for ( auto entery : dict ) Dune::Fem::Parameter::append( entery.first.str(), entery.second.str() ); }
+    );
+    param.def("append", [](const Dune::Fem::ParameterContainer &, const std::string &key, const std::string &val)
+        { Dune::Fem::Parameter::append( key, val ); }
+    );
+    param.def("__str__", [](const Dune::Fem::ParameterContainer &)
+        { std::stringstream str; Dune::Fem::Parameter::write( str ); return str.str(); }
+    );
+
+    module.attr( "parameter" ) = pybind11::cast( Dune::Fem::Parameter::container() );
   }
 
   return module.ptr();

@@ -8,7 +8,7 @@ import os
 import subprocess
 import sys
 import types
-import dune.femmpi
+from dune import comm
 from dune.source import SourceWriter
 
 
@@ -634,7 +634,7 @@ def importModel(grid, model, dirichlet = {}, tempVars=True):
         grid = grid._module
     name = 'ellipticmodel_' + model.signature + "_" + grid._typeHash
 
-    if dune.femmpi.comm.rank == 0:
+    if comm.rank == 0:
         print("Importing module for model with signature " + model.signature)
         if not os.path.isfile(os.path.join(compilePath, name + ".so")):
             writer = SourceWriter(compilePath + '/modelimpl.hh')
@@ -710,5 +710,5 @@ def importModel(grid, model, dirichlet = {}, tempVars=True):
             cmake.wait()
             os.rename(os.path.join(compilePath, "modelimpl.so"), os.path.join(compilePath, name + ".so"))
 
-        dune.femmpi.comm.barrier()
+        comm.barrier()
         return importlib.import_module("dune.generated." + name)

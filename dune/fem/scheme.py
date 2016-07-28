@@ -8,7 +8,7 @@ import hashlib
 import os.path
 import re
 
-from .. import femmpi
+from dune.fem import comm
 from ..generator import generator
 from . import discretefunction
 
@@ -102,7 +102,7 @@ def create(scheme, space_or_target, model, name, *param, **parameters):
         scheme (string): the identifier for the scheme type to use
         space (Space): a space class generated from dune.fem.space
         grid (LeafGrid): a LeafGrid class generated from dune.fem.grid
-        model (DiffusionModel) : a model class generated from dune.models.femufl
+        model (DiffusionModel) : a model class generated from dune.models.elliptmodel
         name (string): the python name for the scheme
         parameters (kwargs): parameters used for fixing the scheme type
 
