@@ -155,7 +155,7 @@ FemScheme< Space, Model, solver >::FemScheme ( const DiscreteFunctionSpaceType &
     // the elliptic operator (implicit)
     implicitOperator_( new DifferentiableEllipticOperator< LinearOperatorType, ModelType >( model_, space_ ) ),
     // create linear operator (domainSpace,rangeSpace)
-    linearOperator_( new LinearOperatorType( "assembled elliptic operator", space_, space_ ) ),
+    linearOperator_( new LinearOperatorType( "assembled elliptic operator", space_, space_) ), // , parameter ) ),
     estimator_( space_, model ),
     exactSolution_( model_.exactSolution( gridPart() ) ),
     parameter_(parameter)

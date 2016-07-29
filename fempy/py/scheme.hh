@@ -31,7 +31,7 @@ namespace Dune
           new( &instance ) Scheme( space, model, prefix );
         }, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
         cls.def( "__init__", [] ( Scheme &instance, Space &space, const ModelType& model, const std::string &prefix, const pybind11::dict &parameters ) {
-          new( &instance ) Scheme( space, model, prefix, pyParameter( parameters, *( new std::string() ) ) );
+          new( &instance ) Scheme( space, model, prefix, pyParameter( parameters, make_shared<std::string>()) );
           },
           pybind11::arg("space"), pybind11::arg("model"), pybind11::arg("prefix"), pybind11::arg("parameters"),
           pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
