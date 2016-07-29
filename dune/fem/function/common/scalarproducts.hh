@@ -616,7 +616,7 @@ namespace Dune
         if( deleteGhostEntries )
         {
           // rebuild slave dofs if grid was changed
-          SlaveDofsType &slaveDofs = slaveDofProvider_.slaveDofs();
+          const SlaveDofsType &slaveDofs = slaveDofProvider_.slaveDofs();
 
           // don't delete the last since this is the overall Size
           const int slaveSize = slaveDofs.size() - 1;
