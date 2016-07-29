@@ -4,6 +4,7 @@
 #include <dune/fem/misc/l2norm.hh>
 
 #include <dune/fempy/function/virtualizedgridfunction.hh>
+#include <dune/fempy/parameter.hh>
 #include <dune/fempy/py/common/numpyvector.hh>
 #include <dune/fempy/py/discretefunction.hh>
 #include <dune/corepy/pybind11/pybind11.h>
@@ -29,6 +30,11 @@ namespace Dune
         cls.def( "__init__", [] ( Scheme &instance, Space &space, const ModelType& model, const std::string &prefix ) {
           new( &instance ) Scheme( space, model, prefix );
         }, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
+        cls.def( "__init__", [] ( Scheme &instance, Space &space, const ModelType& model, const std::string &prefix, const pybind11::dict &parameters ) {
+          new( &instance ) Scheme( space, model, prefix, pyParameter( parameters, *( new std::string() ) ) );
+          },
+          pybind11::arg("space"), pybind11::arg("model"), pybind11::arg("prefix"), pybind11::arg("parameters"),
+          pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
         cls.def("_prepare", [] (Scheme &scheme, const DiscreteFunction &add) { scheme.prepare(add); });
         cls.def("_prepare", [] (Scheme &scheme) { scheme.prepare(); });
         cls.def("_solve", [] (Scheme &scheme, DiscreteFunction &solution,bool assemble) { scheme.solve(solution, assemble); });
