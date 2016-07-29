@@ -195,7 +195,7 @@ namespace Dune
                            end              = 11
                          };
         const PetscPcType serialStart = petsc_ilu;
-        const PetscPcType serialEnd = petsc_icc;
+        const PetscPcType serialEnd   = petsc_icc;
 
         PCType type = PCNONE ;
 
@@ -285,7 +285,6 @@ namespace Dune
         Mat& A = const_cast<Mat &> (matrixOp_->petscMatrix());
 
         // set operator to PETSc solver context
-        // ::Dune::Petsc::KSPSetOperators( ksp_, A, A, DIFFERENT_NONZERO_PATTERN);
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 5
         ::Dune::Petsc::KSPSetOperators( ksp_, A, A, SAME_PRECONDITIONER);
 #else
@@ -373,6 +372,12 @@ namespace Dune
           \param[out] dest solution
       */
       void operator() ( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+      {
+        apply(arg,dest);
+      }
+
+      template <class DiscreteFunction>
+      void operator() ( const DiscreteFunction& arg, DiscreteFunction& dest ) const
       {
         apply(arg,dest);
       }

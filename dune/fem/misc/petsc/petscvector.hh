@@ -87,6 +87,7 @@ namespace Dune
 
       static void assign( ArrayType& array, const int newIndex, const int oldIndex )
       {
+        DUNE_THROW(NotImplemented,"assign is to be implemented");
         /*
         const unsigned int blockSize = ArrayType :: blockSize;
         for( unsigned int i = 0; i < blockSize; ++i )
@@ -400,6 +401,8 @@ namespace Dune
       // setup vector according to mapping sizes
       void init()
       {
+        dofMapping().update();
+
         // set up the DofMapping instance and all variables depending on it
         localSize_ = dofMapping().numOwnedDofBlocks() * blockSize;
         numGhosts_ = dofMapping().numSlaveBlocks()    * blockSize;
@@ -478,7 +481,7 @@ namespace Dune
       Vec ghostedVec_;
 
       mutable unsigned long memorySequence_; // represents the state of the PETSc vec in memory
-      mutable unsigned long sequence_; // represents the the modifications to the PETSc vec
+      mutable unsigned long sequence_; // represents the modifications to the PETSc vec
 
       mutable bool communicateFlag_;
       PetscInt localSize_;

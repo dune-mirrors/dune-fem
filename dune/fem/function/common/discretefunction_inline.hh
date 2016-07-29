@@ -94,7 +94,10 @@ namespace Dune
       ::assign ( const DiscreteFunctionInterface< DFType > &g )
     {
       if( BaseType::size() != g.size() )
+      {
+        std::cout << BaseType::size() << " vs " << g.size() << std::endl;
         DUNE_THROW(InvalidStateException,"DiscreteFunctionDefault: sizes do not match in assign");
+      }
 
       // copy all dofs from g to this
       const auto end = BaseType::dend();

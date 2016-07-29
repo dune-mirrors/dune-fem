@@ -288,7 +288,11 @@ namespace Dune
       }
 
       inline Double ()
-      {}
+//#ifndef NDEBUG
+//        : value_( std::numeric_limits< double >::quiet_NaN() )
+//#endif
+      {
+      }
 
       inline Double ( const double value )
       : value_( value )
