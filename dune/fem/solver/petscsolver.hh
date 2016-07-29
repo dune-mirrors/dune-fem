@@ -30,7 +30,7 @@ namespace Dune
     // --------------
 
     /** \brief PETSc KSP solver context for PETSc Mat and PETSc Vec */
-    template< class DF, class Op >
+    template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
     class PetscInverseOperator
       : public Operator< DF, DF >
     {
@@ -53,6 +53,8 @@ namespace Dune
       typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
       typedef PetscDiscreteFunction< DiscreteFunctionSpaceType > PetscDiscreteFunctionType;
 
+      typedef PetscLinearOperator< DiscreteFunctionType, DiscreteFunctionType >  AssembledOperatorType;
+
       typedef Op OperatorType;
 
       /** \brief constructor
@@ -72,6 +74,7 @@ namespace Dune
                              bool verbose,
                              const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
+        matrixOp_( dynamic_cast<const AssembledOperatorType*> (&op_) ),
         reduction_( reduction ),
         absLimit_( absLimit ),
         maxIter_( maxIter ),
@@ -96,6 +99,7 @@ namespace Dune
                              int maxIter,
                              const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
+        matrixOp_( dynamic_cast<const AssembledOperatorType*> (&op_) ),
         reduction_( reduction ),
         absLimit_ ( absLimit ),
         maxIter_( maxIter ),
@@ -112,6 +116,7 @@ namespace Dune
                              double absLimit,
                              const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
+        matrixOp_( dynamic_cast<const AssembledOperatorType*> (&op_) ),
         reduction_( reduction ),
         absLimit_ ( absLimit ),
         maxIter_( std::numeric_limits< int >::max()),
@@ -270,8 +275,14 @@ namespace Dune
         if( pcType == petsc_superlu )
           ::Dune::Petsc::PCFactorSetMatSolverPackage(pc_,MATSOLVERSUPERLU_DIST);
 
+        // check if operator is an assembled operator, otherwise we cannot proceed
+        if( ! matrixOp_ )
+        {
+          DUNE_THROW(NotImplemented,"Petsc solver with matrix free implementations not yet supported!");
+        }
+
         // get matrix from linear operator
-        Mat& A = const_cast< Mat & > (op_.petscMatrix());
+        Mat& A = const_cast<Mat &> (matrixOp_->petscMatrix());
 
         // set operator to PETSc solver context
         // ::Dune::Petsc::KSPSetOperators( ksp_, A, A, DIFFERENT_NONZERO_PATTERN);
@@ -314,32 +325,22 @@ namespace Dune
       {
         // copy discrete functions
         PetscDiscreteFunctionType Arg("PetscSolver::arg", arg.space() );
-        interpolate( arg, Arg );
-        //Arg.assign( arg );
+        //interpolate( arg, Arg );
+        Arg.assign( arg );
 
         // also copy initial destination in case this is used a solver init value
         PetscDiscreteFunctionType Dest("PetscSolver::dest", dest.space() );
-        interpolate( dest, Dest );
-        //Dest.assign( dest );
+        //interpolate( dest, Dest );
+        Dest.assign( dest );
 
         apply( Arg, Dest );
         // copy destination back
-        interpolate( Dest, dest );
-        //dest.assign( Dest );
+        //interpolate( Dest, dest );
+        dest.assign( Dest );
       }
 
       void apply( const PetscDiscreteFunctionType& arg, PetscDiscreteFunctionType& dest ) const
       {
-        // get matrix from linear operator
-        Mat& A = const_cast< Mat & > (op_.petscMatrix());
-
-        // set operator to PETSc solver context
-        // ::Dune::Petsc::KSPSetOperators( ksp_, A, A, DIFFERENT_NONZERO_PATTERN);
-#if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 5
-        ::Dune::Petsc::KSPSetOperators( ksp_, A, A, SAME_PRECONDITIONER);
-#else
-        ::Dune::Petsc::KSPSetOperators( ksp_, A, A );
-#endif
         // call PETSc solvers
         ::Dune::Petsc::KSPSolve(ksp_, *arg.petscVec() , *dest.petscVec() );
 
@@ -382,6 +383,8 @@ namespace Dune
 
     protected:
       const OperatorType &op_; // linear operator
+      const AssembledOperatorType* matrixOp_; // assembled operator
+
       KSP ksp_;   // PETSc Krylov Space solver context
       PC  pc_;    // PETSc perconditioning context
       double reduction_;
