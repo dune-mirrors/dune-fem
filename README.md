@@ -51,9 +51,9 @@ Installation
 For a full explanation of the DUNE installation process please read
 the [installation notes][2].
 
- [0]: http://www.dune-project.org/fem/
- [1]: http://www.dune-project.org
- [2]: http://www.dune-project.org/doc/installation-notes.html
+ [0]: https://www.dune-project.org/modules/dune-fem/
+ [1]: https://www.dune-project.org
+ [2]: https://www.dune-project.org/doc/installation/
  [3]: http://www.mcs.anl.gov/petsc/
  [4]: http://eigen.tuxfamily.org
  [5]: http://lists.dune-project.org/mailman/listinfo/dune-fem
