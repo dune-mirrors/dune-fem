@@ -37,12 +37,13 @@ class EllipticModel:
         self.exact = "result = RangeType( 0 );"
         self.n = "result = RangeType( 0 );"
         self.jacobianExact = "result = JacobianRangeType( 0 );"
+        self.field = "double"
 
     def write(self, sourceWriter, name='Model', targs=[]):
         sourceWriter.openStruct(name, targs=(['class GridPart'] + targs + ['class... Coefficients']))
 
         sourceWriter.typedef("GridPart", "GridPartType")
-        sourceWriter.typedef("double", "RangeFieldType")
+        sourceWriter.typedef(SourceWriter.cpp_fields(self.field), "RangeFieldType")
 
         sourceWriter.emit("static const int dimRange = " + str(self.dimRange) + ";")
         sourceWriter.emit("static const int dimDomain = GridPartType::dimensionworld;")
@@ -58,10 +59,22 @@ class EllipticModel:
 
         sourceWriter.typedef("Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >", "BoundaryIdProviderType")
 
-        sourceWriter.section('private')
         if self.coefficients:
-            sourceWriter.typedef('std::tuple< ' + ', '.join([('Dune::Fem::FunctionSpace< double, RangeFieldType, dimDomain, ' + str(coefficient['dimRange']) + ' >') for coefficient in self.coefficients]) + ' >', 'CoefficientFunctionSpaceTupleType')
-            sourceWriter.section('public')
+            sourceWriter.typedef('std::tuple< ' + ', '.join(\
+                    [('Dune::FieldVector< ' +\
+                    SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
+                    str(coefficient['dimRange']) + ' >')\
+                    for coefficient in self.coefficients if coefficient['constant']]) + ' >',\
+                    'ConstantsTupleType;')
+            sourceWriter.typedef('std::tuple< ' + ', '.join(\
+                    [('Dune::Fem::FunctionSpace< double,' +\
+                    SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
+                    'dimDomain, ' +\
+                    str(coefficient['dimRange']) + ' >')\
+                    for coefficient in self.coefficients if not coefficient['constant']]) + ' >',\
+                    'CoefficientFunctionSpaceTupleType')
+
+            sourceWriter.typedef('typename std::tuple_element_t<i,ConstantsTupleType>', 'ConstantsRangeType', targs=['std::size_t i'])
             sourceWriter.emit('static const std::size_t numCoefficients = std::tuple_size< CoefficientFunctionSpaceTupleType >::value;')
             sourceWriter.typedef('typename std::tuple_element< i, CoefficientFunctionSpaceTupleType >::type', 'CoefficientFunctionSpaceType', targs=['std::size_t i'] )
             sourceWriter.typedef('typename CoefficientFunctionSpaceType< i >::RangeType', 'CoefficientRangeType', targs=['std::size_t i'])
@@ -69,10 +82,10 @@ class EllipticModel:
             sourceWriter.typedef('typename CoefficientFunctionSpaceType< i >::HessianRangeType', 'CoefficientHessianRangeType', targs=['std::size_t i'])
         else:
             sourceWriter.emit('static const std::size_t numCoefficients = 0u;')
-            sourceWriter.section('public')
 
         sourceWriter.emit('')
         sourceWriter.typedef('typename std::tuple_element< i, std::tuple< Coefficients... > >::type', 'CoefficientType', targs=['std::size_t i'])
+        sourceWriter.typedef('typename std::tuple_element< i, ConstantsTupleType >::type', 'ConstantsType', targs=['std::size_t i'])
 
         arg_x = 'const Point &x'
         arg_u = 'const RangeType &u'
@@ -159,6 +172,13 @@ class EllipticModel:
         sourceWriter.emit(self.dirichlet)
         sourceWriter.closeConstMethod()
 
+        sourceWriter.openConstMethod('const ConstantsType< i > &constant', targs=['std::size_t i'])
+        sourceWriter.emit('return std::get< i >( constants_ );')
+        sourceWriter.closeConstMethod()
+        sourceWriter.openMethod('ConstantsType< i > &constant', targs=['std::size_t i'])
+        sourceWriter.emit('return std::get< i >( constants_ );')
+        sourceWriter.closeMethod()
+
         sourceWriter.openConstMethod('const CoefficientType< i > &coefficient', targs=['std::size_t i'])
         sourceWriter.emit('return std::get< i >( coefficients_ );')
         sourceWriter.closeConstMethod()
@@ -173,6 +193,7 @@ class EllipticModel:
         sourceWriter.emit('')
         sourceWriter.emit('mutable const EntityType *entity_ = nullptr;')
         sourceWriter.emit('mutable std::tuple< Coefficients... > coefficients_;')
+        sourceWriter.emit('mutable ConstantsTupleType constants_;')
         sourceWriter.emit(self.vars)
         sourceWriter.closeStruct(name)
 
@@ -417,10 +438,14 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
 
     def coefficient(self, expr):
         if expr not in self.exprs:
-            idx = str(expr.count())
-            self.code.append('CoefficientRangeType< ' + idx + ' > c' + idx + ';')
-            self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
-            self.exprs[expr] = 'c' + idx
+            idx = str(expr.number)
+            if expr.is_cellwise_constant():
+                self.code.append('CoefficientRangeType< ' + idx + ' > c' + idx + ';')
+                self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
+                self.exprs[expr] = 'c' + idx
+            else:
+                self.code.append('ConstantsRangeType< ' + idx + ' > cc' + idx + ' = constant< ' + idx + ' >();')
+                self.exprs[expr] = 'cc' + idx
         return self.exprs[expr]
 
     def cos(self, expr):
@@ -439,23 +464,26 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
             return self.exprs[expr]
 
     def float_value(self, expr):
+        val = str(expr.value())
+        if "." not in val:
+            val = val + "."
         if expr.value() < 0:
-            return '(' + str(expr.value()) + ')'
+            return '(' + val + ')'
         else:
-            return str(expr.value())
+            return val
 
     def grad(self, expr):
         if expr not in self.exprs:
             operand = expr.ufl_operands[0]
             if isinstance(operand, ufl.coefficient.Coefficient):
-                idx = str(operand.count())
+                idx = str(operand.number)
                 self.code.append('CoefficientJacobianRangeType< ' + idx + ' > dc' + idx + ';')
                 self.code.append('coefficient< ' + idx + ' >().jacobian( x, dc' + idx + ' );')
                 self.exprs[expr] = 'dc' + idx
             elif isinstance(operand, ufl.differentiation.Grad):
                 operand = operand.ufl_operands[0]
                 if isinstance(operand, ufl.coefficient.Coefficient):
-                    idx = str(operand.count())
+                    idx = str(operand.number)
                     self.code.append('CoefficientHessianRangeType< ' + idx + ' > d2c' + idx + ';')
                     self.code.append('coefficient< ' + idx + ' >().hessian( x, d2c' + idx + ' );')
                     self.exprs[expr] = 'd2c' + idx
@@ -564,6 +592,8 @@ def compileUFL(equation, dirichlet = {}, tempVars = True):
     ubar = ufl.Coefficient(u.ufl_function_space())
     dubar = ufl.differentiation.Grad(ubar)
 
+    field = u.ufl_function_space().ufl_element().field()
+
     dform = ufl.algorithms.apply_derivatives.apply_derivatives(ufl.derivative(ufl.action(form, ubar), ubar, u))
 
     source, diffusiveFlux, boundarySource = splitUFLForm( form )
@@ -572,13 +602,32 @@ def compileUFL(equation, dirichlet = {}, tempVars = True):
 
     model = EllipticModel(dimRange, form.signature())
 
+    model.field = field
+
     coefficients = set(form.coefficients())
     for bndId in dirichlet:
         for expr in dirichlet[bndId]:
             _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
             coefficients |= set(c)
+
+    idxConst = 0
+    idxCoeff = 0
     for coefficient in coefficients:
-        model.coefficients.append({'dimRange' : coefficient.ufl_shape[0]})
+        if coefficient.is_cellwise_constant():
+            field = None  # must be improved for 'complex'
+            idx = idxConst
+            idxConst += 1
+        else:
+            field = coefficient.ufl_function_space().ufl_element().field()
+            idx = idxCoeff
+            idxCoeff += 1
+        setattr(coefficient,"number",idx)
+        model.coefficients.append({ \
+            'number' : coefficient.number, \
+            'counter' : coefficient.count(), \
+            'dimRange' : coefficient.ufl_shape[0],\
+            'constant' : coefficient.is_cellwise_constant(),\
+            'field': field } )
 
     model.source = generateCode({ u : 'u', du : 'du' }, source, tempVars)
     model.diffusiveFlux = generateCode({ u : 'u', du : 'du' }, diffusiveFlux, tempVars)
@@ -661,7 +710,12 @@ def importModel(grid, model, dirichlet = {}, tempVars=True):
             writer.typedef(grid._typeName, 'GridPart')
 
             if model.coefficients:
-                writer.typedef(modelNameSpace + '::Model< GridPart, ' + ', '.join([('Dune::FemPy::VirtualizedLocalFunction< GridPart, Dune::FieldVector< double, ' + str(coefficient['dimRange']) + ' > >') for coefficient in model.coefficients])  + ' >', 'Model')
+                writer.typedef(modelNameSpace + '::Model< GridPart, ' + ', '.join(\
+                [('Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
+                    'Dune::FieldVector< ' +\
+                    SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
+                    str(coefficient['dimRange']) + ' > >') \
+                    for coefficient in model.coefficients])  + ' >', 'Model')
             else:
                 writer.typedef(modelNameSpace + '::Model< GridPart >', 'Model')
 
@@ -670,7 +724,29 @@ def importModel(grid, model, dirichlet = {}, tempVars=True):
 
             if model.coefficients:
                 writer.emit('')
-                writer.typedef('std::tuple< ' + ', '.join([('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< double, ' + str(coefficient['dimRange']) + ' > >') for coefficient in model.coefficients]) + ' >', 'Coefficients')
+                writer.typedef('std::tuple< ' + ', '.join(\
+                        [('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< ' +\
+                        SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
+                        str(coefficient['dimRange']) + ' > >') for coefficient in model.coefficients]) + ' >', 'Coefficients')
+
+                writer.openFunction('void setConstant', targs=['std::size_t i'], args=['Model &model', 'pybind11::list o'])
+                writer.emit('model.template constant< i >() = o.template cast< typename Model::ConstantsType<i> >();')
+                writer.closeFunction()
+
+                writer.openFunction('auto defSetConstant', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
+                writer.typedef('std::function< void( Model &model, pybind11::list ) >', 'Dispatch')
+                writer.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setConstant< i > )... }};')
+                writer.emit('')
+                # writer.emit('return [ dispatch ] ( ModelWrapper &model, pybind11::object coeff, pybind11::list o ) {')
+                # writer.emit('    std::size_t k = coeff.attr("number").template cast<int>();')
+                # writer.emit('    if ( !coeff.attr("is_piecewise_constant").template cast<bool>() )')
+                # writer.emit('      throw std::range_error( "Using setConstant for a Coefficient" );' )
+                writer.emit('return [ dispatch ] ( ModelWrapper &model, std::size_t k, pybind11::list o ) {')
+                writer.emit('    if( k >= dispatch.size() )')
+                writer.emit('      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );' )
+                writer.emit('    dispatch[ k ]( model.impl(), o );')
+                writer.emit('  };')
+                writer.closeFunction()
 
                 writer.openFunction('void setCoefficient', targs=['std::size_t i'], args=['Model &model', 'pybind11::object o'])
                 writer.emit('model.template coefficient< i >() = o.template cast< typename std::tuple_element< i, Coefficients >::type >().localFunction();')
@@ -680,9 +756,13 @@ def importModel(grid, model, dirichlet = {}, tempVars=True):
                 writer.typedef('std::function< void( Model &model, pybind11::object ) >', 'Dispatch')
                 writer.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setCoefficient< i > )... }};')
                 writer.emit('')
+                # writer.emit('return [ dispatch ] ( ModelWrapper &model, pybind11::object coeff, pybind11::object o ) {')
+                # writer.emit('    std::size_t k = coeff.attr("number").template cast<int>();')
+                # writer.emit('    if ( coeff.attr("is_piecewise_constant").template cast<bool>() )')
+                # writer.emit('      throw std::range_error( "Using setCoefficient for a Constant" );' )
                 writer.emit('return [ dispatch ] ( ModelWrapper &model, std::size_t k, pybind11::object o ) {')
                 writer.emit('    if( k >= dispatch.size() )')
-                writer.emit('      throw std::range_error( "No such coefficient." );')
+                writer.emit('      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );' )
                 writer.emit('    dispatch[ k ]( model.impl(), o );')
                 writer.emit('  };')
                 writer.closeFunction()
@@ -698,7 +778,10 @@ def importModel(grid, model, dirichlet = {}, tempVars=True):
             writer.emit('pybind11::class_< ModelWrapper > model( module, "Model", pybind11::base< ModelBase >() );')
             writer.emit('model.def_property_readonly( "dimRange", [] ( ModelWrapper & ) { return ' + str(model.dimRange) + '; } );')
             if model.coefficients:
-                writer.emit('model.def( "setCoefficient", defSetCoefficient( std::index_sequence_for< Coefficients >() ) );')
+                # index_sequence_for always gives a one element sequence (0)
+                # writer.emit('model.def( "setCoefficient", defSetCoefficient( std::index_sequence_for< Coefficients >() ) );')
+                writer.emit('model.def( "setCoefficient", defSetCoefficient( std::make_index_sequence< std::tuple_size<Coefficients>::value >() ) );')
+                writer.emit('model.def( "setConstant", defSetConstant( std::make_index_sequence< std::tuple_size<typename Model::ConstantsTupleType>::value >() ) );')
             writer.emit('')
             writer.emit('module.def( "get", [] () { return new ModelWrapper(); } );')
             writer.closePythonModule(name)
