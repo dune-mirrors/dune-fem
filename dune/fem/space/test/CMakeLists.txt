@@ -56,4 +56,4 @@ LINK_LIBRARIES dunefem )
 
 dune_add_test( SOURCES test-localadaptation.cc COMPILE_DEFINITIONS "${DEFAULTFLAGS}" LINK_LIBRARIES dunefem MPI_RANKS 1 3 4 TIMEOUT 9999999 )
 
-dune_add_test( SOURCES test-balladapt.cc LINK_LIBRARIES dunefem MPI_RANKS 1 4 TIMEOUT 300 SKIP_ON_77 )
+dune_add_test( SOURCES test-balladapt.cc LINK_LIBRARIES dunefem MPI_RANKS 1 4 TIMEOUT 300 )
