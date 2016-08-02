@@ -613,7 +613,6 @@ def compileUFL(equation, dirichlet = {}, tempVars = True):
     idxConst = 0
     idxCoeff = 0
     for coefficient in coefficients:
-        print("coefficient is cellwise constant:",coefficient.is_cellwise_constant())
         if coefficient.is_cellwise_constant():
             field = None  # must be improved for 'complex'
             idx = idxConst
@@ -736,22 +735,21 @@ def importModel(grid, model, dirichlet = {}, tempVars=True):
                         for coefficient in model.coefficients if not coefficient["constant"]]) \
                       + ' >', 'Coefficients')
 
-                writer.openFunction('void setConstant', targs=['std::size_t i'], args=['Model &model', 'pybind11::list o'])
-                writer.emit('model.template constant< i >() = o.template cast< typename Model::ConstantsType<i> >();')
+                writer.openFunction('void setConstant', targs=['std::size_t i'], args=['Model &model', 'pybind11::list l'])
+                writer.emit('model.template constant< i >() = l.template cast< typename Model::ConstantsType<i> >();')
                 writer.closeFunction()
 
                 writer.openFunction('auto defSetConstant', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
                 writer.typedef('std::function< void( Model &model, pybind11::list ) >', 'Dispatch')
                 writer.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setConstant< i > )... }};')
                 writer.emit('')
-                # writer.emit('return [ dispatch ] ( ModelWrapper &model, pybind11::object coeff, pybind11::list o ) {')
-                # writer.emit('    std::size_t k = coeff.attr("number").template cast<int>();')
-                # writer.emit('    if ( !coeff.attr("is_piecewise_constant").template cast<bool>() )')
+                writer.emit('return [ dispatch ] ( ModelWrapper &model, pybind11::handle coeff, pybind11::list l ) {')
+                writer.emit('    std::size_t k = coeff.attr("number").template cast<int>();')
+                # writer.emit('    if ( !coeff("is_piecewise_constant")(coeff).template cast<bool>() )')
                 # writer.emit('      throw std::range_error( "Using setConstant for a Coefficient" );' )
-                writer.emit('return [ dispatch ] ( ModelWrapper &model, std::size_t k, pybind11::list o ) {')
                 writer.emit('    if( k >= dispatch.size() )')
                 writer.emit('      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );' )
-                writer.emit('    dispatch[ k ]( model.impl(), o );')
+                writer.emit('    dispatch[ k ]( model.impl(), l );')
                 writer.emit('  };')
                 writer.closeFunction()
 
@@ -763,11 +761,10 @@ def importModel(grid, model, dirichlet = {}, tempVars=True):
                 writer.typedef('std::function< void( Model &model, pybind11::object ) >', 'Dispatch')
                 writer.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setCoefficient< i > )... }};')
                 writer.emit('')
-                # writer.emit('return [ dispatch ] ( ModelWrapper &model, pybind11::object coeff, pybind11::object o ) {')
-                # writer.emit('    std::size_t k = coeff.attr("number").template cast<int>();')
+                writer.emit('return [ dispatch ] ( ModelWrapper &model, pybind11::object coeff, pybind11::object o ) {')
+                writer.emit('    std::size_t k = coeff.attr("number").template cast<int>();')
                 # writer.emit('    if ( coeff.attr("is_piecewise_constant").template cast<bool>() )')
                 # writer.emit('      throw std::range_error( "Using setCoefficient for a Constant" );' )
-                writer.emit('return [ dispatch ] ( ModelWrapper &model, std::size_t k, pybind11::object o ) {')
                 writer.emit('    if( k >= dispatch.size() )')
                 writer.emit('      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );' )
                 writer.emit('    dispatch[ k ]( model.impl(), o );')
