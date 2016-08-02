@@ -440,12 +440,12 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         if expr not in self.exprs:
             idx = str(expr.number)
             if expr.is_cellwise_constant():
+                self.code.append('ConstantsRangeType< ' + idx + ' > cc' + idx + ' = constant< ' + idx + ' >();')
+                self.exprs[expr] = 'cc' + idx
+            else:
                 self.code.append('CoefficientRangeType< ' + idx + ' > c' + idx + ';')
                 self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
                 self.exprs[expr] = 'c' + idx
-            else:
-                self.code.append('ConstantsRangeType< ' + idx + ' > cc' + idx + ' = constant< ' + idx + ' >();')
-                self.exprs[expr] = 'cc' + idx
         return self.exprs[expr]
 
     def cos(self, expr):
@@ -613,19 +613,23 @@ def compileUFL(equation, dirichlet = {}, tempVars = True):
     idxConst = 0
     idxCoeff = 0
     for coefficient in coefficients:
+        print("coefficient is cellwise constant:",coefficient.is_cellwise_constant())
         if coefficient.is_cellwise_constant():
             field = None  # must be improved for 'complex'
             idx = idxConst
+            dimRange = 1 if coefficient.ufl_shape==() else coefficient.ufl_shape[0]
             idxConst += 1
         else:
             field = coefficient.ufl_function_space().ufl_element().field()
+            dimRange = coefficient.ufl_shape[0]
             idx = idxCoeff
+            dimRange = coefficient.ufl_shape[0]
             idxCoeff += 1
         setattr(coefficient,"number",idx)
         model.coefficients.append({ \
             'number' : coefficient.number, \
             'counter' : coefficient.count(), \
-            'dimRange' : coefficient.ufl_shape[0],\
+            'dimRange' : dimRange,\
             'constant' : coefficient.is_cellwise_constant(),\
             'field': field } )
 
@@ -715,7 +719,8 @@ def importModel(grid, model, dirichlet = {}, tempVars=True):
                     'Dune::FieldVector< ' +\
                     SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
                     str(coefficient['dimRange']) + ' > >') \
-                    for coefficient in model.coefficients])  + ' >', 'Model')
+                    for coefficient in model.coefficients if not coefficient["constant"]])\
+                  + ' >', 'Model')
             else:
                 writer.typedef(modelNameSpace + '::Model< GridPart >', 'Model')
 
@@ -727,7 +732,9 @@ def importModel(grid, model, dirichlet = {}, tempVars=True):
                 writer.typedef('std::tuple< ' + ', '.join(\
                         [('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< ' +\
                         SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
-                        str(coefficient['dimRange']) + ' > >') for coefficient in model.coefficients]) + ' >', 'Coefficients')
+                        str(coefficient['dimRange']) + ' > >') \
+                        for coefficient in model.coefficients if not coefficient["constant"]]) \
+                      + ' >', 'Coefficients')
 
                 writer.openFunction('void setConstant', targs=['std::size_t i'], args=['Model &model', 'pybind11::list o'])
                 writer.emit('model.template constant< i >() = o.template cast< typename Model::ConstantsType<i> >();')
