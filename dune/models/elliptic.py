@@ -576,7 +576,7 @@ def generateCode(predefined, tensor, tempVars = True):
 # compileUFL
 # ----------
 
-def compileUFL(equation, dirichlet = {}, tempVars = True):
+def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
     form = equation.lhs - equation.rhs
     if not isinstance(form, ufl.Form):
         raise Exception("ufl.Form expected.")
@@ -593,6 +593,11 @@ def compileUFL(equation, dirichlet = {}, tempVars = True):
     dubar = ufl.differentiation.Grad(ubar)
 
     field = u.ufl_function_space().ufl_element().field()
+
+    # if exact solution is passed in suptract a(u,.) from the form
+    if not exact == None:
+        b = ufl.replace(form, {u: ufl.as_vector(exact)} )
+        form = form - b
 
     dform = ufl.algorithms.apply_derivatives.apply_derivatives(ufl.derivative(ufl.action(form, ubar), ubar, u))
 
@@ -677,9 +682,9 @@ def compileUFL(equation, dirichlet = {}, tempVars = True):
 # importModel
 # -----------
 
-def importModel(grid, model, dirichlet = {}, tempVars=True):
+def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
     if isinstance(model, ufl.equation.Equation):
-        model = compileUFL(model, dirichlet, tempVars)
+        model = compileUFL(model, dirichlet, exact, tempVars)
     compilePath = os.path.join(os.path.dirname(__file__), "../generated")
 
     if not isinstance(grid, types.ModuleType):
