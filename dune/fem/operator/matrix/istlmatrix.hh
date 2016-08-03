@@ -104,6 +104,7 @@ namespace Dune
     template <class LittleBlockType, class RowDiscreteFunctionImp, class ColDiscreteFunctionImp = RowDiscreteFunctionImp>
     class ImprovedBCRSMatrix : public BCRSMatrix<LittleBlockType>
     {
+        friend struct MatrixDimension<ImprovedBCRSMatrix>;
       public:
         typedef RowDiscreteFunctionImp RowDiscreteFunctionType;
         typedef ColDiscreteFunctionImp ColDiscreteFunctionType;
