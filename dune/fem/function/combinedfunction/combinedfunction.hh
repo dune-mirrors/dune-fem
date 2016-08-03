@@ -5,13 +5,13 @@
 #include <iostream>
 #include <string>
 
-#include <dune/fem/common/referencevector.hh>
 #include <dune/fem/common/stackallocator.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
 #include <dune/fem/space/combinedspace/combinedspace.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/dofstorage.hh>
+#include <dune/fem/storage/referencevector.hh>
 
 namespace Dune
 {

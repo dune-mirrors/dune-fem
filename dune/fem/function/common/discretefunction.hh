@@ -1,15 +1,12 @@
 #ifndef DUNE_FEM_DISCRETEFUNCTION_HH
 #define DUNE_FEM_DISCRETEFUNCTION_HH
 
-// C++ includes
 #include <complex>
 #include <ostream>
 #include <string>
 
 #include <dune/common/dynvector.hh>
 
-// dune-fem includes
-#include <dune/fem/common/referencevector.hh>
 #include <dune/fem/function/common/dofiterator.hh>
 #include <dune/fem/function/common/function.hh>
 #include <dune/fem/function/common/functor.hh>
@@ -22,6 +19,7 @@
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/storage/envelope.hh>
+#include <dune/fem/storage/referencevector.hh>
 #include <dune/fem/version.hh>
 
 
