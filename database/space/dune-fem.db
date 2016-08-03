@@ -1,9 +1,10 @@
 {
   "Lagrange" :
   {
-    "type"      : "Dune::Fem::LagrangeDiscreteFunctionSpace< Dune::Fem::FunctionSpace< double, double, $(gridpart)::dimensionworld, $(dimrange) >, $(gridpart), $(polorder) >",
-    "default"   : [ "dimrange=1", "polorder=1" ],
+    "type"      : "Dune::Fem::LagrangeDiscreteFunctionSpace< Dune::Fem::FunctionSpace< double, $(field), $(gridpart)::dimensionworld, $(dimrange) >, $(gridpart), $(polorder) >",
+    "default"   : [ "dimrange=1", "polorder=1", "field=double" ],
     "checks"    : [ "$(dimrange) >= 1", "$(polorder) >= 1" ],
+    "translate" : { "field" : [ "double=double", "complex=std::complex<double>" ] },
     "include"   : [ "dune/fem/space/lagrange.hh" ]
   },
   "DGONB" :
