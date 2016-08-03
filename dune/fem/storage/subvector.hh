@@ -164,7 +164,7 @@ namespace Dune
     class SubVector : public DenseVector< SubVector< BaseVectorImp, IndexMapperImp > >
     {
       typedef SubVector< BaseVectorImp, IndexMapperImp > ThisType;
-      typedef DenseVector< SubVector < BaseVectorImp, IndexMapperImp > > BaseType;
+      typedef DenseVector< ThisType > BaseType;
 
     public:
       typedef typename BaseType::size_type size_type;
