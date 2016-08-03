@@ -96,7 +96,7 @@ struct DiffusionModel
 {
   typedef GridPart GridPartType;
   static const int dimRange = dimR;
-  typedef DiffusionModel<GridPartType,dimRange> ModelType;
+  typedef DiffusionModel<GridPartType,dimRange,RangeField> ModelType;
   typedef RangeField RangeFieldType;
 
   typedef Dune::Fem::FunctionSpace< double, RangeFieldType,
@@ -259,11 +259,11 @@ protected:
 };
 
 template < class ModelImpl >
-struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPartType, ModelImpl::dimRange>
+struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPartType, ModelImpl::dimRange, typename ModelImpl::RangeFieldType>
 {
   typedef typename ModelImpl::GridPartType GridPartType;
   static const int dimRange  = ModelImpl::dimRange;
-  typedef DiffusionModel<GridPartType, dimRange> Base;
+  typedef DiffusionModel<GridPartType, dimRange, typename ModelImpl::RangeFieldType> Base;
 
   typedef typename Base::Point Point;
   typedef typename Base::IntersectionPoint IntersectionPoint;
@@ -339,7 +339,7 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
 };
 
 template < class ModelTraits >
-struct DiffusionModelEngine : public DiffusionModel<typename ModelTraits::GridPartType, ModelTraits::dimRange>
+struct DiffusionModelEngine : public DiffusionModel<typename ModelTraits::GridPartType, ModelTraits::dimRange, typename ModelTraits::RangeFieldType>
 {
   typedef typename ModelTraits::GridPartType GridPartType;
   static const int dimRange  = ModelTraits::dimRange;

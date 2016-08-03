@@ -1,6 +1,10 @@
 #ifndef DUNE_FEMPY_PY_SPACE_HH
 #define DUNE_FEMPY_PY_SPACE_HH
 
+#include <dune/corepy/common/fmatrix.hh>
+#include <dune/corepy/common/fvector.hh>
+
+#include <dune/corepy/pybind11/complex.h>
 #include <dune/corepy/pybind11/pybind11.h>
 
 namespace Dune
@@ -17,6 +21,13 @@ namespace Dune
       template< class Space, class Cls >
       void registerSpace ( pybind11::module module, Cls &cls )
       {
+        typedef typename Space::FunctionSpaceType::RangeFieldType RangeFieldType;
+        if (!std::is_same<RangeFieldType,double>::value)
+        {
+          registerFieldVector<RangeFieldType>(module, std::make_integer_sequence<int, 10>());
+          registerFieldMatrix<RangeFieldType>(module, std::make_integer_sequence<int, 5>());
+        }
+
         typedef typename Space::GridPartType GridPart;
 
         cls.def_property_readonly( "grid", [](Space &sp) -> const GridPart& {return sp.gridPart();} );
