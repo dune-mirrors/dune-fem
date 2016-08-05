@@ -79,6 +79,7 @@ namespace Dune
         absLimit_( absLimit ),
         maxIter_( maxIter ),
         verbose_( verbose ),
+        pcCreated_( false ),
         iterations_( 0 ),
         solverName_("none"),
         precondName_("none")
@@ -104,6 +105,7 @@ namespace Dune
         absLimit_ ( absLimit ),
         maxIter_( maxIter ),
         verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
+        pcCreated_( false ),
         iterations_( 0 ),
         solverName_("none"),
         precondName_("none")
@@ -121,6 +123,7 @@ namespace Dune
         absLimit_ ( absLimit ),
         maxIter_( std::numeric_limits< int >::max()),
         verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
+        pcCreated_( false ),
         iterations_( 0 ),
         solverName_("none"),
         precondName_("none")
@@ -131,8 +134,12 @@ namespace Dune
       //! destructor freeing KSP context
       ~PetscInverseOperator()
       {
-        // destroy PC context
-        ::Dune::Petsc::PCDestroy( &pc_ );
+        if( pcCreated_ )
+        {
+          // destroy PC context
+          ::Dune::Petsc::PCDestroy( &pc_ );
+        }
+
         // destroy solver context
         ::Dune::Petsc::KSPDestroy( &ksp_ );
       }
@@ -256,10 +263,15 @@ namespace Dune
         // get level of perconditioner iterations
         PetscInt pcLevel = 1 + parameter.getValue<int>("petsc.preconditioning.iterations", 0 );
 
-        // create preconditioning context
-        ::Dune::Petsc::PCCreate( &pc_ );
-        ::Dune::Petsc::PCSetType( pc_, type );
-        ::Dune::Petsc::PCFactorSetLevels( pc_, pcLevel );
+        // set preconditioning context
+        if( pcType != petsc_none )
+        {
+          // create preconditioning context
+          ::Dune::Petsc::PCCreate( &pc_ );
+          ::Dune::Petsc::PCSetType( pc_, type );
+          ::Dune::Petsc::PCFactorSetLevels( pc_, pcLevel );
+          pcCreated_ = true ;
+        }
 
         if ( pcType == petsc_hypre )
         {
@@ -268,8 +280,12 @@ namespace Dune
           ::Dune::Petsc::PCHYPRESetType( pc_, "boomeramg" );
         }
 
-        // set preconditioning context
-        ::Dune::Petsc::KSPSetPC( ksp_, pc_ );
+        // set preconditioning context, if type != none (otherwise problem when solving)
+        if( pcType != petsc_none )
+        {
+          ::Dune::Petsc::KSPSetPC( ksp_, pc_ );
+        }
+
         if( pcType == petsc_mumps )
           ::Dune::Petsc::PCFactorSetMatSolverPackage(pc_,MATSOLVERMUMPS);
         if( pcType == petsc_superlu )
@@ -396,6 +412,7 @@ namespace Dune
       double absLimit_;
       int maxIter_;
       bool verbose_ ;
+      bool pcCreated_;
       mutable int iterations_;
       std::string solverName_;
       std::string precondName_;
