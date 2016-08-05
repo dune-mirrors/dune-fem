@@ -6,7 +6,6 @@
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/io/parameter.hh>
-#include <dune/fem/space/common/interpolate.hh>
 
 #if HAVE_PETSC
 #include <dune/fem/operator/linear/petscoperator.hh>
@@ -341,17 +340,14 @@ namespace Dune
       {
         // copy discrete functions
         PetscDiscreteFunctionType Arg("PetscSolver::arg", arg.space() );
-        //interpolate( arg, Arg );
         Arg.assign( arg );
 
         // also copy initial destination in case this is used a solver init value
         PetscDiscreteFunctionType Dest("PetscSolver::dest", dest.space() );
-        //interpolate( dest, Dest );
         Dest.assign( dest );
 
         apply( Arg, Dest );
         // copy destination back
-        //interpolate( Dest, dest );
         dest.assign( Dest );
       }
 
