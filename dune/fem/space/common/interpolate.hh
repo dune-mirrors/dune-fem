@@ -51,18 +51,15 @@ namespace Dune
     {
       const bool hasLocalFunction = std::is_convertible< GridFunction, HasLocalFunction >::value;
       interpolate( u, v, ps, std::integral_constant< bool, hasLocalFunction >() );
-
     }
 
     template< class Function, class DiscreteFunction, unsigned int partitions >
     static inline void interpolate ( const Function &u, DiscreteFunction &v, PartitionSet< partitions > ps, std::integral_constant< bool, false > )
     {
-      typedef typename DiscreteFunction :: DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-      typedef typename DiscreteFunctionSpaceType :: GridPartType GridPartType;
+      typedef typename DiscreteFunction :: DiscreteFunctionSpaceType :: GridPartType  GridPartType;
       typedef GridFunctionAdapter< Function, GridPartType > GridFunctionType;
 
-      const DiscreteFunctionSpaceType &space = v.space();
-      GridFunctionType uGrid( "uGrid", u, space.gridPart() );
+      GridFunctionType uGrid( "uGrid", u, v.space().gridPart() );
 
       interpolate( uGrid, v, ps );
     }

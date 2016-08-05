@@ -9,6 +9,7 @@
 #include <dune/fem/space/common/interpolate.hh>
 
 #if HAVE_PETSC
+#include <dune/fem/operator/linear/petscoperator.hh>
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/function/petscdiscretefunction.hh>
 

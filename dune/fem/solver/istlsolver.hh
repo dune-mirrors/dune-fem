@@ -15,7 +15,7 @@
 #include <dune/istl/superlu.hh>
 
 #include <dune/fem/operator/linear/istladapter.hh>
-#include <dune/fem/operator/matrix/istlmatrix.hh>
+#include <dune/fem/operator/linear/istloperator.hh>
 
 namespace Dune
 {
