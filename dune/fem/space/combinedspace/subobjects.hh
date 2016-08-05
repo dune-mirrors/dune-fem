@@ -13,46 +13,6 @@ namespace Dune
   namespace Fem
   {
 
-    template< class DofVector, class Dof >
-    class SubDofVector
-    {
-      typedef DofVector DofVectorType;
-      typedef Dof DofType;
-
-      public:
-      typedef DofType value_type;
-
-        SubDofVector( DofVectorType &dofs, int size, int offset ) :
-          dofs_( dofs ),
-          offset_ ( offset ),
-          size_( size )
-        {}
-
-        const DofType  &operator[] ( const int i ) const
-        {
-          assert( (i < size_ )&& (i >= 0 ) );
-          return dofs_[ i + offset_ ];
-        }
-
-        DofType &operator[] ( const int i )
-        {
-          assert( (i < size_ )&& (i >= 0 ) );
-          return dofs_[ i + offset_ ];
-        }
-
-        int size() const
-        {
-          return size_;
-        }
-
-
-      private:
-        DofVectorType &dofs_;
-        const int offset_;
-        const int size_;
-    };
-
-
     template< class T >
     struct RowType;
 

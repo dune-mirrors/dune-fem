@@ -16,7 +16,7 @@
 
 #include <dune/fem/space/basisfunctionset/basisfunctionset.hh>
 #include <dune/fem/space/combinedspace/subobjects.hh>
-
+#include <dune/fem/storage/subvector.hh>
 
 namespace Dune
 {
@@ -395,13 +395,10 @@ namespace Dune
       template< class Point, class DofVector, class Tuple >
       static void apply ( const Point &x, const DofVector &dofVector, RangeType &values, const OffsetType &offset, const Tuple &tuple )
       {
-        std::size_t size = std::get< i >( tuple ).size();
-        // get size of this basisFunctionSet
-        typedef typename DofVector::value_type DofType;
-        typename std::tuple_element< i, BasisFunctionSetTupleType >::type::RangeType thisRange;
-
-        SubDofVector< const DofVector, const DofType > subDofVector( dofVector, size, offset[ i ] );
         // evaluateAll for this BasisFunctionSet, with View on DofVector
+        std::size_t size = std::get< i >( tuple ).size();
+        SubVector< const DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
+        typename std::tuple_element< i, BasisFunctionSetTupleType >::type::RangeType thisRange;
         std::get< i >( tuple ).evaluateAll( x, subDofVector, thisRange );
         std::copy( thisRange.begin(), thisRange.end(), values.begin() + rangeOffset );
       }
@@ -421,13 +418,10 @@ namespace Dune
       template< class Point, class DofVector, class Tuple >
       static void apply ( const Point &x, const DofVector &dofVector, JacobianRangeType &values, const OffsetType &offset, const Tuple &tuple )
       {
-        // get size of this basisFunctionSet
-        std::size_t size = std::get< i >( tuple ).size();
-        typedef typename DofVector::value_type DofType;
-        typename std::tuple_element< i, BasisFunctionSetTupleType >::type::JacobianRangeType thisJacobian;
-
-        SubDofVector< const DofVector, const DofType > subDofVector( dofVector, size, offset[ i ] );
         // jacobianAll for this BasisFunctionSet, with View on DofVector
+        std::size_t size = std::get< i >( tuple ).size();
+        SubVector< const DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
+        typename std::tuple_element< i, BasisFunctionSetTupleType >::type::JacobianRangeType thisJacobian;
         std::get< i >( tuple ).jacobianAll( x, subDofVector, thisJacobian );
         std::copy( thisJacobian.begin(), thisJacobian.end(), values.begin() + rangeOffset );
       }
@@ -447,13 +441,10 @@ namespace Dune
       template< class Point, class DofVector, class Tuple >
       static void apply ( const Point &x, const DofVector &dofVector, HessianRangeType &values, const OffsetType &offset, const Tuple &tuple )
       {
-        // get size of this basisFunctionSet
-        std::size_t size = std::get< i >( tuple ).size();
-        typedef typename DofVector::value_type DofType;
-        typename std::tuple_element< i, BasisFunctionSetTupleType >::type::HessianRangeType thisHessian;
-
-        SubDofVector< const DofVector, const DofType > subDofVector( dofVector, size, offset[ i ] );
         // hessianAll for this BasisFunctionSet, with View on DofVector
+        std::size_t size = std::get< i >( tuple ).size();
+        SubVector< const DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
+        typename std::tuple_element< i, BasisFunctionSetTupleType >::type::HessianRangeType thisHessian;
         std::get< i >( tuple ).hessianAll( x, subDofVector, thisHessian );
         std::copy( thisHessian.begin(), thisHessian.end(), values.begin() + rangeOffset );
       }
@@ -479,7 +470,6 @@ namespace Dune
         ThisStorage &thisStorage = s.template rangeStorage< i >();
         thisStorage.resize( size );
 
-        // misuse SubDofVector
         std::get< i >( tuple ).evaluateAll( x, thisStorage );
 
         for( std::size_t j = 0; j < size; ++j )
@@ -575,8 +565,8 @@ namespace Dune
       static void apply ( const Point &x, const RangeType &factor, DofVector &dofVector, const OffsetType &offset, const Tuple &tuple )
       {
         std::size_t size = std::get< i >( tuple ).size();
+        SubVector< const DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
         SubRangeType subFactor( factor );
-        SubDofVector< DofVector, typename DofVector::value_type > subDofVector( dofVector, size, offset[ i ] );
         std::get< i >( tuple ).axpy( x, (ThisRangeType) subFactor, subDofVector );
       }
 
@@ -585,8 +575,8 @@ namespace Dune
       static void apply ( const Point &x, const JacobianRangeType &factor, DofVector &dofVector, const OffsetType &offset, const Tuple &tuple )
       {
         std::size_t size = std::get< i >( tuple ).size();
+        SubVector< const DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
         SubJacobianRangeType subFactor( factor );
-        SubDofVector< DofVector, typename DofVector::value_type > subDofVector( dofVector, size, offset[ i ] );
         std::get< i >( tuple ).axpy( x, (ThisJacobianRangeType) subFactor, subDofVector );
       }
 
@@ -595,9 +585,9 @@ namespace Dune
       static void apply ( const Point &x, const RangeType &rangeFactor, const JacobianRangeType &jacobianFactor, DofVector &dofVector, const OffsetType &offset, const Tuple &tuple )
       {
         std::size_t size = std::get< i >( tuple ).size();
+        SubVector< const DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
         SubRangeType subRangeFactor( rangeFactor );
         SubJacobianRangeType subJacobianFactor( jacobianFactor );
-        SubDofVector< DofVector, typename DofVector::value_type > subDofVector( dofVector, size, offset[ i ] );
         std::get< i >( tuple ).axpy( x, (ThisRangeType) subRangeFactor, (ThisJacobianRangeType) subJacobianFactor, subDofVector );
       }
     };
