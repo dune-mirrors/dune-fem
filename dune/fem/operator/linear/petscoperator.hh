@@ -131,7 +131,7 @@ namespace Dune
       //! destructor deleting PETSc Mat object
       ~PetscLinearOperator ()
       {
-        removeObj();
+        destroy();
       }
 
       void communicate ()
@@ -183,7 +183,7 @@ namespace Dune
         if(sequence_ != domainSpace().sequence())
         {
           // clear Petsc Mat
-          removeObj();
+          destroy();
 
           // reset temporary Petsc discrete functions
           petscArg_.reset();
@@ -378,6 +378,16 @@ namespace Dune
       {
         ::Dune::Petsc::MatView( petscMatrix_, PETSC_VIEWER_STDOUT_WORLD );
       }
+
+      // print matrix just here for debugging
+      void print( std::ostream& s ) const
+      {
+        if( &s == &std::cout || &s == &std::cerr )
+        {
+          view();
+        }
+      }
+
       /* Not tested yet
       void viewMatlab (const char *filename) const
       {
@@ -397,10 +407,14 @@ namespace Dune
       PetscLinearOperator ();
 
       //! destructor deleting PETSc Mat object
-      void removeObj ()
+      void destroy ()
       {
         if( status_ != statNothing )
+        {
           ::Dune::Petsc::MatDestroy( &petscMatrix_ );
+          setStatus( statNothing );
+        }
+        sequence_ = -1;
       }
 
       void setStatus(const Status &newstatus) const
@@ -584,9 +598,12 @@ namespace Dune
         status_ = statInsert;
         petscLinearOperator_.setStatus(status_);
         const int col = this->columns();
+        const int globalRowIdx = globalRowIndex( localRow );
         for(int localCol=0; localCol<col; ++localCol)
-          ::Dune::Petsc::MatSetValue( petscMatrix(), globalRowIndex( localRow ), globalColIndex( localCol ) ,
-              (localCol==localRow)?1:0., INSERT_VALUES );
+        {
+          ::Dune::Petsc::MatSetValue( petscMatrix(), globalRowIdx, globalColIndex( localCol ), 0.0, INSERT_VALUES );
+        }
+
         /*
         ::Dune::Petsc::MatAssemblyBegin( petscMatrix(), MAT_FLUSH_ASSEMBLY );
         ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix(), MAT_FLUSH_ASSEMBLY );
