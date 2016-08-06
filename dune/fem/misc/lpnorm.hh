@@ -55,7 +55,9 @@ namespace Dune
           {
             const typename UDiscreteFunctionType::LocalFunctionType uLocal = u.localFunction( entity );
             const typename VDiscreteFunctionType::LocalFunctionType vLocal = v.localFunction( entity );
-            const unsigned int orderLocal = (order == 0 ? 2*std::max( uLocal.order(), vLocal.order() ) : order);
+            const unsigned int uOrder = uLocal.order();
+            const unsigned int vOrder = vLocal.order();
+            const unsigned int orderLocal = (order == 0 ? 2*std::max( uOrder, vOrder ) : order);
             norm.distanceLocal( entity, orderLocal, uLocal, vLocal, sum );
           }
           return sum;

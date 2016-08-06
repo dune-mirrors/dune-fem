@@ -14,6 +14,7 @@
 #include <dune/istl/paamg/pinfo.hh>
 #endif
 
+#include <dune/fem/operator/matrix/spmatrix.hh> // MatrixParameter
 #include <dune/fem/operator/matrix/istlmatrixadapter.hh>
 
 namespace Dune

@@ -42,8 +42,8 @@ namespace Dune
       typedef typename ColumnDiscreteFunctionType :: DiscreteFunctionSpaceType ColSpaceType;
       typedef Fem::ParallelScalarProduct<ColumnDiscreteFunctionType> ParallelScalarProductType;
 
-      typedef typename RowDiscreteFunctionType :: DofStorageType     X;
-      typedef typename ColumnDiscreteFunctionType :: DofStorageType  Y;
+      typedef typename RowDiscreteFunctionType    :: DofStorageType   X;
+      typedef typename ColumnDiscreteFunctionType :: DofStorageType   Y;
 
       //! export types
       typedef MatrixType  matrix_type;
@@ -68,9 +68,9 @@ namespace Dune
       //! constructor: just store a reference to a matrix
       //! and the spaces as well as preconditioning method
       ISTLParallelMatrixAdapterInterface ( MatrixType &matrix,
-                                   const RowSpaceType &rowSpace,
-                                   const ColSpaceType &colSpace,
-                                   const PreconditionAdapterType& precon )
+                                           const RowSpaceType &rowSpace,
+                                           const ColSpaceType &colSpace,
+                                           const PreconditionAdapterType& precon )
       : matrix_( matrix ),
         rowSpace_( rowSpace ),
         colSpace_( colSpace ),
@@ -92,13 +92,23 @@ namespace Dune
       virtual ParallelScalarProductType &scp() { return scp_; }
 
       //! apply operator to x:  \f$ y = A(x) \f$
-      virtual void apply ( const X &x, Y &y ) const = 0;
+      virtual void apply ( const X &x, Y &y ) const
+      {
+        DUNE_THROW(NotImplemented,"interface method apply not overloaded!");
+      }
 
       //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
-      virtual void applyscaleadd ( field_type alpha, const X &x, Y &y) const = 0;
+      virtual void applyscaleadd ( field_type alpha, const X &x, Y &y) const
+      {
+        DUNE_THROW(NotImplemented,"interface method applyscaleadd not overloaded!");
+      }
 
       //! apply operator and substract right-hand-side
-      virtual double residuum(const Y& rhs, X& x) const = 0;
+      virtual double residuum(const Y& rhs, X& x) const
+      {
+        DUNE_THROW(NotImplemented,"interface method residuum not overloaded!");
+        return 0.0;
+      }
 
       //! get matrix
       virtual const MatrixType& getmat () const { return matrix_; }
