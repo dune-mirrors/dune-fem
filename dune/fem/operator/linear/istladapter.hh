@@ -6,7 +6,7 @@
 #include <dune/istl/operators.hh>
 
 #include <dune/fem/function/blockvectorfunction.hh>
-#include <dune/fem/operator/matrix/preconditionerwrapper.hh>
+#include <dune/fem/operator/matrix/istlpreconditioner.hh>
 
 namespace Dune
 {

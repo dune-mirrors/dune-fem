@@ -5,7 +5,6 @@
 
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/common/operator.hh>
-#include <dune/fem/operator/matrix/preconditionerwrapper.hh>
 #include <dune/fem/io/parameter.hh>
 
 
@@ -40,7 +39,7 @@ namespace Dune
       template <class MatrixAdapter>
       static std::pair< int, double >
       call ( const OperatorImp &op,
-             MatrixAdapter matrix,
+             MatrixAdapter& matrix,
              const DiscreteFunction &arg, DiscreteFunction &dest,
              double reduction, double absLimit, int maxIter, bool verbose,
              const ParameterReader &parameter )
@@ -178,9 +177,12 @@ namespace Dune
         std::pair< int, double > info;
         if( matrixOp_ )
         {
-          std::cout << "Use assembled operator" << std::endl;
-          auto matrixAdapter = matrixOp_->systemMatrix().matrixAdapter();
-          info = SolverCallerType::call( op_, matrixAdapter,
+          typedef typename AssembledOperatorType :: BaseType  MatrixObjectType;
+          const MatrixObjectType& matrixObj = matrixOp_->systemMatrix() ;
+
+          typedef ISTLMatrixAdapterFactory< MatrixObjectType > ISTLMatrixAdapterFactoryType;
+          auto matrixAdapterPtr = ISTLMatrixAdapterFactoryType :: matrixAdapter( matrixObj );
+          info = SolverCallerType::call( op_, *matrixAdapterPtr,
                                          arg, dest, reduction_, absLimit_, maxIter_, verbose_, parameter_ );
         }
         else

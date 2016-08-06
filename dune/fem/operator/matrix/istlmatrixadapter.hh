@@ -13,19 +13,122 @@
 #include <dune/fem/space/padaptivespace/discontinuousgalerkin.hh>
 #include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/operator/common/operator.hh>
-#include <dune/fem/operator/matrix/preconditionerwrapper.hh>
 
 namespace Dune
 {
   namespace Fem
   {
+
+    template <class Matrix>
+    class PreconditionerWrapper ;
+
+
     template <class MatrixImp>
-    class LagrangeParallelMatrixAdapter
+    class ISTLParallelMatrixAdapterInterface
       : public AssembledLinearOperator< MatrixImp,
                  typename MatrixImp :: RowBlockVectorType,
                  typename MatrixImp :: ColBlockVectorType>
     {
+      typedef ISTLParallelMatrixAdapterInterface< MatrixImp > ThisType;
+    public:
+      typedef MatrixImp MatrixType;
+      typedef Fem::PreconditionerWrapper< MatrixType > PreconditionAdapterType;
+
+      typedef typename MatrixType :: RowDiscreteFunctionType RowDiscreteFunctionType;
+      typedef typename MatrixType :: ColDiscreteFunctionType ColumnDiscreteFunctionType;
+
+      typedef typename RowDiscreteFunctionType :: DiscreteFunctionSpaceType RowSpaceType;
+
+      typedef typename ColumnDiscreteFunctionType :: DiscreteFunctionSpaceType ColSpaceType;
+      typedef Fem::ParallelScalarProduct<ColumnDiscreteFunctionType> ParallelScalarProductType;
+
+      typedef typename RowDiscreteFunctionType :: DofStorageType     X;
+      typedef typename ColumnDiscreteFunctionType :: DofStorageType  Y;
+
+      //! export types
+      typedef MatrixType  matrix_type;
+      typedef X domain_type;
+      typedef Y range_type;
+      typedef typename X::field_type field_type;
+
+      //! define the category
+      enum { category=SolverCategory::sequential };
+
+    public:
+      //! copy constructor
+      ISTLParallelMatrixAdapterInterface ( const ISTLParallelMatrixAdapterInterface &org )
+      : matrix_( org.matrix_ ),
+        rowSpace_( org.rowSpace_ ),
+        colSpace_( org.colSpace_ ),
+        scp_( colSpace_ ),
+        preconditioner_( org.preconditioner_ ),
+        averageCommTime_( org.averageCommTime_ )
+      {}
+
+      //! constructor: just store a reference to a matrix
+      //! and the spaces as well as preconditioning method
+      ISTLParallelMatrixAdapterInterface ( MatrixType &matrix,
+                                   const RowSpaceType &rowSpace,
+                                   const ColSpaceType &colSpace,
+                                   const PreconditionAdapterType& precon )
+      : matrix_( matrix ),
+        rowSpace_( rowSpace ),
+        colSpace_( colSpace ),
+        scp_( colSpace_ ),
+        preconditioner_( precon ),
+        averageCommTime_( 0 )
+      {}
+
+      //! return communication time
+      virtual double averageCommTime() const { return averageCommTime_ ; }
+
+      //! return reference to preconditioner
+      virtual PreconditionAdapterType &preconditionAdapter() { return preconditioner_; }
+
+      //! return reference to preconditioner
+      virtual const PreconditionAdapterType &preconditionAdapter() const { return preconditioner_; }
+
+      //! return reference to preconditioner
+      virtual ParallelScalarProductType &scp() { return scp_; }
+
+      //! apply operator to x:  \f$ y = A(x) \f$
+      virtual void apply ( const X &x, Y &y ) const = 0;
+
+      //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
+      virtual void applyscaleadd ( field_type alpha, const X &x, Y &y) const = 0;
+
+      //! apply operator and substract right-hand-side
+      virtual double residuum(const Y& rhs, X& x) const = 0;
+
+      //! get matrix
+      virtual const MatrixType& getmat () const { return matrix_; }
+
+    protected:
+      void communicate( Y &y ) const
+      {
+        if( rowSpace_.grid().comm().size() <= 1 )
+          return;
+
+        Dune::Timer commTime;
+        ColumnDiscreteFunctionType tmp( "LagrangeParallelMatrixAdapter::communicate", colSpace_, y );
+        colSpace_.communicate( tmp );
+        averageCommTime_ += commTime.elapsed();
+      }
+
+      MatrixType &matrix_;
+      const RowSpaceType &rowSpace_;
+      const ColSpaceType &colSpace_;
+      mutable ParallelScalarProductType scp_;
+      PreconditionAdapterType preconditioner_;
+      mutable double averageCommTime_;
+    };
+
+    template <class MatrixImp>
+    class LagrangeParallelMatrixAdapter
+      : public ISTLParallelMatrixAdapterInterface< MatrixImp >
+    {
       typedef LagrangeParallelMatrixAdapter< MatrixImp > ThisType;
+      typedef ISTLParallelMatrixAdapterInterface< MatrixImp >     BaseType;
     public:
       typedef MatrixImp MatrixType;
       typedef Fem::PreconditionerWrapper<MatrixType> PreconditionAdapterType;
@@ -49,16 +152,17 @@ namespace Dune
 
       //! define the category
       enum { category=SolverCategory::sequential };
+    protected:
+      using BaseType :: matrix_;
+      using BaseType :: scp_ ;
+      using BaseType :: colSpace_ ;
+      using BaseType :: rowSpace_ ;
+      using BaseType :: averageCommTime_;
 
     public:
-      //! copy constructur
+      //! copy constructor
       LagrangeParallelMatrixAdapter ( const LagrangeParallelMatrixAdapter &org )
-      : matrix_( org.matrix_ ),
-        rowSpace_( org.rowSpace_ ),
-        colSpace_( org.colSpace_ ),
-        scp_( colSpace_ ),
-        preconditioner_( org.preconditioner_ ),
-        averageCommTime_( org.averageCommTime_ )
+      : BaseType( org )
       {}
 
       //! constructor: just store a reference to a matrix
@@ -67,36 +171,8 @@ namespace Dune
                                       const RowSpaceType &rowSpace,
                                       const ColSpaceType &colSpace,
                                       const PreconditionAdapterType& precon )
-      : matrix_( matrix ),
-        rowSpace_( rowSpace ),
-        colSpace_( colSpace ),
-        scp_( colSpace_ ),
-        preconditioner_( precon ),
-        averageCommTime_( 0 )
+      : BaseType( matrix, rowSpace, colSpace, precon )
       {}
-
-      //! return communication time
-      double averageCommTime() const
-      {
-        return averageCommTime_ ;
-      }
-
-      //! return reference to preconditioner
-      PreconditionAdapterType &preconditionAdapter()
-      {
-        return preconditioner_;
-      }
-      //! return reference to preconditioner
-      const PreconditionAdapterType &preconditionAdapter() const
-      {
-        return preconditioner_;
-      }
-
-      //! return reference to preconditioner
-      ParallelScalarProductType &scp()
-      {
-        return scp_;
-      }
 
       //! apply operator to x:  \f$ y = A(x) \f$
       virtual void apply ( const X &x, Y &y ) const
@@ -132,12 +208,6 @@ namespace Dune
         return scp_.norm(tmp);
       }
 
-      //! get matrix via *
-      virtual const MatrixType& getmat () const
-      {
-        return matrix_;
-      }
-
     protected:
       void communicate( Y &y ) const
       {
@@ -149,22 +219,14 @@ namespace Dune
         colSpace_.communicate( tmp );
         averageCommTime_ += commTime.elapsed();
       }
-
-      MatrixType &matrix_;
-      const RowSpaceType &rowSpace_;
-      const ColSpaceType &colSpace_;
-      mutable ParallelScalarProductType scp_;
-      PreconditionAdapterType preconditioner_;
-      mutable double averageCommTime_;
     };
 
     template <class MatrixImp>
     class DGParallelMatrixAdapter
-      : public AssembledLinearOperator< MatrixImp,
-                 typename MatrixImp :: RowBlockVectorType,
-                 typename MatrixImp :: ColBlockVectorType>
+      : public ISTLParallelMatrixAdapterInterface< MatrixImp >
     {
-      typedef DGParallelMatrixAdapter< MatrixImp > ThisType ;
+      typedef DGParallelMatrixAdapter< MatrixImp >   ThisType ;
+      typedef ISTLParallelMatrixAdapterInterface< MatrixImp > BaseType;
     public:
       typedef MatrixImp MatrixType;
       typedef Fem::PreconditionerWrapper<MatrixType> PreconditionAdapterType;
@@ -190,24 +252,16 @@ namespace Dune
       enum { category=SolverCategory::sequential };
 
     protected:
-      MatrixType& matrix_;
-      const RowSpaceType& rowSpace_;
-      const ColSpaceType& colSpace_;
-
-      ParallelScalarProductType scp_;
-
-      PreconditionAdapterType preconditioner_;
-      mutable double averageCommTime_;
+      using BaseType :: matrix_;
+      using BaseType :: scp_;
+      using BaseType :: rowSpace_;
+      using BaseType :: colSpace_;
+      using BaseType :: averageCommTime_;
 
     public:
       //! constructor: just store a reference to a matrix
       DGParallelMatrixAdapter (const DGParallelMatrixAdapter& org)
-        : matrix_(org.matrix_)
-        , rowSpace_(org.rowSpace_)
-        , colSpace_(org.colSpace_)
-        , scp_(colSpace_)
-        , preconditioner_(org.preconditioner_)
-        , averageCommTime_( org.averageCommTime_ )
+        : BaseType( org )
       {}
 
       //! constructor: just store a reference to a matrix
@@ -215,26 +269,8 @@ namespace Dune
                                const RowSpaceType& rowSpace,
                                const ColSpaceType& colSpace,
                                const PreconditionAdapterType& precon )
-        : matrix_(A)
-        , rowSpace_(rowSpace)
-        , colSpace_(colSpace)
-        , scp_(colSpace_)
-        , preconditioner_( precon )
-        , averageCommTime_( 0.0 )
+        : BaseType( A, rowSpace, colSpace, precon )
       {}
-
-      //! return communication time
-      double averageCommTime() const
-      {
-        return averageCommTime_ ;
-      }
-
-      //! return reference to preconditioner
-      PreconditionAdapterType& preconditionAdapter() { return preconditioner_; }
-      const PreconditionAdapterType& preconditionAdapter() const { return preconditioner_; }
-
-      //! return reference to preconditioner
-      ParallelScalarProductType& scp() { return scp_; }
 
       //! apply operator to x:  \f$ y = A(x) \f$
       virtual void apply (const X& x, Y& y) const
@@ -309,11 +345,6 @@ namespace Dune
         return std::sqrt( res );
       }
 
-      //! get matrix via *
-      virtual const MatrixType& getmat () const
-      {
-        return matrix_;
-      }
     protected:
       void communicate(const X& x) const
       {
@@ -332,59 +363,6 @@ namespace Dune
         averageCommTime_ += commTime.elapsed();
       }
     };
-
-    template <class MatrixImp,class Space>
-    struct ISTLParallelMatrixAdapter;
-
-    template< class MatrixImp,
-              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
-    struct ISTLParallelMatrixAdapter< MatrixImp, LagrangeDiscreteFunctionSpace< FunctionSpace,GridPart,polOrder,Storage> >
-    {
-      typedef LagrangeParallelMatrixAdapter<MatrixImp> Type;
-    };
-
-    template< class MatrixImp,
-              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
-    struct ISTLParallelMatrixAdapter< MatrixImp, PAdaptiveLagrangeSpace< FunctionSpace,GridPart,polOrder,Storage> >
-    {
-      typedef LagrangeParallelMatrixAdapter<MatrixImp> Type;
-    };
-    template< class MatrixImp,
-              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
-    struct ISTLParallelMatrixAdapter< MatrixImp, DiscontinuousGalerkinSpace< FunctionSpace,GridPart,polOrder,Storage> >
-    {
-      typedef DGParallelMatrixAdapter<MatrixImp> Type ;
-    };
-    template< class MatrixImp,
-              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
-    struct ISTLParallelMatrixAdapter< MatrixImp, LagrangeDiscontinuousGalerkinSpace< FunctionSpace,GridPart,polOrder,Storage> >
-    {
-      typedef DGParallelMatrixAdapter<MatrixImp> Type ;
-    };
-    template< class MatrixImp,
-              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
-    struct ISTLParallelMatrixAdapter< MatrixImp, LegendreDiscontinuousGalerkinSpace< FunctionSpace,GridPart,polOrder,Storage> >
-    {
-      typedef DGParallelMatrixAdapter<MatrixImp> Type ;
-    };
-    template< class MatrixImp,
-              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
-    struct ISTLParallelMatrixAdapter< MatrixImp, HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace,GridPart,polOrder,Storage> >
-    {
-      typedef DGParallelMatrixAdapter<MatrixImp> Type ;
-    };
-    template< class MatrixImp,
-              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
-    struct ISTLParallelMatrixAdapter< MatrixImp, PAdaptiveDGSpace< FunctionSpace,GridPart,polOrder,Storage> >
-    {
-      typedef DGParallelMatrixAdapter<MatrixImp> Type ;
-    };
-    template< class MatrixImp, class ... DiscreteFunctionSpaces >
-    struct ISTLParallelMatrixAdapter<MatrixImp, TupleDiscreteFunctionSpace< DiscreteFunctionSpaces ... > >
-    {
-      typedef LagrangeParallelMatrixAdapter<MatrixImp> Type;
-    };
-
 
   } // end namespace Fem
 } // end namespace Dune
