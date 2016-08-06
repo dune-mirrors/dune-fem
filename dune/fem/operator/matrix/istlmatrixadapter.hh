@@ -374,6 +374,62 @@ namespace Dune
       }
     };
 
+
+    //- deprecated classes
+    template <class MatrixImp,class Space>
+    struct ISTLParallelMatrixAdapter;
+
+    template< class MatrixImp,
+              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
+    struct ISTLParallelMatrixAdapter< MatrixImp, LagrangeDiscreteFunctionSpace< FunctionSpace,GridPart,polOrder,Storage> >
+    {
+      typedef LagrangeParallelMatrixAdapter<MatrixImp> Type;
+    };
+
+    template< class MatrixImp,
+              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
+    struct ISTLParallelMatrixAdapter< MatrixImp, PAdaptiveLagrangeSpace< FunctionSpace,GridPart,polOrder,Storage> >
+    {
+      typedef LagrangeParallelMatrixAdapter<MatrixImp> Type;
+    };
+    template< class MatrixImp,
+              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
+    struct ISTLParallelMatrixAdapter< MatrixImp, DiscontinuousGalerkinSpace< FunctionSpace,GridPart,polOrder,Storage> >
+    {
+      typedef DGParallelMatrixAdapter<MatrixImp> Type ;
+    };
+    template< class MatrixImp,
+              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
+    struct ISTLParallelMatrixAdapter< MatrixImp, LagrangeDiscontinuousGalerkinSpace< FunctionSpace,GridPart,polOrder,Storage> >
+    {
+      typedef DGParallelMatrixAdapter<MatrixImp> Type ;
+    };
+    template< class MatrixImp,
+              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
+    struct ISTLParallelMatrixAdapter< MatrixImp, LegendreDiscontinuousGalerkinSpace< FunctionSpace,GridPart,polOrder,Storage> >
+    {
+      typedef DGParallelMatrixAdapter<MatrixImp> Type ;
+    };
+    template< class MatrixImp,
+              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
+    struct ISTLParallelMatrixAdapter< MatrixImp, HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace,GridPart,polOrder,Storage> >
+    {
+      typedef DGParallelMatrixAdapter<MatrixImp> Type ;
+    };
+    template< class MatrixImp,
+              class FunctionSpace, class GridPart, int polOrder, template< class > class Storage>
+    struct ISTLParallelMatrixAdapter< MatrixImp, PAdaptiveDGSpace< FunctionSpace,GridPart,polOrder,Storage> >
+    {
+      typedef DGParallelMatrixAdapter<MatrixImp> Type ;
+    };
+    template< class MatrixImp, class ... DiscreteFunctionSpaces >
+    struct ISTLParallelMatrixAdapter<MatrixImp, TupleDiscreteFunctionSpace< DiscreteFunctionSpaces ... > >
+    {
+      typedef LagrangeParallelMatrixAdapter<MatrixImp> Type;
+    };
+
+
+
   } // end namespace Fem
 } // end namespace Dune
 
