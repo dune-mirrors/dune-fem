@@ -137,12 +137,12 @@ namespace Dune
         return data_.size();
       }
 
-      field_type &operator[] ( size_type i )
+      value_type &operator[] ( size_type i )
       {
         return *data_[ i ];
       }
 
-      const field_type &operator[] ( size_type i ) const
+      const value_type &operator[] ( size_type i ) const
       {
         return *data_[ i ];
       }
