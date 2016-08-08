@@ -111,7 +111,7 @@ public:
   typedef DiscreteFunctionType SolutionType;
   /*********************************************************/
 
-  FemScheme ( const DiscreteFunctionSpaceType &space, const ModelType &model, const std::string &name );
+  FemScheme ( const DiscreteFunctionSpaceType &space, const ModelType &model, const std::string &name, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() );
 
   const ExactSolutionType &exactSolution() const { return exactSolution_; }
 
@@ -142,14 +142,12 @@ protected:
   std::unique_ptr< Dune::Fem::Operator< DiscreteFunctionType,DiscreteFunctionType > > linearOperator_;
   EstimatorType estimator_; // estimator for residual error
   const ExactSolutionType exactSolution_;
+  const Dune::Fem::ParameterReader parameter_;
 };
 
 
-// DataOutputParameters
-// --------------------
-
 template< class Space, class Model, SolverType solver >
-FemScheme< Space, Model, solver >::FemScheme ( const DiscreteFunctionSpaceType &space, const ModelType &model, const std::string &name )
+FemScheme< Space, Model, solver >::FemScheme ( const DiscreteFunctionSpaceType &space, const ModelType &model, const std::string &name, const Dune::Fem::ParameterReader &parameter )
   : model_( model ),
     name_( name ),
     space_( space ),
@@ -157,9 +155,10 @@ FemScheme< Space, Model, solver >::FemScheme ( const DiscreteFunctionSpaceType &
     // the elliptic operator (implicit)
     implicitOperator_( new DifferentiableEllipticOperator< LinearOperatorType, ModelType >( model_, space_ ) ),
     // create linear operator (domainSpace,rangeSpace)
-    linearOperator_( new LinearOperatorType( "assembled elliptic operator", space_, space_ ) ),
+    linearOperator_( new LinearOperatorType( "assembled elliptic operator", space_, space_) ), // , parameter ) ),
     estimator_( space_, model ),
-    exactSolution_( model_.exactSolution( gridPart() ) )
+    exactSolution_( model_.exactSolution( gridPart() ) ),
+    parameter_(parameter)
 {}
 
 
@@ -191,7 +190,7 @@ void FemScheme< Space, Model, solver >::solve ( DiscreteFunctionType &solution, 
   typedef DifferentiableEllipticOperator< LinearOperatorType, ModelType > OperatorType;
   typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
   typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
-  InverseOperatorType invOp( dynamic_cast< OperatorType & >( *implicitOperator_ ) );
+  InverseOperatorType invOp( dynamic_cast< OperatorType & >( *implicitOperator_ ), parameter_ );
   invOp( rhs_, solution );
 }
 
