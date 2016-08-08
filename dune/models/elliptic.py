@@ -82,6 +82,7 @@ class EllipticModel:
             sourceWriter.typedef('typename CoefficientFunctionSpaceType< i >::HessianRangeType', 'CoefficientHessianRangeType', targs=['std::size_t i'])
         else:
             sourceWriter.emit('static const std::size_t numCoefficients = 0u;')
+            sourceWriter.typedef('std::tuple<>', 'ConstantsTupleType;')
 
         sourceWriter.emit('')
         sourceWriter.typedef('typename std::tuple_element< i, std::tuple< Coefficients... > >::type', 'CoefficientType', targs=['std::size_t i'])

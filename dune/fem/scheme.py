@@ -114,11 +114,13 @@ def create(scheme, space_or_target, model, name, *param, **parameters):
     try:
         space = space_or_target.space
         target = space_or_target
+        storage = target._storage
+        module = get(scheme, space, storage=storage, **parameters)
     except:
         space = space_or_target
         target = None
+        module = get(scheme, space, **parameters)
 
-    module = get(scheme, space, **parameters)
 
     class ExtendedScheme(module.Scheme):
         def __init__(self,space,model,name,target=None):
