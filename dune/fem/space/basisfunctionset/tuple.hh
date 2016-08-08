@@ -565,7 +565,7 @@ namespace Dune
       static void apply ( const Point &x, const RangeType &factor, DofVector &dofVector, const OffsetType &offset, const Tuple &tuple )
       {
         std::size_t size = std::get< i >( tuple ).size();
-        SubVector< const DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
+        SubVector< DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
         SubRangeType subFactor( factor );
         std::get< i >( tuple ).axpy( x, (ThisRangeType) subFactor, subDofVector );
       }
@@ -575,7 +575,7 @@ namespace Dune
       static void apply ( const Point &x, const JacobianRangeType &factor, DofVector &dofVector, const OffsetType &offset, const Tuple &tuple )
       {
         std::size_t size = std::get< i >( tuple ).size();
-        SubVector< const DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
+        SubVector< DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
         SubJacobianRangeType subFactor( factor );
         std::get< i >( tuple ).axpy( x, (ThisJacobianRangeType) subFactor, subDofVector );
       }
@@ -585,7 +585,7 @@ namespace Dune
       static void apply ( const Point &x, const RangeType &rangeFactor, const JacobianRangeType &jacobianFactor, DofVector &dofVector, const OffsetType &offset, const Tuple &tuple )
       {
         std::size_t size = std::get< i >( tuple ).size();
-        SubVector< const DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
+        SubVector< DofVector, OffsetSubMapper > subDofVector( dofVector, OffsetSubMapper( size, offset[ i ] ) );
         SubRangeType subRangeFactor( rangeFactor );
         SubJacobianRangeType subJacobianFactor( jacobianFactor );
         std::get< i >( tuple ).axpy( x, (ThisRangeType) subRangeFactor, (ThisJacobianRangeType) subJacobianFactor, subDofVector );
