@@ -3,6 +3,7 @@ dune_install(dynamicarray.hh
              envelope.hh
              objectstack.hh
              referencecounter.hh
+             referencevector.hh
              singletonlist.hh
              subvector.hh)
 

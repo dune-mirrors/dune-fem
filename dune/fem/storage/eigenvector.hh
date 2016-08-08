@@ -49,7 +49,7 @@ namespace Dune
     class EigenVector : public DenseVector< EigenVector< K > >
     {
       typedef EigenVector< K > ThisType;
-      typedef DenseVector< EigenVector< K > > BaseType;
+      typedef DenseVector< ThisType > BaseType;
 
     public:
       typedef typename BaseType::size_type size_type;

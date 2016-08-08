@@ -5,7 +5,6 @@
 #include <string>
 #include <utility>
 
-#include <dune/fem/common/referencevector.hh>
 #include <dune/fem/common/stackallocator.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/localfunction/mutable.hh>

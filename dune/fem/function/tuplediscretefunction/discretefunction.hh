@@ -7,7 +7,6 @@
 
 #include <dune/common/std/utility.hh>
 
-#include <dune/fem/common/referencevector.hh>
 #include <dune/fem/common/stackallocator.hh>
 #include <dune/fem/common/tupleforeach.hh>
 #include <dune/fem/function/common/discretefunction.hh>

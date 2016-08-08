@@ -4,7 +4,6 @@
 #include <memory>
 #include <string>
 
-#include <dune/fem/common/referencevector.hh>
 #include <dune/fem/common/stackallocator.hh>
 #include <dune/fem/function/blockvectors/defaultblockvectors.hh>
 #include <dune/fem/function/common/discretefunction.hh>
