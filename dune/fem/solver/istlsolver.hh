@@ -415,7 +415,8 @@ namespace Dune
       static std::pair< int, double >
       call ( const OperatorImp &op,
              const DiscreteFunction &arg, DiscreteFunction &dest,
-             double reduction, double absLimit, int maxIter, bool verbose )
+             double reduction, double absLimit, int maxIter, bool verbose,
+             const ParameterReader &parameter )
       {
         typedef typename OperatorImp :: MatrixAdapterType MatrixAdapterType;
         MatrixAdapterType matrix  = op.systemMatrix().matrixAdapter();
@@ -426,8 +427,11 @@ namespace Dune
         typedef typename MatrixAdapterType :: MatrixType MatrixType;
         typedef typename MatrixType :: BaseType ISTLMatrixType;
         SuperLU< ISTLMatrixType > solver( matrix.getmat(), verbose );
+
+        typedef typename DiscreteFunction :: DofStorageType BlockVectorType;
+        BlockVectorType rhs( arg.blockVector() );
         // solve the system
-        solver.apply( dest.blockVector(), arg.blockVector(), returnInfo );
+        solver.apply( dest.blockVector(), rhs, returnInfo );
 #else
         DUNE_THROW(NotImplemented,"SuperLU solver not found in configure, please re-configure");
 #endif
