@@ -8,8 +8,8 @@ DEPENDENCIES=@REQUIRES@
 
 Name: @PACKAGE_NAME@
 Version: @VERSION@
-Description: The Dune FEM module 
-URL: http://dune.mathematik.uni-freiburg.de/
+Description: The Dune FEM module
+URL: https://www.dune-project.org/modules/dune-fem/
 Requires: ${DEPENDENCIES}
 Libs: -L${libdir} -ldunefem
 Cflags: -I${includedir}

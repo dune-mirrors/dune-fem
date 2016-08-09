@@ -1,6 +1,6 @@
 Module: dune-fem
 Version: 2.4.1-rc
-Maintainer: dune@mathematik.uni-freiburg.de
+Maintainer: dune-fem@dune-project.org
 Whitespace-Hook: Yes
 Depends: dune-grid (>= 2.4)
 Suggests: dune-alugrid (>= 2.4) dune-istl (>= 2.4) dune-localfunctions (>= 2.4) dune-spgrid (>= 2.4)
