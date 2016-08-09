@@ -7,9 +7,6 @@
 
 #include <dune/corepy/pybind11/pybind11.h>
 
-// VTKDataType
-// -----------
-
 PYBIND11_PLUGIN( femmpi )
 {
   pybind11::module module( "femmpi" );

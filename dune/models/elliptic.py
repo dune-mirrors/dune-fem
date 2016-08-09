@@ -595,7 +595,7 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
 
     field = u.ufl_function_space().ufl_element().field()
 
-    # if exact solution is passed in suptract a(u,.) from the form
+    # if exact solution is passed in subtract a(u,.) from the form
     if not exact == None:
         b = ufl.replace(form, {u: ufl.as_vector(exact)} )
         form = form - b
