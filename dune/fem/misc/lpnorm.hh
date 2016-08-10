@@ -111,8 +111,11 @@ namespace Dune
         order = (order == 0 ? 2*u.space().order() : order);
 
         ReturnType sum( 0 );
-        for( const EntityType &entity : elements( gridPart_, Partitions::interior ) )
+        const auto end = gridPart_.template end<0>();
+        for (auto it = gridPart_.template begin<0>(); it!=end; ++it)
+        // for( const EntityType &entity : elements( gridPart_, Partitions::interior ) )
         {
+          const EntityType &entity = *it;
           typename DiscreteFunctionType::LocalFunctionType uLocal = u.localFunction( entity );
           normLocal( entity, order, uLocal, sum );
         }
