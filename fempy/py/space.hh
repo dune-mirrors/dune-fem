@@ -1,8 +1,6 @@
 #ifndef DUNE_FEMPY_PY_SPACE_HH
 #define DUNE_FEMPY_PY_SPACE_HH
 
-#include <dune/fem/misc/l2norm.hh>
-
 #include <dune/corepy/common/fmatrix.hh>
 #include <dune/corepy/common/fvector.hh>
 
@@ -16,15 +14,6 @@ namespace Dune
 
   namespace FemPy
   {
-
-    template <class GridPart, class Field, int dimR>
-    double distance
-    (Dune::FemPy::VirtualizedGridFunction<GridPart, Dune::FieldVector<Field,dimR>> &u,
-     Dune::FemPy::VirtualizedGridFunction<GridPart, Dune::FieldVector<Field,dimR>> &v)
-    {
-      Dune::Fem::L2Norm<GridPart> norm( u.gridPart(), 8);
-      return norm.distance(u,v);
-    }
 
     // registerSpace
     // -------------
@@ -50,12 +39,6 @@ namespace Dune
         cls.def( "__init__", [] ( Space &instance, GridPart &grid ) {
             new( &instance ) Space( grid );
           }, pybind11::keep_alive< 1, 2 >() );
-        cls.def( "distance", [] ( Space&,
-          Dune::FemPy::VirtualizedGridFunction<GridPartType, Dune::FieldVector<RangeFieldType,dimRange>> &u,
-          Dune::FemPy::VirtualizedGridFunction<GridPartType, Dune::FieldVector<RangeFieldType,dimRange>> &v)
-          {
-            return distance(u,v);
-          } );
       }
     }
     template< class Space, class Holder, class AliasType >
