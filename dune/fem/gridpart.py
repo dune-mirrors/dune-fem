@@ -55,9 +55,6 @@ def levelFunction(self):
 def partitionFunction(self):
     return self.localGridFunction("rank", function.Partition(comm.rank))
 
-def distance(self,u,v):
-    return u.space.distance(u,v)
-
 myGenerator = generator.Generator("GridPart",
         "dune/fempy/py" , "Dune::FemPy")
 
@@ -72,7 +69,6 @@ def addAttr(module, cls):
     setattr(cls, "writeVTK", writeVTK )
     setattr(cls, "levelFunction", levelFunction )
     setattr(cls, "partitionFunction", partitionFunction )
-    setattr(cls, "distance", distance )
 
 def get(gp, **parameters):
     """Create a gridpart module using the gridpart-database.
