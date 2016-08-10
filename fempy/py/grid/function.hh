@@ -152,7 +152,9 @@ namespace Dune
         return simpleGridFunction( std::move( name ), gridPart, [ evaluate ] ( const Coordinate &x ) {
             pybind11::gil_scoped_acquire acq;
             pybind11::object v( evaluate( x ) );
-            return v.template cast< FieldVector< double, dimRange > >();
+            try { return v.template cast< FieldVector< double, dimRange > >(); }
+            catch(std::exception& e) { std::cout << e.what() << " in GlobalGridFunction::evaluate" << std::endl; throw pybind11::cast_error("error converting return value in localGridFunction"); }
+            return FieldVector<double,dimRange>(0);
           } );
       }
 
@@ -222,7 +224,9 @@ namespace Dune
         return simpleGridFunction( std::move( name ), gridPart, [ evaluate ] ( const Entity &entity, const Coordinate &x ) {
             pybind11::gil_scoped_acquire acq;
             pybind11::object v( evaluate( entity, x ) );
-            return v.template cast< FieldVector< double, dimRange > >();
+            try { return v.template cast< FieldVector< double, dimRange > >(); }
+            catch(std::exception& e) { std::cout << e.what() << " in LocalGridFunction::evaluate" << std::endl; throw pybind11::cast_error("error converting return value in localGridFunction"); }
+            return FieldVector<double,dimRange>(0);
           } );
       }
 
