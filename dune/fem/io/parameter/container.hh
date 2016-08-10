@@ -87,6 +87,15 @@ namespace Dune
       /** \brief cast into ParameterReader */
       operator ParameterReader () const { return ParameterReader( std::ref( parameter_ ) ); }
 
+      /** \brief set the rank for verbose output
+       *
+       *  This mehtod allows to set the fem verbosity within the code.
+       *
+       * \param[in]  verboseRank  the rank of the processor to have * verbose output (-1: no verbose output)
+       * \param[out] the value used before the change
+       */
+      int setVerboseRank( int verboseRank );
+
       /**
        * \brief add parameters from the command line
        *
@@ -328,7 +337,7 @@ namespace Dune
       auto info  = parameter_.map.insert( std::make_pair( key, Value( value, curFileName_ ) ) );
       Value &val = info.first->second;
 
-      if( !verbose() )
+      if( verbose() )
       {
         std::cout << curFileName_ << "[" << curLineNumber_ << "]: ";
         if( info.second )
@@ -421,6 +430,12 @@ namespace Dune
       return true;
     }
 
+    inline int ParameterContainer::setVerboseRank( int verboseRank )
+    {
+      int old = parameter_.verboseRank;
+      parameter_.verboseRank = verboseRank;
+      return old;
+    }
 
     inline void ParameterContainer::processFile ( const std::string &filename )
     {

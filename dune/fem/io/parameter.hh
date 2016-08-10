@@ -193,6 +193,15 @@ namespace Dune
         return container;
       }
 
+      /** \brief set the rank for verbose output
+       *
+       *  This mehtod allows to set the fem verbosity within the code.
+       *
+       * \param[in]  verboseRank  the rank of the processor to have * verbose output (-1: no verbose output)
+       * \param[out] the value used before the change
+       */
+      static int setVerboseRank( int verboseRank ) { return container().setVerboseRank( verboseRank ); }
+
       /** \brief add parameters from the command line
           RangeType gRight;
        *
