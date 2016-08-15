@@ -454,8 +454,6 @@ namespace Dune
       // type of communication manager object which does communication
       typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType > SlaveDofsType;
 
-      typedef typename DiscreteFunctionType :: DofVectorType :: DofContainerType  DofContainerType;
-
       typedef RangeFieldType  field_type;
       typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
 
