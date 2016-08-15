@@ -370,6 +370,8 @@ class FluxExtracter(ufl.algorithms.transformer.Transformer):
             expr = expr.ufl_operands[0]
         return isinstance(expr, ufl.argument.Argument) and expr.number() == 0
 
+    def variable(self, expr):
+        return expr.expression()
 
 
 # splitUFLForm
