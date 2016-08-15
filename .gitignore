@@ -1,34 +1,7 @@
-/check-doxygen.out
-/check-headers.out
-/check.out
-/compile
-/config.guess
-/config.h
-/config.h.in
-/config.lt
-/config.status
-/config.sub
-/configure
-/depcomp
-/dune-fem*.tar.bz2
-/dune-fem*.tar.gz
-/dune-fem.pc
-/install-sh
-/ltmain.sh
-/missing
-/setup.sh
-/stamp-h1
-/test-driver
-
-.deps
-.libs
-Makefile
-Makefile.in
-
+# ignore all build folders
+/build*/
+# ignore backup files
 *~
-*.la
-*.lo
-*.log
-*.o
 *.swp
-build-cmake/
+# ignore cmake petsc module
+/cmake/modules/petsc/

@@ -1,9 +1,0 @@
-/dataoutputtest
-/persistencemanagertest
-/Makefile
-/Makefile.in
-/.deps
-/.libs
-/*.so.*
-/*.swp
-/*.log
