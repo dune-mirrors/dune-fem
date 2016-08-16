@@ -6,8 +6,7 @@
   },
   "BurgersScheme"   :
   {
-    "type"      : "PRPScheme< $(spaceA), $(spaceB), DiffusionModel< typename $(spaceA)::GridPartType, $(spaceA)::dimRange+1 > >",
-    "include"   : [ "navierstokes/burgers.cc" ],
-    "extension"  : "yes"
+    "type"      : "BurgersSchemeWrapper< PRPScheme< $(spaceA), $(spaceB), DiffusionModel< typename $(spaceA)::GridPartType, $(spaceA)::dimRange+1 > > >",
+    "include"   : [ "navierstokes/burgers.cc" ]
   }
 }
