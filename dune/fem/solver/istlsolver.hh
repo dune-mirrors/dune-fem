@@ -77,7 +77,7 @@ namespace Dune
 
     // ISTLInverseOp
     // Baseclass for each ISTL solver
-    // -------------
+    // ------------------------------
 
     template< class DF, class Op, class SolverCaller >
     struct ISTLInverseOp
@@ -91,13 +91,20 @@ namespace Dune
       typedef SolverCaller SolverCallerType;
 
       typedef Dune::Fem::ISTLMatrixFreeOperatorAdapter< OperatorType >                      ISTLMatrixFreeAdapterType;
-      typedef Dune::Fem::ISTLLinearOperator< DiscreteFunctionType, DiscreteFunctionType >   AssembledOperatorType;
+
+      // if OperatorType is Dune::Fem::Operator, then use ISTLLinearOperator as
+      // assembled operator, otherwise we assume that OperatorType is assembled
+      // and fulfills the interface of ISTLLinearOperator
+      typedef typename std::conditional<
+              std::is_same< Dune::Fem::Operator< DiscreteFunctionType, DiscreteFunctionType >, OperatorType >::value,
+                Dune::Fem::ISTLLinearOperator< DiscreteFunctionType, DiscreteFunctionType >,
+                OperatorType > :: type  AssembledOperatorType;
 
       /** \brief constructor
        *
        *  \param[in] op Mapping describing operator to invert
        *  \param[in] reduction reduction epsilon
-       *  \param[in] absLimit absolut limit of residual (not used here)
+       *  \param[in] absLimit absolute limit of residual (not used here)
        *  \param[in] maxIter maximal iteration steps
        *  \param[in] verbose verbosity
        *
@@ -121,7 +128,7 @@ namespace Dune
        *
        *  \param[in] op        mapping describing operator to invert
        *  \param[in] reduction    reduction epsilon
-       *  \param[in] absLimit  absolut limit of residual (not used here)
+       *  \param[in] absLimit  absolute limit of residual (not used here)
        *  \param[in] maxIter   maximal iteration steps
        */
       ISTLInverseOp ( const OperatorType &op,
@@ -177,6 +184,7 @@ namespace Dune
         std::pair< int, double > info;
         if( matrixOp_ )
         {
+          std::cout << "Using assembled operator" << std::endl;
           typedef typename AssembledOperatorType :: BaseType  MatrixObjectType;
           const MatrixObjectType& matrixObj = matrixOp_->systemMatrix() ;
 
