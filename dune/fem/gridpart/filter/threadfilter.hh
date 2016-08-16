@@ -1,10 +1,6 @@
 #ifndef DUNE_FEM_THEADFILTER_HH
 #define DUNE_FEM_THEADFILTER_HH
 
-//- system includes
-#include <algorithm>
-
-//- dune-fem includes
 #include <dune/fem/gridpart/filter/filter.hh>
 #include <dune/fem/storage/dynamicarray.hh>
 
@@ -17,20 +13,23 @@ namespace Dune
     // --------------------
 
     template< class > class FilterDefaultImplementation;
-    template< class > class ThreadFilter;
+    template< class , class > class ThreadFilter;
 
 
     // ThreadFilterTraits
     // ------------------------
 
-    template< class GridPartImp >
+    template< class GridPartImp, class ThreadArrayImp >
     struct ThreadFilterTraits
     {
       //! \brief grid part type
       typedef GridPartImp GridPartType;
 
+      //! \brief array type
+      typedef ThreadArrayImp ThreadArrayType;
+
       //! \brief filter type
-      typedef ThreadFilter< GridPartType > FilterType;
+      typedef ThreadFilter< GridPartType, ThreadArrayType > FilterType;
 
       //! \brief entity types
       template < int cd >
@@ -48,27 +47,27 @@ namespace Dune
     // ThreadFilter
     // ------------------
 
-    template< class GridPartImp >
+    template< class GridPartImp, class ThreadArrayImp = DynamicArray< int > >
     class ThreadFilter
-    : public FilterDefaultImplementation< ThreadFilterTraits< GridPartImp > >
+    : public FilterDefaultImplementation< ThreadFilterTraits< GridPartImp, ThreadArrayImp > >
     {
-      // type of grid part
+    public:
+
+      //! \brief type of grid part
       typedef GridPartImp GridPartType;
 
-      // type of traits
-      typedef ThreadFilterTraits< GridPartType > Traits;
+      //! \brief array type
+      typedef ThreadArrayImp ThreadArrayType;
 
-      // this type
-      typedef ThreadFilter< GridPartType > ThisType;
+      //! \brief type of traits
+      typedef ThreadFilterTraits< GridPartType, ThreadArrayType > Traits;
 
-      // base type
+      //! \brief this type
+      typedef ThreadFilter< GridPartType, ThreadArrayType > ThisType;
+
+      //! \brief base type
       typedef FilterDefaultImplementation< Traits > BaseType;
 
-      static const int dimension = GridPartType::GridType::dimension;
-
-      static const int nCodim = dimension+1;
-
-    public:
       //! \brief type of the filter implementation
       typedef typename Traits::FilterType FilterType;
 
@@ -84,7 +83,6 @@ namespace Dune
       //! \brief type of codim 0 entity
       typedef typename Traits::EntityType EntityType;
 
-      typedef DynamicArray< int >  ThreadArrayType ;
 
       //! \brief constructor
       ThreadFilter ( const GridPartType & gridPart,
@@ -93,15 +91,10 @@ namespace Dune
       : indexSet_( gridPart.indexSet() ),
         threadNum_( threadNum ),
         thread_( thead )
-      { }
+      {}
 
       //! \brief copy constructor
-      ThreadFilter ( const ThisType & other )
-      : indexSet_( other.indexSet_ ),
-        threadNum_( other.threadNum_ ),
-        thread_( other.thread_ )
-      {
-      }
+      ThreadFilter ( const ThisType & other ) = default;
 
       //! \brief return false since all interior intersections should be skipped
       template< class Intersection >
@@ -120,7 +113,7 @@ namespace Dune
           return (thread_ == threadNum_[ indexSet_.index( entity ) ]);
         }
         else
-          return false ;
+          return false;
       }
 
       //! \brief returns true if the given entity has the correct thread number
@@ -128,8 +121,7 @@ namespace Dune
       template< class Entity >
       bool contains ( const Entity & entity ) const
       {
-        enum { cc = Entity::codimension };
-        return contains< cc >( entity );
+        return contains< Entity::codimension >( entity );
       }
 
       //! \brief returns true if an intersection is a boundary intersection
@@ -155,7 +147,7 @@ namespace Dune
 
     protected:
       const IndexSetType& indexSet_;
-      const ThreadArrayType& threadNum_ ;
+      const ThreadArrayType& threadNum_;
       const int thread_;
     };
 
