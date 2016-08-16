@@ -532,8 +532,8 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
 
     # only implemented for 3D normal
     def facet_normal(self, expr):
-        self.using.add('const DomainType w1 = entity().geometry().corner(0)-entity().geometry().corner(1);\n' \
-                  '      const DomainType w2 = entity().geometry().corner(0)-entity().geometry().corner(2);\n' \
+        self.using.add('const DomainType w1 = -entity.geometry.jacobianTransposed(coordinate(x))[0];\n' \
+                  '      const DomainType w2 = -entity.geometry.jacobianTransposed(coordinate(x))[1];\n' \
                   '      DomainType normal;\n' \
                   '      normal[0]=w1[1]*w2[2]-w1[2]*w2[1];\n' \
                   '      normal[1]=-(w1[0]*w2[2]-w1[2]*w2[0]);\n' \
