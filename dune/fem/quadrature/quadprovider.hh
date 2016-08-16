@@ -51,7 +51,13 @@ namespace Dune
 
         QuadImp &getQuadrature( const GeometryType &geometry, unsigned int order )
         {
-          assert( order < storage_.size() );
+          if(order >= storage_.size() )
+          {
+            std::cerr << "A quadrature of order " << order
+                      << "is not implemented!" << std::endl
+                      << "Choosing maximum order: " << storage_.size()-1 << std::endl << std::endl;
+            order = storage_.size() -1;
+          }
 
           QuadPtr& quadPtr = storage_[ order ];
           if( quadPtr == nullptr )
