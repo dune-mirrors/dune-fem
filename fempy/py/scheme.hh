@@ -20,7 +20,7 @@ namespace Dune
     namespace detail
     {
       template< class Scheme, class Cls >
-      void registerScheme ( pybind11::module module, Cls &cls )
+      void registerScheme ( pybind11::module module, Cls &cls, std::true_type)
       {
         typedef typename Scheme::DiscreteFunctionSpaceType Space;
         typedef typename Scheme::GridPartType GridPart;
@@ -55,9 +55,11 @@ namespace Dune
       }
     }
     template< class Scheme, class Holder, class AliasType >
-    void registerScheme ( pybind11::module module, pybind11::class_<Scheme,Holder,AliasType> &cls )
+    void registerScheme ( pybind11::module module, pybind11::class_<Scheme, Holder, AliasType> &cls )
     {
-      detail::registerScheme<Scheme>(module,cls);
+      typedef typename Scheme::DiscreteFunctionSpaceType Space;
+      typedef typename Scheme::ModelType ModelType;
+      detail::registerScheme<Scheme>(module, cls, std::is_constructible<Scheme, Space&, ModelType&, std::string&>());
     }
   }
 }
