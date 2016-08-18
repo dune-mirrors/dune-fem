@@ -10,9 +10,11 @@
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
-#include <dune/fem/gridpart/filter/radialfilter.hh>
+#include <dune/fem/gridpart/filter/threadfilter.hh>
 #include <dune/fem/gridpart/filter/basicfilterwrapper.hh>
+#include <dune/fem/gridpart/filter/radialfilter.hh>
 #include <dune/fem/misc/gridwidth.hh>
+#include <dune/fem/storage/dynamicarray.hh>
 
 #include "failure.hh"
 #include "checkseed.hh"
@@ -153,11 +155,6 @@ void testFilteredGridPart( HostGridPartType& hostGridPart, FilterType& filter )
   Dune::Fem::CheckIntersections< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
 }
 
-typedef Dune::GridSelector::GridType GridType;
-typedef Dune::Fem::AdaptiveLeafGridPart< GridType > HostGridPartType;
-typedef Dune::Fem::RadialFilter< GridType::ctype, GridType::dimensionworld > BasicFilterType;
-typedef Dune::Fem::BasicFilterWrapper< HostGridPartType, BasicFilterType > FilterType;
-
 int main( int argc, char ** argv )
 {
   Dune::Fem::MPIManager :: initialize( argc, argv );
@@ -173,18 +170,36 @@ int main( int argc, char ** argv )
     grid.loadBalance();
 
     // create grid part
+    typedef Dune::GridSelector::GridType GridType;
+    typedef Dune::Fem::AdaptiveLeafGridPart< GridType > HostGridPartType;
     HostGridPartType hostGridPart( grid );
-    BasicFilterType::GlobalCoordinateType center( 0 );
-    BasicFilterType basicFilter( center, .25 );
-    FilterType filter( hostGridPart, basicFilter );
 
-    // test allowing non consecutive index set
-    std::cout << std::endl << "Testing FilteredGridPart allowing non consecutive index set " << std::endl << std::endl;
-    testFilteredGridPart< false, HostGridPartType, FilterType >( hostGridPart, filter );
+    // create radial filter
+    typedef Dune::Fem::RadialFilter< GridType::ctype, GridType::dimensionworld > RadialFilterType;
+    RadialFilterType::GlobalCoordinateType center( 0 );
+    RadialFilterType radialFilter( center, .25 );
+    typedef Dune::Fem::BasicFilterWrapper< HostGridPartType, RadialFilterType > WrapperRadialFilterType;
+    WrapperRadialFilterType wrappedRadialFilter( hostGridPart, radialFilter );
 
-    // test forcing consecutive index set
-    std::cout << std::endl << "Testing FilteredGridPart forcing consecutive index set " << std::endl << std::endl;
-    testFilteredGridPart< true, HostGridPartType, FilterType >( hostGridPart, filter );
+    // test FilteredGridPart with radial filter and allowing non consecutive index set
+    std::cout << std::endl << "Testing FilteredGridPart with radial filter: allow non consecutive index set" << std::endl << std::endl;
+    testFilteredGridPart< false, HostGridPartType, WrapperRadialFilterType >( hostGridPart, wrappedRadialFilter );
+
+    // test FilteredGridPart with radial filter and forcing consecutive index set
+    std::cout << std::endl << "Testing FilteredGridPart with radial filter: force consecutive index set" << std::endl << std::endl;
+    testFilteredGridPart< true, HostGridPartType, WrapperRadialFilterType >( hostGridPart, wrappedRadialFilter );
+
+    // create thread filter
+    typedef std::vector< int > ThreadArrayType;
+    ThreadArrayType tags( grid.size(0), 0 );
+    for( std::size_t i = ( tags.size()/2 ); i < tags.size(); ++i )
+      tags[ i ] = 1;
+    typedef Dune::Fem::ThreadFilter< HostGridPartType, ThreadArrayType > ThreadFilterType;
+    ThreadFilterType threadFilter( hostGridPart, tags, 1 );
+
+    // test FilteredGridPart with thread filter and allowing non consecutive index set
+    std::cout << std::endl << "Testing FilteredGridPart with thread filter: allow non consecutive index set" << std::endl << std::endl;
+    testFilteredGridPart< false, HostGridPartType, ThreadFilterType >( hostGridPart, threadFilter );
   }
   catch(Dune::Exception &e)
   {
