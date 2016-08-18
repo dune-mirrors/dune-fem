@@ -1,7 +1,8 @@
 #include <config.h>
 
-#include <cassert>
+#include <algorithm>
 #include <iostream>
+#include <vector>
 
 #if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
 // do nothing in this test if experimental_grid_extension is not activated
@@ -22,101 +23,91 @@ int main () { return 0; }
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/space/lagrange.hh>
 
-#include "./failure.hh"
-#include "./checkseed.hh"
-#include "./checkgeometry.hh"
-#include "./checkindexset.hh"
-#include "./checkintersections.hh"
-#include "../../test/testgrid.hh"
+#include "failure.hh"
+#include "checkseed.hh"
+#include "checkgeometry.hh"
+#include "checkindexset.hh"
+#include "checkintersections.hh"
+#include <dune/fem/test/testgrid.hh>
 
 template< class GridPartType >
 void testGridPart( const GridPartType & gridPart )
 {
-  typedef typename GridPartType::IndexSetType IndexSetType;
+  const auto& indexSet = gridPart.indexSet();
   typedef typename GridPartType::IndexSetType::IndexType IndexType;
-  const IndexSetType & indexSet = gridPart.indexSet();
   IndexType maxIndex = 0;
   int count = 0;
   std::vector< bool > isConsecutiveIndex(GridPartType::dimension+1,true);
   std::vector< std::vector< bool > > consecutiveIndex(GridPartType::dimension+1);
-  for (int c=0;c<=GridPartType::dimension;++c)
+  for(int c=0;c<=GridPartType::dimension;++c)
     consecutiveIndex[c].resize( indexSet.size(c), false );
 
-  typedef typename GridPartType::template Codim< 0 >::IteratorType IteratorType;
-  const IteratorType end = gridPart.template end< 0 >();
-  for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
+  for( const auto& element : elements( gridPart ) )
   {
-    const typename IteratorType::Entity &element = *it;
     ++count;
-    IndexType index = indexSet.index(element);
+    auto index = indexSet.index(element);
     maxIndex = std::max( index, maxIndex);
 
-    if (index >= IndexType(consecutiveIndex[0].size())) isConsecutiveIndex[0] = false;
-    else consecutiveIndex[0][index] = true;
-    for (int c=0;c<=GridPartType::dimension;++c)
+    if(index >= IndexType(consecutiveIndex[0].size()))
+      isConsecutiveIndex[0] = false;
+    else
+      consecutiveIndex[0][index] = true;
+    for(int c=0;c<=GridPartType::dimension;++c)
     {
-      int nSubEn = Dune::ReferenceElements< typename GridPartType::GridType::ctype, GridPartType::dimension >::
-          general( element.type() ).size(c);
-      for (int i=0;i<nSubEn;++i)
+      int nSubEn =
+        Dune::ReferenceElements< typename GridPartType::GridType::ctype, GridPartType::dimension >::general( element.type() ).size(c);
+      for(int i=0;i<nSubEn;++i)
       {
-        IndexType index = indexSet.subIndex(element,i,c);
-        if (index >= IndexType(consecutiveIndex[c].size())) isConsecutiveIndex[c] = false;
-        else consecutiveIndex[c][index] = true;
+        auto index = indexSet.subIndex(element,i,c);
+        if(index >= IndexType(consecutiveIndex[c].size()))
+          isConsecutiveIndex[c] = false;
+        else
+          consecutiveIndex[c][index] = true;
       }
     }
   }
 
   std::cout << "entities visited: " << count << std::endl;
-
   std::cout << "entities in index set: " << indexSet.size( 0 ) << std::endl;
   std::cout << "maximum value in index set: " << maxIndex << std::endl;
 
-  for (int c=0;c<=GridPartType::dimension;++c)
+  for(int c=0;c<=GridPartType::dimension;++c)
   {
     std::cout << "index set for codim " << c;
-    if ( !isConsecutiveIndex[c] )
+    if( !isConsecutiveIndex[c] )
     {
       std::cout << " is not consecutive: too large index encountered" << std::endl;
       continue;
     }
-    for (unsigned int i=0;i<consecutiveIndex[c].size();++i)
+    for(unsigned int i=0;i<consecutiveIndex[c].size();++i)
     {
-      if (!consecutiveIndex[c][i])
+      if(!consecutiveIndex[c][i])
       {
         isConsecutiveIndex[c] = false;
         break;
       }
     }
-    if ( !isConsecutiveIndex[c] )
-    {
+    if( !isConsecutiveIndex[c] )
       std::cout << " is not consecutive: hole encountered" << std::endl;
-    }
     else
-    {
       std::cout << " is consecutive" << std::endl;
-    }
   }
 }
 
 template< int codim, class GridPartType >
 void testSubEntities( const GridPartType & gridPart )
 {
-  typedef typename GridPartType::IndexSetType IndexSetType;
-  typedef typename GridPartType::IndexSetType::IndexType IndexType;
-  const IndexSetType & indexSet = gridPart.indexSet();
-  IndexType maxIndex = 0;
+  const auto& indexSet = gridPart.indexSet();
+  typename GridPartType::IndexSetType::IndexType maxIndex = 0;
   int count = 0;
-  typedef typename GridPartType::template Codim< codim >::IteratorType IteratorType;
-  const IteratorType end = gridPart.template end< codim >();
-  for( IteratorType it = gridPart.template begin< codim >(); it != end; ++it )
+  for( auto it = gridPart.template begin< codim >(); it != gridPart.template end< codim >(); ++it )
   {
     ++count;
-    IndexType index = indexSet.index(*it);
+    auto index = indexSet.index(*it);
     maxIndex = std::max( index, maxIndex);
   }
 
   std::cout << "codim " << codim << " subentities visited: " << count << std::endl;
-
   std::cout << "entities in index set: " << indexSet.size( codim ) << std::endl;
   std::cout << "maximum value in index set: " << maxIndex << std::endl;
 }
@@ -124,41 +115,28 @@ void testSubEntities( const GridPartType & gridPart )
 template< class GridPartType >
 void testIntersectionIterator( const GridPartType & gridPart )
 {
-  typedef typename GridPartType::template Codim< 0 >::template Partition<Dune::All_Partition>::IteratorType IteratorType;
-  typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
-  typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
-  typedef typename GridPartType::IntersectionType IntersectionType;
-
   std::vector<int> index( gridPart.indexSet().size(0), 0 );
 
-  const IteratorType end = gridPart.template end< 0,Dune::All_Partition >();
-  for( IteratorType it = gridPart.template begin< 0,Dune::All_Partition >(); it != end; ++it )
-    index[ gridPart.indexSet().index( *it ) ] = 1;
+  for( const auto& element : elements( gridPart ) )
+    index[ gridPart.indexSet().index( element ) ] = 1;
 
-  for( IteratorType it = gridPart.template begin< 0,Dune::All_Partition >(); it != end; ++it )
-  {
-    const typename IteratorType::Entity &element = *it;
-    const IntersectionIteratorType iend = gridPart.iend( element );
-    for ( IntersectionIteratorType inter = gridPart.ibegin( element ); inter != iend; ++inter )
-    {
-      IntersectionType intersection = *inter;
+  for( const auto& element : elements( gridPart ) )
+    for( const auto& intersection : intersections( gridPart, element ) )
       if( intersection.neighbor() )
       {
-        EntityType neighbor = intersection.outside();
-        typename GridPartType::IndexSetType::IndexType nbIndex = gridPart.indexSet().index( neighbor );
-        if ( nbIndex >= index.size() )
+        const auto& neighbor = intersection.outside();
+        const auto& nbIndex = gridPart.indexSet().index( neighbor );
+        if( nbIndex >= index.size() )
         {
           std::cout << "An index on neighbor is too large" << std::endl;
           continue;
         }
-        if ( index[ nbIndex ] == 0 )
+        if( index[ nbIndex ] == 0 )
         {
           std::cout << "A neighbor is not part of the gridPart" << std::endl;
           continue;
         }
       }
-    }
-  }
 }
 
 
@@ -187,29 +165,16 @@ public:
 template< class GridPart, class LocalFunction >
 void testExchangeGeometry ( const GridPart &gridPart, LocalFunction &localFunction )
 {
-  typedef typename GridPart::template Codim< 0 >::IteratorType IteratorType;
-  typedef typename GridPart::template Codim< 0 >::EntityType EntityType;
-  typedef typename GridPart::template Codim< 0 >::GeometryType GeometryType;
-
-  typedef Dune::ReferenceElement< typename GridPart::ctype, GridPart::dimension > RefElementType;
-  typedef Dune::ReferenceElements< typename GridPart::ctype, GridPart::dimension > RefElementsType;
-
-
-  const IteratorType end = gridPart.template end< 0 >();
-  for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
+  for( const auto& entity : elements( gridPart ) )
   {
-    const EntityType &entity = *it;
-
-    const RefElementType &refElement = RefElementsType::general( entity.type() );
+    const auto& refElement = Dune::ReferenceElements< typename GridPart::ctype, GridPart::dimension >::general( entity.type() );
     localFunction.init( entity.impl().hostEntity() );
     for( int i = 0; i < refElement.size( GridPart::dimension ); ++i )
-    {
       for( int k = 0; k < GridPart::dimensionworld; ++k )
         localFunction[ i*GridPart::dimensionworld + k ] = refElement.position( i, GridPart::dimension )[ k ];
-    }
 
-    EntityType xchgEntity = gridPart.exchangeGeometry( entity, localFunction );
-    const GeometryType &xchgGeometry = xchgEntity.geometry();
+    auto xchgEntity = gridPart.exchangeGeometry( entity, localFunction );
+    const auto& xchgGeometry = xchgEntity.geometry();
     if( xchgGeometry.type() != entity.type() )
       DUNE_THROW( Dune::InvalidStateException, "exchangeGeometry returns wrong geometry type." );
     if( (xchgGeometry.center() - refElement.position( 0, 0 )).two_norm() > 1e-8 )
@@ -235,7 +200,7 @@ try
   Dune::Fem::MPIManager::initialize( argc, argv );
 
   // create grid
-  GridType &grid = Dune::Fem::TestGrid::grid();
+  auto& grid = Dune::Fem::TestGrid::grid();
 
   // refine grid
   const int step = Dune::Fem::TestGrid::refineStepsForHalf();

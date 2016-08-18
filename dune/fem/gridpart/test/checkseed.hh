@@ -40,16 +40,14 @@ namespace Dune
         template< const int codim >
         static void check ( const GridPart &gridPart )
         {
-          typedef typename GridPart::template Codim< codim >::IteratorType IteratorType;
           typedef typename GridPart::template Codim< codim >::EntityType EntityType;
           typedef typename GridPart::template Codim< codim >::EntitySeedType EntitySeedType;
           static_assert( std::is_same< EntitySeedType, typename EntityType::EntitySeed >::value, "Types of EntitySeed do not coincide" );
 
-          const IteratorType end = gridPart.template end< codim >();
-          for( IteratorType it = gridPart.template begin< codim >(); it != end; ++it )
+          for( auto it = gridPart.template begin< codim >(); it != gridPart.template end< codim >(); ++it )
           {
-            EntityType entity = *it;
-            EntitySeedType seed = entity.seed();
+            auto entity = *it;
+            auto seed = entity.seed();
             if( gridPart.entity( seed ) != entity )
               DUNE_THROW( Dune::Exception, "Could not recover entity from seed" );
           }
@@ -63,7 +61,7 @@ namespace Dune
         static void apply ( const GridPart &gridPart )
         {
           // check whether grid part has entity of given codimension
-          const bool hasEntity = Dune::Fem::GridPartCapabilities::hasEntity< GridPart, codim >::v;
+          constexpr bool hasEntity = Dune::Fem::GridPartCapabilities::hasEntity< GridPart, codim >::v;
           If< GridPart, hasEntity >::template check< codim >( gridPart );
         }
       };

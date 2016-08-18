@@ -86,7 +86,7 @@ namespace Dune
         template< class Entity >
         static void apply ( const Entity &entity, FailureHandler &failureHandler )
         {
-          const bool hasEntity = Dune::Fem::GridPartCapabilities::hasEntity< GridPartType, codim >::v;
+          constexpr bool hasEntity = Dune::Fem::GridPartCapabilities::hasEntity< GridPartType, codim >::v;
           If< GridPartType, hasEntity >::template check< codim, Entity >( entity, failureHandler );
         }
       };
@@ -97,7 +97,7 @@ namespace Dune
         static void apply ( const IndexSetType &indexSet, const GridPartType &gridPart,
                            FailureHandler &failureHandler )
         {
-          const bool hasEntity = Dune::Fem::GridPartCapabilities::hasEntity< GridPartType, codim >::v;
+          constexpr bool hasEntity = Dune::Fem::GridPartCapabilities::hasEntity< GridPartType, codim >::v;
           If< GridPartType, hasEntity >::template count< codim >( indexSet, gridPart, failureHandler );
         }
       };
@@ -105,7 +105,7 @@ namespace Dune
     public:
       static void check ( const GridPartType &gridPart, FailureHandler &failureHandler )
       {
-        const IndexSetType &indexSet = gridPart.indexSet();
+        const auto& indexSet = gridPart.indexSet();
 
         // check geometry types
         checkGeomTypes( indexSet, gridPart, failureHandler );
@@ -128,10 +128,7 @@ namespace Dune
                     FailureHandler &failureHandler )
     {
       unsigned int count = 0;
-
-      typedef typename Codim< codim >::IteratorType IteratorType;
-      const IteratorType end = gridPart.template end< codim >();
-      for( IteratorType it = gridPart.template begin< codim >(); it != end; ++it )
+      for( auto it = gridPart.template begin< codim >(); it != gridPart.template end< codim >(); ++it )
         ++count;
 
       if( (unsigned int) indexSet.size( codim ) != count )
@@ -160,21 +157,17 @@ namespace Dune
       }
       else
       {
-        typedef typename Codim< 0 >::IteratorType IteratorType;
-        const IteratorType end = gridPart.template end< 0 >();
-        for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
-          geomTypes[ 0 ].push_back( it->type() );
+        for( const auto& entity : elements( gridPart ) )
+          geomTypes[ 0 ].push_back( entity.type() );
         std::sort( geomTypes[ 0 ].begin(), geomTypes[ 0 ].end() );
-        std::vector< GeometryType > :: iterator it = std::unique( geomTypes[ 0 ].begin(), geomTypes[ 0 ].end() );
+        auto it = std::unique( geomTypes[ 0 ].begin(), geomTypes[ 0 ].end() );
         geomTypes[ 0 ].erase( it, geomTypes[ 0 ].end() );
       }
 
       // build all other codimension from refernce elements
-      const std::vector< GeometryType >::const_iterator end = geomTypes[ 0 ].end();
-      for( std::vector< GeometryType >::const_iterator it = geomTypes[ 0 ].begin(); it !=  end; ++it )
+      for( const auto& geomType : geomTypes[ 0 ] )
       {
-        const Dune::ReferenceElement< ctype, dimension > &referenceElement
-          = Dune::ReferenceElements< ctype, dimension >::general( *it );
+        const auto& referenceElement = Dune::ReferenceElements< ctype, dimension >::general( geomType );
         for( int cd = 1; cd <= dimension; ++cd )
         {
           const int nSubEntities = referenceElement.size( cd );
@@ -187,7 +180,7 @@ namespace Dune
       for( int cd = 1; cd <= dimension; ++cd )
       {
         std::sort( geomTypes[ cd ].begin(), geomTypes[ cd ].end() );
-        std::vector< GeometryType > :: iterator it = std::unique( geomTypes[ cd ].begin(), geomTypes[ cd ].end() );
+        auto it = std::unique( geomTypes[ cd ].begin(), geomTypes[ cd ].end() );
         geomTypes[ cd ].erase( it, geomTypes[ cd ].end() );
       }
 

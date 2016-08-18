@@ -13,7 +13,7 @@ foreach( file ${MARCOGRIDFILES} )
   configure_file( ${file} ${CMAKE_CURRENT_BINARY_DIR}/${file} COPYONLY )
 endforeach()
 
-dune_add_test( NAME gp_lagrangeinterpolation SOURCES lagrangeinterpolation.cc
+dune_add_test( NAME test_gplagrangeinterpolation SOURCES test-gplagrangeinterpolation.cc
 COMPILE_DEFINITIONS "${GRIDTYPE};GRIDDIM=${GRIDDIM};COUNT_FLOPS;POLORDER=1"
 LINK_LIBRARIES dunefem )
 

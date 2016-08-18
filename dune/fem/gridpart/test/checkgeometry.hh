@@ -49,10 +49,9 @@ namespace Dune
           const int subEntities = entity.subEntities( codim );
           for ( int i = 0; i < subEntities; ++i )
           {
-            typedef typename Entity::template Codim< codim >::Entity SubEntity;
-            SubEntity subEntity = entity.template subEntity< codim >( i );
+            auto subEntity = entity.template subEntity< codim >( i );
 
-            typename SubEntity::Geometry geometry = subEntity.geometry();
+            auto geometry = subEntity.geometry();
             if( subEntity.type() != geometry.type() )
               std::cerr << "Error: Entity and geometry report different geometry types on codimension " << codim << "." << std::endl;
             Dune::checkGeometry( geometry );
@@ -67,7 +66,7 @@ namespace Dune
         static void apply ( const Entity &entity, FailureHandler &failureHandler )
         {
           // check whether grid part has entity of given codimension
-          const bool hasEntity = Dune::Fem::GridPartCapabilities::hasEntity< GridPartType, codim >::v;
+          constexpr bool hasEntity = Dune::Fem::GridPartCapabilities::hasEntity< GridPartType, codim >::v;
           If< GridPartType, hasEntity >::template check< codim, Entity >( entity, failureHandler );
         }
       };
@@ -80,15 +79,8 @@ namespace Dune
         // tests will be forwarded to dune-grid, where failures are not supported
         std::cout << "Note: FailureHandler will be ignored" << std::endl;
 
-        typedef typename GridPartType::template Codim< 0 >::IteratorType IteratorType;
-        typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
-
-        const IteratorType end = gridPart.template end< 0>();
-        for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
-        {
-          const EntityType &entity = *it;
+        for( const auto& entity : elements( gridPart ) )
           ForLoop< CheckSubEntityGeometry, 0, dimension >::apply( entity, failureHandler );
-        }
       }
     };
 

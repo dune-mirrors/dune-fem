@@ -6,6 +6,8 @@
 
 #include <config.h>
 #include <iostream>
+#include <sstream>
+#include <string>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
@@ -27,9 +29,9 @@ using namespace Dune;
 // polynom approximation order of quadratures,
 // at least poolynom order of basis functions
 #ifdef POLORDER
-  const int polOrder = POLORDER;
+  constexpr int polOrder = POLORDER;
 #else
-  const int polOrder = 1;
+  constexpr int polOrder = 1;
 #endif
 
 #ifdef COMPILE_TEST
@@ -39,22 +41,18 @@ using namespace Dune;
 #endif
   typedef Dune :: GridSelector :: GridType MyGridType;
 
-  // typedef AdaptiveLeafGridPart< MyGridType > HostGridPartType;
   typedef Fem::LeafGridPart< MyGridType > HostGridPartType;
   typedef Fem::RadialFilter< MyGridType::ctype, MyGridType::dimensionworld > BasicFilterType;
   typedef Fem::BasicFilterWrapper< HostGridPartType, BasicFilterType > FilterType;
   typedef Fem::FilteredGridPart< HostGridPartType, FilterType, true > GridPartType;
-  // typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 
   typedef Fem::FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionSpaceType;
 
-  typedef Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
-    DiscreteFunctionSpaceType;
+  typedef Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
 
   typedef Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
   typedef Fem::ExactSolution< FunctionSpaceType > ExactSolutionType;
-
 
 
   void writeOut ( Fem::VirtualOutStream out, const DiscreteFunctionType &solution )
@@ -81,12 +79,11 @@ using namespace Dune;
       gridptr_->loadBalance();
     }
 
-  private:
-    TestGrid ( const ThisType & );
-
-    ThisType &operator= ( const ThisType & );
-
   public:
+    TestGrid ( const ThisType & ) = delete;
+
+    ThisType &operator= ( const ThisType & ) = delete;
+
     static ThisType &instance ()
     {
       static ThisType staticInstance;
@@ -120,7 +117,7 @@ using namespace Dune;
     Dune::Fem::MPIManager :: initialize( argc, argv );
     try
     {
-      MyGridType &grid = TestGrid<MyGridType> :: grid();
+      auto& grid = TestGrid<MyGridType> :: grid();
       const int step = TestGrid<MyGridType> :: refineStepsForHalf();
       grid.globalRefine( 2*step );
       HostGridPartType hostGridPart (grid );
@@ -128,26 +125,22 @@ using namespace Dune;
       BasicFilterType basicFilter( center, .25 );
       FilterType filter( hostGridPart, basicFilter );
       GridPartType gridPart( hostGridPart, filter );
-      // GridPartType gridPart ( grid );
-
 
       DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
       ExactSolutionType f;
       DiscreteFunctionType solution( "solution", discreteFunctionSpace );
       solution.clear();
 
-      std :: cout << "maxDofs = " << discreteFunctionSpace.blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize << std :: endl;
+      std::cout << "maxDofs = " << discreteFunctionSpace.blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize << std::endl;
 
-      //! perform Lagrange interpolation
+      // perform Lagrange interpolation
       interpolate( gridFunctionAdapter( f, gridPart, discreteFunctionSpace.order() + 2 ), solution );
       solution.communicate();
 
       // output to vtk file
       Fem::VTKIO<GridPartType> vtkWriter(gridPart);
       vtkWriter.addVertexData(solution);
-      vtkWriter.pwrite("vtxprojection",
-                        Fem::Parameter::commonOutputPath().c_str(),"",
-                        Dune::VTK::ascii);
+      vtkWriter.pwrite( "vtxprojection", Fem::Parameter::commonOutputPath().c_str(), "", Dune::VTK::ascii );
       return 0;
     }
     catch( Exception e )

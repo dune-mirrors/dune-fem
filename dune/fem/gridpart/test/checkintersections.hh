@@ -73,19 +73,11 @@ namespace Dune
     public:
       static void check ( const GridPartType &gridPart, FailureHandler &failureHandler )
       {
-        typedef typename GridPartType::template Codim< 0 >::IteratorType IteratorType;
-        typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
-
-        const IteratorType end = gridPart.template end< 0>();
-        for( IteratorType it = gridPart.template begin< 0 >(); it != end; ++it )
+        for( const auto& entity : elements( gridPart ) )
         {
-          const EntityType &entity = *it;
-
-          typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
-          const IntersectionIteratorType iend = gridPart.iend( entity );
-          for( IntersectionIteratorType iit = gridPart.ibegin( entity ); iit != iend; ++iit )
+          for( auto it = gridPart.ibegin( entity ); it != gridPart.iend( entity ); ++it )
           {
-            const IntersectionType &intersection = *iit;
+            const auto& intersection = *it;
 
             checkIntersection( intersection, false );
 
@@ -93,7 +85,7 @@ namespace Dune
             IntersectionQuadrature< CachingQuadrature< GridPartType, 1 >, true >
               inter( gridPart, intersection, 2 );
 
-            checkIntersectionIteratorAssignment( iit, failureHandler );
+            checkIntersectionIteratorAssignment( it, failureHandler );
             checkLocalGeometries( intersection, entity, failureHandler );
           }
 
@@ -146,25 +138,20 @@ namespace Dune
         return;
       // global coordinate type
       typedef typename GeometryType::GlobalCoordinate GlobalCoordinateType;
-      // local coordinate type
-      typedef typename GeometryType::LocalCoordinate LocalCoordinateType;
       // single coordinate type
       typedef typename GridPartType::ctype ctype;
 
       // compute sum of all integration outer normals
       GlobalCoordinateType sum( 0 );
-      const IntersectionIteratorType end = gridPart.iend( entity );
-      for( IntersectionIteratorType it = gridPart.ibegin( entity ); it != end; ++it )
+      for( const auto& intersection : intersections( gridPart, entity ) )
       {
         // get Gauss quadrature points
-        const Dune::QuadratureRule< ctype, LocalGeometryType::mydimension > & quad =
-          Dune::QuadratureRules< ctype, LocalGeometryType::mydimension >::rule( it->type(), 3 );
+        const auto& quadrature = Dune::QuadratureRules< ctype, LocalGeometryType::mydimension >::rule( intersection.type(), 3 );
 
-        for ( size_t i = 0; i < quad.size(); ++i )
+        for( const auto& qp : quadrature )
         {
-          const LocalCoordinateType &point = quad[ i ].position();
-          GlobalCoordinateType integrationOuterNormal = it->integrationOuterNormal( point );
-          sum.axpy( quad[ i ].weight(), integrationOuterNormal );
+          auto integrationOuterNormal = intersection.integrationOuterNormal( qp.position() );
+          sum.axpy( qp.weight(), integrationOuterNormal );
         }
       }
 
@@ -182,7 +169,7 @@ namespace Dune
                                const EntityType &entity,
                                FailureHandler &failureHandler )
     {
-      LocalGeometryType geometryInInside = intersection.geometryInInside();
+      auto geometryInInside = intersection.geometryInInside();
       geometryInInside.type();
       Dune::checkLocalGeometry( geometryInInside, entity.type(), "geometryInInside" );
 
