@@ -17,9 +17,9 @@ dune_add_test( NAME gp_lagrangeinterpolation SOURCES lagrangeinterpolation.cc
 COMPILE_DEFINITIONS "${GRIDTYPE};GRIDDIM=${GRIDDIM};COUNT_FLOPS;POLORDER=1"
 LINK_LIBRARIES dunefem )
 
-set( gp filteredgridpart idgridpart geogridpart )
+set( GRIDPARTS filteredgridpart idgridpart geogridpart )
 foreach( gp ${GRIDPARTS} )
-  dune_add_test( NAME test_${gp} SOURCES test-${GP}.cc
+  dune_add_test( NAME test_${gp} SOURCES test-${gp}.cc
   COMPILE_DEFINITIONS "${GRIDTYPE};GRIDDIM=${GRIDDIM};COUNT_FLOPS"
   LINK_LIBRARIES dunefem )
 endforeach()
