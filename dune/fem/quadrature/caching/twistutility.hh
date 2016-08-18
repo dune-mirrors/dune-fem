@@ -56,7 +56,7 @@ namespace Dune
 
     /** \brief Utility to get twist from IntersectionIterator,
         if provided by grid (i.e. AlbertaGrid, ALUGrid)
-        otherwise return default values (correct for YASP/SGRID).
+        otherwise return default values (correct for YASP).
 
         The twist (t) of a face is defined in the following way:
         - sign(t) gives information on the relationship between the

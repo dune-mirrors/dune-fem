@@ -1,5 +1,5 @@
 if( NOT GRIDTYPE )
-  set(GRIDTYPE SGRID)
+  set( GRIDTYPE YASPGRID )
 endif()
 
 if( NOT GRIDDIM )

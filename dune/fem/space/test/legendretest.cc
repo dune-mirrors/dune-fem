@@ -5,20 +5,12 @@
 
 // #include <dune/grid/io/file/dgfparser/gridtype.hh>
 // static const int dimw = dimworld;
-#define S_GRID 0
-#define YGRID 1
+
 static const int dimw =2;
-#if S_GRID
-#include<dune/grid/sgrid.hh>
 
-typedef Dune::SGrid<dimw,dimw> HGridType;
-#endif
-
-#if YGRID
 #include<dune/grid/yaspgrid.hh>
 
 typedef Dune::YaspGrid< dimw > HGridType;
-#endif
 
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
@@ -362,14 +354,6 @@ int main (int argc, char **argv)
   // std::string macroGridName (tmp);
   // macroGridName += "dgrid.dgf";
 
-#if S_GRID
-  Dune::FieldVector<int,dimw> N(2);
-  Dune::FieldVector<HGridType::ctype,dimw> L(0.0);
-  Dune::FieldVector<HGridType::ctype,dimw> H(1.0);
-  HGridType grid(N,L,H);
-#endif
-
-#if YGRID
   FieldVector<double, dimw> lang;
   std::array<int, dimw> anz;
   std::bitset< dimw > per;
@@ -381,7 +365,6 @@ int main (int argc, char **argv)
   }
 
   HGridType grid(lang,anz,per,1);
-#endif
 
 
  //  GridPtr<HGridType> gridptr(macroGridName);
