@@ -51,12 +51,10 @@ namespace Dune
     class ThreadFilter
     : public FilterDefaultImplementation< ThreadFilterTraits< GridPartImp, ThreadArrayImp > >
     {
-    public:
-
       //! \brief type of grid part
       typedef GridPartImp GridPartType;
 
-      //! \brief array type
+      //! \brief type of array
       typedef ThreadArrayImp ThreadArrayType;
 
       //! \brief type of traits
@@ -68,6 +66,7 @@ namespace Dune
       //! \brief base type
       typedef FilterDefaultImplementation< Traits > BaseType;
 
+    public:
       //! \brief type of the filter implementation
       typedef typename Traits::FilterType FilterType;
 
@@ -83,7 +82,6 @@ namespace Dune
       //! \brief type of codim 0 entity
       typedef typename Traits::EntityType EntityType;
 
-
       //! \brief constructor
       ThreadFilter ( const GridPartType & gridPart,
                      const ThreadArrayType& threadNum,
@@ -94,7 +92,11 @@ namespace Dune
       {}
 
       //! \brief copy constructor
-      ThreadFilter ( const ThisType & other ) = default;
+      ThreadFilter ( const ThisType & other )
+      : indexSet_( other.indexSet_ ),
+        threadNum_( other.threadNum_ ),
+        thread_( other.thread_ )
+      {}
 
       //! \brief return false since all interior intersections should be skipped
       template< class Intersection >
