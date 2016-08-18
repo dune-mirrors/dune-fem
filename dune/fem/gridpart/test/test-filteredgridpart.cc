@@ -14,7 +14,6 @@
 #include <dune/fem/gridpart/filter/basicfilterwrapper.hh>
 #include <dune/fem/gridpart/filter/radialfilter.hh>
 #include <dune/fem/misc/gridwidth.hh>
-#include <dune/fem/storage/dynamicarray.hh>
 
 #include "failure.hh"
 #include "checkseed.hh"
@@ -135,15 +134,15 @@ void testFilteredGridPart( HostGridPartType& hostGridPart, FilterType& filter )
   typedef Dune::Fem::FilteredGridPart< HostGridPartType, FilterType, UseConsecutiveIndexSet > GridPartType;
   GridPartType gridPart( hostGridPart, filter );
 
-  std::cout << "Test using codim=0 iterator" << std::endl;
+  std::cout << "Testing entities" << std::endl;
   testGridPart( gridPart );
   std::cout << std::endl;
 
-  std::cout << "Test using codim=dimension iterator" << std::endl;
+  std::cout << "Testing subentities" << std::endl;
   testSubEntities< HostGridPartType::GridType::dimension >( gridPart );
   std::cout << std::endl;
 
-  std::cout << "gridWidth: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
+  std::cout << "GridWidth: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
 
   typedef Dune::DefaultFailureHandler FailureHandlerType;
   FailureHandlerType failureHandler;

@@ -1,12 +1,10 @@
 #ifndef DUNE_FEM_TEST_TESTGRID_HH
 #define DUNE_FEM_TEST_TESTGRID_HH
 
-// C++ includes
 #include <sstream>
+#include <string>
 
-// dune-grid includes
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
-
 
 namespace Dune
 {
@@ -29,12 +27,11 @@ namespace Dune
         gridptr_->loadBalance();
       }
 
-    private:
-      TestGrid ( const ThisType & );
-
-      ThisType &operator= ( const ThisType & );
-
     public:
+      TestGrid ( const ThisType & ) = delete;
+
+      ThisType &operator= ( const ThisType & ) = delete;
+
       static ThisType &instance ()
       {
         static ThisType staticInstance;
