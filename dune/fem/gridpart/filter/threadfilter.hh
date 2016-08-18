@@ -57,6 +57,9 @@ namespace Dune
       //! \brief type of array
       typedef ThreadArrayImp ThreadArrayType;
 
+      //! \brief type of array field
+      typedef typename ThreadArrayType::value_type FieldType;
+
       //! \brief type of traits
       typedef ThreadFilterTraits< GridPartType, ThreadArrayType > Traits;
 
@@ -85,7 +88,7 @@ namespace Dune
       //! \brief constructor
       ThreadFilter ( const GridPartType & gridPart,
                      const ThreadArrayType& threadNum,
-                     const int thead )
+                     const FieldType thead )
       : indexSet_( gridPart.indexSet() ),
         threadNum_( threadNum ),
         thread_( thead )
@@ -150,7 +153,7 @@ namespace Dune
     protected:
       const IndexSetType& indexSet_;
       const ThreadArrayType& threadNum_;
-      const int thread_;
+      const FieldType thread_;
     };
 
   }  // end namespace Fem
