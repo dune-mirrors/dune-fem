@@ -13,6 +13,7 @@ int main () { return 0; }
 #include <dune/geometry/referenceelements.hh>
 
 #include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
@@ -175,6 +176,11 @@ public:
   {
     y = x;
   }
+
+  void jacobian ( const DomainType & , RangeType &y ) const
+  {
+    y = RangeType(0);
+  }
 };
 
 
@@ -241,7 +247,9 @@ try
   DiscreteCoordFunctionSpaceType coordFunctionSpace( hostGridPart );
   CoordFunctionType coordFunction( "coordinate function", coordFunctionSpace );
   typedef Identity< CoordFunctionSpaceType > IdentityType;
-  Dune::Fem::interpolate( IdentityType(), coordFunction );
+  IdentityType identity;
+  Dune::Fem::GridFunctionAdapter< IdentityType, HostGridPartType > identitydDF( "identity", identity, hostGridPart );
+  Dune::Fem::interpolate( identitydDF, coordFunction );
   GridPartType gridPart( coordFunction );
 
   // run test
