@@ -106,6 +106,9 @@ typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 typedef Fem :: FunctionSpace< double, double, GridSelector::dimworld, 1 > WeightFunctionSpaceType;
 typedef WeightFunction< WeightFunctionSpaceType > WeightFunctionType;
 
+typedef Fem::DiscreteFunctionTraits< DiscreteFunctionType > Traits;
+typedef typename Traits::DofType DofType;
+
 // main program
 int main(int argc, char ** argv)
 {
