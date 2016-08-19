@@ -151,9 +151,9 @@ namespace Dune
 
       typedef typename GeoGridPartTraits< CoordFunction >::GridPartFamily GridPartFamily;
 
+    public:
       typedef typename GridPartFamily::Traits::HostGridPartType HostGridPartType;
 
-    public:
       typedef CoordFunction CoordFunctionType;
 
       typedef typename BaseType::GridType GridType;
@@ -279,12 +279,13 @@ namespace Dune
       // return reference to the coordfunction
       const CoordFunctionType &coordFunction () const { return coordFunction_; }
 
-    private:
+      // return reference to the host grid part
       const HostGridPartType &hostGridPart () const
       {
         return coordFunction_.gridPart();
       }
 
+    private:
       const CoordFunctionType &coordFunction_;
       IndexSetType indexSet_;
     };
