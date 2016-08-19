@@ -29,32 +29,32 @@ namespace Dune
     // Internal Forward Declarations
     // -----------------------------
 
-    template< class HostGridPart >
+    template< class HostGridPartImp >
     class IdGridPart;
 
 
     // IdGridPartTraits
     // ----------------
 
-    template< class HostGridPart >
+    template< class HostGridPartImp >
     struct IdGridPartTraits
     {
-      typedef IdGridPart< HostGridPart > GridPartType;
+      typedef IdGridPart< HostGridPartImp > GridPartType;
 
       //! type of twist utility
-      typedef MetaTwistUtility< typename HostGridPart :: TwistUtilityType >  TwistUtilityType;
+      typedef MetaTwistUtility< typename HostGridPartImp :: TwistUtilityType >  TwistUtilityType;
 
       // Traits for dune-grid facades ("Gen-Gurke!")
       struct GridFamily
       {
-        typedef typename HostGridPart::ctype ctype;
+        typedef typename HostGridPartImp::ctype ctype;
 
-        static const int dimension = HostGridPart::dimension;
-        static const int dimensionworld = HostGridPart::dimensionworld;
+        static const int dimension = HostGridPartImp::dimension;
+        static const int dimensionworld = HostGridPartImp::dimensionworld;
 
         struct Traits
         {
-          typedef HostGridPart HostGridPartType;
+          typedef HostGridPartImp HostGridPartType;
 
           struct EmptyData {};
 
@@ -94,13 +94,14 @@ namespace Dune
 
         typedef typename Traits::HierarchicIterator HierarchicIterator;
       };
+      typedef typename GridFamily::Traits::HostGridPartType HostGridPartType;
 
-      typedef typename HostGridPart::GridType GridType;
+      typedef typename HostGridPartType::GridType GridType;
 
       typedef IdIndexSet< const GridFamily > IndexSetType;
 
-      static const PartitionIteratorType indexSetPartitionType = HostGridPart::indexSetPartitionType;
-      static const InterfaceType indexSetInterfaceType = HostGridPart::indexSetInterfaceType;
+      static const PartitionIteratorType indexSetPartitionType = HostGridPartType::indexSetPartitionType;
+      static const InterfaceType indexSetInterfaceType = HostGridPartType::indexSetInterfaceType;
 
       typedef IdIntersectionIterator < const GridFamily > IntersectionIteratorImplType;
       typedef IdIntersection< const GridFamily > IntersectionImplType;
@@ -122,9 +123,9 @@ namespace Dune
         };
       };
 
-      typedef typename HostGridPart::CollectiveCommunicationType CollectiveCommunicationType;
+      typedef typename HostGridPartType::CollectiveCommunicationType CollectiveCommunicationType;
 
-      static const bool conforming = HostGridPart::Traits::conforming;
+      static const bool conforming = HostGridPartType::Traits::conforming;
     };
 
 
@@ -132,17 +133,17 @@ namespace Dune
     // IdGridPart
     // ----------
 
-    template< class HostGridPart >
+    template< class HostGridPartImp >
     class IdGridPart
-    : public GridPartInterface< IdGridPartTraits< HostGridPart > >
+    : public GridPartInterface< IdGridPartTraits< HostGridPartImp > >
     {
-      typedef IdGridPart< HostGridPart > ThisType;
-      typedef GridPartInterface< IdGridPartTraits< HostGridPart > > BaseType;
+      typedef IdGridPart< HostGridPartImp > ThisType;
+      typedef GridPartInterface< IdGridPartTraits< HostGridPartImp > > BaseType;
 
-      typedef typename IdGridPartTraits< HostGridPart >::GridFamily GridFamily;
+      typedef typename IdGridPartTraits< HostGridPartImp >::GridFamily GridFamily;
 
     public:
-      typedef HostGridPart HostGridPartType;
+      typedef typename GridFamily::Traits::HostGridPartType HostGridPartType;
 
       typedef typename BaseType::GridType GridType;
       typedef typename BaseType::IndexSetType IndexSetType;
