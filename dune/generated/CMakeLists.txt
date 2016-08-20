@@ -16,10 +16,6 @@ configure_file(__init__.py __init__.py COPYONLY)
 
 install(FILES generated_module.cc DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/python/dune/generated)
 
-
 add_library(modelimpl SHARED EXCLUDE_FROM_ALL modelimpl.cc)
-target_link_libraries(modelimpl ${Boost_LIBRARIES})
 target_include_directories(modelimpl PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(modelimpl PROPERTIES PREFIX "")
-configure_file(model.hh.in model.hh.in COPYONLY)
-configure_file(modelimpl.hh.in modelimpl.hh.in COPYONLY)
