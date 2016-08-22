@@ -194,14 +194,14 @@ namespace Dune
       }
 
       //! ibegin of corresponding intersection iterator for given entity
-      inline IntersectionIteratorType
+      IntersectionIteratorType
       ibegin ( const ElementType &entity ) const
       {
         return leafGridView_.ibegin( entity );
       }
 
       //! iend of corresponding intersection iterator for given entity
-      inline IntersectionIteratorType
+      IntersectionIteratorType
       iend ( const ElementType &entity ) const
       {
         return leafGridView_.iend( entity );
@@ -213,16 +213,16 @@ namespace Dune
       }
 
       //! Returns maxlevel of the grid
-      inline int level () const
+      int level () const
       {
         return grid().maxLevel();
       }
 
       //! corresponding communication method for this grid part
       template< class DataHandle, class Data >
-      inline void communicate ( CommDataHandleIF< DataHandle, Data > &data,
-                                InterfaceType iftype,
-                                CommunicationDirection dir ) const
+      void communicate ( CommDataHandleIF< DataHandle, Data > &data,
+                         InterfaceType iftype,
+                         CommunicationDirection dir ) const
       {
         this->grid().communicate( data, iftype, dir );
       }
@@ -320,13 +320,13 @@ namespace Dune
     public:
       typedef typename BaseType :: GridType GridType;
       //! Constructor
-      inline explicit AdaptiveLeafGridPart ( GridType &grid )
+      explicit AdaptiveLeafGridPart ( GridType &grid )
       : BaseType( grid )
       {
       }
 
       //! copy constructor
-      inline AdaptiveLeafGridPart ( const AdaptiveLeafGridPart& other )
+      AdaptiveLeafGridPart ( const AdaptiveLeafGridPart& other )
       : BaseType( other )
       {
       }
@@ -347,13 +347,13 @@ namespace Dune
     public:
       typedef typename BaseType :: GridType GridType;
       //! Constructor
-      inline explicit DGAdaptiveLeafGridPart ( GridType &grid )
+      explicit DGAdaptiveLeafGridPart ( GridType &grid )
       : BaseType( grid )
       {
       }
 
       //! copy constructor
-      inline DGAdaptiveLeafGridPart ( const DGAdaptiveLeafGridPart& other )
+      DGAdaptiveLeafGridPart ( const DGAdaptiveLeafGridPart& other )
       : BaseType( other )
       {
       }
@@ -389,13 +389,13 @@ namespace Dune
     public:
       typedef typename BaseType :: GridType GridType;
       //! Constructor
-      inline explicit IntersectionAdaptiveLeafGridPart( GridType &grid )
+      explicit IntersectionAdaptiveLeafGridPart( GridType &grid )
       : BaseType( grid )
       {
       }
 
       //! copy constructor
-      inline IntersectionAdaptiveLeafGridPart( const IntersectionAdaptiveLeafGridPart& other )
+      IntersectionAdaptiveLeafGridPart( const IntersectionAdaptiveLeafGridPart& other )
       : BaseType( other )
       {
       }
