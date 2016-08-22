@@ -36,6 +36,8 @@ namespace Dune
     {
       typedef Implementation GridPartType;
 
+      typedef GridPartType HostGridPartType;
+
       typedef GridView GridViewType;
       static const bool conforming = GridView::conforming;
 
@@ -80,7 +82,8 @@ namespace Dune
       : public GridPartInterface< GridView2GridPartTraits< GridView, Implementation > >
     {
       typedef GridView2GridPart< GridView, Implementation > ThisType;
-      typedef GridPartInterface< GridView2GridPartTraits< GridView, Implementation > > BaseType;
+      typedef GridView2GridPartTraits< GridView, Implementation > TraitsType;
+      typedef GridPartInterface< TraitsType > BaseType;
 
     public:
       /** \copydoc Dune::Fem::GridPartInterface::GridType */
@@ -88,6 +91,9 @@ namespace Dune
 
       /** \copydoc Dune::Fem::GridPartInterface::GridViewType */
       typedef typename BaseType::GridViewType GridViewType;
+
+      /** \copydoc Dune::Fem::GridPartInterface::HostGridPartType */
+      typedef typename TraitsType::HostGridPartType HostGridPartType;
 
       template< int codim >
       struct Codim
@@ -140,6 +146,12 @@ namespace Dune
 
       /** \copydoc Dune::Fem::GridPartInterface::grid */
       const GridType &grid () const { return gridView_.grid(); }
+
+      /** \copydoc Dune::Fem::GridPartInterface::hostGridPart */
+      const HostGridPartType &hostGridPartType () const
+      {
+        return static_cast<const HostGridPartType&> ( *this );
+      }
 
       /** \copydoc Dune::Fem::GridPartInterface::indexSet */
       const IndexSetType &indexSet () const { return indexSet_; }
