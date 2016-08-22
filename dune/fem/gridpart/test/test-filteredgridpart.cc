@@ -148,7 +148,7 @@ void testFilteredGridPart( HostGridPartType& hostGridPart, FilterType& filter )
   FailureHandlerType failureHandler;
   std::cout << "Testing entity seeds" << std::endl;
   Dune::Fem::CheckEntitySeed< GridPartType >::check( gridPart );
-  std::cout << "Testing geometies" << std::endl;
+  std::cout << "Testing geometries" << std::endl;
   Dune::Fem::CheckGeometry< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
   std::cout << "Testing intersections" << std::endl;
   Dune::Fem::CheckIntersections< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );

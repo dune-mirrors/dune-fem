@@ -16,7 +16,6 @@ int main () { return 0; }
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/function/localfunction/temporary.hh>
-#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/gridpart/geogridpart.hh>
 #include <dune/fem/misc/gridwidth.hh>
@@ -186,14 +185,6 @@ void testExchangeGeometry ( const GridPart &gridPart, LocalFunction &localFuncti
 };
 
 
-typedef Dune::GridSelector::GridType GridType;
-//typedef Dune::Fem::AdaptiveLeafGridPart< GridType > HostGridPartType;
-typedef Dune::Fem::LeafGridPart< GridType > HostGridPartType;
-typedef Dune::Fem::FunctionSpace< GridType::ctype, GridType::ctype, GridType::dimensionworld, GridType::dimensionworld > CoordFunctionSpaceType;
-typedef Dune::Fem::LagrangeDiscreteFunctionSpace< CoordFunctionSpaceType, HostGridPartType, 1 > DiscreteCoordFunctionSpaceType;
-typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteCoordFunctionSpaceType > CoordFunctionType;
-typedef Dune::Fem::GeoGridPart< CoordFunctionType > GridPartType;
-
 int main ( int argc, char ** argv )
 try
 {
@@ -208,36 +199,46 @@ try
   grid.loadBalance();
 
   // create grid part
+  typedef Dune::GridSelector::GridType GridType;
+  typedef Dune::Fem::LeafGridPart< GridType > HostGridPartType;
   HostGridPartType hostGridPart( grid );
+  typedef Dune::Fem::FunctionSpace< GridType::ctype, GridType::ctype, GridType::dimensionworld, GridType::dimensionworld > CoordFunctionSpaceType;
+  typedef Dune::Fem::LagrangeDiscreteFunctionSpace< CoordFunctionSpaceType, HostGridPartType, 1 > DiscreteCoordFunctionSpaceType;
   DiscreteCoordFunctionSpaceType coordFunctionSpace( hostGridPart );
+  typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteCoordFunctionSpaceType > CoordFunctionType;
   CoordFunctionType coordFunction( "coordinate function", coordFunctionSpace );
   typedef Identity< CoordFunctionSpaceType > IdentityType;
   IdentityType identity;
   Dune::Fem::GridFunctionAdapter< IdentityType, HostGridPartType > identitydDF( "identity", identity, hostGridPart );
   Dune::Fem::interpolate( identitydDF, coordFunction );
+  typedef Dune::Fem::GeoGridPart< CoordFunctionType > GridPartType;
   GridPartType gridPart( coordFunction );
 
-  // run test
-  std::cout << "test using codim=0 iterator" << std::endl;
+  // run tests
+  std::cout << "Testing entities" << std::endl;
   testGridPart( gridPart );
   std::cout << std::endl;
-  std::cout << "test using codim=dimension iterator" << std::endl;
+
+  std::cout << "Testing subentities" << std::endl;
   testSubEntities< GridType::dimension >( gridPart );
-
   std::cout << std::endl;
-  std::cout << "gridWidth: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
 
+  std::cout << "GridWidth: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
+
+  std::cout << "Testing exchange geometry" << std::endl;
   Dune::Fem::TemporaryLocalFunction< DiscreteCoordFunctionSpaceType > tlf( coordFunctionSpace );
   testExchangeGeometry( gridPart, tlf );
+  std::cout << std::endl;
 
-  std::cout << std::endl << std::endl;
-
-  // check entity seed
   typedef Dune::DefaultFailureHandler FailureHandlerType;
   FailureHandlerType failureHandler;
+  std::cout << "Testing entity seeds" << std::endl;
   Dune::Fem::CheckEntitySeed< GridPartType >::check( gridPart );
+  std::cout << "Testing geometries" << std::endl;
   Dune::Fem::CheckGeometry< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+  std::cout << "Testing index set" << std::endl;
   Dune::Fem::CheckIndexSet< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+  std::cout << "Testing intersections" << std::endl;
   Dune::Fem::CheckIntersections< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
 
   return 0;

@@ -134,11 +134,6 @@ void testIntersectionIterator( const GridPartType & gridPart )
 }
 
 
-
-typedef Dune::GridSelector::GridType GridType;
-typedef Dune::Fem::AdaptiveLeafGridPart< GridType > HostGridPartType;
-typedef Dune::Fem::IdGridPart< HostGridPartType > GridPartType;
-
 int main ( int argc, char ** argv )
 try
 {
@@ -153,27 +148,32 @@ try
   grid.loadBalance();
 
   // create grid part
+  typedef Dune::GridSelector::GridType GridType;
+  typedef Dune::Fem::AdaptiveLeafGridPart< GridType > HostGridPartType;
   HostGridPartType hostGridPart( grid );
+  typedef Dune::Fem::IdGridPart< HostGridPartType > GridPartType;
   GridPartType gridPart( hostGridPart );
 
-  // run test
-  std::cout << "test using codim=0 iterator" << std::endl;
+  // run tests
+  std::cout << "Testing entities" << std::endl;
   testGridPart( gridPart );
   std::cout << std::endl;
-  std::cout << "test using codim=dimension iterator" << std::endl;
+
+  std::cout << "Testing subentities" << std::endl;
   testSubEntities< GridType::dimension >( gridPart );
-
   std::cout << std::endl;
-  std::cout << "gridWidth: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
 
-  std::cout << std::endl << std::endl;
+  std::cout << "GridWidth: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
 
-  // check entity seed
   typedef Dune::DefaultFailureHandler FailureHandlerType;
   FailureHandlerType failureHandler;
+  std::cout << "Testing entity seeds" << std::endl;
   Dune::Fem::CheckEntitySeed< GridPartType >::check( gridPart );
+  std::cout << "Testing geometries" << std::endl;
   Dune::Fem::CheckGeometry< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+  std::cout << "Testing index set" << std::endl;
   Dune::Fem::CheckIndexSet< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
+  std::cout << "Testing intersections" << std::endl;
   Dune::Fem::CheckIntersections< GridPartType, FailureHandlerType >::check( gridPart, failureHandler );
 
   return 0;
