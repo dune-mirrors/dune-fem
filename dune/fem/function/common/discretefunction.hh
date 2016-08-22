@@ -896,6 +896,12 @@ namespace Dune
     template< class DiscreteFunction >
     class ManagedDiscreteFunction;
 
+
+    template< class DiscreteFunction >
+    struct DiscreteFunctionTraits< ManagedDiscreteFunction< DiscreteFunction > >
+    : public DiscreteFunctionTraits< DiscreteFunction > {};
+
+
     /** \class DiscreteFunctionTraits
      *  \brief Traits class for a DiscreteFunction
      *
