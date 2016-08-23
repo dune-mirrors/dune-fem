@@ -1,7 +1,6 @@
 #ifndef DUNE_FEM_SPACE_PADAPTIVE_LAGRANGE_HH
 #define DUNE_FEM_SPACE_PADAPTIVE_LAGRANGE_HH
 
-#include <dune/fem/operator/lagrangeinterpolation.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/lagrange/shapefunctionset.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
@@ -206,10 +205,8 @@ namespace Dune
         assert( searchFunction( df ) == dfList_.end() );
 
         // select LagrangeInterpolation to be the LocalInterpolation
-        typedef typename BaseType :: template PAdaptiveDiscreteFunctionEntry<
-            DiscreteFunction, LagrangeInterpolation< DiscreteFunction, DiscreteFunction > > RealEntryType ;
-        typedef typename BaseType :: PAdaptiveDiscreteFunctionEntryInterface
-          EntryInterface;
+        typedef typename BaseType :: template PAdaptiveDiscreteFunctionEntry< DiscreteFunction > RealEntryType ;
+        typedef typename BaseType :: PAdaptiveDiscreteFunctionEntryInterface   EntryInterface;
         EntryInterface *entry = new RealEntryType( df );
 
         assert( entry );

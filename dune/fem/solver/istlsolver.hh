@@ -5,7 +5,6 @@
 
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/common/operator.hh>
-#include <dune/fem/operator/matrix/preconditionerwrapper.hh>
 #include <dune/fem/io/parameter.hh>
 
 
@@ -13,6 +12,9 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/superlu.hh>
+
+#include <dune/fem/operator/linear/istladapter.hh>
+#include <dune/fem/operator/linear/istloperator.hh>
 
 namespace Dune
 {
@@ -34,16 +36,14 @@ namespace Dune
     template< class OperatorImp, class DiscreteFunction, class SolverCaller >
     struct DefaultSolverCaller
     {
-
+      template <class MatrixAdapter>
       static std::pair< int, double >
       call ( const OperatorImp &op,
+             MatrixAdapter& matrix,
              const DiscreteFunction &arg, DiscreteFunction &dest,
              double reduction, double absLimit, int maxIter, bool verbose,
              const ParameterReader &parameter )
       {
-        typedef typename OperatorImp :: MatrixAdapterType MatrixAdapterType;
-        MatrixAdapterType matrix = op.systemMatrix().matrixAdapter();
-
         typedef typename DiscreteFunction :: DofStorageType BlockVectorType;
 
         // verbose only in verbose mode and for rank 0
@@ -58,7 +58,8 @@ namespace Dune
             std::cout << SolverCaller::name() <<": reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit << std::endl;
         }
 
-        typename SolverCaller :: SolverType solver( matrix, matrix.scp(), matrix.preconditionAdapter(), reduction, maxIter, verb );
+        typename SolverCaller :: SolverType solver( matrix, dest.scalarProduct(),
+                                                    matrix.preconditionAdapter(), reduction, maxIter, verb );
 
         // copy right hand side since ISTL is overwriting it
         BlockVectorType rhs( arg.blockVector() );
@@ -76,7 +77,7 @@ namespace Dune
 
     // ISTLInverseOp
     // Baseclass for each ISTL solver
-    // -------------
+    // ------------------------------
 
     template< class DF, class Op, class SolverCaller >
     struct ISTLInverseOp
@@ -85,14 +86,25 @@ namespace Dune
     public:
       typedef DF DiscreteFunctionType;
       typedef DiscreteFunctionType  DestinationType;
+      typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
       typedef Op OperatorType;
       typedef SolverCaller SolverCallerType;
+
+      typedef Dune::Fem::ISTLMatrixFreeOperatorAdapter< OperatorType >                      ISTLMatrixFreeAdapterType;
+
+      // if OperatorType is Dune::Fem::Operator, then use ISTLLinearOperator as
+      // assembled operator, otherwise we assume that OperatorType is assembled
+      // and fulfills the interface of ISTLLinearOperator
+      typedef typename std::conditional<
+              std::is_same< Dune::Fem::Operator< DiscreteFunctionType, DiscreteFunctionType >, OperatorType >::value,
+                Dune::Fem::ISTLLinearOperator< DiscreteFunctionType, DiscreteFunctionType >,
+                OperatorType > :: type  AssembledOperatorType;
 
       /** \brief constructor
        *
        *  \param[in] op Mapping describing operator to invert
        *  \param[in] reduction reduction epsilon
-       *  \param[in] absLimit absolut limit of residual (not used here)
+       *  \param[in] absLimit absolute limit of residual (not used here)
        *  \param[in] maxIter maximal iteration steps
        *  \param[in] verbose verbosity
        *
@@ -102,6 +114,7 @@ namespace Dune
                       double reduction, double absLimit, int maxIter, bool verbose,
                       const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
+        matrixOp_( dynamic_cast<const AssembledOperatorType*> (&op_) ),
         reduction_( reduction ),
         absLimit_( absLimit ),
         maxIter_( maxIter ),
@@ -115,13 +128,14 @@ namespace Dune
        *
        *  \param[in] op        mapping describing operator to invert
        *  \param[in] reduction    reduction epsilon
-       *  \param[in] absLimit  absolut limit of residual (not used here)
+       *  \param[in] absLimit  absolute limit of residual (not used here)
        *  \param[in] maxIter   maximal iteration steps
        */
       ISTLInverseOp ( const OperatorType &op,
                       double reduction, double absLimit, int maxIter,
                       const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
+        matrixOp_( dynamic_cast<const AssembledOperatorType*> (&op_) ),
         reduction_( reduction ),
         absLimit_ ( absLimit ),
         maxIter_( maxIter ),
@@ -135,6 +149,7 @@ namespace Dune
                       double reduction, double absLimit,
                       const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
+        matrixOp_( dynamic_cast<const AssembledOperatorType*> (&op_) ),
         reduction_( reduction ),
         absLimit_ ( absLimit ),
         maxIter_( std::numeric_limits< int >::max() ),
@@ -162,8 +177,28 @@ namespace Dune
       */
       void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
       {
-        std::pair< int, double > info
-          = SolverCallerType::call( op_, arg, dest, reduction_, absLimit_, maxIter_, verbose_, parameter_ );
+        // if op_ is an instance of ISTLLinearOperator (i.e. assembled) we can
+        // use the corresponding matrix adapter, otherwise we assume it's a
+        // matrix free implementation
+
+        std::pair< int, double > info;
+        if( matrixOp_ )
+        {
+          std::cout << "Using assembled operator" << std::endl;
+          typedef typename AssembledOperatorType :: BaseType  MatrixObjectType;
+          const MatrixObjectType& matrixObj = matrixOp_->systemMatrix() ;
+
+          typedef ISTLMatrixAdapterFactory< MatrixObjectType > ISTLMatrixAdapterFactoryType;
+          auto matrixAdapterPtr = ISTLMatrixAdapterFactoryType :: matrixAdapter( matrixObj );
+          info = SolverCallerType::call( op_, *matrixAdapterPtr,
+                                         arg, dest, reduction_, absLimit_, maxIter_, verbose_, parameter_ );
+        }
+        else
+        {
+          ISTLMatrixFreeAdapterType matrixAdapter( op_, arg.space(), dest.space() );
+          info = SolverCallerType::call( op_, matrixAdapter,
+                                         arg, dest, reduction_, absLimit_, maxIter_, verbose_, parameter_ );
+        }
 
         iterations_ = info.first;
         averageCommTime_ = info.second;
@@ -192,6 +227,7 @@ namespace Dune
 
     private:
       const OperatorType &op_;
+      const AssembledOperatorType* matrixOp_;
       double reduction_;
       double absLimit_;
       int maxIter_;
@@ -223,8 +259,10 @@ namespace Dune
     // --------------
 
     /** \brief LoopSolver scheme for block matrices (BCRSMatrix)
-        and block vectors (BVector) from DUNE-ISTL. */
-    template< class DF, class Op >
+               and block vectors (BVector) from DUNE-ISTL.
+        \note Op defaults to Dune::Fem::Operator.
+     */
+    template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
     struct ISTLLoopOp
     : public ISTLInverseOp< DF, Op, LoopSolverCaller< Op, DF > >
     {
@@ -257,8 +295,10 @@ namespace Dune
     // --------------
 
     /** \brief MINRes scheme for block matrices (BCRSMatrix)
-        and block vectors (BVector) from DUNE-ISTL. */
-    template< class DF, class Op >
+        and block vectors (BVector) from DUNE-ISTL.
+        \note Op defaults to Dune::Fem::Operator.
+     */
+    template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
     struct ISTLMINResOp
     : public ISTLInverseOp< DF, Op, MINResSolverCaller< Op, DF > >
     {
@@ -290,8 +330,10 @@ namespace Dune
     // --------------
 
     /** \brief BICG-stab scheme for block matrices (BCRSMatrix)
-        and block vectors (BVector) from DUNE-ISTL. */
-    template< class DF, class Op >
+        and block vectors (BVector) from DUNE-ISTL.
+        \note Op defaults to Dune::Fem::Operator.
+     */
+    template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
     struct ISTLBICGSTABOp
     : public ISTLInverseOp< DF, Op, BiCGSTABSolverCaller< Op, DF > >
     {
@@ -308,16 +350,15 @@ namespace Dune
     template< class OperatorImp, class DiscreteFunction >
     struct GMResSolverCaller
     {
-
+      template <class MatrixAdapter>
       static std::pair< int, double >
       call ( const OperatorImp &op,
+             MatrixAdapter matrix,
              const DiscreteFunction &arg, DiscreteFunction &dest,
              double reduction, double absLimit, int maxIter, bool verbose,
              const ParameterReader &parameter )
       {
         int restart = parameter.getValue< int >( "istl.gmres.restart", 5 );
-        typedef typename OperatorImp :: MatrixAdapterType MatrixAdapterType;
-        MatrixAdapterType matrix = op.systemMatrix().matrixAdapter();
 
         typedef typename DiscreteFunction :: DofStorageType BlockVectorType;
 
@@ -360,8 +401,9 @@ namespace Dune
 
     /** \brief GMRes scheme for block matrices (BCRSMatrix)
      *         and block vectors (BVector) from dune-istl
+     *  \note Op defaults to Dune::Fem::Operator.
      */
-    template< class DF, class Op >
+    template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
     struct ISTLGMResOp
     : public ISTLInverseOp< DF, Op, GMResSolverCaller< Op, DF > >
     {
@@ -393,8 +435,10 @@ namespace Dune
     // --------
 
     /** \brief BICG-stab scheme for block matrices (BCRSMatrix)
-    and block vectors (BVector) from dune-istl. */
-    template< class DF, class Op >
+               and block vectors (BVector) from dune-istl.
+        \note Op defaults to Dune::Fem::Operator.
+     */
+    template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
     struct ISTLCGOp
     : public ISTLInverseOp< DF, Op, CGSolverCaller< Op, DF > >
     {
@@ -411,15 +455,19 @@ namespace Dune
     template< class OperatorImp, class DiscreteFunction >
     struct SuperLUSolverCaller
     {
-
+      template <class MatrixAdapterDummy>
       static std::pair< int, double >
       call ( const OperatorImp &op,
+             MatrixAdapterDummy dummy,
              const DiscreteFunction &arg, DiscreteFunction &dest,
              double reduction, double absLimit, int maxIter, bool verbose,
              const ParameterReader &parameter )
       {
         typedef typename OperatorImp :: MatrixAdapterType MatrixAdapterType;
         MatrixAdapterType matrix  = op.systemMatrix().matrixAdapter();
+
+        static_assert( std::is_same< MatrixAdapterDummy, MatrixAdapterType > :: value,
+                       "SuperLU only works with assembled operators" );
 
         InverseOperatorResult returnInfo;
 #if HAVE_SUPERLU

@@ -22,6 +22,7 @@
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/common/commindexmap.hh>
 #include <dune/fem/function/blockvectorfunction/declaration.hh>
+#include <dune/fem/function/blockvectors/defaultblockvectors.hh>
 
 namespace Dune
 {
@@ -402,12 +403,33 @@ namespace Dune
       }
     };
 
-#if HAVE_MPI
+#if HAVE_DUNE_ISTL
+    template <class DofVector>
+    struct ISTLScalarProductSelector
+    {
+      typedef Dune::FieldVector< typename DofVector::FieldType, DofVector::blockSize > Block;
+      typedef Dune::BlockVector< Block > type;
+    };
+
+    template <class Block>
+    struct ISTLScalarProductSelector< Dune::Fem::ISTLBlockVector< Block > >
+      : public Dune::ScalarProduct< typename Dune::Fem::ISTLBlockVector< Block > :: DofContainerType >
+    {
+      //! define the category
+      enum { category=Dune::SolverCategory::sequential };
+
+      typedef typename ISTLBlockVector< Block > :: DofContainerType type;
+    };
+#endif
+
     //! Proxy class to evaluate ScalarProduct
     //! holding SlaveDofs which is singleton per space and mapper
     template< class DiscreteFunction >
     class ParallelScalarProduct
       : public SlaveDofsProvider< typename DiscreteFunction :: DiscreteFunctionSpaceType >
+#if HAVE_DUNE_ISTL
+      , public ISTLScalarProductSelector< typename DiscreteFunction :: DofVectorType >
+#endif
     {
     public:
       typedef DiscreteFunction DiscreteFunctionType;
@@ -432,8 +454,8 @@ namespace Dune
       // type of communication manager object which does communication
       typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType > SlaveDofsType;
 
-      typedef typename DiscreteFunctionType :: ConstDofBlockPtrType
-        ConstDofBlockPtrType;
+      typedef RangeFieldType  field_type;
+      typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
 
       //! constructor taking space
       ParallelScalarProduct ( const DiscreteFunctionSpaceType &space )
@@ -446,6 +468,14 @@ namespace Dune
       template < class OtherDiscreteFunctionType >
       RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x, const OtherDiscreteFunctionType &y ) const
       {
+        return dotProduct( x.dofVector(), y.dofVector() );
+      }
+
+    protected:
+      //! evaluate scalar product on dofVector and omit slave nodes
+      template < class DofVector, class OtherDofVector >
+      RangeFieldType dotProduct ( const DofVector &x, const OtherDofVector &y ) const
+      {
         auto &slaveDofs = this->slaveDofs();
 
         RangeFieldType scp = 0;
@@ -456,7 +486,7 @@ namespace Dune
           const int nextSlave = slaveDofs[ slave ];
           for(; i < nextSlave; ++i )
             for( unsigned int j = 0; j < blockSize; ++j )
-              scp += x.dofVector()[ i ][ j ] * y.dofVector()[ i ][ j ];
+              scp += x[ i ][ j ] * y[ i ][ j ];
 
           // skip the slave dof
           ++i;
@@ -466,157 +496,36 @@ namespace Dune
         scp = space().gridPart().comm().sum( scp );
         return scp;
       }
-    };
-#else
-    //! Proxy class to evaluate ScalarProduct
-    //! holding SlaveDofs which is singleton per space and mapper
-    template< class DiscreteFunction >
-    class ParallelScalarProduct
-    {
-    public:
-      typedef DiscreteFunction DiscreteFunctionType;
-
-    private:
-      typedef ParallelScalarProduct< DiscreteFunctionType > ThisType;
-
-    public:
-      //! type of the discrete function space
-      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
-        DiscreteFunctionSpaceType;
-
-      //! type of range field
-      typedef typename DiscreteFunctionSpaceType :: RangeFieldType  RangeFieldType;
-
-      typedef typename DiscreteFunctionType :: ConstDofIteratorType
-        ConstDofIteratorType;
-
-      //! constructor taking space
-      ParallelScalarProduct ( const DiscreteFunctionSpaceType& )
-      {}
-
-      ParallelScalarProduct( const ThisType& ) = delete;
-
-      //! return scalar product of dofs
-      template < class OtherDiscreteFunctionType >
-      RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x,
-                                         const OtherDiscreteFunctionType &y ) const
-      {
-        RangeFieldType scp = 0;
-
-        auto endit = x.dend ();
-        auto xit = x.dbegin ();
-        auto yit = y.dbegin();
-        for( ; xit != endit; ++xit, ++yit )
-          scp += (*xit) * (*yit);
-        return scp;
-      }
-    };
-#endif
 
 #if HAVE_DUNE_ISTL
-    //! Proxy class to evaluate ScalarProduct
-    //! holding SlaveDofs which is singleton per space and mapper
-    template< class DiscreteFunctionSpaceImp >
-    class ParallelScalarProduct
-      < ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceImp > >
-    : public ScalarProduct
-      < typename ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceImp >
-          :: DofStorageType >
-    {
-      //! discrete function type
-      typedef ISTLBlockVectorDiscreteFunction<DiscreteFunctionSpaceImp> DiscreteFunctionType;
-      //! type of this class
-      typedef ParallelScalarProduct<DiscreteFunctionType> ThisType;
-      //! type of BlockVector
-      typedef typename DiscreteFunctionType :: DofStorageType BlockVectorType;
-      //! type of discrete function space
-      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType
-        DiscreteFunctionSpaceType;
-
-      //! type of range field
-      typedef typename DiscreteFunctionSpaceType :: RangeFieldType  RangeFieldType;
-
-      //! type of used mapper
-      typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
-
-    public:
-      // type of communication manager object which does communication
-      typedef SlaveDofsProvider< DiscreteFunctionSpaceType > SlaveDofsProviderType;
-      typedef typename SlaveDofsProviderType :: SlaveDofsType SlaveDofsType;
-
-      //! export types
-      typedef BlockVectorType domain_type;
-      typedef typename BlockVectorType :: block_type :: field_type field_type;
-
-      //! define the category
-      enum { category=SolverCategory::sequential };
-
     protected:
-      const DiscreteFunctionSpaceType & space_;
-      SlaveDofsProviderType slaveDofProvider_;
+      typedef typename ISTLScalarProductSelector< typename DiscreteFunction :: DofVectorType > :: type BlockVectorType;
 
-      ParallelScalarProduct ( const ThisType &org );
     public:
-      //! constructor taking space
-      ParallelScalarProduct ( const DiscreteFunctionSpaceType &space )
-      : space_( space ), slaveDofProvider_( space )
-      {}
-
-      //! remove object comm
-      ~ParallelScalarProduct () = default;
-
-      SlaveDofsType& slaveDofs ()
-      {
-        return slaveDofProvider_.slaveDofs();
-      }
-
-      const SlaveDofsType& slaveDofs () const
-      {
-        return slaveDofProvider_.slaveDofs();
-      }
-
-      /*! \brief Dot product of two discrete functions.
-        It is assumed that the vectors are consistent on the interior+border
-        partition.
-       */
-      RangeFieldType scalarProductDofs(const DiscreteFunctionType& x,
-                                       const DiscreteFunctionType& y) const
-      {
-        std::cout << "ISTL prod" << std::endl;
-        return scalarProductDofs(x.blockVector(),y.blockVector());
-      }
-
-      /*! \brief Dot product of two vectors.
-        It is assumed that the vectors are consistent on the interior+border
-        partition.
-       */
+      //! dot product for ISTL solvers
       virtual field_type dot (const BlockVectorType& x,
                               const BlockVectorType& y)
       {
-        return const_cast<ThisType&> (*this).scalarProductDofs(x,y);
+        return dotProduct( x, y );
       }
 
-      /*! \brief Norm of a right-hand side vector.
-        The vector must be consistent on the interior+border partition
-       */
-      virtual typename Dune::FieldTraits< RangeFieldType >::real_type
-        norm (const BlockVectorType& x)
+      //! norm for ISTL solvers
+      virtual real_type norm( const BlockVectorType& x )
       {
-        return std::abs( std::sqrt( const_cast<ThisType&> (*this).scalarProductDofs(x,x) ) );
+        return std::abs( std::sqrt( dotProduct( x, x ) ) );
       }
 
       //! delete slave values (for debugging)
-      void deleteNonInterior(BlockVectorType& x) const
+      void deleteNonInterior( BlockVectorType& x) const
       {
 #if HAVE_MPI
         // case of ALUGrid and DGSpace or FVSpace
-        const bool deleteGhostEntries = (space_.gridPart().grid().overlapSize( 0 ) == 0) && !space_.continuous();
+        const bool deleteGhostEntries = (space().gridPart().grid().overlapSize( 0 ) == 0) && !space().continuous();
 
         // only delete ghost entries
         if( deleteGhostEntries )
         {
-          // rebuild slave dofs if grid was changed
-          const SlaveDofsType &slaveDofs = slaveDofProvider_.slaveDofs();
+          const auto &slaveDofs = this->slaveDofs();
 
           // don't delete the last since this is the overall Size
           const int slaveSize = slaveDofs.size() - 1;
@@ -625,43 +534,8 @@ namespace Dune
         }
 #endif
       }
-
-    protected:
-      /*! \brief Dot product of two block vectors.
-        It is assumed that the vectors are consistent on the interior+border
-        partition.
-       */
-      RangeFieldType scalarProductDofs(const BlockVectorType& x,
-                                       const BlockVectorType& y) const
-      {
-#if HAVE_MPI
-        // rebuild slave dofs if grid was changed
-        const auto& slaveDofs = slaveDofProvider_.slaveDofs();
-
-        RangeFieldType scp = 0;
-        int i = 0;
-        const int slaveSize = slaveDofs.size();
-        for(int slave = 0; slave<slaveSize; ++slave)
-        {
-          const int nextSlave = slaveDofs[slave];
-          for(; i<nextSlave; ++i)
-          {
-            scp += x[i] * y[i];
-          }
-          // set i to next valid value
-          ++i;
-        }
-        scp = space_.gridPart().comm().sum( scp );
-        return scp;
-#else
-        // return build-in scalar product
-        RangeFieldType scp = x * y;
-        scp = space_.gridPart().comm().sum( scp );
-        return scp;
 #endif
-      }
     };
-#endif
 
   //@}
 

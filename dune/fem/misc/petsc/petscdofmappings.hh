@@ -137,6 +137,9 @@ namespace Dune
         localSlaveMapping_.resize( space.blockMapper().size(), -1 );
         globalDofMapping_.resize( space.blockMapper().size(), 0 );
 
+        std::fill( localSlaveMapping_.begin(), localSlaveMapping_.end(), -1 );
+        std::fill( globalDofMapping_.begin(), globalDofMapping_.end(), 0 );
+
         // global dof index
         GlobalDofType index = processStartIndex_ ;
         for( int slave = 0, i = 0; slave < slaveDofs.size(); ++slave )

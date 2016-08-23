@@ -8,7 +8,9 @@
 #include <dune/fem/io/parameter.hh>
 
 #if HAVE_PETSC
+#include <dune/fem/operator/linear/petscoperator.hh>
 #include <dune/fem/misc/petsc/petsccommon.hh>
+#include <dune/fem/function/petscdiscretefunction.hh>
 
 namespace Dune
 {
@@ -28,7 +30,7 @@ namespace Dune
     // --------------
 
     /** \brief PETSc KSP solver context for PETSc Mat and PETSc Vec */
-    template< class DF, class Op >
+    template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
     class PetscInverseOperator
       : public Operator< DF, DF >
     {
@@ -47,6 +49,12 @@ namespace Dune
     public:
       typedef DF DiscreteFunctionType;
       typedef DiscreteFunctionType  DestinationType;
+
+      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
+      typedef PetscDiscreteFunction< DiscreteFunctionSpaceType > PetscDiscreteFunctionType;
+
+      typedef PetscLinearOperator< DiscreteFunctionType, DiscreteFunctionType >  AssembledOperatorType;
+
       typedef Op OperatorType;
 
       /** \brief constructor
@@ -66,10 +74,12 @@ namespace Dune
                              bool verbose,
                              const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
+        matrixOp_( dynamic_cast<const AssembledOperatorType*> (&op_) ),
         reduction_( reduction ),
         absLimit_( absLimit ),
         maxIter_( maxIter ),
         verbose_( verbose ),
+        pcCreated_( false ),
         iterations_( 0 ),
         solverName_("none"),
         precondName_("none")
@@ -90,10 +100,12 @@ namespace Dune
                              int maxIter,
                              const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
+        matrixOp_( dynamic_cast<const AssembledOperatorType*> (&op_) ),
         reduction_( reduction ),
         absLimit_ ( absLimit ),
         maxIter_( maxIter ),
         verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
+        pcCreated_( false ),
         iterations_( 0 ),
         solverName_("none"),
         precondName_("none")
@@ -106,10 +118,12 @@ namespace Dune
                              double absLimit,
                              const ParameterReader &parameter = Parameter::container() )
       : op_( op ),
+        matrixOp_( dynamic_cast<const AssembledOperatorType*> (&op_) ),
         reduction_( reduction ),
         absLimit_ ( absLimit ),
         maxIter_( std::numeric_limits< int >::max()),
         verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
+        pcCreated_( false ),
         iterations_( 0 ),
         solverName_("none"),
         precondName_("none")
@@ -120,8 +134,12 @@ namespace Dune
       //! destructor freeing KSP context
       ~PetscInverseOperator()
       {
-        // destroy PC context
-        ::Dune::Petsc::PCDestroy( &pc_ );
+        if( pcCreated_ )
+        {
+          // destroy PC context
+          ::Dune::Petsc::PCDestroy( &pc_ );
+        }
+
         // destroy solver context
         ::Dune::Petsc::KSPDestroy( &ksp_ );
       }
@@ -184,7 +202,7 @@ namespace Dune
                            end              = 11
                          };
         const PetscPcType serialStart = petsc_ilu;
-        const PetscPcType serialEnd = petsc_icc;
+        const PetscPcType serialEnd   = petsc_icc;
 
         PCType type = PCNONE ;
 
@@ -245,10 +263,15 @@ namespace Dune
         // get level of perconditioner iterations
         PetscInt pcLevel = 1 + parameter.getValue<int>("petsc.preconditioning.iterations", 0 );
 
-        // create preconditioning context
-        ::Dune::Petsc::PCCreate( &pc_ );
-        ::Dune::Petsc::PCSetType( pc_, type );
-        ::Dune::Petsc::PCFactorSetLevels( pc_, pcLevel );
+        // set preconditioning context
+        if( pcType != petsc_none )
+        {
+          // create preconditioning context
+          ::Dune::Petsc::PCCreate( &pc_ );
+          ::Dune::Petsc::PCSetType( pc_, type );
+          ::Dune::Petsc::PCFactorSetLevels( pc_, pcLevel );
+          pcCreated_ = true ;
+        }
 
         if ( pcType == petsc_hypre )
         {
@@ -257,18 +280,27 @@ namespace Dune
           ::Dune::Petsc::PCHYPRESetType( pc_, "boomeramg" );
         }
 
-        // set preconditioning context
-        ::Dune::Petsc::KSPSetPC( ksp_, pc_ );
+        // set preconditioning context, if type != none (otherwise problem when solving)
+        if( pcType != petsc_none )
+        {
+          ::Dune::Petsc::KSPSetPC( ksp_, pc_ );
+        }
+
         if( pcType == petsc_mumps )
           ::Dune::Petsc::PCFactorSetMatSolverPackage(pc_,MATSOLVERMUMPS);
         if( pcType == petsc_superlu )
           ::Dune::Petsc::PCFactorSetMatSolverPackage(pc_,MATSOLVERSUPERLU_DIST);
 
+        // check if operator is an assembled operator, otherwise we cannot proceed
+        if( ! matrixOp_ )
+        {
+          DUNE_THROW(NotImplemented,"Petsc solver with matrix free implementations not yet supported!");
+        }
+
         // get matrix from linear operator
-        Mat& A = const_cast< Mat & > (op_.petscMatrix());
+        Mat& A = const_cast<Mat &> (matrixOp_->petscMatrix());
 
         // set operator to PETSc solver context
-        // ::Dune::Petsc::KSPSetOperators( ksp_, A, A, DIFFERENT_NONZERO_PATTERN);
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 5
         ::Dune::Petsc::KSPSetOperators( ksp_, A, A, SAME_PRECONDITIONER);
 #else
@@ -303,7 +335,23 @@ namespace Dune
           \param[in] arg right hand side
           \param[out] dest solution
       */
-      void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
+      template <class DiscreteFunction>
+      void apply( const DiscreteFunction& arg, DiscreteFunction& dest ) const
+      {
+        // copy discrete functions
+        PetscDiscreteFunctionType Arg("PetscSolver::arg", arg.space() );
+        Arg.assign( arg );
+
+        // also copy initial destination in case this is used a solver init value
+        PetscDiscreteFunctionType Dest("PetscSolver::dest", dest.space() );
+        Dest.assign( dest );
+
+        apply( Arg, Dest );
+        // copy destination back
+        dest.assign( Dest );
+      }
+
+      void apply( const PetscDiscreteFunctionType& arg, PetscDiscreteFunctionType& dest ) const
       {
         // call PETSc solvers
         ::Dune::Petsc::KSPSolve(ksp_, *arg.petscVec() , *dest.petscVec() );
@@ -341,18 +389,27 @@ namespace Dune
         apply(arg,dest);
       }
 
+      template <class DiscreteFunction>
+      void operator() ( const DiscreteFunction& arg, DiscreteFunction& dest ) const
+      {
+        apply(arg,dest);
+      }
+
       PetscInverseOperator () = delete;
       PetscInverseOperator( const PetscInverseOperator& ) = delete;
       PetscInverseOperator& operator= ( const PetscInverseOperator& ) = delete;
 
     protected:
       const OperatorType &op_; // linear operator
+      const AssembledOperatorType* matrixOp_; // assembled operator
+
       KSP ksp_;   // PETSc Krylov Space solver context
       PC  pc_;    // PETSc perconditioning context
       double reduction_;
       double absLimit_;
       int maxIter_;
       bool verbose_ ;
+      bool pcCreated_;
       mutable int iterations_;
       std::string solverName_;
       std::string precondName_;

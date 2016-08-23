@@ -8,6 +8,8 @@
 
 //- Dune includes
 #include <dune/fem/io/streams/streams.hh>
+#include <dune/fem/misc/threads/threadmanager.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 
 namespace Dune
 {
@@ -28,7 +30,7 @@ namespace Dune
       typedef FlOpCounter< void > ThisType;
 
     protected:
-      unsigned long count_;
+      ThreadSafeValue< unsigned long > count_;
 
     protected:
       inline FlOpCounter ()
@@ -39,13 +41,22 @@ namespace Dune
     public:
       inline ~FlOpCounter ()
       {
+        assert( ThreadManager::singleThreadMode() );
+        unsigned long totalCount = 0;
+        for( size_t i=0; i<count_.size(); ++i )
+        {
+          std::cout << "Thread[ " << i << " ]: " << count_[ i ] << std::endl;
+          totalCount += count_[ i ];
+        }
+
         std :: cout << "Total number of floating point operations: "
-                    << count_ << std :: endl;
+                    << totalCount << std :: endl;
       }
 
       inline ThisType &operator++ ()
       {
-        ++count_;
+
+        ++(*count_);
         return *this;
       }
 
@@ -68,7 +79,7 @@ namespace Dune
       typedef FlOpCounter< FloatType > ThisType;
 
     protected:
-      unsigned long count_;
+      ThreadSafeValue< unsigned long > count_;
 
     protected:
       inline FlOpCounter ()
@@ -79,14 +90,22 @@ namespace Dune
     public:
       inline ~FlOpCounter ()
       {
+        assert( ThreadManager::singleThreadMode() );
+        unsigned long totalCount = 0;
+        for( size_t i=0; i<count_.size(); ++i )
+        {
+          std::cout << "Thread[ " << i << " ]: " << count_[ i ] << std::endl;
+          totalCount += count_[ i ];
+        }
+
         std :: cout << "Number of floating point operations for "
                     << FloatType :: typeName() << ": "
-                    << count_ << std :: endl;
+                    << totalCount << std :: endl;
       }
 
       inline ThisType &operator++ ()
       {
-        ++count_;
+        ++(*count_);
         ++(FlOpCounter< void > :: instance());
         return *this;
       }
@@ -288,7 +307,11 @@ namespace Dune
       }
 
       inline Double ()
-      {}
+//#ifndef NDEBUG
+//        : value_( std::numeric_limits< double >::signaling_NaN() )
+//#endif
+      {
+      }
 
       inline Double ( const double value )
       : value_( value )
@@ -904,25 +927,25 @@ namespace std
     return Dune::Fem::abs( a );
   }
 
-  // wrap of std power
+  // wrap of std min
   inline double min (const Dune::Fem::Double& v, const double p)
   {
     return Dune::Fem::min(v,p);
   }
 
-  // wrap of std power
+  // wrap of std min
   inline double min (const double v, const Dune::Fem::Double& p)
   {
     return Dune::Fem::min(v,p);
   }
 
-  // wrap of std power
+  // wrap of std max
   inline double max (const Dune::Fem::Double& v, const double p)
   {
     return Dune::Fem::max(v,p);
   }
 
-  // wrap of std power
+  // wrap of std max
   inline double max (const double v, const Dune::Fem::Double& p)
   {
     return Dune::Fem::max(v,p);
@@ -946,13 +969,13 @@ namespace std
     return Dune::Fem::real( x );
   }
 
-  // wrap of std real
+  // wrap of std imag
   inline double imag (const complex<Dune::Fem::Double>& x)
   {
     return Dune::Fem::imag( x );
   }
 
-  // wrap of std real
+  // wrap of std imag
   inline double imag (const Dune::Fem::Double& x)
   {
     return Dune::Fem::imag( x );

@@ -34,6 +34,8 @@ namespace Dune
       typedef AdaptiveDiscreteFunction< DomainFunctionSpace > DomainFunctionType;
       typedef AdaptiveDiscreteFunction< RangeFunctionSpace > RangeFunctionType;
 
+      typedef typename RangeFunctionSpace :: RangeFieldType  RangeFieldType;
+
     public:
       typedef Operator< DomainFunctionType, RangeFunctionType > OperatorType;
 
@@ -48,8 +50,8 @@ namespace Dune
 
       void operator() ( const double *u, double *w, int i = 0 )
       {
-        DomainFunctionType uFunction( "ParDGOperator u", domainSpace_, u );
-        RangeFunctionType wFunction( "ParDGOperator w", rangeSpace_, w );
+        DomainFunctionType uFunction( "ParDGOperator u", domainSpace_, (const RangeFieldType *) u );
+        RangeFunctionType  wFunction( "ParDGOperator w", rangeSpace_ , (RangeFieldType *) w );
         operator_( uFunction, wFunction );
       }
 
@@ -127,16 +129,27 @@ namespace Dune
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
+        if( ! std::is_same< typename DiscreteFunction::RangeFieldType, double > ::value )
+        {
+          DUNE_THROW(Dune::NotImplemented,"ParDGGeneralizedMinResInverseOperator only works for double as RangeFieldType" );
+        }
+
         ParDGOperatorType parDGOperator( operator_, w.space(), u.space() );
+
+        const double* U = (const double *) u.leakPointer() ;
+        double* W       = (double * ) w.leakPointer();
+
         if( preconditioner_ )
         {
           ParDGOperatorType parDGPreconditioner( *preconditioner_, w.space(), w.space() );
           solver_.set_preconditioner( parDGPreconditioner );
-          solver_.solve( parDGOperator, w.leakPointer(), u.leakPointer() );
+          solver_.solve( parDGOperator, W, U );
           solver_.unset_preconditioner();
         }
         else
-          solver_.solve( parDGOperator, w.leakPointer(), u.leakPointer() );
+        {
+          solver_.solve( parDGOperator, W, U );
+        }
       }
 
       unsigned int iterations () const

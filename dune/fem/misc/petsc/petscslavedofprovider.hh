@@ -54,6 +54,12 @@ namespace Dune
         PetscDofMappingProviderType::removeObject( dofMapping_ );
       }
 
+      //! update dof mapping
+      void update()
+      {
+        dofMapping_.update();
+      }
+
       const PetscDofMappingType& dofMapping() const { return dofMapping_; }
       PetscDofMappingType& dofMapping() { return dofMapping_; }
 

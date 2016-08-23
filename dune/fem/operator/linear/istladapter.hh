@@ -5,6 +5,9 @@
 
 #include <dune/istl/operators.hh>
 
+#include <dune/fem/function/blockvectorfunction.hh>
+#include <dune/fem/operator/matrix/istlpreconditioner.hh>
+
 namespace Dune
 {
 
@@ -22,7 +25,7 @@ namespace Dune
       typedef Dune::LinearOperator< typename Operator::DomainFunctionType::DofStorageType, typename Operator::RangeFunctionType::DofStorageType > BaseType;
 
       typedef typename Operator::DomainFunctionType DomainFunctionType;
-      typedef typename Operator::RangeFunctionType RangeFunctionType;
+      typedef typename Operator::RangeFunctionType  RangeFunctionType;
 
     public:
       enum {category=SolverCategory::sequential};
@@ -59,10 +62,82 @@ namespace Dune
         y.axpy( alpha, fy.blockVector() );
       }
 
-    private:
+    protected:
       const OperatorType &op_;
       const DomainFunctionSpaceType &domainSpace_;
       const RangeFunctionSpaceType &rangeSpace_;
+    };
+
+    template< class Operator >
+    class ISTLMatrixFreeOperatorAdapter : public ISTLLinearOperatorAdapter< Operator >
+    {
+      typedef ISTLMatrixFreeOperatorAdapter< Operator >   ThisType;
+      typedef ISTLLinearOperatorAdapter< Operator >       BaseType;
+
+      typedef typename Operator::DomainFunctionType       DomainFunctionType;
+      typedef typename Operator::RangeFunctionType        RangeFunctionType;
+
+    public:
+      enum {category=SolverCategory::sequential};
+
+      typedef Operator OperatorType;
+
+      typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainFunctionSpaceType;
+      typedef typename RangeFunctionType::DiscreteFunctionSpaceType  RangeFunctionSpaceType;
+
+      static_assert( std::is_same< DomainFunctionType, ISTLBlockVectorDiscreteFunction< DomainFunctionSpaceType > > :: value,
+                     "ISTLMatrixFreeOperatorAdapter only works with ISTLBlockVectorDiscreteFunction" );
+      static_assert( std::is_same< RangeFunctionType,  ISTLBlockVectorDiscreteFunction< RangeFunctionSpaceType  > > :: value,
+                     "ISTLMatrixFreeOperatorAdapter only works with ISTLBlockVectorDiscreteFunction" );
+
+      typedef typename BaseType::domain_type domain_type;
+      typedef typename BaseType::range_type range_type;
+      typedef typename BaseType::field_type field_type;
+
+      typedef Fem::ParallelScalarProduct< RangeFunctionType >                 ParallelScalarProductType;
+      typedef Fem::IdentityPreconditionerWrapper< domain_type, range_type >   PreconditionAdapterType;
+
+      //! constructor creating matrix free ISTL adapter
+      ISTLMatrixFreeOperatorAdapter ( const OperatorType &op,
+                                      const DomainFunctionSpaceType &domainSpace,
+                                      const RangeFunctionSpaceType &rangeSpace )
+        : BaseType( op, domainSpace, rangeSpace ),
+          scp_( rangeSpace ),
+          preconditioner_()
+      {}
+
+      //! copy constructor
+      ISTLMatrixFreeOperatorAdapter ( const ISTLMatrixFreeOperatorAdapter& other )
+        : BaseType( other ),
+          scp_( other.rangeSpace_ ),
+          preconditioner_()
+      {}
+
+      //! return reference to preconditioner (here identity)
+      PreconditionAdapterType& preconditionAdapter() { return preconditioner_; }
+      //! return reference to preconditioner (here identity)
+      const PreconditionAdapterType& preconditionAdapter() const { return preconditioner_; }
+
+      virtual double residuum(const range_type& rhs, domain_type& x) const
+      {
+        range_type tmp( rhs );
+
+        this->apply(x,tmp);
+        tmp -= rhs;
+
+        // return global sum of residuum
+        return scp_.norm(tmp);
+      }
+
+      //! return reference to preconditioner
+      ParallelScalarProductType& scp() const { return scp_; }
+
+      //! dummy function returning 0
+      double averageCommTime () const { return 0; }
+
+    protected:
+      mutable ParallelScalarProductType scp_;
+      PreconditionAdapterType   preconditioner_;
     };
 
   } // namespace Fem
