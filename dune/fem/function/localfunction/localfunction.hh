@@ -2,6 +2,7 @@
 #define DUNE_FEM_FUNCTION_LOCALFUNCTION_LOCALFUNCTION_HH
 
 #include <utility>
+#include <type_traits>
 
 #include <dune/common/deprecated.hh>
 #include <dune/common/fvector.hh>
@@ -377,8 +378,8 @@ namespace Dune
       template< class QuadratureType, class VectorType >
       void evaluateQuadrature( const QuadratureType &quad, VectorType &result ) const
       {
-        assert( result.size() > 0 );
-        evaluateQuadrature( quad, result, result[ 0 ] );
+        typename std::decay< decltype( result[ 0 ] ) >::type dummy;
+        evaluateQuadrature( quad, result, dummy );
       }
 
 
