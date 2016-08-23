@@ -31,9 +31,13 @@ The following DUNE modules are suggested:
 
 The following software is optional:
 
+* [Eigen][4]
+
+* [PAPI][17]
+
 * [PETSc][3]
 
-* [Eigen][4]
+* [SIONlib][16]
 
 * [SuiteSparse][15]
 
@@ -67,3 +71,5 @@ the [installation notes][2].
  [13]: http://gitlab.dune-project.org/core/dune-istl
  [14]: http://gitlab.dune-project.org/core/dune-localfunctions
  [15]: http://faculty.cse.tamu.edu/davis/suitesparse.html
+ [16]: http://www.fz-juelich.de/jsc/sionlib
+ [17]: http://icl.cs.utk.edu/papi/software/index.html
