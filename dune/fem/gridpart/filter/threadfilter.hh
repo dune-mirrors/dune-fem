@@ -51,6 +51,7 @@ namespace Dune
     class ThreadFilter
     : public FilterDefaultImplementation< ThreadFilterTraits< GridPartImp, ThreadArrayImp > >
     {
+    public:
       //! \brief type of grid part
       typedef GridPartImp GridPartType;
 
@@ -63,6 +64,7 @@ namespace Dune
       //! \brief type of traits
       typedef ThreadFilterTraits< GridPartType, ThreadArrayType > Traits;
 
+    protected:
       //! \brief this type
       typedef ThreadFilter< GridPartType, ThreadArrayType > ThisType;
 
