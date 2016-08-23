@@ -285,6 +285,12 @@ namespace Dune
         return coordFunction_.gridPart();
       }
 
+      // return reference to the host grid part
+      HostGridPartType &hostGridPart ()
+      {
+        return const_cast< HostGridPartType & >( coordFunction_.gridPart() );
+      }
+
     private:
       const CoordFunctionType &coordFunction_;
       IndexSetType indexSet_;

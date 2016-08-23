@@ -153,6 +153,12 @@ namespace Dune
         return static_cast<const HostGridPartType&> ( *this );
       }
 
+      /** \copydoc Dune::Fem::GridPartInterface::hostGridPart */
+      HostGridPartType &hostGridPartType ()
+      {
+        return static_cast<HostGridPartType&> ( *this );
+      }
+
       /** \copydoc Dune::Fem::GridPartInterface::indexSet */
       const IndexSetType &indexSet () const { return indexSet_; }
 

@@ -172,6 +172,13 @@ namespace Dune
         return asImp();
       }
 
+      //! \brief Returns reference to the host grid part
+      //! \note this is not a meta grid part therefore it simply returns the grid part itself
+      HostGridPartType& hostGridPart()
+      {
+        return asImp();
+      }
+
       //! Begin iterator on the leaf level
       template< int codim >
       typename Codim< codim > :: IteratorType
@@ -242,6 +249,11 @@ namespace Dune
       const GridPartType& asImp() const
       {
         return static_cast<const GridPartType &> (*this);
+      }
+
+      GridPartType& asImp()
+      {
+        return static_cast<GridPartType &> (*this);
       }
     };
 

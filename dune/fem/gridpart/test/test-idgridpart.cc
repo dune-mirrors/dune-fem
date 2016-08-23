@@ -158,7 +158,7 @@ try
   // check that the HostGridType of a grid part which is not a meta grid part coincides with itself
   if( !( std::is_same< HostGridPartType, typename HostGridPartType::HostGridPartType >::value ) )
     DUNE_THROW( Dune::InvalidStateException, "Inconsistent HostGridPartType" );
-  if( !( std::is_same< const HostGridPartType&, decltype( hostGridPart.hostGridPart() ) >::value ) )
+  if( !( std::is_same< HostGridPartType&, decltype( hostGridPart.hostGridPart() ) >::value ) )
     DUNE_THROW( Dune::InvalidStateException, "Inconsistent hostGridPartType() return type" );
 
   // run tests

@@ -263,6 +263,8 @@ namespace Dune
 
       const HostGridPartType &hostGridPart () const { return hostGridPart_; }
 
+      HostGridPartType &hostGridPart () { return hostGridPart_; }
+
       typedef typename GridFamily::Traits::ExtraData ExtraData;
       ExtraData data () const { return ExtraData(); }
 

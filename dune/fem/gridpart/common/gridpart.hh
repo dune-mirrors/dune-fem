@@ -139,7 +139,6 @@ namespace Dune
         typedef typename Partition< InteriorBorder_Partition >::IteratorType IteratorType;
       };
 
-    public:
       //! \brief Returns const reference to the underlying grid
       const GridType &grid () const
       {
@@ -156,6 +155,14 @@ namespace Dune
       //! \brief Returns const reference to the host grid part
       //! \note if it is not a meta grid part, this method simply returns the grid part itself
       const HostGridPartType &hostGridPart () const
+      {
+        CHECK_INTERFACE_IMPLEMENTATION((asImp().hostGridPart()));
+        return asImp().hostGridPart();
+      }
+
+      //! \brief Returns reference to the host grid part
+      //! \note if it is not a meta grid part, this method simply returns the grid part itself
+      HostGridPartType &hostGridPart ()
       {
         CHECK_INTERFACE_IMPLEMENTATION((asImp().hostGridPart()));
         return asImp().hostGridPart();
@@ -295,7 +302,7 @@ namespace Dune
 
     protected:
       //! do not create explicit instances of this class
-      GridPartInterface () {}
+      GridPartInterface () = default;
 
     private:
       GridPartType &asImp () { return static_cast< GridPartType & >( *this ); }
