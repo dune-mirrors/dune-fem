@@ -17,7 +17,7 @@
 
 #if USE_PTHREADS
 #include <pthread.h>
-#include <map>
+#include <unordered_map>
 #endif
 
 #ifdef _OPENMP
@@ -80,7 +80,7 @@ namespace Dune
     private:
       struct Manager ;
       typedef int thread_number_t(Manager&);
-      typedef std::map< const pthread_t, int > ThreadIdMap ;
+      typedef std::unordered_map< pthread_t, int > ThreadIdMap ;
       struct Manager
       {
         const pthread_t master_;
@@ -95,7 +95,7 @@ namespace Dune
           return mg ;
         }
 
-        inline void setThreadNumber(  const pthread_t& threadId, const int threadNum )
+        inline void setThreadNumber( const pthread_t& threadId, const int threadNum )
         {
           assert( isMaster() );
           // thread number 0 is reserved for the master thread
@@ -156,9 +156,8 @@ namespace Dune
           else
           {
             // otherwise find mapped thread number
-            ThreadIdMap :: iterator num = mg.idmap_.find( self ) ;
-            assert( num != mg.idmap_.end() );
-            return (*num).second ;
+            assert( mg.idmap_.find( self ) != mg.idmap_.end() );
+            return mg.idmap_.at( self );
           }
         }
 
