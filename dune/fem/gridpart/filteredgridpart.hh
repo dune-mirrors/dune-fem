@@ -3,6 +3,7 @@
 
 //- system includes
 #include <cassert>
+#include <memory>
 
 //- dune-grid includes
 #include <dune/grid/common/datahandleif.hh>
@@ -46,8 +47,8 @@ namespace Dune
       }
 
       template < class IndexSetPtr >
-      static const IndexSetType &
-      indexSet ( const FilteredGP &gridPart, const IndexSetPtr *idxSetPtr )
+      static const IndexSetType&
+      indexSet ( const FilteredGP &gridPart, const std::unique_ptr< IndexSetPtr >& idxSetPtr )
       {
         assert( idxSetPtr );
         return *idxSetPtr;
@@ -55,7 +56,11 @@ namespace Dune
     };
 
 
-    // when index set from gridpartimp is used return 0
+    // FilteredGridPartIndexSetSelector
+    // specialization for non-filtered index set,
+    // i.e. host index set
+    // -----------------------------------------
+
     template< class FilteredGP, class HostGP >
     struct FilteredGridPartIndexSetSelector< FilteredGP, HostGP, false >
     {
@@ -63,12 +68,12 @@ namespace Dune
 
       static IndexSetType *create(const FilteredGP &gridPart)
       {
-        return 0;
+        return nullptr;
       }
 
       template < class IndexSetPtr >
-      static const IndexSetType &
-      indexSet ( const FilteredGP &gridPart, const IndexSetPtr * )
+      static const IndexSetType&
+      indexSet ( const FilteredGP &gridPart, const std::unique_ptr< IndexSetPtr >& )
       {
         return gridPart.hostGridPart().indexSet();
       }
@@ -235,16 +240,8 @@ namespace Dune
       FilteredGridPart ( HostGridPartType &hostGridPart, const FilterType &filter )
       : hostGridPart_( hostGridPart ),
         filter_( filter ),
-        indexSetPtr_( 0 )
+        indexSetPtr_( IndexSetSelectorType::create( *this ) )
       {
-        indexSetPtr_ = IndexSetSelectorType::create( *this );
-      }
-
-      //! \brief destructor
-      ~FilteredGridPart ()
-      {
-        if(  indexSetPtr_ )
-          delete indexSetPtr_;
       }
 
       //! \brief copy constructor
@@ -386,7 +383,7 @@ namespace Dune
     private:
       HostGridPartType &hostGridPart_;
       FilterType filter_;
-      const IndexSetType *indexSetPtr_;
+      std::unique_ptr< IndexSetType > indexSetPtr_;
     };
 
   } // namespace Fem
