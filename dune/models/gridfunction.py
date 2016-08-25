@@ -75,8 +75,8 @@ def gridFunction(grid, code):
             writer.emit('')
             writer.emit('// export function class')
             writer.emit('')
-            #writer.emit('auto cls = pybind11::class_< GridFunction >( module, "GridFunction");')
-            writer.emit('pybind11::class_< GridFunction > registerGridFunction( module );')
+            writer.emit('pybind11::class_< GridFunction > registerGridFunction( module, "GridFunction" );')
+            writer.emit('module.def( "get", [] () { return new GridFunction; } );')
             writer.closePythonModule(name)
             writer.closeNameSpace('FemPy')
             writer.closeNameSpace('Dune')
@@ -86,7 +86,6 @@ def gridFunction(grid, code):
             #writer.emit('RangeType value;')
             #writer.emit('gf.evaluate( x, value );')
             #writer.emit('return value; } );')
-            #writer.emit('module.def( "get", [] () { return new GridFunction(){}; } );')
 
             writer.close()
 
