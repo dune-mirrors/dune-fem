@@ -1,12 +1,7 @@
 #ifndef DUNE_FEM_SPACE_COMBINEDSPACE_GENERIC_HH
 #define DUNE_FEM_SPACE_COMBINEDSPACE_GENERIC_HH
 
-#include <algorithm>
-#include <type_traits>
-
-#include <dune/common/math.hh>
-
-#include <dune/grid/common/grid.hh>
+#include <memory>
 
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/dofmanager.hh>
@@ -91,13 +86,6 @@ namespace Dune
       GenericCombinedDiscreteFunctionSpace ( const ThisType& ) = delete;
       ThisType& operator= ( const ThisType& ) = delete;
 
-      //! destructor (freeing base functions and mapper)
-      ~GenericCombinedDiscreteFunctionSpace ()
-      {
-        Traits::deleteBlockMapper( blockMapper_ );
-        Traits::deleteSpaces( spaceTuple_ );
-      }
-
       using BaseType::gridPart;
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::contains */
@@ -167,7 +155,7 @@ namespace Dune
       DiscreteFunctionSpaceTupleType spaceTuple_;
 
       //! BlockMapper
-      BlockMapperType *blockMapper_;
+      std::unique_ptr< BlockMapperType > blockMapper_;
     };
 
   } // namespace Fem

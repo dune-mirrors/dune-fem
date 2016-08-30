@@ -2,9 +2,11 @@
 #define DUNE_FEM_SPACE_COMBINEDSPACE_TUPLESPACE_HH
 
 #include <algorithm>
+#include <memory>
 #include <type_traits>
 
 #include <dune/common/math.hh>
+#include <dune/common/std/memory.hh>
 
 #include <dune/grid/common/grid.hh>
 
@@ -39,36 +41,15 @@ namespace Dune
                      "You should provide at least one space to the TupleDiscreteFunctionSpace" );
 
       // we need to store pointer to the spaces in the SpaceTuple, since space can not be copied.
-      typedef std::tuple< DiscreteFunctionSpaces * ... > DiscreteFunctionSpaceTupleType;
-
-    protected:
-      // helper struct to create and delete each entry in the tuple
-      template< int i >
-      struct Constructor
-      {
-        template< class Tuple, class ... Args >
-        static void apply ( Tuple &tuple, Args && ... args )
-        {
-          typedef typename std::remove_pointer< typename std::tuple_element< i, Tuple >::type >::type Element;
-          std::get< i >( tuple ) = new Element( std::forward< Args >( args ) ... );
-        }
-      };
-
-      template< int i >
-      struct Deleter
-      {
-        template< class Tuple >
-        static void apply ( Tuple &tuple ) { delete std::get< i >( tuple ); }
-      };
+      typedef std::tuple< std::unique_ptr< DiscreteFunctionSpaces > ... > DiscreteFunctionSpaceTupleType;
 
     public:
-
       // helper struct to access contained sub spaces
       template< int i >
       struct SubDiscreteFunctionSpace
       {
         // type of i-th sub space
-        typedef typename std::remove_pointer< typename std::tuple_element< i, DiscreteFunctionSpaceTupleType >::type >::type Type;
+        typedef typename std::tuple_element< i, DiscreteFunctionSpaceTupleType >::type::element_type Type;
 
         // type of i-th sub BlockMapper
         typedef typename Type::BlockMapperType BlockMapperType;
@@ -94,6 +75,20 @@ namespace Dune
         }
       };
 
+    protected:
+      // helper struct to create each entry in the tuple
+      template< int i >
+      struct Constructor
+      {
+        template< class Tuple, class ... Args >
+        static void apply ( Tuple &tuple, Args && ... args )
+        {
+          typedef typename SubDiscreteFunctionSpace< i >::Type Element;
+          std::get< i >( tuple ) = Std::make_unique< Element >( std::forward< Args >( args ) ... );
+        }
+      };
+
+    public:
       static_assert( Std::are_all_same< std::integral_constant< int, DiscreteFunctionSpaces::Traits::codimension > ... >::value,
                      "TupleDiscreteFunctionSpace for spaces with different codimensions is not supported" );
       static const int codimension = SubDiscreteFunctionSpace< 0 >::Type::Traits::codimension;
@@ -128,8 +123,7 @@ namespace Dune
       typedef TupleSpaceInterpolation< DiscreteFunctionSpaces ... > InterpolationType;
 
       // review to make it work for all kind of combinations
-      template< class DiscreteFunction,
-                class Operation = DFCommunicationOperation::Copy >
+      template< class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
       struct CommDataHandle
       {
         //! type of data handle
@@ -138,17 +132,10 @@ namespace Dune
         typedef Operation OperationType;
       };
 
-
       // construct new instance of blockMapper
       static BlockMapperType *getBlockMapper ( const DiscreteFunctionSpaceTupleType &spaceTuple )
       {
         return getBlockMapper( spaceTuple, std::index_sequence_for< DiscreteFunctionSpaces ... >() );
-      }
-
-      // delete instance of BlockMapper
-      static void deleteBlockMapper ( BlockMapperType *blockMapper )
-      {
-        delete blockMapper;
       }
 
       // create Tuple of contained subspaces
@@ -158,12 +145,6 @@ namespace Dune
         DiscreteFunctionSpaceTupleType tuple;
         ForLoop< Constructor, 0, sizeof ... ( DiscreteFunctionSpaces ) -1 >::apply( tuple, gridPart, commInterface, commDirection );
         return tuple;
-      }
-
-      // delete Tuple of contained subspaces
-      static void deleteSpaces ( DiscreteFunctionSpaceTupleType &tuple )
-      {
-        ForLoop< Deleter, 0, sizeof ... ( DiscreteFunctionSpaces ) -1 >::apply( tuple );
       }
 
       template< class Entity >
@@ -242,7 +223,7 @@ namespace Dune
 
       /** \brief constructor
        *
-       *  \param[in]  gridPart       grid part for the Lagrange space
+       *  \param[in]  gridPart       grid part
        *  \param[in]  commInterface  communication interface to use (optional)
        *  \param[in]  commDirection  communication direction to use (optional)
        */

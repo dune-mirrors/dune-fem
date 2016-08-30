@@ -2,9 +2,11 @@
 #define DUNE_FEM_SPACE_COMBINEDSPACE_POWERSPACE_HH
 
 #include <algorithm>
+#include <memory>
 #include <type_traits>
 
 #include <dune/common/math.hh>
+#include <dune/common/std/memory.hh>
 
 #include <dune/grid/common/grid.hh>
 
@@ -37,7 +39,7 @@ namespace Dune
     struct PowerDiscreteFunctionSpaceTraits
     {
       // we need to store pointer to the spaces in the SpaceTuple, since space can not be copied.
-      typedef DiscreteFunctionSpace *DiscreteFunctionSpaceTupleType;
+      typedef std::unique_ptr< DiscreteFunctionSpace > DiscreteFunctionSpaceTupleType;
 
       // helper struct to access contained sub spaces
       template< int >
@@ -115,23 +117,11 @@ namespace Dune
         return new BlockMapperType( spaceTuple->gridPart(), spaceTuple->blockMapper() );
       }
 
-      // delete instance of BlockMapper
-      static void deleteBlockMapper ( BlockMapperType *blockMapper )
-      {
-        delete blockMapper;
-      }
-
       // create Tuple of contained subspaces
       static DiscreteFunctionSpaceTupleType createSpaces ( GridPartType &gridPart, InterfaceType commInterface,
                                                            CommunicationDirection commDirection )
       {
-        return new DiscreteFunctionSpace( gridPart, commInterface, commDirection );
-      }
-
-      // delete Tuple of contained subspaces
-      static void deleteSpaces ( DiscreteFunctionSpaceTupleType &tuple )
-      {
-        delete tuple;
+        return Std::make_unique< DiscreteFunctionSpace >( gridPart, commInterface, commDirection );
       }
 
       template< class Entity >
@@ -156,7 +146,7 @@ namespace Dune
     /** \addtogroup DiscreteFunctionSpace
      *
      *  Provides a DiscreteFunctionSpace combined from arbitrary number of DiscreteFunctionSpaces
-     *  of different types into a single \ref Dune::Fem::DiscreteFunctionSpaceInterface ( U_h times V_h times .... ).
+     *  of same type into a single \ref Dune::Fem::DiscreteFunctionSpaceInterface ( U_h times V_h times .... ).
      *
      *  \note It is assumed that the each space is build upon the same gridpart
      */
@@ -190,7 +180,7 @@ namespace Dune
 
       /** \brief constructor
        *
-       *  \param[in]  gridPart       grid part for the Lagrange space
+       *  \param[in]  gridPart       grid part
        *  \param[in]  commInterface  communication interface to use (optional)
        *  \param[in]  commDirection  communication direction to use (optional)
        */
