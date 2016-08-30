@@ -6,7 +6,7 @@
 #include <dune/common/exceptions.hh>
 
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
 #include <dune/fem/gridpart/filter/threadfilter.hh>
 #include <dune/fem/misc/gridwidth.hh>
@@ -29,17 +29,17 @@ int main( int argc, char** argv )
 
     // create grid part
     typedef Dune::GridSelector::GridType GridType;
-    typedef Dune::Fem::AdaptiveLeafGridPart< GridType > HostGridPartType;
+    typedef Dune::Fem::LeafGridPart< GridType > HostGridPartType;
     HostGridPartType hostGridPart( grid );
 
     // create filters
     typedef std::vector< int > ArrayType;
-    ArrayType tags( grid.size(0), 0 );
+    ArrayType tags( grid.size( 0 ), 0 );
     auto tagsIt( tags.begin() );
     for( const auto& entity : elements( hostGridPart ) )
     {
       const auto& center( entity.geometry().center() );
-      if( center[ 0 ] < 0.5 )
+      if( center[ 0 ] < 0.25 )
         *tagsIt = 0;
       else
         *tagsIt = 1;
@@ -76,17 +76,19 @@ int main( int argc, char** argv )
     typedef Dune::Fem::FunctionSpace< double, double, GridType::dimension, 1 > FunctionSpaceType;
     typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, HostGridPartType, 0 > HostDiscreteFunctionSpaceType;
     HostDiscreteFunctionSpaceType hostSpace( hostGridPart );
-    Dune::Fem::AdaptiveDiscreteFunction< HostDiscreteFunctionSpaceType > hostDF ( "host", hostSpace );
+    typedef Dune::Fem::AdaptiveDiscreteFunction< HostDiscreteFunctionSpaceType > HostDiscreteFunctionType;
+    HostDiscreteFunctionType hostDF( "host", hostSpace );
     for( const auto& entity : entities( hostDF ) )
     {
       auto localDF = hostDF.localFunction( entity );
       const auto& center( entity.geometry().center() );
-      localDF[ 0 ] = ( center[ 0 ] < 0.5 ? center[ 0 ] : center[ 0 ]+2.0 );
+      localDF[ 0 ] = ( center[ 0 ] < 0.25 ? center[ 0 ] : center[ 0 ]+2.0 );
     }
     std::cout << "Number of DOFs hostDF : " << hostDF.size() << std::endl;
     typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, FilteredGridPartType, 0 > FilteredDiscreteFunctionSpaceType;
     FilteredDiscreteFunctionSpaceType leftSpace( leftGridPart );
-    Dune::Fem::AdaptiveDiscreteFunction< FilteredDiscreteFunctionSpaceType > leftDF ( "left", leftSpace );
+    typedef Dune::Fem::AdaptiveDiscreteFunction< FilteredDiscreteFunctionSpaceType > FilteredDiscreteFunctionType;
+    FilteredDiscreteFunctionType leftDF( "left", leftSpace );
     for( const auto& entity : entities( leftDF ) )
     {
       auto localDF = leftDF.localFunction( entity );
@@ -94,7 +96,7 @@ int main( int argc, char** argv )
     }
     std::cout << "Number of DOFs leftDF : " << leftDF.size() << std::endl;
     FilteredDiscreteFunctionSpaceType rightSpace( rightGridPart );
-    Dune::Fem::AdaptiveDiscreteFunction< FilteredDiscreteFunctionSpaceType > rightDF ( "right", rightSpace );
+    FilteredDiscreteFunctionType rightDF( "right", rightSpace );
     for( const auto& entity : entities( rightDF ) )
     {
       auto localDF = rightDF.localFunction( entity );

@@ -118,8 +118,7 @@ int main ( int argc, char **argv )
 
     GridPartType gridPart( grid );
     // add check for grid width
-    std::cout << "Grid width: "
-              << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
+    std::cout << "Grid width: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
 
     DiscreteFunctionSpaceType space( gridPart );
 

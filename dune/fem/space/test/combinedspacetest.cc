@@ -1,7 +1,10 @@
 #include <config.h>
+
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <tuple>
+#include <vector>
 
 static const int dimw = Dune::GridSelector::dimworld;
 
@@ -71,32 +74,24 @@ typedef FuncSpace::RangeType RangeType;
 typedef FuncSpace::JacobianRangeType JacobianRangeType;
 typedef FuncSpace::HessianRangeType HessianRangeType;
 
-typedef DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
-typedef DiscreteFunctionSpaceType1::BasisFunctionSetType BasisFunctionSetType1;
-typedef DiscreteFunctionSpaceType2::BasisFunctionSetType BasisFunctionSetType2;
-
 typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 
 const int dimRange = FuncSpace::dimRange;
 const int dimRange1 = FuncSpace1::dimRange;
 const int dimRange2 = FuncSpace2::dimRange;
-
 const int dimDomain = FuncSpace::dimDomain;
-
 
 
 void checkBasisSet ( const EntityType &entity, const DiscreteFunctionSpaceType &space )
 {
-  BasisFunctionSetType bSet = space.basisFunctionSet( entity );
+  auto bSet = space.basisFunctionSet( entity );
 
-  BasisFunctionSetType1 bSet1 = space.subDiscreteFunctionSpace< 0 >().basisFunctionSet( entity );
-  BasisFunctionSetType2 bSet2 = space.subDiscreteFunctionSpace< 1 >().basisFunctionSet( entity );
+  auto bSet1 = space.subDiscreteFunctionSpace< 0 >().basisFunctionSet( entity );
+  auto bSet2 = space.subDiscreteFunctionSpace< 1 >().basisFunctionSet( entity );
 
   const int nrBasis = bSet.size();
   const int nrBasis1 = bSet1.size();
   const int nrBasis2 = bSet2.size();
-
-  QuadratureType quad( entity, space.order() + 1 );
 
   std::vector< RangeType > ranges( nrBasis, RangeType( 0. ) );
   std::vector< RangeType1 > ranges1( nrBasis1, RangeType1( 0. ) );
@@ -125,20 +120,21 @@ void checkBasisSet ( const EntityType &entity, const DiscreteFunctionSpaceType &
   std::vector< HessianRangeType1 > hessians1( nrBasis1, null1 );
   std::vector< HessianRangeType2 > hessians2( nrBasis2, null2 );
 
-  for( unsigned int qp = 0; qp < quad.nop(); ++qp )
+  QuadratureType quadrature( entity, space.order() + 1 );
+  for( const auto& qp : quadrature )
   {
 
-    bSet.evaluateAll( quad[ qp ], ranges );
-    bSet1.evaluateAll( quad[ qp ], ranges1 );
-    bSet2.evaluateAll( quad[ qp ], ranges2 );
+    bSet.evaluateAll( qp, ranges );
+    bSet1.evaluateAll( qp, ranges1 );
+    bSet2.evaluateAll( qp, ranges2 );
 
-    bSet.jacobianAll( quad[ qp ], jacs );
-    bSet1.jacobianAll( quad[ qp ], jacs1 );
-    bSet2.jacobianAll( quad[ qp ], jacs2 );
+    bSet.jacobianAll( qp, jacs );
+    bSet1.jacobianAll( qp, jacs1 );
+    bSet2.jacobianAll( qp, jacs2 );
 
-    bSet.hessianAll( quad[ qp ], hessians );
-    bSet1.hessianAll( quad[ qp ], hessians1 );
-    bSet2.hessianAll( quad[ qp ], hessians2 );
+    bSet.hessianAll( qp, hessians );
+    bSet1.hessianAll( qp, hessians1 );
+    bSet2.hessianAll( qp, hessians2 );
 
     RangeType value( 0 );
     JacobianRangeType jac( 0 );
@@ -244,7 +240,6 @@ protected:
 };
 
 
-
 void checkInterpolation ( const EntityType &entity, const DiscreteFunctionSpaceType &space )
 {
   std::vector< double > ldv;
@@ -253,22 +248,10 @@ void checkInterpolation ( const EntityType &entity, const DiscreteFunctionSpaceT
   DummyLocalFunction lf( entity );
   space.interpolation( entity ) ( lf, ldv );
 
-#if 0
-  // find a better version then this!
-  for( const auto &e : ldv )
-    if( std::abs( e -1  ) > 1e-8 )
-      DUNE_THROW( InvalidStateException,
-                  "Space::interpolation returns wrong values" );
-#endif
+  //TODO check wether interpolation is successfull
 }
 
 
-
-//**************************************************
-//
-//  main programm, run algorithm twice to calc EOC
-//
-//**************************************************
 int main ( int argc, char **argv )
 {
   MPIManager::initialize( argc, argv );

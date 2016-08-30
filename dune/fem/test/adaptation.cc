@@ -1,5 +1,4 @@
 #ifdef ALBERTAGRID
-// set dimensions to ALBERTA dimensions to avoid conflicts
 #undef GRIDDIM
 #define GRIDDIM ALBERTA_DIM
 #undef WORLDDIM
@@ -17,34 +16,23 @@
 #define CONFORMING_SPACE
 #endif
 
-// include configure variables
 #include <config.h>
 
-// iostream includes
 #include <iostream>
+#include <sstream>
+#include <string>
+#include <tuple>
 
-// include grid part
+#include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-
-// include output
 #include <dune/fem/io/file/dataoutput.hh>
-
-// include discrete function space
+#include <dune/fem/space/combinedspace.hh>
+#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/space/padaptivespace.hh>
-#include <dune/fem/space/discontinuousgalerkin.hh>
-#include <dune/fem/space/combinedspace.hh>
 
-// adaptation ...
-#include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/space/common/adaptmanager.hh>
-
-#ifndef HAVE_DUNE_ISTL
-#undef WANT_ISTL
-#endif
-
-#if WANT_ISTL
-// include discrete function
+#ifdef HAVE_DUNE_ISTL
 #include <dune/fem/function/blockvectorfunction.hh>
 #endif
 
@@ -90,20 +78,18 @@ struct Scheme
   typedef FunctionSpace FunctionSpaceType;
 #ifdef CONFORMING_SPACE
   typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
-  // typedef Dune::Fem::PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
 #else
   typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, POLORDER > DiscreteFunctionSpaceType;
 #endif
 #else
   typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpace, GridPartType, POLORDER > DiscreteFunctionSpaceType1;
   typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpace, GridPartType, POLORDER > DiscreteFunctionSpaceType2;
-  typedef Dune::Fem::TupleDiscreteFunctionSpace< DiscreteFunctionSpaceType1, DiscreteFunctionSpaceType2 >
-    DiscreteFunctionSpaceType;
+  typedef Dune::Fem::TupleDiscreteFunctionSpace< DiscreteFunctionSpaceType1, DiscreteFunctionSpaceType2 > DiscreteFunctionSpaceType;
 
   typedef typename DiscreteFunctionSpaceType :: FunctionSpaceType FunctionSpaceType;
 #endif
 
-#if WANT_ISTL
+#ifdef HAVE_DUNE_ISTL
   typedef Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 #else
   typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
@@ -137,34 +123,17 @@ struct Scheme
   }
 
   //! mark elements for adaptation
-  bool mark ( const double time ) const
+  bool mark ( double time ) const
   {
     int marked = 0;
     int count = 0;
     int total = 0;
 
     // loop over all elements
-    const IteratorType end = discreteSpace_.end();
-    for( IteratorType it = discreteSpace_.begin(); it != end; ++it )
+    for( const auto& entity : discreteSpace_ )
     {
-      const ElementType &entity = *it;
-
-      /*
       // find center
-      DomainType center = DomainType( 0 );
-
-      for( int i = 0; i < entity.geometry().corners(); ++i )
-      {
-        center += entity.geometry().corner( i );
-      }
-      // x = center - ( t, t, t )
-      DomainType x;
-      for( int i = 0; i < DomainType::dimension; ++i )
-        x[ i ] = center[ i ] - time;
-      */
-
-      // find center
-      DomainType center = entity.geometry().center();
+      auto center = entity.geometry().center();
       DomainType x = DomainType(-time);
       x += center;
 
@@ -188,10 +157,10 @@ struct Scheme
     marked = grid_.comm().max( marked );
 
     // print info
-    if( bool( marked ) )
-      std::cout << "P" << Dune::Fem::MPIManager::rank() << ": " <<
-        "marked (" << count << " of " << total << ")" << std::endl;
-    return bool(marked);
+    if( static_cast< bool >( marked ) )
+      std::cout << "P" << Dune::Fem::MPIManager::rank() << ": " << "marked (" << count << " of " << total << ")" << std::endl;
+
+    return static_cast< bool >(marked);
   }
 
   //! do the adaptation for a given marking
@@ -214,8 +183,7 @@ protected:
 template< class FunctionSpace >
 struct Function : Dune::Fem::Function< FunctionSpace, Function< FunctionSpace > >
 {
-  void evaluate( const typename FunctionSpace::DomainType &x,
-                 typename FunctionSpace::RangeType &y ) const
+  void evaluate( const typename FunctionSpace::DomainType &x, typename FunctionSpace::RangeType &y ) const
   {
     y[ 0 ] = 0.0;
   }
@@ -232,23 +200,21 @@ double algorithm ( HGridType &grid, const int step )
   GridPartType gridPart(grid);
 
   // use a scalar function space
-  typedef Dune::Fem::FunctionSpace< double, double,
-              HGridType :: dimensionworld, 1 > FunctionSpaceType;
+  typedef Dune::Fem::FunctionSpace< double, double, HGridType :: dimensionworld, 1 > FunctionSpaceType;
 
   typedef Scheme< GridPartType, FunctionSpaceType > SchemeType;
   SchemeType scheme( gridPart, step );
 
-  //////////////////////////
   typedef Function< FunctionSpaceType > FunctionType;
   FunctionType f;
   typedef Dune::Fem::GridFunctionAdapter< FunctionType, GridPartType > GridExactSolutionType;
   GridExactSolutionType gridExactSolution("exact solution", f, gridPart, 5 );
-  //! input/output tuple and setup datawritter
+
+  // output
   typedef std::tuple< const typename SchemeType::DiscreteFunctionType *, GridExactSolutionType * > IOTupleType;
   typedef Dune::Fem::DataOutput< HGridType, IOTupleType > DataOutputType;
-  IOTupleType ioTuple( &(scheme.solution()), &gridExactSolution) ; // tuple with pointers
+  IOTupleType ioTuple( &(scheme.solution()), &gridExactSolution);
   DataOutputType dataOutput( grid, ioTuple, DataOutputParameters( step ) );
-  ///////////////////////////
 
   for( double time = 0; time <= 0.15; time += 0.05 )
   {
@@ -274,8 +240,6 @@ double algorithm ( HGridType &grid, const int step )
   return 0.0;
 }
 
-// main
-// ----
 
 int main ( int argc, char **argv )
 try
@@ -311,8 +275,6 @@ try
 
   std::string gridfile;
   Dune::Fem::Parameter::get( "fem.io.macrogrid", gridfilestr.str(), gridfile );
-
-  // create grid from DGF file
 
   // the method rank and size from MPIManager are static
   if( Dune::Fem::MPIManager::rank() == 0 )
