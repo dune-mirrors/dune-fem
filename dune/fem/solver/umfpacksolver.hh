@@ -14,10 +14,8 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/matrix/colcompspmatrix.hh>
 
-#if HAVE_DUNE_ISTL
-#include <dune/istl/umfpack.hh>
-
 #if HAVE_SUITESPARSE_UMFPACK
+#include <dune/fem/misc/umfpack.hh>
 
 namespace Dune
 {
@@ -271,7 +269,5 @@ class UMFPACKOp:public Operator<DF, DF>
 }
 
 #endif // #if HAVE_SUITESPARSE_UMFPACK
-
-#endif // #if HAVE_DUNE_ISTL
 
 #endif // #ifndef DUNE_FEM_UMFPACKSOLVER_HH
