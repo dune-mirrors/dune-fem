@@ -96,6 +96,12 @@ if( HAVE_PETSC )
   set( TESTS ${TESTS} l2projection_petsc )
 endif()
 
+if( ${SuiteSparse_UMFPACK_FOUND} )
+  dune_add_test( NAME l2projection_adaptive_umfpack SOURCES l2projection.cc
+  COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS};USE_UMFPACK" )
+  set( TESTS ${TESTS} l2projection_adaptive_umfpack )
+endif()
+
 dune_add_test( NAME l2projection_adaptive SOURCES l2projection.cc
 COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} l2projection_adaptive )
