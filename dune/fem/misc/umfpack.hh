@@ -191,6 +191,64 @@ namespace Dune
       umfpack_di_symbolic( args ... );
     }
   };
+#endif // #if not HAVE_DUNE_ISTL
+
+  template< >
+  struct UMFPackMethodChooser< Fem::Double >
+  {
+    template< class... A >
+    static void defaults ( A ... args )
+    {
+      umfpack_di_defaults( args ... );
+    }
+    template< class ... A >
+    static void free_numeric ( A ... args )
+    {
+      umfpack_di_free_numeric( args ... );
+    }
+    template< class ... A >
+    static void free_symbolic ( A ... args )
+    {
+      umfpack_di_free_symbolic( args ... );
+    }
+    template< class ... A >
+    static int load_numeric ( A ... args )
+    {
+      return umfpack_di_load_numeric( args ... );
+    }
+    template< class ... A >
+    static void numeric ( A ... args )
+    {
+      umfpack_di_numeric( args ... );
+    }
+    template< class ... A >
+    static void report_info ( A ... args )
+    {
+      umfpack_di_report_info( args ... );
+    }
+    template< class ... A >
+    static void report_status ( A ... args )
+    {
+      umfpack_di_report_status( args ... );
+    }
+    template< class ... A >
+    static int save_numeric ( A ... args )
+    {
+      return umfpack_di_save_numeric( args ... );
+    }
+    template< class ... A >
+    static void solve ( int m, const int *cs, const int *ri, const Fem::Double *val, Fem::Double *x, const Fem::Double *b, A ... args )
+    {
+      umfpack_di_solve( m, cs, ri, reinterpret_cast< const double * >(val),
+          reinterpret_cast< double * >( x ),
+          reinterpret_cast< const double * >( b ), args ... );
+    }
+    template< class ... A >
+    static void symbolic ( A ... args )
+    {
+      umfpack_di_symbolic( args ... );
+    }
+  };
 
 } // namespace Dune
 
