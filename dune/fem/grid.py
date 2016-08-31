@@ -29,6 +29,8 @@ from types import ModuleType
 
 from ..generator import generator
 
+from .. import common
+
 from . import gridpart
 from . import space
 
@@ -123,7 +125,7 @@ def leafGrid(constructor, grid, **parameters):
     class LeafGrid(module.LeafGrid):
         def __init__(self, reader):
             module.LeafGrid.__init__(self, reader)
-            self.marker = self.hierarchicalGrid.marker
+            self.marker = common.Marker
 
         def mark(self, marking):
             return self.hierarchicalGrid.mark(marking)
