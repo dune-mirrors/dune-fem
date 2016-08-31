@@ -10,6 +10,8 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 
+#include <dune/corepy/common/common.hh>
+
 #include <dune/fempy/grid/discretefunctionmanager.hh>
 #include <dune/fempy/grid/virtualizedrestrictprolong.hh>
 #include <dune/fempy/parameter.hh>
@@ -128,7 +130,7 @@ namespace Dune
 
       typedef Fem::AdaptationManager< Grid, RestrictProlong< Grid > > AdaptationManager;
 
-      enum class Marker { Coarsen = -1, Keep = 0, Refine = 1 };
+      typedef Dune::CorePy::Marker Marker;
 
       typedef typename Grid::template Codim< 0 >::Entity Element;
 
