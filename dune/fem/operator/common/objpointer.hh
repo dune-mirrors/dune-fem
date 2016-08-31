@@ -27,8 +27,12 @@ namespace Dune
       //! need virtual desctructor for deleting the real objects.
       virtual ~ObjPointer ()
       {
-        if(next) delete next; next = 0;
-        if(item) delete item; item = 0;
+        if(next)
+          delete next;
+        next = 0;
+        if(item)
+          delete item;
+        item = 0;
       }
     };
 
@@ -44,7 +48,9 @@ namespace Dune
       //! need virtual desctructor for deleting the real objects.
       virtual ~ObjPointerStorage ()
       {
-        if(item_) delete item_; item_ = 0;
+        if(item_)
+          delete item_;
+        item_ = 0;
       }
 
       //! Store new generated DiscreteOperator Pointer
