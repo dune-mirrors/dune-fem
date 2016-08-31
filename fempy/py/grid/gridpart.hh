@@ -43,8 +43,6 @@ namespace Dune
       {
         typedef typename GridPart::GridType Grid;
 
-        const int dim = GridPart::dimension;
-
         registerGridPartConstructorFromGrid<GridPart,Cls>(cls,std::is_constructible<GridPart,Grid&>());
         cls.attr( "dimGrid" ) = pybind11::int_( GridPart::dimension );
         cls.attr( "dimWorld" ) = pybind11::int_( GridPart::dimensionworld );
