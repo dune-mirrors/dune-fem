@@ -28,8 +28,8 @@ namespace Dune
         static const int dimRange = Space::dimRange;
         if (!std::is_same<RangeFieldType,double>::value)
         {
-          registerFieldVector<RangeFieldType>(module, std::make_integer_sequence<int, 10>());
-          registerFieldMatrix<RangeFieldType>(module, std::make_integer_sequence<int, 5>());
+          Dune::CorePy::registerFieldVector<RangeFieldType>(module, std::make_integer_sequence<int, 10>());
+          Dune::CorePy::registerFieldMatrix<RangeFieldType>(module, std::make_integer_sequence<int, 5>());
         }
 
         typedef typename Space::GridPartType GridPart;
