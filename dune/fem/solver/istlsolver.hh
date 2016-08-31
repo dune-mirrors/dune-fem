@@ -353,7 +353,7 @@ namespace Dune
       template <class MatrixAdapter>
       static std::pair< int, double >
       call ( const OperatorImp &op,
-             MatrixAdapter matrix,
+             MatrixAdapter& matrix,
              const DiscreteFunction &arg, DiscreteFunction &dest,
              double reduction, double absLimit, int maxIter, bool verbose,
              const ParameterReader &parameter )
@@ -375,7 +375,7 @@ namespace Dune
         }
 
         RestartedGMResSolver< BlockVectorType >
-          solver( matrix, matrix.scp(), matrix.preconditionAdapter(), reduction, restart, maxIter, verb );
+          solver( matrix, dest.scalarProduct(), matrix.preconditionAdapter(), reduction, restart, maxIter, verb );
 
         // copy right hand side since ISTL is overwriting it
         BlockVectorType rhs( arg.blockVector() );
