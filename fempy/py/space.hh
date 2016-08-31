@@ -25,7 +25,6 @@ namespace Dune
       {
         typedef typename Space::GridPartType GridPartType;
         typedef typename Space::FunctionSpaceType::RangeFieldType RangeFieldType;
-        static const int dimRange = Space::dimRange;
         if (!std::is_same<RangeFieldType,double>::value)
         {
           Dune::CorePy::registerFieldVector<RangeFieldType>(module, std::make_integer_sequence<int, 10>());
