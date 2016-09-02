@@ -115,7 +115,7 @@ class SourceWriter:
             for i in range(0,len(bases)):
                 prefix = '  : ' if i == 0 else '    '
                 postfix = ',' if i+1 < len(bases) else ''
-                self.emit(prefix + base + postfix)
+                self.emit(prefix + bases[i] + postfix)
         self.emit('{')
         self.pushBlock('struct', name)
 
