@@ -18,12 +18,11 @@ def gridFunction(grid, code):
     gfnumber = 0
     check = 0
     while check == 0:
-        name = 'gridfunction_' + str(gfnumber) + '_' + grid._typeHash
+        name = 'localfunction_' + str(gfnumber) + '_' + grid._typeHash
         if os.path.isfile(os.path.join(compilePath, name + '.so')):
             gfnumber += 1
         else:
             check = 1
-    gfname = 'GridFunction_' + str(gfnumber) + '_' + grid._typeHash
     locname = 'LocalFunction_' + str(gfnumber) + '_' + grid._typeHash
 
     if comm.rank == 0:
@@ -36,14 +35,32 @@ def gridFunction(grid, code):
             writer.emit('')
             writer.emit('#include <dune/fem/space/common/functionspace.hh>')
             writer.emit('#include <dune/fem/space/common/interpolate.hh>')
+            writer.emit('#include <dune/fem/function/common/localfunctionadapter.hh>')
+            writer.emit('')
             writer.emit('#include <dune/fempy/py/grid/function.hh>')
+
             writer.emit('')
 
-            writer.openStruct(locname, targs=(['class GridPart'] + ['class Range']))
+            writer.openStruct(locname, targs=(['class GridPart'] + ['class Range']+ ['class... Coefficients']) )
+            writer.typedef(locname + '< GridPart, Range >', 'LocalFunction')
             writer.typedef('GridPart', 'GridPartType')
             writer.typedef('Range', 'RangeType')
+            writer.typedef('Dune::Fem::LocalFunctionAdapter< LocalFunction >', 'GridFunction')
             writer.typedef('typename GridPart::template Codim< 0 >::EntityType', 'EntityType')
             writer.typedef('typename EntityType::Geometry::LocalCoordinate', 'LocalCoordinateType')
+            writer.emit('static const int dimRange = ' + str(dimRange) + ';')
+            writer.emit('static const int dimDomain = GridPart::dimensionworld;')
+            writer.typedef('typename Dune::Fem::FunctionSpace< double, double, dimDomain, dimRange >', 'FunctionSpaceType')
+            writer.typedef('typename FunctionSpaceType::JacobianRangeType', 'JacobianRangeType')
+            writer.typedef('typename FunctionSpaceType::DomainType', 'DomainType')
+            writer.typedef('typename FunctionSpaceType::HessianRangeType', 'HessianRangeType')
+
+            writer.openConstMethod('bool init', args=['const EntityType &entity'])
+            writer.emit('LocalFunction* local = new LocalFunction;') # want to avoid this memory leak in future
+            writer.emit('GridFunction ("' + name + '", local);')
+            writer.emit('entity_ = &entity;')
+            writer.emit('return true;')
+            writer.closeConstMethod()
 
             writer.openConstMethod('const EntityType &entity')
             writer.emit('return *entity_;')
@@ -53,49 +70,8 @@ def gridFunction(grid, code):
             writer.emit(code)
             writer.closeConstMethod()
 
-            writer.openConstMethod('void jacobian' args=['const PointType &x', 'RangeType &value'], targs=['class PointType'])
+            writer.openConstMethod('void jacobian', args=['const PointType &x', 'JacobianRangeType &value'], targs=['class PointType'])
             writer.emit('// not implemented')
-            writer.closeConstMethod
-
-            writer.emit('mutable const EntityType *entity_ = nullptr;')
-            writer.closeStruct()
-
-
-            writer.openStruct(gfname, targs=(['class GridPart'] + ['class Range'] + ['class... Coefficients']))
-
-            writer.typedef('GridPart', 'GridPartType')
-            writer.typedef('Range', 'RangeType')
-            writer.typedef(locname + '< GridPart, Range >', 'LocalFunctionType')
-            writer.emit('static const int dimRange = ' + str(dimRange) + ';')
-            writer.emit('static const int dimDomain = GridPart::dimensionworld;')
-            writer.typedef('typename Dune::Fem::FunctionSpace< double, double, dimDomain, dimRange >', 'FunctionSpaceType')
-            writer.typedef('typename GridPart::template Codim< 0 >::EntityType', 'EntityType')
-            writer.typedef('typename FunctionSpaceType::DomainType', 'DomainType')
-            writer.typedef('typename EntityType::Geometry::LocalCoordinate', 'LocalCoordinateType')
-            writer.typedef('typename FunctionSpaceType::JacobianRangeType', 'JacobianRangeType')
-            writer.typedef('typename FunctionSpaceType::HessianRangeType', 'HessianRangeType')
-
-            writer.openConstMethod('bool init', args=['const EntityType &entity'] + ['const GridPartType &gridPart'] + ['const LocalFunctionType &localFunction'])
-            writer.emit('entity_ = &entity;')
-            writer.emit('gridPart_ = &gridPart;')
-            writer.emit('localFunction_ = &localFunction;')
-            writer.emit('return true;')
-            writer.closeConstMethod()
-
-            writer.openConstMethod('const EntityType &entity')
-            writer.emit('return *entity_;')
-            writer.closeConstMethod()
-
-            writer.openConstMethod('GridPartType &gridPart')
-            writer.emit('return *gridPart_;')
-            writer.closeConstMethod()
-
-            writer.openConstMethod('LocalFunctionType &localFunction', args=['const EntityType &entity'])
-            writer.emit('return *localFunction_;')
-            writer.closeConstMethod()
-
-            writer.openConstMethod('std::string name')
-            writer.emit('return "' + name + '";')
             writer.closeConstMethod()
 
             writer.section('private')
@@ -104,18 +80,17 @@ def gridFunction(grid, code):
             writer.closeConstMethod()
             writer.emit('')
             writer.emit('mutable const EntityType *entity_ = nullptr;')
-            writer.emit('mutable const GridPartType *gridPart_ = nullptr;')
-            writer.emit('mutable const LocalFunctionType *localFunction_ = nullptr;')
             writer.emit('mutable std::tuple< Coefficients... > coefficients_;')
             writer.closeStruct()
 
             writer.emit('')
-            writer.typedef(grid._typeName, 'GridPart')
+            writer.typedef(grid._typeName, 'GridPartType')
             writer.emit('static const int dimRange = ' + str(dimRange) + ';')
-            writer.emit('static const int dimDomain = GridPart::dimensionworld;')
+            writer.emit('static const int dimDomain = GridPartType::dimensionworld;')
             writer.typedef('typename Dune::Fem::FunctionSpace< double, double, dimDomain, dimRange >', 'FunctionSpaceType')
             writer.typedef('typename FunctionSpaceType::RangeType', 'RangeType')
-            writer.typedef(gfname + '< GridPart, RangeType >', 'GridFunction')
+            writer.typedef(locname + '< GridPartType, RangeType >', 'LocalFunction')
+            writer.typedef('Dune::Fem::LocalFunctionAdapter< LocalFunction >', 'GridFunction')
 
             writer.openNameSpace('Dune')
             writer.openNameSpace('FemPy')
