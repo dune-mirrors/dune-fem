@@ -52,6 +52,8 @@ def gridFunction(grid, code):
             writer.typedef('typename FunctionSpaceType::HessianRangeType', 'HessianRangeType')
 
             writer.openConstMethod('bool init', args=['const EntityType &entity'])
+            #writer.emit('LocalFunction* local = new LocalFunction;') # want to avoid this memory leak in future
+            #writer.emit('GridFunction ("' + name + '", local);')
             writer.emit('entity_ = &entity;')
             writer.emit('return true;')
             writer.closeConstMethod()
