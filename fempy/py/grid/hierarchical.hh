@@ -92,7 +92,6 @@ namespace Dune
       detail::clsVirtualizedRestrictProlong< Grid >( cls );
 
       typedef VirtualizedRestrictProlong< Grid > RestrictProlong;
-      typedef GridAdaptation< Grid > Adaptation;
 
       cls.def( "adapt", [] ( Grid &grid ) {
           std::array< RestrictProlong, 0 > rpList;
