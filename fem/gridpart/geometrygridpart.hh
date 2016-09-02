@@ -100,7 +100,7 @@ namespace Dune
     struct GeometryGridPartTraits
     {
       typedef GridFunction GridFunctionType;
-      typedef typename GridFunction::GridPartType HostGridPart;
+      typedef typename GridFunction::GridPartType HostGridPartType;
       typedef GeometryGridPart< GridFunction > GridPartType;
       typedef GeometryGridPartFamily< GridFunction > GridPartFamily;
       typedef GeometryGridPartFamily< GridFunction > GridFamily;
@@ -111,14 +111,14 @@ namespace Dune
       static const int dimensionworld = GridFunction::FunctionSpaceType::dimRange;
 
       //! type of twist utility
-      typedef MetaTwistUtility< typename HostGridPart::TwistUtilityType >  TwistUtilityType;
+      typedef MetaTwistUtility< typename HostGridPartType::TwistUtilityType >  TwistUtilityType;
 
       typedef IdIndexSet< const GridPartFamily > IndexSetType;
 
-      typedef typename HostGridPart::GridType GridType;
+      typedef typename HostGridPartType::GridType GridType;
 
-      static const PartitionIteratorType indexSetPartitionType = HostGridPart::indexSetPartitionType;
-      static const InterfaceType indexSetInterfaceType = HostGridPart::indexSetInterfaceType;
+      static const PartitionIteratorType indexSetPartitionType = HostGridPartType::indexSetPartitionType;
+      static const InterfaceType indexSetInterfaceType = HostGridPartType::indexSetInterfaceType;
 
       typedef GeometryGridPartIntersectionIterator< const GridFamily > IntersectionIteratorImplType;
       typedef GeometryGridPartIntersection< const GridFamily > IntersectionImplType;
@@ -141,8 +141,8 @@ namespace Dune
         };
       };
 
-      typedef typename HostGridPart::CollectiveCommunicationType CollectiveCommunicationType;
-      static const bool conforming = HostGridPart::Traits::conforming;
+      typedef typename HostGridPartType::CollectiveCommunicationType CollectiveCommunicationType;
+      static const bool conforming = HostGridPartType::Traits::conforming;
     };
 
 
@@ -162,7 +162,7 @@ namespace Dune
       typedef typename GeometryGridPartTraits< GridFunctionType >::GridFamily GridFamily;
 
     public:
-      typedef typename GridFunctionType::GridPartType HostGridPart;
+      typedef typename GridFunctionType::GridPartType HostGridPartType;
       typedef typename BaseType::GridType GridType;
       typedef typename BaseType::IndexSetType IndexSetType;
       typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
@@ -279,12 +279,12 @@ namespace Dune
         return EntityObj( Implementation( gridFunction_, entity ) );
       }
 
-    private:
-      const HostGridPart &hostGridPart () const
+      const HostGridPartType &hostGridPart () const
       {
         return gridFunction_.gridPart();
       }
 
+    private:
       const GridFunctionType &gridFunction_;
       IndexSetType indexSet_;
     };
