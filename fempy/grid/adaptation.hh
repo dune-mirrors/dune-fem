@@ -10,6 +10,8 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 
+#include <dune/corepy/common/common.hh>
+
 #include <dune/fempy/grid/discretefunctionmanager.hh>
 #include <dune/fempy/grid/virtualizedrestrictprolong.hh>
 #include <dune/fempy/parameter.hh>
@@ -128,28 +130,12 @@ namespace Dune
 
       typedef Fem::AdaptationManager< Grid, RestrictProlong< Grid > > AdaptationManager;
 
-      enum class Marker { Coarsen = -1, Keep = 0, Refine = 1 };
-
       typedef typename Grid::template Codim< 0 >::Entity Element;
 
       explicit GridAdaptation ( Grid &grid )
         : restrictProlong_( grid ),
           adaptationManager_( grid, restrictProlong_, noParameter() )
       {}
-
-      template< class Marking >
-      std::pair< int, int > mark ( Marking marking )
-      {
-        std::pair< int, int > marked;
-        for( const Element &element : elements( grid().leafGridView() ) )
-        {
-          Marker marker = marking( element );
-          marked.first += static_cast< int >( marker == Marker::Refine );
-          marked.second += static_cast< int >( marker == Marker::Coarsen );
-          grid().mark( static_cast< int >( marker ), element );
-        }
-        return marked;
-      }
 
       template< class Iterator >
       void adapt ( Iterator begin, Iterator end )

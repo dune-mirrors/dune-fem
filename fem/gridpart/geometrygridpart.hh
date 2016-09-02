@@ -16,10 +16,10 @@
 #include <dune/fem/gridpart/geometrygridpart/capabilities.hh>
 #include <dune/fem/gridpart/geometrygridpart/datahandle.hh>
 #include <dune/fem/gridpart/geometrygridpart/entity.hh>
+#include <dune/fem/gridpart/geometrygridpart/geometry.hh>
 #include <dune/fem/gridpart/geometrygridpart/intersection.hh>
 #include <dune/fem/gridpart/geometrygridpart/intersectioniterator.hh>
 #include <dune/fem/gridpart/geometrygridpart/iterator.hh>
-#include <dune/fem/gridpart/geometrygridpart/geometry.hh>
 #include <dune/fem/gridpart/idgridpart/indexset.hh>
 
 namespace Dune
@@ -82,7 +82,7 @@ namespace Dune
 
       template< int codim >
       struct Codim
-      : public Traits::template Codim< codim >
+        : public Traits::template Codim< codim >
       {};
 
       typedef typename Traits::LeafIntersectionIterator LeafIntersectionIterator;
@@ -91,6 +91,8 @@ namespace Dune
       typedef typename Traits::HierarchicIterator HierarchicIterator;
     };
 
+
+
     // GeometryGridPartTraits
     // ----------------------
 
@@ -98,7 +100,7 @@ namespace Dune
     struct GeometryGridPartTraits
     {
       typedef GridFunction GridFunctionType;
-      typedef typename GridFunction :: GridPartType HostGridPart;
+      typedef typename GridFunction::GridPartType HostGridPartType;
       typedef GeometryGridPart< GridFunction > GridPartType;
       typedef GeometryGridPartFamily< GridFunction > GridPartFamily;
       typedef GeometryGridPartFamily< GridFunction > GridFamily;
@@ -109,16 +111,16 @@ namespace Dune
       static const int dimensionworld = GridFunction::FunctionSpaceType::dimRange;
 
       //! type of twist utility
-      typedef MetaTwistUtility< typename HostGridPart :: TwistUtilityType >  TwistUtilityType;
+      typedef MetaTwistUtility< typename HostGridPartType::TwistUtilityType >  TwistUtilityType;
 
       typedef IdIndexSet< const GridPartFamily > IndexSetType;
 
-      typedef typename HostGridPart::GridType GridType;
+      typedef typename HostGridPartType::GridType GridType;
 
-      static const PartitionIteratorType indexSetPartitionType = HostGridPart::indexSetPartitionType;
-      static const InterfaceType indexSetInterfaceType = HostGridPart::indexSetInterfaceType;
+      static const PartitionIteratorType indexSetPartitionType = HostGridPartType::indexSetPartitionType;
+      static const InterfaceType indexSetInterfaceType = HostGridPartType::indexSetInterfaceType;
 
-      typedef GeometryGridPartIntersectionIterator < const GridFamily > IntersectionIteratorImplType;
+      typedef GeometryGridPartIntersectionIterator< const GridFamily > IntersectionIteratorImplType;
       typedef GeometryGridPartIntersection< const GridFamily > IntersectionImplType;
       typedef IntersectionIterator< const GridFamily, IntersectionIteratorImplType, IntersectionImplType > IntersectionIteratorType;
 
@@ -139,26 +141,28 @@ namespace Dune
         };
       };
 
-      typedef typename HostGridPart::CollectiveCommunicationType CollectiveCommunicationType;
-      static const bool conforming = HostGridPart::Traits::conforming;
+      typedef typename HostGridPartType::CollectiveCommunicationType CollectiveCommunicationType;
+      static const bool conforming = HostGridPartType::Traits::conforming;
     };
 
 
 
     // GeometryGridPart
-    // ----------
+    // ----------------
 
     template< class GridFunction >
     struct GeometryGridPart
-    : public GridPartInterface< GeometryGridPartTraits< GridFunction > >
+      : public GridPartInterface< GeometryGridPartTraits< GridFunction > >
     {
       typedef GridFunction GridFunctionType;
+
     private:
       typedef GeometryGridPart< GridFunctionType > ThisType;
       typedef GridPartInterface< GeometryGridPartTraits< GridFunctionType > > BaseType;
       typedef typename GeometryGridPartTraits< GridFunctionType >::GridFamily GridFamily;
+
     public:
-      typedef typename GridFunctionType::GridPartType HostGridPart;
+      typedef typename GridFunctionType::GridPartType HostGridPartType;
       typedef typename BaseType::GridType GridType;
       typedef typename BaseType::IndexSetType IndexSetType;
       typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
@@ -170,12 +174,12 @@ namespace Dune
 
       template< int codim >
       struct Codim
-      : public BaseType::template Codim< codim >
+        : public BaseType::template Codim< codim >
       {};
 
       explicit GeometryGridPart ( const GridFunctionType &gridFunction )
-      : gridFunction_( gridFunction ),
-        indexSet_( hostGridPart().indexSet() )
+        : gridFunction_( gridFunction ),
+          indexSet_( hostGridPart().indexSet() )
       {}
 
       const GridType &grid () const
@@ -253,7 +257,7 @@ namespace Dune
       }
 
 #if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
-      template < class EntitySeed >
+      template< class EntitySeed >
       typename Codim< EntitySeed::codimension >::EntityPointerType
       entityPointer ( const EntitySeed &seed ) const
       {
@@ -275,12 +279,12 @@ namespace Dune
         return EntityObj( Implementation( gridFunction_, entity ) );
       }
 
-    private:
-      const HostGridPart &hostGridPart () const
+      const HostGridPartType &hostGridPart () const
       {
         return gridFunction_.gridPart();
       }
 
+    private:
       const GridFunctionType &gridFunction_;
       IndexSetType indexSet_;
     };

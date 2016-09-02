@@ -95,8 +95,14 @@ namespace Dune
       };
 
     public:
-      PyGridFunction ( const GridFunction &impl, pybind11::object pyObj ) : impl_( &impl ), pyObj_( std::move( pyObj ) ) {}
-      PyGridFunction ( const GridFunction &impl ) : impl_( &impl ), pyObj_( pybind11::detail::get_object_handle( impl_ ), true ) {}
+      PyGridFunction ( const GridFunction &impl, pybind11::object pyObj )
+        : impl_( &impl ), pyObj_( std::move( pyObj ) )
+      {}
+
+      PyGridFunction ( const GridFunction &impl )
+        : impl_( &impl ),
+          pyObj_( pybind11::detail::get_object_handle( impl_, pybind11::detail::get_type_info( typeid( GridFunction ) ) ), true )
+      {}
 
       LocalFunctionType localFunction ( const EntityType &entity ) const { return LocalFunctionType( impl_->localFunction( entity ), pyObj_ ); }
 

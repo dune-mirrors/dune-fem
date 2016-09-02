@@ -89,23 +89,9 @@ namespace Dune
       cls.def( "globalRefine", [] ( Grid &grid ) { gridAdaptation( grid ).globalRefine( 1 ); } );
       cls.def( "globalRefine", [] ( Grid &grid, int level ) { gridAdaptation( grid ).globalRefine( level ); } );
 
-      Dune::CorePy::registerHierarchicalGrid<Grid>(scope,cls);
-
       detail::clsVirtualizedRestrictProlong< Grid >( cls );
 
       typedef VirtualizedRestrictProlong< Grid > RestrictProlong;
-      typedef GridAdaptation< Grid > Adaptation;
-      typedef typename Adaptation::Marker Marker;
-      typedef typename Adaptation::Element Element;
-
-      pybind11::enum_< Marker > marker( cls, "marker" );
-      marker.value( "coarsen", Marker::Coarsen );
-      marker.value( "keep", Marker::Keep );
-      marker.value( "refine", Marker::Refine );
-
-      cls.def( "mark", [] ( Grid &grid, const std::function< Marker( const Element &e ) > &marker ) {
-          return gridAdaptation( grid ).mark( marker );
-        } );
 
       cls.def( "adapt", [] ( Grid &grid ) {
           std::array< RestrictProlong, 0 > rpList;
@@ -126,6 +112,8 @@ namespace Dune
           std::cout << "loadbalanding grid and " << rpList.size() << " functions..." << std::endl;
           gridAdaptation( grid ).loadBalance( rpList.begin(), rpList.end() );
         } );
+
+      Dune::CorePy::registerHierarchicalGrid<Grid>(scope,cls);
 
       return cls;
     }

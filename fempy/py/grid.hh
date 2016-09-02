@@ -30,12 +30,6 @@ namespace Dune
       clsGW.def(pybind11::init<GridPart&>());
       pybind11::implicitly_convertible<GridPart,typename GridPart::GridViewType>();
       CorePy::registerGridView<typename GridPart::GridViewType>( module, cls );
-      cls.def( "coordinates", [] ( const GridPart &gridPart ) {
-          return coordinates( static_cast< typename GridPart::GridViewType >( gridPart ) );
-        } );
-      cls.def( "tesselate", [] ( const GridPart &gridPart ) {
-          return tesselate( static_cast< typename GridPart::GridViewType >( gridPart ) );
-        } );
     }
 
   } // namespace FemPy

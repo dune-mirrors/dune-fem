@@ -246,7 +246,7 @@ protected:
     // map local to global BlockDofs
     std::vector<std::size_t> globalBlockDofs(localBlocks);
     space_.blockMapper().map(entity,globalBlockDofs);
-    std::vector<double> values( localBlocks*localBlockSize );
+    std::vector<typename LocalFunctionType::RangeFieldType> values( localBlocks*localBlockSize );
 
     int localDof = 0;
 

@@ -17,11 +17,11 @@ namespace Dune
   {
 
     // GeometryGridPartEntity
-    // ---------
+    // ----------------------
 
     template< int codim, int dim, class GridFamily >
     class GeometryGridPartEntity
-    : public DefaultGridPartEntity < codim, dim, GridFamily >
+      : public DefaultGridPartEntity < codim, dim, GridFamily >
     {
       typedef typename std::remove_const< GridFamily >::type::Traits Traits;
       typedef typename Traits::GridFunctionType GridFunctionType;
@@ -63,7 +63,7 @@ namespace Dune
 
       Geometry geometry () const
       {
-        return Geometry( GeometryGridPartGeometry( hostEntity().geometry() ) );
+        DUNE_THROW( NotImplemented, "GeometryGridPart only implements the geometry for entities of codimension 0." );
       }
 
       EntitySeed seed () const { return EntitySeed( hostEntity().seed() ); }
@@ -83,6 +83,7 @@ namespace Dune
         assert( gridFunction_ );
         return *gridFunction_;
       }
+
     private:
       HostEntityType hostEntity_;
       const GridFunctionType *gridFunction_ = nullptr;
@@ -91,11 +92,11 @@ namespace Dune
 
 
     // GeometryGridPartEntity for codimension 0
-    // ---------------------------
+    // ----------------------------------------
 
     template< int dim, class GridFamily >
     class GeometryGridPartEntity< 0, dim, GridFamily >
-    : public DefaultGridPartEntity < 0, dim, GridFamily >
+      : public DefaultGridPartEntity < 0, dim, GridFamily >
     {
       typedef typename std::remove_const< GridFamily >::type::Traits Traits;
       typedef typename Traits::GridFunctionType GridFunctionType;
@@ -127,14 +128,12 @@ namespace Dune
       GeometryGridPartEntity () = default;
 
       GeometryGridPartEntity ( const GridFunctionType &gridFunction, HostEntityType hostEntity )
-      : hostEntity_( std::move( hostEntity ) )
-      , gridFunction_( &gridFunction )
+        : hostEntity_( std::move( hostEntity ) ), gridFunction_( &gridFunction )
       {}
 
       template< class LocalFunction >
       GeometryGridPartEntity ( const GeometryGridPartEntity &other, const LocalFunction &localGridFunction )
-      : hostEntity_( other.hostEntity_ )
-      , gridFunction_( other.gridFunction_ )
+        : hostEntity_( other.hostEntity_ ), gridFunction_( other.gridFunction_ )
       {
       }
 
@@ -164,11 +163,10 @@ namespace Dune
       unsigned int subEntities ( unsigned int codim ) const { return hostEntity().subEntities( codim ); }
 
       template< int codim >
-      typename Traits::template Codim< codim >::Entity
-      subEntity ( int i ) const
+      typename Traits::template Codim< codim >::Entity subEntity ( int i ) const
       {
         typedef typename Traits::template Codim< codim >::Entity::Implementation EntityImpl;
-        return EntityImpl( *gridFunction_, make_entity( hostEntity().template subEntity< codim >( i ) ) );
+        return EntityImpl( *gridFunction_, hostEntity().template subEntity< codim >( i ) );
       }
 
       bool hasBoundaryIntersections () const

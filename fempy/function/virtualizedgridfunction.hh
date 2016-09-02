@@ -32,7 +32,8 @@ namespace Dune
       typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
       typedef typename EntityType::Geometry::GlobalCoordinate GlobalCoordinateType;
 
-      typedef Fem::FunctionSpace< typename GridPart::ctype, typename FieldTraits< Value >::field_type, GridPart::dimensionworld, Value::dimension > FunctionSpaceType;
+      typedef typename FieldTraits< Value >::field_type RangeFieldType;
+      typedef Fem::FunctionSpace< typename GridPart::ctype, RangeFieldType, GridPart::dimensionworld, Value::dimension > FunctionSpaceType;
 
       static const int dimDomain = FunctionSpaceType::dimDomain;
       static const int dimRange = FunctionSpaceType::dimRange;
@@ -272,6 +273,22 @@ namespace Dune
       typedef typename Base::JacobianRangeType JacobianRangeType;
 
     private:
+      struct Space
+      {
+        Space(const GridPart &gridPart, int o)
+          : gp_(gridPart), o_(o) {}
+        int order() const
+        {
+          return o_;
+        }
+        const GridPart& gridPart() const
+        {
+          return gp_;
+        }
+        const GridPart &gp_;
+        int o_;
+      };
+
       template< class GF >
       static constexpr bool isGridFunction ()
       {
@@ -327,6 +344,10 @@ namespace Dune
       std::string name () const { return impl_->name(); }
 
       const GridPartType &gridPart () const { return impl_->gridPart(); }
+      const Space space() const
+      {
+        return Space(impl_->gridPart(), 5);
+      }
 
       void evaluate ( const DomainType &x, RangeType &value ) const { return impl_->evaluate( x, value ); }
       void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const { return impl_->jacobian( x, jacobian ); }
