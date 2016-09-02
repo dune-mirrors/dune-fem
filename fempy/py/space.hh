@@ -23,7 +23,6 @@ namespace Dune
       template< class Space, class Cls >
       void registerSpace ( pybind11::module module, Cls &cls )
       {
-        typedef typename Space::GridPartType GridPartType;
         typedef typename Space::FunctionSpaceType::RangeFieldType RangeFieldType;
         if (!std::is_same<RangeFieldType,double>::value)
         {
