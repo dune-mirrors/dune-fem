@@ -56,8 +56,8 @@ def gridFunction(grid, code):
             writer.typedef('typename FunctionSpaceType::HessianRangeType', 'HessianRangeType')
 
             writer.openConstMethod('bool init', args=['const EntityType &entity'])
-            writer.emit('LocalFunction* local = new LocalFunction;') # want to avoid this memory leak in future
-            writer.emit('GridFunction ("' + name + '", local);')
+            #writer.emit('LocalFunction* local = new LocalFunction;') # want to avoid this memory leak in future
+            #writer.emit('GridFunction ("' + name + '", local);')
             writer.emit('entity_ = &entity;')
             writer.emit('return true;')
             writer.closeConstMethod()
@@ -99,7 +99,10 @@ def gridFunction(grid, code):
             writer.emit('// export function class')
             writer.emit('')
             writer.emit('pybind11::class_< GridFunction > cls = registerGridFunction< GridFunction >( module, "GridFunction" );')
-            writer.emit('module.def( "get", [] () { return new GridFunction; } );')
+            writer.emit('module.def( "get", [] ( GridFunction &instance, const GridPartType &gridPart ) {')
+            writer.emit('        LocalFunction *lf = new LocalFunction();')
+            writer.emit('        new ( &instance ) GridFunction("' + name + '", *lf, gridPart );')
+            writer.emit('});')
             writer.closePythonModule(name)
             writer.closeNameSpace('FemPy')
             writer.closeNameSpace('Dune')

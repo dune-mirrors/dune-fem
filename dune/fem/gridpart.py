@@ -7,6 +7,7 @@ from types import ModuleType
 from ..generator import generator
 from . import space
 from . import function
+from ..models.gridfunction import gridFunction
 from dune.fem import comm
 
 import inspect
@@ -55,6 +56,9 @@ def levelFunction(self):
 def partitionFunction(self):
     return self.localGridFunction("rank", function.Partition(comm.rank))
 
+def localFunction(grid, code):
+    return gridFunction(grid, code).get(grid)
+
 myGenerator = generator.Generator("GridPart",
         "dune/fempy/py" , "Dune::FemPy")
 
@@ -65,10 +69,11 @@ def getGridPartType(gridpart, **parameters):
 
 def addAttr(module, cls):
     setattr(cls, "_module", module)
-    setattr(cls, "interpolate", interpolate )
-    setattr(cls, "writeVTK", writeVTK )
-    setattr(cls, "levelFunction", levelFunction )
-    setattr(cls, "partitionFunction", partitionFunction )
+    setattr(cls, "interpolate", interpolate)
+    setattr(cls, "writeVTK", writeVTK)
+    setattr(cls, "levelFunction", levelFunction)
+    setattr(cls, "partitionFunction", partitionFunction)
+    setattr(cls, "localFunction", localFunction)
 
 def get(gp, **parameters):
     """Create a gridpart module using the gridpart-database.
