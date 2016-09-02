@@ -130,28 +130,12 @@ namespace Dune
 
       typedef Fem::AdaptationManager< Grid, RestrictProlong< Grid > > AdaptationManager;
 
-      typedef Dune::CorePy::Marker Marker;
-
       typedef typename Grid::template Codim< 0 >::Entity Element;
 
       explicit GridAdaptation ( Grid &grid )
         : restrictProlong_( grid ),
           adaptationManager_( grid, restrictProlong_, noParameter() )
       {}
-
-      template< class Marking >
-      std::pair< int, int > mark ( Marking marking )
-      {
-        std::pair< int, int > marked;
-        for( const Element &element : elements( grid().leafGridView() ) )
-        {
-          Marker marker = marking( element );
-          marked.first += static_cast< int >( marker == Marker::Refine );
-          marked.second += static_cast< int >( marker == Marker::Coarsen );
-          grid().mark( static_cast< int >( marker ), element );
-        }
-        return marked;
-      }
 
       template< class Iterator >
       void adapt ( Iterator begin, Iterator end )
