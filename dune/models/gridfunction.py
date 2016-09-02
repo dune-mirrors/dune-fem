@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import importlib
+import hashlib
 import os
 import subprocess
 import sys
@@ -15,15 +16,10 @@ def gridFunction(grid, code):
     if not isinstance(grid, types.ModuleType):
         grid = grid._module
 
-    gfnumber = 0
-    check = 0
-    while check == 0:
-        name = 'localfunction_' + str(gfnumber) + '_' + grid._typeHash
-        if os.path.isfile(os.path.join(compilePath, name + '.so')):
-            gfnumber += 1
-        else:
-            check = 1
-    locname = 'LocalFunction_' + str(gfnumber) + '_' + grid._typeHash
+    myCodeHash = hashlib.md5(code.encode('utf-8')).hexdigest()
+    locname = 'LocalFunction_' + myCodeHash + '_' + grid._typeHash
+    name = 'localfunction_' + myCodeHash + '_' + grid._typeHash
+
 
     if comm.rank == 0:
         if not os.path.isfile(os.path.join(compilePath, name + '.so')):
