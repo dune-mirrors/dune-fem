@@ -5,11 +5,13 @@ import hashlib
 import os
 import subprocess
 import sys
+import timeit
 import types
 from dune import comm
 from dune.source import SourceWriter
 
 def gridFunction(grid, code):
+    start_time = timeit.default_timer()
     compilePath = os.path.join(os.path.dirname(__file__), '../generated')
 
     dimRange = grid.dimensionworld
@@ -37,7 +39,7 @@ def gridFunction(grid, code):
 
             writer.emit('')
 
-            writer.openStruct(locname, targs=(['class GridPart'] + ['class Range']+ ['class... Coefficients']) )
+            writer.openStruct(locname, targs=(['class GridPart'] + ['class Range']+ ['class... Coefficients']), bases=(["Dune::Fem::LocalFunctionAdapterHasInitialize"]) )
             writer.typedef(locname + '< GridPart, Range >', 'LocalFunction')
             writer.typedef('GridPart', 'GridPartType')
             writer.typedef('Range', 'RangeType')
@@ -52,8 +54,6 @@ def gridFunction(grid, code):
             writer.typedef('typename FunctionSpaceType::HessianRangeType', 'HessianRangeType')
 
             writer.openConstMethod('bool init', args=['const EntityType &entity'])
-            #writer.emit('LocalFunction* local = new LocalFunction;') # want to avoid this memory leak in future
-            #writer.emit('GridFunction ("' + name + '", local);')
             writer.emit('entity_ = &entity;')
             writer.emit('return true;')
             writer.closeConstMethod()
@@ -101,8 +101,8 @@ def gridFunction(grid, code):
             writer.emit('')
             writer.emit('pybind11::class_< GridFunction > cls = registerGridFunction< GridFunction >( module, "GridFunction" );')
             writer.emit('module.def( "get", [] ( const std::string name, const GridPartType &gridPart ) {')
-            writer.emit('        LocalFunction *lf = new LocalFunction();')
-            writer.emit('        return new GridFunction("name", *lf, gridPart );')
+            writer.emit('        LocalFunction local;')
+            writer.emit('        return new GridFunction(name, local, gridPart );')
             writer.emit('}, pybind11::keep_alive< 0, 1 >());')
             writer.closePythonModule(pyname)
             writer.closeNameSpace('FemPy')
@@ -113,6 +113,7 @@ def gridFunction(grid, code):
             cmake = subprocess.Popen(['cmake', '--build', '../../..', '--target', 'gridfunction'], cwd=compilePath)
             cmake.wait()
             os.rename(os.path.join(compilePath, 'gridfunction.so'), os.path.join(compilePath, pyname + '.so'))
+            print("Compilation took: " , timeit.default_timer()-start_time , "seconds")
 
         comm.barrier()
         return importlib.import_module('dune.generated.' + pyname)
