@@ -5,10 +5,8 @@
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/io/parameter.hh>
 
+#include <dune/corepy/pybind11/extensions.h>
 #include <dune/corepy/pybind11/pybind11.h>
-
-// VTKDataType
-// -----------
 
 PYBIND11_PLUGIN( femmpi )
 {
@@ -20,13 +18,8 @@ PYBIND11_PLUGIN( femmpi )
     char **argv = nullptr;
     Dune::Fem::MPIManager::initialize( argc, argv );
 
-    // managed to initialize mpi
-    typedef Dune::Fem::MPIManager::CollectiveCommunication Comm;
-
-    pybind11::class_< Comm > cc( module, "CollectiveCommunication" );
-    cc.def_property_readonly( "rank", &Comm::rank );
-    cc.def_property_readonly( "size", &Comm::size );
-    cc.def( "barrier", &Comm::barrier );
+    if( !pybind11::already_registered< Dune::Fem::MPIManager::CollectiveCommunication >() )
+      DUNE_THROW( Dune::Exception, "CollectiveCommunication not registered, yet" );
 
     module.attr( "comm" ) = pybind11::cast( Dune::Fem::MPIManager::comm() );
   }
@@ -58,6 +51,18 @@ PYBIND11_PLUGIN( femmpi )
     param.def("append", [](const Dune::Fem::ParameterContainer &, const std::string &key, const pybind11::handle &val)
         { // int old = Dune::Fem::Parameter::setVerboseRank(0);
           Dune::Fem::Parameter::append( key, val.str() );
+          // Dune::Fem::Parameter::setVerboseRank( old );
+        }
+    );
+    param.def("append", [](const Dune::Fem::ParameterContainer &, const std::string &key, const int val)
+        { // int old = Dune::Fem::Parameter::setVerboseRank(0);
+          Dune::Fem::Parameter::append( key, std::to_string(val) );
+          // Dune::Fem::Parameter::setVerboseRank( old );
+        }
+    );
+    param.def("append", [](const Dune::Fem::ParameterContainer &, const std::string &key, const double val)
+        { // int old = Dune::Fem::Parameter::setVerboseRank(0);
+          Dune::Fem::Parameter::append( key, std::to_string(val) );
           // Dune::Fem::Parameter::setVerboseRank( old );
         }
     );

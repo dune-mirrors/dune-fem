@@ -212,3 +212,10 @@ class SourceWriter:
             return isinstance(obj, basestring)
         else:
             return isinstance(obj, str)
+
+    @staticmethod
+    def cpp_fields(field):
+        if field=="complex":
+            return "std::complex<double>"
+        else:
+            return "double"

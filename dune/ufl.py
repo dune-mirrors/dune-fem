@@ -28,5 +28,8 @@ def cell(dimDomain):
 # -----
 
 class Space(ufl.VectorElement):
-    def __init__(self, dimDomain, dimRange):
+    def __init__(self, dimDomain, dimRange,field="double"):
         ufl.VectorElement.__init__(self, "Lagrange", cell(dimDomain), 1, int(dimRange))
+        self._field = field
+    def field(self):
+        return self._field

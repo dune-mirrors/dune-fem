@@ -4,6 +4,7 @@ __metaclass__ = type
 import sys
 from types import ModuleType
 
+import dune.common as common
 from ..generator import generator
 from . import space
 from . import function
@@ -38,9 +39,9 @@ def writeVTK(grid,  name, celldata=[], pointdata=[], cellvector=[], pointvector=
     else:
         vtk = grid.vtkWriter(subsampling)
     for df in celldata:
-        df.addToVTKWriter(vtk, vtk.CellData)
+        df.addToVTKWriter(vtk, common.DataType.CellData)
     for df in pointdata:
-        df.addToVTKWriter(vtk, vtk.PointData)
+        df.addToVTKWriter(vtk, common.DataType.PointData)
     for df in cellvector:
         df.addToVTKWriter(vtk, vtk.CellVectorData)
     for df in pointvector:
