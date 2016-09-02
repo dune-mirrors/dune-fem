@@ -63,14 +63,11 @@ namespace Dune
       operator bool () const { return bool( hostIntersection_ ); }
 
 #if DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
-      Entity inside () const { return typename Entity::Implementation( gridFunction(), make_entity(hostIntersection().inside()) ); }
-      Entity outside () const { return typename Entity::Implementation( gridFunction(), make_entity(hostIntersection().outside()) ); }
+      Entity inside () const { return typename Entity::Implementation( gridFunction(), hostIntersection().inside() ); }
+      Entity outside () const { return typename Entity::Implementation( gridFunction(), hostIntersection().outside() ); }
 #else // #if DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
       EntityPointer inside () const
       {
-        EntityPointerImplType impl( hostIntersection().inside(), gridFunction());
-        EntityPointer eptr(impl);
-        return eptr;
         return EntityPointerImplType( hostIntersection().inside(), gridFunction() );
       }
 
