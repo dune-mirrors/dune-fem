@@ -42,7 +42,7 @@ namespace Dune
         std::array< Dispatch, sizeof...( dimRange ) > dispatch = {{ Dispatch( l2Norm< GridPart, double, dimRange > )... }};
 
         return [ dispatch ] ( pybind11::object gp, pybind11::object func ) {
-          const GridPart &gridPart = gp.cast< const GridPart & >();
+          //const GridPart &gridPart = gp.cast< const GridPart & >();
           pybind11::object dimRobj = func.attr("dimRange");
           int dimR = func.attr("dimRange").cast<int>();
           if( static_cast< std::size_t >( dimR ) >= dispatch.size() )
