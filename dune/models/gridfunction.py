@@ -67,10 +67,15 @@ def gridFunction(grid, code):
             writer.closeConstMethod()
 
             writer.openConstMethod('void evaluate', args=['const PointType &x', 'RangeType &value'], targs=['class PointType'])
+            writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
             writer.emit(code)
             writer.closeConstMethod()
 
             writer.openConstMethod('void jacobian', args=['const PointType &x', 'JacobianRangeType &value'], targs=['class PointType'])
+            writer.emit('// not implemented')
+            writer.closeConstMethod()
+
+            writer.openConstMethod('void hessian', args=['const PointType &x', 'HessianRangeType &value'], targs=['class PointType'])
             writer.emit('// not implemented')
             writer.closeConstMethod()
 
@@ -99,9 +104,9 @@ def gridFunction(grid, code):
             writer.emit('// export function class')
             writer.emit('')
             writer.emit('pybind11::class_< GridFunction > cls = registerGridFunction< GridFunction >( module, "GridFunction" );')
-            writer.emit('module.def( "get", [] ( GridFunction &instance, const GridPartType &gridPart ) {')
+            writer.emit('module.def( "get", [] ( const GridPartType &gridPart ) {')
             writer.emit('        LocalFunction *lf = new LocalFunction();')
-            writer.emit('        new ( &instance ) GridFunction("' + name + '", *lf, gridPart );')
+            writer.emit('        return new GridFunction("' + name + '", *lf, gridPart );')
             writer.emit('});')
             writer.closePythonModule(name)
             writer.closeNameSpace('FemPy')

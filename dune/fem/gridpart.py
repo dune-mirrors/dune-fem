@@ -57,7 +57,8 @@ def partitionFunction(self):
     return self.localGridFunction("rank", function.Partition(comm.rank))
 
 def localFunction(grid, code):
-    return gridFunction(grid, code).get(grid)
+    gf = gridFunction(grid, code)
+    return gf.get(grid)
 
 myGenerator = generator.Generator("GridPart",
         "dune/fempy/py" , "Dune::FemPy")
