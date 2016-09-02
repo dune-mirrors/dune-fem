@@ -27,7 +27,7 @@ namespace Dune
     template< class LocalFunction >
     pybind11::class_< LocalFunction > registerLocalFunction ( pybind11::handle scope, const char *clsName = "LocalFunction" )
     {
-      typedef typename LocalFunction::LocalCoordinateType LocalCoordinate;
+      typedef typename LocalFunction::EntityType::Geometry::LocalCoordinate LocalCoordinate;
 
       pybind11::class_< LocalFunction > cls( scope, clsName );
 
