@@ -61,6 +61,20 @@ def localFunction(grid, name, code):
     gf = gridFunction(grid, code)
     return gf.get(name, grid)
 
+def function(self, name, **kwargs):
+    params = {"code": self.localFunction,
+              "globalExpr": self.globalGridFunction,
+              "localExpr": self.localGridFunction}
+              #"ufl":self.uflGridFunction}
+    assert len(kwargs) == 1,\
+           "Only one argument allowed to define grid function"
+    for key, value in kwargs.items():
+        assert key in params,\
+           "Wrong parameter used to generate grid function."+\
+           "Possible parameters are:\n"+\
+           ", ".join( [param for param,_ in params.items()] )
+        return params[key](name,value)
+
 myGenerator = generator.Generator("GridPart",
         "dune/fempy/py" , "Dune::FemPy")
 
@@ -76,6 +90,7 @@ def addAttr(module, cls):
     setattr(cls, "levelFunction", levelFunction)
     setattr(cls, "partitionFunction", partitionFunction)
     setattr(cls, "localFunction", localFunction)
+    setattr(cls, "function", function)
 
 def get(gp, **parameters):
     """Create a gridpart module using the gridpart-database.

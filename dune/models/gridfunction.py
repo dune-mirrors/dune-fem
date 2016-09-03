@@ -102,7 +102,7 @@ def gridFunction(grid, code):
             writer.emit('pybind11::class_< GridFunction > cls = registerGridFunction< GridFunction >( module, "GridFunction" );')
             writer.emit('module.def( "get", [] ( const std::string name, const GridPartType &gridPart ) {')
             writer.emit('        LocalFunction *lf = new LocalFunction();')
-            writer.emit('        return new GridFunction("name", *lf, gridPart );')
+            writer.emit('        return new GridFunction(name, *lf, gridPart );')
             writer.emit('}, pybind11::keep_alive< 0, 1 >());')
             writer.closePythonModule(pyname)
             writer.closeNameSpace('FemPy')
