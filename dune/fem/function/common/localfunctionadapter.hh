@@ -4,6 +4,7 @@
 #include <functional>
 #include <memory>
 #include <set>
+#include <tuple>
 #include <type_traits>
 
 #include <dune/common/hybridutilities.hh>
@@ -33,10 +34,6 @@ namespace Dune
     template< class LocalFunctionImpl >
     class LocalFunctionAdapterLocalFunction;
 
-    //! identifier to local function has initialize feature
-    struct LocalFunctionAdapterHasInitialize {} ;
-
-
 
     //! traits of DiscreteFunctionAdapter
     template< class LocalFunctionImpl >
@@ -45,7 +42,22 @@ namespace Dune
       typedef typename LocalFunctionImpl::FunctionSpaceType FunctionSpaceType;
       typedef typename LocalFunctionImpl::GridPartType GridPartType;
 
-      static const bool localFunctionHasInitialize = std::is_convertible< LocalFunctionImpl, LocalFunctionAdapterHasInitialize >::value;
+      // use storage as reference if no copy constructor
+      template< class T, bool >
+      struct LocalFuncType
+      {
+        typedef T& Type;
+      };
+      // otherwise use storage as copy
+      template< class T >
+      struct LocalFuncType< T, true >
+      {
+        typedef T Type;
+      };
+
+      // store the local function object by value if it can be copy constructed - otherwise store a reference
+      static constexpr bool localFunctionHasCopyConstructor = std::is_copy_constructible<LocalFunctionImpl>::value;
+      typedef typename LocalFuncType< LocalFunctionImpl, localFunctionHasCopyConstructor >::Type LocalFuncStorageType;
 
       typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
       typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
@@ -165,7 +177,6 @@ namespace Dune
       typedef typename Traits::LocalFunctionType LocalFunctionType;
 
     protected:
-      // interface class for local function init
       struct ArgumentIF
       {
         virtual void initialize( LocalFunctionType* ) const = 0;
@@ -174,16 +185,12 @@ namespace Dune
         {}
       };
 
-      // storage of argument reference to init local functions
       template <class ArgType>
       struct ArgumentInitializer : public ArgumentIF
       {
-        // store arg here, this is a tuple of discrete functions
-        // that has to be copied
         const ArgType arg_;
         const double time_;
 
-        // constructor storing argument
         ArgumentInitializer( const ArgType& arg, double time )
         : arg_( arg ), time_( time )
         {}
@@ -197,10 +204,13 @@ namespace Dune
         }
       };
 
+      typedef typename Traits::LocalFuncStorageType LocalFuncStorageType;
+
     public:
-      //! constructer taking instance of EvalImp class
+      //! constructor taking a const reference instance of the local function class
+      //! This is the only useable constructor if the local function implementation is not copy constructible
       LocalFunctionAdapter ( const std::string &name,
-                             LocalFunctionImplType &localFunctionImpl,
+                             const LocalFunctionImplType &localFunctionImpl,
                              const GridPartType &gridPart,
                              unsigned int order = DiscreteFunctionSpaceType::polynomialOrder )
       : space_( gridPart, order ),
@@ -211,7 +221,46 @@ namespace Dune
         order_( order )
       {}
 
-      // reference to function this local belongs to
+      //! constructor taking a r-value reference instance of the local function class
+      LocalFunctionAdapter ( const std::string &name,
+                             LocalFunctionImplType &&localFunctionImpl,
+                             const GridPartType &gridPart,
+                             unsigned int order = DiscreteFunctionSpaceType::polynomialOrder )
+      : space_( gridPart, order ),
+        localFunctionImpl_( localFunctionImpl ),
+        lfList_(),
+        argInitializer_(),
+        name_( name ),
+        order_( order )
+      {}
+
+      //! constructor setting up a local instance of the local function class.
+      //! Note: the order argument has to be passed in as well
+      template < class ...Args >
+      LocalFunctionAdapter ( const std::string &name,
+                             const GridPartType &gridPart,
+                             unsigned int order,
+                             Args&... args)
+      : space_( gridPart, order ),
+        localFunctionImpl_( args... ),
+        lfList_(),
+        argInitializer_(),
+        name_( name ),
+        order_( order )
+      {}
+
+      //! constructor setting up a local instance of the local function class.
+      //! A tuple is used for the constructor arguments of that object, so
+      //! something like std::forward_as_tuple should be used.
+      template < class ...Args >
+      LocalFunctionAdapter ( const std::string &name,
+                             const GridPartType &gridPart,
+                             const std::tuple< Args&... > &args,
+                             unsigned int order = DiscreteFunctionSpaceType::polynomialOrder )
+      : LocalFunctionAdapter( name, gridPart, args, order,
+           std::make_index_sequence< std::tuple_size< std::tuple<Args&...> >::value >{} )
+      {}
+
       LocalFunctionAdapter( const ThisType &other )
       : space_( other.space_ ),
         localFunctionImpl_( other.localFunctionImpl_ ),
@@ -228,13 +277,13 @@ namespace Dune
       }
 
       //! return local function implementation
-      const LocalFunctionImplType& localFunctionImpl() const
+      const LocalFuncStorageType& localFunctionImpl() const
       {
         return localFunctionImpl_;
       }
 
       //! return local function implementation
-      LocalFunctionImplType& localFunctionImpl()
+      LocalFuncStorageType& localFunctionImpl()
       {
         return localFunctionImpl_;
       }
@@ -316,17 +365,16 @@ namespace Dune
         return *this;
       }
 
-      //! initialize local function with argument
+      //! initialize local function with argument and time
       template< class ArgumentType >
       void initialize( const ArgumentType &arg, double time )
       {
-        constexpr bool hasInit = Traits::localFunctionHasInitialize;
-        if( hasInit)
+        constexpr bool hasCopyConstructor = Traits::localFunctionHasCopyConstructor;
+        if( hasCopyConstructor)
         {
-          // makes a copy of arg, which is a tuple of discrete functions
           argInitializer_ = Std::make_unique< ArgumentInitializer< ArgumentType > >( arg, time );
           for( auto& localFunctionPtr : lfList_ )
-            Hybrid::ifElse( hasInit, [ & ]( auto&& ){ argInitializer_->initialize( localFunctionPtr ); } );
+            Hybrid::ifElse( hasCopyConstructor, [ & ]( auto&& ){ argInitializer_->initialize( localFunctionPtr ); } );
         }
         else
           DUNE_THROW(NotImplemented,"LocalFunctionAdapter::initialize is not implemented");
@@ -335,7 +383,7 @@ namespace Dune
       //! add LocalFunction to list of local functions
       void registerLocalFunction( LocalFunctionType* lf ) const
       {
-        if( Traits::localFunctionHasInitialize )
+        if( Traits::localFunctionHasCopyConstructor )
         {
           if( argInitializer_ != nullptr )
             argInitializer_->initialize( lf );
@@ -346,13 +394,27 @@ namespace Dune
       //! remove LocalFunction to list of local functions
       void deleteLocalFunction( LocalFunctionType* lf ) const
       {
-        if( Traits::localFunctionHasInitialize )
+        if( Traits::localFunctionHasCopyConstructor )
           lfList_.erase( lf );
       }
 
     protected:
+      template <class ...Args, std::size_t ...index>
+      LocalFunctionAdapter ( const std::string &name,
+                             const GridPartType &gridPart,
+                             const std::tuple< Args&... > &args,
+                             unsigned int order,
+                             std::index_sequence< index... > )
+      : space_( gridPart, order ),
+        localFunctionImpl_( std::get< index >( args )... ),
+        lfList_(),
+        argInitializer_(),
+        name_( name ),
+        order_( order )
+      {}
+
       DiscreteFunctionSpaceType space_;
-      LocalFunctionImplType &localFunctionImpl_;
+      LocalFuncStorageType localFunctionImpl_;
       mutable std::set< LocalFunctionType * > lfList_;
       std::unique_ptr< ArgumentIF > argInitializer_ ;
       const std::string name_;
@@ -389,19 +451,7 @@ namespace Dune
       typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
       typedef typename Traits::EntityType EntityType;
 
-      // default is reference
-      template <int, bool hasInit >
-      struct LocalFuncType
-      {
-        typedef LocalFunctionImplType&  Type;
-      };
-
-      // non default is object
-      template <int dummy >
-      struct LocalFuncType<dummy, true>
-      {
-        typedef LocalFunctionImplType Type;
-      };
+      typedef typename Traits::LocalFuncStorageType LocalFuncStorageType;
 
       //! constructor initializing local function
       LocalFunctionAdapterLocalFunction ( const EntityType &entity, const DiscreteFunctionType &adapter )
@@ -409,7 +459,7 @@ namespace Dune
       {
         // add local function to list
         adapter_.registerLocalFunction( this );
-        localFunctionImpl_.init( entity );
+        localFunctionImpl().init( entity );
       }
 
       //! constructor
@@ -445,21 +495,21 @@ namespace Dune
       template< class PointType >
       void evaluate ( const PointType &x, RangeType &ret ) const
       {
-        localFunctionImpl_.evaluate(x,ret);
+        localFunctionImpl().evaluate(x,ret);
       }
 
       //! jacobian of local function
       template< class PointType >
       void jacobian ( const PointType &x, JacobianRangeType &ret ) const
       {
-        localFunctionImpl_.jacobian( x, ret );
+        localFunctionImpl().jacobian( x, ret );
       }
 
       // hessian of local function
       template< class PointType >
       void hessian ( const PointType &x, HessianRangeType &ret ) const
       {
-        localFunctionImpl_.hessian( x, ret );
+        localFunctionImpl().hessian( x, ret );
       }
 
       template< class QuadratureType, class VectorType  >
@@ -469,16 +519,10 @@ namespace Dune
       }
 
       //! init local function
-      void init(const EntityType& en)
+      void init( const EntityType& entity )
       {
-        localFunctionImpl_.init(en);
-        entity_=&en;
-      }
-
-      template <class ArgumentType>
-      void initialize ( const ArgumentType& arg, double time )
-      {
-        localFunctionImpl_.initialize( arg, time );
+        localFunctionImpl().init( entity );
+        entity_ = &entity;
       }
 
       //! get entity
@@ -488,10 +532,15 @@ namespace Dune
         return *entity_;
       }
 
+      template <class ArgumentType>
+      void initialize ( const ArgumentType& arg, double time )
+      {
+        localFunctionImpl().initialize( arg, time );
+      }
+
     protected:
       template< class QuadratureType, class VectorType  >
-      void evaluateQuadrature( const QuadratureType &quad,
-          VectorType &result, const RangeType& ) const
+      void evaluateQuadrature( const QuadratureType &quad, VectorType &result, const RangeType& ) const
       {
         const size_t quadNop = quad.nop();
         for(size_t i = 0; i<quadNop; ++i)
@@ -499,19 +548,26 @@ namespace Dune
       }
 
       template< class QuadratureType, class VectorType  >
-      void evaluateQuadrature( const QuadratureType &quad,
-          VectorType &result, const JacobianRangeType& ) const
+      void evaluateQuadrature( const QuadratureType &quad, VectorType &result, const JacobianRangeType& ) const
       {
         const size_t quadNop = quad.nop();
         for(size_t i = 0; i<quadNop; ++i)
           jacobian( quad[ i ], result[ i ] );
       }
 
-    protected:
+      const LocalFuncStorageType& localFunctionImpl() const
+      {
+        return localFunctionImpl_;
+      }
+
+      LocalFuncStorageType& localFunctionImpl()
+      {
+        return localFunctionImpl_;
+      }
+
+      EntityType const* entity_ = nullptr;
       const DiscreteFunctionType &adapter_;
-      typedef typename LocalFuncType< 0, Traits::localFunctionHasInitialize >::Type LocalFuncStorageType;
       LocalFuncStorageType localFunctionImpl_;
-      EntityType const* entity_;
     };
 
 
@@ -538,7 +594,7 @@ namespace Dune
      *    AdaptedFunctionType fAdapted("adapted function",localAnalyticalFunction,gridPart);
      */
     template<class DiscreteFunctionSpaceImpl>
-    class LocalAnalyticalFunctionBinder:public LocalFunctionAdapterHasInitialize
+    class LocalAnalyticalFunctionBinder
     {
     public:
       typedef DiscreteFunctionSpaceImpl DiscreteFunctionSpaceType;

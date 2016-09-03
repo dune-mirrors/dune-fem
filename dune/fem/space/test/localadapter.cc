@@ -66,7 +66,7 @@ int main ( int argc, char **argv )
         return ret;
       });
   typedef Dune::Fem::LocalFunctionAdapter<LocalAnalyticalFunctionType> LocalAdaptedFunctionType;
-  LocalAdaptedFunctionType localAdapted("local adapted function",localAnalyticalFunction,gridPart,5);
+  LocalAdaptedFunctionType localAdapted("local adapted function",std::move(localAnalyticalFunction),gridPart,5);
 
   // interpolate local adpated function over discrete function
   Dune::Fem::interpolate(localAdapted,dfLocalAdapted);
