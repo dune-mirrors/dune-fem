@@ -8,7 +8,6 @@ import dune.common as common
 from ..generator import generator
 from . import space
 from . import function
-from ..models.gridfunction import gridFunction
 from dune.fem import comm
 
 import inspect
@@ -56,24 +55,23 @@ def levelFunction(self):
     return self.localGridFunction("level", function.Levels())
 def partitionFunction(self):
     return self.localGridFunction("rank", function.Partition(comm.rank))
-
-def localFunction(grid, name, code):
-    gf = gridFunction(grid, code)
-    return gf.get(name, grid)
+def globalGridFunction(grid,name,value):
+    return grid.globalGridFunction(name,value)
+def localGridFunction(grid,name,value):
+    return grid.localGridFunction(name,value)
+gridFunctions = { "globalExpr": globalGridFunction,
+                  "localExpr": localGridFunction}
+          #"ufl":self.uflGridFunction}
 
 def function(self, name, **kwargs):
-    params = {"code": self.localFunction,
-              "globalExpr": self.globalGridFunction,
-              "localExpr": self.localGridFunction}
-              #"ufl":self.uflGridFunction}
     assert len(kwargs) == 1,\
            "Only one argument allowed to define grid function"
     for key, value in kwargs.items():
-        assert key in params,\
+        assert key in gridFunctions,\
            "Wrong parameter used to generate grid function."+\
            "Possible parameters are:\n"+\
-           ", ".join( [param for param,_ in params.items()] )
-        return params[key](name,value)
+           ", ".join( [param for param,_ in gridFunctions.items()] )
+        return gridFunctions[key](self,name,value)
 
 myGenerator = generator.Generator("GridPart",
         "dune/fempy/py" , "Dune::FemPy")
@@ -89,7 +87,6 @@ def addAttr(module, cls):
     setattr(cls, "writeVTK", writeVTK)
     setattr(cls, "levelFunction", levelFunction)
     setattr(cls, "partitionFunction", partitionFunction)
-    setattr(cls, "localFunction", localFunction)
     setattr(cls, "function", function)
 
 def get(gp, **parameters):

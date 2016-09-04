@@ -9,12 +9,46 @@ import timeit
 import types
 from dune import comm
 from dune.source import SourceWriter
+# import dune.fem.gridpart as gridpart
+from dune.fem.gridpart import gridFunctions
+
+# method to add to gridpart.function call
+def generatedFunction(grid, name, code):
+    gf = gridFunction(grid, code)
+    return gf.get(name, grid)
+gridFunctions.update( {"code":generatedFunction} )
+def UFLFunction(grid, name, expr):
+    import ufl
+    import dune.models.elliptic as generate
+    R = len(expr)
+    D = grid.dimension
+    code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R,), expr), False))
+    evaluate = code.replace("result","value")
+    ###################
+    jac = []
+    for r in range(R):
+        jac_form = [\
+            ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(\
+                ufl.grad(expr)[r,d]*ufl.dx\
+            ))) for d in range(D)]
+        jac.append( [jac_form[d].integrals()[0].integrand() if not jac_form[d].empty() else 0 for d in range(D)] )
+    jac = ufl.as_matrix(jac)
+    code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R,D), jac), False))
+    jacobian = code.replace("result","value")
+    ###################
+    ###################
+    return generatedFunction(grid,name,evaluate)
+gridFunctions.update( {"ufl":UFLFunction} )
 
 def gridFunction(grid, code):
     start_time = timeit.default_timer()
     compilePath = os.path.join(os.path.dirname(__file__), '../generated')
 
-    dimRange = grid.dimensionworld
+    codeA = code.split("\n")
+    codeB = [c.split("=") for c in codeA]
+    codeC = [c[0] for c in codeB if "value" in c[0]]
+    dimRange = max( [int(c.split("[")[1].split("]")[0]) for c in codeC] )+1
+
     if not isinstance(grid, types.ModuleType):
         grid = grid._module
 
@@ -32,7 +66,6 @@ def gridFunction(grid, code):
             writer.emit('#include <dune/corepy/pybind11/extensions.h>')
             writer.emit('')
             writer.emit('#include <dune/fem/space/common/functionspace.hh>')
-            writer.emit('#include <dune/fem/space/common/interpolate.hh>')
             writer.emit('#include <dune/fem/function/common/localfunctionadapter.hh>')
             writer.emit('')
             writer.emit('#include <dune/fempy/py/grid/function.hh>')
