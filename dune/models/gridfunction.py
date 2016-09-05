@@ -24,7 +24,6 @@ def UFLFunction(grid, name, expr):
     D = grid.dimension
     code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R,), expr), False))
     evaluate = code.replace("result","value")
-    ###################
     jac = []
     for r in range(R):
         jac_form = [\
@@ -35,9 +34,7 @@ def UFLFunction(grid, name, expr):
     jac = ufl.as_matrix(jac)
     code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R,D), jac), False))
     jacobian = code.replace("result","value")
-    ###################
-    ###################
-    return generatedFunction(grid,name,evaluate)
+    return generatedFunction(grid,name,{"evaluate":evaluate,"jacobian":jacobian})
 gridFunctions.update( {"ufl":UFLFunction} )
 
 def dimRangeSplit(code):
@@ -129,31 +126,28 @@ def gridFunction(grid, code):
             writer.emit('return *entity_;')
             writer.closeConstMethod()
 
-            writer.openConstMethod('void evaluate', args=['const PointType &x', 'RangeType &value'], targs=['class PointType'])
+            writer.openConstMethod('void evaluate', args=['const PointType &x', 'RangeType &value'], targs=['class PointType'],implemented=eval)
             if eval:
+                eval = eval.strip()
                 if 'xGlobal' in eval:
                     writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
-                writer.emit(eval)
-            else:
-                writer.emit('DUNE_THROW( Dune::NotImplemented, "evaluate not implemented");')
+                writer.emit(eval.split("\n"))
             writer.closeConstMethod()
 
-            writer.openConstMethod('void jacobian', args=['const PointType &x', 'JacobianRangeType &value'], targs=['class PointType'])
+            writer.openConstMethod('void jacobian', args=['const PointType &x', 'JacobianRangeType &value'], targs=['class PointType'],implemented=jac)
             if jac:
+                jac = jac.strip()
                 if 'xGlobal' in jac:
                     writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
-                writer.emit(jac)
-            else:
-                writer.emit('DUNE_THROW( Dune::NotImplemented, "jacobian not implemented");')
+                writer.emit(jac.split("\n"))
             writer.closeConstMethod()
 
-            writer.openConstMethod('void hessian', args=['const PointType &x', 'HessianRangeType &value'], targs=['class PointType'])
+            writer.openConstMethod('void hessian', args=['const PointType &x', 'HessianRangeType &value'], targs=['class PointType'], implemented=hess)
             if hess:
+                hess = hess.strip()
                 if 'xGlobal' in hess:
                     writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
-                writer.emit(hess)
-            else:
-                writer.emit('DUNE_THROW( Dune::NotImplemented, "hessian not implemented");')
+                writer.emit(hess.split("\n"))
             writer.closeConstMethod()
 
             writer.section('private')

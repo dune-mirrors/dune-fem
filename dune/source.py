@@ -75,6 +75,12 @@ class SourceWriter:
             self.blocks.append((realBlock, realName))
             raise Exception("Trying to close " + realBlock + " " + realName + " as " + block + " " + name + ".");
 
+    def getName(self,block):
+        for b in reversed(self.blocks):
+            if b[0] == block:
+                return b[1]
+        return None
+
     def openNameSpace(self, name):
         self.emit(None if self.begin else '')
         self.emit('namespace ' + name)
@@ -133,7 +139,7 @@ class SourceWriter:
         self.blocks.append((block, name))
         self.begin = True
 
-    def openConstMethod(self, typedName, targs=None, args=None):
+    def openConstMethod(self, typedName, targs=None, args=None, implemented=True):
         self.emit(None if self.begin else '')
         if targs:
             self.emit('template< ' + ', '.join([arg.strip() for arg in targs]) + ' >')
@@ -143,6 +149,13 @@ class SourceWriter:
             self.emit(typedName + ' () const')
         self.emit('{')
         self.pushBlock('const method', typedName)
+        if not implemented:
+            struct = self.getName("struct")
+            if struct:
+                fullMethodName = struct + "::" + typedName
+            else:
+                fullMethodName = typedName
+            self.emit('DUNE_THROW(Dune::NotImplemented, "'+fullMethodName+'");')
 
     def closeConstMethod(self, typedName=None):
         self.popBlock('const method', typedName)
