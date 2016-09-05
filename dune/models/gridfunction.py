@@ -44,15 +44,25 @@ def gridFunction(grid, code):
     start_time = timeit.default_timer()
     compilePath = os.path.join(os.path.dirname(__file__), '../generated')
 
+    # find the dimRange using @dimrange or counting values
     codeA = code.split("\n")
-    codeB = [c.split("=") for c in codeA]
-    codeC = [c[0] for c in codeB if "value" in c[0]]
-    dimRange = max( [int(c.split("[")[1].split("]")[0]) for c in codeC] )+1
+    if '@dimrange' in code:
+        for c in codeA:
+            if '@dimrange' in c:
+                dimRange = int( c.split("=",1)[1] )
+            else:
+                cpp_code += c + "\n"
+        cpp_code = cpp_code[:-2]
+    else:
+        codeB = [c.split("=") for c in codeA]
+        codeC = [c[0] for c in codeB if "value" in c[0]]
+        dimRange = max( [int(c.split("[")[1].split("]")[0]) for c in codeC] ) + 1
+        cpp_code = code
 
     if not isinstance(grid, types.ModuleType):
         grid = grid._module
 
-    myCodeHash = hashlib.md5(code.encode('utf-8')).hexdigest()
+    myCodeHash = hashlib.md5(cpp_code.encode('utf-8')).hexdigest()
     locname = 'LocalFunction_' + myCodeHash + '_' + grid._typeHash
     pyname = 'localfunction_' + myCodeHash + '_' + grid._typeHash
 
@@ -97,7 +107,7 @@ def gridFunction(grid, code):
 
             writer.openConstMethod('void evaluate', args=['const PointType &x', 'RangeType &value'], targs=['class PointType'])
             writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
-            writer.emit(code)
+            writer.emit(cpp_code)
             writer.closeConstMethod()
 
             writer.openConstMethod('void jacobian', args=['const PointType &x', 'JacobianRangeType &value'], targs=['class PointType'])
