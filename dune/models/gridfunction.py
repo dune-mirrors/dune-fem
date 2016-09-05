@@ -10,15 +10,15 @@ import types
 from dune import comm
 from dune.source import SourceWriter
 
-def gridFunction(grid, code):
-    start_time = timeit.default_timer()
-    compilePath = os.path.join(os.path.dirname(__file__), '../generated')
-
-    # find the dimRange using @dimrange or counting values
+def dimRangeSplit(code):
+    """find the dimRange using @dimrange or counting values
+    """
+    cpp_code = ''
     codeA = code.split("\n")
-    if '@dimrange' in code:
+    if '@dimrange' in code or '@range' in code:
+        print('@dimrange specified')
         for c in codeA:
-            if '@dimrange' in c:
+            if '@dimrange' in c or '@range' in c:
                 dimRange = int( c.split("=",1)[1] )
             else:
                 cpp_code += c + "\n"
@@ -28,6 +28,30 @@ def gridFunction(grid, code):
         codeC = [c[0] for c in codeB if "value" in c[0]]
         dimRange = max( [int(c.split("[")[1].split("]")[0]) for c in codeC] ) + 1
         cpp_code = code
+    return ( cpp_code, dimRange )
+
+def gridFunction(grid, code):
+    start_time = timeit.default_timer()
+    compilePath = os.path.join(os.path.dirname(__file__), '../generated')
+
+    if type(code) is not dict: code = { 'eval': code }
+    cpp_code = ''
+    eval = ''
+    jac = ''
+    hess = ''
+    for key, value in code.items():
+        if key == 'eval' or key == 'evaluate':
+            eval, dimRange = dimRangeSplit(value)
+            cpp_code += eval + '\n'
+        elif key == 'jac' or key == 'jacobian':
+            jac, dimRange = dimRangeSplit(value)
+            cpp_code += jac + '\n'
+        elif key == 'hess' or key == 'hessian':
+            hess, dimRange = dimRangeSplit(value)
+            cpp_code += hess + '\n'
+        else:
+            print(key, ' is not a valid key. Use "eval", "jac" or "hess"')
+            exit(1)
 
     if not isinstance(grid, types.ModuleType):
         grid = grid._module
@@ -77,16 +101,30 @@ def gridFunction(grid, code):
             writer.closeConstMethod()
 
             writer.openConstMethod('void evaluate', args=['const PointType &x', 'RangeType &value'], targs=['class PointType'])
-            writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
-            writer.emit(cpp_code)
+            if eval:
+                if 'xGlobal' in eval:
+                    writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
+                writer.emit(eval)
+            else:
+                writer.emit('DUNE_THROW( Dune::NotImplemented, "evaluate not implemented");')
             writer.closeConstMethod()
 
             writer.openConstMethod('void jacobian', args=['const PointType &x', 'JacobianRangeType &value'], targs=['class PointType'])
-            writer.emit('// not implemented')
+            if jac:
+                if 'xGlobal' in jac:
+                    writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
+                writer.emit(jac)
+            else:
+                writer.emit('DUNE_THROW( Dune::NotImplemented, "jacobian not implemented");')
             writer.closeConstMethod()
 
             writer.openConstMethod('void hessian', args=['const PointType &x', 'HessianRangeType &value'], targs=['class PointType'])
-            writer.emit('// not implemented')
+            if hess:
+                if 'xGlobal' in hess:
+                    writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
+                writer.emit(hess)
+            else:
+                writer.emit('DUNE_THROW( Dune::NotImplemented, "hessian not implemented");')
             writer.closeConstMethod()
 
             writer.section('private')
