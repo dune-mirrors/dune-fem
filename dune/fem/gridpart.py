@@ -7,7 +7,7 @@ from types import ModuleType
 import dune.common as common
 from ..generator import generator
 from . import space
-from . import function
+from . import function as gf
 from dune.fem import comm
 
 import inspect
@@ -52,9 +52,9 @@ def writeVTK(grid,  name, celldata=[], pointdata=[], cellvector=[], pointvector=
     return vtk
 
 def levelFunction(self):
-    return self.localGridFunction("level", function.Levels())
+    return self.localGridFunction("level", gf.Levels())
 def partitionFunction(self):
-    return self.localGridFunction("rank", function.Partition(comm.rank))
+    return self.localGridFunction("rank", gf.Partition(comm.rank))
 def globalGridFunction(grid,name,value):
     return grid.globalGridFunction(name,value)
 def localGridFunction(grid,name,value):
