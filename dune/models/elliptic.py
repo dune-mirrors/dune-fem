@@ -20,8 +20,9 @@ class EllipticModel(BaseModel):
     def __init__(self, dimRange, signature):
         BaseModel.__init__(self, dimRange, signature)
         self.source = "result = RangeType( 0 );"
-        self.linSource = "result = JacobianRangeType( 0 );"
-        self.diffusiveFlux = "result = RangeType( 0 );"
+        self.linSource = "result = RangeType( 0 );"
+        self.linNVSource = "result = RangeType( 0 );"
+        self.diffusiveFlux = "result = JacobianRangeType( 0 );"
         self.linDiffusiveFlux = "result = JacobianRangeType( 0 );"
         self.fluxDivergence = "result = RangeType( 0 );"
         self.alpha = "result = RangeType( 0 );"
@@ -49,12 +50,25 @@ class EllipticModel(BaseModel):
         arg_r = 'RangeType &result'
         arg_dr = 'JacobianRangeType &result'
 
-        sourceWriter.openConstMethod('void source', targs=['class Point'], args=[arg_x, arg_u, arg_du, arg_r])
-        sourceWriter.emit(self.source)
-        sourceWriter.closeConstMethod()
+        if True:
+            sourceWriter.openConstMethod('void source', targs=['class Point'], args=[arg_x, arg_u, arg_du, arg_r])
+            sourceWriter.emit(self.source)
+            sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void linSource', targs=['class Point'], args=[arg_ubar, arg_dubar, arg_x, arg_u, arg_du, arg_r])
-        sourceWriter.emit(self.linSource)
+            sourceWriter.openConstMethod('void linSource', targs=['class Point'], args=[arg_ubar, arg_dubar, arg_x, arg_u, arg_du, arg_r])
+            sourceWriter.emit(self.linSource)
+            sourceWriter.closeConstMethod()
+        else:
+            sourceWriter.openConstMethod('void source', targs=['class Point'], args=[arg_x, arg_u, arg_du, arg_d2u, arg_r])
+            sourceWriter.emit(self.source)
+            sourceWriter.closeConstMethod()
+
+            sourceWriter.openConstMethod('void linSource', targs=['class Point'], args=[arg_ubar, arg_dubar, arg_d2ubar, arg_x, arg_u, arg_du, arg_r])
+            sourceWriter.emit(self.linSource)
+            sourceWriter.closeConstMethod()
+
+        sourceWriter.openConstMethod('void linNVSource', targs=['class Point'], args=[arg_ubar, arg_dubar, arg_d2ubar, arg_x, arg_d2u, arg_r])
+        sourceWriter.emit(self.linNVSource)
         sourceWriter.closeConstMethod()
 
         sourceWriter.openConstMethod('void diffusiveFlux', targs=['class Point'], args=[arg_x, arg_u, arg_du, arg_dr])
@@ -433,8 +447,8 @@ def splitUFLForm(form, linear):
         du = ufl.differentiation.Grad(u)
         d2u = ufl.differentiation.Grad(du)
         source0,source1,source2 = splitUFL2(u,du,d2u,source)
-        source = source0 + source1 + source2
-        return source, diffusiveFlux, boundarySource
+        source = source0 + source1
+        return source, source2, diffusiveFlux, boundarySource
 
     return source, diffusiveFlux, boundarySource
 
@@ -609,7 +623,6 @@ def generateCode(predefined, tensor, tempVars = True):
     generator = CodeGenerator(predefined, tempVars)
     results = []
     for index in tensor.keys():
-        print(index)
         result = generator.visit(tensor[index])
         results.append('result' + generator.translateIndex(index) + ' = ' + result + ';')
     return list(generator.using) + generator.code + results
@@ -646,7 +659,7 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
     dform = ufl.algorithms.apply_derivatives.apply_derivatives(ufl.derivative(ufl.action(form, ubar), ubar, u))
 
     source, diffusiveFlux, boundarySource = splitUFLForm( form, False )
-    linSource, linDiffusiveFlux, linBoundarySource = splitUFLForm( dform, True )
+    linSource, linNVSource, linDiffusiveFlux, linBoundarySource = splitUFLForm( dform, True )
     fluxDivergence, _, _ = splitUFLForm(ufl.inner(source.as_ufl() - ufl.div(diffusiveFlux.as_ufl()), phi) * ufl.dx(0),False)
 
     model = EllipticModel(dimRange, form.signature())
@@ -685,6 +698,7 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
     model.diffusiveFlux = generateCode({ u : 'u', du : 'du' }, diffusiveFlux, tempVars)
     model.alpha = generateCode({ u : 'u' }, boundarySource, tempVars)
     model.linSource = generateCode({ u : 'u', du : 'du', d2u : 'd2u', ubar : 'ubar', dubar : 'dubar', d2ubar : 'd2ubar'}, linSource, tempVars)
+    model.linNVSource = generateCode({ u : 'u', du : 'du', d2u : 'd2u', ubar : 'ubar', dubar : 'dubar', d2ubar : 'd2ubar'}, linNVSource, tempVars)
     model.linDiffusiveFlux = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linDiffusiveFlux, tempVars)
     model.linAlpha = generateCode({ u : 'u', ubar : 'ubar' }, linBoundarySource, tempVars)
     model.fluxDivergence = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, fluxDivergence, tempVars)

@@ -1,9 +1,9 @@
 {
   "FemScheme" :
   {
-    "type"      : "FemScheme< $(space), DiffusionModel< typename $(space)::GridPartType, $(space)::dimRange, typename $(space)::RangeFieldType >, $(storage) >",
+    "type"      : "FemScheme< $(space), DiffusionModel< typename $(space)::GridPartType, $(space)::dimRange, typename $(space)::RangeFieldType >, DifferentiableEllipticOperator, $(storage) >",
     "translate" : { "storage" : [ "Adaptive=fem", "Istl=istl" ] },
-    "include"   : [ "dune/fem/schemes/femscheme.hh" ]
+    "include"   : [ "dune/fem/schemes/elliptic.hh", "dune/fem/schemes/femscheme.hh" ]
   },
   "DGFemScheme" :
   {
