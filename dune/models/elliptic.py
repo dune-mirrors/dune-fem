@@ -94,6 +94,7 @@ class EllipticModel:
         arg_d2u = 'const HessianRangeType &d2u'
         arg_ubar = 'const RangeType &ubar'
         arg_dubar = 'const JacobianRangeType &dubar'
+        arg_d2ubar = 'const HessianRangeType &d2ubar'
         arg_r = 'RangeType &result'
         arg_dr = 'JacobianRangeType &result'
 
@@ -373,7 +374,6 @@ class FluxExtracter(ufl.algorithms.transformer.Transformer):
     def variable(self, expr):
         return expr.expression()
 
-
 # splitUFLForm
 # ------------
 
@@ -407,8 +407,6 @@ def splitUFLForm(form):
             raise NotImplementedError('Integrals of type ' + integral.integral_type() + ' are not supported.')
 
     return source, diffusiveFlux, boundarySource
-
-
 
 # CodeGenerator
 # -------------
@@ -607,6 +605,7 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
     d2u = ufl.differentiation.Grad(du)
     ubar = ufl.Coefficient(u.ufl_function_space())
     dubar = ufl.differentiation.Grad(ubar)
+    d2ubar = ufl.differentiation.Grad(dubar)
 
     field = u.ufl_function_space().ufl_element().field()
 
@@ -653,10 +652,10 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
             'constant' : coefficient.is_cellwise_constant(),\
             'field': field } )
 
-    model.source = generateCode({ u : 'u', du : 'du' }, source, tempVars)
+    model.source = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, source, tempVars)
     model.diffusiveFlux = generateCode({ u : 'u', du : 'du' }, diffusiveFlux, tempVars)
     model.alpha = generateCode({ u : 'u' }, boundarySource, tempVars)
-    model.linSource = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linSource, tempVars)
+    model.linSource = generateCode({ u : 'u', du : 'du', d2u : 'd2u', ubar : 'ubar', dubar : 'dubar', d2ubar : 'd2ubar'}, linSource, tempVars)
     model.linDiffusiveFlux = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linDiffusiveFlux, tempVars)
     model.linAlpha = generateCode({ u : 'u', ubar : 'ubar' }, linBoundarySource, tempVars)
     model.fluxDivergence = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, fluxDivergence, tempVars)
