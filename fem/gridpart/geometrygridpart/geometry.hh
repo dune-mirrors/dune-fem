@@ -44,8 +44,8 @@ namespace Dune
       typedef FieldVector< ctype, mydimension > LocalVector;
       typedef FieldVector< ctype, coorddimension > GlobalVector;
 
-      typedef typename HostGeometryType::JacobianTransposed JacobianTransposed;
-      typedef typename HostGeometryType::Jacobian JacobianInverseTransposed;
+      typedef FieldMatrix< ctype, mydimension, coorddimension > JacobianTransposed;
+      typedef FieldMatrix< ctype, coorddimension, mydimension > JacobianInverseTransposed;
       typedef JacobianInverseTransposed Jacobian;
 
       GeometryGridPartBasicGeometry ( const HostGeometryType &hostGeometry )
@@ -67,13 +67,13 @@ namespace Dune
       ctype integrationElement ( const LocalVector &local ) const { return hostGeometry_.integrationElement( local ); }
       ctype volume () const { return hostGeometry_.volume(); }
 
-      const JacobianTransposed &
+      const FieldMatrix< ctype, mydimension, coorddimension > &
       jacobianTransposed ( const LocalVector &local ) const
       {
         return hostGeometry_.jacobianTransposed( local );
       }
 
-      const JacobianInverseTransposed &
+      const FieldMatrix< ctype, coorddimension, mydimension > &
       jacobianInverseTransposed ( const LocalVector &local ) const
       {
         return hostGeometry_.jacobianInverseTransposed( local );
@@ -119,8 +119,8 @@ namespace Dune
       typedef FieldVector< ctype, mydimension > LocalVector;
       typedef FieldVector< ctype, coorddimension > GlobalVector;
 
-      typedef typename HostGeometryType::JacobianTransposed JacobianTransposed;
-      typedef typename HostGeometryType::JacobianInverseTransposed JacobianInverseTransposed;
+      typedef FieldMatrix< ctype, mydimension, coorddimension > JacobianTransposed;
+      typedef FieldMatrix< ctype, coorddimension, mydimension > JacobianInverseTransposed;
       typedef JacobianInverseTransposed Jacobian;
 
       typedef typename GridFamily::GridFunctionType GridFunctionType;
@@ -245,8 +245,8 @@ namespace Dune
       typedef FieldVector< ctype, mydimension > LocalVector;
       typedef FieldVector< ctype, coorddimension > GlobalVector;
 
-      typedef typename HostGeometryType::JacobianTransposed JacobianTransposed;
-      typedef typename HostGeometryType::JacobianInverseTransposed JacobianInverseTransposed;
+      typedef FieldMatrix< ctype, mydimension, coorddimension > JacobianTransposed;
+      typedef FieldMatrix< ctype, coorddimension, mydimension > JacobianInverseTransposed;
       typedef JacobianInverseTransposed Jacobian;
 
       typedef typename GridFamily::GridFunctionType GridFunctionType;
