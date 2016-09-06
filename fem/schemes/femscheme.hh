@@ -57,7 +57,6 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
 
-#include <dune/fem/schemes/elliptic.hh>
 #include <dune/fem/schemes/rhs.hh>
 #include <dune/fem/schemes/diffusionmodel.hh>
 
@@ -71,7 +70,9 @@
  * - Model: description of the data functions and methods required for the
  *          elliptic operator (massFlux, diffusionFlux)
  *******************************************************************************/
-template< class Space, class Model, SolverType solver >
+template< class Space, class Model,
+  template<class LinOp,class M,class Constraint = Dune::DirichletConstraints< M, typename LinOp::RangeFunctionType::DiscreteFunctionSpaceType> > class DifferentiableOperator,
+    SolverType solver >
 class FemScheme
 {
 public:
@@ -111,16 +112,49 @@ public:
   typedef DiscreteFunctionType SolutionType;
   /*********************************************************/
 
-  FemScheme ( const DiscreteFunctionSpaceType &space, const ModelType &model, const std::string &name, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() );
+  FemScheme ( const DiscreteFunctionSpaceType &space, const ModelType &model, const std::string &name, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+  : model_( model ),
+    name_( name ),
+    space_( space ),
+    rhs_( "rhs", space_ ),
+    // the elliptic operator (implicit)
+    implicitOperator_( new DifferentiableOperator< LinearOperatorType, ModelType >( model_, space_ ) ),
+    // create linear operator (domainSpace,rangeSpace)
+    linearOperator_( new LinearOperatorType( "assembled elliptic operator", space_, space_) ), // , parameter ) ),
+    estimator_( space_, model ),
+    exactSolution_( model_.exactSolution( gridPart() ) ),
+    parameter_(parameter)
+  {}
 
   const ExactSolutionType &exactSolution() const { return exactSolution_; }
 
-  void prepare ();
-  void prepare ( const DiscreteFunctionType &add );
+  void prepare ()
+  {
+    typedef DifferentiableOperator< LinearOperatorType, ModelType > OperatorType;
+    // assemble rhs
+    assembleRHS( model_, model_.rightHandSide( gridPart() ), model_.neumanBoundary( gridPart() ), rhs_ );
+
+    // set boundary values to the rhs - since implicitOperator is of
+    // abstract base type we need to cast here
+    dynamic_cast< OperatorType & >( *implicitOperator_ ).prepare( rhs_ );
+  }
+
+  void prepare ( const DiscreteFunctionType &add )
+  {
+    prepare();
+    rhs_ += add;
+  }
 
   void operator() ( const DiscreteFunctionType &arg, DiscreteFunctionType &dest ) { (*implicitOperator_)( arg, dest ); }
 
-  void solve ( DiscreteFunctionType &solution, bool assemble );
+  void solve ( DiscreteFunctionType &solution, bool assemble )
+  {
+    typedef DifferentiableOperator< LinearOperatorType, ModelType > OperatorType;
+    typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
+    typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
+    InverseOperatorType invOp( dynamic_cast< OperatorType & >( *implicitOperator_ ), parameter_ );
+    invOp( rhs_, solution );
+  }
 
   //! mark elements for adaptation
   bool mark ( double tolerance ) { return estimator_.mark( tolerance ); }
@@ -144,54 +178,5 @@ protected:
   const ExactSolutionType exactSolution_;
   const Dune::Fem::ParameterReader parameter_;
 };
-
-
-template< class Space, class Model, SolverType solver >
-FemScheme< Space, Model, solver >::FemScheme ( const DiscreteFunctionSpaceType &space, const ModelType &model, const std::string &name, const Dune::Fem::ParameterReader &parameter )
-  : model_( model ),
-    name_( name ),
-    space_( space ),
-    rhs_( "rhs", space_ ),
-    // the elliptic operator (implicit)
-    implicitOperator_( new DifferentiableEllipticOperator< LinearOperatorType, ModelType >( model_, space_ ) ),
-    // create linear operator (domainSpace,rangeSpace)
-    linearOperator_( new LinearOperatorType( "assembled elliptic operator", space_, space_) ), // , parameter ) ),
-    estimator_( space_, model ),
-    exactSolution_( model_.exactSolution( gridPart() ) ),
-    parameter_(parameter)
-{}
-
-
-//! setup the right hand side
-template< class Space, class Model, SolverType solver >
-void FemScheme< Space, Model, solver >::prepare ()
-{
-  typedef DifferentiableEllipticOperator< LinearOperatorType, ModelType > OperatorType;
-  // assemble rhs
-  assembleRHS( model_, model_.rightHandSide( gridPart() ), model_.neumanBoundary( gridPart() ), rhs_ );
-
-  // set boundary values to the rhs - since implicitOperator is of
-  // abstract base type we need to cast here
-  dynamic_cast< OperatorType & >( *implicitOperator_ ).prepare( rhs_ );
-}
-
-
-template< class Space, class Model, SolverType solver >
-void FemScheme< Space, Model, solver >::prepare ( const DiscreteFunctionType &add )
-{
-  prepare();
-  rhs_ += add;
-}
-
-
-template < class Space, class Model, SolverType solver >
-void FemScheme< Space, Model, solver >::solve ( DiscreteFunctionType &solution, bool assemble )
-{
-  typedef DifferentiableEllipticOperator< LinearOperatorType, ModelType > OperatorType;
-  typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
-  typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
-  InverseOperatorType invOp( dynamic_cast< OperatorType & >( *implicitOperator_ ), parameter_ );
-  invOp( rhs_, solution );
-}
 
 #endif // #ifndef DUNE_FEM_SCHEMES_FEMSCHEME_HH
