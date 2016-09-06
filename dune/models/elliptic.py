@@ -7,6 +7,7 @@ import importlib
 import os
 import subprocess
 import sys
+import timeit
 import types
 from dune import comm
 from dune.source import SourceWriter
@@ -698,6 +699,8 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
 # -----------
 
 def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
+    start_time = timeit.default_timer()
+
     if isinstance(model, ufl.equation.Equation):
         model = compileUFL(model, dirichlet, exact, tempVars)
     compilePath = os.path.join(os.path.dirname(__file__), "../generated")
@@ -816,6 +819,7 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
             cmake = subprocess.Popen(["cmake", "--build", "../../..", "--target", "modelimpl"], cwd=compilePath)
             cmake.wait()
             os.rename(os.path.join(compilePath, "modelimpl.so"), os.path.join(compilePath, name + ".so"))
+            print("Compilation took: " , timeit.default_timer()-start_time , "seconds")
 
         comm.barrier()
         return importlib.import_module("dune.generated." + name)
