@@ -375,10 +375,120 @@ class FluxExtracter(ufl.algorithms.transformer.Transformer):
     def variable(self, expr):
         return expr.expression()
 
+# DerivativeExtracter
+# -------------
+
+class DerivativeExtracter(ufl.algorithms.transformer.Transformer):
+    def __init__(self):
+        ufl.algorithms.transformer.Transformer.__init__(self)
+
+    def argument(self, expr):
+        if expr.number() == 0:
+            raise Exception('Test function should occur at all.')
+        else:
+            return expr
+
+    grad = ufl.algorithms.transformer.Transformer.reuse_if_possible
+
+    def indexed(self, expr):
+        if len(expr.ufl_operands) != 2:
+            raise Exception('Indexed expressions must have exactly two children.')
+        operand = expr.ufl_operands[0]
+        index = expr.ufl_operands[1]
+        if self.isTrialFunction(operand):
+            tensor = ExprTensor(operand.ufl_shape)
+            tensor[index] = ufl.constantvalue.IntValue(1)
+            return {operand : tensor}
+        else:
+            return self.reuse_if_possible(expr, self.visit(operand), index)
+
+    def division(self, expr, left, right):
+        if isinstance(left, ufl.core.expr.Expr) and isinstance(right, ufl.core.expr.Expr):
+            return self.reuse_if_possible(expr, left, right)
+        elif isinstance(left, dict) and isinstance(right, ufl.core.expr.Expr):
+            return {op : left[op] / right for op in left}
+        else:
+            raise Exception('Only the left child of a division may access the test function.')
+
+    def product(self, expr, left, right):
+        if isinstance(left, ufl.core.expr.Expr) and isinstance(right, ufl.core.expr.Expr):
+            return self.reuse_if_possible(expr, left, right)
+        elif isinstance(left, dict) and isinstance(right, ufl.core.expr.Expr):
+            return {op : left[op] * right for op in left}
+        elif isinstance(left, ufl.core.expr.Expr) and isinstance(right, dict):
+            return {op : right[op] * left for op in right}
+        else:
+            raise Exception('Only one child of a product may access the test function.')
+
+    def sum(self, expr, left, right):
+        if isinstance(left, ufl.core.expr.Expr) and isinstance(right, ufl.core.expr.Expr):
+            return self.reuse_if_possible(expr, left, right)
+        elif isinstance(left, dict) and isinstance(right, dict):
+            for op in right:
+                left[op] = (left[op] + right[op]) if op in left else right[op]
+            return left
+        else:
+            raise Exception('Either both summands must contain test function or none')
+
+    def nonlinear(self, expr, *operands):
+        for operand in operands:
+            if isinstance(operand, dict):
+                raise Exception('Test function cannot appear in nonlinear expressions.')
+        return self.reuse_if_possible(expr, *operands)
+
+    atan = nonlinear
+    atan_2 = nonlinear
+    cos = nonlinear
+    sin = nonlinear
+    power = nonlinear
+    tan = nonlinear
+
+    def terminal(self, expr):
+        return expr
+
+    def isTrialFunction(self, expr):
+        while isinstance(expr, ufl.differentiation.Grad):
+            expr = expr.ufl_operands[0]
+        return isinstance(expr, ufl.argument.Argument) and expr.number() == 1
+
+
+# splitUFL2
+# ------------
+def splitUFL2(u,du,d2u,tree):
+
+    tree0 = ExprTensor(u.ufl_shape)
+    tree1 = ExprTensor(du.ufl_shape)
+    tree2 = ExprTensor(d2u.ufl_shape)
+
+    for index in tree.keys():
+        q = DerivativeExtracter().visit(tree[index])
+        for op in q:
+            if op == u:
+                tree0 = tree0 + q[op]
+            elif op == du:
+                tree1 = tree1 + q[op]
+            elif op == d2u:
+                tree2 = tree2 + q[op]
+            else:
+                raise Exception('Invalid trial function derivative encountered in bulk integral: ' + op)
+
+    res0 = ExprTensor(u.ufl_shape)
+    res1 = ExprTensor(u.ufl_shape)
+    res2 = ExprTensor(u.ufl_shape)
+    for r in range(u.ufl_shape[0]):
+        i = ufl.core.multiindex.FixedIndex(r)
+        m = ufl.core.multiindex.as_multi_index(i)
+        res0[m] = res0[m] + tree0.as_ufl()[r]*u[r]
+        for d in range(du.ufl_shape[1]):
+            res1[m] = res1[m] + tree1.as_ufl()[r,d]*du[r,d]
+            for dd in range(d2u.ufl_shape[2]):
+                res2[m] = res2[m] + tree2.as_ufl()[r,d,dd]*d2u[r,d,dd]
+    return res0,res1,res2
+
 # splitUFLForm
 # ------------
 
-def splitUFLForm(form):
+def splitUFLForm(form, linear):
     phi = form.arguments()[0]
     dphi = ufl.differentiation.Grad(phi)
 
@@ -406,6 +516,14 @@ def splitUFLForm(form):
                     raise Exception('Invalid derivative encountered in boundary integral: ' + op)
         else:
             raise NotImplementedError('Integrals of type ' + integral.integral_type() + ' are not supported.')
+
+    if linear:
+        u = form.arguments()[1]
+        du = ufl.differentiation.Grad(u)
+        d2u = ufl.differentiation.Grad(du)
+        source0,source1,source2 = splitUFL2(u,du,d2u,source)
+        source = source0 + source1 + source2
+        return source, diffusiveFlux, boundarySource
 
     return source, diffusiveFlux, boundarySource
 
@@ -573,8 +691,6 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         else:
             raise Exception('Index type not supported: ' + repr(index))
 
-
-
 # generateCode
 # ------------
 
@@ -582,6 +698,7 @@ def generateCode(predefined, tensor, tempVars = True):
     generator = CodeGenerator(predefined, tempVars)
     results = []
     for index in tensor.keys():
+        print(index)
         result = generator.visit(tensor[index])
         results.append('result' + generator.translateIndex(index) + ' = ' + result + ';')
     return list(generator.using) + generator.code + results
@@ -617,9 +734,9 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
 
     dform = ufl.algorithms.apply_derivatives.apply_derivatives(ufl.derivative(ufl.action(form, ubar), ubar, u))
 
-    source, diffusiveFlux, boundarySource = splitUFLForm( form )
-    linSource, linDiffusiveFlux, linBoundarySource = splitUFLForm( dform )
-    fluxDivergence, _, _ = splitUFLForm(ufl.inner(source.as_ufl() - ufl.div(diffusiveFlux.as_ufl()), phi) * ufl.dx(0))
+    source, diffusiveFlux, boundarySource = splitUFLForm( form, False )
+    linSource, linDiffusiveFlux, linBoundarySource = splitUFLForm( dform, True )
+    fluxDivergence, _, _ = splitUFLForm(ufl.inner(source.as_ufl() - ufl.div(diffusiveFlux.as_ufl()), phi) * ufl.dx(0),False)
 
     model = EllipticModel(dimRange, form.signature())
 
