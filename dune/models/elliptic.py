@@ -11,18 +11,14 @@ import timeit
 import types
 from dune import comm
 from dune.source import SourceWriter
-
+from dune.source import BaseModel
 
 # EllipticModel
 # -------------
 
-class EllipticModel:
+class EllipticModel(BaseModel):
     def __init__(self, dimRange, signature):
-        self.dimRange = dimRange
-        self.coefficients = []
-        self.init = None
-        self.vars = None
-        self.signature = signature
+        BaseModel.__init__(self, dimRange, signature)
         self.source = "result = RangeType( 0 );"
         self.linSource = "result = JacobianRangeType( 0 );"
         self.diffusiveFlux = "result = RangeType( 0 );"
@@ -38,56 +34,10 @@ class EllipticModel:
         self.exact = "result = RangeType( 0 );"
         self.n = "result = RangeType( 0 );"
         self.jacobianExact = "result = JacobianRangeType( 0 );"
-        self.field = "double"
 
     def write(self, sourceWriter, name='Model', targs=[]):
-        sourceWriter.openStruct(name, targs=(['class GridPart'] + targs + ['class... Coefficients']))
-
-        sourceWriter.typedef("GridPart", "GridPartType")
-        sourceWriter.typedef(SourceWriter.cpp_fields(self.field), "RangeFieldType")
-
-        sourceWriter.emit("static const int dimRange = " + str(self.dimRange) + ";")
-        sourceWriter.emit("static const int dimDomain = GridPartType::dimensionworld;")
-        sourceWriter.emit("static const int dimLocal = GridPartType::dimension;")
-
-        sourceWriter.typedef("typename GridPart::template Codim< 0 >::EntityType", "EntityType")
-        sourceWriter.typedef("typename GridPart::IntersectionType", "IntersectionType")
-        sourceWriter.typedef("Dune::Fem::FunctionSpace< double, RangeFieldType, dimDomain, dimRange >", "FunctionSpaceType")
-        sourceWriter.typedef("typename FunctionSpaceType::DomainType", "DomainType")
-        sourceWriter.typedef("typename FunctionSpaceType::RangeType", "RangeType")
-        sourceWriter.typedef("typename FunctionSpaceType::JacobianRangeType", "JacobianRangeType")
-        sourceWriter.typedef("typename FunctionSpaceType::HessianRangeType", "HessianRangeType")
-
+        self.pre(sourceWriter, name='Model', targs=[])
         sourceWriter.typedef("Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >", "BoundaryIdProviderType")
-
-        if self.coefficients:
-            sourceWriter.typedef('std::tuple< ' + ', '.join(\
-                    [('Dune::FieldVector< ' +\
-                    SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
-                    str(coefficient['dimRange']) + ' >')\
-                    for coefficient in self.coefficients if coefficient['constant']]) + ' >',\
-                    'ConstantsTupleType;')
-            sourceWriter.typedef('std::tuple< ' + ', '.join(\
-                    [('Dune::Fem::FunctionSpace< double,' +\
-                    SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
-                    'dimDomain, ' +\
-                    str(coefficient['dimRange']) + ' >')\
-                    for coefficient in self.coefficients if not coefficient['constant']]) + ' >',\
-                    'CoefficientFunctionSpaceTupleType')
-
-            sourceWriter.typedef('typename std::tuple_element_t<i,ConstantsTupleType>', 'ConstantsRangeType', targs=['std::size_t i'])
-            sourceWriter.emit('static const std::size_t numCoefficients = std::tuple_size< CoefficientFunctionSpaceTupleType >::value;')
-            sourceWriter.typedef('typename std::tuple_element< i, CoefficientFunctionSpaceTupleType >::type', 'CoefficientFunctionSpaceType', targs=['std::size_t i'] )
-            sourceWriter.typedef('typename CoefficientFunctionSpaceType< i >::RangeType', 'CoefficientRangeType', targs=['std::size_t i'])
-            sourceWriter.typedef('typename CoefficientFunctionSpaceType< i >::JacobianRangeType', 'CoefficientJacobianRangeType', targs=['std::size_t i'])
-            sourceWriter.typedef('typename CoefficientFunctionSpaceType< i >::HessianRangeType', 'CoefficientHessianRangeType', targs=['std::size_t i'])
-        else:
-            sourceWriter.emit('static const std::size_t numCoefficients = 0u;')
-            sourceWriter.typedef('std::tuple<>', 'ConstantsTupleType;')
-
-        sourceWriter.emit('')
-        sourceWriter.typedef('typename std::tuple_element< i, std::tuple< Coefficients... > >::type', 'CoefficientType', targs=['std::size_t i'])
-        sourceWriter.typedef('typename std::tuple_element< i, ConstantsTupleType >::type', 'ConstantsType', targs=['std::size_t i'])
 
         arg_x = 'const Point &x'
         arg_u = 'const RangeType &u'
@@ -97,21 +47,6 @@ class EllipticModel:
         arg_dubar = 'const JacobianRangeType &dubar'
         arg_r = 'RangeType &result'
         arg_dr = 'JacobianRangeType &result'
-
-        sourceWriter.openConstMethod('bool init', args=['const EntityType &entity'])
-        sourceWriter.emit('entity_ = &entity;')
-        sourceWriter.emit('initCoefficients( std::make_index_sequence< numCoefficients >() );')
-        sourceWriter.emit(self.init)
-        sourceWriter.emit('return true;')
-        sourceWriter.closeConstMethod()
-
-        sourceWriter.openConstMethod('const EntityType &entity')
-        sourceWriter.emit('return *entity_;')
-        sourceWriter.closeConstMethod()
-
-        sourceWriter.openConstMethod('std::string name')
-        sourceWriter.emit('return "' + name + '";')
-        sourceWriter.closeConstMethod()
 
         sourceWriter.openConstMethod('void source', targs=['class Point'], args=[arg_x, arg_u, arg_du, arg_r])
         sourceWriter.emit(self.source)
@@ -174,31 +109,7 @@ class EllipticModel:
         sourceWriter.emit(self.dirichlet)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('const ConstantsType< i > &constant', targs=['std::size_t i'])
-        sourceWriter.emit('return std::get< i >( constants_ );')
-        sourceWriter.closeConstMethod()
-        sourceWriter.openMethod('ConstantsType< i > &constant', targs=['std::size_t i'])
-        sourceWriter.emit('return std::get< i >( constants_ );')
-        sourceWriter.closeMethod()
-
-        sourceWriter.openConstMethod('const CoefficientType< i > &coefficient', targs=['std::size_t i'])
-        sourceWriter.emit('return std::get< i >( coefficients_ );')
-        sourceWriter.closeConstMethod()
-        sourceWriter.openMethod('CoefficientType< i > &coefficient', targs=['std::size_t i'])
-        sourceWriter.emit('return std::get< i >( coefficients_ );')
-        sourceWriter.closeMethod()
-
-        sourceWriter.section('private')
-        sourceWriter.openConstMethod('void initCoefficients', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-        sourceWriter.emit('std::ignore = std::make_tuple( (std::get< i >( coefficients_ ).init( entity() ), i)... );')
-        sourceWriter.closeConstMethod()
-        sourceWriter.emit('')
-        sourceWriter.emit('mutable const EntityType *entity_ = nullptr;')
-        sourceWriter.emit('mutable std::tuple< Coefficients... > coefficients_;')
-        sourceWriter.emit('mutable ConstantsTupleType constants_;')
-        sourceWriter.emit(self.vars)
-        sourceWriter.closeStruct(name)
-
+        self.post(sourceWriter, name='Model', targs=[])
 
 
 # ExprTensor
@@ -751,49 +662,7 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
             writer.typedef('typename ModelWrapper::Base', 'ModelBase')
 
             if model.coefficients:
-                writer.emit('')
-                writer.typedef('std::tuple< ' + ', '.join(\
-                        [('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< ' +\
-                        SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
-                        str(coefficient['dimRange']) + ' > >') \
-                        for coefficient in model.coefficients if not coefficient["constant"]]) \
-                      + ' >', 'Coefficients')
-
-                writer.openFunction('void setConstant', targs=['std::size_t i'], args=['Model &model', 'pybind11::list l'])
-                writer.emit('model.template constant< i >() = l.template cast< typename Model::ConstantsType<i> >();')
-                writer.closeFunction()
-
-                writer.openFunction('auto defSetConstant', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-                writer.typedef('std::function< void( Model &model, pybind11::list ) >', 'Dispatch')
-                writer.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setConstant< i > )... }};')
-                writer.emit('')
-                writer.emit('return [ dispatch ] ( ModelWrapper &model, pybind11::handle coeff, pybind11::list l ) {')
-                writer.emit('    std::size_t k = coeff.attr("number").template cast<int>();')
-                # writer.emit('    if ( !coeff("is_piecewise_constant")(coeff).template cast<bool>() )')
-                # writer.emit('      throw std::range_error( "Using setConstant for a Coefficient" );' )
-                writer.emit('    if( k >= dispatch.size() )')
-                writer.emit('      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );' )
-                writer.emit('    dispatch[ k ]( model.impl(), l );')
-                writer.emit('  };')
-                writer.closeFunction()
-
-                writer.openFunction('void setCoefficient', targs=['std::size_t i'], args=['Model &model', 'pybind11::object o'])
-                writer.emit('model.template coefficient< i >() = o.template cast< typename std::tuple_element< i, Coefficients >::type >().localFunction();')
-                writer.closeFunction()
-
-                writer.openFunction('auto defSetCoefficient', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-                writer.typedef('std::function< void( Model &model, pybind11::object ) >', 'Dispatch')
-                writer.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setCoefficient< i > )... }};')
-                writer.emit('')
-                writer.emit('return [ dispatch ] ( ModelWrapper &model, pybind11::object coeff, pybind11::object o ) {')
-                writer.emit('    std::size_t k = coeff.attr("number").template cast<int>();')
-                # writer.emit('    if ( coeff.attr("is_piecewise_constant").template cast<bool>() )')
-                # writer.emit('      throw std::range_error( "Using setCoefficient for a Constant" );' )
-                writer.emit('    if( k >= dispatch.size() )')
-                writer.emit('      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );' )
-                writer.emit('    dispatch[ k ]( model.impl(), o );')
-                writer.emit('  };')
-                writer.closeFunction()
+                model.set(writer)
 
             writer.openPythonModule(name)
             writer.emit('')
