@@ -26,9 +26,9 @@ def interpolate( self, func, **kwargs ):
     elif gl == 0: # already a grid function
         storage = kwargs.pop('storage', "Adaptive")
         try:
-            df = discretefunction.create(storage,self,name=func.name, **kwargs)
+            df = discretefunction.create(storage, self, name=func.name, **kwargs)
         except:
-            df = discretefunction.create(storage,self, **kwargs)
+            df = discretefunction.create(storage, self, **kwargs)
         df.interpolate(func)
         return df
     return None

@@ -7,7 +7,7 @@ from types import ModuleType
 import dune.common as common
 from ..generator import generator
 from . import space
-from . import function
+from . import function as gf
 from dune.fem import comm
 
 import inspect
@@ -52,9 +52,26 @@ def writeVTK(grid,  name, celldata=[], pointdata=[], cellvector=[], pointvector=
     return vtk
 
 def levelFunction(self):
-    return self.localGridFunction("level", function.Levels())
+    return self.localGridFunction("level", gf.Levels())
 def partitionFunction(self):
-    return self.localGridFunction("rank", function.Partition(comm.rank))
+    return self.localGridFunction("rank", gf.Partition(comm.rank))
+def globalGridFunction(grid,name,value):
+    return grid.globalGridFunction(name,value)
+def localGridFunction(grid,name,value):
+    return grid.localGridFunction(name,value)
+gridFunctions = { "globalExpr": globalGridFunction,
+                  "localExpr": localGridFunction}
+          #"ufl":self.uflGridFunction}
+
+def function(self, name, **kwargs):
+    assert len(kwargs) == 1,\
+           "Only one argument allowed to define grid function"
+    for key, value in kwargs.items():
+        assert key in gridFunctions,\
+           "Wrong parameter used to generate grid function."+\
+           "Possible parameters are:\n"+\
+           ", ".join( [param for param,_ in gridFunctions.items()] )
+        return gridFunctions[key](self,name,value)
 
 myGenerator = generator.Generator("GridPart",
         "dune/fempy/py" , "Dune::FemPy")
@@ -66,10 +83,11 @@ def getGridPartType(gridpart, **parameters):
 
 def addAttr(module, cls):
     setattr(cls, "_module", module)
-    setattr(cls, "interpolate", interpolate )
-    setattr(cls, "writeVTK", writeVTK )
-    setattr(cls, "levelFunction", levelFunction )
-    setattr(cls, "partitionFunction", partitionFunction )
+    setattr(cls, "interpolate", interpolate)
+    setattr(cls, "writeVTK", writeVTK)
+    setattr(cls, "levelFunction", levelFunction)
+    setattr(cls, "partitionFunction", partitionFunction)
+    setattr(cls, "function", function)
 
 def get(gp, **parameters):
     """Create a gridpart module using the gridpart-database.

@@ -19,3 +19,7 @@ install(FILES generated_module.cc DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/python
 add_library(modelimpl SHARED EXCLUDE_FROM_ALL modelimpl.cc)
 target_include_directories(modelimpl PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(modelimpl PROPERTIES PREFIX "")
+
+add_library(gridfunction SHARED EXCLUDE_FROM_ALL gridfunction.cc)
+target_include_directories(gridfunction PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+set_target_properties(gridfunction PROPERTIES PREFIX "")
