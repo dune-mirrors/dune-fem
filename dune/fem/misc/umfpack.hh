@@ -159,11 +159,6 @@ namespace Dune
       return umfpack_di_load_numeric( args ... );
     }
     template< class ... A >
-    static void numeric ( A ... args )
-    {
-      umfpack_di_numeric( args ... );
-    }
-    template< class ... A >
     static void report_info ( A ... args )
     {
       umfpack_di_report_info( args ... );
@@ -237,16 +232,23 @@ namespace Dune
       return umfpack_di_save_numeric( args ... );
     }
     template< class ... A >
-    static void solve ( int m, const int *cs, const int *ri, const Fem::Double *val, Fem::Double *x, const Fem::Double *b, A ... args )
-    {
-      umfpack_di_solve( m, cs, ri, reinterpret_cast< const double * >(val),
-          reinterpret_cast< double * >( x ),
-          reinterpret_cast< const double * >( b ), args ... );
-    }
-    template< class ... A >
     static void symbolic ( A ... args )
     {
       umfpack_di_symbolic( args ... );
+    }
+    static void numeric ( const int *Ap, const int *Ai, const double *Ax, void* Symbolic, void **Numeric,
+        const double Control[ UMFPACK_CONTROL], double Info[ UMFPACK_INFO] )
+    {
+      umfpack_di_numeric( Ap, Ai, Ax, Symbolic, Numeric, Control, Info );
+      Fem::FlOpCounter< Fem::Double >::instance() += Info[ UMFPACK_FLOPS ];
+    }
+
+    static void solve ( int m, const int *cs, const int *ri, const Fem::Double *val, Fem::Double *x, const Fem::Double *b,
+        void *Numeric, const double Control[ UMFPACK_CONTROL ], double Info[ UMFPACK_INFO ] )
+    {
+      umfpack_di_solve( m, cs, ri, reinterpret_cast< const double * >(val),
+          reinterpret_cast< double * >( x ), reinterpret_cast< const double * >( b ), Numeric, Control, Info );
+      Fem::FlOpCounter< Fem::Double >::instance() += Info[ UMFPACK_SOLVE_FLOPS ];
     }
   };
 

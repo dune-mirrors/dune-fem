@@ -60,6 +60,12 @@ namespace Dune
         return *this;
       }
 
+      inline ThisType &operator+= ( unsigned long i )
+      {
+        *count_ += i;
+        return *this;
+      }
+
       inline static ThisType &instance ()
       {
         static ThisType instance;
@@ -110,6 +116,13 @@ namespace Dune
         return *this;
       }
 
+      inline ThisType &operator+= ( unsigned long i )
+      {
+        *count_ += i;
+        FlOpCounter< void >::instance() += i;
+        return *this;
+      }
+
       inline static ThisType &instance ()
       {
         static ThisType instance;
@@ -135,6 +148,11 @@ namespace Dune
 
     public:
       inline ThisType &operator++ ()
+      {
+        return *this;
+      }
+
+      inline ThisType &operator+= ( unsigned long i )
       {
         return *this;
       }
@@ -167,6 +185,7 @@ namespace Dune
     static inline double max (const Double& v, const double p);
     // wrap of std max
     static inline double max (const double v, const Double& p);
+
 
 
     // numeric limits
