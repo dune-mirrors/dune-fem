@@ -113,10 +113,8 @@ def gridFunction(grid, code, coefficients=None):
             writer.emit('#include <dune/fempy/py/grid/function.hh>')
             writer.emit('')
 
-            base.pre(writer, name=locname, targs=(['class Range']))
+            base.pre(writer, name=locname, targs=(['class Range']), bases=(["Dune::Fem::LocalFunctionAdapterHasInitialize"]))
 
-            #writer.typedef(locname + '< GridPartType, RangeType >', 'LocalFunction')
-            #writer.typedef('Dune::Fem::LocalFunctionAdapter< LocalFunction >', 'GridFunction')
             writer.typedef('typename EntityType::Geometry::LocalCoordinate', 'LocalCoordinateType')
 
             writer.openConstMethod('void evaluate', args=['const PointType &x', 'RangeType &value'], targs=['class PointType'],implemented=eval)
@@ -180,7 +178,7 @@ def gridFunction(grid, code, coefficients=None):
             writer.emit('module.def( "get", [] ( const std::string name, const GridPartType &gridPart ) {')
             writer.emit('        LocalFunction local;')
             writer.emit('        return new GridFunction(name, local, gridPart );')
-            writer.emit('}, pybind11::keep_alive< 0, 1 >());')
+            writer.emit('}, pybind11::keep_alive< 0, 22 >());')
             writer.closePythonModule(pyname)
             writer.closeNameSpace('FemPy')
             writer.closeNameSpace('Dune')

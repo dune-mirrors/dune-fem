@@ -242,8 +242,9 @@ class BaseModel:
         self.signature = signature
         self.field = "double"
 
-    def pre(self, sourceWriter, name='Model', targs=[]):
-        sourceWriter.openStruct(name, targs=(['class GridPart'] + targs + ['class... Coefficients']))
+    def pre(self, sourceWriter, name='Model', targs=[], bases=[]):
+        sourceWriter.openStruct(name, targs=(['class GridPart'] + targs + ['class... Coefficients']),\
+        bases=(bases))
 
         sourceWriter.typedef("GridPart", "GridPartType")
         sourceWriter.typedef(SourceWriter.cpp_fields(self.field), "RangeFieldType")
