@@ -9,33 +9,41 @@ import timeit
 import types
 from dune import comm
 from dune.source import SourceWriter
+from dune.source import BaseModel
 # import dune.fem.gridpart as gridpart
 from dune.fem.gridpart import gridFunctions
 
 # method to add to gridpart.function call
-def generatedFunction(grid, name, code):
-    gf = gridFunction(grid, code)
+def generatedFunction(grid, name, code, coefficients=None):
+    gf = gridFunction(grid, code, coefficients=coefficients)
     return gf.get(name, grid)
-gridFunctions.update( {"code":generatedFunction} )
+
+gridFunctions.update( {"code" : generatedFunction} )
+
 def UFLFunction(grid, name, expr):
     import ufl
     import dune.models.elliptic as generate
     R = len(expr)
     D = grid.dimension
-    code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R,), expr), False))
-    evaluate = code.replace("result","value")
+    code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R, ), expr), False))
+    evaluate = code.replace("result", "value")
     jac = []
     for r in range(R):
         jac_form = [\
             ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(\
-                ufl.grad(expr)[r,d]*ufl.dx\
+                ufl.grad(expr)[r, d]*ufl.dx\
             ))) for d in range(D)]
         jac.append( [jac_form[d].integrals()[0].integrand() if not jac_form[d].empty() else 0 for d in range(D)] )
     jac = ufl.as_matrix(jac)
-    code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R,D), jac), False))
-    jacobian = code.replace("result","value")
-    return generatedFunction(grid,name,{"evaluate":evaluate,"jacobian":jacobian})
-gridFunctions.update( {"ufl":UFLFunction} )
+    code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R, D), jac), False))
+    jacobian = code.replace("result", "value")
+    try:
+        coef = set(expr.coefficients())
+    except:
+        coef = None
+    return generatedFunction(grid, name, {"evaluate" : evaluate, "jacobian" : jacobian}, coefficients=coef)
+
+gridFunctions.update( {"ufl" : UFLFunction} )
 
 def dimRangeSplit(code):
     """find the dimRange using @dimrange or counting values
@@ -57,7 +65,7 @@ def dimRangeSplit(code):
         cpp_code = code
     return ( cpp_code, dimRange )
 
-def gridFunction(grid, code):
+def gridFunction(grid, code, coefficients=None):
     start_time = timeit.default_timer()
     compilePath = os.path.join(os.path.dirname(__file__), '../generated')
 
@@ -87,6 +95,9 @@ def gridFunction(grid, code):
     locname = 'LocalFunction_' + myCodeHash + '_' + grid._typeHash
     pyname = 'localfunction_' + myCodeHash + '_' + grid._typeHash
 
+    base = BaseModel(dimRange, myCodeHash)
+    if coefficients:
+        base.coefficients = coefficients
 
     if comm.rank == 0:
         if not os.path.isfile(os.path.join(compilePath, pyname + '.so')):
@@ -100,31 +111,13 @@ def gridFunction(grid, code):
             writer.emit('#include <dune/fem/function/common/localfunctionadapter.hh>')
             writer.emit('')
             writer.emit('#include <dune/fempy/py/grid/function.hh>')
-
             writer.emit('')
 
-            writer.openStruct(locname, targs=(['class GridPart'] + ['class Range']+ ['class... Coefficients']), bases=(["Dune::Fem::LocalFunctionAdapterHasInitialize"]) )
-            writer.typedef(locname + '< GridPart, Range >', 'LocalFunction')
-            writer.typedef('GridPart', 'GridPartType')
-            writer.typedef('Range', 'RangeType')
-            writer.typedef('Dune::Fem::LocalFunctionAdapter< LocalFunction >', 'GridFunction')
-            writer.typedef('typename GridPart::template Codim< 0 >::EntityType', 'EntityType')
+            base.pre(writer, name=locname, targs=(['class Range']))
+
+            #writer.typedef(locname + '< GridPartType, RangeType >', 'LocalFunction')
+            #writer.typedef('Dune::Fem::LocalFunctionAdapter< LocalFunction >', 'GridFunction')
             writer.typedef('typename EntityType::Geometry::LocalCoordinate', 'LocalCoordinateType')
-            writer.emit('static const int dimRange = ' + str(dimRange) + ';')
-            writer.emit('static const int dimDomain = GridPart::dimensionworld;')
-            writer.typedef('typename Dune::Fem::FunctionSpace< double, double, dimDomain, dimRange >', 'FunctionSpaceType')
-            writer.typedef('typename FunctionSpaceType::JacobianRangeType', 'JacobianRangeType')
-            writer.typedef('typename FunctionSpaceType::DomainType', 'DomainType')
-            writer.typedef('typename FunctionSpaceType::HessianRangeType', 'HessianRangeType')
-
-            writer.openConstMethod('bool init', args=['const EntityType &entity'])
-            writer.emit('entity_ = &entity;')
-            writer.emit('return true;')
-            writer.closeConstMethod()
-
-            writer.openConstMethod('const EntityType &entity')
-            writer.emit('return *entity_;')
-            writer.closeConstMethod()
 
             writer.openConstMethod('void evaluate', args=['const PointType &x', 'RangeType &value'], targs=['class PointType'],implemented=eval)
             if eval:
@@ -150,14 +143,7 @@ def gridFunction(grid, code):
                 writer.emit(hess.split("\n"))
             writer.closeConstMethod()
 
-            writer.section('private')
-            writer.openConstMethod('void initCoefficients', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-            writer.emit('std::ignore = std::make_tuple( (std::get< i >( coefficients_ ).init( entity() ), i)... );')
-            writer.closeConstMethod()
-            writer.emit('')
-            writer.emit('mutable const EntityType *entity_ = nullptr;')
-            writer.emit('mutable std::tuple< Coefficients... > coefficients_;')
-            writer.closeStruct()
+            base.post(writer, name=locname, targs=(['class Range']))
 
             writer.emit('')
             writer.typedef(grid._typeName, 'GridPartType')
@@ -165,8 +151,21 @@ def gridFunction(grid, code):
             writer.emit('static const int dimDomain = GridPartType::dimensionworld;')
             writer.typedef('typename Dune::Fem::FunctionSpace< double, double, dimDomain, dimRange >', 'FunctionSpaceType')
             writer.typedef('typename FunctionSpaceType::RangeType', 'RangeType')
-            writer.typedef(locname + '< GridPartType, RangeType >', 'LocalFunction')
+
+            if base.coefficients:
+                writer.typedef(locname + '< GridPartType, RangeType, ' + ', '.join(\
+                [('Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
+                    'Dune::FieldVector< ' +\
+                    SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
+                    str(coefficient['dimRange']) + ' > >') \
+                    for coefficient in base.coefficients if not coefficient["constant"]])\
+                  + ' >', 'LocalFunction')
+            else:
+                writer.typedef(locname + '< GridPartType, RangeType >', 'LocalFunction')
             writer.typedef('Dune::Fem::LocalFunctionAdapter< LocalFunction >', 'GridFunction')
+
+            if base.coefficients:
+                base.setCoef(writer, modelClass='LocalFunction', wrapperClass='GridFunction')
 
             writer.openNameSpace('Dune')
             writer.openNameSpace('FemPy')
@@ -175,6 +174,9 @@ def gridFunction(grid, code):
             writer.emit('// export function class')
             writer.emit('')
             writer.emit('pybind11::class_< GridFunction > cls = registerGridFunction< GridFunction >( module, "GridFunction" );')
+            if base.coefficients:
+                writer.emit('cls.def( "setCoefficient", defSetCoefficient( std::make_index_sequence< std::tuple_size<Coefficients>::value >() ) );')
+                writer.emit('cls.def( "setConstant", defSetConstant( std::make_index_sequence< std::tuple_size<typename Model::ConstantsTupleType>::value >() ) );')
             writer.emit('module.def( "get", [] ( const std::string name, const GridPartType &gridPart ) {')
             writer.emit('        LocalFunction local;')
             writer.emit('        return new GridFunction(name, local, gridPart );')

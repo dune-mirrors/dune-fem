@@ -283,7 +283,7 @@ class BaseModel:
             sourceWriter.typedef('typename CoefficientFunctionSpaceType< i >::HessianRangeType', 'CoefficientHessianRangeType', targs=['std::size_t i'])
         else:
             sourceWriter.emit('static const std::size_t numCoefficients = 0u;')
-            sourceWriter.typedef('std::tuple<>', 'ConstantsTupleType;')
+            sourceWriter.typedef('std::tuple<>', 'ConstantsTupleType')
 
         sourceWriter.emit('')
         sourceWriter.typedef('typename std::tuple_element< i, std::tuple< Coefficients... > >::type', 'CoefficientType', targs=['std::size_t i'])
@@ -330,7 +330,7 @@ class BaseModel:
         sourceWriter.emit(self.vars)
         sourceWriter.closeStruct(name)
 
-    def set(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper'):
+    def setCoef(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper'):
         sourceWriter.emit('')
         sourceWriter.typedef('std::tuple< ' + ', '.join(\
                 [('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< ' +\
@@ -339,7 +339,7 @@ class BaseModel:
                 for coefficient in self.coefficients if not coefficient["constant"]]) \
               + ' >', 'Coefficients')
 
-        sourceWriter.openFunction('void setConstant', targs=['std::size_t i'], args=['Model &model', 'pybind11::list l'])
+        sourceWriter.openFunction('void setConstant', targs=['std::size_t i'], args=[modelClass + ' &model', 'pybind11::list l'])
         sourceWriter.emit('model.template constant< i >() = l.template cast< typename ' + modelClass + '::ConstantsType<i> >();')
         sourceWriter.closeFunction()
 
