@@ -25,6 +25,21 @@ def UFLFunction(grid, name, expr):
     import dune.models.elliptic as generate
     R = len(expr)
     D = grid.dimension
+    try:
+        _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
+        coef = set(c)
+    except:
+        coef = None
+    idxConst = 0
+    idxCoeff = 0
+    for coefficient in coef:
+        if coefficient.is_cellwise_constant():
+            idx = idxConst
+            idxConst += 1
+        else:
+            idx = idxCoeff
+            idxCoeff += 1
+        setattr(coefficient, "number", idx)
     code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R, ), expr), False))
     evaluate = code.replace("result", "value")
     jac = []
@@ -37,10 +52,6 @@ def UFLFunction(grid, name, expr):
     jac = ufl.as_matrix(jac)
     code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R, D), jac), False))
     jacobian = code.replace("result", "value")
-    try:
-        coef = set(expr.coefficients())
-    except:
-        coef = None
     return generatedFunction(grid, name, {"evaluate" : evaluate, "jacobian" : jacobian}, coefficients=coef)
 
 gridFunctions.update( {"ufl" : UFLFunction} )
@@ -97,7 +108,19 @@ def gridFunction(grid, code, coefficients=None):
 
     base = BaseModel(dimRange, myCodeHash)
     if coefficients:
-        base.coefficients = coefficients
+        for coefficient in coefficients:
+            if coefficient.is_cellwise_constant():
+                field = None  # must be improved for 'complex'
+                dimR = 1 if coefficient.ufl_shape==() else coefficient.ufl_shape[0]
+            else:
+                field = coefficient.ufl_function_space().ufl_element().field()
+                dimR = coefficient.ufl_shape[0]
+            base.coefficients.append({ \
+                'number' : coefficient.number, \
+                'counter' : coefficient.count(), \
+                'dimRange' : dimR,\
+                'constant' : coefficient.is_cellwise_constant(),
+                'field': field } )
 
     if comm.rank == 0:
         if not os.path.isfile(os.path.join(compilePath, pyname + '.so')):
@@ -115,6 +138,16 @@ def gridFunction(grid, code, coefficients=None):
 
             base.pre(writer, name=locname, targs=(['class Range']), bases=(["Dune::Fem::LocalFunctionAdapterHasInitialize"]))
 
+            if base.coefficients:
+                writer.typedef(locname + '< GridPart, RangeType, ' + ', '.join(\
+                [('Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
+                    'Dune::FieldVector< ' +\
+                    SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
+                    str(coefficient['dimRange']) + ' > >') \
+                    for coefficient in base.coefficients if not coefficient["constant"]])\
+                  + ' >', 'LocalFunction')
+            else:
+                writer.typedef(locname + '< GridPart, RangeType >', 'LocalFunction')
             writer.typedef('typename EntityType::Geometry::LocalCoordinate', 'LocalCoordinateType')
 
             writer.openConstMethod('void evaluate', args=['const PointType &x', 'RangeType &value'], targs=['class PointType'],implemented=eval)
@@ -141,17 +174,19 @@ def gridFunction(grid, code, coefficients=None):
                 writer.emit(hess.split("\n"))
             writer.closeConstMethod()
 
+            writer.emit('LocalFunction &impl() { return *this; }')
+
             base.post(writer, name=locname, targs=(['class Range']))
 
             writer.emit('')
-            writer.typedef(grid._typeName, 'GridPartType')
+            writer.typedef(grid._typeName, 'GridPart')
             writer.emit('static const int dimRange = ' + str(dimRange) + ';')
-            writer.emit('static const int dimDomain = GridPartType::dimensionworld;')
+            writer.emit('static const int dimDomain = GridPart::dimensionworld;')
             writer.typedef('typename Dune::Fem::FunctionSpace< double, double, dimDomain, dimRange >', 'FunctionSpaceType')
             writer.typedef('typename FunctionSpaceType::RangeType', 'RangeType')
 
             if base.coefficients:
-                writer.typedef(locname + '< GridPartType, RangeType, ' + ', '.join(\
+                writer.typedef(locname + '< GridPart, RangeType, ' + ', '.join(\
                 [('Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
                     'Dune::FieldVector< ' +\
                     SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
@@ -159,11 +194,11 @@ def gridFunction(grid, code, coefficients=None):
                     for coefficient in base.coefficients if not coefficient["constant"]])\
                   + ' >', 'LocalFunction')
             else:
-                writer.typedef(locname + '< GridPartType, RangeType >', 'LocalFunction')
+                writer.typedef(locname + '< GridPart, RangeType >', 'LocalFunction')
             writer.typedef('Dune::Fem::LocalFunctionAdapter< LocalFunction >', 'GridFunction')
 
             if base.coefficients:
-                base.setCoef(writer, modelClass='LocalFunction', wrapperClass='GridFunction')
+                base.setCoef(writer, modelClass='LocalFunction', wrapperClass='LocalFunction')
 
             writer.openNameSpace('Dune')
             writer.openNameSpace('FemPy')
@@ -174,11 +209,11 @@ def gridFunction(grid, code, coefficients=None):
             writer.emit('pybind11::class_< GridFunction > cls = registerGridFunction< GridFunction >( module, "GridFunction" );')
             if base.coefficients:
                 writer.emit('cls.def( "setCoefficient", defSetCoefficient( std::make_index_sequence< std::tuple_size<Coefficients>::value >() ) );')
-                writer.emit('cls.def( "setConstant", defSetConstant( std::make_index_sequence< std::tuple_size<typename Model::ConstantsTupleType>::value >() ) );')
-            writer.emit('module.def( "get", [] ( const std::string name, const GridPartType &gridPart ) {')
+                writer.emit('cls.def( "setConstant", defSetConstant( std::make_index_sequence< std::tuple_size<typename LocalFunction::ConstantsTupleType>::value >() ) );')
+            writer.emit('module.def( "get", [] ( const std::string name, const GridPart &gridPart ) {')
             writer.emit('        LocalFunction local;')
             writer.emit('        return new GridFunction(name, local, gridPart );')
-            writer.emit('}')#, pybind11::keep_alive< 0, 2 >());') #error here?
+            writer.emit('}, pybind11::keep_alive< 0, 2 >());') #error here?
             writer.closePythonModule(pyname)
             writer.closeNameSpace('FemPy')
             writer.closeNameSpace('Dune')

@@ -556,7 +556,6 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
             field = coefficient.ufl_function_space().ufl_element().field()
             dimRange = coefficient.ufl_shape[0]
             idx = idxCoeff
-            dimRange = coefficient.ufl_shape[0]
             idxCoeff += 1
         setattr(coefficient,"number",idx)
         model.coefficients.append({ \
