@@ -71,7 +71,7 @@ namespace Dune
           } );
         cls.def( "interpolate", [] ( DF &df, typename Space::RangeType value ) {
             Fem::interpolate(
-                  simpleGridFunction( df.space().gridPart(), [ value ] ( typename DF::DomainType ) { return value; }
+                  simpleGridFunction( df.space().gridPart(), [ value ] ( typename DF::DomainType ) { return value; },0
             ), df );
           } );
 

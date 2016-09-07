@@ -155,7 +155,7 @@ namespace Dune
             try { return v.template cast< FieldVector< double, dimRange > >(); }
             catch(std::exception& e) { std::cout << e.what() << " in GlobalGridFunction::evaluate" << std::endl; throw pybind11::cast_error("error converting return value in localGridFunction"); }
             return FieldVector<double,dimRange>(0);
-          } );
+          }, 2 ); // !!!! what is the right order
       }
 
 
@@ -227,7 +227,7 @@ namespace Dune
             try { return v.template cast< FieldVector< double, dimRange > >(); }
             catch(std::exception& e) { std::cout << e.what() << " in LocalGridFunction::evaluate" << std::endl; throw pybind11::cast_error("error converting return value in localGridFunction"); }
             return FieldVector<double,dimRange>(0);
-          } );
+          },2 ); // !!!! what is the right order?
       }
 
 

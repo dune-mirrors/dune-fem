@@ -57,7 +57,7 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
 
-#include <dune/fem/schemes/rhs.hh>
+#include <dune/fem/schemes/dgrhs.hh>
 #include <dune/fem/schemes/diffusionmodel.hh>
 
 // FemScheme
@@ -132,7 +132,7 @@ public:
   {
     typedef DifferentiableOperator< LinearOperatorType, ModelType > OperatorType;
     // assemble rhs
-    assembleRHS( model_, model_.rightHandSide( gridPart() ), model_.neumanBoundary( gridPart() ), rhs_ );
+    assembleDGRHS( model_, model_.rightHandSide( gridPart() ), model_.neumanBoundary( gridPart() ), rhs_, 20 );
 
     // set boundary values to the rhs - since implicitOperator is of
     // abstract base type we need to cast here

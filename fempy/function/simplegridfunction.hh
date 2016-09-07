@@ -136,14 +136,14 @@ namespace Dune
       typedef typename Base::RangeType RangeType;
       typedef typename Base::JacobianRangeType JacobianRangeType;
 
-      SimpleGridFunction ( std::string name, const GridPartType &gridPart, LocalEvaluator localEvaluator, int order = std::numeric_limits< int >::max() )
+      SimpleGridFunction ( std::string name, const GridPartType &gridPart, LocalEvaluator localEvaluator, int order) // = std::numeric_limits< int >::max() )
         : name_( std::move( name ) ),
           gridPart_( gridPart ),
           localEvaluator_( std::move( localEvaluator ) ),
           order_( order )
       {}
 
-      SimpleGridFunction ( const GridPartType &gridPart, LocalEvaluator localEvaluator, int order = std::numeric_limits< int >::max() )
+      SimpleGridFunction ( const GridPartType &gridPart, LocalEvaluator localEvaluator, int order) // = std::numeric_limits< int >::max() )
         : name_( "unnamed-" + className< LocalEvaluator >() ),
           gridPart_( gridPart ),
           localEvaluator_( std::move( localEvaluator ) ),
@@ -261,14 +261,14 @@ namespace Dune
 
     template< class GridPart, class LocalEvaluator >
     inline static std::enable_if_t< IsLocalEvaluator< GridPart, LocalEvaluator >::value, SimpleGridFunction< GridPart, LocalEvaluator > >
-    simpleGridFunction ( std::string name, const GridPart &gridPart, LocalEvaluator localEvaluator, int order = std::numeric_limits< int >::max() )
+    simpleGridFunction ( std::string name, const GridPart &gridPart, LocalEvaluator localEvaluator, int order)
     {
       return SimpleGridFunction< GridPart, LocalEvaluator >( std::move( name ), gridPart, std::move( localEvaluator ), order );
     }
 
     template< class GridPart, class LocalEvaluator >
     inline static std::enable_if_t< IsLocalEvaluator< GridPart, LocalEvaluator >::value, SimpleGridFunction< GridPart, LocalEvaluator > >
-    simpleGridFunction ( const GridPart &gridPart, LocalEvaluator localEvaluator, int order = std::numeric_limits< int >::max() )
+    simpleGridFunction ( const GridPart &gridPart, LocalEvaluator localEvaluator, int order)
     {
       return SimpleGridFunction< GridPart, LocalEvaluator >( gridPart, std::move( localEvaluator ), order );
     }
@@ -279,14 +279,14 @@ namespace Dune
 
     template< class GridPart, class Evaluator >
     inline static std::enable_if_t< IsEvaluator< GridPart, Evaluator >::value, SimpleGlobalGridFunction< GridPart, Evaluator > >
-    simpleGridFunction ( std::string name, const GridPart &gridPart, Evaluator evaluator, int order = std::numeric_limits< int >::max() )
+    simpleGridFunction ( std::string name, const GridPart &gridPart, Evaluator evaluator, int order)
     {
       return SimpleGlobalGridFunction< GridPart, Evaluator >( std::move( name ), gridPart, std::move( evaluator ), order );
     }
 
     template< class GridPart, class Evaluator >
     inline static std::enable_if_t< IsEvaluator< GridPart, Evaluator >::value, SimpleGlobalGridFunction< GridPart, Evaluator > >
-    simpleGridFunction ( const GridPart &gridPart, Evaluator evaluator, int order = std::numeric_limits< int >::max() )
+    simpleGridFunction ( const GridPart &gridPart, Evaluator evaluator, int order)
     {
       return SimpleGlobalGridFunction< GridPart, Evaluator >( gridPart, std::move( evaluator ), order );
     }

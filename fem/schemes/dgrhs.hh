@@ -48,8 +48,10 @@
 // assembleRHS
 // -----------
 
-template< class Model, class Function, class Neuman, class Dirichlet, class DiscreteFunction >
-void assembleDGRHS ( const Model &model, const Function &function, const Neuman &neuman, const Dirichlet &dirichlet, DiscreteFunction &rhs,
+template< class Model, class Function, class Neuman, class DiscreteFunction >
+// template< class Model, class Function, class Neuman, class Dirichlet, class DiscreteFunction >
+void assembleDGRHS ( const Model &model, const Function &function, const Neuman &neuman, // const Dirichlet &dirichlet,
+                     DiscreteFunction &rhs,
                      double penalty )
 {
   assembleRHS( model, function, neuman, rhs );
@@ -99,10 +101,10 @@ void assembleDGRHS ( const Model &model, const Function &function, const Neuman 
       const IntersectionType &intersection = *iit;
       if ( ! intersection.boundary() ) // i.e. if intersection is on boundary: nothing to be done for Neumann zero b.c.
         continue;                      // since [u] = 0  and grad u.n = 0
-      Dune::FieldVector<bool,dimRange> components;
+      Dune::FieldVector<int,dimRange> components(0);
       if ( ! model.isDirichletIntersection( intersection, components) )
         continue;
-
+#if 0
       const typename Dirichlet::LocalFunctionType dirichletLocal = dirichlet.localFunction( entity);
 
       typedef typename IntersectionType::Geometry  IntersectionGeometryType;
@@ -144,6 +146,7 @@ void assembleDGRHS ( const Model &model, const Function &function, const Neuman 
         advalue *= weight;
         rhsLocal.axpy( quadInside[ pt ], value, advalue );
       }
+#endif
     }
   }
   rhs.communicate();
