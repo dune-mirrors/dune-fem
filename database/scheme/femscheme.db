@@ -7,8 +7,14 @@
   },
   "DGFemScheme" :
   {
-    "type"      : "DGFemScheme< $(space), DiffusionModel< $(gridpart), $(dimRange) > , $(solver) >",
-    "checks"    : [ "'$(solver)' == 'fem' or '$(solver)' == 'femoem' or '$(solver)' == 'istl' or '$(solver)' == 'umfpack' or '$(solver)' == 'petsc'" ], 
-    "include"   : [ "dune/fem/schemes/dgfemscheme.hh" ]
+    "type"      : "FemScheme< $(space), DiffusionModel< typename $(space)::GridPartType, $(space)::dimRange, typename $(space)::RangeFieldType >, DifferentiableDGEllipticOperator, $(storage) >",
+    "translate" : { "storage" : [ "Adaptive=fem", "Istl=istl" ] },
+    "include"   : [ "dune/fem/schemes/dgelliptic.hh", "dune/fem/schemes/femscheme.hh" ]
+  },
+  "NVDGFemScheme" :
+  {
+    "type"      : "FemScheme< $(space), DiffusionModel< typename $(space)::GridPartType, $(space)::dimRange, typename $(space)::RangeFieldType >, DifferentiableNVDGEllipticOperator, $(storage) >",
+    "translate" : { "storage" : [ "Adaptive=fem", "Istl=istl" ] },
+    "include"   : [ "dune/fem/schemes/nvdgelliptic.hh", "dune/fem/schemes/femscheme.hh" ]
   }
 }

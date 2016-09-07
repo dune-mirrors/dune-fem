@@ -778,8 +778,8 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
             writer.typedef(grid._typeName, 'GridPart')
 
             if model.coefficients:
-                writer.typedef(modelNameSpace + '::Model< GridPart, ' + ', '.join(\
-                [('Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
+                writer.typedef(modelNameSpace + '::Model< GridPart' + ' '.join(\
+                [(',Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
                     'Dune::FieldVector< ' +\
                     SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
                     str(coefficient['dimRange']) + ' > >') \
