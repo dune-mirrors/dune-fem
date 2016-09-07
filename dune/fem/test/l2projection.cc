@@ -34,7 +34,11 @@
 #else
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/linear/spoperator.hh>
+#if HAVE_SUITESPARSE_UMFPACK && defined USE_UMFPACK
+#include <dune/fem/solver/umfpacksolver.hh>
+#else
 #include <dune/fem/solver/cginverseoperator.hh>
+#endif
 #endif
 
 #include <dune/fem/misc/l2norm.hh>
@@ -59,7 +63,7 @@ const int polOrder = 1;
 typedef Dune::GridSelector :: GridType GridType;
 
 typedef Dune::Fem::AdaptiveLeafGridPart< GridType, Dune::InteriorBorder_Partition > GridPartType;
-typedef Dune::Fem::FunctionSpace< double, double, GridType::dimensionworld, 1 > SpaceType;
+typedef Dune::Fem::FunctionSpace< typename GridType::ctype, typename GridType::ctype, GridType::dimensionworld, 1 > SpaceType;
 typedef Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, polOrder > DiscreteSpaceType;
 #if HAVE_PETSC && defined USE_PETSCDISCRETEFUNCTION
 typedef Dune::Fem::PetscDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
@@ -77,7 +81,11 @@ typedef Dune::Fem::EigenCGInverseOperator< DiscreteFunctionType > InverseOperato
 #else
 typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
 typedef Dune::Fem::SparseRowLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
+#if HAVE_SUITESPARSE_UMFPACK && defined USE_UMFPACK
+typedef Dune::Fem::UMFPACKOp< DiscreteFunctionType, LinearOperatorType > InverseOperatorType;
+#else
 typedef Dune::Fem::CGInverseOperator< DiscreteFunctionType > InverseOperatorType;
+#endif
 #endif
 
 typedef MassOperator< DiscreteFunctionType, LinearOperatorType > MassOperatorType;
