@@ -178,7 +178,7 @@ def gridFunction(grid, code, coefficients=None):
             writer.emit('module.def( "get", [] ( const std::string name, const GridPartType &gridPart ) {')
             writer.emit('        LocalFunction local;')
             writer.emit('        return new GridFunction(name, local, gridPart );')
-            writer.emit('}, pybind11::keep_alive< 0, 22 >());')
+            writer.emit('}')#, pybind11::keep_alive< 0, 2 >());') #error here?
             writer.closePythonModule(pyname)
             writer.closeNameSpace('FemPy')
             writer.closeNameSpace('Dune')
