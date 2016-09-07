@@ -13,11 +13,11 @@ from dune.source import SourceWriter
 from dune.fem.gridpart import gridFunctions
 
 # method to add to gridpart.function call
-def generatedFunction(grid, name, code):
+def generatedFunction(grid, name, order, code):
     gf = gridFunction(grid, code)
-    return gf.get(name, grid)
+    return gf.get(name, order, grid)
 gridFunctions.update( {"code":generatedFunction} )
-def UFLFunction(grid, name, expr):
+def UFLFunction(grid, name, order, expr):
     import ufl
     import dune.models.elliptic as generate
     R = len(expr)
@@ -34,7 +34,7 @@ def UFLFunction(grid, name, expr):
     jac = ufl.as_matrix(jac)
     code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R,D), jac), False))
     jacobian = code.replace("result","value")
-    return generatedFunction(grid,name,{"evaluate":evaluate,"jacobian":jacobian})
+    return generatedFunction(grid,name,order,{"evaluate":evaluate,"jacobian":jacobian})
 gridFunctions.update( {"ufl":UFLFunction} )
 
 def dimRangeSplit(code):
@@ -175,10 +175,9 @@ def gridFunction(grid, code):
             writer.emit('// export function class')
             writer.emit('')
             writer.emit('pybind11::class_< GridFunction > cls = registerGridFunction< GridFunction >( module, "GridFunction" );')
-            writer.emit('module.def( "get", [] ( const std::string name, const GridPartType &gridPart ) {')
-            writer.emit('        LocalFunction local;')
-            writer.emit('        return new GridFunction(name, local, gridPart );')
-            writer.emit('}, pybind11::keep_alive< 0, 1 >());')
+            writer.emit('module.def( "get", [] ( const std::string name, int order, const GridPartType &gridPart ) {')
+            writer.emit('        return new GridFunction(name, LocalFunction(), gridPart, order );')
+            writer.emit('}, pybind11::keep_alive< 0, 3 >());')
             writer.closePythonModule(pyname)
             writer.closeNameSpace('FemPy')
             writer.closeNameSpace('Dune')

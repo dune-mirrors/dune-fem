@@ -387,15 +387,18 @@ def splitUFL2(u,du,d2u,tree):
 
     for index in tree.keys():
         q = DerivativeExtracter().visit(tree[index])
-        for op in q:
-            if op == u:
-                tree0 = tree0 + q[op]
-            elif op == du:
-                tree1 = tree1 + q[op]
-            elif op == d2u:
-                tree2 = tree2 + q[op]
-            else:
-                raise Exception('Invalid trial function derivative encountered in bulk integral: ' + op)
+        try:
+            for op in q:
+                if op == u:
+                    tree0 = tree0 + q[op]
+                elif op == du:
+                    tree1 = tree1 + q[op]
+                elif op == d2u:
+                    tree2 = tree2 + q[op]
+                else:
+                    raise Exception('Invalid trial function derivative encountered in bulk integral: ' + op)
+        except: # source is zero
+            pass
 
     res0 = ExprTensor(u.ufl_shape)
     res1 = ExprTensor(u.ufl_shape)
