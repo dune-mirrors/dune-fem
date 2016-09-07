@@ -33,6 +33,7 @@ namespace Dune
         typedef typename Space::GridPartType GridPart;
 
         cls.def_property_readonly( "grid", [](Space &sp) -> const GridPart& {return sp.gridPart();} );
+        cls.def_property_readonly( "order", [](Space &sp) -> int {return sp.order();} );
 
         cls.def( "__init__", [] ( Space &instance, GridPart &grid ) {
             new( &instance ) Space( grid );
