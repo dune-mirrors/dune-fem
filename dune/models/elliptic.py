@@ -391,38 +391,30 @@ class DerivativeExtracter(ufl.algorithms.transformer.Transformer):
 # splitUFL2
 # ------------
 def splitUFL2(u,du,d2u,tree):
-
     tree0 = ExprTensor(u.ufl_shape)
-    tree1 = ExprTensor(du.ufl_shape)
-    tree2 = ExprTensor(d2u.ufl_shape)
+    tree1 = ExprTensor(u.ufl_shape)
+    tree2 = ExprTensor(u.ufl_shape)
 
     for index in tree.keys():
         q = DerivativeExtracter().visit(tree[index])
-        try:
-            for op in q:
-                if op == u:
-                    tree0 = tree0 + q[op]
-                elif op == du:
-                    tree1 = tree1 + q[op]
-                elif op == d2u:
-                    tree2 = tree2 + q[op]
-                else:
-                    raise Exception('Invalid trial function derivative encountered in bulk integral: ' + op)
-        except: # source is zero
-            pass
-
-    res0 = ExprTensor(u.ufl_shape)
-    res1 = ExprTensor(u.ufl_shape)
-    res2 = ExprTensor(u.ufl_shape)
-    for r in range(u.ufl_shape[0]):
-        i = ufl.core.multiindex.FixedIndex(r)
-        m = ufl.core.multiindex.as_multi_index(i)
-        res0[m] = res0[m] + tree0.as_ufl()[r]*u[r]
-        for d in range(du.ufl_shape[1]):
-            res1[m] = res1[m] + tree1.as_ufl()[r,d]*du[r,d]
-            for dd in range(d2u.ufl_shape[2]):
-                res2[m] = res2[m] + tree2.as_ufl()[r,d,dd]*d2u[r,d,dd]
-    return res0,res1,res2
+        for op in q:
+            if op == u:
+                tree0[index] = tree0[index] +\
+                   sum(i[0]*i[1] for i in zip(q[op].as_ufl(),u))
+            elif op == du:
+                for r in range(du.ufl_shape[0]):
+                    for d in range(du.ufl_shape[1]):
+                        tree1[index] = tree1[index] +\
+                            q[op].as_ufl()[r,d]*du[r,d]
+            elif op == d2u:
+                for r in range(d2u.ufl_shape[0]):
+                    for d1 in range(d2u.ufl_shape[1]):
+                        for d2 in range(d2u.ufl_shape[2]):
+                            tree2[index] = tree2[index] +\
+                                q[op].as_ufl()[r,d1,d2]*d2u[r,d1,d2]
+            else:
+                raise Exception('Invalid trial function derivative encountered in bulk integral: ' + op)
+    return tree0,tree1,tree2
 
 # splitUFLForm
 # ------------
@@ -461,7 +453,7 @@ def splitUFLForm(form, linear):
         du = ufl.differentiation.Grad(u)
         d2u = ufl.differentiation.Grad(du)
         source0,source1,source2 = splitUFL2(u,du,d2u,source)
-        source = source0 + source1
+        source = source0 + source1 # + source2
         return source, source2, diffusiveFlux, boundarySource
 
     return source, diffusiveFlux, boundarySource
