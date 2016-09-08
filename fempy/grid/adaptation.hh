@@ -134,7 +134,7 @@ namespace Dune
 
       explicit GridAdaptation ( Grid &grid )
         : restrictProlong_( grid ),
-          adaptationManager_( grid, restrictProlong_, noParameter() )
+          adaptationManager_( grid, restrictProlong_, parameter( { { "fem.loadbalancing.step", "0" } } ) )
       {}
 
       template< class Iterator >
