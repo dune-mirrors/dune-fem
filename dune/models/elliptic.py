@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import division, print_function
 
 import ufl
 import ufl.algorithms
@@ -148,6 +148,11 @@ class ExprTensor:
             raise Exception('Cannot add tensors of different shape.')
         return ExprTensor(self.shape, self._add(self.shape, self.data, other.data))
 
+    def __truediv__(self, other):
+        if isinstance(other, ExprTensor):
+            raise Exception('Cannot divide by tensors tensors.')
+        return ExprTensor(self.shape, self._div(self.shape, self.data, other))
+
     def __mul__(self, other):
         if isinstance(other, ExprTensor):
             raise Exception('Cannot multiply tensors.')
@@ -206,6 +211,12 @@ class ExprTensor:
             return [(ufl.core.multiindex.FixedIndex(i),) for i in range(0, shape[0])]
         else:
             return [(ufl.core.multiindex.FixedIndex(i),) + t for i in range(0, shape[0]) for t in self._keys(shape[1:])]
+
+    def _div(self, shape, tensor, value):
+        if len(shape) == 1:
+            return [tensor[i] / value for i in range(0, shape[0])]
+        else:
+            return [self._div(shape[1:], tensor[i], value) for i in range(0, shape[0])]
 
     def _mul(self, shape, tensor, value):
         if len(shape) == 1:
