@@ -332,7 +332,7 @@ namespace Dune
         virtual void registerToLoadBalancer ( Fem::LoadBalancer< Grid > &loadBalancer ) override
         {
           // todo: implement this check
-          auto contains = [] ( const typename Grid::template Codim< 0 >::Entity &e ) { return false; };
+          auto contains = [] ( const typename Grid::template Codim< 0 >::Entity &e ) { return e.isLeaf(); };
           loadBalancer.addDiscreteFunction( list, loadBalanceContainsCheck< Grid >( contains ) );
         }
 

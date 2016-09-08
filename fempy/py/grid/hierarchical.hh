@@ -99,7 +99,8 @@ namespace Dune
         } );
 
       cls.def( "adapt", [] ( Grid &grid, const std::list< RestrictProlong > &rpList ) {
-          std::cout << "adapting grid and " << rpList.size() << " functions..." << std::endl;
+          if( grid.comm().rank() == 0 )
+            std::cout << "adapting grid and " << rpList.size() << " functions..." << std::endl;
           gridAdaptation( grid ).adapt( rpList.begin(), rpList.end() );
         } );
 
@@ -109,7 +110,8 @@ namespace Dune
         } );
 
       cls.def( "loadBalance", [] ( Grid &grid, const std::list< RestrictProlong > &rpList ) {
-          std::cout << "loadbalanding grid and " << rpList.size() << " functions..." << std::endl;
+          if( grid.comm().rank() == 0 )
+            std::cout << "loadbalanding grid and " << rpList.size() << " functions..." << std::endl;
           gridAdaptation( grid ).loadBalance( rpList.begin(), rpList.end() );
         } );
 
