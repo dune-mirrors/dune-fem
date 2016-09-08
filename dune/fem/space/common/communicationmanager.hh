@@ -363,7 +363,7 @@ namespace Dune
         const auto handles = [ &df ] ( const std::unique_ptr< DiscreteFunctionCommunicatorInterface > &commObj ) { return commObj->handles( df ); };
         CommObjListType::reverse_iterator pos = std::find_if( objList_.rbegin(), objList_.rend(), handles );
         if( pos != objList_.rend() )
-          objList_.erase( pos.base() );
+          objList_.erase( --pos.base() );
         else
           DUNE_THROW( RangeError, "Trying to remove discrete function that was never added" );
       }
