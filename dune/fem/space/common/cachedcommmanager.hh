@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_CACHED_COMMUNICATION_MANAGER_HH
 #define DUNE_FEM_CACHED_COMMUNICATION_MANAGER_HH
 
+#include <cassert>
+
 //- system includes
 #include <iostream>
 #include <map>
@@ -1238,7 +1240,7 @@ namespace Dune
           comm_.rebuildCache();
         }
 
-        virtual bool handles ( IsDiscreteFunction &df ) const { return (&df_ == &df); }
+        virtual bool handles ( IsDiscreteFunction &df ) const { return (&static_cast< IsDiscreteFunction & >( df_ ) == &df); }
       };
 
       // ALUGrid send/recv buffers
@@ -1261,8 +1263,6 @@ namespace Dune
       // number of processors
       int mySize_;
 
-      // copy constructor
-      CommunicationManagerList(const CommunicationManagerList&);
     public:
       //! constructor creating list of communicated objects
       template <class CombinedObjectType>
@@ -1277,6 +1277,8 @@ namespace Dune
       CommunicationManagerList()
         : mySize_( -1 )
       {}
+
+      CommunicationManagerList ( const CommunicationManagerList & ) = delete;
 
       //! add one discrete function to the list with given unpack operation
       template <class DiscreteFunctionImp, class Operation>
@@ -1312,10 +1314,10 @@ namespace Dune
       template< class DiscreteFunction >
       void removeFromList ( DiscreteFunction &df )
       {
-        const auto handles = [ &df ] ( const std::unique_ptr< CommObjInterfaceType > &commObj ) { return commObj->handles( df ); };
+        const auto handles = [ &df ] ( const std::unique_ptr< CommObjInterfaceType > &commObj ) { assert( commObj ); return commObj->handles( df ); };
         CommObjListType::reverse_iterator pos = std::find_if( objList_.rbegin(), objList_.rend(), handles );
         if( pos != objList_.rend() )
-          objList_.erase( pos.base() );
+          objList_.erase( --pos.base() );
         else
           DUNE_THROW( RangeError, "Trying to remove discrete function that was never added" );
       }
