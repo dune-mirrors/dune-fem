@@ -67,9 +67,9 @@ class EllipticModel(BaseModel):
             sourceWriter.emit(self.linSource)
             sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void linNVSource', targs=['class Point'], args=[arg_ubar, arg_dubar, arg_d2ubar, arg_x, arg_d2u, arg_r])
-        sourceWriter.emit(self.linNVSource)
-        sourceWriter.closeConstMethod()
+        # sourceWriter.openConstMethod('void linNVSource', targs=['class Point'], args=[arg_ubar, arg_dubar, arg_d2ubar, arg_x, arg_d2u, arg_r])
+        # sourceWriter.emit(self.linNVSource)
+        # sourceWriter.closeConstMethod()
 
         sourceWriter.openConstMethod('void diffusiveFlux', targs=['class Point'], args=[arg_x, arg_u, arg_du, arg_dr])
         sourceWriter.emit(self.diffusiveFlux)
@@ -816,6 +816,19 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
                 writer.emit('model.def( "setCoefficient", defSetCoefficient( std::make_index_sequence< std::tuple_size<Coefficients>::value >() ) );')
                 writer.emit('model.def( "setConstant", defSetConstant( std::make_index_sequence< std::tuple_size<typename Model::ConstantsTupleType>::value >() ) );')
             writer.emit('')
+            writer.emit('model.def( "__init__", [] (ModelWrapper &instance, const pybind11::dict &coeff) {')
+            writer.emit('  new (&instance) ModelWrapper( );')
+            writer.emit('  const int size = std::tuple_size<Coefficients>::value;')
+            writer.emit('  auto dispatch = defSetCoefficient( std::make_index_sequence<size>() );' )
+            writer.emit('  std::vector<bool> coeffSet(size,false);')
+            writer.emit('  for (auto item : coeff) {')
+            writer.emit('    int k = dispatch(instance, item.first, item.second); ')
+            writer.emit('    coeffSet[k] = true;')
+            writer.emit('  }')
+            writer.emit('  if ( !std::all_of(coeffSet.begin(),coeffSet.end(),[](bool v){return v;}) )')
+            writer.emit('    throw pybind11::key_error("need to set all coefficients during model construction");')
+            writer.emit('  });')
+            writer.emit('')
             writer.emit('module.def( "get", [] () { return new ModelWrapper(); } );')
             writer.closePythonModule(name)
 
@@ -829,3 +842,6 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
 
         comm.barrier()
         return importlib.import_module("dune.generated." + name)
+
+def create(grid, form,coeff={}):
+    return importModel(grid, compileUFL(form)).Model(coeff)
