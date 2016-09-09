@@ -35,59 +35,45 @@ class EllipticModel(BaseModel):
         self.exact = "result = RangeType( 0 );"
         self.n = "result = RangeType( 0 );"
         self.jacobianExact = "result = JacobianRangeType( 0 );"
+        self.arg_x = 'const Point &x'
+        self.arg_u = 'const RangeType &u'
+        self.arg_du = 'const JacobianRangeType &du'
+        self.arg_d2u = 'const HessianRangeType &d2u'
+        self.arg_ubar = 'const RangeType &ubar'
+        self.arg_dubar = 'const JacobianRangeType &dubar'
+        self.arg_d2ubar = 'const HessianRangeType &d2ubar'
+        self.arg_r = 'RangeType &result'
+        self.arg_dr = 'JacobianRangeType &result'
 
-    def write(self, sourceWriter, name='Model', targs=[]):
-        self.pre(sourceWriter, name='Model', targs=[])
+    def main(self, sourceWriter, name='Model', targs=[]):
         sourceWriter.typedef("Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >", "BoundaryIdProviderType")
 
-        arg_x = 'const Point &x'
-        arg_u = 'const RangeType &u'
-        arg_du = 'const JacobianRangeType &du'
-        arg_d2u = 'const HessianRangeType &d2u'
-        arg_ubar = 'const RangeType &ubar'
-        arg_dubar = 'const JacobianRangeType &dubar'
-        arg_d2ubar = 'const HessianRangeType &d2ubar'
-        arg_r = 'RangeType &result'
-        arg_dr = 'JacobianRangeType &result'
 
-        if True:
-            sourceWriter.openConstMethod('void source', targs=['class Point'], args=[arg_x, arg_u, arg_du, arg_r])
-            sourceWriter.emit(self.source)
-            sourceWriter.closeConstMethod()
+        sourceWriter.openConstMethod('void source', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_r])
+        sourceWriter.emit(self.source)
+        sourceWriter.closeConstMethod()
 
-            sourceWriter.openConstMethod('void linSource', targs=['class Point'], args=[arg_ubar, arg_dubar, arg_x, arg_u, arg_du, arg_r])
-            sourceWriter.emit(self.linSource)
-            sourceWriter.closeConstMethod()
-        else:
-            sourceWriter.openConstMethod('void source', targs=['class Point'], args=[arg_x, arg_u, arg_du, arg_d2u, arg_r])
-            sourceWriter.emit(self.source)
-            sourceWriter.closeConstMethod()
+        sourceWriter.openConstMethod('void linSource', targs=['class Point'], args=[self.arg_ubar, self.arg_dubar, self.arg_x, self.arg_u, self.arg_du, self.arg_r])
+        sourceWriter.emit(self.linSource)
+        sourceWriter.closeConstMethod()
 
-            sourceWriter.openConstMethod('void linSource', targs=['class Point'], args=[arg_ubar, arg_dubar, arg_d2ubar, arg_x, arg_u, arg_du, arg_r])
-            sourceWriter.emit(self.linSource)
-            sourceWriter.closeConstMethod()
-
-        # sourceWriter.openConstMethod('void linNVSource', targs=['class Point'], args=[arg_ubar, arg_dubar, arg_d2ubar, arg_x, arg_d2u, arg_r])
-        # sourceWriter.emit(self.linNVSource)
-        # sourceWriter.closeConstMethod()
-
-        sourceWriter.openConstMethod('void diffusiveFlux', targs=['class Point'], args=[arg_x, arg_u, arg_du, arg_dr])
+        sourceWriter.openConstMethod('void diffusiveFlux', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_dr])
         sourceWriter.emit(self.diffusiveFlux)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void linDiffusiveFlux', targs=['class Point'], args=[arg_ubar, arg_dubar, arg_x, arg_u, arg_du, arg_dr])
+        sourceWriter.openConstMethod('void linDiffusiveFlux', targs=['class Point'], args=[self.arg_ubar, self.arg_dubar, self.arg_x, self.arg_u, self.arg_du, self.arg_dr])
         sourceWriter.emit(self.linDiffusiveFlux)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void fluxDivergence', targs=['class Point'], args=[arg_x, arg_u, arg_du, arg_d2u, arg_r])
+        sourceWriter.openConstMethod('void fluxDivergence', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_d2u, self.arg_r])
         sourceWriter.emit(self.fluxDivergence)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void alpha', targs=['class Point'], args=[arg_x, arg_u, arg_r])
+        sourceWriter.openConstMethod('void alpha', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_r])
         sourceWriter.emit(self.alpha)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void linAlpha', targs=['class Point'], args=[arg_ubar, arg_x, arg_u, arg_r])
+        sourceWriter.openConstMethod('void linAlpha', targs=['class Point'], args=[self.arg_ubar, self.arg_x, self.arg_u, self.arg_r])
         sourceWriter.emit(self.linAlpha)
         sourceWriter.closeConstMethod()
 
@@ -103,27 +89,30 @@ class EllipticModel(BaseModel):
         sourceWriter.emit(self.isDirichletIntersection)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void f', args=['const DomainType &x', arg_r])
+        sourceWriter.openConstMethod('void f', args=['const DomainType &x', self.arg_r])
         sourceWriter.emit(self.f)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void n', args=['const DomainType &x', arg_r])
+        sourceWriter.openConstMethod('void n', args=['const DomainType &x', self.arg_r])
         sourceWriter.emit(self.n)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void exact', args=['const DomainType &x', arg_r])
+        sourceWriter.openConstMethod('void exact', args=['const DomainType &x', self.arg_r])
         sourceWriter.emit(self.exact)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void jacobianExact', args=['const DomainType &x', arg_dr])
+        sourceWriter.openConstMethod('void jacobianExact', args=['const DomainType &x', self.arg_dr])
         sourceWriter.emit('// used for possible computation of H^1 error')
         sourceWriter.emit(self.jacobianExact)
         sourceWriter.closeConstMethod()
 
-        sourceWriter.openConstMethod('void dirichlet', targs=['class Point'], args=['int id', arg_x, arg_r])
+        sourceWriter.openConstMethod('void dirichlet', targs=['class Point'], args=['int id', self.arg_x, self.arg_r])
         sourceWriter.emit(self.dirichlet)
         sourceWriter.closeConstMethod()
 
+    def write(self, sourceWriter, name='Model', targs=[]):
+        self.pre(sourceWriter, name='Model', targs=[])
+        self.main(sourceWriter, name='Model', targs=[])
         self.post(sourceWriter, name='Model', targs=[])
 
 
@@ -690,7 +679,6 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
             field = coefficient.ufl_function_space().ufl_element().field()
             dimRange = coefficient.ufl_shape[0]
             idx = idxCoeff
-            dimRange = coefficient.ufl_shape[0]
             idxCoeff += 1
         setattr(coefficient,"number",idx)
         model.coefficients.append({ \
@@ -798,7 +786,7 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
             writer.typedef('typename ModelWrapper::Base', 'ModelBase')
 
             if model.coefficients:
-                model.set(writer)
+                model.setCoef(writer)
 
             writer.openPythonModule(name)
             writer.emit('')
