@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import division, print_function
 
 import ufl
 import ufl.algorithms
@@ -20,8 +20,9 @@ class EllipticModel(BaseModel):
     def __init__(self, dimRange, signature):
         BaseModel.__init__(self, dimRange, signature)
         self.source = "result = RangeType( 0 );"
-        self.linSource = "result = JacobianRangeType( 0 );"
-        self.diffusiveFlux = "result = RangeType( 0 );"
+        self.linSource = "result = RangeType( 0 );"
+        self.linNVSource = "result = RangeType( 0 );"
+        self.diffusiveFlux = "result = JacobianRangeType( 0 );"
         self.linDiffusiveFlux = "result = JacobianRangeType( 0 );"
         self.fluxDivergence = "result = RangeType( 0 );"
         self.alpha = "result = RangeType( 0 );"
@@ -40,11 +41,13 @@ class EllipticModel(BaseModel):
         self.arg_d2u = 'const HessianRangeType &d2u'
         self.arg_ubar = 'const RangeType &ubar'
         self.arg_dubar = 'const JacobianRangeType &dubar'
+        self.arg_d2ubar = 'const HessianRangeType &d2ubar'
         self.arg_r = 'RangeType &result'
         self.arg_dr = 'JacobianRangeType &result'
 
     def main(self, sourceWriter, name='Model', targs=[]):
         sourceWriter.typedef("Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >", "BoundaryIdProviderType")
+
 
         sourceWriter.openConstMethod('void source', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_r])
         sourceWriter.emit(self.source)
@@ -134,6 +137,11 @@ class ExprTensor:
             raise Exception('Cannot add tensors of different shape.')
         return ExprTensor(self.shape, self._add(self.shape, self.data, other.data))
 
+    def __truediv__(self, other):
+        if isinstance(other, ExprTensor):
+            raise Exception('Cannot divide by tensors tensors.')
+        return ExprTensor(self.shape, self._div(self.shape, self.data, other))
+
     def __mul__(self, other):
         if isinstance(other, ExprTensor):
             raise Exception('Cannot multiply tensors.')
@@ -192,6 +200,12 @@ class ExprTensor:
             return [(ufl.core.multiindex.FixedIndex(i),) for i in range(0, shape[0])]
         else:
             return [(ufl.core.multiindex.FixedIndex(i),) + t for i in range(0, shape[0]) for t in self._keys(shape[1:])]
+
+    def _div(self, shape, tensor, value):
+        if len(shape) == 1:
+            return [tensor[i] / value for i in range(0, shape[0])]
+        else:
+            return [self._div(shape[1:], tensor[i], value) for i in range(0, shape[0])]
 
     def _mul(self, shape, tensor, value):
         if len(shape) == 1:
@@ -286,11 +300,116 @@ class FluxExtracter(ufl.algorithms.transformer.Transformer):
     def variable(self, expr):
         return expr.expression()
 
+# DerivativeExtracter
+# -------------
+
+class DerivativeExtracter(ufl.algorithms.transformer.Transformer):
+    def __init__(self):
+        ufl.algorithms.transformer.Transformer.__init__(self)
+
+    def argument(self, expr):
+        if expr.number() == 0:
+            raise Exception('Test function should occur at all.')
+        else:
+            return expr
+
+    grad = ufl.algorithms.transformer.Transformer.reuse_if_possible
+
+    def indexed(self, expr):
+        if len(expr.ufl_operands) != 2:
+            raise Exception('Indexed expressions must have exactly two children.')
+        operand = expr.ufl_operands[0]
+        index = expr.ufl_operands[1]
+        if self.isTrialFunction(operand):
+            tensor = ExprTensor(operand.ufl_shape)
+            tensor[index] = ufl.constantvalue.IntValue(1)
+            return {operand : tensor}
+        else:
+            return self.reuse_if_possible(expr, self.visit(operand), index)
+
+    def division(self, expr, left, right):
+        if isinstance(left, ufl.core.expr.Expr) and isinstance(right, ufl.core.expr.Expr):
+            return self.reuse_if_possible(expr, left, right)
+        elif isinstance(left, dict) and isinstance(right, ufl.core.expr.Expr):
+            return {op : left[op] / right for op in left}
+        else:
+            raise Exception('Only the left child of a division may access the test function.')
+
+    def product(self, expr, left, right):
+        if isinstance(left, ufl.core.expr.Expr) and isinstance(right, ufl.core.expr.Expr):
+            return self.reuse_if_possible(expr, left, right)
+        elif isinstance(left, dict) and isinstance(right, ufl.core.expr.Expr):
+            return {op : left[op] * right for op in left}
+        elif isinstance(left, ufl.core.expr.Expr) and isinstance(right, dict):
+            return {op : right[op] * left for op in right}
+        else:
+            raise Exception('Only one child of a product may access the test function.')
+
+    def sum(self, expr, left, right):
+        if isinstance(left, ufl.core.expr.Expr) and isinstance(right, ufl.core.expr.Expr):
+            return self.reuse_if_possible(expr, left, right)
+        elif isinstance(left, dict) and isinstance(right, dict):
+            for op in right:
+                left[op] = (left[op] + right[op]) if op in left else right[op]
+            return left
+        else:
+            raise Exception('Either both summands must contain test function or none')
+
+    def nonlinear(self, expr, *operands):
+        for operand in operands:
+            if isinstance(operand, dict):
+                raise Exception('Test function cannot appear in nonlinear expressions.')
+        return self.reuse_if_possible(expr, *operands)
+
+    atan = nonlinear
+    atan_2 = nonlinear
+    cos = nonlinear
+    sin = nonlinear
+    power = nonlinear
+    tan = nonlinear
+
+    def terminal(self, expr):
+        return expr
+
+    def isTrialFunction(self, expr):
+        while isinstance(expr, ufl.differentiation.Grad):
+            expr = expr.ufl_operands[0]
+        return isinstance(expr, ufl.argument.Argument) and expr.number() == 1
+
+
+# splitUFL2
+# ------------
+def splitUFL2(u,du,d2u,tree):
+    tree0 = ExprTensor(u.ufl_shape)
+    tree1 = ExprTensor(u.ufl_shape)
+    tree2 = ExprTensor(u.ufl_shape)
+
+    for index in tree.keys():
+        q = DerivativeExtracter().visit(tree[index])
+        if q==0: continue
+        for op in q:
+            if op == u:
+                tree0[index] = tree0[index] +\
+                   sum(i[0]*i[1] for i in zip(q[op].as_ufl(),u))
+            elif op == du:
+                for r in range(du.ufl_shape[0]):
+                    for d in range(du.ufl_shape[1]):
+                        tree1[index] = tree1[index] +\
+                            q[op].as_ufl()[r,d]*du[r,d]
+            elif op == d2u:
+                for r in range(d2u.ufl_shape[0]):
+                    for d1 in range(d2u.ufl_shape[1]):
+                        for d2 in range(d2u.ufl_shape[2]):
+                            tree2[index] = tree2[index] +\
+                                q[op].as_ufl()[r,d1,d2]*d2u[r,d1,d2]
+            else:
+                raise Exception('Invalid trial function derivative encountered in bulk integral: ' + op)
+    return tree0,tree1,tree2
 
 # splitUFLForm
 # ------------
 
-def splitUFLForm(form):
+def splitUFLForm(form, linear):
     phi = form.arguments()[0]
     dphi = ufl.differentiation.Grad(phi)
 
@@ -319,9 +438,15 @@ def splitUFLForm(form):
         else:
             raise NotImplementedError('Integrals of type ' + integral.integral_type() + ' are not supported.')
 
+    if linear:
+        u = form.arguments()[1]
+        du = ufl.differentiation.Grad(u)
+        d2u = ufl.differentiation.Grad(du)
+        source0,source1,source2 = splitUFL2(u,du,d2u,source)
+        source = source0 + source1 # + source2
+        return source, source2, diffusiveFlux, boundarySource
+
     return source, diffusiveFlux, boundarySource
-
-
 
 # CodeGenerator
 # -------------
@@ -487,8 +612,6 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         else:
             raise Exception('Index type not supported: ' + repr(index))
 
-
-
 # generateCode
 # ------------
 
@@ -520,6 +643,7 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
     d2u = ufl.differentiation.Grad(du)
     ubar = ufl.Coefficient(u.ufl_function_space())
     dubar = ufl.differentiation.Grad(ubar)
+    d2ubar = ufl.differentiation.Grad(dubar)
 
     field = u.ufl_function_space().ufl_element().field()
 
@@ -530,9 +654,9 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
 
     dform = ufl.algorithms.apply_derivatives.apply_derivatives(ufl.derivative(ufl.action(form, ubar), ubar, u))
 
-    source, diffusiveFlux, boundarySource = splitUFLForm( form )
-    linSource, linDiffusiveFlux, linBoundarySource = splitUFLForm( dform )
-    fluxDivergence, _, _ = splitUFLForm(ufl.inner(source.as_ufl() - ufl.div(diffusiveFlux.as_ufl()), phi) * ufl.dx(0))
+    source, diffusiveFlux, boundarySource = splitUFLForm( form, False )
+    linSource, linNVSource, linDiffusiveFlux, linBoundarySource = splitUFLForm( dform, True )
+    fluxDivergence, _, _ = splitUFLForm(ufl.inner(source.as_ufl() - ufl.div(diffusiveFlux.as_ufl()), phi) * ufl.dx(0),False)
 
     model = EllipticModel(dimRange, form.signature())
 
@@ -565,10 +689,11 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
             'constant' : coefficient.is_cellwise_constant(),\
             'field': field } )
 
-    model.source = generateCode({ u : 'u', du : 'du' }, source, tempVars)
+    model.source = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, source, tempVars)
     model.diffusiveFlux = generateCode({ u : 'u', du : 'du' }, diffusiveFlux, tempVars)
     model.alpha = generateCode({ u : 'u' }, boundarySource, tempVars)
-    model.linSource = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linSource, tempVars)
+    model.linSource = generateCode({ u : 'u', du : 'du', d2u : 'd2u', ubar : 'ubar', dubar : 'dubar', d2ubar : 'd2ubar'}, linSource, tempVars)
+    model.linNVSource = generateCode({ u : 'u', du : 'du', d2u : 'd2u', ubar : 'ubar', dubar : 'dubar', d2ubar : 'd2ubar'}, linNVSource, tempVars)
     model.linDiffusiveFlux = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linDiffusiveFlux, tempVars)
     model.linAlpha = generateCode({ u : 'u', ubar : 'ubar' }, linBoundarySource, tempVars)
     model.fluxDivergence = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, fluxDivergence, tempVars)
@@ -648,8 +773,8 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
             writer.typedef(grid._typeName, 'GridPart')
 
             if model.coefficients:
-                writer.typedef(modelNameSpace + '::Model< GridPart, ' + ', '.join(\
-                [('Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
+                writer.typedef(modelNameSpace + '::Model< GridPart' + ' '.join(\
+                [(',Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
                     'Dune::FieldVector< ' +\
                     SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
                     str(coefficient['dimRange']) + ' > >') \
@@ -680,6 +805,24 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
                 writer.emit('model.def( "setCoefficient", defSetCoefficient( std::make_index_sequence< std::tuple_size<Coefficients>::value >() ) );')
                 writer.emit('model.def( "setConstant", defSetConstant( std::make_index_sequence< std::tuple_size<typename Model::ConstantsTupleType>::value >() ) );')
             writer.emit('')
+            writer.emit('model.def( "__init__", [] (ModelWrapper &instance, const pybind11::dict &coeff) {')
+            writer.emit('  new (&instance) ModelWrapper( );')
+            if model.coefficients:
+                writer.emit('  const int size = std::tuple_size<Coefficients>::value;')
+                writer.emit('  auto dispatch = defSetCoefficient( std::make_index_sequence<size>() );' )
+                writer.emit('  std::vector<bool> coeffSet(size,false);')
+                writer.emit('  for (auto item : coeff) {')
+                writer.emit('    int k = dispatch(instance, item.first, item.second); ')
+                writer.emit('    coeffSet[k] = true;')
+                writer.emit('  }')
+                writer.emit('  if ( !std::all_of(coeffSet.begin(),coeffSet.end(),[](bool v){return v;}) )')
+                writer.emit('    throw pybind11::key_error("need to set all coefficients during model construction");')
+            writer.emit('  });')
+            if not model.coefficients:
+                writer.emit('model.def( "__init__", [] (ModelWrapper &instance) {')
+                writer.emit('  new (&instance) ModelWrapper( );')
+                writer.emit('  });')
+            writer.emit('')
             writer.emit('module.def( "get", [] () { return new ModelWrapper(); } );')
             writer.closePythonModule(name)
 
@@ -693,3 +836,6 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
 
         comm.barrier()
         return importlib.import_module("dune.generated." + name)
+
+def create(grid, form,coeff={}):
+    return importModel(grid, compileUFL(form)).Model(coeff)

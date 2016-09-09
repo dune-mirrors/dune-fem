@@ -15,14 +15,15 @@ def getSpaceType(space, **parameters):
     return myGenerator.getTypeName(space, **parameters)
 
 def interpolate( self, func, **kwargs ):
+    order = self.order
     try:
         gl = len(inspect.getargspec(func)[0])
     except:
         gl = 0
     if gl == 1:   # global function
-        return interpolate(self,self.grid.globalGridFunction("gf", func), **kwargs)
+        return interpolate(self,self.grid.globalGridFunction("gf", order, func), **kwargs)
     elif gl == 2: # local function
-        return interpolate(self,self.grid.localGridFunction("gf", func), **kwargs)
+        return interpolate(self,self.grid.localGridFunction("gf", order, func), **kwargs)
     elif gl == 0: # already a grid function
         storage = kwargs.pop('storage', "Adaptive")
         try:

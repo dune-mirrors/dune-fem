@@ -14,13 +14,13 @@ from dune.source import BaseModel
 from dune.fem.gridpart import gridFunctions
 
 # method to add to gridpart.function call
-def generatedFunction(grid, name, code, *args, coefficients=None):
+def generatedFunction(grid, name, order, code, *args, coefficients=None):
     gf = gridFunction(grid, code, *args, coefficients=coefficients)
-    return gf.get(name, grid)
+    return gf.get(name, order, grid)
 
 gridFunctions.update( {"code" : generatedFunction} )
 
-def UFLFunction(grid, name, expr):
+def UFLFunction(grid, name, order, expr):
     import ufl
     import dune.models.elliptic as generate
     R = len(expr)
@@ -52,7 +52,7 @@ def UFLFunction(grid, name, expr):
     jac = ufl.as_matrix(jac)
     code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R, D), jac), False))
     jacobian = code.replace("result", "value")
-    return generatedFunction(grid, name, {"evaluate" : evaluate, "jacobian" : jacobian}, coefficients=coef)
+    return generatedFunction(grid, name, order, {"evaluate" : evaluate, "jacobian" : jacobian}, coefficients=coef)
 
 gridFunctions.update( {"ufl" : UFLFunction} )
 
@@ -212,8 +212,8 @@ def gridFunction(grid, code, *args, coefficients=None):
 
             writer.openStruct(wrappername, targs=(['class GridPart'] + ['class Range']), bases=(['GridFunction']))
             writer.typedef('GridFunction', 'BaseType')
-            writer.emit(wrappername + '( const std::string name, const GridPart &gridPart ) :')
-            writer.emit('    BaseType(name, localFunctionImpl_, gridPart) {}')
+            writer.emit(wrappername + '( const std::string name, const GridPart &gridPart, int order ) :')
+            writer.emit('    BaseType(name, localFunctionImpl_, gridPart, order) {}')
             writer.emit('LocalFunction& impl() { return localFunctionImpl_; }')
             writer.emit('LocalFunction localFunctionImpl_;')
             writer.closeStruct()
@@ -232,9 +232,9 @@ def gridFunction(grid, code, *args, coefficients=None):
             if base.coefficients:
                 writer.emit('cls.def( "setCoefficient", defSetCoefficient( std::make_index_sequence< std::tuple_size<Coefficients>::value >() ) );')
                 writer.emit('cls.def( "setConstant", defSetConstant( std::make_index_sequence< std::tuple_size<typename LocalFunction::ConstantsTupleType>::value >() ) );')
-            writer.emit('module.def( "get", [] ( const std::string name, const GridPart &gridPart ) {')
-            writer.emit('        return new GFWrapper(name, gridPart);')
-            writer.emit('}, pybind11::keep_alive< 0, 2 >());')
+            writer.emit('module.def( "get", [] ( const std::string name, int order, const GridPart &gridPart ) {')
+            writer.emit('        return new GFWrapper(name, gridPart, order);')
+            writer.emit('}, pybind11::keep_alive< 0, 3 >());')
             writer.closePythonModule(pyname)
             writer.closeNameSpace('FemPy')
             writer.closeNameSpace('Dune')

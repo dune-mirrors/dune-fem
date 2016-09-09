@@ -19,17 +19,27 @@ def interpolate(grid, func, **kwargs):
     except:
         gl = 0
     if gl == 1:   # global function
-        return interpolate(grid, grid.globalGridFunction("gf", func), **kwargs)
+        order = kwargs.get("order",None)
+        if not order:
+            order = kwargs.get("polorder",None)
+            if not order:
+                raise ValueError("must provide order to interpolate when used with a global function")
+        return interpolate(grid, grid.globalGridFunction("gf", order, func), **kwargs)
     elif gl == 2: # local function
-        return interpolate(grid, grid.localGridFunction("gf", func), **kwargs)
+        order = kwargs.get("order",None)
+        if not order:
+            order = kwargs.get("polorder",None)
+            if not order:
+                raise ValueError("must provide order to interpolate when used with a local function")
+        return interpolate(grid, grid.localGridFunction("gf", order, func), **kwargs)
     elif gl == 0: # already a grid function
-      try:
-          R = func.dimRange
-      except:
-          R = len(func)
-      spaceName = kwargs.pop('space')
-      mySpace = space.create(spaceName, grid, dimrange=R, **kwargs)
-      return mySpace.interpolate(func, **kwargs)
+        try:
+            R = func.dimRange
+        except:
+            R = len(func)
+        spaceName = kwargs.pop('space')
+        mySpace = space.create(spaceName, grid, dimrange=R, **kwargs)
+        return mySpace.interpolate(func, **kwargs)
 
 def writeVTK(grid,  name, celldata=[], pointdata=[], cellvector=[], pointvector=[],
              number=None, subsampling=None):
@@ -52,18 +62,17 @@ def writeVTK(grid,  name, celldata=[], pointdata=[], cellvector=[], pointvector=
     return vtk
 
 def levelFunction(self):
-    return self.localGridFunction("level", gf.Levels())
+    return self.localGridFunction("level", 0, gf.Levels())
 def partitionFunction(self):
-    return self.localGridFunction("rank", gf.Partition(comm.rank))
-def globalGridFunction(grid, name, value):
-    return grid.globalGridFunction(name, value)
-def localGridFunction(grid, name, value):
-    return grid.localGridFunction(name, value)
+    return self.localGridFunction("rank", 0, gf.Partition(comm.rank))
+def globalGridFunction(grid, name, order, value):
+    return grid.globalGridFunction(name, order, value)
+def localGridFunction(grid, name, order, value):
+    return grid.localGridFunction(name, order, value)
 gridFunctions = { "globalExpr": globalGridFunction,
                   "localExpr": localGridFunction}
-          #"ufl":self.uflGridFunction}
 
-def function(self, name, *args, **kwargs):
+def function(self, name, order, *args, **kwargs):
     assert len(kwargs) == 1,\
            "Only one argument allowed to define grid function"
     for key, value in kwargs.items():
@@ -71,7 +80,7 @@ def function(self, name, *args, **kwargs):
            "Wrong parameter used to generate grid function."+\
            "Possible parameters are:\n"+\
            ", ".join( [param for param,_ in gridFunctions.items()] )
-        return gridFunctions[key](self, name, value, *args)
+        return gridFunctions[key](self, name, order, value, *args)
 
 myGenerator = generator.Generator("GridPart",
         "dune/fempy/py" , "Dune::FemPy")
