@@ -10,6 +10,10 @@ from .space            import myGenerator as spaceGenerator
 from .discretefunction import myGenerator as discretefunctionGenerator
 from .scheme           import myGenerator as schemeGenerator
 
+def ellipticModel(*args,**kwargs):
+    from ..models.elliptic import create
+    return create(*args,**kwargs)
+
 def rebuild():
     gridGenerator.force=gridpartGenerator.force=spaceGenerator.force=\
             discretefunctionGenerator.force=schemeGenerator.force = True
