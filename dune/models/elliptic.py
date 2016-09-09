@@ -386,6 +386,7 @@ def splitUFL2(u,du,d2u,tree):
 
     for index in tree.keys():
         q = DerivativeExtracter().visit(tree[index])
+        if q==0: continue
         for op in q:
             if op == u:
                 tree0[index] = tree0[index] +\
@@ -806,16 +807,21 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
             writer.emit('')
             writer.emit('model.def( "__init__", [] (ModelWrapper &instance, const pybind11::dict &coeff) {')
             writer.emit('  new (&instance) ModelWrapper( );')
-            writer.emit('  const int size = std::tuple_size<Coefficients>::value;')
-            writer.emit('  auto dispatch = defSetCoefficient( std::make_index_sequence<size>() );' )
-            writer.emit('  std::vector<bool> coeffSet(size,false);')
-            writer.emit('  for (auto item : coeff) {')
-            writer.emit('    int k = dispatch(instance, item.first, item.second); ')
-            writer.emit('    coeffSet[k] = true;')
-            writer.emit('  }')
-            writer.emit('  if ( !std::all_of(coeffSet.begin(),coeffSet.end(),[](bool v){return v;}) )')
-            writer.emit('    throw pybind11::key_error("need to set all coefficients during model construction");')
+            if model.coefficients:
+                writer.emit('  const int size = std::tuple_size<Coefficients>::value;')
+                writer.emit('  auto dispatch = defSetCoefficient( std::make_index_sequence<size>() );' )
+                writer.emit('  std::vector<bool> coeffSet(size,false);')
+                writer.emit('  for (auto item : coeff) {')
+                writer.emit('    int k = dispatch(instance, item.first, item.second); ')
+                writer.emit('    coeffSet[k] = true;')
+                writer.emit('  }')
+                writer.emit('  if ( !std::all_of(coeffSet.begin(),coeffSet.end(),[](bool v){return v;}) )')
+                writer.emit('    throw pybind11::key_error("need to set all coefficients during model construction");')
             writer.emit('  });')
+            if not model.coefficients:
+                writer.emit('model.def( "__init__", [] (ModelWrapper &instance) {')
+                writer.emit('  new (&instance) ModelWrapper( );')
+                writer.emit('  });')
             writer.emit('')
             writer.emit('module.def( "get", [] () { return new ModelWrapper(); } );')
             writer.closePythonModule(name)

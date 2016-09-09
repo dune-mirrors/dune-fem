@@ -210,7 +210,7 @@ def gridFunction(grid, code, coefficients=None):
             if base.coefficients:
                 writer.emit('cls.def( "setCoefficient", defSetCoefficient( std::make_index_sequence< std::tuple_size<Coefficients>::value >() ) );')
                 writer.emit('cls.def( "setConstant", defSetConstant( std::make_index_sequence< std::tuple_size<typename LocalFunction::ConstantsTupleType>::value >() ) );')
-            writer.emit('module.def( "get", [] ( const std::string name, int order, const GridPartType &gridPart ) {')
+            writer.emit('module.def( "get", [] ( const std::string name, int order, const GridPart &gridPart ) {')
             writer.emit('        return new GridFunction(name, LocalFunction(), gridPart, order );')
             writer.emit('}, pybind11::keep_alive< 0, 3 >());') # error here?
             writer.closePythonModule(pyname)

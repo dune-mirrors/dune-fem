@@ -355,6 +355,7 @@ class BaseModel:
         sourceWriter.emit('    if( k >= dispatch.size() )')
         sourceWriter.emit('      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );' )
         sourceWriter.emit('    dispatch[ k ]( model.impl(), l );')
+        sourceWriter.emit('    return k;')
         sourceWriter.emit('  };')
         sourceWriter.closeFunction()
 
@@ -373,5 +374,6 @@ class BaseModel:
         sourceWriter.emit('    if( k >= dispatch.size() )')
         sourceWriter.emit('      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );' )
         sourceWriter.emit('    dispatch[ k ]( model.impl(), o );')
+        sourceWriter.emit('    return k;')
         sourceWriter.emit('  };')
         sourceWriter.closeFunction()
