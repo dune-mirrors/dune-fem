@@ -66,8 +66,8 @@ namespace Dune
         virtual void restrictLocal ( const Element &father, const Element &child, bool initialize ) const override { impl().restrictLocal( father, child, initialize ); }
         virtual void prolongLocal ( const Element &father, const Element &child, bool initialize ) const override { impl().prolongLocal( father, child, initialize ); }
 
-        virtual void addToList ( Fem::CommunicationManagerList &commList ) override { /*impl().addToList( commList );*/ }
-        virtual void removeFromList ( Fem::CommunicationManagerList &commList ) override { /*impl().removeFromList( commList );*/ }
+        virtual void addToList ( Fem::CommunicationManagerList &commList ) override { impl().addToList( commList ); }
+        virtual void removeFromList ( Fem::CommunicationManagerList &commList ) override { impl().removeFromList( commList ); }
 
         virtual void addToLoadBalancer ( Fem::LoadBalancer< Grid > &lb ) override { impl().addToLoadBalancer( lb ); }
         virtual void addToLoadBalancer ( DiscreteFunctionManager< Grid > &lb ) override { impl().addToLoadBalancer( lb ); }
