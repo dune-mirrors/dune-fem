@@ -55,15 +55,15 @@ def levelFunction(self):
     return self.localGridFunction("level", gf.Levels())
 def partitionFunction(self):
     return self.localGridFunction("rank", gf.Partition(comm.rank))
-def globalGridFunction(grid,name,value):
-    return grid.globalGridFunction(name,value)
-def localGridFunction(grid,name,value):
-    return grid.localGridFunction(name,value)
+def globalGridFunction(grid, name, value):
+    return grid.globalGridFunction(name, value)
+def localGridFunction(grid, name, value):
+    return grid.localGridFunction(name, value)
 gridFunctions = { "globalExpr": globalGridFunction,
                   "localExpr": localGridFunction}
           #"ufl":self.uflGridFunction}
 
-def function(self, name, **kwargs):
+def function(self, name, *args, **kwargs):
     assert len(kwargs) == 1,\
            "Only one argument allowed to define grid function"
     for key, value in kwargs.items():
@@ -71,7 +71,7 @@ def function(self, name, **kwargs):
            "Wrong parameter used to generate grid function."+\
            "Possible parameters are:\n"+\
            ", ".join( [param for param,_ in gridFunctions.items()] )
-        return gridFunctions[key](self,name,value)
+        return gridFunctions[key](self, name, value, *args)
 
 myGenerator = generator.Generator("GridPart",
         "dune/fempy/py" , "Dune::FemPy")

@@ -14,8 +14,8 @@ from dune.source import BaseModel
 from dune.fem.gridpart import gridFunctions
 
 # method to add to gridpart.function call
-def generatedFunction(grid, name, code, coefficients=None):
-    gf = gridFunction(grid, code, coefficients=coefficients)
+def generatedFunction(grid, name, code, *args, coefficients=None):
+    gf = gridFunction(grid, code, *args, coefficients=coefficients)
     return gf.get(name, grid)
 
 gridFunctions.update( {"code" : generatedFunction} )
@@ -62,7 +62,6 @@ def dimRangeSplit(code):
     cpp_code = ''
     codeA = code.split("\n")
     if '@dimrange' in code or '@range' in code:
-        print('@dimrange specified')
         for c in codeA:
             if '@dimrange' in c or '@range' in c:
                 dimRange = int( c.split("=",1)[1] )
@@ -76,7 +75,7 @@ def dimRangeSplit(code):
         cpp_code = code
     return ( cpp_code, dimRange )
 
-def gridFunction(grid, code, coefficients=None):
+def gridFunction(grid, code, *args, coefficients=None):
     start_time = timeit.default_timer()
     compilePath = os.path.join(os.path.dirname(__file__), '../generated')
 
@@ -109,19 +108,44 @@ def gridFunction(grid, code, coefficients=None):
 
     base = BaseModel(dimRange, myCodeHash)
     if coefficients:
-        for coefficient in coefficients:
-            if coefficient.is_cellwise_constant():
-                field = None  # must be improved for 'complex'
-                dimR = 1 if coefficient.ufl_shape==() else coefficient.ufl_shape[0]
+        if type(coefficients) is set:
+            for coefficient in coefficients:
+                if coefficient.is_cellwise_constant():
+                    field = None  # must be improved for 'complex'
+                    dimR = 1 if coefficient.ufl_shape==() else coefficient.ufl_shape[0]
+                else:
+                    field = coefficient.ufl_function_space().ufl_element().field()
+                    dimR = coefficient.ufl_shape[0]
+                base.coefficients.append({ \
+                    'number' : coefficient.number, \
+                    'counter' : coefficient.count(), \
+                    'dimRange' : dimR,\
+                    'constant' : coefficient.is_cellwise_constant(),
+                    'field': field } )
+    elif args:
+        assert len(args) == 1,\
+           "arg needs to be a single dict object."
+        for arg in args:
+            if type(arg) is dict:
+                coefNum = 0
+                constNum = 0
+                for key, value in arg.items():
+                    if value[1] == True:
+                        num = constNum
+                        constNum += 1
+                        field = None
+                    else:
+                        num = coefNum
+                        coefNum += 1
+                        field = 'double'
+                    base.coefficients.append({ \
+                        'number' : num, \
+                        'dimRange' : value[0], \
+                        'constant' : value[1], \
+                        'field' : field } )
             else:
-                field = coefficient.ufl_function_space().ufl_element().field()
-                dimR = coefficient.ufl_shape[0]
-            base.coefficients.append({ \
-                'number' : coefficient.number, \
-                'counter' : coefficient.count(), \
-                'dimRange' : dimR,\
-                'constant' : coefficient.is_cellwise_constant(),
-                'field': field } )
+                print('Error: arg needs to be dict object containing coefficients.')
+                exit(1)
 
     if comm.rank == 0:
         if not os.path.isfile(os.path.join(compilePath, pyname + '.so')):
@@ -138,17 +162,7 @@ def gridFunction(grid, code, coefficients=None):
             writer.emit('')
 
             base.pre(writer, name=locname, targs=(['class Range']), bases=(["Dune::Fem::LocalFunctionAdapterHasInitialize"]))
-
-            if base.coefficients:
-                writer.typedef(locname + '< GridPart, RangeType, ' + ', '.join(\
-                [('Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
-                    'Dune::FieldVector< ' +\
-                    SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
-                    str(coefficient['dimRange']) + ' > >') \
-                    for coefficient in base.coefficients if not coefficient["constant"]])\
-                  + ' >', 'LocalFunction')
-            else:
-                writer.typedef(locname + '< GridPart, RangeType >', 'LocalFunction')
+            writer.emit('')
             writer.typedef('typename EntityType::Geometry::LocalCoordinate', 'LocalCoordinateType')
 
             writer.openConstMethod('void evaluate', args=['const PointType &x', 'RangeType &value'], targs=['class PointType'],implemented=eval)
@@ -174,8 +188,6 @@ def gridFunction(grid, code, coefficients=None):
                     writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
                 writer.emit(hess.split("\n"))
             writer.closeConstMethod()
-
-            writer.emit('LocalFunction &impl() { return *this; }')
 
             base.post(writer, name=locname, targs=(['class Range']))
 
@@ -217,7 +229,6 @@ def gridFunction(grid, code, coefficients=None):
             writer.emit('// export function class')
             writer.emit('')
             writer.emit('pybind11::class_< GFWrapper > cls = registerGridFunction< GFWrapper >( module, "GFWrapper" );')
-            #writer.emit('pybind11::implicitly_convertible< GFWrapper, GridFunction >();') # not sure if needed in some form?
             if base.coefficients:
                 writer.emit('cls.def( "setCoefficient", defSetCoefficient( std::make_index_sequence< std::tuple_size<Coefficients>::value >() ) );')
                 writer.emit('cls.def( "setConstant", defSetConstant( std::make_index_sequence< std::tuple_size<typename LocalFunction::ConstantsTupleType>::value >() ) );')
