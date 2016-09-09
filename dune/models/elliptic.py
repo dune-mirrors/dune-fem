@@ -10,6 +10,7 @@ import sys
 import timeit
 import types
 from dune import comm
+from dune.ufl import GridCoefficient
 from dune.source import SourceWriter
 from dune.source import BaseModel
 
@@ -837,5 +838,13 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
         comm.barrier()
         return importlib.import_module("dune.generated." + name)
 
-def create(grid, form,coeff={}):
-    return importModel(grid, compileUFL(form)).Model(coeff)
+def create(grid, equation, dirichlet = {}, exact = None, tempVars=True, coefficients={}):
+    form = equation.lhs - equation.rhs
+    uflCoeff = set(form.coefficients())
+    for bndId in dirichlet:
+        for expr in dirichlet[bndId]:
+            _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
+            uflCoeff |= set(c)
+    fullCoeff = {c:c.gf for c in uflCoeff if isinstance(c,GridCoefficient)}
+    fullCoeff.update(coefficients)
+    return importModel(grid, compileUFL(equation,dirichlet,exact,tempVars)).Model(fullCoeff)
