@@ -105,6 +105,7 @@ def gridFunction(grid, code, coefficients=None):
     myCodeHash = hashlib.md5(cpp_code.encode('utf-8')).hexdigest()
     locname = 'LocalFunction_' + myCodeHash + '_' + grid._typeHash
     pyname = 'localfunction_' + myCodeHash + '_' + grid._typeHash
+    wrappername = 'GridFunction_' + myCodeHash + '_' + grid._typeHash
 
     base = BaseModel(dimRange, myCodeHash)
     if coefficients:
@@ -197,8 +198,17 @@ def gridFunction(grid, code, coefficients=None):
                 writer.typedef(locname + '< GridPart, RangeType >', 'LocalFunction')
             writer.typedef('Dune::Fem::LocalFunctionAdapter< LocalFunction >', 'GridFunction')
 
+            writer.openStruct(wrappername, targs=(['class GridPart'] + ['class Range']), bases=(['GridFunction']))
+            writer.typedef('GridFunction', 'BaseType')
+            writer.emit(wrappername + '( const std::string name, const GridPart &gridPart, int order ) :')
+            writer.emit('    BaseType(name, localFunctionImpl_, gridPart, order) {}')
+            writer.emit('LocalFunction& impl() { return localFunctionImpl_; }')
+            writer.emit('LocalFunction localFunctionImpl_;')
+            writer.closeStruct()
+            writer.typedef(wrappername + '< GridPart, RangeType >', 'GFWrapper')
+
             if base.coefficients:
-                base.setCoef(writer, modelClass='LocalFunction', wrapperClass='LocalFunction')
+                base.setCoef(writer, modelClass='LocalFunction', wrapperClass='GFWrapper')
 
             writer.openNameSpace('Dune')
             writer.openNameSpace('FemPy')
@@ -206,13 +216,14 @@ def gridFunction(grid, code, coefficients=None):
             writer.emit('')
             writer.emit('// export function class')
             writer.emit('')
-            writer.emit('pybind11::class_< GridFunction > cls = registerGridFunction< GridFunction >( module, "GridFunction" );')
+            writer.emit('pybind11::class_< GFWrapper > cls = registerGridFunction< GFWrapper >( module, "GFWrapper" );')
+            #writer.emit('pybind11::implicitly_convertible< GFWrapper, GridFunction >();') # not sure if needed in some form?
             if base.coefficients:
                 writer.emit('cls.def( "setCoefficient", defSetCoefficient( std::make_index_sequence< std::tuple_size<Coefficients>::value >() ) );')
                 writer.emit('cls.def( "setConstant", defSetConstant( std::make_index_sequence< std::tuple_size<typename LocalFunction::ConstantsTupleType>::value >() ) );')
             writer.emit('module.def( "get", [] ( const std::string name, int order, const GridPart &gridPart ) {')
-            writer.emit('        return new GridFunction(name, LocalFunction(), gridPart, order );')
-            writer.emit('}, pybind11::keep_alive< 0, 3 >());') # error here?
+            writer.emit('        return new GFWrapper(name, gridPart, order);')
+            writer.emit('}, pybind11::keep_alive< 0, 3 >());')
             writer.closePythonModule(pyname)
             writer.closeNameSpace('FemPy')
             writer.closeNameSpace('Dune')
