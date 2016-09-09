@@ -21,7 +21,6 @@ PYBIND11_PLUGIN( femmpi )
     if( !pybind11::already_registered< Dune::Fem::MPIManager::CollectiveCommunication >() )
       DUNE_THROW( Dune::Exception, "CollectiveCommunication not registered, yet" );
 
-    typedef Dune::Fem::MPIManager::CollectiveCommunication Comm;
     module.attr( "comm" ) = pybind11::cast( Dune::Fem::MPIManager::comm() );
   }
   catch ( const std::exception &e )
