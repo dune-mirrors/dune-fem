@@ -151,13 +151,13 @@ def gridFunction(grid, code, coefficients=None):
             base.pre(writer, name=locname, targs=(['class Range']), bases=(["Dune::Fem::LocalFunctionAdapterHasInitialize"]))
 
             if base.coefficients:
-                writer.typedef(locname + '< GridPart, RangeType, ' + ', '.join(\
-                [('Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
-                    'Dune::FieldVector< ' +\
-                    SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
-                    str(coefficient['dimRange']) + ' > >') \
-                    for coefficient in base.coefficients if not coefficient["constant"]])\
-                  + ' >', 'LocalFunction')
+                writer.typedef(locname + '< GridPart, RangeType ' +\
+                ''.join(', Dune::FemPy::VirtualizedLocalFunction< GridPart, '+\
+                     'Dune::FieldVector< ' +\
+                      SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
+                      str(coefficient['dimRange']) + ' > > ' \
+                      for coefficient in base.coefficients if not coefficient["constant"]) +\
+                   ' >', 'LocalFunction')
             else:
                 writer.typedef(locname + '< GridPart, RangeType >', 'LocalFunction')
             writer.typedef('typename EntityType::Geometry::LocalCoordinate', 'LocalCoordinateType')
@@ -198,8 +198,8 @@ def gridFunction(grid, code, coefficients=None):
             writer.typedef('typename FunctionSpaceType::RangeType', 'RangeType')
 
             if base.coefficients:
-                writer.typedef(locname + '< GridPart, RangeType, ' + ', '.join(\
-                [('Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
+                writer.typedef(locname + '< GridPart, RangeType ' + ''.join(\
+                [(', Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
                     'Dune::FieldVector< ' +\
                     SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
                     str(coefficient['dimRange']) + ' > >') \

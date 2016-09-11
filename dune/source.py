@@ -411,16 +411,5 @@ class BaseModel:
         sourceWriter.emit('  },')
         if constrKeepAlive:
             sourceWriter.emit(constrKeepAlive + ',')
-        sourceWriter.emit(', '.join('pybind11::arg("' + i[0] + '")' for i in constrArgs) + ',' +\
-                            'pybind11::arg("coefficients") );')
-        if not self.coefficients:
-            sourceWriter.emit('cls.def( "__init__", [] (' + wrapperClass + ' &instance, '+\
-                    ', '.join( i[1]+' '+i[0] for i in constrArgs) +\
-                    ') {')
-            sourceWriter.emit('  new (&instance) ' + wrapperClass + '('+\
-                    ', '.join(i[0] for i in constrArgs) +\
-                    ');')
-            if constrKeepAlive:
-                sourceWriter.emit('  },' + constrKeepAlive + ');')
-            else:
-                sourceWriter.emit('  } );')
+        sourceWriter.emit(''.join('pybind11::arg("' + i[0] + '"), ' for i in constrArgs) +\
+                'pybind11::arg("coefficients")=pybind11::dict() );')
