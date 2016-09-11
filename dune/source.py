@@ -263,9 +263,9 @@ class BaseModel:
 
         if self.coefficients:
             sourceWriter.typedef('std::tuple< ' + ', '.join(\
-                    [('Dune::FieldVector< ' +\
+                    [('std::shared_ptr<Dune::FieldVector< ' +\
                     SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
-                    str(coefficient['dimRange']) + ' >')\
+                    str(coefficient['dimRange']) + ' >>')\
                     for coefficient in self.coefficients if coefficient['constant']]) + ' >',\
                     'ConstantsTupleType;')
             sourceWriter.typedef('std::tuple< ' + ', '.join(\
@@ -276,7 +276,7 @@ class BaseModel:
                     for coefficient in self.coefficients if not coefficient['constant']]) + ' >',\
                     'CoefficientFunctionSpaceTupleType')
 
-            sourceWriter.typedef('typename std::tuple_element_t<i,ConstantsTupleType>', 'ConstantsRangeType', targs=['std::size_t i'])
+            sourceWriter.typedef('typename std::tuple_element_t<i,ConstantsTupleType>::element_type', 'ConstantsRangeType', targs=['std::size_t i'])
             sourceWriter.emit('static const std::size_t numCoefficients = std::tuple_size< CoefficientFunctionSpaceTupleType >::value;')
             sourceWriter.typedef('typename std::tuple_element< i, CoefficientFunctionSpaceTupleType >::type', 'CoefficientFunctionSpaceType', targs=['std::size_t i'] )
             sourceWriter.typedef('typename CoefficientFunctionSpaceType< i >::RangeType', 'CoefficientRangeType', targs=['std::size_t i'])
@@ -288,8 +288,14 @@ class BaseModel:
 
         sourceWriter.emit('')
         sourceWriter.typedef('typename std::tuple_element< i, std::tuple< Coefficients... > >::type', 'CoefficientType', targs=['std::size_t i'])
-        sourceWriter.typedef('typename std::tuple_element< i, ConstantsTupleType >::type', 'ConstantsType', targs=['std::size_t i'])
+        sourceWriter.typedef('typename std::tuple_element< i, ConstantsTupleType >::type::element_type', 'ConstantsType', targs=['std::size_t i'])
 
+        sourceWriter.openMethod(name, args=[])
+        sourceWriter.emit('constructConstants( std::make_index_sequence< std::tuple_size<ConstantsTupleType>::value >() );' )
+        sourceWriter.closeMethod()
+        sourceWriter.emit('')
+
+        sourceWriter.emit('')
         sourceWriter.openConstMethod('bool init', args=['const EntityType &entity'])
         sourceWriter.emit('entity_ = &entity;')
         sourceWriter.emit('initCoefficients( std::make_index_sequence< numCoefficients >() );')
@@ -307,10 +313,10 @@ class BaseModel:
 
     def post(self, sourceWriter, name='Model', targs=[]):
         sourceWriter.openConstMethod('const ConstantsType< i > &constant', targs=['std::size_t i'])
-        sourceWriter.emit('return std::get< i >( constants_ );')
+        sourceWriter.emit('return *( std::get< i >( constants_ ) );')
         sourceWriter.closeConstMethod()
         sourceWriter.openMethod('ConstantsType< i > &constant', targs=['std::size_t i'])
-        sourceWriter.emit('return std::get< i >( constants_ );')
+        sourceWriter.emit('return *( std::get< i >( constants_ ) );')
         sourceWriter.closeMethod()
 
         sourceWriter.openConstMethod('const CoefficientType< i > &coefficient', targs=['std::size_t i'])
@@ -324,6 +330,10 @@ class BaseModel:
         sourceWriter.openConstMethod('void initCoefficients', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
         sourceWriter.emit('std::ignore = std::make_tuple( (std::get< i >( coefficients_ ).init( entity() ), i)... );')
         sourceWriter.closeConstMethod()
+        sourceWriter.openMethod('void constructConstants', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
+        sourceWriter.emit('std::ignore = std::make_tuple( (std::get< i >( constants_ ) = std::make_shared<ConstantsType< i >>(), i)... );')
+        sourceWriter.closeMethod()
+        sourceWriter.emit('')
         sourceWriter.emit('')
         sourceWriter.emit('mutable const EntityType *entity_ = nullptr;')
         sourceWriter.emit('mutable std::tuple< Coefficients... > coefficients_;')
@@ -377,3 +387,40 @@ class BaseModel:
         sourceWriter.emit('    return k;')
         sourceWriter.emit('  };')
         sourceWriter.closeFunction()
+    def export(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper', constrArgs=(), constrKeepAlive=None):
+        if self.coefficients:
+            # sourceWriter.emit('cls.def( "setCoefficient", defSetCoefficient( std::make_index_sequence< std::tuple_size<Coefficients>::value >() ) );')
+            sourceWriter.emit('cls.def( "setConstant", defSetConstant( std::make_index_sequence< std::tuple_size <typename '+ modelClass + '::ConstantsTupleType>::value >() ) );')
+        sourceWriter.emit('')
+        sourceWriter.emit('cls.def( "__init__", [] (' + wrapperClass + ' &instance, '+\
+                ' '.join( i[1]+' '+i[0]+',' for i in constrArgs) +\
+                'const pybind11::dict &coeff) {')
+        sourceWriter.emit('  new (&instance) ' + wrapperClass + '('+\
+                ', '.join(i[0] for i in constrArgs) +\
+                ');')
+        if self.coefficients:
+            sourceWriter.emit('  const int size = std::tuple_size<Coefficients>::value;')
+            sourceWriter.emit('  auto dispatch = defSetCoefficient( std::make_index_sequence<size>() );' )
+            sourceWriter.emit('  std::vector<bool> coeffSet(size,false);')
+            sourceWriter.emit('  for (auto item : coeff) {')
+            sourceWriter.emit('    int k = dispatch(instance, item.first, item.second); ')
+            sourceWriter.emit('    coeffSet[k] = true;')
+            sourceWriter.emit('  }')
+            sourceWriter.emit('  if ( !std::all_of(coeffSet.begin(),coeffSet.end(),[](bool v){return v;}) )')
+            sourceWriter.emit('    throw pybind11::key_error("need to set all coefficients during construction");')
+        sourceWriter.emit('  },')
+        if constrKeepAlive:
+            sourceWriter.emit(constrKeepAlive + ',')
+        sourceWriter.emit(', '.join('pybind11::arg("' + i[0] + '")' for i in constrArgs) + ',' +\
+                            'pybind11::arg("coefficients") );')
+        if not self.coefficients:
+            sourceWriter.emit('cls.def( "__init__", [] (' + wrapperClass + ' &instance, '+\
+                    ', '.join( i[1]+' '+i[0] for i in constrArgs) +\
+                    ') {')
+            sourceWriter.emit('  new (&instance) ' + wrapperClass + '('+\
+                    ', '.join(i[0] for i in constrArgs) +\
+                    ');')
+            if constrKeepAlive:
+                sourceWriter.emit('  },' + constrKeepAlive + ');')
+            else:
+                sourceWriter.emit('  } );')

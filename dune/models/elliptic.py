@@ -798,33 +798,11 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
             writer.emit('  pybind11::class_< ModelBase >( module, "ModelBase" );')
             writer.emit('')
             writer.emit('// actual wrapper class for model derived from abstract base')
-            writer.emit('pybind11::class_< ModelWrapper > model( module, "Model", pybind11::base< ModelBase >() );')
-            writer.emit('model.def_property_readonly( "dimRange", [] ( ModelWrapper & ) { return ' + str(model.dimRange) + '; } );')
-            if model.coefficients:
-                # index_sequence_for always gives a one element sequence (0)
-                # writer.emit('model.def( "setCoefficient", defSetCoefficient( std::index_sequence_for< Coefficients >() ) );')
-                writer.emit('model.def( "setCoefficient", defSetCoefficient( std::make_index_sequence< std::tuple_size<Coefficients>::value >() ) );')
-                writer.emit('model.def( "setConstant", defSetConstant( std::make_index_sequence< std::tuple_size<typename Model::ConstantsTupleType>::value >() ) );')
+            writer.emit('pybind11::class_< ModelWrapper > cls( module, "Model", pybind11::base< ModelBase >() );')
+            writer.emit('cls.def_property_readonly( "dimRange", [] ( ModelWrapper & ) { return ' + str(model.dimRange) + '; } );')
             writer.emit('')
-            writer.emit('model.def( "__init__", [] (ModelWrapper &instance, const pybind11::dict &coeff) {')
-            writer.emit('  new (&instance) ModelWrapper( );')
-            if model.coefficients:
-                writer.emit('  const int size = std::tuple_size<Coefficients>::value;')
-                writer.emit('  auto dispatch = defSetCoefficient( std::make_index_sequence<size>() );' )
-                writer.emit('  std::vector<bool> coeffSet(size,false);')
-                writer.emit('  for (auto item : coeff) {')
-                writer.emit('    int k = dispatch(instance, item.first, item.second); ')
-                writer.emit('    coeffSet[k] = true;')
-                writer.emit('  }')
-                writer.emit('  if ( !std::all_of(coeffSet.begin(),coeffSet.end(),[](bool v){return v;}) )')
-                writer.emit('    throw pybind11::key_error("need to set all coefficients during model construction");')
-            writer.emit('  });')
-            if not model.coefficients:
-                writer.emit('model.def( "__init__", [] (ModelWrapper &instance) {')
-                writer.emit('  new (&instance) ModelWrapper( );')
-                writer.emit('  });')
+            model.export(writer, 'Model', 'ModelWrapper')
             writer.emit('')
-            writer.emit('module.def( "get", [] () { return new ModelWrapper(); } );')
             writer.closePythonModule(name)
 
             writer.close()
@@ -839,12 +817,20 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
         return importlib.import_module("dune.generated." + name)
 
 def create(grid, equation, dirichlet = {}, exact = None, tempVars=True, coefficients={}):
+    Model = importModel(grid, compileUFL(equation,dirichlet,exact,tempVars)).Model
+    class ExtendedModel(Model):
+        setCoeffs = {}
+        def __init__(self,*args,**kwargs):
+            coefficients = kwargs.pop("coefficients",{})
+            fullCoeff = ExtendedModel.setCoeffs
+            fullCoeff.update(coefficients)
+            Model.__init__(self, coefficients=fullCoeff)
+
     form = equation.lhs - equation.rhs
     uflCoeff = set(form.coefficients())
     for bndId in dirichlet:
         for expr in dirichlet[bndId]:
             _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
             uflCoeff |= set(c)
-    fullCoeff = {c:c.gf for c in uflCoeff if isinstance(c,GridCoefficient)}
-    fullCoeff.update(coefficients)
-    return importModel(grid, compileUFL(equation,dirichlet,exact,tempVars)).Model(fullCoeff)
+    ExtendedModel.setCoeffs = {c:c.gf for c in uflCoeff if isinstance(c,GridCoefficient)}
+    return ExtendedModel

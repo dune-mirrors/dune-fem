@@ -14,15 +14,18 @@ from dune.source import BaseModel
 from dune.fem.gridpart import gridFunctions
 
 # method to add to gridpart.function call
-def generatedFunction(grid, name, order, code, coefficients=None):
-    gf = gridFunction(grid, code, coefficients=coefficients)
-    return gf.get(name, order, grid)
+def generatedFunction(grid, name, order, code, *args, **kwargs):
+    coefficients = kwargs.pop("coefficients",{})
+    ######## A lot to do here....
+    Gf = gridFunction(grid, code, coefficients).GFWrapper
+    return Gf(name,order,grid,*args,**kwargs)
 
 gridFunctions.update( {"code" : generatedFunction} )
 
-def UFLFunction(grid, name, order, expr):
+def UFLFunction(grid, name, order, expr, *args, **kwargs):
     import ufl
     import dune.models.elliptic as generate
+    from dune.ufl import GridCoefficient
     R = len(expr)
     D = grid.dimension
     try:
@@ -52,7 +55,15 @@ def UFLFunction(grid, name, order, expr):
     jac = ufl.as_matrix(jac)
     code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R, D), jac), False))
     jacobian = code.replace("result", "value")
-    return generatedFunction(grid, name, order, {"evaluate" : evaluate, "jacobian" : jacobian}, coefficients=coef)
+
+    code = {"evaluate" : evaluate, "jacobian" : jacobian}
+    Gf = gridFunction(grid, code, coef).GFWrapper
+
+    coefficients = kwargs.pop("coefficients",{})
+    fullCoeff = {c:c.gf for c in coef if isinstance(c,GridCoefficient)}
+    fullCoeff.update(coefficients)
+    kwargs["coefficients"] = fullCoeff
+    return Gf(name,order,grid,*args,**kwargs)
 
 gridFunctions.update( {"ufl" : UFLFunction} )
 
@@ -200,7 +211,7 @@ def gridFunction(grid, code, coefficients=None):
 
             writer.openStruct(wrappername, targs=(['class GridPart'] + ['class Range']), bases=(['GridFunction']))
             writer.typedef('GridFunction', 'BaseType')
-            writer.emit(wrappername + '( const std::string name, const GridPart &gridPart, int order ) :')
+            writer.emit(wrappername + '( const std::string name, int order, const GridPart &gridPart ) :')
             writer.emit('    BaseType(name, localFunctionImpl_, gridPart, order) {}')
             writer.emit('LocalFunction& impl() { return localFunctionImpl_; }')
             writer.emit('LocalFunction localFunctionImpl_;')
@@ -210,23 +221,20 @@ def gridFunction(grid, code, coefficients=None):
             if base.coefficients:
                 base.setCoef(writer, modelClass='LocalFunction', wrapperClass='GFWrapper')
 
-            writer.openNameSpace('Dune')
-            writer.openNameSpace('FemPy')
             writer.openPythonModule(pyname)
             writer.emit('')
             writer.emit('// export function class')
             writer.emit('')
-            writer.emit('pybind11::class_< GFWrapper > cls = registerGridFunction< GFWrapper >( module, "GFWrapper" );')
-            #writer.emit('pybind11::implicitly_convertible< GFWrapper, GridFunction >();') # not sure if needed in some form?
+            writer.emit('pybind11::class_< GFWrapper > cls = Dune::FemPy::registerGridFunction< GFWrapper >( module, "GFWrapper" );')
+            writer.emit('')
+            base.export(writer, 'LocalFunction', 'GFWrapper', constrArgs = (('name','std::string'),('order','int'),('gridPart','GridPart&')), constrKeepAlive='pybind11::keep_alive<0,3>()' )
+            writer.emit('')
             if base.coefficients:
-                writer.emit('cls.def( "setCoefficient", defSetCoefficient( std::make_index_sequence< std::tuple_size<Coefficients>::value >() ) );')
                 writer.emit('cls.def( "setConstant", defSetConstant( std::make_index_sequence< std::tuple_size<typename LocalFunction::ConstantsTupleType>::value >() ) );')
-            writer.emit('module.def( "get", [] ( const std::string name, int order, const GridPart &gridPart ) {')
-            writer.emit('        return new GFWrapper(name, gridPart, order);')
-            writer.emit('}, pybind11::keep_alive< 0, 3 >());')
+            # writer.emit('module.def( "get", [] ( const std::string name, int order, const GridPart &gridPart ) {')
+            # writer.emit('        return new GFWrapper(name, gridPart, order);')
+            # writer.emit('}, pybind11::keep_alive< 0, 3 >());')
             writer.closePythonModule(pyname)
-            writer.closeNameSpace('FemPy')
-            writer.closeNameSpace('Dune')
 
             writer.close()
 
