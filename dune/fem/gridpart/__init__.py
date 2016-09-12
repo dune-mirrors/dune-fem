@@ -5,9 +5,9 @@ import sys
 from types import ModuleType
 
 import dune.common as common
-from ..generator import generator
-from . import space
-from . import function as gf
+from ...generator import generator
+from .. import space
+from .. import function as gf
 from dune.fem import comm
 
 import inspect
