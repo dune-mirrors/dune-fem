@@ -112,13 +112,14 @@ def codeSplitter(code, coefficients):
         dimRange = max( [int(c.split("[")[1].split("]")[0]) for c in codeC] ) + 1
         cpp_code = code
     for coef in coefficients:
-        gfname = '@gf:' + coef['name']
-        cnum = 'c' + str(coef['number'])
-        if gfname in cpp_code:
-            cpp_code = cpp_code.replace(gfname, cnum)
-            cpp_code = 'CoefficientRangeType< 0 > ' + cnum + ';\n' \
-                       + 'coefficient< ' + str(coef['number']) + ' >().evaluate( x, ' \
-                       + cnum + ' );' + cpp_code
+        if 'name' in coef:
+            gfname = '@gf:' + coef['name']
+            cnum = 'c' + str(coef['number'])
+            if gfname in cpp_code:
+                cpp_code = cpp_code.replace(gfname, cnum)
+                cpp_code = 'CoefficientRangeType< 0 > ' + cnum + ';\n' \
+                           + 'coefficient< ' + str(coef['number']) + ' >().evaluate( x, ' \
+                           + cnum + ' );' + cpp_code
     return ( cpp_code, dimRange )
 
 def gridFunction(grid, code, coefficients): # *args, coefficients=None):
