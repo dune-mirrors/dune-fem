@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-
 import ufl
 
 # cell
@@ -33,3 +32,14 @@ class Space(ufl.VectorElement):
         self._field = field
     def field(self):
         return self._field
+
+# Coefficient
+# -----------
+
+class GridCoefficient(ufl.Coefficient):
+    def __init__(self,gf):
+        grid = gf.grid
+        dimRange = gf.dimRange
+        uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange)
+        ufl.Coefficient.__init__(self,uflSpace)
+        self.gf = gf

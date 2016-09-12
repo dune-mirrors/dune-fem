@@ -14,15 +14,33 @@ from dune.source import BaseModel
 from dune.fem.gridpart import gridFunctions
 
 # method to add to gridpart.function call
-def generatedFunction(grid, name, order, code, *args, coefficients=None):
-    gf = gridFunction(grid, code, *args, coefficients=coefficients)
-    return gf.get(name, order, grid)
+def generatedFunction(grid, name, order, code, *args, **kwargs):
+    class Dummy(object):
+        def __init__(self,number):
+            self.number = number
+    coef = kwargs.pop("coefficients",{})
+    coefficients = []
+    setCoefficients  = {}
+    number = 0
+    for key,val in coef.items():
+      coefficients.append({ \
+                  'name' : key, \
+                  'number' : number, \
+                  'dimRange' : val.dimRange, \
+                  'constant' : False, \
+                  'field': "double" } )
+      setCoefficients[Dummy(number)] = val
+      number += 1
+    ######## A lot to do here....
+    Gf = gridFunction(grid, code, coefficients).GFWrapper
+    return Gf(name,order,grid,setCoefficients)
 
 gridFunctions.update( {"code" : generatedFunction} )
 
-def UFLFunction(grid, name, order, expr):
+def UFLFunction(grid, name, order, expr, *args, **kwargs):
     import ufl
     import dune.models.elliptic as generate
+    from dune.ufl import GridCoefficient
     R = len(expr)
     D = grid.dimension
     try:
@@ -32,14 +50,26 @@ def UFLFunction(grid, name, order, expr):
         coef = None
     idxConst = 0
     idxCoeff = 0
+    coefficients = []
     for coefficient in coef:
         if coefficient.is_cellwise_constant():
             idx = idxConst
             idxConst += 1
+            field = None  # must be improved for 'complex'
+            dimR = 1 if coefficient.ufl_shape==() else coefficient.ufl_shape[0]
         else:
             idx = idxCoeff
             idxCoeff += 1
+            field = coefficient.ufl_function_space().ufl_element().field()
+            dimR = coefficient.ufl_shape[0]
         setattr(coefficient, "number", idx)
+        coefficients.append({ \
+                'number' : coefficient.number, \
+                'counter' : coefficient.count(), \
+                'dimRange' : dimR,\
+                'constant' : coefficient.is_cellwise_constant(),
+                'field': field } )
+
     code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R, ), expr), False))
     evaluate = code.replace("result", "value")
     jac = []
@@ -52,7 +82,15 @@ def UFLFunction(grid, name, order, expr):
     jac = ufl.as_matrix(jac)
     code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R, D), jac), False))
     jacobian = code.replace("result", "value")
-    return generatedFunction(grid, name, order, {"evaluate" : evaluate, "jacobian" : jacobian}, coefficients=coef)
+
+    code = {"evaluate" : evaluate, "jacobian" : jacobian}
+    Gf = gridFunction(grid, code, coefficients).GFWrapper
+
+    coefficients = kwargs.pop("coefficients",{})
+    fullCoeff = {c:c.gf for c in coef if isinstance(c,GridCoefficient)}
+    fullCoeff.update(coefficients)
+    kwargs["coefficients"] = fullCoeff
+    return Gf(name,order,grid,*args,**kwargs)
 
 gridFunctions.update( {"ufl" : UFLFunction} )
 
@@ -75,7 +113,7 @@ def dimRangeSplit(code):
         cpp_code = code
     return ( cpp_code, dimRange )
 
-def gridFunction(grid, code, *args, coefficients=None):
+def gridFunction(grid, code, coefficients): # *args, coefficients=None):
     start_time = timeit.default_timer()
     compilePath = os.path.join(os.path.dirname(__file__), '../generated')
 
@@ -107,22 +145,8 @@ def gridFunction(grid, code, *args, coefficients=None):
     wrappername = 'GridFunction_' + myCodeHash + '_' + grid._typeHash
 
     base = BaseModel(dimRange, myCodeHash)
-    if coefficients:
-        if type(coefficients) is set:
-            for coefficient in coefficients:
-                if coefficient.is_cellwise_constant():
-                    field = None  # must be improved for 'complex'
-                    dimR = 1 if coefficient.ufl_shape==() else coefficient.ufl_shape[0]
-                else:
-                    field = coefficient.ufl_function_space().ufl_element().field()
-                    dimR = coefficient.ufl_shape[0]
-                base.coefficients.append({ \
-                    'number' : coefficient.number, \
-                    'counter' : coefficient.count(), \
-                    'dimRange' : dimR,\
-                    'constant' : coefficient.is_cellwise_constant(),
-                    'field': field } )
-    elif args:
+    base.coefficients = coefficients
+    if 0:
         assert len(args) == 1,\
            "arg needs to be a single dict object."
         for arg in args:
@@ -162,7 +186,6 @@ def gridFunction(grid, code, *args, coefficients=None):
             writer.emit('')
 
             base.pre(writer, name=locname, targs=(['class Range']), bases=(["Dune::Fem::LocalFunctionAdapterHasInitialize"]))
-            writer.emit('')
             writer.typedef('typename EntityType::Geometry::LocalCoordinate', 'LocalCoordinateType')
 
             writer.openConstMethod('void evaluate', args=['const PointType &x', 'RangeType &value'], targs=['class PointType'],implemented=eval)
@@ -199,8 +222,8 @@ def gridFunction(grid, code, *args, coefficients=None):
             writer.typedef('typename FunctionSpaceType::RangeType', 'RangeType')
 
             if base.coefficients:
-                writer.typedef(locname + '< GridPart, RangeType, ' + ', '.join(\
-                [('Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
+                writer.typedef(locname + '< GridPart, RangeType ' + ''.join(\
+                [(', Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
                     'Dune::FieldVector< ' +\
                     SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
                     str(coefficient['dimRange']) + ' > >') \
@@ -212,7 +235,7 @@ def gridFunction(grid, code, *args, coefficients=None):
 
             writer.openStruct(wrappername, targs=(['class GridPart'] + ['class Range']), bases=(['GridFunction']))
             writer.typedef('GridFunction', 'BaseType')
-            writer.emit(wrappername + '( const std::string name, const GridPart &gridPart, int order ) :')
+            writer.emit(wrappername + '( const std::string name, int order, const GridPart &gridPart ) :')
             writer.emit('    BaseType(name, localFunctionImpl_, gridPart, order) {}')
             writer.emit('LocalFunction& impl() { return localFunctionImpl_; }')
             writer.emit('LocalFunction localFunctionImpl_;')
@@ -222,22 +245,15 @@ def gridFunction(grid, code, *args, coefficients=None):
             if base.coefficients:
                 base.setCoef(writer, modelClass='LocalFunction', wrapperClass='GFWrapper')
 
-            writer.openNameSpace('Dune')
-            writer.openNameSpace('FemPy')
             writer.openPythonModule(pyname)
             writer.emit('')
             writer.emit('// export function class')
             writer.emit('')
-            writer.emit('pybind11::class_< GFWrapper > cls = registerGridFunction< GFWrapper >( module, "GFWrapper" );')
-            if base.coefficients:
-                writer.emit('cls.def( "setCoefficient", defSetCoefficient( std::make_index_sequence< std::tuple_size<Coefficients>::value >() ) );')
-                writer.emit('cls.def( "setConstant", defSetConstant( std::make_index_sequence< std::tuple_size<typename LocalFunction::ConstantsTupleType>::value >() ) );')
-            writer.emit('module.def( "get", [] ( const std::string name, int order, const GridPart &gridPart ) {')
-            writer.emit('        return new GFWrapper(name, gridPart, order);')
-            writer.emit('}, pybind11::keep_alive< 0, 3 >());')
+            writer.emit('pybind11::class_< GFWrapper > cls = Dune::FemPy::registerGridFunction< GFWrapper >( module, "GFWrapper" );')
+            writer.emit('')
+            base.export(writer, 'LocalFunction', 'GFWrapper', constrArgs = (('name','std::string'),('order','int'),('gridPart','GridPart&')), constrKeepAlive='pybind11::keep_alive<0,3>()' )
+            writer.emit('')
             writer.closePythonModule(pyname)
-            writer.closeNameSpace('FemPy')
-            writer.closeNameSpace('Dune')
 
             writer.close()
 

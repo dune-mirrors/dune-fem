@@ -73,14 +73,20 @@ gridFunctions = { "globalExpr": globalGridFunction,
                   "localExpr": localGridFunction}
 
 def function(self, name, order, *args, **kwargs):
-    assert len(kwargs) == 1,\
-           "Only one argument allowed to define grid function"
-    for key, value in kwargs.items():
-        assert key in gridFunctions,\
+    value = None
+    key = None
+    for testKey in gridFunctions:
+        testValue = kwargs.pop(testKey,None)
+        if testValue:
+            assert not value,\
+                "Only one argument allowed to define grid function"
+            value = testValue
+            key = testKey
+    assert value,\
            "Wrong parameter used to generate grid function."+\
            "Possible parameters are:\n"+\
            ", ".join( [param for param,_ in gridFunctions.items()] )
-        return gridFunctions[key](self, name, order, value, *args)
+    return gridFunctions[key](self,name,order,value, *args, **kwargs)
 
 myGenerator = generator.Generator("GridPart",
         "dune/fempy/py" , "Dune::FemPy")
