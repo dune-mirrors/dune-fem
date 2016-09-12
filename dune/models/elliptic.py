@@ -817,20 +817,23 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
         return importlib.import_module("dune.generated." + name)
 
 def create(grid, equation, dirichlet = {}, exact = None, tempVars=True, coefficients={}):
-    Model = importModel(grid, compileUFL(equation,dirichlet,exact,tempVars)).Model
+    # Model = importModel(grid, compileUFL(equation,dirichlet,exact,tempVars)).Model
+    Model = importModel(grid, equation, dirichlet, exact, tempVars).Model
     class ExtendedModel(Model):
         setCoeffs = {}
         def __init__(self,*args,**kwargs):
             coefficients = kwargs.pop("coefficients",{})
             fullCoeff = ExtendedModel.setCoeffs
             fullCoeff.update(coefficients)
+            print(fullCoeff)
             Model.__init__(self, coefficients=fullCoeff)
 
-    form = equation.lhs - equation.rhs
-    uflCoeff = set(form.coefficients())
-    for bndId in dirichlet:
-        for expr in dirichlet[bndId]:
-            _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
-            uflCoeff |= set(c)
-    ExtendedModel.setCoeffs = {c:c.gf for c in uflCoeff if isinstance(c,GridCoefficient)}
+    if isinstance(equation, ufl.equation.Equation):
+        form = equation.lhs - equation.rhs
+        uflCoeff = set(form.coefficients())
+        for bndId in dirichlet:
+            for expr in dirichlet[bndId]:
+                _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
+                uflCoeff |= set(c)
+        ExtendedModel.setCoeffs = {c:c.gf for c in uflCoeff if isinstance(c,GridCoefficient)}
     return ExtendedModel
