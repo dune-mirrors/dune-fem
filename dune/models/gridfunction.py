@@ -94,8 +94,8 @@ def UFLFunction(grid, name, order, expr, *args, **kwargs):
 
 gridFunctions.update( {"ufl" : UFLFunction} )
 
-def dimRangeSplit(code):
-    """find the dimRange using @dimrange or counting values
+def codeSplitter(code, coefficients):
+    """find the dimRange and any coefficients in code string
     """
     cpp_code = ''
     codeA = code.split("\n")
@@ -111,6 +111,14 @@ def dimRangeSplit(code):
         codeC = [c[0] for c in codeB if "value" in c[0]]
         dimRange = max( [int(c.split("[")[1].split("]")[0]) for c in codeC] ) + 1
         cpp_code = code
+    for coef in coefficients:
+        gfname = '@gf:' + coef['name']
+        cnum = 'c' + str(coef['number'])
+        if gfname in cpp_code:
+            cpp_code = cpp_code.replace(gfname, cnum)
+            cpp_code = 'CoefficientRangeType< 0 > ' + cnum + ';\n' \
+                       + 'coefficient< ' + str(coef['number']) + ' >().evaluate( x, ' \
+                       + cnum + ' );' + cpp_code
     return ( cpp_code, dimRange )
 
 def gridFunction(grid, code, coefficients): # *args, coefficients=None):
@@ -124,13 +132,13 @@ def gridFunction(grid, code, coefficients): # *args, coefficients=None):
     hess = ''
     for key, value in code.items():
         if key == 'eval' or key == 'evaluate':
-            eval, dimRange = dimRangeSplit(value)
+            eval, dimRange = codeSplitter(value, coefficients)
             cpp_code += eval + '\n'
         elif key == 'jac' or key == 'jacobian':
-            jac, dimRange = dimRangeSplit(value)
+            jac, dimRange = codeSplitter(value, coefficients)
             cpp_code += jac + '\n'
         elif key == 'hess' or key == 'hessian':
-            hess, dimRange = dimRangeSplit(value)
+            hess, dimRange = codeSplitter(value, coefficients)
             cpp_code += hess + '\n'
         else:
             print(key, ' is not a valid key. Use "eval", "jac" or "hess"')

@@ -76,7 +76,7 @@ def function(self, name, order, *args, **kwargs):
     value = None
     key = None
     for testKey in gridFunctions:
-        testValue = kwargs.pop(testKey,None)
+        testValue = kwargs.pop(testKey, None)
         if testValue:
             assert not value,\
                 "Only one argument allowed to define grid function"
@@ -86,7 +86,7 @@ def function(self, name, order, *args, **kwargs):
            "Wrong parameter used to generate grid function."+\
            "Possible parameters are:\n"+\
            ", ".join( [param for param,_ in gridFunctions.items()] )
-    return gridFunctions[key](self,name,order,value, *args, **kwargs)
+    return gridFunctions[key](self, name, order, value, *args, **kwargs)
 
 myGenerator = generator.Generator("GridPart",
         "dune/fempy/py" , "Dune::FemPy")
