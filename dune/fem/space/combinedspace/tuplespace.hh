@@ -89,13 +89,13 @@ namespace Dune
       };
 
     public:
+      static_assert( Std::are_all_same< typename DiscreteFunctionSpaces::GridPartType::template Codim< 0 >::EntityType ... >::value,
+                     "TupleDiscreteFunctionSpace works only for GridPart's with the same entity type" );
+
       static_assert( Std::are_all_same< std::integral_constant< int, DiscreteFunctionSpaces::Traits::codimension > ... >::value,
                      "TupleDiscreteFunctionSpace for spaces with different codimensions is not supported" );
       static const int codimension = SubDiscreteFunctionSpace< 0 >::Type::Traits::codimension;
 
-      static_assert( Std::are_all_same< typename DiscreteFunctionSpaces::GridPartType ... >::value,
-                     "TupleDiscreteFunctionSpace works only for common GridPartTypes" );
-      // type of GridPart
       typedef typename SubDiscreteFunctionSpace< 0 >::Type::GridPartType GridPartType;
       typedef typename GridPartType::GridType GridType;
       typedef typename GridPartType::IndexSetType IndexSetType;
@@ -168,7 +168,7 @@ namespace Dune
       static BlockMapperType *getBlockMapper ( const DiscreteFunctionSpaceTupleType &tuple, std::index_sequence< i ... > )
       {
         return new BlockMapperType( SubDiscreteFunctionSpace< 0 >::subDiscreteFunctionSpace( tuple ).gridPart(),
-            SubDiscreteFunctionSpace< i >::subNonBlockMapper( tuple ) ... );
+                                    SubDiscreteFunctionSpace< i >::subNonBlockMapper( tuple ) ... );
       }
 
       template< class Entity, std::size_t ... i >
@@ -197,8 +197,6 @@ namespace Dune
      *
      *  Provides a DiscreteFunctionSpace combined from arbitrary number of DiscreteFunctionSpaces
      *  of different types into a single \ref Dune::Fem::DiscreteFunctionSpaceInterface ( U_h times V_h times .... ).
-     *
-     *  \note It is assumed that the each space is build upon the same gridpart
      */
 
     /** \class   DiscreteFunctionSpace
@@ -214,18 +212,17 @@ namespace Dune
       typedef TupleDiscreteFunctionSpaceTraits< DiscreteFunctionSpaces ... > Traits;
 
     public:
-      //! extract grid informations, it is assumed the both spaces are living on the
-      //! same gridPart
       typedef typename Traits::GridPartType GridPartType;
-
       typedef typename Traits::InterpolationType InterpolationType;
       typedef typename Traits::EntityType EntityType;
+      typedef typename Traits::DiscreteFunctionSpaceTupleType DiscreteFunctionSpaceTupleType;
 
       /** \brief constructor
        *
-       *  \param[in]  gridPart       grid part
+       *  \param[in]  gridPart       reference to the grid part
        *  \param[in]  commInterface  communication interface to use (optional)
        *  \param[in]  commDirection  communication direction to use (optional)
+       *
        */
       TupleDiscreteFunctionSpace ( GridPartType &gridPart,
                                    const InterfaceType commInterface = InteriorBorder_All_Interface,
@@ -233,8 +230,30 @@ namespace Dune
         : BaseType( gridPart, commInterface, commDirection )
       {}
 
-      TupleDiscreteFunctionSpace ( const ThisType& ) = delete;
-      ThisType& operator= ( const ThisType& ) = delete;
+      /** \brief constructor
+       *
+       *  \param[in]  spaces        list of move constructable spaces
+       *
+       *  \note Gridparts, communication interfaces and directions are assumed to be consistent in all spaces.
+       *  Otherwise the behaviour of this space is undefined.
+       */
+      TupleDiscreteFunctionSpace ( DiscreteFunctionSpaces &&  ... spaces )
+        : BaseType( std::make_tuple( Std::make_unique( spaces ) ... ) )
+      {}
+
+      /** \brief constructor
+       *
+       *  \param[in]  spaceTuple     tuple of unique pointers to the subspaces
+       *
+       *  \note Gridparts, communication interfaces and directions are assumed to be consistent in all spaces.
+       *  Otherwise the behaviour of this space is undefined.
+       */
+      TupleDiscreteFunctionSpace ( DiscreteFunctionSpaceTupleType &&spaceTuple )
+        : BaseType( std::move( spaceTuple ) )
+      {}
+
+      TupleDiscreteFunctionSpace ( const ThisType & ) = delete;
+      ThisType &operator= ( const ThisType & ) = delete;
 
       //! return tuple of const References to the contained sub spaces
       std::tuple< const DiscreteFunctionSpaces & ... > spaceTuple () const

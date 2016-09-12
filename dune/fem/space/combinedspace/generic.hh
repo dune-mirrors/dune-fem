@@ -40,7 +40,7 @@ namespace Dune
       //! dimension of the grid (not the world)
       enum { dimension = GridType::dimension };
 
-      //! the underlaying Analytical function space
+      //! the underlaying analytical function space
       typedef typename Traits::FunctionSpaceType FunctionSpaceType;
 
       //! maximum polynomial order of functions in this space
@@ -71,9 +71,10 @@ namespace Dune
 
       /** \brief constructor
        *
-       *  \param[in]  gridPart       grid part for the Lagrange space
+       *  \param[in]  gridPart       reference to the grid part
        *  \param[in]  commInterface  communication interface to use (optional)
        *  \param[in]  commDirection  communication direction to use (optional)
+       *
        */
       GenericCombinedDiscreteFunctionSpace ( GridPartType &gridPart,
                                              const InterfaceType commInterface = defaultInterface,
@@ -83,8 +84,21 @@ namespace Dune
           blockMapper_( Traits::getBlockMapper( spaceTuple_ ) )
       {}
 
-      GenericCombinedDiscreteFunctionSpace ( const ThisType& ) = delete;
-      ThisType& operator= ( const ThisType& ) = delete;
+    protected:
+
+      GenericCombinedDiscreteFunctionSpace ( DiscreteFunctionSpaceTupleType &&spaceTuple )
+        : BaseType(
+            Traits::template SubDiscreteFunctionSpace< 0 >::subDiscreteFunctionSpace( spaceTuple ).gridPart(),
+            Traits::template SubDiscreteFunctionSpace< 0 >::subDiscreteFunctionSpace( spaceTuple ).communicationInterface(),
+            Traits::template SubDiscreteFunctionSpace< 0 >::subDiscreteFunctionSpace( spaceTuple ).communicationDirection() ),
+          spaceTuple_( std::move( spaceTuple ) ),
+          blockMapper_( Traits::getBlockMapper( spaceTuple_ ) )
+      {}
+
+    public:
+
+      GenericCombinedDiscreteFunctionSpace ( const ThisType & ) = delete;
+      ThisType &operator= ( const ThisType & ) = delete;
 
       using BaseType::gridPart;
 

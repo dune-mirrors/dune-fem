@@ -99,16 +99,16 @@ namespace Dune
 
       // review to make it work for all kind of combinations
       template< class DiscreteFunction,
-                class Operation =
-                  typename DiscreteFunctionSpace::template CommDataHandle< DiscreteFunctionSpace >::OperationType >
+                class Operation
+                  = typename DiscreteFunctionSpace::template CommDataHandle< DiscreteFunctionSpace >::OperationType >
       struct CommDataHandle
       {
         //! type of data handle
         typedef typename DiscreteFunctionSpace::
-          template CommDataHandle< DiscreteFunction, Operation >::Type Type;
+        template CommDataHandle< DiscreteFunction, Operation >::Type Type;
         //! type of operatation to perform on scatter
         typedef typename DiscreteFunctionSpace::
-          template CommDataHandle< DiscreteFunction, Operation >::OperationType OperationType;
+        template CommDataHandle< DiscreteFunction, Operation >::OperationType OperationType;
       };
 
       // construct new instance of blockMapper
@@ -147,8 +147,6 @@ namespace Dune
      *
      *  Provides a DiscreteFunctionSpace combined from arbitrary number of DiscreteFunctionSpaces
      *  of same type into a single \ref Dune::Fem::DiscreteFunctionSpaceInterface ( U_h times V_h times .... ).
-     *
-     *  \note It is assumed that the each space is build upon the same gridpart
      */
 
     /** \class   DiscreteFunctionSpace
@@ -166,8 +164,7 @@ namespace Dune
 
     public:
       typedef PowerDiscreteFunctionSpaceTraits< DiscreteFunctionSpace, N > Traits;
-      //! extract grid informations, it is assumed the both spaces are living on the
-      //! same gridPart
+      //! type of grid part
       typedef typename Traits::GridPartType GridPartType;
 
       //! type of contained discrete function space
@@ -191,8 +188,8 @@ namespace Dune
           LagrangePointSetExporterType( containedSpace() )
       {}
 
-      PowerDiscreteFunctionSpace ( const ThisType& ) = delete;
-      ThisType& operator= ( const ThisType& ) = delete;
+      PowerDiscreteFunctionSpace ( const ThisType & ) = delete;
+      ThisType &operator= ( const ThisType & ) = delete;
 
       //! return tuple of const References to the contained sub spaces
       const ContainedDiscreteFunctionSpaceType &containedSpace () const
@@ -208,7 +205,7 @@ namespace Dune
 
 
     //! specialization of DifferentDiscreteFunctionSpace for PowerDiscreteFunctionSpace
-    template< class DiscreteFunctionSpace, int  N, class NewFunctionSpace >
+    template< class DiscreteFunctionSpace, int N, class NewFunctionSpace >
     struct DifferentDiscreteFunctionSpace< PowerDiscreteFunctionSpace< DiscreteFunctionSpace, N >, NewFunctionSpace >
     {
       typedef PowerDiscreteFunctionSpace< DiscreteFunctionSpace, NewFunctionSpace::dimRange > Type;

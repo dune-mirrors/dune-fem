@@ -1,26 +1,29 @@
 #include <config.h>
 
 #include <iostream>
+#include <tuple>
 #include <vector>
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/std/memory.hh>
 
 #include <dune/fem/function/adaptivefunction.hh>
-#include <dune/fem/gridpart/leafgridpart.hh>
-#include <dune/fem/gridpart/filteredgridpart.hh>
+#include <dune/fem/function/tuplediscretefunction.hh>
 #include <dune/fem/gridpart/filter/threadfilter.hh>
+#include <dune/fem/gridpart/filteredgridpart.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/misc/gridwidth.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/test/testgrid.hh>
 
-int main( int argc, char** argv )
+int main ( int argc, char **argv )
 {
   Dune::Fem::MPIManager::initialize( argc, argv );
 
   try
   {
     // create grid
-    auto& grid = Dune::Fem::TestGrid::grid();
+    auto &grid = Dune::Fem::TestGrid::grid();
 
     // refine grid
     const int step = Dune::Fem::TestGrid::refineStepsForHalf();
@@ -36,9 +39,9 @@ int main( int argc, char** argv )
     typedef std::vector< int > ArrayType;
     ArrayType tags( grid.size( 0 ), 0 );
     auto tagsIt( tags.begin() );
-    for( const auto& entity : elements( hostGridPart ) )
+    for( const auto &entity : elements( hostGridPart ) )
     {
-      const auto& center( entity.geometry().center() );
+      const auto &center( entity.geometry().center() );
       if( center[ 0 ] < 0.25 )
         *tagsIt = 0;
       else
@@ -66,11 +69,11 @@ int main( int argc, char** argv )
 
     // check grid parts width
     std::cout << "Host grid part width: " << Dune::Fem::GridWidth::calcGridWidth( hostGridPart )
-       << " ( number of entities : " << grid.size( 0 ) << " ) " << std::endl;
+              << " ( number of entities : " << grid.size( 0 ) << " ) " << std::endl;
     std::cout << "Left grid part width: " << Dune::Fem::GridWidth::calcGridWidth( leftGridPart )
-      << " ( number of entities : " << sizeLeftGridPart << " ) " << std::endl;
+              << " ( number of entities : " << sizeLeftGridPart << " ) " << std::endl;
     std::cout << "Right grid part width: " << Dune::Fem::GridWidth::calcGridWidth( rightGridPart )
-      << " ( number of entities : " << sizeRightGridPart << " ) " << std::endl;
+              << " ( number of entities : " << sizeRightGridPart << " ) " << std::endl;
 
     // create dfs and fill dofs
     typedef Dune::Fem::FunctionSpace< double, double, GridType::dimension, 1 > FunctionSpaceType;
@@ -78,10 +81,10 @@ int main( int argc, char** argv )
     HostDiscreteFunctionSpaceType hostSpace( hostGridPart );
     typedef Dune::Fem::AdaptiveDiscreteFunction< HostDiscreteFunctionSpaceType > HostDiscreteFunctionType;
     HostDiscreteFunctionType hostDF( "host", hostSpace );
-    for( const auto& entity : entities( hostDF ) )
+    for( const auto &entity : entities( hostDF ) )
     {
       auto localDF = hostDF.localFunction( entity );
-      const auto& center( entity.geometry().center() );
+      const auto &center( entity.geometry().center() );
       localDF[ 0 ] = ( center[ 0 ] < 0.25 ? center[ 0 ] : center[ 0 ]+2.0 );
     }
     std::cout << "Number of DOFs hostDF : " << hostDF.size() << std::endl;
@@ -89,7 +92,7 @@ int main( int argc, char** argv )
     FilteredDiscreteFunctionSpaceType leftSpace( leftGridPart );
     typedef Dune::Fem::AdaptiveDiscreteFunction< FilteredDiscreteFunctionSpaceType > FilteredDiscreteFunctionType;
     FilteredDiscreteFunctionType leftDF( "left", leftSpace );
-    for( const auto& entity : entities( leftDF ) )
+    for( const auto &entity : entities( leftDF ) )
     {
       auto localDF = leftDF.localFunction( entity );
       localDF[ 0 ] = entity.geometry().center()[ 0 ];
@@ -97,7 +100,7 @@ int main( int argc, char** argv )
     std::cout << "Number of DOFs leftDF : " << leftDF.size() << std::endl;
     FilteredDiscreteFunctionSpaceType rightSpace( rightGridPart );
     FilteredDiscreteFunctionType rightDF( "right", rightSpace );
-    for( const auto& entity : entities( rightDF ) )
+    for( const auto &entity : entities( rightDF ) )
     {
       auto localDF = rightDF.localFunction( entity );
       localDF[ 0 ] = entity.geometry().center()[ 0 ]+2.0;
@@ -105,14 +108,40 @@ int main( int argc, char** argv )
     std::cout << "Number of DOFs rightDF : " << rightDF.size() << std::endl;
 
     // check dfs
-    for( const auto& entity : entities( leftDF ) )
+    for( const auto &entity : entities( leftDF ) )
       if( leftDF.localFunction( entity )[ 0 ] != hostDF.localFunction( entity )[ 0 ] )
         DUNE_THROW( Dune::InvalidStateException, "Inconsistent DOF in leftDF" );
-    for( const auto& entity : entities( rightDF ) )
+    for( const auto &entity : entities( rightDF ) )
       if( rightDF.localFunction( entity )[ 0 ] != hostDF.localFunction( entity )[ 0 ] )
         DUNE_THROW( Dune::InvalidStateException, "Inconsistent DOF in rightDF" );
+
+    // create tuple df
+    typedef Dune::Fem::TupleDiscreteFunction< FilteredDiscreteFunctionType, FilteredDiscreteFunctionType > TupleDiscreteFunctionType;
+    typedef typename TupleDiscreteFunctionType::DiscreteFunctionSpaceType TupleDiscreteSpaceType;
+    TupleDiscreteSpaceType tupleSpace(
+      std::make_tuple(
+        Dune::Std::make_unique< FilteredDiscreteFunctionSpaceType >( leftGridPart ),
+        Dune::Std::make_unique< FilteredDiscreteFunctionSpaceType >( rightGridPart ) )
+      );
+    TupleDiscreteFunctionType tupleDF( "tuple", tupleSpace );
+    std::cout << "Number of DOFs tupleDF : " << tupleDF.size() << std::endl;
+    std::cout << "Number of DOFs tupleDF first component: " << tupleDF.template subDiscreteFunction< 0 >().size() << std::endl;
+    std::cout << "Number of DOFs tupleDF second component: " << tupleDF.template subDiscreteFunction< 1 >().size() << std::endl;
+
+    typedef Dune::Fem::TupleDiscreteFunction< FilteredDiscreteFunctionType, HostDiscreteFunctionType > MixedTupleDiscreteFunctionType;
+    typedef typename MixedTupleDiscreteFunctionType::DiscreteFunctionSpaceType MixedTupleDiscreteSpaceType;
+    MixedTupleDiscreteSpaceType mixedTupleSpace(
+      std::make_tuple(
+        Dune::Std::make_unique< FilteredDiscreteFunctionSpaceType >( leftGridPart ),
+        Dune::Std::make_unique< HostDiscreteFunctionSpaceType >( hostGridPart ) )
+      );
+
+    MixedTupleDiscreteFunctionType mixedTupleDF( "mixed tuple", mixedTupleSpace );
+    std::cout << "Number of DOFs mixedTupleDF : " << mixedTupleDF.size() << std::endl;
+    std::cout << "Number of DOFs mixedTupleDF first component: " << mixedTupleDF.template subDiscreteFunction< 0 >().size() << std::endl;
+    std::cout << "Number of DOFs mixedTupleDF second component: " << mixedTupleDF.template subDiscreteFunction< 1 >().size() << std::endl;
   }
-  catch( Dune::Exception& e )
+  catch( Dune::Exception &e )
   {
     std::cerr << e << std::endl;
     return 1;
