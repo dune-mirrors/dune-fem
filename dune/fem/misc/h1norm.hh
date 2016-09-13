@@ -11,10 +11,10 @@ namespace Dune
 
     template< class GridPart >
     class H1Norm
-    : public LPNormBase< GridPart, H1Norm< GridPart> >
+    : public IntegralBase< GridPart, H1Norm< GridPart> >
     {
       typedef H1Norm< GridPart > ThisType;
-      typedef LPNormBase< GridPart, H1Norm< GridPart> > BaseType;
+      typedef IntegralBase< GridPart, H1Norm< GridPart> > BaseType;
 
     public:
       typedef GridPart GridPartType;

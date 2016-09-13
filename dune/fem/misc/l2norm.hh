@@ -4,7 +4,7 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/integrator.hh>
 
-#include <dune/fem/misc/lpnorm.hh>
+#include <dune/fem/misc/domainintegral.hh>
 
 namespace Dune
 {
@@ -16,9 +16,9 @@ namespace Dune
     // ------
 
     template< class GridPart >
-    class L2Norm : public LPNormBase< GridPart, L2Norm< GridPart > >
+    class L2Norm : public IntegralBase< GridPart, L2Norm< GridPart > >
     {
-      typedef LPNormBase< GridPart, L2Norm< GridPart > > BaseType ;
+      typedef IntegralBase< GridPart, L2Norm< GridPart > > BaseType ;
       typedef L2Norm< GridPart > ThisType;
 
     public:
