@@ -96,9 +96,10 @@ def addAttr(module, cls):
     setattr(cls, "partitionFunction", partitionFunction)
     setattr(cls, "function", function)
 
-generator = SimpleGenerator("GridPart", "dune/fempy/py", "Dune::FemPy")
+generator = SimpleGenerator("GridPart", "Dune::FemPy")
 
 def module(includes, typeName, constructors=None, methods=None):
+    includes = includes + ["dune/fempy/py/gridpart.hh"]
     typeHash = "gridpart_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
     module = generator.load(includes, typeName, typeHash, constructors, methods)
     addAttr(module, module.GridPart)
