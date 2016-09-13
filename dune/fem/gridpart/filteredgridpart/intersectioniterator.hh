@@ -173,6 +173,11 @@ namespace Dune
         return nInfo_.boundaryId_;
       }
 
+      std::size_t boundarySegmentIndex () const
+      {
+        DUNE_THROW( NotImplemented, "boundarySegmentIndex not implemented for FilteredGridPart, yet" );
+      }
+
       //! \brief overloaded neighbor method
       bool neighbor () const
       {
