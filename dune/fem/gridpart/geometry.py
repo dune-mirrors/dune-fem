@@ -17,13 +17,18 @@ def create(coordFunction):
         GridPart: the constructed GridPart
     """
     includes = coordFunction._module._includes + ["dune/fem/gridpart/geometrygridpart.hh"]
-    typeName = "Dune::Fem::GeometryGridPart< " + coordFunction._module._typeName + " >"
+    coordFunctionType = coordFunction._module._typeName
+    typeName = "Dune::Fem::GeometryGridPart< " + coordFunctionType + " >"
+
+    constructor = ["[] ( " + typeName + " &self" + ", " + coordFunctionType + " &coordFunction ) {",
+                   "    new (&self) " + typeName + "( coordFunction );",
+                   "  }, pybind11::keep_alive< 1, 2 >()"]
+
     typeHash = "gridpart_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = generator.load(includes, typeName, typeHash)
+    module = generator.load(includes, typeName, typeHash, [constructor])
     addAttr(module, module.GridPart)
     return module.GridPart(coordFunction)
 
-#############################################
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.ELLIPSIS)

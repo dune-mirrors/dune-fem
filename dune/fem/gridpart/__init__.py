@@ -5,7 +5,6 @@ import sys
 from types import ModuleType
 
 import dune.common as common
-from ...generator import generator
 from .. import space
 from .. import function as gf
 from dune.fem import comm
@@ -88,14 +87,6 @@ def function(self, name, order, *args, **kwargs):
            ", ".join( [param for param,_ in gridFunctions.items()] )
     return gridFunctions[key](self,name,order,value, *args, **kwargs)
 
-myGenerator = generator.Generator("GridPart",
-        "dune/fempy/py" , "Dune::FemPy")
-
-def getGridPartType(gridpart, **parameters):
-    """Return the gridpart type (using a function from database.py).
-    """
-    return myGenerator.getTypeName(gridpart, **parameters)
-
 def addAttr(module, cls):
     setattr(cls, "_module", module)
     setattr(cls, "interpolate", interpolate)
@@ -104,43 +95,6 @@ def addAttr(module, cls):
     setattr(cls, "partitionFunction", partitionFunction)
     setattr(cls, "function", function)
 
-def get(gp, **parameters):
-    """Create a gridpart module using the gridpart-database.
-
-    This function creates a python module called gridpart_xxx.py where xxx is a
-    number derived from the gridpart type.
-    It does this by fetching the typedef and includes from the gridpart-database
-    using the given arguments.
-
-    Returns:
-        module: the newly created gridpart module
-
-    """
-    module = myGenerator.getModule(gp, **parameters)
-    addAttr(module, module.GridPart)
-    return module
-
-def create(gp, gf, **parameters):
-    """Get a GridPart.
-
-    Call get() and create a C++ gridpart class
-
-    Args:
-        gridpart (string): the identifier for the scheme type to use
-        gf; main argument, will in some form conatin the host grid part
-    Returns:
-        GridPart: the constructed GridPart
-    """
-    if gp=="Geometry":
-        # try:
-            module = get(gp, discfunc=gf._module._typeName, extra_includes=gf._module._includes, **parameters)
-        # except:
-        #     gp  = "Hallo"
-        #     val = "Dune::FieldVector<double,"+str(gf.dimRange)+">"
-        #     module = get("GeometryVirtual", gridpart=gp, value=val, **parameters)
-    return module.GridPart(gf)
-
-#############################################
 if __name__ == "__main__":
     import doctest
     doctest.testmod(optionflags=doctest.ELLIPSIS)
