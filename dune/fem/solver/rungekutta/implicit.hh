@@ -73,8 +73,8 @@ namespace DuneODE
      */
     ImplicitRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
                                TimeProviderType &timeProvider,
-                               const ParametersType& tscParam = ParametersType(),
-                               const NonlinearSolverParametersType& nlsParam = NonlinearSolverParametersType() )
+                               const ParametersType& tscParam,
+                               const NonlinearSolverParametersType& nlsParam )
     : BaseType( helmholtzOp,
                 butcherTable( tscParam.selectedSolver( 1 ) ),
                 TimeStepControlType( timeProvider, tscParam ),
