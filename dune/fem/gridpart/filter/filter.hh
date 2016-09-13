@@ -79,14 +79,13 @@ namespace Dune
       typedef typename Codim< 0 >::EntityType EntityType;
 
     private:
-      // constructor
-      FilterInterface () { }
+      FilterInterface () = default;
 
-      // copy constructor
-      FilterInterface ( const ThisType & );
+      FilterInterface ( const ThisType & ) = default;
+      FilterInterface ( ThisType && ) = default;
 
-      // assignment operator
-      ThisType & operator= ( const ThisType & );
+      ThisType &operator= ( const ThisType & ) = default;
+      ThisType &operator= ( ThisType && ) = default;
 
     public:
       //! \brief returns true if the given entity of the pointer in the domain
@@ -176,14 +175,13 @@ namespace Dune
     protected:
       using BaseType::asImp;
 
-      // constructor
-      FilterDefaultImplementation () { }
+      FilterDefaultImplementation () = default;
 
-      // copy constructor
-      FilterDefaultImplementation ( const ThisType & );
+      FilterDefaultImplementation ( const ThisType & ) = default;
+      FilterDefaultImplementation ( ThisType && ) = default;
 
-      // assignment operator
-      ThisType &operator= ( const ThisType & );
+      ThisType &operator= ( const ThisType & ) = default;
+      ThisType &operator= ( ThisType && ) = default;
 
     public:
       using BaseType::contains;
