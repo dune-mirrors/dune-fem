@@ -5,7 +5,6 @@ set(HEADERS
   geometry.hh
   hierarchical.hh
   numpy.hh
-  range.hh
   restrictprolong.hh
   vtk.hh
 )
