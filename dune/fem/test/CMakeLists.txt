@@ -93,3 +93,5 @@ dune_add_test(lagrangeinterpolation_linear lagrangeinterpolation_quadratic dgl2p
               vtxprojection_adaptive intersectionindexset dgl2projection_filtered
               NO_DEPENDENCY adaptation_4.sh 
               DEPENDENCY_ONLY adaptation)
+
+exclude_from_headercheck( dfspace.hh testgrid.hh )

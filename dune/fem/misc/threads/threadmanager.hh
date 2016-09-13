@@ -4,20 +4,20 @@
 #include <cassert>
 #include <cstdlib>
 
-#if defined USE_PTHREADS && HAVE_PTHREAD == 0
+#if USE_PTHREADS && HAVE_PTHREAD == 0
 #warning "pthreads were not found!"
 #undef USE_PTHREADS
 #endif
 
-#if defined _OPENMP || defined USE_PTHREADS
+#if defined _OPENMP || USE_PTHREADS == 1
 #ifndef USE_SMP_PARALLEL
 #define USE_SMP_PARALLEL
 #endif
 #endif
 
-#ifdef USE_PTHREADS
+#if USE_PTHREADS
 #include <pthread.h>
-#include <map>
+#include <unordered_map>
 #endif
 
 #ifdef _OPENMP
@@ -72,7 +72,7 @@ namespace Dune
         return currentThreads() == 1 ;
       }
     }; // end class ThreadManager
-#elif defined USE_PTHREADS
+#elif USE_PTHREADS
 #warning "ThreadManager: using pthreads"
 
     struct ThreadManager
@@ -80,7 +80,7 @@ namespace Dune
     private:
       struct Manager ;
       typedef int thread_number_t(Manager&);
-      typedef std::map< const pthread_t, int > ThreadIdMap ;
+      typedef std::unordered_map< pthread_t, int > ThreadIdMap ;
       struct Manager
       {
         const pthread_t master_;
@@ -95,7 +95,7 @@ namespace Dune
           return mg ;
         }
 
-        inline void setThreadNumber(  const pthread_t& threadId, const int threadNum )
+        inline void setThreadNumber( const pthread_t& threadId, const int threadNum )
         {
           assert( isMaster() );
           // thread number 0 is reserved for the master thread
@@ -156,9 +156,8 @@ namespace Dune
           else
           {
             // otherwise find mapped thread number
-            ThreadIdMap :: iterator num = mg.idmap_.find( self ) ;
-            assert( num != mg.idmap_.end() );
-            return (*num).second ;
+            assert( mg.idmap_.find( self ) != mg.idmap_.end() );
+            return mg.idmap_.at( self );
           }
         }
 

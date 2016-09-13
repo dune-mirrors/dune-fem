@@ -12,7 +12,10 @@
 #include <dune/fem/misc/threads/threaditeratorstorage.hh>
 
 #ifdef USE_SMP_PARALLEL
+#ifdef HAVE_DUNE_ALUGRID
+#define USE_THREADPARTITIONER
 #include <dune/fem/misc/threads/threadpartitioner.hh>
+#endif
 #endif
 
 namespace Dune {
@@ -29,7 +32,7 @@ namespace Dune {
       typedef typename GridPartType :: IndexSetType  IndexSetType;
 
       typedef ThreadFilter<GridPartType> FilterType;
-#ifdef USE_SMP_PARALLEL
+#ifdef USE_THREADPARTITIONER
       typedef FilteredGridPart< GridPartType, FilterType, false > FilteredGridPartType ;
 
       typedef typename FilteredGridPartType :: template Codim< 0 > :: IteratorType
@@ -39,14 +42,12 @@ namespace Dune {
 #endif
 
       typedef typename IteratorType :: Entity EntityType ;
-      typedef typename GridPartType :: template Codim<0> ::
-        EntityPointerType EntityPointer ;
 
       typedef DofManager< GridType > DofManagerType;
 
       static const PartitionIteratorType pitype = GridPartType :: indexSetPartitionType ;
 
-#ifdef USE_SMP_PARALLEL
+#ifdef USE_THREADPARTITIONER
       typedef ThreadPartitioner< GridPartType >           ThreadPartitionerType;
       typedef typename ThreadPartitionerType :: Method    PartitioningMethodType ;
 #endif // #ifdef USE_SMP_PARALLEL
@@ -56,7 +57,7 @@ namespace Dune {
       const DofManagerType& dofManager_;
       const IndexSetType& indexSet_;
 
-#ifdef USE_SMP_PARALLEL
+#ifdef USE_THREADPARTITIONER
       int sequence_;
       std::vector< FilteredGridPartType* > filteredGridParts_;
 
@@ -66,7 +67,7 @@ namespace Dune {
       // ratio of computing time needed by the master thread compared to the other threads
       double masterRatio_ ;
 
-#ifdef USE_SMP_PARALLEL
+#ifdef USE_THREADPARTITIONER
       const PartitioningMethodType method_;
 #endif // #ifdef USE_SMP_PARALLEL
 
@@ -75,7 +76,7 @@ namespace Dune {
       const bool verbose_ ;
 
     protected:
-#ifdef USE_SMP_PARALLEL
+#ifdef USE_THREADPARTITIONER
       static PartitioningMethodType getMethod ( const ParameterReader &parameter )
       {
         // default is recursive
@@ -90,12 +91,12 @@ namespace Dune {
         : gridPart_( gridPart ),
           dofManager_( DofManagerType :: instance( gridPart_.grid() ) ),
           indexSet_( gridPart_.indexSet() )
-#ifdef USE_SMP_PARALLEL
+#ifdef USE_THREADPARTITIONER
         , sequence_( -1 )
         , filteredGridParts_( Fem :: ThreadManager :: maxThreads() )
 #endif
         , masterRatio_( 1.0 )
-#ifdef USE_SMP_PARALLEL
+#ifdef USE_THREADPARTITIONER
         , method_( getMethod( parameter ) )
 #endif // #ifdef USE_SMP_PARALLEL
         , communicationThread_( parameter.getValue<bool>("fem.threads.communicationthread", false)
@@ -103,7 +104,7 @@ namespace Dune {
         , verbose_( Parameter::verbose() &&
                     parameter.getValue<bool>("fem.threads.verbose", false ) )
       {
-#ifdef USE_SMP_PARALLEL
+#ifdef USE_THREADPARTITIONER
         for(int thread=0; thread < Fem :: ThreadManager :: maxThreads(); ++thread )
         {
           // thread is the thread number of this filter
@@ -117,7 +118,7 @@ namespace Dune {
         update();
       }
 
-#ifdef USE_SMP_PARALLEL
+#ifdef USE_THREADPARTITIONER
       //! destructor
       ~DomainDecomposedIterator()
       {
@@ -139,7 +140,7 @@ namespace Dune {
       //! update internal list of iterators
       void update()
       {
-#ifdef USE_SMP_PARALLEL
+#ifdef USE_THREADPARTITIONER
         const int sequence = gridPart_.sequence() ;
         // if grid got updated also update iterators
         if( sequence_ != sequence )
@@ -218,7 +219,7 @@ namespace Dune {
       //! return begin iterator for current thread
       IteratorType begin() const
       {
-#ifdef USE_SMP_PARALLEL
+#ifdef USE_THREADPARTITIONER
         const int thread = ThreadManager :: thread() ;
         if( communicationThread_ && thread == 0 )
           return filteredGridParts_[ thread ]->template end< 0 > ();
@@ -232,7 +233,7 @@ namespace Dune {
       //! return end iterator for current thread
       IteratorType end() const
       {
-#ifdef USE_SMP_PARALLEL
+#ifdef USE_THREADPARTITIONER
         return filteredGridParts_[ ThreadManager :: thread() ]->template end< 0 > ();
 #else
         return gridPart_.template end< 0 > ();
@@ -248,7 +249,7 @@ namespace Dune {
       //! return thread number this entity belongs to
       int thread(const EntityType& entity ) const
       {
-#ifdef USE_SMP_PARALLEL
+#ifdef USE_THREADPARTITIONER
         assert( (int)threadNum_.size() > (int) indexSet_.index( entity ) );
         // NOTE: this number can also be negative for ghost elements or elements
         // that do not belong to the set covered by the space iterators

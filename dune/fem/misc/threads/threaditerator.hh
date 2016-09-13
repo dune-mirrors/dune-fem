@@ -5,11 +5,11 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dune/fem/space/common/arrays.hh>
-#include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/gridpart/filter/threadfilter.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/misc/threads/threaditeratorstorage.hh>
-#include <dune/fem/gridpart/filter/threadfilter.hh>
+#include <dune/fem/space/common/dofmanager.hh>
+#include <dune/fem/space/common/arrays.hh>
 
 namespace Dune
 {
@@ -31,7 +31,6 @@ namespace Dune
       typedef typename GridPartType :: GridType  GridType;
       typedef typename GridPartType :: template Codim< 0 > :: template Partition< pitype > :: IteratorType       IteratorType ;
       typedef typename GridPartType :: template Codim< 0 > :: EntityType         EntityType ;
-      typedef typename GridPartType :: template Codim< 0 > :: EntityPointerType  EntityPointerType ;
       typedef typename GridPartType :: IndexSetType IndexSetType ;
       typedef DofManager< GridType > DofManagerType;
 
