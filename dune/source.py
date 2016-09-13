@@ -387,6 +387,7 @@ class BaseModel:
         sourceWriter.emit('    return k;')
         sourceWriter.emit('  };')
         sourceWriter.closeFunction()
+
     def export(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper', constrArgs=(), constrKeepAlive=None):
         if self.coefficients:
             # sourceWriter.emit('cls.def( "setCoefficient", defSetCoefficient( std::make_index_sequence< std::tuple_size<Coefficients>::value >() ) );')
