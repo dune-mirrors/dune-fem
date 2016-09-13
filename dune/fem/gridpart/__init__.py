@@ -1,16 +1,17 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 __metaclass__ = type
 
+import hashlib
 import sys
 from types import ModuleType
 
 import dune.common as common
+from ...generator.generator import SimpleGenerator
 from .. import space
 from .. import function as gf
 from dune.fem import comm
 
 import inspect
-
 
 def interpolate(grid, func, **kwargs):
     try:
@@ -94,6 +95,14 @@ def addAttr(module, cls):
     setattr(cls, "levelFunction", levelFunction)
     setattr(cls, "partitionFunction", partitionFunction)
     setattr(cls, "function", function)
+
+generator = SimpleGenerator("GridPart", "dune/fempy/py", "Dune::FemPy")
+
+def module(includes, typeName, constructors=None, methods=None):
+    typeHash = "gridpart_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
+    module = generator.load(includes, typeName, typeHash, constructors, methods)
+    addAttr(module, module.GridPart)
+    return module
 
 if __name__ == "__main__":
     import doctest

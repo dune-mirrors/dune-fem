@@ -1,11 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import hashlib
-
-from ...generator.generator import SimpleGenerator
-from . import addAttr
-
-generator = SimpleGenerator("GridPart", "dune/fempy/py", "Dune::FemPy")
+from . import module
 
 def cppBool(value):
     return "true" if value else "false"
@@ -34,10 +29,7 @@ def create(hostGridPart, contains, useFilteredIndexSet=False):
                    "    new (&self) " + typeName + "( hostGridPart, " + filterType + "( hostGridPart, containsCpp ) );",
                    "  }, pybind11::keep_alive< 1, 2 >()"]
 
-    typeHash = "gridpart_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = generator.load(includes, typeName, typeHash, [constructor])
-    addAttr(module, module.GridPart)
-    return module.GridPart(hostGridPart, contains)
+    return module(includes, typeName, [constructor]).GridPart(hostGridPart, contains)
 
 if __name__ == "__main__":
     import doctest
