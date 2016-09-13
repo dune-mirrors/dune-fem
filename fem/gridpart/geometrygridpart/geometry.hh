@@ -108,11 +108,80 @@ namespace Dune
     // MyGeometryImpl
     // --------------
 
-    template< int mydim, int cdim, class GridFamily, bool isElement >
-    class MyGeometryImpl;
+    template< int mydim, int cdim, class GridFamily, class = void >
+    struct MyGeometryImpl
+    {
+      typedef GeometryGridPartGeometryTraits< mydim, GridFamily > Traits;
+      typedef typename Traits::HostGeometryType HostGeometryType;
+
+      static const int dimension = HostGeometryType::dimension;
+      static const int mydimension = HostGeometryType::mydimension;
+      static const int coorddimension = Traits::dimensionworld;
+
+      typedef typename HostGeometryType::ctype ctype;
+      typedef FieldVector< ctype, mydimension > LocalVector;
+      typedef FieldVector< ctype, coorddimension > GlobalVector;
+
+      typedef FieldMatrix< ctype, mydimension, coorddimension > JacobianTransposed;
+      typedef FieldMatrix< ctype, coorddimension, mydimension > JacobianInverseTransposed;
+
+      typedef typename GridFamily::GridFunctionType GridFunctionType;
+
+      GeometryType type () const
+      {
+        DUNE_THROW( NotImplemented, "GeometryGridPart does not implement Geometry for codimension " << (GridFamily::dimension-mydim) );
+      }
+
+      bool affine () const { return false; }
+
+      int corners () const
+      {
+        DUNE_THROW( NotImplemented, "GeometryGridPart does not implement Geometry for codimension " << (GridFamily::dimension-mydim) );
+      }
+
+      GlobalVector corner ( const int i ) const
+      {
+        DUNE_THROW( NotImplemented, "GeometryGridPart does not implement Geometry for codimension " << (GridFamily::dimension-mydim) );
+      }
+
+      GlobalVector center () const
+      {
+        DUNE_THROW( NotImplemented, "GeometryGridPart does not implement Geometry for codimension " << (GridFamily::dimension-mydim) );
+      }
+
+      GlobalVector global ( const LocalVector &local ) const
+      {
+        DUNE_THROW( NotImplemented, "GeometryGridPart does not implement Geometry for codimension " << (GridFamily::dimension-mydim) );
+      }
+
+      LocalVector local ( const GlobalVector &global ) const
+      {
+        DUNE_THROW( NotImplemented, "GeometryGridPart does not implement Geometry for codimension " << (GridFamily::dimension-mydim) );
+      }
+
+      ctype integrationElement ( const LocalVector &local ) const
+      {
+        DUNE_THROW( NotImplemented, "GeometryGridPart does not implement Geometry for codimension " << (GridFamily::dimension-mydim) );
+      }
+
+      ctype volume () const
+      {
+        DUNE_THROW( NotImplemented, "GeometryGridPart does not implement Geometry for codimension " << (GridFamily::dimension-mydim) );
+      }
+
+      FieldMatrix< ctype, mydimension, coorddimension > jacobianTransposed ( const LocalVector &local ) const
+      {
+        DUNE_THROW( NotImplemented, "GeometryGridPart does not implement Geometry for codimension " << (GridFamily::dimension-mydim) );
+      }
+
+      FieldMatrix< ctype, coorddimension, mydimension > jacobianInverseTransposed ( const LocalVector &local ) const
+      {
+        DUNE_THROW( NotImplemented, "GeometryGridPart does not implement Geometry for codimension " << (GridFamily::dimension-mydim) );
+      }
+    };
 
     template< int mydim, int cdim, class GridFamily >
-    struct MyGeometryImpl< mydim, cdim, GridFamily, false >
+    struct MyGeometryImpl< mydim, cdim, GridFamily, std::enable_if_t< mydim == GridFamily::dimension-1 > >
     {
       typedef GeometryGridPartGeometryTraits< mydim, GridFamily > Traits;
       typedef typename Traits::HostGeometryType HostGeometryType;
@@ -135,15 +204,13 @@ namespace Dune
       typedef typename Traits::HostGridPartType HostGridPartType;
       typedef Dune::Fem::CachingQuadrature< HostGridPartType, 0 > ElementQuadratureType;
 
-      typedef typename HostGridPartType::template Codim< 0 >::EntityType HostEntityType;
-
       typedef Dune::AffineGeometry< ctype, mydim, GridFamily::dimension > AffineGeometryType;
       typedef typename HostGridPartType::IntersectionType HostIntersectionType;
 
       // Helper class to compute a matrix pseudo inverse
       typedef GenericGeometry::MatrixHelper< GenericGeometry::DuneCoordTraits< ctype > > MatrixHelper;
 
-      MyGeometryImpl ( const MyGeometryImpl< GridFamily::dimension, cdim, GridFamily, true > elementGeo,
+      MyGeometryImpl ( const MyGeometryImpl< GridFamily::dimension, cdim, GridFamily > elementGeo,
                        const GridFunctionType *gridFunction,
                        const HostIntersectionType *hostIntersection,
                        const AffineGeometryType &affineGeometry )
@@ -225,7 +292,7 @@ namespace Dune
       }
 
     private:
-      const MyGeometryImpl< GridFamily::dimension, cdim, GridFamily, true > elementGeo_;
+      const MyGeometryImpl< GridFamily::dimension, cdim, GridFamily > elementGeo_;
       const GridFunctionType gridFunction_;
       const HostIntersectionType *hostIntersection_;
       const AffineGeometryType affineGeo_;
@@ -234,7 +301,7 @@ namespace Dune
     };
 
     template< int mydim, int cdim, class GridFamily >
-    struct MyGeometryImpl< mydim, cdim, GridFamily, true >
+    struct MyGeometryImpl< mydim, cdim, GridFamily, std::enable_if_t< mydim == GridFamily::dimension > >
     {
       typedef GeometryGridPartGeometryTraits< mydim, GridFamily > Traits;
 
@@ -339,8 +406,7 @@ namespace Dune
 
         Dune::FMatrixHelp::multTransposedMatrix( gradPhiGradF, retMatrix );
 
-        return std::sqrt( retMatrix.determinant());
-
+        return std::sqrt( retMatrix.determinant() );
       }
 
       ctype volume () const
@@ -398,24 +464,24 @@ namespace Dune
 
     template< int mydim, int cdim, class GridFamily >
     struct GeometryGridPartGeometry
-      : public MyGeometryImpl< mydim, cdim, GridFamily, (mydim == GridFamily::dimension) >
+      : public MyGeometryImpl< mydim, cdim, GridFamily >
     {
-      typedef MyGeometryImpl< mydim, cdim, GridFamily, (mydim == GridFamily::dimension) > Base;
+      typedef MyGeometryImpl< mydim, cdim, GridFamily > Base;
       typedef typename Base::HostGeometryType HostGeometryType;
       typedef typename HostGeometryType::ctype ctype;
 
       typedef typename Base::GridFunctionType GridFunctionType;
-      typedef typename Base::HostEntityType HostEntityType;
 
-      typedef typename Base::HostGridPartType HostGridPartType;
+      typedef typename std::remove_const< GridFamily >::type::Traits::HostGridPartType HostGridPartType;
 
+      typedef typename HostGridPartType::template Codim< 0 >::EntityType HostEntityType;
       typedef typename HostGridPartType::IntersectionType HostIntersectionType;
 
       typedef Dune::AffineGeometry< ctype, mydim, GridFamily::dimension > AffineGeometryType;
 
-      //GeometryGridPartGeometry () = default;
+      GeometryGridPartGeometry () = default;
 
-      GeometryGridPartGeometry ( const MyGeometryImpl< GridFamily::dimension, cdim, GridFamily, true > elementGeo,
+      GeometryGridPartGeometry ( const MyGeometryImpl< GridFamily::dimension, cdim, GridFamily > elementGeo,
                                  const GridFunctionType *gridFunction,
                                  const HostIntersectionType *hostIntersection,
                                  const AffineGeometryType &affineGeometry )
@@ -428,8 +494,7 @@ namespace Dune
         : Base( hostGeometry, hostEntity, gridFunction )
       {}
 
-      GeometryGridPartGeometry ( const HostEntityType &hostEntity,
-                                 const GridFunctionType *gridFunction )
+      GeometryGridPartGeometry ( const HostEntityType &hostEntity, const GridFunctionType *gridFunction )
         : Base( hostEntity, gridFunction )
       {}
     };
