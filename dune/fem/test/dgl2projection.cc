@@ -15,6 +15,7 @@ int main () { return 0;}
 #include <dune/fem/misc/l1norm.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
+#include <dune/fem/misc/lpnorm.hh>
 
 #if defined USE_BLOCKVECTORFUNCTION
 #include <dune/fem/function/blockvectorfunction.hh>
