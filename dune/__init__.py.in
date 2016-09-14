@@ -1,5 +1,0 @@
-__import__('pkg_resources').declare_namespace(__name__)
-__path__.append("${dune-corepy_DIR}/python/dune")
-import dune.common
-import dune.femmpi
-from dune.femmpi import comm
