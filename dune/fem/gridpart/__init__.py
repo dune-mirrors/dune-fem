@@ -100,8 +100,8 @@ generator = SimpleGenerator("GridPart", "Dune::FemPy")
 
 def module(includes, typeName, constructors=None, methods=None):
     includes = includes + ["dune/fempy/py/gridpart.hh"]
-    typeHash = "gridpart_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = generator.load(includes, typeName, typeHash, constructors, methods)
+    moduleName = "gridpart_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
+    module = generator.load(includes, typeName, moduleName, constructors, methods)
     addAttr(module, module.GridPart)
     return module
 
