@@ -8,6 +8,7 @@
 #include <dune/fempy/py/grid/gridpart.hh>
 #include <dune/fempy/py/grid/hierarchical.hh>
 
+#include <dune/corepy/common/typeregistry.hh>
 #include <dune/corepy/pybind11/pybind11.h>
 
 namespace Dune
@@ -26,7 +27,9 @@ namespace Dune
       // the GridView registration
       detail::registerGridPart< GridPart >( module, cls );
       registerHierarchicalGrid< typename GridPart::GridType >( module );
+      auto entry = Dune::CorePy::typeRegistry().insertInner<GridPart,typename GridPart::GridViewType>("GridViewType", {});
       auto clsGW = pybind11::class_<typename GridPart::GridViewType>(module, "GridView");
+      Dune::CorePy::typeRegistry().exportToPython(clsGW,entry.first->second);
       clsGW.def(pybind11::init<GridPart&>());
       pybind11::implicitly_convertible<GridPart,typename GridPart::GridViewType>();
       CorePy::registerGridView<typename GridPart::GridViewType>( module, cls );
