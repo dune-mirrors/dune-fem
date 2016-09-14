@@ -751,7 +751,8 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
         print("Importing module for model with signature " + model.signature)
         if not os.path.isfile(os.path.join(compilePath, name + ".so")):
             writer = SourceWriter(compilePath + '/modelimpl.hh')
-            writer.emit(grid._includes)
+
+            writer.emit("".join(["#include <" + i + ">\n" for i in grid._includes]))
             writer.emit('')
             writer.emit('#include <dune/fem/misc/boundaryidprovider.hh>')
             writer.emit('#include <dune/fem/gridpart/leafgridpart.hh>')
