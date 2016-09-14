@@ -37,7 +37,7 @@ from . import space
 
 class Generator(generator.Generator):
     def modifyIncludes(self, includes):
-        return includes + "#include <dune/fem/gridpart/adaptiveleafgridpart.hh>\n"
+        return includes + ["dune/fem/gridpart/adaptiveleafgridpart.hh"]
     def modifyTypeName(self, typeName):
         return "Dune::Fem::AdaptiveLeafGridPart<" + typeName + ">";
 

@@ -1,7 +1,8 @@
+add_subdirectory(gridpart)
+
 add_python_target(create)
 add_python_target(grid)
 add_python_target(function)
-add_python_target(gridpart)
 add_python_target(space)
 add_python_target(discretefunction)
 add_python_target(scheme)

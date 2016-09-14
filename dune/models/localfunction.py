@@ -176,7 +176,7 @@ def gridFunction(grid, code, coefficients):
     if comm.rank == 0:
         if not os.path.isfile(os.path.join(compilePath, pyname + '.so')):
             writer = SourceWriter(compilePath + '/localfunction.hh')
-            writer.emit(grid._includes)
+            writer.emit("".join(["#include <" + i + ">\n" for i in grid._includes]))
             writer.emit('')
             writer.emit('#include <dune/corepy/pybind11/pybind11.h>')
             writer.emit('#include <dune/corepy/pybind11/extensions.h>')
