@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_QUADPROVIDER_HH
 #define DUNE_FEM_QUADPROVIDER_HH
 
+#include <iostream>
 #include <vector>
 
 #include <dune/fem/quadrature/quadratureimp.hh>
