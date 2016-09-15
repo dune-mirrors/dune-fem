@@ -109,7 +109,7 @@ def module(includes, typeName, constructors=None, methods=None):
 def create(gridpart, *args, **kwargs):
     try:
         gridpart = importlib.import_module("dune.fem.gridpart." + gridpart)
-        gridpart.create(*args, **kwargs)
+        return gridpart.create(*args, **kwargs)
     except ImportError:
         raise ValueError("No grid part named " + gridpart)
 
