@@ -1,6 +1,7 @@
 #ifndef DUNE_FEMPY_PY_GRIDPART_HH
 #define DUNE_FEMPY_PY_GRIDPART_HH
 
+#include <dune/corepy/common/typeregistry.hh>
 #include <dune/corepy/grid/gridview.hh>
 
 #include <dune/fempy/py/grid/gridpart.hh>
@@ -21,10 +22,16 @@ namespace Dune
     {
       detail::registerGridPart< GridPart >( module, cls );
 
-      auto clsGW = pybind11::class_< typename GridPart::GridViewType >( module, "GridView" );
+      typedef typename GridPart::GridViewType GridView;
+
+      auto &registry = CorePy::typeRegistry();
+      auto entry = registry.insertInner< GridPart, GridView >( "GridViewType", {} );
+      registry.exportToPython( cls, entry.first->second );
+
+      auto clsGW = pybind11::class_< GridView >( module, "GridView" );
       clsGW.def( pybind11::init< GridPart & >() );
-      pybind11::implicitly_convertible< GridPart, typename GridPart::GridViewType >();
-      CorePy::registerGridView< typename GridPart::GridViewType >( module, cls );
+      pybind11::implicitly_convertible< GridPart, GridView >();
+      CorePy::registerGridView< GridView >( module, cls );
     }
 
   } // namespace FemPy
