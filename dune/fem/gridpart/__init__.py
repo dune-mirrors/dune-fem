@@ -106,12 +106,23 @@ def module(includes, typeName, constructors=None, methods=None):
     addAttr(module, module.GridPart)
     return module
 
+
+_modules = dict()
+
+def register(**modules):
+    _modules.update(modules)
+
+
 def create(gridpart, *args, **kwargs):
-    try:
-        gridpart = importlib.import_module("dune.fem.gridpart." + gridpart)
-        return gridpart.create(*args, **kwargs)
-    except ImportError:
-        raise ValueError("No grid part named " + gridpart)
+    gridpart = importlib.import_module(_modules[gridpart])
+    return gridpart.create(*args, **kwargs)
+
+# register our own grid parts
+
+register(Geometry = "dune.fem.gridpart.geometry")
+register(Filtered = "dune.fem.gridpart.filtered")
+
+# enable doc test
 
 if __name__ == "__main__":
     import doctest
