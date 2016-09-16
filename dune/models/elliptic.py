@@ -682,8 +682,8 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
             dimRange = coefficient.ufl_shape[0]
             idx = idxCoeff
             idxCoeff += 1
-        setattr(coefficient,"number",idx)
         model.coefficients.append({ \
+            'name' : str(coefficient), \
             'number' : coefficient.number, \
             'counter' : coefficient.count(), \
             'dimRange' : dimRange,\

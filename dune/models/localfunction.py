@@ -73,8 +73,8 @@ def UFLFunction(grid, name, order, expr, *args, **kwargs):
             idxCoeff += 1
             field = coefficient.ufl_function_space().ufl_element().field()
             dimR = coefficient.ufl_shape[0]
-        setattr(coefficient, "number", idx)
         coefficients.append({ \
+                'name' : str(coefficient), \
                 'number' : coefficient.number, \
                 'counter' : coefficient.count(), \
                 'dimRange' : dimR,\
