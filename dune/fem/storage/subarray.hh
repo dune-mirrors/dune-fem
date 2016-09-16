@@ -50,6 +50,82 @@ namespace Dune
     };
 
 
+    //! Index mapper which simply adds an offset to the index
+    class OffsetSubMapper
+    : public IndexMapperInterface< OffsetSubMapper >
+    {
+      typedef OffsetSubMapper ThisType;
+      typedef IndexMapperInterface< OffsetSubMapper > BaseType;
+
+    public:
+      OffsetSubMapper( unsigned int size, unsigned int offset )
+      : size_( size ), offset_( offset )
+      {}
+
+      OffsetSubMapper( const ThisType& ) = default;
+      OffsetSubMapper( ThisType&& ) = default;
+      ThisType& operator=( const ThisType& ) = default;
+      ThisType& operator=( ThisType&& ) = default;
+
+      unsigned int size() const
+      {
+        return size_;
+      }
+
+      unsigned int range() const
+      {
+        return size_;
+      }
+
+      unsigned int operator[]( unsigned int i) const
+      {
+        return i+offset_;
+      }
+
+    private:
+      const unsigned int size_;
+      const unsigned int offset_;
+    };
+
+    //! Index mapper with static size which simply adds an offset to the index
+    template<unsigned int dim>
+    class StaticOffsetSubMapper
+    : public IndexMapperInterface< StaticOffsetSubMapper< dim > >
+    {
+      typedef StaticOffsetSubMapper< dim > ThisType;
+      typedef IndexMapperInterface< StaticOffsetSubMapper< dim > > BaseType;
+
+    public:
+      StaticOffsetSubMapper( unsigned int offset )
+      : offset_( offset )
+      {}
+
+      StaticOffsetSubMapper( const ThisType& ) = default;
+      StaticOffsetSubMapper( ThisType&& ) = default;
+      ThisType& operator=( const ThisType& ) = default;
+      ThisType& operator=( ThisType&& ) = default;
+
+      static constexpr unsigned int size()
+      {
+        return dim;
+      }
+
+      static constexpr unsigned int range()
+      {
+        return dim;
+      }
+
+      unsigned int operator[]( unsigned int i) const
+      {
+        return i+offset_;
+      }
+
+    private:
+      const unsigned int offset_;
+    };
+
+
+
     template< class IndexMapper >
     struct SupportsIndexMapperInterface
     {
