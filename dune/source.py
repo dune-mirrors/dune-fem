@@ -358,7 +358,7 @@ class BaseModel:
                 name = coef['name']
                 sourceWriter.emit('if (id == "' + name + '") return ' + number + ';')
             else:
-                str(count = coef['count'])
+                count = str(coef['counter'])
                 sourceWriter.emit('if (id == "w_' + count + '") return ' + number + ';')
         sourceWriter.closeFunction()
 
