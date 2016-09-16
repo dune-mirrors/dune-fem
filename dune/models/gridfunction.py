@@ -140,9 +140,9 @@ def gridFunction(grid, code, coefficients): # *args, coefficients=None):
         grid = grid._module
 
     myCodeHash = hashlib.md5(cpp_code.encode('utf-8')).hexdigest()
-    locname = 'LocalFunction_' + myCodeHash + '_' + grid._typeHash
-    pyname = 'localfunction_' + myCodeHash + '_' + grid._typeHash
-    wrappername = 'GridFunction_' + myCodeHash + '_' + grid._typeHash
+    locname = 'LocalFunction_' + myCodeHash + '_' + grid._moduleName
+    pyname = 'localfunction_' + myCodeHash + '_' + grid._moduleName
+    wrappername = 'GridFunction_' + myCodeHash + '_' + grid._moduleName
 
     base = BaseModel(dimRange, myCodeHash)
     base.coefficients = coefficients

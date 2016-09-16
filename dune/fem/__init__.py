@@ -1,10 +1,10 @@
 from __future__ import print_function
 from mpi4py import MPI
 from ..femmpi import comm
-from .grid import leafGrid
+from . import grid
 import dune.models.gridfunction
-import dune.fem.create
 from ..common import reader
+from .create import *
 
 def string2dgf(dgf):
     return (reader.dgfString,"DGF\n" + dgf)

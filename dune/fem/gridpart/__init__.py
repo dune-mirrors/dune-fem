@@ -106,23 +106,16 @@ def module(includes, typeName, constructors=None, methods=None):
     addAttr(module, module.GridPart)
     return module
 
+gpNames = { "geometry"  : "dune.fem.gridpart.geometry",
+            "filter@"   : "dune.fem.gridpart.filtered"
+            }
 
-_modules = dict()
+def register(**kwargs):
+    gpNames.update(kwargs)
 
-def register(**modules):
-    _modules.update(modules)
-
-
-def create(gridpart, *args, **kwargs):
-    gridpart = importlib.import_module(_modules[gridpart])
-    return gridpart.create(*args, **kwargs)
-
-# register our own grid parts
-
-register(Geometry = "dune.fem.gridpart.geometry")
-register(Filtered = "dune.fem.gridpart.filtered")
-
-# enable doc test
+def create(gp, *args, **kwargs):
+    gpModule = importlib.import_module(gpNames[gp.lower()])
+    return gpModule.create(*args,**kwargs)
 
 if __name__ == "__main__":
     import doctest

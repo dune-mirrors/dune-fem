@@ -745,7 +745,7 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
 
     if not isinstance(grid, types.ModuleType):
         grid = grid._module
-    name = 'ellipticmodel_' + model.signature + "_" + grid._typeHash
+    name = 'ellipticmodel_' + model.signature + "_" + grid._moduleName
 
     if comm.rank == 0:
         print("Importing module for model with signature " + model.signature)
@@ -826,7 +826,6 @@ def create(grid, equation, dirichlet = {}, exact = None, tempVars=True, coeffici
             coefficients = kwargs.pop("coefficients",{})
             fullCoeff = ExtendedModel.setCoeffs
             fullCoeff.update(coefficients)
-            print(fullCoeff)
             Model.__init__(self, coefficients=fullCoeff)
 
     if isinstance(equation, ufl.equation.Equation):

@@ -1,4 +1,0 @@
-add_subdirectory(grid)
-add_subdirectory(space)
-add_subdirectory(scheme)
-add_subdirectory(discretefunction)
