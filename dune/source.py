@@ -350,6 +350,14 @@ class BaseModel:
                 for coefficient in self.coefficients if not coefficient["constant"]]) \
               + ' >', 'Coefficients')
 
+        sourceWriter.openFunction('std::size_t renumberConstants', args=['pybind11::handle &obj'])
+        sourceWriter.emit('std::string id = obj.str();')
+        for coef in self.coefficients:
+            number = str(coef['number'])
+            name = coef['name']
+            sourceWriter.emit('if (id == "' + name + '") return ' + number + ';')
+        sourceWriter.closeFunction()
+
         sourceWriter.openFunction('void setConstant', targs=['std::size_t i'], args=[modelClass + ' &model', 'pybind11::list l'])
         sourceWriter.emit('model.template constant< i >() = l.template cast< typename ' + modelClass + '::ConstantsType<i> >();')
         sourceWriter.closeFunction()
@@ -359,13 +367,7 @@ class BaseModel:
         sourceWriter.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setConstant< i > )... }};')
         sourceWriter.emit('')
         sourceWriter.emit('return [ dispatch ] ( ' + wrapperClass + ' &model, pybind11::handle coeff, pybind11::list l ) {')
-        sourceWriter.emit('    auto number = coeff.attr("number");')
-        sourceWriter.emit('    std::size_t k = 0;')
-        sourceWriter.emit('    if (!number)')
-        sourceWriter.emit('    {')
-        sourceWriter.emit('      throw pybind11::value_error("constant set that is not used in UFL form");')
-        sourceWriter.emit('    }')
-        sourceWriter.emit('    k = number.template cast<int>();')
+        sourceWriter.emit('    std::size_t k = renumberConstants(coeff);')
         # sourceWriter.emit('    if ( !coeff("is_piecewise_constant")(coeff).template cast<bool>() )')
         # sourceWriter.emit('      throw std::range_error( "Using setConstant for a Coefficient" );' )
         sourceWriter.emit('    if( k >= dispatch.size() )')
