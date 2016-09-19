@@ -75,13 +75,13 @@ def UFLFunction(grid, name, order, expr, *args, **kwargs):
             dimR = coefficient.ufl_shape[0]
         coefficients.append({ \
                 'name' : str(coefficient), \
-                'number' : coefficient.number, \
+                'number' : idx, \
                 'counter' : coefficient.count(), \
                 'dimRange' : dimR,\
                 'constant' : coefficient.is_cellwise_constant(),
                 'field': field } )
 
-    code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R, ), expr), False))
+    code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R, ), expr), coefficients, False))
     evaluate = code.replace("result", "value")
     jac = []
     for r in range(R):
@@ -91,7 +91,7 @@ def UFLFunction(grid, name, order, expr, *args, **kwargs):
             ))) for d in range(D)]
         jac.append( [jac_form[d].integrals()[0].integrand() if not jac_form[d].empty() else 0 for d in range(D)] )
     jac = ufl.as_matrix(jac)
-    code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R, D), jac), False))
+    code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R, D), jac), coefficients, False))
     jacobian = code.replace("result", "value")
 
     code = {"evaluate" : evaluate, "jacobian" : jacobian}
