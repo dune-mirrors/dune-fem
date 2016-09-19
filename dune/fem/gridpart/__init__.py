@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __metaclass__ = type
 
 import hashlib
+import importlib
 import sys
 from types import ModuleType
 
@@ -100,10 +101,28 @@ generator = SimpleGenerator("GridPart", "Dune::FemPy")
 
 def module(includes, typeName, constructors=None, methods=None):
     includes = includes + ["dune/fempy/py/gridpart.hh"]
-    typeHash = "gridpart_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = generator.load(includes, typeName, typeHash, constructors, methods)
+    moduleName = "gridpart_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
+    module = generator.load(includes, typeName, moduleName, constructors, methods)
     addAttr(module, module.GridPart)
     return module
+
+
+_modules = dict()
+
+def register(**modules):
+    _modules.update(modules)
+
+
+def create(gridpart, *args, **kwargs):
+    gridpart = importlib.import_module(_modules[gridpart])
+    return gridpart.create(*args, **kwargs)
+
+# register our own grid parts
+
+register(Geometry = "dune.fem.gridpart.geometry")
+register(Filtered = "dune.fem.gridpart.filtered")
+
+# enable doc test
 
 if __name__ == "__main__":
     import doctest
