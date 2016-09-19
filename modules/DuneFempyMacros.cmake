@@ -9,4 +9,4 @@ function(add_gmshgeo_target file)
   add_custom_target(${file}.msh ALL DEPENDS ${OUT})
 endfunction()
 
-declare_python_dune_module(MODULE dune-fempy INIT "import dune.femmpi")
+declare_python_dune_module(dune-fempy)
