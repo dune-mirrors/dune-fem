@@ -15,13 +15,9 @@ from dune.fem.gridpart import gridFunctions
 
 # method to add to gridpart.function call
 def generatedFunction(grid, name, order, code, *args, **kwargs):
-    class Dummy(object):
-        def __init__(self, number):
-            self.number = number
     coef = kwargs.pop("coefficients", {})
     const = kwargs.pop("constants", {})
     coefficients = []
-    setCoefficients  = {}
     coefNumber = 0
     constNumber = 0
     for key, val in coef.items():
@@ -31,7 +27,6 @@ def generatedFunction(grid, name, order, code, *args, **kwargs):
                   'dimRange' : val.dimRange, \
                   'constant' : False, \
                   'field': "double" } )
-      setCoefficients[Dummy(coefNumber)] = val
       coefNumber += 1
     for key, val in const.items():
       coefficients.append({ \
@@ -40,11 +35,10 @@ def generatedFunction(grid, name, order, code, *args, **kwargs):
                   'dimRange' : val, \
                   'constant' : True, \
                   'field': None } )
-      #setCoefficients[Dummy(constNumber)] = val
       constNumber += 1
     ######## A lot to do here....
     Gf = gridFunction(grid, code, coefficients).GFWrapper
-    return Gf(name, order, grid, setCoefficients)
+    return Gf(name, order, grid, coef)
 
 gridFunctions.update( {"code" : generatedFunction} )
 
