@@ -356,6 +356,7 @@ class BaseModel:
             number = str(coef['number'])
             name = coef['name']
             sourceWriter.emit('if (id == "' + name + '") return ' + number + ';')
+        sourceWriter.emit('throw pybind11::value_error("coefficient \'" + id + "\' has not been registered");')
         sourceWriter.closeFunction()
 
         sourceWriter.openFunction('void setConstant', targs=['std::size_t i'], args=[modelClass + ' &model', 'pybind11::list l'])
