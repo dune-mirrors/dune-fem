@@ -61,7 +61,7 @@ schemeNames = { "h1"      : "dune.fem.scheme.h1",
                 "dg"      : "dune.fem.scheme.dg",
                 "mvdg"    : "dune.fem.scheme.nvdg",
                 "stokes"  : "dune.fem.scheme.stokes",
-                "burgers" : "dune.fen.scheme.burgers"
+                "burgers" : "dune.fem.scheme.burgers"
               }
 
 def register(**kwargs):
