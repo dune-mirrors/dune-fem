@@ -5,7 +5,7 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dune/fem/gridpart/filter/threadfilter.hh>
+#include <dune/fem/gridpart/filter/domainfilter.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/misc/threads/threaditeratorstorage.hh>
 #include <dune/fem/space/common/dofmanager.hh>
@@ -34,7 +34,7 @@ namespace Dune
       typedef typename GridPartType :: IndexSetType IndexSetType ;
       typedef DofManager< GridType > DofManagerType;
 
-      typedef ThreadFilter<GridPartType> FilterType;
+      typedef DomainFilter<GridPartType> FilterType;
 
 
     protected:

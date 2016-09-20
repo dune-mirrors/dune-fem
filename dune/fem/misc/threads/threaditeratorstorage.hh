@@ -8,7 +8,6 @@
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
-#include <dune/fem/gridpart/filter/threadfilter.hh>
 
 #ifdef USE_SMP_PARALLEL
 #include <dune/fem/misc/threads/threadpartitioner.hh>

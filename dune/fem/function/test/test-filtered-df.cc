@@ -9,7 +9,7 @@
 
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/tuplediscretefunction.hh>
-#include <dune/fem/gridpart/filter/threadfilter.hh>
+#include <dune/fem/gridpart/filter/domainfilter.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/misc/gridwidth.hh>
@@ -48,7 +48,7 @@ int main ( int argc, char **argv )
         *tagsIt = 1;
       ++tagsIt;
     }
-    typedef Dune::Fem::ThreadFilter< HostGridPartType, ArrayType > FilterType;
+    typedef Dune::Fem::DomainFilter< HostGridPartType, ArrayType > FilterType;
     FilterType leftFilter( hostGridPart, tags, 0 );
     FilterType rightFilter( hostGridPart, tags, 1 );
 
