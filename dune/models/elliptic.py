@@ -697,14 +697,14 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
             'constant' : coefficient.is_cellwise_constant(),\
             'field': field } )
 
-    model.source = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, model.coefficients, source, tempVars)
-    model.diffusiveFlux = generateCode({ u : 'u', du : 'du' }, model.coefficients, diffusiveFlux, tempVars)
-    model.alpha = generateCode({ u : 'u' }, model.coefficients, boundarySource, tempVars)
-    model.linSource = generateCode({ u : 'u', du : 'du', d2u : 'd2u', ubar : 'ubar', dubar : 'dubar', d2ubar : 'd2ubar'}, model.coefficients, linSource, tempVars)
-    model.linNVSource = generateCode({ u : 'u', du : 'du', d2u : 'd2u', ubar : 'ubar', dubar : 'dubar', d2ubar : 'd2ubar'}, model.coefficients, linNVSource, tempVars)
-    model.linDiffusiveFlux = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, model.coefficients, linDiffusiveFlux, tempVars)
-    model.linAlpha = generateCode({ u : 'u', ubar : 'ubar' }, model.coefficients, linBoundarySource, tempVars)
-    model.fluxDivergence = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, model.coefficients, fluxDivergence, tempVars)
+    model.source = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, source, model.coefficients, tempVars)
+    model.diffusiveFlux = generateCode({ u : 'u', du : 'du' }, diffusiveFlux, model.coefficients, tempVars)
+    model.alpha = generateCode({ u : 'u' }, boundarySource, model.coefficients, tempVars)
+    model.linSource = generateCode({ u : 'u', du : 'du', d2u : 'd2u', ubar : 'ubar', dubar : 'dubar', d2ubar : 'd2ubar'}, linSource, model.coefficients, tempVars)
+    model.linNVSource = generateCode({ u : 'u', du : 'du', d2u : 'd2u', ubar : 'ubar', dubar : 'dubar', d2ubar : 'd2ubar'}, linNVSource, model.coefficients, tempVars)
+    model.linDiffusiveFlux = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linDiffusiveFlux, model.coefficients, tempVars)
+    model.linAlpha = generateCode({ u : 'u', ubar : 'ubar' }, linBoundarySource, model.coefficients, tempVars)
+    model.fluxDivergence = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, fluxDivergence, model.coefficients, tempVars)
 
     if dirichlet:
         model.hasDirichletBoundary = True
