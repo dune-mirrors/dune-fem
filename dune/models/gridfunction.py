@@ -8,6 +8,7 @@ import sys
 import timeit
 import types
 from dune import comm
+import dune.generator.builder as builder
 from dune.source import SourceWriter
 from dune.source import BaseModel
 # import dune.fem.gridpart as gridpart
@@ -115,7 +116,6 @@ def dimRangeSplit(code):
 
 def gridFunction(grid, code, coefficients): # *args, coefficients=None):
     start_time = timeit.default_timer()
-    compilePath = os.path.join(os.path.dirname(__file__), '../generated')
 
     if type(code) is not dict: code = { 'eval': code }
     cpp_code = ''
@@ -171,96 +171,89 @@ def gridFunction(grid, code, coefficients): # *args, coefficients=None):
                 print('Error: arg needs to be dict object containing coefficients.')
                 exit(1)
 
-    if comm.rank == 0:
-        if not os.path.isfile(os.path.join(compilePath, pyname + '.so')):
-            writer = SourceWriter(compilePath + '/gridfunction.hh')
-            writer.emit("".join(["#include <" + i + ">\n" for i in grid._includes]))
-            writer.emit('')
-            writer.emit('#include <dune/corepy/pybind11/pybind11.h>')
-            writer.emit('#include <dune/corepy/pybind11/extensions.h>')
-            writer.emit('')
-            writer.emit('#include <dune/fem/space/common/functionspace.hh>')
-            writer.emit('#include <dune/fem/function/common/localfunctionadapter.hh>')
-            writer.emit('')
-            writer.emit('#include <dune/fempy/py/grid/function.hh>')
-            writer.emit('')
+    writer = SourceWriter()
+    writer.emit("".join(["#include <" + i + ">\n" for i in grid._includes]))
+    writer.emit('')
+    writer.emit('#include <dune/corepy/pybind11/pybind11.h>')
+    writer.emit('#include <dune/corepy/pybind11/extensions.h>')
+    writer.emit('')
+    writer.emit('#include <dune/fem/space/common/functionspace.hh>')
+    writer.emit('#include <dune/fem/function/common/localfunctionadapter.hh>')
+    writer.emit('')
+    writer.emit('#include <dune/fempy/py/grid/function.hh>')
+    writer.emit('')
 
-            base.pre(writer, name=locname, targs=(['class Range']), bases=(["Dune::Fem::LocalFunctionAdapterHasInitialize"]))
-            writer.typedef('typename EntityType::Geometry::LocalCoordinate', 'LocalCoordinateType')
+    base.pre(writer, name=locname, targs=(['class Range']), bases=(["Dune::Fem::LocalFunctionAdapterHasInitialize"]))
+    writer.typedef('typename EntityType::Geometry::LocalCoordinate', 'LocalCoordinateType')
 
-            writer.openConstMethod('void evaluate', args=['const PointType &x', 'RangeType &value'], targs=['class PointType'],implemented=eval)
-            if eval:
-                eval = eval.strip()
-                if 'xGlobal' in eval:
-                    writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
-                writer.emit(eval.split("\n"))
-            writer.closeConstMethod()
+    writer.openConstMethod('void evaluate', args=['const PointType &x', 'RangeType &value'], targs=['class PointType'],implemented=eval)
+    if eval:
+        eval = eval.strip()
+        if 'xGlobal' in eval:
+            writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
+        writer.emit(eval.split("\n"))
+    writer.closeConstMethod()
 
-            writer.openConstMethod('void jacobian', args=['const PointType &x', 'JacobianRangeType &value'], targs=['class PointType'],implemented=jac)
-            if jac:
-                jac = jac.strip()
-                if 'xGlobal' in jac:
-                    writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
-                writer.emit(jac.split("\n"))
-            writer.closeConstMethod()
+    writer.openConstMethod('void jacobian', args=['const PointType &x', 'JacobianRangeType &value'], targs=['class PointType'],implemented=jac)
+    if jac:
+        jac = jac.strip()
+        if 'xGlobal' in jac:
+            writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
+        writer.emit(jac.split("\n"))
+    writer.closeConstMethod()
 
-            writer.openConstMethod('void hessian', args=['const PointType &x', 'HessianRangeType &value'], targs=['class PointType'], implemented=hess)
-            if hess:
-                hess = hess.strip()
-                if 'xGlobal' in hess:
-                    writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
-                writer.emit(hess.split("\n"))
-            writer.closeConstMethod()
+    writer.openConstMethod('void hessian', args=['const PointType &x', 'HessianRangeType &value'], targs=['class PointType'], implemented=hess)
+    if hess:
+        hess = hess.strip()
+        if 'xGlobal' in hess:
+            writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
+        writer.emit(hess.split("\n"))
+    writer.closeConstMethod()
 
-            base.post(writer, name=locname, targs=(['class Range']))
+    base.post(writer, name=locname, targs=(['class Range']))
 
-            writer.emit('')
-            writer.typedef(grid._typeName, 'GridPart')
-            writer.emit('static const int dimRange = ' + str(dimRange) + ';')
-            writer.emit('static const int dimDomain = GridPart::dimensionworld;')
-            writer.typedef('typename Dune::Fem::FunctionSpace< double, double, dimDomain, dimRange >', 'FunctionSpaceType')
-            writer.typedef('typename FunctionSpaceType::RangeType', 'RangeType')
+    writer.emit('')
+    writer.typedef(grid._typeName, 'GridPart')
+    writer.emit('static const int dimRange = ' + str(dimRange) + ';')
+    writer.emit('static const int dimDomain = GridPart::dimensionworld;')
+    writer.typedef('typename Dune::Fem::FunctionSpace< double, double, dimDomain, dimRange >', 'FunctionSpaceType')
+    writer.typedef('typename FunctionSpaceType::RangeType', 'RangeType')
 
-            if base.coefficients:
-                writer.typedef(locname + '< GridPart, RangeType ' + ''.join(\
-                [(', Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
-                    'Dune::FieldVector< ' +\
-                    SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
-                    str(coefficient['dimRange']) + ' > >') \
-                    for coefficient in base.coefficients if not coefficient["constant"]])\
-                  + ' >', 'LocalFunction')
-            else:
-                writer.typedef(locname + '< GridPart, RangeType >', 'LocalFunction')
-            writer.typedef('Dune::Fem::LocalFunctionAdapter< LocalFunction >', 'GridFunction')
+    if base.coefficients:
+        writer.typedef(locname + '< GridPart, RangeType ' + ''.join(\
+        [(', Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
+            'Dune::FieldVector< ' +\
+            SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
+            str(coefficient['dimRange']) + ' > >') \
+            for coefficient in base.coefficients if not coefficient["constant"]])\
+          + ' >', 'LocalFunction')
+    else:
+        writer.typedef(locname + '< GridPart, RangeType >', 'LocalFunction')
+    writer.typedef('Dune::Fem::LocalFunctionAdapter< LocalFunction >', 'GridFunction')
 
-            writer.openStruct(wrappername, targs=(['class GridPart'] + ['class Range']), bases=(['GridFunction']))
-            writer.typedef('GridFunction', 'BaseType')
-            writer.emit(wrappername + '( const std::string name, int order, const GridPart &gridPart ) :')
-            writer.emit('    BaseType(name, localFunctionImpl_, gridPart, order) {}')
-            writer.emit('LocalFunction& impl() { return localFunctionImpl_; }')
-            writer.emit('LocalFunction localFunctionImpl_;')
-            writer.closeStruct()
-            writer.typedef(wrappername + '< GridPart, RangeType >', 'GFWrapper')
+    writer.openStruct(wrappername, targs=(['class GridPart'] + ['class Range']), bases=(['GridFunction']))
+    writer.typedef('GridFunction', 'BaseType')
+    writer.emit(wrappername + '( const std::string name, int order, const GridPart &gridPart ) :')
+    writer.emit('    BaseType(name, localFunctionImpl_, gridPart, order) {}')
+    writer.emit('LocalFunction& impl() { return localFunctionImpl_; }')
+    writer.emit('LocalFunction localFunctionImpl_;')
+    writer.closeStruct()
+    writer.typedef(wrappername + '< GridPart, RangeType >', 'GFWrapper')
 
-            if base.coefficients:
-                base.setCoef(writer, modelClass='LocalFunction', wrapperClass='GFWrapper')
+    if base.coefficients:
+        base.setCoef(writer, modelClass='LocalFunction', wrapperClass='GFWrapper')
 
-            writer.openPythonModule(pyname)
-            writer.emit('')
-            writer.emit('// export function class')
-            writer.emit('')
-            writer.emit('pybind11::class_< GFWrapper > cls = Dune::FemPy::registerGridFunction< GFWrapper >( module, "GFWrapper" );')
-            writer.emit('')
-            base.export(writer, 'LocalFunction', 'GFWrapper', constrArgs = (('name','std::string'),('order','int'),('gridPart','GridPart&')), constrKeepAlive='pybind11::keep_alive<0,3>()' )
-            writer.emit('')
-            writer.closePythonModule(pyname)
+    writer.openPythonModule(pyname)
+    writer.emit('')
+    writer.emit('// export function class')
+    writer.emit('')
+    writer.emit('pybind11::class_< GFWrapper > cls = Dune::FemPy::registerGridFunction< GFWrapper >( module, "GFWrapper" );')
+    writer.emit('')
+    base.export(writer, 'LocalFunction', 'GFWrapper', constrArgs = (('name','std::string'),('order','int'),('gridPart','GridPart&')), constrKeepAlive='pybind11::keep_alive<0,3>()' )
+    writer.emit('')
+    writer.closePythonModule(pyname)
 
-            writer.close()
+    builder.Builder(verbose=True).load(pyname, writer.writer.getvalue())
+    writer.close()
 
-            cmake = subprocess.Popen(['cmake', '--build', '../../..', '--target', 'gridfunction'], cwd=compilePath)
-            cmake.wait()
-            os.rename(os.path.join(compilePath, 'gridfunction.so'), os.path.join(compilePath, pyname + '.so'))
-            print("Compilation took: " , timeit.default_timer()-start_time , "seconds")
-
-        comm.barrier()
-        return importlib.import_module('dune.generated.' + pyname)
+    return importlib.import_module('dune.generated.' + pyname)

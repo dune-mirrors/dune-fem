@@ -13,6 +13,7 @@ from dune import comm
 from dune.ufl import GridCoefficient
 from dune.source import SourceWriter
 from dune.source import BaseModel
+import dune.generator.builder as builder
 
 # EllipticModel
 # -------------
@@ -741,81 +742,71 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
 
     if isinstance(model, ufl.equation.Equation):
         model = compileUFL(model, dirichlet, exact, tempVars)
-    compilePath = os.path.join(os.path.dirname(__file__), "../generated")
 
     if not isinstance(grid, types.ModuleType):
         grid = grid._module
     name = 'ellipticmodel_' + model.signature + "_" + grid._moduleName
 
-    if comm.rank == 0:
-        print("Importing module for model with signature " + model.signature)
-        if not os.path.isfile(os.path.join(compilePath, name + ".so")):
-            writer = SourceWriter(compilePath + '/modelimpl.hh')
+    writer = SourceWriter()
 
-            writer.emit("".join(["#include <" + i + ">\n" for i in grid._includes]))
-            writer.emit('')
-            writer.emit('#include <dune/fem/misc/boundaryidprovider.hh>')
-            writer.emit('#include <dune/fem/gridpart/leafgridpart.hh>')
-            writer.emit('#include <dune/fem/gridpart/adaptiveleafgridpart.hh>')
-            writer.emit('')
-            writer.emit('#include <dune/corepy/pybind11/pybind11.h>')
-            writer.emit('#include <dune/corepy/pybind11/extensions.h>')
-            writer.emit('')
-            if model.coefficients:
-                writer.emit('#include <dune/fempy/function/virtualizedgridfunction.hh>')
-                writer.emit('')
-            writer.emit('#include <dune/fem/schemes/diffusionmodel.hh>')
+    writer.emit("".join(["#include <" + i + ">\n" for i in grid._includes]))
+    writer.emit('')
+    writer.emit('#include <dune/fem/misc/boundaryidprovider.hh>')
+    writer.emit('#include <dune/fem/gridpart/leafgridpart.hh>')
+    writer.emit('#include <dune/fem/gridpart/adaptiveleafgridpart.hh>')
+    writer.emit('')
+    writer.emit('#include <dune/corepy/pybind11/pybind11.h>')
+    writer.emit('#include <dune/corepy/pybind11/extensions.h>')
+    writer.emit('')
+    if model.coefficients:
+        writer.emit('#include <dune/fempy/function/virtualizedgridfunction.hh>')
+        writer.emit('')
+    writer.emit('#include <dune/fem/schemes/diffusionmodel.hh>')
 
-            modelNameSpace = 'ModelImpl_' + model.signature
+    modelNameSpace = 'ModelImpl_' + model.signature
 
-            writer.openNameSpace(modelNameSpace)
-            model.write(writer)
-            writer.closeNameSpace(modelNameSpace)
+    writer.openNameSpace(modelNameSpace)
+    model.write(writer)
+    writer.closeNameSpace(modelNameSpace)
 
-            writer.typedef(grid._typeName, 'GridPart')
+    writer.typedef(grid._typeName, 'GridPart')
 
-            if model.coefficients:
-                writer.typedef(modelNameSpace + '::Model< GridPart' + ' '.join(\
-                [(',Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
-                    'Dune::FieldVector< ' +\
-                    SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
-                    str(coefficient['dimRange']) + ' > >') \
-                    for coefficient in model.coefficients if not coefficient["constant"]])\
-                  + ' >', 'Model')
-            else:
-                writer.typedef(modelNameSpace + '::Model< GridPart >', 'Model')
+    if model.coefficients:
+        writer.typedef(modelNameSpace + '::Model< GridPart' + ' '.join(\
+        [(',Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
+            'Dune::FieldVector< ' +\
+            SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
+            str(coefficient['dimRange']) + ' > >') \
+            for coefficient in model.coefficients if not coefficient["constant"]])\
+          + ' >', 'Model')
+    else:
+        writer.typedef(modelNameSpace + '::Model< GridPart >', 'Model')
 
-            writer.typedef('DiffusionModelWrapper< Model >', 'ModelWrapper')
-            writer.typedef('typename ModelWrapper::Base', 'ModelBase')
+    writer.typedef('DiffusionModelWrapper< Model >', 'ModelWrapper')
+    writer.typedef('typename ModelWrapper::Base', 'ModelBase')
 
-            if model.coefficients:
-                model.setCoef(writer)
+    if model.coefficients:
+        model.setCoef(writer)
 
-            writer.openPythonModule(name)
-            writer.emit('')
-            writer.emit('')
-            writer.emit('// export abstract base class')
-            writer.emit('if( !pybind11::already_registered< ModelBase >() )')
-            writer.emit('  pybind11::class_< ModelBase >( module, "ModelBase" );')
-            writer.emit('')
-            writer.emit('// actual wrapper class for model derived from abstract base')
-            writer.emit('pybind11::class_< ModelWrapper > cls( module, "Model", pybind11::base< ModelBase >() );')
-            writer.emit('cls.def_property_readonly( "dimRange", [] ( ModelWrapper & ) { return ' + str(model.dimRange) + '; } );')
-            writer.emit('')
-            model.export(writer, 'Model', 'ModelWrapper')
-            writer.emit('')
-            writer.closePythonModule(name)
+    writer.openPythonModule(name)
+    writer.emit('')
+    writer.emit('')
+    writer.emit('// export abstract base class')
+    writer.emit('if( !pybind11::already_registered< ModelBase >() )')
+    writer.emit('  pybind11::class_< ModelBase >( module, "ModelBase" );')
+    writer.emit('')
+    writer.emit('// actual wrapper class for model derived from abstract base')
+    writer.emit('pybind11::class_< ModelWrapper > cls( module, "Model", pybind11::base< ModelBase >() );')
+    writer.emit('cls.def_property_readonly( "dimRange", [] ( ModelWrapper & ) { return ' + str(model.dimRange) + '; } );')
+    writer.emit('')
+    model.export(writer, 'Model', 'ModelWrapper')
+    writer.emit('')
+    writer.closePythonModule(name)
 
-            writer.close()
+    builder.Builder(verbose=True).load(name, writer.writer.getvalue())
+    writer.close()
 
-            # the new model is constructed in the file modelimpl.cc for which make targets exist:
-            cmake = subprocess.Popen(["cmake", "--build", "../../..", "--target", "modelimpl"], cwd=compilePath)
-            cmake.wait()
-            os.rename(os.path.join(compilePath, "modelimpl.so"), os.path.join(compilePath, name + ".so"))
-            print("Compilation took: " , timeit.default_timer()-start_time , "seconds")
-
-        comm.barrier()
-        return importlib.import_module("dune.generated." + name)
+    return importlib.import_module("dune.generated." + name)
 
 def create(grid, equation, dirichlet = {}, exact = None, tempVars=True, coefficients={}):
     # Model = importModel(grid, compileUFL(equation,dirichlet,exact,tempVars)).Model

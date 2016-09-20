@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-import sys
+import sys, StringIO
 
 
 # FileWriter
@@ -12,6 +12,19 @@ class FileWriter:
 
     def emit(self, src):
         print(src, file=self.file)
+
+    def close(self):
+        self.file.close()
+
+class StringWriter:
+    def __init__(self):
+        self.file = StringIO.StringIO()
+
+    def emit(self, src):
+        print(src, file=self.file)
+
+    def getvalue(self):
+        return self.file.getvalue()
 
     def close(self):
         self.file.close()
@@ -36,8 +49,10 @@ class ListWriter:
 # ------------
 
 class SourceWriter:
-    def __init__(self, writer):
-        if self._isstring(writer):
+    def __init__(self, writer=None):
+        if not writer:
+            self.writer = StringWriter()
+        elif self._isstring(writer):
             self.writer = FileWriter(writer)
         else:
             self.writer = writer
