@@ -371,6 +371,7 @@ class BaseModel:
             number = str(coef['number'])
             name = coef['name']
             sourceWriter.emit('if (id == "' + name + '") return ' + number + ';')
+        sourceWriter.emit('throw pybind11::value_error("coefficient \'" + id + "\' has not been registered");')
         sourceWriter.closeFunction()
 
         sourceWriter.openFunction('void setConstant', targs=['std::size_t i'], args=[modelClass + ' &model', 'pybind11::list l'])
@@ -383,8 +384,6 @@ class BaseModel:
         sourceWriter.emit('')
         sourceWriter.emit('return [ dispatch ] ( ' + wrapperClass + ' &model, pybind11::handle coeff, pybind11::list l ) {')
         sourceWriter.emit('    std::size_t k = renumberConstants(coeff);')
-        # sourceWriter.emit('    if ( !coeff("is_piecewise_constant")(coeff).template cast<bool>() )')
-        # sourceWriter.emit('      throw std::range_error( "Using setConstant for a Coefficient" );' )
         sourceWriter.emit('    if( k >= dispatch.size() )')
         sourceWriter.emit('      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );' )
         sourceWriter.emit('    dispatch[ k ]( model.impl(), l );')
@@ -401,9 +400,7 @@ class BaseModel:
         sourceWriter.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setCoefficient< i > )... }};')
         sourceWriter.emit('')
         sourceWriter.emit('return [ dispatch ] ( ' + wrapperClass + ' &model, pybind11::handle coeff, pybind11::handle o ) {')
-        sourceWriter.emit('    std::size_t k = coeff.attr("number").template cast<int>();')
-        # sourceWriter.emit('    if ( coeff.attr("is_piecewise_constant").template cast<bool>() )')
-        # sourceWriter.emit('      throw std::range_error( "Using setCoefficient for a Constant" );' )
+        sourceWriter.emit('    std::size_t k = renumberConstants(coeff);')
         sourceWriter.emit('    if( k >= dispatch.size() )')
         sourceWriter.emit('      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );' )
         sourceWriter.emit('    dispatch[ k ]( model.impl(), o );')
