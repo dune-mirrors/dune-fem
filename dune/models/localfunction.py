@@ -117,20 +117,25 @@ def codeSplitter(code, coefficients):
         dimRange = max( [int(c.split("[")[1].split("]")[0]) for c in codeC] ) + 1
         cpp_code = code
     for coef in coefficients:
+        num = str(coef['number'])
         if 'name' in coef:
             gfname = '@gf:' + coef['name']
             constname = '@const:' + coef['name']
+            jacname = '@jac:' + coef['name']
+            if jacname in cpp_code:
+                cpp_code = cpp_code.replace(jacname, 'dc' + num)
+                cpp_code = 'CoefficientJacobianRangeType< ' + num + ' > dc' + num + ';\n' \
+                           + 'coefficient< ' + num + ' >().jacobian( x, dc' \
+                           + num + ' );\n' + cpp_code
             if gfname in cpp_code:
-                cnum = 'c' + str(coef['number'])
-                cpp_code = cpp_code.replace(gfname, cnum)
-                cpp_code = 'CoefficientRangeType< 0 > ' + cnum + ';\n' \
-                           + 'coefficient< ' + str(coef["number"]) + ' >().evaluate( x, ' \
-                           + cnum + ' );' + cpp_code
+                cpp_code = cpp_code.replace(gfname, 'c' + num)
+                cpp_code = 'CoefficientRangeType< ' + num  + ' > c' + num + ';\n' \
+                           + 'coefficient< ' + num + ' >().evaluate( x, c' \
+                           + num + ' );\n' + cpp_code
             elif constname in cpp_code:
-                ccnum = 'cc' + str(coef['number'])
-                cpp_code = cpp_code.replace(constname, ccnum)
-                cpp_code = 'ConstantsRangeType< 0 > ' + ccnum + ' = constant< ' \
-                           + str(coef["number"]) + ' >();\n' + cpp_code
+                cpp_code = cpp_code.replace(constname, 'cc' + num)
+                cpp_code = 'ConstantsRangeType< ' + num + ' > cc' + num + ' = constant< ' \
+                           + num + ' >();\n' + cpp_code
     return ( cpp_code, dimRange )
 
 def gridFunction(grid, code, coefficients):
