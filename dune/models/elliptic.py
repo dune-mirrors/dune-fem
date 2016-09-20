@@ -453,12 +453,19 @@ def splitUFLForm(form, linear):
 # -------------
 
 class CodeGenerator(ufl.algorithms.transformer.Transformer):
-    def __init__(self, predefined, tempVars):
+    def __init__(self, predefined, coefficients, tempVars):
         ufl.algorithms.transformer.Transformer.__init__(self)
         self.using = set()
         self.exprs = predefined
+        self.coefficients = coefficients
         self.code = []
         self.tempVars = tempVars
+
+    def getNumber(self, expr):
+        e = [ ee for ee in self.coefficients if ee["name"] == str(expr) ]
+        if len(e) > 1:
+            raise KeyError('two coefficients provided with same name')
+        return e[0]["number"]
 
     def argument(self, expr):
         if expr in self.exprs:
@@ -480,7 +487,7 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
 
     def coefficient(self, expr):
         if expr not in self.exprs:
-            idx = str(expr.number)
+            idx = str(self.getNumber(expr))
             if expr.is_cellwise_constant():
                 self.code.append('ConstantsRangeType< ' + idx + ' > cc' + idx + ' = constant< ' + idx + ' >();')
                 self.exprs[expr] = 'cc' + idx
@@ -518,21 +525,21 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         if expr not in self.exprs:
             operand = expr.ufl_operands[0]
             if isinstance(operand, ufl.coefficient.Coefficient):
-                idx = str(operand.number)
+                idx = str(self.getNumber(operand))
                 self.code.append('CoefficientJacobianRangeType< ' + idx + ' > dc' + idx + ';')
                 self.code.append('coefficient< ' + idx + ' >().jacobian( x, dc' + idx + ' );')
                 self.exprs[expr] = 'dc' + idx
             elif isinstance(operand, ufl.differentiation.Grad):
                 operand = operand.ufl_operands[0]
                 if isinstance(operand, ufl.coefficient.Coefficient):
-                    idx = str(operand.number)
+                    idx = str(self.getNumber(operand))
                     self.code.append('CoefficientHessianRangeType< ' + idx + ' > d2c' + idx + ';')
                     self.code.append('coefficient< ' + idx + ' >().hessian( x, d2c' + idx + ' );')
                     self.exprs[expr] = 'd2c' + idx
                 else:
                     raise Exception('Elliptic model does not allow for second derivatives, yet.')
             elif isinstance(operand, ufl.argument.Argument):
-                raise Exception('Unknown argument: ' + str(operand.number()))
+                raise Exception('Unknown argument: ' + str(operand))
             else:
                 raise Exception('Cannot compute gradient of ' + repr(expr))
         return self.exprs[expr]
@@ -616,8 +623,8 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
 # generateCode
 # ------------
 
-def generateCode(predefined, tensor, tempVars = True):
-    generator = CodeGenerator(predefined, tempVars)
+def generateCode(predefined, tensor, coefficients, tempVars = True):
+    generator = CodeGenerator(predefined, coefficients, tempVars)
     results = []
     for index in tensor.keys():
         result = generator.visit(tensor[index])
@@ -684,20 +691,20 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
             idxCoeff += 1
         model.coefficients.append({ \
             'name' : str(coefficient), \
-            'number' : coefficient.number, \
+            'number' : idx, \
             'counter' : coefficient.count(), \
             'dimRange' : dimRange,\
             'constant' : coefficient.is_cellwise_constant(),\
             'field': field } )
 
-    model.source = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, source, tempVars)
-    model.diffusiveFlux = generateCode({ u : 'u', du : 'du' }, diffusiveFlux, tempVars)
-    model.alpha = generateCode({ u : 'u' }, boundarySource, tempVars)
-    model.linSource = generateCode({ u : 'u', du : 'du', d2u : 'd2u', ubar : 'ubar', dubar : 'dubar', d2ubar : 'd2ubar'}, linSource, tempVars)
-    model.linNVSource = generateCode({ u : 'u', du : 'du', d2u : 'd2u', ubar : 'ubar', dubar : 'dubar', d2ubar : 'd2ubar'}, linNVSource, tempVars)
-    model.linDiffusiveFlux = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linDiffusiveFlux, tempVars)
-    model.linAlpha = generateCode({ u : 'u', ubar : 'ubar' }, linBoundarySource, tempVars)
-    model.fluxDivergence = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, fluxDivergence, tempVars)
+    model.source = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, source, model.coefficients, tempVars)
+    model.diffusiveFlux = generateCode({ u : 'u', du : 'du' }, diffusiveFlux, model.coefficients, tempVars)
+    model.alpha = generateCode({ u : 'u' }, boundarySource, model.coefficients, tempVars)
+    model.linSource = generateCode({ u : 'u', du : 'du', d2u : 'd2u', ubar : 'ubar', dubar : 'dubar', d2ubar : 'd2ubar'}, linSource, model.coefficients, tempVars)
+    model.linNVSource = generateCode({ u : 'u', du : 'du', d2u : 'd2u', ubar : 'ubar', dubar : 'dubar', d2ubar : 'd2ubar'}, linNVSource, model.coefficients, tempVars)
+    model.linDiffusiveFlux = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linDiffusiveFlux, model.coefficients, tempVars)
+    model.linAlpha = generateCode({ u : 'u', ubar : 'ubar' }, linBoundarySource, model.coefficients, tempVars)
+    model.fluxDivergence = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, fluxDivergence, model.coefficients, tempVars)
 
     if dirichlet:
         model.hasDirichletBoundary = True
@@ -722,7 +729,7 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
                 raise Exception('Dirichtlet boundary condition has wrong dimension.')
             model.dirichlet.append('case ' + str(bndId) + ':')
             model.dirichlet.append('  {')
-            model.dirichlet += ['    ' + line for line in generateCode({}, ExprTensor((dimRange,), dirichlet[bndId]), tempVars)]
+            model.dirichlet += ['    ' + line for line in generateCode({}, ExprTensor((dimRange,), model.coefficients, dirichlet[bndId]), tempVars)]
             model.dirichlet.append('  }')
             model.dirichlet.append('  break;')
         model.dirichlet.append('default:')

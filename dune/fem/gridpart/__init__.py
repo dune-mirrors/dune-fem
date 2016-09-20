@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 __metaclass__ = type
 
 import hashlib
+import importlib
 import sys
 from types import ModuleType
 
@@ -104,6 +105,24 @@ def module(includes, typeName, constructors=None, methods=None):
     module = generator.load(includes, typeName, moduleName, constructors, methods)
     addAttr(module, module.GridPart)
     return module
+
+
+_modules = dict()
+
+def register(**modules):
+    _modules.update(modules)
+
+
+def create(gridpart, *args, **kwargs):
+    gridpart = importlib.import_module(_modules[gridpart])
+    return gridpart.create(*args, **kwargs)
+
+# register our own grid parts
+
+register(Geometry = "dune.fem.gridpart.geometry")
+register(Filtered = "dune.fem.gridpart.filtered")
+
+# enable doc test
 
 if __name__ == "__main__":
     import doctest
