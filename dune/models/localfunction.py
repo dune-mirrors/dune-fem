@@ -11,30 +11,40 @@ from dune import comm
 import dune.generator.builder as builder
 from dune.source import SourceWriter
 from dune.source import BaseModel
-# import dune.fem.gridpart as gridpart
 from dune.fem.gridpart import gridFunctions
 
 # method to add to gridpart.function call
 def generatedFunction(grid, name, order, code, *args, **kwargs):
     class Dummy(object):
-        def __init__(self,number):
+        def __init__(self, number):
             self.number = number
-    coef = kwargs.pop("coefficients",{})
+    coef = kwargs.pop("coefficients", {})
+    const = kwargs.pop("constants", {})
     coefficients = []
     setCoefficients  = {}
-    number = 0
-    for key,val in coef.items():
+    coefNumber = 0
+    constNumber = 0
+    for key, val in coef.items():
       coefficients.append({ \
                   'name' : key, \
-                  'number' : number, \
+                  'number' : coefNumber, \
                   'dimRange' : val.dimRange, \
                   'constant' : False, \
                   'field': "double" } )
-      setCoefficients[Dummy(number)] = val
-      number += 1
+      setCoefficients[Dummy(coefNumber)] = val
+      coefNumber += 1
+    for key, val in const.items():
+      coefficients.append({ \
+                  'name' : key, \
+                  'number' : constNumber, \
+                  'dimRange' : val, \
+                  'constant' : True, \
+                  'field': None } )
+      #setCoefficients[Dummy(constNumber)] = val
+      constNumber += 1
     ######## A lot to do here....
     Gf = gridFunction(grid, code, coefficients).GFWrapper
-    return Gf(name,order,grid,setCoefficients)
+    return Gf(name, order, grid, setCoefficients)
 
 gridFunctions.update( {"code" : generatedFunction} )
 
@@ -63,8 +73,8 @@ def UFLFunction(grid, name, order, expr, *args, **kwargs):
             idxCoeff += 1
             field = coefficient.ufl_function_space().ufl_element().field()
             dimR = coefficient.ufl_shape[0]
-        setattr(coefficient, "number", idx)
         coefficients.append({ \
+                'name' : str(coefficient), \
                 'number' : coefficient.number, \
                 'counter' : coefficient.count(), \
                 'dimRange' : dimR,\
@@ -87,16 +97,16 @@ def UFLFunction(grid, name, order, expr, *args, **kwargs):
     code = {"evaluate" : evaluate, "jacobian" : jacobian}
     Gf = gridFunction(grid, code, coefficients).GFWrapper
 
-    coefficients = kwargs.pop("coefficients",{})
-    fullCoeff = {c:c.gf for c in coef if isinstance(c,GridCoefficient)}
+    coefficients = kwargs.pop("coefficients", {})
+    fullCoeff = {c:c.gf for c in coef if isinstance(c, GridCoefficient)}
     fullCoeff.update(coefficients)
     kwargs["coefficients"] = fullCoeff
-    return Gf(name,order,grid,*args,**kwargs)
+    return Gf(name, order, grid, *args, **kwargs)
 
 gridFunctions.update( {"ufl" : UFLFunction} )
 
-def dimRangeSplit(code):
-    """find the dimRange using @dimrange or counting values
+def codeSplitter(code, coefficients):
+    """find the dimRange and any coefficients in code string
     """
     cpp_code = ''
     codeA = code.split("\n")
@@ -112,9 +122,24 @@ def dimRangeSplit(code):
         codeC = [c[0] for c in codeB if "value" in c[0]]
         dimRange = max( [int(c.split("[")[1].split("]")[0]) for c in codeC] ) + 1
         cpp_code = code
+    for coef in coefficients:
+        if 'name' in coef:
+            gfname = '@gf:' + coef['name']
+            constname = '@const:' + coef['name']
+            if gfname in cpp_code:
+                cnum = 'c' + str(coef['number'])
+                cpp_code = cpp_code.replace(gfname, cnum)
+                cpp_code = 'CoefficientRangeType< 0 > ' + cnum + ';\n' \
+                           + 'coefficient< ' + str(coef["number"]) + ' >().evaluate( x, ' \
+                           + cnum + ' );' + cpp_code
+            elif constname in cpp_code:
+                ccnum = 'cc' + str(coef['number'])
+                cpp_code = cpp_code.replace(constname, ccnum)
+                cpp_code = 'ConstantsRangeType< 0 > ' + ccnum + ' = constant< ' \
+                           + str(coef["number"]) + ' >();\n' + cpp_code
     return ( cpp_code, dimRange )
 
-def gridFunction(grid, code, coefficients): # *args, coefficients=None):
+def gridFunction(grid, code, coefficients):
     start_time = timeit.default_timer()
 
     if type(code) is not dict: code = { 'eval': code }
@@ -124,13 +149,13 @@ def gridFunction(grid, code, coefficients): # *args, coefficients=None):
     hess = ''
     for key, value in code.items():
         if key == 'eval' or key == 'evaluate':
-            eval, dimRange = dimRangeSplit(value)
+            eval, dimRange = codeSplitter(value, coefficients)
             cpp_code += eval + '\n'
         elif key == 'jac' or key == 'jacobian':
-            jac, dimRange = dimRangeSplit(value)
+            jac, dimRange = codeSplitter(value, coefficients)
             cpp_code += jac + '\n'
         elif key == 'hess' or key == 'hessian':
-            hess, dimRange = dimRangeSplit(value)
+            hess, dimRange = codeSplitter(value, coefficients)
             cpp_code += hess + '\n'
         else:
             print(key, ' is not a valid key. Use "eval", "jac" or "hess"')
@@ -146,30 +171,6 @@ def gridFunction(grid, code, coefficients): # *args, coefficients=None):
 
     base = BaseModel(dimRange, myCodeHash)
     base.coefficients = coefficients
-    if 0:
-        assert len(args) == 1,\
-           "arg needs to be a single dict object."
-        for arg in args:
-            if type(arg) is dict:
-                coefNum = 0
-                constNum = 0
-                for key, value in arg.items():
-                    if value[1] == True:
-                        num = constNum
-                        constNum += 1
-                        field = None
-                    else:
-                        num = coefNum
-                        coefNum += 1
-                        field = 'double'
-                    base.coefficients.append({ \
-                        'number' : num, \
-                        'dimRange' : value[0], \
-                        'constant' : value[1], \
-                        'field' : field } )
-            else:
-                print('Error: arg needs to be dict object containing coefficients.')
-                exit(1)
 
     writer = SourceWriter()
     writer.emit("".join(["#include <" + i + ">\n" for i in grid._includes]))
@@ -249,7 +250,7 @@ def gridFunction(grid, code, coefficients): # *args, coefficients=None):
     writer.emit('')
     writer.emit('pybind11::class_< GFWrapper > cls = Dune::FemPy::registerGridFunction< GFWrapper >( module, "GFWrapper" );')
     writer.emit('')
-    base.export(writer, 'LocalFunction', 'GFWrapper', constrArgs = (('name','std::string'),('order','int'),('gridPart','GridPart&')), constrKeepAlive='pybind11::keep_alive<0,3>()' )
+    base.export(writer, 'LocalFunction', 'GFWrapper', constrArgs = (('name', 'std::string'), ('order', 'int'), ('gridPart', 'GridPart&')), constrKeepAlive='pybind11::keep_alive<0,3>()' )
     writer.emit('')
     writer.closePythonModule(pyname)
 

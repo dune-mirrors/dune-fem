@@ -2,7 +2,7 @@ from __future__ import print_function
 from mpi4py import MPI
 from ..femmpi import comm
 from . import grid
-import dune.models.gridfunction
+import dune.models.localfunction
 from ..common import reader
 from .create import *
 
