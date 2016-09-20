@@ -76,6 +76,7 @@ def addAttr(module, cls):
 
 dune.grid.grid_generator.generator = Generator("Grid", "Dune::FemPy", "LeafGrid")
 dune.grid.grid_generator.addAttr = addAttr
+dune.grid.grid_generator.fileBase = "femgrid"
 
 #############################################
 if __name__ == "__main__":

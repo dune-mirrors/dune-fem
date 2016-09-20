@@ -36,9 +36,11 @@ def addAttr(module, cls, field):
     setattr(cls, "field", field )
     setattr(cls, "interpolate", interpolate )
 
+fileBase = "femspace"
+
 def module(field, includes, typeName, constructors=None, methods=None):
     includes = includes + ["dune/fempy/py/space.hh"]
-    moduleName = "space_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
+    moduleName = fileBase + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
     module = generator.load(includes, typeName, moduleName, constructors, methods)
     addAttr(module, module.Space, field)
     return module
