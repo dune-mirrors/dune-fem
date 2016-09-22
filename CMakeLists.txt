@@ -28,7 +28,7 @@ if (PYTHON)
         COMMAND "${CMAKE_COMMAND}" -DCMAKE_INSTALL_COMPONENT=python
                     -P "${CMAKE_BINARY_DIR}/cmake_install.cmake" )
     install(CODE
-      "execute_process(COMMAND python setup.py install -f ${PYTHON_INSTALL_LOCATION}
+      "execute_process(COMMAND pip install . ${PYTHON_INSTALL_LOCATION}
                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
       COMPONENT python)
 endif()
