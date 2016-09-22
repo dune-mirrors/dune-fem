@@ -10,7 +10,7 @@ import dune.common as common
 from ...generator.generator import SimpleGenerator
 from .. import space
 from .. import function as gf
-from dune.fem import comm
+from dune.common import comm
 
 import inspect
 

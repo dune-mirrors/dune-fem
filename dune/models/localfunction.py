@@ -7,7 +7,6 @@ import subprocess
 import sys
 import timeit
 import types
-from dune import comm
 import dune.generator.builder as builder
 from dune.source import SourceWriter
 from dune.source import BaseModel

@@ -3,8 +3,11 @@ add_subdirectory(space)
 add_subdirectory(discretefunction)
 add_subdirectory(scheme)
 
-add_python_target(grid)
-add_python_target(create)
-add_python_target(function)
+add_library(femmpi SHARED femmpi.cc)
+set_target_properties(femmpi PROPERTIES PREFIX "")
 
-configure_file(__init__.py __init__.py COPYONLY)
+# add_python_target(grid)
+# add_python_target(create)
+# add_python_target(function)
+
+# configure_file(__init__.py __init__.py COPYONLY)

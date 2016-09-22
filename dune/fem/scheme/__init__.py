@@ -9,7 +9,6 @@ import os.path
 import re
 # from termcolor import colored
 
-from dune.fem import comm
 from .. import discretefunction
 
 from dune.generator.generator import SimpleGenerator

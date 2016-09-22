@@ -29,9 +29,10 @@ from types import ModuleType
 
 from dune.generator.generator import SimpleGenerator
 
-from .. import common
+# from .. import common
 import dune.grid
 import dune.grid.grid_generator
+from dune.grid.core import *
 
 from . import gridpart
 

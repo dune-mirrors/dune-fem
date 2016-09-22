@@ -9,7 +9,6 @@ import subprocess
 import sys
 import timeit
 import types
-from dune import comm
 from dune.ufl import GridCoefficient
 from dune.source import SourceWriter
 from dune.source import BaseModel
