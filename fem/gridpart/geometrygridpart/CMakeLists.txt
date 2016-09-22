@@ -1,5 +1,5 @@
 #install headers
-install(FILES
-    capabilities.hh  datahandle.hh  entitypointer.hh  indexset.hh  intersectioniterator.hh
-    entity.hh        geometry.hh    intersection.hh   iterator.hh
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/gridpart/geometrygridpart)
+
+dune_install(
+capabilities.hh  datahandle.hh  geometry.hh  intersection.hh          iterator.hh
+entity.hh      indexset.hh  intersectioniterator.hh)

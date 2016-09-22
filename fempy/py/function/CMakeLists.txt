@@ -1,5 +1,4 @@
 set(HEADERS
-  discrete.hh
   grid.hh
 )
 
