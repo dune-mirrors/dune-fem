@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-import sys, StringIO
+import sys, io
 
 
 # FileWriter
@@ -18,7 +18,7 @@ class FileWriter:
 
 class StringWriter:
     def __init__(self):
-        self.file = StringIO.StringIO()
+        self.file = io.StringIO()
 
     def emit(self, src):
         print(src, file=self.file)

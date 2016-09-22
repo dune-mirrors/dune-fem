@@ -12,7 +12,7 @@ import types
 from dune.ufl import GridCoefficient
 from dune.source import SourceWriter
 from dune.source import BaseModel
-import dune.generator.builder as builder
+from dune.generator.generator import builder
 
 # EllipticModel
 # -------------
@@ -811,7 +811,7 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
     writer.emit('')
     writer.closePythonModule(name)
 
-    builder.Builder(verbose=True).load(name, writer.writer.getvalue())
+    builder.load(name, writer.writer.getvalue())
     writer.close()
 
     return importlib.import_module("dune.generated." + name)

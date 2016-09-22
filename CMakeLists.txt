@@ -23,7 +23,12 @@ if (PYTHON)
       set(PYTHON_INSTALL_LOCATION "--prefix=${CMAKE_INSTALL_PREFIX}")
       message("--cmake")
     endif()
+
+    add_custom_target(python-install # DEPENDS python
+        COMMAND "${CMAKE_COMMAND}" -DCMAKE_INSTALL_COMPONENT=python
+                    -P "${CMAKE_BINARY_DIR}/cmake_install.cmake" )
     install(CODE
       "execute_process(COMMAND python setup.py install -f ${PYTHON_INSTALL_LOCATION}
-               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
+               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
+      COMPONENT python)
 endif()

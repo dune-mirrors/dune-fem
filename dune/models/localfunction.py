@@ -7,7 +7,7 @@ import subprocess
 import sys
 import timeit
 import types
-import dune.generator.builder as builder
+from dune.generator.generator import builder
 from dune.source import SourceWriter
 from dune.source import BaseModel
 from dune.fem.gridpart import gridFunctions
@@ -252,7 +252,7 @@ def gridFunction(grid, code, coefficients):
     writer.emit('')
     writer.closePythonModule(pyname)
 
-    builder.Builder(verbose=True).load(pyname, writer.writer.getvalue())
+    builder.load(pyname, writer.writer.getvalue())
     writer.close()
 
     return importlib.import_module('dune.generated.' + pyname)
