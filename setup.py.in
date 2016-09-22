@@ -1,0 +1,17 @@
+from setuptools import setup, find_packages
+
+setup(name="dune.fem",
+    namespace_packages=['dune'],
+    description="Python lib for dune: fem package",
+    version="2.4",
+    author="Andreas Dedner and Martin Nolte",
+    packages = find_packages(),
+    zip_safe = 0,
+    package_data = {'': ['*.so']}
+  )
+
+#    package_data = {'dune': ['${CMAKE_CURRENT_BINARY_DIR}/dune/*.so']}
+#    package_dir={ '': '${CMAKE_CURRENT_SOURCE_DIR}' },
+#    packages=[ 'dune.common',
+#               'dune.geometry',
+#               'dune.grid', ]
