@@ -86,6 +86,8 @@
 
 #include <dune/fem/solver/newtoninverseoperator.hh>
 
+#include <dune/fempy/py/common/numpyvector.hh>
+
 // #include <dune/fem/operator/lagrangeinterpolation.hh>
 
 /*********************************************************/
@@ -97,7 +99,8 @@ enum SolverType
   femoem,      // use the matrix based version of the dune-fem solvers with blas
   istl,        // use the dune-istl solvers
   umfpack,     // use the direct solver umfpack
-  petsc        // use the petsc package
+  petsc,       // use the petsc package
+  numpy        // use the numpy vectors based on pybind11
 };
 enum OperatorType
 {
@@ -191,5 +194,19 @@ struct Solvers<DFSpace,petsc,symmetric>
   // use the parameter petsc.kspsolver.method
 };
 #endif
+
+template <class DFSpace, bool symmetric>
+struct Solvers<DFSpace,numpy,symmetric>
+{
+  static const bool solverConfigured = true;
+  typedef DFSpace DiscreteFunctionSpaceType;
+  typedef Dune::FemPy::NumPyVector<double> DofVectorType;
+  typedef Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< DiscreteFunctionSpaceType, DofVectorType > > DiscreteFunctionType;
+  typedef Dune::Fem::SparseRowLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
+  typedef typename std::conditional<symmetric,
+          Dune::Fem::ISTLCGOp< DiscreteFunctionType, LinearOperatorType >,
+          Dune::Fem::ISTLGMResOp< DiscreteFunctionType, LinearOperatorType > > :: type
+          LinearInverseOperatorType;
+};
 
 #endif // end #if FEM_SOLVER_HH
