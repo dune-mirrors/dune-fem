@@ -1,34 +1,3 @@
 add_subdirectory(dune)
 
-find_program(PYTHON "python")
-if (PYTHON)
-    file(GLOB_RECURSE MY_PYS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "dune/*.py")
-    foreach(ITEM ${MY_PYS})
-      # get_filename_component(ITEM_PATH ${ITEM} PATH)
-      # file(COPY ${ITEM} DESTINATION ${ITEM_PATH})
-      configure_file(${ITEM} ${ITEM} COPYONLY)
-    endforeach()
-
-    set(SETUP_PY_IN "${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in")
-    set(SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
-    configure_file(${SETUP_PY_IN} ${SETUP_PY})
-
-    if(PYTHON_INSTALL_LOCATION STREQUAL "user")
-      set(PYTHON_INSTALL_LOCATION "--user")
-      message("--user")
-    elseif(PYTHON_INSTALL_LOCATION STREQUAL "global")
-      set(PYTHON_INSTALL_LOCATION "")
-      message("--global")
-    else()
-      set(PYTHON_INSTALL_LOCATION "--prefix=${CMAKE_INSTALL_PREFIX}")
-      message("--cmake")
-    endif()
-
-    add_custom_target(python-install # DEPENDS python
-        COMMAND "${CMAKE_COMMAND}" -DCMAKE_INSTALL_COMPONENT=python
-                    -P "${CMAKE_BINARY_DIR}/cmake_install.cmake" )
-    install(CODE
-      "execute_process(COMMAND pip install . ${PYTHON_INSTALL_LOCATION}
-               WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})"
-      COMPONENT python)
-endif()
+configure_file(setup.py.in setup.py)

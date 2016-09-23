@@ -1,4 +1,5 @@
-# add_python_target(filtered)
-# add_python_target(geometry)
-
-# configure_file(__init__.py __init__.py COPYONLY)
+add_python_targets(gridpart
+  __init__
+  filtered
+  geometry
+)
