@@ -85,21 +85,31 @@ namespace Dune
 
       const value_type &operator[] ( size_type index ) const
       {
-        return static_cast< T * >( bufferInfo_.ptr )[ index * bufferInfo_.strides[ 0 ] ];
+        return leakPointer()[ index ];
       }
-
       value_type &operator[] ( size_type index )
       {
-        return static_cast< T * >( bufferInfo_.ptr )[ index * bufferInfo_.strides[ 0 ] ];
+        return leakPointer()[ index ];
       }
       value_type &vec_access ( size_type index )
       {
-        return static_cast< T * >( bufferInfo_.ptr )[ index * bufferInfo_.strides[ 0 ] ];
+        return leakPointer()[ index ];
       }
       const value_type &vec_access ( size_type index ) const
       {
-        return static_cast< T * >( bufferInfo_.ptr )[ index * bufferInfo_.strides[ 0 ] ];
+        return leakPointer()[ index ];
       }
+
+      inline const value_type *leakPointer () const
+      {
+        return static_cast< value_type * >( bufferInfo_.ptr );
+      }
+      inline value_type *leakPointer ()
+      {
+        return static_cast< value_type * >( bufferInfo_.ptr );
+      }
+
+
 
       void reserve ( size_type newCapacity ) {}
 
