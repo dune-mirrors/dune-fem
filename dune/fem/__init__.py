@@ -5,3 +5,4 @@ import dune.fem.femmpi
 from . import grid
 import dune.models.localfunction
 from .create import *
+from dune.fem.femmpi import parameter
