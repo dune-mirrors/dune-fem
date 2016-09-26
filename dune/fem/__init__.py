@@ -1,8 +1,9 @@
 from __future__ import print_function
-from mpi4py import MPI
+
 import dune.common
-import dune.fem.femmpi
+
+from ._fem import *
+
 from . import grid
 import dune.models.localfunction
 from .create import *
-from dune.fem.femmpi import parameter

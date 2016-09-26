@@ -8,9 +8,9 @@
 #include <dune/corepy/pybind11/extensions.h>
 #include <dune/corepy/pybind11/pybind11.h>
 
-PYBIND11_PLUGIN( femmpi )
+PYBIND11_PLUGIN( _fem )
 {
-  pybind11::module module( "femmpi" );
+  pybind11::module module( "_fem" );
 
   try
   {

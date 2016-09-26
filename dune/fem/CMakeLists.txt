@@ -3,8 +3,8 @@ add_subdirectory(space)
 add_subdirectory(discretefunction)
 add_subdirectory(scheme)
 
-add_library(femmpi SHARED femmpi.cc)
-set_target_properties(femmpi PROPERTIES PREFIX "")
+add_library(_fem SHARED _fem.cc)
+set_target_properties(_fem PROPERTIES PREFIX "")
 
 add_python_targets(fem
   __init__
