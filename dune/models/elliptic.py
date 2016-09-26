@@ -45,10 +45,11 @@ class EllipticModel(BaseModel):
         self.arg_d2ubar = 'const HessianRangeType &d2ubar'
         self.arg_r = 'RangeType &result'
         self.arg_dr = 'JacobianRangeType &result'
+        self.symmetric = 'false'
 
     def main(self, sourceWriter, name='Model', targs=[]):
         sourceWriter.typedef("Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >", "BoundaryIdProviderType")
-
+        sourceWriter.emit('static const bool symmetric = ' + self.symmetric + ';')
 
         sourceWriter.openConstMethod('void source', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_r])
         sourceWriter.emit(self.source)
@@ -668,6 +669,9 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
 
     model = EllipticModel(dimRange, form.signature())
 
+    expandform = ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(equation.lhs)))
+    if expandform == ufl.adjoint(expandform):
+        model.symmetric = 'true'
     model.field = field
 
     coefficients = set(form.coefficients())
@@ -829,12 +833,16 @@ def create(grid, equation, dirichlet = {}, exact = None, tempVars=True, coeffici
     Model = importModel(grid, equation, dirichlet, exact, tempVars).Model
     class ExtendedModel(Model):
         setCoeffs = {}
-        def __init__(self,*args,**kwargs):
+        def __init__(self, *args, **kwargs):
             coefficients = kwargs.pop("coefficients",{})
             fullCoeff = ExtendedModel.setCoeffs
             fullCoeff.update(coefficients)
-            print(fullCoeff)
             Model.__init__(self, coefficients=fullCoeff)
+            lhs = ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(equation.lhs)))
+            if lhs == ufl.adjoint(lhs):
+                setattr(self, 'symmetric', 'true')
+            else:
+                setattr(self, 'symmetric', 'false')
 
     if isinstance(equation, ufl.equation.Equation):
         form = equation.lhs - equation.rhs

@@ -242,6 +242,12 @@ class BaseModel:
         self.signature = signature
         self.field = "double"
 
+    def getNumber(self, expr):
+        e = [ ee for ee in self.coefficients if ee["name"] == str(expr) ]
+        if len(e) > 1:
+            raise KeyError('two coefficients provided with same name')
+        return e[0]["number"]
+
     def pre(self, sourceWriter, name='Model', targs=[], bases=[]):
         sourceWriter.openStruct(name, targs=(['class GridPart'] + targs + ['class... Coefficients']),\
         bases=(bases))
