@@ -7,7 +7,7 @@ import inspect
 
 from dune.generator.generator import SimpleGenerator
 from .. import discretefunction
-import dune.fem.discretefunction.numpy as numpyfunction
+from ..discretefunction import numpy as numpydf
 
 def interpolate( self, func, **kwargs ):
     order = self.order
@@ -31,7 +31,8 @@ def interpolate( self, func, **kwargs ):
     return None
 
 def numpyfunction( self, name, data ):
-    return nupyfunction(self, data, name)
+    assert data.shape[0] == self.size(), "vector has wrong shape"
+    return numpydf.create(self, data, name)
 
 generator = SimpleGenerator("Space", "Dune::FemPy")
 
