@@ -72,10 +72,11 @@
  *******************************************************************************/
 template< class Space, class Model,
   template<class LinOp,class M,class Constraint = Dune::DirichletConstraints< M, typename LinOp::RangeFunctionType::DiscreteFunctionSpaceType> > class DifferentiableOperator,
-    SolverType solver >
+    SolverType s >
 class FemScheme
 {
 public:
+  static const SolverType solver = s;
   //! type of the mathematical model
   typedef Model ModelType;
   typedef typename ModelType::ExactSolutionType ExactSolutionType;
@@ -120,7 +121,7 @@ public:
     // the elliptic operator (implicit)
     implicitOperator_( new DifferentiableOperator< LinearOperatorType, ModelType >( model_, space_ ) ),
     // create linear operator (domainSpace,rangeSpace)
-    linearOperator_( new LinearOperatorType( "assembled elliptic operator", space_, space_) ), // , parameter ) ),
+    linearOperator_( new LinearOperatorType( "assembled elliptic operator", space_, space_ ) ), // , parameter ) ),
     estimator_( space_, model ),
     exactSolution_( model_.exactSolution( gridPart() ) ),
     parameter_(parameter)
@@ -145,7 +146,18 @@ public:
     rhs_ += add;
   }
 
-  void operator() ( const DiscreteFunctionType &arg, DiscreteFunctionType &dest ) { (*implicitOperator_)( arg, dest ); }
+  void constraint( DiscreteFunctionType &u )
+  {
+    typedef DifferentiableOperator< LinearOperatorType, ModelType > OperatorType;
+    dynamic_cast< OperatorType & >( *implicitOperator_ ).prepare( u );
+  }
+
+  template <class GridFunction>
+  void operator() ( const GridFunction &arg, DiscreteFunctionType &dest )
+  {
+    typedef DifferentiableOperator< LinearOperatorType, ModelType > OperatorType;
+    dynamic_cast< OperatorType & >( *implicitOperator_ ).apply( arg, dest );
+  }
 
   void solve ( DiscreteFunctionType &solution, bool assemble )
   {
@@ -154,6 +166,15 @@ public:
     typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
     InverseOperatorType invOp( dynamic_cast< OperatorType & >( *implicitOperator_ ), parameter_ );
     invOp( rhs_, solution );
+  }
+
+  template <class GridFunction>
+  const LinearOperatorType &assemble( const GridFunction &ubar )
+  {
+    typedef DifferentiableOperator< LinearOperatorType, ModelType > OperatorType;
+    dynamic_cast< OperatorType & >(*implicitOperator_ ).apply(ubar,
+                  dynamic_cast<LinearOperatorType&>(*linearOperator_));
+    return dynamic_cast<LinearOperatorType&>(*linearOperator_);
   }
 
   //! mark elements for adaptation

@@ -121,9 +121,17 @@ public:
     // set boundary values for solution
     constraints()( u );
   }
+  void prepare( const RangeDiscreteFunctionType &u, RangeDiscreteFunctionType &w )
+  {
+    // set boundary values for solution
+    constraints()( u, w );
+  }
 
   //! application operator
-  virtual void operator() ( const DomainDiscreteFunctionType &u, RangeDiscreteFunctionType &w ) const;
+  virtual void operator() ( const DomainDiscreteFunctionType &u, RangeDiscreteFunctionType &w ) const
+  { apply(u,w); }
+  template <class GF>
+  void apply( const GF &u, RangeDiscreteFunctionType &w ) const;
 
 protected:
   const ModelType &model () const { return model_; }
@@ -185,7 +193,11 @@ public:
   {}
 
   //! method to setup the jacobian of the operator for storage in a matrix
-  void jacobian ( const DomainDiscreteFunctionType &u, JacobianOperatorType &jOp ) const;
+  void jacobian ( const DomainDiscreteFunctionType &u, JacobianOperatorType &jOp ) const
+  { apply(u,jOp); }
+  template <class GridFunctionType>
+  void apply ( const GridFunctionType &u, JacobianOperatorType &jOp ) const;
+  using BaseType::apply;
 
 protected:
   using BaseType::model;
@@ -198,8 +210,9 @@ protected:
 // ----------------------------------
 
 template< class DomainDiscreteFunction, class RangeDiscreteFunction, class Model, class Constraints >
+template<class GF>
 void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model, Constraints >
-  ::operator() ( const DomainDiscreteFunctionType &u, RangeDiscreteFunctionType &w ) const
+  ::apply( const GF &u, RangeDiscreteFunctionType &w ) const
 {
   w.clear();
   // get discrete function space
@@ -215,7 +228,7 @@ void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model, Con
     const GeometryType &geometry = entity.geometry();
 
     // get local representation of the discrete functions
-    const DomainLocalFunctionType uLocal = u.localFunction( entity );
+    const auto uLocal = u.localFunction( entity );
     RangeLocalFunctionType wLocal = w.localFunction( entity );
 
     // obtain quadrature order
@@ -297,8 +310,9 @@ void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model, Con
 // ------------------------------------------------
 
 template< class JacobianOperator, class Model, class Constraints >
+template<class GF>
 void DifferentiableEllipticOperator< JacobianOperator, Model, Constraints >
-  ::jacobian ( const DomainDiscreteFunctionType &u, JacobianOperator &jOp ) const
+  ::apply ( const GF &u, JacobianOperator &jOp ) const
 {
   typedef typename JacobianOperator::LocalMatrixType LocalMatrixType;
   typedef typename DomainDiscreteFunctionSpaceType::BasisFunctionSetType DomainBasisFunctionSetType;
@@ -325,7 +339,7 @@ void DifferentiableEllipticOperator< JacobianOperator, Model, Constraints >
 
     const GeometryType &geometry = entity.geometry();
 
-    const DomainLocalFunctionType uLocal = u.localFunction( entity );
+    const auto uLocal = u.localFunction( entity );
     LocalMatrixType jLocal = jOp.localMatrix( entity, entity );
 
     const DomainBasisFunctionSetType &domainBaseSet = jLocal.domainBasisFunctionSet();

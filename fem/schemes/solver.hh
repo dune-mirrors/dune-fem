@@ -88,7 +88,10 @@
 
 #include <dune/fempy/py/common/numpyvector.hh>
 
-// #include <dune/fem/operator/lagrangeinterpolation.hh>
+#define HAVE_EIGEN 1
+#include <dune/fem/storage/eigenvector.hh>
+#include <dune/fem/operator/linear/eigenoperator.hh>
+#include <dune/fem/solver/eigen.hh>
 
 /*********************************************************/
 
@@ -100,7 +103,8 @@ enum SolverType
   istl,        // use the dune-istl solvers
   umfpack,     // use the direct solver umfpack
   petsc,       // use the petsc package
-  numpy        // use the numpy vectors based on pybind11
+  numpy,       // use the numpy vectors based on pybind11
+  eigen        // use the eigen vector library
 };
 enum OperatorType
 {
@@ -202,11 +206,24 @@ struct Solvers<DFSpace,numpy,symmetric>
   typedef DFSpace DiscreteFunctionSpaceType;
   typedef Dune::FemPy::NumPyVector<double> DofVectorType;
   typedef Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< DiscreteFunctionSpaceType, DofVectorType > > DiscreteFunctionType;
-  typedef Dune::Fem::SparseRowLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
-  typedef typename std::conditional<symmetric,
-          Dune::Fem::ISTLCGOp< DiscreteFunctionType, LinearOperatorType >,
-          Dune::Fem::ISTLGMResOp< DiscreteFunctionType, LinearOperatorType > > :: type
+  typedef Dune::Fem::EigenLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
+  typedef typename Dune::conditional<symmetric,
+          Dune::Fem::EigenCGInverseOperator< DiscreteFunctionType >,
+          Dune::Fem::EigenBiCGStabInverseOperator< DiscreteFunctionType > > :: type
           LinearInverseOperatorType;
 };
 
+template <class DFSpace, bool symmetric>
+struct Solvers<DFSpace,eigen,symmetric>
+{
+  static const bool solverConfigured = true;
+  typedef DFSpace DiscreteFunctionSpaceType;
+  typedef Dune::Fem::EigenVector<double> DofVectorType;
+  typedef Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< DiscreteFunctionSpaceType, DofVectorType > > DiscreteFunctionType;
+  typedef Dune::Fem::EigenLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
+  typedef typename Dune::conditional<symmetric,
+          Dune::Fem::EigenCGInverseOperator< DiscreteFunctionType >,
+          Dune::Fem::EigenBiCGStabInverseOperator< DiscreteFunctionType > > :: type
+          LinearInverseOperatorType;
+};
 #endif // end #if FEM_SOLVER_HH

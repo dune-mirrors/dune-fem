@@ -63,53 +63,69 @@ namespace Dune
       typedef typename Base::value_type value_type;
 
       explicit NumPyVector ( size_type size )
-        : array_( pybind11::buffer_info( nullptr, sizeof( T ), pybind11::format_descriptor< T >::value, 1, { size }, { sizeof( T ) } ) ),
-          bufferInfo_( array_.request( true ) )
+        : array_( pybind11::buffer_info( nullptr, sizeof( T ),
+                  pybind11::format_descriptor< T >::value, 1, { size }, { sizeof( T ) } )
+                ),
+          // bufferInfo_( array_.request( true ) ),
+          size_(size)
       {}
 
-      NumPyVector ( pybind11::array_t< T > array )
-        : array_( std::move( array ) ),
-          bufferInfo_( array_.request( true ) )
+      NumPyVector ( pybind11::buffer buf )
+        : array_( buf.request(true) ),
+          size_( 0 )
       {
-        if( bufferInfo_.ndim() != 1 )
+        pybind11::buffer_info info = buf.request();
+        if (info.ndim != 1)
           DUNE_THROW( InvalidStateException, "NumPyVector can only be created from one-dimensional array" );
+        size_ = info.shape[0];
       }
 
       NumPyVector ( const This &other ) = delete;
-      NumPyVector ( This &&other ) = default;
+      NumPyVector ( This &&other ) = delete;
+
+      ~NumPyVector()
+      {
+        std::cout << "in numpy destructor" << std::endl;
+      }
 
       This &operator= ( const This &other ) = delete;
-      This &operator= ( This && ) = default;
+      This &operator= ( This &&other ) = delete;
 
       operator pybind11::array_t< T > () const { return array_; }
 
       const value_type &operator[] ( size_type index ) const
       {
-        return leakPointer()[ index ];
+        return data()[ index ];
       }
       value_type &operator[] ( size_type index )
       {
-        return leakPointer()[ index ];
+        return data()[ index ];
       }
       value_type &vec_access ( size_type index )
       {
-        return leakPointer()[ index ];
+        return data()[ index ];
       }
       const value_type &vec_access ( size_type index ) const
       {
-        return leakPointer()[ index ];
+        return data()[ index ];
       }
 
-      inline const value_type *leakPointer () const
+      inline const value_type *data () const
       {
-        return static_cast< value_type * >( bufferInfo_.ptr );
+        return static_cast< value_type * >( array_.request(false).ptr ); // bufferInfo_.ptr );
       }
-      inline value_type *leakPointer ()
+      inline value_type *data ()
       {
-        return static_cast< value_type * >( bufferInfo_.ptr );
+        return static_cast< value_type * >( array_.request(true).ptr ); // bufferInfo_.ptr );
       }
-
-
+      pybind11::array_t< T > &coefficients()
+      {
+        return array_;
+      }
+      pybind11::array_t< T > &coefficients() const
+      {
+        return array_;
+      }
 
       void reserve ( size_type newCapacity ) {}
 
@@ -118,26 +134,32 @@ namespace Dune
         if( newSize == size() )
           return;
 
-        NumPyVector other( newSize );
+        pybind11::array_t< T > other( pybind11::buffer_info( nullptr, sizeof( T ),
+                      pybind11::format_descriptor< T >::value, 1, { newSize }, { sizeof( T ) } ) );
+        value_type* buffer = static_cast< value_type * >( array_.request(true).ptr );
         for( std::size_t i = 0; i < std::min( newSize, size() ); ++i )
-          other[ i ] = (*this)[ i ];
+          buffer[ i ] = (*this)[ i ];
         for( std::size_t i = std::min( newSize, size() ); i < newSize; ++i )
-          other[ i ] = value;
-        *this = std::move( other );
+          buffer[ i ] = value;
+        // bufferInfo_ = other.request( true ); // causes corrupted double list error at end of program
+        array_ = std::move( other );
+        size_ = newSize;
+        std::cout << "Sizes: " << size() << " " << newSize << std::endl;
       }
 
       size_type size () const
       {
-        return bufferInfo_.shape[ 0 ];
+        return size_; // bufferInfo_.shape[ 0 ];
       }
       size_type vec_size () const
       {
-        return bufferInfo_.shape[ 0 ];
+        return size_; // bufferInfo_.shape[ 0 ];
       }
 
     private:
-      pybind11::array_t< T > array_;
-      pybind11::buffer_info bufferInfo_;
+      mutable pybind11::array_t< T > array_;
+      size_type size_;
+      // pybind11::buffer_info bufferInfo_;
     };
 
   } // namespace FemPy

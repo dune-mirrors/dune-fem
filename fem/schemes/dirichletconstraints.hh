@@ -152,6 +152,24 @@ public:
       }
     }
   }
+  template < class GridFunctionType, class DiscreteFunctionType >
+  void operator ()( const GridFunctionType &u, DiscreteFunctionType& w ) const
+  {
+    updateDirichletDofs();
+
+    if( hasDirichletDofs_ )
+    {
+      for( const auto &entity : space_ )
+      {
+        typedef typename GridFunctionType :: LocalFunctionType GridLocalFunctionType;
+        typedef typename DiscreteFunctionType :: LocalFunctionType LocalFunctionType;
+        LocalFunctionType wLocal = w.localFunction( entity );
+        const GridLocalFunctionType uLocal = u.localFunction( entity );
+        // interpolate dirichlet dofs
+        dirichletDofTreatment( uLocal, wLocal );
+      }
+    }
+  }
 
   /*! treatment of Dirichlet-DoFs for solution and right-hand-side
    *
@@ -261,6 +279,40 @@ protected:
         {
           space_.interpolation(entity)
             (typename ModelType::BoundaryWrapper(model_,dirichletBlocks_[global][l]), values);
+          // store result
+          assert( (unsigned int)localDof < wLocal.size() );
+          wLocal[ localDof ] = values[ localDof ];
+        }
+      }
+    }
+  }
+  template< class GridLocalFunctionType, class LocalFunctionType >
+  void dirichletDofTreatment( const GridLocalFunctionType &uLocal,
+                              LocalFunctionType &wLocal ) const
+  {
+    // get entity
+    const typename LocalFunctionType::EntityType &entity = wLocal.entity();
+
+    // get number of Lagrange Points
+    const int localBlocks = space_.blockMapper().numDofs( entity );
+
+    // map local to global BlockDofs
+    std::vector<std::size_t> globalBlockDofs(localBlocks);
+    space_.blockMapper().map(entity,globalBlockDofs);
+    std::vector<double> values( localBlocks*localBlockSize );
+    space_.interpolation(entity)(uLocal, values);
+
+    int localDof = 0;
+
+    // iterate over face dofs and set unit row
+    for( int localBlock = 0 ; localBlock < localBlocks; ++ localBlock )
+    {
+      // store result to dof vector
+      int global = globalBlockDofs[localBlock];
+      for( int l = 0; l < localBlockSize ; ++ l, ++localDof )
+      {
+        if( dirichletBlocks_[ global ][l] )
+        {
           // store result
           assert( (unsigned int)localDof < wLocal.size() );
           wLocal[ localDof ] = values[ localDof ];

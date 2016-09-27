@@ -2,6 +2,7 @@
 #define DUNE_FEMPY_PY_SCHEME_HH
 
 #include <dune/fem/misc/l2norm.hh>
+#include <dune/fem/schemes/solver.hh>
 
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/parameter.hh>
@@ -19,10 +20,32 @@ namespace Dune
 
     namespace detail
     {
+      // register assemble method if data method is available (and return value is registered)
+      template <class Scheme,class Cls>
+      auto registerSchemeAssemble(Cls &cls,int)
+      -> std::enable_if_t<Scheme::solver==SolverType::eigen,void>
+      {
+        typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
+        typedef typename Scheme::DiscreteFunctionSpaceType Space;
+        typedef typename Space::RangeType RangeType;
+        typedef typename Scheme::GridPartType GridPart;
+
+        cls.def("assemble", [](Scheme &scheme, const DiscreteFunction &ubar)
+            { return scheme.assemble(ubar).systemMatrix().matrix().data(); } );
+            // pybind11::keep_alive<0,1>());
+        cls.def("assemble", [](Scheme &scheme, const VirtualizedGridFunction<GridPart,RangeType> &ubar)
+            { return scheme.assemble(ubar).systemMatrix().matrix().data(); } );
+            // pybind11::keep_alive<0,1>());
+      }
+      template <class Scheme,class Cls>
+      void registerSchemeAssemble(Cls &cls,long)
+      {}
+
       template< class Scheme, class Cls >
       void registerScheme ( pybind11::module module, Cls &cls, std::true_type)
       {
         typedef typename Scheme::DiscreteFunctionSpaceType Space;
+        typedef typename Space::RangeType RangeType;
         typedef typename Scheme::GridPartType GridPart;
         typedef typename Scheme::ModelType ModelType;
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
@@ -39,6 +62,8 @@ namespace Dune
         cls.def("_prepare", [] (Scheme &scheme) { scheme.prepare(); });
         cls.def("_solve", [] (Scheme &scheme, DiscreteFunction &solution,bool assemble) { scheme.solve(solution, assemble); });
         cls.def("__call__", [] (Scheme &scheme, const DiscreteFunction &arg, DiscreteFunction &dest) { scheme(arg,dest); });
+        cls.def("__call__", [] (Scheme &scheme, const VirtualizedGridFunction<GridPart,RangeType> &arg, DiscreteFunction &dest) { scheme(arg,dest); });
+
         cls.def("error", [] (Scheme &scheme, DiscreteFunction &solution)
         {
           Dune::Fem::L2Norm< GridPart > norm( solution.space().gridPart() );
@@ -52,6 +77,10 @@ namespace Dune
         cls.def_property_readonly( "name", &Scheme::name );
         cls.def_property_readonly( "dimRange", [](Scheme&) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
         cls.def_property_readonly( "space", &Scheme::space );
+
+        registerSchemeAssemble<Scheme>(cls,0);
+
+        cls.def("constraint", [] (Scheme &scheme, DiscreteFunction &u) { scheme.constraint(u); });
       }
     }
     template< class Scheme, class Holder, class AliasType >

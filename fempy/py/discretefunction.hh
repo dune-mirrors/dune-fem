@@ -10,6 +10,11 @@
 #include <dune/fempy/py/grid/function.hh>
 #include <dune/fempy/py/grid/restrictprolong.hh>
 
+#include <dune/fem/function/vectorfunction/vectorfunction.hh>
+#include <dune/fempy/py/common/numpyvector.hh>
+
+#include <dune/corepy/pybind11/eigen.h>
+
 namespace Dune
 {
 
@@ -37,12 +42,79 @@ namespace Dune
     namespace detail
     {
       template< class DF, class Cls >
+      void registerDFConstructor( Cls &cls, std::false_type )
+      {}
+      template<class DF, class Cls >
+      void registerDFConstructor( Cls &cls, std::true_type )
+      {
+        typedef typename DF::DiscreteFunctionSpaceType Space;
+        cls.def( "__init__", [] ( DF &instance, Space &space, const std::string &name ) {
+            new( &instance ) DF( std::move(name), space );
+          }, pybind11::keep_alive< 1, 2 >() );
+      }
+
+#if 0
+      template <class DF>
+      auto registerDFBuffer(DF &instance,int)
+      -> decltype(instance.dofVector().array().data(),pybind11::buffer_info())
+      {
+        typedef typename DF::RangeType Value;
+        typedef typename Value::field_type FieldType;
+        return pybind11::buffer_info(
+            instance.dofVector().array().data(),    /* Pointer to buffer */
+            sizeof(FieldType),                      /* Size of one scalar */
+            pybind11::format_descriptor<FieldType>::format(), /* Python struct-style format descriptor */
+            1,                                      /* Number of dimensions */
+            { instance.size() },                    /* Buffer dimensions */
+            { sizeof(FieldType) }                   /* Strides (in bytes) for each index */
+        );
+      }
+      template <class DF>
+      pybind11::buffer_info registerDFBuffer(DF &instance,long)
+      {
+        // THROW SOME EXCEPTION
+        typedef typename DF::RangeType Value;
+        typedef typename Value::field_type FieldType;
+        return pybind11::buffer_info(
+            nullptr,                                /* Pointer to buffer */
+            sizeof(FieldType),                      /* Size of one scalar */
+            pybind11::format_descriptor<FieldType>::format(), /* Python struct-style format descriptor */
+            1,                                      /* Number of dimensions */
+            { instance.size() },                    /* Buffer dimensions */
+            { sizeof(FieldType) }                   /* Strides (in bytes) for each index */
+        );
+      }
+#endif
+      template <class DF, class Cls>
+      auto registerDFBuffer(Cls &cls,int)
+      -> decltype(std::declval<DF>().dofVector().array().data(),void())
+      {
+        typedef typename DF::RangeType Value;
+        typedef typename Value::field_type FieldType;
+        cls.def_buffer( [](DF &instance) -> pybind11::buffer_info {
+            return pybind11::buffer_info(
+                instance.dofVector().array().data(),    /* Pointer to buffer */
+                sizeof(FieldType),                      /* Size of one scalar */
+                pybind11::format_descriptor<FieldType>::format(), /* Python struct-style format descriptor */
+                1,                                      /* Number of dimensions */
+                { instance.size() },                    /* Buffer dimensions */
+                { sizeof(FieldType) }                   /* Strides (in bytes) for each index */
+            );
+          }); // ????  pybind11::keep_alive<0,1>() );
+      }
+      template <class DF,class Cls>
+      void registerDFBuffer(Cls &cls,long)
+      {
+      }
+
+      template< class DF, class Cls >
       void registerDiscreteFunction ( pybind11::module module, Cls &cls )
       {
         typedef typename DF::DiscreteFunctionSpaceType Space;
         typedef typename DF::GridPartType GridPart;
         typedef typename DF::RangeType Value;
         typedef typename GridPart::GridType Grid;
+        typedef typename Value::field_type FieldType;
 
         detail::registerGridFunction< DF >( module, cls);
 
@@ -59,9 +131,7 @@ namespace Dune
         cls.def_property_readonly( "space", [](DF &df) -> const typename DF::DiscreteFunctionSpaceType& {return df.space();} );
         cls.def("clear", [] (DF &instance) { instance.clear(); } );
 
-        cls.def( "__init__", [] ( DF &instance, Space &space, const std::string &name ) {
-            new( &instance ) DF( std::move(name), space );
-          }, pybind11::keep_alive< 1, 2 >() );
+        registerDFConstructor< DF, Cls >( cls, std::is_constructible< DF, const std::string&, const Space& >() );
 
         cls.def( "assign", [] ( DF &instance, const DF &other ) { instance.assign(other); } );
 
@@ -75,7 +145,6 @@ namespace Dune
             ), df );
           } );
 
-
         typedef typename DF::DofVectorType DofVector;
         if (!pybind11::already_registered<DofVector>())
         {
@@ -84,6 +153,8 @@ namespace Dune
         cls.def( "dofVector", [] ( DF &instance ) -> DofVector&{ return instance.dofVector(); },
                  pybind11::return_value_policy::reference_internal );
         cls.def( "assign", [] ( DF &instance, const DofVector &other ) { instance.dofVector() = other; } );
+
+        registerDFBuffer<DF>(cls,0);
       }
     }
     template< class DF, class Holder, class AliasType >
@@ -91,7 +162,19 @@ namespace Dune
     {
       detail::registerDiscreteFunction<DF>(module,cls);
     }
-
+    template< class Space, class Field, class Holder, class AliasType >
+    void registerDiscreteFunction ( pybind11::module module,
+          pybind11::class_<Dune::Fem::VectorDiscreteFunction<Space,Dune::FemPy::NumPyVector<Field>>,
+          Holder,AliasType> &cls )
+    {
+      typedef Dune::Fem::VectorDiscreteFunction<Space,Dune::FemPy::NumPyVector<Field>> DF;
+      detail::registerDiscreteFunction<DF>(module,cls);
+      typedef typename DF::VectorType VectorType;
+      cls.def( "__init__", [] ( DF &instance, Space &space, const std::string &name, pybind11::buffer &dof ) {
+          VectorType *vec = new VectorType(dof);
+          new( &instance ) DF( std::move(name), space, *vec );
+        }, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 4 >() );
+    }
   } // namespace FemPy
 
 } // namespace Dune
