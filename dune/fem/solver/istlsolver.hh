@@ -184,7 +184,6 @@ namespace Dune
         std::pair< int, double > info;
         if( matrixOp_ )
         {
-          std::cout << "Using assembled operator" << std::endl;
           typedef typename AssembledOperatorType :: BaseType  MatrixObjectType;
           const MatrixObjectType& matrixObj = matrixOp_->systemMatrix() ;
 
