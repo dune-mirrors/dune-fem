@@ -29,12 +29,16 @@ def interpolate( self, func, **kwargs ):
         return df
     return None
 
+def numpyfunction( self, name, data ):
+    return discretefunction.create("numpy", self, data, name)
+
 generator = SimpleGenerator("Space", "Dune::FemPy")
 
 def addAttr(module, cls, field):
     setattr(cls, "_module", module)
     setattr(cls, "field", field )
     setattr(cls, "interpolate", interpolate )
+    setattr(cls, "numpyfunction", numpyfunction )
 
 fileBase = "femspace"
 

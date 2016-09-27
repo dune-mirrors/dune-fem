@@ -3,4 +3,5 @@ add_python_targets(discretefunction
   adaptive
   istl
   numpy
+  eigen
 )

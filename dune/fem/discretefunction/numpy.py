@@ -2,7 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from . import module
 
-def create(space, name="tmp", **unused):
+def create(space, vec, name="tmp", **unused):
     """create a discrete function - using the fem numpy storage as linear algebra backend
 
     Args:
@@ -15,10 +15,11 @@ def create(space, name="tmp", **unused):
     includes = [ "dune/fem/function/vectorfunction/managedvectorfunction.hh", "dune/fempy/py/common/numpyvector.hh" ] + space._module._includes
     spaceType = space._module._typeName
     field = space.field
-    typeName = "Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< " +\
-          spaceType + ", Dune::FemPy::NumPyVector< " + field + " > > >"
+    # typeName = "Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< " +\
+    typeName = "Dune::Fem::VectorDiscreteFunction< " +\
+          spaceType + ", Dune::FemPy::NumPyVector< " + field + " > >"
 
-    return module("numpy", includes, typeName).DiscreteFunction(space,name)
+    return module("numpy", includes, typeName).DiscreteFunction(space,name,vec)
 
 if __name__ == "__main__":
     import doctest

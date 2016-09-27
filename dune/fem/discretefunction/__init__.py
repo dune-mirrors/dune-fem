@@ -24,6 +24,7 @@ discretefunctionNames = { "adaptive" : "dune.fem.discretefunction.adaptive",
                           "fem"      : "dune.fem.discretefunction.adaptive",
                           "istl"     : "dune.fem.discretefunction.istl",
                           "numpy"    : "dune.fem.discretefunction.numpy",
+                          "eigen"    : "dune.fem.discretefunction.eigen"
                         }
 
 def register(**kwargs):

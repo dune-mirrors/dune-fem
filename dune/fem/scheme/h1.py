@@ -19,6 +19,8 @@ def create(space_or_df, model, name="tmp", **kwargs):
         storage = "istl"
     elif storage == "Numpy" or storage == "numpy":
         storage = "numpy"
+    elif storage == "Eigen" or storage == "eigen":
+        storage = "eigen"
     elif storage == "Fem" or storage == "fem":
         storage = "fem"
     else:
