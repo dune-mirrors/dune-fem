@@ -288,6 +288,11 @@ namespace Dune
         return space_;
       }
 
+      const GridPartType &gridPart () const
+      {
+        return space().gridPart();
+      }
+
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::operator+=(const DiscreteFunctionInterfaceType &g) */
       template <class DFType>
       DiscreteFunctionType &operator+= ( const DFType &g )
@@ -494,12 +499,20 @@ namespace Dune
       void init(const EntityType& en)
       {
         localFunctionImpl_.init(en);
+        entity_=&en;
       }
 
       template <class ArgumentType>
       void initialize ( const ArgumentType& arg, const double time )
       {
         localFunctionImpl_.initialize( arg, time );
+      }
+
+      //! get entity
+      const EntityType& entity() const
+      {
+        assert( entity_ );
+        return *entity_;
       }
 
     protected:
@@ -525,6 +538,7 @@ namespace Dune
       const DiscreteFunctionType &adapter_;
       typedef typename LocalFuncType< 0, Traits::localFunctionHasInitialize >::Type LocalFuncStorageType;
       LocalFuncStorageType localFunctionImpl_;
+      EntityType const* entity_;
     };
 
 
