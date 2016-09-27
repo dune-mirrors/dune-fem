@@ -8,7 +8,7 @@ dune_install(alugridwriter.hh bartonnackmaninterface.hh
              l1norm.hh l2norm.hh
              linesegmentsampler.hh lpnorm.hh mapgeomtype.hh
              metaprogramming.hh mpimanager.hh
-             nonconformitylevel.hh umfpack.hh )
+             nonconformitylevel.hh umfpack.hh domainintegral.hh)
 
 dune_add_subdirs(petsc threads)
 
