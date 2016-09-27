@@ -7,6 +7,7 @@ import inspect
 
 from dune.generator.generator import SimpleGenerator
 from .. import discretefunction
+import dune.fem.discretefunction.numpy as numpyfunction
 
 def interpolate( self, func, **kwargs ):
     order = self.order
@@ -30,7 +31,7 @@ def interpolate( self, func, **kwargs ):
     return None
 
 def numpyfunction( self, name, data ):
-    return discretefunction.create("numpy", self, data, name)
+    return nupyfunction(self, data, name)
 
 generator = SimpleGenerator("Space", "Dune::FemPy")
 
