@@ -126,8 +126,8 @@ namespace Dune
       //! set all entries in row to zero
       void clearRow (size_type row)
       {
-        std::cout << "EigenMatrix::clearRow not yet implemented" << std::endl;
-        abort();
+        matrix_.prune([row](const size_type& r, const size_type& c, const field_type& v)
+          { return (row != r); }); //  || r == c); });
       }
 
       //! return max number of non zeros

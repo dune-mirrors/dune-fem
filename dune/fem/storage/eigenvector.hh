@@ -1,7 +1,7 @@
 #ifndef EIGENVECTOR_HH
 #define EIGENVECTOR_HH
 
-#if HAVE_EIGEN
+#ifdef HAVE_EIGEN
 
 #include <algorithm>
 #include <iostream>
@@ -110,15 +110,15 @@ namespace Dune
       }
 
       //! Obtain pointer to data
-      const value_type* leakPointer() const
+      const value_type* data() const
       {
-        return data_.memptr();
+        return data_.data();
       }
 
       //! Obtain pointer to data
-      value_type* leakPointer()
+      value_type* data()
       {
-        return data_.memptr();
+        return data_.data();
       }
 
       //! Allocate memory
