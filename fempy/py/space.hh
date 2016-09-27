@@ -34,6 +34,7 @@ namespace Dune
 
         cls.def_property_readonly( "grid", [](Space &sp) -> const GridPart& {return sp.gridPart();} );
         cls.def_property_readonly( "order", [](Space &sp) -> int {return sp.order();} );
+        cls.def_property_readonly( "size", [](Space &sp) -> int {return sp.size();} );
 
         cls.def( "__init__", [] ( Space &instance, GridPart &grid ) {
             new( &instance ) Space( grid );

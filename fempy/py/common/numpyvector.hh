@@ -131,6 +131,7 @@ namespace Dune
 
       void resize ( size_type newSize, value_type value = value_type() )
       {
+        DUNE_THROW(NotImplemented, "resize is not available on a NumpyVector at the moment");
         if( newSize == size() )
           return;
 

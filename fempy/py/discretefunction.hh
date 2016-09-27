@@ -53,38 +53,6 @@ namespace Dune
           }, pybind11::keep_alive< 1, 2 >() );
       }
 
-#if 0
-      template <class DF>
-      auto registerDFBuffer(DF &instance,int)
-      -> decltype(instance.dofVector().array().data(),pybind11::buffer_info())
-      {
-        typedef typename DF::RangeType Value;
-        typedef typename Value::field_type FieldType;
-        return pybind11::buffer_info(
-            instance.dofVector().array().data(),    /* Pointer to buffer */
-            sizeof(FieldType),                      /* Size of one scalar */
-            pybind11::format_descriptor<FieldType>::format(), /* Python struct-style format descriptor */
-            1,                                      /* Number of dimensions */
-            { instance.size() },                    /* Buffer dimensions */
-            { sizeof(FieldType) }                   /* Strides (in bytes) for each index */
-        );
-      }
-      template <class DF>
-      pybind11::buffer_info registerDFBuffer(DF &instance,long)
-      {
-        // THROW SOME EXCEPTION
-        typedef typename DF::RangeType Value;
-        typedef typename Value::field_type FieldType;
-        return pybind11::buffer_info(
-            nullptr,                                /* Pointer to buffer */
-            sizeof(FieldType),                      /* Size of one scalar */
-            pybind11::format_descriptor<FieldType>::format(), /* Python struct-style format descriptor */
-            1,                                      /* Number of dimensions */
-            { instance.size() },                    /* Buffer dimensions */
-            { sizeof(FieldType) }                   /* Strides (in bytes) for each index */
-        );
-      }
-#endif
       template <class DF, class Cls>
       auto registerDFBuffer(Cls &cls,int)
       -> decltype(std::declval<DF>().dofVector().array().data(),void())
@@ -129,6 +97,7 @@ namespace Dune
         pybind11::implicitly_convertible< DF, VirtualizedRestrictProlong< Grid > >();
 
         cls.def_property_readonly( "space", [](DF &df) -> const typename DF::DiscreteFunctionSpaceType& {return df.space();} );
+        cls.def_property_readonly( "size", [](DF &df) {return df.size();} );
         cls.def("clear", [] (DF &instance) { instance.clear(); } );
 
         registerDFConstructor< DF, Cls >( cls, std::is_constructible< DF, const std::string&, const Space& >() );
@@ -162,6 +131,8 @@ namespace Dune
     {
       detail::registerDiscreteFunction<DF>(module,cls);
     }
+    // special registry for numpy df since they require a constructor
+    // taking the dof vector
     template< class Space, class Field, class Holder, class AliasType >
     void registerDiscreteFunction ( pybind11::module module,
           pybind11::class_<Dune::Fem::VectorDiscreteFunction<Space,Dune::FemPy::NumPyVector<Field>>,
