@@ -3,7 +3,7 @@ dune_install(cginverseoperator.hh diagonalpreconditioner.hh istlinverseoperators
              odesolver.hh odesolverinterface.hh oemsolver.hh
              parameter.hh pardg.hh pardginverseoperators.hh
              petscsolver.hh preconditionedinverseoperator.hh
-             timeprovider.hh umfpacksolver.hh spqrsolver.hh ldlsolver.hh)
+             timeprovider.hh umfpacksolver.hh spqrsolver.hh ldlsolver.hh eigen.hh)
 
 dune_add_subdirs(rungekutta ode oemsolver test)
 
