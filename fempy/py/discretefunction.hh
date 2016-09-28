@@ -13,7 +13,10 @@
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
 #include <dune/fempy/py/common/numpyvector.hh>
 
-#include <dune/corepy/pybind11/eigen.h>
+//#if HAVE_EIGEN
+//#include <dune/corepy/pybind11/eigen.h>
+//#endif // #if HAVE_EIGEN
+#include <dune/corepy/pybind11/pybind11.h>
 
 namespace Dune
 {
