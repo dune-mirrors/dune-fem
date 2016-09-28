@@ -88,7 +88,6 @@
 
 #include <dune/fempy/py/common/numpyvector.hh>
 
-#define HAVE_EIGEN 1
 #include <dune/fem/storage/eigenvector.hh>
 #include <dune/fem/operator/linear/eigenoperator.hh>
 #include <dune/fem/solver/eigen.hh>
@@ -199,6 +198,7 @@ struct Solvers<DFSpace,petsc,symmetric>
 };
 #endif
 
+#if HAVE_EIGEN
 template <class DFSpace, bool symmetric>
 struct Solvers<DFSpace,numpy,symmetric>
 {
@@ -212,7 +212,9 @@ struct Solvers<DFSpace,numpy,symmetric>
           Dune::Fem::EigenBiCGStabInverseOperator< DiscreteFunctionType > > :: type
           LinearInverseOperatorType;
 };
+#endif // #if HAVE_EIGEN
 
+#if HAVE_EIGEN
 template <class DFSpace, bool symmetric>
 struct Solvers<DFSpace,eigen,symmetric>
 {
@@ -226,4 +228,6 @@ struct Solvers<DFSpace,eigen,symmetric>
           Dune::Fem::EigenBiCGStabInverseOperator< DiscreteFunctionType > > :: type
           LinearInverseOperatorType;
 };
-#endif // end #if FEM_SOLVER_HH
+#endif // #if HAVE_EIGEN
+
+#endif // #ifndef FEM_SOLVER_HH
