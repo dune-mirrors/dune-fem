@@ -99,12 +99,12 @@ namespace Dune
 
       const Grid &grid () const
       {
-        return gridPart_.grid();
+        return gridPart().grid();
       }
 
       const IndexSet &indexSet () const
       {
-        return gridPart_.indexSet();
+        return gridPart().indexSet();
       }
 
       int size ( int codim ) const
@@ -132,7 +132,7 @@ namespace Dune
       template< int codim, PartitionIteratorType pitype >
       typename Codim< codim >::template Partition< pitype >::Iterator begin () const
       {
-        return gridPart_.template begin< codim, pitype >();
+        return gridPart().template begin< codim, pitype >();
       }
 
       template< int codim >
@@ -144,22 +144,22 @@ namespace Dune
       template< int codim, PartitionIteratorType pitype >
       typename Codim< codim >::template Partition< pitype >::Iterator end () const
       {
-        return gridPart_.template end< codim, pitype >();
+        return gridPart().template end< codim, pitype >();
       }
 
       IntersectionIterator ibegin ( const typename Codim< 0 >::Entity &entity ) const
       {
-        return gridPart_.ibegin( entity );
+        return gridPart().ibegin( entity );
       }
 
       IntersectionIterator iend ( const typename Codim< 0 >::Entity &entity ) const
       {
-        return gridPart_.iend( entity );
+        return gridPart().iend( entity );
       }
 
       const CollectiveCommunication &comm () const
       {
-        return gridPart_.comm();
+        return gridPart().comm();
       }
 
       int overlapSize ( int codim ) const
@@ -177,8 +177,10 @@ namespace Dune
                          InterfaceType iftype,
                          CommunicationDirection dir ) const
       {
-        gridPart_.communicate( data, iftype, dir );
+        gridPart().communicate( data, iftype, dir );
       }
+
+      const GridPartType &gridPart () const { return gridPart_; }
 
     private:
       const GridPartType &gridPart_;
