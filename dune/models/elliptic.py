@@ -469,7 +469,6 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         self.tempVars = tempVars
 
     def getNumber(self, expr):
-        print(self.coefficients)
         try:
             name = expr.str()
         except:

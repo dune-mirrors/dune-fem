@@ -46,17 +46,17 @@ def UFLFunction(grid, name, order, expr, **kwargs):
             idxCoeff += 1
             field = coefficient.ufl_function_space().ufl_element().field()
             dimR = coefficient.ufl_shape[0]
-            try:
-                name = coefficient.str()
-            except:
-                name = str(coefficient)
+        try:
+            name = coefficient.str()
+        except:
+            name = str(coefficient)
         coefficients.append({ \
-                'name' : name, \
-                'number' : idx, \
-                'counter' : coefficient.count(), \
-                'dimRange' : dimR,\
-                'constant' : coefficient.is_cellwise_constant(),
-                'field': field } )
+                    'name' : name, \
+                    'number' : idx, \
+                    'counter' : coefficient.count(), \
+                    'dimRange' : dimR,\
+                    'constant' : coefficient.is_cellwise_constant(),
+                    'field': field } )
 
     code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R, ), expr), coefficients, False))
     evaluate = code.replace("result", "value")
