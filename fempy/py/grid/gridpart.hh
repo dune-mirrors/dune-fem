@@ -52,7 +52,6 @@ namespace Dune
             // create Python guard object, removing the grid part once the grid view dies
             pybind11::cpp_function remove_gridpart( [ this, pos ] ( pybind11::handle weakref ) {
                 delete pos->second;
-                pos->second = nullptr;
                 instances_.erase( pos );
                 weakref.dec_ref();
               } );
@@ -92,7 +91,7 @@ namespace Dune
       // -----------------
 
       template< class GridView >
-      inline GridPartConverter< GridView > gridPartConverter ()
+      inline GridPartConverter< GridView > &gridPartConverter ()
       {
         static GridPartConverter< GridView > converter;
         return converter;
