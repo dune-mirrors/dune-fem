@@ -475,18 +475,24 @@ class BaseModel:
             jacname = '@jac:' + coef['name']
             if jacname in code:
                 code = code.replace(jacname, 'dc' + num)
-                code = 'CoefficientJacobianRangeType< ' + num + ' > dc' + num + ';\n' \
+                init = 'CoefficientJacobianRangeType< ' + num + ' > dc' + num + ';\n' \
                            + 'coefficient< ' + num + ' >().jacobian( x, dc' \
-                           + num + ' );\n      ' + code
+                           + num + ' );\n      '
+                if not init in code:
+                    code = init + code
             if gfname in code:
                 code = code.replace(gfname, 'c' + num)
-                code = 'CoefficientRangeType< ' + num  + ' > c' + num + ';\n' \
+                init = 'CoefficientRangeType< ' + num  + ' > c' + num + ';\n' \
                            + '      coefficient< ' + num + ' >().evaluate( x, c' \
-                           + num + ' );\n      ' + code
+                           + num + ' );\n      '
+                if not init in code:
+                    code = init + code
             elif constname in code:
                 code = code.replace(constname, 'cc' + num)
-                code = 'ConstantsRangeType< ' + num + ' > cc' + num + ' = constant< ' \
-                           + num + ' >();\n      ' + code
+                init = 'ConstantsRangeType< ' + num + ' > cc' + num + ' = constant< ' \
+                           + num + ' >();\n      '
+                if not init in code:
+                    code = init + code
         return code
 
     @staticmethod

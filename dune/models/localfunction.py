@@ -47,7 +47,7 @@ def UFLFunction(grid, name, order, expr, **kwargs):
             field = coefficient.ufl_function_space().ufl_element().field()
             dimR = coefficient.ufl_shape[0]
         coefficients.append({ \
-                'name' : str(coefficient), \
+                'name' : coefficient.str(), \
                 'number' : idx, \
                 'counter' : coefficient.count(), \
                 'dimRange' : dimR,\

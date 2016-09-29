@@ -119,10 +119,10 @@ class EllipticModel(BaseModel):
 
     def appendCode(self, key, code, **kwargs):
         function = getattr(self, key)
+        newCode = '\n      '.join(function) + '\n' + code
         coef = kwargs.pop("coefficients", {})
-        code = self.codeCoefficient(code, coef)
-        function.append(code)
-        setattr(self, key, function)
+        newCode = self.codeCoefficient(newCode, coef)
+        setattr(self, key, newCode)
 
 # ExprTensor
 # ----------
@@ -469,7 +469,7 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         self.tempVars = tempVars
 
     def getNumber(self, expr):
-        e = [ ee for ee in self.coefficients if ee["name"] == str(expr) ]
+        e = [ ee for ee in self.coefficients if ee["name"] == expr.str() ]
         if len(e) > 1:
             raise KeyError('two coefficients provided with same name')
         return e[0]["number"]
@@ -496,11 +496,14 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         if expr not in self.exprs:
             idx = str(self.getNumber(expr))
             if expr.is_cellwise_constant():
-                self.code.append('ConstantsRangeType< ' + idx + ' > cc' + idx + ' = constant< ' + idx + ' >();')
+                init = 'ConstantsRangeType< ' + idx + ' > cc' + idx + ' = constant< ' + idx + ' >();'
+                if not init in self.code:
+                    self.code.append(init)
                 self.exprs[expr] = 'cc' + idx
             else:
-                self.code.append('CoefficientRangeType< ' + idx + ' > c' + idx + ';')
-                self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
+                init = 'CoefficientRangeType< ' + idx + ' > c' + idx + ';\n      coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );'
+                if not init in self.code:
+                    self.code.append(init)
                 self.exprs[expr] = 'c' + idx
         return self.exprs[expr]
 
@@ -686,8 +689,8 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
             _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
             coefficients |= set(c)
 
-    idxConst = 0 #max((int(coef['number']) for coef in model.coefficients if coef['constant'] == True), -1) + 1
-    idxCoeff = 0 #max((int(coef['number']) for coef in model.coefficients if coef['constant'] == False), -1) + 1
+    idxConst = 0
+    idxCoeff = 0
     for coefficient in coefficients:
         if coefficient.is_cellwise_constant():
             field = None  # must be improved for 'complex'
@@ -700,7 +703,7 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
             idx = idxCoeff
             idxCoeff += 1
         model.coefficients.append({ \
-            'name' : str(coefficient), \
+            'name' : coefficient.str(), \
             'number' : idx, \
             'counter' : coefficient.count(), \
             'dimRange' : dimRange,\
