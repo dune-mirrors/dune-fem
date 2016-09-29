@@ -42,26 +42,6 @@ def interpolate(grid, func, **kwargs):
         mySpace = space.create(spaceName, grid, dimrange=R, **kwargs)
         return mySpace.interpolate(func, **kwargs)
 
-def writeVTK(grid,  name, celldata=[], pointdata=[], cellvector=[], pointvector=[],
-             number=None, subsampling=None):
-    if subsampling == None:
-        vtk = grid.vtkWriter()
-    else:
-        vtk = grid.vtkWriter(subsampling)
-    for df in celldata:
-        df.addToVTKWriter(vtk, common.DataType.CellData)
-    for df in pointdata:
-        df.addToVTKWriter(vtk, common.DataType.PointData)
-    for df in cellvector:
-        df.addToVTKWriter(vtk, vtk.CellVectorData)
-    for df in pointvector:
-        df.addToVTKWriter(vtk, vtk.PointVectorData)
-    if number == None:
-        vtk.write(name)
-    else:
-        vtk.write( name, number )
-    return vtk
-
 def levelFunction(self):
     return self.localGridFunction("level", 0, gf.Levels())
 def partitionFunction(self):
@@ -92,7 +72,6 @@ def function(self, name, order, *args, **kwargs):
 def addAttr(module, cls):
     setattr(cls, "_module", module)
     setattr(cls, "interpolate", interpolate)
-    setattr(cls, "writeVTK", writeVTK)
     setattr(cls, "levelFunction", levelFunction)
     setattr(cls, "partitionFunction", partitionFunction)
     setattr(cls, "function", function)
