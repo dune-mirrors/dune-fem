@@ -469,7 +469,12 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         self.tempVars = tempVars
 
     def getNumber(self, expr):
-        e = [ ee for ee in self.coefficients if ee["name"] == expr.str() ]
+        print(self.coefficients)
+        try:
+            name = expr.str()
+        except:
+            name = str(expr)
+        e = [ ee for ee in self.coefficients if ee["name"] == name ]
         if len(e) > 1:
             raise KeyError('two coefficients provided with same name')
         return e[0]["number"]
@@ -702,8 +707,12 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
             dimRange = coefficient.ufl_shape[0]
             idx = idxCoeff
             idxCoeff += 1
+        try:
+            name = coefficient.str()
+        except:
+            name = str(coefficient)
         model.coefficients.append({ \
-            'name' : coefficient.str(), \
+            'name' : name, \
             'number' : idx, \
             'counter' : coefficient.count(), \
             'dimRange' : dimRange,\
