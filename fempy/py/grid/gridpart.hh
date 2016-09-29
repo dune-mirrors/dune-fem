@@ -1,15 +1,21 @@
 #ifndef DUNE_FEMPY_PY_GRID_GRIDPART_HH
 #define DUNE_FEMPY_PY_GRID_GRIDPART_HH
 
+#include <cassert>
+
+#include <map>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 #include <dune/fem/misc/l2norm.hh>
+#include <dune/fem/gridpart/common/gridpart2gridview.hh>
 
 #include <dune/corepy/grid/vtk.hh>
 
+#include <dune/fempy/grid/gridpartadapter.hh>
 #include <dune/fempy/function/gridfunctionview.hh>
 #include <dune/fempy/py/grid/function.hh>
 #include <dune/fempy/py/grid/numpy.hh>
@@ -22,6 +28,99 @@ namespace Dune
   namespace FemPy
   {
 
+    namespace detail
+    {
+
+      // GridPartConverter
+      // -----------------
+
+      template< class GV >
+      struct GridPartConverter
+      {
+        typedef GV GridView;
+        typedef GridPartAdapter< GV > GridPart;
+
+        GridPart &operator() ( pybind11::handle gridView )
+        {
+          auto result = instances_.emplace( gridView.ptr(), nullptr );
+          auto pos = result.first;
+          if( result.second )
+          {
+            // create new gridpart object
+            pos->second = new GridPart( gridView.template cast< GridView >() );
+
+            // create Python guard object, removing the grid part once the grid view dies
+            pybind11::cpp_function remove_gridpart( [ this, pos ] ( pybind11::handle weakref ) {
+                delete pos->second;
+                pos->second = nullptr;
+                instances_.erase( pos );
+                weakref.dec_ref();
+              } );
+            pybind11::weakref weakref( gridView, remove_gridpart );
+            weakref.release();
+          }
+          assert( pos->second );
+          return *pos->second;
+        }
+
+      private:
+        std::map< PyObject *, GridPart * > instances_;
+      };
+
+
+      template< class GP >
+      struct GridPartConverter< Dune::GridView< Fem::GridPart2GridViewTraits< GP > > >
+      {
+        typedef GP GridPart;
+        typedef Dune::GridView< Fem::GridPart2GridViewTraits< GP > > GridView;
+
+        GridPart &operator() ( pybind11::handle gridView )
+        {
+          return const_cast< GridPart & >( gridView.template cast< GridView >().impl().gridPart() );
+        }
+      };
+
+
+      template< class GP >
+      struct GridPartConverter< Fem::GridPart2GridView< GP > >
+        : public GridPartConverter< Dune::GridView< Fem::GridPart2GridViewTraits< GP > > >
+      {};
+
+
+
+      // gridPartConverter
+      // -----------------
+
+      template< class GridView >
+      inline GridPartConverter< GridView > gridPartConverter ()
+      {
+        static GridPartConverter< GridView > converter;
+        return converter;
+      }
+
+    } // namespace detail
+
+
+
+    // GridPart
+    // --------
+
+    template< class GridView >
+    using GridPart = typename detail::GridPartConverter< GridView >::GridPart;
+
+
+
+    // gridPart
+    // --------
+
+    template< class GridView >
+    inline static GridPart< GridView > &gridPart ( pybind11::handle gridView )
+    {
+      return detail::gridPartConverter< GridView >()( std::move( gridView ) );
+    }
+
+
+#if 0
     // registerGridPart
     // ----------------
 
@@ -82,6 +181,7 @@ namespace Dune
       }
 
     } // namespace detail
+#endif // #if 0
 
   } // namespace FemPy
 

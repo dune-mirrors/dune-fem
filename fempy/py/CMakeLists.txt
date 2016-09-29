@@ -4,8 +4,6 @@ add_subdirectory(grid)
 
 set(HEADERS
   discretefunction.hh
-  grid.hh
-  gridpart.hh
   scheme.hh
   space.hh
 )
