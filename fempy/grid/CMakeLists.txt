@@ -1,6 +1,8 @@
 set(HEADERS
   adaptation.hh
   discretefunctionmanager.hh
+  globalmapper.hh
+  gridpartadapter.hh
   virtualizedrestrictprolong.hh
 )
 
