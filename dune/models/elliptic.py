@@ -117,6 +117,12 @@ class EllipticModel(BaseModel):
         self.main(sourceWriter, name='Model', targs=[])
         self.post(sourceWriter, name='Model', targs=[])
 
+    def appendCode(self, key, code, **kwargs):
+        function = getattr(self, key)
+        coef = kwargs.pop("coefficients", {})
+        code = self.codeCoefficient(code, coef)
+        function.append(code)
+        setattr(self, key, function)
 
 # ExprTensor
 # ----------
@@ -680,8 +686,8 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
             _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
             coefficients |= set(c)
 
-    idxConst = 0
-    idxCoeff = 0
+    idxConst = 0 #max((int(coef['number']) for coef in model.coefficients if coef['constant'] == True), -1) + 1
+    idxCoeff = 0 #max((int(coef['number']) for coef in model.coefficients if coef['constant'] == False), -1) + 1
     for coefficient in coefficients:
         if coefficient.is_cellwise_constant():
             field = None  # must be improved for 'complex'
@@ -834,15 +840,10 @@ def create(grid, equation, dirichlet = {}, exact = None, tempVars=True, coeffici
     class ExtendedModel(Model):
         setCoeffs = {}
         def __init__(self, *args, **kwargs):
-            coefficients = kwargs.pop("coefficients",{})
+            coefficients = kwargs.pop("coefficients", {})
             fullCoeff = ExtendedModel.setCoeffs
             fullCoeff.update(coefficients)
             Model.__init__(self, coefficients=fullCoeff)
-            lhs = ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(equation.lhs)))
-            if lhs == ufl.adjoint(lhs):
-                setattr(self, 'symmetric', 'true')
-            else:
-                setattr(self, 'symmetric', 'false')
 
     if isinstance(equation, ufl.equation.Equation):
         form = equation.lhs - equation.rhs
@@ -852,4 +853,9 @@ def create(grid, equation, dirichlet = {}, exact = None, tempVars=True, coeffici
                 _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
                 uflCoeff |= set(c)
         ExtendedModel.setCoeffs = {c:c.gf for c in uflCoeff if isinstance(c,GridCoefficient)}
+        lhs = ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(equation.lhs)))
+        if lhs == ufl.adjoint(lhs):
+            setattr(self, 'symmetric', 'true')
+        else:
+            setattr(self, 'symmetric', 'false')
     return ExtendedModel

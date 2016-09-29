@@ -14,35 +14,14 @@ from dune.source import BaseModel
 from dune.fem.gridpart import gridFunctions
 
 # method to add to gridpart.function call
-def generatedFunction(grid, name, order, code, *args, **kwargs):
+def generatedFunction(grid, name, order, code, **kwargs):
     coef = kwargs.pop("coefficients", {})
-    const = kwargs.pop("constants", {})
-    coefficients = []
-    coefNumber = 0
-    constNumber = 0
-    for key, val in coef.items():
-      coefficients.append({ \
-                  'name' : key, \
-                  'number' : coefNumber, \
-                  'dimRange' : val.dimRange, \
-                  'constant' : False, \
-                  'field': "double" } )
-      coefNumber += 1
-    for key, val in const.items():
-      coefficients.append({ \
-                  'name' : key, \
-                  'number' : constNumber, \
-                  'dimRange' : val, \
-                  'constant' : True, \
-                  'field': None } )
-      constNumber += 1
-    ######## A lot to do here....
-    Gf = gridFunction(grid, code, coefficients).GFWrapper
+    Gf = gridFunction(grid, code, coef).GFWrapper
     return Gf(name, order, grid, coef)
 
 gridFunctions.update( {"code" : generatedFunction} )
 
-def UFLFunction(grid, name, order, expr, *args, **kwargs):
+def UFLFunction(grid, name, order, expr, **kwargs):
     import ufl
     import dune.models.elliptic as generate
     from dune.ufl import GridCoefficient
@@ -79,11 +58,11 @@ def UFLFunction(grid, name, order, expr, *args, **kwargs):
     evaluate = code.replace("result", "value")
     jac = []
     for r in range(R):
-        jac_form = [\
+        jacForm = [\
             ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(\
                 ufl.grad(expr)[r, d]*ufl.dx\
             ))) for d in range(D)]
-        jac.append( [jac_form[d].integrals()[0].integrand() if not jac_form[d].empty() else 0 for d in range(D)] )
+        jac.append( [jacForm[d].integrals()[0].integrand() if not jacForm[d].empty() else 0 for d in range(D)] )
     jac = ufl.as_matrix(jac)
     code = '\n'.join(c for c in generate.generateCode({}, generate.ExprTensor((R, D), jac), coefficients, False))
     jacobian = code.replace("result", "value")
@@ -95,68 +74,29 @@ def UFLFunction(grid, name, order, expr, *args, **kwargs):
     fullCoeff = {c:c.gf for c in coef if isinstance(c, GridCoefficient)}
     fullCoeff.update(coefficients)
     kwargs["coefficients"] = fullCoeff
-    return Gf(name, order, grid, *args, **kwargs)
+    return Gf(name, order, grid, **kwargs)
 
 gridFunctions.update( {"ufl" : UFLFunction} )
 
-def codeSplitter(code, coefficients):
-    """find the dimRange and any coefficients in code string
-    """
-    cpp_code = ''
-    codeA = code.split("\n")
-    if '@dimrange' in code or '@range' in code:
-        for c in codeA:
-            if '@dimrange' in c or '@range' in c:
-                dimRange = int( c.split("=",1)[1] )
-            else:
-                cpp_code += c + "\n"
-        cpp_code = cpp_code[:-2]
-    else:
-        codeB = [c.split("=") for c in codeA]
-        codeC = [c[0] for c in codeB if "value" in c[0]]
-        dimRange = max( [int(c.split("[")[1].split("]")[0]) for c in codeC] ) + 1
-        cpp_code = code
-    for coef in coefficients:
-        num = str(coef['number'])
-        if 'name' in coef:
-            gfname = '@gf:' + coef['name']
-            constname = '@const:' + coef['name']
-            jacname = '@jac:' + coef['name']
-            if jacname in cpp_code:
-                cpp_code = cpp_code.replace(jacname, 'dc' + num)
-                cpp_code = 'CoefficientJacobianRangeType< ' + num + ' > dc' + num + ';\n' \
-                           + 'coefficient< ' + num + ' >().jacobian( x, dc' \
-                           + num + ' );\n' + cpp_code
-            if gfname in cpp_code:
-                cpp_code = cpp_code.replace(gfname, 'c' + num)
-                cpp_code = 'CoefficientRangeType< ' + num  + ' > c' + num + ';\n' \
-                           + 'coefficient< ' + num + ' >().evaluate( x, c' \
-                           + num + ' );\n' + cpp_code
-            elif constname in cpp_code:
-                cpp_code = cpp_code.replace(constname, 'cc' + num)
-                cpp_code = 'ConstantsRangeType< ' + num + ' > cc' + num + ' = constant< ' \
-                           + num + ' >();\n' + cpp_code
-    return ( cpp_code, dimRange )
-
 def gridFunction(grid, code, coefficients):
-    start_time = timeit.default_timer()
+    startTime = timeit.default_timer()
     compilePath = os.path.join(os.path.dirname(__file__), '../generated')
 
     if type(code) is not dict: code = { 'eval': code }
-    cpp_code = ''
+    cppCode = ''
     eval = ''
     jac = ''
     hess = ''
     for key, value in code.items():
         if key == 'eval' or key == 'evaluate':
-            eval, dimRange = codeSplitter(value, coefficients)
-            cpp_code += eval + '\n'
+            eval, dimRange = BaseModel.codeDimRange(value)
+            cppCode += eval + '\n'
         elif key == 'jac' or key == 'jacobian':
-            jac, dimRange = codeSplitter(value, coefficients)
-            cpp_code += jac + '\n'
+            jac, dimRange = BaseModel.codeDimRange(value)
+            cppCode += jac + '\n'
         elif key == 'hess' or key == 'hessian':
-            hess, dimRange = codeSplitter(value, coefficients)
-            cpp_code += hess + '\n'
+            hess, dimRange = BaseModel.codeDimRange(value)
+            cppCode += hess + '\n'
         else:
             print(key, ' is not a valid key. Use "eval", "jac" or "hess"')
             exit(1)
@@ -164,13 +104,18 @@ def gridFunction(grid, code, coefficients):
     if not isinstance(grid, types.ModuleType):
         grid = grid._module
 
-    myCodeHash = hashlib.md5(cpp_code.encode('utf-8')).hexdigest()
+    myCodeHash = hashlib.md5(cppCode.encode('utf-8')).hexdigest()
     locname = 'LocalFunction_' + myCodeHash + '_' + grid._typeHash
     pyname = 'localfunction_' + myCodeHash + '_' + grid._typeHash
     wrappername = 'GridFunction_' + myCodeHash + '_' + grid._typeHash
 
     base = BaseModel(dimRange, myCodeHash)
-    base.coefficients = coefficients
+    if isinstance(coefficients, dict):
+        eval = base.codeCoefficient(eval, coefficients)
+        jac = base.codeCoefficient(jac, coefficients)
+        hess = base.codeCoefficient(hess, coefficients)
+    else:
+        base.coefficients.extend(coefficients)
 
     if comm.rank == 0:
         if not os.path.isfile(os.path.join(compilePath, pyname + '.so')):
@@ -261,7 +206,7 @@ def gridFunction(grid, code, coefficients):
             cmake = subprocess.Popen(['cmake', '--build', '../../..', '--target', 'localfunction'], cwd=compilePath)
             cmake.wait()
             os.rename(os.path.join(compilePath, 'localfunction.so'), os.path.join(compilePath, pyname + '.so'))
-            print("Compilation took: " , timeit.default_timer()-start_time , "seconds")
+            print("Compilation took: " , timeit.default_timer()-startTime , "seconds")
 
         comm.barrier()
         return importlib.import_module('dune.generated.' + pyname)
