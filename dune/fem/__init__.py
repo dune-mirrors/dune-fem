@@ -4,6 +4,5 @@ import dune.common
 
 from ._fem import *
 
-from . import grid
 import dune.models.localfunction
 from .create import *

@@ -2,11 +2,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from . import module
 
-def create(gridpart, order=1, dimrange=1, field="double", storage="adaptive", **unused):
+def create(gridview, order=1, dimrange=1, field="double", storage="adaptive", **unused):
     """create a Lagrange space
 
     Args:
-        gridpart: the underlying grid part
+        gridview: the underlying grid view
         order: polynomial order of the finite element functions
         dimrange: dimension of the range space
         field: field of the range space
@@ -29,14 +29,13 @@ def create(gridpart, order=1, dimrange=1, field="double", storage="adaptive", **
     if field == "complex":
         field = "std::complex<double>"
 
-    includes = [ "dune/fem/space/lagrange.hh" ] + gridpart._module._includes
-    gridPart = gridpart._module._typeName
-    dimw = gridpart.dimWorld
+    includes = [ "dune/fem/space/lagrange.hh" ] + gridview._module._includes
+    dimw = gridview.dimWorld
     typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
-      gridPart + ", " + str(order) + " >"
+      "Dune::FemPy::GridPart< " + gridview._module._typeName + " >, " + str(order) + " >"
 
-    return module(field, includes, typeName).Space(gridpart)
+    return module(field, includes, typeName).Space(gridview)
 
 if __name__ == "__main__":
     import doctest

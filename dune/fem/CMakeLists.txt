@@ -8,7 +8,6 @@ set_target_properties(_fem PROPERTIES PREFIX "")
 
 add_python_targets(fem
   __init__
-  grid
   create
   function
 )

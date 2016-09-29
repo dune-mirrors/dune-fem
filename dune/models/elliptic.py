@@ -760,12 +760,11 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
     writer.emit("".join(["#include <" + i + ">\n" for i in grid._includes]))
     writer.emit('')
     writer.emit('#include <dune/fem/misc/boundaryidprovider.hh>')
-    writer.emit('#include <dune/fem/gridpart/leafgridpart.hh>')
-    writer.emit('#include <dune/fem/gridpart/adaptiveleafgridpart.hh>')
     writer.emit('')
     writer.emit('#include <dune/corepy/pybind11/pybind11.h>')
     writer.emit('#include <dune/corepy/pybind11/extensions.h>')
     writer.emit('')
+    writer.emit('#include <dune/fempy/py/grid/gridpart.hh>')
     if model.coefficients:
         writer.emit('#include <dune/fempy/function/virtualizedgridfunction.hh>')
         writer.emit('')
@@ -777,7 +776,7 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
     model.write(writer)
     writer.closeNameSpace(modelNameSpace)
 
-    writer.typedef(grid._typeName, 'GridPart')
+    writer.typedef('typename Dune::FemPy::GridPart< ' + grid._typeName + ' >', 'GridPart')
 
     if model.coefficients:
         writer.typedef(modelNameSpace + '::Model< GridPart' + ' '.join(\
