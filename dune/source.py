@@ -426,9 +426,45 @@ class BaseModel:
         sourceWriter.emit(''.join('pybind11::arg("' + i[0] + '"), ' for i in constrArgs) +\
                 'pybind11::arg("coefficients")=pybind11::dict() );')
 
-    def codeCoefficient(self, code, coefficients):
+    def codeCoefficient(self, code, coefficients, constants):
         """find coefficients/constants in code string and do replacements
         """
+        if coefficients:
+            number = 0
+            numCoeffs = [coef['number'] for coef in self.coefficients if coef['constant'] == False]
+            if numCoeffs:
+                number = max(numCoeffs) + 1
+            for key, val in coefficients.items():
+                check = 0
+                for coef in self.coefficients:
+                    if key == coef['name']:
+                        check = 1
+                if check == 0:
+                    self.coefficients.append({ \
+                              'name' : key, \
+                              'number' : number, \
+                              'dimRange' : val.dimRange, \
+                              'constant' : False, \
+                              'field': "double" } )
+                    number += 1
+        if constants:
+            number = 0
+            numConsts = [coef['number'] for coef in self.coefficients if coef['constant'] == True]
+            if numConsts:
+                number = max(numCoeffs) + 1
+            for key, val in constants.items():
+                check = 0
+                for coef in self.coefficients:
+                    if key == coef['name']:
+                        check = 1
+                if check == 0:
+                    self.coefficients.append({ \
+                              'name' : key, \
+                              'number' : number, \
+                              'dimRange' : val, \
+                              'constant' : True, \
+                              'field': None } )
+                    number += 1
         if '@const:' in code:
             codeCst = code.split('@const:')
             import itertools
@@ -443,30 +479,19 @@ class BaseModel:
                     if name == coef['name']:
                         check = 1
                 if check == 0:
+                    cname = '@const:' + name
+                    afterName = code.split(cname)[1:]
+                    if afterName[0][0] == '[':
+                        beforeText = [an.split(']')[0].split('[')[1] for an in afterName]
+                        dimRange = max( [int(bt) for bt in beforeText] ) + 1
+                    else:
+                        dimRange = 1
                     self.coefficients.append({
                           'name' : name, \
                           'number' : number, \
-                          'dimRange' : 1, \
+                          'dimRange' : dimRange, \
                           'constant' : True, \
                           'field': None } )
-                    number += 1
-        number = 0
-        numCoeffs = [coef['number'] for coef in self.coefficients if coef['constant'] == False]
-        if numCoeffs:
-            number = max(numCoeffs) + 1
-        if coefficients:
-            for key, val in coefficients.items():
-                check = 0
-                for coef in self.coefficients:
-                    if key == coef['name']:
-                        check = 1
-                if check == 0:
-                    self.coefficients.append({ \
-                              'name' : key, \
-                              'number' : number, \
-                              'dimRange' : val.dimRange, \
-                              'constant' : False, \
-                              'field': "double" } )
                     number += 1
         for coef in self.coefficients:
             num = str(coef['number'])

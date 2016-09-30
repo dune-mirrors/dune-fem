@@ -121,7 +121,8 @@ class EllipticModel(BaseModel):
         function = getattr(self, key)
         newCode = '\n      '.join(function) + '\n' + code
         coef = kwargs.pop("coefficients", {})
-        newCode = self.codeCoefficient(newCode, coef)
+        const = kwargs.pop("constants", {})
+        newCode = self.codeCoefficient(newCode, coef, const)
         setattr(self, key, newCode)
 
 # ExprTensor

@@ -10,13 +10,13 @@ import types
 from dune import comm
 from dune.source import SourceWriter
 from dune.source import BaseModel
-# import dune.fem.gridpart as gridpart
 from dune.fem.gridpart import gridFunctions
 
 # method to add to gridpart.function call
 def generatedFunction(grid, name, order, code, **kwargs):
     coef = kwargs.pop("coefficients", {})
-    Gf = gridFunction(grid, code, coef).GFWrapper
+    const = kwargs.pop("constants", {})
+    Gf = gridFunction(grid, code, coef, const).GFWrapper
     return Gf(name, order, grid, coef)
 
 gridFunctions.update( {"code" : generatedFunction} )
@@ -72,7 +72,7 @@ def UFLFunction(grid, name, order, expr, **kwargs):
     jacobian = code.replace("result", "value")
 
     code = {"evaluate" : evaluate, "jacobian" : jacobian}
-    Gf = gridFunction(grid, code, coefficients).GFWrapper
+    Gf = gridFunction(grid, code, coefficients, None).GFWrapper
 
     coefficients = kwargs.pop("coefficients", {})
     fullCoeff = {c:c.gf for c in coef if isinstance(c, GridCoefficient)}
@@ -82,7 +82,7 @@ def UFLFunction(grid, name, order, expr, **kwargs):
 
 gridFunctions.update( {"ufl" : UFLFunction} )
 
-def gridFunction(grid, code, coefficients):
+def gridFunction(grid, code, coefficients, constants):
     startTime = timeit.default_timer()
     compilePath = os.path.join(os.path.dirname(__file__), '../generated')
 
@@ -115,9 +115,9 @@ def gridFunction(grid, code, coefficients):
 
     base = BaseModel(dimRange, myCodeHash)
     if isinstance(coefficients, dict):
-        eval = base.codeCoefficient(eval, coefficients)
-        jac = base.codeCoefficient(jac, coefficients)
-        hess = base.codeCoefficient(hess, coefficients)
+        eval = base.codeCoefficient(eval, coefficients, constants)
+        jac = base.codeCoefficient(jac, coefficients, constants)
+        hess = base.codeCoefficient(hess, coefficients, constants)
     else:
         base.coefficients.extend(coefficients)
 
