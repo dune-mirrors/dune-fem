@@ -31,6 +31,60 @@ namespace Dune
     namespace detail
     {
 
+      // GridModificationListener
+      // ------------------------
+
+      template< class Grid >
+      class GridModificationListener final
+        : public CorePy::GridModificationListener< Grid >
+      {
+        typedef Fem::DofManager< Grid > DofManager;
+
+      public:
+        GridModificationListener ( const Grid &grid )
+          : dofManager_( DofManager::instance( grid ) )
+        {
+          std::cout << "created modification listener" << std::endl;
+        }
+
+        ~GridModificationListener ()
+        {
+          std::cout << "destroyed modification listener" << std::endl;
+        }
+
+        virtual void preModification ( const Grid &grid )
+        {
+          std::cout << "pre modification listener" << std::endl;
+        }
+
+        virtual void postModification ( const Grid &grid )
+        {
+          std::cout << "post modification listener" << std::endl;
+          dofManager_.resize();
+          dofManager_.compress();
+        }
+
+      private:
+        DofManager &dofManager_;
+      };
+
+
+      template< class Grid >
+      inline static void addGridModificationListener ( const Grid &grid )
+      {
+        typedef GridModificationListener< Grid > Listener;
+        for( const auto &listener : CorePy::detail::gridModificationListeners( grid ) )
+        {
+          if( dynamic_cast< Listener * >( listener.second ) )
+            return;
+        }
+
+        pybind11::handle nurse = pybind11::detail::get_object_handle( &grid, pybind11::detail::get_type_info( typeid( Grid ) ) );
+        CorePy::detail::addGridModificationListener( grid, new Listener( grid ), nurse );
+      }
+
+
+
       // GridPartConverter
       // -----------------
 
@@ -46,8 +100,13 @@ namespace Dune
           auto pos = result.first;
           if( result.second )
           {
+            GridView view = gridView.template cast< GridView >();
+
+            // add grid modification listener (if not registered)
+            addGridModificationListener( view.grid() );
+
             // create new gridpart object
-            pos->second = new GridPart( gridView.template cast< GridView >() );
+            pos->second = new GridPart( view );
 
             // create Python guard object, removing the grid part once the grid view dies
             pybind11::cpp_function remove_gridpart( [ this, pos ] ( pybind11::handle weakref ) {
