@@ -12,7 +12,7 @@ import types
 from dune.ufl import GridCoefficient
 from dune.source import SourceWriter
 from dune.source import BaseModel
-from dune.generator.generator import builder
+from dune.generator import builder
 
 # EllipticModel
 # -------------

@@ -7,7 +7,7 @@ import subprocess
 import sys
 import timeit
 import types
-from dune.generator.generator import builder
+from dune.generator import builder
 from dune.source import SourceWriter
 from dune.source import BaseModel
 from dune.fem.gridpart import gridFunctions
