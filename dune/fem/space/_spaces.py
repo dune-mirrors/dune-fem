@@ -6,11 +6,11 @@ logger = logging.getLogger(__name__)
 
 import dune.common.checkconfiguration as checkconfiguration
 
-def dgonb(gridpart, order=1, dimrange=1, field="double", storage="adaptive", **unused):
+def dgonb(gridview, order=1, dimrange=1, field="double", storage="adaptive", **unused):
     """create a discontinous galerkin space with elementwise orthonormal basis functions
 
     Args:
-        gridpart: the underlying grid part
+        gridview: the underlying grid view
         order: polynomial order of the finite element functions
         dimrange: dimension of the range space
         field: field of the range space
@@ -34,14 +34,13 @@ def dgonb(gridpart, order=1, dimrange=1, field="double", storage="adaptive", **u
     if field == "complex":
         field = "std::complex<double>"
 
-    includes = [ "dune/fem/space/discontinuousgalerkin.hh" ] + gridpart._module._includes
-    gridPart = gridpart._module._typeName
-    dimw = gridpart.dimWorld
+    includes = [ "dune/fem/space/discontinuousgalerkin.hh" ] + gridview._module._includes
+    dimw = gridview.dimWorld
     typeName = "Dune::Fem::DiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
-      gridPart + ", " + str(order) + " >"
+      "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
 
-    return module(field, includes, typeName).Space(gridpart)
+    return module(field, includes, typeName).Space(gridview)
 
 def lagrange(gridview, order=1, dimrange=1, field="double", storage="adaptive", **unused):
     """create a Lagrange space
@@ -79,11 +78,11 @@ def lagrange(gridview, order=1, dimrange=1, field="double", storage="adaptive", 
 
     return module(field, includes, typeName).Space(gridview)
 
-def p1Bubble(gridpart, dimrange=1, field="double", order=1, storage="adaptive", **unused):
+def p1Bubble(gridview, dimrange=1, field="double", order=1, storage="adaptive", **unused):
     """create a P1 space enriched with element bubble functions
 
     Args:
-        gridpart: the underlying grid part
+        gridview: the underlying grid part
         dimrange: dimension of the range space
         field: field of the range space
         storage: underlying linear algebra backend
@@ -106,11 +105,10 @@ def p1Bubble(gridpart, dimrange=1, field="double", order=1, storage="adaptive", 
     if field == "complex":
         field = "std::complex<double>"
 
-    includes = [ "dune/fem/space/p1bubble.hh" ] + gridpart._module._includes
-    gridPart = gridpart._module._typeName
-    dimw = gridpart.dimWorld
+    includes = [ "dune/fem/space/p1bubble.hh" ] + gridview._includes
+    dimw = gridview.dimWorld
     typeName = "Dune::Fem::BubbleElementSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
-      gridPart + " >"
+      "Dune::FemPy::GridPart< " + gridview._module._typeName + " > >"
 
-    return module(field, includes, typeName).Space(gridpart)
+    return module(field, includes, typeName).Space(gridview)
