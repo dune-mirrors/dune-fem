@@ -13,12 +13,10 @@
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/gridpart/common/gridpart2gridview.hh>
 
+#include <dune/corepy/grid/hierarchical.hh>
 #include <dune/corepy/grid/vtk.hh>
 
 #include <dune/fempy/grid/gridpartadapter.hh>
-#include <dune/fempy/function/gridfunctionview.hh>
-#include <dune/fempy/py/grid/function.hh>
-#include <dune/fempy/py/grid/numpy.hh>
 
 #include <dune/corepy/pybind11/pybind11.h>
 

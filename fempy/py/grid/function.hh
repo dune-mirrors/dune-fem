@@ -6,12 +6,15 @@
 #include <tuple>
 #include <utility>
 
+#include <dune/fem/misc/domainintegral.hh>
+
 #include <dune/corepy/grid/vtk.hh>
 
 #include <dune/fempy/function/gridfunctionview.hh>
 #include <dune/fempy/function/simplegridfunction.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/py/grid/numpy.hh>
+#include <dune/fempy/py/grid/gridpart.hh>
 
 #include <dune/corepy/pybind11/pybind11.h>
 
@@ -60,6 +63,7 @@ namespace Dune
         typedef typename GridFunction::LocalFunctionType LocalFunction;
         typedef typename LocalFunction::EntityType Entity;
         typedef typename GridFunction::GridPartType GridPartType;
+        typedef typename GridPartType::GridViewType GridView;
 
         registerLocalFunction< LocalFunction >( cls );
 
@@ -70,7 +74,7 @@ namespace Dune
         cls.def_property_readonly( "dimRange", [] ( GridFunction &gf ) -> int { return GridFunction::RangeType::dimension; } );
 
         cls.def_property_readonly( "name", [] ( GridFunction &gf ) -> std::string { return gf.name(); } );
-        cls.def_property_readonly( "grid", [](GridFunction &gf) -> const GridPartType& {return gf.gridPart();} );
+        cls.def_property_readonly( "grid", [] ( GridFunction &gf ) -> GridView { return static_cast< GridView >( gf.gridPart() ); } );
 
         cls.def( "localFunction", [] ( const GridFunction &gf, const Entity &entity ) -> LocalFunction {
             return gf.localFunction( entity );
@@ -81,6 +85,8 @@ namespace Dune
 
         cls.def( "cellData", [] ( const GridFunction &gf ) { return cellData( gf ); } );
         cls.def( "pointData", [] ( const GridFunction &gf ) { return pointData( gf ); } );
+
+        cls.def( "integrate", [] ( const GridFunction &gf ) { return Dune::Fem::Integral<GridPartType>(gf.gridPart(),gf.space().order()).norm(gf); });
       }
 
       template< class GridFunction >
@@ -268,22 +274,23 @@ namespace Dune
       typedef std::function< pybind11::object( const GridPart &, std::string, int, pybind11::function, pybind11::object ) > Dispatch;
       std::array< Dispatch, sizeof...( dimRange ) > dispatch = {{ Dispatch( detail::pyLocalGridFunction< GridPart, dimRange > )... }};
 
-      return [ dispatch ] ( pybind11::object gp, std::string name, int order, pybind11::function evaluate ) {
-          const GridPart &gridPart = gp.cast< const GridPart & >();
+      return [ dispatch ] ( pybind11::object gv, std::string name, int order, pybind11::function evaluate ) {
+          typedef typename GridPart::GridViewType GridView;
+          const auto &gp = gridPart<GridView>( gv );
           int dimR = -1;
-          if( gridPart.template begin< 0 >() != gridPart.template end< 0 >() )
+          if( gp.template begin< 0 >() != gp.template end< 0 >() )
           {
             typename GridPart::template Codim< 0 >::GeometryType::LocalCoordinate x( 0 );
             pybind11::gil_scoped_acquire acq;
-            pybind11::object v( evaluate( *gridPart.template begin< 0 >(), x ) );
+            pybind11::object v( evaluate( *gp.template begin< 0 >(), x ) );
             dimR = len( v );
           }
-          dimR = gridPart.comm().max( dimR );
+          dimR = gp.comm().max( dimR );
           if( dimR < 0 )
             DUNE_THROW( InvalidStateException, "Cannot create local grid function on empty grid" );
           if( static_cast< std::size_t >( dimR ) >= dispatch.size() )
             DUNE_THROW( NotImplemented, "localGridFunction not implemented for dimRange = " + std::to_string( dimR ) );
-          return dispatch[ static_cast< std::size_t >( dimR ) ]( gridPart, std::move( name ), order, std::move( evaluate ), std::move( gp ) );
+          return dispatch[ static_cast< std::size_t >( dimR ) ]( gp, std::move( name ), order, std::move( evaluate ), std::move( gv ) );
         };
     }
 
