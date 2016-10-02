@@ -40,6 +40,7 @@ namespace Dune
 
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
@@ -125,6 +126,21 @@ namespace Dune
       typedef SimpleGridFunction< GridPart, LocalEvaluator > This;
       typedef Fem::Function< typename SimpleLocalFunction< GridPart, LocalEvaluator >::FunctionSpaceType, SimpleGridFunction< GridPart, LocalEvaluator > > Base;
 
+      struct Space
+      {
+        Space(const GridPart &gridPart, int o)
+          : gp_(gridPart), o_(o) {}
+        int order() const
+        {
+          return o_;
+        }
+        const GridPart& gridPart() const
+        {
+          return gp_;
+        }
+        const GridPart &gp_;
+        int o_;
+      };
     public:
       typedef GridPart GridPartType;
 
@@ -172,6 +188,11 @@ namespace Dune
         const auto geometry = entity.geometry();
         localFunction( entity ).jacobian( geometry.local( x ), jacobian );
         jacobian = JacobianRangeType(0);
+      }
+
+      const Space space() const
+      {
+        return Space(gridPart(), order_);
       }
 
       int order () const { return order_; }
