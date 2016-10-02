@@ -24,7 +24,7 @@ def interpolate( self, func, **kwargs ):
         gf = create.function("local", self.grid, "tmp", order, func)
         return interpolate(self, gf, **kwargs)
     elif gl == 0: # already a grid function
-        storage = kwargs.pop('storage', "Adaptive")
+        storage = kwargs.pop('storage', "adaptive")
         try:
             name = kwargs.pop("name", func.name)
             df = create.discretefunction(storage, self, name=name, **kwargs)

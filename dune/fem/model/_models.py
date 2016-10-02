@@ -8,6 +8,7 @@ import dune.common.checkconfiguration as checkconfiguration
 
 def elliptic(grid, equation, dirichlet = {}, exact = None, tempVars=True, coefficients={}):
     import ufl
+    import dune.ufl
     import dune.models.elliptic as elliptic
     Model = elliptic.importModel(grid, equation, dirichlet, exact, tempVars).Model
     if isinstance(equation, ufl.equation.Equation):
@@ -17,7 +18,7 @@ def elliptic(grid, equation, dirichlet = {}, exact = None, tempVars=True, coeffi
             for expr in dirichlet[bndId]:
                 _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
                 uflCoeff |= set(c)
-        fullCoeffs = {c:c.gf for c in uflCoeff if isinstance(c,GridCoefficient)}
+        fullCoeffs = {c:c.gf for c in uflCoeff if isinstance(c,dune.ufl.GridCoefficient)}
     else:
         fullCoeffs = {}
     fullCoeffs.update(coefficients)
