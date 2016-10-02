@@ -810,7 +810,7 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
     writer.emit('')
     writer.closePythonModule(name)
 
-    builder.load(name, writer.writer.getvalue())
+    builder.load(name, writer.writer.getvalue(), "ellipticModel")
     writer.close()
 
     return importlib.import_module("dune.generated." + name)

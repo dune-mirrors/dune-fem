@@ -179,6 +179,7 @@ def gridFunction(grid, code, coefficients):
     writer.emit('#include <dune/fem/space/common/functionspace.hh>')
     writer.emit('#include <dune/fem/function/common/localfunctionadapter.hh>')
     writer.emit('')
+    writer.emit('#include <dune/fempy/py/grid/gridpart.hh>')
     writer.emit('#include <dune/fempy/py/grid/function.hh>')
     writer.emit('')
 
@@ -212,7 +213,8 @@ def gridFunction(grid, code, coefficients):
     base.post(writer, name=locname, targs=(['class Range']))
 
     writer.emit('')
-    writer.typedef(grid._typeName, 'GridPart')
+    writer.typedef('Dune::FemPy::GridPart< ' + grid._typeName + ' >', 'GridPart')
+    writer.typedef('typename GridPart::GridViewType', 'GridView')
     writer.emit('static const int dimRange = ' + str(dimRange) + ';')
     writer.emit('static const int dimDomain = GridPart::dimensionworld;')
     writer.typedef('typename Dune::Fem::FunctionSpace< double, double, dimDomain, dimRange >', 'FunctionSpaceType')
@@ -230,14 +232,14 @@ def gridFunction(grid, code, coefficients):
         writer.typedef(locname + '< GridPart, RangeType >', 'LocalFunction')
     writer.typedef('Dune::Fem::LocalFunctionAdapter< LocalFunction >', 'GridFunction')
 
-    writer.openStruct(wrappername, targs=(['class GridPart'] + ['class Range']), bases=(['GridFunction']))
+    writer.openStruct(wrappername, targs=(['class GridView'] + ['class Range']), bases=(['GridFunction']))
     writer.typedef('GridFunction', 'BaseType')
-    writer.emit(wrappername + '( const std::string name, int order, const GridPart &gridPart ) :')
-    writer.emit('    BaseType(name, localFunctionImpl_, gridPart, order) {}')
+    writer.emit(wrappername + '( const std::string name, int order, pybind11::handle gridView ) :')
+    writer.emit('    BaseType(name, localFunctionImpl_, Dune::FemPy::gridPart<GridView>(gridView), order) {}')
     writer.emit('LocalFunction& impl() { return localFunctionImpl_; }')
     writer.emit('LocalFunction localFunctionImpl_;')
     writer.closeStruct()
-    writer.typedef(wrappername + '< GridPart, RangeType >', 'GFWrapper')
+    writer.typedef(wrappername + '< GridView, RangeType >', 'GFWrapper')
 
     if base.coefficients:
         base.setCoef(writer, modelClass='LocalFunction', wrapperClass='GFWrapper')
@@ -248,11 +250,11 @@ def gridFunction(grid, code, coefficients):
     writer.emit('')
     writer.emit('pybind11::class_< GFWrapper > cls = Dune::FemPy::registerGridFunction< GFWrapper >( module, "GFWrapper" );')
     writer.emit('')
-    base.export(writer, 'LocalFunction', 'GFWrapper', constrArgs = (('name', 'std::string'), ('order', 'int'), ('gridPart', 'GridPart&')), constrKeepAlive='pybind11::keep_alive<0,3>()' )
+    base.export(writer, 'LocalFunction', 'GFWrapper', constrArgs = (('name', 'std::string'), ('order', 'int'), ('gridView', 'pybind11::handle')), constrKeepAlive='pybind11::keep_alive<0,3>()' )
     writer.emit('')
     writer.closePythonModule(pyname)
 
-    builder.load(pyname, writer.writer.getvalue())
+    builder.load(pyname, writer.writer.getvalue(), "localFunction")
     writer.close()
 
     return importlib.import_module('dune.generated.' + pyname)
