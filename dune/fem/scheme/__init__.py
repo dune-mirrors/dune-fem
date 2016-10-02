@@ -9,18 +9,19 @@ import os.path
 import re
 # from termcolor import colored
 
-from .. import discretefunction
+from ._schemes import *
 
 from dune.generator.generator import SimpleGenerator
 
 def solve( scheme, rhs=None, target=None, name=None, assemble=True ):
+    import dune.create as create
     if name == None:
         if hasattr(scheme, 'name'):
             name = scheme.name
         else:
             name == "default"
     if target == None:
-          target = discretefunction.create(scheme._storage, scheme.space, name=name)
+          target = create.discretefunction(scheme._storage, scheme.space, name=name)
           target.interpolate( [0,]*scheme.dimRange )
     if rhs == None:
         scheme._prepare()
@@ -57,17 +58,3 @@ def module(storage, includes, typeName, constructors=None, methods=None):
     module = generator.load(includes, typeName, moduleName, constructors, methods)
     addAttr(module, module.Scheme, storage)
     return module
-
-schemeNames = { "h1"      : "dune.fem.scheme.h1",
-                "dg"      : "dune.fem.scheme.dg",
-                "mvdg"    : "dune.fem.scheme.nvdg",
-                "stokes"  : "dune.fem.scheme.stokes",
-                "burgers" : "dune.fem.scheme.burgers"
-              }
-
-def register(**kwargs):
-    schemeNames.update(kwargs)
-
-def create(scheme, *args, **kwargs):
-    schemeModule = importlib.import_module(schemeNames[ scheme.lower() ])
-    return schemeModule.create(*args,**kwargs)
