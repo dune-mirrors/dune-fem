@@ -203,14 +203,16 @@ namespace Dune
       typedef std::function< pybind11::object( const GridPart &, std::string, int, pybind11::function, pybind11::object ) > Dispatch;
       std::array< Dispatch, sizeof...( dimRange ) > dispatch = {{ Dispatch( detail::pyGlobalGridFunction< GridPart, dimRange > )... }};
 
-      return [ dispatch ] ( pybind11::object gridPart, std::string name, int order, pybind11::function evaluate ) {
+      return [ dispatch ] ( pybind11::object gv, std::string name, int order, pybind11::function evaluate ) {
+          typedef typename GridPart::GridViewType GridView;
+          const auto &gp = gridPart<GridView>( gv );
           typename GridPart::template Codim< 0 >::GeometryType::GlobalCoordinate x( 0 );
           pybind11::gil_scoped_acquire acq;
           pybind11::object v( evaluate( x ) );
           const std::size_t dimR = len( v );
           if( dimR >= dispatch.size() )
             DUNE_THROW( NotImplemented, "globalGridFunction not implemented for dimRange = " + std::to_string( dimR ) );
-          return dispatch[ dimR ]( gridPart.cast< const GridPart & >(), std::move( name ), order, std::move( evaluate ), gridPart );
+          return dispatch[ dimR ]( gp, std::move( name ), order, std::move( evaluate ), std::move(gv) );
         };
     }
 

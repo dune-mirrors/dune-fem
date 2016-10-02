@@ -9,6 +9,9 @@
 #include <dune/fempy/py/common/numpyvector.hh>
 #include <dune/fempy/py/discretefunction.hh>
 #include <dune/corepy/pybind11/pybind11.h>
+#if HAVE_EIGEN
+  #include <dune/corepy/pybind11/eigen.h>
+#endif
 
 namespace Dune
 {
