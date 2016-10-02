@@ -6,21 +6,23 @@ import inspect
 
 from dune.generator.generator import SimpleGenerator
 from dune.fem import discretefunction
-from dune.fem.discretefunction import numpy as numpydf
+from dune.fem.function import numpyFunction
 
 from ._spaces import *
 
 def interpolate( self, func, **kwargs ):
-    from dune.create import create
+    import dune.create as create
     order = self.order
     try:
         gl = len(inspect.getargspec(func)[0])
     except:
         gl = 0
     if gl == 1:   # global function
-        return interpolate(self,self.grid.globalGridFunction("gf", order, func), **kwargs)
+        gf = create.function("global", self.grid, "tmp", order, func)
+        return interpolate(self, gf, **kwargs)
     elif gl == 2: # local function
-        return interpolate(self,self.grid.localGridFunction("gf", order, func), **kwargs)
+        gf = create.function("local", self.grid, "tmp", order, func)
+        return interpolate(self, gf, **kwargs)
     elif gl == 0: # already a grid function
         storage = kwargs.pop('storage', "Adaptive")
         try:
@@ -32,9 +34,8 @@ def interpolate( self, func, **kwargs ):
         return df
     return None
 
-def numpyfunction( self, name, data ):
-    assert data.shape[0] == self.size(), "vector has wrong shape"
-    return numpydf(self, data, name)
+def numpyfunction( self, data, name ):
+    return numpyFunction(self, data, name)
 
 generator = SimpleGenerator("Space", "Dune::FemPy")
 

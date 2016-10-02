@@ -32,13 +32,6 @@ registry["scheme"] = {
          "burgers" : scheme.burgers
      }
 registry["function"] = {
-         "h1"      : scheme.h1,
-         "dg"      : scheme.dg,
-         "mvdg"    : scheme.nvdg,
-         "stokes"  : scheme.stokes,
-         "burgers" : scheme.burgers
-     }
-registry["function"] = {
          "global"     : function.globalFunction,
          "local"      : function.localFunction,
          "cpp"        : function.cppFunction,

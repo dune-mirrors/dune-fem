@@ -58,27 +58,3 @@ def istl(space, name="tmp", **unused):
     typeName = "Dune::Fem::ISTLBlockVectorDiscreteFunction< " + spaceType + " >"
 
     return module("istl", includes, typeName).DiscreteFunction(space,name)
-
-def numpy(space, vec, name="tmp", **unused):
-    """create a discrete function - using the fem numpy storage as linear algebra backend
-       Note: this is not a 'managed' discrete function, i.e., the storage
-       is passed in and owned by the user. No resizing will take be done
-       during grid modification.
-
-    Args:
-        space: discrete space
-        vec: the vector storage (a numpy array)
-
-    Returns:
-        DiscreteFunction: the constructed discrete function
-    """
-
-    from . import module
-    includes = [ "dune/fem/function/vectorfunction/managedvectorfunction.hh", "dune/fempy/py/common/numpyvector.hh" ] + space._module._includes
-    spaceType = space._module._typeName
-    field = space.field
-    # typeName = "Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< " +\
-    typeName = "Dune::Fem::VectorDiscreteFunction< " +\
-          spaceType + ", Dune::FemPy::NumPyVector< " + field + " > >"
-
-    return module("numpy", includes, typeName).DiscreteFunction(space,name,vec)
