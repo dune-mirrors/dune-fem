@@ -4,12 +4,10 @@ import dune.common
 
 from ._fem import *
 
-import dune.models.localfunction
-from dune.fem.create import *
-
 from . import space as space
 from . import discretefunction as discretefunction
 from . import scheme as scheme
+from . import model as model
 
 registry = {}
 
@@ -40,4 +38,7 @@ registry["function"] = {
          "levels"     : function.levelFunction,
          "partitions" : function.partitionFunction,
          "discrete"   : function.discreteFunction
+     }
+registry["model"] = {
+         "elliptic"   : model.elliptic
      }

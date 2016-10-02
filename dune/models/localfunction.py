@@ -10,7 +10,6 @@ import types
 from dune.generator import builder
 from dune.source import SourceWriter
 from dune.source import BaseModel
-from dune.fem.gridpart import gridFunctions
 
 # method to add to gridpart.function call
 def generatedFunction(grid, name, order, code, *args, **kwargs):
@@ -38,8 +37,6 @@ def generatedFunction(grid, name, order, code, *args, **kwargs):
     ######## A lot to do here....
     Gf = gridFunction(grid, code, coefficients).GFWrapper
     return Gf(name, order, grid, coef)
-
-gridFunctions.update( {"code" : generatedFunction} )
 
 def UFLFunction(grid, name, order, expr, *args, **kwargs):
     import ufl
@@ -95,8 +92,6 @@ def UFLFunction(grid, name, order, expr, *args, **kwargs):
     fullCoeff.update(coefficients)
     kwargs["coefficients"] = fullCoeff
     return Gf(name, order, grid, *args, **kwargs)
-
-gridFunctions.update( {"ufl" : UFLFunction} )
 
 def codeSplitter(code, coefficients):
     """find the dimRange and any coefficients in code string
