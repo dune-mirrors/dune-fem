@@ -172,12 +172,12 @@ namespace Dune
         assert( numOwnedDofBlocks_ == ownedDofBlocks );
 
         typedef typename SpaceType :: template ToNewDimRange< 1 > :: Type DofSpaceType ;
+        typedef typename SpaceType :: GridPartType  GridPartType;
+        GridPartType& gridPart = const_cast< GridPartType& > (space.gridPart());
 
         if( space.continuous() )
         {
           typedef DofSpaceType GlobalDofSpaceType ;
-          typedef typename DofSpaceType :: GridPartType  GridPartType;
-          GridPartType& gridPart = const_cast< GridPartType& > (space.gridPart());
           GlobalDofSpaceType dofSpace( gridPart );
 
           // store global dofs as a discrete function to use the already
@@ -195,8 +195,6 @@ namespace Dune
           // for discontinuous solution we only need one dof per element --> FV space
           typedef FiniteVolumeSpace< typename DofSpaceType :: FunctionSpaceType,
                                      typename DofSpaceType :: GridPartType >  GlobalDofSpaceType ;
-          typedef typename DofSpaceType :: GridPartType  GridPartType;
-          GridPartType& gridPart = const_cast< GridPartType& > (space.gridPart());
           GlobalDofSpaceType dofSpace( gridPart );
 
           // store global dofs as a discrete function to use the already

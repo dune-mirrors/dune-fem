@@ -183,11 +183,7 @@ namespace Dune
     }
     inline void PCHYPRESetType( PC pc, const char* type )
     {
-#if HAVE_PETSC_HYPRE
       ErrorCheck( ::PCHYPRESetType( pc, type ) );
-#else
-      DUNE_THROW( InvalidStateException, "HYPRE not found within PETSc, please re-configure!");
-#endif
     }
 
     // matrix routines

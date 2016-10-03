@@ -37,7 +37,4 @@
 /* Define if we have PETSc */
 #cmakedefine HAVE_PETSC ENABLE_PETSC
 
-/* true if HYPRE was found through PETSc */
-#cmakedefine HAVE_PETSC_HYPRE 1
-
 /* end dune-fem */
