@@ -506,9 +506,10 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
                     self.code.append(init)
                 self.exprs[expr] = 'cc' + idx
             else:
-                init = 'CoefficientRangeType< ' + idx + ' > c' + idx + ';\n      coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );'
+                init = 'CoefficientRangeType< ' + idx + ' > c' + idx + ';'
                 if not init in self.code:
                     self.code.append(init)
+                    self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
                 self.exprs[expr] = 'c' + idx
         return self.exprs[expr]
 
