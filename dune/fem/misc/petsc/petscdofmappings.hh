@@ -176,7 +176,9 @@ namespace Dune
         if( space.continuous() )
         {
           typedef DofSpaceType GlobalDofSpaceType ;
-          GlobalDofSpaceType dofSpace( space.gridPart() );
+          typedef typename DofSpaceType :: GridPartType  GridPartType;
+          GridPartType& gridPart = const_cast< GridPartType& > (space.gridPart());
+          GlobalDofSpaceType dofSpace( gridPart );
 
           // store global dofs as a discrete function to use the already
           // built communication patterns to sum up the global dofs
@@ -193,7 +195,9 @@ namespace Dune
           // for discontinuous solution we only need one dof per element --> FV space
           typedef FiniteVolumeSpace< typename DofSpaceType :: FunctionSpaceType,
                                      typename DofSpaceType :: GridPartType >  GlobalDofSpaceType ;
-          GlobalDofSpaceType dofSpace( space.gridPart() );
+          typedef typename DofSpaceType :: GridPartType  GridPartType;
+          GridPartType& gridPart = const_cast< GridPartType& > (space.gridPart());
+          GlobalDofSpaceType dofSpace( gridPart );
 
           // store global dofs as a discrete function to use the already
           // built communication patterns to sum up the global dofs
