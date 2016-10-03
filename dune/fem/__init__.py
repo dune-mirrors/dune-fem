@@ -7,6 +7,7 @@ from ._fem import *
 from . import space as space
 from . import discretefunction as discretefunction
 from . import scheme as scheme
+from . import function as function
 from . import model as model
 
 registry = {}
@@ -29,16 +30,16 @@ registry["scheme"] = {
          "stokes"  : scheme.stokes,
          "burgers" : scheme.burgers
      }
-#registry["function"] = {
-#         "global"     : function.globalFunction,
-#         "local"      : function.localFunction,
-#         "cpp"        : function.cppFunction,
-#         "ufl"        : function.uflFunction,
-#         "numpy"      : function.numpyFunction,
-#         "levels"     : function.levelFunction,
-#         "partitions" : function.partitionFunction,
-#         "discrete"   : function.discreteFunction
-#     }
+registry["function"] = {
+         "global"     : function.globalFunction,
+         "local"      : function.localFunction,
+         "cpp"        : function.cppFunction,
+         "ufl"        : function.uflFunction,
+         "numpy"      : function.numpyFunction,
+         "levels"     : function.levelFunction,
+         "partitions" : function.partitionFunction,
+         "discrete"   : function.discreteFunction
+     }
 registry["model"] = {
          "elliptic"   : model.elliptic
      }

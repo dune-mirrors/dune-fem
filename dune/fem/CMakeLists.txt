@@ -2,7 +2,7 @@ add_subdirectory(gridpart)
 add_subdirectory(space)
 add_subdirectory(discretefunction)
 add_subdirectory(scheme)
-# add_subdirectory(function)
+add_subdirectory(function)
 add_subdirectory(model)
 
 add_library(_fem SHARED _fem.cc)
