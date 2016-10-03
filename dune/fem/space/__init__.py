@@ -9,7 +9,7 @@ from dune.fem import discretefunction
 
 from ._spaces import *
 
-def interpolate( self, func, **kwargs ):
+def interpolate( self, func, name=None, **kwargs ):
     import dune.create as create
     order = self.order
     try:
@@ -18,17 +18,15 @@ def interpolate( self, func, **kwargs ):
         gl = 0
     if gl == 1:   # global function
         gf = create.function("global", self.grid, "tmp", order, func)
-        return interpolate(self, gf, **kwargs)
+        return interpolate(self, gf, name, **kwargs)
     elif gl == 2: # local function
         gf = create.function("local", self.grid, "tmp", order, func)
-        return interpolate(self, gf, **kwargs)
+        return interpolate(self, gf, name, **kwargs)
     elif gl == 0: # already a grid function
         storage = kwargs.pop('storage', "adaptive")
-        try:
-            name = kwargs.pop("name", func.name)
-            df = create.discretefunction(storage, self, name=name, **kwargs)
-        except:
-            df = create.discretefunction(storage, self, **kwargs)
+        if not name:
+            name = func.name
+        df = create.discretefunction(storage, self, name=name, **kwargs)
         df.interpolate(func)
         return df
     return None
