@@ -108,6 +108,13 @@ def gridFunction(grid, code, coefficients, constants):
     if not isinstance(grid, types.ModuleType):
         grid = grid._module
 
+    if isinstance(coefficients, dict):
+        for entry in coefficients.items():
+            cppCode += entry[0]
+    else:
+        for coefficient in coefficients:
+            cppCode += str(coefficient.get('name'))
+
     myCodeHash = hashlib.md5(cppCode.encode('utf-8')).hexdigest()
     locname = 'LocalFunction_' + myCodeHash + '_' + grid._typeHash
     pyname = 'localfunction_' + myCodeHash + '_' + grid._typeHash
