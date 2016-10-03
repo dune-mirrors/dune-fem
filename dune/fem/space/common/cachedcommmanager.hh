@@ -590,6 +590,29 @@ namespace Dune
 
       // read data from object stream to DataImp& data vector
       // --readBuffer
+      template< class Dof, class Operation >
+      inline void readBufferValue( const Dof& bufferValue,
+                                   Dof& dfValue,
+                                   const Operation& operation,
+                                   std::integral_constant< bool, true > ) const
+      {
+        readBufferValue( bufferValue, dfValue, *operation, std::integral_constant< bool, false > () );
+      }
+
+      template< class Dof, class Operation >
+      inline void readBufferValue( const Dof& bufferValue,
+                                   Dof& dfValue,
+                                   const Operation& operation,
+                                   std::integral_constant< bool, false > ) const
+      {
+        static_assert( ! std::is_pointer< Operation > :: value,
+                "DependencyCache::readBufferValue: Operation needs to be a reference here!"  );
+
+        operation( bufferValue, dfValue );
+      }
+
+      // read data from object stream to DataImp& data vector
+      // --readBuffer
       template< class DiscreteFunction, class Operation >
       inline void readBuffer( const int link,
                               ObjectStreamType &str,
@@ -618,8 +641,10 @@ namespace Dune
 #else
             str.read( value );
 #endif
-            // apply given operation (e.g. Add or Copy) to received data
-            operation( value, discreteFunction.dofVector()[indexMap[i]][k] );
+            // apply operation (distinguish between pointer and reference for legacy code)
+            readBufferValue( value,
+                discreteFunction.dofVector()[indexMap[i]][k],
+                operation, std::integral_constant< bool, std::is_pointer< Operation > :: value > () );
           }
         }
       }

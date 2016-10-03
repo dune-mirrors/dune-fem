@@ -269,7 +269,7 @@ namespace Dune
 
       //! add discrete function to communicator with given unpack operation
       template< class Communicator, class Operation >
-      void addToList ( Communicator &comm, const Operation* op)
+      void addToList ( Communicator &comm, const Operation& op)
       {
         if( localRP_.needCommunication() )
           comm.addToList( discreteFunction_, op );

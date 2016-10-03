@@ -505,7 +505,7 @@ namespace Dune
                                         (see DFCommunicationOperation)
        */
       template <class DiscreteFunction, class Operation>
-      void communicate(DiscreteFunction& discreteFunction, const Operation* op) const
+      void communicate(DiscreteFunction& discreteFunction, const Operation& op) const
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
             asImp().communicate( discreteFunction , op ) );
@@ -521,7 +521,7 @@ namespace Dune
       template< class DiscreteFunction, class Operation >
       inline typename CommDataHandle< DiscreteFunction, Operation > :: Type
       createDataHandle ( DiscreteFunction& discreteFunction,
-                        const Operation *operation ) const
+                        const Operation &operation ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION
           ( asImp().createDataHandle( discreteFunction, operation ) );
@@ -803,7 +803,7 @@ namespace Dune
         communicate( discreteFunction, operation );
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::communicate(DiscreteFunction &discreteFunction, const Operation *) const */
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::communicate(DiscreteFunction &discreteFunction, const Operation &operation) const */
       template <class DiscreteFunction, class Operation>
       void communicate(DiscreteFunction& discreteFunction, const Operation& op ) const
       {
@@ -815,7 +815,7 @@ namespace Dune
         communicator().exchange( discreteFunction, op );
       }
 
-      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::createDataHandle(DiscreteFunction &discreteFunction.const Operation *operation) const
+      /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::createDataHandle(DiscreteFunction &discreteFunction.const Operation &operation) const
 
           \note The default implementation is
           \code

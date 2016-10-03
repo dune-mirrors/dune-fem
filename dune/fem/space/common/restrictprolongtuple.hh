@@ -113,7 +113,7 @@ namespace Dune
 
       /** \copydoc Dune::Fem::RestrictProlongInterface::addToList */
       template< class Communicator, class Operation >
-      void addToList ( Communicator &comm, const Operation* op )
+      void addToList ( Communicator &comm, const Operation& op )
       {
         Dune::ForLoop< AddToList, 0, sizeof...( Tail ) >::apply( comm, tuple_, op );
       }
@@ -148,7 +148,7 @@ namespace Dune
     struct RestrictProlongTuple< Head, Tail... >::AddToList
     {
       template< class Communicator, class Operation >
-      static void apply ( Communicator &comm, std::tuple< Head, Tail... > &tuple, const Operation* op )
+      static void apply ( Communicator &comm, std::tuple< Head, Tail... > &tuple, const Operation& op )
       {
         std::get< i >( tuple ).addToList( comm, op );
       }

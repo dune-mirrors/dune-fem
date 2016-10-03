@@ -184,7 +184,7 @@ namespace Dune
       */
       template< class Operation >
       typename CommDataHandle< Operation > :: Type
-      dataHandle( const Operation *operation )
+      dataHandle( const Operation &operation )
       {
         return space().createDataHandle( *this, operation );
       }
