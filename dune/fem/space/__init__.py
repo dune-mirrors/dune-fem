@@ -6,7 +6,6 @@ import inspect
 
 from dune.generator.generator import SimpleGenerator
 from dune.fem import discretefunction
-from dune.fem.function import numpyFunction
 
 from ._spaces import *
 
@@ -35,6 +34,7 @@ def interpolate( self, func, **kwargs ):
     return None
 
 def numpyfunction( self, data, name ):
+    from dune.fem.function import numpyFunction
     return numpyFunction(self, data, name)
 
 generator = SimpleGenerator("Space", "Dune::FemPy")
