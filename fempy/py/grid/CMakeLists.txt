@@ -1,7 +1,7 @@
 set(HEADERS
+  adaptation.hh
   function.hh
   gridpart.hh
-  hierarchical.hh
   numpy.hh
   restrictprolong.hh
 )

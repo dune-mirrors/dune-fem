@@ -1,0 +1,107 @@
+#ifndef DUNE_FEMPY_PY_GRID_ADAPTATION_HH
+#define DUNE_FEMPY_PY_GRID_ADAPTATION_HH
+
+#include <cassert>
+
+#include <array>
+#include <list>
+#include <map>
+
+#include <dune/fempy/grid/adaptation.hh>
+#include <dune/fempy/py/grid/restrictprolong.hh>
+
+#include <dune/corepy/pybind11/pybind11.h>
+#include <dune/corepy/pybind11/stl.h>
+
+namespace Dune
+{
+
+  namespace FemPy
+  {
+
+    namespace detail
+    {
+
+      // gridAdaptationInstances
+      // -----------------------
+
+      template< class Grid >
+      inline std::map< Grid *, GridAdaptation< Grid > * > &gridAdaptationInstances ()
+      {
+        static std::map< Grid *, GridAdaptation< Grid > * > instances;
+        return instances;
+      }
+
+    } // namespace detail
+
+
+
+    // gridAdaptation
+    // --------------
+
+    template< class Grid >
+    inline static GridAdaptation< Grid > &gridAdaptation ( Grid &grid )
+    {
+      auto result = detail::gridAdaptationInstances< Grid >().insert( std::make_pair( &grid, nullptr ) );
+      auto pos = result.first;
+      if( result.second )
+      {
+        pos->second = new GridAdaptation< Grid >( grid );
+
+        pybind11::handle nurse = pybind11::detail::get_object_handle( &grid, pybind11::detail::get_type_info( typeid( Grid ) ) );
+        if( nurse )
+        {
+          pybind11::cpp_function remove_adaptation( [ pos ] ( pybind11::handle weakref ) {
+              delete pos->second;
+              detail::gridAdaptationInstances< Grid >().erase( pos );
+              weakref.dec_ref();
+            } );
+          pybind11::weakref( nurse, remove_adaptation ).release();
+        }
+      }
+      assert( pos->second );
+      return *pos->second;
+    }
+
+
+
+    // registerGridAdaptation
+    // ----------------------
+
+    template< class Grid, class Holder, class Alias >
+    inline static void registerGridAdaptation ( pybind11::module module, pybind11::class_< GridAdaptation< Grid >, Holder, Alias > &cls )
+    {
+      detail::clsVirtualizedRestrictProlong< Grid >( cls );
+
+      typedef VirtualizedRestrictProlong< Grid > RestrictProlong;
+
+      cls.def( "adapt", [] ( GridAdaptation< Grid > &gridAdaptation ) {
+          std::array< RestrictProlong, 0 > rpList;
+          gridAdaptation.adapt( rpList.begin(), rpList.end() );
+        } );
+
+      cls.def( "adapt", [] ( GridAdaptation< Grid > &gridAdaptation, const std::list< RestrictProlong > &rpList ) {
+          if( gridAdaptation.grid().comm().rank() == 0 )
+            std::cout << "adapting grid and " << rpList.size() << " functions..." << std::endl;
+          gridAdaptation.adapt( rpList.begin(), rpList.end() );
+        } );
+
+      cls.def( "loadBalance", [] ( GridAdaptation< Grid > &gridAdaptation ) {
+          std::array< RestrictProlong, 0 > rpList;
+          gridAdaptation.loadBalance( rpList.begin(), rpList.end() );
+        } );
+
+      cls.def( "loadBalance", [] ( GridAdaptation< Grid > &gridAdaptation, const std::list< RestrictProlong > &rpList ) {
+          if( gridAdaptation.grid().comm().rank() == 0 )
+            std::cout << "loadbalanding grid and " << rpList.size() << " functions..." << std::endl;
+          gridAdaptation.loadBalance( rpList.begin(), rpList.end() );
+        } );
+
+      module.def( "gridAdaptation", &gridAdaptation< Grid >, pybind11::return_value_policy::reference );
+    }
+
+  } // namespace FemPy
+
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEMPY_PY_GRID_ADAPTATION_HH
