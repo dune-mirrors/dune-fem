@@ -88,9 +88,11 @@
 
 #include <dune/fempy/py/common/numpyvector.hh>
 
+#if HAVE_EIGEN
 #include <dune/fem/storage/eigenvector.hh>
 #include <dune/fem/operator/linear/eigenoperator.hh>
 #include <dune/fem/solver/eigen.hh>
+#endif
 
 /*********************************************************/
 
