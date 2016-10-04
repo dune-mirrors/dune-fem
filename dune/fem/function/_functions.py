@@ -46,7 +46,7 @@ def partitionFunction(gridview):
             self.rank = rank
         def __call__(self,en,x):
             return [self.rank]
-    return localFunction(gridview, "rank", 0, Partition(comm.rank))
+    return localFunction(gridview, "rank", 0, Partition(gridview.comm.rank))
 
 def cppFunction(gridview, name, order, code, *args, **kwargs):
     return dune.models.localfunction.generatedFunction(gridview, name, order, code, *args, **kwargs)
