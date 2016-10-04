@@ -3,6 +3,7 @@ from __future__ import print_function
 import dune.common
 
 from ._fem import *
+from ._adaptation import adapt, loadBalance
 
 from . import space as space
 from . import discretefunction as discretefunction
