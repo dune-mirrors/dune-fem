@@ -23,6 +23,42 @@ namespace Dune
     class FlOpCounter;
 
 
+    template <class FloatImp>
+    class FlOpSummary
+    {
+      typedef FlOpSummary< FloatImp >   ThisType;
+
+      ThreadSafeValue< unsigned long > count_;
+
+      FlOpSummary() : count_( 0 ) {}
+    public:
+      ~FlOpSummary ()
+      {
+        //assert( ThreadManager::singleThreadMode() );
+        unsigned long totalCount = 0;
+        for( size_t i=0; i<count_.size(); ++i )
+        {
+          std::cout << "Thread[ " << i << " ]: " << count_[ i ] << std::endl;
+          totalCount += count_[ i ];
+        }
+
+        std :: cout << "Total number of floating point operations: "
+                    << totalCount << std :: endl;
+      }
+
+      inline void add( const unsigned long count, const int thread )
+      {
+        count_[ thread ] += count ;
+      }
+
+      inline static ThisType& instance()
+      {
+        static ThisType instance;
+        return instance;
+      }
+    };
+
+    /*
     template<>
     class FlOpCounter< void >
     {
@@ -30,7 +66,7 @@ namespace Dune
       typedef FlOpCounter< void > ThisType;
 
     protected:
-      ThreadSafeValue< unsigned long > count_;
+      unsigned long count_;
 
     protected:
       inline FlOpCounter ()
@@ -41,6 +77,7 @@ namespace Dune
     public:
       inline ~FlOpCounter ()
       {
+        FlOpSummary< void > ::instance().add( count_ );
         assert( ThreadManager::singleThreadMode() );
         unsigned long totalCount = 0;
         for( size_t i=0; i<count_.size(); ++i )
@@ -62,11 +99,11 @@ namespace Dune
 
       inline static ThisType &instance ()
       {
-        static ThisType instance;
+        static thread_local ThisType instance;
         return instance;
       }
     };
-
+    */
 
 
     template< class FloatImp >
@@ -79,40 +116,31 @@ namespace Dune
       typedef FlOpCounter< FloatType > ThisType;
 
     protected:
-      ThreadSafeValue< unsigned long > count_;
+      unsigned long count_;
+      const int thread_;
 
     protected:
       inline FlOpCounter ()
-      : count_( 0 )
+      : count_( 0 ), thread_( ThreadManager::thread() )
       {
+        FlOpSummary< FloatImp > :: instance() ;
       }
 
     public:
       inline ~FlOpCounter ()
       {
-        assert( ThreadManager::singleThreadMode() );
-        unsigned long totalCount = 0;
-        for( size_t i=0; i<count_.size(); ++i )
-        {
-          std::cout << "Thread[ " << i << " ]: " << count_[ i ] << std::endl;
-          totalCount += count_[ i ];
-        }
-
-        std :: cout << "Number of floating point operations for "
-                    << FloatType :: typeName() << ": "
-                    << totalCount << std :: endl;
+        FlOpSummary< FloatImp > :: instance().add( count_, thread_ );
       }
 
       inline ThisType &operator++ ()
       {
-        ++(*count_);
-        ++(FlOpCounter< void > :: instance());
+        ++(count_);
         return *this;
       }
 
       inline static ThisType &instance ()
       {
-        static ThisType instance;
+        static thread_local ThisType instance;
         return instance;
       }
     };
@@ -306,7 +334,7 @@ namespace Dune
         return value_;
       }
 
-      inline Double ()
+      inline Double () : value_( 0 )
 //#ifndef NDEBUG
 //        : value_( std::numeric_limits< double >::signaling_NaN() )
 //#endif

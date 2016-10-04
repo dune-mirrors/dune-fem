@@ -6,12 +6,9 @@
 #include <vector>
 #include <type_traits>
 
-// dune-common includes
-#include <dune/common/nullptr.hh>
-#include <dune/common/typetraits.hh>
-
 // dune-fem includes
 #include <dune/fem/misc/functor.hh>
+#include <dune/fem/misc/threads/threadsafevalue.hh>
 #include <dune/fem/quadrature/caching/registry.hh>
 #include <dune/fem/quadrature/cachingpointlist.hh>
 #include <dune/fem/quadrature/quadrature.hh>
@@ -39,23 +36,30 @@ namespace Dune
       typedef typename ShapeFunctionSet::JacobianRangeType JacobianRangeType;
       typedef typename ShapeFunctionSet::HessianRangeType HessianRangeType;
 
-      typedef std::vector< RangeType >         RangeVectorType ;
-      typedef std::vector< JacobianRangeType > JacobianRangeVectorType ;
+      typedef std::vector< RangeType >          RangeVectorType ;
+      typedef std::vector< JacobianRangeType >  JacobianRangeVectorType ;
 
-      typedef std::vector< RangeType * > ValueCacheVectorType;
-      typedef std::vector< JacobianRangeType * > JacobianCacheVectorType;
+      typedef std::vector< RangeVectorType >         ValueCacheVectorType;
+      typedef std::vector< JacobianRangeVectorType > JacobianCacheVectorType;
 
       explicit CachingShapeFunctionSet ( const GeometryType &type,
                                          const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
       : type_( type ),
-        shapeFunctionSet_( shapeFunctionSet )
+        shapeFunctionSet_( shapeFunctionSet ),
+        localRangeCache_(),
+        localJacobianCache_()
       {
         QuadratureStorageRegistry::registerStorage( *this );
       }
 
       ~CachingShapeFunctionSet ();
+      CachingShapeFunctionSet ( const ThisType& ) = delete;
+      const ThisType& operator= ( const ThisType& ) = delete;
 
-      int order () const { return shapeFunctionSet_.order(); }
+      int order () const
+      {
+        return shapeFunctionSet_.order();
+      }
 
       std::size_t size () const
       {
@@ -71,7 +75,7 @@ namespace Dune
       template< class Quadrature, class Functor >
       void evaluateEach ( const QuadraturePointWrapper< Quadrature > &x, Functor functor ) const
       {
-        const bool cacheable = Conversion< Quadrature, CachingInterface >::exists;
+        const bool cacheable = std::is_convertible< Quadrature, CachingInterface >::value;
         evaluateEach( x.quadrature(), x.point(), functor, std::integral_constant< bool, cacheable >() );
       }
 
@@ -84,7 +88,7 @@ namespace Dune
       template< class Quadrature, class Functor >
       void jacobianEach ( const QuadraturePointWrapper< Quadrature > &x, Functor functor ) const
       {
-        const bool cacheable = Conversion< Quadrature, CachingInterface >::exists;
+        const bool cacheable = std::is_convertible< Quadrature, CachingInterface >::value;
         jacobianEach( x.quadrature(), x.point(), functor, std::integral_constant< bool, cacheable >() );
       }
 
@@ -97,24 +101,24 @@ namespace Dune
       GeometryType type () const {  return type_; }
 
       template < class QuadratureType >
-      const RangeType* rangeCache( const QuadratureType& quadrature ) const
+      const RangeVectorType& rangeCache( const QuadratureType& quadrature ) const
       {
-        return ReturnCache< QuadratureType, Conversion< QuadratureType, CachingInterface >::exists > ::
-          ranges( *this, quadrature, valueCaches_, localRangeCache_ );
+        return ReturnCache< QuadratureType, std::is_convertible< QuadratureType, CachingInterface >::value > ::
+          ranges( *this, quadrature, valueCaches_, *localRangeCache_ );
       }
 
       template < class QuadratureType >
-      const JacobianRangeType* jacobianCache( const QuadratureType& quadrature ) const
+      const JacobianRangeVectorType& jacobianCache( const QuadratureType& quadrature ) const
       {
-        return ReturnCache< QuadratureType, Conversion< QuadratureType, CachingInterface >::exists > ::
-          jacobians( *this, quadrature, jacobianCaches_, localJacobianCache_ );
+        return ReturnCache< QuadratureType, std::is_convertible< QuadratureType, CachingInterface >::value > ::
+          jacobians( *this, quadrature, jacobianCaches_, *localJacobianCache_ );
       }
 
     private:
       template< class Quad, bool cacheable >
       struct ReturnCache
       {
-        static const RangeType*
+        static const RangeVectorType&
         ranges( const ThisType& shapeFunctionSet,
                 const Quad& quad,
                 const ValueCacheVectorType&,
@@ -125,18 +129,19 @@ namespace Dune
           const unsigned int size = shapeFunctionSet.size();
 
           // make sure cache has the appropriate size
-          storage.resize( size * nop * 10  );
+          storage.resize( size * nop );
+          RangeType* data = storage.data();
 
           for( unsigned int qp = 0 ; qp < nop; ++ qp )
           {
             const int cacheQp = quad.cachingPoint( qp );
-            AssignFunctor< RangeType* > funztor( &(storage[ cacheQp *size ]) );
+            AssignFunctor< RangeType* > funztor( data + (cacheQp * size) );
             shapeFunctionSet.evaluateEach( quad[ qp ], funztor );
           }
-          return &(storage[0]);
+          return storage;
         }
 
-        static const JacobianRangeType*
+        static const JacobianRangeVectorType&
         jacobians( const ThisType& shapeFunctionSet,
                    const Quad& quad,
                    const JacobianCacheVectorType&,
@@ -147,22 +152,23 @@ namespace Dune
           const unsigned int size = shapeFunctionSet.size();
 
           // make sure cache has the appropriate size
-          storage.resize( size * nop * 10  );
+          storage.resize( size * nop );
+          JacobianRangeType* data = storage.data();
 
           for( unsigned int qp = 0 ; qp < nop; ++ qp )
           {
             const int cacheQp = quad.cachingPoint( qp );
-            AssignFunctor< JacobianRangeType* > funztor( &(storage[ cacheQp * size ]) );
+            AssignFunctor< JacobianRangeType* > funztor( data + ( cacheQp * size ) );
             shapeFunctionSet.jacobianEach( quad[ qp ], funztor );
           }
-          return &(storage[ 0 ]);
+          return storage;
         }
       };
 
       template< class Quad >
       struct ReturnCache< Quad, true >
       {
-        static const RangeType*
+        static const RangeVectorType&
         ranges( const ThisType& shapeFunctionSet,
                 const Quad& quad,
                 const ValueCacheVectorType& cache,
@@ -171,7 +177,7 @@ namespace Dune
           return cache[ quad.id() ];
         }
 
-        static const JacobianRangeType*
+        static const JacobianRangeVectorType&
         jacobians( const ThisType& shapeFunctionSet,
                    const Quad& quad,
                    const JacobianCacheVectorType& cache,
@@ -210,18 +216,17 @@ namespace Dune
       template< class PointVector >
       void cachePoints ( std::size_t id, const PointVector &points );
 
-      // prohibit copying and assignment
-      CachingShapeFunctionSet ( const ThisType & );
-      const ThisType &operator= ( const ThisType & );
-
       GeometryType type_;
       ShapeFunctionSet shapeFunctionSet_;
       ValueCacheVectorType valueCaches_;
       JacobianCacheVectorType jacobianCaches_;
 
-      mutable RangeVectorType          localRangeCache_ ;
-      mutable JacobianRangeVectorType  localJacobianCache_;
-
+      // local caches are used when a quadrature that is not a caching quadrature
+      // is used and the cache is requested by the autogenerated axpy methods
+      // in shared memory runs these might be accessed by different threads at
+      // the same time
+      mutable ThreadSafeValue< RangeVectorType >         localRangeCache_ ;
+      mutable ThreadSafeValue< JacobianRangeVectorType > localJacobianCache_;
     };
 
 
@@ -233,10 +238,6 @@ namespace Dune
     inline CachingShapeFunctionSet< ShapeFunctionSet >::~CachingShapeFunctionSet ()
     {
       QuadratureStorageRegistry::unregisterStorage( *this );
-      for( typename ValueCacheVectorType::iterator it = valueCaches_.begin(); it != valueCaches_.end(); ++it )
-        delete [] *it;
-      for( typename JacobianCacheVectorType::iterator it = jacobianCaches_.begin(); it != jacobianCaches_.end(); ++it )
-        delete [] *it;
     }
 
 
@@ -246,12 +247,12 @@ namespace Dune
       ::evaluateEach ( const Quadrature &quadrature, std::size_t pt, Functor functor,
                        std::integral_constant< bool, true > ) const
     {
-      assert( (quadrature.id() < valueCaches_.size()) && valueCaches_[ quadrature.id() ] );
-      const RangeType *cache = valueCaches_[ quadrature.id() ];
+      assert( (quadrature.id() < valueCaches_.size()) && !valueCaches_[ quadrature.id() ].empty() );
+      const RangeType *cache = valueCaches_[ quadrature.id() ].data();
 
-      const std::size_t numShapeFunctions = size();
-      const std::size_t cpt = quadrature.cachingPoint( pt );
-      for( std::size_t i = 0; i < numShapeFunctions; ++i )
+      const unsigned int numShapeFunctions = size();
+      const unsigned int cpt = quadrature.cachingPoint( pt );
+      for( unsigned int i = 0; i < numShapeFunctions; ++i )
         functor( i, cache[ cpt*numShapeFunctions + i ] );
     }
 
@@ -262,12 +263,12 @@ namespace Dune
       ::jacobianEach ( const Quadrature &quadrature, std::size_t pt, Functor functor,
                        std::integral_constant< bool, true > ) const
     {
-      assert( (quadrature.id() < jacobianCaches_.size()) && jacobianCaches_[ quadrature.id() ] );
-      const JacobianRangeType *cache = jacobianCaches_[ quadrature.id() ];
+      assert( (quadrature.id() < jacobianCaches_.size()) && !jacobianCaches_[ quadrature.id() ].empty() );
+      const JacobianRangeType *cache = jacobianCaches_[ quadrature.id() ].data();
 
-      const std::size_t numShapeFunctions = size();
-      const std::size_t cpt = quadrature.cachingPoint( pt );
-      for( std::size_t i = 0; i < numShapeFunctions; ++i )
+      const unsigned int numShapeFunctions = size();
+      const unsigned int cpt = quadrature.cachingPoint( pt );
+      for( unsigned int i = 0; i < numShapeFunctions; ++i )
         functor( i, cache[ cpt*numShapeFunctions + i ] );
     }
 
@@ -278,12 +279,13 @@ namespace Dune
     {
       if( id >= valueCaches_.size() )
       {
-        valueCaches_.resize( id+1, nullptr );
-        jacobianCaches_.resize( id+1, nullptr );
+        valueCaches_.resize( id+1, RangeVectorType() );
+        jacobianCaches_.resize( id+1, JacobianRangeVectorType() );
       }
-      assert( bool( valueCaches_[ id ] ) == bool( jacobianCaches_[ id ] ) );
 
-      if( !valueCaches_[ id ] )
+      assert( valueCaches_[ id ].empty() == jacobianCaches_[ id ].empty() );
+
+      if( valueCaches_[ id ].empty() )
       {
         typedef typename FunctionSpaceType::DomainFieldType ctype;
         const int dim = FunctionSpaceType::dimDomain;
@@ -309,21 +311,23 @@ namespace Dune
     inline void CachingShapeFunctionSet< ShapeFunctionSet >
       ::cachePoints ( std::size_t id, const PointVector &points )
     {
-      const std::size_t numShapeFunctions = size();
-      const std::size_t numPoints = points.size();
-      RangeType *values = new RangeType[ numShapeFunctions * numPoints ];
-      JacobianRangeType *jacobians = new JacobianRangeType[ numShapeFunctions * numPoints ];
-      if( !values || !jacobians )
+      const unsigned int numShapeFunctions = size();
+      const unsigned int numPoints = points.size();
+
+      RangeVectorType& values = valueCaches_[ id ];
+      values.resize( numShapeFunctions * numPoints );
+
+      JacobianRangeVectorType& jacobians = jacobianCaches_[ id ];
+      jacobians.resize( numShapeFunctions * numPoints );
+
+      if( values.empty() || jacobians.empty() )
         DUNE_THROW( OutOfMemoryError, "Unable to allocate shape function set caches." );
 
-      for( std::size_t pt = 0; pt < numPoints; ++pt )
+      for( unsigned int pt = 0; pt < numPoints; ++pt )
       {
-        evaluateEach( points[ pt ], AssignFunctor< RangeType * >( values + pt*numShapeFunctions ) );
-        jacobianEach( points[ pt ], AssignFunctor< JacobianRangeType * >( jacobians + pt*numShapeFunctions ) );
+        evaluateEach( points[ pt ], AssignFunctor< RangeType * >( values.data() + pt*numShapeFunctions ) );
+        jacobianEach( points[ pt ], AssignFunctor< JacobianRangeType * >( jacobians.data() + pt*numShapeFunctions ) );
       }
-
-      valueCaches_[ id ] = values;
-      jacobianCaches_[ id ] = jacobians;
     }
 
   } // namespace Fem
