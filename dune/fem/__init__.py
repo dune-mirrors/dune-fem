@@ -5,6 +5,7 @@ import dune.common
 from ._fem import *
 from ._adaptation import adapt, loadBalance
 
+from . import view as view
 from . import space as space
 from . import discretefunction as discretefunction
 from . import scheme as scheme
@@ -13,6 +14,11 @@ from . import model as model
 
 registry = {}
 
+registry["view"] = {
+         "adaptive"   : view.adaptiveLeafGridView,
+         "filtered"   : view.filteredGridView,
+         "geometry"   : view.geometryGridView
+     }
 registry["space"] = {
          "Lagrange"   : space.lagrange,
          "DGONB"      : space.dgonb,
