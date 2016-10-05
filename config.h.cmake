@@ -19,9 +19,6 @@
 /* Define actual name of xdr_uint_64_t method */
 #cmakedefine XDR_UINT64_FUNC ${XDR_UINT64_FUNC}
 
-/* Define if we have thread local storage */
-#cmakedefine HAVE_PTHREAD_TLS 1
-
 /* Define if we have pthreads */
 #cmakedefine HAVE_PTHREAD 1
 
