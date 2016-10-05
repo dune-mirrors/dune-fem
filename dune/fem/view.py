@@ -36,7 +36,7 @@ def adaptiveLeafGridView(grid, *args, **kwargs):
         import dune.create as create
         grid = create.grid(grid,*args,**kwargs)
     else:
-        assert args.__len__() and kwargs.__len__(),\
+        assert args.__len__()==0 and kwargs.__len__()==0,\
             "too many arguments passed to adaptiveLeafGridView method"
     gridModule = importlib.import_module(type(grid).__module__)
     if isinstance(grid, getattr(gridModule, "LeafGrid")):
