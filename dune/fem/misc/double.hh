@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cmath>
 #include <limits>
+#include <string>
 
 //- Dune includes
 #include <dune/fem/io/streams/streams.hh>
@@ -23,56 +24,40 @@ namespace Dune
     class FlOpCounter;
 
 
-    template<>
-    class FlOpCounter< void >
+    template <class FloatImp>
+    class FlOpSummary
     {
-    private:
-      typedef FlOpCounter< void > ThisType;
+      typedef FlOpSummary< FloatImp >   ThisType;
 
-    protected:
+      std::string name_;
       ThreadSafeValue< unsigned long > count_;
 
-    protected:
-      inline FlOpCounter ()
-      : count_( 0 )
-      {
-      }
-
+      FlOpSummary(const std::string& name) : name_(name), count_( 0 ) {}
     public:
-      inline ~FlOpCounter ()
+      ~FlOpSummary ()
       {
-        assert( ThreadManager::singleThreadMode() );
         unsigned long totalCount = 0;
         for( size_t i=0; i<count_.size(); ++i )
         {
-          std::cout << "Thread[ " << i << " ]: " << count_[ i ] << std::endl;
+          std::cout << name_ << " thread[ " << i << " ]: " << count_[ i ] << std::endl;
           totalCount += count_[ i ];
         }
 
-        std :: cout << "Total number of floating point operations: "
+        std :: cout << "Total number of floating point operations (" << name_ << "): "
                     << totalCount << std :: endl;
       }
 
-      inline ThisType &operator++ ()
+      inline void add( const unsigned long count, const int thread )
       {
-
-        ++(*count_);
-        return *this;
+        count_[ thread ] += count ;
       }
 
-      inline ThisType &operator+= ( unsigned long i )
+      inline static ThisType& instance( const std::string& name )
       {
-        *count_ += i;
-        return *this;
-      }
-
-      inline static ThisType &instance ()
-      {
-        static ThisType instance;
+        static ThisType instance( name );
         return instance;
       }
     };
-
 
 
     template< class FloatImp >
@@ -85,47 +70,37 @@ namespace Dune
       typedef FlOpCounter< FloatType > ThisType;
 
     protected:
-      ThreadSafeValue< unsigned long > count_;
+      unsigned long count_;
+      const int thread_;
 
     protected:
       inline FlOpCounter ()
-      : count_( 0 )
+      : count_( 0 ), thread_( ThreadManager::thread() )
       {
+        FlOpSummary< FloatImp > :: instance( FloatImp::typeName() ) ;
       }
 
     public:
       inline ~FlOpCounter ()
       {
-        assert( ThreadManager::singleThreadMode() );
-        unsigned long totalCount = 0;
-        for( size_t i=0; i<count_.size(); ++i )
-        {
-          std::cout << "Thread[ " << i << " ]: " << count_[ i ] << std::endl;
-          totalCount += count_[ i ];
-        }
-
-        std :: cout << "Number of floating point operations for "
-                    << FloatType :: typeName() << ": "
-                    << totalCount << std :: endl;
+        FlOpSummary< FloatImp > :: instance( FloatImp::typeName() ).add( count_, thread_ );
       }
 
       inline ThisType &operator++ ()
       {
-        ++(*count_);
-        ++(FlOpCounter< void > :: instance());
+        ++(count_);
         return *this;
       }
 
-      inline ThisType &operator+= ( unsigned long i )
+      inline ThisType &operator += ( const unsigned long i )
       {
-        *count_ += i;
-        FlOpCounter< void >::instance() += i;
+        count_ += i;
         return *this;
       }
 
       inline static ThisType &instance ()
       {
-        static ThisType instance;
+        static thread_local ThisType instance;
         return instance;
       }
     };
@@ -152,14 +127,14 @@ namespace Dune
         return *this;
       }
 
-      inline ThisType &operator+= ( unsigned long i )
+      inline ThisType &operator += ( const unsigned long i )
       {
         return *this;
       }
 
       inline static ThisType &instance ()
       {
-        static ThisType instance;
+        static thread_local ThisType instance;
         return instance;
       }
     };
@@ -185,7 +160,6 @@ namespace Dune
     static inline double max (const Double& v, const double p);
     // wrap of std max
     static inline double max (const double v, const Double& p);
-
 
 
     // numeric limits
@@ -326,6 +300,7 @@ namespace Dune
       }
 
       inline Double ()
+        // : value_( 0 )
 //#ifndef NDEBUG
 //        : value_( std::numeric_limits< double >::signaling_NaN() )
 //#endif
