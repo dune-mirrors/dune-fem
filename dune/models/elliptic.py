@@ -653,7 +653,10 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
     dubar = ufl.differentiation.Grad(ubar)
     d2ubar = ufl.differentiation.Grad(dubar)
 
-    field = u.ufl_function_space().ufl_element().field()
+    try:
+        field = u.ufl_function_space().ufl_element().field()
+    except AttributeError:
+        field = "double"
 
     # if exact solution is passed in subtract a(u,.) from the form
     if not exact == None:
