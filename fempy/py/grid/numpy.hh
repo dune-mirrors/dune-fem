@@ -1,7 +1,15 @@
 #ifndef DUNE_FEMPY_PY_GRID_NUMPY_HH
 #define DUNE_FEMPY_PY_GRID_NUMPY_HH
 
+#include <cstddef>
+
+#include <algorithm>
+#include <vector>
+
 #include <dune/common/ftraits.hh>
+
+#include <dune/geometry/type.hh>
+#include <dune/geometry/virtualrefinement.hh>
 
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/common/rangegenerators.hh>
@@ -73,16 +81,18 @@ namespace Dune
       typedef typename GridFunction::RangeType Range;
       typedef typename FieldTraits< Range >::field_type Field;
 
+      const int dimension = GridPart::dimension;
+      const GeometryType gtSimplex( GeometryType::simplex, dimension );
+
       std::vector< Range > cellData;
       Fem::LocalAverage< LocalFunction, GridPart > localAverage;
       for( const auto &element : elements( static_cast< typename GridPart::GridViewType >( gridFunction.gridPart() ), ps ) )
       {
-        if( !element.type().isSimplex() )
-          DUNE_THROW( NotImplemented, "Only simplicial grids can be tessealted right now." );
-
         Range value;
         localAverage( gridFunction.localFunction( element ), value );
-        cellData.push_back( value );
+        const auto &refinement = buildRefinement< dimension, double >( element.type(), gtSimplex );
+        for( auto it = refinement.eBegin( 0 ), end = refinement.eEnd( 0 ); it != end; ++it )
+          cellData.push_back( value );
       }
 
       const std::vector< std::size_t > shape{ cellData.size(), static_cast< std::size_t >( Range::dimension ) };
