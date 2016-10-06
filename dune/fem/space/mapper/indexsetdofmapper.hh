@@ -620,8 +620,6 @@ namespace Dune
         typedef typename BaseType::GridPartType GridPartType;
         typedef typename BaseType::SizeType SizeType;
 
-        using BaseType::update;
-
         template< class CodeFactory >
         AdaptiveDofMapper ( const GridPartType &gridPart, const CodeFactory &codeFactory )
           : BaseType( gridPart, codeFactory )
@@ -637,6 +635,9 @@ namespace Dune
         }
 
         ThisType &operator= ( const ThisType & ) = delete;
+
+        // Adaptive DoF mappers are always up to date, so this method does nothing.
+        void update () {}
 
         // adaptation interface
 
@@ -654,14 +655,14 @@ namespace Dune
         bool consecutive () const { return true; }
 
         template< class Entity >
-        void insertEntity ( const Entity &entity ) { update(); }
+        void insertEntity ( const Entity &entity ) { BaseType::update(); }
 
         template< class Entity >
         void removeEntity ( const Entity &entity ) {}
 
-        void resize () { update(); }
+        void resize () { BaseType::update(); }
 
-        bool compress () { update(); return true; }
+        bool compress () { BaseType::update(); return true; }
 
         template <class StreamTraits>
         void write( OutStreamInterface< StreamTraits >& out ) const {}
@@ -669,7 +670,7 @@ namespace Dune
         template <class StreamTraits>
         void read( InStreamInterface< StreamTraits >& in )
         {
-          update();
+          BaseType::update();
         }
 
         void backup () const {}

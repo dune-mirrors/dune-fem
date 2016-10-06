@@ -188,6 +188,19 @@ namespace Dune
         return asImp().numEntityDofs( entity );
       }
 
+      /**
+       * \brief update DoF mapping after grid modification
+       *
+       * \note This method may not have any semantic side effects and may
+       *       may be called arbitrarily often.
+       *
+       * \note If the update is expensive, implementors might choose to check
+       *       the sequence number of the underlying grid part.
+       **/
+      void update ()
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION( asImp().update() );
+      }
     };
 
 
@@ -264,6 +277,14 @@ namespace Dune
         CHECK_INTERFACE_IMPLEMENTATION(asImp().numBlocks());
         return asImp().numBlocks();
       }
+
+      /**
+       * \brief update DoF mapping after grid modification
+       *
+       * Adaptive DoF mappers are considered to be always up to date and this
+       * method does nothing.
+       **/
+      void update () {}
     };
 
     /// @}
