@@ -536,7 +536,7 @@ namespace Dune
 
         for( std::size_t j = 0; j < size; ++j )
         {
-          values[ j + offset[ i ] ] = HessianRangeType( RangeFieldType( 0.0 ) );
+          values[ j + offset[ i ] ] = typename HessianRangeType::value_type( 0.0 );
           for( int r = 0; r < thisDimRange; ++r )
             values[ j + offset[ i ] ][ r + rangeOffset ] = thisStorage[ j ][ r ];
         }

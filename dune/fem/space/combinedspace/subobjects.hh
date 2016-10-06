@@ -85,13 +85,15 @@ namespace Dune
 
 
   // cast into fieldMatrix
-  template<class DomainObj, class RangeObj, int offset>
-  void istl_assign_to_fmatrix( DenseMatrix< typename std::remove_const< RangeObj > :: type >& fm,
-                               const Fem::SubObject<DomainObj, RangeObj, offset>& s)
+  template< class DomianObj, class RangeObj, int offset >
+  struct DenseMatrixAssigner< typename std::remove_const< RangeObj >::type, Fem::SubObject< DomianObj, RangeObj, offset > >
   {
-    for( int i = 0; i < s.size(); ++i )
-      fm[ i ] = s[ i ];
-  }
+    static void apply ( typename std::remove_const< RangeObj >::type &fm, const Fem::SubObject< DomianObj, RangeObj, offset > &s )
+    {
+      for( int i = 0; i < s.size(); ++i )
+        fm[ i ] = s[ i ];
+    }
+  };
 
 } //  namespace Dune
 
