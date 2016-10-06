@@ -3,6 +3,7 @@
 
 #include <cstddef>
 
+#include <type_traits>
 #include <utility>
 
 #include <dune/common/dynvector.hh>
@@ -181,6 +182,9 @@ namespace Dune
       template< class LocalFunction, class LocalDofVector >
       void apply ( const LocalFunction &localFunction, LocalDofVector &dofs ) const
       {
+        static_assert( std::is_same< RangeType, typename LocalFunction::RangeType >::value,
+                       "RangeType and LocalFunction::RangeType have to be the same type" );
+
         const BasisFunctionSetType basisFunctionSet = this->basisFunctionSet();
         const auto geometry = basisFunctionSet.entity().geometry();
 
