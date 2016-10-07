@@ -775,7 +775,11 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
 
     if not isinstance(grid, types.ModuleType):
         grid = grid._module
-    name = 'ellipticmodel_' + model.signature + "_" + grid._typeHash
+    try:
+        name = 'ellipticmodel_' + model.signature + '_' + grid._typeHash
+    except:
+        name = 'ellipticmodel_' + model.signature
+        print('warning: grid does not have typeHash')
 
     if comm.rank == 0:
         print("Importing module for model with signature " + model.signature)
@@ -868,7 +872,7 @@ def create(grid, equation, dirichlet = {}, exact = None, tempVars=True, coeffici
         ExtendedModel.setCoeffs = {c:c.gf for c in uflCoeff if isinstance(c,GridCoefficient)}
         lhs = ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(equation.lhs)))
         if lhs == ufl.adjoint(lhs):
-            setattr(self, 'symmetric', 'true')
+            setattr(ExtendedModel, 'symmetric', 'true')
         else:
-            setattr(self, 'symmetric', 'false')
+            setattr(ExtendedModel, 'symmetric', 'false')
     return ExtendedModel
