@@ -436,10 +436,10 @@ namespace Dune
       void setAdaptation( Adaptation&,
                           const double weight = 1.0 ) {}
 
-      //! \brief default method for setting adaptation handle and thead filter to discrete model
-      template <class Adaptation, class ThreadFilter>
+      //! \brief default method for setting adaptation handle and domain filter to discrete model
+      template <class Adaptation, class DomainFilter>
       void setAdaptation( Adaptation&,
-                          const ThreadFilter&,
+                          const DomainFilter&,
                           const double weight = 1.0 ) {}
 
       //! remove pointer to adaptation handle

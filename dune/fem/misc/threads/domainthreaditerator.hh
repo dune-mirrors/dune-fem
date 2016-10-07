@@ -8,10 +8,10 @@
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
-#include <dune/fem/gridpart/filter/threadfilter.hh>
+#include <dune/fem/gridpart/filter/domainfilter.hh>
 #include <dune/fem/misc/threads/threaditeratorstorage.hh>
 
-#ifdef USE_SMP_PARALLEL 
+#ifdef USE_SMP_PARALLEL
 #ifdef HAVE_DUNE_ALUGRID
 #define USE_THREADPARTITIONER
 #include <dune/fem/misc/threads/threadpartitioner.hh>
@@ -31,7 +31,7 @@ namespace Dune {
       typedef typename GridPartType :: GridType      GridType;
       typedef typename GridPartType :: IndexSetType  IndexSetType;
 
-      typedef ThreadFilter<GridPartType> FilterType;
+      typedef DomainFilter<GridPartType> FilterType;
 #ifdef USE_THREADPARTITIONER
       typedef FilteredGridPart< GridPartType, FilterType, false > FilteredGridPartType ;
 
