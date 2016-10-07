@@ -83,8 +83,9 @@ namespace Dune
         cls.def( "addToVTKWriter", &Dune::CorePy::addToVTKWriter< GridFunction, VTKWriter< typename GridFunction::GridPartType::GridViewType > >,
             pybind11::keep_alive< 2, 1 >() );
 
-        cls.def( "cellData", [] ( const GridFunction &gf ) { return cellData( gf ); } );
-        cls.def( "pointData", [] ( const GridFunction &gf ) { return pointData( gf ); } );
+        using pybind11::operator""_a;
+        cls.def( "cellData", [] ( const GridFunction &self, int level ) { return cellData( self, level ); }, "level"_a = 0 );
+        cls.def( "pointData", [] ( const GridFunction &self, int level ) { return pointData( self, level ); }, "level"_a = 0 );
 
         cls.def( "integrate", [] ( const GridFunction &gf ) { return Dune::Fem::Integral<GridPartType>(gf.gridPart(),gf.space().order()).norm(gf); });
       }

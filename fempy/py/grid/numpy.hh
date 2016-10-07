@@ -14,9 +14,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/common/rangegenerators.hh>
 
-#include <dune/fem/function/localfunction/average.hh>
-#include <dune/fem/quadrature/cornerpointset.hh>
-
+#include <dune/corepy/grid/numpy.hh>
 #include <dune/corepy/pybind11/numpy.h>
 #include <dune/corepy/pybind11/pybind11.h>
 
@@ -29,43 +27,46 @@ namespace Dune
     // pointData
     // ---------
 
-    template< class GridFunction, class Mapper >
-    inline static pybind11::array_t< typename FieldTraits< typename GridFunction::RangeType >::field_type > pointData ( const GridFunction &gridFunction, const Mapper &mapper )
+    template< class GridFunction, unsigned int partitions >
+    inline static pybind11::array_t< typename FieldTraits< typename GridFunction::RangeType >::field_type >
+    pointData ( const GridFunction &gridFunction, int level, PartitionSet< partitions > ps )
     {
       typedef typename GridFunction::GridPartType GridPart;
       typedef typename GridFunction::RangeType Range;
       typedef typename FieldTraits< Range >::field_type Field;
 
-      const std::vector< std::size_t > shape{ static_cast< std::size_t >( mapper.size() ), static_cast< std::size_t >( Range::dimension ) };
-      const std::vector< std::size_t > stride{ Range::dimension * sizeof( Field ), sizeof( Field ) };
-      pybind11::array_t< Field > data( pybind11::buffer_info( nullptr, sizeof( Field ), pybind11::format_descriptor< Field >::value, 2, shape, stride ) );
+      const int dimGrid = GridPart::dimension;
 
-      pybind11::buffer_info info = data.request( true );
-      for( const auto &element : elements( static_cast< typename GridPart::GridViewType >( gridFunction.gridPart() ), Partitions::all ) )
+      const GeometryType gtSimplex( GeometryType::simplex, dimGrid );
+      std::vector< Range > values;
+      for( const auto &element : elements( static_cast< typename GridPart::GridViewType >( gridFunction.gridPart() ), ps ) )
       {
         const auto localFunction = gridFunction.localFunction( element );
+        const auto &refinement = buildRefinement< dimGrid, double >( element.type(), gtSimplex );
 
-        Fem::CornerPointSet< GridPart > corners( element );
-        for( std::size_t i = 0; i < corners.nop(); ++i )
+        for( auto it = refinement.vBegin( level ), end = refinement.vEnd( level ); it != end; ++it )
         {
-          typename Mapper::Index index;
-          if( !mapper.contains( element, i, GridPart::dimension, index ) )
-            continue;
           Range value;
-          localFunction.evaluate( corners[ i ], value );
-          std::copy( value.begin(), value.end(), static_cast< Field * >( info.ptr ) + Range::dimension * index );
+          localFunction.evaluate( it.coords(), value );
+          values.push_back( value );
         }
       }
 
-      return data;
+      return CorePy::makeNumPyArray< Field >( values, { values.size(), Range::dimension } );
+    }
+
+    template< class GridFunction, unsigned int partitions >
+    inline static pybind11::array_t< typename FieldTraits< typename GridFunction::RangeType >::field_type >
+    pointData ( const GridFunction &gridFunction, PartitionSet< partitions > ps )
+    {
+      return pointData( gridFunction, 0, ps );
     }
 
     template< class GridFunction >
-    inline static pybind11::array_t< typename FieldTraits< typename GridFunction::RangeType >::field_type > pointData ( const GridFunction &gridFunction )
+    inline static pybind11::array_t< typename FieldTraits< typename GridFunction::RangeType >::field_type >
+    pointData ( const GridFunction &gridFunction, int level = 0 )
     {
-      typedef typename GridFunction::GridPartType::GridViewType GridView;
-      MultipleCodimMultipleGeomTypeMapper< GridView, MCMGVertexLayout > mapper( static_cast< GridView >( gridFunction.gridPart() ) );
-      return pointData( gridFunction, mapper );
+      return pointData( gridFunction, level, Partitions::all );
     }
 
 
@@ -74,43 +75,45 @@ namespace Dune
     // --------
 
     template< class GridFunction, unsigned int partitions >
-    inline static pybind11::array_t< typename FieldTraits< typename GridFunction::RangeType >::field_type > cellData ( const GridFunction &gridFunction, PartitionSet< partitions > ps )
+    inline static pybind11::array_t< typename FieldTraits< typename GridFunction::RangeType >::field_type >
+    cellData ( const GridFunction &gridFunction, int level, PartitionSet< partitions > ps )
     {
       typedef typename GridFunction::GridPartType GridPart;
-      typedef typename GridFunction::LocalFunctionType LocalFunction;
       typedef typename GridFunction::RangeType Range;
       typedef typename FieldTraits< Range >::field_type Field;
 
-      const int dimension = GridPart::dimension;
-      const GeometryType gtSimplex( GeometryType::simplex, dimension );
+      const int dimGrid = GridPart::dimension;
 
-      std::vector< Range > cellData;
-      Fem::LocalAverage< LocalFunction, GridPart > localAverage;
+      const GeometryType gtSimplex( GeometryType::simplex, dimGrid );
+      std::vector< Range > values;
       for( const auto &element : elements( static_cast< typename GridPart::GridViewType >( gridFunction.gridPart() ), ps ) )
       {
-        Range value;
-        localAverage( gridFunction.localFunction( element ), value );
-        const auto &refinement = buildRefinement< dimension, double >( element.type(), gtSimplex );
+        const auto localFunction = gridFunction.localFunction( element );
+        const auto &refinement = buildRefinement< dimGrid, double >( element.type(), gtSimplex );
+
         for( auto it = refinement.eBegin( 0 ), end = refinement.eEnd( 0 ); it != end; ++it )
-          cellData.push_back( value );
+        {
+          Range value;
+          localFunction.evaluate( it.coords(), value );
+          values.push_back( value );
+        }
       }
 
-      const std::vector< std::size_t > shape{ cellData.size(), static_cast< std::size_t >( Range::dimension ) };
-      const std::vector< std::size_t > stride{ Range::dimension * sizeof( Field ), sizeof( Field ) };
-      pybind11::array_t< Field > result( pybind11::buffer_info( nullptr, sizeof( Field ), pybind11::format_descriptor< Field >::value, 2, shape, stride ) );
+      return CorePy::makeNumPyArray< Field >( values, { values.size(), Range::dimension } );
+    }
 
-      pybind11::buffer_info info = result.request( true );
-      Field *out = static_cast< Field * >( info.ptr );
-      for( const Range &value : cellData )
-        out = std::copy( value.begin(), value.end(), out );
-
-      return result;
+    template< class GridFunction, unsigned int partitions >
+    inline static pybind11::array_t< typename FieldTraits< typename GridFunction::RangeType >::field_type >
+    cellData ( const GridFunction &gridFunction, PartitionSet< partitions > ps )
+    {
+      return cellData( gridFunction, 0, ps );
     }
 
     template< class GridFunction >
-    inline static pybind11::array_t< typename FieldTraits< typename GridFunction::RangeType >::field_type > cellData ( const GridFunction &gridFunction )
+    inline static pybind11::array_t< typename FieldTraits< typename GridFunction::RangeType >::field_type >
+    cellData ( const GridFunction &gridFunction, int level = 0 )
     {
-      return cellData( gridFunction, Partitions::all );
+      return cellData( gridFunction, level, Partitions::all );
     }
 
   } // namespace FemPy
