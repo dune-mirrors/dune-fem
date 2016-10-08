@@ -42,11 +42,11 @@ def dgonb(gridview, order=1, dimrange=1, field="double", storage="adaptive", **u
 
     return module(field, includes, typeName).Space(gridview)
 
-def lagrange(gridview, order=1, dimrange=1, field="double", storage="adaptive", **unused):
+def lagrange(view, order=1, dimrange=1, field="double", storage="adaptive", **unused):
     """create a Lagrange space
 
     Args:
-        gridview: the underlying grid view
+        view: the underlying grid view
         order: polynomial order of the finite element functions
         dimrange: dimension of the range space
         field: field of the range space
@@ -70,13 +70,13 @@ def lagrange(gridview, order=1, dimrange=1, field="double", storage="adaptive", 
     if field == "complex":
         field = "std::complex<double>"
 
-    includes = [ "dune/fem/space/lagrange.hh" ] + gridview._module._includes
-    dimw = gridview.dimWorld
+    includes = [ "dune/fem/space/lagrange.hh" ] + view._module._includes
+    dimw = view.dimWorld
     typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridview._module._typeName + " >, " + str(order) + " >"
+      "Dune::FemPy::GridPart< " + view._module._typeName + " >, " + str(order) + " >"
 
-    return module(field, includes, typeName).Space(gridview)
+    return module(field, includes, typeName).Space(view)
 
 def p1Bubble(gridview, dimrange=1, field="double", order=1, storage="adaptive", **unused):
     """create a P1 space enriched with element bubble functions

@@ -84,7 +84,7 @@ def dg(space_or_df, model, name="tmp", **kwargs):
 
     return module(storage, includes, typeName).Scheme(space,model,name,**kwargs)
 
-def h1(space_or_df, model, name="tmp", **kwargs):
+def h1(space, model, name="tmp", storage="fem", parameters={}):
     """create a scheme for solving second order pdes with continuous finite element
 
     Args:
@@ -94,8 +94,7 @@ def h1(space_or_df, model, name="tmp", **kwargs):
     """
 
     from . import module, spaceAndStorage
-    storage = kwargs.pop("storage","fem")
-    space, storage = spaceAndStorage(space_or_df,storage)
+    space, storage = spaceAndStorage(space,storage)
 
     if storage == "Adaptive" or storage == "adaptive":
         storage = "fem"
@@ -121,7 +120,7 @@ def h1(space_or_df, model, name="tmp", **kwargs):
           "typename " + spaceType + "::RangeFieldType >, DifferentiableEllipticOperator, " +\
           storage + " >"
 
-    return module(storage, includes, typeName).Scheme(space,model,name,**kwargs)
+    return module(storage, includes, typeName).Scheme(space,model,name,parameters)
 
 def nvdg(space_or_df, model, name="tmp", **kwargs):
     """create a scheme for solving non variational second order pdes with discontinuous finite element
