@@ -41,23 +41,10 @@ namespace Dune
       public:
         GridModificationListener ( const Grid &grid )
           : dofManager_( DofManager::instance( grid ) )
-        {
-          std::cout << "created modification listener" << std::endl;
-        }
-
-        ~GridModificationListener ()
-        {
-          std::cout << "destroyed modification listener" << std::endl;
-        }
-
-        virtual void preModification ( const Grid &grid )
-        {
-          std::cout << "pre modification listener" << std::endl;
-        }
+        {}
 
         virtual void postModification ( const Grid &grid )
         {
-          std::cout << "post modification listener" << std::endl;
           dofManager_.resize();
           dofManager_.compress();
         }
@@ -66,6 +53,10 @@ namespace Dune
         DofManager &dofManager_;
       };
 
+
+
+      // addGridModificationListener
+      // ---------------------------
 
       template< class Grid >
       inline static void addGridModificationListener ( const Grid &grid )
