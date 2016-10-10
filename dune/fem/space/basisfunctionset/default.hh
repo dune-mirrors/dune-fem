@@ -4,6 +4,10 @@
 // C++ includes
 #include <cassert>
 #include <cstddef>
+#include <memory>
+
+// dune-common includes
+#include <dune/common/std/optional.hh>
 
 #include <type_traits>
 #include <utility>
@@ -83,15 +87,42 @@ namespace Dune
       typedef std::decay_t< decltype( Dune::ReferenceElements< ctype, GeometryType::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) ) > ReferenceElementType;
 
       //! \brief constructor
-      DefaultBasisFunctionSet ()
-      : entity_( nullptr )
-      {}
+      DefaultBasisFunctionSet () {}
 
       //! \brief constructor
       explicit DefaultBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
-      : entity_( &entity ),
-        shapeFunctionSet_( shapeFunctionSet )
-      {}
+        : entity_( &entity ),
+          shapeFunctionSet_( shapeFunctionSet )
+      {
+        // Note that this should be geometry_ = entity.geometry()
+        // But Dune::Geometries are not assignable ...
+        geometry_.reset();
+        geometry_.emplace( entity.geometry() );
+      }
+
+      DefaultBasisFunctionSet ( const DefaultBasisFunctionSet &other )
+        : entity_( other.entity_ ),
+          shapeFunctionSet_( other.shapeFunctionSet_ )
+      {
+        // Note that this should be geometry_ = entity.geometry()
+        // But Dune::Geometries are not assignable ...
+        geometry_.reset();
+        if( other.geometry_ )
+          geometry_.emplace( other.geometry_.value() );
+      }
+
+      DefaultBasisFunctionSet &operator= ( const DefaultBasisFunctionSet &other )
+      {
+        entity_ = other.entity_;
+        shapeFunctionSet_ = other.shapeFunctionSet_;
+
+        // Note that this should be geometry_ = entity.geometry()
+        // But Dune::Geometries are not assignable ...
+        geometry_.reset();
+        if( other.geometry_ )
+          geometry_.emplace( other.geometry_.value() );
+        return *this;
+      }
 
 
       // Basis Function Set Interface Methods
@@ -129,7 +160,7 @@ namespace Dune
        *
        *  \note valuesA and valuesB can be vectors of RangeType or
        *        JacobianRangeType
-      */
+       */
       template< class QuadratureType, class VectorA, class VectorB, class DofVector >
       void axpy ( const QuadratureType &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector &dofs ) const
       {
@@ -161,7 +192,7 @@ namespace Dune
         typedef typename GeometryType::JacobianInverseTransposed GeometryJacobianInverseTransposedType;
         const GeometryType &geo = geometry();
         const GeometryJacobianInverseTransposedType &gjit = geo.jacobianInverseTransposed( coordinate( x ) );
-        LocalJacobianRangeType tmpJacobianFactor( RangeFieldType(0) );
+        LocalJacobianRangeType tmpJacobianFactor( RangeFieldType( 0 ) );
         for( int r = 0; r < FunctionSpaceType::dimRange; ++r )
           gjit.mtv( jacobianFactor[ r ], tmpJacobianFactor[ r ] );
 
@@ -315,11 +346,12 @@ namespace Dune
       const ShapeFunctionSetType &shapeFunctionSet () const { return shapeFunctionSet_; }
 
     protected:
-      GeometryType geometry () const { return entity().geometry(); }
+      GeometryType geometry () const { return geometry_.value(); }
 
     private:
-      const EntityType *entity_;
+      const EntityType *entity_ = nullptr;
       ShapeFunctionSetType shapeFunctionSet_;
+      Std::optional< GeometryType > geometry_;
     };
 
   } // namespace Fem
