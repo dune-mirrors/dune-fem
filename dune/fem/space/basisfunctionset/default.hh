@@ -4,6 +4,10 @@
 // C++ includes
 #include <cassert>
 #include <cstddef>
+#include <memory>
+
+// dune-common includes
+#include <dune/common/std/optional.hh>
 
 // dune-geometry includes
 #include <dune/geometry/referenceelements.hh>
@@ -81,14 +85,19 @@ namespace Dune
 
       //! \brief constructor
       DefaultBasisFunctionSet ()
-      : entity_( nullptr )
+        : entity_( nullptr )
       {}
 
       //! \brief constructor
       explicit DefaultBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
-      : entity_( &entity ),
-        shapeFunctionSet_( shapeFunctionSet )
+        : entity_( &entity ),
+          geometry_( entity.geometry() ),
+          shapeFunctionSet_( shapeFunctionSet )
       {}
+
+      DefaultBasisFunctionSet ( const DefaultBasisFunctionSet &other ) = default;
+
+      DefaultBasisFunctionSet &operator= ( const DefaultBasisFunctionSet &other ) = default;
 
 
       // Basis Function Set Interface Methods
@@ -125,7 +134,7 @@ namespace Dune
        *
        *  \note valuesA and valuesB can be vectors of RangeType or
        *        JacobianRangeType
-      */
+       */
       template< class QuadratureType, class VectorA, class VectorB, class DofVector >
       void axpy ( const QuadratureType &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector &dofs ) const
       {
@@ -157,7 +166,7 @@ namespace Dune
         typedef typename GeometryType::JacobianInverseTransposed GeometryJacobianInverseTransposedType;
         const GeometryType &geo = geometry();
         const GeometryJacobianInverseTransposedType &gjit = geo.jacobianInverseTransposed( coordinate( x ) );
-        LocalJacobianRangeType tmpJacobianFactor( RangeFieldType(0) );
+        LocalJacobianRangeType tmpJacobianFactor( RangeFieldType( 0 ) );
         for( int r = 0; r < FunctionSpaceType::dimRange; ++r )
           gjit.mtv( jacobianFactor[ r ], tmpJacobianFactor[ r ] );
 
@@ -286,10 +295,14 @@ namespace Dune
       const ShapeFunctionSetType &shapeFunctionSet () const { return shapeFunctionSet_; }
 
     protected:
-      GeometryType geometry () const { return entity().geometry(); }
+      GeometryType geometry () const
+      {
+        return geometry_;
+      }
 
     private:
       const EntityType *entity_;
+      Std::Optional< GeometryType > geometry_;
       ShapeFunctionSetType shapeFunctionSet_;
     };
 
