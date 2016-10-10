@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <iostream>
-#include <type_traits>
 #include <vector>
 
 #include <dune/common/exceptions.hh>
@@ -173,12 +172,6 @@ int main( int argc, char ** argv )
     typedef Dune::GridSelector::GridType GridType;
     typedef Dune::Fem::AdaptiveLeafGridPart< GridType > HostGridPartType;
     HostGridPartType hostGridPart( grid );
-
-    // check that the HostGridType of a grid part which is not a meta grid part coincides with itself
-    if( !( std::is_same< HostGridPartType, typename HostGridPartType::HostGridPartType >::value ) )
-      DUNE_THROW( Dune::InvalidStateException, "Inconsistent HostGridPartType" );
-    if( !( std::is_same< HostGridPartType&, decltype( hostGridPart.hostGridPart() ) >::value ) )
-      DUNE_THROW( Dune::InvalidStateException, "Inconsistent hostGridPartType() return type" );
 
     // create radial filter
     typedef Dune::Fem::RadialFilter< GridType::ctype, GridType::dimensionworld > RadialFilterType;

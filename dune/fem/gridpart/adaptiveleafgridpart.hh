@@ -78,10 +78,6 @@ namespace Dune
       //! The leaf index set of the grid implementation
       typedef typename Traits :: IndexSetType IndexSetType;
 
-      //! Host grid part type
-      //! \note this is not a meta grid part therefore it is simply the type of implementation itself
-      typedef typename Traits :: HostGridPartType HostGridPartType;
-
       //! Struct providing types of the leaf iterators on codimension codim
       template< int codim >
       struct Codim
@@ -163,20 +159,6 @@ namespace Dune
       const IndexSetType &indexSet () const
       {
         return indexSet_;
-      }
-
-      //! \brief Returns const reference to the host grid part
-      //! \note this is not a meta grid part therefore it simply returns the grid part itself
-      const HostGridPartType& hostGridPart() const
-      {
-        return asImp();
-      }
-
-      //! \brief Returns reference to the host grid part
-      //! \note this is not a meta grid part therefore it simply returns the grid part itself
-      HostGridPartType& hostGridPart()
-      {
-        return asImp();
       }
 
       //! Begin iterator on the leaf level
@@ -277,10 +259,6 @@ namespace Dune
 
       //! type of the grid part , i.e. this type
       typedef AdaptiveLeafGridPart< GridType, idxpitype, onlyCodimensionZero > GridPartType;
-
-      //! type of the host grid part
-      //! \note this is not a meta grid part therefore it is simply the type of implementation itself
-      typedef GridPartType HostGridPartType;
 
       /** \brief The type of the corresponding TwistUtility */
       typedef TwistUtility< GridType >  TwistUtilityType ;

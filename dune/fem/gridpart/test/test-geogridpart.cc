@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <iostream>
-#include <type_traits>
 #include <vector>
 
 #if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
@@ -214,12 +213,6 @@ try
   Dune::Fem::interpolate( identitydDF, coordFunction );
   typedef Dune::Fem::GeoGridPart< CoordFunctionType > GridPartType;
   GridPartType gridPart( coordFunction );
-
-  // check that the HostGridType of a grid part which is not a meta grid part coincides with itself
-  if( !( std::is_same< HostGridPartType, typename HostGridPartType::HostGridPartType >::value ) )
-    DUNE_THROW( Dune::InvalidStateException, "Inconsistent HostGridPartType" );
-  if( !( std::is_same< HostGridPartType&, decltype( hostGridPart.hostGridPart() ) >::value ) )
-    DUNE_THROW( Dune::InvalidStateException, "Inconsistent hostGridPartType() return type" );
 
   // run tests
   std::cout << "Testing entities" << std::endl;
