@@ -1,4 +1,15 @@
-#install headers
-install(FILES
-  dgelliptic.hh dgrhs.hh dirichletconstraints.hh estimator.hh solver.hh dgfemscheme.hh diffusionmodel.hh elliptic.hh femscheme.hh rhs.hh
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/schemes)
+set(HEADERS
+  dgelliptic.hh
+  dgfemscheme.hh
+  dgrhs.hh
+  diffusionmodel.hh
+  dirichletconstraints.hh
+  elliptic.hh
+  estimator.hh
+  femscheme.hh
+  galerkin.hh
+  rhs.hh
+  solver.hh
+)
+
+install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/schemes)

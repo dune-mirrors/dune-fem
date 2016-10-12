@@ -53,14 +53,16 @@ namespace Dune
         typedef typename Scheme::ModelType ModelType;
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
 
-        cls.def( "__init__", [] ( Scheme &instance, Space &space, const ModelType& model, const std::string &prefix ) {
-          new( &instance ) Scheme( space, model, prefix );
-        }, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
-        cls.def( "__init__", [] ( Scheme &instance, Space &space, const ModelType& model, const std::string &prefix, const pybind11::dict &parameters ) {
-          new( &instance ) Scheme( space, model, prefix, pyParameter( parameters, make_shared<std::string>()) );
-          },
-          pybind11::arg("space"), pybind11::arg("model"), pybind11::arg("prefix"), pybind11::arg("parameters"),
-          pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
+        using pybind11::operator""_a;
+
+        cls.def( "__init__", [] ( Scheme &self, Space &space, const ModelType &model, std::string name ) {
+            new (&self) Scheme( space, model, std::move( name ) );
+          }, "space"_a, "model"_a, "name"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
+
+        cls.def( "__init__", [] ( Scheme &self, Space &space, const ModelType &model, std::string name, const pybind11::dict &parameters ) {
+            new (&self) Scheme( space, model, std::move( name ), pyParameter( parameters, std::make_shared< std::string >() ) );
+          }, "space"_a, "model"_a, "name"_a, "parameters"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
+
         cls.def("_prepare", [] (Scheme &scheme, const DiscreteFunction &add) { scheme.prepare(add); });
         cls.def("_prepare", [] (Scheme &scheme) { scheme.prepare(); });
         cls.def("_solve", [] (Scheme &scheme, DiscreteFunction &solution,bool assemble) { scheme.solve(solution, assemble); });
@@ -86,6 +88,7 @@ namespace Dune
         cls.def("constraint", [] (Scheme &scheme, DiscreteFunction &u) { scheme.constraint(u); });
       }
     }
+
     template< class Scheme, class Holder, class AliasType >
     void registerScheme ( pybind11::module module, pybind11::class_<Scheme, Holder, AliasType> &cls )
     {
@@ -93,7 +96,9 @@ namespace Dune
       typedef typename Scheme::ModelType ModelType;
       detail::registerScheme<Scheme>(module, cls, std::is_constructible<Scheme, Space&, ModelType&, std::string&>());
     }
-  }
-}
 
-#endif
+  } // namespace FemPy
+
+} // namespace Dune
+
+#endif // #ifndef DUNE_FEMPY_PY_SCHEME_HH
