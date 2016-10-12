@@ -415,54 +415,7 @@ namespace Dune
       //! resize the memory with the new size
       void resize ()
       {
-        // store old size of space (don't use mapper here)
-        const int oldSize = array_.size();
-
-        // get current size
-        const int nSize = mapper().size();
-
-        // if nothing changed do nothing
-        if( nSize == oldSize ) return ;
-
-        // resize memory to current value
-        array_.resize( nSize );
-
-        // if data is only temporary data, don't adjust memory
-        if( ! dataCompressionEnabled_ ) return ;
-
-        // now check all blocks beginning with the largest
-        const int numBlocks = mapper().numBlocks();
-
-        // initialize upperBound
-        int upperBound = oldSize ;
-
-        // make sure offset of block 0 is zero
-        assert( mapper().offSet( 0 ) == 0 );
-        assert( mapper().oldOffSet( 0 ) == 0 );
-
-        // skip block 0 (since offset == 0)
-        for( int block = numBlocks-1; block >= 1; --block )
-        {
-          // get offsets
-          const int newOffSet = mapper().offSet( block );
-          const int oldOffSet = mapper().oldOffSet( block );
-
-          // make sure new offset is larger
-          assert( newOffSet >= oldOffSet );
-
-          // if off set is not zero
-          if( newOffSet > oldOffSet )
-          {
-            // calculate block size
-            const int blockSize = upperBound - oldOffSet;
-            // move block backward
-            SpecialArrayFeatures< DofArrayType >
-              :: memMoveBackward( array_, blockSize, oldOffSet, newOffSet );
-
-            // update upper bound
-            upperBound = oldOffSet;
-          }
-        }
+        resize( std::integral_constant< bool, Capabilities::isAdaptiveDofMapper< MapperType >::v >() );
       }
 
       //! reserve memory for what is comming
@@ -549,6 +502,71 @@ namespace Dune
       inline MapperType &mapper () const
       {
         return mapper_;
+      }
+
+      // resize for non-adaptive mappers
+      void resize ( std::false_type )
+      {
+        // note: The mapper might already have been updated, so do not use
+        //       it to obtain old array size.
+        mapper().update();
+        const int size = mapper().size();
+        if( size != static_cast< int >( array_.size() ) )
+          array_.resize( size );
+      }
+
+      // resize for adaptive mappers
+      void resize ( std::true_type )
+      {
+        // note: The mapper is adaptive and has been updated automatically, so
+        //       do not use it to obtain old array size.
+        const int oldSize = array_.size();
+
+        // get current size
+        const int nSize = mapper().size();
+
+        // if nothing changed do nothing
+        if( nSize == oldSize ) return ;
+
+        // resize memory to current value
+        array_.resize( nSize );
+
+        // if data is only temporary data, don't adjust memory
+        if( ! dataCompressionEnabled_ ) return ;
+
+        // now check all blocks beginning with the largest
+        const int numBlocks = mapper().numBlocks();
+
+        // initialize upperBound
+        int upperBound = oldSize ;
+
+        // make sure offset of block 0 is zero
+        assert( mapper().offSet( 0 ) == 0 );
+        assert( mapper().oldOffSet( 0 ) == 0 );
+
+        // skip block 0 (since offset == 0)
+        for( int block = numBlocks-1; block >= 1; --block )
+        {
+          // get offsets
+          const int newOffSet = mapper().offSet( block );
+          const int oldOffSet = mapper().oldOffSet( block );
+
+          // make sure new offset is larger
+          assert( newOffSet >= oldOffSet );
+
+          // if off set is not zero
+          if( newOffSet > oldOffSet )
+          {
+            // calculate block size
+            const int blockSize = upperBound - oldOffSet;
+            // move block backward
+            SpecialArrayFeatures< DofArrayType >
+              :: memMoveBackward( array_, blockSize, oldOffSet, newOffSet );
+
+            // update upper bound
+            upperBound = oldOffSet;
+          }
+        }
       }
 
       // move array to rear insertion points

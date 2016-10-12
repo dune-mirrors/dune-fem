@@ -144,6 +144,8 @@ namespace Dune
           return contains( Entity::codimension ) ? 1 : 0;
         }
 
+        void update () {}
+
         /* \} */
 
         /* \name AdaptiveDofMapper interface methods
