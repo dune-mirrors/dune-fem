@@ -76,15 +76,37 @@ namespace Dune
 
       private:
         template< class Integrands >
-        static std::true_type hasInteriorIntegrand ( const Integrands &, decltype( std::declval< const Integrands & >().interior( std::declval< const InteriorQuadraturePointType & >(), std::declval< const ValueType & >() ) ) * = nullptr );
+        static std::true_type chkHasInteriorIntegrand ( const Integrands &, decltype( std::declval< const Integrands & >().interior( std::declval< const InteriorQuadraturePointType & >(), std::declval< const ValueType & >() ) ) * = nullptr );
 
-        static std::false_type hasInteriorIntegrand ( ... );
+        static std::false_type chkHasInteriorIntegrand ( ... );
+
+        template< class Integrands, std::enable_if_t< std::is_same< decltype( std::declval< const Integrands & >().hasInterior() ), bool >::value, int > = 0 >
+        static std::true_type chkHasInteriorIntegrandCheck ( const Integrands & );
+
+        static std::false_type chkHasInteriorIntegrandCheck ( ... );
 
       public:
         template< class Integrands >
         struct HasInteriorIntegrand
-          : public decltype( hasInteriorIntegrand( std::declval< const Integrands & >() ) )
+          : public decltype( chkHasInteriorIntegrand( std::declval< const Integrands & >() ) )
         {};
+
+        template< class Integrands >
+        struct HasInteriorIntegrandCheck
+          : public decltype( chkHasInteriorIntegrandCheck( std::declval< const Integrands & >() ) )
+        {};
+
+        template< class Integrands, std::enable_if_t< HasInteriorIntegrandCheck< Integrands >::value, int > = 0 >
+        static bool hasInteriorIntegrand ( const Integrands &integrands )
+        {
+          return integrands.hasInterior();
+        }
+
+        template< class Integrands, std::enable_if_t< !HasInteriorIntegrandCheck< Integrands >::value, int > = 0 >
+        static bool hasInteriorIntegrand ( const Integrands &integrands )
+        {
+          return HasInteriorIntegrand< Integrands >::value;
+        }
 
         template< class Integrands, class W, std::enable_if_t< HasInteriorIntegrand< Integrands >::value, int > = 0 >
         static void addInteriorIntegrand ( const Integrands &integrands, const InteriorQuadraturePointType &qp, const RangeFieldType &weight, const ValueType &u, W &w )
@@ -118,15 +140,37 @@ namespace Dune
 
       private:
         template< class Integrands >
-        static std::true_type hasBoundaryIntegrand ( const Integrands &, decltype( std::declval< const Integrands & >().boundary( std::declval< const SurfaceQuadraturePointType & >(), std::declval< const ValueType & >() ) ) * = nullptr );
+        static std::true_type chkHasBoundaryIntegrand ( const Integrands &, decltype( std::declval< const Integrands & >().boundary( std::declval< const SurfaceQuadraturePointType & >(), std::declval< const ValueType & >() ) ) * = nullptr );
 
-        static std::false_type hasBoundaryIntegrand ( ... );
+        static std::false_type chkHasBoundaryIntegrand ( ... );
+
+        template< class Integrands, std::enable_if_t< std::is_same< decltype( std::declval< const Integrands & >().hasBoundary() ), bool >::value, int > = 0 >
+        static std::true_type chkHasBoundaryIntegrandCheck ( const Integrands & );
+
+        static std::false_type chkHasBoundaryIntegrandCheck ( ... );
 
       public:
         template< class Integrands >
         struct HasBoundaryIntegrand
-          : public decltype( hasBoundaryIntegrand( std::declval< const Integrands & >() ) )
+          : public decltype( chkHasBoundaryIntegrand( std::declval< const Integrands & >() ) )
         {};
+
+        template< class Integrands >
+        struct HasBoundaryIntegrandCheck
+          : public decltype( chkHasBoundaryIntegrandCheck( std::declval< const Integrands & >() ) )
+        {};
+
+        template< class Integrands, std::enable_if_t< HasBoundaryIntegrandCheck< Integrands >::value, int > = 0 >
+        static bool hasBoundaryIntegrand ( const Integrands &integrands )
+        {
+          return integrands.hasBoundary();
+        }
+
+        template< class Integrands, std::enable_if_t< !HasBoundaryIntegrandCheck< Integrands >::value, int > = 0 >
+        static bool hasBoundaryIntegrand ( const Integrands &integrands )
+        {
+          return HasBoundaryIntegrand< Integrands >::value;
+        }
 
         template< class Integrands, class W, std::enable_if_t< HasBoundaryIntegrand< Integrands >::value, int > = 0 >
         static void addBoundaryIntegrand ( const Integrands &integrands, const SurfaceQuadraturePointType &qp, const RangeFieldType &weight, const ValueType &u, W &w )
@@ -160,15 +204,37 @@ namespace Dune
 
       private:
         template< class Integrands >
-        static std::true_type hasSkeletonIntegrand ( const Integrands &, decltype( std::declval< const Integrands & >().skeleton( std::declval< const SurfaceQuadraturePointType & >(), std::declval< const ValueType & >(), std::declval< const ValueType & >() ) ) * = nullptr );
+        static std::true_type chkHasSkeletonIntegrand ( const Integrands &, decltype( std::declval< const Integrands & >().skeleton( std::declval< const SurfaceQuadraturePointType & >(), std::declval< const ValueType & >(), std::declval< const ValueType & >() ) ) * = nullptr );
 
-        static std::false_type hasSkeletonIntegrand ( ... );
+        static std::false_type chkHasSkeletonIntegrand ( ... );
+
+        template< class Integrands, std::enable_if_t< std::is_same< decltype( std::declval< const Integrands & >().hasSkeleton() ), bool >::value, int > = 0 >
+        static std::true_type chkHasSkeletonIntegrandCheck ( const Integrands & );
+
+        static std::false_type chkHasSkeletonIntegrandCheck ( ... );
 
       public:
         template< class Integrands >
         struct HasSkeletonIntegrand
-          : public decltype( hasSkeletonIntegrand( std::declval< const Integrands & >() ) )
+          : public decltype( chkHasSkeletonIntegrand( std::declval< const Integrands & >() ) )
         {};
+
+        template< class Integrands >
+        struct HasSkeletonIntegrandCheck
+          : public decltype( chkHasSkeletonIntegrandCheck( std::declval< const Integrands & >() ) )
+        {};
+
+        template< class Integrands, std::enable_if_t< HasSkeletonIntegrandCheck< Integrands >::value, int > = 0 >
+        static bool hasSkeletonIntegrand ( const Integrands &integrands )
+        {
+          return integrands.hasSkeleton();
+        }
+
+        template< class Integrands, std::enable_if_t< !HasSkeletonIntegrandCheck< Integrands >::value, int > = 0 >
+        static bool hasSkeletonIntegrand ( const Integrands &integrands )
+        {
+          return HasSkeletonIntegrand< Integrands >::value;
+        }
 
         template< class Integrands, class QP, class W, std::enable_if_t< HasSkeletonIntegrand< Integrands >::value, int > = 0 >
         static void addSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, W &wIn )
@@ -199,7 +265,7 @@ namespace Dune
         static void addSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, W &wIn, W &wOut )
         {}
 
-        template< class Integrands, class QP, class J, std::enable_if_t< HasBoundaryIntegrand< Integrands >::value, int > = 0 >
+        template< class Integrands, class QP, class J, std::enable_if_t< HasSkeletonIntegrand< Integrands >::value, int > = 0 >
         static void addLinearizedSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn )
         {
           auto integrand = integrands.linearizedSkeleton( qpIn, uIn, uOut );
@@ -215,7 +281,7 @@ namespace Dune
           }
         }
 
-        template< class Integrands, class QP, class J, std::enable_if_t< HasBoundaryIntegrand< Integrands >::value, int > = 0 >
+        template< class Integrands, class QP, class J, std::enable_if_t< HasSkeletonIntegrand< Integrands >::value, int > = 0 >
         static void addLinearizedSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn, J &jInOut, J &jOutOut )
         {
           auto integrand = integrands.linearizedSkeleton( qpIn, uIn, uOut );
@@ -237,12 +303,12 @@ namespace Dune
           }
         }
 
-        template< class Integrands, class QP, class J, std::enable_if_t< !HasBoundaryIntegrand< Integrands >::value, int > = 0 >
-        static void addLinearizedSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jIn )
+        template< class Integrands, class QP, class J, std::enable_if_t< !HasSkeletonIntegrand< Integrands >::value, int > = 0 >
+        static void addLinearizedSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn )
         {}
 
-        template< class Integrands, class QP, class J, std::enable_if_t< !HasBoundaryIntegrand< Integrands >::value, int > = 0 >
-        static void addLinearizedSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jIn, J &jOut )
+        template< class Integrands, class QP, class J, std::enable_if_t< !HasSkeletonIntegrand< Integrands >::value, int > = 0 >
+        static void addLinearizedSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn, J &jInOut, J &jOutOut )
         {}
 
         // interior integral
@@ -250,7 +316,7 @@ namespace Dune
         template< class Integrands, class U, class W >
         void addInteriorIntegral ( Integrands &integrands, const U &u, W &w ) const
         {
-          if( !HasInteriorIntegrand< Integrands >::value || !integrands.init( u.entity() ) )
+          if( !integrands.init( u.entity() ) )
             return;
 
           const auto geometry = u.entity().geometry();
@@ -264,7 +330,7 @@ namespace Dune
         template< class Integrands, class U, class J >
         void addLinearizedInteriorIntegral ( Integrands &integrands, const U &u, ValueVectorType &phi, J &j ) const
         {
-          if( !HasInteriorIntegrand< Integrands >::value || !integrands.init( u.entity() ) )
+          if( !integrands.init( u.entity() ) )
             return;
 
           const auto geometry = u.entity().geometry();
@@ -282,7 +348,7 @@ namespace Dune
         template< class Integrands, class Intersection, class U, class W >
         void addBoundaryIntegral ( Integrands &integrands, const Intersection &intersection, const U &u, W &w ) const
         {
-          if( !HasBoundaryIntegrand< Integrands >::value || !integrands.init( intersection ) )
+          if( !integrands.init( intersection ) )
             return;
 
           const auto geometry = intersection.geometry();
@@ -296,7 +362,7 @@ namespace Dune
         template< class Integrands, class Intersection, class U, class J >
         void addLinearizedBoundaryIntegral ( Integrands &integrands, const Intersection &intersection, const U &u, ValueVectorType &phi, J &j ) const
         {
-          if( !HasBoundaryIntegrand< Integrands >::value || !integrands.init( intersection ) )
+          if( !integrands.init( intersection ) )
             return;
 
           const auto geometry = intersection.geometry();
@@ -344,9 +410,9 @@ namespace Dune
         }
 
         template< class Integrands, class Intersection, class U, class... W >
-        void addSkeletonIntegral ( const Integrands &integrands, const Intersection &intersection, const U &uIn, const U &uOut, W &... w ) const
+        void addSkeletonIntegral ( Integrands &integrands, const Intersection &intersection, const U &uIn, const U &uOut, W &... w ) const
         {
-          if( !HasSkeletonIntegrand< Integrands >::value || !integrands.init( intersection ) )
+          if( !integrands.init( intersection ) )
             return;
 
           if( intersection.conforming() )
@@ -378,9 +444,9 @@ namespace Dune
         }
 
         template< class Integrands, class Intersection, class U, class... J >
-        void addLinearizedSkeletonIntegral ( const Integrands &integrands, const Intersection &intersection, const U &uIn, const U &uOut, ValueVectorType &phiIn, ValueVectorType &phiOut, J &... j ) const
+        void addLinearizedSkeletonIntegral ( Integrands &integrands, const Intersection &intersection, const U &uIn, const U &uOut, ValueVectorType &phiIn, ValueVectorType &phiOut, J &... j ) const
         {
-          if( !HasSkeletonIntegrand< Integrands >::value || !integrands.init( intersection ) )
+          if( !integrands.init( intersection ) )
             return;
 
           if( intersection.conforming() )
@@ -395,8 +461,9 @@ namespace Dune
 
         // evaluate
 
+      private:
         template< class Integrands, class GridFunction, class DiscreteFunction, std::enable_if_t< !HasSkeletonIntegrand< Integrands >::value, int > = 0 >
-        void evaluate ( Integrands &integrands, const GridFunction &u, DiscreteFunction &w ) const
+        void evaluate ( Integrands &integrands, const GridFunction &u, DiscreteFunction &w, std::false_type ) const
         {
           w.clear();
 
@@ -409,9 +476,10 @@ namespace Dune
             wLocal.init( entity );
             wLocal.clear();
 
-            addInteriorIntegral( integrands, uLocal, wLocal );
+            if( hasInteriorIntegrand( integrands ) )
+              addInteriorIntegral( integrands, uLocal, wLocal );
 
-            if( HasBoundaryIntegrand< Integrands >::value && entity.hasBoundaryIntersections() )
+            if( hasBoundaryIntegrand( integrands ) && entity.hasBoundaryIntersections() )
             {
               for( const auto &intersection : intersections( gridPart(), entity ) )
               {
@@ -426,12 +494,12 @@ namespace Dune
           w.communicate();
         }
 
-        template< class Integrands, class GridFunction, class DiscreteFunction, std::enable_if_t< HasSkeletonIntegrand< Integrands >::value, int > = 0 >
-        static void evaluate ( Integrands &integrands, const GridFunction &u, DiscreteFunction &w )
+        template< class Integrands, class GridFunction, class DiscreteFunction >
+        void evaluate ( Integrands &integrands, const GridFunction &u, DiscreteFunction &w, std::true_type ) const
         {
           w.clear();
 
-          TemporaryLocalFunction< DiscreteFunctionSpaceType > wInside( discreteFunctionSpace ), wOutside( discreteFunctionSpace() );
+          TemporaryLocalFunction< DiscreteFunctionSpaceType > wInside( discreteFunctionSpace() ), wOutside( discreteFunctionSpace() );
 
           const auto &indexSet = gridPart().indexSet();
           for( const EntityType &inside : elements( gridPart(), Partitions::interiorBorder ) )
@@ -441,17 +509,21 @@ namespace Dune
             wInside.init( inside );
             wInside.clear();
 
-            addInteriorIntegral( integrands, uInside, wInside );
+            if( hasInteriorIntegrand( integrands ) )
+              addInteriorIntegral( integrands, uInside, wInside );
 
             for( const auto &intersection : intersections( gridPart(), inside ) )
             {
               if( intersection.boundary() )
-                addBoundaryIntegral( integrands, intersection, uInside, wInside );
+              {
+                if( hasBoundaryIntegrand( integrands ) )
+                  addBoundaryIntegral( integrands, intersection, uInside, wInside );
+              }
               else if( intersection.neighbor() )
               {
                 const EntityType &outside = intersection.outside();
 
-                if( outside.partitionType != InteriorEntity )
+                if( outside.partitionType() != InteriorEntity )
                   addSkeletonIntegral( integrands, intersection, uInside, u.localFunction( outside ), wInside );
                 else if( indexSet.index( inside ) < indexSet.index( outside ) )
                 {
@@ -469,10 +541,21 @@ namespace Dune
           w.communicate();
         }
 
+      public:
+        template< class Integrands, class GridFunction, class DiscreteFunction >
+        void evaluate ( Integrands &integrands, const GridFunction &u, DiscreteFunction &w ) const
+        {
+          if( hasSkeletonIntegrand( integrands ) )
+            evaluate( integrands, u, w, std::true_type() );
+          else
+            evaluate( integrands, u, w, std::false_type() );
+        }
+
         // assemble
 
-        template< class Integrands, class GridFunction, class JacobianOperator, std::enable_if_t< !HasSkeletonIntegrand< Integrands >::value, int > = 0 >
-        void assemble ( Integrands &integrands, const GridFunction &u, JacobianOperator &jOp ) const
+      private:
+        template< class Integrands, class GridFunction, class JacobianOperator >
+        void assemble ( Integrands &integrands, const GridFunction &u, JacobianOperator &jOp, std::false_type ) const
         {
           DiagonalStencil< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > stencil( discreteFunctionSpace(), discreteFunctionSpace() );
           jOp.reserve( stencil );
@@ -490,9 +573,10 @@ namespace Dune
             jOpLocal.init( entity, entity );
             jOpLocal.clear();
 
-            addLinearizedInteriorIntegral( integrands, uLocal, phi, jOpLocal );
+            if( hasInteriorIntegrand( integrands ) )
+              addLinearizedInteriorIntegral( integrands, uLocal, phi, jOpLocal );
 
-            if( HasBoundaryIntegrand< Integrands >::value && entity.hasBoundaryIntersections() )
+            if( hasBoundaryIntegrand( integrands ) && entity.hasBoundaryIntersections() )
             {
               for( const auto &intersection : intersections( gridPart(), entity ) )
               {
@@ -507,8 +591,8 @@ namespace Dune
           jOp.communicate();
         }
 
-        template< class Integrands, class GridFunction, class JacobianOperator, std::enable_if_t< HasSkeletonIntegrand< Integrands >::value, int > = 0 >
-        void assemble ( const DiscreteFunctionSpaceType &discreteFunctionSpace(), Integrands &integrands, const GridFunction &u, JacobianOperator &jOp ) const
+        template< class Integrands, class GridFunction, class JacobianOperator >
+        void assemble ( Integrands &integrands, const GridFunction &u, JacobianOperator &jOp, std::true_type ) const
         {
           typedef TemporaryLocalMatrix< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > TemporaryLocalMatrix;
 
@@ -530,12 +614,16 @@ namespace Dune
             jOpInIn.init( inside, inside );
             jOpInIn.clear();
 
-            addLinearizedInteriorIntegral( integrands, uIn, phiIn, jOpInIn );
+            if( hasInteriorIntegrand( integrands ) )
+              addLinearizedInteriorIntegral( integrands, uIn, phiIn, jOpInIn );
 
             for( const auto &intersection : intersections( gridPart(), inside ) )
             {
               if( intersection.boundary() )
-                addLinearizedBoundaryIntegral( integrands, intersection, uIn, phiIn, jOpInIn );
+              {
+                if( hasBoundaryIntegrand( integrands ) )
+                  addLinearizedBoundaryIntegral( integrands, intersection, uIn, phiIn, jOpInIn );
+              }
               else if( intersection.neighbor() )
               {
                 const EntityType &outside = intersection.outside();
@@ -543,7 +631,7 @@ namespace Dune
                 jOpOutIn.init( outside, inside );
                 jOpOutIn.clear();
 
-                if( outside.partitionType != InteriorEntity )
+                if( outside.partitionType() != InteriorEntity )
                   addLinearizedSkeletonIntegral( integrands, intersection, uIn, u.localFunction( outside ), phiIn, phiOut, jOpInIn, jOpOutIn );
                 else if( indexSet.index( inside ) < indexSet.index( outside ) )
                 {
@@ -567,6 +655,18 @@ namespace Dune
 
           jOp.communicate();
         }
+
+      public:
+        template< class Integrands, class GridFunction, class JacobianOperator >
+        void assemble ( Integrands &integrands, const GridFunction &u, JacobianOperator &jOp ) const
+        {
+          if( hasSkeletonIntegrand( integrands ) )
+            assemble( integrands, u, jOp, std::true_type() );
+          else
+            assemble( integrands, u, jOp, std::false_type() );
+        }
+
+        // accessors
 
         const DiscreteFunctionSpaceType &discreteFunctionSpace () const { return dfSpace_; }
         const GridPartType &gridPart () const { return discreteFunctionSpace().gridPart(); }
