@@ -207,7 +207,7 @@ struct Solvers<DFSpace,numpy,symmetric>
   typedef Dune::FemPy::NumPyVector<double> DofVectorType;
   typedef Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< DiscreteFunctionSpaceType, DofVectorType > > DiscreteFunctionType;
   typedef Dune::Fem::EigenLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
-  typedef typename Dune::conditional<symmetric,
+  typedef typename std::conditional<symmetric,
           Dune::Fem::EigenCGInverseOperator< DiscreteFunctionType >,
           Dune::Fem::EigenBiCGStabInverseOperator< DiscreteFunctionType > > :: type
           LinearInverseOperatorType;
@@ -223,7 +223,7 @@ struct Solvers<DFSpace,eigen,symmetric>
   typedef Dune::Fem::EigenVector<double> DofVectorType;
   typedef Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< DiscreteFunctionSpaceType, DofVectorType > > DiscreteFunctionType;
   typedef Dune::Fem::EigenLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
-  typedef typename Dune::conditional<symmetric,
+  typedef typename std::conditional<symmetric,
           Dune::Fem::EigenCGInverseOperator< DiscreteFunctionType >,
           Dune::Fem::EigenBiCGStabInverseOperator< DiscreteFunctionType > > :: type
           LinearInverseOperatorType;
