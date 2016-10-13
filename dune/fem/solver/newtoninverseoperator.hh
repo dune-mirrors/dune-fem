@@ -219,7 +219,6 @@ namespace Dune
         return *jOp_;
       }
 
-    private:
       const OperatorType &op_;
       const std::unique_ptr< NewtonParameter > parameters_;
 

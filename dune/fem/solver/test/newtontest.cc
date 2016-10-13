@@ -199,6 +199,24 @@ class MyOperator
 
 };
 
+// Test whether inheritance works
+template<class JacobianOperator, class LInvOp>
+class MyNewtonInverseOperator
+  : public Dune::Fem::NewtonInverseOperator<JacobianOperator, LInvOp>
+{
+  typedef Dune::Fem::NewtonInverseOperator<JacobianOperator, LInvOp> BaseType;
+ public:
+  using BaseType::NewtonInverseOperator;
+  typedef typename BaseType::DomainFunctionType DomainFunctionType;
+  typedef typename BaseType::RangeFunctionType RangeFunctionType;
+
+  void operator()(const DomainFunctionType& arg, RangeFunctionType& result) const
+  {
+    // Plug in modifications here, e.g.
+    BaseType::operator()(arg, result);
+  }
+};
+
 int main( int argc, char **argv )
 {
   Dune::Fem::MPIManager::initialize( argc, argv );
@@ -213,7 +231,8 @@ int main( int argc, char **argv )
   typedef MyLinearOperator<systemSize> LinearOperatorType;
   typedef MyOperator<systemSize> OperatorType;
   typedef MyLinearInverseOperator<systemSize> LinearInverseOperatorType;
-  typedef Dune::Fem::NewtonInverseOperator<LinearOperatorType, LinearInverseOperatorType> NewtonInverseOperatorType;
+  // typedef Dune::Fem::NewtonInverseOperator<LinearOperatorType, LinearInverseOperatorType> NewtonInverseOperatorType;
+  typedef MyNewtonInverseOperator<LinearOperatorType, LinearInverseOperatorType> NewtonInverseOperatorType;
 
 
   FunctionType sol("sol", { 1, 2, 3, 4, 7 }), rhs("rhs", {0,0,0,0,0});
