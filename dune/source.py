@@ -257,6 +257,12 @@ class BaseModel:
         self.signature = signature
         self.field = "double"
 
+    def getNumber(self, expr):
+        e = [ ee for ee in self.coefficients if ee["name"] == str(expr) ]
+        if len(e) > 1:
+            raise KeyError('two coefficients provided with same name')
+        return e[0]["number"]
+
     def pre(self, sourceWriter, name='Model', targs=[], bases=[]):
         sourceWriter.openStruct(name, targs=(['class GridPart'] + targs + ['class... Coefficients']),\
         bases=(bases))
@@ -434,3 +440,118 @@ class BaseModel:
             sourceWriter.emit(constrKeepAlive + ',')
         sourceWriter.emit(''.join('pybind11::arg("' + i[0] + '"), ' for i in constrArgs) +\
                 'pybind11::arg("coefficients")=pybind11::dict() );')
+
+    def codeCoefficient(self, code, coefficients, constants):
+        """find coefficients/constants in code string and do replacements
+        """
+        if coefficients:
+            number = 0
+            numCoeffs = [coef['number'] for coef in self.coefficients if coef['constant'] == False]
+            if numCoeffs:
+                number = max(numCoeffs) + 1
+            for key, val in coefficients.items():
+                check = 0
+                for coef in self.coefficients:
+                    if key == coef['name']:
+                        check = 1
+                if check == 0:
+                    self.coefficients.append({ \
+                              'name' : key, \
+                              'number' : number, \
+                              'dimRange' : val.dimRange, \
+                              'constant' : False, \
+                              'field': "double" } )
+                    number += 1
+        if constants:
+            number = 0
+            numConsts = [coef['number'] for coef in self.coefficients if coef['constant'] == True]
+            if numConsts:
+                number = max(numCoeffs) + 1
+            for key, val in constants.items():
+                check = 0
+                for coef in self.coefficients:
+                    if key == coef['name']:
+                        check = 1
+                if check == 0:
+                    self.coefficients.append({ \
+                              'name' : key, \
+                              'number' : number, \
+                              'dimRange' : val, \
+                              'constant' : True, \
+                              'field': None } )
+                    number += 1
+        if '@const:' in code:
+            codeCst = code.split('@const:')
+            import itertools
+            names = set(["".join(itertools.takewhile(str.isalpha, c)) for c in codeCst[1:]])
+            number = 0
+            numConsts = [coef['number'] for coef in self.coefficients if coef['constant'] == True]
+            if numConsts:
+                number = max(numConsts) + 1
+            for name in names:
+                check = 0
+                for coef in self.coefficients:
+                    if name == coef['name']:
+                        check = 1
+                if check == 0:
+                    cname = '@const:' + name
+                    afterName = code.split(cname)[1:]
+                    if afterName[0][0] == '[':
+                        beforeText = [an.split(']')[0].split('[')[1] for an in afterName]
+                        dimRange = max( [int(bt) for bt in beforeText] ) + 1
+                    else:
+                        dimRange = 1
+                    self.coefficients.append({
+                          'name' : name, \
+                          'number' : number, \
+                          'dimRange' : dimRange, \
+                          'constant' : True, \
+                          'field': None } )
+                    number += 1
+        for coef in self.coefficients:
+            num = str(coef['number'])
+            gfname = '@gf:' + coef['name']
+            constname = '@const:' + coef['name']
+            jacname = '@jac:' + coef['name']
+            if jacname in code:
+                code = code.replace(jacname, 'dc' + num)
+                if not 'CoefficientJacobianRangeType< ' + num + ' > dc' + num + ';' in code:
+                    code = 'CoefficientJacobianRangeType< ' + num + ' > dc' + num + ';\n' \
+                           + 'coefficient< ' + num + ' >().jacobian( x, dc' \
+                           + num + ' );' + code
+            if gfname in code:
+                code = code.replace(gfname, 'c' + num)
+                if not 'CoefficientRangeType< ' + num  + ' > c' + num + ';' in code:
+                    code = 'CoefficientRangeType< ' + num  + ' > c' + num + ';\n' \
+                           + 'coefficient< ' + num + ' >().evaluate( x, c' \
+                           + num + ' );' + code
+            elif constname in code:
+                code = code.replace(constname, 'cc' + num)
+                init = 'ConstantsRangeType< ' + num + ' > cc' + num + ' = constant< ' \
+                           + num + ' >();'
+                if not init in code:
+                    code = init + code
+        return code
+
+    @staticmethod
+    def codeDimRange(code):
+        """find dimRange from code string
+        """
+        codeOut = ''
+        lines = code.split("\n")
+        if '@dimrange' in code or '@range' in code:
+            for line in lines:
+                if '@dimrange' in line or '@range' in line:
+                    dimRange = int( line.split("=", 1)[1] )
+                else:
+                    codeOut += line + "\n"
+            codeOut = codeOut[:-2]
+        else:
+            lhs = [line.split("=") for line in lines]
+            values = [string[0] for string in lhs if "value" in string[0]]
+            try:
+                dimRange = max( [int(c.split("[")[1].split("]")[0]) for c in values] ) + 1
+            except:
+                dimRange = "n/a"
+            codeOut = code
+        return (codeOut, dimRange)
