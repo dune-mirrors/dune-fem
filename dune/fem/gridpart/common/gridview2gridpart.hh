@@ -122,14 +122,13 @@ namespace Dune
       explicit GridView2GridPart ( const GridView &gridView )
         : gridView_( gridView ),
           indexSet_( gridView_.indexSet() ),
-          dofManager_( DofManagerType::instance( gridView.grid() ) )
-
+          dofManager_( DofManagerType::instance( gridView_.grid() ) )
       {}
 
       explicit GridView2GridPart ( GridView &&gridView )
         : gridView_( std::move( gridView ) ),
           indexSet_( gridView_.indexSet() ),
-          dofManager_( DofManagerType::instance( gridView.grid() ) )
+          dofManager_( DofManagerType::instance( gridView_.grid() ) )
       {}
 
       GridView2GridPart ( const ThisType &rhs )
