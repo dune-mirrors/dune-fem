@@ -84,6 +84,36 @@ def dg(space_or_df, model, name="tmp", **kwargs):
 
     return module(storage, includes, typeName).Scheme(space,model,name,**kwargs)
 
+
+def galerkin(space, model, name="tmp", storage="fem", parameters={}):
+    from . import module, spaceAndStorage
+    space, storage = spaceAndStorage(space, storage)
+
+    if storage == "Adaptive" or storage == "adaptive":
+        storage = "fem"
+    elif storage == "Istl" or storage == "istl":
+        storage = "istl"
+    elif storage == "Numpy" or storage == "numpy":
+        storage = "numpy"
+    elif storage == "Eigen" or storage == "eigen":
+        storage = "eigen"
+    elif storage == "Fem" or storage == "fem":
+        storage = "fem"
+    else:
+        raise KeyError("Parameter error in Galerkin scheme with storage=" + storage)
+
+    spaceType = space._module._typeName
+    gridPartType = "typename " + spaceType + "::GridPartType"
+    dimRange = spaceType + "::dimRange"
+    rangeFieldType = "typename " + spaceType + "::RangeFieldType"
+    modelType = "IntegrandsModel< " + ", ".join([gridPartType, dimRange, rangeFieldType]) + " >"
+
+    typeName = "Dune::Fem::GalerkinScheme< " + ", ".join([spaceType, modelType, storage]) + " >"
+    includes = ["dune/fem/schemes/galerkin.hh"] + space._module._includes
+
+    return module(storage, includes, typeName).Scheme(space, model, name, parameters)
+
+
 def h1(space, model, name="tmp", storage="fem", parameters={}):
     """create a scheme for solving second order pdes with continuous finite element
 
@@ -121,6 +151,41 @@ def h1(space, model, name="tmp", storage="fem", parameters={}):
           storage + " >"
 
     return module(storage, includes, typeName).Scheme(space,model,name,parameters)
+
+
+def h1Galerkin(space, model, name="tmp", storage="fem", parameters={}):
+    from . import module, spaceAndStorage
+    space, storage = spaceAndStorage(space, storage)
+
+    if storage == "Adaptive" or storage == "adaptive":
+        storage = "fem"
+    elif storage == "Istl" or storage == "istl":
+        storage = "istl"
+    elif storage == "Numpy" or storage == "numpy":
+        storage = "numpy"
+    elif storage == "Eigen" or storage == "eigen":
+        storage = "eigen"
+    elif storage == "Fem" or storage == "fem":
+        storage = "fem"
+    else:
+        raise KeyError("Parameter error in Galerkin scheme with storage=" + storage)
+
+    spaceType = space._module._typeName
+    gridPartType = "typename " + spaceType + "::GridPartType"
+    dimRange = spaceType + "::dimRange"
+    rangeFieldType = "typename " + spaceType + "::RangeFieldType"
+    modelType = "DiffusionModel< " + ", ".join([gridPartType, dimRange, rangeFieldType]) + " >"
+    integrandsType = "Dune::Fem::DiffusionModelIntegrands< " + modelType + " >"
+
+    typeName = "Dune::Fem::GalerkinScheme< " + ", ".join([spaceType, integrandsType, storage]) + " >"
+    includes = ["dune/fem/schemes/galerkin.hh", "dune/fem/schemes/diffusionmodel.hh", "dune/fempy/parameter.hh"] + space._module._includes
+
+    constructor = ['[] ( ' + typeName + ' &self, const ' + spaceType + ' &space, const ' + modelType + ' &model, std::string name, const pybind11::dict &parameters ) {',
+                   '    new (&self) ' + typeName + '( space, ' + integrandsType + '( model ), std::move( name ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
+                   '  }, "space"_a, "model"_a, "name"_a, "parameters"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >()']
+
+    return module(storage, includes, typeName, [constructor]).Scheme(space, model, name, parameters)
+
 
 def nvdg(space_or_df, model, name="tmp", **kwargs):
     """create a scheme for solving non variational second order pdes with discontinuous finite element
