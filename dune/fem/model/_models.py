@@ -19,6 +19,11 @@ def elliptic(view, equation, dirichlet = {}, exact = None, tempVars=True, coeffi
                 _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
                 uflCoeff |= set(c)
         fullCoeffs = {c:c.gf for c in uflCoeff if isinstance(c,dune.ufl.GridCoefficient)}
+        lhs = ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(equation.lhs)))
+        if lhs == ufl.adjoint(lhs):
+            setattr(Model, 'symmetric', 'true')
+        else:
+            setattr(Model, 'symmetric', 'false')
     else:
         fullCoeffs = {}
     fullCoeffs.update(coefficients)

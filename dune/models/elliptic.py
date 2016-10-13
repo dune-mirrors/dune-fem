@@ -45,10 +45,11 @@ class EllipticModel(BaseModel):
         self.arg_d2ubar = 'const HessianRangeType &d2ubar'
         self.arg_r = 'RangeType &result'
         self.arg_dr = 'JacobianRangeType &result'
+        self.symmetric = 'false'
 
     def main(self, sourceWriter, name='Model', targs=[]):
         sourceWriter.typedef("Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >", "BoundaryIdProviderType")
-
+        sourceWriter.emit('static const bool symmetric = ' + self.symmetric + ';')
 
         sourceWriter.openConstMethod('void source', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_r])
         sourceWriter.emit(self.source)
@@ -116,6 +117,13 @@ class EllipticModel(BaseModel):
         self.main(sourceWriter, name='Model', targs=[])
         self.post(sourceWriter, name='Model', targs=[])
 
+    def appendCode(self, key, code, **kwargs):
+        function = getattr(self, key)
+        newCode = '\n      '.join(function) + '\n' + code
+        coef = kwargs.pop("coefficients", {})
+        const = kwargs.pop("constants", {})
+        newCode = self.codeCoefficient(newCode, coef, const)
+        setattr(self, key, newCode)
 
 # ExprTensor
 # ----------
@@ -462,7 +470,11 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         self.tempVars = tempVars
 
     def getNumber(self, expr):
-        e = [ ee for ee in self.coefficients if ee["name"] == str(expr) ]
+        try:
+            name = expr.str()
+        except:
+            name = str(expr)
+        e = [ ee for ee in self.coefficients if ee["name"] == name ]
         if len(e) > 1:
             raise KeyError('two coefficients provided with same name')
         return e[0]["number"]
@@ -489,11 +501,15 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
         if expr not in self.exprs:
             idx = str(self.getNumber(expr))
             if expr.is_cellwise_constant():
-                self.code.append('ConstantsRangeType< ' + idx + ' > cc' + idx + ' = constant< ' + idx + ' >();')
+                init = 'ConstantsRangeType< ' + idx + ' > cc' + idx + ' = constant< ' + idx + ' >();'
+                if not init in self.code:
+                    self.code.append(init)
                 self.exprs[expr] = 'cc' + idx
             else:
-                self.code.append('CoefficientRangeType< ' + idx + ' > c' + idx + ';')
-                self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
+                init = 'CoefficientRangeType< ' + idx + ' > c' + idx + ';'
+                if not init in self.code:
+                    self.code.append(init)
+                    self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
                 self.exprs[expr] = 'c' + idx
         return self.exprs[expr]
 
@@ -671,6 +687,9 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
 
     model = EllipticModel(dimRange, form.signature())
 
+    expandform = ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(equation.lhs)))
+    if expandform == ufl.adjoint(expandform):
+        model.symmetric = 'true'
     model.field = field
 
     coefficients = set(form.coefficients())
@@ -692,8 +711,12 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
             dimRange = coefficient.ufl_shape[0]
             idx = idxCoeff
             idxCoeff += 1
+        try:
+            name = coefficient.str()
+        except:
+            name = str(coefficient)
         model.coefficients.append({ \
-            'name' : str(coefficient), \
+            'name' : name, \
             'number' : idx, \
             'counter' : coefficient.count(), \
             'dimRange' : dimRange,\
