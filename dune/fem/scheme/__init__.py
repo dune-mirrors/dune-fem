@@ -13,21 +13,17 @@ from ._schemes import *
 
 from dune.generator.generator import SimpleGenerator
 
-def solve( scheme, rhs=None, target=None, name=None, assemble=True ):
+def solve( scheme, target=None, name=None ):
     import dune.create as create
-    if name == None:
-        if hasattr(scheme, 'name'):
-            name = scheme.name
-        else:
-            name == "default"
     if target == None:
-          target = create.discretefunction(scheme._storage, scheme.space, name=name)
-          target.interpolate( [0,]*scheme.dimRange )
-    if rhs == None:
-        scheme._prepare()
-    else:
-        scheme._prepare(rhs)
-    scheme._solve(target,assemble)
+        if name == None:
+            if hasattr(scheme, 'name'):
+                name = scheme.name
+            else:
+                name = "default"
+        target = create.discretefunction(scheme._storage, scheme.space, name=name)
+        target.interpolate( [0,]*scheme.dimRange )
+    scheme._solve(target)
     return target
 
 def spaceAndStorage(space_or_df,storage):

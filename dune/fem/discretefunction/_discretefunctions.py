@@ -33,6 +33,15 @@ def eigen(space, name="tmp", **unused):
         DiscreteFunction: the constructed discrete function
     """
 
+    try:
+        checkconfiguration.preprocessorTest([ ("#if HAVE_EIGEN","Eigen package is not available") ])
+    except checkconfiguration.ConfigurationError as err:
+        if logger.getEffectiveLevel() == logging.DEBUG:
+            raise
+        else:
+            print("configuration error while creating a discrete function with storage=eigen exiting...")
+            sys.exit(-1)
+
     from . import module
     includes = [ "dune/fem/function/vectorfunction/managedvectorfunction.hh", "dune/fem/storage/eigenvector.hh" ] + space._module._includes
     spaceType = space._module._typeName
