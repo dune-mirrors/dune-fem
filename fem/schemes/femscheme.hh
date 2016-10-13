@@ -57,7 +57,6 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
 
-#include <dune/fem/schemes/dgrhs.hh>
 #include <dune/fem/schemes/diffusionmodel.hh>
 
 // FemScheme
@@ -113,11 +112,9 @@ public:
   typedef DiscreteFunctionType SolutionType;
   /*********************************************************/
 
-  FemScheme ( const DiscreteFunctionSpaceType &space, const ModelType &model, const std::string &name, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+  FemScheme ( const DiscreteFunctionSpaceType &space, const ModelType &model, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
   : model_( model ),
-    name_( name ),
     space_( space ),
-    rhs_( "rhs", space_ ),
     // the elliptic operator (implicit)
     implicitOperator_( new DifferentiableOperator< LinearOperatorType, ModelType >( model_, space_ ) ),
     // create linear operator (domainSpace,rangeSpace)
@@ -128,23 +125,6 @@ public:
   {}
 
   const ExactSolutionType &exactSolution() const { return exactSolution_; }
-
-  void prepare ()
-  {
-    typedef DifferentiableOperator< LinearOperatorType, ModelType > OperatorType;
-    // assemble rhs
-    assembleDGRHS( model_, model_.rightHandSide( gridPart() ), model_.neumanBoundary( gridPart() ), rhs_, 20 );
-
-    // set boundary values to the rhs - since implicitOperator is of
-    // abstract base type we need to cast here
-    dynamic_cast< OperatorType & >( *implicitOperator_ ).prepare( rhs_ );
-  }
-
-  void prepare ( const DiscreteFunctionType &add )
-  {
-    prepare();
-    rhs_ += add;
-  }
 
   void constraint( DiscreteFunctionType &u )
   {
@@ -159,13 +139,16 @@ public:
     dynamic_cast< OperatorType & >( *implicitOperator_ ).apply( arg, dest );
   }
 
-  void solve ( DiscreteFunctionType &solution, bool assemble )
+  void solve ( DiscreteFunctionType &solution )
   {
     typedef DifferentiableOperator< LinearOperatorType, ModelType > OperatorType;
     typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
     typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
     InverseOperatorType invOp( dynamic_cast< OperatorType & >( *implicitOperator_ ), parameter_ );
-    invOp( rhs_, solution );
+    DiscreteFunctionType bnd(solution);
+    bnd.clear();
+    dynamic_cast< OperatorType & >( *implicitOperator_ ).prepare( bnd );
+    invOp( bnd, solution );
   }
 
   template <class GridFunction>
@@ -183,16 +166,12 @@ public:
   //! calculate error estimator
   double estimate ( const DiscreteFunctionType &solution ) { return estimator_.estimate( solution ); }
 
-  const std::string &name () { return name_; }
-
   const GridPartType &gridPart () const { return space().gridPart(); }
   const DiscreteFunctionSpaceType &space( ) const { return space_; }
 
 protected:
   const ModelType &model_;   // the mathematical model
-  const std::string name_;
   const DiscreteFunctionSpaceType &space_; // discrete function space
-  DiscreteFunctionType rhs_;        // the right hand side
   std::unique_ptr< Dune::Fem::DifferentiableOperator< LinearOperatorType > > implicitOperator_;
   std::unique_ptr< Dune::Fem::Operator< DiscreteFunctionType,DiscreteFunctionType > > linearOperator_;
   EstimatorType estimator_; // estimator for residual error

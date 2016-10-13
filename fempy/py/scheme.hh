@@ -55,37 +55,30 @@ namespace Dune
 
         using pybind11::operator""_a;
 
-        cls.def( "__init__", [] ( Scheme &self, Space &space, const ModelType &model, std::string name ) {
-            new (&self) Scheme( space, model, std::move( name ) );
-          }, "space"_a, "model"_a, "name"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
+        cls.def( "__init__", [] ( Scheme &self, Space &space, const ModelType &model ) {
+            new (&self) Scheme( space, model );
+          }, "space"_a, "model"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
 
-        cls.def( "__init__", [] ( Scheme &self, Space &space, const ModelType &model, std::string name, const pybind11::dict &parameters ) {
-            new (&self) Scheme( space, model, std::move( name ), pyParameter( parameters, std::make_shared< std::string >() ) );
-          }, "space"_a, "model"_a, "name"_a, "parameters"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
+        cls.def( "__init__", [] ( Scheme &self, Space &space, const ModelType &model, const pybind11::dict &parameters ) {
+            new (&self) Scheme( space, model, pyParameter( parameters, std::make_shared< std::string >() ) );
+          }, "space"_a, "model"_a, "parameters"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
 
-        cls.def("_prepare", [] (Scheme &scheme, const DiscreteFunction &add) { scheme.prepare(add); });
-        cls.def("_prepare", [] (Scheme &scheme) { scheme.prepare(); });
-        cls.def("_solve", [] (Scheme &scheme, DiscreteFunction &solution,bool assemble) { scheme.solve(solution, assemble); });
+        cls.def("_solve", [] (Scheme &scheme, DiscreteFunction &solution) { scheme.solve(solution); });
         cls.def("__call__", [] (Scheme &scheme, const DiscreteFunction &arg, DiscreteFunction &dest) { scheme(arg,dest); });
         cls.def("__call__", [] (Scheme &scheme, const VirtualizedGridFunction<GridPart,RangeType> &arg, DiscreteFunction &dest) { scheme(arg,dest); });
 
-        cls.def("error", [] (Scheme &scheme, DiscreteFunction &solution)
-        {
-          Dune::Fem::L2Norm< GridPart > norm( solution.space().gridPart() );
-          return norm.distance( solution, scheme.exactSolution() );
-        } );
-        cls.def("mark", [] (Scheme &scheme, const DiscreteFunction &solution, double tolerance )
-        {
-          double est = scheme.estimate(solution);
-          return std::make_tuple(est,scheme.mark(tolerance));
-        });
-        cls.def_property_readonly( "name", &Scheme::name );
         cls.def_property_readonly( "dimRange", [](Scheme&) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
         cls.def_property_readonly( "space", &Scheme::space );
 
         registerSchemeAssemble<Scheme>(cls,0);
 
         cls.def("constraint", [] (Scheme &scheme, DiscreteFunction &u) { scheme.constraint(u); });
+
+        cls.def("mark", [] (Scheme &scheme, const DiscreteFunction &solution, double tolerance )
+        {
+          double est = scheme.estimate(solution);
+          return std::make_tuple(est,scheme.mark(tolerance));
+        });
       }
     }
 
@@ -94,7 +87,7 @@ namespace Dune
     {
       typedef typename Scheme::DiscreteFunctionSpaceType Space;
       typedef typename Scheme::ModelType ModelType;
-      detail::registerScheme<Scheme>(module, cls, std::is_constructible<Scheme, Space&, ModelType&, std::string&>());
+      detail::registerScheme<Scheme>(module, cls, std::is_constructible<Scheme, Space&, ModelType&>());
     }
 
   } // namespace FemPy
