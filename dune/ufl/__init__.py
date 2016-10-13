@@ -1,5 +1,7 @@
 from __future__ import absolute_import
+
 import ufl
+import ufl.equation
 
 # cell
 # ----
@@ -57,3 +59,20 @@ class NamedConstant(ufl.Coefficient):
         self.name = name
     def str(self):
         return self.name
+
+# register markdown formatter for integrands, forms and equations to IPython
+
+try:
+    markdown = get_ipython().display_formatter.formatters['text/markdown']
+    plain = get_ipython().display_formatter.formatters['text/plain']
+
+    from .latex import equation2latex, form2latex
+
+    markdown.for_type(ufl.Form, lambda f: "\\begin{equation*}" + form2latex(f) + "\\end{equation*}")
+    markdown.for_type(ufl.equation.Equation, lambda e: "\\begin{equation*}" + equation2latex(e) + "\\end{equation*}")
+
+    # disable warning for calling repr to UFL forms and equations
+    plain.for_type(ufl.Form, lambda f, p, c: None)
+    plain.for_type(ufl.equation.Equation, lambda e, p, c: None)
+except Exception as e:
+    pass
