@@ -104,8 +104,9 @@ namespace Dune
                                   int polOrd = -1)
       {
         typedef typename DiscreteFunctionImp::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-        typedef typename DiscreteFunctionImp::LocalFunctionType LocalFuncType;
-        typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+        typedef typename DiscreteFunctionImp::LocalFunctionType   LocalFuncType;
+        typedef typename DiscreteFunctionSpaceType::GridPartType  GridPartType;
+        typedef typename DiscreteFunctionSpaceType::RangeType     RangeType;
 
         typedef typename FunctionImp::LocalFunctionType LocalFType;
 
@@ -127,6 +128,9 @@ namespace Dune
         // extract type from grid part
         typedef typename GridPartType::template Codim<0>::GeometryType Geometry;
 
+        // create storage for values
+        std::vector< RangeType > values;
+
         for(const auto & en : space)
         {
           // get geometry
@@ -137,28 +141,31 @@ namespace Dune
 
           // get local function of destination
           LocalFuncType lf = discFunc.localFunction(en);
+
           // get local function of argument
           const LocalFType f = func.localFunction(en);
 
           const int quadNop = quad.nop();
 
-          typename DiscreteFunctionSpaceType :: RangeType value ;
+          // adjust size of values
+          values.resize( quadNop );
 
           for(int qP = 0; qP < quadNop ; ++qP)
           {
             const double intel =
                  quad.weight(qP) * geo.integrationElement( quad.point(qP) );
 
-            // evaluate function
-            f.evaluate(quad[ qP ], value );
+            // evaluate function at quadrature point
+            f.evaluate(quad[ qP ], values[ qP ] );
 
             // apply weight
-            value *= intel;
-
-            // add to local function
-            lf.axpy( quad[ qP ], value );
+            values[ qP ] *= intel;
           }
 
+          // add values to local function
+          lf.axpyQuadrature( quad, values );
+
+          // apply inverse of mass matrix to local function
           massMatrix.applyInverse( en, lf );
         }
       }
