@@ -241,7 +241,7 @@ namespace Dune
         template< class Integrands, class QP, class W, std::enable_if_t< HasSkeletonIntegrand< Integrands >::value, int > = 0 >
         static void addSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, W &wIn )
         {
-          std::pair< ValueType, ValueType > integrand = integrands.skeleton( qpIn, uIn, uOut );
+          std::pair< ValueType, ValueType > integrand = integrands.skeleton( qpIn, uIn, qpOut, uOut );
           std::get< 0 >( integrand.first ) *= weight;
           std::get< 1 >( integrand.first ) *= weight;
           wIn.axpy( qpIn, std::get< 0 >( integrand.first ), std::get< 1 >( integrand.first ) );
@@ -270,7 +270,7 @@ namespace Dune
         template< class Integrands, class QP, class J, std::enable_if_t< HasSkeletonIntegrand< Integrands >::value, int > = 0 >
         static void addLinearizedSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn )
         {
-          auto integrand = integrands.skeleton( qpIn, uIn, qpOut, uOut );
+          auto integrand = integrands.linearizedSkeleton( qpIn, uIn, qpOut, uOut );
           for( std::size_t col = 0; col < colsIn; ++col )
           {
             std::pair< ValueType, ValueType > intPhi = integrand.first( std::make_tuple( std::get< 0 >( phiIn )[ col ], std::get< 1 >( phiIn )[ col ] ) );
@@ -286,7 +286,7 @@ namespace Dune
         template< class Integrands, class QP, class J, std::enable_if_t< HasSkeletonIntegrand< Integrands >::value, int > = 0 >
         static void addLinearizedSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn, J &jInOut, J &jOutOut )
         {
-          auto integrand = integrands.linearizedSkeleton( qpIn, uIn, uOut );
+          auto integrand = integrands.linearizedSkeleton( qpIn, uIn, qpOut, uOut );
           for( std::size_t col = 0; col < colsIn; ++col )
           {
             std::pair< ValueType, ValueType > intPhi = integrand.first( std::make_tuple( std::get< 0 >( phiIn )[ col ], std::get< 1 >( phiIn )[ col ] ) );
@@ -460,7 +460,7 @@ namespace Dune
         // evaluate
 
       private:
-        template< class Integrands, class GridFunction, class DiscreteFunction, std::enable_if_t< !HasSkeletonIntegrand< Integrands >::value, int > = 0 >
+        template< class Integrands, class GridFunction, class DiscreteFunction >
         void evaluate ( Integrands &integrands, const GridFunction &u, DiscreteFunction &w, std::false_type ) const
         {
           w.clear();
@@ -982,7 +982,7 @@ namespace Dune
         const EntityType outside = intersection().outside();
 
         const RangeFieldType half = RangeFieldType( 1 ) / RangeFieldType( 2 );
-        const auto normal = intersection.unitOuterNormal( xIn.localPosition() );
+        const auto normal = intersection().unitOuterNormal( xIn.localPosition() );
 
         ValueType uJump;
         std::get< 0 >( uJump ) = std::get< 0 >( uOut ) - std::get< 0 >( uIn );
@@ -1008,7 +1008,8 @@ namespace Dune
 
         RangeType int0 = std::get< 0 >( uJump );
         int0 *= beta_;
-        (dFluxIn + dFluxOut).usmv( -half, normal, int0 );
+        dFluxIn += dFluxOut;
+        dFluxIn.usmv( -half, normal, int0 );
 
         dFluxPrimeIn *= -half;
         dFluxPrimeOut *= -half;
@@ -1019,7 +1020,7 @@ namespace Dune
       template< class Point >
       auto linearizedSkeleton ( const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut ) const
       {
-        const auto normal = intersection.unitOuterNormal( xIn.localPosition() );
+        const auto normal = intersection().unitOuterNormal( xIn.localPosition() );
 
         ValueType uJump;
         std::get< 0 >( uJump ) = std::get< 0 >( uOut ) - std::get< 0 >( uIn );
@@ -1067,7 +1068,6 @@ namespace Dune
           const EntityType outside = intersection().outside();
 
           const RangeFieldType half = RangeFieldType( 1 ) / RangeFieldType( 2 );
-          const auto normal = intersection.unitOuterNormal( xIn.localPosition() );
 
           ValueType phiJump;
           std::get< 0 >( phiJump ) = std::get< 0 >( phiOut );
