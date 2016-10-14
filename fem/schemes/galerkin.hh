@@ -13,6 +13,7 @@
 #include <dune/grid/common/rangegenerators.hh>
 
 #include <dune/fem/function/localfunction/temporary.hh>
+#include <dune/fem/operator/common/automaticdifferenceoperator.hh>
 #include <dune/fem/operator/common/differentiableoperator.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/stencil.hh>
@@ -741,6 +742,30 @@ namespace Dune
 
 
 
+    // AutomaticDifferenceGalerkinOperator
+    // -----------------------------------
+
+    template< class DiscreteFunction, class Integrands >
+    class AutomaticDifferenceGalerkinOperator
+      : public GalerkinOperator< DiscreteFunction, Integrands >,
+        public AutomaticDifferenceOperator< DiscreteFunction >
+    {
+      typedef GalerkinOperator< DiscreteFunction, Integrands > BaseType;
+      typedef AutomaticDifferenceOperator< DiscreteFunction > AutomaticDifferenceOperatorType;
+
+      template< class, class, SolverType > friend class GalerkinScheme;
+
+    public:
+      typedef typename BaseType::DiscreteFunctionType DiscreteFunctionType;
+      typedef typename BaseType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+
+      template< class... Args >
+      AutomaticDifferenceGalerkinOperator ( const DiscreteFunctionSpaceType &dfSpace, Args &&... args )
+        : BaseType( dfSpace, std::forward< Args >( args )... ), AutomaticDifferenceOperatorType()
+      {}
+    };
+
+
     // GalerkinScheme
     // --------------
 
@@ -760,7 +785,8 @@ namespace Dune
 
       static const int dimRange = DiscreteFunctionSpaceType::dimRange;
 
-      typedef DifferentiableGalerkinOperator< LinearOperatorType, Integrands > GalerkinOperatorType;
+      //typedef DifferentiableGalerkinOperator< LinearOperatorType, Integrands > GalerkinOperatorType;
+      typedef AutomaticDifferenceGalerkinOperator< DiscreteFunctionType, Integrands > GalerkinOperatorType;
 
       GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, const Integrands &integrands, std::string name, Dune::Fem::ParameterReader parameter = Dune::Fem::Parameter::container() )
         : galerkinOperator_( dfSpace, integrands ),
@@ -784,7 +810,7 @@ namespace Dune
       void solve ( DiscreteFunctionType &solution, bool assemble )
       {
         typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
-        NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > invOp( galerkinOperator_, parameter_ );
+        NewtonInverseOperator< typename GalerkinOperatorType::JacobianOperatorType, LinearInverseOperatorType > invOp( galerkinOperator_, parameter_ );
         invOp( rhs_, solution );
       }
 
@@ -923,14 +949,14 @@ namespace Dune
         if( intersection.boundary() )
         {
           const EntityType inside = intersection.inside();
-          beta_ = intersection.geometry().volume() / inside.geometry().volume();
+          beta_ = penalty_ * intersection.geometry().volume() / inside.geometry().volume();
           return (model().hasNeumanBoundary() && model().init( inside ));
         }
         else if( intersection.neighbor() )
         {
           const auto volIn = intersection.inside().geometry().volume();
           const auto volOut = intersection.outside().geometry().volume();
-          beta_ = intersection.geometry().volume() / std::min( volIn, volOut );
+          beta_ = penalty_ * intersection.geometry().volume() / std::min( volIn, volOut );
           return true;
         }
       }
@@ -984,13 +1010,10 @@ namespace Dune
         const RangeFieldType half = RangeFieldType( 1 ) / RangeFieldType( 2 );
         const auto normal = intersection().unitOuterNormal( xIn.localPosition() );
 
-        ValueType uJump;
-        std::get< 0 >( uJump ) = std::get< 0 >( uOut ) - std::get< 0 >( uIn );
+        ValueType uJump( 0, 0 );
+        std::get< 0 >( uJump ) = std::get< 0 >( uIn ) - std::get< 0 >( uOut );
         for( int i = 0; i < RangeType::dimension; ++i )
-        {
-          std::get< 1 >( uJump )[ i ] = normal;
-          std::get< 1 >( uJump )[ i ] *= std::get< 0 >( uJump )[ i ];
-        }
+          std::get< 1 >( uJump )[ i ].axpy( std::get< 0 >( uJump )[ i ], normal );
 
         model().init( outside );
         JacobianRangeType dFluxOut( 0 ), dFluxPrimeOut( 0 );
@@ -1014,7 +1037,7 @@ namespace Dune
         dFluxPrimeIn *= -half;
         dFluxPrimeOut *= -half;
 
-        return std::make_pair( ValueType( int0, dFluxPrimeOut ), ValueType( -int0, dFluxPrimeOut ) );
+        return std::make_pair( ValueType( int0, dFluxPrimeIn ), ValueType( -int0, dFluxPrimeOut ) );
       }
 
       template< class Point >
@@ -1022,13 +1045,10 @@ namespace Dune
       {
         const auto normal = intersection().unitOuterNormal( xIn.localPosition() );
 
-        ValueType uJump;
-        std::get< 0 >( uJump ) = std::get< 0 >( uOut ) - std::get< 0 >( uIn );
+        ValueType uJump( 0, 0 );
+        std::get< 0 >( uJump ) = std::get< 0 >( uIn ) - std::get< 0 >( uOut );
         for( int i = 0; i < RangeType::dimension; ++i )
-        {
-          std::get< 1 >( uJump )[ i ] = normal;
-          std::get< 1 >( uJump )[ i ] *= std::get< 0 >( uJump )[ i ];
-        }
+          std::get< 1 >( uJump )[ i ].axpy( std::get< 0 >( uJump )[ i ], normal );
 
         auto intIn = [ this, xIn, uIn, xOut, uOut, normal, uJump ] ( const ValueType &phiIn ) {
           const EntityType inside = intersection().inside();
@@ -1036,13 +1056,10 @@ namespace Dune
 
           const RangeFieldType half = RangeFieldType( 1 ) / RangeFieldType( 2 );
 
-          ValueType phiJump;
+          ValueType phiJump( 0, 0 );
           std::get< 0 >( phiJump ) = std::get< 0 >( phiIn );
           for( int i = 0; i < RangeType::dimension; ++i )
-          {
-            std::get< 1 >( phiJump )[ i ] = normal;
-            std::get< 1 >( phiJump )[ i ] *= -std::get< 0 >( phiJump )[ i ];
-          }
+            std::get< 1 >( phiJump )[ i ].axpy( std::get< 0 >( phiJump )[ i ], normal );
 
           model().init( outside );
           JacobianRangeType dFluxPrimeOut( 0 );
@@ -1060,7 +1077,7 @@ namespace Dune
           dFluxPrimeIn *= -half;
           dFluxPrimeOut *= -half;
 
-          return std::make_pair( ValueType( int0, dFluxPrimeOut ), ValueType( -int0, dFluxPrimeOut ) );
+          return std::make_pair( ValueType( int0, dFluxPrimeIn ), ValueType( -int0, dFluxPrimeOut ) );
         };
 
         auto intOut = [ this, xIn, uIn, xOut, uOut, normal, uJump ] ( const ValueType &phiOut ) {
@@ -1069,13 +1086,10 @@ namespace Dune
 
           const RangeFieldType half = RangeFieldType( 1 ) / RangeFieldType( 2 );
 
-          ValueType phiJump;
+          ValueType phiJump( 0, 0 );
           std::get< 0 >( phiJump ) = std::get< 0 >( phiOut );
           for( int i = 0; i < RangeType::dimension; ++i )
-          {
-            std::get< 1 >( phiJump )[ i ] = normal;
-            std::get< 1 >( phiJump )[ i ] *= std::get< 0 >( phiJump )[ i ];
-          }
+            std::get< 1 >( phiJump )[ i ].axpy( -std::get< 0 >( phiJump )[ i ], normal );
 
           model().init( outside );
           JacobianRangeType dFluxOut( 0 ), dFluxPrimeOut( 0 );
@@ -1093,7 +1107,7 @@ namespace Dune
           dFluxPrimeIn *= -half;
           dFluxPrimeOut *= -half;
 
-          return std::make_pair( ValueType( int0, dFluxPrimeOut ), ValueType( -int0, dFluxPrimeOut ) );
+          return std::make_pair( ValueType( int0, dFluxPrimeIn ), ValueType( -int0, dFluxPrimeOut ) );
         };
 
         return std::make_pair( intIn, intOut );
