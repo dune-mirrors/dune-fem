@@ -58,6 +58,28 @@ def dg(space_or_df, model, name="tmp", **kwargs):
     return module(storage, includes, typeName).Scheme(space,model,name,**kwargs)
 
 
+def dgGalerkin(space, model, penalty, name="tmp", storage=None, parameters={}):
+    from . import module, canonicalizeStorage, spaceAndStorage
+    space, storage = spaceAndStorage(space, storage)
+    storage = canonicalizeStorage(storage)
+
+    spaceType = space._module._typeName
+    gridPartType = "typename " + spaceType + "::GridPartType"
+    dimRange = spaceType + "::dimRange"
+    rangeFieldType = "typename " + spaceType + "::RangeFieldType"
+    modelType = "DiffusionModel< " + ", ".join([gridPartType, dimRange, rangeFieldType]) + " >"
+    integrandsType = "Dune::Fem::DGDiffusionModelIntegrands< " + modelType + " >"
+
+    typeName = "Dune::Fem::GalerkinScheme< " + ", ".join([spaceType, integrandsType, storage]) + " >"
+    includes = ["dune/fem/schemes/galerkin.hh", "dune/fem/schemes/diffusionmodel.hh", "dune/fempy/parameter.hh"] + space._module._includes
+
+    constructor = ['[] ( ' + typeName + ' &self, const ' + spaceType + ' &space, const ' + modelType + ' &model, const typename ' + modelType + '::RangeFieldType &penalty, std::string name, const pybind11::dict &parameters ) {',
+                   '    new (&self) ' + typeName + '( space, ' + integrandsType + '( model, penalty ), std::move( name ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
+                   '  }, "space"_a, "model"_a, "name"_a, "penalty"_a, "parameters"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >()']
+
+    return module(storage, includes, typeName, [constructor]).Scheme(space, model, penalty, name, parameters)
+
+
 def galerkin(space, model, name="tmp", storage=None, parameters={}):
     from . import module, canonicalizeStorage, spaceAndStorage
     space, storage = spaceAndStorage(space, storage)

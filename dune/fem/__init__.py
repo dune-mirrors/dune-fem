@@ -34,6 +34,7 @@ registry["scheme"] = {
          "h1"         : scheme.h1,
          "h1galerkin" : scheme.h1Galerkin,
          "dg"         : scheme.dg,
+         "dggalerkin" : scheme.dgGalerkin,
          "mvdg"       : scheme.nvdg,
          "stokes"     : scheme.stokes,
          "burgers"    : scheme.burgers
