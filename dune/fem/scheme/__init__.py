@@ -56,7 +56,7 @@ def canonicalizeStorage(storage=None):
     elif storage == "Numpy" or storage == "numpy":
         return "numpy"
     elif storage == "Fem" or storage == "fem":
-        return = "fem"
+        return "fem"
     else:
         raise KeyError("Invalid storage: " + storage)
 
