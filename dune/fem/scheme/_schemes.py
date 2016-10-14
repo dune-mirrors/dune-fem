@@ -4,19 +4,6 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 
-def canonicalizeStorage(storage):
-    if storage == "Adaptive" or storage == "adaptive":
-        return "fem"
-    elif storage == "Istl" or storage == "istl":
-        return "istl"
-    elif storage == "Numpy" or storage == "numpy":
-        return "numpy"
-    elif storage == "Fem" or storage == "fem":
-        return = "fem"
-    else:
-        raise KeyError("Invalid storage: " + storage)
-
-
 def burgers(space_or_df, model, name, viscosity, timestep, **kwargs):
     """create a scheme for solving quasi stokes type saddle point problem with continuous finite-elements
 
@@ -26,8 +13,8 @@ def burgers(space_or_df, model, name, viscosity, timestep, **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, spaceAndStorage
-    storage = kwargs.pop("storage","fem")
+    from . import module, canonicalizeStorage, spaceAndStorage
+    storage = kwargs.pop("storage", None)
     vspace, vstorage = spaceAndStorage(space_or_df[0],storage)
     pspace, pstorage = spaceAndStorage(space_or_df[1],storage)
     if not (vstorage == pstorage):
@@ -54,8 +41,8 @@ def dg(space_or_df, model, name="tmp", **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, spaceAndStorage
-    storage = kwargs.pop("storage","fem")
+    from . import module, canonicalizeStorage, spaceAndStorage
+    storage = kwargs.pop("storage",None)
     space, storage = spaceAndStorage(space_or_df,storage)
     storage = canonicalizeStorage(storage)
 
@@ -71,8 +58,8 @@ def dg(space_or_df, model, name="tmp", **kwargs):
     return module(storage, includes, typeName).Scheme(space,model,name,**kwargs)
 
 
-def galerkin(space, model, name="tmp", storage="fem", parameters={}):
-    from . import module, spaceAndStorage
+def galerkin(space, model, name="tmp", storage=None, parameters={}):
+    from . import module, canonicalizeStorage, spaceAndStorage
     space, storage = spaceAndStorage(space, storage)
     storage = canonicalizeStorage(storage)
 
@@ -88,7 +75,7 @@ def galerkin(space, model, name="tmp", storage="fem", parameters={}):
     return module(storage, includes, typeName).Scheme(space, model, name, parameters)
 
 
-def h1(space, model, name="tmp", storage="fem", parameters={}):
+def h1(space, model, name="tmp", storage=None, parameters={}):
     """create a scheme for solving second order pdes with continuous finite element
 
     Args:
@@ -97,7 +84,7 @@ def h1(space, model, name="tmp", storage="fem", parameters={}):
         Scheme: the constructed scheme
     """
 
-    from . import module, spaceAndStorage
+    from . import module, canonicalizeStorage, spaceAndStorage
     space, storage = spaceAndStorage(space,storage)
     storage = canonicalizeStorage(storage)
 
@@ -113,8 +100,8 @@ def h1(space, model, name="tmp", storage="fem", parameters={}):
     return module(storage, includes, typeName).Scheme(space,model,name,parameters)
 
 
-def h1Galerkin(space, model, name="tmp", storage="fem", parameters={}):
-    from . import module, spaceAndStorage
+def h1Galerkin(space, model, name="tmp", storage=None, parameters={}):
+    from . import module, canonicalizeStorage, spaceAndStorage
     space, storage = spaceAndStorage(space, storage)
     storage = canonicalizeStorage(storage)
 
@@ -144,8 +131,8 @@ def nvdg(space_or_df, model, name="tmp", **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, spaceAndStorage
-    storage = kwargs.pop("storage","fem")
+    from . import module, canonicalizeStorage, spaceAndStorage
+    storage = kwargs.pop("storage", None)
     space, storage = spaceAndStorage(space_or_df,storage)
     storage = canonicalizeStorage(storage)
 
@@ -170,8 +157,8 @@ def stokes(space_or_df, model, name, viscosity, timestep, **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, spaceAndStorage
-    storage = kwargs.pop("storage","fem")
+    from . import module, canonicalizeStorage, spaceAndStorage
+    storage = kwargs.pop("storage", None)
     vspace, vstorage = spaceAndStorage(space_or_df[0],storage)
     pspace, pstorage = spaceAndStorage(space_or_df[1],storage)
     if not (vstorage == pstorage):

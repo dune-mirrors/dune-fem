@@ -13,7 +13,7 @@ from ._schemes import *
 
 from dune.generator.generator import SimpleGenerator
 
-def solve( scheme, rhs=None, target=None, name=None, assemble=True ):
+def solve(scheme, rhs=None, target=None, name=None, assemble=True):
     import dune.create as create
     if name == None:
         if hasattr(scheme, 'name'):
@@ -30,7 +30,8 @@ def solve( scheme, rhs=None, target=None, name=None, assemble=True ):
     scheme._solve(target,assemble)
     return target
 
-def spaceAndStorage(space_or_df,storage):
+
+def spaceAndStorage(space_or_df, storage):
     try:
         space = space_or_df.space
     except:
@@ -43,6 +44,22 @@ def spaceAndStorage(space_or_df,storage):
                # colored( storage + " != " + space_or_df._storage, 'red')
     storage = space_or_df._storage
     return space, storage
+
+
+def canonicalizeStorage(storage=None):
+    if storage is None:
+        return "fem"
+    if storage == "Adaptive" or storage == "adaptive":
+        return "fem"
+    elif storage == "Istl" or storage == "istl":
+        return "istl"
+    elif storage == "Numpy" or storage == "numpy":
+        return "numpy"
+    elif storage == "Fem" or storage == "fem":
+        return = "fem"
+    else:
+        raise KeyError("Invalid storage: " + storage)
+
 
 generator = SimpleGenerator("Scheme", "Dune::FemPy")
 
