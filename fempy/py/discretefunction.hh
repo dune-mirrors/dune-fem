@@ -1,22 +1,20 @@
 #ifndef DUNE_FEMPY_PY_DISCRETEFUNCTION_HH
 #define DUNE_FEMPY_PY_DISCRETEFUNCTION_HH
 
+#include <dune/fem/function/vectorfunction/vectorfunction.hh>
 #include <dune/fem/space/common/interpolate.hh>
 
 #include <dune/corepy/pybind11/pybind11.h>
 #include <dune/corepy/pybind11/extensions.h>
-
-#include <dune/fempy/py/function/grid.hh>
-#include <dune/fempy/py/grid/function.hh>
-#include <dune/fempy/py/grid/restrictprolong.hh>
-
-#include <dune/fem/function/vectorfunction/vectorfunction.hh>
-#include <dune/fempy/py/common/numpyvector.hh>
-
 //#if HAVE_EIGEN
 //#include <dune/corepy/pybind11/eigen.h>
 //#endif // #if HAVE_EIGEN
-#include <dune/corepy/pybind11/pybind11.h>
+
+#include <dune/fempy/py/common/numpyvector.hh>
+#include <dune/fempy/py/function/grid.hh>
+#include <dune/fempy/py/grid/function.hh>
+#include <dune/fempy/py/grid/restrictprolong.hh>
+#include <dune/fempy/py/space.hh>
 
 namespace Dune
 {
@@ -104,7 +102,7 @@ namespace Dune
           }, pybind11::keep_alive< 1, 2 >() );
         pybind11::implicitly_convertible< DF, VirtualizedRestrictProlong< Grid > >();
 
-        cls.def_property_readonly( "space", [] ( DF &df ) -> const typename DF::DiscreteFunctionSpaceType & { return df.space(); } );
+        cls.def_property_readonly( "space", [] ( pybind11::object self ) { return getSpace( self.cast< const DF & >(), self ); } );
         cls.def_property_readonly( "size", [] ( DF &df ) { return df.size(); } );
         cls.def( "clear", [] ( DF &instance ) { instance.clear(); } );
 

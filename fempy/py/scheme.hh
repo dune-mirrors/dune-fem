@@ -4,20 +4,23 @@
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/schemes/solver.hh>
 
+#include <dune/corepy/pybind11/pybind11.h>
+#if HAVE_EIGEN
+#include <dune/corepy/pybind11/eigen.h>
+#endif
+
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/parameter.hh>
 #include <dune/fempy/py/common/numpyvector.hh>
 #include <dune/fempy/py/discretefunction.hh>
-#include <dune/corepy/pybind11/pybind11.h>
-#if HAVE_EIGEN
-  #include <dune/corepy/pybind11/eigen.h>
-#endif
+#include <dune/fempy/py/space.hh>
 
 namespace Dune
 {
 
   namespace FemPy
   {
+
     // registerScheme
     // -------------
 
@@ -79,14 +82,9 @@ namespace Dune
           double est = scheme.estimate(solution);
           return std::make_tuple(est,scheme.mark(tolerance));
         });
-        cls.def_property_readonly( "name", &Scheme::name );
         cls.def_property_readonly( "dimRange", [](Scheme&) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
-
-        cls.def_property_readonly( "space", [] ( const Scheme &self ) {
-            const Space &space = self.space();
-            pybind11::handle hSpace = pybind11::detail::get_object_handle( &space, pybind11::detail::get_type_info( typeid( Space ) ) );
-            return pybind11::object( hSpace, true );
-          } );
+        cls.def_property_readonly( "name", &Scheme::name );
+        cls.def_property_readonly( "space", [] ( pybind11::object self ) { return detail::getSpace( self.cast< const Scheme & >(), self ); } );
 
         registerSchemeAssemble<Scheme>(cls,0);
 
