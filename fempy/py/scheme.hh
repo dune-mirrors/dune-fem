@@ -81,7 +81,12 @@ namespace Dune
         });
         cls.def_property_readonly( "name", &Scheme::name );
         cls.def_property_readonly( "dimRange", [](Scheme&) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
-        cls.def_property_readonly( "space", &Scheme::space );
+
+        cls.def_property_readonly( "space", [] ( const Scheme &self ) {
+            const Space &space = self.space();
+            pybind11::handle hSpace = pybind11::detail::get_object_handle( &space, pybind11::detail::get_type_info( typeid( Space ) ) );
+            return pybind11::object( hSpace, true );
+          } );
 
         registerSchemeAssemble<Scheme>(cls,0);
 
