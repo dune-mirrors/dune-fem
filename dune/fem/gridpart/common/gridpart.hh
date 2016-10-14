@@ -85,10 +85,6 @@ namespace Dune
       //! \brief Type of the implementation
       typedef typename Traits::GridPartType GridPartType;
 
-      //! \brief Type of the host grid part
-      //! \note if the implementation is not a meta grid part, this is the type of implementation itself
-      typedef typename Traits::HostGridPartType HostGridPartType;
-
       //! \brief type of Grid implementation
       typedef typename Traits::GridType GridType;
 
@@ -150,22 +146,6 @@ namespace Dune
       {
         CHECK_INTERFACE_IMPLEMENTATION((asImp().grid()));
         return asImp().grid();
-      }
-
-      //! \brief Returns const reference to the host grid part
-      //! \note if it is not a meta grid part, this method simply returns the grid part itself
-      const HostGridPartType &hostGridPart () const
-      {
-        CHECK_INTERFACE_IMPLEMENTATION((asImp().hostGridPart()));
-        return asImp().hostGridPart();
-      }
-
-      //! \brief Returns reference to the host grid part
-      //! \note if it is not a meta grid part, this method simply returns the grid part itself
-      HostGridPartType &hostGridPart ()
-      {
-        CHECK_INTERFACE_IMPLEMENTATION((asImp().hostGridPart()));
-        return asImp().hostGridPart();
       }
 
       //! \brief Returns reference to index set of the underlying grid
