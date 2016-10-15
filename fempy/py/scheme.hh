@@ -71,7 +71,6 @@ namespace Dune
         cls.def("__call__", [] (Scheme &scheme, const VirtualizedGridFunction<GridPart,RangeType> &arg, DiscreteFunction &dest) { scheme(arg,dest); });
 
         cls.def_property_readonly( "dimRange", [](Scheme&) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
-        cls.def_property_readonly( "name", &Scheme::name );
         cls.def_property_readonly( "space", [] ( pybind11::object self ) { return detail::getSpace( self.cast< const Scheme & >(), self ); } );
 
         registerSchemeAssemble<Scheme>(cls,0);
