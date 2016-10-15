@@ -144,11 +144,11 @@ public:
     typedef DifferentiableOperator< LinearOperatorType, ModelType > OperatorType;
     typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
     typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
-    InverseOperatorType invOp( dynamic_cast< OperatorType & >( *implicitOperator_ ), parameter_ );
-    DiscreteFunctionType bnd(solution);
-    bnd.clear();
-    dynamic_cast< OperatorType & >( *implicitOperator_ ).prepare( bnd );
-    invOp( bnd, solution );
+    // InverseOperatorType invOp( dynamic_cast< OperatorType & >( *implicitOperator_ ), parameter_ );
+    // DiscreteFunctionType bnd(solution);
+    // bnd.clear();
+    // dynamic_cast< OperatorType & >( *implicitOperator_ ).prepare( bnd );
+    // invOp( bnd, solution );
   }
 
   template <class GridFunction>
