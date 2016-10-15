@@ -560,7 +560,7 @@ namespace Dune
           jOp.clear();
 
           const std::size_t maxNumLocalDofs = discreteFunctionSpace().blockMapper().maxNumDofs() * discreteFunctionSpace().localBlockSize;
-          ValueVectorType phi( maxNumLocalDofs, maxNumLocalDofs );
+          ValueVectorType phi{ std::vector< RangeType >( maxNumLocalDofs ), std::vector< JacobianRangeType >( maxNumLocalDofs ) };
 
           TemporaryLocalMatrix< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > jOpLocal( discreteFunctionSpace(), discreteFunctionSpace() );
 
@@ -599,7 +599,8 @@ namespace Dune
           jOp.clear();
 
           const std::size_t maxNumLocalDofs = discreteFunctionSpace().blockMapper().maxNumDofs() * discreteFunctionSpace().localBlockSize;
-          ValueVectorType phiIn( maxNumLocalDofs, maxNumLocalDofs ), phiOut( maxNumLocalDofs, maxNumLocalDofs );
+          ValueVectorType phiIn{ std::vector< RangeType >( maxNumLocalDofs ), std::vector< JacobianRangeType >( maxNumLocalDofs ) };
+          ValueVectorType phiOut{ std::vector< RangeType >( maxNumLocalDofs ), std::vector< JacobianRangeType >( maxNumLocalDofs ) };
 
           TemporaryLocalMatrix jOpInIn( discreteFunctionSpace(), discreteFunctionSpace() ), jOpOutIn( discreteFunctionSpace(), discreteFunctionSpace() );
           TemporaryLocalMatrix jOpInOut( discreteFunctionSpace(), discreteFunctionSpace() ), jOpOutOut( discreteFunctionSpace(), discreteFunctionSpace() );
@@ -784,8 +785,8 @@ namespace Dune
 
       static const int dimRange = DiscreteFunctionSpaceType::dimRange;
 
-      //typedef DifferentiableGalerkinOperator< LinearOperatorType, Integrands > GalerkinOperatorType;
-      typedef AutomaticDifferenceGalerkinOperator< DiscreteFunctionType, Integrands > GalerkinOperatorType;
+      typedef DifferentiableGalerkinOperator< LinearOperatorType, Integrands > GalerkinOperatorType;
+      //typedef AutomaticDifferenceGalerkinOperator< DiscreteFunctionType, Integrands > GalerkinOperatorType;
 
       GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, const Integrands &integrands, Dune::Fem::ParameterReader parameter = Dune::Fem::Parameter::container() )
         : galerkinOperator_( dfSpace, integrands ),
