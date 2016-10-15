@@ -483,7 +483,7 @@ class BaseModel:
         if '@const:' in code:
             codeCst = code.split('@const:')
             import itertools
-            names = set(["".join(itertools.takewhile(str.isalpha, c)) for c in codeCst[1:]])
+            names = set(["".join(itertools.takewhile(str.isalpha, str(c))) for c in codeCst[1:]])
             number = 0
             numConsts = [coef['number'] for coef in self.coefficients if coef['constant'] == True]
             if numConsts:
