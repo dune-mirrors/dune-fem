@@ -13,6 +13,7 @@
 #include <dune/grid/common/rangegenerators.hh>
 
 #include <dune/fem/function/localfunction/temporary.hh>
+#include <dune/fem/operator/common/automaticdifferenceoperator.hh>
 #include <dune/fem/operator/common/differentiableoperator.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/stencil.hh>
@@ -241,7 +242,7 @@ namespace Dune
         template< class Integrands, class QP, class W, std::enable_if_t< HasSkeletonIntegrand< Integrands >::value, int > = 0 >
         static void addSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, W &wIn )
         {
-          std::pair< ValueType, ValueType > integrand = integrands.skeleton( qpIn, uIn, uOut );
+          std::pair< ValueType, ValueType > integrand = integrands.skeleton( qpIn, uIn, qpOut, uOut );
           std::get< 0 >( integrand.first ) *= weight;
           std::get< 1 >( integrand.first ) *= weight;
           wIn.axpy( qpIn, std::get< 0 >( integrand.first ), std::get< 1 >( integrand.first ) );
@@ -270,7 +271,7 @@ namespace Dune
         template< class Integrands, class QP, class J, std::enable_if_t< HasSkeletonIntegrand< Integrands >::value, int > = 0 >
         static void addLinearizedSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn )
         {
-          auto integrand = integrands.skeleton( qpIn, uIn, qpOut, uOut );
+          auto integrand = integrands.linearizedSkeleton( qpIn, uIn, qpOut, uOut );
           for( std::size_t col = 0; col < colsIn; ++col )
           {
             std::pair< ValueType, ValueType > intPhi = integrand.first( std::make_tuple( std::get< 0 >( phiIn )[ col ], std::get< 1 >( phiIn )[ col ] ) );
@@ -286,7 +287,7 @@ namespace Dune
         template< class Integrands, class QP, class J, std::enable_if_t< HasSkeletonIntegrand< Integrands >::value, int > = 0 >
         static void addLinearizedSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn, J &jInOut, J &jOutOut )
         {
-          auto integrand = integrands.linearizedSkeleton( qpIn, uIn, uOut );
+          auto integrand = integrands.linearizedSkeleton( qpIn, uIn, qpOut, uOut );
           for( std::size_t col = 0; col < colsIn; ++col )
           {
             std::pair< ValueType, ValueType > intPhi = integrand.first( std::make_tuple( std::get< 0 >( phiIn )[ col ], std::get< 1 >( phiIn )[ col ] ) );
@@ -460,7 +461,7 @@ namespace Dune
         // evaluate
 
       private:
-        template< class Integrands, class GridFunction, class DiscreteFunction, std::enable_if_t< !HasSkeletonIntegrand< Integrands >::value, int > = 0 >
+        template< class Integrands, class GridFunction, class DiscreteFunction >
         void evaluate ( Integrands &integrands, const GridFunction &u, DiscreteFunction &w, std::false_type ) const
         {
           w.clear();
@@ -740,6 +741,30 @@ namespace Dune
 
 
 
+    // AutomaticDifferenceGalerkinOperator
+    // -----------------------------------
+
+    template< class DiscreteFunction, class Integrands >
+    class AutomaticDifferenceGalerkinOperator
+      : public GalerkinOperator< DiscreteFunction, Integrands >,
+        public AutomaticDifferenceOperator< DiscreteFunction >
+    {
+      typedef GalerkinOperator< DiscreteFunction, Integrands > BaseType;
+      typedef AutomaticDifferenceOperator< DiscreteFunction > AutomaticDifferenceOperatorType;
+
+      template< class, class, SolverType > friend class GalerkinScheme;
+
+    public:
+      typedef typename BaseType::DiscreteFunctionType DiscreteFunctionType;
+      typedef typename BaseType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+
+      template< class... Args >
+      AutomaticDifferenceGalerkinOperator ( const DiscreteFunctionSpaceType &dfSpace, Args &&... args )
+        : BaseType( dfSpace, std::forward< Args >( args )... ), AutomaticDifferenceOperatorType()
+      {}
+    };
+
+
     // GalerkinScheme
     // --------------
 
@@ -759,7 +784,8 @@ namespace Dune
 
       static const int dimRange = DiscreteFunctionSpaceType::dimRange;
 
-      typedef DifferentiableGalerkinOperator< LinearOperatorType, Integrands > GalerkinOperatorType;
+      //typedef DifferentiableGalerkinOperator< LinearOperatorType, Integrands > GalerkinOperatorType;
+      typedef AutomaticDifferenceGalerkinOperator< DiscreteFunctionType, Integrands > GalerkinOperatorType;
 
       GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, const Integrands &integrands, Dune::Fem::ParameterReader parameter = Dune::Fem::Parameter::container() )
         : galerkinOperator_( dfSpace, integrands ),
@@ -779,8 +805,7 @@ namespace Dune
       void solve ( DiscreteFunctionType &solution )
       {
         typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
-        NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > invOp( galerkinOperator_, parameter_ );
-        rhs_.clear();
+        NewtonInverseOperator< typename GalerkinOperatorType::JacobianOperatorType, LinearInverseOperatorType > invOp( galerkinOperator_, parameter_ );
         invOp( rhs_, solution );
       }
 
@@ -913,14 +938,14 @@ namespace Dune
         if( intersection.boundary() )
         {
           const EntityType inside = intersection.inside();
-          beta_ = intersection.geometry().volume() / inside.geometry().volume();
+          beta_ = penalty_ * intersection.geometry().volume() / inside.geometry().volume();
           return (model().hasNeumanBoundary() && model().init( inside ));
         }
         else if( intersection.neighbor() )
         {
           const auto volIn = intersection.inside().geometry().volume();
           const auto volOut = intersection.outside().geometry().volume();
-          beta_ = intersection.geometry().volume() / std::min( volIn, volOut );
+          beta_ = penalty_ * intersection.geometry().volume() / std::min( volIn, volOut );
           return true;
         }
       }
@@ -972,15 +997,12 @@ namespace Dune
         const EntityType outside = intersection().outside();
 
         const RangeFieldType half = RangeFieldType( 1 ) / RangeFieldType( 2 );
-        const auto normal = intersection.unitOuterNormal( xIn.localPosition() );
+        const auto normal = intersection().unitOuterNormal( xIn.localPosition() );
 
-        ValueType uJump;
-        std::get< 0 >( uJump ) = std::get< 0 >( uOut ) - std::get< 0 >( uIn );
+        ValueType uJump( 0, 0 );
+        std::get< 0 >( uJump ) = std::get< 0 >( uIn ) - std::get< 0 >( uOut );
         for( int i = 0; i < RangeType::dimension; ++i )
-        {
-          std::get< 1 >( uJump )[ i ] = normal;
-          std::get< 1 >( uJump )[ i ] *= std::get< 0 >( uJump )[ i ];
-        }
+          std::get< 1 >( uJump )[ i ].axpy( std::get< 0 >( uJump )[ i ], normal );
 
         model().init( outside );
         JacobianRangeType dFluxOut( 0 ), dFluxPrimeOut( 0 );
@@ -998,26 +1020,24 @@ namespace Dune
 
         RangeType int0 = std::get< 0 >( uJump );
         int0 *= beta_;
-        (dFluxIn + dFluxOut).usmv( -half, normal, int0 );
+        dFluxIn += dFluxOut;
+        dFluxIn.usmv( -half, normal, int0 );
 
         dFluxPrimeIn *= -half;
         dFluxPrimeOut *= -half;
 
-        return std::make_pair( ValueType( int0, dFluxPrimeOut ), ValueType( -int0, dFluxPrimeOut ) );
+        return std::make_pair( ValueType( int0, dFluxPrimeIn ), ValueType( -int0, dFluxPrimeOut ) );
       }
 
       template< class Point >
       auto linearizedSkeleton ( const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut ) const
       {
-        const auto normal = intersection.unitOuterNormal( xIn.localPosition() );
+        const auto normal = intersection().unitOuterNormal( xIn.localPosition() );
 
-        ValueType uJump;
-        std::get< 0 >( uJump ) = std::get< 0 >( uOut ) - std::get< 0 >( uIn );
+        ValueType uJump( 0, 0 );
+        std::get< 0 >( uJump ) = std::get< 0 >( uIn ) - std::get< 0 >( uOut );
         for( int i = 0; i < RangeType::dimension; ++i )
-        {
-          std::get< 1 >( uJump )[ i ] = normal;
-          std::get< 1 >( uJump )[ i ] *= std::get< 0 >( uJump )[ i ];
-        }
+          std::get< 1 >( uJump )[ i ].axpy( std::get< 0 >( uJump )[ i ], normal );
 
         auto intIn = [ this, xIn, uIn, xOut, uOut, normal, uJump ] ( const ValueType &phiIn ) {
           const EntityType inside = intersection().inside();
@@ -1025,13 +1045,10 @@ namespace Dune
 
           const RangeFieldType half = RangeFieldType( 1 ) / RangeFieldType( 2 );
 
-          ValueType phiJump;
+          ValueType phiJump( 0, 0 );
           std::get< 0 >( phiJump ) = std::get< 0 >( phiIn );
           for( int i = 0; i < RangeType::dimension; ++i )
-          {
-            std::get< 1 >( phiJump )[ i ] = normal;
-            std::get< 1 >( phiJump )[ i ] *= -std::get< 0 >( phiJump )[ i ];
-          }
+            std::get< 1 >( phiJump )[ i ].axpy( std::get< 0 >( phiJump )[ i ], normal );
 
           model().init( outside );
           JacobianRangeType dFluxPrimeOut( 0 );
@@ -1049,7 +1066,7 @@ namespace Dune
           dFluxPrimeIn *= -half;
           dFluxPrimeOut *= -half;
 
-          return std::make_pair( ValueType( int0, dFluxPrimeOut ), ValueType( -int0, dFluxPrimeOut ) );
+          return std::make_pair( ValueType( int0, dFluxPrimeIn ), ValueType( -int0, dFluxPrimeOut ) );
         };
 
         auto intOut = [ this, xIn, uIn, xOut, uOut, normal, uJump ] ( const ValueType &phiOut ) {
@@ -1057,15 +1074,11 @@ namespace Dune
           const EntityType outside = intersection().outside();
 
           const RangeFieldType half = RangeFieldType( 1 ) / RangeFieldType( 2 );
-          const auto normal = intersection.unitOuterNormal( xIn.localPosition() );
 
-          ValueType phiJump;
+          ValueType phiJump( 0, 0 );
           std::get< 0 >( phiJump ) = std::get< 0 >( phiOut );
           for( int i = 0; i < RangeType::dimension; ++i )
-          {
-            std::get< 1 >( phiJump )[ i ] = normal;
-            std::get< 1 >( phiJump )[ i ] *= std::get< 0 >( phiJump )[ i ];
-          }
+            std::get< 1 >( phiJump )[ i ].axpy( -std::get< 0 >( phiJump )[ i ], normal );
 
           model().init( outside );
           JacobianRangeType dFluxOut( 0 ), dFluxPrimeOut( 0 );
@@ -1083,7 +1096,7 @@ namespace Dune
           dFluxPrimeIn *= -half;
           dFluxPrimeOut *= -half;
 
-          return std::make_pair( ValueType( int0, dFluxPrimeOut ), ValueType( -int0, dFluxPrimeOut ) );
+          return std::make_pair( ValueType( int0, dFluxPrimeIn ), ValueType( -int0, dFluxPrimeOut ) );
         };
 
         return std::make_pair( intIn, intOut );

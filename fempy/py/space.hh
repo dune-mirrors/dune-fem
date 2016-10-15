@@ -44,6 +44,32 @@ namespace Dune
           }, pybind11::keep_alive< 1, 2 >() );
       }
 
+
+
+      // getSpace
+      // --------
+
+      template< class T >
+      pybind11::object getSpace ( const T &obj, pybind11::handle nurse = pybind11::handle() )
+      {
+        typedef std::decay_t< decltype( std::declval< const T & >().space() ) > Space;
+
+        const Space &space = obj.space();
+        pybind11::object pySpace( pybind11::detail::get_object_handle( &space, pybind11::detail::get_type_info( typeid( Space ) ) ), true );
+#if 0
+        // disable returning spaces not defined on Python side for now
+        // Bug: pybind11 seems to require at least a move constructor to cast a reference to a Python object
+        if( !pySpace )
+        {
+          pySpace = pybind11::object( pybind11::cast( space, pybind11::return_value_policy::reference ), true );
+          if( !nurse )
+            nurse = pybind11::detail::get_object_handle( &obj, pybind11::detail::get_type_info( typeid( T ) ) );
+          pybind11::detail::keep_alive_impl( pySpace, nurse );
+        }
+#endif
+        return pySpace;
+      }
+
     } // namespace detail
 
 

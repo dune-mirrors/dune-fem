@@ -4,20 +4,23 @@
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/schemes/solver.hh>
 
+#include <dune/corepy/pybind11/pybind11.h>
+#if HAVE_EIGEN
+#include <dune/corepy/pybind11/eigen.h>
+#endif
+
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/parameter.hh>
 #include <dune/fempy/py/common/numpyvector.hh>
 #include <dune/fempy/py/discretefunction.hh>
-#include <dune/corepy/pybind11/pybind11.h>
-#if HAVE_EIGEN
-  #include <dune/corepy/pybind11/eigen.h>
-#endif
+#include <dune/fempy/py/space.hh>
 
 namespace Dune
 {
 
   namespace FemPy
   {
+
     // registerScheme
     // -------------
 
@@ -68,7 +71,8 @@ namespace Dune
         cls.def("__call__", [] (Scheme &scheme, const VirtualizedGridFunction<GridPart,RangeType> &arg, DiscreteFunction &dest) { scheme(arg,dest); });
 
         cls.def_property_readonly( "dimRange", [](Scheme&) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
-        cls.def_property_readonly( "space", &Scheme::space );
+        cls.def_property_readonly( "name", &Scheme::name );
+        cls.def_property_readonly( "space", [] ( pybind11::object self ) { return detail::getSpace( self.cast< const Scheme & >(), self ); } );
 
         registerSchemeAssemble<Scheme>(cls,0);
 
