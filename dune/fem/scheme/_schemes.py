@@ -4,8 +4,6 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 
-import dune.common.checkconfiguration as checkconfiguration
-
 def burgers(space_or_df, model, name, viscosity, timestep, **kwargs):
     """create a scheme for solving quasi stokes type saddle point problem with continuous finite-elements
 
@@ -15,26 +13,13 @@ def burgers(space_or_df, model, name, viscosity, timestep, **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, spaceAndStorage
-    storage = kwargs.pop("storage","fem")
+    from . import module, canonicalizeStorage, spaceAndStorage
+    storage = kwargs.pop("storage", None)
     vspace, vstorage = spaceAndStorage(space_or_df[0],storage)
     pspace, pstorage = spaceAndStorage(space_or_df[1],storage)
     if not (vstorage == pstorage):
-        raise KeyError("storages provided differe")
-    storage = vstorage
-
-    if storage == "Adaptive" or storage == "adaptive":
-        storage = "fem"
-    elif storage == "Istl" or storage == "istl":
-        storage = "istl"
-    elif storage == "Numpy" or storage == "numpy":
-        storage = "numpy"
-    elif storage == "Fem" or storage == "fem":
-        storage = "fem"
-    else:
-        raise KeyError(\
-            "Parameter error in FemScheme with "+\
-            "storage=" + storage)
+        raise KeyError("storages provided differ")
+    storage = canonicalizeStorage(vstorage)
 
     includes = [ "navierstokes/burgers.cc" ] + vspace._module._includes + pspace._module._includes
     vspaceType = vspace._module._typeName
@@ -56,22 +41,10 @@ def dg(space_or_df, model, name="tmp", **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, spaceAndStorage
-    storage = kwargs.pop("storage","fem")
+    from . import module, canonicalizeStorage, spaceAndStorage
+    storage = kwargs.pop("storage",None)
     space, storage = spaceAndStorage(space_or_df,storage)
-
-    if storage == "Adaptive" or storage == "adaptive":
-        storage = "fem"
-    elif storage == "Istl" or storage == "istl":
-        storage = "istl"
-    elif storage == "Numpy" or storage == "numpy":
-        storage = "numpy"
-    elif storage == "Fem" or storage == "fem":
-        storage = "fem"
-    else:
-        raise KeyError(\
-            "Parameter error in FemScheme with "+\
-            "storage=" + storage)
+    storage = canonicalizeStorage(storage)
 
     includes = [ "dune/fem/schemes/dgelliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._module._includes
     spaceType = space._module._typeName
@@ -85,22 +58,32 @@ def dg(space_or_df, model, name="tmp", **kwargs):
     return module(storage, includes, typeName).Scheme(space,model,name,**kwargs)
 
 
-def galerkin(space, model, name="tmp", storage="fem", parameters={}):
-    from . import module, spaceAndStorage
+def dgGalerkin(space, model, penalty, name="tmp", storage=None, parameters={}):
+    from . import module, canonicalizeStorage, spaceAndStorage
     space, storage = spaceAndStorage(space, storage)
+    storage = canonicalizeStorage(storage)
 
-    if storage == "Adaptive" or storage == "adaptive":
-        storage = "fem"
-    elif storage == "Istl" or storage == "istl":
-        storage = "istl"
-    elif storage == "Numpy" or storage == "numpy":
-        storage = "numpy"
-    elif storage == "Eigen" or storage == "eigen":
-        storage = "eigen"
-    elif storage == "Fem" or storage == "fem":
-        storage = "fem"
-    else:
-        raise KeyError("Parameter error in Galerkin scheme with storage=" + storage)
+    spaceType = space._module._typeName
+    gridPartType = "typename " + spaceType + "::GridPartType"
+    dimRange = spaceType + "::dimRange"
+    rangeFieldType = "typename " + spaceType + "::RangeFieldType"
+    modelType = "DiffusionModel< " + ", ".join([gridPartType, dimRange, rangeFieldType]) + " >"
+    integrandsType = "Dune::Fem::DGDiffusionModelIntegrands< " + modelType + " >"
+
+    typeName = "Dune::Fem::GalerkinScheme< " + ", ".join([spaceType, integrandsType, storage]) + " >"
+    includes = ["dune/fem/schemes/galerkin.hh", "dune/fem/schemes/diffusionmodel.hh", "dune/fempy/parameter.hh"] + space._module._includes
+
+    constructor = ['[] ( ' + typeName + ' &self, const ' + spaceType + ' &space, const ' + modelType + ' &model, const typename ' + modelType + '::RangeFieldType &penalty, std::string name, const pybind11::dict &parameters ) {',
+                   '    new (&self) ' + typeName + '( space, ' + integrandsType + '( model, penalty ), std::move( name ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
+                   '  }, "space"_a, "model"_a, "name"_a, "penalty"_a, "parameters"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >()']
+
+    return module(storage, includes, typeName, [constructor]).Scheme(space, model, penalty, name, parameters)
+
+
+def galerkin(space, model, name="tmp", storage=None, parameters={}):
+    from . import module, canonicalizeStorage, spaceAndStorage
+    space, storage = spaceAndStorage(space, storage)
+    storage = canonicalizeStorage(storage)
 
     spaceType = space._module._typeName
     gridPartType = "typename " + spaceType + "::GridPartType"
@@ -114,7 +97,7 @@ def galerkin(space, model, name="tmp", storage="fem", parameters={}):
     return module(storage, includes, typeName).Scheme(space, model, name, parameters)
 
 
-def h1(space, model, storage="fem", parameters={}):
+def h1(space, model, storage=None, parameters={}):
     """create a scheme for solving second order pdes with continuous finite element
 
     Args:
@@ -123,32 +106,9 @@ def h1(space, model, storage="fem", parameters={}):
         Scheme: the constructed scheme
     """
 
-    from . import module, spaceAndStorage
+    from . import module, canonicalizeStorage, spaceAndStorage
     space, storage = spaceAndStorage(space,storage)
-
-    if storage == "Adaptive" or storage == "adaptive":
-        storage = "fem"
-    elif storage == "Istl" or storage == "istl":
-        storage = "istl"
-    elif storage == "Numpy" or storage == "numpy":
-        storage = "numpy"
-    elif storage == "Eigen" or storage == "eigen":
-        try:
-            checkconfiguration.preprocessorTest([ ("#if HAVE_EIGEN","Eigen package is not available") ])
-        except checkconfiguration.ConfigurationError as err:
-            if logger.getEffectiveLevel() == logging.DEBUG:
-                raise
-            else:
-                print("configuration error while creating a discrete function with storage=eigen exiting...")
-                sys.exit(-1)
-        storage = "eigen"
-
-    elif storage == "Fem" or storage == "fem":
-        storage = "fem"
-    else:
-        raise KeyError(\
-            "Parameter error in FemScheme with "+\
-            "storage=" + storage)
+    storage = canonicalizeStorage(storage)
 
     includes = [ "dune/fem/schemes/elliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._module._includes
     spaceType = space._module._typeName
@@ -162,22 +122,10 @@ def h1(space, model, storage="fem", parameters={}):
     return module(storage, includes, typeName).Scheme(space,model,parameters)
 
 
-def h1Galerkin(space, model, storage="fem", parameters={}):
-    from . import module, spaceAndStorage
+def h1Galerkin(space, model, storage=None, parameters={}):
+    from . import module, canonicalizeStorage, spaceAndStorage
     space, storage = spaceAndStorage(space, storage)
-
-    if storage == "Adaptive" or storage == "adaptive":
-        storage = "fem"
-    elif storage == "Istl" or storage == "istl":
-        storage = "istl"
-    elif storage == "Numpy" or storage == "numpy":
-        storage = "numpy"
-    elif storage == "Eigen" or storage == "eigen":
-        storage = "eigen"
-    elif storage == "Fem" or storage == "fem":
-        storage = "fem"
-    else:
-        raise KeyError("Parameter error in Galerkin scheme with storage=" + storage)
+    storage = canonicalizeStorage(storage)
 
     spaceType = space._module._typeName
     gridPartType = "typename " + spaceType + "::GridPartType"
@@ -205,22 +153,10 @@ def nvdg(space_or_df, model, name="tmp", **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, spaceAndStorage
-    storage = kwargs.pop("storage","fem")
+    from . import module, canonicalizeStorage, spaceAndStorage
+    storage = kwargs.pop("storage", None)
     space, storage = spaceAndStorage(space_or_df,storage)
-
-    if storage == "Adaptive" or storage == "adaptive":
-        storage = "fem"
-    elif storage == "Istl" or storage == "istl":
-        storage = "istl"
-    elif storage == "Numpy" or storage == "numpy":
-        storage = "numpy"
-    elif storage == "Fem" or storage == "fem":
-        storage = "fem"
-    else:
-        raise KeyError(\
-            "Parameter error in FemScheme with "+\
-            "storage=" + storage)
+    storage = canonicalizeStorage(storage)
 
     includes = [ "dune/fem/schemes/nvdgelliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._module._includes
     spaceType = space._module._typeName
@@ -233,6 +169,7 @@ def nvdg(space_or_df, model, name="tmp", **kwargs):
 
     return module(storage, includes, typeName).Scheme(space,model,name,**kwargs)
 
+
 def stokes(space_or_df, model, name, viscosity, timestep, **kwargs):
     """create a scheme for solving quasi stokes type saddle point problem with continuous finite-elements
 
@@ -242,26 +179,13 @@ def stokes(space_or_df, model, name, viscosity, timestep, **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, spaceAndStorage
-    storage = kwargs.pop("storage","fem")
+    from . import module, canonicalizeStorage, spaceAndStorage
+    storage = kwargs.pop("storage", None)
     vspace, vstorage = spaceAndStorage(space_or_df[0],storage)
     pspace, pstorage = spaceAndStorage(space_or_df[1],storage)
     if not (vstorage == pstorage):
         raise KeyError("storages provided differe")
-    storage = vstorage
-
-    if storage == "Adaptive" or storage == "adaptive":
-        storage = "fem"
-    elif storage == "Istl" or storage == "istl":
-        storage = "istl"
-    elif storage == "Numpy" or storage == "numpy":
-        storage = "numpy"
-    elif storage == "Fem" or storage == "fem":
-        storage = "fem"
-    else:
-        raise KeyError(\
-            "Parameter error in FemScheme with "+\
-            "storage=" + storage)
+    storage = canonicalizeStorage(vstorage)
 
     includes = [ "navierstokes/stokes.cc" ] + vspace._module._includes + pspace._module._includes
     vspaceType = vspace._module._typeName

@@ -27,7 +27,8 @@ def solve( scheme, target=None, name=None ):
     scheme._solve(target)
     return target
 
-def spaceAndStorage(space_or_df,storage):
+
+def spaceAndStorage(space_or_df, storage):
     try:
         space = space_or_df.space
     except:
@@ -40,6 +41,22 @@ def spaceAndStorage(space_or_df,storage):
                # colored( storage + " != " + space_or_df._storage, 'red')
     storage = space_or_df._storage
     return space, storage
+
+
+def canonicalizeStorage(storage=None):
+    if storage is None:
+        return "fem"
+    if storage == "Adaptive" or storage == "adaptive":
+        return "fem"
+    elif storage == "Istl" or storage == "istl":
+        return "istl"
+    elif storage == "Numpy" or storage == "numpy":
+        return "numpy"
+    elif storage == "Fem" or storage == "fem":
+        return "fem"
+    else:
+        raise KeyError("Invalid storage: " + storage)
+
 
 generator = SimpleGenerator("Scheme", "Dune::FemPy")
 
