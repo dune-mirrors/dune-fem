@@ -19,7 +19,10 @@ namespace Dune
     // Scheme for
     // L[ubar] + DL[ubar](u-ubar) = 0 in the affine linear case
     // 0 = A ubar - b + Au - A ubar = Au - b = DL[ubar]u - affineShift and
-    // so affineShift = b = Aubar - L[ubar]
+    // so affineShift = b = A ubar - L[ubar]
+    // Note that we assume that A is fixed (use setup to recreate the matrix)
+    // but b is allowed to change (i.e. in a time dependent problem the
+    // affine shift can depend on the previous solution)
     template< class Scheme >
     struct LinearizedScheme
     {
@@ -69,7 +72,7 @@ namespace Dune
 
       void constraint ( DiscreteFunctionType &u ) const { scheme_.constraint(u); }
 
-      void operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w )
+      void operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w ) const
       {
         assert( sequence_ == scheme_.space().sequence() );
         affineShift();
@@ -78,7 +81,7 @@ namespace Dune
       }
 
       template <class GridFunction>
-      void operator() ( const GridFunction &arg, DiscreteFunctionType &dest )
+      void operator() ( const GridFunction &arg, DiscreteFunctionType &dest ) const
       {
         assert( sequence_ == scheme_.space().sequence() );
         DiscreteFunctionType tmp(dest);
@@ -86,12 +89,14 @@ namespace Dune
         (*this)(tmp,dest);
       }
 
-      void solve ( DiscreteFunctionType &solution )
+      void solve ( DiscreteFunctionType &solution ) const
       {
+        int oldCount = (*inverseOperator_).iterations();
         affineShift();
         constraint(solution);
         assert( sequence_ == scheme_.space().sequence() );
         (*inverseOperator_)( affineShift_, solution );
+        // std::cout << "Linear Iterations: " << (*inverseOperator_).iterations()-oldCount << std::endl;
       }
 
       template< class GridFunction >
@@ -108,7 +113,7 @@ namespace Dune
       const DiscreteFunctionSpaceType &space() const { return scheme_.space(); }
 
     protected:
-      void affineShift()
+      void affineShift() const
       {
         DiscreteFunctionType tmp(ubar_);
         tmp.clear();
@@ -125,7 +130,7 @@ namespace Dune
       double linabstol_;
       double linreduction_;
       std::shared_ptr<LinearInverseOperatorType> inverseOperator_;
-      DiscreteFunctionType affineShift_;
+      mutable DiscreteFunctionType affineShift_;
       Dune::Fem::ParameterReader parameter_;
       DiscreteFunctionType ubar_;
       int sequence_;
