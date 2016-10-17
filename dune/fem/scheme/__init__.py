@@ -29,6 +29,8 @@ def solve( scheme, target=None, name=None ):
 
 
 def spaceAndStorage(space_or_df, storage):
+    if not storage:
+        storage = canonicalizeStorage(storage)
     try:
         space = space_or_df.space
     except:
