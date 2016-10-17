@@ -137,6 +137,34 @@ def h1Galerkin(space, model, storage=None, parameters={}):
 
     return module(storage, includes, typeName, [constructor]).Scheme(space, model, parameters)
 
+
+def linearized(scheme, ubar=None, parameters={}):
+    from . import module
+    schemeType = scheme._typeName
+    typeName = "Dune::Fem::LinearizedScheme< " + ", ".join([schemeType]) + " >"
+    includes = ["dune/fem/schemes/linearized.hh", "dune/fempy/parameter.hh"] + scheme._includes
+
+    constructor1 = ['[] ( DuneType &self,',
+                         'typename DuneType::SchemeType &scheme,',
+                         'typename DuneType::DiscreteFunctionType &ubar,',
+                         'const pybind11::dict &parameters ) {',
+                   '   new (&self) DuneType( scheme, ubar, Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
+                   '  }, "scheme"_a, "ubar"_a, "parameters"_a,',
+                   '     pybind11::keep_alive< 1, 2 >()']
+    constructor2 = ['[] ( DuneType &self,',
+                         'typename DuneType::SchemeType &scheme,',
+                         'const pybind11::dict &parameters ) {',
+                   '   new (&self) DuneType( scheme,  Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
+                   '  }, "scheme"_a, "parameters"_a,',
+                   '     pybind11::keep_alive< 1, 2 >()']
+    method = ['setup', 'DuneType::setup']
+
+    m = module(scheme._storage, includes, typeName, [constructor1,constructor2], [method])
+    if ubar:
+        return m.Scheme(scheme, ubar, parameters)
+    else:
+        return m.Scheme(scheme, parameters)
+
 def nvdg(space_or_df, model, name="tmp", **kwargs):
     """create a scheme for solving non variational second order pdes with discontinuous finite element
 
