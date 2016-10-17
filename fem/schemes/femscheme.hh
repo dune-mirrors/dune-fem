@@ -126,20 +126,26 @@ public:
 
   const ExactSolutionType &exactSolution() const { return exactSolution_; }
 
-  void constraint( DiscreteFunctionType &u )
+  const DifferentiableOperator< LinearOperatorType, ModelType > &fullOperator() const
+  {
+    typedef DifferentiableOperator< LinearOperatorType, ModelType > OperatorType;
+    dynamic_cast< const OperatorType & >( *implicitOperator_ );
+  }
+
+  void constraint( DiscreteFunctionType &u ) const
   {
     typedef DifferentiableOperator< LinearOperatorType, ModelType > OperatorType;
     dynamic_cast< OperatorType & >( *implicitOperator_ ).prepare( u );
   }
 
   template <class GridFunction>
-  void operator() ( const GridFunction &arg, DiscreteFunctionType &dest )
+  void operator() ( const GridFunction &arg, DiscreteFunctionType &dest ) const
   {
     typedef DifferentiableOperator< LinearOperatorType, ModelType > OperatorType;
     dynamic_cast< OperatorType & >( *implicitOperator_ ).apply( arg, dest );
   }
 
-  void solve ( DiscreteFunctionType &solution )
+  void solve ( DiscreteFunctionType &solution ) const
   {
     typedef DifferentiableOperator< LinearOperatorType, ModelType > OperatorType;
     typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
