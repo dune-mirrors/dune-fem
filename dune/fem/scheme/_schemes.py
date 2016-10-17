@@ -13,13 +13,12 @@ def burgers(space_or_df, model, name, viscosity, timestep, **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, canonicalizeStorage, spaceAndStorage
+    from . import module, spaceAndStorage
     storage = kwargs.pop("storage", None)
     vspace, vstorage = spaceAndStorage(space_or_df[0],storage)
     pspace, pstorage = spaceAndStorage(space_or_df[1],storage)
     if not (vstorage == pstorage):
         raise KeyError("storages provided differ")
-    storage = canonicalizeStorage(vstorage)
 
     includes = [ "navierstokes/burgers.cc" ] + vspace._module._includes + pspace._module._includes
     vspaceType = vspace._module._typeName
@@ -41,10 +40,9 @@ def dg(space_or_df, model, name="tmp", **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, canonicalizeStorage, spaceAndStorage
+    from . import module, spaceAndStorage
     storage = kwargs.pop("storage",None)
     space, storage = spaceAndStorage(space_or_df,storage)
-    storage = canonicalizeStorage(storage)
 
     includes = [ "dune/fem/schemes/dgelliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._module._includes
     spaceType = space._module._typeName
@@ -59,9 +57,8 @@ def dg(space_or_df, model, name="tmp", **kwargs):
 
 
 def dgGalerkin(space, model, penalty, name="tmp", storage=None, parameters={}):
-    from . import module, canonicalizeStorage, spaceAndStorage
+    from . import module, spaceAndStorage
     space, storage = spaceAndStorage(space, storage)
-    storage = canonicalizeStorage(storage)
 
     spaceType = space._module._typeName
     gridPartType = "typename " + spaceType + "::GridPartType"
@@ -81,9 +78,8 @@ def dgGalerkin(space, model, penalty, name="tmp", storage=None, parameters={}):
 
 
 def galerkin(space, model, name="tmp", storage=None, parameters={}):
-    from . import module, canonicalizeStorage, spaceAndStorage
+    from . import module, spaceAndStorage
     space, storage = spaceAndStorage(space, storage)
-    storage = canonicalizeStorage(storage)
 
     spaceType = space._module._typeName
     gridPartType = "typename " + spaceType + "::GridPartType"
@@ -106,12 +102,11 @@ def h1(space, model, storage=None, parameters={}):
         Scheme: the constructed scheme
     """
 
-    from . import module, canonicalizeStorage, spaceAndStorage
+    from . import module, spaceAndStorage
     space, storage = spaceAndStorage(space,storage)
-    storage = canonicalizeStorage(storage)
 
-    includes = [ "dune/fem/schemes/elliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._module._includes
-    spaceType = space._module._typeName
+    includes = [ "dune/fem/schemes/elliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._includes
+    spaceType = space._typeName
     typeName = "FemScheme< " + spaceType + ", " +\
         "DiffusionModel< " +\
           "typename " + spaceType + "::GridPartType, " +\
@@ -123,9 +118,8 @@ def h1(space, model, storage=None, parameters={}):
 
 
 def h1Galerkin(space, model, storage=None, parameters={}):
-    from . import module, canonicalizeStorage, spaceAndStorage
+    from . import module, spaceAndStorage
     space, storage = spaceAndStorage(space, storage)
-    storage = canonicalizeStorage(storage)
 
     spaceType = space._module._typeName
     gridPartType = "typename " + spaceType + "::GridPartType"
@@ -143,7 +137,6 @@ def h1Galerkin(space, model, storage=None, parameters={}):
 
     return module(storage, includes, typeName, [constructor]).Scheme(space, model, parameters)
 
-
 def nvdg(space_or_df, model, name="tmp", **kwargs):
     """create a scheme for solving non variational second order pdes with discontinuous finite element
 
@@ -153,10 +146,9 @@ def nvdg(space_or_df, model, name="tmp", **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, canonicalizeStorage, spaceAndStorage
+    from . import module, spaceAndStorage
     storage = kwargs.pop("storage", None)
     space, storage = spaceAndStorage(space_or_df,storage)
-    storage = canonicalizeStorage(storage)
 
     includes = [ "dune/fem/schemes/nvdgelliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._module._includes
     spaceType = space._module._typeName
@@ -179,13 +171,12 @@ def stokes(space_or_df, model, name, viscosity, timestep, **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, canonicalizeStorage, spaceAndStorage
+    from . import module, spaceAndStorage
     storage = kwargs.pop("storage", None)
     vspace, vstorage = spaceAndStorage(space_or_df[0],storage)
     pspace, pstorage = spaceAndStorage(space_or_df[1],storage)
     if not (vstorage == pstorage):
         raise KeyError("storages provided differe")
-    storage = canonicalizeStorage(vstorage)
 
     includes = [ "navierstokes/stokes.cc" ] + vspace._module._includes + pspace._module._includes
     vspaceType = vspace._module._typeName
