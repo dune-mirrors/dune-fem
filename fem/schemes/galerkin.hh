@@ -795,15 +795,20 @@ namespace Dune
           parameter_( std::move( parameter ) )
       {}
 
-      void constraint ( const DiscreteFunctionType &u ) {}
+      const GalerkinOperatorType &fullOperator() const
+      {
+        return galerkinOperator_;
+      }
+
+      void constraint ( const DiscreteFunctionType &u ) const {}
 
       template< class GridFunction >
-      void operator() ( const GridFunction &u, DiscreteFunctionType &w )
+      void operator() ( const GridFunction &u, DiscreteFunctionType &w ) const
       {
         galerkinOperator_.impl_.evaluate( galerkinOperator_.integrands_, u, w );
       }
 
-      void solve ( DiscreteFunctionType &solution )
+      void solve ( DiscreteFunctionType &solution ) const
       {
         typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
         NewtonInverseOperator< typename GalerkinOperatorType::JacobianOperatorType, LinearInverseOperatorType > invOp( galerkinOperator_, parameter_ );
