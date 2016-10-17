@@ -56,7 +56,7 @@ def dg(space_or_df, model, name="tmp", **kwargs):
     return module(storage, includes, typeName).Scheme(space,model,name,**kwargs)
 
 
-def dgGalerkin(space, model, penalty, name="tmp", storage=None, parameters={}):
+def dgGalerkin(space, model, penalty, storage=None, parameters={}):
     from . import module, spaceAndStorage
     space, storage = spaceAndStorage(space, storage)
 
@@ -70,14 +70,14 @@ def dgGalerkin(space, model, penalty, name="tmp", storage=None, parameters={}):
     typeName = "Dune::Fem::GalerkinScheme< " + ", ".join([spaceType, integrandsType, storage]) + " >"
     includes = ["dune/fem/schemes/galerkin.hh", "dune/fem/schemes/diffusionmodel.hh", "dune/fempy/parameter.hh"] + space._module._includes
 
-    constructor = ['[] ( ' + typeName + ' &self, const ' + spaceType + ' &space, const ' + modelType + ' &model, const typename ' + modelType + '::RangeFieldType &penalty, std::string name, const pybind11::dict &parameters ) {',
-                   '    new (&self) ' + typeName + '( space, ' + integrandsType + '( model, penalty ), std::move( name ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
-                   '  }, "space"_a, "model"_a, "name"_a, "penalty"_a, "parameters"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >()']
+    constructor = ['[] ( ' + typeName + ' &self, const ' + spaceType + ' &space, const ' + modelType + ' &model, const typename ' + modelType + '::RangeFieldType &penalty, const pybind11::dict &parameters ) {',
+                   '    new (&self) ' + typeName + '( space, ' + integrandsType + '( model, penalty ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
+                   '  }, "space"_a, "model"_a, "penalty"_a, "parameters"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >()']
 
-    return module(storage, includes, typeName, [constructor]).Scheme(space, model, penalty, name, parameters)
+    return module(storage, includes, typeName, [constructor]).Scheme(space, model, penalty, parameters)
 
 
-def galerkin(space, model, name="tmp", storage=None, parameters={}):
+def galerkin(space, model, storage=None, parameters={}):
     from . import module, spaceAndStorage
     space, storage = spaceAndStorage(space, storage)
 
@@ -90,7 +90,7 @@ def galerkin(space, model, name="tmp", storage=None, parameters={}):
     typeName = "Dune::Fem::GalerkinScheme< " + ", ".join([spaceType, modelType, storage]) + " >"
     includes = ["dune/fem/schemes/galerkin.hh"] + space._module._includes
 
-    return module(storage, includes, typeName).Scheme(space, model, name, parameters)
+    return module(storage, includes, typeName).Scheme(space, model, parameters)
 
 
 def h1(space, model, storage=None, parameters={}):
