@@ -88,7 +88,6 @@ namespace Dune
         typedef typename DF::GridPartType GridPart;
         typedef typename DF::RangeType Value;
         typedef typename GridPart::GridType Grid;
-        typedef typename Value::field_type FieldType;
 
         detail::registerGridFunction< DF >( module, cls );
 
