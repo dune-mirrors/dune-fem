@@ -155,6 +155,7 @@ public:
     bnd.clear();
     dynamic_cast< OperatorType & >( *implicitOperator_ ).prepare( bnd );
     invOp( bnd, solution );
+    // std::cout << "Linear Iterations: " << invOp.linearIterations() << std::endl;
   }
 
   template <class GridFunction>
