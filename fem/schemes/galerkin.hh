@@ -536,6 +536,7 @@ namespace Dune
 
             w.addLocalDofs( inside, wInside.localDofVector() );
           }
+
           w.communicate();
         }
 
@@ -766,6 +767,7 @@ namespace Dune
     };
 
 
+
     // GalerkinScheme
     // --------------
 
@@ -786,14 +788,16 @@ namespace Dune
       static const int dimRange = DiscreteFunctionSpaceType::dimRange;
 
       typedef DifferentiableGalerkinOperator< LinearOperatorType, Integrands > GalerkinOperatorType;
-      //typedef AutomaticDifferenceGalerkinOperator< DiscreteFunctionType, Integrands > GalerkinOperatorType;
+      // typedef AutomaticDifferenceGalerkinOperator< DiscreteFunctionType, Integrands > GalerkinOperatorType;
 
       GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, const Integrands &integrands, Dune::Fem::ParameterReader parameter = Dune::Fem::Parameter::container() )
         : galerkinOperator_( dfSpace, integrands ),
           linearOperator_( "assembled Galerkin operator", dfSpace, dfSpace ),
           rhs_( "rhs", dfSpace ),
           parameter_( std::move( parameter ) )
-      {}
+      {
+        rhs_.clear();
+      }
 
       void constraint ( const DiscreteFunctionType &u ) {}
 
@@ -826,7 +830,7 @@ namespace Dune
     protected:
       GalerkinOperatorType galerkinOperator_;
       LinearOperatorType linearOperator_;
-      mutable DiscreteFunctionType rhs_;
+      DiscreteFunctionType rhs_;
       Dune::Fem::ParameterReader parameter_;
     };
 
@@ -958,7 +962,7 @@ namespace Dune
         model().source( x, std::get< 0 >( u ), std::get< 1 >( u ), source );
         JacobianRangeType dFlux( 0 );
         model().diffusiveFlux( x, std::get< 0 >( u ), std::get< 1 >( u ), dFlux );
-        return std::make_tuple( source, dFlux );
+        return ValueType( source, dFlux );
       }
 
       template< class Point >
@@ -969,7 +973,7 @@ namespace Dune
             model().linSource( std::get< 0 >( u ), std::get< 1 >( u ), x, std::get< 0 >( phi ), std::get< 1 >( phi ), source );
             JacobianRangeType dFlux( 0 );
             model().linDiffusiveFlux( std::get< 0 >( u ), std::get< 1 >( u ), x, std::get< 0 >( phi ), std::get< 1 >( phi ), dFlux );
-            return std::make_tuple( source, dFlux );
+            return ValueType( source, dFlux );
           };
       }
 
@@ -978,7 +982,7 @@ namespace Dune
       {
         RangeType alpha( 0 );
         model().alpha( x, std::get< 0 >( u ), alpha );
-        return std::make_tuple( alpha, 0 );
+        return ValueType( alpha, 0 );
       }
 
       template< class Point >
@@ -987,7 +991,7 @@ namespace Dune
         return [ this, x, u ] ( const ValueType &phi ) {
             RangeType alpha( 0 );
             model().linAlpha( std::get< 0 >( u ), x, std::get< 0 >( phi ), alpha );
-            return std::make_tuple( alpha, 0 );
+            return ValueType( alpha, 0 );
           };
       }
 
@@ -1001,22 +1005,24 @@ namespace Dune
         const auto normal = intersection().unitOuterNormal( xIn.localPosition() );
 
         ValueType uJump( 0, 0 );
-        std::get< 0 >( uJump ) = std::get< 0 >( uIn ) - std::get< 0 >( uOut );
+        std::get< 0 >( uJump ) = std::get< 0 >( uOut ) - std::get< 0 >( uIn );
         for( int i = 0; i < RangeType::dimension; ++i )
           std::get< 1 >( uJump )[ i ].axpy( std::get< 0 >( uJump )[ i ], normal );
 
         model().init( outside );
         JacobianRangeType dFluxOut( 0 ), dFluxPrimeOut( 0 );
         model().diffusiveFlux( xOut, std::get< 0 >( uOut ), std::get< 1 >( uJump ), dFluxPrimeOut );
-        model().diffusiveFlux( xOut, 0, 0, dFluxOut );
+        model().diffusiveFlux( xOut, std::get< 0 >( uOut ), 0, dFluxOut );
         dFluxPrimeOut -= dFluxOut;
+        dFluxOut = 0;
         model().diffusiveFlux( xOut, std::get< 0 >( uOut ), std::get< 1 >( uOut ), dFluxOut );
 
         model().init( inside );
         JacobianRangeType dFluxIn( 0 ), dFluxPrimeIn( 0 );
         model().diffusiveFlux( xIn, std::get< 0 >( uIn ), std::get< 1 >( uJump ), dFluxPrimeIn );
-        model().diffusiveFlux( xIn, 0, 0, dFluxIn );
+        model().diffusiveFlux( xIn, std::get< 0 >( uIn ), 0, dFluxIn );
         dFluxPrimeIn -= dFluxIn;
+        dFluxIn = 0;
         model().diffusiveFlux( xIn, std::get< 0 >( uIn ), std::get< 1 >( uIn ), dFluxIn );
 
         RangeType int0 = std::get< 0 >( uJump );
@@ -1027,7 +1033,7 @@ namespace Dune
         dFluxPrimeIn *= -half;
         dFluxPrimeOut *= -half;
 
-        return std::make_pair( ValueType( int0, dFluxPrimeIn ), ValueType( -int0, dFluxPrimeOut ) );
+        return std::make_pair( ValueType( -int0, dFluxPrimeIn ), ValueType( int0, dFluxPrimeOut ) );
       }
 
       template< class Point >
@@ -1036,7 +1042,7 @@ namespace Dune
         const auto normal = intersection().unitOuterNormal( xIn.localPosition() );
 
         ValueType uJump( 0, 0 );
-        std::get< 0 >( uJump ) = std::get< 0 >( uIn ) - std::get< 0 >( uOut );
+        std::get< 0 >( uJump ) = std::get< 0 >( uOut ) - std::get< 0 >( uIn );
         for( int i = 0; i < RangeType::dimension; ++i )
           std::get< 1 >( uJump )[ i ].axpy( std::get< 0 >( uJump )[ i ], normal );
 
@@ -1047,7 +1053,7 @@ namespace Dune
           const RangeFieldType half = RangeFieldType( 1 ) / RangeFieldType( 2 );
 
           ValueType phiJump( 0, 0 );
-          std::get< 0 >( phiJump ) = std::get< 0 >( phiIn );
+          std::get< 0 >( phiJump ) -= std::get< 0 >( phiIn );
           for( int i = 0; i < RangeType::dimension; ++i )
             std::get< 1 >( phiJump )[ i ].axpy( std::get< 0 >( phiJump )[ i ], normal );
 
@@ -1058,6 +1064,9 @@ namespace Dune
           model().init( inside );
           JacobianRangeType dFluxIn( 0 ), dFluxPrimeIn( 0 );
           model().linDiffusiveFlux( std::get< 0 >( uIn ), std::get< 1 >( uJump ), xIn, std::get< 0 >( phiIn ), std::get< 1 >( phiJump ), dFluxPrimeIn );
+          model().linDiffusiveFlux( std::get< 0 >( uIn ), 0, xIn, std::get< 0 >( phiIn ), 0, dFluxIn );
+          dFluxPrimeIn -= dFluxIn;
+          dFluxIn = 0;
           model().linDiffusiveFlux( std::get< 0 >( uIn ), std::get< 1 >( uIn ), xIn, std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), dFluxIn );
 
           RangeType int0 = std::get< 0 >( phiJump );
@@ -1067,7 +1076,7 @@ namespace Dune
           dFluxPrimeIn *= -half;
           dFluxPrimeOut *= -half;
 
-          return std::make_pair( ValueType( int0, dFluxPrimeIn ), ValueType( -int0, dFluxPrimeOut ) );
+          return std::make_pair( ValueType( -int0, dFluxPrimeIn ), ValueType( int0, dFluxPrimeOut ) );
         };
 
         auto intOut = [ this, xIn, uIn, xOut, uOut, normal, uJump ] ( const ValueType &phiOut ) {
@@ -1079,11 +1088,14 @@ namespace Dune
           ValueType phiJump( 0, 0 );
           std::get< 0 >( phiJump ) = std::get< 0 >( phiOut );
           for( int i = 0; i < RangeType::dimension; ++i )
-            std::get< 1 >( phiJump )[ i ].axpy( -std::get< 0 >( phiJump )[ i ], normal );
+            std::get< 1 >( phiJump )[ i ].axpy( std::get< 0 >( phiJump )[ i ], normal );
 
           model().init( outside );
           JacobianRangeType dFluxOut( 0 ), dFluxPrimeOut( 0 );
           model().linDiffusiveFlux( std::get< 0 >( uOut ), std::get< 1 >( uJump ), xOut, std::get< 0 >( phiOut ), std::get< 1 >( phiJump ), dFluxPrimeOut );
+          model().linDiffusiveFlux( std::get< 0 >( uOut ), 0, xOut, std::get< 0 >( phiOut ), 0, dFluxOut );
+          dFluxPrimeOut -= dFluxOut;
+          dFluxOut = 0;
           model().linDiffusiveFlux( std::get< 0 >( uOut ), std::get< 1 >( uOut ), xOut, std::get< 0 >( phiOut ), std::get< 1 >( phiOut ), dFluxOut );
 
           model().init( inside );
@@ -1097,7 +1109,7 @@ namespace Dune
           dFluxPrimeIn *= -half;
           dFluxPrimeOut *= -half;
 
-          return std::make_pair( ValueType( int0, dFluxPrimeIn ), ValueType( -int0, dFluxPrimeOut ) );
+          return std::make_pair( ValueType( -int0, dFluxPrimeIn ), ValueType( int0, dFluxPrimeOut ) );
         };
 
         return std::make_pair( intIn, intOut );
