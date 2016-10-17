@@ -22,10 +22,40 @@ namespace Dune
   {
 
     // registerScheme
-    // -------------
+    // --------------
 
     namespace detail
     {
+      // registerSchemeConstructor
+      // -------------------------
+      template< class Scheme, class Holder, class Alias >
+      void registerSchemeConstructor ( pybind11::class_< Scheme, Holder, Alias > &cls, std::false_type )
+      {}
+
+      template< class Scheme, class Holder, class Alias >
+      void registerSchemeConstructor ( pybind11::class_< Scheme, Holder, Alias > &cls, std::true_type )
+      {
+        using pybind11::operator""_a;
+        typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
+        typedef typename Scheme::DiscreteFunctionSpaceType Space;
+        typedef typename Scheme::ModelType ModelType;
+        cls.def( "__init__", [] ( Scheme &self, Space &space, const ModelType &model ) {
+            new (&self) Scheme( space, model );
+          }, "space"_a, "model"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
+        cls.def( "__init__", [] ( Scheme &self, Space &space, const ModelType &model, const pybind11::dict &parameters ) {
+            new (&self) Scheme( space, model, pyParameter( parameters, std::make_shared< std::string >() ) );
+          }, "space"_a, "model"_a, "parameters"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
+      }
+
+      template< class Scheme, class Holder, class Alias >
+      void registerSchemeConstructor ( pybind11::class_< Scheme, Holder, Alias > &cls )
+      {
+        typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
+        typedef typename Scheme::DiscreteFunctionSpaceType Space;
+        typedef typename Scheme::ModelType ModelType;
+        registerSchemeConstructor( cls, std::is_constructible< Scheme, Space&, ModelType& >() );
+      }
+
       // register assemble method if data method is available (and return value is registered)
       template <class Scheme,class Cls>
       auto registerSchemeAssemble(Cls &cls,int)
@@ -48,7 +78,7 @@ namespace Dune
       {}
 
       template< class Scheme, class Cls >
-      void registerScheme ( pybind11::module module, Cls &cls, std::true_type)
+      void registerScheme ( pybind11::module module, Cls &cls)
       {
         typedef typename Scheme::DiscreteFunctionSpaceType Space;
         typedef typename Space::RangeType RangeType;
@@ -58,13 +88,7 @@ namespace Dune
 
         using pybind11::operator""_a;
 
-        cls.def( "__init__", [] ( Scheme &self, Space &space, const ModelType &model ) {
-            new (&self) Scheme( space, model );
-          }, "space"_a, "model"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
-
-        cls.def( "__init__", [] ( Scheme &self, Space &space, const ModelType &model, const pybind11::dict &parameters ) {
-            new (&self) Scheme( space, model, pyParameter( parameters, std::make_shared< std::string >() ) );
-          }, "space"_a, "model"_a, "parameters"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
+        registerSchemeConstructor( cls );
 
         cls.def("_solve", [] (Scheme &scheme, DiscreteFunction &solution) { scheme.solve(solution); });
         cls.def("__call__", [] (Scheme &scheme, const DiscreteFunction &arg, DiscreteFunction &dest) { scheme(arg,dest); });
@@ -90,7 +114,7 @@ namespace Dune
     {
       typedef typename Scheme::DiscreteFunctionSpaceType Space;
       typedef typename Scheme::ModelType ModelType;
-      detail::registerScheme<Scheme>(module, cls, std::is_constructible<Scheme, Space&, ModelType&>());
+      detail::registerScheme<Scheme>(module, cls);
     }
 
   } // namespace FemPy
