@@ -102,6 +102,7 @@ namespace Dune
         template< class Integrands, std::enable_if_t< HasInteriorIntegrandCheck< Integrands >::value, int > = 0 >
         static bool hasInteriorIntegrand ( const Integrands &integrands )
         {
+          static_assert( HasInteriorIntegrand< Integrands >::value, "Integrands providing check for interior integrand must also provide the integrand." );
           return integrands.hasInterior();
         }
 
@@ -166,6 +167,7 @@ namespace Dune
         template< class Integrands, std::enable_if_t< HasBoundaryIntegrandCheck< Integrands >::value, int > = 0 >
         static bool hasBoundaryIntegrand ( const Integrands &integrands )
         {
+          static_assert( HasBoundaryIntegrand< Integrands >::value, "Integrands providing check for boundary integrand must also provide the integrand." );
           return integrands.hasBoundary();
         }
 
@@ -230,6 +232,7 @@ namespace Dune
         template< class Integrands, std::enable_if_t< HasSkeletonIntegrandCheck< Integrands >::value, int > = 0 >
         static bool hasSkeletonIntegrand ( const Integrands &integrands )
         {
+          static_assert( HasSkeletonIntegrand< Integrands >::value, "Integrands providing check for skeleton integrand must also provide the integrand." );
           return integrands.hasSkeleton();
         }
 
