@@ -5,6 +5,14 @@ from ufl.constantvalue import Zero
 from ufl.core.multiindex import MultiIndex
 
 
+def keys(shape):
+    if len(shape) > 0:
+        return [(i,) + t for i in range(0, shape[0]) for t in keys(shape[1:])]
+    else:
+        return [tuple()]
+
+
+
 # ExprTensor
 # ----------
 
@@ -65,7 +73,7 @@ class ExprTensor:
             raise Exception('Expect tuple or MultiIndex to access component')
 
     def keys(self):
-        return self._keys(self.shape)
+        return keys(self.shape)
 
     def as_ufl(self):
         return self._as_ufl(self.shape, self.data)
@@ -81,12 +89,6 @@ class ExprTensor:
             return as_tensor([self._as_ufl(shape[1:], data[i]) for i in range(0, shape[0])])
         else:
             return data
-
-    def _keys(self, shape):
-        if len(shape) > 0:
-            return [(i,) + t for i in range(0, shape[0]) for t in self._keys(shape[1:])]
-        else:
-            return [tuple()]
 
     def _div(self, shape, tensor, value):
         if len(shape) > 0:
