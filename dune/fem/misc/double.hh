@@ -100,7 +100,11 @@ namespace Dune
 
       inline static ThisType &instance ()
       {
+#ifdef HAVE_PTHREAD
         static thread_local ThisType instance;
+#else
+        static ThisType instance;
+#endif
         return instance;
       }
     };
@@ -134,7 +138,11 @@ namespace Dune
 
       inline static ThisType &instance ()
       {
+#ifdef HAVE_PTHREAD
         static thread_local ThisType instance;
+#else
+        static ThisType instance;
+#endif
         return instance;
       }
     };
