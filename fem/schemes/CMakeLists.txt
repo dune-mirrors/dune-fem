@@ -8,6 +8,7 @@ set(HEADERS
   estimator.hh
   femscheme.hh
   galerkin.hh
+  integrands.hh
   linearized.hh
   rhs.hh
   solver.hh
