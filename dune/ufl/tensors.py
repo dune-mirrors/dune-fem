@@ -33,7 +33,10 @@ class ExprTensor:
 
     def __truediv__(self, other):
         if isinstance(other, ExprTensor):
-            raise Exception('Cannot divide by tensors tensors.')
+            if len(other.shape) > 0:
+                raise Exception('Cannot divide by tensors tensors.')
+            else:
+                other = other.data
         return ExprTensor(self.shape, self._div(self.shape, self.data, other))
 
     def __mul__(self, other):
