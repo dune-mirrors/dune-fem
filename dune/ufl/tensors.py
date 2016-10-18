@@ -46,7 +46,7 @@ class ExprTensor:
             key = key.indices()
         if isinstance(key, tuple):
             if len(key) != len(self.shape):
-                raise Exception('Expect key of length ' + str(len(shape)) + '.')
+                raise Exception('Expect key of length ' + str(len(self.shape)) + ' (got ' + str(len(key)) + ').')
             data = self.data
             while len(key) > 0:
                 data = data[int(key[0])]
@@ -60,7 +60,7 @@ class ExprTensor:
             key = key.indices()
         if isinstance(key, tuple):
             if len(key) != len(self.shape):
-                raise Exception('Expect key of length ' + str(len(shape)) + '.')
+                raise Exception('Expect key of length ' + str(len(self.shape)) + ' (got ' + str(len(key)) + ').')
             if len(key) > 0:
                 data = self.data
                 while len(key) > 1:
