@@ -2,7 +2,7 @@ from __future__ import division, print_function
 
 from ufl import as_tensor
 from ufl.constantvalue import Zero
-from ufl.core.multiindex import FixedIndex, MultiIndex
+from ufl.core.multiindex import MultiIndex
 
 
 # ExprTensor
@@ -35,26 +35,24 @@ class ExprTensor:
 
     def __getitem__(self, key):
         if isinstance(key, MultiIndex):
+            key = key.indices()
+        if isinstance(key, tuple):
             if len(key) != len(self.shape):
                 raise Exception('Expect key of length ' + str(len(shape)) + '.')
-            if not all(isinstance(idx, FixedIndex) for idx in key):
-                raise Exception('Expect only FixedIndex entries in MultiIndex.')
             data = self.data
-            key = key.indices()
             while len(key) > 0:
                 data = data[int(key[0])]
                 key = key[1:]
             return data
         else:
-            raise Exception('Expect MultiIndex to access component')
+            raise Exception('Expect tuple or MultiIndex to access component')
 
     def __setitem__(self, key, value):
         if isinstance(key, MultiIndex):
+            key = key.indices()
+        if isinstance(key, tuple):
             if len(key) != len(self.shape):
                 raise Exception('Expect key of length ' + str(len(shape)) + '.')
-            if not all(isinstance(idx, FixedIndex) for idx in key):
-                raise Exception('Expect only FixedIndex entries in MultiIndex.')
-            key = key.indices()
             if len(key) > 0:
                 data = self.data
                 while len(key) > 1:
@@ -64,10 +62,10 @@ class ExprTensor:
             else:
                 self.data = value
         else:
-            raise Exception('Expect MultiIndex to access component')
+            raise Exception('Expect tuple or MultiIndex to access component')
 
     def keys(self):
-        return [MultiIndex(idx) for idx in self._keys(self.shape)]
+        return self._keys(self.shape)
 
     def as_ufl(self):
         return self._as_ufl(self.shape, self.data)
@@ -86,9 +84,9 @@ class ExprTensor:
 
     def _keys(self, shape):
         if len(shape) > 0:
-            return [(FixedIndex(i),) + t for i in range(0, shape[0]) for t in self._keys(shape[1:])]
+            return [(i,) + t for i in range(0, shape[0]) for t in self._keys(shape[1:])]
         else:
-            return tuple()
+            return [tuple()]
 
     def _div(self, shape, tensor, value):
         if len(shape) > 0:

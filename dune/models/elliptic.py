@@ -10,6 +10,8 @@ import sys
 import timeit
 import types
 
+from ufl.core.multiindex import FixedIndex, MultiIndex
+
 from dune.ufl import GridCoefficient
 from dune.ufl.tensors import ExprTensor
 from dune.source import SourceWriter
@@ -525,15 +527,14 @@ class CodeGenerator(ufl.algorithms.transformer.Transformer):
             return cexpr
 
     def translateIndex(self, index):
-        if isinstance(index, ufl.core.multiindex.MultiIndex):
-            result = ''
-            for component in index:
-                result += self.translateIndex(component)
-            return result
-        elif isinstance(index, ufl.core.multiindex.FixedIndex):
+        if isinstance(index, (tuple, MultiIndex)):
+            return ''.join([self.translateIndex(i) for i in index])
+        elif isinstance(index, (int, FixedIndex)):
             return '[ ' + str(index) + ' ]'
         else:
             raise Exception('Index type not supported: ' + repr(index))
+
+
 
 # generateCode
 # ------------
