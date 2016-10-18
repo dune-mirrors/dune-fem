@@ -10,16 +10,17 @@ import sys
 import timeit
 import types
 
+from ufl.algorithms import expand_compounds, expand_derivatives, expand_indices
 from ufl.core.multiindex import FixedIndex, MultiIndex
 
 from dune.ufl import GridCoefficient
 from dune.ufl.tensors import ExprTensor
+from dune.ufl.linear import splitMultiLinearExpr
+
 from dune.source import SourceWriter
 from dune.source import BaseModel
 from dune.generator import builder
 
-# EllipticModel
-# -------------
 
 class EllipticModel(BaseModel):
     def __init__(self, dimRange, signature):
@@ -130,85 +131,6 @@ class EllipticModel(BaseModel):
         setattr(self, key, newCode)
 
 
-
-# FluxExtracter
-# -------------
-
-class FluxExtracter(ufl.algorithms.transformer.Transformer):
-    def __init__(self):
-        ufl.algorithms.transformer.Transformer.__init__(self)
-
-    def argument(self, expr):
-        if expr.number() == 0:
-            raise Exception('Test function should only occur in indexed expressions.')
-        else:
-            return expr
-
-    grad = ufl.algorithms.transformer.Transformer.reuse_if_possible
-
-    def indexed(self, expr):
-        if len(expr.ufl_operands) != 2:
-            raise Exception('Indexed expressions must have exactly two children.')
-        operand = expr.ufl_operands[0]
-        index = expr.ufl_operands[1]
-        if self.isTestFunction(operand):
-            tensor = ExprTensor(operand.ufl_shape)
-            tensor[index] = ufl.constantvalue.IntValue(1)
-            return {operand : tensor}
-        else:
-            return self.reuse_if_possible(expr, self.visit(operand), index)
-
-    def division(self, expr, left, right):
-        if isinstance(left, ufl.core.expr.Expr) and isinstance(right, ufl.core.expr.Expr):
-            return self.reuse_if_possible(expr, left, right)
-        elif isinstance(left, dict) and isinstance(right, ufl.core.expr.Expr):
-            return {op : left[op] / right for op in left}
-        else:
-            raise Exception('Only the left child of a division may access the test function.')
-
-    def product(self, expr, left, right):
-        if isinstance(left, ufl.core.expr.Expr) and isinstance(right, ufl.core.expr.Expr):
-            return self.reuse_if_possible(expr, left, right)
-        elif isinstance(left, dict) and isinstance(right, ufl.core.expr.Expr):
-            return {op : left[op] * right for op in left}
-        elif isinstance(left, ufl.core.expr.Expr) and isinstance(right, dict):
-            return {op : right[op] * left for op in right}
-        else:
-            raise Exception('Only one child of a product may access the test function.')
-
-    def sum(self, expr, left, right):
-        if isinstance(left, ufl.core.expr.Expr) and isinstance(right, ufl.core.expr.Expr):
-            return self.reuse_if_possible(expr, left, right)
-        elif isinstance(left, dict) and isinstance(right, dict):
-            for op in right:
-                left[op] = (left[op] + right[op]) if op in left else right[op]
-            return left
-        else:
-            raise Exception('Either both summands must contain test function or none')
-
-    def nonlinear(self, expr, *operands):
-        for operand in operands:
-            if isinstance(operand, dict):
-                raise Exception('Test function cannot appear in nonlinear expressions.')
-        return self.reuse_if_possible(expr, *operands)
-
-    atan = nonlinear
-    atan_2 = nonlinear
-    cos = nonlinear
-    sin = nonlinear
-    power = nonlinear
-    tan = nonlinear
-
-    def terminal(self, expr):
-        return expr
-
-    def isTestFunction(self, expr):
-        while isinstance(expr, ufl.differentiation.Grad):
-            expr = expr.ufl_operands[0]
-        return isinstance(expr, ufl.argument.Argument) and expr.number() == 0
-
-    def variable(self, expr):
-        return expr.expression()
 
 # DerivativeExtracter
 # -------------
@@ -327,24 +249,24 @@ def splitUFLForm(form, linear):
     diffusiveFlux = ExprTensor(dphi.ufl_shape)
     boundarySource = ExprTensor(phi.ufl_shape)
 
-    form = ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(form)))
+    form = expand_indices(expand_derivatives(expand_compounds(form)))
     for integral in form.integrals():
         if integral.integral_type() == 'cell':
-            fluxExprs = FluxExtracter().visit(integral.integrand())
+            fluxExprs = splitMultiLinearExpr(integral.integrand(), [phi])
             for op in fluxExprs:
-                if op == phi:
+                if op[0] == phi:
                     source = source + fluxExprs[op]
-                elif op == dphi:
+                elif op[0] == dphi:
                     diffusiveFlux = diffusiveFlux + fluxExprs[op]
                 else:
-                    raise Exception('Invalid derivative encountered in bulk integral: ' + op)
+                    raise Exception('Invalid derivative encountered in bulk integral: ' + str(op[0]))
         elif integral.integral_type() == 'exterior_facet':
-            fluxExprs = FluxExtracter().visit(integral.integrand())
+            fluxExprs = splitMultiLinearExpr(integral.integrand(), [phi])
             for op in fluxExprs:
-                if op == phi:
+                if op[0] == phi:
                     boundarySource = boundarySource + fluxExprs[op]
                 else:
-                    raise Exception('Invalid derivative encountered in boundary integral: ' + op)
+                    raise Exception('Invalid derivative encountered in boundary integral: ' + str(op[0]))
         else:
             raise NotImplementedError('Integrals of type ' + integral.integral_type() + ' are not supported.')
 
