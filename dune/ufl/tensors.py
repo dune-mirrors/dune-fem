@@ -41,10 +41,10 @@ class ExprTensor:
                 raise Exception('Expect only FixedIndex entries in MultiIndex.')
             data = self.data
             key = key.indices()
-            while len(key) > 1:
+            while len(key) > 0:
                 data = data[int(key[0])]
                 key = key[1:]
-            return data[int(key[0])]
+            return data
         else:
             raise Exception('Expect MultiIndex to access component')
 
@@ -54,12 +54,15 @@ class ExprTensor:
                 raise Exception('Expect key of length ' + str(len(shape)) + '.')
             if not all(isinstance(idx, FixedIndex) for idx in key):
                 raise Exception('Expect only FixedIndex entries in MultiIndex.')
-            data = self.data
             key = key.indices()
-            while len(key) > 1:
-                data = data[int(key[0])]
-                key = key[1:]
-            data[int(key[0])] = value
+            if len(key) > 0:
+                data = self.data
+                while len(key) > 1:
+                    data = data[int(key[0])]
+                    key = key[1:]
+                data[int(key[0])] = value
+            else:
+                self.data = value
         else:
             raise Exception('Expect MultiIndex to access component')
 
@@ -70,37 +73,37 @@ class ExprTensor:
         return self._as_ufl(self.shape, self.data)
 
     def _add(self, shape, left, right):
-        if len(shape) == 1:
-            return [left[i] + right[i] for i in range(0, shape[0])]
-        else:
+        if len(shape) > 0:
             return [self._add(shape[1:], left[i], right[i]) for i in range(0, shape[0])]
+        else:
+            return left + right
 
     def _as_ufl(self, shape, data):
-        if len(shape) == 1:
-            return as_tensor(data)
-        else:
+        if len(shape) > 0:
             return as_tensor([self._as_ufl(shape[1:], data[i]) for i in range(0, shape[0])])
+        else:
+            return data
 
     def _keys(self, shape):
-        if len(shape) == 1:
-            return [(FixedIndex(i),) for i in range(0, shape[0])]
-        else:
+        if len(shape) > 0:
             return [(FixedIndex(i),) + t for i in range(0, shape[0]) for t in self._keys(shape[1:])]
+        else:
+            return tuple()
 
     def _div(self, shape, tensor, value):
-        if len(shape) == 1:
-            return [tensor[i] / value for i in range(0, shape[0])]
-        else:
+        if len(shape) > 0:
             return [self._div(shape[1:], tensor[i], value) for i in range(0, shape[0])]
+        else:
+            return tensor / value
 
     def _mul(self, shape, tensor, value):
-        if len(shape) == 1:
-            return [tensor[i] * value for i in range(0, shape[0])]
-        else:
+        if len(shape) > 0:
             return [self._mul(shape[1:], tensor[i], value) for i in range(0, shape[0])]
+        else:
+            return tensor * value
 
     def _zero(self, shape):
-        if len(shape) == 1:
-            return [Zero() for i in range(0, shape[0])]
-        else:
+        if len(shape) > 0:
             return [self._zero(shape[1:]) for i in range(0, shape[0])]
+        else:
+            return Zero()
