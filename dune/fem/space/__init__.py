@@ -23,7 +23,7 @@ def interpolate( self, func, name=None, **kwargs ):
         gf = create.function("local", self.grid, "tmp", order, func)
         return interpolate(self, gf, name, **kwargs)
     elif gl == 0: # already a grid function
-        storage = kwargs.pop('storage', "adaptive")
+        storage = self.storage
         if not name:
             name = func.name
         df = create.discretefunction(storage, self, name=name, **kwargs)
@@ -37,17 +37,34 @@ def numpyfunction( self, data, name ):
 
 generator = SimpleGenerator("Space", "Dune::FemPy")
 
-def addAttr(module, cls, field):
+def canonicalizeStorage(storage):
+    if not storage:
+        return "fem"
+    if storage == "Adaptive" or storage == "adaptive":
+        return "fem"
+    elif storage == "Istl" or storage == "istl":
+        return "istl"
+    elif storage == "Numpy" or storage == "numpy":
+        return "numpy"
+    elif storage == "Fem" or storage == "fem":
+        return "fem"
+    elif storage == "Eigen" or storage == "eigen":
+        return "eigen"
+    else:
+        raise KeyError("Invalid storage: " + storage)
+
+def addAttr(module, cls, field, storage):
     setattr(cls, "_module", module)
     setattr(cls, "field", field )
+    setattr(cls, "storage", canonicalizeStorage(storage) )
     setattr(cls, "interpolate", interpolate )
     setattr(cls, "numpyfunction", numpyfunction )
 
 fileBase = "femspace"
 
-def module(field, includes, typeName, constructors=None, methods=None):
+def module(field, storage, includes, typeName, constructors=None, methods=None):
     includes = includes + ["dune/fempy/py/space.hh"]
     moduleName = fileBase + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
     module = generator.load(includes, typeName, moduleName, constructors, methods)
-    addAttr(module, module.Space, field)
+    addAttr(module, module.Space, field, storage)
     return module

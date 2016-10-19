@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 import dune.common.checkconfiguration as checkconfiguration
 
-def dgonb(gridview, order=1, dimrange=1, field="double", storage="adaptive", **unused):
+def dgonb(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
     """create a discontinous galerkin space with elementwise orthonormal basis functions
 
     Args:
@@ -40,9 +40,9 @@ def dgonb(gridview, order=1, dimrange=1, field="double", storage="adaptive", **u
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
 
-    return module(field, includes, typeName).Space(gridview)
+    return module(field, storage, includes, typeName).Space(gridview)
 
-def lagrange(view, order=1, dimrange=1, field="double", storage="adaptive", **unused):
+def lagrange(view, order=1, dimrange=1, field="double", storage=None, **unused):
     """create a Lagrange space
 
     Args:
@@ -76,9 +76,9 @@ def lagrange(view, order=1, dimrange=1, field="double", storage="adaptive", **un
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + view._module._typeName + " >, " + str(order) + " >"
 
-    return module(field, includes, typeName).Space(view)
+    return module(field, storage, includes, typeName).Space(view)
 
-def p1Bubble(gridview, dimrange=1, field="double", order=1, storage="adaptive", **unused):
+def p1Bubble(gridview, dimrange=1, field="double", order=1, storage=None, **unused):
     """create a P1 space enriched with element bubble functions
 
     Args:
@@ -111,4 +111,4 @@ def p1Bubble(gridview, dimrange=1, field="double", order=1, storage="adaptive", 
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._module._typeName + " > >"
 
-    return module(field, includes, typeName).Space(gridview)
+    return module(field, storage, includes, typeName).Space(gridview)
