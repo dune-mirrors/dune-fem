@@ -817,7 +817,7 @@ namespace Dune
         typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
         NewtonInverseOperator< typename GalerkinOperatorType::JacobianOperatorType, LinearInverseOperatorType > invOp( galerkinOperator_, parameter_ );
         invOp( rhs_, solution );
-        // std::cout << "Linear Iterations: " << invOp.linearIterations() << std::endl;
+        std::cout << "Linear Iterations: " << invOp.linearIterations() << std::endl;
       }
 
       template< class GridFunction >
