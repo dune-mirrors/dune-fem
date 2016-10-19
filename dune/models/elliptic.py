@@ -13,7 +13,7 @@ import types
 from ufl.algorithms import expand_compounds, expand_derivatives, expand_indices
 from ufl.core.multiindex import FixedIndex, MultiIndex
 
-from dune.ufl import GridCoefficient
+from dune.ufl import codegen, GridCoefficient
 from dune.ufl.tensors import ExprTensor
 from dune.ufl.linear import splitMultiLinearExpr
 
@@ -280,194 +280,16 @@ def splitUFLForm(form, linear):
 
     return source, diffusiveFlux, boundarySource
 
-# CodeGenerator
-# -------------
-
-class CodeGenerator(ufl.algorithms.transformer.Transformer):
-    def __init__(self, predefined, coefficients, tempVars):
-        ufl.algorithms.transformer.Transformer.__init__(self)
-        self.using = set()
-        self.exprs = predefined
-        self.coefficients = coefficients
-        self.code = []
-        self.tempVars = tempVars
-
-    def getNumber(self, expr):
-        try:
-            name = expr.str()
-        except:
-            name = str(expr)
-        e = [ ee for ee in self.coefficients if ee["name"] == name ]
-        if len(e) > 1:
-            raise KeyError('two coefficients provided with same name')
-        return e[0]["number"]
-
-    def argument(self, expr):
-        if expr in self.exprs:
-            return self.exprs[expr]
-        else:
-            raise Exception('Unknown argument: ' + str(expr.number()))
-
-    def atan(self, expr):
-        self.using.add('using std::atan;')
-        if expr not in self.exprs:
-            self.exprs[expr] = self._makeTmp('atan( ' + self.visit(expr.ufl_operands[0]) + ' )')
-        return self.exprs[expr]
-
-    def atan_2(self, expr):
-        self.using.add('using std::atan2;')
-        if expr not in self.exprs:
-            self.exprs[expr] = self._makeTmp('atan2( ' + self.visit(expr.ufl_operands[0]) + ', ' + self.visit(expr.ufl_operands[1]) + ' )')
-        return self.exprs[expr]
-
-    def coefficient(self, expr):
-        if expr not in self.exprs:
-            idx = str(self.getNumber(expr))
-            if expr.is_cellwise_constant():
-                init = 'ConstantsRangeType< ' + idx + ' > cc' + idx + ' = constant< ' + idx + ' >();'
-                if not init in self.code:
-                    self.code.append(init)
-                self.exprs[expr] = 'cc' + idx
-            else:
-                init = 'CoefficientRangeType< ' + idx + ' > c' + idx + ';'
-                if not init in self.code:
-                    self.code.append(init)
-                    self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
-                self.exprs[expr] = 'c' + idx
-        return self.exprs[expr]
-
-    def cos(self, expr):
-        self.using.add('using std::cos;')
-        if expr not in self.exprs:
-            self.exprs[expr] = self._makeTmp('cos( ' + self.visit(expr.ufl_operands[0]) + ' )')
-        return self.exprs[expr]
-
-    def division(self, expr):
-        if expr in self.exprs:
-            return self.exprs[expr]
-        else:
-            left = self.visit(expr.ufl_operands[0])
-            right = self.visit(expr.ufl_operands[1])
-            self.exprs[expr] = self._makeTmp('(' + left + ' / ' + right + ')')
-            return self.exprs[expr]
-
-    def float_value(self, expr):
-        val = str(expr.value())
-        if "." not in val:
-            val = val + "."
-        if expr.value() < 0:
-            return '(' + val + ')'
-        else:
-            return val
-
-    def grad(self, expr):
-        if expr not in self.exprs:
-            operand = expr.ufl_operands[0]
-            if isinstance(operand, ufl.coefficient.Coefficient):
-                idx = str(self.getNumber(operand))
-                self.code.append('CoefficientJacobianRangeType< ' + idx + ' > dc' + idx + ';')
-                self.code.append('coefficient< ' + idx + ' >().jacobian( x, dc' + idx + ' );')
-                self.exprs[expr] = 'dc' + idx
-            elif isinstance(operand, ufl.differentiation.Grad):
-                operand = operand.ufl_operands[0]
-                if isinstance(operand, ufl.coefficient.Coefficient):
-                    idx = str(self.getNumber(operand))
-                    self.code.append('CoefficientHessianRangeType< ' + idx + ' > d2c' + idx + ';')
-                    self.code.append('coefficient< ' + idx + ' >().hessian( x, d2c' + idx + ' );')
-                    self.exprs[expr] = 'd2c' + idx
-                else:
-                    raise Exception('Elliptic model does not allow for second derivatives, yet.')
-            elif isinstance(operand, ufl.argument.Argument):
-                raise Exception('Unknown argument: ' + str(operand))
-            else:
-                raise Exception('Cannot compute gradient of ' + repr(expr))
-        return self.exprs[expr]
-
-    def indexed(self, expr, operand, index):
-        return operand + self.translateIndex(index)
-
-    int_value = float_value
-
-    def product(self, expr):
-        if expr in self.exprs:
-            return self.exprs[expr]
-        else:
-            left = self.visit(expr.ufl_operands[0])
-            right = self.visit(expr.ufl_operands[1])
-            self.exprs[expr] = self._makeTmp('(' + left + ' * ' + right + ')')
-            return self.exprs[expr]
-
-    def power(self, expr):
-        self.using.add('using std::pow;')
-        if expr not in self.exprs:
-            self.exprs[expr] = self._makeTmp('pow( ' + self.visit(expr.ufl_operands[0]) + ', ' + self.visit(expr.ufl_operands[1]) + ' )')
-        return self.exprs[expr]
-
-    def sin(self, expr):
-        self.using.add('using std::sin;')
-        if expr not in self.exprs:
-            self.exprs[expr] = self._makeTmp('sin( ' + self.visit(expr.ufl_operands[0]) + ' )')
-        return self.exprs[expr]
-
-    def spatial_coordinate(self, expr):
-        self.using.add('using Dune::Fem::coordinate;')
-        if expr not in self.exprs:
-            self.exprs[expr] = self._makeTmp('entity().geometry().global( coordinate( x ) )')
-        return self.exprs[expr]
-
-    # only implemented for 3D normal
-    def facet_normal(self, expr):
-        self.using.add('const DomainType w1 = -entity.geometry.jacobianTransposed(coordinate(x))[0];\n' \
-                  '      const DomainType w2 = -entity.geometry.jacobianTransposed(coordinate(x))[1];\n' \
-                  '      DomainType normal;\n' \
-                  '      normal[0]=w1[1]*w2[2]-w1[2]*w2[1];\n' \
-                  '      normal[1]=-(w1[0]*w2[2]-w1[2]*w2[0]);\n' \
-                  '      normal[2]=w1[0]*w2[1]-w1[1]*w2[0];\n' \
-                  '      normal/=2.*entity().geometry().volume();\n')
-        if expr not in self.exprs:
-            self.exprs[expr] = self._makeTmp('normal')
-        return self.exprs[expr]
-
-    def sum(self, expr, left, right):
-        return '(' + left + ' + ' + right + ')'
-
-    def tan(self, expr):
-        self.using.add('using std::tan;')
-        if expr not in self.exprs:
-            self.exprs[expr] = self._makeTmp('tan( ' + self.visit(expr.ufl_operands[0]) + ' )')
-        return self.exprs[expr]
-
-    def zero(self, expr):
-        return '0'
-
-    def _makeTmp(self, cexpr):
-        if self.tempVars:
-            var = 'tmp' + str(len(self.code))
-            self.code.append('const auto ' + var + ' = ' + cexpr + ';')
-            return var
-        else:
-            return cexpr
-
-    def translateIndex(self, index):
-        if isinstance(index, (tuple, MultiIndex)):
-            return ''.join([self.translateIndex(i) for i in index])
-        elif isinstance(index, (int, FixedIndex)):
-            return '[ ' + str(index) + ' ]'
-        else:
-            raise Exception('Index type not supported: ' + repr(index))
-
 
 
 # generateCode
 # ------------
 
 def generateCode(predefined, tensor, coefficients, tempVars = True):
-    generator = CodeGenerator(predefined, coefficients, tempVars)
-    results = []
-    for index in tensor.keys():
-        result = generator.visit(tensor[index])
-        results.append('result' + generator.translateIndex(index) + ' = ' + result + ';')
-    return list(generator.using) + generator.code + results
+    keys = tensor.keys()
+    expressions = [tensor[i] for i in keys]
+    preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars)
+    return preamble + [('result' + codegen.translateIndex(i) + ' = ' + r + ';') for i, r in zip(keys, results)]
 
 
 
