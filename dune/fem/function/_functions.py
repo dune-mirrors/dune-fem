@@ -54,9 +54,14 @@ def cppFunction(gridview, name, order, code, *args, **kwargs):
 def uflFunction(gridview, name, order, ufl, *args, **kwargs):
     return dune.models.localfunction.UFLFunction(gridview, name, order, ufl, *args, **kwargs)
 
-def discreteFunction(df, space, name, *args, **kwargs):
-    from dune.create import create
-    return create.discretefunction(df,space,name,**kwargs)
+def discreteFunction(space, name, expr=None, *args, **kwargs):
+    import dune.create as create
+    df = create.discretefunction(space.storage,space,name,**kwargs)
+    if expr:
+        df.interpolate( expr )
+    else:
+        df.interpolate( [0,]*df.dimRange )
+    return df
 
 def numpyFunction(space, vec, name="tmp", **unused):
     """create a discrete function - using the fem numpy storage as linear algebra backend
