@@ -37,26 +37,12 @@ def numpyfunction( self, data, name ):
 
 generator = SimpleGenerator("Space", "Dune::FemPy")
 
-def canonicalizeStorage(storage):
-    if not storage:
-        return "fem"
-    if storage == "Adaptive" or storage == "adaptive":
-        return "fem"
-    elif storage == "Istl" or storage == "istl":
-        return "istl"
-    elif storage == "Numpy" or storage == "numpy":
-        return "numpy"
-    elif storage == "Fem" or storage == "fem":
-        return "fem"
-    elif storage == "Eigen" or storage == "eigen":
-        return "eigen"
-    else:
-        raise KeyError("Invalid storage: " + storage)
-
 def addAttr(module, cls, field, storage):
+    if not storage:
+        storage = "adaptive"
     setattr(cls, "_module", module)
     setattr(cls, "field", field )
-    setattr(cls, "storage", canonicalizeStorage(storage) )
+    setattr(cls, "storage", storage )
     setattr(cls, "interpolate", interpolate )
     setattr(cls, "numpyfunction", numpyfunction )
 

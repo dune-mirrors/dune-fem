@@ -13,11 +13,11 @@ def burgers(space, model, name, viscosity, timestep, **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module
+    from . import module, storageToSolver
     vspace = space[0]
     pspace = space[1]
-    vstorage = vspape.storage
-    pstorage = pspace.storage
+    vstorage = storageToSolver(vspape.storage)
+    pstorage = storageToSolver(pspace.storage)
     if not (vstorage == pstorage):
         raise KeyError("storages provided differ")
 
@@ -41,8 +41,8 @@ def dg(space, model, name="tmp", **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module
-    storage = space.storage
+    from . import module, storageToSolver
+    storage = storageToSolver(space.storage)
 
     includes = [ "dune/fem/schemes/dgelliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._module._includes
     spaceType = space._module._typeName
@@ -57,8 +57,8 @@ def dg(space, model, name="tmp", **kwargs):
 
 
 def dgGalerkin(space, model, penalty, parameters={}):
-    from . import module
-    storage = space.storage
+    from . import module, storageToSolver
+    storage = storageToSolver(space.storage)
 
     spaceType = space._module._typeName
     gridPartType = "typename " + spaceType + "::GridPartType"
@@ -78,8 +78,8 @@ def dgGalerkin(space, model, penalty, parameters={}):
 
 
 def galerkin(space, model, parameters={}):
-    from . import module
-    storage = space.storage
+    from . import module, storageToSolver
+    storage = storageToSolver(space.storage)
 
     spaceType = space._module._typeName
     gridPartType = "typename " + spaceType + "::GridPartType"
@@ -102,8 +102,8 @@ def h1(space, model, parameters={}):
         Scheme: the constructed scheme
     """
 
-    from . import module
-    storage = space.storage
+    from . import module, storageToSolver
+    storage = storageToSolver(space.storage)
 
     includes = [ "dune/fem/schemes/elliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._includes
     spaceType = space._typeName
@@ -118,8 +118,8 @@ def h1(space, model, parameters={}):
 
 
 def h1Galerkin(space, model, parameters={}):
-    from . import module
-    storage = space.storage
+    from . import module, storageToSolver
+    storage = storageToSolver(space.storage)
 
     spaceType = space._module._typeName
     gridPartType = "typename " + spaceType + "::GridPartType"
@@ -139,7 +139,7 @@ def h1Galerkin(space, model, parameters={}):
 
 
 def linearized(scheme, ubar=None, parameters={}):
-    from . import module
+    from . import module, storageToSolver
     schemeType = scheme._typeName
     typeName = "Dune::Fem::LinearizedScheme< " + ", ".join([schemeType]) + " >"
     includes = ["dune/fem/schemes/linearized.hh", "dune/fempy/parameter.hh"] + scheme._includes
@@ -174,8 +174,8 @@ def nvdg(space, model, name="tmp", **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module
-    storage = space.storage
+    from . import module, storageToSolver
+    storage = storageToSolver(space.storage)
 
     includes = [ "dune/fem/schemes/nvdgelliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._module._includes
     spaceType = space._module._typeName
@@ -198,11 +198,11 @@ def stokes(space_or_df, model, name, viscosity, timestep, **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module
+    from . import module, storageToSolver
     vspace = space[0]
     pspace = space[1]
-    vstorage = vspape.storage
-    pstorage = pspace.storage
+    vstorage = storageToSolver(vspape.storage)
+    pstorage = storageToSolver(pspace.storage)
     if not (vstorage == pstorage):
         raise KeyError("storages provided differe")
 

@@ -29,6 +29,16 @@ def solve( scheme, target=None, name=None ):
 
 generator = SimpleGenerator("Scheme", "Dune::FemPy")
 
+def storageToSolver(storage):
+    if storage == "adaptive":
+        return "fem"
+    elif storage == "istl":
+        return "istl"
+    elif storage == "numpy":
+        return "numpy"
+    elif storage == "eigen":
+        return "eigen"
+
 def addAttr(module, cls):
     setattr(cls, "solve", solve)
 
