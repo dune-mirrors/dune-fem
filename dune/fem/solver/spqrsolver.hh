@@ -256,7 +256,7 @@ class SPQROp:public Operator<DF, DF>
   void decompose() const
   {
     const std::size_t dimMat(ccsmat_.N());
-    const int nnz(ccsmat_.getColStart()[dimMat]);
+    const std::size_t nnz(ccsmat_.getColStart()[dimMat]);
     // initialise the matrix A
     bool sorted(true);
     bool packed(true);
