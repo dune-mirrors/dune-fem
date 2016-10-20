@@ -127,7 +127,7 @@ namespace Dune
     // VTKIOBase
     // ---------
 
-    //! /brief Output using VTK
+    //! \brief Output using VTK
     template< class GridPart, bool subsampling >
     class VTKIOBase
     {

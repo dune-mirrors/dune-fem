@@ -72,7 +72,7 @@ namespace Dune
       };
 
     public:
-      /** /brief project function onto discrete discontinuous galerkin space
+      /** \brief project function onto discrete discontinuous galerkin space
        *
        * \param f  function that is going to be projected
        * \param discFunc discrete function storing the result

@@ -226,8 +226,8 @@ class SPQROp:public Operator<DF, DF>
     return 0;
   }
 
-  /** /brief Get QR factorization.
-   *  /warning It is up to the user to preserve consistency when modifyng it.
+  /** \brief Get QR factorization.
+   *  \warning It is up to the user to preserve consistency when modifyng it.
    */
   SuiteSparseQR_factorization<DofType>* getFactorization()
   {
@@ -252,7 +252,7 @@ class SPQROp:public Operator<DF, DF>
   mutable cholmod_dense* B_;
   mutable SuiteSparseQR_factorization<DofType>* spqrfactorization_;
 
-  // /brief Computes the SPQR decomposition.
+  // \brief Computes the SPQR decomposition.
   void decompose() const
   {
     const std::size_t dimMat(ccsmat_.N());
