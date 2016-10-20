@@ -284,7 +284,7 @@ class LDLOp:public Operator<DF, DF>
 
     double Info [AMD_INFO];
     if(amd_order (dimMat, ccsmat_.getColStart(), ccsmat_.getRowIndex(), P_, (DofType *) NULL, Info) < AMD_OK)
-      DUNE_THROW(InvalidStateException,"Error: AMD failed!");
+      DUNE_THROW(InvalidStateException,"LDL Error: AMD failed!");
     if(verbose_)
       amd_info (Info);
     // compute the symbolic factorisation
@@ -302,7 +302,10 @@ class LDLOp:public Operator<DF, DF>
     delete [] Lnz_;
 
     if(rank!=dimMat)
-      DUNE_THROW(InvalidStateException,"Error: LDL factorisation failed!");
+    {
+      std::cerr<<"LDL Error: rank is "<<rank<<" while matrix size is "<<dimMat<<"!"<<std::endl;
+      DUNE_THROW(InvalidStateException,"LDL Error: factorisation failed!");
+    }
   }
 };
 
