@@ -223,7 +223,7 @@ class UMFPACKOp:public Operator<DF, DF>
     return ccsmat_;
   }
 
-  // /brief Print some statistics about the UMFPACK decomposition.
+  // \brief Print some statistics about the UMFPACK decomposition.
   void printDecompositionInfo() const
   {
     Caller::report_info(UMF_Control,UMF_Decomposition_Info);
@@ -241,7 +241,7 @@ class UMFPACKOp:public Operator<DF, DF>
 
   typedef typename Dune::UMFPackMethodChooser<DofType> Caller;
 
-  // /brief Computes the UMFPACK decomposition.
+  // \brief Computes the UMFPACK decomposition.
   void decompose() const
   {
     const std::size_t dimMat(ccsmat_.N());

@@ -267,7 +267,7 @@ class LDLOp:public Operator<DF, DF>
   mutable DofType* Lx_;
   mutable int* Li_;
 
-  // /brief Computes the LDL decomposition.
+  // \brief Computes the LDL decomposition.
   void decompose() const
   {
     // allocate vectors
