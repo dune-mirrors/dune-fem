@@ -2,8 +2,12 @@
 #define DUNE_FEM_PERSISTENCEMANAGER_HH
 
 #include <fstream>
+#include <iostream>
 #include <list>
+#include <sstream>
+#include <string>
 #include <type_traits>
+#include <utility>
 
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/parameter.hh>

@@ -3,14 +3,13 @@
 
 #include <cmath>
 #include <fstream>
-#include <limits>
 #include <iomanip>
+#include <limits>
 #include <sstream>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/tuples.hh>
 
 namespace Dune
 {

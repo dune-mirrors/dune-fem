@@ -9,7 +9,6 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/forloop.hh>
-#include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
 
 #include <dune/fem/common/tupleutility.hh>

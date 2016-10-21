@@ -5,11 +5,9 @@
 #include <iostream>
 #include <set>
 #include <type_traits>
-#include <tuple>
 #include <vector>
 
 #include <dune/common/timer.hh>
-#include <dune/common/tuples.hh>
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/io/parameter.hh>

@@ -6,11 +6,9 @@
 #include <utility>
 
 #include <dune/common/forloop.hh>
-#include <dune/common/tuples.hh>
-
 #include <dune/common/std/utility.hh>
-#include <dune/fem/common/utility.hh>
 
+#include <dune/fem/common/utility.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>

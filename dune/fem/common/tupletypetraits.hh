@@ -1,13 +1,13 @@
 #ifndef DUNE_FEM_PASS_COMMON_TUPLETYPETRAITS_HH
 #define DUNE_FEM_PASS_COMMON_TUPLETYPETRAITS_HH
 
+#include <tuple>
 #include <type_traits>
 
-#include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
 #include <dune/common/typetraits.hh>
 
-#include "tupleutility.hh"
+#include <dune/fem/common/tupleutility.hh>
 
 namespace
 {
