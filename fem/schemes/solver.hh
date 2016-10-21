@@ -104,7 +104,7 @@ enum SolverType
   istl,        // use the dune-istl solvers
   umfpack,     // use the direct solver umfpack
   petsc,       // use the petsc package
-  numpy,       // use the numpy vectors based on pybind11
+  // numpy,       // use the numpy vectors based on pybind11
   eigen        // use the eigen vector library
 };
 enum OperatorType
@@ -200,7 +200,7 @@ struct Solvers<DFSpace,petsc,symmetric>
 };
 #endif
 
-#if HAVE_EIGEN
+#if 0 // HAVE_EIGEN
 template <class DFSpace, bool symmetric>
 struct Solvers<DFSpace,numpy,symmetric>
 {
