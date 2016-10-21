@@ -17,6 +17,7 @@ from dune.ufl import codegen, GridCoefficient
 from dune.ufl.tensors import ExprTensor
 from dune.ufl.linear import splitMultiLinearExpr
 
+from dune.source import Method, TypeAlias, Variable
 from dune.source import SourceWriter
 from dune.source import BaseModel
 from dune.generator import builder
@@ -52,74 +53,48 @@ class EllipticModel(BaseModel):
         self.arg_dr = 'JacobianRangeType &result'
         self.symmetric = 'false'
 
-    def main(self, sourceWriter, name='Model', targs=[]):
-        sourceWriter.typedef("Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >", "BoundaryIdProviderType")
-        sourceWriter.emit('static const bool symmetric = ' + self.symmetric + ';')
+    def main(self, name='Model', targs=[]):
+        hasDirichletBoundary = Method('bool hasDirichletBoundary', const=True)
+        hasDirichletBoundary.append('return ' + ('true' if self.hasDirichletBoundary else 'false') + ';')
 
-        sourceWriter.openConstMethod('void source', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_r])
-        sourceWriter.emit(self.source)
-        sourceWriter.closeConstMethod()
+        hasNeumanBoundary = Method('bool hasNeumanBoundary', const=True)
+        hasNeumanBoundary.append('return ' + ('true' if self.hasNeumanBoundary else 'false') + ';')
 
-        sourceWriter.openConstMethod('void linSource', targs=['class Point'], args=[self.arg_ubar, self.arg_dubar, self.arg_x, self.arg_u, self.arg_du, self.arg_r])
-        sourceWriter.emit(self.linSource)
-        sourceWriter.closeConstMethod()
+        isDirichletIntersection = Method('bool isDirichletIntersection', args=['const IntersectionType &intersection', 'Dune::FieldVector< int, dimRange > &dirichletComponent'], code=self.isDirichletIntersection, const=True)
 
-        sourceWriter.openConstMethod('void diffusiveFlux', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_dr])
-        sourceWriter.emit(self.diffusiveFlux)
-        sourceWriter.closeConstMethod()
+        f = Method('void f', args=['const DomainType &x', self.arg_r], code=self.f, const=True)
+        n = Method('void n', args=['const DomainType &x', self.arg_r], code=self.n, const=True)
 
-        sourceWriter.openConstMethod('void linDiffusiveFlux', targs=['class Point'], args=[self.arg_ubar, self.arg_dubar, self.arg_x, self.arg_u, self.arg_du, self.arg_dr])
-        sourceWriter.emit(self.linDiffusiveFlux)
-        sourceWriter.closeConstMethod()
+        exact = Method('void exact', args=['const DomainType &x', self.arg_r], code=self.exact, const=True)
 
-        sourceWriter.openConstMethod('void fluxDivergence', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_d2u, self.arg_r])
-        sourceWriter.emit(self.fluxDivergence)
-        sourceWriter.closeConstMethod()
+        jacobianExact = Method('void jacobianExact', args=['const DomainType &x', self.arg_dr], const=True)
+        jacobianExact.append('// used for possible computation of H^1 error')
+        jacobianExact.append(self.jacobianExact)
 
-        sourceWriter.openConstMethod('void alpha', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_r])
-        sourceWriter.emit(self.alpha)
-        sourceWriter.closeConstMethod()
+        dirichlet = Method('void dirichlet', targs=['class Point'], args=['int id', self.arg_x, self.arg_r], code=self.dirichlet, const=True)
 
-        sourceWriter.openConstMethod('void linAlpha', targs=['class Point'], args=[self.arg_ubar, self.arg_x, self.arg_u, self.arg_r])
-        sourceWriter.emit(self.linAlpha)
-        sourceWriter.closeConstMethod()
+        result = []
+        result.append(TypeAlias("BoundaryIdProviderType", "Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >"))
+        result.append(Variable("const bool symmetric", value=self.symmetric, static=True))
 
-        sourceWriter.openConstMethod('bool hasDirichletBoundary')
-        sourceWriter.emit('return ' + ('true' if self.hasDirichletBoundary else 'false') + ';')
-        sourceWriter.closeConstMethod()
+        result.append(Method('void source', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_r], code=self.source, const=True))
+        result.append(Method('void linSource', targs=['class Point'], args=[self.arg_ubar, self.arg_dubar, self.arg_x, self.arg_u, self.arg_du, self.arg_r], code=self.linSource, const=True))
 
-        sourceWriter.openConstMethod('bool hasNeumanBoundary')
-        sourceWriter.emit('return ' + ('true' if self.hasNeumanBoundary else 'false') + ';')
-        sourceWriter.closeConstMethod()
+        result.append(Method('void diffusiveFlux', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_dr], code=self.diffusiveFlux, const=True))
+        result.append(Method('void linDiffusiveFlux', targs=['class Point'], args=[self.arg_ubar, self.arg_dubar, self.arg_x, self.arg_u, self.arg_du, self.arg_dr], code=self.linDiffusiveFlux, const=True))
 
-        sourceWriter.openConstMethod('bool isDirichletIntersection', args=['const IntersectionType &intersection', 'Dune::FieldVector< int, dimRange > &dirichletComponent'])
-        sourceWriter.emit(self.isDirichletIntersection)
-        sourceWriter.closeConstMethod()
+        result.append(Method('void fluxDivergence', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_d2u, self.arg_r], code=self.fluxDivergence, const=True))
 
-        sourceWriter.openConstMethod('void f', args=['const DomainType &x', self.arg_r])
-        sourceWriter.emit(self.f)
-        sourceWriter.closeConstMethod()
+        result.append(Method('void alpha', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_r], code=self.alpha, const=True))
+        result.append(Method('void linAlpha', targs=['class Point'], args=[self.arg_ubar, self.arg_x, self.arg_u, self.arg_r], code=self.linAlpha, const=True))
 
-        sourceWriter.openConstMethod('void n', args=['const DomainType &x', self.arg_r])
-        sourceWriter.emit(self.n)
-        sourceWriter.closeConstMethod()
+        result += [hasDirichletBoundary, hasNeumanBoundary, isDirichletIntersection, f, n, exact, jacobianExact, dirichlet]
 
-        sourceWriter.openConstMethod('void exact', args=['const DomainType &x', self.arg_r])
-        sourceWriter.emit(self.exact)
-        sourceWriter.closeConstMethod()
-
-        sourceWriter.openConstMethod('void jacobianExact', args=['const DomainType &x', self.arg_dr])
-        sourceWriter.emit('// used for possible computation of H^1 error')
-        sourceWriter.emit(self.jacobianExact)
-        sourceWriter.closeConstMethod()
-
-        sourceWriter.openConstMethod('void dirichlet', targs=['class Point'], args=['int id', self.arg_x, self.arg_r])
-        sourceWriter.emit(self.dirichlet)
-        sourceWriter.closeConstMethod()
+        return result
 
     def write(self, sourceWriter, name='Model', targs=[]):
         self.pre(sourceWriter, name='Model', targs=[])
-        self.main(sourceWriter, name='Model', targs=[])
+        sourceWriter.emit(self.main(name='Model', targs=[]))
         self.post(sourceWriter, name='Model', targs=[])
 
     def appendCode(self, key, code, **kwargs):
@@ -133,7 +108,7 @@ class EllipticModel(BaseModel):
 
 
 # DerivativeExtracter
-# -------------
+# -------------------
 
 class DerivativeExtracter(ufl.algorithms.transformer.Transformer):
     def __init__(self):

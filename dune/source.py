@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals
 
-import sys, io
+import copy, io, sys
 
 
 # FileWriter
@@ -45,6 +45,146 @@ class ListWriter:
 
 
 
+
+# Block
+# -----
+
+class Block:
+    def __init__(self):
+        self.content = []
+
+    def append(self, *objs):
+        for obj in objs:
+            if isinstance(obj, (list, set, tuple)):
+                self.content += [o for o in obj]
+            else:
+                self.content.append(obj)
+
+
+
+# NameSpace
+# ---------
+
+class NameSpace(Block):
+    def __init__(self, name=None):
+        Block.__init__(self)
+        self.name = name
+
+
+
+# Function
+# --------
+
+class Function(Block):
+    def __init__(self, typedName, targs=None, args=None, code=None):
+        Block.__init__(self)
+        self.typedName = typedName
+        self.targs = None
+        if targs is not None:
+            self.targs = [arg.strip() for arg in targs]
+        self.args = None
+        if args is not None:
+            self.args= [arg.strip() for arg in args]
+        if code is not None:
+            self.append(code)
+
+
+
+# Method
+# ------
+
+class Method(Block):
+    def __init__(self, typedName, targs=None, args=None, code=None, static=False, const=False, volatile=False):
+        Block.__init__(self)
+        self.typedName = typedName
+        self.static = static
+        self.resetQualifiers(const=const, volatile=volatile)
+        if static and (const or volatile):
+            raise Exception('Cannot cv-qualify static method.')
+        self.targs = None
+        if targs is not None:
+            self.targs = [arg.strip() for arg in targs]
+        self.args = None
+        if args is not None:
+            self.args= [arg.strip() for arg in args]
+        if code is not None:
+            self.append(code)
+
+    def variant(self, typedName, const=False, volatile=False):
+        method = copy.copy(self)
+        method.typedName = typedName
+        method.resetQualifiers(const=const, volatile=volatile)
+        return method
+
+    def resetQualifiers(self, const=False, volatile=False):
+        self.qualifiers=[]
+        if const:
+            self.qualifiers.append('const')
+        if volatile:
+            self.qualifiers.append('volatile')
+
+
+
+# TypeAlias
+# ---------
+
+class TypeAlias:
+    def __init__(self, name, typeName, targs=None):
+        self.name = name
+        self.typeName = typeName
+        self.targs = None
+        if targs is not None:
+            self.targs = [arg.strip() for arg in targs]
+
+
+
+# Variable
+# --------
+
+class Variable:
+    def __init__(self, typedName, value=None, static=False, mutable=False):
+        self.typedName = typedName
+        self.value = value
+        self.static = static
+        self.mutable = mutable
+
+
+
+# Class
+# -----
+
+class Class(Block):
+    def __init__(self, name, targs=None, bases=None, final=False):
+        Block.__init__(self)
+        self.name = name
+        self.targs = None
+        if targs is not None:
+            self.targs = [arg.strip() for arg in targs]
+        self.bases = None
+        if bases is not None:
+            self.bases = [base.strip() for base in bases]
+        self.final = final
+        self.type = 'class'
+
+    def addMethod(self, typedName, targs=None, args=None, static=False, const=False, volatile=False, implemented=True):
+        method = Method(typedName, targs=targs, args=args, static=static, const=const, volatile=volatile)
+        if not implemented:
+            method.append('DUNE_THROW(Dune::NotImplemented, "' + name + '::' + typedName + '");')
+        append(method)
+        return method if implemented else None
+
+
+
+# Struct
+# ------
+
+class Struct(Class):
+    def __init__(self, name, targs=None, bases=None, final=False):
+        Block.__init__(self, name, targs=targs, bases=bases, final=final)
+        self.type = 'struct'
+
+
+
 # SourceWriter
 # ------------
 
@@ -64,16 +204,81 @@ class SourceWriter:
             raise Exception("Open blocks left in source file.")
         self.writer.close()
 
-    def emit(self, src):
+    def emit(self, src, indent=0):
         if src is None:
             return
         elif isinstance(src, (list, set, tuple)):
             for srcline in src:
-                self.emit(srcline)
+                self.emit(srcline, indent)
+        elif isinstance(src, NameSpace):
+            self.emit(None if self.begin else '')
+            if src.name is not None:
+                self.emit('namespace ' + src.name, indent)
+            else:
+                self.emit('namespace', indent)
+            self.emit('{', indent)
+            self.emit('', indent)
+            self.emit(src.content, intent+1)
+            self.emit('', indent)
+            if src.name is not None:
+                self.emit('} // namespace ' + name, indent)
+            else:
+                self.emit('} // anonymous namespace', indent)
+        elif isinstance(src, Class):
+            self.emit(None if self.begin else ['','',''], indent)
+            self.emit(['// ' + name, '// ' + '-' * len(name), ''], indent)
+            if src.targs:
+                self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
+            self.emit(src.type + ' ' + name + (' final' if src.final else ''))
+            if src.bases:
+                for i in range(0,len(src.bases)):
+                    prefix = ': ' if i == 0 else '  '
+                    postfix = ',' if i+1 < len(src.bases) else ''
+                    self.emit(prefix + base + postfix, indent+1)
+            self.emit('{', indent)
+            self.emit(src.content, indent+1)
+            self.emit('};', indent)
+        elif isinstance(src, Function):
+            self.emit(None if self.begin else '', indent)
+            if src.targs:
+                self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
+            signature = typedName + ' ('
+            if src.args:
+                signature += ' ' + ', '.join(src.args) + ' '
+            signature += ')'
+            self.emit(signature, indent)
+            self.emit('{', indent)
+            self.emit(src.content, indent+1)
+            self.emit('}', indent)
+        elif isinstance(src, Method):
+            self.emit(None if self.begin else '', indent)
+            if src.targs:
+                self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
+            signature = ('static ' if src.static else '') + src.typedName + ' ('
+            if src.args:
+                signature += ' ' + ', '.join(src.args) + ' '
+            signature += ')'
+            if src.qualifiers:
+                signature += ' ' + ' '.join(src.qualifiers)
+            self.emit(signature, indent)
+            self.emit('{', indent)
+            self.emit(src.content, indent+1)
+            self.emit('}', indent)
+        elif isinstance(src, TypeAlias):
+            if src.targs:
+                self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
+                self.emit('using ' + src.name + ' = ' + src.typeName + ';', indent)
+            else:
+                self.emit('typedef ' + src.typeName + ' ' + src.name + ';', indent)
+        elif isinstance(src, Variable):
+            declaration = ('static ' if src.static else '') + ('mutable ' if src.mutable else '') + src.typedName
+            if src.value is not None:
+                declaration += ' = ' + src.value
+            self.emit(declaration + ';', indent)
         elif self._isstring(src):
             src = src.rstrip()
             if src:
-                self.writer.emit('  ' * len(self.blocks) + src)
+                self.writer.emit('  ' * (len(self.blocks) + indent) + src)
             else:
                 self.writer.emit('')
             self.begin = False
@@ -229,11 +434,7 @@ class SourceWriter:
         self.emit('}')
 
     def typedef(self, typeName, typeAlias, targs=None):
-        if targs:
-            self.emit('template< ' + ', '.join([arg.strip() for arg in targs]) + ' >')
-            self.emit('using ' + typeAlias + ' = ' + typeName + ';')
-        else:
-            self.emit('typedef ' + typeName + ' ' + typeAlias + ';')
+        self.emit(TypeAlias(typeAlias, typeName, targs=targs))
 
     def _isstring(self, obj):
         if sys.version_info.major == 2:
@@ -314,51 +515,41 @@ class BaseModel:
         sourceWriter.openMethod(name, args=[])
         sourceWriter.emit('constructConstants( std::make_index_sequence< std::tuple_size<ConstantsTupleType>::value >() );' )
         sourceWriter.closeMethod()
-        sourceWriter.emit('')
 
-        sourceWriter.emit('')
-        sourceWriter.openConstMethod('bool init', args=['const EntityType &entity'])
-        sourceWriter.emit('entity_ = &entity;')
-        sourceWriter.emit('initCoefficients( std::make_index_sequence< numCoefficients >() );')
-        sourceWriter.emit(self.init)
-        sourceWriter.emit('return true;')
-        sourceWriter.closeConstMethod()
+        init = Method('bool init', args=['const EntityType &entity'], const=True)
+        init.append('entity_ = &entity;',
+                    'initCoefficients( std::make_index_sequence< numCoefficients >() );',
+                    self.init,
+                    'return true;')
 
-        sourceWriter.openConstMethod('const EntityType &entity')
-        sourceWriter.emit('return *entity_;')
-        sourceWriter.closeConstMethod()
+        entity = Method('const EntityType &entity', const=True)
+        entity.append('return *entity_;')
 
-        sourceWriter.openConstMethod('std::string name')
-        sourceWriter.emit('return "' + name + '";')
-        sourceWriter.closeConstMethod()
+        sourceWriter.emit([init, entity, Method('std::string name', const=True, code=['return "' + name + '";'])])
 
     def post(self, sourceWriter, name='Model', targs=[]):
-        sourceWriter.openConstMethod('const ConstantsType< i > &constant', targs=['std::size_t i'])
-        sourceWriter.emit('return *( std::get< i >( constants_ ) );')
-        sourceWriter.closeConstMethod()
-        sourceWriter.openMethod('ConstantsType< i > &constant', targs=['std::size_t i'])
-        sourceWriter.emit('return *( std::get< i >( constants_ ) );')
-        sourceWriter.closeMethod()
+        constant = Method('ConstantsType< i > &constant', targs=['std::size_t i'])
+        constant.append('return *( std::get< i >( constants_ ) );')
+        sourceWriter.emit([constant.variant('const ConstantsType< i > &constant', const=True), constant])
 
-        sourceWriter.openConstMethod('const CoefficientType< i > &coefficient', targs=['std::size_t i'])
-        sourceWriter.emit('return std::get< i >( coefficients_ );')
-        sourceWriter.closeConstMethod()
-        sourceWriter.openMethod('CoefficientType< i > &coefficient', targs=['std::size_t i'])
-        sourceWriter.emit('return std::get< i >( coefficients_ );')
-        sourceWriter.closeMethod()
+        coefficient = Method('CoefficientType< i > &coefficient', targs=['std::size_t i'])
+        coefficient.append('return std::get< i >( coefficients_ );')
+        sourceWriter.emit([coefficient.variant('const CoefficientType< i > &coefficient', const=True), coefficient])
 
         sourceWriter.section('private')
-        sourceWriter.openConstMethod('void initCoefficients', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-        sourceWriter.emit('std::ignore = std::make_tuple( (std::get< i >( coefficients_ ).init( entity() ), i)... );')
-        sourceWriter.closeConstMethod()
-        sourceWriter.openMethod('void constructConstants', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-        sourceWriter.emit('std::ignore = std::make_tuple( (std::get< i >( constants_ ) = std::make_shared<ConstantsType< i >>(), i)... );')
-        sourceWriter.closeMethod()
+
+        initCoefficients = Method('void initCoefficients', targs=['std::size_t... i'], args=['std::index_sequence< i... >'], const=True)
+        initCoefficients.append('std::ignore = std::make_tuple( (std::get< i >( coefficients_ ).init( entity() ), i)... );')
+
+        constructConstants = Method('void constructConstants', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
+        constructConstants.append('std::ignore = std::make_tuple( (std::get< i >( constants_ ) = std::make_shared<ConstantsType< i >>(), i)... );')
+
+        sourceWriter.emit([initCoefficients, constructConstants])
+
         sourceWriter.emit('')
-        sourceWriter.emit('')
-        sourceWriter.emit('mutable const EntityType *entity_ = nullptr;')
-        sourceWriter.emit('mutable std::tuple< Coefficients... > coefficients_;')
-        sourceWriter.emit('mutable ConstantsTupleType constants_;')
+        sourceWriter.emit(Variable('const EntityType *entity_', 'nullptr', mutable=True))
+        sourceWriter.emit(Variable('std::tuple< Coefficients... > coefficients_;', mutable=True))
+        sourceWriter.emit(Variable('ConstantsTupleType constants_;', mutable=True))
         sourceWriter.emit(self.vars)
         sourceWriter.closeStruct(name)
 
@@ -397,22 +588,23 @@ class BaseModel:
         sourceWriter.emit('  };')
         sourceWriter.closeFunction()
 
-        sourceWriter.openFunction('void setCoefficient', targs=['std::size_t i'], args=[ modelClass + ' &model', 'pybind11::handle o'])
-        sourceWriter.emit('model.template coefficient< i >() = o.template cast< typename std::tuple_element< i, Coefficients >::type >().localFunction();')
-        sourceWriter.closeFunction()
+        setCoefficient = Function('void setCoefficient', targs=['std::size_t i'], args=[ modelClass + ' &model', 'pybind11::handle o'])
+        setCoefficient.append('model.template coefficient< i >() = o.template cast< typename std::tuple_element< i, Coefficients >::type >().localFunction();')
+        sourceWriter.emit(setCoefficient)
 
-        sourceWriter.openFunction('auto defSetCoefficient', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-        sourceWriter.typedef('std::function< void( ' + modelClass + ' &model, pybind11::handle ) >', 'Dispatch')
-        sourceWriter.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setCoefficient< i > )... }};')
-        sourceWriter.emit('')
-        sourceWriter.emit('return [ dispatch ] ( ' + wrapperClass + ' &model, pybind11::handle coeff, pybind11::handle o ) {')
-        sourceWriter.emit('    std::size_t k = renumberConstants(coeff);')
-        sourceWriter.emit('    if( k >= dispatch.size() )')
-        sourceWriter.emit('      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );' )
-        sourceWriter.emit('    dispatch[ k ]( model.impl(), o );')
-        sourceWriter.emit('    return k;')
-        sourceWriter.emit('  };')
-        sourceWriter.closeFunction()
+        defSetCoefficient = Function('auto defSetCoefficient', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
+        defSetCoefficient.append(TypeAlias('Dispatch', 'std::function< void( ' + modelClass + ' &model, pybind11::handle ) >'),
+                                 Variable('std::array< Dispatch, sizeof...( i ) > dispatch', '{{ Dispatch( setCoefficient< i > )... }}'),
+                                 '',
+                                 'return [ dispatch ] ( ' + wrapperClass + ' &model, pybind11::handle coeff, pybind11::handle o ) {',
+                                 '    std::size_t k = renumberConstants(coeff);',
+                                 'if( k >= dispatch.size() )',
+                                 '      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );',
+                                 '    dispatch[ k ]( model.impl(), o );',
+                                 '    return k;'
+                                 '  };')
+
+        sourceWriter.emit(defSetCoefficient)
 
     def export(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper', constrArgs=(), constrKeepAlive=None):
         if self.coefficients:
