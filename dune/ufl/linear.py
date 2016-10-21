@@ -40,7 +40,7 @@ class MultiLinearExprSplitter(Transformer):
             return self.terminal(expr)
 
     def division(self, expr, left, right):
-        if right.keys() != [self.empty]:
+        if list(right.keys()) != [self.empty]:
             raise Exception('Only the left child of a division may access the linear arguments.')
         r = right[self.empty]
         return {key: l / r for key, l in left.items()}
