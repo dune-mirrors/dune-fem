@@ -4,7 +4,7 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 
-def burgers(space_or_df, model, name, viscosity, timestep, **kwargs):
+def burgers(space, model, name, viscosity, timestep, **kwargs):
     """create a scheme for solving quasi stokes type saddle point problem with continuous finite-elements
 
     Args:
@@ -13,10 +13,11 @@ def burgers(space_or_df, model, name, viscosity, timestep, **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, spaceAndStorage
-    storage = kwargs.pop("storage", None)
-    vspace, vstorage = spaceAndStorage(space_or_df[0],storage)
-    pspace, pstorage = spaceAndStorage(space_or_df[1],storage)
+    from . import module, storageToSolver
+    vspace = space[0]
+    pspace = space[1]
+    vstorage = storageToSolver(vspape.storage)
+    pstorage = storageToSolver(pspace.storage)
     if not (vstorage == pstorage):
         raise KeyError("storages provided differ")
 
@@ -29,9 +30,9 @@ def burgers(space_or_df, model, name, viscosity, timestep, **kwargs):
           vspaceType + "::dimRange+1 " +\
         "> > >"
 
-    return module(storage, includes, typeName).Scheme((vspace,pspace),model,name,viscosity,timestep) # ,**kwargs)
+    return module(includes, typeName).Scheme((vspace,pspace),model,name,viscosity,timestep) # ,**kwargs)
 
-def dg(space_or_df, model, name="tmp", **kwargs):
+def dg(space, model, name="tmp", **kwargs):
     """create a scheme for solving second order pdes with discontinuous finite elements
 
     Args:
@@ -40,9 +41,8 @@ def dg(space_or_df, model, name="tmp", **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, spaceAndStorage
-    storage = kwargs.pop("storage",None)
-    space, storage = spaceAndStorage(space_or_df,storage)
+    from . import module, storageToSolver
+    storage = storageToSolver(space.storage)
 
     includes = [ "dune/fem/schemes/dgelliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._module._includes
     spaceType = space._module._typeName
@@ -53,12 +53,12 @@ def dg(space_or_df, model, name="tmp", **kwargs):
           "typename " + spaceType + "::RangeFieldType >, DifferentiableDGEllipticOperator, " +\
           storage + " >"
 
-    return module(storage, includes, typeName).Scheme(space,model,name,**kwargs)
+    return module(includes, typeName).Scheme(space,model,name,**kwargs)
 
 
-def dgGalerkin(space, model, penalty, storage=None, parameters={}):
-    from . import module, spaceAndStorage
-    space, storage = spaceAndStorage(space, storage)
+def dgGalerkin(space, model, penalty, parameters={}):
+    from . import module, storageToSolver
+    storage = storageToSolver(space.storage)
 
     spaceType = space._module._typeName
     gridPartType = "typename " + spaceType + "::GridPartType"
@@ -74,12 +74,12 @@ def dgGalerkin(space, model, penalty, storage=None, parameters={}):
                    '    new (&self) ' + typeName + '( space, ' + integrandsType + '( model, penalty ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
                    '  }, "space"_a, "model"_a, "penalty"_a, "parameters"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >()']
 
-    return module(storage, includes, typeName, [constructor]).Scheme(space, model, penalty, parameters)
+    return module(includes, typeName, [constructor]).Scheme(space, model, penalty, parameters)
 
 
-def galerkin(space, model, storage=None, parameters={}):
-    from . import module, spaceAndStorage
-    space, storage = spaceAndStorage(space, storage)
+def galerkin(space, model, parameters={}):
+    from . import module, storageToSolver
+    storage = storageToSolver(space.storage)
 
     spaceType = space._module._typeName
     gridPartType = "typename " + spaceType + "::GridPartType"
@@ -90,10 +90,10 @@ def galerkin(space, model, storage=None, parameters={}):
     typeName = "Dune::Fem::GalerkinScheme< " + ", ".join([spaceType, modelType, storage]) + " >"
     includes = ["dune/fem/schemes/galerkin.hh"] + space._module._includes
 
-    return module(storage, includes, typeName).Scheme(space, model, parameters)
+    return module(includes, typeName).Scheme(space, model, parameters)
 
 
-def h1(space, model, storage=None, parameters={}):
+def h1(space, model, parameters={}):
     """create a scheme for solving second order pdes with continuous finite element
 
     Args:
@@ -102,8 +102,8 @@ def h1(space, model, storage=None, parameters={}):
         Scheme: the constructed scheme
     """
 
-    from . import module, spaceAndStorage
-    space, storage = spaceAndStorage(space,storage)
+    from . import module, storageToSolver
+    storage = storageToSolver(space.storage)
 
     includes = [ "dune/fem/schemes/elliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._includes
     spaceType = space._typeName
@@ -114,12 +114,12 @@ def h1(space, model, storage=None, parameters={}):
           "typename " + spaceType + "::RangeFieldType >, DifferentiableEllipticOperator, " +\
           storage + " >"
 
-    return module(storage, includes, typeName).Scheme(space,model,parameters)
+    return module(includes, typeName).Scheme(space,model,parameters)
 
 
-def h1Galerkin(space, model, storage=None, parameters={}):
-    from . import module, spaceAndStorage
-    space, storage = spaceAndStorage(space, storage)
+def h1Galerkin(space, model, parameters={}):
+    from . import module, storageToSolver
+    storage = storageToSolver(space.storage)
 
     spaceType = space._module._typeName
     gridPartType = "typename " + spaceType + "::GridPartType"
@@ -135,11 +135,11 @@ def h1Galerkin(space, model, storage=None, parameters={}):
                    '    new (&self) ' + typeName + '( space, ' + integrandsType + '( model ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
                    '  }, "space"_a, "model"_a, "parameters"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >()']
 
-    return module(storage, includes, typeName, [constructor]).Scheme(space, model, parameters)
+    return module(includes, typeName, [constructor]).Scheme(space, model, parameters)
 
 
 def linearized(scheme, ubar=None, parameters={}):
-    from . import module
+    from . import module, storageToSolver
     schemeType = scheme._typeName
     typeName = "Dune::Fem::LinearizedScheme< " + ", ".join([schemeType]) + " >"
     includes = ["dune/fem/schemes/linearized.hh", "dune/fempy/parameter.hh"] + scheme._includes
@@ -159,13 +159,13 @@ def linearized(scheme, ubar=None, parameters={}):
                    '     pybind11::keep_alive< 1, 2 >()']
     method = ['setup', 'DuneType::setup']
 
-    m = module(scheme._storage, includes, typeName, [constructor1,constructor2], [method])
+    m = module(includes, typeName, [constructor1,constructor2], [method])
     if ubar:
         return m.Scheme(scheme, ubar, parameters)
     else:
         return m.Scheme(scheme, parameters)
 
-def nvdg(space_or_df, model, name="tmp", **kwargs):
+def nvdg(space, model, name="tmp", **kwargs):
     """create a scheme for solving non variational second order pdes with discontinuous finite element
 
     Args:
@@ -174,9 +174,8 @@ def nvdg(space_or_df, model, name="tmp", **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, spaceAndStorage
-    storage = kwargs.pop("storage", None)
-    space, storage = spaceAndStorage(space_or_df,storage)
+    from . import module, storageToSolver
+    storage = storageToSolver(space.storage)
 
     includes = [ "dune/fem/schemes/nvdgelliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._module._includes
     spaceType = space._module._typeName
@@ -187,7 +186,7 @@ def nvdg(space_or_df, model, name="tmp", **kwargs):
           "typename " + spaceType + "::RangeFieldType >, DifferentiableNVDGEllipticOperator, " +\
           storage + " >"
 
-    return module(storage, includes, typeName).Scheme(space,model,name,**kwargs)
+    return module(includes, typeName).Scheme(space,model,name,**kwargs)
 
 
 def stokes(space_or_df, model, name, viscosity, timestep, **kwargs):
@@ -199,10 +198,11 @@ def stokes(space_or_df, model, name, viscosity, timestep, **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, spaceAndStorage
-    storage = kwargs.pop("storage", None)
-    vspace, vstorage = spaceAndStorage(space_or_df[0],storage)
-    pspace, pstorage = spaceAndStorage(space_or_df[1],storage)
+    from . import module, storageToSolver
+    vspace = space[0]
+    pspace = space[1]
+    vstorage = storageToSolver(vspape.storage)
+    pstorage = storageToSolver(pspace.storage)
     if not (vstorage == pstorage):
         raise KeyError("storages provided differe")
 
@@ -215,4 +215,4 @@ def stokes(space_or_df, model, name, viscosity, timestep, **kwargs):
           vspaceType + "::dimRange+1 " +\
         "> > >"
 
-    return module(storage, includes, typeName).Scheme((vspace,pspace),model,name,viscosity,timestep) #**kwargs)
+    return module(includes, typeName).Scheme((vspace,pspace),model,name,viscosity,timestep) #**kwargs)
