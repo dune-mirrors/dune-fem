@@ -3,9 +3,7 @@
 
 #include <tuple>
 
-#include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
-
 #include <dune/fem/common/tupleutility.hh>
 
 namespace Dune
@@ -33,11 +31,11 @@ namespace Dune
       typedef typename std::tuple_element< Position< T >::value, Tuple >::type Type;
       static Type& at( Tuple& tuple )
       {
-        return Dune::get< Position< T >::value >( tuple );
+        return std::get< Position< T >::value >( tuple );
       }
       static const Type& at( const Tuple& tuple )
       {
-        return Dune::get< Position< T >::value >( tuple );
+        return std::get< Position< T >::value >( tuple );
       }
     };
 
@@ -123,30 +121,27 @@ namespace Dune
   typename std::tuple_element< i, Tuple >::type &
   get ( Dune::TypeIndexedTuple< Tuple, Types > &tuple )
   {
-    return get< i >( static_cast< Tuple & >( tuple ) );
+    return std::get< i >( static_cast< Tuple & >( tuple ) );
   }
 
   template< int i, class Tuple, class Types >
   const typename std::tuple_element< i, Tuple >::type &
   get ( const Dune::TypeIndexedTuple< Tuple, Types > &tuple )
   {
-    return get< i >( static_cast< const Tuple & >( tuple ) );
+    return std::get< i >( static_cast< const Tuple & >( tuple ) );
   }
 
 } // namespace Dune
 
 
-// Some Specializations for Tuple Access
-// -------------------------------------
-
-// \todo please check this construction, later.
+// TODO please check this construction, later.
 // At the moment it is needed to make dune-fem-dg compile!
 namespace std
 {
   template< size_t i, class Tuple, class Types >
   struct tuple_element< i, Dune::TypeIndexedTuple< Tuple, Types > >
   {
-    typedef typename tuple_element< i, Tuple >::type type;
+    typedef typename std::tuple_element< i, Tuple >::type type;
   };
 }
 

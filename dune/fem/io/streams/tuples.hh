@@ -1,7 +1,8 @@
 #ifndef DUNE_FEM_IO_STREAMS_TUPLES_HH
 #define DUNE_FEM_IO_STREAMS_TUPLES_HH
 
-#include <dune/common/tuples.hh>
+#include <tuple>
+
 #include <dune/common/tupleutility.hh>
 
 #include <dune/fem/io/streams/streams.hh>

@@ -6,7 +6,6 @@
 #include <dune/geometry/type.hh>
 
 #include <dune/common/forloop.hh>
-#include <dune/common/tuples.hh>
 #include <dune/common/tupleutility.hh>
 #include <dune/fem/common/utility.hh>
 
@@ -30,7 +29,7 @@ namespace Dune
       template< int ... I >
       struct RangeOffsets
       {
-        typedef tuple< std::integral_constant< int, I > ... > RangeSizeTuple;
+        typedef std::tuple< std::integral_constant< int, I > ... > RangeSizeTuple;
 
         template< int j >
         static constexpr int size () { return std::tuple_element< j, RangeSizeTuple >::type::value; }
@@ -69,7 +68,7 @@ namespace Dune
       static const std::size_t dimRange = Std::sum( static_cast< int >( ShapeFunctionSets::FunctionSpaceType::dimRange ) ... );
 
     public:
-      typedef tuple< ShapeFunctionSets ... > ShapeFunctionSetTupleType;
+      typedef std::tuple< ShapeFunctionSets ... > ShapeFunctionSetTupleType;
       typedef typename ToNewDimRangeFunctionSpace< typename std::tuple_element< 0, ShapeFunctionSetTupleType >::type::FunctionSpaceType, dimRange >::Type FunctionSpaceType;
 
       typedef typename FunctionSpaceType::DomainType DomainType;
@@ -143,7 +142,7 @@ namespace Dune
       }
 
       template< std::size_t ... I >
-      static tuple< decltype( makeGeometryType< I >( std::declval< GeometryType >() ) ) ... >
+      static std::tuple< decltype( makeGeometryType< I >( std::declval< GeometryType >() ) ) ... >
       makeGeometryTypeTuple ( GeometryType type, std::index_sequence< I ... > )
       {
         return std::make_tuple( makeGeometryType< I >( type ) ... );

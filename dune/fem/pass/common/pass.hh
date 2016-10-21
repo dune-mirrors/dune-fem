@@ -7,8 +7,6 @@
 #include <type_traits>
 
 #include <dune/common/timer.hh>
-#include <dune/common/tuples.hh>
-
 #include <dune/fem/common/tupleutility.hh>
 #include <dune/fem/operator/common/operator.hh>
 
@@ -333,8 +331,8 @@ namespace Dune
         // this method is called on the last pass which needs no
         // finalizing of communication, so call the correct method
         // on the previous pass
-        // get<0> ( totalArg ) is the global argument type
-        previousPass_.finalizeCommunication( *(get<0> ( totalArg )) );
+        // std::get<0> ( totalArg ) is the global argument type
+        previousPass_.finalizeCommunication( *(std::get<0> ( totalArg )) );
       }
 
       /** \brief receiveCommunication collects possbily initiated non-blocking
@@ -345,8 +343,8 @@ namespace Dune
         // this method is called on the last pass which needs no
         // finalizing of communication, so call the correct method
         // on the previous pass
-        // get<0> ( totalArg ) is the global argument type
-        previousPass_.receiveCommunication( *(get<0> ( totalArg )) );
+        // std::get<0> ( totalArg ) is the global argument type
+        previousPass_.receiveCommunication( *(std::get<0> ( totalArg )) );
       }
 
       /** \brief initializeCommunication of this pass, this will initialize

@@ -1,24 +1,19 @@
 #ifndef DUNE_FEM_INPUTOUTPUTTUPLES_HH
 #define DUNE_FEM_INPUTOUTPUTTUPLES_HH
 
-//- system includes
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <tuple>
 
-//- Dune includes
 #include <dune/common/forloop.hh>
-#include <dune/common/tuples.hh>
 
-//- Dune grid includes
 #include <dune/grid/common/backuprestore.hh>
 
-//- Dune fem includes
-#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/parameter.hh>
-#include <dune/grid/common/backuprestore.hh>
+#include <dune/fem/space/common/dofmanager.hh>
 
 namespace Dune
 {
