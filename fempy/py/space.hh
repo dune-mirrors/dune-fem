@@ -19,6 +19,28 @@ namespace Dune
     namespace detail
     {
 
+      // registerSpaceConstructor
+      // -------------------------
+      template< class Space, class Holder, class Alias >
+      void registerSpaceConstructor ( pybind11::class_< Space, Holder, Alias > &cls, std::false_type )
+      {}
+      template< class Space, class Holder, class Alias >
+      void registerSpaceConstructor ( pybind11::class_< Space, Holder, Alias > &cls, std::true_type )
+      {
+        typedef typename Space::GridPartType GridPart;
+        typedef typename GridPart::GridViewType GridView;
+        cls.def( "__init__", [] ( Space &instance, pybind11::object gridView ) {
+            new( &instance ) Space( gridPart< GridView >( gridView ) );
+          }, pybind11::keep_alive< 1, 2 >() );
+      }
+      template< class Space, class Holder, class Alias >
+      void registerSpaceConstructor ( pybind11::class_< Space, Holder, Alias > &cls )
+      {
+        typedef typename Space::GridPartType GridPart;
+        typedef typename GridPart::GridViewType GridView;
+        registerSpaceConstructor( cls, std::is_constructible< Space, GridPart& >() );
+      }
+
       // registerSpace
       // -------------
 
@@ -39,9 +61,7 @@ namespace Dune
         cls.def_property_readonly( "order", [] ( Space &spc ) -> int { return spc.order(); } );
         cls.def_property_readonly( "size", [] ( Space &spc ) -> int { return spc.size(); } );
 
-        cls.def( "__init__", [] ( Space &instance, pybind11::object gridView ) {
-            new( &instance ) Space( gridPart< GridView >( gridView ) );
-          }, pybind11::keep_alive< 1, 2 >() );
+        registerSpaceConstructor( cls );
       }
 
 
