@@ -21,9 +21,10 @@ def solve( scheme, target=None, name=None ):
                 name = scheme.name
             else:
                 name = "default"
-        # target = create.discretefunction(scheme._storage, scheme.space, name=name)
+        # target = create.discretefunction(scheme.space._storage, scheme.space, name=name)
         # target.interpolate( [0,]*scheme.dimRange )
-        target = scheme.space.interpolate( lambda x:[0,]*scheme.dimRange, name=name)
+        # target = scheme.space.interpolate( lambda x:[0,]*scheme.dimRange, name=name)
+        target = create.function("discrete", scheme.space, name=name)
     scheme._solve(target)
     return target
 

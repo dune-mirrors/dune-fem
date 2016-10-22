@@ -60,7 +60,8 @@ def discreteFunction(space, name, expr=None, *args, **kwargs):
     if expr:
         df.interpolate( expr )
     else:
-        df.interpolate( [0,]*df.dimRange )
+        # df.interpolate( [0,]*df.dimRange )
+        df.clear()
     return df
 
 def numpyFunction(space, vec, name="tmp", **unused):
