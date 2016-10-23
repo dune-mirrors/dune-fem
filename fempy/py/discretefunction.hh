@@ -24,6 +24,26 @@ namespace Dune
 
     namespace detail
     {
+      // registerRestrictProlong
+      // -----------------------
+      template <class T, class = void>
+      struct IsComplete : std::false_type
+      {};
+      template <class T>
+      struct IsComplete< T, decltype(void(sizeof(T))) > : std::true_type
+      {};
+      template <class Grid, class DF>
+      void registerRestrictProlong( pybind11::module module, std::true_type)
+      {
+        detail::clsVirtualizedRestrictProlong< Grid >( module )
+          .def( "__init__", [] ( VirtualizedRestrictProlong< Grid > &instance, DF &df ) {
+            new (&instance) VirtualizedRestrictProlong< Grid >( df );
+          }, pybind11::keep_alive< 1, 2 >() );
+        pybind11::implicitly_convertible< DF, VirtualizedRestrictProlong< Grid > >();
+      }
+      template <class Grid, class DF>
+      void registerRestrictProlong( pybind11::module module, std::false_type)
+      {}
 
       // registerDFConstructor
       // ---------------------
@@ -96,10 +116,7 @@ namespace Dune
           } );
         pybind11::implicitly_convertible< DF, VirtualizedGridFunction< GridPart, Value > >();
 
-        detail::clsVirtualizedRestrictProlong< Grid >( module ).def( "__init__", [] ( VirtualizedRestrictProlong< Grid > &instance, DF &df ) {
-            new (&instance) VirtualizedRestrictProlong< Grid >( df );
-          }, pybind11::keep_alive< 1, 2 >() );
-        pybind11::implicitly_convertible< DF, VirtualizedRestrictProlong< Grid > >();
+        registerRestrictProlong<Grid,DF>(module, IsComplete<Dune::Fem::DefaultLocalRestrictProlong<Space>>() );
 
         cls.def_property_readonly( "space", [] ( pybind11::object self ) { return getSpace( self.cast< const DF & >(), self ); } );
         cls.def_property_readonly( "size", [] ( DF &df ) { return df.size(); } );
