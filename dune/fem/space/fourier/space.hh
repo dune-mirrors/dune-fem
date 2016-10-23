@@ -87,6 +87,8 @@ namespace Dune
 
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
+      enum { hasLocalInterpolate = false };
+
     protected:
       static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
       static const CommunicationDirection defaultDirection =  ForwardCommunication;
@@ -125,6 +127,11 @@ namespace Dune
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
       BlockMapperType &blockMapper () const { return blockMapper_; }
 
+      template< class GridFunction, class DiscreteFunction, unsigned int partitions >
+      void interpolate ( const GridFunction &u, DiscreteFunction &v, PartitionSet< partitions > ps) const
+      {
+        DUNE_THROW(NotImplemented,"Interpolation on the Fourierspace is not implemented");
+      }
     private:
       mutable BlockMapperType blockMapper_;
       FunctionSetType functionSet_;

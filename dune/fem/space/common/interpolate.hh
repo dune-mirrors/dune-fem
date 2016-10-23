@@ -50,22 +50,26 @@ namespace Dune
     static inline void interpolate ( const GridFunction &u, DiscreteFunction &v, PartitionSet< partitions > ps )
     {
       const bool hasLocalFunction = std::is_convertible< GridFunction, HasLocalFunction >::value;
-      interpolate( u, v, ps, std::integral_constant< bool, hasLocalFunction >() );
+      interpolate( u, v, ps,
+          std::integral_constant< bool, hasLocalFunction >(),
+          std::integral_constant< bool, DiscreteFunction::DiscreteFunctionSpaceType::hasLocalInterpolate >() );
     }
 
-    template< class Function, class DiscreteFunction, unsigned int partitions >
-    static inline void interpolate ( const Function &u, DiscreteFunction &v, PartitionSet< partitions > ps, std::integral_constant< bool, false > )
+    template< class Function, class DiscreteFunction, unsigned int partitions, bool value >
+    static inline void interpolate ( const Function &u, DiscreteFunction &v, PartitionSet< partitions > ps,
+                                     std::integral_constant< bool, false >, std::integral_constant< bool, value> )
     {
       typedef typename DiscreteFunction :: DiscreteFunctionSpaceType :: GridPartType  GridPartType;
       typedef GridFunctionAdapter< Function, GridPartType > GridFunctionType;
 
       GridFunctionType uGrid( "uGrid", u, v.space().gridPart() );
 
-      interpolate( uGrid, v, ps );
+      interpolate( uGrid, v, ps, std::integral_constant<bool,value>() );
     }
 
     template< class GridFunction, class DiscreteFunction, unsigned int partitions >
-    static inline void interpolate ( const GridFunction &u, DiscreteFunction &v, PartitionSet< partitions > ps, std::integral_constant< bool, true > )
+    static inline void interpolate ( const GridFunction &u, DiscreteFunction &v, PartitionSet< partitions > ps,
+        std::integral_constant< bool, true >, std::integral_constant< bool, true > )
     {
       // reserve memory for local dof vector
       std::vector< typename DiscreteFunction::RangeFieldType > ldv;
@@ -89,6 +93,12 @@ namespace Dune
         // write local dofs into v
         v.setLocalDofs( entity, ldv );
       }
+    }
+    template< class GridFunction, class DiscreteFunction, unsigned int partitions >
+    static inline void interpolate ( const GridFunction &u, DiscreteFunction &v, PartitionSet< partitions > ps,
+        std::integral_constant< bool, true >, std::integral_constant< bool, false > )
+    {
+      v.space().interpolate(u,v,ps);
     }
 
   } // namespace Fem

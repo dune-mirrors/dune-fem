@@ -183,6 +183,9 @@ namespace Dune
       //! size of local blocks
       enum { localBlockSize = Traits :: localBlockSize };
 
+      //! set to true if a interpolate(entity) method is availabe
+      enum { hasLocalInterpolate = true };
+
       //! type of underlying \ref GridPart "grid part"
       typedef typename Traits :: GridPartType GridPartType;
 
