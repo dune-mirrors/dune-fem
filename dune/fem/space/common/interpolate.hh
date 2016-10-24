@@ -15,6 +15,10 @@ namespace Dune
 
   namespace Fem
   {
+
+    // interpolate
+    // -----------
+
     /**
      * \function interpolate
      * \ingroup  DiscreteFunctionSpace
@@ -44,17 +48,9 @@ namespace Dune
       interpolate( u, v, Partitions::all );
     }
 
-    // interpolate implementations
-    // ---------------------------
-    template< class GridFunction, class DiscreteFunction, unsigned int partitions >
-    static inline void interpolate ( const GridFunction &u, DiscreteFunction &v, PartitionSet< partitions > ps )
-    {
-      const bool hasLocalFunction = std::is_convertible< GridFunction, HasLocalFunction >::value;
-      interpolate( u, v, ps, std::integral_constant< bool, hasLocalFunction >() );
-    }
-
     template< class Function, class DiscreteFunction, unsigned int partitions >
-    static inline void interpolate ( const Function &u, DiscreteFunction &v, PartitionSet< partitions > ps, std::integral_constant< bool, false > )
+    static inline std::enable_if_t< !std::is_convertible< Function, HasLocalFunction >::value >
+    interpolate ( const Function &u, DiscreteFunction &v, PartitionSet< partitions > ps )
     {
       typedef typename DiscreteFunction :: DiscreteFunctionSpaceType :: GridPartType  GridPartType;
       typedef GridFunctionAdapter< Function, GridPartType > GridFunctionType;
@@ -65,7 +61,8 @@ namespace Dune
     }
 
     template< class GridFunction, class DiscreteFunction, unsigned int partitions >
-    static inline void interpolate ( const GridFunction &u, DiscreteFunction &v, PartitionSet< partitions > ps, std::integral_constant< bool, true > )
+    static inline std::enable_if_t< std::is_convertible< GridFunction, HasLocalFunction >::value >
+    interpolate ( const GridFunction &u, DiscreteFunction &v, PartitionSet< partitions > ps )
     {
       // reserve memory for local dof vector
       std::vector< typename DiscreteFunction::RangeFieldType > ldv;
