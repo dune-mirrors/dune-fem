@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals
 
-from .cplusplus import Method, SourceWriter, Variable
+from .cplusplus import Method, SourceWriter, TypeAlias, Variable
 
 class BaseModel:
     def __init__(self, dimRange, signature):
@@ -28,13 +28,14 @@ class BaseModel:
         sourceWriter.emit("static const int dimDomain = GridPartType::dimensionworld;")
         sourceWriter.emit("static const int dimLocal = GridPartType::dimension;")
 
-        sourceWriter.typedef("typename GridPart::template Codim< 0 >::EntityType", "EntityType")
-        sourceWriter.typedef("typename GridPart::IntersectionType", "IntersectionType")
-        sourceWriter.typedef("Dune::Fem::FunctionSpace< double, RangeFieldType, dimDomain, dimRange >", "FunctionSpaceType")
-        sourceWriter.typedef("typename FunctionSpaceType::DomainType", "DomainType")
-        sourceWriter.typedef("typename FunctionSpaceType::RangeType", "RangeType")
-        sourceWriter.typedef("typename FunctionSpaceType::JacobianRangeType", "JacobianRangeType")
-        sourceWriter.typedef("typename FunctionSpaceType::HessianRangeType", "HessianRangeType")
+        typedefs = [TypeAlias("EntityType", "typename GridPart::template Codim< 0 >::EntityType"),
+                    TypeAlias("IntersectionType", "typename GridPart::IntersectionType"),
+                    TypeAlias("FunctionSpaceType", "Dune::Fem::FunctionSpace< double, RangeFieldType, dimDomain, dimRange >"),
+                    TypeAlias("DomainType", "typename FunctionSpaceType::DomainType"),
+                    TypeAlias("RangeType", "typename FunctionSpaceType::RangeType"),
+                    TypeAlias("JacobianRangeType", "typename FunctionSpaceType::JacobianRangeType"),
+                    TypeAlias("HessianRangeType", "typename FunctionSpaceType::HessianRangeType")]
+        sourceWriter.emit(typedefs)
 
         if self.coefficients:
             sourceWriter.typedef('std::tuple< ' + ', '.join(\
@@ -62,8 +63,8 @@ class BaseModel:
             sourceWriter.typedef('std::tuple<>', 'ConstantsTupleType')
 
         sourceWriter.emit('')
-        sourceWriter.typedef('typename std::tuple_element< i, std::tuple< Coefficients... > >::type', 'CoefficientType', targs=['std::size_t i'])
-        sourceWriter.typedef('typename std::tuple_element< i, ConstantsTupleType >::type::element_type', 'ConstantsType', targs=['std::size_t i'])
+        sourceWriter.emit(TypeAlias('CoefficientType', 'typename std::tuple_element< i, std::tuple< Coefficients... > >::type', targs=['std::size_t i']))
+        sourceWriter.emit(TypeAlias('ConstantsType', 'typename std::tuple_element< i, ConstantsTupleType >::type::element_type', targs=['std::size_t i']))
 
         sourceWriter.openMethod(name, args=[])
         sourceWriter.emit('constructConstants( std::make_index_sequence< std::tuple_size<ConstantsTupleType>::value >() );' )
