@@ -120,6 +120,33 @@ namespace Dune
 
 
 
+      namespace Impl
+      {
+
+        template< class DFS >
+        std::true_type hasInterpolation ( const DFS &, decltype( std::declval< const DFS & >().interpolation( std::declval< typename DFS::EntityType >() ) ) * = nullptr );
+
+        std::false_type hasInterpolation ( ... );
+
+      } // namespace Impl
+
+
+      /**
+       * \class hasInterpolation
+       *
+       * \brief determine whether a discrete function space provides a (local)
+       *        interpolation
+       *
+       * \note This capability is generated automatically by SFINAE.
+       */
+      template< class DiscreteFunctionSpace >
+      struct hasInterpolation
+      {
+        static const bool v = decltype( Impl::hasInterpolation( std::declval< const DiscreteFunctionSpace & >() ) )::value;
+      };
+
+
+
       // const specialization
       // --------------------
 
@@ -170,6 +197,12 @@ namespace Dune
       struct isHierarchic< const DiscreteFunctionSpace >
       {
         static const bool v = isHierarchic< DiscreteFunctionSpace >::v;
+      };
+
+      template< class DiscreteFunctionSpace >
+      struct hasInterpolation< const DiscreteFunctionSpace >
+      {
+        static const bool v = hasInterpolation< DiscreteFunctionSpace >::v;
       };
 
     } // namespace Capabilities

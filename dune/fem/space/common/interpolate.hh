@@ -9,6 +9,7 @@
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
+#include <dune/fem/space/common/capabilities.hh>
 
 namespace Dune
 {
@@ -61,7 +62,7 @@ namespace Dune
     }
 
     template< class GridFunction, class DiscreteFunction, unsigned int partitions >
-    static inline std::enable_if_t< std::is_convertible< GridFunction, HasLocalFunction >::value >
+    static inline std::enable_if_t< std::is_convertible< GridFunction, HasLocalFunction >::value && Capabilities::hasInterpolation< typename DiscreteFunction::DiscreteFunctionSpaceType >::v >
     interpolate ( const GridFunction &u, DiscreteFunction &v, PartitionSet< partitions > ps )
     {
       // reserve memory for local dof vector
