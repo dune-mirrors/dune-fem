@@ -23,6 +23,7 @@
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
+#include <dune/fem/space/fourier.hh>
 #include <dune/fem/space/lagrange.hh>
 
 #include "../../test/exactsolution.hh"
@@ -184,9 +185,10 @@ try
   // create discrete function spaces
   Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder > discontinuousGalerkinSpace( gridPart );
   Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > lagrangeSpace( gridPart );
+  Dune::Fem::FourierDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 > fourierSpace( gridPart, polOrder+1 );
 
   // perform eoc loop
-  eocLoop( *grid, steps, discontinuousGalerkinSpace, lagrangeSpace );
+  eocLoop( *grid, steps, discontinuousGalerkinSpace, lagrangeSpace, fourierSpace );
 
   return 0;
 }
