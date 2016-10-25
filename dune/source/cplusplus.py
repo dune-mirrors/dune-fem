@@ -242,7 +242,7 @@ class SourceWriter:
             self.emit(None if self.begin else '', indent)
             if src.targs:
                 self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
-            signature = typedName + ' ('
+            signature = src.typedName + ' ('
             if src.args:
                 signature += ' ' + ', '.join(src.args) + ' '
             signature += ')'

@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals
 
-from .cplusplus import Method, SourceWriter, TypeAlias, Variable
+from .cplusplus import Method, SourceWriter, TypeAlias, Variable, Function
 
 class BaseModel:
     def __init__(self, dimRange, signature):
