@@ -111,6 +111,24 @@ class CodeGenerator(MultiFunction):
 
     int_value = float_value
 
+    def negative_restricted(self, expr):
+        try:
+            return self.predefined[expr]
+        except KeyError:
+            pass
+
+        operand = expr.ufl_operands[0]
+        raise Exception('Cannot compute restriction of ' + str(expr) + ', yet')
+
+    def positive_restricted(self, expr):
+        try:
+            return self.predefined[expr]
+        except KeyError:
+            pass
+
+        operand = expr.ufl_operands[0]
+        raise Exception('Cannot compute restriction of ' + str(expr) + ', yet')
+
     def product(self, expr, x, y):
         return self._makeTmp('(' + x + ' * ' + y + ')')
 

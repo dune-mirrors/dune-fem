@@ -1,11 +1,22 @@
 from __future__ import absolute_import, division, print_function
 
+from ufl.algorithms import expand_compounds, expand_derivatives, expand_indices
 from ufl.algorithms.analysis import extract_arguments
+from ufl.algorithms.apply_restrictions import apply_restrictions
 from ufl.algorithms.transformer import Transformer
 from ufl.constantvalue import IntValue
 from ufl.differentiation import Grad
+from ufl.restriction import Restricted
 
 from .tensors import ExprTensor, keys
+
+
+def sumTensorMaps(left, right):
+    for key, r in right.items():
+        l = left.get(key)
+        left[key] = r if l is None else l + r
+        return left
+
 
 class MultiLinearExprSplitter(Transformer):
     def __init__(self, arguments):
@@ -64,10 +75,7 @@ class MultiLinearExprSplitter(Transformer):
         return result
 
     def sum(self, expr, left, right):
-        for key, r in right.items():
-            l = left.get(key)
-            left[key] = r if l is None else l + r
-        return left
+        return sumTensorMaps(left, right)
 
     def terminal(self, expr):
         if len(expr.ufl_shape) > 0:
@@ -87,6 +95,8 @@ class MultiLinearExprSplitter(Transformer):
         return self.visit(expr.expression())
 
     def _getLeaf(self, expr):
+        if isinstance(expr, Restricted):
+            expr = expr.ufl_operands[0]
         while isinstance(expr, Grad):
             expr = expr.ufl_operands[0]
         return expr
@@ -120,3 +130,20 @@ def splitMultiLinearExpr(expr, arguments=None):
     if arguments is None:
         arguments = extract_arguments(expr)
     return MultiLinearExprSplitter(arguments).visit(expr)
+
+
+
+def splitForm(form, arguments=None):
+    if arguments is None:
+        arguments = form.arguments()
+    form = apply_restrictions(expand_indices(expand_derivatives(expand_compounds(form))))
+
+    integrals = {}
+    for integral in form.integrals():
+        right = splitMultiLinearExpr(integral.integrand(), arguments)
+        left = integrals.get(integral.integral_type())
+        if left is not None:
+            right = sumTensorMaps(left, right)
+        integrals[integral.integral_type()] = right
+
+    return integrals

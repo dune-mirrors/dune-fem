@@ -64,6 +64,12 @@ class Expr2Latex(Transformer):
     def multi_index(self, expr):
         return "{" + ",".join([str(i) for i in expr]) + "}"
 
+    def negative_restricted(self, expr, arg):
+        return "\\left(" + arg + "\\right)^-"
+
+    def positive_restricted(self, expr, arg):
+        return "\\left(" + arg + "\\right)^+"
+
     def product(self, expr, left, right):
         return left + "\," + right
 
