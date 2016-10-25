@@ -37,7 +37,6 @@ namespace Dune
       void registerSpaceConstructor ( pybind11::class_< Space, Holder, Alias > &cls )
       {
         typedef typename Space::GridPartType GridPart;
-        typedef typename GridPart::GridViewType GridView;
         registerSpaceConstructor( cls, std::is_constructible< Space, GridPart& >() );
       }
 
