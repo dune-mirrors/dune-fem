@@ -252,10 +252,6 @@ def compileUFL(equation, tempVars=True):
         integrands.boundary = generateUnaryCode(predefined, [phi, dphi], integrals['exterior_facet'], integrands.coefficients, tempVars);
 
     if 'interior_facet' in integrals.keys():
-        for key, value in integrals['interior_facet'].items():
-            print('----- ' + ' | '.join([str(k) for k in key]) + ' -----')
-            for k in value.keys():
-                print(', '.join([str(i) for i in k]) + ': ' + str(value[k]))
         predefined = {u('-'): 'std::get< 0 >( uIn )', du('-'): 'std::get< 1 >( uIn )', u('+'): 'std::get< 0 >( uOut )', du('+'): 'std::get< 0 >( uOut )'}
         integrands.skeleton = generateBinaryCode(predefined, [phi, dphi], integrals['interior_facet'], integrands.coefficients, tempVars)
 
