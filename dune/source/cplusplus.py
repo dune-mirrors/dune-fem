@@ -186,8 +186,19 @@ class Class(Block):
 
 class Struct(Class):
     def __init__(self, name, targs=None, bases=None, final=False):
-        Block.__init__(self, name, targs=targs, bases=bases, final=final)
+        Class.__init__(self, name, targs=targs, bases=bases, final=final)
         self.type = 'struct'
+
+
+
+# AccessModifier
+# --------------
+
+class AccessModifier:
+    def __init__(self, modifier):
+        if modifier not in ['private', 'protected', 'public']:
+            raise Exception(modifier + ' is not a valid access modifier.')
+        self.modifier = modifier
 
 
 
@@ -278,7 +289,7 @@ class SourceWriter:
               self.emit('{}', indent)
         elif isinstance(src, Constructor):
             if not isinstance(context, Class):
-                raise Exception('constructors can only occur in classes or structs')
+                raise Exception('Constructors can only occur in classes or structs')
             self.emit(None if self.begin else '', indent)
             if src.targs:
                 self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
@@ -298,6 +309,12 @@ class SourceWriter:
               self.emit('}', indent)
             else:
               self.emit('{}', indent)
+        elif isinstance(src, AccessModifier):
+            if not isinstance(context, Class):
+                raise Exception('Access modifiers can only occur in classes or structs')
+            self.emit(None if self.begin else '')
+            self.emit(src.modifier + ':', indent-1)
+            self.begin = True
         elif isinstance(src, TypeAlias):
             if src.targs:
                 self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
