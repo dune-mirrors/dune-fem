@@ -42,8 +42,9 @@ class Integrands():
         result.append(TypeAlias("IntersectionType", "typename GridPart::IntersectionType"))
         result.append(TypeAlias("FunctionSpaceType", "Dune::Fem::FunctionSpace< double, RangeFieldType, dimDomain, dimRange >"))
 
-        for s in ["DomainType", "RangeType", "JacobianRangeType", "HessianRangeType"]:
+        for s in ["DomainType", "RangeType", "JacobianRangeType"]:
             result.append(TypeAlias(s, "typename FunctionSpaceType::" + s))
+        result.append(TypeAlias("ValueType", "std::tuple< RangeType, JacobianRangeType >"))
 
         if self.coefficients:
             constants = [("std::shared_ptr< Dune::FieldVector< " + SourceWriter.cpp_fields(c['field']) + ", " + str(c['dimRange']) + " > >") for c in self.coefficients if c['constant']]
@@ -54,7 +55,7 @@ class Integrands():
             result.append(TypeAlias("ConstantsRangeType", "typename std::tuple_element_t< i, ConstantsTupleType >::element_type", targs=["std::size_t i"]))
             result.append(Variable("const std::size_t numCoefficients", "std::tuple_size< CoefficientFunctionSpaceTupleType >::value", static=True))
             result.append(TypeAlias("CoefficientFunctionSpaceType", "typename std::tuple_element< i, CoefficientFunctionSpaceTupleType >::type", targs=["std::size_t i"]))
-            for s in ["RangeType", "JacobianRangeType", "HessianRangeType"]:
+            for s in ["RangeType", "JacobianRangeType"]:
                 result.append(TypeAlias("Coefficient" + s, "typename CoefficientFunctionSpaceType< i >::" + s, targs=["std::size_t i"]))
         else:
             result.append(Variable("const std::size_t numCoefficients", "0u", static=True))
