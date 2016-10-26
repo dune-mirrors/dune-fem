@@ -46,6 +46,11 @@ class ListWriter:
 
 
 
+def stripEach(l):
+    return None if l is None else [o.strip() for o in l]
+
+
+
 # Block
 # -----
 
@@ -79,12 +84,8 @@ class Function(Block):
     def __init__(self, typedName, targs=None, args=None, code=None):
         Block.__init__(self)
         self.typedName = typedName
-        self.targs = None
-        if targs is not None:
-            self.targs = [arg.strip() for arg in targs]
-        self.args = None
-        if args is not None:
-            self.args= [arg.strip() for arg in args]
+        self.targs = stripEach(targs)
+        self.args = stripEach(args)
         if code is not None:
             self.append(code)
 
@@ -101,12 +102,8 @@ class Method(Block):
         self.resetQualifiers(const=const, volatile=volatile)
         if static and (const or volatile):
             raise Exception('Cannot cv-qualify static method.')
-        self.targs = None
-        if targs is not None:
-            self.targs = [arg.strip() for arg in targs]
-        self.args = None
-        if args is not None:
-            self.args= [arg.strip() for arg in args]
+        self.targs = stripEach(targs)
+        self.args = stripEach(args)
         if code is not None:
             self.append(code)
 
@@ -125,6 +122,20 @@ class Method(Block):
 
 
 
+# Constructor
+# -----------
+
+class Constructor(Block):
+    def __init__(self, targs=None, args=None, init=None, code=None):
+        Block.__init__(self)
+        self.targs = stripEach(targs)
+        self.args = stripEach(args)
+        self.init = stripEach(init)
+        if code is not None:
+            self.append(code)
+
+
+
 # TypeAlias
 # ---------
 
@@ -132,9 +143,7 @@ class TypeAlias:
     def __init__(self, name, typeName, targs=None):
         self.name = name
         self.typeName = typeName
-        self.targs = None
-        if targs is not None:
-            self.targs = [arg.strip() for arg in targs]
+        self.targs = stripEach(targs)
 
 
 
@@ -158,11 +167,8 @@ class Class(Block):
         Block.__init__(self)
         self.name = name
         self.targs = None
-        if targs is not None:
-            self.targs = [arg.strip() for arg in targs]
-        self.bases = None
-        if bases is not None:
-            self.bases = [base.strip() for base in bases]
+        self.targs = stripEach(targs)
+        self.bases = stripEach(bases)
         self.final = final
         self.type = 'class'
 
@@ -204,12 +210,12 @@ class SourceWriter:
             raise Exception("Open blocks left in source file.")
         self.writer.close()
 
-    def emit(self, src, indent=0):
+    def emit(self, src, indent=0, context=None):
         if src is None:
             return
         elif isinstance(src, (list, set, tuple)):
-            for srcline in src:
-                self.emit(srcline, indent)
+            for s in src:
+                self.emit(s, indent, context)
         elif isinstance(src, NameSpace):
             self.emit(None if self.begin else '')
             if src.name is not None:
@@ -218,25 +224,25 @@ class SourceWriter:
                 self.emit('namespace', indent)
             self.emit('{', indent)
             self.emit('', indent)
-            self.emit(src.content, intent+1)
+            self.emit(src.content, intent+1, src)
             self.emit('', indent)
             if src.name is not None:
-                self.emit('} // namespace ' + name, indent)
+                self.emit('} // namespace ' + src.name, indent)
             else:
                 self.emit('} // anonymous namespace', indent)
         elif isinstance(src, Class):
             self.emit(None if self.begin else ['','',''], indent)
-            self.emit(['// ' + name, '// ' + '-' * len(name), ''], indent)
+            self.emit(['// ' + src.name, '// ' + '-' * len(src.name), ''], indent)
             if src.targs:
                 self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
-            self.emit(src.type + ' ' + name + (' final' if src.final else ''))
+            self.emit(src.type + ' ' + src.name + (' final' if src.final else ''))
             if src.bases:
                 for i in range(0,len(src.bases)):
                     prefix = ': ' if i == 0 else '  '
                     postfix = ',' if i+1 < len(src.bases) else ''
-                    self.emit(prefix + base + postfix, indent+1)
+                    self.emit(prefix + src.bases[i] + postfix, indent+1)
             self.emit('{', indent)
-            self.emit(src.content, indent+1)
+            self.emit(src.content, indent+1, src)
             self.emit('};', indent)
         elif isinstance(src, Function):
             self.emit(None if self.begin else '', indent)
@@ -247,9 +253,12 @@ class SourceWriter:
                 signature += ' ' + ', '.join(src.args) + ' '
             signature += ')'
             self.emit(signature, indent)
-            self.emit('{', indent)
-            self.emit(src.content, indent+1)
-            self.emit('}', indent)
+            if src.content:
+              self.emit('{', indent)
+              self.emit(src.content, indent+1, src)
+              self.emit('}', indent)
+            else:
+              self.emit('{}', indent)
         elif isinstance(src, Method):
             self.emit(None if self.begin else '', indent)
             if src.targs:
@@ -261,9 +270,34 @@ class SourceWriter:
             if src.qualifiers:
                 signature += ' ' + ' '.join(src.qualifiers)
             self.emit(signature, indent)
-            self.emit('{', indent)
-            self.emit(src.content, indent+1)
-            self.emit('}', indent)
+            if src.content:
+              self.emit('{', indent)
+              self.emit(src.content, indent+1, src)
+              self.emit('}', indent)
+            else:
+              self.emit('{}', indent)
+        elif isinstance(src, Constructor):
+            if not isinstance(context, Class):
+                raise Exception('constructors can only occur in classes or structs')
+            self.emit(None if self.begin else '', indent)
+            if src.targs:
+                self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
+            signature = context.name + ' ('
+            if src.args:
+                signature += ' ' + ', '.join(src.args) + ' '
+            signature += ')'
+            self.emit(signature, indent)
+            if src.init:
+                for i in range(0,len(src.init)):
+                    prefix = ': ' if i == 0 else '  '
+                    postfix = ',' if i+1 < len(src.init) else ''
+                    self.emit(prefix + src.init[i] + postfix, indent+1)
+            if src.content:
+              self.emit('{', indent)
+              self.emit(src.content, indent+1, src)
+              self.emit('}', indent)
+            else:
+              self.emit('{}', indent)
         elif isinstance(src, TypeAlias):
             if src.targs:
                 self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
