@@ -46,11 +46,6 @@ class ListWriter:
 
 
 
-def stripEach(l):
-    return None if l is None else [o.strip() for o in l]
-
-
-
 # Block
 # -----
 
@@ -84,8 +79,8 @@ class Function(Block):
     def __init__(self, typedName, targs=None, args=None, code=None):
         Block.__init__(self)
         self.typedName = typedName
-        self.targs = stripEach(targs)
-        self.args = stripEach(args)
+        self.targs = None if targs is None else [a.strip() for a in targs]
+        self.args = None if args is None else [a.strip() for a in args]
         if code is not None:
             self.append(code)
 
@@ -102,8 +97,8 @@ class Method(Block):
         self.resetQualifiers(const=const, volatile=volatile)
         if static and (const or volatile):
             raise Exception('Cannot cv-qualify static method.')
-        self.targs = stripEach(targs)
-        self.args = stripEach(args)
+        self.targs = None if targs is None else [a.strip() for a in targs]
+        self.args = None if args is None else [a.strip() for a in args]
         if code is not None:
             self.append(code)
 
@@ -128,9 +123,9 @@ class Method(Block):
 class Constructor(Block):
     def __init__(self, targs=None, args=None, init=None, code=None):
         Block.__init__(self)
-        self.targs = stripEach(targs)
-        self.args = stripEach(args)
-        self.init = stripEach(init)
+        self.targs = None if targs is None else [a.strip() for a in targs]
+        self.args = None if args is None else [a.strip() for a in args]
+        self.init = None if init is None else [a.strip() for a in init]
         if code is not None:
             self.append(code)
 
@@ -143,7 +138,7 @@ class TypeAlias:
     def __init__(self, name, typeName, targs=None):
         self.name = name
         self.typeName = typeName
-        self.targs = stripEach(targs)
+        self.targs = None if targs is None else [a.strip() for a in targs]
 
 
 
@@ -167,8 +162,8 @@ class Class(Block):
         Block.__init__(self)
         self.name = name
         self.targs = None
-        self.targs = stripEach(targs)
-        self.bases = stripEach(bases)
+        self.targs = None if targs is None else [a.strip() for a in targs]
+        self.bases = None if bases is None else [a.strip() for a in bases]
         self.final = final
         self.type = 'class'
 
@@ -209,7 +204,118 @@ class EnumClass:
     def __init__(self, name, values, base=None):
         self.name = name
         self.base = None if base is None else base.strip()
-        self.values = stripEach(values)
+        self.values = [v.strip() for v in values]
+
+
+
+# Expression
+# ----------
+
+class Expression:
+    def __init__(self, cppType=None):
+        self.cppType = cppType
+
+
+
+# BuiltInFunctionCall
+# -------------------
+
+class BuiltInFunctionCall(Expression):
+    def __init__(self, header, cppType, function, args=None):
+        Expression.__init__(self, cppType)
+        self.header = header
+        self.function = function
+        self.args = args
+
+
+
+# ConstantExpression
+# ------------------
+
+class ConstantExpression(Expression):
+    def __init__(self, cppType, value):
+        Expression.__init__(self, cppType)
+        self.value = value
+
+
+
+# ConstructExpression
+# -------------------
+
+class ConstructExpression(Expression):
+    def __init__(self, cppType, args=None):
+        Expression.__init__(self, cppType)
+        self.args = None if args is None else [makeExpression(arg) for arg in args]
+
+
+
+# LambdaExpression
+# ----------------
+
+class LambdaExpression(Expression, Block):
+    def __init__(self, args=None, capture=None, code=None):
+        Expression.__init__(self, None)
+        Block.__init__(self)
+        self.args=args
+        self.capture=capture
+        if code is not None:
+            self.append(code)
+
+
+
+# makeExpression
+# --------------
+
+def makeExpression(expr):
+    if isinstance(expr, bool):
+        return ConstantExpression('bool', 'true' if expr else 'false')
+    elif isinstance(expr, int):
+        return ConstantExpression('int', str(expr))
+    else:
+        return expr
+
+
+
+# Statement
+# ---------
+
+class Statement:
+    def __init__(self):
+        pass
+
+
+
+# ReturnStatement
+# ---------------
+
+class ReturnStatement(Statement):
+    def __init__(self, expr=None):
+        Statement.__init__(self)
+        self.expression = None if expr is None else makeExpression(expr)
+
+
+
+# short hand notation
+# -------------------
+
+def construct(cppType, *args):
+    return ConstructExpression(cppType, args if args else None)
+
+
+def make_pair(left, right):
+    if isinstance(left, Expression) and isinstance(right, Expression) and left.cppType is not None and right.cppType is not None:
+        cppType = 'std::pair< ' + left.cppType + ', ' + right.cppType + ' >'
+    else:
+        cppType = None
+    return BuiltInFunctionCall('utility', cppType, 'std::make_pair', args=[left, right])
+
+
+def return_(expr=None):
+    return ReturnStatement(expr)
+
+
+def lambda_(args=None, capture=None, code=None):
+    return LambdaExpression(args=args, capture=capture, code=code)
 
 
 
@@ -343,6 +449,23 @@ class SourceWriter:
             if src.value is not None:
                 declaration += ' = ' + src.value
             self.emit(declaration + ';', indent)
+        elif isinstance(src, Statement):
+            if not isinstance(context, (Constructor, Function, Method)):
+                raise Exception('Statements can only occur in constructors, functions and methods')
+            if isinstance(src, ReturnStatement):
+                if src.expression is not None:
+                    expr = self.translateExpr(src.expression)
+                    expr[len(expr)-1] += ';'
+                    self.emit('return ' + expr[0], indent)
+                    for e in expr[1:]:
+                        if isinstance(e, list):
+                            self.emit(e, indent+2, Function('<lambda>'))
+                        else:
+                            self.emit(e, indent+1)
+                else:
+                    self.emit('return;', indent)
+            else:
+                raise Exception('Unknown statement type.')
         elif self._isstring(src):
             src = src.rstrip()
             if src:
@@ -352,6 +475,35 @@ class SourceWriter:
             self.begin = False
         else:
             raise Exception("Unable to print " + repr(src) + ".")
+
+    def translateExpr(self, expr):
+        def join(lists, delimiter=''):
+            left = lists[0]
+            if len(lists) > 1:
+                right = lists[1]
+                n = len(left)
+                return join([left[:n-1] + [left[n-1] + delimiter + right[0]] + right[1:]] + lists[2:], delimiter)
+            else:
+                return left
+
+        if isinstance(expr, BuiltInFunctionCall):
+            if expr.args is not None:
+                return join([[expr.function + '( '], join([self.translateExpr(arg) for arg in expr.args], ', '), [' )']])
+            else:
+                return [expr.function + '()']
+        elif isinstance(expr, ConstantExpression):
+            return [expr.value]
+        elif isinstance(expr, ConstructExpression):
+            if expr.args is not None:
+                return join([[expr.cppType + '( '], join([self.translateExpr(arg) for arg in expr.args], ', '), [' )']])
+            else:
+                return [expr.cppType + '()']
+        elif isinstance(expr, LambdaExpression):
+            capture = '' if expr.capture is None else ' ' + ', '.join(expr.capture) + ' '
+            args = '' if expr.args is None else ' ' + ', '.join(expr.args) + ' '
+            return ['[' + capture + '] (' + args + ') {', expr.content, '}']
+        else:
+            return [expr.strip()]
 
     def pushBlock(self, block, name):
         self.blocks.append((block, name))

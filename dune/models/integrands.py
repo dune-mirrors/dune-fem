@@ -3,9 +3,11 @@ from __future__ import division, print_function
 from ufl import Coefficient, Form
 from ufl import action, derivative
 from ufl.algorithms.apply_derivatives import apply_derivatives
+from ufl.constantvalue import IntValue, Zero
 from ufl.differentiation import Grad
 
 from dune.source.cplusplus import AccessModifier, Constructor, EnumClass, Method, Struct, TypeAlias, Variable
+from dune.source.cplusplus import construct, lambda_, make_pair, return_
 from dune.source.cplusplus import SourceWriter
 
 from dune.ufl import codegen
@@ -76,12 +78,12 @@ class Integrands():
         initEntity.append('entity_' + inside + ' = entity;')
         initEntity.append('initCoefficients( entity_' + inside + ', coefficients_' + inside + ', std::make_index_sequence< numCoefficients >() );')
         initEntity.append(self.init)
-        initEntity.append('return true;')
+        initEntity.append(return_(True))
         result.append(initEntity)
 
         initIntersection = Method('bool init', args=['const IntersectionType &intersection'], const=True)
         if self.skeleton is None:
-            initIntersection.append('return (intersection.boundary() && init( intersection.inside() ));')
+            initIntersection.append(return_('(intersection.boundary() && init( intersection.inside() ))'))
         else:
             initIntersection.append('entity_[ Side::in ] = intersection.inside();')
             initIntersection.append('initCoefficients( entity_[ Side::in ], coefficients_[ Side::in ], std::make_index_sequence< numCoefficients >() );')
@@ -90,7 +92,7 @@ class Integrands():
             initIntersection.append('  entity_[ Side::out ] = intersection.outside();')
             initIntersection.append('  initCoefficients( entity_[ Side::out ], coefficients_[ Side::out ], std::make_index_sequence< numCoefficients >() );')
             initIntersection.append('}')
-            initIntersection.append('return true;')
+            initIntersection.append(return_(True))
         result.append(initIntersection)
 
         return result
@@ -100,11 +102,11 @@ class Integrands():
 
         if self.interior is not None:
             result.append(Method('ValueType interior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.interior, const=True))
-            #result.append(Method('auto linearizedInterior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.linearizedInterior, const=True))
+            result.append(Method('auto linearizedInterior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.linearizedInterior, const=True))
 
         if self.boundary is not None:
             result.append(Method('ValueType boundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.boundary, const=True))
-            #result.append(Method('auto linearizedBoundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.linearizedBoundary, const=True))
+            result.append(Method('auto linearizedBoundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.linearizedBoundary, const=True))
 
         if self.skeleton is not None:
             result.append(Method('std::pair< ValueType, ValueType > skeleton', targs=['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=self.skeleton, const=True))
@@ -115,13 +117,13 @@ class Integrands():
     def post(self):
         result = []
 
-        constant = Method('ConstantsType< i > &constant', targs=['std::size_t i'], code='return *std::get< i >( constants_ );')
+        constant = Method('ConstantsType< i > &constant', targs=['std::size_t i'], code=return_('*std::get< i >( constants_ )'))
         result += [constant.variant('const ConstantsType< i > &constant', const=True), constant]
 
         if self.skeleton is None:
-            coefficient = Method('CoefficientType< i > &coefficient', targs=['std::size_t i'], code='return std::get< i >( coefficients_ );')
+            coefficient = Method('CoefficientType< i > &coefficient', targs=['std::size_t i'], code=return_('std::get< i >( coefficients_ )'))
         else:
-            coefficient = Method('CoefficientType< i > &coefficient', targs=['std::size_t i', 'Side side = Side::in'], code='return std::get< i >( coefficients_[ side ] );')
+            coefficient = Method('CoefficientType< i > &coefficient', targs=['std::size_t i', 'Side side = Side::in'], code=return_('std::get< i >( coefficients_[ side ] )'))
         result += [coefficient.variant('const CoefficientType< i > &coefficient', const=True), coefficient]
 
         result.append(AccessModifier('private'))
@@ -182,15 +184,66 @@ def generateCode(predefined, testFunctions, tensorMap, coefficients, tempVars=Tr
     return preamble, values
 
 
+def generateLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, coefficients, tempVars=True):
+    # build list of all expressions to compile
+    expressions = []
+    for phi in testFunctions:
+        for psi in trialFunctions:
+            if (phi, psi) not in tensorMap:
+                continue
+            tensor = tensorMap[(phi, psi)]
+            keys = tensor.keys()
+            expressions += [tensor[i] for i in keys]
+
+    # compile all expressions at once
+    preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars)
+
+    # extract generated code for expressions and build values
+    values = []
+    for phi in testFunctions:
+        value = tensors.fill(phi.ufl_shape, None)
+        for idx in range(len(trialFunctions)):
+            psi = trialFunctions[idx]
+            strpsi = 'std::get< ' + str(idx) + ' >( phi )'
+            if (phi, psi) in tensorMap:
+                tensor = tensorMap[(phi, psi)]
+                keys = tensor.keys()
+                for ij, r in zip(keys, results[:len(keys)]):
+                    if isinstance(tensor[ij], Zero):
+                        continue
+                    i = ij[:len(phi.ufl_shape)]
+                    j = ij[len(phi.ufl_shape):]
+                    if isinstance(tensor[ij], IntValue) and int(tensor[ij]) == 1:
+                        r = strpsi + codegen.translateIndex(j)
+                    else:
+                        r = '(' + r + ') * ' + strpsi + codegen.translateIndex(j)
+                    s = tensors.getItem(value, i)
+                    s = r if s is None else s + ' + ' + r
+                    value = tensors.setItem(value, i, s)
+                results = results[len(keys):]
+        value = tensors.apply(lambda v : '' if v is None else v, phi.ufl_shape, value)
+        values += [tensors.reformat(lambda row: '{ ' + ', '.join(row) + ' }', phi.ufl_shape, value)]
+
+    return preamble, values
+
+
 def generateUnaryCode(predefined, testFunctions, tensorMap, coefficients, tempVars=True):
     preamble, values = generateCode(predefined, testFunctions, tensorMap, coefficients, tempVars)
-    return preamble + ['return ValueType( ' + ', '.join(values) + ' );']
+    return preamble + [return_(construct('ValueType', *values))]
+
+
+def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, coefficients, tempVars=True):
+    if tensorMap is None:
+        return [return_(lambda_(args=['const ValueType &phi'], code=return_(construct('ValueType', 0, 0))))]
+
+    preamble, values = generateLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, coefficients, tempVars)
+    return preamble + [return_(lambda_(args=['const ValueType &phi'], code=return_(construct('ValueType', *values))))]
 
 
 def generateBinaryCode(predefined, testFunctions, tensorMap, coefficients, tempVars=True):
     restrictedTestFunctions = [phi('-') for phi in testFunctions] + [phi('+') for phi in testFunctions]
     preamble, values = generateCode(predefined, restrictedTestFunctions, tensorMap, coefficients, tempVars=True)
-    return preamble + ['return std::make_pair( ValueType( ' + ', '.join(values) + ' ), ValueType( ' + ', '.join(values) + ' ) );']
+    return preamble + [return_(make_pair(construct('ValueType', *values[:len(testFunctions)]), construct('ValueType', *values[len(testFunctions):])))]
 
 
 def compileUFL(equation, tempVars=True):
@@ -238,18 +291,20 @@ def compileUFL(equation, tempVars=True):
     dform = apply_derivatives(derivative(action(form, ubar), ubar, u))
     linearizedIntegrals = splitForm(dform, [phi, u])
 
-    #if integrals.keys() != linearizedIntegrals.keys():
-    #    raise Exception('linearization contains different integrals.')
     if not set(integrals.keys()) <= {'cell', 'exterior_facet', 'interior_facet'}:
         raise Exception('unknown integral encountered in ' + str(set(integrals.keys())) + '.')
 
     if 'cell' in integrals.keys():
         predefined = {u: 'std::get< 0 >( u )', du: 'std::get< 1 >( u )'}
-        integrands.interior = generateUnaryCode(predefined, [phi, dphi], integrals['cell'], integrands.coefficients, tempVars);
+        integrands.interior = generateUnaryCode(predefined, [phi, dphi], integrals['cell'], integrands.coefficients, tempVars)
+        predefined = {ubar: 'std::get< 0 >( u )', dubar: 'std::get< 1 >( u )'}
+        integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('cell'), integrands.coefficients, tempVars)
 
     if 'exterior_facet' in integrals.keys():
         predefined = {u: 'std::get< 0 >( u )', du: 'std::get< 1 >( u )'}
         integrands.boundary = generateUnaryCode(predefined, [phi, dphi], integrals['exterior_facet'], integrands.coefficients, tempVars);
+        predefined = {ubar: 'std::get< 0 >( u )', dubar: 'std::get< 1 >( u )'}
+        integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('exterior_facet'), integrands.coefficients, tempVars)
 
     if 'interior_facet' in integrals.keys():
         predefined = {u('-'): 'std::get< 0 >( uIn )', du('-'): 'std::get< 1 >( uIn )', u('+'): 'std::get< 0 >( uOut )', du('+'): 'std::get< 0 >( uOut )'}

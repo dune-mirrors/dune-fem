@@ -156,7 +156,7 @@ class CodeGenerator(MultiFunction):
         return self._makeTmp('normal')
 
     def sum(self, expr, x, y):
-        return '(' + x + ' + ' + y + ')'
+        return self._makeTmp('(' + x + ' + ' + y + ')')
 
     def tan(self, expr, x):
         self.using.add('using std::tan;')
