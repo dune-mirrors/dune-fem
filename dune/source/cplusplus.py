@@ -202,6 +202,17 @@ class AccessModifier:
 
 
 
+# EnumClass
+# ---------
+
+class EnumClass:
+    def __init__(self, name, values, base=None):
+        self.name = name
+        self.base = None if base is None else base.strip()
+        self.values = stripEach(values)
+
+
+
 # SourceWriter
 # ------------
 
@@ -248,13 +259,19 @@ class SourceWriter:
                 self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
             self.emit(src.type + ' ' + src.name + (' final' if src.final else ''))
             if src.bases:
-                for i in range(0,len(src.bases)):
+                for i in range(0, len(src.bases)):
                     prefix = ': ' if i == 0 else '  '
                     postfix = ',' if i+1 < len(src.bases) else ''
                     self.emit(prefix + src.bases[i] + postfix, indent+1)
             self.emit('{', indent)
             self.emit(src.content, indent+1, src)
             self.emit('};', indent)
+        elif isinstance(src, EnumClass):
+            code = 'enum class ' + src.name
+            if src.base is not None:
+                code += ' : ' + src.base
+            code += ' { ' + ', '.join(src.values) + ' };'
+            self.emit(code, indent)
         elif isinstance(src, Function):
             self.emit(None if self.begin else '', indent)
             if src.targs:

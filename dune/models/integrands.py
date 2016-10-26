@@ -5,7 +5,7 @@ from ufl import action, derivative
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.differentiation import Grad
 
-from dune.source.cplusplus import AccessModifier, Constructor, Method, Struct, TypeAlias, Variable
+from dune.source.cplusplus import AccessModifier, Constructor, EnumClass, Method, Struct, TypeAlias, Variable
 from dune.source.cplusplus import SourceWriter
 
 from dune.ufl import codegen
@@ -63,13 +63,34 @@ class Integrands():
         result.append(TypeAlias('CoefficientType', 'typename std::tuple_element< i, std::tuple< Coefficients... > >::type', targs=['std::size_t i']))
         result.append(TypeAlias('ConstantsType', 'typename std::tuple_element< i, ConstantsTupleType >::type::element_type', targs=['std::size_t i']))
 
+        if self.skeleton is not None:
+            result.append(EnumClass('Side', ['in = 0u', 'out = 1u'], 'std::size_t'))
+            inside = '[ Side::in ]'
+        else:
+            inside = ''
+
         result.append(Constructor(code="constructConstants( std::make_index_sequence< std::tuple_size< ConstantsTupleType >::value >() );"))
 
-        init = Method('bool init', args=['const EntityType &entity'], const=True)
-        init.append('entity_ = entity;', 'initCoefficients( std::make_index_sequence< numCoefficients >() );', self.init, 'return true;')
-        result.append(init)
+        initEntity = Method('bool init', args=['const EntityType &entity'], const=True)
+        initEntity.append('entity_' + inside + ' = entity;')
+        initEntity.append('initCoefficients( entity_' + inside + ', coefficients_' + inside + ', std::make_index_sequence< numCoefficients >() );')
+        initEntity.append(self.init)
+        initEntity.append('return true;')
+        result.append(initEntity)
 
-        result.append(Method('const EntityType &entity', code='return entity_;', const=True))
+        initIntersection = Method('bool init', args=['const IntersectionType &intersection'], const=True)
+        if self.skeleton is None:
+            initIntersection.append('return (intersection.boundary() && init( intersection.inside() ));')
+        else:
+            initIntersection.append('entity_[ Side::in ] = intersection.inside();')
+            initIntersection.append('initCoefficients( entity_[ Side::in ], coefficients_[ Side::in ], std::make_index_sequence< numCoefficients >() );')
+            initIntersection.append('if( intersection.neighbor() )')
+            initIntersection.append('{')
+            initIntersection.append('  entity_[ Side::out ] = intersection.outside();')
+            initIntersection.append('  initCoefficients( entity_[ Side::out ], coefficients_[ Side::out ], std::make_index_sequence< numCoefficients >() );')
+            initIntersection.append('}')
+            initIntersection.append('return true;')
+        result.append(initIntersection)
 
         return result
 
@@ -96,21 +117,28 @@ class Integrands():
         constant = Method('ConstantsType< i > &constant', targs=['std::size_t i'], code='return *std::get< i >( constants_ );')
         result += [constant.variant('const ConstantsType< i > &constant', const=True), constant]
 
-        coefficient = Method('CoefficientType< i > &coefficient', targs=['std::size_t i'], code='return std::get< i >( coefficients_ );')
+        if self.skeleton is None:
+            coefficient = Method('CoefficientType< i > &coefficient', targs=['std::size_t i'], code='return std::get< i >( coefficients_ );')
+        else:
+            coefficient = Method('CoefficientType< i > &coefficient', targs=['std::size_t i', 'Side side = Side::in'], code='return std::get< i >( coefficients_[ side ] );')
         result += [coefficient.variant('const CoefficientType< i > &coefficient', const=True), coefficient]
 
         result.append(AccessModifier('private'))
 
-        initCoefficients = Method('void initCoefficients', targs=['std::size_t... i'], args=['std::index_sequence< i... >'], const=True)
-        initCoefficients.append('std::ignore = std::make_tuple( (std::get< i >( coefficients_ ).init( entity() ), i)... );')
+        initCoefficients = Method('void initCoefficients', targs=['std::size_t... i'], args=['const EntityType &entity', 'std::tuple< Coefficients... > &coefficients', 'std::index_sequence< i... >'], static=True)
+        initCoefficients.append('std::ignore = std::make_tuple( (std::get< i >( coefficients ).init( entity ), i)... );')
         result.append(initCoefficients)
 
         constructConstants = Method('void constructConstants', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
         constructConstants.append('std::ignore = std::make_tuple( (std::get< i >( constants_ ) = std::make_shared< ConstantsType< i > >(), i)... );')
         result.append(constructConstants)
 
-        result.append(Variable('EntityType entity_'))
-        result.append(Variable('std::tuple< Coefficients... > coefficients_'))
+        if self.skeleton is None:
+            result.append(Variable('EntityType entity_'))
+            result.append(Variable('std::tuple< Coefficients... > coefficients_'))
+        else:
+            result.append(Variable('std::array< EntityType, 2 > entity_'))
+            result.append(Variable('std::array< std::tuple< Coefficients... >, 2 > coefficients_'))
         result.append(Variable('ConstantsTupleType constants_'))
         if self.vars is not None:
             result += self.vars
