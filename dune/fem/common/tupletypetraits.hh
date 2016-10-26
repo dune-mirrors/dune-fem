@@ -4,6 +4,7 @@
 #include <tuple>
 #include <type_traits>
 
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/tupleutility.hh>
 #include <dune/common/typetraits.hh>
 
@@ -241,33 +242,14 @@ namespace Dune
    * \tparam  Tuple  tuple of pointer types
    */
   template< class Tuple >
-  class ValidPointerTupleCheck
+  struct ValidPointerTupleCheck
   {
-    static_assert( TupleTypeTraits< Tuple >::isPointerTuple,
-                   "Can not check non-pointer tuple." );
+    static_assert( TupleTypeTraits< Tuple >::isPointerTuple, "Can not check non-pointer tuple." );
 
-    struct ValidPointer
-    {
-      ValidPointer () : v_( true ) {}
-
-      template< class Ptr >
-      void visit ( Ptr &ptr )
-      {
-        v_ &= bool( ptr );
-      }
-
-      operator bool() const { return v_; }
-
-    private:
-      bool v_;
-    };
-
-  public:
     static bool apply ( const Tuple &tuple )
     {
-      Dune::ForEachValue< Tuple > forEach( tuple );
-      ValidPointer check;
-      forEach.apply( check );
+      bool check(true);
+      Hybrid::forEach( tuple, [ & ]( auto&& ti ){ check &= static_cast< bool >( ti ); } );
       return check;
     }
   };
