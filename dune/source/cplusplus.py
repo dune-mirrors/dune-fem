@@ -78,6 +78,19 @@ class NameSpace(Block):
 
 
 
+# BuiltInFunction
+# ---------------
+
+class BuiltInFunction:
+    def __init__(self, header, cppType, name, targs=None, args=None):
+        self.header = header
+        self.cppType = cppType
+        self.name = name
+        self.tarts = None if targs is None else [a.strip() for a in targs]
+        self.args = None if args is None else [a.strip() for a in args]
+
+
+
 # Function
 # --------
 
@@ -224,13 +237,12 @@ class Expression:
 
 
 
-# BuiltInFunctionCall
-# -------------------
+# Application
+# -----------
 
-class BuiltInFunctionCall(Expression):
-    def __init__(self, header, cppType, function, args=None):
-        Expression.__init__(self, cppType)
-        self.header = header
+class Application(Expression):
+    def __init__(self, function, args=None):
+        Expression.__init__(self)
         self.function = function
         self.args = args
 
@@ -314,7 +326,8 @@ def make_pair(left, right):
         cppType = 'std::pair< ' + left.cppType + ', ' + right.cppType + ' >'
     else:
         cppType = None
-    return BuiltInFunctionCall('utility', cppType, 'std::make_pair', args=[left, right])
+    function = BuiltInFunction('utility', cppType, 'std::make_pair', args=['const auto &left', 'const auto &right'])
+    return Application(function, args=[left, right])
 
 
 def return_(expr=None):
@@ -493,11 +506,11 @@ class SourceWriter:
             else:
                 return left
 
-        if isinstance(expr, BuiltInFunctionCall):
+        if isinstance(expr, Application):
             if expr.args is not None:
-                return join([[expr.function + '( '], join([self.translateExpr(arg) for arg in expr.args], ', '), [' )']])
+                return join([[expr.function.name + '( '], join([self.translateExpr(arg) for arg in expr.args], ', '), [' )']])
             else:
-                return [expr.function + '()']
+                return [expr.function.name + '()']
         elif isinstance(expr, ConstantExpression):
             return [expr.value]
         elif isinstance(expr, ConstructExpression):
