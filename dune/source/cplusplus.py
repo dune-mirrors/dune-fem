@@ -533,7 +533,7 @@ class SourceWriter:
                 if len(args) != 2:
                     raise Exception('Unary operators require one argument (' + str(len(args)) + ' given).')
                 if expr.function.position == 'prefix':
-                    return join(expr.function.name + '('], args[0], [')'])
+                    return join([expr.function.name + '('], args[0], [')'])
                 elif expr.function.position == 'postfix':
                     return join(['('], args[0], [')' + expr.function.name])
                 else:
@@ -542,7 +542,7 @@ class SourceWriter:
                 if len(args) != 2:
                     raise Exception('Binary operators require two arguments (' + str(len(args)) + ' given).')
                 return join(['('], args[0], [') ' + expr.function.name + ' ('], args[1], [')'])
-            if isinstance(expr.function, BuiltInFunction, Function, Method):
+            if isinstance(expr.function, (BuiltInFunction, Function, Method)):
                 function = expr.function.name
             else:
                 function = expr.function
