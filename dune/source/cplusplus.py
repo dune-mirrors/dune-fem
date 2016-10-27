@@ -91,6 +91,25 @@ class BuiltInFunction:
 
 
 
+# UnaryOperator
+# -------------
+
+class UnaryOperator:
+    def __init__(self, name, position):
+        self.name = name
+        self.position = position
+
+
+
+# BinaryOperator
+# --------------
+
+class BinaryOperator:
+    def __init__(self, name):
+        self.name = name
+
+
+
 # Function
 # --------
 
@@ -509,10 +528,28 @@ class SourceWriter:
                 return left
 
         if isinstance(expr, Application):
-            if expr.args is not None:
-                return join([[expr.function.name + '( '], join([self.translateExpr(arg) for arg in expr.args], ', '), [' )']])
+            args = [self.translateExpr(arg) for arg in expr.args]
+            if isinstance(expr.function, UnaryOperator):
+                if len(args) != 2:
+                    raise Exception('Unary operators require one argument (' + str(len(args)) + ' given).')
+                if expr.function.position == 'prefix':
+                    return join(expr.function.name + '('], args[0], [')'])
+                elif expr.function.position == 'postfix':
+                    return join(['('], args[0], [')' + expr.function.name])
+                else:
+                    raise Exception('Unary operators are either prefix or postfix.')
+            if isinstance(expr.function, BinaryOperator):
+                if len(args) != 2:
+                    raise Exception('Binary operators require two arguments (' + str(len(args)) + ' given).')
+                return join(['('], args[0], [') ' + expr.function.name + ' ('], args[1], [')'])
+            if isinstance(expr.function, BuiltInFunction, Function, Method):
+                function = expr.function.name
             else:
-                return [expr.function.name + '()']
+                function = expr.function
+            if expr.args is not None:
+                return join([[function + '( '], join(args, ', '), [' )']])
+            else:
+                return [function + '()']
         elif isinstance(expr, ConstantExpression):
             return [expr.value]
         elif isinstance(expr, ConstructExpression):
