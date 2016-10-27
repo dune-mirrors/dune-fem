@@ -101,9 +101,9 @@ class BaseModel:
         sourceWriter.emit([initCoefficients, constructConstants])
 
         sourceWriter.emit('')
-        sourceWriter.emit(Variable('const EntityType *entity_', 'nullptr', mutable=True))
-        sourceWriter.emit(Variable('std::tuple< Coefficients... > coefficients_;', mutable=True))
-        sourceWriter.emit(Variable('ConstantsTupleType constants_;', mutable=True))
+        sourceWriter.emit(Variable('const EntityType *', 'entity_', 'nullptr', mutable=True))
+        sourceWriter.emit(Variable('std::tuple< Coefficients... >', 'coefficients_;', mutable=True))
+        sourceWriter.emit(Variable('ConstantsTupleType', 'constants_;', mutable=True))
         sourceWriter.emit(self.vars)
         sourceWriter.closeStruct(name)
 
@@ -148,7 +148,7 @@ class BaseModel:
 
         defSetCoefficient = Function('auto defSetCoefficient', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
         defSetCoefficient.append(TypeAlias('Dispatch', 'std::function< void( ' + modelClass + ' &model, pybind11::handle ) >'),
-                                 Variable('std::array< Dispatch, sizeof...( i ) > dispatch', '{{ Dispatch( setCoefficient< i > )... }}'),
+                                 Variable('std::array< Dispatch, sizeof...( i ) >', 'dispatch', '{{ Dispatch( setCoefficient< i > )... }}'),
                                  '',
                                  'return [ dispatch ] ( ' + wrapperClass + ' &model, pybind11::handle coeff, pybind11::handle o ) {',
                                  '    std::size_t k = renumberConstants(coeff);',

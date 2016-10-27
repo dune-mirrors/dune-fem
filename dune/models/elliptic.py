@@ -62,7 +62,7 @@ class EllipticModel(BaseModel):
 
         result = []
         result.append(TypeAlias("BoundaryIdProviderType", "Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >"))
-        result.append(Variable("const bool symmetric", value=self.symmetric, static=True))
+        result.append(Variable("const bool", "symmetric", value=self.symmetric, static=True))
 
         result.append(Method('void source', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_r], code=self.source, const=True))
         result.append(Method('void linSource', targs=['class Point'], args=[self.arg_ubar, self.arg_dubar, self.arg_x, self.arg_u, self.arg_du, self.arg_r], code=self.linSource, const=True))

@@ -152,8 +152,9 @@ class TypeAlias:
 # --------
 
 class Variable:
-    def __init__(self, typedName, value=None, static=False, mutable=False):
-        self.typedName = typedName
+    def __init__(self, cppType, name, value=None, static=False, mutable=False):
+        self.cppType = cppType
+        self.name = name
         self.value = value
         self.static = static
         self.mutable = mutable
@@ -451,7 +452,7 @@ class SourceWriter:
             else:
                 self.emit('typedef ' + src.typeName + ' ' + src.name + ';', indent)
         elif isinstance(src, Variable):
-            declaration = ('static ' if src.static else '') + ('mutable ' if src.mutable else '') + src.typedName
+            declaration = ('static ' if src.static else '') + ('mutable ' if src.mutable else '') + self.typedName(src)
             if src.value is not None:
                 declaration += ' = ' + src.value
             self.emit(declaration + ';', indent)
@@ -510,6 +511,12 @@ class SourceWriter:
             return ['[' + capture + '] (' + args + ') {', expr.content, '}']
         else:
             return [expr.strip()]
+
+    def typedName(self, obj):
+        if obj.cppType.endswith('&') or obj.cppType.endswith('*'):
+            return obj.cppType + obj.name
+        else:
+            return obj.cppType + ' ' + obj.name
 
     def pushBlock(self, block, name):
         self.blocks.append((block, name))

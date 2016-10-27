@@ -49,10 +49,10 @@ class CodeGenerator(MultiFunction):
 
         idx = str(self._getNumber(expr))
         if expr.is_cellwise_constant():
-            self.code.append(Variable('const ConstantsRangeType< ' + idx + ' > cc' + idx, 'constant< ' + idx + ' >()'))
+            self.code.append(Variable('const ConstantsRangeType< ' + idx + ' >', 'cc' + idx, 'constant< ' + idx + ' >()'))
             return 'cc' + idx
         else:
-            self.code.append(Variable('CoefficientRangeType< ' + idx + ' > c' + idx))
+            self.code.append(Variable('CoefficientRangeType< ' + idx + ' >', 'c' + idx))
             self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
             return 'c' + idx
 
@@ -81,14 +81,14 @@ class CodeGenerator(MultiFunction):
         operand = expr.ufl_operands[0]
         if isinstance(operand, Coefficient):
             idx = str(self._getNumber(operand))
-            self.code.append(Variable('CoefficientJacobianRangeType< ' + idx + ' > dc' + idx))
+            self.code.append(Variable('CoefficientJacobianRangeType< ' + idx + ' >', 'dc' + idx))
             self.code.append('coefficient< ' + idx + ' >().jacobian( x, dc' + idx + ' );')
             return 'dc' + idx
         elif isinstance(operand, Grad):
             operand = operand.ufl_operands[0]
             if isinstance(operand, Coefficient):
                 idx = str(self._getNumber(operand))
-                self.code.append(Variable('CoefficientHessianRangeType< ' + idx + ' > d2c' + idx))
+                self.code.append(Variable('CoefficientHessianRangeType< ' + idx + ' >', 'd2c' + idx))
                 self.code.append('coefficient< ' + idx + ' >().hessian( x, d2c' + idx + ' );')
                 return 'd2c' + idx
             elif isinstance(operand, Argument):
@@ -139,7 +139,7 @@ class CodeGenerator(MultiFunction):
 
     def spatial_coordinate(self, expr):
         self.using.add('using Dune::Fem::coordinate;')
-        self.code.append(Variable('const auto y', 'entity().geometry().global( coordinate( x ) )'))
+        self.code.append(Variable('const auto', 'y', 'entity().geometry().global( coordinate( x ) )'))
         return 'y'
 
     def sum(self, expr, x, y):
@@ -164,9 +164,9 @@ class CodeGenerator(MultiFunction):
 
     def _makeTmp(self, cexpr):
         if self.tempVars:
-            var = 'tmp' + str(len(self.code))
-            self.code.append(Variable('const auto ' + var, cexpr))
-            return var
+            var = Variable('const auto', 'tmp' + str(len(self.code)), cexpr)
+            self.code.append(var)
+            return var.name
         else:
             return cexpr
 
