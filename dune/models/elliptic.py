@@ -18,7 +18,7 @@ from dune.ufl.tensors import ExprTensor
 from dune.ufl.linear import splitMultiLinearExpr
 
 from dune.source import Method, TypeAlias, Variable
-from dune.source import SourceWriter
+from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source import BaseModel
 from dune.generator import builder
 
@@ -343,34 +343,34 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
     if dirichlet:
         model.hasDirichletBoundary = True
 
-        model.isDirichletIntersection = []
-        model.isDirichletIntersection.append('const int bndId = BoundaryIdProviderType::boundaryId( intersection );')
-        model.isDirichletIntersection.append('std::fill( dirichletComponent.begin(), dirichletComponent.end(), bndId );')
-        model.isDirichletIntersection.append('switch( bndId )')
-        model.isDirichletIntersection.append('{')
+        writer = SourceWriter(ListWriter())
+        writer.emit('const int bndId = BoundaryIdProviderType::boundaryId( intersection );')
+        writer.emit('std::fill( dirichletComponent.begin(), dirichletComponent.end(), bndId );')
+        writer.emit('switch( bndId )')
+        writer.emit('{')
         for bndId in dirichlet:
-            model.isDirichletIntersection.append('case ' + str(bndId) + ':')
-        model.isDirichletIntersection.append('  return true;')
-        model.isDirichletIntersection.append('default:')
-        model.isDirichletIntersection.append('  return false;')
-        model.isDirichletIntersection.append('}')
+            writer.emit('case ' + str(bndId) + ':')
+        writer.emit('return true;', indent=1)
+        writer.emit('default:')
+        writer.emit('return false;', indent=1)
+        writer.emit('}')
+        model.isDirichletIntersection = writer.writer.lines
 
-        model.dirichlet = []
-        model.dirichlet.append('switch( id )')
-        model.dirichlet.append('{')
+        writer = SourceWriter(ListWriter())
+        writer.emit('switch( id )')
+        writer.emit('{')
         for bndId in dirichlet:
             if len(dirichlet[bndId]) != dimRange:
                 raise Exception('Dirichtlet boundary condition has wrong dimension.')
-            model.dirichlet.append('case ' + str(bndId) + ':')
-            model.dirichlet.append('  {')
-            model.dirichlet += ['    ' + line for line in generateCode({},
-                ExprTensor((dimRange,), dirichlet[bndId]),
-                model.coefficients, tempVars)]
-            model.dirichlet.append('  }')
-            model.dirichlet.append('  break;')
-        model.dirichlet.append('default:')
-        model.dirichlet.append('  result = RangeType( 0 );')
-        model.dirichlet.append('}')
+            writer.emit('case ' + str(bndId) + ':')
+            writer.emit('{', indent=1)
+            writer.emit(generateCode({}, ExprTensor((dimRange,), dirichlet[bndId]), model.coefficients, tempVars), indent=2)
+            writer.emit('}', indent=1)
+            writer.emit('break;', indent=1)
+        writer.emit('default:')
+        writer.emit('result = RangeType( 0 );', indent=1)
+        writer.emit('}')
+        model.dirichlet = writer.writer.lines
 
     return model
 

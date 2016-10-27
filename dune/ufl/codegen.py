@@ -7,6 +7,7 @@ from ufl.coefficient import Coefficient
 from ufl.differentiation import Grad
 from ufl.core.multiindex import FixedIndex, MultiIndex
 
+from dune.source.cplusplus import Variable
 
 def translateIndex(index):
     if isinstance(index, (tuple, MultiIndex)):
@@ -48,15 +49,11 @@ class CodeGenerator(MultiFunction):
 
         idx = str(self._getNumber(expr))
         if expr.is_cellwise_constant():
-            init = 'ConstantsRangeType< ' + idx + ' > cc' + idx + ' = constant< ' + idx + ' >();'
-            if not init in self.code:
-                self.code.append(init)
+            self.code.append(Variable('const ConstantsRangeType< ' + idx + ' > cc' + idx, 'constant< ' + idx + ' >()'))
             return 'cc' + idx
         else:
-            init = 'CoefficientRangeType< ' + idx + ' > c' + idx + ';'
-            if not init in self.code:
-                self.code.append(init)
-                self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
+            self.code.append(Variable('CoefficientRangeType< ' + idx + ' > c' + idx))
+            self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
             return 'c' + idx
 
     def cos(self, expr, x):
@@ -84,14 +81,14 @@ class CodeGenerator(MultiFunction):
         operand = expr.ufl_operands[0]
         if isinstance(operand, Coefficient):
             idx = str(self._getNumber(operand))
-            self.code.append('CoefficientJacobianRangeType< ' + idx + ' > dc' + idx + ';')
+            self.code.append(Variable('CoefficientJacobianRangeType< ' + idx + ' > dc' + idx))
             self.code.append('coefficient< ' + idx + ' >().jacobian( x, dc' + idx + ' );')
             return 'dc' + idx
         elif isinstance(operand, Grad):
             operand = operand.ufl_operands[0]
             if isinstance(operand, Coefficient):
                 idx = str(self._getNumber(operand))
-                self.code.append('CoefficientHessianRangeType< ' + idx + ' > d2c' + idx + ';')
+                self.code.append(Variable('CoefficientHessianRangeType< ' + idx + ' > d2c' + idx))
                 self.code.append('coefficient< ' + idx + ' >().hessian( x, d2c' + idx + ' );')
                 return 'd2c' + idx
             elif isinstance(operand, Argument):
@@ -142,7 +139,8 @@ class CodeGenerator(MultiFunction):
 
     def spatial_coordinate(self, expr):
         self.using.add('using Dune::Fem::coordinate;')
-        return self._makeTmp('entity().geometry().global( coordinate( x ) )')
+        self.code.append(Variable('const auto y', 'entity().geometry().global( coordinate( x ) )'))
+        return 'y'
 
     def sum(self, expr, x, y):
         return self._makeTmp('(' + x + ' + ' + y + ')')
@@ -167,7 +165,7 @@ class CodeGenerator(MultiFunction):
     def _makeTmp(self, cexpr):
         if self.tempVars:
             var = 'tmp' + str(len(self.code))
-            self.code.append('const auto ' + var + ' = ' + cexpr + ';')
+            self.code.append(Variable('const auto ' + var, cexpr))
             return var
         else:
             return cexpr

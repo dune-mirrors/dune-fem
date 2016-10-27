@@ -16,6 +16,11 @@ class FileWriter:
     def close(self):
         self.file.close()
 
+
+
+# StringWriter
+# ------------
+
 class StringWriter:
     def __init__(self):
         self.file = io.StringIO()
@@ -28,6 +33,7 @@ class StringWriter:
 
     def close(self):
         self.file.close()
+
 
 
 # ListWriter
