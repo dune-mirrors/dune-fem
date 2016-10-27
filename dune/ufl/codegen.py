@@ -144,17 +144,6 @@ class CodeGenerator(MultiFunction):
         self.using.add('using Dune::Fem::coordinate;')
         return self._makeTmp('entity().geometry().global( coordinate( x ) )')
 
-    # only implemented for 3D normal
-    def facet_normal(self, expr):
-        self.using.add('const DomainType w1 = -entity.geometry.jacobianTransposed(coordinate(x))[0];\n' \
-                  '      const DomainType w2 = -entity.geometry.jacobianTransposed(coordinate(x))[1];\n' \
-                  '      DomainType normal;\n' \
-                  '      normal[0]=w1[1]*w2[2]-w1[2]*w2[1];\n' \
-                  '      normal[1]=-(w1[0]*w2[2]-w1[2]*w2[0]);\n' \
-                  '      normal[2]=w1[0]*w2[1]-w1[1]*w2[0];\n' \
-                  '      normal/=2.*entity().geometry().volume();\n')
-        return self._makeTmp('normal')
-
     def sum(self, expr, x, y):
         return self._makeTmp('(' + x + ' + ' + y + ')')
 
