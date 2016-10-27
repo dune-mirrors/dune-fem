@@ -1,4 +1,4 @@
-from __future__ import print_function, unicode_literals
+from __future__ import division, print_function, unicode_literals
 
 import copy, io, sys
 
@@ -256,6 +256,57 @@ class Expression:
     def __init__(self, cppType=None):
         self.cppType = cppType
 
+    def __add__(self, other):
+        return Application(BinaryOperator('+', self, makeExpression(other)))
+
+    def __sub__(self, other):
+        return Application(BinaryOperator('-', self, makeExpression(other)))
+
+    def __mul__(self, other):
+        return Application(BinaryOperator('*', self, makeExpression(other)))
+
+    def __truediv__(self, other):
+        return Application(BinaryOperator('/', self, makeExpression(other)))
+
+    def __mod__(self, other):
+        return Application(BinaryOperator('%', self, makeExpression(other)))
+
+    def __iadd__(self, other):
+        return Application(BinaryOperator('+=', self, makeExpression(other)))
+
+    def __isub__(self, other):
+        return Application(BinaryOperator('-=', self, makeExpression(other)))
+
+    def __imul__(self, other):
+        return Application(BinaryOperator('*=', self, makeExpression(other)))
+
+    def __imod__(self, other):
+        return Application(BinaryOperator('%=', self, makeExpression(other)))
+
+    def __itruediv__(self, other):
+        return Application(BinaryOperator('/=', self, makeExpression(other)))
+
+    def __lt__(self, other):
+        return Application(BinaryOperator('<', self, makeExpression(other)))
+
+    def __le__(self, other):
+        return Application(BinaryOperator('<=', self, makeExpression(other)))
+
+    def __eq__(self, other):
+        return Application(BinaryOperator('==', self, makeExpression(other)))
+
+    def __ne__(self, other):
+        return Application(BinaryOperator('!=', self, makeExpression(other)))
+
+    def __ge__(self, other):
+        return Application(BinaryOperator('>=', self, makeExpression(other)))
+
+    def __gt__(self, other):
+        return Application(BinaryOperator('>', self, makeExpression(other)))
+
+    def __neg__(self):
+        return Application(UnaryOperator('-', 'prefix'))
+
 
 
 # Application
@@ -311,6 +362,8 @@ def makeExpression(expr):
         return ConstantExpression('bool', 'true' if expr else 'false')
     elif isinstance(expr, int):
         return ConstantExpression('int', str(expr))
+    elif isinstance(expr, float):
+        return ConstantExpression('double', str(expr))
     else:
         return expr
 
