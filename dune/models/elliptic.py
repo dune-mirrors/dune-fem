@@ -50,30 +50,30 @@ class EllipticModel(BaseModel):
         self.symmetric = 'false'
 
     def main(self, name='Model', targs=[]):
-        hasDirichletBoundary = Method('bool hasDirichletBoundary', const=True)
+        hasDirichletBoundary = Method('bool', 'hasDirichletBoundary', const=True)
         hasDirichletBoundary.append('return ' + ('true' if self.hasDirichletBoundary else 'false') + ';')
 
-        hasNeumanBoundary = Method('bool hasNeumanBoundary', const=True)
+        hasNeumanBoundary = Method('bool', 'hasNeumanBoundary', const=True)
         hasNeumanBoundary.append('return ' + ('true' if self.hasNeumanBoundary else 'false') + ';')
 
-        isDirichletIntersection = Method('bool isDirichletIntersection', args=['const IntersectionType &intersection', 'Dune::FieldVector< int, dimRange > &dirichletComponent'], code=self.isDirichletIntersection, const=True)
+        isDirichletIntersection = Method('bool', 'isDirichletIntersection', args=['const IntersectionType &intersection', 'Dune::FieldVector< int, dimRange > &dirichletComponent'], code=self.isDirichletIntersection, const=True)
 
-        dirichlet = Method('void dirichlet', targs=['class Point'], args=['int id', self.arg_x, self.arg_r], code=self.dirichlet, const=True)
+        dirichlet = Method('void', 'dirichlet', targs=['class Point'], args=['int id', self.arg_x, self.arg_r], code=self.dirichlet, const=True)
 
         result = []
         result.append(TypeAlias("BoundaryIdProviderType", "Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >"))
         result.append(Variable("const bool", "symmetric", value=self.symmetric, static=True))
 
-        result.append(Method('void source', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_r], code=self.source, const=True))
-        result.append(Method('void linSource', targs=['class Point'], args=[self.arg_ubar, self.arg_dubar, self.arg_x, self.arg_u, self.arg_du, self.arg_r], code=self.linSource, const=True))
+        result.append(Method('void', 'source', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_r], code=self.source, const=True))
+        result.append(Method('void', 'linSource', targs=['class Point'], args=[self.arg_ubar, self.arg_dubar, self.arg_x, self.arg_u, self.arg_du, self.arg_r], code=self.linSource, const=True))
 
-        result.append(Method('void diffusiveFlux', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_dr], code=self.diffusiveFlux, const=True))
-        result.append(Method('void linDiffusiveFlux', targs=['class Point'], args=[self.arg_ubar, self.arg_dubar, self.arg_x, self.arg_u, self.arg_du, self.arg_dr], code=self.linDiffusiveFlux, const=True))
+        result.append(Method('void', 'diffusiveFlux', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_dr], code=self.diffusiveFlux, const=True))
+        result.append(Method('void', 'linDiffusiveFlux', targs=['class Point'], args=[self.arg_ubar, self.arg_dubar, self.arg_x, self.arg_u, self.arg_du, self.arg_dr], code=self.linDiffusiveFlux, const=True))
 
-        result.append(Method('void fluxDivergence', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_d2u, self.arg_r], code=self.fluxDivergence, const=True))
+        result.append(Method('void', 'fluxDivergence', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_du, self.arg_d2u, self.arg_r], code=self.fluxDivergence, const=True))
 
-        result.append(Method('void alpha', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_r], code=self.alpha, const=True))
-        result.append(Method('void linAlpha', targs=['class Point'], args=[self.arg_ubar, self.arg_x, self.arg_u, self.arg_r], code=self.linAlpha, const=True))
+        result.append(Method('void', 'alpha', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_r], code=self.alpha, const=True))
+        result.append(Method('void', 'linAlpha', targs=['class Point'], args=[self.arg_ubar, self.arg_x, self.arg_u, self.arg_r], code=self.linAlpha, const=True))
 
         result += [hasDirichletBoundary, hasNeumanBoundary, isDirichletIntersection, dirichlet]
 

@@ -74,14 +74,14 @@ class Integrands():
 
         result.append(Constructor(code="constructConstants( std::make_index_sequence< std::tuple_size< ConstantsTupleType >::value >() );"))
 
-        initEntity = Method('bool init', args=['const EntityType &entity'], const=True)
+        initEntity = Method('bool', 'init', args=['const EntityType &entity'], const=True)
         initEntity.append('entity_' + inside + ' = entity;')
         initEntity.append('initCoefficients( entity_' + inside + ', coefficients_' + inside + ', std::make_index_sequence< numCoefficients >() );')
         initEntity.append(self.init)
         initEntity.append(return_(True))
         result.append(initEntity)
 
-        initIntersection = Method('bool init', args=['const IntersectionType &intersection'], const=True)
+        initIntersection = Method('bool', 'init', args=['const IntersectionType &intersection'], const=True)
         if self.skeleton is None:
             initIntersection.append(return_('(intersection.boundary() && init( intersection.inside() ))'))
         else:
@@ -101,38 +101,38 @@ class Integrands():
         result = []
 
         if self.interior is not None:
-            result.append(Method('ValueType interior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.interior, const=True))
-            result.append(Method('auto linearizedInterior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.linearizedInterior, const=True))
+            result.append(Method('ValueType', 'interior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.interior, const=True))
+            result.append(Method('auto', 'linearizedInterior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.linearizedInterior, const=True))
 
         if self.boundary is not None:
-            result.append(Method('ValueType boundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.boundary, const=True))
-            result.append(Method('auto linearizedBoundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.linearizedBoundary, const=True))
+            result.append(Method('ValueType', 'boundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.boundary, const=True))
+            result.append(Method('auto', 'linearizedBoundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.linearizedBoundary, const=True))
 
         if self.skeleton is not None:
-            result.append(Method('std::pair< ValueType, ValueType > skeleton', targs=['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=self.skeleton, const=True))
-            #result.append(Method('auto linearizedSkeleton', targs['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=self.linearizedSkeleton, const=True))
+            result.append(Method('std::pair< ValueType, ValueType >', 'skeleton', targs=['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=self.skeleton, const=True))
+            #result.append(Method('auto', 'linearizedSkeleton', targs['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=self.linearizedSkeleton, const=True))
 
         return result
 
     def post(self):
         result = []
 
-        constant = Method('ConstantsType< i > &constant', targs=['std::size_t i'], code=return_('*std::get< i >( constants_ )'))
+        constant = Method('ConstantsType< i > &', 'constant', targs=['std::size_t i'], code=return_('*std::get< i >( constants_ )'))
         result += [constant.variant('const ConstantsType< i > &constant', const=True), constant]
 
         if self.skeleton is None:
-            coefficient = Method('CoefficientType< i > &coefficient', targs=['std::size_t i'], code=return_('std::get< i >( coefficients_ )'))
+            coefficient = Method('CoefficientType< i > &', 'coefficient', targs=['std::size_t i'], code=return_('std::get< i >( coefficients_ )'))
         else:
-            coefficient = Method('CoefficientType< i > &coefficient', targs=['std::size_t i', 'Side side = Side::in'], code=return_('std::get< i >( coefficients_[ side ] )'))
+            coefficient = Method('CoefficientType< i > &', 'coefficient', targs=['std::size_t i', 'Side side = Side::in'], code=return_('std::get< i >( coefficients_[ side ] )'))
         result += [coefficient.variant('const CoefficientType< i > &coefficient', const=True), coefficient]
 
         result.append(AccessModifier('private'))
 
-        initCoefficients = Method('void initCoefficients', targs=['std::size_t... i'], args=['const EntityType &entity', 'std::tuple< Coefficients... > &coefficients', 'std::index_sequence< i... >'], static=True)
+        initCoefficients = Method('void', 'initCoefficients', targs=['std::size_t... i'], args=['const EntityType &entity', 'std::tuple< Coefficients... > &coefficients', 'std::index_sequence< i... >'], static=True)
         initCoefficients.append('std::ignore = std::make_tuple( (std::get< i >( coefficients ).init( entity ), i)... );')
         result.append(initCoefficients)
 
-        constructConstants = Method('void constructConstants', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
+        constructConstants = Method('void', 'constructConstants', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
         constructConstants.append('std::ignore = std::make_tuple( (std::get< i >( constants_ ) = std::make_shared< ConstantsType< i > >(), i)... );')
         result.append(constructConstants)
 

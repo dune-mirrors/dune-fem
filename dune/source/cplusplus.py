@@ -95,9 +95,10 @@ class BuiltInFunction:
 # --------
 
 class Function(Block):
-    def __init__(self, typedName, targs=None, args=None, code=None):
+    def __init__(self, cppType, name, targs=None, args=None, code=None):
         Block.__init__(self)
-        self.typedName = typedName
+        self.cppType = cppType
+        self.name = name
         self.targs = None if targs is None else [a.strip() for a in targs]
         self.args = None if args is None else [a.strip() for a in args]
         if code is not None:
@@ -109,9 +110,10 @@ class Function(Block):
 # ------
 
 class Method(Block):
-    def __init__(self, typedName, targs=None, args=None, code=None, static=False, const=False, volatile=False):
+    def __init__(self, cppType, name, targs=None, args=None, code=None, static=False, const=False, volatile=False):
         Block.__init__(self)
-        self.typedName = typedName
+        self.cppType = cppType
+        self.name = name
         self.static = static
         self.resetQualifiers(const=const, volatile=volatile)
         if static and (const or volatile):
@@ -402,7 +404,7 @@ class SourceWriter:
             self.emit(None if self.begin else '', indent)
             if src.targs:
                 self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
-            signature = src.typedName + ' ('
+            signature = self.typedName(src) + ' ('
             if src.args:
                 signature += ' ' + ', '.join(src.args) + ' '
             signature += ')'
@@ -417,7 +419,7 @@ class SourceWriter:
             self.emit(None if self.begin else '', indent)
             if src.targs:
                 self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
-            signature = ('static ' if src.static else '') + src.typedName + ' ('
+            signature = ('static ' if src.static else '') + self.typedName(src) + ' ('
             if src.args:
                 signature += ' ' + ', '.join(src.args) + ' '
             signature += ')'
@@ -479,7 +481,7 @@ class SourceWriter:
                     self.emit('return ' + expr[0], indent)
                     for e in expr[1:]:
                         if isinstance(e, list):
-                            self.emit(e, indent+2, Function('<lambda>'))
+                            self.emit(e, indent+2, Function('auto', '<lambda>'))
                         else:
                             self.emit(e, indent+1)
                 else:
