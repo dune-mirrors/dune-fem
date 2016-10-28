@@ -595,7 +595,7 @@ namespace Dune
           // write dof block to stream
           for( int k = 0; k < blockSize; ++k )
           {
-            str.writeUnchecked( ((*blockPtr)[ k ]) );
+            str.writeObject( ((*blockPtr)[ k ]) );
           }
         }
       }
