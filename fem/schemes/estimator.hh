@@ -134,6 +134,7 @@ public:
     // clear all local estimators
     clear();
 
+    // note: not adapted to new interface yet e.g. rhs method
     const auto &rhs = model_.rightHandSide(gridPart_);
 
     //! [Error estimator]

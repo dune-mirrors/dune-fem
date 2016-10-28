@@ -19,6 +19,7 @@ namespace Dune
     template< class Model >
     struct DiffusionModelIntegrands
     {
+      typedef Model ModelType;
       typedef typename Model::GridPartType GridPartType;
 
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
@@ -92,6 +93,7 @@ namespace Dune
     template< class Model >
     struct DGDiffusionModelIntegrands
     {
+      typedef Model ModelType;
       typedef typename Model::GridPartType GridPartType;
 
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;

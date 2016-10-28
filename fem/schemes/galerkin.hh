@@ -769,80 +769,29 @@ namespace Dune
       {}
     };
 
-
-
-    // GalerkinScheme
-    // --------------
-
-    template< class Space, class Integrands, SolverType solver >
-    struct GalerkinScheme
+    template < class LinearOperatorType, class ModelIntegrands >
+    struct ModelDifferentiableGalerkinOperator
+    : public DifferentiableGalerkinOperator< LinearOperatorType, ModelIntegrands >
     {
-      typedef Space DiscreteFunctionSpaceType;
-      typedef Integrands ModelType;
-
-      typedef Solvers< DiscreteFunctionSpaceType, solver, false > UsedSolverType;
-      static_assert( UsedSolverType::solverConfigured, "chosen solver is not configured" );
-
-      typedef typename UsedSolverType::DiscreteFunctionType DiscreteFunctionType;
-      typedef typename UsedSolverType::LinearOperatorType LinearOperatorType;
-
-      typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-
-      static const int dimRange = DiscreteFunctionSpaceType::dimRange;
-
-      typedef DifferentiableGalerkinOperator< LinearOperatorType, Integrands > GalerkinOperatorType;
-      // typedef AutomaticDifferenceGalerkinOperator< DiscreteFunctionType, Integrands > GalerkinOperatorType;
-
-      GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, const Integrands &integrands, Dune::Fem::ParameterReader parameter = Dune::Fem::Parameter::container() )
-        : galerkinOperator_( dfSpace, integrands ),
-          linearOperator_( "assembled Galerkin operator", dfSpace, dfSpace ),
-          rhs_( "rhs", dfSpace ),
-          parameter_( std::move( parameter ) )
+      typedef typename ModelIntegrands::ModelType ModelType;
+      typedef DifferentiableGalerkinOperator< LinearOperatorType, ModelIntegrands > BaseType;
+      typedef typename LinearOperatorType::DomainFunctionType RangeDiscreteFunctionType;
+      typedef typename LinearOperatorType::RangeSpaceType DiscreteFunctionSpaceType;
+      ModelDifferentiableGalerkinOperator( const ModelType &model, const DiscreteFunctionSpaceType &dfSpace )
+      : BaseType(dfSpace, ModelIntegrands(model)) {}
+      template <class GF>
+      void apply( const GF &u, RangeDiscreteFunctionType &w ) const
       {
-        rhs_.clear();
+        BaseType::impl_.evaluate( BaseType::integrands_, u, w );
       }
-
-      const GalerkinOperatorType &fullOperator() const
+      template <class GridFunctionType>
+      void apply ( const GridFunctionType &u, LinearOperatorType &jOp ) const
       {
-        return galerkinOperator_;
+        BaseType::impl_.assemble( BaseType::integrands_, u, jOp );
       }
-
-      void constraint ( const DiscreteFunctionType &u ) const {}
-
-      template< class GridFunction >
-      void operator() ( const GridFunction &u, DiscreteFunctionType &w ) const
-      {
-        galerkinOperator_.impl_.evaluate( galerkinOperator_.integrands_, u, w );
-      }
-
-      void solve ( DiscreteFunctionType &solution ) const
-      {
-        typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
-        NewtonInverseOperator< typename GalerkinOperatorType::JacobianOperatorType, LinearInverseOperatorType > invOp( galerkinOperator_, parameter_ );
-        invOp( rhs_, solution );
-        std::cout << "Linear Iterations: " << invOp.linearIterations() << std::endl;
-      }
-
-      template< class GridFunction >
-      const LinearOperatorType &assemble ( const GridFunction &u )
-      {
-        galerkinOperator_.impl_.assemble( galerkinOperator_.integrands_, u, *linearOperator_ );
-        return *linearOperator_;
-      }
-
-      bool mark ( double tolerance ) { return false; }
-      double estimate ( const DiscreteFunctionType &solution ) { return 0.0; }
-
-      const GridPartType &gridPart () const { return space().gridPart(); }
-      const DiscreteFunctionSpaceType &space() const { return galerkinOperator_.impl_.discreteFunctionSpace(); }
-
-    protected:
-      GalerkinOperatorType galerkinOperator_;
-      LinearOperatorType linearOperator_;
-      DiscreteFunctionType rhs_;
-      Dune::Fem::ParameterReader parameter_;
+      void prepare( RangeDiscreteFunctionType &u ) const
+      {}
     };
-
   } // namespace Fem
 
 } // namespace Dune

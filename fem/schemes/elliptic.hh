@@ -83,12 +83,12 @@ struct EllipticOperator
 : public virtual Dune::Fem::Operator< DomainDiscreteFunction, RangeDiscreteFunction >
 //! [Class for elliptic operator]
 {
-protected:
   typedef DomainDiscreteFunction DomainDiscreteFunctionType;
   typedef RangeDiscreteFunction  RangeDiscreteFunctionType;
   typedef Model                  ModelType;
   typedef Constraints      ConstraintsType;           // the class taking care of boundary constraints e.g. dirichlet bc
 
+protected:
   typedef typename DomainDiscreteFunctionType::DiscreteFunctionSpaceType DomainDiscreteFunctionSpaceType;
   typedef typename DomainDiscreteFunctionType::LocalFunctionType         DomainLocalFunctionType;
   typedef typename DomainLocalFunctionType::RangeType                    DomainRangeType;
@@ -116,7 +116,7 @@ public:
   {}
 
   // prepare the solution vector
-  void prepare( RangeDiscreteFunctionType &u )
+  void prepare( RangeDiscreteFunctionType &u ) const
   {
     // set boundary values for solution
     constraints()( u );

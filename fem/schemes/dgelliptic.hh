@@ -60,6 +60,8 @@ struct DGEllipticOperator
   typedef DiscreteFunction DiscreteFunctionType;
   typedef Model            ModelType;
 
+  typedef DiscreteFunction DomainDiscreteFunctionType;
+  typedef DiscreteFunction RangeDiscreteFunctionType;
 protected:
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
   typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
@@ -68,7 +70,6 @@ protected:
 
   typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
   typedef typename IteratorType::Entity       EntityType;
-  typedef typename EntityType::EntityPointer  EntityPointerType;
   typedef typename EntityType::Geometry       GeometryType;
 
   typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
@@ -103,7 +104,7 @@ public:
   operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w ) const;
 
   // prepare the solution vector
-  void prepare( DiscreteFunctionType &u )
+  void prepare( DiscreteFunctionType &u ) const
   {}
 
 protected:
@@ -139,7 +140,6 @@ protected:
 
   typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
   typedef typename IteratorType::Entity       EntityType;
-  typedef typename EntityType::EntityPointer  EntityPointerType;
   typedef typename EntityType::Geometry       GeometryType;
 
   typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
