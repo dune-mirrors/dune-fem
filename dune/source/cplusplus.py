@@ -212,13 +212,18 @@ class NameSpace(Block):
 # ---------------
 
 class BuiltInFunction:
-    def __init__(self, header, cppType, name, targs=None, args=None):
+    def __init__(self, header, cppType, name, namespace='std', targs=None, args=None):
         self.header = header
         self.cppType = cppType
         self.name = name
+        self.namespace = namespace
         self.tarts = None if targs is None else [a.strip() for a in targs]
         self.args = None if args is None else [a.strip() for a in args]
 
+    def __call__(self, *args):
+        if len(args) != len(self.args):
+            raise Exception('Wrong number of Arguments: ' + len(args) + ' (should be ' + len(self.args) + ').')
+        return Application(self, args=[makeExpression(arg) for arg in args])
 
 
 # UnaryOperator
@@ -324,6 +329,12 @@ class Declaration:
 
 
 
+class Using:
+    def __init__(self, obj):
+        self.obj = obj
+
+
+
 # Class
 # -----
 
@@ -404,21 +415,25 @@ def construct(cppType, *args):
     return ConstructExpression(cppType, args if args else None)
 
 
-def make_pair(left, right):
-    if isinstance(left, Expression) and isinstance(right, Expression) and left.cppType is not None and right.cppType is not None:
-        cppType = 'std::pair< ' + left.cppType + ', ' + right.cppType + ' >'
-    else:
-        cppType = None
-    function = BuiltInFunction('utility', cppType, 'std::make_pair', args=['const auto &left', 'const auto &right'])
-    return Application(function, args=[left, right])
-
-
 def return_(expr=None):
     return ReturnStatement(expr)
 
 
 def lambda_(args=None, capture=None, code=None):
     return LambdaExpression(args=args, capture=capture, code=code)
+
+
+# built-in functions
+# ------------------
+
+atan = BuiltInFunction('cmath', 'X', 'atan', targs=['class X'], args=['conat X &x'])
+atan2 = BuiltInFunction('cmath', 'X', 'atan2', targs=['class X'], args=['const X &x', 'const X &y'])
+cos = BuiltInFunction('cmath', 'X', 'cos', targs=['class X'], args=['const X &x'])
+pow_ = BuiltInFunction('cmath', 'X', 'pow', targs=['class X'], args=['const X &x', 'const X &y'])
+sin = BuiltInFunction('cmath', 'X', 'sin', targs=['class X'], args=['const X &x'])
+tan = BuiltInFunction('cmath', 'X', 'tan', targs=['class X'], args=['const X &x'])
+
+make_pair = BuiltInFunction('utility', 'std::pair< U, V >', 'make_pair', targs=['class U', 'class V'], args=['const U &left', 'const V &right'])
 
 
 
@@ -554,6 +569,14 @@ class SourceWriter:
             if src.initializer is not None:
                 declaration += ' = ' + src.initializer
             self.emit(declaration + ';', indent)
+        elif isinstance(src, Using):
+            if not isinstance(src.obj, BuiltInFunction):
+                raise Exception('Only built-in functions can be used for now')
+            if src.obj.namespace is None:
+                function = src.obj.name
+            else:
+                function = src.obj.namespace + '::' + src.obj.name
+            self.emit('using ' + function + ';')
         elif isinstance(src, Statement):
             if not isinstance(context, (Constructor, Function, Method)):
                 raise Exception('Statements can only occur in constructors, functions and methods')
@@ -606,7 +629,12 @@ class SourceWriter:
                 if len(args) != 2:
                     raise Exception('Binary operators require two arguments (' + str(len(args)) + ' given).')
                 return join(['('], args[0], [') ' + expr.function.name + ' ('], args[1], [')'])
-            if isinstance(expr.function, (BuiltInFunction, Function, Method)):
+            if isinstance(expr.function, BuiltInFunction):
+                if expr.function.namespace is None:
+                    function = expr.function.name
+                else:
+                    function = expr.function.namespace + '::' + expr.function.name
+            elif isinstance(expr.function, (Function, Method)):
                 function = expr.function.name
             else:
                 function = expr.function

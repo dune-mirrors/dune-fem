@@ -7,7 +7,8 @@ from ufl.coefficient import Coefficient
 from ufl.differentiation import Grad
 from ufl.core.multiindex import FixedIndex, MultiIndex
 
-from dune.source.cplusplus import Declaration, Variable
+import dune.source.cplusplus as cplusplus
+from dune.source.cplusplus import Declaration, Using, Variable
 
 def translateIndex(index):
     if isinstance(index, (tuple, MultiIndex)):
@@ -34,12 +35,12 @@ class CodeGenerator(MultiFunction):
             raise Exception('Unknown argument: ' + str(expr.number()))
 
     def atan(self, expr, x):
-        self.using.add('using std::atan;')
-        return self._makeTmp('atan( ' + x + ' )')
+        self.using.add(Using(cplusplus.atan))
+        return self._makeTmp(cplusplus.atan.name + '( ' + x + ' )')
 
     def atan_2(self, expr, x, y):
-        self.using.add('using std::atan2;')
-        return self._makeTmp('atan2( ' + x + ', ' + y + ' )')
+        self.using(add(Using(cplusplus.atan2)))
+        return self._makeTmp(cplusplus.atan2.name + '( ' + x + ', ' + y + ' )')
 
     def coefficient(self, expr):
         try:
@@ -58,8 +59,8 @@ class CodeGenerator(MultiFunction):
         return var.name
 
     def cos(self, expr, x):
-        self.using.add('using std::cos;')
-        return self._makeTmp('cos( ' + x + ' )')
+        self.using.add(Using(cplusplus.cos))
+        return self._makeTmp(cplusplus.cos.name + '( ' + x + ' )')
 
     def division(self, expr, x, y):
         return self._makeTmp('(' + x + ' / ' + y + ')')
@@ -133,12 +134,12 @@ class CodeGenerator(MultiFunction):
         return self._makeTmp('(' + x + ' * ' + y + ')')
 
     def power(self, expr, x, y):
-        self.using.add('using std::pow;')
-        return self._makeTmp('pow( ' + x + ', ' + y + ' )')
+        self.using.add(Using(cplusplus.pow_))
+        return self._makeTmp(cplusplus.pow_.name + '( ' + x + ', ' + y + ' )')
 
     def sin(self, expr, x):
-        self.using.add('using std::sin;')
-        return self._makeTmp('sin( ' + x + ' )')
+        self.using.add(Using(cplusplus.sin))
+        return self._makeTmp(cplusplus.sin.name + '( ' + x + ' )')
 
     def spatial_coordinate(self, expr):
         self.using.add('using Dune::Fem::coordinate;')
@@ -150,8 +151,8 @@ class CodeGenerator(MultiFunction):
         return self._makeTmp('(' + x + ' + ' + y + ')')
 
     def tan(self, expr, x):
-        self.using.add('using std::tan;')
-        return self._makeTmp('tan( ' + x + ' )')
+        self.using.add(Using(cplusplus.tan))
+        return self._makeTmp(cplusplus.tan.name + '( ' + x + ' )')
 
     def zero(self, expr):
         return '0'
