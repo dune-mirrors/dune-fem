@@ -2,6 +2,8 @@ from __future__ import division, print_function, unicode_literals
 
 import copy, io, sys
 
+from .operator import *
+
 
 # FileWriter
 # ----------
@@ -286,52 +288,6 @@ class BuiltInFunction:
         if len(args) != len(self.args):
             raise Exception('Wrong number of Arguments: ' + len(args) + ' (should be ' + len(self.args) + ').')
         return Application(self, args=[makeExpression(arg) for arg in args])
-
-
-
-# Operator
-# --------
-
-class Operator:
-    def __init__(self, name, numArgs):
-        self.name = name
-        self.numArgs = numArgs
-
-
-
-# PrefixUnaryOperator
-# -------------------
-
-class PrefixUnaryOperator(Operator):
-    def __init__(self, name):
-        Operator.__init__(self, name, 1)
-
-
-
-# PostfixUnaryOperator
-# -------------------
-
-class PostfixUnaryOperator(Operator):
-    def __init__(self, name):
-        Operator.__init__(self, name, 1)
-
-
-
-# BinaryOperator
-# --------------
-
-class BinaryOperator(Operator):
-    def __init__(self, name):
-        Operator.__init__(self, name, 2)
-
-
-
-# BracketOperator
-# ---------------
-
-class BracketOperator(Operator):
-    def __init__(self):
-        Operator.__init__(self, '[]', 2)
 
 
 
