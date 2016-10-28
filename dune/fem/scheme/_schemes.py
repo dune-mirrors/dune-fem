@@ -4,6 +4,24 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 
+def femscheme(includes, space, operator):
+    from . import storageToSolver
+    import dune.create as create
+    storage = storageToSolver(space.storage)
+    dfIncludes, dfTypeName, linearOperatorType = create.discretefunction(space.storage,space,instanciate=False)
+    includes += ["dune/fem/schemes/femscheme.hh"] +\
+                space._module._includes + dfIncludes +\
+                ["dune/fem/schemes/diffusionmodel.hh", "dune/fempy/parameter.hh"]
+    spaceType = space._module._typeName
+    modelType = "DiffusionModel< " +\
+          "typename " + spaceType + "::GridPartType, " +\
+          spaceType + "::dimRange, " +\
+          "typename " + spaceType + "::RangeFieldType >"
+    operatorType = operator(linearOperatorType,modelType)
+    typeName = "FemScheme< " + operatorType + ", " + storage + " >"
+    return includes, typeName
+
+
 def burgers(space, model, name, viscosity, timestep, **kwargs):
     """create a scheme for solving quasi stokes type saddle point problem with continuous finite-elements
 
@@ -32,7 +50,7 @@ def burgers(space, model, name, viscosity, timestep, **kwargs):
 
     return module(includes, typeName).Scheme((vspace,pspace),model,name,viscosity,timestep) # ,**kwargs)
 
-def dg(space, model, name="tmp", **kwargs):
+def dg(space, model, **kwargs):
     """create a scheme for solving second order pdes with discontinuous finite elements
 
     Args:
@@ -41,57 +59,26 @@ def dg(space, model, name="tmp", **kwargs):
         Scheme: the constructed scheme
     """
 
-    from . import module, storageToSolver
-    storage = storageToSolver(space.storage)
+    from . import module
 
-    includes = [ "dune/fem/schemes/dgelliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._module._includes
-    spaceType = space._module._typeName
-    typeName = "FemScheme< " + spaceType + ", " +\
-        "DiffusionModel< " +\
-          "typename " + spaceType + "::GridPartType, " +\
-          spaceType + "::dimRange, " +\
-          "typename " + spaceType + "::RangeFieldType >, DifferentiableDGEllipticOperator, " +\
-          storage + " >"
+    includes = [ "dune/fem/schemes/dgelliptic.hh"]
+    operator = lambda linOp,model: "DifferentiableDGEllipticOperator< " +\
+                                   ",".join([linOp,model]) + ">"
+    includes, typeName = femscheme(includes, space, operator)
 
-    return module(includes, typeName).Scheme(space,model,name,**kwargs)
-
+    return module(includes, typeName).Scheme(space,model,**kwargs)
 
 def dgGalerkin(space, model, penalty, parameters={}):
-    from . import module, storageToSolver
-    storage = storageToSolver(space.storage)
+    from . import module
 
-    spaceType = space._module._typeName
-    gridPartType = "typename " + spaceType + "::GridPartType"
-    dimRange = spaceType + "::dimRange"
-    rangeFieldType = "typename " + spaceType + "::RangeFieldType"
-    modelType = "DiffusionModel< " + ", ".join([gridPartType, dimRange, rangeFieldType]) + " >"
-    integrandsType = "Dune::Fem::DGDiffusionModelIntegrands< " + modelType + " >"
+    includes = [ "dune/fem/schemes/galerkin.hh" ]
 
-    typeName = "Dune::Fem::GalerkinScheme< " + ", ".join([spaceType, integrandsType, storage]) + " >"
-    includes = ["dune/fem/schemes/galerkin.hh", "dune/fem/schemes/diffusionmodel.hh", "dune/fempy/parameter.hh"] + space._module._includes
+    operator = lambda linOp,model: "Dune::Fem::ModelDifferentiableDGGalerkinOperator< " +\
+            ",".join([linOp,"Dune::Fem::DGDiffusionModelIntegrands<"+model+">"]) + ">"
 
-    constructor = ['[] ( ' + typeName + ' &self, const ' + spaceType + ' &space, const ' + modelType + ' &model, const typename ' + modelType + '::RangeFieldType &penalty, const pybind11::dict &parameters ) {',
-                   '    new (&self) ' + typeName + '( space, ' + integrandsType + '( model, penalty ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
-                   '  }, "space"_a, "model"_a, "penalty"_a, "parameters"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >()']
-
-    return module(includes, typeName, [constructor]).Scheme(space, model, penalty, parameters)
-
-
-def galerkin(space, model, parameters={}):
-    from . import module, storageToSolver
-    storage = storageToSolver(space.storage)
-
-    spaceType = space._module._typeName
-    gridPartType = "typename " + spaceType + "::GridPartType"
-    dimRange = spaceType + "::dimRange"
-    rangeFieldType = "typename " + spaceType + "::RangeFieldType"
-    modelType = "IntegrandsModel< " + ", ".join([gridPartType, dimRange, rangeFieldType]) + " >"
-
-    typeName = "Dune::Fem::GalerkinScheme< " + ", ".join([spaceType, modelType, storage]) + " >"
-    includes = ["dune/fem/schemes/galerkin.hh"] + space._module._includes
+    includes, typeName = femscheme(includes, space, operator)
 
     return module(includes, typeName).Scheme(space, model, parameters)
-
 
 def h1(space, model, parameters={}):
     """create a scheme for solving second order pdes with continuous finite element
@@ -101,41 +88,25 @@ def h1(space, model, parameters={}):
     Returns:
         Scheme: the constructed scheme
     """
+    from . import module
+    includes = [ "dune/fem/schemes/elliptic.hh" ]
 
-    from . import module, storageToSolver
-    storage = storageToSolver(space.storage)
-
-    includes = [ "dune/fem/schemes/elliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._includes
-    spaceType = space._typeName
-    typeName = "FemScheme< " + spaceType + ", " +\
-        "DiffusionModel< " +\
-          "typename " + spaceType + "::GridPartType, " +\
-          spaceType + "::dimRange, " +\
-          "typename " + spaceType + "::RangeFieldType >, DifferentiableEllipticOperator, " +\
-          storage + " >"
+    operator = lambda linOp,model: "DifferentiableEllipticOperator< " +\
+                                   ",".join([linOp,model]) + ">"
+    includes, typeName = femscheme(includes, space, operator)
 
     return module(includes, typeName).Scheme(space,model,parameters)
 
-
 def h1Galerkin(space, model, parameters={}):
-    from . import module, storageToSolver
-    storage = storageToSolver(space.storage)
+    from . import module
 
-    spaceType = space._module._typeName
-    gridPartType = "typename " + spaceType + "::GridPartType"
-    dimRange = spaceType + "::dimRange"
-    rangeFieldType = "typename " + spaceType + "::RangeFieldType"
-    modelType = "DiffusionModel< " + ", ".join([gridPartType, dimRange, rangeFieldType]) + " >"
-    integrandsType = "Dune::Fem::DiffusionModelIntegrands< " + modelType + " >"
+    includes = [ "dune/fem/schemes/galerkin.hh" ]
+    operator = lambda linOp,model: "Dune::Fem::ModelDifferentiableGalerkinOperator< " +\
+            ",".join([linOp,"Dune::Fem::DiffusionModelIntegrands<"+model+">"]) + ">"
 
-    typeName = "Dune::Fem::GalerkinScheme< " + ", ".join([spaceType, integrandsType, storage]) + " >"
-    includes = ["dune/fem/schemes/galerkin.hh", "dune/fem/schemes/diffusionmodel.hh", "dune/fempy/parameter.hh"] + space._module._includes
+    includes, typeName = femscheme(includes, space, operator)
 
-    constructor = ['[] ( ' + typeName + ' &self, const ' + spaceType + ' &space, const ' + modelType + ' &model, const pybind11::dict &parameters ) {',
-                   '    new (&self) ' + typeName + '( space, ' + integrandsType + '( model ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
-                   '  }, "space"_a, "model"_a, "parameters"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >()']
-
-    return module(includes, typeName, [constructor]).Scheme(space, model, parameters)
+    return module(includes, typeName).Scheme(space, model, parameters)
 
 
 def linearized(scheme, ubar=None, parameters={}):

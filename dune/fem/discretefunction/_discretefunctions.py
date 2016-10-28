@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 import dune.common.checkconfiguration as checkconfiguration
 
-def adaptive(space, name="tmp", **unused):
+def adaptive(space, name="tmp", instanciate=True, **unused):
     """create a discrete function - using the fem adaptive storage as linear algebra backend
 
     Args:
@@ -21,9 +21,14 @@ def adaptive(space, name="tmp", **unused):
     spaceType = space._module._typeName
     typeName = "Dune::Fem::AdaptiveDiscreteFunction< " + spaceType + " >"
 
-    return module("fem", includes, typeName).DiscreteFunction(space,name)
+    if instanciate:
+        return module("fem", includes, typeName).DiscreteFunction(space,name)
+    else:
+        linearOperatorType = "Dune::Fem::SparseRowLinearOperator< " + typeName + "," + typeName + ">"
+        includes += ["dune/fem/operator/linear/spoperator.hh"]
+        return includes, typeName, linearOperatorType
 
-def eigen(space, name="tmp", **unused):
+def eigen(space, name="tmp", instanciate=True, **unused):
     """create a discrete function - using the eigen library as linear algebra backend
 
     Args:
@@ -49,9 +54,14 @@ def eigen(space, name="tmp", **unused):
     typeName = "Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< " +\
             spaceType + ", Dune::Fem::EigenVector< " + field + " > > >"
 
-    return module("eigen", includes, typeName).DiscreteFunction(space,name)
+    if instanciate:
+        return module("eigen", includes, typeName).DiscreteFunction(space,name)
+    else:
+        linearOperatorType = "Dune::Fem::EigenLinearOperator< " + typeName + "," + typeName + ">"
+        includes += ["dune/fem/operator/linear/eigenoperator.hh"]
+        return includes, typeName, linearOperatorType
 
-def istl(space, name="tmp", **unused):
+def istl(space, name="tmp", instanciate=True,  **unused):
     """create a discrete function - using the fem istl storage as linear algebra backend
 
     Args:
@@ -66,4 +76,9 @@ def istl(space, name="tmp", **unused):
     spaceType = space._module._typeName
     typeName = "Dune::Fem::ISTLBlockVectorDiscreteFunction< " + spaceType + " >"
 
-    return module("istl", includes, typeName).DiscreteFunction(space,name)
+    if instanciate:
+        return module("istl", includes, typeName).DiscreteFunction(space,name)
+    else:
+        linearOperatorType = "Dune::Fem::ISTLLinearOperator< " + typeName + "," + typeName + ">"
+        includes += ["dune/fem/operator/linear/istloperator.hh"]
+        return includes, typeName, linearOperatorType
