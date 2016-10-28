@@ -6,8 +6,8 @@ from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.constantvalue import IntValue, Zero
 from ufl.differentiation import Grad
 
-from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, Method, Struct, TypeAlias, Variable
-from dune.source.cplusplus import construct, lambda_, make_pair, return_
+from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, Struct, TypeAlias, Variable
+from dune.source.cplusplus import construct, lambda_, make_pair, makeExpression, return_
 from dune.source.cplusplus import SourceWriter
 
 from dune.ufl import codegen
@@ -179,7 +179,7 @@ def generateCode(predefined, testFunctions, tensorMap, coefficients, tempVars=Tr
             for i, r in zip(keys, results[:len(keys)]):
                 value = tensors.setItem(value, i, r)
             results = results[len(keys):]
-        values += [tensors.reformat(lambda row: '{ ' + ', '.join(row) + ' }', phi.ufl_shape, value)]
+        values += [tensors.reformat(lambda row: InitializerList(*row), phi.ufl_shape, value)]
 
     return preamble, values
 
@@ -204,7 +204,7 @@ def generateLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap,
         value = tensors.fill(phi.ufl_shape, None)
         for idx in range(len(trialFunctions)):
             psi = trialFunctions[idx]
-            strpsi = 'std::get< ' + str(idx) + ' >( phi )'
+            varpsi = Variable('std::tuple< RangeType, JacobianRangeType >', 'phi')[idx]
             if (phi, psi) in tensorMap:
                 tensor = tensorMap[(phi, psi)]
                 keys = tensor.keys()
@@ -214,15 +214,15 @@ def generateLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap,
                     i = ij[:len(phi.ufl_shape)]
                     j = ij[len(phi.ufl_shape):]
                     if isinstance(tensor[ij], IntValue) and int(tensor[ij]) == 1:
-                        r = strpsi + codegen.translateIndex(j)
+                        r = varpsi[j]
                     else:
-                        r = '(' + r + ') * ' + strpsi + codegen.translateIndex(j)
+                        r = r * varpsi[j]
                     s = tensors.getItem(value, i)
-                    s = r if s is None else s + ' + ' + r
+                    s = r if s is None else s + r
                     value = tensors.setItem(value, i, s)
                 results = results[len(keys):]
-        value = tensors.apply(lambda v : '' if v is None else v, phi.ufl_shape, value)
-        values += [tensors.reformat(lambda row: '{ ' + ', '.join(row) + ' }', phi.ufl_shape, value)]
+        value = tensors.apply(lambda v : makeExpression(0) if v is None else v, phi.ufl_shape, value)
+        values += [tensors.reformat(lambda row: InitializerList(*row), phi.ufl_shape, value)]
 
     return preamble, values
 
@@ -295,19 +295,22 @@ def compileUFL(equation, tempVars=True):
         raise Exception('unknown integral encountered in ' + str(set(integrals.keys())) + '.')
 
     if 'cell' in integrals.keys():
-        predefined = {u: 'std::get< 0 >( u )', du: 'std::get< 1 >( u )'}
+        arg = Variable('std::tuple< RangeType, JacobianRangeType >', 'u')
+        predefined = {u: arg[0], du: arg[1]}
         integrands.interior = generateUnaryCode(predefined, [phi, dphi], integrals['cell'], integrands.coefficients, tempVars)
-        predefined = {ubar: 'std::get< 0 >( u )', dubar: 'std::get< 1 >( u )'}
+        predefined = {ubar: arg[0], dubar: arg[1]}
         integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('cell'), integrands.coefficients, tempVars)
 
     if 'exterior_facet' in integrals.keys():
-        predefined = {u: 'std::get< 0 >( u )', du: 'std::get< 1 >( u )'}
+        predefined = {u: arg[0], du: arg[1]}
         integrands.boundary = generateUnaryCode(predefined, [phi, dphi], integrals['exterior_facet'], integrands.coefficients, tempVars);
-        predefined = {ubar: 'std::get< 0 >( u )', dubar: 'std::get< 1 >( u )'}
+        predefined = {ubar: arg[0], dubar: arg[1]}
         integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('exterior_facet'), integrands.coefficients, tempVars)
 
     if 'interior_facet' in integrals.keys():
-        predefined = {u('-'): 'std::get< 0 >( uIn )', du('-'): 'std::get< 1 >( uIn )', u('+'): 'std::get< 0 >( uOut )', du('+'): 'std::get< 0 >( uOut )'}
+        argIn = Variable('std::tuple< RangeType, JacobianRangeType >', 'uIn')
+        argOut = Variable('std::tuple< RangeType, JacobianRangeType >', 'uOut')
+        predefined = {u('-'): argIn[0], du('-'): argIn[1], u('+'): argOut[0], du('+'): argOut[1]}
         integrands.skeleton = generateBinaryCode(predefined, [phi, dphi], integrals['interior_facet'], integrands.coefficients, tempVars)
 
     return integrands

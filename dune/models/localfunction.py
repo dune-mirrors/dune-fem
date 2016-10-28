@@ -7,7 +7,9 @@ import subprocess
 import sys
 import timeit
 import types
+
 from dune.generator import builder
+from dune.source.cplusplus import Method
 from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source import BaseModel
 
@@ -57,7 +59,7 @@ def UFLFunction(grid, name, order, expr, **kwargs):
                     'field': field } )
 
     writer = SourceWriter(ListWriter())
-    writer.emit(generate.generateCode({}, generate.ExprTensor((R, ), expr), coefficients, False))
+    writer.emit(generate.generateCode({}, generate.ExprTensor((R, ), expr), coefficients, False), context=Method('void', 'evaluate'))
     code = '\n'.join(writer.writer.lines)
     evaluate = code.replace("result", "value")
     jac = []
@@ -69,7 +71,7 @@ def UFLFunction(grid, name, order, expr, **kwargs):
         jac.append( [jacForm[d].integrals()[0].integrand() if not jacForm[d].empty() else 0 for d in range(D)] )
     jac = ufl.as_matrix(jac)
     writer = SourceWriter(ListWriter())
-    writer.emit(generate.generateCode({}, generate.ExprTensor((R, D), jac), coefficients, False))
+    writer.emit(generate.generateCode({}, generate.ExprTensor((R, D), jac), coefficients, False), context=Method('void', 'jacobian'))
     code = '\n'.join(writer.writer.lines)
     jacobian = code.replace("result", "value")
 

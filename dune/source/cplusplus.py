@@ -68,69 +68,88 @@ class Block:
 
 
 
+# Statement
+# ---------
+
+class Statement:
+    def __init__(self):
+        pass
+
+
+
 # Expression
 # ----------
 
-class Expression:
+class Expression(Statement):
     def __init__(self, cppType=None):
+        Statement.__init__(self)
         self.cppType = cppType
 
     def __add__(self, other):
-        return Application(BinaryOperator('+'), self, makeExpression(other))
+        return Application(BinaryOperator('+'), args=(self, makeExpression(other)))
 
     def __sub__(self, other):
-        return Application(BinaryOperator('-'), self, makeExpression(other))
+        return Application(BinaryOperator('-'), args=(self, makeExpression(other)))
 
     def __mul__(self, other):
-        return Application(BinaryOperator('*'), self, makeExpression(other))
+        return Application(BinaryOperator('*'), args=(self, makeExpression(other)))
 
     def __truediv__(self, other):
-        return Application(BinaryOperator('/'), self, makeExpression(other))
+        return Application(BinaryOperator('/'), args=(self, makeExpression(other)))
 
     def __mod__(self, other):
-        return Application(BinaryOperator('%'), self, makeExpression(other))
+        return Application(BinaryOperator('%'), args=(self, makeExpression(other)))
 
     def __iadd__(self, other):
-        return Application(BinaryOperator('+='), self, makeExpression(other))
+        return Application(BinaryOperator('+='), args=(self, makeExpression(other)))
 
     def __isub__(self, other):
-        return Application(BinaryOperator('-='), self, makeExpression(other))
+        return Application(BinaryOperator('-='), args=(self, makeExpression(other)))
 
     def __imul__(self, other):
-        return Application(BinaryOperator('*='), self, makeExpression(other))
+        return Application(BinaryOperator('*='), args=(self, makeExpression(other)))
 
     def __imod__(self, other):
-        return Application(BinaryOperator('%='), self, makeExpression(other))
+        return Application(BinaryOperator('%='), args=(self, makeExpression(other)))
 
     def __itruediv__(self, other):
-        return Application(BinaryOperator('/='), self, makeExpression(other))
+        return Application(BinaryOperator('/='), args=(self, makeExpression(other)))
 
     def __lt__(self, other):
-        return Application(BinaryOperator('<'), self, makeExpression(other))
+        return Application(BinaryOperator('<'), args=(self, makeExpression(other)))
 
     def __le__(self, other):
-        return Application(BinaryOperator('<='), self, makeExpression(other))
+        return Application(BinaryOperator('<='), args=(self, makeExpression(other)))
 
     def __eq__(self, other):
-        return Application(BinaryOperator('=='), self, makeExpression(other))
+        return Application(BinaryOperator('=='), args=(self, makeExpression(other)))
 
     def __ne__(self, other):
-        return Application(BinaryOperator('!='), self, makeExpression(other))
+        return Application(BinaryOperator('!='), args=(self, makeExpression(other)))
 
     def __ge__(self, other):
-        return Application(BinaryOperator('>='), self, makeExpression(other))
+        return Application(BinaryOperator('>='), args=(self, makeExpression(other)))
 
     def __gt__(self, other):
-        return Application(BinaryOperator('>'), self, makeExpression(other))
+        return Application(BinaryOperator('>'), args=(self, makeExpression(other)))
 
     def __neg__(self):
-        return Application(PrefixUnaryOperator('-'), self)
+        return Application(PrefixUnaryOperator('-'), args=(self,))
 
     def __pos__(self):
-        return Application(PrefixUnaryOperator('+'), self)
+        return Application(PrefixUnaryOperator('+'), args=(self,))
 
     def __getitem__(self, index):
-        return Application(BracketOperator(), self, makeExpression(other))
+        if self.cppType is not None and self.cppType.startswith('std::tuple'):
+            return Application(get(index), args=(self,))
+        else:
+            if isinstance(index, tuple):
+                result = self
+                for i in index:
+                    result = Application(BracketOperator(), args=(result, makeExpression(i)))
+                return result
+            else:
+                return Application(BracketOperator(), args=(self, makeExpression(index)))
 
 
 
@@ -163,7 +182,10 @@ class Application(Expression):
     def __init__(self, function, args=None):
         Expression.__init__(self)
         self.function = function
-        self.args = args
+        self.args = tuple(args)
+
+    def __hash__(self):
+        return hash((self.cppType, self.function, self.args))
 
 
 
@@ -175,6 +197,9 @@ class ConstantExpression(Expression):
         Expression.__init__(self, cppType)
         self.value = value
 
+    def __hash__(self):
+        return hash((self.cppType, self.value))
+
 
 
 # ConstructExpression
@@ -184,6 +209,41 @@ class ConstructExpression(Expression):
     def __init__(self, cppType, args=None):
         Expression.__init__(self, cppType)
         self.args = None if args is None else [makeExpression(arg) for arg in args]
+
+    def __hash__(self):
+        return hash((self.cppType, self.args))
+
+
+
+# InitializerList
+# ---------------
+
+class InitializerList(Expression):
+    def __init__(self, *args):
+        Expression.__init__(self)
+        self.args = tuple(args)
+
+
+
+# LambdaExpression
+# ----------------
+
+class LambdaExpression(Expression):
+    def __init__(self, args=None, capture=None, code=None):
+        Expression.__init__(self, None)
+        self.args = None if args is None else tuple(args)
+        self.capture = capture
+        if code is None:
+            self.code = None
+        elif isinstance(code, Block):
+            self.code = tuple(block.content)
+        elif isinstance(code, (list, set, tuple)):
+            self.code = (o for o in code)
+        else:
+            self.code = (code,)
+
+    def __hash__(self):
+        return hash((self.cppType, self.args, self.capture, self.code))
 
 
 
@@ -195,19 +255,8 @@ class Variable(Expression):
       Expression.__init__(self, cppType)
       self.name = name
 
-
-
-# LambdaExpression
-# ----------------
-
-class LambdaExpression(Expression, Block):
-    def __init__(self, args=None, capture=None, code=None):
-        Expression.__init__(self, None)
-        Block.__init__(self)
-        self.args=args
-        self.capture=capture
-        if code is not None:
-            self.append(code)
+  def __hash__(self):
+      return hash((self.cppType, self.name))
 
 
 
@@ -255,7 +304,7 @@ class Operator:
 
 class PrefixUnaryOperator(Operator):
     def __init__(self, name):
-        Operator.__init__(name, 1)
+        Operator.__init__(self, name, 1)
 
 
 
@@ -264,7 +313,7 @@ class PrefixUnaryOperator(Operator):
 
 class PostfixUnaryOperator(Operator):
     def __init__(self, name):
-        Operator.__init__(name, 1)
+        Operator.__init__(self, name, 1)
 
 
 
@@ -273,16 +322,16 @@ class PostfixUnaryOperator(Operator):
 
 class BinaryOperator(Operator):
     def __init__(self, name):
-        Operator.__init__(name, 2)
+        Operator.__init__(self, name, 2)
 
 
 
 # BracketOperator
 # ---------------
 
-def BracketOperator(Operator):
+class BracketOperator(Operator):
     def __init__(self):
-        Operator.__init__('[]', 2)
+        Operator.__init__(self, '[]', 2)
 
 
 
@@ -430,15 +479,6 @@ class EnumClass:
 
 
 
-# Statement
-# ---------
-
-class Statement:
-    def __init__(self):
-        pass
-
-
-
 # ReturnStatement
 # ---------------
 
@@ -451,6 +491,10 @@ class ReturnStatement(Statement):
 
 # short hand notation
 # -------------------
+
+def assign(left, right):
+    return Application(BinaryOperator('='), args=(left, makeExpression(right)))
+
 
 def construct(cppType, *args):
     return ConstructExpression(cppType, args if args else None)
@@ -473,6 +517,9 @@ cos = BuiltInFunction('cmath', 'X', 'cos', targs=['class X'], args=['const X &x'
 pow_ = BuiltInFunction('cmath', 'X', 'pow', targs=['class X'], args=['const X &x', 'const X &y'])
 sin = BuiltInFunction('cmath', 'X', 'sin', targs=['class X'], args=['const X &x'])
 tan = BuiltInFunction('cmath', 'X', 'tan', targs=['class X'], args=['const X &x'])
+
+def get(i):
+    return BuiltInFunction('tuple', 'auto', 'get< ' + str(i) + ' >', targs=['class T'], args=['const T &arg'])
 
 make_pair = BuiltInFunction('utility', 'std::pair< U, V >', 'make_pair', targs=['class U', 'class V'], args=['const U &left', 'const V &right'])
 
@@ -608,8 +655,16 @@ class SourceWriter:
                 raise Exception('Only variables can be declared for now.')
             declaration = ('static ' if src.static else '') + ('mutable ' if src.mutable else '') + self.typedName(src.obj)
             if src.initializer is not None:
-                declaration += ' = ' + src.initializer
-            self.emit(declaration + ';', indent)
+                expr = self.translateExpr(src.initializer)
+                expr[len(expr)-1] += ';'
+                self.emit(declaration + ' = ' + expr[0], indent)
+                for e in expr[1:]:
+                    if isinstance(e, tuple):
+                        self.emit(e, indent+2, Function('auto', '<lambda>'))
+                    else:
+                        self.emit(e, indent+1)
+            else:
+                self.emit(declaration + ';', indent)
         elif isinstance(src, Using):
             if not isinstance(src.obj, BuiltInFunction):
                 raise Exception('Only built-in functions can be used for now')
@@ -621,13 +676,22 @@ class SourceWriter:
         elif isinstance(src, Statement):
             if not isinstance(context, (Constructor, Function, Method)):
                 raise Exception('Statements can only occur in constructors, functions and methods')
-            if isinstance(src, ReturnStatement):
+            if isinstance(src, Expression):
+                expr = self.translateExpr(src)
+                expr[len(expr)-1] += ';'
+                self.emit(expr[0], indent)
+                for e in expr[1:]:
+                    if isinstance(e, tuple):
+                        self.emit(e, indent+2, Function('auto', '<lambda>'))
+                    else:
+                        self.emit(e, indent+1)
+            elif isinstance(src, ReturnStatement):
                 if src.expression is not None:
                     expr = self.translateExpr(src.expression)
                     expr[len(expr)-1] += ';'
                     self.emit('return ' + expr[0], indent)
                     for e in expr[1:]:
-                        if isinstance(e, list):
+                        if isinstance(e, tuple):
                             self.emit(e, indent+2, Function('auto', '<lambda>'))
                         else:
                             self.emit(e, indent+1)
@@ -659,15 +723,15 @@ class SourceWriter:
             args = [self.translateExpr(arg) for arg in expr.args]
             if isinstance(expr.function, Operator):
                 if len(args) != expr.function.numArgs:
-                    raise Exception('The operator' + expr.function.name + ' expects ' + expr.function.numArgs + ' arguments (' + str(len(args)) + ' given).')
+                    raise Exception('The operator' + expr.function.name + ' takes ' + expr.function.numArgs + ' arguments (' + str(len(args)) + ' given).')
                 if isinstance(expr.function, PrefixUnaryOperator):
-                    return join([expr.function.name + '('], args[0], [')'])
+                    return join([[expr.function.name + '('], args[0], [')']])
                 elif isinstance(expr.function, PostfixUnaryOperator):
-                    return join(['('], args[0], [')' + expr.function.name])
+                    return join([['('], args[0], [')' + expr.function.name]])
                 elif isinstance(expr.function, BinaryOperator):
-                    return join(['('], args[0], [') ' + expr.function.name + ' ('], args[1], [')'])
+                    return join([['('], args[0], [') ' + expr.function.name + ' ('], args[1], [')']])
                 elif isinstance(expr.function, BracketOperator):
-                    return join(['('], args[0], [')[ '], args[1], [' ]'])
+                    return join([['('], args[0], [')[ '], args[1], [' ]']])
                 else:
                     raise Exception('Unknown operator: ' + repr(expr.function))
             if isinstance(expr.function, BuiltInFunction):
@@ -690,10 +754,14 @@ class SourceWriter:
                 return join([[expr.cppType + '( '], join([self.translateExpr(arg) for arg in expr.args], ', '), [' )']])
             else:
                 return [expr.cppType + '()']
+        elif isinstance(expr, InitializerList):
+            return join([['{ '], join([self.translateExpr(arg) for arg in expr.args], ', '), [' }']])
         elif isinstance(expr, LambdaExpression):
             capture = '' if expr.capture is None else ' ' + ', '.join(expr.capture) + ' '
             args = '' if expr.args is None else ' ' + ', '.join(expr.args) + ' '
-            return ['[' + capture + '] (' + args + ') {', expr.content, '}']
+            return ['[' + capture + '] (' + args + ') {', expr.code, '}']
+        elif isinstance(expr, Variable):
+            return [expr.name]
         else:
             return [expr.strip()]
 

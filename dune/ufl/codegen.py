@@ -36,11 +36,11 @@ class CodeGenerator(MultiFunction):
 
     def atan(self, expr, x):
         self.using.add(Using(cplusplus.atan))
-        return self._makeTmp(cplusplus.atan.name + '( ' + x + ' )')
+        return self._makeTmp(cplusplus.atan(x))
 
     def atan_2(self, expr, x, y):
         self.using(add(Using(cplusplus.atan2)))
-        return self._makeTmp(cplusplus.atan2.name + '( ' + x + ', ' + y + ' )')
+        return self._makeTmp(cplusplus.atan2(x, y))
 
     def coefficient(self, expr):
         try:
@@ -56,23 +56,17 @@ class CodeGenerator(MultiFunction):
             var = Variable('CoefficientRangeType< ' + idx + ' >', 'c' + idx)
             self.code.append(Declaration(var))
             self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
-        return var.name
+        return var
 
     def cos(self, expr, x):
         self.using.add(Using(cplusplus.cos))
-        return self._makeTmp(cplusplus.cos.name + '( ' + x + ' )')
+        return self._makeTmp(cplusplus.cos(x))
 
     def division(self, expr, x, y):
-        return self._makeTmp('(' + x + ' / ' + y + ')')
+        return self._makeTmp(x / y)
 
     def float_value(self, expr):
-        val = str(expr.value())
-        if "." not in val:
-            val += ".0"
-        if expr.value() < 0:
-            return '(' + val + ')'
-        else:
-            return val
+        return cplusplus.makeExpression(expr.value())
 
     def grad(self, expr):
         try:
@@ -86,7 +80,7 @@ class CodeGenerator(MultiFunction):
             var = Variable('CoefficientJacobianRangeType< ' + idx + ' >', 'dc' + idx)
             self.code.append(Declaration(var))
             self.code.append('coefficient< ' + idx + ' >().jacobian( x, ' + var.name + ' );')
-            return var.name
+            return var
         elif isinstance(operand, Grad):
             operand = operand.ufl_operands[0]
             if isinstance(operand, Coefficient):
@@ -94,7 +88,7 @@ class CodeGenerator(MultiFunction):
                 var = Variable('CoefficientHessianRangeType< ' + idx + ' >', 'd2c' + idx)
                 self.code.append(Declaration(var))
                 self.code.append('coefficient< ' + idx + ' >().hessian( x, ' + var.name + ' );')
-                return var.name
+                return var
             elif isinstance(operand, Argument):
                 raise Exception('Unknown argument: ' + str(operand))
             else:
@@ -105,10 +99,12 @@ class CodeGenerator(MultiFunction):
             raise Exception('Cannot compute gradient of ' + repr(expr))
 
     def indexed(self, expr, operand, index):
-        return operand + index
+        for i in index:
+            operand = operand[int(i)]
+        return operand
 
     def multi_index(self, expr):
-        return translateIndex(expr)
+        return expr
 
     int_value = float_value
 
@@ -131,31 +127,31 @@ class CodeGenerator(MultiFunction):
         raise Exception('Cannot compute restriction of ' + str(operand) + ', yet')
 
     def product(self, expr, x, y):
-        return self._makeTmp('(' + x + ' * ' + y + ')')
+        return self._makeTmp(x * y)
 
     def power(self, expr, x, y):
         self.using.add(Using(cplusplus.pow_))
-        return self._makeTmp(cplusplus.pow_.name + '( ' + x + ', ' + y + ' )')
+        return self._makeTmp(cplusplus.pow_(x, y))
 
     def sin(self, expr, x):
         self.using.add(Using(cplusplus.sin))
-        return self._makeTmp(cplusplus.sin.name + '( ' + x + ' )')
+        return self._makeTmp(cplusplus.sin(x))
 
     def spatial_coordinate(self, expr):
         self.using.add('using Dune::Fem::coordinate;')
         var = Variable('const auto', 'y')
         self.code.append(Declaration(var, 'entity().geometry().global( coordinate( x ) )'))
-        return var.name
+        return var
 
     def sum(self, expr, x, y):
-        return self._makeTmp('(' + x + ' + ' + y + ')')
+        return self._makeTmp(x + y)
 
     def tan(self, expr, x):
         self.using.add(Using(cplusplus.tan))
-        return self._makeTmp(cplusplus.tan.name + '( ' + x + ' )')
+        return self._makeTmp(cplusplus.tan(x))
 
     def zero(self, expr):
-        return '0'
+        return cplusplus.makeExpression(0)
 
     def _getNumber(self, expr):
         try:
@@ -171,7 +167,7 @@ class CodeGenerator(MultiFunction):
         if self.tempVars:
             var = Variable('const auto', 'tmp' + str(len(self.code)))
             self.code.append(Declaration(var, cexpr))
-            return var.name
+            return var
         else:
             return cexpr
 

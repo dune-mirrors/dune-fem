@@ -17,7 +17,8 @@ from dune.ufl import codegen, GridCoefficient
 from dune.ufl.tensors import ExprTensor
 from dune.ufl.linear import splitMultiLinearExpr
 
-from dune.source import Declaration, Method, TypeAlias, Variable
+from dune.source.cplusplus import Declaration, Method, TypeAlias, Variable
+from dune.source.cplusplus import assign
 from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source import BaseModel
 from dune.generator import builder
@@ -251,7 +252,8 @@ def generateCode(predefined, tensor, coefficients, tempVars = True):
     keys = tensor.keys()
     expressions = [tensor[i] for i in keys]
     preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars)
-    return preamble + [('result' + codegen.translateIndex(i) + ' = ' + r + ';') for i, r in zip(keys, results)]
+    result = Variable('auto', 'result')
+    return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
 
 
 
@@ -331,14 +333,21 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
             'constant' : coefficient.is_cellwise_constant(),\
             'field': field } )
 
-    model.source = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, source, model.coefficients, tempVars)
-    model.diffusiveFlux = generateCode({ u : 'u', du : 'du' }, diffusiveFlux, model.coefficients, tempVars)
-    model.alpha = generateCode({ u : 'u' }, boundarySource, model.coefficients, tempVars)
-    model.linSource = generateCode({ u : 'u', du : 'du', d2u : 'd2u', ubar : 'ubar', dubar : 'dubar', d2ubar : 'd2ubar'}, linSource, model.coefficients, tempVars)
-    model.linNVSource = generateCode({ u : 'u', du : 'du', d2u : 'd2u', ubar : 'ubar', dubar : 'dubar', d2ubar : 'd2ubar'}, linNVSource, model.coefficients, tempVars)
-    model.linDiffusiveFlux = generateCode({ u : 'u', du : 'du', ubar : 'ubar', dubar : 'dubar' }, linDiffusiveFlux, model.coefficients, tempVars)
-    model.linAlpha = generateCode({ u : 'u', ubar : 'ubar' }, linBoundarySource, model.coefficients, tempVars)
-    model.fluxDivergence = generateCode({ u : 'u', du : 'du', d2u : 'd2u' }, fluxDivergence, model.coefficients, tempVars)
+
+    arg = Variable('const RangeType &', 'u')
+    darg = Variable('const JacobianRangeType &', 'du')
+    d2arg = Variable('const HessianRangeType &', 'd2u')
+    argbar = Variable('const RangeType &', 'ubar')
+    dargbar = Variable('const JacobianRangeType &', 'dubar')
+    d2argbar = Variable('const HessianRangeType &', 'd2ubar')
+    model.source = generateCode({u: arg, du: darg, d2u: d2arg}, source, model.coefficients, tempVars)
+    model.diffusiveFlux = generateCode({u: arg, du: darg}, diffusiveFlux, model.coefficients, tempVars)
+    model.alpha = generateCode({u: arg}, boundarySource, model.coefficients, tempVars)
+    model.linSource = generateCode({u: arg, du: darg, d2u: d2arg, ubar: argbar, dubar: dargbar, d2ubar: d2argbar}, linSource, model.coefficients, tempVars)
+    model.linNVSource = generateCode({u: arg, du: darg, d2u: d2arg, ubar: argbar, dubar: dargbar, d2ubar: d2argbar}, linNVSource, model.coefficients, tempVars)
+    model.linDiffusiveFlux = generateCode({u: arg, du: darg, ubar: argbar, dubar: dargbar}, linDiffusiveFlux, model.coefficients, tempVars)
+    model.linAlpha = generateCode({u: arg, ubar: argbar}, linBoundarySource, model.coefficients, tempVars)
+    model.fluxDivergence = generateCode({u: arg, du: darg, d2u: d2arg}, fluxDivergence, model.coefficients, tempVars)
 
     if dirichlet:
         model.hasDirichletBoundary = True
@@ -364,7 +373,7 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
                 raise Exception('Dirichtlet boundary condition has wrong dimension.')
             writer.emit('case ' + str(bndId) + ':')
             writer.emit('{', indent=1)
-            writer.emit(generateCode({}, ExprTensor((dimRange,), dirichlet[bndId]), model.coefficients, tempVars), indent=2)
+            writer.emit(generateCode({}, ExprTensor((dimRange,), dirichlet[bndId]), model.coefficients, tempVars), indent=2, context=Method('void', 'dirichlet'))
             writer.emit('}', indent=1)
             writer.emit('break;', indent=1)
         writer.emit('default:')
