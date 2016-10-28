@@ -9,6 +9,7 @@ from ufl.differentiation import Grad
 from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, Struct, TypeAlias, Variable
 from dune.source.cplusplus import construct, lambda_, make_pair, makeExpression, return_
 from dune.source.cplusplus import SourceWriter
+from dune.source.algorithm.extractvariables import extractVariables
 
 from dune.ufl import codegen
 from dune.ufl.linear import splitForm
@@ -237,7 +238,8 @@ def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, tenso
         return [return_(lambda_(args=['const ValueType &phi'], code=return_(construct('ValueType', 0, 0))))]
 
     preamble, values = generateLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, coefficients, tempVars)
-    return preamble + [return_(lambda_(args=['const ValueType &phi'], code=return_(construct('ValueType', *values))))]
+    capture = extractVariables(values) - {Variable('std::tuple< RangeType, JacobianRangeType >', 'phi')}
+    return preamble + [return_(lambda_(capture=capture, args=['const ValueType &phi'], code=return_(construct('ValueType', *values))))]
 
 
 def generateBinaryCode(predefined, testFunctions, tensorMap, coefficients, tempVars=True):

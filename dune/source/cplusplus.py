@@ -461,7 +461,7 @@ class SourceWriter:
         elif isinstance(expr, InitializerList):
             return join([['{ '], join([self.translateExpr(arg) for arg in expr.args], ', '), [' }']])
         elif isinstance(expr, LambdaExpression):
-            capture = '' if expr.capture is None else ' ' + ', '.join(expr.capture) + ' '
+            capture = '' if expr.capture is None else ' ' + ', '.join([c.name for c in expr.capture]) + ' '
             args = '' if expr.args is None else ' ' + ', '.join(expr.args) + ' '
             return ['[' + capture + '] (' + args + ') {', expr.code, '}']
         elif isinstance(expr, Variable):
