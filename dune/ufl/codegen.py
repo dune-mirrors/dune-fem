@@ -119,7 +119,7 @@ class CodeGenerator(MultiFunction):
             pass
 
         operand = expr.ufl_operands[0]
-        raise Exception('Cannot compute restriction of ' + str(expr) + ', yet')
+        raise Exception('Cannot compute restriction of ' + str(operand) + ', yet')
 
     def positive_restricted(self, expr):
         try:
@@ -128,7 +128,7 @@ class CodeGenerator(MultiFunction):
             pass
 
         operand = expr.ufl_operands[0]
-        raise Exception('Cannot compute restriction of ' + str(expr) + ', yet')
+        raise Exception('Cannot compute restriction of ' + str(operand) + ', yet')
 
     def product(self, expr, x, y):
         return self._makeTmp('(' + x + ' * ' + y + ')')

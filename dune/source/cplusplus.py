@@ -76,55 +76,61 @@ class Expression:
         self.cppType = cppType
 
     def __add__(self, other):
-        return Application(BinaryOperator('+', self, makeExpression(other)))
+        return Application(BinaryOperator('+'), self, makeExpression(other))
 
     def __sub__(self, other):
-        return Application(BinaryOperator('-', self, makeExpression(other)))
+        return Application(BinaryOperator('-'), self, makeExpression(other))
 
     def __mul__(self, other):
-        return Application(BinaryOperator('*', self, makeExpression(other)))
+        return Application(BinaryOperator('*'), self, makeExpression(other))
 
     def __truediv__(self, other):
-        return Application(BinaryOperator('/', self, makeExpression(other)))
+        return Application(BinaryOperator('/'), self, makeExpression(other))
 
     def __mod__(self, other):
-        return Application(BinaryOperator('%', self, makeExpression(other)))
+        return Application(BinaryOperator('%'), self, makeExpression(other))
 
     def __iadd__(self, other):
-        return Application(BinaryOperator('+=', self, makeExpression(other)))
+        return Application(BinaryOperator('+='), self, makeExpression(other))
 
     def __isub__(self, other):
-        return Application(BinaryOperator('-=', self, makeExpression(other)))
+        return Application(BinaryOperator('-='), self, makeExpression(other))
 
     def __imul__(self, other):
-        return Application(BinaryOperator('*=', self, makeExpression(other)))
+        return Application(BinaryOperator('*='), self, makeExpression(other))
 
     def __imod__(self, other):
-        return Application(BinaryOperator('%=', self, makeExpression(other)))
+        return Application(BinaryOperator('%='), self, makeExpression(other))
 
     def __itruediv__(self, other):
-        return Application(BinaryOperator('/=', self, makeExpression(other)))
+        return Application(BinaryOperator('/='), self, makeExpression(other))
 
     def __lt__(self, other):
-        return Application(BinaryOperator('<', self, makeExpression(other)))
+        return Application(BinaryOperator('<'), self, makeExpression(other))
 
     def __le__(self, other):
-        return Application(BinaryOperator('<=', self, makeExpression(other)))
+        return Application(BinaryOperator('<='), self, makeExpression(other))
 
     def __eq__(self, other):
-        return Application(BinaryOperator('==', self, makeExpression(other)))
+        return Application(BinaryOperator('=='), self, makeExpression(other))
 
     def __ne__(self, other):
-        return Application(BinaryOperator('!=', self, makeExpression(other)))
+        return Application(BinaryOperator('!='), self, makeExpression(other))
 
     def __ge__(self, other):
-        return Application(BinaryOperator('>=', self, makeExpression(other)))
+        return Application(BinaryOperator('>='), self, makeExpression(other))
 
     def __gt__(self, other):
-        return Application(BinaryOperator('>', self, makeExpression(other)))
+        return Application(BinaryOperator('>'), self, makeExpression(other))
 
     def __neg__(self):
-        return Application(UnaryOperator('-', 'prefix'))
+        return Application(PrefixUnaryOperator('-'), self)
+
+    def __pos__(self):
+        return Application(PrefixUnaryOperator('+'), self)
+
+    def __getitem__(self, index):
+        return Application(BracketOperator(), self, makeExpression(other))
 
 
 
@@ -233,22 +239,50 @@ class BuiltInFunction:
         return Application(self, args=[makeExpression(arg) for arg in args])
 
 
-# UnaryOperator
-# -------------
 
-class UnaryOperator:
-    def __init__(self, name, position):
+# Operator
+# --------
+
+class Operator:
+    def __init__(self, name, numArgs):
         self.name = name
-        self.position = position
+        self.numArgs = numArgs
+
+
+
+# PrefixUnaryOperator
+# -------------------
+
+class PrefixUnaryOperator(Operator):
+    def __init__(self, name):
+        Operator.__init__(name, 1)
+
+
+
+# PostfixUnaryOperator
+# -------------------
+
+class PostfixUnaryOperator(Operator):
+    def __init__(self, name):
+        Operator.__init__(name, 1)
 
 
 
 # BinaryOperator
 # --------------
 
-class BinaryOperator:
+class BinaryOperator(Operator):
     def __init__(self, name):
-        self.name = name
+        Operator.__init__(name, 2)
+
+
+
+# BracketOperator
+# ---------------
+
+def BracketOperator(Operator):
+    def __init__(self):
+        Operator.__init__('[]', 2)
 
 
 
@@ -623,19 +657,19 @@ class SourceWriter:
 
         if isinstance(expr, Application):
             args = [self.translateExpr(arg) for arg in expr.args]
-            if isinstance(expr.function, UnaryOperator):
-                if len(args) != 2:
-                    raise Exception('Unary operators require one argument (' + str(len(args)) + ' given).')
-                if expr.function.position == 'prefix':
+            if isinstance(expr.function, Operator):
+                if len(args) != expr.function.numArgs:
+                    raise Exception('The operator' + expr.function.name + ' expects ' + expr.function.numArgs + ' arguments (' + str(len(args)) + ' given).')
+                if isinstance(expr.function, PrefixUnaryOperator):
                     return join([expr.function.name + '('], args[0], [')'])
-                elif expr.function.position == 'postfix':
+                elif isinstance(expr.function, PostfixUnaryOperator):
                     return join(['('], args[0], [')' + expr.function.name])
+                elif isinstance(expr.function, BinaryOperator):
+                    return join(['('], args[0], [') ' + expr.function.name + ' ('], args[1], [')'])
+                elif isinstance(expr.function, BracketOperator):
+                    return join(['('], args[0], [')[ '], args[1], [' ]'])
                 else:
-                    raise Exception('Unary operators are either prefix or postfix.')
-            if isinstance(expr.function, BinaryOperator):
-                if len(args) != 2:
-                    raise Exception('Binary operators require two arguments (' + str(len(args)) + ' given).')
-                return join(['('], args[0], [') ' + expr.function.name + ' ('], args[1], [')'])
+                    raise Exception('Unknown operator: ' + repr(expr.function))
             if isinstance(expr.function, BuiltInFunction):
                 if expr.function.namespace is None:
                     function = expr.function.name
