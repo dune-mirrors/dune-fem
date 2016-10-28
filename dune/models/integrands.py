@@ -75,14 +75,14 @@ class Integrands():
 
         result.append(Constructor(code="constructConstants( std::make_index_sequence< std::tuple_size< ConstantsTupleType >::value >() );"))
 
-        initEntity = Method('bool', 'init', args=['const EntityType &entity'], const=True)
+        initEntity = Method('bool', 'init', args=['const EntityType &entity'])
         initEntity.append('entity_' + inside + ' = entity;')
         initEntity.append('initCoefficients( entity_' + inside + ', coefficients_' + inside + ', std::make_index_sequence< numCoefficients >() );')
         initEntity.append(self.init)
         initEntity.append(return_(True))
         result.append(initEntity)
 
-        initIntersection = Method('bool', 'init', args=['const IntersectionType &intersection'], const=True)
+        initIntersection = Method('bool', 'init', args=['const IntersectionType &intersection'])
         if self.skeleton is None:
             initIntersection.append(return_('(intersection.boundary() && init( intersection.inside() ))'))
         else:
