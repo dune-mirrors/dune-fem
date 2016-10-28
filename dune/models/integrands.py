@@ -111,7 +111,7 @@ class Integrands():
 
         if self.skeleton is not None:
             result.append(Method('std::pair< ValueType, ValueType >', 'skeleton', targs=['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=self.skeleton, const=True))
-            #result.append(Method('auto', 'linearizedSkeleton', targs['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=self.linearizedSkeleton, const=True))
+            result.append(Method('auto', 'linearizedSkeleton', targs=['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=self.linearizedSkeleton, const=True))
 
         return result
 
@@ -248,6 +248,17 @@ def generateBinaryCode(predefined, testFunctions, tensorMap, coefficients, tempV
     return preamble + [return_(make_pair(construct('ValueType', *values[:len(testFunctions)]), construct('ValueType', *values[len(testFunctions):])))]
 
 
+def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, coefficients, tempVars=True):
+    restrictedTestFunctions = [phi('-') for phi in testFunctions] + [phi('+') for phi in testFunctions]
+    restrictedTrialFunctions = [psi('-') for psi in trialFunctions] + [psi('+') for psi in trialFunctions]
+    if tensorMap is None:
+        return [return_(lambda_(args=['const ValueType &phi'], code=return_(construct('ValueType', 0, 0))))]
+
+    preamble, values = generateLinearizedCode(predefined, restrictedTestFunctions, restrictedTrialFunctions, tensorMap, coefficients, tempVars)
+    tensorIn = lambda_(args=['const ValueType &phiIn'], code=return_(construct('ValueType', *values[:len(testFunctions)])))
+    tensorOut = lambda_(args=['const ValueType &phiOut'], code=return_(construct('ValueType', *values[len(testFunctions):])))
+    return preamble + [return_(make_pair(tensorIn, tensorOut))]
+
 def compileUFL(equation, tempVars=True):
     form = equation.lhs - equation.rhs
     if not isinstance(form, Form):
@@ -314,5 +325,7 @@ def compileUFL(equation, tempVars=True):
         argOut = Variable('std::tuple< RangeType, JacobianRangeType >', 'uOut')
         predefined = {u('-'): argIn[0], du('-'): argIn[1], u('+'): argOut[0], du('+'): argOut[1]}
         integrands.skeleton = generateBinaryCode(predefined, [phi, dphi], integrals['interior_facet'], integrands.coefficients, tempVars)
+        predefined = {ubar('-'): argIn[0], dubar('-'): argIn[1], ubar('+'): argOut[0], dubar('+'): argOut[1]}
+        integrands.linearizedSkeleton = generateBinaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('interior_facet'), integrands.coefficients, tempVars)
 
     return integrands
