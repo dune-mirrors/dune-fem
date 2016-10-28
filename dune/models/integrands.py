@@ -6,7 +6,7 @@ from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.constantvalue import IntValue, Zero
 from ufl.differentiation import Grad
 
-from dune.source.cplusplus import AccessModifier, Constructor, EnumClass, Method, Struct, TypeAlias, Variable
+from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, Method, Struct, TypeAlias, Variable
 from dune.source.cplusplus import construct, lambda_, make_pair, return_
 from dune.source.cplusplus import SourceWriter
 
@@ -36,9 +36,9 @@ class Integrands():
         result.append(TypeAlias("GridPartType", "GridPart"))
         result.append(TypeAlias("RangeFieldType", SourceWriter.cpp_fields(self.field)))
 
-        result.append(Variable("const int", "dimRange", str(self.dimRange), static=True))
-        result.append(Variable("const int", "dimDomain", "GridPartType::dimensionworld", static=True))
-        result.append(Variable("const int", "dimLocal", "GridPartType::dimension", static=True))
+        result.append(Declaration(Variable("const int", "dimRange"), str(self.dimRange), static=True))
+        result.append(Declaration(Variable("const int", "dimDomain"), "GridPartType::dimensionworld", static=True))
+        result.append(Declaration(Variable("const int", "dimLocal"), "GridPartType::dimension", static=True))
 
         result.append(TypeAlias("EntityType", "typename GridPart::template Codim< 0 >::EntityType"))
         result.append(TypeAlias("IntersectionType", "typename GridPart::IntersectionType"))
@@ -55,12 +55,12 @@ class Integrands():
             result.append(TypeAlias("CoefficientFunctionSpaceTupleType", "std::tuple< " +", ".join(coefficients) + " >"))
 
             result.append(TypeAlias("ConstantsRangeType", "typename std::tuple_element_t< i, ConstantsTupleType >::element_type", targs=["std::size_t i"]))
-            result.append(Variable("const std::size_t", "numCoefficients", "std::tuple_size< CoefficientFunctionSpaceTupleType >::value", static=True))
+            result.append(Declaration(Variable("const std::size_t", "numCoefficients"), "std::tuple_size< CoefficientFunctionSpaceTupleType >::value", static=True))
             result.append(TypeAlias("CoefficientFunctionSpaceType", "typename std::tuple_element< i, CoefficientFunctionSpaceTupleType >::type", targs=["std::size_t i"]))
             for s in ["RangeType", "JacobianRangeType"]:
                 result.append(TypeAlias("Coefficient" + s, "typename CoefficientFunctionSpaceType< i >::" + s, targs=["std::size_t i"]))
         else:
-            result.append(Variable("const std::size_t", "numCoefficients", "0u", static=True))
+            result.append(Declaration(Variable("const std::size_t", "numCoefficients"), "0u", static=True))
             result.append(TypeAlias("ConstantsTupleType", "std::tuple<>"))
 
         result.append(TypeAlias('CoefficientType', 'typename std::tuple_element< i, std::tuple< Coefficients... > >::type', targs=['std::size_t i']))
@@ -137,12 +137,12 @@ class Integrands():
         result.append(constructConstants)
 
         if self.skeleton is None:
-            result.append(Variable('EntityType', 'entity_'))
-            result.append(Variable('std::tuple< Coefficients... >', 'coefficients_'))
+            result.append(Declaration(Variable('EntityType', 'entity_')))
+            result.append(Declaration(Variable('std::tuple< Coefficients... >', 'coefficients_')))
         else:
-            result.append(Variable('std::array< EntityType, 2 >', 'entity_'))
-            result.append(Variable('std::array< std::tuple< Coefficients... >, 2 >', 'coefficients_'))
-        result.append(Variable('ConstantsTupleType', 'constants_'))
+            result.append(Declaration(Variable('std::array< EntityType, 2 >', 'entity_')))
+            result.append(Declaration(Variable('std::array< std::tuple< Coefficients... >, 2 >', 'coefficients_')))
+        result.append(Declaration(Variable('ConstantsTupleType', 'constants_')))
         if self.vars is not None:
             result += self.vars
 

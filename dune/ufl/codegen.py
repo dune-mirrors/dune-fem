@@ -7,7 +7,7 @@ from ufl.coefficient import Coefficient
 from ufl.differentiation import Grad
 from ufl.core.multiindex import FixedIndex, MultiIndex
 
-from dune.source.cplusplus import Variable
+from dune.source.cplusplus import Declaration, Variable
 
 def translateIndex(index):
     if isinstance(index, (tuple, MultiIndex)):
@@ -49,12 +49,13 @@ class CodeGenerator(MultiFunction):
 
         idx = str(self._getNumber(expr))
         if expr.is_cellwise_constant():
-            self.code.append(Variable('const ConstantsRangeType< ' + idx + ' >', 'cc' + idx, 'constant< ' + idx + ' >()'))
-            return 'cc' + idx
+            var = Variable('const ConstantsRangeType< ' + idx + ' >', 'cc' + idx)
+            self.code.append(Declaration(var, 'constant< ' + idx + ' >()'))
         else:
-            self.code.append(Variable('CoefficientRangeType< ' + idx + ' >', 'c' + idx))
+            var = Variable('CoefficientRangeType< ' + idx + ' >', 'c' + idx)
+            self.code.append(Declaration(var))
             self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
-            return 'c' + idx
+        return var.name
 
     def cos(self, expr, x):
         self.using.add('using std::cos;')
@@ -81,16 +82,18 @@ class CodeGenerator(MultiFunction):
         operand = expr.ufl_operands[0]
         if isinstance(operand, Coefficient):
             idx = str(self._getNumber(operand))
-            self.code.append(Variable('CoefficientJacobianRangeType< ' + idx + ' >', 'dc' + idx))
-            self.code.append('coefficient< ' + idx + ' >().jacobian( x, dc' + idx + ' );')
-            return 'dc' + idx
+            var = Variable('CoefficientJacobianRangeType< ' + idx + ' >', 'dc' + idx)
+            self.code.append(Declaration(var))
+            self.code.append('coefficient< ' + idx + ' >().jacobian( x, ' + var.name + ' );')
+            return var.name
         elif isinstance(operand, Grad):
             operand = operand.ufl_operands[0]
             if isinstance(operand, Coefficient):
                 idx = str(self._getNumber(operand))
-                self.code.append(Variable('CoefficientHessianRangeType< ' + idx + ' >', 'd2c' + idx))
-                self.code.append('coefficient< ' + idx + ' >().hessian( x, d2c' + idx + ' );')
-                return 'd2c' + idx
+                var = Variable('CoefficientHessianRangeType< ' + idx + ' >', 'd2c' + idx)
+                self.code.append(Declaration(var))
+                self.code.append('coefficient< ' + idx + ' >().hessian( x, ' + var.name + ' );')
+                return var.name
             elif isinstance(operand, Argument):
                 raise Exception('Unknown argument: ' + str(operand))
             else:
@@ -139,8 +142,9 @@ class CodeGenerator(MultiFunction):
 
     def spatial_coordinate(self, expr):
         self.using.add('using Dune::Fem::coordinate;')
-        self.code.append(Variable('const auto', 'y', 'entity().geometry().global( coordinate( x ) )'))
-        return 'y'
+        var = Variable('const auto', 'y')
+        self.code.append(Declaration(var, 'entity().geometry().global( coordinate( x ) )'))
+        return var.name
 
     def sum(self, expr, x, y):
         return self._makeTmp('(' + x + ' + ' + y + ')')
@@ -164,8 +168,8 @@ class CodeGenerator(MultiFunction):
 
     def _makeTmp(self, cexpr):
         if self.tempVars:
-            var = Variable('const auto', 'tmp' + str(len(self.code)), cexpr)
-            self.code.append(var)
+            var = Variable('const auto', 'tmp' + str(len(self.code)))
+            self.code.append(Declaration(var, cexpr))
             return var.name
         else:
             return cexpr

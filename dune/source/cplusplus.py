@@ -68,6 +68,136 @@ class Block:
 
 
 
+# Expression
+# ----------
+
+class Expression:
+    def __init__(self, cppType=None):
+        self.cppType = cppType
+
+    def __add__(self, other):
+        return Application(BinaryOperator('+', self, makeExpression(other)))
+
+    def __sub__(self, other):
+        return Application(BinaryOperator('-', self, makeExpression(other)))
+
+    def __mul__(self, other):
+        return Application(BinaryOperator('*', self, makeExpression(other)))
+
+    def __truediv__(self, other):
+        return Application(BinaryOperator('/', self, makeExpression(other)))
+
+    def __mod__(self, other):
+        return Application(BinaryOperator('%', self, makeExpression(other)))
+
+    def __iadd__(self, other):
+        return Application(BinaryOperator('+=', self, makeExpression(other)))
+
+    def __isub__(self, other):
+        return Application(BinaryOperator('-=', self, makeExpression(other)))
+
+    def __imul__(self, other):
+        return Application(BinaryOperator('*=', self, makeExpression(other)))
+
+    def __imod__(self, other):
+        return Application(BinaryOperator('%=', self, makeExpression(other)))
+
+    def __itruediv__(self, other):
+        return Application(BinaryOperator('/=', self, makeExpression(other)))
+
+    def __lt__(self, other):
+        return Application(BinaryOperator('<', self, makeExpression(other)))
+
+    def __le__(self, other):
+        return Application(BinaryOperator('<=', self, makeExpression(other)))
+
+    def __eq__(self, other):
+        return Application(BinaryOperator('==', self, makeExpression(other)))
+
+    def __ne__(self, other):
+        return Application(BinaryOperator('!=', self, makeExpression(other)))
+
+    def __ge__(self, other):
+        return Application(BinaryOperator('>=', self, makeExpression(other)))
+
+    def __gt__(self, other):
+        return Application(BinaryOperator('>', self, makeExpression(other)))
+
+    def __neg__(self):
+        return Application(UnaryOperator('-', 'prefix'))
+
+
+
+# makeExpression
+# --------------
+
+def makeExpression(expr):
+    if isinstance(expr, bool):
+        return ConstantExpression('bool', 'true' if expr else 'false')
+    elif isinstance(expr, int):
+        return ConstantExpression('int', str(expr))
+    elif isinstance(expr, float):
+        return ConstantExpression('double', str(expr))
+    else:
+        return expr
+
+
+
+# Application
+# -----------
+
+class Application(Expression):
+    def __init__(self, function, args=None):
+        Expression.__init__(self)
+        self.function = function
+        self.args = args
+
+
+
+# ConstantExpression
+# ------------------
+
+class ConstantExpression(Expression):
+    def __init__(self, cppType, value):
+        Expression.__init__(self, cppType)
+        self.value = value
+
+
+
+# ConstructExpression
+# -------------------
+
+class ConstructExpression(Expression):
+    def __init__(self, cppType, args=None):
+        Expression.__init__(self, cppType)
+        self.args = None if args is None else [makeExpression(arg) for arg in args]
+
+
+
+# Variable
+# --------
+
+class Variable(Expression):
+  def __init__(self, cppType, name):
+      Expression.__init__(self, cppType)
+      self.name = name
+
+
+
+# LambdaExpression
+# ----------------
+
+class LambdaExpression(Expression, Block):
+    def __init__(self, args=None, capture=None, code=None):
+        Expression.__init__(self, None)
+        Block.__init__(self)
+        self.args=args
+        self.capture=capture
+        if code is not None:
+            self.append(code)
+
+
+
 # NameSpace
 # ---------
 
@@ -182,14 +312,13 @@ class TypeAlias:
 
 
 
-# Variable
-# --------
+# Declaration
+# -----------
 
-class Variable:
-    def __init__(self, cppType, name, value=None, static=False, mutable=False):
-        self.cppType = cppType
-        self.name = name
-        self.value = value
+class Declaration:
+    def __init__(self, obj, initializer=None, static=False, mutable=False):
+        self.obj = obj
+        self.initializer = initializer
         self.static = static
         self.mutable = mutable
 
@@ -246,126 +375,6 @@ class EnumClass:
         self.name = name
         self.base = None if base is None else base.strip()
         self.values = [v.strip() for v in values]
-
-
-
-# Expression
-# ----------
-
-class Expression:
-    def __init__(self, cppType=None):
-        self.cppType = cppType
-
-    def __add__(self, other):
-        return Application(BinaryOperator('+', self, makeExpression(other)))
-
-    def __sub__(self, other):
-        return Application(BinaryOperator('-', self, makeExpression(other)))
-
-    def __mul__(self, other):
-        return Application(BinaryOperator('*', self, makeExpression(other)))
-
-    def __truediv__(self, other):
-        return Application(BinaryOperator('/', self, makeExpression(other)))
-
-    def __mod__(self, other):
-        return Application(BinaryOperator('%', self, makeExpression(other)))
-
-    def __iadd__(self, other):
-        return Application(BinaryOperator('+=', self, makeExpression(other)))
-
-    def __isub__(self, other):
-        return Application(BinaryOperator('-=', self, makeExpression(other)))
-
-    def __imul__(self, other):
-        return Application(BinaryOperator('*=', self, makeExpression(other)))
-
-    def __imod__(self, other):
-        return Application(BinaryOperator('%=', self, makeExpression(other)))
-
-    def __itruediv__(self, other):
-        return Application(BinaryOperator('/=', self, makeExpression(other)))
-
-    def __lt__(self, other):
-        return Application(BinaryOperator('<', self, makeExpression(other)))
-
-    def __le__(self, other):
-        return Application(BinaryOperator('<=', self, makeExpression(other)))
-
-    def __eq__(self, other):
-        return Application(BinaryOperator('==', self, makeExpression(other)))
-
-    def __ne__(self, other):
-        return Application(BinaryOperator('!=', self, makeExpression(other)))
-
-    def __ge__(self, other):
-        return Application(BinaryOperator('>=', self, makeExpression(other)))
-
-    def __gt__(self, other):
-        return Application(BinaryOperator('>', self, makeExpression(other)))
-
-    def __neg__(self):
-        return Application(UnaryOperator('-', 'prefix'))
-
-
-
-# Application
-# -----------
-
-class Application(Expression):
-    def __init__(self, function, args=None):
-        Expression.__init__(self)
-        self.function = function
-        self.args = args
-
-
-
-# ConstantExpression
-# ------------------
-
-class ConstantExpression(Expression):
-    def __init__(self, cppType, value):
-        Expression.__init__(self, cppType)
-        self.value = value
-
-
-
-# ConstructExpression
-# -------------------
-
-class ConstructExpression(Expression):
-    def __init__(self, cppType, args=None):
-        Expression.__init__(self, cppType)
-        self.args = None if args is None else [makeExpression(arg) for arg in args]
-
-
-
-# LambdaExpression
-# ----------------
-
-class LambdaExpression(Expression, Block):
-    def __init__(self, args=None, capture=None, code=None):
-        Expression.__init__(self, None)
-        Block.__init__(self)
-        self.args=args
-        self.capture=capture
-        if code is not None:
-            self.append(code)
-
-
-
-# makeExpression
-# --------------
-
-def makeExpression(expr):
-    if isinstance(expr, bool):
-        return ConstantExpression('bool', 'true' if expr else 'false')
-    elif isinstance(expr, int):
-        return ConstantExpression('int', str(expr))
-    elif isinstance(expr, float):
-        return ConstantExpression('double', str(expr))
-    else:
-        return expr
 
 
 
@@ -538,10 +547,12 @@ class SourceWriter:
                 self.emit('using ' + src.name + ' = ' + src.typeName + ';', indent)
             else:
                 self.emit('typedef ' + src.typeName + ' ' + src.name + ';', indent)
-        elif isinstance(src, Variable):
-            declaration = ('static ' if src.static else '') + ('mutable ' if src.mutable else '') + self.typedName(src)
-            if src.value is not None:
-                declaration += ' = ' + src.value
+        elif isinstance(src, Declaration):
+            if not isinstance(src.obj, Variable):
+                raise Exception('Only variables can be declared for now.')
+            declaration = ('static ' if src.static else '') + ('mutable ' if src.mutable else '') + self.typedName(src.obj)
+            if src.initializer is not None:
+                declaration += ' = ' + src.initializer
             self.emit(declaration + ';', indent)
         elif isinstance(src, Statement):
             if not isinstance(context, (Constructor, Function, Method)):
