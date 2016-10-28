@@ -2,6 +2,9 @@ from __future__ import division, print_function, unicode_literals
 
 import copy, io, sys
 
+from .builtin import *
+from .common import *
+from .expression import *
 from .operator import *
 
 
@@ -54,214 +57,6 @@ class ListWriter:
 
 
 
-# Block
-# -----
-
-class Block:
-    def __init__(self):
-        self.content = []
-
-    def append(self, *objs):
-        for obj in objs:
-            if isinstance(obj, (list, set, tuple)):
-                self.content += [o for o in obj]
-            else:
-                self.content.append(obj)
-
-
-
-# Statement
-# ---------
-
-class Statement:
-    def __init__(self):
-        pass
-
-
-
-# Expression
-# ----------
-
-class Expression(Statement):
-    def __init__(self, cppType=None):
-        Statement.__init__(self)
-        self.cppType = cppType
-
-    def __add__(self, other):
-        return Application(BinaryOperator('+'), args=(self, makeExpression(other)))
-
-    def __sub__(self, other):
-        return Application(BinaryOperator('-'), args=(self, makeExpression(other)))
-
-    def __mul__(self, other):
-        return Application(BinaryOperator('*'), args=(self, makeExpression(other)))
-
-    def __truediv__(self, other):
-        return Application(BinaryOperator('/'), args=(self, makeExpression(other)))
-
-    def __mod__(self, other):
-        return Application(BinaryOperator('%'), args=(self, makeExpression(other)))
-
-    def __iadd__(self, other):
-        return Application(BinaryOperator('+='), args=(self, makeExpression(other)))
-
-    def __isub__(self, other):
-        return Application(BinaryOperator('-='), args=(self, makeExpression(other)))
-
-    def __imul__(self, other):
-        return Application(BinaryOperator('*='), args=(self, makeExpression(other)))
-
-    def __imod__(self, other):
-        return Application(BinaryOperator('%='), args=(self, makeExpression(other)))
-
-    def __itruediv__(self, other):
-        return Application(BinaryOperator('/='), args=(self, makeExpression(other)))
-
-    def __lt__(self, other):
-        return Application(BinaryOperator('<'), args=(self, makeExpression(other)))
-
-    def __le__(self, other):
-        return Application(BinaryOperator('<='), args=(self, makeExpression(other)))
-
-    def __eq__(self, other):
-        return Application(BinaryOperator('=='), args=(self, makeExpression(other)))
-
-    def __ne__(self, other):
-        return Application(BinaryOperator('!='), args=(self, makeExpression(other)))
-
-    def __ge__(self, other):
-        return Application(BinaryOperator('>='), args=(self, makeExpression(other)))
-
-    def __gt__(self, other):
-        return Application(BinaryOperator('>'), args=(self, makeExpression(other)))
-
-    def __neg__(self):
-        return Application(PrefixUnaryOperator('-'), args=(self,))
-
-    def __pos__(self):
-        return Application(PrefixUnaryOperator('+'), args=(self,))
-
-    def __getitem__(self, index):
-        if self.cppType is not None and self.cppType.startswith('std::tuple'):
-            return Application(get(index), args=(self,))
-        else:
-            if isinstance(index, tuple):
-                result = self
-                for i in index:
-                    result = Application(BracketOperator(), args=(result, makeExpression(i)))
-                return result
-            else:
-                return Application(BracketOperator(), args=(self, makeExpression(index)))
-
-
-
-# makeExpression
-# --------------
-
-def makeExpression(expr):
-    if isinstance(expr, bool):
-        return ConstantExpression('bool', 'true' if expr else 'false')
-    elif isinstance(expr, int):
-        if expr < 0:
-            return -ConstantExpression('int', str(-expr))
-        else:
-            return ConstantExpression('int', str(expr))
-    elif isinstance(expr, float):
-        s = str(abs(expr))
-        if "." not in s:
-            s += ".0"
-        e = ConstantExpression('double', s)
-        return -e if expr < 0 else e
-    else:
-        return expr
-
-
-
-# Application
-# -----------
-
-class Application(Expression):
-    def __init__(self, function, args=None):
-        Expression.__init__(self)
-        self.function = function
-        self.args = tuple(args)
-
-    def __hash__(self):
-        return hash((self.cppType, self.function, self.args))
-
-
-
-# ConstantExpression
-# ------------------
-
-class ConstantExpression(Expression):
-    def __init__(self, cppType, value):
-        Expression.__init__(self, cppType)
-        self.value = value
-
-    def __hash__(self):
-        return hash((self.cppType, self.value))
-
-
-
-# ConstructExpression
-# -------------------
-
-class ConstructExpression(Expression):
-    def __init__(self, cppType, args=None):
-        Expression.__init__(self, cppType)
-        self.args = None if args is None else [makeExpression(arg) for arg in args]
-
-    def __hash__(self):
-        return hash((self.cppType, self.args))
-
-
-
-# InitializerList
-# ---------------
-
-class InitializerList(Expression):
-    def __init__(self, *args):
-        Expression.__init__(self)
-        self.args = tuple(args)
-
-
-
-# LambdaExpression
-# ----------------
-
-class LambdaExpression(Expression):
-    def __init__(self, args=None, capture=None, code=None):
-        Expression.__init__(self, None)
-        self.args = None if args is None else tuple(args)
-        self.capture = capture
-        if code is None:
-            self.code = None
-        elif isinstance(code, Block):
-            self.code = tuple(block.content)
-        elif isinstance(code, (list, set, tuple)):
-            self.code = (o for o in code)
-        else:
-            self.code = (code,)
-
-    def __hash__(self):
-        return hash((self.cppType, self.args, self.capture, self.code))
-
-
-
-# Variable
-# --------
-
-class Variable(Expression):
-  def __init__(self, cppType, name):
-      Expression.__init__(self, cppType)
-      self.name = name
-
-  def __hash__(self):
-      return hash((self.cppType, self.name))
-
-
-
 # NameSpace
 # ---------
 
@@ -269,25 +64,6 @@ class NameSpace(Block):
     def __init__(self, name=None):
         Block.__init__(self)
         self.name = name
-
-
-
-# BuiltInFunction
-# ---------------
-
-class BuiltInFunction:
-    def __init__(self, header, cppType, name, namespace='std', targs=None, args=None):
-        self.header = header
-        self.cppType = cppType
-        self.name = name
-        self.namespace = namespace
-        self.tarts = None if targs is None else [a.strip() for a in targs]
-        self.args = None if args is None else [a.strip() for a in args]
-
-    def __call__(self, *args):
-        if len(args) != len(self.args):
-            raise Exception('Wrong number of Arguments: ' + len(args) + ' (should be ' + len(self.args) + ').')
-        return Application(self, args=[makeExpression(arg) for arg in args])
 
 
 
@@ -448,36 +224,8 @@ class ReturnStatement(Statement):
 # short hand notation
 # -------------------
 
-def assign(left, right):
-    return Application(BinaryOperator('='), args=(left, makeExpression(right)))
-
-
-def construct(cppType, *args):
-    return ConstructExpression(cppType, args if args else None)
-
-
 def return_(expr=None):
     return ReturnStatement(expr)
-
-
-def lambda_(args=None, capture=None, code=None):
-    return LambdaExpression(args=args, capture=capture, code=code)
-
-
-# built-in functions
-# ------------------
-
-atan = BuiltInFunction('cmath', 'X', 'atan', targs=['class X'], args=['conat X &x'])
-atan2 = BuiltInFunction('cmath', 'X', 'atan2', targs=['class X'], args=['const X &x', 'const X &y'])
-cos = BuiltInFunction('cmath', 'X', 'cos', targs=['class X'], args=['const X &x'])
-pow_ = BuiltInFunction('cmath', 'X', 'pow', targs=['class X'], args=['const X &x', 'const X &y'])
-sin = BuiltInFunction('cmath', 'X', 'sin', targs=['class X'], args=['const X &x'])
-tan = BuiltInFunction('cmath', 'X', 'tan', targs=['class X'], args=['const X &x'])
-
-def get(i):
-    return BuiltInFunction('tuple', 'auto', 'get< ' + str(i) + ' >', targs=['class T'], args=['const T &arg'])
-
-make_pair = BuiltInFunction('utility', 'std::pair< U, V >', 'make_pair', targs=['class U', 'class V'], args=['const U &left', 'const V &right'])
 
 
 
