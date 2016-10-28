@@ -135,9 +135,16 @@ def makeExpression(expr):
     if isinstance(expr, bool):
         return ConstantExpression('bool', 'true' if expr else 'false')
     elif isinstance(expr, int):
-        return ConstantExpression('int', str(expr))
+        if expr < 0:
+            return -ConstantExpression('int', str(-expr))
+        else:
+            return ConstantExpression('int', str(expr))
     elif isinstance(expr, float):
-        return ConstantExpression('double', str(expr))
+        s = str(abs(expr))
+        if "." not in s:
+            s += ".0"
+        e = ConstantExpression('double', s)
+        return -e if expr < 0 else e
     else:
         return expr
 
