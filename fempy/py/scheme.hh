@@ -2,7 +2,6 @@
 #define DUNE_FEMPY_PY_SCHEME_HH
 
 #include <dune/fem/misc/l2norm.hh>
-#include <dune/fem/schemes/solver.hh>
 
 #include <dune/corepy/pybind11/pybind11.h>
 #if HAVE_EIGEN
@@ -50,7 +49,6 @@ namespace Dune
       template< class Scheme, class Holder, class Alias >
       void registerSchemeConstructor ( pybind11::class_< Scheme, Holder, Alias > &cls )
       {
-        typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
         typedef typename Scheme::DiscreteFunctionSpaceType Space;
         typedef typename Scheme::ModelType ModelType;
         registerSchemeConstructor( cls, std::is_constructible< Scheme, Space&, ModelType& >() );
@@ -59,7 +57,9 @@ namespace Dune
       // register assemble method if data method is available (and return value is registered)
       template <class Scheme,class Cls>
       auto registerSchemeAssemble(Cls &cls,int)
-      -> std::enable_if_t<Scheme::solver==SolverType::eigen,void>
+      // -> std::enable_if_t<Scheme::solver==SolverType::eigen,void>
+      -> decltype(std::declval<typename Scheme::LinearOperatorType>().systemMatrix().matrix().data(),
+          void())
       {
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
         typedef typename Scheme::DiscreteFunctionSpaceType Space;
@@ -102,9 +102,6 @@ namespace Dune
       void registerScheme ( pybind11::module module, Cls &cls)
       {
         typedef typename Scheme::DiscreteFunctionSpaceType Space;
-        typedef typename Space::RangeType RangeType;
-        typedef typename Scheme::GridPartType GridPart;
-        typedef typename Scheme::ModelType ModelType;
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
 
         using pybind11::operator""_a;
