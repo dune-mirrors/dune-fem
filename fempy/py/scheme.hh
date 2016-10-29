@@ -133,8 +133,6 @@ namespace Dune
     template< class Scheme, class Holder, class AliasType >
     void registerScheme ( pybind11::module module, pybind11::class_<Scheme, Holder, AliasType> &cls )
     {
-      typedef typename Scheme::DiscreteFunctionSpaceType Space;
-      typedef typename Scheme::ModelType ModelType;
       detail::registerScheme<Scheme>(module, cls);
     }
 
