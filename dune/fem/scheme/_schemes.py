@@ -4,20 +4,33 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 
-def femscheme(includes, space, operator):
-    storageStr, dfIncludes, dfTypeName, linearOperatorType = space.storage
+def getSolver(solver,storage,default):
+    if not solver:
+        return default(storage)
+    if isinstance(solver,str):
+        return default(storage,solver)
+    elif hasattr(solver, "__len__"):
+        import dune.create as create
+        if (solver.__len__ > 1):
+            return create.solver(solver[0],storage,solver[1])
+        else:
+            return default(storage,solver[0])
+
+def femscheme(includes, space, solver, operator):
+    storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver = space.storage
+    _, solverIncludes, solverTypeName = getSolver(solver,space.storage,defaultSolver)
+
     includes += ["dune/fem/schemes/femscheme.hh"] +\
-                space._module._includes + dfIncludes +\
+                space._includes + dfIncludes + solverIncludes +\
                 ["dune/fem/schemes/diffusionmodel.hh", "dune/fempy/parameter.hh"]
-    spaceType = space._module._typeName
+    spaceType = space._typeName
     modelType = "DiffusionModel< " +\
           "typename " + spaceType + "::GridPartType, " +\
           spaceType + "::dimRange, " +\
           "typename " + spaceType + "::RangeFieldType >"
     operatorType = operator(linearOperatorType,modelType)
-    typeName = "FemScheme< " + operatorType + ", " + storageStr + " >"
+    typeName = "FemScheme< " + operatorType + ", " + solverTypeName + " >"
     return includes, typeName
-
 
 def burgers(space, model, name, viscosity, timestep, **kwargs):
     """create a scheme for solving quasi stokes type saddle point problem with continuous finite-elements
@@ -47,7 +60,7 @@ def burgers(space, model, name, viscosity, timestep, **kwargs):
 
     return module(includes, typeName).Scheme((vspace,pspace),model,name,viscosity,timestep) # ,**kwargs)
 
-def dg(space, model, **kwargs):
+def dg(space, model, solver=None, **kwargs):
     """create a scheme for solving second order pdes with discontinuous finite elements
 
     Args:
@@ -61,11 +74,11 @@ def dg(space, model, **kwargs):
     includes = [ "dune/fem/schemes/dgelliptic.hh"]
     operator = lambda linOp,model: "DifferentiableDGEllipticOperator< " +\
                                    ",".join([linOp,model]) + ">"
-    includes, typeName = femscheme(includes, space, operator)
+    includes, typeName = femscheme(includes, space, solver, operator)
 
     return module(includes, typeName).Scheme(space,model,**kwargs)
 
-def dgGalerkin(space, model, penalty, parameters={}):
+def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     from . import module
 
     includes = [ "dune/fem/schemes/galerkin.hh" ]
@@ -73,11 +86,11 @@ def dgGalerkin(space, model, penalty, parameters={}):
     operator = lambda linOp,model: "Dune::Fem::ModelDifferentiableDGGalerkinOperator< " +\
             ",".join([linOp,"Dune::Fem::DGDiffusionModelIntegrands<"+model+">"]) + ">"
 
-    includes, typeName = femscheme(includes, space, operator)
+    includes, typeName = femscheme(includes, space, solver, operator)
 
     return module(includes, typeName).Scheme(space, model, parameters)
 
-def h1(space, model, parameters={}):
+def h1(space, model, solver=None, parameters={}):
     """create a scheme for solving second order pdes with continuous finite element
 
     Args:
@@ -90,23 +103,23 @@ def h1(space, model, parameters={}):
 
     operator = lambda linOp,model: "DifferentiableEllipticOperator< " +\
                                    ",".join([linOp,model]) + ">"
-    includes, typeName = femscheme(includes, space, operator)
+    includes, typeName = femscheme(includes, space, solver, operator)
 
     return module(includes, typeName).Scheme(space,model,parameters)
 
-def h1Galerkin(space, model, parameters={}):
+def h1Galerkin(space, model, solver=None, parameters={}):
     from . import module
 
     includes = [ "dune/fem/schemes/galerkin.hh" ]
     operator = lambda linOp,model: "Dune::Fem::ModelDifferentiableGalerkinOperator< " +\
             ",".join([linOp,"Dune::Fem::DiffusionModelIntegrands<"+model+">"]) + ">"
 
-    includes, typeName = femscheme(includes, space, operator)
+    includes, typeName = femscheme(includes, space, solver, operator)
 
     return module(includes, typeName).Scheme(space, model, parameters)
 
 
-def linearized(scheme, ubar=None, parameters={}):
+def linearized(scheme, ubar=None, solver=None, parameters={}):
     from . import module, storageToSolver
     schemeType = scheme._typeName
     typeName = "Dune::Fem::LinearizedScheme< " + ", ".join([schemeType]) + " >"

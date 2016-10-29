@@ -6,6 +6,7 @@ import importlib
 from dune.generator.generator import SimpleGenerator
 
 from ._discretefunctions import *
+from ._solvers import *
 
 generator = SimpleGenerator("DiscreteFunction", "Dune::FemPy")
 

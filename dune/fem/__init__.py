@@ -30,6 +30,13 @@ registry["discretefunction"] = {
          "istl"     : discretefunction.istl,
          "eigen"    : discretefunction.eigen
      }
+registry["solver"] = {
+         "fem"         : discretefunction.femsolver,
+         "femoem"      : discretefunction.oemfemsolver,
+         "istl"        : discretefunction.istlsolver,
+         "suitesparse" : discretefunction.suitesparsesolver,
+         "eigen"       : discretefunction.eigensolver
+     }
 registry["scheme"] = {
          "h1"         : scheme.h1,
          "h1galerkin" : scheme.h1Galerkin,

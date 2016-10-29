@@ -6,6 +6,8 @@ logger = logging.getLogger(__name__)
 
 import dune.common.checkconfiguration as checkconfiguration
 
+from . import _solvers as solvers
+
 def adaptive():
     dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space._typeName + " >"
     return lambda space:[\
@@ -13,7 +15,8 @@ def adaptive():
         ["dune/fem/function/adaptivefunction.hh","dune/fem/operator/linear/spoperator.hh"] +\
               space._includes,\
         dfType(space),\
-        "Dune::Fem::SparseRowLinearOperator< " + dfType(space) + "," + dfType(space) + ">"
+        "Dune::Fem::SparseRowLinearOperator< " + dfType(space) + "," + dfType(space) + ">",\
+        solvers.adaptivesolver
     ]
 
 def eigen():
@@ -35,7 +38,8 @@ def eigen():
                 "dune/fem/operator/linear/eigenoperator.hh"] +\
               space._includes,\
         dfType(space),\
-        "Dune::Fem::EigenLinearOperator< " + dfType(space) + "," + dfType(space) + ">"
+        "Dune::Fem::EigenLinearOperator< " + dfType(space) + "," + dfType(space) + ">",\
+        solvers.eigensolver
     ]
 
 def istl():
@@ -45,5 +49,6 @@ def istl():
         ["dune/fem/function/blockvectorfunction.hh", "dune/fem/operator/linear/istloperator.hh"] +\
               space._includes,\
         dfType(space),\
-        "Dune::Fem::ISTLLinearOperator< " + dfType(space) + "," + dfType(space) + ">"
+        "Dune::Fem::ISTLLinearOperator< " + dfType(space) + "," + dfType(space) + ">",
+        solvers.istlsolver
     ]
