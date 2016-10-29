@@ -48,8 +48,6 @@
 
 #include <dune/fem/operator/common/differentiableoperator.hh>
 
-#include <dune/fem/schemes/solver.hh>
-
 // estimator for residual <- not adapted to new diffusion model yet
 #include "estimator.hh"
 
@@ -62,11 +60,10 @@
 // FemScheme
 //----------
 
-template< class Operator, SolverType s >
+template< class Operator, class InverseOperator >
 class FemScheme
 {
 public:
-  static const SolverType solver = s;
   //! type of the mathematical model
   typedef typename Operator::ModelType ModelType;
   typedef typename Operator::RangeDiscreteFunctionType DiscreteFunctionType;
@@ -84,11 +81,7 @@ public:
   //! type of function space (scalar functions, \f$ f: \Omega -> R) \f$
   typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
 
-  // choose type of discrete function, Matrix implementation and solver implementation
-  typedef Solvers<DiscreteFunctionSpaceType,solver,false> UsedSolverType;
-  static_assert( UsedSolverType::solverConfigured, "chosen solver is not configured" );
-
-  typedef typename UsedSolverType::LinearOperatorType LinearOperatorType;
+  typedef typename Operator::JacobianOperatorType LinearOperatorType;
 
   //! type of restriction/prolongation projection for adaptive simulations
   //! (use default here, i.e. LagrangeInterpolation)
@@ -134,7 +127,7 @@ public:
 
   void solve ( DiscreteFunctionType &solution ) const
   {
-    typedef typename UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
+    typedef InverseOperator LinearInverseOperatorType;
     typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
     InverseOperatorType invOp( implicitOperator_, parameter_ );
     DiscreteFunctionType bnd(solution);

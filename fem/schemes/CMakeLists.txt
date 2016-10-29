@@ -11,7 +11,6 @@ set(HEADERS
   integrands.hh
   linearized.hh
   rhs.hh
-  solver.hh
 )
 
 install(FILES ${HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/schemes)
