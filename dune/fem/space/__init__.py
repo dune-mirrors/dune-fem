@@ -57,6 +57,8 @@ def addAttr(module, cls, field, storage):
     if isinstance(storage,str):
         import dune.create as create
         storage = create.discretefunction( storageToSolver(storage) )(cls)
+    else:
+        storage = storage(cls)
     setattr(cls, "storage", storage )
 
 fileBase = "femspace"

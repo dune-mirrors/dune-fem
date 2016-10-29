@@ -34,7 +34,7 @@ def dgonb(gridview, order=1, dimrange=1, field="double", storage=None, **unused)
     if field == "complex":
         field = "std::complex<double>"
 
-    includes = [ "dune/fem/space/discontinuousgalerkin.hh" ] + gridview._module._includes
+    includes = [ "dune/fem/space/discontinuousgalerkin.hh" ] + gridview._includes
     dimw = gridview.dimWorld
     typeName = "Dune::Fem::DiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
@@ -70,11 +70,11 @@ def lagrange(view, order=1, dimrange=1, field="double", storage=None, **unused):
     if field == "complex":
         field = "std::complex<double>"
 
-    includes = [ "dune/fem/space/lagrange.hh" ] + view._module._includes
+    includes = [ "dune/fem/space/lagrange.hh" ] + view._includes
     dimw = view.dimWorld
     typeName = "Dune::Fem::LagrangeDiscreteFunctionSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
-      "Dune::FemPy::GridPart< " + view._module._typeName + " >, " + str(order) + " >"
+      "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(order) + " >"
 
     return module(field, storage, includes, typeName).Space(view)
 
@@ -109,6 +109,6 @@ def p1Bubble(gridview, dimrange=1, field="double", order=1, storage=None, **unus
     dimw = gridview.dimWorld
     typeName = "Dune::Fem::BubbleElementSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
-      "Dune::FemPy::GridPart< " + gridview._module._typeName + " > >"
+      "Dune::FemPy::GridPart< " + gridview._typeName + " > >"
 
     return module(field, storage, includes, typeName).Space(gridview)
