@@ -21,7 +21,6 @@
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 
 #include <dune/fem/schemes/integrands.hh>
-#include <dune/fem/schemes/solver.hh>
 
 namespace Dune
 {
@@ -721,8 +720,6 @@ namespace Dune
     {
       typedef GalerkinOperator< typename JacobianOperator::DomainFunctionType, Integrands > BaseType;
 
-      template< class, class, SolverType > friend class GalerkinScheme;
-
     public:
       typedef JacobianOperator JacobianOperatorType;
 
@@ -756,8 +753,6 @@ namespace Dune
     {
       typedef GalerkinOperator< DiscreteFunction, Integrands > BaseType;
       typedef AutomaticDifferenceOperator< DiscreteFunction > AutomaticDifferenceOperatorType;
-
-      template< class, class, SolverType > friend class GalerkinScheme;
 
     public:
       typedef typename BaseType::DiscreteFunctionType DiscreteFunctionType;
