@@ -14,31 +14,18 @@ from ._schemes import *
 from dune.generator.generator import SimpleGenerator
 
 def solve( scheme, target=None, name=None ):
-    import dune.create as create
+    import dune.fem.function as function
     if target == None:
         if name == None:
             if hasattr(scheme, 'name'):
                 name = scheme.name
             else:
                 name = "default"
-        # target = create.discretefunction(scheme.space._storage, scheme.space, name=name)
-        # target.interpolate( [0,]*scheme.dimRange )
-        # target = scheme.space.interpolate( lambda x:[0,]*scheme.dimRange, name=name)
-        target = create.function("discrete", scheme.space, name=name)
+        target = function.discreteFunction(scheme.space, name=name)
     scheme._solve(target)
     return target
 
 generator = SimpleGenerator("Scheme", "Dune::FemPy")
-
-def storageToSolver(storage):
-    if storage == "adaptive":
-        return "fem"
-    elif storage == "istl":
-        return "istl"
-    elif storage == "numpy":
-        return "numpy"
-    elif storage == "eigen":
-        return "eigen"
 
 def addAttr(module, cls):
     setattr(cls, "solve", solve)

@@ -5,10 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def femscheme(includes, space, operator):
-    from . import storageToSolver
-    import dune.create as create
-    storage = storageToSolver(space.storage)
-    dfIncludes, dfTypeName, linearOperatorType = create.discretefunction(space.storage,space,instanciate=False)
+    storageStr, dfIncludes, dfTypeName, linearOperatorType = space.storage
     includes += ["dune/fem/schemes/femscheme.hh"] +\
                 space._module._includes + dfIncludes +\
                 ["dune/fem/schemes/diffusionmodel.hh", "dune/fempy/parameter.hh"]
@@ -18,7 +15,7 @@ def femscheme(includes, space, operator):
           spaceType + "::dimRange, " +\
           "typename " + spaceType + "::RangeFieldType >"
     operatorType = operator(linearOperatorType,modelType)
-    typeName = "FemScheme< " + operatorType + ", " + storage + " >"
+    typeName = "FemScheme< " + operatorType + ", " + storageStr + " >"
     return includes, typeName
 
 
