@@ -125,7 +125,16 @@ public:
     implicitOperator_.apply( arg, dest );
   }
 
-  void solve ( DiscreteFunctionType &solution ) const
+  struct SolverInfo
+  {
+    SolverInfo(bool pconverged,int plinearIterations,int pnonlinearIterations)
+      : converged(pconverged), linearIterations(plinearIterations), nonlinearIterations(pnonlinearIterations)
+    {}
+    bool converged;
+    int linearIterations;
+    int nonlinearIterations;
+  };
+  SolverInfo solve ( DiscreteFunctionType &solution ) const
   {
     typedef InverseOperator LinearInverseOperatorType;
     typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
@@ -133,7 +142,9 @@ public:
     DiscreteFunctionType bnd(solution);
     bnd.clear();
     implicitOperator_.prepare( bnd );
+    implicitOperator_.prepare( bnd, solution );
     invOp( bnd, solution );
+    return SolverInfo(invOp.converged(),invOp.linearIterations(),invOp.iterations());
   }
 
   template <class GridFunction>

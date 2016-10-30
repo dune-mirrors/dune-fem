@@ -95,7 +95,7 @@ public:
 
   // prepare the solution vector
   template <class Function>
-  void prepare( const Function &func, DiscreteFunctionType &u )
+  void prepare( const Function &func, DiscreteFunctionType &u ) const
   {
   }
 

@@ -786,6 +786,8 @@ namespace Dune
       }
       void prepare( RangeDiscreteFunctionType &u ) const
       {}
+      void prepare( const RangeDiscreteFunctionType &u, RangeDiscreteFunctionType &w ) const
+      {}
     };
   } // namespace Fem
 

@@ -101,14 +101,21 @@ namespace Dune
       template< class Scheme, class Cls >
       void registerScheme ( pybind11::module module, Cls &cls)
       {
-        typedef typename Scheme::DiscreteFunctionSpaceType Space;
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
 
         using pybind11::operator""_a;
 
         registerSchemeConstructor( cls );
 
-        cls.def("_solve", [] (Scheme &scheme, DiscreteFunction &solution) { scheme.solve(solution); });
+        cls.def("_solve", [] (Scheme &scheme, DiscreteFunction &solution)
+            { auto info = scheme.solve(solution);
+              // needs pybind 1.9: return pybind11::dict("converged"_a=info.converged, "iterations"_a=info.nonlinearIterations, "linear_iterations"_a=info.linearIterations);
+              return std::map<std::string,std::string> {
+                  {"converged",std::to_string(info.converged)},
+                  {"iterations",std::to_string(info.nonlinearIterations)},
+                  {"linear_iterations",std::to_string(info.linearIterations)}
+                };
+            });
         cls.def("__call__", [] (Scheme &scheme, const DiscreteFunction &arg, DiscreteFunction &dest) { scheme(arg,dest); });
         registerSchemeGeneralCall<Scheme>(cls,0);
 

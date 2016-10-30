@@ -121,7 +121,7 @@ public:
     // set boundary values for solution
     constraints()( u );
   }
-  void prepare( const RangeDiscreteFunctionType &u, RangeDiscreteFunctionType &w )
+  void prepare( const RangeDiscreteFunctionType &u, RangeDiscreteFunctionType &w ) const
   {
     // set boundary values for solution
     constraints()( u, w );
