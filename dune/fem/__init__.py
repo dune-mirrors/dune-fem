@@ -36,7 +36,8 @@ registry["solver"] = {
          "femoem"      : discretefunction.oemfemsolver,
          "istl"        : discretefunction.istlsolver,
          "suitesparse" : discretefunction.suitesparsesolver,
-         "eigen"       : discretefunction.eigensolver
+         "eigen"       : discretefunction.eigensolver,
+         "viennacl"    : discretefunction.viennaclsolver
      }
 registry["scheme"] = {
          "h1"         : scheme.h1,

@@ -11,7 +11,7 @@ def solvers(includes, storage, operator):
     return includes, typeName
 
 
-def femsolver(storage,solverType="gmres"):
+def femsolver(storage,solverType="cg"):
     includes = ["dune/fem/solver/cginverseoperator.hh"]
 
     if solverType == "cg":
@@ -23,7 +23,7 @@ def femsolver(storage,solverType="gmres"):
     return "fem",includes,typeName
 
 def pardgsolver(storage,solverType="gmres"):
-    includes = ["dune/fem/solver/pardginverseoperators.hh"]
+    includes = ["dune/fem/solver/cginverseoperator.hh"] + ["dune/fem/solver/pardginverseoperators.hh"]
 
     if solverType == "cg":
         operator = lambda df,_: "Dune::Fem::CGInverseOperator< " + df + " >"
@@ -35,7 +35,7 @@ def pardgsolver(storage,solverType="gmres"):
         raise ValueError("wrong krylov solver - only cg,gmres,bicgstab available")
 
     includes, typeName = solvers(includes,storage,operator)
-    return "fem",includes,typeName
+    return "pardg",includes,typeName
 
 def oemfemsolver(storage,solverType="gmres"):
     includes = ["dune/fem/solver/oemsolver.hh"]
@@ -49,7 +49,7 @@ def oemfemsolver(storage,solverType="gmres"):
     elif solverType == "bicgsq":
         operator = lambda df,linop: "Dune::Fem::OEMBICGSQOp< " + ",".join([df,linop]) + " >"
     else:
-        raise ValueError("wrong krylov solver - only cg, gmres, bicgstab, bicqsq available")
+        raise ValueError("wrong krylov solver - only cg,gmres,bicgstab, bicqsq available")
 
     includes, typeName = solvers(includes,storage,operator)
     return "oemfem",includes,typeName
@@ -65,8 +65,10 @@ def istlsolver(storage,solverType="gmres"):
         operator = lambda df,linop: "Dune::Fem::ISTLBICGSTABOp< " + ",".join([df,linop]) + " >"
     elif solverType == "minres":
         operator = lambda df,linop: "Dune::Fem::ISTLMINResOp< " + ",".join([df,linop]) + " >"
+    elif solverType == "superlu":
+        operator = lambda df,linop: "Dune::Fem::ISTLSuperLU< " + ",".join([df,linop]) + " >"
     else:
-        raise ValueError("wrong krylov solver - only cg, gmres, bicgstab, minres available")
+        raise ValueError("wrong krylov solver - only cg,gmres,bicgstab,minres,superlu available")
 
     includes, typeName = solvers(includes,storage,operator)
     return "istl",includes,typeName
@@ -100,3 +102,18 @@ def eigensolver(storage,solverType="bicgstab"):
 
     includes, typeName = solvers(includes,storage,operator)
     return "eigen",includes,typeName
+
+def viennaclsolver(storage,solverType="gmres"):
+    includes = ["dune/fem/solver/viennacl.hh"]
+
+    if solverType == "cg":
+        operator = lambda df,_: "Dune::Fem::ViennaCLCGInverseOperator< " + df + " >"
+    elif solverType == "gmres":
+        operator = lambda df,_: "Dune::Fem::ViennalCLGMResInverseOperator< " + df + " >"
+    elif solverType == "bicgstab":
+        operator = lambda df,_: "Dune::Fem::ViennalCLBiCGStabInverseOperator< " + df + " >"
+    else:
+        raise ValueError("wrong krylov solver - only cg,gmres,bicgstab available")
+
+    includes, typeName = solvers(includes,storage,operator)
+    return "viennacl",includes,typeName

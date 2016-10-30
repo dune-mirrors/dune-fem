@@ -22,8 +22,8 @@ def solve( scheme, target=None, name=None ):
             else:
                 name = "default"
         target = function.discreteFunction(scheme.space, name=name)
-    scheme._solve(target)
-    return target
+    info = scheme._solve(target)
+    return target,info
 
 generator = SimpleGenerator("Scheme", "Dune::FemPy")
 
