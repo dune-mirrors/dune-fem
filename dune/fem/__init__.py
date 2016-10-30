@@ -32,6 +32,7 @@ registry["discretefunction"] = {
      }
 registry["solver"] = {
          "fem"         : discretefunction.femsolver,
+         "pardg"       : discretefunction.pardgsolver,
          "femoem"      : discretefunction.oemfemsolver,
          "istl"        : discretefunction.istlsolver,
          "suitesparse" : discretefunction.suitesparsesolver,
