@@ -16,7 +16,7 @@ def burgers(space, model, name, viscosity, timestep, **kwargs):
     from . import module, storageToSolver
     vspace = space[0]
     pspace = space[1]
-    vstorage = storageToSolver(vspape.storage)
+    vstorage = storageToSolver(vspace.storage)
     pstorage = storageToSolver(pspace.storage)
     if not (vstorage == pstorage):
         raise KeyError("storages provided differ")
@@ -30,7 +30,7 @@ def burgers(space, model, name, viscosity, timestep, **kwargs):
           vspaceType + "::dimRange+1 " +\
         "> > >"
 
-    return module(includes, typeName).Scheme((vspace,pspace),model,name,viscosity,timestep) # ,**kwargs)
+    return module(includes, typeName).Scheme((vspace, pspace), model, name, viscosity, timestep) # ,**kwargs)
 
 def dg(space, model, name="tmp", **kwargs):
     """create a scheme for solving second order pdes with discontinuous finite elements
@@ -186,10 +186,10 @@ def nvdg(space, model, name="tmp", **kwargs):
           "typename " + spaceType + "::RangeFieldType >, DifferentiableNVDGEllipticOperator, " +\
           storage + " >"
 
-    return module(includes, typeName).Scheme(space,model,name,**kwargs)
+    return module(includes, typeName).Scheme(space, model, name, **kwargs)
 
 
-def stokes(space_or_df, model, name, viscosity, timestep, **kwargs):
+def stokes(space, model, name, viscosity, timestep, **kwargs):
     """create a scheme for solving quasi stokes type saddle point problem with continuous finite-elements
 
     Args:
@@ -201,10 +201,10 @@ def stokes(space_or_df, model, name, viscosity, timestep, **kwargs):
     from . import module, storageToSolver
     vspace = space[0]
     pspace = space[1]
-    vstorage = storageToSolver(vspape.storage)
+    vstorage = storageToSolver(vspace.storage)
     pstorage = storageToSolver(pspace.storage)
     if not (vstorage == pstorage):
-        raise KeyError("storages provided differe")
+        raise KeyError("storages provided differ")
 
     includes = [ "navierstokes/stokes.cc" ] + vspace._module._includes + pspace._module._includes
     vspaceType = vspace._module._typeName
@@ -215,4 +215,4 @@ def stokes(space_or_df, model, name, viscosity, timestep, **kwargs):
           vspaceType + "::dimRange+1 " +\
         "> > >"
 
-    return module(includes, typeName).Scheme((vspace,pspace),model,name,viscosity,timestep) #**kwargs)
+    return module(includes, typeName).Scheme((vspace, pspace), model, name, viscosity, timestep) #**kwargs)
