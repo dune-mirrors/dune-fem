@@ -55,12 +55,11 @@ def uflFunction(gridview, name, order, ufl, *args, **kwargs):
     return dune.models.localfunction.UFLFunction(gridview, name, order, ufl, *args, **kwargs)
 
 def discreteFunction(space, name, expr=None, *args, **kwargs):
-    import dune.create as create
-    df = create.discretefunction(space.storage,space,name,**kwargs)
+    _, dfIncludes, dfTypeName, _, _ = space.storage
+    df = dune.fem.discretefunction.module("fem", dfIncludes, dfTypeName).DiscreteFunction(space,name)
     if expr:
         df.interpolate( expr )
     else:
-        # df.interpolate( [0,]*df.dimRange )
         df.clear()
     return df
 
