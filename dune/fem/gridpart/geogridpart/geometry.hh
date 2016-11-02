@@ -31,7 +31,7 @@ namespace Dune
     public:
       typedef typename std::remove_const< GridFamily >::type::ctype ctype;
 
-      typedef GenericGeometry::MatrixHelper< GenericGeometry::DuneCoordTraits< ctype > > MatrixHelper;
+      typedef Dune::Impl::MatrixHelper< ctype > MatrixHelper;
 
       static ctype tolerance () { return 16 * std::numeric_limits< ctype >::epsilon(); }
 
