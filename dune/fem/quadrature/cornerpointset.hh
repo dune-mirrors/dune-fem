@@ -1,7 +1,7 @@
 #ifndef DUNE_FEM_CORNERPOINTSET_HH
 #define DUNE_FEM_CORNERPOINTSET_HH
 
-#include <dune/geometry/genericgeometry/referencedomain.hh>
+#include <dune/geometry/referenceelements.hh>
 
 #include <dune/fem/quadrature/cachingpointlist.hh>
 
@@ -92,8 +92,6 @@ namespace Dune
     {
       typedef IntegrationPointListImp< ct, Topology::dimension > BaseType;
 
-      typedef GenericGeometry::ReferenceDomain< Topology > ReferenceDomain;
-
     public:
       typedef typename BaseType::CoordinateType CoordinateType;
 
@@ -138,12 +136,10 @@ namespace Dune
     template< class ct, class Topology >
     inline void CornerPointList< ct, Topology >::initialize ()
     {
-      for( unsigned int i = 0; i < ReferenceDomain::numCorners; ++i )
-      {
-        CoordinateType pt;
-        ReferenceDomain::corner( i, pt );
-        addIntegrationPoint( pt );
-      }
+      GeometryType gt( Topoology::id, Topology::dimension );
+      const auto &refElement = Dune::ReferenceElements< ct, Topology::dimension >::general( gt );
+      for( unsigned int i = 0; i < refElement.size( Topology::dimension ); ++i )
+        addIntegrationPoint( refElement.position( i, Topology::dimension ) );
     }
 
   } //namespace Fem
