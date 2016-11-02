@@ -7,7 +7,7 @@
 
 #include <dune/common/fmatrix.hh>
 
-#include <dune/geometry/genericgeometry/matrixhelper.hh>
+#include <dune/geometry/affinegeometry.hh>
 
 #include <dune/grid/common/geometry.hh>
 
@@ -208,7 +208,7 @@ namespace Dune
       typedef typename HostGridPartType::IntersectionType HostIntersectionType;
 
       // Helper class to compute a matrix pseudo inverse
-      typedef GenericGeometry::MatrixHelper< GenericGeometry::DuneCoordTraits< ctype > > MatrixHelper;
+      typedef Impl::MatrixHelper< GenericGeometry::DuneCoordTraits< ctype > > MatrixHelper;
 
       MyGeometryImpl ( const MyGeometryImpl< GridFamily::dimension, cdim, GridFamily > elementGeo,
                        const GridFunctionType *gridFunction,
@@ -331,7 +331,7 @@ namespace Dune
       typedef typename HostGridPartType::IntersectionType HostIntersectionType;
 
       // Helper class to compute a matrix pseudo inverse
-      typedef GenericGeometry::MatrixHelper< GenericGeometry::DuneCoordTraits< ctype > > MatrixHelper;
+      typedef Impl::MatrixHelper< GenericGeometry::DuneCoordTraits< ctype > > MatrixHelper;
 
       MyGeometryImpl ( const HostGeometryType &hostGeometry,
                        const HostEntityType &hostEntity,
