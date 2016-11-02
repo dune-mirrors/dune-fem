@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_LUMPING_QUADRATURE_HH
 #define DUNE_FEM_LUMPING_QUADRATURE_HH
 
+#include <dune/geometry/referenceelements.hh>
+
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 namespace Dune {
@@ -37,31 +39,24 @@ class LumpingQuadrature
  public:
   typedef typename BaseType::CoordinateType CoordinateType;
 
- protected:
-  static constexpr auto topologyId = TopologyType::id;
-  typedef Dune::GenericGeometry::ReferenceDomain<TopologyType> ReferenceDomain;
-
- public:
   /** \brief constructor filling the list of points and weights.
    *
-   *  \param[in]  geometry  geometry type for which a quadrature is desired
-   *  \param[in]  order     order, ignored
-   *  \param[in]  id        unique identifier, ignored
+   *  \param[in]  gt     geometry type for which a quadrature is desired
+   *  \param[in]  order  order, ignored
+   *  \param[in]  id     unique identifier, ignored
    */
-  LumpingQuadrature(const GeometryType& geometry, int order, int id)
+  LumpingQuadrature(const GeometryType& gt, int order, int id)
     : BaseType(id)
   {
-    for (unsigned i = 0; i < ReferenceDomain::numCorners; ++i)
-    {
-      CoordinateType pt;
-      ReferenceDomain::corner(i, pt);
-      this->addQuadraturePoint(pt, ReferenceDomain::template volume<FieldType>() / ReferenceDomain::numCorners);
-    }
+    const auto &refElement = Dune::ReferenceElements< FieldType, Topology::dimension >::general( gt );
+    const unsinged int numCorners = refElement.size( Topology::dimension );
+    for( unsigned int i = 0; i < numCorners; ++i )
+      this->addQuadraturePoint( refElement.position( i, Topology::dimension ), refElement.volume() / numCorners );
   }
 
   /** \copydoc QuadratureImp::geometry
    */
-  virtual GeometryType geometryType() const { return GeometryType(topologyId, dimension); }
+  virtual GeometryType geometryType() const { return GeometryType(TopologyType::id, dimension); }
   /** \copydoc QuadratureImp::order
    */
   virtual int order () const { return 1; }
