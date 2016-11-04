@@ -11,14 +11,14 @@ def extractVariables(expr):
             if expr.args is not None:
                 return set.union(*[extractVariables(arg) for arg in expr.args])
             else:
-                return {}
+                return set()
         elif isinstance(expr, ConstantExpression):
-            return {}
+            return set()
         elif isinstance(expr, ConstructExpression):
             if expr.args is not None:
                 return set.union(*[extractVariables(arg) for arg in expr.args])
             else:
-                return {}
+                return set()
         elif isinstance(expr, InitializerList):
             return set.union(*[extractVariables(arg) for arg in expr.args])
         elif isinstance(expr, LambdaExpression):
