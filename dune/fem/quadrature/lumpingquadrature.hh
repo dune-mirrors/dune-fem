@@ -70,10 +70,10 @@ struct DefaultLumpingQuadratureTraits
 {
   typedef QuadratureImp<FieldType, dimension> IntegrationPointListType;
 
-  typedef LumpingQuadrature<FieldType, typename GenericGeometry::SimplexTopology<dimension>::type> SimplexQuadratureType;
-  typedef LumpingQuadrature<FieldType, typename GenericGeometry::CubeTopology<dimension>::type> CubeQuadratureType;
-  typedef LumpingQuadrature<FieldType, typename GenericGeometry::PrismTopology<dimension>::type> PrismQuadratureType;
-  typedef LumpingQuadrature<FieldType, typename GenericGeometry::PyramidTopology<dimension>::type> PyramidQuadratureType;
+  typedef LumpingQuadrature<FieldType, typename Impl::SimplexTopology<dimension>::type> SimplexQuadratureType;
+  typedef LumpingQuadrature<FieldType, typename Impl::CubeTopology<dimension>::type> CubeQuadratureType;
+  typedef LumpingQuadrature<FieldType, typename Impl::PrismTopology<dimension>::type> PrismQuadratureType;
+  typedef LumpingQuadrature<FieldType, typename Impl::PyramidTopology<dimension>::type> PyramidQuadratureType;
   typedef SimplexQuadratureType PointQuadratureType;
   typedef SimplexQuadratureType LineQuadratureType;
 };

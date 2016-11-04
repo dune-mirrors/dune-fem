@@ -2,7 +2,6 @@
 #define DUNE_FEM_FEMQUADRATURES_HH
 
 #include <dune/geometry/type.hh>
-#include <dune/geometry/genericgeometry/topologytypes.hh>
 
 #include <dune/fem/quadrature/quadratureimp.hh>
 
@@ -66,7 +65,7 @@ namespace Dune
     protected:
       int order_;
 
-      static const unsigned int topologyId = GenericGeometry::SimplexTopology< dim >::type::id ;
+      static const unsigned int topologyId = Impl::SimplexTopology< dim >::type::id ;
 
     public:
       /** \brief constructor filling the list of points and weights
@@ -134,7 +133,7 @@ namespace Dune
     protected:
       int order_;
 
-      static const unsigned int topologyId = GenericGeometry::CubeTopology< dim >::type::id ;
+      static const unsigned int topologyId = Impl::CubeTopology< dim >::type::id ;
 
     public:
       /** \brief constructor filling the list of points and weights
@@ -193,7 +192,7 @@ namespace Dune
     protected:
       int order_;
 
-      static const unsigned int topologyId = GenericGeometry::CubeTopology< 1 >::type::id ;
+      static const unsigned int topologyId = Impl::CubeTopology< 1 >::type::id ;
 
     public:
       /** \brief constructor filling the list of points and weights
@@ -254,7 +253,7 @@ namespace Dune
     private:
       int order_;
 
-      static const unsigned int topologyId = GenericGeometry::SimplexTopology< 2 >::type::id ;
+      static const unsigned int topologyId = Impl::SimplexTopology< 2 >::type::id ;
 
     public:
       /** \brief constructor filling the list of points and weights
@@ -316,7 +315,7 @@ namespace Dune
     private:
       int order_;
 
-      static const unsigned int topologyId = GenericGeometry::CubeTopology< 2 >::type::id ;
+      static const unsigned int topologyId = Impl::CubeTopology< 2 >::type::id ;
 
     public:
       /** \brief constructor filling the list of points and weights
@@ -377,7 +376,7 @@ namespace Dune
     private:
       int order_;
 
-      static const unsigned int topologyId = GenericGeometry::SimplexTopology< 3 >::type::id ;
+      static const unsigned int topologyId = Impl::SimplexTopology< 3 >::type::id ;
 
     public:
       /** \brief constructor filling the list of points and weights
@@ -439,7 +438,7 @@ namespace Dune
     private:
       int order_;
 
-      static const unsigned int topologyId = GenericGeometry::CubeTopology< 3 >::type::id ;
+      static const unsigned int topologyId = Impl::CubeTopology< 3 >::type::id ;
 
     public:
       /** \brief constructor filling the list of points and weights
@@ -499,7 +498,7 @@ namespace Dune
     private:
       int order_;
 
-      static const unsigned int topologyId = GenericGeometry::PrismTopology< 3 >::type::id ;
+      static const unsigned int topologyId = Impl::PrismTopology< 3 >::type::id ;
 
     public:
       /** \brief constructor filling the list of points and weights
@@ -559,7 +558,7 @@ namespace Dune
     private:
       int order_;
 
-      static const unsigned int topologyId = GenericGeometry::PyramidTopology< 3 >::type::id ;
+      static const unsigned int topologyId = Impl::PyramidTopology< 3 >::type::id ;
 
     public:
       /** \brief constructor filling the list of points and weights

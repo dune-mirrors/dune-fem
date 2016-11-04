@@ -6,7 +6,6 @@
 
 #include <dune/common/exceptions.hh>
 
-#include <dune/geometry/genericgeometry/topologytypes.hh>
 #include <dune/geometry/type.hh>
 
 #include <dune/fem/common/coordinate.hh>
@@ -92,19 +91,19 @@ namespace Dune
 
     protected:
       // line
-      typedef Dune::GenericGeometry::Prism< Dune::GenericGeometry::Point > Line;
+      typedef Dune::Impl::Prism< Dune::Impl::Point > Line;
       // quadrilateral
-      typedef Dune::GenericGeometry::Prism< Line > Quadrilateral;
+      typedef Dune::Impl::Prism< Line > Quadrilateral;
       // triangle
-      typedef Dune::GenericGeometry::Pyramid< Line > Triangle;
+      typedef Dune::Impl::Pyramid< Line > Triangle;
       // pyramid
-      typedef Dune::GenericGeometry::Prism< Quadrilateral > Hexahedron;
+      typedef Dune::Impl::Prism< Quadrilateral > Hexahedron;
       // hexahedron
-      typedef Dune::GenericGeometry::Pyramid< Quadrilateral > Pyramid;
+      typedef Dune::Impl::Pyramid< Quadrilateral > Pyramid;
       // prism
-      typedef Dune::GenericGeometry::Prism< Triangle > Prism;
+      typedef Dune::Impl::Prism< Triangle > Prism;
       // tetrahedron
-      typedef Dune::GenericGeometry::Pyramid< Triangle > Tetrahedron;
+      typedef Dune::Impl::Pyramid< Triangle > Tetrahedron;
 
       // mapping from topology to basic geometry type (see list above)
       template< class Topology >
@@ -113,11 +112,11 @@ namespace Dune
         template< unsigned int topologyId >
         struct UniqueId
         {
-          static const unsigned int v = topologyId | (unsigned int)Dune::GenericGeometry::prismConstruction;
+          static const unsigned int v = topologyId | (unsigned int)Dune::Impl::prismConstruction;
         };
 
       public:
-        typedef typename Dune::GenericGeometry::Topology< UniqueId< Topology::id >::v, Topology::dimension >::type Type;
+        typedef typename Dune::Impl::Topology< UniqueId< Topology::id >::v, Topology::dimension >::type Type;
       };
 
       // instantiate a basic geometry type
@@ -367,7 +366,7 @@ namespace Dune
       void evaluateEach ( const Point &x, Functor functor ) const
       {
         const DomainType y = coordinate( x );
-        Dune::GenericGeometry::IfTopology< ShapeFunctionSetHelperType::template EvaluateEach, dimension >
+        Dune::Impl::IfTopology< ShapeFunctionSetHelperType::template EvaluateEach, dimension >
           ::apply( topologyId_, y, functor );
       }
 
@@ -376,7 +375,7 @@ namespace Dune
       void jacobianEach ( const Point &x, Functor functor ) const
       {
         const DomainType y = coordinate( x );
-        Dune::GenericGeometry::IfTopology< ShapeFunctionSetHelperType::template JacobianEach, dimension >
+        Dune::Impl::IfTopology< ShapeFunctionSetHelperType::template JacobianEach, dimension >
           ::apply( topologyId_, y, functor );
       }
 
@@ -385,7 +384,7 @@ namespace Dune
       void hessianEach ( const Point &x, Functor functor ) const
       {
         const DomainType y = coordinate( x );
-        Dune::GenericGeometry::IfTopology< ShapeFunctionSetHelperType::template HessianEach, dimension >
+        Dune::Impl::IfTopology< ShapeFunctionSetHelperType::template HessianEach, dimension >
           ::apply( topologyId_, y, functor );
       }
 

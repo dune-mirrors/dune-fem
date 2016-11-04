@@ -51,10 +51,10 @@ namespace Dune
     public:
       typedef IntegrationPointListImp< ct, dim > IntegrationPointListType;
 
-      typedef CornerPointList< ct, typename GenericGeometry::SimplexTopology< dim >::type > SimplexQuadratureType;
-      typedef CornerPointList< ct, typename GenericGeometry::CubeTopology< dim >::type > CubeQuadratureType;
-      typedef CornerPointList< ct, typename GenericGeometry::PrismTopology< pdim >::type > PrismQuadratureType;
-      typedef CornerPointList< ct, typename GenericGeometry::PyramidTopology< pdim >::type > PyramidQuadratureType;
+      typedef CornerPointList< ct, typename Impl::SimplexTopology< dim >::type > SimplexQuadratureType;
+      typedef CornerPointList< ct, typename Impl::CubeTopology< dim >::type > CubeQuadratureType;
+      typedef CornerPointList< ct, typename Impl::PrismTopology< pdim >::type > PrismQuadratureType;
+      typedef CornerPointList< ct, typename Impl::PyramidTopology< pdim >::type > PyramidQuadratureType;
 
       typedef SimplexQuadratureType PointQuadratureType;
       typedef SimplexQuadratureType LineQuadratureType;
