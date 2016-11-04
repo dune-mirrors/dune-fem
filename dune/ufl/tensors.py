@@ -105,6 +105,9 @@ class ExprTensor:
         else:
             raise Exception('Expect tuple or MultiIndex to access component')
 
+    def copy(self):
+        return ExprTensor(self.shape, apply(lambda v: v, self.shape, self.data))
+
     def negative_restricted(self):
         return ExprTensor(self.shape, self._apply(self.shape, self.data, lambda v : NegativeRestricted(v)))
 

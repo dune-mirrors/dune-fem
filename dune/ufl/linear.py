@@ -10,12 +10,12 @@ from ufl.restriction import Restricted
 
 from .tensors import ExprTensor, keys
 
-
 def sumTensorMaps(left, right):
+    result = {key: l.copy() for key, l in left.items()}
     for key, r in right.items():
         l = left.get(key)
-        left[key] = r if l is None else l + r
-        return left
+        result[key] = r.copy() if l is None else l + r
+        return result
 
 
 class MultiLinearExprSplitter(Transformer):
