@@ -185,45 +185,58 @@ def generateCode(predefined, testFunctions, tensorMap, coefficients, tempVars=Tr
     return preamble, values
 
 
-def generateLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, coefficients, tempVars=True):
+def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMap, coefficients, tempVars=True):
+    """generate code for a bilinear form
+
+    Args:
+        predefined:       list of predefined arguments or coefficients
+        testFunctions:    list of arguments to interpret as test functions
+        trialFunctionMap: map of variable to list of arguments to interpret as trial functions
+        tensorMap:        map of expression tensors of shape (testFunction x trialFunction)
+        coefficients:     list of coefficients
+        tempVars:         introduce temporary variables during code generation
+    """
+
     # build list of all expressions to compile
     expressions = []
-    for phi in testFunctions:
-        for psi in trialFunctions:
-            if (phi, psi) not in tensorMap:
-                continue
-            tensor = tensorMap[(phi, psi)]
-            keys = tensor.keys()
-            expressions += [tensor[i] for i in keys]
+    for var, trialFunctions in trialFunctionMap.items():
+        for phi in testFunctions:
+            for psi in trialFunctions:
+                if (phi, psi) not in tensorMap:
+                    continue
+                tensor = tensorMap[(phi, psi)]
+                keys = tensor.keys()
+                expressions += [tensor[i] for i in keys]
 
     # compile all expressions at once
     preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars)
 
     # extract generated code for expressions and build values
-    values = []
-    for phi in testFunctions:
-        value = tensors.fill(phi.ufl_shape, None)
-        for idx in range(len(trialFunctions)):
-            psi = trialFunctions[idx]
-            varpsi = Variable('std::tuple< RangeType, JacobianRangeType >', 'phi')[idx]
-            if (phi, psi) in tensorMap:
-                tensor = tensorMap[(phi, psi)]
-                keys = tensor.keys()
-                for ij, r in zip(keys, results[:len(keys)]):
-                    if isinstance(tensor[ij], Zero):
-                        continue
-                    i = ij[:len(phi.ufl_shape)]
-                    j = ij[len(phi.ufl_shape):]
-                    if isinstance(tensor[ij], IntValue) and int(tensor[ij]) == 1:
-                        r = varpsi[j]
-                    else:
-                        r = r * varpsi[j]
-                    s = tensors.getItem(value, i)
-                    s = r if s is None else s + r
-                    value = tensors.setItem(value, i, s)
-                results = results[len(keys):]
-        value = tensors.apply(lambda v : makeExpression(0) if v is None else v, phi.ufl_shape, value)
-        values += [tensors.reformat(lambda row: InitializerList(*row), phi.ufl_shape, value)]
+    values = {}
+    for var, trialFunctions in trialFunctionMap.items():
+        values[var] = []
+        for phi in testFunctions:
+            value = tensors.fill(phi.ufl_shape, None)
+            for idx in range(len(trialFunctions)):
+                psi = trialFunctions[idx]
+                if (phi, psi) in tensorMap:
+                    tensor = tensorMap[(phi, psi)]
+                    keys = tensor.keys()
+                    for ij, r in zip(keys, results[:len(keys)]):
+                        if isinstance(tensor[ij], Zero):
+                            continue
+                        i = ij[:len(phi.ufl_shape)]
+                        j = ij[len(phi.ufl_shape):]
+                        if isinstance(tensor[ij], IntValue) and int(tensor[ij]) == 1:
+                            r = var[idx][j]
+                        else:
+                            r = r * var[idx][j]
+                        s = tensors.getItem(value, i)
+                        s = r if s is None else s + r
+                        value = tensors.setItem(value, i, s)
+                    results = results[len(keys):]
+            value = tensors.apply(lambda v : makeExpression(0) if v is None else v, phi.ufl_shape, value)
+            values[var] += [tensors.reformat(lambda row: InitializerList(*row), phi.ufl_shape, value)]
 
     return preamble, values
 
@@ -237,9 +250,10 @@ def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, tenso
     if tensorMap is None:
         return [return_(lambda_(args=['const ValueType &phi'], code=return_(construct('ValueType', 0, 0))))]
 
-    preamble, values = generateLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, coefficients, tempVars)
-    capture = extractVariables(values) - {Variable('std::tuple< RangeType, JacobianRangeType >', 'phi')}
-    return preamble + [return_(lambda_(capture=capture, args=['const ValueType &phi'], code=return_(construct('ValueType', *values))))]
+    var = Variable('std::tuple< RangeType, JacobianRangeType >', 'phi')
+    preamble, values = generateLinearizedCode(predefined, testFunctions, {var: trialFunctions}, tensorMap, coefficients, tempVars)
+    capture = extractVariables(values[var]) - {var}
+    return preamble + [return_(lambda_(capture=capture, args=['const ValueType &phi'], code=return_(construct('ValueType', *values[var]))))]
 
 
 def generateBinaryCode(predefined, testFunctions, tensorMap, coefficients, tempVars=True):
@@ -250,13 +264,23 @@ def generateBinaryCode(predefined, testFunctions, tensorMap, coefficients, tempV
 
 def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, coefficients, tempVars=True):
     restrictedTestFunctions = [phi('-') for phi in testFunctions] + [phi('+') for phi in testFunctions]
-    restrictedTrialFunctions = [psi('-') for psi in trialFunctions] + [psi('+') for psi in trialFunctions]
+
+    trialFunctionsIn = [psi('-') for psi in trialFunctions]
+    trialFunctionsOut = [psi('+') for psi in trialFunctions]
+
     if tensorMap is None:
         return [return_(lambda_(args=['const ValueType &phi'], code=return_(construct('ValueType', 0, 0))))]
 
-    preamble, values = generateLinearizedCode(predefined, restrictedTestFunctions, restrictedTrialFunctions, tensorMap, coefficients, tempVars)
-    tensorIn = lambda_(args=['const ValueType &phiIn'], code=return_(construct('ValueType', *values[:len(testFunctions)])))
-    tensorOut = lambda_(args=['const ValueType &phiOut'], code=return_(construct('ValueType', *values[len(testFunctions):])))
+    varIn = Variable('std::tuple< RangeType, JacobianRangeType >', 'phiIn')
+    varOut = Variable('std::tuple< RangeType, JacobianRangeType >', 'phiOut')
+    preamble, values = generateLinearizedCode(predefined, restrictedTestFunctions, {varIn: trialFunctionsIn, varOut: trialFunctionsOut}, tensorMap, coefficients, tempVars)
+
+    captureIn = extractVariables(values[varIn]) - {varIn}
+    captureOut = extractVariables(values[varOut]) - {varOut}
+
+    tensorIn = lambda_(capture=captureIn, args=['const ValueType &phiIn'], code=return_(make_pair(construct('ValueType', *values[varIn][:len(testFunctions)]), construct('ValueType', *values[varIn][len(testFunctions):]))))
+    tensorOut = lambda_(capture=captureOut, args=['const ValueType &phiOut'], code=return_(make_pair(construct('ValueType', *values[varOut][:len(testFunctions)]), construct('ValueType', *values[varOut][len(testFunctions):]))))
+
     return preamble + [return_(make_pair(tensorIn, tensorOut))]
 
 def compileUFL(equation, tempVars=True):
