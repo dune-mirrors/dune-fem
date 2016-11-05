@@ -29,10 +29,10 @@ namespace Dune
      **/
     template< unsigned int topologyId, unsigned int dim, unsigned int polOrder >
     class LagrangePoint
-    : public GenericLagrangePoint< typename GeometryWrapper< topologyId, dim >::GenericGeometryType, polOrder >
+    : public GenericLagrangePoint< typename GeometryWrapper< topologyId, dim >::ImplType, polOrder >
     {
       typedef LagrangePoint< topologyId, dim, polOrder > ThisType;
-      typedef GenericLagrangePoint< typename GeometryWrapper< topologyId, dim >::GenericGeometryType, polOrder > BaseType;
+      typedef GenericLagrangePoint< typename GeometryWrapper< topologyId, dim >::ImplType, polOrder > BaseType;
 
     public:
       static const unsigned int dimension = BaseType::dimension;

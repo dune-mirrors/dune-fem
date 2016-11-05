@@ -19,7 +19,7 @@ namespace Dune
   namespace Fem
   {
 
-    /** \addtogroup GenericGeometry
+    /** \addtogroup Impl
      *
      *  Generic geometries are a way of constructing new geometries out of
      *  existing ones. This allows for code depending on the geometry to be
@@ -56,7 +56,7 @@ namespace Dune
      */
 
     /** \class PointGeometry
-     *  \ingroup GenericGeometry
+     *  \ingroup Impl
      *  \brief generic geometry modelling a single point
      */
     class PointGeometry
@@ -84,7 +84,7 @@ namespace Dune
 
 
     /** \class PyramidGeometry
-     *  \ingroup GenericGeometry
+     *  \ingroup Impl
      *  \brief generic geometry modelling a pyramid over a base geometry
      */
     template< class BaseGeometry >
@@ -129,7 +129,7 @@ namespace Dune
 
 
     /** \class ProductGeometry
-     *  \ingroup GenericGeometry
+     *  \ingroup Impl
      *  \brief generic geometry modelling the product of two base geometries
      */
     template< class FirstGeometry, class SecondGeometry >
@@ -183,22 +183,22 @@ namespace Dune
       struct Prism
       {
         typedef GeometryWrapper< (id & 1), 1 > LineGeometryType;
-        typedef ProductGeometry< typename DimensionReductionType::GenericGeometryType, typename LineGeometryType::GenericGeometryType >
-          GenericGeometryType;
+        typedef ProductGeometry< typename DimensionReductionType::ImplType, typename LineGeometryType::ImplType >
+          ImplType;
       };
 
       template< bool >
       struct Pyramid
       {
-        typedef PyramidGeometry< typename DimensionReductionType::GenericGeometryType >
-          GenericGeometryType;
+        typedef PyramidGeometry< typename DimensionReductionType::ImplType >
+          ImplType;
       };
 
     public:
       static const unsigned int dimension = dim;
 
-      typedef typename std::conditional< isPrism, Prism< true >, Pyramid< false > >::type::GenericGeometryType
-        GenericGeometryType;
+      typedef typename std::conditional< isPrism, Prism< true >, Pyramid< false > >::type::ImplType
+        ImplType;
     };
 
     template< unsigned int id >
@@ -209,7 +209,7 @@ namespace Dune
     public:
       static const unsigned int dimension = 1;
 
-      typedef PyramidGeometry< PointGeometry > GenericGeometryType;
+      typedef PyramidGeometry< PointGeometry > ImplType;
     };
 
     template< unsigned int id >
@@ -220,7 +220,7 @@ namespace Dune
     public:
       static const unsigned int dimension = 0;
 
-      typedef PointGeometry GenericGeometryType;
+      typedef PointGeometry ImplType;
     };
 
 

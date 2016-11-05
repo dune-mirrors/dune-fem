@@ -1,10 +1,8 @@
 #ifndef DUNE_FEM_GRIDPART_IDGRIDPART_CAPABILITIES_HH
 #define DUNE_FEM_GRIDPART_IDGRIDPART_CAPABILITIES_HH
 
-//- dune-geometry includes
-#include <dune/geometry/genericgeometry/topologytypes.hh>
+#include <dune/geometry/type.hh>
 
-//- dune-fem includes
 #include <dune/fem/gridpart/common/capabilities.hh>
 
 namespace Dune

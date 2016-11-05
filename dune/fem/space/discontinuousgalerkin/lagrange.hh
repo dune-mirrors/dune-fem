@@ -56,9 +56,9 @@ namespace Dune
 
       typedef typename GeometryWrapper<
           Dune::Fem::GridPartCapabilities::hasSingleGeometryType< GridPartType >::topologyId, GridPartType::dimension
-        >::GenericGeometryType GenericGeometryType;
+        >::ImplType ImplType;
       typedef GenericLagrangeBaseFunction<
-          typename FunctionSpaceType::ScalarFunctionSpaceType, GenericGeometryType, polOrder
+          typename FunctionSpaceType::ScalarFunctionSpaceType, ImplType, polOrder
         > GenericBaseFunctionType;
 
       static const int localBlockSize

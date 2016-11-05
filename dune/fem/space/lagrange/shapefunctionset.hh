@@ -7,7 +7,6 @@
 #include <dune/common/fvector.hh>
 #include <dune/common/forloop.hh>
 
-#include <dune/geometry/genericgeometry/topologytypes.hh>
 #include <dune/geometry/type.hh>
 
 #include <dune/fem/space/common/functionspace.hh>
@@ -245,20 +244,20 @@ namespace Dune
       // get generic geometry type
       static const unsigned int topologyId = Topology::id;
       typedef typename GeometryWrapper< topologyId, dimension >
-        ::GenericGeometryType GenericGeometryType;
+        ::ImplType ImplType;
 
       template <int polOrd>
       struct CheckOrder
       {
         // type of scalar shape function for current polynomial order
-        typedef LagrangeShapeFunction< FunctionSpace, GenericGeometryType, polOrd >   ShapeFunctionImpl;
+        typedef LagrangeShapeFunction< FunctionSpace, ImplType, polOrd >   ShapeFunctionImpl;
         typedef typename ShapeFunctionImpl::GenericBaseFunctionType GenericBaseFunctionType;
 
         static void apply ( const int order, std::size_t &size )
         {
           if( order == polOrd )
           {
-            size = GenericLagrangePoint< GenericGeometryType, polOrd >::numLagrangePoints;
+            size = GenericLagrangePoint< ImplType, polOrd >::numLagrangePoints;
           }
         }
 
@@ -306,7 +305,7 @@ namespace Dune
       ::numShapeFunctions () const
     {
       std::size_t numShapeFunctions;
-      GenericGeometry::IfTopology< Switch, dimension >::apply( topologyId_, order_, numShapeFunctions );
+      Impl::IfTopology< Switch, dimension >::apply( topologyId_, order_, numShapeFunctions );
       return numShapeFunctions;
     }
 
@@ -317,7 +316,7 @@ namespace Dune
       ::createShapeFunction( const std::size_t i ) const
     {
       ShapeFunctionType *shapeFunction( nullptr );
-      GenericGeometry::IfTopology< Switch, dimension >::apply( topologyId_, i, order_, shapeFunction );
+      Impl::IfTopology< Switch, dimension >::apply( topologyId_, i, order_, shapeFunction );
       assert( shapeFunction );
       return shapeFunction;
     }

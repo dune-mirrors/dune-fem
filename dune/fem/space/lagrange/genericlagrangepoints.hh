@@ -17,7 +17,7 @@ namespace Dune
   namespace Fem
   {
 
-    template< class GenericGeometryType, unsigned int order, bool bottom = true >
+    template< class ImplType, unsigned int order, bool bottom = true >
     class GenericLagrangePoint;
 
 

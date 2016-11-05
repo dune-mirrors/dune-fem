@@ -4,8 +4,8 @@
 #include <cassert>
 
 #include <dune/common/version.hh>
+
 #include <dune/geometry/type.hh>
-#include <dune/geometry/genericgeometry/topologytypes.hh>
 
 #include <dune/grid/utility/hostgridaccess.hh>
 
@@ -151,7 +151,7 @@ namespace Dune
       elementGeometry(const Intersection& intersection,
                       const bool inside)
       {
-        return GeometryType( GenericGeometry::SimplexTopology< dimension >::type::id,
+        return GeometryType( Impl::SimplexTopology< dimension >::type::id,
                              dimension );
       }
     };
