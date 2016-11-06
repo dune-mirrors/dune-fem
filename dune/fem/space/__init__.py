@@ -5,30 +5,14 @@ import hashlib
 import inspect
 
 from dune.generator.generator import SimpleGenerator
-from dune.fem import discretefunction,function
+from dune.fem import function
 
 from ._spaces import *
 
 def interpolate( self, func, name=None, **kwargs ):
-    import dune.create as create
-    order = self.order
-    try:
-        gl = len(inspect.getargspec(func)[0])
-    except:
-        gl = 0
-    if gl == 1:   # global function
-        gf = function.globalFunction(self.grid, "tmp", order, func)
-        return interpolate(self, gf, name, **kwargs)
-    elif gl == 2: # local function
-        gf = function.localFunction(self.grid, "tmp", order, func)
-        return interpolate(self, gf, name, **kwargs)
-    elif gl == 0: # already a grid function
-        storage = self.storage
-        if not name:
-            name = func.name
-        df = function.discreteFunction(self, name=name, expr=func, **kwargs)
-        return df
-    return None
+    if not name:
+        name = func.name
+    return function.discreteFunction(self, name=name, expr=func, **kwargs)
 
 def numpyfunction( self, data, name ):
     from dune.fem.function import numpyFunction
