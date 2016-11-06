@@ -134,10 +134,10 @@ namespace Dune
         cls.def( "assign", [] ( DF &instance, const DF &other ) { instance.assign(other); } );
 
         typedef VirtualizedGridFunction< GridPart, typename Space::RangeType > GridFunction;
-        cls.def( "interpolate", [] ( DF &df, const GridFunction &gf ) {
+        cls.def( "_interpolate", [] ( DF &df, const GridFunction &gf ) {
             Fem::interpolate( gf, df );
           } );
-        cls.def( "interpolate", [] ( DF &df, typename Space::RangeType value ) {
+        cls.def( "_interpolate", [] ( DF &df, typename Space::RangeType value ) {
             const auto gf = simpleGridFunction( df.space().gridPart(), [ value ] ( typename DF::DomainType ) { return value; }, 0 );
             Fem::interpolate( gf, df );
           } );
