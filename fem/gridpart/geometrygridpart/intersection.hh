@@ -8,7 +8,6 @@
 
 #include <dune/fem/gridpart/geometrygridpart/geometry.hh>
 #include <dune/geometry/affinegeometry.hh>
-#include <dune/geometry/genericgeometry/matrixhelper.hh>
 
 namespace Dune
 {
