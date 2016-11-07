@@ -26,6 +26,46 @@ namespace Dune
   namespace Fem
   {
 
+    namespace Impl
+    {
+
+      template< class Topology >
+      struct UniqueTopology;
+
+      template<>
+      struct UniqueTopology< Dune::Impl::Point >
+      {
+        typedef Dune::Impl::Point Type;
+      };
+
+      template<>
+      struct UniqueTopology< Dune::Impl::Prism< Dune::Impl::Point > >
+      {
+        typedef Dune::Impl::Prism< Dune::Impl::Point > Type;
+      };
+
+      template<>
+      struct UniqueTopology< Dune::Impl::Pyramid< Dune::Impl::Point > >
+      {
+        typedef Dune::Impl::Prism< Dune::Impl::Point > Type;
+      };
+
+      template< class BaseTopology >
+      struct UniqueTopology< Dune::Impl::Prism< BaseTopology > >
+      {
+        typedef Dune::Impl::Prism< typename UniqueTopology< BaseTopology >::Type > Type;
+      };
+
+      template< class BaseTopology >
+      struct UniqueTopology< Dune::Impl::Pyramid< BaseTopology > >
+      {
+        typedef Dune::Impl::Pyramid< typename UniqueTopology< BaseTopology >::Type > Type;
+      };
+
+    } // namespace Impl
+
+
+
     // Forward declaration
     // -------------------
 
@@ -105,26 +145,8 @@ namespace Dune
       // tetrahedron
       typedef Dune::Impl::Pyramid< Triangle > Tetrahedron;
 
-      // mapping from topology to basic geometry type (see list above)
       template< class Topology >
-      class BasicGeometryType
-      {
-        template< unsigned int topologyId >
-        struct UniqueId
-        {
-          static const unsigned int v = topologyId | (unsigned int)Dune::Impl::prismConstruction;
-        };
-
-      public:
-        typedef typename Dune::Impl::Topology< UniqueId< Topology::id >::v, Topology::dimension >::type Type;
-      };
-
-      // instantiate a basic geometry type
-      template< class Topology >
-      static typename BasicGeometryType< Topology >::Type basicGeometryType ()
-      {
-        return typename BasicGeometryType< Topology >::Type();
-      }
+      using UniqueTopology = typename Impl::UniqueTopology< Topology >::Type;
 
     public:
       template< class Topology >
@@ -153,7 +175,7 @@ namespace Dune
         for( std::size_t i = 0; i < size; ++i )
         {
           assert( x.size() == Topology::dimension );
-          functor( i, evaluate( basicGeometryType< Topology>(), i, x ) );
+          functor( i, evaluate( UniqueTopology< Topology >(), i, x ) );
         }
       }
 
@@ -216,7 +238,7 @@ namespace Dune
         for( std::size_t i = 0; i < size; ++i )
         {
           assert( x.size() == Topology::dimension );
-          evaluate( basicGeometryType< Topology >(), i, x, jacobian );
+          evaluate( UniqueTopology< Topology >(), i, x, jacobian );
           functor( i, jacobian );
         }
       }
@@ -279,7 +301,7 @@ namespace Dune
         for( std::size_t i = 0; i < size; ++i )
         {
           assert( x.size() == Topology::dimension );
-          evaluate( basicGeometryType< Topology >(), i, x, hessian );
+          evaluate( UniqueTopology< Topology >(), i, x, hessian );
           functor( i, hessian );
         }
       }
