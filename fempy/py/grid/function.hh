@@ -244,7 +244,8 @@ namespace Dune
       return [ dispatch ] ( pybind11::object gv, std::string name, int order, pybind11::function evaluate ) {
           typedef typename GridPart::GridViewType GridView;
           const auto &gp = gridPart<GridView>( gv );
-          typename GridPart::template Codim< 0 >::GeometryType::GlobalCoordinate x( 0 );
+          // typename GridPart::template Codim< 0 >::GeometryType::GlobalCoordinate x( 0 );
+          auto x = gp.template begin<0>()->geometry().center();
           pybind11::gil_scoped_acquire acq;
           pybind11::object v( evaluate( x ) );
           const std::size_t dimR = len( v );
