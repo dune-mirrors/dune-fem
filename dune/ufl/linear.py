@@ -15,7 +15,7 @@ def sumTensorMaps(left, right):
     for key, r in right.items():
         l = left.get(key)
         result[key] = r.copy() if l is None else l + r
-        return result
+    return result
 
 
 class MultiLinearExprSplitter(Transformer):
