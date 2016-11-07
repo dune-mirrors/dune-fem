@@ -305,7 +305,7 @@ namespace Dune
       ::numShapeFunctions () const
     {
       std::size_t numShapeFunctions;
-      Impl::IfTopology< Switch, dimension >::apply( topologyId_, order_, numShapeFunctions );
+      Dune::Impl::IfTopology< Switch, dimension >::apply( topologyId_, order_, numShapeFunctions );
       return numShapeFunctions;
     }
 
@@ -316,7 +316,7 @@ namespace Dune
       ::createShapeFunction( const std::size_t i ) const
     {
       ShapeFunctionType *shapeFunction( nullptr );
-      Impl::IfTopology< Switch, dimension >::apply( topologyId_, i, order_, shapeFunction );
+      Dune::Impl::IfTopology< Switch, dimension >::apply( topologyId_, i, order_, shapeFunction );
       assert( shapeFunction );
       return shapeFunction;
     }
