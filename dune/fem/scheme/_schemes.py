@@ -9,9 +9,10 @@ def getSolver(solver,storage,default):
         return default(storage)
     if isinstance(solver,str):
         return default(storage,solver)
-    elif hasattr(solver, "__len__"):
+    else:
+        tupLen = len(solver)
         import dune.create as create
-        if (solver.__len__ > 1):
+        if (tupLen > 1):
             return create.solver(solver[0],storage,solver[1])
         else:
             return default(storage,solver[0])
