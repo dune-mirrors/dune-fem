@@ -304,7 +304,7 @@ namespace Dune
     inline std::size_t LagrangeShapeFunctionFactory< FunctionSpace, polOrder >
       ::numShapeFunctions () const
     {
-      std::size_t numShapeFunctions;
+      std::size_t numShapeFunctions( 0 );
       Dune::Impl::IfTopology< Switch, dimension >::apply( topologyId_, order_, numShapeFunctions );
       return numShapeFunctions;
     }
