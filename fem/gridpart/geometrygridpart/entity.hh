@@ -61,6 +61,8 @@ namespace Dune
         return hostEntity().partitionType();
       }
 
+      unsigned int subEntities ( unsigned int c ) const { return hostEntity().subEntities( c ); }
+
       Geometry geometry () const
       {
         DUNE_THROW( NotImplemented, "GeometryGridPart only implements the geometry for entities of codimension 0." );
