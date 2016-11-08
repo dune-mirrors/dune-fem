@@ -2,6 +2,7 @@
 #define DUNE_FEM_LUMPING_QUADRATURE_HH
 
 #include <dune/geometry/referenceelements.hh>
+#include <dune/geometry/type.hh>
 
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
@@ -48,10 +49,10 @@ class LumpingQuadrature
   LumpingQuadrature(const GeometryType& gt, int order, int id)
     : BaseType(id)
   {
-    const auto &refElement = Dune::ReferenceElements< FieldType, Topology::dimension >::general( gt );
-    const unsinged int numCorners = refElement.size( Topology::dimension );
-    for( unsigned int i = 0; i < numCorners; ++i )
-      this->addQuadraturePoint( refElement.position( i, Topology::dimension ), refElement.volume() / numCorners );
+    const auto &refElement = Dune::ReferenceElements< FieldType, dimension >::general( gt );
+    const auto numCorners = refElement.size( dimension );
+    for( auto i = decltype( numCorners ){ 0 }; i < numCorners; ++i )
+      this->addQuadraturePoint( refElement.position( i, dimension ), refElement.volume() / numCorners );
   }
 
   /** \copydoc QuadratureImp::geometry
