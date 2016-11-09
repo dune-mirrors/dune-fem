@@ -5,6 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import dune.common.checkconfiguration as checkconfiguration
+import dune.generator.builder as builder
 
 from . import _solvers as solvers
 
@@ -22,12 +23,11 @@ def adaptive():
 def eigen():
     try:
         checkconfiguration.preprocessorTest([ ("#if HAVE_EIGEN","Eigen package is not available") ])
-    except checkconfiguration.ConfigurationError as err:
-        if logger.getEffectiveLevel() == logging.DEBUG:
-            raise
-        else:
-            print("configuration error while creating a discrete function with storage=eigen exiting...")
-            sys.exit(-1)
+    except builder.ConfigurationError as err:
+        print("configuration error while creating a discrete function with storage=eigen exiting...")
+        print("You need to install the `eigen` package and reconfigure dune-py")
+        print("adding -DEigen3_DIR='Path-to-eigen` to the CMAKE_FLAGS")
+        raise
 
     dfType = lambda space: "Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< " +\
                            space._typeName + ", Dune::Fem::EigenVector< " + space.field + " > > >"
