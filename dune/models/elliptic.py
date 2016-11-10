@@ -306,6 +306,8 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
 
     model = EllipticModel(dimRange, form.signature())
 
+    model.hasNeumanBoundary = not boundarySource.is_zero()
+
     expandform = ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(equation.lhs)))
     if expandform == ufl.adjoint(expandform):
         model.symmetric = 'true'

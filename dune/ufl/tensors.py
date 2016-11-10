@@ -81,6 +81,9 @@ class ExprTensor:
     def as_ufl(self):
         return self._as_ufl(self.shape, self.data)
 
+    def is_zero(self):
+        return self.as_ufl() == ExprTensor(self.shape).as_ufl()
+
     def _add(self, shape, left, right):
         if len(shape) > 0:
             return [self._add(shape[1:], left[i], right[i]) for i in range(0, shape[0])]
