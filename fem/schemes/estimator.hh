@@ -90,9 +90,9 @@ public:
 
   typedef typename IntersectionIteratorType :: Intersection IntersectionType;
 
-  typedef typename GridType :: template Codim< 0 > :: Entity ElementType;
+  typedef typename GridPartType :: template Codim< 0 > :: EntityType ElementType;
   typedef typename ElementType::Geometry GeometryType;
-  static const int dimension = GridType :: dimension;
+  static const int dimension = GridPartType :: dimension;
 
   typedef Dune::Fem::CachingQuadrature< GridPartType, 0 > ElementQuadratureType;
   typedef Dune::Fem::CachingQuadrature< GridPartType, 1 > FaceQuadratureType;
@@ -115,7 +115,7 @@ private:
   const ModelType& model_;
 
 public:
-  static_assert( static_cast< unsigned int >( GridType::dimension ) == static_cast< unsigned int >( GridType::dimensionworld ),
+  static_assert( static_cast< unsigned int >( GridPartType::dimension ) == static_cast< unsigned int >( GridPartType::dimensionworld ),
                   "the estimator is not implemented for surfaces problems" );
 
   explicit Estimator ( const DiscreteFunctionSpaceType &dfSpace, const ModelType& model )
@@ -217,7 +217,7 @@ public:
       if( indicator_[ indexSet_.index( entity ) ] > localTol2 )
       {
         // mark entity for refinement
-        grid_.mark( 1, entity );
+        grid_.mark( 1, Dune::Fem::gridEntity(entity) );
         // grid was marked
         marked = 1;
       }
