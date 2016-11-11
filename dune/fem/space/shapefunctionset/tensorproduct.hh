@@ -1,18 +1,17 @@
 #ifndef DUNE_FEM_SHAPEFUNCTIONSET_TENSORPRODUCT_HH
 #define DUNE_FEM_SHAPEFUNCTIONSET_TENSORPRODUCT_HH
 
-// C++ includes
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <tuple>
-#include <array>
 
-// dune-common includes
 #include <dune/common/fmatrix.hh>
 #include <dune/common/forloop.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/hybridutilities.hh>
+#include <dune/common/std/utility.hh>
 #include <dune/common/tupleutility.hh>
-
 #include <dune/fem/common/coordinate.hh>
 
 namespace Dune
@@ -35,7 +34,6 @@ namespace Dune
                      "FunctionSpace must be scalar (i.e., dimRange = 1)." );
 
       struct Assign;
-      struct Order;
 
       template< int i > struct Size;
       template< int i > struct EvaluateAll;
@@ -119,27 +117,6 @@ namespace Dune
 
     private:
       RangeFieldType *buffer_;
-    };
-
-
-
-    // TensorProductShapeFunctionSet::Order
-    // ------------------------------------
-
-    template< class FunctionSpace, class ShapeFunctionSetTuple >
-    struct TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >::Order
-    {
-      Order () : order_( 0 ) {}
-
-      template< class ShapeFunctionSet >
-      void visit ( const ShapeFunctionSet &shapeFunctionSet )
-      {
-        order_ = std::max( order_, shapeFunctionSet.order() );
-      }
-
-      operator int() const { return order_; }
-    private:
-      int order_;
     };
 
 
@@ -278,10 +255,10 @@ namespace Dune
     template< class FunctionSpace, class ShapeFunctionSetTuple >
     inline int TensorProductShapeFunctionSet< FunctionSpace, ShapeFunctionSetTuple >::order () const
     {
-      Dune::ForEachValue< const ShapeFunctionSetTupleType > forEach( shapeFunctionSetTuple_ );
-      Order functor;
-      forEach.apply( functor );
-      return functor;
+      int value( 0 );
+      Hybrid::forEach( Std::make_index_sequence< std::tuple_size< ShapeFunctionSetTupleType >::value >{},
+        [ & ]( auto i ){ value = std::max( value, std::get< i >( shapeFunctionSetTuple_ ).order() ); } );
+      return value;
     }
 
 
