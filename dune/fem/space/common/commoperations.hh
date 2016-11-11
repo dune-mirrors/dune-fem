@@ -5,8 +5,8 @@
 #include <type_traits>
 #include <utility>
 
-#include <dune/common/tupleutility.hh>
-
+#include <dune/common/hybridutilities.hh>
+#include <dune/common/std/utility.hh>
 #include <dune/grid/common/datahandleif.hh>
 
 namespace Dune
@@ -51,139 +51,7 @@ namespace Dune
       : public CommDataHandleIF< CombinedDataHandle< DataHandle... >, typename CombinedDataType< DataHandle... >::Type >
     {
       typedef std::tuple< DataHandle... > DataHandlerTupleType;
-
-      /** DataGather functor  */
-      template <class BufferImp, class EntityImp>
-      class DataGather{
-      public:
-        //! Constructor taking buffer and entity
-        DataGather(BufferImp & buff, const EntityImp & en )
-        : buff_(buff)
-        , en_(en)
-        {}
-
-        //! call gather on given data handle object
-        template <class DataHandlerImp>
-        void visit(DataHandlerImp & dh) {
-          dh.gather(buff_,en_);
-        }
-
-      private:
-        BufferImp & buff_;
-        const EntityImp & en_;
-      };
-
-      /** DataScatter functor  */
-      template <class BufferImp, class EntityImp>
-      class DataScatter{
-      public:
-        //! Constructor
-        //! Constructor taking buffer and entity and size
-        DataScatter(BufferImp & buff, const EntityImp & en, size_t n)
-        : buff_(buff)
-        , en_(en)
-        , size_(n)
-        {}
-
-        //! call scatter on given data handle object
-        template <class DataHandlerImp>
-        void visit(DataHandlerImp & dh) {
-          // TODO: here, the wrong size is passed to the subhandles
-          dh.scatter(buff_,en_,size_);
-        }
-
-      private:
-        BufferImp & buff_;
-        const EntityImp & en_;
-        const size_t size_;
-      };
-
-      /** DataSize functor  */
-      template <class EntityImp>
-      class DataSize
-      {
-      public:
-        //! Constructor
-        //! \param entity to calc size for
-        DataSize(const EntityImp & en)
-        : en_(en)
-        , size_(0)
-        {}
-
-        //! call size on given data handle object
-        template <class DataHandlerImp>
-        void visit(DataHandlerImp & dh)
-        {
-          size_ += dh.size(en_);
-        }
-
-        //! return size
-        size_t size() const { return size_; }
-
-      private:
-        const EntityImp & en_;
-        size_t size_;
-      };
-
-      /** FixedSize functor  */
-      class FixedSize
-      {
-      public:
-        //! Constructor
-        //! \param dim to check for
-        //! \param codim to check for
-        FixedSize(const int dim, const int codim)
-        : dim_(dim)
-        , codim_(codim)
-        , fixedSize_(true)
-        {}
-
-        //! call size on given data handle object
-        template <class DataHandlerImp>
-        void visit(DataHandlerImp & dh)
-        {
-          bool fs = dh.fixedsize(dim_,codim_);
-          fixedSize_ = (fs == false) ? fs : fixedSize_;
-        }
-
-        //! return size
-        bool fixedSize() const { return fixedSize_; }
-
-      private:
-        const int dim_;
-        const int codim_;
-        bool fixedSize_;
-      };
-
-      /** Contains functor  */
-      class Contains
-      {
-      public:
-        //! Constructor
-        //! \param dim to check for
-        //! \param codim to check for
-        Contains(const int dim, const int codim)
-        : dim_(dim)
-        , codim_(codim)
-        , contains_(false)
-        {}
-
-        //! call size on given data handle object
-        template <class DataHandlerImp>
-        void visit(DataHandlerImp & dh)
-        {
-          bool c = dh.contains(dim_,codim_);
-          contains_ = (c == true) ? c : contains_;
-        }
-
-        //! return size
-        bool contains() const { return contains_; }
-
-      private:
-        const int dim_;
-        const int codim_;
-        bool contains_;
-      };
+      static constexpr std::size_t tupleSize = std::tuple_size< DataHandlerTupleType >::value;
 
     public:
       typedef typename CombinedDataType< DataHandle... >::Type DataType;
@@ -198,18 +66,18 @@ namespace Dune
 
       bool contains (int dim, int codim) const
       {
-        ForEachValue<DataHandlerTupleType> forEach(data_);
-        Contains dataContains(dim,codim);
-        forEach.apply(dataContains);
-        return dataContains.contains();
+        bool value( false );
+        Hybrid::forEach( Std::make_index_sequence< tupleSize >{},
+          [ & ]( auto i ){ value = ( value || std::get< i >( data_ ).contains( dim, codim ) ); } );
+        return value;
       }
 
       bool fixedsize (int dim, int codim) const
       {
-        ForEachValue<DataHandlerTupleType> forEach(data_);
-        FixedSize dataFixedSize(dim,codim);
-        forEach.apply(dataFixedSize);
-        return dataFixedSize.fixedSize();
+        bool value( true );
+        Hybrid::forEach( Std::make_index_sequence< tupleSize >{},
+          [ & ]( auto i ){ value = ( value && std::get< i >( data_ ).fixedsize( dim, codim ) ); } );
+        return value;
       }
 
       //! \brief loop over all internal data handlers and call gather for
@@ -217,30 +85,25 @@ namespace Dune
       template<class MessageBufferImp, class EntityType>
       void gather (MessageBufferImp& buff, const EntityType& en) const
       {
-        ForEachValue<DataHandlerTupleType> forEach(data_);
-        DataGather<MessageBufferImp,EntityType> gatherData(buff,en);
-        forEach.apply(gatherData);
+        Hybrid::forEach( Std::make_index_sequence< tupleSize >{}, [ & ]( auto i ){ std::get< i >( data_ ).gather( buff, en ); } );
       }
 
       //! \brief loop over all internal data handlers and call scatter for
       //! given entity
       template<class MessageBufferImp, class EntityType>
-      void scatter (MessageBufferImp& buff, const EntityType& en, size_t n)
+      void scatter (MessageBufferImp& buff, const EntityType& en, std::size_t n)
       {
-        ForEachValue<DataHandlerTupleType> forEach(data_);
-        DataScatter<MessageBufferImp,EntityType> scatterData(buff,en,n);
-        forEach.apply(scatterData);
+        Hybrid::forEach( Std::make_index_sequence< tupleSize >{}, [ & ]( auto i ){ std::get< i >( data_ ).scatter( buff, en, n ); } );
       }
 
       //! \brief loop over all internal data handlers and return sum of data
       //! size of given entity
       template<class EntityType>
-      size_t size (const EntityType& en) const
+      std::size_t size (const EntityType& en) const
       {
-        ForEachValue<DataHandlerTupleType> forEach(data_);
-        DataSize<EntityType> dataSize(en);
-        forEach.apply(dataSize);
-        return dataSize.size();
+        std::size_t value( 0 );
+        Hybrid::forEach( Std::make_index_sequence< tupleSize >{}, [ & ]( auto i ){ value += std::get< i >( data_ ).size( en ); } );
+        return value;
       }
 
     private:
