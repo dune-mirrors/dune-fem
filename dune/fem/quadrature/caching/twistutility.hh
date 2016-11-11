@@ -151,7 +151,7 @@ namespace Dune
       elementGeometry(const Intersection& intersection,
                       const bool inside)
       {
-        return GeometryType( Impl::SimplexTopology< dimension >::type::id,
+        return GeometryType( Dune::Impl::SimplexTopology< dimension >::type::id,
                              dimension );
       }
     };
