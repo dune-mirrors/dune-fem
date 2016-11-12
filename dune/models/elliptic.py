@@ -38,10 +38,6 @@ class EllipticModel(BaseModel):
         self.hasNeumanBoundary = False
         self.isDirichletIntersection = "return false;"
         self.dirichlet = "result = RangeType( 0 );"
-        self.f = "result = RangeType( 0 );"
-        self.exact = "result = RangeType( 0 );"
-        self.n = "result = RangeType( 0 );"
-        self.jacobianExact = "result = JacobianRangeType( 0 );"
         self.arg_x = 'const Point &x'
         self.arg_u = 'const RangeType &u'
         self.arg_du = 'const JacobianRangeType &du'
@@ -62,15 +58,6 @@ class EllipticModel(BaseModel):
 
         isDirichletIntersection = Method('bool isDirichletIntersection', args=['const IntersectionType &intersection', 'Dune::FieldVector< int, dimRange > &dirichletComponent'], code=self.isDirichletIntersection, const=True)
 
-        f = Method('void f', args=['const DomainType &x', self.arg_r], code=self.f, const=True)
-        n = Method('void n', args=['const DomainType &x', self.arg_r], code=self.n, const=True)
-
-        exact = Method('void exact', args=['const DomainType &x', self.arg_r], code=self.exact, const=True)
-
-        jacobianExact = Method('void jacobianExact', args=['const DomainType &x', self.arg_dr], const=True)
-        jacobianExact.append('// used for possible computation of H^1 error')
-        jacobianExact.append(self.jacobianExact)
-
         dirichlet = Method('void dirichlet', targs=['class Point'], args=['int id', self.arg_x, self.arg_r], code=self.dirichlet, const=True)
 
         result = []
@@ -88,7 +75,7 @@ class EllipticModel(BaseModel):
         result.append(Method('void alpha', targs=['class Point'], args=[self.arg_x, self.arg_u, self.arg_r], code=self.alpha, const=True))
         result.append(Method('void linAlpha', targs=['class Point'], args=[self.arg_ubar, self.arg_x, self.arg_u, self.arg_r], code=self.linAlpha, const=True))
 
-        result += [hasDirichletBoundary, hasNeumanBoundary, isDirichletIntersection, f, n, exact, jacobianExact, dirichlet]
+        result += [hasDirichletBoundary, hasNeumanBoundary, isDirichletIntersection, dirichlet]
 
         return result
 
