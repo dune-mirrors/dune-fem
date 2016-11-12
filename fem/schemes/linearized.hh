@@ -11,18 +11,20 @@
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/io/parameter.hh>
 
+
 namespace Dune
 {
 
   namespace Fem
   {
-    // Scheme for
-    // L[ubar] + DL[ubar](u-ubar) = 0 in the affine linear case
-    // 0 = A ubar - b + Au - A ubar = Au - b = DL[ubar]u - affineShift and
-    // so affineShift = b = A ubar - L[ubar]
-    // Note that we assume that A is fixed (use setup to recreate the matrix)
-    // but b is allowed to change (i.e. in a time dependent problem the
-    // affine shift can depend on the previous solution)
+    // Given non linear operator L[u;(c)] where (c) are some coefficients
+    // we define a linear operator
+    // A[u;(c)] := L[ubar;(c)] + DL[ubar;(c)](u-ubar)
+    //           = DL[ubar;(c)]u + L[ubar;(c)] - DL[ubar;(c)]ubar
+    //           = DL[ubar;(c)]u + b
+    // Note: DA[ubar,(c)]u = DL[ubar,(c)]u
+    // and if L[u];(c)] = Au + c we have
+    // A[u;(c)] = Au + Aubar + c - Aubar = Au + c
     template< class Scheme >
     struct LinearizedScheme
     {

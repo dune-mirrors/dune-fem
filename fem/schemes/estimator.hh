@@ -134,14 +134,11 @@ public:
     // clear all local estimators
     clear();
 
-    // note: not adapted to new interface yet e.g. rhs method
-    const auto &rhs = model_.rightHandSide(gridPart_);
-
     //! [Error estimator]
     // calculate local estimator
     const IteratorType end = dfSpace_.end();
     for( IteratorType it = dfSpace_.begin(); it != end; ++it )
-      estimateLocal( rhs, uh, *it );
+      estimateLocal( uh, *it );
 
     double error = 0.0;
 
@@ -241,8 +238,7 @@ protected:
   }
 
   //! caclulate error on element
-  template< class RHSFunctionType >
-  void estimateLocal ( const RHSFunctionType &rhs, const DiscreteFunctionType &uh, const ElementType &entity )
+  void estimateLocal ( const DiscreteFunctionType &uh, const ElementType &entity )
   {
     const typename ElementType :: Geometry &geometry = entity.geometry();
 
@@ -250,7 +246,6 @@ protected:
     const double h2 = (dimension == 2 ? volume : std :: pow( volume, 2.0 / (double)dimension ));
     const int index = indexSet_.index( entity );
     const LocalFunctionType uLocal = uh.localFunction( entity );
-    typename RHSFunctionType::LocalFunctionType localRhs = rhs.localFunction( entity );
 
     ElementQuadratureType quad( entity, 2*(dfSpace_.order() + 1) );
 
@@ -273,12 +268,7 @@ protected:
       uLocal.hessian(x, hessian);
 
       RangeType y;
-      localRhs.evaluate( quad[qp], y );
-
-      RangeType tmp;
-      model_.fluxDivergence(quad[qp], values, jacobian, hessian, tmp);
-      //laplacianLocal( uLocal, quad[ qp ], tmp );
-      y -= tmp;
+      model_.fluxDivergence(quad[qp], values, jacobian, hessian, y);
 
       indicator_[ index ] += h2 * weight * y.two_norm2();
     }
