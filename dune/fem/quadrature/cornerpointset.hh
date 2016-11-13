@@ -136,7 +136,7 @@ namespace Dune
     template< class ct, class Topology >
     inline void CornerPointList< ct, Topology >::initialize ()
     {
-      GeometryType gt( Topoology::id, Topology::dimension );
+      GeometryType gt( Topology::id, Topology::dimension );
       const auto &refElement = Dune::ReferenceElements< ct, Topology::dimension >::general( gt );
       for( unsigned int i = 0; i < refElement.size( Topology::dimension ); ++i )
         addIntegrationPoint( refElement.position( i, Topology::dimension ) );
