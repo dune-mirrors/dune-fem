@@ -3,13 +3,13 @@
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
+#include <tuple>
 #include <vector>
 
-#include <dune/fem/common/tupleforeach.hh>
-#include <dune/fem/misc/gridwidth.hh>
-#include <dune/fem/test/testgrid.hh>
+#include <dune/common/hybridutilities.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
+
 #include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/common/interpolate.hh>
@@ -22,12 +22,12 @@
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/function/tuplediscretefunction.hh>
 
-#include <dune/fem/misc/mpimanager.hh>
-
-
+#include <dune/fem/misc/gridwidth.hh>
 #include <dune/fem/misc/h1norm.hh>
 #include <dune/fem/misc/l2norm.hh>
+#include <dune/fem/misc/mpimanager.hh>
 
+#include <dune/fem/test/testgrid.hh>
 
 typedef Dune::GridSelector::GridType HGridType;
 typedef Dune::Fem::AdaptiveLeafGridPart< HGridType > GridPartType;
@@ -47,7 +47,7 @@ typedef Dune::Fem::ISTLBlockVectorDiscreteFunction< DiscreteFunctionSpace4 > Dis
 typedef Dune::Fem::TupleDiscreteFunction< DiscreteFunction1, DiscreteFunction2, DiscreteFunction3, DiscreteFunction4 > DiscreteFunctionType;
 
 typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-
+typedef typename DiscreteFunctionType::Sequence Sequence;
 
 template< class FunctionSpace >
 struct MyFunction
@@ -103,7 +103,7 @@ int main ( int argc, char **argv )
 
     std::cout << "dofs = " << df.size() << std::endl;
     std::size_t size( 0 );
-    for_each( df, [ &size ]( const auto& sub, auto ){ size += sub.size(); } );
+    Dune::Hybrid::forEach( Sequence{}, [ & ]( auto i ){ size += std::get< i >( df ).size(); } );
     std::cout << size << std::endl;
 
     // refine grid
@@ -112,7 +112,7 @@ int main ( int argc, char **argv )
     df2 += df;
     std::cout << "dofs = " << df.size() << std::endl;
     size = 0;
-    for_each( df, [ &size ]( const auto& sub, auto ){ size += sub.size(); } );
+    Dune::Hybrid::forEach( Sequence{}, [ & ]( auto i ){ size += std::get< i >( df ).size(); } );
     std::cout << size << std::endl;
 
     std::stringstream stream;
@@ -138,18 +138,17 @@ int main ( int argc, char **argv )
       std::cout<< df.name() <<std::endl;
 
       std::cout << "Checking for subFunctions:" << std::endl;
-      for_each( df, []( const auto& sub, auto ){ std::cout << sub.name() << std::endl; } );
+      Dune::Hybrid::forEach( Sequence{}, [ & ]( auto i ){ std::cout<< std::get< i >( df ).name() << std::endl; } );
 
       // read access
       Dune::FieldVector< double, 4 > error;
-      for_each( df, [ & ]( auto& sub, auto i){ error[ i ] = l2Norm.distance( sub, SubFunction() ); } );
+      Dune::Hybrid::forEach( Sequence{}, [ & ]( auto i ){ error[ i ] = l2Norm.distance( std::get< i >( df ), SubFunction() ); } );
       std::cout << error.two_norm() << std::endl;
       assert( std::abs( error.two_norm() - fullError ) < 1e-8 );
 
       // write access
-      for_each( df,
-        [ & ]( auto& sub, auto i){ Dune::Fem::interpolate( Dune::Fem::gridFunctionAdapter( SubFunction(), gridPart, 5 ), sub ); } );
-
+      Dune::Hybrid::forEach( Sequence{},
+        [ & ]( auto i ){ Dune::Fem::interpolate( Dune::Fem::gridFunctionAdapter( SubFunction(), gridPart, 5 ), std::get< i >( df ) ); } );
       std::cout<<std::endl;
 
       Dune::Fem::GlobalRefine::apply( grid, 1 );

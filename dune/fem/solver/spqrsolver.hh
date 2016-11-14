@@ -3,9 +3,11 @@
 
 #include <algorithm>
 #include <iostream>
+#include <tuple>
 #include <vector>
 
-#include <dune/fem/common/tupleforeach.hh>
+#include <dune/common/hybridutilities.hh>
+#include <dune/common/std/utility.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/function/tuplediscretefunction.hh>
@@ -202,13 +204,14 @@ class SPQROp:public Operator<DF, DF>
     // copy DOF's arg into a consecutive vector
     std::vector<DofType> vecArg(arg.size());
     auto vecArgIt(vecArg.begin());
-    for_each(arg,[&vecArgIt](const auto& block,auto I){vecArgIt=std::copy(block.dbegin(),block.dend(),vecArgIt);});
+    Hybrid::forEach(Std::make_index_sequence<sizeof...(DFs)>{},
+      [&](auto i){vecArgIt=std::copy(std::get<i>(arg).dbegin(),std::get<i>(arg).dend(),vecArgIt);});
     std::vector<DofType> vecDest(dest.size());
     // apply operator
     apply(vecArg.data(),vecDest.data());
     // copy back solution into dest
     auto vecDestIt(vecDest.begin());
-    for_each(dest,[&vecDestIt](auto& block,auto I){for(auto& dof:dofs(block)) dof=(*(vecDestIt++));});
+    Hybrid::forEach(Std::make_index_sequence<sizeof...(DFs)>{},[&](auto i){for(auto& dof:dofs(std::get<i>(dest))) dof=(*(vecDestIt++));});
   }
 
   void printTexInfo(std::ostream& out) const

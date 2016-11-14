@@ -5,10 +5,10 @@
 #include <tuple>
 #include <utility>
 
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/std/utility.hh>
 
 #include <dune/fem/common/stackallocator.hh>
-#include <dune/fem/common/tupleforeach.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
@@ -131,7 +131,7 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::enableDofCompression() */
       void enableDofCompression ()
       {
-        for_each( *this, [] ( auto& block, auto I ) { block.enableDofCompression(); } );
+        Hybrid::forEach( Sequence{}, [ & ]( auto i ){  std::get< i >( *this ).enableDofCompression(); } );
       }
 
     protected:
