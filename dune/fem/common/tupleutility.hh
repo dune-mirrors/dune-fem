@@ -243,7 +243,7 @@ namespace Dune
 
     static typename NextType::type append ( Tuple &tuple, Seed &seed )
     {
-      AppendType append = Dune::template get< position >( tuple );
+      AppendType append = std::get< position >( tuple );
       AccumulatedType next = tuple_push_back( seed, append );
       return NextType::append( tuple, next );
     }

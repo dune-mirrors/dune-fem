@@ -430,10 +430,10 @@ namespace Dune
     // -----------------------
 
     template<>
-    class IOTuple< tuple<> >
+    class IOTuple< std::tuple<> >
     : public IOTupleBase
     {
-      typedef tuple<> Tuple;
+      typedef std::tuple<> Tuple;
 
     public:
       static const int length = 0;

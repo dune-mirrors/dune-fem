@@ -2,6 +2,7 @@
 #define DUNE_FEM_DATAWRITER_HH
 
 #include <string>
+#include <tuple>
 
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/file/iointerface.hh>
@@ -235,7 +236,7 @@ namespace Dune
        of pointers to the discrete functions types
        to be stored.
     */
-    template< class GridImp, class DataImp = tuple<> >
+    template< class GridImp, class DataImp = std::tuple<> >
     class CheckPointer
     : public DataWriter< GridImp, DataImp >
     {
@@ -583,7 +584,7 @@ namespace Dune
       static inline
       void restoreData ( const GridType &grid, const std::string checkFile )
       {
-        tuple<> fakeData;
+        std::tuple<> fakeData;
         restoreData( grid, fakeData, checkFile );
       }
 

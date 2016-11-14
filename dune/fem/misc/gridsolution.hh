@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDSOLUTION_HH
 #define DUNE_FEM_GRIDSOLUTION_HH
 
+#include <tuple>
+
 #include <dune/common/exceptions.hh>
 #include <dune/grid/utility/hierarchicsearch.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
@@ -42,7 +44,7 @@ namespace Dune
 
       typedef HierarchicSearch< GridType, IndexSetType > HierarchicSearchType;
 
-      typedef tuple< DiscreteFunctionType* > IOTupleType;
+      typedef std::tuple< DiscreteFunctionType* > IOTupleType;
 
     protected:
       GridType* grid_;
@@ -121,7 +123,7 @@ namespace Dune
                                         const double time,
                                         const int writeStep )
       {
-        typedef tuple< const DiscreteFunctionType* > OutputTuple;
+        typedef std::tuple< const DiscreteFunctionType* > OutputTuple;
         OutputTuple data( &discreteFunction );
         // false means don't backup persistent objects
         CheckPointerType :: writeSingleCheckPoint( grid, data, time, false, writeStep );
