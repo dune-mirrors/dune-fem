@@ -43,7 +43,7 @@ namespace Dune
 
       explicit PetscSlaveDofProvider ( const DiscreteFunctionSpaceType &space )
       : BaseType( space ),
-        dofMapping_( PetscDofMappingProviderType::getObject( slaveDofs_ ) )
+        dofMapping_( space, PetscDofMappingProviderType::getObject( slaveDofs_ ) )
       {
       }
 

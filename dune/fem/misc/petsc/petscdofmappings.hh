@@ -48,7 +48,8 @@ namespace Dune
       typedef PetscInt  GlobalDofType ;
       typedef Dune::DynamicVector< GlobalDofType >           GlobalDofMappingType ;
 
-      PetscDofMappings ( SlaveDofs *slaveDofs )
+      template <class Space>
+      PetscDofMappings ( const Space &space, SlaveDofs *slaveDofs )
       :   slaveDofs_( *slaveDofs ),
           numOwnedDofBlocks_( 0 ),
           numSlaveBlocks_( 0 ),
@@ -58,13 +59,14 @@ namespace Dune
           sequence_( -1 )
       {
         // update dof mapping
-        update();
+        update(space);
       }
 
-      bool update ()
+      template <class Space>
+      bool update (const Space &space)
       {
-        slaveDofs_.rebuild();
-        const int sequence = slaveDofs_.space().sequence();
+        slaveDofs_.rebuild(space);
+        const int sequence = space.sequence();
         if( sequence_ != sequence )
         {
           initialize( slaveDofs_ );
