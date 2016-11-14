@@ -57,11 +57,11 @@ namespace Dune
 
       typedef std::tuple< DiscreteFunctions ... > DiscreteFunctionTuple;
 
-      typedef decltype ( std::index_sequence_for< DiscreteFunctions ... >() ) Sequence;
-
       static_assert( sizeof ... ( DiscreteFunctions ) > 0, "TupleDiscreteFunction needs at least one DiscreteFunction." );
 
     public:
+      typedef decltype ( std::index_sequence_for< DiscreteFunctions ... >() ) Sequence;
+
       typedef TupleDofVector< typename DiscreteFunctions::DofVectorType ... > DofVectorType;
 
       using BaseType::space;
