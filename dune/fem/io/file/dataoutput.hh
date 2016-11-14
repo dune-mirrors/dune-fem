@@ -15,8 +15,8 @@
 #define USE_VTKWRITER 1
 #endif
 
-#include <dune/fem/common/get.hh>
-#include <dune/fem/common/tupleforeach.hh>
+#include <dune/common/hybridutilities.hh>
+#include <dune/common/std/utility.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/io/file/iointerface.hh>
@@ -514,11 +514,12 @@ namespace Dune
       template< typename ...  T >
       void forEach ( std::tuple< T ... >& data )
       {
-        for_each( data, [&]( auto df, auto )
-                        {
+        Hybrid::forEach( Std::make_index_sequence< sizeof...( T ) >{},
+          [&]( auto i ) {
+                          auto df( std::get< i >( data ) );
                           if( df )
                           {
-                            if( conforming_ || (df->space().order() == 0) )
+                            if( conforming_ || ( df->space().order() == 0 ) )
                               vtkOut_.addCellData( *df );
                             else
                               vtkOut_.addVertexData( *df );
@@ -559,8 +560,9 @@ namespace Dune
       template< typename ...  T >
       void forEach ( std::tuple< T ... >& data )
       {
-        for_each( data, [&]( auto df, auto )
-                        {
+        Hybrid::forEach( Std::make_index_sequence< sizeof...( T ) >{},
+          [&]( auto i ) {
+                          auto df( std::get< i >( data ) );
                           if( df )
                           {
                             typedef typename std::remove_pointer< decltype( df ) >::type DFType;
@@ -611,8 +613,9 @@ namespace Dune
       template< typename ... T >
       void forEach ( std::tuple< T ... >& data )
       {
-        for_each( data, [&]( auto df, auto )
-                        {
+        Hybrid::forEach( Std::make_index_sequence< sizeof...( T ) >{},
+          [&]( auto i ) {
+                          auto df( std::get< i >( data ));
                           if( df )
                           {
                             auto lf = df->localFunction(en_);

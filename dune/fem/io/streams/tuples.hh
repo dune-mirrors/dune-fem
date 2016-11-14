@@ -3,79 +3,9 @@
 
 #include <tuple>
 
-#include <dune/common/tupleutility.hh>
-
+#include <dune/common/hybridutilities.hh>
+#include <dune/common/std/utility.hh>
 #include <dune/fem/io/streams/streams.hh>
-
-namespace
-{
-
-  // TupleToInStream
-  // ---------------
-
-  template< class InStream >
-  class TupleToInStream
-  {
-    struct InStreamFunctor
-    {
-      InStreamFunctor ( InStream &in ) : in_( in ) {}
-
-      template< class T >
-      void visit ( T &t ) const
-      {
-        in_ >> t;
-      }
-
-      private:
-        InStream &in_;
-    };
-
-  public:
-    template< class Tuple >
-    static InStream &apply ( InStream &in, Tuple &tuple )
-    {
-      Dune::ForEachValue< Tuple > forEach( tuple );
-      InStreamFunctor functor( in );
-      forEach.apply( functor );
-      return in;
-    }
-  };
-
-
-
-  // TupleToOutStream
-  // ----------------
-
-  template< class OutStream >
-  class TupleToOutStream
-  {
-    struct OutStreamFunctor
-    {
-      OutStreamFunctor ( OutStream &out ) : out_( out ) {}
-
-      template< class T >
-      void visit ( T &t ) const
-      {
-        out_ << t;
-      }
-
-      private:
-        OutStream &out_;
-    };
-
-  public:
-    template< class Tuple >
-    static OutStream &apply ( OutStream &out, const Tuple &tuple )
-    {
-      Dune::ForEachValue< Tuple > forEach( const_cast< Tuple & >( tuple ) );
-      OutStreamFunctor functor( out );
-      forEach.apply( functor );
-      return out;
-    }
-  };
-
-} // namespace
-
 
 
 namespace Dune
@@ -108,7 +38,9 @@ namespace Dune
     inline InStreamInterface< StreamTraits > &
       operator>> ( InStreamInterface< StreamTraits > &in, std::tuple< Args... > &tuple )
     {
-      return TupleToInStream< InStreamInterface< StreamTraits > >::template apply< std::tuple< Args... > >( in, tuple );
+
+      Hybrid::forEach ( Std::make_index_sequence< sizeof...( Args ) >{}, [ & ]( auto i ){ in >> std::get< i >( tuple ); } );
+      return in;
     }
 
 
@@ -127,7 +59,8 @@ namespace Dune
     inline OutStreamInterface< StreamTraits > &
       operator<< ( OutStreamInterface< StreamTraits > &out, const std::tuple< Args... > &tuple )
     {
-      return TupleToOutStream< OutStreamInterface< StreamTraits > >::template apply< std::tuple < Args... > >( out, tuple );
+      Hybrid::forEach ( Std::make_index_sequence< sizeof...( Args ) >{}, [ & ]( auto i ){ out << std::get< i >( tuple ); } );
+      return out;
     }
 
   } // namespace Fem
