@@ -291,7 +291,21 @@ try
   // initialize MPI manager and PETSc
   Dune::Fem::MPIManager::initialize( argc, argv );
 
-  GridType grid( {1, 1}, {{2, 2}} );
+  // GridType grid( {1, 1}, {{2, 2}} );
+  std::stringstream gridfile;
+  gridfile << "DGF" << std::endl;
+  gridfile << "Interval" << std::endl;
+  Dune::FieldVector< double, GridType::dimension> lower( 0 );
+  Dune::FieldVector< double, GridType::dimension> upper( 1 );
+  Dune::FieldVector< int,    GridType::dimension> length( 2 );
+
+  gridfile << lower  << std::endl;
+  gridfile << upper  << std::endl;
+  gridfile << length << std::endl;
+  gridfile << "#" << std::endl;
+
+  Dune::GridPtr< GridType > gridPtr( gridfile );
+  GridType& grid = *gridPtr;
 
   GridPartType gridPart( grid );
   TestGridPartType testGridPart( gridPart );
