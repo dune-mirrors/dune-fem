@@ -445,7 +445,7 @@ namespace Dune
         return new Tuple();
       }
 
-      //! restore all data in tupel
+      //! restore all data in tuple
       template< class GridType >
       static void restoreData ( Tuple &data,
                                 const GridType &grid,

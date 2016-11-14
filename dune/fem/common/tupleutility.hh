@@ -302,7 +302,7 @@ namespace Dune
     {
       using std::get;
       assert( i < size() );
-      return get< pos >( vector_[ i ] );
+      return std::get< pos >( vector_[ i ] );
     }
 
     //! return reference to i-th entry of vector and passId's tuple component
@@ -310,7 +310,7 @@ namespace Dune
     {
       using std::get;
       assert( i < size() );
-      return get< pos >( vector_[ i ] );
+      return std::get< pos >( vector_[ i ] );
     }
 
     //! return size of vector
