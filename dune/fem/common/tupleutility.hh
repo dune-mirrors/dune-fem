@@ -6,6 +6,8 @@
 #include <dune/common/tupleutility.hh>
 #include <dune/common/std/utility.hh>
 
+#include <dune/fem/common/tupleutility.hh>
+
 namespace
 {
 
