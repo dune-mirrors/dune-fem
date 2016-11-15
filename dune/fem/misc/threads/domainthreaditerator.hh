@@ -61,7 +61,7 @@ namespace Dune {
       int sequence_;
       std::vector< FilteredGridPartType* > filteredGridParts_;
 
-      typedef typename FilterType :: ThreadArrayType ThreadArrayType;
+      typedef typename FilterType :: DomainArrayType ThreadArrayType;
       ThreadArrayType threadNum_;
 #endif
       // ratio of computing time needed by the master thread compared to the other threads
