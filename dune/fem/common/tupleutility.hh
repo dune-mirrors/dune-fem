@@ -6,6 +6,8 @@
 #include <dune/common/tupleutility.hh>
 #include <dune/common/std/utility.hh>
 
+#include <dune/fem/common/tupleutility.hh>
+
 namespace
 {
 
@@ -300,17 +302,17 @@ namespace Dune
     //! return reference to i-th entry of vector and pos's tuple component
     ValueType &operator [] ( const size_t i )
     {
-      using std::get;
+      using std::get; // for TypeIndexedTuple the function get is in namespace Dune
       assert( i < size() );
-      return std::get< pos >( vector_[ i ] );
+      return get< pos >( vector_[ i ] );
     }
 
     //! return reference to i-th entry of vector and passId's tuple component
     const ValueType &operator [] ( const size_t i ) const
     {
-      using std::get;
+      using std::get; // for TypeIndexedTuple the function get is in namespace Dune
       assert( i < size() );
-      return std::get< pos >( vector_[ i ] );
+      return get< pos >( vector_[ i ] );
     }
 
     //! return size of vector
