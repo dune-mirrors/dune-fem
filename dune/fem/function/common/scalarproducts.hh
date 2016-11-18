@@ -221,10 +221,10 @@ namespace Dune
       : gridPart_( other.gridPart_ ), mapper_( other.mapper_ )
       {}
 
-      //! returns true if indexSet pointer and numDofs are equal
+      //! returns true if mapper is the same
       bool operator== ( const SingletonKey &other ) const
       {
-        return (&gridPart_ == &other.gridPart_) && (mapper_ == other.mapper_);
+        return (mapper_ == other.mapper_);
       }
 
       //! return reference to index set
@@ -351,7 +351,7 @@ namespace Dune
     protected:
       const DiscreteFunctionSpaceType &space_;
 
-      // is singleton per space
+      // is singleton per space (i.e. mapper)
       SlaveDofsType *slaveDofs_;
 
     public:
@@ -384,7 +384,7 @@ namespace Dune
       const SlaveDofsType &slaveDofs () const
       {
         // rebuild slave dofs if grid was changed
-        slaveDofs_->rebuild(space());
+        slaveDofs_->rebuild( space() );
         return *slaveDofs_;
       }
 
