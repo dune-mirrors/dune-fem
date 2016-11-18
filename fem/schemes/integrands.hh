@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 #include <dune/common/ftraits.hh>
@@ -12,6 +13,104 @@ namespace Dune
 
   namespace Fem
   {
+
+    // IntegrandsTraits
+    // ----------------
+
+    namespace Impl
+    {
+
+      namespace IntegrandsTraits
+      {
+
+        template< class Integrands >
+        using ValueType = typename Integrands::ValueType;
+
+        template< class Integrands >
+        using GridPartType = typename Integrands::GridPartType;
+
+
+        template< class Integrands >
+        using EntityType = typename GridPartType< Integrands >::template Codim< 0 >::EntityType;
+
+        template< class Integrands >
+        using IntersectionType = typename GridPartType< Integrands >::IntersectionType;
+
+
+        template< class Integrands >
+        using InteriorQuadratureType = CachingQuadrature< GridPartType< Integrands >, 0 >;
+
+        template< class Integrands >
+        using SurfaceQuadratureType = CachingQuadrature< GridPartType< Integrands >, 1 >;
+
+
+        template< class Integrands >
+        using InteriorQuadraturePointType = QuadraturePointWrapper< InteriorQuadratureType< Integrands > >;
+
+        template< class Integrands >
+        using SurfaceQuadraturePointType = QuadraturePointWrapper< SurfaceQuadratureType< Integrands > >;
+
+
+        template< class Integrands >
+        static std::true_type interior ( const Integrands &, decltype( std::declval< const Integrands & >().interior( std::declval< const InteriorQuadraturePointType< Integrands > & >(), std::declval< const ValueType< Integrands > & >() ) ) * = nullptr );
+
+        static std::false_type interior ( ... );
+
+        template< class Integrands, std::enable_if_t< std::is_same< decltype( std::declval< const Integrands & >().hasInterior() ), bool >::value, int > = 0 >
+        static std::true_type hasInterior ( const Integrands & );
+
+        static std::false_type hasInterior ( ... );
+
+
+        template< class Integrands >
+        static std::true_type boundary ( const Integrands &, decltype( std::declval< const Integrands & >().boundary( std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const ValueType< Integrands > & >() ) ) * = nullptr );
+
+        static std::false_type boundary ( ... );
+
+        template< class Integrands, std::enable_if_t< std::is_same< decltype( std::declval< const Integrands & >().hasBoundary() ), bool >::value, int > = 0 >
+        static std::true_type hasBoundary ( const Integrands & );
+
+        static std::false_type hasBoundary ( ... );
+
+
+        template< class Integrands >
+        static std::true_type skeleton ( const Integrands &, decltype( std::declval< const Integrands & >().skeleton( std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const ValueType< Integrands > & >(), std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const ValueType< Integrands > & >() ) ) * = nullptr );
+
+        static std::false_type skeleton ( ... );
+
+        template< class Integrands, std::enable_if_t< std::is_same< decltype( std::declval< const Integrands & >().hasSkeleton() ), bool >::value, int > = 0 >
+        static std::true_type hasSkeleton ( const Integrands & );
+
+        static std::false_type hasSkeleton ( ... );
+
+      } // namespace IntegrandsTraits
+
+    } // namespace Impl
+
+    template< class Integrands >
+    struct IntegrandsTraits
+    {
+      typedef Impl::IntegrandsTraits::ValueType< Integrands > ValueType;
+      typedef Impl::IntegrandsTraits::GridPartType< Integrands > GridPartType;
+
+      typedef Impl::IntegrandsTraits::EntityType< Integrands > EntityType;
+      typedef Impl::IntegrandsTraits::IntersectionType< Integrands > IntersectionType;
+
+      static const bool interior = decltype( Impl::IntegrandsTraits::interior( std::declval< const Integrands & >() ) )::value;
+      static const bool hasInterior = decltype( Impl::IntegrandsTraits::hasInterior( std::declval< const Integrands & >() ) )::value;
+
+      static const bool boundary = decltype( Impl::IntegrandsTraits::boundary( std::declval< const Integrands & >() ) )::value;
+      static const bool hasBoundary = decltype( Impl::IntegrandsTraits::hasBoundary( std::declval< const Integrands & >() ) )::value;
+
+      static const bool skeleton = decltype( Impl::IntegrandsTraits::skeleton( std::declval< const Integrands & >() ) )::value;
+      static const bool hasSkeleton = decltype( Impl::IntegrandsTraits::hasSkeleton( std::declval< const Integrands & >() ) )::value;
+
+      static_assert( (!hasInterior || interior), "Existence of method 'hasInterior' implies existence of method interior." );
+      static_assert( (!hasBoundary || boundary), "Existence of method 'hasBoundary' implies existence of method boundary." );
+      static_assert( (!hasSkeleton || skeleton), "Existence of method 'hasSkeleton' implies existence of method skeleton." );
+    };
+
+
 
     // DiffusionModelIntegrands
     // ------------------------
