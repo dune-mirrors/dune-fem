@@ -401,7 +401,8 @@ namespace Dune
       // setup vector according to mapping sizes
       void init()
       {
-        dofMapping().update();
+        // update slave dofs to make dof mappings consistent
+        petscSlaveDofs_.update();
 
         // set up the DofMapping instance and all variables depending on it
         localSize_ = dofMapping().numOwnedDofBlocks() * blockSize;

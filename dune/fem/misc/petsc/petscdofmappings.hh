@@ -40,6 +40,7 @@ namespace Dune
 
     public:
       typedef SlaveDofs  SlaveDofsType;
+      typedef typename SlaveDofsType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
 
       typedef std::vector< int >                       DofMappingType;
       typedef DofMappingType::size_type                IndexType;
@@ -48,8 +49,7 @@ namespace Dune
       typedef PetscInt  GlobalDofType ;
       typedef Dune::DynamicVector< GlobalDofType >           GlobalDofMappingType ;
 
-      template <class Space>
-      PetscDofMappings ( const Space &space, SlaveDofs *slaveDofs )
+      PetscDofMappings ( SlaveDofs *slaveDofs )
       :   slaveDofs_( *slaveDofs ),
           numOwnedDofBlocks_( 0 ),
           numSlaveBlocks_( 0 ),
@@ -58,18 +58,15 @@ namespace Dune
           globalDofMapping_(),
           sequence_( -1 )
       {
-        // update dof mapping
-        update(space);
       }
 
-      template <class Space>
-      bool update (const Space &space)
+      bool update (const DiscreteFunctionSpaceType &space)
       {
         slaveDofs_.rebuild(space);
         const int sequence = space.sequence();
         if( sequence_ != sequence )
         {
-          initialize( slaveDofs_ );
+          initialize( space, slaveDofs_ );
           sequence_ = sequence ;
           return true ;
         }
@@ -119,8 +116,7 @@ namespace Dune
       PetscDofMappings& operator= ( const ThisType& ) = delete;
 
     private:
-      template< typename SlaveDofProvider >
-      void initializeMappings ( SlaveDofProvider& slaveDofs )
+      void initializeMappings ( const DiscreteFunctionSpaceType& space, const SlaveDofsType& slaveDofs )
       {
         // How the local slave mapping is build:
         // Let s_1 < ... < s_n be the slave dof indices (as given by the slaveDofs object) and let
@@ -128,9 +124,6 @@ namespace Dune
         // dofs in a PETSc Vec 'behind the array'. So the local slave mapping is now simply a vector with the following
         // components:
         //    d_1, d_2, ..., d_n, s_1, s_2, ..., s_n
-
-        typedef typename SlaveDofProvider :: DiscreteFunctionSpaceType  SpaceType;
-        const SpaceType& space = slaveDofs.space();
 
         #ifndef NDEBUG
           int ownedDofBlocks = 0;
@@ -173,8 +166,8 @@ namespace Dune
         #endif
         assert( numOwnedDofBlocks_ == ownedDofBlocks );
 
-        typedef typename SpaceType :: template ToNewDimRange< 1 > :: Type DofSpaceType ;
-        typedef typename SpaceType :: GridPartType  GridPartType;
+        typedef typename DiscreteFunctionSpaceType :: template ToNewDimRange< 1 > :: Type DofSpaceType ;
+        typedef typename DiscreteFunctionSpaceType :: GridPartType  GridPartType;
         GridPartType& gridPart = const_cast< GridPartType& > (space.gridPart());
 
         if( space.continuous() )
@@ -211,10 +204,10 @@ namespace Dune
         }
       }
 
-      void initialize ( const SlaveDofsType& slaveDofs )
+      void initialize ( const DiscreteFunctionSpaceType& space, const SlaveDofsType& slaveDofs )
       {
         numSlaveBlocks_    = slaveDofs.size() - 1;
-        numOwnedDofBlocks_ = slaveDofs.space().blockMapper().size() - numSlaveBlocks_;
+        numOwnedDofBlocks_ = space.blockMapper().size() - numSlaveBlocks_;
 
         // start with index 0 (use unsigned long as buffers)
         unsigned long processStartIndex = 0;
@@ -226,7 +219,7 @@ namespace Dune
         // store my start index
         processStartIndex_ = processStartIndex ;
 
-        initializeMappings( slaveDofs );
+        initializeMappings( space, slaveDofs );
 
         #ifndef NDEBUG
           checkSlaveConsistency( slaveDofs );
