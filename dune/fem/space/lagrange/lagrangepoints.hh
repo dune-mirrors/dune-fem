@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_SPACE_LAGRANGE_LAGRANGEPOINTS_HH
 #define DUNE_FEM_SPACE_LAGRANGE_LAGRANGEPOINTS_HH
 
+// dune-common includes
+#include <dune/common/forloop.hh>
+
 // dune-geometry includes
 #include <dune/geometry/referenceelements.hh>
 
