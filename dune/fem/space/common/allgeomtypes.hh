@@ -6,6 +6,7 @@
 #include <map>
 
 //- Dune includes
+#include <dune/common/forloop.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 #include <dune/grid/common/capabilities.hh>
