@@ -92,6 +92,8 @@ namespace Dune
         return hostEntity_;
       }
 
+      unsigned int subEntities ( unsigned int cdim ) const { return hostEntity().subEntities( cdim ); }
+
     private:
       const CoordFunctionType *coordFunction_ = nullptr;
       HostEntityType hostEntity_;
