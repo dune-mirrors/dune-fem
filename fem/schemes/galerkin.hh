@@ -77,19 +77,13 @@ namespace Dune
       public:
         // interior integrand
 
-        template< class Integrands, std::enable_if_t< Fem::IntegrandsTraits< Integrands >::hasInterior, int > = 0 >
+        template< class Integrands >
         static bool hasInteriorIntegrand ( const Integrands &integrands )
         {
           return integrands.hasInterior();
         }
 
-        template< class Integrands, std::enable_if_t< !Fem::IntegrandsTraits< Integrands >::hasInterior, int > = 0 >
-        static bool hasInteriorIntegrand ( const Integrands &integrands )
-        {
-          return Fem::IntegrandsTraits< Integrands >::interior;
-        }
-
-        template< class Integrands, class W, std::enable_if_t< Fem::IntegrandsTraits< Integrands >::interior, int > = 0 >
+        template< class Integrands, class W >
         static void addInteriorIntegrand ( const Integrands &integrands, const InteriorQuadraturePointType &qp, const RangeFieldType &weight, const ValueType &u, W &w )
         {
           ValueType integrand = integrands.interior( qp, u );
@@ -98,11 +92,7 @@ namespace Dune
           w.axpy( qp, std::get< 0 >( integrand ), std::get< 1 >( integrand ) );
         }
 
-        template< class Integrands, class W, std::enable_if_t< !Fem::IntegrandsTraits< Integrands >::interior, int > = 0 >
-        static void addInteriorIntegrand ( const Integrands &integrands, const InteriorQuadraturePointType &qp, const RangeFieldType &weight, const ValueType &u, W &w )
-        {}
-
-        template< class Integrands, class J, std::enable_if_t< Fem::IntegrandsTraits< Integrands >::interior, int > = 0 >
+        template< class Integrands, class J >
         static void addLinearizedInteriorIntegrand ( const Integrands &integrands, const InteriorQuadraturePointType &qp, const RangeFieldType &weight, const ValueType &u, const ValueVectorType &phi, std::size_t cols, J &j )
         {
           auto integrand = integrands.linearizedInterior( qp, u );
@@ -113,25 +103,15 @@ namespace Dune
           }
         }
 
-        template< class Integrands, class J, std::enable_if_t< !Fem::IntegrandsTraits< Integrands >::interior, int > = 0 >
-        static void addLinearizedInteriorIntegrand ( const Integrands &integrands, const InteriorQuadraturePointType &qp, const RangeFieldType &weight, const ValueType &u, const ValueVectorType &phi, std::size_t cols, J &j )
-        {}
-
         // boundary integrand
 
-        template< class Integrands, std::enable_if_t< Fem::IntegrandsTraits< Integrands >::hasBoundary, int > = 0 >
+        template< class Integrands >
         static bool hasBoundaryIntegrand ( const Integrands &integrands )
         {
           return integrands.hasBoundary();
         }
 
-        template< class Integrands, std::enable_if_t< !Fem::IntegrandsTraits< Integrands >::hasBoundary, int > = 0 >
-        static bool hasBoundaryIntegrand ( const Integrands &integrands )
-        {
-          return Fem::IntegrandsTraits< Integrands >::boundary;
-        }
-
-        template< class Integrands, class W, std::enable_if_t< Fem::IntegrandsTraits< Integrands >::boundary, int > = 0 >
+        template< class Integrands, class W >
         static void addBoundaryIntegrand ( const Integrands &integrands, const SurfaceQuadraturePointType &qp, const RangeFieldType &weight, const ValueType &u, W &w )
         {
           ValueType integrand = integrands.boundary( qp, u );
@@ -140,11 +120,7 @@ namespace Dune
           w.axpy( qp, std::get< 0 >( integrand ), std::get< 1 >( integrand ) );
         }
 
-        template< class Integrands, class W, std::enable_if_t< !Fem::IntegrandsTraits< Integrands >::boundary, int > = 0 >
-        static void addBoundaryIntegrand ( const Integrands &integrands, const SurfaceQuadraturePointType &qp, const RangeFieldType &weight, const ValueType &u, W &w )
-        {}
-
-        template< class Integrands, class J, std::enable_if_t< Fem::IntegrandsTraits< Integrands >::boundary, int > = 0 >
+        template< class Integrands, class J >
         static void addLinearizedBoundaryIntegrand ( const Integrands &integrands, const SurfaceQuadraturePointType &qp, const RangeFieldType &weight, const ValueType &u, const ValueVectorType &phi, std::size_t cols, J &j )
         {
           auto integrand = integrands.linearizedBoundary( qp, u );
@@ -155,25 +131,15 @@ namespace Dune
           }
         }
 
-        template< class Integrands, class J, std::enable_if_t< !Fem::IntegrandsTraits< Integrands >::boundary, int > = 0 >
-        static void addLinearizedBoundaryIntegrand ( const Integrands &integrands, const SurfaceQuadraturePointType &qp, const RangeFieldType &weight, const ValueType &u, const ValueVectorType &phi, std::size_t cols, J &j )
-        {}
-
         // skeleton integrand
 
-        template< class Integrands, std::enable_if_t< Fem::IntegrandsTraits< Integrands >::hasSkeleton, int > = 0 >
+        template< class Integrands >
         static bool hasSkeletonIntegrand ( const Integrands &integrands )
         {
           return integrands.hasSkeleton();
         }
 
-        template< class Integrands, std::enable_if_t< !Fem::IntegrandsTraits< Integrands >::hasSkeleton, int > = 0 >
-        static bool hasSkeletonIntegrand ( const Integrands &integrands )
-        {
-          return Fem::IntegrandsTraits< Integrands >::skeleton;
-        }
-
-        template< class Integrands, class QP, class W, std::enable_if_t< Fem::IntegrandsTraits< Integrands >::skeleton, int > = 0 >
+        template< class Integrands, class QP, class W >
         static void addSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, W &wIn )
         {
           std::pair< ValueType, ValueType > integrand = integrands.skeleton( qpIn, uIn, qpOut, uOut );
@@ -182,7 +148,7 @@ namespace Dune
           wIn.axpy( qpIn, std::get< 0 >( integrand.first ), std::get< 1 >( integrand.first ) );
         }
 
-        template< class Integrands, class QP, class W, std::enable_if_t< Fem::IntegrandsTraits< Integrands >::skeleton, int > = 0 >
+        template< class Integrands, class QP, class W >
         static void addSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, W &wIn, W &wOut )
         {
           std::pair< ValueType, ValueType > integrand = integrands.skeleton( qpIn, uIn, qpOut, uOut );
@@ -194,15 +160,7 @@ namespace Dune
           wOut.axpy( qpOut, std::get< 0 >( integrand.second ), std::get< 1 >( integrand.second ) );
         }
 
-        template< class Integrands, class QP, class W, std::enable_if_t< !Fem::IntegrandsTraits< Integrands >::skeleton, int > = 0 >
-        static void addSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, W &wIn )
-        {}
-
-        template< class Integrands, class QP, class W, std::enable_if_t< !Fem::IntegrandsTraits< Integrands >::skeleton, int > = 0 >
-        static void addSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, W &wIn, W &wOut )
-        {}
-
-        template< class Integrands, class QP, class J, std::enable_if_t< Fem::IntegrandsTraits< Integrands >::skeleton, int > = 0 >
+        template< class Integrands, class QP, class J >
         static void addLinearizedSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn )
         {
           auto integrand = integrands.linearizedSkeleton( qpIn, uIn, qpOut, uOut );
@@ -218,7 +176,7 @@ namespace Dune
           }
         }
 
-        template< class Integrands, class QP, class J, std::enable_if_t< Fem::IntegrandsTraits< Integrands >::skeleton, int > = 0 >
+        template< class Integrands, class QP, class J >
         static void addLinearizedSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn, J &jInOut, J &jOutOut )
         {
           auto integrand = integrands.linearizedSkeleton( qpIn, uIn, qpOut, uOut );
@@ -235,14 +193,6 @@ namespace Dune
             jOutOut.column( col ).axpy( std::get< 0 >( phiOut ), std::get< 1 >( phiOut ), std::get< 0 >( intPhi.second ), std::get< 1 >( intPhi.second ), weight );
           }
         }
-
-        template< class Integrands, class QP, class J, std::enable_if_t< !Fem::IntegrandsTraits< Integrands >::skeleton, int > = 0 >
-        static void addLinearizedSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn )
-        {}
-
-        template< class Integrands, class QP, class J, std::enable_if_t< !Fem::IntegrandsTraits< Integrands >::skeleton, int > = 0 >
-        static void addLinearizedSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn, J &jInOut, J &jOutOut )
-        {}
 
         // interior integral
 
@@ -623,6 +573,8 @@ namespace Dune
     {
       typedef DiscreteFunction DiscreteFunctionType;
 
+      typedef std::conditional_t< IntegrandsTraits< Integrands >::isFull, Integrands, FullIntegrands< Integrands > > IntegrandsType;
+
       typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
       template< class... Args >
@@ -637,7 +589,7 @@ namespace Dune
 
     protected:
       Impl::GalerkinOperator< DiscreteFunctionSpaceType > impl_;
-      mutable Integrands integrands_;
+      mutable IntegrandsType integrands_;
     };
 
 

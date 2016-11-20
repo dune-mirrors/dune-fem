@@ -2,6 +2,7 @@
 #define DUNE_FEM_SCHEMES_INTEGRANDS_HH
 
 #include <algorithm>
+#include <functional>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -108,6 +109,187 @@ namespace Dune
       static_assert( (!hasInterior || interior), "Existence of method 'hasInterior' implies existence of method interior." );
       static_assert( (!hasBoundary || boundary), "Existence of method 'hasBoundary' implies existence of method boundary." );
       static_assert( (!hasSkeleton || skeleton), "Existence of method 'hasSkeleton' implies existence of method skeleton." );
+
+      static const bool isFull = hasInterior && hasBoundary && hasSkeleton;
+    };
+
+
+
+    // FullIntegrands
+    // --------------
+
+    template< class Integrands >
+    struct FullIntegrands
+    {
+      typedef typename IntegrandsTraits< Integrands >::ValueType ValueType;
+      typedef typename IntegrandsTraits< Integrands >::GridPartType GridPartType;
+
+      typedef typename IntegrandsTraits< Integrands >::EntityType EntityType;
+      typedef typename IntegrandsTraits< Integrands >::IntersectionType IntersectionType;
+
+    private:
+      template< class T, std::enable_if_t< IntegrandsTraits< T >::hasInterior, int > = 0 >
+      static bool hasInterior ( const T &integrands )
+      {
+        return integrands.hasInterior();
+      }
+
+      template< class T, std::enable_if_t< !IntegrandsTraits< T >::hasInterior, int > = 0 >
+      static bool hasInterior ( const T &integrands )
+      {
+        return IntegrandsTraits< T >::interior;
+      }
+
+      template< class T, class Point, std::enable_if_t< IntegrandsTraits< T >::interior, int > = 0 >
+      static ValueType interior ( const T &integrands, const Point &x, const ValueType &u )
+      {
+        return integrands.interior( x, u );
+      }
+
+      template< class T, class Point, std::enable_if_t< !IntegrandsTraits< T >::interior, int > = 0 >
+      static ValueType interior ( const T &integrands, const Point &x, const ValueType &u )
+      {
+        return ValueType();
+      }
+
+      template< class T, class Point, std::enable_if_t< IntegrandsTraits< T >::interior, int > = 0 >
+      static auto linearizedInterior ( const T &integrands, const Point &x, const ValueType &u )
+      {
+        return integrands.linearizedInterior( x, u );
+      }
+
+      template< class T, class Point, std::enable_if_t< !IntegrandsTraits< T >::interior, int > = 0 >
+      static auto linearizedInterior ( const T &integrands, const Point &x, const ValueType &u )
+      {
+        return [] ( const ValueType & ) { return ValueType(); };
+      }
+
+      template< class T, std::enable_if_t< IntegrandsTraits< T >::hasBoundary, int > = 0 >
+      static bool hasBoundary ( const T &integrands )
+      {
+        return integrands.hasBoundary();
+      }
+
+      template< class T, std::enable_if_t< !IntegrandsTraits< T >::hasBoundary, int > = 0 >
+      static bool hasBoundary ( const T &integrands )
+      {
+        return IntegrandsTraits< T >::boundary;
+      }
+
+      template< class T, class Point, std::enable_if_t< IntegrandsTraits< T >::boundary, int > = 0 >
+      static ValueType boundary ( const T &integrands, const Point &x, const ValueType &u )
+      {
+        return integrands.boundary( x, u );
+      }
+
+      template< class T, class Point, std::enable_if_t< !IntegrandsTraits< T >::boundary, int > = 0 >
+      static ValueType boundary ( const T &integrands, const Point &x, const ValueType &u )
+      {
+        return ValueType();
+      }
+
+      template< class T, class Point, std::enable_if_t< IntegrandsTraits< T >::boundary, int > = 0 >
+      static auto linearizedBoundary ( const T &integrands, const Point &x, const ValueType &u )
+      {
+        return integrands.linearizedBoundary( x, u );
+      }
+
+      template< class T, class Point, std::enable_if_t< !IntegrandsTraits< T >::boundary, int > = 0 >
+      static auto linearizedBoundary ( const T &integrands, const Point &x, const ValueType &u )
+      {
+        return [] ( const ValueType & ) { return ValueType(); };
+      }
+
+      template< class T, std::enable_if_t< IntegrandsTraits< T >::hasSkeleton, int > = 0 >
+      static bool hasSkeleton ( const T &integrands )
+      {
+        return integrands.hasSkeleton();
+      }
+
+      template< class T, std::enable_if_t< !IntegrandsTraits< T >::hasSkeleton, int > = 0 >
+      static bool hasSkeleton ( const T &integrands )
+      {
+        return IntegrandsTraits< T >::skeleton;
+      }
+
+      template< class T, class Point, std::enable_if_t< IntegrandsTraits< T >::skeleton, int > = 0 >
+      static std::pair< ValueType, ValueType > skeleton ( const T &integrands, const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut )
+      {
+        return integrands.skeleton( xIn, uIn, xOut, uOut );
+      }
+
+      template< class T, class Point, std::enable_if_t< !IntegrandsTraits< T >::skeleton, int > = 0 >
+      static std::pair< ValueType, ValueType > skeleton ( const T &integrands, const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut )
+      {
+        return std::make_pair( ValueType(), ValueType() );
+      }
+
+      template< class T, class Point, std::enable_if_t< IntegrandsTraits< T >::skeleton, int > = 0 >
+      static auto linearizedSkeleton ( const T &integrands, const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut )
+      {
+        return integrands.linearizedSkeleton( integrands, xIn, uIn, xOut, uOut );
+      }
+
+      template< class T, class Point, std::enable_if_t< !IntegrandsTraits< T >::skeleton, int > = 0 >
+      static auto linearizedSkeleton ( const T &integrands, const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut )
+      {
+        auto zero = [] ( const ValueType & ) { return std::make_pair( ValueType(), ValueType() ); };
+        return std::make_pair( zero, zero );
+      }
+
+    public:
+      template< class... Args >
+      explicit FullIntegrands ( Args &&... args )
+        : integrands_( std::forward< Args >( args )... )
+      {}
+
+      bool init ( const EntityType &entity ) { return std::ref( integrands_ ).get().init( entity ); }
+      bool init ( const IntersectionType &intersection ) { return std::ref( integrands_ ).get().init( intersection ); }
+
+      bool hasInterior () const { return hasInterior( std::ref( integrands_ ).get() ); }
+
+      template< class Point >
+      ValueType interior ( const Point &x, const ValueType &u ) const
+      {
+        return interior( std::ref( integrands_ ).get(), x, u );
+      }
+
+      template< class Point >
+      auto linearizedInterior ( const Point &x, const ValueType &u ) const
+      {
+        return linearizedInterior( std::ref( integrands_ ).get(), x, u );
+      }
+
+      bool hasBoundary () const { return hasBoundary( std::ref( integrands_ ).get() ); }
+
+      template< class Point >
+      ValueType boundary ( const Point &x, const ValueType &u ) const
+      {
+        return boundary( std::ref( integrands_ ).get(), x, u );
+      }
+
+      template< class Point >
+      auto linearizedBoundary ( const Point &x, const ValueType &u ) const
+      {
+        return linearizedBoundary( std::ref( integrands_ ).get(), x, u );
+      }
+
+      bool hasSkeleton () const { return hasSkeleton( std::ref( integrands_ ).get() ); }
+
+      template< class Point >
+      std::pair< ValueType, ValueType > skeleton ( const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut ) const
+      {
+        return skeleton( std::ref( integrands_ ).get(), xIn, uIn, xOut, uOut );
+      }
+
+      template< class Point >
+      auto linearizedSkeleton ( const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut ) const
+      {
+        return linearizedSkeleton( std::ref( integrands_ ).get(), xIn, uIn, xOut, uOut );
+      }
+
+    private:
+      Integrands integrands_;
     };
 
 
