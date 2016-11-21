@@ -31,7 +31,7 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: BlockMapperType  BlockMapperType;
 
       // type of communication manager object which does communication
-      typedef PetscDofMappings PetscDofMappingType;
+      typedef PetscDofMappings<DiscreteFunctionSpaceType> PetscDofMappingType;
       typedef SingletonList< const DiscreteFunctionSpaceType*, PetscDofMappingType > PetscDofMappingProviderType;
 
       explicit PetscSlaveDofProvider ( const DiscreteFunctionSpaceType &space )
