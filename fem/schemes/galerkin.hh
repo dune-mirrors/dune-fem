@@ -74,92 +74,6 @@ namespace Dune
           basis.jacobianAll( x, std::get< 1 >( phi ) );
         }
 
-      public:
-        // interior integrand
-
-        template< class Integrands >
-        static bool hasInteriorIntegrand ( const Integrands &integrands )
-        {
-          return integrands.hasInterior();
-        }
-
-        template< class Integrands, class W >
-        static void addInteriorIntegrand ( const Integrands &integrands, const InteriorQuadraturePointType &qp, const RangeFieldType &weight, const ValueType &u, W &w )
-        {
-          ValueType integrand = integrands.interior( qp, u );
-          std::get< 0 >( integrand ) *= weight;
-          std::get< 1 >( integrand ) *= weight;
-          w.axpy( qp, std::get< 0 >( integrand ), std::get< 1 >( integrand ) );
-        }
-
-        template< class Integrands, class J >
-        static void addLinearizedInteriorIntegrand ( const Integrands &integrands, const InteriorQuadraturePointType &qp, const RangeFieldType &weight, const ValueType &u, const ValueVectorType &phi, std::size_t cols, J &j )
-        {
-          auto integrand = integrands.linearizedInterior( qp, u );
-          for( std::size_t col = 0; col < cols; ++col )
-          {
-            ValueType intPhi = integrand( std::make_tuple( std::get< 0 >( phi )[ col ], std::get< 1 >( phi )[ col ] ) );
-            j.column( col ).axpy( std::get< 0 >( phi ), std::get< 1 >( phi ), std::get< 0 >( intPhi ), std::get< 1 >( intPhi ), weight );
-          }
-        }
-
-        // boundary integrand
-
-        template< class Integrands >
-        static bool hasBoundaryIntegrand ( const Integrands &integrands )
-        {
-          return integrands.hasBoundary();
-        }
-
-        template< class Integrands, class W >
-        static void addBoundaryIntegrand ( const Integrands &integrands, const SurfaceQuadraturePointType &qp, const RangeFieldType &weight, const ValueType &u, W &w )
-        {
-          ValueType integrand = integrands.boundary( qp, u );
-          std::get< 0 >( integrand ) *= weight;
-          std::get< 1 >( integrand ) *= weight;
-          w.axpy( qp, std::get< 0 >( integrand ), std::get< 1 >( integrand ) );
-        }
-
-        template< class Integrands, class J >
-        static void addLinearizedBoundaryIntegrand ( const Integrands &integrands, const SurfaceQuadraturePointType &qp, const RangeFieldType &weight, const ValueType &u, const ValueVectorType &phi, std::size_t cols, J &j )
-        {
-          auto integrand = integrands.linearizedBoundary( qp, u );
-          for( std::size_t col = 0; col < cols; ++col )
-          {
-            ValueType intPhi = integrand( std::make_tuple( std::get< 0 >( phi )[ col ], std::get< 1 >( phi )[ col ] ) );
-            j.column( col ).axpy( std::get< 0 >( phi ), std::get< 1 >( phi ), std::get< 0 >( intPhi ), std::get< 1 >( intPhi ), weight );
-          }
-        }
-
-        // skeleton integrand
-
-        template< class Integrands >
-        static bool hasSkeletonIntegrand ( const Integrands &integrands )
-        {
-          return integrands.hasSkeleton();
-        }
-
-        template< class Integrands, class QP, class W >
-        static void addSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, W &wIn )
-        {
-          std::pair< ValueType, ValueType > integrand = integrands.skeleton( qpIn, uIn, qpOut, uOut );
-          std::get< 0 >( integrand.first ) *= weight;
-          std::get< 1 >( integrand.first ) *= weight;
-          wIn.axpy( qpIn, std::get< 0 >( integrand.first ), std::get< 1 >( integrand.first ) );
-        }
-
-        template< class Integrands, class QP, class W >
-        static void addSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, W &wIn, W &wOut )
-        {
-          std::pair< ValueType, ValueType > integrand = integrands.skeleton( qpIn, uIn, qpOut, uOut );
-          std::get< 0 >( integrand.first ) *= weight;
-          std::get< 1 >( integrand.first ) *= weight;
-          wIn.axpy( qpIn, std::get< 0 >( integrand.first ), std::get< 1 >( integrand.first ) );
-          std::get< 0 >( integrand.second ) *= weight;
-          std::get< 1 >( integrand.second ) *= weight;
-          wOut.axpy( qpOut, std::get< 0 >( integrand.second ), std::get< 1 >( integrand.second ) );
-        }
-
         template< class Integrands, class QP, class J >
         static void addLinearizedSkeletonIntegrand ( const Integrands &integrands, const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn )
         {
@@ -194,6 +108,7 @@ namespace Dune
           }
         }
 
+      public:
         // interior integral
 
         template< class Integrands, class U, class W >
@@ -206,7 +121,12 @@ namespace Dune
           for( const InteriorQuadraturePointType qp : InteriorQuadratureType( u.entity(), 2*w.order() ) )
           {
             const RangeFieldType weight = qp.weight() * geometry.integrationElement( qp.position() );
-            addInteriorIntegrand( integrands, qp, weight, value( u, qp ), w );
+
+            ValueType integrand = integrands.interior( qp, value( u, qp ) );
+
+            std::get< 0 >( integrand ) *= weight;
+            std::get< 1 >( integrand ) *= weight;
+            w.axpy( qp, std::get< 0 >( integrand ), std::get< 1 >( integrand ) );
           }
         }
 
@@ -221,8 +141,15 @@ namespace Dune
           for( const auto qp : InteriorQuadratureType( u.entity(), 2*basis.order() ) )
           {
             const auto weight = qp.weight() * geometry.integrationElement( qp.position() );
+
             values( basis, qp, phi );
-            addLinearizedInteriorIntegrand( integrands, qp, weight, value( u, qp ), phi, basis.size(), j );
+            auto integrand = integrands.linearizedInterior( qp, value( u, qp ) );
+
+            for( std::size_t col = 0, cols = basis.size(); col < cols; ++col )
+            {
+              ValueType intPhi = integrand( std::make_tuple( std::get< 0 >( phi )[ col ], std::get< 1 >( phi )[ col ] ) );
+              j.column( col ).axpy( std::get< 0 >( phi ), std::get< 1 >( phi ), std::get< 0 >( intPhi ), std::get< 1 >( intPhi ), weight );
+            }
           }
         }
 
@@ -238,7 +165,12 @@ namespace Dune
           for( const SurfaceQuadraturePointType qp : SurfaceQuadratureType( gridPart(), intersection, 2*w.order(), SurfaceQuadratureType::INSIDE ) )
           {
             const RangeFieldType weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
-            addBoundaryIntegrand( integrands, qp, weight, value( u, qp ), w );
+
+            ValueType integrand = integrands.boundary( qp, value( u, qp ) );
+
+            std::get< 0 >( integrand ) *= weight;
+            std::get< 1 >( integrand ) *= weight;
+            w.axpy( qp, std::get< 0 >( integrand ), std::get< 1 >( integrand ) );
           }
         }
 
@@ -253,8 +185,15 @@ namespace Dune
           for( const SurfaceQuadraturePointType qp : SurfaceQuadratureType( gridPart(), intersection, 2*basis.order(), SurfaceQuadratureType::INSIDE ) )
           {
             const RangeFieldType weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
+
             values( basis, qp, phi );
-            addLinearizedBoundaryIntegrand( integrands, qp, weight, value( u, qp ), phi, basis.size(), j );
+            auto integrand = integrands.linearizedBoundary( qp, value( u, qp ) );
+
+            for( std::size_t col = 0, cols = basis.size(); col < cols; ++col )
+            {
+              ValueType intPhi = integrand( std::make_tuple( std::get< 0 >( phi )[ col ], std::get< 1 >( phi )[ col ] ) );
+              j.column( col ).axpy( std::get< 0 >( phi ), std::get< 1 >( phi ), std::get< 0 >( intPhi ), std::get< 1 >( intPhi ), weight );
+            }
           }
         }
 
@@ -271,8 +210,11 @@ namespace Dune
 
             const auto qpIn = quadrature.inside()[ qp ];
             const auto qpOut = quadrature.outside()[ qp ];
+            std::pair< ValueType, ValueType > integrand = integrands.skeleton( qpIn, value( uIn, qpIn ), qpOut, value( uOut, qpOut ) );
 
-            addSkeletonIntegrand( integrands, qpIn, qpOut, weight, value( uIn, qpIn ), value( uOut, qpOut ), wIn );
+            std::get< 0 >( integrand.first ) *= weight;
+            std::get< 1 >( integrand.first ) *= weight;
+            wIn.axpy( qpIn, std::get< 0 >( integrand.first ), std::get< 1 >( integrand.first ) );
           }
         }
 
@@ -287,8 +229,15 @@ namespace Dune
 
             const auto qpIn = quadrature.inside()[ qp ];
             const auto qpOut = quadrature.outside()[ qp ];
+            std::pair< ValueType, ValueType > integrand = integrands.skeleton( qpIn, value( uIn, qpIn ), qpOut, value( uOut, qpOut ) );
 
-            addSkeletonIntegrand( integrands, qpIn, qpOut, weight, value( uIn, qpIn ), value( uOut, qpOut ), wIn, wOut );
+            std::get< 0 >( integrand.first ) *= weight;
+            std::get< 1 >( integrand.first ) *= weight;
+            wIn.axpy( qpIn, std::get< 0 >( integrand.first ), std::get< 1 >( integrand.first ) );
+
+            std::get< 0 >( integrand.second ) *= weight;
+            std::get< 1 >( integrand.second ) *= weight;
+            wOut.axpy( qpOut, std::get< 0 >( integrand.second ), std::get< 1 >( integrand.second ) );
           }
         }
 
@@ -359,10 +308,10 @@ namespace Dune
             wLocal.init( entity );
             wLocal.clear();
 
-            if( hasInteriorIntegrand( integrands ) )
+            if( integrands.hasInterior() )
               addInteriorIntegral( integrands, uLocal, wLocal );
 
-            if( hasBoundaryIntegrand( integrands ) && entity.hasBoundaryIntersections() )
+            if( integrands.hasBoundary() && entity.hasBoundaryIntersections() )
             {
               for( const auto &intersection : intersections( gridPart(), entity ) )
               {
@@ -392,14 +341,14 @@ namespace Dune
             wInside.init( inside );
             wInside.clear();
 
-            if( hasInteriorIntegrand( integrands ) )
+            if( integrands.hasInterior() )
               addInteriorIntegral( integrands, uInside, wInside );
 
             for( const auto &intersection : intersections( gridPart(), inside ) )
             {
               if( intersection.boundary() )
               {
-                if( hasBoundaryIntegrand( integrands ) )
+                if( integrands.hasBoundary() )
                   addBoundaryIntegral( integrands, intersection, uInside, wInside );
               }
               else if( intersection.neighbor() )
@@ -428,7 +377,7 @@ namespace Dune
         template< class Integrands, class GridFunction, class DiscreteFunction >
         void evaluate ( Integrands &integrands, const GridFunction &u, DiscreteFunction &w ) const
         {
-          if( hasSkeletonIntegrand( integrands ) )
+          if( integrands.hasSkeleton() )
             evaluate( integrands, u, w, std::true_type() );
           else
             evaluate( integrands, u, w, std::false_type() );
@@ -456,10 +405,10 @@ namespace Dune
             jOpLocal.init( entity, entity );
             jOpLocal.clear();
 
-            if( hasInteriorIntegrand( integrands ) )
+            if( integrands.hasInterior() )
               addLinearizedInteriorIntegral( integrands, uLocal, phi, jOpLocal );
 
-            if( hasBoundaryIntegrand( integrands ) && entity.hasBoundaryIntersections() )
+            if( integrands.hasBoundary() && entity.hasBoundaryIntersections() )
             {
               for( const auto &intersection : intersections( gridPart(), entity ) )
               {
@@ -498,14 +447,14 @@ namespace Dune
             jOpInIn.init( inside, inside );
             jOpInIn.clear();
 
-            if( hasInteriorIntegrand( integrands ) )
+            if( integrands.hasInterior() )
               addLinearizedInteriorIntegral( integrands, uIn, phiIn, jOpInIn );
 
             for( const auto &intersection : intersections( gridPart(), inside ) )
             {
               if( intersection.boundary() )
               {
-                if( hasBoundaryIntegrand( integrands ) )
+                if( integrands.hasBoundary() )
                   addLinearizedBoundaryIntegral( integrands, intersection, uIn, phiIn, jOpInIn );
               }
               else if( intersection.neighbor() )
@@ -544,7 +493,7 @@ namespace Dune
         template< class Integrands, class GridFunction, class JacobianOperator >
         void assemble ( Integrands &integrands, const GridFunction &u, JacobianOperator &jOp ) const
         {
-          if( hasSkeletonIntegrand( integrands ) )
+          if( integrands.hasSkeleton() )
             assemble( integrands, u, jOp, std::true_type() );
           else
             assemble( integrands, u, jOp, std::false_type() );
