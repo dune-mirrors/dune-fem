@@ -17,6 +17,7 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/space/common/slavedofs.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/version.hh>
 
@@ -200,6 +201,8 @@ namespace Dune
       typedef typename GridPartType :: template Codim< Traits::codimension > :: EntityType EntityType;
       //! type of the intersections
       typedef typename GridPartType :: IntersectionType IntersectionType;
+      //! type of slavedofs
+      typedef SlaveDofs< DiscreteFunctionSpaceType, BlockMapperType > SlaveDofsType;
 
       /** \brief defines type of data handle for communication
           \param  DiscreteFunction  type of \ref Dune::Fem::DiscreteFunctionInterface
@@ -528,6 +531,13 @@ namespace Dune
         return asImp().createDataHandle( discreteFunction, operation );
       }
 
+      /** \brief get slave dofs */
+      const SlaveDofsType& slaveDofs() const
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().slaveDofs() );
+        return asImp().slaveDofs();
+      }
+
     protected:
       // Barton-Nackman trick
       inline const DiscreteFunctionSpaceType &asImp () const
@@ -614,6 +624,10 @@ namespace Dune
 
       //! type of communication manager
       typedef CommunicationManager< DiscreteFunctionSpaceType > CommunicationManagerType;
+
+      typedef typename BaseType :: SlaveDofsType SlaveDofsType;
+      typedef typename SlaveDofsType :: SingletonKey SlaveDofsKeyType;
+      typedef SingletonList< SlaveDofsKeyType, SlaveDofsType > SlaveDofsProviderType;
     protected:
       GridPartType &gridPart_;
 
@@ -650,8 +664,14 @@ namespace Dune
         allGeomTypes_( gridPart.indexSet() ),
         dofManager_( DofManagerType :: instance( gridPart.grid() ) ),
         commInterface_( commInterface ),
-        commDirection_( commDirection )
+        commDirection_( commDirection ),
+        slaveDofs_( 0 )
       {}
+      ~DiscreteFunctionSpaceDefault ()
+      {
+        if( slaveDofs_ )
+          SlaveDofsProviderType :: removeObject( *slaveDofs_ );
+      }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::sequence */
       inline int sequence () const
@@ -837,6 +857,15 @@ namespace Dune
           :: Type( discreteFunction, operation );
       }
 
+      /** \brief get slave dofs */
+      const SlaveDofsType& slaveDofs() const
+      {
+        if (!slaveDofs_)
+          slaveDofs_ = &( SlaveDofsProviderType :: getObject( SlaveDofsKeyType( this->gridPart(), this->blockMapper() ) ) );
+        slaveDofs_->rebuild(asImp());
+        return *slaveDofs_;
+      }
+
       /** \brief default implementation of addFunction does nothing at the moment */
       template <class DiscreteFunction>
       void addFunction( DiscreteFunction& df ) const
@@ -869,6 +898,7 @@ namespace Dune
 
       // only combined space should use geomTypes
       template <class , int , DofStoragePolicy> friend class CombinedSpace;
+      mutable SlaveDofsType *slaveDofs_;
     };
 
 
