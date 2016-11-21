@@ -262,7 +262,7 @@ class SourceWriter:
                 self.emit('namespace', indent)
             self.emit('{', indent)
             self.emit('', indent)
-            self.emit(src.content, intent+1, src)
+            self.emit(src.content, indent+1, src)
             self.emit('', indent)
             if src.name is not None:
                 self.emit('} // namespace ' + src.name, indent)
