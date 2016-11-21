@@ -1,10 +1,15 @@
 from __future__ import division, print_function
 
+import types
+
 from ufl import Coefficient, Form
 from ufl import action, derivative
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.constantvalue import IntValue, Zero
+from ufl.equation import Equation
 from ufl.differentiation import Grad
+
+from dune.generator import builder
 
 from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, Struct, TypeAlias, Variable
 from dune.source.cplusplus import construct, lambda_, make_pair, makeExpression, return_
@@ -149,12 +154,12 @@ class Integrands():
 
         return result
 
-    def write(self, sourceWriter, name='Integrands', targs=[]):
-        code = Struct(name, targs=(['class GridPart'] + targs + ['class... Coefficients']))
-        code.append(self.pre())
-        code.append(self.main())
-        code.append(self.post())
-        sourceWriter.emit(code)
+    def code(self, name='Integrands', targs=[]):
+        result = Struct(name, targs=(['class GridPart'] + targs + ['class... Coefficients']))
+        result.append(self.pre())
+        result.append(self.main())
+        result.append(self.post())
+        return result
 
 
 def generateCode(predefined, testFunctions, tensorMap, coefficients, tempVars=True):
@@ -283,6 +288,7 @@ def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tens
 
     return preamble + [return_(make_pair(tensorIn, tensorOut))]
 
+
 def compileUFL(equation, tempVars=True):
     form = equation.lhs - equation.rhs
     if not isinstance(form, Form):
@@ -353,3 +359,54 @@ def compileUFL(equation, tempVars=True):
         integrands.linearizedSkeleton = generateBinaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('interior_facet'), integrands.coefficients, tempVars)
 
     return integrands
+
+
+def load(grid, integrands, tempVars=True):
+    if isinstance(integrands, Equation):
+        integrands = compileUFL(integrands, tempVars)
+
+    if not isinstance(grid, types.ModuleType):
+        grid = grid._module
+    name = 'integrands_' + integrands.signature + "_" + grid._moduleName
+
+    writer = SourceWriter()
+
+    writer.emit("".join(["#include <" + i + ">\n" for i in grid._includes]))
+    writer.emit('')
+    writer.emit('#include <dune/fem/misc/boundaryidprovider.hh>')
+    writer.emit('')
+    writer.emit('#include <dune/corepy/pybind11/pybind11.h>')
+    writer.emit('#include <dune/corepy/pybind11/extensions.h>')
+    writer.emit('')
+    writer.emit('#include <dune/fempy/py/grid/gridpart.hh>')
+    if integrands.coefficients:
+        writer.emit('#include <dune/fempy/function/virtualizedgridfunction.hh>')
+        writer.emit('')
+    writer.emit('#include <dune/fem/schemes/integrands.hh>')
+
+    modelNameSpace = 'Integrands_' + integrands.signature
+
+    writer.openNameSpace(modelNameSpace)
+    writer.emit(integrands.code())
+    writer.closeNameSpace(modelNameSpace)
+
+    post = []
+    post.append(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + grid._typeName + ' >'));
+    if integrands.coefficients:
+        rangetypes = ['Dune::FieldVector< ' + SourceWriter.cpp_fields(c['field']) + ', ' + str(c['dimRange']) + ' >' for c in integrands.coefficients if not c['constant']]
+        coefficients = ['Dune::FemPy::VirtualizedLocalFunction< GridPart, ' + ', '.join(r) + ' >' for r in rangetypes]
+    else:
+        coefficients = []
+    post.append(TypeAlias('Integrands', modelNameSpace + '::Integrands< ' + ', '.join(['GridPart'] + coefficients) + ' >'))
+    post.append(TypeAlias('VirtualizedIntegrands', 'Dune::Fem::VirtualizedIntegrands< GridPart, typename Integrands::ValueType >'))
+    writer.emit(post);
+
+    writer.openPythonModule(name)
+    writer.emit('if( !pybind11::already_registered< VirtualizedIntegrands >() )')
+    writer.emit('  pybind11::class_< VirtualizedIntegrands >( module, "VirtualizedIntegrands" );')
+    writer.closePythonModule(name)
+
+    source = writer.writer.getvalue()
+    writer.close()
+
+    return builder.load(name, source, "integrands")
