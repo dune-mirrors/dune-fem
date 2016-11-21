@@ -61,7 +61,6 @@ namespace Dune
     protected:
       typedef Fem :: CommunicationIndexMap IndexMapType;
 
-      const SpaceType &space_;
       const GridPartType &gridPart_;
       const MapperType &mapper_;
 
@@ -78,8 +77,7 @@ namespace Dune
     public:
       //! constructor taking space
       SlaveDofs ( const SingletonKey &key )
-      : space_( key.space() ),
-        gridPart_( space_.gridPart() ),
+      : gridPart_( key.gridPart() ),
         mapper_( key.mapper() ),
         myRank_( gridPart_.comm().rank() ),
         mySize_( gridPart_.comm().size() ),
@@ -126,7 +124,7 @@ namespace Dune
       }
 
       //! finalize
-      void finalize ()
+      void finalize (const SpaceType &space)
       {
         // insert slaves
         slaves_.set( slaveSet_ );
@@ -135,38 +133,32 @@ namespace Dune
         slaveSet_.clear();
 
         // store actual sequence number
-        sequence_ = space_.sequence();
+        sequence_ = space.sequence();
       }
 
       //! check if grid has changed and rebuild cache if necessary
-      void rebuild ()
+      void rebuild (const SpaceType &space)
       {
         // check whether grid has changed.
-        if( sequence_ != space_.sequence() )
+        if( sequence_ != space.sequence() )
         {
           initialize();
-          buildMaps();
-          finalize();
+          buildMaps(space);
+          finalize(space);
         }
       }
 
-      //! return reference to discrete function space
-      const SpaceType& space () const
-      {
-        return space_;
-      }
-
     protected:
-      void buildMaps ()
+      void buildMaps (const SpaceType &space)
       {
         // build linkage and index maps
-        if( !space_.continuous() )
-          buildDiscontinuousMaps();
+        if( !space.continuous() )
+          buildDiscontinuousMaps(space);
         else
-          buildCommunicatedMaps();
+          buildCommunicatedMaps(space);
       }
 
-      void buildDiscontinuousMaps ()
+      void buildDiscontinuousMaps (const SpaceType &space)
       {
         // for discontinuous spaces we don't have to communicate
         const auto idxpitype = GridPartType :: indexSetPartitionType;
@@ -181,7 +173,7 @@ namespace Dune
         insert( mapper_.size() );
       }
 
-      void buildCommunicatedMaps ()
+      void buildCommunicatedMaps (const SpaceType &space)
       {
         // we have to skip communication when parallel program is executed only on one processor
         // otherwise YaspGrid and Lagrange polorder=2 fails :(
@@ -189,7 +181,7 @@ namespace Dune
         {
           try
           {
-            LinkBuilder handle( *this, space_ , mapper_ );
+            LinkBuilder handle( *this, space , mapper_ );
             gridPart_.communicate( handle, GridPartType::indexSetInterfaceType, ForwardCommunication );
           }
           catch( const Exception &e )
@@ -211,33 +203,34 @@ namespace Dune
     {
     public:
       typedef Space SpaceType;
+      typedef typename SpaceType::GridPartType GridPartType;
       typedef Mapper MapperType;
 
     protected:
-      const SpaceType &space_;
+      const GridPartType &gridPart_;
       const MapperType *const mapper_;
 
     public:
       //! constructor taking space
       SingletonKey ( const SpaceType &space, const MapperType &mapper )
-      : space_( space ), mapper_( &mapper )
+      : gridPart_( space.gridPart() ), mapper_( &mapper )
       {}
 
       //! copy constructor
       SingletonKey ( const SingletonKey &other )
-      : space_( other.space_ ), mapper_( other.mapper_ )
+      : gridPart_( other.gridPart_ ), mapper_( other.mapper_ )
       {}
 
-      //! returns true if indexSet pointer and numDofs are equal
+      //! returns true if mapper is the same
       bool operator== ( const SingletonKey &other ) const
       {
-        return (space_ == other.space_) && (mapper_ == other.mapper_);
+        return (mapper_ == other.mapper_);
       }
 
       //! return reference to index set
-      const SpaceType &space () const
+      const GridPartType &gridPart () const
       {
-        return space_;
+        return gridPart_;
       }
 
       //! return reference to index set
@@ -358,7 +351,7 @@ namespace Dune
     protected:
       const DiscreteFunctionSpaceType &space_;
 
-      // is singleton per space
+      // is singleton per space (i.e. mapper)
       SlaveDofsType *slaveDofs_;
 
     public:
@@ -391,7 +384,7 @@ namespace Dune
       const SlaveDofsType &slaveDofs () const
       {
         // rebuild slave dofs if grid was changed
-        slaveDofs_->rebuild();
+        slaveDofs_->rebuild( space() );
         return *slaveDofs_;
       }
 
@@ -468,6 +461,8 @@ namespace Dune
       template < class OtherDiscreteFunctionType >
       RangeFieldType scalarProductDofs ( const DiscreteFunctionType &x, const OtherDiscreteFunctionType &y ) const
       {
+        assert(&(x.space()) == &(y.space()));
+        assert(&(x.space()) == &(this->space()));
         return dotProduct( x.dofVector(), y.dofVector() );
       }
 

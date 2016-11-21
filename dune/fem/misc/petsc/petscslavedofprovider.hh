@@ -33,7 +33,7 @@ namespace Dune
       using BaseType :: slaveDofs_;
 
     public:
-      typedef typename DiscreteFunctionSpaceType :: BlockMapperType  BlockMapperType;
+      typedef typename DiscreteFunctionSpaceType :: BlockMapperType   BlockMapperType;
       typedef SlaveDofs< DiscreteFunctionSpaceType, BlockMapperType > SlaveDofsType;
 
 
@@ -45,6 +45,7 @@ namespace Dune
       : BaseType( space ),
         dofMapping_( PetscDofMappingProviderType::getObject( slaveDofs_ ) )
       {
+        dofMapping_.update( space );
       }
 
       //! destructor
@@ -57,7 +58,7 @@ namespace Dune
       //! update dof mapping
       void update()
       {
-        dofMapping_.update();
+        dofMapping_.update( space_ );
       }
 
       const PetscDofMappingType& dofMapping() const { return dofMapping_; }
