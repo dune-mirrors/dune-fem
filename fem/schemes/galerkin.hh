@@ -19,6 +19,7 @@
 #include <dune/fem/operator/common/temporarylocalmatrix.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/intersectionquadrature.hh>
+#include <dune/fem/solver/newtoninverseoperator.hh>
 
 #include <dune/fem/schemes/integrands.hh>
 
@@ -555,6 +556,8 @@ namespace Dune
         return impl_.evaluate( u, w );
       }
 
+      const DiscreteFunctionSpaceType &discreteFunctionSpace () const { return impl_.discreteFunctionSpace(); }
+
     protected:
       Impl::GalerkinOperator< DiscreteFunctionSpaceType, Integrands > impl_;
     };
@@ -655,6 +658,86 @@ namespace Dune
       void prepare( RangeDiscreteFunctionType &u ) const {}
 
       void prepare( const RangeDiscreteFunctionType &u, RangeDiscreteFunctionType &w ) const {}
+    };
+
+
+
+    // GalerkinScheme
+    // --------------
+
+    template< class Operator, class InverseOperator >
+    struct GalerkinScheme
+    {
+      typedef Operator DifferentiableOperatorType;
+
+      typedef typename DifferentiableOperatorType::RangeDiscreteFunctionType DiscreteFunctionType;
+      typedef typename DifferentiableOperatorType::JacobianOperatorType LinearOperatorType;
+
+      typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+
+      typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
+      typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+
+      struct SolverInfo
+      {
+        SolverInfo ( bool converged, int linearIterations, int nonlinearIterations )
+          : converged( converged ), linearIterations( linearIterations ), nonlinearIterations( nonlinearIterations )
+        {}
+
+        bool converged;
+        int linearIterations, nonlinearIterations;
+      };
+
+      template< class... Args >
+      GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, Dune::Fem::ParameterReader parameter, const Args &&... args )
+        : fullOperator_( dfSpace, std::forward< Args >( args )... ),
+          linearOperator_( "assembled elliptic operator", dfSpace, dfSpace ),
+          parameter_( std::move( parameter ) )
+      {}
+
+      template< class... Args >
+      GalerkinScheme ( const DiscreteFunctionSpaceType &space, const Args &&... args )
+        : GalerkinScheme( space, Dune::Fem::Parameter::container(), std::forward< Args >( args )... )
+      {}
+
+      const DifferentiableOperatorType &fullOperator() const { return fullOperator_; }
+
+      void constraint ( DiscreteFunctionType &u ) const {}
+
+      template< class GridFunction >
+      void operator() ( const GridFunction &u, DiscreteFunctionType &w ) const
+      {
+        fullOperator()( u, w );
+      }
+
+      SolverInfo solve ( DiscreteFunctionType &solution ) const
+      {
+        DiscreteFunctionType bnd( solution );
+        bnd.clear();
+
+        Dune::Fem::NewtonInverseOperator< LinearOperatorType, InverseOperator > invOp( fullOperator(), parameter_ );
+        invOp( bnd, solution );
+
+        return SolverInfo( invOp.converged(), invOp.linearIterations(), invOp.iterations() );
+      }
+
+      template< class GridFunction >
+      const LinearOperatorType &assemble ( const GridFunction &ubar )
+      {
+        fullOperator().jacobian( ubar, linearOperator_ );
+        return linearOperator_;
+      }
+
+      bool mark ( double tolerance ) { return false; }
+      double estimate ( const DiscreteFunctionType &solution ) { return 0.0; }
+
+      const DiscreteFunctionSpaceType &space () const { return fullOperator_.discreteFunctionSpace(); }
+      const GridPartType &gridPart () const { return space().gridPart(); }
+
+    protected:
+      DifferentiableOperatorType fullOperator_;
+      LinearOperatorType linearOperator_;
+      Dune::Fem::ParameterReader parameter_;
     };
 
   } // namespace Fem
