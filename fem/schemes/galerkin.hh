@@ -665,10 +665,10 @@ namespace Dune
     // GalerkinScheme
     // --------------
 
-    template< class Operator, class InverseOperator >
+    template< class Integrands, class LinearOperator, class InverseOperator >
     struct GalerkinScheme
     {
-      typedef Operator DifferentiableOperatorType;
+      typedef DifferentiableGalerkinOperator< LinearOperator, Integrands > DifferentiableOperatorType;
 
       typedef typename DifferentiableOperatorType::RangeDiscreteFunctionType DiscreteFunctionType;
       typedef typename DifferentiableOperatorType::JacobianOperatorType LinearOperatorType;
@@ -688,16 +688,8 @@ namespace Dune
         int linearIterations, nonlinearIterations;
       };
 
-      template< class... Args >
-      GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, Dune::Fem::ParameterReader parameter, const Args &&... args )
-        : fullOperator_( dfSpace, std::forward< Args >( args )... ),
-          linearOperator_( "assembled elliptic operator", dfSpace, dfSpace ),
-          parameter_( std::move( parameter ) )
-      {}
-
-      template< class... Args >
-      GalerkinScheme ( const DiscreteFunctionSpaceType &space, const Args &&... args )
-        : GalerkinScheme( space, Dune::Fem::Parameter::container(), std::forward< Args >( args )... )
+      GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, Integrands integrands, ParameterReader parameter = Parameter::container )
+        : fullOperator_( dfSpace, std::move( integrands ) ), parameter_( std::move( parameter ) ), linearOperator_( "assembled elliptic operator", dfSpace, dfSpace )
       {}
 
       const DifferentiableOperatorType &fullOperator() const { return fullOperator_; }
@@ -736,8 +728,8 @@ namespace Dune
 
     protected:
       DifferentiableOperatorType fullOperator_;
+      ParameterReader parameter_;
       LinearOperatorType linearOperator_;
-      Dune::Fem::ParameterReader parameter_;
     };
 
   } // namespace Fem
