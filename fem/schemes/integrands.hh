@@ -9,6 +9,8 @@
 
 #include <dune/common/ftraits.hh>
 
+#include <dune/fempy/quadrature/cachingpoint.hh>
+
 namespace Dune
 {
 
@@ -290,6 +292,170 @@ namespace Dune
 
     private:
       Integrands integrands_;
+    };
+
+
+
+    // VirtualizedIntegrands
+    // ---------------------
+
+    template< class GridPart, class Value >
+    class VirtualizedIntegrands
+    {
+      typedef VirtualizedIntegrands< GridPart, Value > This;
+
+    public:
+      typedef GridPart GridPartType;
+      typedef Value ValueType;
+
+      typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
+      typedef typename GridPartType::IntersectionType IntersectionType;
+
+    private:
+      typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
+
+      typedef QuadraturePointWrapper< FemPy::CachingPoint< LocalCoordinateType > > InteriorQuadraturePointType;
+      typedef QuadraturePointWrapper< FemPy::CachingPoint< LocalCoordinateType > > SurfaceQuadraturePointType;
+
+      template< class R >
+      using Linearization = std::function< R( const ValueType & ) >;
+
+      template< class R >
+      using LinearizationPair = std::pair< Linearization< std::pair< R, R > >, Linearization< std::pair< R, R > > >;
+
+      struct Interface
+      {
+        virtual ~Interface ()  {}
+
+        virtual bool init ( const EntityType &entity ) = 0;
+        virtual bool init ( const IntersectionType &intersection ) = 0;
+
+        virtual bool hasInterior () const = 0;
+        virtual ValueType interior ( const InteriorQuadraturePointType &x, const ValueType &u ) const = 0;
+        virtual Linearization< ValueType > linearizedInterior ( const InteriorQuadraturePointType &x, const ValueType &u ) const = 0;
+
+        virtual bool hasBoundary () const = 0;
+        virtual ValueType boundary ( const SurfaceQuadraturePointType &x, const ValueType &u ) const = 0;
+        virtual Linearization< ValueType > linearizedBoundary ( const SurfaceQuadraturePointType &x, const ValueType &u ) const = 0;
+
+        virtual bool hasSkeleton () const = 0;
+        virtual std::pair< ValueType, ValueType > skeleton ( const SurfaceQuadraturePointType &xIn, const ValueType &uIn, const SurfaceQuadraturePointType &xOut, const ValueType &uOut ) const = 0;
+        virtual LinearizationPair< ValueType > linearizedSkeleton ( const SurfaceQuadraturePointType &xIn, const ValueType &uIn, const SurfaceQuadraturePointType &xOut, const ValueType &uOut ) const = 0;
+      };
+
+      template< class Impl >
+      struct Implementation final
+        : public Interface
+      {
+        Implementation ( Impl impl ) : impl_( std::move( impl ) ) {}
+        virtual Interface *clone () const override { return new Implementation( *this ); }
+
+        virtual bool init ( const EntityType &entity ) override { return impl().init( entity ); }
+        virtual bool init ( const IntersectionType &intersection ) override { return impl().init( intersection ); }
+
+        virtual bool hasInterior () const override { return impl().hasInterior(); }
+        virtual ValueType interior ( const InteriorQuadraturePointType &x, const ValueType &u ) const override { return impl().interior( x, u ); }
+        virtual Linearization< ValueType > linearizedInterior ( const InteriorQuadraturePointType &x, const ValueType &u ) const override { return impl().linearizedInterior( x, u ); }
+
+        virtual bool hasBoundary () const override { return impl().hasBoundary(); }
+        virtual ValueType boundary ( const SurfaceQuadraturePointType &x, const ValueType &u ) const override { return impl().boundary( x, u ); }
+        virtual Linearization< ValueType > linearizedBoundary ( const SurfaceQuadraturePointType &x, const ValueType &u ) const override { return impl().linearizedBoundary( x, u ); }
+
+        virtual bool hasSkeleton () const override { return impl().hasSkeleton(); }
+        virtual std::pair< ValueType, ValueType > skeleton ( const SurfaceQuadraturePointType &xIn, const ValueType &uIn, const SurfaceQuadraturePointType &xOut, const ValueType &uOut ) const override { return impl().skeleton( xIn, uIn, xOut, uOut ); }
+        virtual LinearizationPair< ValueType > linearizedSkeleton ( const SurfaceQuadraturePointType &xIn, const ValueType &uIn, const SurfaceQuadraturePointType &xOut, const ValueType &uOut ) const override { return impl().linearizedSkeleton( xIn, uIn, xOut, uOut ); }
+
+      private:
+        const auto &impl () const { return std::cref( impl_ ).get(); }
+        auto &impl () { return std::ref( impl_ ).get(); }
+
+        Impl impl_;
+      };
+
+    public:
+      template< class Integrands, std::enable_if_t< IntegrandsTraits< std::decay_t< Integrands > >::isFull && !std::is_same< std::decay_t< Integrands >, This >::value, int > = 0 >
+      explicit VirtualizedIntegrands ( Integrands integrands )
+        : impl_( new Implementation< Integrands >( std::move( integrands ) ) )
+      {}
+
+      template< class Integrands, std::enable_if_t< !IntegrandsTraits< Integrands >::isFull, int > = 0 >
+      explicit VirtualizedIntegrands ( Integrands integrands )
+        : VirtualizedIntegrands( FullIntegrands< std::decay_t< Integrands > >( std::move( integrands ) ) )
+      {}
+
+      VirtualizedIntegrands ( const This &other ) : impl_( other ? other.impl_->clone() : nullptr ) {}
+      VirtualizedIntegrands ( This && ) = default;
+
+      VirtualizedIntegrands &operator= ( const This &other ) { impl_.reset( other ? other.impl_->clone() : nullptr ); }
+      VirtualizedIntegrands &operator= ( This && ) = default;
+
+      explicit operator bool () const { return static_cast< bool >( impl_ ); }
+
+      bool init ( const EntityType &entity ) { return impl_->init( entity ); }
+      bool init ( const IntersectionType &intersection ) { return impl_->init( intersection ); }
+
+      bool hasInterior () const { return impl_->hasInterior(); }
+
+      template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
+      ValueType interior ( const Fem::QuadraturePointWrapper< Quadrature > &x, const ValueType &u ) const
+      {
+        // note: QuadraturePoint will store a reference to QuadratureCacheIdentifier.
+        //       This object must be kept alive until the evaluation returns!
+        FemPy::CachingPoint< LocalCoordinateType > y( x );
+        return impl_->interior( static_cast< InteriorQuadraturePointType >( y ), u );
+      }
+
+      template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
+      auto linerizedInterior ( const Fem::QuadraturePointWrapper< Quadrature > &x, const ValueType &u ) const
+      {
+        // note: QuadraturePoint will store a reference to QuadratureCacheIdentifier.
+        //       This object must be kept alive until the evaluation returns!
+        FemPy::CachingPoint< LocalCoordinateType > y( x );
+        return impl_->linearizedInterior( static_cast< InteriorQuadraturePointType >( y ), u );
+      }
+
+      bool hasBoundary () const { return impl_->hasBoundary(); }
+
+      template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
+      ValueType boundary ( const Fem::QuadraturePointWrapper< Quadrature > &x, const ValueType &u ) const
+      {
+        // note: QuadraturePoint will store a reference to QuadratureCacheIdentifier.
+        //       This object must be kept alive until the evaluation returns!
+        FemPy::CachingPoint< LocalCoordinateType > y( x );
+        return impl_->boundary( static_cast< SurfaceQuadraturePointType >( y ), u );
+      }
+
+      template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
+      auto linearizedBoundary ( const Fem::QuadraturePointWrapper< Quadrature > &x, const ValueType &u ) const
+      {
+        // note: QuadraturePoint will store a reference to QuadratureCacheIdentifier.
+        //       This object must be kept alive until the evaluation returns!
+        FemPy::CachingPoint< LocalCoordinateType > y( x );
+        return impl_->linearizedBoundary( static_cast< SurfaceQuadraturePointType >( y ), u );
+      }
+
+      bool hasSkeleton () const { return impl_->hasSkeleton(); }
+
+      template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
+      std::pair< ValueType, ValueType > skeleton ( const Fem::QuadraturePointWrapper< Quadrature > &xIn, const ValueType &uIn, const Fem::QuadraturePointWrapper< Quadrature > &xOut, const ValueType &uOut ) const
+      {
+        // note: QuadraturePoint will store a reference to QuadratureCacheIdentifier.
+        //       This object must be kept alive until the evaluation returns!
+        FemPy::CachingPoint< LocalCoordinateType > yIn( xIn ), yOut( xOut );
+        return impl_->skeleton( static_cast< SurfaceQuadraturePointType >( yIn ), uIn, static_cast< SurfaceQuadraturePointType >( yOut ), uOut );
+      }
+
+      template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
+      auto linearizedSkeleton ( const Fem::QuadraturePointWrapper< Quadrature > &xIn, const ValueType &uIn, const Fem::QuadraturePointWrapper< Quadrature > &xOut, const ValueType &uOut ) const
+      {
+        // note: QuadraturePoint will store a reference to QuadratureCacheIdentifier.
+        //       This object must be kept alive until the evaluation returns!
+        FemPy::CachingPoint< LocalCoordinateType > yIn( xIn ), yOut( xOut );
+        return impl_->linearizedSkeleton( static_cast< SurfaceQuadraturePointType >( yIn ), uIn, static_cast< SurfaceQuadraturePointType >( yOut ), uOut );
+      }
+
+    private:
+      std::unique_ptr< Interface > impl_;
     };
 
 
