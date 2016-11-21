@@ -33,11 +33,13 @@ namespace Dune
      *
      * =================================================
      */
+    template <class Space>
     class PetscDofMappings
     {
       typedef PetscDofMappings ThisType;
 
     public:
+      typedef Space                                    DiscreteFunctionSpaceType;
       typedef std::vector< int >                       DofMappingType;
       typedef DofMappingType::size_type                IndexType;
       typedef typename DofMappingType::value_type      DofType;
@@ -45,8 +47,7 @@ namespace Dune
       typedef PetscInt  GlobalDofType ;
       typedef Dune::DynamicVector< GlobalDofType >           GlobalDofMappingType ;
 
-      template <class Space>
-      PetscDofMappings ( const Space *space )
+      PetscDofMappings ( const DiscreteFunctionSpaceType *space )
       : numOwnedDofBlocks_( 0 ),
         numSlaveBlocks_( 0 ),
         processStartIndex_( 0 ),
@@ -58,8 +59,7 @@ namespace Dune
         update(*space);
       }
 
-      template <class Space>
-      bool update (const Space &space)
+      bool update (const DiscreteFunctionSpaceType &space)
       {
         auto &slaveDofs = space.slaveDofs();
         const int sequence = space.sequence();
@@ -115,8 +115,8 @@ namespace Dune
       PetscDofMappings& operator= ( const ThisType& ) = delete;
 
     private:
-      template< typename Space, typename SlaveDofsProvider >
-      void initializeMappings ( const Space &space, const SlaveDofsProvider& slaveDofs )
+      template< typename SlaveDofsProvider >
+      void initializeMappings ( const DiscreteFunctionSpaceType &space, const SlaveDofsProvider& slaveDofs )
       {
         // How the local slave mapping is build:
         // Let s_1 < ... < s_n be the slave dof indices (as given by the slaveDofs object) and let
@@ -166,8 +166,8 @@ namespace Dune
         #endif
         assert( numOwnedDofBlocks_ == ownedDofBlocks );
 
-        typedef typename Space :: template ToNewDimRange< 1 > :: Type DofSpaceType ;
-        typedef typename Space :: GridPartType  GridPartType;
+        typedef typename DiscreteFunctionSpaceType :: template ToNewDimRange< 1 > :: Type DofSpaceType ;
+        typedef typename DiscreteFunctionSpaceType :: GridPartType  GridPartType;
         GridPartType& gridPart = const_cast< GridPartType& > (space.gridPart());
 
         if( space.continuous() )
@@ -204,8 +204,8 @@ namespace Dune
         }
       }
 
-      template< typename Space, typename SlaveDofsProvider >
-      void initialize ( const Space &space, const SlaveDofsProvider& slaveDofs )
+      template< typename SlaveDofsProvider >
+      void initialize ( const DiscreteFunctionSpaceType &space, const SlaveDofsProvider& slaveDofs )
       {
         numSlaveBlocks_    = slaveDofs.size() - 1;
         numOwnedDofBlocks_ = space.blockMapper().size() - numSlaveBlocks_;
