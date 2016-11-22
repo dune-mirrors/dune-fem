@@ -2,7 +2,7 @@ from __future__ import division, print_function
 
 import types
 
-from ufl import Coefficient, Form
+from ufl import Coefficient, Form, SpatialCoordinate
 from ufl import action, derivative
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.constantvalue import IntValue, Zero
@@ -11,10 +11,10 @@ from ufl.differentiation import Grad
 
 from dune.generator import builder
 
-from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, Struct, TypeAlias, Variable
-from dune.source.cplusplus import construct, lambda_, make_pair, makeExpression, return_
+from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, Struct, TypeAlias, Using, Variable
+from dune.source.cplusplus import construct, coordinate, lambda_, make_pair, makeExpression, return_
 from dune.source.cplusplus import SourceWriter
-from dune.source.algorithm.extractvariables import extractVariables
+from dune.source.algorithm.extractvariables import extractVariablesFromExpressions, extractVariablesFromStatements
 
 from dune.ufl import codegen
 from dune.ufl.linear import splitForm
@@ -103,20 +103,42 @@ class Integrands():
 
         return result
 
+    def declareSpatialCoordinate(self, x):
+        y = Variable('const DomainType', 'y')
+        if self.skeleton is not None:
+            inside = '[ static_cast< std::size_t >( Side::in ) ]'
+        else:
+            inside = ''
+        return Declaration(y, 'entity_' + inside + '.geometry().global( Dune::Fem::coordinate( ' + x + ' ) )')
+
+    def declareIfUsed(self, declarations, code):
+        usedVars = extractVariablesFromStatements(code)
+        prepend = []
+        for decl in declarations:
+            if decl.obj in usedVars:
+                prepend.append(decl)
+        return prepend + code
+
     def main(self):
         result = []
 
         if self.interior is not None:
-            result.append(Method('ValueType', 'interior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.interior, const=True))
-            result.append(Method('auto', 'linearizedInterior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.linearizedInterior, const=True))
+            interior = self.declareIfUsed([self.declareSpatialCoordinate('x')], self.interior)
+            result.append(Method('ValueType', 'interior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=interior, const=True))
+            linearizedInterior = self.declareIfUsed([self.declareSpatialCoordinate('x')], self.linearizedInterior)
+            result.append(Method('auto', 'linearizedInterior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=linearizedInterior, const=True))
 
         if self.boundary is not None:
-            result.append(Method('ValueType', 'boundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.boundary, const=True))
-            result.append(Method('auto', 'linearizedBoundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.linearizedBoundary, const=True))
+            boundary = self.declareIfUsed([self.declareSpatialCoordinate('x')], self.boundary)
+            result.append(Method('ValueType', 'boundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=boundary, const=True))
+            linearizedBoundary = self.declareIfUsed([self.declareSpatialCoordinate('x')], self.linearizedBoundary)
+            result.append(Method('auto', 'linearizedBoundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=linearizedBoundary, const=True))
 
         if self.skeleton is not None:
-            result.append(Method('std::pair< ValueType, ValueType >', 'skeleton', targs=['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=self.skeleton, const=True))
-            result.append(Method('auto', 'linearizedSkeleton', targs=['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=self.linearizedSkeleton, const=True))
+            skeleton = self.declareIfUsed([self.declareSpatialCoordinate('xIn')], self.skeleton)
+            result.append(Method('std::pair< ValueType, ValueType >', 'skeleton', targs=['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=skeleton, const=True))
+            linearizedSkeleton = self.declareIfUsed([self.declareSpatialCoordinate('xIn')], self.linearizedSkeleton)
+            result.append(Method('auto', 'linearizedSkeleton', targs=['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=linearizedSkeleton, const=True))
 
         return result
 
@@ -178,7 +200,7 @@ def generateCode(predefined, testFunctions, tensorMap, coefficients, tempVars=Tr
     # extract generated code for expressions and build values
     values = []
     for phi in testFunctions:
-        value = tensors.fill(phi.ufl_shape, '0')
+        value = tensors.fill(phi.ufl_shape, makeExpression(0))
         if (phi,) in tensorMap:
             tensor = tensorMap[(phi,)]
             keys = tensor.keys()
@@ -246,28 +268,28 @@ def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMa
     return preamble, values
 
 
-def generateUnaryCode(predefined, testFunctions, tensorMap, coefficients, tempVars=True):
+def generateUnaryCode(predefined, testFunctions, x, tensorMap, coefficients, tempVars=True):
     preamble, values = generateCode(predefined, testFunctions, tensorMap, coefficients, tempVars)
     return preamble + [return_(construct('ValueType', *values))]
 
 
-def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, coefficients, tempVars=True):
+def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, x, tensorMap, coefficients, tempVars=True):
     if tensorMap is None:
         return [return_(lambda_(args=['const ValueType &phi'], code=return_(construct('ValueType', 0, 0))))]
 
     var = Variable('std::tuple< RangeType, JacobianRangeType >', 'phi')
     preamble, values = generateLinearizedCode(predefined, testFunctions, {var: trialFunctions}, tensorMap, coefficients, tempVars)
-    capture = extractVariables(values[var]) - {var}
+    capture = extractVariablesFromExpressions(values[var]) - {var}
     return preamble + [return_(lambda_(capture=capture, args=['const ValueType &phi'], code=return_(construct('ValueType', *values[var]))))]
 
 
-def generateBinaryCode(predefined, testFunctions, tensorMap, coefficients, tempVars=True):
+def generateBinaryCode(predefined, testFunctions, x, tensorMap, coefficients, tempVars=True):
     restrictedTestFunctions = [phi('-') for phi in testFunctions] + [phi('+') for phi in testFunctions]
     preamble, values = generateCode(predefined, restrictedTestFunctions, tensorMap, coefficients, tempVars=True)
     return preamble + [return_(make_pair(construct('ValueType', *values[:len(testFunctions)]), construct('ValueType', *values[len(testFunctions):])))]
 
 
-def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, coefficients, tempVars=True):
+def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, x, tensorMap, coefficients, tempVars=True):
     restrictedTestFunctions = [phi('-') for phi in testFunctions] + [phi('+') for phi in testFunctions]
 
     trialFunctionsIn = [psi('-') for psi in trialFunctions]
@@ -280,8 +302,8 @@ def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tens
     varOut = Variable('std::tuple< RangeType, JacobianRangeType >', 'phiOut')
     preamble, values = generateLinearizedCode(predefined, restrictedTestFunctions, {varIn: trialFunctionsIn, varOut: trialFunctionsOut}, tensorMap, coefficients, tempVars)
 
-    captureIn = extractVariables(values[varIn]) - {varIn}
-    captureOut = extractVariables(values[varOut]) - {varOut}
+    captureIn = extractVariablesFromExpressions(values[varIn]) - {varIn}
+    captureOut = extractVariablesFromExpressions(values[varOut]) - {varOut}
 
     tensorIn = lambda_(capture=captureIn, args=['const ValueType &phiIn'], code=return_(make_pair(construct('ValueType', *values[varIn][:len(testFunctions)]), construct('ValueType', *values[varIn][len(testFunctions):]))))
     tensorOut = lambda_(capture=captureOut, args=['const ValueType &phiOut'], code=return_(make_pair(construct('ValueType', *values[varOut][:len(testFunctions)]), construct('ValueType', *values[varOut][len(testFunctions):]))))
@@ -295,6 +317,9 @@ def compileUFL(equation, tempVars=True):
         raise Exception("ufl.Form expected.")
     if len(form.arguments()) < 2:
         raise Exception("Elliptic model requires form with at least two arguments.")
+
+    x = SpatialCoordinate(form.ufl_cell())
+    y = Variable('const DomainType', 'y')
 
     phi = form.arguments()[0]
     dphi = Grad(phi)
@@ -339,25 +364,25 @@ def compileUFL(equation, tempVars=True):
 
     if 'cell' in integrals.keys():
         arg = Variable('std::tuple< RangeType, JacobianRangeType >', 'u')
-        predefined = {u: arg[0], du: arg[1]}
-        integrands.interior = generateUnaryCode(predefined, [phi, dphi], integrals['cell'], integrands.coefficients, tempVars)
-        predefined = {ubar: arg[0], dubar: arg[1]}
-        integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('cell'), integrands.coefficients, tempVars)
+        predefined = {x: y, u: arg[0], du: arg[1]}
+        integrands.interior = generateUnaryCode(predefined, [phi, dphi], x, integrals['cell'], integrands.coefficients, tempVars)
+        predefined = {x: y, ubar: arg[0], dubar: arg[1]}
+        integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], x, linearizedIntegrals.get('cell'), integrands.coefficients, tempVars)
 
     if 'exterior_facet' in integrals.keys():
         arg = Variable('std::tuple< RangeType, JacobianRangeType >', 'u')
-        predefined = {u: arg[0], du: arg[1]}
-        integrands.boundary = generateUnaryCode(predefined, [phi, dphi], integrals['exterior_facet'], integrands.coefficients, tempVars);
-        predefined = {ubar: arg[0], dubar: arg[1]}
-        integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('exterior_facet'), integrands.coefficients, tempVars)
+        predefined = {x: y, u: arg[0], du: arg[1]}
+        integrands.boundary = generateUnaryCode(predefined, [phi, dphi], x, integrals['exterior_facet'], integrands.coefficients, tempVars);
+        predefined = {x: y, ubar: arg[0], dubar: arg[1]}
+        integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], x, linearizedIntegrals.get('exterior_facet'), integrands.coefficients, tempVars)
 
     if 'interior_facet' in integrals.keys():
         argIn = Variable('std::tuple< RangeType, JacobianRangeType >', 'uIn')
         argOut = Variable('std::tuple< RangeType, JacobianRangeType >', 'uOut')
-        predefined = {u('-'): argIn[0], du('-'): argIn[1], u('+'): argOut[0], du('+'): argOut[1]}
-        integrands.skeleton = generateBinaryCode(predefined, [phi, dphi], integrals['interior_facet'], integrands.coefficients, tempVars)
-        predefined = {ubar('-'): argIn[0], dubar('-'): argIn[1], ubar('+'): argOut[0], dubar('+'): argOut[1]}
-        integrands.linearizedSkeleton = generateBinaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('interior_facet'), integrands.coefficients, tempVars)
+        predefined = {x: y, u('-'): argIn[0], du('-'): argIn[1], u('+'): argOut[0], du('+'): argOut[1]}
+        integrands.skeleton = generateBinaryCode(predefined, [phi, dphi], x, integrals['interior_facet'], integrands.coefficients, tempVars)
+        predefined = {x: y, ubar('-'): argIn[0], dubar('-'): argIn[1], ubar('+'): argOut[0], dubar('+'): argOut[1]}
+        integrands.linearizedSkeleton = generateBinaryLinearizedCode(predefined, [phi, dphi], [u, du], x, linearizedIntegrals.get('interior_facet'), integrands.coefficients, tempVars)
 
     return integrands
 

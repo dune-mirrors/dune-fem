@@ -139,6 +139,8 @@ class Variable(Expression):
 
 
 def makeExpression(expr):
+    if isinstance(expr, Expression):
+        return expr
     if isinstance(expr, bool):
         return ConstantExpression('bool', 'true' if expr else 'false')
     elif isinstance(expr, int):
@@ -153,6 +155,7 @@ def makeExpression(expr):
         e = ConstantExpression('double', s)
         return -e if expr < 0 else e
     else:
+        print("Warning: Makeing expression from " + str(expr) + ".")
         return expr
 
 

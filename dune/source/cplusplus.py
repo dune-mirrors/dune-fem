@@ -144,10 +144,18 @@ class TypeAlias:
 
 class Declaration:
     def __init__(self, obj, initializer=None, static=False, mutable=False):
+        if not isinstance(obj, Variable):
+            raise Exception('Only variables can be declared for now.')
         self.obj = obj
         self.initializer = initializer
         self.static = static
         self.mutable = mutable
+
+    def __repr__(self):
+        s = "declare " + self.obj.name + " : " + self.obj.cppType
+        if self.initializer is not None:
+            s += " = " + repr(self.initializer)
+        return s
 
 
 
