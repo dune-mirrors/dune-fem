@@ -35,7 +35,6 @@ namespace Dune
       void registerSchemeConstructor ( pybind11::class_< Scheme, Holder, Alias > &cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
-        typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
         typedef typename Scheme::DiscreteFunctionSpaceType Space;
         typedef typename Scheme::ModelType ModelType;
         cls.def( "__init__", [] ( Scheme &self, Space &space, const ModelType &model ) {

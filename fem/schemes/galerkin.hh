@@ -670,7 +670,7 @@ namespace Dune
     {
       typedef DifferentiableGalerkinOperator< LinearOperator, Integrands > DifferentiableOperatorType;
 
-      typedef typename DifferentiableOperatorType::RangeDiscreteFunctionType DiscreteFunctionType;
+      typedef typename DifferentiableOperatorType::DiscreteFunctionType DiscreteFunctionType;
       typedef typename DifferentiableOperatorType::JacobianOperatorType LinearOperatorType;
 
       typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
@@ -688,7 +688,7 @@ namespace Dune
         int linearIterations, nonlinearIterations;
       };
 
-      GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, Integrands integrands, ParameterReader parameter = Parameter::container )
+      GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, Integrands integrands, ParameterReader parameter = Parameter::container() )
         : fullOperator_( dfSpace, std::move( integrands ) ), parameter_( std::move( parameter ) ), linearOperator_( "assembled elliptic operator", dfSpace, dfSpace )
       {}
 
