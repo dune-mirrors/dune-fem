@@ -74,7 +74,7 @@ class Integrands():
 
         if self.skeleton is not None:
             result.append(EnumClass('Side', ['in = 0u', 'out = 1u'], 'std::size_t'))
-            inside = '[ Side::in ]'
+            inside = '[ static_cast< std::size_t >( Side::in ) ]'
         else:
             inside = ''
 
@@ -91,12 +91,12 @@ class Integrands():
         if self.skeleton is None:
             initIntersection.append(return_('(intersection.boundary() && init( intersection.inside() ))'))
         else:
-            initIntersection.append('entity_[ Side::in ] = intersection.inside();')
-            initIntersection.append('initCoefficients( entity_[ Side::in ], coefficients_[ Side::in ], std::make_index_sequence< numCoefficients >() );')
+            initIntersection.append('entity_[ static_cast< std::size_t >( Side::in ) ] = intersection.inside();')
+            initIntersection.append('initCoefficients( entity_[ static_cast< std::size_t >( Side::in ) ], coefficients_[ static_cast< std::size_t >( Side::in ) ], std::make_index_sequence< numCoefficients >() );')
             initIntersection.append('if( intersection.neighbor() )')
             initIntersection.append('{')
-            initIntersection.append('  entity_[ Side::out ] = intersection.outside();')
-            initIntersection.append('  initCoefficients( entity_[ Side::out ], coefficients_[ Side::out ], std::make_index_sequence< numCoefficients >() );')
+            initIntersection.append('  entity_[ static_cast< std::size_t >( Side::out ) ] = intersection.outside();')
+            initIntersection.append('  initCoefficients( entity_[ static_cast< std::size_t >( Side::out ) ], coefficients_[ static_cast< std::size_t >( Side::out ) ], std::make_index_sequence< numCoefficients >() );')
             initIntersection.append('}')
             initIntersection.append(return_(True))
         result.append(initIntersection)
@@ -129,7 +129,7 @@ class Integrands():
         if self.skeleton is None:
             coefficient = Method('CoefficientType< i > &', 'coefficient', targs=['std::size_t i'], code=return_('std::get< i >( coefficients_ )'))
         else:
-            coefficient = Method('CoefficientType< i > &', 'coefficient', targs=['std::size_t i', 'Side side = Side::in'], code=return_('std::get< i >( coefficients_[ side ] )'))
+            coefficient = Method('CoefficientType< i > &', 'coefficient', targs=['std::size_t i', 'Side side = Side::in'], code=return_('std::get< i >( coefficients_[ static_cast< std::size_t >( side ) ] )'))
         result += [coefficient.variant('const CoefficientType< i > &coefficient', const=True), coefficient]
 
         result.append(AccessModifier('private'))
@@ -404,6 +404,8 @@ def load(grid, integrands, tempVars=True):
     writer.openPythonModule(name)
     writer.emit('if( !pybind11::already_registered< VirtualizedIntegrands >() )')
     writer.emit('  pybind11::class_< VirtualizedIntegrands >( module, "VirtualizedIntegrands" );')
+    writer.emit('')
+    writer.emit('module.def( "create", [] () { return VirtualizedIntegrands( Integrands() ); } );')
     writer.closePythonModule(name)
 
     source = writer.writer.getvalue()
