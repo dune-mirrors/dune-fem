@@ -201,7 +201,7 @@ namespace Dune
       typedef typename GridPartType :: template Codim< Traits::codimension > :: EntityType EntityType;
       //! type of the intersections
       typedef typename GridPartType :: IntersectionType IntersectionType;
-      //! type of slavedofs
+      //! type of slave dofs
       typedef SlaveDofs< DiscreteFunctionSpaceType, BlockMapperType > SlaveDofsType;
 
       /** \brief defines type of data handle for communication
@@ -626,8 +626,20 @@ namespace Dune
       typedef CommunicationManager< DiscreteFunctionSpaceType > CommunicationManagerType;
 
       typedef typename BaseType :: SlaveDofsType SlaveDofsType;
+
+    protected:
       typedef typename SlaveDofsType :: SingletonKey SlaveDofsKeyType;
       typedef SingletonList< SlaveDofsKeyType, SlaveDofsType > SlaveDofsProviderType;
+      // deleter class passed to shared_ptr for deleting slave dofs
+      // when pointer does out of scope
+      struct SlaveDofsDeleter
+      {
+        void operator()(SlaveDofsType *slaveDofs)
+        {
+          SlaveDofsProviderType :: removeObject( *slaveDofs );
+        }
+      };
+
     protected:
       GridPartType &gridPart_;
 
@@ -665,13 +677,8 @@ namespace Dune
         dofManager_( DofManagerType :: instance( gridPart.grid() ) ),
         commInterface_( commInterface ),
         commDirection_( commDirection ),
-        slaveDofs_( 0 )
+        slaveDofs_()
       {}
-      ~DiscreteFunctionSpaceDefault ()
-      {
-        if( slaveDofs_ )
-          SlaveDofsProviderType :: removeObject( *slaveDofs_ );
-      }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::sequence */
       inline int sequence () const
@@ -860,9 +867,14 @@ namespace Dune
       /** \brief get slave dofs */
       const SlaveDofsType& slaveDofs() const
       {
-        if (!slaveDofs_)
-          slaveDofs_ = &( SlaveDofsProviderType :: getObject( SlaveDofsKeyType( this->gridPart(), this->blockMapper() ) ) );
-        slaveDofs_->rebuild(asImp());
+        if ( ! slaveDofs_ )
+        {
+          slaveDofs_.reset(
+              &( SlaveDofsProviderType :: getObject( SlaveDofsKeyType( this->gridPart(), this->blockMapper() ) ) ),
+              SlaveDofsDeleter() );
+        }
+
+        slaveDofs_->rebuild( asImp() );
         return *slaveDofs_;
       }
 
@@ -898,7 +910,7 @@ namespace Dune
 
       // only combined space should use geomTypes
       template <class , int , DofStoragePolicy> friend class CombinedSpace;
-      mutable SlaveDofsType *slaveDofs_;
+      mutable std::shared_ptr< SlaveDofsType > slaveDofs_;
     };
 
 
