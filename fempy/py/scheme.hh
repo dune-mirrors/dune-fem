@@ -1,6 +1,8 @@
 #ifndef DUNE_FEMPY_PY_SCHEME_HH
 #define DUNE_FEMPY_PY_SCHEME_HH
 
+#include <dune/common/typeutilities.hh>
+
 #include <dune/fem/misc/l2norm.hh>
 
 #include <dune/corepy/pybind11/pybind11.h>
@@ -25,14 +27,12 @@ namespace Dune
 
     namespace detail
     {
+
       // registerSchemeConstructor
       // -------------------------
-      template< class Scheme, class Holder, class Alias >
-      void registerSchemeConstructor ( pybind11::class_< Scheme, Holder, Alias > &cls, std::false_type )
-      {}
 
-      template< class Scheme, class Holder, class Alias >
-      void registerSchemeConstructor ( pybind11::class_< Scheme, Holder, Alias > &cls, std::true_type )
+      template< class Scheme, class Holder, class Alias, std::enable_if_t< std::is_constructible< Scheme, const typename Scheme::DiscreteFunctionSpaceType &, const typename Scheme::ModelType & >::value, int > = 0 >
+      void registerSchemeConstructor ( pybind11::class_< Scheme, Holder, Alias > &cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
@@ -47,11 +47,13 @@ namespace Dune
       }
 
       template< class Scheme, class Holder, class Alias >
+      void registerSchemeConstructor ( pybind11::class_< Scheme, Holder, Alias > &cls, PriorityTag< 0 > )
+      {}
+
+      template< class Scheme, class Holder, class Alias >
       void registerSchemeConstructor ( pybind11::class_< Scheme, Holder, Alias > &cls )
       {
-        typedef typename Scheme::DiscreteFunctionSpaceType Space;
-        typedef typename Scheme::ModelType ModelType;
-        registerSchemeConstructor( cls, std::is_constructible< Scheme, Space&, ModelType& >() );
+        registerSchemeConstructor( cls, PriorityTag< 42 >() );
       }
 
       // register assemble method if data method is available (and return value is registered)

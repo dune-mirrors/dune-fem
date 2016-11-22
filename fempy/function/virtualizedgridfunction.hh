@@ -11,6 +11,7 @@
 #include <dune/fem/space/common/functionspace.hh>
 
 #include <dune/fempy/quadrature/cachingpoint.hh>
+#include <dune/fempy/quadrature/elementpoint.hh>
 
 namespace Dune
 {
@@ -44,7 +45,14 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
     private:
-      typedef Fem::QuadraturePointWrapper< CachingPoint< LocalCoordinateType > > QuadraturePoint;
+      typedef FemPy::CachingPoint< LocalCoordinateType > CachingPoint;
+      typedef FemPy::ElementPoint< LocalCoordinateType > ElementPoint;
+
+      template< class QP >
+      static Fem::QuadraturePointWrapper< QP > asQP ( const QP &qp )
+      {
+        return static_cast< Fem::QuadraturePointWrapper< QP > >( qp );
+      }
 
       template< class GF >
       static constexpr bool isGridFunction ()
@@ -80,11 +88,14 @@ namespace Dune
 
         virtual void init ( const EntityType &entity ) = 0;
         virtual void evaluate ( const LocalCoordinateType &x, RangeType &value ) const = 0;
-        virtual void evaluate ( const QuadraturePoint &x, RangeType &value ) const = 0;
+        virtual void evaluate ( const CachingPoint &x, RangeType &value ) const = 0;
+        virtual void evaluate ( const ElementPoint &x, RangeType &value ) const = 0;
         virtual void jacobian ( const LocalCoordinateType &x, JacobianRangeType &jacobian ) const = 0;
-        virtual void jacobian ( const QuadraturePoint &x, JacobianRangeType &jacobian ) const = 0;
+        virtual void jacobian ( const CachingPoint &x, JacobianRangeType &jacobian ) const = 0;
+        virtual void jacobian ( const ElementPoint &x, JacobianRangeType &jacobian ) const = 0;
         virtual void hessian ( const LocalCoordinateType &x, HessianRangeType &hessian ) const = 0;
-        virtual void hessian ( const QuadraturePoint &x, HessianRangeType &hessian ) const = 0;
+        virtual void hessian ( const CachingPoint &x, HessianRangeType &hessian ) const = 0;
+        virtual void hessian ( const ElementPoint &x, HessianRangeType &hessian ) const = 0;
         virtual int order () const = 0;
         virtual const EntityType &entity () const = 0;
       };
@@ -99,11 +110,14 @@ namespace Dune
         virtual void init ( const EntityType &entity ) override { impl().init( entity ); }
 
         virtual void evaluate ( const LocalCoordinateType &x, RangeType &value ) const override { impl().evaluate( x, value ); }
-        virtual void evaluate ( const QuadraturePoint &x, RangeType &value ) const override { impl().evaluate( x, value ); }
+        virtual void evaluate ( const CachingPoint &x, RangeType &value ) const override { impl().evaluate( asQP( x ), value ); }
+        virtual void evaluate ( const ElementPoint &x, RangeType &value ) const override { impl().evaluate( asQP( x ), value ); }
         virtual void jacobian ( const LocalCoordinateType &x, JacobianRangeType &jacobian ) const override { impl().jacobian( x, jacobian ); }
-        virtual void jacobian ( const QuadraturePoint &x, JacobianRangeType &jacobian ) const override { impl().jacobian( x, jacobian ); }
+        virtual void jacobian ( const CachingPoint &x, JacobianRangeType &jacobian ) const override { impl().jacobian( asQP( x ), jacobian ); }
+        virtual void jacobian ( const ElementPoint &x, JacobianRangeType &jacobian ) const override { impl().jacobian( asQP( x ), jacobian ); }
         virtual void hessian ( const LocalCoordinateType &x, HessianRangeType &hessian ) const override { impl().hessian( x, hessian ); }
-        virtual void hessian ( const QuadraturePoint &x, HessianRangeType &hessian ) const override { impl().hessian( x, hessian ); }
+        virtual void hessian ( const CachingPoint &x, HessianRangeType &hessian ) const override { impl().hessian( asQP( x ), hessian ); }
+        virtual void hessian ( const ElementPoint &x, HessianRangeType &hessian ) const override { impl().hessian( asQP( x ), hessian ); }
         virtual int order () const override { return impl().order(); }
         virtual const EntityType &entity () const override { return impl().entity(); }
 
@@ -153,21 +167,14 @@ namespace Dune
       std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value >
       evaluate ( const Fem::QuadraturePointWrapper< Quadrature > &x, RangeType &value ) const
       {
-        // note: QuadraturePoint will store a reference to QuadratureCacheIdentifier.
-        //       This object must be kept alive until the evaluation returns!
-        CachingPoint< LocalCoordinateType > y( x );
-        impl_->evaluate( static_cast< QuadraturePoint >( y ), value );
+        impl_->evaluate( CachingPoint( x ), value );
       }
 
       template< class Quadrature >
       std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value >
       evaluate ( const Fem::QuadraturePointWrapper< Quadrature > &x, RangeType &value ) const
       {
-#if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
-        impl_->evaluate( x.position(), value );
-#else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
-        impl_->evaluate( x.quadrature().point( x.point() ), value);
-#endif // #else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
+        impl_->evaluate( ElementPoint( x ), value );
       }
 
       template< class Quadrature, class Values >
@@ -188,21 +195,14 @@ namespace Dune
       std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value >
       jacobian ( const Fem::QuadraturePointWrapper< Quadrature > &x, JacobianRangeType &jacobian ) const
       {
-        // note: QuadraturePoint will store a reference to QuadratureCacheIdentifier.
-        //       This object must be kept alive until the evaluation returns!
-        CachingPoint< LocalCoordinateType > y( x );
-        impl_->jacobian( static_cast< QuadraturePoint >( y ), jacobian );
+        impl_->jacobian( CachingPoint( x ), jacobian );
       }
 
       template< class Quadrature >
       std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value >
       jacobian ( const Fem::QuadraturePointWrapper< Quadrature > &x, JacobianRangeType &jacobian ) const
       {
-#if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
-        impl_->jacobian( x.position(), jacobian );
-#else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
-        impl_->jacobian( x.quadrature().point( x.point() ), jacobian );
-#endif // #else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
+        impl_->jacobian( ElementPoint( x ), jacobian );
       }
 
       template< class Quadrature, class Jacobians >
@@ -223,21 +223,14 @@ namespace Dune
       std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value >
       hessian ( const Fem::QuadraturePointWrapper< Quadrature > &x, HessianRangeType &hessian ) const
       {
-        // note: QuadraturePoint will store a reference to QuadratureCacheIdentifier.
-        //       This object must be kept alive until the evaluation returns!
-        CachingPoint< LocalCoordinateType > y( x );
-        impl_->hessian( static_cast< QuadraturePoint >( y ), hessian );
+        impl_->hessian( CachingPoint( x ), hessian );
       }
 
       template< class Quadrature >
       std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value >
       hessian ( const Fem::QuadraturePointWrapper< Quadrature > &x, HessianRangeType &hessian ) const
       {
-#if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
-        impl_->hessian( x.position(), hessian );
-#else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
-        impl_->hessian( x.quadrature().point( x.point() ), hessian );
-#endif // #else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
+        impl_->hessian( ElementPoint( x ), hessian );
       }
 
       int order () const { return impl_->order(); }
