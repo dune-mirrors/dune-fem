@@ -273,7 +273,7 @@ class SourceWriter:
             self.emit(['// ' + src.name, '// ' + '-' * len(src.name), ''], indent)
             if src.targs:
                 self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
-            self.emit(src.type + ' ' + src.name + (' final' if src.final else ''))
+            self.emit(src.type + ' ' + src.name + (' final' if src.final else ''), indent)
             if src.bases:
                 for i in range(0, len(src.bases)):
                     prefix = ': ' if i == 0 else '  '
