@@ -20,11 +20,12 @@ def translateIndex(index):
 
 
 class CodeGenerator(MultiFunction):
-    def __init__(self, predefined, coefficients, tempVars):
+    def __init__(self, predefined, coefficients, entity, tempVars):
         MultiFunction.__init__(self)
         self.using = set()
         self.predefined = predefined
         self.coefficients = coefficients
+        self.entity = entity
         self.code = []
         self.tempVars = tempVars
 
@@ -138,9 +139,9 @@ class CodeGenerator(MultiFunction):
         return self._makeTmp(cplusplus.sin(x))
 
     def spatial_coordinate(self, expr):
-        self.using.add('using Dune::Fem::coordinate;')
+        self.using.add(Using(cplusplus.coordinate))
         var = Variable('const auto', 'y')
-        self.code.append(Declaration(var, 'entity().geometry().global( coordinate( x ) )'))
+        self.code.append(Declaration(var, self.entity + '.geometry().global( coordinate( x ) )'))
         return var
 
     def sum(self, expr, x, y):
@@ -172,8 +173,8 @@ class CodeGenerator(MultiFunction):
             return cexpr
 
 
-def generateCode(predefined, expressions, coefficients, tempVars = True):
-    generator = CodeGenerator(predefined, coefficients, tempVars)
+def generateCode(predefined, expressions, coefficients, entity="entity()", tempVars=True):
+    generator = CodeGenerator(predefined, coefficients, entity, tempVars)
     results = map_expr_dags(generator, expressions)
     print(generator.using)
     return list(generator.using) + generator.code, results

@@ -248,10 +248,10 @@ def splitUFLForm(form, linear):
 # generateCode
 # ------------
 
-def generateCode(predefined, tensor, coefficients, tempVars = True):
+def generateCode(predefined, tensor, coefficients, tempVars=True):
     keys = tensor.keys()
     expressions = [tensor[i] for i in keys]
-    preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars)
+    preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars=tempVars)
     result = Variable('auto', 'result')
     return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
 

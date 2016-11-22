@@ -173,7 +173,7 @@ def generateCode(predefined, testFunctions, tensorMap, coefficients, tempVars=Tr
         expressions += [tensor[i] for i in keys]
 
     # compile all expressions at once
-    preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars)
+    preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars=tempVars)
 
     # extract generated code for expressions and build values
     values = []
@@ -214,7 +214,7 @@ def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMa
                 expressions += [tensor[i] for i in keys]
 
     # compile all expressions at once
-    preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars)
+    preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars=tempVars)
 
     # extract generated code for expressions and build values
     values = {}
