@@ -39,7 +39,7 @@ class CodeGenerator(MultiFunction):
         return self._makeTmp(cplusplus.atan(x))
 
     def atan_2(self, expr, x, y):
-        self.using(add(Using(cplusplus.atan2)))
+        self.using.add(Using(cplusplus.atan2)))
         return self._makeTmp(cplusplus.atan2(x, y))
 
     def coefficient(self, expr):
