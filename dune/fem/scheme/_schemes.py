@@ -72,7 +72,7 @@ def dg(space, model, solver=None, **kwargs):
 
     from . import module
 
-    includes = [ "dune/fem/schemes/dgelliptic.hh"]
+    includes = ["dune/fem/schemes/dgelliptic.hh"]
     operator = lambda linOp,model: "DifferentiableDGEllipticOperator< " +\
                                    ",".join([linOp,model]) + ">"
     includes, typeName = femscheme(includes, space, solver, operator)
@@ -82,7 +82,7 @@ def dg(space, model, solver=None, **kwargs):
 def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     from . import module
 
-    includes = [ "dune/fem/schemes/galerkin.hh" ]
+    includes = ["dune/fem/schemes/galerkin.hh"]
 
     operator = lambda linOp,model: "Dune::Fem::ModelDifferentiableDGGalerkinOperator< " +\
             ",".join([linOp,"Dune::Fem::DGDiffusionModelIntegrands<"+model+">"]) + ">"
@@ -90,6 +90,34 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     includes, typeName = femscheme(includes, space, solver, operator)
 
     return module(includes, typeName).Scheme(space, model, parameters)
+
+
+def galerkin(space, integrands, solver=None, parameters={}):
+    from . import module
+
+    storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver = space.storage
+    _, solverIncludes, solverTypeName = getSolver(solver, space.storage, defaultSolver)
+
+    includes = ["dune/fem/schemes/galerkin.hh"]
+    includes += space._includes + dfIncludes + solverIncludes
+    includes += ["dune/fempy/parameter.hh"]
+
+    spaceType = space._typeName
+    valueType = 'std::tuple< typename ' + spaceType + '::RangeType, typename ' + spaceType + '::JacobianRangeType >'
+    integrandsType = 'Dune::Fem::VirtualizedIntegrands< typename ' + spaceType + '::GridPartType, ' + valueType + ' >'
+
+    typeName = 'Dune::Fem::GalerkinScheme< ' + integrandsType + ', ' + linearOperatorType + ', ' + solverTypeName + ' >'
+
+    ctors = []
+    ctors.append(['[] ( ' + typeName + ' &self, const ' + spaceType + ' &space, ' + integrandsType + 'integrands ) {',
+                  '    new (&self) ' + typeName + '( space, std::move( integrands ) );',
+                  '  }, "space"_a, "integrands"_a, pybind11::keep_alive< 1, 2 >()'])
+    ctors.append(['[] ( ' + typeName + ' &self, const ' + spaceType + ' &space, ' + integrandsType + 'integrands, const pybind11::dict &parameters ) {',
+                  '    new (&self) ' + typeName + '( space, std::move( integrands ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
+                  '  }, "space"_a, "integrands"_a, "parameters"_a, pybind11::keep_alive< 1, 2 >()'])
+
+    return module(includes, typeName, ctors).Scheme(space, integrands, parameters)
+
 
 def h1(space, model, solver=None, parameters={}):
     """create a scheme for solving second order pdes with continuous finite element
@@ -100,13 +128,14 @@ def h1(space, model, solver=None, parameters={}):
         Scheme: the constructed scheme
     """
     from . import module
-    includes = [ "dune/fem/schemes/elliptic.hh" ]
+    includes = ["dune/fem/schemes/elliptic.hh"]
 
     operator = lambda linOp,model: "DifferentiableEllipticOperator< " +\
                                    ",".join([linOp,model]) + ">"
     includes, typeName = femscheme(includes, space, solver, operator)
 
     return module(includes, typeName).Scheme(space,model,parameters)
+
 
 def h1Galerkin(space, model, solver=None, parameters={}):
     from . import module
@@ -159,7 +188,7 @@ def nvdg(space, model, name="tmp", **kwargs):
     from . import module, storageToSolver
     storage = storageToSolver(space.storage)
 
-    includes = [ "dune/fem/schemes/nvdgelliptic.hh", "dune/fem/schemes/femscheme.hh" ] + space._module._includes
+    includes = ["dune/fem/schemes/nvdgelliptic.hh", "dune/fem/schemes/femscheme.hh"] + space._module._includes
     spaceType = space._module._typeName
     typeName = "FemScheme< " + spaceType + ", " +\
         "DiffusionModel< " +\
