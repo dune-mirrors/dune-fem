@@ -151,9 +151,26 @@ class Declaration:
 
 
 
+# Using
+# -----
+
 class Using:
     def __init__(self, obj):
+        if not isinstance(obj, BuiltInFunction):
+            raise Exception('Only built-in functions can be used for now')
         self.obj = obj
+
+    def __eq__(self, other):
+        return self.obj == other.obj
+
+    def __hash__(self):
+        return hash((Using, self.obj))
+
+    def __str__(self):
+        return "using " + str(self.obj) + ";"
+
+    def __repr__(self):
+        return "using " + repr(self.obj)
 
 
 
@@ -370,13 +387,7 @@ class SourceWriter:
             else:
                 self.emit(declaration + ';', indent)
         elif isinstance(src, Using):
-            if not isinstance(src.obj, BuiltInFunction):
-                raise Exception('Only built-in functions can be used for now')
-            if src.obj.namespace is None:
-                function = src.obj.name
-            else:
-                function = src.obj.namespace + '::' + src.obj.name
-            self.emit('using ' + function + ';')
+            self.emit(str(src), indent)
         elif isinstance(src, Statement):
             if not isinstance(context, (Constructor, Function, Method)):
                 raise Exception('Statements can only occur in constructors, functions and methods')

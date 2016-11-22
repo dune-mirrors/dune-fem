@@ -16,6 +16,27 @@ class BuiltInFunction:
         from .expression import Application, makeExpression
         return Application(self, args=[makeExpression(arg) for arg in args])
 
+    def __eq__(self, other):
+        if not isinstance(other, BuiltInFunction):
+            return False
+        if (other.namespace == self.namespace) and (other.name == self.name):
+            assert (other.header == self.header)
+            return True
+        else:
+            return False
+
+    def __hash__(self):
+        return hash(("BuildInFunction", self.namespace, self.cppType, self.name))
+
+    def __str__(self):
+        if self.namespace is None:
+            return self.name
+        else:
+            return self.namespace + '::' + self.name
+
+    def __repr__(self):
+        return "built-in(" + str(self) + ")"
+
 
 atan = BuiltInFunction('cmath', 'X', 'atan', targs=['class X'], args=['conat X &x'])
 atan2 = BuiltInFunction('cmath', 'X', 'atan2', targs=['class X'], args=['const X &x', 'const X &y'])
