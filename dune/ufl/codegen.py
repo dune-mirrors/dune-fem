@@ -178,5 +178,4 @@ class CodeGenerator(MultiFunction):
 def generateCode(predefined, expressions, coefficients, tempVars=True):
     generator = CodeGenerator(predefined, coefficients, tempVars)
     results = map_expr_dags(generator, expressions)
-    print(generator.using)
     return list(generator.using) + generator.code, results
