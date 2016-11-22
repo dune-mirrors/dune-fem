@@ -229,7 +229,7 @@ namespace Dune
       template< class T, class Point, std::enable_if_t< IntegrandsTraits< T >::skeleton, int > = 0 >
       static auto linearizedSkeleton ( const T &integrands, const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut )
       {
-        return integrands.linearizedSkeleton( integrands, xIn, uIn, xOut, uOut );
+        return integrands.linearizedSkeleton( xIn, uIn, xOut, uOut );
       }
 
       template< class T, class Point, std::enable_if_t< !IntegrandsTraits< T >::skeleton, int > = 0 >
@@ -326,6 +326,7 @@ namespace Dune
       struct Interface
       {
         virtual ~Interface ()  {}
+        virtual Interface *clone () const = 0;
 
         virtual bool init ( const EntityType &entity ) = 0;
         virtual bool init ( const IntersectionType &intersection ) = 0;
