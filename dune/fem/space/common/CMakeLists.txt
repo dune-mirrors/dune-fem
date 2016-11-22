@@ -5,4 +5,4 @@ dune_install(adaptmanager.hh allgeomtypes.hh arrays.hh
              dofmanager.hh dofstorage.hh functionspace.hh
              functionspaceinterface.hh interpolate.hh loadbalancer.hh
              localrestrictprolong.hh restrictprolongfunction.hh restrictprolonginterface.hh
-             adaptcallbackhandle.hh)
+             adaptcallbackhandle.hh slavedofs.hh)
