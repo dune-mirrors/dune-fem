@@ -345,6 +345,7 @@ def compileUFL(equation, tempVars=True):
         integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('cell'), integrands.coefficients, tempVars)
 
     if 'exterior_facet' in integrals.keys():
+        arg = Variable('std::tuple< RangeType, JacobianRangeType >', 'u')
         predefined = {u: arg[0], du: arg[1]}
         integrands.boundary = generateUnaryCode(predefined, [phi, dphi], integrals['exterior_facet'], integrands.coefficients, tempVars);
         predefined = {ubar: arg[0], dubar: arg[1]}
