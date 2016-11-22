@@ -32,25 +32,17 @@ typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartTyp
 
 void baseTests ( MyGridType &grid, int level )
 {
-  typedef typename DiscreteFunctionSpaceType :: BlockMapperType BlockMapperType;
-  typedef Dune::Fem::SlaveDofs< DiscreteFunctionSpaceType, BlockMapperType > SlaveDofsType;
-  typedef typename SlaveDofsType :: SingletonKey SlaveDofsKeyType;
-  typedef Dune::Fem::SingletonList< SlaveDofsKeyType, SlaveDofsType > SlaveDofsProviderType;
-  // test consistency of slavedofs
+  typedef typename DiscreteFunctionSpaceType :: SlaveDofsType SlaveDofsType;
   GridPartType gridPart( grid );
   DiscreteFunctionSpaceType *space1 = new DiscreteFunctionSpaceType( gridPart );
   DiscreteFunctionSpaceType *space2 = new DiscreteFunctionSpaceType( gridPart );
-  SlaveDofsKeyType key1( *space1, space1->blockMapper() );
-  SlaveDofsType &slaveDofs1 = SlaveDofsProviderType :: getObject( key1 );
-  slaveDofs1.rebuild(*space1);
+  const SlaveDofsType &slaveDofs1 = space1->slaveDofs();
   std::cout << "number of slave dofs: " << slaveDofs1.size() << std::endl;
   space1->~DiscreteFunctionSpaceType();
   char *tmp = new(space1)char[sizeof(DiscreteFunctionSpaceType)];
-  for (int i=0;i<sizeof(DiscreteFunctionSpaceType);++i) tmp[i]=0;
+  for (unsigned int i=0;i<sizeof(DiscreteFunctionSpaceType);++i) tmp[i]=0;
   delete [] tmp;
-  SlaveDofsKeyType key2( *space2, space2->blockMapper() );
-  SlaveDofsType &slaveDofs2 = SlaveDofsProviderType :: getObject( key2 );
-  slaveDofs1.rebuild(*space2);
+  const SlaveDofsType &slaveDofs2 = space2->slaveDofs();
   std::cout << "number of slave dofs: " << slaveDofs2.size() << std::endl;
   delete space2;
 }
