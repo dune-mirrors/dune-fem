@@ -17,6 +17,7 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/common/functionspace.hh>
+#include <dune/fem/space/common/slavedofs.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/version.hh>
 
@@ -200,6 +201,8 @@ namespace Dune
       typedef typename GridPartType :: template Codim< Traits::codimension > :: EntityType EntityType;
       //! type of the intersections
       typedef typename GridPartType :: IntersectionType IntersectionType;
+      //! type of slave dofs
+      typedef SlaveDofs< DiscreteFunctionSpaceType, BlockMapperType > SlaveDofsType;
 
       /** \brief defines type of data handle for communication
           \param  DiscreteFunction  type of \ref Dune::Fem::DiscreteFunctionInterface
@@ -528,6 +531,13 @@ namespace Dune
         return asImp().createDataHandle( discreteFunction, operation );
       }
 
+      /** \brief get slave dofs */
+      const SlaveDofsType& slaveDofs() const
+      {
+        CHECK_INTERFACE_IMPLEMENTATION( asImp().slaveDofs() );
+        return asImp().slaveDofs();
+      }
+
     protected:
       // Barton-Nackman trick
       inline const DiscreteFunctionSpaceType &asImp () const
@@ -614,6 +624,22 @@ namespace Dune
 
       //! type of communication manager
       typedef CommunicationManager< DiscreteFunctionSpaceType > CommunicationManagerType;
+
+      typedef typename BaseType :: SlaveDofsType SlaveDofsType;
+
+    protected:
+      typedef typename SlaveDofsType :: SingletonKey SlaveDofsKeyType;
+      typedef SingletonList< SlaveDofsKeyType, SlaveDofsType > SlaveDofsProviderType;
+      // deleter class passed to shared_ptr for deleting slave dofs
+      // when pointer does out of scope
+      struct SlaveDofsDeleter
+      {
+        void operator()(SlaveDofsType *slaveDofs)
+        {
+          SlaveDofsProviderType :: removeObject( *slaveDofs );
+        }
+      };
+
     protected:
       GridPartType &gridPart_;
 
@@ -650,7 +676,8 @@ namespace Dune
         allGeomTypes_( gridPart.indexSet() ),
         dofManager_( DofManagerType :: instance( gridPart.grid() ) ),
         commInterface_( commInterface ),
-        commDirection_( commDirection )
+        commDirection_( commDirection ),
+        slaveDofs_()
       {}
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::sequence */
@@ -837,6 +864,20 @@ namespace Dune
           :: Type( discreteFunction, operation );
       }
 
+      /** \brief get slave dofs */
+      const SlaveDofsType& slaveDofs() const
+      {
+        if ( ! slaveDofs_ )
+        {
+          slaveDofs_.reset(
+              &( SlaveDofsProviderType :: getObject( SlaveDofsKeyType( this->gridPart(), this->blockMapper() ) ) ),
+              SlaveDofsDeleter() );
+        }
+
+        slaveDofs_->rebuild( asImp() );
+        return *slaveDofs_;
+      }
+
       /** \brief default implementation of addFunction does nothing at the moment */
       template <class DiscreteFunction>
       void addFunction( DiscreteFunction& df ) const
@@ -869,6 +910,7 @@ namespace Dune
 
       // only combined space should use geomTypes
       template <class , int , DofStoragePolicy> friend class CombinedSpace;
+      mutable std::shared_ptr< SlaveDofsType > slaveDofs_;
     };
 
 

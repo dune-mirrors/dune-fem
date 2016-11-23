@@ -21,29 +21,21 @@ namespace Dune
      * =================================================
      */
     template< typename DFSpace >
-    class PetscSlaveDofProvider : public SlaveDofsProvider< DFSpace >
+    class PetscSlaveDofProvider
     {
     public:
       typedef DFSpace DiscreteFunctionSpaceType;
 
       typedef PetscSlaveDofProvider< DiscreteFunctionSpaceType > ThisType;
-      typedef SlaveDofsProvider< DiscreteFunctionSpaceType >     BaseType;
-    protected:
-      using BaseType :: space_;
-      using BaseType :: slaveDofs_;
 
-    public:
-      typedef typename DiscreteFunctionSpaceType :: BlockMapperType   BlockMapperType;
-      typedef SlaveDofs< DiscreteFunctionSpaceType, BlockMapperType > SlaveDofsType;
-
+      typedef typename DiscreteFunctionSpaceType :: BlockMapperType  BlockMapperType;
 
       // type of communication manager object which does communication
-      typedef PetscDofMappings< SlaveDofsType >  PetscDofMappingType;
-      typedef SingletonList< SlaveDofsType*, PetscDofMappingType > PetscDofMappingProviderType;
+      typedef PetscDofMappings<DiscreteFunctionSpaceType> PetscDofMappingType;
+      typedef SingletonList< const DiscreteFunctionSpaceType*, PetscDofMappingType > PetscDofMappingProviderType;
 
       explicit PetscSlaveDofProvider ( const DiscreteFunctionSpaceType &space )
-      : BaseType( space ),
-        dofMapping_( PetscDofMappingProviderType::getObject( slaveDofs_ ) )
+      : dofMapping_( PetscDofMappingProviderType::getObject( &space ) )
       {
         dofMapping_.update( space );
       }
@@ -56,9 +48,9 @@ namespace Dune
       }
 
       //! update dof mapping
-      void update()
+      void update(const DiscreteFunctionSpaceType &space)
       {
-        dofMapping_.update( space_ );
+        dofMapping_.update(space);
       }
 
       const PetscDofMappingType& dofMapping() const { return dofMapping_; }

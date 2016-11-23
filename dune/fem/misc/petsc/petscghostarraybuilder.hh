@@ -33,10 +33,10 @@ namespace Dune
      * access the array using array()
      * =================================================
      */
-    template< typename SlaveProvider, typename PDofMapping >
+    template< typename DFSpace, typename PDofMapping >
     class PetscGhostArrayBuilder
     {
-      typedef PetscGhostArrayBuilder< SlaveProvider, PDofMapping > ThisType;
+      typedef PetscGhostArrayBuilder< DFSpace, PDofMapping > ThisType;
 
       typedef std::vector< std::pair< int, int > > StorageType;
       struct StorageSort
@@ -45,24 +45,22 @@ namespace Dune
       };
 
     public:
-      typedef SlaveProvider SlaveProviderType;
-      typedef typename SlaveProviderType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      typedef DFSpace DiscreteFunctionSpaceType;
       typedef PDofMapping PetscDofMappingType;
       typedef PetscInt value_type;
       static const int blockSize = DiscreteFunctionSpaceType::localBlockSize;
 
-
-      explicit PetscGhostArrayBuilder ( SlaveProviderType& slaveDofs,
+      explicit PetscGhostArrayBuilder ( const DFSpace& space,
                                         PetscDofMappingType& petscDofMapping )
       : array_( 0 ),
         arrayNeedsUpdate_( true )
       {
-        if( slaveDofs.space().gridPart().comm().size() > 1 ) // YaspGrid and lagrange polorder = 2 fails unless we skip this in serial code
+        if( space.gridPart().comm().size() > 1 ) // YaspGrid and lagrange polorder = 2 fails unless we skip this in serial code
         {
           try
           {
-            PetscDofCommunicator< DiscreteFunctionSpaceType, ThisType > handle( slaveDofs.space(), petscDofMapping, *this );
-            slaveDofs.space().gridPart().communicate( handle, DiscreteFunctionSpaceType::GridPartType::indexSetInterfaceType, ForwardCommunication );
+            PetscDofCommunicator< DiscreteFunctionSpaceType, ThisType > handle( space, petscDofMapping, *this );
+            space.gridPart().communicate( handle, DiscreteFunctionSpaceType::GridPartType::indexSetInterfaceType, ForwardCommunication );
           }
           catch( const Dune::Exception &e )
           {
