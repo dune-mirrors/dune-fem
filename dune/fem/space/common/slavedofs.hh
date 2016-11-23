@@ -318,9 +318,9 @@ namespace Dune
       }
     };
 
-#if 0 // just for testing should be deprecated in 2.5
+    // just for testing should be deprecated in 2.5
     //! Proxy class to evaluate ScalarProduct
-    //! holding SlaveDofs which is singleton per space and mapper
+    //! \note Deprecated class, use space.slaveDofs() instead.
     template< class DiscreteFunctionSpace >
     class SlaveDofsProvider
     {
@@ -337,32 +337,16 @@ namespace Dune
 
       enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
 
-      // type of communication manager object which does communication
-      typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType > SlaveDofsType;
-      typedef typename SlaveDofsType :: SingletonKey SlaveDofsKeyType;
-
-      typedef SingletonList< SlaveDofsKeyType, SlaveDofsType >
-        SlaveDofsProviderType;
+      typedef typename DiscreteFunctionSpaceType :: SlaveDofsType SlaveDofsType;
 
     protected:
       const DiscreteFunctionSpaceType &space_;
 
-      // is singleton per space
-      SlaveDofsType *slaveDofs_;
-
     public:
       //! constructor taking space
-      SlaveDofsProvider ( const DiscreteFunctionSpaceType &space )
-      : space_( space ), slaveDofs_( getSlaveDofs( space_ ) )
+      SlaveDofsProvider ( const DiscreteFunctionSpaceType &space ) DUNE_DEPRECATED_MSG( "Use space.slaveDofs() instead." )
+      : space_( space )
       {}
-
-      SlaveDofsProvider ( ThisType && other )
-        : space_( other.space_ ), slaveDofs_( std::move( other.slaveDofs_ ) )
-      {
-        other.slaveDofs_ = nullptr;
-      }
-
-      SlaveDofsProvider( const ThisType& ) = delete;
 
       //! return discrete function space
       const DiscreteFunctionSpaceType& space() const
@@ -370,28 +354,13 @@ namespace Dune
         return space_;
       }
 
-      //! remove object comm
-      ~SlaveDofsProvider ()
-      {
-        if( slaveDofs_ )
-          SlaveDofsProviderType :: removeObject( *slaveDofs_ );
-      }
-
       const SlaveDofsType &slaveDofs () const
       {
         // rebuild slave dofs if grid was changed
-        slaveDofs_->rebuild(space());
-        return *slaveDofs_;
+        return space_.slaveDofs();
       }
 
-    protected:
-      static SlaveDofsType *getSlaveDofs ( const DiscreteFunctionSpaceType &space )
-      {
-        SlaveDofsKeyType key( space, space.blockMapper() );
-        return &(SlaveDofsProviderType :: getObject( key ));
-      }
     };
-#endif
 
   //@}
 
