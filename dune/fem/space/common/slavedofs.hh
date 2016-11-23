@@ -354,9 +354,9 @@ namespace Dune
         return space_;
       }
 
+      //! return slaveDofs from space
       const SlaveDofsType &slaveDofs () const
       {
-        // rebuild slave dofs if grid was changed
         return space_.slaveDofs();
       }
 
