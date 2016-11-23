@@ -110,7 +110,9 @@ void testIntersectionIterator( const GridPartType & gridPart )
   for( const auto& element : elements( gridPart ) )
     index[ gridPart.indexSet().index( element ) ] = 1;
 
+  typename GridPartType::template Codim<0>::EntityType::Geometry::GlobalCoordinate surfaceNormal(0);
   for( const auto& element : elements( gridPart ))
+  {
     for( const auto& intersection : intersections( gridPart, element ) )
       if(intersection.neighbor())
       {
@@ -126,6 +128,16 @@ void testIntersectionIterator( const GridPartType & gridPart )
           continue;
         }
       }
+    if (element.hasBoundaryIntersections())
+      for( const auto& intersection : intersections( gridPart, element ) )
+        if(intersection.boundary())
+        {
+          auto n = intersection.centerUnitOuterNormal();
+          n *= intersection.geometry().volume();
+          surfaceNormal += n;
+        }
+  }
+  std::cout << "boundary normal sum up to: " << surfaceNormal << std::endl;
 }
 
 template< bool UseConsecutiveIndexSet, class HostGridPartType, class FilterType >
@@ -140,6 +152,10 @@ void testFilteredGridPart( HostGridPartType& hostGridPart, FilterType& filter )
 
   std::cout << "Testing subentities" << std::endl;
   testSubEntities< HostGridPartType::GridType::dimension >( gridPart );
+  std::cout << std::endl;
+
+  std::cout << "Testing intersection" << std::endl;
+  testIntersectionIterator( gridPart );
   std::cout << std::endl;
 
   std::cout << "GridWidth: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
