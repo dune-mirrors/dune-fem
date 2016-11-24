@@ -71,63 +71,6 @@ namespace Dune
 
 
 
-    // BoundaryIdProvider for ALUConformGrid
-    // -------------------------------------
-
-#if HAVE_ALUGRID
-    template< int dim, int dimw >
-    struct BoundaryIdProvider< ALUConformGrid< dim, dimw > >
-    {
-      typedef ALUConformGrid< dim, dimw > GridType;
-
-      template< class Intersection >
-      static int boundaryId ( const Intersection &intersection )
-      {
-        return intersection.impl().boundaryId();
-      }
-    };
-#endif // #if HAVE_ALUGRID
-
-
-
-    // BoundaryIdProvider for ALUCubeGrid
-    // ----------------------------------
-
-#if HAVE_ALUGRID
-    template< int dim, int dimw >
-    struct BoundaryIdProvider< ALUCubeGrid< dim, dimw > >
-    {
-      typedef ALUCubeGrid< dim, dimw > GridType;
-
-      template< class Intersection >
-      static int boundaryId ( const Intersection &intersection )
-      {
-        return intersection.impl().boundaryId();
-      }
-    };
-#endif // #if HAVE_ALUGRID
-
-
-
-    // BoundaryIdProvider for ALUSimplexGrid
-    // -------------------------------------
-
-#if HAVE_ALUGRID
-    template< int dim, int dimw >
-    struct BoundaryIdProvider< ALUSimplexGrid< dim, dimw > >
-    {
-      typedef ALUSimplexGrid< dim, dimw > GridType;
-
-      template< class Intersection >
-      static int boundaryId ( const Intersection &intersection )
-      {
-        return intersection.impl().boundaryId();
-      }
-    };
-#endif // #if HAVE_ALUGRID
-
-
-
     // BoundaryIdProvider for CacheItGrid
     // ----------------------------------
 

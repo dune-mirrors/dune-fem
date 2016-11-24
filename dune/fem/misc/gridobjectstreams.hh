@@ -71,49 +71,6 @@ namespace Dune
 #endif // #if HAVE_ALUGRID || HAVE_DUNE_ALUGRID
 
 
-
-    // GridObjectStreamTraits for ALUConformGrid
-    // -----------------------------------------
-
-#if HAVE_ALUGRID
-    template< int dim, int dimworld >
-    struct GridObjectStreamTraits< ALUConformGrid< dim, dimworld> >
-    {
-      typedef typename ALUConformGrid< dim, dimworld >::ObjectStreamType InStreamType;
-      typedef typename ALUConformGrid< dim, dimworld >::ObjectStreamType OutStreamType;
-    };
-#endif // #if HAVE_ALUGRID
-
-
-
-    // GridObjectStreamTraits for ALUCubeGrid
-    // --------------------------------------
-
-#if HAVE_ALUGRID
-    template< int dim, int dimworld >
-    struct GridObjectStreamTraits< ALUCubeGrid< dim, dimworld> >
-    {
-      typedef typename ALUCubeGrid< dim, dimworld >::ObjectStreamType InStreamType;
-      typedef typename ALUCubeGrid< dim, dimworld >::ObjectStreamType OutStreamType;
-    };
-#endif // #if HAVE_ALUGRID
-
-
-
-    // GridObjectStreamTraits for ALUSimplexGrid
-    // -----------------------------------------
-
-#if HAVE_ALUGRID
-    template< int dim, int dimworld >
-    struct GridObjectStreamTraits< ALUSimplexGrid< dim, dimworld> >
-    {
-      typedef typename ALUSimplexGrid< dim, dimworld >::ObjectStreamType InStreamType;
-      typedef typename ALUSimplexGrid< dim, dimworld >::ObjectStreamType OutStreamType;
-    };
-#endif // #if HAVE_ALUGRID
-
-
-
     // GridObjectStreamTraits for CacheItGrid
     // --------------------------------------
 

@@ -88,10 +88,7 @@ namespace Dune
 #ifndef NDEBUG
         std::vector< std::string > knownGrids;
         knownGrids.push_back( "AlbertaGrid" );
-        knownGrids.push_back( "ALUConformGrid" );
-        knownGrids.push_back( "ALUCubeGrid" );
         knownGrids.push_back( "ALUGrid" );
-        knownGrids.push_back( "ALUSimplexGrid" );
         knownGrids.push_back( "CacheItGrid" );
         knownGrids.push_back( "CartesianGrid" );
         knownGrids.push_back( "GeometryGrid" );

@@ -595,7 +595,11 @@ namespace Dune
           // write dof block to stream
           for( int k = 0; k < blockSize; ++k )
           {
+#if HAVE_ALUGRID
+            str.writeObject( ((*blockPtr)[ k ]) );
+#else
             str.writeUnchecked( ((*blockPtr)[ k ]) );
+#endif
           }
         }
       }

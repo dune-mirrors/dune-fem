@@ -120,7 +120,7 @@ namespace Dune
       const int dim = 3;
       const int codim = 1;
 
-      typedef ALUCubeGrid< 3, 3 > GridType;
+      typedef ALUGrid< 3, 3, cube, nonconforming > GridType;
       typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
       typedef CacheProvider< GridPartType, codim > CacheProviderType;
       typedef Quadrature< GridPartType::ctype, GridPartType::dimension-1 > QuadratureType;
@@ -170,7 +170,7 @@ namespace Dune
       const int dim = 3;
       const int codim = 1;
 
-      typedef ALUSimplexGrid< 3, 3 > GridType;
+      typedef ALUGrid< 3, 3, simplex, nonconforming > GridType;
       typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
       typedef CacheProvider< GridPartType, codim > CacheProviderType;
       //typedef CacheProviderType::QuadratureType QuadratureType;
