@@ -382,7 +382,15 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
 def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
     start_time = timeit.default_timer()
 
-    if isinstance(model, ufl.equation.Equation):
+    if isinstance(model, str):
+        with open(model, 'r') as myfile:
+            data = myfile.read()
+        name = data.split('PYBIND11_PLUGIN( ')[1].split(' )')[0]
+        builder.load(name, data, "ellipticModel")
+
+        return importlib.import_module("dune.generated." + name)
+
+    elif isinstance(model, ufl.equation.Equation):
         model = compileUFL(model, dirichlet, exact, tempVars)
 
     if not isinstance(grid, types.ModuleType):
