@@ -5,7 +5,7 @@
 #include <utility>
 #include <tuple>
 
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 #include <dune/common/std/utility.hh>
 
 #include <dune/fem/common/utility.hh>

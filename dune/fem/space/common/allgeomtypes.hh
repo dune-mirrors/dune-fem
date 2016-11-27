@@ -6,7 +6,7 @@
 #include <map>
 
 //- Dune includes
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 #include <dune/grid/common/capabilities.hh>
@@ -125,7 +125,7 @@ namespace Dune
         if( multipleGeomTypes() )
         {
           // store all possible geom types
-          ForLoop< InsertGeometryTypes, 0, GridType::dimension > :: apply( geomTypes_ );
+          Fem::ForLoop< InsertGeometryTypes, 0, GridType::dimension > :: apply( geomTypes_ );
         }
         else
         {

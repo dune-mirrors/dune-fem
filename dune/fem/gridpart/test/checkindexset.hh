@@ -8,7 +8,7 @@
 
 //- dune-common includes
 #include <dune/common/fvector.hh>
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/stdstreams.hh>
 
@@ -111,7 +111,7 @@ namespace Dune
         checkGeomTypes( indexSet, gridPart, failureHandler );
 
         // check size
-        ForLoop< CheckSize, 0, dimension >::apply( indexSet, gridPart, failureHandler );
+        Fem::ForLoop< CheckSize, 0, dimension >::apply( indexSet, gridPart, failureHandler );
       }
     };
 

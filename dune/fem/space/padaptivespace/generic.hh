@@ -301,7 +301,7 @@ namespace Dune
 
         for( unsigned int i = 0; i < geometryTypes.size(); ++i )
         {
-          ForLoop< Initialize, 1, polynomialOrder >::
+          Fem::ForLoop< Initialize, 1, polynomialOrder >::
             apply( scalarShapeFunctionSets_, compiledLocalKeys_, geometryTypes[ i ] );
         }
 

@@ -106,7 +106,7 @@ namespace Dune
       template< class LocalFunction, class LocalDofVector >
       void operator() ( const LocalFunction &lf, LocalDofVector &ldv ) const
       {
-        ForLoop< Apply, 0, setSize >::apply( interpolation_, basisFunctionSet_, lf, ldv );
+        Fem::ForLoop< Apply, 0, setSize >::apply( interpolation_, basisFunctionSet_, lf, ldv );
       }
 
     protected:

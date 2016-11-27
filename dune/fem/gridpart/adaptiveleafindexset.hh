@@ -9,7 +9,7 @@
 #include <vector>
 #include <type_traits>
 
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 
 #include <dune/fem/gridpart/codimindexset.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
@@ -336,7 +336,7 @@ namespace Dune
         // enable requested codimensions and rebuild index set
         for( const auto& codim : codimensions )
         {
-          ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
+          Fem::ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
         }
       }
 
@@ -429,7 +429,7 @@ namespace Dune
 
         // count entities for given geometry type
         IndexType count = 0 ;
-        ForLoop< CountElements, 0, dimension > :: apply( *this, type, count );
+        Fem::ForLoop< CountElements, 0, dimension > :: apply( *this, type, count );
         return count;
       }
 
@@ -624,7 +624,7 @@ namespace Dune
 
         if( (codim != 0) && ! codimUsed_[ codim ] )
         {
-          ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
+          Fem::ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
         }
 
         const CodimIndexSetType &codimSet = codimLeafSet( codim );
@@ -868,7 +868,7 @@ namespace Dune
         const bool skipGhosts = (pitype != All_Partition);
         // only for index sets upporting more than one codim
         if( numCodimensions > 1 )
-          ForLoop< InsertGhostSubEntities, 1, dimension >::apply( *this, entity, skipGhosts );
+          Fem::ForLoop< InsertGhostSubEntities, 1, dimension >::apply( *this, entity, skipGhosts );
       }
       else
 #endif // HAVE_MPI
@@ -876,7 +876,7 @@ namespace Dune
         codimLeafSet( 0 ).insert( entity );
         // only for index sets supporting more than one codim
         if( numCodimensions > 1 )
-          ForLoop< InsertSubEntities, 1, dimension >::apply( *this, entity );
+          Fem::ForLoop< InsertSubEntities, 1, dimension >::apply( *this, entity );
 
       }
 

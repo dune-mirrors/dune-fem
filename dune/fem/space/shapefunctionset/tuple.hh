@@ -5,7 +5,7 @@
 
 #include <dune/geometry/type.hh>
 
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 #include <dune/common/tupleutility.hh>
 #include <dune/fem/common/utility.hh>
 
@@ -82,7 +82,7 @@ namespace Dune
         : shapeFunctionSetTuple_( makeGeometryTypeTuple( type, std::index_sequence_for< ShapeFunctionSets ... >() ) )
       {
         offset_[ 0 ] = 0;
-        ForLoop< Offsets, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_ );
+        Fem::ForLoop< Offsets, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_ );
       }
 
       template< class ... Args >
@@ -90,14 +90,14 @@ namespace Dune
         : shapeFunctionSetTuple_( std::forward< Args >( args ) ... )
       {
         offset_[ 0 ] = 0;
-        ForLoop< Offsets, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_ );
+        Fem::ForLoop< Offsets, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_ );
       }
 
       explicit TupleShapeFunctionSet ( const ShapeFunctionSetTupleType &shapeFunctionSetTuple  )
         : shapeFunctionSetTuple_( shapeFunctionSetTuple )
       {
         offset_[ 0 ] = 0;
-        ForLoop< Offsets, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_ );
+        Fem::ForLoop< Offsets, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_ );
       }
 
       int order () const { return order( std::index_sequence_for< ShapeFunctionSets ... >() ); }
@@ -107,19 +107,19 @@ namespace Dune
       template< class Point, class Functor >
       void evaluateEach ( const Point &x, Functor functor ) const
       {
-        ForLoop< EvaluateEach, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_, x, functor );
+        Fem::ForLoop< EvaluateEach, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_, x, functor );
       }
 
       template< class Point, class Functor >
       void jacobianEach ( const Point &x, Functor functor ) const
       {
-        ForLoop< JacobianEach, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_, x, functor );
+        Fem::ForLoop< JacobianEach, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_, x, functor );
       }
 
       template< class Point, class Functor >
       void hessianEach ( const Point &x, Functor functor ) const
       {
-        ForLoop< HessianEach, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_, x, functor );
+        Fem::ForLoop< HessianEach, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_, x, functor );
       }
 
     protected:

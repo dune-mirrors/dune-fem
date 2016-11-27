@@ -273,7 +273,7 @@ namespace Dune
         // create compiled local keys
         for( unsigned int i = 0; i < geometryTypes.size(); ++i )
         {
-          ForLoop< ConstructCompiledLocalKeys, minPolOrder, maxPolOrder > ::
+          Fem::ForLoop< ConstructCompiledLocalKeys, minPolOrder, maxPolOrder > ::
               apply( compiledLocalKeys_, geometryTypes[ i ] );
         }
       }

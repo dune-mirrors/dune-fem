@@ -2,7 +2,7 @@
 #define DUNE_FEM_GRIDPART_TEST_CHECKGEOMETRY_HH
 
 //- dune-common includes
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 #include <dune/common/exceptions.hh>
 #include <dune/common/stdstreams.hh>
 
@@ -80,7 +80,7 @@ namespace Dune
         std::cout << "Note: FailureHandler will be ignored" << std::endl;
 
         for( const auto& entity : elements( gridPart ) )
-          ForLoop< CheckSubEntityGeometry, 0, dimension >::apply( entity, failureHandler );
+          Fem::ForLoop< CheckSubEntityGeometry, 0, dimension >::apply( entity, failureHandler );
       }
     };
 
