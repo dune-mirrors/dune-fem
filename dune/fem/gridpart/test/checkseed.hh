@@ -6,7 +6,7 @@
 #include <type_traits>
 
 //- dune-common includes
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 #include <dune/common/exceptions.hh>
 
 //- dune-fem includes
@@ -72,7 +72,7 @@ namespace Dune
       static void check ( const GridPartType &gridPart )
       {
         // generic for loop over all codimensions
-        Dune::ForLoop< CheckCodim, 0, dimension >::apply( gridPart );
+        Dune::Fem::ForLoop< CheckCodim, 0, dimension >::apply( gridPart );
       }
     };
 

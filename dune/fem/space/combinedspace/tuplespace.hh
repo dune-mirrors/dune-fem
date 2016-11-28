@@ -143,7 +143,7 @@ namespace Dune
                                                            CommunicationDirection commDirection )
       {
         DiscreteFunctionSpaceTupleType tuple;
-        ForLoop< Constructor, 0, sizeof ... ( DiscreteFunctionSpaces ) -1 >::apply( tuple, gridPart, commInterface, commDirection );
+        Fem::ForLoop< Constructor, 0, sizeof ... ( DiscreteFunctionSpaces ) -1 >::apply( tuple, gridPart, commInterface, commDirection );
         return tuple;
       }
 

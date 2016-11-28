@@ -5,7 +5,7 @@
 #include <tuple>
 #include <utility>
 
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 #include <dune/common/std/utility.hh>
 
 #include <dune/fem/common/utility.hh>
@@ -156,7 +156,7 @@ namespace Dune
         {
           OffsetType localOffset;
           localOffset[ 0 ] = 0;
-          ForLoop< MapEach, 0, mapperTupleSize - 1 >::apply( localOffset, globalOffset_, element, f, mapperTuple_ );
+          Fem::ForLoop< MapEach, 0, mapperTupleSize - 1 >::apply( localOffset, globalOffset_, element, f, mapperTuple_ );
         }
 
         template< class Entity, class Functor >
@@ -164,7 +164,7 @@ namespace Dune
         {
           OffsetType localOffset;
           localOffset[ 0 ] = 0;
-          ForLoop< MapEachEntityDof, 0, mapperTupleSize - 1 >::apply( localOffset, globalOffset_, entity, f, mapperTuple_ );
+          Fem::ForLoop< MapEachEntityDof, 0, mapperTupleSize - 1 >::apply( localOffset, globalOffset_, entity, f, mapperTuple_ );
         }
 
         int maxNumDofs () const { return maxNumDofs( std::index_sequence_for< Mapper ... >() ); }
@@ -255,7 +255,7 @@ namespace Dune
         {
           globalOffset_[ 0 ] = 0;
           // compute new offsets
-          ForLoop< ComputeOffSet, 0, mapperTupleSize - 1 >::apply( globalOffset_, mapperTuple_ );
+          Fem::ForLoop< ComputeOffSet, 0, mapperTupleSize - 1 >::apply( globalOffset_, mapperTuple_ );
         }
 
         GridPartType &gridPart_;
@@ -382,7 +382,7 @@ namespace Dune
         {
           SizeType nHoles = 0;
           int comp = -1;
-          ForLoop< NumberOfHoles, 0, mapperTupleSize - 1 >::apply( nHoles, comp, block, mapperTuple_ );
+          Fem::ForLoop< NumberOfHoles, 0, mapperTupleSize - 1 >::apply( nHoles, comp, block, mapperTuple_ );
           return nHoles;
         }
 
@@ -390,7 +390,7 @@ namespace Dune
         {
           int comp = -1;
           SizeType oIndex = 0;
-          ForLoop< OldIndex, 0, mapperTupleSize - 1 >::apply( oIndex, comp, hole, block, mapperTuple_ );
+          Fem::ForLoop< OldIndex, 0, mapperTupleSize - 1 >::apply( oIndex, comp, hole, block, mapperTuple_ );
           assert( comp >= 0 );
           return oIndex + globalOffset_[ comp ];
         }
@@ -399,7 +399,7 @@ namespace Dune
         {
           int comp = -1;
           SizeType nIndex = 0;
-          ForLoop< NewIndex, 0, mapperTupleSize - 1 >::apply( nIndex, comp, hole, block, mapperTuple_ );
+          Fem::ForLoop< NewIndex, 0, mapperTupleSize - 1 >::apply( nIndex, comp, hole, block, mapperTuple_ );
           assert( comp > 0 );
           return nIndex + globalOffset_[ comp ];
         }
@@ -408,7 +408,7 @@ namespace Dune
         {
           int comp = -1;
           SizeType oOffset = 0;
-          ForLoop< OldOffset, 0, mapperTupleSize - 1 >::apply( oOffset, comp, block, mapperTuple_ );
+          Fem::ForLoop< OldOffset, 0, mapperTupleSize - 1 >::apply( oOffset, comp, block, mapperTuple_ );
           assert( comp >= 0 );
           return oOffset + oldGlobalOffset_[ comp ];
         }
@@ -417,7 +417,7 @@ namespace Dune
         {
           int comp = -1;
           SizeType offset = 0;
-          ForLoop< Offset, 0, mapperTupleSize - 1 >::apply( offset, comp, block, mapperTuple_ );
+          Fem::ForLoop< Offset, 0, mapperTupleSize - 1 >::apply( offset, comp, block, mapperTuple_ );
           assert( comp >= 0 );
           return offset + globalOffset_[ comp ];
         }

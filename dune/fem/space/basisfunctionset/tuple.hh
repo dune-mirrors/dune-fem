@@ -6,7 +6,7 @@
 #include <tuple>
 #include <vector>
 
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 #include <dune/common/std/utility.hh>
 
 #include <dune/geometry/type.hh>
@@ -169,7 +169,7 @@ namespace Dune
         : basisFunctionSetTuple_( basisFunctionSets ... )
       {
         offset_[ 0 ] = 0;
-        ForLoop< ComputeOffset, 0, setIterationSize >::apply( offset_, basisFunctionSetTuple_ );
+        Fem::ForLoop< ComputeOffset, 0, setIterationSize >::apply( offset_, basisFunctionSetTuple_ );
       }
 
       // constructor taking a tuple of basisfunction sets
@@ -177,7 +177,7 @@ namespace Dune
         : basisFunctionSetTuple_( basisFunctionSetTuple )
       {
         offset_[ 0 ] = 0;
-        ForLoop< ComputeOffset, 0, setIterationSize >::apply( offset_, basisFunctionSetTuple_ );
+        Fem::ForLoop< ComputeOffset, 0, setIterationSize >::apply( offset_, basisFunctionSetTuple_ );
       }
 
       // Basis Function Set Interface Methods
@@ -217,7 +217,7 @@ namespace Dune
       template< class Point, class DofVector >
       void evaluateAll ( const Point &x, const DofVector &dofs, RangeType &value ) const
       {
-        ForLoop< EvaluateAll, 0, setIterationSize >::apply( x, dofs, value, offset_, basisFunctionSetTuple_ );
+        Fem::ForLoop< EvaluateAll, 0, setIterationSize >::apply( x, dofs, value, offset_, basisFunctionSetTuple_ );
       }
 
       //! \copydoc BasisFunctionSet::evaluateAll( x, values )
@@ -225,7 +225,7 @@ namespace Dune
       void evaluateAll ( const Point &x, RangeArray &values ) const
       {
         assert( values.size() >= size() );
-        ForLoop< EvaluateAllRanges, 0, setIterationSize >::apply( x, values, storage_, offset_, basisFunctionSetTuple_ );
+        Fem::ForLoop< EvaluateAllRanges, 0, setIterationSize >::apply( x, values, storage_, offset_, basisFunctionSetTuple_ );
       }
 
       //! \copydoc BasisFunctionSet::evaluateAll( quad, dofs, ranges )
@@ -241,7 +241,7 @@ namespace Dune
       template< class Point, class DofVector >
       void jacobianAll ( const Point &x, const DofVector &dofs, JacobianRangeType &jacobian ) const
       {
-        ForLoop< JacobianAll, 0, setIterationSize >::apply( x, dofs, jacobian, offset_, basisFunctionSetTuple_ );
+        Fem::ForLoop< JacobianAll, 0, setIterationSize >::apply( x, dofs, jacobian, offset_, basisFunctionSetTuple_ );
       }
 
       //! \copydoc BasisFunctionSet::jacobianAll( x, dofs, jacobians )
@@ -249,7 +249,7 @@ namespace Dune
       void jacobianAll ( const Point &x, JacobianRangeArray &jacobians ) const
       {
         assert( jacobians.size() >= size() );
-        ForLoop< JacobianAllRanges, 0, setIterationSize >::apply( x, jacobians, storage_, offset_, basisFunctionSetTuple_ );
+        Fem::ForLoop< JacobianAllRanges, 0, setIterationSize >::apply( x, jacobians, storage_, offset_, basisFunctionSetTuple_ );
       }
 
       //! \brief evaluate the jacobian of all basis functions and store the result in the jacobians array
@@ -265,7 +265,7 @@ namespace Dune
       template< class Point, class DofVector >
       void hessianAll ( const Point &x, const DofVector &dofs, HessianRangeType &hessian ) const
       {
-        ForLoop< HessianAll, 0, setIterationSize >::apply( x, dofs, hessian, offset_, basisFunctionSetTuple_ );
+        Fem::ForLoop< HessianAll, 0, setIterationSize >::apply( x, dofs, hessian, offset_, basisFunctionSetTuple_ );
       }
 
       //! \copydoc BasisFunctionSet::hessianAll( x, hessians )
@@ -273,7 +273,7 @@ namespace Dune
       void hessianAll ( const Point &x, HessianRangeArray &hessians ) const
       {
         assert( hessians.size() >= size() );
-        ForLoop< HessianAllRanges, 0, setIterationSize >::apply( x, hessians, storage_, offset_, basisFunctionSetTuple_ );
+        Fem::ForLoop< HessianAllRanges, 0, setIterationSize >::apply( x, hessians, storage_, offset_, basisFunctionSetTuple_ );
       }
 
       //! \copydoc BasisFunctionSet::axpy( quad, values, dofs )
@@ -303,21 +303,21 @@ namespace Dune
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, DofVector &dofs ) const
       {
-        ForLoop< Axpy, 0, setIterationSize >::apply( x, valueFactor, dofs, offset_, basisFunctionSetTuple_ );
+        Fem::ForLoop< Axpy, 0, setIterationSize >::apply( x, valueFactor, dofs, offset_, basisFunctionSetTuple_ );
       }
 
       //! \copydoc BasisFunctionSet::axpy( x, jacobianFactor, dofs )
       template< class Point, class DofVector >
       void axpy ( const Point &x, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const
       {
-        ForLoop< Axpy, 0, setIterationSize >::apply( x, jacobianFactor, dofs, offset_, basisFunctionSetTuple_ );
+        Fem::ForLoop< Axpy, 0, setIterationSize >::apply( x, jacobianFactor, dofs, offset_, basisFunctionSetTuple_ );
       }
 
       //! \copydoc BasisFunctionSet::axpy( x, valueFactor, jacobianFactor, dofs )
       template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, const JacobianRangeType &jacobianFactor, DofVector &dofs ) const
       {
-        ForLoop< Axpy, 0, setIterationSize >::apply( x, valueFactor, jacobianFactor, dofs, offset_, basisFunctionSetTuple_ );
+        Fem::ForLoop< Axpy, 0, setIterationSize >::apply( x, valueFactor, jacobianFactor, dofs, offset_, basisFunctionSetTuple_ );
       }
 
       /***** NON Interface methods ****/

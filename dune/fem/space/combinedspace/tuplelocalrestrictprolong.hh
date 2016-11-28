@@ -7,7 +7,7 @@
 #include <vector>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 #include <dune/common/std/utility.hh>
 
 #include <dune/fem/common/utility.hh>
@@ -57,7 +57,7 @@ namespace Dune
 
       void setFatherChildWeight ( const DomainFieldType &weight )
       {
-        ForLoop< SetFatherChildWeight, 0, setSize >::apply( weight, localRestrictProlongTuple_ );
+        Fem::ForLoop< SetFatherChildWeight, 0, setSize >::apply( weight, localRestrictProlongTuple_ );
       }
 
       //! restrict data to father
@@ -65,7 +65,7 @@ namespace Dune
       void restrictLocal ( LFFather &lfFather, const LFSon &lfSon,
                            const LocalGeometry &geometryInFather, bool initialize ) const
       {
-        ForLoop< RestrictLocal, 0, setSize >::apply( lfFather, lfSon, geometryInFather, initialize, localRestrictProlongTuple_ );
+        Fem::ForLoop< RestrictLocal, 0, setSize >::apply( lfFather, lfSon, geometryInFather, initialize, localRestrictProlongTuple_ );
       }
 
 
@@ -73,7 +73,7 @@ namespace Dune
       void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,
                           const LocalGeometry &geometryInFather, bool initialize ) const
       {
-        ForLoop< ProlongLocal, 0, setSize >::apply( lfFather, lfSon, geometryInFather, initialize, localRestrictProlongTuple_ );
+        Fem::ForLoop< ProlongLocal, 0, setSize >::apply( lfFather, lfSon, geometryInFather, initialize, localRestrictProlongTuple_ );
       }
 
       bool needCommunication () const

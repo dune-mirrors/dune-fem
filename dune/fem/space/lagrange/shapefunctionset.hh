@@ -5,7 +5,7 @@
 #include <cstdlib>
 
 #include <dune/common/fvector.hh>
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 
 #include <dune/geometry/type.hh>
 
@@ -273,13 +273,13 @@ namespace Dune
       static void apply ( const int order, std::size_t &size )
       {
         // loop over all possible polynomial order to find correct size
-        Dune::ForLoop< CheckOrder, 0, maxPolOrder >::apply( order, size );
+        Dune::Fem::ForLoop< CheckOrder, 0, maxPolOrder >::apply( order, size );
       }
 
       static void apply ( const std::size_t &i, const int order, ShapeFunctionType *&shapeFunction )
       {
         // loop over all possible polynomial order to create correct shape function
-        Dune::ForLoop< CheckOrder, 0, maxPolOrder >::apply( i, order, shapeFunction );
+        Dune::Fem::ForLoop< CheckOrder, 0, maxPolOrder >::apply( i, order, shapeFunction );
       }
     };
 

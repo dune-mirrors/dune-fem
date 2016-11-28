@@ -724,7 +724,7 @@ namespace Dune
           polyStorage.activate();
 
           // insert for all sub entities
-          ForLoop< InsertSubEntities, 0, highestDimension>::
+          Fem::ForLoop< InsertSubEntities, 0, highestDimension>::
             apply( entity, clk, polOrd, size_, notAlreadyCounted, dofContainer_ );
 
           //printEntityDofs( entity );
@@ -740,7 +740,7 @@ namespace Dune
         // polOrd ist set on call of deactivate
         if( entityPolynomOrder_[ entity ].deactivate( polOrd ) )
         {
-          ForLoop< RemoveSubEntities, 0, highestDimension>::
+          Fem::ForLoop< RemoveSubEntities, 0, highestDimension>::
             apply( entity, polOrd, dofContainer_ );
         }
       }

@@ -1,6 +1,6 @@
 #include <config.h>
 
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 
 #include <dune/geometry/type.hh>
 
@@ -62,7 +62,7 @@ int main( int argc, char **argv )
   std::cout << "Number of shape functions: " << numShapeFunctions;
   std::cout << std::endl << std::endl;
 
-  ForLoop< PrintMaxDofs, 0, DIMENSION >::apply();
+  Fem::ForLoop< PrintMaxDofs, 0, DIMENSION >::apply();
   std::cout << std::endl;
 
   unsigned int errors = 0;

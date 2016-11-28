@@ -4,7 +4,7 @@
 #include <tuple>
 #include <utility>
 
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 #include <dune/common/tupleutility.hh>
 
 #include <dune/fem/space/common/restrictprolonginterface.hh>
@@ -78,14 +78,14 @@ namespace Dune
       /** \copydoc Dune::Fem::RestrictProlongInterface::setFatherChildWeight */
       void setFatherChildWeight ( const DomainFieldType &weight ) const
       {
-        Dune::ForLoop< SetFatherChildWeight, 0, sizeof...( Tail ) >::apply( weight, tuple_ );
+        Dune::Fem::ForLoop< SetFatherChildWeight, 0, sizeof...( Tail ) >::apply( weight, tuple_ );
       }
 
       /** \copydoc Dune::Fem::RestrictProlongInterface::restrictLocal */
       template< class Entity >
       void restrictLocal ( const Entity &father, const Entity &child, bool initialize ) const
       {
-        Dune::ForLoop< RestrictLocal, 0, sizeof...( Tail ) >::apply( father, child, initialize, tuple_ );
+        Dune::Fem::ForLoop< RestrictLocal, 0, sizeof...( Tail ) >::apply( father, child, initialize, tuple_ );
       }
 
       /** \copydoc Dune::Fem::RestrictProlongInterface::restrictLocal */
@@ -93,14 +93,14 @@ namespace Dune
       void restrictLocal ( const Entity &father, const Entity &child,
                            const LocalGeometry &geometryInFather, bool initialize ) const
       {
-        Dune::ForLoop< RestrictLocal, 0, sizeof...( Tail ) >::apply( father, child, geometryInFather, initialize, tuple_ );
+        Dune::Fem::ForLoop< RestrictLocal, 0, sizeof...( Tail ) >::apply( father, child, geometryInFather, initialize, tuple_ );
       }
 
       /** \copydoc Dune::Fem::RestrictProlongInterface::prolongLocal */
       template< class Entity >
       void prolongLocal ( const Entity &father, const Entity &child, bool initialize ) const
       {
-        Dune::ForLoop< ProlongLocal, 0, sizeof...( Tail ) >::apply( father, child, initialize, tuple_ );
+        Dune::Fem::ForLoop< ProlongLocal, 0, sizeof...( Tail ) >::apply( father, child, initialize, tuple_ );
       }
 
       /** \copydoc Dune::Fem::RestrictProlongInterface::prolongLocal */
@@ -108,28 +108,28 @@ namespace Dune
       void prolongLocal ( const Entity &father, const Entity &child,
                           const LocalGeometry &geometryInFather, bool initialize ) const
       {
-        Dune::ForLoop< ProlongLocal, 0, sizeof...( Tail ) >::apply( father, child, geometryInFather, initialize, tuple_ );
+        Dune::Fem::ForLoop< ProlongLocal, 0, sizeof...( Tail ) >::apply( father, child, geometryInFather, initialize, tuple_ );
       }
 
       /** \copydoc Dune::Fem::RestrictProlongInterface::addToList */
       template< class Communicator, class Operation >
       void addToList ( Communicator &comm, const Operation& op )
       {
-        Dune::ForLoop< AddToList, 0, sizeof...( Tail ) >::apply( comm, tuple_, op );
+        Dune::Fem::ForLoop< AddToList, 0, sizeof...( Tail ) >::apply( comm, tuple_, op );
       }
 
       /** \copydoc Dune::Fem::RestrictProlongInterface::addToList */
       template< class Communicator >
       void addToList ( Communicator &comm )
       {
-        Dune::ForLoop< AddToList, 0, sizeof...( Tail ) >::apply( comm, tuple_ );
+        Dune::Fem::ForLoop< AddToList, 0, sizeof...( Tail ) >::apply( comm, tuple_ );
       }
 
       /** \copydoc Dune::Fem::RestrictProlongInterface::addToLoadBalancer */
       template< class LoadBalancer >
       void addToLoadBalancer ( LoadBalancer &loadBalancer )
       {
-        Dune::ForLoop< AddToLoadBalancer, 0, sizeof...( Tail ) >::apply( loadBalancer, tuple_ );
+        Dune::Fem::ForLoop< AddToLoadBalancer, 0, sizeof...( Tail ) >::apply( loadBalancer, tuple_ );
       }
 
       /** \} */
