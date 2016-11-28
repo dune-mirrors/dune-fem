@@ -379,12 +379,12 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
 # importModel
 # -----------
 
-def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
+def importModel(grid, model, dirichlet = {}, exact = None, tempVars = True, header = False):
     start_time = timeit.default_timer()
 
     if isinstance(model, str):
-        with open(model, 'r') as myfile:
-            data = myfile.read()
+        with open(model, 'r') as modelFile:
+            data = modelFile.read()
         name = data.split('PYBIND11_PLUGIN( ')[1].split(' )')[0]
         builder.load(name, data, "ellipticModel")
 
@@ -452,7 +452,13 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars=True):
     writer.emit('')
     writer.closePythonModule(name)
 
-    builder.load(name, writer.writer.getvalue(), "ellipticModel")
-    writer.close()
+    if header == False:
+        builder.load(name, writer.writer.getvalue(), "ellipticModel")
+        writer.close()
+    else:
+        with open(header, 'w') as modelFile:
+            modelFile.write(writer.writer.getvalue())
+        writer.close()
+        return 0
 
     return importlib.import_module("dune.generated." + name)
