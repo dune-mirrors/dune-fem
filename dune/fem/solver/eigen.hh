@@ -5,6 +5,7 @@
 
 #include <Eigen/IterativeLinearSolvers>
 
+#include <dune/fem/io/parameter.hh>
 #include <dune/fem/operator/linear/eigenoperator.hh>
 
 namespace Dune
@@ -35,9 +36,8 @@ namespace Dune
       typedef typename OperatorType::MatrixType::MatrixStorageType Matrix;
 
     public:
-      template <class P>
       EigenInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter, bool verbose,
-          const P &p=P())
+                             const ParameterReader &parameter = Parameter::container() )
         : op_(op)
         , solver_()
       {
@@ -46,9 +46,8 @@ namespace Dune
         solver_.factorize( op_.matrix().data() );
       }
 
-      template <class P>
       EigenInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter,
-          const P &p=P())
+                             const ParameterReader &parameter = Parameter::container() )
         : op_(op)
         , solver_()
       {
@@ -71,51 +70,12 @@ namespace Dune
     };
 
     template< class DiscreteFunction>
-    class EigenCGInverseOperator
-      : public EigenInverseOperator<DiscreteFunction,
-            Eigen::ConjugateGradient<typename EigenInverseOperatorTraits<DiscreteFunction>::Matrix>
-          >
-    {
-      typedef EigenInverseOperatorTraits<DiscreteFunction> Traits;
-      typedef EigenInverseOperator<DiscreteFunction,
-            Eigen::ConjugateGradient<typename Traits::Matrix> > BaseType;
-      public:
-      typedef typename Traits::OperatorType OperatorType;
+    using EigenCGInverseOperator = EigenInverseOperator<DiscreteFunction,
+            Eigen::ConjugateGradient<typename EigenInverseOperatorTraits<DiscreteFunction>::Matrix> >;
 
-      template <class P>
-      EigenCGInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter, bool verbose,
-          const P& p=P())
-        : BaseType(op,redEps,absLimit,maxIter,verbose,p) {}
-      template <class P>
-      EigenCGInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter,
-          const P& p=P())
-        : BaseType(op,redEps,absLimit,maxIter) {}
-      EigenCGInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
-        : BaseType(op,redEps,absLimit,maxIter) {}
-    };
     template< class DiscreteFunction>
-    class EigenBiCGStabInverseOperator
-      : public EigenInverseOperator<DiscreteFunction,
-            Eigen::BiCGSTAB<typename EigenInverseOperatorTraits<DiscreteFunction>::Matrix>
-          >
-    {
-      typedef EigenInverseOperatorTraits<DiscreteFunction> Traits;
-      typedef EigenInverseOperator<DiscreteFunction,
-            Eigen::BiCGSTAB<typename Traits::Matrix> > BaseType;
-      public:
-      typedef typename Traits::OperatorType OperatorType;
-
-      template <class P>
-      EigenBiCGStabInverseOperator ( const OperatorType &op, double redEps, double absLimit, int maxIter, bool verbose,
-          const P& p=P())
-        : BaseType(op,redEps,absLimit,maxIter,verbose,p) {}
-      template <class P>
-      EigenBiCGStabInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter,
-          const P& p=P())
-        : BaseType(op,redEps,absLimit,maxIter) {}
-      EigenBiCGStabInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter = std::numeric_limits< unsigned int >::max() )
-        : BaseType(op,redEps,absLimit,maxIter) {}
-    };
+    using EigenBiCGStabInverseOperator = EigenInverseOperator<DiscreteFunction,
+            Eigen::BiCGSTAB<typename EigenInverseOperatorTraits<DiscreteFunction>::Matrix> >;
 
   } // namespace Fem
 } // namespace Dune
