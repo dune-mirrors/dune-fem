@@ -28,10 +28,10 @@ namespace Dune
       {
 
         template< class Integrands >
-        using ValueType = typename Integrands::ValueType;
+        using ValueType = typename std::decay_t< decltype( std::ref( std::declval< const Integrands & >() ).get() ) >::ValueType;
 
         template< class Integrands >
-        using GridPartType = typename Integrands::GridPartType;
+        using GridPartType = typename std::decay_t< decltype( std::ref( std::declval< const Integrands & >() ).get() ) >::GridPartType;
 
 
         template< class Integrands >
@@ -246,52 +246,55 @@ namespace Dune
         : integrands_( std::forward< Args >( args )... )
       {}
 
-      bool init ( const EntityType &entity ) { return std::ref( integrands_ ).get().init( entity ); }
-      bool init ( const IntersectionType &intersection ) { return std::ref( integrands_ ).get().init( intersection ); }
+      bool init ( const EntityType &entity ) { return integrands().init( entity ); }
+      bool init ( const IntersectionType &intersection ) { return integrands().init( intersection ); }
 
-      bool hasInterior () const { return hasInterior( std::ref( integrands_ ).get() ); }
+      bool hasInterior () const { return hasInterior( integrands() ); }
 
       template< class Point >
       ValueType interior ( const Point &x, const ValueType &u ) const
       {
-        return interior( std::ref( integrands_ ).get(), x, u );
+        return interior( integrands(), x, u );
       }
 
       template< class Point >
       auto linearizedInterior ( const Point &x, const ValueType &u ) const
       {
-        return linearizedInterior( std::ref( integrands_ ).get(), x, u );
+        return linearizedInterior( integrands(), x, u );
       }
 
-      bool hasBoundary () const { return hasBoundary( std::ref( integrands_ ).get() ); }
+      bool hasBoundary () const { return hasBoundary( integrands() ); }
 
       template< class Point >
       ValueType boundary ( const Point &x, const ValueType &u ) const
       {
-        return boundary( std::ref( integrands_ ).get(), x, u );
+        return boundary( integrands(), x, u );
       }
 
       template< class Point >
       auto linearizedBoundary ( const Point &x, const ValueType &u ) const
       {
-        return linearizedBoundary( std::ref( integrands_ ).get(), x, u );
+        return linearizedBoundary( integrands(), x, u );
       }
 
-      bool hasSkeleton () const { return hasSkeleton( std::ref( integrands_ ).get() ); }
+      bool hasSkeleton () const { return hasSkeleton( integrands() ); }
 
       template< class Point >
       std::pair< ValueType, ValueType > skeleton ( const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut ) const
       {
-        return skeleton( std::ref( integrands_ ).get(), xIn, uIn, xOut, uOut );
+        return skeleton( integrands(), xIn, uIn, xOut, uOut );
       }
 
       template< class Point >
       auto linearizedSkeleton ( const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut ) const
       {
-        return linearizedSkeleton( std::ref( integrands_ ).get(), xIn, uIn, xOut, uOut );
+        return linearizedSkeleton( integrands(), xIn, uIn, xOut, uOut );
       }
 
     private:
+      decltype( auto ) integrands () { return std::ref( integrands_ ).get(); }
+      decltype( auto ) integrands () const { return std::ref( integrands_ ).get(); }
+
       Integrands integrands_;
     };
 
