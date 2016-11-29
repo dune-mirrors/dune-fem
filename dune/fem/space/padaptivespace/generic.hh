@@ -7,6 +7,7 @@
 
 #include <dune/common/math.hh>
 
+#include <dune/fem/common/forloop.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>

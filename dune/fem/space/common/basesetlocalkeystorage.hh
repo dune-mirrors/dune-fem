@@ -3,14 +3,12 @@
 
 #include <utility>
 
-//- dune-common includes
 #include <dune/common/exceptions.hh>
 
-//- dune-geometry includes
 #include <dune/geometry/type.hh>
 #include <dune/geometry/typeindex.hh>
 
-//- dune-fem includes
+#include <dune/fem/common/forloop.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/storage/singletonlist.hh>
 

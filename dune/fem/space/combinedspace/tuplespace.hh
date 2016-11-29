@@ -10,6 +10,7 @@
 
 #include <dune/grid/common/grid.hh>
 
+#include <dune/fem/common/forloop.hh>
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/space/basisfunctionset/tuple.hh>
 #include <dune/fem/space/combinedspace/generic.hh>
