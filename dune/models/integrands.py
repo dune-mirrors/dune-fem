@@ -408,7 +408,7 @@ def load(grid, integrands, tempVars=True):
     if integrands.coefficients:
         writer.emit('#include <dune/fempy/function/virtualizedgridfunction.hh>')
         writer.emit('')
-    writer.emit('#include <dune/fem/schemes/integrands.hh>')
+    writer.emit('#include <dune/fempy/py/integrands.hh>')
 
     modelNameSpace = 'Integrands_' + integrands.signature
 
@@ -424,14 +424,11 @@ def load(grid, integrands, tempVars=True):
     else:
         coefficients = []
     post.append(TypeAlias('Integrands', modelNameSpace + '::Integrands< ' + ', '.join(['GridPart'] + coefficients) + ' >'))
-    post.append(TypeAlias('VirtualizedIntegrands', 'Dune::Fem::VirtualizedIntegrands< GridPart, typename Integrands::ValueType >'))
     writer.emit(post);
 
     writer.openPythonModule(name)
-    writer.emit('if( !pybind11::already_registered< VirtualizedIntegrands >() )')
-    writer.emit('  pybind11::class_< VirtualizedIntegrands >( module, "VirtualizedIntegrands" );')
-    writer.emit('')
-    writer.emit('module.def( "create", [] () { return VirtualizedIntegrands( Integrands() ); } );')
+    writer.emit('auto cls = Dune::FemPy::registerIntegrands< Integrands >( module );')
+    writer.emit('cls.def( "__init__", [] ( Integrands &self ) { new (&self) Integrands(); } );')
     writer.closePythonModule(name)
 
     source = writer.writer.getvalue()

@@ -109,12 +109,12 @@ def galerkin(space, integrands, solver=None, parameters={}):
     typeName = 'Dune::Fem::GalerkinScheme< ' + integrandsType + ', ' + linearOperatorType + ', ' + solverTypeName + ' >'
 
     ctors = []
-    ctors.append(['[] ( ' + typeName + ' &self, const ' + spaceType + ' &space, ' + integrandsType + 'integrands ) {',
-                  '    new (&self) ' + typeName + '( space, std::move( integrands ) );',
-                  '  }, "space"_a, "integrands"_a, pybind11::keep_alive< 1, 2 >()'])
-    ctors.append(['[] ( ' + typeName + ' &self, const ' + spaceType + ' &space, ' + integrandsType + 'integrands, const pybind11::dict &parameters ) {',
-                  '    new (&self) ' + typeName + '( space, std::move( integrands ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
-                  '  }, "space"_a, "integrands"_a, "parameters"_a, pybind11::keep_alive< 1, 2 >()'])
+    ctors.append(['[] ( ' + typeName + ' &self, const ' + spaceType + ' &space, ' + integrandsType + ' &integrands ) {',
+                  '    new (&self) ' + typeName + '( space, std::ref( integrands ) );',
+                  '  }, "space"_a, "integrands"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 3 >()'])
+    ctors.append(['[] ( ' + typeName + ' &self, const ' + spaceType + ' &space, ' + integrandsType + ' &integrands, const pybind11::dict &parameters ) {',
+                  '    new (&self) ' + typeName + '( space, std::ref( integrands ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
+                  '  }, "space"_a, "integrands"_a, "parameters"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 3 >()'])
 
     return module(includes, typeName, ctors).Scheme(space, integrands, parameters)
 
