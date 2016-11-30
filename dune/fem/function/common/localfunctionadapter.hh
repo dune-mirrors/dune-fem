@@ -568,7 +568,7 @@ namespace Dune
       typename DiscreteFunctionSpaceImpl::FunctionSpaceType::RangeType(
       const typename DiscreteFunctionSpaceImpl::FunctionSpaceType::DomainType&,
       double,const typename DiscreteFunctionSpaceImpl::EntityType&)> >
-    class LocalAnalyticalFunctionBinder
+    class LocalAnalyticalFunctionBinder:public LocalFunctionAdapterHasInitialize
     {
     public:
       typedef DiscreteFunctionSpaceImpl DiscreteFunctionSpaceType;
@@ -585,18 +585,17 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       //! constructor (without jacobian and without hessian)
-      LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f):
+      LocalAnalyticalFunctionBinder(AnalyticalFunctionType&& f):
         f_(f),j_(),h_(),t_(0.0)
       {}
 
       //! constructor (without hessian)
-      LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f, const AnalyticalFunctionType &j):
+      LocalAnalyticalFunctionBinder(AnalyticalFunctionType&& f, AnalyticalFunctionType&& j):
         f_(f),j_(j),h_(),t_(0.0)
       {}
 
       //! constructor
-      LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f,const AnalyticalFunctionType& j,
-                                    const AnalyticalFunctionType& h):
+      LocalAnalyticalFunctionBinder(AnalyticalFunctionType&& f, AnalyticalFunctionType&& j, AnalyticalFunctionType&& h):
         f_(f),j_(j),h_(h),t_(0.0)
       {}
 
@@ -621,22 +620,15 @@ namespace Dune
         ret=h_(entity().geometry().global(coordinate(x)),t_,entity());
       }
 
-      //! initialize to new entity
+      //! initialize entity
       void init(const EntityType& entity)
       {
         entity_=&entity;
       }
 
-      //! initialize to new entity and to new time
-      void init(const EntityType& entity, double time)
-      {
-        entity_=&entity;
-        t_=time;
-      }
-
-      //! set time
-      template<typename... Args>
-      void initialize(const Args&... ,double time)
+      //! initialize time
+      template<typename Arg>
+      void initialize(Arg&& , double time)
       {
         t_=time;
       }
