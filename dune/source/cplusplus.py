@@ -485,6 +485,8 @@ class SourceWriter:
             return ['[' + capture + '] (' + args + ') {', expr.code, '}']
         elif isinstance(expr, Variable):
             return [expr.name]
+        elif isinstance(expr, UnformattedExpression):
+            return [expr.value]
         else:
             return [expr.strip()]
 

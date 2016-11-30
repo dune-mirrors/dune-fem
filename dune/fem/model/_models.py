@@ -28,3 +28,10 @@ def elliptic(view, equation, dirichlet = {}, exact = None, tempVars=True, coeffi
         fullCoeffs = {}
     fullCoeffs.update(coefficients)
     return Model( coefficients=fullCoeffs )
+
+
+def integrands(view, equation, tempVars=True, coefficients={}):
+    import ufl
+    import dune.ufl
+    import dune.models.integrands as integrands
+    return integrands.create(view, equation, tempVars=tempVars)

@@ -1,6 +1,6 @@
 from __future__ import division, print_function, unicode_literals
 
-from ..expression import Application, ConstantExpression, ConstructExpression, Expression, InitializerList, LambdaExpression, Variable
+from ..expression import Application, ConstantExpression, ConstructExpression, Expression, InitializerList, LambdaExpression, UnformattedExpression, Variable
 from ..cplusplus import Declaration, ReturnStatement, Using
 
 
@@ -23,6 +23,8 @@ def extractVariablesFromExpression(expr):
         return set(expr.capture)
     elif isinstance(expr, Variable):
         return {expr}
+    elif isinstance(expr, UnformattedExpression):
+        return set()
     else:
         raise Exception("Unknown expression", expr)
 

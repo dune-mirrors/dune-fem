@@ -24,13 +24,13 @@ class CodeGenerator(MultiFunction):
         MultiFunction.__init__(self)
         self.using = set()
         self.predefined = predefined
-        self.coefficients = coefficients
+        self.coefficients = [] if coefficients is None else coefficients
         self.code = []
         self.tempVars = tempVars
 
     def argument(self, expr):
         try:
-            return self.predefined[expr]
+            return self._makeTmp(self.predefined[expr], True)
         except KeyError:
             raise Exception('Unknown argument: ' + str(expr.number()))
 
@@ -44,7 +44,7 @@ class CodeGenerator(MultiFunction):
 
     def coefficient(self, expr):
         try:
-            return self.predefined[expr]
+            return self._makeTmp(self.predefined[expr], True)
         except KeyError:
             pass
 
@@ -70,7 +70,7 @@ class CodeGenerator(MultiFunction):
 
     def grad(self, expr):
         try:
-            return self.predefined[expr]
+            return self._makeTmp(self.predefined[expr], True)
         except KeyError:
             pass
 
@@ -110,7 +110,7 @@ class CodeGenerator(MultiFunction):
 
     def negative_restricted(self, expr):
         try:
-            return self.predefined[expr]
+            return self._makeTmp(self.predefined[expr], True)
         except KeyError:
             pass
 
@@ -119,7 +119,7 @@ class CodeGenerator(MultiFunction):
 
     def positive_restricted(self, expr):
         try:
-            return self.predefined[expr]
+            return self._makeTmp(self.predefined[expr], True)
         except KeyError:
             pass
 
@@ -139,7 +139,7 @@ class CodeGenerator(MultiFunction):
 
     def spatial_coordinate(self, expr):
         try:
-            return self.predefined[expr]
+            return self._makeTmp(self.predefined[expr], True)
         except KeyError:
             self.using.add(Using(cplusplus.coordinate))
             var = Variable('const auto', 'y')
@@ -166,16 +166,25 @@ class CodeGenerator(MultiFunction):
             raise KeyError('two coefficients provided with same name')
         return e[0]["number"]
 
-    def _makeTmp(self, cexpr):
-        if self.tempVars:
-            var = Variable('const auto', 'tmp' + str(len(self.code)))
+    def _makeTmp(self, cexpr, tempVars=None):
+        if isinstance(cexpr, Variable):
+            return cexpr
+        if tempVars is None:
+            tempVars = self.tempVars
+        if tempVars:
+            cppType = None
+            if isinstance(cexpr, cplusplus.Expression):
+                cppType = cexpr.cppType
+            if cppType is None:
+                cppType = 'const auto'
+            var = Variable(cppType, 'tmp' + str(len(self.code)))
             self.code.append(Declaration(var, cexpr))
             return var
         else:
             return cexpr
 
 
-def generateCode(predefined, expressions, coefficients, tempVars=True):
+def generateCode(predefined, expressions, coefficients=None, tempVars=True):
     generator = CodeGenerator(predefined, coefficients, tempVars)
     results = map_expr_dags(generator, expressions)
     return list(generator.using) + generator.code, results

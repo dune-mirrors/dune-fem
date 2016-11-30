@@ -138,6 +138,15 @@ class Variable(Expression):
       return hash((self.cppType, self.name))
 
 
+class UnformattedExpression(Expression):
+    def __init__(self, cppType, value):
+        Expression.__init__(self, cppType)
+        self.value = value.strip()
+
+    def __hash__(self):
+        return hash((self.cppType, self.value))
+
+
 def makeExpression(expr):
     if isinstance(expr, Expression):
         return expr

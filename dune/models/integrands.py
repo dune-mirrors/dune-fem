@@ -11,7 +11,7 @@ from ufl.differentiation import Grad
 
 from dune.generator import builder
 
-from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, Struct, TypeAlias, Using, Variable
+from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, Struct, TypeAlias, UnformattedExpression, Using, Variable
 from dune.source.cplusplus import construct, coordinate, lambda_, make_pair, makeExpression, return_
 from dune.source.cplusplus import SourceWriter
 from dune.source.algorithm.extractvariables import extractVariablesFromExpressions, extractVariablesFromStatements
@@ -25,7 +25,8 @@ class Integrands():
         self.dimRange = dimRange
         self.signature = signature
         self.field = "double"
-        self.coefficients = []
+        self._constants = []
+        self._coefficients = []
         self.init = None
         self.vars = None
 
@@ -35,6 +36,30 @@ class Integrands():
         self.linearizedBoundary = None
         self.skeleton = None
         self.linearizedSkeleton = None
+
+        self._derivatives = [('RangeType', 'evaluate'), ('JacobianRangeType', 'jacobian'), ('HessianRangeType', 'hessian')]
+
+    def addCoefficient(self, field, dimRange):
+        idx = len(self._coefficients)
+        self._coefficients.append({'dimRange': dimRange, 'field': field})
+        return idx
+
+    def addConstant(self, cppType):
+        idx = len(self._constants)
+        self._constants.append(cppType)
+        return idx
+
+    def constant(self, idx):
+        return UnformattedExpression(self._constants[idx], 'constant< ' + str(idx) + ' >()')
+
+    def coefficient(self, idx, x, side=None):
+        targs = [str(idx)]
+        if side is not None:
+            targs.append(side)
+        return (UnformattedExpression('typename CoefficientFunctionSpaceType< ' + str(idx) + ' >::' + t, n + 'Coefficient< ' + ', '.join(targs) + ' >( ' + x + ' )') for t, n in self._derivatives)
+
+    def spatialCoordinate(self, x):
+        return UnformattedExpression('DomainType', 'entity().geometry().global( Dune::Fem::coordinate( ' + x + ' ) )')
 
     def pre(self):
         result = []
@@ -54,23 +79,24 @@ class Integrands():
             result.append(TypeAlias(s, "typename FunctionSpaceType::" + s))
         result.append(TypeAlias("ValueType", "std::tuple< RangeType, JacobianRangeType >"))
 
-        if self.coefficients:
-            constants = [("std::shared_ptr< Dune::FieldVector< " + SourceWriter.cpp_fields(c['field']) + ", " + str(c['dimRange']) + " > >") for c in self.coefficients if c['constant']]
-            result.append(TypeAlias("ConstantsTupleType", "std::tuple< " + ", ".join(constants) + " >"))
-            coefficients = [('Dune::Fem::FunctionSpace< double,' + SourceWriter.cpp_fields(c['field']) + ', dimDomain, ' + str(c['dimRange']) + ' >') for c in self.coefficients if not c['constant']]
-            result.append(TypeAlias("CoefficientFunctionSpaceTupleType", "std::tuple< " +", ".join(coefficients) + " >"))
+        constants = ["std::shared_ptr< " + c + " >" for c in self._constants]
+        result.append(TypeAlias("ConstantTupleType", "std::tuple< " + ", ".join(constants) + " >"))
+        if constants:
+            result.append(TypeAlias("ConstantsRangeType", "typename std::tuple_element_t< i, ConstantTupleType >::element_type", targs=["std::size_t i"]))
 
-            result.append(TypeAlias("ConstantsRangeType", "typename std::tuple_element_t< i, ConstantsTupleType >::element_type", targs=["std::size_t i"]))
-            result.append(Declaration(Variable("const std::size_t", "numCoefficients"), "std::tuple_size< CoefficientFunctionSpaceTupleType >::value", static=True))
+        if self._coefficients:
+            coefficientSpaces = [('Dune::Fem::FunctionSpace< double,' + SourceWriter.cpp_fields(c['field']) + ', dimDomain, ' + str(c['dimRange']) + ' >') for c in self._coefficients]
+            result.append(TypeAlias("CoefficientFunctionSpaceTupleType", "std::tuple< " +", ".join(coefficientSpaces) + " >"))
+            result.append(TypeAlias("CoefficientTupleType", "std::tuple< Coefficients... >"))
+
             result.append(TypeAlias("CoefficientFunctionSpaceType", "typename std::tuple_element< i, CoefficientFunctionSpaceTupleType >::type", targs=["std::size_t i"]))
             for s in ["RangeType", "JacobianRangeType"]:
                 result.append(TypeAlias("Coefficient" + s, "typename CoefficientFunctionSpaceType< i >::" + s, targs=["std::size_t i"]))
         else:
-            result.append(Declaration(Variable("const std::size_t", "numCoefficients"), "0u", static=True))
-            result.append(TypeAlias("ConstantsTupleType", "std::tuple<>"))
+            result.append(TypeAlias("CoefficientTupleType", "std::tuple<>"))
 
-        result.append(TypeAlias('CoefficientType', 'typename std::tuple_element< i, std::tuple< Coefficients... > >::type', targs=['std::size_t i']))
-        result.append(TypeAlias('ConstantsType', 'typename std::tuple_element< i, ConstantsTupleType >::type::element_type', targs=['std::size_t i']))
+        result.append(TypeAlias('CoefficientType', 'typename std::tuple_element< i, CoefficientTupleType >::type', targs=['std::size_t i']))
+        result.append(TypeAlias('ConstantType', 'typename std::tuple_element< i, ConstantTupleType >::type::element_type', targs=['std::size_t i']))
 
         if self.skeleton is not None:
             result.append(EnumClass('Side', ['in = 0u', 'out = 1u'], 'std::size_t'))
@@ -78,11 +104,12 @@ class Integrands():
         else:
             inside = ''
 
-        result.append(Constructor(code="constructConstants( std::make_index_sequence< std::tuple_size< ConstantsTupleType >::value >() );"))
+        result.append(Constructor(code="constructConstants( std::make_index_sequence< std::tuple_size< ConstantTupleType >::value >() );"))
 
         initEntity = Method('bool', 'init', args=['const EntityType &entity'])
         initEntity.append('entity_' + inside + ' = entity;')
-        initEntity.append('initCoefficients( entity_' + inside + ', coefficients_' + inside + ', std::make_index_sequence< numCoefficients >() );')
+        if self._coefficients:
+            initEntity.append('initCoefficients( entity_' + inside + ', coefficients_' + inside + ', std::index_sequence_for< Coefficients... >() );')
         initEntity.append(self.init)
         initEntity.append(return_(True))
         result.append(initEntity)
@@ -92,85 +119,95 @@ class Integrands():
             initIntersection.append(return_('(intersection.boundary() && init( intersection.inside() ))'))
         else:
             initIntersection.append('entity_[ static_cast< std::size_t >( Side::in ) ] = intersection.inside();')
-            initIntersection.append('initCoefficients( entity_[ static_cast< std::size_t >( Side::in ) ], coefficients_[ static_cast< std::size_t >( Side::in ) ], std::make_index_sequence< numCoefficients >() );')
+            if self._coefficients:
+                initIntersection.append('initCoefficients( entity_[ static_cast< std::size_t >( Side::in ) ], coefficients_[ static_cast< std::size_t >( Side::in ) ], std::index_sequence_for< Coefficients... >() );')
             initIntersection.append('if( intersection.neighbor() )')
             initIntersection.append('{')
             initIntersection.append('  entity_[ static_cast< std::size_t >( Side::out ) ] = intersection.outside();')
-            initIntersection.append('  initCoefficients( entity_[ static_cast< std::size_t >( Side::out ) ], coefficients_[ static_cast< std::size_t >( Side::out ) ], std::make_index_sequence< numCoefficients >() );')
+            if self._coefficients:
+                initIntersection.append('  initCoefficients( entity_[ static_cast< std::size_t >( Side::out ) ], coefficients_[ static_cast< std::size_t >( Side::out ) ], std::index_sequence_for< Coefficients... >() );')
             initIntersection.append('}')
             initIntersection.append(return_(True))
         result.append(initIntersection)
 
         return result
 
-    def declareSpatialCoordinate(self, x):
-        y = Variable('const DomainType', 'y')
-        if self.skeleton is not None:
-            inside = '[ static_cast< std::size_t >( Side::in ) ]'
-        else:
-            inside = ''
-        return Declaration(y, 'entity_' + inside + '.geometry().global( Dune::Fem::coordinate( ' + x + ' ) )')
-
-    def declareIfUsed(self, declarations, code):
-        usedVars = extractVariablesFromStatements(code)
-        prepend = []
-        for decl in declarations:
-            if decl.obj in usedVars:
-                prepend.append(decl)
-        return prepend + code
-
     def main(self):
         result = []
 
         if self.interior is not None:
-            interior = self.declareIfUsed([self.declareSpatialCoordinate('x')], self.interior)
-            result.append(Method('ValueType', 'interior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=interior, const=True))
-            linearizedInterior = self.declareIfUsed([self.declareSpatialCoordinate('x')], self.linearizedInterior)
-            result.append(Method('auto', 'linearizedInterior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=linearizedInterior, const=True))
+            result.append(Method('ValueType', 'interior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.interior, const=True))
+            result.append(Method('auto', 'linearizedInterior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.linearizedInterior, const=True))
 
         if self.boundary is not None:
-            boundary = self.declareIfUsed([self.declareSpatialCoordinate('x')], self.boundary)
-            result.append(Method('ValueType', 'boundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=boundary, const=True))
-            linearizedBoundary = self.declareIfUsed([self.declareSpatialCoordinate('x')], self.linearizedBoundary)
-            result.append(Method('auto', 'linearizedBoundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=linearizedBoundary, const=True))
+            result.append(Method('ValueType', 'boundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.boundary, const=True))
+            result.append(Method('auto', 'linearizedBoundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.linearizedBoundary, const=True))
 
         if self.skeleton is not None:
-            skeleton = self.declareIfUsed([self.declareSpatialCoordinate('xIn')], self.skeleton)
-            result.append(Method('std::pair< ValueType, ValueType >', 'skeleton', targs=['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=skeleton, const=True))
-            linearizedSkeleton = self.declareIfUsed([self.declareSpatialCoordinate('xIn')], self.linearizedSkeleton)
-            result.append(Method('auto', 'linearizedSkeleton', targs=['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=linearizedSkeleton, const=True))
+            result.append(Method('std::pair< ValueType, ValueType >', 'skeleton', targs=['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=self.skeleton, const=True))
+            result.append(Method('auto', 'linearizedSkeleton', targs=['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=self.linearizedSkeleton, const=True))
 
         return result
 
     def post(self):
         result = []
 
-        constant = Method('ConstantsType< i > &', 'constant', targs=['std::size_t i'], code=return_('*std::get< i >( constants_ )'))
-        result += [constant.variant('const ConstantsType< i > &constant', const=True), constant]
+        constant = Method('ConstantType< i > &', 'constant', targs=['std::size_t i'], code=return_('*std::get< i >( constants_ )'))
+        result += [constant.variant('const ConstantType< i > &constant', const=True), constant]
+
+        if self._coefficients:
+            setCoefficient = Method('void', 'setCoefficient', targs=['std::size_t i'], args=['const CoefficientType< i > &coefficient'])
+            if self.skeleton is None:
+                setCoefficient.append('std::get< i >( coefficients_ ) = coefficient.localFunction();')
+            else:
+                setCoefficient.append('std::get< i >( coefficients_ )[ static_cast< std::size_t >( Side::in ) ] = coefficient.localFunction();')
+                setCoefficient.append('std::get< i >( coefficients_ )[ static_cast< std::size_t >( Side::out ) ] = coefficient.localFunction();')
+            result.append(setCoefficient)
 
         if self.skeleton is None:
-            coefficient = Method('CoefficientType< i > &', 'coefficient', targs=['std::size_t i'], code=return_('std::get< i >( coefficients_ )'))
+            entity = UnformattedExpression('const EntityType &', 'entity_')
         else:
-            coefficient = Method('CoefficientType< i > &', 'coefficient', targs=['std::size_t i', 'Side side = Side::in'], code=return_('std::get< i >( coefficients_[ static_cast< std::size_t >( side ) ] )'))
-        result += [coefficient.variant('const CoefficientType< i > &coefficient', const=True), coefficient]
+            entity = UnformattedExpression('const EntityType &', 'entity_[ static_cast< std::size_t >( Side::in ) ]')
+        result.append(Method(entity.cppType, 'entity', const=True, code=return_(entity)))
 
         result.append(AccessModifier('private'))
 
-        initCoefficients = Method('void', 'initCoefficients', targs=['std::size_t... i'], args=['const EntityType &entity', 'std::tuple< Coefficients... > &coefficients', 'std::index_sequence< i... >'], static=True)
-        initCoefficients.append('std::ignore = std::make_tuple( (std::get< i >( coefficients ).init( entity ), i)... );')
-        result.append(initCoefficients)
+        if self._coefficients:
+            initCoefficients = Method('void', 'initCoefficients', targs=['std::size_t... i'], args=['const EntityType &entity', 'std::tuple< typename Coefficients::LocalFunctionType... > &coefficients', 'std::index_sequence< i... >'], static=True)
+            initCoefficients.append('std::ignore = std::make_tuple( (std::get< i >( coefficients ).init( entity ), i)... );')
+            result.append(initCoefficients)
 
         constructConstants = Method('void', 'constructConstants', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-        constructConstants.append('std::ignore = std::make_tuple( (std::get< i >( constants_ ) = std::make_shared< ConstantsType< i > >(), i)... );')
+        constructConstants.append('std::ignore = std::make_tuple( (std::get< i >( constants_ ) = std::make_shared< ConstantType< i > >(), i)... );')
         result.append(constructConstants)
+
+        if self._coefficients:
+            for cppType, name in self._derivatives:
+                var = Variable('typename CoefficientFunctionSpaceType< i >::' + cppType, 'result')
+                if self.skeleton is None:
+                    method = Method(var.cppType, name + 'Coefficient', targs=['std::size_t i', 'class Point'], args=['const Point &x'], const=True)
+                    method.append(Declaration(var))
+                    method.append(UnformattedExpression('void', 'std::get< i >( coefficients_ ).' + name + '( x, ' + var.name + ' );'))
+                    method.append(return_(var))
+                    result.append(method)
+                else:
+                    method = Method(var.cppType, name + 'Coefficient', targs=['std::size_t i', 'Side side', 'class Point'], args=['const Point &x'], const=True)
+                    method.append(Declaration(var))
+                    method.append(UnformattedExpression('void', 'std::get< i >( coefficients )[ static_cast< std::size_t >( side ) ].' + name + '( x, ' + var.name + ' )'))
+                    method.append(return_(var))
+                    result.append(method)
+
+                    method = Method(var.cppType, name + 'Coefficient', targs=['std::size_t i', 'class Point'], args=['const Point &x'], const=True)
+                    method.append(return_(UnformattedExpression(var.cppType, name + 'Coefficient< i, Side::in >( x )')))
+                    result.append(method)
 
         if self.skeleton is None:
             result.append(Declaration(Variable('EntityType', 'entity_')))
-            result.append(Declaration(Variable('std::tuple< Coefficients... >', 'coefficients_')))
+            result.append(Declaration(Variable('std::tuple< typename Coefficients::LocalFunctionType... >', 'coefficients_')))
         else:
             result.append(Declaration(Variable('std::array< EntityType, 2 >', 'entity_')))
-            result.append(Declaration(Variable('std::array< std::tuple< Coefficients... >, 2 >', 'coefficients_')))
-        result.append(Declaration(Variable('ConstantsTupleType', 'constants_')))
+            result.append(Declaration(Variable('std::array< CoefficientTupleType, 2 >', 'coefficients_')))
+        result.append(Declaration(Variable('ConstantTupleType', 'constants_')))
         if self.vars is not None:
             result += self.vars
 
@@ -184,7 +221,7 @@ class Integrands():
         return result
 
 
-def generateCode(predefined, testFunctions, tensorMap, coefficients, tempVars=True):
+def generateCode(predefined, testFunctions, tensorMap, tempVars=True):
     # build list of all expressions to compile
     expressions = []
     for phi in testFunctions:
@@ -195,7 +232,7 @@ def generateCode(predefined, testFunctions, tensorMap, coefficients, tempVars=Tr
         expressions += [tensor[i] for i in keys]
 
     # compile all expressions at once
-    preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars=tempVars)
+    preamble, results = codegen.generateCode(predefined, expressions, tempVars=tempVars)
 
     # extract generated code for expressions and build values
     values = []
@@ -212,7 +249,7 @@ def generateCode(predefined, testFunctions, tensorMap, coefficients, tempVars=Tr
     return preamble, values
 
 
-def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMap, coefficients, tempVars=True):
+def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMap, tempVars=True):
     """generate code for a bilinear form
 
     Args:
@@ -220,7 +257,6 @@ def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMa
         testFunctions:    list of arguments to interpret as test functions
         trialFunctionMap: map of variable to list of arguments to interpret as trial functions
         tensorMap:        map of expression tensors of shape (testFunction x trialFunction)
-        coefficients:     list of coefficients
         tempVars:         introduce temporary variables during code generation
     """
 
@@ -236,7 +272,7 @@ def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMa
                 expressions += [tensor[i] for i in keys]
 
     # compile all expressions at once
-    preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars=tempVars)
+    preamble, results = codegen.generateCode(predefined, expressions, tempVars=tempVars)
 
     # extract generated code for expressions and build values
     values = {}
@@ -268,28 +304,28 @@ def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMa
     return preamble, values
 
 
-def generateUnaryCode(predefined, testFunctions, x, tensorMap, coefficients, tempVars=True):
-    preamble, values = generateCode(predefined, testFunctions, tensorMap, coefficients, tempVars)
+def generateUnaryCode(predefined, testFunctions, tensorMap, tempVars=True):
+    preamble, values = generateCode(predefined, testFunctions, tensorMap, tempVars)
     return preamble + [return_(construct('ValueType', *values))]
 
 
-def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, x, tensorMap, coefficients, tempVars=True):
+def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, tempVars=True):
     if tensorMap is None:
         return [return_(lambda_(args=['const ValueType &phi'], code=return_(construct('ValueType', 0, 0))))]
 
     var = Variable('std::tuple< RangeType, JacobianRangeType >', 'phi')
-    preamble, values = generateLinearizedCode(predefined, testFunctions, {var: trialFunctions}, tensorMap, coefficients, tempVars)
+    preamble, values = generateLinearizedCode(predefined, testFunctions, {var: trialFunctions}, tensorMap, tempVars)
     capture = extractVariablesFromExpressions(values[var]) - {var}
     return preamble + [return_(lambda_(capture=capture, args=['const ValueType &phi'], code=return_(construct('ValueType', *values[var]))))]
 
 
-def generateBinaryCode(predefined, testFunctions, x, tensorMap, coefficients, tempVars=True):
+def generateBinaryCode(predefined, testFunctions, tensorMap, tempVars=True):
     restrictedTestFunctions = [phi('-') for phi in testFunctions] + [phi('+') for phi in testFunctions]
-    preamble, values = generateCode(predefined, restrictedTestFunctions, tensorMap, coefficients, tempVars=True)
+    preamble, values = generateCode(predefined, restrictedTestFunctions, tensorMap, tempVars=True)
     return preamble + [return_(make_pair(construct('ValueType', *values[:len(testFunctions)]), construct('ValueType', *values[len(testFunctions):])))]
 
 
-def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, x, tensorMap, coefficients, tempVars=True):
+def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, tempVars=True):
     restrictedTestFunctions = [phi('-') for phi in testFunctions] + [phi('+') for phi in testFunctions]
 
     trialFunctionsIn = [psi('-') for psi in trialFunctions]
@@ -300,7 +336,7 @@ def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, x, t
 
     varIn = Variable('std::tuple< RangeType, JacobianRangeType >', 'phiIn')
     varOut = Variable('std::tuple< RangeType, JacobianRangeType >', 'phiOut')
-    preamble, values = generateLinearizedCode(predefined, restrictedTestFunctions, {varIn: trialFunctionsIn, varOut: trialFunctionsOut}, tensorMap, coefficients, tempVars)
+    preamble, values = generateLinearizedCode(predefined, restrictedTestFunctions, {varIn: trialFunctionsIn, varOut: trialFunctionsOut}, tensorMap, tempVars)
 
     captureIn = extractVariablesFromExpressions(values[varIn]) - {varIn}
     captureOut = extractVariablesFromExpressions(values[varOut]) - {varOut}
@@ -338,21 +374,15 @@ def compileUFL(equation, tempVars=True):
     except AttributeError:
         pass
 
-    idxConst = 0
-    idxCoeff = 0
+    constants = dict()
+    coefficients = dict()
     for coefficient in set(form.coefficients()):
-        try:
-            name = coefficient.str()
-        except:
-            name = str(coefficient)
         if coefficient.is_cellwise_constant():
-            dimRange = 1 if coefficient.ufl_shape==() else coefficient.ufl_shape[0]
-            integrands.coefficients.append({'name': name, 'number' : idxConst, 'counter' : coefficient.count(), 'dimRange' : dimRange, 'constant': True, 'field': None})
-            idxConst += 1
+            dimRange = (1 if len(coefficient.ufl_shape) == 0 else coefficient.ufl_shape[0])
+            idx = integrands.addConstant('Dune::FieldVector< double, ' + str(dimRange) + ' >')
+            constants[coefficient] = integrands.constant(idx)
         else:
-            field = coefficient.ufl_function_space().ufl_element().field()
-            integrands.coefficients.append({'name': name, 'number' : idxCoeff, 'counter' : coefficient.count(), 'dimRange' : coefficient.ufl_shape[0], 'constant': False, 'field': field})
-            idxCoeff += 1
+            coefficients[coefficient] = integrands.addCoefficient(coefficient.ufl_function_space().ufl_element().field(), coefficient.ufl_shape[0])
 
     integrals = splitForm(form, [phi])
 
@@ -362,29 +392,61 @@ def compileUFL(equation, tempVars=True):
     if not set(integrals.keys()) <= {'cell', 'exterior_facet', 'interior_facet'}:
         raise Exception('unknown integral encountered in ' + str(set(integrals.keys())) + '.')
 
+    def predefineCoefficients(predefined, x, side=None):
+        for coefficient, idx in coefficients.items():
+            for derivative in integrands.coefficient(idx, x, side=side):
+                if side is None:
+                    predefined[coefficient] = derivative
+                elif side == 'Side::in':
+                    predefined[coefficient('-')] = derivative
+                elif side == 'Side::out':
+                    predefined[coefficient('+')] = derivative
+                coefficient = Grad(coefficient)
+
     if 'cell' in integrals.keys():
         arg = Variable('std::tuple< RangeType, JacobianRangeType >', 'u')
-        predefined = {x: y, u: arg[0], du: arg[1]}
-        integrands.interior = generateUnaryCode(predefined, [phi, dphi], x, integrals['cell'], integrands.coefficients, tempVars)
-        predefined = {x: y, ubar: arg[0], dubar: arg[1]}
-        integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], x, linearizedIntegrals.get('cell'), integrands.coefficients, tempVars)
+        predefined = {u: arg[0], du: arg[1], x: integrands.spatialCoordinate('x')}
+        predefined.update(constants)
+        predefineCoefficients(predefined, 'x')
+        integrands.interior = generateUnaryCode(predefined, [phi, dphi], integrals['cell'], tempVars)
+        predefined = {ubar: arg[0], dubar: arg[1], x: integrands.spatialCoordinate('x')}
+        predefined.update(constants)
+        predefineCoefficients(predefined, 'x')
+        integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('cell'), tempVars)
 
     if 'exterior_facet' in integrals.keys():
         arg = Variable('std::tuple< RangeType, JacobianRangeType >', 'u')
-        predefined = {x: y, u: arg[0], du: arg[1]}
-        integrands.boundary = generateUnaryCode(predefined, [phi, dphi], x, integrals['exterior_facet'], integrands.coefficients, tempVars);
-        predefined = {x: y, ubar: arg[0], dubar: arg[1]}
-        integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], x, linearizedIntegrals.get('exterior_facet'), integrands.coefficients, tempVars)
+        predefined = {u: arg[0], du: arg[1], x: integrands.spatialCoordinate('x')}
+        predefined.update(constants)
+        predefineCoefficients(predefined, 'x')
+        integrands.boundary = generateUnaryCode(predefined, [phi, dphi], integrals['exterior_facet'], tempVars);
+        predefined = {ubar: arg[0], dubar: arg[1], x: integrands.spatialCoordinate('x')}
+        predefined.update(constants)
+        predefineCoefficients(predefined, 'x')
+        integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('exterior_facet'), tempVars)
 
     if 'interior_facet' in integrals.keys():
         argIn = Variable('std::tuple< RangeType, JacobianRangeType >', 'uIn')
         argOut = Variable('std::tuple< RangeType, JacobianRangeType >', 'uOut')
-        predefined = {x: y, u('-'): argIn[0], du('-'): argIn[1], u('+'): argOut[0], du('+'): argOut[1]}
-        integrands.skeleton = generateBinaryCode(predefined, [phi, dphi], x, integrals['interior_facet'], integrands.coefficients, tempVars)
-        predefined = {x: y, ubar('-'): argIn[0], dubar('-'): argIn[1], ubar('+'): argOut[0], dubar('+'): argOut[1]}
-        integrands.linearizedSkeleton = generateBinaryLinearizedCode(predefined, [phi, dphi], [u, du], x, linearizedIntegrals.get('interior_facet'), integrands.coefficients, tempVars)
+        predefined = {u('-'): argIn[0], du('-'): argIn[1], u('+'): argOut[0], du('+'): argOut[1], x: integrands.spatialCoordinate('xIn')}
+        predefined.update(constants)
+        predefineCoefficients(predefined, 'xIn', 'Side::in')
+        predefineCoefficients(predefined, 'xOut', 'Side::out')
+        integrands.skeleton = generateBinaryCode(predefined, [phi, dphi], integrals['interior_facet'], tempVars)
+        predefined = {ubar('-'): argIn[0], dubar('-'): argIn[1], ubar('+'): argOut[0], dubar('+'): argOut[1], x: integrands.spatialCoordinate('xIn')}
+        predefined.update(constants)
+        predefineCoefficients(predefined, 'xIn', 'Side::in')
+        predefineCoefficients(predefined, 'xOut', 'Side::out')
+        integrands.linearizedSkeleton = generateBinaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('interior_facet'), tempVars)
 
     return integrands
+
+
+
+def setCoefficient(integrands, index, coefficient):
+    print("Calling setCoefficient")
+    integrands._setCoefficient(index, coefficient)
+
 
 
 def load(grid, integrands, tempVars=True):
@@ -405,7 +467,7 @@ def load(grid, integrands, tempVars=True):
     writer.emit('#include <dune/corepy/pybind11/extensions.h>')
     writer.emit('')
     writer.emit('#include <dune/fempy/py/grid/gridpart.hh>')
-    if integrands.coefficients:
+    if integrands._coefficients:
         writer.emit('#include <dune/fempy/function/virtualizedgridfunction.hh>')
         writer.emit('')
     writer.emit('#include <dune/fempy/py/integrands.hh>')
@@ -418,9 +480,9 @@ def load(grid, integrands, tempVars=True):
 
     post = []
     post.append(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + grid._typeName + ' >'));
-    if integrands.coefficients:
-        rangetypes = ['Dune::FieldVector< ' + SourceWriter.cpp_fields(c['field']) + ', ' + str(c['dimRange']) + ' >' for c in integrands.coefficients if not c['constant']]
-        coefficients = ['Dune::FemPy::VirtualizedLocalFunction< GridPart, ' + ', '.join(r) + ' >' for r in rangetypes]
+    if integrands._coefficients:
+        rangetypes = ['Dune::FieldVector< ' + SourceWriter.cpp_fields(c['field']) + ', ' + str(c['dimRange']) + ' >' for c in integrands._coefficients]
+        coefficients = ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + r + ' >' for r in rangetypes]
     else:
         coefficients = []
     post.append(TypeAlias('Integrands', modelNameSpace + '::Integrands< ' + ', '.join(['GridPart'] + coefficients) + ' >'))
@@ -434,4 +496,9 @@ def load(grid, integrands, tempVars=True):
     source = writer.writer.getvalue()
     writer.close()
 
-    return builder.load(name, source, "integrands")
+    module = builder.load(name, source, "integrands")
+    return module
+
+
+def create(grid, integrands, tempVars=True):
+    return load(grid, integrands, tempVars=tempVars).Integrands()
