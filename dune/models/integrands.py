@@ -439,19 +439,20 @@ def compileUFL(equation, tempVars=True):
         predefineCoefficients(predefined, 'xOut', 'Side::out')
         integrands.linearizedSkeleton = generateBinaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('interior_facet'), tempVars)
 
-    return integrands
-
+    return integrands, coefficients
 
 
 def setCoefficient(integrands, index, coefficient):
-    print("Calling setCoefficient")
+    try:
+        index = integrands._renumbering[index]
+    except KeyError:
+        pass
     integrands._setCoefficient(index, coefficient)
 
 
-
-def load(grid, integrands, tempVars=True):
+def load(grid, integrands, renumbering=None, tempVars=True):
     if isinstance(integrands, Equation):
-        integrands = compileUFL(integrands, tempVars)
+        integrands, renumbering = compileUFL(integrands, tempVars)
 
     if not isinstance(grid, types.ModuleType):
         grid = grid._module
@@ -497,8 +498,12 @@ def load(grid, integrands, tempVars=True):
     writer.close()
 
     module = builder.load(name, source, "integrands")
+    if renumbering is not None:
+        setattr(module.Integrands, "_setCoefficient", getattr(module.Integrands, "setCoefficient"))
+        setattr(module.Integrands, "_renumbering", renumbering)
+        setattr(module.Integrands, "setCoefficient", setCoefficient)
     return module
 
 
-def create(grid, integrands, tempVars=True):
-    return load(grid, integrands, tempVars=tempVars).Integrands()
+def create(grid, integrands, renumbering=None, tempVars=True):
+    return load(grid, integrands, renumbering=renumbering, tempVars=tempVars).Integrands()
