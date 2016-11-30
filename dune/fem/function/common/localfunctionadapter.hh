@@ -1,9 +1,13 @@
 #ifndef DUNE_FEM_LOCALFUNCTIONADAPTER_HH
 #define DUNE_FEM_LOCALFUNCTIONADAPTER_HH
 
-#include <set>
 #include <functional>
+#include <memory>
+#include <set>
 #include <type_traits>
+
+#include <dune/common/hybridutilities.hh>
+#include <dune/common/std/memory.hh>
 
 #include <dune/fem/function/common/discretefunction.hh>
 
@@ -161,32 +165,13 @@ namespace Dune
       typedef typename Traits::LocalFunctionType LocalFunctionType;
 
     protected:
-      //! set of created local functions
-      typedef std::set< LocalFunctionType * > LocalFunctionListType;
-
-      template <class ArgumentType, bool hasInit >
-      struct LocalFunctionInitializer
-      {
-        static void init( const ArgumentType& , LocalFunctionListType& )
-        {}
-      };
-
-      template <class ArgumentType>
-      struct LocalFunctionInitializer< ArgumentType, true >
-      {
-        static void init( const ArgumentType& arg, LocalFunctionListType& lfList)
-        {
-          for( auto& localFunctionPtr : lfList )
-            arg.initialize( localFunctionPtr );
-        }
-      };
-
       // interface class for local function init
       struct ArgumentIF
       {
-        virtual void initialize( LocalFunctionType* lf ) const = 0;
+        virtual void initialize( LocalFunctionType* ) const = 0;
 
-        virtual ~ArgumentIF () {}
+        virtual ~ArgumentIF ()
+        {}
       };
 
       // storage of argument reference to init local functions
@@ -199,12 +184,12 @@ namespace Dune
         const double time_;
 
         // constructor storing argument
-        ArgumentInitializer( const ArgType& arg, const double time )
-        : arg_( arg ),
-          time_( time )
+        ArgumentInitializer( const ArgType& arg, double time )
+        : arg_( arg ), time_( time )
         {}
 
-        ~ArgumentInitializer () {}
+        ~ArgumentInitializer ()
+        {}
 
         virtual void initialize( LocalFunctionType* lf ) const
         {
@@ -221,7 +206,7 @@ namespace Dune
       : space_( gridPart, order ),
         localFunctionImpl_( localFunctionImpl ),
         lfList_(),
-        argInitializer_( 0 ),
+        argInitializer_(),
         name_( name ),
         order_( order )
       {}
@@ -231,15 +216,10 @@ namespace Dune
       : space_( other.space_ ),
         localFunctionImpl_( other.localFunctionImpl_ ),
         lfList_(),
-        argInitializer_( 0 ),
+        argInitializer_(),
         name_( other.name_ ),
         order_( other.order_ )
       {}
-
-      ~LocalFunctionAdapter()
-      {
-        delete argInitializer_ ;
-      }
 
       //! return the order of the space
       unsigned int order() const
@@ -336,21 +316,20 @@ namespace Dune
         return *this;
       }
 
-      //! initialize local function with argument (see insertfunctionpass.hh)
+      //! initialize local function with argument
       template< class ArgumentType >
-      void initialize( const ArgumentType &arg, const double time )
+      void initialize( const ArgumentType &arg, double time )
       {
-        if( Traits::localFunctionHasInitialize )
+        constexpr bool hasInit = Traits::localFunctionHasInitialize;
+        if( hasInit)
         {
-          delete argInitializer_ ;
           // makes a copy of arg, which is a tuple of discrete functions
-          argInitializer_ = new ArgumentInitializer< ArgumentType >( arg, time );
-          LocalFunctionInitializer< ArgumentIF, Traits::localFunctionHasInitialize > :: init( *argInitializer_, lfList_ );
+          argInitializer_ = Std::make_unique< ArgumentInitializer< ArgumentType > >( arg, time );
+          for( auto& localFunctionPtr : lfList_ )
+            Hybrid::ifElse( hasInit, [ & ]( auto&& ){ argInitializer_->initialize( localFunctionPtr ); } );
         }
         else
-        {
           DUNE_THROW(NotImplemented,"LocalFunctionAdapter::initialize is not implemented");
-        }
       }
 
       //! add LocalFunction to list of local functions
@@ -358,7 +337,7 @@ namespace Dune
       {
         if( Traits::localFunctionHasInitialize )
         {
-          if( argInitializer_ )
+          if( argInitializer_ != nullptr )
             argInitializer_->initialize( lf );
           lfList_.insert( lf );
         }
@@ -368,16 +347,14 @@ namespace Dune
       void deleteLocalFunction( LocalFunctionType* lf ) const
       {
         if( Traits::localFunctionHasInitialize )
-        {
           lfList_.erase( lf );
-        }
       }
 
     protected:
       DiscreteFunctionSpaceType space_;
       LocalFunctionImplType &localFunctionImpl_;
-      mutable LocalFunctionListType lfList_;
-      const ArgumentIF* argInitializer_ ;
+      mutable std::set< LocalFunctionType * > lfList_;
+      std::unique_ptr< ArgumentIF > argInitializer_ ;
       const std::string name_;
       const unsigned int order_;
     };
@@ -428,8 +405,7 @@ namespace Dune
 
       //! constructor initializing local function
       LocalFunctionAdapterLocalFunction ( const EntityType &entity, const DiscreteFunctionType &adapter )
-      : adapter_( adapter ),
-        localFunctionImpl_( adapter.localFunctionImpl_ )
+      : adapter_( adapter ), localFunctionImpl_( adapter.localFunctionImpl_ )
       {
         // add local function to list
         adapter_.registerLocalFunction( this );
@@ -438,8 +414,7 @@ namespace Dune
 
       //! constructor
       explicit LocalFunctionAdapterLocalFunction ( const DiscreteFunctionType &adapter )
-      : adapter_( adapter ),
-        localFunctionImpl_( adapter.localFunctionImpl_ )
+      : adapter_( adapter ), localFunctionImpl_( adapter.localFunctionImpl_ )
       {
         // add local function to list
         adapter_.registerLocalFunction( this );
@@ -447,8 +422,7 @@ namespace Dune
 
       //! copy constructor
       LocalFunctionAdapterLocalFunction ( const ThisType &other )
-      : adapter_( other.adapter_ ),
-        localFunctionImpl_( other.localFunctionImpl_ )
+      : adapter_( other.adapter_ ), localFunctionImpl_( other.localFunctionImpl_ )
       {
         // add local function to list
         adapter_.registerLocalFunction( this );
@@ -489,8 +463,7 @@ namespace Dune
       }
 
       template< class QuadratureType, class VectorType  >
-      void evaluateQuadrature( const QuadratureType &quad,
-                               VectorType &result ) const
+      void evaluateQuadrature( const QuadratureType &quad, VectorType &result ) const
       {
         evaluateQuadrature( quad, result, result[ 0 ] );
       }
@@ -503,7 +476,7 @@ namespace Dune
       }
 
       template <class ArgumentType>
-      void initialize ( const ArgumentType& arg, const double time )
+      void initialize ( const ArgumentType& arg, double time )
       {
         localFunctionImpl_.initialize( arg, time );
       }
