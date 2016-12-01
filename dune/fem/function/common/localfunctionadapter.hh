@@ -558,19 +558,24 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       //! constructor (without jacobian and without hessian)
-      LocalAnalyticalFunctionBinder(AnalyticalFunctionType&& f):
+      LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f):
         f_(f),j_(),h_(),t_(0.0)
       {}
 
       //! constructor (without hessian)
-      LocalAnalyticalFunctionBinder(AnalyticalFunctionType&& f, AnalyticalFunctionType&& j):
+      LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f,const AnalyticalFunctionType& j):
         f_(f),j_(j),h_(),t_(0.0)
       {}
 
       //! constructor
-      LocalAnalyticalFunctionBinder(AnalyticalFunctionType&& f, AnalyticalFunctionType&& j, AnalyticalFunctionType&& h):
+      LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f,const AnalyticalFunctionType& j,const AnalyticalFunctionType& h):
         f_(f),j_(j),h_(h),t_(0.0)
       {}
+
+      LocalAnalyticalFunctionBinder(const ThisType& )=default;
+      LocalAnalyticalFunctionBinder(ThisType&& )=default;
+      ThisType& operator=(const ThisType& )=default;
+      ThisType& operator=(ThisType&& )=default;
 
       //! evaluate local function
       template<class PointType>
@@ -601,7 +606,7 @@ namespace Dune
 
       //! initialize time
       template<typename Arg>
-      void initialize(Arg&& , double time)
+      void initialize(Arg&& ,double time)
       {
         t_=time;
       }
@@ -609,8 +614,14 @@ namespace Dune
       //! get entity
       const EntityType& entity() const
       {
-        assert( entity_ );
+        assert(entity_);
         return *entity_;
+      }
+
+      //! get time
+      double time() const
+      {
+        return t_;
       }
 
     private:
