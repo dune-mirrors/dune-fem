@@ -379,8 +379,7 @@ def compileUFL(equation, tempVars=True):
     for coefficient in set(form.coefficients()):
         if coefficient.is_cellwise_constant():
             dimRange = (1 if len(coefficient.ufl_shape) == 0 else coefficient.ufl_shape[0])
-            idx = integrands.addConstant('Dune::FieldVector< double, ' + str(dimRange) + ' >')
-            constants[coefficient] = integrands.constant(idx)
+            constants[coefficient] = integrands.addConstant('Dune::FieldVector< double, ' + str(dimRange) + ' >')
         else:
             coefficients[coefficient] = integrands.addCoefficient(coefficient.ufl_function_space().ufl_element().field(), coefficient.ufl_shape[0])
 
@@ -405,41 +404,56 @@ def compileUFL(equation, tempVars=True):
 
     if 'cell' in integrals.keys():
         arg = Variable('std::tuple< RangeType, JacobianRangeType >', 'u')
+
         predefined = {u: arg[0], du: arg[1], x: integrands.spatialCoordinate('x')}
-        predefined.update(constants)
+        predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.interior = generateUnaryCode(predefined, [phi, dphi], integrals['cell'], tempVars)
+
         predefined = {ubar: arg[0], dubar: arg[1], x: integrands.spatialCoordinate('x')}
-        predefined.update(constants)
+        predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('cell'), tempVars)
 
     if 'exterior_facet' in integrals.keys():
         arg = Variable('std::tuple< RangeType, JacobianRangeType >', 'u')
+
         predefined = {u: arg[0], du: arg[1], x: integrands.spatialCoordinate('x')}
-        predefined.update(constants)
+        predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.boundary = generateUnaryCode(predefined, [phi, dphi], integrals['exterior_facet'], tempVars);
+
         predefined = {ubar: arg[0], dubar: arg[1], x: integrands.spatialCoordinate('x')}
-        predefined.update(constants)
+        predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('exterior_facet'), tempVars)
 
     if 'interior_facet' in integrals.keys():
         argIn = Variable('std::tuple< RangeType, JacobianRangeType >', 'uIn')
         argOut = Variable('std::tuple< RangeType, JacobianRangeType >', 'uOut')
+
         predefined = {u('-'): argIn[0], du('-'): argIn[1], u('+'): argOut[0], du('+'): argOut[1], x: integrands.spatialCoordinate('xIn')}
-        predefined.update(constants)
+        predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'xIn', 'Side::in')
         predefineCoefficients(predefined, 'xOut', 'Side::out')
         integrands.skeleton = generateBinaryCode(predefined, [phi, dphi], integrals['interior_facet'], tempVars)
+
         predefined = {ubar('-'): argIn[0], dubar('-'): argIn[1], ubar('+'): argOut[0], dubar('+'): argOut[1], x: integrands.spatialCoordinate('xIn')}
-        predefined.update(constants)
+        predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'xIn', 'Side::in')
         predefineCoefficients(predefined, 'xOut', 'Side::out')
         integrands.linearizedSkeleton = generateBinaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('interior_facet'), tempVars)
 
+    coefficients.update(constants)
     return integrands, coefficients
+
+
+def setConstant(integrands, index, value):
+    try:
+        index = integrands._renumbering[index]
+    except KeyError:
+        pass
+    integrands._setConstant(index, value)
 
 
 def setCoefficient(integrands, index, coefficient):
@@ -499,8 +513,10 @@ def load(grid, integrands, renumbering=None, tempVars=True):
 
     module = builder.load(name, source, "integrands")
     if renumbering is not None:
+        setattr(module.Integrands, "_setConstant", getattr(module.Integrands, "setConstant"))
         setattr(module.Integrands, "_setCoefficient", getattr(module.Integrands, "setCoefficient"))
         setattr(module.Integrands, "_renumbering", renumbering)
+        setattr(module.Integrands, "setConstant", setConstant)
         setattr(module.Integrands, "setCoefficient", setCoefficient)
     return module
 
