@@ -6,9 +6,9 @@
 #include <tuple>
 #include <utility>
 
-#if DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
+#if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
 #include <dune/fem/misc/domainintegral.hh>
-#else
+#else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/grid/common/rangegenerators.hh>
 namespace Dune {
@@ -43,7 +43,7 @@ namespace Dune {
     };
   } // namespcae Fem
 } // namespcae Dune
-#endif
+#endif // #else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
 
 #include <dune/corepy/grid/vtk.hh>
 
