@@ -24,7 +24,7 @@ namespace Dune
   namespace FemPy
   {
 
-#if ! DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
+#if ! DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
     template< class DofVector, class Functor >
     struct DofBlockFunctor
     {
@@ -51,7 +51,7 @@ namespace Dune
     {
       return DofBlockFunctor< DofVector, Functor >( dofVector, std::move( functor ) );
     }
-#endif // #if ! DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
+#endif // #if ! DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
 
 
 
