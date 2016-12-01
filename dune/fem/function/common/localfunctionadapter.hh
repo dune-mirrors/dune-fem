@@ -518,7 +518,7 @@ namespace Dune
 
     /** \brief LocalAnalyticalFunctionBinder binds a C++ local analytical function (and also its Jacobian
      *  and Hessian) to an object which provides all the methods and types needed by the LocalFunctionAdapter.
-     *  It stores a copy to the local analytical function.
+     *  It stores a copy as a std::function.
      *
      *  Therefore, in order to transform the function
      *
@@ -537,16 +537,12 @@ namespace Dune
      *    typedef LocalFunctionAdapter<LocalAnalyticalFunctionType> AdaptedFunctionType;
      *    AdaptedFunctionType fAdapted("adapted function",localAnalyticalFunction,gridPart);
      */
-    template<class DiscreteFunctionSpaceImpl,class AnalyticalFunctionImpl=std::function<
-      typename DiscreteFunctionSpaceImpl::FunctionSpaceType::RangeType(
-      const typename DiscreteFunctionSpaceImpl::FunctionSpaceType::DomainType&,
-      double,const typename DiscreteFunctionSpaceImpl::EntityType&)> >
+    template<class DiscreteFunctionSpaceImpl>
     class LocalAnalyticalFunctionBinder:public LocalFunctionAdapterHasInitialize
     {
     public:
       typedef DiscreteFunctionSpaceImpl DiscreteFunctionSpaceType;
-      typedef AnalyticalFunctionImpl AnalyticalFunctionType;
-      typedef LocalAnalyticalFunctionBinder<DiscreteFunctionSpaceType,AnalyticalFunctionType> ThisType;
+      typedef LocalAnalyticalFunctionBinder<DiscreteFunctionSpaceType> ThisType;
 
       typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
@@ -557,25 +553,40 @@ namespace Dune
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
-      //! constructor (without jacobian and without hessian)
-      LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f):
-        f_(f),j_(),h_(),t_(0.0)
-      {}
-
-      //! constructor (without hessian)
-      LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f,const AnalyticalFunctionType& j):
-        f_(f),j_(j),h_(),t_(0.0)
-      {}
+      typedef std::function<RangeType(const DomainType&,double,const EntityType&)> AnalyticalFunctionType;
+      typedef std::function<JacobianRangeType(const DomainType&,double,const EntityType&)> AnalyticalJacobianType;
+      typedef std::function<HessianRangeType(const DomainType&,double,const EntityType&)> AnalyticalHessianType;
 
       //! constructor
-      LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f,const AnalyticalFunctionType& j,const AnalyticalFunctionType& h):
-        f_(f),j_(j),h_(h),t_(0.0)
+      LocalAnalyticalFunctionBinder(const AnalyticalFunctionType& f=[](const auto& ,auto ,const auto& ){return RangeType(0.0);},
+                                    const AnalyticalJacobianType& j=[](const auto& ,auto ,const auto& ){return JacobianRangeType(0.0);},
+                                    const AnalyticalHessianType& h=[](const auto& ,auto ,const auto& ){return HessianRangeType(0.0);},
+                                    double t=0.0):
+        f_(f),j_(j),h_(h),t_(t)
       {}
 
       LocalAnalyticalFunctionBinder(const ThisType& )=default;
       LocalAnalyticalFunctionBinder(ThisType&& )=default;
       ThisType& operator=(const ThisType& )=default;
       ThisType& operator=(ThisType&& )=default;
+
+      //! set local function
+      void setFunction(const AnalyticalFunctionType& f)
+      {
+        f_=f;
+      }
+
+      //! set jacobian local function
+      void setJacobian(const AnalyticalJacobianType& j)
+      {
+        j_=j;
+      }
+
+      //! set hessian local function
+      void setHessian(const AnalyticalHessianType& h)
+      {
+        h_=h;
+      }
 
       //! evaluate local function
       template<class PointType>
@@ -586,14 +597,14 @@ namespace Dune
 
       //! evaluate jacobian local function
       template<class PointType>
-      void jacobian(const PointType &x,JacobianRangeType &ret) const
+      void jacobian(const PointType& x,JacobianRangeType& ret) const
       {
         ret=j_(entity().geometry().global(coordinate(x)),t_,entity());
       }
 
       //! evaluate hessian local function
       template<class PointType>
-      void hessian(const PointType &x,HessianRangeType &ret ) const
+      void hessian(const PointType& x,HessianRangeType& ret ) const
       {
         ret=h_(entity().geometry().global(coordinate(x)),t_,entity());
       }
@@ -627,8 +638,8 @@ namespace Dune
     private:
       EntityType const* entity_;
       AnalyticalFunctionType f_;
-      AnalyticalFunctionType j_;
-      AnalyticalFunctionType h_;
+      AnalyticalJacobianType j_;
+      AnalyticalHessianType h_;
       double t_;
     };
 
