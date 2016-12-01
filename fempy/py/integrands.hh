@@ -25,6 +25,54 @@ namespace Dune
       namespace RegisterIntegrands
       {
 
+        // CoefficientsRegistry
+        // --------------------
+
+        template< class Integrands >
+        struct CoefficientsRegistry
+        {
+          typedef std::array< pybind11::object, std::tuple_size< typename Integrands::CoefficientTupleType >::value > Objects;
+
+          Objects &operator() ( pybind11::handle integrands )
+          {
+            auto result = objects_.insert( std::make_pair( integrands.ptr(), Objects() ) );
+            auto pos = result.first;
+            if( result.second )
+            {
+              pybind11::cpp_function remove_objects( [ this, pos ] ( pybind11::handle weakref ) {
+                  objects_.erase( pos );
+                  weakref.dec_ref();
+                } );
+              pybind11::weakref weakref( integrands, remove_objects );
+              weakref.release();
+            }
+            return pos->second;
+          }
+
+          Objects &operator() ( Integrands &integrands )
+          {
+            return (*this)( pybind11::detail::get_object_handle( &integrands, pybind11::detail::get_type_info( typeid( Integrands ) ) ) );
+          }
+
+        private:
+          std::map< PyObject *, Objects > objects_;
+        };
+
+
+
+        // coefficientsRegistry
+        // --------------------
+
+        template< class Integrands >
+        inline CoefficientsRegistry< Integrands > &coefficientsRegistry ()
+        {
+          static CoefficientsRegistry< Integrands > registry;
+          return registry;
+        }
+
+
+
+
         // setConstant
         // -----------
 
@@ -37,6 +85,7 @@ namespace Dune
           Hybrid::forEach( std::make_index_sequence< numConstants >(), [ &dispatch ] ( auto i ) {
               dispatch[ i ] = [ i ] ( Integrands &integrands, pybind11::handle o ) {
                   integrands.template constant< i >() = o.template cast< typename Integrands::template ConstantType< i > >();
+                  coefficientsRegistry< Integrands >()( integrands )[ i ] = pybind11::object( o, true );
                 };
             } );
 
@@ -77,20 +126,22 @@ namespace Dune
                 };
             } );
 
-          cls.def( "setCoefficient", [ dispatch ] ( Integrands &integrands, int k, pybind11::handle o ) {
+          using pybind11::operator""_a;
+          cls.def( "setCoefficient", [ dispatch ] ( Integrands &integrands, int k, pybind11::handle coefficient ) {
               if( k >= dispatch.size() )
                 throw std::range_error( "No such coefficient: " + std::to_string( k ) + " (must be in [0, " + std::to_string( dispatch.size() ) + "[)" );
-              dispatch[ k ]( integrands, o );
-            } );
+              dispatch[ k ]( integrands, coefficient );
+            }, "k"_a, "coefficient"_a );
         }
 
         template< class Integrands, class Holder, class Alias >
         inline static std::enable_if_t< (std::tuple_size< typename Integrands::CoefficientTupleType >::value == 0) >
         setCoefficient ( pybind11::class_< Integrands, Holder, Alias > cls, PriorityTag< 1 > )
         {
+          using pybind11::operator""_a;
           cls.def( "setCoefficient", [] ( Integrands &integrands, int k, pybind11::handle ) {
               throw std::range_error( "No such coefficient: " + std::to_string( k ) + " (there are no constants)" );
-            } );
+            }, "k"_a, "coefficient"_a );
         }
 
         template< class Integrands, class Holder, class Alias >
