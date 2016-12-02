@@ -2,7 +2,7 @@ from __future__ import division, print_function
 
 import types
 
-from ufl import Coefficient, Form, SpatialCoordinate
+from ufl import Coefficient, FacetNormal, Form, SpatialCoordinate
 from ufl import action, derivative
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.constantvalue import IntValue, Zero
@@ -61,6 +61,9 @@ class Integrands():
     def spatialCoordinate(self, x):
         return UnformattedExpression('DomainType', 'entity().geometry().global( Dune::Fem::coordinate( ' + x + ' ) )')
 
+    def facetNormal(self, x):
+        return UnformattedExpression('DomainType', 'intersection_.unitOuterNormal( ' + x + '.localPosition() )')
+
     def pre(self):
         result = []
 
@@ -115,6 +118,7 @@ class Integrands():
         result.append(initEntity)
 
         initIntersection = Method('bool', 'init', args=['const IntersectionType &intersection'])
+        initIntersection.append(UnformattedExpression('IntersectionType &', 'intersection_ = intersection'))
         if self.skeleton is None:
             initIntersection.append(return_('(intersection.boundary() && init( intersection.inside() ))'))
         else:
@@ -203,11 +207,14 @@ class Integrands():
 
         if self.skeleton is None:
             result.append(Declaration(Variable('EntityType', 'entity_')))
-            result.append(Declaration(Variable('std::tuple< typename Coefficients::LocalFunctionType... >', 'coefficients_')))
         else:
             result.append(Declaration(Variable('std::array< EntityType, 2 >', 'entity_')))
-            result.append(Declaration(Variable('std::array< CoefficientTupleType, 2 >', 'coefficients_')))
+        result.append(Declaration(Variable('IntersectionType', 'intersection_')))
         result.append(Declaration(Variable('ConstantTupleType', 'constants_')))
+        if self.skeleton is None:
+            result.append(Declaration(Variable('std::tuple< typename Coefficients::LocalFunctionType... >', 'coefficients_')))
+        else:
+            result.append(Declaration(Variable('std::array< CoefficientTupleType, 2 >', 'coefficients_')))
         if self.vars is not None:
             result += self.vars
 
@@ -320,16 +327,16 @@ def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, tenso
 
 
 def generateBinaryCode(predefined, testFunctions, tensorMap, tempVars=True):
-    restrictedTestFunctions = [phi('-') for phi in testFunctions] + [phi('+') for phi in testFunctions]
+    restrictedTestFunctions = [phi('+') for phi in testFunctions] + [phi('-') for phi in testFunctions]
     preamble, values = generateCode(predefined, restrictedTestFunctions, tensorMap, tempVars=True)
     return preamble + [return_(make_pair(construct('ValueType', *values[:len(testFunctions)]), construct('ValueType', *values[len(testFunctions):])))]
 
 
 def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, tempVars=True):
-    restrictedTestFunctions = [phi('-') for phi in testFunctions] + [phi('+') for phi in testFunctions]
+    restrictedTestFunctions = [phi('+') for phi in testFunctions] + [phi('-') for phi in testFunctions]
 
-    trialFunctionsIn = [psi('-') for psi in trialFunctions]
-    trialFunctionsOut = [psi('+') for psi in trialFunctions]
+    trialFunctionsIn = [psi('+') for psi in trialFunctions]
+    trialFunctionsOut = [psi('-') for psi in trialFunctions]
 
     if tensorMap is None:
         return [return_(make_pair(lambda_(args=['const ValueType &phiIn'], code=return_(construct('ValueType', 0, 0))), lambda_(args=['const ValueType &phiOut'], code=return_(construct('ValueType', 0, 0)))))]
@@ -355,7 +362,7 @@ def compileUFL(equation, tempVars=True):
         raise Exception("Elliptic model requires form with at least two arguments.")
 
     x = SpatialCoordinate(form.ufl_cell())
-    y = Variable('const DomainType', 'y')
+    n = FacetNormal(form.ufl_cell())
 
     phi = form.arguments()[0]
     dphi = Grad(phi)
@@ -397,20 +404,22 @@ def compileUFL(equation, tempVars=True):
                 if side is None:
                     predefined[coefficient] = derivative
                 elif side == 'Side::in':
-                    predefined[coefficient('-')] = derivative
-                elif side == 'Side::out':
                     predefined[coefficient('+')] = derivative
+                elif side == 'Side::out':
+                    predefined[coefficient('-')] = derivative
                 coefficient = Grad(coefficient)
 
     if 'cell' in integrals.keys():
         arg = Variable('std::tuple< RangeType, JacobianRangeType >', 'u')
 
-        predefined = {u: arg[0], du: arg[1], x: integrands.spatialCoordinate('x')}
+        predefined = {u: arg[0], du: arg[1]}
+        predefined[x] = integrands.spatialCoordinate('x')
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.interior = generateUnaryCode(predefined, [phi, dphi], integrals['cell'], tempVars)
 
-        predefined = {ubar: arg[0], dubar: arg[1], x: integrands.spatialCoordinate('x')}
+        predefined = {ubar: arg[0], dubar: arg[1]}
+        predefined[x] = integrands.spatialCoordinate('x')
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('cell'), tempVars)
@@ -418,12 +427,16 @@ def compileUFL(equation, tempVars=True):
     if 'exterior_facet' in integrals.keys():
         arg = Variable('std::tuple< RangeType, JacobianRangeType >', 'u')
 
-        predefined = {u: arg[0], du: arg[1], x: integrands.spatialCoordinate('x')}
+        predefined = {u: arg[0], du: arg[1]}
+        predefined[x] = integrands.spatialCoordinate('x')
+        predefined[n] = integrands.facetNormal('x')
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.boundary = generateUnaryCode(predefined, [phi, dphi], integrals['exterior_facet'], tempVars);
 
-        predefined = {ubar: arg[0], dubar: arg[1], x: integrands.spatialCoordinate('x')}
+        predefined = {ubar: arg[0], dubar: arg[1]}
+        predefined[x] = integrands.spatialCoordinate('x')
+        predefined[n] = integrands.facetNormal('x')
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('exterior_facet'), tempVars)
@@ -432,13 +445,17 @@ def compileUFL(equation, tempVars=True):
         argIn = Variable('std::tuple< RangeType, JacobianRangeType >', 'uIn')
         argOut = Variable('std::tuple< RangeType, JacobianRangeType >', 'uOut')
 
-        predefined = {u('-'): argIn[0], du('-'): argIn[1], u('+'): argOut[0], du('+'): argOut[1], x: integrands.spatialCoordinate('xIn')}
+        predefined = {u('+'): argIn[0], du('+'): argIn[1], u('-'): argOut[0], du('-'): argOut[1]}
+        predefined[x] = integrands.spatialCoordinate('xIn')
+        predefined[n('+')] = integrands.facetNormal('xIn')
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'xIn', 'Side::in')
         predefineCoefficients(predefined, 'xOut', 'Side::out')
         integrands.skeleton = generateBinaryCode(predefined, [phi, dphi], integrals['interior_facet'], tempVars)
 
-        predefined = {ubar('-'): argIn[0], dubar('-'): argIn[1], ubar('+'): argOut[0], dubar('+'): argOut[1], x: integrands.spatialCoordinate('xIn')}
+        predefined = {ubar('+'): argIn[0], dubar('+'): argIn[1], ubar('-'): argOut[0], dubar('-'): argOut[1]}
+        predefined[x] = integrands.spatialCoordinate('xIn')
+        predefined[n('+')] = integrands.facetNormal('xIn')
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'xIn', 'Side::in')
         predefineCoefficients(predefined, 'xOut', 'Side::out')

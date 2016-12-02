@@ -136,7 +136,9 @@ def splitMultiLinearExpr(expr, arguments=None):
 def splitForm(form, arguments=None):
     if arguments is None:
         arguments = form.arguments()
-    form = apply_restrictions(expand_indices(expand_derivatives(expand_compounds(form))))
+    form = apply_restrictions(form)
+    form = expand_indices(expand_derivatives(expand_compounds(form)))
+    form = apply_restrictions(form)
 
     integrals = {}
     for integral in form.integrals():

@@ -65,6 +65,12 @@ class CodeGenerator(MultiFunction):
     def division(self, expr, x, y):
         return self._makeTmp(x / y)
 
+    def facet_normal(self, expr):
+        try:
+            return self._makeTmp(self.predefined[expr], True)
+        except KeyError:
+            raise Exception('Facet Normal not avalailable for this expression.')
+
     def float_value(self, expr):
         return cplusplus.makeExpression(expr.value())
 
