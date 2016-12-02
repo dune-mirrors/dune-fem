@@ -210,7 +210,7 @@ namespace Dune
       //! constructor taking a const reference instance of the local function class
       //! This is the only useable constructor if the local function implementation is not copy constructible
       LocalFunctionAdapter ( const std::string &name,
-                             const LocalFunctionImplType &localFunctionImpl,
+                             LocalFunctionImplType &localFunctionImpl,
                              const GridPartType &gridPart,
                              unsigned int order = DiscreteFunctionSpaceType::polynomialOrder )
       : space_( gridPart, order ),
