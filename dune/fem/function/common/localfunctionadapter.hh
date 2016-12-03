@@ -207,10 +207,23 @@ namespace Dune
       typedef typename Traits::LocalFuncStorageType LocalFuncStorageType;
 
     public:
-      //! constructor taking a const reference instance of the local function class
+      //! constructor taking a reference instance of the local function class
       //! This is the only useable constructor if the local function implementation is not copy constructible
       LocalFunctionAdapter ( const std::string &name,
                              LocalFunctionImplType &localFunctionImpl,
+                             const GridPartType &gridPart,
+                             unsigned int order = DiscreteFunctionSpaceType::polynomialOrder )
+      : space_( gridPart, order ),
+        localFunctionImpl_( localFunctionImpl ),
+        lfList_(),
+        argInitializer_(),
+        name_( name ),
+        order_( order )
+      {}
+
+      //! constructor taking a const reference instance of the local function class
+      LocalFunctionAdapter ( const std::string &name,
+                             const LocalFunctionImplType &localFunctionImpl,
                              const GridPartType &gridPart,
                              unsigned int order = DiscreteFunctionSpaceType::polynomialOrder )
       : space_( gridPart, order ),
