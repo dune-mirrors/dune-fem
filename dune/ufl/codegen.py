@@ -8,7 +8,7 @@ from ufl.differentiation import Grad
 from ufl.core.multiindex import FixedIndex, MultiIndex
 
 import dune.source.cplusplus as cplusplus
-from dune.source.cplusplus import Declaration, Using, Variable
+from dune.source.cplusplus import ConditionalExpression, Declaration, Using, Variable
 
 def translateIndex(index):
     if isinstance(index, (tuple, MultiIndex)):
@@ -58,6 +58,9 @@ class CodeGenerator(MultiFunction):
             self.code.append('coefficient< ' + idx + ' >().evaluate( x, c' + idx + ' );')
         return var
 
+    def conditional(self, expr, cond, true, false):
+        return ConditionalExpression('auto', cond, true, false)
+
     def cos(self, expr, x):
         self.using.add(Using(cplusplus.cos))
         return self._makeTmp(cplusplus.cos(x))
@@ -73,6 +76,12 @@ class CodeGenerator(MultiFunction):
 
     def float_value(self, expr):
         return cplusplus.makeExpression(expr.value())
+
+    def ge(self, expr, left, right):
+        return left >= right
+
+    def gt(self, expr, left, right):
+        return left > right
 
     def grad(self, expr):
         try:
@@ -109,6 +118,20 @@ class CodeGenerator(MultiFunction):
             operand = operand[int(i)]
         return operand
 
+    def le(self, expr, left, right):
+        return left <= right
+
+    def lt(self, expr, left, right):
+        return left < right
+
+    def max_value(self, expr, left, right):
+        self.using.add(Using(cplusplus.max_))
+        return self._makeTmp(cplusplus.max_(left, right))
+
+    def min_value(self, expr, left, right):
+        self.using.add(Using(cplusplus.min_))
+        return self._makeTmp(cplusplus.min_(left, right))
+
     def multi_index(self, expr):
         return expr
 
@@ -142,6 +165,10 @@ class CodeGenerator(MultiFunction):
     def sin(self, expr, x):
         self.using.add(Using(cplusplus.sin))
         return self._makeTmp(cplusplus.sin(x))
+
+    def sqrt(self, expr, x):
+        self.using.add(Using(cplusplus.sqrt))
+        return self._makeTmp(cplusplus.sqrt(x))
 
     def spatial_coordinate(self, expr):
         try:

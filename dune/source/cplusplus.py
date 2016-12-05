@@ -470,6 +470,8 @@ class SourceWriter:
                 return join([[function + '( '], join(args, ', '), [' )']])
             else:
                 return [function + '()']
+        elif isinstance(expr, ConditionalExpression):
+            return join([['('], self.translateExpr(expr.cond), [' ? '], self.translateExpr(expr.true), [' : '], self.translateExpr(expr.false), [')']])
         elif isinstance(expr, ConstantExpression):
             return [expr.value]
         elif isinstance(expr, ConstructExpression):

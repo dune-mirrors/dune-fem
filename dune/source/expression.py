@@ -87,6 +87,17 @@ class Application(Expression):
         return hash((self.cppType, self.function, self.args))
 
 
+class ConditionalExpression(Expression):
+    def __init__(self, cppType, cond, true, false):
+        Expression.__init__(self, cppType)
+        self.cond = cond
+        self.true = true
+        self.false = false
+
+    def __hash__(self):
+        return hash((self.cppType, self.cond, self.true, self.false))
+
+
 class ConstantExpression(Expression):
     def __init__(self, cppType, value):
         Expression.__init__(self, cppType)
