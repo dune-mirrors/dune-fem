@@ -639,22 +639,40 @@ namespace Dune
       ThisType& operator=(const ThisType& )=default;
       ThisType& operator=(ThisType&& )=default;
 
-      //! set local function
-      void setFunction(const AnalyticalFunctionType& f)
+      //! get local function
+      AnalyticalFunctionType& function()
       {
-        f_=f;
+        return f_;
       }
 
-      //! set jacobian local function
-      void setJacobian(const AnalyticalJacobianType& j)
+      //! get local function
+      const AnalyticalFunctionType& function() const
       {
-        j_=j;
+        return f_;
       }
 
-      //! set hessian local function
-      void setHessian(const AnalyticalHessianType& h)
+      //! get jacobian local function
+      AnalyticalJacobianType& jacobian()
       {
-        h_=h;
+        return j_;
+      }
+
+      //! get jacobian local function
+      const AnalyticalJacobianType& jacobian() const
+      {
+        return j_;
+      }
+
+      //! get hessian local function
+      AnalyticalHessianType& hessian()
+      {
+        return h_;
+      }
+
+      //! get hessian local function
+      const AnalyticalHessianType& hessian() const
+      {
+        return h_;
       }
 
       //! evaluate local function
