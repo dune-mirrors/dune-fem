@@ -376,21 +376,13 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
 
 
 
-# importModel
+# generateModel
 # -----------
 
-def importModel(grid, model, dirichlet = {}, exact = None, tempVars = True, header = False):
+def generateModel(grid, model, dirichlet = {}, exact = None, tempVars = True, header = False):
     start_time = timeit.default_timer()
 
-    if isinstance(model, str):
-        with open(model, 'r') as modelFile:
-            data = modelFile.read()
-        name = data.split('PYBIND11_PLUGIN( ')[1].split(' )')[0]
-        builder.load(name, data, "ellipticModel")
-
-        return importlib.import_module("dune.generated." + name)
-
-    elif isinstance(model, ufl.equation.Equation):
+    if isinstance(model, ufl.equation.Equation):
         model = compileUFL(model, dirichlet, exact, tempVars)
 
     if not isinstance(grid, types.ModuleType):
@@ -422,7 +414,7 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars = True, head
 
     if model.coefficients:
         writer.typedef(modelNameSpace + '::Model< GridPart' + ' '.join(\
-        [(',Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
+        [(', Dune::FemPy::VirtualizedLocalFunction< GridPart,'+\
             'Dune::FieldVector< ' +\
             SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
             str(coefficient['dimRange']) + ' > >') \
@@ -452,13 +444,19 @@ def importModel(grid, model, dirichlet = {}, exact = None, tempVars = True, head
     writer.emit('')
     writer.closePythonModule(name)
 
-    if header == False:
-        builder.load(name, writer.writer.getvalue(), "ellipticModel")
-        writer.close()
-    else:
+    if header != False:
         with open(header, 'w') as modelFile:
             modelFile.write(writer.writer.getvalue())
-        writer.close()
-        return 0
+    return writer, name
 
+def importModel(grid, model, dirichlet = {}, exact = None, tempVars = True, header = False):
+    if isinstance(model, str):
+        with open(model, 'r') as modelFile:
+            data = modelFile.read()
+        name = data.split('PYBIND11_PLUGIN( ')[1].split(' )')[0]
+        builder.load(name, data, "ellipticModel")
+        return importlib.import_module("dune.generated." + name)
+    writer, name = generateModel(grid, model, dirichlet, exact, tempVars, header)
+    builder.load(name, writer.writer.getvalue(), "ellipticModel")
+    writer.close()
     return importlib.import_module("dune.generated." + name)

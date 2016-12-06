@@ -6,11 +6,11 @@ logger = logging.getLogger(__name__)
 
 import dune.common.checkconfiguration as checkconfiguration
 
-def elliptic(view, equation, dirichlet = {}, exact = None, tempVars=True, coefficients={}):
+def elliptic(view, equation, dirichlet = {}, exact = None, tempVars=True, coefficients={}, header=False):
     import ufl
     import dune.ufl
     import dune.models.elliptic as elliptic
-    Model = elliptic.importModel(view, equation, dirichlet, exact, tempVars).Model
+    Model = elliptic.importModel(view, equation, dirichlet, exact, tempVars, header).Model
     if isinstance(equation, ufl.equation.Equation):
         form = equation.lhs - equation.rhs
         uflCoeff = set(form.coefficients())
