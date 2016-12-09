@@ -88,7 +88,7 @@ namespace Dune
       {
         if( codim == dimension-1 )
         {
-          const auto &refElement = ReferenceElements< typename GridPart::ctype, GridPart::dimension >::general( element );
+          const auto &refElement = ReferenceElements< typename GridPart::ctype, GridPart::dimension >::general( element.type() );
           assert( refElement.size( subEntity, codim, dimension ) == 2 );
           const int vx[ 2 ] = { refElement.subEntity( subEntity, codim, 0, dimension ), refElement.subEntity( subEntity, codim, 1, dimension ) };
           return Mapping( localIdSet_.subId( gridEntity( element ), vx[ 1 ], dimension ) < localIdSet_.subId( gridEntity( element ), vx[ 0 ], dimension ) );
