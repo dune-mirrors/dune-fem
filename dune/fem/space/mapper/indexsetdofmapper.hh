@@ -44,7 +44,7 @@ namespace Dune
       DefaultLocalDofMapping () {}
       DefaultLocalDofMapping ( const GridPart & ) {}
 
-      Mapping operator() ( const typename GridPart::template Codim< 0 >::Entity &element, unsigned int subEntity, unsigned int codim ) const { return {}; }
+      Mapping operator() ( const typename GridPart::template Codim< 0 >::EntityType &element, unsigned int subEntity, unsigned int codim ) const { return {}; }
     };
 
 
@@ -355,8 +355,7 @@ namespace Dune
       {
         const auto &indexSet = gridPart_.indexSet();
 
-        typedef typename DofMapperCode::ConstIterator Iterator;
-        code( element )( [ this, &indexSet, &element, f ] ( unsigned int gtIndex, unsigned int subEntity, Iterator begin, Iterator end ) {
+        code( element )( [ this, &indexSet, &element, f ] ( unsigned int gtIndex, unsigned int subEntity, auto begin, auto end ) {
             const SubEntityInfo &info = subEntityInfo_[ gtIndex ];
             const SizeType subIndex = indexSet.subIndex( element, subEntity, info.codim );
             SizeType index = info.offset + SizeType( info.numDofs ) * subIndex;
