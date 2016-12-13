@@ -109,10 +109,10 @@ class ExprTensor:
         return ExprTensor(self.shape, apply(lambda v: v, self.shape, self.data))
 
     def negative_restricted(self):
-        return ExprTensor(self.shape, self._apply(self.shape, self.data, lambda v : NegativeRestricted(v)))
+        return ExprTensor(self.shape, apply(lambda v: NegativeRestricted(v), self.shape, self.data))
 
     def positive_restricted(self):
-        return ExprTensor(self.shape, self._apply(self.shape, self.data, lambda v : PositiveRestricted(v)))
+        return ExprTensor(self.shape, apply(lambda v: PositiveRestricted(v), self.shape, self.data))
 
     def keys(self):
         return keys(self.shape)
