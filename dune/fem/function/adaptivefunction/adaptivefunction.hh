@@ -50,6 +50,7 @@ namespace Dune
       typedef typename BaseType :: DiscreteFunctionSpaceType  DiscreteFunctionSpaceType;
       typedef typename BaseType :: DofVectorType              DofVectorType;
       typedef typename BaseType :: DofType                    DofType;
+      typedef typename BaseType :: GridPartType               GridPartType;
 
       using BaseType::assign;
 

@@ -40,6 +40,9 @@ namespace Dune
       //! type of DiscreteFunction
       typedef DiscreteFunction DiscreteFunctionType;
 
+      //! type of the gridpart
+      typedef typename DiscreteFunctionTraits< DiscreteFunction >::DiscreteFunctionSpaceType::GridPartType GridPartType;
+
       //! type of the entity, the local function lives on is given by the space
       typedef typename BaseType::EntityType EntityType;
 
@@ -105,6 +108,11 @@ namespace Dune
       DiscreteFunctionType &discreteFunction ()
       {
         return *discreteFunction_;
+      }
+
+      const GridPartType &gridPart() const
+      {
+        return discreteFunction().gridPart();
       }
 
     private:

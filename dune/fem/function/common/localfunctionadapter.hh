@@ -411,6 +411,7 @@ namespace Dune
 
       typedef typename Traits::DiscreteFunctionType DiscreteFunctionType;
       typedef typename Traits::EntityType EntityType;
+      typedef typename Traits::GridPartType GridPartType;
 
       // default is reference
       template <int, bool hasInit >
@@ -465,6 +466,12 @@ namespace Dune
       unsigned int order() const
       {
         return adapter_.order();
+      }
+
+      //! return gridPart
+      const GridPartType& gridPart() const
+      {
+        return adapter_.gridPart();
       }
 
       //! evaluate local function
