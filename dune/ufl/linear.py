@@ -1,7 +1,9 @@
 from __future__ import absolute_import, division, print_function
 
-from ufl.algorithms import expand_compounds, expand_derivatives, expand_indices
+from ufl.algorithms import expand_indices
 from ufl.algorithms.analysis import extract_arguments
+from ufl.algorithms.apply_derivatives import apply_derivatives
+from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering
 from ufl.algorithms.apply_restrictions import apply_restrictions
 from ufl.algorithms.transformer import Transformer
 from ufl.constantvalue import IntValue
@@ -29,9 +31,7 @@ class MultiLinearExprSplitter(Transformer):
             raise Exception('Arguments should only occur in fully indexed expressions.')
         key = self._key(expr)
         if key != self.empty:
-            tensor = ExprTensor(self._shape(key))
-            tensor[tuple()] = IntValue(1)
-            return {key: tensor}
+            return self._tensor(key, tuple())
         else:
             return self.terminal(expr)
 
@@ -44,9 +44,7 @@ class MultiLinearExprSplitter(Transformer):
         index = expr.ufl_operands[1]
         key = self._key(operand)
         if key != self.empty:
-            tensor = ExprTensor(operand.ufl_shape)
-            tensor[index.indices()] = IntValue(1)
-            return {key: tensor}
+            return self._tensor(key, index.indices())
         else:
             return self.terminal(expr)
 
@@ -55,6 +53,12 @@ class MultiLinearExprSplitter(Transformer):
             raise Exception('Only the left child of a division may access the linear arguments.')
         r = right[self.empty]
         return {key: l / r for key, l in left.items()}
+
+    def negative_restricted(self, expr, arg):
+        return {key: value.negative_restricted() for key, value in arg.items()}
+
+    def positive_restricted(self, expr, arg):
+        return {key: value.negative_restricted() for key, value in arg.items()}
 
     def product(self, expr, left, right):
         def oneOf(l, r):
@@ -112,6 +116,11 @@ class MultiLinearExprSplitter(Transformer):
                 shape += arg.ufl_shape
         return shape
 
+    def _tensor(self, key, indices):
+        tensor = ExprTensor(self._shape(key))
+        tensor[indices] = IntValue(1)
+        return {key: tensor}
+
     def _productIndices(self, keyl, keyr):
         if len(keyl) > 0:
             indices = self._productIndices(keyl[1:], keyr[1:])
@@ -136,8 +145,9 @@ def splitMultiLinearExpr(expr, arguments=None):
 def splitForm(form, arguments=None):
     if arguments is None:
         arguments = form.arguments()
+
     form = apply_restrictions(form)
-    form = expand_indices(expand_derivatives(expand_compounds(form)))
+    form = expand_indices(apply_derivatives(apply_algebra_lowering(form)))
     form = apply_restrictions(form)
 
     integrals = {}
