@@ -28,6 +28,12 @@ class CodeGenerator(MultiFunction):
         self.code = []
         self.tempVars = tempVars
 
+    def _require_predefined(self, expr):
+        try:
+            return self._makeTmp(self.predefined[expr], True)
+        except KeyError:
+            raise Exception('%s not available for this expression.' % expr._ufl_class_.__name__)
+
     def argument(self, expr):
         try:
             return self._makeTmp(self.predefined[expr], True)
@@ -41,6 +47,8 @@ class CodeGenerator(MultiFunction):
     def atan_2(self, expr, x, y):
         self.using.add(Using(cplusplus.atan2))
         return self._makeTmp(cplusplus.atan2(x, y))
+
+    cell_volume = _require_predefined
 
     def coefficient(self, expr):
         try:
@@ -68,11 +76,8 @@ class CodeGenerator(MultiFunction):
     def division(self, expr, x, y):
         return self._makeTmp(x / y)
 
-    def facet_normal(self, expr):
-        try:
-            return self._makeTmp(self.predefined[expr], True)
-        except KeyError:
-            raise Exception('Facet Normal not avalailable for this expression.')
+    facet_area = _require_predefined
+    facet_normal = _require_predefined
 
     def float_value(self, expr):
         return cplusplus.makeExpression(expr.value())
@@ -215,6 +220,7 @@ class CodeGenerator(MultiFunction):
             return var
         else:
             return cexpr
+
 
 
 def generateCode(predefined, expressions, coefficients=None, tempVars=True):

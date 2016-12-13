@@ -2,7 +2,7 @@ from __future__ import division, print_function
 
 import types
 
-from ufl import Coefficient, FacetNormal, Form, SpatialCoordinate
+from ufl import CellVolume, Coefficient, FacetArea, FacetNormal, Form, SpatialCoordinate
 from ufl import action, derivative
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.constantvalue import IntValue, Zero
@@ -63,6 +63,13 @@ class Integrands():
 
     def facetNormal(self, x):
         return UnformattedExpression('DomainType', 'intersection_.unitOuterNormal( ' + x + '.localPosition() )')
+
+    def cellVolume(self, side=None):
+        entity = 'entity()' if side is None else 'entity_[ static_cast< std::size_t >( ' + side + ' ) ]'
+        return UnformattedExpression('DomainFieldType', entity + '.geometry().volume()')
+
+    def facetArea(self):
+        return UnformattedExpression('DomainFieldType', 'intersection_.geometry().volume()')
 
     def pre(self):
         result = []
@@ -363,6 +370,8 @@ def compileUFL(equation, tempVars=True):
 
     x = SpatialCoordinate(form.ufl_cell())
     n = FacetNormal(form.ufl_cell())
+    vol = CellVolume(form.ufl_cell())
+    area = FacetArea(form.ufl_cell())
 
     phi = form.arguments()[0]
     dphi = Grad(phi)
@@ -414,12 +423,14 @@ def compileUFL(equation, tempVars=True):
 
         predefined = {u: arg[0], du: arg[1]}
         predefined[x] = integrands.spatialCoordinate('x')
+        predefined[vol] = integrands.cellVolume()
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.interior = generateUnaryCode(predefined, [phi, dphi], integrals['cell'], tempVars)
 
         predefined = {ubar: arg[0], dubar: arg[1]}
         predefined[x] = integrands.spatialCoordinate('x')
+        predefined[vol] = integrands.cellVolume()
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('cell'), tempVars)
@@ -430,6 +441,8 @@ def compileUFL(equation, tempVars=True):
         predefined = {u: arg[0], du: arg[1]}
         predefined[x] = integrands.spatialCoordinate('x')
         predefined[n] = integrands.facetNormal('x')
+        predefined[vol] = integrands.cellVolume()
+        predefined[area] = integrands.facetArea()
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.boundary = generateUnaryCode(predefined, [phi, dphi], integrals['exterior_facet'], tempVars);
@@ -437,6 +450,8 @@ def compileUFL(equation, tempVars=True):
         predefined = {ubar: arg[0], dubar: arg[1]}
         predefined[x] = integrands.spatialCoordinate('x')
         predefined[n] = integrands.facetNormal('x')
+        predefined[vol] = integrands.cellVolume()
+        predefined[area] = integrands.facetArea()
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('exterior_facet'), tempVars)
@@ -448,6 +463,9 @@ def compileUFL(equation, tempVars=True):
         predefined = {u('+'): argIn[0], du('+'): argIn[1], u('-'): argOut[0], du('-'): argOut[1]}
         predefined[x] = integrands.spatialCoordinate('xIn')
         predefined[n('+')] = integrands.facetNormal('xIn')
+        predefined[vol('+')] = integrands.cellVolume('Side::in')
+        predefined[vol('-')] = integrands.cellVolume('Side::out')
+        predefined[area] = integrands.facetArea()
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'xIn', 'Side::in')
         predefineCoefficients(predefined, 'xOut', 'Side::out')
@@ -456,6 +474,9 @@ def compileUFL(equation, tempVars=True):
         predefined = {ubar('+'): argIn[0], dubar('+'): argIn[1], ubar('-'): argOut[0], dubar('-'): argOut[1]}
         predefined[x] = integrands.spatialCoordinate('xIn')
         predefined[n('+')] = integrands.facetNormal('xIn')
+        predefined[vol('+')] = integrands.cellVolume('Side::in')
+        predefined[vol('-')] = integrands.cellVolume('Side::out')
+        predefined[area] = integrands.facetArea()
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'xIn', 'Side::in')
         predefineCoefficients(predefined, 'xOut', 'Side::out')
