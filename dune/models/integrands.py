@@ -1,6 +1,6 @@
 from __future__ import division, print_function
 
-import types
+from types import MethodType, ModuleType
 
 from ufl import CellVolume, Coefficient, FacetArea, FacetNormal, Form, SpatialCoordinate
 from ufl import action, derivative
@@ -506,7 +506,7 @@ def load(grid, integrands, renumbering=None, tempVars=True):
     if isinstance(integrands, Equation):
         integrands, renumbering = compileUFL(integrands, tempVars)
 
-    if not isinstance(grid, types.ModuleType):
+    if not isinstance(grid, ModuleType):
         grid = grid._module
     name = 'integrands_' + integrands.signature + "_" + grid._moduleName
 
@@ -551,8 +551,10 @@ def load(grid, integrands, renumbering=None, tempVars=True):
 
     module = builder.load(name, source, "integrands")
     if renumbering is not None:
-        setattr(module.Integrands, "_setConstant", getattr(module.Integrands, "setConstant"))
-        setattr(module.Integrands, "_setCoefficient", getattr(module.Integrands, "setCoefficient"))
+        module.Integrands._setConstant = module.Integrands.__dict__['setConstant']
+        module.Integrands._setCoefficient = module.Integrands.__dict__['setCoefficient']
+        #setattr(module.Integrands, "_setConstant", getattr(module.Integrands, "setConstant"))
+        #setattr(module.Integrands, "_setCoefficient", getattr(module.Integrands, "setCoefficient"))
         setattr(module.Integrands, "_renumbering", renumbering)
         setattr(module.Integrands, "setConstant", setConstant)
         setattr(module.Integrands, "setCoefficient", setCoefficient)
