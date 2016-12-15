@@ -68,19 +68,53 @@ namespace Dune
         typedef decltype( makeValueVector( 0u ) ) ValueVectorType;
 
         template< class LocalFunction, class Point >
+        static void value ( const LocalFunction &u, const Point &x, typename LocalFunction::RangeType &phi )
+        {
+          u.evaluate( x, phi );
+        }
+
+        template< class LocalFunction, class Point >
+        static void value ( const LocalFunction &u, const Point &x, typename LocalFunction::JacobianRangeType &phi )
+        {
+          u.jacobian( x, phi );
+        }
+
+        template< class LocalFunction, class Point >
+        static void value ( const LocalFunction &u, const Point &x, typename LocalFunction::HessianRangeType &phi )
+        {
+          u.hessian( x, phi );
+        }
+
+        template< class LocalFunction, class Point >
         static ValueType value ( const LocalFunction &u, const Point &x )
         {
-          ValueType value;
-          u.evaluate( x, std::get< 0 >( value ) );
-          u.jacobian( x, std::get< 1 >( value ) );
-          return value;
+          ValueType phi;
+          Hybrid::forEach( std::make_index_sequence< std::tuple_size< ValueType >::value >(), [ &u, &x, &phi ] ( auto i ) { value( u, x, std::get< i >( phi ) ); } );
+          return phi;
+        }
+
+        template< class Basis, class Point >
+        static void values ( const Basis &basis, const Point &x, std::vector< typename Basis::RangeType > &phi )
+        {
+          basis.evaluateAll( x, phi );
+        }
+
+        template< class Basis, class Point >
+        static void values ( const Basis &basis, const Point &x, std::vector< typename Basis::JacobianRangeType > &phi )
+        {
+          basis.jacobianAll( x, phi );
+        }
+
+        template< class Basis, class Point >
+        static void values ( const Basis &basis, const Point &x, std::vector< typename Basis::HessianRangeType > &phi )
+        {
+          basis.hessianAll( x, phi );
         }
 
         template< class Basis, class Point >
         static void values ( const Basis &basis, const Point &x, ValueVectorType &phi )
         {
-          basis.evaluateAll( x, std::get< 0 >( phi ) );
-          basis.jacobianAll( x, std::get< 1 >( phi ) );
+          Hybrid::forEach( std::make_index_sequence< std::tuple_size< ValueType >::value >(), [ &basis, &x, &phi ] ( auto i ) { values( basis, x, std::get< i >( phi ) ); } );
         }
 
         template< class QP, class J >
