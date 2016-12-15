@@ -42,10 +42,11 @@ namespace Dune
 
         typedef std::conditional_t< Fem::IntegrandsTraits< Integrands >::isFull, Integrands, FullIntegrands< Integrands > > IntegrandsType;
 
-        typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+        typedef typename Integrands::GridPartType GridPartType;
+
+        typedef typename GridPartType::ctype ctype;
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
-        typedef typename DiscreteFunctionSpaceType::RangeFieldType RangeFieldType;
         typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
         typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
 
@@ -85,7 +86,7 @@ namespace Dune
         }
 
         template< class QP, class J >
-        void addLinearizedSkeletonIntegrand ( const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn ) const
+        void addLinearizedSkeletonIntegrand ( const QP &qpIn, const QP &qpOut, const ctype &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn ) const
         {
           auto integrand = integrands_.linearizedSkeleton( qpIn, uIn, qpOut, uOut );
           for( std::size_t col = 0; col < colsIn; ++col )
@@ -101,7 +102,7 @@ namespace Dune
         }
 
         template< class QP, class J >
-        void addLinearizedSkeletonIntegrand ( const QP &qpIn, const QP &qpOut, const RangeFieldType &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn, J &jInOut, J &jOutOut ) const
+        void addLinearizedSkeletonIntegrand ( const QP &qpIn, const QP &qpOut, const ctype &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn, J &jInOut, J &jOutOut ) const
         {
           auto integrand = integrands_.linearizedSkeleton( qpIn, uIn, qpOut, uOut );
           for( std::size_t col = 0; col < colsIn; ++col )
@@ -130,7 +131,7 @@ namespace Dune
           const auto geometry = u.entity().geometry();
           for( const InteriorQuadraturePointType qp : InteriorQuadratureType( u.entity(), 2*w.order() ) )
           {
-            const RangeFieldType weight = qp.weight() * geometry.integrationElement( qp.position() );
+            const ctype weight = qp.weight() * geometry.integrationElement( qp.position() );
 
             ValueType integrand = integrands_.interior( qp, value( u, qp ) );
 
@@ -174,7 +175,7 @@ namespace Dune
           const auto geometry = intersection.geometry();
           for( const SurfaceQuadraturePointType qp : SurfaceQuadratureType( gridPart(), intersection, 2*w.order(), SurfaceQuadratureType::INSIDE ) )
           {
-            const RangeFieldType weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
+            const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
             ValueType integrand = integrands_.boundary( qp, value( u, qp ) );
 
@@ -194,7 +195,7 @@ namespace Dune
           const auto &basis = discreteFunctionSpace().basisFunctionSet( u.entity() );
           for( const SurfaceQuadraturePointType qp : SurfaceQuadratureType( gridPart(), intersection, 2*basis.order(), SurfaceQuadratureType::INSIDE ) )
           {
-            const RangeFieldType weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
+            const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
             values( basis, qp, phi );
             auto integrand = integrands_.linearizedBoundary( qp, value( u, qp ) );
@@ -217,7 +218,7 @@ namespace Dune
           const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*wIn.order(), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
-            const RangeFieldType weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
+            const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
 
             const auto qpIn = quadrature.inside()[ qp ];
             const auto qpOut = quadrature.outside()[ qp ];
@@ -236,7 +237,7 @@ namespace Dune
           const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*std::max( wIn.order(), wOut.order() ), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
-            const RangeFieldType weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
+            const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
 
             const auto qpIn = quadrature.inside()[ qp ];
             const auto qpOut = quadrature.outside()[ qp ];
@@ -262,7 +263,7 @@ namespace Dune
           const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*std::max( basisIn.order(), basisOut.order() ), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
-            const RangeFieldType weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
+            const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
 
             const auto qpIn = quadrature.inside()[ qp ];
             const auto qpOut = quadrature.outside()[ qp ];
