@@ -35,25 +35,15 @@ namespace Dune
       // GalerkinOperator
       // ----------------
 
-      template< class DiscreteFunctionSpace, class Integrands >
+      template< class Integrands >
       struct GalerkinOperator
       {
-        typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
-
         typedef std::conditional_t< Fem::IntegrandsTraits< Integrands >::isFull, Integrands, FullIntegrands< Integrands > > IntegrandsType;
 
         typedef typename Integrands::GridPartType GridPartType;
 
         typedef typename GridPartType::ctype ctype;
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
-
-        typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
-        typedef typename DiscreteFunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-        typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
-
-        static_assert( std::is_same< typename Integrands::GridPartType, GridPartType >::value, "DiscreteFunctionSpace and Integrands must be defined on the same grid part." );
-        static_assert( std::is_same< typename Integrands::ValueType, std::tuple< RangeType, JacobianRangeType > >::value, "For now, Integrands::ValueType must be std::tuple< RangeType, JacobianRangeType >." );
 
       private:
         typedef CachingQuadrature< GridPartType, 0 > InteriorQuadratureType;
@@ -62,12 +52,20 @@ namespace Dune
         typedef CachingQuadrature< GridPartType, 1 > SurfaceQuadratureType;
         typedef QuadraturePointWrapper< SurfaceQuadratureType > SurfaceQuadraturePointType;
 
-        template< class... T >
-        static std::tuple< std::vector< T >... > makeVectorValue ( std::tuple< T... > );
-
         typedef typename Integrands::ValueType ValueType;
-        typedef decltype( makeVectorValue( std::declval< ValueType >() ) ) ValueVectorType;
 
+        template< std::size_t... i >
+        static std::tuple< std::vector< std::tuple_element_t< i, ValueType > >... > makeValueVector ( std::size_t maxNumLocalDofs, std::index_sequence< i... > )
+        {
+          return { std::vector< std::tuple_element_t< i, ValueType > >( maxNumLocalDofs )... };
+        }
+
+        static auto makeValueVector ( std::size_t maxNumLocalDofs )
+        {
+          return makeValueVector( maxNumLocalDofs, std::make_index_sequence< std::tuple_size< ValueType >::value >() );
+        }
+
+        typedef decltype( makeValueVector( 0u ) ) ValueVectorType;
 
         template< class LocalFunction, class Point >
         static ValueType value ( const LocalFunction &u, const Point &x )
@@ -148,7 +146,7 @@ namespace Dune
             return;
 
           const auto geometry = u.entity().geometry();
-          const auto &basis = discreteFunctionSpace().basisFunctionSet( u.entity() );
+          const auto &basis = j.domainBasisFunctionSet();
           for( const auto qp : InteriorQuadratureType( u.entity(), 2*basis.order() ) )
           {
             const auto weight = qp.weight() * geometry.integrationElement( qp.position() );
@@ -192,7 +190,7 @@ namespace Dune
             return;
 
           const auto geometry = intersection.geometry();
-          const auto &basis = discreteFunctionSpace().basisFunctionSet( u.entity() );
+          const auto &basis = j.domainBasisFunctionSet();
           for( const SurfaceQuadraturePointType qp : SurfaceQuadratureType( gridPart(), intersection, 2*basis.order(), SurfaceQuadratureType::INSIDE ) )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
@@ -253,11 +251,11 @@ namespace Dune
           }
         }
 
-        template< bool conforming, class Intersection, class U, class... J >
-        void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, ValueVectorType &phiIn, ValueVectorType &phiOut, J &... j ) const
+        template< bool conforming, class Intersection, class U, class J >
+        void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, ValueVectorType &phiIn, ValueVectorType &phiOut, J &jInIn, J &jOutIn ) const
         {
-          const auto &basisIn = discreteFunctionSpace().basisFunctionSet( uIn.entity() );
-          const auto &basisOut = discreteFunctionSpace().basisFunctionSet( uOut.entity() );
+          const auto &basisIn = jInIn.domainBasisFunctionSet();
+          const auto &basisOut = jOutIn.domainBasisFunctionSet();
 
           const auto geometry = intersection.geometry();
           const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*std::max( basisIn.order(), basisOut.order() ), false );
@@ -271,7 +269,29 @@ namespace Dune
             values( basisIn, qpIn, phiIn );
             values( basisOut, qpOut, phiOut );
 
-            addLinearizedSkeletonIntegrand( qpIn, qpOut, weight, value( uIn, qpIn ), value( uOut, qpOut ), phiIn, basisIn.size(), phiOut, basisOut.size(), j... );
+            addLinearizedSkeletonIntegrand( qpIn, qpOut, weight, value( uIn, qpIn ), value( uOut, qpOut ), phiIn, basisIn.size(), phiOut, basisOut.size(), jInIn, jOutIn );
+          }
+        }
+
+        template< bool conforming, class Intersection, class U, class J >
+        void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, ValueVectorType &phiIn, ValueVectorType &phiOut, J &jInIn, J &jOutIn, J &jInOut, J &jOutOut ) const
+        {
+          const auto &basisIn = jInIn.domainBasisFunctionSet();
+          const auto &basisOut = jOutIn.domainBasisFunctionSet();
+
+          const auto geometry = intersection.geometry();
+          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*std::max( basisIn.order(), basisOut.order() ), false );
+          for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
+          {
+            const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
+
+            const auto qpIn = quadrature.inside()[ qp ];
+            const auto qpOut = quadrature.outside()[ qp ];
+
+            values( basisIn, qpIn, phiIn );
+            values( basisOut, qpOut, phiOut );
+
+            addLinearizedSkeletonIntegrand( qpIn, qpOut, weight, value( uIn, qpIn ), value( uOut, qpOut ), phiIn, basisIn.size(), phiOut, basisOut.size(), jInIn, jOutIn, jInOut, jOutOut );
           }
         }
 
@@ -303,8 +323,8 @@ namespace Dune
         // constructor
 
         template< class... Args >
-        explicit GalerkinOperator ( const DiscreteFunctionSpaceType &dfSpace, Args &&... args )
-          : dfSpace_( dfSpace ), integrands_( std::forward< Args >( args )... )
+        explicit GalerkinOperator ( const GridPartType &gridPart, Args &&... args )
+          : gridPart_( gridPart ), integrands_( std::forward< Args >( args )... )
         {}
 
         // evaluate
@@ -315,7 +335,7 @@ namespace Dune
         {
           w.clear();
 
-          TemporaryLocalFunction< DiscreteFunctionSpaceType > wLocal( discreteFunctionSpace() );
+          TemporaryLocalFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > wLocal( w.space() );
 
           for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
           {
@@ -347,7 +367,7 @@ namespace Dune
         {
           w.clear();
 
-          TemporaryLocalFunction< DiscreteFunctionSpaceType > wInside( discreteFunctionSpace() ), wOutside( discreteFunctionSpace() );
+          TemporaryLocalFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > wInside( w.space() ), wOutside( w.space() );
 
           const auto &indexSet = gridPart().indexSet();
           for( const EntityType &inside : elements( gridPart(), Partitions::interiorBorder ) )
@@ -393,6 +413,12 @@ namespace Dune
         template< class GridFunction, class DiscreteFunction >
         void evaluate ( const GridFunction &u, DiscreteFunction &w ) const
         {
+          static_assert( std::is_same< typename GridFunction::GridPartType, GridPartType >::value, "Argument 'u' and Integrands must be defined on the same grid part." );
+          static_assert( std::is_same< typename DiscreteFunction::GridPartType, GridPartType >::value, "Argument 'w' and Integrands must be defined on the same grid part." );
+
+          static_assert( std::is_same< ValueType, std::tuple< typename GridFunction::RangeType, typename GridFunction::JacobianRangeType > >::value, "For now, Integrands::ValueType must be std::tuple< RangeType, JacobianRangeType >." );
+          static_assert( std::is_same< ValueType, std::tuple< typename DiscreteFunction::RangeType, typename DiscreteFunction::JacobianRangeType > >::value, "For now, Integrands::ValueType must be std::tuple< RangeType, JacobianRangeType >." );
+
           if( integrands_.hasSkeleton() )
             evaluate( u, w, std::true_type() );
           else
@@ -405,14 +431,16 @@ namespace Dune
         template< class GridFunction, class JacobianOperator >
         void assemble ( const GridFunction &u, JacobianOperator &jOp, std::false_type ) const
         {
-          DiagonalStencil< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > stencil( discreteFunctionSpace(), discreteFunctionSpace() );
+          typedef TemporaryLocalMatrix< typename JacobianOperator::DomainSpaceType, typename JacobianOperator::RangeSpaceType > TemporaryLocalMatrixType;
+
+          DiagonalStencil< typename JacobianOperator::DomainSpaceType, typename JacobianOperator::RangeSpaceType > stencil( jOp.domainSpace(), jOp.rangeSpace() );
           jOp.reserve( stencil );
           jOp.clear();
 
-          const std::size_t maxNumLocalDofs = discreteFunctionSpace().blockMapper().maxNumDofs() * discreteFunctionSpace().localBlockSize;
-          ValueVectorType phi{ std::vector< RangeType >( maxNumLocalDofs ), std::vector< JacobianRangeType >( maxNumLocalDofs ) };
+          const std::size_t maxNumLocalDofs = jOp.domainSpace().blockMapper().maxNumDofs() * jOp.domainSpace().localBlockSize;
+          ValueVectorType phi = makeValueVector( maxNumLocalDofs );
 
-          TemporaryLocalMatrix< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > jOpLocal( discreteFunctionSpace(), discreteFunctionSpace() );
+          TemporaryLocalMatrixType jOpLocal( jOp.domainSpace(), jOp.rangeSpace() );
 
           for( const EntityType &entity : elements( gridPart(), Partitions::interiorBorder ) )
           {
@@ -442,18 +470,18 @@ namespace Dune
         template< class GridFunction, class JacobianOperator >
         void assemble ( const GridFunction &u, JacobianOperator &jOp, std::true_type ) const
         {
-          typedef TemporaryLocalMatrix< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > TemporaryLocalMatrix;
+          typedef TemporaryLocalMatrix< typename JacobianOperator::DomainSpaceType, typename JacobianOperator::RangeSpaceType > TemporaryLocalMatrixType;
 
-          DiagonalAndNeighborStencil< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > stencil( discreteFunctionSpace(), discreteFunctionSpace() );
+          DiagonalAndNeighborStencil< typename JacobianOperator::DomainSpaceType, typename JacobianOperator::RangeSpaceType > stencil( jOp.domainSpace(), jOp.rangeSpace() );
           jOp.reserve( stencil );
           jOp.clear();
 
-          const std::size_t maxNumLocalDofs = discreteFunctionSpace().blockMapper().maxNumDofs() * discreteFunctionSpace().localBlockSize;
-          ValueVectorType phiIn{ std::vector< RangeType >( maxNumLocalDofs ), std::vector< JacobianRangeType >( maxNumLocalDofs ) };
-          ValueVectorType phiOut{ std::vector< RangeType >( maxNumLocalDofs ), std::vector< JacobianRangeType >( maxNumLocalDofs ) };
+          const std::size_t maxNumLocalDofs = jOp.domainSpace().blockMapper().maxNumDofs() * jOp.domainSpace().localBlockSize;
+          ValueVectorType phiIn = makeValueVector( maxNumLocalDofs );
+          ValueVectorType phiOut = makeValueVector( maxNumLocalDofs );
 
-          TemporaryLocalMatrix jOpInIn( discreteFunctionSpace(), discreteFunctionSpace() ), jOpOutIn( discreteFunctionSpace(), discreteFunctionSpace() );
-          TemporaryLocalMatrix jOpInOut( discreteFunctionSpace(), discreteFunctionSpace() ), jOpOutOut( discreteFunctionSpace(), discreteFunctionSpace() );
+          TemporaryLocalMatrixType jOpInIn( jOp.domainSpace(), jOp.rangeSpace() ), jOpOutIn( jOp.domainSpace(), jOp.rangeSpace() );
+          TemporaryLocalMatrixType jOpInOut( jOp.domainSpace(), jOp.rangeSpace() ), jOpOutOut( jOp.domainSpace(), jOp.rangeSpace() );
 
           const auto &indexSet = gridPart().indexSet();
           for( const EntityType &inside : elements( gridPart(), Partitions::interiorBorder ) )
@@ -509,6 +537,14 @@ namespace Dune
         template< class GridFunction, class JacobianOperator >
         void assemble ( const GridFunction &u, JacobianOperator &jOp ) const
         {
+          static_assert( std::is_same< typename GridFunction::GridPartType, GridPartType >::value, "Argument 'u' and Integrands must be defined on the same grid part." );
+          static_assert( std::is_same< typename JacobianOperator::DomainSpaceType::GridPartType, GridPartType >::value, "Argument 'jOp' and Integrands must be defined on the same grid part." );
+          static_assert( std::is_same< typename JacobianOperator::RangeSpaceType::GridPartType, GridPartType >::value, "Argument 'jOp' and Integrands must be defined on the same grid part." );
+
+          static_assert( std::is_same< ValueType, std::tuple< typename GridFunction::RangeType, typename GridFunction::JacobianRangeType > >::value, "For now, Integrands::ValueType must be std::tuple< RangeType, JacobianRangeType >." );
+          static_assert( std::is_same< ValueType, std::tuple< typename JacobianOperator::DomainSpaceType::RangeType, typename JacobianOperator::DomainSpaceType::JacobianRangeType > >::value, "For now, Integrands::ValueType must be std::tuple< RangeType, JacobianRangeType >." );
+          static_assert( std::is_same< ValueType, std::tuple< typename JacobianOperator::RangeSpaceType::RangeType, typename JacobianOperator::RangeSpaceType::JacobianRangeType > >::value, "For now, Integrands::ValueType must be std::tuple< RangeType, JacobianRangeType >." );
+
           if( integrands_.hasSkeleton() )
             assemble( u, jOp, std::true_type() );
           else
@@ -517,11 +553,10 @@ namespace Dune
 
         // accessors
 
-        const DiscreteFunctionSpaceType &discreteFunctionSpace () const { return dfSpace_; }
-        const GridPartType &gridPart () const { return discreteFunctionSpace().gridPart(); }
+        const GridPartType &gridPart () const { return gridPart_; }
 
       private:
-        const DiscreteFunctionSpaceType &dfSpace_;
+        const GridPartType &gridPart_;
         mutable IntegrandsType integrands_;
       };
 
@@ -543,7 +578,7 @@ namespace Dune
 
       template< class... Args >
       GalerkinOperator ( const DiscreteFunctionSpaceType &dfSpace, Args &&... args )
-        : impl_( dfSpace, std::forward< Args >( args )... )
+        : discreteFunctionSpace_( dfSpace ), impl_( dfSpace.gridPart(), std::forward< Args >( args )... )
       {}
 
       void operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w ) const
@@ -557,10 +592,11 @@ namespace Dune
         return impl_.evaluate( u, w );
       }
 
-      const DiscreteFunctionSpaceType &discreteFunctionSpace () const { return impl_.discreteFunctionSpace(); }
+      const DiscreteFunctionSpaceType &discreteFunctionSpace () const { return discreteFunctionSpace_; }
 
     protected:
-      Impl::GalerkinOperator< DiscreteFunctionSpaceType, Integrands > impl_;
+      const DiscreteFunctionSpaceType &discreteFunctionSpace_;
+      Impl::GalerkinOperator< Integrands > impl_;
     };
 
 
