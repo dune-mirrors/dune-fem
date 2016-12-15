@@ -89,7 +89,9 @@ class UMFPACKOp:public Operator<DF, DF>
 
   // \brief Destructor.
   ~UMFPACKOp()
-  {}
+  {
+    finalize();
+  }
 
   /** \brief Solve the system
    *  \param[in] arg right hand side
@@ -115,7 +117,7 @@ class UMFPACKOp:public Operator<DF, DF>
   }
 
   // \brief Free allocated memory.
-  inline void finalize() const
+  void finalize() const
   {
     if(isloaded_)
     {
