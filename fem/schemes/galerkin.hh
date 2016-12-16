@@ -23,6 +23,7 @@
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
 
+#include <dune/fem/operator/common/localmatrixcolumn.hh>
 #include <dune/fem/schemes/integrands.hh>
 
 namespace Dune
@@ -60,9 +61,9 @@ namespace Dune
         typedef std::make_index_sequence< std::tuple_size< RangeValueType >::value > RangeValueIndices;
 
         template< std::size_t... i >
-        static std::tuple< std::vector< std::tuple_element_t< i, DomainValueType > >... > makeDomainValueVector ( std::size_t maxNumLocalDofs, std::index_sequence< i... > )
+        static auto makeDomainValueVector ( std::size_t maxNumLocalDofs, std::index_sequence< i... > )
         {
-          return { std::vector< std::tuple_element_t< i, DomainValueType > >( maxNumLocalDofs )... };
+          return std::make_tuple( std::vector< std::tuple_element_t< i, DomainValueType > >( maxNumLocalDofs )... );
         }
 
         static auto makeDomainValueVector ( std::size_t maxNumLocalDofs )
@@ -93,7 +94,7 @@ namespace Dune
         template< class LocalFunction, class Point, class... T >
         static void value ( const LocalFunction &u, const Point &x, std::tuple< T... > &phi )
         {
-          Hybrid::forEach( std::index_sequence_for< T... >(), [ &u, &x, &phi ] ( auto i ) { value( u, x, std::get< i >( phi ) ); } );
+          Hybrid::forEach( std::index_sequence_for< T... >(), [ &u, &x, &phi ] ( auto i ) { GalerkinOperator::value( u, x, std::get< i >( phi ) ); } );
         }
 
         template< class Basis, class Point >
@@ -117,7 +118,7 @@ namespace Dune
         template< class Basis, class Point, class... T >
         static void values ( const Basis &basis, const Point &x, std::tuple< std::vector< T >... > &phi )
         {
-          Hybrid::forEach( std::index_sequence_for< T... >(), [ &basis, &x, &phi ] ( auto i ) { values( basis, x, std::get< i >( phi ) ); } );
+          Hybrid::forEach( std::index_sequence_for< T... >(), [ &basis, &x, &phi ] ( auto i ) { GalerkinOperator::values( basis, x, std::get< i >( phi ) ); } );
         }
 
         template< class LocalFunction, class Point >
@@ -156,7 +157,7 @@ namespace Dune
 
             RangeValueType integrand = integrands_.interior( qp, domainValue( u, qp ) );
 
-            Hybrid::forEach( RangeValueIndices(), [ &w, &integrand, weight ] ( auto i ) {
+            Hybrid::forEach( RangeValueIndices(), [ &qp, &w, &integrand, weight ] ( auto i ) {
                 std::get< i >( integrand ) *= weight;
                 w.axpy( qp, std::get< i >( integrand ) );
               } );
@@ -180,10 +181,15 @@ namespace Dune
             values( domainBasis, qp, phi );
             auto integrand = integrands_.linearizedInterior( qp, domainValue( u, qp ) );
 
-            for( std::size_t col = 0, cols = basis.size(); col < cols; ++col )
+            for( std::size_t col = 0, cols = domainBasis.size(); col < cols; ++col )
             {
+              LocalMatrixColumn< J > jCol( j, col );
               RangeValueType intPhi = integrand( value( phi, col ) );
-              j.column( col ).axpy( std::get< 0 >( phi ), std::get< 1 >( phi ), std::get< 0 >( intPhi ), std::get< 1 >( intPhi ), weight );
+
+              Hybrid::forEach( RangeValueIndices(), [ &qp, &jCol, &intPhi, weight ] ( auto i ) {
+                  std::get< i >( intPhi ) *= weight;
+                  jCol.axpy( qp, std::get< i >( intPhi ) );
+                } );
             }
           }
         }
@@ -203,7 +209,7 @@ namespace Dune
 
             RangeValueType integrand = integrands_.boundary( qp, domainValue( u, qp ) );
 
-            Hybrid::forEach( RangeValueIndices(), [ &w, &integrand, weight ] ( auto i ) {
+            Hybrid::forEach( RangeValueIndices(), [ &qp, &w, &integrand, weight ] ( auto i ) {
                 std::get< i >( integrand ) *= weight;
                 w.axpy( qp, std::get< i >( integrand ) );
               } );
@@ -217,17 +223,26 @@ namespace Dune
             return;
 
           const auto geometry = intersection.geometry();
-          const auto &basis = j.domainBasisFunctionSet();
-          for( const SurfaceQuadraturePointType qp : SurfaceQuadratureType( gridPart(), intersection, 2*basis.order(), SurfaceQuadratureType::INSIDE ) )
+          const auto &domainBasis = j.domainBasisFunctionSet();
+          const auto &rangeBasis = j.rangeBasisFunctionSet();
+
+          for( const SurfaceQuadraturePointType qp : SurfaceQuadratureType( gridPart(), intersection, 2*rangeBasis.order(), SurfaceQuadratureType::INSIDE ) )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
-            values( basis, qp, phi );
+            values( domainBasis, qp, phi );
             auto integrand = integrands_.linearizedBoundary( qp, domainValue( u, qp ) );
 
-            for( std::size_t col = 0, cols = basis.size(); col < cols; ++col )
+            for( std::size_t col = 0, cols = domainBasis.size(); col < cols; ++col )
             {
+              LocalMatrixColumn< J > jCol( j, col );
               RangeValueType intPhi = integrand( value( phi, col ) );
+
+              Hybrid::forEach( RangeValueIndices(), [ &qp, &jCol, &intPhi, weight ] ( auto i ) {
+                  std::get< i >( intPhi ) *= weight;
+                  jCol.axpy( qp, std::get< i >( intPhi ) );
+                } );
+
               j.column( col ).axpy( std::get< 0 >( phi ), std::get< 1 >( phi ), std::get< 0 >( intPhi ), std::get< 1 >( intPhi ), weight );
             }
           }
@@ -249,7 +264,7 @@ namespace Dune
             const auto qpOut = quadrature.outside()[ qp ];
             std::pair< RangeValueType, RangeValueType > integrand = integrands_.skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
 
-            Hybrid::forEach( RangeValueIndices(), [ &wIn, &integrand, weight ] ( auto i ) {
+            Hybrid::forEach( RangeValueIndices(), [ &qpIn, &wIn, &integrand, weight ] ( auto i ) {
                 std::get< i >( integrand.first ) *= weight;
                 wIn.axpy( qpIn, std::get< i >( integrand.first ) );
               } );
@@ -269,7 +284,7 @@ namespace Dune
             const auto qpOut = quadrature.outside()[ qp ];
             std::pair< RangeValueType, RangeValueType > integrand = integrands_.skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
 
-            Hybrid::forEach( RangeValueIndices(), [ &wIn, &wOut, &integrand, weight ] ( auto i ) {
+            Hybrid::forEach( RangeValueIndices(), [ &qpIn, &wIn, &qpOut, &wOut, &integrand, weight ] ( auto i ) {
                 std::get< i >( integrand.first ) *= weight;
                 wIn.axpy( qpIn, std::get< i >( integrand.first ) );
 
@@ -282,11 +297,13 @@ namespace Dune
         template< bool conforming, class Intersection, class U, class J >
         void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, DomainValueVectorType &phiIn, DomainValueVectorType &phiOut, J &jInIn, J &jOutIn ) const
         {
-          const auto &basisIn = jInIn.domainBasisFunctionSet();
-          const auto &basisOut = jOutIn.domainBasisFunctionSet();
+          const auto &domainBasisIn = jInIn.domainBasisFunctionSet();
+          const auto &domainBasisOut = jOutIn.domainBasisFunctionSet();
+
+          const auto &rangeBasisIn = jInIn.rangeBasisFunctionSet();
 
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*std::max( basisIn.order(), basisOut.order() ), false );
+          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*rangeBasisIn.order(), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -294,19 +311,30 @@ namespace Dune
             const auto qpIn = quadrature.inside()[ qp ];
             const auto qpOut = quadrature.outside()[ qp ];
 
-            values( basisIn, qpIn, phiIn );
-            values( basisOut, qpOut, phiOut );
+            values( domainBasisIn, qpIn, phiIn );
+            values( domainBasisOut, qpOut, phiOut );
 
             auto integrand = integrands_.linearizedSkeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
-            for( std::size_t col = 0, cols = basisIn.size(); col < cols; ++col )
+            for( std::size_t col = 0, cols = domainBasisIn.size(); col < cols; ++col )
             {
+              LocalMatrixColumn< J > jInInCol( jInIn, col );
               std::pair< RangeValueType, RangeValueType > intPhi = integrand.first( value( phiIn, col ) );
-              jInIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
+
+              Hybrid::forEach( RangeValueIndices(), [ &qpIn, &jInInCol, &intPhi, weight ] ( auto i ) {
+                std::get< i >( intPhi.first ) *= weight;
+                jInInCol.axpy( qpIn, std::get< i >( intPhi.first ) );
+              } );
+
             }
-            for( std::size_t col = 0, cols = basisOut.size(); col < cols; ++col )
+            for( std::size_t col = 0, cols = domainBasisOut.size(); col < cols; ++col )
             {
+              LocalMatrixColumn< J > jOutInCol( jOutIn, col );
               std::pair< RangeValueType, RangeValueType > intPhi = integrand.second( value( phiOut, col ) );
-              jOutIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
+
+              Hybrid::forEach( RangeValueIndices(), [ &qpIn, &jOutInCol, &intPhi, weight ] ( auto i ) {
+                std::get< i >( intPhi.first ) *= weight;
+                jOutInCol.axpy( qpIn, std::get< i >( intPhi.first ) );
+              } );
             }
           }
         }
@@ -314,11 +342,14 @@ namespace Dune
         template< bool conforming, class Intersection, class U, class J >
         void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, DomainValueVectorType &phiIn, DomainValueVectorType &phiOut, J &jInIn, J &jOutIn, J &jInOut, J &jOutOut ) const
         {
-          const auto &basisIn = jInIn.domainBasisFunctionSet();
-          const auto &basisOut = jOutIn.domainBasisFunctionSet();
+          const auto &domainBasisIn = jInIn.domainBasisFunctionSet();
+          const auto &domainBasisOut = jOutIn.domainBasisFunctionSet();
+
+          const auto &rangeBasisIn = jInIn.rangeBasisFunctionSet();
+          const auto &rangeBasisOut = jInOut.rangeBasisFunctionSet();
 
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*std::max( basisIn.order(), basisOut.order() ), false );
+          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*std::max( rangeBasisIn.order(), rangeBasisOut.order() ), false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -326,21 +357,37 @@ namespace Dune
             const auto qpIn = quadrature.inside()[ qp ];
             const auto qpOut = quadrature.outside()[ qp ];
 
-            values( basisIn, qpIn, phiIn );
-            values( basisOut, qpOut, phiOut );
+            values( domainBasisIn, qpIn, phiIn );
+            values( domainBasisOut, qpOut, phiOut );
 
             auto integrand = integrands_.linearizedSkeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
-            for( std::size_t col = 0, cols = basisIn.size(); col < cols; ++col )
+            for( std::size_t col = 0, cols = domainBasisIn.size(); col < cols; ++col )
             {
+              LocalMatrixColumn< J > jInInCol( jInIn, col );
+              LocalMatrixColumn< J > jInOutCol( jInOut, col );
               std::pair< RangeValueType, RangeValueType > intPhi = integrand.first( value( phiIn, col ) );
-              jInIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
-              jInOut.column( col ).axpy( std::get< 0 >( phiOut ), std::get< 1 >( phiOut ), std::get< 0 >( intPhi.second ), std::get< 1 >( intPhi.second ), weight );
+
+              Hybrid::forEach( RangeValueIndices(), [ &qpIn, &jInInCol, &qpOut, &jInOutCol, &intPhi, weight ] ( auto i ) {
+                std::get< i >( intPhi.first ) *= weight;
+                jInInCol.axpy( qpIn, std::get< i >( intPhi.first ) );
+
+                std::get< i >( intPhi.second ) *= weight;
+                jInOutCol.axpy( qpOut, std::get< i >( intPhi.second ) );
+              } );
             }
-            for( std::size_t col = 0, cols = basisOut.size(); col < cols; ++col )
+            for( std::size_t col = 0, cols = domainBasisOut.size(); col < cols; ++col )
             {
+              LocalMatrixColumn< J > jOutInCol( jOutIn, col );
+              LocalMatrixColumn< J > jOutOutCol( jOutOut, col );
               std::pair< RangeValueType, RangeValueType > intPhi = integrand.second( value( phiOut, col ) );
-              jOutIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
-              jOutOut.column( col ).axpy( std::get< 0 >( phiOut ), std::get< 1 >( phiOut ), std::get< 0 >( intPhi.second ), std::get< 1 >( intPhi.second ), weight );
+
+              Hybrid::forEach( RangeValueIndices(), [ &qpIn, &jOutInCol, &qpOut, &jOutOutCol, &intPhi, weight ] ( auto i ) {
+                std::get< i >( intPhi.first ) *= weight;
+                jOutInCol.axpy( qpIn, std::get< i >( intPhi.first ) );
+
+                std::get< i >( intPhi.second ) *= weight;
+                jOutOutCol.axpy( qpOut, std::get< i >( intPhi.second ) );
+              } );
             }
           }
         }
