@@ -117,40 +117,6 @@ namespace Dune
           Hybrid::forEach( std::make_index_sequence< std::tuple_size< ValueType >::value >(), [ &basis, &x, &phi ] ( auto i ) { values( basis, x, std::get< i >( phi ) ); } );
         }
 
-        template< class QP, class J >
-        void addLinearizedSkeletonIntegrand ( const QP &qpIn, const QP &qpOut, const ctype &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn ) const
-        {
-          auto integrand = integrands_.linearizedSkeleton( qpIn, uIn, qpOut, uOut );
-          for( std::size_t col = 0; col < colsIn; ++col )
-          {
-            std::pair< ValueType, ValueType > intPhi = integrand.first( std::make_tuple( std::get< 0 >( phiIn )[ col ], std::get< 1 >( phiIn )[ col ] ) );
-            jInIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
-          }
-          for( std::size_t col = 0; col < colsOut; ++col )
-          {
-            std::pair< ValueType, ValueType > intPhi = integrand.second( std::make_tuple( std::get< 0 >( phiOut )[ col ], std::get< 1 >( phiOut )[ col ] ) );
-            jOutIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
-          }
-        }
-
-        template< class QP, class J >
-        void addLinearizedSkeletonIntegrand ( const QP &qpIn, const QP &qpOut, const ctype &weight, const ValueType &uIn, const ValueType &uOut, const ValueVectorType &phiIn, std::size_t colsIn, const ValueVectorType &phiOut, std::size_t colsOut, J &jInIn, J &jOutIn, J &jInOut, J &jOutOut ) const
-        {
-          auto integrand = integrands_.linearizedSkeleton( qpIn, uIn, qpOut, uOut );
-          for( std::size_t col = 0; col < colsIn; ++col )
-          {
-            std::pair< ValueType, ValueType > intPhi = integrand.first( std::make_tuple( std::get< 0 >( phiIn )[ col ], std::get< 1 >( phiIn )[ col ] ) );
-            jInIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
-            jInOut.column( col ).axpy( std::get< 0 >( phiOut ), std::get< 1 >( phiOut ), std::get< 0 >( intPhi.second ), std::get< 1 >( intPhi.second ), weight );
-          }
-          for( std::size_t col = 0; col < colsOut; ++col )
-          {
-            std::pair< ValueType, ValueType > intPhi = integrand.second( std::make_tuple( std::get< 0 >( phiOut )[ col ], std::get< 1 >( phiOut )[ col ] ) );
-            jOutIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
-            jOutOut.column( col ).axpy( std::get< 0 >( phiOut ), std::get< 1 >( phiOut ), std::get< 0 >( intPhi.second ), std::get< 1 >( intPhi.second ), weight );
-          }
-        }
-
       public:
         // interior integral
 
@@ -303,7 +269,17 @@ namespace Dune
             values( basisIn, qpIn, phiIn );
             values( basisOut, qpOut, phiOut );
 
-            addLinearizedSkeletonIntegrand( qpIn, qpOut, weight, value( uIn, qpIn ), value( uOut, qpOut ), phiIn, basisIn.size(), phiOut, basisOut.size(), jInIn, jOutIn );
+            auto integrand = integrands_.linearizedSkeleton( qpIn, value( uIn, qpIn ), qpOut, value( uOut, qpOut ) );
+            for( std::size_t col = 0, cols = basisIn.size(); col < cols; ++col )
+            {
+              std::pair< ValueType, ValueType > intPhi = integrand.first( std::make_tuple( std::get< 0 >( phiIn )[ col ], std::get< 1 >( phiIn )[ col ] ) );
+              jInIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
+            }
+            for( std::size_t col = 0, cols = basisOut.size(); col < cols; ++col )
+            {
+              std::pair< ValueType, ValueType > intPhi = integrand.second( std::make_tuple( std::get< 0 >( phiOut )[ col ], std::get< 1 >( phiOut )[ col ] ) );
+              jOutIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
+            }
           }
         }
 
@@ -325,7 +301,19 @@ namespace Dune
             values( basisIn, qpIn, phiIn );
             values( basisOut, qpOut, phiOut );
 
-            addLinearizedSkeletonIntegrand( qpIn, qpOut, weight, value( uIn, qpIn ), value( uOut, qpOut ), phiIn, basisIn.size(), phiOut, basisOut.size(), jInIn, jOutIn, jInOut, jOutOut );
+            auto integrand = integrands_.linearizedSkeleton( qpIn, value( uIn, qpIn ), qpOut, value( uOut, qpOut ) );
+            for( std::size_t col = 0, cols = basisIn.size(); col < cols; ++col )
+            {
+              std::pair< ValueType, ValueType > intPhi = integrand.first( std::make_tuple( std::get< 0 >( phiIn )[ col ], std::get< 1 >( phiIn )[ col ] ) );
+              jInIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
+              jInOut.column( col ).axpy( std::get< 0 >( phiOut ), std::get< 1 >( phiOut ), std::get< 0 >( intPhi.second ), std::get< 1 >( intPhi.second ), weight );
+            }
+            for( std::size_t col = 0, cols = basisOut.size(); col < cols; ++col )
+            {
+              std::pair< ValueType, ValueType > intPhi = integrand.second( std::make_tuple( std::get< 0 >( phiOut )[ col ], std::get< 1 >( phiOut )[ col ] ) );
+              jOutIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
+              jOutOut.column( col ).axpy( std::get< 0 >( phiOut ), std::get< 1 >( phiOut ), std::get< 0 >( intPhi.second ), std::get< 1 >( intPhi.second ), weight );
+            }
           }
         }
 
