@@ -146,7 +146,7 @@ def gridFunction(grid, code, coefficients, constants):
     writer.emit('#include <dune/fempy/py/grid/function.hh>')
     writer.emit('')
 
-    base.pre(writer, name=locname, targs=(['class Range']), bases=(["Dune::Fem::LocalFunctionAdapterHasInitialize"]))
+    base.pre(writer, name=locname, targs=(['class Range']))
     writer.typedef('typename EntityType::Geometry::LocalCoordinate', 'LocalCoordinateType')
 
     writer.openConstMethod('void evaluate', args=['const PointType &x', 'RangeType &value'], targs=['class PointType'],implemented=eval)
