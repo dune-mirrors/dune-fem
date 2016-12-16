@@ -8,6 +8,8 @@
 #include <utility>
 #include <vector>
 
+#include <dune/common/hybridutilities.hh>
+
 #include <dune/grid/common/rangegenerators.hh>
 
 #include <dune/fem/function/localfunction/temporary.hh>
@@ -53,6 +55,7 @@ namespace Dune
         typedef QuadraturePointWrapper< SurfaceQuadratureType > SurfaceQuadraturePointType;
 
         typedef typename Integrands::ValueType ValueType;
+        typedef std::make_index_sequence< std::tuple_size< ValueType >::value > ValueIndices;
 
         template< std::size_t... i >
         static std::tuple< std::vector< std::tuple_element_t< i, ValueType > >... > makeValueVector ( std::size_t maxNumLocalDofs, std::index_sequence< i... > )
@@ -62,7 +65,7 @@ namespace Dune
 
         static auto makeValueVector ( std::size_t maxNumLocalDofs )
         {
-          return makeValueVector( maxNumLocalDofs, std::make_index_sequence< std::tuple_size< ValueType >::value >() );
+          return makeValueVector( maxNumLocalDofs, ValueIndices() );
         }
 
         typedef decltype( makeValueVector( 0u ) ) ValueVectorType;
@@ -89,7 +92,7 @@ namespace Dune
         static ValueType value ( const LocalFunction &u, const Point &x )
         {
           ValueType phi;
-          Hybrid::forEach( std::make_index_sequence< std::tuple_size< ValueType >::value >(), [ &u, &x, &phi ] ( auto i ) { value( u, x, std::get< i >( phi ) ); } );
+          Hybrid::forEach( ValueIndices(), [ &u, &x, &phi ] ( auto i ) { value( u, x, std::get< i >( phi ) ); } );
           return phi;
         }
 
@@ -114,7 +117,7 @@ namespace Dune
         template< class Basis, class Point >
         static void values ( const Basis &basis, const Point &x, ValueVectorType &phi )
         {
-          Hybrid::forEach( std::make_index_sequence< std::tuple_size< ValueType >::value >(), [ &basis, &x, &phi ] ( auto i ) { values( basis, x, std::get< i >( phi ) ); } );
+          Hybrid::forEach( ValueIndices(), [ &basis, &x, &phi ] ( auto i ) { values( basis, x, std::get< i >( phi ) ); } );
         }
 
       public:
@@ -133,8 +136,7 @@ namespace Dune
 
             ValueType integrand = integrands_.interior( qp, value( u, qp ) );
 
-            std::get< 0 >( integrand ) *= weight;
-            std::get< 1 >( integrand ) *= weight;
+            Hybrid::forEach( ValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand ) *= weight; } );
             w.axpy( qp, std::get< 0 >( integrand ), std::get< 1 >( integrand ) );
           }
         }
@@ -177,8 +179,7 @@ namespace Dune
 
             ValueType integrand = integrands_.boundary( qp, value( u, qp ) );
 
-            std::get< 0 >( integrand ) *= weight;
-            std::get< 1 >( integrand ) *= weight;
+            Hybrid::forEach( ValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand ) *= weight; } );
             w.axpy( qp, std::get< 0 >( integrand ), std::get< 1 >( integrand ) );
           }
         }
@@ -222,8 +223,7 @@ namespace Dune
             const auto qpOut = quadrature.outside()[ qp ];
             std::pair< ValueType, ValueType > integrand = integrands_.skeleton( qpIn, value( uIn, qpIn ), qpOut, value( uOut, qpOut ) );
 
-            std::get< 0 >( integrand.first ) *= weight;
-            std::get< 1 >( integrand.first ) *= weight;
+            Hybrid::forEach( ValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand.first ) *= weight; } );
             wIn.axpy( qpIn, std::get< 0 >( integrand.first ), std::get< 1 >( integrand.first ) );
           }
         }
@@ -241,12 +241,10 @@ namespace Dune
             const auto qpOut = quadrature.outside()[ qp ];
             std::pair< ValueType, ValueType > integrand = integrands_.skeleton( qpIn, value( uIn, qpIn ), qpOut, value( uOut, qpOut ) );
 
-            std::get< 0 >( integrand.first ) *= weight;
-            std::get< 1 >( integrand.first ) *= weight;
+            Hybrid::forEach( ValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand.first ) *= weight; } );
             wIn.axpy( qpIn, std::get< 0 >( integrand.first ), std::get< 1 >( integrand.first ) );
 
-            std::get< 0 >( integrand.second ) *= weight;
-            std::get< 1 >( integrand.second ) *= weight;
+            Hybrid::forEach( ValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand.second ) *= weight; } );
             wOut.axpy( qpOut, std::get< 0 >( integrand.second ), std::get< 1 >( integrand.second ) );
           }
         }
