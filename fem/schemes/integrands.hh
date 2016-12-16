@@ -28,7 +28,10 @@ namespace Dune
       {
 
         template< class Integrands >
-        using ValueType = typename std::decay_t< decltype( std::ref( std::declval< const Integrands & >() ).get() ) >::ValueType;
+        using DomainValueType = typename std::decay_t< decltype( std::ref( std::declval< const Integrands & >() ).get() ) >::DomainValueType;
+
+        template< class Integrands >
+        using RangeValueType = typename std::decay_t< decltype( std::ref( std::declval< const Integrands & >() ).get() ) >::RangeValueType;
 
         template< class Integrands >
         using GridPartType = typename std::decay_t< decltype( std::ref( std::declval< const Integrands & >() ).get() ) >::GridPartType;
@@ -56,7 +59,7 @@ namespace Dune
 
 
         template< class Integrands >
-        static std::true_type interior ( const Integrands &, decltype( std::declval< const Integrands & >().interior( std::declval< const InteriorQuadraturePointType< Integrands > & >(), std::declval< const ValueType< Integrands > & >() ) ) * = nullptr );
+        static std::true_type interior ( const Integrands &, decltype( std::declval< const Integrands & >().interior( std::declval< const InteriorQuadraturePointType< Integrands > & >(), std::declval< const DomainValueType< Integrands > & >() ) ) * = nullptr );
 
         static std::false_type interior ( ... );
 
@@ -67,7 +70,7 @@ namespace Dune
 
 
         template< class Integrands >
-        static std::true_type boundary ( const Integrands &, decltype( std::declval< const Integrands & >().boundary( std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const ValueType< Integrands > & >() ) ) * = nullptr );
+        static std::true_type boundary ( const Integrands &, decltype( std::declval< const Integrands & >().boundary( std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const DomainValueType< Integrands > & >() ) ) * = nullptr );
 
         static std::false_type boundary ( ... );
 
@@ -78,7 +81,7 @@ namespace Dune
 
 
         template< class Integrands >
-        static std::true_type skeleton ( const Integrands &, decltype( std::declval< const Integrands & >().skeleton( std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const ValueType< Integrands > & >(), std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const ValueType< Integrands > & >() ) ) * = nullptr );
+        static std::true_type skeleton ( const Integrands &, decltype( std::declval< const Integrands & >().skeleton( std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const DomainValueType< Integrands > & >(), std::declval< const SurfaceQuadraturePointType< Integrands > & >(), std::declval< const DomainValueType< Integrands > & >() ) ) * = nullptr );
 
         static std::false_type skeleton ( ... );
 
@@ -94,7 +97,8 @@ namespace Dune
     template< class Integrands >
     struct IntegrandsTraits
     {
-      typedef Impl::IntegrandsTraits::ValueType< Integrands > ValueType;
+      typedef Impl::IntegrandsTraits::DomainValueType< Integrands > DomainValueType;
+      typedef Impl::IntegrandsTraits::RangeValueType< Integrands > RangeValueType;
       typedef Impl::IntegrandsTraits::GridPartType< Integrands > GridPartType;
 
       typedef Impl::IntegrandsTraits::EntityType< Integrands > EntityType;
@@ -124,7 +128,8 @@ namespace Dune
     template< class Integrands >
     struct FullIntegrands
     {
-      typedef typename IntegrandsTraits< Integrands >::ValueType ValueType;
+      typedef typename IntegrandsTraits< Integrands >::DomainValueType DomainValueType;
+      typedef typename IntegrandsTraits< Integrands >::RangeValueType RangeValueType;
       typedef typename IntegrandsTraits< Integrands >::GridPartType GridPartType;
 
       typedef typename IntegrandsTraits< Integrands >::EntityType EntityType;
@@ -144,27 +149,27 @@ namespace Dune
       }
 
       template< class T, class Point, std::enable_if_t< IntegrandsTraits< T >::interior, int > = 0 >
-      static ValueType interior ( const T &integrands, const Point &x, const ValueType &u )
+      static RangeValueType interior ( const T &integrands, const Point &x, const DomainValueType &u )
       {
         return integrands.interior( x, u );
       }
 
       template< class T, class Point, std::enable_if_t< !IntegrandsTraits< T >::interior, int > = 0 >
-      static ValueType interior ( const T &integrands, const Point &x, const ValueType &u )
+      static RangeValueType interior ( const T &integrands, const Point &x, const DomainValueType &u )
       {
-        return ValueType();
+        return RangeValueType();
       }
 
       template< class T, class Point, std::enable_if_t< IntegrandsTraits< T >::interior, int > = 0 >
-      static auto linearizedInterior ( const T &integrands, const Point &x, const ValueType &u )
+      static auto linearizedInterior ( const T &integrands, const Point &x, const DomainValueType &u )
       {
         return integrands.linearizedInterior( x, u );
       }
 
       template< class T, class Point, std::enable_if_t< !IntegrandsTraits< T >::interior, int > = 0 >
-      static auto linearizedInterior ( const T &integrands, const Point &x, const ValueType &u )
+      static auto linearizedInterior ( const T &integrands, const Point &x, const DomainValueType &u )
       {
-        return [] ( const ValueType & ) { return ValueType(); };
+        return [] ( const DomainValueType & ) { return RangeValueType(); };
       }
 
       template< class T, std::enable_if_t< IntegrandsTraits< T >::hasBoundary, int > = 0 >
@@ -180,27 +185,27 @@ namespace Dune
       }
 
       template< class T, class Point, std::enable_if_t< IntegrandsTraits< T >::boundary, int > = 0 >
-      static ValueType boundary ( const T &integrands, const Point &x, const ValueType &u )
+      static RangeValueType boundary ( const T &integrands, const Point &x, const DomainValueType &u )
       {
         return integrands.boundary( x, u );
       }
 
       template< class T, class Point, std::enable_if_t< !IntegrandsTraits< T >::boundary, int > = 0 >
-      static ValueType boundary ( const T &integrands, const Point &x, const ValueType &u )
+      static RangeValueType boundary ( const T &integrands, const Point &x, const DomainValueType &u )
       {
-        return ValueType();
+        return RangeValueType();
       }
 
       template< class T, class Point, std::enable_if_t< IntegrandsTraits< T >::boundary, int > = 0 >
-      static auto linearizedBoundary ( const T &integrands, const Point &x, const ValueType &u )
+      static auto linearizedBoundary ( const T &integrands, const Point &x, const DomainValueType &u )
       {
         return integrands.linearizedBoundary( x, u );
       }
 
       template< class T, class Point, std::enable_if_t< !IntegrandsTraits< T >::boundary, int > = 0 >
-      static auto linearizedBoundary ( const T &integrands, const Point &x, const ValueType &u )
+      static auto linearizedBoundary ( const T &integrands, const Point &x, const DomainValueType &u )
       {
-        return [] ( const ValueType & ) { return ValueType(); };
+        return [] ( const DomainValueType & ) { return RangeValueType(); };
       }
 
       template< class T, std::enable_if_t< IntegrandsTraits< T >::hasSkeleton, int > = 0 >
@@ -216,27 +221,27 @@ namespace Dune
       }
 
       template< class T, class Point, std::enable_if_t< IntegrandsTraits< T >::skeleton, int > = 0 >
-      static std::pair< ValueType, ValueType > skeleton ( const T &integrands, const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut )
+      static std::pair< RangeValueType, RangeValueType > skeleton ( const T &integrands, const Point &xIn, const DomainValueType &uIn, const Point &xOut, const DomainValueType &uOut )
       {
         return integrands.skeleton( xIn, uIn, xOut, uOut );
       }
 
       template< class T, class Point, std::enable_if_t< !IntegrandsTraits< T >::skeleton, int > = 0 >
-      static std::pair< ValueType, ValueType > skeleton ( const T &integrands, const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut )
+      static std::pair< RangeValueType, RangeValueType > skeleton ( const T &integrands, const Point &xIn, const DomainValueType &uIn, const Point &xOut, const DomainValueType &uOut )
       {
-        return std::make_pair( ValueType(), ValueType() );
+        return std::make_pair( RangeValueType(), RangeValueType() );
       }
 
       template< class T, class Point, std::enable_if_t< IntegrandsTraits< T >::skeleton, int > = 0 >
-      static auto linearizedSkeleton ( const T &integrands, const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut )
+      static auto linearizedSkeleton ( const T &integrands, const Point &xIn, const DomainValueType &uIn, const Point &xOut, const DomainValueType &uOut )
       {
         return integrands.linearizedSkeleton( xIn, uIn, xOut, uOut );
       }
 
       template< class T, class Point, std::enable_if_t< !IntegrandsTraits< T >::skeleton, int > = 0 >
-      static auto linearizedSkeleton ( const T &integrands, const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut )
+      static auto linearizedSkeleton ( const T &integrands, const Point &xIn, const DomainValueType &uIn, const Point &xOut, const DomainValueType &uOut )
       {
-        auto zero = [] ( const ValueType & ) { return std::make_pair( ValueType(), ValueType() ); };
+        auto zero = [] ( const DomainValueType & ) { return std::make_pair( RangeValueType(), RangeValueType() ); };
         return std::make_pair( zero, zero );
       }
 
@@ -252,13 +257,13 @@ namespace Dune
       bool hasInterior () const { return hasInterior( integrands() ); }
 
       template< class Point >
-      ValueType interior ( const Point &x, const ValueType &u ) const
+      RangeValueType interior ( const Point &x, const DomainValueType &u ) const
       {
         return interior( integrands(), x, u );
       }
 
       template< class Point >
-      auto linearizedInterior ( const Point &x, const ValueType &u ) const
+      auto linearizedInterior ( const Point &x, const DomainValueType &u ) const
       {
         return linearizedInterior( integrands(), x, u );
       }
@@ -266,13 +271,13 @@ namespace Dune
       bool hasBoundary () const { return hasBoundary( integrands() ); }
 
       template< class Point >
-      ValueType boundary ( const Point &x, const ValueType &u ) const
+      RangeValueType boundary ( const Point &x, const DomainValueType &u ) const
       {
         return boundary( integrands(), x, u );
       }
 
       template< class Point >
-      auto linearizedBoundary ( const Point &x, const ValueType &u ) const
+      auto linearizedBoundary ( const Point &x, const DomainValueType &u ) const
       {
         return linearizedBoundary( integrands(), x, u );
       }
@@ -280,13 +285,13 @@ namespace Dune
       bool hasSkeleton () const { return hasSkeleton( integrands() ); }
 
       template< class Point >
-      std::pair< ValueType, ValueType > skeleton ( const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut ) const
+      std::pair< RangeValueType, RangeValueType > skeleton ( const Point &xIn, const DomainValueType &uIn, const Point &xOut, const DomainValueType &uOut ) const
       {
         return skeleton( integrands(), xIn, uIn, xOut, uOut );
       }
 
       template< class Point >
-      auto linearizedSkeleton ( const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut ) const
+      auto linearizedSkeleton ( const Point &xIn, const DomainValueType &uIn, const Point &xOut, const DomainValueType &uOut ) const
       {
         return linearizedSkeleton( integrands(), xIn, uIn, xOut, uOut );
       }
@@ -303,14 +308,15 @@ namespace Dune
     // VirtualizedIntegrands
     // ---------------------
 
-    template< class GridPart, class Value >
+    template< class GridPart, class DomainValue, class RangeValue = DomainValue >
     class VirtualizedIntegrands
     {
-      typedef VirtualizedIntegrands< GridPart, Value > This;
+      typedef VirtualizedIntegrands< GridPart, DomainValue, RangeValue > This;
 
     public:
       typedef GridPart GridPartType;
-      typedef Value ValueType;
+      typedef DomainValue DomainValueType;
+      typedef RangeValue RangeValueType;
 
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
       typedef typename GridPartType::IntersectionType IntersectionType;
@@ -330,7 +336,7 @@ namespace Dune
       }
 
       template< class R >
-      using Linearization = std::function< R( const ValueType & ) >;
+      using Linearization = std::function< R( const DomainValueType & ) >;
 
       template< class R >
       using LinearizationPair = std::pair< Linearization< std::pair< R, R > >, Linearization< std::pair< R, R > > >;
@@ -344,22 +350,22 @@ namespace Dune
         virtual bool init ( const IntersectionType &intersection ) = 0;
 
         virtual bool hasInterior () const = 0;
-        virtual ValueType interior ( const InteriorCachingPointType &x, const ValueType &u ) const = 0;
-        virtual ValueType interior ( const InteriorElementPointType &x, const ValueType &u ) const = 0;
-        virtual Linearization< ValueType > linearizedInterior ( const InteriorCachingPointType &x, const ValueType &u ) const = 0;
-        virtual Linearization< ValueType > linearizedInterior ( const InteriorElementPointType &x, const ValueType &u ) const = 0;
+        virtual RangeValueType interior ( const InteriorCachingPointType &x, const DomainValueType &u ) const = 0;
+        virtual RangeValueType interior ( const InteriorElementPointType &x, const DomainValueType &u ) const = 0;
+        virtual Linearization< RangeValueType > linearizedInterior ( const InteriorCachingPointType &x, const DomainValueType &u ) const = 0;
+        virtual Linearization< RangeValueType > linearizedInterior ( const InteriorElementPointType &x, const DomainValueType &u ) const = 0;
 
         virtual bool hasBoundary () const = 0;
-        virtual ValueType boundary ( const SurfaceCachingPointType &x, const ValueType &u ) const = 0;
-        virtual ValueType boundary ( const SurfaceElementPointType &x, const ValueType &u ) const = 0;
-        virtual Linearization< ValueType > linearizedBoundary ( const SurfaceCachingPointType &x, const ValueType &u ) const = 0;
-        virtual Linearization< ValueType > linearizedBoundary ( const SurfaceElementPointType &x, const ValueType &u ) const = 0;
+        virtual RangeValueType boundary ( const SurfaceCachingPointType &x, const DomainValueType &u ) const = 0;
+        virtual RangeValueType boundary ( const SurfaceElementPointType &x, const DomainValueType &u ) const = 0;
+        virtual Linearization< RangeValueType > linearizedBoundary ( const SurfaceCachingPointType &x, const DomainValueType &u ) const = 0;
+        virtual Linearization< RangeValueType > linearizedBoundary ( const SurfaceElementPointType &x, const DomainValueType &u ) const = 0;
 
         virtual bool hasSkeleton () const = 0;
-        virtual std::pair< ValueType, ValueType > skeleton ( const SurfaceCachingPointType &xIn, const ValueType &uIn, const SurfaceCachingPointType &xOut, const ValueType &uOut ) const = 0;
-        virtual std::pair< ValueType, ValueType > skeleton ( const SurfaceElementPointType &xIn, const ValueType &uIn, const SurfaceElementPointType &xOut, const ValueType &uOut ) const = 0;
-        virtual LinearizationPair< ValueType > linearizedSkeleton ( const SurfaceCachingPointType &xIn, const ValueType &uIn, const SurfaceCachingPointType &xOut, const ValueType &uOut ) const = 0;
-        virtual LinearizationPair< ValueType > linearizedSkeleton ( const SurfaceElementPointType &xIn, const ValueType &uIn, const SurfaceElementPointType &xOut, const ValueType &uOut ) const = 0;
+        virtual std::pair< RangeValueType, RangeValueType > skeleton ( const SurfaceCachingPointType &xIn, const DomainValueType &uIn, const SurfaceCachingPointType &xOut, const DomainValueType &uOut ) const = 0;
+        virtual std::pair< RangeValueType, RangeValueType > skeleton ( const SurfaceElementPointType &xIn, const DomainValueType &uIn, const SurfaceElementPointType &xOut, const DomainValueType &uOut ) const = 0;
+        virtual LinearizationPair< RangeValueType > linearizedSkeleton ( const SurfaceCachingPointType &xIn, const DomainValueType &uIn, const SurfaceCachingPointType &xOut, const DomainValueType &uOut ) const = 0;
+        virtual LinearizationPair< RangeValueType > linearizedSkeleton ( const SurfaceElementPointType &xIn, const DomainValueType &uIn, const SurfaceElementPointType &xOut, const DomainValueType &uOut ) const = 0;
       };
 
       template< class Impl >
@@ -373,22 +379,22 @@ namespace Dune
         virtual bool init ( const IntersectionType &intersection ) override { return impl().init( intersection ); }
 
         virtual bool hasInterior () const override { return impl().hasInterior(); }
-        virtual ValueType interior ( const InteriorCachingPointType &x, const ValueType &u ) const override { return impl().interior( asQP( x ), u ); }
-        virtual ValueType interior ( const InteriorElementPointType &x, const ValueType &u ) const override { return impl().interior( asQP( x ), u ); }
-        virtual Linearization< ValueType > linearizedInterior ( const InteriorCachingPointType &x, const ValueType &u ) const override { return impl().linearizedInterior( asQP( x ), u ); }
-        virtual Linearization< ValueType > linearizedInterior ( const InteriorElementPointType &x, const ValueType &u ) const override { return impl().linearizedInterior( asQP( x ), u ); }
+        virtual RangeValueType interior ( const InteriorCachingPointType &x, const DomainValueType &u ) const override { return impl().interior( asQP( x ), u ); }
+        virtual RangeValueType interior ( const InteriorElementPointType &x, const DomainValueType &u ) const override { return impl().interior( asQP( x ), u ); }
+        virtual Linearization< RangeValueType > linearizedInterior ( const InteriorCachingPointType &x, const DomainValueType &u ) const override { return impl().linearizedInterior( asQP( x ), u ); }
+        virtual Linearization< RangeValueType > linearizedInterior ( const InteriorElementPointType &x, const DomainValueType &u ) const override { return impl().linearizedInterior( asQP( x ), u ); }
 
         virtual bool hasBoundary () const override { return impl().hasBoundary(); }
-        virtual ValueType boundary ( const SurfaceCachingPointType &x, const ValueType &u ) const override { return impl().boundary( asQP( x ), u ); }
-        virtual ValueType boundary ( const SurfaceElementPointType &x, const ValueType &u ) const override { return impl().boundary( asQP( x ), u ); }
-        virtual Linearization< ValueType > linearizedBoundary ( const SurfaceCachingPointType &x, const ValueType &u ) const override { return impl().linearizedBoundary( asQP( x ), u ); }
-        virtual Linearization< ValueType > linearizedBoundary ( const SurfaceElementPointType &x, const ValueType &u ) const override { return impl().linearizedBoundary( asQP( x ), u ); }
+        virtual RangeValueType boundary ( const SurfaceCachingPointType &x, const DomainValueType &u ) const override { return impl().boundary( asQP( x ), u ); }
+        virtual RangeValueType boundary ( const SurfaceElementPointType &x, const DomainValueType &u ) const override { return impl().boundary( asQP( x ), u ); }
+        virtual Linearization< RangeValueType > linearizedBoundary ( const SurfaceCachingPointType &x, const DomainValueType &u ) const override { return impl().linearizedBoundary( asQP( x ), u ); }
+        virtual Linearization< RangeValueType > linearizedBoundary ( const SurfaceElementPointType &x, const DomainValueType &u ) const override { return impl().linearizedBoundary( asQP( x ), u ); }
 
         virtual bool hasSkeleton () const override { return impl().hasSkeleton(); }
-        virtual std::pair< ValueType, ValueType > skeleton ( const SurfaceCachingPointType &xIn, const ValueType &uIn, const SurfaceCachingPointType &xOut, const ValueType &uOut ) const override { return impl().skeleton( asQP( xIn ), uIn, asQP( xOut ), uOut ); }
-        virtual std::pair< ValueType, ValueType > skeleton ( const SurfaceElementPointType &xIn, const ValueType &uIn, const SurfaceElementPointType &xOut, const ValueType &uOut ) const override { return impl().skeleton( asQP( xIn ), uIn, asQP( xOut ), uOut ); }
-        virtual LinearizationPair< ValueType > linearizedSkeleton ( const SurfaceCachingPointType &xIn, const ValueType &uIn, const SurfaceCachingPointType &xOut, const ValueType &uOut ) const override { return impl().linearizedSkeleton( asQP( xIn ), uIn, asQP( xOut ), uOut ); }
-        virtual LinearizationPair< ValueType > linearizedSkeleton ( const SurfaceElementPointType &xIn, const ValueType &uIn, const SurfaceElementPointType &xOut, const ValueType &uOut ) const override { return impl().linearizedSkeleton( asQP( xIn ), uIn, asQP( xOut ), uOut ); }
+        virtual std::pair< RangeValueType, RangeValueType > skeleton ( const SurfaceCachingPointType &xIn, const DomainValueType &uIn, const SurfaceCachingPointType &xOut, const DomainValueType &uOut ) const override { return impl().skeleton( asQP( xIn ), uIn, asQP( xOut ), uOut ); }
+        virtual std::pair< RangeValueType, RangeValueType > skeleton ( const SurfaceElementPointType &xIn, const DomainValueType &uIn, const SurfaceElementPointType &xOut, const DomainValueType &uOut ) const override { return impl().skeleton( asQP( xIn ), uIn, asQP( xOut ), uOut ); }
+        virtual LinearizationPair< RangeValueType > linearizedSkeleton ( const SurfaceCachingPointType &xIn, const DomainValueType &uIn, const SurfaceCachingPointType &xOut, const DomainValueType &uOut ) const override { return impl().linearizedSkeleton( asQP( xIn ), uIn, asQP( xOut ), uOut ); }
+        virtual LinearizationPair< RangeValueType > linearizedSkeleton ( const SurfaceElementPointType &xIn, const DomainValueType &uIn, const SurfaceElementPointType &xOut, const DomainValueType &uOut ) const override { return impl().linearizedSkeleton( asQP( xIn ), uIn, asQP( xOut ), uOut ); }
 
       private:
         const auto &impl () const { return std::cref( impl_ ).get(); }
@@ -422,25 +428,25 @@ namespace Dune
       bool hasInterior () const { return impl_->hasInterior(); }
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
-      ValueType interior ( const Fem::QuadraturePointWrapper< Quadrature > &x, const ValueType &u ) const
+      RangeValueType interior ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
         return impl_->interior( InteriorCachingPointType( x ), u );
       }
 
       template< class Quadrature, std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
-      ValueType interior ( const Fem::QuadraturePointWrapper< Quadrature > &x, const ValueType &u ) const
+      RangeValueType interior ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
         return impl_->interior( InteriorElementPointType( x ), u );
       }
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
-      auto linearizedInterior ( const Fem::QuadraturePointWrapper< Quadrature > &x, const ValueType &u ) const
+      auto linearizedInterior ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
         return impl_->linearizedInterior( InteriorCachingPointType( x ), u );
       }
 
       template< class Quadrature, std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
-      auto linearizedInterior ( const Fem::QuadraturePointWrapper< Quadrature > &x, const ValueType &u ) const
+      auto linearizedInterior ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
         return impl_->linearizedInterior( InteriorElementPointType( x ), u );
       }
@@ -448,25 +454,25 @@ namespace Dune
       bool hasBoundary () const { return impl_->hasBoundary(); }
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
-      ValueType boundary ( const Fem::QuadraturePointWrapper< Quadrature > &x, const ValueType &u ) const
+      RangeValueType boundary ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
         return impl_->boundary( SurfaceCachingPointType( x ), u );
       }
 
       template< class Quadrature, std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
-      ValueType boundary ( const Fem::QuadraturePointWrapper< Quadrature > &x, const ValueType &u ) const
+      RangeValueType boundary ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
         return impl_->boundary( SurfaceElementPointType( x ), u );
       }
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
-      auto linearizedBoundary ( const Fem::QuadraturePointWrapper< Quadrature > &x, const ValueType &u ) const
+      auto linearizedBoundary ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
         return impl_->linearizedBoundary( SurfaceCachingPointType( x ), u );
       }
 
       template< class Quadrature, std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
-      auto linearizedBoundary ( const Fem::QuadraturePointWrapper< Quadrature > &x, const ValueType &u ) const
+      auto linearizedBoundary ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
         return impl_->linearizedBoundary( SurfaceElementPointType( x ), u );
       }
@@ -474,25 +480,25 @@ namespace Dune
       bool hasSkeleton () const { return impl_->hasSkeleton(); }
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
-      std::pair< ValueType, ValueType > skeleton ( const Fem::QuadraturePointWrapper< Quadrature > &xIn, const ValueType &uIn, const Fem::QuadraturePointWrapper< Quadrature > &xOut, const ValueType &uOut ) const
+      std::pair< RangeValueType, RangeValueType > skeleton ( const Fem::QuadraturePointWrapper< Quadrature > &xIn, const DomainValueType &uIn, const Fem::QuadraturePointWrapper< Quadrature > &xOut, const DomainValueType &uOut ) const
       {
         return impl_->skeleton( SurfaceCachingPointType( xIn ), uIn, SurfaceCachingPointType( xOut ), uOut );
       }
 
       template< class Quadrature, std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
-      std::pair< ValueType, ValueType > skeleton ( const Fem::QuadraturePointWrapper< Quadrature > &xIn, const ValueType &uIn, const Fem::QuadraturePointWrapper< Quadrature > &xOut, const ValueType &uOut ) const
+      std::pair< RangeValueType, RangeValueType > skeleton ( const Fem::QuadraturePointWrapper< Quadrature > &xIn, const DomainValueType &uIn, const Fem::QuadraturePointWrapper< Quadrature > &xOut, const DomainValueType &uOut ) const
       {
         return impl_->skeleton( SurfaceElementPointType( xIn ), uIn, SurfaceElementPointType( xOut ), uOut );
       }
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
-      auto linearizedSkeleton ( const Fem::QuadraturePointWrapper< Quadrature > &xIn, const ValueType &uIn, const Fem::QuadraturePointWrapper< Quadrature > &xOut, const ValueType &uOut ) const
+      auto linearizedSkeleton ( const Fem::QuadraturePointWrapper< Quadrature > &xIn, const DomainValueType &uIn, const Fem::QuadraturePointWrapper< Quadrature > &xOut, const DomainValueType &uOut ) const
       {
         return impl_->linearizedSkeleton( SurfaceCachingPointType( xIn ), uIn, SurfaceCachingPointType( xOut ), uOut );
       }
 
       template< class Quadrature, std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
-      auto linearizedSkeleton ( const Fem::QuadraturePointWrapper< Quadrature > &xIn, const ValueType &uIn, const Fem::QuadraturePointWrapper< Quadrature > &xOut, const ValueType &uOut ) const
+      auto linearizedSkeleton ( const Fem::QuadraturePointWrapper< Quadrature > &xIn, const DomainValueType &uIn, const Fem::QuadraturePointWrapper< Quadrature > &xOut, const DomainValueType &uOut ) const
       {
         return impl_->linearizedSkeleton( SurfaceElementPointType( xIn ), uIn, SurfaceElementPointType( xOut ), uOut );
       }
@@ -518,7 +524,8 @@ namespace Dune
       typedef typename Model::RangeType RangeType;
       typedef typename Model::JacobianRangeType JacobianRangeType;
 
-      typedef std::tuple< RangeType, JacobianRangeType > ValueType;
+      typedef std::tuple< RangeType, JacobianRangeType > DomainValueType;
+      typedef std::tuple< RangeType, JacobianRangeType > RangeValueType;
 
       explicit DiffusionModelIntegrands ( const Model &model ) : model_( &model ) {}
 
@@ -530,7 +537,7 @@ namespace Dune
       }
 
       template< class Point >
-      ValueType interior ( const Point &x, const ValueType &u ) const
+      RangeValueType interior ( const Point &x, const DomainValueType &u ) const
       {
         RangeType source( 0 );
         model().source( x, std::get< 0 >( u ), std::get< 1 >( u ), source );
@@ -540,9 +547,9 @@ namespace Dune
       }
 
       template< class Point >
-      auto linearizedInterior ( const Point &x, const ValueType &u ) const
+      auto linearizedInterior ( const Point &x, const DomainValueType &u ) const
       {
-        return [ this, x, u ] ( const ValueType &phi ) {
+        return [ this, x, u ] ( const DomainValueType &phi ) {
             RangeType source( 0 );
             model().linSource( std::get< 0 >( u ), std::get< 1 >( u ), x, std::get< 0 >( phi ), std::get< 1 >( phi ), source );
             JacobianRangeType dFlux( 0 );
@@ -552,7 +559,7 @@ namespace Dune
       }
 
       template< class Point >
-      ValueType boundary ( const Point &x, const ValueType &u ) const
+      RangeValueType boundary ( const Point &x, const DomainValueType &u ) const
       {
         RangeType alpha( 0 );
         model().alpha( x, std::get< 0 >( u ), alpha );
@@ -560,9 +567,9 @@ namespace Dune
       }
 
       template< class Point >
-      auto linearizedBoundary ( const Point &x, const ValueType &u ) const
+      auto linearizedBoundary ( const Point &x, const DomainValueType &u ) const
       {
-        return [ this, x, u ] ( const ValueType &phi ) {
+        return [ this, x, u ] ( const DomainValueType &phi ) {
             RangeType alpha( 0 );
             model().linAlpha( std::get< 0 >( u ), x, std::get< 0 >( phi ), alpha );
             return std::make_tuple( alpha, 0 );
@@ -594,7 +601,8 @@ namespace Dune
 
       typedef typename FieldTraits< RangeType >::field_type RangeFieldType;
 
-      typedef std::tuple< RangeType, JacobianRangeType > ValueType;
+      typedef std::tuple< RangeType, JacobianRangeType > DomainValueType;
+      typedef std::tuple< RangeType, JacobianRangeType > RangeValueType;
 
       DGDiffusionModelIntegrands ( const Model &model, RangeFieldType penalty )
         : model_( &model ), penalty_( penalty )
@@ -625,47 +633,47 @@ namespace Dune
       }
 
       template< class Point >
-      ValueType interior ( const Point &x, const ValueType &u ) const
+      RangeValueType interior ( const Point &x, const DomainValueType &u ) const
       {
         RangeType source( 0 );
         model().source( x, std::get< 0 >( u ), std::get< 1 >( u ), source );
         JacobianRangeType dFlux( 0 );
         model().diffusiveFlux( x, std::get< 0 >( u ), std::get< 1 >( u ), dFlux );
-        return ValueType( source, dFlux );
+        return RangeValueType( source, dFlux );
       }
 
       template< class Point >
-      auto linearizedInterior ( const Point &x, const ValueType &u ) const
+      auto linearizedInterior ( const Point &x, const DomainValueType &u ) const
       {
-        return [ this, x, u ] ( const ValueType &phi ) {
+        return [ this, x, u ] ( const DomainValueType &phi ) {
             RangeType source( 0 );
             model().linSource( std::get< 0 >( u ), std::get< 1 >( u ), x, std::get< 0 >( phi ), std::get< 1 >( phi ), source );
             JacobianRangeType dFlux( 0 );
             model().linDiffusiveFlux( std::get< 0 >( u ), std::get< 1 >( u ), x, std::get< 0 >( phi ), std::get< 1 >( phi ), dFlux );
-            return ValueType( source, dFlux );
+            return RangeValueType( source, dFlux );
           };
       }
 
       template< class Point >
-      ValueType boundary ( const Point &x, const ValueType &u ) const
+      RangeValueType boundary ( const Point &x, const DomainValueType &u ) const
       {
         RangeType alpha( 0 );
         model().alpha( x, std::get< 0 >( u ), alpha );
-        return ValueType( alpha, 0 );
+        return RangeValueType( alpha, 0 );
       }
 
       template< class Point >
-      auto linearizedBoundary ( const Point &x, const ValueType &u ) const
+      auto linearizedBoundary ( const Point &x, const DomainValueType &u ) const
       {
-        return [ this, x, u ] ( const ValueType &phi ) {
+        return [ this, x, u ] ( const DomainValueType &phi ) {
             RangeType alpha( 0 );
             model().linAlpha( std::get< 0 >( u ), x, std::get< 0 >( phi ), alpha );
-            return ValueType( alpha, 0 );
+            return RangeValueType( alpha, 0 );
           };
       }
 
       template< class Point >
-      std::pair< ValueType, ValueType > skeleton ( const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut ) const
+      std::pair< RangeValueType, RangeValueType > skeleton ( const Point &xIn, const DomainValueType &uIn, const Point &xOut, const DomainValueType &uOut ) const
       {
         const EntityType inside = intersection().inside();
         const EntityType outside = intersection().outside();
@@ -673,7 +681,7 @@ namespace Dune
         const RangeFieldType half = RangeFieldType( 1 ) / RangeFieldType( 2 );
         const auto normal = intersection().unitOuterNormal( xIn.localPosition() );
 
-        ValueType uJump( 0, 0 );
+        DomainValueType uJump( 0, 0 );
         std::get< 0 >( uJump ) = std::get< 0 >( uOut ) - std::get< 0 >( uIn );
         for( int i = 0; i < RangeType::dimension; ++i )
           std::get< 1 >( uJump )[ i ].axpy( std::get< 0 >( uJump )[ i ], normal );
@@ -702,26 +710,26 @@ namespace Dune
         dFluxPrimeIn *= -half;
         dFluxPrimeOut *= -half;
 
-        return std::make_pair( ValueType( -int0, dFluxPrimeIn ), ValueType( int0, dFluxPrimeOut ) );
+        return std::make_pair( RangeValueType( -int0, dFluxPrimeIn ), RangeValueType( int0, dFluxPrimeOut ) );
       }
 
       template< class Point >
-      auto linearizedSkeleton ( const Point &xIn, const ValueType &uIn, const Point &xOut, const ValueType &uOut ) const
+      auto linearizedSkeleton ( const Point &xIn, const DomainValueType &uIn, const Point &xOut, const DomainValueType &uOut ) const
       {
         const auto normal = intersection().unitOuterNormal( xIn.localPosition() );
 
-        ValueType uJump( 0, 0 );
+        DomainValueType uJump( 0, 0 );
         std::get< 0 >( uJump ) = std::get< 0 >( uOut ) - std::get< 0 >( uIn );
         for( int i = 0; i < RangeType::dimension; ++i )
           std::get< 1 >( uJump )[ i ].axpy( std::get< 0 >( uJump )[ i ], normal );
 
-        auto intIn = [ this, xIn, uIn, xOut, uOut, normal, uJump ] ( const ValueType &phiIn ) {
+        auto intIn = [ this, xIn, uIn, xOut, uOut, normal, uJump ] ( const DomainValueType &phiIn ) {
           const EntityType inside = intersection().inside();
           const EntityType outside = intersection().outside();
 
           const RangeFieldType half = RangeFieldType( 1 ) / RangeFieldType( 2 );
 
-          ValueType phiJump( 0, 0 );
+          DomainValueType phiJump( 0, 0 );
           std::get< 0 >( phiJump ) -= std::get< 0 >( phiIn );
           for( int i = 0; i < RangeType::dimension; ++i )
             std::get< 1 >( phiJump )[ i ].axpy( std::get< 0 >( phiJump )[ i ], normal );
@@ -745,16 +753,16 @@ namespace Dune
           dFluxPrimeIn *= -half;
           dFluxPrimeOut *= -half;
 
-          return std::make_pair( ValueType( -int0, dFluxPrimeIn ), ValueType( int0, dFluxPrimeOut ) );
+          return std::make_pair( RangeValueType( -int0, dFluxPrimeIn ), RangeValueType( int0, dFluxPrimeOut ) );
         };
 
-        auto intOut = [ this, xIn, uIn, xOut, uOut, normal, uJump ] ( const ValueType &phiOut ) {
+        auto intOut = [ this, xIn, uIn, xOut, uOut, normal, uJump ] ( const DomainValueType &phiOut ) {
           const EntityType inside = intersection().inside();
           const EntityType outside = intersection().outside();
 
           const RangeFieldType half = RangeFieldType( 1 ) / RangeFieldType( 2 );
 
-          ValueType phiJump( 0, 0 );
+          DomainValueType phiJump( 0, 0 );
           std::get< 0 >( phiJump ) = std::get< 0 >( phiOut );
           for( int i = 0; i < RangeType::dimension; ++i )
             std::get< 1 >( phiJump )[ i ].axpy( std::get< 0 >( phiJump )[ i ], normal );
@@ -778,7 +786,7 @@ namespace Dune
           dFluxPrimeIn *= -half;
           dFluxPrimeOut *= -half;
 
-          return std::make_pair( ValueType( -int0, dFluxPrimeIn ), ValueType( int0, dFluxPrimeOut ) );
+          return std::make_pair( RangeValueType( -int0, dFluxPrimeIn ), RangeValueType( int0, dFluxPrimeOut ) );
         };
 
         return std::make_pair( intIn, intOut );

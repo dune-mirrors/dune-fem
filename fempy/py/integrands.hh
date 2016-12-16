@@ -169,10 +169,10 @@ namespace Dune
       // clsVirtualizedIntegrands
       // ------------------------
 
-      template< class GridPart, class Value >
-      inline pybind11::class_< Fem::VirtualizedIntegrands< GridPart, Value > > clsVirtualizedIntegrands ( pybind11::handle scope )
+      template< class GridPart, class DomainValue, class RangeValue >
+      inline pybind11::class_< Fem::VirtualizedIntegrands< GridPart, DomainValue, RangeValue > > clsVirtualizedIntegrands ( pybind11::handle scope )
       {
-        typedef Fem::VirtualizedIntegrands< GridPart, Value > Integrands;
+        typedef Fem::VirtualizedIntegrands< GridPart, DomainValue, RangeValue > Integrands;
         static pybind11::class_< Integrands > cls = registerIntegrands< Integrands >( scope, "VirtualizedIntegrands" );
         return cls;
       }
@@ -188,12 +188,13 @@ namespace Dune
     inline pybind11::class_< Integrands > registerIntegrands ( pybind11::handle scope, const char *clsName = "Integrands" )
     {
       typedef typename Integrands::GridPartType GridPart;
-      typedef typename Integrands::ValueType Value;
-      typedef Fem::VirtualizedIntegrands< GridPart, Value > VirtualizedIntegrands;
+      typedef typename Integrands::DomainValueType DomainValue;
+      typedef typename Integrands::RangeValueType RangeValue;
+      typedef Fem::VirtualizedIntegrands< GridPart, DomainValue, RangeValue > VirtualizedIntegrands;
 
       pybind11::class_< Integrands > cls = detail::registerIntegrands< Integrands >( scope, clsName );
 
-      detail::clsVirtualizedIntegrands< GridPart, Value >( scope ).def( "__init__", [] ( VirtualizedIntegrands &self, Integrands &integrands ) {
+      detail::clsVirtualizedIntegrands< GridPart, DomainValue, RangeValue >( scope ).def( "__init__", [] ( VirtualizedIntegrands &self, Integrands &integrands ) {
           new (&self) VirtualizedIntegrands( std::ref( integrands ) );
         }, pybind11::keep_alive< 1, 2 >() );
       pybind11::implicitly_convertible< Integrands, VirtualizedIntegrands >();

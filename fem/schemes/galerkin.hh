@@ -54,21 +54,23 @@ namespace Dune
         typedef CachingQuadrature< GridPartType, 1 > SurfaceQuadratureType;
         typedef QuadraturePointWrapper< SurfaceQuadratureType > SurfaceQuadraturePointType;
 
-        typedef typename Integrands::ValueType ValueType;
-        typedef std::make_index_sequence< std::tuple_size< ValueType >::value > ValueIndices;
+        typedef typename Integrands::DomainValueType DomainValueType;
+        typedef typename Integrands::RangeValueType RangeValueType;
+        typedef std::make_index_sequence< std::tuple_size< DomainValueType >::value > DomainValueIndices;
+        typedef std::make_index_sequence< std::tuple_size< RangeValueType >::value > RangeValueIndices;
 
         template< std::size_t... i >
-        static std::tuple< std::vector< std::tuple_element_t< i, ValueType > >... > makeValueVector ( std::size_t maxNumLocalDofs, std::index_sequence< i... > )
+        static std::tuple< std::vector< std::tuple_element_t< i, DomainValueType > >... > makeDomainValueVector ( std::size_t maxNumLocalDofs, std::index_sequence< i... > )
         {
-          return { std::vector< std::tuple_element_t< i, ValueType > >( maxNumLocalDofs )... };
+          return { std::vector< std::tuple_element_t< i, DomainValueType > >( maxNumLocalDofs )... };
         }
 
-        static auto makeValueVector ( std::size_t maxNumLocalDofs )
+        static auto makeDomainValueVector ( std::size_t maxNumLocalDofs )
         {
-          return makeValueVector( maxNumLocalDofs, ValueIndices() );
+          return makeDomainValueVector( maxNumLocalDofs, DomainValueIndices() );
         }
 
-        typedef decltype( makeValueVector( 0u ) ) ValueVectorType;
+        typedef decltype( makeDomainValueVector( 0u ) ) DomainValueVectorType;
 
         template< class LocalFunction, class Point >
         static void value ( const LocalFunction &u, const Point &x, typename LocalFunction::RangeType &phi )
@@ -88,12 +90,10 @@ namespace Dune
           u.hessian( x, phi );
         }
 
-        template< class LocalFunction, class Point >
-        static ValueType value ( const LocalFunction &u, const Point &x )
+        template< class LocalFunction, class Point, class... T >
+        static void value ( const LocalFunction &u, const Point &x, std::tuple< T... > &phi )
         {
-          ValueType phi;
-          Hybrid::forEach( ValueIndices(), [ &u, &x, &phi ] ( auto i ) { value( u, x, std::get< i >( phi ) ); } );
-          return phi;
+          Hybrid::forEach( std::index_sequence_for< T... >(), [ &u, &x, &phi ] ( auto i ) { value( u, x, std::get< i >( phi ) ); } );
         }
 
         template< class Basis, class Point >
@@ -114,10 +114,30 @@ namespace Dune
           basis.hessianAll( x, phi );
         }
 
-        template< class Basis, class Point >
-        static void values ( const Basis &basis, const Point &x, ValueVectorType &phi )
+        template< class Basis, class Point, class... T >
+        static void values ( const Basis &basis, const Point &x, std::tuple< std::vector< T >... > &phi )
         {
-          Hybrid::forEach( ValueIndices(), [ &basis, &x, &phi ] ( auto i ) { values( basis, x, std::get< i >( phi ) ); } );
+          Hybrid::forEach( std::index_sequence_for< T... >(), [ &basis, &x, &phi ] ( auto i ) { values( basis, x, std::get< i >( phi ) ); } );
+        }
+
+        template< class LocalFunction, class Point >
+        static DomainValueType domainValue ( const LocalFunction &u, const Point &x )
+        {
+          DomainValueType phi;
+          value( u, x, phi );
+          return phi;
+        }
+
+        template< class Phi, std::size_t... i >
+        static auto value ( const Phi &phi, std::size_t col, std::index_sequence< i... > )
+        {
+          return std::make_tuple( std::get< i >( phi )[ col ]... );
+        }
+
+        template< class... T >
+        static auto value ( const std::tuple< std::vector< T >... > &phi, std::size_t col )
+        {
+          return value( phi, col, std::index_sequence_for< T... >() );
         }
 
       public:
@@ -134,15 +154,15 @@ namespace Dune
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.position() );
 
-            ValueType integrand = integrands_.interior( qp, value( u, qp ) );
+            RangeValueType integrand = integrands_.interior( qp, domainValue( u, qp ) );
 
-            Hybrid::forEach( ValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand ) *= weight; } );
+            Hybrid::forEach( RangeValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand ) *= weight; } );
             w.axpy( qp, std::get< 0 >( integrand ), std::get< 1 >( integrand ) );
           }
         }
 
         template< class U, class J >
-        void addLinearizedInteriorIntegral ( const U &u, ValueVectorType &phi, J &j ) const
+        void addLinearizedInteriorIntegral ( const U &u, DomainValueVectorType &phi, J &j ) const
         {
           if( !integrands_.init( u.entity() ) )
             return;
@@ -154,11 +174,11 @@ namespace Dune
             const auto weight = qp.weight() * geometry.integrationElement( qp.position() );
 
             values( basis, qp, phi );
-            auto integrand = integrands_.linearizedInterior( qp, value( u, qp ) );
+            auto integrand = integrands_.linearizedInterior( qp, domainValue( u, qp ) );
 
             for( std::size_t col = 0, cols = basis.size(); col < cols; ++col )
             {
-              ValueType intPhi = integrand( std::make_tuple( std::get< 0 >( phi )[ col ], std::get< 1 >( phi )[ col ] ) );
+              RangeValueType intPhi = integrand( value( phi, col ) );
               j.column( col ).axpy( std::get< 0 >( phi ), std::get< 1 >( phi ), std::get< 0 >( intPhi ), std::get< 1 >( intPhi ), weight );
             }
           }
@@ -177,15 +197,15 @@ namespace Dune
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
-            ValueType integrand = integrands_.boundary( qp, value( u, qp ) );
+            RangeValueType integrand = integrands_.boundary( qp, domainValue( u, qp ) );
 
-            Hybrid::forEach( ValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand ) *= weight; } );
+            Hybrid::forEach( RangeValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand ) *= weight; } );
             w.axpy( qp, std::get< 0 >( integrand ), std::get< 1 >( integrand ) );
           }
         }
 
         template< class Intersection, class U, class J >
-        void addLinearizedBoundaryIntegral ( const Intersection &intersection, const U &u, ValueVectorType &phi, J &j ) const
+        void addLinearizedBoundaryIntegral ( const Intersection &intersection, const U &u, DomainValueVectorType &phi, J &j ) const
         {
           if( !integrands_.init( intersection ) )
             return;
@@ -197,11 +217,11 @@ namespace Dune
             const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
             values( basis, qp, phi );
-            auto integrand = integrands_.linearizedBoundary( qp, value( u, qp ) );
+            auto integrand = integrands_.linearizedBoundary( qp, domainValue( u, qp ) );
 
             for( std::size_t col = 0, cols = basis.size(); col < cols; ++col )
             {
-              ValueType intPhi = integrand( std::make_tuple( std::get< 0 >( phi )[ col ], std::get< 1 >( phi )[ col ] ) );
+              RangeValueType intPhi = integrand( value( phi, col ) );
               j.column( col ).axpy( std::get< 0 >( phi ), std::get< 1 >( phi ), std::get< 0 >( intPhi ), std::get< 1 >( intPhi ), weight );
             }
           }
@@ -221,9 +241,9 @@ namespace Dune
 
             const auto qpIn = quadrature.inside()[ qp ];
             const auto qpOut = quadrature.outside()[ qp ];
-            std::pair< ValueType, ValueType > integrand = integrands_.skeleton( qpIn, value( uIn, qpIn ), qpOut, value( uOut, qpOut ) );
+            std::pair< RangeValueType, RangeValueType > integrand = integrands_.skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
 
-            Hybrid::forEach( ValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand.first ) *= weight; } );
+            Hybrid::forEach( RangeValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand.first ) *= weight; } );
             wIn.axpy( qpIn, std::get< 0 >( integrand.first ), std::get< 1 >( integrand.first ) );
           }
         }
@@ -239,18 +259,18 @@ namespace Dune
 
             const auto qpIn = quadrature.inside()[ qp ];
             const auto qpOut = quadrature.outside()[ qp ];
-            std::pair< ValueType, ValueType > integrand = integrands_.skeleton( qpIn, value( uIn, qpIn ), qpOut, value( uOut, qpOut ) );
+            std::pair< RangeValueType, RangeValueType > integrand = integrands_.skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
 
-            Hybrid::forEach( ValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand.first ) *= weight; } );
+            Hybrid::forEach( RangeValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand.first ) *= weight; } );
             wIn.axpy( qpIn, std::get< 0 >( integrand.first ), std::get< 1 >( integrand.first ) );
 
-            Hybrid::forEach( ValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand.second ) *= weight; } );
+            Hybrid::forEach( RangeValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand.second ) *= weight; } );
             wOut.axpy( qpOut, std::get< 0 >( integrand.second ), std::get< 1 >( integrand.second ) );
           }
         }
 
         template< bool conforming, class Intersection, class U, class J >
-        void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, ValueVectorType &phiIn, ValueVectorType &phiOut, J &jInIn, J &jOutIn ) const
+        void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, DomainValueVectorType &phiIn, DomainValueVectorType &phiOut, J &jInIn, J &jOutIn ) const
         {
           const auto &basisIn = jInIn.domainBasisFunctionSet();
           const auto &basisOut = jOutIn.domainBasisFunctionSet();
@@ -267,22 +287,22 @@ namespace Dune
             values( basisIn, qpIn, phiIn );
             values( basisOut, qpOut, phiOut );
 
-            auto integrand = integrands_.linearizedSkeleton( qpIn, value( uIn, qpIn ), qpOut, value( uOut, qpOut ) );
+            auto integrand = integrands_.linearizedSkeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
             for( std::size_t col = 0, cols = basisIn.size(); col < cols; ++col )
             {
-              std::pair< ValueType, ValueType > intPhi = integrand.first( std::make_tuple( std::get< 0 >( phiIn )[ col ], std::get< 1 >( phiIn )[ col ] ) );
+              std::pair< RangeValueType, RangeValueType > intPhi = integrand.first( value( phiIn, col ) );
               jInIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
             }
             for( std::size_t col = 0, cols = basisOut.size(); col < cols; ++col )
             {
-              std::pair< ValueType, ValueType > intPhi = integrand.second( std::make_tuple( std::get< 0 >( phiOut )[ col ], std::get< 1 >( phiOut )[ col ] ) );
+              std::pair< RangeValueType, RangeValueType > intPhi = integrand.second( value( phiOut, col ) );
               jOutIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
             }
           }
         }
 
         template< bool conforming, class Intersection, class U, class J >
-        void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, ValueVectorType &phiIn, ValueVectorType &phiOut, J &jInIn, J &jOutIn, J &jInOut, J &jOutOut ) const
+        void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, DomainValueVectorType &phiIn, DomainValueVectorType &phiOut, J &jInIn, J &jOutIn, J &jInOut, J &jOutOut ) const
         {
           const auto &basisIn = jInIn.domainBasisFunctionSet();
           const auto &basisOut = jOutIn.domainBasisFunctionSet();
@@ -299,16 +319,16 @@ namespace Dune
             values( basisIn, qpIn, phiIn );
             values( basisOut, qpOut, phiOut );
 
-            auto integrand = integrands_.linearizedSkeleton( qpIn, value( uIn, qpIn ), qpOut, value( uOut, qpOut ) );
+            auto integrand = integrands_.linearizedSkeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
             for( std::size_t col = 0, cols = basisIn.size(); col < cols; ++col )
             {
-              std::pair< ValueType, ValueType > intPhi = integrand.first( std::make_tuple( std::get< 0 >( phiIn )[ col ], std::get< 1 >( phiIn )[ col ] ) );
+              std::pair< RangeValueType, RangeValueType > intPhi = integrand.first( value( phiIn, col ) );
               jInIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
               jInOut.column( col ).axpy( std::get< 0 >( phiOut ), std::get< 1 >( phiOut ), std::get< 0 >( intPhi.second ), std::get< 1 >( intPhi.second ), weight );
             }
             for( std::size_t col = 0, cols = basisOut.size(); col < cols; ++col )
             {
-              std::pair< ValueType, ValueType > intPhi = integrand.second( std::make_tuple( std::get< 0 >( phiOut )[ col ], std::get< 1 >( phiOut )[ col ] ) );
+              std::pair< RangeValueType, RangeValueType > intPhi = integrand.second( value( phiOut, col ) );
               jOutIn.column( col ).axpy( std::get< 0 >( phiIn ), std::get< 1 >( phiIn ), std::get< 0 >( intPhi.first ), std::get< 1 >( intPhi.first ), weight );
               jOutOut.column( col ).axpy( std::get< 0 >( phiOut ), std::get< 1 >( phiOut ), std::get< 0 >( intPhi.second ), std::get< 1 >( intPhi.second ), weight );
             }
@@ -329,7 +349,7 @@ namespace Dune
         }
 
         template< class Intersection, class U, class... J >
-        void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, ValueVectorType &phiIn, ValueVectorType &phiOut, J &... j ) const
+        void addLinearizedSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, DomainValueVectorType &phiIn, DomainValueVectorType &phiOut, J &... j ) const
         {
           if( !integrands_.init( intersection ) )
             return;
@@ -436,9 +456,6 @@ namespace Dune
           static_assert( std::is_same< typename GridFunction::GridPartType, GridPartType >::value, "Argument 'u' and Integrands must be defined on the same grid part." );
           static_assert( std::is_same< typename DiscreteFunction::GridPartType, GridPartType >::value, "Argument 'w' and Integrands must be defined on the same grid part." );
 
-          static_assert( std::is_same< ValueType, std::tuple< typename GridFunction::RangeType, typename GridFunction::JacobianRangeType > >::value, "For now, Integrands::ValueType must be std::tuple< RangeType, JacobianRangeType >." );
-          static_assert( std::is_same< ValueType, std::tuple< typename DiscreteFunction::RangeType, typename DiscreteFunction::JacobianRangeType > >::value, "For now, Integrands::ValueType must be std::tuple< RangeType, JacobianRangeType >." );
-
           if( integrands_.hasSkeleton() )
             evaluate( u, w, std::true_type() );
           else
@@ -458,7 +475,7 @@ namespace Dune
           jOp.clear();
 
           const std::size_t maxNumLocalDofs = jOp.domainSpace().blockMapper().maxNumDofs() * jOp.domainSpace().localBlockSize;
-          ValueVectorType phi = makeValueVector( maxNumLocalDofs );
+          DomainValueVectorType phi = makeDomainValueVector( maxNumLocalDofs );
 
           TemporaryLocalMatrixType jOpLocal( jOp.domainSpace(), jOp.rangeSpace() );
 
@@ -497,8 +514,8 @@ namespace Dune
           jOp.clear();
 
           const std::size_t maxNumLocalDofs = jOp.domainSpace().blockMapper().maxNumDofs() * jOp.domainSpace().localBlockSize;
-          ValueVectorType phiIn = makeValueVector( maxNumLocalDofs );
-          ValueVectorType phiOut = makeValueVector( maxNumLocalDofs );
+          DomainValueVectorType phiIn = makeDomainValueVector( maxNumLocalDofs );
+          DomainValueVectorType phiOut = makeDomainValueVector( maxNumLocalDofs );
 
           TemporaryLocalMatrixType jOpInIn( jOp.domainSpace(), jOp.rangeSpace() ), jOpOutIn( jOp.domainSpace(), jOp.rangeSpace() );
           TemporaryLocalMatrixType jOpInOut( jOp.domainSpace(), jOp.rangeSpace() ), jOpOutOut( jOp.domainSpace(), jOp.rangeSpace() );
@@ -560,10 +577,6 @@ namespace Dune
           static_assert( std::is_same< typename GridFunction::GridPartType, GridPartType >::value, "Argument 'u' and Integrands must be defined on the same grid part." );
           static_assert( std::is_same< typename JacobianOperator::DomainSpaceType::GridPartType, GridPartType >::value, "Argument 'jOp' and Integrands must be defined on the same grid part." );
           static_assert( std::is_same< typename JacobianOperator::RangeSpaceType::GridPartType, GridPartType >::value, "Argument 'jOp' and Integrands must be defined on the same grid part." );
-
-          static_assert( std::is_same< ValueType, std::tuple< typename GridFunction::RangeType, typename GridFunction::JacobianRangeType > >::value, "For now, Integrands::ValueType must be std::tuple< RangeType, JacobianRangeType >." );
-          static_assert( std::is_same< ValueType, std::tuple< typename JacobianOperator::DomainSpaceType::RangeType, typename JacobianOperator::DomainSpaceType::JacobianRangeType > >::value, "For now, Integrands::ValueType must be std::tuple< RangeType, JacobianRangeType >." );
-          static_assert( std::is_same< ValueType, std::tuple< typename JacobianOperator::RangeSpaceType::RangeType, typename JacobianOperator::RangeSpaceType::JacobianRangeType > >::value, "For now, Integrands::ValueType must be std::tuple< RangeType, JacobianRangeType >." );
 
           if( integrands_.hasSkeleton() )
             assemble( u, jOp, std::true_type() );
