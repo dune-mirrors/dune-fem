@@ -87,7 +87,8 @@ class Integrands():
 
         for s in ["DomainType", "RangeType", "JacobianRangeType"]:
             result.append(TypeAlias(s, "typename FunctionSpaceType::" + s))
-        result.append(TypeAlias("ValueType", "std::tuple< RangeType, JacobianRangeType >"))
+        result.append(TypeAlias("DomainValueType", "std::tuple< RangeType, JacobianRangeType >"))
+        result.append(TypeAlias("RangeValueType", "std::tuple< RangeType, JacobianRangeType >"))
 
         constants = ["std::shared_ptr< " + c + " >" for c in self._constants]
         result.append(TypeAlias("ConstantTupleType", "std::tuple< " + ", ".join(constants) + " >"))
@@ -147,16 +148,16 @@ class Integrands():
         result = []
 
         if self.interior is not None:
-            result.append(Method('ValueType', 'interior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.interior, const=True))
-            result.append(Method('auto', 'linearizedInterior', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.linearizedInterior, const=True))
+            result.append(Method('RangeValueType', 'interior', targs=['class Point'], args=['const Point &x', 'const DomainValueType &u'], code=self.interior, const=True))
+            result.append(Method('auto', 'linearizedInterior', targs=['class Point'], args=['const Point &x', 'const DomainValueType &u'], code=self.linearizedInterior, const=True))
 
         if self.boundary is not None:
-            result.append(Method('ValueType', 'boundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.boundary, const=True))
-            result.append(Method('auto', 'linearizedBoundary', targs=['class Point'], args=['const Point &x', 'const ValueType &u'], code=self.linearizedBoundary, const=True))
+            result.append(Method('RangeValueType', 'boundary', targs=['class Point'], args=['const Point &x', 'const DomainValueType &u'], code=self.boundary, const=True))
+            result.append(Method('auto', 'linearizedBoundary', targs=['class Point'], args=['const Point &x', 'const DomainValueType &u'], code=self.linearizedBoundary, const=True))
 
         if self.skeleton is not None:
-            result.append(Method('std::pair< ValueType, ValueType >', 'skeleton', targs=['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=self.skeleton, const=True))
-            result.append(Method('auto', 'linearizedSkeleton', targs=['class Point'], args=['const Point &xIn', 'const ValueType &uIn', 'const Point &xOut', 'const ValueType &uOut'], code=self.linearizedSkeleton, const=True))
+            result.append(Method('std::pair< RangeValueType, RangeValueType >', 'skeleton', targs=['class Point'], args=['const Point &xIn', 'const DomainValueType &uIn', 'const Point &xOut', 'const DomainValueType &uOut'], code=self.skeleton, const=True))
+            result.append(Method('auto', 'linearizedSkeleton', targs=['class Point'], args=['const Point &xIn', 'const DomainValueType &uIn', 'const Point &xOut', 'const DomainValueType &uOut'], code=self.linearizedSkeleton, const=True))
 
         return result
 
@@ -320,23 +321,23 @@ def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMa
 
 def generateUnaryCode(predefined, testFunctions, tensorMap, tempVars=True):
     preamble, values = generateCode(predefined, testFunctions, tensorMap, tempVars)
-    return preamble + [return_(construct('ValueType', *values))]
+    return preamble + [return_(construct('RangeValueType', *values))]
 
 
 def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, tempVars=True):
     if tensorMap is None:
-        return [return_(lambda_(args=['const ValueType &phi'], code=return_(construct('ValueType', 0, 0))))]
+        return [return_(lambda_(args=['const DomainValueType &phi'], code=return_(construct('RangeValueType', 0, 0))))]
 
     var = Variable('std::tuple< RangeType, JacobianRangeType >', 'phi')
     preamble, values = generateLinearizedCode(predefined, testFunctions, {var: trialFunctions}, tensorMap, tempVars)
     capture = extractVariablesFromExpressions(values[var]) - {var}
-    return preamble + [return_(lambda_(capture=capture, args=['const ValueType &phi'], code=return_(construct('ValueType', *values[var]))))]
+    return preamble + [return_(lambda_(capture=capture, args=['const DomainValueType &phi'], code=return_(construct('RangeValueType', *values[var]))))]
 
 
 def generateBinaryCode(predefined, testFunctions, tensorMap, tempVars=True):
     restrictedTestFunctions = [phi('+') for phi in testFunctions] + [phi('-') for phi in testFunctions]
     preamble, values = generateCode(predefined, restrictedTestFunctions, tensorMap, tempVars=True)
-    return preamble + [return_(make_pair(construct('ValueType', *values[:len(testFunctions)]), construct('ValueType', *values[len(testFunctions):])))]
+    return preamble + [return_(make_pair(construct('RangeValueType', *values[:len(testFunctions)]), construct('RangeValueType', *values[len(testFunctions):])))]
 
 
 def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, tempVars=True):
@@ -346,7 +347,7 @@ def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tens
     trialFunctionsOut = [psi('-') for psi in trialFunctions]
 
     if tensorMap is None:
-        return [return_(make_pair(lambda_(args=['const ValueType &phiIn'], code=return_(construct('ValueType', 0, 0))), lambda_(args=['const ValueType &phiOut'], code=return_(construct('ValueType', 0, 0)))))]
+        return [return_(make_pair(lambda_(args=['const DomainValueType &phiIn'], code=return_(construct('RangeValueType', 0, 0))), lambda_(args=['const DomainValueType &phiOut'], code=return_(construct('RangeValueType', 0, 0)))))]
 
     varIn = Variable('std::tuple< RangeType, JacobianRangeType >', 'phiIn')
     varOut = Variable('std::tuple< RangeType, JacobianRangeType >', 'phiOut')
@@ -355,8 +356,8 @@ def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tens
     captureIn = extractVariablesFromExpressions(values[varIn]) - {varIn}
     captureOut = extractVariablesFromExpressions(values[varOut]) - {varOut}
 
-    tensorIn = lambda_(capture=captureIn, args=['const ValueType &phiIn'], code=return_(make_pair(construct('ValueType', *values[varIn][:len(testFunctions)]), construct('ValueType', *values[varIn][len(testFunctions):]))))
-    tensorOut = lambda_(capture=captureOut, args=['const ValueType &phiOut'], code=return_(make_pair(construct('ValueType', *values[varOut][:len(testFunctions)]), construct('ValueType', *values[varOut][len(testFunctions):]))))
+    tensorIn = lambda_(capture=captureIn, args=['const DomainValueType &phiIn'], code=return_(make_pair(construct('RangeValueType', *values[varIn][:len(testFunctions)]), construct('RangeValueType', *values[varIn][len(testFunctions):]))))
+    tensorOut = lambda_(capture=captureOut, args=['const DomainValueType &phiOut'], code=return_(make_pair(construct('RangeValueType', *values[varOut][:len(testFunctions)]), construct('RangeValueType', *values[varOut][len(testFunctions):]))))
 
     return preamble + [return_(make_pair(tensorIn, tensorOut))]
 
