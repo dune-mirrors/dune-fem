@@ -156,8 +156,10 @@ namespace Dune
 
             RangeValueType integrand = integrands_.interior( qp, domainValue( u, qp ) );
 
-            Hybrid::forEach( RangeValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand ) *= weight; } );
-            w.axpy( qp, std::get< 0 >( integrand ), std::get< 1 >( integrand ) );
+            Hybrid::forEach( RangeValueIndices(), [ &w, &integrand, weight ] ( auto i ) {
+                std::get< i >( integrand ) *= weight;
+                w.axpy( qp, std::get< i >( integrand ) );
+              } );
           }
         }
 
@@ -168,12 +170,14 @@ namespace Dune
             return;
 
           const auto geometry = u.entity().geometry();
-          const auto &basis = j.domainBasisFunctionSet();
-          for( const auto qp : InteriorQuadratureType( u.entity(), 2*basis.order() ) )
+          const auto &domainBasis = j.domainBasisFunctionSet();
+          const auto &rangeBasis = j.rangeBasisFunctionSet();
+
+          for( const auto qp : InteriorQuadratureType( u.entity(), 2*rangeBasis.order() ) )
           {
             const auto weight = qp.weight() * geometry.integrationElement( qp.position() );
 
-            values( basis, qp, phi );
+            values( domainBasis, qp, phi );
             auto integrand = integrands_.linearizedInterior( qp, domainValue( u, qp ) );
 
             for( std::size_t col = 0, cols = basis.size(); col < cols; ++col )
@@ -199,8 +203,10 @@ namespace Dune
 
             RangeValueType integrand = integrands_.boundary( qp, domainValue( u, qp ) );
 
-            Hybrid::forEach( RangeValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand ) *= weight; } );
-            w.axpy( qp, std::get< 0 >( integrand ), std::get< 1 >( integrand ) );
+            Hybrid::forEach( RangeValueIndices(), [ &w, &integrand, weight ] ( auto i ) {
+                std::get< i >( integrand ) *= weight;
+                w.axpy( qp, std::get< i >( integrand ) );
+              } );
           }
         }
 
@@ -243,8 +249,10 @@ namespace Dune
             const auto qpOut = quadrature.outside()[ qp ];
             std::pair< RangeValueType, RangeValueType > integrand = integrands_.skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
 
-            Hybrid::forEach( RangeValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand.first ) *= weight; } );
-            wIn.axpy( qpIn, std::get< 0 >( integrand.first ), std::get< 1 >( integrand.first ) );
+            Hybrid::forEach( RangeValueIndices(), [ &wIn, &integrand, weight ] ( auto i ) {
+                std::get< i >( integrand.first ) *= weight;
+                wIn.axpy( qpIn, std::get< i >( integrand.first ) );
+              } );
           }
         }
 
@@ -261,11 +269,13 @@ namespace Dune
             const auto qpOut = quadrature.outside()[ qp ];
             std::pair< RangeValueType, RangeValueType > integrand = integrands_.skeleton( qpIn, domainValue( uIn, qpIn ), qpOut, domainValue( uOut, qpOut ) );
 
-            Hybrid::forEach( RangeValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand.first ) *= weight; } );
-            wIn.axpy( qpIn, std::get< 0 >( integrand.first ), std::get< 1 >( integrand.first ) );
+            Hybrid::forEach( RangeValueIndices(), [ &wIn, &wOut, &integrand, weight ] ( auto i ) {
+                std::get< i >( integrand.first ) *= weight;
+                wIn.axpy( qpIn, std::get< i >( integrand.first ) );
 
-            Hybrid::forEach( RangeValueIndices(), [ &integrand, weight ] ( auto i ) { std::get< i >( integrand.second ) *= weight; } );
-            wOut.axpy( qpOut, std::get< 0 >( integrand.second ), std::get< 1 >( integrand.second ) );
+                std::get< i >( integrand.second ) *= weight;
+                wOut.axpy( qpOut, std::get< i >( integrand.second ) );
+              } );
           }
         }
 
