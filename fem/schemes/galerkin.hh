@@ -242,8 +242,6 @@ namespace Dune
                   std::get< i >( intPhi ) *= weight;
                   jCol.axpy( qp, std::get< i >( intPhi ) );
                 } );
-
-              j.column( col ).axpy( std::get< 0 >( phi ), std::get< 1 >( phi ), std::get< 0 >( intPhi ), std::get< 1 >( intPhi ), weight );
             }
           }
         }
@@ -324,7 +322,6 @@ namespace Dune
                 std::get< i >( intPhi.first ) *= weight;
                 jInInCol.axpy( qpIn, std::get< i >( intPhi.first ) );
               } );
-
             }
             for( std::size_t col = 0, cols = domainBasisOut.size(); col < cols; ++col )
             {
