@@ -1,9 +1,14 @@
 #ifndef DUNE_FEMPY_PY_OPERATOR_HH
 #define DUNE_FEMPY_PY_OPERATOR_HH
 
+#include <type_traits>
+#include <utility>
+
 #include <dune/common/typeutilities.hh>
 
 #include <dune/corepy/pybind11/pybind11.h>
+
+#include <dune/fem/operator/common/differentiableoperator.hh>
 
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 
@@ -27,14 +32,44 @@ namespace Dune
       // registerGeneralOperatorCall
       // ---------------------------
 
-      template< class Operator, class Holder, class Alias, decltype( std::declval< const Operator & >()( std::declval< const GeneralGridFunction< typename Operator::DomainFunctionType > & >(), std::declval< typename Operator::RangeFunctionType & >() ), int ) = 0 >
-      void registerGeneralOperatorCall ( pybind11::class_< Operator, Holder, Class > &cls, PriorityTag< 1 > )
+      template< class Operator, class Holder, class Alias, decltype( std::declval< const Operator & >()( std::declval< const GeneralGridFunction< typename Operator::DomainFunctionType > & >(), std::declval< typename Operator::RangeFunctionType & >() ), 0 ) = 0 >
+      void registerGeneralOperatorCall ( pybind11::class_< Operator, Holder, Alias > &cls, PriorityTag< 1 > )
       {
         cls.def( "__call__", [] ( Operator &op, const GeneralGridFunction< typename Operator::DomainFunctionType > &u, typename Operator::RangeFunctionType &w ) { op( u, w ); } );
       }
 
       template< class Operator, class Holder, class Alias >
       void registerOperatorGeneralCall ( pybind11::class_< Operator, Holder, Alias > &cls, PriorityTag< 0 > )
+      {}
+
+
+
+      // registerGeneralOperatorJacobian
+      // -------------------------------
+
+      template< class Operator, class Holder, class Alias, decltype( std::declval< const Operator & >().jacobian( std::declval< const GeneralGridFunction< typename Operator::DomainFunctionType > & >(), std::declval< typename Operator::JacobianOperatorType >() ), 0 ) = 0 >
+      void registerGeneralOperatorJacobian ( pybind11::class_< Operator, Holder, Alias > &cls, PriorityTag< 1 > )
+      {
+        cls.def( "jacobian", [] ( Operator &op, const GeneralGridFunction< typename Operator::DomainFunctionType > &u, typename Operator::JacobianRangeType &jOp ) { op.jacobian( u, jOp ); } );
+      }
+
+      template< class Operator, class Holder, class Alias >
+      void registerGeneralOperatorJacobian ( pybind11::class_< Operator, Holder, Alias > &cls, PriorityTag< 0 > )
+      {}
+
+
+
+      // registerOperatorJacobian
+      // ------------------------
+
+      template< class Operator, class Holder, class Alias, decltype( std::declval< const Operator & >().jacobian( std::declval< const typename Operator::DomainFunctionType & >(), std::declval< typename Operator::JacobianOperatorType >() ), 0 ) = 0 >
+      void registerOperatorJacobian ( pybind11::class_< Operator, Holder, Alias > &cls, PriorityTag< 1 > )
+      {
+        cls.def( "jacobian", [] ( Operator &op, const typename Operator::DomainFunctionType &u, typename Operator::JacobianRangeType &jOp ) { op.jacobian( u, jOp ); } );
+      }
+
+      template< class Operator, class Holder, class Alias >
+      void registerOperatorJacobian ( pybind11::class_< Operator, Holder, Alias > &cls, PriorityTag< 0 > )
       {}
 
 
@@ -52,6 +87,9 @@ namespace Dune
 
         cls.def( "__call__", [] ( Operator &op, const DomainFunction &u, RangeFunction &w ) { op( u, w ); } );
         registerGeneralOperatorCall( cls, PriorityTag< 42 >() );
+
+        registerOperatorJacobian( cls, PriorityTag< 42 >() );
+        registerGeneralOperatorJacobian( cls, PriorityTag< 42 >() );
       }
 
     } // namespace detail
