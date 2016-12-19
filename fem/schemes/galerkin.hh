@@ -655,34 +655,36 @@ namespace Dune
     // GalerkinOperator
     // ----------------
 
-    template< class DiscreteFunction, class Integrands >
+    template< class Integrands, class DomainFunction, class RangeFunction = DomainFunction >
     struct GalerkinOperator
-      : public virtual Operator< DiscreteFunction >
+      : public virtual Operator< DomainFunction, RangeFunction >
     {
-      typedef DiscreteFunction DiscreteFunctionType;
+      typedef DomainFunction DomainFunctionType;
+      typedef RangeFunction RangeFunctionType;
 
-      typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      static_assert( std::is_same< typename DomainFunctionType::GridPartType, typename RangeFunctionType::GridPartType >::value, "DomainFunction and RangeFunction must be defined on the same grid part." );
+
+      typedef typename RangeFunctionType::GridPartType GridPartType;
 
       template< class... Args >
-      GalerkinOperator ( const DiscreteFunctionSpaceType &dfSpace, Args &&... args )
-        : discreteFunctionSpace_( dfSpace ), impl_( dfSpace.gridPart(), std::forward< Args >( args )... )
+      explicit GalerkinOperator ( const GridPartType &gridPart, Args &&... args )
+        : impl_( gridPart, std::forward< Args >( args )... )
       {}
 
-      void operator() ( const DiscreteFunctionType &u, DiscreteFunctionType &w ) const
+      virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const final override
       {
         impl_.evaluate( u, w );
       }
 
       template< class GridFunction >
-      void operator() ( const GridFunction &u, DiscreteFunctionType &w ) const
+      void operator() ( const GridFunction &u, RangeFunctionType &w ) const
       {
         return impl_.evaluate( u, w );
       }
 
-      const DiscreteFunctionSpaceType &discreteFunctionSpace () const { return discreteFunctionSpace_; }
+      const GridPartType &gridPart () const { return impl_.gridPart(); }
 
     protected:
-      const DiscreteFunctionSpaceType &discreteFunctionSpace_;
       Impl::GalerkinOperator< Integrands > impl_;
     };
 
@@ -691,25 +693,27 @@ namespace Dune
     // DifferentiableGalerkinOperator
     // ------------------------------
 
-    template< class JacobianOperator, class Integrands >
+    template< class Integrands, class JacobianOperator >
     class DifferentiableGalerkinOperator
-      : public GalerkinOperator< typename JacobianOperator::DomainFunctionType, Integrands >,
+      : public GalerkinOperator< Integrands, typename JacobianOperator::DomainFunctionType, typename JacobianOperator::RangeFunctionType >,
         public DifferentiableOperator< JacobianOperator >
     {
-      typedef GalerkinOperator< typename JacobianOperator::DomainFunctionType, Integrands > BaseType;
+      typedef GalerkinOperator< Integrands, typename JacobianOperator::DomainFunctionType, typename JacobianOperator::RangeFunctionType > BaseType;
 
     public:
       typedef JacobianOperator JacobianOperatorType;
 
-      typedef typename BaseType::DiscreteFunctionType DiscreteFunctionType;
-      typedef typename BaseType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      typedef typename BaseType::DomainFunctionType DomainFunctionType;
+      typedef typename BaseType::RangeFunctionType RangeFunctionType;
+
+      typedef typename BaseType::GridPartType GridPartType;
 
       template< class... Args >
-      DifferentiableGalerkinOperator ( const DiscreteFunctionSpaceType &dfSpace, Args &&... args )
-        : BaseType( dfSpace, std::forward< Args >( args )... )
+      explicit DifferentiableGalerkinOperator ( const GridPartType &gridPart, Args &&... args )
+        : BaseType( gridPart, std::forward< Args >( args )... )
       {}
 
-      void jacobian ( const DiscreteFunctionType &u, JacobianOperatorType &jOp ) const
+      virtual void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const final override
       {
         impl_.assemble( u, jOp );
       }
@@ -729,21 +733,20 @@ namespace Dune
     // AutomaticDifferenceGalerkinOperator
     // -----------------------------------
 
-    template< class DiscreteFunction, class Integrands >
+    template< class Integrands, class DomainFunction, class RangeFunction >
     class AutomaticDifferenceGalerkinOperator
-      : public GalerkinOperator< DiscreteFunction, Integrands >,
-        public AutomaticDifferenceOperator< DiscreteFunction >
+      : public GalerkinOperator< Integrands, DomainFunction, RangeFunction >,
+        public AutomaticDifferenceOperator< DomainFunction, RangeFunction >
     {
-      typedef GalerkinOperator< DiscreteFunction, Integrands > BaseType;
-      typedef AutomaticDifferenceOperator< DiscreteFunction > AutomaticDifferenceOperatorType;
+      typedef GalerkinOperator< Integrands, DomainFunction, RangeFunction > BaseType;
+      typedef AutomaticDifferenceOperator< DomainFunction, RangeFunction > AutomaticDifferenceOperatorType;
 
     public:
-      typedef typename BaseType::DiscreteFunctionType DiscreteFunctionType;
-      typedef typename BaseType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      typedef typename BaseType::GridPartType GridPartType;
 
       template< class... Args >
-      AutomaticDifferenceGalerkinOperator ( const DiscreteFunctionSpaceType &dfSpace, Args &&... args )
-        : BaseType( dfSpace, std::forward< Args >( args )... ), AutomaticDifferenceOperatorType()
+      explicit AutomaticDifferenceGalerkinOperator ( const GridPartType &gridPart, Args &&... args )
+        : BaseType( gridPart, std::forward< Args >( args )... ), AutomaticDifferenceOperatorType()
       {}
     };
 
@@ -754,21 +757,21 @@ namespace Dune
 
     template < class LinearOperator, class ModelIntegrands >
     struct ModelDifferentiableGalerkinOperator
-      : public DifferentiableGalerkinOperator< LinearOperator, ModelIntegrands >
+      : public DifferentiableGalerkinOperator< ModelIntegrands, LinearOperator >
     {
-      typedef DifferentiableGalerkinOperator< LinearOperator, ModelIntegrands > BaseType;
+      typedef DifferentiableGalerkinOperator< ModelIntegrands, LinearOperator > BaseType;
 
       typedef typename ModelIntegrands::ModelType ModelType;
 
-      typedef typename LinearOperator::DomainFunctionType RangeDiscreteFunctionType;
+      typedef typename LinearOperator::DomainFunctionType RangeFunctionType;
       typedef typename LinearOperator::RangeSpaceType DiscreteFunctionSpaceType;
 
       ModelDifferentiableGalerkinOperator ( const ModelType &model, const DiscreteFunctionSpaceType &dfSpace )
-        : BaseType( dfSpace, model )
+        : BaseType( dfSpace.gridPart(), model )
       {}
 
       template< class GridFunction >
-      void apply ( const GridFunction &u, RangeDiscreteFunctionType &w ) const
+      void apply ( const GridFunction &u, RangeFunctionType &w ) const
       {
         (*this)( u, w );
       }
@@ -779,9 +782,9 @@ namespace Dune
         (*this).jacobian( u, jOp );
       }
 
-      void prepare( RangeDiscreteFunctionType &u ) const {}
+      void prepare( RangeFunctionType &u ) const {}
 
-      void prepare( const RangeDiscreteFunctionType &u, RangeDiscreteFunctionType &w ) const {}
+      void prepare( const RangeFunctionType &u, RangeFunctionType &w ) const {}
     };
 
 
@@ -792,12 +795,14 @@ namespace Dune
     template< class Integrands, class LinearOperator, class InverseOperator >
     struct GalerkinScheme
     {
-      typedef DifferentiableGalerkinOperator< LinearOperator, Integrands > DifferentiableOperatorType;
+      typedef DifferentiableGalerkinOperator< Integrands, LinearOperator > DifferentiableOperatorType;
 
-      typedef typename DifferentiableOperatorType::DiscreteFunctionType DiscreteFunctionType;
+      typedef typename DifferentiableOperatorType::DomainFunctionType DomainFunctionType;
+      typedef typename DifferentiableOperatorType::RangeFunctionType RangeFunctionType;
       typedef typename DifferentiableOperatorType::JacobianOperatorType LinearOperatorType;
 
-      typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+      typedef RangeFunctionType DiscreteFunctionType;
+      typedef typename RangeFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
       typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
       typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
@@ -813,7 +818,10 @@ namespace Dune
       };
 
       GalerkinScheme ( const DiscreteFunctionSpaceType &dfSpace, Integrands integrands, ParameterReader parameter = Parameter::container() )
-        : fullOperator_( dfSpace, std::move( integrands ) ), parameter_( std::move( parameter ) ), linearOperator_( "assembled elliptic operator", dfSpace, dfSpace )
+        : dfSpace_( dfSpace ),
+          fullOperator_( dfSpace.gridPart(), std::move( integrands ) ),
+          parameter_( std::move( parameter ) ),
+          linearOperator_( "assembled elliptic operator", dfSpace, dfSpace )
       {}
 
       const DifferentiableOperatorType &fullOperator() const { return fullOperator_; }
@@ -847,10 +855,11 @@ namespace Dune
       bool mark ( double tolerance ) { return false; }
       double estimate ( const DiscreteFunctionType &solution ) { return 0.0; }
 
-      const DiscreteFunctionSpaceType &space () const { return fullOperator_.discreteFunctionSpace(); }
+      const DiscreteFunctionSpaceType &space () const { return dfSpace_; }
       const GridPartType &gridPart () const { return space().gridPart(); }
 
     protected:
+      const DiscreteFunctionSpaceType &dfSpace_;
       DifferentiableOperatorType fullOperator_;
       ParameterReader parameter_;
       LinearOperatorType linearOperator_;
