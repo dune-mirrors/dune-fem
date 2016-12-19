@@ -5,7 +5,9 @@ from types import MethodType, ModuleType
 from ufl import CellVolume, Coefficient, FacetArea, FacetNormal, Form, SpatialCoordinate
 from ufl import action, derivative
 from ufl.algorithms.apply_derivatives import apply_derivatives
+from ufl.algorithms import Replacer
 from ufl.constantvalue import IntValue, Zero
+from ufl.corealg.map_dag import map_expr_dags
 from ufl.equation import Equation
 from ufl.differentiation import Grad
 
@@ -17,6 +19,7 @@ from dune.source.cplusplus import SourceWriter
 from dune.source.algorithm.extractvariables import extractVariablesFromExpressions, extractVariablesFromStatements
 
 from dune.ufl import codegen
+from dune.ufl.gatherderivatives import gatherDerivatives
 from dune.ufl.linear import splitForm
 import dune.ufl.tensors as tensors
 
@@ -39,8 +42,8 @@ class Integrands():
             rangeValue = domainValue
 
         self.signature = signature
-        self.domainValue = domainValue
-        self.rangeValue = rangeValue
+        self.domainValue = tuple(domainValue)
+        self.rangeValue = tuple(rangeValue)
 
         self.field = "double"
         self._constants = []
@@ -66,6 +69,12 @@ class Integrands():
             return 'Dune::FieldVector< Dune::FieldMatrix< double, ' + str(shape[1]) + ', ' + str(shape[2]) + ' >, ' + str(shape[0]) + ' >'
         else:
             raise ValueError('No C++ type defined for tensors of shape ' + str(shape) + '.')
+
+    def domainValueVariable(self, name):
+        return Variable('std::tuple< ' + ', '.join([self._cppTensor(v) for v in self.domainValue]) + ' >', name)
+
+    def rangeValueVariable(self, name):
+        return Variable('std::tuple< ' + ', '.join([self._cppTensor(v) for v in self.rangeValue]) + ' >', name)
 
     def addCoefficient(self, field, dimRange):
         idx = len(self._coefficients)
@@ -350,7 +359,7 @@ def generateUnaryCode(predefined, testFunctions, tensorMap, tempVars=True):
 
 def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, tempVars=True):
     if tensorMap is None:
-        return [return_(lambda_(args=['const DomainValueType &phi'], code=return_(construct('RangeValueType', 0, 0))))]
+        return [return_(lambda_(args=['const DomainValueType &phi'], code=return_(construct('RangeValueType', *[0 for i in range(len(testFunctions))]))))]
 
     var = Variable('std::tuple< RangeType, JacobianRangeType >', 'phi')
     preamble, values = generateLinearizedCode(predefined, testFunctions, {var: trialFunctions}, tensorMap, tempVars)
@@ -371,7 +380,9 @@ def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tens
     trialFunctionsOut = [psi('-') for psi in trialFunctions]
 
     if tensorMap is None:
-        return [return_(make_pair(lambda_(args=['const DomainValueType &phiIn'], code=return_(construct('RangeValueType', 0, 0))), lambda_(args=['const DomainValueType &phiOut'], code=return_(construct('RangeValueType', 0, 0)))))]
+        tensorIn = lambda_(args=['const DomainValueType &phiIn'], code=return_(construct('RangeValueType', *[0 for i in range(len(testFunctions))])))
+        tensorOut = lambda_(args=['const DomainValueType &phiOut'], code=return_(construct('RangeValueType', *[0 for i in range(len(testFunctions))])))
+        return [return_(make_pair(tensorIn, tensorOut))]
 
     varIn = Variable('std::tuple< RangeType, JacobianRangeType >', 'phiIn')
     varOut = Variable('std::tuple< RangeType, JacobianRangeType >', 'phiOut')
@@ -399,17 +410,17 @@ def compileUFL(equation, tempVars=True):
     area = FacetArea(form.ufl_cell())
 
     phi = form.arguments()[0]
-    dphi = Grad(phi)
-    dimRange = phi.ufl_shape[0]
 
     u = form.arguments()[1]
-    du = Grad(u)
-    d2u = Grad(du)
     ubar = Coefficient(u.ufl_function_space())
-    dubar = Grad(ubar)
-    d2ubar = Grad(dubar)
 
-    integrands = Integrands(form.signature(), (u.ufl_shape, du.ufl_shape), (phi.ufl_shape, dphi.ufl_shape))
+    derivatives = gatherDerivatives(form, [phi, u])
+
+    derivatives_phi = derivatives[0]
+    derivatives_u = derivatives[1]
+    derivatives_ubar = map_expr_dags(Replacer({u: ubar}), derivatives_u)
+
+    integrands = Integrands(form.signature(), (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi))
     try:
         integrands.field = u.ufl_function_space().ufl_element().field()
     except AttributeError:
@@ -444,48 +455,48 @@ def compileUFL(equation, tempVars=True):
                 coefficient = Grad(coefficient)
 
     if 'cell' in integrals.keys():
-        arg = Variable('std::tuple< RangeType, JacobianRangeType >', 'u')
+        arg = integrands.domainValueVariable('u')
 
-        predefined = {u: arg[0], du: arg[1]}
+        predefined = {derivatives_u[i]: arg[i] for i in range(len(derivatives_u))}
         predefined[x] = integrands.spatialCoordinate('x')
         predefined[vol] = integrands.cellVolume()
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
-        integrands.interior = generateUnaryCode(predefined, [phi, dphi], integrals['cell'], tempVars)
+        integrands.interior = generateUnaryCode(predefined, derivatives_phi, integrals['cell'], tempVars)
 
-        predefined = {ubar: arg[0], dubar: arg[1]}
+        predefined = {derivatives_ubar[i]: arg[i] for i in range(len(derivatives_u))}
         predefined[x] = integrands.spatialCoordinate('x')
         predefined[vol] = integrands.cellVolume()
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
-        integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('cell'), tempVars)
+        integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('cell'), tempVars)
 
     if 'exterior_facet' in integrals.keys():
-        arg = Variable('std::tuple< RangeType, JacobianRangeType >', 'u')
+        arg = integrands.domainValueVariable('u')
 
-        predefined = {u: arg[0], du: arg[1]}
+        predefined = {derivatives_u[i]: arg[i] for i in range(len(derivatives_u))}
         predefined[x] = integrands.spatialCoordinate('x')
         predefined[n] = integrands.facetNormal('x')
         predefined[vol] = integrands.cellVolume()
         predefined[area] = integrands.facetArea()
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
-        integrands.boundary = generateUnaryCode(predefined, [phi, dphi], integrals['exterior_facet'], tempVars);
+        integrands.boundary = generateUnaryCode(predefined, derivatives_phi, integrals['exterior_facet'], tempVars);
 
-        predefined = {ubar: arg[0], dubar: arg[1]}
+        predefined = {derivatives_ubar[i]: arg[i] for i in range(len(derivatives_u))}
         predefined[x] = integrands.spatialCoordinate('x')
         predefined[n] = integrands.facetNormal('x')
         predefined[vol] = integrands.cellVolume()
         predefined[area] = integrands.facetArea()
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
-        integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('exterior_facet'), tempVars)
+        integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('exterior_facet'), tempVars)
 
     if 'interior_facet' in integrals.keys():
-        argIn = Variable('std::tuple< RangeType, JacobianRangeType >', 'uIn')
-        argOut = Variable('std::tuple< RangeType, JacobianRangeType >', 'uOut')
+        argIn = integrands.domainValueVariable('uIn')
+        argOut = integrands.domainValueVariable('uOut')
 
-        predefined = {u('+'): argIn[0], du('+'): argIn[1], u('-'): argOut[0], du('-'): argOut[1]}
+        predefined = {derivatives_u[i](s): arg[i] for i in range(len(derivatives_u)) for s, arg in (('+', argIn), ('-', argOut))}
         predefined[x] = integrands.spatialCoordinate('xIn')
         predefined[n('+')] = integrands.facetNormal('xIn')
         predefined[vol('+')] = integrands.cellVolume('Side::in')
@@ -494,9 +505,9 @@ def compileUFL(equation, tempVars=True):
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'xIn', 'Side::in')
         predefineCoefficients(predefined, 'xOut', 'Side::out')
-        integrands.skeleton = generateBinaryCode(predefined, [phi, dphi], integrals['interior_facet'], tempVars)
+        integrands.skeleton = generateBinaryCode(predefined, derivatives_phi, integrals['interior_facet'], tempVars)
 
-        predefined = {ubar('+'): argIn[0], dubar('+'): argIn[1], ubar('-'): argOut[0], dubar('-'): argOut[1]}
+        predefined = {derivatives_ubar[i](s): arg[i] for i in range(len(derivatives_u)) for s, arg in (('+', argIn), ('-', argOut))}
         predefined[x] = integrands.spatialCoordinate('xIn')
         predefined[n('+')] = integrands.facetNormal('xIn')
         predefined[vol('+')] = integrands.cellVolume('Side::in')
@@ -505,7 +516,7 @@ def compileUFL(equation, tempVars=True):
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'xIn', 'Side::in')
         predefineCoefficients(predefined, 'xOut', 'Side::out')
-        integrands.linearizedSkeleton = generateBinaryLinearizedCode(predefined, [phi, dphi], [u, du], linearizedIntegrals.get('interior_facet'), tempVars)
+        integrands.linearizedSkeleton = generateBinaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('interior_facet'), tempVars)
 
     coefficients.update(constants)
     return integrands, coefficients
