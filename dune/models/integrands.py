@@ -70,11 +70,11 @@ class Integrands():
         else:
             raise ValueError('No C++ type defined for tensors of shape ' + str(shape) + '.')
 
-    def domainValueVariable(self, name):
-        return Variable('std::tuple< ' + ', '.join([self._cppTensor(v) for v in self.domainValue]) + ' >', name)
+    def domainValueTuple(self):
+        return 'std::tuple< ' + ', '.join([self._cppTensor(v) for v in self.domainValue]) + ' >'
 
-    def rangeValueVariable(self, name):
-        return Variable('std::tuple< ' + ', '.join([self._cppTensor(v) for v in self.rangeValue]) + ' >', name)
+    def rangeValueTuple(self):
+        return 'std::tuple< ' + ', '.join([self._cppTensor(v) for v in self.rangeValue]) + ' >'
 
     def addCoefficient(self, field, dimRange):
         idx = len(self._coefficients)
@@ -118,8 +118,8 @@ class Integrands():
 
         result.append(TypeAlias("GlobalCoordinateType", "typename EntityType::Geometry::GlobalCoordinate"))
 
-        result.append(TypeAlias("DomainValueType", "std::tuple< " + ', '.join([self._cppTensor(v) for v in self.domainValue]) + " >"))
-        result.append(TypeAlias("RangeValueType", "std::tuple< " + ', '.join([self._cppTensor(v) for v in self.rangeValue]) + " >"))
+        result.append(TypeAlias("DomainValueType", self.domainValueTuple()))
+        result.append(TypeAlias("RangeValueType", self.rangeValueTuple()))
 
         constants = ["std::shared_ptr< " + c + " >" for c in self._constants]
         if constants:
@@ -455,7 +455,7 @@ def compileUFL(equation, tempVars=True):
                 coefficient = Grad(coefficient)
 
     if 'cell' in integrals.keys():
-        arg = integrands.domainValueVariable('u')
+        arg = Variable(integrands.domainValueTuple(), 'u')
 
         predefined = {derivatives_u[i]: arg[i] for i in range(len(derivatives_u))}
         predefined[x] = integrands.spatialCoordinate('x')
@@ -472,7 +472,7 @@ def compileUFL(equation, tempVars=True):
         integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('cell'), tempVars)
 
     if 'exterior_facet' in integrals.keys():
-        arg = integrands.domainValueVariable('u')
+        arg = Variable(integrands.domainValueTuple(), 'u')
 
         predefined = {derivatives_u[i]: arg[i] for i in range(len(derivatives_u))}
         predefined[x] = integrands.spatialCoordinate('x')
@@ -493,8 +493,8 @@ def compileUFL(equation, tempVars=True):
         integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('exterior_facet'), tempVars)
 
     if 'interior_facet' in integrals.keys():
-        argIn = integrands.domainValueVariable('uIn')
-        argOut = integrands.domainValueVariable('uOut')
+        argIn = Variable(integrands.domainValueTuple(), 'uIn')
+        argOut = Variable(integrands.domainValueTuple(), 'uOut')
 
         predefined = {derivatives_u[i](s): arg[i] for i in range(len(derivatives_u)) for s, arg in (('+', argIn), ('-', argOut))}
         predefined[x] = integrands.spatialCoordinate('xIn')
@@ -586,6 +586,8 @@ def load(grid, integrands, renumbering=None, tempVars=True):
     writer.close()
 
     module = builder.load(name, source, "integrands")
+    setattr(module.Integrands, "_domainValueType", integrands.domainValueTuple())
+    setattr(module.Integrands, "_rangeValueType", integrands.rangeValueTuple())
     if renumbering is not None:
         module.Integrands._setConstant = module.Integrands.__dict__['setConstant']
         module.Integrands._setCoefficient = module.Integrands.__dict__['setCoefficient']

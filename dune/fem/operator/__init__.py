@@ -34,9 +34,7 @@ def galerkin(integrands, domainSpace, rangeSpace=None):
     includes += domainSpace._includes + domainFunctionIncludes
     includes += rangeSpace._includes + rangeFunctionIncludes
 
-    domainValueType = 'std::tuple< typename ' + domainSpaceType + '::RangeType, typename ' + domainSpaceType + '::JacobianRangeType >'
-    rangeValueType = 'std::tuple< typename ' + rangeSpaceType + '::RangeType, typename ' + rangeSpaceType + '::JacobianRangeType >'
-    integrandsType = 'Dune::Fem::VirtualizedIntegrands< typename ' + rangeSpaceType + '::GridPartType, ' + domainValueType + ', ' + rangeValueType + ' >'
+    integrandsType = 'Dune::Fem::VirtualizedIntegrands< typename ' + rangeSpaceType + '::GridPartType, ' + integrands._domainValueType + ', ' + integrands._rangeValueType + ' >'
 
     typeName = 'Dune::Fem::GalerkinOperator< ' + integrandsType + ', ' + domainFunctionType + ', ' + rangeFunctionType + ' >'
 
