@@ -21,9 +21,27 @@ from dune.ufl.linear import splitForm
 import dune.ufl.tensors as tensors
 
 class Integrands():
-    def __init__(self, dimRange, signature):
-        self.dimRange = dimRange
+    def __init__(self, signature, domainValue, rangeValue=None):
+        """construct new integrands
+
+        Args:
+            signature:    unique signature for these integrands
+            domainValue:  structure of domain value tuple
+            rangeVlue:    structure of range value tuple
+
+        Returns:
+            Integrands: newly constructed integrands
+
+        The tuples domainValue and rangeValue contain the shapes of the
+        corresponding value types for these integrands.
+        """
+        if rangeValue is None:
+            rangeValue = domainValue
+
         self.signature = signature
+        self.domainValue = domainValue
+        self.rangeValue = rangeValue
+
         self.field = "double"
         self._constants = []
         self._coefficients = []
@@ -38,6 +56,16 @@ class Integrands():
         self.linearizedSkeleton = None
 
         self._derivatives = [('RangeType', 'evaluate'), ('JacobianRangeType', 'jacobian'), ('HessianRangeType', 'hessian')]
+
+    def _cppTensor(self, shape):
+        if len(shape) == 1:
+            return 'Dune::FieldVector< double, ' + str(shape[0]) + ' >'
+        elif len(shape) == 2:
+            return 'Dune::FieldMatrix< double, ' + str(shape[0]) + ', ' + str(shape[1]) + ' >'
+        elif len(shape) == 3:
+            return 'Dune::FieldVector< Dune::FieldMatrix< double, ' + str(shape[1]) + ', ' + str(shape[2]) + ' >, ' + str(shape[0]) + ' >'
+        else:
+            raise ValueError('No C++ type defined for tensors of shape ' + str(shape) + '.')
 
     def addCoefficient(self, field, dimRange):
         idx = len(self._coefficients)
@@ -59,10 +87,10 @@ class Integrands():
         return (UnformattedExpression('typename CoefficientFunctionSpaceType< ' + str(idx) + ' >::' + t, n + 'Coefficient< ' + ', '.join(targs) + ' >( ' + x + ' )') for t, n in self._derivatives)
 
     def spatialCoordinate(self, x):
-        return UnformattedExpression('DomainType', 'entity().geometry().global( Dune::Fem::coordinate( ' + x + ' ) )')
+        return UnformattedExpression('GlobalCoordinateType', 'entity().geometry().global( Dune::Fem::coordinate( ' + x + ' ) )')
 
     def facetNormal(self, x):
-        return UnformattedExpression('DomainType', 'intersection_.unitOuterNormal( ' + x + '.localPosition() )')
+        return UnformattedExpression('GlobalCoordinateType', 'intersection_.unitOuterNormal( ' + x + '.localPosition() )')
 
     def cellVolume(self, side=None):
         entity = 'entity()' if side is None else 'entity_[ static_cast< std::size_t >( ' + side + ' ) ]'
@@ -75,25 +103,21 @@ class Integrands():
         result = []
 
         result.append(TypeAlias("GridPartType", "GridPart"))
-        result.append(TypeAlias("RangeFieldType", SourceWriter.cpp_fields(self.field)))
-
-        result.append(Declaration(Variable("const int", "dimRange"), str(self.dimRange), static=True))
-        result.append(Declaration(Variable("const int", "dimDomain"), "GridPartType::dimensionworld", static=True))
-        result.append(Declaration(Variable("const int", "dimLocal"), "GridPartType::dimension", static=True))
 
         result.append(TypeAlias("EntityType", "typename GridPart::template Codim< 0 >::EntityType"))
         result.append(TypeAlias("IntersectionType", "typename GridPart::IntersectionType"))
-        result.append(TypeAlias("FunctionSpaceType", "Dune::Fem::FunctionSpace< double, RangeFieldType, dimDomain, dimRange >"))
 
-        for s in ["DomainType", "RangeType", "JacobianRangeType"]:
-            result.append(TypeAlias(s, "typename FunctionSpaceType::" + s))
-        result.append(TypeAlias("DomainValueType", "std::tuple< RangeType, JacobianRangeType >"))
-        result.append(TypeAlias("RangeValueType", "std::tuple< RangeType, JacobianRangeType >"))
+        result.append(TypeAlias("GlobalCoordinateType", "typename EntityType::Geometry::GlobalCoordinate"))
+
+        result.append(TypeAlias("DomainValueType", "std::tuple< " + ', '.join([self._cppTensor(v) for v in self.domainValue]) + " >"))
+        result.append(TypeAlias("RangeValueType", "std::tuple< " + ', '.join([self._cppTensor(v) for v in self.rangeValue]) + " >"))
 
         constants = ["std::shared_ptr< " + c + " >" for c in self._constants]
-        result.append(TypeAlias("ConstantTupleType", "std::tuple< " + ", ".join(constants) + " >"))
         if constants:
+            result.append(TypeAlias("ConstantTupleType", "std::tuple< " + ", ".join(constants) + " >"))
             result.append(TypeAlias("ConstantsRangeType", "typename std::tuple_element_t< i, ConstantTupleType >::element_type", targs=["std::size_t i"]))
+        else:
+            result.append(TypeAlias("ConstantTupleType", "std::tuple<>"))
 
         if self._coefficients:
             coefficientSpaces = [('Dune::Fem::FunctionSpace< double,' + SourceWriter.cpp_fields(c['field']) + ', dimDomain, ' + str(c['dimRange']) + ' >') for c in self._coefficients]
@@ -385,7 +409,7 @@ def compileUFL(equation, tempVars=True):
     dubar = Grad(ubar)
     d2ubar = Grad(dubar)
 
-    integrands = Integrands(dimRange, form.signature())
+    integrands = Integrands(form.signature(), (u.ufl_shape, du.ufl_shape), (phi.ufl_shape, dphi.ufl_shape))
     try:
         integrands.field = u.ufl_function_space().ufl_element().field()
     except AttributeError:
