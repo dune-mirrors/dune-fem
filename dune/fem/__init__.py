@@ -8,6 +8,7 @@ from ._adaptation import adapt, loadBalance
 from . import view as view
 from . import space as space
 from . import discretefunction as discretefunction
+from . import operator as operator
 from . import scheme as scheme
 from . import function as function
 from . import model as model
@@ -30,6 +31,9 @@ registry["discretefunction"] = {
          "istl"     : discretefunction.istl,
          "eigen"    : discretefunction.eigen
      }
+registry["operator"] = {
+        "galerkin"   : operator.galerkin
+    }
 registry["solver"] = {
          "fem"         : discretefunction.femsolver,
          "pardg"       : discretefunction.pardgsolver,
