@@ -400,8 +400,7 @@ namespace Dune
       {
         const SubEntityFilter filter( RefElementsType::general( element.type() ), i, c );
         indices.resize( numEntityDofs( element ) );
-        typedef typename DofMapperCode::ConstIterator Iterator;
-        code( element )( [ this, &indices, &filter ] ( unsigned int gtIndex, unsigned int subEntity, Iterator begin, Iterator end ) {
+        code( element )( [ this, &indices, &filter ] ( unsigned int gtIndex, unsigned int subEntity, auto begin, auto end ) {
             const bool active = filter( subEntity, subEntityInfo_[ gtIndex ].codim );
             while( begin != end )
               indices[ *(begin++) ] = active;
