@@ -1,5 +1,9 @@
 from __future__ import division, print_function
 
+from ufl.algorithms import expand_indices
+from ufl.algorithms.apply_derivatives import apply_derivatives
+from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering
+from ufl.algorithms.apply_restrictions import apply_restrictions
 from ufl.corealg.map_dag import map_expr_dags
 from ufl.corealg.multifunction import MultiFunction
 from ufl.argument import Argument
@@ -224,6 +228,7 @@ class CodeGenerator(MultiFunction):
 
 
 def generateCode(predefined, expressions, coefficients=None, tempVars=True):
+    expressions = [expand_indices(apply_derivatives(apply_algebra_lowering(expr))) for expr in expressions]
     generator = CodeGenerator(predefined, coefficients, tempVars)
     results = map_expr_dags(generator, expressions)
     return list(generator.using) + generator.code, results
