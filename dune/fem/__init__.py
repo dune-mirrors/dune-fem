@@ -21,9 +21,10 @@ registry["view"] = {
          "geometry"   : view.geometryGridView
      }
 registry["space"] = {
-         "Lagrange"   : space.lagrange,
-         "DGONB"      : space.dgonb,
-         "P1Bubble"   : space.p1Bubble
+         "Lagrange"     : space.lagrange,
+         "DGONB"        : space.dgonb,
+         "FiniteVolume" : space.finiteVolume,
+         "P1Bubble"     : space.p1Bubble
      }
 registry["discretefunction"] = {
          "adaptive" : discretefunction.adaptive,

@@ -78,6 +78,36 @@ def lagrange(view, order=1, dimrange=1, field="double", storage=None, **unused):
 
     return module(field, storage, includes, typeName).Space(view)
 
+
+def finiteVolume(gridview, dimrange=1, field="double", storage=None, **unused):
+    """create a finite volume space
+
+    A finite volume space is a discontinuous function space, using the element
+    indicator function as its sole basis function.
+
+    Args:
+        gridview: the underlying grid view
+        dimrange: dimension of the range space
+        field: field of the range space
+        storage: underlying linear algebra backend
+
+    Returns:
+        Space: the constructed Space
+    """
+
+    from dune.fem.space import module
+    if dimrange < 1:
+        raise KeyError("invalid dimRange: " + str(dimrange) + " (must be >= 1)")
+    if field == "complex":
+        field = "std::complex<double>"
+
+    includes = ["dune/fem/space/finitevolume.hh" ] + gridview._includes
+    functionSpaceType = "Dune::Fem::FunctionSpace< double, " + field + ", " + str(gridview.dimWorld) + ", " + str(dimrange) + " >"
+    typeName = "Dune::Fem::FiniteVolumeSpace< " + functionSpaceType + ", Dune::FemPy::GridPart< " + gridview._typeName + " > >"
+
+    return module(field, storage, includes, typeName).Space(gridview)
+
+
 def p1Bubble(gridview, dimrange=1, field="double", order=1, storage=None, **unused):
     """create a P1 space enriched with element bubble functions
 
