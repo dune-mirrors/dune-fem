@@ -1,5 +1,6 @@
 add_subdirectory(common)
 add_subdirectory(function)
+add_subdirectory(geometry)
 add_subdirectory(grid)
 add_subdirectory(py)
 add_subdirectory(quadrature)
