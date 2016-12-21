@@ -2,7 +2,9 @@ from __future__ import division, print_function
 
 from types import MethodType, ModuleType
 
-from ufl import CellVolume, Coefficient, FacetArea, FacetNormal, Form, SpatialCoordinate
+from ufl import Coefficient, FacetNormal, Form, SpatialCoordinate
+from ufl import CellVolume, MinCellEdgeLength, MaxCellEdgeLength
+from ufl import FacetArea, MinFacetEdgeLength, MaxFacetEdgeLength
 from ufl import action, derivative
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.algorithms import Replacer
@@ -14,8 +16,9 @@ from ufl.differentiation import Grad
 from dune.generator import builder
 
 from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, Struct, TypeAlias, UnformattedExpression, Using, Variable
-from dune.source.cplusplus import construct, coordinate, lambda_, make_pair, makeExpression, return_
+from dune.source.cplusplus import construct, coordinate, lambda_, make_pair, makeExpression, maxEdgeLength, minEdgeLength, return_
 from dune.source.cplusplus import SourceWriter
+from dune.source.algorithm.extractincludes import extractIncludesFromStatements
 from dune.source.algorithm.extractvariables import extractVariablesFromExpressions, extractVariablesFromStatements
 
 from dune.ufl import codegen
@@ -105,8 +108,15 @@ class Integrands():
         entity = 'entity()' if side is None else 'entity_[ static_cast< std::size_t >( ' + side + ' ) ]'
         return UnformattedExpression('auto', entity + '.geometry().volume()')
 
+    def cellGeometry(self, side=None):
+        entity = 'entity()' if side is None else 'entity_[ static_cast< std::size_t >( ' + side + ' ) ]'
+        return UnformattedExpression('auto', entity + '.geometry()')
+
     def facetArea(self):
         return UnformattedExpression('auto', 'intersection_.geometry().volume()')
+
+    def facetGeometry(self):
+        return UnformattedExpression('auto', 'intersection_.geometry()')
 
     def pre(self):
         result = []
@@ -261,6 +271,9 @@ class Integrands():
 
         return result
 
+    def includes(self):
+        return set.union(*[extractIncludesFromStatements(stmts) for stmts in (self.interior, self.linearizedInterior, self.boundary, self.linearizedBoundary, self.skeleton, self.linearizedSkeleton)])
+
     def code(self, name='Integrands', targs=[]):
         result = Struct(name, targs=(['class GridPart'] + targs + ['class... Coefficients']))
         result.append(self.pre())
@@ -406,8 +419,14 @@ def compileUFL(equation, tempVars=True):
 
     x = SpatialCoordinate(form.ufl_cell())
     n = FacetNormal(form.ufl_cell())
-    vol = CellVolume(form.ufl_cell())
-    area = FacetArea(form.ufl_cell())
+
+    cellVolume = CellVolume(form.ufl_cell())
+    maxCellEdgeLength = MaxCellEdgeLength(form.ufl_cell())
+    minCellEdgeLength = MinCellEdgeLength(form.ufl_cell())
+
+    facetArea = FacetArea(form.ufl_cell())
+    maxFacetEdgeLength = MaxFacetEdgeLength(form.ufl_cell())
+    minFacetEdgeLength = MinFacetEdgeLength(form.ufl_cell())
 
     phi = form.arguments()[0]
 
@@ -459,14 +478,18 @@ def compileUFL(equation, tempVars=True):
 
         predefined = {derivatives_u[i]: arg[i] for i in range(len(derivatives_u))}
         predefined[x] = integrands.spatialCoordinate('x')
-        predefined[vol] = integrands.cellVolume()
+        predefined[cellVolume] = integrands.cellVolume()
+        predefined[maxCellEdgeLength] = maxEdgeLength(integrands.cellGeometry())
+        predefined[minCellEdgeLength] = minEdgeLength(integrands.cellGeometry())
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.interior = generateUnaryCode(predefined, derivatives_phi, integrals['cell'], tempVars)
 
         predefined = {derivatives_ubar[i]: arg[i] for i in range(len(derivatives_u))}
         predefined[x] = integrands.spatialCoordinate('x')
-        predefined[vol] = integrands.cellVolume()
+        predefined[cellVolume] = integrands.cellVolume()
+        predefined[maxCellEdgeLength] = maxEdgeLength(integrands.cellGeometry())
+        predefined[minCellEdgeLength] = minEdgeLength(integrands.cellGeometry())
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('cell'), tempVars)
@@ -477,8 +500,12 @@ def compileUFL(equation, tempVars=True):
         predefined = {derivatives_u[i]: arg[i] for i in range(len(derivatives_u))}
         predefined[x] = integrands.spatialCoordinate('x')
         predefined[n] = integrands.facetNormal('x')
-        predefined[vol] = integrands.cellVolume()
-        predefined[area] = integrands.facetArea()
+        predefined[cellVolume] = integrands.cellVolume()
+        predefined[maxCellEdgeLength] = maxEdgeLength(integrands.cellGeometry())
+        predefined[minCellEdgeLength] = minEdgeLength(integrands.cellGeometry())
+        predefined[facetArea] = integrands.facetArea()
+        predefined[maxFacetEdgeLength] = maxEdgeLength(integrands.facetGeometry())
+        predefined[minFacetEdgeLength] = minEdgeLength(integrands.facetGeometry())
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.boundary = generateUnaryCode(predefined, derivatives_phi, integrals['exterior_facet'], tempVars);
@@ -486,8 +513,12 @@ def compileUFL(equation, tempVars=True):
         predefined = {derivatives_ubar[i]: arg[i] for i in range(len(derivatives_u))}
         predefined[x] = integrands.spatialCoordinate('x')
         predefined[n] = integrands.facetNormal('x')
-        predefined[vol] = integrands.cellVolume()
-        predefined[area] = integrands.facetArea()
+        predefined[cellVolume] = integrands.cellVolume()
+        predefined[maxCellEdgeLength] = maxEdgeLength(integrands.cellGeometry())
+        predefined[minCellEdgeLength] = minEdgeLength(integrands.cellGeometry())
+        predefined[facetArea] = integrands.facetArea()
+        predefined[maxFacetEdgeLength] = maxEdgeLength(integrands.facetGeometry())
+        predefined[minFacetEdgeLength] = minEdgeLength(integrands.facetGeometry())
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
         integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('exterior_facet'), tempVars)
@@ -499,9 +530,15 @@ def compileUFL(equation, tempVars=True):
         predefined = {derivatives_u[i](s): arg[i] for i in range(len(derivatives_u)) for s, arg in (('+', argIn), ('-', argOut))}
         predefined[x] = integrands.spatialCoordinate('xIn')
         predefined[n('+')] = integrands.facetNormal('xIn')
-        predefined[vol('+')] = integrands.cellVolume('Side::in')
-        predefined[vol('-')] = integrands.cellVolume('Side::out')
-        predefined[area] = integrands.facetArea()
+        predefined[cellVolume('+')] = integrands.cellVolume('Side::in')
+        predefined[cellVolume('-')] = integrands.cellVolume('Side::out')
+        predefined[maxCellEdgeLength('+')] = maxEdgeLength(integrands.cellGeometry('Side::in'))
+        predefined[maxCellEdgeLength('-')] = maxEdgeLength(integrands.cellGeometry('Side::out'))
+        predefined[minCellEdgeLength('+')] = minEdgeLength(integrands.cellGeometry('Side::in'))
+        predefined[minCellEdgeLength('-')] = minEdgeLength(integrands.cellGeometry('Side::out'))
+        predefined[facetArea] = integrands.facetArea()
+        predefined[maxFacetEdgeLength] = maxEdgeLength(integrands.facetGeometry())
+        predefined[minFacetEdgeLength] = minEdgeLength(integrands.facetGeometry())
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'xIn', 'Side::in')
         predefineCoefficients(predefined, 'xOut', 'Side::out')
@@ -510,9 +547,15 @@ def compileUFL(equation, tempVars=True):
         predefined = {derivatives_ubar[i](s): arg[i] for i in range(len(derivatives_u)) for s, arg in (('+', argIn), ('-', argOut))}
         predefined[x] = integrands.spatialCoordinate('xIn')
         predefined[n('+')] = integrands.facetNormal('xIn')
-        predefined[vol('+')] = integrands.cellVolume('Side::in')
-        predefined[vol('-')] = integrands.cellVolume('Side::out')
-        predefined[area] = integrands.facetArea()
+        predefined[cellVolume('+')] = integrands.cellVolume('Side::in')
+        predefined[cellVolume('-')] = integrands.cellVolume('Side::out')
+        predefined[maxCellEdgeLength('+')] = maxEdgeLength(integrands.cellGeometry('Side::in'))
+        predefined[maxCellEdgeLength('-')] = maxEdgeLength(integrands.cellGeometry('Side::out'))
+        predefined[minCellEdgeLength('+')] = minEdgeLength(integrands.cellGeometry('Side::in'))
+        predefined[minCellEdgeLength('-')] = minEdgeLength(integrands.cellGeometry('Side::out'))
+        predefined[facetArea] = integrands.facetArea()
+        predefined[maxFacetEdgeLength] = maxEdgeLength(integrands.facetGeometry())
+        predefined[minFacetEdgeLength] = minEdgeLength(integrands.facetGeometry())
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'xIn', 'Side::in')
         predefineCoefficients(predefined, 'xOut', 'Side::out')
@@ -546,11 +589,16 @@ def load(grid, integrands, renumbering=None, tempVars=True):
         grid = grid._module
     name = 'integrands_' + integrands.signature + "_" + grid._moduleName
 
+    includes = integrands.includes()
+
     writer = SourceWriter()
 
     writer.emit("".join(["#include <" + i + ">\n" for i in grid._includes]))
-    writer.emit('')
-    writer.emit('#include <dune/fem/misc/boundaryidprovider.hh>')
+    #writer.emit('')
+    #writer.emit('#include <dune/fem/misc/boundaryidprovider.hh>')
+    if includes:
+        writer.emit('')
+        writer.emit(['#include <' + i + '>' for i in includes])
     writer.emit('')
     writer.emit('#include <dune/corepy/pybind11/pybind11.h>')
     writer.emit('#include <dune/corepy/pybind11/extensions.h>')

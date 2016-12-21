@@ -134,9 +134,15 @@ class CodeGenerator(MultiFunction):
     def lt(self, expr, left, right):
         return left < right
 
+    max_cell_edge_length = _require_predefined
+    max_facet_edge_length = _require_predefined
+
     def max_value(self, expr, left, right):
         self.using.add(Using(cplusplus.max_))
         return self._makeTmp(cplusplus.max_(left, right))
+
+    min_cell_edge_length = _require_predefined
+    min_facet_edge_length = _require_predefined
 
     def min_value(self, expr, left, right):
         self.using.add(Using(cplusplus.min_))

@@ -55,3 +55,6 @@ def get(i):
 make_pair = BuiltInFunction('utility', 'std::pair< U, V >', 'make_pair', targs=['class U', 'class V'], args=['const U &left', 'const V &right'])
 
 coordinate = BuiltInFunction('dune/fem/common/coordinate.hh', 'X', 'coordinate', namespace='Dune::Fem', targs=['class X'], args=['const X &x'])
+
+maxEdgeLength = BuiltInFunction('dune/fempy/geometry/edgelength.hh', 'typename Geometry::ctype', 'maxEdgeLength', namespace='Dune::FemPy', targs=['class Geometry'], args=['const Geometry &geometry'])
+minEdgeLength = BuiltInFunction('dune/fempy/geometry/edgelength.hh', 'typename Geometry::ctype', 'minEdgeLength', namespace='Dune::FemPy', targs=['class Geometry'], args=['const Geometry &geometry'])
