@@ -49,7 +49,7 @@ namespace Dune
 
       const auto &refElement = ReferenceElements< ctype, dim >::general( geometry.type() );
 
-      ctype maxEdgeLength = std::numeric_limits< ctype >::max();
+      ctype maxEdgeLength( 0 );
       for( int i = 0, n = refElement.size( dim-1 ); i < n; ++i )
         maxEdgeLength = std::max( maxEdgeLength, edgeLength( geometry, refElement.template geometry< dim-1 >( i ) ) );
 
@@ -69,7 +69,7 @@ namespace Dune
 
       const auto &refElement = ReferenceElements< ctype, dim >::general( geometry.type() );
 
-      ctype minEdgeLength( 0 );
+      ctype minEdgeLength = std::numeric_limits< ctype >::max();
       for( int i = 0, n = refElement.size( dim-1 ); i < n; ++i )
         minEdgeLength = std::min( minEdgeLength, edgeLength( geometry, refElement.template geometry< dim-1 >( i ) ) );
 
