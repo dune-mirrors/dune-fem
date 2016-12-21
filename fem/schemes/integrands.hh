@@ -419,12 +419,10 @@ namespace Dune
         : VirtualizedIntegrands( FullIntegrands< std::decay_t< Integrands > >( std::move( integrands ) ) )
       {}
 
-      //VirtualizedIntegrands ( const This &other ) : impl_( other ? other.impl().clone() : nullptr ) {}
-      VirtualizedIntegrands ( const This &other ) = delete;
+      VirtualizedIntegrands ( const This &other ) : impl_( other ? other.impl().clone() : nullptr ) {}
       VirtualizedIntegrands ( This && ) = default;
 
-      //VirtualizedIntegrands &operator= ( const This &other ) { impl_.reset( other ? other.impl().clone() : nullptr ); }
-      VirtualizedIntegrands &operator= ( const This &other ) = delete;
+      VirtualizedIntegrands &operator= ( const This &other ) { impl_.reset( other ? other.impl().clone() : nullptr ); }
       VirtualizedIntegrands &operator= ( This && ) = default;
 
       explicit operator bool () const { return static_cast< bool >( impl_ ); }
