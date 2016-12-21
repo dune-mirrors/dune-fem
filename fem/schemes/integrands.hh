@@ -405,21 +405,26 @@ namespace Dune
         Impl impl_;
       };
 
+      template< class Integrands >
+      using isVirtualized = std::is_same< std::decay_t< decltype( std::ref( std::declval< Integrands & >() ).get() ) >, This >;
+
     public:
-      template< class Integrands, std::enable_if_t< IntegrandsTraits< std::decay_t< Integrands > >::isFull && !std::is_same< std::decay_t< Integrands >, This >::value, int > = 0 >
+      template< class Integrands, std::enable_if_t< IntegrandsTraits< std::decay_t< Integrands > >::isFull && !isVirtualized< Integrands >::value, int > = 0 >
       explicit VirtualizedIntegrands ( Integrands integrands )
         : impl_( new Implementation< Integrands >( std::move( integrands ) ) )
       {}
 
-      template< class Integrands, std::enable_if_t< !IntegrandsTraits< Integrands >::isFull, int > = 0 >
+      template< class Integrands, std::enable_if_t< !IntegrandsTraits< Integrands >::isFull && !isVirtualized< Integrands >::value, int > = 0 >
       explicit VirtualizedIntegrands ( Integrands integrands )
         : VirtualizedIntegrands( FullIntegrands< std::decay_t< Integrands > >( std::move( integrands ) ) )
       {}
 
-      VirtualizedIntegrands ( const This &other ) : impl_( other ? other.impl().clone() : nullptr ) {}
+      //VirtualizedIntegrands ( const This &other ) : impl_( other ? other.impl().clone() : nullptr ) {}
+      VirtualizedIntegrands ( const This &other ) = delete;
       VirtualizedIntegrands ( This && ) = default;
 
-      VirtualizedIntegrands &operator= ( const This &other ) { impl_.reset( other ? other.impl().clone() : nullptr ); }
+      //VirtualizedIntegrands &operator= ( const This &other ) { impl_.reset( other ? other.impl().clone() : nullptr ); }
+      VirtualizedIntegrands &operator= ( const This &other ) = delete;
       VirtualizedIntegrands &operator= ( This && ) = default;
 
       explicit operator bool () const { return static_cast< bool >( impl_ ); }
