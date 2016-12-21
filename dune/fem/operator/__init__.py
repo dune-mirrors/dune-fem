@@ -40,7 +40,7 @@ def galerkin(integrands, domainSpace, rangeSpace=None):
 
     ctors = []
     ctors.append(['[] ( ' + typeName + ' &self, pybind11::object gridView, ' + integrandsType + ' &integrands ) {',
-                  '    new (&self) ' + typeName + '( Dune::FemPy::gridPart< typename ' + rangeSpaceType + '::GridPartType::GridViewType >( gridView ), std::ref( integrands ) );',
+                  '    new (&self) ' + typeName + '( Dune::FemPy::gridPart< typename ' + rangeSpaceType + '::GridPartType::GridViewType >( gridView ), integrands );',
                   '  }, "grid"_a, "integrands"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 3 >()'])
 
     return load(includes, typeName, ctors).Operator(rangeSpace.grid, integrands)
