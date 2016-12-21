@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SCHEMES_INTEGRANDS_HH
 #define DUNE_FEM_SCHEMES_INTEGRANDS_HH
 
+#include <cassert>
+
 #include <algorithm>
 #include <functional>
 #include <tuple>
@@ -422,88 +424,91 @@ namespace Dune
 
       explicit operator bool () const { return static_cast< bool >( impl_ ); }
 
-      bool init ( const EntityType &entity ) { return impl_->init( entity ); }
-      bool init ( const IntersectionType &intersection ) { return impl_->init( intersection ); }
+      bool init ( const EntityType &entity ) { return impl().init( entity ); }
+      bool init ( const IntersectionType &intersection ) { return impl().init( intersection ); }
 
-      bool hasInterior () const { return impl_->hasInterior(); }
+      bool hasInterior () const { return impl().hasInterior(); }
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       RangeValueType interior ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
-        return impl_->interior( InteriorCachingPointType( x ), u );
+        return impl().interior( InteriorCachingPointType( x ), u );
       }
 
       template< class Quadrature, std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       RangeValueType interior ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
-        return impl_->interior( InteriorElementPointType( x ), u );
+        return impl().interior( InteriorElementPointType( x ), u );
       }
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       auto linearizedInterior ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
-        return impl_->linearizedInterior( InteriorCachingPointType( x ), u );
+        return impl().linearizedInterior( InteriorCachingPointType( x ), u );
       }
 
       template< class Quadrature, std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       auto linearizedInterior ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
-        return impl_->linearizedInterior( InteriorElementPointType( x ), u );
+        return impl().linearizedInterior( InteriorElementPointType( x ), u );
       }
 
-      bool hasBoundary () const { return impl_->hasBoundary(); }
+      bool hasBoundary () const { return impl().hasBoundary(); }
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       RangeValueType boundary ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
-        return impl_->boundary( SurfaceCachingPointType( x ), u );
+        return impl().boundary( SurfaceCachingPointType( x ), u );
       }
 
       template< class Quadrature, std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       RangeValueType boundary ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
-        return impl_->boundary( SurfaceElementPointType( x ), u );
+        return impl().boundary( SurfaceElementPointType( x ), u );
       }
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       auto linearizedBoundary ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
-        return impl_->linearizedBoundary( SurfaceCachingPointType( x ), u );
+        return impl().linearizedBoundary( SurfaceCachingPointType( x ), u );
       }
 
       template< class Quadrature, std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       auto linearizedBoundary ( const Fem::QuadraturePointWrapper< Quadrature > &x, const DomainValueType &u ) const
       {
-        return impl_->linearizedBoundary( SurfaceElementPointType( x ), u );
+        return impl().linearizedBoundary( SurfaceElementPointType( x ), u );
       }
 
-      bool hasSkeleton () const { return impl_->hasSkeleton(); }
+      bool hasSkeleton () const { return impl().hasSkeleton(); }
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       std::pair< RangeValueType, RangeValueType > skeleton ( const Fem::QuadraturePointWrapper< Quadrature > &xIn, const DomainValueType &uIn, const Fem::QuadraturePointWrapper< Quadrature > &xOut, const DomainValueType &uOut ) const
       {
-        return impl_->skeleton( SurfaceCachingPointType( xIn ), uIn, SurfaceCachingPointType( xOut ), uOut );
+        return impl().skeleton( SurfaceCachingPointType( xIn ), uIn, SurfaceCachingPointType( xOut ), uOut );
       }
 
       template< class Quadrature, std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       std::pair< RangeValueType, RangeValueType > skeleton ( const Fem::QuadraturePointWrapper< Quadrature > &xIn, const DomainValueType &uIn, const Fem::QuadraturePointWrapper< Quadrature > &xOut, const DomainValueType &uOut ) const
       {
-        return impl_->skeleton( SurfaceElementPointType( xIn ), uIn, SurfaceElementPointType( xOut ), uOut );
+        return impl().skeleton( SurfaceElementPointType( xIn ), uIn, SurfaceElementPointType( xOut ), uOut );
       }
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       auto linearizedSkeleton ( const Fem::QuadraturePointWrapper< Quadrature > &xIn, const DomainValueType &uIn, const Fem::QuadraturePointWrapper< Quadrature > &xOut, const DomainValueType &uOut ) const
       {
-        return impl_->linearizedSkeleton( SurfaceCachingPointType( xIn ), uIn, SurfaceCachingPointType( xOut ), uOut );
+        return impl().linearizedSkeleton( SurfaceCachingPointType( xIn ), uIn, SurfaceCachingPointType( xOut ), uOut );
       }
 
       template< class Quadrature, std::enable_if_t< !std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       auto linearizedSkeleton ( const Fem::QuadraturePointWrapper< Quadrature > &xIn, const DomainValueType &uIn, const Fem::QuadraturePointWrapper< Quadrature > &xOut, const DomainValueType &uOut ) const
       {
-        return impl_->linearizedSkeleton( SurfaceElementPointType( xIn ), uIn, SurfaceElementPointType( xOut ), uOut );
+        return impl().linearizedSkeleton( SurfaceElementPointType( xIn ), uIn, SurfaceElementPointType( xOut ), uOut );
       }
 
     private:
+      const Interface &impl () const { assert( impl_ ); return *impl_; }
+      Interface &impl () { assert( impl_ ); return *impl_; }
+
       std::unique_ptr< Interface > impl_;
     };
 
