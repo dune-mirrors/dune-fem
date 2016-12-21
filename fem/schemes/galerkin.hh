@@ -43,7 +43,7 @@ namespace Dune
       {
         typedef std::conditional_t< Fem::IntegrandsTraits< Integrands >::isFull, Integrands, FullIntegrands< Integrands > > IntegrandsType;
 
-        typedef typename Integrands::GridPartType GridPartType;
+        typedef typename IntegrandsType::GridPartType GridPartType;
 
         typedef typename GridPartType::ctype ctype;
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
@@ -55,8 +55,8 @@ namespace Dune
         typedef CachingQuadrature< GridPartType, 1 > SurfaceQuadratureType;
         typedef QuadraturePointWrapper< SurfaceQuadratureType > SurfaceQuadraturePointType;
 
-        typedef typename Integrands::DomainValueType DomainValueType;
-        typedef typename Integrands::RangeValueType RangeValueType;
+        typedef typename IntegrandsType::DomainValueType DomainValueType;
+        typedef typename IntegrandsType::RangeValueType RangeValueType;
         typedef std::make_index_sequence< std::tuple_size< DomainValueType >::value > DomainValueIndices;
         typedef std::make_index_sequence< std::tuple_size< RangeValueType >::value > RangeValueIndices;
 
