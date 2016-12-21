@@ -1,5 +1,6 @@
 add_python_targets(ufl
   __init__
+  applyrestrictions
   codegen
   gatherderivatives
   latex
