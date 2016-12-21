@@ -103,10 +103,10 @@ class Integrands():
 
     def cellVolume(self, side=None):
         entity = 'entity()' if side is None else 'entity_[ static_cast< std::size_t >( ' + side + ' ) ]'
-        return UnformattedExpression('DomainFieldType', entity + '.geometry().volume()')
+        return UnformattedExpression('auto', entity + '.geometry().volume()')
 
     def facetArea(self):
-        return UnformattedExpression('DomainFieldType', 'intersection_.geometry().volume()')
+        return UnformattedExpression('auto', 'intersection_.geometry().volume()')
 
     def pre(self):
         result = []
