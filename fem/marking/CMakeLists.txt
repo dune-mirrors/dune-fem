@@ -1,4 +1,5 @@
 set(HEADERS
+  doerfler.hh
   localerror.hh
   maximum.hh
 )
