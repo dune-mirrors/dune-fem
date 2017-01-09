@@ -79,7 +79,6 @@ namespace Dune
         };
         template< class Functor >
         struct MapFunctor;
-        struct SubEntityFilterFunctor;
 
       public:
         typedef SizeType GlobalKeyType;
@@ -348,90 +347,7 @@ namespace Dune
         Functor functor_;
       };
 
-      template< class GridPart >
-      struct DofMapper< GridPart >::SubEntityFilterFunctor
-      {
-        static const bool isCartesian = Dune::Capabilities::
-          isCartesian< typename GridPart :: GridType > :: v ;
 
-        SubEntityFilterFunctor( const GridPart &gridPart, const std::vector< SubEntityInfo > &subEntityInfo,
-                                const ElementType &element, int i, int c,
-                                std::vector<bool> &vec )
-        : gridPart_( gridPart ),
-          subEntityInfo_( subEntityInfo ),
-          element_( element ),
-          vec_(vec),
-          filter_(RefElementsType::general( element.type() ), i,c)
-        {}
-
-        template< class Iterator >
-        void operator() ( unsigned int gtIndex, unsigned int subEntity, Iterator it, Iterator end )
-        {
-          enum { dimension = GridPart :: dimension };
-
-          const SubEntityInfo &info = subEntityInfo_[ gtIndex ];
-
-          const unsigned int codim = info.codim ;
-
-          const unsigned int numDofs = info.numDofs ;
-
-          bool active = filter_(subEntity,codim);
-
-          // for non-Cartesian grids check twist if on codim 1 noDofs > 1
-          // this should be the case for polOrder > 2
-          if( ! isCartesian && codim == dimension-1 && numDofs > 1 )
-          {
-            typedef typename GridPart::ctype FieldType ;
-            const Dune::ReferenceElement< FieldType, dimension > &refElem
-                = Dune::ReferenceElements< FieldType, dimension >::general( element_.type() );
-
-#ifndef NDEBUG
-            const int vxSize = refElem.size( subEntity, codim, dimension );
-            // two vertices per edge in 2d
-            assert( vxSize == 2 );
-#endif
-            const int vx[ 2 ] = { refElem.subEntity ( subEntity, codim, 0, dimension ),
-                                  refElem.subEntity ( subEntity, codim, 1, dimension ) };
-
-            // flip index if face is twisted
-            if( gridPart_.grid().localIdSet().subId( gridEntity( element_ ), vx[ 1 ], dimension )
-                < gridPart_.grid().localIdSet().subId( gridEntity( element_ ), vx[ 0 ], dimension ) )
-            {
-              std::vector< unsigned int > global( numDofs );
-              std::vector< unsigned int > local ( numDofs );
-
-              unsigned int count = 0 ;
-              while( it != end )
-              {
-                local [ count ] = *(it++);
-                ++count ;
-              }
-
-              unsigned int reverse = numDofs - 1;
-              for( unsigned int i=0; i<numDofs; ++ i, --reverse )
-              {
-                vec_[ local[i] ] = active;
-              }
-
-              // already did mapping, then return
-              return ;
-            }
-          }
-
-          // standard mapping
-          while( it != end )
-          {
-            vec_[ *(it++) ] = active;
-          }
-        }
-
-      private:
-        const GridPart& gridPart_;
-        const std::vector< SubEntityInfo > &subEntityInfo_;
-        const ElementType &element_;
-        std::vector<bool> &vec_;
-        SubEntityFilter filter_;
-      };
 
       // Implementation of DofMapper
       // ---------------------------
@@ -540,8 +456,14 @@ namespace Dune
       inline void DofMapper< GridPart >
         ::onSubEntity( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
       {
+        const SubEntityFilter filter( RefElementsType::general( element.type() ), i, c );
         indices.resize( numEntityDofs( element ) );
-        code( element )( SubEntityFilterFunctor( gridPart_, subEntityInfo_, element, i,c , indices ) );
+        typedef typename DofMapperCode::ConstIterator Iterator;
+        code( element )( [ this, &indices, &filter ] ( unsigned int gtIndex, unsigned int subEntity, Iterator begin, Iterator end ) {
+            const bool active = filter( subEntity, subEntityInfo_[ gtIndex ].codim );
+            while( begin != end )
+              indices[ *(begin++) ] = active;
+          } );
       }
 
       template< class GridPart >
