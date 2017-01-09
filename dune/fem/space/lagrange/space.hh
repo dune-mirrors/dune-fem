@@ -61,7 +61,7 @@ namespace Dune
       static const int polynomialOrder = polOrder;
 
       static const int localBlockSize = FunctionSpaceType::dimRange;
-      typedef IndexSetDofMapper< GridPartType > BlockMapperType;
+      typedef IndexSetDofMapper< GridPartType, std::conditional_t< Dune::Capabilities::isCartesian< typename GridPart::GridType >::v, DefaultLocalDofMapping< GridPart >, LagrangeLocalDofMapping< GridPart > > > BlockMapperType;
 
       static const int codimension = 0;
 
