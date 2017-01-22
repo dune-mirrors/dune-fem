@@ -10,6 +10,7 @@
 
 #include <dune/grid/common/grid.hh>
 
+#include <dune/fem/common/forloop.hh>
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/space/basisfunctionset/tuple.hh>
 #include <dune/fem/space/combinedspace/generic.hh>
@@ -143,7 +144,7 @@ namespace Dune
                                                            CommunicationDirection commDirection )
       {
         DiscreteFunctionSpaceTupleType tuple;
-        ForLoop< Constructor, 0, sizeof ... ( DiscreteFunctionSpaces ) -1 >::apply( tuple, gridPart, commInterface, commDirection );
+        Fem::ForLoop< Constructor, 0, sizeof ... ( DiscreteFunctionSpaces ) -1 >::apply( tuple, gridPart, commInterface, commDirection );
         return tuple;
       }
 

@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <tuple>
 
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 
 #include <dune/grid/common/backuprestore.hh>
 
@@ -191,7 +191,7 @@ namespace Dune
 
         // create all data
         Tuple *ret = new Tuple;
-        ForLoop< CreateData, 0, length-1 >::apply( *grid, *ret );
+        Fem::ForLoop< CreateData, 0, length-1 >::apply( *grid, *ret );
 
         if( newGrid )
         {
@@ -203,7 +203,7 @@ namespace Dune
         inStream >> time ;
 
         // now read all data
-        ForLoop< RestoreStream, 0, length-1 >::apply( inStream, *ret );
+        Fem::ForLoop< RestoreStream, 0, length-1 >::apply( inStream, *ret );
 
         if( Parameter :: verbose() )
           std::cout << "    FINISHED!" << std::endl;
@@ -229,7 +229,7 @@ namespace Dune
         InStreamType inStream( filename );
 
         // read all data now
-        ForLoop< RestoreStream, 0, length-1 >::apply( inStream, data );
+        Fem::ForLoop< RestoreStream, 0, length-1 >::apply( inStream, data );
       }
 
       //! write grid and data to given directory
@@ -254,7 +254,7 @@ namespace Dune
         outStream << time;
 
         // write data to stream
-        ForLoop< OutputStream, 0, length-1 >::apply( outStream, tuple );
+        Fem::ForLoop< OutputStream, 0, length-1 >::apply( outStream, tuple );
 
         // delete stream created by StreamFactory
         delete &outStream;
@@ -263,24 +263,24 @@ namespace Dune
       template< class Disp, class DINFO >
       static void addToDisplay ( Disp &disp, const DINFO *dinf, double time, Tuple &tuple )
       {
-        ForLoop< AddToDisplay, 0, length-1 >::apply( disp, dinf, time, tuple );
+        Fem::ForLoop< AddToDisplay, 0, length-1 >::apply( disp, dinf, time, tuple );
       }
 
       template< class Disp, class DINFO >
       static void addToDisplayOrRemove ( Disp &disp, const DINFO *dinf, double time, Tuple &tuple )
       {
-        ForLoop< AddToDisplayOrRemove, 0, length-1 >::apply( disp, dinf, time, tuple );
+        Fem::ForLoop< AddToDisplayOrRemove, 0, length-1 >::apply( disp, dinf, time, tuple );
       }
 
       template< class Disp >
       static void addToDisplay ( Disp &disp, Tuple &tuple )
       {
-        ForLoop< AddToDisplay, 0, length-1 >::apply( disp, tuple );
+        Fem::ForLoop< AddToDisplay, 0, length-1 >::apply( disp, tuple );
       }
 
       static void removeData ( Tuple &tuple )
       {
-        ForLoop< RemoveData, 0, length-1 >::apply( tuple );
+        Fem::ForLoop< RemoveData, 0, length-1 >::apply( tuple );
       }
     };
 

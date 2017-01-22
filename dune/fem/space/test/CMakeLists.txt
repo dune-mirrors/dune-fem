@@ -25,6 +25,7 @@ set( TESTS
   lagrangeglobalrefine
   lagrangeinterpolation
   legendretest
+  localadapter
   padapt
 )
 

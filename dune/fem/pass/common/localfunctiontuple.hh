@@ -8,7 +8,7 @@
 #include <utility>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 #include <dune/common/tupleutility.hh>
 
 #include <dune/fem/common/tupleutility.hh>
@@ -138,7 +138,7 @@ namespace Dune
        */
       void init ( const EntityType &entity )
       {
-        ForLoop< SetEntity, 0, TupleSize-1 >::apply( localFunctions(), entity );
+        Fem::ForLoop< SetEntity, 0, TupleSize-1 >::apply( localFunctions(), entity );
       }
 
       /** \brief return entity */
@@ -155,7 +155,7 @@ namespace Dune
       template< class Point >
       void evaluate ( const Point &x, RangeTupleType &values ) const
       {
-        ForLoop< Evaluate, 0, TupleSize-1 >::apply( localFunctions(), x, values );
+        Fem::ForLoop< Evaluate, 0, TupleSize-1 >::apply( localFunctions(), x, values );
       }
 
       /** \brief evaluate jacobians of local functions
@@ -166,7 +166,7 @@ namespace Dune
       template< class Point >
       void jacobian ( const Point &x, JacobianRangeTupleType &jacobians ) const
       {
-        ForLoop< Jacobian, 0, TupleSize-1 >::apply( localFunctions(), x, jacobians );
+        Fem::ForLoop< Jacobian, 0, TupleSize-1 >::apply( localFunctions(), x, jacobians );
       }
 
       /** \brief evaluate hessians of local functions
@@ -177,7 +177,7 @@ namespace Dune
       template< class Point >
       void hessian ( const Point &x, HessianRangeTupleType &hessians ) const
       {
-        ForLoop< Hessian, 0, TupleSize-1 >::apply( localFunctions(), x, hessians );
+        Fem::ForLoop< Hessian, 0, TupleSize-1 >::apply( localFunctions(), x, hessians );
       }
 
       /** \brief evaluate local functions for quadrature
@@ -189,7 +189,7 @@ namespace Dune
       void evaluateQuadrature ( const QuadratureType &quadrature, TupleVectorType &vector ) const
       {
         assert( vector.size() >= quadrature.nop() );
-        ForLoop< EvaluateQuadrature, 0, TupleSize-1 >::apply( quadrature, localFunctions(), vector );
+        Fem::ForLoop< EvaluateQuadrature, 0, TupleSize-1 >::apply( quadrature, localFunctions(), vector );
       }
 
       //! \brief get i-th tuple element

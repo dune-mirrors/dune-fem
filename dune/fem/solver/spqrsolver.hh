@@ -86,9 +86,11 @@ class SPQROp:public Operator<DF, DF>
     cc_ = new cholmod_common();
     cholmod_l_start(cc_);
   }
+
   // \brief Destructor.
   ~SPQROp()
   {
+    finalize();
     cholmod_l_finish(cc_);
   }
 

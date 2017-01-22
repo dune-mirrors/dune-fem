@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_GRIDPART_COMMON_GRIDPART2GRIDVIEW_HH
 #define DUNE_FEM_GRIDPART_COMMON_GRIDPART2GRIDVIEW_HH
 
+#include <cassert>
+
 #include <dune/common/exceptions.hh>
 
 #include <dune/grid/common/gridenums.hh>
@@ -90,12 +92,8 @@ namespace Dune
       enum { dimensionworld = GridPartType::dimensionworld };
 
       explicit GridPart2GridViewImpl ( const GridPartType &gridPart )
-      : gridPart_( gridPart )
+        : gridPart_( &gridPart )
       {}
-
-      GridPart2GridViewImpl ( const ThisType &other ) = default;
-
-      ThisType &operator= ( const ThisType & ) = delete;
 
       const Grid &grid () const
       {
@@ -180,10 +178,10 @@ namespace Dune
         gridPart().communicate( data, iftype, dir );
       }
 
-      const GridPartType &gridPart () const { return gridPart_; }
+      const GridPartType &gridPart () const { assert( gridPart_ ); return *gridPart_; }
 
     private:
-      const GridPartType &gridPart_;
+      const GridPartType *gridPart_;
     };
 
 

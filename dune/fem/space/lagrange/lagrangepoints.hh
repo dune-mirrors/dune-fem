@@ -2,7 +2,7 @@
 #define DUNE_FEM_SPACE_LAGRANGE_LAGRANGEPOINTS_HH
 
 // dune-common includes
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 
 // dune-geometry includes
 #include <dune/geometry/referenceelements.hh>
@@ -380,13 +380,13 @@ namespace Dune
       LagrangePointListImplementation ( const size_t id )
       : BaseType( id )
       {
-        ForLoop< CreateLagrangePoint, 1, maxPolynomialOrder > :: apply( *this, maxPolynomialOrder );
+        Fem::ForLoop< CreateLagrangePoint, 1, maxPolynomialOrder > :: apply( *this, maxPolynomialOrder );
       }
 
       LagrangePointListImplementation ( const GeometryType &geo, const int order, const size_t id )
       : BaseType( id )
       {
-        ForLoop< CreateLagrangePoint, 1, maxPolynomialOrder > :: apply( *this, order );
+        Fem::ForLoop< CreateLagrangePoint, 1, maxPolynomialOrder > :: apply( *this, order );
 
         // assert this after lagrangePointImpl has been created since
         // this->geometry() uses this class

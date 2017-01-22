@@ -85,9 +85,12 @@ class LDLOp:public Operator<DF, DF>
   LDLOp(const OperatorType& op, const ParameterReader &parameter = Parameter::container() ) :
     op_(op), verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
   {}
+
   // \brief Destructor.
   ~LDLOp()
-  {}
+  {
+    finalize();
+  }
 
   /** \brief Solve the system
    *  \param[in] arg right hand side

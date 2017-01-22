@@ -11,6 +11,8 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/genericiterator.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/typetraits.hh>
+
 #include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/datahandleif.hh>
 
@@ -126,12 +128,11 @@ namespace Dune
       }
 
       //! check if grid has changed and rebuild cache if necessary
-      template <typename... T>
-      struct dependent_false { static constexpr bool value = false; };
       void rebuild ()
       {
-        static_assert(dependent_false<ThisType>::value, "don't call rebuild() on slavedof class - use the rebuild method tking a space or use the method slavedofs on the space directly");
+        static_assert( AlwaysFalse< ThisType >::value, "don't call rebuild() on slavedof class - use the rebuild method taking a space or use the method slavedofs on the space directly" );
       }
+
       void rebuild (const SpaceType &space)
       {
         // check whether grid has changed.
