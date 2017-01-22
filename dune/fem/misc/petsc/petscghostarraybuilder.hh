@@ -251,10 +251,15 @@ namespace Dune
       {
         bool isDuplicate = false;
         int idx = space_.indexSet().index(entity);
-        if (duplicates_.find(idx) != duplicates_.end())
+        // std::cout << "scatter<" << EntityType::codimension << ">"
+        //           << ": [" << duplicates_.size() << "] "
+        //           << idx << " "
+        //           << entity.geometry().center() << std::endl;
+        if (duplicates_.find(idx*10+EntityType::codimension)
+            != duplicates_.end())
           isDuplicate = true;
         else
-          duplicates_.insert(idx);
+          duplicates_.insert(idx*10+EntityType::codimension);
 
         int twiceNumSlaveDofs;
         buffer.read( twiceNumSlaveDofs );
@@ -270,6 +275,10 @@ namespace Dune
         AssignFunctor< std::vector< size_t> >  functor( globalDofs );
         mapper_.mapEachEntityDof( entity, functor );
 
+        // std::cout << "          " << twiceNumSlaveDofs/2 << std::endl;
+        // if ( isDuplicate && twiceNumSlaveDofs!=0)
+        //   std::cout << "ERROR" << std::endl;
+        // assert( !isDuplicate || twiceNumSlaveDofs==0 );
         for( size_t i = 0; i < size_t( twiceNumSlaveDofs/2 ); ++i )
         {
           int petscDof, index;
@@ -279,7 +288,7 @@ namespace Dune
           assert( petscDofMapping_.isSlave( globalDof ) );
 
           buffer.read( petscDof );
-          if ( !isDuplicate )
+          // if ( !isDuplicate )
             ghostArrayBuilder_.push_back( globalDof, petscDof );
         }
       }

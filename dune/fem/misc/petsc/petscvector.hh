@@ -360,6 +360,16 @@ namespace Dune
           VecView( vec_, PETSC_VIEWER_STDOUT_WORLD );
       }
 
+      void clearGhost( )
+      {
+        PetscScalar *array;
+        VecGetArray( ghostedVec_,&array );
+        for( int i=localSize_; i < localSize_ + numGhosts_; i++ )
+        {
+          array[i] = 0.;
+        }
+      }
+
       void printGhost ( bool doit)
       {
           if( !doit )
@@ -369,7 +379,7 @@ namespace Dune
           VecGetArray( ghostedVec_,&array );
           for( int i=0; i < localSize_ + numGhosts_; i++ )
           {
-            PetscSynchronizedPrintf(PETSC_COMM_WORLD,"%D %G\n",i,PetscRealPart(array[i]));
+            PetscSynchronizedPrintf(PETSC_COMM_WORLD,"%D %g\n",i,PetscRealPart(array[i]));
           }
           VecRestoreArray( ghostedVec_, &array );
 #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 5
@@ -415,6 +425,7 @@ namespace Dune
         // set up the ghost array builder
         typedef PetscGhostArrayBuilder< DFSpace, PetscDofMappingType > PetscGhostArrayBuilderType;
         PetscGhostArrayBuilderType ghostArrayBuilder( space_, dofMapping() );
+        // std::cout << ghostArrayBuilder.size() << " " << dofMapping().numSlaveBlocks() << std::endl;
         assert( int( ghostArrayBuilder.size() ) == dofMapping().numSlaveBlocks() );
 
         // finally, create the PETSc Vecs

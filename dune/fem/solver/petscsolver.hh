@@ -148,6 +148,7 @@ namespace Dune
       {
         // Create linear solver context
         ::Dune::Petsc::KSPCreate( &ksp_ );
+        KSPSetInitialGuessNonzero( ksp_, PETSC_TRUE );
 
         enum PetscSolver { petsc_cg         = 0,
                            petsc_bicg       = 1,
@@ -353,14 +354,22 @@ namespace Dune
 
       void apply( const PetscDiscreteFunctionType& arg, PetscDiscreteFunctionType& dest ) const
       {
+        // std::cout << "******************************" << std::endl;
+        // std::cout << "Before:" << std::endl;
+        dest.dofVector().clearGhost();
+        // dest.dofVector().printGhost(true);
         // call PETSc solvers
         ::Dune::Petsc::KSPSolve(ksp_, *arg.petscVec() , *dest.petscVec() );
 
         // for continuous solution we need a communication here
         if( dest.space().continuous() )
         {
+          // std::cout << "End:" << std::endl;
+          // dest.dofVector().printGhost(true);
           dest.communicate();
+          // dest.space().communicate( dest, DFCommunicationOperation::Copy() );
         }
+        // std::cout << "******************************" << std::endl;
 
         // get number of iterations
         PetscInt its ;
