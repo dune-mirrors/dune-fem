@@ -163,7 +163,11 @@ namespace Dune
 #endif
     inline void KSPSetTolerances ( KSP ksp, PetscReal rtol, PetscReal abstol, PetscReal dtol, PetscInt maxits )
       { ErrorCheck( ::KSPSetTolerances( ksp, rtol, abstol, dtol, maxits ) ); }
-    inline void KSPSolve ( KSP ksp, Vec b, Vec x ) { ErrorCheck( ::KSPSolve( ksp, b, x ) ); }
+    inline void KSPSolve ( KSP ksp, Vec b, Vec x )
+    {
+      // ErrorCheck( ::KSPSetInitialGuessNonzero( ksp, PETSC_TRUE ) );
+      ErrorCheck( ::KSPSolve( ksp, b, x ) );
+    }
     inline void KSPSetPC ( KSP ksp, PC pc ) { ErrorCheck( ::KSPSetPC( ksp, pc ) ); }
 
     // preconditioning

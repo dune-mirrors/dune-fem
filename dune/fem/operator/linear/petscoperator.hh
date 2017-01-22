@@ -415,7 +415,7 @@ namespace Dune
       {
         if (petscMatrix() && newstatus != status_)
         {
-          assert(status_ != statFinalized);
+          // assert(status_ != statFinalized);
           ::Dune::Petsc::MatAssemblyBegin( petscMatrix(), MAT_FLUSH_ASSEMBLY );
           ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix(), MAT_FLUSH_ASSEMBLY );
           status_ = newstatus;
