@@ -25,7 +25,12 @@ class RestrictionPropagator(MultiFunction):
         return op
 
     def facet_normal(self, expr):
-        return -expr('+') if self.side == '-' else expr('+')
+        if self.side is None:
+            return expr
+        elif self.side == '-':
+            return -expr('+')
+        else:
+            return expr('+')
 
     cell_volume = _apply_restriction
 
