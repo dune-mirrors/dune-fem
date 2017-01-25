@@ -29,46 +29,54 @@ PYBIND11_PLUGIN( _fem )
   }
 
   {
+    using pybind11::operator""_a;
     pybind11::class_< Dune::Fem::ParameterContainer > param( module, "Parameter" );
-    param.def("append", [](const Dune::Fem::ParameterContainer &, const std::string &filename)
-        { // int old = Dune::Fem::Parameter::setVerboseRank(0);
-          Dune::Fem::Parameter::append( filename );
-          // Dune::Fem::Parameter::setVerboseRank( old );
-        }
-    );
-    param.def("append", [](const Dune::Fem::ParameterContainer &, const std::map<std::string,std::string> &dict)
-        { // int old = Dune::Fem::Parameter::setVerboseRank(0);
-          for ( auto entery : dict ) Dune::Fem::Parameter::append( entery.first, entery.second );
-          // Dune::Fem::Parameter::setVerboseRank( old );
-        }
-    );
-    param.def("append", [](const Dune::Fem::ParameterContainer &, const pybind11::dict &dict)
-        { // int old = Dune::Fem::Parameter::setVerboseRank(0);
-          for ( auto entery : dict ) Dune::Fem::Parameter::append( entery.first.str(), entery.second.str() );
-          // Dune::Fem::Parameter::setVerboseRank( old );
-        }
-    );
-    param.def("append", [](const Dune::Fem::ParameterContainer &, const std::string &key, const pybind11::handle &val)
-        { // int old = Dune::Fem::Parameter::setVerboseRank(0);
-          Dune::Fem::Parameter::append( key, val.str() );
-          // Dune::Fem::Parameter::setVerboseRank( old );
-        }
-    );
-    param.def("append", [](const Dune::Fem::ParameterContainer &, const std::string &key, const int val)
-        { // int old = Dune::Fem::Parameter::setVerboseRank(0);
-          Dune::Fem::Parameter::append( key, std::to_string(val) );
-          // Dune::Fem::Parameter::setVerboseRank( old );
-        }
-    );
-    param.def("append", [](const Dune::Fem::ParameterContainer &, const std::string &key, const double val)
-        { // int old = Dune::Fem::Parameter::setVerboseRank(0);
-          Dune::Fem::Parameter::append( key, std::to_string(val) );
-          // Dune::Fem::Parameter::setVerboseRank( old );
-        }
-    );
-    param.def("__str__", [](const Dune::Fem::ParameterContainer &)
-        { std::stringstream str; Dune::Fem::Parameter::write( str ); return str.str(); }
-    );
+
+    param.def( "append", [] ( Dune::Fem::ParameterContainer &self, const std::string &fileName ) {
+        self.append( fileName );
+      }, "fileName"_a );
+
+    param.def( "append", [] ( Dune::Fem::ParameterContainer &self, const std::map< std::string, std::string > &entries ) {
+        for( auto entry : entries )
+          self.append( entry.first, entry.second );
+      }, "entries"_a );
+
+    param.def( "append", [] ( Dune::Fem::ParameterContainer &self, const pybind11::dict &entries ) {
+        for ( auto entry : entries )
+          self.append( entry.first.str(), entry.second.str() );
+      }, "entries"_a );
+
+    param.def( "append", [] ( Dune::Fem::ParameterContainer &self, const std::string &key, pybind11::handle value ) {
+        self.append( key, value.str() );
+      }, "key"_a, "value"_a );
+
+    // do we really need this one?
+    param.def( "append", [] ( Dune::Fem::ParameterContainer &self, const std::string &key, int value ) {
+        self.append( key, std::to_string( value ) );
+      }, "key"_a, "value"_a );
+
+    // do we really need this one?
+    param.def( "append", [] ( Dune::Fem::ParameterContainer &self, const std::string &key, double value ) {
+        self.append( key, std::to_string( value ) );
+      }, "key"_a, "value"_a );
+
+    param.def( "exists", [] ( const Dune::Fem::ParameterContainer &self, const std::string &key ) {
+        return self.exists( key );
+      }, "key"_a );
+
+    param.def( "__getitem__", [] ( const Dune::Fem::ParameterContainer &self, const std::string &key ) {
+        return self.getValue< std::string >( key );
+      } , "key"_a );
+
+    param.def( "__setitem__", [] ( Dune::Fem::ParameterContainer &self, const std::string &key, pybind11::handle value ) {
+        self.append( key, value.str() );
+      }, "key"_a, "value"_a );
+
+    param.def( "__str__", [] ( const Dune::Fem::ParameterContainer &self ) {
+        std::stringstream s;
+        self.write( s );
+        return s.str();
+      } );
 
     module.attr( "parameter" ) = pybind11::cast( Dune::Fem::Parameter::container() );
   }
