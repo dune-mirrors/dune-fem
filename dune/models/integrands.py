@@ -139,7 +139,7 @@ class Integrands():
             result.append(TypeAlias("ConstantTupleType", "std::tuple<>"))
 
         if self._coefficients:
-            coefficientSpaces = [('Dune::Fem::FunctionSpace< double,' + SourceWriter.cpp_fields(c['field']) + ', dimDomain, ' + str(c['dimRange']) + ' >') for c in self._coefficients]
+            coefficientSpaces = [('Dune::Fem::FunctionSpace< double,' + SourceWriter.cpp_fields(c['field']) + ', GlobalCoordinateType::dimension, ' + str(c['dimRange']) + ' >') for c in self._coefficients]
             result.append(TypeAlias("CoefficientFunctionSpaceTupleType", "std::tuple< " +", ".join(coefficientSpaces) + " >"))
             result.append(TypeAlias("CoefficientTupleType", "std::tuple< Coefficients... >"))
 
