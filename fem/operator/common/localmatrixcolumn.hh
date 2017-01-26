@@ -3,6 +3,8 @@
 
 #include <utility>
 
+#include <dune/fem/operator/common/temporarylocalmatrix.hh>
+
 namespace Dune
 {
 
@@ -61,13 +63,59 @@ namespace Dune
       typedef typename BasisFunctionSetType::JacobianRangeType JacobianRangeType;
       typedef typename BasisFunctionSetType::HessianRangeType HessianRangeType;
 
+      typedef RangeFieldType value_type;
+      typedef unsigned int size_type;
+
       LocalMatrixColumn ( LocalMatrixType &localMatrix, unsigned int col )
         : localMatrix_( localMatrix ), col_( col )
       {}
 
-      RangeFieldType operator[] ( unsigned int row ) const { return localMatrix_.get( row, col_ ); }
+      RangeFieldType operator[] ( size_type row ) const { return localMatrix_.get( row, col_ ); }
 
-      LocalMatrixEntry< LocalMatrixType > operator[] ( unsigned int row ) { return LocalMatrixEntry< LocalMatrixType >( localMatrix_, row, col_ ); }
+      LocalMatrixEntry< LocalMatrixType > operator[] ( size_type row ) { return LocalMatrixEntry< LocalMatrixType >( localMatrix_, row, col_ ); }
+
+      template< class Point, class... Factor >
+      void axpy ( const Point &x, Factor &&... factor )
+      {
+        basisFunctionSet().axpy( x, std::forward< Factor >( factor )..., *this );
+      }
+
+      const BasisFunctionSetType &basisFunctionSet () const { return localMatrix_.rangeBasisFunctionSet(); }
+
+    private:
+      LocalMatrixType &localMatrix_;
+      unsigned int col_;
+    };
+
+
+
+    // LocalMatrixColumn for TemporaryLocalMatrix
+    // ------------------------------------------
+
+    template< class DomainSpace, class RangeSpace >
+    class LocalMatrixColumn< TemporaryLocalMatrix< DomainSpace, RangeSpace > >
+    {
+      typedef LocalMatrixColumn< TemporaryLocalMatrix< DomainSpace, RangeSpace > > ThisType;
+
+    public:
+      typedef TemporaryLocalMatrix< DomainSpace, RangeSpace > LocalMatrixType;
+
+      typedef typename LocalMatrixType::RangeFieldType RangeFieldType;
+      typedef typename LocalMatrixType::RangeBasisFunctionSetType BasisFunctionSetType;
+
+      typedef typename BasisFunctionSetType::RangeType RangeType;
+      typedef typename BasisFunctionSetType::JacobianRangeType JacobianRangeType;
+      typedef typename BasisFunctionSetType::HessianRangeType HessianRangeType;
+
+      typedef RangeFieldType value_type;
+      typedef unsigned int size_type;
+
+      LocalMatrixColumn ( LocalMatrixType &localMatrix, unsigned int col )
+        : localMatrix_( localMatrix ), col_( col )
+      {}
+
+      const value_type &operator[] ( size_type row ) const { return localMatrix_[ row ][ col_ ]; }
+      value_type &operator[] ( size_type row ) { return localMatrix_[ row ][ col_ ]; }
 
       template< class Point, class... Factor >
       void axpy ( const Point &x, Factor &&... factor )
