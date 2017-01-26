@@ -24,7 +24,9 @@ registry["space"] = {
          "Lagrange"     : space.lagrange,
          "DGONB"        : space.dgonb,
          "FiniteVolume" : space.finiteVolume,
-         "P1Bubble"     : space.p1Bubble
+         "P1Bubble"     : space.p1Bubble,
+         "combined"     : space.combined,
+         "tuple"        : space.combined
      }
 registry["discretefunction"] = {
          "adaptive" : discretefunction.adaptive,
