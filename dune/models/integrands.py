@@ -79,7 +79,7 @@ class Integrands():
     def rangeValueTuple(self):
         return 'std::tuple< ' + ', '.join([self._cppTensor(v) for v in self.rangeValue]) + ' >'
 
-    def addCoefficient(self, field, dimRange):
+    def addCoefficient(self, dimRange, field="double"):
         idx = len(self._coefficients)
         self._coefficients.append({'dimRange': dimRange, 'field': field})
         return idx
@@ -248,7 +248,7 @@ class Integrands():
                 else:
                     method = Method(var.cppType, name + 'Coefficient', targs=['std::size_t i', 'Side side', 'class Point'], args=['const Point &x'], const=True)
                     method.append(Declaration(var))
-                    method.append(UnformattedExpression('void', 'std::get< i >( coefficients )[ static_cast< std::size_t >( side ) ].' + name + '( x, ' + var.name + ' )'))
+                    method.append(UnformattedExpression('void', 'std::get< i >( coefficients_ )[ static_cast< std::size_t >( side ) ].' + name + '( x, ' + var.name + ' )'))
                     method.append(return_(var))
                     result.append(method)
 
@@ -452,7 +452,10 @@ def compileUFL(equation, tempVars=True):
             dimRange = (1 if len(coefficient.ufl_shape) == 0 else coefficient.ufl_shape[0])
             constants[coefficient] = integrands.addConstant('Dune::FieldVector< double, ' + str(dimRange) + ' >')
         else:
-            coefficients[coefficient] = integrands.addCoefficient(coefficient.ufl_function_space().ufl_element().field(), coefficient.ufl_shape[0])
+            try:
+                coefficients[coefficient] = integrands.addCoefficient(coefficient.ufl_shape[0], coefficient.ufl_function_space().ufl_element().field())
+            except AttributeError:
+                coefficients[coefficient] = integrands.addCoefficient(coefficient.ufl_shape[0])
 
     integrals = splitForm(form, [phi])
 
