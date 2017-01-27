@@ -56,6 +56,7 @@ namespace Dune
         typedef typename Space::GridPartType GridPart;
         typedef typename GridPart::GridViewType GridView;
 
+        cls.def_property_readonly( "dimRange", [] ( Space &spc ) -> int { return Space::dimRange; } );
         cls.def_property_readonly( "grid", [] ( Space &spc ) -> GridView { return static_cast< GridView >( spc.gridPart() ); } );
         cls.def_property_readonly( "order", [] ( Space &spc ) -> int { return spc.order(); } );
         cls.def_property_readonly( "size", [] ( Space &spc ) -> int { return spc.size(); } );
