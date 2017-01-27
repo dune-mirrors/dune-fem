@@ -215,8 +215,8 @@ class Integrands():
             if self.skeleton is None:
                 setCoefficient.append('std::get< i >( coefficients_ ) = coefficient.localFunction();')
             else:
-                setCoefficient.append('std::get< i >( coefficients_ )[ static_cast< std::size_t >( Side::in ) ] = coefficient.localFunction();')
-                setCoefficient.append('std::get< i >( coefficients_ )[ static_cast< std::size_t >( Side::out ) ] = coefficient.localFunction();')
+                setCoefficient.append('std::get< i >( coefficients_[ static_cast< std::size_t >( Side::in ) ] ) = coefficient.localFunction();')
+                setCoefficient.append('std::get< i >( coefficients_[ static_cast< std::size_t >( Side::out ) ] ) = coefficient.localFunction();')
             result.append(setCoefficient)
 
         if self.skeleton is None:
@@ -248,7 +248,7 @@ class Integrands():
                 else:
                     method = Method(var.cppType, name + 'Coefficient', targs=['std::size_t i', 'Side side', 'class Point'], args=['const Point &x'], const=True)
                     method.append(Declaration(var))
-                    method.append(UnformattedExpression('void', 'std::get< i >( coefficients_ )[ static_cast< std::size_t >( side ) ].' + name + '( x, ' + var.name + ' )'))
+                    method.append(UnformattedExpression('void', 'std::get< i >( coefficients_[ static_cast< std::size_t >( side ) ] ).' + name + '( x, ' + var.name + ' )'))
                     method.append(return_(var))
                     result.append(method)
 
@@ -265,7 +265,7 @@ class Integrands():
         if self.skeleton is None:
             result.append(Declaration(Variable('std::tuple< typename Coefficients::LocalFunctionType... >', 'coefficients_')))
         else:
-            result.append(Declaration(Variable('std::array< CoefficientTupleType, 2 >', 'coefficients_')))
+            result.append(Declaration(Variable('std::array< std::tuple< typename Coefficients::LocalFunctionType... >, 2 >', 'coefficients_')))
         if self.vars is not None:
             result += self.vars
 
