@@ -110,12 +110,12 @@ namespace Dune
         DUNE_THROW( NotImplemented, "GeometryGridPart does not implement Geometry for codimension " << (GridFamily::dimension-mydim) );
       }
 
-      FieldMatrix< ctype, mydimension, coorddimension > jacobianTransposed ( const LocalVector &local ) const
+      JacobianTransposed jacobianTransposed ( const LocalVector &local ) const
       {
         DUNE_THROW( NotImplemented, "GeometryGridPart does not implement Geometry for codimension " << (GridFamily::dimension-mydim) );
       }
 
-      FieldMatrix< ctype, coorddimension, mydimension > jacobianInverseTransposed ( const LocalVector &local ) const
+      JacobianInverseTransposed jacobianInverseTransposed ( const LocalVector &local ) const
       {
         DUNE_THROW( NotImplemented, "GeometryGridPart does not implement Geometry for codimension " << (GridFamily::dimension-mydim) );
       }
@@ -212,22 +212,21 @@ namespace Dune
         return vol;
       }
 
-      const FieldMatrix< ctype, mydimension, coorddimension > &
-      jacobianTransposed ( const LocalVector &local ) const
+      JacobianTransposed jacobianTransposed ( const LocalVector &local ) const
       {
         FieldMatrix< ctype, mydimension, GridFamily::dimension > gradFeT( affineGeo_.jacobianTransposed( local ) );
         FieldMatrix< ctype, GridFamily::dimension, coorddimension > gradFT( elementGeo_.jacobianTransposed( affineGeo_.global( local )) );
 
-        Dune::FMatrixHelp::multMatrix( gradFeT, gradFT, jacTransposed_ );
-
-        return jacTransposed_;
+        JacobianTransposed jacTransposed( 0 );
+        Dune::FMatrixHelp::multMatrix( gradFeT, gradFT, jacTransposed );
+        return jacTransposed;
       }
 
-      const FieldMatrix< ctype, coorddimension, mydimension > &
-      jacobianInverseTransposed ( const LocalVector &local ) const
+      JacobianInverseTransposed jacobianInverseTransposed ( const LocalVector &local ) const
       {
-        MatrixHelper::template rightInvA< mydimension, coorddimension >( jacobianTransposed( local ), jacInverseTransposed_ );
-        return jacInverseTransposed_;
+        JacobianInverseTransposed jacInverseTransposed( 0 );
+        MatrixHelper::template rightInvA< mydimension, coorddimension >( jacobianTransposed( local ), jacInverseTransposed );
+        return jacInverseTransposed;
       }
 
     private:
@@ -235,8 +234,6 @@ namespace Dune
       const GridFunctionType gridFunction_;
       const HostIntersectionType *hostIntersection_;
       const AffineGeometryType affineGeo_;
-      mutable FieldMatrix< ctype, mydimension, coorddimension > jacTransposed_;
-      mutable FieldMatrix< ctype, coorddimension, mydimension > jacInverseTransposed_;
     };
 
     template< int mydim, int cdim, class GridFamily >
@@ -356,8 +353,7 @@ namespace Dune
         return vol;
       }
 
-      const FieldMatrix< ctype, mydimension, coorddimension > &
-      jacobianTransposed ( const LocalVector &local ) const
+      JacobianTransposed jacobianTransposed ( const LocalVector &local ) const
       {
         FieldMatrix< ctype, mydimension, coorddimension > gradFT( hostGeometry_.jacobianTransposed( local ) );
         FieldMatrix< ctype, coorddimension, coorddimension > gradPhi, gradPhiT;
@@ -368,24 +364,21 @@ namespace Dune
           for( int j = 0; j != coorddimension; ++j )
             gradPhiT[ i ][ j ] = gradPhi[ j ][ i ];
 
-        Dune::FMatrixHelp::multMatrix( gradFT, gradPhiT, jacTransposed_ );
-
-        return jacTransposed_;
+        JacobianTransposed jacTransposed( 0 );
+        Dune::FMatrixHelp::multMatrix( gradFT, gradPhiT, jacTransposed );
+        return jacTransposed;
       }
 
-      const FieldMatrix< ctype, coorddimension, mydimension > &
-      jacobianInverseTransposed ( const LocalVector &local ) const
+      JacobianInverseTransposed jacobianInverseTransposed ( const LocalVector &local ) const
       {
-        MatrixHelper::template rightInvA< mydimension, coorddimension >( jacobianTransposed( local ), jacInverseTransposed_ );
-
-        return jacInverseTransposed_;
+        JacobianInverseTransposed jacInverseTransposed( 0 );
+        MatrixHelper::template rightInvA< mydimension, coorddimension >( jacobianTransposed( local ), jacInverseTransposed );
+        return jacInverseTransposed;
       }
 
     private:
       HostGeometryType hostGeometry_;
       LocalFunctionType localFunction_;
-      mutable FieldMatrix< ctype, mydimension, coorddimension > jacTransposed_;
-      mutable FieldMatrix< ctype, coorddimension, mydimension > jacInverseTransposed_;
     };
 
 
