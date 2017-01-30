@@ -60,14 +60,14 @@ namespace Dune
       };
 
 
-#if ! DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
+#if ! DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
       template< class GridFunctionType >
       struct isParallel< GeometryGridPart< GridFunctionType > >
       {
         typedef typename GridFunctionType::GridPartType HostGridPartType;
         static const bool v = isParallel< HostGridPartType >::v;
       };
-#endif // #if ! DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
+#endif // #if ! DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
 
 
       template< class GridFunctionType, int codim  >

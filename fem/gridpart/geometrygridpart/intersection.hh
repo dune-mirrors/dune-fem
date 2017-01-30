@@ -33,7 +33,7 @@ namespace Dune
       typedef typename Traits::template Codim< 0 >::Entity Entity;
 #if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
       typedef typename Traits::template Codim< 0 >::EntityPointer EntityPointer;
-#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
+#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
       typedef typename Traits::template Codim< 0 >::Geometry ElementGeometry;
       typedef typename Traits::template Codim< 1 >::Geometry Geometry;
       typedef typename Traits::template Codim< 1 >::LocalGeometry LocalGeometry;
@@ -45,7 +45,7 @@ namespace Dune
     private:
 #if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
       typedef typename EntityPointer::Implementation EntityPointerImplType;
-#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
+#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
       typedef typename ElementGeometry::Implementation ElementGeometryImplType;
       typedef typename Geometry::Implementation GeometryImplType;
 
@@ -64,7 +64,7 @@ namespace Dune
 #if DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
       Entity inside () const { return typename Entity::Implementation( gridFunction(), hostIntersection().inside() ); }
       Entity outside () const { return typename Entity::Implementation( gridFunction(), hostIntersection().outside() ); }
-#else // #if DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
+#else // #if DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
       EntityPointer inside () const
       {
         return EntityPointerImplType( hostIntersection().inside(), gridFunction() );
@@ -74,7 +74,7 @@ namespace Dune
       {
         return EntityPointerImplType( hostIntersection().outside(), gridFunction() );
       }
-#endif // #else // #if DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
+#endif // #else // #if DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
 
       bool boundary () const
       {
