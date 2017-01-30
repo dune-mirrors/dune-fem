@@ -25,65 +25,6 @@ namespace Dune
 
     template< int, int, class >
     class GeometryGridPartGeometry;
-    template< int, int, class >
-    class GeometryGridPartLocalGeometry;
-
-
-
-    // GeometryGridPartBasicGeometry
-    // -----------------------------
-
-    template< class Traits >
-    struct GeometryGridPartBasicGeometry
-    {
-      typedef typename Traits::HostGeometryType HostGeometryType;
-
-      static const int dimension = HostGeometryType::dimension;
-      static const int mydimension = HostGeometryType::mydimension;
-      static const int coorddimension = Traits::dimensionworld;
-
-      typedef typename HostGeometryType::ctype ctype;
-      typedef FieldVector< ctype, mydimension > LocalVector;
-      typedef FieldVector< ctype, coorddimension > GlobalVector;
-
-      typedef FieldMatrix< ctype, mydimension, coorddimension > JacobianTransposed;
-      typedef FieldMatrix< ctype, coorddimension, mydimension > JacobianInverseTransposed;
-      typedef JacobianInverseTransposed Jacobian;
-
-      GeometryGridPartBasicGeometry ( const HostGeometryType &hostGeometry )
-        : hostGeometry_( hostGeometry )
-      {}
-
-      operator bool() const { return bool( hostGeometry_ ); }
-
-      GeometryType type () const { return hostGeometry_.type(); }
-      bool affine () const { return hostGeometry_.affine(); }
-
-      int corners () const { return hostGeometry_.corners(); }
-      GlobalVector corner ( const int i ) const { return hostGeometry_.corner( i ); }
-      GlobalVector center () const { return hostGeometry_.center(); }
-
-      GlobalVector global ( const LocalVector &local ) const { return hostGeometry_.global( local ); }
-      LocalVector local ( const GlobalVector &global ) const { return hostGeometry_.local( global ); }
-
-      ctype integrationElement ( const LocalVector &local ) const { return hostGeometry_.integrationElement( local ); }
-      ctype volume () const { return hostGeometry_.volume(); }
-
-      const FieldMatrix< ctype, mydimension, coorddimension > &
-      jacobianTransposed ( const LocalVector &local ) const
-      {
-        return hostGeometry_.jacobianTransposed( local );
-      }
-
-      const FieldMatrix< ctype, coorddimension, mydimension > &
-      jacobianInverseTransposed ( const LocalVector &local ) const
-      {
-        return hostGeometry_.jacobianInverseTransposed( local );
-      }
-
-    private:
-      HostGeometryType hostGeometry_;
-    };
 
 
 
@@ -496,44 +437,6 @@ namespace Dune
 
       GeometryGridPartGeometry ( const HostEntityType &hostEntity, const GridFunctionType *gridFunction )
         : Base( hostEntity, gridFunction )
-      {}
-    };
-
-
-
-    // GeometryGridPartLocalGeometryTraits
-    // -----------------------------------
-
-    template< int mydim, class GridFamily >
-    struct GeometryGridPartLocalGeometryTraits
-    {
-      typedef typename std::remove_const< GridFamily >::type::Traits::HostGridPartType HostGridPartType;
-
-      static const int dimension = HostGridPartType::dimension;
-      static const int mydimension = mydim;
-      static const int codimension = dimension - mydimension;
-
-      typedef typename HostGridPartType::template Codim< codimension >::LocalGeometryType HostGeometryType;
-    };
-
-
-
-    // GeometryGridPartLocalGeometry
-    // -----------------------------
-
-    template< int mydim, int cdim, class GridFamily >
-    class GeometryGridPartLocalGeometry
-      : public GeometryGridPartBasicGeometry< GeometryGridPartLocalGeometryTraits< mydim, GridFamily > >
-    {
-      typedef GeometryGridPartBasicGeometry< GeometryGridPartLocalGeometryTraits< mydim, GridFamily > > Base;
-
-    public:
-      typedef typename Base::HostGeometryType HostGeometryType;
-
-      GeometryGridPartLocalGeometry () = default;
-
-      GeometryGridPartLocalGeometry ( const HostGeometryType &hostGeometry )
-        : Base( hostGeometry )
       {}
     };
 
