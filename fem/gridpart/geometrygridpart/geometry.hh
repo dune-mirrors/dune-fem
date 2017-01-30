@@ -46,11 +46,11 @@ namespace Dune
 
 
 
-    // MyGeometryImpl
-    // --------------
+    // GeometryGridPartBasicGeometry
+    // -----------------------------
 
     template< int mydim, int cdim, class GridFamily, class = void >
-    struct MyGeometryImpl
+    struct GeometryGridPartBasicGeometry
     {
       typedef GeometryGridPartGeometryTraits< mydim, GridFamily > Traits;
       typedef typename Traits::HostGeometryType HostGeometryType;
@@ -122,7 +122,7 @@ namespace Dune
     };
 
     template< int mydim, int cdim, class GridFamily >
-    struct MyGeometryImpl< mydim, cdim, GridFamily, std::enable_if_t< mydim == GridFamily::dimension-1 > >
+    struct GeometryGridPartBasicGeometry< mydim, cdim, GridFamily, std::enable_if_t< mydim == GridFamily::dimension-1 > >
     {
       typedef GeometryGridPartGeometryTraits< mydim, GridFamily > Traits;
       typedef typename Traits::HostGeometryType HostGeometryType;
@@ -151,16 +151,14 @@ namespace Dune
       // Helper class to compute a matrix pseudo inverse
       typedef Impl::FieldMatrixHelper< ctype > MatrixHelper;
 
-      MyGeometryImpl ( const MyGeometryImpl< GridFamily::dimension, cdim, GridFamily > elementGeo,
-                       const GridFunctionType *gridFunction,
-                       const HostIntersectionType *hostIntersection,
-                       const AffineGeometryType &affineGeometry )
+      GeometryGridPartBasicGeometry ( const GeometryGridPartBasicGeometry< GridFamily::dimension, cdim, GridFamily > elementGeo,
+                                      const GridFunctionType *gridFunction,
+                                      const HostIntersectionType *hostIntersection,
+                                      const AffineGeometryType &affineGeometry )
         : elementGeo_( elementGeo ),
           gridFunction_( *gridFunction ),
           hostIntersection_( hostIntersection ),
-          affineGeo_( affineGeometry ),
-          jacTransposed_( 0 ),
-          jacInverseTransposed_( 0 )
+          affineGeo_( affineGeometry )
       {}
 
       GeometryType type () const { return affineGeo_.type(); }
@@ -233,7 +231,7 @@ namespace Dune
       }
 
     private:
-      const MyGeometryImpl< GridFamily::dimension, cdim, GridFamily > elementGeo_;
+      const GeometryGridPartBasicGeometry< GridFamily::dimension, cdim, GridFamily > elementGeo_;
       const GridFunctionType gridFunction_;
       const HostIntersectionType *hostIntersection_;
       const AffineGeometryType affineGeo_;
@@ -242,7 +240,7 @@ namespace Dune
     };
 
     template< int mydim, int cdim, class GridFamily >
-    struct MyGeometryImpl< mydim, cdim, GridFamily, std::enable_if_t< mydim == GridFamily::dimension > >
+    struct GeometryGridPartBasicGeometry< mydim, cdim, GridFamily, std::enable_if_t< mydim == GridFamily::dimension > >
     {
       typedef GeometryGridPartGeometryTraits< mydim, GridFamily > Traits;
 
@@ -274,24 +272,16 @@ namespace Dune
       // Helper class to compute a matrix pseudo inverse
       typedef Impl::FieldMatrixHelper< ctype > MatrixHelper;
 
-      MyGeometryImpl ( const HostGeometryType &hostGeometry,
-                       const HostEntityType &hostEntity,
-                       const GridFunctionType *gridFunction )
+      GeometryGridPartBasicGeometry ( const HostGeometryType &hostGeometry, const HostEntityType &hostEntity, const GridFunctionType *gridFunction )
         : hostGeometry_( hostGeometry ),
-          localFunction_( *gridFunction ),
-          // localFunction_( gridFunction->localFunction( hostEntity ) ),
-          jacTransposed_( 0 ),
-          jacInverseTransposed_( 0 )
+          localFunction_( *gridFunction )
       {
         localFunction_.init( hostEntity );
       }
 
-      MyGeometryImpl ( const HostEntityType &hostEntity, const GridFunctionType *gridFunction )
+      GeometryGridPartBasicGeometry ( const HostEntityType &hostEntity, const GridFunctionType *gridFunction )
         : hostGeometry_( hostEntity.geometry() ),
-          localFunction_( *gridFunction ),
-          // localFunction_( gridFunction->localFunction( hostEntity ) ),
-          jacTransposed_( 0 ),
-          jacInverseTransposed_( 0 )
+          localFunction_( *gridFunction )
       {
         localFunction_.init( hostEntity );
       }
@@ -405,9 +395,9 @@ namespace Dune
 
     template< int mydim, int cdim, class GridFamily >
     struct GeometryGridPartGeometry
-      : public MyGeometryImpl< mydim, cdim, GridFamily >
+      : public GeometryGridPartBasicGeometry< mydim, cdim, GridFamily >
     {
-      typedef MyGeometryImpl< mydim, cdim, GridFamily > Base;
+      typedef GeometryGridPartBasicGeometry< mydim, cdim, GridFamily > Base;
       typedef typename Base::HostGeometryType HostGeometryType;
       typedef typename HostGeometryType::ctype ctype;
 
@@ -422,7 +412,7 @@ namespace Dune
 
       GeometryGridPartGeometry () = default;
 
-      GeometryGridPartGeometry ( const MyGeometryImpl< GridFamily::dimension, cdim, GridFamily > elementGeo,
+      GeometryGridPartGeometry ( const GeometryGridPartBasicGeometry< GridFamily::dimension, cdim, GridFamily > elementGeo,
                                  const GridFunctionType *gridFunction,
                                  const HostIntersectionType *hostIntersection,
                                  const AffineGeometryType &affineGeometry )
