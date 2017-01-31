@@ -474,16 +474,24 @@ namespace Dune
         {
           // try to read given check point file
           checkPointFile_ = checkFile;
-          // read last counter
-          bool ok = readCheckPoint();
+
+          // read last counter, don't issue warning
+          bool ok = readCheckPoint( false );
 
           // if check point couldn't be opened, try again with default
           if(!ok)
           {
+
             // read name of check point file
             checkPointFile_ = path_;
             checkPointFile_ += "/";
             checkPointFile_ += parameter.checkPointPrefix();
+
+            const bool warn = (myRank == 0);
+            if( warn )
+            {
+              std::cerr << "WARNING: Coudn't open file `" << checkFile << "' trying file `" << checkPointFile_ << "' instead!" << std::endl;
+            }
 
             ok = readCheckPoint();
             if( ! ok )
@@ -523,7 +531,7 @@ namespace Dune
 
         int checkPointNumber = 0;
         // if given checkpointfile is not valid use default checkpoint file
-        if( ! readParameter(checkFile,"LastCheckPoint",checkPointNumber,verbose ) )
+        if( ! readParameter(checkFile,"LastCheckPoint",checkPointNumber, verbose, false ) )
         {
           // read default path
           path = IOInterface::readPath();
@@ -532,6 +540,10 @@ namespace Dune
           // try out default checkpoint file
           checkPointFile += "/";
           checkPointFile += parameter.checkPointPrefix();
+          if ( verbose )
+          {
+            std::cerr << "WARNING: Coudn't open file `" << checkFile << "' trying file `" << checkPointFile << "' instead!" << std::endl;
+          }
           readParameter(checkPointFile,"LastCheckPoint",checkPointNumber, verbose);
         }
         else
