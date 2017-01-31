@@ -14,6 +14,8 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 
+#include <dune/fem/gridpart/common/unimplementedgeometry.hh>
+
 namespace Dune
 {
 
@@ -51,6 +53,7 @@ namespace Dune
 
     template< int mydim, int cdim, class GridFamily, class = void >
     struct GeometryGridPartBasicGeometry
+      : public UnimplementedGeometry< typename GridFamily::ctype, mydim, cdim >
     {
       typedef GeometryGridPartGeometryTraits< mydim, GridFamily > Traits;
       typedef typename Traits::HostGeometryType HostGeometryType;
