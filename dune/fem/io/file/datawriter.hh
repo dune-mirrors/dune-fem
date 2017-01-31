@@ -3,6 +3,7 @@
 
 #include <string>
 #include <tuple>
+#include <limits>
 
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/file/iointerface.hh>
@@ -280,8 +281,21 @@ namespace Dune
           // try backup using stream method first
           try
           {
+            std::string gridBackup ;
+            // get backup stream from grid facility
+            {
+              std::stringstream gridBackupStream;
+              Dune::BackupRestoreFacility< GridType > :: backup( grid_, gridBackupStream );
+              gridBackup = gridBackupStream.str();
+            }
+
             std::ostream& stream = PersistenceManager :: backupStream().stream();
-            Dune::BackupRestoreFacility< GridType > :: backup( grid_, stream );
+
+            // store size and data into persistent stream
+            // Note: use either 32bit or 64bit int but not size_t
+            const int64_t gridBackupSize = gridBackup.size();
+            stream.write( (const char *) &gridBackupSize, sizeof(int64_t));
+            stream.write( gridBackup.c_str(), gridBackupSize );
           }
           catch ( Dune :: NotImplemented )
           {
@@ -548,7 +562,22 @@ namespace Dune
         try
         {
           std::istream& stream = PersistenceManager :: restoreStream().stream();
-          grid = Dune::BackupRestoreFacility< GridType > :: restore( stream );
+          std::stringstream gridStream;
+
+          {
+            // recover grid backup from global backup stream, i.e. size and data
+            int64_t gridStreamSize = -1;
+            stream.read( (char *) &gridStreamSize, sizeof(int64_t));
+            assert( gridStreamSize >= 0 && gridStreamSize < std::numeric_limits<int64_t>::max());
+            std::vector< char > gridBuffer( gridStreamSize );
+            stream.read( gridBuffer.data(), gridStreamSize );
+
+            // write data to grid input stream
+            gridStream.write( gridBuffer.data(), gridStreamSize );
+          }
+
+          // perform restore using grid stream only
+          grid = Dune::BackupRestoreFacility< GridType > :: restore( gridStream );
         }
         catch ( Dune :: NotImplemented )
         {
