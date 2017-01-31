@@ -554,9 +554,13 @@ namespace Dune
         // this is only available in dune-grid 2.3.x and later
         try
         {
-          std::string str;
-          PersistenceManager :: restoreStream() >> str;
-          std::stringstream gridStream(str);
+          std::string gridData;
+          PersistenceManager :: restoreStream() >> gridData;
+          // copy data to stream
+          std::stringstream gridStream( gridData );
+          // clear grid data
+          gridData = std::string();
+
           // perform restore using grid stream only
           grid = Dune::BackupRestoreFacility< GridType > :: restore( gridStream );
         }
