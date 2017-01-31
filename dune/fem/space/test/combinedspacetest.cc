@@ -264,6 +264,7 @@ int main ( int argc, char **argv )
 
     GridPtr< MyGridType > gridptr( macroGridName );
     MyGridType &grid = *gridptr;
+    grid.loadBalance();
 
     GridPartType part( grid );
     DiscreteFunctionSpaceType space( part );
