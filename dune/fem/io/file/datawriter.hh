@@ -288,14 +288,7 @@ namespace Dune
               Dune::BackupRestoreFacility< GridType > :: backup( grid_, gridBackupStream );
               gridBackup = gridBackupStream.str();
             }
-
-            std::ostream& stream = PersistenceManager :: backupStream().stream();
-
-            // store size and data into persistent stream
-            // Note: use either 32bit or 64bit int but not size_t
-            const int64_t gridBackupSize = gridBackup.size();
-            stream.write( (const char *) &gridBackupSize, sizeof(int64_t));
-            stream.write( gridBackup.c_str(), gridBackupSize );
+            PersistenceManager :: backupStream() << gridBackup;
           }
           catch ( Dune :: NotImplemented )
           {
@@ -561,21 +554,9 @@ namespace Dune
         // this is only available in dune-grid 2.3.x and later
         try
         {
-          std::istream& stream = PersistenceManager :: restoreStream().stream();
-          std::stringstream gridStream;
-
-          {
-            // recover grid backup from global backup stream, i.e. size and data
-            int64_t gridStreamSize = -1;
-            stream.read( (char *) &gridStreamSize, sizeof(int64_t));
-            assert( gridStreamSize >= 0 && gridStreamSize < std::numeric_limits<int64_t>::max());
-            std::vector< char > gridBuffer( gridStreamSize );
-            stream.read( gridBuffer.data(), gridStreamSize );
-
-            // write data to grid input stream
-            gridStream.write( gridBuffer.data(), gridStreamSize );
-          }
-
+          std::string str;
+          PersistenceManager :: restoreStream() >> str;
+          std::stringstream gridStream(str);
           // perform restore using grid stream only
           grid = Dune::BackupRestoreFacility< GridType > :: restore( gridStream );
         }
