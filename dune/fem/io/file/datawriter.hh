@@ -3,6 +3,7 @@
 
 #include <string>
 #include <tuple>
+#include <limits>
 
 #include <dune/fem/io/file/asciiparser.hh>
 #include <dune/fem/io/file/iointerface.hh>
@@ -280,8 +281,14 @@ namespace Dune
           // try backup using stream method first
           try
           {
-            std::ostream& stream = PersistenceManager :: backupStream().stream();
-            Dune::BackupRestoreFacility< GridType > :: backup( grid_, stream );
+            std::string gridBackup ;
+            // get backup stream from grid facility
+            {
+              std::stringstream gridBackupStream;
+              Dune::BackupRestoreFacility< GridType > :: backup( grid_, gridBackupStream );
+              gridBackup = gridBackupStream.str();
+            }
+            PersistenceManager :: backupStream() << gridBackup;
           }
           catch ( Dune :: NotImplemented )
           {
@@ -467,16 +474,24 @@ namespace Dune
         {
           // try to read given check point file
           checkPointFile_ = checkFile;
-          // read last counter
-          bool ok = readCheckPoint();
+
+          // read last counter, don't issue warning
+          bool ok = readCheckPoint( false );
 
           // if check point couldn't be opened, try again with default
           if(!ok)
           {
+
             // read name of check point file
             checkPointFile_ = path_;
             checkPointFile_ += "/";
             checkPointFile_ += parameter.checkPointPrefix();
+
+            const bool warn = (myRank == 0);
+            if( warn )
+            {
+              std::cerr << "WARNING: Coudn't open file `" << checkFile << "' trying file `" << checkPointFile_ << "' instead!" << std::endl;
+            }
 
             ok = readCheckPoint();
             if( ! ok )
@@ -516,7 +531,7 @@ namespace Dune
 
         int checkPointNumber = 0;
         // if given checkpointfile is not valid use default checkpoint file
-        if( ! readParameter(checkFile,"LastCheckPoint",checkPointNumber,verbose ) )
+        if( ! readParameter(checkFile,"LastCheckPoint",checkPointNumber, verbose, false ) )
         {
           // read default path
           path = IOInterface::readPath();
@@ -525,6 +540,10 @@ namespace Dune
           // try out default checkpoint file
           checkPointFile += "/";
           checkPointFile += parameter.checkPointPrefix();
+          if ( verbose )
+          {
+            std::cerr << "WARNING: Coudn't open file `" << checkFile << "' trying file `" << checkPointFile << "' instead!" << std::endl;
+          }
           readParameter(checkPointFile,"LastCheckPoint",checkPointNumber, verbose);
         }
         else
@@ -547,8 +566,15 @@ namespace Dune
         // this is only available in dune-grid 2.3.x and later
         try
         {
-          std::istream& stream = PersistenceManager :: restoreStream().stream();
-          grid = Dune::BackupRestoreFacility< GridType > :: restore( stream );
+          std::string gridData;
+          PersistenceManager :: restoreStream() >> gridData;
+          // copy data to stream
+          std::stringstream gridStream( gridData );
+          // clear grid data
+          gridData = std::string();
+
+          // perform restore using grid stream only
+          grid = Dune::BackupRestoreFacility< GridType > :: restore( gridStream );
         }
         catch ( Dune :: NotImplemented )
         {
