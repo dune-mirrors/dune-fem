@@ -113,12 +113,12 @@ namespace Dune
 
       LocalGeometry geometryInInside () const
       {
-        return LocalGeometry( hostIntersection().geometryInInside() );
+        return hostIntersection().geometryInInside();
       }
 
       LocalGeometry geometryInOutside () const
       {
-        return LocalGeometry( hostIntersection().geometryInOutside() );
+        return hostIntersection().geometryInOutside();
       }
 
       Geometry geometry () const
