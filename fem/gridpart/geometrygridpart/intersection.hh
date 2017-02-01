@@ -42,6 +42,9 @@ namespace Dune
       typedef GeometryGridPartGeometry<1,dimensionworld,GridFamily> GeometryGridPartGeometryType;
       typedef Dune::AffineGeometry< ctype, 1, GridFamily::dimension > AffineGeometryType;
 
+      typedef FieldVector< ctype, dimensionworld > GlobalCoordinate;
+      typedef FieldVector< ctype, dimension-1 > LocalCoordinate;
+
     private:
 #if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
       typedef typename EntityPointer::Implementation EntityPointerImplType;
@@ -153,22 +156,18 @@ namespace Dune
         return hostIntersection().indexInOutside();
       }
 
-      FieldVector< ctype, dimensionworld >
-      integrationOuterNormal ( const FieldVector< ctype, dimension-1 > &local ) const
+      GlobalCoordinate integrationOuterNormal ( const LocalCoordinate &local ) const
       {
-        const ReferenceElement< ctype, dimension > &refElement
-          = ReferenceElements< ctype, dimension>::general( insideGeo_.type() );
+        const auto &refElement = ReferenceElements< ctype, dimension >::general( insideGeo_.type() );
+        const auto &refNormal = refElement.integrationOuterNormal( indexInInside() );
 
-        FieldVector< ctype, dimensionworld > normal;
-        FieldVector< ctype, dimension > x( geometryInInside().global( local ) );
+        const auto jit = insideGeo_.jacobianInverseTransposed( geometryInInside().global( local ) );
 
-        const FieldMatrix< ctype, dimensionworld, dimension > &jit = insideGeo_.jacobianInverseTransposed( x );
-        const FieldVector< ctype, dimension > &refNormal = refElement.integrationOuterNormal( indexInInside() );
+        GlobalCoordinate normal;
         jit.mv( refNormal, normal );
-        normal *= geometry().integrationElement(local)/normal.two_norm();
         // double det = std::sqrt( GeometryGridPartGeometryType::MatrixHelper::template detATA<dimensionworld,dimension>( jit ) );
-        // normal *= ctype( 1 ) / sqrt(det);
-        return normal;
+        // return normal *= ctype( 1 ) / sqrt(det);
+        return normal *= geometry().integrationElement( local ) / normal.two_norm();
 
 #if 0
 //! Alternative implementation (gives the same result)
@@ -206,10 +205,11 @@ if (normal*hostIntersection().integrationOuterNormal(local) < 0)
 // normal *= GeometryImplType(insideGeo_, gridFunction_, hostIntersection_, affineGeometry).integrationElement(local);
 normal *= geometry().integrationElement(local)/normal.two_norm();
        // return hostIntersection().integrationOuterNormal(local);
-#endif
        return normal;
+#endif
       }
 
+#if 0
   void crossProduct(const FieldVector< ctype, dimensionworld > &vec1, const FieldVector< ctype, dimensionworld > &vec2, FieldVector< ctype, dimensionworld > &ret) const
   {
     assert( dimensionworld == 3 );
@@ -218,43 +218,32 @@ normal *= geometry().integrationElement(local)/normal.two_norm();
     ret[1] = vec1[2]*vec2[0] - vec1[0]*vec2[2];
     ret[2] = vec1[0]*vec2[1] - vec1[1]*vec2[0];
   }
+#endif
 
-      FieldVector< ctype, dimensionworld >
-      outerNormal ( const FieldVector< ctype, dimension-1 > &local ) const
+      GlobalCoordinate outerNormal ( const LocalCoordinate &local ) const
       {
+        const auto &refElement = Dune::ReferenceElements< ctype, dimension >::general( insideGeo_.type() );
+        const auto &refNormal = refElement.integrationOuterNormal( indexInInside() );
 
-        // return hostIntersection().outerNormal( local );
-
-
-        const Dune::ReferenceElement< ctype, dimension > &refElement
-          = Dune::ReferenceElements< ctype, dimension >::general( insideGeo_.type() );
-
-
-        FieldVector< ctype, dimension > x( geometryInInside().global( local ) );
-        typedef typename ElementGeometryImplType::JacobianInverseTransposed JacobianInverseTransposed;
-        const JacobianInverseTransposed &jit = insideGeo_.jacobianInverseTransposed( x );
-        const FieldVector< ctype, dimension > &refNormal = refElement.integrationOuterNormal( indexInInside() );
-
-        FieldVector< ctype, dimensionworld > normal;
-        jit.mv( refNormal, normal );
+        GlobalCoordinate normal;
+        insideGeo_.jacobianInverseTransposed( geometryInInside().global( local ) ).mv( refNormal, normal );
         return normal;
-
       }
 
-      FieldVector< ctype, dimensionworld >
-      unitOuterNormal ( const FieldVector< ctype, dimension-1 > &local ) const
+      GlobalCoordinate unitOuterNormal ( const LocalCoordinate &local ) const
       {
-        FieldVector< ctype, dimensionworld > normal = outerNormal( local );
-        normal *= (ctype( 1 ) / normal.two_norm());
-        return normal;
-
+        GlobalCoordinate normal = outerNormal( local );
+        return normal *= (ctype( 1 ) / normal.two_norm());
       }
 
-      FieldVector< ctype, dimensionworld > centerUnitOuterNormal () const
+      GlobalCoordinate centerUnitOuterNormal () const
       {
-        const ReferenceElement< ctype, dimension-1 > &refFace
-          = ReferenceElements< ctype, dimension-1 >::general( type() );
-        return unitOuterNormal( refFace.position( 0, 0 ) );
+        const auto &refElement = Dune::ReferenceElements< ctype, dimension >::general( insideGeo_.type() );
+        const auto &refNormal = refElement.integrationOuterNormal( indexInInside() );
+
+        GlobalCoordinate normal;
+        insideGeo_.jacobianInverseTransposed( geometryInInside().center() ).mv( refNormal, normal );
+        return normal *= (ctype( 1 ) / normal.two_norm());
       }
 
       const HostIntersectionType &hostIntersection () const
