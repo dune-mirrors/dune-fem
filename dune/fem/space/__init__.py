@@ -3,11 +3,19 @@ __metaclass__ = type
 
 import hashlib
 import inspect
+import sys
 
 from dune.generator.generator import SimpleGenerator
 from dune.fem import function
 
 from ._spaces import *
+
+if sys.version_info.major == 2:
+  def isString(s):
+    return isinstance(s, (str, unicode))
+else:
+  def isString(s):
+    return isinstance(s, str)
 
 def interpolate( self, func, name=None, **kwargs ):
     if not name:
@@ -38,7 +46,7 @@ def addAttr(module, cls, field, storage):
 
     if not storage:
         storage = str("fem")
-    if isinstance(storage,str):
+    if isString(storage):
         import dune.create as create
         storage = create.discretefunction( storageToSolver(storage) )(cls)
     else:
