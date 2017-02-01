@@ -52,6 +52,8 @@ namespace Dune
       typedef typename HostGridPartType::IntersectionType HostIntersectionType;
 
     public:
+      GeometryGridPartIntersection () = default;
+
       GeometryGridPartIntersection ( const GridFunctionType &gridFunction, const ElementGeometry &insideGeo )
         : gridFunction_( &gridFunction ), insideGeo_( insideGeo.impl() )
       {}
@@ -121,7 +123,7 @@ namespace Dune
       Geometry geometry () const
       {
         typedef typename Geometry::Implementation Impl;
-        return Geometry( Impl( insideGeo_, geometryInInside(), 2*insideGeo_.localFunction().order()+1 ) );
+        return Geometry( Impl( insideGeo_, geometryInInside(), 2*insideGeo_.impl().localFunction().order()+1 ) );
       }
 
       bool equals(const This &other) const

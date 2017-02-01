@@ -16,6 +16,7 @@
 
 #include <dune/fem/gridpart/common/compositegeometry.hh>
 #include <dune/fem/gridpart/common/localfunctiongeometry.hh>
+#include <dune/fem/gridpart/common/sharedgeometry.hh>
 #include <dune/fem/gridpart/geometrygridpart/capabilities.hh>
 #include <dune/fem/gridpart/geometrygridpart/datahandle.hh>
 #include <dune/fem/gridpart/geometrygridpart/entity.hh>
@@ -56,7 +57,7 @@ namespace Dune
         typedef GridFunction GridFunctionType;
         typedef typename GridFunctionType::GridPartType HostGridPartType;
 
-        typedef LocalFunctionGeometry< typename GridFunction::LocalFunctionType > ElementGeometryImpl;
+        typedef SharedGeometry< LocalFunctionGeometry< typename GridFunction::LocalFunctionType > > ElementGeometryImpl;
 
         template< int codim >
         struct Codim
