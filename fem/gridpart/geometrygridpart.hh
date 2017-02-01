@@ -3,24 +3,25 @@
 
 #include <dune/common/version.hh>
 
-#include <dune/fem/gridpart/common/gridpart.hh>
-#include <dune/fem/gridpart/common/gridpart2gridview.hh>
-
 #if ! DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
 #error "Experimental grid extensions required for GeometryGridPart. Add -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE to your CMAKE_FLAGS."
 #else // #if ! DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
 
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
+#include <dune/fem/gridpart/common/gridpart.hh>
+#include <dune/fem/gridpart/common/gridpart2gridview.hh>
 #include <dune/fem/gridpart/common/metatwistutility.hh>
+#include <dune/fem/gridpart/idgridpart/indexset.hh>
+
+#include <dune/fem/gridpart/common/compositegeometry.hh>
+#include <dune/fem/gridpart/common/localfunctiongeometry.hh>
 #include <dune/fem/gridpart/geometrygridpart/capabilities.hh>
 #include <dune/fem/gridpart/geometrygridpart/datahandle.hh>
 #include <dune/fem/gridpart/geometrygridpart/entity.hh>
-#include <dune/fem/gridpart/geometrygridpart/geometry.hh>
 #include <dune/fem/gridpart/geometrygridpart/intersection.hh>
 #include <dune/fem/gridpart/geometrygridpart/intersectioniterator.hh>
 #include <dune/fem/gridpart/geometrygridpart/iterator.hh>
-#include <dune/fem/gridpart/idgridpart/indexset.hh>
 
 namespace Dune
 {
@@ -55,11 +56,17 @@ namespace Dune
         typedef GridFunction GridFunctionType;
         typedef typename GridFunctionType::GridPartType HostGridPartType;
 
+        typedef LocalFunctionGeometry< typename GridFunction::LocalFunctionType > ElementGeometryImpl;
+
         template< int codim >
         struct Codim
         {
-          typedef Dune::Geometry< dimension - codim, dimensionworld, const GridPartFamily, GeometryGridPartGeometry > Geometry;
           typedef typename HostGridPartType::template Codim< codim >::LocalGeometryType LocalGeometry;
+
+          template< int mydim, int cdim, class Grid >
+          using GeometryImpl = std::conditional_t< mydim == dimension, ElementGeometryImpl, CompositeGeometry< ElementGeometryImpl, LocalGeometry > >;
+
+          typedef Dune::Geometry< dimension - codim, dimensionworld, const GridPartFamily, GeometryImpl > Geometry;
 
           typedef Dune::Entity< codim, dimension, const GridPartFamily, GeometryGridPartEntity > Entity;
           typedef typename HostGridPartType::GridType::template Codim< codim >::EntitySeed EntitySeed;

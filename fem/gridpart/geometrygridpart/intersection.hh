@@ -6,7 +6,6 @@
 #include <dune/common/version.hh>
 #include <dune/fem/misc/compatibility.hh>
 
-#include <dune/fem/gridpart/geometrygridpart/geometry.hh>
 #include <dune/geometry/affinegeometry.hh>
 
 namespace Dune
@@ -39,8 +38,6 @@ namespace Dune
       typedef typename Traits::template Codim< 1 >::LocalGeometry LocalGeometry;
 
       typedef typename Traits::GridFunctionType GridFunctionType;
-      typedef GeometryGridPartGeometry<1,dimensionworld,GridFamily> GeometryGridPartGeometryType;
-      typedef Dune::AffineGeometry< ctype, 1, GridFamily::dimension > AffineGeometryType;
 
       typedef FieldVector< ctype, dimensionworld > GlobalCoordinate;
       typedef FieldVector< ctype, dimension-1 > LocalCoordinate;
@@ -49,7 +46,6 @@ namespace Dune
 #if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
       typedef typename EntityPointer::Implementation EntityPointerImplType;
 #endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
-      typedef typename ElementGeometry::Implementation ElementGeometryImplType;
       typedef typename Geometry::Implementation GeometryImplType;
 
       typedef typename Traits::HostGridPartType HostGridPartType;
@@ -57,9 +53,7 @@ namespace Dune
 
     public:
       GeometryGridPartIntersection ( const GridFunctionType &gridFunction, const ElementGeometry &insideGeo )
-      : hostIntersection_( 0 ),
-        gridFunction_( &gridFunction ),
-        insideGeo_( insideGeo.impl() )
+        : gridFunction_( &gridFunction ), insideGeo_( insideGeo.impl() )
       {}
 
       operator bool () const { return bool( hostIntersection_ ); }
@@ -126,14 +120,8 @@ namespace Dune
 
       Geometry geometry () const
       {
-
-        //! affineGeometry == hostIntersection().geometryInInside()
-        AffineGeometryType affineGeometry ( type(), hostIntersection().geometryInInside().corner(0),
-              hostIntersection().geometryInInside().jacobianTransposed(typename
-                LocalGeometry::LocalCoordinate(0) ) );
-        return Geometry( GeometryGridPartGeometryType(
-              insideGeo_,
-              gridFunction_, hostIntersection_, affineGeometry) );
+        typedef typename Geometry::Implementation Impl;
+        return Geometry( Impl( insideGeo_, geometryInInside(), 2*insideGeo_.localFunction().order()+1 ) );
       }
 
       bool equals(const This &other) const
@@ -252,10 +240,7 @@ normal *= geometry().integrationElement(local)/normal.two_norm();
         return *hostIntersection_;
       }
 
-      void invalidate ()
-      {
-        hostIntersection_ = 0;
-      }
+      void invalidate () { hostIntersection_ = nullptr; }
 
       void initialize ( const HostIntersectionType &hostIntersection )
       {
@@ -270,9 +255,9 @@ normal *= geometry().integrationElement(local)/normal.two_norm();
       }
 
     private:
-      const HostIntersectionType *hostIntersection_;
-      const GridFunctionType *gridFunction_;
-      ElementGeometryImplType insideGeo_;
+      const HostIntersectionType *hostIntersection_ = nullptr;
+      const GridFunctionType *gridFunction_ = nullptr;
+      typename ElementGeometry::Implementation insideGeo_;
     };
 
   } // namespace Fem

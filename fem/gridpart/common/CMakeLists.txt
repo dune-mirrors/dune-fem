@@ -1,5 +1,8 @@
 set(HEADERS
+  compositegeometry.hh
+  localfunctiongeometry.hh
   sharedgeometry.hh
+  simplegeometry.hh
   unimplementedgeometry.hh
 )
 

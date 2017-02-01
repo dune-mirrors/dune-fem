@@ -122,8 +122,6 @@ namespace Dune
     private:
       typedef typename Traits::HostGridPartType HostGridPartType;
 
-      typedef typename Geometry::Implementation GeometryImplType;
-
     public:
       typedef typename HostGridPartType::template Codim< codimension >::EntityType HostEntityType;
 
@@ -151,7 +149,10 @@ namespace Dune
 
       Geometry geometry () const
       {
-        return Geometry( GeometryImplType( hostEntity().geometry(), hostEntity(), gridFunction_ ) );
+        typedef typename Geometry::Implementation Impl;
+        Impl impl( gridFunction() );
+        impl.init( hostEntity() );
+        return Geometry( impl );
       }
 
       EntitySeed seed () const { return EntitySeed( hostEntity().seed() ); }
