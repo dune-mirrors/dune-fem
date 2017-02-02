@@ -6,11 +6,11 @@ from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering
 from ufl.algorithms.apply_restrictions import apply_restrictions
 from ufl.algorithms.transformer import Transformer
-from ufl.constantvalue import IntValue
+from ufl.constantvalue import IntValue, Zero
 from ufl.differentiation import Grad
 from ufl.restriction import Restricted
 
-from .tensors import ExprTensor, keys
+from .tensors import conditionalExprTensor, ExprTensor, keys
 
 def sumTensorMaps(left, right):
     result = {key: l.copy() for key, l in left.items()}
@@ -80,6 +80,16 @@ class MultiLinearExprSplitter(Transformer):
 
     def sum(self, expr, left, right):
         return sumTensorMaps(left, right)
+
+    def conditional(self, expr):
+        condition = expr.ufl_operands[0]
+        trueCase = self.visit(expr.ufl_operands[1])
+        falseCase = self.visit(expr.ufl_operands[2])
+
+        result = dict()
+        for key in set(trueCase.keys()) | set(falseCase.keys()):
+            result[key] = conditionalExprTensor(condition, trueCase.get(key, Zero()), falseCase.get(key, Zero()))
+        return result
 
     def terminal(self, expr):
         if len(expr.ufl_shape) > 0:

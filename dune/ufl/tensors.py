@@ -1,6 +1,7 @@
 from __future__ import division, print_function
 
 from ufl import as_tensor
+from ufl.conditional import Conditional
 from ufl.constantvalue import Zero
 from ufl.core.multiindex import MultiIndex
 from ufl.restriction import NegativeRestricted, PositiveRestricted
@@ -122,3 +123,12 @@ class ExprTensor:
 
     def is_zero(self):
         return self.as_ufl() == ExprTensor(self.shape).as_ufl()
+
+
+def conditionalExprTensor(condition, trueTensor, falseTensor):
+    if not isinstance(trueTensor, ExprTensor) or not isinstance(falseTensor, ExprTensor):
+        raise Exception('conditionalExprTensor works on ExprTensors only.')
+    if trueTensor.shape != falseTensor.shape:
+        raise Exception('Cannot construct conditional for tensors of different shape.')
+    shape = trueTensor.shape
+    return ExprTensor(shape, apply(lambda u, v: Conditional(condition, u, v), shape, trueTensor.data, falseTensor.data))

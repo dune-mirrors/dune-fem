@@ -1,7 +1,7 @@
 from __future__ import division, print_function, unicode_literals
 
 from ..builtin import BuiltInFunction
-from ..expression import Application, ConstantExpression, ConstructExpression, Expression, InitializerList, LambdaExpression, UnformattedExpression, Variable
+from ..expression import Application, ConditionalExpression, ConstantExpression, ConstructExpression, Expression, InitializerList, LambdaExpression, UnformattedExpression, Variable
 from ..cplusplus import Declaration, ReturnStatement, Using
 
 
@@ -29,6 +29,8 @@ def extractIncludesFromExpression(expr):
         return set()
     elif isinstance(expr, UnformattedExpression):
         return set()
+    elif isinstance(expr, ConditionalExpression):
+        return set.union(*[extractIncludesFromExpression(arg) for arg in (expr.cond, expr.true, expr.false)])
     else:
         raise Exception("Unknown expression", expr)
 
