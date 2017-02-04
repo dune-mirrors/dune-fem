@@ -7,7 +7,7 @@ from ufl import CellVolume, MinCellEdgeLength, MaxCellEdgeLength
 from ufl import FacetArea, MinFacetEdgeLength, MaxFacetEdgeLength
 from ufl import action, derivative
 from ufl.algorithms.apply_derivatives import apply_derivatives
-from ufl.algorithms import Replacer
+from ufl.algorithms.replace import Replacer
 from ufl.constantvalue import IntValue, Zero
 from ufl.corealg.map_dag import map_expr_dags
 from ufl.equation import Equation
