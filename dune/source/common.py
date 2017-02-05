@@ -16,3 +16,18 @@ class Block:
 class Statement:
     def __init__(self):
         pass
+
+
+class UnformattedBlock():
+    def __init__(self, *lines):
+        self.lines = []
+        self.append(*lines)
+
+    def append(self, *lines):
+        for line in lines:
+            if isinstance(line, (list, tuple)):
+                self.append(*list(line))
+            elif isinstance(line, str):
+                self.lines += line.split('\n')
+            else:
+                raise Exception('Only strings (or lists of them) can be appended to an UnformattedBlock')

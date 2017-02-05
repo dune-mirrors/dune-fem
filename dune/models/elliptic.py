@@ -17,7 +17,7 @@ from dune.ufl import codegen, GridCoefficient
 from dune.ufl.tensors import ExprTensor
 from dune.ufl.linear import splitMultiLinearExpr
 
-from dune.source.cplusplus import Declaration, Method, TypeAlias, Variable
+from dune.source.cplusplus import Declaration, Method, TypeAlias, UnformattedBlock, Variable
 from dune.source.cplusplus import assign
 from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source import BaseModel
@@ -87,11 +87,10 @@ class EllipticModel(BaseModel):
 
     def appendCode(self, key, code, **kwargs):
         function = getattr(self, key)
-        newCode = '\n      '.join(function) + '\n' + code
         coef = kwargs.pop("coefficients", {})
         const = kwargs.pop("constants", {})
-        newCode = self.codeCoefficient(newCode, coef, const)
-        setattr(self, key, newCode)
+        function.append(UnformattedBlock(self.codeCoefficient(code, coef, const)))
+        setattr(self, key, function)
 
 
 
