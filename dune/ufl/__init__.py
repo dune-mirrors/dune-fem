@@ -60,6 +60,14 @@ class NamedConstant(ufl.Coefficient):
     def str(self):
         return self.name
 
+
+class DirichletBC:
+    def __init__(self, functionSpace, value, subDomain):
+        self.functionSpace = functionSpace
+        self.value = value
+        self.subDomain = subDomain
+
+
 # register markdown formatter for integrands, forms and equations to IPython
 
 try:
