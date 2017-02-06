@@ -5,17 +5,11 @@ import hashlib
 import inspect
 import sys
 
+from dune.common.compatibility import isString
 from dune.generator.generator import SimpleGenerator
 from dune.fem import function
 
 from ._spaces import *
-
-if sys.version_info.major == 2:
-  def isString(s):
-    return isinstance(s, (str, unicode))
-else:
-  def isString(s):
-    return isinstance(s, str)
 
 def interpolate( self, func, name=None, **kwargs ):
     if not name:
