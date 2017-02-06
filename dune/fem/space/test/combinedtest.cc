@@ -20,6 +20,9 @@ static const int dimw = Dune::GridSelector::dimworld;
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
+
+#include <dune/fem/test/testgrid.hh>
+
 using namespace Dune;
 using namespace Fem;
 
@@ -281,9 +284,6 @@ int main (int argc, char **argv)
   }
   int ml = atoi( argv[1] );
   double* error = new double[ml];
-  char tmp[16]; sprintf(tmp,"%d",dimw);
-  std::string macroGridName (tmp);
-  macroGridName += "dgrid.dgf";
 
   std :: cout << "Polynomial Order: " << polOrd << std :: endl;
 
@@ -291,10 +291,9 @@ int main (int argc, char **argv)
     SingleDiscreteFunctionType,RANGE > DiscreteFunctionType1;
   DiscreteFunctionType1* solution1;
   {
-    GridPtr<MyGridType> gridptr(macroGridName);
-    MyGridType& grid=*gridptr;
-    const int step = Dune::DGFGridInfo<MyGridType>::
-      refineStepsForHalf();
+    MyGridType &grid = Dune::Fem::TestGrid::grid();
+    const int step = Dune::Fem::TestGrid::refineStepsForHalf();
+
     GridPartType part ( grid );
     SingleDiscreteFunctionSpaceType singFuncSpace ( part );
     SingleDiscreteFunctionType singSol("sol",singFuncSpace);

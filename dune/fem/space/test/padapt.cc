@@ -43,6 +43,8 @@ const int polOrder = POLORDER;
 #endif
 #include <dune/fem/io/parameter.hh>
 
+#include <dune/fem/test/testgrid.hh>
+
 
 // Check for unhealthy grids
 // -------------------------

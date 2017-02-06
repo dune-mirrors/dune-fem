@@ -46,6 +46,7 @@ const int polOrder = POLORDER;
 #endif
 #include <dune/fem/io/parameter.hh>
 
+#include <dune/fem/test/testgrid.hh>
 
 // Check for unhealthy grids
 // -------------------------
@@ -373,14 +374,10 @@ try
   int ml = 2 ; // default value = 2
   ml = Parameter :: getValue ("lagrangeadapt.maxlevel", ml);
 
-  std::ostringstream gridName;
-  gridName << MyGridType::dimensionworld << "dgrid.dgf";
-  GridPtr< MyGridType > gridptr( gridName.str().c_str() );
-  gridptr->loadBalance();
+  MyGridType &grid = Dune::Fem::TestGrid::grid();
+  const int step = Dune::Fem::TestGrid::refineStepsForHalf();
 
-  const int step = DGFGridInfo< MyGridType >::refineStepsForHalf();
-
-  GridPartType gridPart( *gridptr );
+  GridPartType gridPart( grid );
   DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
   DiscreteFunctionSpaceTwoType discreteFunctionSpaceTwo( gridPart );
   DiscreteFunctionType solutionOne( "solution 1", discreteFunctionSpace );

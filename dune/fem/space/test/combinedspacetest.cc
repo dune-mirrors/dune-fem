@@ -18,6 +18,8 @@ static const int dimw = Dune::GridSelector::dimworld;
 
 #include <dune/fem/misc/double.hh>
 
+#include <dune/fem/test/testgrid.hh>
+
 
 using namespace Dune;
 using namespace Fem;
@@ -257,14 +259,7 @@ int main ( int argc, char **argv )
   MPIManager::initialize( argc, argv );
   try
   {
-    std::stringstream tmp;
-    tmp << dimw;
-    std::string macroGridName( tmp.str());
-    macroGridName += "dgrid.dgf";
-
-    GridPtr< MyGridType > gridptr( macroGridName );
-    MyGridType &grid = *gridptr;
-    grid.loadBalance();
+    MyGridType &grid = Dune::Fem::TestGrid::grid();
 
     GridPartType part( grid );
     DiscreteFunctionSpaceType space( part );

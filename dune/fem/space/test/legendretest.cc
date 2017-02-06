@@ -22,6 +22,7 @@ typedef Dune::YaspGrid< dimw > HGridType;
 #if HAVE_GRAPE
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
+
 using namespace Dune;
 using namespace Fem;
 
