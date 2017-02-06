@@ -376,6 +376,7 @@ try
   std::ostringstream gridName;
   gridName << MyGridType::dimensionworld << "dgrid.dgf";
   GridPtr< MyGridType > gridptr( gridName.str().c_str() );
+  gridptr->loadBalance();
 
   const int step = DGFGridInfo< MyGridType >::refineStepsForHalf();
 
