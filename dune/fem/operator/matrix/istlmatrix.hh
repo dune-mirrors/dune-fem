@@ -428,7 +428,14 @@ namespace Dune
           numRows_( rowMapper_.maxNumDofs() ),
           numCols_( colMapper_.maxNumDofs() ),
           matrixObj_( mObj )
-      {}
+      {
+#if DUNE_VERSION_NEWER(DUNE_FEM,2,4)
+        const auto &slaveDofs = this->domainSpace().slaveDofs();
+#else
+        Fem::SlaveDofsProvider< DomainSpaceType > slaveDofsProvider( this->domainSpace() );
+        const auto &slaveDofs = slaveDofsProvider.slaveDofs();
+#endif
+      }
 
       ISTLLocalMatrix ( const ISTLLocalMatrix& org )
         : BaseType( org ),
@@ -438,7 +445,14 @@ namespace Dune
           numCols_( org.numCols_ ),
           matrices_(org.matrices_),
           matrixObj_(org.matrixObj_)
-      {}
+      {
+#if DUNE_VERSION_NEWER(DUNE_FEM,2,4)
+        const auto &slaveDofs = this->domainSpace().slaveDofs();
+#else
+        Fem::SlaveDofsProvider< DomainSpaceType > slaveDofsProvider( this->domainSpace() );
+        const auto &slaveDofs = slaveDofsProvider.slaveDofs();
+#endif
+      }
 
       //! initialize this local Matrix to (colEntity, rowEntity)
       void init ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
@@ -571,6 +585,30 @@ namespace Dune
       //! empty as the little matrices are already sorted
       void resort ()
       {}
+
+      void makeUnitRow( const int localDof )
+      {
+        // clear all other columns
+        clearRow( localDof );
+
+        // set diagonal to 1 (if master)
+        // first get the slaveDofs
+#if DUNE_VERSION_NEWER(DUNE_FEM,2,4)
+        const auto &slaveDofs = this->domainSpace().slaveDofs();
+#else
+        Fem::SlaveDofsProvider< DomainSpaceType > slaveDofsProvider( this->domainSpace() );
+        const auto &slaveDofs = slaveDofsProvider.slaveDofs();
+#endif
+        // no we need to find out to which block localDof belongs:
+        const int localBlocks = this->domainSpace().blockMapper().numDofs( this->domainEntity() );
+        std::vector<std::size_t> globalBlockDofs(localBlocks);
+        this->domainSpace().blockMapper().map( this->domainEntity(), globalBlockDofs );
+
+        const int block = (int) localDof / DomainSpaceType :: localBlockSize;
+        int global = globalBlockDofs[block];
+        double value = slaveDofs.isSlave( global )? 0.0 : 1.0;
+        set( localDof, localDof, value );
+      }
 
     protected:
       //! set matrix row to zero

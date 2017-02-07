@@ -142,7 +142,14 @@ namespace Dune
         localMatrix().clearRow( localRow );
       }
 
-      /** \copydoc Dune::Fem::LocalMatrixInterface::clearRow */
+      /** \copydoc Dune::Fem::LocalMatrixInterface::makeUnitRow */
+      void makeUnitRow( const int  localRow )
+      {
+        localMatrix().makeUnitRow( localRow );
+      }
+
+
+      /** \copydoc Dune::Fem::LocalMatrixInterface::clearCol */
       void clearCol ( const int localCol )
       {
         localMatrix().clearCol( localCol );
