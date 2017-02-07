@@ -50,10 +50,7 @@ namespace Dune
 
       private:
         typedef CachingQuadrature< GridPartType, 0 > InteriorQuadratureType;
-        typedef QuadraturePointWrapper< InteriorQuadratureType > InteriorQuadraturePointType;
-
         typedef CachingQuadrature< GridPartType, 1 > SurfaceQuadratureType;
-        typedef QuadraturePointWrapper< SurfaceQuadratureType > SurfaceQuadraturePointType;
 
         typedef typename IntegrandsType::DomainValueType DomainValueType;
         typedef typename IntegrandsType::RangeValueType RangeValueType;
@@ -151,7 +148,7 @@ namespace Dune
             return;
 
           const auto geometry = u.entity().geometry();
-          for( const InteriorQuadraturePointType qp : InteriorQuadratureType( u.entity(), 2*w.order() ) )
+          for( const auto qp : InteriorQuadratureType( u.entity(), 2*w.order() ) )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.position() );
 
@@ -203,7 +200,7 @@ namespace Dune
             return;
 
           const auto geometry = intersection.geometry();
-          for( const SurfaceQuadraturePointType qp : SurfaceQuadratureType( gridPart(), intersection, 2*w.order(), SurfaceQuadratureType::INSIDE ) )
+          for( const auto qp : SurfaceQuadratureType( gridPart(), intersection, 2*w.order(), SurfaceQuadratureType::INSIDE ) )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
@@ -226,7 +223,7 @@ namespace Dune
           const auto &domainBasis = j.domainBasisFunctionSet();
           const auto &rangeBasis = j.rangeBasisFunctionSet();
 
-          for( const SurfaceQuadraturePointType qp : SurfaceQuadratureType( gridPart(), intersection, 2*rangeBasis.order(), SurfaceQuadratureType::INSIDE ) )
+          for( const auto qp : SurfaceQuadratureType( gridPart(), intersection, 2*rangeBasis.order(), SurfaceQuadratureType::INSIDE ) )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
@@ -319,9 +316,9 @@ namespace Dune
               std::pair< RangeValueType, RangeValueType > intPhi = integrand.first( value( phiIn, col ) );
 
               Hybrid::forEach( RangeValueIndices(), [ &qpIn, &jInInCol, &intPhi, weight ] ( auto i ) {
-                std::get< i >( intPhi.first ) *= weight;
-                jInInCol.axpy( qpIn, std::get< i >( intPhi.first ) );
-              } );
+                  std::get< i >( intPhi.first ) *= weight;
+                  jInInCol.axpy( qpIn, std::get< i >( intPhi.first ) );
+                } );
             }
             for( std::size_t col = 0, cols = domainBasisOut.size(); col < cols; ++col )
             {
@@ -329,9 +326,9 @@ namespace Dune
               std::pair< RangeValueType, RangeValueType > intPhi = integrand.second( value( phiOut, col ) );
 
               Hybrid::forEach( RangeValueIndices(), [ &qpIn, &jOutInCol, &intPhi, weight ] ( auto i ) {
-                std::get< i >( intPhi.first ) *= weight;
-                jOutInCol.axpy( qpIn, std::get< i >( intPhi.first ) );
-              } );
+                  std::get< i >( intPhi.first ) *= weight;
+                  jOutInCol.axpy( qpIn, std::get< i >( intPhi.first ) );
+                } );
             }
           }
         }
@@ -365,12 +362,12 @@ namespace Dune
               std::pair< RangeValueType, RangeValueType > intPhi = integrand.first( value( phiIn, col ) );
 
               Hybrid::forEach( RangeValueIndices(), [ &qpIn, &jInInCol, &qpOut, &jInOutCol, &intPhi, weight ] ( auto i ) {
-                std::get< i >( intPhi.first ) *= weight;
-                jInInCol.axpy( qpIn, std::get< i >( intPhi.first ) );
+                  std::get< i >( intPhi.first ) *= weight;
+                  jInInCol.axpy( qpIn, std::get< i >( intPhi.first ) );
 
-                std::get< i >( intPhi.second ) *= weight;
-                jInOutCol.axpy( qpOut, std::get< i >( intPhi.second ) );
-              } );
+                  std::get< i >( intPhi.second ) *= weight;
+                  jInOutCol.axpy( qpOut, std::get< i >( intPhi.second ) );
+                } );
             }
             for( std::size_t col = 0, cols = domainBasisOut.size(); col < cols; ++col )
             {
@@ -379,12 +376,12 @@ namespace Dune
               std::pair< RangeValueType, RangeValueType > intPhi = integrand.second( value( phiOut, col ) );
 
               Hybrid::forEach( RangeValueIndices(), [ &qpIn, &jOutInCol, &qpOut, &jOutOutCol, &intPhi, weight ] ( auto i ) {
-                std::get< i >( intPhi.first ) *= weight;
-                jOutInCol.axpy( qpIn, std::get< i >( intPhi.first ) );
+                  std::get< i >( intPhi.first ) *= weight;
+                  jOutInCol.axpy( qpIn, std::get< i >( intPhi.first ) );
 
-                std::get< i >( intPhi.second ) *= weight;
-                jOutOutCol.axpy( qpOut, std::get< i >( intPhi.second ) );
-              } );
+                  std::get< i >( intPhi.second ) *= weight;
+                  jOutOutCol.axpy( qpOut, std::get< i >( intPhi.second ) );
+                } );
             }
           }
         }
