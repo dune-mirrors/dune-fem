@@ -268,6 +268,7 @@ namespace Dune
       // force communication _now_
       void communicateNow () const
       {
+        assemble();
         communicateFlag_ = true;
         ++sequence_;
         communicateIfNecessary();
@@ -303,9 +304,11 @@ namespace Dune
 
       void clear ()
       {
+        assemble();
         ::Dune::Petsc::VecSet( *getVector(), 0. );
         updateGhostRegions();
         vectorIsUpToDateNow();
+        assemble();
       }
 
       PetscScalar operator* ( const ThisType &other ) const
@@ -409,6 +412,13 @@ namespace Dune
         assign( other );
         return *this;
       }
+
+      void assemble() const
+      {
+        ::Dune::Petsc::VecAssemblyBegin( vec_ );
+        ::Dune::Petsc::VecAssemblyEnd  ( vec_ );
+      }
+
     protected:
       // setup vector according to mapping sizes
       void init()
