@@ -49,7 +49,7 @@ namespace Dune
       static_assert( Std::are_all_same< typename DiscreteFunctionSpaces::DomainFieldType ... >::value,
           "TupleLocalRestrictProlong needs common DomainFieldType in the Spaces!" );
 
-      typedef typename std::tuple_element< 0, LocalRestrictProlongTupleType >::type::DomainFieldType DomainFieldType;
+      typedef std::tuple_element_t< 0, std::tuple< typename DiscreteFunctionSpaces::DomainFieldType... > > DomainFieldType;
 
       TupleLocalRestrictProlong ( std::tuple< const DiscreteFunctionSpaces & ... > tuple )
         : localRestrictProlongTuple_( localRestrictProlongTuple( tuple, std::index_sequence_for< DiscreteFunctionSpaces ... >() ) )
