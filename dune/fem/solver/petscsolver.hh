@@ -315,6 +315,7 @@ namespace Dune
         // set monitor in verbose mode
         if( verbose_ )
         {
+          op_.communicate(true);
           ::Dune::Petsc::KSPView( ksp_ );
           ::Dune::Petsc::KSPMonitorSet( ksp_, &monitor, PETSC_NULL, PETSC_NULL);
         }
@@ -354,6 +355,9 @@ namespace Dune
 
       void apply( const PetscDiscreteFunctionType& arg, PetscDiscreteFunctionType& dest ) const
       {
+        op_.communicate(true);
+        arg.dofVector().assemble();
+        dest.dofVector().assemble();
         // std::cout << "******************************" << std::endl;
         // std::cout << "Before:" << std::endl;
         dest.dofVector().clearGhost();
