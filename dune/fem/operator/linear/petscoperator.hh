@@ -73,9 +73,9 @@ namespace Dune
     private:
       typedef PetscSlaveDofProvider< DomainSpaceType > RowPetscSlaveDofsType;
       typedef PetscSlaveDofProvider< RangeSpaceType  > ColPetscSlaveDofsType;
-      enum Status {statAssembled=0,statAdd=1,statInsert=2,statGet=3,statNothing=4,statFinalized=5};
 
     public:
+      enum Status {statAssembled=0,statAdd=1,statInsert=2,statGet=3,statNothing=4,statFinalized=5};
       typedef typename ColPetscSlaveDofsType :: PetscDofMappingType   ColDofMappingType;
       typedef typename RowPetscSlaveDofsType :: PetscDofMappingType   RowDofMappingType;
 
@@ -134,11 +134,12 @@ namespace Dune
         destroy();
       }
 
-      void communicate ()
+      void communicate (bool final = false) const
       {
-        ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FINAL_ASSEMBLY );
-        ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FINAL_ASSEMBLY );
-        status_ = statFinalized;
+        if (final)
+          assemble( statFinalized );
+        else
+          assemble( statInsert );
       }
 
       const DomainSpaceType& domainSpace () const { return domainSpace_; }
@@ -154,15 +155,17 @@ namespace Dune
           petscArg_.reset( new PetscDomainFunctionType( "PetscOp-arg", domainSpace_ ) );
         if( ! petscDest_ )
           petscDest_.reset( new PetscRangeFunctionType( "PetscOp-arg", rangeSpace_ ) );
-
         petscArg_->assign( arg );
-        ::Dune::Petsc::MatMult( petscMatrix_, *(petscArg_->petscVec()) , *(petscDest_->petscVec()) );
+
+        apply( *petscArg_, *petscDest_ );
+
         dest.assign( *petscDest_ );
       }
 
       /** \brief application operator for PetscDiscreteFunction */
       void apply ( const PetscDomainFunctionType &arg, PetscRangeFunctionType &dest ) const
       {
+        communicate(true);
         ::Dune::Petsc::MatMult( petscMatrix_, *arg.petscVec() , *dest.petscVec() );
       }
 
@@ -271,9 +274,12 @@ namespace Dune
         }
       }
 
+      // not this must be called on all processors at the same time
       void clear ()
       {
+        assemble( statInsert, true );
         ::Dune::Petsc::MatZeroEntries( petscMatrix_ );
+        assemble( statAdd, true );
       }
 
       //! interface method from LocalMatrixFactory
@@ -295,8 +301,7 @@ namespace Dune
       template< class LocalMatrix >
       void addLocalMatrix ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity, const LocalMatrix &localMat )
       {
-        setStatus( statAdd );
-
+        assert( status_ == statAdd );
         std::vector< PetscInt > r, c;
         setupIndices( rangeSpace_.blockMapper(), rowDofMapping(), rangeEntity, rangeLocalBlockSize, r);
         setupIndices( domainSpace_.blockMapper(), colDofMapping(), domainEntity, domainLocalBlockSize, c);
@@ -307,13 +312,12 @@ namespace Dune
             v[ i * c.size() +j ] = localMat.get( i, j );
 
         ::Dune::Petsc::MatSetValues( petscMatrix_, r.size(), r.data(), c.size(), c.data(), v.data(), ADD_VALUES );
-        // setStatus( statAssembled );
       }
 
       template< class LocalMatrix, class Scalar >
       void addScaledLocalMatrix ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity, const LocalMatrix &localMat, const Scalar &s )
       {
-        setStatus( statAdd );
+        assert( status_ == statAdd );
 
         std::vector< PetscInt > r, c;
         setupIndices( rangeSpace_.blockMapper(), rowDofMapping(), rangeEntity, rangeLocalBlockSize, r);
@@ -325,13 +329,12 @@ namespace Dune
             v[ i * c.size() +j ] = s * localMat.get( i, j );
 
         ::Dune::Petsc::MatSetValues( petscMatrix_, r.size(), r.data(), c.size(), c.data(), v.data(), ADD_VALUES );
-        // setStatus( statAssembled );
       }
 
       template< class LocalMatrix >
       void setLocalMatrix ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity, const LocalMatrix &localMat )
       {
-        setStatus( statInsert );
+        assert( status_ == statInsert );
 
         std::vector< PetscInt > r, c;
         setupIndices( rangeSpace_.blockMapper(), rowDofMapping(), rangeEntity, rangeLocalBlockSize, r);
@@ -343,15 +346,13 @@ namespace Dune
             v[ i * c.size() +j ] = localMat.get( i, j );
 
         ::Dune::Petsc::MatSetValues( petscMatrix_, r.size(), r.data(), c.size(), c.data(), v.data(), INSERT_VALUES );
-
-        // setStatus( statAssembled );
       }
 
 
       template< class LocalMatrix >
       void getLocalMatrix ( const RowEntityType &domainEntity, const ColumnEntityType &rangeEntity, LocalMatrix &localMat ) const
       {
-        assert( status_==statFinalized );
+        communicate(true);
 
         std::vector< PetscInt > r, c;
         setupIndices( rangeSpace_.blockMapper(), rowDofMapping(), rangeEntity, rangeLocalBlockSize, r);
@@ -363,8 +364,6 @@ namespace Dune
         for( std::size_t i =0 ; i< r.size(); ++i )
           for( std::size_t j =0; j< c.size(); ++j )
             localMat.set( i, j, v[ i * c.size() +j ] );
-
-        // setStatus( statAssembled );
       }
 
       // just here for debugging
@@ -397,6 +396,24 @@ namespace Dune
       //! return reference to column global mapping
       const ColDofMappingType& colDofMapping() const { return colSlaveDofs_.dofMapping(); }
 
+      void assemble(const Status &newstatus, bool force=false) const
+      {
+        if (petscMatrix() && (newstatus != status_ || force) )
+        {
+          if (newstatus == statFinalized)
+          {
+            ::Dune::Petsc::MatAssemblyBegin( petscMatrix_, MAT_FINAL_ASSEMBLY );
+            ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix_, MAT_FINAL_ASSEMBLY );
+          }
+          else
+          {
+            ::Dune::Petsc::MatAssemblyBegin( petscMatrix(), MAT_FLUSH_ASSEMBLY );
+            ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix(), MAT_FLUSH_ASSEMBLY );
+          }
+          status_ = newstatus;
+        }
+      }
+
     private:
       PetscLinearOperator ();
 
@@ -406,20 +423,9 @@ namespace Dune
         if( status_ != statNothing )
         {
           ::Dune::Petsc::MatDestroy( &petscMatrix_ );
-          setStatus( statNothing );
+          assemble( statNothing );
         }
         sequence_ = -1;
-      }
-
-      void setStatus(const Status &newstatus) const
-      {
-        if (petscMatrix() && newstatus != status_)
-        {
-          // assert(status_ != statFinalized);
-          ::Dune::Petsc::MatAssemblyBegin( petscMatrix(), MAT_FLUSH_ASSEMBLY );
-          ::Dune::Petsc::MatAssemblyEnd  ( petscMatrix(), MAT_FLUSH_ASSEMBLY );
-          status_ = newstatus;
-        }
       }
 
       // Used to setup row/column indices. DofMapper is the DUNE DoF mapper
@@ -571,8 +577,8 @@ namespace Dune
 
       inline void add ( const int localRow, const int localCol, const RangeFieldType &value )
       {
-        status_ = statAdd;
-        petscLinearOperator_.setStatus(status_);
+        // status_ = statAdd;
+        // petscLinearOperator_.setStatus(status_);
         ::Dune::Petsc::MatSetValue( petscMatrix(), globalRowIndex( localRow ), globalColIndex( localCol ) , value, ADD_VALUES );
         //! int idx = localCol + localRow*columns();
         //! assert( idx < values_.size() );
@@ -580,18 +586,37 @@ namespace Dune
       }
       inline void set(const int localRow, const int localCol, const RangeFieldType &value )
       {
-        status_ = statInsert;
-        petscLinearOperator_.setStatus(status_);
+        // status_ = statInsert;
+        // petscLinearOperator_.setStatus(status_);
         ::Dune::Petsc::MatSetValue( petscMatrix(), globalRowIndex( localRow ), globalColIndex( localCol ) , value, INSERT_VALUES );
         // int idx = localCol + localRow*columns();
         // assert( idx < values_.size() );
         // values_[idx] = value;
       }
+
+      void makeUnitRow( const int localDof )
+      {
+#if 0
+        typedef Fem::SlaveDofsProvider< DiscreteFunctionSpaceType > SlaveDofsProviderType;
+        typedef typename SlaveDofsProviderType :: SlaveDofsType SlaveDofsType;
+#if DUNE_VERSION_NEWER(DUNE_FEM,2,4)
+        const SlaveDofsType &slaveDofs = space_.slaveDofs();
+#else
+        SlaveDofsProviderType slaveDofsProvider_( domainSpace() );
+        const SlaveDofsType &slaveDofs = slaveDofsProvider_.slaveDofs();
+#endif
+#endif
+        // clear all other columns
+        clearRow( localDof );
+        // set diagonal to 1
+        set( localDof, localDof, 1.0 );
+      }
+
       //! set matrix row to zero
       void clearRow ( const int localRow )
       {
-        status_ = statInsert;
-        petscLinearOperator_.setStatus(status_);
+        // status_ = statInsert;
+        // petscLinearOperator_.setStatus(status_);
         const int col = this->columns();
         const int globalRowIdx = globalRowIndex( localRow );
         for(int localCol=0; localCol<col; ++localCol)
