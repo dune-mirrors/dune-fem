@@ -293,6 +293,40 @@ namespace Dune
        *
        *  \returns a DoF iterator pointing to first DoF (degre of freedom)
        */
+      ConstDofIteratorType begin () const
+      {
+        return asImp().dbegin ();
+      }
+
+      /** \brief obtain an iterator pointing behind the last DoF (read-only)
+       *
+       *  \returns a DoF iterator pointing behind the last DoF (degree of freedom)
+       */
+      ConstDofIteratorType end () const
+      {
+        return asImp().dend ();
+      }
+
+      /** \brief obtain an iterator pointing to the first DoF (read-write)
+       *
+       *  \returns a DoF iterator pointing to first DoF (degre of freedom)
+       */
+      DofIteratorType begin ()
+      {
+        return asImp().dbegin ();
+      }
+
+      /** \brief obtain an iterator pointing behind the last DoF (read-write)
+       *
+       *  \returns a DoF iterator pointing behind the last DoF (degree of freedom)
+       */
+      DofIteratorType end ()
+      {
+        return asImp().dend ();
+      }
+
+
+
       ConstDofIteratorType dbegin () const
       {
         return asImp().dbegin ();
