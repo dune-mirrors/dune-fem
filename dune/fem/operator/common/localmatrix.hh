@@ -115,6 +115,15 @@ namespace Dune
           asImp().set(localRow,localCol,value));
       }
 
+      /*! \brief set row to unit vector
+          \param[in] localRow local row that is to be set
+       */
+      void makeUnitRow( const int  localRow )
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION(
+            asImp().makeUnitRow( localRow ));
+      }
+
       /*! \brief set row to zero values
           \param[in] localRow local row that is set to zero
        */
@@ -381,6 +390,13 @@ namespace Dune
         {
           this->set(localRow, j, 0);
         }
+      }
+
+      /** \copydoc Dune::Fem::LocalMatrixInterface::makeUnitRow */
+      void makeUnitRow( const int  localRow )
+      {
+        this->clearRow( localRow );
+        this->set(localRow, localRow, 1);
       }
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::clearCol */
