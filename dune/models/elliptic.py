@@ -58,12 +58,6 @@ class EllipticModel:
         self.arg_dr = 'JacobianRangeType &result'
         self.symmetric = False
 
-    def getNumber(self, expr):
-        e = [ ee for ee in self.coefficients if ee["name"] == str(expr) ]
-        if len(e) > 1:
-            raise KeyError('two coefficients provided with same name')
-        return e[0]["number"]
-
     def pre(self, name):
         result = [TypeAlias("GridPartType", "GridPart"),
                   TypeAlias("EntityType", "typename GridPart::template Codim< 0 >::EntityType"),
