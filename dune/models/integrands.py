@@ -15,7 +15,7 @@ from ufl.differentiation import Grad
 
 from dune.generator import builder
 
-from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, Struct, TypeAlias, UnformattedExpression, Using, Variable
+from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, NameSpace, Struct, TypeAlias, UnformattedExpression, Using, Variable
 from dune.source.cplusplus import construct, coordinate, lambda_, make_pair, makeExpression, maxEdgeLength, minEdgeLength, return_
 from dune.source.cplusplus import SourceWriter
 from dune.source.algorithm.extractincludes import extractIncludesFromStatements
@@ -590,13 +590,13 @@ def load(grid, integrands, renumbering=None, tempVars=True):
 
     if not isinstance(grid, ModuleType):
         grid = grid._module
-    name = 'integrands_' + integrands.signature + "_" + grid._moduleName
+    name = 'integrands_' + integrands.signature + '_' + grid._moduleName
 
     includes = integrands.includes()
 
     writer = SourceWriter()
 
-    writer.emit("".join(["#include <" + i + ">\n" for i in grid._includes]))
+    writer.emit(["#include <" + i + ">" for i in grid._includes])
     #writer.emit('')
     #writer.emit('#include <dune/fem/misc/boundaryidprovider.hh>')
     if includes:
@@ -612,21 +612,21 @@ def load(grid, integrands, renumbering=None, tempVars=True):
         writer.emit('')
     writer.emit('#include <dune/fempy/py/integrands.hh>')
 
-    modelNameSpace = 'Integrands_' + integrands.signature
+    code = []
 
-    writer.openNameSpace(modelNameSpace)
-    writer.emit(integrands.code())
-    writer.closeNameSpace(modelNameSpace)
+    nameSpace = NameSpace('Integrands_' + integrands.signature)
+    nameSpace.append(integrands.code())
+    code.append(nameSpace)
 
-    post = []
-    post.append(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + grid._typeName + ' >'));
+    code.append(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + grid._typeName + ' >'))
     if integrands._coefficients:
-        rangetypes = ['Dune::FieldVector< ' + SourceWriter.cpp_fields(c['field']) + ', ' + str(c['dimRange']) + ' >' for c in integrands._coefficients]
-        coefficients = ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + r + ' >' for r in rangetypes]
+        rangeTypes = ['Dune::FieldVector< ' + SourceWriter.cpp_fields(c['field']) + ', ' + str(c['dimRange']) + ' >' for c in integrands._coefficients]
+        coefficients = ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + r + ' >' for r in rangeTypes]
     else:
         coefficients = []
-    post.append(TypeAlias('Integrands', modelNameSpace + '::Integrands< ' + ', '.join(['GridPart'] + coefficients) + ' >'))
-    writer.emit(post);
+    code.append(TypeAlias('Integrands', nameSpace.name + '::Integrands< ' + ', '.join(['GridPart'] + coefficients) + ' >'))
+
+    writer.emit(code);
 
     writer.openPythonModule(name)
     writer.emit('auto cls = Dune::FemPy::registerIntegrands< Integrands >( module );')
@@ -644,9 +644,9 @@ def load(grid, integrands, renumbering=None, tempVars=True):
         module.Integrands._setCoefficient = module.Integrands.__dict__['setCoefficient']
         #setattr(module.Integrands, "_setConstant", getattr(module.Integrands, "setConstant"))
         #setattr(module.Integrands, "_setCoefficient", getattr(module.Integrands, "setCoefficient"))
-        setattr(module.Integrands, "_renumbering", renumbering)
-        setattr(module.Integrands, "setConstant", setConstant)
-        setattr(module.Integrands, "setCoefficient", setCoefficient)
+        setattr(module.Integrands, '_renumbering', renumbering)
+        setattr(module.Integrands, 'setConstant', setConstant)
+        setattr(module.Integrands, 'setCoefficient', setCoefficient)
     return module
 
 
