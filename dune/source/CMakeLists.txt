@@ -5,7 +5,8 @@ add_python_targets(source
   basemodel
   builtin
   common
-  expression
   cplusplus
+  expression
+  fem
   operator
 )

@@ -2,6 +2,8 @@ from __future__ import division, print_function, unicode_literals
 
 import copy, io, sys
 
+from ..common.compatibility import isString
+
 from .builtin import *
 from .common import *
 from .expression import *
@@ -147,7 +149,7 @@ class Declaration:
         if not isinstance(obj, Variable):
             raise Exception('Only variables can be declared for now.')
         self.obj = obj
-        self.initializer = initializer
+        self.initializer = None if initializer is None else makeExpression(initializer)
         self.static = static
         self.mutable = mutable
 
@@ -261,7 +263,7 @@ class SourceWriter:
     def __init__(self, writer=None):
         if not writer:
             self.writer = StringWriter()
-        elif self._isstring(writer):
+        elif isString(writer):
             self.writer = FileWriter(writer)
         else:
             self.writer = writer
@@ -432,7 +434,7 @@ class SourceWriter:
                 self.emit('}', indent)
             else:
                 self.emit('{}', indent)
-        elif self._isstring(src):
+        elif isString(src):
             src = src.rstrip()
             if src:
                 self.writer.emit('  ' * (len(self.blocks) + indent) + src)
@@ -495,12 +497,16 @@ class SourceWriter:
             capture = '' if not expr.capture else ' ' + ', '.join([c.name for c in expr.capture]) + ' '
             args = '' if expr.args is None else ' ' + ', '.join(expr.args) + ' '
             return ['[' + capture + '] (' + args + ') {', expr.code, '}']
+        elif isinstance(expr, NullPtr):
+            return ['nullptr']
         elif isinstance(expr, Variable):
             return [expr.name]
         elif isinstance(expr, UnformattedExpression):
             return [expr.value]
-        else:
+        elif isString(expr):
             return [expr.strip()]
+        else:
+            raise Exception('Invalid type of expression: ' + str(type(expr)))
 
     def typedName(self, obj):
         if obj.cppType.endswith('&') or obj.cppType.endswith('*'):
@@ -658,12 +664,6 @@ class SourceWriter:
 
     def typedef(self, typeName, typeAlias, targs=None):
         self.emit(TypeAlias(typeAlias, typeName, targs=targs))
-
-    def _isstring(self, obj):
-        if sys.version_info.major == 2:
-            return isinstance(obj, basestring)
-        else:
-            return isinstance(obj, str)
 
     @staticmethod
     def cpp_fields(field):

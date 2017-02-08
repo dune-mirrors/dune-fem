@@ -140,13 +140,21 @@ class LambdaExpression(Expression):
         return hash((self.cppType, self.args, self.capture, self.code))
 
 
-class Variable(Expression):
-  def __init__(self, cppType, name):
-      Expression.__init__(self, cppType)
-      self.name = name
+class NullPtr(Expression):
+    def __init__(self):
+        Expression.__init__(self, "std::nullptr_t")
 
-  def __hash__(self):
-      return hash((self.cppType, self.name))
+    def __hash__(self):
+        return hash(self.cppType)
+
+
+class Variable(Expression):
+    def __init__(self, cppType, name):
+        Expression.__init__(self, cppType)
+        self.name = name
+
+    def __hash__(self):
+        return hash((self.cppType, self.name))
 
 
 class UnformattedExpression(Expression):
@@ -189,3 +197,6 @@ def construct(cppType, *args):
 
 def lambda_(args=None, capture=None, code=None):
     return LambdaExpression(args=args, capture=capture, code=code)
+
+
+nullptr = NullPtr()
