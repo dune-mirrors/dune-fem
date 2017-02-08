@@ -35,27 +35,30 @@ class EllipticModel:
         self.signature = signature
         self.field = "double"
 
-        self.source = [assign(Variable("RangeType", "result"), construct("RangeType", 0))]
-        self.linSource = [assign(Variable("RangeType", "result"), construct("RangeType", 0))]
-        self.linNVSource = [assign(Variable("RangeType", "result"), construct("RangeType", 0))]
-        self.diffusiveFlux = [assign(Variable("JacobianRangeType", "result"), construct("JacobianRangeType", 0))]
-        self.linDiffusiveFlux = [assign(Variable("JacobianRangeType", "result"), construct("JacobianRangeType", 0))]
-        self.fluxDivergence = [assign(Variable("RangeType", "result"), construct("RangeType", 0))]
-        self.alpha = [assign(Variable("RangeType", "result"), construct("RangeType", 0))]
-        self.linAlpha = [assign(Variable("RangeType", "result"), construct("RangeType", 0))]
+        self.arg_r = Variable("RangeType &", "result")
+        self.arg_dr = Variable("JacobianRangeType &", "result")
+
+        self.arg_x = Variable("const Point &", "x")
+        self.arg_u = Variable("const RangeType &", "u")
+        self.arg_du = Variable("const JacobianRangeType &", "du")
+        self.arg_d2u = Variable("const HessianRangeType &", "d2u")
+        self.arg_ubar = Variable("const RangeType &", "ubar")
+        self.arg_dubar = Variable("const JacobianRangeType &", "dubar")
+        self.arg_d2ubar = Variable("const HessianRangeType &", "d2ubar")
+
+        self.source = [assign(self.arg_r, construct("RangeType", 0))]
+        self.linSource = [assign(self.arg_r, construct("RangeType", 0))]
+        self.linNVSource = [assign(self.arg_r, construct("RangeType", 0))]
+        self.diffusiveFlux = [assign(self.arg_dr, construct("JacobianRangeType", 0))]
+        self.linDiffusiveFlux = [assign(self.arg_dr, construct("JacobianRangeType", 0))]
+        self.fluxDivergence = [assign(self.arg_r, construct("RangeType", 0))]
+        self.alpha = [assign(self.arg_r, construct("RangeType", 0))]
+        self.linAlpha = [assign(self.arg_r, construct("RangeType", 0))]
+
         self.hasDirichletBoundary = False
         self.hasNeumanBoundary = False
         self.isDirichletIntersection = [return_(False)]
-        self.dirichlet = [assign(Variable("RangeType", "result"), construct("RangeType", 0))]
-        self.arg_x = 'const Point &x'
-        self.arg_u = 'const RangeType &u'
-        self.arg_du = 'const JacobianRangeType &du'
-        self.arg_d2u = 'const HessianRangeType &d2u'
-        self.arg_ubar = 'const RangeType &ubar'
-        self.arg_dubar = 'const JacobianRangeType &dubar'
-        self.arg_d2ubar = 'const HessianRangeType &d2ubar'
-        self.arg_r = 'RangeType &result'
-        self.arg_dr = 'JacobianRangeType &result'
+        self.dirichlet = [assign(self.arg_r, construct("RangeType", 0))]
         self.symmetric = False
 
     def pre(self, name):

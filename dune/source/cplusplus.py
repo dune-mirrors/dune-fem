@@ -78,7 +78,7 @@ class Function(Block):
         self.cppType = cppType
         self.name = name
         self.targs = None if targs is None else [a.strip() for a in targs]
-        self.args = None if args is None else [a.strip() for a in args]
+        self.args = None if args is None else [a.strip() if isString(a) else a for a in args]
         if code is not None:
             self.append(code)
 
@@ -97,7 +97,7 @@ class Method(Block):
         if static and (const or volatile):
             raise Exception('Cannot cv-qualify static method.')
         self.targs = None if targs is None else [a.strip() for a in targs]
-        self.args = None if args is None else [a.strip() for a in args]
+        self.args = None if args is None else [a.strip() if isString(a) else a for a in args]
         if code is not None:
             self.append(code)
 
@@ -123,7 +123,7 @@ class Constructor(Block):
     def __init__(self, targs=None, args=None, init=None, code=None):
         Block.__init__(self)
         self.targs = None if targs is None else [a.strip() for a in targs]
-        self.args = None if args is None else [a.strip() for a in args]
+        self.args = None if args is None else [a.strip() if isString(a) else a for a in args]
         self.init = None if init is None else [a.strip() for a in init]
         if code is not None:
             self.append(code)
@@ -321,7 +321,8 @@ class SourceWriter:
                 self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
             signature = self.typedName(src) + ' ('
             if src.args:
-                signature += ' ' + ', '.join(src.args) + ' '
+                args = [self.typedName(arg) if isinstance(arg, Variable) else arg for arg in src.args]
+                signature += ' ' + ', '.join(args) + ' '
             signature += ')'
             self.emit(signature, indent)
             if src.content:
@@ -336,7 +337,8 @@ class SourceWriter:
                 self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
             signature = ('static ' if src.static else '') + self.typedName(src) + ' ('
             if src.args:
-                signature += ' ' + ', '.join(src.args) + ' '
+                args = [self.typedName(arg) if isinstance(arg, Variable) else arg for arg in src.args]
+                signature += ' ' + ', '.join(args) + ' '
             signature += ')'
             if src.qualifiers:
                 signature += ' ' + ' '.join(src.qualifiers)
@@ -355,7 +357,8 @@ class SourceWriter:
                 self.emit('template< ' + ', '.join(src.targs) + ' >', indent)
             signature = context.name + ' ('
             if src.args:
-                signature += ' ' + ', '.join(src.args) + ' '
+                args = [self.typedName(arg) if isinstance(arg, Variable) else arg for arg in src.args]
+                signature += ' ' + ', '.join(args) + ' '
             signature += ')'
             self.emit(signature, indent)
             if src.init:
