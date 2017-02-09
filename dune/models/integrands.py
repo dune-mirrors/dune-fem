@@ -17,7 +17,7 @@ from dune.generator import builder
 
 from dune.source.builtin import get, hybridForEach, make_pair, make_index_sequence, make_shared
 from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, NameSpace, Struct, TypeAlias, UnformattedExpression, Using, Variable
-from dune.source.cplusplus import assign, construct, coordinate, lambda_, makeExpression, maxEdgeLength, minEdgeLength, return_
+from dune.source.cplusplus import assign, construct, coordinate, dereference, lambda_, makeExpression, maxEdgeLength, minEdgeLength, return_
 from dune.source.cplusplus import SourceWriter
 from dune.source.algorithm.extractincludes import extractIncludesFromStatements
 from dune.source.algorithm.extractvariables import extractVariablesFromExpressions, extractVariablesFromStatements
@@ -215,8 +215,8 @@ class Integrands():
             code.append(Method('std::pair< RangeValueType, RangeValueType >', 'skeleton', targs=['class Point'], args=['const Point &xIn', 'const DomainValueType &uIn', 'const Point &xOut', 'const DomainValueType &uOut'], code=self.skeleton, const=True))
             code.append(Method('auto', 'linearizedSkeleton', targs=['class Point'], args=['const Point &xIn', 'const DomainValueType &uIn', 'const Point &xOut', 'const DomainValueType &uOut'], code=self.linearizedSkeleton, const=True))
 
-        constant = Method('ConstantType< i > &', 'constant', targs=['std::size_t i'], code=return_('*std::get< i >( constants_ )'))
-        code.append(constant.variant('const ConstantType< i > &constant', const=True), constant)
+        code.append(Method('const ConstantType< i > &', 'constant', targs=['std::size_t i'], code=return_(dereference(get('i')(constants_))), const=True))
+        code.append(Method('ConstantType< i > &', 'constant', targs=['std::size_t i'], code=return_(dereference(get('i')(constants_)))))
 
         if self._coefficients:
             setCoefficient = Method('void', 'setCoefficient', targs=['std::size_t i'], args=['const CoefficientType< i > &coefficient'])
