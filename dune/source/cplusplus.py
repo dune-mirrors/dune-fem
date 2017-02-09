@@ -242,18 +242,17 @@ class EnumClass:
 # ---------------
 
 class ReturnStatement(Statement):
-    def __init__(self, expr=None, pointer=False):
+    def __init__(self, expr=None):
         Statement.__init__(self)
         self.expression = None if expr is None else makeExpression(expr)
-        self.pointer = pointer
 
 
 
 # short hand notation
 # -------------------
 
-def return_(expr=None,pointer=False):
-    return ReturnStatement(expr,pointer)
+def return_(expr=None):
+    return ReturnStatement(expr)
 
 
 
@@ -418,9 +417,7 @@ class SourceWriter:
                 if src.expression is not None:
                     expr = self.translateExpr(src.expression)
                     expr[len(expr)-1] += ';'
-                    self.emit('return ' +
-                       ("*" if src.pointer else "") +
-                       expr[0], indent)
+                    self.emit('return ' + expr[0], indent)
                     for e in expr[1:]:
                         if isinstance(e, tuple):
                             self.emit(e, indent+2, Function('auto', '<lambda>'))
@@ -497,6 +494,8 @@ class SourceWriter:
                 return join([[expr.cppType + '( '], join([self.translateExpr(arg) for arg in expr.args], ', '), [' )']])
             else:
                 return [expr.cppType + '()']
+        elif isinstance(expr, DereferenceExpression):
+            return join([['*'], self.translateExpr(expr.expr)])
         elif isinstance(expr, InitializerList):
             return join([['{ '], join([self.translateExpr(arg) for arg in expr.args], ', '), [' }']])
         elif isinstance(expr, LambdaExpression):

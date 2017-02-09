@@ -20,7 +20,7 @@ from dune.ufl.linear import splitMultiLinearExpr
 from dune.source.builtin import get
 from dune.source.cplusplus import UnformattedExpression
 from dune.source.cplusplus import AccessModifier, Constructor, Declaration, Function, Method, NameSpace, Struct, TypeAlias, UnformattedBlock, Variable
-from dune.source.cplusplus import assign, construct, nullptr, return_
+from dune.source.cplusplus import assign, construct, dereference, nullptr, return_
 from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source.fem import declareFunctionSpace
 from dune.generator import builder
@@ -120,8 +120,8 @@ class EllipticModel:
         constants_ = Variable("ConstantsTupleType", "constants_")
         coefficients_ = Variable("std::tuple< Coefficients... >", "coefficients_")
 
-        result = [Method("const ConstantsType< i > &", "constant", targs=["std::size_t i"], code=return_(get("i")(constants_), True), const=True),
-                  Method("ConstantsType< i > &", "constant", targs=["std::size_t i"], code=return_(get("i")(constants_),True))]
+        result = [Method("const ConstantsType< i > &", "constant", targs=["std::size_t i"], code=return_(dereference(get("i")(constants_))), const=True),
+                  Method("ConstantsType< i > &", "constant", targs=["std::size_t i"], code=return_(dereference(get("i")(constants_))))]
 
         result += [Method("const CoefficientType< i > &", "coefficient", targs=["std::size_t i"], code=return_(get("i")(coefficients_)), const=True),
                    Method("CoefficientType< i > &", "coefficient", targs=["std::size_t i"], code=return_(get("i")(coefficients_)))]

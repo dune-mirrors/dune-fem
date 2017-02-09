@@ -116,6 +116,15 @@ class ConstructExpression(Expression):
         return hash((self.cppType, self.args))
 
 
+class DereferenceExpression(Expression):
+    def __init__(self, expr):
+        Expression.__init__(self, 'auto')
+        self.expr = expr
+
+    def __hash__(self):
+        return hash('operator*', self.expr)
+
+
 class InitializerList(Expression):
     def __init__(self, *args):
         Expression.__init__(self)
@@ -193,6 +202,10 @@ def assign(left, right):
 
 def construct(cppType, *args):
     return ConstructExpression(cppType, args if args else None)
+
+
+def dereference(expr):
+    return DereferenceExpression(expr)
 
 
 def lambda_(args=None, capture=None, code=None):
