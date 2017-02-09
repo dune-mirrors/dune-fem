@@ -242,17 +242,18 @@ class EnumClass:
 # ---------------
 
 class ReturnStatement(Statement):
-    def __init__(self, expr=None):
+    def __init__(self, expr=None, pointer=False):
         Statement.__init__(self)
         self.expression = None if expr is None else makeExpression(expr)
+        self.pointer = pointer
 
 
 
 # short hand notation
 # -------------------
 
-def return_(expr=None):
-    return ReturnStatement(expr)
+def return_(expr=None,pointer=False):
+    return ReturnStatement(expr,pointer)
 
 
 
@@ -417,7 +418,9 @@ class SourceWriter:
                 if src.expression is not None:
                     expr = self.translateExpr(src.expression)
                     expr[len(expr)-1] += ';'
-                    self.emit('return ' + expr[0], indent)
+                    self.emit('return ' +
+                       ("*" if src.pointer else "") +
+                       expr[0], indent)
                     for e in expr[1:]:
                         if isinstance(e, tuple):
                             self.emit(e, indent+2, Function('auto', '<lambda>'))

@@ -77,8 +77,9 @@ class EllipticModel:
         coefficients = ["Dune::Fem::FunctionSpace< DomainFieldType, " + SourceWriter.cpp_fields(c['field']) + ", dimDomain, " + str(c['dimRange']) + " >" for c in self.coefficients if not c['constant']]
         result += [Declaration(Variable("const std::size_t", "numCoefficients"), initializer=len(coefficients), static=True)]
         if coefficients:
-            result += [TypeAlias("CoefficientFunctionSpaceTupleType", "std::tuple< " + ", ".join(coefficients)) + " >"]
-            result += [TypeAlias("CoefficientRangeType", "typename CoefficientFunctionSpaceType< i >::" + t, "Coefficient" + t, targs=["std::size_t i "]) for t in ["RangeType", "JacobianRangeType", "HessianRangeType"]]
+            result += [TypeAlias("CoefficientFunctionSpaceTupleType", "std::tuple< " + ", ".join(coefficients) + " >")]
+            result += [TypeAlias("Coefficient"+t, "typename std::tuple_element_t< i, CoefficientFunctionSpaceTupleType >::" + t, targs=["std::size_t i"])
+                  for t in ["RangeType", "JacobianRangeType", "HessianRangeType"]]
 
         result += [TypeAlias('CoefficientType', 'typename std::tuple_element< i, std::tuple< Coefficients... > >::type', targs=['std::size_t i'])]
         result += [TypeAlias('ConstantsType', 'typename std::tuple_element< i, ConstantsTupleType >::type::element_type', targs=['std::size_t i'])]
@@ -119,8 +120,8 @@ class EllipticModel:
         constants_ = Variable("ConstantsTupleType", "constants_")
         coefficients_ = Variable("std::tuple< Coefficients... >", "coefficients_")
 
-        result = [Method("const ConstantsType< i > &", "constant", targs=["std::size_t i"], code=return_(get("i")(constants_)), const=True),
-                  Method("ConstantsType< i > &", "constant", targs=["std::size_t i"], code=return_(get("i")(constants_)))]
+        result = [Method("const ConstantsType< i > &", "constant", targs=["std::size_t i"], code=return_(get("i")(constants_), True), const=True),
+                  Method("ConstantsType< i > &", "constant", targs=["std::size_t i"], code=return_(get("i")(constants_),True))]
 
         result += [Method("const CoefficientType< i > &", "coefficient", targs=["std::size_t i"], code=return_(get("i")(coefficients_)), const=True),
                    Method("CoefficientType< i > &", "coefficient", targs=["std::size_t i"], code=return_(get("i")(coefficients_)))]
