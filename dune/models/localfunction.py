@@ -198,9 +198,9 @@ def gridFunction(grid, code, coefficients, constants):
     writer.openStruct(wrappername, targs=(['class GridView'] + ['class Range']), bases=(['GridFunction']))
     writer.typedef('GridFunction', 'BaseType')
     writer.emit(wrappername + '( const std::string name, int order, pybind11::handle gridView ) :')
-    writer.emit('    BaseType(name, localFunctionImpl_, Dune::FemPy::gridPart<GridView>(gridView), order) {}')
-    writer.emit('LocalFunction& impl() { return localFunctionImpl_; }')
-    writer.emit('LocalFunction localFunctionImpl_;')
+    writer.emit('    BaseType(name, LocalFunction(), Dune::FemPy::gridPart<GridView>(gridView), order) {}')
+    writer.emit('LocalFunction& impl() { return this->localFunctionImpl(); }')
+
     writer.closeStruct()
     writer.typedef(wrappername + '< GridView, RangeType >', 'GFWrapper')
 
