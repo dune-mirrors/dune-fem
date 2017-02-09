@@ -115,6 +115,9 @@ class ExprTensor:
     def positive_restricted(self):
         return ExprTensor(self.shape, apply(lambda v: PositiveRestricted(v), self.shape, self.data))
 
+    def for_each(self, op):
+        return ExprTensor(self.shape, apply(lambda v: op(v), self.shape, self.data))
+
     def keys(self):
         return keys(self.shape)
 
