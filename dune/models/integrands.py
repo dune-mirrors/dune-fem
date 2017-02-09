@@ -15,8 +15,9 @@ from ufl.differentiation import Grad
 
 from dune.generator import builder
 
+from dune.source.builtin import get, hybridForEach, make_pair, make_index_sequence, make_shared
 from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, NameSpace, Struct, TypeAlias, UnformattedExpression, Using, Variable
-from dune.source.cplusplus import construct, coordinate, lambda_, make_pair, makeExpression, maxEdgeLength, minEdgeLength, return_
+from dune.source.cplusplus import assign, construct, coordinate, lambda_, makeExpression, maxEdgeLength, minEdgeLength, return_
 from dune.source.cplusplus import SourceWriter
 from dune.source.algorithm.extractincludes import extractIncludesFromStatements
 from dune.source.algorithm.extractvariables import extractVariablesFromExpressions, extractVariablesFromStatements
@@ -118,62 +119,79 @@ class Integrands():
     def facetGeometry(self):
         return UnformattedExpression('auto', 'intersection_.geometry()')
 
-    def pre(self):
-        result = []
+    def code(self, name='Integrands', targs=[]):
+        code = Struct(name, targs=(['class GridPart'] + targs + ['class... Coefficients']))
 
-        result.append(TypeAlias("GridPartType", "GridPart"))
+        code.append(TypeAlias("GridPartType", "GridPart"))
 
-        result.append(TypeAlias("EntityType", "typename GridPart::template Codim< 0 >::EntityType"))
-        result.append(TypeAlias("IntersectionType", "typename GridPart::IntersectionType"))
+        code.append(TypeAlias("EntityType", "typename GridPart::template Codim< 0 >::EntityType"))
+        code.append(TypeAlias("IntersectionType", "typename GridPart::IntersectionType"))
 
-        result.append(TypeAlias("GlobalCoordinateType", "typename EntityType::Geometry::GlobalCoordinate"))
+        code.append(TypeAlias("GlobalCoordinateType", "typename EntityType::Geometry::GlobalCoordinate"))
 
-        result.append(TypeAlias("DomainValueType", self.domainValueTuple()))
-        result.append(TypeAlias("RangeValueType", self.rangeValueTuple()))
+        code.append(TypeAlias("DomainValueType", self.domainValueTuple()))
+        code.append(TypeAlias("RangeValueType", self.rangeValueTuple()))
 
         constants = ["std::shared_ptr< " + c + " >" for c in self._constants]
         if constants:
-            result.append(TypeAlias("ConstantTupleType", "std::tuple< " + ", ".join(constants) + " >"))
-            result.append(TypeAlias("ConstantsRangeType", "typename std::tuple_element_t< i, ConstantTupleType >::element_type", targs=["std::size_t i"]))
+            code.append(TypeAlias("ConstantTupleType", "std::tuple< " + ", ".join(constants) + " >"))
+            code.append(TypeAlias("ConstantsRangeType", "typename std::tuple_element_t< i, ConstantTupleType >::element_type", targs=["std::size_t i"]))
         else:
-            result.append(TypeAlias("ConstantTupleType", "std::tuple<>"))
+            code.append(TypeAlias("ConstantTupleType", "std::tuple<>"))
 
         if self._coefficients:
             coefficientSpaces = [('Dune::Fem::FunctionSpace< double,' + SourceWriter.cpp_fields(c['field']) + ', GlobalCoordinateType::dimension, ' + str(c['dimRange']) + ' >') for c in self._coefficients]
-            result.append(TypeAlias("CoefficientFunctionSpaceTupleType", "std::tuple< " +", ".join(coefficientSpaces) + " >"))
-            result.append(TypeAlias("CoefficientTupleType", "std::tuple< Coefficients... >"))
+            code.append(TypeAlias("CoefficientFunctionSpaceTupleType", "std::tuple< " +", ".join(coefficientSpaces) + " >"))
+            code.append(TypeAlias("CoefficientTupleType", "std::tuple< Coefficients... >"))
 
-            result.append(TypeAlias("CoefficientFunctionSpaceType", "typename std::tuple_element< i, CoefficientFunctionSpaceTupleType >::type", targs=["std::size_t i"]))
+            code.append(TypeAlias("CoefficientFunctionSpaceType", "typename std::tuple_element< i, CoefficientFunctionSpaceTupleType >::type", targs=["std::size_t i"]))
             for s in ["RangeType", "JacobianRangeType"]:
-                result.append(TypeAlias("Coefficient" + s, "typename CoefficientFunctionSpaceType< i >::" + s, targs=["std::size_t i"]))
+                code.append(TypeAlias("Coefficient" + s, "typename CoefficientFunctionSpaceType< i >::" + s, targs=["std::size_t i"]))
         else:
-            result.append(TypeAlias("CoefficientTupleType", "std::tuple<>"))
+            code.append(TypeAlias("CoefficientTupleType", "std::tuple<>"))
 
-        result.append(TypeAlias('CoefficientType', 'typename std::tuple_element< i, CoefficientTupleType >::type', targs=['std::size_t i']))
-        result.append(TypeAlias('ConstantType', 'typename std::tuple_element< i, ConstantTupleType >::type::element_type', targs=['std::size_t i']))
+        code.append(TypeAlias('CoefficientType', 'typename std::tuple_element< i, CoefficientTupleType >::type', targs=['std::size_t i']))
+        code.append(TypeAlias('ConstantType', 'typename std::tuple_element< i, ConstantTupleType >::type::element_type', targs=['std::size_t i']))
 
         if self.skeleton is not None:
-            result.append(EnumClass('Side', ['in = 0u', 'out = 1u'], 'std::size_t'))
+            code.append(EnumClass('Side', ['in = 0u', 'out = 1u'], 'std::size_t'))
             inside = '[ static_cast< std::size_t >( Side::in ) ]'
         else:
             inside = ''
 
-        result.append(Constructor(code="constructConstants( std::make_index_sequence< std::tuple_size< ConstantTupleType >::value >() );"))
+        if self.skeleton is None:
+            entity_ = Variable('EntityType', 'entity_')
+            insideEntity = entity_
+        else:
+            entity_ = Variable('std::array< EntityType, 2 >', 'entity_')
+            insideEntity = entity_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::in )')]
+            outsideEntity = entity_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::out )')]
+        intersection_ = Variable('IntersectionType', 'intersection_')
 
-        initEntity = Method('bool', 'init', args=['const EntityType &entity'])
-        initEntity.append('entity_' + inside + ' = entity;')
+        constants_ = Variable("ConstantTupleType", "constants_")
+        if self.skeleton is None:
+            coefficients_ = Variable('std::tuple< typename Coefficients::LocalFunctionType... >', 'coefficients_')
+        else:
+            coefficients_ = Variable('std::array< std::tuple< typename Coefficients::LocalFunctionType... >, 2 >', 'coefficients_')
+
+        code.append(Constructor(code=hybridForEach(make_index_sequence("std::tuple_size< ConstantTupleType >::value")(), lambda_(args=["auto i"], capture=[Variable('auto', 'this')], code=assign(get("i")(constants_), make_shared("ConstantType< i >")())))))
+
+        entity = Variable('const EntityType &', 'entity')
+        initEntity = Method('bool', 'init', args=[entity])
+        initEntity.append(assign(insideEntity, entity))
         if self._coefficients:
             initEntity.append('initCoefficients( entity_' + inside + ', coefficients_' + inside + ', std::index_sequence_for< Coefficients... >() );')
         initEntity.append(self.init)
         initEntity.append(return_(True))
-        result.append(initEntity)
+        code.append(initEntity)
 
-        initIntersection = Method('bool', 'init', args=['const IntersectionType &intersection'])
-        initIntersection.append(UnformattedExpression('IntersectionType &', 'intersection_ = intersection'))
+        intersection = Variable('const IntersectionType &', 'intersection')
+        initIntersection = Method('bool', 'init', args=[intersection])
+        initIntersection.append(assign(intersection_, intersection))
         if self.skeleton is None:
             initIntersection.append(return_('(intersection.boundary() && init( intersection.inside() ))'))
         else:
-            initIntersection.append('entity_[ static_cast< std::size_t >( Side::in ) ] = intersection.inside();')
+            initIntersection.append(assign(insideEntity, UnformattedExpression('EntityType', 'intersection.inside()')))
             if self._coefficients:
                 initIntersection.append('initCoefficients( entity_[ static_cast< std::size_t >( Side::in ) ], coefficients_[ static_cast< std::size_t >( Side::in ) ], std::index_sequence_for< Coefficients... >() );')
             initIntersection.append('if( intersection.neighbor() )')
@@ -183,58 +201,40 @@ class Integrands():
                 initIntersection.append('  initCoefficients( entity_[ static_cast< std::size_t >( Side::out ) ], coefficients_[ static_cast< std::size_t >( Side::out ) ], std::index_sequence_for< Coefficients... >() );')
             initIntersection.append('}')
             initIntersection.append(return_(True))
-        result.append(initIntersection)
-
-        return result
-
-    def main(self):
-        result = []
+        code.append(initIntersection)
 
         if self.interior is not None:
-            result.append(Method('RangeValueType', 'interior', targs=['class Point'], args=['const Point &x', 'const DomainValueType &u'], code=self.interior, const=True))
-            result.append(Method('auto', 'linearizedInterior', targs=['class Point'], args=['const Point &x', 'const DomainValueType &u'], code=self.linearizedInterior, const=True))
+            code.append(Method('RangeValueType', 'interior', targs=['class Point'], args=['const Point &x', 'const DomainValueType &u'], code=self.interior, const=True))
+            code.append(Method('auto', 'linearizedInterior', targs=['class Point'], args=['const Point &x', 'const DomainValueType &u'], code=self.linearizedInterior, const=True))
 
         if self.boundary is not None:
-            result.append(Method('RangeValueType', 'boundary', targs=['class Point'], args=['const Point &x', 'const DomainValueType &u'], code=self.boundary, const=True))
-            result.append(Method('auto', 'linearizedBoundary', targs=['class Point'], args=['const Point &x', 'const DomainValueType &u'], code=self.linearizedBoundary, const=True))
+            code.append(Method('RangeValueType', 'boundary', targs=['class Point'], args=['const Point &x', 'const DomainValueType &u'], code=self.boundary, const=True))
+            code.append(Method('auto', 'linearizedBoundary', targs=['class Point'], args=['const Point &x', 'const DomainValueType &u'], code=self.linearizedBoundary, const=True))
 
         if self.skeleton is not None:
-            result.append(Method('std::pair< RangeValueType, RangeValueType >', 'skeleton', targs=['class Point'], args=['const Point &xIn', 'const DomainValueType &uIn', 'const Point &xOut', 'const DomainValueType &uOut'], code=self.skeleton, const=True))
-            result.append(Method('auto', 'linearizedSkeleton', targs=['class Point'], args=['const Point &xIn', 'const DomainValueType &uIn', 'const Point &xOut', 'const DomainValueType &uOut'], code=self.linearizedSkeleton, const=True))
-
-        return result
-
-    def post(self):
-        result = []
+            code.append(Method('std::pair< RangeValueType, RangeValueType >', 'skeleton', targs=['class Point'], args=['const Point &xIn', 'const DomainValueType &uIn', 'const Point &xOut', 'const DomainValueType &uOut'], code=self.skeleton, const=True))
+            code.append(Method('auto', 'linearizedSkeleton', targs=['class Point'], args=['const Point &xIn', 'const DomainValueType &uIn', 'const Point &xOut', 'const DomainValueType &uOut'], code=self.linearizedSkeleton, const=True))
 
         constant = Method('ConstantType< i > &', 'constant', targs=['std::size_t i'], code=return_('*std::get< i >( constants_ )'))
-        result += [constant.variant('const ConstantType< i > &constant', const=True), constant]
+        code.append(constant.variant('const ConstantType< i > &constant', const=True), constant)
 
         if self._coefficients:
             setCoefficient = Method('void', 'setCoefficient', targs=['std::size_t i'], args=['const CoefficientType< i > &coefficient'])
             if self.skeleton is None:
-                setCoefficient.append('std::get< i >( coefficients_ ) = coefficient.localFunction();')
+                setCoefficient.append(assign(get('i')(coefficients_), UnformattedExpression('auto', 'coefficient.localFunction();')))
             else:
-                setCoefficient.append('std::get< i >( coefficients_[ static_cast< std::size_t >( Side::in ) ] ) = coefficient.localFunction();')
-                setCoefficient.append('std::get< i >( coefficients_[ static_cast< std::size_t >( Side::out ) ] ) = coefficient.localFunction();')
-            result.append(setCoefficient)
+                setCoefficient.append(assign(get('i')(coefficients_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::in )')]), UnformattedExpression('auto', 'coefficient.localFunction();')))
+                setCoefficient.append(assign(get('i')(coefficients_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::out )')]), UnformattedExpression('auto', 'coefficient.localFunction();')))
+            code.append(setCoefficient)
 
-        if self.skeleton is None:
-            entity = UnformattedExpression('const EntityType &', 'entity_')
-        else:
-            entity = UnformattedExpression('const EntityType &', 'entity_[ static_cast< std::size_t >( Side::in ) ]')
-        result.append(Method(entity.cppType, 'entity', const=True, code=return_(entity)))
+        code.append(Method('const EntityType &', 'entity', const=True, code=return_(insideEntity)))
 
-        result.append(AccessModifier('private'))
+        code.append(AccessModifier('private'))
 
         if self._coefficients:
             initCoefficients = Method('void', 'initCoefficients', targs=['std::size_t... i'], args=['const EntityType &entity', 'std::tuple< typename Coefficients::LocalFunctionType... > &coefficients', 'std::index_sequence< i... >'], static=True)
             initCoefficients.append('std::ignore = std::make_tuple( (std::get< i >( coefficients ).init( entity ), i)... );')
-            result.append(initCoefficients)
-
-        constructConstants = Method('void', 'constructConstants', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-        constructConstants.append('std::ignore = std::make_tuple( (std::get< i >( constants_ ) = std::make_shared< ConstantType< i > >(), i)... );')
-        result.append(constructConstants)
+            code.append(initCoefficients)
 
         if self._coefficients:
             for cppType, name in self._derivatives:
@@ -244,38 +244,28 @@ class Integrands():
                     method.append(Declaration(var))
                     method.append(UnformattedExpression('void', 'std::get< i >( coefficients_ ).' + name + '( x, ' + var.name + ' );'))
                     method.append(return_(var))
-                    result.append(method)
+                    code.append(method)
                 else:
                     method = Method(var.cppType, name + 'Coefficient', targs=['std::size_t i', 'Side side', 'class Point'], args=['const Point &x'], const=True)
                     method.append(Declaration(var))
                     method.append(UnformattedExpression('void', 'std::get< i >( coefficients_[ static_cast< std::size_t >( side ) ] ).' + name + '( x, ' + var.name + ' )'))
                     method.append(return_(var))
-                    result.append(method)
+                    code.append(method)
 
                     method = Method(var.cppType, name + 'Coefficient', targs=['std::size_t i', 'class Point'], args=['const Point &x'], const=True)
                     method.append(return_(UnformattedExpression(var.cppType, name + 'Coefficient< i, Side::in >( x )')))
-                    result.append(method)
+                    code.append(method)
 
-        if self.skeleton is None:
-            result.append(Declaration(Variable('EntityType', 'entity_')))
-        else:
-            result.append(Declaration(Variable('std::array< EntityType, 2 >', 'entity_')))
-        result.append(Declaration(Variable('IntersectionType', 'intersection_')))
-        result.append(Declaration(Variable('ConstantTupleType', 'constants_')))
-        if self.skeleton is None:
-            result.append(Declaration(Variable('std::tuple< typename Coefficients::LocalFunctionType... >', 'coefficients_')))
-        else:
-            result.append(Declaration(Variable('std::array< std::tuple< typename Coefficients::LocalFunctionType... >, 2 >', 'coefficients_')))
+        code.append(Declaration(entity_), Declaration(intersection_))
+        code.append(Declaration(constants_), Declaration(coefficients_))
         if self.vars is not None:
-            result += self.vars
+            code += self.vars
 
-        return result
+        return code
 
     def includes(self):
         return set.union(*[extractIncludesFromStatements(stmts) for stmts in (self.interior, self.linearizedInterior, self.boundary, self.linearizedBoundary, self.skeleton, self.linearizedSkeleton)])
 
-    def code(self, name='Integrands', targs=[]):
-        result = Struct(name, targs=(['class GridPart'] + targs + ['class... Coefficients']))
         result.append(self.pre())
         result.append(self.main())
         result.append(self.post())

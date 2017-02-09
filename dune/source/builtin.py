@@ -1,5 +1,8 @@
 from __future__ import division, print_function, unicode_literals
 
+from ..common.compatibility import isString
+
+from expression import Variable
 
 class BuiltInFunction:
     def __init__(self, header, cppType, name, namespace='std', targs=None, args=None):
@@ -8,11 +11,17 @@ class BuiltInFunction:
         self.name = name
         self.namespace = namespace
         self.tarts = None if targs is None else [a.strip() for a in targs]
-        self.args = None if args is None else [a.strip() for a in args]
+        self.args = [] if args is None else [a.strip() if isString(a) else a for a in args]
+
+        if len(self.args) > 0:
+            arg = self.args[len(self.args)-1]
+            self.variadic = (isinstance(arg, Variable) and arg.cppType.endswith('...'))
+        else:
+            self.variadic = False
 
     def __call__(self, *args):
-        if len(args) != len(self.args):
-            raise Exception('Wrong number of Arguments: ' + len(args) + ' (should be ' + len(self.args) + ').')
+        if (len(args) != len(self.args)) and not self.variadic:
+            raise Exception('Wrong number of Arguments: ' + str(len(args)) + ' (should be ' + str(len(self.args)) + ').')
         from .expression import Application, makeExpression
         return Application(self, args=[makeExpression(arg) for arg in args])
 
@@ -53,6 +62,14 @@ def get(i):
     return BuiltInFunction('tuple', 'auto', 'get< ' + str(i) + ' >', targs=['class T'], args=['const T &arg'])
 
 make_pair = BuiltInFunction('utility', 'std::pair< U, V >', 'make_pair', targs=['class U', 'class V'], args=['const U &left', 'const V &right'])
+
+def make_index_sequence(n):
+    return BuiltInFunction('utility', 'auto', 'make_index_sequence< ' + str(n) + ' >')
+
+def make_shared(T):
+    return BuiltInFunction('memory', 'std::shared_ptr< T >', 'make_shared< ' + T + ' >', targs=['class... Args'], args=[Variable('Args &&...', 'args')])
+
+hybridForEach = BuiltInFunction('dune/common/hybridutilities.hh', 'void', 'forEach', namespace='Dune::Hybrid', targs=['class Range', 'class F'], args=['Range &&range', 'F &&f'])
 
 coordinate = BuiltInFunction('dune/fem/common/coordinate.hh', 'X', 'coordinate', namespace='Dune::Fem', targs=['class X'], args=['const X &x'])
 

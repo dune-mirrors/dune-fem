@@ -481,7 +481,7 @@ class SourceWriter:
                 function = expr.function.name
             else:
                 function = expr.function
-            if expr.args is not None:
+            if expr.args:
                 return join([[function + '( '], join(args, ', '), [' )']])
             else:
                 return [function + '()']
@@ -512,6 +512,8 @@ class SourceWriter:
             raise Exception('Invalid type of expression: ' + str(type(expr)))
 
     def typedName(self, obj):
+        if obj.cppType is None:
+            raise Exception('object ' + obj.name + '  does not have a type.')
         if obj.cppType.endswith('&') or obj.cppType.endswith('*'):
             return obj.cppType + obj.name
         else:
