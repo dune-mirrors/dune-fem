@@ -2,7 +2,7 @@ from __future__ import division, print_function, unicode_literals
 
 from ..common.compatibility import isString
 
-from expression import Variable
+from .expression import Variable
 
 class BuiltInFunction:
     def __init__(self, header, cppType, name, namespace='std', targs=None, args=None):
