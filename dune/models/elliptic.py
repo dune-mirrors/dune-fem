@@ -91,7 +91,7 @@ class EllipticModel:
         coefficients_ = Variable("std::tuple< Coefficients... >", "coefficients_")
 
         code.append(Constructor(code=hybridForEach(make_index_sequence("std::tuple_size< ConstantsTupleType >::value")(),
-                                                   lambda_(args=["auto i"], capture=[Variable('auto', 'this')], code=assign(get("i")(constants_), make_shared("ConstantType< i >")())))))
+                                                   lambda_(args=["auto i"], capture=[Variable('auto', 'this')], code=assign(get("i")(constants_), make_shared("ConstantsType< i >")())))))
 
         init = Method('bool', 'init', args=['const EntityType &entity'], const=True)
         init.append(UnformattedBlock("entity_ = &entity;", "initCoefficients( std::make_index_sequence< numCoefficients >() );"), self.init, return_(True))
