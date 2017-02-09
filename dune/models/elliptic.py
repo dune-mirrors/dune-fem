@@ -48,7 +48,7 @@ class EllipticModel:
 
         self.source = [assign(self.arg_r, construct("RangeType", 0))]
         self.linSource = [assign(self.arg_r, construct("RangeType", 0))]
-        self.linNVSource = [assign(self.arg_r, construct("RangeType", 0))]
+        # self.linNVSource = [assign(self.arg_r, construct("RangeType", 0))]
         self.diffusiveFlux = [assign(self.arg_dr, construct("JacobianRangeType", 0))]
         self.linDiffusiveFlux = [assign(self.arg_dr, construct("JacobianRangeType", 0))]
         self.fluxDivergence = [assign(self.arg_r, construct("RangeType", 0))]
@@ -460,9 +460,9 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
     fluxDivergence, _, _ = splitUFLForm(ufl.inner(source.as_ufl() - ufl.div(diffusiveFlux.as_ufl()), phi) * ufl.dx(0))
 
     # split linNVSource off linSource
-    linSources = splitUFL2(u, du, d2u, linSource)
-    linNVSource = linSources[2]
-    linSource = linSources[0] + linSources[1]
+    # linSources = splitUFL2(u, du, d2u, linSource)
+    # linNVSource = linSources[2]
+    # linSource = linSources[0] + linSources[1]
 
     model = EllipticModel(dimRange, form.signature())
 
@@ -515,7 +515,7 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
     model.diffusiveFlux = generateCode({u: arg, du: darg}, diffusiveFlux, model.coefficients, tempVars)
     model.alpha = generateCode({u: arg}, boundarySource, model.coefficients, tempVars)
     model.linSource = generateCode({u: arg, du: darg, d2u: d2arg, ubar: argbar, dubar: dargbar, d2ubar: d2argbar}, linSource, model.coefficients, tempVars)
-    model.linNVSource = generateCode({u: arg, du: darg, d2u: d2arg, ubar: argbar, dubar: dargbar, d2ubar: d2argbar}, linNVSource, model.coefficients, tempVars)
+    # model.linNVSource = generateCode({u: arg, du: darg, d2u: d2arg, ubar: argbar, dubar: dargbar, d2ubar: d2argbar}, linNVSource, model.coefficients, tempVars)
     model.linDiffusiveFlux = generateCode({u: arg, du: darg, ubar: argbar, dubar: dargbar}, linDiffusiveFlux, model.coefficients, tempVars)
     model.linAlpha = generateCode({u: arg, ubar: argbar}, linBoundarySource, model.coefficients, tempVars)
     model.fluxDivergence = generateCode({u: arg, du: darg, d2u: d2arg}, fluxDivergence, model.coefficients, tempVars)
