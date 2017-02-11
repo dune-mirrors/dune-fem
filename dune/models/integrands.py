@@ -221,7 +221,7 @@ class Integrands():
         if self._coefficients:
             setCoefficient = Method('void', 'setCoefficient', targs=['std::size_t i'], args=['const CoefficientType< i > &coefficient'])
             if self.skeleton is None:
-                setCoefficient.append(assign(get('i')(coefficients_), UnformattedExpression('auto', 'coefficient.localFunction();')))
+                setCoefficient.append(assign(get('i')(coefficients_), UnformattedExpression('auto', 'coefficient.localFunction()')))
             else:
                 setCoefficient.append(assign(get('i')(coefficients_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::in )')]), UnformattedExpression('auto', 'coefficient.localFunction();')))
                 setCoefficient.append(assign(get('i')(coefficients_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::out )')]), UnformattedExpression('auto', 'coefficient.localFunction();')))
