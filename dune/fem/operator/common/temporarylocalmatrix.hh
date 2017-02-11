@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <vector>
 
+#include <dune/common/densematrix.hh>
+
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/storage/rowreferencevector.hh>
 
