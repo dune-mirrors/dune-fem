@@ -366,6 +366,7 @@ int main (int argc, char **argv)
   }
 
   HGridType grid(lang,anz,per,1);
+  grid.loadBalance();
 
 
  //  GridPtr<HGridType> gridptr(macroGridName);
