@@ -1,8 +1,5 @@
 from __future__ import division, print_function, unicode_literals
 
-import ufl
-import ufl.algorithms
-
 import importlib
 import os
 import subprocess
@@ -10,7 +7,12 @@ import sys
 import timeit
 import types
 
+from ufl import Coefficient, Form, SpatialCoordinate
+from ufl import action, adjoint, derivative, div, dx, inner
 from ufl.algorithms import expand_compounds, expand_derivatives, expand_indices
+from ufl.algorithms.apply_derivatives import apply_derivatives
+from ufl.differentiation import Grad
+from ufl.equation import Equation
 from ufl.core.multiindex import FixedIndex, MultiIndex
 
 from dune.ufl import codegen, GridCoefficient
@@ -349,7 +351,7 @@ class EllipticModel:
 
 def splitUFLForm(form):
     phi = form.arguments()[0]
-    dphi = ufl.differentiation.Grad(phi)
+    dphi = Grad(phi)
 
     source = ExprTensor(phi.ufl_shape)
     diffusiveFlux = ExprTensor(dphi.ufl_shape)
@@ -428,7 +430,7 @@ def generateCode(predefined, tensor, coefficients, tempVars=True):
 
 def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
     form = equation.lhs - equation.rhs
-    if not isinstance(form, ufl.Form):
+    if not isinstance(form, Form):
         raise Exception("ufl.Form expected.")
     if len(form.arguments()) < 2:
         raise Exception("Elliptic model requires form with at least two arguments.")
@@ -437,11 +439,13 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
     dimRange = phi.ufl_shape[0]
 
     u = form.arguments()[1]
-    du = ufl.differentiation.Grad(u)
-    d2u = ufl.differentiation.Grad(du)
-    ubar = ufl.Coefficient(u.ufl_function_space())
-    dubar = ufl.differentiation.Grad(ubar)
-    d2ubar = ufl.differentiation.Grad(dubar)
+    du = Grad(u)
+    d2u = Grad(du)
+    ubar = Coefficient(u.ufl_function_space())
+    dubar = Grad(ubar)
+    d2ubar = Grad(dubar)
+
+    x = SpatialCoordinate(form.ufl_cell())
 
     try:
         field = u.ufl_function_space().ufl_element().field()
@@ -453,11 +457,11 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
         b = ufl.replace(form, {u: ufl.as_vector(exact)} )
         form = form - b
 
-    dform = ufl.algorithms.apply_derivatives.apply_derivatives(ufl.derivative(ufl.action(form, ubar), ubar, u))
+    dform = apply_derivatives(derivative(action(form, ubar), ubar, u))
 
     source, diffusiveFlux, boundarySource = splitUFLForm(form)
     linSource, linDiffusiveFlux, linBoundarySource = splitUFLForm(dform)
-    fluxDivergence, _, _ = splitUFLForm(ufl.inner(source.as_ufl() - ufl.div(diffusiveFlux.as_ufl()), phi) * ufl.dx(0))
+    fluxDivergence, _, _ = splitUFLForm(inner(source.as_ufl() - div(diffusiveFlux.as_ufl()), phi) * dx(0))
 
     # split linNVSource off linSource
     # linSources = splitUFL2(u, du, d2u, linSource)
@@ -468,8 +472,8 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
 
     model.hasNeumanBoundary = not boundarySource.is_zero()
 
-    expandform = ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(equation.lhs)))
-    if expandform == ufl.adjoint(expandform):
+    expandform = expand_indices(expand_derivatives(expand_compounds(equation.lhs)))
+    if expandform == adjoint(expandform):
         model.symmetric = 'true'
     model.field = field
 
@@ -504,21 +508,25 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
             'constant' : coefficient.is_cellwise_constant(),\
             'field': field } )
 
+    predefined = {u: model.arg_u, du: model.arg_du}
+    predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
+    model.source = generateCode(predefined, source, model.coefficients, tempVars)
+    model.diffusiveFlux = generateCode(predefined, diffusiveFlux, model.coefficients, tempVars=tempVars)
+    predefined.update({ubar: model.arg_ubar, dubar: model.arg_dubar})
+    model.linSource = generateCode(predefined, linSource, model.coefficients, tempVars=tempVars)
+    model.linDiffusiveFlux = generateCode(predefined, linDiffusiveFlux, model.coefficients, tempVars=tempVars)
 
-    arg = Variable('const RangeType &', 'u')
-    darg = Variable('const JacobianRangeType &', 'du')
-    d2arg = Variable('const HessianRangeType &', 'd2u')
-    argbar = Variable('const RangeType &', 'ubar')
-    dargbar = Variable('const JacobianRangeType &', 'dubar')
-    d2argbar = Variable('const HessianRangeType &', 'd2ubar')
-    model.source = generateCode({u: arg, du: darg, d2u: d2arg}, source, model.coefficients, tempVars)
-    model.diffusiveFlux = generateCode({u: arg, du: darg}, diffusiveFlux, model.coefficients, tempVars)
-    model.alpha = generateCode({u: arg}, boundarySource, model.coefficients, tempVars)
-    model.linSource = generateCode({u: arg, du: darg, d2u: d2arg, ubar: argbar, dubar: dargbar, d2ubar: d2argbar}, linSource, model.coefficients, tempVars)
     # model.linNVSource = generateCode({u: arg, du: darg, d2u: d2arg, ubar: argbar, dubar: dargbar, d2ubar: d2argbar}, linNVSource, model.coefficients, tempVars)
-    model.linDiffusiveFlux = generateCode({u: arg, du: darg, ubar: argbar, dubar: dargbar}, linDiffusiveFlux, model.coefficients, tempVars)
-    model.linAlpha = generateCode({u: arg, ubar: argbar}, linBoundarySource, model.coefficients, tempVars)
-    model.fluxDivergence = generateCode({u: arg, du: darg, d2u: d2arg}, fluxDivergence, model.coefficients, tempVars)
+
+    predefined = {u: model.arg_u}
+    predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
+    model.alpha = generateCode(predefined, boundarySource, model.coefficients, tempVars)
+    predefined.update({ubar: model.arg_ubar})
+    model.linAlpha = generateCode(predefined, linBoundarySource, model.coefficients, tempVars)
+
+    predefined = {u: model.arg_u, du: model.arg_du, d2u: model.arg_d2u}
+    predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
+    model.fluxDivergence = generateCode(predefined, fluxDivergence, model.coefficients, tempVars=tempVars)
 
     if dirichlet:
         model.hasDirichletBoundary = True
@@ -562,7 +570,7 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
 def generateModel(grid, model, dirichlet = {}, exact = None, tempVars = True, header = False):
     start_time = timeit.default_timer()
 
-    if isinstance(model, ufl.equation.Equation):
+    if isinstance(model, Equation):
         model = compileUFL(model, dirichlet, exact, tempVars)
 
     if not isinstance(grid, types.ModuleType):
