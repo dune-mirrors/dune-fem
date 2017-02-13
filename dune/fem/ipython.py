@@ -64,8 +64,6 @@ def plotComponents(grid, solution, show=None, showGrid=True):
 
     display(fig)
 
-def
-
 def mayaviPointData(grid, solution, level=0, component=0):
     from mayavi import mlab
     triangulation = grid.triangulation(level)
