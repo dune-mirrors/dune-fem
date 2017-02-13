@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <dune/common/densematrix.hh>
+#include <dune/common/dynvector.hh>
 
 #include <dune/fem/operator/common/localmatrix.hh>
 #include <dune/fem/storage/rowreferencevector.hh>
@@ -63,8 +64,8 @@ namespace Dune
 
 
 
-  // FieldTraits for FullyDynamicMatrix
-  // ----------------------------------
+  // FieldTraits for TemporaryLocalMatrix
+  // ------------------------------------
 
   template< class DomainSpaceImp, class RangeSpaceImp >
   struct FieldTraits< Fem::TemporaryLocalMatrix< DomainSpaceImp, RangeSpaceImp > >

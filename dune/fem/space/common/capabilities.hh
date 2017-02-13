@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_SPACE_COMMON_CAPABILITIES_HH
 #define DUNE_FEM_SPACE_COMMON_CAPABILITIES_HH
 
+#include <type_traits>
 
 namespace Dune
 {
