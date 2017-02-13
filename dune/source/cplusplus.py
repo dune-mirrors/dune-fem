@@ -238,6 +238,25 @@ class EnumClass:
 
 
 
+# SwitchStatement
+# ---------------
+
+class SwitchStatement(Statement):
+    def __init__(self, var, branches=None, default=None):
+        self.var = var
+        self.branches = dict()
+        if branches is not None:
+            for case, code in branch:
+                self.append(case, code)
+        self.default = Block()
+        self.default.append(default)
+
+    def append(self, case, code):
+        block = self.branches.setdefault(case, Block())
+        block.append(code)
+
+
+
 # ReturnStatement
 # ---------------
 
@@ -425,6 +444,22 @@ class SourceWriter:
                             self.emit(e, indent+1)
                 else:
                     self.emit('return;', indent)
+            elif isinstance(src, SwitchStatement):
+                self.emit('switch( ' + src.var.name + ' )', indent)
+                self.emit('{', indent)
+                for case, code in src.branches.items():
+                    self.emit('case ' + str(case) + ':', indent)
+                    if code.content:
+                        self.emit('{', indent+1)
+                        self.emit(code.content, indent+2, context)
+                        self.emit('}', indent+1)
+                    self.emit('break;', indent+1)
+                if src.default.content:
+                    self.emit('default:', indent)
+                    self.emit('{', indent+1)
+                    self.emit(src.default.content, indent+2, context)
+                    self.emit('}', indent+1)
+                self.emit('}', indent)
             else:
                 raise Exception('Unknown statement type.')
         elif isinstance(src, UnformattedBlock):

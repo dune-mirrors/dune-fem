@@ -10,6 +10,7 @@ import types
 from ufl import Coefficient, Form, SpatialCoordinate
 from ufl import action, adjoint, derivative, div, dx, inner
 from ufl.algorithms import expand_compounds, expand_derivatives, expand_indices
+from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.differentiation import Grad
 from ufl.equation import Equation
@@ -21,7 +22,7 @@ from dune.ufl.linear import splitMultiLinearExpr
 
 from dune.source.builtin import get, hybridForEach, make_index_sequence, make_shared
 from dune.source.cplusplus import UnformattedExpression
-from dune.source.cplusplus import AccessModifier, Constructor, Declaration, Function, Method, NameSpace, Struct, TypeAlias, UnformattedBlock, Variable
+from dune.source.cplusplus import AccessModifier, Constructor, Declaration, Function, Method, NameSpace, Struct, SwitchStatement, TypeAlias, UnformattedBlock, Variable
 from dune.source.cplusplus import assign, construct, dereference, lambda_, nullptr, return_
 from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source.fem import declareFunctionSpace
@@ -47,6 +48,9 @@ class EllipticModel:
         self.arg_ubar = Variable("const RangeType &", "ubar")
         self.arg_dubar = Variable("const JacobianRangeType &", "dubar")
         self.arg_d2ubar = Variable("const HessianRangeType &", "d2ubar")
+
+        self.arg_i = Variable("const IntersectionType &", "intersection")
+        self.arg_bndId = Variable("int", "bndId")
 
         self.source = [assign(self.arg_r, construct("RangeType", 0))]
         self.linSource = [assign(self.arg_r, construct("RangeType", 0))]
@@ -119,8 +123,8 @@ class EllipticModel:
         code.append(Method('bool', 'hasDirichletBoundary', const=True, code=return_(self.hasDirichletBoundary)))
         code.append(Method('bool', 'hasNeumanBoundary', const=True, code=return_(self.hasNeumanBoundary)))
 
-        code.append(Method('bool', 'isDirichletIntersection', args=['const IntersectionType &intersection', 'Dune::FieldVector< int, dimRange > &dirichletComponent'], code=self.isDirichletIntersection, const=True))
-        code.append(Method('void', 'dirichlet', targs=['class Point'], args=['int id', self.arg_x, self.arg_r], code=self.dirichlet, const=True))
+        code.append(Method('bool', 'isDirichletIntersection', args=[self.arg_i, 'Dune::FieldVector< int, dimRange > &dirichletComponent'], code=self.isDirichletIntersection, const=True))
+        code.append(Method('void', 'dirichlet', targs=['class Point'], args=[self.arg_bndId, self.arg_x, self.arg_r], code=self.dirichlet, const=True))
 
         code.append(Method("const ConstantsType< i > &", "constant", targs=["std::size_t i"], code=return_(dereference(get("i")(constants_))), const=True))
         code.append(Method("ConstantsType< i > &", "constant", targs=["std::size_t i"], code=return_(dereference(get("i")(constants_)))))
@@ -480,7 +484,7 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
     coefficients = set(form.coefficients())
     for bndId in dirichlet:
         for expr in dirichlet[bndId]:
-            _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
+            _, c = extract_arguments_and_coefficients(expr)
             coefficients |= set(c)
 
     idxConst = 0
@@ -531,34 +535,22 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
     if dirichlet:
         model.hasDirichletBoundary = True
 
-        writer = SourceWriter(ListWriter())
-        writer.emit('const int bndId = BoundaryIdProviderType::boundaryId( intersection );')
-        writer.emit('std::fill( dirichletComponent.begin(), dirichletComponent.end(), bndId );')
-        writer.emit('switch( bndId )')
-        writer.emit('{')
-        for bndId in dirichlet:
-            writer.emit('case ' + str(bndId) + ':')
-        writer.emit('return true;', indent=1)
-        writer.emit('default:')
-        writer.emit('return false;', indent=1)
-        writer.emit('}')
-        model.isDirichletIntersection = writer.writer.lines
+        bndId = Variable('const int', 'bndId')
 
-        writer = SourceWriter(ListWriter())
-        writer.emit('switch( id )')
-        writer.emit('{')
-        for bndId in dirichlet:
-            if len(dirichlet[bndId]) != dimRange:
-                raise Exception('Dirichtlet boundary condition has wrong dimension.')
-            writer.emit('case ' + str(bndId) + ':')
-            writer.emit('{', indent=1)
-            writer.emit(generateCode({}, ExprTensor((dimRange,), dirichlet[bndId]), model.coefficients, tempVars), indent=2, context=Method('void', 'dirichlet'))
-            writer.emit('}', indent=1)
-            writer.emit('break;', indent=1)
-        writer.emit('default:')
-        writer.emit('result = RangeType( 0 );', indent=1)
-        writer.emit('}')
-        model.dirichlet = writer.writer.lines
+        switch = SwitchStatement(bndId, default=return_(False))
+        for i in dirichlet:
+            switch.append(i, return_(True))
+        model.isDirichletIntersection = [Declaration(bndId, initializer=UnformattedExpression('int', 'BoundaryIdProviderType::boundaryId( ' + model.arg_i.name + ' )')),
+                                         UnformattedBlock('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + bndId.name + ' );'),
+                                         switch
+                                        ]
+
+        switch = SwitchStatement(model.arg_bndId, default=assign(model.arg_r, construct("RangeType", 0)))
+        predefined = {}
+        predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
+        for i, code in dirichlet.items():
+            switch.append(i, generateCode(predefined, ExprTensor((dimRange,), code), model.coefficients, tempVars))
+        model.dirichlet = [switch]
 
     return model
 
