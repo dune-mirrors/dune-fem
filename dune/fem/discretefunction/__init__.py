@@ -34,6 +34,6 @@ fileBase = "femdiscretefunction"
 def module(storage, includes, typeName, constructors=None, methods=None):
     includes = includes + ["dune/fempy/py/discretefunction.hh"]
     moduleName = fileBase + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = generator.load(includes, typeName, moduleName, constructors, methods)
+    module = generator.load(includes, typeName, moduleName, constructors, methods, bufferProtocol=True)
     addAttr(module, module.DiscreteFunction, storage)
     return module
