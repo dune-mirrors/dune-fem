@@ -134,4 +134,9 @@ def conditionalExprTensor(condition, trueTensor, falseTensor):
     if trueTensor.shape != falseTensor.shape:
         raise Exception('Cannot construct conditional for tensors of different shape.')
     shape = trueTensor.shape
-    return ExprTensor(shape, apply(lambda u, v: Conditional(condition, u, v), shape, trueTensor.data, falseTensor.data))
+    def f(u, v):
+        if isinstance(u, Zero) and isinstance(v, Zero):
+            return u
+        else:
+            return Conditional(condition, u, v)
+    return ExprTensor(shape, apply(f, shape, trueTensor.data, falseTensor.data))
