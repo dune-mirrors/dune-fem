@@ -86,6 +86,9 @@ class ExprTensor:
             raise Exception('Cannot multiply tensors.')
         return ExprTensor(self.shape, apply(lambda v: v * other, self.shape, self.data))
 
+    def __neg__(self):
+        return ExprTensor(self.shape, apply(lambda v: -v, self.shape, self.data))
+
     def __getitem__(self, key):
         if isinstance(key, MultiIndex):
             key = key.indices()
