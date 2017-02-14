@@ -282,6 +282,29 @@ namespace Dune
     };
 
 
+
+    // DifferentDiscreteFunctionSpace
+    // ------------------------------
+
+    //! specialization of DifferentDiscreteFunctionSpace for TupleDiscreteFunctionSpace
+    template< class ... DiscreteFunctionSpaces, class NewFunctionSpace >
+    struct DifferentDiscreteFunctionSpace< TupleDiscreteFunctionSpace< DiscreteFunctionSpaces... >, NewFunctionSpace >
+    {
+      static_assert( (NewFunctionSpace::dimRange % TupleDiscreteFunctionSpace< DiscreteFunctionSpaces... >::dimRange == 0),
+                     "DifferentDiscreteFunctionSpace can only be applied to TupleFunctionSpace, if new dimRange is a multiple of the original one." );
+
+    private:
+      static const int factor = (NewFunctionSpace::dimRange / TupleDiscreteFunctionSpace< DiscreteFunctionSpaces... >::dimRange);
+
+      template< class DiscreteFunctionSpace >
+      using NewSubFunctionSpace = typename ToNewDimRangeFunctionSpace< NewFunctionSpace, factor*DiscreteFunctionSpace::dimRange >::Type;
+
+    public:
+      typedef TupleDiscreteFunctionSpace< typename DifferentDiscreteFunctionSpace< DiscreteFunctionSpaces, NewSubFunctionSpace< DiscreteFunctionSpaces > >::Type... > Type;
+    };
+
+
+
     // DefaultLocalRestrictProlong
     // ---------------------------
 
