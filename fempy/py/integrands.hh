@@ -76,9 +76,9 @@ namespace Dune
         // setConstant
         // -----------
 
-        template< class Integrands, class Holder, class Alias >
+        template< class Integrands, class... options >
         inline static std::enable_if_t< (std::tuple_size< typename Integrands::ConstantTupleType >::value > 0) >
-        setConstant ( pybind11::class_< Integrands, Holder, Alias > cls, PriorityTag< 1 > )
+        setConstant ( pybind11::class_< Integrands, options... > cls, PriorityTag< 1 > )
         {
           const std::size_t numConstants = std::tuple_size< typename Integrands::ConstantTupleType >::value;
           std::array< std::function< void( Integrands &, pybind11::handle ) >, numConstants > dispatch;
@@ -96,17 +96,17 @@ namespace Dune
             } );
         }
 
-        template< class Integrands, class Holder, class Alias >
+        template< class Integrands, class... options >
         inline static std::enable_if_t< (std::tuple_size< typename Integrands::ConstantTupleType >::value == 0) >
-        setConstant ( pybind11::class_< Integrands, Holder, Alias > cls, PriorityTag< 1 > )
+        setConstant ( pybind11::class_< Integrands, options... > cls, PriorityTag< 1 > )
         {
           cls.def( "setConstant", [] ( Integrands &integrands, int k, pybind11::handle ) {
               throw std::range_error( "No such constant: " + std::to_string( k ) + " (there are no constants)" );
             } );
         }
 
-        template< class Integrands, class Holder, class Alias >
-        inline static void setConstant ( pybind11::class_< Integrands, Holder, Alias > cls, PriorityTag< 0 > )
+        template< class Integrands, class... options >
+        inline static void setConstant ( pybind11::class_< Integrands, options... > cls, PriorityTag< 0 > )
         {}
 
 
@@ -114,9 +114,9 @@ namespace Dune
         // setCoefficient
         // --------------
 
-        template< class Integrands, class Holder, class Alias >
+        template< class Integrands, class... options >
         inline static std::enable_if_t< (std::tuple_size< typename Integrands::CoefficientTupleType >::value > 0) >
-        setCoefficient ( pybind11::class_< Integrands, Holder, Alias > cls, PriorityTag< 1 > )
+        setCoefficient ( pybind11::class_< Integrands, options... > cls, PriorityTag< 1 > )
         {
           const std::size_t numCoefficients = std::tuple_size< typename Integrands::CoefficientTupleType >::value;
           std::array< std::function< void( Integrands &, pybind11::handle ) >, numCoefficients > dispatch;
@@ -134,9 +134,9 @@ namespace Dune
             }, "k"_a, "coefficient"_a );
         }
 
-        template< class Integrands, class Holder, class Alias >
+        template< class Integrands, class... options >
         inline static std::enable_if_t< (std::tuple_size< typename Integrands::CoefficientTupleType >::value == 0) >
-        setCoefficient ( pybind11::class_< Integrands, Holder, Alias > cls, PriorityTag< 1 > )
+        setCoefficient ( pybind11::class_< Integrands, options... > cls, PriorityTag< 1 > )
         {
           using pybind11::operator""_a;
           cls.def( "setCoefficient", [] ( Integrands &integrands, int k, pybind11::handle ) {
@@ -144,8 +144,8 @@ namespace Dune
             }, "k"_a, "coefficient"_a );
         }
 
-        template< class Integrands, class Holder, class Alias >
-        inline static void setCoefficient ( pybind11::class_< Integrands, Holder, Alias > cls, PriorityTag< 0 > )
+        template< class Integrands, class... options >
+        inline static void setCoefficient ( pybind11::class_< Integrands, options... > cls, PriorityTag< 0 > )
         {}
 
       } // namespace RegisterIntegrands
