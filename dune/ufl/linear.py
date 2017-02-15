@@ -88,7 +88,8 @@ class MultiLinearExprSplitter(Transformer):
 
         result = dict()
         for key in set(trueCase.keys()) | set(falseCase.keys()):
-            result[key] = conditionalExprTensor(condition, trueCase.get(key, Zero()), falseCase.get(key, Zero()))
+            zero = ExprTensor(self._shape(key))
+            result[key] = conditionalExprTensor(condition, trueCase.get(key, zero), falseCase.get(key, zero))
         return result
 
     def terminal(self, expr):
