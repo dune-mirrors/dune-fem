@@ -24,18 +24,33 @@ def _plotPointData(fig,grid,solution, level=0, gridLines="black", vectors=False,
                       units='xy', scale=10., zorder=3, color='blue',
                       width=0.007, headwidth=3., headlength=4.)
         except:
-            if solution.dimRange > 1:
-                data = linalg.norm(data,axis=1)
+            pass
+
+        if solution.dimRange > 1:
+            data = linalg.norm(data,axis=1)
+        else:
+            data = data[:,0]
+        minData = amin(data)
+        maxData = amax(data)
+        if clim == None:
+            clim = [minData, maxData]
+        levels = linspace(clim[0], clim[1], 256, endpoint=True)
+        pyplot.tricontourf(triangulation, data, cmap=cmap, levels=levels, extend="both")
+        if colorbar:
+            # having extend not 'both' does not seem to work...
+            if clim[0] > minData and clim[1] < maxData:
+                extend = 'both'
+            elif clim[0] > minData:
+                extend = 'min'
+            elif clim[1] < maxData:
+                extend = 'max'
             else:
-                data = data[:,0]
-            if not clim == None:
-                levels = linspace(clim[0], clim[1], 256)
-            else:
-                levels = linspace(amin(data), amax(data), 256)
-            pyplot.tricontourf(triangulation, data, cmap=cmap, levels=levels, extend="both")
-            if colorbar:
-                cbar = pyplot.colorbar(orientation="vertical",shrink=1.0, extend="both")
-                cbar.ax.tick_params(labelsize=18)
+                extend = 'neither'
+            v = linspace(clim[0], clim[1], 10, endpoint=True)
+            norm = matplotlib.colors.Normalize(vmin=clim[0], vmax=clim[1])
+            cbar = pyplot.colorbar(orientation="vertical",shrink=1.0,
+                      extend=extend, norm=norm, ticks=v)
+            cbar.ax.tick_params(labelsize=18)
 
 
     fig.gca().set_aspect('equal')
