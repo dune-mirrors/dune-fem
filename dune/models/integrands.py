@@ -356,7 +356,7 @@ def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMa
 
 
 def generateUnaryCode(predefined, testFunctions, tensorMap, tempVars=True):
-    preamble, values = generateCode(predefined, testFunctions, tensorMap, tempVars)
+    preamble, values = generateCode(predefined, testFunctions, tensorMap, tempVars=tempVars)
     return preamble + [return_(construct('RangeValueType', *values))]
 
 
@@ -365,14 +365,14 @@ def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, tenso
         return [return_(lambda_(args=['const DomainValueType &phi'], code=return_(construct('RangeValueType', *[0 for i in range(len(testFunctions))]))))]
 
     var = Variable('std::tuple< RangeType, JacobianRangeType >', 'phi')
-    preamble, values = generateLinearizedCode(predefined, testFunctions, {var: trialFunctions}, tensorMap, tempVars)
+    preamble, values = generateLinearizedCode(predefined, testFunctions, {var: trialFunctions}, tensorMap, tempVars=tempVars)
     capture = extractVariablesFromExpressions(values[var]) - {var}
     return preamble + [return_(lambda_(capture=capture, args=['const DomainValueType &phi'], code=return_(construct('RangeValueType', *values[var]))))]
 
 
 def generateBinaryCode(predefined, testFunctions, tensorMap, tempVars=True):
     restrictedTestFunctions = [phi('+') for phi in testFunctions] + [phi('-') for phi in testFunctions]
-    preamble, values = generateCode(predefined, restrictedTestFunctions, tensorMap, tempVars=True)
+    preamble, values = generateCode(predefined, restrictedTestFunctions, tensorMap, tempVars=tempVars)
     return preamble + [return_(make_pair(construct('RangeValueType', *values[:len(testFunctions)]), construct('RangeValueType', *values[len(testFunctions):])))]
 
 
@@ -389,7 +389,7 @@ def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tens
 
     varIn = Variable('std::tuple< RangeType, JacobianRangeType >', 'phiIn')
     varOut = Variable('std::tuple< RangeType, JacobianRangeType >', 'phiOut')
-    preamble, values = generateLinearizedCode(predefined, restrictedTestFunctions, {varIn: trialFunctionsIn, varOut: trialFunctionsOut}, tensorMap, tempVars)
+    preamble, values = generateLinearizedCode(predefined, restrictedTestFunctions, {varIn: trialFunctionsIn, varOut: trialFunctionsOut}, tensorMap, tempVars=tempVars)
 
     captureIn = extractVariablesFromExpressions(values[varIn]) - {varIn}
     captureOut = extractVariablesFromExpressions(values[varOut]) - {varOut}
@@ -476,7 +476,7 @@ def compileUFL(equation, tempVars=True):
         predefined[minCellEdgeLength] = minEdgeLength(integrands.cellGeometry())
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
-        integrands.interior = generateUnaryCode(predefined, derivatives_phi, integrals['cell'], tempVars)
+        integrands.interior = generateUnaryCode(predefined, derivatives_phi, integrals['cell'], tempVars=tempVars)
 
         predefined = {derivatives_ubar[i]: arg[i] for i in range(len(derivatives_u))}
         predefined[x] = integrands.spatialCoordinate('x')
@@ -485,7 +485,7 @@ def compileUFL(equation, tempVars=True):
         predefined[minCellEdgeLength] = minEdgeLength(integrands.cellGeometry())
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
-        integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('cell'), tempVars)
+        integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('cell'), tempVars=tempVars)
 
     if 'exterior_facet' in integrals.keys():
         arg = Variable(integrands.domainValueTuple(), 'u')
@@ -501,7 +501,7 @@ def compileUFL(equation, tempVars=True):
         predefined[minFacetEdgeLength] = minEdgeLength(integrands.facetGeometry())
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
-        integrands.boundary = generateUnaryCode(predefined, derivatives_phi, integrals['exterior_facet'], tempVars);
+        integrands.boundary = generateUnaryCode(predefined, derivatives_phi, integrals['exterior_facet'], tempVars=tempVars);
 
         predefined = {derivatives_ubar[i]: arg[i] for i in range(len(derivatives_u))}
         predefined[x] = integrands.spatialCoordinate('x')
@@ -514,7 +514,7 @@ def compileUFL(equation, tempVars=True):
         predefined[minFacetEdgeLength] = minEdgeLength(integrands.facetGeometry())
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'x')
-        integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('exterior_facet'), tempVars)
+        integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('exterior_facet'), tempVars=tempVars)
 
     if 'interior_facet' in integrals.keys():
         argIn = Variable(integrands.domainValueTuple(), 'uIn')
@@ -535,7 +535,7 @@ def compileUFL(equation, tempVars=True):
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'xIn', 'Side::in')
         predefineCoefficients(predefined, 'xOut', 'Side::out')
-        integrands.skeleton = generateBinaryCode(predefined, derivatives_phi, integrals['interior_facet'], tempVars)
+        integrands.skeleton = generateBinaryCode(predefined, derivatives_phi, integrals['interior_facet'], tempVars=tempVars)
 
         predefined = {derivatives_ubar[i](s): arg[i] for i in range(len(derivatives_u)) for s, arg in (('+', argIn), ('-', argOut))}
         predefined[x] = integrands.spatialCoordinate('xIn')
@@ -552,7 +552,7 @@ def compileUFL(equation, tempVars=True):
         predefined.update({c: integrands.constant(i) for c, i in constants.items()})
         predefineCoefficients(predefined, 'xIn', 'Side::in')
         predefineCoefficients(predefined, 'xOut', 'Side::out')
-        integrands.linearizedSkeleton = generateBinaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('interior_facet'), tempVars)
+        integrands.linearizedSkeleton = generateBinaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('interior_facet'), tempVars=tempVars)
 
     coefficients.update(constants)
     return integrands, coefficients
@@ -576,7 +576,7 @@ def setCoefficient(integrands, index, coefficient):
 
 def load(grid, integrands, renumbering=None, tempVars=True):
     if isinstance(integrands, Equation):
-        integrands, renumbering = compileUFL(integrands, tempVars)
+        integrands, renumbering = compileUFL(integrands, tempVars=tempVars)
 
     if not isinstance(grid, ModuleType):
         grid = grid._module

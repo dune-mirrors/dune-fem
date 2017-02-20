@@ -16,7 +16,8 @@ from ufl.differentiation import Grad
 from ufl.equation import Equation
 from ufl.core.multiindex import FixedIndex, MultiIndex
 
-from dune.ufl import codegen, GridCoefficient
+from dune.ufl import DirichletBC, GridCoefficient
+from dune.ufl import codegen
 from dune.ufl.tensors import ExprTensor
 from dune.ufl.linear import splitMultiLinearExpr
 
@@ -428,11 +429,8 @@ def generateCode(predefined, tensor, coefficients, tempVars=True):
     return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
 
 
-
-# compileUFL
-# ----------
-
-def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
+#def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
+def compileUFL(equation, *args, **kwargs):
     form = equation.lhs - equation.rhs
     if not isinstance(form, Form):
         raise Exception("ufl.Form expected.")
@@ -457,8 +455,8 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
         field = "double"
 
     # if exact solution is passed in subtract a(u,.) from the form
-    if not exact == None:
-        b = ufl.replace(form, {u: ufl.as_vector(exact)} )
+    if "exact" in kwargs:
+        b = ufl.replace(form, {u: ufl.as_vector(kwargs["exact"])} )
         form = form - b
 
     dform = apply_derivatives(derivative(action(form, ubar), ubar, u))
@@ -481,11 +479,14 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
         model.symmetric = 'true'
     model.field = field
 
+    dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
+    if "dirichlet" in kwargs:
+        dirichletBCs += [DirichletBC(u.ufl_space(), ufl.as_vector(value), bndId) for bndId, value in kwargs["dirichlet"].items()]
+
     coefficients = set(form.coefficients())
-    for bndId in dirichlet:
-        for expr in dirichlet[bndId]:
-            _, c = extract_arguments_and_coefficients(expr)
-            coefficients |= set(c)
+    for bc in dirichletBCs:
+        _, c = extract_arguments_and_coefficients(bc.value)
+        coefficients |= set(c)
 
     idxConst = 0
     idxCoeff = 0
@@ -512,6 +513,8 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
             'constant' : coefficient.is_cellwise_constant(),\
             'field': field } )
 
+    tempVars = kwargs.get("tempVars", True)
+
     predefined = {u: model.arg_u, du: model.arg_du}
     predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
     model.source = generateCode(predefined, source, model.coefficients, tempVars)
@@ -532,13 +535,31 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
     predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
     model.fluxDivergence = generateCode(predefined, fluxDivergence, model.coefficients, tempVars=tempVars)
 
-    if dirichlet:
+    if dirichletBCs:
         model.hasDirichletBoundary = True
 
+        bySubDomain = dict()
+        for bc in dirichletBCs:
+            if bc.subDomain in bySubDomain:
+                raise Exception('Multiply defined Dirichlet boundary for subdomain ' + str(bc.subDomain))
+
+            if not isinstance(bc.functionSpace, (FunctionSpace, FiniteElementBase)):
+                raise Exception('Function space must either be a ufl.FunctionSpace or a ufl.FiniteElement')
+            if isinstance(bc.functionSpace, FunctionSpace) and (bc.functionSpace != u.ufl_function_space()):
+                raise Exception('Cannot handle boundary conditions on subspaces, yet')
+            if isinstance(bc.functionSpace, FiniteElementBase) and (bc.functionSpace != u.ufl_element()):
+                raise Exception('Cannot handle boundary conditions on subspaces, yet')
+
+            value = ExprTensor(u.ufl_shape)
+            for key in value.keys():
+                value[key] = Indexed(bc.value, MultiIndex(tuple(FixedIndex(k) for k in key)))
+            bySubDomain[bc.subDomain] = value
+
         bndId = Variable('const int', 'bndId')
+        getBndId = UnformattedExpression('int', 'Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >::boundaryId( ' + model.arg_i.name + ' )')
 
         switch = SwitchStatement(bndId, default=return_(False))
-        for i in dirichlet:
+        for i in bySubDomain:
             switch.append(i, return_(True))
         model.isDirichletIntersection = [Declaration(bndId, initializer=UnformattedExpression('int', 'BoundaryIdProviderType::boundaryId( ' + model.arg_i.name + ' )')),
                                          UnformattedBlock('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + bndId.name + ' );'),
@@ -548,22 +569,19 @@ def compileUFL(equation, dirichlet = {}, exact = None, tempVars = True):
         switch = SwitchStatement(model.arg_bndId, default=assign(model.arg_r, construct("RangeType", 0)))
         predefined = {}
         predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
-        for i, code in dirichlet.items():
-            switch.append(i, generateCode(predefined, ExprTensor((dimRange,), code), model.coefficients, tempVars))
+        for i, value in bySubDomain.items():
+            switch.append(i, generateCode(predefined, value, model.coefficients, tempVars=tempVars))
         model.dirichlet = [switch]
 
     return model
 
 
-
-# generateModel
-# -----------
-
-def generateModel(grid, model, dirichlet = {}, exact = None, tempVars = True, header = False):
+#def generateModel(grid, model, dirichlet = {}, exact = None, tempVars = True, header = False):
+def generateModel(grid, model, *args, **kwargs):
     start_time = timeit.default_timer()
 
     if isinstance(model, Equation):
-        model = compileUFL(model, dirichlet, exact, tempVars)
+        model = compileUFL(model, *args, **kwargs)
 
     if not isinstance(grid, types.ModuleType):
         grid = grid._module
@@ -616,19 +634,21 @@ def generateModel(grid, model, dirichlet = {}, exact = None, tempVars = True, he
     model.export(writer, 'Model', 'ModelWrapper')
     writer.closePythonModule(name)
 
-    if header != False:
-        with open(header, 'w') as modelFile:
+    if "header" in kwargs:
+        with open(kwargs["header"], 'w') as modelFile:
             modelFile.write(writer.writer.getvalue())
     return writer, name
 
-def importModel(grid, model, dirichlet = {}, exact = None, tempVars = True, header = False):
+
+#def importModel(grid, model, dirichlet = {}, exact = None, tempVars = True, header = False):
+def importModel(grid, model, *args, **kwargs):
     if isinstance(model, str):
         with open(model, 'r') as modelFile:
             data = modelFile.read()
         name = data.split('PYBIND11_PLUGIN( ')[1].split(' )')[0]
         builder.load(name, data, "ellipticModel")
         return importlib.import_module("dune.generated." + name)
-    writer, name = generateModel(grid, model, dirichlet, exact, tempVars, header)
+    writer, name = generateModel(grid, model, *args, **kwargs)
     builder.load(name, writer.writer.getvalue(), "ellipticModel")
     writer.close()
     return importlib.import_module("dune.generated." + name)
