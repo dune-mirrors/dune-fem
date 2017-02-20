@@ -332,10 +332,9 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Constraints >
         else if( intersection.boundary() )
         {
           Dune::FieldVector<int,dimRange> components(0);
-          if ( ! model().isDirichletIntersection( intersection, components) )
-            continue;
+          model().isDirichletIntersection( intersection, components);
 
-          typedef typename IntersectionType::Geometry  IntersectionGeometryType;
+          typedef typename IntersectionType::Geometry IntersectionGeometryType;
           const IntersectionGeometryType &intersectionGeometry = intersection.geometry();
 
           // compute penalty factor
@@ -351,6 +350,9 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Constraints >
             const DomainType normal = intersection.integrationOuterNormal( x );
             const double weight = quadInside.weight( pt );
 
+            RangeType bndValue;
+            model().dirichlet(1, quadInside[pt], bndValue);
+
             RangeType value;
             JacobianRangeType dvalue,advalue;
 
@@ -358,22 +360,12 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Constraints >
             JacobianRangeType duIn, aduIn;
             uLocal.evaluate( quadInside[ pt ], vuIn );
             uLocal.jacobian( quadInside[ pt ], duIn );
-            for (int r=0;r<dimRange;++r)
-              if (!components[r]) // do not use dirichlet constraints here
-              {
-                vuIn[r] = 0;
-                duIn[r] = 0;
-              }
-
-            model().diffusiveFlux( quadInside[ pt ], vuIn, duIn, aduIn );
-
             jump = vuIn;
+            jump -= bndValue;
 
             // penalty term : beta [u] [phi] = beta (u+ - u-)(phi+ - phi-)=beta (u+ - u-)phi+
             value = jump;
             value *= beta * intersectionGeometry.integrationElement( x );
-            // {A grad u}.[phi] = {A grad u}.phi+ n_+ = 0.5*(grad u+ + grad u-).n_+ phi+
-            aduIn.umv(normal,value);
 
             //  [ u ] * { grad phi_en } = -normal(u+ - u-) * 0.5 grad phi_en
             // here we need a diadic product of u x n
@@ -382,6 +374,18 @@ void DGEllipticOperator< RangeDiscreteFunction, Model, Constraints >
                 dvalue[r][d] = -0.5 * normal[d] * jump[r];
 
             model().diffusiveFlux( quadInside[ pt ], jump, dvalue, advalue );
+
+            for (int r=0;r<dimRange;++r)
+              if (!components[r]) // do not use dirichlet constraints here
+              {
+                value[r] = 0;
+                advalue[r] = 0;
+              }
+
+            // consistency term
+            // {A grad u}.[phi] = {A grad u}.phi+ n_+ = 0.5*(grad u+ + grad u-).n_+ phi+
+            model().diffusiveFlux( quadInside[ pt ], vuIn, duIn, aduIn );
+            aduIn.umv(normal,value);
 
             value *= weight;
             advalue *= weight;
@@ -597,8 +601,7 @@ void DifferentiableDGEllipticOperator< JacobianOperator, Model, Constraints >
       else if( intersection.boundary() )
       {
         Dune::FieldVector<int,dimRange> components(0);
-        if ( ! model().isDirichletIntersection( intersection, components) )
-          continue;
+        model().isDirichletIntersection( intersection, components);
 
         typedef typename IntersectionType::Geometry  IntersectionGeometryType;
         const IntersectionGeometryType &intersectionGeometry = intersection.geometry();
