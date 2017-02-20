@@ -71,7 +71,7 @@ namespace Dune
       {}
 
       NumPyVector ( pybind11::buffer buf )
-        : array_( buf.request(true) ),
+        : array_( buf ), // buf.request(true) ),
           size_( 0 )
       {
         pybind11::buffer_info info = buf.request();
