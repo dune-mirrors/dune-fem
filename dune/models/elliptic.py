@@ -28,7 +28,6 @@ from dune.source.cplusplus import AccessModifier, Constructor, Declaration, Func
 from dune.source.cplusplus import assign, construct, dereference, lambda_, nullptr, return_
 from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source.fem import declareFunctionSpace
-from dune.generator import builder
 
 
 class EllipticModel:
@@ -643,6 +642,7 @@ def generateModel(grid, model, *args, **kwargs):
 
 #def importModel(grid, model, dirichlet = {}, exact = None, tempVars = True, header = False):
 def importModel(grid, model, *args, **kwargs):
+    from dune.generator import builder
     if isinstance(model, str):
         with open(model, 'r') as modelFile:
             data = modelFile.read()

@@ -13,8 +13,6 @@ from ufl.corealg.map_dag import map_expr_dags
 from ufl.equation import Equation
 from ufl.differentiation import Grad
 
-from dune.generator import builder
-
 from dune.source.builtin import get, hybridForEach, make_pair, make_index_sequence, make_shared
 from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, NameSpace, Struct, TypeAlias, UnformattedExpression, Using, Variable
 from dune.source.cplusplus import assign, construct, coordinate, dereference, lambda_, makeExpression, maxEdgeLength, minEdgeLength, return_
@@ -626,6 +624,7 @@ def load(grid, integrands, renumbering=None, tempVars=True):
     source = writer.writer.getvalue()
     writer.close()
 
+    from dune.generator import builder
     module = builder.load(name, source, "integrands")
     setattr(module.Integrands, "_domainValueType", integrands.domainValueTuple())
     setattr(module.Integrands, "_rangeValueType", integrands.rangeValueTuple())
