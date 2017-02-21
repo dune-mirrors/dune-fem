@@ -198,8 +198,8 @@ class CodeGenerator(MultiFunction):
 
     def _getNumber(self, expr):
         try:
-            name = expr.str()
-        except:
+            name = getattr(expr, "name")
+        except AttributeError:
             name = str(expr)
         e = [ee for ee in self.coefficients if ee["name"] == name]
         if len(e) > 1:

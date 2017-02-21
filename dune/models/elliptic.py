@@ -502,8 +502,8 @@ def compileUFL(equation, *args, **kwargs):
             idx = idxCoeff
             idxCoeff += 1
         try:
-            name = coefficient.str()
-        except:
+            name = getattr(coefficient, "name")
+        except AttributeError:
             name = str(coefficient)
         model.coefficients.append({ \
             'name' : name, \

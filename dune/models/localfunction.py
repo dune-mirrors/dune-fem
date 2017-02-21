@@ -46,9 +46,10 @@ def UFLFunction(grid, name, order, expr, **kwargs):
             idxCoeff += 1
             field = coefficient.ufl_function_space().ufl_element().field()
             dimR = coefficient.ufl_shape[0]
+
         try:
-            name = coefficient.str()
-        except:
+            name = getattr(coefficient, "name")
+        except AttributeError:
             name = str(coefficient)
         coefficients.append({ \
                     'name' : name, \

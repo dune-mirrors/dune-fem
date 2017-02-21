@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import ufl
+import ufl.domain
 import ufl.equation
 
 # cell
@@ -29,10 +30,6 @@ def cell(dimDomainOrGrid):
         raise NotImplementedError('UFL cell not implemented for dimension' + str(dimDomain) + '.')
 
 
-
-# Space
-# -----
-
 class Space(ufl.VectorElement):
     def __init__(self, dimDomainOrGridOrSpace, dimRange=None, field="double"):
         if not dimRange:
@@ -43,8 +40,22 @@ class Space(ufl.VectorElement):
     def field(self):
         return self._field
 
-# Coefficient
-# -----------
+
+def Coefficient(functionSpace, name=None, count=None):
+    """UFL form argument type: Representation of a form coefficient."""
+    coefficient = ufl.Coefficient(functionSpace, count=count)
+    if name is not None:
+        coefficient.name = name
+    return coefficient
+
+
+def Constant(domain, dimRange=None, name=None, count=None):
+    """UFL value: Represents a globally constant vector-valued coefficient."""
+    domain = ufl.domain.as_domain(domain)
+    element = ufl.VectorElement("Real", domain.ufl_cell(), 0, int(dimRange))
+    fs = FunctionSpace(domain, element)
+    return Coefficient(functionSpace, name=name, count=count)
+
 
 class GridCoefficient(ufl.Coefficient):
     def __init__(self, gf):
@@ -53,20 +64,6 @@ class GridCoefficient(ufl.Coefficient):
         uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange)
         ufl.Coefficient.__init__(self, uflSpace)
         self.gf = gf
-
-class NamedCoefficient(ufl.Coefficient):
-    def __init__(self, uflSpace, name):
-        ufl.Coefficient.__init__(self, uflSpace)
-        self.name = name
-    def str(self):
-        return self.name
-
-class NamedConstant(ufl.Coefficient):
-    def __init__(self, uflSpace, name):
-        ufl.Constant.__init__(self, uflSpace)
-        self.name = name
-    def str(self):
-        return self.name
 
 
 class DirichletBC:
