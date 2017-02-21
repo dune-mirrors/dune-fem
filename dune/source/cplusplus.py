@@ -65,10 +65,11 @@ class ListWriter:
 # ---------
 
 class NameSpace(Block):
-    def __init__(self, name=None):
+    def __init__(self, name=None, code=None):
         Block.__init__(self)
         self.name = name
-
+        if code is not None:
+            self.append(code)
 
 
 # Function
