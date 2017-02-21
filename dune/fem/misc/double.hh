@@ -8,6 +8,7 @@
 #include <string>
 
 //- Dune includes
+#include <dune/common/typetraits.hh>
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/misc/threads/threadsafevalue.hh>
@@ -917,7 +918,12 @@ namespace Dune
 
   } // namespace Fem
 
-using Fem :: Double ;
+  using Fem :: Double ;
+
+  template <>
+  struct IsNumber< Double > : public IsNumber< double > {};
+  template <>
+  struct has_nan < Double > : public has_nan < double > {};
 
 } // namespace Dune
 
