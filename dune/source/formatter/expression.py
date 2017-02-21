@@ -18,8 +18,34 @@ def entangleLists(lists, delimiter=''):
         return left
 
 
-def formatExpression(expr):
-    if isinstance(expr, Application):
+class FormatExpression:
+    def __call__(self, expr):
+        if isinstance(expr, Application):
+            return self.application(expr)
+        elif isinstance(expr, ConditionalExpression):
+            return self.conditional(expr)
+        elif isinstance(expr, ConstantExpression):
+            return self.constant(expr)
+        elif isinstance(expr, ConstructExpression):
+            return self.construct(expr)
+        elif isinstance(expr, DereferenceExpression):
+            return self.dereference(expr)
+        elif isinstance(expr, InitializerList):
+            return self.initializerList(expr)
+        elif isinstance(expr, LambdaExpression):
+            return self.lambda_(expr)
+        elif isinstance(expr, NullPtr):
+            return self.nullptr(expr)
+        elif isinstance(expr, Variable):
+            return self.variable(expr)
+        elif isinstance(expr, UnformattedExpression):
+            return self.unformatted(expr)
+        elif isString(expr):
+            return self.unformatted(UnformattedExpression('auto', expr))
+        else:
+            raise Exception('Invalid type of expression: ' + str(type(expr)))
+
+    def application(self, expr):
         args = [formatExpression(arg) for arg in expr.args]
         if isinstance(expr.function, Operator):
             if len(args) != expr.function.numArgs:
@@ -47,30 +73,40 @@ def formatExpression(expr):
             return entangleLists([[function + '( '], entangleLists(args, ', '), [' )']])
         else:
             return [function + '()']
-    elif isinstance(expr, ConditionalExpression):
-        return entangleLists([['('], formatExpression(expr.cond), [' ? '], formatExpression(expr.true), [' : '], formatExpression(expr.false), [')']])
-    elif isinstance(expr, ConstantExpression):
+
+    def conditional(self, expr):
+        return entangleLists([['('], self(expr.cond), [' ? '], self(expr.true), [' : '], self(expr.false), [')']])
+
+    def constant(self, expr):
         return [expr.value]
-    elif isinstance(expr, ConstructExpression):
+
+    def construct(self, expr):
         if expr.args is not None:
-            return entangleLists([[expr.cppType + '( '], entangleLists([formatExpression(arg) for arg in expr.args], ', '), [' )']])
+            return entangleLists([[expr.cppType + '( '], entangleLists([self(arg) for arg in expr.args], ', '), [' )']])
         else:
             return [expr.cppType + '()']
-    elif isinstance(expr, DereferenceExpression):
-        return entangleLists([['*'], formatExpression(expr.expr)])
-    elif isinstance(expr, InitializerList):
-        return entangleLists([['{ '], entangleLists([formatExpression(arg) for arg in expr.args], ', '), [' }']])
-    elif isinstance(expr, LambdaExpression):
+
+    def dereference(self, expr):
+        return entangleLists([['*'], self(expr.expr)])
+
+    def initializerList(self, expr):
+        return entangleLists([['{ '], entangleLists([self(arg) for arg in expr.args], ', '), [' }']])
+
+    def lambda_(self, expr):
         capture = '' if not expr.capture else ' ' + ', '.join([c.name for c in expr.capture]) + ' '
         args = '' if expr.args is None else ' ' + ', '.join(expr.args) + ' '
         return ['[' + capture + '] (' + args + ') {', expr.code, '}']
-    elif isinstance(expr, NullPtr):
+
+    def nullptr(self, expr):
         return ['nullptr']
-    elif isinstance(expr, Variable):
+
+    def variable(self, expr):
         return [expr.name]
-    elif isinstance(expr, UnformattedExpression):
+
+    def unformatted(self, expr):
         return [expr.value]
-    elif isString(expr):
-        return [expr.strip()]
-    else:
-        raise Exception('Invalid type of expression: ' + str(type(expr)))
+
+
+def formatExpression(expr):
+    lines = FormatExpression()(expr)
+    return lines
