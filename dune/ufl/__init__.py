@@ -49,11 +49,19 @@ def Coefficient(functionSpace, name=None, count=None):
     return coefficient
 
 
-def Constant(domain, dimRange=None, name=None, count=None):
+def Constant(domain, name=None, count=None):
+    """UFL value: Represents a globally constant coefficient."""
+    domain = ufl.domain.as_domain(domain)
+    element = ufl.FiniteElement("Real", domain.ufl_cell(), 0)
+    functionSpace = ufl.FunctionSpace(domain, element)
+    return Coefficient(functionSpace, name=name, count=count)
+
+
+def VectorConstant(domain, dimRange=None, name=None, count=None):
     """UFL value: Represents a globally constant vector-valued coefficient."""
     domain = ufl.domain.as_domain(domain)
-    element = ufl.VectorElement("Real", domain.ufl_cell(), 0, int(dimRange))
-    fs = FunctionSpace(domain, element)
+    element = ufl.VectorElement("Real", domain.ufl_cell(), 0, dimRange)
+    functionSpace = ufl.FunctionSpace(domain, element)
     return Coefficient(functionSpace, name=name, count=count)
 
 
