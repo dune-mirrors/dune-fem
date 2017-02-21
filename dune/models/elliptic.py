@@ -7,11 +7,12 @@ import sys
 import timeit
 import types
 
-from ufl import Coefficient, Form, SpatialCoordinate
-from ufl import action, adjoint, derivative, div, dx, inner
+from ufl import Coefficient, Form, FiniteElementBase, FunctionSpace, SpatialCoordinate
+from ufl import action, adjoint, as_vector, derivative, div, dx, inner
 from ufl.algorithms import expand_compounds, expand_derivatives, expand_indices
 from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from ufl.algorithms.apply_derivatives import apply_derivatives
+from ufl.classes import Indexed
 from ufl.differentiation import Grad
 from ufl.equation import Equation
 from ufl.core.multiindex import FixedIndex, MultiIndex
@@ -456,7 +457,7 @@ def compileUFL(equation, *args, **kwargs):
 
     # if exact solution is passed in subtract a(u,.) from the form
     if "exact" in kwargs:
-        b = ufl.replace(form, {u: ufl.as_vector(kwargs["exact"])} )
+        b = ufl.replace(form, {u: as_vector(kwargs["exact"])} )
         form = form - b
 
     dform = apply_derivatives(derivative(action(form, ubar), ubar, u))
@@ -481,7 +482,7 @@ def compileUFL(equation, *args, **kwargs):
 
     dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
     if "dirichlet" in kwargs:
-        dirichletBCs += [DirichletBC(u.ufl_space(), ufl.as_vector(value), bndId) for bndId, value in kwargs["dirichlet"].items()]
+        dirichletBCs += [DirichletBC(u.ufl_function_space(), as_vector(value), bndId) for bndId, value in kwargs["dirichlet"].items()]
 
     coefficients = set(form.coefficients())
     for bc in dirichletBCs:
