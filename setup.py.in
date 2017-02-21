@@ -7,7 +7,11 @@ setup(name="dune.fem",
     author="Andreas Dedner and Martin Nolte",
     packages = find_packages(),
     zip_safe = 0,
-    package_data = {'': ['*.so']}
+    package_data = {'': ['*.so']},
+    entry_points={
+        'console_scripts': [
+            'dune-ellipticmodelcompiler = dune.models.elliptic.compiler:main'
+            ]}
   )
 
 #    package_data = {'dune': ['${CMAKE_CURRENT_BINARY_DIR}/dune/*.so']}

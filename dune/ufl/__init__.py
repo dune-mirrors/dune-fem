@@ -36,7 +36,9 @@ class Space(ufl.VectorElement):
             dimRange = dimDomainOrGridOrSpace.dimRange
             dimDomainOrGridOrSpace = dimDomainOrGridOrSpace.grid
         ufl.VectorElement.__init__(self, "Lagrange", cell(dimDomainOrGridOrSpace), 1, int(dimRange))
+        self.dimRange = dimRange
         self._field = field
+
     def field(self):
         return self._field
 

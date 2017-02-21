@@ -89,8 +89,9 @@ def generateCode(predefined, tensor, coefficients, tempVars=True):
     return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
 
 
-def compileUFL(equation, *args, **kwargs):
-    form = equation.lhs - equation.rhs
+def compileUFL(form, *args, **kwargs):
+    if isinstance(form, Equation):
+        form = form.lhs - form.rhs
     if not isinstance(form, Form):
         raise Exception("ufl.Form expected.")
     if len(form.arguments()) < 2:
@@ -133,9 +134,9 @@ def compileUFL(equation, *args, **kwargs):
 
     model.hasNeumanBoundary = not boundarySource.is_zero()
 
-    expandform = expand_indices(expand_derivatives(expand_compounds(equation.lhs)))
-    if expandform == adjoint(expandform):
-        model.symmetric = 'true'
+    #expandform = expand_indices(expand_derivatives(expand_compounds(equation.lhs)))
+    #if expandform == adjoint(expandform):
+    #    model.symmetric = 'true'
     model.field = field
 
     dirichletBCs = [arg for arg in args if isinstance(arg, DirichletBC)]
