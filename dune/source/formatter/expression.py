@@ -46,20 +46,10 @@ class FormatExpression:
             raise Exception('Invalid type of expression: ' + str(type(expr)))
 
     def application(self, expr):
-        args = [formatExpression(arg) for arg in expr.args]
         if isinstance(expr.function, Operator):
-            if len(args) != expr.function.numArgs:
-                raise Exception('The operator' + expr.function.name + ' takes ' + expr.function.numArgs + ' arguments (' + str(len(args)) + ' given).')
-            if isinstance(expr.function, PrefixUnaryOperator):
-                return entangleLists([[expr.function.name + '('], args[0], [')']])
-            elif isinstance(expr.function, PostfixUnaryOperator):
-                return entangleLists([['('], args[0], [')' + expr.function.name]])
-            elif isinstance(expr.function, BinaryOperator):
-                return entangleLists([['('], args[0], [') ' + expr.function.name + ' ('], args[1], [')']])
-            elif isinstance(expr.function, BracketOperator):
-                return entangleLists([['('], args[0], [')[ '], args[1], [' ]']])
-            else:
-                raise Exception('Unknown operator: ' + repr(expr.function))
+            return self.operatorApplication(expr)
+
+        args = [self(arg) for arg in expr.args]
         if isinstance(expr.function, BuiltInFunction):
             if expr.function.namespace is None:
                 function = expr.function.name
@@ -99,6 +89,21 @@ class FormatExpression:
 
     def nullptr(self, expr):
         return ['nullptr']
+
+    def operatorApplication(self, expr):
+        args = [self(arg) for arg in expr.args]
+        if len(args) != expr.function.numArgs:
+            raise Exception('The operator' + expr.function.name + ' takes ' + expr.function.numArgs + ' arguments (' + str(len(args)) + ' given).')
+        if isinstance(expr.function, PrefixUnaryOperator):
+            return entangleLists([[expr.function.name + '('], args[0], [')']])
+        elif isinstance(expr.function, PostfixUnaryOperator):
+            return entangleLists([['('], args[0], [')' + expr.function.name]])
+        elif isinstance(expr.function, BinaryOperator):
+            return entangleLists([['('], args[0], [') ' + expr.function.name + ' ('], args[1], [')']])
+        elif isinstance(expr.function, BracketOperator):
+            return entangleLists([['('], args[0], [')[ '], args[1], [' ]']])
+        else:
+            raise Exception('Unknown operator: ' + repr(expr.function))
 
     def variable(self, expr):
         return [expr.name]
