@@ -399,6 +399,7 @@ def splitUFL2(u,du,d2u,tree):
 # ------------
 
 def generateCode(predefined, tensor, coefficients, tempVars=True):
+    from dune.ufl import codegen
     keys = tensor.keys()
     expressions = [tensor[i] for i in keys]
     preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars=tempVars)

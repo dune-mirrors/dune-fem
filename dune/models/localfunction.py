@@ -25,7 +25,9 @@ def generatedFunction(grid, name, order, code, **kwargs):
 def UFLFunction(grid, name, order, expr, **kwargs):
     import ufl
     import dune.models.elliptic as generate
-    from dune.ufl import GridCoefficient
+    from dune.models.elliptic.model import generateCode
+    from dune.ufl.tensors import ExprTensor
+    from dune.ufl import GridCoefficient, codegen
     R = len(expr)
     D = grid.dimension
     try:
@@ -61,7 +63,7 @@ def UFLFunction(grid, name, order, expr, **kwargs):
                     'field': field } )
 
     writer = SourceWriter(ListWriter())
-    writer.emit(generate.generateCode({}, generate.ExprTensor((R, ), expr), coefficients, False), context=Method('void', 'evaluate'))
+    writer.emit(generateCode({}, ExprTensor((R, ), expr), coefficients, False), context=Method('void', 'evaluate'))
     code = '\n'.join(writer.writer.lines)
     evaluate = code.replace("result", "value")
     jac = []
@@ -73,7 +75,7 @@ def UFLFunction(grid, name, order, expr, **kwargs):
         jac.append( [jacForm[d].integrals()[0].integrand() if not jacForm[d].empty() else 0 for d in range(D)] )
     jac = ufl.as_matrix(jac)
     writer = SourceWriter(ListWriter())
-    writer.emit(generate.generateCode({}, generate.ExprTensor((R, D), jac), coefficients, False), context=Method('void', 'jacobian'))
+    writer.emit(generateCode({}, ExprTensor((R, D), jac), coefficients, False), context=Method('void', 'jacobian'))
     code = '\n'.join(writer.writer.lines)
     jacobian = code.replace("result", "value")
 
