@@ -19,6 +19,36 @@ def entangleLists(lists, delimiter=''):
 
 
 class FormatExpression:
+    _priority_terminal = 0
+    _priority_postfix = 1
+    _priority_prefix = 2
+    _priority_multiplication = 3
+    _priority_addition = 4
+    _priority_relational = 5
+    _priority_equality = 6
+    _priority_assignment = 7
+    _priority_none = 8
+
+    _priority_binary = {
+        '+':  _priority_addition,
+        '-':  _priority_addition,
+        '*':  _priority_multiplication,
+        '/':  _priority_multiplication,
+        '%':  _priority_multiplication,
+        '=':  _priority_assignment,
+        '+=': _priority_assignment,
+        '-=': _priority_assignment,
+        '*=': _priority_assignment,
+        '%=': _priority_assignment,
+        '/=': _priority_assignment,
+        '<':  _priority_relational,
+        '<=': _priority_relational,
+        '==': _priority_equality,
+        '!=': _priority_equality,
+        '>=': _priority_relational,
+        '>':  _priority_relational
+        }
+
     def __call__(self, expr):
         if isinstance(expr, Application):
             return self.application(expr)
@@ -45,11 +75,14 @@ class FormatExpression:
         else:
             raise Exception('Invalid type of expression: ' + str(type(expr)))
 
+    def formatArg(self, priority, arg):
+        arg = self(arg)
+        return arg[0] if priority > arg[1] else entangleLists([['('], arg[0], [')']])
+
     def application(self, expr):
         if isinstance(expr.function, Operator):
             return self.operatorApplication(expr)
 
-        args = [self(arg) for arg in expr.args]
         if isinstance(expr.function, BuiltInFunction):
             if expr.function.namespace is None:
                 function = expr.function.name
@@ -59,59 +92,74 @@ class FormatExpression:
             function = expr.function.name
         else:
             function = expr.function
+
+        priority = FormatExpression._priority_postfix
         if expr.args:
-            return entangleLists([[function + '( '], entangleLists(args, ', '), [' )']])
+            args = [self.formatArg(priority, arg) for arg in expr.args]
+            return entangleLists([[function + '( '], entangleLists(args, ', '), [' )']]), priority
         else:
-            return [function + '()']
+            return [function + '()'], priority
 
     def conditional(self, expr):
-        return entangleLists([['('], self(expr.cond), [' ? '], self(expr.true), [' : '], self(expr.false), [')']])
+        priority = FormatExpression._priority_assignment
+        cond = self.formatArg(priority, expr.cond)
+        true = self.formatArg(priority, expr.true)
+        false = self.formatArg(priority, expr.false)
+        return entangleLists([cond, [' ? '], true, [' : '], false]), priority
 
     def constant(self, expr):
-        return [expr.value]
+        return [expr.value], FormatExpression._priority_terminal
 
     def construct(self, expr):
+        priority = FormatExpression._priority_postfix
         if expr.args is not None:
-            return entangleLists([[expr.cppType + '( '], entangleLists([self(arg) for arg in expr.args], ', '), [' )']])
+            args = [self.formatArg(priority, arg) for arg in expr.args]
+            return entangleLists([[expr.cppType + '( '], entangleLists(args, ', '), [' )']]), priority
         else:
-            return [expr.cppType + '()']
+            return [expr.cppType + '()'], priority
 
     def dereference(self, expr):
-        return entangleLists([['*'], self(expr.expr)])
+        priority = FormatExpression._priority_prefix
+        arg = self.formatArg(priority, expr.expr)
+        return entangleLists([['*'], arg]), priority
 
     def initializerList(self, expr):
-        return entangleLists([['{ '], entangleLists([self(arg) for arg in expr.args], ', '), [' }']])
+        args = [self.formatArg(FormatExpression._priority_postfix, arg) for arg in expr.args]
+        return entangleLists([['{ '], entangleLists(args, ', '), [' }']]), FormatExpression._priority_terminal
 
     def lambda_(self, expr):
         capture = '' if not expr.capture else ' ' + ', '.join([c.name for c in expr.capture]) + ' '
         args = '' if expr.args is None else ' ' + ', '.join(expr.args) + ' '
-        return ['[' + capture + '] (' + args + ') {', expr.code, '}']
+        return ['[' + capture + '] (' + args + ') {', expr.code, '}'], FormatExpression._priority_terminal
 
     def nullptr(self, expr):
-        return ['nullptr']
+        return ['nullptr'], FormatExpression._priority_terminal
 
     def operatorApplication(self, expr):
-        args = [self(arg) for arg in expr.args]
-        if len(args) != expr.function.numArgs:
-            raise Exception('The operator' + expr.function.name + ' takes ' + expr.function.numArgs + ' arguments (' + str(len(args)) + ' given).')
+        if len(expr.args) != expr.function.numArgs:
+            raise Exception('The operator' + expr.function.name + ' takes ' + expr.function.numArgs + ' arguments (' + str(len(expr.args)) + ' given).')
         if isinstance(expr.function, PrefixUnaryOperator):
-            return entangleLists([[expr.function.name + '('], args[0], [')']])
+            return entangleLists([[expr.function.name], self.formatArg(FormatExpression._priority_prefix, expr.args[0])]), FormatExpression._priority_prefix
         elif isinstance(expr.function, PostfixUnaryOperator):
-            return entangleLists([['('], args[0], [')' + expr.function.name]])
+            return entangleLists([self.formatArg(FormatExpression._priority_postfix, expr.args[0]), [expr.function.name]]), FormatExpression._priority_postfix
         elif isinstance(expr.function, BinaryOperator):
-            return entangleLists([['('], args[0], [') ' + expr.function.name + ' ('], args[1], [')']])
+            priority = FormatExpression._priority_binary[expr.function.name]
+            args = [self.formatArg(priority, arg) for arg in expr.args]
+            return entangleLists([args[0], [' ' + expr.function.name + ' '], args[1]]), priority
         elif isinstance(expr.function, BracketOperator):
-            return entangleLists([['('], args[0], [')[ '], args[1], [' ]']])
+            arg = self.formatArg(FormatExpression._priority_postfix, expr.args[0])
+            subscript = self.formatArg(FormatExpression._priority_none, expr.args[1])
+            return entangleLists([arg, ['[ '], subscript, [' ]']]), FormatExpression._priority_postfix
         else:
             raise Exception('Unknown operator: ' + repr(expr.function))
 
     def variable(self, expr):
-        return [expr.name]
+        return [expr.name], FormatExpression._priority_terminal
 
     def unformatted(self, expr):
-        return [expr.value]
+        return [expr.value], FormatExpression._priority_none
 
 
 def formatExpression(expr):
-    lines = FormatExpression()(expr)
+    lines, _ = FormatExpression()(expr)
     return lines
