@@ -1,4 +1,5 @@
 add_subdirectory(algorithm)
+add_subdirectory(formatter)
 
 add_python_targets(source
   __init__

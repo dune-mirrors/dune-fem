@@ -1,34 +1,11 @@
 from __future__ import division, print_function, unicode_literals
 
-import importlib
-import os
-import subprocess
-import sys
-import timeit
-import types
-
-from ufl import Coefficient, Form, SpatialCoordinate
-from ufl import action, adjoint, derivative, div, dx, inner
-from ufl.algorithms import expand_compounds, expand_derivatives, expand_indices
-from ufl.algorithms.analysis import extract_arguments_and_coefficients
-from ufl.algorithms.apply_derivatives import apply_derivatives
-from ufl.differentiation import Grad
-from ufl.equation import Equation
-from ufl.core.multiindex import FixedIndex, MultiIndex
-
-from dune.ufl import DirichletBC, GridCoefficient
-from dune.ufl import codegen
-from dune.ufl.tensors import ExprTensor
-from dune.ufl.linear import splitMultiLinearExpr
-
 from dune.source.builtin import get, hybridForEach, make_index_sequence, make_shared
 from dune.source.cplusplus import UnformattedExpression
-from dune.source.cplusplus import AccessModifier, Constructor, Declaration, Function, Method, NameSpace, Struct, SwitchStatement, TypeAlias, UnformattedBlock, Variable
+from dune.source.cplusplus import AccessModifier, Constructor, Declaration, Function, Method, NameSpace, Struct, TypeAlias, UnformattedBlock, Variable
 from dune.source.cplusplus import assign, construct, dereference, lambda_, nullptr, return_
-from dune.source.cplusplus import ListWriter, SourceWriter
+from dune.source.cplusplus import SourceWriter
 from dune.source.fem import declareFunctionSpace
-from dune.generator import builder
-from dune.common.hashit import hashIt
 
 
 class EllipticModel:
@@ -351,7 +328,6 @@ class EllipticModel:
         setattr(self, key, function)
 
 
-
 # splitUFLForm
 # ------------
 
@@ -579,6 +555,7 @@ def compileUFL(equation, *args, **kwargs):
 
 #def generateModel(grid, model, dirichlet = {}, exact = None, tempVars = True, header = False):
 def generateModel(grid, model, *args, **kwargs):
+    from dune.common.hashit import hashIt
     start_time = timeit.default_timer()
 
     if isinstance(model, Equation):

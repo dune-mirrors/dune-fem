@@ -102,8 +102,9 @@ class MultiLinearExprSplitter(Transformer):
     atan = terminal
     atan_2 = terminal
     cos = terminal
-    sin = terminal
     power = terminal
+    sin = terminal
+    sqrt = terminal
     tan = terminal
 
     def variable(self, expr):

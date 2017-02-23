@@ -9,6 +9,8 @@ from .common import *
 from .expression import *
 from .operator import *
 
+from .formatter.expression import formatExpression
+
 
 # FileWriter
 # ----------
@@ -63,10 +65,11 @@ class ListWriter:
 # ---------
 
 class NameSpace(Block):
-    def __init__(self, name=None):
+    def __init__(self, name=None, code=None):
         Block.__init__(self)
         self.name = name
-
+        if code is not None:
+            self.append(code)
 
 
 # Function
@@ -408,7 +411,7 @@ class SourceWriter:
                 raise Exception('Only variables can be declared for now.')
             declaration = ('static ' if src.static else '') + ('mutable ' if src.mutable else '') + self.typedName(src.obj)
             if src.initializer is not None:
-                expr = self.translateExpr(src.initializer)
+                expr = formatExpression(src.initializer)
                 expr[len(expr)-1] += ';'
                 self.emit(declaration + ' = ' + expr[0], indent)
                 for e in expr[1:]:
@@ -424,7 +427,7 @@ class SourceWriter:
             if not isinstance(context, (Constructor, Function, Method)):
                 raise Exception('Statements can only occur in constructors, functions and methods')
             if isinstance(src, Expression):
-                expr = self.translateExpr(src)
+                expr = formatExpression(src)
                 expr[len(expr)-1] += ';'
                 self.emit(expr[0], indent)
                 for e in expr[1:]:
@@ -434,7 +437,7 @@ class SourceWriter:
                         self.emit(e, indent+1)
             elif isinstance(src, ReturnStatement):
                 if src.expression is not None:
-                    expr = self.translateExpr(src.expression)
+                    expr = formatExpression(src.expression)
                     expr[len(expr)-1] += ';'
                     self.emit('return ' + expr[0], indent)
                     for e in expr[1:]:
@@ -481,72 +484,6 @@ class SourceWriter:
             self.begin = False
         else:
             raise Exception("Unable to print " + repr(src) + ".")
-
-    def translateExpr(self, expr):
-        def join(lists, delimiter=''):
-            left = lists[0]
-            if len(lists) > 1:
-                right = lists[1]
-                n = len(left)
-                return join([left[:n-1] + [left[n-1] + delimiter + right[0]] + right[1:]] + lists[2:], delimiter)
-            else:
-                return left
-
-        if isinstance(expr, Application):
-            args = [self.translateExpr(arg) for arg in expr.args]
-            if isinstance(expr.function, Operator):
-                if len(args) != expr.function.numArgs:
-                    raise Exception('The operator' + expr.function.name + ' takes ' + expr.function.numArgs + ' arguments (' + str(len(args)) + ' given).')
-                if isinstance(expr.function, PrefixUnaryOperator):
-                    return join([[expr.function.name + '('], args[0], [')']])
-                elif isinstance(expr.function, PostfixUnaryOperator):
-                    return join([['('], args[0], [')' + expr.function.name]])
-                elif isinstance(expr.function, BinaryOperator):
-                    return join([['('], args[0], [') ' + expr.function.name + ' ('], args[1], [')']])
-                elif isinstance(expr.function, BracketOperator):
-                    return join([['('], args[0], [')[ '], args[1], [' ]']])
-                else:
-                    raise Exception('Unknown operator: ' + repr(expr.function))
-            if isinstance(expr.function, BuiltInFunction):
-                if expr.function.namespace is None:
-                    function = expr.function.name
-                else:
-                    function = expr.function.namespace + '::' + expr.function.name
-            elif isinstance(expr.function, (Function, Method)):
-                function = expr.function.name
-            else:
-                function = expr.function
-            if expr.args:
-                return join([[function + '( '], join(args, ', '), [' )']])
-            else:
-                return [function + '()']
-        elif isinstance(expr, ConditionalExpression):
-            return join([['('], self.translateExpr(expr.cond), [' ? '], self.translateExpr(expr.true), [' : '], self.translateExpr(expr.false), [')']])
-        elif isinstance(expr, ConstantExpression):
-            return [expr.value]
-        elif isinstance(expr, ConstructExpression):
-            if expr.args is not None:
-                return join([[expr.cppType + '( '], join([self.translateExpr(arg) for arg in expr.args], ', '), [' )']])
-            else:
-                return [expr.cppType + '()']
-        elif isinstance(expr, DereferenceExpression):
-            return join([['*'], self.translateExpr(expr.expr)])
-        elif isinstance(expr, InitializerList):
-            return join([['{ '], join([self.translateExpr(arg) for arg in expr.args], ', '), [' }']])
-        elif isinstance(expr, LambdaExpression):
-            capture = '' if not expr.capture else ' ' + ', '.join([c.name for c in expr.capture]) + ' '
-            args = '' if expr.args is None else ' ' + ', '.join(expr.args) + ' '
-            return ['[' + capture + '] (' + args + ') {', expr.code, '}']
-        elif isinstance(expr, NullPtr):
-            return ['nullptr']
-        elif isinstance(expr, Variable):
-            return [expr.name]
-        elif isinstance(expr, UnformattedExpression):
-            return [expr.value]
-        elif isString(expr):
-            return [expr.strip()]
-        else:
-            raise Exception('Invalid type of expression: ' + str(type(expr)))
 
     def typedName(self, obj):
         if obj.cppType is None:
