@@ -27,7 +27,8 @@ from dune.source.cplusplus import AccessModifier, Constructor, Declaration, Func
 from dune.source.cplusplus import assign, construct, dereference, lambda_, nullptr, return_
 from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source.fem import declareFunctionSpace
-from dune.generator import builder, hashIt
+from dune.generator import builder
+from dune.common.hashit import hashIt
 
 
 class EllipticModel:

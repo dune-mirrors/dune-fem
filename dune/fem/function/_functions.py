@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 import dune.models.localfunction
 
 import dune.common.checkconfiguration as checkconfiguration
-from dune.generator import hashIt
+from dune.common.hashit import hashIt
 
 def registerGridFunctions(gridview):
     from dune.generator import builder

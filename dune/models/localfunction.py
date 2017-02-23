@@ -8,7 +8,8 @@ import sys
 import timeit
 import types
 
-from dune.generator import builder, hashIt
+from dune.common.hashit import hashIt
+from dune.generator import builder
 from dune.source.cplusplus import Method
 from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source import BaseModel

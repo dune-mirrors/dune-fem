@@ -13,7 +13,8 @@ from ufl.corealg.map_dag import map_expr_dags
 from ufl.equation import Equation
 from ufl.differentiation import Grad
 
-from dune.generator import builder, hashIt
+from dune.generator import builder
+from dune.common.hashit import hashIt
 
 from dune.source.builtin import get, hybridForEach, make_pair, make_index_sequence, make_shared
 from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, NameSpace, Struct, TypeAlias, UnformattedExpression, Using, Variable
