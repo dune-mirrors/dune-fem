@@ -186,7 +186,11 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   typedef typename Base::EntityType EntityType;
   typedef typename Base::IntersectionType IntersectionType;
 
-  DiffusionModelWrapper() : impl_() {}
+  template< class... Args, std::enable_if_t< std::is_constructible< ModelImpl, Args &&... >::value, int > = 0 >
+  explicit DiffusionModelWrapper ( Args &&... args )
+    : impl_( std::forward< Args >( args )... )
+  {}
+
   ~DiffusionModelWrapper()
   {
     std::cout << "In DiffusionModelWrapper destructor" << std::endl;
