@@ -61,6 +61,7 @@ class CodeGenerator(MultiFunction):
         except KeyError:
             pass
 
+        print('Warning: ' + ('Constant ' if expr.is_cellwise_constant() else 'Coefficient ') + str(expr) + ' not predefined.')
         idx = str(self._getNumber(expr))
         if expr.is_cellwise_constant():
             var = Variable('const ConstantsRangeType< ' + idx + ' >', 'cc' + idx)
