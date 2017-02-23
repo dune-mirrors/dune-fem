@@ -5,6 +5,7 @@ from ...common.compatibility import isString
 from ..builtin import *
 from ..common import *
 from ..expression import *
+from ..function import *
 from ..operator import *
 
 
@@ -83,22 +84,24 @@ class FormatExpression:
         if isinstance(expr.function, Operator):
             return self.operatorApplication(expr)
 
+        priority = FormatExpression._priority_postfix
         if isinstance(expr.function, BuiltInFunction):
             if expr.function.namespace is None:
-                function = expr.function.name
+                function = [expr.function.name]
             else:
-                function = expr.function.namespace + '::' + expr.function.name
+                function = [expr.function.namespace + '::' + expr.function.name]
         elif isinstance(expr.function, (Function, Method)):
-            function = expr.function.name
+            function = [expr.function.name]
+        elif isinstance(expr.function, LambdaExpression):
+            function = self.formatArg(priority, expr.function)
         else:
-            function = expr.function
+            function = [expr.function]
 
-        priority = FormatExpression._priority_postfix
         if expr.args:
             args = [self.formatArg(priority, arg) for arg in expr.args]
-            return entangleLists([[function + '( '], entangleLists(args, ', '), [' )']]), priority
+            return entangleLists([function, ['( '], entangleLists(args, ', '), [' )']]), priority
         else:
-            return [function + '()'], priority
+            return entangleLists([function, ['()']]), priority
 
     def conditional(self, expr):
         priority = FormatExpression._priority_assignment
