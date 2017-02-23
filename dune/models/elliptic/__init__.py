@@ -9,6 +9,8 @@ from ufl.equation import Equation
 from dune.source.cplusplus import NameSpace, TypeAlias
 from dune.source.cplusplus import SourceWriter
 
+from dune.common.hashit import hashIt
+
 from .model import EllipticModel
 from .ufl import compileUFL
 
@@ -18,9 +20,7 @@ def generateModel(grid, model, *args, **kwargs):
     if isinstance(model, Equation):
         model = compileUFL(model, *args, **kwargs)
 
-    if not isinstance(grid, types.ModuleType):
-        grid = grid._module
-    name = 'ellipticmodel_' + model.signature + "_" + grid._moduleName
+    name = 'ellipticmodel_' + model.signature + "_" + hashIt(grid._typeName)
 
     writer = SourceWriter()
 
