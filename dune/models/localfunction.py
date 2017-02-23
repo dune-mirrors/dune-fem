@@ -10,7 +10,9 @@ import types
 
 from dune.common.hashit import hashIt
 from dune.generator import builder
-from dune.source.cplusplus import Method
+
+from dune.source.cplusplus import Method, Variable
+from dune.source.cplusplus import assign
 from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source import BaseModel
 
@@ -22,12 +24,19 @@ def generatedFunction(grid, name, order, code, **kwargs):
     return Gf(name, order, grid, coef)
 
 
+def generateCode(predefined, tensor, coefficients, tempVars=True):
+    from dune.ufl import codegen
+    keys = tensor.keys()
+    expressions = [tensor[i] for i in keys]
+    preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars=tempVars)
+    result = Variable('auto', 'result')
+    return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
+
+
 def UFLFunction(grid, name, order, expr, **kwargs):
     import ufl
-    import dune.models.elliptic as generate
-    from dune.models.elliptic.model import generateCode
+    from dune.ufl import GridCoefficient
     from dune.ufl.tensors import ExprTensor
-    from dune.ufl import GridCoefficient, codegen
     R = len(expr)
     D = grid.dimension
     try:
