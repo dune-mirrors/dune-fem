@@ -7,12 +7,12 @@ logger = logging.getLogger(__name__)
 import dune.models.localfunction
 
 import dune.common.checkconfiguration as checkconfiguration
+from dune.generator import hashIt
 
 def registerGridFunctions(gridview):
-    import hashlib
     from dune.generator import builder
     typeName = gridview._typeName
-    moduleName = "femgridfunctions_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
+    moduleName = "femgridfunctions_" + hashIt(typeName)
 
     includes = ["dune/fempy/py/grid/gridpart.hh", "dune/fempy/py/grid/function.hh"] + gridview._includes
 
@@ -79,10 +79,9 @@ def numpyFunction(space, vec, name="tmp", **unused):
 
     from dune.fem.discretefunction import module
     assert vec.shape[0] == space.size, str(vec.shape[0]) +"!="+ str(space.size) + ": numpy vector has wrong shape"
-    includes = [ "dune/fem/function/vectorfunction/managedvectorfunction.hh", "dune/fempy/py/common/numpyvector.hh" ] + space._module._includes
-    spaceType = space._module._typeName
+    includes = [ "dune/fem/function/vectorfunction/managedvectorfunction.hh", "dune/fempy/py/common/numpyvector.hh" ] + space._includes
+    spaceType = space._typeName
     field = space.field
-    # typeName = "Dune::Fem::ManagedDiscreteFunction< Dune::Fem::VectorDiscreteFunction< " +\
     typeName = "Dune::Fem::VectorDiscreteFunction< " +\
           spaceType + ", Dune::FemPy::NumPyVector< " + field + " > >"
 

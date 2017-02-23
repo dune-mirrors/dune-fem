@@ -13,7 +13,7 @@ from ufl.corealg.map_dag import map_expr_dags
 from ufl.equation import Equation
 from ufl.differentiation import Grad
 
-from dune.generator import builder
+from dune.generator import builder, hashIt
 
 from dune.source.builtin import get, hybridForEach, make_pair, make_index_sequence, make_shared
 from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, NameSpace, Struct, TypeAlias, UnformattedExpression, Using, Variable
@@ -578,9 +578,9 @@ def load(grid, integrands, renumbering=None, tempVars=True):
     if isinstance(integrands, Equation):
         integrands, renumbering = compileUFL(integrands, tempVars=tempVars)
 
-    if not isinstance(grid, ModuleType):
-        grid = grid._module
-    name = 'integrands_' + integrands.signature + '_' + grid._moduleName
+    # if not isinstance(grid, ModuleType):
+    #     grid = grid._module
+    name = 'integrands_' + integrands.signature + '_' + hashIt(grid._typeName)
 
     includes = integrands.includes()
 

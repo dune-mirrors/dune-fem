@@ -8,7 +8,7 @@ import sys
 import timeit
 import types
 
-from dune.generator import builder
+from dune.generator import builder, hashIt
 from dune.source.cplusplus import Method
 from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source import BaseModel
@@ -108,8 +108,8 @@ def gridFunction(grid, code, coefficients, constants):
             print(key, ' is not a valid key. Use "eval", "jac" or "hess"')
             exit(1)
 
-    if not isinstance(grid, types.ModuleType):
-        grid = grid._module
+    # if not isinstance(grid, types.ModuleType):
+    #     grid = grid._module
 
     if isinstance(coefficients, dict):
         for entry in coefficients.items():
@@ -118,10 +118,10 @@ def gridFunction(grid, code, coefficients, constants):
         for coefficient in coefficients:
             cppCode += str(coefficient.get('name'))
 
-    myCodeHash = hashlib.md5(cppCode.encode('utf-8')).hexdigest()
-    locname = 'LocalFunction_' + myCodeHash + '_' + grid._moduleName
-    pyname = 'localfunction_' + myCodeHash + '_' + grid._moduleName
-    wrappername = 'GridFunction_' + myCodeHash + '_' + grid._moduleName
+    myCodeHash = hashIt(cppCode)
+    locname = 'LocalFunction_' + myCodeHash + '_' + hashIt(grid._typeName)
+    pyname = 'localfunction_' + myCodeHash + '_' + hashIt(grid._typeName)
+    wrappername = 'GridFunction_' + myCodeHash + '_' + hashIt(grid._typeName)
 
     base = BaseModel(dimRange, myCodeHash)
     if isinstance(coefficients, dict):

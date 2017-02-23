@@ -27,7 +27,7 @@ from dune.source.cplusplus import AccessModifier, Constructor, Declaration, Func
 from dune.source.cplusplus import assign, construct, dereference, lambda_, nullptr, return_
 from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source.fem import declareFunctionSpace
-from dune.generator import builder
+from dune.generator import builder, hashIt
 
 
 class EllipticModel:
@@ -583,9 +583,9 @@ def generateModel(grid, model, *args, **kwargs):
     if isinstance(model, Equation):
         model = compileUFL(model, *args, **kwargs)
 
-    if not isinstance(grid, types.ModuleType):
-        grid = grid._module
-    name = 'ellipticmodel_' + model.signature + "_" + grid._moduleName
+    # if not isinstance(grid, types.ModuleType):
+    #     grid = grid._module
+    name = 'ellipticmodel_' + model.signature + "_" + hashIt(grid._typeName)
 
     writer = SourceWriter()
 
