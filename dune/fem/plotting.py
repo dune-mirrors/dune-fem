@@ -2,8 +2,13 @@ import matplotlib
 from matplotlib import pyplot
 from numpy import amin, amax, linspace, linalg
 from matplotlib.collections import PolyCollection
+try:
+    from IPython.core.display import display
+except:
+    def display():
+        pass
 
-def _plotPointData(fig,grid,solution, level=0, gridLines="black", vectors=False,
+def _plotPointData(fig,grid,solution, level=0, gridLines="black", vectors=None,
         xlim=None, ylim=None, clim=None, cmap=None, colorbar=True):
 
     if not gridLines == "":
@@ -15,43 +20,44 @@ def _plotPointData(fig,grid,solution, level=0, gridLines="black", vectors=False,
     if not solution == None:
         triangulation = grid.triangulation(level)
         data = solution.pointData(level)
-        if vectors == True:
-            vectors = [0,1]
         try:
             x1 = vectors[0]
             x2 = vectors[1]
+            if x1 >= solution.dimRange or x2 >= solution.dimRange:
+                vectors = None
+        except:
+            vectors = None
+
+        if not vectors == None:
             pyplot.quiver(triangulation.x, triangulation.y, data[:,x1], data[:,x2],
                       units='xy', scale=10., zorder=3, color='blue',
                       width=0.007, headwidth=3., headlength=4.)
-        except:
-            pass
-
-        if solution.dimRange > 1:
-            data = linalg.norm(data,axis=1)
         else:
-            data = data[:,0]
-        minData = amin(data)
-        maxData = amax(data)
-        if clim == None:
-            clim = [minData, maxData]
-        levels = linspace(clim[0], clim[1], 256, endpoint=True)
-        pyplot.tricontourf(triangulation, data, cmap=cmap, levels=levels, extend="both")
-        if colorbar:
-            # having extend not 'both' does not seem to work...
-            if clim[0] > minData and clim[1] < maxData:
-                extend = 'both'
-            elif clim[0] > minData:
-                extend = 'min'
-            elif clim[1] < maxData:
-                extend = 'max'
+            if solution.dimRange > 1:
+                data = linalg.norm(data,axis=1)
             else:
-                extend = 'neither'
-            v = linspace(clim[0], clim[1], 10, endpoint=True)
-            norm = matplotlib.colors.Normalize(vmin=clim[0], vmax=clim[1])
-            cbar = pyplot.colorbar(orientation="vertical",shrink=1.0,
-                      extend=extend, norm=norm, ticks=v)
-            cbar.ax.tick_params(labelsize=18)
-
+                data = data[:,0]
+            minData = amin(data)
+            maxData = amax(data)
+            if clim == None:
+                clim = [minData, maxData]
+            levels = linspace(clim[0], clim[1], 256, endpoint=True)
+            pyplot.tricontourf(triangulation, data, cmap=cmap, levels=levels, extend="both")
+            if colorbar:
+                # having extend not 'both' does not seem to work (needs fixing)...
+                if clim[0] > minData and clim[1] < maxData:
+                    extend = 'both'
+                elif clim[0] > minData:
+                    extend = 'min'
+                elif clim[1] < maxData:
+                    extend = 'max'
+                else:
+                    extend = 'neither'
+                v = linspace(clim[0], clim[1], 10, endpoint=True)
+                norm = matplotlib.colors.Normalize(vmin=clim[0], vmax=clim[1])
+                cbar = pyplot.colorbar(orientation="vertical",shrink=1.0,
+                          extend=extend, norm=norm, ticks=v)
+                cbar.ax.tick_params(labelsize=18)
 
     fig.gca().set_aspect('equal')
     fig.gca().autoscale()
@@ -75,6 +81,8 @@ def plotPointData(solution, level=0, gridLines="black", vectors=False,
     _plotPointData(fig,grid,solution,level,gridLines,vectors,xlim,ylim,clim,cmap,True)
 
     pyplot.show()
+    # display(fig)
+    # return fig
 
 def plotComponents(solution, level=0, show=None, gridLines="black",
         xlim=None, ylim=None, clim=None, cmap=None):
@@ -108,6 +116,8 @@ def plotComponents(solution, level=0, show=None, gridLines="black",
         _plotPointData(fig,grid,solution[p],level,"",False,xlim,ylim,clim,cmap,False)
 
     pyplot.show()
+    # display(fig)
+    # return fig
 
 def mayaviPointData(grid, solution, level=0, component=0):
     from mayavi import mlab
