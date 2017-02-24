@@ -116,7 +116,7 @@ class FormatExpression:
     def construct(self, expr):
         priority = FormatExpression._priority_postfix
         if expr.args is not None:
-            args = [self.formatArg(priority, arg) for arg in expr.args]
+            args = [self.formatArg(FormatExpression._priority_none, arg) for arg in expr.args]
             return entangleLists([[expr.cppType + '( '], entangleLists(args, ', '), [' )']]), priority
         else:
             return [expr.cppType + '()'], priority
@@ -127,7 +127,7 @@ class FormatExpression:
         return entangleLists([['*'], arg]), priority
 
     def initializerList(self, expr):
-        args = [self.formatArg(FormatExpression._priority_postfix, arg) for arg in expr.args]
+        args = [self.formatArg(FormatExpression._none, arg) for arg in expr.args]
         return entangleLists([['{ '], entangleLists(args, ', '), [' }']]), FormatExpression._priority_terminal
 
     def lambda_(self, expr):
