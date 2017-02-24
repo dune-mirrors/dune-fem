@@ -164,6 +164,14 @@ class NullPtr(Expression):
         return hash(self.cppType)
 
 
+class This(Expression):
+    def __init__(self):
+        Expression.__init__(self, "auto")
+
+    def __hash__(self):
+        return hash(("auto", "this"))
+
+
 class Variable(Expression):
     def __init__(self, cppType, name):
         Expression.__init__(self, cppType)
@@ -220,3 +228,4 @@ def lambda_(args=None, capture=None, code=None):
 
 
 nullptr = NullPtr()
+this = This()

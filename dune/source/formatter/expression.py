@@ -67,6 +67,8 @@ class FormatExpression:
             return self.lambda_(expr)
         elif isinstance(expr, NullPtr):
             return self.nullptr(expr)
+        elif isinstance(expr, This):
+            return self.this(expr)
         elif isinstance(expr, Variable):
             return self.variable(expr)
         elif isinstance(expr, UnformattedExpression):
@@ -155,6 +157,9 @@ class FormatExpression:
             return entangleLists([arg, ['[ '], subscript, [' ]']]), FormatExpression._priority_postfix
         else:
             raise Exception('Unknown operator: ' + repr(expr.function))
+
+    def this(self, expr):
+        return ['this'], FormatExpression._priority_terminal
 
     def variable(self, expr):
         return [expr.name], FormatExpression._priority_terminal
