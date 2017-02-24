@@ -98,7 +98,7 @@ class FormatExpression:
             function = [expr.function]
 
         if expr.args:
-            args = [self.formatArg(priority, arg) for arg in expr.args]
+            args = [self.formatArg(FormatExpression._priority_none, arg) for arg in expr.args]
             return entangleLists([function, ['( '], entangleLists(args, ', '), [' )']]), priority
         else:
             return entangleLists([function, ['()']]), priority
