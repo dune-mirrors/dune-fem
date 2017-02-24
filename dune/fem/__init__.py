@@ -32,7 +32,8 @@ registry["discretefunction"] = {
          "adaptive" : discretefunction.adaptive,
          "fem"      : discretefunction.adaptive,
          "istl"     : discretefunction.istl,
-         "eigen"    : discretefunction.eigen
+         "eigen"    : discretefunction.eigen,
+         "petsc"    : discretefunction.petsc
      }
 registry["operator"] = {
         "galerkin"   : operator.galerkin
@@ -44,7 +45,8 @@ registry["solver"] = {
          "istl"        : discretefunction.istlsolver,
          "suitesparse" : discretefunction.suitesparsesolver,
          "eigen"       : discretefunction.eigensolver,
-         "viennacl"    : discretefunction.viennaclsolver
+         "viennacl"    : discretefunction.viennaclsolver,
+         "petsc"       : discretefunction.petscsolver
      }
 registry["scheme"] = {
          "h1"         : scheme.h1,

@@ -52,3 +52,13 @@ def istl():
         "Dune::Fem::ISTLLinearOperator< " + dfType(space) + "," + dfType(space) + ">",
         solvers.istlsolver
     ]
+def petsc():
+    dfType = lambda space: "Dune::Fem::PetscDiscreteFunction< " + space._typeName + " >"
+    return lambda space:[\
+        "istl",\
+        ["dune/fem/function/petscdiscretefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
+              space._includes,\
+        dfType(space),\
+        "Dune::Fem::PetscLinearOperator< " + dfType(space) + "," + dfType(space) + ">",
+        solvers.petscsolver
+    ]

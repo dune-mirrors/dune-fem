@@ -29,6 +29,8 @@ def storageToSolver(storage):
         return "numpy"
     elif storage == "eigen":
         return "eigen"
+    elif storage == "petsc":
+        return "petsc"
 
 generator = SimpleGenerator("Space", "Dune::FemPy")
 
@@ -42,6 +44,7 @@ def addAttr(module, cls, field, storage):
         storage = str("fem")
     if isString(storage):
         import dune.create as create
+        assert storageToSolver(storage), "wrong storage (" + storage + ") passed to space"
         storage = create.discretefunction( storageToSolver(storage) )(cls)
     else:
         storage = storage(cls)
