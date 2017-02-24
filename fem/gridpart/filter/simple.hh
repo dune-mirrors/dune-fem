@@ -66,14 +66,16 @@ namespace Dune
       using Codim = typename Base::template Codim< codim >;
 
       template< class Contains >
-      SimpleFilter ( const GridPart &gridPart, Contains contains, int interiorBoundaryId = 1 )
+      SimpleFilter ( const GridPart &gridPart, Contains contains, int domainId )
         : mapper_( static_cast< typename GridPart::GridViewType >( gridPart ) ),
           contains_( mapper_.size(), false ),
-          interiorBoundaryId_( interiorBoundaryId )
+          mapper0_( static_cast< typename GridPart::GridViewType >( gridPart ) ),
+          domainIds_( mapper0_.size(), -1 )
       {
         for( const typename Codim< 0 >::EntityType &entity : elements( gridPart ) )
         {
-          if( contains( entity ) )
+          domainIds_[ mapper0_.index( entity ) ] = contains( entity );
+          if( domainIds_[ mapper0_.index( entity ) ] == domainId )
             mark( entity, AllCodims() );
         }
       }
@@ -105,7 +107,8 @@ namespace Dune
       template< class Intersection >
       int intersectionBoundaryId ( const Intersection &intersection ) const
       {
-        return (intersection.boundary() ? intersection.boundaryId() : interiorBoundaryId_);
+        return ( intersection.boundary() ? intersection.boundaryId() :
+                 domainIds_[ mapper0_.index( intersection.outside() ) ] );
       }
 
       template< class Intersection >
@@ -130,7 +133,8 @@ namespace Dune
 
       MultipleCodimMultipleGeomTypeMapper< typename GridPart::GridViewType, Layout > mapper_;
       std::vector< bool > contains_;
-      int interiorBoundaryId_;
+      MultipleCodimMultipleGeomTypeMapper< typename GridPart::GridViewType, MCMGElementLayout > mapper0_;
+      std::vector< int > domainIds_;
     };
 
   } // namespace Fem
