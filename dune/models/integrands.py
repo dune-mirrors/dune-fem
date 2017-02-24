@@ -573,12 +573,12 @@ def setCoefficient(integrands, index, coefficient):
 
 
 def load(grid, integrands, renumbering=None, tempVars=True):
+    from dune.common.hashit import hashIt
+
     if isinstance(integrands, Equation):
         integrands, renumbering = compileUFL(integrands, tempVars=tempVars)
 
-    if not isinstance(grid, ModuleType):
-        grid = grid._module
-    name = 'integrands_' + integrands.signature + '_' + grid._moduleName
+    name = 'integrands_' + integrands.signature + '_' + hashIt(grid._typeName)
 
     includes = integrands.includes()
 
