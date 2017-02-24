@@ -28,7 +28,6 @@ def elliptic(view, equation, *args, **kwargs):
             setattr(Model, 'symmetric', 'false')
     else:
         fullCoeffs = {}
-    print(fullCoeffs, coefficients)
     fullCoeffs.update(coefficients)
     return Model( coefficients=fullCoeffs )
 
