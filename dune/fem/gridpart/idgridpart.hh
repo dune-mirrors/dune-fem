@@ -2,7 +2,7 @@
 #define DUNE_FEM_GRIDPART_IDGRIDPART_HH
 
 #if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
-#error "Experimental grid extensions required for IdGridPart. Reconfigure with --enable-experimental-grid-extensions to enable IdGridPart."
+#error "Experimental grid extensions required for IdGridPart. Reconfigure with -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE."
 #else
 
 #include <dune/grid/common/gridview.hh>
