@@ -68,8 +68,10 @@ namespace Dune
       static const std::size_t dimRange = Std::sum( static_cast< int >( ShapeFunctionSets::FunctionSpaceType::dimRange ) ... );
 
     public:
-      typedef std::tuple< ShapeFunctionSets ... > ShapeFunctionSetTupleType;
-      typedef typename ToNewDimRangeFunctionSpace< typename std::tuple_element< 0, ShapeFunctionSetTupleType >::type::FunctionSpaceType, dimRange >::Type FunctionSpaceType;
+      template< std::size_t i >
+      using SubShapeFunctionSetType = std::tuple_element_t< i, std::tuple< ShapeFunctionSets... > >;
+
+      typedef typename ToNewDimRangeFunctionSpace< typename SubShapeFunctionSetType< 0 >::FunctionSpaceType, dimRange >::Type FunctionSpaceType;
 
       typedef typename FunctionSpaceType::DomainType DomainType;
       typedef typename FunctionSpaceType::RangeType RangeType;
@@ -93,7 +95,7 @@ namespace Dune
         Fem::ForLoop< Offsets, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_ );
       }
 
-      explicit TupleShapeFunctionSet ( const ShapeFunctionSetTupleType &shapeFunctionSetTuple  )
+      explicit TupleShapeFunctionSet ( const std::tuple< ShapeFunctionSets... > &shapeFunctionSetTuple  )
         : shapeFunctionSetTuple_( shapeFunctionSetTuple )
       {
         offset_[ 0 ] = 0;
@@ -122,6 +124,12 @@ namespace Dune
         Fem::ForLoop< HessianEach, 0, sizeof ... ( ShapeFunctionSets ) -1 >::apply( shapeFunctionSetTuple_, offset_, x, functor );
       }
 
+      template< std::size_t i >
+      const SubShapeFunctionSetType< i > &subShapeFunctionSet ( std::integral_constant< std::size_t, i > = {} ) const
+      {
+        return std::get< i >( shapeFunctionSetTuple_ );
+      }
+
     protected:
       template< std::size_t ... I >
       int order ( std::index_sequence< I ... > ) const
@@ -148,7 +156,7 @@ namespace Dune
         return std::make_tuple( makeGeometryType< I >( type ) ... );
       }
 
-      ShapeFunctionSetTupleType shapeFunctionSetTuple_;
+      std::tuple< ShapeFunctionSets... > shapeFunctionSetTuple_;
       Offset offset_;
     };
 
