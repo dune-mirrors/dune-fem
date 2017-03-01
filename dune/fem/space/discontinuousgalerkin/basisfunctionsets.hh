@@ -110,10 +110,10 @@ namespace Dune
        */
 
       explicit DefaultBasisFunctionSets ( ShapeFunctionSetsType &&shapeFunctionSets )
-        : shapeFunctionSets_( std::forward< ShapeFunctionSetsType >( shapeFunctionSets ) )
+        : shapeFunctionSets_( std::move( shapeFunctionSets ) )
       {}
 
-      template< class... Args >
+      template< class... Args, std::enable_if_t< std::is_constructible< ShapeFunctionSetsType, Args &&... >::value, int > = 0 >
       explicit DefaultBasisFunctionSets ( Args &&... args )
         : shapeFunctionSets_( std::forward< Args >( args )... )
       {}
@@ -125,14 +125,10 @@ namespace Dune
        */
 
       DefaultBasisFunctionSets ( const ThisType & ) = delete;
-
-      DefaultBasisFunctionSets ( ThisType & ) = delete;
-
-      DefaultBasisFunctionSets ( ThisType &&other )
-        : shapeFunctionSets_( std::move( other.shapeFunctionSets_ ) )
-      {}
+      DefaultBasisFunctionSets ( ThisType &&other ) = default;
 
       DefaultBasisFunctionSets &operator= ( const ThisType & ) = delete;
+      DefaultBasisFunctionSets &operator= ( ThisType && ) = delete;
 
       /** \} */
 
@@ -141,28 +137,23 @@ namespace Dune
        */
 
       /** \copydoc Dune::Fem::BasisFunctionSets::order */
-      int order () const { return shapeFunctionSets_.order(); }
+      int order () const { return shapeFunctionSets().order(); }
 
       /** \copydoc Dune::Fem::BasisFunctionSets::order */
-      int order ( const EntityType &entity ) const
-      {
-        return shapeFunctionSets_.order( entity.type() );
-      }
+      int order ( const EntityType &entity ) const { return shapeFunctionSets().order( entity.type() ); }
 
       /** \copydoc Dune::Fem::BasisFunctionSets::basisFunctionSet */
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
-        return BasisFunctionSetType( entity, shapeFunctionSet( entity.type() ) );
+        return BasisFunctionSetType( entity, shapeFunctionSets().shapeFunctionSet( entity.type() ) );
       }
 
       /** \} */
 
-    private:
-      ShapeFunctionSetType shapeFunctionSet ( const Dune::GeometryType &type ) const
-      {
-        return shapeFunctionSets_.shapeFunctionSet( type );
-      }
+      const ShapeFunctionSetsType &shapeFunctionSets () const { return shapeFunctionSets_; }
+      ShapeFunctionSetsType &shapeFunctionSets () { return shapeFunctionSets_; }
 
+    private:
       ShapeFunctionSetsType shapeFunctionSets_;
     };
 
