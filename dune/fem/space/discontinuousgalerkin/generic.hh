@@ -64,7 +64,7 @@ namespace Dune
                                                    const InterfaceType commInterface = InteriorBorder_All_Interface,
                                                    const CommunicationDirection commDirection = ForwardCommunication )
       : BaseType( gridPart, commInterface, commDirection ),
-        basisFunctionSets_( std::forward< BasisFunctionSetsType >( basisFunctionSets ) ),
+        basisFunctionSets_( std::move( basisFunctionSets ) ),
         blockMapper_( gridPart )
       {}
 
@@ -77,11 +77,7 @@ namespace Dune
       GenericDiscontinuousGalerkinSpace ( const ThisType & ) = delete;
 
       /** \brief move constructor */
-      GenericDiscontinuousGalerkinSpace ( ThisType &&other )
-        : BaseType( other ),
-          basisFunctionSets_( std::move( other.basisFunctionSets_ ) ),
-          blockMapper_( std::move( blockMapper_ ) )
-      {}
+      GenericDiscontinuousGalerkinSpace ( ThisType &&other ) = default;
 
       GenericDiscontinuousGalerkinSpace &operator= ( const ThisType & ) = default;
 
@@ -97,7 +93,7 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet */
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
-        return basisFunctionSets_.basisFunctionSet( entity );
+        return basisFunctionSets().basisFunctionSet( entity );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
@@ -107,15 +103,18 @@ namespace Dune
       static constexpr bool continuous ( const IntersectionType &intersection ) { return false; }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
-      int order () const { return basisFunctionSets_.order(); }
+      int order () const { return basisFunctionSets().order(); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
-      int order ( const EntityType &entity ) const { return basisFunctionSets_.order( entity ); }
+      int order ( const EntityType &entity ) const { return basisFunctionSets().order( entity ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
       BlockMapperType &blockMapper () const { return blockMapper_; }
 
       /** \} */
+
+      const BasisFunctionSetsType &basisFunctionSets () const { return basisFunctionSets_; }
+      BasisFunctionSetsType &basisFunctionSets () { return basisFunctionSets_; }
 
     private:
       BasisFunctionSetsType basisFunctionSets_;
