@@ -129,7 +129,7 @@ class FormatExpression:
         return entangleLists([['*'], arg]), priority
 
     def initializerList(self, expr):
-        args = [self.formatArg(FormatExpression._none, arg) for arg in expr.args]
+        args = [self.formatArg(FormatExpression._priority_none, arg) for arg in expr.args]
         return entangleLists([['{ '], entangleLists(args, ', '), [' }']]), FormatExpression._priority_terminal
 
     def lambda_(self, expr):
