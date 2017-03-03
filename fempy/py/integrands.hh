@@ -85,7 +85,6 @@ namespace Dune
           Hybrid::forEach( std::make_index_sequence< numConstants >(), [ &dispatch ] ( auto i ) {
               dispatch[ i ] = [ i ] ( Integrands &integrands, pybind11::handle o ) {
                   integrands.template constant< i >() = o.template cast< typename Integrands::template ConstantType< i > >();
-                  coefficientsRegistry< Integrands >()( integrands )[ i ] = pybind11::object( o, true );
                 };
             } );
 
@@ -123,6 +122,7 @@ namespace Dune
           Hybrid::forEach( std::make_index_sequence< numCoefficients >(), [ &dispatch ] ( auto i ) {
               dispatch[ i ] = [ i ] ( Integrands &integrands, pybind11::handle o ) {
                   integrands.template setCoefficient< i >( o.template cast< std::tuple_element_t< i, typename Integrands::CoefficientTupleType > >() );
+                  coefficientsRegistry< Integrands >()( integrands )[ i ] = pybind11::object( o, true );
                 };
             } );
 
