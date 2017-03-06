@@ -118,6 +118,8 @@ namespace Dune
       template< class GridFunction, class Cls >
       void registerGridFunction ( pybind11::handle scope, Cls &cls)
       {
+        using pybind11::operator""_a;
+
         typedef typename GridFunction::LocalFunctionType LocalFunction;
         typedef typename LocalFunction::EntityType Entity;
         typedef typename GridFunction::GridPartType GridPartType;
@@ -149,10 +151,8 @@ namespace Dune
                 }), std::integral_constant< int, 1 >() );
           }, pybind11::keep_alive< 0, 1 >() );
 
-        cls.def( "addToVTKWriter", &Dune::CorePy::addToVTKWriter< GridFunction, VTKWriter< typename GridFunction::GridPartType::GridViewType > >,
-            pybind11::keep_alive< 2, 1 >() );
+        cls.def( "addToVTKWriter", &Dune::CorePy::addToVTKWriter< GridFunction >, pybind11::keep_alive< 3, 1 >(), "name"_a, "writer"_a, "dataType"_a );
 
-        using pybind11::operator""_a;
         cls.def( "cellData", [] ( const GridFunction &self, int level ) { return cellData( self, level ); }, "level"_a = 0 );
         cls.def( "pointData", [] ( const GridFunction &self, int level ) { return pointData( self, level ); }, "level"_a = 0 );
 
