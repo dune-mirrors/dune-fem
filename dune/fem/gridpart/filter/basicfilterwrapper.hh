@@ -170,9 +170,16 @@ namespace Dune
       typedef typename Traits::EntityType EntityType;
 
       //! \brief constructor
-      BasicFilterWrapper ( const GridPartType & gridPart, const BasicFilterType & filter = BasicFilterType() )
+      BasicFilterWrapper ( const GridPartType & gridPart, const BasicFilterType & filter )
       : gridPart_( gridPart ),
         filter_( filter )
+      { }
+
+      //! \brief constructor
+      template< typename ... Args >
+      BasicFilterWrapper ( const GridPartType & gridPart, Args && ... args )
+      : gridPart_( gridPart ),
+        filter_( args ... )
       { }
 
       //! \brief copy constructor

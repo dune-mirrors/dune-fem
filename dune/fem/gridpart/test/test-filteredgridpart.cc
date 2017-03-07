@@ -10,8 +10,8 @@
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
-#include <dune/fem/gridpart/filter/domainfilter.hh>
 #include <dune/fem/gridpart/filter/basicfilterwrapper.hh>
+#include <dune/fem/gridpart/filter/domainfilter.hh>
 #include <dune/fem/gridpart/filter/radialfilter.hh>
 #include <dune/fem/misc/gridwidth.hh>
 
@@ -191,10 +191,8 @@ int main( int argc, char ** argv )
 
     // create radial filter
     typedef Dune::Fem::RadialFilter< GridType::ctype, GridType::dimensionworld > RadialFilterType;
-    RadialFilterType::GlobalCoordinateType center( 0 );
-    RadialFilterType radialFilter( center, .25 );
     typedef Dune::Fem::BasicFilterWrapper< HostGridPartType, RadialFilterType > WrapperRadialFilterType;
-    WrapperRadialFilterType wrappedRadialFilter( hostGridPart, radialFilter );
+    WrapperRadialFilterType wrappedRadialFilter( hostGridPart, RadialFilterType::GlobalCoordinateType( 0 ), 0.25 );
 
     // test FilteredGridPart with radial filter and allowing non consecutive index set
     std::cout << std::endl << "Testing FilteredGridPart with radial filter: allow non consecutive index set" << std::endl << std::endl;
@@ -210,11 +208,13 @@ int main( int argc, char ** argv )
     for( std::size_t i = ( tags.size()/2 ); i < tags.size(); ++i )
       tags[ i ] = 1;
     typedef Dune::Fem::DomainFilter< HostGridPartType, DomainArrayType > DomainFilterType;
-    DomainFilterType domainFilter( hostGridPart, tags, 1 );
+    typedef Dune::Fem::BasicFilterWrapper< HostGridPartType, DomainFilterType > WrapperDomainFilterType;
+    WrapperDomainFilterType wrapperDomainFilter( hostGridPart, hostGridPart, tags, 1 );
 
     // test FilteredGridPart with domain filter and allowing non consecutive index set
     std::cout << std::endl << "Testing FilteredGridPart with domain filter: allow non consecutive index set" << std::endl << std::endl;
-    testFilteredGridPart< false, HostGridPartType, DomainFilterType >( hostGridPart, domainFilter );
+    testFilteredGridPart< false, HostGridPartType, WrapperDomainFilterType >( hostGridPart, wrapperDomainFilter );
+
   }
   catch(Dune::Exception &e)
   {
