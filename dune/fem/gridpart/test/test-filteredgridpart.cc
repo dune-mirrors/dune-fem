@@ -104,7 +104,7 @@ void testSubEntities( const GridPartType & gridPart )
 }
 
 template< class GridPartType >
-void testIntersectionIterator( const GridPartType & gridPart )
+void testIntersection( const GridPartType & gridPart )
 {
   std::vector<int> index( gridPart.indexSet().size(0), 0 );
   for( const auto& element : elements( gridPart ) )
@@ -155,7 +155,7 @@ void testFilteredGridPart( HostGridPartType& hostGridPart, FilterType& filter )
   std::cout << std::endl;
 
   std::cout << "Testing intersection" << std::endl;
-  testIntersectionIterator( gridPart );
+  testIntersection( gridPart );
   std::cout << std::endl;
 
   std::cout << "GridWidth: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;

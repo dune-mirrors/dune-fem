@@ -55,22 +55,22 @@ namespace Dune
       //! \brief return what boundary id we have in case of boundary intersection
       //         which is either it.boundary == true or contains (it.ouside()) == false
       //         so here true is a good choice
-      template < class IntersectionIteratorType >
-      bool intersectionBoundary( const IntersectionIteratorType & it ) const
+      template < class Intersection >
+      bool intersectionBoundary( const Intersection & ) const
       {
         return true;
       }
       //! \brief return what boundary id we have in case of boundary intersection
       //          which is either it.boundary == true or contains (it.ouside()) == false
-      template < class IntersectionIteratorType >
-      int intersectionBoundaryId(const IntersectionIteratorType & it) const
+      template < class Intersection >
+      int intersectionBoundaryId(const Intersection & ) const
       {
         return 1;
       }
 
       //! \brief if contains() is true then we have an interior entity
-      template <class IntersectionIteratorType>
-      bool intersectionNeighbor( const IntersectionIteratorType & it ) const
+      template <class Intersection>
+      bool intersectionNeighbor( const Intersection &  ) const
       {
         return false;
       }

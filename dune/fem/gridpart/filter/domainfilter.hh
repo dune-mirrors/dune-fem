@@ -104,7 +104,7 @@ namespace Dune
 
       //! \brief return false since all interior intersections should be skipped
       template< class Intersection >
-      bool interiorIntersection( const Intersection &intersection ) const
+      bool interiorIntersection( const Intersection & ) const
       {
         return false;
       }
