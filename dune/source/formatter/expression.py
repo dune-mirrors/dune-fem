@@ -5,6 +5,7 @@ from ...common.compatibility import isString
 from ..builtin import *
 from ..common import *
 from ..expression import *
+from ..function import *
 from ..operator import *
 
 
@@ -66,6 +67,8 @@ class FormatExpression:
             return self.lambda_(expr)
         elif isinstance(expr, NullPtr):
             return self.nullptr(expr)
+        elif isinstance(expr, This):
+            return self.this(expr)
         elif isinstance(expr, Variable):
             return self.variable(expr)
         elif isinstance(expr, UnformattedExpression):
@@ -83,22 +86,24 @@ class FormatExpression:
         if isinstance(expr.function, Operator):
             return self.operatorApplication(expr)
 
+        priority = FormatExpression._priority_postfix
         if isinstance(expr.function, BuiltInFunction):
             if expr.function.namespace is None:
-                function = expr.function.name
+                function = [expr.function.name]
             else:
-                function = expr.function.namespace + '::' + expr.function.name
+                function = [expr.function.namespace + '::' + expr.function.name]
         elif isinstance(expr.function, (Function, Method)):
-            function = expr.function.name
+            function = [expr.function.name]
+        elif isinstance(expr.function, LambdaExpression):
+            function = self.formatArg(priority, expr.function)
         else:
-            function = expr.function
+            function = [expr.function]
 
-        priority = FormatExpression._priority_postfix
         if expr.args:
-            args = [self.formatArg(priority, arg) for arg in expr.args]
-            return entangleLists([[function + '( '], entangleLists(args, ', '), [' )']]), priority
+            args = [self.formatArg(FormatExpression._priority_none, arg) for arg in expr.args]
+            return entangleLists([function, ['( '], entangleLists(args, ', '), [' )']]), priority
         else:
-            return [function + '()'], priority
+            return entangleLists([function, ['()']]), priority
 
     def conditional(self, expr):
         priority = FormatExpression._priority_assignment
@@ -113,7 +118,7 @@ class FormatExpression:
     def construct(self, expr):
         priority = FormatExpression._priority_postfix
         if expr.args is not None:
-            args = [self.formatArg(priority, arg) for arg in expr.args]
+            args = [self.formatArg(FormatExpression._priority_none, arg) for arg in expr.args]
             return entangleLists([[expr.cppType + '( '], entangleLists(args, ', '), [' )']]), priority
         else:
             return [expr.cppType + '()'], priority
@@ -124,7 +129,7 @@ class FormatExpression:
         return entangleLists([['*'], arg]), priority
 
     def initializerList(self, expr):
-        args = [self.formatArg(FormatExpression._priority_postfix, arg) for arg in expr.args]
+        args = [self.formatArg(FormatExpression._priority_none, arg) for arg in expr.args]
         return entangleLists([['{ '], entangleLists(args, ', '), [' }']]), FormatExpression._priority_terminal
 
     def lambda_(self, expr):
@@ -152,6 +157,9 @@ class FormatExpression:
             return entangleLists([arg, ['[ '], subscript, [' ]']]), FormatExpression._priority_postfix
         else:
             raise Exception('Unknown operator: ' + repr(expr.function))
+
+    def this(self, expr):
+        return ['this'], FormatExpression._priority_terminal
 
     def variable(self, expr):
         return [expr.name], FormatExpression._priority_terminal

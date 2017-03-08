@@ -81,10 +81,10 @@ def splitUFLForm(form):
 #    return tree0, tree1, tree2
 
 
-def generateCode(predefined, tensor, coefficients, tempVars=True):
+def generateCode(predefined, tensor, tempVars=True):
     keys = tensor.keys()
     expressions = [tensor[i] for i in keys]
-    preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars=tempVars)
+    preamble, results = codegen.generateCode(predefined, expressions, tempVars=tempVars)
     result = Variable('auto', 'result')
     return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
 
@@ -143,57 +143,62 @@ def compileUFL(form, *args, **kwargs):
     if "dirichlet" in kwargs:
         dirichletBCs += [DirichletBC(u.ufl_function_space(), as_vector(value), bndId) for bndId, value in kwargs["dirichlet"].items()]
 
-    coefficients = set(form.coefficients())
+    uflCoefficients = set(form.coefficients())
     for bc in dirichletBCs:
         _, c = extract_arguments_and_coefficients(bc.value)
-        coefficients |= set(c)
+        uflCoefficients |= set(c)
 
-    idxConst = 0
-    idxCoeff = 0
-    for coefficient in coefficients:
-        if coefficient.is_cellwise_constant():
-            field = None  # must be improved for 'complex'
-            idx = idxConst
-            dimRange = 1 if coefficient.ufl_shape==() else coefficient.ufl_shape[0]
-            idxConst += 1
-        else:
-            field = coefficient.ufl_function_space().ufl_element().field()
-            dimRange = coefficient.ufl_shape[0]
-            idx = idxCoeff
-            idxCoeff += 1
+    constants = dict()
+    coefficients = dict()
+    for coefficient in uflCoefficients:
         try:
             name = getattr(coefficient, "name")
         except AttributeError:
             name = str(coefficient)
-        model.coefficients.append({ \
-            'name' : name, \
-            'number' : idx, \
-            'counter' : coefficient.count(), \
-            'dimRange' : dimRange,\
-            'constant' : coefficient.is_cellwise_constant(),\
-            'field': field } )
+        if coefficient.is_cellwise_constant():
+            if len(coefficient.ufl_shape) == 0:
+                constants[coefficient] = model.addConstant('double', name)
+            elif len(coefficient.ufl_shape) == 1:
+                constants[coefficient] = model.addConstant('Dune::FieldVector< double, ' + str(coefficient.ufl_shape[0]) + ' >', name)
+            else:
+                Exception('Currently, only scalars and vectors are supported as constants')
+        else:
+            try:
+                coefficients[coefficient] = model.addCoefficient(coefficient.ufl_shape[0], coefficient.ufl_function_space().ufl_element().field())
+            except AttributeError:
+                coefficients[coefficient] = model.addCoefficient(coefficient.ufl_shape[0])
 
     tempVars = kwargs.get("tempVars", True)
 
+    def predefineCoefficients(predefined, x):
+        for coefficient, idx in coefficients.items():
+            for derivative in model.coefficient(idx, x):
+                predefined[coefficient] = derivative
+                coefficient = Grad(coefficient)
+        predefined.update({c: model.constant(i) for c, i in constants.items()})
+
     predefined = {u: model.arg_u, du: model.arg_du}
     predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
-    model.source = generateCode(predefined, source, model.coefficients, tempVars)
-    model.diffusiveFlux = generateCode(predefined, diffusiveFlux, model.coefficients, tempVars=tempVars)
+    predefineCoefficients(predefined, model.arg_x)
+    model.source = generateCode(predefined, source, tempVars=tempVars)
+    model.diffusiveFlux = generateCode(predefined, diffusiveFlux, tempVars=tempVars)
     predefined.update({ubar: model.arg_ubar, dubar: model.arg_dubar})
-    model.linSource = generateCode(predefined, linSource, model.coefficients, tempVars=tempVars)
-    model.linDiffusiveFlux = generateCode(predefined, linDiffusiveFlux, model.coefficients, tempVars=tempVars)
+    model.linSource = generateCode(predefined, linSource, tempVars=tempVars)
+    model.linDiffusiveFlux = generateCode(predefined, linDiffusiveFlux, tempVars=tempVars)
 
     # model.linNVSource = generateCode({u: arg, du: darg, d2u: d2arg, ubar: argbar, dubar: dargbar, d2ubar: d2argbar}, linNVSource, model.coefficients, tempVars)
 
     predefined = {u: model.arg_u}
     predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
-    model.alpha = generateCode(predefined, boundarySource, model.coefficients, tempVars)
+    predefineCoefficients(predefined, model.arg_x)
+    model.alpha = generateCode(predefined, boundarySource, tempVars=tempVars)
     predefined.update({ubar: model.arg_ubar})
-    model.linAlpha = generateCode(predefined, linBoundarySource, model.coefficients, tempVars)
+    model.linAlpha = generateCode(predefined, linBoundarySource, tempVars=tempVars)
 
     predefined = {u: model.arg_u, du: model.arg_du, d2u: model.arg_d2u}
     predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
-    model.fluxDivergence = generateCode(predefined, fluxDivergence, model.coefficients, tempVars=tempVars)
+    predefineCoefficients(predefined, model.arg_x)
+    model.fluxDivergence = generateCode(predefined, fluxDivergence, tempVars=tempVars)
 
     if dirichletBCs:
         model.hasDirichletBoundary = True
@@ -229,8 +234,10 @@ def compileUFL(form, *args, **kwargs):
         switch = SwitchStatement(model.arg_bndId, default=assign(model.arg_r, construct("RangeType", 0)))
         predefined = {}
         predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
+        predefineCoefficients(predefined, model.arg_x)
         for i, value in bySubDomain.items():
-            switch.append(i, generateCode(predefined, value, model.coefficients, tempVars=tempVars))
+            switch.append(i, generateCode(predefined, value, tempVars=tempVars))
         model.dirichlet = [switch]
 
-    return model
+    coefficients.update(constants)
+    return model, coefficients
