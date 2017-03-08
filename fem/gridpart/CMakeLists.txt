@@ -1,3 +1,4 @@
+add_subdirectory(common)
 add_subdirectory(filter)
 add_subdirectory(geometrygridpart)
 
