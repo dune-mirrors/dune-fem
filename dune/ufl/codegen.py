@@ -39,6 +39,10 @@ class CodeGenerator(MultiFunction):
         except KeyError:
             raise Exception('%s not available for this expression.' % expr._ufl_class_.__name__)
 
+    def abs(self, expr, x):
+        self.using.add(Using(cplusplus.abs))
+        return self._makeTmp(cplusplus.abs(x))
+
     def argument(self, expr):
         try:
             return self._makeTmp(self.predefined[expr], True)
