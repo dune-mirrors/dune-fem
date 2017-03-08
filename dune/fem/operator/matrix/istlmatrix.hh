@@ -972,6 +972,13 @@ namespace Dune
       {
         return LocalMatrixType( localMatrixStack_, domainEntity, rangeEntity );
       }
+
+      //! return uninitialized local matrix object
+      LocalMatrixType localMatrix() const
+      {
+        return LocalMatrixType( localMatrixStack_ );
+      }
+
       LocalColumnObjectType localColumn( const DomainEntityType &domainEntity ) const
       {
         return LocalColumnObjectType ( *this, domainEntity );
