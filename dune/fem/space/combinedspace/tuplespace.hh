@@ -5,12 +5,13 @@
 #include <memory>
 #include <type_traits>
 
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/math.hh>
 #include <dune/common/std/memory.hh>
+#include <dune/common/std/utility.hh>
 
 #include <dune/grid/common/grid.hh>
 
-#include <dune/fem/common/forloop.hh>
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/space/basisfunctionset/tuple.hh>
 #include <dune/fem/space/combinedspace/generic.hh>
@@ -76,19 +77,6 @@ namespace Dune
         }
       };
 
-    protected:
-      // helper struct to create each entry in the tuple
-      template< int i >
-      struct Constructor
-      {
-        template< class Tuple, class ... Args >
-        static void apply ( Tuple &tuple, Args && ... args )
-        {
-          typedef typename SubDiscreteFunctionSpace< i >::Type Element;
-          std::get< i >( tuple ) = Std::make_unique< Element >( std::forward< Args >( args ) ... );
-        }
-      };
-
     public:
       static_assert( Std::are_all_same< typename DiscreteFunctionSpaces::GridPartType::template Codim< 0 >::EntityType ... >::value,
                      "TupleDiscreteFunctionSpace works only for GridPart's with the same entity type" );
@@ -144,7 +132,12 @@ namespace Dune
                                                            CommunicationDirection commDirection )
       {
         DiscreteFunctionSpaceTupleType tuple;
-        Fem::ForLoop< Constructor, 0, sizeof ... ( DiscreteFunctionSpaces ) -1 >::apply( tuple, gridPart, commInterface, commDirection );
+        Hybrid::forEach( Std::make_index_sequence< sizeof ... ( DiscreteFunctionSpaces ) >{},
+          [ & ]( auto i )
+          {
+            typedef typename SubDiscreteFunctionSpace< i >::Type Element;
+            std::get< i >( tuple ) = Std::make_unique< Element >( gridPart, commInterface, commDirection );
+          } );
         return tuple;
       }
 
