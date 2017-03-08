@@ -1,5 +1,7 @@
 from __future__ import division, print_function, unicode_literals
 
+from types import GeneratorType
+
 from .common import Block, Statement
 from .operator import BinaryOperator, BracketOperator, PrefixUnaryOperator, PostfixUnaryOperator
 
@@ -140,10 +142,15 @@ class LambdaExpression(Expression):
             self.code = None
         elif isinstance(code, Block):
             self.code = tuple(block.content)
-        elif isinstance(code, (list, set, tuple)):
-            self.code = (o for o in code)
+        elif isinstance(code, (list, set, tuple, GeneratorType)):
+            self.code = tuple(code)
         else:
             self.code = (code,)
+
+    def __call__(self, *args):
+        if (len(args) != len(self.args)):
+            raise Exception('Wrong number of Arguments: ' + str(len(args)) + ' (should be ' + str(len(self.args)) + ').')
+        return Application(self, args=[makeExpression(arg) for arg in args])
 
     def __hash__(self):
         return hash((self.cppType, self.args, self.capture, self.code))
@@ -155,6 +162,14 @@ class NullPtr(Expression):
 
     def __hash__(self):
         return hash(self.cppType)
+
+
+class This(Expression):
+    def __init__(self):
+        Expression.__init__(self, "auto")
+
+    def __hash__(self):
+        return hash(("auto", "this"))
 
 
 class Variable(Expression):
@@ -213,3 +228,4 @@ def lambda_(args=None, capture=None, code=None):
 
 
 nullptr = NullPtr()
+this = This()

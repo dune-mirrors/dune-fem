@@ -30,6 +30,8 @@ PYBIND11_PLUGIN( _fem )
 
   {
     using pybind11::operator""_a;
+    using pybind11::str;
+
     pybind11::class_< Dune::Fem::ParameterContainer > param( module, "Parameter" );
 
     param.def( "append", [] ( Dune::Fem::ParameterContainer &self, const std::string &fileName ) {
@@ -43,11 +45,11 @@ PYBIND11_PLUGIN( _fem )
 
     param.def( "append", [] ( Dune::Fem::ParameterContainer &self, const pybind11::dict &entries ) {
         for ( auto entry : entries )
-          self.append( entry.first.str(), entry.second.str() );
+          self.append( str( entry.first ), str( entry.second ) );
       }, "entries"_a );
 
     param.def( "append", [] ( Dune::Fem::ParameterContainer &self, const std::string &key, pybind11::handle value ) {
-        self.append( key, value.str() );
+        self.append( key, str( value ) );
       }, "key"_a, "value"_a );
 
     // do we really need this one?
@@ -69,7 +71,7 @@ PYBIND11_PLUGIN( _fem )
       } , "key"_a );
 
     param.def( "__setitem__", [] ( Dune::Fem::ParameterContainer &self, const std::string &key, pybind11::handle value ) {
-        self.append( key, value.str() );
+        self.append( key, str( value ) );
       }, "key"_a, "value"_a );
 
     param.def( "__str__", [] ( const Dune::Fem::ParameterContainer &self ) {
