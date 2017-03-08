@@ -50,7 +50,8 @@ class BuiltInFunction:
 max_ = BuiltInFunction('algorithm', 'X', 'max', targs=['class X'], args=['const X &x', 'const X &y'])
 min_ = BuiltInFunction('algorithm', 'X', 'min', targs=['class X'], args=['const X &x', 'const X &y'])
 
-atan = BuiltInFunction('cmath', 'X', 'atan', targs=['class X'], args=['conat X &x'])
+abs = BuiltInFunction('cmath', 'X', 'abs', targs=['class X'], args=['const X &x'])
+atan = BuiltInFunction('cmath', 'X', 'atan', targs=['class X'], args=['const X &x'])
 atan2 = BuiltInFunction('cmath', 'X', 'atan2', targs=['class X'], args=['const X &x', 'const X &y'])
 cos = BuiltInFunction('cmath', 'X', 'cos', targs=['class X'], args=['const X &x'])
 pow_ = BuiltInFunction('cmath', 'X', 'pow', targs=['class X'], args=['const X &x', 'const X &y'])
