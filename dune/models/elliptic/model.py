@@ -3,7 +3,7 @@ from __future__ import division, print_function, unicode_literals
 from dune.source.builtin import get, make_shared
 from dune.source.cplusplus import UnformattedExpression
 from dune.source.cplusplus import AccessModifier, Constructor, Declaration, Function, Method, NameSpace, Struct, TypeAlias, UnformattedBlock, Variable
-from dune.source.cplusplus import assign, construct, dereference, lambda_, nullptr, return_
+from dune.source.cplusplus import assign, construct, dereference, lambda_, nullptr, return_, this
 from dune.source.cplusplus import SourceWriter
 from dune.source.fem import declareFunctionSpace
 
@@ -72,9 +72,9 @@ class EllipticModel:
         for t, n in (('RangeType', 'evaluate'), ('JacobianRangeType', 'jacobian'), ('HessianRangeType', 'hessian')):
             result = Variable('typename std::tuple_element_t< ' + str(idx) + ', CoefficientFunctionSpaceTupleType >::' + t, 'result')
             code = [Declaration(result),
-                    UnformattedExpression('void', 'std::get< ' + idx + ' >( coefficients_ ).' + n + '( x, ' + result.name + ' )'),
+                    UnformattedExpression('void', 'std::get< ' + str(idx) + ' >( coefficients_ ).' + n + '( x, ' + result.name + ' )'),
                     return_(result)]
-            coefficient += [lambda_(args=['auto x'], code=code)(x)]
+            coefficient += [lambda_(capture=[this], args=['auto x'], code=code)(x)]
         return coefficient
 
     @property
