@@ -24,11 +24,13 @@ def initModel(model, *args, **kwargs):
     if len(args) == 1 and isinstance(args[0], dict):
         coefficients.update(args[0])
         args = []
+    else:
+        args = list(args)
 
     coefficientNames = model._coefficientNames
     if len(args) > len(coefficientNames):
         raise ArgumentError('Too many coefficients passed.')
-    args += (None,) * (len(coefficientNames) - len(args))
+    args += [None] * (len(coefficientNames) - len(args))
 
     for name, value in kwargs:
         i = coefficientNames.get(name)
@@ -58,7 +60,7 @@ def initModel(model, *args, **kwargs):
 
     if hasattr(model, '_renumbering'):
         for c in (k for k in model._renumbering if isinstance(k, GridCoefficient)):
-            i = model_.renumbering[c]
+            i = model._renumbering[c]
             if args[i] is None:
                 args[i] = c.gf
 
@@ -110,7 +112,7 @@ def load(grid, model, *args, **kwargs):
     writer.emit(code)
 
     if model.hasConstants:
-        model.setCoef(writer)
+        model.exportSetConstant(writer)
 
     writer.openPythonModule(name)
     writer.emit('// export abstract base class')

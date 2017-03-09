@@ -3,7 +3,7 @@ from __future__ import division, print_function, unicode_literals
 from dune.source.builtin import get, make_shared
 from dune.source.cplusplus import UnformattedExpression
 from dune.source.cplusplus import AccessModifier, Constructor, Declaration, Function, Method, NameSpace, Struct, TypeAlias, UnformattedBlock, Variable
-from dune.source.cplusplus import assign, construct, dereference, lambda_, nullptr, return_
+from dune.source.cplusplus import assign, construct, dereference, lambda_, nullptr, return_, this
 from dune.source.cplusplus import SourceWriter
 from dune.source.fem import declareFunctionSpace
 
@@ -72,9 +72,9 @@ class EllipticModel:
         for t, n in (('RangeType', 'evaluate'), ('JacobianRangeType', 'jacobian'), ('HessianRangeType', 'hessian')):
             result = Variable('typename std::tuple_element_t< ' + str(idx) + ', CoefficientFunctionSpaceTupleType >::' + t, 'result')
             code = [Declaration(result),
-                    UnformattedExpression('void', 'std::get< ' + idx + ' >( coefficients_ ).' + n + '( x, ' + result.name + ' )'),
+                    UnformattedExpression('void', 'std::get< ' + str(idx) + ' >( coefficients_ ).' + n + '( x, ' + result.name + ' )'),
                     return_(result)]
-            coefficient += [lambda_(args=['auto x'], code=code)(x)]
+            coefficient += [lambda_(capture=[this], args=['auto x'], code=code)(x)]
         return coefficient
 
     @property
@@ -101,6 +101,7 @@ class EllipticModel:
 
         if self.hasConstants:
             code.append(TypeAlias("ConstantType", "typename std::tuple_element_t< i, " + constants_.cppType + " >::element_type", targs=["std::size_t i"]))
+            code.append(Declaration(Variable("const std::size_t", "numConstants"), initializer=str(len(self._constants)), static=True))
 
         if self.hasCoefficients:
             coefficientSpaces = ["Dune::Fem::FunctionSpace< DomainFieldType, " + SourceWriter.cpp_fields(c['field']) + ", dimDomain, " + str(c['dimRange']) + " >" for c in self._coefficients]
@@ -118,7 +119,7 @@ class EllipticModel:
         code.append(constructor)
 
         init = ['entity_ = &entity;']
-        init += ['std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ).init( entity() );' for i, c in enumerate(self._coefficients)]
+        init += ['std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ).init( entity );' for i, c in enumerate(self._coefficients)]
         init = [UnformattedBlock(init)] + self.init + [return_(True)]
         code.append(Method('bool', 'init', args=['const EntityType &entity'], code=init, const=True))
 
@@ -164,39 +165,39 @@ class EllipticModel:
     #def write(self, sourceWriter, name='Model', targs=[]):
     #    sourceWriter.emit(self.code(name=name, targs=targs))
 
-    def setCoef(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper'):
+    def exportSetConstant(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper'):
         sourceWriter.openFunction('std::size_t renumberConstants', args=['pybind11::handle &obj'])
-        sourceWriter.emit('std::string id = obj.str();')
+        sourceWriter.emit('std::string id = pybind11::str( obj );')
         for name, number in self._constantNames.items():
             sourceWriter.emit('if (id == "' + name + '") return ' + str(number) + ';')
         sourceWriter.emit('throw pybind11::value_error("coefficient \'" + id + "\' has not been registered");')
         sourceWriter.closeFunction()
 
-        sourceWriter.openFunction('void setConstant', targs=['std::size_t i'], args=[modelClass + ' &model', 'pybind11::list l'])
-        sourceWriter.emit('model.template constant< i >() = l.template cast< typename ' + modelClass + '::ConstantsType<i> >();')
+        sourceWriter.openFunction('void setConstant', targs=['std::size_t i'], args=[modelClass + ' &model', 'pybind11::handle value'])
+        sourceWriter.emit('model.template constant< i >() = value.template cast< typename ' + modelClass + '::ConstantType< i > >();')
         sourceWriter.closeFunction()
 
         sourceWriter.openFunction('auto defSetConstant', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-        sourceWriter.typedef('std::function< void( ' + modelClass + ' &model, pybind11::list ) >', 'Dispatch')
+        sourceWriter.typedef('std::function< void( ' + modelClass + ' &model, pybind11::handle ) >', 'Dispatch')
         sourceWriter.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setConstant< i > )... }};')
         sourceWriter.emit('')
-        sourceWriter.emit('return [ dispatch ] ( ' + wrapperClass + ' &model, pybind11::handle coeff, pybind11::list l ) {')
-        sourceWriter.emit('    std::size_t k = renumberConstants(coeff);')
+        sourceWriter.emit('return [ dispatch ] ( ' + wrapperClass + ' &model, pybind11::handle coeff, pybind11::handle value ) {')
+        sourceWriter.emit('    std::size_t k = renumberConstants( coeff );')
         sourceWriter.emit('    if( k >= dispatch.size() )')
         sourceWriter.emit('      throw std::range_error( "No such coefficient: "+std::to_string(k)+" >= "+std::to_string(dispatch.size()) );' )
-        sourceWriter.emit('    dispatch[ k ]( model.impl(), l );')
+        sourceWriter.emit('    dispatch[ k ]( model.impl(), value );')
         sourceWriter.emit('    return k;')
         sourceWriter.emit('  };')
         sourceWriter.closeFunction()
 
     def export(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper'):
         if self.hasConstants:
-            sourceWriter.emit('cls.def( "setConstant", defSetConstant( std::make_index_sequence< std::tuple_size <typename '+ modelClass + '::ConstantsTupleType>::value >() ) );')
+            sourceWriter.emit('cls.def( "setConstant", defSetConstant( std::make_index_sequence< ' + modelClass + '::numConstants >() ) );')
         coefficients = [('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< ' + SourceWriter.cpp_fields(c['field']) + ', ' + str(c['dimRange']) + ' > >') for c in self._coefficients]
         sourceWriter.emit('')
         sourceWriter.emit('cls.def( "__init__", [] ( ' + ', '.join([wrapperClass + ' &self'] + ['const ' + c + ' &coefficient' + str(i) for i, c in enumerate(coefficients)]) + ' ) {')
         if self.hasCoefficients:
-            sourceWriter.emit('  new (&self) ' + wrapperClass + '( ' + ', '.join('coefficient' + str(i) + '.localFunction()' for i, c in enumerate(coefficients)) + ' )')
+            sourceWriter.emit('  new (&self) ' + wrapperClass + '( ' + ', '.join('coefficient' + str(i) + '.localFunction()' for i, c in enumerate(coefficients)) + ' );')
         else:
             sourceWriter.emit('  new (&self) ' + wrapperClass + '();')
         #if self.coefficients:
@@ -210,7 +211,7 @@ class EllipticModel:
         #    sourceWriter.emit('  if ( !std::all_of(coeffSet.begin(),coeffSet.end(),[](bool v){return v;}) )')
         #    sourceWriter.emit('    throw pybind11::key_error("need to set all coefficients during construction");')
         if self.hasCoefficients:
-            sourceWriter.emit('  }, ' + ''.join('pybind11::keep_alive< 1, ' + str(i) + ' >(), ' for i, c in enumerate(coefficients, start=2)) + ' );')
+            sourceWriter.emit('  }, ' + ', '.join('pybind11::keep_alive< 1, ' + str(i) + ' >()' for i, c in enumerate(coefficients, start=2)) + ' );')
         else:
             sourceWriter.emit('  } );')
 
@@ -541,8 +542,8 @@ def generateModel(grid, model, *args, **kwargs):
 
     writer.emit(code)
 
-    if model.coefficients:
-        model.setCoef(writer)
+    if model.constants:
+        model.exportSetConstant(writer)
 
     writer.openPythonModule(name)
     writer.emit('// export abstract base class')

@@ -168,6 +168,8 @@ class This(Expression):
     def __init__(self):
         Expression.__init__(self, "auto")
 
+    name = 'this'
+
     def __hash__(self):
         return hash(("auto", "this"))
 
