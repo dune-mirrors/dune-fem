@@ -165,6 +165,8 @@ class CodeGenerator(MultiFunction):
             pass
 
         operand = expr.ufl_operands[0]
+        if isinstance(operand, Coefficient) and operand.ufl_element().family() == "Real":
+            return self.coefficient(operand)
         raise Exception('Cannot compute restriction of ' + str(operand))
 
     def product(self, expr, x, y):
