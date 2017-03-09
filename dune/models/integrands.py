@@ -381,8 +381,9 @@ def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tens
     trialFunctionsOut = [psi('-') for psi in trialFunctions]
 
     if tensorMap is None:
-        tensorIn = lambda_(args=['const DomainValueType &phiIn'], code=return_(construct('RangeValueType', *[0 for i in range(len(testFunctions))])))
-        tensorOut = lambda_(args=['const DomainValueType &phiOut'], code=return_(construct('RangeValueType', *[0 for i in range(len(testFunctions))])))
+        value = construct('RangeValueType', *[0 for i in range(len(testFunctions))])
+        tensorIn = lambda_(args=['const DomainValueType &phiIn'], code=return_(make_pair(value, value)))
+        tensorOut = lambda_(args=['const DomainValueType &phiOut'], code=return_(make_pair(value, value)))
         return [return_(make_pair(tensorIn, tensorOut))]
 
     varIn = Variable('std::tuple< RangeType, JacobianRangeType >', 'phiIn')
