@@ -2,6 +2,8 @@ from __future__ import division, print_function, unicode_literals
 
 from types import GeneratorType
 
+from ..common.compatibility import isInteger
+
 from .common import Block, Statement
 from .operator import BinaryOperator, BracketOperator, PrefixUnaryOperator, PostfixUnaryOperator
 
@@ -195,13 +197,13 @@ class UnformattedExpression(Expression):
 def makeExpression(expr):
     if isinstance(expr, Expression):
         return expr
-    if isinstance(expr, bool):
+    elif isinstance(expr, bool):
         return ConstantExpression('bool', 'true' if expr else 'false')
-    elif isinstance(expr, int):
+    elif isInteger(expr):
         if expr < 0:
-            return -ConstantExpression('int', str(-expr))
+            return -ConstantExpression('long', str(-expr))
         else:
-            return ConstantExpression('int', str(expr))
+            return ConstantExpression('long', str(expr))
     elif isinstance(expr, float):
         s = str(abs(expr))
         if "." not in s:
@@ -209,7 +211,7 @@ def makeExpression(expr):
         e = ConstantExpression('double', s)
         return -e if expr < 0 else e
     else:
-        print("Warning: Makeing expression from " + str(expr) + ".")
+        print("Warning: Makeing expression from " + str(expr) + "(type: " + str(type(expr)) + ").")
         return expr
 
 

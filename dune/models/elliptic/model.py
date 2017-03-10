@@ -1,5 +1,7 @@
 from __future__ import division, print_function, unicode_literals
 
+from dune.common.compatibility import isInteger
+
 from dune.source.builtin import get, make_shared
 from dune.source.cplusplus import UnformattedExpression
 from dune.source.cplusplus import AccessModifier, Constructor, Declaration, Function, Method, NameSpace, Struct, TypeAlias, UnformattedBlock, Variable
@@ -10,6 +12,7 @@ from dune.source.fem import declareFunctionSpace
 
 class EllipticModel:
     def __init__(self, dimRange, signature):
+        assert isInteger(dimRange)
         self.dimRange = dimRange
         self.init = []
         self.vars = None
@@ -96,12 +99,12 @@ class EllipticModel:
         code.append(TypeAlias("EntityType", "typename GridPart::template Codim< 0 >::EntityType"))
         code.append(TypeAlias("IntersectionType", "typename GridPart::IntersectionType"))
 
-        code.append(declareFunctionSpace("typename GridPartType::ctype", SourceWriter.cpp_fields(self.field), "GridPartType::dimensionworld", self.dimRange))
-        code.append(Declaration(Variable("const int", "dimLocal"), initializer="GridPartType::dimension", static=True))
+        code.append(declareFunctionSpace("typename GridPartType::ctype", SourceWriter.cpp_fields(self.field), UnformattedExpression("int", "GridPartType::dimensionworld"), self.dimRange))
+        code.append(Declaration(Variable("const int", "dimLocal"), initializer=UnformattedExpression("int", "GridPartType::dimension"), static=True))
 
         if self.hasConstants:
             code.append(TypeAlias("ConstantType", "typename std::tuple_element_t< i, " + constants_.cppType + " >::element_type", targs=["std::size_t i"]))
-            code.append(Declaration(Variable("const std::size_t", "numConstants"), initializer=str(len(self._constants)), static=True))
+            code.append(Declaration(Variable("const std::size_t", "numConstants"), initializer=len(self._constants), static=True))
 
         if self.hasCoefficients:
             coefficientSpaces = ["Dune::Fem::FunctionSpace< DomainFieldType, " + SourceWriter.cpp_fields(c['field']) + ", dimDomain, " + str(c['dimRange']) + " >" for c in self._coefficients]
@@ -124,7 +127,7 @@ class EllipticModel:
         code.append(Method('bool', 'init', args=['const EntityType &entity'], code=init, const=True))
 
         code.append(Method('const EntityType &', 'entity', code=return_(dereference(entity_)), const=True))
-        code.append(Method('std::string', 'name', const=True, code=return_('"' + name + '"')))
+        code.append(Method('std::string', 'name', const=True, code=return_(UnformattedExpression('const char *', '"' + name + '"'))))
 
         code.append(TypeAlias("BoundaryIdProviderType", "Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >"))
         code.append(Declaration(Variable("const bool", "symmetric"), initializer=self.symmetric, static=True))
