@@ -64,6 +64,19 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
       lf[ i ] = static_cast<DofType>(cont);
   }
 
+  // check init method on uninitialized local function
+  for( const auto& entity : entities(df) )
+  {
+    auto lf = df.localFunction( entity );
+    auto ulf = df.localFunction();
+    ulf.init( entity );
+    if( lf.numDofs() != ulf.numDofs() )
+      DUNE_THROW(Dune::InvalidStateException,"Init method for uninitialized local function did not work");
+    for( auto i=0; i<lf.numDofs(); ++i )
+      if( lf[ i ] != ulf [ i ] )
+        DUNE_THROW(Dune::InvalidStateException,"Init method for uninitialized local function did not work");
+  }
+
   // check block access
   const std::size_t localBlockSize = DiscreteFunctionSpaceType::localBlockSize;
   const std::size_t numBlocks      = df.blocks();
