@@ -629,7 +629,7 @@ def load(grid, integrands, renumbering=None, tempVars=True):
     module = builder.load(name, source, "integrands")
     setattr(module.Integrands, "_domainValueType", integrands.domainValueTuple())
     setattr(module.Integrands, "_rangeValueType", integrands.rangeValueTuple())
-    if renumbering is not None:
+    if (renumbering is not None) and not hasattr(module.Integrands, "_renumbering"):
         module.Integrands._setConstant = module.Integrands.__dict__['setConstant']
         module.Integrands._setCoefficient = module.Integrands.__dict__['setCoefficient']
         #setattr(module.Integrands, "_setConstant", getattr(module.Integrands, "setConstant"))
