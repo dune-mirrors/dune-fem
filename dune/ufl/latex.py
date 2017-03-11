@@ -25,7 +25,7 @@ class Expr2Latex(Transformer):
 
     def coefficient(self, expr):
         if self.coefficients is None:
-            return "w^{" + str(expr.number()) + "}"
+            return "w^{" + str(expr.count()) + "}"
         else:
             return coefficients[expr]
 
