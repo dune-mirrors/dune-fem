@@ -40,7 +40,7 @@ def initModel(model, *args, **kwargs):
             raise ArgumentError('Coefficient already given as positional argument: ' + name + '.')
         args[i] = value
 
-    for key, value in coefficients:
+    for key, value in coefficients.items():
         if isinstance(key, Coefficient):
             try:
                 i = model._renumbering[key]

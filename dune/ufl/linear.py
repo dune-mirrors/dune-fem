@@ -107,6 +107,7 @@ class MultiLinearExprSplitter(Transformer):
     sin = terminal
     sqrt = terminal
     tan = terminal
+    tanh = terminal
 
     def variable(self, expr):
         return self.visit(expr.expression())

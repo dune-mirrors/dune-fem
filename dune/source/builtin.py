@@ -58,6 +58,7 @@ pow_ = BuiltInFunction('cmath', 'X', 'pow', targs=['class X'], args=['const X &x
 sin = BuiltInFunction('cmath', 'X', 'sin', targs=['class X'], args=['const X &x'])
 sqrt = BuiltInFunction('cmath', 'X', 'sqrt', targs=['class X'], args=['const X &x'])
 tan = BuiltInFunction('cmath', 'X', 'tan', targs=['class X'], args=['const X &x'])
+tanh = BuiltInFunction('cmath', 'X', 'tanh', targs=['class X'], args=['const X &x'])
 
 def get(i):
     return BuiltInFunction('tuple', 'auto', 'get< ' + str(i) + ' >', targs=['class T'], args=['const T &arg'])

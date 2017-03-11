@@ -200,6 +200,10 @@ class CodeGenerator(MultiFunction):
         self.using.add(Using(cplusplus.tan))
         return self._makeTmp(cplusplus.tan(x))
 
+    def tanh(self, expr, x):
+        self.using.add(Using(cplusplus.tanh))
+        return self._makeTmp(cplusplus.tanh(x))
+
     def zero(self, expr):
         return cplusplus.makeExpression(0)
 
