@@ -206,7 +206,7 @@ def makeExpression(expr):
             return ConstantExpression('long', str(expr))
     elif isinstance(expr, float):
         s = str(abs(expr))
-        if "." not in s:
+        if ("." not in s) and ("e" not in s):
             s += ".0"
         e = ConstantExpression('double', s)
         return -e if expr < 0 else e
