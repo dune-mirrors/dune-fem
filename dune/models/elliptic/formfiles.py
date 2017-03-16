@@ -54,4 +54,4 @@ def loadUFLFile(filename):
 
 def compileUFLFile(filename, tempVars=True):
     models = loadUFLFile(filename)
-    return [compileUFL(model.form, *model.constraints, tempVars=tempVars).code(model.name) for model in models]
+    return [compileUFL(model.form, *model.constraints, tempVars=tempVars)[0].code(model.name) for model in models]
