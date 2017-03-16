@@ -226,7 +226,7 @@ class EllipticModel:
                 self.addCoefficient(value.dimRange, name)
         for name, dimRange in constants.items():
             if name not in self._constantNames:
-                self.addConstant('Dune::FieldVector< double, ' + dimRange + ' >', name)
+                self.addConstant('Dune::FieldVector< double, ' + str(dimRange) + ' >', name)
 
         if '@const:' in code:
             codeCst = code.split('@const:')
@@ -240,7 +240,7 @@ class EllipticModel:
                         dimRange = max( [int(bt) for bt in beforeText] ) + 1
                     else:
                         dimRange = 1
-                    self.addConstant('Dune::FieldVector< double, ' + dimRange + ' >', name)
+                    self.addConstant('Dune::FieldVector< double, ' + str(dimRange) + ' >', name)
 
         for i, c in enumerate(self._coefficients):
             jacname = '@jac:' + c['name']
@@ -258,7 +258,7 @@ class EllipticModel:
                 if not decl in code:
                     code = decl + '\ncoefficient< ' + str(i) + ' >().evaluate( x, ' + varname + ' );' + code
 
-        for name, i in self._constNames.items():
+        for name, i in self._constantNames.items():
             cname = '@const:' + name
             if cname in code:
                 varname = 'cc' + str(i)
