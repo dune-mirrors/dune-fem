@@ -101,11 +101,13 @@ class MultiLinearExprSplitter(Transformer):
 
     atan = terminal
     atan_2 = terminal
+    abs = terminal
     cos = terminal
     power = terminal
     sin = terminal
     sqrt = terminal
     tan = terminal
+    tanh = terminal
 
     def variable(self, expr):
         return self.visit(expr.expression())

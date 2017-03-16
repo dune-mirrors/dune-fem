@@ -221,8 +221,8 @@ class Integrands():
             if self.skeleton is None:
                 setCoefficient.append(assign(get('i')(coefficients_), UnformattedExpression('auto', 'coefficient.localFunction()')))
             else:
-                setCoefficient.append(assign(get('i')(coefficients_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::in )')]), UnformattedExpression('auto', 'coefficient.localFunction();')))
-                setCoefficient.append(assign(get('i')(coefficients_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::out )')]), UnformattedExpression('auto', 'coefficient.localFunction();')))
+                setCoefficient.append(assign(get('i')(coefficients_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::in )')]), UnformattedExpression('auto', 'coefficient.localFunction()')))
+                setCoefficient.append(assign(get('i')(coefficients_[UnformattedExpression('std::size_t', 'static_cast< std::size_t >( Side::out )')]), UnformattedExpression('auto', 'coefficient.localFunction()')))
             code.append(setCoefficient)
 
         code.append(Method('const EntityType &', 'entity', const=True, code=return_(insideEntity)))
@@ -381,8 +381,9 @@ def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tens
     trialFunctionsOut = [psi('-') for psi in trialFunctions]
 
     if tensorMap is None:
-        tensorIn = lambda_(args=['const DomainValueType &phiIn'], code=return_(construct('RangeValueType', *[0 for i in range(len(testFunctions))])))
-        tensorOut = lambda_(args=['const DomainValueType &phiOut'], code=return_(construct('RangeValueType', *[0 for i in range(len(testFunctions))])))
+        value = construct('RangeValueType', *[0 for i in range(len(testFunctions))])
+        tensorIn = lambda_(args=['const DomainValueType &phiIn'], code=return_(make_pair(value, value)))
+        tensorOut = lambda_(args=['const DomainValueType &phiOut'], code=return_(make_pair(value, value)))
         return [return_(make_pair(tensorIn, tensorOut))]
 
     varIn = Variable('std::tuple< RangeType, JacobianRangeType >', 'phiIn')
@@ -573,12 +574,12 @@ def setCoefficient(integrands, index, coefficient):
 
 
 def load(grid, integrands, renumbering=None, tempVars=True):
+    from dune.common.hashit import hashIt
+
     if isinstance(integrands, Equation):
         integrands, renumbering = compileUFL(integrands, tempVars=tempVars)
 
-    if not isinstance(grid, ModuleType):
-        grid = grid._module
-    name = 'integrands_' + integrands.signature + '_' + grid._moduleName
+    name = 'integrands_' + integrands.signature + '_' + hashIt(grid._typeName)
 
     includes = integrands.includes()
 
@@ -628,7 +629,7 @@ def load(grid, integrands, renumbering=None, tempVars=True):
     module = builder.load(name, source, "integrands")
     setattr(module.Integrands, "_domainValueType", integrands.domainValueTuple())
     setattr(module.Integrands, "_rangeValueType", integrands.rangeValueTuple())
-    if renumbering is not None:
+    if (renumbering is not None) and not hasattr(module.Integrands, "_renumbering"):
         module.Integrands._setConstant = module.Integrands.__dict__['setConstant']
         module.Integrands._setCoefficient = module.Integrands.__dict__['setCoefficient']
         #setattr(module.Integrands, "_setConstant", getattr(module.Integrands, "setConstant"))

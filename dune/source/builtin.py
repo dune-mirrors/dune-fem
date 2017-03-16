@@ -50,13 +50,15 @@ class BuiltInFunction:
 max_ = BuiltInFunction('algorithm', 'X', 'max', targs=['class X'], args=['const X &x', 'const X &y'])
 min_ = BuiltInFunction('algorithm', 'X', 'min', targs=['class X'], args=['const X &x', 'const X &y'])
 
-atan = BuiltInFunction('cmath', 'X', 'atan', targs=['class X'], args=['conat X &x'])
+abs = BuiltInFunction('cmath', 'X', 'abs', targs=['class X'], args=['const X &x'])
+atan = BuiltInFunction('cmath', 'X', 'atan', targs=['class X'], args=['const X &x'])
 atan2 = BuiltInFunction('cmath', 'X', 'atan2', targs=['class X'], args=['const X &x', 'const X &y'])
 cos = BuiltInFunction('cmath', 'X', 'cos', targs=['class X'], args=['const X &x'])
 pow_ = BuiltInFunction('cmath', 'X', 'pow', targs=['class X'], args=['const X &x', 'const X &y'])
 sin = BuiltInFunction('cmath', 'X', 'sin', targs=['class X'], args=['const X &x'])
 sqrt = BuiltInFunction('cmath', 'X', 'sqrt', targs=['class X'], args=['const X &x'])
 tan = BuiltInFunction('cmath', 'X', 'tan', targs=['class X'], args=['const X &x'])
+tanh = BuiltInFunction('cmath', 'X', 'tanh', targs=['class X'], args=['const X &x'])
 
 def get(i):
     return BuiltInFunction('tuple', 'auto', 'get< ' + str(i) + ' >', targs=['class T'], args=['const T &arg'])

@@ -39,6 +39,10 @@ class CodeGenerator(MultiFunction):
         except KeyError:
             raise Exception('%s not available for this expression.' % expr._ufl_class_.__name__)
 
+    def abs(self, expr, x):
+        self.using.add(Using(cplusplus.abs))
+        return self._makeTmp(cplusplus.abs(x))
+
     def argument(self, expr):
         try:
             return self._makeTmp(self.predefined[expr], True)
@@ -61,6 +65,7 @@ class CodeGenerator(MultiFunction):
         except KeyError:
             pass
 
+        print('Warning: ' + ('Constant ' if expr.is_cellwise_constant() else 'Coefficient ') + str(expr) + ' not predefined.')
         idx = str(self._getNumber(expr))
         if expr.is_cellwise_constant():
             var = Variable('const ConstantsRangeType< ' + idx + ' >', 'cc' + idx)
@@ -160,6 +165,8 @@ class CodeGenerator(MultiFunction):
             pass
 
         operand = expr.ufl_operands[0]
+        if isinstance(operand, Coefficient) and operand.ufl_element().family() == "Real":
+            return self.coefficient(operand)
         raise Exception('Cannot compute restriction of ' + str(operand))
 
     def product(self, expr, x, y):
@@ -192,6 +199,10 @@ class CodeGenerator(MultiFunction):
     def tan(self, expr, x):
         self.using.add(Using(cplusplus.tan))
         return self._makeTmp(cplusplus.tan(x))
+
+    def tanh(self, expr, x):
+        self.using.add(Using(cplusplus.tanh))
+        return self._makeTmp(cplusplus.tanh(x))
 
     def zero(self, expr):
         return cplusplus.makeExpression(0)

@@ -1,5 +1,9 @@
 from __future__ import division, print_function, unicode_literals
 
+from types import GeneratorType
+
+from ..common.compatibility import isInteger
+
 from .common import Block, Statement
 from .operator import BinaryOperator, BracketOperator, PrefixUnaryOperator, PostfixUnaryOperator
 
@@ -140,10 +144,15 @@ class LambdaExpression(Expression):
             self.code = None
         elif isinstance(code, Block):
             self.code = tuple(block.content)
-        elif isinstance(code, (list, set, tuple)):
-            self.code = (o for o in code)
+        elif isinstance(code, (list, set, tuple, GeneratorType)):
+            self.code = tuple(code)
         else:
             self.code = (code,)
+
+    def __call__(self, *args):
+        if (len(args) != len(self.args)):
+            raise Exception('Wrong number of Arguments: ' + str(len(args)) + ' (should be ' + str(len(self.args)) + ').')
+        return Application(self, args=[makeExpression(arg) for arg in args])
 
     def __hash__(self):
         return hash((self.cppType, self.args, self.capture, self.code))
@@ -155,6 +164,16 @@ class NullPtr(Expression):
 
     def __hash__(self):
         return hash(self.cppType)
+
+
+class This(Expression):
+    def __init__(self):
+        Expression.__init__(self, "auto")
+
+    name = 'this'
+
+    def __hash__(self):
+        return hash(("auto", "this"))
 
 
 class Variable(Expression):
@@ -178,21 +197,21 @@ class UnformattedExpression(Expression):
 def makeExpression(expr):
     if isinstance(expr, Expression):
         return expr
-    if isinstance(expr, bool):
+    elif isinstance(expr, bool):
         return ConstantExpression('bool', 'true' if expr else 'false')
-    elif isinstance(expr, int):
+    elif isInteger(expr):
         if expr < 0:
-            return -ConstantExpression('int', str(-expr))
+            return -ConstantExpression('long', str(-expr))
         else:
-            return ConstantExpression('int', str(expr))
+            return ConstantExpression('long', str(expr))
     elif isinstance(expr, float):
         s = str(abs(expr))
-        if "." not in s:
+        if ("." not in s) and ("e" not in s):
             s += ".0"
         e = ConstantExpression('double', s)
         return -e if expr < 0 else e
     else:
-        print("Warning: Makeing expression from " + str(expr) + ".")
+        print("Warning: Makeing expression from " + str(expr) + "(type: " + str(type(expr)) + ").")
         return expr
 
 
@@ -213,3 +232,4 @@ def lambda_(args=None, capture=None, code=None):
 
 
 nullptr = NullPtr()
+this = This()

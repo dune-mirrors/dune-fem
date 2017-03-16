@@ -38,10 +38,12 @@ def adaptiveLeafGridView(grid, *args, **kwargs):
     else:
         assert args.__len__()==0 and kwargs.__len__()==0,\
             "too many arguments passed to adaptiveLeafGridView method"
-    gridModule = importlib.import_module(type(grid).__module__)
-    if isinstance(grid, getattr(gridModule, "LeafGrid")):
+
+    try:
         grid = grid.hierarchicalGrid
-        gridModule = importlib.import_module(type(grid).__module__)
+    except:
+        pass
+    gridModule = importlib.import_module(type(grid).__module__)
 
     if not isinstance(grid, getattr(gridModule, "HierarchicalGrid")):
         raise ValueError('Cannot only create an adaptiveLeafGridView from a DUNE grid.')

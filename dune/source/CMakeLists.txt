@@ -9,5 +9,6 @@ add_python_targets(source
   cplusplus
   expression
   fem
+  function
   operator
 )

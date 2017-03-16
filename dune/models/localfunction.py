@@ -8,8 +8,11 @@ import sys
 import timeit
 import types
 
+from dune.common.hashit import hashIt
 from dune.generator import builder
-from dune.source.cplusplus import Method
+
+from dune.source.cplusplus import Method, Variable
+from dune.source.cplusplus import assign
 from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source import BaseModel
 
@@ -21,10 +24,19 @@ def generatedFunction(grid, name, order, code, **kwargs):
     return Gf(name, order, grid, coef)
 
 
+def generateCode(predefined, tensor, coefficients, tempVars=True):
+    from dune.ufl import codegen
+    keys = tensor.keys()
+    expressions = [tensor[i] for i in keys]
+    preamble, results = codegen.generateCode(predefined, expressions, coefficients, tempVars=tempVars)
+    result = Variable('auto', 'result')
+    return preamble + [assign(result[i], r) for i, r in zip(keys, results)]
+
+
 def UFLFunction(grid, name, order, expr, **kwargs):
     import ufl
-    import dune.models.elliptic as generate
     from dune.ufl import GridCoefficient
+    from dune.ufl.tensors import ExprTensor
     R = len(expr)
     D = grid.dimension
     try:
@@ -60,7 +72,7 @@ def UFLFunction(grid, name, order, expr, **kwargs):
                     'field': field } )
 
     writer = SourceWriter(ListWriter())
-    writer.emit(generate.generateCode({}, generate.ExprTensor((R, ), expr), coefficients, False), context=Method('void', 'evaluate'))
+    writer.emit(generateCode({}, ExprTensor((R, ), expr), coefficients, False), context=Method('void', 'evaluate'))
     code = '\n'.join(writer.writer.lines)
     evaluate = code.replace("result", "value")
     jac = []
@@ -72,7 +84,7 @@ def UFLFunction(grid, name, order, expr, **kwargs):
         jac.append( [jacForm[d].integrals()[0].integrand() if not jacForm[d].empty() else 0 for d in range(D)] )
     jac = ufl.as_matrix(jac)
     writer = SourceWriter(ListWriter())
-    writer.emit(generate.generateCode({}, generate.ExprTensor((R, D), jac), coefficients, False), context=Method('void', 'jacobian'))
+    writer.emit(generateCode({}, ExprTensor((R, D), jac), coefficients, False), context=Method('void', 'jacobian'))
     code = '\n'.join(writer.writer.lines)
     jacobian = code.replace("result", "value")
 
@@ -109,8 +121,8 @@ def gridFunction(grid, code, coefficients, constants):
             print(key, ' is not a valid key. Use "eval", "jac" or "hess"')
             exit(1)
 
-    if not isinstance(grid, types.ModuleType):
-        grid = grid._module
+    # if not isinstance(grid, types.ModuleType):
+    #     grid = grid._module
 
     if isinstance(coefficients, dict):
         for entry in coefficients.items():
@@ -119,10 +131,10 @@ def gridFunction(grid, code, coefficients, constants):
         for coefficient in coefficients:
             cppCode += str(coefficient.get('name'))
 
-    myCodeHash = hashlib.md5(cppCode.encode('utf-8')).hexdigest()
-    locname = 'LocalFunction_' + myCodeHash + '_' + grid._moduleName
-    pyname = 'localfunction_' + myCodeHash + '_' + grid._moduleName
-    wrappername = 'GridFunction_' + myCodeHash + '_' + grid._moduleName
+    myCodeHash = hashIt(cppCode)
+    locname = 'LocalFunction_' + myCodeHash + '_' + hashIt(grid._typeName)
+    pyname = 'localfunction_' + myCodeHash + '_' + hashIt(grid._typeName)
+    wrappername = 'GridFunction_' + myCodeHash + '_' + hashIt(grid._typeName)
 
     base = BaseModel(dimRange, myCodeHash)
     if isinstance(coefficients, dict):
