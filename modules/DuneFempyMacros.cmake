@@ -1,3 +1,5 @@
+include(UseModelCompiler)
+
 function(add_gmshgeo_target file)
   set(OUT ${CMAKE_CURRENT_BINARY_DIR}/${file}.msh)
   set(IN ${CMAKE_CURRENT_SOURCE_DIR}/${file}.geo)
