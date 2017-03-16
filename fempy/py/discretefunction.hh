@@ -48,12 +48,12 @@ namespace Dune
       // registerDFConstructor
       // ---------------------
 
-      template< class DF, class Holder, class Alias >
-      void registerDFConstructor ( pybind11::class_< DF, Holder, Alias > &cls, std::false_type )
+      template< class DF, class... options >
+      void registerDFConstructor ( pybind11::class_< DF, options... > &cls, std::false_type )
       {}
 
-      template< class DF, class Holder, class Alias >
-      void registerDFConstructor ( pybind11::class_< DF, Holder, Alias > &cls, std::true_type )
+      template< class DF, class... options >
+      void registerDFConstructor ( pybind11::class_< DF, options... > &cls, std::true_type )
       {
         using pybind11::operator""_a;
 
@@ -63,8 +63,8 @@ namespace Dune
           }, "space"_a, "name"_a, pybind11::keep_alive< 1, 2 >() );
       }
 
-      template< class DF, class Holder, class Alias >
-      void registerDFConstructor ( pybind11::class_< DF, Holder, Alias > &cls )
+      template< class DF, class... options >
+      void registerDFConstructor ( pybind11::class_< DF, options... > &cls )
       {
         registerDFConstructor( cls, std::is_constructible< DF, const std::string &, const typename DF::DiscreteFunctionSpaceType & >() );
       }
@@ -162,17 +162,17 @@ namespace Dune
     // registerDiscreteFunction
     // ------------------------
 
-    template< class DF, class Holder, class Alias >
-    void registerDiscreteFunction ( pybind11::module module, pybind11::class_< DF, Holder, Alias > &cls )
+    template< class DF, class... options >
+    void registerDiscreteFunction ( pybind11::module module, pybind11::class_< DF, options... > &cls )
     {
       detail::registerDiscreteFunction< DF >( module, cls );
     }
 
     // special registry for numpy df since they require a constructor
     // taking the dof vector
-    template< class Space, class Field, class Holder, class Alias >
+    template< class Space, class Field, class... options >
     void registerDiscreteFunction ( pybind11::module module,
-          pybind11::class_< Dune::Fem::VectorDiscreteFunction< Space, Dune::FemPy::NumPyVector< Field > >, Holder, Alias > &cls )
+          pybind11::class_< Dune::Fem::VectorDiscreteFunction< Space, Dune::FemPy::NumPyVector< Field > >, options... > &cls )
     {
       using pybind11::operator""_a;
 

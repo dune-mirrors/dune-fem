@@ -31,8 +31,8 @@ namespace Dune
       // registerSchemeConstructor
       // -------------------------
 
-      template< class Scheme, class Holder, class Alias, std::enable_if_t< std::is_constructible< Scheme, const typename Scheme::DiscreteFunctionSpaceType &, const typename Scheme::ModelType & >::value, int > = 0 >
-      void registerSchemeConstructor ( pybind11::class_< Scheme, Holder, Alias > &cls, PriorityTag< 1 > )
+      template< class Scheme, class... options, std::enable_if_t< std::is_constructible< Scheme, const typename Scheme::DiscreteFunctionSpaceType &, const typename Scheme::ModelType & >::value, int > = 0 >
+      void registerSchemeConstructor ( pybind11::class_< Scheme, options... > &cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
         typedef typename Scheme::DiscreteFunctionSpaceType Space;
@@ -45,12 +45,12 @@ namespace Dune
           }, "space"_a, "model"_a, "parameters"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
       }
 
-      template< class Scheme, class Holder, class Alias >
-      void registerSchemeConstructor ( pybind11::class_< Scheme, Holder, Alias > &cls, PriorityTag< 0 > )
+      template< class Scheme, class... options >
+      void registerSchemeConstructor ( pybind11::class_< Scheme, options... > &cls, PriorityTag< 0 > )
       {}
 
-      template< class Scheme, class Holder, class Alias >
-      void registerSchemeConstructor ( pybind11::class_< Scheme, Holder, Alias > &cls )
+      template< class Scheme, class... options >
+      void registerSchemeConstructor ( pybind11::class_< Scheme, options... > &cls )
       {
         registerSchemeConstructor( cls, PriorityTag< 42 >() );
       }
@@ -135,8 +135,8 @@ namespace Dune
       }
     }
 
-    template< class Scheme, class Holder, class AliasType >
-    void registerScheme ( pybind11::module module, pybind11::class_<Scheme, Holder, AliasType> &cls )
+    template< class Scheme, class... options >
+    void registerScheme ( pybind11::module module, pybind11::class_<Scheme, options...> &cls )
     {
       detail::registerScheme<Scheme>(module, cls);
     }

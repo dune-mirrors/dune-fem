@@ -41,8 +41,12 @@ namespace Dune
     inline static Fem::ParameterReader pyParameter ( const pybind11::dict &dict, std::shared_ptr< std::string > tmp )
     {
       return Fem::ParameterReader( [ dict, tmp ] ( const std::string &key, const std::string *def ) {
-          pybind11::object value = dict[ key.c_str() ];
-          *tmp = (value ? static_cast< std::string >( value.str() ) : Fem::Parameter::getValue( key, *def ));
+          try {
+            pybind11::object value = dict[ key.c_str() ];
+            *tmp = static_cast< std::string >( value.str() );
+          } catch (...) {
+            *tmp = Fem::Parameter::getValue( key, *def );
+          }
           return tmp.get();
         } );
     }
