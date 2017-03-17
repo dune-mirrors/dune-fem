@@ -513,22 +513,17 @@ def generateModel(grid, model, *args, **kwargs):
     #     grid = grid._module
     name = 'ellipticmodel_' + model.signature + "_" + hashIt(grid._typeName)
 
-    writer = SourceWriter()
-
-    writer.emit(["#include <" + i + ">" for i in grid._includes])
-    writer.emit('')
-    writer.emit('#include <dune/fem/misc/boundaryidprovider.hh>')
-    writer.emit('')
-    writer.emit('#include <dune/corepy/pybind11/pybind11.h>')
-    writer.emit('#include <dune/corepy/pybind11/extensions.h>')
-    writer.emit('')
-    writer.emit('#include <dune/fempy/py/grid/gridpart.hh>')
-    if model.coefficients:
-        writer.emit('#include <dune/fempy/function/virtualizedgridfunction.hh>')
-        writer.emit('')
-    writer.emit('#include <dune/fem/schemes/diffusionmodel.hh>')
-
     code = []
+
+    code += [Include(i) for i in grid._includes]
+    code.append(Include("dune/fem/misc/boundaryidprovider.hh>"))
+
+    code.append(Include("dune/corepy/pybind11/pybind11.h"))
+    code.append(Include("dune/corepy/pybind11/extensions.h"))
+    code.append(Include("dune/fempy/py/grid/gridpart.hh"))
+    if model.coefficients:
+        code.append(Include("dune/fempy/function/virtualizedgridfunction.hh"))
+    code.append(Include("dune/fem/schemes/diffusionmodel.hh"))
 
     nameSpace = NameSpace("ModelImpl_" + model.signature)
     nameSpace.append(model.code())
@@ -543,6 +538,7 @@ def generateModel(grid, model, *args, **kwargs):
     code += [TypeAlias("ModelWrapper", "DiffusionModelWrapper< Model >"),
              TypeAlias("ModelBase", "typename ModelWrapper::Base")]
 
+    writer = SourceWriter()
     writer.emit(code)
 
     if model.constants:

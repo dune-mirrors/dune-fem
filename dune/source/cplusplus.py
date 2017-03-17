@@ -61,6 +61,11 @@ class ListWriter:
 
 
 
+class Include:
+    def __init__(self, fileName):
+        self.fileName = fileName
+
+
 
 # NameSpace
 # ---------
@@ -244,6 +249,8 @@ class SourceWriter:
         elif isinstance(src, (list, set, tuple)):
             for s in src:
                 self.emit(s, indent, context)
+        elif isinstance(src, Include):
+            self.emit('#include <' + src.fileName + '>')
         elif isinstance(src, NameSpace):
             self.emit(None if self.begin else '')
             if src.name is not None:

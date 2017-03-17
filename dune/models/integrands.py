@@ -14,7 +14,7 @@ from ufl.equation import Equation
 from ufl.differentiation import Grad
 
 from dune.source.builtin import get, hybridForEach, make_pair, make_index_sequence, make_shared
-from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, InitializerList, Method, NameSpace, Struct, TypeAlias, UnformattedExpression, Using, Variable
+from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, Include, InitializerList, Method, NameSpace, Struct, TypeAlias, UnformattedExpression, Using, Variable
 from dune.source.cplusplus import assign, construct, coordinate, dereference, lambda_, makeExpression, maxEdgeLength, minEdgeLength, return_
 from dune.source.cplusplus import SourceWriter
 from dune.source.algorithm.extractincludes import extractIncludesFromStatements
@@ -262,12 +262,8 @@ class Integrands():
         return code
 
     def includes(self):
-        return set.union(*[extractIncludesFromStatements(stmts) for stmts in (self.interior, self.linearizedInterior, self.boundary, self.linearizedBoundary, self.skeleton, self.linearizedSkeleton)])
-
-        result.append(self.pre())
-        result.append(self.main())
-        result.append(self.post())
-        return result
+        incs = set.union(*[extractIncludesFromStatements(stmts) for stmts in (self.interior, self.linearizedInterior, self.boundary, self.linearizedBoundary, self.skeleton, self.linearizedSkeleton)])
+        return [Include(i) for i in incs]
 
 
 def generateCode(predefined, testFunctions, tensorMap, tempVars=True):
@@ -581,27 +577,18 @@ def load(grid, integrands, renumbering=None, tempVars=True):
 
     name = 'integrands_' + integrands.signature + '_' + hashIt(grid._typeName)
 
-    includes = integrands.includes()
-
-    writer = SourceWriter()
-
-    writer.emit(["#include <" + i + ">" for i in grid._includes])
-    #writer.emit('')
-    #writer.emit('#include <dune/fem/misc/boundaryidprovider.hh>')
-    if includes:
-        writer.emit('')
-        writer.emit(['#include <' + i + '>' for i in includes])
-    writer.emit('')
-    writer.emit('#include <dune/corepy/pybind11/pybind11.h>')
-    writer.emit('#include <dune/corepy/pybind11/extensions.h>')
-    writer.emit('')
-    writer.emit('#include <dune/fempy/py/grid/gridpart.hh>')
-    if integrands._coefficients:
-        writer.emit('#include <dune/fempy/function/virtualizedgridfunction.hh>')
-        writer.emit('')
-    writer.emit('#include <dune/fempy/py/integrands.hh>')
-
     code = []
+    code += [Include(i) for i in grid._includes]
+    #code.append(Include("dune/fem/misc/boundaryidprovider.hh"))
+
+    code += integrands.includes()
+    code.append(Include("dune/corepy/pybind11/pybind11.h"))
+    code.append(Include("dune/corepy/pybind11/extensions.h"))
+    code.append(Include("dune/fempy/py/grid/gridpart.hh"))
+
+    if integrands._coefficients:
+        code.append(Include("dune/fempy/function/virtualizedgridfunction.hh"))
+    code.append(Include("dune/fempy/py/integrands.hh"))
 
     nameSpace = NameSpace('Integrands_' + integrands.signature)
     nameSpace.append(integrands.code())
@@ -615,6 +602,7 @@ def load(grid, integrands, renumbering=None, tempVars=True):
         coefficients = []
     code.append(TypeAlias('Integrands', nameSpace.name + '::Integrands< ' + ', '.join(['GridPart'] + coefficients) + ' >'))
 
+    writer = SourceWriter()
     writer.emit(code);
 
     writer.openPythonModule(name)

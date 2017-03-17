@@ -11,7 +11,7 @@ import types
 from dune.common.hashit import hashIt
 from dune.generator import builder
 
-from dune.source.cplusplus import Method, Variable
+from dune.source.cplusplus import Include, Method, Variable
 from dune.source.cplusplus import assign
 from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source import BaseModel
@@ -145,19 +145,19 @@ def gridFunction(grid, code, coefficients, constants):
     else:
         base.coefficients.extend(coefficients)
 
-    writer = SourceWriter()
-    writer.emit("".join(["#include <" + i + ">\n" for i in grid._includes]))
-    writer.emit('')
-    writer.emit('#include <dune/corepy/pybind11/pybind11.h>')
-    writer.emit('#include <dune/corepy/pybind11/extensions.h>')
-    writer.emit('')
-    writer.emit('#include <dune/fem/space/common/functionspace.hh>')
-    writer.emit('#include <dune/fem/function/common/localfunctionadapter.hh>')
-    writer.emit('')
+    code = []
 
-    writer.emit('#include <dune/fempy/py/grid/gridpart.hh>')
-    writer.emit('#include <dune/fempy/py/grid/function.hh>')
-    writer.emit('')
+    code = [Include(i) for i in grid._includes]
+
+    code.append(Include("dune/corepy/pybind11/pybind11.h"))
+    code.append(Include("dune/corepy/pybind11/extensions.h"))
+    code.append(Include("dune/fem/space/common/functionspace.hh"))
+    code.append(Include("dune/fem/function/common/localfunctionadapter.hh"))
+
+    code.append(Include("dune/fempy/py/grid/gridpart.hh"))
+    code.append(Include("dune/fempy/py/grid/function.hh"))
+
+    writer = SourceWriter()
 
     base.pre(writer, name=locname, targs=(['class Range']))
     writer.typedef('typename EntityType::Geometry::LocalCoordinate', 'LocalCoordinateType')
