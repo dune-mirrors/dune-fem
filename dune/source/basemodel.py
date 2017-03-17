@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 from .cplusplus import Constructor, Declaration, Function, Method, SourceWriter, TypeAlias, Variable
+from .fem import declareFunctionSpace
 
 class BaseModel:
     def __init__(self, dimRange, signature):
@@ -21,52 +22,39 @@ class BaseModel:
         sourceWriter.openStruct(name, targs=(['class GridPart'] + targs + ['class... Coefficients']),\
         bases=(bases))
 
-        sourceWriter.typedef("GridPart", "GridPartType")
-        sourceWriter.typedef(SourceWriter.cpp_fields(self.field), "RangeFieldType")
-
-        sourceWriter.emit("static const int dimRange = " + str(self.dimRange) + ";")
-        sourceWriter.emit("static const int dimDomain = GridPartType::dimensionworld;")
-        sourceWriter.emit("static const int dimLocal = GridPartType::dimension;")
-
-        typedefs = [TypeAlias("EntityType", "typename GridPart::template Codim< 0 >::EntityType"),
-                    TypeAlias("IntersectionType", "typename GridPart::IntersectionType"),
-                    TypeAlias("FunctionSpaceType", "Dune::Fem::FunctionSpace< double, RangeFieldType, dimDomain, dimRange >"),
-                    TypeAlias("DomainType", "typename FunctionSpaceType::DomainType"),
-                    TypeAlias("RangeType", "typename FunctionSpaceType::RangeType"),
-                    TypeAlias("JacobianRangeType", "typename FunctionSpaceType::JacobianRangeType"),
-                    TypeAlias("HessianRangeType", "typename FunctionSpaceType::HessianRangeType")]
-        sourceWriter.emit(typedefs)
+        code = [TypeAlias('GridPartType', 'GridPart'),
+                TypeAlias("EntityType", "typename GridPart::template Codim< 0 >::EntityType"),
+                TypeAlias("IntersectionType", "typename GridPart::IntersectionType")]
+        code.append(declareFunctionSpace("typename GridPartType::ctype", SourceWriter.cpp_fields(self.field), UnformattedExpression("int", "GridPartType::dimensionworld"), self.dimRange))
+        code.append(Declaration(Variable("const int", "dimLocal"), initializer=UnformattedExpression("int", "GridPartType::dimension"), static=True))
 
         if self.coefficients:
-            sourceWriter.typedef('std::tuple< ' + ', '.join(\
+            code.append(TypeAlias('CoefficientFunctionSpaceTupleType', 'std::tuple< ' + ', '.join(\
                     [('std::shared_ptr<Dune::FieldVector< ' +\
                     SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
                     str(coefficient['dimRange']) + ' >>')\
-                    for coefficient in self.coefficients if coefficient['constant']]) + ' >',\
-                    'ConstantsTupleType;')
-            sourceWriter.typedef('std::tuple< ' + ', '.join(\
+                    for coefficient in self.coefficients if coefficient['constant']]) + ' >'))
+            code.append(TypeAlias('CoefficientFunctionSpaceTupleType', 'std::tuple< ' + ', '.join(\
                     [('Dune::Fem::FunctionSpace< double,' +\
                     SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
                     'dimDomain, ' +\
                     str(coefficient['dimRange']) + ' >')\
-                    for coefficient in self.coefficients if not coefficient['constant']]) + ' >',\
-                    'CoefficientFunctionSpaceTupleType')
+                    for coefficient in self.coefficients if not coefficient['constant']]) + ' >'))
 
-            sourceWriter.typedef('typename std::tuple_element_t<i,ConstantsTupleType>::element_type', 'ConstantsRangeType', targs=['std::size_t i'])
-            sourceWriter.emit('static const std::size_t numCoefficients = std::tuple_size< CoefficientFunctionSpaceTupleType >::value;')
-            sourceWriter.typedef('typename std::tuple_element< i, CoefficientFunctionSpaceTupleType >::type', 'CoefficientFunctionSpaceType', targs=['std::size_t i'] )
-            sourceWriter.typedef('typename CoefficientFunctionSpaceType< i >::RangeType', 'CoefficientRangeType', targs=['std::size_t i'])
-            sourceWriter.typedef('typename CoefficientFunctionSpaceType< i >::JacobianRangeType', 'CoefficientJacobianRangeType', targs=['std::size_t i'])
-            sourceWriter.typedef('typename CoefficientFunctionSpaceType< i >::HessianRangeType', 'CoefficientHessianRangeType', targs=['std::size_t i'])
+            code.append(TypeAlias('ConstantsRangeType', 'typename std::tuple_element_t<i,ConstantsTupleType>::element_type', targs=['std::size_t i']))
+            code.append(Declaratition(Variable('const std::size_t', 'numCoefficients'), initializer=UnformattedExpression('std::size_t', 'std::tuple_size< CoefficientFunctionSpaceTupleType >::value'), static=True))
+            code.append(TypeAlias('CoefficientFunctionSpaceType', 'typename std::tuple_element< i, CoefficientFunctionSpaceTupleType >::type', targs=['std::size_t i']))
+            code.append(TypeAlias('CoefficientRangeType', 'typename CoefficientFunctionSpaceType< i >::RangeType', targs=['std::size_t i']))
+            code.append(TypeAlias('CoefficientJacobianRangeType', 'typename CoefficientFunctionSpaceType< i >::JacobianRangeType', targs=['std::size_t i']))
+            code.append(TypeAlias('CoefficientHessianRangeType', 'typename CoefficientFunctionSpaceType< i >::HessianRangeType', targs=['std::size_t i']))
         else:
-            sourceWriter.emit('static const std::size_t numCoefficients = 0u;')
-            sourceWriter.typedef('std::tuple<>', 'ConstantsTupleType')
+            code.append(Declaratition(Variable('const std::size_t', 'numCoefficients'), initializer=0, static=True))
+            code.append(TypeAlias('ConstantsTupleType', 'std::tuple<>'))
 
-        sourceWriter.emit('')
-        sourceWriter.emit(TypeAlias('CoefficientType', 'typename std::tuple_element< i, std::tuple< Coefficients... > >::type', targs=['std::size_t i']))
-        sourceWriter.emit(TypeAlias('ConstantsType', 'typename std::tuple_element< i, ConstantsTupleType >::type::element_type', targs=['std::size_t i']))
 
-        code = []
+        code.append(TypeAlias('CoefficientType', 'typename std::tuple_element< i, std::tuple< Coefficients... > >::type', targs=['std::size_t i']))
+        code.append(TypeAlias('ConstantsType', 'typename std::tuple_element< i, ConstantsTupleType >::type::element_type', targs=['std::size_t i']))
+
         code.append(Constructor(name), code=UnformattedBlock('constructConstants( std::make_index_sequence< std::tuple_size<ConstantsTupleType>::value >() );'))
 
         init = Method('bool', 'init', args=['const EntityType &entity'], const=True)
@@ -78,7 +66,9 @@ class BaseModel:
         entity = Method('const EntityType &', 'entity', const=True)
         entity.append('return *entity_;')
 
-        sourceWriter.emit([init, entity, Method('std::string', 'name', const=True, code=['return "' + name + '";'])])
+        code.append([init, entity])
+        code.append(Method('std::string', 'name', const=True, code=['return "' + name + '";']))
+        sourceWriter.emit(code)
 
     def post(self, sourceWriter, name='Model', targs=[]):
         constant = Method('ConstantsType< i > &', 'constant', targs=['std::size_t i'])
@@ -108,12 +98,11 @@ class BaseModel:
 
     def setCoef(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper'):
         sourceWriter.emit('')
-        sourceWriter.typedef('std::tuple< ' + ', '.join(\
+        sourceWriter.emit(TypeAlias('Coefficients', 'std::tuple< ' + ', '.join(\
                 [('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< ' +\
                 SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
                 str(coefficient['dimRange']) + ' > >') \
-                for coefficient in self.coefficients if not coefficient["constant"]]) \
-              + ' >', 'Coefficients')
+                for coefficient in self.coefficients if not coefficient["constant"]]) + ' >'))
 
         sourceWriter.openFunction('std::size_t renumberConstants', args=['pybind11::handle &obj'])
         sourceWriter.emit('std::string id = obj.str();')
@@ -129,7 +118,7 @@ class BaseModel:
         sourceWriter.closeFunction()
 
         sourceWriter.openFunction('auto defSetConstant', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-        sourceWriter.typedef('std::function< void( ' + modelClass + ' &model, pybind11::list ) >', 'Dispatch')
+        sourceWriter.emit(TypeAlias('Dispatch', 'std::function< void( ' + modelClass + ' &model, pybind11::list ) >'))
         sourceWriter.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setConstant< i > )... }};')
         sourceWriter.emit('')
         sourceWriter.emit('return [ dispatch ] ( ' + wrapperClass + ' &model, pybind11::handle coeff, pybind11::list l ) {')

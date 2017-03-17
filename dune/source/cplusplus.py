@@ -552,9 +552,6 @@ class SourceWriter:
         self.popBlock('pybind11 module', moduleName)
         self.emit('}')
 
-    def typedef(self, typeName, typeAlias, targs=None):
-        self.emit(TypeAlias(typeAlias, typeName, targs=targs))
-
     @staticmethod
     def cpp_fields(field):
         if field=="complex":

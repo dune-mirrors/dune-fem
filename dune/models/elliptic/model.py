@@ -181,7 +181,7 @@ class EllipticModel:
         sourceWriter.closeFunction()
 
         sourceWriter.openFunction('auto defSetConstant', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
-        sourceWriter.typedef('std::function< void( ' + modelClass + ' &model, pybind11::handle ) >', 'Dispatch')
+        sourceWriter.emit(TypeAlias('Dispatch', 'std::function< void( ' + modelClass + ' &model, pybind11::handle ) >'))
         sourceWriter.emit('std::array< Dispatch, sizeof...( i ) > dispatch = {{ Dispatch( setConstant< i > )... }};')
         sourceWriter.emit('')
         sourceWriter.emit('return [ dispatch ] ( ' + wrapperClass + ' &model, pybind11::handle coeff, pybind11::handle value ) {')
