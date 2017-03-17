@@ -158,14 +158,10 @@ def gridFunction(grid, code, coefficients, constants):
     code.append(Include("dune/fempy/py/grid/gridpart.hh"))
     code.append(Include("dune/fempy/py/grid/function.hh"))
 
-    writer = SourceWriter()
+    struct = Struct(locname, targs=['class GridPart', 'class Range', 'class... Coefficients'])
+    struct.append(base.pre(name=locname))
 
-    writer.emit( code );
-
-    base.pre(writer, name=locname, targs=(['class Range']))
-
-    code = []
-    code.append(TypeAlias('LocalCoordinateType', 'typename EntityType::Geometry::LocalCoordinate'))
+    struct.append(TypeAlias('LocalCoordinateType', 'typename EntityType::Geometry::LocalCoordinate'))
 
     evaluate = Method('void', 'evaluate', args=['const Point &x', 'RangeType &value'], targs=['class Point'], const=True)
     if eval:
@@ -175,7 +171,7 @@ def gridFunction(grid, code, coefficients, constants):
         evaluate.append(UnformattedBlock(eval.split('\n')))
     else:
         evaluate.append(UnformattedBlock('DUNE_THROW( Dune::NotImplemented, "evaluate not implemented." );'));
-    code.append(evaluate)
+    struct.append(evaluate)
 
     jacobian = Method('void', 'jacobian', args=['const Point &x', 'JacobianRangeType &value'], targs=['class Point'], const=True)
     if jac:
@@ -185,7 +181,7 @@ def gridFunction(grid, code, coefficients, constants):
         jacobian.append(UnformattedBlock(jac.split('\n')))
     else:
         jacobian.append(UnformattedBlock('DUNE_THROW( Dune::NotImplemented, "jacobian not implemented." );'));
-    code.append(jacobian)
+    struct.append(jacobian)
 
     hessian = Method('void', 'hessian', args=['const Point &x', 'JacobianRangeType &value'], targs=['class Point'], const=True)
     if hess:
@@ -195,13 +191,11 @@ def gridFunction(grid, code, coefficients, constants):
         hessian.append(UnformattedBlock(hess.split('\n')))
     else:
         hessian.append(UnformattedBlock('DUNE_THROW( Dune::NotImplemented, "hessian not implemented." );'));
-    code.append(hessian)
+    struct.append(hessian)
 
-    writer.emit(code)
+    struct.append(base.post())
+    code.append(struct)
 
-    base.post(writer, name=locname, targs=(['class Range']))
-
-    code = []
     code.append(TypeAlias('GridPart', 'Dune::FemPy::GridPart< ' + grid._typeName + ' >'))
     code.append(TypeAlias('GridView', 'typename GridPart::GridViewType'))
     code.append(declareFunctionSpace("typename GridPartType::ctype", "double", UnformattedExpression("int", "GridPartType::dimensionworld"), dimRange))

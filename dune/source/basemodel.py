@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals
 
-from .cplusplus import Constructor, Declaration, Function, Method, SourceWriter, TypeAlias, Variable
+from .cplusplus import AccessModifier, Constructor, Declaration, Function, Method, SourceWriter, TypeAlias, Variable
 from .fem import declareFunctionSpace
 
 class BaseModel:
@@ -18,10 +18,7 @@ class BaseModel:
             raise KeyError('two coefficients provided with same name')
         return e[0]["number"]
 
-    def pre(self, sourceWriter, name='Model', targs=[], bases=[]):
-        sourceWriter.openStruct(name, targs=(['class GridPart'] + targs + ['class... Coefficients']),\
-        bases=(bases))
-
+    def pre(self, name='Model'):
         code = [TypeAlias('GridPartType', 'GridPart'),
                 TypeAlias("EntityType", "typename GridPart::template Codim< 0 >::EntityType"),
                 TypeAlias("IntersectionType", "typename GridPart::IntersectionType")]
@@ -55,7 +52,7 @@ class BaseModel:
         code.append(TypeAlias('CoefficientType', 'typename std::tuple_element< i, std::tuple< Coefficients... > >::type', targs=['std::size_t i']))
         code.append(TypeAlias('ConstantsType', 'typename std::tuple_element< i, ConstantsTupleType >::type::element_type', targs=['std::size_t i']))
 
-        code.append(Constructor(name), code=UnformattedBlock('constructConstants( std::make_index_sequence< std::tuple_size<ConstantsTupleType>::value >() );'))
+        code.append(Constructor(), code=UnformattedBlock('constructConstants( std::make_index_sequence< std::tuple_size<ConstantsTupleType>::value >() );'))
 
         init = Method('bool', 'init', args=['const EntityType &entity'], const=True)
         init.append('entity_ = &entity;',
@@ -68,18 +65,19 @@ class BaseModel:
 
         code.append([init, entity])
         code.append(Method('std::string', 'name', const=True, code=['return "' + name + '";']))
-        sourceWriter.emit(code)
+        return code
 
-    def post(self, sourceWriter, name='Model', targs=[]):
+    def post(self):
         constant = Method('ConstantsType< i > &', 'constant', targs=['std::size_t i'])
         constant.append('return *( std::get< i >( constants_ ) );')
-        sourceWriter.emit([constant.variant('const ConstantsType< i > &constant', const=True), constant])
+
+        code = [constant.variant('const ConstantsType< i > &constant', const=True), constant]
 
         coefficient = Method('CoefficientType< i > &', 'coefficient', targs=['std::size_t i'])
         coefficient.append('return std::get< i >( coefficients_ );')
-        sourceWriter.emit([coefficient.variant('const CoefficientType< i > &coefficient', const=True), coefficient])
+        code +=[coefficient.variant('const CoefficientType< i > &coefficient', const=True), coefficient]
 
-        sourceWriter.section('private')
+        code.append(AccessModifier('private'))
 
         initCoefficients = Method('void', 'initCoefficients', targs=['std::size_t... i'], args=['std::index_sequence< i... >'], const=True)
         initCoefficients.append('std::ignore = std::make_tuple( (std::get< i >( coefficients_ ).init( entity() ), i)... );')
@@ -87,14 +85,12 @@ class BaseModel:
         constructConstants = Method('void', 'constructConstants', targs=['std::size_t... i'], args=['std::index_sequence< i... >'])
         constructConstants.append('std::ignore = std::make_tuple( (std::get< i >( constants_ ) = std::make_shared<ConstantsType< i >>(), i)... );')
 
-        sourceWriter.emit([initCoefficients, constructConstants])
+        code += [initCoefficients, constructConstants]
 
-        sourceWriter.emit('')
-        sourceWriter.emit(Declaration(Variable('const EntityType *', 'entity_'), 'nullptr', mutable=True))
-        sourceWriter.emit(Declaration(Variable('std::tuple< Coefficients... >', 'coefficients_;'), mutable=True))
-        sourceWriter.emit(Declaration(Variable('ConstantsTupleType', 'constants_;'), mutable=True))
-        sourceWriter.emit(self.vars)
-        sourceWriter.closeStruct(name)
+        code.append(Declaration(Variable('const EntityType *', 'entity_'), 'nullptr', mutable=True))
+        code.append(Declaration(Variable('std::tuple< Coefficients... >', 'coefficients_;'), mutable=True))
+        code.append(Declaration(Variable('ConstantsTupleType', 'constants_;'), mutable=True))
+        code.append(self.vars)
 
     def setCoef(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper'):
         sourceWriter.emit('')
