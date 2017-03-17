@@ -11,7 +11,7 @@ import types
 from dune.common.hashit import hashIt
 from dune.generator import builder
 
-from dune.source.cplusplus import Include, Method, Variable
+from dune.source.cplusplus import Include, Method, UnformattedExpression, UnformattedBlock, Variable
 from dune.source.cplusplus import assign
 from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source import BaseModel
@@ -159,32 +159,44 @@ def gridFunction(grid, code, coefficients, constants):
 
     writer = SourceWriter()
 
-    base.pre(writer, name=locname, targs=(['class Range']))
-    writer.typedef('typename EntityType::Geometry::LocalCoordinate', 'LocalCoordinateType')
+    writer.emit( code );
 
-    writer.openConstMethod('void evaluate', args=['const PointType &x', 'RangeType &value'], targs=['class PointType'],implemented=eval)
+    base.pre(writer, name=locname, targs=(['class Range']))
+
+    code = []
+    code.append(TypeAlias('LocalCoordinateType', 'typename EntityType::Geometry::LocalCoordinate'))
+
+    evaluate = Method('void', 'evaluate', args=['const Point &x', 'RangeType &value'], targs=['class Point'], const=True)
     if eval:
         eval = eval.strip()
         if 'xGlobal' in eval:
-            writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
-        writer.emit(eval.split("\n"))
-    writer.closeConstMethod()
+            evaluate.append(UnformattedExpression('void', 'const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) )'))
+        evaluate.append(UnformattedBlock(eval.split('\n')))
+    else:
+        evaluate.append(UnformattedBlock('DUNE_THROW( Dune::NotImplemented, "evaluate not implemented." );'));
+    code.append(evaluate)
 
-    writer.openConstMethod('void jacobian', args=['const PointType &x', 'JacobianRangeType &value'], targs=['class PointType'],implemented=jac)
+    jacobian = Method('void', 'jacobian', args=['const Point &x', 'JacobianRangeType &value'], targs=['class Point'], const=True)
     if jac:
         jac = jac.strip()
         if 'xGlobal' in jac:
-            writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
-        writer.emit(jac.split("\n"))
-    writer.closeConstMethod()
+            jacobian.append(UnformattedExpression('void', 'const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) )'))
+        jacobian.append(UnformattedBlock(jac.split('\n')))
+    else:
+        jacobian.append(UnformattedBlock('DUNE_THROW( Dune::NotImplemented, "jacobian not implemented." );'));
+    code.append(jacobian)
 
-    writer.openConstMethod('void hessian', args=['const PointType &x', 'HessianRangeType &value'], targs=['class PointType'], implemented=hess)
+    hessian = Method('void', 'hessian', args=['const Point &x', 'JacobianRangeType &value'], targs=['class Point'], const=True)
     if hess:
         hess = hess.strip()
         if 'xGlobal' in hess:
-            writer.emit('const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) );')
-        writer.emit(hess.split("\n"))
-    writer.closeConstMethod()
+            hessian.append(UnformattedExpression('void', 'const DomainType xGlobal = entity().geometry().global( Dune::Fem::coordinate( x ) )'))
+        hessian.append(UnformattedBlock(hess.split('\n')))
+    else:
+        hessian.append(UnformattedBlock('DUNE_THROW( Dune::NotImplemented, "hessian not implemented." );'));
+    code.append(hessian)
+
+    writer.emit(code)
 
     base.post(writer, name=locname, targs=(['class Range']))
 

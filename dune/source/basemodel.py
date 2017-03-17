@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals
 
-from .cplusplus import Declaration, Function, Method, SourceWriter, TypeAlias, Variable
+from .cplusplus import Constructor, Declaration, Function, Method, SourceWriter, TypeAlias, Variable
 
 class BaseModel:
     def __init__(self, dimRange, signature):
@@ -66,9 +66,8 @@ class BaseModel:
         sourceWriter.emit(TypeAlias('CoefficientType', 'typename std::tuple_element< i, std::tuple< Coefficients... > >::type', targs=['std::size_t i']))
         sourceWriter.emit(TypeAlias('ConstantsType', 'typename std::tuple_element< i, ConstantsTupleType >::type::element_type', targs=['std::size_t i']))
 
-        sourceWriter.openMethod(name, args=[])
-        sourceWriter.emit('constructConstants( std::make_index_sequence< std::tuple_size<ConstantsTupleType>::value >() );' )
-        sourceWriter.closeMethod()
+        code = []
+        code.append(Constructor(name), code=UnformattedBlock('constructConstants( std::make_index_sequence< std::tuple_size<ConstantsTupleType>::value >() );'))
 
         init = Method('bool', 'init', args=['const EntityType &entity'], const=True)
         init.append('entity_ = &entity;',

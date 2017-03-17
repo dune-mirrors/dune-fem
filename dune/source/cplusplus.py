@@ -515,43 +515,6 @@ class SourceWriter:
         self.blocks.append((block, name))
         self.begin = True
 
-    def openConstMethod(self, typedName, targs=None, args=None, implemented=True):
-        self.emit(None if self.begin else '')
-        if targs:
-            self.emit('template< ' + ', '.join([arg.strip() for arg in targs]) + ' >')
-        if args:
-            self.emit(typedName + ' ( ' + ', '.join([arg.strip() for arg in args]) + ' ) const')
-        else:
-            self.emit(typedName + ' () const')
-        self.emit('{')
-        self.pushBlock('const method', typedName)
-        if not implemented:
-            struct = self.getName("struct")
-            if struct:
-                fullMethodName = struct + "::" + typedName
-            else:
-                fullMethodName = typedName
-            self.emit('DUNE_THROW(Dune::NotImplemented, "'+fullMethodName+'");')
-
-    def closeConstMethod(self, typedName=None):
-        self.popBlock('const method', typedName)
-        self.emit('}')
-
-    def openMethod(self, typedName, targs=None, args=None):
-        self.emit(None if self.begin else '')
-        if targs:
-            self.emit('template< ' + ', '.join([arg.strip() for arg in targs]) + ' >')
-        if args:
-            self.emit(typedName + ' ( ' + ', '.join([arg.strip() for arg in args]) + ' )')
-        else:
-            self.emit(typedName + ' ()')
-        self.emit('{')
-        self.pushBlock('method', typedName)
-
-    def closeMethod(self, typedName=None):
-        self.popBlock('method', typedName)
-        self.emit('}')
-
     def openFunction(self, typedName, targs=None, args=None):
         self.emit(None if self.begin else '')
         if targs:
