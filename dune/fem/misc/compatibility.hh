@@ -4,7 +4,6 @@
 #include <utility>
 
 #include <dune/grid/common/entity.hh>
-#include <dune/grid/common/entitypointer.hh>
 #include <dune/fem/version.hh>
 
 namespace Dune
@@ -15,14 +14,6 @@ namespace Dune
 
     // make_entity
     // -----------
-
-    template< class Grid, class Implementation >
-    DUNE_VERSION_DEPRECATED_3_0("make_entity")
-    typename Dune::EntityPointer< Grid, Implementation >::Entity
-    make_entity ( const Dune::EntityPointer< Grid, Implementation > &entityPointer )
-    {
-      return *entityPointer;
-    }
 
     template< int codim, int dim, class Grid, template< int, int, class > class Implementation >
     DUNE_VERSION_DEPRECATED_3_0("make_entity")
