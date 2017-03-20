@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals
 
-from .cplusplus import AccessModifier, Constructor, Declaration, Function, Method, SourceWriter, TypeAlias, Variable
+from .cplusplus import AccessModifier, Constructor, Declaration, Function, Method, SourceWriter, TypeAlias, Variable, UnformattedExpression, UnformattedBlock, TypeAlias
 from .fem import declareFunctionSpace
 
 class BaseModel:
@@ -45,14 +45,15 @@ class BaseModel:
             code.append(TypeAlias('CoefficientJacobianRangeType', 'typename CoefficientFunctionSpaceType< i >::JacobianRangeType', targs=['std::size_t i']))
             code.append(TypeAlias('CoefficientHessianRangeType', 'typename CoefficientFunctionSpaceType< i >::HessianRangeType', targs=['std::size_t i']))
         else:
-            code.append(Declaratition(Variable('const std::size_t', 'numCoefficients'), initializer=0, static=True))
+            code.append(Declaration(Variable('const std::size_t', 'numCoefficients'), initializer=0, static=True))
             code.append(TypeAlias('ConstantsTupleType', 'std::tuple<>'))
 
 
         code.append(TypeAlias('CoefficientType', 'typename std::tuple_element< i, std::tuple< Coefficients... > >::type', targs=['std::size_t i']))
         code.append(TypeAlias('ConstantsType', 'typename std::tuple_element< i, ConstantsTupleType >::type::element_type', targs=['std::size_t i']))
 
-        code.append(Constructor(), code=UnformattedBlock('constructConstants( std::make_index_sequence< std::tuple_size<ConstantsTupleType>::value >() );'))
+        # code.append(Constructor(), code=UnformattedBlock('constructConstants( std::make_index_sequence< std::tuple_size<ConstantsTupleType>::value >() );'))
+        code.append(UnformattedBlock('constructConstants( std::make_index_sequence< std::tuple_size<ConstantsTupleType>::value >() );'))
 
         init = Method('bool', 'init', args=['const EntityType &entity'], const=True)
         init.append('entity_ = &entity;',

@@ -11,7 +11,7 @@ import types
 from dune.common.hashit import hashIt
 from dune.generator import builder
 
-from dune.source.cplusplus import Include, Method, UnformattedExpression, UnformattedBlock, Variable
+from dune.source.cplusplus import Include, Method, UnformattedExpression, UnformattedBlock, Variable, Struct, TypeAlias, Constructor, return_
 from dune.source.cplusplus import assign
 from dune.source.cplusplus import ListWriter, SourceWriter
 from dune.source import BaseModel
@@ -101,6 +101,7 @@ def UFLFunction(grid, name, order, expr, **kwargs):
 
 def gridFunction(grid, code, coefficients, constants):
     startTime = timeit.default_timer()
+    writer = SourceWriter(ListWriter())
 
     if type(code) is not dict:
         code = {'eval': code}
@@ -212,7 +213,8 @@ def gridFunction(grid, code, coefficients, constants):
     wrapper = Struct(wrappername, targs=['class GridView', 'class Range'], bases=['GridFunction'])
     wrapper.append(TypeAlias('BaseType', 'GridFunction'))
     wrapper.append(Constructor(args=['const std::string name', 'int order', 'pybind11::handle gridView'], init=['BaseType(name, LocalFunction(), Dune::FemPy::gridPart< GridView >( gridView ), order )']))
-    wrapper.append(Method('LocalFunction &', 'impl', code=return_(UnformattedExpression('this->localFunctionImpl()'))))
+    # ??? wrapper.append(Method('LocalFunction &', 'impl', code=return_(UnformattedExpression('this->localFunctionImpl()'))))
+    wrapper.append(Method('LocalFunction &', 'impl', code=return_('this->localFunctionImpl()')))
     code.append(wrapper)
 
     code.append(TypeAlias('GFWrapper', wrappername + '< GridView, RangeType >'))
