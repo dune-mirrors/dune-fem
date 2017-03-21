@@ -41,7 +41,7 @@ class BaseModel:
                     for coefficient in self.coefficients if not coefficient['constant']]) + ' >'))
 
             code.append(TypeAlias('ConstantsRangeType', 'typename std::tuple_element_t<i,ConstantsTupleType>::element_type', targs=['std::size_t i']))
-            code.append(Declaratition(Variable('const std::size_t', 'numCoefficients'), initializer=UnformattedExpression('std::size_t', 'std::tuple_size< CoefficientFunctionSpaceTupleType >::value'), static=True))
+            code.append(Declaration(Variable('const std::size_t', 'numCoefficients'), initializer=UnformattedExpression('std::size_t', 'std::tuple_size< CoefficientFunctionSpaceTupleType >::value'), static=True))
             code.append(TypeAlias('CoefficientFunctionSpaceType', 'typename std::tuple_element< i, CoefficientFunctionSpaceTupleType >::type', targs=['std::size_t i']))
             code.append(TypeAlias('CoefficientRangeType', 'typename CoefficientFunctionSpaceType< i >::RangeType', targs=['std::size_t i']))
             code.append(TypeAlias('CoefficientJacobianRangeType', 'typename CoefficientFunctionSpaceType< i >::JacobianRangeType', targs=['std::size_t i']))
