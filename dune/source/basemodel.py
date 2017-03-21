@@ -28,7 +28,7 @@ class BaseModel:
         code.append(Declaration(Variable("const int", "dimLocal"), initializer=UnformattedExpression("int", "GridPartType::dimension"), static=True))
 
         if self.coefficients:
-            code.append(TypeAlias('CoefficientFunctionSpaceTupleType', 'std::tuple< ' + ', '.join(\
+            code.append(TypeAlias('ConstantsTupleType', 'std::tuple< ' + ', '.join(\
                     [('std::shared_ptr<Dune::FieldVector< ' +\
                     SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
                     str(coefficient['dimRange']) + ' >>')\
@@ -98,7 +98,7 @@ class BaseModel:
     def setCoef(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper'):
         sourceWriter.emit('')
         sourceWriter.emit(TypeAlias('Coefficients', 'std::tuple< ' + ', '.join(\
-                [('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< ' +\
+                [('Dune::FemPy::VirtualizedGridFunction< GridPartType, Dune::FieldVector< ' +\
                 SourceWriter.cpp_fields(coefficient['field']) + ', ' +\
                 str(coefficient['dimRange']) + ' > >') \
                 for coefficient in self.coefficients if not coefficient["constant"]]) + ' >'))
