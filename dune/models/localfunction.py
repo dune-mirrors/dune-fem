@@ -13,7 +13,7 @@ from dune.generator import builder
 
 from dune.source.cplusplus import Include, Method, UnformattedExpression, UnformattedBlock, Variable, Struct, TypeAlias, Constructor, return_
 from dune.source.cplusplus import assign
-from dune.source.cplusplus import ListWriter, SourceWriter
+from dune.source.cplusplus import ListWriter, StringWriter, SourceWriter
 from dune.source import BaseModel
 from dune.source.fem import declareFunctionSpace
 
@@ -101,7 +101,6 @@ def UFLFunction(grid, name, order, expr, **kwargs):
 
 def gridFunction(grid, code, coefficients, constants):
     startTime = timeit.default_timer()
-    writer = SourceWriter(ListWriter())
 
     if type(code) is not dict:
         code = {'eval': code}
@@ -184,7 +183,7 @@ def gridFunction(grid, code, coefficients, constants):
         jacobian.append(UnformattedBlock('DUNE_THROW( Dune::NotImplemented, "jacobian not implemented." );'));
     struct.append(jacobian)
 
-    hessian = Method('void', 'hessian', args=['const Point &x', 'JacobianRangeType &value'], targs=['class Point'], const=True)
+    hessian = Method('void', 'hessian', args=['const Point &x', 'HessianRangeType &value'], targs=['class Point'], const=True)
     if hess:
         hess = hess.strip()
         if 'xGlobal' in hess:
@@ -197,28 +196,28 @@ def gridFunction(grid, code, coefficients, constants):
     struct.append(base.post())
     code.append(struct)
 
-    code.append(TypeAlias('GridPart', 'Dune::FemPy::GridPart< ' + grid._typeName + ' >'))
-    code.append(TypeAlias('GridView', 'typename GridPart::GridViewType'))
+    code.append(TypeAlias('GridPartType', 'Dune::FemPy::GridPart< ' + grid._typeName + ' >'))
+    code.append(TypeAlias('GridView', 'typename GridPartType::GridViewType'))
     code.append(declareFunctionSpace("typename GridPartType::ctype", "double", UnformattedExpression("int", "GridPartType::dimensionworld"), dimRange))
 
     if base.coefficients:
-        code.append(TypeAlias('LocalFunction', locname + '< GridPart, RangeType '
-            + ''.join([(', Dune::FemPy::VirtualizedLocalFunction< GridPart, Dune::FieldVector< ' \
+        code.append(TypeAlias('LocalFunction', locname + '< GridPartType, RangeType '
+            + ''.join([(', Dune::FemPy::VirtualizedLocalFunction< GridPartType, Dune::FieldVector< ' \
                       + SourceWriter.cpp_fields(coefficient['field']) + ', ' + str(coefficient['dimRange']) + ' > >') \
                       for coefficient in base.coefficients if not coefficient["constant"]]) + ' >'))
     else:
-        code.append(TypeAlias('LocalFunction', locname + '< GridPart, RangeType >'))
+        code.append(TypeAlias('LocalFunction', locname + '< GridPartType, RangeType >'))
     code.append(TypeAlias('GridFunction', 'Dune::Fem::LocalFunctionAdapter< LocalFunction >'))
 
     wrapper = Struct(wrappername, targs=['class GridView', 'class Range'], bases=['GridFunction'])
     wrapper.append(TypeAlias('BaseType', 'GridFunction'))
     wrapper.append(Constructor(args=['const std::string name', 'int order', 'pybind11::handle gridView'], init=['BaseType(name, LocalFunction(), Dune::FemPy::gridPart< GridView >( gridView ), order )']))
-    # ??? wrapper.append(Method('LocalFunction &', 'impl', code=return_(UnformattedExpression('this->localFunctionImpl()'))))
-    wrapper.append(Method('LocalFunction &', 'impl', code=return_('this->localFunctionImpl()')))
+    wrapper.append(Method('LocalFunction &', 'impl', code=return_(UnformattedExpression('auto', 'this->localFunctionImpl()'))))
     code.append(wrapper)
 
     code.append(TypeAlias('GFWrapper', wrappername + '< GridView, RangeType >'))
 
+    writer = SourceWriter(StringWriter())
     writer.emit(code)
 
     if base.coefficients:
