@@ -27,37 +27,37 @@ namespace Dune
       typedef typename Codim< 0 >::EntityType EntityType;
 
       template< class Entity >
-      static bool contains ( const Entity & entity )
+      static bool contains ( const Entity & )
       {
         return true;
       }
 
       template< int cd >
-      static bool contains ( const typename Codim< cd >::EntityType & entity )
+      static bool contains ( const typename Codim< cd >::EntityType & )
       {
         return true;
       }
 
-      template < class IntersectionIteratorType >
-      static bool intersectionBoundary( const IntersectionIteratorType & it )
+      template < class Intersection >
+      static bool intersectionBoundary( const Intersection & )
       {
         return true;
       }
 
-      template < class IntersectionIteratorType >
-      static int intersectionBoundaryId(const IntersectionIteratorType & it)
+      template < class Intersection >
+      static int intersectionBoundaryId(const Intersection & )
       {
         return 1;
       }
 
-      template <class IntersectionIteratorType>
-      static bool intersectionNeighbor( const IntersectionIteratorType & it )
+      template <class Intersection >
+      static bool intersectionNeighbor( const Intersection & )
       {
         return true;
       }
 
       template< class Intersection >
-      static bool interiorIntersection( const Intersection & intersection )
+      static bool interiorIntersection( const Intersection & )
       {
         return true;
       }

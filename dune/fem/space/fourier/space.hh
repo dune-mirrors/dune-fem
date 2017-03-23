@@ -17,6 +17,7 @@
 #include <dune/fem/space/fourier/declaration.hh>
 #include <dune/fem/space/fourier/dofmapper.hh>
 #include <dune/fem/space/fourier/functionset.hh>
+#include <dune/fem/space/fourier/interpolate.hh>
 
 namespace Dune
 {
@@ -124,6 +125,8 @@ namespace Dune
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
       BlockMapperType &blockMapper () const { return blockMapper_; }
+
+      const FunctionSetType &functionSet () const { return functionSet_; }
 
     private:
       mutable BlockMapperType blockMapper_;

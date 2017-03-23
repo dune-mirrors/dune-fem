@@ -24,6 +24,6 @@ dune_add_test( NAME test_tuplediscretefunction SOURCES test-tuplediscretefunctio
 COMPILE_DEFINITIONS "${GRIDTYPE}" "GRIDDIM=${GRIDDIM}"
 LINK_LIBRARIES dunefem )
 
-dune_add_test( NAME dftest SOURCES dftest.cc
+dune_add_test( NAME test_df SOURCES test-df.cc
 COMPILE_DEFINITIONS "${GRIDTYPE}" "GRIDDIM=${GRIDDIM}"
 LINK_LIBRARIES dunefem )

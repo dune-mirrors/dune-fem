@@ -36,6 +36,8 @@ static const int dimw = Dune::GridSelector::dimworld;
   #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
+#include <dune/fem/test/testgrid.hh>
+
 using namespace Dune;
 using namespace Fem;
 
@@ -155,14 +157,9 @@ int main (int argc, char **argv)
     ml = atoi( argv[1] );
 
   std::vector< double> error(ml);
-  std::stringstream tmp;
-  tmp << dimw;
-  std::string macroGridName (tmp.str());
-  macroGridName += "dgrid.dgf";
 
-  GridPtr< MyGridType > gridptr( macroGridName );
-  MyGridType &grid = *gridptr;
-  const int step = Dune::DGFGridInfo< MyGridType >::refineStepsForHalf();
+  MyGridType &grid = Dune::Fem::TestGrid::grid();
+  const int step = Dune::Fem::TestGrid::refineStepsForHalf();
 
   GridPartType part ( grid );
   DiscreteFunctionSpaceType linFuncSpace ( part );

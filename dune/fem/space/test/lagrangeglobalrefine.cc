@@ -17,6 +17,8 @@ const int polOrder = POLORDER;
 #include <dune/fem/misc/h1norm.hh>
 #include <dune/fem/io/parameter.hh>
 
+#include <dune/fem/test/testgrid.hh>
+
 
 
 // Function to Interpolate
@@ -164,15 +166,10 @@ try
 
   const int ml = Dune::Fem::Parameter::getValue< int >( "lagrangeglobalrefine.maxlevel", 2 );
 
-  std::ostringstream gridName;
-  gridName << MyGridType::dimension << "dgrid.dgf";
-  Dune::GridPtr< MyGridType > gridptr( gridName.str().c_str() );
+  MyGridType &grid = Dune::Fem::TestGrid::grid();
 
-  //const int step = DGFGridInfo< MyGridType >::refineStepsForHalf();
-  gridptr->globalRefine( ml );
-
-  for( int level = 0; level < gridptr->maxLevel(); ++level )
-    algorithm( *gridptr, level );
+  for( int level = 0; level < grid.maxLevel(); ++level )
+    algorithm( grid, level );
 
   return 0;
 }

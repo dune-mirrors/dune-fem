@@ -1,9 +1,10 @@
 #ifndef DUNE_FEM_STENCIL_HH
 #define DUNE_FEM_STENCIL_HH
 
-#include <iostream>
-#include <set>
+#include <algorithm>
 #include <map>
+#include <numeric>
+#include <set>
 
 #include <dune/grid/common/gridenums.hh>
 #include <dune/fem/misc/functor.hh>
@@ -18,7 +19,7 @@ namespace Dune
      *  To assemble a matrix from an operator the method reserve has to be
      *  called on the linear operator class passing a stencil object as
      *  parameter. To setup a full stencil the method fill has to be
-     *  called with each pair (en,nb) for which the locslMatrix method is
+     *  called with each pair (en,nb) for which the localMatrix method is
      *  called during the assembly.
      *
      *  \tparam  DomainSpace  type of discrete function space for the domain
@@ -96,13 +97,8 @@ namespace Dune
        */
       int maxNonZerosEstimate() const
       {
-        int ret = 0;
-        typedef typename GlobalStencilType::const_iterator StencilIteratorType;
-        const GlobalStencilType &glStencil = globalStencil();
-        StencilIteratorType end = glStencil.end();
-        for ( StencilIteratorType it = glStencil.begin(); it != end; ++it)
-          ret = std::max(ret,(int)it->second.size());
-        return ret;
+        return std::accumulate( globalStencil().begin(), globalStencil().end(), 0,
+         []( int ret, const auto& entry ){ return std::max( ret, static_cast<int>( entry.second.size() ) ); } );
       }
 
     private:
@@ -236,21 +232,14 @@ namespace Dune
         for (const auto & entity: dSpace)
         {
           BaseType::fill(entity,entity);
-          typedef typename DomainSpace::GridPartType GridPart;
-          typedef typename GridPart :: IntersectionIteratorType IntersectionIteratorType;
-          typedef typename IntersectionIteratorType :: Intersection IntersectionType;
-
-          const IntersectionIteratorType endit = dSpace.gridPart().iend( entity );
-          for( IntersectionIteratorType it = dSpace.gridPart().ibegin( entity );
-               it != endit; ++it )
+          for (const auto & intersection: intersections(dSpace.gridPart(), entity) )
           {
-            const IntersectionType& intersection = *it;
             if ( onlyNonContinuousNeighbors
                 && rSpace.continuous(intersection) && dSpace.continuous(intersection) )
               continue;
             if( intersection.neighbor() )
             {
-              DomainEntityType neighbor = intersection.outside();
+              auto neighbor = intersection.outside();
               BaseType::fill(neighbor,entity);
             }
           }

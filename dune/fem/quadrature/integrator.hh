@@ -1,7 +1,6 @@
 #ifndef DUNE_FEM_INTEGRATOR_HH
 #define DUNE_FEM_INTEGRATOR_HH
 
-//- Dune includes
 #include <dune/fem/quadrature/quadrature.hh>
 
 namespace Dune
@@ -35,9 +34,6 @@ namespace Dune
       typedef typename QuadratureType :: EntityType EntityType;
 
     protected:
-      typedef typename EntityType :: Geometry GeometryType;
-
-    protected:
       const int order_;
 
     public:
@@ -46,7 +42,7 @@ namespace Dune
           \param[in]  order   polynomial order for which the used quadrature
                               shall be exact
        */
-      inline explicit Integrator ( unsigned int order )
+      explicit Integrator ( unsigned int order )
       : order_( order )
       {}
 
@@ -68,28 +64,23 @@ namespace Dune
                                  added
        */
       template< class Function >
-      inline void integrateAdd ( const EntityType &entity,
-                                 const Function &function,
-                                 typename Function :: RangeType &ret ) const
+      void integrateAdd ( const EntityType &entity,
+                          const Function &function,
+                          typename Function :: RangeType &ret ) const
       {
         typedef typename Function :: RangeType RangeType;
         typedef typename Function :: RangeFieldType RangeFieldType;
         typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
 
-        const GeometryType &geometry = entity.geometry();
         const QuadratureType quadrature( entity, order_ );
-
-        const unsigned int numQuadraturePoints = quadrature.nop();
-        for( unsigned int pt = 0; pt < numQuadraturePoints; ++pt )
+        for( const auto& qp : quadrature )
         {
           // evaluate function in quadrature point
           RangeType phi;
-          function.evaluate( quadrature[ pt ], phi );
+          function.evaluate( qp, phi );
 
           // calculate the weight of the quadrature point
-          const RealType weight
-            = geometry.integrationElement( quadrature.point( pt ) )
-              * quadrature.weight( pt );
+          const RealType weight = entity.geometry().integrationElement( qp.position() ) * qp.weight();
 
           ret.axpy( weight, phi );
         }
@@ -112,9 +103,9 @@ namespace Dune
           \param[out]  ret       value of the integral
        */
       template< class Function >
-      inline void integrate ( const EntityType &entity,
-                              const Function &function,
-                              typename Function :: RangeType &ret ) const
+      void integrate ( const EntityType &entity,
+                       const Function &function,
+                       typename Function :: RangeType &ret ) const
       {
         ret = 0;
         integrateAdd( entity, function, ret );

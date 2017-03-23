@@ -21,8 +21,8 @@ namespace Dune
         Handling Parameters, i.e., values that can be set after compilation, in
         dune-fem is extremely easy. Just add
         \code
-        Dune::MPIManager::initialize( argc, argv );
-        Dune::Parameter::append( argc, argv );
+        Dune::Fem::MPIManager::initialize( argc, argv );
+        Dune::Fem::Parameter::append( argc, argv );
         \endcode
         at the head of your main function. Parameters are strings of the
         format "key: value". Any command line argument containing a colon

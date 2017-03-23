@@ -96,16 +96,15 @@ namespace Dune
         tag_( tag )
       {}
 
-      //! \brief copy constructor
-      DomainFilter ( const ThisType & other )
-      : indexSet_( other.indexSet_ ),
-        tags_( other.tags_ ),
-        tag_( other.tag_ )
-      {}
+      DomainFilter ( const ThisType & ) = default;
+      DomainFilter ( ThisType && ) = default;
+
+      ThisType &operator= ( const ThisType & ) = default;
+      ThisType &operator= ( ThisType && ) = default;
 
       //! \brief return false since all interior intersections should be skipped
       template< class Intersection >
-      bool interiorIntersection( const Intersection &intersection ) const
+      bool interiorIntersection( const Intersection & ) const
       {
         return false;
       }

@@ -218,6 +218,28 @@ namespace Dune
         return asImp().localFunction( entity );
       }
 
+      /** \brief obtain an uninitialized local function (read-write)
+       *
+       *  \note before calling any method of the local function initialize it passing an entity
+       *
+       *  \returns an uninitialized local function
+       */
+      LocalFunctionType localFunction ()
+      {
+        return asImp().localFunction();
+      }
+
+      /** \brief obtain an uninitialized local function (read-write)
+       *
+       * \note before calling any method of the local function initialize it passing an entity
+       *
+       *  \returns an uninitialized local function
+       */
+      const LocalFunctionType localFunction () const
+      {
+        return asImp().localFunction();
+      }
+
       /** \brief set all degrees of freedom to zero */
       void clear()
       {
@@ -612,6 +634,12 @@ namespace Dune
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
       const LocalFunctionType localFunction ( const EntityType &entity ) const { return LocalFunctionType( asImp(), entity ); }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction() */
+      LocalFunctionType localFunction () { return LocalFunctionType( asImp() ); }
+
+      /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction() */
+      const LocalFunctionType localFunction () const { return LocalFunctionType( asImp() ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::clear() */
       void clear() { dofVector().clear(); }
