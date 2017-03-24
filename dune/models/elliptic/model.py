@@ -52,7 +52,7 @@ class EllipticModel:
         self.dirichlet = [assign(self.arg_r, construct("RangeType", 0))]
         self.symmetric = False
 
-    def addCoefficient(self, dimRange, name, field="double"):
+    def addCoefficient(self, dimRange, name=None, field="double"):
         idx = len(self._coefficients)
         self._coefficients.append({'dimRange': dimRange, 'name': name, 'field': field})
         return idx
