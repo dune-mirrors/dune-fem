@@ -206,6 +206,12 @@ class LDLOp:public Operator<DF, DF>
     out<<"Solver: LDL direct solver"<<std::endl;
   }
 
+  // \brief Print some statistics about the LDL decomposition.
+  void printDecompositionInfo() const
+  {
+    amd_info(info_);
+  }
+
   double averageCommTime() const
   {
     return 0.0;
@@ -272,6 +278,7 @@ class LDLOp:public Operator<DF, DF>
   mutable DofType* Y_;
   mutable DofType* Lx_;
   mutable int* Li_;
+  mutable double info_[AMD_INFO];
 
   // \brief Computes the LDL decomposition.
   void decompose() const
@@ -288,11 +295,10 @@ class LDLOp:public Operator<DF, DF>
     P_ = new int [dimMat];
     Pinv_ = new int [dimMat];
 
-    double Info [AMD_INFO];
-    if(amd_order (dimMat, ccsmat_.getColStart(), ccsmat_.getRowIndex(), P_, (DofType *) NULL, Info) < AMD_OK)
+    if(amd_order (dimMat, ccsmat_.getColStart(), ccsmat_.getRowIndex(), P_, (DofType *) NULL, info_) < AMD_OK)
       DUNE_THROW(InvalidStateException,"LDL Error: AMD failed!");
     if(verbose_)
-      amd_info (Info);
+      printDecompositionInfo();
     // compute the symbolic factorisation
     ldl_symbolic(dimMat, ccsmat_.getColStart(), ccsmat_.getRowIndex(), Lp_, Parent_, Lnz_, Flag_, P_, Pinv_);
     // initialise those entries of additionalVectors_ whose dimension is known only now
