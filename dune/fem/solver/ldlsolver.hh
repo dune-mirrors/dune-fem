@@ -305,17 +305,17 @@ class LDLOp:public Operator<DF, DF>
     Lx_ = new DofType [Lp_[dimMat]];
     Li_ = new int [Lp_[dimMat]];
     // compute the numeric factorisation
-    const std::size_t rank(ldl_numeric(dimMat, ccsmat_.getColStart(), ccsmat_.getRowIndex(), ccsmat_.getValues(),
-                               Lp_, Parent_, Lnz_, Li_, Lx_, D_, Y_, Pattern_, Flag_, P_, Pinv_));
+    const std::size_t k(ldl_numeric(dimMat, ccsmat_.getColStart(), ccsmat_.getRowIndex(), ccsmat_.getValues(),
+                                    Lp_, Parent_, Lnz_, Li_, Lx_, D_, Y_, Pattern_, Flag_, P_, Pinv_));
     // free temporary vectors
     delete [] Flag_;
     delete [] Pattern_;
     delete [] Parent_;
     delete [] Lnz_;
 
-    if(rank!=dimMat)
+    if(k!=dimMat)
     {
-      std::cerr<<"LDL Error: rank is "<<rank<<" while matrix size is "<<dimMat<<"!"<<std::endl;
+      std::cerr<<"LDL Error: D("<<k<<","<<k<<") is zero!"<<std::endl;
       DUNE_THROW(InvalidStateException,"LDL Error: factorisation failed!");
     }
   }
