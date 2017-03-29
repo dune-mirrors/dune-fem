@@ -61,3 +61,5 @@ dune_add_test( SOURCES test-globalrefine.cc COMPILE_DEFINITIONS "${DEFAULTFLAGS}
 
 dune_add_test( SOURCES test-balladapt.cc LINK_LIBRARIES dunefem MPI_RANKS 1 4 TIMEOUT 300 )
 dune_add_test( SOURCES test-slavedofs.cc LINK_LIBRARIES dunefem MPI_RANKS 1 4 TIMEOUT 300 COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE" )
+
+dune_add_test( SOURCES test-tupledgspace.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )

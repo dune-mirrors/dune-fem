@@ -90,7 +90,7 @@ namespace Dune
       explicit DiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                             const InterfaceType commInterface = InteriorBorder_All_Interface,
                                             const CommunicationDirection commDirection = ForwardCommunication )
-        : BaseType( gridPart, basisFunctionSets( gridPart ), commInterface, commDirection )
+        : BaseType( gridPart, makeBasisFunctionSets( gridPart ), commInterface, commDirection )
       {}
 
       InterpolationType interpolation ( const EntityType &entity ) const
@@ -99,7 +99,7 @@ namespace Dune
       }
 
     private:
-      static BasisFunctionSetsType basisFunctionSets ( const GridPartType &gridPart )
+      static BasisFunctionSetsType makeBasisFunctionSets ( const GridPartType &gridPart )
       {
         typedef typename BasisFunctionSetsType::ShapeFunctionSetsType ShapeFunctionSetsType;
         ShapeFunctionSetsType shapeFunctionSets( gridPart );

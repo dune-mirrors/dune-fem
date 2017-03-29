@@ -435,6 +435,10 @@ namespace Dune
     public:
       typedef typename ToNewRange< ScalarFunctionSpaceType, RangeVector >::Type FunctionSpaceType;
 
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+
       template< class ... Args >
       VectorialShapeFunctionSet ( Args&& ... args )
       : scalarShapeFunctionSet_( std::forward< Args > ( args ) ... )

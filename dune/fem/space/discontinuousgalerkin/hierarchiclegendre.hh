@@ -110,7 +110,7 @@ namespace Dune
       explicit HierarchicLegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                                               const InterfaceType commInterface = InteriorBorder_All_Interface,
                                                               const CommunicationDirection commDirection = ForwardCommunication )
-        : BaseType( gridPart, basisFunctionSets( gridPart ), commInterface, commDirection )
+        : BaseType( gridPart, makeBasisFunctionSets( gridPart ), commInterface, commDirection )
       {}
 
       static DFSpaceIdentifier type () { return HierarchicLegendreDGSpace_id; }
@@ -121,7 +121,7 @@ namespace Dune
       }
 
     private:
-      static BasisFunctionSetsType basisFunctionSets ( const GridPartType &gridPart )
+      static BasisFunctionSetsType makeBasisFunctionSets ( const GridPartType &gridPart )
       {
         typedef typename BasisFunctionSetsType::ShapeFunctionSetsType ShapeFunctionSetsType;
         ShapeFunctionSetsType shapeFunctionSets( gridPart );
