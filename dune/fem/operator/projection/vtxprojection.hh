@@ -1,8 +1,16 @@
 #ifndef DUNE_FEM_VTXPROJECTION_HH
 #define DUNE_FEM_VTXPROJECTION_HH
 
-// #include <dune/grid/utility/twistutility.hh>
+#include <cstddef>
+#include <cmath>
 
+#include <algorithm>
+#include <functional>
+#include <vector>
+
+#include <dune/grid/common/rangegenerators.hh>
+
+#include <dune/fem/common/coordinate.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/lagrange.hh>
@@ -27,6 +35,161 @@ namespace Dune
 
     struct VtxProjectionImpl
     {
+      template< class Entity, class FunctionSpace, class Weight >
+      struct WeightLocalFunction
+      {
+        typedef Entity EntityType;
+        typedef FunctionSpace FunctionSpaceType;
+
+        typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+        typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+
+        typedef typename FunctionSpaceType::DomainType DomainType;
+        typedef typename FunctionSpaceType::RangeType RangeType;
+
+        typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+        typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+
+        typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
+
+        static const int dimDomain = FunctionSpaceType::dimDomain;
+        static const int dimRange = FunctionSpaceType::dimRange;
+
+        explicit WeightLocalFunction ( Weight &weight ) : weight_( weight ) {}
+
+        void init ( const EntityType &entity ) { weight_.setEntity( entity ); }
+
+        template< class Point >
+        void evaluate ( const Point &x, RangeType &value ) const
+        {
+          RangeFieldType weight = weight_( coordinate( x ) );
+          for( int i = 0; i < dimRange; ++i )
+            value[ i ] = weight;
+        };
+
+        template< class Point >
+        void jacobian ( const Point &x, JacobianRangeType &jacobian ) const
+        {
+          DUNE_THROW( NotImplemented, "Vertex projection weights do not provide Jacobians." );
+        }
+
+        template< class Point >
+        void hessian ( const Point &x, HessianRangeType &hessian ) const
+        {
+          DUNE_THROW( NotImplemented, "Vertex projection weights do not provide Hessians." );
+        }
+
+        template< class Quadrature, class Values >
+        void evaluateQuadrature ( const Quadrature &quadrature, Values &values ) const
+        {
+          for( const auto &qp : quadrature )
+            doEvaluate( qp, values[ qp.index() ] );
+        }
+
+      private:
+        template< class Point >
+        void doEvaluate ( const Point &x, RangeType &value ) const
+        {
+          evaluate( x, value );
+        };
+
+        template< class Point >
+        void doEvaluate ( const Point &x, JacobianRangeType &value ) const
+        {
+          jacobian( x, value );
+        };
+
+        template< class Point >
+        void doEvaluate ( const Point &x, HessianRangeType &value ) const
+        {
+          hessian( x, value );
+        };
+
+        Weight &weight_;
+      };
+
+      template< class DiscreteFunction, class Intersection >
+      struct OutsideLocalFunction
+      {
+        typedef typename DiscreteFunction::LocalFunctionType LocalFunctionType;
+
+        typedef typename LocalFunctionType::EntityType EntityType;
+        typedef typename LocalFunctionType::FunctionSpaceType FunctionSpaceType;
+
+        typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+        typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+
+        typedef typename FunctionSpaceType::DomainType DomainType;
+        typedef typename FunctionSpaceType::RangeType RangeType;
+
+        typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+        typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+
+        typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
+
+        static const int dimDomain = FunctionSpaceType::dimDomain;
+        static const int dimRange = FunctionSpaceType::dimRange;
+
+        typedef typename Intersection::LocalGeometry GeometryType;
+
+        explicit OutsideLocalFunction ( const DiscreteFunction &df ) : localFunction_( df ) {}
+
+        void init ( const EntityType &outside, const GeometryType &geoIn, const GeometryType &geoOut )
+        {
+          localFunction_.init( outside );
+          geoIn_ = &geoIn;
+          geoOut_ = &geoOut;
+        }
+
+        template< class Point >
+        void evaluate ( const Point &x, RangeType &value ) const
+        {
+          localFunction_.evaluate( geoOut_->global( geoIn_->local( coordinate( x ) ) ), value );
+        };
+
+        template< class Point >
+        void jacobian ( const Point &x, JacobianRangeType &jacobian ) const
+        {
+          DUNE_THROW( NotImplemented, "Vertex projection weights do not provide Jacobians." );
+        }
+
+        template< class Point >
+        void hessian ( const Point &x, HessianRangeType &hessian ) const
+        {
+          DUNE_THROW( NotImplemented, "Vertex projection weights do not provide Hessians." );
+        }
+
+        template< class Quadrature, class Values >
+        void evaluateQuadrature ( const Quadrature &quadrature, Values &values ) const
+        {
+          for( const auto &qp : quadrature )
+            doEvaluate( qp, values[ qp.index() ] );
+        }
+
+      private:
+        template< class Point >
+        void doEvaluate ( const Point &x, RangeType &value ) const
+        {
+          evaluate( x, value );
+        };
+
+        template< class Point >
+        void doEvaluate ( const Point &x, JacobianRangeType &value ) const
+        {
+          jacobian( x, value );
+        };
+
+        template< class Point >
+        void doEvaluate ( const Point &x, HessianRangeType &value ) const
+        {
+          hessian( x, value );
+        };
+
+        LocalFunctionType localFunction_;
+        const GeometryType *geoIn_ = nullptr;
+        const GeometryType *geoOut_ = nullptr;
+      };
+
       template< class Function, class DiscreteFunction, class Weight >
       static void project ( const Function &f, DiscreteFunction &u, Weight &weight )
       {
@@ -34,118 +197,113 @@ namespace Dune
         typedef typename Function::LocalFunctionType LocalFunctionType;
 
         typedef typename DiscreteFunction::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-        typedef typename DiscreteFunction::LocalFunctionType LocalDiscreteFunctionType;
+        typedef typename DiscreteFunction::GridPartType GridPartType;
+        typedef typename DiscreteFunction::DofType DofType;
 
-        typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-        typedef typename DiscreteFunctionSpaceType::LagrangePointSetType LagrangePointSetType;
-
-        typedef typename GridPartType::IntersectionIteratorType IntersectionIteratorType;
         typedef typename GridPartType::IntersectionType IntersectionType;
         typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
-        typedef typename GridPartType::template Codim< 0 >::GeometryType GeometryType;;
 
-        typedef typename LagrangePointSetType::template Codim< 1 >::SubEntityIteratorType FaceDofIteratorType;
-
-        typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-        typedef typename Dune::FieldTraits< RangeFieldType >::real_type RealType;
-        typedef typename FunctionSpaceType::RangeType RangeType;
-        typedef typename GeometryType::LocalCoordinate LocalCoordinateType;
-
-        const unsigned int dimRange = FunctionSpaceType::dimRange;
         const DiscreteFunctionSpaceType &space = u.space();
+        const auto &blockMapper = space.blockMapper();
+        DiscreteFunction w ( "weight", space );
 
         u.clear();
-        DiscreteFunction w ( "weight", space );
         w.clear();
+
+        LocalFunctionType lf( f );
+        WeightLocalFunction< EntityType, FunctionSpaceType, Weight > localWeight( weight );
+
+        std::vector< DofType > ldu, ldw;
+        const std::size_t localBlockSize = DiscreteFunctionSpaceType::localBlockSize;
+        const std::size_t maxNumBlocks = blockMapper.maxNumDofs();
+        ldu.reserve( maxNumBlocks * localBlockSize );
+        ldw.reserve( maxNumBlocks * localBlockSize );
 
         for ( const auto& entity : space )
         {
-          weight.setEntity( entity );
+          // initialize local function and local weight
+          lf.init( entity );
+          localWeight.init( entity );
 
-          LocalDiscreteFunctionType lw = w.localFunction( entity );
-          LocalDiscreteFunctionType lu = u.localFunction( entity );
+          // resize local DoF vectors
+          const std::size_t numBlocks = blockMapper.numDofs( entity );
+          ldu.resize( numBlocks * localBlockSize );
+          ldw.resize( numBlocks * localBlockSize );
 
-          const LocalFunctionType lf = f.localFunction( entity );
-          const LagrangePointSetType &lagrangePointSet = space.lagrangePointSet( entity );
+          // interpolate function values and weights
+          const auto interpolation = space.interpolation( entity );
+          interpolation( lf, ldu );
+          interpolation( localWeight, ldw );
 
-          const unsigned int numPoints = lagrangePointSet.nop();
-          for( unsigned int pt = 0; pt < numPoints; ++pt )
-          {
-            RangeType val;
-            lf.evaluate( lagrangePointSet[ pt ], val );
+          // multiply function values by weights
+          std::transform( ldu.begin(), ldu.end(), ldw.begin(), ldu.begin(), std::multiplies< DofType >() );
 
-            RealType wght = weight( lagrangePointSet.point( pt ) );
-
-            for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate )
-            {
-              lu[ dimRange*pt + coordinate ] += wght*val[ coordinate ];
-              lw[ dimRange*pt + coordinate ] += wght;
-            }
-          }
+          // add result to global DoF vectors
+          u.addLocalDofs( entity, ldu );
+          w.addLocalDofs( entity, ldw );
         }
 
-        u.communicate();
-        w.communicate();
+        space.communicate( u, DFCommunicationOperation::Add() );
+        space.communicate( w, DFCommunicationOperation::Add() );
 
-        typedef typename DiscreteFunction::DofIteratorType DofIteratorType;
-
-        const DofIteratorType udend = u.dend();
-        DofIteratorType udit = u.dbegin();
-        DofIteratorType wdit = w.dbegin();
-        for( ; udit != udend; ++udit, ++wdit )
-        {
-          // assert( (*wdit > 0.) || (*udit == 0.) );
-          RealType weight = std::abs( *wdit );
-          if ( weight > 1e-12 )
-            *udit /= weight;
-        }
+        // divide DoFs by according weights
+        std::transform( u.dbegin(), u.dend(), w.dbegin(), u.dbegin(), [] ( DofType u, DofType w ) {
+            using std::abs;
+            typename Dune::FieldTraits< DofType >::field_type weight = abs( w );
+            return (weight > 1e-12 ? u / weight : u);
+          } );
 
         // make function continuous over hanging nodes
 
         if( !GridPartType::Traits::conforming && Fem::GridPartCapabilities::hasGrid< GridPartType >::v)
         {
-          const GridPartType &gridPart =  space.gridPart();
-          for( const auto& entity : space )
+          std::vector< bool > onSubEntity;
+          onSubEntity.reserve( maxNumBlocks );
+
+          OutsideLocalFunction< DiscreteFunction, IntersectionType > uOutside( u );
+
+          for( const auto &inside : space )
           {
-            const LagrangePointSetType &lagrangePointSet = space.lagrangePointSet( entity );
-
-            const IntersectionIteratorType iend = gridPart.iend( entity );
-            for( IntersectionIteratorType iit = gridPart.ibegin( entity ); iit != iend; ++iit )
+            for( const auto &intersection : intersections( space.gridPart(), inside ) )
             {
-              const IntersectionType &intersection = *iit;
+              if( intersection.conforming() || !intersection.neighbor() )
+                continue;
 
-              if( intersection.neighbor() )
+              // skip this intersection, if inside is finer than outside
+              const EntityType outside = intersection.outside();
+              if( inside.level() <= outside.level() )
+                continue;
+
+              // initialize "outside local function"
+              // note: intersection geometries must live until end of intersection loop!
+              const auto geoIn = intersection.geometryInInside();
+              const auto geoOut = intersection.geometryInOutside();
+              uOutside.init( outside, geoIn, geoOut );
+
+              // resize local DoF vectors
+              const std::size_t numBlocks = blockMapper.numDofs( inside );
+              ldu.resize( numBlocks * localBlockSize );
+              ldw.resize( numBlocks * localBlockSize );
+
+              // interpolate "outside" values
+              const auto interpolation = space.interpolation( inside );
+              interpolation( uOutside, ldw );
+
+              // fetch inside local DoFs
+              u.getLocalDofs( inside, ldu );
+
+              // patch DoFs assigned to the face
+              blockMapper.onSubEntity( inside, intersection.indexInInside(), 1, onSubEntity );
+              for( std::size_t i = 0; i < numBlocks; ++i )
               {
-                // get neighbor
-                EntityType neighbor = intersection.outside();
-
-                // if non-conforming situation
-                if( entity.level() > neighbor.level() )
-                {
-                  const int indexInInside = intersection.indexInInside();
-
-                  typedef typename IntersectionType::LocalGeometry LocalGeometryType;
-                  const LocalGeometryType &geoIn  = intersection.geometryInInside();
-                  const LocalGeometryType &geoOut = intersection.geometryInOutside();
-
-                  LocalDiscreteFunctionType uIn  = u.localFunction( entity );
-                  LocalDiscreteFunctionType uOut = u.localFunction( neighbor );
-
-                  const FaceDofIteratorType fdend = lagrangePointSet.template endSubEntity< 1 >( indexInInside );
-                  FaceDofIteratorType fdit = lagrangePointSet.template beginSubEntity< 1 >( indexInInside );
-                  for( ; fdit != fdend; ++fdit )
-                  {
-                    const LocalCoordinateType &xIn = lagrangePointSet.point( *fdit );
-                    const LocalCoordinateType xOut = geoOut.global( geoIn.local( xIn ) );
-
-                    RangeType val;
-                    uOut.evaluate( xOut, val );
-
-                    for( unsigned int coordinate = 0; coordinate < dimRange; ++coordinate )
-                      uIn[ dimRange*(*fdit) + coordinate ] = val[ coordinate ];
-                  }
-                }
+                if( !onSubEntity[ i ] )
+                  continue;
+                for( std::size_t j = 0; j < localBlockSize; ++i )
+                  ldu[ i*localBlockSize + j ] = ldw[ i*localBlockSize + j ];
               }
+
+              // write back inside local DoFs
+              u.setLocalDofs( inside, ldu );
             }
           }
         }
