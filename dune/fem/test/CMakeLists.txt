@@ -128,7 +128,7 @@ endif()
 #finally add all pkg flags and local libs to tests
 foreach( test ${TESTS} )
   target_link_dune_default_libraries( ${test} )
-  dune_target_link_libraries( ${test} "${LOCAL_LIBS}" )
+  dune_target_link_libraries( ${test} dunefem )
 endforeach()
 
 exclude_from_headercheck( dfspace.hh testgrid.hh )
