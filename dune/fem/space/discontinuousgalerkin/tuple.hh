@@ -12,8 +12,10 @@
 #include <dune/fem/space/combinedspace/tuplelocalrestrictprolong.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/discontinuousgalerkin/generic.hh>
+#include <dune/fem/space/discontinuousgalerkin/basisfunctionsets.hh>
 #include <dune/fem/space/shapefunctionset/tuple.hh>
 #include <dune/fem/storage/subvector.hh>
+
 
 namespace Dune
 {
