@@ -52,9 +52,6 @@ namespace Dune
       //! mapper used to for block vector function
       typedef typename Traits::BlockMapperType BlockMapperType;
 
-      //! size of local blocks
-      enum { localBlockSize = Traits::localBlockSize };
-
       //! type of identifier for this discrete function space
       typedef int IdentifierType;
       //! identifier of this discrete function space

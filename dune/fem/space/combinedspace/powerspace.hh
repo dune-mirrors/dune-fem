@@ -87,7 +87,7 @@ namespace Dune
       typedef PowerMapper< GridPartType, typename DiscreteFunctionSpace::BlockMapperType, N > BlockMapperType;
 
       // in the most general case we will unroll all local blockings
-      enum { localBlockSize = DiscreteFunctionSpace::localBlockSize };
+      typedef typename DiscreteFunctionSpace::LocalBlockIndices LocalBlockIndices;
 
       // type functionspace
       typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;

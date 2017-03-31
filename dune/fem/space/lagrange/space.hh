@@ -11,6 +11,7 @@
 #include <dune/geometry/type.hh>
 
 // dune-fem includes
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>
@@ -60,8 +61,8 @@ namespace Dune
 
       static const int polynomialOrder = polOrder;
 
-      static const int localBlockSize = FunctionSpaceType::dimRange;
       typedef IndexSetDofMapper< GridPartType, std::conditional_t< Dune::Capabilities::isCartesian< typename GridPart::GridType >::v, DefaultLocalDofMapping< GridPart >, LagrangeLocalDofMapping< GridPart > > > BlockMapperType;
+      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange > LocalBlockIndices;
 
       static const int codimension = 0;
 
