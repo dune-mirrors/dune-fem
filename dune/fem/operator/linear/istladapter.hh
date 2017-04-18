@@ -2,6 +2,7 @@
 #define DUNE_FEM_OPERATOR_LINEAR_ISTLADAPTER_HH
 
 #if HAVE_DUNE_ISTL
+#include <dune/common/version.hh>
 
 #include <dune/istl/operators.hh>
 
@@ -28,7 +29,9 @@ namespace Dune
       typedef typename Operator::RangeFunctionType  RangeFunctionType;
 
     public:
+#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
       enum {category=SolverCategory::sequential};
+#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
       typedef Operator OperatorType;
 
@@ -62,6 +65,10 @@ namespace Dune
         y.axpy( alpha, fy.blockVector() );
       }
 
+#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
+      SolverCategory::Category category () const override { return SolverCategory::sequential; }
+#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
+
     protected:
       const OperatorType &op_;
       const DomainFunctionSpaceType &domainSpace_;
@@ -78,7 +85,9 @@ namespace Dune
       typedef typename Operator::RangeFunctionType        RangeFunctionType;
 
     public:
+#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
       enum {category=SolverCategory::sequential};
+#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
       typedef Operator OperatorType;
 
@@ -128,6 +137,10 @@ namespace Dune
         // return global sum of residuum
         return scp_.norm(tmp);
       }
+
+#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
+      SolverCategory::Category category () const override { return SolverCategory::sequential; }
+#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
       //! return reference to preconditioner
       ParallelScalarProductType& scp() const { return scp_; }

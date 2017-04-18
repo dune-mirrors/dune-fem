@@ -7,6 +7,8 @@
 
 
 #if HAVE_DUNE_ISTL
+#include <dune/common/version.hh>
+
 #include <dune/istl/operators.hh>
 #include <dune/istl/preconditioners.hh>
 
@@ -125,6 +127,11 @@ namespace Dune
 
       //! \copydoc Preconditioner
       virtual void post (X& x) {}
+
+#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
+      //! \brief The category the precondtioner is part of.
+      SolverCategory::Category category () const override { return SolverCategory::sequential; }
+#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
     };
 
 
@@ -156,9 +163,11 @@ namespace Dune
       //! \brief The field type of the preconditioner.
       typedef typename X::field_type field_type;
 
+#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
       enum {
         //! \brief The category the precondtioner is part of.
         category=SolverCategory::sequential };
+#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
       //! default constructor
       IdentityPreconditionerWrapper(){}
@@ -174,6 +183,10 @@ namespace Dune
 
       //! \copydoc Preconditioner
       virtual void post (X& x) {}
+
+#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
+      SolverCategory::Category category () const override { return SolverCategory::sequential; }
+#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
     };
 
 
@@ -247,9 +260,11 @@ namespace Dune
       //! \brief The field type of the preconditioner.
       typedef typename X::field_type field_type;
 
+#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
       enum {
         //! \brief The category the precondtioner is part of.
         category=SolverCategory::sequential };
+#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
       //! copy constructor
       PreconditionerWrapper (const PreconditionerWrapper& org)
@@ -344,6 +359,14 @@ namespace Dune
           preconder_->post(x);
         }
       }
+
+      //! \brief The category the precondtioner is part of.
+#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
+      SolverCategory::Category category () const override
+      {
+        return (preconder_ ? preconder_->category() : SolverCategory::sequential);
+      }
+#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
     protected:
       template <class Smoother>
