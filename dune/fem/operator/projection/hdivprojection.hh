@@ -1,7 +1,10 @@
+#warning "dune/fem/operator/projection/hdivprojection.hh is deprecated and will be moved to dune-fem-dg."
+
 #ifndef DUNE_FEM_HDIV_PROJECTION_HH
 #define DUNE_FEM_HDIV_PROJECTION_HH
 
 //- Dune includes
+#include <dune/common/deprecated.hh>
 #include <dune/geometry/referenceelements.hh>
 
 //- Dune-fem includes
@@ -177,7 +180,7 @@ namespace Dune
 
      public:
       //! constructor taking space
-      HdivProjection(const DiscreteFunctionSpaceType& space) :
+      HdivProjection(const DiscreteFunctionSpaceType& space) DUNE_DEPRECATED_MSG( "Use dune-fem-dg implementation." ) :
         space_(space),
         gridPart_(space.gridPart()),
         faceSpace_( gridPart_ ),
@@ -185,7 +188,7 @@ namespace Dune
         gradSpace_( gridPart_ )
       {}
 
-      HdivProjection(const HdivProjection& org) :
+      HdivProjection(const HdivProjection& org) DUNE_DEPRECATED_MSG( "Use dune-fem-dg implementation." ) :
         space_(org.space_),
         gridPart_( org.gridPart_),
         faceSpace_( gridPart_ ),
