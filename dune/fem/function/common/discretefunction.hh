@@ -136,8 +136,10 @@ namespace Dune
       //! type of mapping base class for this discrete function
       typedef typename BaseType :: MappingType MappingType;
 
+      typedef typename DiscreteFunctionSpaceType::LocalBlockIndices BlockIndices;
+
       //! size of the dof blocks
-      enum { blockSize = DiscreteFunctionSpaceType::localBlockSize };
+      static constexpr std::size_t blockSize = Hybrid::size( BlockIndices() );
 
       template< class Operation >
       struct CommDataHandle
@@ -587,8 +589,7 @@ namespace Dune
       //! size type of the block vector
       typedef typename DofVectorType::SizeType SizeType;
 
-      //! size of the dof blocks
-      enum { blockSize = BaseType::blockSize };
+      using BaseType::blockSize;
 
       template< class Operation >
       struct CommDataHandle
