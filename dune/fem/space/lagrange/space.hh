@@ -255,7 +255,7 @@ namespace Dune
        */
       InterpolationType interpolation ( const EntityType &entity ) const
       {
-        return InterpolationType( lagrangePointSet( entity ), basisFunctionSet( entity ) );
+        return InterpolationType( lagrangePointSetContainer_.compiledLocalKey( entity.type(), polynomialOrder ), basisFunctionSet( entity ) );
       }
 
       /** \brief return shape function set for given entity
@@ -292,6 +292,7 @@ namespace Dune
        *  \returns LagrangePointSet
        */
       template< class EntityType >
+      DUNE_VERSION_DEPRECATED_3_0( "interpolation" )
       const LagrangePointSetType &lagrangePointSet ( const EntityType &entity ) const
       {
         return lagrangePointSet( entity.type() );
@@ -306,6 +307,7 @@ namespace Dune
        *
        *  \returns LagrangePointSetType
        */
+      DUNE_VERSION_DEPRECATED_3_0( "interpolation" )
       const LagrangePointSetType &lagrangePointSet ( const GeometryType &type ) const
       {
         return lagrangePointSetContainer_.compiledLocalKey( type, polynomialOrder );
