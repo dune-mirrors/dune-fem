@@ -35,7 +35,7 @@ namespace Dune
     // ------------------
 
     template< class FunctionSpace, int Order >
-    struct FourierFunctionSet;
+    class FourierFunctionSet;
 
 
 
