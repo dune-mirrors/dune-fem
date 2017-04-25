@@ -1,6 +1,6 @@
 ---
 variables:
-  DUNECI_OPTS:/duneci/dune-fem/scripts/opts/ci-gcc.opts
+  DUNECI_OPTS: "/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts"
 
 before_script:
   - duneci-install-module https://gitlab.dune-project.org/core/dune-common.git
@@ -13,24 +13,24 @@ before_script:
 
 debian:9--gcc:
   image: duneci/base:9
-  script: duneci-standard-test --opts=/duneci/dune-fem/scripts/opts/ci-gcc.opts
+  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
 
 debian:9--clang:
   image: duneci/base:9
-  script: duneci-standard-test --opts=/duneci/dune-fem/scripts/opts/ci-clang.opts
+  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-clang.opts
 
 debian:8--gcc:
   image: duneci/base:8
-  script: duneci-standard-test --opts=/duneci/dune-fem/scripts/opts/ci-gcc.opts
+  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
 
 debian:8-backports--clang:
   image: duneci/base:8-backports
-  script: duneci-standard-test --opts=/duneci/dune-fem/scripts/opts/ci-clang.opts
+  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-clang.opts
 
 ubuntu:16.04--gcc:
   image: duneci/base:16.04
-  script: duneci-standard-test --opts=/duneci/dune-fem/scripts/opts/ci-gcc.opts
+  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
 
 ubuntu:16.04--clang:
   image: duneci/base:16.04
-  script: duneci-standard-test --opts=/duneci/dune-fem/scripts/opts/ci-clang.opts
+  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-clang.opts
