@@ -1,6 +1,10 @@
 #include "mappertest.hh"
 
+#include <dune/fem/function/common/common.hh>
+#include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/localfunction/const.hh>
+#include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/space/lagrange.hh>
 
@@ -53,78 +57,58 @@ namespace Dune
     void LagrangeMapper_Test< Grid >::checkDiscreteFunction ( const SpaceType &space )
     {
       typedef AdaptiveDiscreteFunction< SpaceType > DiscreteFunctionType;
+      typedef typename SpaceType::FunctionSpaceType FunctionSpaceType;
+      typedef typename DiscreteFunctionType::DofType DofType;
 
-      typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
-      typedef typename SpaceType::LagrangePointSetType LagrangePointSetType;
-      typedef typename SpaceType::IteratorType::Entity::Geometry GeometryType;
-      static const int dimworld = SpaceType::GridPartType::GridType::dimensionworld;
-
+      static const int dimworld = SpaceType::GridPartType::dimensionworld;
 
       std::cout << "size of space: " << space.size() << " (= " << (space.size() / dimworld) << " * " << dimworld << ")" << std::endl;
+
+      const auto id = gridFunctionAdapter( Identity< FunctionSpaceType >(), space.gridPart() );
 
       DiscreteFunctionType u( "u", space );
       u.clear();
 
-      int errors = 0;
-
       std::cout << std::endl;
       std::cout << "Phase I: Setting each DoF of a discrete function to its global coordinate..." << std::endl;
 
+      typename decltype( id )::LocalFunctionType idLocal( id );
+      TemporaryLocalFunction< SpaceType > vLocal( space ), wLocal( space );
       for( const auto &entity : space )
       {
-        const GeometryType &geometry = entity.geometry();
+        const auto &interpolation = space.interpolation( entity );
 
-        const LagrangePointSetType &lagrangePoints = space.lagrangePointSet( entity );
-        const int numLPoints = lagrangePoints.nop();
+        idLocal.init( entity );
+        vLocal.init( entity );
+        interpolation( idLocal, vLocal.localDofVector() );
 
-        LocalFunctionType ulocal = u.localFunction( entity );
+        u.setLocalDofs( entity, vLocal.localDofVector() );
 
-        assert( numLPoints * dimworld == ulocal.numDofs() );
-        for( int i = 0; i < numLPoints; ++i )
-        {
-          const FieldVector< double, dimworld > &lpoint = lagrangePoints.point( i );
-          FieldVector< double, dimworld > x = geometry.global( lpoint );
+        wLocal.init( entity );
+        interpolation( vLocal, wLocal.localDofVector() );
 
-          for( int j = 0; j < dimworld; ++j )
-            ulocal[ i * dimworld + j ] = x[ j ];
-
-          FieldVector< double, dimworld > y( 0 );
-          ulocal.evaluate( lagrangePoints[ i ], y );
-          if( (y - x).two_norm() > 1e-10 )
-          {
-            std::cout << "point " << i << " ( " << lpoint << " ): " << x << " != " << y << std::endl;
-            ++errors;
-          }
-        }
+        if( !std::equal( vLocal.localDofVector().begin(), vLocal.localDofVector().end(), wLocal.localDofVector().begin(), [] ( DofType v, DofType w ) { return (v - w < 1e-10); } ) )
+          DUNE_THROW( Exception, "Local interpolation and basis function set are inconsistent" );
       }
 
-      std::cout << std::endl << "Phase II: Verifying that each DoF of the discrete function containts its global coordinate..." << std::endl;
+      std::cout << std::endl;
+      std::cout << "Phase II: Verifying that each DoF of the discrete function containts its global coordinate..." << std::endl;
+      ConstLocalFunction< DiscreteFunctionType > uLocal( u );
       for( const auto &entity : space )
       {
-        const GeometryType &geometry = entity.geometry();
+        const auto &interpolation = space.interpolation( entity );
 
-        const LagrangePointSetType &lagrangePoints = space.lagrangePointSet( entity );
-        const int numLPoints = lagrangePoints.nop();
+        idLocal.init( entity );
+        vLocal.init( entity );
+        interpolation( idLocal, vLocal.localDofVector() );
 
-        LocalFunctionType ulocal = u.localFunction( entity );
+        uLocal.init( entity );
+        wLocal.init( entity );
+        interpolation( uLocal, wLocal.localDofVector() );
 
-        assert( numLPoints * dimworld == ulocal.numDofs() );
-        for( int i = 0; i < numLPoints; ++i )
-        {
-          const FieldVector< double, dimworld > &lpoint = lagrangePoints.point( i );
-          FieldVector< double, dimworld > x = geometry.global( lpoint );
-
-          FieldVector< double, dimworld > y( 0 );
-          ulocal.evaluate( lagrangePoints[ i ], y );
-          if( (y - x).two_norm() > 1e-10 )
-          {
-            std::cout << "point " << i << " ( " << lpoint << " ): " << x << " != " << y << std::endl;
-            ++errors;
-          }
-        }
+        if( !std::equal( vLocal.localDofVector().begin(), vLocal.localDofVector().end(), wLocal.localDofVector().begin(), [] ( DofType v, DofType w ) { return (v - w < 1e-10); } ) )
+          DUNE_THROW( Exception, "Inconsistent Mapper" );
       }
-
-      assert( errors == 0 );
     }
 
   } // namespace Fem
