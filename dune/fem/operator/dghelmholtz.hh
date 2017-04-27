@@ -16,12 +16,9 @@ namespace Dune
 
     template< class JacobianOp >
     class DGHelmholtzJacobianOperator
-    : public Operator< typename JacobianOp::DomainFunctionType, typename JacobianOp::RangeFunctionType >
+    : public JacobianOp
     {
-      typedef DGHelmholtzJacobianOperator< JacobianOp > ThisType;
-      typedef Operator< typename JacobianOp::DomainFunctionType, typename JacobianOp::RangeFunctionType > BaseType;
-
-      template< class > friend class DGHelmholtzOperator;
+      typedef JacobianOp BaseType;
 
     public:
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
@@ -31,7 +28,7 @@ namespace Dune
       typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeFunctionSpaceType;
 
       DGHelmholtzJacobianOperator ( const std::string &name, const DomainFunctionSpaceType &dSpace, const RangeFunctionSpaceType &rSpace )
-      : jacobianOp_( name, dSpace, rSpace ),
+      : BaseType( name, dSpace, rSpace ),
         lambda_( 0 ),
         wTmp_( "DGHelmholtzJacobianOperator temporary", rSpace )
       {}
@@ -41,7 +38,7 @@ namespace Dune
         w.assign( u );
         if( lambda() != 0.0 )
         {
-          jacobianOp_( u, wTmp_ );
+          BaseType::operator()( u, wTmp_ );
           w.axpy( -lambda(), wTmp_ );
         }
       }
@@ -50,7 +47,6 @@ namespace Dune
       void setLambda ( double lambda ) { lambda_ = lambda; }
 
     protected:
-      JacobianOp jacobianOp_;
       double lambda_;
       mutable RangeFunctionType wTmp_;
     };
@@ -95,7 +91,7 @@ namespace Dune
 
       void jacobian ( const DomainFunctionType &u, JacobianOperatorType &jOp ) const
       {
-        spaceOperator().jacobian( u, jOp.jacobianOp_ );
+        spaceOperator().jacobian( u, jOp );
         jOp.setLambda( lambda() );
       }
 
