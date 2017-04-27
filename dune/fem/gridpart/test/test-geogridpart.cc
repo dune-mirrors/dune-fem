@@ -13,6 +13,7 @@ int main () { return 0; }
 
 #include <dune/geometry/referenceelements.hh>
 
+#include <dune/fem/function/common/common.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/function/localfunction/temporary.hh>
@@ -139,28 +140,6 @@ void testIntersectionIterator( const GridPartType & gridPart )
 }
 
 
-template< class FunctionSpace >
-class Identity
-: public Dune::Fem::Function< FunctionSpace, Identity< FunctionSpace > >
-{
-  typedef Dune::Fem::Function< FunctionSpace, Identity< FunctionSpace > > BaseType;
-
-public:
-  typedef typename BaseType::DomainType DomainType;
-  typedef typename BaseType::RangeType RangeType;
-
-  void evaluate ( const DomainType &x, RangeType &y ) const
-  {
-    y = x;
-  }
-
-  void jacobian ( const DomainType & , RangeType &y ) const
-  {
-    y = RangeType(0);
-  }
-};
-
-
 template< class GridPart, class LocalFunction >
 void testExchangeGeometry ( const GridPart &gridPart, LocalFunction &localFunction )
 {
@@ -207,7 +186,7 @@ try
   DiscreteCoordFunctionSpaceType coordFunctionSpace( hostGridPart );
   typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteCoordFunctionSpaceType > CoordFunctionType;
   CoordFunctionType coordFunction( "coordinate function", coordFunctionSpace );
-  typedef Identity< CoordFunctionSpaceType > IdentityType;
+  typedef Dune::Fem::Identity< CoordFunctionSpaceType > IdentityType;
   IdentityType identity;
   Dune::Fem::GridFunctionAdapter< IdentityType, HostGridPartType > identitydDF( "identity", identity, hostGridPart );
   Dune::Fem::interpolate( identitydDF, coordFunction );
