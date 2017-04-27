@@ -292,8 +292,9 @@ namespace Dune
        *  \returns LagrangePointSet
        */
       template< class EntityType >
+      const LagrangePointSetType &
       DUNE_VERSION_DEPRECATED_3_0( "interpolation" )
-      const LagrangePointSetType &lagrangePointSet ( const EntityType &entity ) const
+      lagrangePointSet ( const EntityType &entity ) const
       {
         return lagrangePointSet( entity.type() );
       }
@@ -307,8 +308,9 @@ namespace Dune
        *
        *  \returns LagrangePointSetType
        */
+      const LagrangePointSetType &
       DUNE_VERSION_DEPRECATED_3_0( "interpolation" )
-      const LagrangePointSetType &lagrangePointSet ( const GeometryType &type ) const
+      lagrangePointSet ( const GeometryType &type ) const
       {
         return lagrangePointSetContainer_.compiledLocalKey( type, polynomialOrder );
       }
