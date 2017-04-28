@@ -68,7 +68,7 @@ namespace Dune
     // BasicGridFunctionAdapter
     // ------------------------
 
-    /** \brief GridFunctionAdapter provides local functions for a Function.
+    /** \brief BasicGridFunctionAdapter provides local functions for a Function.
      */
     template< class FunctionImp, class GridPartImp >
     class BasicGridFunctionAdapter
@@ -379,6 +379,43 @@ namespace Dune
     gridFunctionAdapter ( const Function &function, const GridPart &gridPart, unsigned int order = 111 )
     {
       return GridFunctionAdapter< Function, GridPart >( std::string(), function, gridPart, order );
+    }
+
+    /**
+     * \brief convert a function to a grid function
+     *
+     * \param[in]  name      name of the grid function
+     * \param[in]  function  function to convert
+     * \param[in]  gridPart  grid part to restrict the domain to
+     * \param[in]  order     polynomial order to report (defaults to 111)
+     *
+     * \note This version accepts only lvalue references. The grid function only
+     *       references the original function.
+     **/
+    template< class Function, class GridPart >
+    inline static GridFunctionAdapter< Function, GridPart >
+    gridFunctionAdapter ( std::string name, Function &function, const GridPart &gridPart, unsigned int order = 111 )
+    {
+      const Function& cf = function;
+      return gridFunctionAdapter( name, cf, gridPart, order );
+    }
+
+    /**
+     * \brief convert a function to a grid function
+     *
+     * \param[in]  function  function to convert
+     * \param[in]  gridPart  grid part to restrict the domain to
+     * \param[in]  order     polynomial order to report (defaults to 111)
+     *
+     * \note This version accepts only lvalue references. The grid function only
+     *       references the original function.
+     **/
+    template< class Function, class GridPart >
+    inline static GridFunctionAdapter< Function, GridPart >
+    gridFunctionAdapter ( Function &function, const GridPart &gridPart, unsigned int order = 111 )
+    {
+      const Function& cf = function;
+      return gridFunctionAdapter( cf, gridPart, order );
     }
 
     /**
