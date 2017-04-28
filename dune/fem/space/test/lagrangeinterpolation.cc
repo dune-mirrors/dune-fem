@@ -369,7 +369,7 @@ double algorithm( MyGridType &grid, DiscreteFunctionType &solution, int turn )
 
   GridPartType part( grid );
   DiscreteFunctionSpaceType discreteFunctionSpace( part );
-  const ExactSolution f;
+  ExactSolution f;
 
   //! perform Lagrange interpolation
   interpolate( gridFunctionAdapter( f, part, discreteFunctionSpace.order() + 2 ), solution );
