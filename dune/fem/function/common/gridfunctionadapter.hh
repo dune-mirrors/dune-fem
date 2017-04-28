@@ -378,7 +378,7 @@ namespace Dune
     inline static GridFunctionAdapter< Function, GridPart >
     gridFunctionAdapter ( const Function &function, const GridPart &gridPart, unsigned int order = 111 )
     {
-      return GridFunctionAdapter< Function, GridPart >( "", function, gridPart, order );
+      return GridFunctionAdapter< Function, GridPart >( std::string(), function, gridPart, order );
     }
 
     /**
@@ -413,7 +413,7 @@ namespace Dune
     inline static BasicGridFunctionAdapter< Function, GridPart >
     gridFunctionAdapter ( Function &&function, const GridPart &gridPart, unsigned int order = 111 )
     {
-      return BasicGridFunctionAdapter< Function, GridPart >( "", std::move( function ), gridPart, order );
+      return BasicGridFunctionAdapter< Function, GridPart >( std::string(), std::move( function ), gridPart, order );
     }
 
 
