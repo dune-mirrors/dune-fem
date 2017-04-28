@@ -3,12 +3,18 @@
 
 #include <dune/common/typeutilities.hh>
 
+#if HAVE_DUNE_ISTL
+#include <dune/istl/bcrsmatrix.hh>
+#endif // #if HAVE_DUNE_ISTL
+
+#include <dune/fem/operator/linear/istloperator.hh>
 #include <dune/fem/misc/l2norm.hh>
 
 #include <dune/corepy/pybind11/pybind11.h>
 #if HAVE_EIGEN
 #include <dune/corepy/pybind11/eigen.h>
 #endif
+#include <dune/corepy/istl/bcrsmatrix.hh>
 
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/parameter.hh>
@@ -28,15 +34,43 @@ namespace Dune
     namespace detail
     {
 
+      // IsISTLLinearOperator
+      // --------------------
+
+#if HAVE_DUNE_ISTL
+      template< class T >
+      struct IsISTLLinearOperator
+        : public std::false_type
+      {};
+
+      template< class DomainFunction, class RangeFunction >
+      struct IsISTLLinearOperator< Fem::ISTLLinearOperator< DomainFunction, RangeFunction > >
+        : public std::true_type
+      {};
+#endif // #if HAVE_DUNE_ISTL
+
+
+#if HAVE_DUNE_ISTL
+      template< class B, class A >
+      const BCRSMatrix< B, A > &getBCRSMatrix ( const BCRSMatrix< B, A > &matrix )
+      {
+        return matrix;
+      }
+#endif // #if HAVE_DUNE_ISTL
+
+
+
       // registerSchemeConstructor
       // -------------------------
 
       template< class Scheme, class... options, std::enable_if_t< std::is_constructible< Scheme, const typename Scheme::DiscreteFunctionSpaceType &, const typename Scheme::ModelType & >::value, int > = 0 >
       void registerSchemeConstructor ( pybind11::class_< Scheme, options... > &cls, PriorityTag< 1 > )
       {
-        using pybind11::operator""_a;
         typedef typename Scheme::DiscreteFunctionSpaceType Space;
         typedef typename Scheme::ModelType ModelType;
+
+        using pybind11::operator""_a;
+
         cls.def( "__init__", [] ( Scheme &self, Space &space, const ModelType &model ) {
             new (&self) Scheme( space, model );
           }, "space"_a, "model"_a, pybind11::keep_alive< 1, 3 >(), pybind11::keep_alive< 1, 2 >() );
@@ -55,30 +89,63 @@ namespace Dune
         registerSchemeConstructor( cls, PriorityTag< 42 >() );
       }
 
+
+
+      // registerSchemeAssemble
+      // ----------------------
+
       // register assemble method if data method is available (and return value is registered)
-      template <class Scheme,class Cls>
-      auto registerSchemeAssemble(Cls &cls,int)
-      // -> std::enable_if_t<Scheme::solver==SolverType::eigen,void>
-      -> decltype(std::declval<typename Scheme::LinearOperatorType>().systemMatrix().matrix().data(),
-          void())
+#if HAVE_DUNE_ISTL
+      template< class Scheme, class... options >
+      std::enable_if_t< IsISTLLinearOperator< typename Scheme::LinearOperatorType >::value >
+      registerSchemeAssemble ( pybind11::class_< Scheme, options... > &cls, PriorityTag< 2 > )
       {
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
-        typedef typename Scheme::DiscreteFunctionSpaceType Space;
-        typedef typename Space::RangeType RangeType;
+        typedef typename DiscreteFunction::RangeType RangeType;
         typedef typename Scheme::GridPartType GridPart;
 
-        cls.def("assemble", [](Scheme &scheme, const DiscreteFunction &ubar)
-            { return scheme.assemble(ubar).systemMatrix().matrix().data(); },
-            pybind11::return_value_policy::reference_internal
-            );
-        cls.def("assemble", [](Scheme &scheme, const VirtualizedGridFunction<GridPart,RangeType> &ubar)
-            { return scheme.assemble(ubar).systemMatrix().matrix().data(); },
-            pybind11::return_value_policy::reference_internal
-            );
+        typedef std::decay_t< decltype( getBCRSMatrix( std::declval< const typename Scheme::LinearOperatorType & >().matrix() ) ) > BCRSMatrix;
+        if( !pybind11::already_registered< BCRSMatrix >() )
+          CorePy::registerBCRSMatrix< BCRSMatrix >( cls );
+
+        using pybind11::operator""_a;
+
+        cls.def( "assemble", [] ( Scheme &scheme, const DiscreteFunction &ubar ) {
+            return getBCRSMatrix( scheme.assemble( ubar ).matrix() );
+          }, pybind11::return_value_policy::reference_internal, "ubar"_a );
+        cls.def( "assemble", [] ( Scheme &scheme, const VirtualizedGridFunction< GridPart, RangeType > &ubar ) {
+            return getBCRSMatrix( scheme.assemble( ubar ).matrix() );
+          }, pybind11::return_value_policy::reference_internal, "ubar"_a );
       }
-      template <class Scheme,class Cls>
-      void registerSchemeAssemble(Cls &cls,long)
+#endif // #if HAVE_DUNE_ISTL
+
+      template< class Scheme, class... options >
+      auto registerSchemeAssemble ( pybind11::class_< Scheme, options... > &cls, PriorityTag< 1 > )
+        -> decltype( std::declval< typename Scheme::LinearOperatorType >().systemMatrix().matrix().data(), void() )
+      {
+        typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
+        typedef typename DiscreteFunction::RangeType RangeType;
+        typedef typename Scheme::GridPartType GridPart;
+
+        using pybind11::operator""_a;
+
+        cls.def( "assemble", [] ( Scheme &scheme, const DiscreteFunction &ubar ) {
+            return scheme.assemble( ubar ).systemMatrix().matrix().data();
+          }, pybind11::return_value_policy::reference_internal, "ubar"_a );
+        cls.def( "assemble", [] ( Scheme &scheme, const VirtualizedGridFunction< GridPart, RangeType > &ubar ) {
+            return scheme.assemble( ubar ).systemMatrix().matrix().data();
+          }, pybind11::return_value_policy::reference_internal, "ubar"_a );
+      }
+
+      template< class Scheme, class... options >
+      void registerSchemeAssemble ( pybind11::class_< Scheme, options... > &cls, PriorityTag< 0 > )
       {}
+
+      template< class Scheme, class... options >
+      void registerSchemeAssemble ( pybind11::class_< Scheme, options... > &cls )
+      {
+        registerSchemeAssemble( cls, PriorityTag< 42 >() );
+      }
 
       template <class Scheme, class Cls>
       auto registerSchemeGeneralCall( Cls &cls, int )
@@ -123,7 +190,7 @@ namespace Dune
         cls.def_property_readonly( "dimRange", [](Scheme&) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
         cls.def_property_readonly( "space", [] ( pybind11::object self ) { return detail::getSpace( self.cast< const Scheme & >(), self ); } );
 
-        registerSchemeAssemble<Scheme>(cls,0);
+        registerSchemeAssemble( cls );
 
         cls.def("constraint", [] (Scheme &scheme, DiscreteFunction &u) { scheme.constraint(u); });
 
