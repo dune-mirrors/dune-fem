@@ -8,7 +8,7 @@
 #include <dune/common/fvector.hh>
 
 // include pardg quadratures
-#include <dune/fem/solver/pardg.hh>
+#include <dune/fem/quadrature/pardgsimplexquadrature.hh>
 
 namespace Dune
 {
@@ -21,13 +21,13 @@ namespace Dune
     class ParDGSimplexPointsAdapter {
     public:
       enum { numCorners = dim+1 };
-      typedef typename PARDG::Quadrature<dim> ParDGQuadratureType;
+      typedef typename ParDGSimplexQuadrature::Quadrature<dim> ParDGQuadratureType;
       typedef FieldVector<double, dim> CoordinateType;
 
     public:
       //! Constructor.
       ParDGSimplexPointsAdapter(int order) :
-        quad_(ParDGQuadratureType::quadrature(order)),
+        quad_( ParDGQuadratureType::quadrature(order) ),
         order_(order)
       {
       }
@@ -65,7 +65,7 @@ namespace Dune
       }
 
     private:
-      const ParDGQuadratureType& quad_;
+      ParDGQuadratureType quad_;
       const int order_;
     };
 
