@@ -77,7 +77,7 @@ namespace Dune
       public HasLocalFunction
     {
       typedef BasicGridFunctionAdapter< FunctionImp, GridPartImp > ThisType;
-      typedef Function< typename FunctionImp::FunctionSpaceType, ThisType > BaseType;
+      typedef Function< typename std::decay_t< FunctionImp >::FunctionSpaceType, ThisType > BaseType;
 
       // Make sure the function is not a discrete functon
       static_assert( !(std::is_convertible< FunctionImp, HasLocalFunction >::value),
