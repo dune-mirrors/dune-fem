@@ -4,6 +4,8 @@
 #include <dune/fem/gridpart/filter/filter.hh>
 #include <dune/fem/storage/dynamicarray.hh>
 
+#include <dune/fem/misc/boundaryidprovider.hh>
+
 namespace Dune
 {
   namespace Fem
@@ -64,6 +66,9 @@ namespace Dune
       //! \brief type of traits
       typedef DomainFilterTraits< GridPartType, DomainArrayType > Traits;
 
+      //! \brief boundary id provider, specialized for each grid
+      typedef BoundaryIdProvider< typename GridPartType::GridType >
+        BoundaryIdProviderType;
     protected:
       //! \brief this type
       typedef DomainFilter< GridPartType, DomainArrayType > ThisType;
@@ -134,14 +139,14 @@ namespace Dune
       template< class Intersection >
       bool intersectionBoundary( const Intersection & intersection ) const
       {
-        return intersection.boundary();
+        return BoundaryIdProviderType::boundaryId( intersection );
       }
 
       //! \brief returns the boundary id for an intersection
       template< class Intersection >
       int intersectionBoundaryId ( const Intersection & intersection ) const
       {
-        return intersection.boundaryId();
+        return BoundaryIdProviderType::boundaryId( intersection );
       }
 
       //! \brief returns true if for an intersection a neighbor exsits

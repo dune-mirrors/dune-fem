@@ -54,7 +54,6 @@ int main( int argc, char **argv )
 
     typedef FunctionSpace< double, double, GridType::dimensionworld, dimRange  > FunctionSpace;
 
-    typedef FunctionSpace::DomainType DomainType;
     typedef FunctionSpace::RangeType RangeType;
 
     typedef LagrangeDiscreteFunctionSpace < FunctionSpace, GridPartType, PolynomialOrder, CachingStorage > DiscreteFunctionSpace;
