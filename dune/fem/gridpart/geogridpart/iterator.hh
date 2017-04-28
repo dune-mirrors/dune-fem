@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <utility>
 
+#include <dune/common/version.hh>
 #include <dune/grid/common/gridenums.hh>
 
 namespace Dune
@@ -27,6 +28,10 @@ namespace Dune
     public:
       typedef typename Traits::CoordFunctionType CoordFunctionType;
       typedef typename HostGridPartType::template Codim< codim >::template Partition< pitype >::IteratorType HostIteratorType;
+
+#if !DUNE_VERSION_NEWER(DUNE_GRID, 2, 6 )
+      static const int codimension = HostIteratorType::codimension;
+#endif
 
       typedef typename Traits::template Codim< codim >::Entity Entity;
 
