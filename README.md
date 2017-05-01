@@ -1,6 +1,8 @@
 DUNE-FEM
 ========
 
+[![build status](https://gitlab.dune-project.org/dune-fem/dune-fem-test/badges/master/build.svg)](https://gitlab.dune-project.org/dune-fem/dune-fem-test/commits/master)
+
 [DUNE-FEM][0] is a [Distributed and Unified Numerics Environment][1]
 module which defines interfaces for implementing discretization methods like Finite Element Methods (FEM)
 and Finite Volume Methods (FV) and Discontinuous Galerkin Methods (DG).
