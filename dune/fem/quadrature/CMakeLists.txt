@@ -4,7 +4,7 @@ dune_install(cachingpointlist.hh cachingquadrature.hh cornerpointset.hh
              femquadratures_inline.hh gausspoints.hh gausspoints_implementation.hh
              idprovider.hh integrator.hh quadrature.hh
              quadratureimp.hh quadratureimp_inline.hh pyramidpoints.hh
-             quadprovider.hh simplexpoints.hh intersectionquadrature.hh
+             quadprovider.hh intersectionquadrature.hh
              pardgsimplexquadrature.hh )
 
 dune_add_subdirs(caching test)

@@ -4,6 +4,8 @@
 #include <cassert>
 #include <vector>
 
+#include <dune/common/fvector.hh>
+
 namespace Dune {
 namespace Fem {
 namespace ParDGSimplexQuadrature
@@ -14,20 +16,69 @@ template<int dim>
 class Quadrature
 {
 public:
+  enum { numCorners = dim+1 };
+  typedef Dune::FieldVector< double, dim > CoordinateType;
+  typedef Dune::FieldVector< double, dim+1 > Point;
+
   Quadrature(int nop, int degree, const double x[][dim+1]);
-  int number_of_points() const;
-  const double* x(int i) const;
-  double w(int i) const;
-  const double* w() const;
+  explicit Quadrature( const int order )
+  {
+    const Quadrature& quad = quadrature( order );
+    nop    = quad.number_of_points();
+    degree = quad.max_order();
+
+    x_w.resize( nop );
+    for(int i=0; i<nop; i++)
+    {
+      for(int l=0; l<=dim; l++) x_w[i][l] = quad.x_w[i][l];
+    }
+  }
+
+  CoordinateType point( const int i ) const
+  {
+    assert(i >= 0 && i < numPoints());
+    CoordinateType result;
+    for (size_t j = 0; j < dim; ++j)
+    {
+      result[j] = x(i)[j];
+    }
+    return result;
+  }
+
+  //! Access to the ith quadrature weight.
+  double weight(const int i) const
+  {
+    assert(i >= 0 && i < numPoints());
+    // scale with volume of reference element!
+    return w(i);
+  }
+
+  int order() const { return degree; }
+
+  int numPoints() const { return number_of_points(); }
+  int max_order() const { return degree; }
+
+  int number_of_points() const{ return nop; }
+
+  const Point& x(int i) const {
+    assert(i>=0 && i<nop);
+    return x_w[i];
+  }
+
+  double w(int i) const
+  {
+    assert(i>=0 && i<nop);
+    return x_w[i][dim];
+  }
+
   void check() const;
 
   static const Quadrature& quadrature(int minimum_degree);
 
-private:
-  typedef double Point[dim+1];
+protected:
 
-  const int nop;
-  const int degree;
+  int nop;
+  int degree;
   std::vector< Point > x_w;
 };
 
@@ -98,40 +149,6 @@ Quadrature<dim>::Quadrature(int nop, int degree, const double (*x)[dim+1])
   {
     for(int l=0; l<=dim; l++) x_w[i][l] = x[i][l];
   }
-}
-
-
-template<int dim>
-inline
-int Quadrature<dim>::number_of_points() const
-{
-  return nop;
-}
-
-
-template<int dim>
-inline
-const double* Quadrature<dim>::x(int i) const
-{
-  assert(i>=0 && i<nop);
-  return (dim == 0)? NULL : x_w[i];
-}
-
-
-template<int dim>
-inline
-double Quadrature<dim>::w(int i) const
-{
-  assert(i>=0 && i<nop);
-  return x_w[i][dim];
-}
-
-
-template<int dim>
-inline
-const double* Quadrature<dim>::w() const
-{
-  return &x_w[0][dim];
 }
 
 
