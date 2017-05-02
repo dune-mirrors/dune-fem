@@ -84,7 +84,7 @@ namespace Dune
       static int boundaryId ( const Intersection &intersection )
       {
         return BoundaryIdProvider< HostGrid >
-          ::boundaryId ( HostGridAccess< GridType >::getIntersection( intersection ) );
+          ::boundaryId ( HostGridAccess< GridType >::hostIntersection( intersection ) );
       }
     };
 #endif // #if HAVE_DUNE_METAGRID
@@ -104,7 +104,7 @@ namespace Dune
       static int boundaryId ( const Intersection &intersection )
       {
         return BoundaryIdProvider< HostGrid >
-          ::boundaryId ( HostGridAccess< GridType >::getIntersection( intersection ) );
+          ::boundaryId ( HostGridAccess< GridType >::hostIntersection( intersection ) );
       }
     };
 #endif // #if HAVE_DUNE_METAGRID
@@ -125,10 +125,10 @@ namespace Dune
       template< class Intersection >
       static int boundaryId ( const Intersection &intersection )
       {
-        if( !iHostGridAccess< GridType >::getIntersection( intersection ).boundary() )
+        if( !iHostGridAccess< GridType >::hostIntersection( intersection ).boundary() )
           DUNE_THROW( NotImplemented, "BoundaryIdProvider for artificial boundaries of FilteredGrid not implemented." );
         return BoundaryIdProvider< HostGrid >
-          ::boundaryId ( HostGridAccess< GridType >::getIntersection( intersection ) );
+          ::boundaryId ( HostGridAccess< GridType >::hostIntersection( intersection ) );
       }
     };
 #endif // #if HAVE_DUNE_METAGRID
@@ -147,7 +147,7 @@ namespace Dune
       static int boundaryId ( const Intersection &intersection )
       {
         return BoundaryIdProvider< HostGrid >
-          ::boundaryId ( HostGridAccess< GridType >::getIntersection( intersection ) );
+          ::boundaryId ( HostGridAccess< GridType >::hostIntersection( intersection ) );
       }
     };
 
@@ -166,7 +166,7 @@ namespace Dune
       static int boundaryId ( const Intersection &intersection )
       {
         return BoundaryIdProvider< HostGrid >
-          ::boundaryId ( HostGridAccess< GridType >::getIntersection( intersection ) );
+          ::boundaryId ( HostGridAccess< GridType >::hostIntersection( intersection ) );
       }
     };
 #endif // #if HAVE_DUNE_METAGRID
@@ -203,7 +203,7 @@ namespace Dune
       static int boundaryId ( const Intersection &intersection )
       {
         return BoundaryIdProvider< HostGrid >
-          ::boundaryId ( HostGridAccess< GridType >::getIntersection( intersection ) );
+          ::boundaryId ( HostGridAccess< GridType >::hostIntersection( intersection ) );
       }
     };
 #endif // #if HAVE_DUNE_METAGRID
@@ -240,7 +240,7 @@ namespace Dune
       static int boundaryId ( const Intersection &intersection )
       {
         return BoundaryIdProvider< HostGrid >
-          ::boundaryId ( HostGridAccess< GridType >::getIntersection( intersection ) );
+          ::boundaryId ( HostGridAccess< GridType >::hostIntersection( intersection ) );
       }
     };
 #endif // #if HAVE_DUNE_METAGRID
