@@ -2,6 +2,7 @@
 #define DUNE_FEM_PARDGSIMPLEXQUADRATURE_HPP
 
 #include <cassert>
+#include <vector>
 
 namespace Dune {
 namespace Fem {
@@ -14,7 +15,6 @@ class Quadrature
 {
 public:
   Quadrature(int nop, int degree, const double x[][dim+1]);
-  ~Quadrature();
   int number_of_points() const;
   const double* x(int i) const;
   double w(int i) const;
@@ -28,7 +28,7 @@ private:
 
   const int nop;
   const int degree;
-  Point *x_w;
+  std::vector< Point > x_w;
 };
 
 
@@ -91,23 +91,13 @@ extern const Quadrature3d quad3d_0, quad3d_1, quad3d_2, quad3d_3, quad3d_4,
 // class Quadrature<dim> inline implementation
 template<int dim>
 inline
-Quadrature<dim>::Quadrature(int nop, int degree,
-           const double x[][dim+1]) :
-  nop(nop), degree(degree), x_w(new Point[nop])
+Quadrature<dim>::Quadrature(int nop, int degree, const double (*x)[dim+1])
+  : nop(nop), degree(degree), x_w( nop )
 {
-  assert(x_w);
-
-  for(int i=0; i<nop; i++){
+  for(int i=0; i<nop; i++)
+  {
     for(int l=0; l<=dim; l++) x_w[i][l] = x[i][l];
   }
-}
-
-
-template<int dim>
-inline
-Quadrature<dim>::~Quadrature()
-{
-  delete[] x_w;
 }
 
 

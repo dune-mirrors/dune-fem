@@ -65,7 +65,7 @@ namespace Dune
       }
 
     private:
-      ParDGQuadratureType quad_;
+      const ParDGQuadratureType& quad_;
       const int order_;
     };
 
