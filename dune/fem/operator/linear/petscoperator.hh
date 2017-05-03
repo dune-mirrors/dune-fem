@@ -167,6 +167,9 @@ namespace Dune
       {
         communicate(true);
         ::Dune::Petsc::MatMult( petscMatrix_, *arg.petscVec() , *dest.petscVec() );
+        // for continuous solution we need a communication here
+        if( dest.space().continuous() )
+          dest.communicate();
       }
 
       void operator() ( const DomainFunctionType &arg, RangeFunctionType &dest ) const
