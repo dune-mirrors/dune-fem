@@ -12,6 +12,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
+#include <dune/fem/test/testgrid.hh>
 
 
 // Type Definitions
@@ -67,14 +68,12 @@ try
 
   const int ml = Dune::Fem::Parameter::getValue< int >( "lagrangeglobalrefine.maxlevel", 2 );
 
-  std::ostringstream gridName;
-  gridName << MyGridType::dimension << "dgrid.dgf";
-  Dune::GridPtr< MyGridType > gridptr( gridName.str().c_str() );
+  MyGridType &grid = Dune::Fem::TestGrid::grid();
 
   for( int level = 0; level < ml; ++level )
   {
-    baseTests( *gridptr, level );
-    Dune::Fem::GlobalRefine::apply(*gridptr,1);
+    baseTests( grid, level );
+    Dune::Fem::GlobalRefine::apply(grid,1);
   }
 
   return 0;

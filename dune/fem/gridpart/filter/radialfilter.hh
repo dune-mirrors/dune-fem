@@ -1,7 +1,6 @@
 #ifndef DUNE_FEM_GRIDPART_FILTER_RADIALFILTER_HH
 #define DUNE_FEM_GRIDPART_FILTER_RADIALFILTER_HH
 
-// dune-common includes
 #include <dune/common/fvector.hh>
 
 namespace Dune
@@ -13,8 +12,7 @@ namespace Dune
     // RadialFilter
     // ------------
 
-    /**! \brief example implementation; given center x and radius r,
-     *          filter is characteristic function of clos B_r( x )
+    /**! \brief given center x and radius r, filter is characteristic function of clos B_r( x )
      */
     template < typename ct, int dimw >
     class RadialFilter
@@ -24,28 +22,23 @@ namespace Dune
       typedef ct ctype;
 
       //! \brief export dimension
-      static const int dimensionworld = dimw;
+      static constexpr int dimensionworld = dimw;
 
       //! \brief coordinate type
       typedef Dune::FieldVector< ct, dimw > GlobalCoordinateType;
 
       //! \brief constructor
-      RadialFilter( const GlobalCoordinateType & center,
-                    const ctype radius )
+      RadialFilter( const GlobalCoordinateType & center = GlobalCoordinateType( 0 ),
+                    ctype radius = 0.25)
       : center_( center ),
         radius_( radius )
-      { }
-
-      RadialFilter ()
-      : center_( 0 ),
-        radius_( 0.25 )
       { }
 
       //! \brief check whether entity center is inside of circle
       template< class Entity >
       bool contains ( const Entity & entity ) const
       {
-        static const int cc = Entity::codimension;
+        constexpr int cc = Entity::codimension;
         if( cc != 0 )
           DUNE_THROW( InvalidStateException, "RadialFilter::contains only available for codim 0 entities" );
         ctype dist = (entity.geometry().center() - center_).two_norm();
@@ -56,30 +49,28 @@ namespace Dune
       template< class Intersection >
       bool interiorIntersection( const Intersection &intersection ) const
       {
-        typedef typename Intersection::Entity EntityType;
-        const EntityType outside(intersection.outside());
-        return contains( outside );
+        return contains( intersection.outside() );
       }
 
       //! \brief return what boundary id we have in case of boundary intersection
       //         which is either it.boundary == true or contains (it.ouside()) == false
       //         so here true is a good choice
-      template < class IntersectionIteratorType >
-      inline bool intersectionBoundary( const IntersectionIteratorType & it ) const
+      template < class Intersection >
+      bool intersectionBoundary( const Intersection & ) const
       {
         return true;
       }
       //! \brief return what boundary id we have in case of boundary intersection
       //          which is either it.boundary == true or contains (it.ouside()) == false
-      template < class IntersectionIteratorType >
-      inline int intersectionBoundaryId(const IntersectionIteratorType & it) const
+      template < class Intersection >
+      int intersectionBoundaryId(const Intersection & ) const
       {
         return 1;
       }
 
       //! \brief if contains() is true then we have an interior entity
-      template <class IntersectionIteratorType>
-      inline bool intersectionNeighbor( const IntersectionIteratorType & it ) const
+      template <class Intersection>
+      bool intersectionNeighbor( const Intersection &  ) const
       {
         return false;
       }

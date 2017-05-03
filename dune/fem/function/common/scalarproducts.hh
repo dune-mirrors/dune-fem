@@ -11,6 +11,8 @@
 #include <dune/common/exceptions.hh>
 #include <dune/common/genericiterator.hh>
 #include <dune/common/ftraits.hh>
+#include <dune/common/version.hh>
+
 #include <dune/grid/common/gridenums.hh>
 #include <dune/grid/common/datahandleif.hh>
 
@@ -47,10 +49,16 @@ namespace Dune
     struct ISTLScalarProductSelector< Dune::Fem::ISTLBlockVector< Block > >
       : public Dune::ScalarProduct< typename Dune::Fem::ISTLBlockVector< Block > :: DofContainerType >
     {
+#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
       //! define the category
       enum { category=Dune::SolverCategory::sequential };
+#endif // #if !DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
       typedef typename ISTLBlockVector< Block > :: DofContainerType type;
+
+#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
+      Dune::SolverCategory::Category category () const override { return SolverCategory::sequential; }
+#endif // #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
     };
 #endif
 

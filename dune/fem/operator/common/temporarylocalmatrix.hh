@@ -4,7 +4,11 @@
 #include <algorithm>
 #include <vector>
 
+#include <dune/common/densematrix.hh>
+#include <dune/common/dynvector.hh>
+
 #include <dune/fem/operator/common/localmatrix.hh>
+#include <dune/fem/storage/rowreferencevector.hh>
 
 namespace Dune
 {
@@ -12,23 +16,16 @@ namespace Dune
   namespace Fem
   {
 
-    /** \ingroup Matrix
-     *  \class TemporaryLocalMatrix
-     *  \brief A local matrix with a small array as storage
-     *
-     *  A TemporaryLocalMatrix is an implementation of the LocalMatrixInterface
-     *  storing the matrix values in an array. It is useful when generating
-     *  multiple local matrices that shall then be added together.
-     *
-     *  \note Due to the backing array, accesses to the matrix should be very fast.
-     *
-     *  \param DomainSpaceImp  DiscreteFunctionSpace modelling the domain
-     *  \param RangeSpaceImp   DiscreteFunctionSpace modelling the range
-     */
+    // Internal Forward Declarations
+    // -----------------------------
+
     template< class DomainSpaceImp, class RangeSpaceImp >
     class TemporaryLocalMatrix;
 
 
+
+    // TemporaryLocalMatrixTraits
+    // --------------------------
 
     template< class DomainSpaceImp, class RangeSpaceImp >
     struct TemporaryLocalMatrixTraits
@@ -44,12 +41,62 @@ namespace Dune
       typedef RangeFieldType LittleBlockType;
     };
 
+  } // namespace Fem
 
 
+
+  // DenseMatVecTraits for TemporaryLocalMatrix
+  // ------------------------------------------
+
+  template< class DomainSpaceImp, class RangeSpaceImp >
+  struct DenseMatVecTraits< Fem::TemporaryLocalMatrix< DomainSpaceImp, RangeSpaceImp > >
+  {
+    typedef Fem::TemporaryLocalMatrix< DomainSpaceImp, RangeSpaceImp > derived_type;
+
+    typedef typename Fem::TemporaryLocalMatrixTraits< DomainSpaceImp, RangeSpaceImp >::RangeFieldType value_type;
+    typedef int size_type;
+
+    typedef DynamicVector< value_type > row_type;
+
+    typedef Fem::RowReferenceVector< value_type > row_reference;
+    typedef Fem::RowReferenceVector< const value_type > const_row_reference;
+  };
+
+
+
+  // FieldTraits for TemporaryLocalMatrix
+  // ------------------------------------
+
+  template< class DomainSpaceImp, class RangeSpaceImp >
+  struct FieldTraits< Fem::TemporaryLocalMatrix< DomainSpaceImp, RangeSpaceImp > >
+    : public FieldTraits< typename Fem::TemporaryLocalMatrixTraits< DomainSpaceImp, RangeSpaceImp >::RangeFieldType >
+  {};
+
+
+
+  namespace Fem
+  {
+
+    // TemporaryLocalMatrix
+    // --------------------
+
+    /** \ingroup Matrix
+     *  \class TemporaryLocalMatrix
+     *  \brief A local matrix with a small array as storage
+     *
+     *  A TemporaryLocalMatrix is an implementation of the LocalMatrixInterface
+     *  storing the matrix values in an array. It is useful when generating
+     *  multiple local matrices that shall then be added together.
+     *
+     *  \note Due to the backing array, accesses to the matrix should be very fast.
+     *
+     *  \param DomainSpaceImp  DiscreteFunctionSpace modelling the domain
+     *  \param RangeSpaceImp   DiscreteFunctionSpace modelling the range
+     */
     template< class DomainSpaceImp, class RangeSpaceImp >
     class TemporaryLocalMatrix
-    : public LocalMatrixDefault
-      < TemporaryLocalMatrixTraits< DomainSpaceImp, RangeSpaceImp > >
+      : public DenseMatrix< TemporaryLocalMatrix< DomainSpaceImp, RangeSpaceImp > >,
+        public LocalMatrixDefault< TemporaryLocalMatrixTraits< DomainSpaceImp, RangeSpaceImp > >
     {
     public:
       typedef DomainSpaceImp DomainSpaceType;
@@ -64,15 +111,22 @@ namespace Dune
       typedef LocalMatrixDefault< Traits > BaseType;
 
     public:
-      using BaseType :: rows;
-      using BaseType :: columns;
       typedef typename Traits :: DomainFieldType DomainFieldType;
       typedef typename Traits :: RangeFieldType RangeFieldType;
+
+      typedef int size_type;
+      typedef RangeFieldType value_type;
+
+      typedef RowReferenceVector< value_type > row_reference;
+      typedef RowReferenceVector< const value_type > const_row_reference;
 
     protected:
       std::vector< RangeFieldType > fields_;
 
     public:
+      using BaseType::domainBasisFunctionSet;
+      using BaseType::rangeBasisFunctionSet;
+
       inline TemporaryLocalMatrix ( const DomainSpaceType &domainSpace,
                                     const RangeSpaceType &rangeSpace )
       : BaseType( domainSpace, rangeSpace ),
@@ -140,6 +194,25 @@ namespace Dune
         std::fill( start, end, 0 );
       }
 
+      size_type rows () const { return mat_rows(); }
+      size_type cols () const { return mat_cols(); }
+      size_type columns () const { return mat_cols(); }
+
+      // make this thing a dense matrix
+      size_type mat_rows () const { return rangeBasisFunctionSet().size(); }
+      size_type mat_cols () const { return domainBasisFunctionSet().size(); }
+
+      row_reference mat_access ( size_type i )
+      {
+        const size_type cols = mat_cols();
+        return row_reference( fields_.data() + i*cols, cols );
+      }
+
+      const_row_reference mat_access ( size_type i ) const
+      {
+        const size_type cols = mat_cols();
+        return const_row_reference( fields_.data() + i*cols, cols );
+      }
     };
 
   } // namespace Fem

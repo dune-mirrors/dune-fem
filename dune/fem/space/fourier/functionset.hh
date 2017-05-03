@@ -35,7 +35,7 @@ namespace Dune
     // ------------------
 
     template< class FunctionSpace, int Order >
-    struct FourierFunctionSet;
+    class FourierFunctionSet;
 
 
 
@@ -66,39 +66,45 @@ namespace Dune
       template< class Functor >
       static void evaluateEach ( const DomainType &x, Functor functor )
       {
-        functor( 0, RangeFieldType( 1 ) / RangeFieldType( 2 ) );
+        using std::sin;
+        using std::cos;
+        functor( 0, RangeType( RangeFieldType( 1 ) / RangeFieldType( 2 ) ) );
         // use recursion:
         // sin((n+1)*x) = sin(n*x)*cos(x) + cos(n*x)*sin(x)
         // cos((n+1)*x) = cos(n*x)*cos(x) - sin(n*x)*sin(x)
         SizeType basisFunction = 1;
         for( int n = 1; n <= Order; ++n )
         {
-          functor( basisFunction++, std::cos( n*x[ 0 ] ) );
-          functor( basisFunction++, std::sin( n*x[ 0 ] ) );
+          functor( basisFunction++, RangeType( cos( n*x[ 0 ] ) ) );
+          functor( basisFunction++, RangeType( sin( n*x[ 0 ] ) ) );
         }
       }
 
       template< class Functor >
       static void jacobianEach ( const DomainType &x, Functor functor )
       {
-        functor( 0, RangeFieldType( 0 ) );
+        using std::sin;
+        using std::cos;
+        functor( 0, JacobianRangeType( RangeFieldType( 0 ) ) );
         SizeType basisFunction = 1;
         for( int n = 1; n <= Order; ++n )
         {
-          functor( basisFunction++, -n*std::sin( n*x[ 0 ] ) );
-          functor( basisFunction++, n*std::cos( n*x[ 0 ] ) );
+          functor( basisFunction++, JacobianRangeType( -n*sin( n*x[ 0 ] ) ) );
+          functor( basisFunction++, JacobianRangeType( n*cos( n*x[ 0 ] ) ) );
         }
       }
 
       template< class Functor >
       static void hessianEach ( const DomainType &x, Functor functor )
       {
-        functor( 0, RangeFieldType( 0 ) );
+        using std::sin;
+        using std::cos;
+        functor( 0, HessianRangeType( RangeFieldType( 0 ) ) );
         SizeType basisFunction = 1;
         for( int n = 1; n <= Order; ++n )
         {
-          functor( basisFunction++, -(n*n)*std::cos( n*x[ 0 ] ) );
-          functor( basisFunction++, -(n*n)*std::sin( n*x[ 0 ] ) );
+          functor( basisFunction++, HessianRangeType( -(n*n)*cos( n*x[ 0 ] ) ) );
+          functor( basisFunction++, HessianRangeType( -(n*n)*sin( n*x[ 0 ] ) ) );
         }
       }
     private:

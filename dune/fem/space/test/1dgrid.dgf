@@ -1,0 +1,16 @@
+DGF
+
+Interval
+0   % p0
+1   % p1
+4   % nx
+#
+
+BoundaryDomain
+default 1 
+#
+
+GridParameter
+closure none
+overlap 1
+#

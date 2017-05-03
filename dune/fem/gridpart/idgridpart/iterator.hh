@@ -4,7 +4,6 @@
 #include <type_traits>
 #include <utility>
 
-#include <dune/grid/common/entitypointer.hh>
 #include <dune/grid/common/gridenums.hh>
 
 namespace Dune
@@ -27,9 +26,7 @@ namespace Dune
       typedef typename Traits::ExtraData ExtraData;
       typedef typename HostGridPartType::template Codim< codim >::template Partition< pitype >::IteratorType HostIteratorType;
 
-      static const int codimension = HostIteratorType::codimension;
-
-      typedef typename Traits::template Codim< codimension >::Entity Entity;
+      typedef typename Traits::template Codim< codim >::Entity Entity;
 
       IdIterator () = default;
 

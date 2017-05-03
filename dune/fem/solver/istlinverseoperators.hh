@@ -7,6 +7,8 @@
 #include <dune/fem/io/parameter.hh>
 
 #if HAVE_DUNE_ISTL
+#include <dune/common/version.hh>
+
 #include <dune/fem/operator/linear/istladapter.hh>
 
 #include <dune/istl/scalarproducts.hh>
@@ -31,7 +33,9 @@ namespace Dune
       typedef typename Preconditioner::RangeFunctionType RangeFunctionType;
 
     public:
+#if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
       enum {category=SolverCategory::sequential};
+#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
       typedef typename BaseType::domain_type domain_type;
       typedef typename BaseType::range_type range_type;
@@ -67,6 +71,10 @@ namespace Dune
           (*precon_)( px, py );
         }
       }
+
+#if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
+      SolverCategory::Category category () const override { SolverCategory::sequential; }
+#endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
     protected:
       const Preconditioner *precon_;

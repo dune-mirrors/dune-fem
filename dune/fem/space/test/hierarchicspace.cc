@@ -15,6 +15,8 @@ using namespace Dune;
 
 #include <dune/fem/io/parameter.hh>
 
+#include <dune/fem/test/testgrid.hh>
+
 // polynom approximation order of quadratures,
 // at least poolynom order of basis functions
 static const int dimRange = 1 ;
@@ -164,11 +166,9 @@ try {
       Dune::GeometryType( Dune::Capabilities::hasSingleGeometryType< MyGridType
         >::topologyId, MyGridType::dimension ).isCube() )
   {
-    std::ostringstream gridFilenameStream;
-    gridFilenameStream << MyGridType::dimensionworld << "dgrid.dgf";
-    Dune::GridPtr< MyGridType > grid( gridFilenameStream.str() );
+    MyGridType &grid = Dune::Fem::TestGrid::grid();
 
-    GridPartType part ( *grid );
+    GridPartType part ( grid );
     {
       std::cout << "Check DiscontinuousGalerkinSpace... ";
       DGSpaceType space( part );

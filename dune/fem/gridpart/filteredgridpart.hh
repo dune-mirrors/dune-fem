@@ -282,7 +282,7 @@ namespace Dune
       typename Codim< codim >::template Partition< pitype >::IteratorType begin () const
       {
         typedef typename Codim< codim >::template Partition< pitype >::IteratorType IteratorType;
-        typedef typename IteratorType::Implementation IteratorImpl;
+        typedef FilteredGridPartIterator< codim, pitype, ThisType > IteratorImpl;
         return IteratorType( IteratorImpl( *this, hostGridPart().template begin< codim, pitype >() ) );
       }
 
@@ -298,7 +298,7 @@ namespace Dune
       typename Codim< codim >::template Partition< pitype >::IteratorType end () const
       {
         typedef typename Codim< codim >::template Partition< pitype >::IteratorType IteratorType;
-        typedef typename IteratorType::Implementation IteratorImpl;
+        typedef FilteredGridPartIterator< codim, pitype, ThisType > IteratorImpl;
         return IteratorType( IteratorImpl( *this, hostGridPart().template end< codim, pitype >() ) );
       }
 

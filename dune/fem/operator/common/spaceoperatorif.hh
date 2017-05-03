@@ -97,12 +97,13 @@ namespace Dune
       *
       * \interfaceclass
       */
-    template< class DiscreteFunction >
+    template< class DiscreteFunction,
+              class JacobianOperator = Fem::AutomaticDifferenceOperator< DiscreteFunction >  >
     class SpaceOperatorInterface
-    : public Fem::AutomaticDifferenceOperator< DiscreteFunction >,
+    : public JacobianOperator,
       public PARDGSpaceOperatorInterface< DiscreteFunction >
     {
-      typedef SpaceOperatorInterface< DiscreteFunction > ThisType;
+      typedef SpaceOperatorInterface< DiscreteFunction, JacobianOperator > ThisType;
       typedef Fem::Operator< DiscreteFunction > BaseType;
 
     public:
@@ -353,26 +354,26 @@ namespace Dune
     // Implementation of SpaceOperatorInterface
     // ----------------------------------------
 
-    template< class DiscreteFunction >
-    inline void SpaceOperatorInterface< DiscreteFunction >
+    template< class DiscreteFunction, class JacobianOperator >
+    inline void SpaceOperatorInterface< DiscreteFunction, JacobianOperator >
       ::operator() ( const double *u, double *f ) const
     {
-      CallDoubleOperator< SpaceOperatorInterface< DiscreteFunction >,
+      CallDoubleOperator< SpaceOperatorInterface< DiscreteFunction, JacobianOperator >,
                           DiscreteFunction,
                           typename DiscreteFunction :: RangeFieldType >::apply( *this, u, f );
     }
 
-    template< class DiscreteFunction >
-    inline void SpaceOperatorInterface< DiscreteFunction >
+    template< class DiscreteFunction, class JacobianOperator >
+    inline void SpaceOperatorInterface< DiscreteFunction, JacobianOperator >
       ::limit ( const double *u, double *f ) const
     {
-      CallDoubleOperator< SpaceOperatorInterface< DiscreteFunction >,
+      CallDoubleOperator< SpaceOperatorInterface< DiscreteFunction, JacobianOperator >,
                           DiscreteFunction,
                           typename DiscreteFunction :: RangeFieldType >::limit( *this, u, f );
     }
 
-    template< class DiscreteFunction >
-    inline void SpaceOperatorInterface< DiscreteFunction >
+    template< class DiscreteFunction, class JacobianOperator >
+    inline void SpaceOperatorInterface< DiscreteFunction, JacobianOperator >
       ::initializeTimeStepSize ( const DestinationType &U0 ) const
     {
       // create temporary variable

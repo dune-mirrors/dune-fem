@@ -328,7 +328,7 @@ namespace Dune
       auto info  = parameter_.map.insert( std::make_pair( key, Value( value, curFileName_ ) ) );
       Value &val = info.first->second;
 
-      if( !verbose() )
+      if( verbose() )
       {
         std::cout << curFileName_ << "[" << curLineNumber_ << "]: ";
         if( info.second )

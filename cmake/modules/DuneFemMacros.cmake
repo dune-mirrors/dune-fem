@@ -1,9 +1,3 @@
-
-#make libdunefem known locally
-set(LOCAL_LIBS "${PROJECT_BINARY_DIR}/lib/libdunefem.a"
-  CACHE FILEPATH "path to local libs in dune-fem" )
-  mark_as_advanced(LOCAL_LIBS)
-
 #find endian headers
 set(ENDIAN_HEADER_ROOT "" CACHE STRING "path of endian header")
 check_include_file_cxx(endian.h HAVE_ENDIAN_HEADER_HH)

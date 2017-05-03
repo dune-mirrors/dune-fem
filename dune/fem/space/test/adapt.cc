@@ -33,6 +33,8 @@ using namespace Dune;
 
 #include <dune/fem/io/parameter.hh>
 
+#include <dune/fem/test/testgrid.hh>
+
 // polynom approximation order of quadratures,
 // at least poolynom order of basis functions
 static const int polOrd   = POLORDER;
@@ -241,13 +243,10 @@ try {
 
   std::vector<double> error(ml);
 
-  std::ostringstream gridFilenameStream;
-  gridFilenameStream << MyGridType::dimensionworld << "dgrid.dgf";
-  GridPtr< MyGridType > grid( gridFilenameStream.str() );
+  MyGridType &grid = Dune::Fem::TestGrid::grid();
+  const int step = Dune::Fem::TestGrid::refineStepsForHalf();
 
-  const int step = DGFGridInfo< MyGridType >::refineStepsForHalf();
-
-  GridPartType part ( *grid );
+  GridPartType part ( grid );
   DiscreteFunctionSpaceType space( part );
 
   // threshold for EOC difference to predicted value
@@ -260,7 +259,7 @@ try {
   std::cout << "------------    Refining:" << std::endl;
   for(int i=0; i<ml; i+=1)
   {
-    error[i] = algorithm ( *grid , solution, step, (i==ml-1));
+    error[i] = algorithm ( grid , solution, step, (i==ml-1));
     if (i>0)
     {
       if ( isLocallyAdaptive )
@@ -279,7 +278,7 @@ try {
   std::cout << "------------   Coarsening:" << std::endl;
   for(int i=ml-1; i>=0; i-=1)
   {
-    error[i] = algorithm ( *grid , solution,-step, 1);
+    error[i] = algorithm ( grid , solution,-step, 1);
     if (i<ml-1)
     {
       if( isLocallyAdaptive )

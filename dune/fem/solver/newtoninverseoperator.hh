@@ -221,7 +221,7 @@ namespace Dune
 
     private:
       const OperatorType &op_;
-      const NewtonParameter *parameters_;
+      const std::unique_ptr< NewtonParameter > parameters_;
 
       const double tolerance_, linAbsTol_, linReduction_;
       const bool verbose_;

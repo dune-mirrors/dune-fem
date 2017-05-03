@@ -152,15 +152,7 @@ class SPQROp:public Operator<DF, DF>
     cholmod_l_free_dense(&X, cc_);
     // output some statistics
     if(verbose_ > 0)
-    {
-      std::cout<<std::endl<<"Solving with SuiteSparseQR"<<std::endl;
-      std::cout<<"Flops Taken: "<<cc_->SPQR_flopcount<<std::endl;
-      std::cout<<"Analysis Time: "<<cc_->SPQR_analyze_time<<" s"<<std::endl;
-      std::cout<<"Factorize Time: "<<cc_->SPQR_factorize_time<<" s"<<std::endl;
-      std::cout<<"Backsolve Time: "<<cc_->SPQR_solve_time<<" s"<<std::endl;
-      std::cout<<"Peak Memory Usage: "<<cc_->memory_usage<<" bytes"<<std::endl;
-      std::cout<<"Rank Estimate: "<<cc_->SPQR_istat[4]<<std::endl<<std::endl;
-    }
+      printDecompositionInfo();
   }
 
   /** \brief Solve the system.
@@ -219,6 +211,21 @@ class SPQROp:public Operator<DF, DF>
   void printTexInfo(std::ostream& out) const
   {
     out<<"Solver: SPQR direct solver"<<std::endl;
+  }
+
+  // \brief Print some statistics about the SPQR decomposition.
+  void printDecompositionInfo() const
+  {
+    if(isloaded_)
+    {
+      std::cout<<std::endl<<"Solving with SuiteSparseQR"<<std::endl;
+      std::cout<<"Flops Taken: "<<cc_->SPQR_flopcount<<std::endl;
+      std::cout<<"Analysis Time: "<<cc_->SPQR_analyze_time<<" s"<<std::endl;
+      std::cout<<"Factorize Time: "<<cc_->SPQR_factorize_time<<" s"<<std::endl;
+      std::cout<<"Backsolve Time: "<<cc_->SPQR_solve_time<<" s"<<std::endl;
+      std::cout<<"Peak Memory Usage: "<<cc_->memory_usage<<" bytes"<<std::endl;
+      std::cout<<"Rank Estimate: "<<cc_->SPQR_istat[4]<<std::endl<<std::endl;
+    }
   }
 
   double averageCommTime() const
