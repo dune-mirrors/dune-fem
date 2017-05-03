@@ -8,7 +8,7 @@
 // quadrature storage classes
 #include "gausspoints.hh"
 #include "pyramidpoints.hh"
-#include "simplexpoints.hh"
+#include "pardgsimplexquadrature.hh"
 
 namespace Dune
 {

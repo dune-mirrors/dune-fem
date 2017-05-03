@@ -9,7 +9,7 @@ namespace Dune
   namespace Fem
   {
 
-#define SimplexPointsAdapter ParDGSimplexPointsAdapter
+#define SimplexPointsAdapter ParDGSimplexQuadrature::Quadrature
 
   // only if we use dune-fem quadratures
     template <class ct, int dim>

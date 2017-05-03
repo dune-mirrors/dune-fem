@@ -87,12 +87,11 @@ int main(int argc, char ** argv)
     GridPartType gridPart( grid );
 
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
-    ExactSolutionType f;
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
     solution.clear();
 
     // interpolate
-    interpolate( gridFunctionAdapter( f, gridPart, discreteFunctionSpace.order() + 2 ), solution );
+    interpolate( gridFunctionAdapter( ExactSolutionType(), gridPart, discreteFunctionSpace.order() + 2 ), solution );
 
     // let's check on IO
     DiscreteFunctionType readback( "readback", discreteFunctionSpace );

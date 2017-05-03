@@ -168,6 +168,8 @@ try
 
   MyGridType &grid = Dune::Fem::TestGrid::grid();
 
+  grid.globalRefine( ml );
+
   for( int level = 0; level < grid.maxLevel(); ++level )
     algorithm( grid, level );
 
