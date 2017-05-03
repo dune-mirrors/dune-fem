@@ -80,7 +80,8 @@ PYBIND11_PLUGIN( _fem )
         return s.str();
       } );
 
-    module.attr( "parameter" ) = pybind11::cast( Dune::Fem::Parameter::container() );
+    module.attr( "parameter" ) = pybind11::cast( Dune::Fem::Parameter::container(),
+           pybind11::return_value_policy::reference );
   }
 
   return module.ptr();
