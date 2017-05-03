@@ -20,8 +20,3 @@ LINK_LIBRARIES dunefem )
 dune_add_test( NAME generic SOURCES generic.cc
 COMPILE_DEFINITIONS  ${DEFAULTFLAGS}
 LINK_LIBRARIES dunefem )
-
-
-dune_add_test( NAME testnonscalarmapper SOURCES testnonscalarmapper.cc
-COMPILE_DEFINITIONS  ${DEFAULTFLAGS}
-LINK_LIBRARIES dunefem )
