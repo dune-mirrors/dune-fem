@@ -262,15 +262,7 @@ namespace Dune
         \note Op defaults to Dune::Fem::Operator.
      */
     template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
-    struct ISTLLoopOp
-    : public ISTLInverseOp< DF, Op, LoopSolverCaller< Op, DF > >
-    {
-      typedef ISTLInverseOp< DF, Op, LoopSolverCaller< Op, DF > > BaseType;
-    public:
-
-      template< class ... Args >
-      ISTLLoopOp ( Args && ... args ) : BaseType( std::forward< Args >( args ) ... )  {}
-    };
+    using ISTLLoopOp = ISTLInverseOp< DF, Op, LoopSolverCaller< Op, DF > >;
 
 
     // MINResSolverCaller
@@ -298,14 +290,7 @@ namespace Dune
         \note Op defaults to Dune::Fem::Operator.
      */
     template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
-    struct ISTLMINResOp
-    : public ISTLInverseOp< DF, Op, MINResSolverCaller< Op, DF > >
-    {
-      typedef ISTLInverseOp< DF, Op, MINResSolverCaller< Op, DF > > BaseType;
-    public:
-      template< class ... Args >
-      ISTLMINResOp ( Args && ... args ) : BaseType( std::forward< Args >( args ) ... )  {}
-    };
+    using ISTLMINResOp = ISTLInverseOp< DF, Op, MINResSolverCaller< Op, DF > >;
 
 
     // BiCGSTABSolverCaller
@@ -333,14 +318,7 @@ namespace Dune
         \note Op defaults to Dune::Fem::Operator.
      */
     template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
-    struct ISTLBICGSTABOp
-    : public ISTLInverseOp< DF, Op, BiCGSTABSolverCaller< Op, DF > >
-    {
-      typedef ISTLInverseOp< DF, Op, BiCGSTABSolverCaller< Op, DF > > BaseType;
-    public:
-      template< class ... Args >
-      ISTLBICGSTABOp ( Args && ... args ) : BaseType( std::forward< Args >( args ) ... )  {}
-    };
+    using ISTLBICGSTABOp = ISTLInverseOp< DF, Op, BiCGSTABSolverCaller< Op, DF > >;
 
 
     // GMResSolverCaller
@@ -403,14 +381,7 @@ namespace Dune
      *  \note Op defaults to Dune::Fem::Operator.
      */
     template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
-    struct ISTLGMResOp
-    : public ISTLInverseOp< DF, Op, GMResSolverCaller< Op, DF > >
-    {
-      typedef ISTLInverseOp< DF, Op, GMResSolverCaller< Op, DF > > BaseType;
-    public:
-      template< class ... Args >
-      ISTLGMResOp ( Args && ... args ) : BaseType( std::forward< Args >( args ) ... )  {}
-    };
+    using ISTLGMResOp = ISTLInverseOp< DF, Op, GMResSolverCaller< Op, DF > >;
 
 
     // CGSolverCaller
@@ -438,14 +409,7 @@ namespace Dune
         \note Op defaults to Dune::Fem::Operator.
      */
     template< class DF, class Op = Dune::Fem::Operator< DF, DF > >
-    struct ISTLCGOp
-    : public ISTLInverseOp< DF, Op, CGSolverCaller< Op, DF > >
-    {
-      typedef ISTLInverseOp< DF, Op, CGSolverCaller< Op, DF > > BaseType;
-    public:
-      template< class ... Args >
-      ISTLCGOp ( Args && ... args ) : BaseType( std::forward< Args >( args ) ... )  {}
-    };
+    using ISTLCGOp = ISTLInverseOp< DF, Op, CGSolverCaller< Op, DF > >;
 
 
     // SuperLUSolverCaller
@@ -507,14 +471,7 @@ namespace Dune
         package</a>.
     */
     template< class DF, class Op >
-    struct ISTLSuperLU
-    : public ISTLInverseOp< DF, Op, SuperLUSolverCaller< Op, DF > >
-    {
-      typedef ISTLInverseOp< DF, Op, SuperLUSolverCaller< Op, DF > > BaseType;
-    public:
-      template< class ... Args >
-      ISTLSuperLU ( Args && ... args ) : BaseType( std::forward< Args >( args ) ... )  {}
-    };
+    using ISTLSuperLU = ISTLInverseOp< DF, Op, SuperLUSolverCaller< Op, DF > >;
 
 
   ///@}
