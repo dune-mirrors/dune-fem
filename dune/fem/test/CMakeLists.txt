@@ -1,6 +1,6 @@
-# if no grid type is specified during configuration time we choose yaspgrid
+# if no grid type is specified during configuration time we choose dune-alugrid simplex
 if( NOT GRIDTYPE )
-  set( GRIDTYPE ALUSIMPLEXGRID )
+  set( GRIDTYPE ALUGRID_SIMPLEX )
 endif()
 
 # same as for GridType, we set the default grid dimension to 2
