@@ -1,6 +1,6 @@
-# if no grid type is specified during configuration time we choose yaspgrid
+# if no grid type is specified during configuration time we choose dune-alugrid simplex
 if( NOT GRIDTYPE )
-  set( GRIDTYPE YASPGRID )
+  set( GRIDTYPE ALUGRID_SIMPLEX )
 endif()
 
 # same as for GridType, we set the default grid dimension to 2
@@ -77,10 +77,6 @@ dune_add_test( NAME vtxprojection_adaptive SOURCES vtxprojection.cc
 COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} vtxprojection_adaptive )
 
-dune_add_test( NAME intersectionindexset SOURCES intersectionindexset.cc
-COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
-set( TESTS ${TESTS} intersectionindexset )
-
 dune_add_test( NAME combinedspaceadaptation SOURCES adaptation.cc
 COMPILE_DEFINITIONS "COMBINEDSPACE;GRIDDIM=3;WORLDDIM=3;${GRIDTYPE}" )
 set( TESTS ${TESTS} combinedspaceadaptation )
@@ -132,3 +128,5 @@ foreach( test ${TESTS} )
 endforeach()
 
 exclude_from_headercheck( dfspace.hh testgrid.hh )
+
+dune_add_test(SOURCES test-intersectionindexset.cc LINK_LIBRARIES dunefem CMAKE_GUARD dune-alugrid_FOUND)
