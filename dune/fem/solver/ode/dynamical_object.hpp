@@ -14,6 +14,8 @@ public:
 
 protected:
   DynamicalObject(const char name[], int id, int components = 1);
+  DynamicalObject(const DynamicalObject &) = delete;
+  DynamicalObject(DynamicalObject &&);
   virtual ~DynamicalObject();
 
   int id() const;
@@ -51,6 +53,14 @@ DynamicalObject::DynamicalObject(const char name[], int id, int components) :
   eta_hi = 0.1;
 }
 
+
+inline
+DynamicalObject::DynamicalObject(DynamicalObject &&other) :
+  _size(other._size), name(other.name), _id(other._id), eta_lo(other.eta_lo), eta_hi(other.eta_hi), os(other.os)
+{
+  other._size = nullptr;
+  other.name = nullptr;
+}
 
 
 inline

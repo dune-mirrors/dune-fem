@@ -5,6 +5,9 @@
 
 #include <cmath>
 #include <cassert>
+
+#include <utility>
+
 #include "linear_solver.hpp"
 #include "blas.hpp"
 
@@ -12,7 +15,7 @@ using namespace pardg;
 
 GMRES::GMRES(Communicator &comm, int m) :
   IterativeLinearSolver(comm), DynamicalObject("GMRES", comm.id()),
-  m(m), H(m+1,m), v(NULL), z(NULL)
+  m(m), H(m+1,m), v(nullptr), z(nullptr)
 {
   g = new double[6*m+1];
   assert(g);
@@ -25,7 +28,15 @@ GMRES::GMRES(Communicator &comm, int m) :
   dset(6*m+1, 0.0, g, 1);
 }
 
-
+GMRES::GMRES(GMRES &&other) :
+  IterativeLinearSolver(std::move(static_cast<IterativeLinearSolver &>(other))),
+  DynamicalObject(std::move(static_cast<DynamicalObject &>(other))),
+  m(other.m), H(std::move(other.H)),
+  g(other.g), s(other.s), c(other.c), y(other.y), local_dot(other.local_dot),
+  global_dot(other.global_dot), v(other.v), z(other.z)
+{
+  other.g = other.v = other.z = nullptr;
+}
 
 GMRES::~GMRES()
 {

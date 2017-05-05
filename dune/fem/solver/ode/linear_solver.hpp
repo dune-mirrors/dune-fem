@@ -1,8 +1,10 @@
 #ifndef LINEAR_SOLVER_HPP
 #define LINEAR_SOLVER_HPP
 
-#include <iostream>
 #include <cmath>
+
+#include <iostream>
+
 #include "communicator.hpp"
 #include "dynamical_object.hpp"
 #include "function.hpp"
@@ -119,6 +121,8 @@ class GMRES : public IterativeLinearSolver, public DynamicalObject
 {
 public:
   GMRES(Communicator &comm, int m);
+  GMRES(const GMRES &) = delete;
+  GMRES(GMRES &&);
   virtual ~GMRES();
   virtual void set_preconditioner(Function &preconditioner);
   // set pointer to predonditioner to zero
@@ -174,6 +178,8 @@ class BICGSTAB : public IterativeLinearSolver, public DynamicalObject
 {
 public:
   BICGSTAB(Communicator &comm);
+  BICGSTAB(const BICGSTAB &) = delete;
+  BICGSTAB(BICGSTAB &&);
   ~BICGSTAB();
 
   virtual void set_preconditioner(Function &preconditioner);
