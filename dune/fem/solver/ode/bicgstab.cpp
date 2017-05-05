@@ -1,5 +1,8 @@
 #include <cmath>
 #include <cassert>
+
+#include <utility>
+
 #include "linear_solver.hpp"
 #include "blas.hpp"
 
@@ -10,9 +13,16 @@ using namespace pardg;
 
 BICGSTAB::BICGSTAB(Communicator &comm) :
   IterativeLinearSolver(comm), DynamicalObject( "BiCGstab", comm.id() ),
-  r(NULL), r_star(NULL), p(NULL), s(NULL), tmp(NULL), z(NULL)
+  r(nullptr), r_star(nullptr), p(nullptr), s(nullptr), tmp(nullptr), z(nullptr)
 {}
 
+BICGSTAB::BICGSTAB(BICGSTAB &&other) :
+  IterativeLinearSolver(std::move(static_cast<IterativeLinearSolver &>(other))),
+  DynamicalObject(std::move(static_cast<DynamicalObject &>(other))),
+  r(other.r), r_star(other.r_star), p(other.p), s(other.s), tmp(other.tmp), z(other.z)
+{
+  other.r = nullptr;
+}
 
 BICGSTAB::~BICGSTAB()
 {
