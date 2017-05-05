@@ -1,9 +1,14 @@
 #ifndef DUNE_FEM_NEWTONINVERSEOPERATOR_HH
 #define DUNE_FEM_NEWTONINVERSEOPERATOR_HH
 
-#include <cfloat>
+#include <cassert>
+#include <cmath>
+
 #include <iostream>
+#include <limits>
 #include <memory>
+#include <string>
+#include <utility>
 
 #include <dune/fem/solver/parameter.hh>
 #include <dune/fem/io/parameter.hh>
@@ -137,65 +142,122 @@ namespace Dune
 
       /** constructor
        *
+       *  \param[in]  jInv       linear inverse operator (will be move constructed)
+       *
+       *  \note The tolerance is read from the paramter
+       *        <b>fem.solver.newton.tolerance</b>
+       */
+
+      NewtonInverseOperator ( LinearInverseOperatorType jInv, const NewtonParameter &parameter )
+        : NewtonInverseOperator( std::move( jInv ), parameter.toleranceParameter(), parameter )
+      {}
+
+      explicit NewtonInverseOperator ( LinearInverseOperatorType jInv,
+                                       const ParameterReader &parameter = Parameter::container() )
+        : NewtonInverseOperator( std::move( jInv ), ParametersType( parameter ) )
+      {}
+
+      /** constructor
+       *
+       *  \param[in]  jInv        linear inverse operator (will be move constructed)
+       *  \param[in]  epsilon     tolerance for norm of residual
+       *
+       *  \note The tolerance is read from the paramter
+       *        <b>fem.solver.newton.tolerance</b>
+       */
+
+      NewtonInverseOperator ( LinearInverseOperatorType jInv, const DomainFieldType &epsilon, const NewtonParameter &parameter )
+        : tolerance_( epsilon ),
+          verbose_( parameter.newtonVerbose() && MPIManager::rank () == 0 ),
+          maxIterations_( parameter.maxIterationsParameter() ),
+          maxLinearIterations_( parameter.maxLinearIterationsParameter() ),
+          jInv_( std::move( jInv ) )
+      {}
+
+      NewtonInverseOperator ( LinearInverseOperatorType jInv, const DomainFieldType &epsilon,
+                              const ParameterReader &parameter = Parameter::container() )
+        : NewtonInverseOperator( std::move( jInv ), epsilon, ParametersType( parameter ) )
+      {}
+
+
+      /** constructor
+       *
+       *  \note The tolerance is read from the paramter
+       *        <b>fem.solver.newton.tolerance</b>
+       */
+      explicit NewtonInverseOperator ( const NewtonParameter &parameter )
+        : NewtonInverseOperator( parameter.toleranceParameter(), parameter )
+      {}
+
+      explicit NewtonInverseOperator ( const ParameterReader &parameter = Parameter::container() )
+        : NewtonInverseOperator( ParametersType( parameter ) )
+      {}
+
+      /** constructor
+       *
+       *  \param[in]  epsilon  tolerance for norm of residual
+       */
+      NewtonInverseOperator ( const DomainFieldType &epsilon, const NewtonParameter &parameter )
+        : NewtonInverseOperator(
+            LinearInverseOperatorType( parameter.linReductionParameter( epsilon ),
+                                       parameter.linAbsTolParameter( epsilon ),
+                                       parameter.maxLinearIterationsParameter(),
+                                       parameter.linearSolverVerbose(),
+                                       parameter.parameter() ),
+            epsilon, parameter )
+      {}
+
+      NewtonInverseOperator ( const DomainFieldType &epsilon,
+                              const ParameterReader &parameter = Parameter::container() )
+        : NewtonInverseOperator( epsilon, ParametersType( parameter ) )
+      {}
+
+
+      /** constructor
+       *
        *  \param[in]  op       operator to invert
        *
        *  \note The tolerance is read from the paramter
        *        <b>fem.solver.newton.tolerance</b>
        */
-      NewtonInverseOperator ( const OperatorType &op, const NewtonParameter &parameter )
-      : op_( op ),
-        parameters_( parameter.clone() ),
-        tolerance_( parameter.toleranceParameter() ),
-        linAbsTol_( parameter.linAbsTolParameter( tolerance_ ) ),
-        linReduction_( parameter.linReductionParameter( tolerance_ ) ),
-        verbose_( parameter.newtonVerbose() && MPIManager::rank () == 0 ),
-        linVerbose_( parameter.linearSolverVerbose() ),
-        maxIterations_( parameter.maxIterationsParameter() ),
-        maxLinearIterations_( parameter.maxLinearIterationsParameter() )
-      {}
 
-      explicit NewtonInverseOperator ( const OperatorType &op, const ParameterReader &parameter = Parameter::container() )
-      : op_( op ),
-        parameters_( new ParametersType( parameter ) ),
-        tolerance_( parameters_->toleranceParameter() ),
-        linAbsTol_( parameters_->linAbsTolParameter( tolerance_ ) ),
-        linReduction_( parameters_->linReductionParameter( tolerance_ ) ),
-        verbose_( parameters_->newtonVerbose() && MPIManager::rank () == 0 ),
-        linVerbose_( parameters_->linearSolverVerbose() ),
-        maxIterations_( parameters_->maxIterationsParameter() ),
-        maxLinearIterations_( parameters_->maxLinearIterationsParameter() )
-      {}
+
+      NewtonInverseOperator ( const OperatorType &op, const NewtonParameter &parameter )
+        : NewtonInverseOperator( parameter )
+      {
+        bind( op );
+      }
+
+      explicit NewtonInverseOperator ( const OperatorType &op,
+                                       const ParameterReader &parameter = Parameter::container() )
+        : NewtonInverseOperator( parameter )
+      {
+        bind( op );
+      }
 
       /** constructor
        *
        *  \param[in]  op       operator to invert
        *  \param[in]  epsilon  tolerance for norm of residual
        */
+
       NewtonInverseOperator ( const OperatorType &op, const DomainFieldType &epsilon,
                               const NewtonParameter &parameter )
-      : op_( op ),
-        parameters_( parameter.clone() ),
-        tolerance_( epsilon ),
-        linAbsTol_( parameter.linAbsTolParameter( tolerance_ ) ),
-        linReduction_( parameter.linReductionParameter( tolerance_ ) ),
-        verbose_( parameter.newtonVerbose() ),
-        linVerbose_( parameter.linearSolverVerbose() ),
-        maxIterations_( parameter.maxIterationsParameter() ),
-        maxLinearIterations_( parameter.maxLinearIterationsParameter() )
-      {}
+        : NewtonInverseOperator( epsilon, parameter )
+      {
+        bind( op );
+      }
 
       NewtonInverseOperator ( const OperatorType &op, const DomainFieldType &epsilon,
                               const ParameterReader &parameter = Parameter::container() )
-      : op_( op ),
-        parameters_( new ParametersType( parameter ) ),
-        tolerance_( epsilon ),
-        linAbsTol_( parameters_->linAbsTolParameter( tolerance_ ) ),
-        linReduction_( parameters_->linReductionParameter( tolerance_ ) ),
-        verbose_( parameters_->newtonVerbose() && MPIManager::rank () == 0 ),
-        linVerbose_( parameters_->linearSolverVerbose() ),
-        maxIterations_( parameters_->maxIterationsParameter() ),
-        maxLinearIterations_( parameters_->maxLinearIterationsParameter() )
-      {}
+        : NewtonInverseOperator( epsilon, parameter )
+      {
+        bind( op );
+      }
+
+      void bind ( const OperatorType &op ) { op_ = &op; }
+
+      void unbind () { op_ = nullptr; }
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const;
 
@@ -220,18 +282,17 @@ namespace Dune
       }
 
     private:
-      const OperatorType &op_;
-      const std::unique_ptr< NewtonParameter > parameters_;
+      const OperatorType *op_ = nullptr;
 
-      const double tolerance_, linAbsTol_, linReduction_;
+      const double tolerance_;
       const bool verbose_;
-      const bool linVerbose_;
       const int maxIterations_;
       const int maxLinearIterations_;
 
       mutable DomainFieldType delta_;
       mutable int iterations_;
       mutable int linearIterations_;
+      mutable LinearInverseOperatorType jInv_;
       mutable std::unique_ptr< JacobianOperatorType > jOp_;
     };
 
@@ -244,12 +305,14 @@ namespace Dune
     inline void NewtonInverseOperator< JacobianOperator, LInvOp >
       ::operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
     {
+      assert( op_ );
+
       DomainFunctionType residual( u );
       RangeFunctionType dw( w );
       JacobianOperatorType& jOp = jacobian( "jacobianOperator", dw.space(), u.space() );
 
       // compute initial residual
-      op_( w, residual );
+      (*op_)( w, residual );
       residual -= u;
       delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
 
@@ -259,23 +322,24 @@ namespace Dune
           std::cerr << "Newton iteration " << iterations_ << ": |residual| = " << delta_ << std::endl;
 
         // evaluate operator's jacobian
-        op_.jacobian( w, jOp );
+        (*op_).jacobian( w, jOp );
 
         // David: With this factor, the tolerance of CGInverseOp is the absolute
         //        rather than the relative error
         //        (see also dune-fem/dune/fem/solver/inverseoperators.hh)
-        const int remLinearIts = maxLinearIterations_ - linearIterations_;
-        const LinearInverseOperatorType jInv( jOp, linReduction_, linAbsTol_, remLinearIts, linVerbose_, parameters_->parameter() );
+        jInv_.bind( jOp );
+        jInv_.setMaxIterations( maxLinearIterations_ - linearIterations_ );
 
         dw.clear();
-        jInv( residual, dw );
-        linearIterations_ += jInv.iterations();
+        jInv_( residual, dw );
+        linearIterations_ += jInv_.iterations();
         w -= dw;
 
-        op_( w, residual );
+        (*op_)( w, residual );
         residual -= u;
         delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
       }
+      jInv_.unbind();
       if( verbose_ )
         std::cerr << "Newton iteration " << iterations_ << ": |residual| = " << delta_ << std::endl;
     }
