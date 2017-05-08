@@ -52,6 +52,31 @@ class UMFPACKOp:public Operator<DF, DF>
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
   /** \brief Constructor.
+   *  \param[in] redEps relative tolerance for residual (not used here)
+   *  \param[in] absLimit absolut solving tolerance for residual (not used here)
+   *  \param[in] maxIter maximal number of iterations performed (not used here)
+   *  \param[in] verbose verbosity
+   */
+  UMFPACKOp(const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
+            const ParameterReader &parameter = Parameter::container() ) :
+    UMFPACKOp(verbose)
+  {}
+
+  /** \brief Constructor.
+   *  \param[in] redEps relative tolerance for residual (not used here)
+   *  \param[in] absLimit absolut solving tolerance for residual (not used here)
+   *  \param[in] maxIter maximal number of iterations performed (not used here)
+   */
+  UMFPACKOp(const double& redEps, const double& absLimit,
+            const int& maxIter, const ParameterReader& parameter = Parameter::container() ) :
+    UMFPACKOp(parameter.getValue<bool>("fem.solver.verbose",false))
+  {}
+
+  UMFPACKOp(const ParameterReader& parameter = Parameter::container() ) :
+    UMFPACKOp(parameter.getValue<bool>("fem.solver.verbose",false))
+  {}
+
+  /** \brief Constructor.
    *  \param[in] op Operator to invert
    *  \param[in] redEps relative tolerance for residual (not used here)
    *  \param[in] absLimit absolut solving tolerance for residual (not used here)
@@ -60,31 +85,27 @@ class UMFPACKOp:public Operator<DF, DF>
    */
   UMFPACKOp(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
             const ParameterReader &parameter = Parameter::container() ) :
-    op_(op), verbose_(verbose), ccsmat_(), isloaded_(false)
+    UMFPACKOp(verbose)
   {
-    Caller::defaults(UMF_Control);
-    UMF_Control[UMFPACK_PRL] = 4;
+    bind(op);
   }
 
   /** \brief Constructor.
-   *  \param[in] op Operator to invert
    *  \param[in] redEps relative tolerance for residual (not used here)
    *  \param[in] absLimit absolut solving tolerance for residual (not used here)
    *  \param[in] maxIter maximal number of iterations performed (not used here)
    */
   UMFPACKOp(const OperatorType& op, const double& redEps, const double& absLimit,
             const int& maxIter, const ParameterReader& parameter = Parameter::container() ) :
-    op_(op), verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
+    UMFPACKOp(parameter.getValue<bool>("fem.solver.verbose",false))
   {
-    Caller::defaults(UMF_Control);
-    UMF_Control[UMFPACK_PRL] = 4;
+    bind(op);
   }
 
   UMFPACKOp(const OperatorType& op, const ParameterReader& parameter = Parameter::container() ) :
-    op_(op), verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
+    UMFPACKOp(parameter.getValue<bool>("fem.solver.verbose",false))
   {
-    Caller::defaults(UMF_Control);
-    UMF_Control[UMFPACK_PRL] = 4;
+    bind(op);
   }
 
   // \brief Destructor.
@@ -92,6 +113,9 @@ class UMFPACKOp:public Operator<DF, DF>
   {
     finalize();
   }
+
+  void bind ( const OperatorType& op ) { op_ = &op; }
+  void unbind () { op_ = nullptr; finalize(); }
 
   /** \brief Solve the system
    *  \param[in] arg right hand side
@@ -108,9 +132,9 @@ class UMFPACKOp:public Operator<DF, DF>
   template<typename... A>
   void prepare(A... ) const
   {
-    if(!isloaded_)
+    if(op_ && !isloaded_)
     {
-      ccsmat_ = op_.systemMatrix().matrix();
+      ccsmat_ = op_->systemMatrix().matrix();
       decompose();
       isloaded_ = true;
     }
@@ -218,6 +242,7 @@ class UMFPACKOp:public Operator<DF, DF>
   {
     return 0;
   }
+  void setMaxIterations ( int ) {}
 
   /** \brief Get CCS matrix of the operator to solve.
    *  \warning It is up to the user to preserve consistency.
@@ -234,10 +259,17 @@ class UMFPACKOp:public Operator<DF, DF>
   }
 
   private:
-  const OperatorType& op_;
+  explicit UMFPACKOp ( const bool &verbose ) :
+    verbose_(verbose), ccsmat_()
+  {
+    Caller::defaults(UMF_Control);
+    UMF_Control[UMFPACK_PRL] = 4;
+  }
+
+  const OperatorType *op_;
   const bool verbose_;
   mutable CCSMatrixType ccsmat_;
-  mutable bool isloaded_;
+  mutable bool isloaded_ = false;
   mutable void *UMF_Symbolic;
   mutable void *UMF_Numeric;
   mutable double UMF_Control[UMFPACK_CONTROL];
