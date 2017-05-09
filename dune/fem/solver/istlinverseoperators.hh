@@ -73,7 +73,7 @@ namespace Dune
       }
 
 #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
-      SolverCategory::Category category () const override { SolverCategory::sequential; }
+      SolverCategory::Category category () const override { return SolverCategory::sequential; }
 #endif // #if ! DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
 
     protected:
