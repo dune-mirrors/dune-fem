@@ -51,10 +51,10 @@ namespace Dune
       {}
 
       // pre and post do nothing here
-      virtual void pre ( domain_type &x, range_type &y ) {}
-      virtual void post ( domain_type &x ) {}
+      virtual void pre ( domain_type &x, range_type &y ) override {}
+      virtual void post ( domain_type &x ) override {}
 
-      virtual void apply ( domain_type &x, const range_type &y )
+      virtual void apply ( domain_type &x, const range_type &y ) override
       {
         // no precon
         if( !precon_ )

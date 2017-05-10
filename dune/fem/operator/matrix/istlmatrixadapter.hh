@@ -95,13 +95,13 @@ namespace Dune
       virtual ParallelScalarProductType &scp() { return scp_; }
 
       //! apply operator to x:  \f$ y = A(x) \f$
-      virtual void apply ( const X &x, Y &y ) const
+      void apply ( const X &x, Y &y ) const override
       {
         DUNE_THROW(NotImplemented,"interface method apply not overloaded!");
       }
 
       //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
-      virtual void applyscaleadd ( field_type alpha, const X &x, Y &y) const
+      void applyscaleadd ( field_type alpha, const X &x, Y &y) const override
       {
         DUNE_THROW(NotImplemented,"interface method applyscaleadd not overloaded!");
       }
@@ -114,7 +114,7 @@ namespace Dune
       }
 
       //! get matrix
-      virtual const MatrixType& getmat () const { return matrix_; }
+      const MatrixType& getmat () const override { return matrix_; }
 
 #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
       SolverCategory::Category category () const override { return SolverCategory::sequential; }
@@ -195,14 +195,14 @@ namespace Dune
       {}
 
       //! apply operator to x:  \f$ y = A(x) \f$
-      virtual void apply ( const X &x, Y &y ) const
+      void apply ( const X &x, Y &y ) const override
       {
         matrix_.mv( x, y );
         communicate( y );
       }
 
       //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
-      virtual void applyscaleadd ( field_type alpha, const X &x, Y &y) const
+      void applyscaleadd ( field_type alpha, const X &x, Y &y) const override
       {
         if( rowSpace_.grid().comm().size() <= 1 )
         {
@@ -217,7 +217,7 @@ namespace Dune
         }
       }
 
-      virtual double residuum(const Y& rhs, X& x) const
+      double residuum(const Y& rhs, X& x) const override
       {
         Y tmp( rhs );
 
@@ -299,7 +299,7 @@ namespace Dune
       {}
 
       //! apply operator to x:  \f$ y = A(x) \f$
-      virtual void apply (const X& x, Y& y) const
+      void apply (const X& x, Y& y) const override
       {
         // exchange data first
         communicate( x );
@@ -312,7 +312,7 @@ namespace Dune
       }
 
       //! apply operator to x, scale and add:  \f$ y = y + \alpha A(x) \f$
-      virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const
+      void applyscaleadd (field_type alpha, const X& x, Y& y) const override
       {
         // exchange data first
         communicate( x );
@@ -324,7 +324,7 @@ namespace Dune
         scp_.deleteNonInterior( y );
       }
 
-      virtual double residuum(const Y& rhs, X& x) const
+      double residuum(const Y& rhs, X& x) const override
       {
         // exchange data
         communicate( x );

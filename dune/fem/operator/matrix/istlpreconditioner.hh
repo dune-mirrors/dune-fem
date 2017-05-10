@@ -117,16 +117,16 @@ namespace Dune
       {}
 
       //! \copydoc Preconditioner
-      virtual void pre (X& x, Y& b) {}
+      void pre (X& x, Y& b) override {}
 
       //! \copydoc Preconditioner
-      virtual void apply (X& v, const Y& d)
+      void apply (X& v, const Y& d) override
       {
         diagonalPrecon_.applyToISTLBlockVector( d, v );
       }
 
       //! \copydoc Preconditioner
-      virtual void post (X& x) {}
+      void post (X& x) override {}
 
 #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
       //! \brief The category the precondtioner is part of.
@@ -173,16 +173,16 @@ namespace Dune
       IdentityPreconditionerWrapper(){}
 
       //! \copydoc Preconditioner
-      virtual void pre (X& x, Y& b) {}
+      void pre (X& x, Y& b) override {}
 
       //! \copydoc Preconditioner
-      virtual void apply (X& v, const Y& d)
+      void apply (X& v, const Y& d) override
       {
         Apply< X, Y> :: copy( v, d );
       }
 
       //! \copydoc Preconditioner
-      virtual void post (X& x) {}
+      void post (X& x) override {}
 
 #if DUNE_VERSION_NEWER(DUNE_ISTL, 2, 6)
       SolverCategory::Category category () const override { return SolverCategory::sequential; }
@@ -323,7 +323,7 @@ namespace Dune
       }
 
       //! \copydoc Preconditioner
-      virtual void pre (X& x, Y& b)
+      void pre (X& x, Y& b) override
       {
         // all the sequentiel implemented Preconditioners do nothing in pre and post
         // apply preconditioner
@@ -336,7 +336,7 @@ namespace Dune
       }
 
       //! \copydoc Preconditioner
-      virtual void apply (X& v, const Y& d)
+      void apply (X& v, const Y& d) override
       {
         if( preEx_ )
         {
@@ -350,7 +350,7 @@ namespace Dune
       }
 
       //! \copydoc Preconditioner
-      virtual void post (X& x)
+      void post (X& x) override
       {
         // all the implemented Preconditioners do nothing in pre and post
         // apply preconditioner

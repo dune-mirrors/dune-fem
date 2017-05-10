@@ -50,14 +50,14 @@ namespace Dune
           rangeSpace_( rangeSpace )
       {}
 
-      virtual void apply ( const domain_type &x, range_type &y ) const
+      virtual void apply ( const domain_type &x, range_type &y ) const override
       {
         const DomainFunctionType fx( "ISTLLinearOperatorAdapter::apply::x", domainSpace_, x );
         RangeFunctionType fy( "ISTLLinearOperatorAdapter::apply::y", rangeSpace_, y );
         op_( fx, fy );
       }
 
-      virtual void applyscaleadd ( field_type alpha, const domain_type &x, range_type &y ) const
+      virtual void applyscaleadd ( field_type alpha, const domain_type &x, range_type &y ) const override
       {
         const DomainFunctionType fx( "ISTLLinearOperatorAdapter::applyscaleadd::x", domainSpace_, x );
         RangeFunctionType fy( "ISTLLinearOperatorAdapter::applyscaleadd::y", rangeSpace_ );
