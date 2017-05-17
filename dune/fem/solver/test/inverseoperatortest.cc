@@ -25,6 +25,7 @@
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/lagrange.hh>
+#include <dune/fem/solver/oemsolver.hh>
 
 #if HAVE_DUNE_ISTL
 #include <dune/fem/function/blockvectorfunction.hh>
@@ -159,6 +160,46 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 
+  // OEMCGOp + SparseRowLinearOperator
+  {
+    using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
+    using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
+    using InverseOperator   = Dune::Fem::OEMCGOp< DiscreteFunction, LinearOperator >;
+
+    std::string designation(" === OEMCGOp + SparseRowLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+  }
+
+  // OEMBICGSTABOp + SparseRowLinearOperator
+  {
+    using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
+    using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
+    using InverseOperator   = Dune::Fem::OEMBICGSTABOp< DiscreteFunction, LinearOperator >;
+
+    std::string designation(" === OEMBICGSTABOp + SparseRowLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+  }
+
+  // OEMBICGSQOp + SparseRowLinearOperator
+  {
+    using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
+    using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
+    using InverseOperator   = Dune::Fem::OEMBICGSQOp< DiscreteFunction, LinearOperator >;
+
+    std::string designation(" === OEMBICGSQOp + SparseRowLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+  }
+
+  // // OEMGMRESOp + SparseRowLinearOperator
+  // {
+  //   using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
+  //   using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
+  //   using InverseOperator   = Dune::Fem::OEMGMRESOp< DiscreteFunction, LinearOperator >;
+
+  //   std::string designation(" === OEMGMRESOp + SparseRowLinearOperator === ");
+  //   pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+  // }
+
 #ifdef USE_PARDG_ODE_SOLVER
   // ParDGGeneralizedMinResInverseOperator + SparseRowLinearOperator
   {
@@ -177,6 +218,36 @@ int main(int argc, char** argv)
     using InverseOperator   = Dune::Fem::ParDGBiCGStabInverseOperator< DiscreteFunction >;
 
     std::string designation(" === ParDGBiCGStabInverseOperator + SparseRowLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+  }
+
+  // GMRESOp + SparseRowLinearOperator
+  {
+    using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
+    using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
+    using InverseOperator   = Dune::Fem::GMRESOp< DiscreteFunction, LinearOperator >;
+
+    std::string designation(" === GMRESOp + SparseRowLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+  }
+
+  // // FGMRESOp + SparseRowLinearOperator
+  // {
+  //   using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
+  //   using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
+  //   using InverseOperator   = Dune::Fem::FGMRESOp< DiscreteFunction, LinearOperator >;
+
+  //   std::string designation(" === FGMRESOp + SparseRowLinearOperator === ");
+  //   pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+  // }
+
+  // BICGSTABOp + SparseRowLinearOperator
+  {
+    using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
+    using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
+    using InverseOperator   = Dune::Fem::BICGSTABOp< DiscreteFunction, LinearOperator >;
+
+    std::string designation(" === BICGSTABOp + SparseRowLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 #endif // USE_PARDG_ODE_SOLVER

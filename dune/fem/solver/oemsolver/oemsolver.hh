@@ -359,7 +359,7 @@ namespace Dune
 
     private:
       // no const reference, we make const later
-      OperatorType &op_;
+      OperatorType *op_ = nullptr;
       typename DiscreteFunctionType::RangeFieldType epsilon_;
       int maxIter_;
       bool verbose_ ;
@@ -419,6 +419,31 @@ namespace Dune
     public:
 
       /** \brief constructor of OEM-CG
+          \param[in] redEps realative tolerance for residual
+          \param[in] absLimit absolut solving tolerance for residual
+          \param[in] maxIter maximal number of iterations performed
+          \param[in] verbose verbosity
+      */
+      OEMCGOp ( double redEps, double absLimit, int maxIter, bool verbose,
+                const ParameterReader &parameter = Parameter::container() )
+      : epsilon_( absLimit ),
+        maxIter_( maxIter ),
+        verbose_( verbose ),
+        iterations_( 0 )
+      {}
+
+      OEMCGOp ( double redEps, double absLimit, int maxIter,
+                const ParameterReader &parameter = Parameter::container() )
+      : OEMCGOp( redEps, absLimit, maxIter, parameter.getValue< bool >( "fem.solver.verbose", false ), parameter )
+      {}
+
+      OEMCGOp ( double redEps, double absLimit,
+                const ParameterReader &parameter = Parameter::container() )
+      : OEMCGOp( redEps, absLimit, std::numeric_limits< int >::max(),
+                 parameter.getValue< bool >( "fem.solver.verbose", false ), parameter )
+      {}
+
+      /** \brief constructor of OEM-CG
           \param[in] op Operator to invert
           \param[in] redEps realative tolerance for residual
           \param[in] absLimit absolut solving tolerance for residual
@@ -428,32 +453,36 @@ namespace Dune
       OEMCGOp ( OperatorType &op,
                 double redEps, double absLimit, int maxIter, bool verbose,
                 const ParameterReader &parameter = Parameter::container() )
-      : op_(op),
-        epsilon_( absLimit ),
-        maxIter_( maxIter ),
-        verbose_( verbose ),
-        iterations_( 0 )
-      {}
+      : OEMCGOp( redEps, absLimit, maxIter_, verbose, parameter )
+      {
+        bind( op );
+      }
 
       OEMCGOp ( OperatorType &op,
                 double redEps, double absLimit, int maxIter,
                 const ParameterReader &parameter = Parameter::container() )
-      : op_( op ),
-        epsilon_( absLimit ),
-        maxIter_( maxIter ),
-        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
-        iterations_( 0 )
-      {}
+      : OEMCGOp( redEps, absLimit, maxIter_, parameter )
+      {
+        bind( op );
+      }
 
       OEMCGOp ( OperatorType &op,
                 double redEps, double absLimit,
                 const ParameterReader &parameter = Parameter::container() )
-      : op_( op ),
-        epsilon_( absLimit ),
-        maxIter_( std::numeric_limits< int >::max() ),
-        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
-        iterations_( 0 )
-      {}
+      : OEMCGOp( redEps, absLimit, parameter )
+      {
+        bind( op );
+      }
+
+      void bind ( OperatorType& op )
+      {
+        op_ = &op;
+      }
+
+      void unbind ()
+      {
+        op_ = nullptr;
+      }
 
       void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
       {
@@ -468,12 +497,18 @@ namespace Dune
         return iterations_;
       }
 
+      void setMaxIterations ( int maxIter )
+      {
+        maxIter_ = maxIter;
+      }
+
       /** \brief solve the system
           \param[in] arg right hand side
           \param[out] dest solution
       */
       void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
       {
+        assert( op_ );
         // prepare operator
         prepare ( arg, dest );
 
@@ -484,7 +519,7 @@ namespace Dune
                        // OEMSolver::PreconditionInterface
                        std::is_convertible<OperatorType, OEMSolver::PreconditionInterface > ::value >::
                          // call solver, see above
-                         call(op_,arg,dest,epsilon_,maxIter_,verbose_);
+                         call(*op_,arg,dest,epsilon_,maxIter_,verbose_);
 
         iterations_ = val.first;
 
@@ -517,7 +552,7 @@ namespace Dune
 
     private:
       // no const reference, we make const later
-      OperatorType &op_;
+      OperatorType *op_ = nullptr;
       typename DiscreteFunctionType::RangeFieldType epsilon_;
       int maxIter_;
       bool verbose_ ;
@@ -569,6 +604,35 @@ namespace Dune
 
     public:
       /** \brief constructor of OEM-BiCG-stab
+          \param[in] redEps realative tolerance for residual
+          \param[in] absLimit absolut solving tolerance for residual
+          \param[in] maxIter maximal number of iterations performed
+          \param[in] verbose verbosity
+      */
+      OEMBICGSTABOp ( double redEps, double absLimit, int maxIter, bool verbose,
+                      const ParameterReader &parameter = Parameter::container() )
+      : epsilon_( absLimit ),
+        maxIter_( maxIter ),
+        verbose_( verbose ),
+        iterations_( 0 )
+      {
+      }
+
+      OEMBICGSTABOp ( double redEps, double absLimit, int maxIter,
+                      const ParameterReader &parameter = Parameter::container() )
+      : OEMBICGSTABOp( redEps, absLimit, maxIter,
+                       parameter.getValue< bool >( "fem.solver.verbose", false ), parameter )
+      {
+      }
+
+      OEMBICGSTABOp ( double redEps, double absLimit,
+                      const ParameterReader &parameter = Parameter::container() )
+      : OEMBICGSTABOp( redEps, absLimit, std::numeric_limits< int >::max(),
+                       parameter.getValue< bool >( "fem.solver.verbose", false ), parameter )
+      {
+      }
+
+      /** \brief constructor of OEM-BiCG-stab
           \param[in] op Operator to invert
           \param[in] redEps realative tolerance for residual
           \param[in] absLimit absolut solving tolerance for residual
@@ -578,35 +642,37 @@ namespace Dune
       OEMBICGSTABOp ( OperatorType& op,
                       double redEps, double absLimit, int maxIter, bool verbose,
                       const ParameterReader &parameter = Parameter::container() )
-      : op_(op),
-        epsilon_( absLimit ),
-        maxIter_( maxIter ),
-        verbose_( verbose ),
-        iterations_( 0 )
+      : OEMBICGSTABOp( redEps, absLimit, maxIter, verbose, parameter )
       {
+        bind( op );
       }
 
       OEMBICGSTABOp ( OperatorType &op,
                       double redEps, double absLimit, int maxIter,
                       const ParameterReader &parameter = Parameter::container() )
-      : op_( op ),
-        epsilon_( absLimit ),
-        maxIter_( maxIter ),
-        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
-        iterations_( 0 )
+      : OEMBICGSTABOp( redEps, absLimit, maxIter, parameter )
       {
+        bind( op );
       }
 
       OEMBICGSTABOp ( OperatorType &op,
                       double redEps, double absLimit,
                       const ParameterReader &parameter = Parameter::container() )
-      : op_( op ),
-        epsilon_( absLimit ),
-        maxIter_( std::numeric_limits< int >::max() ),
-        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
-        iterations_( 0 )
+      : OEMBICGSTABOp( redEps, absLimit, parameter )
       {
+        bind( op );
       }
+
+      void bind ( OperatorType &op )
+      {
+        op_ = &op;
+      }
+
+      void unbind ()
+      {
+        op_ = nullptr;
+      }
+
       void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
       {
       }
@@ -620,6 +686,11 @@ namespace Dune
         return iterations_;
       }
 
+      void setMaxIterations ( int maxIter )
+      {
+        maxIter_ = maxIter;
+      }
+
 
       /** \brief solve the system
           \param[in] arg right hand side
@@ -627,6 +698,7 @@ namespace Dune
       */
       void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
       {
+        assert( op_ );
         // prepare operator
         prepare ( arg, dest );
 
@@ -637,7 +709,7 @@ namespace Dune
                        // OEMSolver::PreconditionInterface
                        std::is_convertible<OperatorType, OEMSolver::PreconditionInterface > ::value >::
                          // call solver, see above
-                         call(op_,arg,dest,epsilon_,maxIter_,verbose_);
+                         call(*op_,arg,dest,epsilon_,maxIter_,verbose_);
 
         iterations_ = val.first;
 
@@ -674,7 +746,7 @@ namespace Dune
 
     private:
       // no const reference, we make const later
-      OperatorType &op_;
+      OperatorType *op_ = nullptr;
       typename DiscreteFunctionType::RangeFieldType epsilon_;
       int maxIter_;
       bool verbose_ ;
@@ -688,37 +760,68 @@ namespace Dune
           \param[in] maxIter maximal number of iterations performed
           \param[in] verbose verbosity
       */
-      OEMBICGSQOp ( OperatorType &op,
-                    double redEps, double absLimit, int maxIter, bool verbose,
+      OEMBICGSQOp ( double redEps, double absLimit, int maxIter, bool verbose,
                     const ParameterReader &parameter = Parameter::container() )
-      : op_(op),
-        epsilon_( absLimit ),
+      : epsilon_( absLimit ),
         maxIter_( maxIter ),
         verbose_( verbose ),
         iterations_( 0 )
       {
       }
 
+      OEMBICGSQOp ( double redEps, double absLimit,
+                    const ParameterReader &parameter = Parameter::container() )
+      : OEMBICGSQOp( redEps, absLimit, std::numeric_limits< int >::max(),
+                     parameter.getValue< bool >( "fem.solver.verbose", false ), parameter )
+      {
+      }
+
+      OEMBICGSQOp ( double redEps, double absLimit, int maxIter,
+                    const ParameterReader &parameter = Parameter::container() )
+      : OEMBICGSQOp( redEps, absLimit, maxIter,
+                     parameter.getValue< bool >( "fem.solver.verbose", false ), parameter )
+      {
+      }
+
+      /** \brief constructor of OEM-BiCG-SQ
+          \param[in] op Operator to invert
+          \param[in] redEps realative tolerance for residual
+          \param[in] absLimit absolut solving tolerance for residual
+          \param[in] maxIter maximal number of iterations performed
+          \param[in] verbose verbosity
+      */
+      OEMBICGSQOp ( OperatorType &op,
+                    double redEps, double absLimit, int maxIter, bool verbose,
+                    const ParameterReader &parameter = Parameter::container() )
+      : OEMBICGSQOp( redEps, absLimit, maxIter, verbose, parameter )
+      {
+        bind( op );
+      }
+
       OEMBICGSQOp ( OperatorType &op,
                     double redEps, double absLimit,
                     const ParameterReader &parameter = Parameter::container() )
-      : op_( op ),
-        epsilon_( absLimit ),
-        maxIter_( std::numeric_limits< int >::max() ),
-        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
-        iterations_( 0 )
+      : OEMBICGSQOp( redEps, absLimit, parameter )
       {
+        bind( op );
       }
 
       OEMBICGSQOp ( OperatorType &op,
                     double redEps, double absLimit, int maxIter,
                     const ParameterReader &parameter = Parameter::container() )
-      : op_( op ),
-        epsilon_( absLimit ),
-        maxIter_( maxIter ),
-        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
-        iterations_( 0 )
+      : OEMBICGSQOp( redEps, absLimit, maxIter, parameter )
       {
+        bind( op );
+      }
+
+      void bind ( OperatorType &op )
+      {
+        op_ = &op;
+      }
+
+      void unbind ()
+      {
+        op_ = nullptr;
       }
 
       void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
@@ -734,18 +837,24 @@ namespace Dune
         return iterations_;
       }
 
+      void setMaxIterations ( int maxIter )
+      {
+        maxIter_ = maxIter;
+      }
+
       /** \brief solve the system
           \param[in] arg right hand side
           \param[out] dest solution
       */
       void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
       {
+        assert( op_ );
         // prepare operator
         prepare ( arg, dest );
 
         int size = arg.space().size();
 
-        int iter = OEMSolver::bicgsq(size,op_.systemMatrix(),
+        int iter = OEMSolver::bicgsq(size,op_->systemMatrix(),
             arg.leakPointer(),dest.leakPointer(),epsilon_,maxIter_,verbose_);
 
         iterations_ = iter;
@@ -849,6 +958,33 @@ namespace Dune
 
     public:
       /** \brief constructor of OEM-GMRES
+          \param[in] redEps realative tolerance for residual
+          \param[in] absLimit absolut solving tolerance for residual
+          \param[in] maxIter maximal number of iterations performed
+          \param[in] verbose verbosity
+      */
+      OEMGMRESOp ( double redEps, double absLimit, int maxIter, bool verbose,
+                   const ParameterReader &parameter = Parameter::container() )
+      : epsilon_( absLimit ),
+        maxIter_( maxIter ),
+        restart_( parameter.getValue< int >( "oemsolver.gmres.restart", 20 ) ),
+        verbose_( verbose ),
+        iterations_( 0 )
+      {}
+
+      OEMGMRESOp ( double redEps, double absLimit, int maxIter,
+                   const ParameterReader &parameter = Parameter::container() )
+      : OEMGMRESOp( redEps, absLimit, maxIter,
+                    parameter.getValue< bool >( "fem.solver.verbose", false ), parameter )
+      {}
+
+      OEMGMRESOp ( double redEps, double absLimit,
+                   const ParameterReader &parameter = Parameter::container() )
+      : OEMGMRESOp( redEps, absLimit, std::numeric_limits< int >::max(),
+                    parameter.getValue< bool >( "fem.solver.verbose", false ), parameter )
+      {}
+
+      /** \brief constructor of OEM-GMRES
           \param[in] op Operator to invert
           \param[in] redEps realative tolerance for residual
           \param[in] absLimit absolut solving tolerance for residual
@@ -858,35 +994,36 @@ namespace Dune
       OEMGMRESOp ( OperatorType &op,
                    double redEps, double absLimit, int maxIter, bool verbose,
                    const ParameterReader &parameter = Parameter::container() )
-      : op_( op ),
-        epsilon_( absLimit ),
-        maxIter_( maxIter ),
-        restart_( parameter.getValue< int >( "oemsolver.gmres.restart", 20 ) ),
-        verbose_( verbose ),
-        iterations_( 0 )
-      {}
+      : OEMGMRESOp( redEps, absLimit, maxIter, verbose, parameter )
+      {
+        bind( op );
+      }
 
       OEMGMRESOp ( OperatorType &op,
                    double redEps, double absLimit, int maxIter,
                    const ParameterReader &parameter = Parameter::container() )
-      : op_( op ),
-        epsilon_( absLimit ),
-        maxIter_( maxIter ),
-        restart_( parameter.getValue< int >( "oemsolver.gmres.restart", 20 ) ),
-        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
-        iterations_( 0 )
-      {}
+      : OEMGMRESOp( redEps, absLimit, maxIter, parameter )
+      {
+        bind( op );
+      }
 
       OEMGMRESOp ( OperatorType &op,
                    double redEps, double absLimit,
                    const ParameterReader &parameter = Parameter::container() )
-      : op_( op ),
-        epsilon_( absLimit ),
-        maxIter_( std::numeric_limits< int >::max() ),
-        restart_( parameter.getValue< int >( "oemsolver.gmres.restart", 20 ) ),
-        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
-        iterations_( 0 )
-      {}
+      : OEMGMRESOp( redEps, absLimit, parameter )
+      {
+        bind( op );
+      }
+
+      void bind ( OperatorType &op )
+      {
+        op_ = &op;
+      }
+
+      void unbind ()
+      {
+        op_ = nullptr;
+      }
 
       void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
       {
@@ -901,12 +1038,18 @@ namespace Dune
         return iterations_;
       }
 
+      void setMaxIterations ( int maxIter )
+      {
+        maxIter_ = maxIter;
+      }
+
       /** \brief solve the system
           \param[in] arg right hand side
           \param[out] dest solution
       */
       void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
       {
+        assert( op_ );
         // prepare operator
         prepare ( arg, dest );
 
@@ -920,7 +1063,7 @@ namespace Dune
                        // OEMSolver::PreconditionInterface
                        std::is_convertible<OperatorType, OEMSolver::PreconditionInterface > ::value >::
                          // call solver, see above
-                         call(op_,arg,dest,inner,epsilon_,maxIter_,verbose_);
+                         call(*op_,arg,dest,inner,epsilon_,maxIter_,verbose_);
 
         iterations_ = val.first;
 
@@ -944,7 +1087,7 @@ namespace Dune
 
     private:
       // no const reference, we make const later
-      OperatorType &op_;
+      OperatorType *op_ = nullptr;
       typename DiscreteFunctionType::RangeFieldType epsilon_;
       int maxIter_;
       int restart_;
@@ -1052,7 +1195,7 @@ namespace Dune
       mutable SolverType solver_;
 
       // wrapper to fit interface of FGMRES operator
-      OperatorType &op_;
+      OperatorType *op_ = nullptr;
 
       typename DiscreteFunctionType::RangeFieldType epsilon_;
       int maxIter_;
@@ -1060,13 +1203,30 @@ namespace Dune
       mutable int iterations_;
 
     public:
+      GMRESOp( double  redEps , double absLimit , int maxIter , bool verbose,
+          const ParameterReader &parameter = Parameter::container() )
+      : solver_(PARDG::Communicator::instance(), parameter.getValue< int >( "oemsolver.gmres.restart", 20 ) )
+        , epsilon_ ( absLimit )
+        , maxIter_ (maxIter ) , verbose_ ( verbose )
+        , iterations_ ( 0 )
+      {
+      }
+
       GMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose,
           const ParameterReader &parameter = Parameter::container() )
-          : solver_(PARDG::Communicator::instance(), parameter.getValue< int >( "oemsolver.gmres.restart", 20 ) )
-          , op_(op) , epsilon_ ( absLimit )
-          , maxIter_ (maxIter ) , verbose_ ( verbose )
-          , iterations_ ( 0 )
+      : GMRESOp( redEps, absLimit, maxIter, verbose )
       {
+        bind( op );
+      }
+
+      void bind ( OperatorType &op )
+      {
+        op_ = &op;
+      }
+
+      void unbind ()
+      {
+        op_ = nullptr;
       }
 
       void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
@@ -1082,12 +1242,18 @@ namespace Dune
         return iterations_;
       }
 
+      void setMaxIterations ( int maxIter )
+      {
+        maxIter_ = maxIter;
+      }
+
       /** \brief solve the system
           \param[in] arg right hand side
           \param[out] dest solution
       */
       void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
       {
+        assert( op_ );
         // prepare operator
         prepare ( arg, dest );
 
@@ -1106,7 +1272,7 @@ namespace Dune
                        // OEMSolver::PreconditionInterface
                        std::is_convertible<OperatorType, OEMSolver::PreconditionInterface > ::value >::
                        // call solver, see above
-                       call(solver_,op_.systemMatrix(),arg,dest);
+                       call(solver_,op_->systemMatrix(),arg,dest);
 
         iterations_ = solver_.number_of_iterations();
 
@@ -1203,7 +1369,7 @@ namespace Dune
       mutable SolverType solver_;
 
       // wrapper to fit interface of FGMRES operator
-      OperatorType &op_;
+      OperatorType *op_ = nullptr;
 
       typename DiscreteFunctionType::RangeFieldType epsilon_;
       int maxIter_;
@@ -1211,13 +1377,30 @@ namespace Dune
       mutable int iterations_;
 
     public:
-      FGMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose,
-          const ParameterReader &parameter = Parameter::container() )
-          : solver_(PARDG::Communicator::instance(), parameter.getValue< int >( "oemsolver.gmres.restart", 20 ) )
-          , op_(op) , epsilon_ ( absLimit )
-          , maxIter_ (maxIter ) , verbose_ ( verbose )
-          , iterations_( 0 )
+      FGMRESOp( double  redEps , double absLimit , int maxIter , bool verbose,
+                const ParameterReader &parameter = Parameter::container() )
+      : solver_(PARDG::Communicator::instance(), parameter.getValue< int >( "oemsolver.gmres.restart", 20 ) )
+        , epsilon_ ( absLimit )
+        , maxIter_ (maxIter ) , verbose_ ( verbose )
+        , iterations_( 0 )
       {
+      }
+
+      FGMRESOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose,
+                const ParameterReader &parameter = Parameter::container() )
+      : FGMRESOp( redEps, absLimit, maxIter, verbose, parameter )
+      {
+        bind( op );
+      }
+
+      void bind ( OperatorType &op )
+      {
+        op_ = &op;
+      }
+
+      void unbind ()
+      {
+        op_ = nullptr;
       }
 
       void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
@@ -1233,9 +1416,15 @@ namespace Dune
         return iterations_;
       }
 
+      void setMaxIterations ( int maxIter )
+      {
+        maxIter_ = maxIter;
+      }
+
       //! solve the system
       void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
       {
+        assert( op_ );
         // prepare operator
         prepare ( arg, dest );
 
@@ -1254,7 +1443,7 @@ namespace Dune
                        // OEMSolver::PreconditionInterface
                        std::is_convertible<OperatorType, OEMSolver::PreconditionInterface > ::value >::
                        // call solver, see above
-                       call(solver_,op_,arg,dest);
+                       call(solver_,*op_,arg,dest);
 
         iterations_ = solver_.number_of_iterations();
 
@@ -1354,7 +1543,7 @@ namespace Dune
       typedef PARDG::BICGSTAB SolverType;
       mutable SolverType solver_;
       // wrapper to fit interface of GMRES operator
-      OperatorType &op_;
+      OperatorType *op_ = nullptr;
 
       typename DiscreteFunctionType::RangeFieldType epsilon_;
       int maxIter_;
@@ -1362,13 +1551,30 @@ namespace Dune
       mutable int iterations_;
 
     public:
-      BICGSTABOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose ,
-          const ParameterReader &parameter = Parameter::container() )
-          : solver_(PARDG::Communicator::instance())
-          , op_(op), epsilon_ ( absLimit )
-          , maxIter_ (maxIter ) , verbose_ ( verbose )
-          , iterations_( 0 )
+      BICGSTABOp( double  redEps , double absLimit , int maxIter , bool verbose ,
+                  const ParameterReader &parameter = Parameter::container() )
+      : solver_(PARDG::Communicator::instance())
+        , epsilon_ ( absLimit )
+        , maxIter_ (maxIter ) , verbose_ ( verbose )
+        , iterations_( 0 )
       {
+      }
+
+      BICGSTABOp( OperatorType & op , double  redEps , double absLimit , int maxIter , bool verbose ,
+                  const ParameterReader &parameter = Parameter::container() )
+      : BICGSTABOp( redEps, absLimit, maxIter, verbose, parameter )
+      {
+        bind( op );
+      }
+
+      void bind ( OperatorType &op )
+      {
+        op_ = &op;
+      }
+
+      void unbind ()
+      {
+        op_ = nullptr;
       }
 
       void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
@@ -1384,9 +1590,15 @@ namespace Dune
         return iterations_;
       }
 
+      void setMaxIterations ( int maxIter )
+      {
+        maxIter_ = maxIter;
+      }
+
       //! solve the system
       void apply( const DiscreteFunctionType& arg, DiscreteFunctionType& dest ) const
       {
+        assert( op_ );
         // prepare operator
         prepare ( arg, dest );
 
@@ -1405,7 +1617,7 @@ namespace Dune
                        // OEMSolver::PreconditionInterface
                        std::is_convertible<OperatorType, OEMSolver::PreconditionInterface > ::value >::
                        // call solver, see above
-                       call(solver_,op_,arg,dest);
+                       call(solver_,*op_,arg,dest);
 
         iterations_ = solver_.number_of_iterations();
 
