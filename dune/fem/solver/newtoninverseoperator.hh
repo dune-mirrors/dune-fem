@@ -262,7 +262,9 @@ namespace Dune
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const;
 
       int iterations () const { return iterations_; }
+      void setMaxIterations ( int maxIterations ) { maxIterations_ = maxIterations; }
       int linearIterations () const { return linearIterations_; }
+      void setMaxLinearIterations ( int maxLinearIterations ) { maxLinearIterations_ = maxLinearIterations; }
 
       bool converged () const
       {
