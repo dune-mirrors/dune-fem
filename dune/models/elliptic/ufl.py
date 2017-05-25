@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from ufl import Coefficient, Form, FiniteElementBase, FunctionSpace, SpatialCoordinate
-from ufl import action, adjoint, as_vector, derivative, div, dx, inner
+from ufl import action, adjoint, as_vector, derivative, div, dx, inner, replace
 from ufl.algorithms import expand_compounds, expand_derivatives, expand_indices
 from ufl.algorithms.analysis import extract_arguments_and_coefficients
 from ufl.algorithms.apply_derivatives import apply_derivatives
@@ -116,7 +116,7 @@ def compileUFL(form, *args, **kwargs):
 
     # if exact solution is passed in subtract a(u,.) from the form
     if "exact" in kwargs:
-        b = ufl.replace(form, {u: as_vector(kwargs["exact"])} )
+        b = replace(form, {u: as_vector(kwargs["exact"])} )
         form = form - b
 
     dform = apply_derivatives(derivative(action(form, ubar), ubar, u))
