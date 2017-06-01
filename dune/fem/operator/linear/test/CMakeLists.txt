@@ -1,3 +1,5 @@
+dune_install(checklinearoperator.hh)
+
 # some default flags needed very often
 set( DEFAULTFLAGS "COUNT_FLOPS;YASPGRID;GRIDDIM=2" )
 
