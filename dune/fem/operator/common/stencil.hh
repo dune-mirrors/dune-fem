@@ -101,6 +101,9 @@ namespace Dune
          []( int ret, const auto& entry ){ return std::max( ret, static_cast<int>( entry.second.size() ) ); } );
       }
 
+      int rows () const { return rangeBlockMapper_.size(); }
+      int cols () const { return rangeBlockMapper_.size(); }
+
     private:
 
       struct FillFunctor
