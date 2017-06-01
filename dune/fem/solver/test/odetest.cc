@@ -18,8 +18,8 @@
 
 #include <dune/fem/solver/rungekutta/timestepcontrol.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
+#include <dune/fem/solver/inverseoperators.hh>
 #include <dune/fem/operator/dghelmholtz.hh>
-#include <dune/fem/solver/pardginverseoperators.hh>
 
 #include <dune/fem/solver/rungekutta/explicit.hh>
 #include <dune/fem/solver/rungekutta/implicit.hh>
@@ -114,7 +114,7 @@ public:
 
   typedef myRHS PreconditionOperatorType;
 
-  myRHS() {
+  myRHS() : t_(0.0) {
   }
 
   const SpaceType& space() const {
@@ -171,55 +171,51 @@ namespace Dune
   namespace Fem
   {
 
-    template <>
-    class ParDGOperator< myDest<systemSize>, myDest<systemSize> >
-    : public PARDG::Function
+    namespace LinearSolver
     {
-    public:
-      typedef myDest<systemSize> DomainFunctionType;
-      typedef DomainFunctionType RangeFunctionType;
-      typedef ParDGOperator< DomainFunctionType, RangeFunctionType> ThisType;
-
-    public:
-      typedef Operator< DomainFunctionType, RangeFunctionType > OperatorType;
-
-      typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainFunctionSpaceType;
-      typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeFunctionSpaceType;
-
-      ParDGOperator ( const OperatorType &op, const DomainFunctionSpaceType &domainSpace, const RangeFunctionSpaceType &rangeSpace )
-      : operator_( op ),
-        domainSpace_( domainSpace ),
-        rangeSpace_( rangeSpace )
-      {}
-
-      void operator() ( const double *u, double *w, int i = 0 )
+      template <>
+      class OperatorAdapter< myDest<systemSize>, myDest<systemSize> >
+      : public LinearSolver::FunctionIF<double>
       {
-        DomainFunctionType uFunction( "ParDGOperator u", domainSpace_, u );
-        RangeFunctionType  wFunction( "ParDGOperator w", rangeSpace_, w );
-        operator_( uFunction, wFunction );
-        // copy result back
-        for( int i=0; i<dim_of_value(); ++ i )
-          w[ i ] = wFunction[ i ];
-      }
+      public:
+        typedef myDest<systemSize> DomainFunctionType;
+        typedef DomainFunctionType RangeFunctionType;
+        typedef OperatorAdapter< DomainFunctionType, RangeFunctionType> ThisType;
 
-      int dim_of_argument( int i = 0 ) const
-      {
-        assert( i == 0 );
-        return domainSpace_.size();
-      }
+      public:
+        typedef Operator< DomainFunctionType, RangeFunctionType > OperatorType;
 
-      int dim_of_value ( int i = 0 ) const
-      {
-        assert( i == 0 );
-        return rangeSpace_.size();
-      }
+        typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainFunctionSpaceType;
+        typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeFunctionSpaceType;
 
-    private:
-      const OperatorType &operator_;
-      const DomainFunctionSpaceType &domainSpace_;
-      const RangeFunctionSpaceType &rangeSpace_;
-    };
+        OperatorAdapter ( const OperatorType &op, const DomainFunctionSpaceType &domainSpace, const RangeFunctionSpaceType &rangeSpace )
+        : operator_( op ),
+          domainSpace_( domainSpace ),
+          rangeSpace_( rangeSpace )
+        {}
 
+        void operator() ( const double *u, double *w)
+        {
+          DomainFunctionType uFunction( "OperatorAdapter::u", domainSpace_, u );
+          RangeFunctionType  wFunction( "OperatorAdapter::w", rangeSpace_, w );
+          operator_( uFunction, wFunction );
+          // copy result back
+          const int dim = size();
+          for( int i=0; i<dim; ++ i )
+            w[ i ] = wFunction[ i ];
+        }
+
+        int size() const
+        {
+          return domainSpace_.size();
+        }
+
+      private:
+        const OperatorType &operator_;
+        const DomainFunctionSpaceType &domainSpace_;
+        const RangeFunctionSpaceType &rangeSpace_;
+      };
+    }
   }
 }
 
@@ -300,7 +296,8 @@ struct ImplicitRKFactory
   typedef SpaceOperator  SpaceOperatorType;
   typedef typename SpaceOperatorType::DestinationType DestinationType;
 
-  typedef Dune::Fem::ParDGGeneralizedMinResInverseOperator< DestinationType >  LinearInverseOperatorType;
+  typedef Dune::Fem::GeneralizedMinResInverseOperator< DestinationType >  LinearInverseOperatorType;
+  //typedef Dune::Fem::BiCGStabInverseOperator< DestinationType >  LinearInverseOperatorType;
   typedef DuneODE::ImplicitRungeKuttaTimeStepControl                           TimeStepControlType;
 
   typedef Dune::Fem::DGHelmholtzOperator< SpaceOperatorType >                  HelmholtzOperatorType;
@@ -366,7 +363,6 @@ int main( int argc, char **argv )
     std::cout << "Dune-fem row rungekutta" << std::endl;
     solve( ImplicitRKFactory< SpaceOperatorType, DuneODE::ROWRungeKuttaSolver > (), verbose );
   }
-
 
   return 0;
 }
