@@ -5,5 +5,4 @@ dune_install(
   indexset.hh
   intersection.hh
   intersectioniterator.hh
-  iterator.hh
 )
