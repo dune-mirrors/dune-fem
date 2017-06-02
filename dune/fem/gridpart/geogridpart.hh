@@ -5,6 +5,8 @@
 #error "Experimental grid extensions required for GeoGridPart. Reconfigure with -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE."
 #else
 
+#include <cassert>
+
 #include <dune/grid/common/gridview.hh>
 
 #include <dune/fem/gridpart/common/deaditerator.hh>
@@ -17,8 +19,8 @@
 #include <dune/fem/gridpart/geogridpart/geometry.hh>
 #include <dune/fem/gridpart/geogridpart/intersection.hh>
 #include <dune/fem/gridpart/geogridpart/intersectioniterator.hh>
-#include <dune/fem/gridpart/geogridpart/iterator.hh>
 #include <dune/fem/gridpart/idgridpart/indexset.hh>
+#include <dune/fem/gridpart/idgridpart/iterator.hh>
 
 namespace Dune
 {
@@ -34,6 +36,25 @@ namespace Dune
 
     template< class CoordFunction >
     struct GeoGridPartFamily;
+
+
+
+    // GeoGridPartData
+    // ---------------
+
+    template< class CoordFunction >
+    struct GeoGridPartData
+    {
+      typedef CoordFunction CoordFunctionType;
+
+      GeoGridPartData () = default;
+      GeoGridPartData ( const CoordFunctionType &coordFunction ) : coordFunction_( &coordFunction ) {}
+
+      operator const CoordFunctionType & () const { assert( coordFunction_ ); return *coordFunction_; }
+
+    private:
+      const CoordFunctionType *coordFunction_ = nullptr;
+    };
 
 
 
@@ -53,7 +74,9 @@ namespace Dune
 
       struct Traits
       {
+        typedef GeoGridPartData< CoordFunction > ExtraData;
         typedef CoordFunction CoordFunctionType;
+
         typedef typename CoordFunctionType::GridPartType HostGridPartType;
 
         template< int codim >
@@ -128,7 +151,7 @@ namespace Dune
         template< PartitionIteratorType pitype >
         struct Partition
         {
-          typedef EntityIterator< codim, const GridPartFamily, GeoIterator< codim, pitype, const GridPartFamily > > IteratorType;
+          typedef EntityIterator< codim, const GridPartFamily, IdIterator< codim, pitype, const GridPartFamily > > IteratorType;
         };
       };
 
@@ -198,7 +221,7 @@ namespace Dune
       typename Codim< codim >::template Partition< pitype >::IteratorType
       begin () const
       {
-        return GeoIterator< codim, pitype, const GridPartFamily >( coordFunction_, hostGridPart().template begin< codim, pitype >() );
+        return IdIterator< codim, pitype, const GridPartFamily >( coordFunction_, hostGridPart().template begin< codim, pitype >() );
       }
 
       template< int codim >
@@ -212,7 +235,7 @@ namespace Dune
       typename Codim< codim >::template Partition< pitype >::IteratorType
       end () const
       {
-        return GeoIterator< codim, pitype, const GridPartFamily >( coordFunction_, hostGridPart().template end< codim, pitype >() );
+        return IdIterator< codim, pitype, const GridPartFamily >( coordFunction_, hostGridPart().template end< codim, pitype >() );
       }
 
       int level () const
