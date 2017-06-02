@@ -71,9 +71,9 @@ namespace Dune
 
           typedef Dune::Entity< codim, dimension, const GridPartFamily, GeometryGridPartEntity > Entity;
           typedef typename HostGridPartType::GridType::template Codim< codim >::EntitySeed EntitySeed;
-#if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
+#if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 6 )
           typedef Dune::EntityPointer< const GridPartFamily, DefaultEntityPointer< Entity > > EntityPointer;
-#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
+#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 6 )
         };
 
         typedef DeadIntersection< const GridPartFamily > IntersectionImplType;
@@ -139,7 +139,9 @@ namespace Dune
         typedef typename GridFamily::Traits::template Codim< codim >::LocalGeometry LocalGeometryType;
 
         typedef typename GridFamily::Traits::template Codim< codim >::Entity EntityType;
+#if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 6 )
         typedef Dune::EntityPointer< const GridPartFamily, DefaultEntityPointer< EntityType > > EntityPointerType;
+#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 6 )
         typedef typename GridFamily::Traits::template Codim< codim >::EntitySeed EntitySeedType;
 
         template< PartitionIteratorType pitype >
