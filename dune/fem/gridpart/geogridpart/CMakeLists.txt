@@ -6,5 +6,4 @@ dune_install(
   geometry.hh
   intersection.hh
   intersectioniterator.hh
-  iterator.hh
 )
