@@ -7,6 +7,7 @@
 
 #include <utility>
 
+#include <dune/fem/io/parameter.hh>
 #include <dune/fem/storage/dynamicarray.hh>
 
 namespace Dune

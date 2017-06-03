@@ -39,6 +39,24 @@ namespace DuneODE
      *
      *  \param[in]  helmholtzOp   Helmholtz operator \f$L\f$
      *  \param[in]  timeProvider  time provider
+     *  \param[in]  butcherTable  Butcher table defining the scheme
+     *  \param[in]  parameter     ParameterReader for reading parameters
+     */
+    ImplicitRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
+                               TimeProviderType &timeProvider,
+                               const SimpleButcherTable< double >& butcherTable,
+                               const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+    : BaseType( helmholtzOp,
+                butcherTable,
+                TimeStepControlType( timeProvider, ParametersType( parameter ) ),
+                NonlinearSolverParametersType( parameter )
+              )
+    {}
+
+    /** \brief constructor
+     *
+     *  \param[in]  helmholtzOp   Helmholtz operator \f$L\f$
+     *  \param[in]  timeProvider  time provider
      *  \param[in]  order         order of butcher table to use
      *  \param[in]  tscParam      parameters for implicit time step control
      *  \param[in]  nlsParam      parameters for non linear solver control
@@ -49,17 +67,25 @@ namespace DuneODE
                                const ParametersType& tscParam,
                                const NonlinearSolverParametersType& nlsParam )
     : BaseType( helmholtzOp,
-                butcherTable( tscParam.selectedSolver( order ) ),
+                defaultButcherTables( tscParam.selectedSolver( order ) ),
                 TimeStepControlType( timeProvider, tscParam ),
                 nlsParam )
     {}
 
+    /** \brief constructor
+     *
+     *  \param[in]  helmholtzOp   Helmholtz operator \f$L\f$
+     *  \param[in]  timeProvider  time provider
+     *  \param[in]  order         order of butcher table to use
+     *  \param[in]  tscParam      parameters for implicit time step control
+     *  \param[in]  nlsParam      parameters for non linear solver control
+     */
     ImplicitRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
                                TimeProviderType &timeProvider,
                                int order,
                                const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
     : BaseType( helmholtzOp,
-                butcherTable( ParametersType( parameter ).selectedSolver( order ) ),
+                defaultButcherTables( ParametersType( parameter ).selectedSolver( order ) ),
                 TimeStepControlType( timeProvider, ParametersType( parameter ) ),
                 NonlinearSolverParametersType( parameter ) )
     {}
@@ -76,22 +102,28 @@ namespace DuneODE
                                const ParametersType& tscParam,
                                const NonlinearSolverParametersType& nlsParam )
     : BaseType( helmholtzOp,
-                butcherTable( tscParam.selectedSolver( 1 ) ),
+                defaultButcherTables( tscParam.selectedSolver( 1 ) ),
                 TimeStepControlType( timeProvider, tscParam ),
                 nlsParam )
     {}
 
+    /** \brief constructor
+     *
+     *  \param[in]  helmholtzOp   Helmholtz operator \f$L\f$
+     *  \param[in]  timeProvider  time provider
+     *  \param[in]  parameter     ParameterReader for reading parameters
+     */
     ImplicitRungeKuttaSolver ( HelmholtzOperatorType &helmholtzOp,
                                TimeProviderType &timeProvider,
                                const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
     : BaseType( helmholtzOp,
-                butcherTable( ParametersType( parameter ).selectedSolver( 1 ) ),
+                defaultButcherTables( ParametersType( parameter ).selectedSolver( 1 ) ),
                 TimeStepControlType( timeProvider, ParametersType( parameter ) ),
                 NonlinearSolverParametersType( parameter ) )
     {}
 
   protected:
-    static SimpleButcherTable< double > butcherTable ( const int solverId )
+    static SimpleButcherTable< double > defaultButcherTables ( const int solverId )
     {
       switch( solverId )
       {

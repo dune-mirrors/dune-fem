@@ -12,6 +12,7 @@
 #include <dune/fem/operator/common/spaceoperatorif.hh>
 #include <dune/fem/solver/odesolverinterface.hh>
 #include <dune/fem/solver/timeprovider.hh>
+#include <dune/fem/solver/rungekutta/butchertable.hh>
 
 namespace DuneODE
 {
@@ -71,13 +72,55 @@ namespace DuneODE
 
     using OdeSolverInterface<DestinationImp> :: solve ;
   protected:
-    std::vector< std::vector<double> > a;
-    std::vector<double> b;
-    std::vector<double> c;
-    std::vector<DestinationType*> Upd;
-    const int ord_;
+    SimpleButcherTable< double > defaultButcherTables( const int order ) const
+    {
+      switch( order )
+      {
+        case 1: return explicitEulerButcherTable();
+        case 2: return tvd2ButcherTable();
+        case 3: return tvd3ButcherTable();
+        case 4: return rk4ButcherTable();
+        case 5:
+        case 6: return expl6ButcherTable();
+
+        default:
+               std::cerr<< "Warning: ExplicitRungeKutta of order "<< order << " not implemented, using order 6!" << std::endl;
+               return expl6ButcherTable();
+      }
+    }
 
   public:
+    /** \brief constructor
+      \param[in] op Operator \f$L\f$
+      \param[in] tp TimeProvider
+      \param[in] bt Butcher table defining the Runge-Kutta scheme
+      \param[in] verbose verbosity
+    */
+    ExplicitRungeKuttaSolver(OperatorType& op,
+                             TimeProviderBase& tp,
+                             const SimpleButcherTable< double >& butcherTable,
+                             bool verbose )
+      : A_( butcherTable.A() ),
+        b_( butcherTable.b() ),
+        c_( butcherTable.c() ),
+        Upd(),
+        op_(op),
+        tp_(tp),
+        ord_( butcherTable.order() ),
+        stages_( butcherTable.stages() ),
+        initialized_(false)
+    {
+      assert(ord_>0);
+
+      // create update memory
+      for (int i=0; i<stages_; ++i)
+      {
+        Upd.emplace_back( new DestinationType("URK",op_.space()) );
+      }
+      Upd.emplace_back(new DestinationType("Ustep",op_.space()) );
+
+    }
+
     /** \brief constructor
       \param[in] op Operator \f$L\f$
       \param[in] tp TimeProvider
@@ -87,63 +130,10 @@ namespace DuneODE
     ExplicitRungeKuttaSolver(OperatorType& op,
                              TimeProviderBase& tp,
                              const int pord,
-                             bool verbose ) :
-      a(0),b(0),c(0), Upd(0),
-      ord_(pord),
-      op_(op),
-      tp_(tp),
-      initialized_(false)
+                             bool verbose )
+      : ExplicitRungeKuttaSolver( op, tp, defaultButcherTables( pord ), verbose )
     {
-      assert(ord_>0);
-      a.resize(ord_);
-      for (int i=0; i<ord_; ++i)
-      {
-        a[i].resize(ord_);
-      }
-      b.resize(ord_);
-      c.resize(ord_);
-
-      switch (ord_)
-      {
-        case 4 :
-          a[0][0]=0.;     a[0][1]=0.;     a[0][2]=0.;    a[0][3]=0.;
-          a[1][0]=1.0;    a[1][1]=0.;     a[1][2]=0.;    a[1][3]=0.;
-          a[2][0]=0.25;   a[2][1]=0.25;   a[2][2]=0.;    a[2][3]=0.;
-          a[3][0]=1./6.;  a[3][1]=1./6.;  a[3][2]=2./3.; a[3][3]=0.;
-          b[0]=1./6.;     b[1]=1./6.;     b[2]=2./3.;    b[3]=0.;
-          c[0]=0.;        c[1]=1.0;       c[2]=0.5;      c[3]=1.0;
-          break;
-        case 3 :
-          a[0][0]=0.;     a[0][1]=0.;     a[0][2]=0.;
-          a[1][0]=1.0;    a[1][1]=0.;     a[1][2]=0.;
-          a[2][0]=0.25;   a[2][1]=0.25;   a[2][2]=0.;
-          b[0]=1./6.;     b[1]=1./6.;     b[2]=2./3.;
-          c[0]=0.;        c[1]=1;         c[2]=0.5;
-          break;
-        case 2 :
-          a[0][0]=0.;     a[0][1]=0.;
-          a[1][0]=1.0;    a[1][1]=0.;
-          b[0]=0.5;       b[1]=0.5;
-          c[0]=0;         c[1]=1;
-          break;
-        case 1:
-          a[0][0]=0.;
-          b[0]=1.;
-          c[0]=0.;
-          break;
-        default : std::cerr << "Runge-Kutta method of this order not implemented"
-                            << std::endl;
-                  abort();
-      }
-
-      // create update memory
-      for (int i=0; i<ord_; ++i)
-      {
-        Upd.push_back(new DestinationType("URK",op_.space()) );
-      }
-      Upd.push_back(new DestinationType("Ustep",op_.space()) );
     }
-
 
     ExplicitRungeKuttaSolver(OperatorType& op,
                              TimeProviderBase& tp,
@@ -151,13 +141,6 @@ namespace DuneODE
                              const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
       : ExplicitRungeKuttaSolver( op, tp, pord, true )
     {}
-
-    //! destructor
-    ~ExplicitRungeKuttaSolver()
-    {
-      for(size_t i=0; i<Upd.size(); ++i)
-        delete Upd[i];
-    }
 
     //! apply operator once to get dt estimate
     void initialize(const DestinationType& U0)
@@ -199,16 +182,16 @@ namespace DuneODE
       // provide operators time step estimate
       tp_.provideTimeStepEstimate( op_.timeStepEstimate() );
 
-      for (int i=1; i<ord_; ++i)
+      for (int i=1; i<stages_; ++i)
       {
         (Upd[ord_])->assign(U0);
         for (int j=0; j<i ; ++j)
         {
-          (Upd[ord_])->axpy((a[i][j]*dt), *(Upd[j]));
+          (Upd[ord_])->axpy((A_[i][j]*dt), *(Upd[j]));
         }
 
         // set new time
-        op_.setTime( t + c[i]*dt );
+        op_.setTime( t + c_[i]*dt );
 
         // apply operator
         op_( *(Upd[ord_]), *(Upd[i]) );
@@ -218,9 +201,9 @@ namespace DuneODE
       }
 
       // Perform Update
-      for (int j=0; j<ord_; ++j)
+      for (int j=0; j<stages_; ++j)
       {
-        U0.axpy((b[j]*dt), *(Upd[j]));
+        U0.axpy((b_[j]*dt), *(Upd[j]));
       }
     }
 
@@ -232,10 +215,23 @@ namespace DuneODE
     }
 
   protected:
+    // Butcher table A,b,c
+    Dune::DynamicMatrix< double > A_;
+    Dune::DynamicVector< double > b_;
+    Dune::DynamicVector< double > c_;
+
+    // stages of Runge-Kutta solver
+    std::vector< std::unique_ptr< DestinationType > > Upd;
+
     // operator to solve for
     OperatorType& op_;
     // time provider
     TimeProviderBase& tp_;
+
+    // order of RK solver
+    const int ord_;
+    // number of stages
+    const int stages_;
     // init flag
     bool initialized_;
   };
