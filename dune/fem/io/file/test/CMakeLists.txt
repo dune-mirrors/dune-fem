@@ -14,6 +14,9 @@ foreach( file ${TESTDATAFILES} )
   configure_file( ${file} ${CMAKE_CURRENT_BINARY_DIR}/${file} COPYONLY )
 endforeach()
 
+dune_add_test( NAME backuprestore SOURCES backuprestore.cc
+COMPILE_DEFINITIONS "POLORDER=2;WANT_GRAPE=0;${GRIDTYPE};GRIDDIM=${GRIDDIM}" LINK_LIBRARIES dunefem )
+
 dune_add_test( NAME persistencemanagertest SOURCES persistencemanagertest.cc
 COMPILE_DEFINITIONS "POLORDER=2;WANT_GRAPE=0;${GRIDTYPE};GRIDDIM=${GRIDDIM}" LINK_LIBRARIES dunefem )
 
