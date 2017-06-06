@@ -288,7 +288,7 @@ namespace Dune
         hostGridPart().communicate( handleWrapper, iftype, dir );
       }
 
-#if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
+#if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 6 )
       template< class EntitySeed >
       typename Codim< EntitySeed::codimension >::EntityPointerType
       entityPointer ( const EntitySeed &seed ) const
@@ -296,7 +296,7 @@ namespace Dune
         typedef typename Codim< EntitySeed::codimension >::EntityPointerType::Implementation EntityPointerImp;
         return EntityPointerImp( hostGridPart().entityPointer( seed ), gridFunction_ );
       }
-#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 3, 0 )
+#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 6 )
 
       // convert a grid entity to a grid part entity ("Gurke!")
       template< class Entity >

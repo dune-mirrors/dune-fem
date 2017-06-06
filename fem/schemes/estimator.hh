@@ -290,11 +290,11 @@ protected:
                               const ElementType &inside,
                               const LocalFunctionType &uInside )
   {
-#if DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
+#if DUNE_VERSION_NEWER( DUNE_FEM, 2, 6 )
     const ElementType &outside = intersection.outside();
-#else // #if DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
+#else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 6 )
     const ElementType outside = Dune::Fem::make_entity( intersection.outside() );
-#endif // #else // #if DUNE_VERSION_NEWER( DUNE_FEM, 3, 0 )
+#endif // #else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 6 )
 
     const int insideIndex = indexSet_.index( inside );
     const int outsideIndex = indexSet_.index( outside );
