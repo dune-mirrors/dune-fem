@@ -94,6 +94,11 @@ namespace Dune
       typedef Operator< DiscreteFunction, DiscreteFunction > OperatorType;
       typedef Operator< DiscreteFunction, DiscreteFunction > PreconditionerType;
 
+      bool getVerbosity( const ParameterReader& parameter ) const
+      {
+        return parameter.getValue< bool >( "fem.solver.verbose", false );
+      }
+
       ParDGGeneralizedMinResInverseOperator ( const OperatorType &op,
                                               double redEps, double absLimit, unsigned int maxIterations, bool verbose,
                                               const ParameterReader &parameter = Parameter::container() )
@@ -101,13 +106,15 @@ namespace Dune
 
       ParDGGeneralizedMinResInverseOperator ( const OperatorType &op, double redEps, double absLimit,
                                               const ParameterReader &parameter = Parameter::container() )
-      : ParDGGeneralizedMinResInverseOperator( op, nullptr, redEps, absLimit, std::numeric_limits< unsigned int >::max(), false, parameter )
+      : ParDGGeneralizedMinResInverseOperator( op, nullptr, redEps, absLimit, std::numeric_limits< unsigned int >::max(),
+                                               getVerbosity( parameter ), parameter )
       {}
 
       ParDGGeneralizedMinResInverseOperator ( const OperatorType &op, double redEps, double absLimit,
                                               unsigned int maxIterations,
                                               const ParameterReader &parameter = Parameter::container() )
-      : ParDGGeneralizedMinResInverseOperator( op, nullptr, redEps, absLimit, maxIterations, false, parameter ) {}
+      : ParDGGeneralizedMinResInverseOperator( op, nullptr, redEps, absLimit, maxIterations,
+                                               getVerbosity( parameter ), parameter ) {}
 
 
       ParDGGeneralizedMinResInverseOperator ( const OperatorType &op, const PreconditionerType &preconditioner,
@@ -118,13 +125,15 @@ namespace Dune
       ParDGGeneralizedMinResInverseOperator ( const OperatorType &op, const PreconditionerType &preconditioner,
                                               double redEps, double absLimit,
                                               const ParameterReader &parameter = Parameter::container() )
-      : ParDGGeneralizedMinResInverseOperator( op, &preconditioner, redEps, absLimit, std::numeric_limits< unsigned int >::max(), false, parameter )
+      : ParDGGeneralizedMinResInverseOperator( op, &preconditioner, redEps, absLimit, std::numeric_limits< unsigned int >::max(),
+                                               getVerbosity( parameter ), parameter )
       {}
 
       ParDGGeneralizedMinResInverseOperator ( const OperatorType &op, const PreconditionerType &preconditioner,
                                               double redEps, double absLimit, unsigned int maxIterations,
                                               const ParameterReader &parameter = Parameter::container() )
-      : ParDGGeneralizedMinResInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, false, parameter ) {}
+      : ParDGGeneralizedMinResInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations,
+                                               getVerbosity( parameter ), parameter ) {}
 
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
@@ -204,6 +213,11 @@ namespace Dune
       typedef Operator< DiscreteFunction, DiscreteFunction > OperatorType;
       typedef Operator< DiscreteFunction, DiscreteFunction > PreconditionerType;
 
+      bool getVerbosity( const ParameterReader& parameter ) const
+      {
+        return parameter.getValue< bool >( "fem.solver.verbose", false );
+      }
+
       ParDGBiCGStabInverseOperator ( const OperatorType &op,
                                      double redEps, double absLimit, unsigned int maxIterations, bool verbose,
                                      const ParameterReader &parameter = Parameter::container() )
@@ -212,12 +226,14 @@ namespace Dune
       ParDGBiCGStabInverseOperator ( const OperatorType &op,
                                      double redEps, double absLimit,
                                      const ParameterReader &parameter = Parameter::container() )
-      : ParDGBiCGStabInverseOperator( op, nullptr, redEps, absLimit, std::numeric_limits< unsigned int >::max(), false, parameter ) {}
+      : ParDGBiCGStabInverseOperator( op, nullptr, redEps, absLimit, std::numeric_limits< unsigned int >::max(),
+                                      getVerbosity( parameter ), parameter ) {}
 
       ParDGBiCGStabInverseOperator ( const OperatorType &op,
                                      double redEps, double absLimit, unsigned int maxIterations,
                                      const ParameterReader &parameter = Parameter::container() )
-      : ParDGBiCGStabInverseOperator( op, nullptr, redEps, absLimit, maxIterations, false, parameter ) {}
+      : ParDGBiCGStabInverseOperator( op, nullptr, redEps, absLimit, maxIterations,
+                                      getVerbosity( parameter ), parameter ) {}
 
 
       ParDGBiCGStabInverseOperator ( const OperatorType &op, const PreconditionerType &preconditioner,
@@ -228,12 +244,14 @@ namespace Dune
       ParDGBiCGStabInverseOperator ( const OperatorType &op, const PreconditionerType &preconditioner,
                                      double redEps, double absLimit,
                                      const ParameterReader &parameter = Parameter::container() )
-      : ParDGBiCGStabInverseOperator( op, &preconditioner, redEps, absLimit, std::numeric_limits< unsigned int >::max(), false, parameter ) {}
+      : ParDGBiCGStabInverseOperator( op, &preconditioner, redEps, absLimit, std::numeric_limits< unsigned int >::max(),
+                                      getVerbosity( parameter ), parameter ) {}
 
       ParDGBiCGStabInverseOperator ( const OperatorType &op, const PreconditionerType &preconditioner,
                                      double redEps, double absLimit, unsigned int maxIterations,
                                      const ParameterReader &parameter = Parameter::container() )
-      : ParDGBiCGStabInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, false, parameter ) {}
+      : ParDGBiCGStabInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations,
+                                      getVerbosity( parameter ), parameter ) {}
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
       {

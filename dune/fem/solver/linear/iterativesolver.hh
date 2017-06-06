@@ -26,6 +26,20 @@ namespace LinearSolver
     static const int residualReduction = 2;
   };
 
+  /** \brief get error measure
+   *  \param parameter   Parameter reader object
+   *  \param paramName   parameter key for Fem::Parameter
+   */
+  inline
+  int getErrorMeasure(const Dune::Fem::ParameterReader &parameter,
+                      const char *paramName)
+  {
+    const std::string errorTypeTable[] =
+      { "absolute", "relative", "residualreduction" };
+    const int errorType = parameter.getEnum( paramName, errorTypeTable, 0 );
+    return errorType ;
+  }
+
   /** \brief set tolerance for linear solvers
    *  \param solver      linear solver object
    *  \param redEps      relative reduction tolerance
@@ -37,9 +51,7 @@ namespace LinearSolver
   void setTolerance(const Dune::Fem::ParameterReader &parameter, Solver &solver,
                     double redEps, double absLimit, const char *paramName)
   {
-    const std::string errorTypeTable[] =
-      { "absolute", "relative", "residualreduction" };
-    const int errorType = parameter.getEnum( paramName, errorTypeTable, 0 );
+    const int errorType = getErrorMeasure( parameter, *paramName );
     solver.setTolerance( absLimit, errorType );
   }
 
@@ -154,12 +166,14 @@ namespace LinearSolver
     // y \in \R^m
     //
     // computes y = beta y + alpha op(A) x
-    void gemv(const int m, const int n,
-              const FieldType alpha, const FieldType *A, const int lda,
-              const FieldType *x,
-              // const int incx,
-              const FieldType beta, FieldType *y
-              // const int incy
+    void gemv(const int m,           // j+1
+              const int n,           // dim
+              const FieldType alpha, // 1.0
+              const FieldType *A,    // v
+              const int lda,         // dim
+              const FieldType *x,    // vjp
+              const FieldType beta,  // 0.0
+              FieldType *y           // global_dot
              ) const
     {
       assert(lda >= n); // consistent lda

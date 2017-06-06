@@ -18,6 +18,7 @@ namespace Dune
   namespace Fem
   {
 
+#if 0
     // Internal Forward Declarations
     // -----------------------------
 
@@ -71,7 +72,7 @@ namespace Dune
       };
     }  // end namespace LinearSolver
 
-
+#endif
 
     // GeneralizedMinResInverseOperator
     // -------------------------------------
@@ -82,7 +83,7 @@ namespace Dune
     {
       typedef Operator< DiscreteFunction, DiscreteFunction > BaseType;
 
-      typedef LinearSolver::OperatorAdapter< DiscreteFunction, DiscreteFunction > OperatorAdapterType;
+      //typedef LinearSolver::OperatorAdapter< DiscreteFunction, DiscreteFunction > OperatorAdapterType;
 
       typedef typename MPIManager::CollectiveCommunication  CollectiveCommunicationType;
     public:
@@ -129,29 +130,41 @@ namespace Dune
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
-        if( ! std::is_same< typename DiscreteFunction::RangeFieldType, double > ::value )
+        std::ostream* os = nullptr;
+        // only set output when general verbose mode is enabled
+        // (basically to avoid output on every rank)
+        if( verbose_ && Parameter :: verbose() )
         {
-          DUNE_THROW(Dune::NotImplemented,"GeneralizedMinResInverseOperator only works for double as RangeFieldType" );
+          os = &std::cout;
         }
 
-        OperatorAdapterType opA( operator_, w.space(), u.space() );
+        // TODO: Allow to store memory in class, this either needs pointer or
+        // operator to export the space
+        if( v_.empty() )
+        {
+          v_.reserve( restart_+1 );
+          for( int i=0; i<=restart_; ++i )
+          {
+            v_.emplace_back( DiscreteFunction( "GMRes::v", u.space() ) );
+          }
+          if( preconditioner_ )
+            v_.emplace_back( DiscreteFunction( "GMRes::z", u.space() ) );
+        }
 
-        if( preconditioner_ )
-        {
-          OperatorAdapterType precondA( *preconditioner_, w.space(), w.space() );
-          solver_.set_preconditioner( precondA );
-          solver_.solve( opA, w.leakPointer(), u.leakPointer() );
-          solver_.unset_preconditioner();
-        }
-        else
-        {
-          solver_.solve( opA, w.leakPointer(), u.leakPointer() );
-        }
+        // if solver convergence failed numIter will be negative
+        int numIter = LinearSolver::gmres( operator_, preconditioner_,
+                                           v_, w, u, restart_,
+                                           tolerance_, maxIterations_,
+                                           errorType_, os );
+
+        // only add number of iterations when solver converged
+        if( numIter > 0 )
+          numOfIterations_ += numIter;
       }
 
       unsigned int iterations () const
       {
-        return solver_.number_of_iterations();
+        return numOfIterations_;
       }
 
     private:
@@ -165,26 +178,33 @@ namespace Dune
                                          double redEps, double absLimit,
                                          unsigned int maxIterations, bool verbose,
                                          const ParameterReader &parameter = Parameter::container() )
-      : solver_( MPIManager::comm(), parameter.getValue< int >( "fem.solver.gmres.restart", 20 ) ),
+      : //  solver_( MPIManager::comm(), parameter.getValue< int >( "fem.solver.gmres.restart", 20 ) ),
         operator_( op ),
-        preconditioner_( preconditioner )
+        preconditioner_( preconditioner ),
+        tolerance_( absLimit ),
+        errorType_( LinearSolver::getErrorMeasure( parameter, "fem.solver.errormeasure" ) ),
+        maxIterations_( std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations ) ),
+        numOfIterations_( 0 ),
+        verbose_( parameter.getValue< bool >("fem.solver.verbose", false ) ),
+        restart_( parameter.getValue< int >( "fem.solver.gmres.restart", 20 ) )
       {
-        LinearSolver::setTolerance( parameter, solver_, redEps, absLimit, "fem.solver.errormeasure" );
-
-        maxIterations = std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations );
-        solver_.set_max_number_of_iterations( int( maxIterations ) );
-
-        // only set output when general verbose mode is enabled
-        // (basically to avoid output on every rank)
-        if( verbose && Parameter :: verbose() )
-        {
-          solver_.set_output( std::cout );
-        }
       }
 
-      mutable LinearSolver::GMRES<double, CollectiveCommunicationType > solver_;
+      // mutable LinearSolver::GMRES<double, CollectiveCommunicationType > solver_;
       const OperatorType &operator_;
       const PreconditionerType *preconditioner_;
+
+      mutable std::vector< DomainFunctionType > v_;
+
+      const double tolerance_;
+      const int errorType_;
+
+      const unsigned int maxIterations_;
+      mutable unsigned int numOfIterations_;
+
+      const bool verbose_;
+
+      const int restart_;
     };
 
     // BiCGStabInverseOperator
@@ -196,7 +216,7 @@ namespace Dune
     {
       typedef Operator< DiscreteFunction, DiscreteFunction > BaseType;
 
-      typedef LinearSolver::OperatorAdapter< DiscreteFunction, DiscreteFunction > OperatorAdapterType;
+      // typedef LinearSolver::OperatorAdapter< DiscreteFunction, DiscreteFunction > OperatorAdapterType;
 
     public:
       typedef typename MPIManager::CollectiveCommunication  CollectiveCommunicationType;
@@ -221,7 +241,7 @@ namespace Dune
       BiCGStabInverseOperator ( const OperatorType &op,
                                 double redEps, double absLimit, unsigned int maxIterations,
                                 const ParameterReader &parameter = Parameter::container() )
-      : BiCGStabInverseOperator( op, nullptr, redEps, absLimit, maxIterations, readVerbose(), parameter ) {}
+      : BiCGStabInverseOperator( op, nullptr, redEps, absLimit, maxIterations, readVerbose( parameter ), parameter ) {}
 
 
       BiCGStabInverseOperator ( const OperatorType &op, const PreconditionerType &preconditioner,
@@ -242,21 +262,42 @@ namespace Dune
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
-        OperatorAdapterType opA( operator_, w.space(), u.space() );
-        if( preconditioner_ )
+        std::ostream* os = nullptr;
+        // only set output when general verbose mode is enabled
+        // (basically to avoid output on every rank)
+        if( verbose_ && Parameter :: verbose() )
         {
-          OperatorAdapterType precondA( *preconditioner_, w.space(), w.space() );
-          solver_.set_preconditioner( precondA );
-          solver_.solve( opA, w.leakPointer(), u.leakPointer() );
-          solver_.unset_preconditioner();
+          os = &std::cout;
         }
-        else
-          solver_.solve( opA, w.leakPointer(), u.leakPointer() );
+
+        // TODO: Allow to store memory in class, this either needs pointer or
+        // operator to export the space
+
+        if( tempMemory_.empty() )
+        {
+          tempMemory_.emplace_back( DomainFunctionType( "BiCGStab::r",   u.space() ) );
+          tempMemory_.emplace_back( DomainFunctionType( "BiCGStab::r*",  u.space() ) );
+          tempMemory_.emplace_back( DomainFunctionType( "BiCGStab::p",   u.space() ) );
+          tempMemory_.emplace_back( DomainFunctionType( "BiCGStab::s",   u.space() ) );
+          tempMemory_.emplace_back( DomainFunctionType( "BiCGStab::tmp", u.space() ) );
+          if( preconditioner_ )
+            tempMemory_.emplace_back( DomainFunctionType( "BiCGStab::z", u.space() ) );
+        }
+
+        // if solver convergence failed numIter will be negative
+        int numIter = LinearSolver::bicgstab( operator_, preconditioner_,
+                                              tempMemory_, w, u,
+                                              tolerance_, maxIterations_,
+                                              errorType_, os );
+
+        // only add number of iterations when solver converged
+        if( numIter > 0 )
+          numOfIterations_ += numIter;
       }
 
       unsigned int iterations () const
       {
-        return solver_.number_of_iterations();
+        return numOfIterations_;
       }
 
     private:
@@ -268,27 +309,30 @@ namespace Dune
       BiCGStabInverseOperator ( const OperatorType &op, const PreconditionerType *preconditioner,
                                 double redEps, double absLimit, unsigned int maxIterations, bool verb,
                                 const ParameterReader &parameter )
-      : solver_( MPIManager::comm() ),
+      : //solver_( MPIManager::comm() ),
         operator_( op ),
-        preconditioner_( preconditioner )
+        preconditioner_( preconditioner ),
+        tolerance_( absLimit ),
+        errorType_( LinearSolver::getErrorMeasure( parameter, "fem.solver.errormeasure" ) ),
+        maxIterations_( std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations ) ),
+        numOfIterations_( 0 ),
+        verbose_( parameter.getValue< bool >("fem.solver.verbose", false ) )
       {
-        LinearSolver::setTolerance( parameter, solver_,redEps, absLimit, "fem.solver.errormeasure" );
-
-        maxIterations = std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations );
-        solver_.set_max_number_of_iterations( int( maxIterations ) );
-
-        bool verbose = parameter.getValue< bool >("fem.solver.verbose", false );
-        // only set output when general verbose mode is enabled
-        // (basically to avoid output on every rank)
-        if( verbose && Parameter :: verbose() )
-        {
-          solver_.set_output( std::cout );
-        }
       }
 
-      mutable LinearSolver::BICGSTAB<double, CollectiveCommunicationType > solver_;
+      // mutable LinearSolver::BICGSTAB<double, CollectiveCommunicationType > solver_;
       const OperatorType &operator_;
       const PreconditionerType *preconditioner_;
+
+      mutable std::vector< DomainFunctionType > tempMemory_;
+
+      const double tolerance_;
+      const int errorType_;
+
+      const unsigned int maxIterations_;
+      mutable unsigned int numOfIterations_;
+
+      const bool verbose_;
     };
 
   } // namespace Fem

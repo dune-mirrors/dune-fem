@@ -37,7 +37,7 @@
 #if HAVE_SUITESPARSE_UMFPACK && defined USE_UMFPACK
 #include <dune/fem/solver/umfpacksolver.hh>
 #else
-#include <dune/fem/solver/cginverseoperator.hh>
+#include <dune/fem/solver/inverseoperators.hh>
 #endif
 #endif
 
@@ -84,7 +84,9 @@ typedef Dune::Fem::SparseRowLinearOperator< DiscreteFunctionType, DiscreteFuncti
 #if HAVE_SUITESPARSE_UMFPACK && defined USE_UMFPACK
 typedef Dune::Fem::UMFPACKOp< DiscreteFunctionType, LinearOperatorType > InverseOperatorType;
 #else
-typedef Dune::Fem::CGInverseOperator< DiscreteFunctionType > InverseOperatorType;
+//typedef Dune::Fem::CGInverseOperator< DiscreteFunctionType > InverseOperatorType;
+//typedef Dune::Fem::GeneralizedMinResInverseOperator< DiscreteFunctionType > InverseOperatorType;
+typedef Dune::Fem::BiCGStabInverseOperator< DiscreteFunctionType > InverseOperatorType;
 #endif
 #endif
 
@@ -231,8 +233,8 @@ try
     double l2eoc = log( error[ step ][ 0 ] / error[ step -1 ][ 0 ] ) / log( 0.5 );
     double h1eoc = log( error[ step ][ 1 ] / error[ step -1 ][ 1 ] ) / log( 0.5 );
 
-//    std::cout<< "L2 Eoc: " << l2eoc << std::endl;
-//    std::cout<< "H1 Eoc: " << h1eoc << std::endl;
+    //std::cout<< "L2 Eoc: " << l2eoc << std::endl;
+    //std::cout<< "H1 Eoc: " << h1eoc << std::endl;
     if( std::abs( l2eoc -1 - polOrder )  > 0.2 )
     {
       DUNE_THROW(Dune::InvalidStateException,"EOC check of solving mass matrix system failed");

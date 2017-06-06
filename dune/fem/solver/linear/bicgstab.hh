@@ -1,5 +1,3 @@
-// BICGSTAB inline implementation
-
 #ifndef DUNE_FEM_BICGSTAB_HH
 #define DUNE_FEM_BICGSTAB_HH
 
@@ -18,202 +16,214 @@ namespace Fem
 namespace LinearSolver
 {
 
-  // Iterative methods for sparse linear systems / Yousef Saad.
-  // Boston, Mass. : PWS Publ., 1996. - XVI, 447 S. : graph. Darst.;
-  // (engl.)(The PWS series in computer science)
-  // ISBN 0-534-94776-X
-  //
-  // BICGSTAB - Solver page 220
-  template <class T, class Comm >
-  class BICGSTAB : public IterativeSolver< T, Comm >
+  template <class Communication, class DiscreteFunction, class FieldType>
+  void scalarProductVecs( const Communication& comm,
+                          const DiscreteFunction& r_df,
+                          const DiscreteFunction& s_df,
+                          const DiscreteFunction& r_star_df,
+                          FieldType* global_dot )
   {
-  protected:
-    typedef IterativeSolver< T, Comm >  BaseType;
+    const auto& r      = r_df.dofVector();
+    const auto& s      = s_df.dofVector();
+    const auto& r_star = r_star_df.dofVector();
 
-    using BaseType :: scalarProduct;
-    using BaseType :: os_;
-    using BaseType :: preconditioner_;
-    using BaseType :: comm_;
-    using BaseType :: tolerance;
-    using BaseType :: max_num_of_iterations;
-    using BaseType :: num_of_iterations;
-    using BaseType :: toleranceCriteria;
-    using BaseType :: z_;
+    global_dot[ 4 ] = global_dot[ 3 ] = global_dot[ 2 ] = global_dot[ 1 ] = global_dot[ 0 ] = 0.0;
 
-    BICGSTAB(const BICGSTAB &) = delete;
-
-  public:
-    typedef typename BaseType :: Function  Function;
-
-    typedef T         FieldType;
-    typedef FieldType field_type;
-
-    typedef typename BaseType :: VectorType         VectorType;
-    typedef typename BaseType :: MutableVectorType  MutableVectorType;
-
-    BICGSTAB(const Comm &comm ) :
-      BaseType( comm ),
-      v_()
+    const size_t size = r.size();
+    for( size_t i=0; i<size; ++i )
     {
-      v_.setMemoryFactor( 1.1 );
+      global_dot[0] += r[ i ] * s[ i ];
+      global_dot[1] += r[ i ] * r[ i ];
+      global_dot[2] += s[ i ] * s[ i ];
+      global_dot[3] += s[ i ] * r_star[ i ];
+      global_dot[4] += r[ i ] * r_star[ i ];
     }
 
-    BICGSTAB(BICGSTAB &&other) :
-      BaseType( other ),
-      v_( std::move(other.v_))
-    {
-    }
+    // make sum global
+    comm.sum( global_dot, 5 );
+  }
 
-    // from Function, solve Au = b, Au = op(u)
-    bool solve(Function &op, FieldType *u, const FieldType *b);
-
-  protected:
-    virtual void resize(int new_size)
-    {
-      BaseType :: resize( new_size );
-      v_.resize( 5*new_size, 0.0 );
-    }
-
-  protected:
-    MutableVectorType  v_;
-  };
-
-  template <class T, class Comm>
-  inline bool BICGSTAB< T, Comm>::solve(Function &op, FieldType* x, const FieldType *b)
+  template <class Communication, class DofVector>
+  typename DofVector::FieldType
+  scalarProduct( const Communication& comm,
+                 const DofVector& x,
+                 const DofVector& y )
   {
-    const int dim = op.size();
-    resize(dim);
+    typename DofVector::FieldType scp = 0;
 
-    FieldType* r = v_.data();
-    FieldType* r_star = r + dim;
-    FieldType* p = r_star + dim;
-    FieldType* s = p + dim ;
-    FieldType* tmp = s + dim;
-    FieldType* z = ( preconditioner_ ) ? z_.data() : nullptr;
+    const size_t size = x.size();
+    for( size_t i=0; i<size; ++i )
+    {
+      scp += x[ i ] * y[ i ];
+    }
+
+    // make sum global
+    return comm.sum( scp );
+  }
+
+  /* General implementation of a BiCG-stab algorithm based on Dune::Fem::DiscreteFunction
+   * \param op linear operator A
+   * \param x  solution to be sought
+   * \param b  right hand side
+   * \param tempMem temporary memory
+   * \param tolerance for the solver
+   * \param maxIter maximal iterations to be performed
+   * \param toleranceCriteria tolerance citeria (see iterativesolvers.hh)
+   * \param os output if enabled
+   */
+  template <class Operator, class Precoditioner, class DiscreteFunction>
+  inline int bicgstab( Operator &op,
+                       Precoditioner* preconditioner,
+                       std::vector< DiscreteFunction >& tempMem,
+                       DiscreteFunction& x,
+                       const DiscreteFunction& b,
+                       const double tolerance,
+                       const int maxIterations,
+                       const int toleranceCriteria,
+                       std::ostream* os = nullptr )
+  {
+    const auto& comm = b.space().gridPart().comm();
+
+    DiscreteFunction& r = tempMem[ 0 ];
+    DiscreteFunction& r_star = tempMem[ 1 ];
+    DiscreteFunction& p = tempMem[ 2 ];
+    DiscreteFunction& s = tempMem[ 3 ];
+    DiscreteFunction& tmp = tempMem[ 4 ];
+
+    DiscreteFunction* z = nullptr;
+
+    typedef typename DiscreteFunction :: RangeFieldType FieldType;
+
+    if( tempMem.size() == 6 )
+    {
+      z = &tempMem[ 5 ];
+    }
 
     // relative or absolute tolerance
     FieldType global_dot[5];
     double _tolerance = tolerance;
-    if (toleranceCriteria == ToleranceCriteria::relative){
-      //local_dot[0] = cblas_ddot(dim, b, 1, b, 1);
-      //comm.allreduce(1, local_dot, global_dot, MPI_SUM);
-      global_dot[ 0 ] = scalarProduct( dim, b, b );
-      _tolerance *= sqrt(global_dot[0]);
+
+    if (toleranceCriteria == ToleranceCriteria::relative)
+    {
+      global_dot[ 0 ] = scalarProduct( comm, b.dofVector(), b.dofVector() );
+      _tolerance *= std::sqrt(global_dot[0]);
     }
 
     // init
-    if (preconditioner_){       // right preconditioning
-      (*preconditioner_)(x, z); // z = M^{-1} x
-      op(z, r);                // r = A z
-    }
-    else op(x, r);             // r = A x
-
-    for(int k=0; k<dim; k++)
+    if (preconditioner)         // right preconditioning
     {
-      r[k] = b[k] - r[k];
-      p[k] = r[k];
-      r_star[k] = r[k];
+      (*preconditioner)(x, *z); // z = M^{-1} x
+      op( *z, r);               // r = A z
+    }
+    else
+    {
+      op(x, r);              // r = A x
     }
 
-    //local_dot[0] = cblas_ddot(dim, r, 1, r_star, 1);
-    //comm.allreduce(1, local_dot, global_dot, MPI_SUM);
-    global_dot[0] = scalarProduct( dim, r, r_star );
+    // residual: r = b - r
+    r *= -1.0;
+    r += b ;
+
+    // p = r
+    p.assign( r );
+    // r_star = r
+    r_star.assign( r );
+
+    global_dot[0] = scalarProduct( comm, r.dofVector(), r_star.dofVector() );
 
     FieldType nu = global_dot[0];
-    if (toleranceCriteria == ToleranceCriteria::residualReduction){
-      _tolerance *= sqrt(nu);
+    if (toleranceCriteria == ToleranceCriteria::residualReduction)
+    {
+      _tolerance *= std::sqrt(nu);
     }
 
     // iterate
     int iterations = 0;
-    while (true){
+    while (true)
+    {
       // 2x linear operator 1x dot
-      if (preconditioner_){    // right preconditioning
-        (*preconditioner_)(p, z); // z = M^{-1} p
-        op(z, tmp);              // tmp = A z
+      if( preconditioner ) // right preconditioning
+      {
+        (*preconditioner)(p, *z); // z = M^{-1} p
+        op( *z, tmp);              // tmp = A z
       }
       else op(p, tmp);           // tmp = A p
 
-      //local_dot[0] = cblas_ddot(dim, tmp, 1, r_star, 1);
-      //comm.allreduce(1, local_dot, global_dot, MPI_SUM);
-      global_dot[0] = scalarProduct( dim, tmp, r_star );
+      global_dot[0] = scalarProduct( comm, tmp.dofVector(), r_star.dofVector() );
 
       const FieldType alpha = nu / global_dot[0];
-      for(int k=0; k<dim; k++) s[k] = r[k] - alpha*tmp[k];
+      s.assign( r );
+      s.axpy( -alpha, tmp );
 
-      if (preconditioner_)
+      if( preconditioner )
       {
         // right preconditioning
-        (*preconditioner_)(s, z); // z = M^{-1} s
-        op(z, r);                 // r = A z
+        (*preconditioner)(s, *z); // z = M^{-1} s
+        op(*z, r);                 // r = A z
       }
       else
       {
         op(s, r);                 // r = A s
       }
 
-      // 5x dot
-      global_dot[0]=global_dot[1]=global_dot[2]=global_dot[3]=global_dot[4] = 0.0;
-      for(int k=0; k<dim; k++){
-        global_dot[0] += r[k]*s[k];
-        global_dot[1] += r[k]*r[k];
-        global_dot[2] += s[k]*s[k];
-        global_dot[3] += s[k]*r_star[k];
-        global_dot[4] += r[k]*r_star[k];
-      }
-
-      //comm.allreduce(5, local_dot, global_dot, MPI_SUM);
-      comm_.sum( global_dot, 5 );
+      // 5x dot: r * s | r * r | s * s | s * r_star | r * r_star
+      scalarProductVecs( comm, r, s, r_star, global_dot );
 
       // scalars
       const FieldType omega = global_dot[0] / global_dot[1];
-      const FieldType res = sqrt(global_dot[2]
+      const FieldType res = std::sqrt(global_dot[2]
             -omega*(2.0*global_dot[0] - omega*global_dot[1]) );
 
-      const double beta = (global_dot[3] - omega*global_dot[4])
+      const FieldType beta = (global_dot[3] - omega*global_dot[4])
         *alpha / (omega*nu);
 
       nu = (global_dot[3] - omega*global_dot[4]);
 
       // update
-      for(int k=0; k<dim; k++){
-        x[k] += alpha*p[k] + omega*s[k];
-        r[k] = s[k] - omega*r[k];
-        p[k] = r[k] + beta*( p[k] - omega*tmp[k] );
-      }
+      // x += alpha * p + omega s
+      x.axpy( alpha, p );
+      x.axpy( omega, s );
 
-      iterations++;
-      if (res < _tolerance || iterations >= max_num_of_iterations) break;
-      if ( os_ )
+      // r = s - omega r
+      r *= -omega;
+      r += s ;
+
+      // p = r + beta * ( p - omega * tmp )
+      p *= beta;
+      p.axpy( -omega*beta, tmp );
+      p += r;
+
+      ++iterations;
+      if (res < _tolerance || iterations >= maxIterations ) break;
+      if ( os )
       {
-        (*os_) << "BiCGstab it: " << iterations << " : " << res << std::endl;
+        (*os) << "Fem::BiCGstab it: " << iterations << " : " << res << std::endl;
       }
     }
 
     // output
-    if ( os_ )
+    if ( os )
     {
-      (*os_) << "BiCGstab:  number of iterations: "
+      (*os) << "Fem::BiCGstab:  number of iterations: "
          << iterations
          << std::endl;
     }
 
     // setup approx solution for right preconditioner use
-    if (preconditioner_)
+    if( preconditioner )
     {
       // right preconditioner
-      (*preconditioner_)(x, z);
+      (*preconditioner)(x, *z);
+
       // x = z
-      for( int i=0; i<dim; ++i )
-        x[ i ] = z[ i ];
+      x.assign( *z );
     }
 
-    // update the global number of iterations from IterativeSolver
-    num_of_iterations += iterations;
+    if( iterations >= maxIterations )
+      return -iterations;
 
-    return (iterations < max_num_of_iterations)? true: false;
+    return iterations;
   }
-
 
 } // end namespace Solver
 
