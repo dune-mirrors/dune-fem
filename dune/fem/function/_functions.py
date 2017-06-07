@@ -4,6 +4,11 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 
+try:
+    import ufl
+except:
+    pass
+
 import dune.models.localfunction
 
 import dune.common.checkconfiguration as checkconfiguration
@@ -31,16 +36,20 @@ def registerGridFunctions(gridview):
 
     return builder.load(moduleName, source, "gridfunctions")
 
+
 def globalFunction(gridview, name, order, value):
     module = registerGridFunctions(gridview)
     return GridCoefficient( module.globalGridFunction(gridview,name,order,value) )
+
 
 def localFunction(gridview, name, order, value):
     module = registerGridFunctions(gridview)
     return GridCoefficient( (module.localGridFunction(gridview,name,order,value)) )
 
+
 def levelFunction(gridview):
     return localFunction(gridview, "level", 0, lambda en,_: [en.level])
+
 
 def partitionFunction(gridview):
     class Partition(object):
@@ -50,23 +59,38 @@ def partitionFunction(gridview):
             return [self.rank]
     return localFunction(gridview, "rank", 0, Partition(gridview.comm.rank))
 
+
 def cppFunction(gridview, name, order, code, *args, **kwargs):
     return dune.models.localfunction.generatedFunction(gridview, name, order, code, *args, **kwargs)
+
 
 def uflFunction(gridview, name, order, ufl, *args, **kwargs):
     return GridCoefficient( dune.models.localfunction.UFLFunction(gridview, name, order, ufl, *args, **kwargs) )
 
+
 def discreteFunction(space, name, expr=None, *args, **kwargs):
+    """create a discrete function
+
+    Args:
+        space: discrete function space
+        name:  name of the discrete function
+        expr:  analytical expression to interpolate
+
+    Returns:
+        DiscreteFunction: the constructed discrete function
+    """
     storage, dfIncludes, dfTypeName, _, _ = space.storage
     df = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName).DiscreteFunction(space,name)
-    if expr:
-        df.interpolate( expr )
-    else:
+    if expr is None:
         df.clear()
-
+    elif ufl and isinstance(expr, ufl.core.expr.Expr):
+        raise ValueError("Cannot process ufl expression, yet")
+    else:
+        df.interpolate(expr)
     return df
     # this needs to work
     # return GridCoefficient(df)
+
 
 def numpyFunction(space, vec, name="tmp", **unused):
     """create a discrete function - using the fem numpy storage as linear algebra backend

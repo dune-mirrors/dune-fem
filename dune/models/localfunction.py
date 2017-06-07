@@ -38,8 +38,6 @@ def UFLFunction(grid, name, order, expr, **kwargs):
     import ufl
     from dune.ufl import GridCoefficient
     from dune.ufl.tensors import ExprTensor
-    R = len(expr)
-    D = grid.dimension
     try:
         _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
         coef = set(c)
@@ -72,20 +70,25 @@ def UFLFunction(grid, name, order, expr, **kwargs):
                     'constant' : coefficient.is_cellwise_constant(),
                     'field': field } )
 
+    if expr.ufl_shape == ():
+        expr = ufl.as_vector([expr])
+    dimR = expr.ufl_shape[0]
+    dimD = grid.dimension
+
     writer = SourceWriter(ListWriter())
-    writer.emit(generateCode({}, ExprTensor((R, ), expr), coefficients, False), context=Method('void', 'evaluate'))
+    writer.emit(generateCode({}, ExprTensor((dimR, ), expr), coefficients, False), context=Method('void', 'evaluate'))
     code = '\n'.join(writer.writer.lines)
     evaluate = code.replace("result", "value")
     jac = []
-    for r in range(R):
+    for r in range(dimR):
         jacForm = [\
             ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(\
                 ufl.grad(expr)[r, d]*ufl.dx\
-            ))) for d in range(D)]
-        jac.append( [jacForm[d].integrals()[0].integrand() if not jacForm[d].empty() else 0 for d in range(D)] )
+            ))) for d in range(dimD)]
+        jac.append( [jacForm[d].integrals()[0].integrand() if not jacForm[d].empty() else 0 for d in range(dimD)] )
     jac = ufl.as_matrix(jac)
     writer = SourceWriter(ListWriter())
-    writer.emit(generateCode({}, ExprTensor((R, D), jac), coefficients, False), context=Method('void', 'jacobian'))
+    writer.emit(generateCode({}, ExprTensor((dimR, dimD), jac), coefficients, False), context=Method('void', 'jacobian'))
     code = '\n'.join(writer.writer.lines)
     jacobian = code.replace("result", "value")
 
