@@ -54,6 +54,7 @@ namespace Dune {
 #include <dune/fempy/py/grid/gridpart.hh>
 
 #include <dune/corepy/pybind11/pybind11.h>
+#include <dune/corepy/pybind11/extensions.h>
 
 namespace Dune
 {
@@ -163,7 +164,8 @@ namespace Dune
       pybind11::class_< GridFunction > registerGridFunction ( pybind11::handle scope, const char *clsName = "GridFunction" )
       {
         pybind11::class_< GridFunction > cls( scope, clsName );
-        registerGridFunction<GridFunction>(scope, cls);
+        registerGridFunction< GridFunction >( scope, cls );
+        pybind11::implicitly_convert_facades< GridFunction >();
         return cls;
       }
 
