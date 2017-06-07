@@ -36,15 +36,36 @@ def registerGridFunctions(gridview):
 
     return builder.load(moduleName, source, "gridfunctions")
 
+import ufl
+from dune.ufl import Space
+from abc import ABCMeta
+from six import with_metaclass, add_metaclass
+from functools import partial
+def uflgetattr(coefficient,self,item):
+    if item=="__coefficient__":
+        return coefficient
+    return getattr(coefficient, item)
+def addUFL(instance):
+    cls = instance.__class__
+    grid = instance.grid
+    dimRange = instance.dimRange
+    uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange)
+    # coefficient = Coefficient(uflSpace)
+    coefficient = GridCoefficient(instance)
+    cls.__getattr__ = lambda self,item: uflgetattr(coefficient,self,item)
+    cls.__sub__ = lambda self,other: self.__coefficient__ - other.__coefficient__
+    cls = add_metaclass(ABCMeta)(cls)
+    cls.register(GridCoefficient)
+    setattr(cls,"__coefficient__",coefficient)
+    return instance
 
 def globalFunction(gridview, name, order, value):
     module = registerGridFunctions(gridview)
-    return GridCoefficient( module.globalGridFunction(gridview,name,order,value) )
-
+    return addUFL(module.globalGridFunction(gridview,name,order,value))
 
 def localFunction(gridview, name, order, value):
     module = registerGridFunctions(gridview)
-    return GridCoefficient( (module.localGridFunction(gridview,name,order,value)) )
+    return addUFL(module.localGridFunction(gridview,name,order,value))
 
 
 def levelFunction(gridview):
@@ -65,7 +86,7 @@ def cppFunction(gridview, name, order, code, *args, **kwargs):
 
 
 def uflFunction(gridview, name, order, ufl, *args, **kwargs):
-    return GridCoefficient( dune.models.localfunction.UFLFunction(gridview, name, order, ufl, *args, **kwargs) )
+    return addUFL( dune.models.localfunction.UFLFunction(gridview, name, order, ufl, *args, **kwargs))
 
 
 def discreteFunction(space, name, expr=None, *args, **kwargs):
@@ -87,7 +108,7 @@ def discreteFunction(space, name, expr=None, *args, **kwargs):
         raise ValueError("Cannot process ufl expression, yet")
     else:
         df.interpolate(expr)
-    return GridCoefficient(df)
+    return addUFL(df)
 
 
 def numpyFunction(space, vec, name="tmp", **unused):

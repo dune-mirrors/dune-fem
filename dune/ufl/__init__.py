@@ -73,14 +73,14 @@ class GridCoefficient(ufl.Coefficient):
         uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange)
         ufl.Coefficient.__init__(self, uflSpace)
         self.gf = gf
-        self.__impl__ = gf
-    def __getattr__(self, item):
-        result = getattr(self.__impl__, item)
-        return result
-    def __repr__(self):
-        return repr(self.__impl__)
-    def __str__(self):
-        return self.name
+    #     self.__impl__ = gf
+    # def __getattr__(self, item):
+    #     result = getattr(self.__impl__, item)
+    #     return result
+    # def __repr__(self):
+    #     return repr(self.__impl__)
+    # def __str__(self):
+    #     return self.name
 
 class DirichletBC:
     def __init__(self, functionSpace, value, subDomain):
