@@ -9,6 +9,8 @@ import dune.models.localfunction
 import dune.common.checkconfiguration as checkconfiguration
 from dune.common.hashit import hashIt
 
+from dune.ufl import GridCoefficient
+
 def registerGridFunctions(gridview):
     from dune.generator import builder
     typeName = gridview._typeName
@@ -31,14 +33,14 @@ def registerGridFunctions(gridview):
 
 def globalFunction(gridview, name, order, value):
     module = registerGridFunctions(gridview)
-    return module.globalGridFunction(gridview,name,order,value)
+    return GridCoefficient( module.globalGridFunction(gridview,name,order,value) )
 
 def localFunction(gridview, name, order, value):
     module = registerGridFunctions(gridview)
-    return module.localGridFunction(gridview,name,order,value)
+    return GridCoefficient( (module.localGridFunction(gridview,name,order,value)) )
 
 def levelFunction(gridview):
-    return localFunction(gridview, "level", 0, lambda en,_: [en.level] )
+    return localFunction(gridview, "level", 0, lambda en,_: [en.level])
 
 def partitionFunction(gridview):
     class Partition(object):
@@ -52,7 +54,7 @@ def cppFunction(gridview, name, order, code, *args, **kwargs):
     return dune.models.localfunction.generatedFunction(gridview, name, order, code, *args, **kwargs)
 
 def uflFunction(gridview, name, order, ufl, *args, **kwargs):
-    return dune.models.localfunction.UFLFunction(gridview, name, order, ufl, *args, **kwargs)
+    return GridCoefficient( dune.models.localfunction.UFLFunction(gridview, name, order, ufl, *args, **kwargs) )
 
 def discreteFunction(space, name, expr=None, *args, **kwargs):
     storage, dfIncludes, dfTypeName, _, _ = space.storage
@@ -61,7 +63,10 @@ def discreteFunction(space, name, expr=None, *args, **kwargs):
         df.interpolate( expr )
     else:
         df.clear()
+
     return df
+    # this needs to work
+    # return GridCoefficient(df)
 
 def numpyFunction(space, vec, name="tmp", **unused):
     """create a discrete function - using the fem numpy storage as linear algebra backend

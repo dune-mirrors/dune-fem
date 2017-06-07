@@ -66,7 +66,6 @@ def VectorConstant(domain, dimRange=None, name=None, count=None):
     functionSpace = ufl.FunctionSpace(domain, element)
     return Coefficient(functionSpace, name=name, count=count)
 
-
 class GridCoefficient(ufl.Coefficient):
     def __init__(self, gf):
         grid = gf.grid
@@ -74,7 +73,12 @@ class GridCoefficient(ufl.Coefficient):
         uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange)
         ufl.Coefficient.__init__(self, uflSpace)
         self.gf = gf
-
+        self.__impl__ = gf
+    def __getattr__(self, item):
+        result = getattr(self.__impl__, item)
+        return result
+    def __repr__(self):
+        return repr(self.__impl__)
 
 class DirichletBC:
     def __init__(self, functionSpace, value, subDomain):
