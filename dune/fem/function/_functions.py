@@ -87,9 +87,7 @@ def discreteFunction(space, name, expr=None, *args, **kwargs):
         raise ValueError("Cannot process ufl expression, yet")
     else:
         df.interpolate(expr)
-    return df
-    # this needs to work
-    # return GridCoefficient(df)
+    return GridCoefficient(df)
 
 
 def numpyFunction(space, vec, name="tmp", **unused):

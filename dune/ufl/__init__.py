@@ -79,6 +79,8 @@ class GridCoefficient(ufl.Coefficient):
         return result
     def __repr__(self):
         return repr(self.__impl__)
+    def __str__(self):
+        return self.name
 
 class DirichletBC:
     def __init__(self, functionSpace, value, subDomain):
