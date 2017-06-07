@@ -158,6 +158,7 @@ namespace Dune
         cls.def( "pointData", [] ( const GridFunction &self, int level ) { return pointData( self, level ); }, "level"_a = 0 );
 
         cls.def( "integrate", [] ( const GridFunction &gf ) { return Dune::Fem::Integral<GridPartType>(gf.gridPart(),gf.space().order()).norm(gf); });
+        pybind11::implicitly_convert_facades< GridFunction >();
       }
 
       template< class GridFunction >
@@ -165,7 +166,6 @@ namespace Dune
       {
         pybind11::class_< GridFunction > cls( scope, clsName );
         registerGridFunction< GridFunction >( scope, cls );
-        pybind11::implicitly_convert_facades< GridFunction >();
         return cls;
       }
 
