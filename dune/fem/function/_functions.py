@@ -36,32 +36,23 @@ def registerGridFunctions(gridview):
 
     return builder.load(moduleName, source, "gridfunctions")
 
-import ufl
 from dune.ufl import Space
-from abc import ABCMeta
-from six import with_metaclass, add_metaclass
-from functools import partial
-def uflgetattr(coefficient,self,item):
-    if item=="__coefficient__":
-        return coefficient
-    return getattr(coefficient, item)
+
 def addUFL(instance):
-    cls = instance.__class__
     grid = instance.grid
     dimRange = instance.dimRange
     uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange)
-    # coefficient = Coefficient(uflSpace)
-    coefficient = GridCoefficient(instance)
-    cls.__getattr__ = lambda self,item: uflgetattr(coefficient,self,item)
-    cls.__sub__ = lambda self,other: self.__coefficient__ - other.__coefficient__
-    cls = add_metaclass(ABCMeta)(cls)
-    cls.register(GridCoefficient)
-    setattr(cls,"__coefficient__",coefficient)
-    return instance
+    # Alternative 1: try to derive from GridCoefficient directly
+    # instance.__class__.__bases__ += (GridCoefficient, )
+    # GridFunction.__init__(instance,uflSpace)
+    # return instance
+    # Alternative 2: wrap instance into a GridFunction
+    return GridCoefficient(instance)
 
 def globalFunction(gridview, name, order, value):
     module = registerGridFunctions(gridview)
     return addUFL(module.globalGridFunction(gridview,name,order,value))
+
 
 def localFunction(gridview, name, order, value):
     module = registerGridFunctions(gridview)
