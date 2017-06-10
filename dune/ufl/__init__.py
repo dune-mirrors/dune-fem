@@ -75,7 +75,12 @@ class GridCoefficient(ufl.Coefficient):
         self.gf = gf
         self.__impl__ = gf
     def __getitem__(self,i):
-        return GridCoefficient(self.gf[i])
+        try:
+          return GridCoefficient(self.gf[i])
+        except:
+          return ufl.Coefficient.__getitem__(self,i)
+    def ufl_evaluate(self, x, component, derivatives):
+        return self.gf.localFunction(x.entity).evaluate(x.xlocal)[component[0]]
     def __getattr__(self, item):
         result = getattr(self.__impl__, item)
         return result
