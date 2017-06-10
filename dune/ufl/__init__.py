@@ -74,7 +74,12 @@ class GridCoefficient(ufl.Coefficient):
         ufl.Coefficient.__init__(self, uflSpace)
         self.gf = gf
         self.__impl__ = gf
+    @property
+    def array(self):
+        import numpy as np
+        return np.array( self.gf, copy=False )
     def __getitem__(self,i):
+        print("__getitem__",i)
         try:
           return GridCoefficient(self.gf[i])
         except:
