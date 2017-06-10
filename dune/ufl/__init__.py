@@ -74,6 +74,8 @@ class GridCoefficient(ufl.Coefficient):
         ufl.Coefficient.__init__(self, uflSpace)
         self.gf = gf
         self.__impl__ = gf
+    def __getitem__(self,i):
+        return GridCoefficient(self.gf[i])
     def __getattr__(self, item):
         result = getattr(self.__impl__, item)
         return result
