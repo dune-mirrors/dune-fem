@@ -11,6 +11,9 @@ from dune.fem import function
 
 from ._spaces import *
 
+import ufl
+import dune.ufl
+
 
 def interpolate(space, func, name=None, **kwargs):
     """interpolate a function into a discrete function space
@@ -57,6 +60,12 @@ def addAttr(module, cls, field, storage):
     else:
         storage = storage(cls)
     setattr(cls, "storage", storage)
+
+    cls.uflSpace         = property(lambda self: dune.ufl.Space(self))
+    cls.uflTrialFunction = property(lambda self: ufl.TrialFunction(self.uflSpace))
+    cls.uflTestFunction  = property(lambda self: ufl.TestFunction(self.uflSpace))
+    cls.uflConstant      = property(lambda self: ufl.Constant(self.uflSpace.cell()))
+    cls.uflSpatialCoordinate = property(lambda self: ufl.SpatialCoordinate(self.uflSpace.cell()))
 
 fileBase = "femspace"
 

@@ -95,6 +95,8 @@ def discreteFunction(space, name, expr=None, *args, **kwargs):
     df = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName).DiscreteFunction(space,name)
     if expr is None:
         df.clear()
+    elif ufl and isinstance(expr, GridCoefficient):
+        df.interpolate(expr.gf)
     elif ufl and isinstance(expr, ufl.core.expr.Expr):
         raise ValueError("Cannot process ufl expression, yet")
     else:

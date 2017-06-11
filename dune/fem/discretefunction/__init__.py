@@ -22,7 +22,7 @@ def interpolate(self, func):
         func = function.globalFunction(self.space.grid, "tmp", self.space.order, func)
     elif gl == 2: # local function
         func = function.localFunction(self.space.grid, "tmp", self.space.order, func)
-    return self._interpolate(func)
+    return self._interpolate(func.gf)
 
 def addAttr(module, cls, storage):
     setattr(cls, "_module", module)

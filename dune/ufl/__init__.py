@@ -74,16 +74,20 @@ class GridCoefficient(ufl.Coefficient):
         ufl.Coefficient.__init__(self, uflSpace)
         self.gf = gf
         self.__impl__ = gf
+    def component(self,i):
+        return self.gf[i]
     @property
     def array(self):
         import numpy as np
         return np.array( self.gf, copy=False )
-    def __getitem__(self,i):
-        print("__getitem__",i)
-        try:
-          return GridCoefficient(self.gf[i])
-        except:
-          return ufl.Coefficient.__getitem__(self,i)
+    # @property
+    # def ufl_shape(self):
+    #     return () if self.gf.dimRange==1 else ufl.Coefficient.ufl_shape.fget(self)
+    # def __getitem__(self,i):
+    #     try:
+    #       return GridCoefficient(self.gf[i])
+    #     except:
+    #       return ufl.Coefficient.__getitem__(self,i)
     def ufl_evaluate(self, x, component, derivatives):
         return self.gf.localFunction(x.entity).evaluate(x.xlocal)[component[0]]
     def __getattr__(self, item):
@@ -96,7 +100,10 @@ class GridCoefficient(ufl.Coefficient):
 
 class DirichletBC:
     def __init__(self, functionSpace, value, subDomain):
-        self.functionSpace = functionSpace
+        try:
+            self.functionSpace = functionSpace.uflSpace
+        except AttributeError:
+            self.functionSpace = functionSpace
         self.value = value
         self.subDomain = subDomain
 
