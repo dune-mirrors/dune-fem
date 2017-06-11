@@ -90,8 +90,14 @@ class GridCoefficient(ufl.Coefficient):
     #       return GridCoefficient(self.gf[i])
     #     except:
     #       return ufl.Coefficient.__getitem__(self,i)
+
     def ufl_evaluate(self, x, component, derivatives):
-        return self.gf.localFunction(x.entity).evaluate(x.xlocal)[component[0]]
+        assert len(derivatives) == 0 or len(derivatives) == 1 , \
+                "can only evaluate up to first order derivatives of grid functions"
+        if len(derivatives) == 0:
+            return self.gf.localFunction(x.entity).evaluate(x.xLocal)[component[0]]
+        else:
+            return self.gf.localFunction(x.entity).jacobian(x.xLocal)[component[0]][derivatives[0]]
     def __getattr__(self, item):
         result = getattr(self.__impl__, item)
         return result
