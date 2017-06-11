@@ -76,6 +76,8 @@ class GridCoefficient(ufl.Coefficient):
         self.__impl__ = gf
     def component(self,i):
         return self.gf[i]
+    def copy(self):
+        return GridCoefficient(self.gf.copy())
     @property
     def array(self):
         import numpy as np
