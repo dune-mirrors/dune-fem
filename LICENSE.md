@@ -313,7 +313,7 @@ POSSIBILITY OF SUCH DAMAGES.
   Freiburg, 5/08/2007
   Robert Kloefkorn
 
-  (dune-fem@dune-project.org)
+  (dune-fem@lists.dune-project.org)
 
 This General Public License does not permit incorporating your program into
 proprietary programs.  If your program is a subroutine library, you may
