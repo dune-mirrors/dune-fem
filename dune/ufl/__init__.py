@@ -131,6 +131,21 @@ class DirichletBC:
         self.value = value
         self.subDomain = subDomain
 
+# there is an issue here that evaluating a ufl expression can
+# be very slow!
+# The problem seems to be that __call__ on a ufl expression
+# can only return a scalar - therefore a possible grid function
+# is evaluated multiple time for each component and each
+# derivative - need a better implementation?
+def expression2GF(grid,expression,order):
+    from dune.fem.function._functions import localFunction
+    shape = expression.ufl_shape
+    assert len(shape) == 0 or len(shape) == 1,\
+            "can only generate grid function from scalar or vector valued expression, got %s" %str(shape)
+    if len(shape) == 0:
+        return localFunction(grid, "tmp", order, lambda e,x: [expression(e(x))] )
+    if len(shape) == 1:
+        return localFunction(grid, "tmp", order, lambda e,x: [expression[i](e(x)) for i in range(shape[0]) ] )
 
 # register markdown formatter for integrands, forms and equations to IPython
 

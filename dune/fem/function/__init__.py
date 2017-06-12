@@ -9,15 +9,10 @@ from dune.generator.generator import SimpleGenerator
 
 from ._functions import *
 
+import dune.ufl
+
 def integrate(grid,expression,order):
-    shape = expression.ufl_shape
-    assert len(shape) == 0 or len(shape) == 1 , "can only integrate scalar or vector valued expression"
-    if len(shape) == 0:
-        gf = localFunction(grid, "tmp", order, lambda e,x: [expression(e(x))] )
-        return gf.integrate()[0]
-    if len(shape) == 1:
-        gf = localFunction(grid, "tmp", order, lambda e,x: [ expression[i](e(x)) for i in range(shape[0]) ] )
-        return gf.integrate()
+    return dune.ufl.expression2GF(grid,expression,order).integrate()
 # perhaps a general
 #    def assemble(grid/space, expression, order):
 # would be better. If expression is a function this would return a

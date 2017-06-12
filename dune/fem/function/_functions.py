@@ -36,17 +36,7 @@ def registerGridFunctions(gridview):
 
     return builder.load(moduleName, source, "gridfunctions")
 
-from dune.ufl import Space
-
 def addUFL(instance):
-    grid = instance.grid
-    dimRange = instance.dimRange
-    uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange)
-    # Alternative 1: try to derive from GridCoefficient directly
-    # instance.__class__.__bases__ += (GridCoefficient, )
-    # GridFunction.__init__(instance,uflSpace)
-    # return instance
-    # Alternative 2: wrap instance into a GridFunction
     return GridCoefficient(instance)
 
 def globalFunction(gridview, name, order, value):

@@ -66,13 +66,20 @@ def _plotPointData(fig,grid,solution, level=0, gridLines="black", vectors=None,
     if ylim:
         fig.gca().set_ylim(ylim)
 
+from ufl.core.expr import Expr
+from dune.ufl import expression2GF
 def plotPointData(solution, level=0, gridLines="black", vectors=False,
-        xlim=None, ylim=None, clim=None, cmap=None):
+        xlim=None, ylim=None, clim=None, cmap=None, **kwargs):
     try:
         grid = solution.grid
-    except:
-        grid = solution
-        solution = None
+    except AttributeError:
+        if isinstance(solution, Expr):
+            grid = kwargs.get("grid",None)
+            assert grid, "need to provide a named grid argument to plot a ufl expression directly"
+            solution = expression2GF(grid,solution,1)
+        else:
+            grid = solution
+            solution = None
     if not grid.dimension == 2:
         print("inline plotting so far only available for 2d grids")
         return
@@ -85,12 +92,17 @@ def plotPointData(solution, level=0, gridLines="black", vectors=False,
     # return fig
 
 def plotComponents(solution, level=0, show=None, gridLines="black",
-        xlim=None, ylim=None, clim=None, cmap=None):
+        xlim=None, ylim=None, clim=None, cmap=None, **kwargs):
     try:
         grid = solution.grid
-    except:
-        grid = solution
-        solution = None
+    except AttributeError:
+        if isinstance(solution, Expr):
+            grid = kwargs.get("grid",None)
+            assert grid, "need to provide a named grid argument to plot a ufl expression directly"
+            solution = expression2GF(grid,solution,1)
+        else:
+            grid = solution
+            solution = None
     if not grid.dimension == 2:
         print("inline plotting so far only available for 2d grids")
         return
