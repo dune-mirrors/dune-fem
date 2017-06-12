@@ -66,6 +66,21 @@ def VectorConstant(domain, dimRange=None, name=None, count=None):
     functionSpace = ufl.FunctionSpace(domain, element)
     return Coefficient(functionSpace, name=name, count=count)
 
+from ufl.indexed import Indexed
+from ufl.index_combination_utils import create_slice_indices
+from ufl.core.multiindex import MultiIndex
+class GridIndexed(Indexed):
+    def __init__(self,gc,i):
+        component = (i,)
+        shape = gc.ufl_shape
+        all_indices, _, _ = create_slice_indices(component, shape, gc.ufl_free_indices)
+        mi = MultiIndex(all_indices)
+        Indexed.__init__(self,gc,mi)
+        self.__impl__ = gc.gf[i]
+    def __getattr__(self, item):
+        result = getattr(self.__impl__, item)
+        return result
+
 class GridCoefficient(ufl.Coefficient):
     def __init__(self, gf):
         grid = gf.grid
@@ -85,11 +100,12 @@ class GridCoefficient(ufl.Coefficient):
     # @property
     # def ufl_shape(self):
     #     return () if self.gf.dimRange==1 else ufl.Coefficient.ufl_shape.fget(self)
-    # def __getitem__(self,i):
-    #     try:
-    #       return GridCoefficient(self.gf[i])
-    #     except:
-    #       return ufl.Coefficient.__getitem__(self,i)
+
+    def __getitem__(self,i):
+        if isinstance(i,int):
+            return GridIndexed(self,i)
+        else:
+            return ufl.Coefficient.__getitem__(self,i)
 
     def ufl_evaluate(self, x, component, derivatives):
         assert len(derivatives) == 0 or len(derivatives) == 1 , \
