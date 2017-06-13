@@ -43,28 +43,20 @@ class Space(ufl.VectorElement):
         return self._field
 
 
-def Coefficient(functionSpace, name=None, count=None):
-    """UFL form argument type: Representation of a form coefficient."""
+def NamedCoefficient(functionSpace, name=None, count=None):
     coefficient = ufl.Coefficient(functionSpace, count=count)
     if name is not None:
         coefficient.name = name
     return coefficient
+def NamedConstant(domain, dimRange=None, name=None, count=None):
+    if dimRange == 0:
+        constant = ufl.Constant(domain, count)
+    else:
+        constant = ufl.VectorConstant(domain, dim=dimRange, count=count)
+    if name is not None:
+        constant.name = name
+    return constant
 
-
-def Constant(domain, name=None, count=None):
-    """UFL value: Represents a globally constant coefficient."""
-    domain = ufl.domain.as_domain(domain)
-    element = ufl.FiniteElement("Real", domain.ufl_cell(), 0)
-    functionSpace = ufl.FunctionSpace(domain, element)
-    return Coefficient(functionSpace, name=name, count=count)
-
-
-def VectorConstant(domain, dimRange=None, name=None, count=None):
-    """UFL value: Represents a globally constant vector-valued coefficient."""
-    domain = ufl.domain.as_domain(domain)
-    element = ufl.VectorElement("Real", domain.ufl_cell(), 0, dimRange)
-    functionSpace = ufl.FunctionSpace(domain, element)
-    return Coefficient(functionSpace, name=name, count=count)
 
 from ufl.indexed import Indexed
 from ufl.index_combination_utils import create_slice_indices

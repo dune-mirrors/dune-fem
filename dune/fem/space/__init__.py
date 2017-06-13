@@ -64,8 +64,17 @@ def addAttr(module, cls, field, storage):
     cls.uflSpace         = property(lambda self: dune.ufl.Space(self))
     cls.uflTrialFunction = property(lambda self: ufl.TrialFunction(self.uflSpace))
     cls.uflTestFunction  = property(lambda self: ufl.TestFunction(self.uflSpace))
-    cls.uflConstant      = property(lambda self: ufl.Constant(self.uflSpace.cell()))
     cls.uflSpatialCoordinate = property(lambda self: ufl.SpatialCoordinate(self.uflSpace.cell()))
+    def uflConstant(self, dimRange=0, name=None):
+        if name:
+            return dune.ufl.NamedConstant(self.uflSpace.cell(),dimRange,name)
+        elif dimRange == 0:
+            return ufl.Constant(self.uflSpace.cell())
+        else:
+            return ufl.VectorConstant(self.uflSpace.cell(), dim=dimRange)
+    cls.uflConstant    = property(uflConstant)
+    cls.vectorConstant = lambda self,dimRange: uflConstant(self,dimRange)
+    cls.namedConstant  = lambda self, name, dimRange=0: uflConstant(self,dimRange,name)
 
 fileBase = "femspace"
 

@@ -123,6 +123,14 @@ def load(grid, model, *args, **kwargs):
     writer.emit('pybind11::class_< ModelWrapper > cls( module, "Model", pybind11::base< ModelBase >() );')
     writer.emit('cls.def_property_readonly( "dimRange", [] ( ModelWrapper & ) { return ' + str(model.dimRange) + '; } );')
     writer.emit('')
+    for n, number in model._constantNames.items():
+        print(n,number)
+        writer.emit('cls.def_property( "' + n + '", ' +
+          '[] ( ModelWrapper &self ) { return self.impl().template constant<' + str(number) + '>(); }, ' +
+          '[] ( ModelWrapper &self, typename ModelWrapper::Impl::ConstantType<' + str(number) + '>& value) { self.impl().template constant<' + str(number) + '>() = value; }' +
+          ');')
+    writer.emit('')
+
     model.export(writer, 'Model', 'ModelWrapper')
     writer.closePythonModule(name)
 

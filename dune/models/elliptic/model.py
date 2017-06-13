@@ -503,6 +503,7 @@ def compileUFL(equation, *args, **kwargs):
 
 #def generateModel(grid, model, dirichlet = {}, exact = None, tempVars = True, header = False):
 def generateModel(grid, model, *args, **kwargs):
+    assert True
     from dune.common.hashit import hashIt
     start_time = timeit.default_timer()
 
@@ -552,6 +553,7 @@ def generateModel(grid, model, *args, **kwargs):
     writer.emit('// actual wrapper class for model derived from abstract base')
     writer.emit('pybind11::class_< ModelWrapper > cls( module, "Model", pybind11::base< ModelBase >() );')
     writer.emit('cls.def_property_readonly( "dimRange", [] ( ModelWrapper & ) { return ' + str(model.dimRange) + '; } );')
+
     writer.emit('')
     model.export(writer, 'Model', 'ModelWrapper')
     writer.closePythonModule(name)
