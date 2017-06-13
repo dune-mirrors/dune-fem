@@ -170,6 +170,7 @@ public:
 template < class ModelImpl >
 struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPartType, ModelImpl::dimRange, typename ModelImpl::RangeFieldType>
 {
+  typedef ModelImpl Impl;
   typedef typename ModelImpl::GridPartType GridPartType;
   static const int dimRange  = ModelImpl::dimRange;
   typedef DiffusionModel<GridPartType, dimRange, typename ModelImpl::RangeFieldType> Base;
