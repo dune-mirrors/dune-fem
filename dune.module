@@ -1,7 +1,7 @@
 Module: dune-fem
-Version: 2.5.0
+Version: 2.6.0
 Maintainer: dune-fem@lists.dune-project.org
 Whitespace-Hook: Yes
-Depends: dune-grid (>= 2.5)
-Suggests: dune-alugrid (>= 2.4) dune-istl (>= 2.5) dune-localfunctions (>= 2.5) dune-spgrid (>= 2.5)
+Depends: dune-grid (>= 2.6)
+Suggests: dune-alugrid (>= 2.4) dune-istl (>= 2.6) dune-localfunctions (>= 2.6) dune-spgrid (>= 2.6)
 Sources: dune
