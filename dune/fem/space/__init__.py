@@ -73,8 +73,8 @@ def addAttr(module, cls, field, storage):
         else:
             return ufl.VectorConstant(self.uflSpace.cell(), dim=dimRange)
     cls.uflConstant    = property(uflConstant)
-    cls.vectorConstant = lambda self,dimRange: uflConstant(self,dimRange)
-    cls.namedConstant  = lambda self, name, dimRange=0: uflConstant(self,dimRange,name)
+    cls.uflVectorConstant = lambda self,dimRange: uflConstant(self,dimRange)
+    cls.uflNamedConstant  = lambda self, name, dimRange=0: uflConstant(self,dimRange,name)
 
 fileBase = "femspace"
 
