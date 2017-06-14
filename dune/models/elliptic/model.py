@@ -171,6 +171,7 @@ class EllipticModel:
     def exportSetConstant(self, sourceWriter, modelClass='Model', wrapperClass='ModelWrapper'):
         sourceWriter.openFunction('std::size_t renumberConstants', args=['pybind11::handle &obj'])
         sourceWriter.emit('std::string id = pybind11::str( obj );')
+        sourceWriter.emit('if( obj.attr("name") ) id = pybind11::str(obj.attr("name"));')
         for name, number in self._constantNames.items():
             sourceWriter.emit('if (id == "' + name + '") return ' + str(number) + ';')
         sourceWriter.emit('throw pybind11::value_error("coefficient \'" + id + "\' has not been registered");')
