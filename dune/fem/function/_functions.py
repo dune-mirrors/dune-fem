@@ -14,7 +14,7 @@ import dune.models.localfunction
 import dune.common.checkconfiguration as checkconfiguration
 from dune.common.hashit import hashIt
 
-from dune.ufl import GridCoefficient
+from dune.ufl import GridCoefficient, expression2GF
 
 def registerGridFunctions(gridview):
     from dune.generator import builder
@@ -88,7 +88,7 @@ def discreteFunction(space, name, expr=None, *args, **kwargs):
     elif ufl and isinstance(expr, GridCoefficient):
         df.interpolate(expr.gf)
     elif ufl and isinstance(expr, ufl.core.expr.Expr):
-        raise ValueError("Cannot process ufl expression, yet")
+        df.interpolate(expression2GF(space.grid,expr,space.order))
     else:
         df.interpolate(expr)
     return addUFL(df)
