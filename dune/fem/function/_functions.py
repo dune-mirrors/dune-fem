@@ -116,4 +116,4 @@ def numpyFunction(space, vec, name="tmp", **unused):
     typeName = "Dune::Fem::VectorDiscreteFunction< " +\
           spaceType + ", Dune::FemPy::NumPyVector< " + field + " > >"
 
-    return module("numpy", includes, typeName).DiscreteFunction(space,name,vec)
+    return addUFL(module("numpy", includes, typeName).DiscreteFunction(space,name,vec))
