@@ -163,6 +163,10 @@ public:
   const GridPartType &gridPart () const { return space().gridPart(); }
   const DiscreteFunctionSpaceType &space( ) const { return space_; }
 
+  const ModelType &model() const
+  {
+    return model_;
+  }
 protected:
   const ModelType &model_;   // the mathematical model
   const DiscreteFunctionSpaceType &space_; // discrete function space

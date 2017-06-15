@@ -189,6 +189,7 @@ namespace Dune
 
         cls.def_property_readonly( "dimRange", [](Scheme&) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
         cls.def_property_readonly( "space", [] ( pybind11::object self ) { return detail::getSpace( self.cast< const Scheme & >(), self ); } );
+        cls.def_property_readonly( "model", &Scheme::model );
 
         registerSchemeAssemble( cls );
 
