@@ -376,7 +376,7 @@ def compileUFL(equation, *args, **kwargs):
     x = SpatialCoordinate(form.ufl_cell())
 
     try:
-        field = u.ufl_function_space().ufl_element().field()
+        field = u.ufl_function_space().field()
     except AttributeError:
         field = "double"
 
@@ -423,7 +423,7 @@ def compileUFL(equation, *args, **kwargs):
             dimRange = 1 if coefficient.ufl_shape==() else coefficient.ufl_shape[0]
             idxConst += 1
         else:
-            field = coefficient.ufl_function_space().ufl_element().field()
+            field = coefficient.ufl_function_space().field()
             dimRange = coefficient.ufl_shape[0]
             idx = idxCoeff
             idxCoeff += 1

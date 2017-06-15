@@ -55,7 +55,7 @@ def UFLFunction(grid, name, order, expr, **kwargs):
         else:
             idx = idxCoeff
             idxCoeff += 1
-            field = coefficient.ufl_function_space().ufl_element().field()
+            field = coefficient.ufl_function_space().field()
             dimR = coefficient.ufl_shape[0]
 
         try:

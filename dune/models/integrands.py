@@ -426,7 +426,7 @@ def compileUFL(equation, tempVars=True):
 
     integrands = Integrands(form.signature(), (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi))
     try:
-        integrands.field = u.ufl_function_space().ufl_element().field()
+        integrands.field = u.ufl_function_space().field()
     except AttributeError:
         pass
 
@@ -438,7 +438,7 @@ def compileUFL(equation, tempVars=True):
             constants[coefficient] = integrands.addConstant('Dune::FieldVector< double, ' + str(dimRange) + ' >')
         else:
             try:
-                coefficients[coefficient] = integrands.addCoefficient(coefficient.ufl_shape[0], coefficient.ufl_function_space().ufl_element().field())
+                coefficients[coefficient] = integrands.addCoefficient(coefficient.ufl_shape[0], coefficient.ufl_function_space().field())
             except AttributeError:
                 coefficients[coefficient] = integrands.addCoefficient(coefficient.ufl_shape[0])
 

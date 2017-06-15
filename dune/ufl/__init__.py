@@ -30,18 +30,22 @@ def cell(dimDomainOrGrid):
         raise NotImplementedError('UFL cell not implemented for dimension' + str(dimDomain) + '.')
 
 
-class Space(ufl.VectorElement):
+class Space(ufl.FunctionSpace):
     def __init__(self, dimDomainOrGridOrSpace, dimRange=None, field="double"):
         if not dimRange:
+            self.duneSpace = dimDomainOrGridOrSpace
             dimRange = dimDomainOrGridOrSpace.dimRange
             dimDomainOrGridOrSpace = dimDomainOrGridOrSpace.grid
-        ufl.VectorElement.__init__(self, "Lagrange", cell(dimDomainOrGridOrSpace), 1, int(dimRange))
+        ve = ufl.VectorElement("Lagrange", cell(dimDomainOrGridOrSpace), 1, int(dimRange))
+        domain = ufl.domain.default_domain(ve.cell())
+        ufl.FunctionSpace.__init__(self,domain, ve)
         self.dimRange = dimRange
         self._field = field
-
+        self._cell = ve.cell()
+    def cell(self):
+        return self._cell
     def field(self):
         return self._field
-
 
 def NamedCoefficient(functionSpace, name=None, count=None):
     coefficient = ufl.Coefficient(functionSpace, count=count)
