@@ -128,9 +128,16 @@ def h1(space, model, solver=None, parameters={}):
     Returns:
         Scheme: the constructed scheme
     """
+    modelParam = None
+    if isinstance(model, (list, tuple)):
+        modelParam = model[1:]
+        model = model[0]
     if isinstance(model,Equation):
         from dune.fem.model._models import elliptic
-        model = elliptic(space.grid,model)
+        if modelParam:
+            model = elliptic(space.grid,model,*modelParam)
+        else:
+            model = elliptic(space.grid,model)
 
     from . import module
     includes = ["dune/fem/schemes/elliptic.hh"]
