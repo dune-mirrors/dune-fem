@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from functools import wraps
 
 import ufl
 import ufl.domain
@@ -77,7 +78,14 @@ class GridIndexed(Indexed):
         result = getattr(self.__impl__, item)
         return result
 
+
+
 class GridCoefficient(ufl.Coefficient):
+    """ This class combines a Dune grid function and a ufl Coefficient
+        class. Detailed documentation can be accessed by calling
+        - help(self.GridFunction)
+        - help(self.Coefficient)
+    """
     def __init__(self, gf):
         grid = gf.grid
         dimRange = gf.dimRange
@@ -85,6 +93,10 @@ class GridCoefficient(ufl.Coefficient):
         ufl.Coefficient.__init__(self, uflSpace)
         self.gf = gf
         self.__impl__ = gf
+        __module__ = self.gf.__module__
+        self.Coefficient = ufl.Coefficient
+        self.GridFunction = gf.__class__
+
     def component(self,i):
         return self.gf[i]
     def copy(self):
@@ -93,16 +105,6 @@ class GridCoefficient(ufl.Coefficient):
     def array(self):
         import numpy as np
         return np.array( self.gf, copy=False )
-    # @property
-    # def ufl_shape(self):
-    #     return () if self.gf.dimRange==1 else ufl.Coefficient.ufl_shape.fget(self)
-
-    def __getitem__(self,i):
-        if isinstance(i,int):
-            return GridIndexed(self,i)
-        else:
-            return ufl.Coefficient.__getitem__(self,i)
-
     def ufl_evaluate(self, x, component, derivatives):
         assert len(derivatives) == 0 or len(derivatives) == 1 , \
                 "can only evaluate up to first order derivatives of grid functions"
@@ -110,13 +112,31 @@ class GridCoefficient(ufl.Coefficient):
             return self.gf.localFunction(x.entity).evaluate(x.xLocal)[component[0]]
         else:
             return self.gf.localFunction(x.entity).jacobian(x.xLocal)[component[0]][derivatives[0]]
+
+    def __getitem__(self,i):
+        if isinstance(i,int):
+            return GridIndexed(self,i)
+        else:
+            return ufl.Coefficient.__getitem__(self,i)
     def __getattr__(self, item):
+        def tocontainer(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                return func(*args, **kwargs)
+            return wrapper
         result = getattr(self.__impl__, item)
+        if callable(result):
+            # doc = result.func.__doc__
+            result = tocontainer(result)
+            # result.func.__doc__ = doc
         return result
     def __repr__(self):
         return repr(self.__impl__)
     def __str__(self):
         return self.name
+    __dict__   = property(lambda self:self.gf.__dict__)
+    __name__   = property(lambda self:self.gf.__name__)
+    __class__  = property(lambda self:self.gf.__class__)
 
 class DirichletBC:
     def __init__(self, functionSpace, value, subDomain):
