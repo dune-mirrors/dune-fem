@@ -9,6 +9,7 @@
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/io/file/vtkio.hh>
+#include <dune/fem/io/streams/asciistreams.hh>
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/discontinuousgalerkin/lagrange.hh>
 #include <dune/fem/space/discontinuousgalerkin/space.hh>
@@ -85,11 +86,23 @@ int main ( int argc, char **argv )
   Dune::Fem::HierarchicalDiscreteFunction< DiscreteFunctionSpaceType > u( "solution", dfSpace );
   interpolate( uGridExact, u );
 
+  {
+    Dune::Fem::ASCIIOutStream out( "test-hierarchicalfunction.dat" );
+    u.write( out );
+  }
+
+  u.clear();
+
+  {
+    Dune::Fem::ASCIIInStream in( "test-hierarchicalfunction.dat" );
+    u.read( in );
+  }
+
   // output analytical function and interolation to vtk file
   Dune::Fem::VTKIO< GridPartType > vtkIO( gridPart, Dune::VTK::nonconforming );
   vtkIO.addVertexData( uGridExact );
   vtkIO.addVertexData( u );
-  vtkIO.write( "test-tupledgspace" );
+  vtkIO.write( "test-hierarchicalfunction" );
 
   return 0;
 }

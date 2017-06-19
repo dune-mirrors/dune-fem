@@ -228,20 +228,26 @@ namespace Dune
       in >> name_;
 
       // read size as integer
-      int mysize;
-      in >> mysize ;
+      int32_t mysize;
+      in >> mysize;
 
       // check size
-      if( mysize != BaseType :: size() &&
-          BaseType :: size() != this->space().size() ) // only read compressed vectors
-      {
+      if( static_cast< int >( mysize ) != BaseType::size() )
         DUNE_THROW( IOError, "Trying to read discrete function of different size." );
-      }
+      if( BaseType::size() != static_cast< int >( this->space().size() ) )
+        DUNE_THROW( InvalidStateException, "Trying to read discrete function in uncompressed state." );
 
       // read all dofs
-      const auto end = BaseType :: dend();
-      for( auto it = BaseType :: dbegin(); it != end; ++it )
-        in >> *it;
+      typedef typename DiscreteFunctionSpaceType::BlockMapperType BlockMapperType;
+      typedef typename DiscreteFunctionSpaceType::LocalBlockIndices LocalBlockIndices;
+      typedef typename BlockMapperType::SizeType SizeType;
+
+      const BlockMapperType &blockMapper = this->space().blockMapper();
+      for( SizeType i = 0; i < blockMapper.size(); ++i )
+      {
+        auto &&block = this->dofVector()[ i ];
+        Hybrid::forEach( LocalBlockIndices(), [ &in, &block ] ( auto j ) { in >> block[ j ]; } );
+      }
     }
 
 
@@ -261,17 +267,24 @@ namespace Dune
       out << name_;
 
       // only allow write when vector is compressed
-      if( BaseType :: size() != this->space().size() )
-        DUNE_THROW(InvalidStateException,"Writing DiscreteFunction in uncompressed state!");
+      if( BaseType::size() != static_cast< int >( this->space().size() ) )
+        DUNE_THROW( InvalidStateException, "Trying to write DiscreteFunction in uncompressed state." );
 
-      // write size as integer
-      const auto mysize = BaseType :: size();
+      // write size as 32-bit integer
+      const int32_t mysize = BaseType::size();
       out << mysize;
 
       // write all dofs
-      const auto end = BaseType :: dend();
-      for( auto it = BaseType :: dbegin(); it != end; ++it )
-        out << *it;
+      typedef typename DiscreteFunctionSpaceType::BlockMapperType BlockMapperType;
+      typedef typename DiscreteFunctionSpaceType::LocalBlockIndices LocalBlockIndices;
+      typedef typename BlockMapperType::SizeType SizeType;
+
+      const BlockMapperType &blockMapper = this->space().blockMapper();
+      for( SizeType i = 0; i < blockMapper.size(); ++i )
+      {
+        const auto block = this->dofVector()[ i ];
+        Hybrid::forEach( LocalBlockIndices(), [ &out, &block ] ( auto j ) { out << block[ j ]; } );
+      }
     }
 
 
