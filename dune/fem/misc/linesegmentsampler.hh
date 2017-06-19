@@ -152,32 +152,65 @@ namespace Dune
         DomainFieldType lower = std::numeric_limits< DomainFieldType >::min();
         DomainFieldType upper = std::numeric_limits< DomainFieldType >::max();
 
-        const ReferenceElement &refElement = ReferenceElements::general( geometry.type() );
-        const int numFaces = refElement.size( 1 );
-        for( int face = 0; face < numFaces; ++face )
+        if( entity.type().isNone() )
         {
-          const LocalDomainType &center = refElement.position( face, 1 );
-
-          DomainType normal;
-          const LocalDomainType &refNormal = refElement.integrationOuterNormal( face );
-          geometry.jacobianInverseTransposed( center ).mv( refNormal, normal );
-
-          const DomainFieldType nds = normal * ds;
-          const DomainFieldType ncl = normal * (geometry.global( center ) - left_);
-          if( std::abs( nds ) > 1e-8 )
+          const auto endnit = gridPart().iend( entity );
+          for( auto nit = gridPart().ibegin( entity ); nit != endnit; ++nit )
           {
-            // ds is not parallel to the face
-            const DomainFieldType alpha = ncl / nds;
-            if( nds > 0 )
-              upper = std::min( upper, alpha );
-            else
-              lower = std::max( lower, alpha );
+            const auto& intersection = *nit;
+
+            const DomainType center = intersection.geometry().center();
+            DomainType normal = intersection.centerUnitOuterNormal();
+            normal *= intersection.geometry().volume();
+
+            const DomainFieldType nds = normal * ds;
+            const DomainFieldType ncl = normal * (center - left_);
+            if( std::abs( nds ) > 1e-8 )
+            {
+              // ds is not parallel to the face
+              const DomainFieldType alpha = ncl / nds;
+              if( nds > 0 )
+                upper = std::min( upper, alpha );
+              else
+                lower = std::max( lower, alpha );
+            }
+            else if( ncl < -1e-8 )
+            {
+              // ds is parallel to the face and the line lies on the outside
+              lower = std::numeric_limits< DomainFieldType >::max();
+              upper = std::numeric_limits< DomainFieldType >::min();
+            }
           }
-          else if( ncl < -1e-8 )
+        }
+        else
+        {
+          const ReferenceElement &refElement = ReferenceElements::general( geometry.type() );
+          const int numFaces = refElement.size( 1 );
+          for( int face = 0; face < numFaces; ++face )
           {
-            // ds is parallel to the face and the line lies on the outside
-            lower = std::numeric_limits< DomainFieldType >::max();
-            upper = std::numeric_limits< DomainFieldType >::min();
+            const LocalDomainType &center = refElement.position( face, 1 );
+
+            DomainType normal;
+            const LocalDomainType &refNormal = refElement.integrationOuterNormal( face );
+            geometry.jacobianInverseTransposed( center ).mv( refNormal, normal );
+
+            const DomainFieldType nds = normal * ds;
+            const DomainFieldType ncl = normal * (geometry.global( center ) - left_);
+            if( std::abs( nds ) > 1e-8 )
+            {
+              // ds is not parallel to the face
+              const DomainFieldType alpha = ncl / nds;
+              if( nds > 0 )
+                upper = std::min( upper, alpha );
+              else
+                lower = std::max( lower, alpha );
+            }
+            else if( ncl < -1e-8 )
+            {
+              // ds is parallel to the face and the line lies on the outside
+              lower = std::numeric_limits< DomainFieldType >::max();
+              upper = std::numeric_limits< DomainFieldType >::min();
+            }
           }
         }
 

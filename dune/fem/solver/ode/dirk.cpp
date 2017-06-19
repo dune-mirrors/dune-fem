@@ -212,7 +212,8 @@ void DIRK::LinearOperator::operator()(const double *p, double *DFu_p, int compon
   const double lambda_eps = lambda / eps;
 
   dwaxpby(dim, 1.0, u, 1, eps, p, 1, u_tmp, 1);
-  f(t, u_tmp, DFu_p, component);
+  //f(t, u_tmp, DFu_p, component);
+  f(t, u_tmp, DFu_p, -1);
   for(int i=0; i<dim; i++) DFu_p[i] = p[i] - lambda_eps*(DFu_p[i] - f_tmp[i]);
 }
 

@@ -69,6 +69,9 @@ namespace Dune
       */
       virtual void setTime ( const double time ) {}
 
+      virtual void activateLinear() = 0 ;
+      virtual void deactivateLinear() = 0 ;
+
       /** \brief estimate maximum time step
        *
        *  For an explicit time discretization, the time step has to be limited.

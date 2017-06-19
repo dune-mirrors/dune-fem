@@ -104,8 +104,21 @@ namespace DuneODE
       // set actual time of iteration step
       op_.setTime( this->time() );
 
+      if( i < 0 )
+      {
+        //std::cout << "Linear part activated" << std::endl;
+        op_.activateLinear();
+      }
+
       // call operator apply
       op_( u, f );
+
+      if( i < 0 )
+      {
+        //std::cout << "Linear part dectivated" << std::endl;
+        op_.deactivateLinear();
+      }
+
     }
 
     //! return size of argument
