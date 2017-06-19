@@ -121,6 +121,9 @@ namespace DuneODE
 
     }
 
+    virtual void activateLinear () { op_.activateLinear(); }
+    virtual void deactivateLinear () { op_.deactivateLinear(); }
+
     //! return size of argument
     int dim_of_argument(int i = 0) const
     {

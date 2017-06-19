@@ -69,8 +69,8 @@ namespace Dune
       */
       virtual void setTime ( const double time ) {}
 
-      virtual void activateLinear() = 0 ;
-      virtual void deactivateLinear() = 0 ;
+      virtual void activateLinear() {}
+      virtual void deactivateLinear() {}
 
       /** \brief estimate maximum time step
        *

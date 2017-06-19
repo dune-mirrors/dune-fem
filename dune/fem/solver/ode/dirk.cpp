@@ -106,6 +106,7 @@ bool DIRK::step_iterative(double t, double dt, double *u,
     // Euler predictor
     f(t+c[i]*dt, u, f_tmp);
     dwaxpby(dim, c[i]*dt, f_tmp, 1, 1.0, u, 1, ui, 1);
+    f.activateLinear();
     // ui = u^n
     //cblas_dcopy(dim, u, 1, ui, 1);
 
@@ -126,6 +127,7 @@ bool DIRK::step_iterative(double t, double dt, double *u,
       dset(dim, 0.0, y, 1);
       op.setup(t+c[i]*dt, ui, lambda);
       const bool lin_solver_conv = ils->solve(op, y, F);
+      //f.deactivateLinear();
 
       // add every ILS iteration performed for this time step
       int ils_iter = ils->number_of_iterations();
@@ -157,6 +159,7 @@ bool DIRK::step_iterative(double t, double dt, double *u,
 
       if(sqrt(global_dot) < tolerance) break;
     }
+    f.deactivateLinear();
 
     newton_iterations += newton_iter;
 
@@ -194,6 +197,7 @@ void DIRK::LinearOperator::setup(double t, const double *u, double lambda)
   this->t = t;
   this->u = u;
   this->lambda = lambda;
+  // f.activateLinear();
 }
 
 
@@ -212,8 +216,7 @@ void DIRK::LinearOperator::operator()(const double *p, double *DFu_p, int compon
   const double lambda_eps = lambda / eps;
 
   dwaxpby(dim, 1.0, u, 1, eps, p, 1, u_tmp, 1);
-  //f(t, u_tmp, DFu_p, component);
-  f(t, u_tmp, DFu_p, -1);
+  f(t, u_tmp, DFu_p, component);
   for(int i=0; i<dim; i++) DFu_p[i] = p[i] - lambda_eps*(DFu_p[i] - f_tmp[i]);
 }
 
