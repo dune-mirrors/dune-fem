@@ -187,18 +187,6 @@ namespace Dune
 
 
     template< class Impl >
-    inline typename DiscreteFunctionDefault< Impl > :: DiscreteFunctionType &
-    DiscreteFunctionDefault< Impl >
-      :: operator*= ( const RangeFieldType &scalar )
-    {
-      const auto end = BaseType :: dend();
-      for( auto it = BaseType :: dbegin(); it != end; ++it )
-        *it *= scalar;
-      return asImp();
-    }
-
-
-    template< class Impl >
     template< class StreamTraits >
     inline void DiscreteFunctionDefault< Impl >
       :: read ( InStreamInterface< StreamTraits > &in )

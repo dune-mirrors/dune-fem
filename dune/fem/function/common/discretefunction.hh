@@ -796,7 +796,11 @@ namespace Dune
        *
        *  \returns reference to this discrete function (i.e. *this)
        */
-      inline DiscreteFunctionType &operator*= ( const RangeFieldType &scalar );
+      DiscreteFunctionType &operator*= ( const RangeFieldType &scalar )
+      {
+        dofVector() *= scalar;
+        return asImp();
+      }
 
       /** \brief devide all DoFs by a scalar factor
        *
