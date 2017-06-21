@@ -15,6 +15,7 @@
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/operator/linear/hierarchical.hh>
+#include <dune/fem/solver/cginverseoperator.hh>
 #include <dune/fem/space/discontinuousgalerkin/lagrange.hh>
 #include <dune/fem/space/discontinuousgalerkin/space.hh>
 #include <dune/fem/space/discontinuousgalerkin/tuple.hh>
@@ -114,7 +115,14 @@ int main ( int argc, char **argv )
 
   // compute error
   Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
-  std::cout << "L2-Error: " << l2norm.distance( uGridExact, u ) << std::endl;
+  std::cout << "L2-Error (ISTL-CG): " << l2norm.distance( uGridExact, u ) << std::endl;
+
+  // solve again using dune-fem CG inverse operator
+  u.clear();
+  massOp.assembleRHS( uGridExact, rhs );
+  Dune::Fem::Solver::CGInverseOperator< DiscreteFunctionType > invOp( massOp, 1e-10, 1e-10, 1000, false );
+  invOp( rhs, u );
+  std::cout << "L2-Error (FEM-CG):  " << l2norm.distance( uGridExact, u ) << std::endl;
 
   return 0;
 }
