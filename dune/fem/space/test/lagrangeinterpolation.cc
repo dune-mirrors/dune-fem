@@ -33,6 +33,8 @@
 #include <dune/grid/io/visual/grapedatadisplay.hh>
 #endif
 
+#include <dune/fem/test/testgrid.hh>
+
 using namespace Dune;
 using namespace Fem;
 
@@ -428,13 +430,8 @@ try
 
   std::vector< double > error( ml );
 
-  std::ostringstream gridFilenameStream;
-  gridFilenameStream << MyGridType::dimensionworld << "dgrid.dgf";
-  const std::string macroGridName = gridFilenameStream.str();
-
-  GridPtr< MyGridType > gridptr( macroGridName );
-  MyGridType &grid = *gridptr;
-  const int step = Dune::DGFGridInfo< MyGridType >::refineStepsForHalf();
+  MyGridType &grid = Dune::Fem::TestGrid::grid();
+  const int step = Dune::Fem::TestGrid::refineStepsForHalf();
   GridPartType gridPart( grid );
 
   for( int i = 0; i < ml; ++i )

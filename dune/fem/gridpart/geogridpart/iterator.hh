@@ -6,7 +6,6 @@
 #include <type_traits>
 #include <utility>
 
-#include <dune/grid/common/entitypointer.hh>
 #include <dune/grid/common/gridenums.hh>
 
 namespace Dune

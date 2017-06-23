@@ -33,14 +33,13 @@ namespace Dune
      *
      * =================================================
      */
-    template< class SlaveDofs >
+    template <class Space>
     class PetscDofMappings
     {
-      typedef PetscDofMappings< SlaveDofs > ThisType;
+      typedef PetscDofMappings ThisType;
 
     public:
-      typedef SlaveDofs  SlaveDofsType;
-
+      typedef Space                                    DiscreteFunctionSpaceType;
       typedef std::vector< int >                       DofMappingType;
       typedef DofMappingType::size_type                IndexType;
       typedef typename DofMappingType::value_type      DofType;
@@ -48,26 +47,25 @@ namespace Dune
       typedef PetscInt  GlobalDofType ;
       typedef Dune::DynamicVector< GlobalDofType >           GlobalDofMappingType ;
 
-      PetscDofMappings ( SlaveDofs *slaveDofs )
-      :   slaveDofs_( *slaveDofs ),
-          numOwnedDofBlocks_( 0 ),
-          numSlaveBlocks_( 0 ),
-          processStartIndex_( 0 ),
-          localSlaveMapping_(),
-          globalDofMapping_(),
-          sequence_( -1 )
+      PetscDofMappings ( const DiscreteFunctionSpaceType *space )
+      : numOwnedDofBlocks_( 0 ),
+        numSlaveBlocks_( 0 ),
+        processStartIndex_( 0 ),
+        localSlaveMapping_(),
+        globalDofMapping_(),
+        sequence_( -1 )
       {
         // update dof mapping
-        update();
+        update(*space);
       }
 
-      bool update ()
+      bool update (const DiscreteFunctionSpaceType &space)
       {
-        slaveDofs_.rebuild();
-        const int sequence = slaveDofs_.space().sequence();
+        auto &slaveDofs = space.slaveDofs();
+        const int sequence = space.sequence();
         if( sequence_ != sequence )
         {
-          initialize( slaveDofs_ );
+          initialize( space, slaveDofs );
           sequence_ = sequence ;
           return true ;
         }
@@ -109,16 +107,16 @@ namespace Dune
       template < class Stream >
       void read( const Stream& ) {}
 
-      void resize () { update (); }
-      bool compress() { return update (); }
+      // void resize () { update (); }
+      // bool compress() { return update (); }
 
       PetscDofMappings () = delete;
       PetscDofMappings ( const ThisType& ) = delete;
       PetscDofMappings& operator= ( const ThisType& ) = delete;
 
     private:
-      template< typename SlaveDofProvider >
-      void initializeMappings ( SlaveDofProvider& slaveDofs )
+      template< typename SlaveDofsProvider >
+      void initializeMappings ( const DiscreteFunctionSpaceType &space, const SlaveDofsProvider& slaveDofs )
       {
         // How the local slave mapping is build:
         // Let s_1 < ... < s_n be the slave dof indices (as given by the slaveDofs object) and let
@@ -126,9 +124,6 @@ namespace Dune
         // dofs in a PETSc Vec 'behind the array'. So the local slave mapping is now simply a vector with the following
         // components:
         //    d_1, d_2, ..., d_n, s_1, s_2, ..., s_n
-
-        typedef typename SlaveDofProvider :: DiscreteFunctionSpaceType  SpaceType;
-        const SpaceType& space = slaveDofs.space();
 
         #ifndef NDEBUG
           int ownedDofBlocks = 0;
@@ -171,8 +166,8 @@ namespace Dune
         #endif
         assert( numOwnedDofBlocks_ == ownedDofBlocks );
 
-        typedef typename SpaceType :: template ToNewDimRange< 1 > :: Type DofSpaceType ;
-        typedef typename SpaceType :: GridPartType  GridPartType;
+        typedef typename DiscreteFunctionSpaceType :: template ToNewDimRange< 1 > :: Type DofSpaceType ;
+        typedef typename DiscreteFunctionSpaceType :: GridPartType  GridPartType;
         GridPartType& gridPart = const_cast< GridPartType& > (space.gridPart());
 
         if( space.continuous() )
@@ -209,10 +204,11 @@ namespace Dune
         }
       }
 
-      void initialize ( const SlaveDofsType& slaveDofs )
+      template< typename SlaveDofsProvider >
+      void initialize ( const DiscreteFunctionSpaceType &space, const SlaveDofsProvider& slaveDofs )
       {
         numSlaveBlocks_    = slaveDofs.size() - 1;
-        numOwnedDofBlocks_ = slaveDofs.space().blockMapper().size() - numSlaveBlocks_;
+        numOwnedDofBlocks_ = space.blockMapper().size() - numSlaveBlocks_;
 
         // start with index 0 (use unsigned long as buffers)
         unsigned long processStartIndex = 0;
@@ -224,7 +220,7 @@ namespace Dune
         // store my start index
         processStartIndex_ = processStartIndex ;
 
-        initializeMappings( slaveDofs );
+        initializeMappings( space, slaveDofs );
 
         #ifndef NDEBUG
           checkSlaveConsistency( slaveDofs );
@@ -271,7 +267,6 @@ namespace Dune
       ////////////////////////////////
       // data fields
       ////////////////////////////////
-      SlaveDofsType&  slaveDofs_;         // reference to slave dofs
       GlobalDofType   numOwnedDofBlocks_; // number of blocks where this proc is master
       GlobalDofType   numSlaveBlocks_;    // number of slave blocks
       GlobalDofType   processStartIndex_; // Start index of this process' portion of the PETSc Vec.

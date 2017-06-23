@@ -5,7 +5,7 @@
 #include <tuple>
 #include <utility>
 
-#include <dune/common/forloop.hh>
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/std/utility.hh>
 
 #include <dune/fem/common/utility.hh>
@@ -81,14 +81,6 @@ namespace Dune
       {
         typedef Base< Traits< GridPart, Mapper ... > > BaseType;
 
-        // helper classes
-        template< int >
-        struct ComputeOffSet;
-        template< int >
-        struct MapEach;
-        template< int >
-        struct MapEachEntityDof;
-
         // FunctorWrapper
         // --------------
 
@@ -156,7 +148,13 @@ namespace Dune
         {
           OffsetType localOffset;
           localOffset[ 0 ] = 0;
-          ForLoop< MapEach, 0, mapperTupleSize - 1 >::apply( localOffset, globalOffset_, element, f, mapperTuple_ );
+          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+            [ & ]( auto i )
+            {
+              FunctorWrapper< Functor, i > wrappedFunctor( f, localOffset[ i ], globalOffset_[ i ] );
+              std::get< i >( mapperTuple_ ).mapEach( element, wrappedFunctor );
+              localOffset[ i + 1 ] = localOffset[ i ] + std::get< i >( mapperTuple_ ).numDofs( element );
+            } );
         }
 
         template< class Entity, class Functor >
@@ -164,7 +162,13 @@ namespace Dune
         {
           OffsetType localOffset;
           localOffset[ 0 ] = 0;
-          ForLoop< MapEachEntityDof, 0, mapperTupleSize - 1 >::apply( localOffset, globalOffset_, entity, f, mapperTuple_ );
+          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+            [ & ]( auto i )
+            {
+              FunctorWrapper< Functor, i > wrappedFunctor( f, localOffset[ i ], globalOffset_[ i ] );
+              std::get< i >( mapperTuple_ ).mapEachEntityDof( entity, wrappedFunctor );
+              localOffset[ i + 1 ] = localOffset[ i ] + std::get< i >( mapperTuple_ ).numEntityDofs( entity );
+            } );
         }
 
         int maxNumDofs () const { return maxNumDofs( std::index_sequence_for< Mapper ... >() ); }
@@ -255,7 +259,8 @@ namespace Dune
         {
           globalOffset_[ 0 ] = 0;
           // compute new offsets
-          ForLoop< ComputeOffSet, 0, mapperTupleSize - 1 >::apply( globalOffset_, mapperTuple_ );
+          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+            [ & ]( auto i ){ globalOffset_[ i + 1 ] = globalOffset_[ i ] + std::get< i >( mapperTuple_ ).size(); } );
         }
 
         GridPartType &gridPart_;
@@ -263,57 +268,6 @@ namespace Dune
         OffsetType globalOffset_;
       };
 
-
-      // ComputeOffSet
-      // -------------
-
-      template< class GridPart, class ... Mapper, template< class > class Base >
-      template< int i >
-      struct DofMapper< Traits< GridPart, Mapper ... >, Base >::
-      ComputeOffSet
-      {
-        template< class Tuple >
-        static void apply ( OffsetType &offset, const Tuple &tuple )
-        {
-          offset[ i + 1 ] = offset[ i ] + std::get< i >( tuple ).size();
-        }
-      };
-
-
-      // MapEachEntityDof
-      // ----------------
-
-      template< class GridPart, class ... Mapper, template< class > class Base >
-      template< int i >
-      struct DofMapper< Traits< GridPart, Mapper ... >, Base >::
-      MapEachEntityDof
-      {
-        template< class Entity, class Functor, class Tuple >
-        static void apply ( OffsetType &localOffset, const OffsetType &globalOffset, const Entity &entity, Functor f, const Tuple &tuple )
-        {
-          FunctorWrapper< Functor, i > wrappedFunctor( f, localOffset[ i ], globalOffset[ i ] );
-          std::get< i >( tuple ).mapEachEntityDof( entity, wrappedFunctor );
-          localOffset[ i + 1 ] = localOffset[ i ] + std::get< i >( tuple ).numEntityDofs( entity );
-        }
-      };
-
-
-      // MapEach
-      // -------
-
-      template< class GridPart, class ... Mapper, template< class > class Base >
-      template< int i >
-      struct DofMapper< Traits< GridPart, Mapper ... >, Base >::
-      MapEach
-      {
-        template< class Functor, class Tuple >
-        static void apply ( OffsetType &localOffset, const OffsetType &globalOffset, const ElementType &element, Functor f, const Tuple &tuple )
-        {
-          FunctorWrapper< Functor, i > wrappedFunctor( f, localOffset[ i ], globalOffset[ i ] );
-          std::get< i >( tuple ).mapEach( element, wrappedFunctor );
-          localOffset[ i + 1 ] = localOffset[ i ] + std::get< i >( tuple ).numDofs( element );
-        }
-      };
 
 
       // AdaptiveDofMapper
@@ -329,18 +283,6 @@ namespace Dune
         typedef DofMapper< Traits< GridPart, Mapper ... >, Dune::Fem::AdaptiveDofMapper > BaseType;
 
       protected:
-
-        // helper classes
-        template< int >
-        struct Offset;
-        template< int >
-        struct OldOffset;
-        template< int >
-        struct NewIndex;
-        template< int >
-        struct OldIndex;
-        template< int >
-        struct NumberOfHoles;
 
         // size of the Mapper Tuple
         static const int mapperTupleSize = sizeof ... ( Mapper );
@@ -382,7 +324,18 @@ namespace Dune
         {
           SizeType nHoles = 0;
           int comp = -1;
-          ForLoop< NumberOfHoles, 0, mapperTupleSize - 1 >::apply( nHoles, comp, block, mapperTuple_ );
+          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+            [ & ]( auto i )
+            {
+              if( comp >= 0 )
+                return;
+              const int localBlock = block - std::get< i >( mapperTuple_ ).numBlocks();
+              if( localBlock >= 0 )
+              {
+                comp = i;
+                nHoles = std::get< i >( mapperTuple_ ).numberOfHoles( localBlock );
+              }
+            } );
           return nHoles;
         }
 
@@ -390,7 +343,18 @@ namespace Dune
         {
           int comp = -1;
           SizeType oIndex = 0;
-          ForLoop< OldIndex, 0, mapperTupleSize - 1 >::apply( oIndex, comp, hole, block, mapperTuple_ );
+          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+            [ & ]( auto i )
+            {
+              if( comp >= 0 )
+                return;
+              const int localBlock = block - std::get< i >( mapperTuple_ ).numBlocks();
+              if( localBlock >= 0 )
+              {
+                comp = i;
+                oIndex = std::get< i >( mapperTuple_ ).oldIndex( hole, localBlock );
+              }
+            } );
           assert( comp >= 0 );
           return oIndex + globalOffset_[ comp ];
         }
@@ -399,7 +363,18 @@ namespace Dune
         {
           int comp = -1;
           SizeType nIndex = 0;
-          ForLoop< NewIndex, 0, mapperTupleSize - 1 >::apply( nIndex, comp, hole, block, mapperTuple_ );
+          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+            [ & ]( auto i )
+            {
+              if( comp >= 0 )
+                return;
+              const int localBlock = block - std::get< i >( mapperTuple_ ).numBlocks();
+              if( localBlock >= 0 )
+              {
+                comp = i;
+                nIndex = std::get< i >( mapperTuple_ ).newIndex( hole, localBlock );
+              }
+            } );
           assert( comp > 0 );
           return nIndex + globalOffset_[ comp ];
         }
@@ -408,7 +383,18 @@ namespace Dune
         {
           int comp = -1;
           SizeType oOffset = 0;
-          ForLoop< OldOffset, 0, mapperTupleSize - 1 >::apply( oOffset, comp, block, mapperTuple_ );
+          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+            [ & ]( auto i )
+            {
+              if( comp >= 0 )
+                return;
+              const int localBlock = block - std::get< i >( mapperTuple_ ).numBlocks();
+              if( localBlock >= 0 )
+              {
+                comp = i;
+                oOffset = std::get< i >( mapperTuple_ ).oldOffSet( localBlock );
+              }
+            } );
           assert( comp >= 0 );
           return oOffset + oldGlobalOffset_[ comp ];
         }
@@ -417,11 +403,21 @@ namespace Dune
         {
           int comp = -1;
           SizeType offset = 0;
-          ForLoop< Offset, 0, mapperTupleSize - 1 >::apply( offset, comp, block, mapperTuple_ );
+          Hybrid::forEach( Std::make_index_sequence< mapperTupleSize >{},
+            [ & ]( auto i )
+            {
+              if( comp >= 0 )
+                return;
+              const int localBlock = block - std::get< i >( mapperTuple_ ).numBlocks();
+              if( localBlock >= 0 )
+              {
+                comp = i;
+                offset = std::get< i >( mapperTuple_ ).offSet( localBlock );
+              }
+            } );
           assert( comp >= 0 );
           return offset + globalOffset_[ comp ];
         }
-
 
         void resize () { update(); }
 
@@ -465,122 +461,6 @@ namespace Dune
         OffsetType oldGlobalOffset_;
       };
 
-
-
-      // NumberOfHoles
-      // -------------
-
-      template< class GridPart, class ... Mapper >
-      template< int i >
-      struct AdaptiveDofMapper< Traits< GridPart, Mapper ... > >::
-      NumberOfHoles
-      {
-        template< class Tuple >
-        static void apply ( SizeType &nHoles, int &comp, const int block, const Tuple &tuple )
-        {
-          if( comp >= 0 )
-            return;
-          const int localBlock = block - std::get< i >( tuple ).numBlocks();
-          if( localBlock >= 0 )
-          {
-            comp = i;
-            nHoles = std::get< i >( tuple ).numberOfHoles( localBlock );
-          }
-        }
-      };
-
-
-
-      // OldIndex
-      // --------
-
-      template< class GridPart, class ... Mapper >
-      template< int i >
-      struct AdaptiveDofMapper< Traits< GridPart, Mapper ... > >::
-      OldIndex
-      {
-        template< class Tuple >
-        static void apply ( SizeType &oldIndex, int &comp, const int hole, const int block, const Tuple &tuple )
-        {
-          if( comp >= 0 )
-            return;
-          const int localBlock = block - std::get< i >( tuple ).numBlocks();
-          if( localBlock >= 0 )
-          {
-            comp = i;
-            oldIndex = std::get< i >( tuple ).oldIndex( hole, localBlock );
-          }
-        }
-      };
-
-
-      // NewIndex
-      // --------
-
-      template< class GridPart, class ... Mapper >
-      template< int i >
-      struct AdaptiveDofMapper< Traits< GridPart, Mapper ... > >::
-      NewIndex
-      {
-        template< class Tuple >
-        static void apply ( SizeType &nIndex, int &comp, const int hole, const int block, const Tuple &tuple )
-        {
-          if( comp >= 0 )
-            return;
-          const int localBlock = block - std::get< i >( tuple ).numBlocks();
-          if( localBlock >= 0 )
-          {
-            comp = i;
-            nIndex = std::get< i >( tuple ).newIndex( hole, localBlock );
-          }
-        }
-      };
-
-
-      // OldOffset
-      // ---------
-
-      template< class GridPart, class ... Mapper >
-      template< int i >
-      struct AdaptiveDofMapper< Traits< GridPart, Mapper ... > >::
-      OldOffset
-      {
-        template< class Tuple >
-        static void apply ( SizeType &offset, int &comp, const int block, const Tuple &tuple )
-        {
-          if( comp >= 0 )
-            return;
-          const int localBlock = block - std::get< i >( tuple ).numBlocks();
-          if( localBlock >= 0 )
-          {
-            comp = i;
-            offset = std::get< i >( tuple ).oldOffSet( localBlock );
-          }
-        }
-      };
-
-
-      // Offset
-      // ------
-
-      template< class GridPart, class ... Mapper >
-      template< int i >
-      struct AdaptiveDofMapper< Traits< GridPart, Mapper ... > >::
-      Offset
-      {
-        template< class Tuple >
-        static void apply ( SizeType &offset, int &comp, const int block, const Tuple &tuple )
-        {
-          if( comp >= 0 )
-            return;
-          const int localBlock = block - std::get< i >( tuple ).numBlocks();
-          if( localBlock >= 0 )
-          {
-            comp = i;
-            offset = std::get< i >( tuple ).offSet( localBlock );
-          }
-        }
-      };
 
 
       // Implementation

@@ -2,7 +2,7 @@
 #define DUNE_FEM_GRIDPART_GEOGRIDPART_HH
 
 #if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
-#error "Experimental grid extensions required for GeoGridPart. Reconfigure with --enable-experimental-grid-extensions to enable GeoGridPart."
+#error "Experimental grid extensions required for GeoGridPart. Reconfigure with -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE."
 #else
 
 #include <dune/grid/common/gridview.hh>

@@ -10,8 +10,8 @@
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
-#include <dune/fem/gridpart/filter/domainfilter.hh>
 #include <dune/fem/gridpart/filter/basicfilterwrapper.hh>
+#include <dune/fem/gridpart/filter/domainfilter.hh>
 #include <dune/fem/gridpart/filter/radialfilter.hh>
 #include <dune/fem/misc/gridwidth.hh>
 
@@ -104,13 +104,15 @@ void testSubEntities( const GridPartType & gridPart )
 }
 
 template< class GridPartType >
-void testIntersectionIterator( const GridPartType & gridPart )
+void testIntersection( const GridPartType & gridPart )
 {
   std::vector<int> index( gridPart.indexSet().size(0), 0 );
   for( const auto& element : elements( gridPart ) )
     index[ gridPart.indexSet().index( element ) ] = 1;
 
+  typename GridPartType::template Codim<0>::EntityType::Geometry::GlobalCoordinate surfaceNormal(0);
   for( const auto& element : elements( gridPart ))
+  {
     for( const auto& intersection : intersections( gridPart, element ) )
       if(intersection.neighbor())
       {
@@ -126,6 +128,16 @@ void testIntersectionIterator( const GridPartType & gridPart )
           continue;
         }
       }
+    if (element.hasBoundaryIntersections())
+      for( const auto& intersection : intersections( gridPart, element ) )
+        if(intersection.boundary())
+        {
+          auto n = intersection.centerUnitOuterNormal();
+          n *= intersection.geometry().volume();
+          surfaceNormal += n;
+        }
+  }
+  std::cout << "boundary normal sum up to: " << surfaceNormal << std::endl;
 }
 
 template< bool UseConsecutiveIndexSet, class HostGridPartType, class FilterType >
@@ -140,6 +152,10 @@ void testFilteredGridPart( HostGridPartType& hostGridPart, FilterType& filter )
 
   std::cout << "Testing subentities" << std::endl;
   testSubEntities< HostGridPartType::GridType::dimension >( gridPart );
+  std::cout << std::endl;
+
+  std::cout << "Testing intersection" << std::endl;
+  testIntersection( gridPart );
   std::cout << std::endl;
 
   std::cout << "GridWidth: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
@@ -175,10 +191,8 @@ int main( int argc, char ** argv )
 
     // create radial filter
     typedef Dune::Fem::RadialFilter< GridType::ctype, GridType::dimensionworld > RadialFilterType;
-    RadialFilterType::GlobalCoordinateType center( 0 );
-    RadialFilterType radialFilter( center, .25 );
     typedef Dune::Fem::BasicFilterWrapper< HostGridPartType, RadialFilterType > WrapperRadialFilterType;
-    WrapperRadialFilterType wrappedRadialFilter( hostGridPart, radialFilter );
+    WrapperRadialFilterType wrappedRadialFilter( hostGridPart, RadialFilterType::GlobalCoordinateType( 0 ), 0.25 );
 
     // test FilteredGridPart with radial filter and allowing non consecutive index set
     std::cout << std::endl << "Testing FilteredGridPart with radial filter: allow non consecutive index set" << std::endl << std::endl;
@@ -194,11 +208,13 @@ int main( int argc, char ** argv )
     for( std::size_t i = ( tags.size()/2 ); i < tags.size(); ++i )
       tags[ i ] = 1;
     typedef Dune::Fem::DomainFilter< HostGridPartType, DomainArrayType > DomainFilterType;
-    DomainFilterType domainFilter( hostGridPart, tags, 1 );
+    typedef Dune::Fem::BasicFilterWrapper< HostGridPartType, DomainFilterType > WrapperDomainFilterType;
+    WrapperDomainFilterType wrapperDomainFilter( hostGridPart, hostGridPart, tags, 1 );
 
     // test FilteredGridPart with domain filter and allowing non consecutive index set
     std::cout << std::endl << "Testing FilteredGridPart with domain filter: allow non consecutive index set" << std::endl << std::endl;
-    testFilteredGridPart< false, HostGridPartType, DomainFilterType >( hostGridPart, domainFilter );
+    testFilteredGridPart< false, HostGridPartType, WrapperDomainFilterType >( hostGridPart, wrapperDomainFilter );
+
   }
   catch(Dune::Exception &e)
   {

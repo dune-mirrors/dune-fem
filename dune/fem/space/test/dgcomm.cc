@@ -38,6 +38,8 @@ using namespace Dune;
 
 #include <dune/fem/io/parameter.hh>
 
+#include <dune/fem/test/testgrid.hh>
+
 using namespace Fem;
 
 // polynom approximation order of quadratures,
@@ -256,12 +258,8 @@ try {
 
   std::vector<double> error(ml);
 
-  std::ostringstream gridFilenameStream;
-  gridFilenameStream << GRIDDIM << "dgrid.dgf";
-  GridPtr< MyGridType > gridptr ( gridFilenameStream.str() );
-  MyGridType& grid = *gridptr ;
-
-  const int step = DGFGridInfo< MyGridType >::refineStepsForHalf();
+  MyGridType &grid = Dune::Fem::TestGrid::grid();
+  const int step = Dune::Fem::TestGrid::refineStepsForHalf();
 
   GridPartType part ( grid );
   DiscreteFunctionSpaceType space( part );

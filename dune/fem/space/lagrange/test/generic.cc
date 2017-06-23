@@ -1,6 +1,7 @@
 #include <config.h>
 
-#include <dune/common/forloop.hh>
+#include <dune/common/hybridutilities.hh>
+#include <dune/common/std/utility.hh>
 
 #include <dune/geometry/type.hh>
 
@@ -39,19 +40,6 @@ typedef Fem::LagrangePointListImplementation
   LagrangePointListType;
 
 
-
-template< int codim >
-struct PrintMaxDofs
-{
-  static void apply ()
-  {
-    const unsigned int maxCodimDofs = LagrangePointType::template Codim< codim >::maxDofs();
-    std::cout << "MaxDofs< " << codim << " >: " << maxCodimDofs << std::endl;
-  }
-};
-
-
-
 int main( int argc, char **argv )
 {
   GeometryType geometryType( Impl::TOPOLOGYTYPE<DIMENSION> ::type::id, DIMENSION );
@@ -62,7 +50,8 @@ int main( int argc, char **argv )
   std::cout << "Number of shape functions: " << numShapeFunctions;
   std::cout << std::endl << std::endl;
 
-  ForLoop< PrintMaxDofs, 0, DIMENSION >::apply();
+  Hybrid::forEach( Std::make_index_sequence< DIMENSION+1 >{},
+    [ & ]( auto i ){ std::cout << "MaxDofs< " << i << " >: " << LagrangePointType::template Codim< i >::maxDofs() << std::endl; } );
   std::cout << std::endl;
 
   unsigned int errors = 0;

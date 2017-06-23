@@ -7,6 +7,7 @@
 
 #include <dune/grid/utility/persistentcontainer.hh>
 
+#include <dune/fem/common/forloop.hh>
 #include <dune/fem/misc/capabilities.hh>
 #include <dune/fem/misc/metaprogramming.hh>
 #include <dune/fem/space/common/dofmanager.hh>
@@ -724,7 +725,7 @@ namespace Dune
           polyStorage.activate();
 
           // insert for all sub entities
-          ForLoop< InsertSubEntities, 0, highestDimension>::
+          Fem::ForLoop< InsertSubEntities, 0, highestDimension>::
             apply( entity, clk, polOrd, size_, notAlreadyCounted, dofContainer_ );
 
           //printEntityDofs( entity );
@@ -740,7 +741,7 @@ namespace Dune
         // polOrd ist set on call of deactivate
         if( entityPolynomOrder_[ entity ].deactivate( polOrd ) )
         {
-          ForLoop< RemoveSubEntities, 0, highestDimension>::
+          Fem::ForLoop< RemoveSubEntities, 0, highestDimension>::
             apply( entity, polOrd, dofContainer_ );
         }
       }

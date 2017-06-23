@@ -47,6 +47,10 @@ for dep in $MAKE_CHECK_DEPS ; do
   fi
 done
 
+# obtain MAKE_FLAGS if specified
+MAKE_CHECK_FLAGS=""
+MAKE_CHECK_FLAGS="$(source $OPTSDIR/$OPTS; echo $MAKE_FLAGS)"
+
 # we can skip this opts file if a dependend module is not found
 if ! test -z "$MISSINGDEPS" ; then 
   echo "Skipping $OPTS due to missing dependencies:$MISSINGDEPS"

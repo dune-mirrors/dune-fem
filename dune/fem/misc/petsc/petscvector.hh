@@ -144,7 +144,8 @@ namespace Dune
       typedef typename DFSpace::template CommDataHandle<void>::OperationType CommunicationOperationType;
 
       PetscVector ( const DFSpace& dfSpace )
-      : petscSlaveDofs_( dfSpace ),
+      : space_(dfSpace),
+        petscSlaveDofs_( dfSpace ),
         memorySequence_( 0 ),
         sequence_( 0 ),
         communicateFlag_( false ),
@@ -160,7 +161,8 @@ namespace Dune
 
       // TODO: think about sequence overflows...
       PetscVector ( const ThisType &other )
-      : petscSlaveDofs_( other.petscSlaveDofs_.space() ),
+      : space_( other.space_ ),
+        petscSlaveDofs_( other.space_ ),
         memorySequence_( 0 ),
         sequence_( 0 ),
         communicateFlag_( false ),
@@ -401,7 +403,7 @@ namespace Dune
       // setup vector according to mapping sizes
       void init()
       {
-        dofMapping().update();
+        petscSlaveDofs_.update( space_ );
 
         // set up the DofMapping instance and all variables depending on it
         localSize_ = dofMapping().numOwnedDofBlocks() * blockSize;
@@ -411,8 +413,8 @@ namespace Dune
         assert( static_cast< size_t >( localSize_ + numGhosts_ ) == dofMapping().size() * blockSize );
 
         // set up the ghost array builder
-        typedef PetscGhostArrayBuilder< PetscSlaveDofsType, PetscDofMappingType > PetscGhostArrayBuilderType;
-        PetscGhostArrayBuilderType ghostArrayBuilder( petscSlaveDofs_, dofMapping() );
+        typedef PetscGhostArrayBuilder< DFSpace, PetscDofMappingType > PetscGhostArrayBuilderType;
+        PetscGhostArrayBuilderType ghostArrayBuilder( space_, dofMapping() );
         assert( int( ghostArrayBuilder.size() ) == dofMapping().numSlaveBlocks() );
 
         // finally, create the PETSc Vecs
@@ -476,6 +478,7 @@ namespace Dune
       /*
        * data fields
        */
+      const DFSpace &space_;
       PetscSlaveDofsType petscSlaveDofs_;
       Vec vec_;
       Vec ghostedVec_;

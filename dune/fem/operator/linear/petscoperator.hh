@@ -190,8 +190,8 @@ namespace Dune
           petscDest_.reset();
 
           // update dof mappings
-          rowSlaveDofs_.update();
-          colSlaveDofs_.update();
+          rowSlaveDofs_.update( domainSpace() );
+          colSlaveDofs_.update( rangeSpace() );
 
           /*
           * initialize the row and column petsc dof mappings

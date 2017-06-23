@@ -56,7 +56,7 @@ namespace Dune
           {
 #ifndef NDEBUG
             std::cerr << "A quadrature of order " << order
-                      << "is not implemented!" << std::endl
+                      << " is not implemented!" << std::endl
                       << "Choosing maximum order: " << storage_.size()-1 << std::endl << std::endl;
 #endif
             order = storage_.size() -1;
@@ -276,7 +276,7 @@ namespace Dune
       static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
                                                             int order )
       {
-        assert( geometry.isCube() || geometry.isSimplex() );
+        assert( geometry.isCube() || geometry.isSimplex() || geometry.isNone() );
         assert( order >= 0 );
 
         if( geometry.isSimplex() )
@@ -284,10 +284,15 @@ namespace Dune
           return QuadCreator< 0 > ::
             template provideQuad< SimplexQuadratureType > ( geometry, order );
         }
-        else
+        else if( geometry.isCube() )
         {
           return QuadCreator< 1 > ::
             template provideQuad< CubeQuadratureType >    ( geometry, order ) ;
+        }
+        else
+        {
+          // dummy return for polygonal grid cells, i.e. geometry type none
+          return QuadCreator< 1 > :: template provideQuad< CubeQuadratureType > ( geometry, 0 );
         }
       }
 
@@ -374,8 +379,8 @@ namespace Dune
       static const IntegrationPointListType &getQuadrature( const GeometryType &geometry,
                                                             int order )
       {
-        assert( geometry.isCube() || geometry.isSimplex()
-                || geometry.isPrism() || geometry.isPyramid() );
+        assert( geometry.isCube() || geometry.isSimplex() ||  geometry.isNone()
+             || geometry.isPrism() || geometry.isPyramid() );
         assert( order >= 0 );
 
         if( geometry.isSimplex() )
@@ -391,6 +396,12 @@ namespace Dune
         if( geometry.isPyramid() )
           return QuadCreator< 3 > :: template provideQuad< PyramidQuadratureType >
             ( geometry, order );
+
+        if( geometry.isNone() )
+        {
+          // dummy return for polyhedral grid cells
+          return QuadCreator< 1 > :: template provideQuad< CubeQuadratureType > ( geometry, 0 );
+        }
 
         DUNE_THROW( RangeError, "Element type not available for dimension 3" );
         // dummy return

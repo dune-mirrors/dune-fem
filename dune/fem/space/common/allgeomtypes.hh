@@ -6,6 +6,7 @@
 #include <map>
 
 //- Dune includes
+#include <dune/fem/common/forloop.hh>
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 #include <dune/grid/common/capabilities.hh>
@@ -47,7 +48,7 @@ namespace Dune
 
     protected:
       //! constructor creating empty geometry information
-      GeometryInformation ()
+      GeometryInformation () : isNoneLocalCenter_( 0 )
       {}
 
     public:
@@ -60,22 +61,25 @@ namespace Dune
       //! return local bary center for geometry of type type
       const DomainType &localCenter ( const GeometryType &type ) const
       {
-        return referenceElement( type ).position( 0, 0 );
+        return type.isNone() ? isNoneLocalCenter_ : referenceElement( type ).position( 0, 0 );
       }
 
       //! return volume of reference element for geometry of type type
-      double referenceVolume ( const GeometryType &type ) const
+      ctype referenceVolume ( const GeometryType &type ) const
       {
-        return referenceElement( type ).volume();
+        return type.isNone() ? ctype(1.0) : referenceElement( type ).volume();
       }
 
       //! return reference element for type
       static const ReferenceElementType &referenceElement ( const GeometryType &type )
       {
+        assert( ! type.isNone() );
         return Dune::ReferenceElements< ctype, dim >::general( type );
       }
 
     protected:
+      DomainType isNoneLocalCenter_;
+
       //! build maps
       void buildMaps ( const std::vector< GeometryType > &geomTypes )
       {}
@@ -124,7 +128,7 @@ namespace Dune
         if( multipleGeomTypes() )
         {
           // store all possible geom types
-          ForLoop< InsertGeometryTypes, 0, GridType::dimension > :: apply( geomTypes_ );
+          Fem::ForLoop< InsertGeometryTypes, 0, GridType::dimension > :: apply( geomTypes_ );
         }
         else
         {

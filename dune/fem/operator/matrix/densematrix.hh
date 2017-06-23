@@ -269,6 +269,12 @@ namespace Dune
         return LocalMatrixType( localMatrixStack_, rowEntity, colEntity );
       }
 
+
+      LocalMatrixType localMatrix () const
+      {
+        return LocalMatrixType( localMatrixStack_ );
+      }
+
       void clear ()
       {
         matrix_.clear();

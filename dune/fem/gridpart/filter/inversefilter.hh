@@ -11,8 +11,7 @@ namespace Dune
     class InverseFilter
     {
     public:
-      //! \brief type of the filter implementation
-      typedef InverseFilter< FilterImp > FilterType;
+      typedef InverseFilter< FilterImp > ThisType;
 
       //! \brief entity types
       template< int cd >
@@ -28,6 +27,12 @@ namespace Dune
       InverseFilter ( const FilterImp & filter = FilterImp() )
       : filter_( filter )
       { }
+
+      InverseFilter( const ThisType & ) = default;
+      InverseFilter( ThisType && ) = default;
+
+      ThisType &operator= ( const ThisType & ) = default;
+      ThisType &operator= ( ThisType && ) = default;
 
       //! \brief returns true if the given entity of the pointer in the domain
       template< int cd >
@@ -48,9 +53,7 @@ namespace Dune
       template< class Intersection >
       bool interiorIntersection ( const Intersection &intersection ) const
       {
-        typedef typename Intersection::Entity EntityType;
-        const EntityType outside(intersection.outside());
-        return contains( outside );
+        return contains( intersection.outside() );
       }
 
       //! \brief returns true if an intersection is a boundary intersection

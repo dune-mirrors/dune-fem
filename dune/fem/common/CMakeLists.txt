@@ -1,6 +1,7 @@
 #install header files
 dune_install( coordinate.hh
               fmatrixcol.hh
+              forloop.hh
               referencevector.hh
               stackallocator.hh
               tupletypetraits.hh

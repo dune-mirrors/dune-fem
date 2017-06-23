@@ -7,6 +7,7 @@ if( NOT GRIDDIM )
 endif()
 
 # copy data to build source to make tests work
+configure_file(1dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/1dgrid.dgf COPYONLY)
 configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
 configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
 configure_file(parameter ${CMAKE_CURRENT_BINARY_DIR}/parameter COPYONLY)
@@ -25,6 +26,7 @@ set( TESTS
   lagrangeglobalrefine
   lagrangeinterpolation
   legendretest
+  localadapter
   padapt
 )
 
@@ -58,3 +60,4 @@ dune_add_test( SOURCES test-localadaptation.cc COMPILE_DEFINITIONS "${DEFAULTFLA
 dune_add_test( SOURCES test-globalrefine.cc COMPILE_DEFINITIONS "${DEFAULTFLAGS}" LINK_LIBRARIES dunefem )
 
 dune_add_test( SOURCES test-balladapt.cc LINK_LIBRARIES dunefem MPI_RANKS 1 4 TIMEOUT 300 )
+dune_add_test( SOURCES test-slavedofs.cc LINK_LIBRARIES dunefem MPI_RANKS 1 4 TIMEOUT 300 COMPILE_DEFINITIONS "${DEFAULTFLAGS};USE_COMBINED_SPACE" )

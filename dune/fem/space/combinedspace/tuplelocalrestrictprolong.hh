@@ -7,9 +7,10 @@
 #include <vector>
 
 #include <dune/common/exceptions.hh>
-#include <dune/common/forloop.hh>
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/std/utility.hh>
 
+#include <dune/fem/common/forloop.hh>
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
@@ -35,7 +36,6 @@ namespace Dune
       static const int setSize = sizeof...( DiscreteFunctionSpaces )-1;
 
       // helper structs
-      template< int > struct SetFatherChildWeight;
       template< int > struct RestrictLocal;
       template< int > struct ProlongLocal;
 
@@ -49,7 +49,7 @@ namespace Dune
       static_assert( Std::are_all_same< typename DiscreteFunctionSpaces::DomainFieldType ... >::value,
           "TupleLocalRestrictProlong needs common DomainFieldType in the Spaces!" );
 
-      typedef typename std::tuple_element< 0, LocalRestrictProlongTupleType >::type::DomainFieldType DomainFieldType;
+      typedef std::tuple_element_t< 0, std::tuple< typename DiscreteFunctionSpaces::DomainFieldType... > > DomainFieldType;
 
       TupleLocalRestrictProlong ( std::tuple< const DiscreteFunctionSpaces & ... > tuple )
         : localRestrictProlongTuple_( localRestrictProlongTuple( tuple, std::index_sequence_for< DiscreteFunctionSpaces ... >() ) )
@@ -57,7 +57,8 @@ namespace Dune
 
       void setFatherChildWeight ( const DomainFieldType &weight )
       {
-        ForLoop< SetFatherChildWeight, 0, setSize >::apply( weight, localRestrictProlongTuple_ );
+        Hybrid::forEach( Std::make_index_sequence< sizeof ... ( DiscreteFunctionSpaces ) >{},
+          [ & ]( auto i ){ std::get< i >( localRestrictProlongTuple_ ).setFatherChildWeight( weight ); } );
       }
 
       //! restrict data to father
@@ -65,7 +66,7 @@ namespace Dune
       void restrictLocal ( LFFather &lfFather, const LFSon &lfSon,
                            const LocalGeometry &geometryInFather, bool initialize ) const
       {
-        ForLoop< RestrictLocal, 0, setSize >::apply( lfFather, lfSon, geometryInFather, initialize, localRestrictProlongTuple_ );
+        Fem::ForLoop< RestrictLocal, 0, setSize >::apply( lfFather, lfSon, geometryInFather, initialize, localRestrictProlongTuple_ );
       }
 
 
@@ -73,7 +74,7 @@ namespace Dune
       void prolongLocal ( const LFFather &lfFather, LFSon &lfSon,
                           const LocalGeometry &geometryInFather, bool initialize ) const
       {
-        ForLoop< ProlongLocal, 0, setSize >::apply( lfFather, lfSon, geometryInFather, initialize, localRestrictProlongTuple_ );
+        Fem::ForLoop< ProlongLocal, 0, setSize >::apply( lfFather, lfSon, geometryInFather, initialize, localRestrictProlongTuple_ );
       }
 
       bool needCommunication () const
@@ -92,21 +93,6 @@ namespace Dune
       LocalRestrictProlongTupleType localRestrictProlongTuple_;
     };
 
-
-    // SetFatherChildWeight
-    // --------------------
-
-    template< class ... DiscreteFunctionSpaces >
-    template< int i >
-    struct TupleLocalRestrictProlong< DiscreteFunctionSpaces ... >::
-    SetFatherChildWeight
-    {
-      template< class Tuple >
-      static void apply( const DomainFieldType &weight, Tuple &tuple )
-      {
-        std::get< i >( tuple ).setFatherChildWeight( weight );
-      }
-    };
 
 
     // ProlongLocal

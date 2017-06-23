@@ -7,7 +7,7 @@
 #include <tuple>
 
 #include <dune/common/fmatrix.hh>
-#include <dune/common/forloop.hh>
+#include <dune/fem/common/forloop.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/std/utility.hh>
@@ -200,7 +200,7 @@ namespace Dune
       ::TensorProductShapeFunctionSet ( const ShapeFunctionSetTupleType &shapeFunctionSetTuple )
     : shapeFunctionSetTuple_( shapeFunctionSetTuple )
     {
-      ForLoop< Size, 0, dimension-1 >::apply( shapeFunctionSetTuple_, sizes_ );
+      Fem::ForLoop< Size, 0, dimension-1 >::apply( shapeFunctionSetTuple_, sizes_ );
       std::size_t buffer_size = 0;
       for( int i = 0; i < dimension; ++i )
         buffer_size += sizes_[ i ];
@@ -279,7 +279,7 @@ namespace Dune
       ::evaluateEach ( const Point &x, Functor functor ) const
     {
       RangeFieldType *it = buffer_;
-      ForLoop< EvaluateAll, 0, dimension-1 >::apply( shapeFunctionSetTuple_, coordinate( x ), it );
+      Fem::ForLoop< EvaluateAll, 0, dimension-1 >::apply( shapeFunctionSetTuple_, coordinate( x ), it );
 
       std::size_t index = 0;
       doEvaluateEach( 0, RangeType( RangeFieldType( 1 ) ), index, buffer_, functor );
@@ -292,7 +292,7 @@ namespace Dune
       ::jacobianEach ( const Point &x, Functor functor ) const
     {
       RangeFieldType *it = buffer_;
-      ForLoop< JacobianAll, 0, dimension-1 >::apply( shapeFunctionSetTuple_, coordinate( x ), it );
+      Fem::ForLoop< JacobianAll, 0, dimension-1 >::apply( shapeFunctionSetTuple_, coordinate( x ), it );
 
       std::size_t index = 0;
       JacobianRangeType jacobian;
@@ -308,7 +308,7 @@ namespace Dune
       ::hessianEach ( const Point &x, Functor functor ) const
     {
       RangeFieldType *it = buffer_;
-      ForLoop< HessianAll, 0, dimension-1 >::apply( shapeFunctionSetTuple_, coordinate( x ), it );
+      Fem::ForLoop< HessianAll, 0, dimension-1 >::apply( shapeFunctionSetTuple_, coordinate( x ), it );
 
       std::size_t index = 0;
       HessianRangeType hessian;
