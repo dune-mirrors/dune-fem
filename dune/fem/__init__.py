@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 import dune.common
-
 from ._fem import *
 from ._adaptation import adapt, loadBalance
 

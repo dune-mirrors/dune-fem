@@ -4,17 +4,16 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 
-try:
-    import ufl
-except:
-    pass
 
 import dune.models.localfunction
 
 import dune.common.checkconfiguration as checkconfiguration
 from dune.common.hashit import hashIt
 
-from dune.ufl import GridCoefficient, expression2GF
+try:
+    from dune.ufl import GridCoefficient
+except:
+    pass
 
 def registerGridFunctions(gridview):
     from dune.generator import builder
@@ -37,7 +36,10 @@ def registerGridFunctions(gridview):
     return builder.load(moduleName, source, "gridfunctions")
 
 def addUFL(instance):
-    return GridCoefficient(instance)
+    try:
+        return GridCoefficient(instance)
+    except NameError:
+        return instance
 
 def globalFunction(gridview, name, order, value):
     module = registerGridFunctions(gridview)
@@ -85,10 +87,6 @@ def discreteFunction(space, name, expr=None, *args, **kwargs):
     df = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName).DiscreteFunction(space,name)
     if expr is None:
         df.clear()
-    elif ufl and isinstance(expr, GridCoefficient):
-        df.interpolate(expr.gf)
-    elif ufl and isinstance(expr, ufl.core.expr.Expr):
-        df.interpolate(expression2GF(space.grid,expr,space.order))
     else:
         df.interpolate(expr)
     return addUFL(df)

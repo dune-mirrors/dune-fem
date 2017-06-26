@@ -80,39 +80,23 @@ class GridIndexed(Indexed):
 
 
 
-class GridCoefficient(ufl.Coefficient):
+class GridFunctionWrapper(object):
     """ This class combines a Dune grid function and a ufl Coefficient
         class. Detailed documentation can be accessed by calling
         - help(self.GridFunction)
         - help(self.Coefficient)
     """
     def __init__(self, gf):
-        grid = gf.grid
-        dimRange = gf.dimRange
-        uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange)
-        ufl.Coefficient.__init__(self, uflSpace)
         self.gf = gf
         self.__impl__ = gf
         __module__ = self.gf.__module__
-        self.Coefficient = ufl.Coefficient
         self.GridFunction = gf.__class__
-
-    def component(self,i):
-        return self.gf[i]
     def copy(self):
         return GridCoefficient(self.gf.copy())
     @property
     def array(self):
         import numpy as np
         return np.array( self.gf, copy=False )
-    def ufl_evaluate(self, x, component, derivatives):
-        assert len(derivatives) == 0 or len(derivatives) == 1 , \
-                "can only evaluate up to first order derivatives of grid functions"
-        if len(derivatives) == 0:
-            return self.gf.localFunction(x.entity).evaluate(x.xLocal)[component[0]]
-        else:
-            return self.gf.localFunction(x.entity).jacobian(x.xLocal)[component[0]][derivatives[0]]
-
     def __getitem__(self,i):
         if isinstance(i,int):
             return GridIndexed(self,i)
@@ -137,6 +121,25 @@ class GridCoefficient(ufl.Coefficient):
     __dict__   = property(lambda self:self.gf.__dict__)
     __name__   = property(lambda self:self.gf.__name__)
     __class__  = property(lambda self:self.gf.__class__)
+class GridCoefficient(GridFunctionWrapper, ufl.Coefficient):
+    def __init__(self, gf):
+        grid = gf.grid
+        dimRange = gf.dimRange
+        uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange)
+        GridFunctionWrapper.__init__(self,gf)
+        ufl.Coefficient.__init__(self, uflSpace)
+    def ufl_evaluate(self, x, component, derivatives):
+        assert len(derivatives) == 0 or len(derivatives) == 1 , \
+                "can only evaluate up to first order derivatives of grid functions"
+        if len(derivatives) == 0:
+            return self.gf.localFunction(x.entity).evaluate(x.xLocal)[component[0]]
+        else:
+            return self.gf.localFunction(x.entity).jacobian(x.xLocal)[component[0]][derivatives[0]]
+    def __getitem__(self,i):
+        if isinstance(i,int):
+            return GridIndexed(self,i)
+        else:
+            return ufl.Coefficient.__getitem__(self,i)
 
 class DirichletBC:
     def __init__(self, functionSpace, value, subDomain):
