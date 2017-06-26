@@ -11,7 +11,7 @@
 
 #include <dune/fem/schemes/integrands.hh>
 
-#include <dune/corepy/pybind11/pybind11.h>
+#include <dune/fempy/pybind11/pybind11.hh>
 
 namespace Dune
 {

@@ -2,7 +2,7 @@
 #define DUNE_FEMPY_PY_GRID_RESTRICTPROLONG_HH
 
 #include <dune/fempy/grid/virtualizedrestrictprolong.hh>
-#include <dune/corepy/pybind11/pybind11.h>
+#include <dune/fempy/pybind11/pybind11.hh>
 
 namespace Dune
 {

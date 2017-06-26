@@ -10,10 +10,6 @@
 #include <dune/fem/operator/linear/istloperator.hh>
 #include <dune/fem/misc/l2norm.hh>
 
-#include <dune/corepy/pybind11/pybind11.h>
-#if HAVE_EIGEN
-#include <dune/corepy/pybind11/eigen.h>
-#endif
 #include <dune/corepy/istl/bcrsmatrix.hh>
 
 #include <dune/fempy/function/virtualizedgridfunction.hh>
@@ -21,6 +17,8 @@
 #include <dune/fempy/py/common/numpyvector.hh>
 #include <dune/fempy/py/discretefunction.hh>
 #include <dune/fempy/py/space.hh>
+
+#include <dune/fempy/pybind11/pybind11.hh>
 
 namespace Dune
 {
@@ -166,6 +164,33 @@ namespace Dune
       auto registerSchemeGeneralCall( Cls &cls, long )
       {}
 
+
+
+      // registerSchemeModel
+      // -------------------
+
+      template< class Scheme, class... options >
+      inline static auto registerSchemeModel ( pybind11::class_< Scheme, options... > cls, PriorityTag< 1 > )
+        -> void_t< decltype( std::declval< Scheme >().model() ) >
+      {
+        cls.def_property_readonly( "model", &Scheme::model );
+      }
+
+      template< class Scheme, class... options >
+      inline static void registerSchemeModel ( pybind11::class_< Scheme, options... > cls, PriorityTag< 0 > )
+      {}
+
+      template< class Scheme, class... options >
+      inline void registerSchemeModel ( pybind11::class_< Scheme, options... > cls )
+      {
+        registerSchemeModel( cls, PriorityTag< 42 >() );
+      }
+
+
+
+      // registerScheme
+      // --------------
+
       template< class Scheme, class Cls >
       void registerScheme ( pybind11::module module, Cls &cls)
       {
@@ -189,7 +214,7 @@ namespace Dune
 
         cls.def_property_readonly( "dimRange", [](Scheme&) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
         cls.def_property_readonly( "space", [] ( pybind11::object self ) { return detail::getSpace( self.cast< const Scheme & >(), self ); } );
-        cls.def_property_readonly( "model", &Scheme::model );
+        registerSchemeModel( cls );
 
         registerSchemeAssemble( cls );
 
