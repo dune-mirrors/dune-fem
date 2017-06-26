@@ -577,7 +577,7 @@ def load(grid, integrands, renumbering=None, tempVars=True):
 
     name = 'integrands_' + integrands.signature + '_' + hashIt(grid._typeName)
 
-    code = []
+    code = [Include('config.h')]
     code += [Include(i) for i in grid._includes]
     #code.append(Include("dune/fem/misc/boundaryidprovider.hh"))
 

@@ -515,7 +515,7 @@ def generateModel(grid, model, *args, **kwargs):
     #     grid = grid._module
     name = 'ellipticmodel_' + model.signature + "_" + hashIt(grid._typeName)
 
-    code = []
+    code = [Include(config.h)]
 
     code += [Include(i) for i in grid._includes]
     code.append(Include("dune/fem/misc/boundaryidprovider.hh>"))
@@ -574,6 +574,6 @@ def importModel(grid, model, *args, **kwargs):
         builder.load(name, data, "ellipticModel")
         return importlib.import_module("dune.generated." + name)
     writer, name = generateModel(grid, model, *args, **kwargs)
-    builder.load(name, writer.writer.getvalue(), "ellipticModel")
+    module = builder.load(name, writer.writer.getvalue(), "ellipticModel")
     writer.close()
-    return importlib.import_module("dune.generated." + name)
+    return module

@@ -22,7 +22,8 @@ def registerGridFunctions(gridview):
 
     includes = ["dune/fempy/py/grid/gridpart.hh", "dune/fempy/py/grid/function.hh"] + gridview._includes
 
-    source = "".join(["#include <" + i + ">\n" for i in includes])
+    source = "#include <config.h>\n\n"
+    source += "".join(["#include <" + i + ">\n" for i in includes])
     source += "\n"
     source += "PYBIND11_PLUGIN( " + moduleName + " )\n"
     source += "{\n"
