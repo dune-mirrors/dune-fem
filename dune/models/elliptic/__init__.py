@@ -81,6 +81,7 @@ def load(grid, model, *args, **kwargs):
 
     writer = SourceWriter()
 
+    writer.emit('#include <config.h>')
     writer.emit(["#include <" + i + ">" for i in grid._includes])
     writer.emit('')
     writer.emit('#include <dune/fem/misc/boundaryidprovider.hh>')
