@@ -11,7 +11,7 @@ import dune.common.checkconfiguration as checkconfiguration
 from dune.common.hashit import hashIt
 
 try:
-    from dune.ufl import GridCoefficient
+    from dune.ufl import GridFunction
 except:
     pass
 
@@ -37,8 +37,10 @@ def registerGridFunctions(gridview):
     return builder.load(moduleName, source, "gridfunctions")
 
 def addUFL(instance):
+    return instance.as_ufl()
     try:
-        return GridCoefficient(instance)
+        gf = GridFunction(instance)
+        return GridFunction(instance)
     except NameError:
         return instance
 

@@ -13,7 +13,7 @@ from dune.common.hashit import hashIt
 from dune.source.cplusplus import NameSpace, TypeAlias
 from dune.source.cplusplus import SourceWriter
 
-from dune.ufl import GridCoefficient
+from dune.ufl import GridFunction
 
 from .model import EllipticModel
 from .ufl import compileUFL
@@ -59,7 +59,7 @@ def initModel(model, *args, **kwargs):
         args[i] = value
 
     if hasattr(model, '_renumbering'):
-        for c in (k for k in model._renumbering if isinstance(k, GridCoefficient)):
+        for c in (k for k in model._renumbering if isinstance(k, GridFunction)):
             i = model._renumbering[c]
             if args[i] is None:
                 args[i] = c.gf

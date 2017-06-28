@@ -80,19 +80,29 @@ class GridIndexed(Indexed):
 
 
 
-class GridFunctionWrapper(object):
+class GridFunction(ufl.Coefficient):
     """ This class combines a Dune grid function and a ufl Coefficient
         class. Detailed documentation can be accessed by calling
         - help(self.GridFunction)
         - help(self.Coefficient)
     """
     def __init__(self, gf):
+        try:
+            gf = gf.gf
+            print("GridFunction::__init__", type(gf))
+        except:
+            pass
         self.gf = gf
         self.__impl__ = gf
         __module__ = self.gf.__module__
-        self.GridFunction = gf.__class__
+        self.GridFunctionClass = gf.__class__
+        grid = gf.grid
+
+        dimRange = gf.dimRange
+        uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange)
+        ufl.Coefficient.__init__(self, uflSpace)
     def copy(self):
-        return GridCoefficient(self.gf.copy())
+        return GridFunction(self.gf.copy())
     @property
     def array(self):
         import numpy as np
@@ -121,13 +131,7 @@ class GridFunctionWrapper(object):
     __dict__   = property(lambda self:self.gf.__dict__)
     __name__   = property(lambda self:self.gf.__name__)
     __class__  = property(lambda self:self.gf.__class__)
-class GridCoefficient(GridFunctionWrapper, ufl.Coefficient):
-    def __init__(self, gf):
-        grid = gf.grid
-        dimRange = gf.dimRange
-        uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange)
-        GridFunctionWrapper.__init__(self,gf)
-        ufl.Coefficient.__init__(self, uflSpace)
+
     def ufl_evaluate(self, x, component, derivatives):
         assert len(derivatives) == 0 or len(derivatives) == 1 , \
                 "can only evaluate up to first order derivatives of grid functions"

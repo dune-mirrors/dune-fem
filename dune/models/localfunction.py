@@ -36,7 +36,7 @@ def generateCode(predefined, tensor, coefficients, tempVars=True):
 
 def UFLFunction(grid, name, order, expr, **kwargs):
     import ufl
-    from dune.ufl import GridCoefficient
+    from dune.ufl import GridFunction
     from dune.ufl.tensors import ExprTensor
     try:
         _, c = ufl.algorithms.analysis.extract_arguments_and_coefficients(expr)
@@ -96,7 +96,7 @@ def UFLFunction(grid, name, order, expr, **kwargs):
     Gf = gridFunction(grid, code, coefficients, None).GFWrapper
 
     coefficients = kwargs.pop("coefficients", {})
-    fullCoeff = {c:c.gf for c in coef if isinstance(c, GridCoefficient)}
+    fullCoeff = {c:c.gf for c in coef if isinstance(c, GridFunction)}
     fullCoeff.update(coefficients)
     kwargs["coefficients"] = fullCoeff
     return Gf(name, order, grid, **kwargs)

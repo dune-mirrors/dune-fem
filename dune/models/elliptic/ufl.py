@@ -10,7 +10,7 @@ from ufl.differentiation import Grad
 from ufl.equation import Equation
 from ufl.core.multiindex import FixedIndex, MultiIndex
 
-from dune.ufl import DirichletBC, GridCoefficient
+from dune.ufl import DirichletBC, GridFunction
 from dune.ufl import codegen
 from dune.ufl.tensors import ExprTensor
 from dune.ufl.linear import splitMultiLinearExpr
