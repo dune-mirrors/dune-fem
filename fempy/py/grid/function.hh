@@ -6,6 +6,8 @@
 #include <tuple>
 #include <utility>
 
+#include <dune/fempy/pybind11/pybind11.hh>
+
 #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
 #include <dune/fem/misc/domainintegral.hh>
 #else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
@@ -162,6 +164,22 @@ namespace Dune
         cls.def( "pointData", [] ( const GridFunction &self, int level ) { return pointData( self, level ); }, "level"_a = 0 );
 
         cls.def( "integrate", [] ( const GridFunction &gf ) { return Dune::Fem::Integral<GridPartType>(gf.gridPart(),gf.space().order()).norm(gf); });
+
+
+#if 0
+        cls.def_property_readonly( "as_ufl", [] ( GridFunction &gf ) -> pybind11::handle
+            { pybind11::tuple args( 1 );
+              args[ 0 ] = gf;
+              return PyObject_Call( Dune::FemPy::getGridFunctionWrapper().ptr(), args.ptr(), nullptr );
+            } );
+#else
+        cls.def( "as_ufl", [] ( GridFunction &gf ) -> pybind11::handle
+            { pybind11::tuple args( 1 );
+              args[ 0 ] = gf;
+              return PyObject_Call( Dune::FemPy::getGridFunctionWrapper().ptr(), args.ptr(), nullptr );
+            }, pybind11::keep_alive<0,1>() );
+#endif
+
       }
 
       template< class GridFunction >

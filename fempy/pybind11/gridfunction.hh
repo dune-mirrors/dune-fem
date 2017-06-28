@@ -27,7 +27,7 @@ namespace Dune
 
     inline pybind11::object getGridFunctionWrapper ()
     {
-      static pybind11::object o = pybind11::module::import( "dune.ufl" ).attr( "GridFunctionWrapper" );
+      static pybind11::object o = pybind11::module::import( "dune.ufl" ).attr( "GridFunction" );
       return o;
     }
 

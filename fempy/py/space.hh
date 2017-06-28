@@ -4,9 +4,9 @@
 #include <dune/corepy/common/fmatrix.hh>
 #include <dune/corepy/common/fvector.hh>
 
+#include <dune/fempy/pybind11/pybind11.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/py/grid/gridpart.hh>
-#include <dune/fempy/pybind11/pybind11.hh>
 
 namespace Dune
 {

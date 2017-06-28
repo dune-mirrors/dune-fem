@@ -1,6 +1,8 @@
 #ifndef DUNE_FEMPY_PY_SCHEME_HH
 #define DUNE_FEMPY_PY_SCHEME_HH
 
+#include <dune/fempy/pybind11/pybind11.hh>
+
 #include <dune/common/typeutilities.hh>
 
 #if HAVE_DUNE_ISTL
@@ -18,7 +20,6 @@
 #include <dune/fempy/py/discretefunction.hh>
 #include <dune/fempy/py/space.hh>
 
-#include <dune/fempy/pybind11/pybind11.hh>
 
 namespace Dune
 {
