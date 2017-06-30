@@ -89,7 +89,6 @@ class GridFunction(ufl.Coefficient):
     def __init__(self, gf):
         try:
             gf = gf.gf
-            print("GridFunction::__init__", type(gf))
         except:
             pass
         self.gf = gf
