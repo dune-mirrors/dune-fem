@@ -172,12 +172,19 @@ namespace Dune
               args[ 0 ] = gf;
               return PyObject_Call( Dune::FemPy::getGridFunctionWrapper().ptr(), args.ptr(), nullptr );
             } );
-#else
+#elif 0
         cls.def( "as_ufl", [] ( GridFunction &gf ) -> pybind11::handle
-            { pybind11::tuple args( 1 );
+            {
+              pybind11::tuple args( 1 );
               args[ 0 ] = gf;
               return PyObject_Call( Dune::FemPy::getGridFunctionWrapper().ptr(), args.ptr(), nullptr );
             }, pybind11::keep_alive<0,1>() );
+#else
+        cls.def( "as_ufl", [] ( pybind11::object &gf ) -> pybind11::handle
+            { pybind11::tuple args( 1 );
+              args[ 0 ] = gf;
+              return PyObject_Call( Dune::FemPy::getGridFunctionWrapper().ptr(), args.ptr(), nullptr );
+            },  pybind11::keep_alive<0,1>() );
 #endif
 
       }
