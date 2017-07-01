@@ -87,7 +87,7 @@ def plotPointData(solution, level=0, gridLines="black", vectors=False,
     fig = pyplot.figure()
     _plotPointData(fig,grid,solution,level,gridLines,vectors,xlim,ylim,clim,cmap,True)
 
-    pyplot.show()
+    pyplot.show(block=True)
     # display(fig)
     # return fig
 
@@ -127,7 +127,7 @@ def plotComponents(solution, level=0, show=None, gridLines="black",
         pyplot.subplot(subfig+offset+p)
         _plotPointData(fig,grid,solution[p],level,"",False,xlim,ylim,clim,cmap,False)
 
-    pyplot.show()
+    pyplot.show(block=True)
     # display(fig)
     # return fig
 
@@ -137,4 +137,4 @@ def mayaviPointData(grid, solution, level=0, component=0):
     z = uh.pointData(level)[:,component]
     s = mlab.triangular_mesh(triangulation.x, triangulation.y, z,
                                 triangulation.triangles)
-    mlab.show()
+    mlab.show(block=True)
