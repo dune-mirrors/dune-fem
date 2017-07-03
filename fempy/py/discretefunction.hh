@@ -65,7 +65,7 @@ namespace Dune
       }
 
 
-
+#if 0 // old
       // registerDFBuffer
       // ----------------
 
@@ -90,7 +90,42 @@ namespace Dune
       template< class DF, class Cls >
       void registerDFBuffer ( Cls &cls, long )
       {}
+#endif
+      // registerDofVectorBuffer
+      // ----------------
 
+      template <class DofVector, class Cls>
+      auto registerDofVectorBuffer( Cls &cls, int )
+      -> decltype(std::declval<DofVector>().array().data(),void())
+      {
+        typedef typename DofVector::FieldType FieldType;
+        cls.def_buffer( [](DofVector &instance) -> pybind11::buffer_info {
+            return pybind11::buffer_info(
+                instance.array().data(),                /* Pointer to buffer */
+                sizeof(FieldType),                      /* Size of one scalar */
+                pybind11::format_descriptor<FieldType>::format(), /* Python struct-style format descriptor */
+                1,                                      /* Number of dimensions */
+                { instance.size() },                    /* Buffer dimensions */
+                { sizeof(FieldType) }                   /* Strides (in bytes) for each index */
+            );
+          }); // ????  pybind11::keep_alive<0,1>() );
+        cls.def( "__getitem__", [] ( const DofVector &self, std::size_t index ) -> FieldType {
+            if( index < self.size() )
+              return self.array().data()[index];
+            else
+              throw pybind11::index_error();
+          });
+        cls.def( "__setitem__", [] ( DofVector &self, std::size_t index, FieldType value ) {
+            if( index < self.size() )
+              return self.array().data()[index] = value;
+            else
+              throw pybind11::index_error();
+          });
+      }
+
+      template< class DF, class Cls >
+      void registerDofVectorBuffer ( Cls &cls, long )
+      {}
 
 
       // registerDiscreteFunction
@@ -140,14 +175,17 @@ namespace Dune
         typedef typename DF::DofVectorType DofVector;
         if( !pybind11::already_registered< DofVector >() )
         {
-          auto clsDof = pybind11::class_< DofVector >( module, "DofVector" );
+          auto clsDof = pybind11::class_< DofVector >( module, "DofVector", pybind11::buffer_protocol() );
+          clsDof.def_property_readonly( "size", [] ( DofVector &self ) { return self.size(); } );
+          clsDof.def( "__len__", [] ( const DofVector &self ) { return self.size(); } );
+          clsDof.def( "assign", [] ( DofVector &instance, const DofVector &other ) { instance = other; } );
+          registerDofVectorBuffer< DofVector >( clsDof, 0 );
         }
 
-        cls.def( "dofVector", [] ( DF &instance ) -> DofVector&{ return instance.dofVector(); },
-                 pybind11::return_value_policy::reference_internal );
-        cls.def( "assign", [] ( DF &instance, const DofVector &other ) { instance.dofVector() = other; } );
+        cls.def_property_readonly( "dofVector", [] ( DF &instance ) -> DofVector&{ return instance.dofVector(); }
+            ); // ,pybind11::return_value_policy::reference_internal );
 
-        registerDFBuffer< DF >( cls, 0 );
+        // registerDFBuffer< DF >( cls, 0 );
       }
 
     } // namespace detail
