@@ -101,7 +101,11 @@ class GridFunction(ufl.Coefficient):
         uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange)
         ufl.Coefficient.__init__(self, uflSpace)
     def copy(self):
-        return GridFunction(self.gf.copy())
+        return self.gf.copy().as_ufl(); # GridFunction(self.gf.copy())
+    @property
+    def as_numpy(self):
+        import numpy as np
+        return np.array( self.dofVector, copy=False )
     @property
     def array(self):
         import numpy as np
