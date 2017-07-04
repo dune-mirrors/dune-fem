@@ -119,9 +119,9 @@ class FormatExpression:
         priority = FormatExpression._priority_postfix
         if expr.args is not None:
             args = [self.formatArg(FormatExpression._priority_none, arg) for arg in expr.args]
-            return entangleLists([[expr.cppType + '( '], entangleLists(args, ', '), [' )']]), priority
+            return entangleLists([[expr.cppType + expr.open() + ' '], entangleLists(args, ', '), [' ' + expr.close()]]), priority
         else:
-            return [expr.cppType + '()'], priority
+            return [expr.cppType + expr.open() + expr.close()], priority
 
     def dereference(self, expr):
         priority = FormatExpression._priority_prefix

@@ -351,23 +351,23 @@ def generateLinearizedCode(predefined, testFunctions, trialFunctionMap, tensorMa
 
 def generateUnaryCode(predefined, testFunctions, tensorMap, tempVars=True):
     preamble, values = generateCode(predefined, testFunctions, tensorMap, tempVars=tempVars)
-    return preamble + [return_(construct('RangeValueType', *values))]
+    return preamble + [return_(construct('RangeValueType', *values, brace=True))]
 
 
 def generateUnaryLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, tempVars=True):
     if tensorMap is None:
-        return [return_(lambda_(args=['const DomainValueType &phi'], code=return_(construct('RangeValueType', *[0 for i in range(len(testFunctions))]))))]
+        return [return_(lambda_(args=['const DomainValueType &phi'], code=return_(construct('RangeValueType', *[0 for i in range(len(testFunctions))], brace=True))))]
 
     var = Variable('std::tuple< RangeType, JacobianRangeType >', 'phi')
     preamble, values = generateLinearizedCode(predefined, testFunctions, {var: trialFunctions}, tensorMap, tempVars=tempVars)
     capture = extractVariablesFromExpressions(values[var]) - {var}
-    return preamble + [return_(lambda_(capture=capture, args=['const DomainValueType &phi'], code=return_(construct('RangeValueType', *values[var]))))]
+    return preamble + [return_(lambda_(capture=capture, args=['const DomainValueType &phi'], code=return_(construct('RangeValueType', *values[var], brace=True))))]
 
 
 def generateBinaryCode(predefined, testFunctions, tensorMap, tempVars=True):
     restrictedTestFunctions = [phi('+') for phi in testFunctions] + [phi('-') for phi in testFunctions]
     preamble, values = generateCode(predefined, restrictedTestFunctions, tensorMap, tempVars=tempVars)
-    return preamble + [return_(make_pair(construct('RangeValueType', *values[:len(testFunctions)]), construct('RangeValueType', *values[len(testFunctions):])))]
+    return preamble + [return_(make_pair(construct('RangeValueType', *values[:len(testFunctions)], brace=True), construct('RangeValueType', *values[len(testFunctions):], brace=True)))]
 
 
 def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tensorMap, tempVars=True):
@@ -377,7 +377,7 @@ def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tens
     trialFunctionsOut = [psi('-') for psi in trialFunctions]
 
     if tensorMap is None:
-        value = construct('RangeValueType', *[0 for i in range(len(testFunctions))])
+        value = construct('RangeValueType', *[0 for i in range(len(testFunctions)), brace=True])
         tensorIn = lambda_(args=['const DomainValueType &phiIn'], code=return_(make_pair(value, value)))
         tensorOut = lambda_(args=['const DomainValueType &phiOut'], code=return_(make_pair(value, value)))
         return [return_(make_pair(tensorIn, tensorOut))]
@@ -389,8 +389,8 @@ def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tens
     captureIn = extractVariablesFromExpressions(values[varIn]) - {varIn}
     captureOut = extractVariablesFromExpressions(values[varOut]) - {varOut}
 
-    tensorIn = lambda_(capture=captureIn, args=['const DomainValueType &phiIn'], code=return_(make_pair(construct('RangeValueType', *values[varIn][:len(testFunctions)]), construct('RangeValueType', *values[varIn][len(testFunctions):]))))
-    tensorOut = lambda_(capture=captureOut, args=['const DomainValueType &phiOut'], code=return_(make_pair(construct('RangeValueType', *values[varOut][:len(testFunctions)]), construct('RangeValueType', *values[varOut][len(testFunctions):]))))
+    tensorIn = lambda_(capture=captureIn, args=['const DomainValueType &phiIn'], code=return_(make_pair(construct('RangeValueType', *values[varIn][:len(testFunctions)], brace=True), construct('RangeValueType', *values[varIn][len(testFunctions):], brace=True))))
+    tensorOut = lambda_(capture=captureOut, args=['const DomainValueType &phiOut'], code=return_(make_pair(construct('RangeValueType', *values[varOut][:len(testFunctions)], brace=True), construct('RangeValueType', *values[varOut][len(testFunctions):], brace=True))))
 
     return preamble + [return_(make_pair(tensorIn, tensorOut))]
 

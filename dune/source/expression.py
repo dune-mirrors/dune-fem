@@ -112,12 +112,19 @@ class ConstantExpression(Expression):
 
 
 class ConstructExpression(Expression):
-    def __init__(self, cppType, args=None):
+    def __init__(self, cppType, args=None, brace=False):
         Expression.__init__(self, cppType)
         self.args = None if args is None else [makeExpression(arg) for arg in args]
+        self.brace = brace
+
+    def open(self):
+        return '{' if self.brace else '('
+
+    def close(self):
+        return '}' if self.brace else ')'
 
     def __hash__(self):
-        return hash((self.cppType, self.args))
+        return hash((self.cppType, self.args, self.brace))
 
 
 class DereferenceExpression(Expression):
@@ -219,8 +226,8 @@ def assign(left, right):
     return Application(BinaryOperator('='), args=(left, makeExpression(right)))
 
 
-def construct(cppType, *args):
-    return ConstructExpression(cppType, args if args else None)
+def construct(cppType, *args, **kwargs):
+    return ConstructExpression(cppType, args if args else None, **kwargs)
 
 
 def dereference(expr):
