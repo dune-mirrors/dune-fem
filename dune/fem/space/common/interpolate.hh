@@ -9,6 +9,7 @@
 
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
+#include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/space/common/capabilities.hh>
 
 namespace Dune
@@ -69,7 +70,7 @@ namespace Dune
       std::vector< typename DiscreteFunction::RangeFieldType > ldv;
       ldv.reserve( v.space().blockMapper().maxNumDofs() * DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize );
 
-      typename GridFunction::LocalFunctionType uLocal( u );
+      ConstLocalFunction< GridFunction > uLocal( u );
 
       // iterate over selected partition
       for( const auto entity : elements( v.gridPart(), ps ) )
