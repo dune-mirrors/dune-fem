@@ -36,7 +36,7 @@ namespace Dune
     template< class LFEMap, class FunctionSpace, template< class > class Storage >
     struct LocalFiniteElementDiscreteFunctionSpaceTraits
     {
-      typedef LocalFiniteElementDiscreteFunctionSpace< FunctionSpace, GridPart, Storage > DiscreteFunctionSpaceType;
+      typedef LocalFiniteElementDiscreteFunctionSpace< LFEMap, FunctionSpace, Storage > DiscreteFunctionSpaceType;
 
       typedef typename LFEMap::GridPartType GridPartType;
       typedef typename LFEMap::LocalFiniteElementType LocalFiniteElementType;
@@ -83,10 +83,11 @@ namespace Dune
      **/
     template< class LFEMap, class FunctionSpace, template< class > class Storage = CachingStorage >
     struct LocalFiniteElementDiscreteFunctionSpace
-    : public DiscreteFunctionSpaceDefault< RannacherTurekDiscreteFunctionSpaceTraits< LFEMap, FunctionSpace, Storage > >
+    : public DiscreteFunctionSpaceDefault< LocalFiniteElementDiscreteFunctionSpaceTraits< LFEMap, FunctionSpace, Storage > >
     {
       typedef LocalFiniteElementDiscreteFunctionSpace< LFEMap, FunctionSpace, Storage > ThisType;
-      typedef DiscreteFunctionSpaceDefault< LocalFiniteElementDiscreteFunctionSpaceTraits< FunctionSpace, GridPart, Storage > > BaseType;
+      typedef DiscreteFunctionSpaceDefault<
+        LocalFiniteElementDiscreteFunctionSpaceTraits< LFEMap, FunctionSpace, Storage > > BaseType;
 
       static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
       static const CommunicationDirection defaultDirection =  ForwardCommunication;
@@ -116,6 +117,8 @@ namespace Dune
 
       typedef typename LFEMap::KeyType KeyType;
 
+      typedef typename Traits::LocalFunctionsShapeFunctionSetType LocalFunctionsShapeFunctionSetType;
+
       struct LFEMapFactory
       {
         static LFEMap *createObject ( std::pair< GridPartType *, KeyType > key ) { return new LFEMap( *key.first, key.second ); }
@@ -124,11 +127,12 @@ namespace Dune
 
       typedef SingletonList< std::pair< GridPartType *, KeyType >, LFEMap, LFEMapFactory > LFEMapProviderType;
 
+      typedef typename Traits::StoredShapeFunctionSetType StoredShapeFunctionSetType;
       typedef std::vector< std::unique_ptr< StoredShapeFunctionSetType > > StoredShapeFunctionSetVectorType;
 
       struct StoredShapeFunctionSetVectorFactory
       {
-        static StoredShapeFunctionSetVectorType *createObject ( LFEMap *lfeMap ) { return new StoredShapeFunctionSetVectorType( lfeMap_->size() ); }
+        static StoredShapeFunctionSetVectorType *createObject ( LFEMap *lfeMap ) { return new StoredShapeFunctionSetVectorType( lfeMap->size() ); }
         static void deleteObject ( StoredShapeFunctionSetVectorType *object ) { delete object; }
       };
 
@@ -139,14 +143,17 @@ namespace Dune
         static BlockMapperType *createObject ( LFEMap *lfeMap )
         {
           return new BlockMapperType( lfeMap->gridPart(), [ lfeMap ] ( const auto &refElement ) {
-              return Dune::Fem::compile( refElement, lfeMap->localCoefficients( refElement.type() ) );
+              if( lfeMap->hasCoefficients( refElement.type() ) )
+                return Dune::Fem::compile( refElement, lfeMap->localCoefficients( refElement.type() ) );
+              else
+                return Dune::Fem::DofMapperCode();
             } );
         }
 
         static void deleteObject ( BlockMapperType *object ) { delete object; }
       };
 
-      typedef SingletonList< LFEMap *, BlockMapperType *, BlockMapperSingletonFactory > BlockMapperProviderType;
+      typedef SingletonList< LFEMap *, BlockMapperType, BlockMapperSingletonFactory > BlockMapperProviderType;
 
     public:
       typedef LocalFiniteElementInterpolation< BasisFunctionSetType, LocalInterpolationType > InterpolationType;
@@ -160,7 +167,7 @@ namespace Dune
         : BaseType( gridPart, commInterface, commDirection ),
           lfeMap_( &LFEMapProviderType::getObject( std::make_pair( &gridPart, KeyType() ) ) ),
           storedShapeFunctionSetVector_( &StoredShapeFunctionSetVectorProviderType::getObject( lfeMap_.get() ) ),
-          blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get() )
+          blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get() ) )
       {}
 
       template< class GridPart, std::enable_if_t< std::is_same< GridPart, GridPartType >::value && !std::is_same< KeyType, std::tuple<> >::value, int > = 0 >
@@ -170,7 +177,7 @@ namespace Dune
         : BaseType( gridPart, commInterface, commDirection ),
           lfeMap_( &LFEMapProviderType::getObject( std::make_pair( &gridPart, key ) ) ),
           storedShapeFunctionSetVector_( &StoredShapeFunctionSetVectorProviderType::getObject( lfeMap_.get() ) ),
-          blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get() )
+          blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get() ) )
       {}
 
       LocalFiniteElementDiscreteFunctionSpace ( const ThisType & ) = delete;
@@ -197,7 +204,7 @@ namespace Dune
        **/
       ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
       {
-        return shapeFunctionSet( lfeMap_( entity ) );
+        return getShapeFunctionSet( (*lfeMap_)( entity ), entity.type() );
       }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
@@ -222,22 +229,22 @@ namespace Dune
        **/
       InterpolationType interpolation ( const EntityType &entity ) const
       {
-        auto lfe = lfeMap_( entity );
-        return InterpolationType( BasisFunctionSetType( entity, shapeFunctionSet( lfe ) ), std::get< 2 >( lfe ) );
+        auto lfe = (*lfeMap_)( entity );
+        return InterpolationType( BasisFunctionSetType( entity, getShapeFunctionSet( lfe, entity.type() ) ), std::get< 2 >( lfe ) );
       }
 
     private:
-      ShapeFunctionSetType getShapeFunctionSet ( std::tuple< std::size_t, const LocalBasisType &, const LocalInterpolationType & > lfe )
+      ShapeFunctionSetType getShapeFunctionSet ( std::tuple< std::size_t, const LocalBasisType &, const LocalInterpolationType & > lfe, const GeometryType &type ) const
       {
-        auto &storedShapeFunctionSet = storedShapeFunctionSetVector_[ std::get< 0 >( lfe ) ];
+        auto &storedShapeFunctionSet = (*storedShapeFunctionSetVector_)[ std::get< 0 >( lfe ) ];
         if( !storedShapeFunctionSet )
-          storedShapeFunctionSet.reset( new StoredShapeFunctionSetType( std::get< 1 >( lfe ) ) );
+          storedShapeFunctionSet.reset( new StoredShapeFunctionSetType( type, LocalFunctionsShapeFunctionSetType( std::get< 1 >( lfe ) ) ) );
         return ShapeFunctionSetType( storedShapeFunctionSet.get() );
       }
 
       std::unique_ptr< LFEMap, typename LFEMapProviderType::Deleter > lfeMap_;
-      std::unique_ptr< StoredShapeFunctionSetVectorType, typename StoredShapeFunctionSetVectorProviderType::Delete > storedShapeFunctionSetVector_;
-      BlockMapperType *blockMapper_;
+      std::unique_ptr< StoredShapeFunctionSetVectorType, typename StoredShapeFunctionSetVectorProviderType::Deleter > storedShapeFunctionSetVector_;
+      std::unique_ptr< BlockMapperType, typename BlockMapperProviderType::Deleter > blockMapper_;
     };
 
   } // namespace Fem

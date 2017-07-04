@@ -36,7 +36,7 @@ namespace Dune
       typedef std::size_t size_type;
 
       template< class LocalFunction >
-      struct LocalFunctionWrapper;
+      struct LocalFunctionWrapper
       {
         struct Traits
         {

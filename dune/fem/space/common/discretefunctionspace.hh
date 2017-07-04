@@ -97,8 +97,8 @@ namespace Dune
       RannacherTurekSpace_id,       //!< id for Rannacher-Turek space
       LegendreDGSpace_id,           //!< id for Legendre Discontinuous Galerkin Space
       HierarchicLegendreDGSpace_id, //!< id for Hierarchic Legendre Discontinuous Galerkin Space
-      LagrangeDGSpace_id            //!< id for Lagrange Discontinuous Galerkin Space
-      LocalFiniteElement_id         //!< id for local finite element space
+      LagrangeDGSpace_id,           //!< id for Lagrange Discontinuous Galerkin Space
+      LocalFiniteElementSpace_id         //!< id for local finite element space
     };
 
     inline std::string spaceName( const DFSpaceIdentifier id )

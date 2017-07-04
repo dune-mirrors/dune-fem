@@ -192,6 +192,7 @@ inline Algorithm::ErrorType Algorithm::finalize ( DiscreteFunctionType &solution
 
   error[ 0 ] = l2norm.distance( gridFunction, solution );
   error[ 1 ] = h1norm.distance( gridFunction, solution );
+  std::cout << error <<std::endl;
   return error;
 }
 
