@@ -35,8 +35,8 @@ namespace Dune
     {
       typedef DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
 
-      typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;
+      typedef GridFunctionSpace< GridPartType, FunctionSpace > FunctionSpaceType;
 
       static const int codimension = 0;
 

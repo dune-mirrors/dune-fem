@@ -33,8 +33,8 @@ namespace Dune
     {
       typedef FourierDiscreteFunctionSpace< FunctionSpace, GridPart, order > DiscreteFunctionSpaceType;
 
-      typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;
+      typedef GridFunctionSpace< GridPartType, FunctionSpace > FunctionSpaceType;
 
       static const int codimension = 0;
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;

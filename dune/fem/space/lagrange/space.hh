@@ -55,8 +55,8 @@ namespace Dune
     {
       typedef LagrangeDiscreteFunctionSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
 
-      typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;
+      typedef GridFunctionSpace< GridPartType, FunctionSpace > FunctionSpaceType;
 
       static const int polynomialOrder = polOrder;
 
@@ -68,7 +68,7 @@ namespace Dune
     private:
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
       static const int dimLocal = GridPartType::dimension;
-      typedef typename FunctionSpace::ScalarFunctionSpaceType ScalarFunctionSpaceType;
+      typedef typename FunctionSpaceType::ScalarFunctionSpaceType ScalarFunctionSpaceType;
       typedef typename ToNewDimDomainFunctionSpace< ScalarFunctionSpaceType, dimLocal >::Type ShapeFunctionSpaceType;
 
     public:

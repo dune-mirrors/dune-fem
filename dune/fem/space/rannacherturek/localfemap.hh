@@ -3,6 +3,7 @@
 
 // dune-localfunctions includes
 #include <dune/localfunctions/rannacherturek.hh>
+#include <dune/fem/gridpart/common/capabilities.hh>
 
 namespace Dune
 {
@@ -14,9 +15,11 @@ namespace Dune
     class RannacherTurekLocalFiniteElementMap
     {
       typedef RannacherTurekLocalFiniteElementMap< GridPart, FunctionSpace > ThisType;
-
+      static_assert( Dune::Fem::GridPartCapabilities::hasSingleGeometryType< GridPart >::v,
+                     "GridPart has more than one geometry type." );
     public:
       typedef GridPart GridPartType;
+
       typedef std::tuple< > KeyType;
 
       typedef typename FunctionSpace::DomainFieldType DomainFieldType;
@@ -38,6 +41,9 @@ namespace Dune
       int order () const { return localFe_.localBasis().order(); }
 
       template< class Entity >
+      int order ( const Entity &entity ) const { return order(); }
+
+      template< class Entity >
       std::tuple< std::size_t, const LocalBasisType &, const LocalInterpolationType & > operator() ( const Entity &e ) const
       {
         return std::make_tuple(
@@ -46,10 +52,12 @@ namespace Dune
           localFe_.localInterpolation() );
       }
 
-      bool hasCoefficient ( const GeometryType &type ) const { return type.isCube(); }
+      bool hasCoefficients ( const GeometryType &type ) const { return type.isCube(); }
 
-      template< class GeometryType >
-      LocalCoefficientsType localCoefficients ( const GeometryType &type ) const { return localFe_.localCoefficients(); }
+      const LocalCoefficientsType& localCoefficients ( const GeometryType &type ) const
+      {
+        return localFe_.localCoefficients();
+      }
 
       const GridPartType &gridPart () const { return gridPart_; }
 

@@ -10,6 +10,7 @@
 #include <iostream>
 #include <sstream>
 
+//#define USE_OLD_RANNACHERTUREK_SPACE
 
 // Includes from DUNE-FEM
 // ----------------------

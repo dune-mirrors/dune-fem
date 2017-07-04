@@ -68,8 +68,8 @@ namespace Dune
 
       typedef BDMDiscreteFunctionSpace< FunctionSpace, GridPart, order, Storage > DiscreteFunctionSpaceType;
 
-      typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;
+      typedef GridFunctionSpace< GridPartType, FunctionSpace > FunctionSpaceType;
 
       static const int codimension = 0;
 

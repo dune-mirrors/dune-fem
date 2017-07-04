@@ -8,11 +8,72 @@
 
 #include <dune/common/fvector.hh>
 
+#include <dune/fem/space/basisfunctionset/transformed.hh>
+
 namespace Dune
 {
 
   namespace Fem
   {
+
+    namespace Impl
+    {
+
+      // LocalFunctionWrapper
+      // --------------------
+
+      template< class LocalFunction, class BasisFunctionSet >
+      struct LocalFunctionWrapper
+      {
+        struct Traits
+        {
+          typedef typename LocalFunction::RangeType RangeType;
+        };
+
+        LocalFunctionWrapper ( const LocalFunction &lf, const BasisFunctionSet &bset ) : lf_( lf ) {}
+
+        template< class Arg >
+        void evaluate ( const Arg &x, typename Traits::RangeType &y ) const
+        {
+          lf_.evaluate( x, y );
+        }
+
+      private:
+        const LocalFunction &lf_;
+      };
+
+
+      // LocalFunctionWrapper
+      // --------------------
+
+      template< class LocalFunction, class Entity, class ShapeFunctionSet, class Transformation >
+      struct LocalFunctionWrapper< LocalFunction, TransformedBasisFunctionSet< Entity, ShapeFunctionSet, Transformation > >
+      {
+        typedef TransformedBasisFunctionSet< Entity, ShapeFunctionSet, Transformation > BasisFunctionSetType;
+
+        struct Traits
+        {
+          typedef typename LocalFunction::RangeType RangeType;
+        };
+
+        LocalFunctionWrapper ( const LocalFunction &lf, const BasisFunctionSetType &bset ) : lf_( lf ), bset_( bset ) {}
+
+        template< class Arg >
+        void evaluate ( const Arg &x, typename Traits::RangeType &y ) const
+        {
+          typename Traits::RangeType help;
+          lf_.evaluate( x, help );
+          typename Transformation::InverseTransformationType transf( lf_.entity().geometry(), x );
+          y = transf.apply_t( help );
+        }
+
+      private:
+        const LocalFunction &lf_;
+        const BasisFunctionSetType &bset_;
+      };
+
+    } // namespace Impl
+
 
     // LocalFiniteElementInterpolation
     // -------------------------------
@@ -36,36 +97,19 @@ namespace Dune
       typedef std::size_t size_type;
 
       template< class LocalFunction >
-      struct LocalFunctionWrapper
-      {
-        struct Traits
-        {
-          typedef typename LocalFunction::RangeType RangeType;
-        };
-
-        LocalFunctionWrapper ( const LocalFunction &lf ) : lf_( lf ) {}
-
-        template< class Arg >
-        void evaluate ( const Arg &x, typename Traits::RangeType &y ) const
-        {
-          lf_.evaluate( x, y );
-        }
-
-      private:
-        const LocalFunction &lf_;
-      };
+      using LocalFunctionWrapper = Impl::LocalFunctionWrapper< LocalFunction, BasisFunctionSetType >;
 
     public:
       explicit LocalFiniteElementInterpolation ( const BasisFunctionSetType &basisFunctionSet,
                                                  const LocalInterpolationType &localInterpolation = LocalInterpolationType() )
         : basisFunctionSet_( basisFunctionSet ),
-          localInterpolation_( localInterpolation )
+        localInterpolation_( localInterpolation )
       {}
 
       template< class LocalFunction, class LocalDofVector >
       void operator() ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
       {
-        LocalFunctionWrapper< LocalFunction > wrapper( localFunction );
+        LocalFunctionWrapper< LocalFunction > wrapper( localFunction, basisFunctionSet() );
         localInterpolation().interpolate( wrapper, localDofVector );
       }
 

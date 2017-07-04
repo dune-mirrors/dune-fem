@@ -67,22 +67,9 @@ typedef GridSelector::GridType MyGridType;
 //typedef HierarchicGridPart< MyGridType > GridPartType;
 typedef LeafGridPart< MyGridType > GridPartType;
 
-//! define the function space, \f[ \R^2 \rightarrow \R \f]
-// see dune/common/functionspace.hh
-//typedef MatrixFunctionSpace< double, double, MyGridType::dimensionworld, 3, 5 >
-//  FunctionSpaceType;
-typedef FunctionSpace< double, double, MyGridType::dimensionworld, 1 > FunctionSpaceType;
-typedef MatrixFunctionSpace< double, double, MyGridType::dimensionworld, 1, MyGridType::dimensionworld >
-  GradientFunctionSpaceType;
-
 //! define the function space our unkown belong to
-typedef DiscontinuousGalerkinSpace< GradientFunctionSpaceType,
-                                    GridPartType,
-                                    polOrder,
-                                    CachingStorage >
-  DiscreteGradientFunctionSpaceType;
-typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
-  DiscreteFunctionSpaceType;
+typedef DiscontinuousGalerkinSpace< Dune::FieldMatrix< double, 1, MyGridType::dimensionworld >, GridPartType, polOrder > DiscreteGradientFunctionSpaceType;
+typedef LagrangeDiscreteFunctionSpace< Dim< 1 >, GridPartType, polOrder > DiscreteFunctionSpaceType;
 
 //! define the type of discrete function we are using , see
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType >
@@ -94,7 +81,7 @@ typedef AdaptiveDiscreteFunction< DiscreteGradientFunctionSpaceType >
 typedef DofManager< MyGridType > DofManagerType;
 
 class ExactSolution
-: public Fem::Function< FunctionSpaceType, ExactSolution >
+: public Fem::Function< typename DiscreteFunctionSpaceType::FunctionSpaceType, ExactSolution >
 {
   typedef ExactSolution ThisType;
   typedef Fem::Function< FunctionSpaceType, ExactSolution > BaseType;

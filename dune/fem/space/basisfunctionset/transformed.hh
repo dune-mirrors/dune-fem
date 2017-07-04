@@ -270,13 +270,14 @@ namespace Dune
       //! \brief return shape function set
       const ShapeFunctionSetType &shapeFunctionSet () const { return shapeFunctionSet_; }
 
-    protected:
-      GeometryType geometry () const { return entity().geometry(); }
-
       Transformation transformation ( const DomainType& x ) const
       {
         return Transformation( geometry(), x );
       }
+
+    protected:
+      GeometryType geometry () const { return entity().geometry(); }
+
     private:
       const EntityType *entity_;
       ShapeFunctionSetType shapeFunctionSet_;
