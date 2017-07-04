@@ -1,10 +1,12 @@
 #ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_CONST_HH
 #define DUNE_FEM_FUNCTION_LOCALFUNCTION_CONST_HH
 
-#include <utility>
+#include <algorithm>
 #include <type_traits>
+#include <utility>
 
 #include <dune/common/dynvector.hh>
+
 #include <dune/fem/function/localfunction/mutable.hh>
 #include <dune/fem/function/localfunction/localfunction.hh>
 
@@ -14,22 +16,19 @@ namespace Dune
   namespace Fem
   {
 
-    // external forward declerations
+    // External Forward Declerations
     // -----------------------------
 
-    template<class>
+    template< class >
     struct DiscreteFunctionTraits;
 
-    template<class>
-    class MutableLocalFunction;
+    class HasLocalFunction;
+    class IsDiscreteFunction;
 
 
-    // internal forward declerations
-    // -----------------------------
 
-    template< class DiscreteFunction >
-    class ConstLocalFunction;
-
+    // BasicConstLocalFunction
+    // -----------------------
 
     template < class BasisFunctionSet, class LocalDofVector >
     class BasicConstLocalFunction
@@ -93,10 +92,10 @@ namespace Dune
     };
 
     /** \ingroup LocalFunction
-        \class ConstLocalFunction
+        \class ConstLocalDiscreteFunction
         \brief A constant local function carrying values for one entity
 
-        A ConstLocalFunction is a LocalFunction which is basically doing the same as the
+        A ConstLocalDiscreteFunction is a LocalFunction which is basically doing the same as the
         LocalFunction of a discrete function. The difference is that the local dofs
         are not kept as references but are copied to a local storage.
         Therefore, this is a const local function and any modification of dofs is not
@@ -110,23 +109,22 @@ namespace Dune
                                 local function shall belong to
      */
     template< class DiscreteFunction >
-    class ConstLocalFunction
+    class ConstLocalDiscreteFunction
     : public BasicConstLocalFunction<
-      typename DiscreteFunctionTraits<
-      typename std::remove_const< DiscreteFunction > :: type >::DiscreteFunctionSpaceType::BasisFunctionSetType,
-      Dune::DynamicVector< typename DiscreteFunctionTraits< typename std::remove_const< DiscreteFunction > :: type >::DofType,
-        typename DiscreteFunctionTraits< typename std::remove_const< DiscreteFunction > :: type >::LocalDofVectorAllocatorType
-      :: template rebind< typename DiscreteFunctionTraits< typename std::remove_const< DiscreteFunction >::type > ::DofType > ::other > >
+      typename DiscreteFunctionTraits< std::remove_const_t< DiscreteFunction > >::DiscreteFunctionSpaceType::BasisFunctionSetType,
+      Dune::DynamicVector< typename DiscreteFunctionTraits< std::remove_const_t< DiscreteFunction > >::DofType,
+        typename DiscreteFunctionTraits< std::remove_const_t< DiscreteFunction > >::LocalDofVectorAllocatorType
+      :: template rebind< typename DiscreteFunctionTraits< std::remove_const_t< DiscreteFunction > > ::DofType > ::other > >
     {
-      typedef ConstLocalFunction< DiscreteFunction > ThisType;
-      typedef BasicConstLocalFunction< typename DiscreteFunctionTraits< typename std::remove_const< DiscreteFunction > :: type >::DiscreteFunctionSpaceType::BasisFunctionSetType,
-              Dune::DynamicVector< typename DiscreteFunctionTraits< typename std::remove_const< DiscreteFunction > :: type >::DofType,
-              typename DiscreteFunctionTraits< typename std::remove_const< DiscreteFunction > :: type > :: LocalDofVectorAllocatorType
-              :: template rebind< typename DiscreteFunctionTraits< typename std::remove_const< DiscreteFunction >::type >::DofType >::other  > >
+      typedef ConstLocalDiscreteFunction< DiscreteFunction > ThisType;
+      typedef BasicConstLocalFunction< typename DiscreteFunctionTraits< std::remove_const_t< DiscreteFunction > >::DiscreteFunctionSpaceType::BasisFunctionSetType,
+              Dune::DynamicVector< typename DiscreteFunctionTraits< std::remove_const_t< DiscreteFunction > >::DofType,
+              typename DiscreteFunctionTraits< std::remove_const_t< DiscreteFunction > > :: LocalDofVectorAllocatorType
+              :: template rebind< typename DiscreteFunctionTraits< std::remove_const_t< DiscreteFunction > >::DofType >::other  > >
           BaseType;
 
     public:
-      typedef typename std::remove_const< DiscreteFunction >::type DiscreteFunctionType;
+      typedef std::remove_const_t< DiscreteFunction > DiscreteFunctionType;
       typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
       typedef typename BaseType::DofType DofType;
@@ -147,14 +145,14 @@ namespace Dune
 
           \param[in] df discrete function the local function shall belong to
        */
-      explicit ConstLocalFunction ( const DiscreteFunctionType &df )
+      explicit ConstLocalDiscreteFunction ( const DiscreteFunctionType &df )
       : BaseType( LocalDofVectorType( df.localDofVectorAllocator() ) ),
         discreteFunction_( &df )
       {
       }
 
       //! cast a MutableLocalFunction into this one !!! expensive !!!
-      ConstLocalFunction ( const typename DiscreteFunctionType::LocalFunctionType &localFunction )
+      ConstLocalDiscreteFunction ( const typename DiscreteFunctionType::LocalFunctionType &localFunction )
       : BaseType( localFunction.basisFunctionSet(), LocalDofVectorType( localFunction.size(), localFunction.discreteFunction().localDofVectorAllocator() ) ),
         discreteFunction_( &localFunction.discreteFunction() )
       {
@@ -174,7 +172,7 @@ namespace Dune
                              belong to
           \param[in] entity  entity for initialize the local function to
        */
-      ConstLocalFunction ( const DiscreteFunctionType &df, const EntityType &entity )
+      ConstLocalDiscreteFunction ( const DiscreteFunctionType &df, const EntityType &entity )
       : BaseType( df.space().basisFunctionSet( entity ), LocalDofVectorType( df.localDofVectorAllocator() )  ),
         discreteFunction_( &df )
       {
@@ -182,13 +180,13 @@ namespace Dune
       }
 
       //! copy constructor
-      ConstLocalFunction ( const ThisType &other )
+      ConstLocalDiscreteFunction ( const ThisType &other )
       : BaseType( static_cast<const BaseType &>( other ) ),
         discreteFunction_( other.discreteFunction_ )
       {}
 
       //! move constructor
-      ConstLocalFunction ( ThisType &&other )
+      ConstLocalDiscreteFunction ( ThisType &&other )
       : BaseType( static_cast< BaseType &&>( other ) ),
         discreteFunction_( other.discreteFunction_ )
       {}
@@ -207,6 +205,35 @@ namespace Dune
     protected:
       const DiscreteFunctionType* discreteFunction_;
     };
+
+
+
+    // ConstLocalFunction
+    // ------------------
+
+    namespace Impl
+    {
+
+      template< class GF, class = void >
+      struct ConstLocalFunction;
+
+      template< class GF >
+      struct ConstLocalFunction< GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, GF >::value && std::is_base_of< Fem::IsDiscreteFunction, GF >::value > >
+      {
+        typedef ConstLocalDiscreteFunction< GF > Type;
+      };
+
+      template< class GF >
+      struct ConstLocalFunction< GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, GF >::value && !std::is_base_of< Fem::IsDiscreteFunction, GF >::value > >
+      {
+        typedef typename GF::LocalFunctionType Type;
+      };
+
+    } // namespace Impl
+
+
+    template< class GridFunction >
+    using ConstLocalFunction = typename Impl::ConstLocalFunction< GridFunction >::Type;
 
   } // namespace Fem
 
