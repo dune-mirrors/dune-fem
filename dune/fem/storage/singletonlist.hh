@@ -58,6 +58,11 @@ namespace Dune
       typedef std :: pair< ObjectType * , unsigned int * > ValueType;
       typedef std :: pair< KeyType, ValueType > ListObjType;
 
+      struct Deleter
+      {
+        void operator() ( ObjectType *p ) const { ThisType::removeObject( *p ); }
+      };
+
     private:
       typedef std :: list< ListObjType > ListType;
       typedef typename ListType :: iterator ListIteratorType;
