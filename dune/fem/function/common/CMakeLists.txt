@@ -9,6 +9,7 @@ dune_install(
   functor.hh
   gridfunctionadapter.hh
   instationary.hh
+  localcontribution.hh
   localfunctionadapter.hh
   rangegenerators.hh
   scalarproducts.hh
