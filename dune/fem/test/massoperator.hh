@@ -1,6 +1,8 @@
 #ifndef MASSOPERATOR_HH
 #define MASSOPERATOR_HH
 
+#include <dune/grid/common/rangegenerators.hh>
+
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/operator/common/operator.hh>
@@ -46,50 +48,40 @@ template< class Function >
 void MassOperator< DiscreteFunction, LinearOperator >
   ::assembleRHS( const Function &u, DiscreteFunctionType &w ) const
 {
-  typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-  typedef typename DiscreteFunctionSpaceType::RangeFieldType FieldType;
+  Dune::Fem::ConstLocalFunction< Function > uLocal( u );
+  Dune::Fem::TemporaryLocalFunction< DiscreteFunctionSpaceType > wLocal( dfSpace_ );
 
-  typedef typename IteratorType::Entity EntityType;
-  typedef typename EntityType::Geometry GeometryType;
-
-  Dune::Fem::TemporaryLocalFunction< DiscreteFunctionSpaceType > local( dfSpace_ );
-
+  // clear result
   w.clear();
 
   // run over entities
-  const IteratorType end = dfSpace_.end();
-  for( IteratorType it = dfSpace_.begin(); it != end; ++it )
+  for( const auto &entity : elements( dfSpace_.gridPart(), Dune::Partitions::interiorBorder ) )
   {
+    const auto geometry = entity.geometry();
 
-    const EntityType &entity = *it;
-    const GeometryType &geometry = entity.geometry();
+    uLocal.init( entity );
 
-    local.init( entity );
-    local.clear();
+    wLocal.init( entity );
+    wLocal.clear();
 
     // run over quadrature points
-    QuadratureType quadrature( entity, 2*dfSpace_.order()+1 );
-    for( const auto qp : quadrature )
+    for( const auto qp : QuadratureType( entity, 2*dfSpace_.order()+1 ) )
     {
       // evaluate u
-      const typename QuadratureType::CoordinateType &x = qp.position();
-
       RangeType uValue;
-      u.evaluate( geometry.global( x ), uValue );
+      uLocal.evaluate( qp, uValue );
 
-      // put all things together and don't forget quadrature weights
-      const FieldType weight = qp.weight()*geometry.integrationElement( x );
-
-      // apply weight
-      uValue *= weight;
+      // apply quadrature weight
+      uValue *= qp.weight() * geometry.integrationElement( qp.position() );
 
       // add to local function
-      local.axpy( qp, uValue );
+      wLocal.axpy( qp, uValue );
     }
 
-    w.addLocalDofs( entity, local.localDofVector() );
+    w.addLocalDofs( entity, wLocal.localDofVector() );
   }
 
+  // communicate result
   w.communicate();
 }
 
