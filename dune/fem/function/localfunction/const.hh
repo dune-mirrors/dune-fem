@@ -75,15 +75,12 @@ namespace Dune
       BasicConstLocalFunction ( const ThisType &other ) : BaseType( static_cast<const BaseType &>( other ) ) {}
       BasicConstLocalFunction ( ThisType && other ) : BaseType( static_cast<BaseType&&>(other) ) {}
 
-      using BaseType::operator[];
+      const DofType &operator[] ( SizeType i ) const { return static_cast< const BaseType & >( *this )[ i ]; }
+      const DofType &operator[] ( SizeType i ) { return static_cast< const BaseType & >( *this )[ i ]; }
+
       using BaseType::localDofVector;
 
    protected:
-      DofType &operator[] ( SizeType num )
-      {
-        return static_cast< BaseType &>( *this )[ num ];
-      }
-
       using BaseType::clear;
       using BaseType::assign;
       using BaseType::operator +=;
