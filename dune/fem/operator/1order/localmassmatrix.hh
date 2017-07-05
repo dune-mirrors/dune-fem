@@ -286,7 +286,7 @@ namespace Dune
       void applyInverseDgOrthoNormalBasis ( MassCaller &caller, const EntityType &entity, LocalFunction &lf ) const
       {
         Geometry geo = entity.geometry();
-        assert( dgNumDofs == lf.numDofs() );
+        assert( dgNumDofs == lf.size() );
 
         // affine_ can be a static information
         const bool isAffine = affine() || geo.affine();
