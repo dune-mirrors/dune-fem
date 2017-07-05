@@ -117,6 +117,9 @@ namespace Dune
         BaseType::init( dfSpace_.basisFunctionSet( entity ) );
       }
 
+      void bind ( const EntityType &entity ) { init( entity ); }
+      void unbind () {}
+
     protected:
       const DiscreteFunctionSpaceType &dfSpace_;
     };
