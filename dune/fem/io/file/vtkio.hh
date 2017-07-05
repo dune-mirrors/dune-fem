@@ -41,7 +41,7 @@ namespace Dune
       enum TypeOfField { real, complex_real, complex_imag };
       typedef DF DiscreteFunctionType;
 
-      typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+      typedef ConstLocalFunction< DF > LocalFunctionType;
       typedef typename DiscreteFunctionType::FunctionSpaceType FunctionSpaceType;
 
       static const int dimRange = FunctionSpaceType::dimRange;
@@ -59,7 +59,7 @@ namespace Dune
       VTKFunctionWrapper ( const DiscreteFunctionType& df,
                            const std::string& dataName,
                            int component, bool vector, TypeOfField typeOfField )
-      : discFunc_( df ),
+      : localFunction_( df ),
         name_( ( dataName.size() > 0 ) ? dataName : df.name() ),
         vector_( vector ),
         typeOfField_( typeOfField ),
@@ -80,10 +80,12 @@ namespace Dune
       //! the entity
       virtual double evaluate ( int comp, const EntityType &e, const LocalCoordinateType &xi ) const
       {
+        localFunction_.bind( e );
         typedef typename LocalFunctionType::RangeFieldType RangeFieldType;
-        const LocalFunctionType lf = discFunc_.localFunction(e);
         RangeType val;
-        lf.evaluate(xi,val);
+        localFunction_.evaluate(xi,val);
+        localFunction_.unbind();
+
         RangeFieldType outVal( 0 );
         if (vector_)
         {
@@ -115,7 +117,7 @@ namespace Dune
       }
 
     private:
-      const DiscreteFunctionType &discFunc_;
+      mutable LocalFunctionType localFunction_;
       const std::string name_ ;
       const bool vector_;
       const TypeOfField typeOfField_;

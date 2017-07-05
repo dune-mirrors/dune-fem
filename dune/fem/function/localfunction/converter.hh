@@ -57,7 +57,7 @@ namespace Dune
      *  \endcode
      *  may be used to conveniently create a new instance of a LocalFunctionConverter. Use
      *  \code
-     *    auto g = localFunctionConverter( GF.localFunction( entity ), Converter )
+     *    auto g = localFunctionConverter( localFunction, Converter )
      *  \endcode
      *  to create an converted local function.
      *

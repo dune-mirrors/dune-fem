@@ -256,17 +256,18 @@ void checkLinearOperator ( LinearOperator &linOp, const Range &range, const std:
   rangeFunction2.clear();
   Dune::DynamicVector< double > tmp;
   std::vector< double > values;
+
   for( const auto &entry : range )
   {
     auto domainEntity = entry.first;
     auto rangeEntity = entry.second;
 
-    std::size_t oldSize = domainFunction.localFunction( domainEntity ).size();
+    std::size_t oldSize = domainFunction.space().basisFunctionSet( domainEntity ).size();
     tmp.resize( oldSize );
     domainFunction.getLocalDofs( domainEntity, tmp );
 
     values.clear();
-    std::size_t newSize = rangeFunction2.localFunction( rangeEntity ).size();
+    std::size_t newSize = rangeFunction2.space().basisFunctionSet( rangeEntity ).size();
     values.resize( newSize, 0.0 );
 
     for( const auto &p : permutation )
