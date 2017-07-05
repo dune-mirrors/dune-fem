@@ -127,6 +127,8 @@ namespace Dune
       typedef std::remove_const_t< DiscreteFunction > DiscreteFunctionType;
       typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
+      typedef DiscreteFunctionType GridFunctionType;
+
       typedef typename BaseType::DofType DofType;
       typedef typename BaseType::EntityType EntityType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
@@ -200,7 +202,8 @@ namespace Dune
         discreteFunction().getLocalDofs( entity, localDofVector() );
       }
 
-      const DiscreteFunctionType& discreteFunction() const { return *discreteFunction_; }
+      const DiscreteFunctionType &discreteFunction() const { return *discreteFunction_; }
+      const GridFunctionType &gridFunction() const { return discreteFunction(); }
 
     protected:
       const DiscreteFunctionType* discreteFunction_;
@@ -226,7 +229,21 @@ namespace Dune
       template< class GF >
       struct ConstLocalFunction< GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, GF >::value && !std::is_base_of< Fem::IsDiscreteFunction, GF >::value > >
       {
-        typedef typename GF::LocalFunctionType Type;
+        struct Type
+          : public GF::LocalFunctionType
+        {
+          typedef GF GridFunctionType;
+
+          explicit Type ( const GridFunctionType &gridFunction )
+            : GridFunctionType::LocalFunctionType( gridFunction ),
+              gridFunction_( gridFunction )
+          {}
+
+          const GridFunctionType &gridFunction () const { return gridFunction_; }
+
+        private:
+          const GridFunctionType &gridFunction_;
+        };
       };
 
     } // namespace Impl
