@@ -3,6 +3,7 @@
 
 #include <dune/grid/common/rangegenerators.hh>
 
+#include <dune/fem/common/bindguard.hh>
 #include <dune/fem/function/common/localcontribution.hh>
 #include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/operator/common/operator.hh>
@@ -60,7 +61,7 @@ void MassOperator< DiscreteFunction, LinearOperator >
     const auto geometry = entity.geometry();
 
     uLocal.init( entity );
-    wLocal.bind( entity );
+    auto wGuard = bindGuard( wLocal, entity );
 
     // run over quadrature points
     for( const auto qp : QuadratureType( entity, 2*dfSpace_.order()+1 ) )
@@ -75,8 +76,6 @@ void MassOperator< DiscreteFunction, LinearOperator >
       // add to local function
       wLocal.axpy( qp, uValue );
     }
-
-    wLocal.unbind();
   }
 }
 
