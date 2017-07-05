@@ -3,7 +3,7 @@
 
 #include <dune/grid/common/rangegenerators.hh>
 
-#include <dune/fem/function/localfunction/temporary.hh>
+#include <dune/fem/function/common/localcontribution.hh>
 #include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/temporarylocalmatrix.hh>
@@ -48,11 +48,11 @@ template< class Function >
 void MassOperator< DiscreteFunction, LinearOperator >
   ::assembleRHS( const Function &u, DiscreteFunctionType &w ) const
 {
-  Dune::Fem::ConstLocalFunction< Function > uLocal( u );
-  Dune::Fem::TemporaryLocalFunction< DiscreteFunctionSpaceType > wLocal( dfSpace_ );
-
   // clear result
   w.clear();
+
+  Dune::Fem::ConstLocalFunction< Function > uLocal( u );
+  Dune::Fem::LocalContribution< DiscreteFunctionType > wLocal( w );
 
   // run over entities
   for( const auto &entity : elements( dfSpace_.gridPart(), Dune::Partitions::interiorBorder ) )
@@ -60,9 +60,7 @@ void MassOperator< DiscreteFunction, LinearOperator >
     const auto geometry = entity.geometry();
 
     uLocal.init( entity );
-
-    wLocal.init( entity );
-    wLocal.clear();
+    wLocal.bind( entity );
 
     // run over quadrature points
     for( const auto qp : QuadratureType( entity, 2*dfSpace_.order()+1 ) )
@@ -78,11 +76,8 @@ void MassOperator< DiscreteFunction, LinearOperator >
       wLocal.axpy( qp, uValue );
     }
 
-    w.addLocalDofs( entity, wLocal.localDofVector() );
+    wLocal.unbind();
   }
-
-  // communicate result
-  w.communicate();
 }
 
 
