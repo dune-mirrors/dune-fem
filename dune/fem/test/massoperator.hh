@@ -60,7 +60,7 @@ void MassOperator< DiscreteFunction, LinearOperator >
   {
     const auto geometry = entity.geometry();
 
-    uLocal.init( entity );
+    auto uGuard = bindGuard( uLocal, entity );
     auto wGuard = bindGuard( wLocal, entity );
 
     // run over quadrature points
