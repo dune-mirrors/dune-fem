@@ -695,23 +695,6 @@ namespace Dune
         return asImp().basisFunctionSet( entity ).order();
       }
 
-      /** obtain a local function for an entity (to store intermediate values)
-
-          \param[in]  entity  entity (of codim 0) for which a local function is
-                             desired
-
-          \returns a local function backed by a small, fast array
-       */
-      DUNE_VERSION_DEPRECATED(3,0,remove)
-      LocalFunctionType localFunction ( const EntityType &entity ) const
-      {
-        if( static_cast< const UninitializedObjectStack& >(ldvStack_).objectSize() == 0 )
-          static_cast< UninitializedObjectStack&>( ldvStack_ ).resize(
-              sizeof( typename BaseType::RangeFieldType ) * blockMapper().maxNumDofs() * localBlockSize );
-
-        return LocalFunctionType( *this, entity, LocalDofVectorType( ldvAllocator_ ) );
-      }
-
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::grid() const */
       inline const GridType &grid () const
       {
