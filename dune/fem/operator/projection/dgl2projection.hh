@@ -7,6 +7,8 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
+#include <dune/fem/function/common/localcontribution.hh>
+#include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
 
 namespace Dune
@@ -104,11 +106,8 @@ namespace Dune
                                   int polOrd = -1)
       {
         typedef typename DiscreteFunctionImp::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-        typedef typename DiscreteFunctionImp::LocalFunctionType   LocalFuncType;
         typedef typename DiscreteFunctionSpaceType::GridPartType  GridPartType;
         typedef typename DiscreteFunctionSpaceType::RangeType     RangeType;
-
-        typedef typename FunctionImp::LocalFunctionType LocalFType;
 
         const DiscreteFunctionSpaceType& space =  discFunc.space();
 
@@ -131,42 +130,34 @@ namespace Dune
         // create storage for values
         std::vector< RangeType > values;
 
+        ConstLocalFunction< FunctionImp > uLocal( func );
+        LocalContribution< DiscreteFunctionImp > wLocal( discFunc );
+
         for(const auto & en : space)
         {
           // get geometry
           const Geometry& geo = en.geometry();
+          uLocal.init( en );
+          wLocal.bind( en );
 
           // get quadrature
           QuadratureType quad(en, quadOrd);
 
-          // get local function of destination
-          LocalFuncType lf = discFunc.localFunction(en);
-
-          // get local function of argument
-          const LocalFType f = func.localFunction(en);
-
-          const int quadNop = quad.nop();
-
           // adjust size of values
-          values.resize( quadNop );
+          values.resize( quad.nop() );
+          uLocal.evaluateQuadrature( quad, values );
 
-          for(int qP = 0; qP < quadNop ; ++qP)
-          {
-            const double intel =
-                 quad.weight(qP) * geo.integrationElement( quad.point(qP) );
-
-            // evaluate function at quadrature point
-            f.evaluate(quad[ qP ], values[ qP ] );
-
-            // apply weight
-            values[ qP ] *= intel;
-          }
+          // apply weight
+          for(auto qp : quad )
+            values[ qp.index() ] *= qp.weight() * geo.integrationElement( qp.position() );
 
           // add values to local function
-          lf.axpyQuadrature( quad, values );
+          wLocal.axpyQuadrature( quad, values );
 
           // apply inverse of mass matrix to local function
-          massMatrix.applyInverse( en, lf );
+          massMatrix.applyInverse( en, wLocal );
+
+          wLocal.unbind();
         }
       }
     };
