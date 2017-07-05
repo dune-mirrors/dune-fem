@@ -8,6 +8,8 @@
 
 #include <dune/geometry/referenceelements.hh>
 
+#include <dune/fem/function/localfunction/const.hh>
+
 namespace Dune
 {
 
@@ -130,8 +132,6 @@ namespace Dune
       typedef typename GridPartType::template Codim< 0 >::IteratorType IteratorType;
       typedef typename GridPartType::template Codim< 0 >::EntityType EntityType;
 
-      typedef typename GridFunction::LocalFunctionType LocalFunctionType;
-
       const int numSamples = samples.size();
       if( numSamples < 2 )
         DUNE_THROW( InvalidStateException, "LineSegmentSampler cannot sample less than 2 points." );
@@ -143,6 +143,7 @@ namespace Dune
       for( int i = 0; i < numSamples; ++i )
         samples[ i ] = typename GridFunction::RangeType( invalid );
 
+      ConstLocalFunction< GridFunction > lf( f );
       const IteratorType end = gridPart().template end< 0 >();
       for( IteratorType it = gridPart().template begin< 0 >(); it != end; ++it )
       {
@@ -183,7 +184,7 @@ namespace Dune
 
         if( lower <= upper )
         {
-          const LocalFunctionType &lf = f.localFunction( entity );
+          lf.bind( entity );
           const int i_upper = std::min( int( std::floor( upper + 1e-8 ) ), numSamples - 1 );
           const int i_lower = std::max( int( std::ceil( lower - 1e-8 ) ), 0 );
           for( int i = i_lower; i <= i_upper; ++i )
@@ -192,6 +193,7 @@ namespace Dune
             xi.axpy( DomainFieldType( i ), ds );
             lf.evaluate( geometry.local( xi ), samples[ i ] );
           }
+          lf.unbind();
         }
       }
 

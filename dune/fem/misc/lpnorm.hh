@@ -137,7 +137,7 @@ namespace Dune
       template< class Function >
       struct WeightedFunctionMultiplicator;
 
-      typedef typename WeightFunctionType::LocalFunctionType LocalWeightFunctionType;
+      typedef ConstLocalFunction< WeightFunctionType > LocalWeightFunctionType;
       typedef typename WeightFunctionType::RangeType WeightType;
 
       typedef typename BaseType::EntityType EntityType;
@@ -159,7 +159,7 @@ namespace Dune
       void distanceLocal ( const EntityType &entity, unsigned int order, const ULocalFunctionType &uLocal, const VLocalFunctionType &vLocal, ReturnType &sum ) const;
 
     private:
-      const WeightFunctionType &weightFunction_;
+      LocalWeightFunctionType wfLocal_;
       const double p_;
     };
 
@@ -332,7 +332,7 @@ namespace Dune
     inline WeightedLPNorm< WeightFunction, OrderCalculator >
       ::WeightedLPNorm ( const WeightFunctionType &weightFunction, double p, const bool communicate )
     : BaseType( weightFunction.space().gridPart(), p, communicate ),
-      weightFunction_( weightFunction ),
+      wfLocal_( weightFunction ),
       p_(p)
     {
       static_assert( (WeightFunctionSpaceType::dimRange == 1),
@@ -348,11 +348,10 @@ namespace Dune
       // !!!! order !!!!
       IntegratorType integrator( order );
 
-      LocalWeightFunctionType wfLocal = weightFunction_.localFunction( entity );
-
-      WeightedFunctionMultiplicator< LocalFunctionType > uLocal2( wfLocal, uLocal, p_ );
-
+      wfLocal_.bind( entity );
+      WeightedFunctionMultiplicator< LocalFunctionType > uLocal2( wfLocal_, uLocal, p_ );
       integrator.integrateAdd( entity, uLocal2, sum );
+      wfLocal_.unbind();
     }
 
 
@@ -366,12 +365,12 @@ namespace Dune
       // !!!! order !!!!
       IntegratorType integrator( order );
 
-      LocalWeightFunctionType wfLocal = weightFunction_.localFunction( entity );
-
+      wfLocal_.bind( entity );
       LocalDistanceType dist( uLocal, vLocal );
-      WeightedFunctionMultiplicator< LocalDistanceType > dist2( wfLocal, dist );
+      WeightedFunctionMultiplicator< LocalDistanceType > dist2( wfLocal_, dist );
 
       integrator.integrateAdd( entity, dist2, sum );
+      wfLocal_.unbind();
     }
 
 
