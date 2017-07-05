@@ -39,13 +39,25 @@ namespace Dune
       template< class DiscreteFunction >
       struct Add
       {
-        void initialize ( DiscreteFunction &df ) const {}
-        void finalize ( DiscreteFunction &df ) const { df.communicate(); }
+        typedef typename DiscreteFunction::DofType DofType;
+
+        void initialize ( DiscreteFunction &df ) const
+        {
+          // clear slave DoFs
+          auto &dofVector = df.dofVector();
+          for( const auto &slaveDof : df.space().slaveDofs() )
+          {
+            for( unsigned int j = 0; j < DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize; ++j )
+              dofVector[ slaveDof ][ j ] = DofType( 0 );
+          }
+        }
+
+        void finalize ( DiscreteFunction &df ) const { df.space().communicate( df, DFCommunicationOperation::Add() ); }
 
         template< class Entity, class LocalDofVector >
         void prepare ( const Entity &entity, const DiscreteFunction &df, LocalDofVector &localDofVector ) const
         {
-          std::fill( localDofVector.begin(), localDofVector.end(), typename DiscreteFunction::DofType( 0 ) );
+          std::fill( localDofVector.begin(), localDofVector.end(), DofType( 0 ) );
         }
 
         template< class Entity, class LocalDofVector >
@@ -62,17 +74,9 @@ namespace Dune
 
       template< class DiscreteFunction >
       struct AddScaled
+        : public Add< DiscreteFunction >
       {
         AddScaled ( typename DiscreteFunction::DofType factor ) : factor_( std::move( factor ) ) {}
-
-        void initialize ( DiscreteFunction &df ) const {}
-        void finalize ( DiscreteFunction &df ) const { df.communicate(); }
-
-        template< class Entity, class LocalDofVector >
-        void prepare ( const Entity &entity, const DiscreteFunction &df, LocalDofVector &localDofVector ) const
-        {
-          std::fill( localDofVector.begin(), localDofVector.end(), typename DiscreteFunction::DofType( 0 ) );
-        }
 
         template< class Entity, class LocalDofVector >
         void apply ( const Entity &entity, const LocalDofVector &localDofVector, DiscreteFunction &df ) const
@@ -93,7 +97,7 @@ namespace Dune
       struct Set
       {
         void initialize ( DiscreteFunction &df ) const {}
-        void finalize ( DiscreteFunction &df ) const { df.communicate(); }
+        void finalize ( DiscreteFunction &df ) const { df.space().communicate( df, DFCommunicationOperation::Copy() ); }
 
         template< class Entity, class LocalDofVector >
         void prepare ( const Entity &entity, const DiscreteFunction &df, LocalDofVector &localDofVector ) const
