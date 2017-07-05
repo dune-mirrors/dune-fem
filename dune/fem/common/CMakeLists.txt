@@ -1,5 +1,6 @@
 #install header files
-dune_install( coordinate.hh
+dune_install( bindguard.hh
+              coordinate.hh
               fmatrixcol.hh
               forloop.hh
               referencevector.hh
