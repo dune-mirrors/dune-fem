@@ -56,7 +56,7 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
   // fill with increasing values
   int cont(0);
   {
-    Dune::Fem::LocalContribution< DiscreteFunction > lf( df );
+    Dune::Fem::AddLocalContribution< DiscreteFunction > lf( df );
     for( const auto& entity : entities(df) )
     {
       lf.bind( entity );

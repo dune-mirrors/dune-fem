@@ -146,7 +146,7 @@ namespace Dune
     // LocalContribution
     // -----------------
 
-    template< class DiscreteFunction, template< class > class AssemblyOperation = Assembly::Add >
+    template< class DiscreteFunction, template< class > class AssemblyOperation >
     class LocalContribution
       : public Dune::DenseVector< LocalContribution< DiscreteFunction, AssemblyOperation > >
     {
@@ -341,6 +341,30 @@ namespace Dune
       BasisFunctionSetType basisFunctionSet_;
       AssemblyOperationType assemblyOperation_;
     };
+
+
+
+    // AddLocalContribution
+    // --------------------
+
+    template< class DiscreteFunction >
+    using AddLocalContribution = LocalContribution< DiscreteFunction, Assembly::Add >;
+
+
+
+    // AddScaledLocalContribution
+    // --------------------------
+
+    template< class DiscreteFunction >
+    using AddScaledLocalContribution = LocalContribution< DiscreteFunction, Assembly::AddScaled >;
+
+
+
+    // SetLocalContribution
+    // --------------------
+
+    template< class DiscreteFunction >
+    using SetLocalContribution = LocalContribution< DiscreteFunction, Assembly::Set >;
 
   } // namespace Fem
 

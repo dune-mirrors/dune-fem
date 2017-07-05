@@ -84,7 +84,7 @@ int main ( int argc, char **argv )
     typedef Dune::Fem::AdaptiveDiscreteFunction< HostDiscreteFunctionSpaceType > HostDiscreteFunctionType;
     HostDiscreteFunctionType hostDF( "host", hostSpace );
     {
-      Dune::Fem::LocalContribution< HostDiscreteFunctionType > localDF( hostDF );
+      Dune::Fem::AddLocalContribution< HostDiscreteFunctionType > localDF( hostDF );
       for( const auto &entity : entities( hostDF ) )
       {
         localDF.bind( entity );
@@ -99,7 +99,7 @@ int main ( int argc, char **argv )
     typedef Dune::Fem::AdaptiveDiscreteFunction< FilteredDiscreteFunctionSpaceType > FilteredDiscreteFunctionType;
     FilteredDiscreteFunctionType leftDF( "left", leftSpace );
     {
-      Dune::Fem::LocalContribution< FilteredDiscreteFunctionType > localDF( leftDF );
+      Dune::Fem::AddLocalContribution< FilteredDiscreteFunctionType > localDF( leftDF );
       for( const auto &entity : entities( leftDF ) )
       {
         localDF.bind( entity );
@@ -111,7 +111,7 @@ int main ( int argc, char **argv )
     FilteredDiscreteFunctionSpaceType rightSpace( rightGridPart );
     FilteredDiscreteFunctionType rightDF( "right", rightSpace );
     {
-      Dune::Fem::LocalContribution< FilteredDiscreteFunctionType > localDF( rightDF );
+      Dune::Fem::AddLocalContribution< FilteredDiscreteFunctionType > localDF( rightDF );
       for( const auto &entity : entities( rightDF ) )
       {
         localDF.bind( entity );

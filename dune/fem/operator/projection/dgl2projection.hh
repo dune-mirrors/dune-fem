@@ -131,7 +131,7 @@ namespace Dune
         std::vector< RangeType > values;
 
         ConstLocalFunction< FunctionImp > uLocal( func );
-        LocalContribution< DiscreteFunctionImp > wLocal( discFunc );
+        LocalContribution< DiscreteFunctionImp, Assembly::Add > wLocal( discFunc );
 
         for(const auto & en : space)
         {

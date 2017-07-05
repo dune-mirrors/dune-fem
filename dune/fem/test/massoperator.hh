@@ -53,7 +53,7 @@ void MassOperator< DiscreteFunction, LinearOperator >
   w.clear();
 
   Dune::Fem::ConstLocalFunction< Function > uLocal( u );
-  Dune::Fem::LocalContribution< DiscreteFunctionType > wLocal( w );
+  Dune::Fem::AddLocalContribution< DiscreteFunctionType > wLocal( w );
 
   // run over entities
   for( const auto &entity : elements( dfSpace_.gridPart(), Dune::Partitions::interiorBorder ) )
