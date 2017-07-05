@@ -1,3 +1,1 @@
-dune_install(bicgstab.hh  bicgstabsimple.hh
-             gmres.hh  gmressimple.hh
-             iterativesolver.hh)
+dune_install(cg.hh bicgstab.hh gmres.hh)

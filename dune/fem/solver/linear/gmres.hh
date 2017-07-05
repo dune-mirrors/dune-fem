@@ -7,8 +7,8 @@
 
 #include <utility>
 
-#include <dune/fem/solver/linear/iterativesolver.hh>
 #include <dune/fem/solver/pardg.hh>
+#include <dune/fem/solver/linear/cg.hh>
 
 namespace Dune
 {
@@ -42,13 +42,19 @@ namespace LinearSolver
         y[ l ] = 0;
       }
 
-      const auto& vj  = vjp.dofVector();
-      const size_t dim = vj.size();
-      for( size_t i=0; i<dim; ++i )
+      const auto& slaveDofs = vjp.space().slaveDofs();
+      const auto& vj = vjp.dofVector();
+
+      const size_t numSlaves = slaveDofs.size();
+      for( size_t slave = 0, i = 0 ; slave < numSlaves; ++slave )
       {
-        for(int l=0; l<m; ++l)
+        const size_t nextSlave = slaveDofs[ slave ];
+        for(; i < nextSlave; ++i )
         {
-          y[ l ] += (vj[ i ] * v[ l ].dofVector()[ i ]);
+          for(int l=0; l<m; ++l)
+          {
+            y[ l ] += (vj[ i ] * v[ l ].dofVector()[ i ]);
+          }
         }
       }
 
