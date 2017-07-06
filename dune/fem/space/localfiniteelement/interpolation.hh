@@ -64,7 +64,7 @@ namespace Dune
           typename Traits::RangeType help;
           lf_.evaluate( x, help );
           typename Transformation::InverseTransformationType transf( lf_.entity().geometry(), x );
-          y = transf.apply_t( help );
+          y = transf.apply( help );
         }
 
       private:
