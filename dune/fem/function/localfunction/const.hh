@@ -130,6 +130,9 @@ namespace Dune
       typedef typename BaseType::EntityType EntityType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
       typedef typename BaseType::LocalDofVectorType LocalDofVectorType;
+      typedef typename BaseType::RangeType RangeType;
+      typedef typename BaseType::JacobianRangeType JacobianRangeType;
+      typedef typename BaseType::HessianRangeType HessianRangeType;
 
       /** \brief constructor creating a local function without binding it to an
                  entity
@@ -192,6 +195,55 @@ namespace Dune
 
       using BaseType::localDofVector;
 
+      using BaseType::evaluate;
+      using BaseType::jacobian;
+      using BaseType::hessian;
+
+      /** \brief evaluate the local function
+       *
+       *  \param[in]   x    evaluation point in local coordinates
+       *  \returns          value of the function in the given point
+       */
+      template< class Point >
+      RangeType evaluate ( const Point &p ) const
+      {
+        RangeType val;
+        evaluate( p, val );
+        return val;
+      }
+
+      /** \brief evaluate Jacobian of the local function
+       *
+       *  \note Though the Jacobian is evaluated on the reference element, the
+       *        return value is the Jacobian with respect to the actual entity.
+       *
+       *  \param[in]   x    evaluation point in local coordinates
+       *  \returns          Jacobian of the function in the evaluation point
+       */
+      template< class Point >
+      JacobianRangeType jacobian ( const Point &p ) const
+      {
+        JacobianRangeType jac;
+        jacobian( p, jac );
+        return jac;
+      }
+
+      /** \brief evaluate Hessian of the local function
+       *
+       *  \note Though the Hessian is evaluated on the reference element, the
+       *        return value is the Hessian with respect to the actual entity.
+       *
+       *  \param[in]   x        evaluation point in local coordinates
+       *  \returns              Hessian of the function in the evaluation point
+       */
+      template< class Point >
+      HessianRangeType hessian ( const Point &p ) const
+      {
+        HessianRangeType h;
+        hessian( p, h );
+        return h;
+      }
+
       /** \copydoc Dune::Fem::LocalFunction :: init */
       void init ( const EntityType &entity )
       {
@@ -202,7 +254,7 @@ namespace Dune
       void bind ( const EntityType &entity ) { init( entity ); }
       void unbind () {}
 
-      const DiscreteFunctionType& discreteFunction() const { return *discreteFunction_; }
+      const DiscreteFunctionType &discreteFunction() const { return *discreteFunction_; }
       const GridFunctionType &gridFunction() const { return discreteFunction(); }
 
     protected:
@@ -235,12 +287,46 @@ namespace Dune
           typedef GF GridFunctionType;
           typedef typename GridFunctionType::LocalFunctionType::EntityType EntityType;
 
+          typedef typename GF::LocalFunctionType::RangeType RangeType;
+          typedef typename GF::LocalFunctionType::JacobianRangeType JacobianRangeType;
+          typedef typename GF::LocalFunctionType::HessianRangeType HessianRangeType;
+
           explicit Type ( const GridFunctionType &gridFunction )
             : GridFunctionType::LocalFunctionType( gridFunction ),
               gridFunction_( gridFunction )
           {}
 
+          using GF::LocalFunctionType::evaluate;
+          using GF::LocalFunctionType::jacobian;
+          using GF::LocalFunctionType::hessian;
           using GF::LocalFunctionType::init;
+
+          //! evaluate local function
+          template< class Point >
+          RangeType evaluate ( const Point &p ) const
+          {
+            RangeType val;
+            evaluate( p, val );
+            return val;
+          }
+
+          //! jacobian of local function
+          template< class Point >
+          JacobianRangeType jacobian ( const Point &p ) const
+          {
+            JacobianRangeType jac;
+            jacobian( p, jac );
+            return jac;
+          }
+
+          //! hessian of local function
+          template< class Point >
+          HessianRangeType hessian ( const Point &p ) const
+          {
+            HessianRangeType h;
+            hessian( p, h );
+            return h;
+          }
 
           void bind ( const EntityType &entity ) { init( entity ); }
           void unbind () {}
