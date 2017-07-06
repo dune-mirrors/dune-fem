@@ -49,11 +49,11 @@ namespace Dune
       typedef PiolaTransformation< Geometry, dimRange > ThisType;
 
       static const int dimDomain = Geometry::GlobalCoordinate::dimension;
-      typedef typename Geometry::JacobianTransposed JacobianInverseTransposed;
+      typedef typename Geometry::JacobianTransposed JacobianTransposed;
 
       static_assert( dimRange % dimDomain == 0, "PiolaTransformation can only be applied if dimRange is a multiple of dimDomain." );
 
-      typedef typename FieldTraits< JacobianInverseTransposed >::real_type real_type;
+      typedef typename FieldTraits< JacobianTransposed >::real_type real_type;
       static const int blocks = dimRange / dimDomain;
 
     public:
@@ -136,7 +136,7 @@ namespace Dune
       }
 
     protected:
-      JacobianInverseTransposed gjt_;
+      JacobianTransposed gjt_;
       real_type detInv_;
     };
 
@@ -151,11 +151,11 @@ namespace Dune
       typedef InversePiolaTransformation< Geometry, dimRange > ThisType;
 
       static const int dimDomain = Geometry::GlobalCoordinate::dimension;
-      typedef typename Geometry::JacobianTransposed JacobianTransposed;
+      typedef typename Geometry::JacobianInverseTransposed JacobianInverseTransposed;
 
       static_assert( dimRange % dimDomain == 0, "PiolaTransformation can only be applied if dimRange is a multiple of dimDomain." );
 
-      typedef typename FieldTraits< JacobianTransposed >::real_type real_type;
+      typedef typename FieldTraits< JacobianInverseTransposed >::real_type real_type;
       static const int blocks = dimRange / dimDomain;
 
     public:
@@ -163,8 +163,8 @@ namespace Dune
 
       template< class Point >
       InversePiolaTransformation ( const Geometry &geo, const Point &p )
-        : gjt_( geo.jacobianInverseTransposed( p ) ),
-        detInv_( 1.0 / determinante( gjt_ ) )
+        : gjit_( geo.jacobianInverseTransposed( p ) ),
+        detInv_( 1.0 / determinante( gjit_ ) )
       {}
 
       template< class F >
@@ -175,7 +175,7 @@ namespace Dune
         for( std::size_t r = 0; r < blocks; ++r )
         {
           std::copy_n( d.begin() + r*dimDomain, dimDomain, arg.begin() );
-          gjt_.mtv( arg, dest );
+          gjit_.mtv( arg, dest );
           std::copy_n( dest.begin(), dimDomain, ret.begin() + r*dimDomain );
         }
         ret *= detInv_;
@@ -190,7 +190,7 @@ namespace Dune
         for( std::size_t r = 0; r < blocks; ++r )
         {
           std::copy_n( ret.begin() + r*dimDomain, dimDomain, arg.begin() );
-          gjt_.mv( arg, dest );
+          gjit_.mv( arg, dest );
           std::copy_n( dest.begin(), dimDomain, ret.begin() + r*dimDomain );
         }
         ret *= detInv_;
@@ -209,7 +209,7 @@ namespace Dune
           for( std::size_t b = 0; b < blocks; ++b )
           {
             std::copy_n( col.begin() + b*dimDomain, dimDomain, arg.begin() );
-            gjt_.mv( arg, dest );
+            gjit_.mv( arg, dest );
             std::copy_n( dest.begin(), dimDomain, col.begin() + b*dimDomain );
           }
         }
@@ -229,7 +229,7 @@ namespace Dune
           for( std::size_t b = 0; b < blocks; ++b )
           {
             std::copy_n( col.begin() + b*dimDomain, dimDomain, arg.begin() );
-            gjt_.mtv( arg, dest );
+            gjit_.mtv( arg, dest );
             std::copy_n( dest.begin(), dimDomain, col.begin() + b*dimDomain );
           }
         }
@@ -238,7 +238,7 @@ namespace Dune
       }
 
     protected:
-      JacobianTransposed gjt_;
+      JacobianInverseTransposed gjit_;
       real_type detInv_;
     };
 
