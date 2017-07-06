@@ -47,8 +47,9 @@ typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 
 typedef TestFunctionSpace FunctionSpaceType;
 
-typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
-  DiscreteFunctionSpaceType;
+// typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
+//   DiscreteFunctionSpaceType;
+typedef LagrangeSpace< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
 
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
@@ -86,7 +87,7 @@ int main(int argc, char ** argv)
 
     GridPartType gridPart( grid );
 
-    DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
+    DiscreteFunctionSpaceType discreteFunctionSpace( gridPart, polOrder );
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
     solution.clear();
 

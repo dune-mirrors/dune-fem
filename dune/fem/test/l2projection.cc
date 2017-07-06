@@ -185,7 +185,7 @@ inline Algorithm::ErrorType Algorithm::finalize ( DiscreteFunctionType &solution
   ErrorType error;
   typedef Dune::Fem::GridFunctionAdapter< FunctionType, GridPartType > GridFunctionType;
 
-  const int order = DiscreteSpaceType::polynomialOrder+1;
+  const int order = solution.space().order()+1;
   GridFunctionType gridFunction( "exact solution", function_, gridPart, order );
 
   Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );

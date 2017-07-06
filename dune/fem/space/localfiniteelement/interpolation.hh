@@ -27,8 +27,11 @@ namespace Dune
       {
         struct Traits
         {
+          typedef typename LocalFunction::DomainType DomainType;
           typedef typename LocalFunction::RangeType RangeType;
         };
+        typedef typename LocalFunction::DomainType DomainType;
+        typedef typename LocalFunction::RangeType RangeType;
 
         LocalFunctionWrapper ( const LocalFunction &lf, const BasisFunctionSet &bset ) : lf_( lf ) {}
 
@@ -53,8 +56,11 @@ namespace Dune
 
         struct Traits
         {
+          typedef typename LocalFunction::DomainType DomainType;
           typedef typename LocalFunction::RangeType RangeType;
         };
+        typedef typename LocalFunction::DomainType DomainType;
+        typedef typename LocalFunction::RangeType RangeType;
 
         LocalFunctionWrapper ( const LocalFunction &lf, const BasisFunctionSetType &bset ) : lf_( lf ), bset_( bset ) {}
 

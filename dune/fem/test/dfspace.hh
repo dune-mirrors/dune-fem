@@ -23,7 +23,7 @@
 #endif
 
 #ifndef DIMRANGE
-#  define DIMRANGE 4
+#  define DIMRANGE 1
 #endif
 
 

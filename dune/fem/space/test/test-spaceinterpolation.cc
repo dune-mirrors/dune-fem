@@ -52,13 +52,14 @@ static const int dimRange = GridPartType::dimensionworld;
 typedef Dune::Fem::FunctionSpace< typename GridPartType::ctype,
         typename GridPartType::ctype, GridPartType::dimensionworld, dimRange > FunctionSpaceType;
 
-typedef Dune::Fem::BDMDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
+typedef Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
 //typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
 //typedef Dune::Fem::FiniteVolumeSpace< FunctionSpaceType, GridPartType  > DiscreteFunctionSpaceType;
 //typedef Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
 //typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
 //typedef Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
-//typedef Dune::Fem::RannacherTurekDiscreteFunctionSpace< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
+//typedef Dune::Fem::RannacherTurekSpace< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
+//typedef Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
 
 typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 

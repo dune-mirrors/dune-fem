@@ -31,13 +31,13 @@ namespace Dune
   namespace Fem
   {
 
-    // LocalFiniteElementDiscreteFunctionSpaceTraits
-    // ---------------------------------------------
+    // LocalFiniteElementSpaceTraits
+    // -----------------------------
 
     template< class LFEMap, class FunctionSpace, template< class > class Storage >
-    struct LocalFiniteElementDiscreteFunctionSpaceTraits
+    struct LocalFiniteElementSpaceTraits
     {
-      typedef LocalFiniteElementDiscreteFunctionSpace< LFEMap, FunctionSpace, Storage > DiscreteFunctionSpaceType;
+      typedef LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > DiscreteFunctionSpaceType;
 
       typedef LFEMap LFEMapType;
 
@@ -101,24 +101,24 @@ namespace Dune
 
 
 
-    // LocalFiniteElementDiscreteFunctionSpace
-    // ---------------------------------------
+    // LocalFiniteElementSpace
+    // -----------------------
 
     /** \brief Rannacher-Turek Space
-     *  \class LocalFiniteElementDiscreteFunctionSpace
+     *  \class LocalFiniteElementSpace
      *  \ingroup DiscreteFunctionSpace
      *
-     *  \note The LocalFiniteElementDiscreteFunctionSpace depends on
+     *  \note The LocalFiniteElementSpace depends on
      *        dune-localfunctions (see http://www.dune-project.org).
      *
      *  \todo please doc me
      **/
     template< class LFEMap, class FunctionSpace, template< class > class Storage >
-    class LocalFiniteElementDiscreteFunctionSpace
-      : public DiscreteFunctionSpaceDefault< LocalFiniteElementDiscreteFunctionSpaceTraits< LFEMap, FunctionSpace, Storage > >
+    class LocalFiniteElementSpace
+      : public DiscreteFunctionSpaceDefault< LocalFiniteElementSpaceTraits< LFEMap, FunctionSpace, Storage > >
     {
-      typedef LocalFiniteElementDiscreteFunctionSpace< LFEMap, FunctionSpace, Storage > ThisType;
-      typedef DiscreteFunctionSpaceDefault< LocalFiniteElementDiscreteFunctionSpaceTraits< LFEMap, FunctionSpace, Storage > >
+      typedef LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > ThisType;
+      typedef DiscreteFunctionSpaceDefault< LocalFiniteElementSpaceTraits< LFEMap, FunctionSpace, Storage > >
         BaseType;
 
       typedef typename BaseType::Traits Traits;
@@ -193,9 +193,9 @@ namespace Dune
       using BaseType::order;
 
       template< class GridPart, std::enable_if_t< std::is_same< GridPart, GridPartType >::value &&std::is_same< KeyType, std::tuple< > >::value, int > = 0 >
-      explicit LocalFiniteElementDiscreteFunctionSpace ( GridPart &gridPart,
-                                                         const InterfaceType commInterface = defaultInterface,
-                                                         const CommunicationDirection commDirection = defaultDirection )
+      explicit LocalFiniteElementSpace ( GridPart &gridPart,
+                                         const InterfaceType commInterface = defaultInterface,
+                                         const CommunicationDirection commDirection = defaultDirection )
         : BaseType( gridPart, commInterface, commDirection ),
         lfeMap_( &LFEMapProviderType::getObject( std::make_pair( &gridPart, KeyType() ) ) ),
         storedShapeFunctionSetVector_( &StoredShapeFunctionSetVectorProviderType::getObject( lfeMap_.get() ) ),
@@ -203,17 +203,17 @@ namespace Dune
       {}
 
       template< class GridPart, std::enable_if_t< std::is_same< GridPart, GridPartType >::value && !std::is_same< KeyType, std::tuple< > >::value, int > = 0 >
-      explicit LocalFiniteElementDiscreteFunctionSpace ( GridPart &gridPart, const KeyType &key,
-                                                         const InterfaceType commInterface = defaultInterface,
-                                                         const CommunicationDirection commDirection = defaultDirection )
+      explicit LocalFiniteElementSpace ( GridPart &gridPart, const KeyType &key,
+                                         const InterfaceType commInterface = defaultInterface,
+                                         const CommunicationDirection commDirection = defaultDirection )
         : BaseType( gridPart, commInterface, commDirection ),
         lfeMap_( &LFEMapProviderType::getObject( std::make_pair( &gridPart, key ) ) ),
         storedShapeFunctionSetVector_( &StoredShapeFunctionSetVectorProviderType::getObject( lfeMap_.get() ) ),
         blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get() ) )
       {}
 
-      LocalFiniteElementDiscreteFunctionSpace ( const ThisType & ) = delete;
-      LocalFiniteElementDiscreteFunctionSpace ( ThisType && ) = delete;
+      LocalFiniteElementSpace ( const ThisType & ) = delete;
+      LocalFiniteElementSpace ( ThisType && ) = delete;
 
       ThisType &operator= ( const ThisType & ) = delete;
       ThisType &operator= ( ThisType && ) = delete;
