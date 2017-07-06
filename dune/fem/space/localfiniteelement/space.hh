@@ -15,15 +15,15 @@
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/functionspace.hh>
-#include <dune/fem/space/mapper/nonblockmapper.hh>
-#include <dune/fem/space/shapefunctionset/localfunctions.hh>
+#include <dune/fem/space/mapper/indexsetdofmapper.hh>
+#include <dune/fem/space/mapper/compile.hh>
 #include <dune/fem/space/shapefunctionset/proxy.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
 #include <dune/fem/space/shapefunctionset/vectorial.hh>
 
+#include <dune/fem/space/localfiniteelement/shapefunctionset.hh>
 #include <dune/fem/space/localfiniteelement/capabilities.hh>
 #include <dune/fem/space/localfiniteelement/interpolation.hh>
-#include <dune/fem/space/rannacherturek/dofmappercode.hh>
 
 namespace Dune
 {
