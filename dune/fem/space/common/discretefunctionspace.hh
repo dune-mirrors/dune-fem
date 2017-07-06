@@ -725,6 +725,12 @@ namespace Dune
         return blockMapper().size() * localBlockSize ;
       }
 
+      //! \brief return the maximal number of dofs on entities
+      inline int maxNumDofs () const
+      {
+        return blockMapper().maxNumDofs() * localBlockSize;
+      }
+
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::begin() const
        *
        *  \note The default implementation uses the codim 0 iterators of the
