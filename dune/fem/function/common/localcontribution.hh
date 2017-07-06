@@ -8,6 +8,8 @@
 #include <dune/common/densevector.hh>
 #include <dune/common/ftraits.hh>
 
+#include <dune/fem/common/localcontribution.hh>
+
 namespace Dune
 {
 
@@ -22,25 +24,17 @@ namespace Dune
 
 
 
-    // Internal Forward Declarations
-    // -----------------------------
-
-    template< class DiscreteFunction, template< class > class AssemblyOperation >
-    class LocalContribution;
-
-
-
     namespace Assembly
     {
 
       namespace Global
       {
 
-        // Add
-        // ---
+        // AddBase
+        // -------
 
         template< class DiscreteFunction >
-        struct Add
+        struct AddBase< DiscreteFunction, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > >
         {
           typedef typename DiscreteFunction::DofType DofType;
 
@@ -60,11 +54,11 @@ namespace Dune
 
 
 
-        // Set
-        // ---
+        // SetBase
+        // -------
 
         template< class DiscreteFunction >
-        struct Set
+        struct SetBase< DiscreteFunction, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > >
         {
           static void begin ( DiscreteFunction &df ) {}
           static void end ( DiscreteFunction &df ) { df.space().communicate( df, DFCommunicationOperation::Copy() ); }
@@ -74,11 +68,11 @@ namespace Dune
 
 
 
-      // Add
-      // ---
+      // AddBase
+      // -------
 
       template< class DiscreteFunction >
-      struct Add
+      struct AddBase< DiscreteFunction, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > >
       {
         typedef typename DiscreteFunction::DofType DofType;
 
@@ -99,14 +93,14 @@ namespace Dune
 
 
 
-      // AddScaled
-      // ---------
+      // AddScaledBase
+      // -------------
 
       template< class DiscreteFunction >
-      struct AddScaled
-        : public Add< DiscreteFunction >
+      struct AddScaledBase< DiscreteFunction, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > >
+        : public AddBase< DiscreteFunction >
       {
-        AddScaled ( typename DiscreteFunction::DofType factor ) : factor_( std::move( factor ) ) {}
+        AddScaledBase ( typename DiscreteFunction::DofType factor ) : factor_( std::move( factor ) ) {}
 
         template< class Entity, class LocalDofVector >
         void end ( const Entity &entity, LocalDofVector &localDofVector, DiscreteFunction &df ) const
@@ -120,11 +114,11 @@ namespace Dune
 
 
 
-      // Set
-      // ---
+      // SetBase
+      // -------
 
       template< class DiscreteFunction >
-      struct Set
+      struct SetBase< DiscreteFunction, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > >
       {
         typedef typename DiscreteFunction::DofType DofType;
 
@@ -149,11 +143,11 @@ namespace Dune
 
 
 
-  // DenseMatVecTraits for LocalContribution
-  // ---------------------------------------
+  // DenseMatVecTraits for LocalContribution for Discrete Functions
+  // --------------------------------------------------------------
 
   template< class DiscreteFunction, template< class > class AssemblyOperation >
-  struct DenseMatVecTraits< Fem::LocalContribution< DiscreteFunction, AssemblyOperation > >
+  struct DenseMatVecTraits< Fem::LocalContribution< DiscreteFunction, AssemblyOperation, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > > >
   {
     typedef Fem::LocalContribution< DiscreteFunction, AssemblyOperation > derived_type;
     typedef typename DiscreteFunction::DofType value_type;
@@ -163,11 +157,11 @@ namespace Dune
 
 
 
-  // FieldTraits for LocalContribution
-  // ---------------------------------
+  // FieldTraits for LocalContribution for Discrete Functions
+  // --------------------------------------------------------
 
   template< class DiscreteFunction, template< class > class AssemblyOperation >
-  struct FieldTraits< Fem::LocalContribution< DiscreteFunction, AssemblyOperation > >
+  struct FieldTraits< Fem::LocalContribution< DiscreteFunction, AssemblyOperation, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > > >
   {
     typedef typename FieldTraits< typename DiscreteFunction::DofType >::field_type field_type;
     typedef typename FieldTraits< typename DiscreteFunction::DofType >::real_type real_type;
@@ -178,11 +172,11 @@ namespace Dune
   namespace Fem
   {
 
-    // LocalContribution
-    // -----------------
+    // LocalContribution for Discrete Functions
+    // ----------------------------------------
 
     template< class DiscreteFunction, template< class > class AssemblyOperation >
-    class LocalContribution
+    class LocalContribution< DiscreteFunction, AssemblyOperation, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, DiscreteFunction >::value > >
       : public Dune::DenseVector< LocalContribution< DiscreteFunction, AssemblyOperation > >
     {
       typedef LocalContribution< DiscreteFunction, AssemblyOperation > ThisType;
@@ -373,30 +367,6 @@ namespace Dune
       BasisFunctionSetType basisFunctionSet_;
       AssemblyOperationType assemblyOperation_;
     };
-
-
-
-    // AddLocalContribution
-    // --------------------
-
-    template< class DiscreteFunction >
-    using AddLocalContribution = LocalContribution< DiscreteFunction, Assembly::Add >;
-
-
-
-    // AddScaledLocalContribution
-    // --------------------------
-
-    template< class DiscreteFunction >
-    using AddScaledLocalContribution = LocalContribution< DiscreteFunction, Assembly::AddScaled >;
-
-
-
-    // SetLocalContribution
-    // --------------------
-
-    template< class DiscreteFunction >
-    using SetLocalContribution = LocalContribution< DiscreteFunction, Assembly::Set >;
 
   } // namespace Fem
 
