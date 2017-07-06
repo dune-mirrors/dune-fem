@@ -50,6 +50,8 @@ namespace Dune
       typedef typename LocalFiniteElementType::Traits::LocalCoefficientsType LocalCoefficientsType;
       typedef typename LocalFiniteElementType::Traits::LocalInterpolationType LocalInterpolationType;
 
+      typedef std::tuple< std::size_t, const LocalBasisType&, const LocalInterpolationType& > ReturnType;
+
       template< class ... Args >
       BDMLocalFiniteElementMap ( const GridPart &gridPart, Args ... args )
         : gridPart_( gridPart )
@@ -66,11 +68,10 @@ namespace Dune
       int order ( const Entity &entity ) const { return order(); }
 
       template< class Entity >
-      std::tuple< std::size_t, const LocalBasisType &, const LocalInterpolationType & > operator() ( const Entity &e ) const
+      ReturnType operator() ( const Entity &e ) const
       {
         unsigned char orient = orientation( e );
-        return std::make_tuple(
-          static_cast< std::size_t >( orient ),
+        return ReturnType( static_cast< std::size_t >( orient ),
           map_[ orient ].localBasis(),
           map_[ orient ].localInterpolation() );
       }
