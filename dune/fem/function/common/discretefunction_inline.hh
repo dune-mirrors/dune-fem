@@ -36,6 +36,19 @@ namespace Dune
 
 
     template< class Impl >
+    inline DiscreteFunctionDefault< Impl >::DiscreteFunctionDefault ( const DiscreteFunctionDefault &other )
+      : BaseType( static_cast< const BaseType & >( other ) ),
+        dfSpace_( other.dfSpace_ ),
+        ldvStack_( std::max( std::max( sizeof( DofType ), sizeof( DofType* ) ),
+                             sizeof(typename LocalDofVectorType::value_type) ) // for PetscDiscreteFunction
+                   * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
+        ldvAllocator_( &ldvStack_ ),
+        name_( other.name_ ),
+        scalarProduct_( other.scalarProduct_ )
+    {}
+
+
+    template< class Impl >
     inline DiscreteFunctionDefault< Impl >
       :: DiscreteFunctionDefault ( DiscreteFunctionDefault && other )
     : BaseType( static_cast< BaseType&& >( other ) ),

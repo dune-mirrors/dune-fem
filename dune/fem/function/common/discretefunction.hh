@@ -607,7 +607,7 @@ namespace Dune
        */
       DiscreteFunctionDefault ( const std::string &name, const DiscreteFunctionSpaceType &dfSpace );
 
-      DiscreteFunctionDefault ( const ThisType& ) = default;
+      DiscreteFunctionDefault ( const ThisType& );
       DiscreteFunctionDefault ( ThisType && other );
 
     public:
