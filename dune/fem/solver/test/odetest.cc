@@ -18,7 +18,7 @@
 
 #include <dune/fem/solver/rungekutta/timestepcontrol.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
-#include <dune/fem/solver/inverseoperators.hh>
+#include <dune/fem/solver/krylovinverseoperator.hh>
 #include <dune/fem/operator/dghelmholtz.hh>
 
 #include <dune/fem/solver/rungekutta/explicit.hh>

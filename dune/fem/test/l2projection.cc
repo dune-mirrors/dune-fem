@@ -37,7 +37,7 @@
 #if HAVE_SUITESPARSE_UMFPACK && defined USE_UMFPACK
 #include <dune/fem/solver/umfpacksolver.hh>
 #else
-#include <dune/fem/solver/inverseoperators.hh>
+#include <dune/fem/solver/krylovinverseoperator.hh>
 #endif
 #endif
 
