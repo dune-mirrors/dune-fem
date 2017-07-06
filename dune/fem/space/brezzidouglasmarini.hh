@@ -1,17 +1,16 @@
 #ifndef DUNE_FEM_SPACE_BREZZIDOUGLASMARINI_HH
 #define DUNE_FEM_SPACE_BREZZIDOUGLASMARINI_HH
 
-#ifdef USE_OLD_BDM_SPACE
+#if HAVE_DUNE_LOCALFUNCTIONS
 
-#include "brezzidouglasmarini/space.hh"
+#include <dune/localfunctions/brezzidouglasmarini/brezzidouglasmarini1cube2d.hh>
+#include <dune/localfunctions/brezzidouglasmarini/brezzidouglasmarini1cube3d.hh>
+#include <dune/localfunctions/brezzidouglasmarini/brezzidouglasmarini1simplex2d.hh>
+#include <dune/localfunctions/brezzidouglasmarini/brezzidouglasmarini2cube2d.hh>
+#include <dune/localfunctions/brezzidouglasmarini/brezzidouglasmarini2simplex2d.hh>
 
-#else
-
-// dune-localfunctions includes
 #include <dune/fem/space/basisfunctionset/piolatransformation.hh>
-#include <dune/fem/space/brezzidouglasmarini/localfiniteelement.hh>
 #include <dune/fem/space/localfiniteelement/space.hh>
-
 
 namespace Dune
 {
@@ -19,13 +18,85 @@ namespace Dune
   namespace Fem
   {
 
-    // BDMLocalFiniteElementMap
-    // ------------------------
+    namespace Impl
+    {
+
+      // BDMLocalFiniteElement
+      // ---------------------
+
+      template< unsigned int id, class DomainField, class RangeField, int dimension, int order >
+      struct BDMLocalFiniteElement
+      {
+        static_assert( AlwaysFalse< DomainField >::value, "BDMLocalFiniteElement not implemented for your choice." );
+      };
+
+      // The following local finite elements are implemented
+
+      // 2d, Cube, first order
+      template< class D >
+      struct BDMLocalFiniteElement< Dune::Impl::CubeTopology< 2 >::type::id, D, D, 2, 1 >
+        : public BDM1Cube2DLocalFiniteElement< D, D >
+      {
+        static const int numOrientations = 16;
+        template< class ... Args >
+        BDMLocalFiniteElement ( Args && ... args )
+          : BDM1Cube2DLocalFiniteElement< D, D >( std::forward< Args >( args ) ... ) {}
+      };
+
+      // 3d, Cube, first order
+      template< class D >
+      struct BDMLocalFiniteElement< Dune::Impl::CubeTopology< 3 >::type::id, D, D, 3, 1 >
+        : public BDM1Cube3DLocalFiniteElement< D, D >
+      {
+        static const int numOrientations = 64;
+        template< class ... Args >
+        BDMLocalFiniteElement ( Args && ... args )
+          : BDM1Cube3DLocalFiniteElement< D, D >( std::forward< Args >( args ) ... ) {}
+      };
+
+      // 2d, Cube, second order
+      template< class D >
+      struct BDMLocalFiniteElement< Dune::Impl::CubeTopology< 2 >::type::id, D, D, 2, 2 >
+        : public BDM2Cube2DLocalFiniteElement< D, D >
+      {
+        static const int numOrientations = 16;
+        template< class ... Args >
+        BDMLocalFiniteElement ( Args && ... args )
+          : BDM2Cube2DLocalFiniteElement< D, D >( std::forward< Args >( args ) ... ) {}
+      };
+
+
+      // 2d, simplex, first order
+      template< class D >
+      struct BDMLocalFiniteElement< Dune::Impl::SimplexTopology< 2 >::type::id, D, D, 2, 1 >
+        : public BDM1Simplex2DLocalFiniteElement< D, D >
+      {
+        static const int numOrientations = 8;
+        template< class ... Args >
+        BDMLocalFiniteElement ( Args && ... args )
+          : BDM1Simplex2DLocalFiniteElement< D, D >( std::forward< Args >( args ) ... ) {}
+      };
+
+      // 2d, simplex, second order
+      template< class D >
+      struct BDMLocalFiniteElement< Dune::Impl::SimplexTopology< 2 >::type::id, D, D, 2, 2 >
+        : public BDM2Simplex2DLocalFiniteElement< D, D >
+      {
+        static const int numOrientations = 8;
+        template< class ... Args >
+        BDMLocalFiniteElement ( Args && ... args )
+          : BDM2Simplex2DLocalFiniteElement< D, D >( std::forward< Args >( args ) ... ) {}
+      };
+
+    }
+
+    // BrezziDouglasMariniLocalFiniteElementMap
+    // ----------------------------------------
 
     template< class GridPart, class FunctionSpace, int polOrder >
-    class BDMLocalFiniteElementMap
+    class BrezziDouglasMariniLocalFiniteElementMap
     {
-      typedef BDMLocalFiniteElementMap< GridPart, FunctionSpace, polOrder > ThisType;
+      typedef BrezziDouglasMariniLocalFiniteElementMap< GridPart, FunctionSpace, polOrder > ThisType;
       static_assert( Dune::Fem::GridPartCapabilities::hasSingleGeometryType< GridPart >::v,
                      "GridPart has more than one geometry type." );
 
@@ -45,15 +116,13 @@ namespace Dune
 
       static const int dimLocal = GridPart::dimension;
 
-      typedef BDMLocalFiniteElement< topologyId, DomainFieldType, RangeFieldType, dimLocal, polOrder > LocalFiniteElementType;
+      typedef Impl::BDMLocalFiniteElement< topologyId, DomainFieldType, RangeFieldType, dimLocal, polOrder > LocalFiniteElementType;
       typedef typename LocalFiniteElementType::Traits::LocalBasisType LocalBasisType;
       typedef typename LocalFiniteElementType::Traits::LocalCoefficientsType LocalCoefficientsType;
       typedef typename LocalFiniteElementType::Traits::LocalInterpolationType LocalInterpolationType;
 
-      typedef std::tuple< std::size_t, const LocalBasisType&, const LocalInterpolationType& > ReturnType;
-
       template< class ... Args >
-      BDMLocalFiniteElementMap ( const GridPart &gridPart, Args ... args )
+      BrezziDouglasMariniLocalFiniteElementMap ( const GridPart &gridPart, Args ... args )
         : gridPart_( gridPart )
       {
         for( std::size_t i = 0; i < LocalFiniteElementType::numOrientations; ++i )
@@ -68,12 +137,13 @@ namespace Dune
       int order ( const Entity &entity ) const { return order(); }
 
       template< class Entity >
-      ReturnType operator() ( const Entity &e ) const
+      auto operator() ( const Entity &e ) const
       {
         unsigned char orient = orientation( e );
-        return ReturnType( static_cast< std::size_t >( orient ),
+        return std::tuple< std::size_t, const LocalBasisType&, const LocalInterpolationType& >
+        { static_cast< std::size_t >( orient ),
           map_[ orient ].localBasis(),
-          map_[ orient ].localInterpolation() );
+          map_[ orient ].localInterpolation() };
       }
 
       bool hasCoefficients ( const GeometryType &t ) const
@@ -110,14 +180,15 @@ namespace Dune
     };
 
 
-    // BDMDiscreteFunctionSpace
-    // ------------------------
+    // BrezziDouglasMariniSpace
+    // ----------------------------------------
 
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
-    using BDMDiscreteFunctionSpace
-            = LocalFiniteElementDiscreteFunctionSpace< BDMLocalFiniteElementMap< GridPart, FunctionSpace, polOrder >,
-                                                       FunctionSpace, Storage >;
+    using BrezziDouglasMariniSpace
+            = LocalFiniteElementSpace< BrezziDouglasMariniLocalFiniteElementMap< GridPart, FunctionSpace, polOrder >,
+                                       FunctionSpace, Storage >;
   }
 }
-#endif
+
+#endif // #if HAVE_DUNE_LOCALFUNCTIONS
 #endif // #ifndef DUNE_FEM_SPACE_BREZZIDOUGLASMARINI_HH

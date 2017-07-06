@@ -3,6 +3,7 @@ dune_install( bindguard.hh
               coordinate.hh
               fmatrixcol.hh
               forloop.hh
+              geometrytypemap.hh
               localcontribution.hh
               referencevector.hh
               stackallocator.hh
