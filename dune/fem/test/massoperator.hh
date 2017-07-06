@@ -64,19 +64,18 @@ void MassOperator< DiscreteFunction, LinearOperator >
     wLocal.init( entity );
     wLocal.clear();
 
-    // run over quadrature points
-    for( const auto qp : QuadratureType( entity, 2*dfSpace_.order()+1 ) )
-    {
-      // evaluate u
-      RangeType uValue;
-      uLocal.evaluate( qp, uValue );
+    QuadratureType quad( entity, 2*dfSpace_.order()+1 ) ;
+    std::vector< RangeType > values( quad.nop() );
 
-      // apply quadrature weight
-      uValue *= qp.weight() * geometry.integrationElement( qp.position() );
+    // evaluate u
+    uLocal.evaluateQuadrature( quad, values );
 
-      // add to local function
-      wLocal.axpy( qp, uValue );
-    }
+    // apply quadrature weight
+    for( const auto qp : quad )
+      values[ qp.index() ] *= qp.weight() * geometry.integrationElement( qp.position() );
+
+    // add to local function
+    wLocal.axpyQuadrature( quad, values );
 
     w.addLocalDofs( entity, wLocal.localDofVector() );
   }
@@ -130,14 +129,10 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
       const typename QuadratureType::CoordinateType &x = qp.position();
       const FieldType weight = qp.weight()
                                   * geometry.integrationElement( x );
+      for( auto & e : values )
+        e *= weight;
 
-      // update system matrix
-      for( unsigned int i = 0; i < numBasisFunctions; ++i )
-      {
-        RangeType value = values[ i ];
-        // add column
-        localMatrix.column( i ).axpy( values, value, weight );
-      }
+      basis.axpy( qp, values, localMatrix );
     }
 
     // add to global matrix

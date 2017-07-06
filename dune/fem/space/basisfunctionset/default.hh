@@ -4,6 +4,7 @@
 // C++ includes
 #include <cassert>
 #include <cstddef>
+#include <type_traits>
 
 // dune-geometry includes
 #include <dune/geometry/referenceelements.hh>
@@ -11,6 +12,7 @@
 
 // dune-fem includes
 #include <dune/fem/common/coordinate.hh>
+#include <dune/fem/quadrature/quadrature.hh>
 #include <dune/fem/space/basisfunctionset/functor.hh>
 #include <dune/fem/space/basisfunctionset/transformation.hh>
 #include <dune/fem/space/common/functionspace.hh>
@@ -35,9 +37,9 @@ namespace Dune
      * \note ShapeFunctionSet must be a copyable object. For most
      *       non-trivial implementations, you may want to use a
      *       proxy, see file
-\code
-    <dune/fem/space/shapefunctionset/proxy.hh>
-\endcode
+       \code
+       <dune/fem/space/shapefunctionset/proxy.hh>
+       \endcode
      */
     template< class Entity, class ShapeFunctionSet >
     class DefaultBasisFunctionSet
@@ -64,7 +66,7 @@ namespace Dune
     public:
       //  slight misuse of struct ToLocalFunctionSpace!!!
       //! \brief type of function space
-      typedef typename ToNewDimDomainFunctionSpace< LocalFunctionSpaceType, EntityType :: Geometry :: coorddimension >::Type FunctionSpaceType;
+      typedef typename ToNewDimDomainFunctionSpace< LocalFunctionSpaceType, EntityType::Geometry::coorddimension >::Type FunctionSpaceType;
 
       //! \brief domain type
       typedef typename FunctionSpaceType::DomainType DomainType;
@@ -81,12 +83,12 @@ namespace Dune
 
       //! \brief constructor
       DefaultBasisFunctionSet ()
-      : entity_( nullptr )
+        : entity_( nullptr )
       {}
 
       //! \brief constructor
       explicit DefaultBasisFunctionSet ( const EntityType &entity, const ShapeFunctionSet &shapeFunctionSet = ShapeFunctionSet() )
-      : entity_( &entity ),
+        : entity_( &entity ),
         shapeFunctionSet_( shapeFunctionSet )
       {}
 
@@ -110,14 +112,13 @@ namespace Dune
        *         values and add to dofs
        */
       template< class QuadratureType, class Vector, class DofVector >
-      void axpy ( const QuadratureType &quad, const Vector &values, DofVector &dofs ) const
+      auto axpy ( const QuadratureType &quad, const Vector &values, DofVector &dofs ) const
+      -> std::enable_if_t< !std::is_same< std::decay_t< decltype( Dune::Fem::coordinate( std::declval< const QuadratureType &>() ) ) >, DomainType >::value >
       {
         // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
         const unsigned int nop = quad.nop();
         for( unsigned int qp = 0; qp < nop; ++qp )
-        {
           axpy( quad[ qp ], values[ qp ], dofs );
-        }
       }
 
       /** \brief evaluate all basis function and multiply with given
@@ -125,9 +126,10 @@ namespace Dune
        *
        *  \note valuesA and valuesB can be vectors of RangeType or
        *        JacobianRangeType
-      */
+       */
       template< class QuadratureType, class VectorA, class VectorB, class DofVector >
-      void axpy ( const QuadratureType &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector &dofs ) const
+      auto axpy ( const QuadratureType &quad, const VectorA &valuesA, const VectorB &valuesB, DofVector &dofs ) const
+      -> std::enable_if_t< !std::is_same< std::decay_t< decltype( Dune::Fem::coordinate( std::declval< const QuadratureType &>() ) ) >, DomainType >::value >
       {
         // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
         const unsigned int nop = quad.nop();
@@ -157,7 +159,7 @@ namespace Dune
         typedef typename GeometryType::JacobianInverseTransposed GeometryJacobianInverseTransposedType;
         const GeometryType &geo = geometry();
         const GeometryJacobianInverseTransposedType &gjit = geo.jacobianInverseTransposed( coordinate( x ) );
-        LocalJacobianRangeType tmpJacobianFactor( RangeFieldType(0) );
+        LocalJacobianRangeType tmpJacobianFactor( RangeFieldType( 0 ) );
         for( int r = 0; r < FunctionSpaceType::dimRange; ++r )
           gjit.mtv( jacobianFactor[ r ], tmpJacobianFactor[ r ] );
 
@@ -183,9 +185,7 @@ namespace Dune
         // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
         const unsigned int nop = quad.nop();
         for( unsigned int qp = 0; qp < nop; ++qp )
-        {
           evaluateAll( quad[ qp ], dofs, ranges[ qp ] );
-        }
       }
 
       //! \todo please doc me
@@ -213,9 +213,7 @@ namespace Dune
         // call axpy method for each entry of the given vector, e.g. rangeVector or jacobianVector
         const unsigned int nop = quad.nop();
         for( unsigned int qp = 0; qp < nop; ++qp )
-        {
           jacobianAll( quad[ qp ], dofs, jacobians[ qp ] );
-        }
       }
 
       //! \todo please doc me
@@ -284,6 +282,43 @@ namespace Dune
 
       //! \brief return shape function set
       const ShapeFunctionSetType &shapeFunctionSet () const { return shapeFunctionSet_; }
+
+      template< class Point, class RangeVector, class DofMatrix  >
+      auto axpy ( const Point &x, const RangeVector &ranges, DofMatrix &dofs ) const
+      -> std::enable_if_t< std::is_same< std::decay_t< decltype( Dune::Fem::coordinate( std::declval< const Point &>() ) ) >, DomainType >::value >
+      {
+        axpyImpl( x, ranges, dofs, ranges[ 0 ] );
+      }
+
+      template< class Point, class RangeVector, class JacobianVector, class DofMatrix >
+      auto axpy ( const Point &x, const RangeVector &ranges, const JacobianVector &jacobians, DofMatrix &dofs ) const
+      -> std::enable_if_t< std::is_same< std::decay_t< decltype( Dune::Fem::coordinate( std::declval< const Point &>() ) ) >, DomainType >::value >
+      {
+        axpyImpl( x, ranges, dofs, ranges[ 0 ] );
+        axpyImpl( x, jacobians, dofs, jacobians[ 0 ] );
+      }
+
+      template< class Point, class Ranges, class DofMatrix >
+      void axpyImpl ( const Point &x, const Ranges &ranges, DofMatrix &dofs, RangeType ) const
+      {
+        FunctionalAxpyFunctor< std::vector< RangeType >, DofMatrix > f( ranges, dofs );
+        shapeFunctionSet().evaluateEach( x, f );
+      }
+
+      template< class Point, class Ranges, class DofMatrix >
+      void axpyImpl ( const Point &x, const Ranges &jacobianFactor, DofMatrix &dofs, JacobianRangeType ) const
+      {
+        typedef typename GeometryType::JacobianInverseTransposed GeometryJacobianInverseTransposedType;
+        const GeometryType &geo = geometry();
+        const GeometryJacobianInverseTransposedType &gjit = geo.jacobianInverseTransposed( coordinate( x ) );
+        std::vector< LocalJacobianRangeType > tmpJacobianVector( jacobianFactor.size(), RangeFieldType( 0 ) );
+        for( std::size_t i = 0; i < jacobianFactor.size(); ++i )
+          for( int r = 0; r < FunctionSpaceType::dimRange; ++r )
+            gjit.mtv( jacobianFactor[ i ][ r ], tmpJacobianVector[ i ][ r ] );
+
+        FunctionalAxpyFunctor< std::vector< LocalJacobianRangeType >, DofMatrix > f( tmpJacobianVector, dofs );
+        shapeFunctionSet().jacobianEach( x, f );
+      }
 
     protected:
       GeometryType geometry () const { return entity().geometry(); }

@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_BASEFUNCTIONSET_FUNCTOR_HH
 #define DUNE_FEM_BASEFUNCTIONSET_FUNCTOR_HH
 
+#include <vector>
+
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 
@@ -79,7 +81,6 @@ namespace Dune
     }
 
 
-
     // AxpyFunctor
     // -----------
 
@@ -123,6 +124,29 @@ namespace Dune
 
     private:
       const Value &value_;
+      Vector &vector_;
+    };
+
+
+    template< class Value, class Vector >
+    struct FunctionalAxpyFunctor< std::vector< Value >, Vector >
+    {
+      FunctionalAxpyFunctor ( const std::vector< Value > &value, Vector &vector )
+      : value_( value ),
+        vector_( vector )
+      {}
+
+      template< class V >
+      void operator() ( const std::size_t i, const V &v )
+      {
+        for( std::size_t k = 0; k < value_.size(); ++k )
+        {
+          vector_[ i ][ k ] += scalarProduct( v, value_[ k ] );
+        }
+      }
+
+    private:
+      const std::vector< Value > &value_;
       Vector &vector_;
     };
 
