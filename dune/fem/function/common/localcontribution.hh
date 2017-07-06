@@ -33,6 +33,47 @@ namespace Dune
     namespace Assembly
     {
 
+      namespace Global
+      {
+
+        // Add
+        // ---
+
+        template< class DiscreteFunction >
+        struct Add
+        {
+          typedef typename DiscreteFunction::DofType DofType;
+
+          static void begin ( DiscreteFunction &df )
+          {
+            // clear slave DoFs
+            auto &dofVector = df.dofVector();
+            for( const auto &slaveDof : df.space().slaveDofs() )
+            {
+              for( unsigned int j = 0; j < DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize; ++j )
+                dofVector[ slaveDof ][ j ] = DofType( 0 );
+            }
+          }
+
+          static void end ( DiscreteFunction &df ) { df.space().communicate( df, DFCommunicationOperation::Add() ); }
+        };
+
+
+
+        // Set
+        // ---
+
+        template< class DiscreteFunction >
+        struct Set
+        {
+          static void begin ( DiscreteFunction &df ) {}
+          static void end ( DiscreteFunction &df ) { df.space().communicate( df, DFCommunicationOperation::Copy() ); }
+        };
+
+      } // namespace Global
+
+
+
       // Add
       // ---
 
@@ -41,27 +82,16 @@ namespace Dune
       {
         typedef typename DiscreteFunction::DofType DofType;
 
-        void initialize ( DiscreteFunction &df ) const
-        {
-          // clear slave DoFs
-          auto &dofVector = df.dofVector();
-          for( const auto &slaveDof : df.space().slaveDofs() )
-          {
-            for( unsigned int j = 0; j < DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize; ++j )
-              dofVector[ slaveDof ][ j ] = DofType( 0 );
-          }
-        }
-
-        void finalize ( DiscreteFunction &df ) const { df.space().communicate( df, DFCommunicationOperation::Add() ); }
+        typedef Global::Add< DiscreteFunction > GlobalOperationType;
 
         template< class Entity, class LocalDofVector >
-        void prepare ( const Entity &entity, const DiscreteFunction &df, LocalDofVector &localDofVector ) const
+        void begin ( const Entity &entity, const DiscreteFunction &df, LocalDofVector &localDofVector ) const
         {
           std::fill( localDofVector.begin(), localDofVector.end(), DofType( 0 ) );
         }
 
         template< class Entity, class LocalDofVector >
-        void apply ( const Entity &entity, const LocalDofVector &localDofVector, DiscreteFunction &df ) const
+        void end ( const Entity &entity, LocalDofVector &localDofVector, DiscreteFunction &df ) const
         {
           df.addLocalDofs( entity, localDofVector );
         }
@@ -79,7 +109,7 @@ namespace Dune
         AddScaled ( typename DiscreteFunction::DofType factor ) : factor_( std::move( factor ) ) {}
 
         template< class Entity, class LocalDofVector >
-        void apply ( const Entity &entity, const LocalDofVector &localDofVector, DiscreteFunction &df ) const
+        void end ( const Entity &entity, LocalDofVector &localDofVector, DiscreteFunction &df ) const
         {
           df.addScaledLocalDofs( entity, factor_, localDofVector );
         }
@@ -96,17 +126,18 @@ namespace Dune
       template< class DiscreteFunction >
       struct Set
       {
-        void initialize ( DiscreteFunction &df ) const {}
-        void finalize ( DiscreteFunction &df ) const { df.space().communicate( df, DFCommunicationOperation::Copy() ); }
+        typedef typename DiscreteFunction::DofType DofType;
+
+        typedef Global::Set< DiscreteFunction > GlobalOperationType;
 
         template< class Entity, class LocalDofVector >
-        void prepare ( const Entity &entity, const DiscreteFunction &df, LocalDofVector &localDofVector ) const
+        void begin ( const Entity &entity, const DiscreteFunction &df, LocalDofVector &localDofVector ) const
         {
-          std::fill( localDofVector.begin(), localDofVector.end(), typename DiscreteFunction::DofType( 0 ) );
+          std::fill( localDofVector.begin(), localDofVector.end(), DofType( 0 ) );
         }
 
         template< class Entity, class LocalDofVector >
-        void apply ( const Entity &entity, const LocalDofVector &localDofVector, DiscreteFunction &df ) const
+        void end ( const Entity &entity, LocalDofVector &localDofVector, DiscreteFunction &df ) const
         {
           df.setLocalDofs( entity, localDofVector );
         }
@@ -177,16 +208,13 @@ namespace Dune
           localDofVector_( DiscreteFunctionType::DiscreteFunctionSpaceType::localBlockSize * discreteFunction.space().blockMapper().maxNumDofs() ),
           assemblyOperation_( std::move( assemblyOperation ) )
       {
-        assemblyOperation_.initialize( discreteFunction_ );
+        discreteFunction.template beginAssemble< typename AssemblyOperationType::GlobalOperationType >();
       }
 
       LocalContribution ( const ThisType & ) = delete;
       LocalContribution ( ThisType && ) = delete;
 
-      ~LocalContribution ()
-      {
-        assemblyOperation_.finalize( discreteFunction() );
-      }
+      ~LocalContribution () { discreteFunction().template endAssemble< typename AssemblyOperationType::GlobalOperationType >(); }
 
       ThisType &operator= ( const ThisType & ) = delete;
       ThisType &operator= ( ThisType && ) = delete;
@@ -325,12 +353,12 @@ namespace Dune
       {
         basisFunctionSet_ = discreteFunction().space().basisFunctionSet( entity );
         localDofVector().resize( basisFunctionSet().size() );
-        assemblyOperation_.prepare( entity, discreteFunction(), localDofVector() );
+        assemblyOperation_.begin( entity, discreteFunction(), localDofVector() );
       }
 
       void unbind ()
       {
-        assemblyOperation_.apply( entity(), localDofVector(), discreteFunction() );
+        assemblyOperation_.end( entity(), localDofVector(), discreteFunction() );
         basisFunctionSet_ = BasisFunctionSetType();
       }
 
