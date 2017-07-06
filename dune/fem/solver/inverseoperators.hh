@@ -46,15 +46,13 @@ namespace Dune
       KrylovInverseOperator ( const LinearOperator &op, double redEps, double absLimit,
                                          const ParameterReader &parameter = Parameter::container() )
       : KrylovInverseOperator( op, nullptr, redEps, absLimit,
-                                          std::numeric_limits< unsigned int >::max(), readVerbose( parameter ), parameter )
-      {}
+                                          std::numeric_limits< unsigned int >::max(), readVerbose( parameter ), parameter ) {}
 
       template <class LinearOperator>
       KrylovInverseOperator ( const LinearOperator &op, double redEps, double absLimit,
                                          unsigned int maxIterations,
                                          const ParameterReader &parameter = Parameter::container() )
       : KrylovInverseOperator( op, nullptr, redEps, absLimit, maxIterations, readVerbose( parameter ), parameter ) {}
-
 
       template <class LinearOperator>
       KrylovInverseOperator ( const LinearOperator &op, const PreconditionerType &preconditioner,
@@ -67,8 +65,7 @@ namespace Dune
                                          double redEps, double absLimit,
                                          const ParameterReader &parameter = Parameter::container() )
       : KrylovInverseOperator( op, &preconditioner, redEps, absLimit, std::numeric_limits< unsigned int >::max(),
-                                          readVerbose( parameter ), parameter )
-      {}
+                                          readVerbose( parameter ), parameter ) {}
 
       template <class LinearOperator>
       KrylovInverseOperator ( const LinearOperator &op, const PreconditionerType &preconditioner,
@@ -76,6 +73,28 @@ namespace Dune
                                          const ParameterReader &parameter = Parameter::container() )
       : KrylovInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, readVerbose( parameter ), parameter ) {}
 
+      KrylovInverseOperator ( double redEps, double absLimit,
+                              unsigned int maxIterations, bool verbose,
+                              const ParameterReader &parameter = Parameter::container() )
+      : precondObj_(),
+        tolerance_( absLimit ),
+        errorType_( getErrorMeasure( parameter, "fem.solver.errormeasure" ) ),
+        maxIterations_( std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations ) ),
+        numOfIterations_( 0 ),
+        verbose_( readVerbose( parameter, "fem.solver.verbose" ) ),
+        method_( getMethod( parameter, "fem.solver.krylovmethod" ) ),
+        restart_( method_ == gmres ? parameter.getValue< int >( "fem.solver.gmres.restart", 20 ) : 0 )
+      {}
+
+      KrylovInverseOperator ( double redEps, double absLimit,
+                              const ParameterReader &parameter = Parameter::container() )
+      : KrylovInverseOperator( redEps, absLimit,
+                               std::numeric_limits< unsigned int >::max(), readVerbose( parameter ), parameter ) {}
+
+      KrylovInverseOperator ( double redEps, double absLimit,
+                              unsigned int maxIterations,
+                              const ParameterReader &parameter = Parameter::container() )
+      : KrylovInverseOperator( redEps, absLimit, maxIterations, readVerbose( parameter ), parameter ) {}
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
@@ -104,7 +123,7 @@ namespace Dune
           }
 
           // if solver convergence failed numIter will be negative
-          numIter = LinearSolver::gmres( operator_, preconditioner_,
+          numIter = LinearSolver::gmres( *operator_, preconditioner_,
                                          v_, w, u, restart_,
                                          tolerance_, maxIterations_,
                                          errorType_, os );
@@ -123,7 +142,7 @@ namespace Dune
           }
 
           // if solver convergence failed numIter will be negative
-          numIter = LinearSolver::bicgstab( operator_, preconditioner_,
+          numIter = LinearSolver::bicgstab( *operator_, preconditioner_,
                                             v_, w, u,
                                             tolerance_, maxIterations_,
                                             errorType_, os );
@@ -144,7 +163,7 @@ namespace Dune
           }
 
           // if solver convergence failed numIter will be negative
-          numIter = LinearSolver::cg( operator_, preconditioner_,
+          numIter = LinearSolver::cg( *operator_, preconditioner_,
                                       v_, w, u,
                                       tolerance_, maxIterations_,
                                       errorType_, os );
@@ -158,6 +177,20 @@ namespace Dune
       unsigned int iterations () const
       {
         return numOfIterations_;
+      }
+
+      void bind ( const OperatorType &op ) { operator_ = &op; preconditioner_ = nullptr; }
+      void bind ( const OperatorType &op, const PreconditionerType& preconditioner )
+      {
+        operator_ = &op;
+        preconditioner_ = &preconditioner;
+      }
+
+      void unbind () { operator_ = nullptr; preconditioner_ = nullptr; }
+
+      void setMaxIterations ( unsigned int maxIterations )
+      {
+        maxIterations_ = std::min( static_cast< unsigned int >( std::numeric_limits< int >::max() ), maxIterations );
       }
 
     private:
@@ -182,7 +215,7 @@ namespace Dune
       {
         const std::string krylovMethodTable[] =
           { "cg", "bicgstab", "gmres" };
-        const int methodType = parameter.getEnum( paramName, krylovMethodTable, 0 );
+        const int methodType = parameter.getEnum( paramName, krylovMethodTable, gmres );
         return methodType;
       }
 
@@ -192,18 +225,9 @@ namespace Dune
                               double redEps, double absLimit,
                               unsigned int maxIterations, bool verbose,
                               const ParameterReader &parameter = Parameter::container() )
-      : operator_( op ),
-        precondObj_(),
-        preconditioner_( preconditioner ),
-        tolerance_( absLimit ),
-        errorType_( getErrorMeasure( parameter, "fem.solver.errormeasure" ) ),
-        maxIterations_( std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations ) ),
-        numOfIterations_( 0 ),
-        verbose_( readVerbose( parameter, "fem.solver.verbose" ) ),
-        method_( getMethod( parameter, "fem.solver.krylovmethod" ) ),
-        restart_( method_ == gmres ? parameter.getValue< int >( "fem.solver.gmres.restart", 20 ) : 0 )
+      : KrylovInverseOperator( redEps, absLimit, maxIterations, verbose, parameter )
       {
-
+        bind(op);
         if( ! preconditioner_ )
         {
           const bool preconditioning = parameter.template getValue< bool >( "fem.preconditioning", false );
@@ -216,7 +240,7 @@ namespace Dune
         }
       }
 
-      const OperatorType &operator_;
+      const OperatorType *operator_ = nullptr;
       std::unique_ptr< PreconditionerType > precondObj_;
       const PreconditionerType *preconditioner_;
 
@@ -225,7 +249,7 @@ namespace Dune
       const double tolerance_;
       const int errorType_;
 
-      const unsigned int maxIterations_;
+      unsigned int maxIterations_;
       mutable unsigned int numOfIterations_;
 
       const bool verbose_;
@@ -238,4 +262,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_SOLVER_PARDGINVERSEOPERATORS_HH
+#endif // DUNE_FEM_SOLVER_INVERSEOPERATORS_HH
