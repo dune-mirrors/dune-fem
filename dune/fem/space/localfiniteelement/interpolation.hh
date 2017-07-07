@@ -8,6 +8,7 @@
 
 #include <dune/common/fvector.hh>
 
+#include <dune/fem/function/common/localcontribution.hh>
 #include <dune/fem/space/basisfunctionset/transformed.hh>
 
 namespace Dune
@@ -112,11 +113,18 @@ namespace Dune
         localInterpolation_( localInterpolation )
       {}
 
-      template< class LocalFunction, class LocalDofVector >
-      void operator() ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
+      template< class LocalFunction, class Dof >
+      void operator() ( const LocalFunction &localFunction, std::vector< Dof > &localDofVector ) const
       {
         LocalFunctionWrapper< LocalFunction > wrapper( localFunction, basisFunctionSet() );
         localInterpolation().interpolate( wrapper, localDofVector );
+      }
+
+      template< class LocalFunction, class DiscreteFunction, template< class > class Assembly >
+      void operator() ( const LocalFunction &localFunction, LocalContribution< DiscreteFunction, Assembly > &localContribution ) const
+      {
+        LocalFunctionWrapper< LocalFunction > wrapper( localFunction, basisFunctionSet() );
+        localInterpolation().interpolate( wrapper, localContribution.localDofVector() );
       }
 
       BasisFunctionSetType basisFunctionSet () const { return basisFunctionSet_; }
