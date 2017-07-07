@@ -358,10 +358,12 @@ namespace Dune
 
       /** \brief evaluate all basisfunctions for all quadrature points, multiply with the given factor and
                  add the result to the local coefficients  */
-      template< class QuadratureType, class VectorType >
-      void axpyQuadrature ( const QuadratureType &quad, const VectorType &values )
+      template< class QuadratureType, class ... Vectors >
+      void axpyQuadrature ( const QuadratureType &quad, const Vectors& ... values )
       {
-        basisFunctionSet().axpy( quad, values, localDofVector() );
+        static_assert( sizeof...( Vectors ) > 0, "evaluateQuadrature needs to be called with at least one vector." );
+        std::ignore =
+          std::make_tuple( ( basisFunctionSet().axpy( quad, values, localDofVector() ), 1 )...);
       }
 
       /** \brief evaluate all basisfunctions for all quadrature points, multiply with the given factor and
@@ -375,13 +377,14 @@ namespace Dune
       }
 
       /** \brief evaluate all basisfunctions for all quadrature points and store the results in the result vector */
-      template< class QuadratureType, class VectorType >
-      void evaluateQuadrature( const QuadratureType &quad, VectorType &result ) const
+      template< class QuadratureType, class ... Vectors >
+      void evaluateQuadrature( const QuadratureType &quad, Vectors& ... vec ) const
       {
-        typename std::decay< decltype( result[ 0 ] ) >::type dummy;
-        evaluateQuadrature( quad, result, dummy );
+        static_assert( sizeof...( Vectors ) > 0, "evaluateQuadrature needs to be called with at least one vector." );
+        std::ignore =
+          std::make_tuple( ( evaluateQuadrature( quad, vec, typename std::decay< decltype( vec[ 0 ] ) >::type() ), 1 )
+            ... );
       }
-
 
       /** \brief return const reference to local Dof Vector  */
       const LocalDofVectorType &localDofVector () const { return localDofVector_; }

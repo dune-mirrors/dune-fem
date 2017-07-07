@@ -285,11 +285,11 @@ namespace Dune
       }
 
       //! evaluate function or jacobian of function for given quadrature
-      template < class QuadratureType, class VectorType >
-      void evaluateQuadrature( const QuadratureType& quadrature, VectorType& values ) const
+      template < class QuadratureType, class ... Vectors >
+      void evaluateQuadrature( const QuadratureType& quadrature, Vectors& ... values ) const
       {
-        assert( values.size() == quadrature.nop() );
-        evaluateQuadratureImp( quadrature, values, values[ 0 ] );
+        std::ignore = std::make_tuple(
+            ( evaluateQuadratureImp( quadrature, values, values[ 0 ] ), 1 ) ... );
       }
 
       int order () const { return order_; }
