@@ -21,9 +21,6 @@ static const int dimw = Dune::GridSelector::dimworld;
 #include <dune/fem/test/testgrid.hh>
 
 
-using namespace Dune;
-using namespace Fem;
-
 // polynom approximation order of quadratures,
 // at least polynom order of basis functions
 const int polOrd = POLORDER;
@@ -45,12 +42,12 @@ const int polOrd = POLORDER;
 //***********************************************************************
 
 //! the index set we are using
-typedef GridSelector::GridType MyGridType;
-typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
+typedef Dune::GridSelector::GridType MyGridType;
+typedef Dune::Fem::AdaptiveLeafGridPart< MyGridType > GridPartType;
 
 // see dune/common/functionspace.hh
-typedef FunctionSpace< MyGridType::ctype, double, dimw, 2 > FuncSpace1;
-typedef FunctionSpace< MyGridType::ctype, double, dimw, 1 > FuncSpace2;
+typedef Dune::Fem::FunctionSpace< MyGridType::ctype, double, dimw, 2 > FuncSpace1;
+typedef Dune::Fem::FunctionSpace< MyGridType::ctype, double, dimw, 1 > FuncSpace2;
 
 typedef FuncSpace1::RangeType RangeType1;
 typedef FuncSpace2::RangeType RangeType2;
@@ -61,13 +58,13 @@ typedef FuncSpace2::HessianRangeType HessianRangeType2;
 
 //! define the function space our unkown belong to
 //! see dune/fem/lagrangebase.hh
-typedef LagrangeDiscontinuousGalerkinSpace< FuncSpace1, GridPartType,
-                                            polOrd+1, CachingStorage > DiscreteFunctionSpaceType1;
+typedef Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FuncSpace1, GridPartType,
+                                            polOrd+1, Dune::Fem::CachingStorage > DiscreteFunctionSpaceType1;
 
-typedef LagrangeDiscontinuousGalerkinSpace< FuncSpace2, GridPartType,
-                                            polOrd, CachingStorage > DiscreteFunctionSpaceType2;
+typedef Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FuncSpace2, GridPartType,
+                                            polOrd, Dune::Fem::CachingStorage > DiscreteFunctionSpaceType2;
 
-typedef TupleDiscreteFunctionSpace< DiscreteFunctionSpaceType1, DiscreteFunctionSpaceType2 > DiscreteFunctionSpaceType;
+typedef Dune::Fem::TupleDiscreteFunctionSpace< DiscreteFunctionSpaceType1, DiscreteFunctionSpaceType2 > DiscreteFunctionSpaceType;
 
 typedef DiscreteFunctionSpaceType::IteratorType::Entity EntityType;
 
@@ -76,7 +73,6 @@ typedef FuncSpace::RangeType RangeType;
 typedef FuncSpace::JacobianRangeType JacobianRangeType;
 typedef FuncSpace::HessianRangeType HessianRangeType;
 
-typedef CachingQuadrature< GridPartType, 0 > QuadratureType;
 
 const int dimRange = FuncSpace::dimRange;
 const int dimRange1 = FuncSpace1::dimRange;
@@ -122,7 +118,7 @@ void checkBasisSet ( const EntityType &entity, const DiscreteFunctionSpaceType &
   std::vector< HessianRangeType1 > hessians1( nrBasis1, null1 );
   std::vector< HessianRangeType2 > hessians2( nrBasis2, null2 );
 
-  QuadratureType quadrature( entity, space.order() + 1 );
+  Dune::Fem::CachingQuadrature< GridPartType, 0 > quadrature( entity, space.order() + 1 );
   for( const auto& qp : quadrature )
   {
 
@@ -175,13 +171,13 @@ void checkBasisSet ( const EntityType &entity, const DiscreteFunctionSpaceType &
       // check function value
       value -= ranges[ i ];
       if( value.two_norm() > 1e-8 )
-        DUNE_THROW( InvalidStateException, "Basisfunction::evaluate returns wrong value." );
+        DUNE_THROW( Dune::InvalidStateException, "Basisfunction::evaluate returns wrong value." );
 
       JacobianRangeType jacHelp( jac );
       // check jac
       jacHelp -= jacs[ i ];
       if( jacHelp.frobenius_norm() > 1e-8 )
-        DUNE_THROW( InvalidStateException, "Basisfunction::jacobian returns wrong value." );
+        DUNE_THROW( Dune::InvalidStateException, "Basisfunction::jacobian returns wrong value." );
 
       for( int r = 0; r < dimRange; ++r )
         hessian[ r ] -= hessians[ i ][ r ];
@@ -191,7 +187,7 @@ void checkBasisSet ( const EntityType &entity, const DiscreteFunctionSpaceType &
         val += hessian[ r ].frobenius_norm2();
 
       if( std::sqrt( val ) > 1e-8 )
-        DUNE_THROW( InvalidStateException, "Basisfunction::hessian returns wrong value." );
+        DUNE_THROW( Dune::InvalidStateException, "Basisfunction::hessian returns wrong value." );
     }
   }
 }
@@ -256,7 +252,7 @@ void checkInterpolation ( const EntityType &entity, const DiscreteFunctionSpaceT
 
 int main ( int argc, char **argv )
 {
-  MPIManager::initialize( argc, argv );
+  Dune::Fem::MPIManager::initialize( argc, argv );
   try
   {
     MyGridType &grid = Dune::Fem::TestGrid::grid();
@@ -271,7 +267,7 @@ int main ( int argc, char **argv )
 
     return 0;
   }
-  catch( const Exception &exception )
+  catch( const Dune::Exception &exception )
   {
     std::cerr << exception << std::endl;
     return 1;
