@@ -102,6 +102,57 @@ namespace Dune
 
       /** \brief constructor
        *
+       *  \param[in] reduction reduction epsilon
+       *  \param[in] absLimit absolute limit of residual (not used here)
+       *  \param[in] maxIter maximal iteration steps
+       *  \param[in] verbose verbosity
+       *
+       *  \note ISTL BiCG-stab only uses the relative reduction.
+       */
+      ISTLInverseOp ( double reduction, double absLimit, int maxIter, bool verbose,
+                      const ParameterReader &parameter = Parameter::container() )
+      : reduction_( reduction ),
+        absLimit_( absLimit ),
+        maxIter_( maxIter ),
+        verbose_( verbose ),
+        iterations_( 0 ),
+        averageCommTime_( 0.0 ),
+        parameter_( parameter )
+      {}
+
+      /** \brief constructor
+       *
+       *  \param[in] reduction reduction epsilon
+       *  \param[in] absLimit absolute limit of residual (not used here)
+       *  \param[in] maxIter maximal iteration steps
+       *  \param[in] verbose verbosity
+       *
+       *  \note ISTL BiCG-stab only uses the relative reduction.
+       */
+      ISTLInverseOp ( double reduction, double absLimit, int maxIter,
+                      const ParameterReader &parameter = Parameter::container() )
+      : ISTLInverseOp( reduction, absLimit, maxIter,
+                       parameter.getValue< bool >( "fem.solver.verbose", false ),
+                       parameter )
+      {}
+
+      /** \brief constructor
+       *
+       *  \param[in] reduction reduction epsilon
+       *  \param[in] absLimit absolute limit of residual (not used here)
+       *
+       *  \note ISTL BiCG-stab only uses the relative reduction.
+       */
+      ISTLInverseOp ( double reduction, double absLimit,
+                      const ParameterReader &parameter = Parameter::container() )
+      : ISTLInverseOp( reduction, absLimit,
+                       std::numeric_limits< int >::max(),
+                       parameter.getValue< bool >( "fem.solver.verbose", false ),
+                       parameter )
+      {}
+
+      /** \brief constructor
+       *
        *  \param[in] op Mapping describing operator to invert
        *  \param[in] reduction reduction epsilon
        *  \param[in] absLimit absolute limit of residual (not used here)
@@ -113,16 +164,10 @@ namespace Dune
       ISTLInverseOp ( const OperatorType &op,
                       double reduction, double absLimit, int maxIter, bool verbose,
                       const ParameterReader &parameter = Parameter::container() )
-      : op_( op ),
-        matrixOp_( dynamic_cast<const AssembledOperatorType*> (&op_) ),
-        reduction_( reduction ),
-        absLimit_( absLimit ),
-        maxIter_( maxIter ),
-        verbose_( verbose ),
-        iterations_( 0 ),
-        averageCommTime_( 0.0 ),
-        parameter_( parameter )
-      {}
+      : ISTLInverseOp( reduction, absLimit, maxIter, verbose, parameter )
+      {
+        bind( op );
+      }
 
       /** \brief constructor
        *
@@ -134,30 +179,25 @@ namespace Dune
       ISTLInverseOp ( const OperatorType &op,
                       double reduction, double absLimit, int maxIter,
                       const ParameterReader &parameter = Parameter::container() )
-      : op_( op ),
-        matrixOp_( dynamic_cast<const AssembledOperatorType*> (&op_) ),
-        reduction_( reduction ),
-        absLimit_ ( absLimit ),
-        maxIter_( maxIter ),
-        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
-        iterations_( 0 ),
-        averageCommTime_( 0.0 ),
-        parameter_( parameter )
-      {}
+      : ISTLInverseOp( reduction, absLimit, maxIter, parameter )
+      {
+        bind( op );
+      }
 
       ISTLInverseOp ( const OperatorType &op,
                       double reduction, double absLimit,
                       const ParameterReader &parameter = Parameter::container() )
-      : op_( op ),
-        matrixOp_( dynamic_cast<const AssembledOperatorType*> (&op_) ),
-        reduction_( reduction ),
-        absLimit_ ( absLimit ),
-        maxIter_( std::numeric_limits< int >::max() ),
-        verbose_( parameter.getValue< bool >( "fem.solver.verbose", false ) ),
-        iterations_( 0 ),
-        averageCommTime_( 0.0 ),
-        parameter_( parameter )
-      {}
+      : ISTLInverseOp( reduction, absLimit, parameter )
+      {
+        bind( op );
+      }
+
+      void bind ( const OperatorType& op )
+      {
+        op_ = &op;
+        matrixOp_ = dynamic_cast<const AssembledOperatorType*>( &op );
+      }
+      void unbind () { op_ = nullptr; matrixOp_ = nullptr; }
 
       void prepare (const DiscreteFunctionType& Arg, DiscreteFunctionType& Dest) const
       {}
@@ -180,7 +220,7 @@ namespace Dune
         // if op_ is an instance of ISTLLinearOperator (i.e. assembled) we can
         // use the corresponding matrix adapter, otherwise we assume it's a
         // matrix free implementation
-
+        assert( op_ );
         std::pair< int, double > info;
         if( matrixOp_ )
         {
@@ -189,13 +229,13 @@ namespace Dune
 
           typedef ISTLMatrixAdapterFactory< MatrixObjectType > ISTLMatrixAdapterFactoryType;
           auto matrixAdapterPtr = ISTLMatrixAdapterFactoryType :: matrixAdapter( matrixObj );
-          info = SolverCallerType::call( op_, *matrixAdapterPtr,
+          info = SolverCallerType::call( *op_, *matrixAdapterPtr,
                                          arg, dest, reduction_, absLimit_, maxIter_, verbose_, parameter_ );
         }
         else
         {
-          ISTLMatrixFreeAdapterType matrixAdapter( op_, arg.space(), dest.space() );
-          info = SolverCallerType::call( op_, matrixAdapter,
+          ISTLMatrixFreeAdapterType matrixAdapter( *op_, arg.space(), dest.space() );
+          info = SolverCallerType::call( *op_, matrixAdapter,
                                          arg, dest, reduction_, absLimit_, maxIter_, verbose_, parameter_ );
         }
 
@@ -208,6 +248,7 @@ namespace Dune
       {
         return iterations_;
       }
+      void setMaxIterations ( int maxIter ) { maxIter_ = maxIter; }
 
       //! return accumulated communication time
       double averageCommTime() const
@@ -225,8 +266,8 @@ namespace Dune
       }
 
     private:
-      const OperatorType &op_;
-      const AssembledOperatorType* matrixOp_;
+      const OperatorType* op_ = nullptr;
+      const AssembledOperatorType* matrixOp_ = nullptr;
       double reduction_;
       double absLimit_;
       int maxIter_;

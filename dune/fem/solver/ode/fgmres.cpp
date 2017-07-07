@@ -24,6 +24,15 @@ FGMRES::FGMRES(Communicator &comm, int m) :
   dset(6*m+1, 0.0, g, 1);
 }
 
+FGMRES::FGMRES(FGMRES &&other) :
+  IterativeLinearSolver(std::move(static_cast<IterativeLinearSolver &>(other))),
+  DynamicalObject(std::move(static_cast<DynamicalObject &>(other))),
+  m(other.m), H(std::move(other.H)),
+  g(other.g), s(other.s), c(other.c), y(other.y), local_dot(other.local_dot),
+  global_dot(other.global_dot), v(other.v), z(other.z)
+{
+  other.g = other.v = other.z = nullptr;
+}
 
 
 FGMRES::~FGMRES()

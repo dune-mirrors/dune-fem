@@ -181,6 +181,8 @@ namespace Dune
         solver.apply( x, rhs, result );
       }
 
+      void setMaxIterations( unsigned int maxIterations ) { maxIterations_ = maxIterations_; }
+
     private:
       ReductionType reduction_;
       unsigned int restart_;
@@ -238,41 +240,78 @@ namespace Dune
 
       typedef typename SolverAdapterType::SolverType SolverType;
 
+      ISTLInverseOperator ( double redEps, double absLimit, unsigned int maxIterations, bool verbose,
+                            const ParameterReader &parameter = Parameter::container() )
+        : solverAdapter_( ReductionType( redEps, absLimit ), maxIterations, (Parameter::verbose() && verbose) ? 2 : 0, parameter )
+      {}
+
+      ISTLInverseOperator ( double redEps, double absLimit,
+                            const ParameterReader &parameter = Parameter::container() )
+        : ISTLInverseOperator( redEps, absLimit, std::numeric_limits< unsigned int >::max(), false, parameter ) {}
+
+      ISTLInverseOperator ( double redEps, double absLimit, unsigned int maxIterations,
+                            const ParameterReader &parameter = Parameter::container() )
+        : ISTLInverseOperator( redEps, absLimit, maxIterations, false, parameter ) {}
+
       ISTLInverseOperator ( const OperatorType &op,
                             double redEps, double absLimit, unsigned int maxIterations, bool verbose,
                             const ParameterReader &parameter = Parameter::container() )
-        : ISTLInverseOperator( op, nullptr, redEps, absLimit, maxIterations, verbose, parameter ) {}
+        : ISTLInverseOperator ( redEps, absLimit, maxIterations, verbose, parameter )
+      {
+        bind( op );
+      }
 
-      ISTLInverseOperator ( const OperatorType &op,
-                            double redEps, double absLimit,
+      ISTLInverseOperator ( const OperatorType &op, double redEps, double absLimit,
                             const ParameterReader &parameter = Parameter::container() )
-        : ISTLInverseOperator( op, nullptr, redEps, absLimit, std::numeric_limits< unsigned int >::max(), false, parameter ) {}
+        : ISTLInverseOperator( redEps, absLimit, parameter )
+      {
+        bind( op );
+      }
 
-      ISTLInverseOperator ( const OperatorType &op,
+      ISTLInverseOperator ( const OperatorType& op,
                             double redEps, double absLimit, unsigned int maxIterations,
                             const ParameterReader &parameter = Parameter::container() )
-        : ISTLInverseOperator( op, nullptr, redEps, absLimit, maxIterations, false, parameter ) {}
-
+        : ISTLInverseOperator( redEps, absLimit, maxIterations, parameter )
+      {
+        bind( op );
+      }
 
       ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
                             double redEps, double absLimit, unsigned int maxIterations, bool verbose,
                             const ParameterReader &parameter = Parameter::container() )
-        : ISTLInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, verbose, parameter ) {}
+        : ISTLInverseOperator( redEps, absLimit, maxIterations, verbose, parameter )
+      {
+        bind( op, preconditioner );
+      }
 
       ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
                             double redEps, double absLimit,
                             const ParameterReader &parameter = Parameter::container() )
-        : ISTLInverseOperator( op, &preconditioner, redEps, absLimit, std::numeric_limits< unsigned int >::max(), false, parameter ) {}
+        : ISTLInverseOperator( redEps, absLimit, parameter )
+      {
+        bind( op, preconditioner );
+      }
 
       ISTLInverseOperator ( const OperatorType &op, PreconditionerType &preconditioner,
                             double redEps, double absLimit, unsigned int maxIterations,
                             const ParameterReader &parameter = Parameter::container() )
-        : ISTLInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, false, parameter ) {}
+        : ISTLInverseOperator( redEps, absLimit, maxIterations, parameter )
+      {
+        bind( op, preconditioner );
+      }
 
+      void bind ( const OperatorType &op ) { operator_ = &op; }
+      void bind ( const OperatorType &op, PreconditionerType &preconditioner )
+      {
+        operator_ = &op;
+        preconditioner_ = &preconditioner;
+      }
+      void unbind () { operator_ = nullptr; preconditioner_ = nullptr; }
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
-        ISTLOperatorType istlOperator( operator_, w.space(), u.space() );
+        assert( operator_ );
+        ISTLOperatorType istlOperator( *operator_, w.space(), u.space() );
         ParallelScalarProductType scp( u.space() );
 
         if( !preconditioner_ )
@@ -285,17 +324,10 @@ namespace Dune
       }
 
       unsigned int iterations () const { return result_.iterations; }
+      void setMaxIterations ( unsigned int maxIterations ) { solverAdapter_.setMaxIterations( maxIterations ); }
 
     private:
-      ISTLInverseOperator ( const OperatorType &op, PreconditionerType *preconditioner,
-                            double redEps, double absLimit, unsigned int maxIterations, bool verbose,
-                            const ParameterReader &parameter )
-        : operator_( op ),
-          preconditioner_( preconditioner ),
-          solverAdapter_( ReductionType( redEps, absLimit ), maxIterations, (Parameter::verbose() && verbose) ? 2 : 0, parameter )
-      {}
-
-      void solve ( ISTLOperatorType &istlOperator, ParallelScalarProductType &scp,
+       void solve ( ISTLOperatorType &istlOperator, ParallelScalarProductType &scp,
                    const OperatorType &preconditioner,
                    const DomainFunctionType &u, RangeFunctionType &w ) const
       {
@@ -312,8 +344,8 @@ namespace Dune
         solverAdapter_( istlOperator, scp, preconditioner, rhs, w.blockVector(), result_ );
       }
 
-      const OperatorType &operator_;
-      PreconditionerType *preconditioner_;
+      const OperatorType *operator_ = nullptr;
+      PreconditionerType *preconditioner_ = nullptr;
       SolverAdapterType solverAdapter_;
       mutable Dune::InverseOperatorResult result_;
     };

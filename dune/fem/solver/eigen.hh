@@ -36,37 +36,58 @@ namespace Dune
       typedef typename OperatorType::MatrixType::MatrixStorageType Matrix;
 
     public:
+      EigenInverseOperator ( double redEps, double absLimit, unsigned int maxIter, bool verbose,
+                             const ParameterReader &parameter = Parameter::container() )
+        : solver_(), absLimit_( absLimit )
+      {}
+
+      EigenInverseOperator ( double redEps, double absLimit, unsigned int maxIter,
+                             const ParameterReader &parameter = Parameter::container() )
+        : solver_(), absLimit_( absLimit )
+      {}
+
       EigenInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter, bool verbose,
                              const ParameterReader &parameter = Parameter::container() )
-        : op_(op)
-        , solver_()
+        : solver_(), absLimit_( absLimit )
       {
-        solver_.setTolerance(absLimit);
-        solver_.analyzePattern( op_.matrix().data() );
-        solver_.factorize( op_.matrix().data() );
+        bind( op );
       }
 
       EigenInverseOperator ( const OperatorType &op, double redEps, double absLimit, unsigned int maxIter,
                              const ParameterReader &parameter = Parameter::container() )
-        : op_(op)
-        , solver_()
+        : solver_(), absLimit_( absLimit )
       {
-        solver_.setTolerance(absLimit);
-        solver_.analyzePattern( op_.matrix().data() );
-        solver_.factorize( op_.matrix().data() );
+        bind( op );
       }
+
+      void bind ( const OperatorType &op )
+      {
+        op_ = &op;
+        setup();
+      }
+      void unbind() { op_ = nullptr; }
 
       virtual void operator() ( const DomainFunction &u, RangeFunction &w ) const
       {
-        w.dofVector().array().coefficients()
-           = solver_.solve( u.dofVector().array().coefficients() );
+        if ( op_ )
+          w.dofVector().array().coefficients() = solver_.solve( u.dofVector().array().coefficients() );
       }
 
       unsigned int iterations () const { return solver_.iterations(); }
+      void setMaxIterations ( unsigned int ) {}
 
     protected:
-      const OperatorType &op_;
+      void setup ()
+      {
+        assert( op_ );
+        solver_.setTolerance( absLimit_ );
+        solver_.analyzePattern( op_->matrix().data() );
+        solver_.factorize( op_->matrix().data() );
+      }
+
+      const OperatorType *op_ = nullptr;
       EigenOp solver_;
+      double absLimit_;
     };
 
     template< class DiscreteFunction>

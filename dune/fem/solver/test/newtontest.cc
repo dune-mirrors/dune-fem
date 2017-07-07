@@ -146,25 +146,21 @@ class MyLinearInverseOperator
   typedef typename BaseType::RangeFunctionType RangeFunctionType;
   typedef MyLinearOperator<N> LinearOperatorType;
 
-  template<class... Args>
-  MyLinearInverseOperator(const LinearOperatorType & jOp, const Args & ...)
-    : jOp_(jOp)
-  {}
+  MyLinearInverseOperator () = default;
 
+  void bind ( const LinearOperatorType& jOp ) { jOp_ = &jOp; }
+  void unbind () { jOp_ = nullptr; }
 
   void operator()(const DomainFunctionType& u, RangeFunctionType& w) const
   {
-    jOp_.matrix().solve(static_cast<typename DomainFunctionType::StorageType &> (w),static_cast<const typename DomainFunctionType::StorageType &> (u));
+    (*jOp_).matrix().solve(static_cast<typename DomainFunctionType::StorageType &> (w),static_cast<const typename DomainFunctionType::StorageType &> (u));
   }
 
-  int iterations() const
-  {
-    return 1;
-  }
-
+  int iterations() const { return 1; }
+  void setMaxIterations ( unsigned int ) {}
 
  private:
-  const LinearOperatorType & jOp_;
+  const LinearOperatorType * jOp_ = nullptr;
 };
 
 
@@ -218,8 +214,8 @@ int main( int argc, char **argv )
 
   FunctionType sol("sol", { 1, 2, 3, 4, 7 }), rhs("rhs", {0,0,0,0,0});
   OperatorType op;
-  NewtonInverseOperatorType opInv(op);
-
+  NewtonInverseOperatorType opInv( LinearInverseOperatorType{} );
+  opInv.bind( op );
 
   //solve op(sol) = rhs for sol
   //with a Newton method
@@ -233,6 +229,7 @@ int main( int argc, char **argv )
 
   std::cout << "Converged: " << (opInv.converged() ? "yes" : "no") << std::endl;
 
+  opInv.unbind();
 
   return 0;
 }

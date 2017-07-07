@@ -6,3 +6,5 @@ dune_add_test( NAME odetest SOURCES odetest.cc LINK_LIBRARIES dunefem )
 dune_add_test( NAME test_timeprovider SOURCES test-timeprovider.cc LINK_LIBRARIES dunefem )
 
 dune_add_test( NAME newtontest SOURCES newtontest.cc LINK_LIBRARIES dunefem )
+
+dune_add_test( NAME inverseoperatortest SOURCES inverseoperatortest.cc LINK_LIBRARIES dunefem )
