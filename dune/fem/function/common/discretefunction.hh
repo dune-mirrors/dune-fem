@@ -1,9 +1,12 @@
 #ifndef DUNE_FEM_DISCRETEFUNCTION_HH
 #define DUNE_FEM_DISCRETEFUNCTION_HH
 
+#include <cassert>
+
 #include <complex>
 #include <ostream>
 #include <string>
+#include <typeindex>
 
 #include <dune/common/dynvector.hh>
 
@@ -607,7 +610,7 @@ namespace Dune
        */
       DiscreteFunctionDefault ( const std::string &name, const DiscreteFunctionSpaceType &dfSpace );
 
-      DiscreteFunctionDefault ( const ThisType& ) = default;
+      DiscreteFunctionDefault ( const ThisType& );
       DiscreteFunctionDefault ( ThisType && other );
 
     public:
@@ -874,6 +877,33 @@ namespace Dune
         space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
+      template< class AssembleOperation >
+      void beginAssemble ()
+      {
+        const std::type_index id( typeid( AssembleOperation ) );
+        if( assembleOperation_ != id )
+        {
+          if( assembleOperation_ != std::type_index( typeid( void ) ) )
+            DUNE_THROW( InvalidStateException, "Another assemble operation in progress" );
+          assembleOperation_ = id;
+          assert( assembleCount_ == 0 );
+          AssembleOperation::begin( asImp() );
+        }
+        ++assembleCount_;
+      }
+
+      template< class AssembleOperation >
+      void endAssemble ()
+      {
+        const std::type_index id( typeid( AssembleOperation ) );
+        if( assembleOperation_ != id )
+          DUNE_THROW( InvalidStateException, "Assemble operation not in progress" );
+        assembleOperation_ = std::type_index( typeid( void ) );
+        assert( assembleCount_ > 0 );
+        if( --assembleCount_ == 0 )
+          AssembleOperation::end( asImp() );
+      }
+
     protected:
       friend LocalFunctionType;
 
@@ -919,6 +949,9 @@ namespace Dune
 
       std::string name_;
       ScalarProductType scalarProduct_;
+
+      std::type_index assembleOperation_ = std::type_index( typeid( void ) );;
+      std::size_t assembleCount_ = 0;
     }; // end class DiscreteFunctionDefault
 
 

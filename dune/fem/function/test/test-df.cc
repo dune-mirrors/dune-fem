@@ -15,14 +15,13 @@
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 
+#include <dune/fem/function/blockvectordiscretefunction.hh>
 #include <dune/fem/function/blockvectorfunction.hh>
+#include <dune/fem/function/blockvectors/referenceblockvector.hh>
+#include <dune/fem/function/common/localcontribution.hh>
+#include <dune/fem/function/petscdiscretefunction.hh>
 #include <dune/fem/function/vectorfunction.hh>
 #include <dune/fem/function/vectorfunction/managedvectorfunction.hh>
-#include <dune/fem/function/blockvectordiscretefunction.hh>
-#include <dune/fem/function/blockvectors/referenceblockvector.hh>
-#if HAVE_PETSC
-#include <dune/fem/function/petscdiscretefunction.hh>
-#endif
 
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/combinedfunction.hh>
@@ -56,25 +55,16 @@ void checkFunction( DiscreteFunction& df, OtherDiscreteFunction& other )
 
   // fill with increasing values
   int cont(0);
-  for( const auto& entity : entities(df) )
   {
-    auto lf = df.localFunction( entity );
-    lf.clear();
-    for( auto i=0; i<lf.numDofs(); ++i,++cont )
-      lf[ i ] = static_cast<DofType>(cont);
-  }
-
-  // check init method on uninitialized local function
-  for( const auto& entity : entities(df) )
-  {
-    auto lf = df.localFunction( entity );
-    auto ulf = df.localFunction();
-    ulf.init( entity );
-    if( lf.numDofs() != ulf.numDofs() )
-      DUNE_THROW(Dune::InvalidStateException,"Init method for uninitialized local function did not work");
-    for( auto i=0; i<lf.numDofs(); ++i )
-      if( lf[ i ] != ulf [ i ] )
-        DUNE_THROW(Dune::InvalidStateException,"Init method for uninitialized local function did not work");
+    Dune::Fem::AddLocalContribution< DiscreteFunction > lf( df );
+    for( const auto& entity : entities(df) )
+    {
+      lf.bind( entity );
+      lf.clear();
+      for( int i = 0, n = lf.size(); i < n; ++i,++cont )
+        lf[ i ] = static_cast<DofType>(cont);
+      lf.unbind();
+    }
   }
 
   // check block access

@@ -260,7 +260,7 @@ namespace Dune
       template< class Function >
       struct WeightedFunctionSquare;
 
-      typedef typename WeightFunctionType::LocalFunctionType LocalWeightFunctionType;
+      typedef ConstLocalFunction< WeightFunctionType > LocalWeightFunctionType;
       typedef typename WeightFunctionType::RangeType WeightType;
 
       typedef typename BaseType::EntityType EntityType;
@@ -283,7 +283,7 @@ namespace Dune
       void distanceLocal ( const EntityType &entity, unsigned int order, const ULocalFunctionType &uLocal, const VLocalFunctionType &vLocal, ReturnType &sum ) const;
 
     private:
-      const WeightFunctionType &weightFunction_;
+      LocalWeightFunctionType wfLocal_;
     };
 
 
@@ -296,7 +296,7 @@ namespace Dune
     inline WeightedL2Norm< WeightFunction >
       ::WeightedL2Norm ( const WeightFunctionType &weightFunction, const unsigned int order, const bool communicate )
     : BaseType( weightFunction.space().gridPart(), order, communicate ),
-      weightFunction_( weightFunction )
+      wfLocal_( weightFunction )
     {
       static_assert( (WeightFunctionSpaceType::dimRange == 1),
                      "Wight function must be scalar." );
@@ -311,11 +311,10 @@ namespace Dune
       // !!!! order !!!!
       IntegratorType integrator( order );
 
-      LocalWeightFunctionType wfLocal = weightFunction_.localFunction( entity );
-
-      WeightedFunctionSquare< LocalFunctionType > uLocal2( wfLocal, uLocal );
-
+      wfLocal_.bind( entity );
+      WeightedFunctionSquare< LocalFunctionType > uLocal2( wfLocal_, uLocal );
       integrator.integrateAdd( entity, uLocal2, sum );
+      wfLocal_.unbind();
     }
 
 
@@ -329,12 +328,12 @@ namespace Dune
       // !!!! order !!!!
       IntegratorType integrator( order );
 
-      LocalWeightFunctionType wfLocal = weightFunction_.localFunction( entity );
-
+      wfLocal_.bind( entity );
       LocalDistanceType dist( uLocal, vLocal );
-      WeightedFunctionSquare< LocalDistanceType > dist2( wfLocal, dist );
+      WeightedFunctionSquare< LocalDistanceType > dist2( wfLocal_, dist );
 
       integrator.integrateAdd( entity, dist2, sum );
+      wfLocal_.unbind();
     }
 
 

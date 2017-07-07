@@ -24,15 +24,15 @@ namespace Dune
     typedef Fem::SubVector< K, M > derived_type;
     typedef K container_type;
 
-    typedef typename K::value_type value_type;
-    typedef typename K::size_type size_type;
+    typedef std::decay_t< decltype( std::declval< K >().size() ) > size_type;
+    typedef std::decay_t< decltype( std::declval< K >()[ std::declval< size_type >() ] ) > value_type;
   };
 
   template< class K, class M >
   struct FieldTraits< Fem::SubVector< K, M > >
   {
-    typedef typename FieldTraits< typename K::value_type >::field_type field_type;
-    typedef typename FieldTraits< typename K::value_type >::real_type real_type;
+    typedef typename FieldTraits< typename DenseMatVecTraits< Fem::SubVector< K, M > >::value_type >::field_type field_type;
+    typedef typename FieldTraits< typename DenseMatVecTraits< Fem::SubVector< K, M > >::value_type >::real_type real_type;
   };
 
   namespace Fem

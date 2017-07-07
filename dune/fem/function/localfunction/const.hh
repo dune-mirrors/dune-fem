@@ -199,7 +199,10 @@ namespace Dune
         discreteFunction().getLocalDofs( entity, localDofVector() );
       }
 
-      const DiscreteFunctionType &discreteFunction() const { return *discreteFunction_; }
+      void bind ( const EntityType &entity ) { init( entity ); }
+      void unbind () {}
+
+      const DiscreteFunctionType& discreteFunction() const { return *discreteFunction_; }
       const GridFunctionType &gridFunction() const { return discreteFunction(); }
 
     protected:
@@ -230,11 +233,17 @@ namespace Dune
           : public GF::LocalFunctionType
         {
           typedef GF GridFunctionType;
+          typedef typename GridFunctionType::LocalFunctionType::EntityType EntityType;
 
           explicit Type ( const GridFunctionType &gridFunction )
             : GridFunctionType::LocalFunctionType( gridFunction ),
               gridFunction_( gridFunction )
           {}
+
+          using GF::LocalFunctionType::init;
+
+          void bind ( const EntityType &entity ) { init( entity ); }
+          void unbind () {}
 
           const GridFunctionType &gridFunction () const { return gridFunction_; }
 
