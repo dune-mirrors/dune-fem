@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_SPACE_LOCALFINITEELEMENT_SPACE_HH
-#define DUNE_FEM_SPACE_LOCALFINITEELEMENT_SPACE_HH
+#ifndef DUNE_FEM_SPACE_LOCALFINITEELEMENT_DGSPACE_HH
+#define DUNE_FEM_SPACE_LOCALFINITEELEMENT_DGSPACE_HH
 
 #include <cassert>
 
@@ -31,13 +31,13 @@ namespace Dune
   namespace Fem
   {
 
-    // LocalFiniteElementSpaceTraits
-    // -----------------------------
+    // DiscontinuousLocalFiniteElementSpaceTraits
+    // ------------------------------------------
 
     template< class LFEMap, class FunctionSpace, template< class > class Storage >
-    struct LocalFiniteElementSpaceTraits
+    struct DiscontinuousLocalFiniteElementSpaceTraits
     {
-      typedef LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > DiscreteFunctionSpaceType;
+      typedef DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > DiscreteFunctionSpaceType;
 
       typedef LFEMap LFEMapType;
 
@@ -70,7 +70,7 @@ namespace Dune
     public:
       typedef decltype( basisFunctionSet( std::declval< const LFEMapType & >() ) ) BasisFunctionSetType;
 
-      template< class DiscreteFunction, class Operation = DFCommunicationOperation::Add >
+      template< class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
       struct CommDataHandle
       {
         typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
@@ -80,25 +80,24 @@ namespace Dune
 
 
 
-    // LocalFiniteElementSpace
-    // -----------------------
+    // DiscontinuousLocalFiniteElementSpace
+    // ------------------------------------
 
     /** \brief Rannacher-Turek Space
-     *  \class LocalFiniteElementSpace
+     *  \class DiscontinuousLocalFiniteElementSpace
      *  \ingroup DiscreteFunctionSpace
      *
-     *  \note The LocalFiniteElementSpace depends on
+     *  \note The DiscontinuousLocalFiniteElementSpace depends on
      *        dune-localfunctions (see http://www.dune-project.org).
      *
      *  \todo please doc me
      **/
     template< class LFEMap, class FunctionSpace, template< class > class Storage >
-    class LocalFiniteElementSpace
-      : public DiscreteFunctionSpaceDefault< LocalFiniteElementSpaceTraits< LFEMap, FunctionSpace, Storage > >
+    class DiscontinuousLocalFiniteElementSpace
+      : public DiscreteFunctionSpaceDefault< DiscontinuousLocalFiniteElementSpaceTraits< LFEMap, FunctionSpace, Storage > >
     {
-      typedef LocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > ThisType;
-      typedef DiscreteFunctionSpaceDefault< LocalFiniteElementSpaceTraits< LFEMap, FunctionSpace, Storage > >
-        BaseType;
+      typedef DiscontinuousLocalFiniteElementSpace< LFEMap, FunctionSpace, Storage > ThisType;
+      typedef DiscreteFunctionSpaceDefault< DiscontinuousLocalFiniteElementSpaceTraits< LFEMap, FunctionSpace, Storage > > BaseType;
 
       typedef typename BaseType::Traits Traits;
 
@@ -152,7 +151,7 @@ namespace Dune
         {
           return new BlockMapperType( lfeMap->gridPart(), [ lfeMap ] ( const auto &refElement ) {
             if( lfeMap->hasCoefficients( refElement.type() ) )
-              return Dune::Fem::compile( refElement, lfeMap->localCoefficients( refElement.type() ) );
+              return Dune::Fem::generateCodimensionCode( refElement, 0, lfeMap->localCoefficients( refElement.type() ).size() );
             else
               return Dune::Fem::DofMapperCode();
           } );
@@ -169,9 +168,9 @@ namespace Dune
       using BaseType::order;
 
       template< class GridPart, std::enable_if_t< std::is_same< GridPart, GridPartType >::value &&std::is_same< KeyType, std::tuple<> >::value, int > = 0 >
-      explicit LocalFiniteElementSpace ( GridPart &gridPart,
-                                         const InterfaceType commInterface = InteriorBorder_All_Interface,
-                                         const CommunicationDirection commDirection = ForwardCommunication )
+      explicit DiscontinuousLocalFiniteElementSpace ( GridPart &gridPart,
+                                                      const InterfaceType commInterface = InteriorBorder_All_Interface,
+                                                      const CommunicationDirection commDirection = ForwardCommunication )
         : BaseType( gridPart, commInterface, commDirection ),
           lfeMap_( &LFEMapProviderType::getObject( std::make_pair( &gridPart, KeyType() ) ) ),
           storedShapeFunctionSetVector_( &StoredShapeFunctionSetVectorProviderType::getObject( lfeMap_.get() ) ),
@@ -179,23 +178,23 @@ namespace Dune
       {}
 
       template< class GridPart, std::enable_if_t< std::is_same< GridPart, GridPartType >::value && !std::is_same< KeyType, std::tuple<> >::value, int > = 0 >
-      explicit LocalFiniteElementSpace ( GridPart &gridPart, const KeyType &key,
-                                         const InterfaceType commInterface = InteriorBorder_All_Interface,
-                                         const CommunicationDirection commDirection = ForwardCommunication )
+      explicit DiscontinuousLocalFiniteElementSpace ( GridPart &gridPart, const KeyType &key,
+                                                      const InterfaceType commInterface = InteriorBorder_All_Interface,
+                                                      const CommunicationDirection commDirection = ForwardCommunication )
         : BaseType( gridPart, commInterface, commDirection ),
           lfeMap_( &LFEMapProviderType::getObject( std::make_pair( &gridPart, key ) ) ),
           storedShapeFunctionSetVector_( &StoredShapeFunctionSetVectorProviderType::getObject( lfeMap_.get() ) ),
           blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get() ) )
       {}
 
-      LocalFiniteElementSpace ( const ThisType & ) = delete;
-      LocalFiniteElementSpace ( ThisType && ) = delete;
+      DiscontinuousLocalFiniteElementSpace ( const ThisType & ) = delete;
+      DiscontinuousLocalFiniteElementSpace ( ThisType && ) = delete;
 
       ThisType &operator= ( const ThisType & ) = delete;
       ThisType &operator= ( ThisType && ) = delete;
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::type **/
-      DFSpaceIdentifier type () const { return LocalFiniteElementSpace_id; }
+      DFSpaceIdentifier type () const { return DGSpace_id; }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet **/
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
@@ -228,7 +227,7 @@ namespace Dune
       bool multipleGeometryTypes () const { return true; }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
-      BlockMapperType &blockMapper () const { assert( blockMapper_ ); return *blockMapper_; }
+      BlockMapperType &blockMapper () const { return blockMapper_; }
 
       /**
        * \brief return local interpolation
@@ -244,7 +243,7 @@ namespace Dune
     private:
       ShapeFunctionSetType getShapeFunctionSet ( std::tuple< std::size_t, const LocalBasisType &, const LocalInterpolationType & > lfe, const GeometryType &type ) const
       {
-        auto &storedShapeFunctionSet = (*storedShapeFunctionSetVector_)[ std::get< 0 > ( lfe ) ];
+        auto &storedShapeFunctionSet = (*storedShapeFunctionSetVector_)[ std::get< 0 >( lfe ) ];
         if( !storedShapeFunctionSet )
           storedShapeFunctionSet.reset( new StoredShapeFunctionSetType( type, LocalFunctionsShapeFunctionSetType( std::get< 1 >( lfe ) ) ) );
         return ShapeFunctionSetType( storedShapeFunctionSet.get() );
@@ -259,4 +258,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_SPACE_LOCALFINITEELEMENT_SPACE_HH
+#endif // #ifndef DUNE_FEM_SPACE_LOCALFINITEELEMENT_DGSPACE_HH
