@@ -39,7 +39,7 @@ typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 
 typedef TestFunctionSpace FunctionSpaceType;
 
-#ifdef POLORDER
+#ifndef DEFAULTPOLORDER
 typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER >
    DiscreteFunctionSpaceType;
 #else
@@ -87,10 +87,12 @@ int main(int argc, char ** argv)
 
     GridPartType gridPart( grid );
 
-#if POLORDER
+#ifndef DEFAULTPOLORDER
+#error HALLO
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
 #else
-    const int polOrder = Dune::Fem::Parameter::getValue< int >( "fem.lagrange.polinomialOrder", 1);
+#warning YEAH
+    const int polOrder = Dune::Fem::Parameter::getValue< int >( "fem.lagrange.polinomialOrder");
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart, polOrder );
 #endif
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
