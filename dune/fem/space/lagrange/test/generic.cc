@@ -33,16 +33,14 @@ typedef FunctionSpaceType :: RangeType RangeType;
 typedef Fem::LagrangeShapeFunctionFactory< FunctionSpaceType, POLORDER > ShapeFunctionFactoryType;
 typedef ShapeFunctionFactoryType::ShapeFunctionType ShapeFunctionType;
 
-typedef Fem::LagrangePoint< Impl::TOPOLOGYTYPE<DIMENSION>::type::id, DIMENSION, POLORDER >
-  LagrangePointType;
-typedef Fem::LagrangePointListImplementation
-  < double, Impl::TOPOLOGYTYPE<DIMENSION> ::type::id, DIMENSION, POLORDER >
+typedef Fem::LagrangePoint< Dune::Impl::TOPOLOGYTYPE<DIMENSION>::type::id, DIMENSION, POLORDER > LagrangePointType;
+typedef Fem::LagrangePointListImplementation< double, Dune::Impl::TOPOLOGYTYPE<DIMENSION>::type::id, DIMENSION, POLORDER >
   LagrangePointListType;
 
 
 int main( int argc, char **argv )
 {
-  GeometryType geometryType( Impl::TOPOLOGYTYPE<DIMENSION> ::type::id, DIMENSION );
+  GeometryType geometryType( Dune::Impl::TOPOLOGYTYPE<DIMENSION> ::type::id, DIMENSION );
   ShapeFunctionFactoryType shapeFunctionFactory ( geometryType );
 
   const unsigned int numShapeFunctions = shapeFunctionFactory.numShapeFunctions();
