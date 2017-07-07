@@ -67,8 +67,7 @@ void MassOperator< DiscreteFunction, LinearOperator >
     for( const auto qp : QuadratureType( entity, 2*dfSpace_.order()+1 ) )
     {
       // evaluate u
-      RangeType uValue;
-      uLocal.evaluate( qp, uValue );
+      RangeType uValue = uLocal.evaluate( qp );
 
       // apply quadrature weight
       uValue *= qp.weight() * geometry.integrationElement( qp.position() );
