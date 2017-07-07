@@ -24,6 +24,14 @@ namespace Dune
 
 
 
+    // Internal Forward Declarations
+    // -----------------------------
+
+    template< class DiscreteFunction, template< class > class AssemblyOperation >
+    class LocalContribution;
+
+
+
     namespace Assembly
     {
 
