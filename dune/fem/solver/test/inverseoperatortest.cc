@@ -112,7 +112,8 @@ struct Algorithm
     u.clear();
 
     Function f;
-    massOperator.assembleRHS( f, rhs );
+    auto gridFunction = Dune::Fem::gridFunctionAdapter( f, gridPart, space.order()+1 );
+    massOperator.assembleRHS( gridFunction, rhs );
 
     unsigned long maxIter = space.size();
     maxIter = space.gridPart().comm().sum( maxIter );
