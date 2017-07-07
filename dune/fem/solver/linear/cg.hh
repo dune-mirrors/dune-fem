@@ -33,7 +33,7 @@ namespace LinearSolver
 
     const RealType tolerance = (epsilon * epsilon) * b.normSquaredDofs( );
 
-    assert( ( preconditioner ) ? tempMem.size() == 5 : tempMem.size() ==  3 );
+    assert( preconditioner ? tempMem.size() == 5 : tempMem.size() == 3 );
 
     DiscreteFunction& h = tempMem[ 0 ];
 
@@ -85,7 +85,7 @@ namespace LinearSolver
 
       RangeFieldType qdoth = q.scalarProductDofs( h );
       const RangeFieldType alpha = residuum / qdoth;//<p,Bp>/<q,Aq>
-      assert( std::is_nan( alpha ) );
+      assert( !std::isnan( alpha ) );
       x.axpy( alpha, q );
 
       if( preconditioner )
