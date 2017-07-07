@@ -27,14 +27,6 @@
 using namespace Dune;
 using namespace Fem;
 
-// polynom approximation order of quadratures,
-// at least poolynom order of basis functions
-#ifdef POLORDER
-  const int polOrder = POLORDER;
-#else
-  const int polOrder = 1;
-#endif
-
 typedef GridSelector::GridType MyGridType;
 
 #ifdef LEAFGRIDPART
@@ -47,9 +39,12 @@ typedef AdaptiveLeafGridPart< MyGridType > GridPartType;
 
 typedef TestFunctionSpace FunctionSpaceType;
 
-// typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder >
-//   DiscreteFunctionSpaceType;
+#ifdef POLORDER
+typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, POLORDER >
+   DiscreteFunctionSpaceType;
+#else
 typedef LagrangeSpace< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
+#endif
 
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
 
@@ -76,6 +71,11 @@ int main(int argc, char ** argv)
   MPIManager :: initialize( argc, argv );
   try
   {
+    // add command line parameters to global parameter table
+    Dune::Fem::Parameter::append( argc, argv );
+    // append parameters from the parameter file
+    Dune::Fem::Parameter::append( (argc < 2) ? "parameter" : argv[ 1 ] );
+
     MyGridType &grid = TestGrid :: grid();
     const int step = TestGrid :: refineStepsForHalf();
 
@@ -87,7 +87,12 @@ int main(int argc, char ** argv)
 
     GridPartType gridPart( grid );
 
+#if POLORDER
+    DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
+#else
+    const int polOrder = Dune::Fem::Parameter::getValue< int >( "fem.lagrange.polinomialOrder", 1);
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart, polOrder );
+#endif
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
     solution.clear();
 

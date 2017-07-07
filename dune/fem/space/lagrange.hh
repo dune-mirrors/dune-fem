@@ -1,26 +1,28 @@
 #ifndef HAVE_DUNE_FEM_SPACE_LAGRANGE
 #define HAVE_DUNE_FEM_SPACE_LAGRANGE
 
+#include <dune/fem/space/lagrange/space.hh>
+
 #if HAVE_DUNE_LOCALFUNCTIONS
 // dune-localfunctions includes
 
-#include <dune/fem/space/lagrange/space.hh>
-
 #include <dune/localfunctions/lagrange.hh>
-#include <dune/fem/gridpart/common/capabilities.hh>
-
-#include <dune/fem/space/localfiniteelement/space.hh>
 #include <dune/localfunctions/lagrange/equidistantpoints.hh>
+
+#include <dune/fem/gridpart/common/capabilities.hh>
+#include <dune/fem/space/localfiniteelement/space.hh>
 
 namespace Dune
 {
   namespace Fem
   {
 
-    template< class GridPart, class FunctionSpace >
+    template< class FunctionSpace, class GridPart,
+              template< class, unsigned int > class PointSet = EquidistantPointSet
+            >
     class LagrangeFiniteElementMap
     {
-      typedef LagrangeFiniteElementMap< GridPart, FunctionSpace > ThisType;
+      typedef LagrangeFiniteElementMap< FunctionSpace, GridPart > ThisType;
 
     public:
       typedef GridPart GridPartType;
@@ -32,7 +34,7 @@ namespace Dune
 
       static const int dimLocal = GridPart::dimension;
 
-      typedef LagrangeLocalFiniteElement< EquidistantPointSet,dimLocal,double,double > LocalFiniteElementType;
+      typedef LagrangeLocalFiniteElement< PointSet,dimLocal,double,double > LocalFiniteElementType;
       typedef typename LocalFiniteElementType::Traits::LocalBasisType LocalBasisType;
       typedef typename LocalFiniteElementType::Traits::LocalCoefficientsType LocalCoefficientsType;
       typedef typename LocalFiniteElementType::Traits::LocalInterpolationType LocalInterpolationType;
@@ -82,10 +84,12 @@ namespace Dune
       unsigned int order_;
     };
 
-    template< class FunctionSpace, class GridPart, template< class > class Storage = CachingStorage >
+    template< class FunctionSpace, class GridPart,
+              template< class, unsigned int > class PointSet = EquidistantPointSet,
+              template< class > class Storage = CachingStorage >
     using LagrangeSpace
     = LocalFiniteElementSpace<
-        LagrangeFiniteElementMap< GridPart, FunctionSpace >,
+        LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet >,
         FunctionSpace, Storage >;
   }
 }
