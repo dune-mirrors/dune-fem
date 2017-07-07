@@ -11,6 +11,8 @@
 
 // dune includes
 #include <dune/common/fvector.hh>
+#include <dune/common/parallel/collectivecommunication.hh>
+
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh>
 
@@ -37,8 +39,23 @@ template <int N>
 class myDest : public Dune::FieldVector<double, N> {
   typedef myDest< N > ThisType;
 private:
+  struct GridPartDummy
+  {
+    typedef Dune::CollectiveCommunication< Dune::No_Comm > CollectiveCommunicationType;
+
+    const CollectiveCommunicationType &comm () const { return comm_; }
+
+    CollectiveCommunicationType comm_;
+  };
+
   struct SpaceDummy {
+    typedef GridPartDummy GridPartType;
+
     int size () const { return N; }
+
+    const GridPartType &gridPart () const { return gridPart_; }
+
+    GridPartType gridPart_;
   };
   typedef Dune::FieldVector<double, N> BaseType;
 
@@ -47,6 +64,9 @@ public:
   typedef double RangeFieldType;
   typedef SpaceDummy DiscreteFunctionSpaceType;
   const DiscreteFunctionSpaceType space_;
+
+  typedef typename BaseType::const_iterator ConstDofIteratorType;
+  typedef typename BaseType::iterator DofIteratorType;
 
   myDest(std::string, const DiscreteFunctionSpaceType& space, const double* u = 0)
    : space_( space )
@@ -86,6 +106,11 @@ public:
     }
     return (*this)[i];
   }
+
+  ConstDofIteratorType dbegin () const { return static_cast< const BaseType & >( *this ).begin(); }
+  DofIteratorType dbegin () { return static_cast< BaseType & >( *this ).begin(); }
+  ConstDofIteratorType dend () const { return static_cast< const BaseType & >( *this ).end(); }
+  DofIteratorType dend () { return static_cast< BaseType & >( *this ).end(); }
 
   double* leakPointer() { return &this->operator[](0); }
   const double* leakPointer() const { return &this->operator[](0); }
@@ -166,6 +191,7 @@ private:
 };
 
 
+#if 0
 namespace Dune
 {
   namespace Fem
@@ -218,6 +244,7 @@ namespace Dune
     }
   }
 }
+#endif
 
 template <class OdeFactory>
 void solve(OdeFactory factory, const bool verbose)
@@ -296,7 +323,8 @@ struct ImplicitRKFactory
   typedef SpaceOperator  SpaceOperatorType;
   typedef typename SpaceOperatorType::DestinationType DestinationType;
 
-  typedef Dune::Fem::GeneralizedMinResInverseOperator< DestinationType >  LinearInverseOperatorType;
+  typedef Dune::Fem::KrylovInverseOperator< DestinationType > LinearInverseOperatorType;
+  //typedef Dune::Fem::GeneralizedMinResInverseOperator< DestinationType >  LinearInverseOperatorType;
   //typedef Dune::Fem::BiCGStabInverseOperator< DestinationType >  LinearInverseOperatorType;
   typedef DuneODE::ImplicitRungeKuttaTimeStepControl                           TimeStepControlType;
 
