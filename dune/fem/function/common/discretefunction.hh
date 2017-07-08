@@ -898,10 +898,12 @@ namespace Dune
         const std::type_index id( typeid( AssembleOperation ) );
         if( assembleOperation_ != id )
           DUNE_THROW( InvalidStateException, "Assemble operation not in progress" );
-        assembleOperation_ = std::type_index( typeid( void ) );
         assert( assembleCount_ > 0 );
         if( --assembleCount_ == 0 )
+        {
           AssembleOperation::end( asImp() );
+          assembleOperation_ = std::type_index( typeid( void ) );
+        }
       }
 
     protected:
