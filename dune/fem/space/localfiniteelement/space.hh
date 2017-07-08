@@ -63,9 +63,9 @@ namespace Dune
 
     private:
       template< class LFEM >
-      TransformedBasisFunctionSet< EntityType, ShapeFunctionSetType, typename LFEM::TransformationType > basisFunctionSet ( const LFEM & );
+      static TransformedBasisFunctionSet< EntityType, ShapeFunctionSetType, typename LFEM::TransformationType > basisFunctionSet ( const LFEM & );
 
-      DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > basisFunctionSet ( ... );
+      static DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > basisFunctionSet ( ... );
 
     public:
       typedef decltype( basisFunctionSet( std::declval< const LFEMapType & >() ) ) BasisFunctionSetType;

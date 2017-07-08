@@ -88,10 +88,8 @@ int main(int argc, char ** argv)
     GridPartType gridPart( grid );
 
 #ifndef DEFAULTPOLORDER
-#error HALLO
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
 #else
-#warning YEAH
     const int polOrder = Dune::Fem::Parameter::getValue< int >( "fem.lagrange.polinomialOrder");
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart, polOrder );
 #endif
