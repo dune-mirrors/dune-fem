@@ -59,8 +59,8 @@ int main(int argc, char ** argv)
   try
   {
     MyGridType &grid = TestGrid :: grid();
-    // const int step = TestGrid :: refineStepsForHalf();
-    // grid.globalRefine( 2*step );
+    const int step = TestGrid :: refineStepsForHalf();
+    grid.globalRefine( 2*step );
 
     GridPartType gridPart( grid );
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart ); // DG
@@ -81,21 +81,19 @@ int main(int argc, char ** argv)
 
     LagrangeFunctionType lagrangeSolution("lagrangeSolution",lagspace);
     interpolate( gridFunctionAdapter( exactSolution, gridPart, lagspace.order()+2 ), lagrangeSolution );
-    #if 0
-    LagrangeType lagrangeContSolution("lagrnageContSolution",lagspace);
-    VtxProjection<double,double,LagrangeType,LagrangeType> projection2;
-    projection2(lagrangeSolution,lagrangeContSolution);
+#if 0
+    LagrangeFunctionType testSolution("test",lagspace);
+    VtxProjection<LagrangeFunctionType,LagrangeFunctionType> projection2;
+    projection2(lagrangeSolution,testSolution);
 
     // output to vtk file
     VTKIO<GridPartType> vtkWriter(gridPart);
     vtkWriter.addCellData(solution);
     vtkWriter.addVertexData(contSolution);
-    lagrangeSolution -= lagrangeContSolution;
+    testSolution -= lagrangeSolution;
     vtkWriter.addVertexData(lagrangeSolution);
-    vtkWriter.addVertexData(lagrangeContSolution);
-    vtkWriter.pwrite("vtxprojection",
-		     Parameter::commonOutputPath().c_str(),".",
-		     Dune::VTKOptions::ascii);
+    vtkWriter.addVertexData(testSolution);
+    vtkWriter.pwrite("vtxprojection", Parameter::commonOutputPath().c_str(),".");
 
 #endif
     return 0;

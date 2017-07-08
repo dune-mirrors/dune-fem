@@ -225,6 +225,7 @@ namespace Dune
           {
             // initialize local function and local weight
             auto lfGuard = bindGuard( lf, entity );
+            auto luGuard = bindGuard( lu, entity );
             auto lwGuard = bindGuard( lw, entity );
             auto localWeightGuard = bindGuard( localWeight, entity );
 
