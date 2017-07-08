@@ -83,6 +83,8 @@ namespace Dune
 
           explicit LocalMatrixGetter ( const LocalMatrix &localMatrix ) : localMatrix_( localMatrix ) {}
 
+          decltype( auto ) operator[] ( int row ) const { return localMatrix_[ row ]; }
+
           value_type get ( int row, int col ) const { return localMatrix_[ row ][ col ]; }
 
         private:
