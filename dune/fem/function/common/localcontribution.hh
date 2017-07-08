@@ -197,10 +197,11 @@ namespace Dune
 
       typedef typename BasisFunctionSetType::EntityType EntityType;
 
-      explicit LocalContribution ( DiscreteFunctionType &discreteFunction, AssemblyOperationType assemblyOperation = {} )
+      template< class... Args >
+      explicit LocalContribution ( DiscreteFunctionType &discreteFunction, Args &&... args )
         : discreteFunction_( discreteFunction ),
-          localDofVector_( DiscreteFunctionType::DiscreteFunctionSpaceType::localBlockSize * discreteFunction.space().blockMapper().maxNumDofs() ),
-          assemblyOperation_( std::move( assemblyOperation ) )
+          localDofVector_( discreteFunction.space().maxNumDofs() ),
+          assemblyOperation_( std::forward< Args >( args )... )
       {
         discreteFunction.template beginAssemble< typename AssemblyOperationType::GlobalOperationType >();
       }

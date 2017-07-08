@@ -253,11 +253,11 @@ namespace Dune
       };
 
     public:
-      explicit LocalContribution ( AssembledOperator &assembledOperator, AssemblyOperationType assemblyOperation = {} )
+      template< class... Args >
+      explicit LocalContribution ( AssembledOperator &assembledOperator, Args &&... args )
         : assembledOperator_( assembledOperator ),
-          localMatrixEntries_( AssembledOperator::DomainFunctionType::DiscreteFunctionSpaceType::localBlockSize * assembledOperator.domainSpace().blockMapper().maxNumDofs()
-                               * AssembledOperator::RangeFunctionType::DiscreteFunctionSpaceType::localBlockSize * assembledOperator.rangeSpace().blockMapper().maxNumDofs() ),
-          assemblyOperation_( std::move( assemblyOperation ) )
+          localMatrixEntries_( assembledOperator.domainSpace().maxNumDofs() * assembledOperator.rangeSpace().maxNumDofs() ),
+          assemblyOperation_( std::forward< Args >( args )... )
       {
         //assembledOperator.template beginAssemble< typename AssemblyOperationType::GlobalOperationType >();
       }
