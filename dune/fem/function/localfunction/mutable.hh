@@ -17,9 +17,6 @@ namespace Dune
     template< class >
     struct DiscreteFunctionTraits;
 
-    template< class >
-    class ConstLocalFunction;
-
     //**************************************************************************
     //
     //  --MutableLocalFunction

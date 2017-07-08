@@ -42,10 +42,12 @@ namespace Dune
       //! \brief hessian range type
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
-      explicit LocalFunctionSetAdapter ( const Entity &entity,
-                                         const FunctionSet &functionSet = FunctionSet() )
-      : entity_( &entity ),
-        functionSet_( functionSet )
+      explicit LocalFunctionSetAdapter ( const FunctionSet &functionSet = FunctionSet() )
+        : functionSet_( functionSet )
+      {}
+
+      explicit LocalFunctionSetAdapter ( const Entity &entity, const FunctionSet &functionSet = FunctionSet() )
+        : entity_( &entity ), functionSet_( functionSet )
       {}
 
       /** \copydoc Dune::Fem::LocalFunctionSet::order() const */
@@ -95,7 +97,7 @@ namespace Dune
     private:
       typename EntityType::Geometry geometry () const { return entity().geometry(); }
 
-      const EntityType *entity_;
+      const EntityType *entity_ = nullptr;
       FunctionSetType functionSet_;
     };
 

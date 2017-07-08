@@ -5,8 +5,9 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/grid/utility/hierarchicsearch.hh>
-#include <dune/fem/quadrature/cachingquadrature.hh>
+#include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/io/file/datawriter.hh>
+#include <dune/fem/quadrature/cachingquadrature.hh>
 
 #if HAVE_DUNE_SPGRID
 #include <dune/grid/spgrid.hh>
@@ -52,6 +53,7 @@ namespace Dune
       GridPartType gridPart_;
       DiscreteFunctionSpaceType space_;
       DiscreteFunctionType discreteFunction_;
+      ConstLocalFunction< DiscreteFunctionType > lf_;
       IOTupleType data_;
       HierarchicSearchType hierarchicSearch_;
 
@@ -67,6 +69,7 @@ namespace Dune
         gridPart_( grid() ),
         space_( gridPart_ ),
         discreteFunction_("grid-sol", space_),
+        lf_( discreteFunction_ ),
         data_( &discreteFunction_ ),
         hierarchicSearch_( grid(), gridPart_.indexSet() )
       {
@@ -114,7 +117,9 @@ namespace Dune
 #endif
 
         // evaluate discrete function
-        discreteFunction_.localFunction( entity ).evaluate( local, result );
+        lf_.bind( entity );
+        lf_.evaluate( local, result );
+        lf_.unbind();
       }
 
       //! \brief writes a discrete function

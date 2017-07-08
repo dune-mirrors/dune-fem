@@ -57,7 +57,7 @@ namespace Dune
      *  \endcode
      *  may be used to conveniently create a new instance of a LocalFunctionConverter. Use
      *  \code
-     *    auto g = localFunctionConverter( GF.localFunction( entity ), Converter )
+     *    auto g = localFunctionConverter( localFunction, Converter )
      *  \endcode
      *  to create an converted local function.
      *
@@ -131,10 +131,11 @@ namespace Dune
         hes = converter_( hHes );
       }
 
-      template< class Quadrature, class Vector >
-      void evaluateQuadrature ( const Quadrature &quad, Vector &vector ) const
+      template< class Quadrature, class ... Vectors >
+      void evaluateQuadrature ( const Quadrature &quad, Vectors& ... vector ) const
       {
-        evaluateQuadratureImp( quad, vector, vector[ 0 ] );
+        std::ignore = std::make_tuple(
+            ( evaluateQuadratureImp( quad, vector, vector[ 0 ] ), 1 )... );
       }
 
       int order () const { return this->get().order(); }

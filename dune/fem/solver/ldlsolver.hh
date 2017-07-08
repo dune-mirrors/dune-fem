@@ -60,6 +60,31 @@ class LDLOp:public Operator<DF, DF>
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
 
   /** \brief Constructor.
+   *  \param[in] redEps relative tolerance for residual (not used here)
+   *  \param[in] absLimit absolut solving tolerance for residual (not used here)
+   *  \param[in] maxIter maximal number of iterations performed (not used here)
+   *  \param[in] verbose verbosity
+   */
+  LDLOp(const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
+        const ParameterReader &parameter = Parameter::container() ) :
+    verbose_(verbose), ccsmat_()
+  {}
+
+  /** \brief Constructor.
+   *  \param[in] redEps relative tolerance for residual (not used here)
+   *  \param[in] absLimit absolut solving tolerance for residual (not used here)
+   *  \param[in] maxIter maximal number of iterations performed (not used here)
+   */
+  LDLOp(const double& redEps, const double& absLimit, const int& maxIter,
+        const ParameterReader &parameter = Parameter::container() ) :
+    verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_()
+  {}
+
+  LDLOp(const ParameterReader &parameter = Parameter::container() ) :
+    verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_()
+  {}
+
+  /** \brief Constructor.
    *  \param[in] op Operator to invert
    *  \param[in] redEps relative tolerance for residual (not used here)
    *  \param[in] absLimit absolut solving tolerance for residual (not used here)
@@ -68,8 +93,10 @@ class LDLOp:public Operator<DF, DF>
    */
   LDLOp(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
         const ParameterReader &parameter = Parameter::container() ) :
-    op_(op), verbose_(verbose), ccsmat_(), isloaded_(false)
-  {}
+    verbose_(verbose), ccsmat_(), isloaded_(false)
+  {
+    bind(op);
+  }
 
   /** \brief Constructor.
    *  \param[in] op Operator to invert
@@ -79,18 +106,25 @@ class LDLOp:public Operator<DF, DF>
    */
   LDLOp(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter,
         const ParameterReader &parameter = Parameter::container() ) :
-    op_(op), verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
-  {}
+    verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
+  {
+    bind(op);
+  }
 
   LDLOp(const OperatorType& op, const ParameterReader &parameter = Parameter::container() ) :
-    op_(op), verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
-  {}
+    verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
+  {
+    bind(op);
+  }
 
   // \brief Destructor.
   ~LDLOp()
   {
     finalize();
   }
+
+  void bind (const OperatorType& op) { op_ = &op; }
+  void unbind () { op_ = nullptr; finalize(); }
 
   /** \brief Solve the system
    *  \param[in] arg right hand side
@@ -107,9 +141,9 @@ class LDLOp:public Operator<DF, DF>
   template<typename... A>
   void prepare(A... ) const
   {
-    if(!isloaded_)
+    if(op_ && !isloaded_)
     {
-      ccsmat_ = op_.systemMatrix().matrix();
+      ccsmat_ = op_->systemMatrix().matrix();
       decompose();
       isloaded_ = true;
     }
@@ -221,6 +255,7 @@ class LDLOp:public Operator<DF, DF>
   {
     return 0;
   }
+  void setMaxIterations ( int ) {}
 
   /** \brief Get factorization diagonal matrix D.
    *  \warning It is up to the user to preserve consistency.
@@ -263,10 +298,10 @@ class LDLOp:public Operator<DF, DF>
   }
 
   private:
-  const OperatorType& op_;
+  const OperatorType* op_;
   const bool verbose_;
   mutable CCSMatrixType ccsmat_;
-  mutable bool isloaded_;
+  mutable bool isloaded_ = false;
   mutable int* Lp_;
   mutable int* Parent_;
   mutable int* Lnz_;

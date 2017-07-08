@@ -1,6 +1,8 @@
 #ifndef DUNE_FEM_SLAVEDOFS_HH
 #define DUNE_FEM_SLAVEDOFS_HH
 
+#include <cassert>
+
 #include <iostream>
 #include <memory>
 #include <set>
@@ -67,6 +69,25 @@ namespace Dune
       int sequence_;
 
     public:
+      struct ConstIterator
+      {
+        ConstIterator () = default;
+        ConstIterator ( const IndexMapType &slaves, int index ) : slaves_( &slaves ), index_( index ) {}
+
+        const int &operator* () const { return (*slaves_)[ index_ ]; }
+        const int *operator-> () const { return &(*slaves_)[ index_ ]; }
+
+        bool operator== ( const ConstIterator &other ) const { return (index_ == other.index_); }
+        bool operator!= ( const ConstIterator &other ) const { return (index_ != other.index_); }
+
+        ConstIterator &operator++ () { ++index_; return *this; }
+        ConstIterator operator++ ( int ) { ConstIterator copy( *this ); ++(*this); return copy; }
+
+      private:
+        const IndexMapType *slaves_ = nullptr;
+        int index_ = 0;
+      };
+
       //! constructor taking space
       SlaveDofs ( const SingletonKey &key )
       : mapper_( key.mapper() ),
@@ -89,6 +110,9 @@ namespace Dune
       {
         return slaves_.size();
       }
+
+      ConstIterator begin () const { return ConstIterator( slaves_, 0 ); }
+      ConstIterator end () const { assert( size() > 0 ); return ConstIterator( slaves_, size()-1 ); }
 
       //! return true if index is contained, meaning is a slave dof
       bool isSlave( const int index ) const

@@ -525,10 +525,11 @@ namespace Dune
         localFunctionImpl().hessian( x, ret );
       }
 
-      template< class QuadratureType, class VectorType  >
-      void evaluateQuadrature( const QuadratureType &quad, VectorType &result ) const
+      template< class QuadratureType, class ... Vectors  >
+      void evaluateQuadrature( const QuadratureType &quad, Vectors& ... result ) const
       {
-        evaluateQuadrature( quad, result, result[ 0 ] );
+        std::ignore = std::make_tuple(
+            ( evaluateQuadrature( quad, result, result[ 0 ] ), 1 ) ... );
       }
 
       //! init local function

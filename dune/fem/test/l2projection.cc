@@ -164,7 +164,7 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step )
 
   // assemble RHS
   DiscreteFunctionType rhs( "rhs", space );
-  massOperator.assembleRHS( function_, rhs );
+  massOperator.assembleRHS( gridFunctionAdapter( function_, gridPart, space.order()+1 ), rhs );
 
   unsigned long maxIter = space.size();
   maxIter = space.gridPart().comm().sum( maxIter );

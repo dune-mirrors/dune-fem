@@ -58,12 +58,38 @@ class SPQROp:public Operator<DF, DF>
    *  \param[in] maxIter maximal number of iterations performed (not used here)
    *  \param[in] verbose verbosity
    */
+  SPQROp(const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
+         const ParameterReader &paramter = Parameter::container() ) :
+    SPQROp(verbose)
+  {}
+
+  /** \brief Constructor.
+   *  \param[in] op Operator to invert
+   *  \param[in] redEps relative tolerance for residual (not used here)
+   *  \param[in] absLimit absolut solving tolerance for residual (not used here)
+   *  \param[in] maxIter maximal number of iterations performed (not used here)
+   */
+  SPQROp(const double& redEps, const double& absLimit, const int& maxIter,
+         const ParameterReader &parameter = Parameter::container() ) :
+    SPQROp(parameter.getValue<bool>("fem.solver.verbose",false))
+  {}
+
+  SPQROp(const ParameterReader &parameter = Parameter::container() ) :
+    SPQROp(parameter.getValue<bool>("fem.solver.verbose",false))
+  {}
+
+  /** \brief Constructor.
+   *  \param[in] op Operator to invert
+   *  \param[in] redEps relative tolerance for residual (not used here)
+   *  \param[in] absLimit absolut solving tolerance for residual (not used here)
+   *  \param[in] maxIter maximal number of iterations performed (not used here)
+   *  \param[in] verbose verbosity
+   */
   SPQROp(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter, const bool& verbose,
       const ParameterReader &paramter = Parameter::container() ) :
-    op_(op), verbose_(verbose), ccsmat_(), isloaded_(false)
+    SPQROp(verbose)
   {
-    cc_ = new cholmod_common();
-    cholmod_l_start(cc_);
+    bind(op);
   }
 
   /** \brief Constructor.
@@ -74,17 +100,15 @@ class SPQROp:public Operator<DF, DF>
    */
   SPQROp(const OperatorType& op, const double& redEps, const double& absLimit, const int& maxIter,
          const ParameterReader &parameter = Parameter::container() ) :
-    op_(op), verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
+    SPQROp(parameter.getValue<bool>("fem.solver.verbose",false))
   {
-    cc_ = new cholmod_common();
-    cholmod_l_start(cc_);
+    bind(op);
   }
 
   SPQROp(const OperatorType& op, const ParameterReader &parameter = Parameter::container() ) :
-    op_(op), verbose_(parameter.getValue<bool>("fem.solver.verbose",false)), ccsmat_(), isloaded_(false)
+    SPQROp(parameter.getValue<bool>("fem.solver.verbose",false))
   {
-    cc_ = new cholmod_common();
-    cholmod_l_start(cc_);
+    bind(op);
   }
 
   // \brief Destructor.
@@ -92,7 +116,11 @@ class SPQROp:public Operator<DF, DF>
   {
     finalize();
     cholmod_l_finish(cc_);
+    delete cc_;
   }
+
+  void bind (const OperatorType& op) { op_ = &op; }
+  void unbind () { op_ = nullptr; finalize(); }
 
   /** \brief Solve the system
    *  \param[in] arg right hand side
@@ -109,9 +137,9 @@ class SPQROp:public Operator<DF, DF>
   template<typename... A>
   void prepare(A... ) const
   {
-    if(!isloaded_)
+    if(op_ && !isloaded_)
     {
-      ccsmat_ = op_.systemMatrix().matrix();
+      ccsmat_ = op_->systemMatrix().matrix();
       decompose();
       isloaded_ = true;
     }
@@ -237,6 +265,7 @@ class SPQROp:public Operator<DF, DF>
   {
     return 0;
   }
+  void setMaxIterations( int ) {}
 
   /** \brief Get QR factorization.
    *  \warning It is up to the user to preserve consistency when modifyng it.
@@ -255,10 +284,16 @@ class SPQROp:public Operator<DF, DF>
   }
 
   private:
-  const OperatorType& op_;
+  explicit SPQROp(const bool& verbose) :
+    verbose_(verbose), ccsmat_(), cc_(new cholmod_common())
+  {
+    cholmod_l_start(cc_);
+  }
+
+  const OperatorType* op_ = nullptr;
   const bool verbose_;
   mutable CCSMatrixType ccsmat_;
-  mutable bool isloaded_;
+  mutable bool isloaded_ = false;
   mutable cholmod_common* cc_;
   mutable cholmod_sparse* A_;
   mutable cholmod_dense* B_;

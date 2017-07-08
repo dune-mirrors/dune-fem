@@ -286,7 +286,7 @@ namespace Dune
       void applyInverseDgOrthoNormalBasis ( MassCaller &caller, const EntityType &entity, LocalFunction &lf ) const
       {
         Geometry geo = entity.geometry();
-        assert( dgNumDofs == lf.numDofs() );
+        assert( dgNumDofs == lf.size() );
 
         // affine_ can be a static information
         const bool isAffine = affine() || geo.affine();
@@ -404,7 +404,7 @@ namespace Dune
           = getLocalInverseMassMatrixDefault ( caller, entity, geo, lf.basisFunctionSet() );
 
         // copy local function to right hand side
-        const int numDofs = lf.numDofs();
+        const int numDofs = lf.size();
         rhs_.resize( numDofs );
         for( int l = 0; l < numDofs; ++l )
           rhs_[ l ] = lf[ l ];
@@ -467,7 +467,7 @@ namespace Dune
       void applyInverseLocally ( MassCaller &caller, const EntityType &entity,
                                  const Geometry &geo, LocalFunction &lf ) const
       {
-        const int numDofs = lf.numDofs();
+        const int numDofs = lf.size();
 
         // get local inverted mass matrix
         MatrixType &invMassMatrix =

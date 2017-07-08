@@ -9,6 +9,8 @@
 
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/tuplediscretefunction.hh>
+#include <dune/fem/function/common/localcontribution.hh>
+#include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/gridpart/filter/domainfilter.hh>
 #include <dune/fem/gridpart/filteredgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
@@ -81,39 +83,66 @@ int main ( int argc, char **argv )
     HostDiscreteFunctionSpaceType hostSpace( hostGridPart );
     typedef Dune::Fem::AdaptiveDiscreteFunction< HostDiscreteFunctionSpaceType > HostDiscreteFunctionType;
     HostDiscreteFunctionType hostDF( "host", hostSpace );
-    for( const auto &entity : entities( hostDF ) )
     {
-      auto localDF = hostDF.localFunction( entity );
-      const auto &center( entity.geometry().center() );
-      localDF[ 0 ] = ( center[ 0 ] < 0.25 ? center[ 0 ] : center[ 0 ]+2.0 );
+      Dune::Fem::AddLocalContribution< HostDiscreteFunctionType > localDF( hostDF );
+      for( const auto &entity : entities( hostDF ) )
+      {
+        localDF.bind( entity );
+        const auto &center( entity.geometry().center() );
+        localDF[ 0 ] = ( center[ 0 ] < 0.25 ? center[ 0 ] : center[ 0 ]+2.0 );
+        localDF.unbind();
+      }
     }
     std::cout << "Number of DOFs hostDF : " << hostDF.size() << std::endl;
     typedef Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, FilteredGridPartType, 0 > FilteredDiscreteFunctionSpaceType;
     FilteredDiscreteFunctionSpaceType leftSpace( leftGridPart );
     typedef Dune::Fem::AdaptiveDiscreteFunction< FilteredDiscreteFunctionSpaceType > FilteredDiscreteFunctionType;
     FilteredDiscreteFunctionType leftDF( "left", leftSpace );
-    for( const auto &entity : entities( leftDF ) )
     {
-      auto localDF = leftDF.localFunction( entity );
-      localDF[ 0 ] = entity.geometry().center()[ 0 ];
+      Dune::Fem::AddLocalContribution< FilteredDiscreteFunctionType > localDF( leftDF );
+      for( const auto &entity : entities( leftDF ) )
+      {
+        localDF.bind( entity );
+        localDF[ 0 ] = entity.geometry().center()[ 0 ];
+        localDF.unbind();
+      }
     }
     std::cout << "Number of DOFs leftDF : " << leftDF.size() << std::endl;
     FilteredDiscreteFunctionSpaceType rightSpace( rightGridPart );
     FilteredDiscreteFunctionType rightDF( "right", rightSpace );
-    for( const auto &entity : entities( rightDF ) )
     {
-      auto localDF = rightDF.localFunction( entity );
-      localDF[ 0 ] = entity.geometry().center()[ 0 ]+2.0;
+      Dune::Fem::AddLocalContribution< FilteredDiscreteFunctionType > localDF( rightDF );
+      for( const auto &entity : entities( rightDF ) )
+      {
+        localDF.bind( entity );
+        localDF[ 0 ] = entity.geometry().center()[ 0 ]+2.0;
+        localDF.unbind();
+      }
     }
     std::cout << "Number of DOFs rightDF : " << rightDF.size() << std::endl;
 
     // check dfs
+    Dune::Fem::ConstLocalFunction< HostDiscreteFunctionType > hostLocal( hostDF );
+    Dune::Fem::ConstLocalFunction< FilteredDiscreteFunctionType > leftLocal( leftDF );
+    Dune::Fem::ConstLocalFunction< FilteredDiscreteFunctionType > rightLocal( rightDF );
     for( const auto &entity : entities( leftDF ) )
-      if( leftDF.localFunction( entity )[ 0 ] != hostDF.localFunction( entity )[ 0 ] )
+    {
+      hostLocal.bind( entity );
+      leftLocal.bind( entity );
+      if( leftLocal[ 0 ] != hostLocal[ 0 ] )
         DUNE_THROW( Dune::InvalidStateException, "Inconsistent DOF in leftDF" );
+      hostLocal.unbind();
+      leftLocal.unbind();
+    }
     for( const auto &entity : entities( rightDF ) )
-      if( rightDF.localFunction( entity )[ 0 ] != hostDF.localFunction( entity )[ 0 ] )
+    {
+      hostLocal.bind( entity );
+      rightLocal.bind( entity );
+      if( rightLocal[ 0 ] != hostLocal[ 0 ] )
         DUNE_THROW( Dune::InvalidStateException, "Inconsistent DOF in rightDF" );
+      hostLocal.unbind();
+      rightLocal.unbind();
+    }
 
     // create tuple df
     typedef Dune::Fem::TupleDiscreteFunction< FilteredDiscreteFunctionType, FilteredDiscreteFunctionType > TupleDiscreteFunctionType;

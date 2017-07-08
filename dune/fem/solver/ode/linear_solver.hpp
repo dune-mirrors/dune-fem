@@ -150,6 +150,8 @@ class FGMRES : public IterativeLinearSolver, public DynamicalObject
 {
 public:
   FGMRES(Communicator &comm, int m);
+  FGMRES(const FGMRES &) = delete;
+  FGMRES(FGMRES &&);
   virtual ~FGMRES();
 
   // solve Au = b, Au = linear_operator(u)

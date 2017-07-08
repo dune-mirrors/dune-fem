@@ -285,11 +285,11 @@ namespace Dune
       }
 
       //! evaluate function or jacobian of function for given quadrature
-      template < class QuadratureType, class VectorType >
-      void evaluateQuadrature( const QuadratureType& quadrature, VectorType& values ) const
+      template < class QuadratureType, class ... Vectors >
+      void evaluateQuadrature( const QuadratureType& quadrature, Vectors& ... values ) const
       {
-        assert( values.size() == quadrature.nop() );
-        evaluateQuadratureImp( quadrature, values, values[ 0 ] );
+        std::ignore = std::make_tuple(
+            ( evaluateQuadratureImp( quadrature, values, values[ 0 ] ), 1 ) ... );
       }
 
       int order () const { return order_; }
@@ -310,17 +310,15 @@ namespace Dune
       template < class QuadratureType, class VectorType >
       void evaluateQuadratureImp( const QuadratureType& quadrature, VectorType& values, const RangeType& ) const
       {
-        const auto nop = quadrature.nop();
-        for( auto qp = 0; qp < nop; ++qp )
-          evaluate( quadrature[ qp ], values[ qp ] );
+        for( auto qp : quadrature )
+          evaluate( qp, values[ qp.index() ] );
       }
 
       template < class QuadratureType, class VectorType >
       void evaluateQuadratureImp( const QuadratureType& quadrature, VectorType& values, const JacobianRangeType& ) const
       {
-        const auto nop = quadrature.nop();
-        for( auto qp = 0; qp < nop; ++qp )
-          jacobian( quadrature[ qp ], values[ qp ] );
+        for( auto qp : quadrature )
+          jacobian( qp, values[ qp.index() ] );
       }
 
       const FunctionType &function () const

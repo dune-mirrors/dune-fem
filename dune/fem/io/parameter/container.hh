@@ -55,7 +55,9 @@ namespace Dune
       void resolveShadows ( const std::string &key, Value &val ) const;
       std::string getShadowKey ( const std::string key, const char delimter, std::string &value ) const;
 
-      bool verbose () const { return (verboseRank == MPIManager::rank()); }
+      bool verbose () const {
+        return (verboseRank == MPIManager::rank());
+      }
 
       mutable std::map< std::string, Value > map;
       std::set< std::string > deprecated;
@@ -327,6 +329,12 @@ namespace Dune
     {
       auto info  = parameter_.map.insert( std::make_pair( key, Value( value, curFileName_ ) ) );
       Value &val = info.first->second;
+      if( key == "fem.verboserank" )
+      {
+        ParameterParser< int >::parse( val.value, parameter_.verboseRank );
+        if( (parameter_.verboseRank < -1) || (parameter_.verboseRank >= MPIManager::size() ) )
+          std::cout << "Warning: Parameter 'fem.verboserank' is neither a " << "valid rank nor -1." << std::endl;
+      }
 
       if( verbose() )
       {
@@ -409,15 +417,7 @@ namespace Dune
       else if( key == "deprecated" )
         parameter_.deprecated.insert( value );
       else
-      {
-        const std::string &actual_value = insert( key, value );
-        if( key == "fem.verboserank" )
-        {
-          ParameterParser< int >::parse( actual_value, parameter_.verboseRank );
-          if( (parameter_.verboseRank < -1) || (parameter_.verboseRank >= MPIManager::size() ) )
-            std::cout << "Warning: Parameter 'fem.verboserank' is neither a " << "valid rank nor -1." << std::endl;
-        }
-      }
+        insert( key, value );
       return true;
     }
 

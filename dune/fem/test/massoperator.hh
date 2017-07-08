@@ -1,10 +1,15 @@
 #ifndef MASSOPERATOR_HH
 #define MASSOPERATOR_HH
 
-#include <dune/fem/function/localfunction/temporary.hh>
+#include <dune/common/dynvector.hh>
+
+#include <dune/grid/common/rangegenerators.hh>
+
+#include <dune/fem/common/bindguard.hh>
+#include <dune/fem/function/common/localcontribution.hh>
 #include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/operator/common/operator.hh>
-#include <dune/fem/operator/common/temporarylocalmatrix.hh>
+#include <dune/fem/operator/common/localcontribution.hh>
 
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
@@ -46,112 +51,69 @@ template< class Function >
 void MassOperator< DiscreteFunction, LinearOperator >
   ::assembleRHS( const Function &u, DiscreteFunctionType &w ) const
 {
-  typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-  typedef typename DiscreteFunctionSpaceType::RangeFieldType FieldType;
-
-  typedef typename IteratorType::Entity EntityType;
-  typedef typename EntityType::Geometry GeometryType;
-
-  Dune::Fem::TemporaryLocalFunction< DiscreteFunctionSpaceType > local( dfSpace_ );
-
+  // clear result
   w.clear();
 
+  Dune::Fem::ConstLocalFunction< Function > uLocal( u );
+  Dune::Fem::AddLocalContribution< DiscreteFunctionType > wLocal( w );
+
   // run over entities
-  const IteratorType end = dfSpace_.end();
-  for( IteratorType it = dfSpace_.begin(); it != end; ++it )
+  for( const auto &entity : elements( dfSpace_.gridPart(), Dune::Partitions::interiorBorder ) )
   {
+    const auto geometry = entity.geometry();
 
-    const EntityType &entity = *it;
-    const GeometryType &geometry = entity.geometry();
-
-    local.init( entity );
-    local.clear();
+    auto uGuard = bindGuard( uLocal, entity );
+    auto wGuard = bindGuard( wLocal, entity );
 
     // run over quadrature points
-    QuadratureType quadrature( entity, 2*dfSpace_.order()+1 );
-    for( const auto qp : quadrature )
+    for( const auto qp : QuadratureType( entity, uLocal.order()+wLocal.order() ) )
     {
       // evaluate u
-      const typename QuadratureType::CoordinateType &x = qp.position();
+      RangeType uValue = uLocal.evaluate( qp );
 
-      RangeType uValue;
-      u.evaluate( geometry.global( x ), uValue );
-
-      // put all things together and don't forget quadrature weights
-      const FieldType weight = qp.weight()*geometry.integrationElement( x );
-
-      // apply weight
-      uValue *= weight;
+      // apply quadrature weight
+      uValue *= qp.weight() * geometry.integrationElement( qp.position() );
 
       // add to local function
-      local.axpy( qp, uValue );
+      wLocal.axpy( qp, uValue );
     }
-
-    w.addLocalDofs( entity, local.localDofVector() );
   }
-
-  w.communicate();
 }
 
 
 template< class DiscreteFunction, class LinearOperator >
 void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
 {
-  typedef typename DiscreteFunctionSpaceType::IteratorType IteratorType;
-  typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType;
-  typedef typename DiscreteFunctionSpaceType::RangeFieldType FieldType;
-
-  typedef typename IteratorType::Entity EntityType;
-  typedef typename EntityType::Geometry GeometryType;
-
-  typedef Dune::Fem::TemporaryLocalMatrix< DiscreteFunctionSpaceType, DiscreteFunctionSpaceType > LocalMatrixType;
-
   BaseType::reserve( Dune::Fem::DiagonalStencil<DiscreteFunctionSpaceType,DiscreteFunctionSpaceType>( dfSpace_, dfSpace_ ) );
   BaseType::clear();
 
-  LocalMatrixType localMatrix( dfSpace_, dfSpace_ );
-
-  std::vector< typename DiscreteFunctionSpaceType::RangeType > values;
+  Dune::Fem::AddLocalContribution< LinearOperator > localMatrix( *this );
+  Dune::DynamicVector< typename DiscreteFunctionSpaceType::RangeType > values;
 
   // run over entities
-  const IteratorType end = dfSpace_.end();
-  for( IteratorType it = dfSpace_.begin(); it != end; ++it )
+  for( const auto &entity : elements( dfSpace_.gridPart(), Dune::Partitions::interiorBorder ) )
   {
-    const EntityType &entity = *it;
-    const GeometryType &geometry = entity.geometry();
+    const auto geometry = entity.geometry();
 
-    localMatrix.init( entity, entity );
-    localMatrix.clear();
+    auto jGuard = bindGuard( localMatrix, entity, entity );
 
-    const BasisFunctionSetType &basis = localMatrix.domainBasisFunctionSet();
+    const auto &basis = localMatrix.domainBasisFunctionSet();
     const unsigned int numBasisFunctions = basis.size();
     values.resize( numBasisFunctions );
 
     // run over quadrature points
-    QuadratureType quadrature( entity, 2*dfSpace_.order() );
-    for( const auto qp : quadrature )
+    for( const auto qp : QuadratureType( entity, localMatrix.order() ) )
     {
       // evaluate base functions
       basis.evaluateAll( qp, values );
 
-      // get quadrature weight
-      const typename QuadratureType::CoordinateType &x = qp.position();
-      const FieldType weight = qp.weight()
-                                  * geometry.integrationElement( x );
+      // apply quadrature weight
+      values *= qp.weight() * geometry.integrationElement( qp.position() );
 
       // update system matrix
-      for( unsigned int i = 0; i < numBasisFunctions; ++i )
-      {
-        RangeType value = values[ i ];
-        // add column
-        localMatrix.column( i ).axpy( values, value, weight );
-      }
+      localMatrix.axpy( qp, values );
     }
-
-    // add to global matrix
-    BaseType::addLocalMatrix( entity, entity, localMatrix );
   }
-  BaseType::communicate();
 }
 
 #endif // #ifndef MASSOPERATOR_HH

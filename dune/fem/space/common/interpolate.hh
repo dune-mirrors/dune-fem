@@ -7,8 +7,11 @@
 #include <dune/grid/common/partitionset.hh>
 #include <dune/grid/common/rangegenerators.hh>
 
+#include <dune/fem/common/bindguard.hh>
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
+#include <dune/fem/function/common/localcontribution.hh>
+#include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/space/common/capabilities.hh>
 
 namespace Dune
@@ -65,27 +68,20 @@ namespace Dune
     static inline std::enable_if_t< std::is_convertible< GridFunction, HasLocalFunction >::value && Capabilities::hasInterpolation< typename DiscreteFunction::DiscreteFunctionSpaceType >::v >
     interpolate ( const GridFunction &u, DiscreteFunction &v, PartitionSet< partitions > ps )
     {
-      // reserve memory for local dof vector
-      std::vector< typename DiscreteFunction::RangeFieldType > ldv;
-      ldv.reserve( v.space().blockMapper().maxNumDofs() * DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize );
-
-      typename GridFunction::LocalFunctionType uLocal( u );
+      ConstLocalFunction< GridFunction > uLocal( u );
+      LocalContribution< DiscreteFunction, Assembly::Set > vLocal( v );
 
       // iterate over selected partition
       for( const auto entity : elements( v.gridPart(), ps ) )
       {
-        // obtain local interpolation
-        const auto interpolation = v.space().interpolation( entity );
-
-        // resize local dof vector
-        ldv.resize( v.space().basisFunctionSet( entity ).size() );
-
-        // interpolate u locally
+        // initialize u to entity
         uLocal.init( entity );
-        interpolation( uLocal, ldv );
 
-        // write local dofs into v
-        v.setLocalDofs( entity, ldv );
+        // bind v to entity
+        auto vGuard = bindGuard( vLocal, entity );
+
+        // perform local interpolation
+        v.space().interpolation( entity )( uLocal, vLocal );
       }
     }
 
