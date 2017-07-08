@@ -14,6 +14,10 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/lagrange.hh>
+#include <dune/fem/common/bindguard.hh>
+#include <dune/fem/function/common/localcontribution.hh>
+#include <dune/fem/function/localfunction/const.hh>
+#include <dune/fem/function/localfunction/temporary.hh>
 
 namespace Dune
 {
@@ -57,7 +61,8 @@ namespace Dune
 
         explicit WeightLocalFunction ( Weight &weight ) : weight_( weight ) {}
 
-        void init ( const EntityType &entity ) { weight_.setEntity( entity ); }
+        void bind ( const EntityType &entity ) { weight_.setEntity( entity ); }
+        void unbind () {}
 
         template< class Point >
         void evaluate ( const Point &x, RangeType &value ) const
@@ -134,12 +139,13 @@ namespace Dune
 
         explicit OutsideLocalFunction ( const DiscreteFunction &df ) : localFunction_( df ) {}
 
-        void init ( const EntityType &outside, const GeometryType &geoIn, const GeometryType &geoOut )
+        void bind ( const EntityType &outside, const GeometryType &geoIn, const GeometryType &geoOut )
         {
-          localFunction_.init( outside );
+          localFunction_.bind( outside );
           geoIn_ = &geoIn;
           geoOut_ = &geoOut;
         }
+        void unbind() { localFunction_.unbind(); }
 
         template< class Point >
         void evaluate ( const Point &x, RangeType &value ) const
@@ -185,7 +191,7 @@ namespace Dune
           hessian( x, value );
         };
 
-        LocalFunctionType localFunction_;
+        ConstLocalFunction<DiscreteFunction> localFunction_;
         const GeometryType *geoIn_ = nullptr;
         const GeometryType *geoOut_ = nullptr;
       };
@@ -194,7 +200,6 @@ namespace Dune
       static void project ( const Function &f, DiscreteFunction &u, Weight &weight )
       {
         typedef typename Function::FunctionSpaceType FunctionSpaceType;
-        typedef typename Function::LocalFunctionType LocalFunctionType;
 
         typedef typename DiscreteFunction::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
         typedef typename DiscreteFunction::GridPartType GridPartType;
@@ -210,41 +215,32 @@ namespace Dune
         u.clear();
         w.clear();
 
-        LocalFunctionType lf( f );
-        WeightLocalFunction< EntityType, FunctionSpaceType, Weight > localWeight( weight );
-
-        std::vector< DofType > ldu, ldw;
-        const std::size_t localBlockSize = DiscreteFunctionSpaceType::localBlockSize;
-        const std::size_t maxNumBlocks = blockMapper.maxNumDofs();
-        ldu.reserve( maxNumBlocks * localBlockSize );
-        ldw.reserve( maxNumBlocks * localBlockSize );
-
-        for ( const auto& entity : space )
         {
-          // initialize local function and local weight
-          lf.init( entity );
-          localWeight.init( entity );
+          WeightLocalFunction< EntityType, FunctionSpaceType, Weight > localWeight( weight );
+          Dune::Fem::ConstLocalFunction< Function > lf( f );
+          Dune::Fem::AddLocalContribution< DiscreteFunction> lw( w );
+          Dune::Fem::AddLocalContribution< DiscreteFunction> lu( u );
 
-          // resize local DoF vectors
-          const std::size_t numBlocks = blockMapper.numDofs( entity );
-          ldu.resize( numBlocks * localBlockSize );
-          ldw.resize( numBlocks * localBlockSize );
+          for ( const auto& entity : space )
+          {
+            // initialize local function and local weight
+            auto lfGuard = bindGuard( lf, entity );
+            auto lwGuard = bindGuard( lw, entity );
+            auto localWeightGuard = bindGuard( localWeight, entity );
 
-          // interpolate function values and weights
-          const auto interpolation = space.interpolation( entity );
-          interpolation( lf, ldu );
-          interpolation( localWeight, ldw );
+            // interpolate function values and weights
+            const auto interpolation = space.interpolation( entity );
+            interpolation( lf, lu );
+            interpolation( localWeight, lw );
 
-          // multiply function values by weights
-          std::transform( ldu.begin(), ldu.end(), ldw.begin(), ldu.begin(), std::multiplies< DofType >() );
+            // multiply function values by weights
+            // Q: add begin/end directly to local contributions?
+            std::transform( lu.localDofVector().begin(), lu.localDofVector().end(),
+                            lw.localDofVector().begin(), lu.localDofVector().begin(),
+                            std::multiplies< DofType >() );
+          }
 
-          // add result to global DoF vectors
-          u.addLocalDofs( entity, ldu );
-          w.addLocalDofs( entity, ldw );
-        }
-
-        space.communicate( u, DFCommunicationOperation::Add() );
-        space.communicate( w, DFCommunicationOperation::Add() );
+        } // make sure that everything is communicated
 
         // divide DoFs by according weights
         std::transform( u.dbegin(), u.dend(), w.dbegin(), u.dbegin(), [] ( DofType u, DofType w ) {
@@ -253,15 +249,17 @@ namespace Dune
             return (weight > 1e-12 ? u / weight : u);
           } );
 
+#if 0  // the following needs a mask setter of the dofs
         // make function continuous over hanging nodes
-
         if( !GridPartType::Traits::conforming && Fem::GridPartCapabilities::hasGrid< GridPartType >::v)
         {
           std::vector< bool > onSubEntity;
-          onSubEntity.reserve( maxNumBlocks );
+          onSubEntity.reserve( blockMapper.maxNumDofs() );
 
           OutsideLocalFunction< DiscreteFunction, IntersectionType > uOutside( u );
 
+          Dune::Fem::AddLocalContribution< DiscreteFunction> lu( u );
+          Dune::Fem::TemporaryLocalFunction< DiscreteFunctionSpaceType> lutmp( );
           for( const auto &inside : space )
           {
             for( const auto &intersection : intersections( space.gridPart(), inside ) )
@@ -278,19 +276,14 @@ namespace Dune
               // note: intersection geometries must live until end of intersection loop!
               const auto geoIn = intersection.geometryInInside();
               const auto geoOut = intersection.geometryInOutside();
-              uOutside.init( outside, geoIn, geoOut );
 
-              // resize local DoF vectors
-              const std::size_t numBlocks = blockMapper.numDofs( inside );
-              ldu.resize( numBlocks * localBlockSize );
-              ldw.resize( numBlocks * localBlockSize );
+              auto uOutsideGuard = bindGuard( uOutside, outside, geoIn, geoOut );
+              auto luGuard = bindGuard( lu, entity );
+              auto lutmpGuard = bindGuard( lutmp, entity );
 
               // interpolate "outside" values
               const auto interpolation = space.interpolation( inside );
-              interpolation( uOutside, ldw );
-
-              // fetch inside local DoFs
-              u.getLocalDofs( inside, ldu );
+              interpolation( uOutside, lutmp );
 
               // patch DoFs assigned to the face
               blockMapper.onSubEntity( inside, intersection.indexInInside(), 1, onSubEntity );
@@ -299,14 +292,12 @@ namespace Dune
                 if( !onSubEntity[ i ] )
                   continue;
                 for( std::size_t j = 0; j < localBlockSize; ++i )
-                  ldu[ i*localBlockSize + j ] = ldw[ i*localBlockSize + j ];
+                  lu[ i*localBlockSize + j ] = lutmp[ i*localBlockSize + j ];
               }
-
-              // write back inside local DoFs
-              u.setLocalDofs( inside, ldu );
             }
           }
         }
+#endif
       }
     };
 
