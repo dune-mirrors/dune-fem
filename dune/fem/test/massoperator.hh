@@ -108,7 +108,9 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
       basis.evaluateAll( qp, values );
 
       // apply quadrature weight
-      values *= qp.weight() * geometry.integrationElement( qp.position() );
+      double weight = qp.weight() * geometry.integrationElement( qp.position() );
+      std::for_each( values.begin(), values.end(),
+          [weight](double& a) { a *= weight; } );
 
       // update system matrix
       localMatrix.axpy( qp, values );
