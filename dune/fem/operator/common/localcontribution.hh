@@ -132,7 +132,7 @@ namespace Dune
         template< class DomainEntity, class RangeEntity, class LocalMatrix >
         void end ( const DomainEntity &domainEntity, const RangeEntity &rangeEntity, LocalMatrix &localMatrix, AssembledOperator &op ) const
         {
-          op.addScaledLocalMatrix( domainEntity, rangeEntity, factor_, Impl::LocalMatrixGetter< LocalMatrix >( localMatrix ) );
+          op.addScaledLocalMatrix( domainEntity, rangeEntity, Impl::LocalMatrixGetter< LocalMatrix >( localMatrix ), factor_ );
         }
 
       private:
