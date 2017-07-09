@@ -3,6 +3,8 @@
 #include <config.h>
 #include <iostream>
 
+#include <dune/grid/common/rangegenerators.hh>
+
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/operator/projection/vtxprojection.hh>
 #include <dune/fem/operator/projection/l2projection.hh>
@@ -62,6 +64,18 @@ int main(int argc, char ** argv)
     const int step = TestGrid :: refineStepsForHalf();
     grid.globalRefine( 2*step );
 
+    for( const auto& entity : elements(grid.leafGridView()) )
+    {
+      std::remove_reference_t<decltype(entity)>::Geometry::GlobalCoordinate x(0.1);
+      x -= entity.geometry().center();
+      if( x.two_norm() > 0.3 && x.two_norm() < 0.4 )
+        grid.mark( 1, entity );
+    }
+    grid.preAdapt();
+    grid.adapt();
+    grid.postAdapt();
+
+
     GridPartType gridPart( grid );
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart ); // DG
     typedef LagrangeDiscreteFunctionSpace<FunctionSpaceType, GridPartType,
@@ -94,7 +108,6 @@ int main(int argc, char ** argv)
     vtkWriter.addVertexData(lagrangeSolution);
     vtkWriter.addVertexData(testSolution);
     vtkWriter.pwrite("vtxprojection", Parameter::commonOutputPath().c_str(),".");
-
 #endif
     return 0;
   }

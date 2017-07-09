@@ -73,6 +73,23 @@ namespace Dune
       const Vector &vector_;
     };
 
+    template< class Vector, class Mask >
+    struct LeftMaskedAssign
+    {
+      LeftMaskedAssign ( const Vector &vector, const Mask &mask )
+      : vector_( vector ), mask_(mask) {}
+
+      template< class Value >
+      void operator() ( const std::size_t index, Value &&value ) const
+      {
+        if (mask_[index])
+          value = vector_[ index ];
+      }
+    private:
+      const Vector &vector_;
+      const Mask &mask_;
+    };
+
 
     // AssignReference
     // ---------------

@@ -250,19 +250,26 @@ namespace Dune
             return (weight > 1e-12 ? u / weight : u);
           } );
 
-#if 0  // the following needs a mask setter of the dofs
         // make function continuous over hanging nodes
         if( !GridPartType::Traits::conforming && Fem::GridPartCapabilities::hasGrid< GridPartType >::v)
         {
           std::vector< bool > onSubEntity;
           onSubEntity.reserve( blockMapper.maxNumDofs() );
+          std::vector< bool > mask;
 
           OutsideLocalFunction< DiscreteFunction, IntersectionType > uOutside( u );
+          Dune::Fem::SetLocalContribution< DiscreteFunction> lu( u );
+          Dune::Fem::TemporaryLocalFunction< DiscreteFunctionSpaceType> lutmp( u.space() );
 
-          Dune::Fem::AddLocalContribution< DiscreteFunction> lu( u );
-          Dune::Fem::TemporaryLocalFunction< DiscreteFunctionSpaceType> lutmp( );
           for( const auto &inside : space )
           {
+            lu.bind(inside);
+            auto lutmpGuard = bindGuard( lutmp, inside );
+            mask.resize( lu.size() );
+            std::fill( mask.begin(), mask.end(), false );
+            const std::size_t localBlockSize = DiscreteFunctionSpaceType::localBlockSize;
+            const std::size_t numBlocks = blockMapper.numDofs( inside );
+
             for( const auto &intersection : intersections( space.gridPart(), inside ) )
             {
               if( intersection.conforming() || !intersection.neighbor() )
@@ -279,8 +286,6 @@ namespace Dune
               const auto geoOut = intersection.geometryInOutside();
 
               auto uOutsideGuard = bindGuard( uOutside, outside, geoIn, geoOut );
-              auto luGuard = bindGuard( lu, entity );
-              auto lutmpGuard = bindGuard( lutmp, entity );
 
               // interpolate "outside" values
               const auto interpolation = space.interpolation( inside );
@@ -292,13 +297,16 @@ namespace Dune
               {
                 if( !onSubEntity[ i ] )
                   continue;
-                for( std::size_t j = 0; j < localBlockSize; ++i )
+                for( std::size_t j = 0; j < localBlockSize; ++j )
+                {
                   lu[ i*localBlockSize + j ] = lutmp[ i*localBlockSize + j ];
+                  mask[ i*localBlockSize + j ] = true;
+                }
               }
             }
+            lu.unbind(mask);
           }
         }
-#endif
       }
     };
 

@@ -135,6 +135,12 @@ namespace Dune
         {
           df.setLocalDofs( entity, localDofVector );
         }
+        template< class Entity, class LocalDofVector, class Mask >
+        void end ( const Entity &entity, LocalDofVector &localDofVector, DiscreteFunction &df, const Mask &mask ) const
+        {
+          if ( std::any_of( mask.begin(), mask.end(), [](bool v){return v;} ) )
+            df.setLocalDofs( entity, localDofVector, mask );
+        }
       };
 
     } // namespace Assembly
@@ -202,6 +208,9 @@ namespace Dune
         : discreteFunction_( discreteFunction ),
           localDofVector_( discreteFunction.space().maxNumDofs() ),
           assemblyOperation_( std::forward< Args >( args )... )
+#ifndef NDEBUG
+          , bound_(false)
+#endif
       {
         discreteFunction.template beginAssemble< typename AssemblyOperationType::GlobalOperationType >();
       }
@@ -344,29 +353,52 @@ namespace Dune
         basisFunctionSet().axpy( quad, rangeVector, jacobianVector, localDofVector() );
       }
 
-      void bind ( const EntityType &entity )
+      template <class... Args>
+      void bind ( const EntityType &entity, Args... args )
       {
+#ifndef NDEBUG
+        assert( !bound_ ); bound_ = true;
+#endif
         basisFunctionSet_ = discreteFunction().space().basisFunctionSet( entity );
         localDofVector().resize( basisFunctionSet().size() );
-        assemblyOperation_.begin( entity, discreteFunction(), localDofVector() );
+        assemblyOperation_.begin( entity, discreteFunction(), localDofVector(), args... );
       }
 
-      void unbind ()
+      template <class... Args>
+      void unbind (Args... args)
       {
-        assemblyOperation_.end( entity(), localDofVector(), discreteFunction() );
+        assemblyOperation_.end( entity(), localDofVector(), discreteFunction(), args... );
         basisFunctionSet_ = BasisFunctionSetType();
+#ifndef NDEBUG
+        assert( bound_ ); bound_ = false;
+#endif
       }
 
       /** \brief return const reference to local DoF vector **/
-      const LocalDofVectorType &localDofVector () const { return localDofVector_; }
+      const LocalDofVectorType &localDofVector () const
+      {
+#ifndef NDEBUG
+        assert( bound_ );
+#endif
+        return localDofVector_;
+      }
       /** \brief return mutable reference to local DoF vector **/
-      LocalDofVectorType &localDofVector () { return localDofVector_; }
+      LocalDofVectorType &localDofVector ()
+      {
+#ifndef NDEBUG
+        assert( bound_ );
+#endif
+        return localDofVector_;
+      }
 
     private:
       DiscreteFunctionType &discreteFunction_;
       LocalDofVectorType localDofVector_;
       BasisFunctionSetType basisFunctionSet_;
       AssemblyOperationType assemblyOperation_;
+#ifndef NDEBUG
+      bool bound_;
+#endif
     };
 
   } // namespace Fem

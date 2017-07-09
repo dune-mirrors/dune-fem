@@ -869,6 +869,14 @@ namespace Dune
         space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
       }
 
+      //! set certain local Dofs to dof vector given a mask vector
+      template< class LocalDofs, class Mask >
+      void setLocalDofs ( const EntityType &entity, const LocalDofs &localDofs, const Mask &mask )
+      {
+        LeftMaskedAssign< const LocalDofs, Mask > assignFunctor( localDofs, mask );
+        space().blockMapper().mapEach( entity, dofBlockFunctor( dofVector(), assignFunctor ) );
+      }
+
       //! get local Dofs and store the values  in LocalDofVector
       template< class Vector >
       void getLocalDofs ( const EntityType &entity, Vector &localDofs ) const
