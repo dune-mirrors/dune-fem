@@ -20,6 +20,7 @@ namespace Dune
     template <class DiscreteFunctionSpace, class Constrain>
     struct DofConstraints
     {
+      typedef Constrain ConstrainType;
       typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
       typedef Dune::Fem::AdaptiveDiscreteFunction<DiscreteFunctionSpace> InternalStorageType;
       DofConstraints(const DiscreteFunctionSpaceType &space, Constrain &constrain)
@@ -60,13 +61,55 @@ namespace Dune
       template <class DiscreteFunction>
       void operator()(DiscreteFunction &df)
       {
+        (*this)(values_,df);
+      }
+      template <class LinearOperator>
+      void applyToOperator(LinearOperator &df)
+      {
+        checkUpdate();
+#if 0
+        Dune::Fem::LocalContribution<LinearOperator> localMatrix;
+        // if Dirichlet Dofs have been found, treat them
+        for( const auto &entity : space_ )
+        {
+          auto localMatrixGuard = bindGuard( localMatrix, entity, entity );
+          // get slave dof structure (for parallel runs)
+          const auto &slaveDofs = linearOperator.rangeSpace().slaveDofs();
+          // get number of basis functions
+          const int localBlocks = space_.blockMapper().numDofs( entity );
+          // map local to global dofs
+          std::vector< std::size_t > globalBlockDofs( localBlocks );
+          // obtain all DofBlocks for this element
+          space_.blockMapper().map( entity, globalBlockDofs );
+          // counter for all local dofs (i.e. localBlockDof * localBlockSize + ... )
+          int localDof = 0;
+          // iterate over face dofs and set unit row
+          for( int localBlockDof = 0; localBlockDof < localBlocks; ++localBlockDof )
+          {
+            int global = globalBlockDofs[ localBlockDof ];
+            for( int l = 0; l < localBlockSize; ++l, ++localDof )
+            {
+              if( !dirichletBlocks_[ global ][ l ] )
+                continue;
+              // clear all other columns
+              localMatrix.clearRow( localDof );
+              // set diagonal to 1
+              double value = slaveDofs.isSlave( global ) ? 0.0 : 1.0;
+              localMatrix.set( localDof, localDof, value );
+            }
+          }
+        }
+#endif
+      }
+      template <class From, class To>
+      void operator()(const From &from, To &to)
+      {
         checkUpdate();
 
-        typedef typename InternalStorageType::ConstDofIteratorType ConstDofIteratorType;
-        ConstDofIteratorType valueIt = values_.dbegin();
-        ConstDofIteratorType maskIt = mask_.dbegin();
+        auto valueIt = from.dbegin();
+        auto maskIt = mask_.dbegin();
         int idx = 0;
-        for ( auto& dof : dofs(df) )
+        for ( auto& dof : dofs(to) )
         {
           if ( (*maskIt) > 0)
             dof = (*valueIt);
@@ -75,11 +118,6 @@ namespace Dune
           ++valueIt;
           ++idx;
         }
-      }
-      template <class LinearOperator>
-      void operator()(const LinearOperator &df)
-      {
-        checkUpdate();
       }
       void clear()
       {
@@ -123,7 +161,8 @@ namespace Dune
     struct EmptyModel
     {
       static const unsigned int dimRange = 1;
-      bool isDirichletIntersection ( ... ) { return true; }
+      template <class I, class V>
+      bool isDirichletIntersection (const I&, const V&) { return true; }
       template <class E>
       void bind ( const E& ) {}
       void unbind ( ) {}
@@ -150,7 +189,7 @@ namespace Dune
         std::fill( localMask_.begin(), localMask_.end(), false );
 
         // vector for subentity filter
-        std::vector< bool > globalBlockDofsFilter( numDofs );
+        std::vector< bool > onSubEntityFilter( numDofs );
 
         FieldVector< int, Model::dimRange > block( 0 );
         for( const auto &intersection : intersections( space_.gridPart(), entity ) )
@@ -164,13 +203,13 @@ namespace Dune
 
           // get face number of boundary intersection
           const int face = intersection.indexInInside();
-          space_.blockMapper().onSubEntity( entity, face, 1, globalBlockDofsFilter );
+          space_.blockMapper().onSubEntity( entity, face, 1, onSubEntityFilter );
           // Q: is this general enough?
           for( unsigned int i = 0; i < numDofs; ++i )
             for( unsigned int r = 0; r < Space::localBlockSize; ++r )
               localMask_[ i*Space::localBlockSize+r ] =
                 localMask_[ i*Space::localBlockSize+r ] |
-                globalBlockDofsFilter[ i ];
+                (onSubEntityFilter[ i ] & block[i]>0);
         }
       }
       void unbind() {}
@@ -287,9 +326,13 @@ namespace Dune
       BasisFunctionSetType basisFunctionSet_;
       TemporaryStorage ltmp_;
     };
+#endif // HAVE_DUNE_LOCALFUNCTIONS
+
+    template <class Model, class Space>
+    using DirichletConstraints =
+      DofConstraints< Space, ConstrainOnBoundary< Space, Model > >;
 
   }
 }
-#endif // HAVE_DUNE_LOCALFUNCTIONS
 
 #endif // DUNE_FEM_OPERATOR_COMMON_DOFCONSTRAINTS
