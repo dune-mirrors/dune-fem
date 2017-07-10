@@ -20,10 +20,12 @@
 
 #ifndef POLORDER
 #  define POLORDER 2
+#  define DEFAULTPOLORDER 1
 #endif
 
 #ifndef DIMRANGE
-#  define DIMRANGE 4
+#  define DIMRANGE 1
+#  define DEFAULTDIMRANGE 1
 #endif
 
 

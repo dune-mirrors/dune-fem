@@ -1,8 +1,12 @@
 #ifndef DUNE_FEM_FUNCTIONSPACE_HH
 #define DUNE_FEM_FUNCTIONSPACE_HH
 
-#include <dune/fem/space/common/functionspaceinterface.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/fvector.hh>
+
+#include <dune/geometry/dimension.hh>
+
+#include <dune/fem/space/common/functionspaceinterface.hh>
 
 namespace Dune
 {
@@ -265,6 +269,52 @@ namespace Dune
     {
       typedef FunctionSpace< DomainFieldImp, RangeFieldImp, dimDomain, newDimRange > Type;
     };
+
+
+
+    // GridFunctionSpace
+    // -----------------
+
+    namespace Impl
+    {
+
+      template< class GridPart, class >
+      struct GridFunctionSpace;
+
+      template< class GridPart, class K, int dimRange >
+      struct GridFunctionSpace< GridPart, FunctionSpace< typename GridPart::ctype, K, GridPart::dimensionworld, dimRange > >
+      {
+        typedef FunctionSpace< typename GridPart::ctype, K, GridPart::dimensionworld, dimRange > Type;
+      };
+
+      template< class GridPart, class K, int rows, int cols >
+      struct GridFunctionSpace< GridPart, MatrixFunctionSpace< typename GridPart::ctype, K, GridPart::dimensionworld, rows, cols > >
+      {
+        typedef MatrixFunctionSpace< typename GridPart::ctype, K, GridPart::dimensionworld, rows, cols > Type;
+      };
+
+      template< class GridPart, class K, int dimRange >
+      struct GridFunctionSpace< GridPart, Dune::FieldVector< K, dimRange > >
+      {
+        typedef FunctionSpace< typename GridPart::ctype, K, GridPart::dimensionworld, dimRange > Type;
+      };
+
+      template< class GridPart, class K, int rows, int cols >
+      struct GridFunctionSpace< GridPart, Dune::FieldMatrix< K, rows, cols > >
+      {
+        typedef MatrixFunctionSpace< typename GridPart::ctype, K, GridPart::dimensionworld, rows, cols > Type;
+      };
+
+      template< class GridPart, int dimRange >
+      struct GridFunctionSpace< GridPart, Dune::Dim< dimRange > >
+      {
+        typedef typename GridFunctionSpace< GridPart, Dune::FieldVector< typename GridPart::ctype, dimRange > >::Type Type;
+      };
+
+    } // namespace Impl
+
+    template< class GridPart, class T >
+    using GridFunctionSpace = typename Impl::GridFunctionSpace< GridPart, T >::Type;
 
   } // namespace Fem
 

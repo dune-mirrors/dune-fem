@@ -6,6 +6,7 @@ dune_add_subdirs(basisfunctionset combinedspace common
                  discontinuousgalerkin finitevolume
                  fourier lagrange mapper
                  padaptivespace rannacherturek shapefunctionset
+                 localfiniteelement
                  test)
 
 dune_add_library(space OBJECT

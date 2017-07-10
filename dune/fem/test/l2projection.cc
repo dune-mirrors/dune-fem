@@ -10,6 +10,7 @@
 #include <iostream>
 #include <sstream>
 
+//#define USE_OLD_RANNACHERTUREK_SPACE
 
 // Includes from DUNE-FEM
 // ----------------------
@@ -184,7 +185,7 @@ inline Algorithm::ErrorType Algorithm::finalize ( DiscreteFunctionType &solution
   ErrorType error;
   typedef Dune::Fem::GridFunctionAdapter< FunctionType, GridPartType > GridFunctionType;
 
-  const int order = DiscreteSpaceType::polynomialOrder+1;
+  const int order = solution.space().order()+1;
   GridFunctionType gridFunction( "exact solution", function_, gridPart, order );
 
   Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
@@ -192,6 +193,7 @@ inline Algorithm::ErrorType Algorithm::finalize ( DiscreteFunctionType &solution
 
   error[ 0 ] = l2norm.distance( gridFunction, solution );
   error[ 1 ] = h1norm.distance( gridFunction, solution );
+  std::cout << error <<std::endl;
   return error;
 }
 

@@ -1,6 +1,6 @@
 # if no grid type is specified during configuration time we choose dune-alugrid simplex
 if( NOT GRIDTYPE )
-  set( GRIDTYPE ALUGRID_SIMPLEX )
+  set( GRIDTYPE YASPGRID )
 endif()
 
 # same as for GridType, we set the default grid dimension to 2
@@ -32,6 +32,9 @@ foreach( order RANGE 1 ${MAXORDER} )
                  COMPILE_DEFINITIONS "POLORDER=${order};${DEFAULTFLAGS}" )
   set( TESTS ${TESTS} lagrangeinterpolation_p${order} )
 endforeach()
+dune_add_test( NAME lagrangeinterpolation_dynamic SOURCES lagrangeinterpolation.cc
+               COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} lagrangeinterpolation_dynamic )
 
 # dgl2projection tests for different discrete functions
 dune_add_test( NAME dgl2projection_adaptive SOURCES dgl2projection.cc

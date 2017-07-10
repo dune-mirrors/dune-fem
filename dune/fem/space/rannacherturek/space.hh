@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_SPACE_RANNACHERTUREK_HH
-#define DUNE_FEM_SPACE_RANNACHERTUREK_HH
+#ifndef DUNE_FEM_SPACE_RANNACHERTUREK_SPACE_HH
+#define DUNE_FEM_SPACE_RANNACHERTUREK_SPACE_HH
 
 // ------------------------------------------------------------------------
 // !!! RannacherTurekDiscreteFunctionSpace requires dune-localfunctions !!!
@@ -58,8 +58,8 @@ namespace Dune
 
       typedef RannacherTurekDiscreteFunctionSpace< FunctionSpace, GridPart, Storage > DiscreteFunctionSpaceType;
 
-      typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;
+      typedef GridFunctionSpace< GridPartType, FunctionSpace > FunctionSpaceType;
 
       static const int codimension = 0;
 
@@ -254,4 +254,4 @@ namespace Dune
 
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS
 
-#endif // #ifndef DUNE_FEM_SPACE_RANNACHERTUREK_HH
+#endif // #ifndef DUNE_FEM_SPACE_RANNACHERTUREK_SPACE_HH
