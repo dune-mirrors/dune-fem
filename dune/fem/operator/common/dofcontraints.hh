@@ -29,7 +29,28 @@ struct DofConstraints
   void set(const GridFunction &gf)
   {
     checkUpdate();
-    interpolate( gf, values_ );
+    values_.clear();
+    {
+      Dune::Fem::ConstLocalFunction< GridFunction > lgf( gf );
+      Dune::Fem::AddLocalContribution< InternalStorageType > lvalues( values_ );
+
+      for ( const auto& entity : space_ )
+      {
+        auto gfGuard = bindGuard( lgf, entity );
+        auto valuesGuard = bindGuard( lvalues, entity );
+        const auto interpolation = space_.interpolation( entity );
+        interpolation( lgf, lvalues );
+      }
+    }
+
+    typedef typename InternalStorageType::DofType DofType;
+    // divide DoFs by the mask
+    std::transform( values_.dbegin(), values_.dend(), mask_.dbegin(), values_.dbegin(),
+        [] ( DofType u, DofType w ) {
+        using std::abs;
+        typename Dune::FieldTraits< DofType >::field_type weight = abs( w );
+        return (weight > 1e-12 ? u / weight : 0.);
+        } );
   }
   template <class DiscreteFunction>
   void operator()(DiscreteFunction &df)
@@ -39,14 +60,15 @@ struct DofConstraints
     typedef typename InternalStorageType::ConstDofIteratorType ConstDofIteratorType;
     ConstDofIteratorType valueIt = values_.dbegin();
     ConstDofIteratorType maskIt = mask_.dbegin();
+    int idx = 0;
     for ( auto& dof : dofs(df) )
     {
-      std::cout << *maskIt << " " << *valueIt << std::endl;
-      if ( (*maskIt) == 1)
+      if ( (*maskIt) > 0)
         dof = (*valueIt);
+      assert( maskIt != mask_.dend() && valueIt != values_.dend() );
       ++maskIt;
       ++valueIt;
-      assert( maskIt != mask_.dend() && valueIt != values_dend() );
+      ++idx;
     }
   }
   template <class LinearOperator>
@@ -62,10 +84,10 @@ struct DofConstraints
 
   void update()
   {
-    // mask_.clear();
+    mask_.clear();
     values_.clear();
 
-    Dune::Fem::SetLocalContribution< InternalStorageType > lmask( mask_ );
+    Dune::Fem::AddLocalContribution< InternalStorageType > lmask( mask_ );
 
     for ( const auto& entity : space_ )
     {
@@ -131,8 +153,6 @@ struct ConstrainOnBoundary
             localMask_[ i*Space::localBlockSize+r ] |
             globalBlockDofsFilter[ i ];
     }
-    for( unsigned int i = 0; i < numDofs; ++i )
-      std::cout << "local mask: " << i << " " << localMask_[i] << std::endl;
   }
   void unbind() {}
 

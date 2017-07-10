@@ -36,13 +36,24 @@ int main(int argc, char ** argv)
     solution.clear();
     interpolate( gridFunctionAdapter( ExactSolutionType(), gridPart, discreteFunctionSpace.order() + 2 ), solution );
 
+    DiscreteFunctionType interpol( "interpolation", discreteFunctionSpace );
+    interpol.assign( solution );
+
     ConstrainOnBoundary< DiscreteFunctionSpaceType > mask( discreteFunctionSpace );
     DofConstraints< DiscreteFunctionSpaceType, ConstrainOnBoundary< DiscreteFunctionSpaceType >  >
         constrain( discreteFunctionSpace, mask );
     constrain( solution );
+    DiscreteFunctionType zerobc( "zerobc", discreteFunctionSpace );
+    zerobc.assign( solution );
+
+    constrain.set( gridFunctionAdapter( ExactSolutionType(), gridPart, discreteFunctionSpace.order() + 2 ) );
+    constrain( solution );
+    solution -= interpol;
 
     Dune::Fem::VTKIO<GridPartType> vtkWriter(gridPart);
     vtkWriter.addVertexData(solution);
+    vtkWriter.addVertexData(zerobc);
+    vtkWriter.addVertexData(interpol);
     vtkWriter.pwrite("constrain", Dune::Fem::Parameter::commonOutputPath().c_str(),".");
     return 0;
   }
