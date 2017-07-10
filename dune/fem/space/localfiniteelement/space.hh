@@ -186,7 +186,9 @@ namespace Dune
           lfeMap_( &LFEMapProviderType::getObject( std::make_pair( &gridPart, key ) ) ),
           storedShapeFunctionSetVector_( &StoredShapeFunctionSetVectorProviderType::getObject( lfeMap_.get() ) ),
           blockMapper_( &BlockMapperProviderType::getObject( lfeMap_.get() ) )
-      {}
+      {
+        assert( lfeMap_ );
+      }
 
       LocalFiniteElementSpace ( const ThisType & ) = delete;
       LocalFiniteElementSpace ( ThisType && ) = delete;
@@ -200,6 +202,7 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet **/
       BasisFunctionSetType basisFunctionSet ( const EntityType &entity ) const
       {
+        assert( lfeMap_ );
         return BasisFunctionSetType( entity, shapeFunctionSet( entity ) );
       }
 
@@ -212,6 +215,7 @@ namespace Dune
        **/
       ShapeFunctionSetType shapeFunctionSet ( const EntityType &entity ) const
       {
+        assert( lfeMap_ );
         return getShapeFunctionSet( (*lfeMap_)( entity ), entity.type() );
       }
 
