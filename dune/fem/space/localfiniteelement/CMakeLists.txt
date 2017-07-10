@@ -3,5 +3,5 @@ dune_install(
   dgspace.hh
   interpolation.hh
   space.hh
-  shapefunctions.hh
+  shapefunctionset.hh
 )
