@@ -13,7 +13,7 @@
 #include <dune/fem/test/testgrid.hh>
 #include <dune/fem/test/exactsolution.hh>
 
-#include <dune/fem/operator/common/dofcontraints.hh>
+#include <dune/fem/operator/common/dofconstraints.hh>
 
 #include <dune/fem/operator/common/test/model.hh>
 
@@ -53,11 +53,13 @@ int main(int argc, char ** argv)
 
     DiscreteFunctionType modelTest( "modelTest", discreteFunctionSpace );
     interpolate( gridFunctionAdapter( ExactSolutionType(), gridPart, discreteFunctionSpace.order() + 2 ), modelTest );
+
     typedef Model< FunctionSpaceType, GridPartType > ModelType;
+    typedef Dune::Fem::ConstrainOnBoundary< DiscreteFunctionSpaceType, ModelType > ModelBoundaryMask;
+    typedef Dune::Fem::DofConstraints< DiscreteFunctionSpaceType, ModelBoundaryMask > DirichletConstraints;
     ModelType model;
-    Dune::Fem::ConstrainOnBoundary< DiscreteFunctionSpaceType, ModelType > modelMask( discreteFunctionSpace, model );
-    Dune::Fem::DofConstraints< DiscreteFunctionSpaceType, Dune::Fem::ConstrainOnBoundary< DiscreteFunctionSpaceType, ModelType >  >
-        modelConstrain( discreteFunctionSpace, modelMask );
+    ModelBoundaryMask  modelMask( discreteFunctionSpace, model );
+    DirichletConstraints modelConstrain( discreteFunctionSpace, modelMask );
     Dune::Fem::PiecewiseGridFunction<ModelType> lpw( model, gridPart, 5 );
     Dune::Fem::LocalFunctionAdapter < Dune::Fem::PiecewiseGridFunction<ModelType> >
       pwgf( "pwgf", lpw, gridPart, 5 );
