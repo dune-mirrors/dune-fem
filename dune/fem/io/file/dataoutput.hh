@@ -17,6 +17,9 @@
 
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/std/utility.hh>
+#include <dune/common/typeutilities.hh>
+
+#include <dune/fem/common/utility.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/io/file/iointerface.hh>
@@ -235,10 +238,20 @@ namespace Dune
      /** \brief Constructor creating data output class
         \param grid corresponding grid
         \param data Tuple containing discrete functions to write
+        \param parameters structure for tuning the behavior of the Dune::DataOutput
+                         defaults to Dune::DataOutputParameters
+      */
+      DataOutput ( const GridType &grid, OutPutDataType &data, std::unique_ptr< const DataOutputParameters > parameters );
+
+     /** \brief Constructor creating data output class
+        \param grid corresponding grid
+        \param data Tuple containing discrete functions to write
         \param parameter structure for tuning the behavior of the Dune::DataOutput
                          defaults to Dune::DataOutputParameters
       */
-      DataOutput ( const GridType &grid, OutPutDataType &data, const DataOutputParameters &parameter );
+      DataOutput ( const GridType &grid, OutPutDataType &data, const DataOutputParameters &parameter )
+        : DataOutput( grid, data, std::unique_ptr< const DataOutputParameters >( parameter.clone() ) )
+      {}
 
       DataOutput ( const GridType &grid, OutPutDataType &data, const ParameterReader &parameter = Parameter::container() )
         : DataOutput( grid, data, DataOutputParameters( parameter ) )
@@ -248,22 +261,37 @@ namespace Dune
         \param grid corresponding grid
         \param data Tuple containing discrete functions to write
         \param tp   a time provider to set time (e.g. for restart)
+        \param parameters structure for tuning the behavior of the Dune::DataOutput
+                         defaults to Dune::DataOutputParameters
+      */
+      DataOutput ( const GridType &grid, OutPutDataType &data, const TimeProviderBase &tp, std::unique_ptr< const DataOutputParameters > parameters )
+        : DataOutput( grid, data, std::move( parameters ) )
+      {
+        consistentSaveStep( tp );
+      }
+
+      /** \brief Constructor creating data writer
+        \param grid corresponding grid
+        \param data Tuple containing discrete functions to write
+        \param tp   a time provider to set time (e.g. for restart)
         \param parameter structure for tuning the behavior of the Dune::DataOutput
                          defaults to Dune::DataOutputParameters
       */
-      DataOutput ( const GridType &grid, OutPutDataType &data, const TimeProviderBase &tp, const DataOutputParameters &parameter );
+      DataOutput ( const GridType &grid, OutPutDataType &data, const TimeProviderBase &tp, const DataOutputParameters &parameter )
+        : DataOutput( grid, data, tp, std::unique_ptr< const DataOutputParameters >( parameter.clone() ) )
+      {}
 
       DataOutput ( const GridType &grid, OutPutDataType &data, const TimeProviderBase &tp, const ParameterReader &parameter = Parameter::container() )
         : DataOutput( grid, data, tp, DataOutputParameters( parameter ) )
       {}
+
+      DataOutput ( ThisType && ) = default;
 
       void consistentSaveStep ( const TimeProviderBase &tp ) const;
 
       //! \brief destructor
       virtual ~DataOutput()
       {
-        delete param_;
-
         if( pvd_ )
         {
           pvd_ << "  </Collection>" << std::endl;
@@ -272,10 +300,6 @@ namespace Dune
           pvd_.close();
         }
       }
-
-    protected:
-      //! \brief initialize data writer
-      void init ( const DataOutputParameters &parameter );
 
     public:
       //! \brief returns true if data will be written on next write call
@@ -420,7 +444,7 @@ namespace Dune
 
       //! \brief type of this class
       const GridType& grid_;
-      OutPutDataType &data_;
+      OutPutDataType data_;
 
       // name for data output
       std::string path_;
@@ -443,7 +467,7 @@ namespace Dune
       bool conformingOutput_;
       mutable std::ofstream sequence_;
       mutable std::ofstream pvd_;
-      const DataOutputParameters* param_;
+      std::unique_ptr< const DataOutputParameters > param_;
     };
 
 
@@ -512,7 +536,7 @@ namespace Dune
       {}
 
       template< typename ...  T >
-      void forEach ( std::tuple< T ... >& data )
+      void forEach ( const std::tuple< T ... >& data )
       {
         Hybrid::forEach( Std::make_index_sequence< sizeof...( T ) >{},
           [&]( auto i ) {
@@ -528,7 +552,7 @@ namespace Dune
       }
 
       template< typename T >
-      void forEach ( T& data )
+      void forEach ( const T& data )
       {
         std::tuple< T > tup( data );
         forEach( tup );
@@ -558,7 +582,7 @@ namespace Dune
       {}
 
       template< typename ...  T >
-      void forEach ( std::tuple< T ... >& data )
+      void forEach ( const std::tuple< T ... >& data )
       {
         Hybrid::forEach( Std::make_index_sequence< sizeof...( T ) >{},
           [&]( auto i ) {
@@ -573,7 +597,7 @@ namespace Dune
       }
 
       template< typename T >
-      void forEach ( T& data )
+      void forEach ( const T& data )
       {
         std::tuple< T > tup( data );
         forEach( tup );
@@ -611,7 +635,7 @@ namespace Dune
       {}
 
       template< typename ... T >
-      void forEach ( std::tuple< T ... >& data )
+      void forEach ( const std::tuple< T ... >& data )
       {
         Hybrid::forEach( Std::make_index_sequence< sizeof...( T ) >{},
           [&]( auto i ) {
@@ -631,7 +655,7 @@ namespace Dune
       }
 
       template< typename T >
-      void forEach ( T& data )
+      void forEach ( const T& data )
       {
         std::tuple< T > tup( data );
         forEach( tup );
@@ -646,7 +670,7 @@ namespace Dune
     template< class GridImp, class DataImp >
     inline DataOutput< GridImp, DataImp >
       ::DataOutput ( const GridType &grid, OutPutDataType &data,
-                     const DataOutputParameters& parameter )
+                     std::unique_ptr< const DataOutputParameters > parameters )
     : grid_( grid ),
       data_( data ),
       writeStep_(0),
@@ -656,68 +680,19 @@ namespace Dune
       saveCount_(-1),
       outputFormat_(vtkvtx),
       conformingOutput_( false ),
-      param_(parameter.clone())
+      param_( std::move( parameters ) )
     {
-      // initialize class
-      init( parameter );
-    }
-
-
-    template< class GridImp, class DataImp >
-    inline DataOutput< GridImp, DataImp >
-      ::DataOutput ( const GridType &grid, OutPutDataType &data,
-                     const TimeProviderBase &tp,
-                     const DataOutputParameters &parameter )
-    : grid_(grid),
-      data_(data),
-      writeStep_(0),
-      writeCalls_(0),
-      saveTime_(0),
-      saveStep_(-1),
-      saveCount_(-1),
-      outputFormat_(vtkvtx),
-      conformingOutput_( false ),
-      param_(parameter.clone())
-    {
-      // initialize class
-      init( parameter );
-
-      // make save step consistent
-      consistentSaveStep( tp );
-    }
-
-    template< class GridImp, class DataImp >
-    inline void DataOutput< GridImp, DataImp >
-      ::consistentSaveStep ( const TimeProviderBase &tp ) const
-    {
-      // set old values according to new time
-      if( saveStep_ > 0 )
-      {
-        const auto oldTime = tp.time() - saveStep_;
-        while( saveTime_ <= oldTime )
-        {
-          ++writeStep_;
-          saveTime_ += saveStep_;
-        }
-      }
-    }
-
-
-    template< class GridImp, class DataImp >
-    inline void DataOutput< GridImp, DataImp >::
-    init ( const DataOutputParameters &parameter )
-    {
-      const bool writeMode = parameter.writeMode();
-      path_ = parameter.absolutePath();
+      const bool writeMode = param_->writeMode();
+      path_ = param_->absolutePath();
 
       // create path if not already exists
       if( writeMode )
         IOInterface :: createGlobalPath ( grid_.comm(), path_ );
 
       // add prefix for data file
-      datapref_ += parameter.prefix();
+      datapref_ += param_->prefix();
 
-      auto outputFormat = parameter.outputformat();
+      auto outputFormat = param_->outputformat();
       switch( outputFormat )
       {
         case 0: outputFormat_ = vtk; break;
@@ -730,18 +705,18 @@ namespace Dune
           DUNE_THROW(NotImplemented,"DataOutput::init: wrong output format");
       }
 
-      conformingOutput_ = parameter.conformingoutput();
+      conformingOutput_ = param_->conformingoutput();
 
-      grapeDisplay_ = parameter.grapedisplay();
+      grapeDisplay_ = param_->grapedisplay();
 
       // get parameters for data writing
-      saveStep_ = parameter.savestep();
-      saveCount_ = parameter.savecount();
+      saveStep_ = param_->savestep();
+      saveCount_ = param_->savecount();
 
       // set initial quantities
-      writeStep_ = parameter.startcounter();
-      writeCalls_ =  parameter.startcall();
-      saveTime_ = parameter.startsavetime();
+      writeStep_ = param_->startcounter();
+      writeCalls_ =  param_->startcall();
+      saveTime_ = param_->startsavetime();
 
       if( writeMode )
       {
@@ -775,6 +750,23 @@ namespace Dune
 
         // write parameter file
         Parameter::write("parameter.log");
+      }
+    }
+
+
+    template< class GridImp, class DataImp >
+    inline void DataOutput< GridImp, DataImp >
+      ::consistentSaveStep ( const TimeProviderBase &tp ) const
+    {
+      // set old values according to new time
+      if( saveStep_ > 0 )
+      {
+        const auto oldTime = tp.time() - saveStep_;
+        while( saveTime_ <= oldTime )
+        {
+          ++writeStep_;
+          saveTime_ += saveStep_;
+        }
       }
     }
 
@@ -966,7 +958,134 @@ namespace Dune
     }
 #endif
 
-  } // end namespace Fem
+
+
+    namespace Impl
+    {
+
+      // makeIOTuple
+      // -----------
+
+      template< class DF >
+      inline static auto makeSingleIOTuple ( DF &&df, PriorityTag< 1 > )
+        -> std::enable_if_t< std::is_reference< DF >::value && std::is_base_of< Fem::HasLocalFunction, std::decay_t< DF > >::value,
+                             std::tuple< const std::decay_t< DF > * > >
+      {
+        return std::make_tuple( &df );
+      }
+
+      template< class DF >
+      inline static auto makeSingleIOTuple ( DF &&df, PriorityTag< 0 > )
+        -> std::tuple<>
+      {
+        return {};
+      }
+
+      template< class... Args >
+      inline static auto makeIOTuple ( Args &&... args )
+      {
+        return std::tuple_cat( makeSingleIOTuple( std::forward< Args >( args ), PriorityTag< 42 >() )... );
+      }
+
+
+
+      // getDataOutputParameters
+      // -----------------------
+
+      inline static auto getSingleDataOutputParameters ( std::unique_ptr< const DataOutputParameters > parameters )
+      {
+        return std::make_tuple( std::move( parameters ) );
+      }
+
+      inline static auto getSingleDataOutputParameters ( const DataOutputParameters &parameters )
+      {
+        return std::make_tuple( std::unique_ptr< const DataOutputParameters >( parameters.clone() ) );
+      }
+
+      inline static auto getSingleDataOutputParameters ( const ParameterReader &parameter )
+      {
+        return std::make_tuple( std::make_unique< const DataOutputParameters >( parameter ) );
+      }
+
+      template< class Arg >
+      inline static auto getSingleDataOutputParameters ( Arg &&arg, PriorityTag< 1 > )
+        -> decltype( getSingleDataOutputParameters( std::declval< Arg >() ) )
+      {
+        return getSingleDataOutputParameters( std::forward< Arg >( arg ) );
+      }
+
+      template< class Arg >
+      inline static std::tuple<> getSingleDataOutputParameters ( Arg &&arg, PriorityTag< 0 > )
+      {
+        return {};
+      }
+
+      template< class... Args >
+      inline static auto getDataOutputParametersTuple ( Args &&... args )
+        -> decltype( std::tuple_cat( getSingleDataOutputParameters( std::declval< Args >(), PriorityTag< 42 >() )... ) )
+      {
+        return std::tuple_cat( getSingleDataOutputParameters( std::forward< Args >( args ), PriorityTag< 42 >() )... );
+      }
+
+      template< class... Args >
+      inline static auto getDataOutputParameters ( Args &&... args )
+        -> std::enable_if_t< (std::tuple_size< decltype( getDataOutputParametersTuple( std::declval< Args >()... ) ) >::value == 0), std::unique_ptr< const DataOutputParameters > >
+      {
+        return std::make_unique< const DataOutputParameters >( Parameter::container() );
+      }
+
+      template< class... Args >
+      inline static auto getDataOutputParameters ( Args &&... args )
+        -> std::enable_if_t< (std::tuple_size< decltype( getDataOutputParametersTuple( std::declval< Args >()... ) ) >::value > 0), std::unique_ptr< const DataOutputParameters > >
+      {
+        static_assert( (std::tuple_size< decltype( Impl::getDataOutputParametersTuple( std::declval< Args >()... ) ) >::value == 1), "Cannot pass multiple DataOutputParameters to DataOutput" );
+        return std::get< 0 >( getDataOutputParametersTuple( std::forward< Args >( args )... ) );
+      }
+
+
+
+      // ValidDataOutputArgument
+      // -----------------------
+
+      template< class Arg, class = void >
+      struct ValidDataOutputArgument
+        : public std::false_type
+      {};
+
+      template< class DF >
+      struct ValidDataOutputArgument< DF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, std::decay_t< DF > >::value > >
+        : public std::true_type
+      {};
+
+      template< class Arg >
+      struct ValidDataOutputArgument< Arg, void_t< decltype( getSingleDataOutputParameters( std::declval< Arg >() ) ) > >
+        : public std::true_type
+      {};
+
+    } // namespace Impl
+
+
+
+    // dataOutput
+    // ----------
+
+    template< class Grid, class... Args, std::enable_if_t< Std::And( Impl::ValidDataOutputArgument< Args >::value... ), int > = 0 >
+    inline static auto dataOutput ( const Grid &grid, Args &&... args )
+    {
+      auto ioTuple = Impl::makeIOTuple( std::forward< Args >( args )... );
+      auto parameters = Impl::getDataOutputParameters( std::forward< Args >( args )... );
+      return DataOutput< Grid, decltype( ioTuple ) >( grid, ioTuple, std::move( parameters ) );
+    }
+
+    template< class Grid, class... Args, std::enable_if_t< Std::And( Impl::ValidDataOutputArgument< Args >::value... ), int > = 0 >
+    inline static auto dataOutput ( const Grid &grid, const TimeProviderBase &tp, Args &&... args )
+    {
+      auto ioTuple = Impl::makeIOTuple( std::forward< Args >( args )... );
+      auto parameters = Impl::getDataOutputParameters( std::forward< Args >( args )... );
+      return DataOutput< Grid, decltype( ioTuple ) >( grid, ioTuple, tp, std::move( parameters ) );
+    }
+
+  } // namespace Fem
 
 } // namespace Dune
 

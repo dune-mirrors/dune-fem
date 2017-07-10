@@ -329,12 +329,8 @@ int main (int argc, char **argv)
     typedef LocalFunctionAdapter<AddLsgErrType> AddLsgErrFunction;
     AddLsgErrFunction addLsgErr("U",evalAddLsgErr,solution.space().gridPart());
 
-    typedef std::tuple<AddLsgErrFunction*> OutputType;
-    OutputType out(&addLsgErr);
-
     {
-      OutputParameters1 param1;
-      DataOutput<GridType,OutputType> output(grid,out); // ,param1);
+      auto output = dataOutput( grid, addLsgErr ); //, OutputParameters1() );
       for(int i=0; i<ml; i+=step)
       {
         GlobalRefine::apply(grid,step);
@@ -351,7 +347,7 @@ int main (int argc, char **argv)
     {
       GridTimeProvider<GridType> tp(0,grid);
       // tp.setEndTime(1);
-      DataOutput<GridType,OutputType> output(grid,out,tp,OutputParameters2());
+      auto output = dataOutput( grid, tp, addLsgErr, OutputParameters2() );
       for( tp.init(0.01) ; tp.time()<=0.04 ; tp.next(0.01) )
       {
         algorithm ( grid , solution,tp.time() );
