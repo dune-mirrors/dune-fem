@@ -259,12 +259,11 @@ namespace Dune
 
           OutsideLocalFunction< DiscreteFunction, IntersectionType > uOutside( u );
           Dune::Fem::SetLocalContribution< DiscreteFunction> lu( u );
-          Dune::Fem::TemporaryLocalFunction< DiscreteFunctionSpaceType> lutmp( u.space() );
+          std::vector<double> lutmp( space.maxNumDofs() );
 
           for( const auto &inside : space )
           {
             lu.bind(inside);
-            auto lutmpGuard = bindGuard( lutmp, inside );
             mask.resize( lu.size() );
             std::fill( mask.begin(), mask.end(), false );
             const std::size_t localBlockSize = DiscreteFunctionSpaceType::localBlockSize;
