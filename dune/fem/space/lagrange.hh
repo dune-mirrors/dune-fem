@@ -1,28 +1,32 @@
 #ifndef HAVE_DUNE_FEM_SPACE_LAGRANGE
 #define HAVE_DUNE_FEM_SPACE_LAGRANGE
 
+#include <memory>
+
 #include <dune/fem/space/lagrange/space.hh>
 
 #if HAVE_DUNE_LOCALFUNCTIONS
-// dune-localfunctions includes
-
 #include <dune/localfunctions/lagrange.hh>
 #include <dune/localfunctions/lagrange/equidistantpoints.hh>
+#endif // #if HAVE_DUNE_LOCALFUNCTIONS
 
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/localfiniteelement/space.hh>
 
 namespace Dune
 {
+
   namespace Fem
   {
 
-    template< class FunctionSpace, class GridPart,
-              template< class, unsigned int > class PointSet = EquidistantPointSet
-            >
+    // LagrangeFiniteElementMap
+    // ------------------------
+
+#if HAVE_DUNE_LOCALFUNCTIONS
+    template< class FunctionSpace, class GridPart, template< class, unsigned int > class PointSet = EquidistantPointSet >
     class LagrangeFiniteElementMap
     {
-      typedef LagrangeFiniteElementMap< FunctionSpace, GridPart > ThisType;
+      typedef LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet > ThisType;
 
     public:
       typedef GridPart GridPartType;
@@ -40,8 +44,8 @@ namespace Dune
       typedef typename LocalFiniteElementType::Traits::LocalInterpolationType LocalInterpolationType;
 
       LagrangeFiniteElementMap ( const GridPart &gridPart, unsigned int order )
-        : gridPart_( gridPart ), order_(order),
-          localFeVector_( size(), nullptr ) {}
+        : gridPart_( gridPart ), order_( order ), localFeVector_( size() )
+      {}
 
       static std::size_t size () { return LocalGeometryTypeIndex::size(dimLocal); }
 
@@ -71,28 +75,32 @@ namespace Dune
       const GridPartType &gridPart () const { return gridPart_; }
 
     private:
-      std::size_t localFiniteElement(const GeometryType &type) const
+      std::size_t localFiniteElement ( const GeometryType &type ) const
       {
         std::size_t index = LocalGeometryTypeIndex::index(type);
-        if ( !localFeVector_[index] )
-          localFeVector_[index] = new LocalFiniteElementType(type,order_);
+        if ( !localFeVector_[ index ] )
+          localFeVector_[ index ].reset( new LocalFiniteElementType( type, order_ ) );
         return index;
       }
 
-      mutable std::vector<LocalFiniteElementType*> localFeVector_;
       const GridPartType &gridPart_;
       unsigned int order_;
+      mutable std::vector< std::unique_ptr< LocalFiniteElementType > > localFeVector_;
     };
+
+
+
+    // LagrangeSpace
+    // -------------
 
     template< class FunctionSpace, class GridPart,
               template< class, unsigned int > class PointSet = EquidistantPointSet,
               template< class > class Storage = CachingStorage >
-    using LagrangeSpace
-    = LocalFiniteElementSpace<
-        LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet >,
-        FunctionSpace, Storage >;
-  }
-}
+    using LagrangeSpace = LocalFiniteElementSpace< LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet >, FunctionSpace, Storage >;
+#endif // #if HAVE_DUNE_LOCALFUNCTIONS
 
-#endif // HAVE_DUNE_LOCALFUNCTIONS
-#endif // HAVE_DUNE_FEM_SPACE_LAGRANGE
+  } // namespace Fem
+
+} // namespace Dune
+
+#endif // #ifndef HAVE_DUNE_FEM_SPACE_LAGRANGE

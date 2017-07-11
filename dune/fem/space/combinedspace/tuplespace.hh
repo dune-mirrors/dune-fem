@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <memory>
 #include <type_traits>
+#include <utility>
 
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/math.hh>
@@ -102,7 +103,7 @@ namespace Dune
       typedef TupleMapper< GridPartType, NonBlockMapper< typename DiscreteFunctionSpaces::BlockMapperType, DiscreteFunctionSpaces::localBlockSize > ... > BlockMapperType;
 
       // in the most general case we will unroll all local blockings
-      enum { localBlockSize = 1 };
+      typedef std::index_sequence< 0 > LocalBlockIndices;
 
       // type functionspace
       typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;

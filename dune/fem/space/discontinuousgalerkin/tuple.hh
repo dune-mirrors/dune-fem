@@ -7,6 +7,7 @@
 
 #include <dune/common/hybridutilities.hh>
 
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/function/localfunction/converter.hh>
 #include <dune/fem/space/combinedspace/tuplelocalrestrictprolong.hh>
@@ -211,7 +212,8 @@ namespace Dune
 
       static const int codimension = BasisFunctionSetsType::codimension;
 
-      static const int localBlockSize = Std::sum( static_cast< int >( DFS::localBlockSize )... );
+      typedef Hybrid::CompositeIndexRange< typename DFS::LocalBlockIndices... > LocalBlockIndices;
+
       static const int polynomialOrder = Std::max( static_cast< int >( DFS::polynomialOrder )... );
 
       typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
