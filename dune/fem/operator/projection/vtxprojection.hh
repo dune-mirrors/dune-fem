@@ -179,7 +179,7 @@ namespace Dune
             {
               if( !onSubEntity[ i ] )
                 continue;
-              for( std::size_t j = 0; j < localBlockSize; ++i )
+              for( std::size_t j = 0; j < localBlockSize; ++j )
                 ldu[ i*localBlockSize + j ] = ldw[ i*localBlockSize + j ];
             }
 

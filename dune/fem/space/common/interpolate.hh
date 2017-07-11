@@ -121,7 +121,7 @@ namespace Dune
           const RangeFieldType weight = weight_( coordinate( x ) );
           for( int i = 0; i < dimRange; ++i )
             value[ i ] = weight;
-        };
+        }
 
         template< class Quadrature, class Values >
         auto evaluateQuadrature ( const Quadrature &quadrature, Values &values ) const
