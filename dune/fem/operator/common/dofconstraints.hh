@@ -24,10 +24,10 @@ namespace Dune
       typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
       typedef Dune::Fem::AdaptiveDiscreteFunction<DiscreteFunctionSpace> InternalStorageType;
       DofConstraints(const DiscreteFunctionSpaceType &space, Constrain &constrain)
-      : space_(space),
-        constrain_(constrain),
-        values_( "costraint_values", space_),
-        mask_( "dof_mask", space_),
+      : space_( space ),
+        constrain_( constrain ),
+        values_( "costraint_values", space_ ),
+        mask_( "dof_mask", space_ ),
         sequence_( -1 )
       { update(); }
 
@@ -35,28 +35,7 @@ namespace Dune
       void set(const GridFunction &gf)
       {
         checkUpdate();
-        values_.clear();
-        {
-          Dune::Fem::ConstLocalFunction< GridFunction > lgf( gf );
-          Dune::Fem::AddLocalContribution< InternalStorageType > lvalues( values_ );
-
-          for ( const auto& entity : space_ )
-          {
-            auto gfGuard = bindGuard( lgf, entity );
-            auto valuesGuard = bindGuard( lvalues, entity );
-            const auto interpolation = space_.interpolation( entity );
-            interpolation( lgf, lvalues );
-          }
-        }
-
-        typedef typename InternalStorageType::DofType DofType;
-        // divide DoFs by the mask
-        std::transform( values_.dbegin(), values_.dend(), mask_.dbegin(), values_.dbegin(),
-            [] ( DofType u, DofType w ) {
-            using std::abs;
-            typename Dune::FieldTraits< DofType >::field_type weight = abs( w );
-            return (weight > 1e-12 ? u / weight : 0.);
-            } );
+        interpolate( gf, values_, constrain_, mask_ );
       }
       template <class DiscreteFunction>
       void operator()(DiscreteFunction &df)
@@ -67,39 +46,6 @@ namespace Dune
       void applyToOperator(LinearOperator &df)
       {
         checkUpdate();
-#if 0
-        Dune::Fem::LocalContribution<LinearOperator> localMatrix;
-        // if Dirichlet Dofs have been found, treat them
-        for( const auto &entity : space_ )
-        {
-          auto localMatrixGuard = bindGuard( localMatrix, entity, entity );
-          // get slave dof structure (for parallel runs)
-          const auto &slaveDofs = linearOperator.rangeSpace().slaveDofs();
-          // get number of basis functions
-          const int localBlocks = space_.blockMapper().numDofs( entity );
-          // map local to global dofs
-          std::vector< std::size_t > globalBlockDofs( localBlocks );
-          // obtain all DofBlocks for this element
-          space_.blockMapper().map( entity, globalBlockDofs );
-          // counter for all local dofs (i.e. localBlockDof * localBlockSize + ... )
-          int localDof = 0;
-          // iterate over face dofs and set unit row
-          for( int localBlockDof = 0; localBlockDof < localBlocks; ++localBlockDof )
-          {
-            int global = globalBlockDofs[ localBlockDof ];
-            for( int l = 0; l < localBlockSize; ++l, ++localDof )
-            {
-              if( !dirichletBlocks_[ global ][ l ] )
-                continue;
-              // clear all other columns
-              localMatrix.clearRow( localDof );
-              // set diagonal to 1
-              double value = slaveDofs.isSlave( global ) ? 0.0 : 1.0;
-              localMatrix.set( localDof, localDof, value );
-            }
-          }
-        }
-#endif
       }
       template <class From, class To>
       void operator()(const From &from, To &to)
@@ -122,25 +68,14 @@ namespace Dune
       void clear()
       {
         checkUpdate();
-        values_.clear();
       }
 
       void update()
       {
         mask_.clear();
+        // should use a ZeroDF here
+        interpolate( values_, values_, constrain_, mask_ );
         values_.clear();
-
-        Dune::Fem::AddLocalContribution< InternalStorageType > lmask( mask_ );
-
-        for ( const auto& entity : space_ )
-        {
-          // initialize local function and local weight
-          auto maskGuard = bindGuard( lmask, entity );
-          auto constraintGuard = bindGuard( constrain_, entity );
-          for (unsigned int dof = 0; dof < lmask.size(); ++dof)
-            if ( constrain_(dof) )
-              lmask[dof] = 1.;
-        }
         sequence_ = space_.sequence();
       }
       private:
@@ -177,21 +112,15 @@ namespace Dune
     {
       typedef typename Space::EntityType EntityType;
       ConstrainOnBoundary(const Space& space, Model &model)
-      : space_(space), model_(model), localMask_(0) {}
+      : space_(space), model_(model) {}
 
-      bool operator()(unsigned int localDof) const
-      {
-        assert( localDof < localMask_.size() );
-        return localMask_[localDof];
-      }
-
-      void bind(const EntityType &entity)
+      template <class DofVector>
+      void operator()(const EntityType &entity, DofVector &localMask)
       {
         auto modelGuard = bindGuard( model_, entity );
 
         const unsigned int numDofs = space_.blockMapper().numDofs( entity );
-        localMask_.resize( numDofs*Space::localBlockSize );
-        std::fill( localMask_.begin(), localMask_.end(), false );
+        std::fill( localMask.begin(), localMask.end(), 0. );
 
         // vector for subentity filter
         std::vector< bool > onSubEntityFilter( numDofs );
@@ -211,17 +140,15 @@ namespace Dune
           space_.blockMapper().onSubEntity( entity, face, 1, onSubEntityFilter );
           for( unsigned int i = 0; i < numDofs; ++i )
             for( unsigned int r = 0; r < Space::localBlockSize; ++r )
-              localMask_[ i*Space::localBlockSize+r ] =
-                localMask_[ i*Space::localBlockSize+r ] |
-                  (onSubEntityFilter[ i ] & bnd.second[r]);
+              localMask[ i*Space::localBlockSize+r ] =
+                ( localMask[ i*Space::localBlockSize+r ]==1. |
+                  (onSubEntityFilter[ i ] & bnd.second[r]) ) ? 1.:0.;
         }
       }
-      void unbind() {}
 
       private:
       const Space &space_;
       Model &model_;
-      std::vector<bool> localMask_;
     };
     template <class Space>
     struct ConstrainOnFullBoundary
