@@ -8,6 +8,7 @@
 #include <dune/common/densevector.hh>
 #include <dune/common/ftraits.hh>
 
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/common/localcontribution.hh>
 
 namespace Dune
@@ -40,13 +41,12 @@ namespace Dune
 
           static void begin ( DiscreteFunction &df )
           {
+            typedef typename DiscreteFunction::DiscreteFunctionSpaceType::LocalBlockIndices LocalBlockIndices;
+
             // clear slave DoFs
             auto &dofVector = df.dofVector();
             for( const auto &slaveDof : df.space().slaveDofs() )
-            {
-              for( unsigned int j = 0; j < DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize; ++j )
-                dofVector[ slaveDof ][ j ] = DofType( 0 );
-            }
+              Hybrid::forEach( LocalBlockIndices(), [ &dofVector, &slaveDof ] ( auto &&j ) { dofVector[ slaveDof ][ j ] = DofType( 0 ); } );
           }
 
           static void end ( DiscreteFunction &df ) { df.space().communicate( df, DFCommunicationOperation::Add() ); }

@@ -17,6 +17,7 @@
 #include <dune/localfunctions/rannacherturek.hh>
 
 // dune-fem includes
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
@@ -79,7 +80,7 @@ namespace Dune
       typedef RannacherTurekBlockMapperFactory< GridPartType, LocalCoefficientsType > BlockMapperFactoryType;
       typedef typename BlockMapperFactoryType::BlockMapperType BlockMapperType;
 
-      static const int localBlockSize = FunctionSpaceType::dimRange;
+      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange > LocalBlockIndices;
 
       typedef LocalFunctionsShapeFunctionSet< LocalBasisType > LocalFunctionsShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LocalFunctionsShapeFunctionSetType, Storage > ScalarShapeFunctionSetType;

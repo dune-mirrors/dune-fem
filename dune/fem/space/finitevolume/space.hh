@@ -3,6 +3,7 @@
 
 #include <dune/grid/common/gridenums.hh>
 
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/function/localfunction/average.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/common/capabilities.hh>
@@ -41,7 +42,7 @@ namespace Dune
       typedef typename BasisFunctionSetsType::BasisFunctionSetType BasisFunctionSetType;
 
       typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
-      static const int localBlockSize = FunctionSpaceType::dimRange;
+      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange > LocalBlockIndices;
 
       template <class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
       struct CommDataHandle

@@ -1,8 +1,11 @@
 #ifndef DUNE_FEM_FUNCTION_COMMON_FUNCTOR_HH
 #define DUNE_FEM_FUNCTION_COMMON_FUNCTOR_HH
 
+#include <cstddef>
+
 #include <utility>
 
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/misc/functor.hh>
 #include <dune/fem/space/basisfunctionset/functor.hh>
 
@@ -101,7 +104,8 @@ namespace Dune
     template< class DofVector, class Functor >
     struct DofBlockFunctor
     {
-      static const int blockSize = DofVector::blockSize;
+      typedef typename DofVector::BlockIndices BlockIndices;
+      static constexpr std::size_t blockSize = Hybrid::size( BlockIndices() );
 
       DofBlockFunctor ( DofVector &dofVector, Functor functor )
       : dofVector_( dofVector ), functor_( functor )
@@ -110,9 +114,11 @@ namespace Dune
       template < class GlobalKey >
       void operator () ( std::size_t local, const GlobalKey& globalKey )
       {
-        for( int i = 0; i < blockSize; ++i )
-          functor_( local*blockSize + i, dofVector_[ globalKey ][ i ] );
+        Hybrid::forEach( BlockIndices(), [ this, local, &globalKey ] ( auto &&i ) {
+            functor_( local*blockSize + i, dofVector_[ globalKey ][ i ] );
+          } );
       }
+
     private:
       DofVector &dofVector_;
       Functor functor_;

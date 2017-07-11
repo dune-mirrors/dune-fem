@@ -29,14 +29,26 @@ namespace Dune
     // sum
     // ---
 
-    template< class T >
-    static constexpr T sum ( T a )
+    template< class T, std::enable_if_t< std::is_arithmetic< std::decay_t< T > >::value, int > = 0 >
+    static constexpr std::decay_t< T > sum ( T a )
+    {
+      return a;
+    }
+
+    template< class T, T a >
+    static constexpr std::decay_t< T > sum ( std::integral_constant< T, a > )
+    {
+      return a;
+    }
+
+    template< class T, std::enable_if_t< std::is_enum< std::decay_t< T > >::value, int > = 0 >
+    static constexpr std::underlying_type_t< std::decay_t< T > > sum ( T a )
     {
       return a;
     }
 
     template< class T, class ... U >
-    static constexpr T sum ( T a, U ... b )
+    static constexpr auto sum ( T a, U ... b )
     {
       return a + sum( b ... );
     }

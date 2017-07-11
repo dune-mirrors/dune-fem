@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_SPACE_PADAPTIVE_LAGRANGE_HH
 #define DUNE_FEM_SPACE_PADAPTIVE_LAGRANGE_HH
 
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/lagrange/shapefunctionset.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
@@ -51,7 +52,7 @@ namespace Dune
       static const int polynomialOrder = maxPolOrder;
 
       static const bool continuousSpace = true ;
-      static const int localBlockSize = FunctionSpaceType::dimRange;
+      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange > LocalBlockIndices;
 
       typedef PAdaptiveLagrangeMapper< GridPartType, polynomialOrder > BlockMapperType;
 
