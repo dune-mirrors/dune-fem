@@ -274,10 +274,6 @@ Dune::FieldVector< typename BasisFunctionSetType::RangeType::value_type, 3 >
   typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
   typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
 
-  // dof alignment type
-  typedef typename VectorialBasisFunctionSetType::DofAlignmentType DofAlignmentType;
-  DofAlignmentType dofAlignment = vectorialBasisFunctionSet.dofAlignment();
-
   // init random dof vectors
   std::vector< RangeFieldType > dofs( size );
   for( std::size_t i = 0; i < size; ++i )
