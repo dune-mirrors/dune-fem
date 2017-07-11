@@ -158,11 +158,16 @@ namespace Dune
 
     ///////////////////////////////////////////////////////////
 
+    template <unsigned int dimR>
     struct EmptyModel
     {
-      static const unsigned int dimRange = 1;
-      template <class I, class V>
-      bool isDirichletIntersection (const I&, const V&) { return true; }
+      template <class I>
+      std::pair< unsigned int, std::bitset< dimR > >
+      isDirichlet ( const I& )
+      {
+        std::bitset<dimR> components;
+        return std::make_pair(1, components.set());
+      }
       template <class E>
       void bind ( const E& ) {}
       void unbind ( ) {}
@@ -191,25 +196,24 @@ namespace Dune
         // vector for subentity filter
         std::vector< bool > onSubEntityFilter( numDofs );
 
-        FieldVector< int, Model::dimRange > block( 0 );
         for( const auto &intersection : intersections( space_.gridPart(), entity ) )
         {
           // only need to do something if intersection is with boundary
           if( !intersection.boundary() )
             continue;
           // and model says that it is part of the dirichlet boundary
-          if( !model_.isDirichletIntersection( intersection, block ) )
+          auto bnd = model_.isDirichlet( intersection );
+          if ( bnd.second.none() )
             continue;
 
           // get face number of boundary intersection
           const int face = intersection.indexInInside();
           space_.blockMapper().onSubEntity( entity, face, 1, onSubEntityFilter );
-          // Q: is this general enough?
           for( unsigned int i = 0; i < numDofs; ++i )
             for( unsigned int r = 0; r < Space::localBlockSize; ++r )
               localMask_[ i*Space::localBlockSize+r ] =
                 localMask_[ i*Space::localBlockSize+r ] |
-                (onSubEntityFilter[ i ] & block[i]>0);
+                  (onSubEntityFilter[ i ] & bnd.second[r]);
         }
       }
       void unbind() {}
@@ -220,11 +224,12 @@ namespace Dune
       std::vector<bool> localMask_;
     };
     template <class Space>
-    struct ConstrainOnFullBoundary : public ConstrainOnBoundary<Space,EmptyModel>
+    struct ConstrainOnFullBoundary
+    : public ConstrainOnBoundary< Space, EmptyModel<Space::dimRange> >
     {
       ConstrainOnFullBoundary(const Space& space)
-      : ConstrainOnBoundary<Space,EmptyModel>(space,model_) {}
-      EmptyModel model_;
+      : ConstrainOnBoundary< Space, EmptyModel<Space::dimRange> >(space,model_) {}
+      EmptyModel<Space::dimRange> model_;
     };
 
     /////////////////////////////////////////////////////////////////
@@ -269,21 +274,21 @@ namespace Dune
 
           // get dirichlet information from model
           // Remark: assuming for now that block[i] is zero or always has the same value
-          FieldVector< int, RangeType::dimension > block( 0 );
-          if( !model_.isDirichletIntersection( intersection, block ) )
+          auto bnd = model_.isDirichlet( intersection );
+          if( bnd.second.none() )
             continue;
 
           // get face number of boundary intersection
           const int face = intersection.indexInInside();
           space_.blockMapper().onSubEntity( entity, face, 1, onSubEntity );
-          interpolation( BoundaryWrapper( model_, block[0] ), ltmp_ );
+          interpolation( BoundaryWrapper( model_, bnd.first ), ltmp_ );
 
           int localDof = 0;
           for( int localBlock = 0; localBlock < localBlocks; ++localBlock )
           {
             for( int l = 0; l < DiscreteFunctionSpaceType::localBlockSize; ++l, ++localDof )
             {
-              if (block[l]==0) continue;
+              if (bnd.second[l]==0) continue;
               localFunction_[ localDof ] = ltmp_[ localDof ];
             }
           }

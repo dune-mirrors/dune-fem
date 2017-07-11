@@ -33,13 +33,15 @@ int main(int argc, char ** argv)
     const int step = Dune::Fem::TestGrid :: refineStepsForHalf();
     grid.globalRefine( 2*step );
     GridPartType gridPart( grid );
+
+    // first simply interpolate the given function (store in interpol)
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
     interpolate( gridFunctionAdapter( ExactSolutionType(), gridPart, discreteFunctionSpace.order() + 2 ), solution );
-
     DiscreteFunctionType interpol( "interpolation", discreteFunctionSpace );
     interpol.assign( solution );
 
+    // next use zero b.c. on the whole boundary and store in zerobc
     Dune::Fem::ConstrainOnFullBoundary< DiscreteFunctionSpaceType > mask( discreteFunctionSpace );
     Dune::Fem::DofConstraints< DiscreteFunctionSpaceType, Dune::Fem::ConstrainOnFullBoundary< DiscreteFunctionSpaceType >  >
         constrain( discreteFunctionSpace, mask );
@@ -47,10 +49,13 @@ int main(int argc, char ** argv)
     DiscreteFunctionType zerobc( "zerobc", discreteFunctionSpace );
     zerobc.assign( solution );
 
+    // now use the value from the given function as b.c. on the whole
+    // domain then solution == interpol (so after this solution==0)
     constrain.set( gridFunctionAdapter( ExactSolutionType(), gridPart, discreteFunctionSpace.order() + 2 ) );
     constrain( solution );
     solution -= interpol;
 
+    // now test a b.c. given by the 'model'
     DiscreteFunctionType modelTest( "modelTest", discreteFunctionSpace );
     interpolate( gridFunctionAdapter( ExactSolutionType(), gridPart, discreteFunctionSpace.order() + 2 ), modelTest );
 
