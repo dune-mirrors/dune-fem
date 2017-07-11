@@ -226,6 +226,53 @@ namespace Dune
       template< class GridPartType >
       class GnuplotOutputer;
 
+      struct FileWriter
+      {
+        FileWriter ( std::string name )
+          : file_( name )
+        {
+          if( !file_ )
+            std::cout << "could not write file: " << name << std::endl;
+        }
+
+        void operator() ( const std::string &s ) { file_ << s << std::endl; }
+
+      protected:
+        std::ofstream file_;
+      };
+
+      struct PVDWriter
+        : public FileWriter
+      {
+        PVDWriter ( std::string name )
+          : FileWriter( name )
+        {
+          file_ << "<?xml version=\"1.0\"?>" << std::endl;
+          file_ << "<VTKFile type=\"Collection\" version=\"0.1\" byte_order=\"LittleEndian\">" << std::endl;
+          file_ << "  <Collection>" << std::endl;
+        }
+
+        ~PVDWriter ()
+        {
+          file_ << "  </Collection>" << std::endl;
+          file_ << "</VTKFile>" << std::endl;
+        }
+
+        void operator() ( double sequenceStamp, std::string filename )
+        {
+          // cH: only use the basename of filename, Paraview will
+          // prepend the leading path correctly, if the pvd-file
+          // resides in the same directory as the data files.
+          auto pos = filename.find_last_of( '/' );
+          if( pos != filename.npos )
+            filename = filename.substr( pos+1, filename.npos );
+          static_cast< FileWriter & >( *this )( "    <DataSet timestep=\"" + std::to_string( sequenceStamp ) + "\" group=\"\" part=\"0\" file=\"" + filename + "\"/>" );
+        }
+
+      private:
+        std::ofstream file_;
+      };
+
     public:
       enum OutputFormat { vtk = 0, vtkvtx = 1, subvtk = 2 , binary = 3, gnuplot = 4, none = 5 };
 
@@ -285,21 +332,7 @@ namespace Dune
         : DataOutput( grid, data, tp, DataOutputParameters( parameter ) )
       {}
 
-      DataOutput ( ThisType && ) = default;
-
       void consistentSaveStep ( const TimeProviderBase &tp ) const;
-
-      //! \brief destructor
-      virtual ~DataOutput()
-      {
-        if( pvd_ )
-        {
-          pvd_ << "  </Collection>" << std::endl;
-          pvd_ << "</VTKFile>" << std::endl;
-
-          pvd_.close();
-        }
-      }
 
     public:
       //! \brief returns true if data will be written on next write call
@@ -465,8 +498,8 @@ namespace Dune
       // grape, vtk or ...
       OutputFormat outputFormat_;
       bool conformingOutput_;
-      mutable std::ofstream sequence_;
-      mutable std::ofstream pvd_;
+      std::unique_ptr< FileWriter > sequence_;
+      std::unique_ptr< PVDWriter > pvd_;
       std::unique_ptr< const DataOutputParameters > param_;
     };
 
@@ -723,29 +756,8 @@ namespace Dune
         // only write series file for VTK output
         if ( Parameter :: verbose() && outputFormat_ < binary )
         {
-          {
-            std::string name = path_ + "/" + datapref_;
-            name += ".series";
-            std::cout << "opening file: " << name << std::endl;
-            sequence_.open(name.c_str());
-            if ( ! sequence_ )
-              std::cout << "could not write sequence file" << std::endl;
-          }
-
-          {
-            std::string name = path_ + "/" + datapref_;
-            name += ".pvd";
-            std::cout << "opening file: " << name << std::endl;
-            pvd_.open(name.c_str());
-            if ( ! pvd_ )
-              std::cout << "could not write sequence file" << std::endl;
-            else
-            {
-              pvd_ << "<?xml version=\"1.0\"?>" << std::endl;
-              pvd_ << "<VTKFile type=\"Collection\" version=\"0.1\" byte_order=\"LittleEndian\">" << std::endl;
-              pvd_ << "  <Collection>" << std::endl;
-            }
-          }
+          sequence_.reset( new FileWriter( path_ + "/" + datapref_ + ".series" ) );
+          pvd_.reset( new PVDWriter( path_ + "/" + datapref_ + ".pvd" ) );
         }
 
         // write parameter file
@@ -801,26 +813,10 @@ namespace Dune
       if( outputFormat_ != none )
       {
         if( sequence_ )
-          sequence_ << writeStep_ << " "
-                    << filename << " "
-                    << sequenceStamp
-                    << outstring
-                    << std::endl;
+          (*sequence_)( std::to_string( writeStep_ ) + " " + filename + " " + std::to_string( sequenceStamp ) + outstring );
 
         if( pvd_ )
-        {
-          // cH: only use the basename of filename, Paraview will
-          // prepend the leading path correctly, if the pvd-file
-          // resides in the same directory as the data files.
-          std::string basefilename;
-          auto pos = filename.find_last_of( '/' );
-          if (pos == filename.npos)
-            pos = -1;
-          basefilename = filename.substr( pos+1, filename.npos );
-          pvd_ << "    <DataSet timestep=\"" << sequenceStamp << "\" "
-               << "group=\"\" part=\"0\" "
-               << "file=\""<<basefilename<<"\"/>" << std::endl;
-        }
+          (*pvd_)( sequenceStamp, filename );
 
         if( Parameter::verbose() )
         {
