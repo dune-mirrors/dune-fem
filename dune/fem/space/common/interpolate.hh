@@ -1,8 +1,11 @@
 #ifndef DUNE_FEM_SPACE_COMMON_INTERPOLATE_HH
 #define DUNE_FEM_SPACE_COMMON_INTERPOLATE_HH
 
-#include <vector>
+#include <algorithm>
 #include <type_traits>
+#include <utility>
+
+#include <dune/common/typetraits.hh>
 
 #include <dune/grid/common/partitionset.hh>
 #include <dune/grid/common/rangegenerators.hh>
@@ -83,6 +86,127 @@ namespace Dune
         // perform local interpolation
         v.space().interpolation( entity )( uLocal, vLocal );
       }
+    }
+
+
+
+    namespace Impl
+    {
+
+      template< class Entity, class FunctionSpace, class Weight >
+      struct WeightLocalFunction
+      {
+        typedef Entity EntityType;
+        typedef FunctionSpace FunctionSpaceType;
+
+        typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+        typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+
+        typedef typename FunctionSpaceType::DomainType DomainType;
+        typedef typename FunctionSpaceType::RangeType RangeType;
+
+        typedef typename EntityType::Geometry::LocalCoordinate LocalCoordinateType;
+
+        static constexpr int dimDomain = FunctionSpaceType::dimDomain;
+        static constexpr int dimRange = FunctionSpaceType::dimRange;
+
+        explicit WeightLocalFunction ( Weight &weight ) : weight_( weight ) {}
+
+        void bind ( const EntityType &entity ) { weight_.setEntity( entity ); }
+        void unbind () {}
+
+        template< class Point >
+        void evaluate ( const Point &x, RangeType &value ) const
+        {
+          const RangeFieldType weight = weight_( coordinate( x ) );
+          for( int i = 0; i < dimRange; ++i )
+            value[ i ] = weight;
+        };
+
+        template< class Quadrature, class Values >
+        auto evaluateQuadrature ( const Quadrature &quadrature, Values &values ) const
+          -> std::enable_if_t< std::is_same< decltype( values[ 0 ] ), RangeType & >::value >
+        {
+          for( const auto &qp : quadrature )
+            evaluate( qp, values[ qp.index() ] );
+        }
+
+      private:
+        Weight &weight_;
+      };
+
+    } // namespace Impl
+
+
+
+    // interpolate with weights
+    // ------------------------
+
+    template< class GridFunction, class DiscreteFunction, class Weight >
+    inline static auto interpolate ( const GridFunction &u, DiscreteFunction &v, Weight &&weight )
+      -> std::enable_if_t< !std::is_const< std::remove_reference_t< Weight > >::value  >
+    {
+      DiscreteFunction w( v );
+      interpolate( u, v, std::forward< Weight >( weight ), w );
+    }
+
+    template< class GridFunction, class DiscreteFunction, class Weight >
+    inline static auto interpolate ( const GridFunction &u, DiscreteFunction &v, Weight &&weight )
+      -> std::enable_if_t< !std::is_const< std::remove_reference_t< Weight > >::value && !std::is_base_of< HasLocalFunction, GridFunction >::value >
+    {
+      interpolate( gridFunctionAdapter( u, v.gridPart() ), v, std::forward< Weight >( weight ) );
+    }
+
+    template< class GridFunction, class DiscreteFunction, class Weight >
+    inline static auto interpolate ( const GridFunction &u, DiscreteFunction &v, Weight &&weight, DiscreteFunction &w )
+      -> std::enable_if_t< std::is_base_of< HasLocalFunction, GridFunction >::value && Capabilities::hasInterpolation< typename DiscreteFunction::DiscreteFunctionSpaceType >::v,
+                           void_t< decltype( std::declval< Weight >().setEntity( std::declval< const typename DiscreteFunction::DiscreteFunctionSpaceType::EntityType & >() ) ) > >
+    {
+      typedef typename DiscreteFunction::DiscreteFunctionSpaceType::EntityType EntityType;
+
+      const auto &space = w.space();
+      Impl::WeightLocalFunction< EntityType, std::remove_reference_t< typename DiscreteFunction::FunctionSpaceType >, Weight > localWeight( weight );
+      interpolate( u, v, [ &space, &localWeight ] ( const EntityType &entity, AddLocalContribution< DiscreteFunction > &w ) {
+          auto weightGuard = bindGuard( localWeight, entity );
+          space.interpolation( entity )( localWeight, w );
+        }, w );
+    }
+
+    template< class GridFunction, class DiscreteFunction, class Weight >
+    inline static auto interpolate ( const GridFunction &u, DiscreteFunction &v, Weight &&weight, DiscreteFunction &w )
+      -> std::enable_if_t< std::is_base_of< HasLocalFunction, GridFunction >::value && Capabilities::hasInterpolation< typename DiscreteFunction::DiscreteFunctionSpaceType >::v,
+                           void_t< decltype( std::declval< Weight >()( std::declval< typename DiscreteFunction::DiscreteFunctionSpaceType::EntityType & >(), std::declval< AddLocalContribution< DiscreteFunction > & >() ) ) > >
+    {
+      typedef typename DiscreteFunction::DofType DofType;
+
+      v.clear();
+      w.clear();
+
+      {
+        ConstLocalFunction< GridFunction > uLocal( u );
+        AddLocalContribution< DiscreteFunction > vLocal( v ), wLocal( w );
+
+        for( const auto &entity : v.space() )
+        {
+          auto uGuard = bindGuard( uLocal, entity );
+          auto vGuard = bindGuard( vLocal, entity );
+          auto wGuard = bindGuard( wLocal, entity );
+
+          // interpolate u
+          v.space().interpolation( entity )( uLocal, vLocal );
+
+          // evaluate DoF-wise weight
+          weight( entity, wLocal );
+
+          // multiply interpolated values by weight
+          std::transform( vLocal.begin(), vLocal.end(), wLocal.begin(), vLocal.begin(), std::multiplies< DofType >() );
+        }
+      } // ensure the local contributions go out of scope, here (communication)
+
+      std::transform( v.dbegin(), v.dend(), w.dbegin(), v.dbegin(), [] ( DofType v, DofType w ) {
+          // weights are non-negative, so cancellation cannot occur
+          return (w > DofType( 0 ) ? v / w : v);
+        } );
     }
 
   } // namespace Fem
