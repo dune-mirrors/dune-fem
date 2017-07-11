@@ -25,13 +25,13 @@ struct Model
   static const int dimRange = FunctionSpaceType::dimRange;
 
   Model ( ) {}
-
-  bool isDirichletIntersection ( const IntersectionType &intersection,
-                                 Dune::FieldVector< int, dimRange > &dirichletComponent ) const
+  std::pair< unsigned int, std::bitset< dimRange > >
+  isDirichlet ( const IntersectionType &intersection )
   {
-    std::fill( dirichletComponent.begin(), dirichletComponent.end(), 0 );
-    dirichletComponent[0] = 1;
-    return (intersection.geometry().center()[1]>0.5);
+    unsigned int id = 1;
+    std::bitset<dimRange> components; // start with all bits unset
+    components[0] = (intersection.geometry().center()[1]>0.5);
+    return std::make_pair(id, components);
   }
   template< class Point >
   RangeType dirichlet ( int bndId, const Point &x ) const
