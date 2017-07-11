@@ -2,6 +2,7 @@
 #define DUNE_FEM_CACHED_COMMUNICATION_MANAGER_HH
 
 #include <cassert>
+#include <cstddef>
 
 //- system includes
 #include <iostream>
@@ -25,6 +26,7 @@
 #endif
 
 //- dune-fem includes
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/commindexmap.hh>
@@ -568,13 +570,14 @@ namespace Dune
 
         typedef typename DiscreteFunction :: DofType DofType;
 
-        enum { blockSize = DiscreteFunction :: DiscreteFunctionSpaceType :: localBlockSize } ;
-
         // reserve write buffer for storage of dofs
-        str.reserve( (size * blockSize * sizeof( DofType )) );
+        typename DiscreteFunction::DiscreteFunctionSpaceType::LocalBlockIndices localBlockIndices;
+        str.reserve( size * Hybrid::size( localBlockIndices ) * sizeof( DofType ) );
         for( int i = 0; i < size; ++i )
-          for( int k = 0; k < blockSize; ++k )
-            str.writeUnchecked( discreteFunction.dofVector()[indexMap[i]][k] );
+        {
+          const auto &block = discreteFunction.dofVector()[ indexMap[ i ] ];
+          Hybrid::forEach( localBlockIndices, [ &str, &block ] ( auto &&k ) { str.writeUnchecked( block[ k ] ); } );
+        }
       }
 
       // read data from object stream to DataImp& data vector
@@ -602,28 +605,26 @@ namespace Dune
         assert( sequence_ == space_.sequence() );
         typedef typename DiscreteFunction :: DofType DofType;
 
-        enum { blockSize = DiscreteFunction :: DiscreteFunctionSpaceType :: localBlockSize } ;
-
         // get index map of rank belonging to link
         const auto &indexMap = recvIndexMap_[ dest( link ) ];
 
         const int size = indexMap.size();
         // make sure that the receive buffer has the correct size
-        assert( size_t(size * blockSize * sizeof( DofType )) <= size_t(str.size()) );
-
-        DofType value;
+        typename DiscreteFunction::DiscreteFunctionSpaceType::LocalBlockIndices localBlockIndices;
+        assert( static_cast< std::size_t >( size * Hybrid::size( localBlockIndices ) * sizeof( DofType ) ) <= static_cast< std::size_t >( str.size() ) );
         for( int i = 0; i < size; ++i )
         {
-          for( int k = 0; k < blockSize; ++k )
-          {
+          auto &&block = discreteFunction.dofVector()[ indexMap[ i ] ];
+          Hybrid::forEach( localBlockIndices, [ &str, &operation, &block ] ( auto &&k ) {
+              DofType value;
 #if HAVE_DUNE_ALUGRID
-            str.readUnchecked( value );
-#else
-            str.read( value );
-#endif
-            // apply operation, i.e. COPY, ADD, etc.
-            operation( value, discreteFunction.dofVector()[indexMap[i]][k] );
-          }
+              str.readUnchecked( value );
+#else // #if HAVE_DUNE_ALUGRID
+              str.read( value );
+#endif // #else // #if HAVE_DUNE_ALUGRID
+              // apply operation, i.e. COPY, ADD, etc.
+              operation( value, block[ k ] );
+            } );
         }
       }
     };

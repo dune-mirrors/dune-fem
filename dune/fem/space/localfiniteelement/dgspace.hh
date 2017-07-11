@@ -47,7 +47,8 @@ namespace Dune
       typedef GridFunctionSpace< GridPartType, FunctionSpace > FunctionSpaceType;
 
       static constexpr int codimension = 0;
-      static constexpr int localBlockSize = 1;
+
+      typedef Hybrid::IndexRange< int, 1 > LocalBlockIndices;
 
     private:
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;

@@ -4,6 +4,7 @@
 #include <cassert>
 #include <limits>
 
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/function/common/functionset.hh>
 #include <dune/fem/function/localfunction/localfunctionsetadapter.hh>
 #include <dune/fem/space/basisfunctionset/simple.hh>
@@ -47,7 +48,7 @@ namespace Dune
 
       typedef VectorialBasisFunctionSet< ScalarBasisFunctionSetType, typename FunctionSpaceType::RangeType > BasisFunctionSetType;
 
-      static const int localBlockSize = FunctionSpace::dimRange * FourierFunctionSetSize< FunctionSpaceType::dimDomain, order >::v;
+      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange * FourierFunctionSetSize< FunctionSpaceType::dimDomain, order >::v > LocalBlockIndices;
 
       typedef FourierDofMapper< GridPartType, order > BlockMapperType;
 

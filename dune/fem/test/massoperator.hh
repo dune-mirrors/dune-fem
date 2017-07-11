@@ -62,8 +62,7 @@ void MassOperator< DiscreteFunction, LinearOperator >
   {
     const auto geometry = entity.geometry();
 
-    auto uGuard = bindGuard( uLocal, entity );
-    auto wGuard = bindGuard( wLocal, entity );
+    auto guard = bindGuard( std::tie( uLocal, wLocal ), entity );
 
     // run over quadrature points
     for( const auto qp : QuadratureType( entity, uLocal.order()+wLocal.order() ) )
@@ -95,7 +94,7 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
   {
     const auto geometry = entity.geometry();
 
-    auto jGuard = bindGuard( localMatrix, entity, entity );
+    auto guard = bindGuard( localMatrix, entity, entity );
 
     const auto &basis = localMatrix.domainBasisFunctionSet();
     const unsigned int numBasisFunctions = basis.size();
@@ -108,9 +107,8 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
       basis.evaluateAll( qp, values );
 
       // apply quadrature weight
-      double weight = qp.weight() * geometry.integrationElement( qp.position() );
-      std::for_each( values.begin(), values.end(),
-          [weight](double& a) { a *= weight; } );
+      const auto weight = qp.weight() * geometry.integrationElement( qp.position() );
+      std::for_each( values.begin(), values.end(), [ weight ] ( auto &a ) { a *= weight; } );
 
       // update system matrix
       localMatrix.axpy( qp, values );

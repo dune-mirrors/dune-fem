@@ -1,9 +1,26 @@
-dune_install(adaptivefunction.hh blockvectorfunction.hh
-             combinedfunction.hh vectorfunction.hh
-             subfunction.hh blockvectordiscretefunction.hh petscdiscretefunction.hh
-             tuplediscretefunction.hh)
+dune_install(
+  adaptivefunction.hh
+  blockvectordiscretefunction.hh
+  blockvectorfunction.hh
+  combinedfunction.hh
+  hierarchical.hh
+  petscdiscretefunction.hh
+  subfunction.hh
+  tuplediscretefunction.hh
+  vectorfunction.hh
+)
 
-dune_add_subdirs(common localfunction adaptivefunction
-                 combinedfunction blockvectorfunction
-                 vectorfunction blockvectordiscretefunction
-                 blockvectors petscdiscretefunction test tuplediscretefunction)
+dune_add_subdirs(
+  adaptivefunction
+  blockvectordiscretefunction
+  blockvectorfunction
+  blockvectors
+  combinedfunction
+  common
+  localfunction
+  hierarchical
+  petscdiscretefunction
+  test
+  tuplediscretefunction
+  vectorfunction
+)

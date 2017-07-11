@@ -133,3 +133,10 @@ endforeach()
 exclude_from_headercheck( dfspace.hh testgrid.hh )
 
 dune_add_test(SOURCES test-intersectionindexset.cc LINK_LIBRARIES dunefem CMAKE_GUARD dune-alugrid_FOUND)
+
+dune_add_test(
+  SOURCES test-hierarchicall2projection.cc
+  COMPILE_DEFINITIONS "YASPGRID" "GRIDDIM=2"
+  LINK_LIBRARIES dunefem
+  CMAKE_GUARD dune-istl_FOUND
+)
