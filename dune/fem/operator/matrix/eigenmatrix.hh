@@ -133,7 +133,7 @@ namespace Dune
       template <class Vector>
       void setUnitRows( const Vector &rows )
       {
-        for (r : rows)
+        for (auto r : rows)
         {
           clearRow(r);
           set(r,r,1.);
