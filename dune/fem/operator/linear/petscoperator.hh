@@ -47,7 +47,7 @@ namespace Dune
      */
     template< typename DomainFunction, typename RangeFunction >
     class PetscLinearOperator
-    : public Fem::Operator< DomainFunction, RangeFunction >
+    : public AssembledOperator< DomainFunction, RangeFunction >
     {
       typedef PetscLinearOperator< DomainFunction, RangeFunction > ThisType;
     public:
