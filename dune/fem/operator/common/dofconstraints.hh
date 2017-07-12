@@ -4,6 +4,7 @@
 #include <dune/fem/function/common/rangegenerators.hh>
 #include <dune/fem/common/bindguard.hh>
 #include <dune/fem/function/common/localcontribution.hh>
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/function/localfunction/const.hh>
 
 namespace Dune
@@ -43,25 +44,35 @@ namespace Dune
         (*this)(values_,df);
       }
       template <class LinearOperator>
-      void applyToOperator(LinearOperator &df)
+      void applyToOperator(LinearOperator &lo) // could use operator() with some SFINAE
       {
         checkUpdate();
+        std::vector<unsigned int> rows;
+        rows.reserve(mask_.size()); // need something better
+        unsigned int r=0;
+        for ( const auto &m : dofs(mask_) )
+        {
+          if (m>0)
+            rows.push_back(r);
+          ++r;
+        }
+        lo.setUnitRows( rows );
       }
       template <class From, class To>
       void operator()(const From &from, To &to)
       {
         checkUpdate();
 
-        auto valueIt = from.dbegin();
+        auto fromIt = from.dbegin();
         auto maskIt = mask_.dbegin();
         int idx = 0;
         for ( auto& dof : dofs(to) )
         {
           if ( (*maskIt) > 0)
-            dof = (*valueIt);
-          assert( maskIt != mask_.dend() && valueIt != values_.dend() );
+            dof = (*fromIt);
+          assert( maskIt != mask_.dend() && fromIt != from.dend() );
           ++maskIt;
-          ++valueIt;
+          ++fromIt;
           ++idx;
         }
       }
