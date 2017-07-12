@@ -163,6 +163,50 @@ namespace Dune
               entry = 0;
         }
 
+        template <class Vector>
+        void setUnitRows( const Vector &rows )
+        {
+#if 0
+          // version 1
+          unsigned int r = 0;
+          const auto endrow=this->end();
+          for (auto row=this->begin(); row!=endrow; ++row)
+          {
+            if (row.index() < rows[r]) continue;
+            const auto endcol = (*row).end();
+            for (auto col=(*row).begin(); col!=endcol; ++col)
+              *col = (col.index()==row.index())? 1.:0.;
+            ++r;
+            if (r == rows.size()) break;
+          }
+#else
+          // version 2
+          for (auto r : rows)
+          {
+            const std::size_t blockRow( r/(LittleBlockType :: rows) );
+            const std::size_t localRowIdx( r%(LittleBlockType :: rows) );
+            auto& row = this->operator[](blockRow);
+            const auto endcol = row.end();
+#ifndef NDEBUG
+            bool set = false;
+#endif
+            for (auto col=row.begin(); col!=endcol; ++col)
+            {
+              for (auto& entry : (*col)[localRowIdx])
+                entry = 0;
+              if (col.index() == blockRow)
+              {
+                (*col)[localRowIdx][localRowIdx] = 1.;
+#ifndef NDEBUG
+                set = true;
+#endif
+              }
+            }
+            assert(set);
+          }
+#endif
+        }
+
         //! setup like the old matrix but remove rows with hanging nodes
         template <class HangingNodesType>
         void setup(ThisType& oldMatrix, const HangingNodesType& hangingNodes)
@@ -770,6 +814,11 @@ namespace Dune
         removeObj();
       }
 
+      template <class Vector>
+      void setUnitRows( const Vector &rows )
+      {
+        matrix().setUnitRows( rows );
+      }
       //! reserve memory for assemble based on the provided stencil
       template <class Stencil>
       void reserve(const Stencil &stencil, const bool implicit = true )

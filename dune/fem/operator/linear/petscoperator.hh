@@ -278,6 +278,11 @@ namespace Dune
         ::Dune::Petsc::MatZeroEntries( petscMatrix_ );
       }
 
+      template <class Vector>
+      void setUnitRows( const Vector &rows )
+      {
+      }
+
       //! interface method from LocalMatrixFactory
       ObjectType* newObject() const
       {
