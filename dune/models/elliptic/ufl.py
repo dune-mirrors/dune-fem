@@ -145,8 +145,11 @@ def compileUFL(form, *args, **kwargs):
 
     uflCoefficients = set(form.coefficients())
     for bc in dirichletBCs:
-        _, c = extract_arguments_and_coefficients(bc.value)
-        uflCoefficients |= set(c)
+        try:
+            _, c = extract_arguments_and_coefficients(bc.value)
+            uflCoefficients |= set(c)
+        except:
+            assert type(bc.value) is list, "DirichletBC needs UFL vector or list"
 
     constants = dict()
     coefficients = dict()
@@ -204,6 +207,7 @@ def compileUFL(form, *args, **kwargs):
         model.hasDirichletBoundary = True
 
         bySubDomain = dict()
+        neuman = []
         for bc in dirichletBCs:
             if bc.subDomain in bySubDomain:
                 raise Exception('Multiply defined Dirichlet boundary for subdomain ' + str(bc.subDomain))
@@ -215,6 +219,12 @@ def compileUFL(form, *args, **kwargs):
             if isinstance(bc.functionSpace, FiniteElementBase) and (bc.functionSpace != u.ufl_element()):
                 raise Exception('Cannot handle boundary conditions on subspaces, yet')
 
+            if isinstance(bc.value, list):
+                neuman = [i for i, x in enumerate(bc.value) if x == None]
+                for i in neuman:
+                    bc.value[i] = 0
+                bc.value = as_vector(bc.value)
+
             value = ExprTensor(u.ufl_shape)
             for key in value.keys():
                 value[key] = Indexed(bc.value, MultiIndex(tuple(FixedIndex(k) for k in key)))
@@ -225,7 +235,11 @@ def compileUFL(form, *args, **kwargs):
 
         switch = SwitchStatement(bndId, default=return_(False))
         for i in bySubDomain:
-            switch.append(i, return_(True))
+            code = []
+            if neuman:
+                [code.append('dirichletComponent[' + str(i) + '] = 0;') for i in neuman]
+            code.append(return_(True))
+            switch.append(i, code)
         model.isDirichletIntersection = [Declaration(bndId, initializer=UnformattedExpression('int', 'BoundaryIdProviderType::boundaryId( ' + model.arg_i.name + ' )')),
                                          UnformattedBlock('std::fill( dirichletComponent.begin(), dirichletComponent.end(), ' + bndId.name + ' );'),
                                          switch
