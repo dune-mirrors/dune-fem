@@ -151,6 +151,14 @@ namespace Dune
 
     };
 
+    template< class Scalar, class PVector >
+    void axpy ( const Scalar &a, const Scalar &x, PetscDofProxy< PVector > proxy )
+    {
+      proxy += a*x;
+    }
+
+
+
 
     /* ========================================
      * class PetscDofBlock
