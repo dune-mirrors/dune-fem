@@ -184,6 +184,7 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step )
   // assemble RHS
   DiscreteFunctionType rhs( "rhs", space );
   laplaceOperator.assembleRHS( gridFunctionAdapter( forcing_, gridPart, space.order()+1 ), rhs );
+  laplaceOperator.communicate();
 
   // next use exact solution as b.c. on the whole boundary
   Dune::Fem::ConstrainOnFullBoundary< DiscreteSpaceType > mask( space );
@@ -196,6 +197,7 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step )
   // apply solver
   solution.clear();
   constrain( rhs, solution );
+  // laplaceOperator.finalize(); // to be called1
   InverseOperatorType inverseOperator ( laplaceOperator, 1e-10, 1e-10, 1000 );
   inverseOperator( rhs, solution );
 

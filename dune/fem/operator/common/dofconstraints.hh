@@ -66,7 +66,7 @@ namespace Dune
         auto fromIt = from.dbegin();
         auto maskIt = mask_.dbegin();
         int idx = 0;
-        for ( auto& dof : dofs(to) )
+        for ( auto&& dof : dofs(to) )
         {
           if ( (*maskIt) > 0)
             dof = (*fromIt);
@@ -152,7 +152,7 @@ namespace Dune
           for( unsigned int i = 0; i < numDofs; ++i )
             for( unsigned int r = 0; r < Space::localBlockSize; ++r )
               localMask[ i*Space::localBlockSize+r ] =
-                ( localMask[ i*Space::localBlockSize+r ]==1. |
+                ( (localMask[ i*Space::localBlockSize+r ]==1.) |
                   (onSubEntityFilter[ i ] & bnd.second[r]) ) ? 1.:0.;
         }
       }
