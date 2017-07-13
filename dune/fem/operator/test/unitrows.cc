@@ -160,7 +160,7 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step )
   identityOperator( rhs, solution );
 
   int r = 0;
-  for ( auto& s : dofs(solution) ) // note that this doesn't work for petsc
+  for ( auto&& s : dofs(solution) ) // note that this doesn't work for petsc
   {
     if ( find (rows.begin(), rows.end(), r) == rows.end() )
       s = 0;
