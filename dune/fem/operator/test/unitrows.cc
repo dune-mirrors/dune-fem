@@ -129,32 +129,38 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step )
   LinearOperatorType identityOperator( "identity", space, space );
   identityOperator.reserve( Dune::Fem::DiagonalStencil<DiscreteSpaceType,DiscreteSpaceType>( space, space ) );
   identityOperator.clear();
-  Dune::Fem::AddLocalContribution< LinearOperatorType > localMatrix( identityOperator );
-  typedef Dune::Fem::CachingQuadrature< typename DiscreteSpaceType::GridPartType, 0 > QuadratureType;
-  Dune::DynamicVector< typename SpaceType::RangeType > values;
-  for( const auto &entity : space )
   {
-    auto guard = bindGuard( localMatrix, entity, entity );
-    const auto &basis = localMatrix.domainBasisFunctionSet();
-    const unsigned int numBasisFunctions = basis.size();
-    values.resize( numBasisFunctions, 1. );
-    for( const auto qp : QuadratureType( entity, localMatrix.order() ) )
-      localMatrix.axpy( qp, values );
+    Dune::Fem::AddLocalContribution< LinearOperatorType > localMatrix( identityOperator );
+    typedef Dune::Fem::CachingQuadrature< typename DiscreteSpaceType::GridPartType, 0 > QuadratureType;
+    Dune::DynamicVector< typename SpaceType::RangeType > values;
+    for( const auto &entity : space )
+    {
+      auto guard = bindGuard( localMatrix, entity, entity );
+      const auto &basis = localMatrix.domainBasisFunctionSet();
+      const unsigned int numBasisFunctions = basis.size();
+      values.resize( numBasisFunctions, 1. );
+      for( const auto qp : QuadratureType( entity, localMatrix.order() ) )
+        localMatrix.axpy( qp, values );
+    }
   }
+  // this should not be necessary since it should happen in the local
+  // contribution destructor
+  identityOperator.communicate();
 
   std::vector<unsigned int> rows( {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19} );
   identityOperator.setUnitRows( rows );
   auto rIt = rhs.dbegin();
-  for ( int r=0; r<rows.size(); ++r)
+  for ( unsigned int r=0; r<rows.size(); ++r)
   {
     *rIt = r;
     ++rIt;
   }
 
+  // identityOperator.finalize(); // finished setting up matrix
   identityOperator( rhs, solution );
 
   int r = 0;
-  for ( auto& s : dofs(solution) )
+  for ( auto s : dofs(solution) )
   {
     if ( find (rows.begin(), rows.end(), r) == rows.end() )
       s = 0;

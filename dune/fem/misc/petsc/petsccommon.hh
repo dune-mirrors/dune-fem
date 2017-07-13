@@ -253,6 +253,7 @@ namespace Dune
       { ErrorCheck( ::MatSetValues( mat, m, idxm, n, idxn, v, addv ) ); }
     inline void MatGetValues ( Mat mat, PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[] )
       { ErrorCheck( ::MatGetValues( mat, m, idxm, n, idxn, v ) ); }
+    inline void MatZeroRows ( Mat mat, PetscInt m, const PetscInt idxm[], const PetscScalar v ) { ErrorCheck( ::MatZeroRows( mat, m, idxm, v, 0, 0 ) ); }
     inline void MatView ( Mat mat, PetscViewer viewer ) { ErrorCheck( ::MatView( mat, viewer ) ); }
     inline void MatZeroEntries ( Mat mat ) { ErrorCheck( ::MatZeroEntries( mat ) ); }
     inline void PetscBarrier ( PetscObject obj ) { ErrorCheck( ::PetscBarrier( obj ) ); }

@@ -47,7 +47,7 @@ namespace Dune
      */
     template< typename DomainFunction, typename RangeFunction >
     class PetscLinearOperator
-    : public Fem::Operator< DomainFunction, RangeFunction >
+    : public Fem::AssembledOperator< DomainFunction, RangeFunction >
     {
       typedef PetscLinearOperator< DomainFunction, RangeFunction > ThisType;
     public:
@@ -281,6 +281,10 @@ namespace Dune
       template <class Vector>
       void setUnitRows( const Vector &rows )
       {
+        std::vector< PetscInt > r( rows.size() );
+        for( std::size_t i =0 ; i< rows.size(); ++i )
+          r[i] = rows[i];
+        ::Dune::Petsc::MatZeroRows( petscMatrix_, r.size(), r.data(), 1.);
       }
 
       //! interface method from LocalMatrixFactory
