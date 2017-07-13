@@ -228,16 +228,6 @@ namespace Dune
         }
       }
 
-      template <class Vector>
-      void setUnitRows( const Vector &rows )
-      {
-        for (auto r : rows)
-        {
-          clearRow(r);
-          set(r,r,1.);
-        }
-      }
-
       //! return max number of non zeros
       //! used in SparseRowMatrixObject::reserve
       size_type numNonZeros() const
@@ -530,7 +520,12 @@ namespace Dune
       template <class Vector>
       void setUnitRows( const Vector &rows )
       {
-        matrix_.setUnitRows( rows );
+        const auto &slaveDofs = domainSpace().slaveDofs();
+        for (auto r : rows)
+        {
+          matrix_.clearRow(r);
+          matrix_.set(r,r,slaveDofs.isSlave( r )? 0.0 : 1.0);
+        }
       }
 
       //! resort row numbering in matrix to have ascending numbering

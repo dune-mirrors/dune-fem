@@ -283,7 +283,10 @@ namespace Dune
       {
         std::vector< PetscInt > r( rows.size() );
         for( std::size_t i =0 ; i< rows.size(); ++i )
-          r[i] = rows[i];
+        {
+          const PetscInt block = rowDofMapping().globalMapping( rows[i]/rangeLocalBlockSize );
+          r[i] = block * rangeLocalBlockSize + rows[i]%rangeLocalBlockSize;
+        }
         ::Dune::Petsc::MatZeroRows( petscMatrix_, r.size(), r.data(), 1.);
       }
 
