@@ -2,6 +2,7 @@
 #define DUNE_FEM_FUNCTION_COMMON_LOCALCONTRIBUTION_HH
 
 #include <algorithm>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -10,6 +11,7 @@
 
 #include <dune/fem/common/hybrid.hh>
 #include <dune/fem/common/localcontribution.hh>
+#include <dune/fem/space/common/commoperations.hh>
 
 namespace Dune
 {
@@ -22,6 +24,8 @@ namespace Dune
 
     template< class >
     struct DiscreteFunctionTraits;
+
+    class IsDiscreteFunction;
 
 
 
