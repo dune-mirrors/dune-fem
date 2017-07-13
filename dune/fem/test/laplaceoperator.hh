@@ -51,9 +51,6 @@ template< class Function >
 void LaplaceOperator< DiscreteFunction, LinearOperator >
   ::assembleRHS( const Function &u, DiscreteFunctionType &w ) const
 {
-  // clear result
-  w.clear();
-
   Dune::Fem::ConstLocalFunction< Function > uLocal( u );
   Dune::Fem::AddLocalContribution< DiscreteFunctionType > wLocal( w );
 

@@ -133,10 +133,9 @@ struct Forcing
 
   void evaluate ( const DomainType &x, RangeType &value ) const
   {
-    value = M_PI*M_PI*FunctionSpace::dimDomain + 1.;
+    value = M_PI*M_PI*FunctionSpace::dimDomain;
     for( int k = 0; k < FunctionSpace::dimDomain; ++k )
       value *= cos( M_PI * x[k] );
-    value += x[0]*x[1];
   }
 };
 
@@ -178,13 +177,16 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step )
   DiscreteSpaceType space( gridPart );
   DiscreteFunctionType solution( "solution", space );
 
-  // get operator
+  // get operator (-laplace u + u)
   LaplaceOperatorType laplaceOperator( space );
 
   // assemble RHS
   DiscreteFunctionType rhs( "rhs", space );
+  rhs.clear();
+  // forcing from laplace part of problem
   laplaceOperator.assembleRHS( gridFunctionAdapter( forcing_, gridPart, space.order()+1 ), rhs );
-  laplaceOperator.communicate();
+  // we are solving a problem with mass so add that to rhs
+  laplaceOperator.assembleRHS( gridFunctionAdapter( function_, gridPart, space.order()+1 ), rhs );
 
   // next use exact solution as b.c. on the whole boundary
   Dune::Fem::ConstrainOnFullBoundary< DiscreteSpaceType > mask( space );
@@ -192,12 +194,14 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step )
       constrain( space, mask );
   constrain.set( gridFunctionAdapter( function_, gridPart, space.order() + 2 ) );
   constrain( rhs );
+  // petsc needs to be finalized before applying MatZeroRows
+  // laplaceOperator.finalize();
+  laplaceOperator.communicate();
   constrain.applyToOperator( laplaceOperator );
 
   // apply solver
   solution.clear();
   constrain( rhs, solution );
-  // laplaceOperator.finalize(); // to be called1
   InverseOperatorType inverseOperator ( laplaceOperator, 1e-10, 1e-10, 1000 );
   inverseOperator( rhs, solution );
 
@@ -205,27 +209,6 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step )
     Dune::Fem::VTKIO<GridPartType> vtkWriter(gridPart);
     vtkWriter.addVertexData(solution);
     vtkWriter.pwrite("laplace-"+std::to_string(step), Dune::Fem::Parameter::commonOutputPath().c_str(),".");
-#if 0 // test
-    std::cout << "************************" << std::endl;
-    auto it = solution.dbegin();
-    for ( auto d : dofs(rhs) )
-    {
-      std::cout << d << " " << *it << std::endl;
-      ++it;
-    }
-    std::cout << "*********" << std::endl;
-    for (int i=0;i<space.size();++i)
-    {
-      for (int j=0;j<space.size();++j)
-      {
-        double v = laplaceOperator.systemMatrix().matrix()(i,j);
-        if ( std::abs(v)>1e-10 )
-          std::cout << i << " , " << j << " = " << v << std::endl;
-      }
-      std::cout << std::endl;
-    }
-    std::cout << "************************" << std::endl;
-#endif
   }
 
   return finalize( solution );
