@@ -163,36 +163,6 @@ namespace Dune
               entry = 0;
         }
 
-        template <class Vector>
-        void setUnitRows( const Vector &rows )
-        {
-          const auto &slaveDofs = domainSpace().slaveDofs();
-
-          for (auto r : rows)
-          {
-            const std::size_t blockRow( r/(LittleBlockType :: rows) );
-            const std::size_t localRowIdx( r%(LittleBlockType :: rows) );
-            auto& row = this->operator[](blockRow);
-            const auto endcol = row.end();
-#ifndef NDEBUG
-            bool set = false;
-#endif
-            for (auto col=row.begin(); col!=endcol; ++col)
-            {
-              for (auto& entry : (*col)[localRowIdx])
-                entry = 0;
-              if (col.index() == blockRow)
-              {
-                (*col)[localRowIdx][localRowIdx] = slaveDofs.isSlave( r )? 0.0 : 1.0;
-#ifndef NDEBUG
-                set = true;
-#endif
-              }
-            }
-            assert(set);
-          }
-        }
-
         //! setup like the old matrix but remove rows with hanging nodes
         template <class HangingNodesType>
         void setup(ThisType& oldMatrix, const HangingNodesType& hangingNodes)
@@ -809,7 +779,7 @@ namespace Dune
         {
           const std::size_t blockRow( r/(LittleBlockType :: rows) );
           const std::size_t localRowIdx( r%(LittleBlockType :: rows) );
-          auto& row = this->operator[](blockRow);
+          auto& row = matrix()[blockRow];
           const auto endcol = row.end();
 #ifndef NDEBUG
           bool set = false;
