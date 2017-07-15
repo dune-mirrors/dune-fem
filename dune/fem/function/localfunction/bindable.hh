@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_FUNCTION_LOCALFUNCTION_BINDABLE_HH
 #define DUNE_FEM_FUNCTION_LOCALFUNCTION_BINDABLE_HH
 
+#include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/common/coordinate.hh>
 #include <dune/fem/quadrature/quadrature.hh> // shouldn't be here (but otherwise the coordinate method doesn't work)
 
@@ -9,7 +10,7 @@ namespace Dune
   namespace Fem
   {
     // might not want to include Range - but it is not really needed here...
-    // need to find a better place for this class
+    // but it is helpful to get the right types into the derived class
     template <class GridPart, class Range>
     struct BindableFunction : public HasLocalFunction
     {
