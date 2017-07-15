@@ -124,6 +124,10 @@ if( HAVE_EIGEN )
   set( TESTS ${TESTS} l2projection_eigen )
 endif()
 
+dune_add_test( NAME referencesolution SOURCES referencesolution
+COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_HIERARCHICLEGENDRESPACE;YASPGRID;GRIDDIM=${GRIDDIM}" )
+set( TESTS ${TESTS} referencesolution )
+
 #finally add all pkg flags and local libs to tests
 foreach( test ${TESTS} )
   target_link_dune_default_libraries( ${test} )
