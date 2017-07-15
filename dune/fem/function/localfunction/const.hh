@@ -279,7 +279,7 @@ namespace Dune
       };
 
       template< class GF >
-      struct ConstLocalFunction< GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, GF >::value && !std::is_base_of< Fem::IsDiscreteFunction, GF >::value && !std::is_base_of< Fem::BindableFunction<typename GF::GridPartType,typename GF::Range>, GF >::value > >
+      struct ConstLocalFunction< GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, GF >::value && !std::is_base_of< Fem::IsDiscreteFunction, GF >::value  && std::is_class< typename GF::LocalFunctionType >::value > >
       {
         struct Type
           : public GF::LocalFunctionType
