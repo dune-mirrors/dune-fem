@@ -278,6 +278,18 @@ namespace Dune
         ::Dune::Petsc::MatZeroEntries( petscMatrix_ );
       }
 
+      template <class Vector>
+      void setUnitRows( const Vector &rows )
+      {
+        std::vector< PetscInt > r( rows.size() );
+        for( std::size_t i =0 ; i< rows.size(); ++i )
+        {
+          const PetscInt block = rowDofMapping().globalMapping( rows[i]/rangeLocalBlockSize );
+          r[i] = block * rangeLocalBlockSize + rows[i]%rangeLocalBlockSize;
+        }
+        ::Dune::Petsc::MatZeroRows( petscMatrix_, r.size(), r.data(), 1.);
+      }
+
       //! interface method from LocalMatrixFactory
       ObjectType* newObject() const
       {

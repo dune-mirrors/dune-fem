@@ -517,6 +517,17 @@ namespace Dune
         }
       }
 
+      template <class Vector>
+      void setUnitRows( const Vector &rows )
+      {
+        const auto &slaveDofs = domainSpace().slaveDofs();
+        for (auto r : rows)
+        {
+          matrix_.clearRow(r);
+          matrix_.set(r,r,slaveDofs.isSlave( r )? 0.0 : 1.0);
+        }
+      }
+
       //! resort row numbering in matrix to have ascending numbering
       void resort()
       {

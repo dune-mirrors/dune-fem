@@ -130,6 +130,16 @@ namespace Dune
           { return (row != r); }); //  || r == c); });
       }
 
+      template <class Vector>
+      void setUnitRows( const Vector &rows )
+      {
+        for (auto r : rows)
+        {
+          clearRow(r);
+          set(r,r,1.);
+        }
+      }
+
       //! return max number of non zeros
       //! used in EigenMatrixObject::reserve
       size_type numNonZeros() const
