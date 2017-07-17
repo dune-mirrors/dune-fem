@@ -61,7 +61,11 @@ typedef Dune::GridSelector :: GridType GridType;
 
 typedef Dune::Fem::AdaptiveLeafGridPart< GridType, Dune::InteriorBorder_Partition > GridPartType;
 typedef Dune::Fem::FunctionSpace< typename GridType::ctype, typename GridType::ctype, GridType::dimensionworld, 1 > SpaceType;
+#if 0 // HAVE_DUNE_LOCALFUNCTIONS (to use this the problem with the ToDimRange construction needs to be fixed)
+typedef Dune::Fem::LagrangeSpace< SpaceType, GridPartType > DiscreteSpaceType;
+#else
 typedef Dune::Fem::LagrangeDiscreteFunctionSpace< SpaceType, GridPartType, polOrder > DiscreteSpaceType;
+#endif
 #if HAVE_PETSC && defined USE_PETSCDISCRETEFUNCTION
 typedef Dune::Fem::PetscDiscreteFunction< DiscreteSpaceType > DiscreteFunctionType;
 typedef Dune::Fem::PetscLinearOperator< DiscreteFunctionType, DiscreteFunctionType > LinearOperatorType;
@@ -150,7 +154,7 @@ struct Algorithm
   typedef Forcing< SpaceType > ForcingType;
 
   explicit Algorithm ( GridType &grid );
-  ErrorType operator() ( int step );
+  ErrorType operator() ( int step, unsigned int polynomialOrder  );
   ErrorType finalize ( DiscreteFunctionType &u );
   DiscreteSpaceType &space ();
   void nextMesh ();
@@ -171,10 +175,14 @@ inline void Algorithm :: nextMesh ()
   grid_.globalRefine( Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
 }
 
-inline Algorithm::ErrorType Algorithm::operator() ( int step )
+inline Algorithm::ErrorType Algorithm::operator() ( int step, unsigned int polynomialOrder )
 {
   GridPartType gridPart( grid_ );
+#if 0 // HAVE_DUNE_LOCALFUNCTIONS
+  DiscreteSpaceType space( gridPart, polynomialOrder );
+#else
   DiscreteSpaceType space( gridPart );
+#endif
   DiscreteFunctionType solution( "solution", space );
 
   // get operator (-laplace u + u)
@@ -254,13 +262,18 @@ try
 
   const int nrSteps = 4;
 
+#if 0 // HAVE_DUNE_LOCALFUNCTIONS
+  unsigned int polynomialOrder = Dune::Fem::Parameter::getValue< int >( "fem.lagrange.polynomialOrder");
+#else
+  unsigned int polynomialOrder = polOrder;
+#endif
   std::cout<< "testing with polorder "<< polOrder <<std::endl;
   Algorithm algorithm( grid );
   Algorithm::ErrorType *error;
   error = new  Algorithm::ErrorType[ nrSteps ];
   for( int step = 0; step<nrSteps; ++step )
   {
-    error[ step ] = algorithm( step );
+    error[ step ] = algorithm( step, polynomialOrder );
     algorithm.nextMesh();
   }
 
@@ -271,11 +284,11 @@ try
 
 //    std::cout<< "L2 Eoc: " << l2eoc << std::endl;
 //    std::cout<< "H1 Eoc: " << h1eoc << std::endl;
-    if( std::abs( l2eoc -1 - polOrder )  > 0.2 )
+    if( std::abs( l2eoc -1 - polynomialOrder )  > 0.2 )
     {
       DUNE_THROW(Dune::InvalidStateException,"EOC check of solving laplace matrix system failed");
     }
-    if( std::abs( h1eoc - polOrder )  > 0.2 )
+    if( std::abs( h1eoc - polynomialOrder )  > 0.2 )
     {
       //note: This will fail with Yaspgrid, bug in Geometry JacobianInverse
       DUNE_THROW(Dune::InvalidStateException,"EOC check of solving laplace matrix system failed");

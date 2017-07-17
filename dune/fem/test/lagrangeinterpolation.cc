@@ -90,7 +90,7 @@ int main(int argc, char ** argv)
 #if not DEFAULTPOLORDER && HAVE_DUNE_LOCALFUNCTIONS
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart );
 #else
-    const int polOrder = Dune::Fem::Parameter::getValue< int >( "fem.lagrange.polinomialOrder");
+    const int polOrder = Dune::Fem::Parameter::getValue< int >( "fem.lagrange.polynomialOrder");
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart, polOrder );
 #endif
     DiscreteFunctionType solution( "solution", discreteFunctionSpace );
