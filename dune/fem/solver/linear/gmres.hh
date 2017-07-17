@@ -109,7 +109,7 @@ namespace LinearSolver
 
     DiscreteFunction& v0 = v[ 0 ];
 
-    FieldType global_dot[ m+1 ] = { 0 };
+    std::vector< FieldType > global_dot( m+1, FieldType(0) );
 
     // relative or absolute tolerance
     double _tolerance = tolerance;
@@ -179,7 +179,7 @@ namespace LinearSolver
         //cblas_dgemv(CblasRowMajor, CblasNoTrans,
         //            j+1, dim, 1.0, v, dim, vjp, 1, 0.0, global_dot, 1);
                     //j+1, dim, 1.0, v, dim, vjp, 1, 0.0, local_dot, 1);
-        gemv(comm, j+1, v, vjp, global_dot);
+        gemv(comm, j+1, v, vjp, global_dot.data());
 
         for(int i=0; i<=j; i++) H(i,j) = global_dot[i];
 
