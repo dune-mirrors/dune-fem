@@ -54,6 +54,14 @@ namespace DuneODE
 
 
 
+  // explicit butcher tables
+  // -----------------------
+  SimpleButcherTable< double > explicitEulerButcherTable ();
+  SimpleButcherTable< double > tvd2ButcherTable ();
+  SimpleButcherTable< double > tvd3ButcherTable ();
+  SimpleButcherTable< double > rk4ButcherTable ();
+  SimpleButcherTable< double > expl6ButcherTable ();
+
   // implicit butcher tables
   // -----------------------
 

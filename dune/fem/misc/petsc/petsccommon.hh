@@ -266,7 +266,14 @@ namespace Dune
         ErrorCheck( ::PetscViewerDestroy( viewer ) );
       #endif
     }
-    inline void PetscViewerSetFormat ( PetscViewer viewer, PetscViewerFormat format ) { ErrorCheck( ::PetscViewerSetFormat( viewer, format ) ); }
+    inline void PetscViewerSetFormat ( PetscViewer viewer, PetscViewerFormat format )
+    {
+      #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 5
+        ErrorCheck( ::PetscViewerSetFormat( viewer, format ) );
+      #else
+        ErrorCheck( ::PetscViewerPushFormat( viewer, format ) );
+      #endif
+    }
     inline void VecAssemblyBegin ( Vec vec ) { ErrorCheck( ::VecAssemblyBegin( vec ) ); }
     inline void VecAssemblyEnd ( Vec vec ) { ErrorCheck( ::VecAssemblyEnd( vec ) ); }
     inline void VecAXPY ( Vec y, PetscScalar alpha, Vec x) { ErrorCheck( ::VecAXPY( y, alpha, x ) ); }

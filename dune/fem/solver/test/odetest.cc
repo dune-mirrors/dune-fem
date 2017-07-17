@@ -11,6 +11,8 @@
 
 // dune includes
 #include <dune/common/fvector.hh>
+#include <dune/common/parallel/collectivecommunication.hh>
+
 #include <dune/fem/solver/timeprovider.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh>
 
@@ -18,8 +20,8 @@
 
 #include <dune/fem/solver/rungekutta/timestepcontrol.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
+#include <dune/fem/solver/krylovinverseoperators.hh>
 #include <dune/fem/operator/dghelmholtz.hh>
-#include <dune/fem/solver/pardginverseoperators.hh>
 
 #include <dune/fem/solver/rungekutta/explicit.hh>
 #include <dune/fem/solver/rungekutta/implicit.hh>
@@ -37,8 +39,28 @@ template <int N>
 class myDest : public Dune::FieldVector<double, N> {
   typedef myDest< N > ThisType;
 private:
+  struct GridPartDummy
+  {
+    typedef Dune::CollectiveCommunication< Dune::No_Comm > CollectiveCommunicationType;
+
+    const CollectiveCommunicationType &comm () const { return comm_; }
+
+    CollectiveCommunicationType comm_;
+  };
+
   struct SpaceDummy {
+    typedef GridPartDummy GridPartType;
+    typedef std::array<int, 1 > SlaveDofsType;
+
+    SpaceDummy () : slaveDofs_() { slaveDofs_[ 0 ] = N; }
+
     int size () const { return N; }
+
+    const GridPartType &gridPart () const { return gridPart_; }
+    const SlaveDofsType &slaveDofs () const { return slaveDofs_; }
+
+    SlaveDofsType slaveDofs_;
+    GridPartType gridPart_;
   };
   typedef Dune::FieldVector<double, N> BaseType;
 
@@ -47,6 +69,9 @@ public:
   typedef double RangeFieldType;
   typedef SpaceDummy DiscreteFunctionSpaceType;
   const DiscreteFunctionSpaceType space_;
+
+  typedef typename BaseType::const_iterator ConstDofIteratorType;
+  typedef typename BaseType::iterator DofIteratorType;
 
   myDest(std::string, const DiscreteFunctionSpaceType& space, const double* u = 0)
    : space_( space )
@@ -87,6 +112,14 @@ public:
     return (*this)[i];
   }
 
+  myDest& dofVector() { return *this; }
+  const myDest& dofVector() const { return *this; }
+
+  ConstDofIteratorType dbegin () const { return static_cast< const BaseType & >( *this ).begin(); }
+  DofIteratorType dbegin () { return static_cast< BaseType & >( *this ).begin(); }
+  ConstDofIteratorType dend () const { return static_cast< const BaseType & >( *this ).end(); }
+  DofIteratorType dend () { return static_cast< BaseType & >( *this ).end(); }
+
   double* leakPointer() { return &this->operator[](0); }
   const double* leakPointer() const { return &this->operator[](0); }
 
@@ -114,7 +147,7 @@ public:
 
   typedef myRHS PreconditionOperatorType;
 
-  myRHS() {
+  myRHS() : t_(0.0) {
   }
 
   const SpaceType& space() const {
@@ -166,62 +199,60 @@ private:
 };
 
 
+#if 0
 namespace Dune
 {
   namespace Fem
   {
 
-    template <>
-    class ParDGOperator< myDest<systemSize>, myDest<systemSize> >
-    : public PARDG::Function
+    namespace LinearSolver
     {
-    public:
-      typedef myDest<systemSize> DomainFunctionType;
-      typedef DomainFunctionType RangeFunctionType;
-      typedef ParDGOperator< DomainFunctionType, RangeFunctionType> ThisType;
-
-    public:
-      typedef Operator< DomainFunctionType, RangeFunctionType > OperatorType;
-
-      typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainFunctionSpaceType;
-      typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeFunctionSpaceType;
-
-      ParDGOperator ( const OperatorType &op, const DomainFunctionSpaceType &domainSpace, const RangeFunctionSpaceType &rangeSpace )
-      : operator_( op ),
-        domainSpace_( domainSpace ),
-        rangeSpace_( rangeSpace )
-      {}
-
-      void operator() ( const double *u, double *w, int i = 0 )
+      template <>
+      class OperatorAdapter< myDest<systemSize>, myDest<systemSize> >
+      : public LinearSolver::FunctionIF<double>
       {
-        DomainFunctionType uFunction( "ParDGOperator u", domainSpace_, u );
-        RangeFunctionType  wFunction( "ParDGOperator w", rangeSpace_, w );
-        operator_( uFunction, wFunction );
-        // copy result back
-        for( int i=0; i<dim_of_value(); ++ i )
-          w[ i ] = wFunction[ i ];
-      }
+      public:
+        typedef myDest<systemSize> DomainFunctionType;
+        typedef DomainFunctionType RangeFunctionType;
+        typedef OperatorAdapter< DomainFunctionType, RangeFunctionType> ThisType;
 
-      int dim_of_argument( int i = 0 ) const
-      {
-        assert( i == 0 );
-        return domainSpace_.size();
-      }
+      public:
+        typedef Operator< DomainFunctionType, RangeFunctionType > OperatorType;
 
-      int dim_of_value ( int i = 0 ) const
-      {
-        assert( i == 0 );
-        return rangeSpace_.size();
-      }
+        typedef typename DomainFunctionType::DiscreteFunctionSpaceType DomainFunctionSpaceType;
+        typedef typename RangeFunctionType::DiscreteFunctionSpaceType RangeFunctionSpaceType;
 
-    private:
-      const OperatorType &operator_;
-      const DomainFunctionSpaceType &domainSpace_;
-      const RangeFunctionSpaceType &rangeSpace_;
-    };
+        OperatorAdapter ( const OperatorType &op, const DomainFunctionSpaceType &domainSpace, const RangeFunctionSpaceType &rangeSpace )
+        : operator_( op ),
+          domainSpace_( domainSpace ),
+          rangeSpace_( rangeSpace )
+        {}
 
+        void operator() ( const double *u, double *w)
+        {
+          DomainFunctionType uFunction( "OperatorAdapter::u", domainSpace_, u );
+          RangeFunctionType  wFunction( "OperatorAdapter::w", rangeSpace_, w );
+          operator_( uFunction, wFunction );
+          // copy result back
+          const int dim = size();
+          for( int i=0; i<dim; ++ i )
+            w[ i ] = wFunction[ i ];
+        }
+
+        int size() const
+        {
+          return domainSpace_.size();
+        }
+
+      private:
+        const OperatorType &operator_;
+        const DomainFunctionSpaceType &domainSpace_;
+        const RangeFunctionSpaceType &rangeSpace_;
+      };
+    }
   }
 }
+#endif
 
 template <class OdeFactory>
 void solve(OdeFactory factory, const bool verbose)
@@ -235,7 +266,7 @@ void solve(OdeFactory factory, const bool verbose)
   const double endTime = 2.0;
 
   // options
-  const double stepSize = spaceOperator.timeStepEstimate()/2.;
+  const double stepSize = Dune::Fem::Parameter::getValue("fixedTimeStep", double(spaceOperator.timeStepEstimate()/2.)) ;
   std::cout << "dt = " << stepSize << std::endl;
   const double cfl = 1.;
   const int order = Dune::Fem::Parameter::getValue("fem.ode.order", int(2));
@@ -300,13 +331,13 @@ struct ImplicitRKFactory
   typedef SpaceOperator  SpaceOperatorType;
   typedef typename SpaceOperatorType::DestinationType DestinationType;
 
-  typedef Dune::Fem::ParDGGeneralizedMinResInverseOperator< DestinationType >  LinearInverseOperatorType;
-  typedef DuneODE::ImplicitRungeKuttaTimeStepControl                           TimeStepControlType;
+  typedef Dune::Fem::KrylovInverseOperator< DestinationType >               LinearInverseOperatorType;
+  typedef DuneODE::ImplicitRungeKuttaTimeStepControl                        TimeStepControlType;
 
-  typedef Dune::Fem::DGHelmholtzOperator< SpaceOperatorType >                  HelmholtzOperatorType;
+  typedef Dune::Fem::DGHelmholtzOperator< SpaceOperatorType >               HelmholtzOperatorType;
 
   typedef Dune::Fem::NewtonInverseOperator< typename HelmholtzOperatorType::JacobianOperatorType,
-                                            LinearInverseOperatorType >        NonlinearInverseOperatorType;
+                                            LinearInverseOperatorType >     NonlinearInverseOperatorType;
 
   // either ImplicitRungeKuttaSolver or ROWRungeKuttaSolver
   typedef Solver< HelmholtzOperatorType, NonlinearInverseOperatorType, TimeStepControlType >   OdeSolverType;
@@ -366,7 +397,6 @@ int main( int argc, char **argv )
     std::cout << "Dune-fem row rungekutta" << std::endl;
     solve( ImplicitRKFactory< SpaceOperatorType, DuneODE::ROWRungeKuttaSolver > (), verbose );
   }
-
 
   return 0;
 }

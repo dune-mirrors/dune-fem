@@ -138,7 +138,8 @@ namespace Dune
     {
       GeometryType gt( Topology::id, Topology::dimension );
       const auto &refElement = Dune::ReferenceElements< ct, Topology::dimension >::general( gt );
-      for( unsigned int i = 0; i < refElement.size( Topology::dimension ); ++i )
+      const unsigned int size = refElement.size( Topology::dimension );
+      for( unsigned int i = 0; i < size; ++i )
         addIntegrationPoint( refElement.position( i, Topology::dimension ) );
     }
 
