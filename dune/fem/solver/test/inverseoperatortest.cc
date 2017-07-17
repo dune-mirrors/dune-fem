@@ -208,7 +208,7 @@ int main(int argc, char** argv)
     using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
     using InverseOperator   = Dune::Fem::KrylovInverseOperator< DiscreteFunction >;
 
-    std::string designation(" === ParDGGeneralizedMinResInverseOperator + SparseRowLinearOperator === ");
+    std::string designation(" === KrylovInverseOperator + SparseRowLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 
