@@ -17,16 +17,15 @@
 #include <dune/fem/test/testgrid.hh>
 #include <dune/fem/test/exactsolution.hh>
 
-template< class GF, class GP >
-struct ToGridPart : public Dune::Fem::BindableFunction< GP, typename GF::RangeType >
+template< class GP, class GF >
+struct ToGridPart : public Dune::Fem::BindableGridFunction< GP, typename GF::RangeType >
 {
-  typedef typename GF::RangeType Range;
-  typedef Dune::Fem::BindableFunction< GP, Range > Base;
+  typedef Dune::Fem::BindableGridFunction< GP, typename GF::RangeType > Base;
   typedef typename GF::GridPartType OtherGridPartType;
   typedef typename Base::EntityType EntityType;
 
-  ToGridPart ( const GF &gf )
-    : lgf_(gf), gridPart_(gf.gridPart())
+  ToGridPart ( const GP &gridPart, const GF &gf )
+    : Base(gridPart), lgf_(gf), gridPart_(gf.gridPart())
   {}
 
   template< class Point >
@@ -34,7 +33,7 @@ struct ToGridPart : public Dune::Fem::BindableFunction< GP, typename GF::RangeTy
   {
     auto x = Dune::Fem::coordinate(p);
     EntityType coarse = fine_;
-    while ( !gridPart_.contains(coarse) )
+    while ( !gridPart_.indexSet().contains(coarse) )
     {
       x = coarse.geometryInFather().global(x);
       coarse = coarse.father();
@@ -46,7 +45,7 @@ struct ToGridPart : public Dune::Fem::BindableFunction< GP, typename GF::RangeTy
   {
     auto x = Dune::Fem::coordinate(p);
     EntityType coarse = fine_;
-    while ( !gridPart_.contains(coarse) )
+    while ( !gridPart_.indexSet().contains(coarse) )
     {
       x = coarse.geometryInFather().global(x);
       coarse = coarse.father();
@@ -57,7 +56,7 @@ struct ToGridPart : public Dune::Fem::BindableFunction< GP, typename GF::RangeTy
   {
     EntityType coarse = entity;
     fine_ = entity;
-    while ( !gridPart_.contains(coarse) ) // missing
+    while ( !gridPart_.indexSet().contains(coarse) ) // missing
       coarse = coarse.father();
     lgf_.bind( coarse );
   }
@@ -110,11 +109,11 @@ try
     LevelFunctionType approximation( "approximation", levelSpace );
     interpolate( gridFunctionAdapter( Dune::Fem::ExactSolution<FunctionSpaceType>(), levelGridPart, levelSpace.order() + 2 ), approximation );
 
-    typedef ToGridPart< LevelFunctionType, GridPartType > ToReference;
+    typedef ToGridPart< GridPartType, LevelFunctionType > ToReference;
     Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
     Dune::Fem::H1Norm< GridPartType > h1norm( gridPart );
-    error.push_back( { l2norm.distance( ToReference(approximation), reference ),
-                       h1norm.distance( reference, ToReference(approximation) ) } );
+    error.push_back( { l2norm.distance( ToReference(gridPart, approximation), reference ),
+                       h1norm.distance( reference, ToReference(gridPart, approximation) ) } );
   }
   for( int step = 1; step < error.size()-1; ++step )
   {
