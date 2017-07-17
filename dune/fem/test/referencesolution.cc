@@ -25,15 +25,15 @@ struct ToGridPart : public Dune::Fem::BindableGridFunction< GP, typename GF::Ran
   typedef typename Base::EntityType EntityType;
 
   ToGridPart ( const GP &gridPart, const GF &gf )
-    : Base(gridPart), lgf_(gf), gridPart_(gf.gridPart())
+    : Base(gridPart), lgf_(gf), otherGridPart_(gf.gridPart())
   {}
 
   template< class Point >
   void evaluate ( const Point &p, typename Base::RangeType &val ) const
   {
     auto x = Dune::Fem::coordinate(p);
-    EntityType coarse = fine_;
-    while ( !gridPart_.indexSet().contains(coarse) )
+    EntityType coarse = Base::entity();
+    while ( !otherGridPart_.indexSet().contains(coarse) )
     {
       x = coarse.geometryInFather().global(x);
       coarse = coarse.father();
@@ -44,8 +44,8 @@ struct ToGridPart : public Dune::Fem::BindableGridFunction< GP, typename GF::Ran
   void evaluate ( const Point &p, typename Base::JacobianRangeType &val ) const
   {
     auto x = Dune::Fem::coordinate(p);
-    EntityType coarse = fine_;
-    while ( !gridPart_.indexSet().contains(coarse) )
+    EntityType coarse = Base::entity();
+    while ( !otherGridPart_.indexSet().contains(coarse) )
     {
       x = coarse.geometryInFather().global(x);
       coarse = coarse.father();
@@ -54,19 +54,20 @@ struct ToGridPart : public Dune::Fem::BindableGridFunction< GP, typename GF::Ran
   }
   void bind ( const EntityType &entity )
   {
-    EntityType coarse = entity;
-    fine_ = entity;
-    while ( !gridPart_.indexSet().contains(coarse) ) // missing
-      coarse = coarse.father();
-    lgf_.bind( coarse );
+    Base::bind(entity);
+    coarse_ = entity;
+    while ( !otherGridPart_.indexSet().contains(coarse_) ) // missing on gridPart?
+      coarse_ = coarse_.father();
+    // improve: also compute combined goemetryInFathers between entity and coarse
+    lgf_.bind( coarse_ );
   }
-  void unbind() { lgf_.unbind(); }
+  void unbind() { Base::unbind(); lgf_.unbind(); }
   unsigned int order() const { return lgf_.order(); }
 
 private:
+  mutable EntityType coarse_;
   Dune::Fem::ConstLocalFunction< GF > lgf_;
-  const OtherGridPartType &gridPart_;
-  EntityType fine_;
+  const OtherGridPartType &otherGridPart_;
 };
 
 int main ( int argc, char ** argv )
@@ -88,7 +89,7 @@ try
   typedef Dune::Fem::FunctionSpace< GridType::ctype, GridType::ctype, GridType::dimensionworld, 1 > FunctionSpaceType;
 #if HAVE_DUNE_LOCALFUNCTIONS
   typedef Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType > DiscreteFunctionSpaceType;
-  const int polOrder = Dune::Fem::Parameter::getValue< int >( "fem.lagrange.polinomialOrder");
+  const int polOrder = Dune::Fem::Parameter::getValue< int >( "fem.lagrange.polynomialOrder");
   DiscreteFunctionSpaceType space( gridPart, polOrder );
 #else
   typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 2 > DiscreteFunctionSpaceType;

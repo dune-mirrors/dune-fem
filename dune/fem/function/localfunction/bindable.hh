@@ -32,6 +32,7 @@ namespace Dune
         return entity_.geometry().global( Dune::Fem::coordinate(x) );
       }
       const GridPart& gridPart() const { return gridPart_; }
+      const EntityType &entity() const { return entity_; }
       private:
       EntityType entity_;
       const GridPart &gridPart_;
