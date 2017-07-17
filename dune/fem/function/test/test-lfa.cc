@@ -20,10 +20,11 @@ typedef Dune:: GridSelector::GridType HGridType;
 typedef Dune::Fem::AdaptiveLeafGridPart< HGridType > GridPartType;
 
 template <class GridPart>
-struct A : public Dune::Fem::BindableFunction< GridPart, Dune::Dim<1> >
+struct A : public Dune::Fem::BindableGridFunction< GridPart, Dune::Dim<1> >
 {
-  typedef Dune::Dim<1> Range;
-  typedef Dune::Fem::BindableFunction<GridPart, Range > Base;
+  typedef Dune::Fem::BindableGridFunction<GridPart, Dune::Dim<1> > Base;
+  using Base::Base;
+
   template <class Point>
   void evaluate(const Point &x, typename Base::RangeType &ret) const
   {
@@ -34,10 +35,11 @@ struct A : public Dune::Fem::BindableFunction< GridPart, Dune::Dim<1> >
   std::string name() const { return "A"; } // needed for output
 };
 template <class GridPart>
-struct B : public Dune::Fem::BindableFunction< GridPart, Dune::Dim<1> >
+struct B : public Dune::Fem::BindableGridFunction< GridPart, Dune::Dim<1> >
 {
-  typedef Dune::Dim<1> Range;
-  typedef Dune::Fem::BindableFunction<GridPart, Range > Base;
+  typedef Dune::Fem::BindableGridFunction<GridPart, Dune::Dim<1> > Base;
+  using Base::Base;
+
   template <class Point>
   void evaluate(const Point &x, typename Base::RangeType &ret) const
   {
@@ -53,14 +55,13 @@ struct B : public Dune::Fem::BindableFunction< GridPart, Dune::Dim<1> >
   unsigned int order() const { return 2; }
 };
 template <class GFA, class GFB>
-struct Difference : public Dune::Fem::BindableFunction< typename GFA::GridPartType, typename GFA::RangeType >
+struct Difference : public Dune::Fem::BindableGridFunction< typename GFA::GridPartType, typename GFA::RangeType >
 {
-  typedef typename GFA::RangeType Range;
-  typedef Dune::Fem::BindableFunction<GridPartType, Range> Base;
+  typedef Dune::Fem::BindableGridFunction<GridPartType, typename GFA::RangeType> Base;
   using EntityType = typename Base::EntityType;
 
   Difference(const GFA &gfa, const GFB &gfb)
-    : lgfa_(gfa), lgfb_(gfb) {}
+    : Base(gfa.gridPart()), lgfa_(gfa), lgfb_(gfb) {}
   void bind(const EntityType &entity)
   {
     Base::bind(entity);
@@ -84,15 +85,13 @@ struct Difference : public Dune::Fem::BindableFunction< typename GFA::GridPartTy
   Dune::Fem::ConstLocalFunction<GFB> lgfb_;
 };
 template <class GF, int component>
-struct Jacobian : public Dune::Fem::BindableFunction< typename GF::GridPartType, typename GF::DomainType >
+struct Jacobian : public Dune::Fem::BindableGridFunction< typename GF::GridPartType, typename GF::DomainType >
 {
-  typedef typename GF::GridPartType GridPartType;
-  typedef typename GF::DomainType Range;
-  typedef Dune::Fem::BindableFunction<GridPartType, Range> Base;
+  typedef Dune::Fem::BindableGridFunction<typename GF::GridPartType, typename GF::DomainType> Base;
   using EntityType = typename Base::EntityType;
 
   Jacobian(const GF &gf)
-    : lgf_(gf) {}
+    : Base(gf.gridPart()), lgf_(gf) {}
   void bind(const EntityType &entity)
   {
     Base::bind(entity);
@@ -125,18 +124,18 @@ int main(int argc, char ** argv)
     Dune::Fem::L2Norm< GridPartType > l2norm( gridPart, 2 );
     Dune::Fem::H1Norm< GridPartType > h1norm( gridPart, 2 );
 
-    double error1 = l2norm.distance( A<GridPartType>(), B<GridPartType>() );
+    double error1 = l2norm.distance( A<GridPartType>(gridPart), B<GridPartType>(gridPart) );
     double error2 = l2norm.norm( Difference< A<GridPartType>,B<GridPartType> >
-         ( A<GridPartType>(), B<GridPartType>() ) );
+         ( A<GridPartType>(gridPart), B<GridPartType>(gridPart) ) );
 
     if( std::abs( error1 - error2 )  > 1e-8 )
       DUNE_THROW(Dune::InvalidStateException,"functon adapter check failed!");
 
-    double other = l2norm.norm( Jacobian<B<GridPartType>,0>(B<GridPartType>()) );
-    double jac   = h1norm.norm( B<GridPartType>() );
+    double other = l2norm.norm( Jacobian<B<GridPartType>,0>(B<GridPartType>(gridPart)) );
+    double jac   = h1norm.norm( B<GridPartType>(gridPart) );
     std::cout << error1 << " " << error2 << " " << other << " " << jac << std::endl;
 
-    A<GridPartType> a;
+    A<GridPartType> a(gridPart);
     Dune::Fem::VTKIO<GridPartType> vtkWriter(gridPart);
     vtkWriter.addVertexData(a);
     vtkWriter.pwrite("test_lfa", Dune::Fem::Parameter::commonOutputPath().c_str(),".");

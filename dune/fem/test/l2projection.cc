@@ -95,10 +95,10 @@ typedef MassOperator< DiscreteFunctionType, LinearOperatorType > MassOperatorTyp
 // Function to Project
 // -------------------
 template <class GridPart, class RangeType>
-struct Function : public Dune::Fem::BindableFunction< GridPart, RangeType >
+struct Function : public Dune::Fem::BindableGridFunction< GridPart, RangeType >
 {
-  typedef RangeType Range;
-  typedef Dune::Fem::BindableFunction<GridPart, Range > Base;
+  typedef Dune::Fem::BindableGridFunction<GridPart, RangeType > Base;
+  using Base::Base;
 
   template <class Point>
   void evaluate ( const Point &p, RangeType &value ) const
@@ -139,24 +139,23 @@ struct Algorithm
   void nextMesh ();
 
 private:
-  GridType &grid_;
+  GridPartType gridPart_;
   FunctionType function_;
 };
 
 inline Algorithm::Algorithm ( GridType &grid )
-: grid_( grid )
+: gridPart_( grid ), function_(gridPart_)
 {
 }
 
 inline void Algorithm :: nextMesh ()
 {
-  grid_.globalRefine( Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
+  Dune::Fem::GlobalRefine::apply(gridPart_.grid(), Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
 }
 
 inline Algorithm::ErrorType Algorithm::operator() ( int step )
 {
-  GridPartType gridPart( grid_ );
-  DiscreteSpaceType space( gridPart );
+  DiscreteSpaceType space( gridPart_ );
   DiscreteFunctionType solution( "solution", space );
 
   // get operator

@@ -9,10 +9,10 @@ namespace Dune
 {
   namespace Fem
   {
-    // might not want to include Range - but it is not really needed here...
-    // but it is helpful to get the right types into the derived class
+    struct BindableFunction : public HasLocalFunction {};
+
     template <class GridPart, class Range>
-    struct BindableFunction : public HasLocalFunction
+    struct BindableGridFunction : public BindableFunction
     {
       typedef GridPart GridPartType;
       typedef typename GridPart::template Codim<0>::EntityType EntityType;
@@ -22,6 +22,8 @@ namespace Dune
       typedef typename FunctionSpaceType::RangeType RangeType;
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+      BindableGridFunction(const GridPart &gridPart)
+      : gridPart_(gridPart) {}
       void bind(const EntityType &entity) { entity_ = entity; }
       void unbind() {}
       template <class Point>
@@ -29,8 +31,10 @@ namespace Dune
       {
         return entity_.geometry().global( Dune::Fem::coordinate(x) );
       }
+      const GridPart& gridPart() const { return gridPart_; }
       private:
       EntityType entity_;
+      const GridPart &gridPart_;
     };
 
   } // namespace Fem
