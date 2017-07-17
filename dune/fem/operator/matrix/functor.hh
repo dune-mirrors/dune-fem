@@ -13,25 +13,25 @@ namespace Dune
     // IndexFunctor
     // ------------
 
-    template< class Functor, class Index >
+    template< class Functor, class LocalIndex, class GlobalIndex >
     struct IndexFunctor
     {
-      constexpr IndexFunctor ( Functor functor, int localIndex, Index globalIndex )
+      constexpr IndexFunctor ( Functor functor, const LocalIndex &localIndex, const GlobalIndex &globalIndex )
         : functor_( functor ),
           localIndex_( localIndex ),
           globalIndex_( globalIndex )
       {}
 
-      template< class GlobalKey >
-      void operator() ( const int localKey, const GlobalKey &globalKey )
+      template< class LocalKey, class GlobalKey >
+      void operator() ( const LocalKey localKey, const GlobalKey &globalKey )
       {
         functor_( std::make_pair( localIndex_, localKey ), std::make_pair( globalIndex_, globalKey ) );
       }
 
     private:
       Functor functor_;
-      int localIndex_;
-      Index globalIndex_;
+      LocalIndex localIndex_;
+      GlobalIndex globalIndex_;
     };
 
 
@@ -45,10 +45,10 @@ namespace Dune
         : mapper_( mapper ), entity_( entity ), functor_( std::move( functor ) )
       {}
 
-      template< class GlobalKey >
-      void operator() ( const int localKey, const GlobalKey &globalKey )
+      template< class LocalKey, class GlobalKey >
+      void operator() ( const LocalKey &localKey, const GlobalKey &globalKey )
       {
-        mapper_.mapEach( entity_, IndexFunctor< Functor, GlobalKey >( functor_, localKey, globalKey ) );
+        mapper_.mapEach( entity_, IndexFunctor< Functor, LocalKey, GlobalKey >( functor_, localKey, globalKey ) );
       }
 
     private:

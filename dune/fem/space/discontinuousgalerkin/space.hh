@@ -7,6 +7,7 @@
 
 #include <dune/grid/common/gridenums.hh>
 
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/common/capabilities.hh>
 #include <dune/fem/space/common/commoperations.hh>
@@ -35,8 +36,8 @@ namespace Dune
     {
       typedef DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
 
-      typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;
+      typedef GridFunctionSpace< GridPartType, FunctionSpace > FunctionSpaceType;
 
       static const int codimension = 0;
 
@@ -52,8 +53,8 @@ namespace Dune
       typedef typename BasisFunctionSetsType::BasisFunctionSetType BasisFunctionSetType;
 
       typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
-      static const int localBlockSize
-        = FunctionSpaceType::dimRange*OrthonormalShapeFunctionSetSize< ScalarShapeFunctionSpaceType, polOrder >::v;
+
+      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange * OrthonormalShapeFunctionSetSize< ScalarShapeFunctionSpaceType, polOrder >::v > LocalBlockIndices;
 
       template <class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
       struct CommDataHandle

@@ -4,6 +4,8 @@
 #include <dune/fem/storage/dynamicarray.hh>
 #include <dune/fem/storage/envelope.hh>
 
+#include <dune/fem/common/hybrid.hh>
+
 #if HAVE_PETSC
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
@@ -125,7 +127,9 @@ namespace Dune
       typedef PetscScalar  value_type ;
       typedef Vec  DofContainerType;
 
-      static const int blockSize = DFSpace :: localBlockSize;
+      static constexpr int blockSize = DFSpace::localBlockSize;
+      typedef Hybrid::IndexRange< int, blockSize > BlockIndices;
+
       typedef typename PetscSlaveDofsType :: PetscDofMappingType  PetscDofMappingType;
 
       typedef PetscDofBlock< ThisType >                       DofBlockType;

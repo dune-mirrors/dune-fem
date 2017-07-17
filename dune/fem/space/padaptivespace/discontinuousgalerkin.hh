@@ -1,6 +1,7 @@
 #ifndef DUNE_FEM_SPACE_PADAPTIVE_DISCONTINUOUSGALERKIN_HH
 #define DUNE_FEM_SPACE_PADAPTIVE_DISCONTINUOUSGALERKIN_HH
 
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/operator/projection/dgl2projection.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
@@ -45,10 +46,9 @@ namespace Dune
       typedef PAdaptiveDGSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
 
       static const bool continuousSpace = false ;
-      static const int localBlockSize = FunctionSpace::dimRange;
+      typedef Hybrid::IndexRange< int, FunctionSpace::dimRange > LocalBlockIndices;
 
       typedef PAdaptiveDGMapper< GridPart, polOrder > BlockMapperType;
-      typedef NonBlockMapper< BlockMapperType, localBlockSize > MapperType;
 
       template< class DiscreteFunction,
                 class Operation = DFCommunicationOperation :: Copy >

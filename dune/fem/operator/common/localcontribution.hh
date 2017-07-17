@@ -83,6 +83,8 @@ namespace Dune
 
           explicit LocalMatrixGetter ( const LocalMatrix &localMatrix ) : localMatrix_( localMatrix ) {}
 
+          decltype( auto ) operator[] ( int row ) const { return localMatrix_[ row ]; }
+
           value_type get ( int row, int col ) const { return localMatrix_[ row ][ col ]; }
 
         private:
@@ -132,7 +134,7 @@ namespace Dune
         template< class DomainEntity, class RangeEntity, class LocalMatrix >
         void end ( const DomainEntity &domainEntity, const RangeEntity &rangeEntity, LocalMatrix &localMatrix, AssembledOperator &op ) const
         {
-          op.addScaledLocalMatrix( domainEntity, rangeEntity, factor_, Impl::LocalMatrixGetter< LocalMatrix >( localMatrix ) );
+          op.addScaledLocalMatrix( domainEntity, rangeEntity, Impl::LocalMatrixGetter< LocalMatrix >( localMatrix ), factor_ );
         }
 
       private:
@@ -253,11 +255,11 @@ namespace Dune
       };
 
     public:
-      explicit LocalContribution ( AssembledOperator &assembledOperator, AssemblyOperationType assemblyOperation = {} )
+      template< class... Args >
+      explicit LocalContribution ( AssembledOperator &assembledOperator, Args &&... args )
         : assembledOperator_( assembledOperator ),
-          localMatrixEntries_( AssembledOperator::DomainFunctionType::DiscreteFunctionSpaceType::localBlockSize * assembledOperator.domainSpace().blockMapper().maxNumDofs()
-                               * AssembledOperator::RangeFunctionType::DiscreteFunctionSpaceType::localBlockSize * assembledOperator.rangeSpace().blockMapper().maxNumDofs() ),
-          assemblyOperation_( std::move( assemblyOperation ) )
+          localMatrixEntries_( assembledOperator.domainSpace().maxNumDofs() * assembledOperator.rangeSpace().maxNumDofs() ),
+          assemblyOperation_( std::forward< Args >( args )... )
       {
         //assembledOperator.template beginAssemble< typename AssemblyOperationType::GlobalOperationType >();
       }

@@ -20,16 +20,18 @@ namespace Dune
 
     template< class Field, int dim >
     inline DofMapperCode
-    generateCodimensionCode ( const Dune::ReferenceElement< Field, dim > &refElement, int codim )
+    generateCodimensionCode ( const Dune::ReferenceElement< Field, dim > &refElement, int codim, unsigned int blockSize = 1 )
     {
       unsigned int count = refElement.size( codim );
-      DofMapperCodeWriter code( count, count );
+      DofMapperCodeWriter code( count, count*blockSize );
+      unsigned int pos = 0;
       for( unsigned int i = 0; i < count; ++i )
       {
-        code[ 4*i+0 ] = GlobalGeometryTypeIndex::index( refElement.type( i, codim ) );
-        code[ 4*i+1 ] = i;
-        code[ 4*i+2 ] = 1;
-        code[ 4*i+3 ] = i;
+        code[ pos++ ] = GlobalGeometryTypeIndex::index( refElement.type( i, codim ) );
+        code[ pos++ ] = i;
+        code[ pos++ ] = blockSize;
+        for( unsigned int j = 0; j < blockSize; ++j )
+          code[ pos++ ] = i*blockSize + j;
       }
       return code;
     }

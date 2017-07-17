@@ -20,6 +20,7 @@
 #include <dune/istl/scalarproducts.hh>
 #endif
 
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/storage/singletonlist.hh>
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/common/slavedofs.hh>
@@ -87,8 +88,6 @@ namespace Dune
       //! type of used mapper
       typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
 
-      enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
-
       // type of communication manager object which does communication
       typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType > SlaveDofsType;
 
@@ -124,6 +123,8 @@ namespace Dune
       template < class DofVector, class OtherDofVector >
       RangeFieldType dotProduct ( const DofVector &x, const OtherDofVector &y ) const
       {
+        typedef typename DiscreteFunctionSpaceType::LocalBlockIndices LocalBlockIndices;
+
         auto &slaveDofs = space().slaveDofs();
 
         RangeFieldType scp = 0;
@@ -133,8 +134,7 @@ namespace Dune
         {
           const int nextSlave = slaveDofs[ slave ];
           for(; i < nextSlave; ++i )
-            for( unsigned int j = 0; j < blockSize; ++j )
-              scp += x[ i ][ j ] * y[ i ][ j ];
+            Hybrid::forEach( LocalBlockIndices(), [ &x, &y, &scp, i ] ( auto &&j ) { scp += x[ i ][ j ] * y[ i ][ j ]; } );
 
           // skip the slave dof
           ++i;

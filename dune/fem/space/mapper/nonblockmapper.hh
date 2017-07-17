@@ -52,15 +52,12 @@ namespace Dune
         template< class, template< class > class >
         friend class DofMapper;
 
-
       public:
         typedef typename BaseType::Traits Traits;
-      protected:
 
         typedef typename Traits::BlockMapperType BlockMapperType;
         static const int blockSize = Traits::blockSize;
 
-      public:
         typedef typename Traits::ElementType ElementType;
         typedef typename Traits::SizeType SizeType;
         typedef typename Traits::GlobalKeyType GlobalKeyType;
@@ -88,7 +85,6 @@ namespace Dune
         };
 
       public:
-
         DofMapper ( BlockMapperType &blockMapper )
           : blockMapper_( blockMapper )
         {}
@@ -150,7 +146,6 @@ namespace Dune
           DUNE_THROW( NotImplemented, "Method offSet() called on non-adaptive block mapper" );
         }
 
-      protected:
         const BlockMapperType &blockMapper () const { return blockMapper_; }
 
       private:
@@ -172,14 +167,13 @@ namespace Dune
 
       public:
         typedef typename BaseType::Traits Traits;
-      protected:
 
         typedef typename Traits::BlockMapperType BlockMapperType;
+
         static const int blockSize = Traits::blockSize;
 
         using BaseType::blockMapper;
 
-      public:
         typedef typename Traits::ElementType ElementType;
         typedef typename Traits::SizeType SizeType;
         typedef typename Traits::GlobalKeyType GlobalKeyType;
@@ -212,6 +206,7 @@ namespace Dune
 
         SizeType offSet ( const int block ) const { return blockMapper().offSet( block ) * blockSize; }
       };
+
 
 
       // Implementation

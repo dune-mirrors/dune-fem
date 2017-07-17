@@ -2,13 +2,16 @@
 #define DUNE_FEM_FUNCTION_COMMON_LOCALCONTRIBUTION_HH
 
 #include <algorithm>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 #include <dune/common/densevector.hh>
 #include <dune/common/ftraits.hh>
 
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/common/localcontribution.hh>
+#include <dune/fem/space/common/commoperations.hh>
 
 namespace Dune
 {
@@ -21,6 +24,8 @@ namespace Dune
 
     template< class >
     struct DiscreteFunctionTraits;
+
+    class IsDiscreteFunction;
 
 
 
@@ -40,13 +45,12 @@ namespace Dune
 
           static void begin ( DiscreteFunction &df )
           {
+            typedef typename DiscreteFunction::DiscreteFunctionSpaceType::LocalBlockIndices LocalBlockIndices;
+
             // clear slave DoFs
             auto &dofVector = df.dofVector();
             for( const auto &slaveDof : df.space().slaveDofs() )
-            {
-              for( unsigned int j = 0; j < DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize; ++j )
-                dofVector[ slaveDof ][ j ] = DofType( 0 );
-            }
+              Hybrid::forEach( LocalBlockIndices(), [ &dofVector, &slaveDof ] ( auto &&j ) { dofVector[ slaveDof ][ j ] = DofType( 0 ); } );
           }
 
           static void end ( DiscreteFunction &df ) { df.space().communicate( df, DFCommunicationOperation::Add() ); }
@@ -197,10 +201,11 @@ namespace Dune
 
       typedef typename BasisFunctionSetType::EntityType EntityType;
 
-      explicit LocalContribution ( DiscreteFunctionType &discreteFunction, AssemblyOperationType assemblyOperation = {} )
+      template< class... Args >
+      explicit LocalContribution ( DiscreteFunctionType &discreteFunction, Args &&... args )
         : discreteFunction_( discreteFunction ),
-          localDofVector_( DiscreteFunctionType::DiscreteFunctionSpaceType::localBlockSize * discreteFunction.space().blockMapper().maxNumDofs() ),
-          assemblyOperation_( std::move( assemblyOperation ) )
+          localDofVector_( discreteFunction.space().maxNumDofs() ),
+          assemblyOperation_( std::forward< Args >( args )... )
       {
         discreteFunction.template beginAssemble< typename AssemblyOperationType::GlobalOperationType >();
       }

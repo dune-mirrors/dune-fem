@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_SPACE_RANNACHERTUREK_HH
-#define DUNE_FEM_SPACE_RANNACHERTUREK_HH
+#ifndef DUNE_FEM_SPACE_RANNACHERTUREK_SPACE_HH
+#define DUNE_FEM_SPACE_RANNACHERTUREK_SPACE_HH
 
 // ------------------------------------------------------------------------
 // !!! RannacherTurekDiscreteFunctionSpace requires dune-localfunctions !!!
@@ -17,6 +17,7 @@
 #include <dune/localfunctions/rannacherturek.hh>
 
 // dune-fem includes
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
@@ -58,8 +59,8 @@ namespace Dune
 
       typedef RannacherTurekDiscreteFunctionSpace< FunctionSpace, GridPart, Storage > DiscreteFunctionSpaceType;
 
-      typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;
+      typedef GridFunctionSpace< GridPartType, FunctionSpace > FunctionSpaceType;
 
       static const int codimension = 0;
 
@@ -79,7 +80,7 @@ namespace Dune
       typedef RannacherTurekBlockMapperFactory< GridPartType, LocalCoefficientsType > BlockMapperFactoryType;
       typedef typename BlockMapperFactoryType::BlockMapperType BlockMapperType;
 
-      static const int localBlockSize = FunctionSpaceType::dimRange;
+      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange > LocalBlockIndices;
 
       typedef LocalFunctionsShapeFunctionSet< LocalBasisType > LocalFunctionsShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LocalFunctionsShapeFunctionSetType, Storage > ScalarShapeFunctionSetType;
@@ -254,4 +255,4 @@ namespace Dune
 
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS
 
-#endif // #ifndef DUNE_FEM_SPACE_RANNACHERTUREK_HH
+#endif // #ifndef DUNE_FEM_SPACE_RANNACHERTUREK_SPACE_HH

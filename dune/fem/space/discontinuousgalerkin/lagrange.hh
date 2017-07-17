@@ -5,6 +5,7 @@
 
 #include <dune/grid/common/gridenums.hh>
 
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/operator/projection/local/l2projection.hh>
 #include <dune/fem/operator/projection/local/riesz.hh>
@@ -36,8 +37,8 @@ namespace Dune
     {
       typedef LagrangeDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
 
-      typedef FunctionSpace FunctionSpaceType;
       typedef GridPart GridPartType;
+      typedef GridFunctionSpace< GridPartType, FunctionSpace > FunctionSpaceType;
 
       static const int codimension = 0;
 
@@ -61,8 +62,7 @@ namespace Dune
           typename FunctionSpaceType::ScalarFunctionSpaceType, ImplType, polOrder
         > GenericBaseFunctionType;
 
-      static const int localBlockSize
-        = FunctionSpaceType::dimRange*GenericBaseFunctionType::numBaseFunctions;
+      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange * GenericBaseFunctionType::numBaseFunctions > LocalBlockIndices;
 
       template <class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
       struct CommDataHandle

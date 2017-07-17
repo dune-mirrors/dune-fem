@@ -136,8 +136,10 @@ namespace Dune
       //! type of mapping base class for this discrete function
       typedef typename BaseType :: MappingType MappingType;
 
+      typedef typename DiscreteFunctionSpaceType::LocalBlockIndices BlockIndices;
+
       //! size of the dof blocks
-      enum { blockSize = DiscreteFunctionSpaceType::localBlockSize };
+      static constexpr std::size_t blockSize = Hybrid::size( BlockIndices() );
 
       template< class Operation >
       struct CommDataHandle
@@ -587,8 +589,7 @@ namespace Dune
       //! size type of the block vector
       typedef typename DofVectorType::SizeType SizeType;
 
-      //! size of the dof blocks
-      enum { blockSize = BaseType::blockSize };
+      using BaseType::blockSize;
 
       template< class Operation >
       struct CommDataHandle
@@ -795,7 +796,11 @@ namespace Dune
        *
        *  \returns reference to this discrete function (i.e. *this)
        */
-      inline DiscreteFunctionType &operator*= ( const RangeFieldType &scalar );
+      DiscreteFunctionType &operator*= ( const RangeFieldType &scalar )
+      {
+        dofVector() *= scalar;
+        return asImp();
+      }
 
       /** \brief devide all DoFs by a scalar factor
        *
@@ -898,10 +903,12 @@ namespace Dune
         const std::type_index id( typeid( AssembleOperation ) );
         if( assembleOperation_ != id )
           DUNE_THROW( InvalidStateException, "Assemble operation not in progress" );
-        assembleOperation_ = std::type_index( typeid( void ) );
         assert( assembleCount_ > 0 );
         if( --assembleCount_ == 0 )
+        {
           AssembleOperation::end( asImp() );
+          assembleOperation_ = std::type_index( typeid( void ) );
+        }
       }
 
     protected:

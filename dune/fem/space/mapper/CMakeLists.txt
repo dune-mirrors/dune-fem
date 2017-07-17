@@ -4,6 +4,7 @@ dune_install(
   codimensionmapper.hh
   compile.hh
   dofmapper.hh
+  dynamicnonblockmapper.hh
   exceptions.hh
   genericadaptivedofmapper.hh
   indexsetdofmapper.hh

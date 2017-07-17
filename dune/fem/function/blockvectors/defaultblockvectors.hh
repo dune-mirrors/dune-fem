@@ -8,6 +8,7 @@
 #include <dune/common/densevector.hh>
 #include <dune/common/dynvector.hh>
 
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/misc/debug.hh>
 #include <dune/fem/storage/dynamicarray.hh>
 #include <dune/fem/storage/envelope.hh>
@@ -199,6 +200,8 @@ namespace Dune {
 
     //! Size of each block
     enum { blockSize = BlockSize };
+
+    typedef Hybrid::IndexRange< int, blockSize > BlockIndices;
 
     /** \brief Constructor */
     explicit SimpleBlockVector ( ArrayType& array )
@@ -421,15 +424,17 @@ namespace Dune {
 
 
     using BaseType :: sequence_;
-  public:
 
+  public:
     ISTLBlockVector ( const ThisType& ) = default;
 
     typedef ArrayType DofContainerType;
 
     enum { blockSize = DofBlock :: dimension };
+    typedef Hybrid::IndexRange< int, blockSize > BlockIndices;
 
     typedef typename DofBlock :: value_type FieldType;
+
   protected:
     template <class EmbeddedIterator, class V>
     class Iterator

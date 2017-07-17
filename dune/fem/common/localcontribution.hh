@@ -74,7 +74,9 @@ namespace Dune
       template< class DiscreteFunction >
       struct Add
         : public AddBase< DiscreteFunction >
-      {};
+      {
+        using AddBase< DiscreteFunction >::AddBase;
+      };
 
 
 
@@ -84,7 +86,9 @@ namespace Dune
       template< class DiscreteFunction >
       struct AddScaled
         : public AddScaledBase< DiscreteFunction >
-      {};
+      {
+        using AddScaledBase< DiscreteFunction >::AddScaledBase;
+      };
 
 
 
@@ -94,7 +98,9 @@ namespace Dune
       template< class DiscreteFunction >
       struct Set
         : public SetBase< DiscreteFunction >
-      {};
+      {
+        using SetBase< DiscreteFunction >::SetBase;
+      };
 
     } // namespace Assembly
 

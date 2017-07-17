@@ -10,6 +10,7 @@
 #include <dune/common/dynvector.hh>
 
 // dune-fem includes
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/common/stackallocator.hh>
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/misc/threads/threadsafevalue.hh>
@@ -97,7 +98,8 @@ namespace Dune
       RannacherTurekSpace_id,       //!< id for Rannacher-Turek space
       LegendreDGSpace_id,           //!< id for Legendre Discontinuous Galerkin Space
       HierarchicLegendreDGSpace_id, //!< id for Hierarchic Legendre Discontinuous Galerkin Space
-      LagrangeDGSpace_id            //!< id for Lagrange Discontinuous Galerkin Space
+      LagrangeDGSpace_id,           //!< id for Lagrange Discontinuous Galerkin Space
+      LocalFiniteElementSpace_id         //!< id for local finite element space
     };
 
     inline std::string spaceName( const DFSpaceIdentifier id )
@@ -181,8 +183,10 @@ namespace Dune
       //! type of block mapper of this space
       typedef typename Traits :: BlockMapperType BlockMapperType;
 
+      typedef typename Traits::LocalBlockIndices LocalBlockIndices;
+
       //! size of local blocks
-      enum { localBlockSize = Traits :: localBlockSize };
+      static constexpr std::size_t localBlockSize = Hybrid::size( LocalBlockIndices() );
 
       //! type of underlying \ref GridPart "grid part"
       typedef typename Traits :: GridPartType GridPartType;
@@ -609,13 +613,11 @@ namespace Dune
       typedef typename BaseType :: IteratorType IteratorType;
       typedef typename BaseType :: EntityType EntityType;
 
-      //! size of local blocks
-      enum { localBlockSize = BaseType :: localBlockSize };
-
     protected:
       using BaseType :: asImp;
 
     public:
+      using BaseType::localBlockSize;
       using BaseType :: blockMapper;
       using BaseType :: order ;
 
@@ -825,7 +827,7 @@ namespace Dune
       {
         static_assert( std::is_same< typename DiscreteFunctionSpaceType::BlockMapperType,
             typename DiscreteFunction::DiscreteFunctionSpaceType::BlockMapperType >::value &&
-            static_cast<int>(localBlockSize) == static_cast<int>(DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize),
+            localBlockSize == static_cast< std::size_t >(DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize),
             "DiscreteFunctionSpaceDefault::communicate cannot be called with discrete functions defined over a different space" );
 
         communicator().exchange( discreteFunction, op );
@@ -846,7 +848,7 @@ namespace Dune
       {
         static_assert( std::is_same< typename DiscreteFunctionSpaceType::BlockMapperType,
             typename DiscreteFunction::DiscreteFunctionSpaceType::BlockMapperType >::value &&
-            static_cast<int>(localBlockSize) == static_cast<int>(DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize),
+            localBlockSize == static_cast< std::size_t >(DiscreteFunction::DiscreteFunctionSpaceType::localBlockSize),
             "DiscreteFunctionSpaceDefault::createDataHandle cannot be called with discrete functions defined over a different space" );
         return typename BaseType
           :: template CommDataHandle< DiscreteFunction, Operation >

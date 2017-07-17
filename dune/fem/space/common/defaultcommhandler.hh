@@ -5,6 +5,8 @@
 
 //- Dune includes
 #include <dune/grid/common/datahandleif.hh>
+
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/space/common/commoperations.hh>
 
 namespace Dune
@@ -37,8 +39,7 @@ namespace Dune
 
     protected:
       typedef typename DiscreteFunctionSpaceType::BlockMapperType BlockMapperType;
-
-      static const unsigned int blockSize = DiscreteFunctionSpaceType::localBlockSize;
+      typedef typename DiscreteFunctionSpaceType::LocalBlockIndices LocalBlockIndices;
 
     public:
       DefaultCommunicationHandler( DiscreteFunctionType &function, const Operation& operation = Operation() )
@@ -70,8 +71,8 @@ namespace Dune
         template <class GlobalKey>
         void operator () ( const size_t local, const GlobalKey& globalKey )
         {
-          for( unsigned int j = 0; j < blockSize; ++j )
-            buffer_.write( function_->dofVector()[globalKey][j] );
+          const auto &block = function_->dofVector()[ globalKey ];
+          Hybrid::forEach( LocalBlockIndices(), [ this, &block ] ( auto &&j ) { buffer_.write( block[ j ] ); } );
         }
       };
 
@@ -89,14 +90,15 @@ namespace Dune
         template <class GlobalKey>
         void operator () ( const size_t local, const GlobalKey& globalKey )
         {
-          for( unsigned int j = 0; j < blockSize; ++j )
-          {
-            DataType value;
-            buffer_.read( value );
-            operation_( value, function_->dofVector()[ globalKey ][ j ] );
-          }
+          auto &&block = function_->dofVector()[ globalKey ];
+          Hybrid::forEach( LocalBlockIndices(), [ this, &block ] ( auto &&j ) {
+              DataType value;
+              buffer_.read( value );
+              operation_( value, block[ j ] );
+            } );
         }
       };
+
     public:
       bool contains ( int dim, int codim ) const
       {
@@ -120,7 +122,7 @@ namespace Dune
       template< class MessageBuffer, class Entity >
       void scatter ( MessageBuffer &buffer, const Entity &entity, size_t n )
       {
-        assert( n == blockSize *  blockMapper_.numEntityDofs( entity ) );
+        assert( n == size( entity ) );
         ScatterFunctor< MessageBuffer > scatterDofs ( buffer, function_, operation_ );
 
         blockMapper_.mapEachEntityDof( entity, scatterDofs );
@@ -130,7 +132,7 @@ namespace Dune
       template< class Entity >
       size_t size ( const Entity &entity ) const
       {
-        return blockSize * blockMapper_.numEntityDofs( entity );
+        return Hybrid::size( LocalBlockIndices() ) * blockMapper_.numEntityDofs( entity );
       }
 
     protected:
