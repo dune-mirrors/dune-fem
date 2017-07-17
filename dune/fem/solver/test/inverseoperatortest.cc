@@ -22,6 +22,7 @@
 #include <dune/fem/operator/linear/spoperator.hh>
 #include <dune/fem/solver/cginverseoperator.hh>
 #include <dune/fem/solver/pardginverseoperators.hh>
+#include <dune/fem/solver/krylovinverseoperator.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/lagrange.hh>
@@ -200,6 +201,17 @@ int main(int argc, char** argv)
   //   std::string designation(" === OEMGMRESOp + SparseRowLinearOperator === ");
   //   pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   // }
+
+  // KrylovInverseOperator + SparseRowLinearOperator
+  {
+    using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
+    using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
+    using InverseOperator   = Dune::Fem::KrylovInverseOperator< DiscreteFunction >;
+
+    std::string designation(" === ParDGGeneralizedMinResInverseOperator + SparseRowLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+  }
+
 
 #ifdef USE_PARDG_ODE_SOLVER
   // ParDGGeneralizedMinResInverseOperator + SparseRowLinearOperator
