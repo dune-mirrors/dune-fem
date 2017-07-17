@@ -211,13 +211,17 @@ int main(int argc, char** argv)
     std::string designation1(" === KrylovInverseOperator + SparseRowLinearOperator === ");
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation1, verboseSolver );
 
-    using CGInverseOperator = Dune::Fem::KrylovInverseOperator< DiscreteFunction, InverseOperator::cg >;
-    std::string designation2(" === CGInverseOperator + SparseRowLinearOperator === ");
-    pass &= Algorithm< CGInverseOperator, LinearOperator >::apply( grid, designation2, verboseSolver );
+    using CgInverseOperator = Dune::Fem::CgInverseOperator< DiscreteFunction >;
+    std::string designation2(" === CgInverseOperator + SparseRowLinearOperator === ");
+    pass &= Algorithm< CgInverseOperator, LinearOperator >::apply( grid, designation2, verboseSolver );
 
-    using BiCGStabInverseOperator = Dune::Fem::KrylovInverseOperator< DiscreteFunction, InverseOperator::bicgstab >;
-    std::string designation3(" === BiCGStabOperator + SparseRowLinearOperator === ");
-    pass &= Algorithm< BiCGStabInverseOperator, LinearOperator >::apply( grid, designation3, verboseSolver );
+    using GmresInverseOperator = Dune::Fem::GmresInverseOperator< DiscreteFunction >;
+    std::string designation3(" === GmresInverseOperator + SparseRowLinearOperator === ");
+    pass &= Algorithm< GmresInverseOperator, LinearOperator >::apply( grid, designation3, verboseSolver );
+
+    using BicgstabInverseOperator = Dune::Fem::BicgstabInverseOperator< DiscreteFunction >;
+    std::string designation4(" === BicgstabInverseOperator + SparseRowLinearOperator === ");
+    pass &= Algorithm< BicgstabInverseOperator, LinearOperator >::apply( grid, designation4, verboseSolver );
   }
 
 
