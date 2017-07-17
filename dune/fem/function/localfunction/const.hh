@@ -24,7 +24,7 @@ namespace Dune
 
     class HasLocalFunction;
     class IsDiscreteFunction;
-    class BindableFunction;
+    struct BindableFunction;
 
     // BasicConstLocalFunction
     // -----------------------

@@ -18,6 +18,7 @@
 // include Lagrange discrete function space
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrange.hh>
+#include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/function/localfunction/bindable.hh>
 
 #if HAVE_PETSC && defined USE_PETSCDISCRETEFUNCTION
