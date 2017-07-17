@@ -206,10 +206,18 @@ int main(int argc, char** argv)
   {
     using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
     using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
-    using InverseOperator   = Dune::Fem::KrylovInverseOperator< DiscreteFunction >;
 
-    std::string designation(" === KrylovInverseOperator + SparseRowLinearOperator === ");
-    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+    using InverseOperator   = Dune::Fem::KrylovInverseOperator< DiscreteFunction >;
+    std::string designation1(" === KrylovInverseOperator + SparseRowLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation1, verboseSolver );
+
+    using CGInverseOperator = Dune::Fem::KrylovInverseOperator< DiscreteFunction, InverseOperator::cg >;
+    std::string designation2(" === CGInverseOperator + SparseRowLinearOperator === ");
+    pass &= Algorithm< CGInverseOperator, LinearOperator >::apply( grid, designation2, verboseSolver );
+
+    using BiCGStabInverseOperator = Dune::Fem::KrylovInverseOperator< DiscreteFunction, InverseOperator::bicgstab >;
+    std::string designation3(" === BiCGStabOperator + SparseRowLinearOperator === ");
+    pass &= Algorithm< BiCGStabInverseOperator, LinearOperator >::apply( grid, designation3, verboseSolver );
   }
 
 

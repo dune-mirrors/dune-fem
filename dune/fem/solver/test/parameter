@@ -15,7 +15,7 @@ fem.timeprovider.updatestep: 1
 
 # parameter for the implicit solvers
 fem.solver.krylovmethod: gmres
-fem.solver.verbose: false
+fem.solver.verbose: true
 fem.solver.gmres.restart: 15
 fem.solver.newton.verbose: false
 fem.solver.newton.maxiteration: 50

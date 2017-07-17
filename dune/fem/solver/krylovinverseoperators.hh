@@ -22,7 +22,7 @@ namespace Dune
     // KrylovInverseOperator
     // ---------------------
 
-    template< class DiscreteFunction >
+    template< class DiscreteFunction, int method = -1 >
     class KrylovInverseOperator
     : public Operator< DiscreteFunction, DiscreteFunction >
     {
@@ -30,6 +30,10 @@ namespace Dune
 
       typedef typename MPIManager::CollectiveCommunication  CollectiveCommunicationType;
     public:
+      static const int cg       = 0 ; // CG
+      static const int bicgstab = 1 ; // BiCGStab
+      static const int gmres    = 2 ; // GMRES
+
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
 
@@ -82,7 +86,7 @@ namespace Dune
         maxIterations_( std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations ) ),
         numOfIterations_( 0 ),
         verbose_( readVerbose( parameter, "fem.solver.verbose" ) ),
-        method_( getMethod( parameter, "fem.solver.krylovmethod" ) ),
+        method_( method < 0 ? getMethod( parameter, "fem.solver.krylovmethod" ) : method ),
         restart_( method_ == gmres ? parameter.getValue< int >( "fem.solver.gmres.restart", 20 ) : 0 )
       {}
 
@@ -216,10 +220,6 @@ namespace Dune
       {
         return parameter.getValue< bool >( paramName, false );
       }
-
-      static const int cg       = 0 ; // CG
-      static const int bicgstab = 1 ; // BiCGStab
-      static const int gmres    = 2 ; // GMRES
 
       int getMethod( const ParameterReader& parameter, const char* paramName ) const
       {
