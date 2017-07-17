@@ -114,6 +114,7 @@ void MassOperator< DiscreteFunction, LinearOperator >::assemble ()
       localMatrix.axpy( qp, values );
     }
   }
+  BaseType::communicate();
 }
 
 #endif // #ifndef MASSOPERATOR_HH
