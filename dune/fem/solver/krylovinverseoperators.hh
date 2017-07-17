@@ -169,9 +169,8 @@ namespace Dune
                                       errorType_, os );
         }
 
-        // only add number of iterations when solver converged
-        if( numIter > 0 )
-          numOfIterations_ += numIter;
+        // only store number of iterations when solver converged, otherwise numIter < 0
+        numOfIterations_ = ( numIter > 0 ) ? numIter : 0;
       }
 
       unsigned int iterations () const
