@@ -38,7 +38,7 @@
 #if HAVE_SUITESPARSE_UMFPACK && defined USE_UMFPACK
 #include <dune/fem/solver/umfpacksolver.hh>
 #else
-#include <dune/fem/solver/krylovinverseoperator.hh>
+#include <dune/fem/solver/krylovinverseoperators.hh>
 #endif
 #endif
 
@@ -85,9 +85,7 @@ typedef Dune::Fem::SparseRowLinearOperator< DiscreteFunctionType, DiscreteFuncti
 #if HAVE_SUITESPARSE_UMFPACK && defined USE_UMFPACK
 typedef Dune::Fem::UMFPACKOp< DiscreteFunctionType, LinearOperatorType > InverseOperatorType;
 #else
-//typedef Dune::Fem::CGInverseOperator< DiscreteFunctionType > InverseOperatorType;
-//typedef Dune::Fem::GeneralizedMinResInverseOperator< DiscreteFunctionType > InverseOperatorType;
-typedef Dune::Fem::BiCGStabInverseOperator< DiscreteFunctionType > InverseOperatorType;
+typedef Dune::Fem::KrylovInverseOperator< DiscreteFunctionType > InverseOperatorType;
 #endif
 #endif
 
