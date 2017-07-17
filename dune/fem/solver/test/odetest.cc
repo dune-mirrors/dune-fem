@@ -20,7 +20,7 @@
 
 #include <dune/fem/solver/rungekutta/timestepcontrol.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
-#include <dune/fem/solver/krylovinverseoperator.hh>
+#include <dune/fem/solver/krylovinverseoperators.hh>
 #include <dune/fem/operator/dghelmholtz.hh>
 
 #include <dune/fem/solver/rungekutta/explicit.hh>
@@ -266,7 +266,7 @@ void solve(OdeFactory factory, const bool verbose)
   const double endTime = 2.0;
 
   // options
-  const double stepSize = spaceOperator.timeStepEstimate()/2.;
+  const double stepSize = Dune::Fem::Parameter::getValue("fixedTimeStep", double(spaceOperator.timeStepEstimate()/2.)) ;
   std::cout << "dt = " << stepSize << std::endl;
   const double cfl = 1.;
   const int order = Dune::Fem::Parameter::getValue("fem.ode.order", int(2));
