@@ -18,4 +18,4 @@ petsc.preconditioning.iterations: 2
 
 fem.io.macroGridFile: macrogrid
 
-fem.lagrange.polinomialOrder: 1
+fem.lagrange.polynomialOrder: 1
