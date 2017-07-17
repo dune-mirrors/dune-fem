@@ -24,8 +24,7 @@ namespace Dune
 
     class HasLocalFunction;
     class IsDiscreteFunction;
-    template <class,class>
-    class BindableFunction;
+    struct BindableFunction;
 
     // BasicConstLocalFunction
     // -----------------------
@@ -339,7 +338,7 @@ namespace Dune
       };
 
       template< class GF >
-      struct ConstLocalFunction< GF, std::enable_if_t< std::is_base_of< Fem::BindableFunction<typename GF::GridPartType,typename GF::Range>, GF >::value && !std::is_base_of< Fem::IsDiscreteFunction, GF >::value > >
+      struct ConstLocalFunction< GF, std::enable_if_t< std::is_base_of< Fem::BindableFunction, GF >::value && !std::is_base_of< Fem::IsDiscreteFunction, GF >::value > >
       {
         struct Type
         {
