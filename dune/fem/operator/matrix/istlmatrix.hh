@@ -770,6 +770,35 @@ namespace Dune
         removeObj();
       }
 
+      template <class Vector>
+      void setUnitRows( const Vector &rows )
+      {
+        const auto &slaveDofs = domainSpace().slaveDofs();
+
+        for (auto r : rows)
+        {
+          const std::size_t blockRow( r/(LittleBlockType :: rows) );
+          const std::size_t localRowIdx( r%(LittleBlockType :: rows) );
+          auto& row = matrix()[blockRow];
+          const auto endcol = row.end();
+#ifndef NDEBUG
+          bool set = false;
+#endif
+          for (auto col=row.begin(); col!=endcol; ++col)
+          {
+            for (auto& entry : (*col)[localRowIdx])
+              entry = 0;
+            if (col.index() == blockRow)
+            {
+              (*col)[localRowIdx][localRowIdx] = slaveDofs.isSlave( r )? 0.0 : 1.0;
+#ifndef NDEBUG
+              set = true;
+#endif
+            }
+          }
+          assert(set);
+        }
+      }
       //! reserve memory for assemble based on the provided stencil
       template <class Stencil>
       void reserve(const Stencil &stencil, const bool implicit = true )

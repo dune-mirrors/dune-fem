@@ -138,9 +138,9 @@ namespace DuneODE
                                    const ParametersType& tscParams,
                                    const NonlinearSolverParametersType& nlsParams )
     : BaseType( helmholtzOp,
-                butcherTable( order, false ),
+                defaultButcherTable( order, false ),
                 TimeStepControlType( timeProvider, tscParams ),
-                SourceTermType( explicitOp, butcherTable( order, true ), butcherTable( order, false ).A() ),
+                SourceTermType( explicitOp, defaultButcherTable( order, true ), defaultButcherTable( order, false ).A() ),
                 nlsParams )
     {}
 
@@ -150,9 +150,9 @@ namespace DuneODE
                                    int order,
                                    const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
     : BaseType( helmholtzOp,
-                butcherTable( order, false ),
+                defaultButcherTable( order, false ),
                 TimeStepControlType( timeProvider, parameter ),
-                SourceTermType( explicitOp, butcherTable( order, true ), butcherTable( order, false ).A() ),
+                SourceTermType( explicitOp, defaultButcherTable( order, true ), defaultButcherTable( order, false ).A() ),
                 NonlinearSolverParametersType( parameter ) )
     {}
 
@@ -170,9 +170,9 @@ namespace DuneODE
                                    const ParametersType& tscParams,
                                    const NonlinearSolverParametersType& nlsParams )
     : BaseType( helmholtzOp,
-                butcherTable( 1, false ),
+                defaultButcherTable( 1, false ),
                 TimeStepControlType( timeProvider, tscParams ),
-                SourceTermType( explicitOp, butcherTable( 1, true ), butcherTable( 1, false ).A() ),
+                SourceTermType( explicitOp, defaultButcherTable( 1, true ), defaultButcherTable( 1, false ).A() ),
                 nlsParams )
     {}
 
@@ -181,13 +181,27 @@ namespace DuneODE
                                    TimeProviderType &timeProvider,
                                    const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
     : BaseType( helmholtzOp,
-                butcherTable( 1, false ),
+                defaultButcherTable( 1, false ),
                 TimeStepControlType( timeProvider, parameter ),
-                SourceTermType( explicitOp, butcherTable( 1, true ), butcherTable( 1, false ).A() ),
+                SourceTermType( explicitOp, defaultButcherTable( 1, true ), defaultButcherTable( 1, false ).A() ),
+                NonlinearSolverParametersType( parameter ) )
+    {}
+
+
+    SemiImplicitRungeKuttaSolver ( ExplicitOperatorType &explicitOp,
+                                   HelmholtzOperatorType &helmholtzOp,
+                                   TimeProviderType &timeProvider,
+                                   const SimpleButcherTable< double >& explButcherTable,
+                                   const SimpleButcherTable< double >& implButcherTable,
+                                   const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+    : BaseType( helmholtzOp,
+                implButcherTable,
+                TimeStepControlType( timeProvider, parameter ),
+                SourceTermType( explicitOp, explButcherTable, implButcherTable.A() ),
                 NonlinearSolverParametersType( parameter ) )
     {}
   protected:
-    static SimpleButcherTable< double > butcherTable ( int order, bool expl )
+    static SimpleButcherTable< double > defaultButcherTable ( int order, bool expl )
     {
       switch( order )
       {

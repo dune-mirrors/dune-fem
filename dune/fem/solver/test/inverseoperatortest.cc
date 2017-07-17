@@ -22,6 +22,7 @@
 #include <dune/fem/operator/linear/spoperator.hh>
 #include <dune/fem/solver/cginverseoperator.hh>
 #include <dune/fem/solver/pardginverseoperators.hh>
+#include <dune/fem/solver/krylovinverseoperators.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/lagrange.hh>
@@ -200,6 +201,25 @@ int main(int argc, char** argv)
   //   std::string designation(" === OEMGMRESOp + SparseRowLinearOperator === ");
   //   pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   // }
+
+  // KrylovInverseOperator + SparseRowLinearOperator
+  {
+    using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
+    using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
+
+    using InverseOperator   = Dune::Fem::KrylovInverseOperator< DiscreteFunction >;
+    std::string designation1(" === KrylovInverseOperator + SparseRowLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation1, verboseSolver );
+
+    using CGInverseOperator = Dune::Fem::KrylovInverseOperator< DiscreteFunction, InverseOperator::cg >;
+    std::string designation2(" === CGInverseOperator + SparseRowLinearOperator === ");
+    pass &= Algorithm< CGInverseOperator, LinearOperator >::apply( grid, designation2, verboseSolver );
+
+    using BiCGStabInverseOperator = Dune::Fem::KrylovInverseOperator< DiscreteFunction, InverseOperator::bicgstab >;
+    std::string designation3(" === BiCGStabOperator + SparseRowLinearOperator === ");
+    pass &= Algorithm< BiCGStabInverseOperator, LinearOperator >::apply( grid, designation3, verboseSolver );
+  }
+
 
 #ifdef USE_PARDG_ODE_SOLVER
   // ParDGGeneralizedMinResInverseOperator + SparseRowLinearOperator

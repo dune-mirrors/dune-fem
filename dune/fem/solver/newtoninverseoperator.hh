@@ -328,7 +328,7 @@ namespace Dune
 
         // David: With this factor, the tolerance of CGInverseOp is the absolute
         //        rather than the relative error
-        //        (see also dune-fem/dune/fem/solver/inverseoperators.hh)
+        //        (see also dune-fem/dune/fem/solver/krylovinverseoperators.hh)
         jInv_.bind( jOp );
         jInv_.setMaxIterations( maxLinearIterations_ - linearIterations_ );
 

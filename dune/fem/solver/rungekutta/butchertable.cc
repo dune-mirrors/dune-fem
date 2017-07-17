@@ -4,6 +4,103 @@
 
 namespace DuneODE
 {
+  //////////////////////////////////////////////////////
+  //
+  //  Explicit Butcher Tables
+  //
+  //////////////////////////////////////////////////////
+
+  // explicitEulerButcherTable
+  // -------------------------
+
+  SimpleButcherTable< double > explicitEulerButcherTable ()
+  {
+    static const double A[] = {0.0};
+    static const double b[] = {1.0};
+    static const double c[] = {1.0};
+
+    return SimpleButcherTable< double >( 1, 1, A, b, c );
+  }
+
+
+  // TVD2ButcherTable (Heun)
+  // -----------------------
+
+  SimpleButcherTable< double > tvd2ButcherTable ()
+  {
+    static const double A[] = {0.0, 0.0,
+                               1.0, 0.0};
+    static const double b[] = {0.5, 0.5};
+    static const double c[] = {0.0, 1.0};
+
+    return SimpleButcherTable< double >( 2, 2, A, b, c );
+  }
+
+
+  // TVD3ButcherTable
+  // ----------------
+
+  SimpleButcherTable< double > tvd3ButcherTable ()
+  {
+    static const double A[] = {0.0,  0.0,  0.0,
+                               1.0,  0.0,  0.0,
+                               0.25, 0.25, 0.0};
+    static const double b[] = {1./6., 1./6., 2./3.};
+    static const double c[] = {0.0,   1.0,   0.5};
+
+    return SimpleButcherTable< double >( 3, 3, A, b, c );
+  }
+
+
+  // RK4bButcherTable
+  // ----------------
+
+  SimpleButcherTable< double > rk4ButcherTable ()
+  {
+    //class ExplicitRK4b
+    static const double RK4_A[] =
+      {0.0, 0.0, 0.0, 0.0,
+       0.5, 0.0, 0.0, 0.0,
+       0.0, 0.5, 0.0, 0.0,
+       0.0, 0.0, 1.0, 0.0
+      };
+    static const double RK4_b[] = {1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0};
+    static const double RK4_c[] = {0.0, 0.5, 0.5, 1.0};
+
+    return SimpleButcherTable< double >( 4, 4, RK4_A, RK4_b, RK4_c );
+  }
+
+  // Explicit6ButcherTable
+  // ----------------
+
+  SimpleButcherTable< double > expl6ButcherTable ()
+  {
+    //class ExplicitButcher6
+    static const double Butcher6_A[] =
+      {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+       0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+       2.0/9.0, 4.0/9.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+       7.0/36.0, 2.0/9.0, -1.0/12.0, 0.0, 0.0, 0.0, 0.0,
+       -35.0/144.0, -55.0/36.0, 35.0/48.0, 15.0/8.0, 0.0, 0.0, 0.0,
+       -1.0/360.0, -11.0/36.0, -1.0/8.0, 1.0/2.0, 1.0/10.0, 0.0, 0.0,
+       -41.0/260.0, 22.0/13.0, 43.0/156.0, -118.0/39.0, 32.0/195.0, 80.0/39.0, 0.0
+      };
+    static const double Butcher6_b[] =
+      {13.0/200.0, 0.0, 11.0/40.0, 11.0/40.0, 4.0/25.0, 4.0/25.0, 13.0/200.0};
+    static const double Butcher6_c[] =
+      {0.0, 0.5, 2.0/3.0, 1.0/3.0, 5.0/6.0, 1.0/6.0, 1.0};
+
+    return SimpleButcherTable< double >( 7, 6, Butcher6_A, Butcher6_b, Butcher6_c );
+  }
+
+
+
+
+  //////////////////////////////////////////////////////
+  //
+  //  Implicit Butcher Tables
+  //
+  //////////////////////////////////////////////////////
 
   // implicit34ButcherTable
   // ----------------------
