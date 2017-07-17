@@ -1,213 +1,120 @@
-#ifndef DUNE_FEM_PETSCDOFMAPPING_HH
-#define DUNE_FEM_PETSCDOFMAPPING_HH
+#ifndef DUNE_FEM_MISC_PETSC_PETSCDOFMAPPINGS_HH
+#define DUNE_FEM_MISC_PETSC_PETSCDOFMAPPINGS_HH
 
+#include <cstddef>
+
+#include <algorithm>
 #include <iostream>
-#include <map>
+#include <limits>
+#include <set>
 #include <vector>
 
-#include <dune/common/dynvector.hh>
+#include <dune/grid/common/gridenums.hh>
+#include <dune/grid/common/datahandleif.hh>
 
 #include <dune/fem/space/finitevolume.hh>
 #include <dune/fem/function/vectorfunction.hh>
 #include <dune/fem/misc/mpimanager.hh>
 
 #if HAVE_PETSC
-
 #include <dune/fem/misc/petsc/petsccommon.hh>
+#endif // #if HAVE_PETSC
 
 namespace Dune
 {
+
   namespace Fem
   {
 
+    // PetscDofMappings
+    // ----------------
 
-    /* =================================================
-     * class PetscDofMappings
-     *
-     * This class implements 2 mappings what we need for PETSc integration.
-     *
-     * 1) The local slave mapping which maps local dune dof indices to the local indices the PETSc Vec. This mapping also
-     * knows about slave dofs.
-     *
+    /*
+     * implements 2 mappings needed for PETSc integration:
+     * 1) The local slave mapping which maps local dune dof indices to the local
+     *    indices the PETSc Vec. This mapping also knows about slave dofs.
      * 2) The global mapping, that maps local dune dof indices to global PETSc indices.
-     *
-     * =================================================
      */
-    template <class Space>
+#if HAVE_PETSC
+    template< class Space, class GlobalDof = PetscInt >
     class PetscDofMappings
     {
       typedef PetscDofMappings ThisType;
 
     public:
-      typedef Space                                    DiscreteFunctionSpaceType;
-      typedef std::vector< int >                       DofMappingType;
-      typedef DofMappingType::size_type                IndexType;
-      typedef typename DofMappingType::value_type      DofType;
+      typedef Space DiscreteFunctionSpaceType;
 
-      typedef PetscInt  GlobalDofType ;
-      typedef Dune::DynamicVector< GlobalDofType >           GlobalDofMappingType ;
+    private:
+      typedef typename DiscreteFunctionSpaceType::BlockMapperType BlockMapperType;
+      typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
+
+      struct DataHandle;
+
+    public:
+      typedef int DofType;
+      typedef std::vector< DofType > DofMappingType;
+      typedef DofMappingType::size_type IndexType;
+
+      typedef GlobalDof GlobalDofType;
+      typedef std::vector< GlobalDofType > GlobalDofMappingType;
 
       PetscDofMappings ( const DiscreteFunctionSpaceType *space )
-      : numOwnedDofBlocks_( 0 ),
-        numSlaveBlocks_( 0 ),
-        processStartIndex_( 0 ),
-        localSlaveMapping_(),
-        globalDofMapping_(),
-        sequence_( -1 )
       {
         // update dof mapping
         update(*space);
       }
 
-      bool update (const DiscreteFunctionSpaceType &space)
+      PetscDofMappings ( const ThisType & ) = delete;
+      PetscDofMappings ( ThisType && ) = delete;
+
+      ThisType &operator= ( const ThisType & ) = delete;
+      ThisType &operator= ( ThisType && ) = delete;
+
+      bool update ( const DiscreteFunctionSpaceType &space )
       {
-        auto &slaveDofs = space.slaveDofs();
-        const int sequence = space.sequence();
-        if( sequence_ != sequence )
-        {
-          initialize( space, slaveDofs );
-          sequence_ = sequence ;
-          return true ;
-        }
-        return false ;
+        if( sequence_ == space.sequence() )
+          return false;
+
+        initialize( space );
+        sequence_ = space.sequence();
+        return true;
       }
 
-
       GlobalDofType numOwnedDofBlocks () const { return numOwnedDofBlocks_; }
-
       GlobalDofType numSlaveBlocks () const { return numSlaveBlocks_; }
 
       GlobalDofType processStartIndex () const { return processStartIndex_; }
 
-      size_t size () const { return localSlaveMapping_.size(); }
+      IndexType size () const { return localSlaveMapping_.size(); }
 
-      const DofType& localSlaveMapping ( IndexType index ) const
-      {
-        return localSlaveMapping_[ index ];
-      }
-
-      const GlobalDofType& globalMapping ( const IndexType index ) const
-      {
-        return globalDofMapping_[ index ];
-      }
+      const DofType &localSlaveMapping ( IndexType index ) const { return localSlaveMapping_[ index ]; }
+      const GlobalDofType &globalMapping ( const IndexType index ) const { return globalDofMapping_[ index ]; }
 
       // is the dof with global DUNE index 'i' a slave dof?
-      bool isSlave ( IndexType i ) const
-      {
-        return static_cast< int >( localSlaveMapping( i ) ) >= numOwnedDofBlocks();
-      }
-
+      bool isSlave ( IndexType i ) const { return (static_cast< int >( localSlaveMapping( i ) ) >= numOwnedDofBlocks()); }
 
       ///////////////////////////////////////////////
       //  interface methods for PersistentIndexSet
       ///////////////////////////////////////////////
       template < class Stream >
-      void write( const Stream& ) const {}
+      void write( const Stream & ) const
+      {}
 
       template < class Stream >
-      void read( const Stream& ) {}
+      void read( const Stream & )
+      {}
 
       // void resize () { update (); }
       // bool compress() { return update (); }
 
-      PetscDofMappings () = delete;
-      PetscDofMappings ( const ThisType& ) = delete;
-      PetscDofMappings& operator= ( const ThisType& ) = delete;
-
     private:
-      template< typename SlaveDofsProvider >
-      void initializeMappings ( const DiscreteFunctionSpaceType &space, const SlaveDofsProvider& slaveDofs )
+      void initializeMappings ( const DiscreteFunctionSpaceType &space );
+
+      void initialize ( const DiscreteFunctionSpaceType &space )
       {
-        // How the local slave mapping is build:
-        // Let s_1 < ... < s_n be the slave dof indices (as given by the slaveDofs object) and let
-        // d_1 < ... < d_m be the dof indices of dofs that are owned by this proces. Petsc thinks of slave dofs as
-        // dofs in a PETSc Vec 'behind the array'. So the local slave mapping is now simply a vector with the following
-        // components:
-        //    d_1, d_2, ..., d_n, s_1, s_2, ..., s_n
+        const auto &slaveDofs = space.slaveDofs();
 
-        #ifndef NDEBUG
-          int ownedDofBlocks = 0;
-        #endif
-
-        localSlaveMapping_.resize( space.blockMapper().size(), -1 );
-        globalDofMapping_.resize( space.blockMapper().size(), 0 );
-
-        std::fill( localSlaveMapping_.begin(), localSlaveMapping_.end(), -1 );
-        std::fill( globalDofMapping_.begin(), globalDofMapping_.end(), 0 );
-
-        // global dof index
-        GlobalDofType index = processStartIndex_ ;
-        for( int slave = 0, i = 0; slave < slaveDofs.size(); ++slave )
-        {
-          const int nextSlave = slaveDofs[ slave ];
-          for(; i < nextSlave; ++i )
-          {
-            localSlaveMapping_[ i ] = i - slave;
-            globalDofMapping_[ i ] = index++;
-
-            #ifndef NDEBUG
-              ++ownedDofBlocks;
-            #endif
-          }
-
-          // omit the last slave
-          if( static_cast< size_t >( i ) == localSlaveMapping_.size() )
-            break;
-
-          assert( static_cast< size_t >( i ) < localSlaveMapping_.size() );
-          // skip the slave dof
-          localSlaveMapping_[ i ] = numOwnedDofBlocks_ + slave;
-          globalDofMapping_[ i ] = 0;
-          ++i;
-        }
-
-        #ifndef NDEBUG
-          checkDofMappingConsistency();
-        #endif
-        assert( numOwnedDofBlocks_ == ownedDofBlocks );
-
-        typedef typename DiscreteFunctionSpaceType :: template ToNewDimRange< 1 > :: Type DofSpaceType ;
-        typedef typename DiscreteFunctionSpaceType :: GridPartType  GridPartType;
-        GridPartType& gridPart = const_cast< GridPartType& > (space.gridPart());
-
-        if( space.continuous() )
-        {
-          typedef DofSpaceType GlobalDofSpaceType ;
-          GlobalDofSpaceType dofSpace( gridPart );
-
-          // store global dofs as a discrete function to use the already
-          // built communication patterns to sum up the global dofs
-          // which in this case simply sets the global numbers of the dofs
-          // from the other ranks (we have to use the space's range field type)
-          VectorDiscreteFunction< GlobalDofSpaceType, GlobalDofMappingType  >
-            dofMappingFunc( "globalDofs", dofSpace, globalDofMapping_ );
-
-          // do communication
-          dofMappingFunc.communicate();
-        }
-        else
-        {
-          // for discontinuous solution we only need one dof per element --> FV space
-          typedef FiniteVolumeSpace< typename DofSpaceType :: FunctionSpaceType,
-                                     typename DofSpaceType :: GridPartType >  GlobalDofSpaceType ;
-          GlobalDofSpaceType dofSpace( gridPart );
-
-          // store global dofs as a discrete function to use the already
-          // built communication patterns to sum up the global dofs
-          // which in this case simply sets the global numbers of the dofs
-          // from the other ranks (we have to use the space's range field type)
-          VectorDiscreteFunction< GlobalDofSpaceType, GlobalDofMappingType  >
-            dofMappingFunc( "globalDofs", dofSpace, globalDofMapping_ );
-
-          // do communication
-          dofMappingFunc.communicate();
-        }
-      }
-
-      template< typename SlaveDofsProvider >
-      void initialize ( const DiscreteFunctionSpaceType &space, const SlaveDofsProvider& slaveDofs )
-      {
-        numSlaveBlocks_    = slaveDofs.size() - 1;
+        numSlaveBlocks_ = slaveDofs.size() - 1;
         numOwnedDofBlocks_ = space.blockMapper().size() - numSlaveBlocks_;
 
         // start with index 0 (use unsigned long as buffers)
@@ -218,67 +125,151 @@ namespace Dune
         MPI_Exscan( &numOwnedDofBlocks, &processStartIndex, 1, MPI_UNSIGNED_LONG, MPI_SUM, PETSC_COMM_WORLD );
 
         // store my start index
-        processStartIndex_ = processStartIndex ;
+        processStartIndex_ = processStartIndex;
 
-        initializeMappings( space, slaveDofs );
+        initializeMappings( space );
 
-        #ifndef NDEBUG
-          checkSlaveConsistency( slaveDofs );
-        #endif
+        assert( checkSlaveConsistency( slaveDofs ) );
       }
 
-      //////////////////////////////////////////
-      // Methods for consistency checking, only used when NDEBUG is not set
-      //////////////////////////////////////////
-      template< typename SlavesType >
-      void checkSlaveConsistency ( const SlavesType& slaves ) const
+      template< class SlaveDofs >
+      bool checkSlaveConsistency ( const SlaveDofs &slaveDofs ) const
       {
-        for( size_t i = 0; i < size(); ++i )
+        for( IndexType i = 0; i < size(); ++i )
         {
-          assert( isSlave( i ) == slaves.isSlave( i ) );
+          if( isSlave( i ) != slaveDofs.isSlave( i ) )
+            return false;
         }
+        return true;
       }
 
-      void checkDofMappingConsistency () const
+      bool checkDofMappingConsistency () const
       {
         // Check if the dof mapping is bijective and valid. This piece of code does not strive to be
         // efficient...
-        std::map< DofType, bool > buf;
-        for( std::vector< int >::const_iterator it = localSlaveMapping_.begin(); it != localSlaveMapping_.end(); ++it )
+        std::set< DofType > locals;
+        for( const int local : localSlaveMapping_ )
         {
-          if( *it < 0 )
+          if( local < 0 )
           {
             std::cerr << "localSlaveMapping_ has not been initialized completely on rank " << MPIManager::rank() << std::endl;
-            assert( false );
+            return false;
           }
 
-          if( buf.find( *it ) != buf.end() )
+          if( !locals.insert( local ).second )
           {
-            std::cerr << *it << " was found more than once in localSlaveMapping_ (on rank " << MPIManager::rank() << ")\n";
-            assert( false );
-          }
-          else
-          {
-            buf[ *it ] = true;
+            std::cerr << local << " was found more than once in localSlaveMapping_ (on rank " << MPIManager::rank() << ")" << std::endl;
+            return false;
           }
         }
+        return true;
       }
 
-      ////////////////////////////////
-      // data fields
-      ////////////////////////////////
-      GlobalDofType   numOwnedDofBlocks_; // number of blocks where this proc is master
-      GlobalDofType   numSlaveBlocks_;    // number of slave blocks
-      GlobalDofType   processStartIndex_; // Start index of this process' portion of the PETSc Vec.
-      DofMappingType  localSlaveMapping_; // local mapping (used for Discrete Function)
+      GlobalDofType numOwnedDofBlocks_ = 0;   // number of blocks where this proc is master
+      GlobalDofType numSlaveBlocks_ = 0;      // number of slave blocks
+      GlobalDofType processStartIndex_ = 0;   // Start index of this process' portion of the PETSc Vec.
+      DofMappingType localSlaveMapping_;      // local mapping (used for Discrete Function)
       GlobalDofMappingType globalDofMapping_; // global mapping (needed for matrices)
-      int sequence_ ;                     // sequence number of adaptive grid
+      int sequence_ = -1;                     // sequence number of adaptive grid
     };
+
+
+
+    // PetscDofMappings::DataHandle
+    // ----------------------------
+
+    template< class Space, class GlobalDof >
+    struct PetscDofMappings< Space, GlobalDof >::DataHandle
+      : public CommDataHandleIF< DataHandle, GlobalDof >
+    {
+      DataHandle ( const BlockMapperType &blockMapper, GlobalDofMappingType &globalDofMapping )
+        : blockMapper_( blockMapper ), globalDofMapping_( globalDofMapping )
+      {}
+
+      bool contains ( int dim, int codim ) const { return blockMapper_.contains( codim ); }
+      bool fixedsize ( int dim, int codim ) const { return blockMapper_.fixedDataSize( codim ); }
+
+      template< class Buffer, class Entity >
+      void gather ( Buffer &buffer, const Entity &entity ) const
+      {
+        blockMapper_.mapEachEntityDof( entity, [ this, &buffer ] ( int, auto i ) { buffer.write( globalDofMapping_[ i ] ); } );
+      }
+
+      template< class Buffer, class Entity >
+      void scatter ( Buffer &buffer, const Entity &entity, std::size_t n )
+      {
+        assert( n == blockMapper_.numEntityDofs( entity ) );
+        blockMapper_.mapEachEntityDof( entity, [ this, &buffer ] ( int, auto i ) {
+            GlobalDofType index;
+            buffer.read( index );
+            globalDofMapping_[ i ] = std::min( globalDofMapping_[ i ], index );
+          } );
+      }
+
+      template< class Entity >
+      std::size_t size ( const Entity &entity ) const
+      {
+        return blockMapper_.numEntityDofs( entity );
+      }
+
+    private:
+      const BlockMapperType &blockMapper_;
+      GlobalDofMappingType &globalDofMapping_;
+    };
+
+
+
+    template< class Space, class GlobalDof >
+    inline void PetscDofMappings< Space, GlobalDof >::initializeMappings ( const DiscreteFunctionSpaceType &space )
+    {
+      // How the local slave mapping is build:
+      // Let s_1 < ... < s_n be the slave dof indices (as given by the slaveDofs object) and let
+      // d_1 < ... < d_m be the dof indices of dofs that are owned by this proces. Petsc thinks of slave dofs as
+      // dofs in a PETSc Vec 'behind the array'. So the local slave mapping is now simply a vector with the following
+      // components:
+      //    d_1, d_2, ..., d_n, s_1, s_2, ..., s_n
+
+      const auto &slaveDofs = space.slaveDofs();
+      const BlockMapperType &blockMapper = space.blockMapper();
+
+      localSlaveMapping_.resize( blockMapper.size() );
+      globalDofMapping_.resize( blockMapper.size() );
+
+      std::fill( localSlaveMapping_.begin(), localSlaveMapping_.end(), -1 );
+      std::fill( globalDofMapping_.begin(), globalDofMapping_.end(), std::numeric_limits< GlobalDofType >::max() );
+
+      // global dof index
+      GlobalDofType globalIndex = processStartIndex_;
+      IndexType index = 0;
+      for( int slave = 0; slave < slaveDofs.size(); ++slave )
+      {
+        const IndexType nextSlave = slaveDofs[ slave ];
+        for( ; index < nextSlave; ++index )
+        {
+          localSlaveMapping_[ index ] = index - slave;
+          globalDofMapping_[ index ] = globalIndex++;
+        }
+
+        // omit the last slave
+        if( index == localSlaveMapping_.size() )
+          break;
+        assert( index < localSlaveMapping_.size() );
+
+        // assign the slave DoF a ghost index
+        localSlaveMapping_[ index++ ] = numOwnedDofBlocks_ + slave;
+      }
+
+      assert( index == localSlaveMapping_.size() );
+      assert( globalIndex == processStartIndex_ + numOwnedDofBlocks_ );
+      assert( checkDofMappingConsistency() );
+
+      DataHandle dataHandle( blockMapper, globalDofMapping_ );
+      space.gridPart().communicate( dataHandle, GridPartType::indexSetInterfaceType, ForwardCommunication );
+    }
+#endif // #if HAVE_PETSC
 
   } // namespace Fem
 
 } // namespace Dune
 
-#endif // #if HAVE_PETSC
-
-#endif // DUNE_FEM_PETSCDOFMAPPING_HH
+#endif // #ifndef DUNE_FEM_MISC_PETSC_PETSCDOFMAPPINGS_HH
