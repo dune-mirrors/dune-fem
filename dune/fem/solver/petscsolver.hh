@@ -353,10 +353,14 @@ namespace Dune
 
       void apply( const PetscDiscreteFunctionType& arg, PetscDiscreteFunctionType& dest ) const
       {
+        // need to have a 'distributed' destination vector for continuous spaces
+        if( dest.space().continuous() )
+          dest.dofVector().clearGhost();
+
         // call PETSc solvers
         ::Dune::Petsc::KSPSolve(ksp_, *arg.petscVec() , *dest.petscVec() );
 
-        // for continuous solution we need a communication here
+        // a continuous solution is 'distributed' so need a communication here
         if( dest.space().continuous() )
         {
           dest.communicate();
