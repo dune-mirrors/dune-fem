@@ -179,14 +179,25 @@ namespace Dune
         return numOfIterations_;
       }
 
-      void bind ( const OperatorType &op ) { operator_ = &op; preconditioner_ = nullptr; }
+      void bind ( const OperatorType &op )
+      {
+        unbind();
+
+        operator_ = &op;
+        // if internal preconditioner is active set to preconditioner
+        if( precondObj_ )
+        {
+          preconditioner_ = precondObj_.operator->();
+        }
+      }
+
       void bind ( const OperatorType &op, const PreconditionerType& preconditioner )
       {
         operator_ = &op;
         preconditioner_ = &preconditioner;
       }
 
-      void unbind () { operator_ = nullptr; preconditioner_ = nullptr; }
+      void unbind () { operator_ = nullptr; preconditioner_ = nullptr;  numOfIterations_ = 0; }
 
       void setMaxIterations ( unsigned int maxIterations )
       {
