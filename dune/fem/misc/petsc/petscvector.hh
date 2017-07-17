@@ -355,6 +355,16 @@ namespace Dune
         hasBeenModified();
       }
 
+      void clearGhost( )
+      {
+        PetscScalar *array;
+        VecGetArray( ghostedVec_,&array );
+        for( int i=localSize_; i < localSize_ + numGhosts_; i++ )
+        {
+          array[i] = 0.;
+        }
+      }
+
       // debugging; comes in handy to call these 2 methods in gdb
       // doit is only here to prevent the compiler from optimizing these calls away...
       void printGlobal ( bool doit )
