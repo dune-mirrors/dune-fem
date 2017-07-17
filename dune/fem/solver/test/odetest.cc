@@ -50,11 +50,16 @@ private:
 
   struct SpaceDummy {
     typedef GridPartDummy GridPartType;
+    typedef std::array<int, 1 > SlaveDofsType;
+
+    SpaceDummy () : slaveDofs_() { slaveDofs_[ 0 ] = N; }
 
     int size () const { return N; }
 
     const GridPartType &gridPart () const { return gridPart_; }
+    const SlaveDofsType &slaveDofs () const { return slaveDofs_; }
 
+    SlaveDofsType slaveDofs_;
     GridPartType gridPart_;
   };
   typedef Dune::FieldVector<double, N> BaseType;
@@ -106,6 +111,9 @@ public:
     }
     return (*this)[i];
   }
+
+  myDest& dofVector() { return *this; }
+  const myDest& dofVector() const { return *this; }
 
   ConstDofIteratorType dbegin () const { return static_cast< const BaseType & >( *this ).begin(); }
   DofIteratorType dbegin () { return static_cast< BaseType & >( *this ).begin(); }
@@ -323,15 +331,13 @@ struct ImplicitRKFactory
   typedef SpaceOperator  SpaceOperatorType;
   typedef typename SpaceOperatorType::DestinationType DestinationType;
 
-  typedef Dune::Fem::KrylovInverseOperator< DestinationType > LinearInverseOperatorType;
-  //typedef Dune::Fem::GeneralizedMinResInverseOperator< DestinationType >  LinearInverseOperatorType;
-  //typedef Dune::Fem::BiCGStabInverseOperator< DestinationType >  LinearInverseOperatorType;
-  typedef DuneODE::ImplicitRungeKuttaTimeStepControl                           TimeStepControlType;
+  typedef Dune::Fem::KrylovInverseOperator< DestinationType >               LinearInverseOperatorType;
+  typedef DuneODE::ImplicitRungeKuttaTimeStepControl                        TimeStepControlType;
 
-  typedef Dune::Fem::DGHelmholtzOperator< SpaceOperatorType >                  HelmholtzOperatorType;
+  typedef Dune::Fem::DGHelmholtzOperator< SpaceOperatorType >               HelmholtzOperatorType;
 
   typedef Dune::Fem::NewtonInverseOperator< typename HelmholtzOperatorType::JacobianOperatorType,
-                                            LinearInverseOperatorType >        NonlinearInverseOperatorType;
+                                            LinearInverseOperatorType >     NonlinearInverseOperatorType;
 
   // either ImplicitRungeKuttaSolver or ROWRungeKuttaSolver
   typedef Solver< HelmholtzOperatorType, NonlinearInverseOperatorType, TimeStepControlType >   OdeSolverType;

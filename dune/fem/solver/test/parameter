@@ -1,4 +1,4 @@
-#fem.verboserank: 0
+# fem.verboserank: 0
 
 fem.ode.order: 3
 fem.ode.verbose: none # noconv # ode output: none, cfl, full
@@ -14,9 +14,10 @@ fixedTimeStep: 0.002 # when 0 then use dynamic time step
 #fixedTimeStepEocLoopFactor: 1. # fixed time step is scaled with the inverse of this in each eoc loop
 
 # parameter for the implicit solvers
+fem.solver.krylovmethod: bicgstab
 fem.solver.verbose: true
 fem.solver.gmres.restart: 15
-fem.solver.newton.verbose: 0
+fem.solver.newton.verbose: true
 fem.solver.newton.maxlineariterations: 20
 fem.solver.newton.tolerance: 1e-10
 fem.solver.newton.linreduction: 1e-11
