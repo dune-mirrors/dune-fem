@@ -36,5 +36,5 @@ ubuntu:16.04--clang:
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-clang.opts
 
 debian:9--gcc--petsc:
-  image: martinnolte/duneci-petsc
+  image: martinnolte/duneci-petsc:9
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
