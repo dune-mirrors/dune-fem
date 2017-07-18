@@ -1,0 +1,10 @@
+DGF
+Interval
+0 0       # p0
+0.7 1.3   # p1
+10 10     # n
+#
+
+BOUNDARYDOMAIN
+1    -1 -1   30 30
+#BOUNDARYDOMAIN

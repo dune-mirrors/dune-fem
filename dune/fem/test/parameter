@@ -9,7 +9,7 @@ fem.verboserank: -1
 # verbosity of the cg inverse operator
 fem.solver.verbose: 0
 
-# valid are: "cg" , "bicg", "bicgstab", "gmres" 
+# valid are: "cg" , "bicg", "bicgstab", "gmres"
 petsc.kspsolver.method: cg
 
 # valid are:  "none", "asm", "sor", "jacobi", "ilu-n", "lu", "icc", "hypre"

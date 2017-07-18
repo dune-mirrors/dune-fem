@@ -114,10 +114,6 @@ COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;USE_COMPLEX;${DEFAULTFLA
 set( TESTS ${TESTS} l2projection_istl_complex )
 
 
-dune_add_test( NAME test-tupleoperator SOURCES test-tupleoperator.cc
-COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;USE_COMPLEX;${DEFAULTFLAGS}" )
-set( TESTS ${TESTS} test-tupleoperator )
-
 if( HAVE_EIGEN )
   dune_add_test( NAME l2projection_eigen SOURCES l2projection.cc
   COMPILE_DEFINITIONS "POLORDER=1;USE_EIGEN;${DEFAULTFLAGS}" )
@@ -128,15 +124,33 @@ dune_add_test( NAME referencesolution SOURCES referencesolution
 COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_HIERARCHICLEGENDRESPACE;YASPGRID;GRIDDIM=${GRIDDIM}" )
 set( TESTS ${TESTS} referencesolution )
 
-#finally add all pkg flags and local libs to tests
-foreach( test ${TESTS} )
-  target_link_dune_default_libraries( ${test} )
-  dune_target_link_libraries( ${test} dunefem )
-endforeach()
+dune_add_test( NAME test-tupleoperator SOURCES test-tupleoperator.cc
+COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;USE_COMPLEX;${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} test-tupleoperator )
 
 exclude_from_headercheck( dfspace.hh testgrid.hh )
 
 dune_add_test(SOURCES test-intersectionindexset.cc LINK_LIBRARIES dunefem CMAKE_GUARD dune-alugrid_FOUND)
+
+if( HAVE_PETSC )
+  dune_add_test( NAME laplace_petsc SOURCES laplace.cc
+  COMPILE_DEFINITIONS "POLORDER=1;USE_PETSCDISCRETEFUNCTION;${DEFAULTFLAGS}" )
+  set( TESTS ${TESTS} laplace_petsc )
+endif()
+
+dune_add_test( NAME laplace_adaptive SOURCES laplace.cc
+COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} laplace_adaptive )
+
+dune_add_test( NAME laplace_istl SOURCES laplace.cc
+COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;${DEFAULTFLAGS}" )
+set( TESTS ${TESTS} laplace_istl )
+
+if( HAVE_EIGEN )
+  dune_add_test( NAME laplace_eigen SOURCES laplace.cc
+  COMPILE_DEFINITIONS "POLORDER=1;USE_EIGEN;${DEFAULTFLAGS}" )
+  set( TESTS ${TESTS} laplace_eigen )
+endif()
 
 dune_add_test(
   SOURCES test-hierarchicall2projection.cc
@@ -144,3 +158,9 @@ dune_add_test(
   LINK_LIBRARIES dunefem
   CMAKE_GUARD dune-istl_FOUND
 )
+
+#finally add all pkg flags and local libs to tests
+foreach( test ${TESTS} )
+  target_link_dune_default_libraries( ${test} )
+  dune_target_link_libraries( ${test} dunefem )
+endforeach()
