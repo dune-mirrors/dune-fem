@@ -27,6 +27,7 @@ else()
   set( MAXORDER 2 )
 endif()
 
+#[[
 foreach( order RANGE 1 ${MAXORDER} )
   dune_add_test( NAME lagrangeinterpolation_p${order} SOURCES lagrangeinterpolation.cc
                  COMPILE_DEFINITIONS "POLORDER=${order};${DEFAULTFLAGS}" )
@@ -35,7 +36,9 @@ endforeach()
 dune_add_test( NAME lagrangeinterpolation_dynamic SOURCES lagrangeinterpolation.cc
                COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} lagrangeinterpolation_dynamic )
+]]
 
+#[[
 # dgl2projection tests for different discrete functions
 dune_add_test( NAME dgl2projection_adaptive SOURCES dgl2projection.cc
 COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
@@ -74,7 +77,7 @@ set( TESTS ${TESTS} dgl2projection_filtered )
 dune_add_test( NAME dgl2projection_idgridpart SOURCES dgl2projection.cc
 COMPILE_DEFINITIONS "POLORDER=1;USE_IDGRIDPART;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} dgl2projection_idgridpart )
-
+]]
 
 dune_add_test( NAME vtxprojection_adaptive SOURCES vtxprojection.cc
 COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
@@ -89,6 +92,7 @@ COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE}" MPI_RANKS 1 3 4 TIMEOUT 9
 set( TESTS ${TESTS} adaptation )
 
 
+#[[
 if( HAVE_PETSC )
   dune_add_test( NAME l2projection_petsc SOURCES l2projection.cc
   COMPILE_DEFINITIONS "POLORDER=1;USE_PETSCDISCRETEFUNCTION;${DEFAULTFLAGS}" )
@@ -119,6 +123,7 @@ if( HAVE_EIGEN )
   COMPILE_DEFINITIONS "POLORDER=1;USE_EIGEN;${DEFAULTFLAGS}" )
   set( TESTS ${TESTS} l2projection_eigen )
 endif()
+]]
 
 dune_add_test( NAME referencesolution SOURCES referencesolution
 COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_HIERARCHICLEGENDRESPACE;YASPGRID;GRIDDIM=${GRIDDIM}" )
@@ -130,8 +135,9 @@ set( TESTS ${TESTS} test-tupleoperator )
 
 exclude_from_headercheck( dfspace.hh testgrid.hh )
 
-dune_add_test(SOURCES test-intersectionindexset.cc LINK_LIBRARIES dunefem CMAKE_GUARD dune-alugrid_FOUND)
+# dune_add_test(SOURCES test-intersectionindexset.cc LINK_LIBRARIES dunefem CMAKE_GUARD dune-alugrid_FOUND)
 
+#[[
 if( HAVE_PETSC )
   dune_add_test( NAME laplace_petsc SOURCES laplace.cc
   COMPILE_DEFINITIONS "POLORDER=1;USE_PETSCDISCRETEFUNCTION;${DEFAULTFLAGS}" )
@@ -158,6 +164,7 @@ dune_add_test(
   LINK_LIBRARIES dunefem
   CMAKE_GUARD dune-istl_FOUND
 )
+]]
 
 #finally add all pkg flags and local libs to tests
 foreach( test ${TESTS} )
