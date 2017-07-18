@@ -18,6 +18,8 @@
 // include Lagrange discrete function space
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/lagrange.hh>
+#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/function/localfunction/bindable.hh>
 
 #if HAVE_PETSC && defined USE_PETSCDISCRETEFUNCTION
 #include <dune/fem/function/petscdiscretefunction.hh>
@@ -93,35 +95,35 @@ typedef MassOperator< DiscreteFunctionType, LinearOperatorType > MassOperatorTyp
 
 // Function to Project
 // -------------------
-
-template< class FunctionSpace >
-struct Function
+template <class GridPart, class RangeType>
+struct Function : public Dune::Fem::BindableGridFunction< GridPart, RangeType >
 {
-  typedef FunctionSpace FunctionSpaceType;
+  typedef Dune::Fem::BindableGridFunction<GridPart, RangeType > Base;
+  using Base::Base;
 
-  typedef typename FunctionSpaceType::DomainType DomainType;
-  typedef typename FunctionSpaceType::RangeType RangeType;
-  typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-
-  void evaluate ( const DomainType &x, RangeType &value ) const
+  template <class Point>
+  void evaluate ( const Point &p, RangeType &value ) const
   {
+    auto x = Base::global(p);
     value = 1.;
-    for( int k = 0; k < FunctionSpace::dimDomain; ++k )
+    for( int k = 0; k < x.dimension; ++k )
       value *= sin( M_PI * x[k] );
   }
-
-  void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
+  template <class Point>
+  void evaluate ( const Point &p, typename Base::JacobianRangeType &jacobian ) const
   {
-    for( int j = 0; j < FunctionSpace::dimDomain; ++j )
+    auto x = Base::global(p);
+    for( int j = 0; j < x.dimension; ++j )
     {
       // jacobian has only one row, calc j-th column
       jacobian[0][j] = M_PI;
-      for( int k = 0; k < FunctionSpace::dimDomain; ++k )
+      for( int k = 0; k < x.dimension; ++k )
         jacobian[0][j] *= (j == k ? cos( M_PI*x[k] ) : sin( M_PI*x[k] ));
     }
   }
+  unsigned int order() const { return 4; }
+  std::string name() const { return "MyFunction"; } // needed for output
 };
-
 
 // Algorithm
 // ---------
@@ -129,7 +131,7 @@ struct Function
 struct Algorithm
 {
   typedef Dune::FieldVector< double, 2 > ErrorType;
-  typedef Function< SpaceType > FunctionType;
+  typedef Function< GridPartType, SpaceType::RangeType > FunctionType;
 
   explicit Algorithm ( GridType &grid );
   ErrorType operator() ( int step );
@@ -138,24 +140,23 @@ struct Algorithm
   void nextMesh ();
 
 private:
-  GridType &grid_;
+  GridPartType gridPart_;
   FunctionType function_;
 };
 
 inline Algorithm::Algorithm ( GridType &grid )
-: grid_( grid )
+: gridPart_( grid ), function_(gridPart_)
 {
 }
 
 inline void Algorithm :: nextMesh ()
 {
-  grid_.globalRefine( Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
+  Dune::Fem::GlobalRefine::apply(gridPart_.grid(), Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
 }
 
 inline Algorithm::ErrorType Algorithm::operator() ( int step )
 {
-  GridPartType gridPart( grid_ );
-  DiscreteSpaceType space( gridPart );
+  DiscreteSpaceType space( gridPart_ );
   DiscreteFunctionType solution( "solution", space );
 
   // get operator
@@ -163,7 +164,7 @@ inline Algorithm::ErrorType Algorithm::operator() ( int step )
 
   // assemble RHS
   DiscreteFunctionType rhs( "rhs", space );
-  massOperator.assembleRHS( gridFunctionAdapter( function_, gridPart, space.order()+1 ), rhs );
+  massOperator.assembleRHS( function_, rhs );
 
   unsigned long maxIter = space.size();
   maxIter = space.gridPart().comm().sum( maxIter );
@@ -183,16 +184,14 @@ inline Algorithm::ErrorType Algorithm::finalize ( DiscreteFunctionType &solution
 {
   const GridPartType &gridPart = solution.space().gridPart();
   ErrorType error;
-  typedef Dune::Fem::GridFunctionAdapter< FunctionType, GridPartType > GridFunctionType;
 
   const int order = solution.space().order()+1;
-  GridFunctionType gridFunction( "exact solution", function_, gridPart, order );
 
   Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
   Dune::Fem::H1Norm< GridPartType > h1norm( gridPart );
 
-  error[ 0 ] = l2norm.distance( gridFunction, solution );
-  error[ 1 ] = h1norm.distance( gridFunction, solution );
+  error[ 0 ] = l2norm.distance( function_, solution );
+  error[ 1 ] = h1norm.distance( function_, solution );
   std::cout << error <<std::endl;
   return error;
 }
