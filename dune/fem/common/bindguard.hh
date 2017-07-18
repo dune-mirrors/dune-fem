@@ -5,6 +5,8 @@
 #include <tuple>
 #include <utility>
 
+#include <dune/common/typeutilities.hh>
+
 namespace Dune
 {
 

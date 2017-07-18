@@ -6,6 +6,7 @@
 #include <utility>
 
 #include <dune/geometry/type.hh>
+#include <dune/geometry/typeindex.hh>
 
 namespace Dune
 {
@@ -40,7 +41,7 @@ namespace Dune
   template< class T, int dim, class TypeIndex >
   class GeometryTypeMap
   {
-    typedef GeometryTypeMap< T, int dim, TypeIndex > This;
+    typedef GeometryTypeMap< T, dim, TypeIndex > This;
     typedef std::array< T, TypeIndex::size( dim ) > Container;
 
   public:

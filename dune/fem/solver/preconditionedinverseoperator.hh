@@ -2,6 +2,7 @@
 #define DUNE_FEM_SOLVER_PRECONDITIONEDINVERSEOPERATOR_HH
 
 #include <limits>
+#include <memory>
 
 #include <dune/fem/operator/common/operator.hh>
 
@@ -65,7 +66,7 @@ namespace Dune
       }
 
       unsigned int iterations () const { return inverseOperator_.iterations(); }
-      void setMaxIterations ( nuisgned int maxIterations ) const { inverseOperator_.setMaxIterations( maxIterations ); }
+      void setMaxIterations ( unsigned int maxIterations ) const { inverseOperator_.setMaxIterations( maxIterations ); }
 
     private:
       InverseOperator inverseOperator_;
