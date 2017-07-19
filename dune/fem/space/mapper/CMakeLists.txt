@@ -7,6 +7,7 @@ dune_install(
   dynamicnonblockmapper.hh
   exceptions.hh
   genericadaptivedofmapper.hh
+  ghost.hh
   indexsetdofmapper.hh
   localkey.hh
   nonblockmapper.hh
