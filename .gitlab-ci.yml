@@ -35,10 +35,14 @@ before_script:
 #   image: duneci/base:16.04
 #   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-clang.opts
 
-debian:9--gcc--petsc:
+# debian:9--gcc--petsc:
+#   image: martinnolte/duneci-petsc:9
+#   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc.opts
+
+debian:9--gcc-O2--petsc:
   image: martinnolte/duneci-petsc:9
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc-O2.opts
 
-debian:9--gcc--petsc:
+debian:9--gcc-g--petsc:
   image: martinnolte/duneci-petsc:9
   script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc-g.opts
