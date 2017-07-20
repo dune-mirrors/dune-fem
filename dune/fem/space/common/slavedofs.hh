@@ -151,12 +151,6 @@ namespace Dune
         sequence_ = space.sequence();
       }
 
-      //! check if grid has changed and rebuild cache if necessary
-      void rebuild ()
-      {
-        static_assert( AlwaysFalse< ThisType >::value, "don't call rebuild() on slavedof class - use the rebuild method taking a space or use the method slavedofs on the space directly" );
-      }
-
       void rebuild (const SpaceType &space)
       {
         // check whether grid has changed.
