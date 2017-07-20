@@ -100,10 +100,35 @@ namespace Dune
           blockMapper_.mapEach( element, BlockFunctor< Functor >( blockSize(), f ) );
         }
 
+        void map ( const ElementType &element, std::vector< GlobalKeyType > &indices ) const
+        {
+          indices.resize( numDofs( element ) );
+          mapEach( element, [ &indices ] ( int local, GlobalKeyType global ) { indices[ local ] = global; } );
+        }
+
+        void onSubEntity ( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
+        {
+          const SizeType numDofs = blockMapper_.numDofs( element );
+          blockMapper_.onSubEntity( element, i, c, indices );
+          indices.resize( blockSize() * numDofs );
+          for( SizeType i = numDofs; i > 0; )
+          {
+            for( int j = 0; j < blockSize(); ++j )
+              indices[ i*blockSize() + j ] = indices[ i ];
+          }
+        }
+
         template< class Entity, class Functor >
         void mapEachEntityDof ( const Entity &entity, Functor f ) const
         {
           blockMapper_.mapEachEntityDof( entity, BlockFunctor< Functor >( blockSize(), f ) );
+        }
+
+        template< class Entity >
+        void mapEntityDofs ( const Entity &entity, std::vector< GlobalKeyType > &indices ) const
+        {
+          indices.resize( numEntityDofs( entity ) );
+          mapEachEntityDof( entity, [ &indices ] ( int local, GlobalKeyType global ) { indices[ local ] = global; } );
         }
 
         int maxNumDofs () const { return blockSize() * blockMapper_.maxNumDofs(); }

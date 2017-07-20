@@ -37,7 +37,7 @@ namespace Dune
         : vector_( vector )
       {}
 
-      void operator() ( const std::size_t index, DofProxy value )
+      void operator() ( const std::size_t index, DofProxy value ) const
       {
         vector_[ index ].assign( value );
       }
