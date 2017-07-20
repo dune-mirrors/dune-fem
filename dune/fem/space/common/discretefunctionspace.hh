@@ -632,15 +632,6 @@ namespace Dune
     protected:
       typedef typename SlaveDofsType :: SingletonKey SlaveDofsKeyType;
       typedef SingletonList< SlaveDofsKeyType, SlaveDofsType > SlaveDofsProviderType;
-      // deleter class passed to shared_ptr for deleting slave dofs
-      // when pointer does out of scope
-      struct SlaveDofsDeleter
-      {
-        void operator()(SlaveDofsType *slaveDofs)
-        {
-          SlaveDofsProviderType :: removeObject( *slaveDofs );
-        }
-      };
 
     protected:
       GridPartType &gridPart_;
@@ -862,7 +853,7 @@ namespace Dune
         {
           slaveDofs_.reset(
               &( SlaveDofsProviderType :: getObject( SlaveDofsKeyType( this->gridPart(), this->blockMapper() ) ) ),
-              SlaveDofsDeleter() );
+              typename SlaveDofsProviderType::Deleter() );
         }
 
         slaveDofs_->rebuild( asImp() );
