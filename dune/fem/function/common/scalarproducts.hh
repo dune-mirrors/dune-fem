@@ -89,7 +89,7 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
 
       // type of communication manager object which does communication
-      typedef SlaveDofs< DiscreteFunctionSpaceType, MapperType > SlaveDofsType;
+      typedef SlaveDofs< typename DiscreteFunctionSpaceType::GridPartType, MapperType > SlaveDofsType;
 
       typedef RangeFieldType  field_type;
       typedef typename Dune::FieldTraits< RangeFieldType >::real_type real_type;
@@ -125,24 +125,10 @@ namespace Dune
       {
         typedef typename DiscreteFunctionSpaceType::LocalBlockIndices LocalBlockIndices;
 
-        auto &slaveDofs = space().slaveDofs();
-
         RangeFieldType scp = 0;
-
-        const int numSlaves = slaveDofs.size();
-        for( int slave = 0, i = 0 ; slave < numSlaves; ++slave )
-        {
-          const int nextSlave = slaveDofs[ slave ];
-          for(; i < nextSlave; ++i )
-            Hybrid::forEach( LocalBlockIndices(), [ &x, &y, &scp, i ] ( auto &&j ) { scp += x[ i ][ j ] * y[ i ][ j ]; } );
-
-          // skip the slave dof
-          ++i;
-        }
-
-        // do global sum
-        scp = space().gridPart().comm().sum( scp );
-        return scp;
+        for( const auto i : masterDofs( space().slaveDofs() ) )
+          Hybrid::forEach( LocalBlockIndices(), [ &x, &y, &scp, i ] ( auto &&j ) { scp += x[ i ][ j ] * y[ i ][ j ]; } );
+        return space().gridPart().comm().sum( scp );
       }
 
 #if HAVE_DUNE_ISTL
