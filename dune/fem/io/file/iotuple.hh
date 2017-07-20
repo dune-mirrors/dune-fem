@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <tuple>
 
-#include <dune/fem/common/forloop.hh>
+#include <dune/common/hybridutilities.hh>
 
 #include <dune/grid/common/backuprestore.hh>
 
@@ -191,7 +191,8 @@ namespace Dune
 
         // create all data
         Tuple *ret = new Tuple;
-        Fem::ForLoop< CreateData, 0, length-1 >::apply( *grid, *ret );
+        Hybrid::forEach( Std::make_index_sequence< length >{},
+                         [&]( auto i ) { CreateData<i>::apply( *grid, *ret ); });
 
         if( newGrid )
         {
@@ -203,7 +204,8 @@ namespace Dune
         inStream >> time ;
 
         // now read all data
-        Fem::ForLoop< RestoreStream, 0, length-1 >::apply( inStream, *ret );
+        Hybrid::forEach( Std::make_index_sequence< length >{},
+                         [&]( auto i ) { RestoreStream<i>::apply( inStream, *ret ); });
 
         if( Parameter :: verbose() )
           std::cout << "    FINISHED!" << std::endl;
@@ -229,7 +231,8 @@ namespace Dune
         InStreamType inStream( filename );
 
         // read all data now
-        Fem::ForLoop< RestoreStream, 0, length-1 >::apply( inStream, data );
+        Hybrid::forEach( Std::make_index_sequence< length >{},
+                         [&]( auto i ) { RestoreStream<i>::apply( inStream, data ); });
       }
 
       //! write grid and data to given directory
@@ -254,7 +257,8 @@ namespace Dune
         outStream << time;
 
         // write data to stream
-        Fem::ForLoop< OutputStream, 0, length-1 >::apply( outStream, tuple );
+        Hybrid::forEach( Std::make_index_sequence< length >{},
+                         [&]( auto i ) { OutputStream<i>::apply( outStream, tuple ); });
 
         // delete stream created by StreamFactory
         delete &outStream;
@@ -263,24 +267,28 @@ namespace Dune
       template< class Disp, class DINFO >
       static void addToDisplay ( Disp &disp, const DINFO *dinf, double time, Tuple &tuple )
       {
-        Fem::ForLoop< AddToDisplay, 0, length-1 >::apply( disp, dinf, time, tuple );
+        Hybrid::forEach( Std::make_index_sequence< length >{},
+                         [&]( auto i ) { AddToDisplay<i>::apply( disp, dinf, time, tuple ); });
       }
 
       template< class Disp, class DINFO >
       static void addToDisplayOrRemove ( Disp &disp, const DINFO *dinf, double time, Tuple &tuple )
       {
-        Fem::ForLoop< AddToDisplayOrRemove, 0, length-1 >::apply( disp, dinf, time, tuple );
+        Hybrid::forEach( Std::make_index_sequence< length >{},
+                         [&]( auto i ) { AddToDisplayOrRemove<i>::apply( disp, dinf, time, tuple ); });
       }
 
       template< class Disp >
       static void addToDisplay ( Disp &disp, Tuple &tuple )
       {
-        Fem::ForLoop< AddToDisplay, 0, length-1 >::apply( disp, tuple );
+        Hybrid::forEach( Std::make_index_sequence< length >{},
+                         [&]( auto i ) { AddToDisplay<i>::apply( disp, tuple ); });
       }
 
       static void removeData ( Tuple &tuple )
       {
-        Fem::ForLoop< RemoveData, 0, length-1 >::apply( tuple );
+        Hybrid::forEach( Std::make_index_sequence< length >{},
+                         [&]( auto i ) { RemoveData<i>::apply( tuple ); });
       }
     };
 
