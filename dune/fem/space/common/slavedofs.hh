@@ -343,50 +343,6 @@ namespace Dune
       }
     };
 
-    // just for testing should be deprecated in 2.5
-    //! Proxy class to evaluate ScalarProduct
-    //! \note Deprecated class, use space.slaveDofs() instead.
-    template< class DiscreteFunctionSpace >
-    class SlaveDofsProvider
-    {
-    public:
-      //! type of the discrete function space
-      typedef DiscreteFunctionSpace DiscreteFunctionSpaceType;
-
-    private:
-      typedef SlaveDofsProvider< DiscreteFunctionSpaceType > ThisType;
-
-    public:
-      //! type of used mapper
-      typedef typename DiscreteFunctionSpaceType :: BlockMapperType MapperType;
-
-      enum { blockSize = DiscreteFunctionSpaceType :: localBlockSize };
-
-      typedef typename DiscreteFunctionSpaceType :: SlaveDofsType SlaveDofsType;
-
-    protected:
-      const DiscreteFunctionSpaceType &space_;
-
-    public:
-      //! constructor taking space
-      SlaveDofsProvider ( const DiscreteFunctionSpaceType &space ) DUNE_DEPRECATED_MSG( "Use space.slaveDofs() instead." )
-      : space_( space )
-      {}
-
-      //! return discrete function space
-      const DiscreteFunctionSpaceType& space() const
-      {
-        return space_;
-      }
-
-      //! return slaveDofs from space
-      const SlaveDofsType &slaveDofs () const
-      {
-        return space_.slaveDofs();
-      }
-
-    };
-
   //@}
 
   } // end namespace Fem
