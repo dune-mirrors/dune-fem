@@ -11,4 +11,5 @@ dune_install(
   indexsetdofmapper.hh
   localkey.hh
   nonblockmapper.hh
+  parallel.hh
 )
