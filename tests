@@ -3,4 +3,3 @@ tests:
 2) remove all (dg)l2projection and lagrangeinterpolations 23 minutes
 3) only run two ci's (with -O2 -NDEBUG and -g)            30 min
 3) only run two ci's (with -NDEBUG and -g)                20 min
-

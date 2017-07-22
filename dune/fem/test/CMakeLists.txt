@@ -79,6 +79,7 @@ COMPILE_DEFINITIONS "POLORDER=1;USE_IDGRIDPART;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} dgl2projection_idgridpart )
 ]]
 
+#[[
 dune_add_test( NAME vtxprojection_adaptive SOURCES vtxprojection.cc
 COMPILE_DEFINITIONS "POLORDER=1;${DEFAULTFLAGS}" )
 set( TESTS ${TESTS} vtxprojection_adaptive )
@@ -90,7 +91,7 @@ set( TESTS ${TESTS} combinedspaceadaptation )
 dune_add_test( NAME adaptation SOURCES adaptation.cc
 COMPILE_DEFINITIONS "GRIDDIM=3;WORLDDIM=3;${GRIDTYPE}" MPI_RANKS 1 3 4 TIMEOUT 9999999 )
 set( TESTS ${TESTS} adaptation )
-
+]]
 
 #[[
 if( HAVE_PETSC )
@@ -125,6 +126,7 @@ if( HAVE_EIGEN )
 endif()
 ]]
 
+#[[
 dune_add_test( NAME referencesolution SOURCES referencesolution
 COMPILE_DEFINITIONS "POLORDER=1;COUNT_FLOPS;USE_HIERARCHICLEGENDRESPACE;YASPGRID;GRIDDIM=${GRIDDIM}" )
 set( TESTS ${TESTS} referencesolution )
@@ -134,6 +136,7 @@ COMPILE_DEFINITIONS "POLORDER=1;USE_BLOCKVECTORFUNCTION;USE_COMPLEX;${DEFAULTFLA
 set( TESTS ${TESTS} test-tupleoperator )
 
 exclude_from_headercheck( dfspace.hh testgrid.hh )
+]]
 
 # dune_add_test(SOURCES test-intersectionindexset.cc LINK_LIBRARIES dunefem CMAKE_GUARD dune-alugrid_FOUND)
 
@@ -166,8 +169,10 @@ dune_add_test(
 )
 ]]
 
+#[[
 #finally add all pkg flags and local libs to tests
 foreach( test ${TESTS} )
   target_link_dune_default_libraries( ${test} )
   dune_target_link_libraries( ${test} dunefem )
 endforeach()
+]]

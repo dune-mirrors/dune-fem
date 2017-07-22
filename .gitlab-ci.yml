@@ -41,7 +41,7 @@ before_script:
 
 debian:9--gcc-O2--petsc:
   image: martinnolte/duneci-petsc:9
-  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc-O2.opts
+  script: duneci-standard-test --opts=/builds/dune-fem/dune-fem/scripts/opts/ci-gcc-O.opts
 
 debian:9--gcc-g--petsc:
   image: martinnolte/duneci-petsc:9

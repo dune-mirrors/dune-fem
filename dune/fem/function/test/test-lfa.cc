@@ -47,7 +47,7 @@ struct B : public Dune::Fem::BindableGridFunction< GridPart, Dune::Dim<1> >
     ret[0] = xGl[0]+xGl[1];
   }
   template <class Point>
-  void evaluate(const Point &x, typename Base::JacobianRangeType &ret) const
+  void jacobian(const Point &x, typename Base::JacobianRangeType &ret) const
   {
     ret[0][0] = 1.;
     ret[0][1] = 1.;
