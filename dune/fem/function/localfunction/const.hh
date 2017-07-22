@@ -361,12 +361,12 @@ namespace Dune
           template <class Point>
           void jacobian(const Point &x, JacobianRangeType &ret) const
           {
-            gridFunction().evaluate(x,ret);
+            gridFunction().jacobian(x,ret);
           }
           template <class Point>
           void hessian(const Point &x, HessianRangeType &ret) const
           {
-            gridFunction().evaluate(x,ret);
+            gridFunction().hessian(x,ret);
           }
           unsigned int order() const { return gridFunction().order(); }
 

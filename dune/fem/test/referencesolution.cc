@@ -41,7 +41,7 @@ struct ToGridPart : public Dune::Fem::BindableGridFunction< GP, typename GF::Ran
     lgf_.evaluate(x,val);
   }
   template< class Point >
-  void evaluate ( const Point &p, typename Base::JacobianRangeType &val ) const
+  void jacobian ( const Point &p, typename Base::JacobianRangeType &val ) const
   {
     auto x = Dune::Fem::coordinate(p);
     EntityType coarse = Base::entity();

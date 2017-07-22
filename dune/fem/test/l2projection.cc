@@ -110,7 +110,7 @@ struct Function : public Dune::Fem::BindableGridFunction< GridPart, RangeType >
       value *= sin( M_PI * x[k] );
   }
   template <class Point>
-  void evaluate ( const Point &p, typename Base::JacobianRangeType &jacobian ) const
+  void jacobian ( const Point &p, typename Base::JacobianRangeType &jacobian ) const
   {
     auto x = Base::global(p);
     for( int j = 0; j < x.dimension; ++j )
