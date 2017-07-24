@@ -12,4 +12,5 @@ dune_install(
   localkey.hh
   nonblockmapper.hh
   parallel.hh
+  petsc.hh
 )
