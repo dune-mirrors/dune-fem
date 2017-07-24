@@ -36,11 +36,10 @@ namespace Dune
       static const unsigned int blockSize = PetscVectorType::blockSize;
 
       // This is needed to put DofProxies in STL (or STL-like) containers...
-      PetscDofProxy ( PetscScalar s = 0 )
-      : petscVector_( 0 ),
-        blockIndex_( 0 ),
-        indexInBlock_( 0 )
-      {}
+      PetscDofProxy () = default;
+
+      // ???
+      PetscDofProxy ( PetscScalar s ) {}
 
       // this is called by a friend
       PetscDofProxy ( PetscVectorType &petscVector, IndexType blockIndex, PetscInt indexInBlock )
@@ -119,7 +118,7 @@ namespace Dune
       PetscScalar getValue () const
       {
         assert( valid() );
-        PetscInt index = blockSize*petscVector().dofMapping().localSlaveMapping( blockIndex_ ) + indexInBlock_;
+        PetscInt index = blockSize * petscVector().mappers().ghostIndex( blockIndex_ ) + indexInBlock_;
         PetscScalar ret;
         ::Dune::Petsc::VecGetValues( *petscVector().getGhostedVector(), 1, &index, &ret );
         return ret;
@@ -127,7 +126,7 @@ namespace Dune
 
       void setValue ( const PetscScalar &val, InsertMode mode = INSERT_VALUES )
       {
-        PetscInt index = blockSize*petscVector().dofMapping().localSlaveMapping( blockIndex_ ) + indexInBlock_;
+        PetscInt index = blockSize * petscVector().mappers().ghostIndex( blockIndex_ ) + indexInBlock_;
         ::Dune::Petsc::VecSetValue( *( petscVector().getGhostedVector() ), index, val, mode );
         petscVector().hasBeenModified();
       }
@@ -145,10 +144,9 @@ namespace Dune
       }
 
       // data fields
-      PetscVectorType *petscVector_;
-      IndexType blockIndex_;
-      PetscInt indexInBlock_;
-
+      PetscVectorType *petscVector_ = nullptr;
+      IndexType blockIndex_ = 0;
+      PetscInt indexInBlock_ = 0;
     };
 
     template< class Scalar, class PVector >
@@ -171,8 +169,7 @@ namespace Dune
 
     public:
       typedef PVector PetscVectorType;
-      typedef typename PetscVectorType::PetscDofMappingType PetscDofMappingType;
-      typedef typename PetscDofMappingType::IndexType IndexType;
+      typedef PetscInt IndexType;
 
       static const unsigned int blockSize = PetscVectorType::blockSize;
 
@@ -288,10 +285,10 @@ namespace Dune
         indexInBlock_( indexInBlock )
       {
         // blockIndex == size denotes the end iterator
-        assert( blockIndex <= petscVector_.dofMapping().size() );
+        assert( static_cast< std::size_t >( blockIndex ) <= petscVector_.mappers().size() );
 
         // Is this not the end iterator?
-        if( blockIndex < petscVector_.dofMapping().size() )
+        if( static_cast< std::size_t >( blockIndex ) < petscVector_.mappers().size() )
         {
           resetBlockPtr();
         }
@@ -299,8 +296,7 @@ namespace Dune
 
       bool operator== ( const ThisType &other ) const
       {
-        return blockIndex_ == other.blockIndex_ &&
-               indexInBlock_ == other.indexInBlock_;
+        return (blockIndex_ == other.blockIndex_) && (indexInBlock_ == other.indexInBlock_);
       }
 
       bool operator!= ( const ThisType &other ) const { return !this->operator==( other ); };
@@ -322,11 +318,11 @@ namespace Dune
       void increment ()
       {
         ++indexInBlock_;
-        if( static_cast< unsigned int >( indexInBlock_ ) >= DofBlockType::blockSize )
+        if( static_cast< std::size_t >( indexInBlock_ ) >= DofBlockType::blockSize )
         {
           ++blockIndex_;
           indexInBlock_ = 0;
-          if( static_cast< unsigned int >( blockIndex_ ) < petscVector().dofMapping().size() )
+          if( static_cast< std::size_t >( blockIndex_ ) < petscVector().mappers().size() )
             resetBlockPtr();
         }
       }

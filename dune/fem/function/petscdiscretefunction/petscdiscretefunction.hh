@@ -12,10 +12,7 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/functor.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
-#include <dune/fem/misc/petsc/petsccommon.hh>
-#include <dune/fem/misc/petsc/petscdofmappings.hh>
 #include <dune/fem/misc/petsc/petscvector.hh>
-#include <dune/fem/misc/petsc/petscslavedofprovider.hh>
 
 namespace Dune
 {
@@ -72,6 +69,9 @@ namespace Dune
     };
 
 
+
+    // PetscDiscreteFunction
+    // ---------------------
 
     template <class DiscreteFunctionSpace>
     class PetscDiscreteFunction
