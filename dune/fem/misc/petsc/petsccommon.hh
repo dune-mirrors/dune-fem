@@ -282,6 +282,22 @@ namespace Dune
     inline static void VecCreate ( Vec *vec ) { ErrorCheck( ::VecCreate( FEM_PETSC_COMM_DEFAULT, vec ) ); }
     inline static void VecCreateGhost ( PetscInt n, PetscInt N, PetscInt nghost, const PetscInt ghosts[], Vec *vv )
       { ErrorCheck( ::VecCreateGhost( FEM_PETSC_COMM_DEFAULT, n, N, nghost, ghosts, vv ) ); }
+
+    inline static void VecCreateGhostBlock ( PetscInt bs, PetscInt n, PetscInt N, PetscInt nghost, const PetscInt ghosts[], Vec *vv )
+    {
+#if PETSC_VERSION_MAJOR < 3 || (PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR <= 2)
+      std::unique_ptr< PetscInt[] > ghostsCopy( new PetscInt[ nghost * bs ] );
+      for( PetscInt i = 0; i < nghost; ++i )
+      {
+        for( PetscInt j = 0; j < bs; ++j )
+          ghostsCopy[ i*bs + j ] = ghosts[ i ]*bs + j;
+      }
+      VecCreateGhost( n, N, nghost * bs, ghostsCopy.get(), vv );
+#else // #if PETSC_VERSION_MAJOR < 3 || (PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR <= 2)
+      ErrorCheck( ::VecCreateGhostBlock( FEM_PETSC_COMM_DEFAULT, bs, n, N, nghost, ghosts, vv ) );
+#endif // #else // #if PETSC_VERSION_MAJOR < 3 || (PETSC_VERSION_MAJOR == 3 && PETSC_VERSION_MINOR <= 2)
+    }
+
     inline static void VecDestroy ( Vec *v ) {
       #if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 2
         ErrorCheck( ::VecDestroy( *v ) );
