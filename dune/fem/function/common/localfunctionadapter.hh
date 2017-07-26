@@ -528,8 +528,9 @@ namespace Dune
       template< class QuadratureType, class ... Vectors  >
       void evaluateQuadrature( const QuadratureType &quad, Vectors& ... result ) const
       {
+        static_assert( sizeof...( Vectors ) > 0, "evaluateQuadrature needs to be called with at least one vector." );
         std::ignore = std::make_tuple(
-            ( evaluateQuadrature( quad, result, result[ 0 ] ), 1 ) ... );
+            ( evaluateQuadrature( quad, result ), 1 ) ... );
       }
 
       //! init local function
@@ -552,9 +553,9 @@ namespace Dune
         localFunctionImpl().initialize( arg, time );
       }
 
-    protected:
       template< class QuadratureType, class VectorType  >
-      void evaluateQuadrature( const QuadratureType &quad, VectorType &result, const RangeType& ) const
+      auto evaluateQuadrature( const QuadratureType &quad, VectorType &result ) const
+      -> std::enable_if_t< std::is_same< std::decay_t< decltype(result[ 0 ] ) >, RangeType >::value >
       {
         const size_t quadNop = quad.nop();
         for(size_t i = 0; i<quadNop; ++i)
@@ -562,13 +563,15 @@ namespace Dune
       }
 
       template< class QuadratureType, class VectorType  >
-      void evaluateQuadrature( const QuadratureType &quad, VectorType &result, const JacobianRangeType& ) const
+      auto evaluateQuadrature( const QuadratureType &quad, VectorType &result ) const
+      -> std::enable_if_t< std::is_same< std::decay_t< decltype(result[ 0 ] ) >, JacobianRangeType >::value >
       {
         const size_t quadNop = quad.nop();
         for(size_t i = 0; i<quadNop; ++i)
           jacobian( quad[ i ], result[ i ] );
       }
 
+    protected:
       const LocalFuncStorageType& localFunctionImpl() const
       {
         return localFunctionImpl_;

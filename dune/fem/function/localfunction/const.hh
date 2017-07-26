@@ -397,6 +397,29 @@ namespace Dune
             return h;
           }
 
+          template< class Quadrature, class ... Vectors >
+          void evaluateQuadrature ( const Quadrature &quad, Vectors & ... values ) const
+          {
+            static_assert( sizeof...( Vectors ) > 0, "evaluateQuadrature needs to be called with at least one vector." );
+            std::ignore = std::make_tuple( ( evaluateQuadrature( quad, values ), 1 ) ... );
+          }
+
+          template< class Quadrature, class Vector >
+          auto evaluateQuadrature ( const Quadrature &quad, Vector &v ) const
+          -> std::enable_if_t< std::is_same< std::decay_t< decltype(v[ 0 ]) >, RangeType >::value >
+          {
+            for( const auto qp : quad )
+              v[ qp.index() ] = evaluate( qp );
+          }
+
+          template< class Quadrature, class Vector >
+          auto evaluateQuadrature ( const Quadrature &quad, Vector &v ) const
+          -> std::enable_if_t< std::is_same< std::decay_t< decltype(v[ 0 ]) >, JacobianRangeType >::value >
+          {
+            for( const auto qp : quad )
+              v[ qp.index() ] = jacobian( qp );
+          }
+
           void bind ( const EntityType &entity ) { gridFunction().bind( entity ); }
           void unbind () { gridFunction().unbind(); }
 
