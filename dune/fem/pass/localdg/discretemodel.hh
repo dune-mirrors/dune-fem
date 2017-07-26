@@ -3,6 +3,7 @@
 
 #include <cassert>
 
+#include <dune/common/typetraits.hh>
 #include <dune/common/bartonnackmanifcheck.hh>
 
 #include <dune/fem/pass/common/selector.hh>
@@ -260,19 +261,9 @@ namespace Dune
      *         the fluxes and the source term do nothing, so that the user needn't
      *         implement them if not needed.
      *
-     *  \note N1, ..., N9 are passIds on which model depends
+     *  \note I are passIds on which model depends
      */
-    template< class DGDiscreteModelTraits
-              , int N1 = -1
-              , int N2 = -1
-              , int N3 = -1
-              , int N4 = -1
-              , int N5 = -1
-              , int N6 = -1
-              , int N7 = -1
-              , int N8 = -1
-              , int N9 = -1
-              >
+    template< class DGDiscreteModelTraits, int... I >
     class DGDiscreteModelDefault :
       public DGDiscreteModelInterface<DGDiscreteModelTraits>
     {
@@ -302,7 +293,7 @@ namespace Dune
        * in the template declaration of the DGDiscreteModel where one names
        * passIds necessary for this DGDiscreteModel
        */
-      typedef typename Dune::Fem::Selector< N1 , N2 , N3 , N4 , N5 , N6 , N7 , N8 , N9 >::Type Selector;
+      typedef typename Dune::Fem::VariadicSelector< I... >::Type Selector;
 
     public:
       typedef typename BaseType::EntityType EntityType;
@@ -447,28 +438,20 @@ namespace Dune
     };
 
 
+
+
     // DGDiscreteModelDefaultWithInsideOutside
     // ---------------------------------------
 
     //! Default implementation of the DGDiscreteModelInterface where methods for
     //! the fluxes and the source term do nothing, so that the user needn't
     //! implement them if not needed.
-    template <class DGDiscreteModelTraits
-              , int N1 = -1
-              , int N2 = -1
-              , int N3 = -1
-              , int N4 = -1
-              , int N5 = -1
-              , int N6 = -1
-              , int N7 = -1
-              , int N8 = -1
-              , int N9 = -1
-              >
+    template <class DGDiscreteModelTraits, int... I >
     class DGDiscreteModelDefaultWithInsideOutside
-    : public DGDiscreteModelDefault< DGDiscreteModelTraits, N1, N2, N3, N4, N5, N6, N7, N8, N9 >,
+    : public DGDiscreteModelDefault< DGDiscreteModelTraits, I... >,
       public DGAdaptiveDiscreteModel
     {
-      typedef DGDiscreteModelDefault< DGDiscreteModelTraits, N1, N2, N3, N4, N5, N6, N7, N8, N9 > BaseType;
+      typedef DGDiscreteModelDefault< DGDiscreteModelTraits, I... > BaseType;
 
     public:
       typedef typename BaseType::EntityType EntityType;
@@ -544,6 +527,35 @@ namespace Dune
       const EntityType* nb_;
     };
 
+
+    //Deprecation warning for old usage of DGDiscreteModelDefault (and derived class DGDiscreteModelDefaultWithInsideOutside )
+    template <class T,int N1,int N2,int N3,int N4,int N5,int N6,int N7,int N8 >
+    class DGDiscreteModelDefault< T,N1,N2,N3,N4,N5,N6,N7,N8,-1>
+    { static_assert( AlwaysFalse<T>::value,"Deprecated: You can use a variadic number of ids now: Avoid trailing '-1'!" ); };
+    template <class T,int N1,int N2,int N3,int N4,int N5,int N6,int N7 >
+    class DGDiscreteModelDefault< T,N1,N2,N3,N4,N5,N6,N7,-1 >
+    { static_assert( AlwaysFalse<T>::value,"Deprecated: You can use a variadic number of ids now: Avoid trailing '-1'!" ); };
+    template <class T,int N1,int N2,int N3,int N4,int N5,int N6 >
+    class DGDiscreteModelDefault< T,N1,N2,N3,N4,N5,N6,-1 >
+    { static_assert( AlwaysFalse<T>::value,"Deprecated: You can use a variadic number of ids now: Avoid trailing '-1'!" ); };
+    template <class T,int N1,int N2,int N3,int N4,int N5 >
+    class DGDiscreteModelDefault< T,N1,N2,N3,N4,N5,-1 >
+    { static_assert( AlwaysFalse<T>::value,"Deprecated: You can use a variadic number of ids now: Avoid trailing '-1'!" ); };
+    template <class T,int N1,int N2,int N3,int N4 >
+    class DGDiscreteModelDefault< T,N1,N2,N3,N4,-1 >
+    { static_assert( AlwaysFalse<T>::value,"Deprecated: You can use a variadic number of ids now: Avoid trailing '-1'!" ); };
+    template <class T,int N1,int N2,int N3 >
+    class DGDiscreteModelDefault< T,N1,N2,N3,-1 >
+    { static_assert( AlwaysFalse<T>::value,"Deprecated: You can use a variadic number of ids now: Avoid trailing '-1'!" ); };
+    template <class T,int N1,int N2 >
+    class DGDiscreteModelDefault< T,N1,N2,-1 >
+    { static_assert( AlwaysFalse<T>::value,"Deprecated: You can use a variadic number of ids now: Avoid trailing '-1'!" ); };
+    template <class T,int N1 >
+    class DGDiscreteModelDefault< T,N1,-1 >
+    { static_assert( AlwaysFalse<T>::value,"Deprecated: You can use a variadic number of ids now: Avoid trailing '-1'!" ); };
+    template <class T >
+    class DGDiscreteModelDefault< T,-1 >
+    { static_assert( AlwaysFalse<T>::value,"Deprecated: You can use a variadic number of ids now: Avoid trailing '-1'!" ); };
   } // namespace Fem
 
 }  // namespace Dune

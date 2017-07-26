@@ -14,9 +14,50 @@ namespace Dune
   namespace Fem
   {
 
+    template< class Seed, int... I >
+    struct VariadicSelectorBase;
+
+    /**
+     * \brief A helper class that creates a selector tuple from
+     *        given pass ids.
+     *
+     *  \code
+     *  std::tuple< std::integral_constant< int, N1 >, ..., std::integral_constant< int, Nk > >
+     *  \endcode
+     *
+     * \note This version does not erase -1 entries.
+     */
+    template< class... Args, int... I >
+    struct VariadicSelectorBase< std::tuple< Args... >, I... >
+    {
+      //! \brief tuple consisting of std::integral_constant< int, N_i >
+      typedef typename JoinTuples< std::tuple<Args...>, std::tuple< std::integral_constant<int,I>...> >::type Type;
+
+      // \brief number of elements in selector
+      static const int size = std::tuple_size< Type >::value;
+
+      //! \brief check, whether integer N is contained in selector
+      template< int N >
+      struct Contains
+      {
+        static const bool v = ( Dune::ContainsType< Type, std::integral_constant< int, N > >::value );
+      };
+
+      VariadicSelectorBase() = delete;
+    };
+
+    /**
+     * \brief A helper class that creates a selector tuple from
+     *        given pass ids.
+     */
+    template< int... I >
+    struct VariadicSelector : public VariadicSelectorBase< std::tuple<>, I... >
+    {};
+
+
+
     // ElementTuple
     // ------------
-
     /*
      * \brief A helper class that transforms a number of integers to a tuple.
      *        Result type is:
