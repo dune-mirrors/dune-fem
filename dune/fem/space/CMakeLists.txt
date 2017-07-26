@@ -1,11 +1,11 @@
 dune_install(brezzidouglasmarini.hh combinedspace.hh discontinuousgalerkin.hh finitevolume.hh
-             fourier.hh lagrange.hh padaptivespace.hh rannacherturek.hh)
+             fourier.hh lagrange.hh padaptivespace.hh rannacherturek.hh remapped.hh)
 
 dune_add_subdirs(basisfunctionset combinedspace common
                  discontinuousgalerkin finitevolume
                  fourier lagrange mapper
                  padaptivespace rannacherturek shapefunctionset
-                 localfiniteelement
+                 localfiniteelement remapped
                  test)
 
 dune_add_library(space OBJECT
