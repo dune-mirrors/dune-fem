@@ -8,6 +8,8 @@
 // #include <dune/grid/io/file/dgfparser/dgfgridtype.hh>
 static const int dimw = Dune::GridSelector::dimworld;
 
+#include <dune/common/exceptions.hh>
+
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
@@ -41,6 +43,7 @@ const int polOrd = POLORDER;
 //***********************************************************************
 typedef Dune::GridSelector::GridType GridType;
 
+//typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
 typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
 typedef Dune::Fem::FunctionSpace< GridType::ctype, double, dimw, 4 > FuncSpace;
 typedef Dune::Fem::DiscontinuousGalerkinSpace< FuncSpace, GridPartType, polOrd > DiscreteFunctionSpaceType;
@@ -84,7 +87,9 @@ int main ( int argc, char **argv )
     Dune::Fem::Parameter::append( "parameter" );
     ExactSolution f;
 
-    typedef std::tuple< DiscreteFunctionType * > DataTuple;
+    double error = 0.0;
+
+    // typedef std::tuple< DiscreteFunctionType * > DataTuple;
 
     // do normal computations
     {
@@ -96,32 +101,55 @@ int main ( int argc, char **argv )
       GridPartType gridPart( grid );
       DiscreteFunctionSpaceType space( gridPart );
       DiscreteFunctionType solution( "sol", space );
-      auto gridFunction = Dune::Fem::gridFunctionAdapter( f, gridPart, 4 );
+
+      // add solution to persistence manager to force backup
+      Dune::Fem::persistenceManager << solution;
+
+      auto gridFunction = Dune::Fem::gridFunctionAdapter( f, gridPart, 14 );
       Dune::Fem::interpolate( gridFunction, solution );
+      Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
+      error = l2norm.distance( gridFunction, solution );
+
+      std::cout << "Initial L2-error: " << error << std::endl;
 
       std::cout << "Writing checkpoint ... "<<std::endl;
       // write checkpoint
-      DataTuple data = std::make_tuple( &solution );
-      Dune::Fem::CheckPointer< GridType, DataTuple >::writeSingleCheckPoint( grid, data, 0, true );
+      double time = 0;
+      Dune::Fem::CheckPointer< GridType >::writeSingleCheckPoint( grid, time, true );
     }
+
+    // reset PersistenceManager to initial state (otherwise the restore will not work)
+    Dune::Fem::persistenceManager.reset();
 
     // restore from checkpoint
     {
       std::cout <<"Reading Grid from checkpoint ... "<< std::endl;
       std::string checkpointfile = "data/checkpoint";
-      Dune::GridPtr< GridType > gridPtr( Dune::Fem::CheckPointer< GridType, DataTuple >::restoreGrid( checkpointfile ) );
+      Dune::GridPtr< GridType > gridPtr( Dune::Fem::CheckPointer< GridType >::restoreGrid( checkpointfile ) );
       GridType &grid = *gridPtr;
 
-
       std::cout <<"Reading Data from checkpoint ... "<< std::endl;
-      DataTuple data;
-      Dune::Fem::CheckPointer< GridType, DataTuple >::restoreData( grid, data, checkpointfile );
-      DiscreteFunctionType &solution = *std::get< 0 >( data );
-      GridPartType &gridPart = solution.space().gridPart();
+      GridPartType gridPart( grid );
+      DiscreteFunctionSpaceType space( gridPart );
+      DiscreteFunctionType solution ( "sol", space );
+      solution.clear();
 
+      // register solution to persistence manager
+      Dune::Fem::persistenceManager << solution;
+
+      Dune::Fem::CheckPointer< GridType >::restoreData( grid, checkpointfile );
+
+      std::cout <<"Check L2-norm ... "<< std::endl;
       Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
       auto gridFunction = Dune::Fem::gridFunctionAdapter( f, gridPart, 14 );
-      std::cout << l2norm.distance( gridFunction, solution ) <<std::endl;
+      const double errorNew =  l2norm.distance( gridFunction, solution );
+      const double diff = std::abs( error - errorNew );
+      std::cout << errorNew << std::endl;
+      std::cout << "Difference: " << std::scientific << diff << std::endl;
+      if( diff > 1e-12 )
+        DUNE_THROW(Dune::IOError,"restored solution yields wrong L2-error");
+
+      std::cout << "Successful!"<<std::endl;
     }
 
     return 0;
