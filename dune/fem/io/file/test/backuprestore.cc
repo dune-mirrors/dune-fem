@@ -139,7 +139,7 @@ int main ( int argc, char **argv )
     // restore from checkpoint
     {
       std::cout <<"Reading Grid from checkpoint ... "<< std::endl;
-      std::string checkpointfile = "data/checkpoint";
+      std::string checkpointfile = "./data/checkpoint";
       Dune::GridPtr< GridType > gridPtr( Dune::Fem::CheckPointer< GridType >::restoreGrid( checkpointfile ) );
       GridType &grid = *gridPtr;
 
