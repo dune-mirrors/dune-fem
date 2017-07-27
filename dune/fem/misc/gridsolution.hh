@@ -75,6 +75,7 @@ namespace Dune
       {
         // store grid pointer
         gridPtr_ = grid_;
+        DUNE_THROW(NotImplemented," GridSolution needs to be switched to DataWriter");
         // restore data from checkpoint
         CheckPointerType :: restoreData( grid(), data_, checkPointFile, rank );
       }
@@ -128,10 +129,11 @@ namespace Dune
                                         const double time,
                                         const int writeStep )
       {
-        typedef std::tuple< const DiscreteFunctionType* > OutputTuple;
-        OutputTuple data( &discreteFunction );
+        DUNE_THROW(NotImplemented," writeDiscreteFunction needs to be switched to DataWriter");
+        //typedef std::tuple< const DiscreteFunctionType* > OutputTuple;
+        //OutputTuple data( &discreteFunction );
         // false means don't backup persistent objects
-        CheckPointerType :: writeSingleCheckPoint( grid, data, time, false, writeStep );
+        // CheckPointerType :: writeSingleCheckPoint( grid, data, time, false, writeStep );
       }
 
       const DiscreteFunctionType& discreteFunction() const { return discreteFunction_ ; }
