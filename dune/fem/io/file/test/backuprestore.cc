@@ -46,8 +46,12 @@ typedef Dune::GridSelector::GridType GridType;
 //typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
 typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
 typedef Dune::Fem::FunctionSpace< GridType::ctype, double, dimw, 4 > FuncSpace;
-typedef Dune::Fem::DiscontinuousGalerkinSpace< FuncSpace, GridPartType, polOrd > DiscreteFunctionSpaceType;
-typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+typedef Dune::Fem::DiscontinuousGalerkinSpace< FuncSpace, GridPartType, polOrd > DGSpaceType;
+typedef Dune::Fem::DiscontinuousGalerkinSpace< FuncSpace, GridPartType, polOrd+1 > DGSpaceType2;
+typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FuncSpace, GridPartType, polOrd+1 > LagrangeSpaceType;
+typedef Dune::Fem::AdaptiveDiscreteFunction< DGSpaceType > DiscreteFunctionType1;
+typedef Dune::Fem::AdaptiveDiscreteFunction< DGSpaceType2 > DiscreteFunctionType2;
+typedef Dune::Fem::AdaptiveDiscreteFunction< LagrangeSpaceType > DiscreteFunctionType3;
 
 // the exact solution to the problem for EOC calculation
 struct ExactSolution
@@ -87,7 +91,7 @@ int main ( int argc, char **argv )
     Dune::Fem::Parameter::append( "parameter" );
     ExactSolution f;
 
-    double error = 0.0;
+    std::vector<double> error (3, 0.0);
 
     // typedef std::tuple< DiscreteFunctionType * > DataTuple;
 
@@ -99,18 +103,29 @@ int main ( int argc, char **argv )
       grid.globalRefine( step );
 
       GridPartType gridPart( grid );
-      DiscreteFunctionSpaceType space( gridPart );
-      DiscreteFunctionType solution( "sol", space );
+      DGSpaceType space1( gridPart );
+      DGSpaceType2 space2( gridPart );
+      LagrangeSpaceType space3( gridPart );
+
+      DiscreteFunctionType1 solution1( "sol1", space1 );
+      DiscreteFunctionType2 solution2( "sol2", space2 );
+      DiscreteFunctionType3 solution3( "sol3", space3 );
 
       // add solution to persistence manager to force backup
-      Dune::Fem::persistenceManager << solution;
+      Dune::Fem::persistenceManager << solution1;
+      //Dune::Fem::persistenceManager << solution2;
+      //Dune::Fem::persistenceManager << solution3;
 
       auto gridFunction = Dune::Fem::gridFunctionAdapter( f, gridPart, 14 );
-      Dune::Fem::interpolate( gridFunction, solution );
+      Dune::Fem::interpolate( gridFunction, solution1 );
+      Dune::Fem::interpolate( gridFunction, solution2 );
+      Dune::Fem::interpolate( gridFunction, solution3 );
       Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
-      error = l2norm.distance( gridFunction, solution );
+      error[0] = l2norm.distance( gridFunction, solution1 );
+      error[1] = l2norm.distance( gridFunction, solution2 );
+      error[2] = l2norm.distance( gridFunction, solution3 );
 
-      std::cout << "Initial L2-error: " << error << std::endl;
+      std::cout << "Initial L2-error: " << error[0] << " " << error[1] << " " << error[2] << std::endl;
 
       std::cout << "Writing checkpoint ... "<<std::endl;
       // write checkpoint
@@ -130,24 +145,40 @@ int main ( int argc, char **argv )
 
       std::cout <<"Reading Data from checkpoint ... "<< std::endl;
       GridPartType gridPart( grid );
-      DiscreteFunctionSpaceType space( gridPart );
-      DiscreteFunctionType solution ( "sol", space );
-      solution.clear();
+      DGSpaceType space1( gridPart );
+      DGSpaceType2 space2( gridPart );
+      LagrangeSpaceType space3( gridPart );
 
-      // register solution to persistence manager
-      Dune::Fem::persistenceManager << solution;
+      DiscreteFunctionType1 solution1( "sol1", space1 );
+      DiscreteFunctionType2 solution2( "sol2", space2 );
+      DiscreteFunctionType3 solution3( "sol3", space3 );
+
+      // add solution to persistence manager to force backup
+      Dune::Fem::persistenceManager << solution1;
+      //Dune::Fem::persistenceManager << solution2;
+      //Dune::Fem::persistenceManager << solution3;
+
+      solution1.clear();
+      solution2.clear();
+      solution3.clear();
 
       Dune::Fem::CheckPointer< GridType >::restoreData( grid, checkpointfile );
 
       std::cout <<"Check L2-norm ... "<< std::endl;
       Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
       auto gridFunction = Dune::Fem::gridFunctionAdapter( f, gridPart, 14 );
-      const double errorNew =  l2norm.distance( gridFunction, solution );
-      const double diff = std::abs( error - errorNew );
-      std::cout << errorNew << std::endl;
-      std::cout << "Difference: " << std::scientific << diff << std::endl;
-      if( diff > 1e-12 )
-        DUNE_THROW(Dune::IOError,"restored solution yields wrong L2-error");
+      std::vector<double> errorNew( 3, 0.0 );
+      errorNew[0] =  l2norm.distance( gridFunction, solution1 );
+      errorNew[1] =  l2norm.distance( gridFunction, solution2 );
+      errorNew[2] =  l2norm.distance( gridFunction, solution3 );
+      for( int i=0; i<1; ++i )
+      {
+        const double diff = std::abs( error[i] - errorNew[i] );
+        std::cout << errorNew[i] << std::endl;
+        std::cout << "Difference: " << std::scientific << diff << std::endl;
+        if( diff > 1e-12 )
+          DUNE_THROW(Dune::IOError,"restored solution yields wrong L2-error");
+      }
 
       std::cout << "Successful!"<<std::endl;
     }
