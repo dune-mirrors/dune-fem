@@ -113,6 +113,8 @@ int main ( int argc, char **argv )
 
       // add solution to persistence manager to force backup
       Dune::Fem::persistenceManager << solution1;
+
+      // TODO: fix multiple solution backup
       //Dune::Fem::persistenceManager << solution2;
       //Dune::Fem::persistenceManager << solution3;
 
@@ -138,8 +140,9 @@ int main ( int argc, char **argv )
 
     // restore from checkpoint
     {
+      std::string checkpointfile( DATA_PATH );
+      checkpointfile += "/data/checkpoint";
       std::cout <<"Reading Grid from checkpoint ... "<< std::endl;
-      std::string checkpointfile = "./data/checkpoint";
       Dune::GridPtr< GridType > gridPtr( Dune::Fem::CheckPointer< GridType >::restoreGrid( checkpointfile ) );
       GridType &grid = *gridPtr;
 
