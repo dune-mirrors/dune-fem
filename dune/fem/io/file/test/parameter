@@ -5,3 +5,4 @@ fem.io.grapedisplay: 0
 fem.io.outputformat: 2
 fem.prefix: ./data
 fem.io.datafileprefix: sol
+fem.io.checkpointfile: sol
