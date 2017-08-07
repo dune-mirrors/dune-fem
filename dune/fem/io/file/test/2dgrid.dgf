@@ -5,6 +5,10 @@ Interval
 8 8   #nx ny nz
 #
 
+GridParameter
+overlap 1
+#
+
 BOUNDARYDOMAIN
 1    -1 -1   30 30
 #BOUNDARYDOMAIN

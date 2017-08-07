@@ -629,6 +629,7 @@ namespace Dune
         std::string path = restorePersistentData( );
 
         // make data consecutive at the end of the restore process
+        // and communicate data
         DofManagerType :: instance( grid_ ).compress();
       }
 

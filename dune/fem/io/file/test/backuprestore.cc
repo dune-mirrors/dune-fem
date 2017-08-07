@@ -45,10 +45,10 @@ typedef Dune::GridSelector::GridType GridType;
 
 //typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
 typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
-typedef Dune::Fem::FunctionSpace< GridType::ctype, double, dimw, 4 > FuncSpace;
+typedef Dune::Fem::FunctionSpace< GridType::ctype, double, dimw, dimw+2 > FuncSpace;
 typedef Dune::Fem::DiscontinuousGalerkinSpace< FuncSpace, GridPartType, polOrd > DGSpaceType;
 typedef Dune::Fem::DiscontinuousGalerkinSpace< FuncSpace, GridPartType, polOrd+1 > DGSpaceType2;
-typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FuncSpace, GridPartType, polOrd+1 > LagrangeSpaceType;
+typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FuncSpace, GridPartType, polOrd > LagrangeSpaceType;
 typedef Dune::Fem::AdaptiveDiscreteFunction< DGSpaceType > DiscreteFunctionType1;
 typedef Dune::Fem::AdaptiveDiscreteFunction< DGSpaceType2 > DiscreteFunctionType2;
 typedef Dune::Fem::AdaptiveDiscreteFunction< LagrangeSpaceType > DiscreteFunctionType3;
@@ -91,9 +91,7 @@ int main ( int argc, char **argv )
     Dune::Fem::Parameter::append( "parameter" );
     ExactSolution f;
 
-    std::vector<double> error (3, 0.0);
-
-    // typedef std::tuple< DiscreteFunctionType * > DataTuple;
+    std::vector<double> error;
 
     // do normal computations
     {
@@ -115,21 +113,28 @@ int main ( int argc, char **argv )
       Dune::Fem::persistenceManager << solution1;
 
       // TODO: fix multiple solution backup
-      //Dune::Fem::persistenceManager << solution2;
-      //Dune::Fem::persistenceManager << solution3;
+      Dune::Fem::persistenceManager << solution2;
+      Dune::Fem::persistenceManager << solution3;
 
-      auto gridFunction = Dune::Fem::gridFunctionAdapter( f, gridPart, 14 );
+      auto gridFunction = Dune::Fem::gridFunctionAdapter( f, gridPart, 5 );
       Dune::Fem::interpolate( gridFunction, solution1 );
       Dune::Fem::interpolate( gridFunction, solution2 );
       Dune::Fem::interpolate( gridFunction, solution3 );
       Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
-      error[0] = l2norm.distance( gridFunction, solution1 );
-      error[1] = l2norm.distance( gridFunction, solution2 );
-      error[2] = l2norm.distance( gridFunction, solution3 );
+      error.push_back( l2norm.distance( gridFunction, solution1 ) );
+      error.push_back( l2norm.distance( gridFunction, solution2 ) );
+      error.push_back( l2norm.distance( gridFunction, solution3 ) );
 
-      std::cout << "Initial L2-error: " << error[0] << " " << error[1] << " " << error[2] << std::endl;
+      if( Dune::Fem::Parameter::verbose() )
+      {
+        std::cout << "Initial L2-error: ";
+        for( size_t i=0; i<error.size() ; ++i )
+          std::cout << error[i] << " ";
+        std::cout << std::endl;
 
-      std::cout << "Writing checkpoint ... "<<std::endl;
+        std::cout << "Writing checkpoint ... "<<std::endl;
+      }
+
       // write checkpoint
       double time = 0;
       Dune::Fem::CheckPointer< GridType >::writeSingleCheckPoint( grid, time, true );
@@ -142,11 +147,18 @@ int main ( int argc, char **argv )
     {
       std::string checkpointfile( DATA_PATH );
       checkpointfile += "/data/checkpoint";
-      std::cout <<"Reading Grid from checkpoint ... "<< std::endl;
+      if( Dune::Fem::Parameter::verbose() )
+      {
+        std::cout <<"Reading Grid from checkpoint ... "<< std::endl;
+      }
       Dune::GridPtr< GridType > gridPtr( Dune::Fem::CheckPointer< GridType >::restoreGrid( checkpointfile ) );
       GridType &grid = *gridPtr;
 
-      std::cout <<"Reading Data from checkpoint ... "<< std::endl;
+      if( Dune::Fem::Parameter::verbose() )
+      {
+        std::cout <<"Reading Data from checkpoint ... "<< std::endl;
+      }
+
       GridPartType gridPart( grid );
       DGSpaceType space1( gridPart );
       DGSpaceType2 space2( gridPart );
@@ -158,8 +170,8 @@ int main ( int argc, char **argv )
 
       // add solution to persistence manager to force backup
       Dune::Fem::persistenceManager << solution1;
-      //Dune::Fem::persistenceManager << solution2;
-      //Dune::Fem::persistenceManager << solution3;
+      Dune::Fem::persistenceManager << solution2;
+      Dune::Fem::persistenceManager << solution3;
 
       solution1.clear();
       solution2.clear();
@@ -167,23 +179,36 @@ int main ( int argc, char **argv )
 
       Dune::Fem::CheckPointer< GridType >::restoreData( grid, checkpointfile );
 
-      std::cout <<"Check L2-norm ... "<< std::endl;
+      solution1.communicate();
+      solution2.communicate();
+      solution3.communicate();
+
       Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
-      auto gridFunction = Dune::Fem::gridFunctionAdapter( f, gridPart, 14 );
-      std::vector<double> errorNew( 3, 0.0 );
-      errorNew[0] =  l2norm.distance( gridFunction, solution1 );
-      errorNew[1] =  l2norm.distance( gridFunction, solution2 );
-      errorNew[2] =  l2norm.distance( gridFunction, solution3 );
-      for( int i=0; i<1; ++i )
+      auto gridFunction = Dune::Fem::gridFunctionAdapter( f, gridPart, 5 );
+      std::vector<double> errorNew;
+      errorNew.push_back( l2norm.distance( gridFunction, solution1 ) );
+      errorNew.push_back( l2norm.distance( gridFunction, solution2 ) );
+      // errorNew.push_back( l2norm.distance( gridFunction, solution3 ) );
+
+      if( Dune::Fem::Parameter::verbose() )
+      {
+        std::cout <<"Check L2-norm ... "<< std::endl;
+      }
+      for( size_t i=0; i<errorNew.size(); ++i )
       {
         const double diff = std::abs( error[i] - errorNew[i] );
-        std::cout << errorNew[i] << std::endl;
-        std::cout << "Difference: " << std::scientific << diff << std::endl;
+        if( Dune::Fem::Parameter::verbose() )
+        {
+          std::cout << errorNew[i] << std::endl;
+          std::cout << "Difference: " << std::scientific << diff << std::endl;
+        }
+
         if( diff > 1e-12 )
           DUNE_THROW(Dune::IOError,"restored solution yields wrong L2-error");
       }
 
-      std::cout << "Successful!"<<std::endl;
+      if( Dune::Fem::MPIManager::rank() == 0 )
+        std::cout << "Successful!"<<std::endl;
     }
 
     return 0;
