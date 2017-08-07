@@ -188,6 +188,7 @@ int main ( int argc, char **argv )
       std::vector<double> errorNew;
       errorNew.push_back( l2norm.distance( gridFunction, solution1 ) );
       errorNew.push_back( l2norm.distance( gridFunction, solution2 ) );
+      // TODO: Fix dofcompression and restore for LagrangeSpace
       // errorNew.push_back( l2norm.distance( gridFunction, solution3 ) );
 
       if( Dune::Fem::Parameter::verbose() )
