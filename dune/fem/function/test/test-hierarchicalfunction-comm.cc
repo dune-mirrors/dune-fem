@@ -7,18 +7,21 @@
 
 #include <dune/geometry/dimension.hh>
 
+#include <dune/grid/common/partitionset.hh>
+#include <dune/grid/common/rangegenerators.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 
 #include <dune/fem/common/hybrid.hh>
 #include <dune/fem/function/hierarchical.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
+#include <dune/fem/function/localfunction/const.hh>
+#include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/discontinuousgalerkin/lagrange.hh>
 #include <dune/fem/space/discontinuousgalerkin/space.hh>
 #include <dune/fem/space/discontinuousgalerkin/tuple.hh>
 #include <dune/fem/space/lagrange.hh>
-#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/test/exactsolution.hh>
 
 
@@ -74,6 +77,7 @@ template< class GridPart >
 using LagrangeSpace = Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpace< GridPart, GridPart::dimensionworld+1 >, GridPart, 2 >;
 
 
+
 // equals
 // ------
 
@@ -86,6 +90,35 @@ bool equals ( const T &u, const T &v )
   w -= v;
   return (w.two_norm2() < 128 * std::numeric_limits< real_type >::epsilon());
 }
+
+
+
+// interpolateOnly
+// ---------------
+
+template< class GridFunction, class DiscreteFunction >
+void interpolateOnly ( const GridFunction &u, DiscreteFunction &v )
+{
+  v.clear();
+
+  Dune::Fem::ConstLocalFunction< GridFunction > uLocal( u );
+  Dune::Fem::TemporaryLocalFunction< typename DiscreteFunction::DiscreteFunctionSpaceType > vLocal( v.space() );
+
+  // iterate over selected partition
+  for( const auto entity : elements( v.gridPart(), Dune::Partitions::all ) )
+  {
+    // initialize u, v to entity
+    uLocal.init( entity );
+    vLocal.init( entity );
+
+    // perform local interpolation
+    v.space().interpolation( entity )( uLocal, vLocal.localDofVector() );
+
+    // write interpolation into global DoF vector
+    v.setLocalDofs( entity, vLocal.localDofVector() );
+  }
+}
+
 
 
 // performTest
@@ -106,7 +139,7 @@ void performTest ( const DiscreteFunctionSpace &dfSpace )
   Dune::Fem::ExactSolution< FunctionSpace< GridPartType, GridPartType::dimensionworld+1 > > uExact;
   const auto uGridExact = gridFunctionAdapter( "exact solution", uExact, dfSpace.gridPart(), 3 );
   DiscreteFunctionType u( "solution", dfSpace );
-  interpolate( uGridExact, u );
+  interpolateOnly( uGridExact, u );
 
   // copy discrete function and clear slave dofs
   DiscreteFunctionType w( u );
