@@ -1,0 +1,161 @@
+#include <config.h>
+
+#include <sstream>
+#include <string>
+
+#include <dune/common/exceptions.hh>
+
+#include <dune/geometry/dimension.hh>
+
+#include <dune/grid/io/file/dgfparser/dgfparser.hh>
+
+#include <dune/fem/common/hybrid.hh>
+#include <dune/fem/function/hierarchical.hh>
+#include <dune/fem/function/common/gridfunctionadapter.hh>
+#include <dune/fem/gridpart/leafgridpart.hh>
+#include <dune/fem/misc/mpimanager.hh>
+#include <dune/fem/space/discontinuousgalerkin/lagrange.hh>
+#include <dune/fem/space/discontinuousgalerkin/space.hh>
+#include <dune/fem/space/discontinuousgalerkin/tuple.hh>
+#include <dune/fem/space/lagrange.hh>
+#include <dune/fem/space/common/interpolate.hh>
+#include <dune/fem/test/exactsolution.hh>
+
+
+// dgfUnitCube
+// -----------
+
+inline static std::string dgfUnitCube ( int dimWorld, int cells, int overlap = 1 )
+{
+  std::string dgf = "DGF\nINTERVAL\n";
+  for( int i = 0; i < dimWorld; ++i )
+    dgf += " 0";
+  dgf += "\n";
+  for( int i = 0; i < dimWorld; ++i )
+    dgf += " 1";
+  dgf += "\n";
+  for( int i = 0; i < dimWorld; ++i )
+    dgf += (" " + std::to_string( cells ));
+  dgf += "\n#\n\n";
+  dgf += "GRIDPARAMETER\n";
+  dgf += "OVERLAP " + std::to_string( overlap ) + "\n";
+  dgf += "#\n";
+  return dgf;
+}
+
+
+
+// FunctionSpace
+// -------------
+
+template< class GridPart, int dimRange >
+using FunctionSpace = Dune::Fem::GridFunctionSpace< GridPart, Dune::Dim< dimRange > >;
+
+
+
+// TaylorHoodDGSpace
+// -----------------
+
+template< class GridPart >
+using VelocityDGSpace = Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpace< GridPart, GridPart::dimensionworld >, GridPart, 2 >;
+
+template< class GridPart >
+using PressureDGSpace = Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpace< GridPart, 1 >, GridPart, 1 >;
+
+template< class GridPart >
+using TaylorHoodDGSpace = Dune::Fem::TupleDiscontinuousGalerkinSpace< VelocityDGSpace< GridPart >, PressureDGSpace< GridPart > >;
+
+
+
+// LagrangeSpace
+// -------------
+
+template< class GridPart >
+using LagrangeSpace = Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpace< GridPart, GridPart::dimensionworld+1 >, GridPart, 2 >;
+
+
+// equals
+// ------
+
+template< class T >
+bool equals ( const T &u, const T &v )
+{
+  typedef std::decay_t< decltype( std::declval< const T & >().two_norm2() ) > real_type;
+
+  T w( u );
+  w -= v;
+  return (w.two_norm2() < 128 * std::numeric_limits< real_type >::epsilon());
+}
+
+
+// performTest
+// -----------
+
+template< class DiscreteFunctionSpace >
+void performTest ( const DiscreteFunctionSpace &dfSpace )
+{
+  // some stupid type defs
+  typedef Dune::Fem::HierarchicalDiscreteFunction< DiscreteFunctionSpace > DiscreteFunctionType;
+
+  typedef typename DiscreteFunctionSpace::GridPartType GridPartType;
+  typedef typename DiscreteFunctionSpace::LocalBlockIndices BlockIndices;
+
+  typedef typename DiscreteFunctionType::DofType DofType;
+
+  // interpolate a function
+  Dune::Fem::ExactSolution< FunctionSpace< GridPartType, GridPartType::dimensionworld+1 > > uExact;
+  const auto uGridExact = gridFunctionAdapter( "exact solution", uExact, dfSpace.gridPart(), 3 );
+  DiscreteFunctionType u( "solution", dfSpace );
+  interpolate( uGridExact, u );
+
+  // copy discrete function and clear slave dofs
+  DiscreteFunctionType w( u );
+  for( const auto &slaveDof : dfSpace.slaveDofs() )
+    Dune::Hybrid::forEach( BlockIndices(), [ &w, &slaveDof ] ( auto &&j ) { w.dofVector()[ slaveDof ][ j ] = DofType( 0 ); } );
+
+  // make sure u and w differ
+  if( equals( u.dofVector().array(), w.dofVector().array() ) )
+    DUNE_THROW( Dune::InvalidStateException, "Unique representation does not differ from consistent representation." );
+
+  // communicate w
+  w.communicate();
+
+  // now u and w should not differ
+  if( !equals( u.dofVector().array(), w.dofVector().array() ) )
+    DUNE_THROW( Dune::InvalidStateException, "Functions differ after communication." );
+}
+
+
+
+// main
+// ----
+
+int main ( int argc, char **argv )
+try
+{
+  Dune::Fem::MPIManager::initialize( argc, argv );
+
+  // construct unit cube
+  typedef typename Dune::GridSelector::GridType GridType;
+  std::istringstream dgf( dgfUnitCube( GridType::dimensionworld, 8 ) );
+  Dune::GridPtr< GridType > grid( dgf );
+
+  // create leaf grid part
+  typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
+  GridPartType gridPart( *grid );
+
+  // test Taylor-Hood DG space
+  TaylorHoodDGSpace< GridPartType > taylorHoodDGSpace( gridPart );
+  performTest( taylorHoodDGSpace );
+
+  // test Lagrange space
+  LagrangeSpace< GridPartType > lagrangeSpace( gridPart );
+  performTest( lagrangeSpace );
+
+  return 0;
+}
+catch( const Dune::Exception &e )
+{
+  std::cout << "Exception: " << e << std::endl;
+  return 1;
+}

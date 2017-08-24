@@ -37,3 +37,11 @@ dune_add_test(
   COMPILE_DEFINITIONS "${GRIDTYPE}" "GRIDDIM=${GRIDDIM}"
   LINK_LIBRARIES dunefem
 )
+
+dune_add_test(
+  SOURCES test-hierarchicalfunction-comm.cc
+  COMPILE_DEFINITIONS "${GRIDTYPE}" "GRIDDIM=${GRIDDIM}"
+  LINK_LIBRARIES dunefem
+  MPI_RANKS 2 3 4
+  TIMEOUT 300
+)
