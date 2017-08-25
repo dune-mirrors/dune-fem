@@ -212,8 +212,6 @@ try
   Dune::Fem::Parameter::append( (argc < 2) ? "parameter" : argv[ 1 ] );
 
   GridType &grid = Dune::Fem::TestGrid :: grid();
-  const int step = Dune::Fem::TestGrid :: refineStepsForHalf();
-  grid.globalRefine( 2*step );
 
   const int nrSteps = 4;
 

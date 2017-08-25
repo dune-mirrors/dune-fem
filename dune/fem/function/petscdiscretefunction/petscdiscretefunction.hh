@@ -12,10 +12,7 @@
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/function/common/functor.hh>
 #include <dune/fem/function/localfunction/mutable.hh>
-#include <dune/fem/misc/petsc/petsccommon.hh>
-#include <dune/fem/misc/petsc/petscdofmappings.hh>
 #include <dune/fem/misc/petsc/petscvector.hh>
-#include <dune/fem/misc/petsc/petscslavedofprovider.hh>
 
 namespace Dune
 {
@@ -37,7 +34,7 @@ namespace Dune
         : vector_( vector )
       {}
 
-      void operator() ( const std::size_t index, DofProxy value )
+      void operator() ( const std::size_t index, DofProxy value ) const
       {
         vector_[ index ].assign( value );
       }
@@ -72,6 +69,9 @@ namespace Dune
     };
 
 
+
+    // PetscDiscreteFunction
+    // ---------------------
 
     template <class DiscreteFunctionSpace>
     class PetscDiscreteFunction

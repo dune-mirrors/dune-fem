@@ -94,13 +94,13 @@ namespace Dune
           {}
 
           template< class GlobalKey >
-          void operator() ( int localDof, const GlobalKey &globalKey )
+          void operator() ( int localDof, const GlobalKey &globalKey ) const
           {
             functor_( localDof + localOffset_, CombinedIndex< GlobalKey, int, i >( globalKey, globalOffset_ ) );
           }
 
           template< class GlobalKey >
-          void operator() ( const GlobalKey &globalKey )
+          void operator() ( const GlobalKey &globalKey ) const
           {
             functor_( CombinedIndex< GlobalKey, int, i >( globalKey, globalOffset_ ) );
           }

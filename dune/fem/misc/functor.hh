@@ -35,7 +35,7 @@ namespace Dune
       {}
 
       template< class Value >
-      void operator() ( const std::size_t local, const Value &value )
+      void operator() ( const std::size_t local, const Value &value ) const
       {
         assign_( value, array_[ local ] );
       }
@@ -54,7 +54,7 @@ namespace Dune
       {}
 
       template< class Value >
-      void operator() ( const std::size_t local, const Value &value )
+      void operator() ( const std::size_t local, const Value &value ) const
       {
         assign_( value, array_[ local ] );
       }
@@ -77,7 +77,7 @@ namespace Dune
         value_( value )
       {}
 
-      void operator() ( const std::size_t local, const Value &globalKey )
+      void operator() ( const std::size_t local, const Value &globalKey ) const
       {
         if( local == localFixed_ )
           value_ = globalKey;
@@ -96,7 +96,7 @@ namespace Dune
         entity2_(entity2),
         functor_(functor)
       {}
-      void operator() ( const std::size_t local1, const typename Functor::GlobalKey &globalKey1 )
+      void operator() ( const std::size_t local1, const typename Functor::GlobalKey &globalKey1 ) const
       {
         functor_.set(local1,globalKey1);
         mapper2_.mapEach(entity2_, functor_);
