@@ -266,9 +266,15 @@ namespace Dune
       {
         ConstIterator () = default;
 
+        ConstIterator ( int index, int slave )
+          : index_( index ), slave_( slave )
+        {}
+
         ConstIterator ( const SlaveDofsType &slaveDofs, int index, int slave )
           : slaveDofs_( &slaveDofs ), index_( index ), slave_( slave )
-        {}
+        {
+          skipSlaves();
+        }
 
         int operator* () const { return index_; }
         Envelope< int > operator-> () const { return Envelope< int >( index_ ); }
@@ -276,18 +282,19 @@ namespace Dune
         bool operator== ( const ConstIterator &other ) const { return (index_ == other.index_); }
         bool operator!= ( const ConstIterator &other ) const { return (index_ != other.index_); }
 
-        ConstIterator &operator++ ()
-        {
-          if( ++index_ == slaveDofs()[ slave_ ] )
-            return (++slave_ == slaveDofs().size() ? *this : ++(*this));
-          return *this;
-        }
-
+        ConstIterator &operator++ () { ++index_; skipSlaves(); return *this; }
         ConstIterator operator++ ( int ) { ConstIterator copy( *this ); ++(*this); return copy; }
 
         const SlaveDofsType &slaveDofs () const { assert( slaveDofs_ ); return *slaveDofs_; }
 
       private:
+        void skipSlaves ()
+        {
+          assert( slave_ < slaveDofs().size() );
+          for( ; (index_ == slaveDofs()[ slave_ ]) && (++slave_ != slaveDofs().size()); ++index_ )
+            continue;
+        }
+
         const SlaveDofsType *slaveDofs_ = nullptr;
         int index_ = 0, slave_ = 0;
       };
@@ -297,7 +304,7 @@ namespace Dune
       {}
 
       ConstIterator begin () const { return ConstIterator( slaveDofs_, 0, 0 ); }
-      ConstIterator end () const { return ConstIterator( slaveDofs_, slaveDofs_[ slaveDofs_.size()-1 ], slaveDofs_.size() ); }
+      ConstIterator end () const { return ConstIterator( slaveDofs_[ slaveDofs_.size()-1 ], slaveDofs_.size() ); }
 
       int size () const { return slaveDofs_[ slaveDofs_.size()-1 ] - (slaveDofs_.size()-1); }
 
