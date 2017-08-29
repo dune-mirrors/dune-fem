@@ -148,7 +148,7 @@ namespace Dune
             return;
 
           const auto geometry = u.entity().geometry();
-          for( const auto qp : InteriorQuadratureType( u.entity(), 2*w.order() ) )
+          for( const auto qp : InteriorQuadratureType( u.entity(), 2*w.order()+3 ) )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.position() );
 
@@ -171,7 +171,7 @@ namespace Dune
           const auto &domainBasis = j.domainBasisFunctionSet();
           const auto &rangeBasis = j.rangeBasisFunctionSet();
 
-          for( const auto qp : InteriorQuadratureType( u.entity(), 2*rangeBasis.order() ) )
+          for( const auto qp : InteriorQuadratureType( u.entity(), 2*rangeBasis.order()+3 ) )
           {
             const auto weight = qp.weight() * geometry.integrationElement( qp.position() );
 
@@ -200,7 +200,7 @@ namespace Dune
             return;
 
           const auto geometry = intersection.geometry();
-          for( const auto qp : SurfaceQuadratureType( gridPart(), intersection, 2*w.order(), SurfaceQuadratureType::INSIDE ) )
+          for( const auto qp : SurfaceQuadratureType( gridPart(), intersection, 2*w.order()+3, SurfaceQuadratureType::INSIDE ) )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.localPosition() );
 
@@ -250,7 +250,7 @@ namespace Dune
         void addSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, W &wIn ) const
         {
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*wIn.order(), false );
+          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*wIn.order()+3, false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -270,7 +270,7 @@ namespace Dune
         void addSkeletonIntegral ( const Intersection &intersection, const U &uIn, const U &uOut, W &wIn, W &wOut ) const
         {
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*std::max( wIn.order(), wOut.order() ), false );
+          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*std::max( wIn.order(), wOut.order() )+3, false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -298,7 +298,7 @@ namespace Dune
           const auto &rangeBasisIn = jInIn.rangeBasisFunctionSet();
 
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*rangeBasisIn.order(), false );
+          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*rangeBasisIn.order()+3, false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );
@@ -343,7 +343,7 @@ namespace Dune
           const auto &rangeBasisOut = jInOut.rangeBasisFunctionSet();
 
           const auto geometry = intersection.geometry();
-          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*std::max( rangeBasisIn.order(), rangeBasisOut.order() ), false );
+          const IntersectionQuadrature< SurfaceQuadratureType, conforming > quadrature( gridPart(), intersection, 2*std::max( rangeBasisIn.order(), rangeBasisOut.order() )+3, false );
           for( std::size_t qp = 0, nop = quadrature.nop(); qp != nop; ++qp )
           {
             const ctype weight = quadrature.weight( qp ) * geometry.integrationElement( quadrature.localPoint( qp ) );

@@ -37,12 +37,6 @@ namespace Dune
             return std::unique_ptr< Space >( new Space( gridPart< GridView >( gridView ) ) );
           } ), pybind11::keep_alive< 1, 2 >(), "gridView"_a );
       }
-      template< class Space, class... options >
-      void registerSpaceConstructor ( pybind11::class_< Space, options... > cls )
-      {
-        typedef typename Space::GridPartType GridPart;
-        registerSpaceConstructor( cls, std::is_constructible< Space, GridPart& >() );
-      }
 
       // registerSpace
       // -------------
@@ -70,6 +64,12 @@ namespace Dune
         cls.def_property_readonly( "grid", [] ( Space &self ) -> GridView { return static_cast< GridView >( self.gridPart() ); } );
         cls.def_property_readonly( "order", [] ( Space &self ) -> int { return self.order(); } );
         cls.def_property_readonly( "size", [] ( Space &self ) -> int { return self.size(); } );
+        cls.def_property_readonly( "localBlockSize", [] ( Space &spc ) -> unsigned int { return spc.localBlockSize; } );
+        cls.def("map", [] ( Space &spc, typename Space::EntityType &e) -> std::vector<unsigned int>
+            { std::vector<unsigned int> idx(spc.blockMapper().numDofs(e));
+              spc.blockMapper().mapEach(e, Fem::AssignFunctor< std::vector< unsigned int > >( idx ) );
+              return idx;
+            } );
 
         registerSpaceConstructor( cls );
       }

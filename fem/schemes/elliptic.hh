@@ -48,6 +48,10 @@
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/operator/common/stencil.hh>
 
+#include <dune/fem/common/bindguard.hh>
+#include <dune/fem/function/common/localcontribution.hh>
+#include <dune/fem/function/localfunction/const.hh>
+
 #include <dune/fem/operator/common/differentiableoperator.hh>
 
 #include <dune/fem/schemes/dirichletconstraints.hh>
@@ -218,6 +222,10 @@ void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model, Con
   // get discrete function space
   const RangeDiscreteFunctionSpaceType &dfSpace = w.space();
 
+  // get local representation of the discrete functions
+  Dune::Fem::ConstLocalFunction< GF > uLocal( u );
+  Dune::Fem::AddLocalContribution< RangeDiscreteFunctionType > wLocal( w );
+
   // iterate over grid
   for( const EntityType &entity : dfSpace )
   {
@@ -227,9 +235,8 @@ void EllipticOperator< DomainDiscreteFunction, RangeDiscreteFunction, Model, Con
     // get elements geometry
     const GeometryType &geometry = entity.geometry();
 
-    // get local representation of the discrete functions
-    const auto uLocal = u.localFunction( entity );
-    RangeLocalFunctionType wLocal = w.localFunction( entity );
+    auto uGuard = Dune::Fem::bindGuard( uLocal, entity );
+    auto wGuard = Dune::Fem::bindGuard( wLocal, entity );
 
     // obtain quadrature order
     const int quadOrder = uLocal.order() + wLocal.order();
@@ -332,6 +339,7 @@ void DifferentiableEllipticOperator< JacobianOperator, Model, Constraints >
   std::vector< typename RangeLocalFunctionType::RangeType >         rphi( rangeSpace.blockMapper().maxNumDofs()*rangeBlockSize );
   std::vector< typename RangeLocalFunctionType::JacobianRangeType > rdphi( rangeSpace.blockMapper().maxNumDofs()*rangeBlockSize );
 
+  Dune::Fem::ConstLocalFunction< GF > uLocal( u );
   for( const EntityType &entity : rangeSpace )
   {
     if( !model().init( entity ) )
@@ -339,7 +347,7 @@ void DifferentiableEllipticOperator< JacobianOperator, Model, Constraints >
 
     const GeometryType &geometry = entity.geometry();
 
-    const auto uLocal = u.localFunction( entity );
+    auto uGuard = Dune::Fem::bindGuard( uLocal, entity );
     LocalMatrixType jLocal = jOp.localMatrix( entity, entity );
 
     const DomainBasisFunctionSetType &domainBaseSet = jLocal.domainBasisFunctionSet();
