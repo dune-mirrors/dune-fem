@@ -26,8 +26,11 @@ def interpolate(space, func, name=None, **kwargs):
     Returns:
         DiscreteFunction: the constructed discrete function
     """
+    if isinstance(func, ufl.core.expr.Expr) and not isinstance(func, dune.ufl.GridFunction):
+        func = dune.ufl.expression2GF(space.grid,func,space.order)
     if name is None:
         name = func.name
+    # assert func.dimRange == space.dimRange, "range dimension mismatch"
     return function.discreteFunction(space, name=name, expr=func, **kwargs)
 
 

@@ -11,13 +11,10 @@ def solvers(includes, storage, operator):
     return includes, typeName
 
 
-def femsolver(storage,solverType="cg"):
-    includes = ["dune/fem/solver/cginverseoperator.hh"]
+def femsolver(storage,solverType=None):
+    includes = ["dune/fem/solver/krylovinverseoperators.hh"]
 
-    if solverType == "cg":
-        operator = lambda df,_: "Dune::Fem::CGInverseOperator< " + df + " >"
-    else:
-        raise ValueError("wrong krylov solver - only cg available")
+    operator = lambda df,_: "Dune::Fem::KrylovInverseOperator< " + df + " >"
 
     includes, typeName = solvers(includes,storage,operator)
     return "fem",includes,typeName
@@ -73,7 +70,7 @@ def istlsolver(storage,solverType="gmres"):
     includes, typeName = solvers(includes,storage,operator)
     return "istl",includes,typeName
 
-def suitesparsesolver(storage,solverType="cg"):
+def suitesparsesolver(storage,solverType="umfpack"):
     includes = ["dune/fem/solver/ldlsolver.hh", "dune/fem/solver/spqrsolver.hh", "dune/fem/solver/umfpacksolver.hh"]
 
     if solverType == "ldl":

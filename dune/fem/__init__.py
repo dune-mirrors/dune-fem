@@ -20,12 +20,16 @@ registry["view"] = {
          "geometry"   : view.geometryGridView
      }
 registry["space"] = {
-         "Lagrange"     : space.lagrange,
-         "DGONB"        : space.dgonb,
-         "FiniteVolume" : space.finiteVolume,
-         "P1Bubble"     : space.p1Bubble,
-         "combined"     : space.combined,
-         "tuple"        : space.combined
+         "lagrange"      : space.lagrange,
+         "dgonb"         : space.dgonb,
+         "dglegendre"    : space.dglegendre,
+         "dglagrange"    : space.dglagrange,
+         "fv"            : space.finiteVolume,
+         "p1bubble"      : space.p1Bubble,
+         "combined"      : space.combined,
+         "tuple"         : space.combined,
+         "bdm"           : space.bdm,
+         "rannacherTurek": space.rannacherTurek
      }
 registry["discretefunction"] = {
          "adaptive" : discretefunction.adaptive,
@@ -72,3 +76,30 @@ registry["model"] = {
          "elliptic"   : model.elliptic,
          "integrands" : model.integrands
      }
+
+from ufl import dx
+from dune.ufl import GridFunction
+def evaluate(expression,x,**kwargs):
+    # don't know how to get the coefficients form an expression
+    coefficients = set((expression**2*dx).coefficients())
+    for coefficient in coefficients:
+        if coefficient.is_cellwise_constant():
+            try:
+                name  = coefficient.str()
+                value = kwargs.get(name,None)
+                if value:
+                    pass
+                    # replace the coefficient with the value
+            except AttributeError:
+                pass
+        # else:
+        #     if isinstance(coefficient,GridFunction):
+        #         coefficient.bind(x)
+    val = expression(x)
+    for coefficient in coefficients:
+        if coefficient.is_cellwise_constant():
+            pass
+        else:
+            if isinstance(coefficient,GridCoefficient):
+                coefficient.unbind()
+    return val

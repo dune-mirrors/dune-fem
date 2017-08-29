@@ -17,7 +17,7 @@ def adaptive():
               space._includes,\
         dfType(space),\
         "Dune::Fem::SparseRowLinearOperator< " + dfType(space) + "," + dfType(space) + ">",\
-        solvers.pardgsolver
+        solvers.femsolver
     ]
 
 def eigen():

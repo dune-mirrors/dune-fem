@@ -42,6 +42,83 @@ def dgonb(gridview, order=1, dimrange=1, field="double", storage=None, **unused)
 
     return module(field, storage, includes, typeName).Space(gridview)
 
+def dglegendre(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
+    """create a discontinous galerkin space with elementwise legendre tensor product basis function
+
+    Args:
+        gridview: the underlying grid view
+        order: polynomial order of the finite element functions
+        dimrange: dimension of the range space
+        field: field of the range space
+        storage: underlying linear algebra backend
+
+    Returns:
+        Space: the constructed Space
+    """
+
+    from dune.fem.space import module
+    if dimrange < 1:
+        raise KeyError(\
+            "Parameter error in DiscontinuosGalerkinSpace with "+
+            "dimrange=" + str(dimrange) + ": " +\
+            "dimrange has to be greater or equal to 1")
+    if order < 0:
+        raise KeyError(\
+            "Parameter error in DiscontinuousGalerkinSpace with "+
+            "order=" + str(order) + ": " +\
+            "order has to be greater or equal to 0")
+    if field == "complex":
+        field = "std::complex<double>"
+
+    includes = [ "dune/fem/space/discontinuousgalerkin.hh" ] + gridview._includes
+    dimw = gridview.dimWorld
+    typeName = "Dune::Fem::LegendreDiscontinuousGalerkinSpace< " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+      "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
+
+    return module(field, storage, includes, typeName).Space(gridview)
+
+def dglagrange(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
+    """create a discontinous galerkin space with elementwise lagrange basis function
+
+    Args:
+        gridview: the underlying grid view
+        order: polynomial order of the finite element functions
+        dimrange: dimension of the range space
+        field: field of the range space
+        storage: underlying linear algebra backend
+
+    Returns:
+        Space: the constructed Space
+    """
+
+    from dune.fem.space import module
+    if dimrange < 1:
+        raise KeyError(\
+            "Parameter error in DiscontinuosGalerkinSpace with "+
+            "dimrange=" + str(dimrange) + ": " +\
+            "dimrange has to be greater or equal to 1")
+    if order < 0:
+        raise KeyError(\
+            "Parameter error in DiscontinuousGalerkinSpace with "+
+            "order=" + str(order) + ": " +\
+            "order has to be greater or equal to 0")
+    if field == "complex":
+        field = "std::complex<double>"
+
+    dimw = gridview.dimWorld
+
+    # includes = [ "dune/fem/space/lagrange.hh" ] + gridview._includes
+    # typeName = "Dune::Fem::DGLagrangeSpace< " +\
+    #   "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+    #   "Dune::FemPy::GridPart< " + gridview._typeName + " > >"
+    # return module(field, storage, includes, typeName).Space(gridview,order)
+    includes = [ "dune/fem/space/discontinuousgalerkin.hh" ] + gridview._includes
+    typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+      "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
+    return module(field, storage, includes, typeName).Space(gridview)
+
 
 def lagrange(view, order=1, dimrange=1, field="double", storage=None, **unused):
     """create a Lagrange space
@@ -178,3 +255,36 @@ def combined(*spaces, **unused):
     typeName = "Dune::Fem::TupleDiscreteFunctionSpace< " + ", ".join([space._typeName for space in spaces]) + " >"
 
     return module(combinedField, combinedStorage, includes, typeName).Space(spaces[0].grid)
+
+def bdm(view, order=1, field="double", storage=None, **unused):
+    from dune.fem.space import module
+    if order < 1:
+        raise KeyError(\
+            "Parameter error in LagrangeSpace with "+
+            "order=" + str(order) + ": " +\
+            "order has to be equal to 1 or 2")
+    if field == "complex":
+        field = "std::complex<double>"
+
+    includes = [ "dune/fem/space/brezzidouglasmarini.hh" ] + view._includes
+    dimw = view.dimWorld
+    typeName = "Dune::Fem::BDMDiscreteFunctionSpace< " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimw) + " >, " +\
+      "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(order) + " >"
+
+    return module(field, storage, includes, typeName).Space(view)
+
+def rannacherTurek(view, dimrange=1, field="double", storage=None, **unused):
+    from dune.fem.space import module
+    if dimrange < 1:
+        raise KeyError("invalid dimRange: " + str(dimrange) + " (must be >= 1)")
+    if field == "complex":
+        field = "std::complex<double>"
+
+    includes = [ "dune/fem/space/second.hh" ] + view._includes
+    dimw = view.dimWorld
+    typeName = "Dune::Fem::RannacherTurekDiscreteFunctionSpace< " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+      "Dune::FemPy::GridPart< " + view._typeName + " > >"
+
+    return module(field, storage, includes, typeName).Space(view)

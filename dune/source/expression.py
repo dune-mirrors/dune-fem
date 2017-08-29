@@ -218,7 +218,7 @@ def makeExpression(expr):
         e = ConstantExpression('double', s)
         return -e if expr < 0 else e
     else:
-        print("Warning: Making expression from " + str(expr) + "(type: " + str(type(expr)) + ").")
+        # print("Warning: Making expression from " + str(expr) + "(type: " + str(type(expr)) + ").")
         return expr
 
 

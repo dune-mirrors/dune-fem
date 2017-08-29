@@ -98,6 +98,16 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
 
 
 def galerkin(space, integrands, solver=None, parameters={}):
+    integrandsParam = None
+    if isinstance(integrands, (list, tuple)):
+        integrandsParam = integrands[1:]
+        integrands = integrands[0]
+    if isinstance(integrands,Equation):
+        from dune.fem.model._models import integrands as makeIntegrands
+        if integrandsParam:
+            integrands = makeIntegrands(space.grid,integrands,*integrandsParam)
+        else:
+            integrands = makeIntegrands(space.grid,integrands)
     from . import module
 
     storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver = space.storage
