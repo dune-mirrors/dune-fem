@@ -2,6 +2,8 @@
 #define DUNE_FEM_DOFMAPPER_COMPILE_HH
 
 #include <algorithm>
+#include <type_traits>
+#include <utility>
 
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/typeindex.hh>
@@ -18,9 +20,10 @@ namespace Dune
     // generateCodimensionCode
     // -----------------------
 
-    template< class Field, int dim >
-    inline DofMapperCode
-    generateCodimensionCode ( const Dune::ReferenceElement< Field, dim > &refElement, int codim, unsigned int blockSize = 1 )
+    template< class RefElement,
+              std::enable_if_t< std::is_same< std::decay_t< decltype( std::declval< const RefElement & >().size( 0 ) ) >, int >::value, int > = 0,
+              std::enable_if_t< std::is_same< std::decay_t< decltype( std::declval< const RefElement & >().type( 0, 0 ) ) >, GeometryType >::value, int > = 0 >
+    inline DofMapperCode generateCodimensionCode ( const RefElement &refElement, int codim, unsigned int blockSize = 1 )
     {
       unsigned int count = refElement.size( codim );
       DofMapperCodeWriter code( count, count*blockSize );
@@ -41,11 +44,13 @@ namespace Dune
     // compile (for LocalCoefficients)
     // -------------------------------
 
-    template< class Field, int dim, class LocalCoefficients >
-    inline DofMapperCode
-    compile ( const Dune::ReferenceElement< Field, dim > &refElement,
-              const LocalCoefficients &localCoefficients )
+    template< class RefElement, class LocalCoefficients,
+              std::enable_if_t< std::is_same< std::decay_t< decltype( std::declval< const RefElement & >().size( 0 ) ) >, int >::value, int > = 0,
+              std::enable_if_t< std::is_same< std::decay_t< decltype( std::declval< const RefElement & >().type( 0, 0 ) ) >, GeometryType >::value, int > = 0 >
+    inline DofMapperCode compile ( const RefElement &refElement, const LocalCoefficients &localCoefficients )
     {
+      const int dim = RefElement::dimension;
+
       const std::size_t numDofs = localCoefficients.size(); // total number of DoFs
 
       // count number of keys per subentity
