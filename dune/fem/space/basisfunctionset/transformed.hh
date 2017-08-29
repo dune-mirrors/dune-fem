@@ -71,7 +71,7 @@ namespace Dune
       typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
 
       //! \brief type of reference element
-      typedef Dune::ReferenceElement< ctype, GeometryType::coorddimension > ReferenceElementType;
+      typedef std::decay_t< decltype( Dune::ReferenceElements< ctype, GeometryType::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) ) > ReferenceElementType;
 
       //! \brief constructor
       TransformedBasisFunctionSet ()
@@ -95,7 +95,8 @@ namespace Dune
       std::size_t size () const { return shapeFunctionSet().size(); }
 
       //! \brief return reference element
-      const ReferenceElementType &referenceElement () const
+      auto referenceElement () const
+        -> decltype( Dune::ReferenceElements< ctype, GeometryType::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) )
       {
         return Dune::ReferenceElements< ctype, GeometryType::coorddimension >::general( type() );
       }

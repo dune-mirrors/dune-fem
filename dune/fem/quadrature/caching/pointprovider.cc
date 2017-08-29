@@ -127,9 +127,7 @@ namespace Dune
       // generate key
       QuadratureKeyType key ( elementGeo, quad.id() );
 
-
-      const Dune::ReferenceElement<ct, dim>& refElem =
-        Dune::ReferenceElements<ct, dim>::general(elementGeo);
+      const auto &refElem = Dune::ReferenceElements<ct, dim>::general(elementGeo);
 
       const int numLocalPoints = points.size();
       const int numFaces = refElem.size(codim);

@@ -202,8 +202,8 @@ namespace Dune
         const IndexSetType &indexSet () const { return indexSet_; }
 
       private:
-        static const ReferenceElement< typename GridPartType::ctype, GridPartType::dimension > &
-        referenceElement ( GeometryType type )
+        static auto referenceElement ( GeometryType type )
+          -> decltype( ReferenceElements< typename GridPartType::ctype, GridPartType::dimension >::general( type ) )
         {
           return ReferenceElements< typename GridPartType::ctype, GridPartType::dimension >::general( type );
         }
