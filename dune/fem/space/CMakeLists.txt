@@ -1,6 +1,5 @@
-dune_install(combinedspace.hh discontinuousgalerkin.hh
-             finitevolume.hh fourier.hh lagrange.hh
-             padaptivespace.hh rannacherturek.hh)
+dune_install(brezzidouglasmarini.hh combinedspace.hh discontinuousgalerkin.hh finitevolume.hh
+             fourier.hh lagrange.hh padaptivespace.hh rannacherturek.hh)
 
 dune_add_subdirs(basisfunctionset combinedspace common
                  discontinuousgalerkin finitevolume
