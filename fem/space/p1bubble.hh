@@ -43,6 +43,7 @@
 #include <dune/grid/common/gridenums.hh>
 
 // dune-fem includes
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
@@ -116,6 +117,7 @@ namespace Dune
       static const int polynomialOrder = ScalarShapeFunctionSetType::polynomialOrder;
 
       typedef IndexSetDofMapper< GridPartType > BlockMapperType;
+      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange > LocalBlockIndices;
 
       template <class DiscreteFunction, class Operation = DFCommunicationOperation::Add >
       struct CommDataHandle

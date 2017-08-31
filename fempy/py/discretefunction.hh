@@ -65,36 +65,14 @@ namespace Dune
       }
 
 
-#if 0 // old
-      // registerDFBuffer
-      // ----------------
-
-      template <class DF, class Cls>
-      auto registerDFBuffer( Cls &cls, int )
-      -> decltype(std::declval<DF>().dofVector().array().data(),void())
-      {
-        typedef typename DF::RangeType Value;
-        typedef typename Value::field_type FieldType;
-        cls.def_buffer( [](DF &instance) -> pybind11::buffer_info {
-            return pybind11::buffer_info(
-                instance.dofVector().array().data(),    /* Pointer to buffer */
-                sizeof(FieldType),                      /* Size of one scalar */
-                pybind11::format_descriptor<FieldType>::format(), /* Python struct-style format descriptor */
-                1,                                      /* Number of dimensions */
-                { instance.size() },                    /* Buffer dimensions */
-                { sizeof(FieldType) }                   /* Strides (in bytes) for each index */
-            );
-          }); // ????  pybind11::keep_alive<0,1>() );
-      }
-
-      template< class DF, class Cls >
-      void registerDFBuffer ( Cls &cls, long )
-      {}
-#endif
       // registerDofVectorBuffer
       // ----------------
 
-      template <class DofVector, class Cls>
+      template < class DofVector, class Cls,
+                 typename std::enable_if <
+                   std::is_convertible < decltype( std::declval<DofVector>().array().data()[0] ),
+                                         typename DofVector::FieldType >::value,
+                 int >::type tmp=0 >
       auto registerDofVectorBuffer( Cls &cls, int )
       -> decltype(std::declval<DofVector>().array().data(),void())
       {
@@ -126,7 +104,6 @@ namespace Dune
       template< class DF, class Cls >
       void registerDofVectorBuffer ( Cls &cls, long )
       {}
-
 
       // registerDiscreteFunction
       // ------------------------

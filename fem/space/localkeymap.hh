@@ -76,9 +76,12 @@ namespace Dune
     {
       // return the shape functions for a given reference element. If this
       // is not possible an empty DofMapperCode is returned.
-      template< class Field, int dim >
-      DofMapperCode operator() ( const ReferenceElement< Field, dim > &refElement ) const
+      template< class RefElement,
+                std::enable_if_t< std::is_same< std::decay_t< decltype( std::declval< const RefElement & >().size( 0 ) ) >, int >::value, int > = 0,
+                std::enable_if_t< std::is_same< std::decay_t< decltype( std::declval< const RefElement & >().type( 0, 0 ) ) >, GeometryType >::value, int > = 0 >
+      DofMapperCode operator() ( const RefElement &refElement ) const
       {
+        static const int dim = RefElement::dimension;
         if( refElement.type().isSimplex() )
           return compile( refElement, BubbleElementLocalKeyMap< dim >(dim+1) );
         if( refElement.type().isCube() && refElement.type().dim() == 2)

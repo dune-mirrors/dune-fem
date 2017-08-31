@@ -7,12 +7,11 @@
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/bcrsmatrix.hh>
+#include <dune/corepy/istl/bcrsmatrix.hh>
 #endif // #if HAVE_DUNE_ISTL
 
 #include <dune/fem/operator/linear/istloperator.hh>
 #include <dune/fem/misc/l2norm.hh>
-
-#include <dune/corepy/istl/bcrsmatrix.hh>
 
 #include <dune/fempy/function/virtualizedgridfunction.hh>
 #include <dune/fempy/parameter.hh>
