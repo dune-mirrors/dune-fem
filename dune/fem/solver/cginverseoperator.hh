@@ -87,7 +87,7 @@ namespace Dune
         realCount_( 0 )
       {}
 
-      ConjugateGradientSolver ( const ThisType & )=delete;
+      // ConjugateGradientSolver ( const ThisType & )=delete;
 
       /** \brief solve \f$op( x ) = b\f$
        *
