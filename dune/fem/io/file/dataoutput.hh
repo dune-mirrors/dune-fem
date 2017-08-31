@@ -562,10 +562,9 @@ namespace Dune
     template< class VTKOut >
     struct DataOutput< GridImp, DataImp >::VTKOutputerDG
     {
-      //! Constructor
-      explicit VTKOutputerDG ( VTKOut &vtkOut, bool conforming = false )
-      : vtkOut_( vtkOut ),
-        conforming_( conforming )
+      template< class... Args >
+      explicit VTKOutputerDG ( bool conforming, Args &&... args )
+        : conforming_( conforming ), vtkOut_( std::forward< Args >( args )... )
       {}
 
       template< typename ...  T >
@@ -591,9 +590,14 @@ namespace Dune
         forEach( tup );
       }
 
+      std::string write ( bool parallel, const std::string &name, const std::string &path )
+      {
+        return (parallel ? vtkOut_.pwrite( name, path, "." ) : vtkOut_.write( name ));
+      }
+
     private:
-      VTKOut &vtkOut_;
       bool conforming_;
+      VTKOut vtkOut_;
     };
 #endif // #if USE_VTKWRITER
 
@@ -609,9 +613,9 @@ namespace Dune
     struct DataOutput< GridImp, DataImp >::VTKOutputerLagrange
     {
       //! Constructor
-      explicit VTKOutputerLagrange ( VTKOut &vtkOut )
-      : vtkOut_( vtkOut ),
-        vec_()
+      template< class... Args >
+      explicit VTKOutputerLagrange ( Args &&... args )
+        : vtkOut_( std::forward< Args >( args )... )
       {}
 
       template< typename ...  T >
@@ -636,10 +640,14 @@ namespace Dune
         forEach( tup );
       }
 
+      std::string write ( bool parallel, const std::string &name, const std::string &path )
+      {
+        return (parallel ? vtkOut_.pwrite( name, path, "." ) : vtkOut_.write( name ));
+      }
+
     private:
-      VTKOut &vtkOut_;
-      typedef VTKListEntry< VTKOut > VTKListEntryType;
-      std::vector<std::unique_ptr<VTKListEntryType> > vec_;
+      std::vector< std::unique_ptr< VTKListEntry< VTKOut > > > vec_;
+      VTKOut vtkOut_;
     };
 #endif // #if ENABLE_VTXPROJECTION
 #endif // #if USE_VTKWRITER
@@ -856,51 +864,36 @@ namespace Dune
       {
 #if ENABLE_VTXPROJECTION
         // create vtk output handler
-        typedef VTKIO < GridPartType > VTKIOType;
-        VTKIOType vtkio ( gridPart, VTK::conforming, param_->parameter() );
+        VTKOutputerLagrange< VTKIO< GridPartType > > io( gridPart, VTK::conforming, param_->parameter() );
 
         // add all functions
-        VTKOutputerLagrange< VTKIOType > io( vtkio );
         io.forEach( data_ );
 
         // write all data
-        if( parallel )
-          filename = vtkio.pwrite( name, path_, "." );
-        else
-          filename = vtkio.write( name );
+        filename = io.write( parallel, name, path_ );
 #endif
       }
       else if ( outputFormat_ == vtk )
       {
         // create vtk output handler
-        typedef VTKIO< GridPartType > VTKIOType;
-        VTKIOType vtkio( gridPart, conformingOutput_ ? VTK::conforming : VTK::nonconforming, param_->parameter() );
+        VTKOutputerDG< VTKIO< GridPartType > > io( conformingOutput_, gridPart, conformingOutput_ ? VTK::conforming : VTK::nonconforming, param_->parameter() );
 
         // add all functions
-        VTKOutputerDG< VTKIOType > io( vtkio, conformingOutput_ );
         io.forEach( data_ );
 
         // write all data
-        if( parallel )
-          filename = vtkio.pwrite( name, path_, "." );
-        else
-          filename = vtkio.write( name );
+        filename = io.write( parallel, name, path_ );
       }
       else if ( outputFormat_ == subvtk )
       {
         // create vtk output handler
-        typedef SubsamplingVTKIO < GridPartType > VTKIOType;
-        VTKIOType vtkio ( gridPart, static_cast< unsigned int >( param_->subsamplingLevel() ), param_->parameter() );
+        VTKOutputerDG< SubsamplingVTKIO < GridPartType > > io( conformingOutput_, gridPart, static_cast< unsigned int >( param_->subsamplingLevel() ), param_->parameter() );
 
         // add all functions
-        VTKOutputerDG< VTKIOType > io( vtkio, conformingOutput_ );
         io.forEach( data_ );
 
         // write all data
-        if( parallel )
-          filename = vtkio.pwrite( name, path_, "." );
-        else
-          filename = vtkio.write( name );
+        filename = io.write( parallel, name, path_ );
       }
       return filename;
     }
