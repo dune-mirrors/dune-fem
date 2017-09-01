@@ -204,12 +204,13 @@ namespace Dune
     {
       typedef TupleDiscreteFunctionSpace< DiscreteFunctionSpaces ... > ThisType;
       typedef GenericCombinedDiscreteFunctionSpace< TupleDiscreteFunctionSpaceTraits< DiscreteFunctionSpaces ... > > BaseType;
-      typedef TupleDiscreteFunctionSpaceTraits< DiscreteFunctionSpaces ... > Traits;
 
     public:
-      typedef typename Traits::GridPartType GridPartType;
+      typedef typename BaseType::Traits Traits;
+      typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::EntityType EntityType;
+
       typedef typename Traits::InterpolationType InterpolationType;
-      typedef typename Traits::EntityType EntityType;
       typedef typename Traits::DiscreteFunctionSpaceTupleType DiscreteFunctionSpaceTupleType;
 
       /** \brief constructor

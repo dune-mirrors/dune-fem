@@ -249,6 +249,16 @@ namespace Dune
       BlockMapperType *blockMapper_;
     };
 
+
+    // DifferentDiscreteFunctionSpace
+    // ------------------------------
+
+    template< class FunctionSpace, class GridPart, template< class > class Storage, class NewFunctionSpace >
+    struct DifferentDiscreteFunctionSpace< RannacherTurekDiscreteFunctionSpace< FunctionSpace, GridPart, Storage >, NewFunctionSpace >
+    {
+      typedef RannacherTurekDiscreteFunctionSpace< NewFunctionSpace, GridPart, Storage > Type;
+    };
+
   } // namespace Fem
 
 } // end namespace Dune
