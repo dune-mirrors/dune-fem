@@ -171,7 +171,7 @@ namespace Dune
       template< class Functor >
       void mapEach ( const ElementType &element, Functor f ) const
       {
-        baseMapper().mapEach( element, [ this, f ] ( auto local, auto i ) { f( local, mapping_[ i ] ); } );
+        baseMapper().mapEach( element, [ this, &f ] ( auto local, auto i ) { f( local, mapping_[ i ] ); } );
       }
 
       void map ( const ElementType &element, std::vector< GlobalKeyType > &indices ) const
@@ -193,7 +193,7 @@ namespace Dune
       template< class Entity, class Functor >
       void mapEachEntityDof ( const Entity &entity, Functor f ) const
       {
-        baseMapper().mapEachEntityDof( entity, [ this, f ] ( auto local, auto i ) { f( local, mapping_[ i ] ); } );
+        baseMapper().mapEachEntityDof( entity, [ this, &f ] ( auto local, auto i ) { f( local, mapping_[ i ] ); } );
       }
 
       template< class Entity >
