@@ -126,7 +126,14 @@ namespace Dune
           matrix = new MatrixType( numBasisFct, numBasisFct, 0.0 );
           VolumeQuadratureType volQuad( entity, volumeQuadratureOrder( entity ) );
           buildMatrixNoMassFactor( entity, geo, basisSet, volQuad, numBasisFct, *matrix, false );
-          matrix->invert();
+          try {
+            matrix->invert();
+          }
+          catch ( Dune::FMatrixError &e )
+          {
+            std::cerr << "Matrix is singular:" << std::endl << *matrix << std::endl;
+            std::terminate();
+          }
         }
 
         return *matrix;
