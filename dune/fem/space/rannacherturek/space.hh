@@ -136,7 +136,8 @@ namespace Dune
       static const CommunicationDirection defaultDirection =  ForwardCommunication;
 
     public:
-      static const int polynomialOrder = 1;
+      // must be 2 here since it contains x_i^2
+      static const int polynomialOrder = 2;
 
       typedef typename BaseType::Traits Traits;
 
