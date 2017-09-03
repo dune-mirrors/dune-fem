@@ -59,7 +59,7 @@ namespace Dune
       }
 
       //! return local bary center for geometry of type type
-      const DomainType &localCenter ( const GeometryType &type ) const
+      const DomainType localCenter ( const GeometryType &type ) const
       {
         return type.isNone() ? isNoneLocalCenter_ : referenceElement( type ).position( 0, 0 );
       }
