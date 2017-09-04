@@ -48,6 +48,18 @@ class Space(ufl.FunctionSpace):
     def field(self):
         return self._field
 
+
+class MixedFunctionSpace(ufl.MixedFunctionSpace):
+    def __init__(self, *spaces):
+        ufl.MixedFunctionSpace.__init__(self, *spaces)
+
+    def cell(self):
+        return self.ufl_element().cell()
+
+    def field(self):
+        return self.ufl_sub_spaces()[0].field()
+
+
 def NamedCoefficient(functionSpace, name=None, count=None):
     coefficient = ufl.Coefficient(functionSpace, count=count)
     if name is not None:
