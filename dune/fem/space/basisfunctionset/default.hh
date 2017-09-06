@@ -5,6 +5,9 @@
 #include <cassert>
 #include <cstddef>
 
+#include <type_traits>
+#include <utility>
+
 // dune-geometry includes
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
@@ -77,7 +80,7 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       //! \brief type of reference element
-      typedef Dune::ReferenceElement< ctype, GeometryType::coorddimension > ReferenceElementType;
+      typedef std::decay_t< decltype( Dune::ReferenceElements< ctype, GeometryType::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) ) > ReferenceElementType;
 
       //! \brief constructor
       DefaultBasisFunctionSet ()
@@ -101,7 +104,8 @@ namespace Dune
       std::size_t size () const { return shapeFunctionSet().size(); }
 
       //! \brief return reference element
-      const ReferenceElementType &referenceElement () const
+      auto referenceElement () const
+        -> decltype( Dune::ReferenceElements< ctype, GeometryType::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) )
       {
         return Dune::ReferenceElements< ctype, GeometryType::coorddimension >::general( type() );
       }

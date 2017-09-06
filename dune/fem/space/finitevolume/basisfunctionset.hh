@@ -4,6 +4,9 @@
 #include <cassert>
 #include <cstddef>
 
+#include <type_traits>
+#include <utility>
+
 #include <dune/geometry/referenceelements.hh>
 #include <dune/geometry/type.hh>
 
@@ -39,7 +42,7 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       /** \copydoc Dune::Fem::BasisFunctionSet::ReferenceElementType */
-      typedef Dune::ReferenceElement< typename DomainType::value_type, DomainType::dimension > ReferenceElementType;
+      typedef std::decay_t< decltype( Dune::ReferenceElements< typename EntityType::Geometry::ctype, EntityType::Geometry::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) ) > ReferenceElementType;
 
       /** \name Construction
        *  \{
@@ -180,7 +183,8 @@ namespace Dune
       }
 
       /** \copydoc Dune::Fem::BasisFunctionSet::referenceElementType */
-      const ReferenceElementType &referenceElement () const
+      auto referenceElement () const
+        -> decltype( Dune::ReferenceElements< typename EntityType::Geometry::ctype, EntityType::Geometry::coorddimension >::general( std::declval< const Dune::GeometryType & >() ) )
       {
         return Dune::ReferenceElements< typename EntityType::Geometry::ctype, EntityType::Geometry::coorddimension >::general( type() );
       }
