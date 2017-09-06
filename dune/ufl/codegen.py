@@ -40,8 +40,12 @@ class CodeGenerator(MultiFunction):
             raise Exception('%s not available for this expression.' % expr._ufl_class_.__name__)
 
     def abs(self, expr, x):
-        self.using.add(Using(cplusplus.abs))
-        return self._makeTmp(cplusplus.abs(x))
+        self.using.add(Using(cplusplus.abs_))
+        return self._makeTmp(cplusplus.abs_(x))
+
+    def AndCondition(self, expr, left, right):
+        self.using.add(Using(cplusplus.and_))
+        return self._makeTmp(cplusplus.and_(left, right))
 
     def argument(self, expr):
         try:
@@ -83,8 +87,19 @@ class CodeGenerator(MultiFunction):
         self.using.add(Using(cplusplus.cos))
         return self._makeTmp(cplusplus.cos(x))
 
+    def cosh(self, expr, x):
+        self.using.add(Using(cplusplus.cosh))
+        return self._makeTmp(cplusplus.cosh(x))
+
     def division(self, expr, x, y):
         return self._makeTmp(x / y)
+
+    def eq(self, expr, left, right):
+        return left == right
+
+    def exp(self, expr, x):
+        self.using.add(Using(cplusplus.exp))
+        return self._makeTmp(cplusplus.exp(x))
 
     facet_area = _require_predefined
     facet_normal = _require_predefined
@@ -136,20 +151,24 @@ class CodeGenerator(MultiFunction):
     def le(self, expr, left, right):
         return left <= right
 
+    def ln(self, expr, x):
+        self.using.add(Using(cplusplus.log))
+        return self._makeTmp(cplusplus.log(x))
+
     def lt(self, expr, left, right):
         return left < right
 
     max_cell_edge_length = _require_predefined
     max_facet_edge_length = _require_predefined
 
-    def max_value(self, expr, left, right):
+    def MaxValue(self, expr, left, right):
         self.using.add(Using(cplusplus.max_))
         return self._makeTmp(cplusplus.max_(left, right))
 
     min_cell_edge_length = _require_predefined
     min_facet_edge_length = _require_predefined
 
-    def min_value(self, expr, left, right):
+    def minValue(self, expr, left, right):
         self.using.add(Using(cplusplus.min_))
         return self._makeTmp(cplusplus.min_(left, right))
 
@@ -179,6 +198,10 @@ class CodeGenerator(MultiFunction):
     def sin(self, expr, x):
         self.using.add(Using(cplusplus.sin))
         return self._makeTmp(cplusplus.sin(x))
+
+    def sinh(self, expr, x):
+        self.using.add(Using(cplusplus.sinh))
+        return self._makeTmp(cplusplus.sinh(x))
 
     def sqrt(self, expr, x):
         self.using.add(Using(cplusplus.sqrt))

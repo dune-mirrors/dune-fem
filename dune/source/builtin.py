@@ -47,15 +47,20 @@ class BuiltInFunction:
         return "built-in(" + str(self) + ")"
 
 
+and_ = BuiltInFunction('algorithm', 'X', 'std::logical_and', targs=['class X'], args=['const X &x', 'const X &y'])
 max_ = BuiltInFunction('algorithm', 'X', 'max', targs=['class X'], args=['const X &x', 'const X &y'])
 min_ = BuiltInFunction('algorithm', 'X', 'min', targs=['class X'], args=['const X &x', 'const X &y'])
 
-abs = BuiltInFunction('cmath', 'X', 'abs', targs=['class X'], args=['const X &x'])
+abs_ = BuiltInFunction('cmath', 'X', 'abs', targs=['class X'], args=['const X &x'])
 atan = BuiltInFunction('cmath', 'X', 'atan', targs=['class X'], args=['const X &x'])
 atan2 = BuiltInFunction('cmath', 'X', 'atan2', targs=['class X'], args=['const X &x', 'const X &y'])
+exp = BuiltInFunction('cmath', 'X', 'exp', targs=['class X'], args=['const X &x'])
 cos = BuiltInFunction('cmath', 'X', 'cos', targs=['class X'], args=['const X &x'])
+cosh = BuiltInFunction('cmath', 'X', 'cosh', targs=['class X'], args=['const X &x'])
+log = BuiltInFunction('cmath', 'X', 'log', targs=['class X'], args=['const X &x'])
 pow_ = BuiltInFunction('cmath', 'X', 'pow', targs=['class X'], args=['const X &x', 'const X &y'])
 sin = BuiltInFunction('cmath', 'X', 'sin', targs=['class X'], args=['const X &x'])
+sinh = BuiltInFunction('cmath', 'X', 'sinh', targs=['class X'], args=['const X &x'])
 sqrt = BuiltInFunction('cmath', 'X', 'sqrt', targs=['class X'], args=['const X &x'])
 tan = BuiltInFunction('cmath', 'X', 'tan', targs=['class X'], args=['const X &x'])
 tanh = BuiltInFunction('cmath', 'X', 'tanh', targs=['class X'], args=['const X &x'])

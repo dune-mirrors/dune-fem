@@ -103,8 +103,12 @@ class MultiLinearExprSplitter(Transformer):
     atan_2 = terminal
     abs = terminal
     cos = terminal
+    cosh = terminal
+    exp = terminal
+    ln = terminal
     power = terminal
     sin = terminal
+    sinh = terminal
     sqrt = terminal
     tan = terminal
     tanh = terminal

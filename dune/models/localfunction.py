@@ -59,11 +59,11 @@ def UFLFunction(grid, name, order, expr, **kwargs):
             dimR = coefficient.ufl_shape[0]
 
         try:
-            name = getattr(coefficient, "name")
+            coeffName = getattr(coefficient, "name")
         except AttributeError:
-            name = str(coefficient)
+            coeffName = str(coefficient)
         coefficients.append({ \
-                    'name' : name, \
+                    'name' : coeffName, \
                     'number' : idx, \
                     'counter' : coefficient.count(), \
                     'dimRange' : dimR,\
