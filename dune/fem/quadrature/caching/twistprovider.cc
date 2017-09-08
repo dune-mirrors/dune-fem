@@ -43,18 +43,6 @@ namespace Dune
     }
 
     template <class ct, int dim>
-    int TwistStorage<ct, dim>::minTwist() const
-    {
-      return minTwist_;
-    }
-
-    template <class ct, int dim>
-    int TwistStorage<ct, dim>::maxTwist() const
-    {
-      return maxTwist_;
-    }
-
-    template <class ct, int dim>
     const typename TwistProvider<ct, dim>::TwistStorageType&
     TwistProvider<ct, dim>::getTwistStorage(const QuadratureType& quad)
     {
@@ -131,7 +119,7 @@ namespace Dune
       {
         MapperType mapper(quad_.nop());
 
-        const MatrixType& mat = helper_->buildTransformationMatrix(twist);
+        const MatrixType mat = helper_->buildTransformationMatrix(twist);
 
         for (size_t i = 0; i < quad_.nop(); ++i)
         {
@@ -177,97 +165,6 @@ namespace Dune
       } // for all twists
 
       return storage;
-    }
-
-    template <class ct, int dim>
-    PointTwistMapperStrategy<ct, dim>::
-    PointTwistMapperStrategy(GeometryType geo) :
-      TwistMapperStrategy<ct, dim>(0, 1),
-      refElem_(Dune::ReferenceElements<ct, dim>::cube()),
-      mat_(0.)
-    {
-      assert(dim == 0);
-    }
-
-    template <class ct, int dim>
-    const typename TwistMapperStrategy<ct, dim>::MatrixType&
-    PointTwistMapperStrategy<ct, dim>::buildTransformationMatrix(int twist) const
-    {
-      assert( twist == 0 );
-      mat_[ 0 ] = refElem_.position( 0, dim );
-      return mat_;
-    }
-
-    template <class ct, int dim>
-    LineTwistMapperStrategy<ct, dim>::
-    LineTwistMapperStrategy(GeometryType geo) :
-      TwistMapperStrategy<ct, dim>(0, 2),
-      refElem_(Dune::ReferenceElements<ct, dim>::cube()),
-      mat_(0.)
-    {
-      assert(dim == 1);
-    }
-
-    template <class ct, int dim>
-    const typename TwistMapperStrategy<ct, dim>::MatrixType&
-    LineTwistMapperStrategy<ct, dim>::buildTransformationMatrix(int twist) const
-    {
-      assert( (twist == 0) || (twist == 1) );
-      mat_[ twist   ] = refElem_.position( 0, dim );
-      mat_[ 1-twist ] = refElem_.position( 1, dim );
-      return mat_;
-    }
-
-    template <class ct, int dim>
-    TriangleTwistMapperStrategy<ct, dim>::
-    TriangleTwistMapperStrategy(GeometryType geo) :
-      TwistMapperStrategy<ct, dim>(-3, 3),
-      refElem_(Dune::ReferenceElements<ct, dim>::simplex()),
-      mat_(0.)
-    {
-      assert(dim == 2);
-    }
-
-    template <class ct, int dim>
-    const typename TwistMapperStrategy<ct, dim>::MatrixType&
-    TriangleTwistMapperStrategy<ct, dim>::
-    buildTransformationMatrix(int twist) const
-    {
-      typedef Dune::Fem::FaceTopologyMapping<tetra> FaceTopo;
-      mat_ = 0.0;
-      for (int idx = 0; idx < dim+1; ++idx)
-      {
-        mat_[idx] = refElem_.position(
-            FaceTopo::twistedDuneIndex(idx, twist), dim); // dim == codim here
-      }
-
-      return mat_;
-    }
-
-    template <class ct, int dim>
-    QuadrilateralTwistMapperStrategy<ct, dim>::
-    QuadrilateralTwistMapperStrategy(GeometryType geo) :
-      TwistMapperStrategy<ct, dim>(-4, 4),
-      refElem_(Dune::ReferenceElements<ct, dim>::cube()),
-      mat_(0.)
-    {
-      assert(dim == 2);
-    }
-
-    template <class ct, int dim>
-    const typename TwistMapperStrategy<ct, dim>::MatrixType&
-    QuadrilateralTwistMapperStrategy<ct, dim>::
-    buildTransformationMatrix(int twist) const
-    {
-      typedef Dune::Fem::FaceTopologyMapping<hexa> FaceTopo;
-      mat_ = 0.0;
-      for (int idx = 0; idx < dim+1; ++idx)
-      {
-        mat_[idx] = refElem_.position(
-            FaceTopo::twistedDuneIndex(idx, twist), dim); // dim == codim here
-      }
-
-      return mat_;
     }
 
   } // namespace Fem
