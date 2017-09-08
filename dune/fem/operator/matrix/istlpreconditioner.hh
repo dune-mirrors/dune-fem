@@ -60,14 +60,14 @@ namespace Dune
       virtual int method () const
       {
         static const std::string preConTable[]
-          = { "none", "ssor", "sor", "ilu-0", "ilu-n", "gauss-seidel", "jacobi", "amg-ilu-0", "amg-ilu-n", "amg-jacobi" };
+          = { "none", "ssor", "sor", "ilu-0", "ilu-n", "gauss-seidel", "jacobi", "amg-ilu-0", "amg-ilu-n", "amg-jacobi", "ildl" };
         return Parameter::getEnum(  keyPrefix_ + "preconditioning.method", preConTable, 0 );
       }
 
       virtual std::string preconditionName() const
       {
         static const std::string preConTable[]
-          = { "None", "SSOR", "SOR", "ILU-0", "ILU-n", "Gauss-Seidel", "Jacobi", "AMG-ILU-0", "AMG-ILU-n", "AMG-Jacobi" };
+          = { "None", "SSOR", "SOR", "ILU-0", "ILU-n", "Gauss-Seidel", "Jacobi", "AMG-ILU-0", "AMG-ILU-n", "AMG-Jacobi", "ILDL" };
         const int precond = method();
         std::stringstream tmp;
         tmp << preConTable[precond];
@@ -481,7 +481,8 @@ namespace Dune
                               jacobi = 6,      // Jacobi preconditioner
                               amg_ilu_0 = 7,   // AMG with ILU-0 smoother
                               amg_ilu_n = 8,   // AMG with ILU-n smoother
-                              amg_jacobi = 9   // AMG with Jacobi smoother
+                              amg_jacobi = 9,  // AMG with Jacobi smoother
+                              ildl = 10
       };
 
       typedef Space       DomainSpaceType ;
@@ -651,6 +652,14 @@ namespace Dune
           return createAMGMatrixAdapter( (MatrixAdapterType *)nullptr,
                                          (PreconditionerType*)nullptr,
                                          matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
+        }
+        else if(preconditioning == ildl)
+        {
+          if( procs > 1 )
+            DUNE_THROW(InvalidStateException,"ISTL::SeqILDL not working in parallel computations");
+
+          PreConType preconAdapter( matrix, new SeqILDL<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType>( matrix , relaxFactor ) );
+          return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         else
         {
