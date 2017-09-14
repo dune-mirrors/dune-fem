@@ -180,13 +180,15 @@ int main ( int argc, char **argv )
   std::array< ErrorTupleType, 4 > errors;
   for( ErrorTupleType &e : errors )
   {
-    Dune::Hybrid::forEach( indices, [ &gridPart, &e ] ( auto &&i ) {
+    Dune::Hybrid::forEach( indices, [ &gridPart, &e ] ( auto &&idx ) {
+        const std::size_t i = std::decay_t< decltype( idx ) >::value;
         std::get< i >( e ) = algorithm< std::tuple_element_t< i, DiscreteFunctionSpacesType > >( gridPart );
       } );
     grid->globalRefine(1);
   }
 
-  Dune::Hybrid::forEach( indices, [ &errors ] ( auto &&i ) {
+  Dune::Hybrid::forEach( indices, [ &errors ] ( auto &&idx ) {
+      const std::size_t i = std::decay_t< decltype( idx ) >::value;
       std::cout << ">>> Testing " << Dune::className< std::tuple_element_t< i, DiscreteFunctionSpacesType > >() << ":" << std::endl;
       std::cout << std::endl;
       print( "L2 Error", "L2 EOC", "H1 Error", "H1 EOC" );
