@@ -97,9 +97,10 @@ typedef std::tuple<
   Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
   Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
 #if HAVE_DUNE_LOCALFUNCTIONS
-  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, polOrder >,
+  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 1 >,
+  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 2 >,
   // Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >,
-  Dune::Fem::RannacherTurekSpace< FunctionSpaceType, GridPartType >,
+  // Dune::Fem::RannacherTurekSpace< FunctionSpaceType, GridPartType >,
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS
   Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >,
   Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 2 >
