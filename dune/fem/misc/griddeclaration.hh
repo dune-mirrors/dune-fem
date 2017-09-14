@@ -29,9 +29,6 @@ namespace Dune
 
   class OneDGrid;
 
-  template< int dim, int dimw, class ctype >
-  class SGrid;
-
   template< int dim >
   class UGGrid;
 

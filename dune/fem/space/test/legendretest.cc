@@ -46,7 +46,6 @@ const int polOrd =1;/*POLORDER;*/
 */
 //***********************************************************************
 
-  //typedef Dune::SGrid<dimw,dimw> HGridType;
 //! the index set we are using
 typedef LeafGridPart<HGridType> GridPartType;
 

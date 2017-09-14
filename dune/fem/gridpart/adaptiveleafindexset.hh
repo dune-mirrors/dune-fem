@@ -1024,7 +1024,6 @@ namespace Dune
 
 #if HAVE_MPI
       // for YaspGrid we need all interior indices first
-      // so we can use SGrid for the visualization :(
       if( CartesianNonAdaptiveGrid  &&
           grid_.comm().size() > 1 )
       {
