@@ -26,24 +26,30 @@ namespace Dune
       template< class LocalFunction, class BasisFunctionSet >
       struct LocalFunctionWrapper
       {
+        typedef typename BasisFunctionSet::ShapeFunctionSetType ShapeFunctionSetType;
+
         struct Traits
         {
-          typedef typename LocalFunction::DomainType DomainType;
-          typedef typename LocalFunction::RangeType RangeType;
+          typedef typename ShapeFunctionSetType::ScalarShapeFunctionSetType::DomainType DomainType;
+          typedef typename ShapeFunctionSetType::ScalarShapeFunctionSetType::RangeType RangeType;
         };
-        typedef typename LocalFunction::DomainType DomainType;
-        typedef typename LocalFunction::RangeType RangeType;
 
-        LocalFunctionWrapper ( const LocalFunction &lf, const BasisFunctionSet &bset ) : lf_( lf ) {}
+        typedef typename Traits::DomainType DomainType;
+        typedef typename Traits::RangeType RangeType;
 
-        template< class Arg >
-        void evaluate ( const Arg &x, typename Traits::RangeType &y ) const
+        LocalFunctionWrapper ( const LocalFunction &lf, const BasisFunctionSet &bset, int component )
+          : lf_( lf ), component_( component )
+        {}
+
+        void evaluate ( const DomainType &x, RangeType &y ) const
         {
-          lf_.evaluate( x, y );
+          typedef MakeVectorialTraits< RangeType, typename ShapeFunctionSetType::RangeType > Traits;
+          y = Traits::component( lf_.evaluate( x ), component_ );
         }
 
       private:
         const LocalFunction &lf_;
+        int component_;
       };
 
 
@@ -57,29 +63,33 @@ namespace Dune
 
         struct Traits
         {
-          typedef typename LocalFunction::DomainType DomainType;
-          typedef typename LocalFunction::RangeType RangeType;
+          typedef typename ShapeFunctionSet::ScalarShapeFunctionSetType::DomainType DomainType;
+          typedef typename ShapeFunctionSet::ScalarShapeFunctionSetType::RangeType RangeType;
         };
-        typedef typename LocalFunction::DomainType DomainType;
-        typedef typename LocalFunction::RangeType RangeType;
 
-        LocalFunctionWrapper ( const LocalFunction &lf, const BasisFunctionSetType &bset ) : lf_( lf ), bset_( bset ) {}
+        typedef typename Traits::DomainType DomainType;
+        typedef typename Traits::RangeType RangeType;
 
-        template< class Arg >
-        void evaluate ( const Arg &x, typename Traits::RangeType &y ) const
+        typedef Fem::MakeVectorialTraits< RangeType, typename ShapeFunctionSet::RangeType > MakeVectorialTraits;
+
+        LocalFunctionWrapper ( const LocalFunction &lf, const BasisFunctionSetType &bset, typename MakeVectorialTraits::IndexType component )
+          : lf_( lf ), bset_( bset ), component_( component )
+        {}
+
+        void evaluate ( const DomainType &x, RangeType &y ) const
         {
-          typename Traits::RangeType help;
-          lf_.evaluate( x, help );
-          typename Transformation::InverseTransformationType transf( lf_.entity().geometry(), x );
-          y = transf.apply( help );
+          typedef typename Transformation::InverseTransformationType Trafo;
+          y = MakeVectorialTraits::component( Trafo( lf_.entity().geometry(), x ).apply( lf_.evaluate( x ) ), component_ );
         }
 
       private:
         const LocalFunction &lf_;
         const BasisFunctionSetType &bset_;
+        typename MakeVectorialTraits::IndexType component_;
       };
 
     } // namespace Impl
+
 
 
     // LocalFiniteElementInterpolation
@@ -103,6 +113,11 @@ namespace Dune
 
       typedef std::size_t size_type;
 
+      typedef typename BasisFunctionSetType::ShapeFunctionSetType ShapeFunctionSetType;
+      typedef typename ShapeFunctionSetType::ScalarShapeFunctionSetType ScalarShapeFunctionSetType;
+
+      typedef Fem::MakeVectorialTraits< typename ScalarShapeFunctionSetType::RangeType, typename ShapeFunctionSetType::RangeType > MakeVectorialTraits;
+
       template< class LocalFunction >
       using LocalFunctionWrapper = Impl::LocalFunctionWrapper< LocalFunction, BasisFunctionSetType >;
 
@@ -110,21 +125,24 @@ namespace Dune
       explicit LocalFiniteElementInterpolation ( const BasisFunctionSetType &basisFunctionSet,
                                                  const LocalInterpolationType &localInterpolation = LocalInterpolationType() )
         : basisFunctionSet_( basisFunctionSet ),
-        localInterpolation_( localInterpolation )
+          localInterpolation_( localInterpolation )
       {}
 
-      template< class LocalFunction, class Dof >
-      void operator() ( const LocalFunction &localFunction, std::vector< Dof > &localDofVector ) const
+      template< class LocalFunction, class LocalDofVector >
+      auto operator() ( const LocalFunction &localFunction, LocalDofVector &&localDofVector ) const
+        -> void_t< decltype( localDofVector[ 0 ] = RangeFieldType( 0 ) ) >
       {
-        LocalFunctionWrapper< LocalFunction > wrapper( localFunction, basisFunctionSet() );
-        localInterpolation().interpolate( wrapper, localDofVector );
-      }
+        std::vector< RangeFieldType > phi;
 
-      template< class LocalFunction, class DiscreteFunction, template< class > class Assembly >
-      void operator() ( const LocalFunction &localFunction, LocalContribution< DiscreteFunction, Assembly > &localContribution ) const
-      {
-        LocalFunctionWrapper< LocalFunction > wrapper( localFunction, basisFunctionSet() );
-        localInterpolation().interpolate( wrapper, localContribution.localDofVector() );
+        const typename MakeVectorialTraits::IndexType end = MakeVectorialTraits::end();
+        for( typename MakeVectorialTraits::IndexType k = MakeVectorialTraits::begin(); k != end; ++k )
+        {
+          LocalFunctionWrapper< LocalFunction > wrapper( localFunction, basisFunctionSet(), k );
+          localInterpolation().interpolate( wrapper, phi );
+
+          for( size_type i = 0, size = phi.size(); i < size; ++i )
+            localDofVector[ i*MakeVectorialTraits::factor + MakeVectorialTraits::index( k ) ] = phi[ i ];
+        }
       }
 
       BasisFunctionSetType basisFunctionSet () const { return basisFunctionSet_; }
