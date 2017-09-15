@@ -9,6 +9,7 @@
 #include <dune/localfunctions/brezzidouglasmarini/brezzidouglasmarini2cube2d.hh>
 #include <dune/localfunctions/brezzidouglasmarini/brezzidouglasmarini2simplex2d.hh>
 
+#include <dune/fem/space/common/uniquefacetorientation.hh>
 #include <dune/fem/space/basisfunctionset/piolatransformation.hh>
 #include <dune/fem/space/localfiniteelement/space.hh>
 
@@ -123,7 +124,7 @@ namespace Dune
 
       template< class ... Args >
       BrezziDouglasMariniLocalFiniteElementMap ( const GridPart &gridPart, Args ... args )
-        : gridPart_( gridPart )
+        : orientation_( gridPart )
       {
         for( std::size_t i = 0; i < LocalFiniteElementType::numOrientations; ++i )
           map_[ i ] = LocalFiniteElementType( i );
@@ -139,7 +140,7 @@ namespace Dune
       template< class Entity >
       auto operator() ( const Entity &e ) const
       {
-        unsigned char orient = orientation( e );
+        unsigned int orient = orientation_( e );
         return std::tuple< std::size_t, const LocalBasisType&, const LocalInterpolationType& >
         { static_cast< std::size_t >( orient ),
           map_[ orient ].localBasis(),
@@ -157,38 +158,26 @@ namespace Dune
         return map_[ 0 ].localCoefficients();
       }
 
-      const GridPartType &gridPart () const { return gridPart_; }
-
-    protected:
-
-      // NOTE: this might be cached in future versions
-      template< class Entity >
-      unsigned char orientation ( const Entity &entity ) const
-      {
-        unsigned char ret = 0;
-        auto &idxSet = gridPart().indexSet();
-        for( auto intersection : intersections( gridPart(), entity ) )
-          if( intersection.neighbor() &&
-              ( idxSet.index( entity ) < idxSet.index( intersection.outside() ) ) )
-            ret |= 1 << intersection.indexInInside();
-        return ret;
-      }
+      const GridPartType &gridPart () const { return orientation_.gridPart(); }
 
     private:
-      const GridPartType &gridPart_;
+      UniqueFacetOrientation< GridPartType > orientation_;
       std::array< LocalFiniteElementType, LocalFiniteElementType::numOrientations > map_;
     };
 
 
     // BrezziDouglasMariniSpace
-    // ----------------------------------------
+    // ------------------------
 
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
     using BrezziDouglasMariniSpace
             = LocalFiniteElementSpace< BrezziDouglasMariniLocalFiniteElementMap< GridPart, FunctionSpace, polOrder >,
                                        FunctionSpace, Storage >;
-  }
-}
+
+  } // namespace Fem
+
+} // namespace Dune
 
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS
+
 #endif // #ifndef DUNE_FEM_SPACE_BREZZIDOUGLASMARINI_HH
