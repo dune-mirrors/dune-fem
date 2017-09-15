@@ -466,12 +466,12 @@ namespace Dune
     protected:
       typedef typename ScalarShapeFunctionSetType::FunctionSpaceType ScalarFunctionSpaceType;
 
-      static const std::size_t dimRangeFactor = MakeVectorialTraits< typename ScalarFunctionSpaceType::RangeType, RangeVector >::factor;
-
       template< class Functor, class Vectorial >
       struct VectorialFunctor;
 
     public:
+      static const std::size_t dimRangeFactor = MakeVectorialTraits< typename ScalarFunctionSpaceType::RangeType, RangeVector >::factor;
+
       typedef typename ToNewRange< ScalarFunctionSpaceType, RangeVector >::Type FunctionSpaceType;
 
       typedef typename FunctionSpaceType::RangeType RangeType;

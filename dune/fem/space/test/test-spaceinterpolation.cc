@@ -83,27 +83,30 @@ struct ErrorTuple< std::tuple< T... > >
 typedef Dune::GridSelector::GridType GridType;
 typedef Dune::Fem::LeafGridPart< GridType > GridPartType;
 
+template< int dimR >
+using FunctionSpace = Dune::Fem::GridFunctionSpace< GridPartType, Dune::FieldVector< typename GridPartType::ctype, dimR > >;
+
 static const int dimRange = GridPartType::dimensionworld;
 
-typedef Dune::Fem::GridFunctionSpace< GridPartType, Dune::FieldVector< typename GridPartType::ctype, dimRange > > FunctionSpaceType;
-
 typedef std::tuple<
-  Dune::Fem::FiniteVolumeSpace< FunctionSpaceType, GridPartType >,
-  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 0 >,
-  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
-  Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
-  Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
+  Dune::Fem::FiniteVolumeSpace< FunctionSpace< dimRange >, GridPartType >,
+  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpace< dimRange >, GridPartType, 0 >,
+  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpace< dimRange >, GridPartType, 1 >,
+  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpace< dimRange >, GridPartType, 2 >,
+  Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpace< dimRange >, GridPartType, 1 >,
+  Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpace< dimRange >, GridPartType, 2 >,
+  Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpace< dimRange >, GridPartType, 1 >,
+  Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpace< dimRange >, GridPartType, 2 >,
 #if HAVE_DUNE_LOCALFUNCTIONS
-  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 2 >,
-  // Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >,
-  // Dune::Fem::RannacherTurekSpace< FunctionSpaceType, GridPartType >,
+  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpace< dimRange >, GridPartType, 1 >,
+  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpace< dimRange >, GridPartType, 2 >,
+  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpace< 2*dimRange >, GridPartType, 1 >,
+  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpace< 2*dimRange >, GridPartType, 2 >,
+  // Dune::Fem::LagrangeSpace< FunctionSpace< dimRange >, GridPartType >,
+  // Dune::Fem::RannacherTurekSpace< FunctionSpace< dimRange >, GridPartType >,
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS
-  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 2 >
+  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpace< dimRange >, GridPartType, 1 >,
+  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpace< dimRange >, GridPartType, 2 >
   > DiscreteFunctionSpacesType;
 
 typedef ErrorTuple< DiscreteFunctionSpacesType >::Type ErrorTupleType;

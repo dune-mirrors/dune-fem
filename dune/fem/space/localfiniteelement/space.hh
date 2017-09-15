@@ -49,19 +49,19 @@ namespace Dune
 
       static constexpr int codimension = 0;
 
-      typedef Hybrid::IndexRange< int, 1 > LocalBlockIndices;
-
     private:
       typedef typename GridPartType::template Codim< codimension >::EntityType EntityType;
 
     public:
-      typedef Dune::Fem::IndexSetDofMapper< GridPartType > BlockMapperType;
-
       typedef LocalFunctionsShapeFunctionSet< typename LocalFiniteElementType::Traits::LocalBasisType > LocalFunctionsShapeFunctionSetType;
       typedef SelectCachingShapeFunctionSet< LocalFunctionsShapeFunctionSetType, Storage > StoredShapeFunctionSetType;
 
-      typedef ShapeFunctionSetProxy< StoredShapeFunctionSetType > ShapeFunctionSetType;
-//      typedef VectorialShapeFunctionSet< ShapeFunctionSetProxy< StoredShapeFunctionSetType >, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
+      //typedef ShapeFunctionSetProxy< StoredShapeFunctionSetType > ShapeFunctionSetType;
+      typedef VectorialShapeFunctionSet< ShapeFunctionSetProxy< StoredShapeFunctionSetType >, typename FunctionSpaceType::RangeType > ShapeFunctionSetType;
+
+      typedef Hybrid::IndexRange< int, ShapeFunctionSetType::dimRangeFactor > LocalBlockIndices;
+
+      typedef Dune::Fem::IndexSetDofMapper< GridPartType > BlockMapperType;
 
     private:
       template< class LFEM >
