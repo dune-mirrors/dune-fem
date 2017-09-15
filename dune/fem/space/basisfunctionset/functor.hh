@@ -1,6 +1,10 @@
 #ifndef DUNE_FEM_BASEFUNCTIONSET_FUNCTOR_HH
 #define DUNE_FEM_BASEFUNCTIONSET_FUNCTOR_HH
 
+#include <cassert>
+
+#include <type_traits>
+
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 
@@ -16,17 +20,15 @@ namespace Dune
     // -----------------------------
 
     template< class T >
-    inline void axpy ( const T &a, const T &x, T &y );
+    void axpy ( const T &a, const T &x, T &y );
 
-    template< class K, int SIZE >
-    inline void axpy ( const typename FieldTraits< K >::field_type &a,
-                       const FieldVector< K, SIZE > &x,
-                       FieldVector< K, SIZE > &y );
+    template< class K, int SIZE, class T >
+    std::enable_if_t< std::is_same< K, typename T::value_type >::value >
+    axpy ( const typename FieldTraits< K >::field_type &a, const FieldVector< K, SIZE > &x, DenseVector< T > &y );
 
-    template< class K, int ROWS, int COLS >
-    inline void axpy ( const typename FieldTraits< K >::field_type &a,
-                       const FieldMatrix< K, ROWS, COLS > &x,
-                       FieldMatrix< K, ROWS, COLS > &y );
+    template< class K, int ROWS, int COLS, class T >
+    std::enable_if_t< std::is_same< K, typename T::value_type >::value >
+    axpy ( const typename FieldTraits< K >::field_type &a, const FieldMatrix< K, ROWS, COLS > &x, DenseMatrix< T > &y );
 
 
 
@@ -39,19 +41,18 @@ namespace Dune
       y += a*x;
     }
 
-    template< class K, int SIZE >
-    inline void axpy ( const typename FieldTraits< K >::field_type &a,
-                       const FieldVector< K, SIZE > &x,
-                       FieldVector< K, SIZE > &y )
+    template< class K, int SIZE, class T >
+    inline std::enable_if_t< std::is_same< K, typename T::value_type >::value >
+    axpy ( const typename FieldTraits< K >::field_type &a, const FieldVector< K, SIZE > &x, DenseVector< T > &y )
     {
+      assert( y.size() == x.size() );
       for( int i = 0; i < SIZE; ++i )
         axpy( a, x[ i ], y[ i ] );
     }
 
-    template< class K, int ROWS, int COLS >
-    inline void axpy ( const typename FieldTraits< K >::field_type &a,
-                       const FieldMatrix< K, ROWS, COLS > &x,
-                       FieldMatrix< K, ROWS, COLS > &y )
+    template< class K, int ROWS, int COLS, class T >
+    inline std::enable_if_t< std::is_same< K, typename T::value_type >::value >
+    axpy ( const typename FieldTraits< K >::field_type &a, const FieldMatrix< K, ROWS, COLS > &x, DenseMatrix< T > &y )
     {
       y.axpy( a, x );
     }

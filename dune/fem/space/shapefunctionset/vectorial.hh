@@ -2,14 +2,16 @@
 #define DUNE_FEM_SHAPEFUNCTIONSET_VECTORIAL_HH
 
 // C++ includes
-#include <algorithm>
 #include <cstddef>
+
+#include <algorithm>
+#include <type_traits>
 
 // dune-fem includes
 #include <dune/fem/common/fmatrixcol.hh>
 #include <dune/fem/space/basisfunctionset/functor.hh>
 #include <dune/fem/space/common/functionspace.hh>
-
+#include <dune/fem/storage/subvector.hh>
 
 namespace Dune
 {
@@ -20,59 +22,73 @@ namespace Dune
     // MakeVectorialTraits
     // -------------------
 
-    template< class Scalar, class Vectorial >
+    template< class Scalar, class Vectorial, class = void >
     struct MakeVectorialTraits;
 
-    template< class K, int dimR >
-    struct MakeVectorialTraits< FieldVector< K, 1 >, FieldVector< K, dimR > >
+    template< class K, int dimR, int dimNR >
+    struct MakeVectorialTraits< FieldVector< K, dimR >, FieldVector< K, dimNR >, std::enable_if_t< dimNR % dimR == 0 > >
     {
-      typedef FieldVector< K, 1 > ScalarType;
-      typedef FieldVector< K, dimR > VectorialType;
+      typedef FieldVector< K, dimR > ScalarType;
+      typedef FieldVector< K, dimNR > VectorialType;
 
       typedef typename FieldTraits< VectorialType >::field_type field_type;
-      typedef typename VectorialType::size_type ComponentType;
+      typedef typename VectorialType::size_type IndexType;
       typedef typename VectorialType::size_type size_type;
 
-      static const size_type factor = dimR;
+      typedef SubVector< const VectorialType, StaticOffsetSubMapper< dimR > > ConstComponentType;
+      typedef SubVector< VectorialType, StaticOffsetSubMapper< dimR > > ComponentType;
 
-      static ComponentType begin () { return ComponentType( 0 ); }
-      static ComponentType end () { return ComponentType( factor ); }
+      static const size_type factor = dimNR / dimR;
+
+      static IndexType begin () { return IndexType( 0 ); }
+      static IndexType end () { return IndexType( factor ); }
 
       static VectorialType zeroVectorial () { return VectorialType( K( field_type( 0 ) ) ); }
 
-      static const K &access ( const ScalarType &x ) { return x[ 0 ]; }
-      static K &access ( ScalarType &x ) { return x[ 0 ]; }
+      static ConstComponentType component ( const VectorialType &x, const IndexType &i )
+      {
+        return ConstComponentType( x, StaticOffsetSubMapper< dimR >( i*dimR ) );
+      }
 
-      static const K &access ( const VectorialType &x, const ComponentType &i ) { return x[ i ]; }
-      static K &access ( VectorialType &x, const ComponentType &i ) { return x[ i ]; }
+      static ComponentType component ( VectorialType &x, const IndexType &i )
+      {
+        return ComponentType( x, StaticOffsetSubMapper< dimR >( i*dimR ) );
+      }
 
-      static size_type index ( const ComponentType &i ) { return i; }
+      static size_type index ( const IndexType &i ) { return i; }
     };
 
-    template< class K, int dimR, int dimD >
-    struct MakeVectorialTraits< FieldMatrix< K, 1, dimD >, FieldMatrix< K, dimR, dimD > >
+    template< class K, int dimR, int dimD, int dimNR >
+    struct MakeVectorialTraits< FieldMatrix< K, dimR, dimD >, FieldMatrix< K, dimNR, dimD >, std::enable_if_t< dimNR % dimR == 0 > >
     {
-      typedef FieldMatrix< K, 1, dimD > ScalarType;
-      typedef FieldMatrix< K, dimR, dimD > VectorialType;
+      typedef FieldMatrix< K, dimR, dimD > ScalarType;
+      typedef FieldMatrix< K, dimNR, dimD > VectorialType;
 
       typedef typename FieldTraits< VectorialType >::field_type field_type;
-      typedef typename VectorialType::size_type ComponentType;
+      typedef typename VectorialType::size_type IndexType;
       typedef typename VectorialType::size_type size_type;
 
-      static const size_type factor = dimR;
+      typedef SubRowMatrix< const VectorialType, StaticOffsetSubMapper< dimR > > ConstComponentType;
+      typedef SubRowMatrix< VectorialType, StaticOffsetSubMapper< dimR > > ComponentType;
 
-      static ComponentType begin () { return ComponentType( 0 ); }
-      static ComponentType end () { return ComponentType( factor ); }
+      static const size_type factor = dimNR / dimR;
+
+      static IndexType begin () { return IndexType( 0 ); }
+      static IndexType end () { return IndexType( factor ); }
 
       static VectorialType zeroVectorial () { return VectorialType( K( field_type( 0 ) ) ); }
 
-      static const FieldVector< K, dimD > &access ( const ScalarType &x ) { return x[ 0 ]; }
-      static FieldVector< K, dimD > &access ( ScalarType &x ) { return x[ 0 ]; }
+      static ConstComponentType component ( const VectorialType &x, const IndexType &i )
+      {
+        return ConstComponentType( x, StaticOffsetSubMapper< dimR >( i*dimR ) );
+      }
 
-      static const FieldVector< K, dimD > &access ( const VectorialType &x, const ComponentType &i ) { return x[ i ]; }
-      static FieldVector< K, dimD > &access ( VectorialType &x, const ComponentType &i ) { return x[ i ]; }
+      static ComponentType component ( VectorialType &x, const IndexType &i )
+      {
+        return ComponentType( x, StaticOffsetSubMapper< dimR >( i*dimR ) );
+      }
 
-      static size_type index ( const ComponentType &i ) { return i; }
+      static size_type index ( const IndexType &i ) { return i; }
     };
 
 
@@ -92,10 +108,10 @@ namespace Dune
       typedef typename Traits::VectorialType VectorialType;
 
       typedef typename Traits::field_type field_type;
-      typedef typename Traits::ComponentType ComponentType;
+      typedef typename Traits::IndexType IndexType;
       typedef typename Traits::size_type size_type;
 
-      BasicMakeVectorialExpression ( const ComponentType &component, const ScalarType &scalar )
+      BasicMakeVectorialExpression ( const IndexType &component, const ScalarType &scalar )
       : component_( component ),
         scalar_( scalar )
       {}
@@ -103,7 +119,7 @@ namespace Dune
       operator VectorialType () const
       {
         VectorialType vectorial = Traits::zeroVectorial();
-        Traits::access( vectorial, component() ) = Traits::access( scalar() );
+        Traits::component( vectorial, component() ) = scalar();
         return vectorial;
       }
 
@@ -119,13 +135,13 @@ namespace Dune
         return *this;
       }
 
-      const ComponentType &component () const { return component_; }
+      const IndexType &component () const { return component_; }
 
       const ScalarType &scalar () const { return scalar_; }
       ScalarType &scalar () { return scalar_; }
 
     protected:
-      ComponentType component_;
+      IndexType component_;
       ScalarType scalar_;
     };
 
@@ -142,10 +158,10 @@ namespace Dune
       typedef BasicMakeVectorialExpression< Scalar, Vectorial > BaseType;
 
     public:
-      typedef typename BaseType::ComponentType ComponentType;
+      typedef typename BaseType::IndexType IndexType;
       typedef typename BaseType::ScalarType ScalarType;
 
-      MakeVectorialExpression ( const ComponentType &component, const ScalarType &scalar )
+      MakeVectorialExpression ( const IndexType &component, const ScalarType &scalar )
       : BaseType( component, scalar )
       {}
     };
@@ -162,13 +178,13 @@ namespace Dune
       typedef typename BaseType::VectorialType VectorialType;
 
       typedef typename BaseType::field_type field_type;
-      typedef typename BaseType::ComponentType ComponentType;
+      typedef typename BaseType::IndexType IndexType;
       typedef typename BaseType::size_type size_type;
 
       using BaseType::component;
       using BaseType::scalar;
 
-      MakeVectorialExpression ( const ComponentType &component, const ScalarType &scalar )
+      MakeVectorialExpression ( const IndexType &component, const ScalarType &scalar )
       : BaseType( component, scalar )
       {}
 
@@ -204,13 +220,13 @@ namespace Dune
       typedef typename BaseType::VectorialType VectorialType;
 
       typedef typename BaseType::field_type field_type;
-      typedef typename BaseType::ComponentType ComponentType;
+      typedef typename BaseType::IndexType IndexType;
       typedef typename BaseType::size_type size_type;
 
       using BaseType::component;
       using BaseType::scalar;
 
-      MakeVectorialExpression ( const ComponentType &component, const ScalarType &scalar )
+      MakeVectorialExpression ( const IndexType &component, const ScalarType &scalar )
       : BaseType( component, scalar )
       {}
 
@@ -331,46 +347,69 @@ namespace Dune
            typename MakeVectorialTraits< Scalar, Vectorial >::VectorialType &y )
     {
       typedef MakeVectorialTraits< Scalar, Vectorial > Traits;
-      axpy( a, Traits::access( x.scalar() ), Traits::access( y, x.component() ) );
+      auto z = Traits::component( y, x.component() );
+      axpy( a, x.scalar(), z );
     }
 
-    template< class GeometryJacobianInverseTransposed, class K, int ROWS >
-    void jacobianTransformation ( const GeometryJacobianInverseTransposed &gjit,
-                                  const MakeVectorialExpression< FieldMatrix< K, 1, GeometryJacobianInverseTransposed::cols >, FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::cols > > &a,
-                                  FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::rows > &b )
+
+
+    // jacobianTransformation
+    // ----------------------
+
+    template< class GJIT, class K, int ROWS, int NROWS >
+    inline std::enable_if_t< NROWS % ROWS == 0 >
+    jacobianTransformation ( const GJIT &gjit,
+                             const MakeVectorialExpression< FieldMatrix< K, ROWS, GJIT::cols >, FieldMatrix< K, NROWS, GJIT::cols > > &a,
+                             FieldMatrix< K, NROWS, GJIT::rows > &b )
     {
-      typedef MakeVectorialTraits< FieldMatrix< K, 1, GeometryJacobianInverseTransposed::cols >, FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::cols > > Traits;
-      typedef MakeVectorialTraits< FieldMatrix< K, 1, GeometryJacobianInverseTransposed::rows >, FieldMatrix< K, ROWS, GeometryJacobianInverseTransposed::rows > > RgTraits;
-      b = RgTraits::zeroVectorial();
-      gjit.mv( Traits::access( a.scalar() ), b[ a.component() ] );
+      typedef MakeVectorialTraits< FieldMatrix< K, ROWS, GJIT::rows >, FieldMatrix< K, NROWS, GJIT::rows > > Traits;
+      b = Traits::zeroVectorial();
+      for( int i = 0; i < ROWS; ++i )
+        gjit.mv( a.scalar()[ i ], Traits::component( b, a.component() )[ i ] );
     }
 
-    template< class GeometryJacobianInverseTransposed, class K, int SIZE >
-    void hessianTransformation ( const GeometryJacobianInverseTransposed &gjit,
-                                 const MakeVectorialExpression< FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, 1 >, FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, SIZE > > &a,
-                                 FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::rows, GeometryJacobianInverseTransposed::rows >, SIZE > &b )
-    {
-      const int dimLocal = GeometryJacobianInverseTransposed::cols;
-      const int dimGlobal = GeometryJacobianInverseTransposed::rows;
-      typedef MakeVectorialTraits< FieldVector< FieldMatrix< K, dimLocal, dimLocal >, 1 >, FieldVector< FieldMatrix< K, dimLocal, dimLocal >, SIZE > > Traits;
-      typedef MakeVectorialTraits< FieldVector< FieldMatrix< K, dimGlobal, dimGlobal >, 1 >, FieldVector< FieldMatrix< K, dimGlobal, dimGlobal >, SIZE > > RgTraits;
 
-      b = RgTraits::zeroVectorial();
+
+    // hessianTransformation
+    // ---------------------
+
+    template< class GJIT, class K, int SIZE, int NSIZE >
+    inline std::enable_if_t< NSIZE % SIZE == 0 >
+    hessianTransformation ( const GJIT &gjit,
+                            const MakeVectorialExpression< FieldVector< FieldMatrix< K, GJIT::cols, GJIT::cols >, SIZE >, FieldVector< FieldMatrix< K, GJIT::cols, GJIT::cols >, NSIZE > > &a,
+                            FieldVector< FieldMatrix< K, GJIT::rows, GJIT::rows >, NSIZE > &b )
+    {
+      const int dimLocal = GJIT::cols;
+      const int dimGlobal = GJIT::rows;
+      typedef MakeVectorialTraits< FieldVector< FieldMatrix< K, dimGlobal, dimGlobal >, SIZE >, FieldVector< FieldMatrix< K, dimGlobal, dimGlobal >, NSIZE > > Traits;
+
+      b = Traits::zeroVectorial();
 
       // c = J^{-T} a_r^T
-      FieldMatrix< K, dimLocal, dimGlobal > c;
+      // FieldMatrix< K, dimLocal, dimGlobal > c;
+      FieldVector< FieldMatrix< K, dimLocal, dimGlobal >, SIZE > c;
       for( int i = 0; i < dimLocal; ++i )
-        gjit.mv( Traits::access( a.scalar() )[ i ], c[ i ] );
+      {
+        for( int j = 0; j < SIZE; ++j )
+          gjit.mv( a.scalar()[ j ][ i ], c[ j ][ i ] );
+      }
 
       // b_r = J^{-T} c
       for( int i = 0; i < dimGlobal; ++i )
       {
-        FieldMatrixColumn< const FieldMatrix< K, dimLocal, dimGlobal > > ci( c, i );
-        FieldMatrixColumn< FieldMatrix< K, dimGlobal, dimGlobal > > bi( RgTraits::access( b, a.component() ), i );
-        gjit.umv( ci, bi );
+        for( int j = 0; j < SIZE; ++j )
+        {
+          FieldMatrixColumn< const FieldMatrix< K, dimLocal, dimGlobal > > cji( c[ j ], i );
+          FieldMatrixColumn< FieldMatrix< K, dimGlobal, dimGlobal > > bji( Traits::component( b, a.component() )[ j ], i );
+          gjit.umv( cji, bji );
+        }
       }
-
     }
+
+
+
+    // scalarProduct
+    // -------------
 
     template< class Scalar, class Vectorial >
     inline typename MakeVectorialTraits< Scalar, Vectorial >::field_type
@@ -405,10 +444,10 @@ namespace Dune
     template< class ScalarFunctionSpace, class RangeVector >
     struct ToNewRange;
 
-    template< class DomainField, class RangeField, int dimD, int dimR >
-    struct ToNewRange< FunctionSpace< DomainField, RangeField, dimD, 1 >, FieldVector< RangeField, dimR > >
+    template< class DomainField, class RangeField, int dimD, int dimR, int dimNR >
+    struct ToNewRange< FunctionSpace< DomainField, RangeField, dimD, dimR >, FieldVector< RangeField, dimNR > >
     {
-      typedef FunctionSpace< DomainField, RangeField, dimD, dimR > Type;
+      typedef FunctionSpace< DomainField, RangeField, dimD, dimNR > Type;
     };
 
 
@@ -486,8 +525,8 @@ namespace Dune
       {
         typedef MakeVectorialTraits< Scalar, Vectorial > Traits;
         typedef MakeVectorialExpression< Scalar, Vectorial > Expression;
-        const typename Traits::ComponentType end = Traits::end();
-        for( typename Traits::ComponentType k = Traits::begin(); k != end; ++k )
+        const typename Traits::IndexType end = Traits::end();
+        for( typename Traits::IndexType k = Traits::begin(); k != end; ++k )
           functor_( i*Traits::factor + Traits::index( k ), Expression( k, value ) );
       }
 
