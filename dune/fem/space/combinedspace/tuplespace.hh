@@ -149,7 +149,8 @@ namespace Dune
       template< class T, class F >
       static T accumulate ( const DiscreteFunctionSpaceTupleType &tuple, T value, F &&f )
       {
-        Hybrid::forEach( std::index_sequence_for< DiscreteFunctionSpaces... >{}, [ & ] ( auto &&i ) {
+        Hybrid::forEach( std::index_sequence_for< DiscreteFunctionSpaces... >{}, [ & ] ( auto &&idx ) {
+            const std::size_t i = std::decay_t< decltype( idx ) >::value;
             value = f( value, SubDiscreteFunctionSpace< i >::subDiscreteFunctionSpace( tuple ) );
           } );
         return value;
