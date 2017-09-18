@@ -187,9 +187,10 @@ namespace Dune
     // ----------------------
 
     template< class GridPart, class Mapper >
-    struct SlaveDofs< GridPart, Mapper >::LinkBuilder
+    class SlaveDofs< GridPart, Mapper >::LinkBuilder
       : public CommDataHandleIF< LinkBuilder, int >
     {
+    public:
       LinkBuilder( std::set< int > &slaveSet, const GridPartType &gridPart, const MapperType &mapper )
         : myRank_( gridPart.comm().rank() ), mySize_( gridPart.comm().size() ),
           slaveSet_( slaveSet ), mapper_( mapper )
