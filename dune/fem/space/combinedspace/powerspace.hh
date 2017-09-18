@@ -92,8 +92,6 @@ namespace Dune
       // type functionspace
       typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
 
-      static constexpr int polynomialOrder = DiscreteFunctionSpace::polynomialOrder;
-
       // type of local Interpolation
       typedef PowerSpaceInterpolation< DiscreteFunctionSpace, N > InterpolationType;
 
@@ -130,14 +128,10 @@ namespace Dune
         return BasisFunctionSetType( tuple->basisFunctionSet( entity ) );
       }
 
-      static bool continuous ( const DiscreteFunctionSpaceTupleType &tuple )
+      template< class T, class F >
+      static T accumulate ( const DiscreteFunctionSpaceTupleType &tuple, T value, F &&f )
       {
-        return tuple->continuous();
-      }
-
-      static bool continuous ( const IntersectionType &intersection, const DiscreteFunctionSpaceTupleType &tuple )
-      {
-        return tuple->continuous( intersection );
+        return f( value, *tuple );
       }
     };
 

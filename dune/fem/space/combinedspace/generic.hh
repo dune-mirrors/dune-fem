@@ -1,7 +1,10 @@
 #ifndef DUNE_FEM_SPACE_COMBINEDSPACE_GENERIC_HH
 #define DUNE_FEM_SPACE_COMBINEDSPACE_GENERIC_HH
 
+#include <algorithm>
 #include <memory>
+
+#include <dune/common/hybridutilities.hh>
 
 #include <dune/fem/space/common/discretefunctionspace.hh>
 #include <dune/fem/space/common/dofmanager.hh>
@@ -42,9 +45,6 @@ namespace Dune
 
       //! the underlaying analytical function space
       typedef typename Traits::FunctionSpaceType FunctionSpaceType;
-
-      //! maximum polynomial order of functions in this space
-      enum { polynomialOrder = Traits::polynomialOrder };
 
       //! type of the base function set(s)
       typedef typename Traits::BasisFunctionSetType BasisFunctionSetType;
@@ -109,13 +109,13 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
       bool continuous () const
       {
-        return Traits::continuous( spaceTuple_ );
+        return Traits::accumulate( spaceTuple_, true, [] ( bool c, const auto &s ) { return c && s.continuous(); } );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::continuous */
       bool continuous ( const IntersectionType &intersection ) const
       {
-        return Traits::continuous( intersection, spaceTuple_ );
+        return Traits::accumulate( spaceTuple_, true, [ &intersection ] ( bool c, const auto &s ) { return c && s.continuous( intersection ); } );
       }
 
       /** \brief get the type of this discrete function space
@@ -129,14 +129,14 @@ namespace Dune
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
       int order () const
       {
-        return polynomialOrder;
+        return Traits::accumulate( spaceTuple_, int( 0 ), [] ( int o, const auto &s ) { return std::max( o, s.order() ); } );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::order */
       template< class Entity >
       int order ( const Entity &entity ) const
       {
-        return polynomialOrder;
+        return Traits::accumulate( spaceTuple_, int( 0 ), [ &entity ] ( int o, const auto &s ) { return std::max( o, s.order( entity ) ); } );
       }
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::basisFunctionSet(const EntityType &entity) const */
