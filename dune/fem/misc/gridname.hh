@@ -100,7 +100,6 @@ namespace Dune
         knownGrids.push_back( "ParallelGrid" );
         knownGrids.push_back( "ParallelSimplexGrid" );
         knownGrids.push_back( "PrismGrid" );
-        knownGrids.push_back( "SGrid" );
         knownGrids.push_back( "SPGrid" );
         knownGrids.push_back( "UGGrid" );
         knownGrids.push_back( "YaspGrid" );

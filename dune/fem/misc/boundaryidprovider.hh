@@ -210,23 +210,6 @@ namespace Dune
 
 
 
-    // BoundaryIdProvider for SGrid
-    // ----------------------------
-
-    template< int dim, int dimw, class ctype >
-    struct BoundaryIdProvider< SGrid< dim, dimw, ctype > >
-    {
-      typedef SGrid< dim, dimw, ctype > GridType;
-
-      template< class Intersection >
-      static int boundaryId ( const Intersection &intersection )
-      {
-        return (intersection.boundary() ? (intersection.indexInInside()+1) : 0);
-      }
-    };
-
-
-
     // BoundaryIdProvider for SphereGrid
     // ---------------------------------
 
