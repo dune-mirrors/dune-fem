@@ -10,6 +10,9 @@
 #include <vector>
 
 #include <dune/grid/common/datahandleif.hh>
+
+#include <dune/fem/gridpart/common/indexset.hh>
+#include <dune/fem/space/common/slavedofs.hh>
 #include <dune/fem/space/mapper/capabilities.hh>
 
 namespace Dune

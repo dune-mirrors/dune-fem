@@ -11,6 +11,9 @@
 #include <vector>
 
 #include <dune/grid/common/datahandleif.hh>
+#include <dune/grid/common/gridenums.hh>
+
+#include <dune/fem/gridpart/common/indexset.hh>
 #include <dune/fem/space/mapper/capabilities.hh>
 #include <dune/fem/storage/envelope.hh>
 
