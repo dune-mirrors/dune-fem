@@ -60,18 +60,16 @@ class MixedFunctionSpace(ufl.MixedFunctionSpace):
         return self.ufl_sub_spaces()[0].field()
 
 
-def NamedCoefficient(functionSpace, name=None, count=None):
+def NamedCoefficient(functionSpace, name, count=None):
     coefficient = ufl.Coefficient(functionSpace, count=count)
-    if name is not None:
-        coefficient.name = name
+    coefficient.name = name
     return coefficient
-def NamedConstant(domain, dimRange=None, name=None, count=None):
-    if dimRange == 0:
+def NamedConstant(domain, name, dimRange=None, count=None):
+    if dimRange is None:
         constant = ufl.Constant(domain, count)
     else:
         constant = ufl.VectorConstant(domain, dim=dimRange, count=count)
-    if name is not None:
-        constant.name = name
+    constant.name = name
     return constant
 
 

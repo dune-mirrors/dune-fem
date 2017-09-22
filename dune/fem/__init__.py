@@ -24,7 +24,7 @@ registry["space"] = {
          "dgonb"         : space.dgonb,
          "dglegendre"    : space.dglegendre,
          "dglagrange"    : space.dglagrange,
-         "fv"            : space.finiteVolume,
+         "finitevolume"  : space.finiteVolume,
          "p1bubble"      : space.p1Bubble,
          "combined"      : space.combined,
          "tuple"         : space.combined,
@@ -36,7 +36,8 @@ registry["discretefunction"] = {
          "fem"      : discretefunction.adaptive,
          "istl"     : discretefunction.istl,
          "eigen"    : discretefunction.eigen,
-         "petsc"    : discretefunction.petsc
+         "petsc"    : discretefunction.petsc,
+         "petscadapt"  : discretefunction.petscadapt
      }
 registry["operator"] = {
         "galerkin"   : operator.galerkin
