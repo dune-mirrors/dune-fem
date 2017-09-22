@@ -54,16 +54,27 @@ namespace Dune
       typedef MapperProvider< ParallelMapperType > ParallelMapperProviderType;
 
     public:
+      //! constructor creating petsc mapper
       PetscMappers ( const DiscreteFunctionSpaceType &space )
         : space_( space )
       {
-        const int sequence = space.sequence();
+        const int sequence = space_.sequence();
 
-        ghostMapper_.reset( &GhostMapperProviderType::getObject( std::make_pair( &space.gridPart(), &space.blockMapper() ), sequence ) );
+        ghostMapper_.reset( &GhostMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &space_.blockMapper() ), sequence ) );
         update( *ghostMapper_, sequence );
 
-        parallelMapper_.reset( &ParallelMapperProviderType::getObject( std::make_pair( &space.gridPart(), &ghostMapper_->first ), sequence ) );
+        parallelMapper_.reset( &ParallelMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &ghostMapper_->first ), sequence ) );
         update( *parallelMapper_, sequence );
+      }
+
+      //! copy constructor obtaining pointers for mapper objects
+      PetscMappers ( const PetscMappers &other )
+        : space_( other.space_ )
+      {
+        const int sequence = space_.sequence();
+
+        ghostMapper_.reset( &GhostMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &space_.blockMapper() ), sequence ) );
+        parallelMapper_.reset( &ParallelMapperProviderType::getObject( std::make_pair( &space_.gridPart(), &ghostMapper_->first ), sequence ) );
       }
 
       const DiscreteFunctionSpaceType &space () const { return space_; }
