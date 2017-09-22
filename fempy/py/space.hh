@@ -37,6 +37,12 @@ namespace Dune
             return std::unique_ptr< Space >( new Space( gridPart< GridView >( gridView ) ) );
           } ), pybind11::keep_alive< 1, 2 >(), "gridView"_a );
       }
+      template< class Space, class... options >
+      void registerSpaceConstructor ( pybind11::class_< Space, options... > cls )
+      {
+        typedef typename Space::GridPartType GridPart;
+        registerSpaceConstructor( cls, std::is_constructible< Space, GridPart& >() );
+      }
 
       // registerSpace
       // -------------
