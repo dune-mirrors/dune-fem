@@ -16,8 +16,9 @@
 
 #include <dune/fem/misc/petsc/petsccommon.hh>
 #include <dune/fem/misc/petsc/petscdofblock.hh>
+#include <dune/fem/space/common/commoperations.hh>
+#include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/mapper/petsc.hh>
-
 
 namespace Dune
 {
