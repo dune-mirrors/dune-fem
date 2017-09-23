@@ -152,6 +152,8 @@ namespace Dune
       typedef typename Base::RangeType RangeType;
       typedef typename Base::JacobianRangeType JacobianRangeType;
 
+      static const int dimRange = RangeType::dimension;
+
       SimpleGridFunction ( std::string name, const GridPartType &gridPart, LocalEvaluator localEvaluator, int order) // = std::numeric_limits< int >::max() )
         : name_( std::move( name ) ),
           gridPart_( gridPart ),

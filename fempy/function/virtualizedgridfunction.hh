@@ -265,6 +265,8 @@ namespace Dune
       typedef typename Base::RangeType RangeType;
       typedef typename Base::JacobianRangeType JacobianRangeType;
 
+      static const int dimRange = RangeType::dimension;
+
     private:
       struct Space
       {
