@@ -570,7 +570,7 @@ def importModel(grid, model, *args, **kwargs):
     if isinstance(model, str):
         with open(model, 'r') as modelFile:
             data = modelFile.read()
-        name = data.split('PYBIND11_PLUGIN( ')[1].split(' )')[0]
+        name = data.split('PYBIND11_MODULE( ')[1].split(', module )')[0]
         builder.load(name, data, "ellipticModel")
         return importlib.import_module("dune.generated." + name)
     writer, name = generateModel(grid, model, *args, **kwargs)

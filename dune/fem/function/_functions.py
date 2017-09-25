@@ -25,13 +25,11 @@ def registerGridFunctions(gridview):
     source = "#include <config.h>\n\n"
     source += "".join(["#include <" + i + ">\n" for i in includes])
     source += "\n"
-    source += "PYBIND11_PLUGIN( " + moduleName + " )\n"
+    source += "PYBIND11_MODULE( " + moduleName + ", module )\n"
     source += "{\n"
     source += "  typedef Dune::FemPy::GridPart< " + gridview._typeName + "> GridPart;\n"
-    source += "  pybind11::module module( \"" + moduleName + "\" );\n"
     source += '  module.def( "globalGridFunction", Dune::FemPy::defGlobalGridFunction< GridPart >( module, "GlobalGridFunction", std::make_integer_sequence< int, 11 >() ));\n'
     source += '  module.def( "localGridFunction", Dune::FemPy::defLocalGridFunction< GridPart > ( module, "LocalGridFunction",  std::make_integer_sequence< int, 11 >() ));\n'
-    source += "  return module.ptr();\n"
     source += "}\n"
 
     return builder.load(moduleName, source, "gridfunctions")

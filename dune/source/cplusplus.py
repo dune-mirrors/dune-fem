@@ -486,14 +486,11 @@ class SourceWriter:
 
     def openPythonModule(self, moduleName):
         self.emit(None if self.begin else '')
-        self.emit('PYBIND11_PLUGIN( ' + moduleName.strip() + ' )')
+        self.emit('PYBIND11_MODULE( ' + moduleName.strip() + ', module )')
         self.emit('{')
         self.pushBlock('pybind11 module', moduleName)
-        self.emit('pybind11::module module( "' + moduleName.strip() + '" );')
 
     def closePythonModule(self, moduleName=None):
-        self.emit('')
-        self.emit('return module.ptr();')
         self.popBlock('pybind11 module', moduleName)
         self.emit('}')
 
