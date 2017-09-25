@@ -8,6 +8,8 @@
 #include <type_traits>
 #include <utility>
 
+#include <dune/common/visibility.hh>
+
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 #include <dune/fem/misc/l2norm.hh>
@@ -145,7 +147,7 @@ namespace Dune
       // -----------------
 
       template< class GridView >
-      inline GridPartConverter< GridView > &gridPartConverter ()
+      DUNE_EXPORT inline GridPartConverter< GridView > &gridPartConverter ()
       {
         static GridPartConverter< GridView > converter;
         return converter;

@@ -6,7 +6,7 @@
 #include <tuple>
 #include <utility>
 
-#include <dune/fempy/pybind11/pybind11.hh>
+#include <dune/common/visibility.hh>
 
 #include <dune/fem/misc/domainintegral.hh>
 
@@ -161,7 +161,7 @@ namespace Dune
       // --------------------------
 
       template< class GridPart, class Value >
-      inline pybind11::class_< VirtualizedGridFunction< GridPart, Value > > clsVirtualizedGridFunction ( pybind11::handle scope )
+      DUNE_EXPORT inline pybind11::class_< VirtualizedGridFunction< GridPart, Value > > clsVirtualizedGridFunction ( pybind11::handle scope )
       {
         typedef VirtualizedGridFunction< GridPart, Value > GridFunction;
         static const std::string clsName = "VirtualizedGridFunction" + std::to_string( Value::dimension );
@@ -284,7 +284,7 @@ namespace Dune
       // ---------------------------
 
       template< class GridPart, int dimRange >
-      inline auto registerPyLocalGridFunction ( pybind11::handle scope, const std::string &name, std::integral_constant< int, dimRange > )
+      DUNE_EXPORT inline auto registerPyLocalGridFunction ( pybind11::handle scope, const std::string &name, std::integral_constant< int, dimRange > )
       {
         typedef decltype( makePyLocalGridFunction( std::declval< GridPart >(), std::declval< std::string >(), std::declval< int >(), std::declval< pybind11::function >(), std::integral_constant< int, dimRange >() ) ) GridFunction;
         static const std::string clsName = name + std::to_string( dimRange );

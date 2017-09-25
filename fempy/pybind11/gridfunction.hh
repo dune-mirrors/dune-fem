@@ -3,6 +3,8 @@
 
 #include <type_traits>
 
+#include <dune/common/visibility.hh>
+
 #include <dune/corepy/pybind11/pybind11.h>
 
 namespace Dune
@@ -25,7 +27,7 @@ namespace Dune
     // getGridFunctionWrapper
     // ----------------------
 
-    inline pybind11::object getGridFunctionWrapper ()
+    DUNE_EXPORT inline pybind11::object getGridFunctionWrapper ()
     {
       static pybind11::object o = pybind11::module::import( "dune.ufl" ).attr( "GridFunction" );
       return o;

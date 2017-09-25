@@ -7,6 +7,8 @@
 #include <list>
 #include <map>
 
+#include <dune/common/visibility.hh>
+
 #include <dune/fempy/grid/adaptation.hh>
 #include <dune/fempy/py/grid/restrictprolong.hh>
 #include <dune/fempy/pybind11/pybind11.hh>
@@ -24,7 +26,7 @@ namespace Dune
       // -----------------------
 
       template< class Grid >
-      inline std::map< Grid *, GridAdaptation< Grid > * > &gridAdaptationInstances ()
+      DUNE_EXPORT inline std::map< Grid *, GridAdaptation< Grid > * > &gridAdaptationInstances ()
       {
         static std::map< Grid *, GridAdaptation< Grid > * > instances;
         return instances;

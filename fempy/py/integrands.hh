@@ -7,6 +7,7 @@
 
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/typeutilities.hh>
+#include <dune/common/visibility.hh>
 
 #include <dune/fem/schemes/integrands.hh>
 
@@ -63,7 +64,7 @@ namespace Dune
         // --------------------
 
         template< class Integrands >
-        inline CoefficientsRegistry< Integrands > &coefficientsRegistry ()
+        DUNE_EXPORT inline CoefficientsRegistry< Integrands > &coefficientsRegistry ()
         {
           static CoefficientsRegistry< Integrands > registry;
           return registry;
@@ -171,7 +172,7 @@ namespace Dune
       // ------------------------
 
       template< class GridPart, class DomainValue, class RangeValue >
-      inline pybind11::class_< Fem::VirtualizedIntegrands< GridPart, DomainValue, RangeValue > > clsVirtualizedIntegrands ( pybind11::handle scope )
+      DUNE_EXPORT inline pybind11::class_< Fem::VirtualizedIntegrands< GridPart, DomainValue, RangeValue > > clsVirtualizedIntegrands ( pybind11::handle scope )
       {
         typedef Fem::VirtualizedIntegrands< GridPart, DomainValue, RangeValue > Integrands;
         static pybind11::class_< Integrands > cls = registerIntegrands< Integrands >( scope, "VirtualizedIntegrands" );
