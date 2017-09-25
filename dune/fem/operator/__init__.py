@@ -9,14 +9,14 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 
-from dune.generator.generator import SimpleGenerator
+from dune.generator.generator import Constructor, Method, SimpleGenerator
 
 generator = SimpleGenerator("Operator", "Dune::FemPy")
 
-def load(includes, typeName, constructors=None, methods=None):
+def load(includes, typeName, *args):
     includes = includes + ["dune/fempy/py/operator.hh"]
     moduleName = "femoperator" + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = generator.load(includes, typeName, moduleName, constructors, methods)
+    module = generator.load(includes, typeName, moduleName, *args)
     return module
 
 
@@ -38,9 +38,8 @@ def galerkin(integrands, domainSpace, rangeSpace=None):
 
     typeName = 'Dune::Fem::GalerkinOperator< ' + integrandsType + ', ' + domainFunctionType + ', ' + rangeFunctionType + ' >'
 
-    ctors = []
-    ctors.append(['[] ( ' + typeName + ' &self, pybind11::object gridView, ' + integrandsType + ' &integrands ) {',
-                  '    new (&self) ' + typeName + '( Dune::FemPy::gridPart< typename ' + rangeSpaceType + '::GridPartType::GridViewType >( gridView ), integrands );',
-                  '  }, "grid"_a, "integrands"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 3 >()'])
+    constructor = Constructor(['pybind11::object gridView', integrandsType + ' &integrands'],
+                              ['return new ' + typeName + '( Dune::FemPy::gridPart< typename ' + rangeSpaceType + '::GridPartType::GridViewType >( gridView ), integrands );'],
+                              ['"grid"_a', '"integrands"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()'])
 
-    return load(includes, typeName, ctors).Operator(rangeSpace.grid, integrands)
+    return load(includes, typeName, constructor).Operator(rangeSpace.grid, integrands)

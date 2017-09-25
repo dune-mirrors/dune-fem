@@ -6,7 +6,7 @@ import importlib
 
 import dune.grid.grid_generator
 
-from dune.generator.generator import SimpleGenerator
+from dune.generator.generator import Constructor, Method, SimpleGenerator
 
 generator = SimpleGenerator("GridView", "Dune::CorePy")
 
@@ -14,10 +14,11 @@ def cppBool(value):
     return "true" if value else "false"
 
 
-def module(includes, typeName, constructors=None, methods=None):
+def load(includes, typeName, *args):
     includes = includes + ["dune/corepy/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
     moduleName = "view_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = generator.load(includes, typeName, moduleName, constructors, methods)
+    holder = "Dune::FemPy::GridPartPtr< " + typeName + " >"
+    module = generator.load(includes, typeName, moduleName, *args, options=[holder])
     dune.grid.grid_generator.addAttr(module, module.GridView)
     return module
 
@@ -51,12 +52,12 @@ def adaptiveLeafGridView(grid, *args, **kwargs):
     typeName = "Dune::Fem::AdaptiveLeafGridPart< " + grid._typeName + " >::GridViewType"
     includes = grid._includes + ["dune/fem/gridpart/adaptiveleafgridpart.hh", "dune/corepy/grid/gridview.hh", "dune/fempy/py/grid/gridpart.hh"]
 
-    constructor = ["[] ( " + typeName + " &self, " + grid._typeName + " &grid ) {",
-                   "    Dune::FemPy::detail::addGridModificationListener( grid );",
-                   "    Dune::FemPy::constructGridPart( self, grid );",
-                   "  }, pybind11::keep_alive< 1, 2 >()"]
+    constructor = Constructor([grid._typeName + " &grid"],
+                              ["Dune::FemPy::detail::addGridModificationListener( grid );",
+                               "return Dune::FemPy::makeGridPart< " + typeName + " >( grid );"],
+                              ["pybind11::keep_alive< 1, 2 >()"])
 
-    return module(includes, typeName, [constructor]).GridView(grid)
+    return load(includes, typeName, constructor).GridView(grid)
 
 
 def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False):
@@ -77,15 +78,15 @@ def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False
     filterType = "Dune::Fem::SimpleFilter< " + hostGridPartType + " >"
     typeName = "Dune::Fem::FilteredGridPart< " + hostGridPartType + ", " + filterType + ", " + cppBool(useFilteredIndexSet) + " >::GridViewType"
 
-    constructor = ["[] ( " + typeName + " &self" + ", pybind11::handle hostGridView, pybind11::function contains, int domainId ) {",
-                   "    auto containsCpp = [ contains ] ( const " + hostGridPartType + "::Codim< 0 >::EntityType &e ) {",
-                   "        return contains( e ).template cast< int >();",
-                   "      };",
-                   "    " + hostGridPartType + " &hostGridPart = Dune::FemPy::gridPart< " + hostGridViewType + " >( hostGridView );",
-                   "    Dune::FemPy::constructGridPart( self, hostGridPart, " + filterType + "( hostGridPart, containsCpp, domainId ) );",
-                   "  }, pybind11::keep_alive< 1, 2 >()"]
+    constructor = Constructor(["pybind11::handle hostGridView", "pybind11::function contains", "int domainId"],
+                              ["auto containsCpp = [ contains ] ( const " + hostGridPartType + "::Codim< 0 >::EntityType &e ) {",
+                               "    return contains( e ).template cast< int >();",
+                               "  };",
+                               hostGridPartType + " &hostGridPart = Dune::FemPy::gridPart< " + hostGridViewType + " >( hostGridView );",
+                               "return Dune::FemPy::makeGridPart< " + typeName + " >( hostGridPart, " + filterType + "( hostGridPart, containsCpp, domainId ) );"],
+                              ["pybind11::keep_alive< 1, 2 >()"])
 
-    return module(includes, typeName, [constructor]).GridView(hostGridView, contains, domainId)
+    return load(includes, typeName, constructor).GridView(hostGridView, contains, domainId)
 
 
 def geometryGridView(coordFunction):
@@ -100,11 +101,11 @@ def geometryGridView(coordFunction):
     includes = coordFunction._includes + ["dune/fem/gridpart/geometrygridpart.hh"]
     typeName = "Dune::Fem::GeometryGridPart< " + coordFunction._typeName + " >::GridViewType"
 
-    constructor = ["[] ( " + typeName + " &self" + ", " + coordFunction._typeName + " &coordFunction ) {",
-                   "    Dune::FemPy::constructGridPart( self, coordFunction );",
-                   "  }, pybind11::keep_alive< 1, 2 >()"]
+    constructor = Constructor([coordFunction._typeName + " &coordFunction"],
+                              ["return Dune::FemPy::makeGridPart< " + typeName + " >( coordFunction );"],
+                              ["pybind11::keep_alive< 1, 2 >()"])
 
-    return module(includes, typeName, [constructor]).GridView(coordFunction)
+    return load(includes, typeName, constructor).GridView(coordFunction)
 
 
 if __name__ == "__main__":

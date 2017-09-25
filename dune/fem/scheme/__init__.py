@@ -32,9 +32,9 @@ def addAttr(module, cls):
 
 fileBase = "femscheme"
 
-def module(includes, typeName, constructors=None, methods=None):
+def module(includes, typeName, *args):
     includes = includes + ["dune/fempy/py/scheme.hh"]
     moduleName = fileBase + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = generator.load(includes, typeName, moduleName, constructors, methods)
+    module = generator.load(includes, typeName, moduleName, *args)
     addAttr(module, module.Scheme)
     return module

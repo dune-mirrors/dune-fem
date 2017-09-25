@@ -2,7 +2,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import sys
 import logging
+
 from ufl.equation import Equation
+
+from dune.generator.generator import Constructor, Method
+
 logger = logging.getLogger(__name__)
 
 def getSolver(solver,storage,default):
@@ -110,14 +114,14 @@ def galerkin(space, integrands, solver=None, parameters={}):
     typeName = 'Dune::Fem::GalerkinScheme< ' + integrandsType + ', ' + linearOperatorType + ', ' + solverTypeName + ' >'
 
     ctors = []
-    ctors.append(['[] ( ' + typeName + ' &self, const ' + spaceType + ' &space, ' + integrandsType + ' &integrands ) {',
-                  '    new (&self) ' + typeName + '( space, std::ref( integrands ) );',
-                  '  }, "space"_a, "integrands"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 3 >()'])
-    ctors.append(['[] ( ' + typeName + ' &self, const ' + spaceType + ' &space, ' + integrandsType + ' &integrands, const pybind11::dict &parameters ) {',
-                  '    new (&self) ' + typeName + '( space, std::ref( integrands ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
-                  '  }, "space"_a, "integrands"_a, "parameters"_a, pybind11::keep_alive< 1, 2 >(), pybind11::keep_alive< 1, 3 >()'])
+    ctors.append(Constructor(['const ' + spaceType + ' &space', integrandsType + ' &integrands'],
+                             ['return new ' + typeName + '( space, std::ref( integrands ) );'],
+                             ['"space"_a', '"integrands"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()']))
+    ctors.append(Constructor(['const ' + spaceType + ' &space', integrandsType + ' &integrands', 'const pybind11::dict &parameters'],
+                             ['return new ' + typeName + '( space, std::ref( integrands ), Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );'],
+                             ['"space"_a', '"integrands"_a', '"parameters"_a', 'pybind11::keep_alive< 1, 2 >()', 'pybind11::keep_alive< 1, 3 >()']))
 
-    return module(includes, typeName, ctors).Scheme(space, integrands, parameters)
+    return module(includes, typeName, *ctors).Scheme(space, integrands, parameters)
 
 
 def h1(space, model, solver=None, parameters={}):
@@ -167,26 +171,20 @@ def linearized(scheme, ubar=None, solver=None, parameters={}):
     typeName = "Dune::Fem::LinearizedScheme< " + ", ".join([schemeType]) + " >"
     includes = ["dune/fem/schemes/linearized.hh", "dune/fempy/parameter.hh"] + scheme._includes
 
-    constructor1 = ['[] ( DuneType &self,',
-                         'typename DuneType::SchemeType &scheme,',
-                         'typename DuneType::DiscreteFunctionType &ubar,',
-                         'const pybind11::dict &parameters ) {',
-                   '   new (&self) DuneType( scheme, ubar, Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
-                   '  }, "scheme"_a, "ubar"_a, "parameters"_a,',
-                   '     pybind11::keep_alive< 1, 2 >()']
-    constructor2 = ['[] ( DuneType &self,',
-                         'typename DuneType::SchemeType &scheme,',
-                         'const pybind11::dict &parameters ) {',
-                   '   new (&self) DuneType( scheme,  Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );',
-                   '  }, "scheme"_a, "parameters"_a,',
-                   '     pybind11::keep_alive< 1, 2 >()']
-    method = ['setup', 'DuneType::setup']
+    constructor1 = Constructor(['typename DuneType::SchemeType &scheme,', 'typename DuneType::DiscreteFunctionType &ubar,', 'const pybind11::dict &parameters'],
+                               ['return new DuneType( scheme, ubar, Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );'],
+                               ['"scheme"_a', '"ubar"_a', '"parameters"_a,', 'pybind11::keep_alive< 1, 2 >()'])
+    constructor2 = Constructor(['typename DuneType::SchemeType &scheme,', 'const pybind11::dict &parameters'],
+                               ['return new DuneType( scheme,  Dune::FemPy::pyParameter( parameters, std::make_shared< std::string >() ) );'],
+                               ['"scheme"_a', '"parameters"_a,', 'pybind11::keep_alive< 1, 2 >()'])
+    setup = Method('setup', 'DuneType::setup')
 
-    m = module(includes, typeName, [constructor1,constructor2], [method])
+    m = module(includes, typeName, constructor1, constructor2, setup)
     if ubar:
         return m.Scheme(scheme, ubar, parameters)
     else:
         return m.Scheme(scheme, parameters)
+
 
 def nvdg(space, model, name="tmp", **kwargs):
     """create a scheme for solving non variational second order pdes with discontinuous finite element
