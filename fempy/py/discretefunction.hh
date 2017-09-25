@@ -37,9 +37,9 @@ namespace Dune
       {
         typedef typename DF::GridPartType::GridType Grid;
 
-        detail::clsVirtualizedRestrictProlong< Grid >( module ).def( "__init__", [] ( VirtualizedRestrictProlong< Grid > &self, DF &df ) {
-            new (&self) VirtualizedRestrictProlong< Grid >( df );
-          }, pybind11::keep_alive< 1, 2 >() );
+        detail::clsVirtualizedRestrictProlong< Grid >( module ).def( pybind11::init( [] ( DF &df ) {
+            return new VirtualizedRestrictProlong< Grid >( df );
+          } ), pybind11::keep_alive< 1, 2 >() );
         pybind11::implicitly_convertible< DF, VirtualizedRestrictProlong< Grid > >();
       }
 
@@ -79,10 +79,9 @@ namespace Dune
       {
         using pybind11::operator""_a;
 
-        typedef typename DF::DiscreteFunctionSpaceType Space;
-        cls.def( "__init__", [] ( DF &self, const Space &space, std::string name ) {
-            new (&self) DF( std::move( name ), space );
-          }, "space"_a, "name"_a, pybind11::keep_alive< 1, 2 >() );
+        cls.def( pybind11::init( [] ( const typename DF::DiscreteFunctionSpaceType &space, std::string name ) {
+            return new DF( std::move( name ), space );
+          } ), "space"_a, "name"_a, pybind11::keep_alive< 1, 2 >() );
       }
 
       template< class DF, class... options >
@@ -157,9 +156,9 @@ namespace Dune
 
         detail::registerGridFunction< DF >( module, cls );
 
-        detail::clsVirtualizedGridFunction< GridPart, Value >( module ).def( "__init__", [] ( VirtualizedGridFunction< GridPart, Value > &self, DF &df ) {
-            new (&self) VirtualizedGridFunction< GridPart, Value >( pyGridFunction( df ) );
-          } );
+        detail::clsVirtualizedGridFunction< GridPart, Value >( module ).def( pybind11::init( [] ( DF &df ) {
+            return new VirtualizedGridFunction< GridPart, Value >( pyGridFunction( df ) );
+          } ) );
         pybind11::implicitly_convertible< DF, VirtualizedGridFunction< GridPart, Value > >();
 
         registerRestrictProlong< DF >( module );
