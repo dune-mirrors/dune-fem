@@ -9,7 +9,10 @@
 #include <vector>
 
 //- Dune includes
+#include <dune/common/visibility.hh>
+
 #include <dune/geometry/referenceelements.hh>
+
 #include <dune/fem/quadrature/quadrature.hh>
 
 //- Local includes
@@ -144,7 +147,7 @@ namespace Dune
 
       public:
         //! return reference to mappers
-        static MapperContainerType& instance()
+        DUNE_EXPORT static MapperContainerType& instance()
         {
           // create singleton instance
           static MapperContainer mc;

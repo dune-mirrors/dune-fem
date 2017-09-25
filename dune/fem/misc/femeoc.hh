@@ -9,6 +9,8 @@
 #include <tuple>
 
 #include <dune/common/fvector.hh>
+#include <dune/common/visibility.hh>
+
 #include <dune/fem/io/io.hh>
 #include <dune/fem/io/file/latextablewriter.hh>
 #include <dune/fem/io/parameter.hh>
@@ -236,7 +238,7 @@ namespace Dune
                     std::ostream& out);
 
     public:
-      static FemEoc& instance() {
+      DUNE_EXPORT static FemEoc& instance() {
         static FemEoc instance_;
         return instance_;
       }

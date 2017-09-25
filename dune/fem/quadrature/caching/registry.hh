@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <list>
 
+#include <dune/common/visibility.hh>
+
 // dune-geometry includes
 #include <dune/geometry/type.hh>
 
@@ -46,13 +48,13 @@ namespace Dune
 
       typedef std::list< QuadratureInfo > QuadratureInfoListType;
 
-      static StorageListType &storageList ()
+      DUNE_EXPORT static StorageListType &storageList ()
       {
         static StorageListType storageList;
         return storageList;
       }
 
-      static QuadratureInfoListType &quadratureInfoList ()
+      DUNE_EXPORT static QuadratureInfoListType &quadratureInfoList ()
       {
         static QuadratureInfoListType quadratureInfoList;
         return quadratureInfoList;

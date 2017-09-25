@@ -9,6 +9,8 @@
 #include <type_traits>
 #include <utility>
 
+#include <dune/common/visibility.hh>
+
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/binarystreams.hh>
@@ -338,7 +340,7 @@ namespace Dune
       }
 
     public:
-      static PersistenceManager &instance ()
+      DUNE_EXPORT static PersistenceManager &instance ()
       {
         static PersistenceManager theInstance;
         return theInstance;

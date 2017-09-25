@@ -9,6 +9,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/visibility.hh>
 
 #include <dune/fem/io/io.hh>
 #include <dune/fem/io/parameter.hh>
@@ -304,7 +305,7 @@ namespace Dune
         }
       }
      public:
-      static FemEocTable& instance() {
+      DUNE_EXPORT static FemEocTable& instance() {
         static FemEocTable instance_;
         return instance_;
       }

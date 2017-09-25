@@ -16,6 +16,8 @@
 #include <mpi.h>
 #endif
 
+#include <dune/common/visibility.hh>
+
 // version of ode solver from parDG with MPI
 namespace parDG_MPI {
 

@@ -10,6 +10,7 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/timer.hh>
+#include <dune/common/visibility.hh>
 
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/timeprovider.hh>
@@ -146,7 +147,7 @@ namespace Dune
       void printToFile ( const std::string &fileName, int step );
       void printToFile ( const TimeProviderBase &tp, const std::string &fileName, int step );
 
-      static Timer &instance ()
+      DUNE_EXPORT static Timer &instance ()
       {
         static Timer instance_;
         // don't use this class in multi thread environment
