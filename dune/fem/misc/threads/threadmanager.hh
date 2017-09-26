@@ -23,6 +23,7 @@
 #include <omp.h>
 #endif
 
+#include <dune/common/visibility.hh>
 
 namespace Dune
 {
@@ -79,7 +80,7 @@ namespace Dune
     private:
       struct Manager
       {
-        static inline Manager& instance()
+        DUNE_EXPORT static inline Manager& instance()
         {
           static thread_local Manager mg ;
           return mg ;

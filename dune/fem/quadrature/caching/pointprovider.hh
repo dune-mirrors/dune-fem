@@ -7,6 +7,7 @@
 
 //- Dune includes
 #include <dune/common/math.hh>
+#include <dune/common/visibility.hh>
 
 //- Local includes
 #include "pointmapper.hh"
@@ -47,7 +48,7 @@ namespace Dune
       typedef typename PointContainerType::iterator PointIteratorType;
 
     private:
-      static PointContainerType points_;
+      DUNE_EXPORT static PointContainerType points_;
     };
 
     // * Add elemGeo later
@@ -93,8 +94,8 @@ namespace Dune
                                          GeometryType elementGeo);
 
     private:
-      static PointContainerType points_;
-      static MapperContainerType mappers_;
+      DUNE_EXPORT static PointContainerType points_;
+      DUNE_EXPORT static MapperContainerType mappers_;
     };
 
   } // namespace Fem

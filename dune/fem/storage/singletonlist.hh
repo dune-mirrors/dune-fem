@@ -10,6 +10,8 @@
 #include <type_traits>
 #include <utility>
 
+#include <dune/common/visibility.hh>
+
 //- dune-fem includes
 #include <dune/fem/misc/threads/threadmanager.hh>
 
@@ -77,7 +79,7 @@ namespace Dune
 
       //! list that store pairs of key/object pointers
       //! singleton list
-      inline static ListType & singletonList()
+      DUNE_EXPORT static ListType &singletonList ()
       {
         static SingletonListStorage s;
         //! list that store pairs of key/object pointers

@@ -147,7 +147,7 @@ class Communicator
   }
 public:
   // static method to give one instance needed
-  static Communicator & instance ()
+  DUNE_EXPORT static Communicator & instance ()
   {
     int flag;
     flag = 0;

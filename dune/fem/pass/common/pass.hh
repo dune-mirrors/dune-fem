@@ -7,6 +7,8 @@
 #include <type_traits>
 
 #include <dune/common/timer.hh>
+#include <dune/common/visibility.hh>
+
 #include <dune/fem/common/tupleutility.hh>
 #include <dune/fem/operator/common/operator.hh>
 
@@ -133,7 +135,7 @@ namespace Dune
         }
 
         //! return reference to default object deleter
-        static DeleteHandler<ObjectToDelete>& instance ()
+        DUNE_EXPORT static DeleteHandler<ObjectToDelete>& instance ()
         {
           static DeleteHandler<ObjectToDelete> mh;
           return mh;

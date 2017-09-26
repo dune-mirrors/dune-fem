@@ -9,6 +9,8 @@
 
 //- Dune includes
 #include <dune/common/typetraits.hh>
+#include <dune/common/visibility.hh>
+
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
 #include <dune/fem/misc/threads/threadsafevalue.hh>
@@ -53,7 +55,7 @@ namespace Dune
         count_[ thread ] += count ;
       }
 
-      inline static ThisType& instance( const std::string& name )
+      DUNE_EXPORT static ThisType& instance( const std::string& name )
       {
         static ThisType instance( name );
         return instance;
@@ -99,7 +101,7 @@ namespace Dune
         return *this;
       }
 
-      inline static ThisType &instance ()
+      DUNE_EXPORT static ThisType &instance ()
       {
 #ifdef HAVE_PTHREAD
         static thread_local ThisType instance;
@@ -137,7 +139,7 @@ namespace Dune
         return *this;
       }
 
-      inline static ThisType &instance ()
+      DUNE_EXPORT static ThisType &instance ()
       {
 #ifdef HAVE_PTHREAD
         static thread_local ThisType instance;

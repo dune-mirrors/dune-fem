@@ -2,6 +2,7 @@
 #define DUNE_FEM_PYRAMIDPOINTS_HH
 
 #include <dune/common/fvector.hh>
+#include <dune/common/visibility.hh>
 
 namespace Dune
 {
@@ -20,7 +21,7 @@ namespace Dune
       enum { highest_order = 2 };
 
       //! Access to the singleton object.
-      inline static const PyramidPoints& instance() {
+      DUNE_EXPORT static const PyramidPoints& instance() {
         static PyramidPoints pyramidPoints;
         return pyramidPoints;
       }

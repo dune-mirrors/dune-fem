@@ -3,6 +3,8 @@
 
 #include <cstdlib>
 
+#include <dune/common/visibility.hh>
+
 namespace Dune
 {
 
@@ -14,7 +16,7 @@ namespace Dune
     {
     public:
       //! Access to the singleton object.
-      inline static IdProvider& instance()
+      DUNE_EXPORT static IdProvider& instance()
       {
         static IdProvider idProvider;
         return idProvider;

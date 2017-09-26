@@ -3,6 +3,8 @@
 
 #include <cassert>
 
+#include <dune/common/visibility.hh>
+
 namespace Dune
 {
 
@@ -43,7 +45,7 @@ namespace Dune
        *
        *  \returns the singleton instance of this class
        */
-      inline static const GaussPts &instance()
+      DUNE_EXPORT static const GaussPts &instance()
       {
         static GaussPts gaussPts;
         return gaussPts;
