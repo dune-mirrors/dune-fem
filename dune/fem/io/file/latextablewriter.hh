@@ -128,7 +128,6 @@ namespace Dune
 
       template< class DataTuple >
       typename Value< DataTuple >::Type get ( const DataTuple &data ) const
-      throw ( NoDataException )
       {
         double h = widthSource_.get( data );
         double e = errorSource_.get( data );
@@ -137,7 +136,7 @@ namespace Dune
         if( h < std::numeric_limits< double >::infinity() )
           return std::log( eOld_ / e ) / std::log( hOld_ / h );
         else
-          throw( NoDataException() );
+          throw NoDataException();
       }
 
     private:
@@ -203,7 +202,6 @@ namespace Dune
        *  \note @a N th element of @a data is assumed to be number
        */
       std::string entry ( const DataTuple &data ) const
-      throw (NoDataException)
       {
         return toString( source_.get( data ) );
       }
