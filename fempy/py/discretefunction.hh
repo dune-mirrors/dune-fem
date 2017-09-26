@@ -28,7 +28,7 @@ namespace Dune
       struct IsComplete< T, decltype(void(sizeof(T))) > : std::true_type
       {};
       template <class Grid, class DF>
-      void registerRestrictProlong( pybind11::module module, std::true_type)
+      inline static void registerRestrictProlong( pybind11::module module, std::true_type)
       {
         detail::clsVirtualizedRestrictProlong< Grid >( module )
           .def( "__init__", [] ( VirtualizedRestrictProlong< Grid > &instance, DF &df ) {
@@ -37,18 +37,18 @@ namespace Dune
         pybind11::implicitly_convertible< DF, VirtualizedRestrictProlong< Grid > >();
       }
       template <class Grid, class DF>
-      void registerRestrictProlong( pybind11::module module, std::false_type)
+      inline static void registerRestrictProlong( pybind11::module module, std::false_type)
       {}
 
       // registerDFConstructor
       // ---------------------
 
       template< class DF, class... options >
-      void registerDFConstructor ( pybind11::class_< DF, options... > &cls, std::false_type )
+      inline static void registerDFConstructor ( pybind11::class_< DF, options... > &cls, std::false_type )
       {}
 
       template< class DF, class... options >
-      void registerDFConstructor ( pybind11::class_< DF, options... > &cls, std::true_type )
+      inline static void registerDFConstructor ( pybind11::class_< DF, options... > &cls, std::true_type )
       {
         using pybind11::operator""_a;
 
@@ -59,7 +59,7 @@ namespace Dune
       }
 
       template< class DF, class... options >
-      void registerDFConstructor ( pybind11::class_< DF, options... > &cls )
+      inline static void registerDFConstructor ( pybind11::class_< DF, options... > &cls )
       {
         registerDFConstructor( cls, std::is_constructible< DF, const std::string &, const typename DF::DiscreteFunctionSpaceType & >() );
       }
@@ -73,7 +73,7 @@ namespace Dune
                    std::is_convertible < decltype( std::declval<DofVector>().array().data()[0] ),
                                          typename DofVector::FieldType >::value,
                  int >::type tmp=0 >
-      auto registerDofVectorBuffer( Cls &cls, int )
+      inline static auto registerDofVectorBuffer( Cls &cls, int )
       -> decltype(std::declval<DofVector>().array().data(),void())
       {
         typedef typename DofVector::FieldType FieldType;
@@ -102,14 +102,14 @@ namespace Dune
       }
 
       template< class DF, class Cls >
-      void registerDofVectorBuffer ( Cls &cls, long )
+      inline static void registerDofVectorBuffer ( Cls &cls, long )
       {}
 
       // registerDiscreteFunction
       // ------------------------
 
       template< class DF, class Cls >
-      void registerDiscreteFunction ( pybind11::module module, Cls &cls )
+      inline static void registerDiscreteFunction ( pybind11::module module, Cls &cls )
       {
         typedef typename DF::DiscreteFunctionSpaceType Space;
         typedef typename DF::GridPartType GridPart;
@@ -173,7 +173,7 @@ namespace Dune
     // ------------------------
 
     template< class DF, class... options >
-    void registerDiscreteFunction ( pybind11::module module, pybind11::class_< DF, options... > &cls )
+    inline static void registerDiscreteFunction ( pybind11::module module, pybind11::class_< DF, options... > &cls )
     {
       detail::registerDiscreteFunction< DF >( module, cls );
     }
@@ -181,7 +181,7 @@ namespace Dune
     // special registry for numpy df since they require a constructor
     // taking the dof vector
     template< class Space, class Field, class... options >
-    void registerDiscreteFunction ( pybind11::module module,
+    inline static void registerDiscreteFunction ( pybind11::module module,
           pybind11::class_< Dune::Fem::VectorDiscreteFunction< Space, Dune::FemPy::NumPyVector< Field > >, options... > &cls )
     {
       using pybind11::operator""_a;
