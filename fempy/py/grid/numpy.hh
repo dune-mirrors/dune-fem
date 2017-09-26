@@ -37,12 +37,11 @@ namespace Dune
 
       const int dimGrid = GridPart::dimension;
 
-      const GeometryType gtSimplex( GeometryType::simplex, dimGrid );
       std::vector< Range > values;
       for( const auto &element : elements( static_cast< typename GridPart::GridViewType >( gridFunction.gridPart() ), ps ) )
       {
         const auto localFunction = gridFunction.localFunction( element );
-        const auto &refinement = buildRefinement< dimGrid, double >( element.type(), gtSimplex );
+        const auto &refinement = buildRefinement< dimGrid, double >( element.type(), GeometryTypes::simplex( dimGrid ) );
 
         for( auto it = refinement.vBegin( level ), end = refinement.vEnd( level ); it != end; ++it )
         {
@@ -84,12 +83,11 @@ namespace Dune
 
       const int dimGrid = GridPart::dimension;
 
-      const GeometryType gtSimplex( GeometryType::simplex, dimGrid );
       std::vector< Range > values;
       for( const auto &element : elements( static_cast< typename GridPart::GridViewType >( gridFunction.gridPart() ), ps ) )
       {
         const auto localFunction = gridFunction.localFunction( element );
-        const auto &refinement = buildRefinement< dimGrid, double >( element.type(), gtSimplex );
+        const auto &refinement = buildRefinement< dimGrid, double >( element.type(), GeometryTypes::simplex( dimGrid ) );
 
         for( auto it = refinement.eBegin( 0 ), end = refinement.eEnd( 0 ); it != end; ++it )
         {
