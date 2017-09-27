@@ -24,6 +24,8 @@ namespace Dune
       typedef SparseRowLinearOperator< DomainFunction, RangeFunction > ThisType;
       typedef SparseRowMatrixObject< DomainSpaceType, RangeSpaceType > BaseType;
 
+      typedef typename BaseType::MatrixType::field_type FieldType;
+
       static constexpr bool assembled = true;
 
       using BaseType::apply;
@@ -52,6 +54,20 @@ namespace Dune
 
       void communicate()
       {}
+
+      void maskRows ( const RangeFunctionType &maskFunction, FieldType diagonal = FieldType( 0 ) )
+      {
+        const auto &slaveDofs = maskFunction.space().slaveDofs();
+        for( typename BaseType::size_type i = 0; i < matrix().rows(); ++i )
+        {
+          if( maskFunction.dofVector()[ i ] != FieldType( 0 ) )
+            continue;
+
+          matrix().clearRow( i );
+          if( !slaveDofs.isSlave( i ) )
+            matrix().set( i, i, diagonal );
+        }
+      }
     };
 
   } // namespace Fem

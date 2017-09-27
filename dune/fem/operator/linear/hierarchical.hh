@@ -172,6 +172,11 @@ namespace Dune
         reserve( matrix_, stencil );
       }
 
+      void maskRows ( const RangeFunctionType &maskFunction, DofType diagonal = DofType( 0 ) )
+      {
+        maskRows( matrix_, maskFunction.dofVector(), maskFunction.space().slaveDofs(), diagonal );
+      }
+
     private:
 #if HAVE_DUNE_ISTL
       template< class... C, class... B, class RangeVector >
@@ -287,6 +292,42 @@ namespace Dune
         for( const auto &row : stencil.globalStencil() )
           matrix.setIndices( row.first, row.second.begin(), row.second.end() );
         matrix.endindices();
+      }
+
+      template< class... C, class MaskVector, class SlaveDofs, std::size_t i >
+      static void maskRow ( MultiTypeBlockVector< C... > &row, const MaskVector &maskVector, const SlaveDofs &slaveDofs, DofType diagonal, std::integral_constant< std::size_t, i > )
+      {
+        Hybrid::forEach( std::index_sequence_for< C... >(), [] ( auto &&j ) {
+            ThisType::maskRows( row[ j ], maskVector, slaveDofs, i == j ? diagonal : DofType( 0 ) );
+          } );
+      }
+
+      template< class... R, class... B, class SlaveDofs >
+      static std::enable_if_t< sizeof...( R ) == sizeof...( B ) > maskRows ( MultiTypeBlockMatrix< R... > &matrix, const MultiTypeBlockVector< B... > &maskVector, const SlaveDofs &slaveDofs, DofType diagonal )
+      {
+        Hybrid::forEach( std::index_sequence_for< R... >(), [] ( auto &&i ) {
+            TypeType::maskRow( matrix[ i ], maskVector[ i ], slaveDofs, diagonal, i );
+          } );
+      }
+
+      template< class K, int m, int n, class AM, class AV, class SlaveDofs >
+      static void maskRows ( BCRSMatrix< FieldMatrix< K, m, n >, AM > &matrix, const BlockVector< FieldVector< K, m >, AV > &maskVector, const SlaveDofs &slaveDofs, DofType diagonal )
+      {
+        for( auto i = matrix().begin(), iend = matrix().end(); i != iend; ++i )
+        {
+          const auto &mask = maskVector[ i.index() ];
+          for( auto j = i->begin(), jend = i->end(); j != jend; ++j )
+          {
+            for( int k = 0; k < m; ++k )
+              (*j)[ k ] *= mask[ k ];
+
+            if( (diagonal == DofType( 0 )) || (j.index() != i.index()) || slaveDofs.isSlave( i.index() ) )
+              continue;
+
+            for( int k = 0; k < m; ++k )
+              (*j)[ k ][ k ] += (K( 1 ) - mask[ k ]) * diagonal;
+          }
+        }
       }
 #endif // #if HAVE_DUNE_ISTL
 

@@ -260,6 +260,20 @@ namespace Dune
         ::Dune::Petsc::MatZeroRows( petscMatrix_, r.size(), r.data(), 1. );
       }
 
+      void maskRows ( const RangeFunctionType &maskFunction, PetscScalar diagonal = PetscScalar( 0 ) )
+      {
+        PetscScalar *maskArray;
+        VecGetArray( *maskFunction.getGhostedVector(), &maskArray );
+
+        std::vector< PetscInt > r;
+        for( PetscInt i = 0; i != rows; ++i )
+        {
+          if( maskArray[ i ] != 0 )
+            r.push_back( i );
+        }
+        ::Dune::Petsc::matZeroRows( petscMatrix_, r.size(), r.data(), diagonal );
+      }
+
       //! interface method from LocalMatrixFactory
       ObjectType* newObject() const
       {
