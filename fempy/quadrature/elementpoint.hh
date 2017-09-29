@@ -5,7 +5,6 @@
 
 #include <dune/common/ftraits.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/version.hh>
 
 namespace Dune
 {
@@ -36,11 +35,7 @@ namespace Dune
 
       template< class Quadrature >
       explicit ElementPoint ( const Fem::QuadraturePointWrapper< Quadrature > &x )
-#if DUNE_VERSION_NEWER_REV(DUNE_FEM,2,5,0)
         : ElementPoint( x.quadrature(), x.index() )
-#else
-        : ElementPoint( x.quadrature(), x.point() )
-#endif
       {}
 
       explicit operator Fem::QuadraturePointWrapper< This > () const noexcept { return Fem::QuadraturePointWrapper< This >( *this, 0u ); }
@@ -70,11 +65,7 @@ namespace Dune
 
       template< class Quadrature >
       explicit ElementPoint ( const Fem::QuadraturePointWrapper< Quadrature > &x )
-#if DUNE_VERSION_NEWER_REV(DUNE_FEM,2,5,0)
         : ElementPoint( x.quadrature(), x.index() )
-#else
-        : ElementPoint( x.quadrature(), x.point() )
-#endif
       {}
 
       explicit operator Fem::QuadraturePointWrapper< This > () const noexcept { return Fem::QuadraturePointWrapper< This >( *this, 0u ); }

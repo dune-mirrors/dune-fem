@@ -5,7 +5,6 @@
 
 #include <dune/common/ftraits.hh>
 #include <dune/common/fvector.hh>
-#include <dune/common/version.hh>
 
 #include <dune/fem/quadrature/cachingpointlist.hh>
 
@@ -41,11 +40,7 @@ namespace Dune
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       explicit CachingPoint ( const Fem::QuadraturePointWrapper< Quadrature > &x )
-#if DUNE_VERSION_NEWER_REV(DUNE_FEM,2,5,0)
         : CachingPoint( x.quadrature(), x.index() )
-#else
-        : CachingPoint( x.quadrature(), x.point() )
-#endif
       {}
 
       explicit operator Fem::QuadraturePointWrapper< This > () const noexcept { return Fem::QuadraturePointWrapper< This >( *this, 0u ); }
@@ -83,11 +78,7 @@ namespace Dune
 
       template< class Quadrature, std::enable_if_t< std::is_convertible< Quadrature, Fem::CachingInterface >::value, int > = 0 >
       explicit CachingPoint ( const Fem::QuadraturePointWrapper< Quadrature > &x )
-#if DUNE_VERSION_NEWER_REV(DUNE_FEM,2,5,0)
         : CachingPoint( x.quadrature(), x.index() )
-#else
-        : CachingPoint( x.quadrature(), x.point() )
-#endif
       {}
 
       explicit operator Fem::QuadraturePointWrapper< This > () const noexcept { return Fem::QuadraturePointWrapper< This >( *this, 0u ); }

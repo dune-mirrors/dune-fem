@@ -12,7 +12,6 @@
 #include <vector>
 
 #include <dune/common/dynvector.hh>
-#include <dune/common/version.hh>
 
 #include <dune/fem/space/common/loadbalancer.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
@@ -23,37 +22,6 @@ namespace Dune
 
   namespace FemPy
   {
-
-#if ! DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
-    template< class DofVector, class Functor >
-    struct DofBlockFunctor
-    {
-      static const int blockSize = DofVector::blockSize;
-
-      DofBlockFunctor ( DofVector &dofVector, Functor functor )
-      : dofVector_( dofVector ), functor_( functor )
-      {}
-
-      template < class GlobalKey >
-      void operator () ( std::size_t local, const GlobalKey& globalKey )
-      {
-        for( int i = 0; i < blockSize; ++i )
-          functor_( local*blockSize + i, dofVector_[ globalKey ][ i ] );
-      }
-
-    private:
-      DofVector &dofVector_;
-      Functor functor_;
-    };
-
-    template< class DofVector, class Functor >
-    static inline DofBlockFunctor< DofVector, Functor > dofBlockFunctor ( DofVector &dofVector, Functor functor )
-    {
-      return DofBlockFunctor< DofVector, Functor >( dofVector, std::move( functor ) );
-    }
-#endif // #if ! DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
-
-
 
     // LoadBalanceContainsCheck
     // ------------------------

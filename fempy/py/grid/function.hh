@@ -8,44 +8,7 @@
 
 #include <dune/fempy/pybind11/pybind11.hh>
 
-#if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
 #include <dune/fem/misc/domainintegral.hh>
-#else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
-#include <dune/fem/quadrature/cachingquadrature.hh>
-#include <dune/grid/common/rangegenerators.hh>
-namespace Dune {
-  namespace Fem {
-    template <class GridPart>
-    struct Integral {
-      typedef typename GridPart::template Codim< 0 >::EntityType ElementType;
-      Integral(const GridPart &gp, int order)
-        : gp_(gp), order_(order) {}
-      template <class GF>
-      typename GF::RangeType norm(const GF &gf) {
-      typename GF::RangeType ret(0);
-      const auto end = gp_.template end<0>();
-      for (auto it = gp_.template begin<0>(); it!=end; ++it) {
-          const auto &element = *it;
-          auto lf = gf.localFunction(element);
-          Dune::Fem::CachingQuadrature< GridPart, 0 > quadrature(element, order_);
-          const size_t numQuadraturePoints = quadrature.nop();
-          for( size_t pt = 0; pt < numQuadraturePoints; ++pt ) {
-            const auto &x = quadrature.point( pt );
-            const double weight = quadrature.weight( pt ) * element.geometry().integrationElement( x );
-            typename GF::RangeType val;
-            lf.evaluate( quadrature[ pt ], val );
-            ret.axpy(weight,val);
-          }
-        }
-        return ret;
-      }
-      private:
-      const GridPart &gp_;
-      int order_;
-    };
-  } // namespcae Fem
-} // namespcae Dune
-#endif // #else // #if DUNE_VERSION_NEWER( DUNE_FEM, 2, 5 )
 
 #include <dune/corepy/grid/vtk.hh>
 
@@ -325,7 +288,7 @@ namespace Dune
       // ---------------------------
 
       template< class GridPart, int dimRange >
-      auto registerPyLocalGridFunction ( pybind11::handle scope, const std::string &name, std::integral_constant< int, dimRange > )
+      inline auto registerPyLocalGridFunction ( pybind11::handle scope, const std::string &name, std::integral_constant< int, dimRange > )
       {
         typedef decltype( makePyLocalGridFunction( std::declval< GridPart >(), std::declval< std::string >(), std::declval< int >(), std::declval< pybind11::function >(), std::integral_constant< int, dimRange >() ) ) GridFunction;
         static const std::string clsName = name + std::to_string( dimRange );
