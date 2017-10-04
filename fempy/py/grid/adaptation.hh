@@ -73,26 +73,26 @@ namespace Dune
 
       typedef VirtualizedRestrictProlong< Grid > RestrictProlong;
 
-      cls.def( "adapt", [] ( GridAdaptation< Grid > &gridAdaptation ) {
+      cls.def( "adapt", [] ( GridAdaptation< Grid > &self ) {
           std::array< RestrictProlong, 0 > rpList;
-          gridAdaptation.adapt( rpList.begin(), rpList.end() );
+          self.adapt( rpList.begin(), rpList.end() );
         } );
 
-      cls.def( "adapt", [] ( GridAdaptation< Grid > &gridAdaptation, const std::list< RestrictProlong > &rpList ) {
-          // if( gridAdaptation.grid().comm().rank() == 0 )
+      cls.def( "adapt", [] ( GridAdaptation< Grid > &self, const std::list< RestrictProlong > &rpList ) {
+          // if( self.grid().comm().rank() == 0 )
           //   std::cout << "adapting grid and " << rpList.size() << " functions..." << std::endl;
-          gridAdaptation.adapt( rpList.begin(), rpList.end() );
+          self.adapt( rpList.begin(), rpList.end() );
         } );
 
-      cls.def( "loadBalance", [] ( GridAdaptation< Grid > &gridAdaptation ) {
+      cls.def( "loadBalance", [] ( GridAdaptation< Grid > &self ) {
           std::array< RestrictProlong, 0 > rpList;
-          gridAdaptation.loadBalance( rpList.begin(), rpList.end() );
+          self.loadBalance( rpList.begin(), rpList.end() );
         } );
 
-      cls.def( "loadBalance", [] ( GridAdaptation< Grid > &gridAdaptation, const std::list< RestrictProlong > &rpList ) {
-          // if( gridAdaptation.grid().comm().rank() == 0 )
+      cls.def( "loadBalance", [] ( GridAdaptation< Grid > &self, const std::list< RestrictProlong > &rpList ) {
+          // if( self.grid().comm().rank() == 0 )
           //   std::cout << "loadbalanding grid and " << rpList.size() << " functions..." << std::endl;
-          gridAdaptation.loadBalance( rpList.begin(), rpList.end() );
+          self.loadBalance( rpList.begin(), rpList.end() );
         } );
 
       module.def( "gridAdaptation", &gridAdaptation< Grid >, pybind11::return_value_policy::reference );

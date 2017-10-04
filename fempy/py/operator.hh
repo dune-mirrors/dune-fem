@@ -35,7 +35,7 @@ namespace Dune
       inline static void registerGeneralOperatorCall ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
-        cls.def( "__call__", [] ( Operator &op, const GeneralGridFunction< typename Operator::DomainFunctionType > &u, typename Operator::RangeFunctionType &w ) { op( u, w ); }, "u"_a, "w"_a );
+        cls.def( "__call__", [] ( Operator &self, const GeneralGridFunction< typename Operator::DomainFunctionType > &u, typename Operator::RangeFunctionType &w ) { self( u, w ); }, "u"_a, "w"_a );
       }
 
       template< class Operator, class... options >
@@ -51,7 +51,7 @@ namespace Dune
       inline static void registerGeneralOperatorJacobian ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
-        cls.def( "jacobian", [] ( Operator &op, const GeneralGridFunction< typename Operator::DomainFunctionType > &u, typename Operator::JacobianRangeType &jOp ) { op.jacobian( u, jOp ); }, "u"_a, "jOp"_a );
+        cls.def( "jacobian", [] ( Operator &self, const GeneralGridFunction< typename Operator::DomainFunctionType > &u, typename Operator::JacobianRangeType &jOp ) { self.jacobian( u, jOp ); }, "u"_a, "jOp"_a );
       }
 
       template< class Operator, class... options >
@@ -67,7 +67,8 @@ namespace Dune
       inline static void registerOperatorJacobian ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
-        cls.def( "jacobian", [] ( Operator &op, const typename Operator::DomainFunctionType &u, typename Operator::JacobianRangeType &jOp ) { op.jacobian( u, jOp ); }, "u"_a, "jOp"_a );
+
+        cls.def( "jacobian", [] ( Operator &self, const typename Operator::DomainFunctionType &u, typename Operator::JacobianRangeType &jOp ) { self.jacobian( u, jOp ); }, "u"_a, "jOp"_a );
       }
 
       template< class Operator, class... options >
@@ -87,7 +88,7 @@ namespace Dune
 
         using pybind11::operator""_a;
 
-        cls.def( "__call__", [] ( Operator &op, const DomainFunction &u, RangeFunction &w ) { op( u, w ); }, "u"_a, "w"_a );
+        cls.def( "__call__", [] ( Operator &self, const DomainFunction &u, RangeFunction &w ) { self( u, w ); }, "u"_a, "w"_a );
         registerGeneralOperatorCall( cls, PriorityTag< 42 >() );
 
         registerOperatorJacobian( cls, PriorityTag< 42 >() );

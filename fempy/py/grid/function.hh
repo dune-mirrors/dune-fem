@@ -93,32 +93,30 @@ namespace Dune
 
         registerLocalFunction< LocalFunction >( cls );
 
-        cls.def( "__repr__", [] ( GridFunction &gf ) -> std::string {
-            return "GridFunction< " + std::to_string( GridFunction::RangeType::dimension ) + " >(name = " + gf.name() + ")";
+        cls.def( "__repr__", [] ( GridFunction &self ) -> std::string {
+            return "GridFunction< " + std::to_string( GridFunction::RangeType::dimension ) + " >(name = " + self.name() + ")";
           } );
 
-        cls.def_property_readonly( "dimRange", [] ( GridFunction &gf ) -> int { return GridFunction::RangeType::dimension; } );
-        cls.def_property_readonly( "order", [] ( GridFunction &gf ) -> unsigned int { return gf.space().order(); } );
-        cls.def_property_readonly( "name", [] ( GridFunction &gf ) -> std::string { return gf.name(); } );
-        cls.def_property_readonly( "grid", [] ( GridFunction &gf ) -> GridView { return static_cast< GridView >( gf.gridPart() ); } );
+        cls.def_property_readonly( "dimRange", [] ( GridFunction & ) -> int { return GridFunction::RangeType::dimension; } );
+        cls.def_property_readonly( "order", [] ( GridFunction &self ) -> int { return self.space().order(); } );
+        cls.def_property_readonly( "name", [] ( GridFunction &self ) -> std::string { return self.name(); } );
+        cls.def_property_readonly( "grid", [] ( GridFunction &self ) -> GridView { return static_cast< GridView >( self.gridPart() ); } );
 
-        cls.def( "localFunction", [] ( const GridFunction &gf, const Entity &entity ) -> LocalFunction {
-            return gf.localFunction( entity );
+        cls.def( "localFunction", [] ( const GridFunction &self, const Entity &entity ) -> LocalFunction {
+            return self.localFunction( entity );
           }, pybind11::keep_alive< 0, 1 >(), pybind11::keep_alive< 0, 2 >() );
 
         typedef decltype( makePyLocalGridFunction( std::declval< GridPartType >(), std::declval< std::string >(), std::declval< int >(), std::declval< pybind11::function >(), std::integral_constant< int, 1 >() ) ) ScalarLocalGridFunction;
         if (!pybind11::already_registered<ScalarLocalGridFunction>())
           registerPyLocalGridFunction<GridPartType>( scope, "LocalGridFunction", std::integral_constant< int, 1 >() );
 
-        cls.def( "__getitem__", [] (const GridFunction &gf, size_t c ) {
-            return makePyLocalGridFunction( gf.gridPart(), gf.name()+"_"+std::to_string(c), gf.space().order(),
-                pybind11::cpp_function(
-                [gf,c](const Entity &e, const typename Entity::Geometry::LocalCoordinate &x)
-                {
-                  typename GridFunction::LocalFunctionType::RangeType value;
-                  gf.localFunction(e).evaluate( x, value );
-                  return value[c];
-                }), std::integral_constant< int, 1 >() );
+        cls.def( "__getitem__", [] ( const GridFunction &self, std::size_t c ) {
+            return makePyLocalGridFunction( self.gridPart(), self.name() + "_" + std::to_string(c), self.space().order(),
+                pybind11::cpp_function( [ self, c ] ( const Entity &e, const typename Entity::Geometry::LocalCoordinate &x ) {
+                    typename GridFunction::LocalFunctionType::RangeType value;
+                    self.localFunction( e ).evaluate( x, value );
+                    return value[ c ];
+                  } ), std::integral_constant< int, 1 >() );
           }, pybind11::keep_alive< 0, 1 >() );
 
         cls.def( "addToVTKWriter", &Dune::CorePy::addToVTKWriter< GridFunction >, pybind11::keep_alive< 3, 1 >(), "name"_a, "writer"_a, "dataType"_a );
@@ -126,30 +124,28 @@ namespace Dune
         cls.def( "cellData", [] ( const GridFunction &self, int level ) { return cellData( self, refinementLevels( level ) ); }, "level"_a = 0 );
         cls.def( "pointData", [] ( const GridFunction &self, int level ) { return pointData( self, refinementLevels( level ) ); }, "level"_a = 0 );
 
-        cls.def( "integrate", [] ( const GridFunction &gf ) { return Dune::Fem::Integral<GridPartType>(gf.gridPart(),gf.space().order()).norm(gf); });
+        cls.def( "integrate", [] ( const GridFunction &self ) { return Dune::Fem::Integral< GridPartType >( self.gridPart(), self.space().order() ).norm( self ); } );
 
 
 #if 0
-        cls.def_property_readonly( "as_ufl", [] ( GridFunction &gf ) -> pybind11::handle
-            { pybind11::tuple args( 1 );
-              args[ 0 ] = gf;
+        cls.def_property_readonly( "as_ufl", [] ( GridFunction &self ) -> pybind11::handle {
+              pybind11::tuple args( 1 );
+              args[ 0 ] = self;
               return PyObject_Call( Dune::FemPy::getGridFunctionWrapper().ptr(), args.ptr(), nullptr );
             } );
 #elif 0
-        cls.def( "as_ufl", [] ( GridFunction &gf ) -> pybind11::handle
-            {
+        cls.def( "as_ufl", [] ( GridFunction &self ) -> pybind11::handle {
               pybind11::tuple args( 1 );
-              args[ 0 ] = gf;
+              args[ 0 ] = self;
               return PyObject_Call( Dune::FemPy::getGridFunctionWrapper().ptr(), args.ptr(), nullptr );
             }, pybind11::keep_alive<0,1>() );
 #else
-        cls.def( "as_ufl", [] ( pybind11::object &gf ) -> pybind11::handle
-            { pybind11::tuple args( 1 );
-              args[ 0 ] = gf;
+        cls.def( "as_ufl", [] ( pybind11::object &self ) -> pybind11::handle {
+              pybind11::tuple args( 1 );
+              args[ 0 ] = self;
               return PyObject_Call( Dune::FemPy::getGridFunctionWrapper().ptr(), args.ptr(), nullptr );
-            },  pybind11::keep_alive<0,1>() );
+            },  pybind11::keep_alive< 0, 1 >() );
 #endif
-
       }
 
       template< class GridFunction >

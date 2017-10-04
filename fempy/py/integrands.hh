@@ -88,10 +88,10 @@ namespace Dune
                 };
             } );
 
-          cls.def( "setConstant", [ dispatch ] ( Integrands &integrands, int k, pybind11::handle o ) {
+          cls.def( "setConstant", [ dispatch ] ( Integrands &self, int k, pybind11::handle o ) {
               if( k >= dispatch.size() )
                 throw std::range_error( "No such constant: " + std::to_string( k ) + " (must be in [0, " + std::to_string( dispatch.size() ) + "[)" );
-              dispatch[ k ]( integrands, o );
+              dispatch[ k ]( self, o );
             } );
         }
 
@@ -99,7 +99,7 @@ namespace Dune
         inline static std::enable_if_t< (std::tuple_size< typename Integrands::ConstantTupleType >::value == 0) >
         setConstant ( pybind11::class_< Integrands, options... > cls, PriorityTag< 1 > )
         {
-          cls.def( "setConstant", [] ( Integrands &integrands, int k, pybind11::handle ) {
+          cls.def( "setConstant", [] ( Integrands &, int k, pybind11::handle ) {
               throw std::range_error( "No such constant: " + std::to_string( k ) + " (there are no constants)" );
             } );
         }
@@ -127,10 +127,11 @@ namespace Dune
             } );
 
           using pybind11::operator""_a;
-          cls.def( "setCoefficient", [ dispatch ] ( Integrands &integrands, int k, pybind11::handle coefficient ) {
+
+          cls.def( "setCoefficient", [ dispatch ] ( Integrands &self, int k, pybind11::handle coefficient ) {
               if( k >= dispatch.size() )
                 throw std::range_error( "No such coefficient: " + std::to_string( k ) + " (must be in [0, " + std::to_string( dispatch.size() ) + "[)" );
-              dispatch[ k ]( integrands, coefficient );
+              dispatch[ k ]( self, coefficient );
             }, "k"_a, "coefficient"_a );
         }
 
@@ -139,7 +140,8 @@ namespace Dune
         setCoefficient ( pybind11::class_< Integrands, options... > cls, PriorityTag< 1 > )
         {
           using pybind11::operator""_a;
-          cls.def( "setCoefficient", [] ( Integrands &integrands, int k, pybind11::handle ) {
+
+          cls.def( "setCoefficient", [] ( Integrands &, int k, pybind11::handle ) {
               throw std::range_error( "No such coefficient: " + std::to_string( k ) + " (there are no constants)" );
             }, "k"_a, "coefficient"_a );
         }

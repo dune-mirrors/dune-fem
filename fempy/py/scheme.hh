@@ -92,11 +92,11 @@ namespace Dune
 
         using pybind11::operator""_a;
 
-        cls.def( "assemble", [] ( Scheme &scheme, const DiscreteFunction &ubar ) {
-            return getBCRSMatrix( scheme.assemble( ubar ).matrix() );
+        cls.def( "assemble", [] ( Scheme &self, const DiscreteFunction &ubar ) {
+            return getBCRSMatrix( self.assemble( ubar ).matrix() );
           }, pybind11::return_value_policy::reference_internal, "ubar"_a );
-        cls.def( "assemble", [] ( Scheme &scheme, const VirtualizedGridFunction< GridPart, RangeType > &ubar ) {
-            return getBCRSMatrix( scheme.assemble( ubar ).matrix() );
+        cls.def( "assemble", [] ( Scheme &self, const VirtualizedGridFunction< GridPart, RangeType > &ubar ) {
+            return getBCRSMatrix( self.assemble( ubar ).matrix() );
           }, pybind11::return_value_policy::reference_internal, "ubar"_a );
       }
 #endif // #if HAVE_DUNE_ISTL
@@ -111,11 +111,11 @@ namespace Dune
 
         using pybind11::operator""_a;
 
-        cls.def( "assemble", [] ( Scheme &scheme, const DiscreteFunction &ubar ) {
-            return scheme.assemble( ubar ).matrix().data();
+        cls.def( "assemble", [] ( Scheme &self, const DiscreteFunction &ubar ) {
+            return self.assemble( ubar ).matrix().data();
           }, pybind11::return_value_policy::reference_internal, "ubar"_a );
-        cls.def( "assemble", [] ( Scheme &scheme, const VirtualizedGridFunction< GridPart, RangeType > &ubar ) {
-            return scheme.assemble( ubar ).matrix().data();
+        cls.def( "assemble", [] ( Scheme &self, const VirtualizedGridFunction< GridPart, RangeType > &ubar ) {
+            return self.assemble( ubar ).matrix().data();
           }, pybind11::return_value_policy::reference_internal, "ubar"_a );
       }
 
@@ -144,9 +144,7 @@ namespace Dune
         typedef typename Scheme::DiscreteFunctionSpaceType::RangeType RangeType;
         typedef typename Scheme::GridPartType GridPart;
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
-        cls.def("__call__", [] (Scheme &scheme,
-                const VirtualizedGridFunction<GridPart,RangeType> &arg,
-                DiscreteFunction &dest) { scheme(arg,dest); });
+        cls.def( "__call__", [] ( Scheme &self, const VirtualizedGridFunction< GridPart, RangeType > &arg, DiscreteFunction &dest ) { self( arg, dest ); } );
       }
 
       template< class Scheme, class... options >
@@ -195,31 +193,30 @@ namespace Dune
 
         registerSchemeConstructor( cls );
 
-        cls.def("_solve", [] (Scheme &scheme, DiscreteFunction &solution)
-            { auto info = scheme.solve(solution);
-              // needs pybind 1.9: return pybind11::dict("converged"_a=info.converged, "iterations"_a=info.nonlinearIterations, "linear_iterations"_a=info.linearIterations);
-              return std::map<std::string,std::string> {
-                  {"converged",std::to_string(info.converged)},
-                  {"iterations",std::to_string(info.nonlinearIterations)},
-                  {"linear_iterations",std::to_string(info.linearIterations)}
-                };
-            });
-        cls.def("__call__", [] (Scheme &scheme, const DiscreteFunction &arg, DiscreteFunction &dest) { scheme(arg,dest); });
+        cls.def( "_solve", [] ( Scheme &self, DiscreteFunction &solution ) {
+            auto info = self.solve( solution );
+            // needs pybind 1.9: return pybind11::dict("converged"_a=info.converged, "iterations"_a=info.nonlinearIterations, "linear_iterations"_a=info.linearIterations);
+            return std::map<std::string,std::string> {
+                {"converged",std::to_string(info.converged)},
+                {"iterations",std::to_string(info.nonlinearIterations)},
+                {"linear_iterations",std::to_string(info.linearIterations)}
+              };
+          } );
+        cls.def( "__call__", [] ( Scheme &self, const DiscreteFunction &arg, DiscreteFunction &dest) { self( arg, dest ); } );
         registerSchemeGeneralCall( cls );
 
-        cls.def_property_readonly( "dimRange", [](Scheme&) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
+        cls.def_property_readonly( "dimRange", [] ( Scheme & ) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
         cls.def_property_readonly( "space", [] ( pybind11::object self ) { return detail::getSpace( self.cast< const Scheme & >(), self ); } );
         registerSchemeModel( cls );
 
         registerSchemeAssemble( cls );
 
-        cls.def("constraint", [] (Scheme &scheme, DiscreteFunction &u) { scheme.constraint(u); });
+        cls.def( "constraint", [] ( Scheme &self, DiscreteFunction &u) { self.constraint( u ); } );
 
-        cls.def("mark", [] (Scheme &scheme, const DiscreteFunction &solution, double tolerance )
-        {
-          double est = scheme.estimate(solution);
-          return std::make_tuple(est,scheme.mark(tolerance));
-        });
+        cls.def( "mark", [] ( Scheme &self, const DiscreteFunction &solution, double tolerance ) {
+            double est = self.estimate( solution );
+            return std::make_tuple( est, self.mark( tolerance ) );
+          } );
       }
 
     } // namespace detail

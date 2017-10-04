@@ -27,8 +27,8 @@ namespace Dune
       {
         typedef typename Space::GridPartType GridPart;
         typedef typename GridPart::GridViewType GridView;
-        cls.def( "__init__", [] ( Space &instance, pybind11::object gridView ) {
-            new( &instance ) Space( gridPart< GridView >( gridView ) );
+        cls.def( "__init__", [] ( Space &self, pybind11::object gridView ) {
+            new( &self ) Space( gridPart< GridView >( gridView ) );
           }, pybind11::keep_alive< 1, 2 >() );
       }
       template< class Space, class... options >
@@ -54,10 +54,10 @@ namespace Dune
         typedef typename Space::GridPartType GridPart;
         typedef typename GridPart::GridViewType GridView;
 
-        cls.def_property_readonly( "dimRange", [] ( Space &spc ) -> int { return Space::dimRange; } );
-        cls.def_property_readonly( "grid", [] ( Space &spc ) -> GridView { return static_cast< GridView >( spc.gridPart() ); } );
-        cls.def_property_readonly( "order", [] ( Space &spc ) -> int { return spc.order(); } );
-        cls.def_property_readonly( "size", [] ( Space &spc ) -> int { return spc.size(); } );
+        cls.def_property_readonly( "dimRange", [] ( Space & ) -> int { return Space::dimRange; } );
+        cls.def_property_readonly( "grid", [] ( Space &self ) -> GridView { return static_cast< GridView >( self.gridPart() ); } );
+        cls.def_property_readonly( "order", [] ( Space &self ) -> int { return self.order(); } );
+        cls.def_property_readonly( "size", [] ( Space &self ) -> int { return self.size(); } );
 
         registerSpaceConstructor( cls );
       }
