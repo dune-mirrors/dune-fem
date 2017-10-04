@@ -26,12 +26,14 @@ namespace Dune
       typedef ISTLLinearOperator< DomainFunction, RangeFunction > ThisType;
       typedef ISTLMatrixObject< DomainSpaceType, RangeSpaceType > BaseType;
 
-      typedef typename BaseType::LittleBlockType::field_type FieldType;
+      typedef typename BaseType::LittleBlockType LittleBlockType;
+      typedef typename LittleBlockType::field_type FieldType;
 
       static constexpr bool assembled = true;
 
       using BaseType::apply;
       using BaseType::communicate;
+      using BaseType::matrix;
 
       //! constructor
       //! \param domainSpace space defining domain of operator
@@ -62,7 +64,7 @@ namespace Dune
         return *this;
       }
 
-      void maskRows ( const RangeFunctionType &maskFunction, FieldType diagonal = FieldType( 0 ) )
+      void maskRows ( const RangeFunction &maskFunction, FieldType diagonal = FieldType( 0 ) )
       {
         const auto &slaveDofs = maskFunction.space().slaveDofs();
         for( auto i = matrix().begin(), iend = matrix().end(); i != iend; ++i )

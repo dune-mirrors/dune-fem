@@ -29,6 +29,7 @@ namespace Dune
       static constexpr bool assembled = true;
 
       using BaseType::apply;
+      using BaseType::matrix;
 
       SparseRowLinearOperator( const std::string & ,
                                const DomainSpaceType &domainSpace,
@@ -55,7 +56,7 @@ namespace Dune
       void communicate()
       {}
 
-      void maskRows ( const RangeFunctionType &maskFunction, FieldType diagonal = FieldType( 0 ) )
+      void maskRows ( const RangeFunction &maskFunction, FieldType diagonal = FieldType( 0 ) )
       {
         const auto &slaveDofs = maskFunction.space().slaveDofs();
         for( typename BaseType::size_type i = 0; i < matrix().rows(); ++i )

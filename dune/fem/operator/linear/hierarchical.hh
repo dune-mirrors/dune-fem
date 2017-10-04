@@ -297,7 +297,7 @@ namespace Dune
       template< class... C, class MaskVector, class SlaveDofs, std::size_t i >
       static void maskRow ( MultiTypeBlockVector< C... > &row, const MaskVector &maskVector, const SlaveDofs &slaveDofs, DofType diagonal, std::integral_constant< std::size_t, i > )
       {
-        Hybrid::forEach( std::index_sequence_for< C... >(), [] ( auto &&j ) {
+        Hybrid::forEach( std::index_sequence_for< C... >(), [ &row, &maskVector, &slaveDofs, &diagonal ] ( auto &&j ) {
             ThisType::maskRows( row[ j ], maskVector, slaveDofs, i == j ? diagonal : DofType( 0 ) );
           } );
       }
@@ -305,8 +305,8 @@ namespace Dune
       template< class... R, class... B, class SlaveDofs >
       static std::enable_if_t< sizeof...( R ) == sizeof...( B ) > maskRows ( MultiTypeBlockMatrix< R... > &matrix, const MultiTypeBlockVector< B... > &maskVector, const SlaveDofs &slaveDofs, DofType diagonal )
       {
-        Hybrid::forEach( std::index_sequence_for< R... >(), [] ( auto &&i ) {
-            TypeType::maskRow( matrix[ i ], maskVector[ i ], slaveDofs, diagonal, i );
+        Hybrid::forEach( std::index_sequence_for< R... >(), [ &matrix, &maskVector, &slaveDofs, &diagonal ] ( auto &&i ) {
+            ThisType::maskRow( matrix[ i ], maskVector[ i ], slaveDofs, diagonal, i );
           } );
       }
 
