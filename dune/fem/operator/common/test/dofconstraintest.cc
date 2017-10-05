@@ -44,15 +44,15 @@ int main(int argc, char ** argv)
     // next use zero b.c. on the whole boundary and store in zerobc
     Dune::Fem::ConstrainOnFullBoundary< DiscreteFunctionSpaceType > mask( discreteFunctionSpace );
     Dune::Fem::DofConstraints< DiscreteFunctionSpaceType, Dune::Fem::ConstrainOnFullBoundary< DiscreteFunctionSpaceType >  >
-        constrain( discreteFunctionSpace, mask );
-    constrain( solution );
+        constraints( discreteFunctionSpace, mask );
+    constraints.constrain( solution );
     DiscreteFunctionType zerobc( "zerobc", discreteFunctionSpace );
     zerobc.assign( solution );
 
     // now use the value from the given function as b.c. on the whole
     // domain then solution == interpol (so after this solution==0)
-    constrain.set( gridFunctionAdapter( ExactSolutionType(), gridPart, discreteFunctionSpace.order() + 2 ) );
-    constrain( solution );
+    constraints.set( gridFunctionAdapter( ExactSolutionType(), gridPart, discreteFunctionSpace.order() + 2 ) );
+    constraints.constrain( solution );
     solution -= interpol;
 
     // now test a b.c. given by the 'model'
@@ -64,12 +64,12 @@ int main(int argc, char ** argv)
     typedef Dune::Fem::DofConstraints< DiscreteFunctionSpaceType, ModelBoundaryMask > DirichletConstraints;
     ModelType model;
     ModelBoundaryMask  modelMask( discreteFunctionSpace, model );
-    DirichletConstraints modelConstrain( discreteFunctionSpace, modelMask );
+    DirichletConstraints modelConstraints( discreteFunctionSpace, modelMask );
     Dune::Fem::PiecewiseGridFunction<ModelType> lpw( model, gridPart, 5 );
     Dune::Fem::LocalFunctionAdapter < Dune::Fem::PiecewiseGridFunction<ModelType> >
       pwgf( "pwgf", lpw, gridPart, 5 );
-    modelConstrain.set( pwgf );
-    modelConstrain( modelTest );
+    modelConstraints.set( pwgf );
+    modelConstraints.constrain( modelTest );
 
     Dune::Fem::VTKIO<GridPartType> vtkWriter(gridPart);
     vtkWriter.addVertexData(solution);
