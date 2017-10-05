@@ -38,20 +38,31 @@ namespace Dune
         checkUpdate();
         interpolate( gf, values_, constrain_, mask_ );
       }
-      /**Unconditionally install the constrained DoF-values in @a df
+      /**Unconditionally install the constrained DoF-values in @a to
        *
        * @param[in] df The DiscreteFunction to be modified.
        */
       template <class DiscreteFunction>
-      void constrain(DiscreteFunction &df)
+      void constrain(DiscreteFunction &to)
       {
-        (*this)(values_,df);
+        checkUpdate();
+
+        auto valuesIt = values_.dbegin();
+        auto maskIt = mask_.dbegin();
+        for ( auto&& dof : dofs(to) )
+        {
+          if ( (*maskIt) > 0)
+            dof = (*valuesIt);
+          assert( maskIt != mask_.dend() && valuesIt != values_.dend() );
+          ++maskIt;
+          ++valuesIt;
+        }
       }
       /**Unconditionally install zeroes into the masked DoFs. Purpose:
        *utiliy method in order to manipulate addtional contributions
        *to the RHS befor AXPY and the like.
        *
-       * @param[in] df The DiscreteFunction to be modified.
+       * @param[in] to The DiscreteFunction to be modified.
        */
       template <class DiscreteFunction>
       void zeroConstrain(DiscreteFunction &to)
@@ -81,20 +92,26 @@ namespace Dune
         }
         lo.setUnitRows( rows );
       }
+      /**Compute the difference between the prescribed
+       * constraints-values and the argument @a from and store the
+       * result into @a to.
+       */
       template <class From, class To>
       void operator()(const From &from, To &to)
       {
         checkUpdate();
 
         auto fromIt = from.dbegin();
+        auto valuesIt = values_.dbegin();
         auto maskIt = mask_.dbegin();
         for ( auto&& dof : dofs(to) )
         {
           if ( (*maskIt) > 0)
-            dof = (*fromIt);
-          assert( maskIt != mask_.dend() && fromIt != from.dend() );
+            dof = (*fromIt) - (*valuesIt);
+          assert( maskIt != mask_.dend() && fromIt != from.dend() && valuesIt != values_.dend() );
           ++maskIt;
           ++fromIt;
+          ++valuesIt;
         }
       }
       void clear()
