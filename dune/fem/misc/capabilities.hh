@@ -49,12 +49,6 @@ namespace Dune
       static const bool v = false;
     };
 
-    template< int dim, int dimw, class ctype >
-    struct hasHierarchicIndexSet< SGrid< dim, dimw, ctype > >
-    {
-      static const bool v = false;
-    };
-
     template< int dim >
     struct hasHierarchicIndexSet< UGGrid< dim > >
     {

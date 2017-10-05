@@ -27,8 +27,10 @@ namespace Dune
       : lagrangePointSets_( lagrangePointSets )
       {}
 
-      template< class Field, int dim >
-      DofMapperCode operator() ( const ReferenceElement< Field, dim > &refElement ) const
+      template< class RefElement,
+                std::enable_if_t< std::is_same< std::decay_t< decltype( std::declval< const RefElement & >().size( 0 ) ) >, int >::value, int > = 0,
+                std::enable_if_t< std::is_same< std::decay_t< decltype( std::declval< const RefElement & >().type( 0, 0 ) ) >, GeometryType >::value, int > = 0 >
+      DofMapperCode operator() ( const RefElement &refElement ) const
       {
         const GeometryType type = refElement.type();
         if( lagrangePointSets_.exists( type ) )

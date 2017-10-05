@@ -13,6 +13,7 @@
 
 #include <dune/fem/common/hybrid.hh>
 #include <dune/fem/common/utility.hh>
+#include <dune/fem/function/blockvectors/defaultblockvectors.hh>
 
 namespace Dune
 {

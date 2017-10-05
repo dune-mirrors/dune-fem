@@ -136,7 +136,8 @@ namespace Dune
       static const CommunicationDirection defaultDirection =  ForwardCommunication;
 
     public:
-      static const int polynomialOrder = 1;
+      // must be 2 here since it contains x_i^2
+      static const int polynomialOrder = 2;
 
       typedef typename BaseType::Traits Traits;
 
@@ -247,6 +248,16 @@ namespace Dune
     private:
       ScalarShapeFunctionSetType *scalarShapeFunctionSet_;
       BlockMapperType *blockMapper_;
+    };
+
+
+    // DifferentDiscreteFunctionSpace
+    // ------------------------------
+
+    template< class FunctionSpace, class GridPart, template< class > class Storage, class NewFunctionSpace >
+    struct DifferentDiscreteFunctionSpace< RannacherTurekDiscreteFunctionSpace< FunctionSpace, GridPart, Storage >, NewFunctionSpace >
+    {
+      typedef RannacherTurekDiscreteFunctionSpace< NewFunctionSpace, GridPart, Storage > Type;
     };
 
   } // namespace Fem

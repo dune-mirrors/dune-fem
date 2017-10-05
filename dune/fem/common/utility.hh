@@ -107,9 +107,9 @@ namespace Dune
     // Or
     // --
 
-    static constexpr bool Or ( bool a )
+    static constexpr bool Or ()
     {
-      return a;
+      return false;
     }
 
     template < class ... U >
@@ -122,9 +122,9 @@ namespace Dune
     // And
     // ---
 
-    static constexpr bool And ( bool a )
+    static constexpr bool And ()
     {
-      return a;
+      return true;
     }
 
     template< class B, class ... U >

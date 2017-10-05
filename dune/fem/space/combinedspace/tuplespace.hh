@@ -108,8 +108,6 @@ namespace Dune
       // type functionspace
       typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
 
-      static constexpr int polynomialOrder = Std::max( (int)DiscreteFunctionSpaces::polynomialOrder ... );
-
       typedef TupleSpaceInterpolation< DiscreteFunctionSpaces ... > InterpolationType;
 
       // review to make it work for all kind of combinations
@@ -148,14 +146,14 @@ namespace Dune
         return getBasisFunctionSet( entity, tuple, std::index_sequence_for< DiscreteFunctionSpaces ... >() );
       }
 
-      static bool continuous ( const DiscreteFunctionSpaceTupleType &tuple )
+      template< class T, class F >
+      static T accumulate ( const DiscreteFunctionSpaceTupleType &tuple, T value, F &&f )
       {
-        return continuous( tuple, std::index_sequence_for< DiscreteFunctionSpaces ... >() );
-      }
-
-      static bool continuous ( const IntersectionType &intersection, const DiscreteFunctionSpaceTupleType &tuple )
-      {
-        return continuous( tuple, intersection, std::index_sequence_for< DiscreteFunctionSpaces ... >() );
+        Hybrid::forEach( std::index_sequence_for< DiscreteFunctionSpaces... >{}, [ & ] ( auto &&idx ) {
+            const std::size_t i = std::decay_t< decltype( idx ) >::value;
+            value = f( value, SubDiscreteFunctionSpace< i >::subDiscreteFunctionSpace( tuple ) );
+          } );
+        return value;
       }
 
     protected:
@@ -171,18 +169,6 @@ namespace Dune
                                                         std::index_sequence< i ... > )
       {
         return BasisFunctionSetType( SubDiscreteFunctionSpace< i >::subDiscreteFunctionSpace( tuple ).basisFunctionSet( entity ) ... );
-      }
-
-      template< std::size_t ... i >
-      static bool continuous ( const DiscreteFunctionSpaceTupleType &tuple, std::index_sequence< i ... > )
-      {
-        return Std::And( SubDiscreteFunctionSpace< i >::subDiscreteFunctionSpace( tuple ).continuous() ... );
-      }
-
-      template< std::size_t ... i >
-      static bool continuous ( const DiscreteFunctionSpaceTupleType &tuple, const IntersectionType &intersection, std::index_sequence< i ... > )
-      {
-        return Std::And( SubDiscreteFunctionSpace< i >::subDiscreteFunctionSpace( tuple ).continuous( intersection ) ... );
       }
     };
 
@@ -204,12 +190,13 @@ namespace Dune
     {
       typedef TupleDiscreteFunctionSpace< DiscreteFunctionSpaces ... > ThisType;
       typedef GenericCombinedDiscreteFunctionSpace< TupleDiscreteFunctionSpaceTraits< DiscreteFunctionSpaces ... > > BaseType;
-      typedef TupleDiscreteFunctionSpaceTraits< DiscreteFunctionSpaces ... > Traits;
 
     public:
-      typedef typename Traits::GridPartType GridPartType;
+      typedef typename BaseType::Traits Traits;
+      typedef typename BaseType::GridPartType GridPartType;
+      typedef typename BaseType::EntityType EntityType;
+
       typedef typename Traits::InterpolationType InterpolationType;
-      typedef typename Traits::EntityType EntityType;
       typedef typename Traits::DiscreteFunctionSpaceTupleType DiscreteFunctionSpaceTupleType;
 
       /** \brief constructor

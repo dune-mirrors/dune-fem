@@ -2,13 +2,17 @@
 #define DUNE_FEM_TWISTPROVIDER_HH
 
 //- System includes
-#include <vector>
-#include <map>
-#include <memory>
 #include <cassert>
 
+#include <map>
+#include <memory>
+#include <vector>
+
 //- Dune includes
+#include <dune/common/visibility.hh>
+
 #include <dune/geometry/referenceelements.hh>
+
 #include <dune/fem/quadrature/quadrature.hh>
 
 //- Local includes
@@ -74,10 +78,10 @@ namespace Dune
       const PointVectorType& getPoints() const;
 
       //! Minimal twist
-      int minTwist() const;
+      int minTwist() const { return minTwist_; }
 
       //! Maximal twist + 1
-      int maxTwist() const;
+      int maxTwist() const { return maxTwist_; }
 
     private:
       typedef typename Traits::MapperVectorType MapperVectorType;
@@ -89,6 +93,11 @@ namespace Dune
       int minTwist_;
       int maxTwist_;
     };
+
+
+
+    // TiwstProvider
+    // -------------
 
     //! \brief Access point for PointMapper objects with twist information
     //! PointMapper objects get created once and are reused as often as needed.
@@ -138,7 +147,7 @@ namespace Dune
 
       public:
         //! return reference to mappers
-        static MapperContainerType& instance()
+        DUNE_EXPORT static MapperContainerType& instance()
         {
           // create singleton instance
           static MapperContainer mc;
@@ -147,11 +156,15 @@ namespace Dune
       };
     };
 
+
+
+    // TwistMapperStrategy
+    // -------------------
+
     //! This class factors out all geometry dependent stuff in a strategy class
     template <class ct, int dim>
-    class TwistMapperStrategy
+    struct TwistMapperStrategy
     {
-    public:
       typedef FieldMatrix<ct, dim+1, dim> MatrixType;
 
     public:
@@ -161,9 +174,9 @@ namespace Dune
       {}
 
       //! virtual desctructor because of virtual functions
-      virtual ~TwistMapperStrategy() {}
+      virtual ~TwistMapperStrategy () = default;
 
-      virtual const MatrixType& buildTransformationMatrix(int twist) const = 0;
+      virtual MatrixType buildTransformationMatrix ( int twist ) const = 0;
 
       int minTwist() const { return minTwist_; }
       int maxTwist() const { return maxTwist_; }
@@ -172,6 +185,11 @@ namespace Dune
       int minTwist_;
       int maxTwist_;
     };
+
+
+
+    // TwistMapperCreator
+    // ------------------
 
     //! Helper class for TwistProvider which takes care of the creation process
     template <class ct, int dim>
@@ -219,88 +237,137 @@ namespace Dune
       static const ct eps_;
     };
 
+
+
+    // PointTwistMapperStrategy
+    // ------------------------
+
     //! Implements the creator's functionality that depends on the underlying
     //! geometry. This is the special implementation for points.
     template <class ct, int dim>
-    class PointTwistMapperStrategy : public TwistMapperStrategy<ct, dim> {
-    public:
+    class PointTwistMapperStrategy final
+      : public TwistMapperStrategy<ct, dim>
+    {
       typedef TwistMapperStrategy<ct, dim> BaseType;
       typedef typename BaseType::MatrixType MatrixType;
 
     public:
-      PointTwistMapperStrategy(GeometryType geo);
+      PointTwistMapperStrategy(GeometryType geo)
+        : BaseType( 0, 1 )
+      {
+        assert(dim == 0);
+      }
 
-      //! virtual desctructor because of virtual functions
-      virtual ~PointTwistMapperStrategy() {}
+      virtual MatrixType buildTransformationMatrix ( int twist ) const
+      {
+        const auto &refElement = Dune::ReferenceElements< ct, dim >::cube();
 
-      virtual const MatrixType& buildTransformationMatrix(int tiwst) const;
-
-    private:
-      const Dune::ReferenceElement<ct, dim>& refElem_;
-      mutable MatrixType mat_;
+        assert( twist == 0 );
+        MatrixType mat;
+        mat[ 0 ] = refElement.position( 0, dim );
+        return mat;
+      }
     };
+
+
+
+    // LineTwistMapperStrategy
+    // -----------------------
 
     //! Implements the creator's functionality that depends on the underlying
     //! geometry. This is the special implementation for line.
     template <class ct, int dim>
-    class LineTwistMapperStrategy : public TwistMapperStrategy<ct, dim> {
-    public:
+    class LineTwistMapperStrategy final
+      : public TwistMapperStrategy<ct, dim>
+    {
       typedef TwistMapperStrategy<ct, dim> BaseType;
       typedef typename BaseType::MatrixType MatrixType;
 
     public:
-      LineTwistMapperStrategy(GeometryType geo);
+      LineTwistMapperStrategy(GeometryType geo)
+        : BaseType( 0, 2 )
+      {
+        assert(dim == 1);
+      }
 
-      //! virtual desctructor because of virtual functions
-      virtual ~LineTwistMapperStrategy() {}
+      MatrixType buildTransformationMatrix ( int twist ) const override
+      {
+        const auto &refElement = Dune::ReferenceElements< ct, dim >::cube();
 
-      virtual const MatrixType& buildTransformationMatrix(int tiwst) const;
-
-    private:
-      const Dune::ReferenceElement<ct, dim>& refElem_;
-      mutable MatrixType mat_;
+        assert( (twist == 0) || (twist == 1) );
+        MatrixType mat;
+        mat[ twist   ] = refElement.position( 0, dim );
+        mat[ 1-twist ] = refElement.position( 1, dim );
+        return mat;
+      }
     };
+
+
+
+    // TriangleTwistMapperStrategy
+    // ---------------------------
 
     //! Implements the creator's functionality that depends on the underlying
     //! geometry. This is the special implementation for triangle.
     template <class ct, int dim>
-    class TriangleTwistMapperStrategy : public TwistMapperStrategy<ct, dim> {
-    public:
+    class TriangleTwistMapperStrategy final
+      : public TwistMapperStrategy<ct, dim>
+    {
       typedef TwistMapperStrategy<ct, dim> BaseType;
       typedef typename BaseType::MatrixType MatrixType;
 
     public:
-      TriangleTwistMapperStrategy(GeometryType geo);
-      //! virtual desctructor because of virtual functions
-      virtual ~TriangleTwistMapperStrategy() {}
+      TriangleTwistMapperStrategy(GeometryType geo)
+        : BaseType( -3, 3 )
+      {
+        assert(dim == 2);
+      }
 
-      virtual const MatrixType& buildTransformationMatrix(int twist) const;
+      virtual MatrixType buildTransformationMatrix ( int twist ) const override
+      {
+        typedef Dune::Fem::FaceTopologyMapping<tetra> FaceTopo;
 
-    private:
-      const Dune::ReferenceElement<ct, dim>& refElem_;
-      mutable MatrixType mat_;
+        const auto &refElement = Dune::ReferenceElements< ct, dim >::simplex();
+
+        MatrixType mat( ct( 0 ) );
+        for (int idx = 0; idx < dim+1; ++idx)
+          mat[idx] = refElement.position( FaceTopo::twistedDuneIndex(idx, twist), dim); // dim == codim here
+        return mat;
+      }
     };
+
+
+
+    // QuadrilateralTwistMapperStrategy
+    // --------------------------------
 
     //! Implements the creator's functionality that depends on the underlying
     //! geometry. This is the special implementation for quadrilaterals
     template <class ct, int dim>
-    class QuadrilateralTwistMapperStrategy :
-      public TwistMapperStrategy<ct, dim> {
-    public:
+    class QuadrilateralTwistMapperStrategy final
+      : public TwistMapperStrategy<ct, dim>
+    {
       typedef TwistMapperStrategy<ct, dim> BaseType;
       typedef typename BaseType::MatrixType MatrixType;
 
     public:
-      QuadrilateralTwistMapperStrategy(GeometryType geo);
+      QuadrilateralTwistMapperStrategy(GeometryType geo)
+        : BaseType( -4, 4 )
+      {
+        assert(dim == 2);
+      }
 
-      //! virtual desctructor because of virtual functions
-      virtual ~QuadrilateralTwistMapperStrategy() {}
+      MatrixType buildTransformationMatrix ( int twist ) const override
+      {
+        typedef Dune::Fem::FaceTopologyMapping<hexa> FaceTopo;
 
-      virtual const MatrixType& buildTransformationMatrix(int twist) const;
+        const auto &refElement = Dune::ReferenceElements< ct, dim >::cube();
 
-    private:
-      const Dune::ReferenceElement<ct, dim>& refElem_;
-      mutable MatrixType mat_;
+        MatrixType mat( ct( 0 ) );
+        for (int idx = 0; idx < dim+1; ++idx)
+          mat[idx] = refElement.position( FaceTopo::twistedDuneIndex(idx, twist), dim); // dim == codim here
+        return mat;
+      }
     };
 
   } // namespace Fem

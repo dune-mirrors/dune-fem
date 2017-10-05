@@ -19,11 +19,11 @@ namespace Dune
   namespace Fem
   {
 
-    // KrylovInverseOperator
+    // KrylovInverseOperatorBase
     // ---------------------
 
     template< class DiscreteFunction, int method = -1 >
-    class KrylovInverseOperator
+    class KrylovInverseOperatorBase
     : public Operator< DiscreteFunction, DiscreteFunction >
     {
       typedef Operator< DiscreteFunction, DiscreteFunction > BaseType;
@@ -41,43 +41,43 @@ namespace Dune
       typedef Operator< DiscreteFunction, DiscreteFunction > PreconditionerType;
 
       template <class LinearOperator>
-      KrylovInverseOperator ( const LinearOperator &op,
+      KrylovInverseOperatorBase ( const LinearOperator &op,
                                          double redEps, double absLimit, unsigned int maxIterations, bool verbose,
                                          const ParameterReader &parameter = Parameter::container() )
-      : KrylovInverseOperator( op, nullptr, redEps, absLimit, maxIterations, verbose, parameter ) {}
+      : KrylovInverseOperatorBase( op, nullptr, redEps, absLimit, maxIterations, verbose, parameter ) {}
 
       template <class LinearOperator>
-      KrylovInverseOperator ( const LinearOperator &op, double redEps, double absLimit,
+      KrylovInverseOperatorBase ( const LinearOperator &op, double redEps, double absLimit,
                                          const ParameterReader &parameter = Parameter::container() )
-      : KrylovInverseOperator( op, nullptr, redEps, absLimit,
+      : KrylovInverseOperatorBase( op, nullptr, redEps, absLimit,
                                           std::numeric_limits< unsigned int >::max(), readVerbose( parameter ), parameter ) {}
 
       template <class LinearOperator>
-      KrylovInverseOperator ( const LinearOperator &op, double redEps, double absLimit,
+      KrylovInverseOperatorBase ( const LinearOperator &op, double redEps, double absLimit,
                                          unsigned int maxIterations,
                                          const ParameterReader &parameter = Parameter::container() )
-      : KrylovInverseOperator( op, nullptr, redEps, absLimit, maxIterations, readVerbose( parameter ), parameter ) {}
+      : KrylovInverseOperatorBase( op, nullptr, redEps, absLimit, maxIterations, readVerbose( parameter ), parameter ) {}
 
       template <class LinearOperator>
-      KrylovInverseOperator ( const LinearOperator &op, const PreconditionerType &preconditioner,
+      KrylovInverseOperatorBase ( const LinearOperator &op, const PreconditionerType &preconditioner,
                                          double redEps, double absLimit, unsigned int maxIterations, bool verbose,
                                          const ParameterReader &parameter = Parameter::container() )
-      : KrylovInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, verbose, parameter ) {}
+      : KrylovInverseOperatorBase( op, &preconditioner, redEps, absLimit, maxIterations, verbose, parameter ) {}
 
       template <class LinearOperator>
-      KrylovInverseOperator ( const LinearOperator &op, const PreconditionerType &preconditioner,
+      KrylovInverseOperatorBase ( const LinearOperator &op, const PreconditionerType &preconditioner,
                                          double redEps, double absLimit,
                                          const ParameterReader &parameter = Parameter::container() )
-      : KrylovInverseOperator( op, &preconditioner, redEps, absLimit, std::numeric_limits< unsigned int >::max(),
+      : KrylovInverseOperatorBase( op, &preconditioner, redEps, absLimit, std::numeric_limits< unsigned int >::max(),
                                           readVerbose( parameter ), parameter ) {}
 
       template <class LinearOperator>
-      KrylovInverseOperator ( const LinearOperator &op, const PreconditionerType &preconditioner,
+      KrylovInverseOperatorBase ( const LinearOperator &op, const PreconditionerType &preconditioner,
                                          double redEps, double absLimit, unsigned int maxIterations,
                                          const ParameterReader &parameter = Parameter::container() )
-      : KrylovInverseOperator( op, &preconditioner, redEps, absLimit, maxIterations, readVerbose( parameter ), parameter ) {}
+      : KrylovInverseOperatorBase( op, &preconditioner, redEps, absLimit, maxIterations, readVerbose( parameter ), parameter ) {}
 
-      KrylovInverseOperator ( double redEps, double absLimit,
+      KrylovInverseOperatorBase ( double redEps, double absLimit,
                               unsigned int maxIterations, bool verbose,
                               const ParameterReader &parameter = Parameter::container() )
       : precondObj_(),
@@ -90,15 +90,15 @@ namespace Dune
         restart_( method_ == gmres ? parameter.getValue< int >( "fem.solver.gmres.restart", 20 ) : 0 )
       {}
 
-      KrylovInverseOperator ( double redEps, double absLimit,
+      KrylovInverseOperatorBase ( double redEps, double absLimit,
                               const ParameterReader &parameter = Parameter::container() )
-      : KrylovInverseOperator( redEps, absLimit,
+      : KrylovInverseOperatorBase( redEps, absLimit,
                                std::numeric_limits< unsigned int >::max(), readVerbose( parameter ), parameter ) {}
 
-      KrylovInverseOperator ( double redEps, double absLimit,
+      KrylovInverseOperatorBase ( double redEps, double absLimit,
                               unsigned int maxIterations,
                               const ParameterReader &parameter = Parameter::container() )
-      : KrylovInverseOperator( redEps, absLimit, maxIterations, readVerbose( parameter ), parameter ) {}
+      : KrylovInverseOperatorBase( redEps, absLimit, maxIterations, readVerbose( parameter ), parameter ) {}
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
@@ -230,12 +230,12 @@ namespace Dune
       }
 
       template <class LinearOperator>
-      KrylovInverseOperator ( const LinearOperator &op,
+      KrylovInverseOperatorBase ( const LinearOperator &op,
                               const PreconditionerType *preconditioner,
                               double redEps, double absLimit,
                               unsigned int maxIterations, bool verbose,
                               const ParameterReader &parameter = Parameter::container() )
-      : KrylovInverseOperator( redEps, absLimit, maxIterations, verbose, parameter )
+      : KrylovInverseOperatorBase( redEps, absLimit, maxIterations, verbose, parameter )
       {
         bind(op);
         if( ! preconditioner_ )
@@ -267,6 +267,34 @@ namespace Dune
       const int method_;
       const int restart_;
     };
+
+
+    // KrylovInverseOperator
+    // ---------------------
+
+    template< class DiscreteFunction >
+    using KrylovInverseOperator = KrylovInverseOperatorBase< DiscreteFunction, -1 >;
+
+
+    // CgInverseOperator
+    // -----------------
+
+    template< class DiscreteFunction >
+    using CgInverseOperator = KrylovInverseOperatorBase< DiscreteFunction, KrylovInverseOperator< DiscreteFunction > :: cg >;
+
+
+    // BicgstabInverseOperator
+    // -----------------------
+
+    template< class DiscreteFunction >
+    using BicgstabInverseOperator = KrylovInverseOperatorBase< DiscreteFunction, KrylovInverseOperator< DiscreteFunction > :: bicgstab >;
+
+
+    // GmresInverseOperator
+    // --------------------
+
+    template< class DiscreteFunction >
+    using GmresInverseOperator = KrylovInverseOperatorBase< DiscreteFunction, KrylovInverseOperator< DiscreteFunction > :: gmres >;
 
   } // namespace Fem
 

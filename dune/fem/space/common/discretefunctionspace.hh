@@ -3,7 +3,11 @@
 
 // C++ includes
 #include <cassert>
+
+#include <memory>
+#include <tuple>
 #include <type_traits>
+#include <utility>
 
 // dune-common includes
 #include <dune/common/bartonnackmanifcheck.hh>
@@ -206,7 +210,7 @@ namespace Dune
       //! type of the intersections
       typedef typename GridPartType :: IntersectionType IntersectionType;
       //! type of slave dofs
-      typedef SlaveDofs< DiscreteFunctionSpaceType, BlockMapperType > SlaveDofsType;
+      typedef SlaveDofs< GridPartType, BlockMapperType > SlaveDofsType;
 
       /** \brief defines type of data handle for communication
           \param  DiscreteFunction  type of \ref Dune::Fem::DiscreteFunctionInterface
@@ -627,20 +631,23 @@ namespace Dune
       //! type of communication manager
       typedef CommunicationManager< DiscreteFunctionSpaceType > CommunicationManagerType;
 
-      typedef typename BaseType :: SlaveDofsType SlaveDofsType;
+      typedef typename BaseType::BlockMapperType BlockMapperType;
+      typedef typename BaseType::SlaveDofsType SlaveDofsType;
 
     protected:
-      typedef typename SlaveDofsType :: SingletonKey SlaveDofsKeyType;
-      typedef SingletonList< SlaveDofsKeyType, SlaveDofsType > SlaveDofsProviderType;
-      // deleter class passed to shared_ptr for deleting slave dofs
-      // when pointer does out of scope
-      struct SlaveDofsDeleter
+      struct SlaveDofsFactory
       {
-        void operator()(SlaveDofsType *slaveDofs)
+        typedef std::pair< SlaveDofsType, int > ObjectType;
+
+        static ObjectType *createObject ( std::pair< GridPartType *, BlockMapperType * > key )
         {
-          SlaveDofsProviderType :: removeObject( *slaveDofs );
+          return new ObjectType( std::piecewise_construct, std::tie( *key.first, *key.second ), std::make_tuple( -1 ) );
         }
+
+        static void deleteObject ( ObjectType *object ) { delete object; }
       };
+
+      typedef SingletonList< std::pair< GridPartType *, BlockMapperType * >, std::pair< SlaveDofsType, int >, SlaveDofsFactory > SlaveDofsProviderType;
 
     protected:
       GridPartType &gridPart_;
@@ -678,8 +685,7 @@ namespace Dune
         allGeomTypes_( gridPart.indexSet() ),
         dofManager_( DofManagerType :: instance( gridPart.grid() ) ),
         commInterface_( commInterface ),
-        commDirection_( commDirection ),
-        slaveDofs_()
+        commDirection_( commDirection )
       {}
 
       /** \copydoc Dune::Fem::DiscreteFunctionSpaceInterface::sequence */
@@ -858,15 +864,15 @@ namespace Dune
       /** \brief get slave dofs */
       const SlaveDofsType& slaveDofs() const
       {
-        if ( ! slaveDofs_ )
+        if ( !slaveDofs_ )
+          slaveDofs_.reset( &(SlaveDofsProviderType::getObject( std::make_pair( &this->gridPart(), &this->blockMapper() ) )) );
+        const int sequence = asImp().sequence();
+        if( slaveDofs_->second != sequence )
         {
-          slaveDofs_.reset(
-              &( SlaveDofsProviderType :: getObject( SlaveDofsKeyType( this->gridPart(), this->blockMapper() ) ) ),
-              SlaveDofsDeleter() );
+          slaveDofs_->first.rebuild();
+          slaveDofs_->second = sequence;
         }
-
-        slaveDofs_->rebuild( asImp() );
-        return *slaveDofs_;
+        return slaveDofs_->first;
       }
 
       /** \brief default implementation of addFunction does nothing at the moment */
@@ -901,7 +907,7 @@ namespace Dune
 
       // only combined space should use geomTypes
       template <class , int , DofStoragePolicy> friend class CombinedSpace;
-      mutable std::shared_ptr< SlaveDofsType > slaveDofs_;
+      mutable std::unique_ptr< std::pair< SlaveDofsType, int >, typename SlaveDofsProviderType::Deleter > slaveDofs_;
     };
 
 

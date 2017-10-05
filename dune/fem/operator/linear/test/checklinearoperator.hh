@@ -13,6 +13,7 @@
 #include <dune/common/typetraits.hh>
 #include <dune/common/typeutilities.hh>
 
+#include <dune/fem/common/hybrid.hh>
 #include <dune/fem/operator/common/stencil.hh>
 #include <dune/fem/operator/common/temporarylocalmatrix.hh>
 

@@ -3,6 +3,7 @@
 
 #include <utility>
 #include <type_traits>
+#include <tuple>
 
 #include <dune/common/deprecated.hh>
 #include <dune/common/fvector.hh>

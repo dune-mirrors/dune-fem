@@ -22,7 +22,7 @@ namespace Dune
         : dofVector_( dofVector ), functor_( std::move( functor ) ) {}
 
       template< class GlobalKey >
-      void operator() ( std::size_t local, const GlobalKey &globalKey )
+      void operator() ( std::size_t local, const GlobalKey &globalKey ) const
       {
         const int localBlockSize
           = std::decay< decltype( std::get< GlobalKey::component() >( dofVector_ ) ) >::type::blockSize;
@@ -49,7 +49,7 @@ namespace Dune
         : dofVector_( dofVector ), functor_( std::move( functor ) ) {}
 
       template< class GlobalKey >
-      void operator() ( std::size_t local, const GlobalKey &globalKey )
+      void operator() ( std::size_t local, const GlobalKey &globalKey ) const
       {
         const int localBlockSize
           = std::decay< decltype( std::get< GlobalKey::component() >( dofVector_ ) ) >::type::blockSize;

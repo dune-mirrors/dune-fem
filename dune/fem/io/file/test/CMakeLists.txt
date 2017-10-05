@@ -14,6 +14,9 @@ foreach( file ${TESTDATAFILES} )
   configure_file( ${file} ${CMAKE_CURRENT_BINARY_DIR}/${file} COPYONLY )
 endforeach()
 
+dune_add_test( NAME backuprestore SOURCES backuprestore.cc
+  COMPILE_DEFINITIONS "POLORDER=2;WANT_GRAPE=0;${GRIDTYPE};GRIDDIM=${GRIDDIM};DATA_PATH=\"${CMAKE_CURRENT_BINARY_DIR}\"" LINK_LIBRARIES dunefem MPI_RANKS 1 3 4 TIMEOUT 9999999 )
+
 dune_add_test( NAME persistencemanagertest SOURCES persistencemanagertest.cc
 COMPILE_DEFINITIONS "POLORDER=2;WANT_GRAPE=0;${GRIDTYPE};GRIDDIM=${GRIDDIM}" LINK_LIBRARIES dunefem )
 

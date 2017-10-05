@@ -13,7 +13,7 @@ to the DUNE-FEM [bugtracker][6] instead.
 Dependencies
 ------------
 
-DUNE-FEM requires GCC (4.9+) or clang (3.8+) and depends on the following DUNE modules:
+DUNE-FEM requires GCC (5+) or clang (3.8+) and depends on the following DUNE modules:
 
 * [dune-common][10]
 

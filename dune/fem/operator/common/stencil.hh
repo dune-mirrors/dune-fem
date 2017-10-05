@@ -71,11 +71,12 @@ namespace Dune
       void fill ( const DomainEntityType &dEntity, const RangeEntityType &rEntity,
                   bool fillGhost=true )
       {
-        typedef typename Dune::Fem::MatrixFunctor<DomainBlockMapper,DomainEntityType,FillFunctor > MFunctor;
+        if( (dEntity.partitionType() == GhostEntity) && !fillGhost )
+          return;
 
-        bool doFill = (dEntity.partitionType()!=GhostEntity) || fillGhost;
-        rangeBlockMapper_.mapEach(rEntity,
-                  MFunctor( domainBlockMapper_, dEntity, FillFunctor(globalStencil_,doFill) ) );
+        rangeBlockMapper_.mapEach( rEntity, [ this, &dEntity ] ( int localRow, auto globalRow ) {
+            domainBlockMapper_.mapEach( dEntity, RowFillFunctor( globalStencil_[ globalRow ] ) );
+          } );
       }
 
       /** \brief Return stencil for a given row of the matrix
@@ -105,29 +106,21 @@ namespace Dune
       int cols () const { return rangeBlockMapper_.size(); }
 
     private:
-
-      struct FillFunctor
+      struct RowFillFunctor
       {
-        typedef DomainGlobalKeyType GlobalKey;
-        FillFunctor(GlobalStencilType &stencil,bool fill)
-        : stencil_(stencil),
-          localStencil_(0),
-          fill_(fill)
+        explicit RowFillFunctor ( LocalStencilType &localStencil )
+          : localStencil_( localStencil )
         {}
-        void set(const std::size_t, const DomainGlobalKeyType &domainGlobal)
+
+        void operator() ( const std::size_t, const RangeGlobalKeyType &rangeGlobal ) const
         {
-          localStencil_ = &(stencil_[ domainGlobal ]);
+          localStencil_.insert( rangeGlobal );
         }
-        void operator() ( const std::size_t, const RangeGlobalKeyType &rangeGlobal)
-        {
-          if (fill_)
-            localStencil_->insert( rangeGlobal );
-        }
-        private:
-        GlobalStencilType &stencil_;
-        LocalStencilType *localStencil_;
-        bool fill_;
+
+      private:
+        LocalStencilType &localStencil_;
       };
+
       const DomainBlockMapper &domainBlockMapper_;
       const RangeBlockMapper &rangeBlockMapper_;
       GlobalStencilType globalStencil_;

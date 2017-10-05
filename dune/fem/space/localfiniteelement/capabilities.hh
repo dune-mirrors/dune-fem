@@ -3,6 +3,7 @@
 
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/common/capabilities.hh>
+#include <dune/fem/space/shapefunctionset/selectcaching.hh>
 
 namespace Dune
 {

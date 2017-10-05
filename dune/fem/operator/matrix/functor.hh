@@ -23,7 +23,7 @@ namespace Dune
       {}
 
       template< class LocalKey, class GlobalKey >
-      void operator() ( const LocalKey localKey, const GlobalKey &globalKey )
+      void operator() ( const LocalKey localKey, const GlobalKey &globalKey ) const
       {
         functor_( std::make_pair( localIndex_, localKey ), std::make_pair( globalIndex_, globalKey ) );
       }
@@ -46,7 +46,7 @@ namespace Dune
       {}
 
       template< class LocalKey, class GlobalKey >
-      void operator() ( const LocalKey &localKey, const GlobalKey &globalKey )
+      void operator() ( const LocalKey &localKey, const GlobalKey &globalKey ) const
       {
         mapper_.mapEach( entity_, IndexFunctor< Functor, LocalKey, GlobalKey >( functor_, localKey, globalKey ) );
       }

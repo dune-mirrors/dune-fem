@@ -69,7 +69,7 @@ namespace Dune
         {}
 
         template <class GlobalKey>
-        void operator () ( const size_t local, const GlobalKey& globalKey )
+        void operator () ( const size_t local, const GlobalKey& globalKey ) const
         {
           const auto &block = function_->dofVector()[ globalKey ];
           Hybrid::forEach( LocalBlockIndices(), [ this, &block ] ( auto &&j ) { buffer_.write( block[ j ] ); } );
@@ -88,7 +88,7 @@ namespace Dune
         {}
 
         template <class GlobalKey>
-        void operator () ( const size_t local, const GlobalKey& globalKey )
+        void operator () ( const size_t local, const GlobalKey& globalKey ) const
         {
           auto &&block = function_->dofVector()[ globalKey ];
           Hybrid::forEach( LocalBlockIndices(), [ this, &block ] ( auto &&j ) {

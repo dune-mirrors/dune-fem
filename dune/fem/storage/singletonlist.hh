@@ -7,6 +7,10 @@
 #include <string>
 #include <list>
 #include <iostream>
+#include <type_traits>
+#include <utility>
+
+#include <dune/common/visibility.hh>
 
 //- dune-fem includes
 #include <dune/fem/misc/threads/threadmanager.hh>
@@ -75,7 +79,7 @@ namespace Dune
 
       //! list that store pairs of key/object pointers
       //! singleton list
-      inline static ListType & singletonList()
+      DUNE_EXPORT static ListType &singletonList ()
       {
         static SingletonListStorage s;
         //! list that store pairs of key/object pointers
@@ -85,8 +89,9 @@ namespace Dune
       //! return reference to the object for given key.
       //! If the object does not exist, then it is created first, otherwise the
       //! reference counter is increased.
-      //inline static ObjectType & getObject(KeyType key)
-      inline static ObjectType &getObject( const KeyType &key )
+      template< class... Args >
+      static auto getObject( const KeyType &key, Args &&... args )
+        -> std::enable_if_t< std::is_same< decltype( FactoryType::createObject( key, std::forward< Args >( args )... ) ), ObjectType * >::value, ObjectType & >
       {
         // make sure this method is only called in single thread mode
         assert( Fem :: ThreadManager :: singleThreadMode() );
@@ -101,7 +106,7 @@ namespace Dune
         }
 
         // object does not exist. Create it with reference count of 1
-        ObjectType *object = FactoryType :: createObject( key );
+        ObjectType *object = FactoryType::createObject( key, std::forward< Args >( args )... );
         assert( object );
         ValueType value( object, new unsigned int( 1 ) );
         ListObjType tmp( key, value );

@@ -477,7 +477,7 @@ namespace Dune
 
     template< class GridPart, bool subsampling >
     class VTKIOBase< GridPart, subsampling >::SubsamplingVTKWriter
-    : public Dune::SubsamplingVTKWriter< GridViewType >
+      : public Dune::SubsamplingVTKWriter< GridViewType >
     {
       typedef Dune::SubsamplingVTKWriter< GridViewType > BaseType;
 
@@ -488,10 +488,9 @@ namespace Dune
 
       //! constructor
       SubsamplingVTKWriter( const GridPartType &gridPart,
-                            const int level,
+                            Dune::RefinementIntervals intervals,
                             bool coerceToSimplex = false )
-      : BaseType( static_cast< GridViewType > ( gridPart ),
-                  level, coerceToSimplex )
+        : BaseType( static_cast< GridViewType >( gridPart ), intervals, coerceToSimplex )
       {}
     };
 
@@ -502,7 +501,7 @@ namespace Dune
 
     template< class GridPart >
     class VTKIO< GridPart, false >
-    : public VTKIOBase< GridPart, false >
+      : public VTKIOBase< GridPart, false >
     {
       typedef VTKIO< GridPart > ThisType;
       typedef VTKIOBase< GridPart, false > BaseType;
@@ -528,7 +527,7 @@ namespace Dune
 
     template< class GridPart >
     class VTKIO< GridPart, true >
-    : public VTKIOBase< GridPart , true >
+      : public VTKIOBase< GridPart , true >
     {
       typedef VTKIO< GridPart, true > ThisType;
       typedef VTKIOBase< GridPart, true > BaseType;
@@ -538,8 +537,12 @@ namespace Dune
     public:
       typedef typename BaseType::GridPartType GridPartType;
 
+      explicit VTKIO ( const GridPartType &gridPart, Dune::RefinementIntervals intervals, bool coerceToSimplex, const ParameterReader &parameter = Parameter::container() )
+        : BaseType( gridPart, new VTKWriterType( gridPart, intervals, coerceToSimplex ), parameter )
+      {}
+
       explicit VTKIO ( const GridPartType &gridPart, unsigned int level, bool coerceToSimplex, const ParameterReader &parameter = Parameter::container() )
-        : BaseType( gridPart, new VTKWriterType( gridPart, level, coerceToSimplex ), parameter )
+        : VTKIO( gridPart, Dune::refinementLevels(level), coerceToSimplex, parameter )
       {}
 
       VTKIO ( const GridPartType &gridPart, unsigned int level, const ParameterReader &parameter = Parameter::container() )
@@ -557,7 +560,6 @@ namespace Dune
       VTKIO ( const GridPartType &gridPart, bool coerceToSimplex, const ParameterReader &parameter = Parameter::container() )
         : VTKIO( gridPart, 0, coerceToSimplex, parameter )
       {}
-
     };
 
 

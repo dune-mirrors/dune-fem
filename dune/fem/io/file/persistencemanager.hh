@@ -9,6 +9,8 @@
 #include <type_traits>
 #include <utility>
 
+#include <dune/common/visibility.hh>
+
 #include <dune/fem/io/file/iointerface.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/io/streams/binarystreams.hh>
@@ -326,8 +328,19 @@ namespace Dune
         }
       }
 
+      //! clear all objects registered to PersistenceManager
+      void reset()
+      {
+        closeStreams();   // flush and close streams
+        objects_.clear(); // clear all objects
+        path_.clear();
+        lineNo_ = 0;
+        closed_ =  false;
+        invalid_ = false;
+      }
+
     public:
-      static PersistenceManager &instance ()
+      DUNE_EXPORT static PersistenceManager &instance ()
       {
         static PersistenceManager theInstance;
         return theInstance;

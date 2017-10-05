@@ -117,6 +117,7 @@ namespace Dune
       {
         w.clear();
         umv( matrix_, u.dofVector().array(), w.dofVector().array() );
+        w.communicate();
       }
 
       void communicate () {}

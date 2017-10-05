@@ -52,6 +52,11 @@ namespace Dune
         return Parameter::getValue< int >( keyPrefix_ + "preconditioning.iterations", 5 );
       }
 
+      virtual bool fastILUStorage () const
+      {
+        return Parameter::getValue< bool >( keyPrefix_ + "preconditioning.fastilustorage", true );
+      }
+
       virtual double relaxation () const
       {
         return Parameter::getValue< double >( keyPrefix_ + "preconditioning.relaxation", 1.1 );
@@ -60,14 +65,14 @@ namespace Dune
       virtual int method () const
       {
         static const std::string preConTable[]
-          = { "none", "ssor", "sor", "ilu-0", "ilu-n", "gauss-seidel", "jacobi", "amg-ilu-0", "amg-ilu-n", "amg-jacobi" };
+          = { "none", "ssor", "sor", "ilu-0", "ilu-n", "gauss-seidel", "jacobi", "amg-ilu-0", "amg-ilu-n", "amg-jacobi", "ildl", "ilu", "amg-ilu" };
         return Parameter::getEnum(  keyPrefix_ + "preconditioning.method", preConTable, 0 );
       }
 
       virtual std::string preconditionName() const
       {
         static const std::string preConTable[]
-          = { "None", "SSOR", "SOR", "ILU-0", "ILU-n", "Gauss-Seidel", "Jacobi", "AMG-ILU-0", "AMG-ILU-n", "AMG-Jacobi" };
+          = { "None", "SSOR", "SOR", "ILU-0", "ILU-n", "Gauss-Seidel", "Jacobi", "AMG-ILU-0", "AMG-ILU-n", "AMG-Jacobi", "ILDL", "ILU", "AMG-ILU" };
         const int precond = method();
         std::stringstream tmp;
         tmp << preConTable[precond];
@@ -84,21 +89,6 @@ namespace Dune
     };
 
 #if HAVE_DUNE_ISTL
-    template<class M, class X, class Y, int l=1>
-    class FemSeqILU0 : public SeqILU0<M,X,Y,l>
-    {
-      typedef SeqILU0<M,X,Y,l>  BaseType ;
-    public:
-      typedef typename X::field_type field_type;
-      FemSeqILU0 (const M& A, int iter, field_type w)
-        : BaseType( A, w )
-      {}
-      FemSeqILU0 (const M& A, field_type w)
-        : BaseType( A, w )
-      {}
-    };
-
-
     template< class MatrixObject, class X, class Y >
     class FemDiagonalPreconditioner : public Preconditioner<X,Y>
     {
@@ -475,13 +465,16 @@ namespace Dune
       enum ISTLPreConder_Id { none  = 0 ,      // no preconditioner
                               ssor  = 1 ,      // SSOR preconditioner
                               sor   = 2 ,      // SOR preconditioner
-                              ilu_0 = 3 ,      // ILU-0 preconditioner
-                              ilu_n = 4 ,      // ILU-n preconditioner
+                              ilu_0 = 3 ,      // ILU-0 preconditioner (deprecated)
+                              ilu_n = 4 ,      // ILU-n preconditioner (deprecated)
                               gauss_seidel= 5, // Gauss-Seidel preconditioner
                               jacobi = 6,      // Jacobi preconditioner
-                              amg_ilu_0 = 7,   // AMG with ILU-0 smoother
-                              amg_ilu_n = 8,   // AMG with ILU-n smoother
-                              amg_jacobi = 9   // AMG with Jacobi smoother
+                              amg_ilu_0 = 7,   // AMG with ILU-0 smoother (deprecated)
+                              amg_ilu_n = 8,   // AMG with ILU-n smoother (deprecated)
+                              amg_jacobi = 9,  // AMG with Jacobi smoother
+                              ildl = 10,       // ILDL from istl
+                              ilu = 11,        // ILU preconditioner
+                              amg_ilu = 12     // AMG with ILU preconditioner
       };
 
       typedef Space       DomainSpaceType ;
@@ -531,7 +524,20 @@ namespace Dune
       {
         ISTLPreConder_Id preconditioning = (ISTLPreConder_Id)param.method() ;
         const double relaxFactor         = param.relaxation();
-        const size_t numIterations       = param.numIterations();
+        const size_t numIterations       =
+          (preconditioning == ilu_0 || preconditioning == amg_ilu_0) ? 0 : param.numIterations();
+
+        if( preconditioning == ilu_0 || preconditioning == ilu_n )
+        {
+          preconditioning = ilu;
+          std::cerr << "WARNING: istl.preconditioning.method: ilu_0 and ilu_n is deprecated, use 'ilu' instead" << std::endl;
+        }
+
+        if( preconditioning == amg_ilu_0 || preconditioning == amg_ilu_n )
+        {
+          preconditioning = amg_ilu;
+          std::cerr << "WARNING: istl.preconditioning.method: amg_ilu_0 and amg_ilu_n is deprecated, use 'amg_ilu' instead" << std::endl;
+        }
 
         const DomainSpaceType& domainSpace = matrixObj.domainSpace();
         const RangeSpaceType&  rangeSpace  = matrixObj.rangeSpace();
@@ -572,27 +578,16 @@ namespace Dune
                                       (PreconditionerType*)nullptr,
                                       matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
         }
-        // ILU-0
-        else if(preconditioning == ilu_0)
+        // ILU
+        else if(preconditioning == ilu)
         {
           if( procs > 1 )
-            DUNE_THROW(InvalidStateException,"ISTL::SeqILU0 not working in parallel computations");
+            DUNE_THROW(InvalidStateException,"ISTL::SeqILU not working in parallel computations");
 
-          typedef FemSeqILU0<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-          return createMatrixAdapter( (MatrixAdapterType *)nullptr,
-                                      (PreconditionerType*)nullptr,
-                                      matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
-        }
-        // ILU-n
-        else if(preconditioning == ilu_n)
-        {
-          if( procs > 1 )
-            DUNE_THROW(InvalidStateException,"ISTL::SeqILUn not working in parallel computations");
-
-          typedef SeqILUn<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-          return createMatrixAdapter( (MatrixAdapterType *)nullptr,
-                                      (PreconditionerType*)nullptr,
-                                      matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
+          typedef SeqILU<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+          typedef typename MatrixAdapterType :: PreconditionAdapterType PreConType;
+          PreConType preconAdapter( matrix, new PreconditionerType( matrix, numIterations, relaxFactor, param.fastILUStorage() ) );
+          return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         // Gauss-Seidel
         else if(preconditioning == gauss_seidel)
@@ -628,18 +623,10 @@ namespace Dune
           }
         }
         // AMG ILU-0
-        else if(preconditioning == amg_ilu_0)
+        else if(preconditioning == amg_ilu)
         {
-          // use original SeqILU0 because of some AMG traits classes.
-          typedef SeqILU0<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
-          return createAMGMatrixAdapter( (MatrixAdapterType *)nullptr,
-                                         (PreconditionerType*)nullptr,
-                                         matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
-        }
-        // AMG ILU-n
-        else if(preconditioning == amg_ilu_n)
-        {
-          typedef SeqILUn<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
+          // use original SeqILU because of some AMG traits classes.
+          typedef SeqILU<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType> PreconditionerType;
           return createAMGMatrixAdapter( (MatrixAdapterType *)nullptr,
                                          (PreconditionerType*)nullptr,
                                          matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
@@ -651,6 +638,15 @@ namespace Dune
           return createAMGMatrixAdapter( (MatrixAdapterType *)nullptr,
                                          (PreconditionerType*)nullptr,
                                          matrix, domainSpace, rangeSpace, relaxFactor, numIterations );
+        }
+        // ILDL
+        else if(preconditioning == ildl)
+        {
+          if( procs > 1 )
+            DUNE_THROW(InvalidStateException,"ISTL::SeqILDL not working in parallel computations");
+
+          PreConType preconAdapter( matrix, new SeqILDL<ISTLMatrixType,RowBlockVectorType,ColumnBlockVectorType>( matrix , relaxFactor ) );
+          return new MatrixAdapterType( matrix, domainSpace, rangeSpace, preconAdapter );
         }
         else
         {

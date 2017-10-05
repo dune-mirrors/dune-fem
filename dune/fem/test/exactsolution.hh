@@ -1,10 +1,11 @@
 #ifndef DUNE_FEM_TEST_EXACTSOLUTION_HH
 #define DUNE_FEM_TEST_EXACTSOLUTION_HH
 
-#include <complex>
-// dune-fem includes
-#include <dune/fem/function/common/function.hh>
+#include <cmath>
 
+#include <complex>
+
+#include <dune/fem/function/common/function.hh>
 
 namespace Dune
 {
@@ -17,7 +18,7 @@ namespace Dune
 
     template< class FunctionSpaceImp >
     class ExactSolution
-    : public Fem::Function< FunctionSpaceImp, ExactSolution< FunctionSpaceImp > >
+      : public Fem::Function< FunctionSpaceImp, ExactSolution< FunctionSpaceImp > >
     {
       typedef ExactSolution< FunctionSpaceImp > ThisType;
       typedef Fem::Function< FunctionSpaceImp, ThisType > BaseType;
@@ -36,13 +37,29 @@ namespace Dune
     public:
       void evaluate( const DomainType &x, RangeType &phi ) const
       {
+        using std::sin; using std::pow;
         phi = 1;
-        for(int r = 0; r < RangeType :: dimension; ++r )
-          for( int i = 0; i < DomainType :: dimension; ++i )
-            phi[ r ] += pow(sin( M_PI * x[ i ] ),double(r+1));
-#if defined USE_COMPLEX
-        phi *= std::complex<double>( 1 , -2. );
-#endif
+        for( int r = 0; r < RangeType::dimension; ++r )
+        {
+          for( int i = 0; i < DomainType::dimension; ++i )
+          {
+            const double s = sin( M_PI * x[ i ] );
+            phi[ r ] += pow( s, double( r+1 ) );
+          }
+        }
+        phi *= factor( RangeFieldType( 1 ) );
+      }
+
+      template< class T >
+      static std::complex< T > factor ( std::complex< T > alpha ) noexcept
+      {
+        return alpha * std::complex< T >( 1, -2 );
+      }
+
+      template< class T >
+      static T factor ( T alpha ) noexcept
+      {
+        return alpha;
       }
 
       void evaluate( const DomainType &x, RangeFieldType t, RangeType &phi ) const
@@ -52,15 +69,18 @@ namespace Dune
 
       void jacobian( const DomainType &x, JacobianRangeType &Dphi ) const
       {
-        Dphi = 1;
-        for (int r = 0; r < RangeType :: dimension; ++r)
-          for( int i = 0; i < DomainType :: dimension; ++i )
-            for( int j = 0; j < DomainType :: dimension; ++j )
-              Dphi[ r ][ j ] += double(r+1)*pow(sin( M_PI * x[ i ] ),double(r))*
-                ((i != j) ? 0 : M_PI * cos( M_PI * x[ i ] ));
-#if defined USE_COMPLEX
-        Dphi *= std::complex<double>( 1 , -2. );
-#endif
+        using std::cos; using std::sin; using std::pow;
+        Dphi = 0;
+        for( int r = 0; r < RangeType::dimension; ++r )
+        {
+          for( int i = 0; i < DomainType::dimension; ++i )
+          {
+            const double s = sin( M_PI * x[ i ] );
+            const double c = cos( M_PI * x[ i ] );
+            Dphi[ r ][ i ] += M_PI * double( r+1 ) * pow( s, double( r ) ) * c;
+          }
+        }
+        Dphi *= factor( RangeFieldType( 1 ) );
       }
 
       void jacobian( const DomainType &x, RangeFieldType t, JacobianRangeType &Dphi ) const
@@ -70,19 +90,19 @@ namespace Dune
 
       void hessian( const DomainType &x, HessianRangeType &H ) const
       {
-        for (int r = 0; r < RangeType :: dimension; ++r)
+        using std::cos; using std::sin; using std::pow;
+
+        for( int r = 0; r < RangeType::dimension; ++r )
         {
-          H[ r ] = RangeFieldType ( 0 );
-          for( int i = 0; i < DomainType :: dimension; ++i )
+          H[ r ] = RangeFieldType( 0 );
+          for( int i = 0; i < DomainType::dimension; ++i )
           {
-            const double s =  sin( M_PI * x[ i ] );
-            H[ r ][ i ][ i ] = M_PI * M_PI * (r+1) *
-              ( r * std::pow( s, double( r-1 ) )  - ( r+1 ) * std::pow( s, double( r+1 ) ) );
-           }
+            const double s = sin( M_PI * x[ i ] );
+            const double c = cos( M_PI * x[ i ] );
+            H[ r ][ i ][ i ] = M_PI * M_PI * double( r+1 ) * (r * std::pow( s, double( r-1 ) ) * c*c - std::pow( s, double( r+1 ) ));
+          }
         }
-#if defined USE_COMPLEX
-        H *= std::complex<double>( 1 , -2. );
-#endif
+        H *= factor( RangeFieldType( 1 ) );
       }
 
       void hessian( const DomainType &x, RangeFieldType t, HessianRangeType &H ) const

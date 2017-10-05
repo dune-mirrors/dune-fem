@@ -94,16 +94,6 @@ namespace Dune
     };
 
 
-    // Specialization for SGrid
-    // ------------------------------
-
-    template< int dim, int dimworld, class ctype >
-    struct TwistUtility< SGrid<dim, dimworld, ctype> >
-      : public TwistFreeTwistUtility< SGrid<dim, dimworld, ctype> >
-    {
-    };
-
-
     // Specialization for OneDGrid
     // ------------------------------
 

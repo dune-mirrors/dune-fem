@@ -24,8 +24,7 @@ namespace Dune
 
     class HasLocalFunction;
     class IsDiscreteFunction;
-
-
+    struct BindableFunction;
 
     // BasicConstLocalFunction
     // -----------------------
@@ -279,7 +278,7 @@ namespace Dune
       };
 
       template< class GF >
-      struct ConstLocalFunction< GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, GF >::value && !std::is_base_of< Fem::IsDiscreteFunction, GF >::value > >
+      struct ConstLocalFunction< GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, GF >::value && !std::is_base_of< Fem::IsDiscreteFunction, GF >::value  && std::is_class< typename GF::LocalFunctionType >::value > >
       {
         struct Type
           : public GF::LocalFunctionType
@@ -338,6 +337,99 @@ namespace Dune
         };
       };
 
+      template< class GF >
+      struct ConstLocalFunction< GF, std::enable_if_t< std::is_base_of< Fem::BindableFunction, GF >::value && !std::is_base_of< Fem::IsDiscreteFunction, GF >::value > >
+      {
+        struct Type
+        {
+          typedef GF GridFunctionType;
+          typedef typename GF::EntityType EntityType;
+          typedef typename GF::RangeFieldType RangeFieldType;
+          typedef typename GF::RangeType RangeType;
+          typedef typename GF::JacobianRangeType JacobianRangeType;
+          typedef typename GF::HessianRangeType HessianRangeType;
+
+          explicit Type ( const GridFunctionType &gridFunction )
+            :  gridFunction_( gridFunction )
+          {}
+
+          template <class Point>
+          void evaluate(const Point &x, RangeType &ret) const
+          {
+            gridFunction().evaluate(x,ret);
+          }
+          template <class Point>
+          void jacobian(const Point &x, JacobianRangeType &ret) const
+          {
+            gridFunction().jacobian(x,ret);
+          }
+          template <class Point>
+          void hessian(const Point &x, HessianRangeType &ret) const
+          {
+            gridFunction().hessian(x,ret);
+          }
+          unsigned int order() const { return gridFunction().order(); }
+
+          //! evaluate local function
+          template< class Point >
+          RangeType evaluate ( const Point &p ) const
+          {
+            RangeType val;
+            evaluate( p, val );
+            return val;
+          }
+
+          //! jacobian of local function
+          template< class Point >
+          JacobianRangeType jacobian ( const Point &p ) const
+          {
+            JacobianRangeType jac;
+            jacobian( p, jac );
+            return jac;
+          }
+
+          //! hessian of local function
+          template< class Point >
+          HessianRangeType hessian ( const Point &p ) const
+          {
+            HessianRangeType h;
+            hessian( p, h );
+            return h;
+          }
+
+          template< class Quadrature, class ... Vectors >
+          void evaluateQuadrature ( const Quadrature &quad, Vectors & ... values ) const
+          {
+            static_assert( sizeof...( Vectors ) > 0, "evaluateQuadrature needs to be called with at least one vector." );
+            std::ignore = std::make_tuple( ( evaluateQuadrature( quad, values ), 1 ) ... );
+          }
+
+          template< class Quadrature, class Vector >
+          auto evaluateQuadrature ( const Quadrature &quad, Vector &v ) const
+          -> std::enable_if_t< std::is_same< std::decay_t< decltype(v[ 0 ]) >, RangeType >::value >
+          {
+            for( const auto qp : quad )
+              v[ qp.index() ] = evaluate( qp );
+          }
+
+          template< class Quadrature, class Vector >
+          auto evaluateQuadrature ( const Quadrature &quad, Vector &v ) const
+          -> std::enable_if_t< std::is_same< std::decay_t< decltype(v[ 0 ]) >, JacobianRangeType >::value >
+          {
+            for( const auto qp : quad )
+              v[ qp.index() ] = jacobian( qp );
+          }
+
+          void bind ( const EntityType &entity ) { gridFunction().bind( entity ); }
+          void unbind () { gridFunction().unbind(); }
+
+          const GridFunctionType &gridFunction () const { return gridFunction_; }
+
+        private:
+          GridFunctionType &gridFunction () { return gridFunction_; }
+          GridFunctionType gridFunction_;
+        };
+      };
     } // namespace Impl
 
 

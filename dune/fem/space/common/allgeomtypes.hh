@@ -40,8 +40,12 @@ namespace Dune
       //! coordinate type
       typedef typename GridType::ctype ctype;
 
+    protected:
+      typedef Dune::ReferenceElements< ctype, dim > ReferenceElementsType;
+
+    public:
       //! type of reference element
-      typedef Dune::ReferenceElement< ctype, dim > ReferenceElementType;
+      typedef std::decay_t< decltype( ReferenceElementsType::general( std::declval< const GeometryType & >() ) ) > ReferenceElementType;
 
       //! type of domain vector
       typedef FieldVector<ctype, dim> DomainType;
@@ -59,7 +63,7 @@ namespace Dune
       }
 
       //! return local bary center for geometry of type type
-      const DomainType &localCenter ( const GeometryType &type ) const
+      const DomainType localCenter ( const GeometryType &type ) const
       {
         return type.isNone() ? isNoneLocalCenter_ : referenceElement( type ).position( 0, 0 );
       }
@@ -71,10 +75,11 @@ namespace Dune
       }
 
       //! return reference element for type
-      static const ReferenceElementType &referenceElement ( const GeometryType &type )
+      static auto referenceElement ( const GeometryType &type )
+        -> decltype( ReferenceElementsType::general( type ) )
       {
         assert( ! type.isNone() );
-        return Dune::ReferenceElements< ctype, dim >::general( type );
+        return ReferenceElementsType::general( type );
       }
 
     protected:

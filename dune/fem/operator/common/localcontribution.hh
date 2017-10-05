@@ -11,6 +11,7 @@
 
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/function/common/localcontribution.hh>
+#include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/storage/rowreferencevector.hh>
 #include <dune/fem/storage/subvector.hh>
 

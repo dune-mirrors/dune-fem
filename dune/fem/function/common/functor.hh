@@ -112,7 +112,7 @@ namespace Dune
       {}
 
       template < class GlobalKey >
-      void operator () ( std::size_t local, const GlobalKey& globalKey )
+      void operator () ( std::size_t local, const GlobalKey& globalKey ) const
       {
         Hybrid::forEach( BlockIndices(), [ this, local, &globalKey ] ( auto &&i ) {
             functor_( local*blockSize + i, dofVector_[ globalKey ][ i ] );

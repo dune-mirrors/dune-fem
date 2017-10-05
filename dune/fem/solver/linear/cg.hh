@@ -2,6 +2,9 @@
 #define DUNE_FEM_CG_HH
 
 #include <type_traits>
+#include <vector>
+
+#include <dune/common/ftraits.hh>
 
 namespace Dune
 {

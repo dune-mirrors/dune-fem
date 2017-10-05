@@ -94,13 +94,13 @@ namespace Dune
           {}
 
           template< class GlobalKey >
-          void operator() ( int localDof, const GlobalKey &globalKey )
+          void operator() ( int localDof, const GlobalKey &globalKey ) const
           {
             functor_( localDof + localOffset_, CombinedIndex< GlobalKey, int, i >( globalKey, globalOffset_ ) );
           }
 
           template< class GlobalKey >
-          void operator() ( const GlobalKey &globalKey )
+          void operator() ( const GlobalKey &globalKey ) const
           {
             functor_( CombinedIndex< GlobalKey, int, i >( globalKey, globalOffset_ ) );
           }
@@ -329,11 +329,11 @@ namespace Dune
             {
               if( comp >= 0 )
                 return;
-              const int localBlock = block - std::get< i >( mapperTuple_ ).numBlocks();
+              const int localBlock = block - std::get< i >( this->mapperTuple_ ).numBlocks();
               if( localBlock >= 0 )
               {
                 comp = i;
-                nHoles = std::get< i >( mapperTuple_ ).numberOfHoles( localBlock );
+                nHoles = std::get< i >( this->mapperTuple_ ).numberOfHoles( localBlock );
               }
             } );
           return nHoles;
@@ -348,11 +348,11 @@ namespace Dune
             {
               if( comp >= 0 )
                 return;
-              const int localBlock = block - std::get< i >( mapperTuple_ ).numBlocks();
+              const int localBlock = block - std::get< i >( this->mapperTuple_ ).numBlocks();
               if( localBlock >= 0 )
               {
                 comp = i;
-                oIndex = std::get< i >( mapperTuple_ ).oldIndex( hole, localBlock );
+                oIndex = std::get< i >( this->mapperTuple_ ).oldIndex( hole, localBlock );
               }
             } );
           assert( comp >= 0 );
@@ -368,11 +368,11 @@ namespace Dune
             {
               if( comp >= 0 )
                 return;
-              const int localBlock = block - std::get< i >( mapperTuple_ ).numBlocks();
+              const int localBlock = block - std::get< i >( this->mapperTuple_ ).numBlocks();
               if( localBlock >= 0 )
               {
                 comp = i;
-                nIndex = std::get< i >( mapperTuple_ ).newIndex( hole, localBlock );
+                nIndex = std::get< i >( this->mapperTuple_ ).newIndex( hole, localBlock );
               }
             } );
           assert( comp > 0 );
@@ -388,11 +388,11 @@ namespace Dune
             {
               if( comp >= 0 )
                 return;
-              const int localBlock = block - std::get< i >( mapperTuple_ ).numBlocks();
+              const int localBlock = block - std::get< i >( this->mapperTuple_ ).numBlocks();
               if( localBlock >= 0 )
               {
                 comp = i;
-                oOffset = std::get< i >( mapperTuple_ ).oldOffSet( localBlock );
+                oOffset = std::get< i >( this->mapperTuple_ ).oldOffSet( localBlock );
               }
             } );
           assert( comp >= 0 );
@@ -408,11 +408,11 @@ namespace Dune
             {
               if( comp >= 0 )
                 return;
-              const int localBlock = block - std::get< i >( mapperTuple_ ).numBlocks();
+              const int localBlock = block - std::get< i >( this->mapperTuple_ ).numBlocks();
               if( localBlock >= 0 )
               {
                 comp = i;
-                offset = std::get< i >( mapperTuple_ ).offSet( localBlock );
+                offset = std::get< i >( this->mapperTuple_ ).offSet( localBlock );
               }
             } );
           assert( comp >= 0 );

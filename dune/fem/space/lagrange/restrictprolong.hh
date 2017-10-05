@@ -59,8 +59,7 @@ namespace Dune
       {
         static const int dimRange = LFSon::dimRange;
 
-        const Dune::ReferenceElement< ctype, dimension > &refSon
-          = Dune::ReferenceElements< ctype, dimension >::general( lfSon.entity().type() );
+        const auto &refSon = Dune::ReferenceElements< ctype, dimension >::general( lfSon.entity().type() );
 
         const LagrangePointSetType &pointSet = lagrangePointSet( lfFather.entity() );
 

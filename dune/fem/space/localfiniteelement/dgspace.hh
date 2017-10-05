@@ -64,9 +64,9 @@ namespace Dune
 
     private:
       template< class LFEM >
-      TransformedBasisFunctionSet< EntityType, ShapeFunctionSet, typename LFEM::TransformationType > basisFunctionSet ( const LFEM & );
+      static TransformedBasisFunctionSet< EntityType, ShapeFunctionSetType, typename LFEM::TransformationType > basisFunctionSet ( const LFEM & );
 
-      DefaultBasisFunctionSet< EntityType, ShapeFunctionSet > basisFunctionSet ( ... );
+      static DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType > basisFunctionSet ( ... );
 
     public:
       typedef decltype( basisFunctionSet( std::declval< const LFEMapType & >() ) ) BasisFunctionSetType;
@@ -118,12 +118,12 @@ namespace Dune
 
       typedef typename Traits::LFEMapType LFEMapType;
 
+      typedef typename LFEMapType::KeyType KeyType;
+
     private:
       typedef typename LocalFiniteElementType::Traits::LocalBasisType LocalBasisType;
       typedef typename LocalFiniteElementType::Traits::LocalInterpolationType LocalInterpolationType;
       typedef typename LocalFiniteElementType::Traits::LocalCoefficientsType LocalCoefficientsType;
-
-      typedef typename LFEMapType::KeyType KeyType;
 
       typedef typename Traits::LocalFunctionsShapeFunctionSetType LocalFunctionsShapeFunctionSetType;
 
@@ -228,7 +228,7 @@ namespace Dune
       bool multipleGeometryTypes () const { return true; }
 
       /** @copydoc Dune::Fem::DiscreteFunctionSpaceInterface::blockMapper */
-      BlockMapperType &blockMapper () const { return blockMapper_; }
+      BlockMapperType &blockMapper () const { assert( blockMapper_ ); return *blockMapper_; }
 
       /**
        * \brief return local interpolation

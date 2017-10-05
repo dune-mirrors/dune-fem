@@ -12,6 +12,7 @@
 
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/space/localfiniteelement/space.hh>
+#include <dune/fem/space/localfiniteelement/dgspace.hh>
 
 namespace Dune
 {
@@ -97,6 +98,10 @@ namespace Dune
               template< class, unsigned int > class PointSet = EquidistantPointSet,
               template< class > class Storage = CachingStorage >
     using LagrangeSpace = LocalFiniteElementSpace< LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet >, FunctionSpace, Storage >;
+    template< class FunctionSpace, class GridPart,
+              template< class, unsigned int > class PointSet = EquidistantPointSet,
+              template< class > class Storage = CachingStorage >
+    using DGLagrangeSpace = DiscontinuousLocalFiniteElementSpace< LagrangeFiniteElementMap< FunctionSpace, GridPart, PointSet >, FunctionSpace, Storage >;
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS
 
   } // namespace Fem

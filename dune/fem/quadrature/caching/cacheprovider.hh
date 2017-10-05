@@ -6,7 +6,7 @@
 #include <type_traits>
 
 #include <dune/common/math.hh>
-#include <dune/common/version.hh>
+#include <dune/common/visibility.hh>
 
 #include <dune/fem/gridpart/common/capabilities.hh>
 
@@ -209,7 +209,7 @@ namespace Dune
       createMapper ( const QuadratureType &quad, GeometryType elementGeometry, std::integral_constant< bool, false > );
 
     private:
-      static MapperContainerType mappers_;
+      DUNE_EXPORT static MapperContainerType mappers_;
     };
 
   } // namespace Fem

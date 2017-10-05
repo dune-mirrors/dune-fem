@@ -61,10 +61,15 @@ namespace Dune
       : localCoefficients_( localCoefficients )
       {}
 
-      template< class Field, int dim >
-      Dune::Fem::DofMapperCode operator() ( const Dune::ReferenceElement< Field, dim > &refElement ) const
+      template< class RefElement,
+                std::enable_if_t< std::is_same< std::decay_t< decltype( std::declval< const RefElement & >().size( 0 ) ) >, int >::value, int > = 0,
+                std::enable_if_t< std::is_same< std::decay_t< decltype( std::declval< const RefElement & >().type( 0, 0 ) ) >, GeometryType >::value, int > = 0 >
+      Dune::Fem::DofMapperCode operator() ( const RefElement &refElement ) const
       {
-        return Dune::Fem::compile( refElement, localCoefficients() );
+        if ( refElement.type( 0, 0 ).isCube() )
+          return Dune::Fem::compile( refElement, localCoefficients() );
+        else
+          return Dune::Fem::DofMapperCode();
       }
 
       const LocalCoefficientsType &localCoefficients () const

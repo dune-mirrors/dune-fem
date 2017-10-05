@@ -1,5 +1,5 @@
-#ifndef DUNE_FEM_NONBLOCKMAPPER_HH
-#define DUNE_FEM_NONBLOCKMAPPER_HH
+#ifndef DUNE_FEM_DYNAMICNONBLOCKMAPPER_HH
+#define DUNE_FEM_DYNAMICNONBLOCKMAPPER_HH
 
 #include <vector>
 
@@ -30,7 +30,7 @@ namespace Dune
       template< class BlockMapper >
       struct Traits
       {
-        typedef NonBlockMapper< BlockMapper > DofMapperType;
+        typedef DynamicNonBlockMapper< BlockMapper > DofMapperType;
 
         typedef BlockMapper BlockMapperType;
         typedef typename BlockMapper::ElementType ElementType;
@@ -100,10 +100,35 @@ namespace Dune
           blockMapper_.mapEach( element, BlockFunctor< Functor >( blockSize(), f ) );
         }
 
+        void map ( const ElementType &element, std::vector< GlobalKeyType > &indices ) const
+        {
+          indices.resize( numDofs( element ) );
+          mapEach( element, [ &indices ] ( int local, GlobalKeyType global ) { indices[ local ] = global; } );
+        }
+
+        void onSubEntity ( const ElementType &element, int i, int c, std::vector< bool > &indices ) const
+        {
+          const SizeType numDofs = blockMapper_.numDofs( element );
+          blockMapper_.onSubEntity( element, i, c, indices );
+          indices.resize( blockSize() * numDofs );
+          for( SizeType i = numDofs; i > 0; )
+          {
+            for( int j = 0; j < blockSize(); ++j )
+              indices[ i*blockSize() + j ] = indices[ i ];
+          }
+        }
+
         template< class Entity, class Functor >
         void mapEachEntityDof ( const Entity &entity, Functor f ) const
         {
           blockMapper_.mapEachEntityDof( entity, BlockFunctor< Functor >( blockSize(), f ) );
+        }
+
+        template< class Entity >
+        void mapEntityDofs ( const Entity &entity, std::vector< GlobalKeyType > &indices ) const
+        {
+          indices.resize( numEntityDofs( entity ) );
+          mapEachEntityDof( entity, [ &indices ] ( int local, GlobalKeyType global ) { indices[ local ] = global; } );
         }
 
         int maxNumDofs () const { return blockSize() * blockMapper_.maxNumDofs(); }
@@ -211,10 +236,10 @@ namespace Dune
       // Implementation
       // --------------
 
-      template< class BlockMapper, int blockSize, bool adaptive = Capabilities::isAdaptiveDofMapper< BlockMapper >::v >
+      template< class BlockMapper, bool adaptive = Capabilities::isAdaptiveDofMapper< BlockMapper >::v >
       class Implementation
       {
-        typedef __NonBlockMapper::Traits< BlockMapper, blockSize > Traits;
+        typedef __DynamicNonBlockMapper::Traits< BlockMapper > Traits;
 
       public:
         typedef typename std::conditional< adaptive, AdaptiveDofMapper< Traits >, DofMapper< Traits > >::type Type;
@@ -250,7 +275,7 @@ namespace Dune
       : public DynamicNonBlockMapper< BlockMapper >
     {
       typedef DynamicNonBlockMapper< DynamicNonBlockMapper< BlockMapper > > ThisType;
-      typedef NonBlockMapper< BlockMapper > BaseType;
+      typedef DynamicNonBlockMapper< BlockMapper > BaseType;
 
     public:
       explicit DynamicNonBlockMapper ( const DynamicNonBlockMapper< BlockMapper > &blockMapper, int blockSize )
@@ -263,12 +288,12 @@ namespace Dune
     // DynamicNonBlockMapper for NonBlockMapper
     // ----------------------------------------
 
-    template< class BlockMapper, int innerBlockSize, int outerBlockSize >
+    template< class BlockMapper, int innerBlockSize >
     class DynamicNonBlockMapper< NonBlockMapper< BlockMapper, innerBlockSize > >
       : public DynamicNonBlockMapper< BlockMapper >
     {
       typedef DynamicNonBlockMapper< NonBlockMapper< BlockMapper, innerBlockSize > > ThisType;
-      typedef NonBlockMapper< BlockMapper > BaseType;
+      typedef DynamicNonBlockMapper< BlockMapper > BaseType;
 
     public:
       explicit DynamicNonBlockMapper ( const NonBlockMapper< BlockMapper, innerBlockSize > &blockMapper, int blockSize )
@@ -285,7 +310,7 @@ namespace Dune
     class NonBlockMapper< DynamicNonBlockMapper< BlockMapper >, outerBlockSize >
       : public DynamicNonBlockMapper< BlockMapper >
     {
-      typedef DynamicNonBlockMapper< NonBlockMapper< BlockMapper >, outerBlockSize > ThisType;
+      typedef NonBlockMapper< DynamicNonBlockMapper< BlockMapper >, outerBlockSize > ThisType;
       typedef DynamicNonBlockMapper< BlockMapper > BaseType;
 
     public:
@@ -319,4 +344,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #ifndef DUNE_FEM_NONBLOCKMAPPER_HH
+#endif // #ifndef DUNE_FEM_DYNAMICNONBLOCKMAPPER_HH

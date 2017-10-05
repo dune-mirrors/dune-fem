@@ -51,53 +51,35 @@ include(AddSIONlibFlags)
 find_package(PAPI)
 include(AddPAPIFlags)
 
-# download PETSc cmake files
-set(PETSC_CMAKE_MODULES "${CMAKE_CURRENT_LIST_DIR}/petsc/")
-if(NOT EXISTS "${PETSC_CMAKE_MODULES}")
-  message (STATUS "Downloading cmake-modules from Jed Brown into ${PETSC_CMAKE_MODULES}")
-  execute_process(COMMAND git clone https://github.com/jedbrown/cmake-modules.git ${PETSC_CMAKE_MODULES}
-                  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+set(PETSC_DIR $ENV{PETSC_DIR})
+set(PETSC_ARCH $ENV{PETSC_ARCH})
+find_package(PETSc)
+if(PETSC_FOUND)
+  # set HAVE_PETSC for config.h
+  set(HAVE_PETSC ${PETSC_FOUND})
+  # log result
+  file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
+    "Determining location of PETSC succeded:\n"
+    "Include directory: ${PETSC_INCLUDES}\n"
+    "Library directory: ${PETSC_LIBRARIES}\n\n")
+  set(PETSC_DUNE_COMPILE_FLAGS "-DENABLE_PETSC=1 -I${PETSC_INCLUDES}"
+    CACHE STRING "Compile Flags used by DUNE when compiling with PETSc programs")
+  set(PETSC_DUNE_LIBRARIES ${PETSC_LIBRARIES}
+    CACHE STRING "Libraries used by DUNE when linking PETSc programs")
+  foreach(dir ${PETSC_INCLUDES})
+    set_property(GLOBAL APPEND PROPERTY ALL_PKG_FLAGS "-I${dir}")
+  endforeach()
+  set_property(GLOBAL APPEND PROPERTY ALL_PKG_LIBS "${PETSC_LIBRARIES}")
+  # register includes and libs to global flags
+  dune_register_package_flags(COMPILE_DEFINITIONS "ENABLE_PETSC=1"
+                              INCLUDE_DIRS ${PETSC_INCLUDES}
+                              LIBRARIES ${PETSC_LIBRARIES})
 else()
-  message (STATUS "Updating cmake-modules from Jed Brown into ${PETSC_CMAKE_MODULES}")
-  execute_process(COMMAND git pull
-                  WORKING_DIRECTORY ${PETSC_CMAKE_MODULES})
-endif ()
-
-# check for PETSc if Jed Browns cmake-modules have been successfully downloaded
-# needs to set environment variables PETSC_DIR and optional PETSC_ARCH
-if(EXISTS "${PETSC_CMAKE_MODULES}")
-  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PETSC_CMAKE_MODULES}")
-  set(PETSC_DIR  $ENV{PETSC_DIR})
-  set(PETSC_ARCH $ENV{PETSC_ARCH})
-  find_package(PETSc)
-  if(PETSC_FOUND)
-    # set HAVE_PETSC for config.h
-    set(HAVE_PETSC ${PETSC_FOUND})
-    # log result
-    file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
-      "Determining location of PETSC succeded:\n"
-      "Include directory: ${PETSC_INCLUDES}\n"
-      "Library directory: ${PETSC_LIBRARIES}\n\n")
-    set(PETSC_DUNE_COMPILE_FLAGS "-DENABLE_PETSC=1 -I${PETSC_INCLUDES}"
-      CACHE STRING "Compile Flags used by DUNE when compiling with PETSc programs")
-    set(PETSC_DUNE_LIBRARIES ${PETSC_LIBRARIES}
-      CACHE STRING "Libraries used by DUNE when linking PETSc programs")
-    foreach(dir ${PETSC_INCLUDES})
-      set_property(GLOBAL APPEND PROPERTY ALL_PKG_FLAGS "-I${dir}")
-    endforeach()
-    set_property(GLOBAL APPEND PROPERTY ALL_PKG_LIBS "${PETSC_LIBRARIES}")
-    # register includes and libs to global flags
-    dune_register_package_flags(COMPILE_DEFINITIONS "ENABLE_PETSC=1"
-                                INCLUDE_DIRS ${PETSC_INCLUDES}
-                                LIBRARIES ${PETSC_LIBRARIES})
-
-  else()
-    # log errornous result
-    file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
-      "Determing location of PETSc failed:\n"
-      "Include directory: ${PETSC_INCLUDES}\n"
-      "Library directory: ${PETSC_LIBRARIES}\n\n")
-  endif()
+  # log errornous result
+  file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
+    "Determing location of PETSc failed:\n"
+    "Include directory: ${PETSC_INCLUDES}\n"
+    "Library directory: ${PETSC_LIBRARIES}\n\n")
 endif()
 
 # check for Eigen3

@@ -14,6 +14,7 @@
 //- dune-common includes
 #include <dune/common/math.hh>
 #include <dune/common/timer.hh>
+#include <dune/common/visibility.hh>
 
 //- dune-grid includes
 #include <dune/grid/common/grid.hh>
@@ -189,7 +190,7 @@ namespace Dune
 #endif
 
         // create an unique tag for the communication
-        static int getMessageTag()
+        DUNE_EXPORT static int getMessageTag()
         {
           enum { initial = 665 };
           static int tagCounter = initial ;

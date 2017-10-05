@@ -288,8 +288,8 @@ namespace Dune
       template < class QuadratureType, class ... Vectors >
       void evaluateQuadrature( const QuadratureType& quadrature, Vectors& ... values ) const
       {
-        std::ignore = std::make_tuple(
-            ( evaluateQuadratureImp( quadrature, values, values[ 0 ] ), 1 ) ... );
+        static_assert( sizeof...( Vectors ) > 0, "evaluateQuadrature needs to be called with at least one vector." );
+        std::ignore = std::make_tuple( ( evaluateQuadratureImp( quadrature, values ), 1 ) ... );
       }
 
       int order () const { return order_; }
@@ -308,14 +308,16 @@ namespace Dune
 
     protected:
       template < class QuadratureType, class VectorType >
-      void evaluateQuadratureImp( const QuadratureType& quadrature, VectorType& values, const RangeType& ) const
+      auto evaluateQuadratureImp( const QuadratureType& quadrature, VectorType& values ) const
+      -> std::enable_if_t< std::is_same< std::decay_t< decltype(values[ 0 ] ) >, RangeType >::value >
       {
         for( auto qp : quadrature )
           evaluate( qp, values[ qp.index() ] );
       }
 
       template < class QuadratureType, class VectorType >
-      void evaluateQuadratureImp( const QuadratureType& quadrature, VectorType& values, const JacobianRangeType& ) const
+      auto evaluateQuadratureImp( const QuadratureType& quadrature, VectorType& values ) const
+      -> std::enable_if_t< std::is_same< std::decay_t< decltype(values[ 0 ] ) >, JacobianRangeType >::value >
       {
         for( auto qp : quadrature )
           jacobian( qp, values[ qp.index() ] );

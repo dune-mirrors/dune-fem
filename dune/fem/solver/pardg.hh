@@ -12,6 +12,8 @@
 #include <cstring>
 #include <iostream>
 
+#include <dune/common/visibility.hh>
+
 #include <dune/fem/io/parameter.hh>
 
 #define USE_PARDG_ODE_SOLVER

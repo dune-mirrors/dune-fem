@@ -28,8 +28,20 @@ dune_add_test( NAME test_df SOURCES test-df.cc
 COMPILE_DEFINITIONS "${GRIDTYPE}" "GRIDDIM=${GRIDDIM}"
 LINK_LIBRARIES dunefem )
 
+dune_add_test( NAME test_lfa SOURCES test-lfa.cc
+COMPILE_DEFINITIONS "${GRIDTYPE}" "GRIDDIM=${GRIDDIM}"
+LINK_LIBRARIES dunefem )
+
 dune_add_test(
   SOURCES test-hierarchicalfunction.cc
   COMPILE_DEFINITIONS "${GRIDTYPE}" "GRIDDIM=${GRIDDIM}"
   LINK_LIBRARIES dunefem
+)
+
+dune_add_test(
+  SOURCES test-hierarchicalfunction-comm.cc
+  COMPILE_DEFINITIONS "${GRIDTYPE}" "GRIDDIM=${GRIDDIM}"
+  LINK_LIBRARIES dunefem
+  MPI_RANKS 2 3 4
+  TIMEOUT 300
 )

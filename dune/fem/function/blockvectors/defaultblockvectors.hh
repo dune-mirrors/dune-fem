@@ -445,7 +445,7 @@ namespace Dune {
     protected:
       mutable EmbeddedIterator it_;
 #ifndef NDEBUG
-      const   EmbeddedIterator end_;
+      EmbeddedIterator end_;
 #endif
       int index_;
     public:

@@ -59,8 +59,10 @@ namespace Dune
       class DofMapper
       {
         typedef DofMapper< GridPart, LocalDofMapping > ThisType;
+
       public:
         typedef std::size_t SizeType;
+
       protected:
         struct SubEntityInfo
         {
@@ -75,8 +77,8 @@ namespace Dune
 
         enum CodimType { CodimEmpty, CodimFixedSize, CodimVariableSize };
         static const int dimension = GridPart::dimension;
-        typedef Dune::ReferenceElement< typename GridPart::ctype, dimension > RefElementType;
         typedef Dune::ReferenceElements< typename GridPart::ctype, dimension > RefElementsType;
+        typedef typename RefElementsType::ReferenceElement RefElementType;
 
         struct BuildFunctor;
 
@@ -103,6 +105,7 @@ namespace Dune
           std::vector< std::vector< bool > > active_;
           int size_;
         };
+
         template< class Functor >
         struct MapFunctor;
 
@@ -304,7 +307,7 @@ namespace Dune
         const typename RefElementsType::Iterator end = RefElementsType::end();
         for( typename RefElementsType::Iterator it = RefElementsType::begin(); it != end; ++it )
         {
-          const RefElementType &refElement = *it;
+          const RefElementType refElement = *it;
 
           for( int codim = 0; codim <= dimension; ++codim )
           {

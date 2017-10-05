@@ -58,6 +58,8 @@ namespace Dune
         return 0;
       }
 
+      virtual bool fastILUStorage () const { return false; }
+
       virtual std::string preconditionName() const
       {
         return "None";
