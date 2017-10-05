@@ -38,10 +38,33 @@ namespace Dune
         checkUpdate();
         interpolate( gf, values_, constrain_, mask_ );
       }
+      /**Unconditionally install the constrained DoF-values in @a df
+       *
+       * @param[in] df The DiscreteFunction to be modified.
+       */
       template <class DiscreteFunction>
-      void operator()(DiscreteFunction &df)
+      void constrain(DiscreteFunction &df)
       {
         (*this)(values_,df);
+      }
+      /**Unconditionally install zeroes into the masked DoFs. Purpose:
+       *utiliy method in order to manipulate addtional contributions
+       *to the RHS befor AXPY and the like.
+       *
+       * @param[in] df The DiscreteFunction to be modified.
+       */
+      template <class DiscreteFunction>
+      void zeroConstrain(DiscreteFunction &to)
+      {
+        checkUpdate();
+
+        auto maskIt = mask_.dbegin();
+        for ( auto&& dof : dofs(to) )
+        {
+          if ( (*maskIt) > 0)
+            dof = 0;
+          ++maskIt;
+        }
       }
       template <class LinearOperator>
       void applyToOperator(LinearOperator &lo) // could use operator() with some SFINAE
@@ -65,7 +88,6 @@ namespace Dune
 
         auto fromIt = from.dbegin();
         auto maskIt = mask_.dbegin();
-        int idx = 0;
         for ( auto&& dof : dofs(to) )
         {
           if ( (*maskIt) > 0)
@@ -73,7 +95,6 @@ namespace Dune
           assert( maskIt != mask_.dend() && fromIt != from.dend() );
           ++maskIt;
           ++fromIt;
-          ++idx;
         }
       }
       void clear()
