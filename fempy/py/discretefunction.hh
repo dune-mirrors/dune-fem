@@ -83,18 +83,18 @@ namespace Dune
                 sizeof(FieldType),                      /* Size of one scalar */
                 pybind11::format_descriptor<FieldType>::format(), /* Python struct-style format descriptor */
                 1,                                      /* Number of dimensions */
-                { instance.size() },                    /* Buffer dimensions */
+                { instance.array().size() },            /* Buffer dimensions */
                 { sizeof(FieldType) }                   /* Strides (in bytes) for each index */
             );
           }); // ????  pybind11::keep_alive<0,1>() );
         cls.def( "__getitem__", [] ( const DofVector &self, std::size_t index ) -> FieldType {
-            if( index < self.size() )
+            if( index < self.array().size() )
               return self.array().data()[index];
             else
               throw pybind11::index_error();
           });
         cls.def( "__setitem__", [] ( DofVector &self, std::size_t index, FieldType value ) {
-            if( index < self.size() )
+            if( index < self.array().size() )
               return self.array().data()[index] = value;
             else
               throw pybind11::index_error();
@@ -153,8 +153,8 @@ namespace Dune
         if( !pybind11::already_registered< DofVector >() )
         {
           auto clsDof = pybind11::class_< DofVector >( module, "DofVector", pybind11::buffer_protocol() );
-          clsDof.def_property_readonly( "size", [] ( DofVector &self ) { return self.size(); } );
-          clsDof.def( "__len__", [] ( const DofVector &self ) { return self.size(); } );
+          clsDof.def_property_readonly( "size", [] ( DofVector &self ) { return self.array().size(); } );
+          clsDof.def( "__len__", [] ( const DofVector &self ) { return self.array().size(); } );
           clsDof.def( "assign", [] ( DofVector &instance, const DofVector &other ) { instance = other; } );
           registerDofVectorBuffer< DofVector >( clsDof, 0 );
         }
