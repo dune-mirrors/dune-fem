@@ -53,7 +53,7 @@ namespace Dune
           if( n == 0 )
             return;
 
-          assert( n == baseMapper_.numEntityDofs( entity ) );
+          assert( n == static_cast< std::size_t >( baseMapper_.numEntityDofs( entity ) ) );
           baseMapper_.mapEachEntityDof( entity, [ this, &buffer ] ( int, auto index ) {
               assert( slaveDofs_.isSlave( index ) );
               buffer.read( mapping_[ index ] );
