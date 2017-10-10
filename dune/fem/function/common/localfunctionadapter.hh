@@ -448,6 +448,8 @@ namespace Dune
       //! type of the traits class
       typedef LocalFunctionAdapterTraits< LocalFunctionImplType > Traits;
 
+      typedef typename Traits::FunctionSpaceType FunctionSpaceType;
+
       //! domain type
       typedef typename Traits::DomainFieldType DomainFieldType;
       //! range type
