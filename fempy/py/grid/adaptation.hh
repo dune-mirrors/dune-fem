@@ -67,7 +67,7 @@ namespace Dune
     // ----------------------
 
     template< class Grid, class... options >
-    inline static void registerGridAdaptation ( pybind11::module module, pybind11::class_< GridAdaptation< Grid >, options... > &cls )
+    inline static void registerGridAdaptation ( pybind11::module module, pybind11::class_< GridAdaptation< Grid >, options... > cls )
     {
       detail::clsVirtualizedRestrictProlong< Grid >( cls );
 

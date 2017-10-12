@@ -20,10 +20,10 @@ namespace Dune
       // registerSpaceConstructor
       // -------------------------
       template< class Space, class... options >
-      void registerSpaceConstructor ( pybind11::class_< Space, options... > &cls, std::false_type )
+      void registerSpaceConstructor ( pybind11::class_< Space, options... > cls, std::false_type )
       {}
       template< class Space, class... options >
-      void registerSpaceConstructor ( pybind11::class_< Space, options... > &cls, std::true_type )
+      void registerSpaceConstructor ( pybind11::class_< Space, options... > cls, std::true_type )
       {
         typedef typename Space::GridPartType GridPart;
         typedef typename GridPart::GridViewType GridView;
@@ -32,7 +32,7 @@ namespace Dune
           }, pybind11::keep_alive< 1, 2 >() );
       }
       template< class Space, class... options >
-      void registerSpaceConstructor ( pybind11::class_< Space, options... > &cls )
+      void registerSpaceConstructor ( pybind11::class_< Space, options... > cls )
       {
         typedef typename Space::GridPartType GridPart;
         registerSpaceConstructor( cls, std::is_constructible< Space, GridPart& >() );
@@ -42,7 +42,7 @@ namespace Dune
       // -------------
 
       template< class Space, class Cls >
-      void registerSpace ( pybind11::module module, Cls &cls )
+      void registerSpace ( pybind11::module module, Cls cls )
       {
         typedef typename Space::FunctionSpaceType::RangeFieldType RangeFieldType;
         if( !std::is_same< RangeFieldType, double >::value )
@@ -96,7 +96,7 @@ namespace Dune
     // -------------
 
     template< class Space, class... options >
-    void registerSpace ( pybind11::module module, pybind11::class_<Space,options...> &cls )
+    void registerSpace ( pybind11::module module, pybind11::class_<Space,options...> cls )
     {
       detail::registerSpace<Space>(module,cls);
     }

@@ -62,7 +62,7 @@ namespace Dune
       // -------------------------
 
       template< class Scheme, class... options, std::enable_if_t< std::is_constructible< Scheme, const typename Scheme::DiscreteFunctionSpaceType &, const typename Scheme::ModelType & >::value, int > = 0 >
-      inline static void registerSchemeConstructor ( pybind11::class_< Scheme, options... > &cls, PriorityTag< 1 > )
+      inline static void registerSchemeConstructor ( pybind11::class_< Scheme, options... > cls, PriorityTag< 1 > )
       {
         typedef typename Scheme::DiscreteFunctionSpaceType Space;
         typedef typename Scheme::ModelType ModelType;
@@ -78,11 +78,11 @@ namespace Dune
       }
 
       template< class Scheme, class... options >
-      inline static void registerSchemeConstructor ( pybind11::class_< Scheme, options... > &cls, PriorityTag< 0 > )
+      inline static void registerSchemeConstructor ( pybind11::class_< Scheme, options... > cls, PriorityTag< 0 > )
       {}
 
       template< class Scheme, class... options >
-      inline static void registerSchemeConstructor ( pybind11::class_< Scheme, options... > &cls )
+      inline static void registerSchemeConstructor ( pybind11::class_< Scheme, options... > cls )
       {
         registerSchemeConstructor( cls, PriorityTag< 42 >() );
       }
@@ -96,7 +96,7 @@ namespace Dune
 #if HAVE_DUNE_ISTL
       template< class Scheme, class... options >
       inline static std::enable_if_t< IsISTLLinearOperator< typename Scheme::LinearOperatorType >::value >
-      registerSchemeAssemble ( pybind11::class_< Scheme, options... > &cls, PriorityTag< 2 > )
+      registerSchemeAssemble ( pybind11::class_< Scheme, options... > cls, PriorityTag< 2 > )
       {
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
         typedef typename DiscreteFunction::RangeType RangeType;
@@ -118,7 +118,7 @@ namespace Dune
 #endif // #if HAVE_DUNE_ISTL
 
       template< class Scheme, class... options >
-      inline static auto registerSchemeAssemble ( pybind11::class_< Scheme, options... > &cls, PriorityTag< 1 > )
+      inline static auto registerSchemeAssemble ( pybind11::class_< Scheme, options... > cls, PriorityTag< 1 > )
         -> decltype( std::declval< typename Scheme::LinearOperatorType >().systemMatrix().matrix().data(), void() )
       {
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
@@ -136,17 +136,17 @@ namespace Dune
       }
 
       template< class Scheme, class... options >
-      inline static void registerSchemeAssemble ( pybind11::class_< Scheme, options... > &cls, PriorityTag< 0 > )
+      inline static void registerSchemeAssemble ( pybind11::class_< Scheme, options... > cls, PriorityTag< 0 > )
       {}
 
       template< class Scheme, class... options >
-      inline static void registerSchemeAssemble ( pybind11::class_< Scheme, options... > &cls )
+      inline static void registerSchemeAssemble ( pybind11::class_< Scheme, options... > cls )
       {
         registerSchemeAssemble( cls, PriorityTag< 42 >() );
       }
 
       template <class Scheme, class Cls>
-      inline static auto registerSchemeGeneralCall( Cls &cls, int )
+      inline static auto registerSchemeGeneralCall( Cls cls, int )
       -> decltype(std::declval<typename Scheme::DifferentiableOperatorType>().apply(
             std::declval<const VirtualizedGridFunction<typename Scheme::GridPartType,typename Scheme::DiscreteFunctionSpaceType::RangeType>&>(),
             std::declval<typename Scheme::DiscreteFunctionType&>() ),
@@ -161,7 +161,7 @@ namespace Dune
                 DiscreteFunction &dest) { scheme(arg,dest); });
       }
       template< class Scheme, class Cls >
-      inline static auto registerSchemeGeneralCall( Cls &cls, long )
+      inline static auto registerSchemeGeneralCall( Cls cls, long )
       {}
 
 
@@ -192,7 +192,7 @@ namespace Dune
       // --------------
 
       template< class Scheme, class Cls >
-      inline static void registerScheme ( pybind11::module module, Cls &cls)
+      inline static void registerScheme ( pybind11::module module, Cls cls )
       {
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
 
@@ -230,7 +230,7 @@ namespace Dune
     } // namespace detail
 
     template< class Scheme, class... options >
-    inline static void registerScheme ( pybind11::module module, pybind11::class_<Scheme, options...> &cls )
+    inline static void registerScheme ( pybind11::module module, pybind11::class_<Scheme, options...> cls )
     {
       detail::registerScheme<Scheme>(module, cls);
     }

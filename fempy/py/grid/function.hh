@@ -82,7 +82,7 @@ namespace Dune
       auto registerPyLocalGridFunction ( pybind11::handle scope, const std::string &name, std::integral_constant< int, dimRange > );
 
       template< class GridFunction, class Cls >
-      inline static void registerGridFunction ( pybind11::handle scope, Cls &cls)
+      inline static void registerGridFunction ( pybind11::handle scope, Cls cls )
       {
         using pybind11::operator""_a;
 

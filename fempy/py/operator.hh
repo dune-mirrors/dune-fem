@@ -32,14 +32,14 @@ namespace Dune
       // ---------------------------
 
       template< class Operator, class... options, decltype( std::declval< const Operator & >()( std::declval< const GeneralGridFunction< typename Operator::DomainFunctionType > & >(), std::declval< typename Operator::RangeFunctionType & >() ), 0 ) = 0 >
-      inline static void registerGeneralOperatorCall ( pybind11::class_< Operator, options... > &cls, PriorityTag< 1 > )
+      inline static void registerGeneralOperatorCall ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
         cls.def( "__call__", [] ( Operator &op, const GeneralGridFunction< typename Operator::DomainFunctionType > &u, typename Operator::RangeFunctionType &w ) { op( u, w ); }, "u"_a, "w"_a );
       }
 
       template< class Operator, class... options >
-      inline static void registerOperatorGeneralCall ( pybind11::class_< Operator, options... > &cls, PriorityTag< 0 > )
+      inline static void registerOperatorGeneralCall ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
       {}
 
 
@@ -48,14 +48,14 @@ namespace Dune
       // -------------------------------
 
       template< class Operator, class... options, decltype( std::declval< const Operator & >().jacobian( std::declval< const GeneralGridFunction< typename Operator::DomainFunctionType > & >(), std::declval< typename Operator::JacobianOperatorType >() ), 0 ) = 0 >
-      inline static void registerGeneralOperatorJacobian ( pybind11::class_< Operator, options... > &cls, PriorityTag< 1 > )
+      inline static void registerGeneralOperatorJacobian ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
         cls.def( "jacobian", [] ( Operator &op, const GeneralGridFunction< typename Operator::DomainFunctionType > &u, typename Operator::JacobianRangeType &jOp ) { op.jacobian( u, jOp ); }, "u"_a, "jOp"_a );
       }
 
       template< class Operator, class... options >
-      inline static void registerGeneralOperatorJacobian ( pybind11::class_< Operator, options... > &cls, PriorityTag< 0 > )
+      inline static void registerGeneralOperatorJacobian ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
       {}
 
 
@@ -64,14 +64,14 @@ namespace Dune
       // ------------------------
 
       template< class Operator, class... options, decltype( std::declval< const Operator & >().jacobian( std::declval< const typename Operator::DomainFunctionType & >(), std::declval< typename Operator::JacobianOperatorType >() ), 0 ) = 0 >
-      inline static void registerOperatorJacobian ( pybind11::class_< Operator, options... > &cls, PriorityTag< 1 > )
+      inline static void registerOperatorJacobian ( pybind11::class_< Operator, options... > cls, PriorityTag< 1 > )
       {
         using pybind11::operator""_a;
         cls.def( "jacobian", [] ( Operator &op, const typename Operator::DomainFunctionType &u, typename Operator::JacobianRangeType &jOp ) { op.jacobian( u, jOp ); }, "u"_a, "jOp"_a );
       }
 
       template< class Operator, class... options >
-      inline static void registerOperatorJacobian ( pybind11::class_< Operator, options... > &cls, PriorityTag< 0 > )
+      inline static void registerOperatorJacobian ( pybind11::class_< Operator, options... > cls, PriorityTag< 0 > )
       {}
 
 
@@ -80,7 +80,7 @@ namespace Dune
       // ----------------
 
       template< class Operator, class Cls >
-      inline static void registerOperator ( pybind11::module module, Cls &cls )
+      inline static void registerOperator ( pybind11::module module, Cls cls )
       {
         typedef typename Operator::DomainFunctionType DomainFunction;
         typedef typename Operator::RangeFunctionType RangeFunction;
@@ -102,7 +102,7 @@ namespace Dune
     // ----------------
 
     template< class Operator, class... options >
-    inline static void registerOperator ( pybind11::module module, pybind11::class_< Operator, options... > &cls )
+    inline static void registerOperator ( pybind11::module module, pybind11::class_< Operator, options... > cls )
     {
       detail::registerOperator< Operator >( module, cls );
     }
