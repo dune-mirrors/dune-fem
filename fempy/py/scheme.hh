@@ -61,8 +61,9 @@ namespace Dune
       // registerSchemeConstructor
       // -------------------------
 
-      template< class Scheme, class... options, std::enable_if_t< std::is_constructible< Scheme, const typename Scheme::DiscreteFunctionSpaceType &, const typename Scheme::ModelType & >::value, int > = 0 >
-      inline static void registerSchemeConstructor ( pybind11::class_< Scheme, options... > cls, PriorityTag< 1 > )
+      template< class Scheme, class... options >
+      inline static auto registerSchemeConstructor ( pybind11::class_< Scheme, options... > cls, PriorityTag< 1 > )
+        -> std::enable_if_t< std::is_constructible< Scheme, const typename Scheme::DiscreteFunctionSpaceType &, const typename Scheme::ModelType & >::value >
       {
         typedef typename Scheme::DiscreteFunctionSpaceType Space;
         typedef typename Scheme::ModelType ModelType;
@@ -145,15 +146,19 @@ namespace Dune
         registerSchemeAssemble( cls, PriorityTag< 42 >() );
       }
 
+
+
+      // registerSchemeGeneralCall
+      // -------------------------
+
       template< class Scheme, class... options >
-      inline static auto registerSchemeGeneralCall ( pybind11::class_< Scheme, options... > cls, int )
-      -> decltype(std::declval<typename Scheme::DifferentiableOperatorType>().apply(
-            std::declval<const VirtualizedGridFunction<typename Scheme::GridPartType,typename Scheme::DiscreteFunctionSpaceType::RangeType>&>(),
-            std::declval<typename Scheme::DiscreteFunctionType&>() ),
-          void())
+      inline static auto registerSchemeGeneralCall ( pybind11::class_< Scheme, options... > cls, PriorityTag< 1 > )
+        -> void_t< decltype( std::declval< Scheme & >()(
+                     std::declval< const VirtualizedGridFunction< typename Scheme::GridPartType, typename Scheme::DiscreteFunctionSpaceType::RangeType > & >(),
+                     std::declval< typename Scheme::DiscreteFunctionType & >()
+                   ) ) >
       {
-        typedef typename Scheme::DiscreteFunctionSpaceType Space;
-        typedef typename Space::RangeType RangeType;
+        typedef typename Scheme::DiscreteFunctionSpaceType::RangeType RangeType;
         typedef typename Scheme::GridPartType GridPart;
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
         cls.def("__call__", [] (Scheme &scheme,
@@ -162,8 +167,14 @@ namespace Dune
       }
 
       template< class Scheme, class... options >
-      inline static auto registerSchemeGeneralCall ( pybind11::class_< Scheme, options... > cls, long )
+      inline static void registerSchemeGeneralCall ( pybind11::class_< Scheme, options... > cls, PriorityTag< 0 > )
       {}
+
+      template< class Scheme, class... options >
+      inline static void registerSchemeGeneralCall ( pybind11::class_< Scheme, options... > cls )
+      {
+        registerSchemeGeneralCall( cls, PriorityTag< 42 >() );
+      }
 
 
 
@@ -211,7 +222,7 @@ namespace Dune
                 };
             });
         cls.def("__call__", [] (Scheme &scheme, const DiscreteFunction &arg, DiscreteFunction &dest) { scheme(arg,dest); });
-        registerSchemeGeneralCall<Scheme>(cls,0);
+        registerSchemeGeneralCall( cls );
 
         cls.def_property_readonly( "dimRange", [](Scheme&) -> int { return DiscreteFunction::FunctionSpaceType::dimRange; } );
         cls.def_property_readonly( "space", [] ( pybind11::object self ) { return detail::getSpace( self.cast< const Scheme & >(), self ); } );
