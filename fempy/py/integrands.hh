@@ -2,7 +2,6 @@
 #define DUNE_FEMPY_PY_INTEGRANDS_HH
 
 #include <functional>
-#include <stdexcept>
 #include <tuple>
 #include <utility>
 
@@ -90,7 +89,7 @@ namespace Dune
 
           cls.def( "setConstant", [ dispatch ] ( Integrands &self, int k, pybind11::handle o ) {
               if( k >= dispatch.size() )
-                throw std::range_error( "No such constant: " + std::to_string( k ) + " (must be in [0, " + std::to_string( dispatch.size() ) + "[)" );
+                throw pybind11::index_error( "No such constant: " + std::to_string( k ) + " (must be in [0, " + std::to_string( dispatch.size() ) + "[)" );
               dispatch[ k ]( self, o );
             } );
         }
@@ -100,7 +99,7 @@ namespace Dune
         setConstant ( pybind11::class_< Integrands, options... > cls, PriorityTag< 1 > )
         {
           cls.def( "setConstant", [] ( Integrands &, int k, pybind11::handle ) {
-              throw std::range_error( "No such constant: " + std::to_string( k ) + " (there are no constants)" );
+              throw pybind11::index_error( "No such constant: " + std::to_string( k ) + " (there are no constants)" );
             } );
         }
 
@@ -130,7 +129,7 @@ namespace Dune
 
           cls.def( "setCoefficient", [ dispatch ] ( Integrands &self, int k, pybind11::handle coefficient ) {
               if( k >= dispatch.size() )
-                throw std::range_error( "No such coefficient: " + std::to_string( k ) + " (must be in [0, " + std::to_string( dispatch.size() ) + "[)" );
+                throw pybind11::index_error( "No such coefficient: " + std::to_string( k ) + " (must be in [0, " + std::to_string( dispatch.size() ) + "[)" );
               dispatch[ k ]( self, coefficient );
             }, "k"_a, "coefficient"_a );
         }
@@ -142,7 +141,7 @@ namespace Dune
           using pybind11::operator""_a;
 
           cls.def( "setCoefficient", [] ( Integrands &, int k, pybind11::handle ) {
-              throw std::range_error( "No such coefficient: " + std::to_string( k ) + " (there are no constants)" );
+              throw pybind11::index_error( "No such coefficient: " + std::to_string( k ) + " (there are no constants)" );
             }, "k"_a, "coefficient"_a );
         }
 
