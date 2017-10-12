@@ -10,7 +10,6 @@
 #include <dune/corepy/istl/bcrsmatrix.hh>
 #endif // #if HAVE_DUNE_ISTL
 
-#include <dune/fem/operator/linear/istloperator.hh>
 #include <dune/fem/misc/l2norm.hh>
 
 #include <dune/fempy/function/virtualizedgridfunction.hh>
@@ -31,22 +30,6 @@ namespace Dune
 
     namespace detail
     {
-
-      // IsISTLLinearOperator
-      // --------------------
-
-#if HAVE_DUNE_ISTL
-      template< class T >
-      struct IsISTLLinearOperator
-        : public std::false_type
-      {};
-
-      template< class DomainFunction, class RangeFunction >
-      struct IsISTLLinearOperator< Fem::ISTLLinearOperator< DomainFunction, RangeFunction > >
-        : public std::true_type
-      {};
-#endif // #if HAVE_DUNE_ISTL
-
 
 #if HAVE_DUNE_ISTL
       template< class B, class A >
@@ -96,8 +79,8 @@ namespace Dune
       // register assemble method if data method is available (and return value is registered)
 #if HAVE_DUNE_ISTL
       template< class Scheme, class... options >
-      inline static std::enable_if_t< IsISTLLinearOperator< typename Scheme::LinearOperatorType >::value >
-      registerSchemeAssemble ( pybind11::class_< Scheme, options... > cls, PriorityTag< 2 > )
+      inline static auto registerSchemeAssemble ( pybind11::class_< Scheme, options... > cls, PriorityTag< 2 > )
+        -> void_t< decltype( getBCRSMatrix( std::declval< const typename Scheme::LinearOperatorType & >().matrix() ) ) >
       {
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
         typedef typename DiscreteFunction::RangeType RangeType;
@@ -120,7 +103,7 @@ namespace Dune
 
       template< class Scheme, class... options >
       inline static auto registerSchemeAssemble ( pybind11::class_< Scheme, options... > cls, PriorityTag< 1 > )
-        -> decltype( std::declval< typename Scheme::LinearOperatorType >().systemMatrix().matrix().data(), void() )
+        -> void_t< decltype( std::declval< const typename Scheme::LinearOperatorType & >().matrix().data() ) >
       {
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
         typedef typename DiscreteFunction::RangeType RangeType;
@@ -129,10 +112,10 @@ namespace Dune
         using pybind11::operator""_a;
 
         cls.def( "assemble", [] ( Scheme &scheme, const DiscreteFunction &ubar ) {
-            return scheme.assemble( ubar ).systemMatrix().matrix().data();
+            return scheme.assemble( ubar ).matrix().data();
           }, pybind11::return_value_policy::reference_internal, "ubar"_a );
         cls.def( "assemble", [] ( Scheme &scheme, const VirtualizedGridFunction< GridPart, RangeType > &ubar ) {
-            return scheme.assemble( ubar ).systemMatrix().matrix().data();
+            return scheme.assemble( ubar ).matrix().data();
           }, pybind11::return_value_policy::reference_internal, "ubar"_a );
       }
 
