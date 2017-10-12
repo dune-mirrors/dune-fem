@@ -41,8 +41,8 @@ namespace Dune
       // registerSpace
       // -------------
 
-      template< class Space, class Cls >
-      void registerSpace ( pybind11::module module, Cls cls )
+      template< class Space, class... options >
+      void registerSpace ( pybind11::module module, pybind11::class_< Space, options... > cls )
       {
         typedef typename Space::FunctionSpaceType::RangeFieldType RangeFieldType;
         if( !std::is_same< RangeFieldType, double >::value )
@@ -96,9 +96,9 @@ namespace Dune
     // -------------
 
     template< class Space, class... options >
-    void registerSpace ( pybind11::module module, pybind11::class_<Space,options...> cls )
+    void registerSpace ( pybind11::module module, pybind11::class_< Space, options... > cls )
     {
-      detail::registerSpace<Space>(module,cls);
+      detail::registerSpace( module, cls );
     }
 
   } // namespace FemPy

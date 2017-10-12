@@ -68,12 +68,12 @@ namespace Dune
       // registerDofVectorBuffer
       // ----------------
 
-      template < class DofVector, class Cls,
+      template < class DofVector, class... options,
                  typename std::enable_if <
                    std::is_convertible < decltype( std::declval<DofVector>().array().data()[0] ),
                                          typename DofVector::FieldType >::value,
                  int >::type tmp=0 >
-      inline static auto registerDofVectorBuffer( Cls cls, int )
+      inline static auto registerDofVectorBuffer( pybind11::class_< DofVector, options... > cls, int )
       -> decltype(std::declval<DofVector>().array().data(),void())
       {
         typedef typename DofVector::FieldType FieldType;
@@ -101,15 +101,17 @@ namespace Dune
           });
       }
 
-      template< class DF, class Cls >
-      inline static void registerDofVectorBuffer ( Cls cls, long )
+      template< class DofVector, class... options >
+      inline static void registerDofVectorBuffer ( pybind11::class_< DofVector, options... > cls, long )
       {}
+
+
 
       // registerDiscreteFunction
       // ------------------------
 
-      template< class DF, class Cls >
-      inline static void registerDiscreteFunction ( pybind11::module module, Cls cls )
+      template< class DF, class... options >
+      inline static void registerDiscreteFunction ( pybind11::module module, pybind11::class_< DF, options... > cls )
       {
         typedef typename DF::DiscreteFunctionSpaceType Space;
         typedef typename DF::GridPartType GridPart;
@@ -153,16 +155,18 @@ namespace Dune
         if( !pybind11::already_registered< DofVector >() )
         {
           auto clsDof = pybind11::class_< DofVector >( module, "DofVector", pybind11::buffer_protocol() );
+
           clsDof.def_property_readonly( "size", [] ( DofVector &self ) { return self.array().size(); } );
           clsDof.def( "__len__", [] ( const DofVector &self ) { return self.array().size(); } );
           clsDof.def( "assign", [] ( DofVector &instance, const DofVector &other ) { instance = other; } );
-          registerDofVectorBuffer< DofVector >( clsDof, 0 );
+
+          registerDofVectorBuffer( clsDof, 0 );
         }
 
         cls.def_property_readonly( "dofVector", [] ( DF &instance ) -> DofVector&{ return instance.dofVector(); }
             ); // ,pybind11::return_value_policy::reference_internal );
 
-        // registerDFBuffer< DF >( cls, 0 );
+        // registerDofVectorBuffer( cls, 0 );
       }
 
     } // namespace detail
@@ -175,7 +179,7 @@ namespace Dune
     template< class DF, class... options >
     inline static void registerDiscreteFunction ( pybind11::module module, pybind11::class_< DF, options... > cls )
     {
-      detail::registerDiscreteFunction< DF >( module, cls );
+      detail::registerDiscreteFunction( module, cls );
     }
 
     // special registry for numpy df since they require a constructor
@@ -187,7 +191,7 @@ namespace Dune
       using pybind11::operator""_a;
 
       typedef Dune::Fem::VectorDiscreteFunction<Space,Dune::FemPy::NumPyVector<Field>> DF;
-      detail::registerDiscreteFunction<DF>(module,cls);
+      detail::registerDiscreteFunction( module, cls );
       typedef typename DF::VectorType VectorType;
       cls.def( "__init__", [] ( DF &self, Space &space, std::string name, pybind11::buffer dof ) {
           VectorType *vec = new VectorType( std::move( dof ) );

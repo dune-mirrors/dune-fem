@@ -145,8 +145,8 @@ namespace Dune
         registerSchemeAssemble( cls, PriorityTag< 42 >() );
       }
 
-      template <class Scheme, class Cls>
-      inline static auto registerSchemeGeneralCall( Cls cls, int )
+      template< class Scheme, class... options >
+      inline static auto registerSchemeGeneralCall ( pybind11::class_< Scheme, options... > cls, int )
       -> decltype(std::declval<typename Scheme::DifferentiableOperatorType>().apply(
             std::declval<const VirtualizedGridFunction<typename Scheme::GridPartType,typename Scheme::DiscreteFunctionSpaceType::RangeType>&>(),
             std::declval<typename Scheme::DiscreteFunctionType&>() ),
@@ -160,8 +160,9 @@ namespace Dune
                 const VirtualizedGridFunction<GridPart,RangeType> &arg,
                 DiscreteFunction &dest) { scheme(arg,dest); });
       }
-      template< class Scheme, class Cls >
-      inline static auto registerSchemeGeneralCall( Cls cls, long )
+
+      template< class Scheme, class... options >
+      inline static auto registerSchemeGeneralCall ( pybind11::class_< Scheme, options... > cls, long )
       {}
 
 
@@ -191,8 +192,8 @@ namespace Dune
       // registerScheme
       // --------------
 
-      template< class Scheme, class Cls >
-      inline static void registerScheme ( pybind11::module module, Cls cls )
+      template< class Scheme, class... options >
+      inline static void registerScheme ( pybind11::module module, pybind11::class_< Scheme, options... > cls )
       {
         typedef typename Scheme::DiscreteFunctionType DiscreteFunction;
 
@@ -230,9 +231,9 @@ namespace Dune
     } // namespace detail
 
     template< class Scheme, class... options >
-    inline static void registerScheme ( pybind11::module module, pybind11::class_<Scheme, options...> cls )
+    inline static void registerScheme ( pybind11::module module, pybind11::class_< Scheme, options... > cls )
     {
-      detail::registerScheme<Scheme>(module, cls);
+      detail::registerScheme( module, cls );
     }
 
   } // namespace FemPy

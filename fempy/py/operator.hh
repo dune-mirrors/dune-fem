@@ -79,8 +79,8 @@ namespace Dune
       // registerOperator
       // ----------------
 
-      template< class Operator, class Cls >
-      inline static void registerOperator ( pybind11::module module, Cls cls )
+      template< class Operator, class... options >
+      inline static void registerOperator ( pybind11::module module, pybind11::class_< Operator, options... > cls )
       {
         typedef typename Operator::DomainFunctionType DomainFunction;
         typedef typename Operator::RangeFunctionType RangeFunction;
