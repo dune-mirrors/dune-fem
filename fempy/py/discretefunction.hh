@@ -1,6 +1,12 @@
 #ifndef DUNE_FEMPY_PY_DISCRETEFUNCTION_HH
 #define DUNE_FEMPY_PY_DISCRETEFUNCTION_HH
 
+#include <cstddef>
+
+#include <string>
+#include <type_traits>
+#include <utility>
+
 #include <dune/common/typeutilities.hh>
 
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
@@ -212,5 +218,4 @@ namespace Dune
 
 } // namespace Dune
 
-
-#endif // DUNE_FEMPY_PY_DISCRETEFUNCTION_HH
+#endif // #ifndef DUNE_FEMPY_PY_DISCRETEFUNCTION_HH
