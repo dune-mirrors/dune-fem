@@ -153,6 +153,8 @@ namespace Dune
         typedef typename DF::GridPartType GridPart;
         typedef typename DF::RangeType Value;
 
+        using pybind11::operator""_a;
+
         detail::registerGridFunction< DF >( module, cls );
 
         detail::clsVirtualizedGridFunction< GridPart, Value >( module ).def( "__init__", [] ( VirtualizedGridFunction< GridPart, Value > &self, DF &df ) {
@@ -175,16 +177,16 @@ namespace Dune
           } );
 
         cls.def( "clear", [] ( DF &self ) { self.clear(); } );
-        cls.def( "assign", [] ( DF &self, const DF &other ) { self.assign( other ); } );
+        cls.def( "assign", [] ( DF &self, const DF &other ) { self.assign( other ); }, "other"_a );
 
         typedef VirtualizedGridFunction< GridPart, typename Space::RangeType > GridFunction;
         cls.def( "_interpolate", [] ( DF &self, const GridFunction &gf ) {
             Fem::interpolate( gf, self );
-          } );
+          }, "gridFunction"_a );
         cls.def( "_interpolate", [] ( DF &self, typename Space::RangeType value ) {
             const auto gf = simpleGridFunction( self.space().gridPart(), [ value ] ( typename DF::DomainType ) { return value; }, 0 );
             Fem::interpolate( gf, self );
-          } );
+          }, "value"_a );
 
         typedef typename DF::DofVectorType DofVector;
         if( !pybind11::already_registered< DofVector >() )
@@ -193,7 +195,7 @@ namespace Dune
 
           clsDof.def_property_readonly( "size", [] ( DofVector &self ) { return self.array().size(); } );
           clsDof.def( "__len__", [] ( const DofVector &self ) { return self.array().size(); } );
-          clsDof.def( "assign", [] ( DofVector &self, const DofVector &other ) { self = other; } );
+          clsDof.def( "assign", [] ( DofVector &self, const DofVector &other ) { self = other; }, "other"_a );
 
           registerDofVectorBuffer( clsDof );
         }
