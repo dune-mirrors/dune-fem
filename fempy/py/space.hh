@@ -73,7 +73,7 @@ namespace Dune
         typedef std::decay_t< decltype( std::declval< const T & >().space() ) > Space;
 
         const Space &space = obj.space();
-        pybind11::object pySpace( pybind11::detail::get_object_handle( &space, pybind11::detail::get_type_info( typeid( Space ) ) ), true );
+        auto pySpace = pybind11::reinterpret_borrow< pybind11::object >( pybind11::detail::get_object_handle( &space, pybind11::detail::get_type_info( typeid( Space ) ) ) );
 #if 0
         // disable returning spaces not defined on Python side for now
         // Bug: pybind11 seems to require at least a move constructor to cast a reference to a Python object
