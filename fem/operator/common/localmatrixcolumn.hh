@@ -82,6 +82,8 @@ namespace Dune
 
       const BasisFunctionSetType &basisFunctionSet () const { return localMatrix_.rangeBasisFunctionSet(); }
 
+      auto size() const { return basisFunctionSet().size(); }
+
     private:
       LocalMatrixType &localMatrix_;
       unsigned int col_;
@@ -124,6 +126,8 @@ namespace Dune
       }
 
       const BasisFunctionSetType &basisFunctionSet () const { return localMatrix_.rangeBasisFunctionSet(); }
+
+      auto size() const { return basisFunctionSet().size(); }
 
     private:
       LocalMatrixType &localMatrix_;
