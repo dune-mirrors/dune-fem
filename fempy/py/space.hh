@@ -1,6 +1,9 @@
 #ifndef DUNE_FEMPY_PY_SPACE_HH
 #define DUNE_FEMPY_PY_SPACE_HH
 
+#include <dune/common/hybridutilities.hh>
+#include <dune/corepy/common/dynmatrix.hh>
+#include <dune/corepy/common/dynvector.hh>
 #include <dune/corepy/common/fmatrix.hh>
 #include <dune/corepy/common/fvector.hh>
 
@@ -48,7 +51,13 @@ namespace Dune
         if( !std::is_same< RangeFieldType, double >::value )
         {
           Dune::CorePy::registerFieldVector<RangeFieldType>(module, std::make_integer_sequence<int, 10>());
-          Dune::CorePy::registerFieldMatrix<RangeFieldType>(module, std::make_integer_sequence<int, 5>());
+          Dune::Hybrid::forEach( std::make_integer_sequence< int, 5 >(), [ module ] ( auto rows ) {
+              Dune::Hybrid::forEach( std::make_integer_sequence< int, 5 >(), [ module ] ( auto cols ) {
+                Dune::CorePy::registerFieldMatrix< double, decltype(rows)::value, cols >( module );
+              } );
+            } );
+          Dune::CorePy::registerDynamicVector<RangeFieldType>(module);
+          Dune::CorePy::registerDynamicMatrix<RangeFieldType>(module);
         }
 
         typedef typename Space::GridPartType GridPart;
