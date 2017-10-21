@@ -200,11 +200,11 @@ class EllipticModel:
         coefficients = [('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< ' + SourceWriter.cpp_fields(c['field']) + ', ' + str(c['dimRange']) + ' > >') for c in self._coefficients]
         sourceWriter.emit('')
         # TODO
-        sourceWriter.emit('cls.def( "__init__", [] ( ' + ', '.join([wrapperClass + ' &self'] + ['const ' + c + ' &coefficient' + str(i) for i, c in enumerate(coefficients)]) + ' ) {')
+        sourceWriter.emit('cls.def( pybind11::init( [] ( ' + ', '.join( [] + ['const ' + c + ' &coefficient' + str(i) for i, c in enumerate(coefficients)]) + ' ) {')
         if self.hasCoefficients:
-            sourceWriter.emit('  new (&self) ' + wrapperClass + '( ' + ', '.join('coefficient' + str(i) + '.localFunction()' for i, c in enumerate(coefficients)) + ' );')
+            sourceWriter.emit('  return new  ' + wrapperClass + '( ' + ', '.join('coefficient' + str(i) + '.localFunction()' for i, c in enumerate(coefficients)) + ' );')
         else:
-            sourceWriter.emit('  new (&self) ' + wrapperClass + '();')
+            sourceWriter.emit('  return new  ' + wrapperClass + '();')
         #if self.coefficients:
         #    sourceWriter.emit('  const int size = std::tuple_size<Coefficients>::value;')
         #    sourceWriter.emit('  auto dispatch = defSetCoefficient( std::make_index_sequence<size>() );' )
@@ -216,9 +216,9 @@ class EllipticModel:
         #    sourceWriter.emit('  if ( !std::all_of(coeffSet.begin(),coeffSet.end(),[](bool v){return v;}) )')
         #    sourceWriter.emit('    throw pybind11::key_error("need to set all coefficients during construction");')
         if self.hasCoefficients:
-            sourceWriter.emit('  }, ' + ', '.join('pybind11::keep_alive< 1, ' + str(i) + ' >()' for i, c in enumerate(coefficients, start=2)) + ' );')
+            sourceWriter.emit('  }), ' + ', '.join('pybind11::keep_alive< 1, ' + str(i) + ' >()' for i, c in enumerate(coefficients, start=2)) + ' );')
         else:
-            sourceWriter.emit('  } );')
+            sourceWriter.emit('  } ) );')
 
     def codeCoefficient(self, code, coefficients, constants):
         """find coefficients/constants in code string and do replacements

@@ -607,8 +607,7 @@ def load(grid, integrands, renumbering=None, tempVars=True):
 
     writer.openPythonModule(name)
     writer.emit('auto cls = Dune::FemPy::registerIntegrands< Integrands >( module );')
-    # TODO
-    writer.emit('cls.def( "__init__", [] ( Integrands &self ) { new (&self) Integrands(); } );')
+    writer.emit('cls.def( pybind11::init( [] () { return new Integrands(); } ) );')
     writer.closePythonModule(name)
 
     source = writer.writer.getvalue()
