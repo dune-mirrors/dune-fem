@@ -4,6 +4,8 @@
 #include <string>
 #include <utility>
 
+#include <dune/common/visibility.hh>
+
 #include <dune/fem/function/common/discretefunction.hh>
 #include <dune/fem/space/common/functionspace.hh>
 
@@ -17,7 +19,7 @@ namespace Dune
     // --------------
 
     template< class GridFunction >
-    class PyGridFunction
+    class DUNE_PRIVATE PyGridFunction
       : public Fem::Function< typename GridFunction::FunctionSpaceType, PyGridFunction< GridFunction > >,
         public Fem::HasLocalFunction
     {
@@ -33,7 +35,7 @@ namespace Dune
       typedef typename Base::JacobianRangeType JacobianRangeType;
       typedef typename Base::HessianRangeType HessianRangeType;
 
-      class LocalFunctionType
+      class DUNE_PRIVATE LocalFunctionType
       {
         typedef typename GridFunction::LocalFunctionType Impl;
 
@@ -99,6 +101,7 @@ namespace Dune
         : impl_( &impl ), pyObj_( std::move( pyObj ) )
       {}
 
+     // TODO warning: ‘pybind11::object::object(pybind11::handle, bool)’ is deprecated: Use reinterpret_borrow<object>() or reinterpret_steal<object>() [-Wdeprecated-declarations]
       PyGridFunction ( const GridFunction &impl )
         : impl_( &impl ),
           pyObj_( pybind11::detail::get_object_handle( impl_, pybind11::detail::get_type_info( typeid( GridFunction ) ) ), true )

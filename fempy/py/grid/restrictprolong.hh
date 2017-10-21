@@ -3,6 +3,8 @@
 
 #include <dune/common/visibility.hh>
 
+#include <dune/python/common/typeregistry.hh>
+
 #include <dune/fempy/grid/virtualizedrestrictprolong.hh>
 #include <dune/fempy/pybind11/pybind11.hh>
 
@@ -12,17 +14,6 @@ namespace Dune
   namespace FemPy
   {
 
-    // registerRestrictProlong
-    // -----------------------
-
-    template< class RestrictProlong >
-    inline static pybind11::class_< RestrictProlong > registerRestrictProlong ( pybind11::handle scope, const char *name = "RestrictProlong" )
-    {
-      pybind11::class_< RestrictProlong > cls( scope, name );
-      return cls;
-    }
-
-
     namespace detail
     {
 
@@ -30,11 +21,13 @@ namespace Dune
       // -----------------------------
 
       template< class Grid >
-      DUNE_EXPORT inline pybind11::class_< VirtualizedRestrictProlong< Grid > > clsVirtualizedRestrictProlong ( pybind11::handle scope )
+      inline pybind11::class_< VirtualizedRestrictProlong< Grid > > clsVirtualizedRestrictProlong ( pybind11::handle scope )
       {
         typedef VirtualizedRestrictProlong< Grid > RestrictProlong;
-        static pybind11::class_< RestrictProlong > cls = registerRestrictProlong< RestrictProlong >( scope );
-        return cls;
+        auto cls = Python::insertClass< RestrictProlong >(scope, "RestrictProlong",
+            Python::GenerateTypeName("VirtualizedRestrictProlong",MetaType<Grid>()),
+            Python::IncludeFiles{"dune/fempy/grid/virtualizedrestrictprolong.hh"});
+        return cls.first;
       }
 
     } // namespace detail

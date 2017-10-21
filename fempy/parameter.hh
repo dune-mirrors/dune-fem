@@ -43,7 +43,7 @@ namespace Dune
       return Fem::ParameterReader( [ dict, tmp ] ( const std::string &key, const std::string *def ) {
           try {
             pybind11::object value = dict[ key.c_str() ];
-            *tmp = static_cast< std::string >( value.str() );
+            *tmp = static_cast< std::string >( pybind11::str(value) );
           } catch (...) {
             *tmp = Fem::Parameter::getValue( key, *def );
           }
