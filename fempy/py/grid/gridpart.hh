@@ -8,15 +8,13 @@
 #include <type_traits>
 #include <utility>
 
-#include <dune/common/visibility.hh>
-
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/gridpart/common/gridpart2gridview.hh>
 
-#include <dune/corepy/grid/hierarchical.hh>
-#include <dune/corepy/grid/vtk.hh>
+#include <dune/python/grid/hierarchical.hh>
+#include <dune/python/grid/vtk.hh>
 
 #include <dune/fempy/grid/gridpartadapter.hh>
 #include <dune/fempy/pybind11/pybind11.hh>
@@ -35,7 +33,7 @@ namespace Dune
 
       template< class Grid >
       class GridModificationListener final
-        : public CorePy::GridModificationListener< Grid >
+        : public Python::GridModificationListener< Grid >
       {
         typedef Fem::DofManager< Grid > DofManager;
 
@@ -63,14 +61,14 @@ namespace Dune
       inline static void addGridModificationListener ( const Grid &grid )
       {
         typedef GridModificationListener< Grid > Listener;
-        for( const auto &listener : CorePy::detail::gridModificationListeners( grid ) )
+        for( const auto &listener : Python::detail::gridModificationListeners( grid ) )
         {
           if( dynamic_cast< Listener * >( listener.second ) )
             return;
         }
 
         pybind11::handle nurse = pybind11::detail::get_object_handle( &grid, pybind11::detail::get_type_info( typeid( Grid ) ) );
-        CorePy::detail::addGridModificationListener( grid, new Listener( grid ), nurse );
+        Python::detail::addGridModificationListener( grid, new Listener( grid ), nurse );
       }
 
 
@@ -147,7 +145,7 @@ namespace Dune
       // -----------------
 
       template< class GridView >
-      DUNE_EXPORT inline GridPartConverter< GridView > &gridPartConverter ()
+      inline DUNE_EXPORT GridPartConverter< GridView > &gridPartConverter ()
       {
         static GridPartConverter< GridView > converter;
         return converter;
@@ -176,51 +174,30 @@ namespace Dune
 
 
 
+    // constructGridPart
+    // -----------------
 
-    // GridPartDeleter
-    // ---------------
-
-    template< class GridView >
-    struct GridPartDeleter;
-
-    template< class GridPart >
-    struct GridPartDeleter< Dune::GridView< Fem::GridPart2GridViewTraits< GridPart > > >
+    template< class GridPart, class... Args >
+    inline static auto constructGridPart ( Args &&... args )
     {
-      void operator() ( Dune::GridView< Fem::GridPart2GridViewTraits< GridPart > > *gridView )
-      {
-        delete &gridView->impl().gridPart();
-        delete gridView;
-      }
-    };
+      typedef Dune::GridView< Fem::GridPart2GridViewTraits< GridPart > > GridView;
 
-    template< class GridPart >
-    struct GridPartDeleter< Fem::GridPart2GridViewImpl< GridPart > >
-    {
-      void operator() ( Fem::GridPart2GridViewImpl< GridPart > *gridView )
-      {
-        delete &gridView->gridPart();
-        delete gridView;
-      }
-    };
+      GridPart *gridPart = new GridPart( std::forward< Args >( args )... );
+      GridView *gridView = new GridView( static_cast< GridView >( *gridPart ) );
 
+      // obtain Python object for grid view
+      pybind11::handle nurse = pybind11::detail::get_object_handle( &gridView, pybind11::detail::get_type_info( typeid( GridView ) ) );
+      if( !nurse )
+        return gridView;
 
-
-    // GridPartPtr
-    // -----------
-
-    template< class GridView >
-    using GridPartPtr = std::unique_ptr< GridView, GridPartDeleter< GridView > >;
-
-
-
-    // makeGridPart
-    // ------------
-
-    template< class GridView, class... Args >
-    inline static GridPartPtr< GridView > makeGridPart ( Args &&... args )
-    {
-      GridPart< GridView > *gridPart = new GridPart< GridView >( std::forward< Args >( args )... );
-      return GridPartPtr< GridView >( new GridView( static_cast< GridView >( *gridPart ) ) );
+      // create Python guard object, removing the grid part once the grid view dies
+      pybind11::cpp_function remove_gridpart( [ gridPart ] ( pybind11::handle weakref ) {
+          delete gridPart;
+          weakref.dec_ref();
+        } );
+      pybind11::weakref weakref( nurse, remove_gridpart );
+      weakref.release();
+      return gridView;
     }
 
   } // namespace FemPy

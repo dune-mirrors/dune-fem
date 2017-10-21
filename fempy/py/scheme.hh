@@ -7,7 +7,7 @@
 
 #if HAVE_DUNE_ISTL
 #include <dune/istl/bcrsmatrix.hh>
-#include <dune/corepy/istl/bcrsmatrix.hh>
+#include <dune/python/istl/bcrsmatrix.hh>
 #endif // #if HAVE_DUNE_ISTL
 
 #include <dune/fem/misc/l2norm.hh>
@@ -88,7 +88,7 @@ namespace Dune
 
         typedef std::decay_t< decltype( getBCRSMatrix( std::declval< const typename Scheme::LinearOperatorType & >().matrix() ) ) > BCRSMatrix;
         if( !pybind11::already_registered< BCRSMatrix >() )
-          CorePy::registerBCRSMatrix< BCRSMatrix >( cls );
+          Python::registerBCRSMatrix< BCRSMatrix >( cls );
 
         using pybind11::operator""_a;
 

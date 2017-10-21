@@ -14,7 +14,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/common/rangegenerators.hh>
 
-#include <dune/corepy/grid/numpy.hh>
+#include <dune/python/grid/numpy.hh>
 
 #include <dune/fempy/pybind11/pybind11.hh>
 
@@ -51,7 +51,7 @@ namespace Dune
         }
       }
 
-      return CorePy::makeNumPyArray< Field >( values, { values.size(), Range::dimension } );
+      return Python::makeNumPyArray< Field >( values, { values.size(), Range::dimension } );
     }
 
     template< class GridFunction, unsigned int partitions >
@@ -97,7 +97,7 @@ namespace Dune
         }
       }
 
-      return CorePy::makeNumPyArray< Field >( values, { values.size(), Range::dimension } );
+      return Python::makeNumPyArray< Field >( values, { values.size(), Range::dimension } );
     }
 
     template< class GridFunction, unsigned int partitions >

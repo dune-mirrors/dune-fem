@@ -5,7 +5,7 @@
 
 #include <dune/common/visibility.hh>
 
-#include <dune/corepy/pybind11/pybind11.h>
+#include <dune/python/pybind11/pybind11.h>
 
 namespace Dune
 {

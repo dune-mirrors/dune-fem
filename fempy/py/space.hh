@@ -2,10 +2,10 @@
 #define DUNE_FEMPY_PY_SPACE_HH
 
 #include <dune/common/hybridutilities.hh>
-#include <dune/corepy/common/dynmatrix.hh>
-#include <dune/corepy/common/dynvector.hh>
-#include <dune/corepy/common/fmatrix.hh>
-#include <dune/corepy/common/fvector.hh>
+#include <dune/python/common/dynmatrix.hh>
+#include <dune/python/common/dynvector.hh>
+#include <dune/python/common/fmatrix.hh>
+#include <dune/python/common/fvector.hh>
 
 #include <dune/fempy/pybind11/pybind11.hh>
 #include <dune/fempy/function/virtualizedgridfunction.hh>
@@ -53,14 +53,14 @@ namespace Dune
         typedef typename Space::FunctionSpaceType::RangeFieldType RangeFieldType;
         if( !std::is_same< RangeFieldType, double >::value )
         {
-          Dune::CorePy::registerFieldVector<RangeFieldType>(module, std::make_integer_sequence<int, 10>());
+          Dune::Python::registerFieldVector<RangeFieldType>(module, std::make_integer_sequence<int, 10>());
           Dune::Hybrid::forEach( std::make_integer_sequence< int, 5 >(), [ module ] ( auto rows ) {
               Dune::Hybrid::forEach( std::make_integer_sequence< int, 5 >(), [ module ] ( auto cols ) {
-                Dune::CorePy::registerFieldMatrix< double, decltype(rows)::value, cols >( module );
+                Dune::Python::registerFieldMatrix< double, decltype(rows)::value, cols >( module );
               } );
             } );
-          Dune::CorePy::registerDynamicVector<RangeFieldType>(module);
-          Dune::CorePy::registerDynamicMatrix<RangeFieldType>(module);
+          Dune::Python::registerDynamicVector<RangeFieldType>(module);
+          Dune::Python::registerDynamicMatrix<RangeFieldType>(module);
         }
 
         typedef typename Space::GridPartType GridPart;

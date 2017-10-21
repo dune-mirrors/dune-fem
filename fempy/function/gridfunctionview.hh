@@ -107,7 +107,7 @@ namespace Dune
 
   } // namespace Fem
 
-  namespace CorePy
+  namespace Python
   {
 
     using FemPy::localFunction;
