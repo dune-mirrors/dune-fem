@@ -582,8 +582,8 @@ def load(grid, integrands, renumbering=None, tempVars=True):
     #code.append(Include("dune/fem/misc/boundaryidprovider.hh"))
 
     code += integrands.includes()
-    code.append(Include("dune/corepy/pybind11/pybind11.h"))
-    code.append(Include("dune/corepy/pybind11/extensions.h"))
+    code.append(Include("dune/python/pybind11/pybind11.h"))
+    code.append(Include("dune/python/pybind11/extensions.h"))
     code.append(Include("dune/fempy/py/grid/gridpart.hh"))
 
     if integrands._coefficients:
@@ -607,6 +607,7 @@ def load(grid, integrands, renumbering=None, tempVars=True):
 
     writer.openPythonModule(name)
     writer.emit('auto cls = Dune::FemPy::registerIntegrands< Integrands >( module );')
+    # TODO
     writer.emit('cls.def( "__init__", [] ( Integrands &self ) { new (&self) Integrands(); } );')
     writer.closePythonModule(name)
 

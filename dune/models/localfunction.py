@@ -155,8 +155,8 @@ def gridFunction(grid, code, coefficients, constants):
 
     code += [Include(i) for i in grid._includes]
 
-    code.append(Include("dune/corepy/pybind11/pybind11.h"))
-    code.append(Include("dune/corepy/pybind11/extensions.h"))
+    code.append(Include("dune/python/pybind11/pybind11.h"))
+    code.append(Include("dune/python/pybind11/extensions.h"))
     code.append(Include("dune/fem/space/common/functionspace.hh"))
     code.append(Include("dune/fem/function/common/localfunctionadapter.hh"))
 

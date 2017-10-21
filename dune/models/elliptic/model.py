@@ -199,6 +199,7 @@ class EllipticModel:
             sourceWriter.emit('cls.def( "setConstant", defSetConstant( std::make_index_sequence< ' + modelClass + '::numConstants >() ) );')
         coefficients = [('Dune::FemPy::VirtualizedGridFunction< GridPart, Dune::FieldVector< ' + SourceWriter.cpp_fields(c['field']) + ', ' + str(c['dimRange']) + ' > >') for c in self._coefficients]
         sourceWriter.emit('')
+        # TODO
         sourceWriter.emit('cls.def( "__init__", [] ( ' + ', '.join([wrapperClass + ' &self'] + ['const ' + c + ' &coefficient' + str(i) for i, c in enumerate(coefficients)]) + ' ) {')
         if self.hasCoefficients:
             sourceWriter.emit('  new (&self) ' + wrapperClass + '( ' + ', '.join('coefficient' + str(i) + '.localFunction()' for i, c in enumerate(coefficients)) + ' );')
@@ -520,8 +521,8 @@ def generateModel(grid, model, *args, **kwargs):
     code += [Include(i) for i in grid._includes]
     code.append(Include("dune/fem/misc/boundaryidprovider.hh>"))
 
-    code.append(Include("dune/corepy/pybind11/pybind11.h"))
-    code.append(Include("dune/corepy/pybind11/extensions.h"))
+    code.append(Include("dune/python/pybind11/pybind11.h"))
+    code.append(Include("dune/python/pybind11/extensions.h"))
     code.append(Include("dune/fempy/py/grid/gridpart.hh"))
     if model.coefficients:
         code.append(Include("dune/fempy/function/virtualizedgridfunction.hh"))
