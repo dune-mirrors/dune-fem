@@ -151,9 +151,9 @@ class GridFunction(ufl.Coefficient):
         assert len(derivatives) == 0 or len(derivatives) == 1 , \
                 "can only evaluate up to first order derivatives of grid functions"
         if len(derivatives) == 0:
-            return self.gf.localFunction(x.entity).evaluate(x.xLocal)[component[0]]
+            return self.gf.localFunction(x.entity).evaluate(x.local)[component[0]]
         else:
-            return self.gf.localFunction(x.entity).jacobian(x.xLocal)[component[0]][derivatives[0]]
+            return self.gf.localFunction(x.entity).jacobian(x.local)[component[0]][derivatives[0]]
     def __getitem__(self,i):
         if isinstance(i,int):
             return GridIndexed(self,i)
