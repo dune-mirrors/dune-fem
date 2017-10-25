@@ -266,12 +266,13 @@ namespace Dune
         VecGetArray( *maskFunction.getGhostedVector(), &maskArray );
 
         std::vector< PetscInt > r;
-        for( PetscInt i = 0; i != rows; ++i )
+        const PetscInt size = rangeMappers_.parallelMapper().size() * rangeLocalBlockSize;
+        for( PetscInt i = 0; i != size; ++i )
         {
           if( maskArray[ i ] != 0 )
             r.push_back( i );
         }
-        ::Dune::Petsc::matZeroRows( petscMatrix_, r.size(), r.data(), diagonal );
+        ::Dune::Petsc::MatZeroRows( petscMatrix_, r.size(), r.data(), diagonal );
       }
 
       //! interface method from LocalMatrixFactory
