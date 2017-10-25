@@ -61,7 +61,8 @@ namespace Dune
       DIR* directory = opendir( name.c_str() );
       const bool directoryExists = (directory != 0);
       // close directory again
-      closedir( directory );
+      if ( directoryExists )
+        closedir( directory );
       return directoryExists;
     }
 
