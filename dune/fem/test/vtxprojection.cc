@@ -80,13 +80,13 @@ int main(int argc, char ** argv)
     DiscreteFunctionSpaceType discreteFunctionSpace( gridPart ); // DG
 
 #if HAVE_DUNE_LOCALFUNCTIONS
-    typedef LagrangeDiscreteFunctionSpace<FunctionSpaceType, GridPartType, 1>
-      LDiscreteFunctionSpaceType;
-    LDiscreteFunctionSpaceType lagspace(gridPart);
-#else
     typedef LagrangeSpace<FunctionSpaceType, GridPartType>
       LDiscreteFunctionSpaceType;
     LDiscreteFunctionSpaceType lagspace(gridPart,1);
+#else
+    typedef LagrangeDiscreteFunctionSpace<FunctionSpaceType, GridPartType, 1>
+      LDiscreteFunctionSpaceType;
+    LDiscreteFunctionSpaceType lagspace(gridPart);
 #endif
 
     ExactSolutionType exactSolution;
