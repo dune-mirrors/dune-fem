@@ -3,6 +3,7 @@
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/fem/common/explicitfieldvector.hh>
 
 namespace Dune
 {
@@ -75,7 +76,7 @@ namespace Dune
 
       /** \brief Intrinsic type used for the hessian values
           has a Dune::FieldMatrix type interface */
-      typedef FieldVector< FieldMatrix< RangeFieldType, dimDomain, dimDomain >, dimRange > HessianRangeType;
+      typedef ExplicitFieldVector< FieldMatrix< RangeFieldType, dimDomain, dimDomain >, dimRange > HessianRangeType;
 
       /** \brief corresponding scalar function space */
       typedef typename FunctionSpaceTraits :: ScalarFunctionSpaceType
