@@ -25,51 +25,32 @@ namespace Dune
 
       typedef typename Traits::HostGridPartType::IntersectionIteratorType HostIntersectionIteratorType;
 
+      typedef typename Traits::template Codim< 0 >::Geometry ElementGeometry;
+
+      typedef typename Traits::GridFunctionType GridFunctionType;
+
       typedef GeometryGridPartIntersection< const GridFamily > IntersectionImplType;
 
     public:
       typedef Dune::Intersection< const GridFamily, IntersectionImplType > Intersection;
 
-      template <class Entity>
-      GeometryGridPartIntersectionIterator ( const Entity &inside,
-             const HostIntersectionIteratorType &hostIterator )
-      : hostIterator_( hostIterator ),
-        intersection_( IntersectionImplType( inside.impl().gridFunction(), inside.geometry() ) )
+      GeometryGridPartIntersectionIterator () = default;
+
+      template< class Entity >
+      GeometryGridPartIntersectionIterator ( const Entity &inside, const HostIntersectionIteratorType &hostIterator )
+        : hostIterator_( hostIterator ), gridFunction_( inside.impl().gridFunction() ), insideGeo_( inside.geometry().impl() )
       {}
 
-      GeometryGridPartIntersectionIterator ( const ThisType &other )
-      : hostIterator_( other.hostIterator_ ),
-        intersection_( IntersectionImplType( other.intersection_.impl() ) )
-      {}
+      bool equals ( const ThisType &other ) const { return (hostIterator_ == other.hostIterator_); }
 
-      const ThisType &operator= ( const ThisType &other )
-      {
-        hostIterator_ = other.hostIterator_;
-        intersection_.impl() = other.intersection_.impl();
-        return *this;
-      }
+      void increment () { ++hostIterator_; }
 
-      bool equals ( const ThisType &other ) const
-      {
-        return (hostIterator_ == other.hostIterator_);
-      }
-
-      void increment ()
-      {
-        ++hostIterator_;
-        intersection_.impl().invalidate();
-      }
-
-      const Intersection &dereference () const
-      {
-        if( !intersection_.impl() )
-          intersection_.impl().initialize( *hostIterator_ );
-        return intersection_;
-      }
+      Intersection dereference () const { return IntersectionImplType( *gridFunction_, insideGeo_, *hostIterator_ ); }
 
     private:
       HostIntersectionIteratorType hostIterator_;
-      mutable Intersection intersection_;
+      const GridFunctionType *gridFunction_ = nullptr;
+      typename ElementGeometry::Implementation insideGeo_;
     };
 
   } // namespace Fem

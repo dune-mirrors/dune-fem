@@ -30,9 +30,6 @@ namespace Dune
       static const int dimensionworld = std::remove_const< GridFamily >::type::dimensionworld;
 
       typedef typename Traits::template Codim< 0 >::Entity Entity;
-#if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
-      typedef typename Traits::template Codim< 0 >::EntityPointer EntityPointer;
-#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
       typedef typename Traits::template Codim< 0 >::Geometry ElementGeometry;
       typedef typename Traits::template Codim< 1 >::Geometry Geometry;
       typedef typename Traits::template Codim< 1 >::LocalGeometry LocalGeometry;
@@ -43,82 +40,35 @@ namespace Dune
       typedef FieldVector< ctype, dimension-1 > LocalCoordinate;
 
     private:
-#if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
-      typedef typename EntityPointer::Implementation EntityPointerImplType;
-#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
       typedef typename Geometry::Implementation GeometryImplType;
 
       typedef typename Traits::HostGridPartType HostGridPartType;
       typedef typename HostGridPartType::IntersectionType HostIntersectionType;
 
     public:
-      GeometryGridPartIntersection () = default;
-
-      GeometryGridPartIntersection ( const GridFunctionType &gridFunction, const ElementGeometry &insideGeo )
-        : gridFunction_( &gridFunction ), insideGeo_( insideGeo.impl() )
+      GeometryGridPartIntersection ( const GridFunctionType &gridFunction, const typename ElementGeometry::Implementation &insideGeo, HostIntersectionType hostIntersection )
+        : hostIntersection_( std::move( hostIntersection ) ), gridFunction_( &gridFunction ), insideGeo_( insideGeo )
       {}
 
       operator bool () const { return bool( hostIntersection_ ); }
 
-#if DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
       Entity inside () const { return typename Entity::Implementation( gridFunction(), hostIntersection().inside() ); }
       Entity outside () const { return typename Entity::Implementation( gridFunction(), hostIntersection().outside() ); }
-#else // #if DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
-      EntityPointer inside () const
-      {
-        return EntityPointerImplType( hostIntersection().inside(), gridFunction() );
-      }
 
-      EntityPointer outside () const
-      {
-        return EntityPointerImplType( hostIntersection().outside(), gridFunction() );
-      }
-#endif // #else // #if DUNE_VERSION_NEWER( DUNE_GRID, 2, 4 )
+      bool boundary () const { return hostIntersection().boundary(); }
 
-      bool boundary () const
-      {
-        return hostIntersection().boundary();
-      }
+      bool conforming () const { return hostIntersection().conforming(); }
 
-      bool conforming () const
-      {
-        return hostIntersection().conforming();
-      }
+      int twistInSelf() const { return hostIntersection().impl().twistInSelf(); }
 
-      int twistInSelf() const
-      {
-        return hostIntersection().impl().twistInSelf();
-      }
+      int twistInNeighbor() const { return hostIntersection().impl().twistInNeighbor(); }
 
-      int twistInNeighbor() const
-      {
-        return hostIntersection().impl().twistInNeighbor();
-      }
+      bool neighbor () const { return hostIntersection().neighbor(); }
 
-      bool neighbor () const
-      {
-        return hostIntersection().neighbor();
-      }
+      std::size_t boundarySegmentIndex () const { return hostIntersection().boundarySegmentIndex(); }
 
-      int boundaryId () const
-      {
-        return hostIntersection().boundaryId();
-      }
-
-      size_t boundarySegmentIndex () const
-      {
-        return hostIntersection().boundarySegmentIndex();
-      }
-
-      LocalGeometry geometryInInside () const
-      {
-        return hostIntersection().geometryInInside();
-      }
-
-      LocalGeometry geometryInOutside () const
-      {
-        return hostIntersection().geometryInOutside();
-      }
+      LocalGeometry geometryInInside () const { return hostIntersection().geometryInInside(); }
+      LocalGeometry geometryInOutside () const { return hostIntersection().geometryInOutside(); }
 
       Geometry geometry () const
       {
@@ -126,25 +76,12 @@ namespace Dune
         return Geometry( Impl( insideGeo_, geometryInInside(), 2*insideGeo_.impl().localFunction().order()+1 ) );
       }
 
-      bool equals(const This &other) const
-      {
-        return hostIntersection() == other.hostIntersection();
-      }
+      bool equals ( const This &other ) const { return hostIntersection() == other.hostIntersection(); }
 
-      GeometryType type () const
-      {
-        return hostIntersection().type();
-      }
+      GeometryType type () const { return hostIntersection().type(); }
 
-      int indexInInside () const
-      {
-        return hostIntersection().indexInInside();
-      }
-
-      int indexInOutside () const
-      {
-        return hostIntersection().indexInOutside();
-      }
+      int indexInInside () const { return hostIntersection().indexInInside(); }
+      int indexInOutside () const { return hostIntersection().indexInOutside(); }
 
       GlobalCoordinate integrationOuterNormal ( const LocalCoordinate &local ) const
       {
@@ -236,19 +173,7 @@ normal *= geometry().integrationElement(local)/normal.two_norm();
         return normal *= (ctype( 1 ) / normal.two_norm());
       }
 
-      const HostIntersectionType &hostIntersection () const
-      {
-        assert( *this );
-        return *hostIntersection_;
-      }
-
-      void invalidate () { hostIntersection_ = nullptr; }
-
-      void initialize ( const HostIntersectionType &hostIntersection )
-      {
-        assert( !(*this) );
-        hostIntersection_ = &hostIntersection;
-      }
+      const HostIntersectionType &hostIntersection () const { return hostIntersection_; }
 
       const GridFunctionType &gridFunction () const
       {
@@ -257,7 +182,7 @@ normal *= geometry().integrationElement(local)/normal.two_norm();
       }
 
     private:
-      const HostIntersectionType *hostIntersection_ = nullptr;
+      HostIntersectionType hostIntersection_;
       const GridFunctionType *gridFunction_ = nullptr;
       typename ElementGeometry::Implementation insideGeo_;
     };
