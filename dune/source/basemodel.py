@@ -169,6 +169,7 @@ class BaseModel:
             sourceWriter.emit('  if ( !std::all_of(coeffSet.begin(),coeffSet.end(),[](bool v){return v;}) )')
             sourceWriter.emit('    throw pybind11::key_error("need to set all coefficients during construction");')
             sourceWriter.emit('  return instance;')
+        sourceWriter.emit('  return instance;')
         sourceWriter.emit('  }),')
         if constrKeepAlive:
             sourceWriter.emit(constrKeepAlive + ',')

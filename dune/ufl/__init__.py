@@ -175,15 +175,21 @@ class DirichletBC:
 # can only return a scalar - therefore a possible grid function
 # is evaluated multiple time for each component and each
 # derivative - need a better implementation?
+class CoordWrapper:
+    def __init__(self,e,x):
+        self.entity = e
+        self.local = x
+        self.glb = e.geometry.position(x)
+    def __getitem__(self,i): return self.glb[i]
 def expression2GF(grid,expression,order):
     from dune.fem.function._functions import localFunction
     shape = expression.ufl_shape
     assert len(shape) == 0 or len(shape) == 1,\
             "can only generate grid function from scalar or vector valued expression, got %s" %str(shape)
     if len(shape) == 0:
-        return localFunction(grid, "tmp", order, lambda e,x: [expression(e(x))] )
+        return localFunction(grid, "tmp", order, lambda e,x: [expression(CoordWrapper(e,x))] )
     if len(shape) == 1:
-        return localFunction(grid, "tmp", order, lambda e,x: [expression[i](e(x)) for i in range(shape[0]) ] )
+        return localFunction(grid, "tmp", order, lambda e,x: [expression[i](CoordWrapper(e,x)) for i in range(shape[0]) ] )
 
 # register markdown formatter for integrands, forms and equations to IPython
 

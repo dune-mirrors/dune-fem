@@ -49,7 +49,9 @@ def globalFunction(gridview, name, order, value):
 
 def localFunction(gridview, name, order, value):
     module = registerGridFunctions(gridview)
-    return addUFL(module.localGridFunction(gridview,name,order,value))
+    ret = module.localGridFunction(gridview,name,order,value)
+    ret = addUFL(ret)
+    return ret
 
 
 def levelFunction(gridview):
