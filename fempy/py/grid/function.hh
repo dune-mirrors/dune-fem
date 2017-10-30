@@ -92,7 +92,7 @@ namespace Dune
         typedef typename GridPartType::GridViewType GridView;
 
         auto lfClass = Python::insertClass<LocalFunction>(cls, "LocalFunction",
-            Python::GenerateTypeName("TODO"));
+            Python::GenerateTypeName("TODO-LGF"));
             // Python::GenerateTypeName(cls,"LocalFunctionType")).first;
         assert( lfClass.second );
         registerLocalFunction< LocalFunction >( cls, lfClass.first );
@@ -168,7 +168,7 @@ namespace Dune
       {
         typedef VirtualizedGridFunction< GridPart, Value > GridFunction;
         auto vgfClass = Python::insertClass<GridFunction>(scope,"VirtualizedGridFunction"+std::to_string(Value::dimension),
-            Python::GenerateTypeName("TODO"),
+            Python::GenerateTypeName("TODO-VGF"),
             // Python::GenerateTypeName("VirtualizedGridFunction",MetaType<GridPart>(),MetaType<Value>()),
             Python::IncludeFiles{"dune/fempy/function/virtualizedgridfunction.hh"});
         if( vgfClass.second )

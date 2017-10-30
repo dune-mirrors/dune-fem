@@ -205,7 +205,7 @@ namespace Dune
 
       detail::clsVirtualizedIntegrands< GridPart, DomainValue, RangeValue >( scope ).
         def( pybind11::init( [] ( Integrands &integrands ) {
-          new VirtualizedIntegrands( std::ref( integrands ) );
+          return new VirtualizedIntegrands( std::ref( integrands ) );
         }), pybind11::keep_alive< 1, 2 >() );
       pybind11::implicitly_convertible< Integrands, VirtualizedIntegrands >();
 

@@ -29,7 +29,7 @@ namespace Dune
       const GridType &grid () const { return static_cast< GridView >( *this ).grid(); }
       GridType &grid () { return const_cast< GridType & >( static_cast< GridView >( *this ).grid() ); }
 
-      int level () const { DUNE_THROW( NotImplemented, "GridPartAdapter cannot provide level information" ); }
+      int level () const { DUNE_THROW( NotImplemented, "GridPartAdapter cannot provide level information" ); return -1; }
     };
 
   } // namespace FemPy
