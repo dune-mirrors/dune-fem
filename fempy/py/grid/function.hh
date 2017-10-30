@@ -183,9 +183,8 @@ namespace Dune
     // registerGridFunction
     // --------------------
 
-    template< class GridFunction >
-    inline static void registerGridFunction ( pybind11::handle scope,
-        pybind11::class_<GridFunction> cls )
+    template< class GridFunction, class... options >
+    inline static void registerGridFunction ( pybind11::handle scope, pybind11::class_< GridFunction, options... > cls )
     {
       typedef typename GridFunction::GridPartType GridPart;
       typedef typename GridFunction::RangeType Value;
