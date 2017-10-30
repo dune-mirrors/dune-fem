@@ -5,10 +5,6 @@
 
 #include <dune/common/version.hh>
 
-#if ! DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
-#error "Experimental grid extensions required for GeometryGridPart. Add -DDUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS=TRUE to your CMAKE_FLAGS."
-#else // #if ! DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
-
 #include <dune/fem/gridpart/common/deaditerator.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
@@ -93,9 +89,6 @@ namespace Dune
 
           typedef Dune::Entity< codim, dimension, const GridPartFamily, GeometryGridPartEntity > Entity;
           typedef typename HostGridPartType::GridType::template Codim< codim >::EntitySeed EntitySeed;
-#if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 6 )
-          typedef Dune::EntityPointer< const GridPartFamily, DefaultEntityPointer< Entity > > EntityPointer;
-#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 6 )
         };
 
         typedef DeadIntersection< const GridPartFamily > IntersectionImplType;
@@ -161,9 +154,6 @@ namespace Dune
         typedef typename GridFamily::Traits::template Codim< codim >::LocalGeometry LocalGeometryType;
 
         typedef typename GridFamily::Traits::template Codim< codim >::Entity EntityType;
-#if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 6 )
-        typedef Dune::EntityPointer< const GridPartFamily, DefaultEntityPointer< EntityType > > EntityPointerType;
-#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 6 )
         typedef typename GridFamily::Traits::template Codim< codim >::EntitySeed EntitySeedType;
 
         template< PartitionIteratorType pitype >
@@ -287,16 +277,6 @@ namespace Dune
         GeometryGridPartDataHandle< GridFamily, HostHandleType > handleWrapper( handle, gridFunction_ );
         hostGridPart().communicate( handleWrapper, iftype, dir );
       }
-
-#if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 6 )
-      template< class EntitySeed >
-      typename Codim< EntitySeed::codimension >::EntityPointerType
-      entityPointer ( const EntitySeed &seed ) const
-      {
-        typedef typename Codim< EntitySeed::codimension >::EntityPointerType::Implementation EntityPointerImp;
-        return EntityPointerImp( hostGridPart().entityPointer( seed ), gridFunction_ );
-      }
-#endif // #if ! DUNE_VERSION_NEWER( DUNE_GRID, 2, 6 )
 
       // convert a grid entity to a grid part entity ("Gurke!")
       template< class Entity >

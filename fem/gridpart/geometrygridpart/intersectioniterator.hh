@@ -14,17 +14,18 @@ namespace Dune
   {
 
     // GeometryGridPartIntersectionIterator
-    // ----------------------
+    // ------------------------------------
 
     template< class GridFamily >
     class GeometryGridPartIntersectionIterator
     {
       typedef GeometryGridPartIntersectionIterator< GridFamily > ThisType;
 
-      typedef typename std::remove_const< GridFamily >::type::Traits Traits;
+      typedef typename std::remove_const_t< GridFamily >::Traits Traits;
 
       typedef typename Traits::HostGridPartType::IntersectionIteratorType HostIntersectionIteratorType;
 
+      typedef typename Traits::template Codim< 0 >::Entity Entity;
       typedef typename Traits::template Codim< 0 >::Geometry ElementGeometry;
 
       typedef typename Traits::GridFunctionType GridFunctionType;
@@ -36,9 +37,8 @@ namespace Dune
 
       GeometryGridPartIntersectionIterator () = default;
 
-      template< class Entity >
       GeometryGridPartIntersectionIterator ( const Entity &inside, const HostIntersectionIteratorType &hostIterator )
-        : hostIterator_( hostIterator ), gridFunction_( inside.impl().gridFunction() ), insideGeo_( inside.geometry().impl() )
+        : hostIterator_( hostIterator ), gridFunction_( &inside.impl().gridFunction() ), insideGeo_( inside.geometry().impl() )
       {}
 
       bool equals ( const ThisType &other ) const { return (hostIterator_ == other.hostIterator_); }
