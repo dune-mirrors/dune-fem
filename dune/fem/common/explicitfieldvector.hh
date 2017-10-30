@@ -9,6 +9,9 @@ namespace Dune
 
   namespace Fem
   {
+    /**A variant of FieldVector which does not allow for implicit
+     * type-conversion from an to everything.
+     */
     template<class T, int N>
     class ExplicitFieldVector;
   }
@@ -27,16 +30,62 @@ namespace Dune
 
   namespace Fem {
 
+    /**Accept implicit type conversion from any DenseVector to a field
+     * vector only if both vectors contain field elements of some type
+     * or both vectors do NOT contain field elements of some kind and
+     * the elements of the DenseVector are convertible to the field
+     * vector's elements.
+     *
+     * This inhibits the initialization of a FieldVector of complex
+     * objects like matrices from a field vector of scalars.
+     */
+    template<class C, class T>
+    struct AcceptElementImplicitConstruction
+    {
+      static constexpr bool value =
+        (std::is_same<typename FieldTraits<typename DenseMatVecTraits<C>::value_type>::field_type,
+         typename DenseMatVecTraits<C>::value_type
+         >::value
+         ==
+         std::is_same<typename FieldTraits<T>::field_type, T>::value)
+        &&
+        std::is_convertible<typename DenseMatVecTraits<C>::value_type, T>::value;
+    };
+
     template<class T, int N>
     class ExplicitFieldVector
       : public Dune::FieldVector<T, N>
     {
       typedef Dune::FieldVector<T, N> BaseType;
      public:
-      using BaseType::FieldVector;
+      //! Inherit assignment
       using BaseType::operator=;
-      operator const BaseType&() const { return static_cast<const BaseType>(*this); }
-      operator BaseType&() { return static_cast<BaseType>(*this); }
+
+      /**Redirect any general construction to the base class during
+       * explicit conversion
+       */
+      template<class... V>
+      explicit ExplicitFieldVector(const V&... args) : BaseType(args...) {}
+
+      /**Allow implicit conversion if bothe vector are either
+       * composed of field-elements of some fields which can be
+       * converted into each other or if both vectors are composed of
+       * more complicated elements (which can be converted into each
+       * other), but do not allow implicit conversion of a FieldVector
+       * of scalars into a FieldVector composed of more complicated
+       * stuff. In particalar, FunctionSpace::RangeType cannot be
+       * implicitly converted to FunctionSpace::HessianRangeType.
+       */
+      template<class C>
+      ExplicitFieldVector(const DenseVector<C>& x,
+                          typename std::enable_if<(
+                            IsFieldVectorSizeCorrect<C, N>::value
+                            &&
+                            AcceptElementImplicitConstruction<C, T>::value)
+                          >::type* dummy=0 )
+        : BaseType(x)
+      {}
+
     };
 
   } // Fem
