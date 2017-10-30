@@ -180,7 +180,7 @@ namespace Dune
     template< class GridPart, class... Args >
     inline static auto constructGridPart ( Args &&... args )
     {
-      typedef Dune::GridView< Fem::GridPart2GridViewTraits< GridPart > > GridView;
+      typedef typename GridPart::GridViewType GridView;
 
       GridPart *gridPart = new GridPart( std::forward< Args >( args )... );
       GridView *gridView = new GridView( Fem::GridPart2GridViewImpl< GridPart >( *gridPart ) );
