@@ -183,7 +183,7 @@ namespace Dune
       typedef Dune::GridView< Fem::GridPart2GridViewTraits< GridPart > > GridView;
 
       GridPart *gridPart = new GridPart( std::forward< Args >( args )... );
-      GridView *gridView = new GridView( static_cast< GridView >( *gridPart ) );
+      GridView *gridView = new GridView( Fem::GridPart2GridViewImpl< GridPart >( *gridPart ) );
 
       // obtain Python object for grid view
       pybind11::handle nurse = pybind11::detail::get_object_handle( &gridView, pybind11::detail::get_type_info( typeid( GridView ) ) );
