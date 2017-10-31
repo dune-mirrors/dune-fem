@@ -322,7 +322,7 @@ namespace Dune
 
       int boundaryId ( const IntersectionType &intersection ) const
       {
-        return intersection.boundaryId();
+        return intersection.impl().boundaryId();
       }
 
       const CollectiveCommunicationType &comm () const { return hostGridPart_.comm(); }

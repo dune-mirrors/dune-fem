@@ -209,7 +209,7 @@ namespace Dune
 
       int boundaryId ( const IntersectionType &intersection ) const
       {
-        return intersection.boundaryId();
+        return intersection.impl().boundaryId();
       }
 
       //! Returns maxlevel of the grid
