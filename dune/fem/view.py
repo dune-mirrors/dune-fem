@@ -82,6 +82,7 @@ def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False
     hostGridViewType = hostGridView._typeName
     hostGridPartType = "Dune::FemPy::GridPart< " + hostGridViewType + " >"
     filterType = "Dune::Fem::SimpleFilter< " + hostGridPartType + " >"
+    gridPartName = "Dune::Fem::FilteredGridPart< " + hostGridPartType + ", " + filterType + ", " + cppBool(useFilteredIndexSet) + " >"
     typeName = "Dune::Fem::FilteredGridPart< " + hostGridPartType + ", " + filterType + ", " + cppBool(useFilteredIndexSet) + " >::GridViewType"
 
     constructor = Constructor(["pybind11::handle hostGridView", "pybind11::function contains", "int domainId"],
@@ -89,7 +90,7 @@ def filteredGridView(hostGridView, contains, domainId, useFilteredIndexSet=False
                                "    return contains( e ).template cast< int >();",
                                "  };",
                                hostGridPartType + " &hostGridPart = Dune::FemPy::gridPart< " + hostGridViewType + " >( hostGridView );",
-                               "return Dune::FemPy::makeGridPart< " + typeName + " >( hostGridPart, " + filterType + "( hostGridPart, containsCpp, domainId ) );"],
+                               "return Dune::FemPy::constructGridPart< " + gridPartName + " >( hostGridPart, " + filterType + "( hostGridPart, containsCpp, domainId ) );"],
                               ["pybind11::keep_alive< 1, 2 >()"])
 
     return load(includes, typeName, constructor).GridView(hostGridView, contains, domainId)
