@@ -343,6 +343,4 @@ namespace Dune
 
 } // namespace Dune
 
-#endif // #else // #if ! DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
-
 #endif // #ifndef DUNE_FEM_GRIDPART_GEOMETRYGRIDPART_HH
