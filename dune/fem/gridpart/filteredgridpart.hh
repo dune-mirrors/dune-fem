@@ -15,6 +15,7 @@
 #include <dune/fem/gridpart/common/metatwistutility.hh>
 #include <dune/fem/gridpart/filteredgridpart/capabilities.hh>
 #include <dune/fem/gridpart/filteredgridpart/datahandle.hh>
+#include <dune/fem/gridpart/filteredgridpart/intersection.hh>
 #include <dune/fem/gridpart/filteredgridpart/intersectioniterator.hh>
 #include <dune/fem/gridpart/filteredgridpart/iterator.hh>
 
@@ -110,6 +111,33 @@ namespace Dune
       //! \brief type of grid part
       typedef FilteredGridPart< HostGridPartImp, FilterImp, useFilteredIndexSet > GridPartType;
 
+      struct GridPartFamily
+      {
+        typedef FilterImp Filter;
+        typedef HostGridPartImp HostGridPart;
+
+        static const int dimension = HostGridPart::dimension;
+        static const int dimensionworld = HostGridPart::dimensionworld;
+
+        typedef typename HostGridPart::ctype ctype;
+
+        typedef FilteredGridPartIntersectionIterator< const GridPartFamily > IntersectionIteratorImpl;
+        typedef FilteredGridPartIntersection< Filter, typename HostGridPart::IntersectionType > IntersectionImpl;
+
+        typedef Dune::IntersectionIterator< const GridPartFamily, IntersectionIteratorImpl, IntersectionImpl > IntersectionIterator;
+        typedef Dune::Intersection< const GridPartFamily, IntersectionImpl > Intersection;
+
+        template< int codim >
+        struct Codim
+        {
+          typedef typename HostGridPart::template Codim< codim >::GeometryType Geometry;
+          typedef typename HostGridPart::template Codim< codim >::LocalGeometryType LocalGeometry;
+
+          typedef typename HostGridPart::template Codim< codim >::EntityType Entity;
+          typedef typename HostGridPart::template Codim< codim >::EntitySeedType EntitySeed;
+        };
+      };
+
       //! \brief grid part imp
       typedef HostGridPartImp HostGridPartType;
 
@@ -135,9 +163,10 @@ namespace Dune
       typedef typename HostGridPartType::Traits::IntersectionIteratorType HostIntersectionIteratorType;
 
       //! \brief type of intersection iterator
-      typedef FilteredGridPartIntersectionIterator< const FilterType, const GridPartType, HostIntersectionIteratorType > IntersectionIteratorType;
+      typedef typename GridPartFamily::IntersectionIterator IntersectionIteratorType;
 
-      typedef typename IntersectionIteratorType::Intersection IntersectionType;
+      //! \brief type of intersection
+      typedef typename GridPartFamily::Intersection IntersectionType;
 
       //! \brief struct providing types of the iterators on codimension cd
       template< int codim >
@@ -311,13 +340,15 @@ namespace Dune
       //! \brief ibegin of corresponding intersection iterator for given entity
       IntersectionIteratorType ibegin ( const EntityType &entity ) const
       {
-        return typename ThisType::IntersectionIteratorType( *this, entity, hostGridPart().ibegin( entity ) );
+        typedef typename IntersectionIteratorType::Implementation IntersectionIteratorImpl;
+        return IntersectionIteratorType( IntersectionIteratorImpl( filter(), hostGridPart().ibegin( entity ) ) );
       }
 
       //! \brief iend of corresponding intersection iterator for given entity
       IntersectionIteratorType iend ( const EntityType &entity ) const
       {
-        return typename ThisType::IntersectionIteratorType( *this, entity, hostGridPart().iend( entity ) );
+        typedef typename IntersectionIteratorType::Implementation IntersectionIteratorImpl;
+        return IntersectionIteratorType( IntersectionIteratorImpl( filter(), hostGridPart().iend( entity ) ) );
       }
 
       int boundaryId ( const IntersectionType &intersection ) const
