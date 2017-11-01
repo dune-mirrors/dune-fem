@@ -11,6 +11,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dune/fem/gridpart/filter/filter.hh>
+#include <dune/fem/misc/boundaryidprovider.hh>
 
 namespace Dune
 {
@@ -55,21 +56,17 @@ namespace Dune
 
       typedef std::make_integer_sequence< int, GridPart::dimension+1 > AllCodims;
 
-      template< int dim >
-      struct Layout
-      {
-        bool contains ( Dune::GeometryType gt ) { return true; }
-      };
-
     public:
       template< int codim >
       using Codim = typename Base::template Codim< codim >;
 
       template< class Contains >
       SimpleFilter ( const GridPart &gridPart, Contains contains, int domainId )
-        : mapper_( static_cast< typename GridPart::GridViewType >( gridPart ) ),
+        : mapper_( static_cast< typename GridPart::GridViewType >( gridPart ),
+            [](Dune::GeometryType,int ) {return true;} ),
           contains_( mapper_.size(), false ),
-          mapper0_( static_cast< typename GridPart::GridViewType >( gridPart ) ),
+          mapper0_( static_cast< typename GridPart::GridViewType >( gridPart ),
+            [](Dune::GeometryType gt,int dim) {return gt.dim()==dim;} ),
           domainIds_( mapper0_.size(), -1 )
       {
         for( const typename Codim< 0 >::EntityType &entity : elements( gridPart ) )
@@ -107,7 +104,8 @@ namespace Dune
       template< class Intersection >
       int intersectionBoundaryId ( const Intersection &intersection ) const
       {
-        return ( intersection.boundary() ? intersection.boundaryId() :
+        return ( intersection.boundary() ?
+            Dune::Fem::BoundaryIdProvider<typename GridPart::GridType>::boundaryId( intersection ) :
                  domainIds_[ mapper0_.index( intersection.outside() ) ] );
       }
 
@@ -131,9 +129,9 @@ namespace Dune
         std::ignore = std::make_tuple( (mark( entity, Dune::Codim< codim >() ), codim)... );
       }
 
-      MultipleCodimMultipleGeomTypeMapper< typename GridPart::GridViewType, Layout > mapper_;
+      MultipleCodimMultipleGeomTypeMapper< typename GridPart::GridViewType > mapper_;
       std::vector< bool > contains_;
-      MultipleCodimMultipleGeomTypeMapper< typename GridPart::GridViewType, MCMGElementLayout > mapper0_;
+      MultipleCodimMultipleGeomTypeMapper< typename GridPart::GridViewType > mapper0_;
       std::vector< int > domainIds_;
     };
 
