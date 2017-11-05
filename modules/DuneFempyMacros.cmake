@@ -1,6 +1,4 @@
-if(NOT (${DUNE_COMMON_VERSION} VERSION_LESS 2.6))
-  #dune_python_find_package(PACKAGE "ufl" REQUIRED VERSION "2016.2")
-endif()
+dune_python_find_package(PACKAGE "ufl" REQUIRED VERSION "2016.2")
 
 include(UseModelCompiler)
 
