@@ -911,8 +911,7 @@ namespace Dune
           // in parallel case we need special treatment, if no preconditoner exist
           else if( arg.space().gridPart().comm().size() > 1 )
           {
-            typedef typename OperatorImp::SystemMatrixType SystemMatrixType;
-            OEMSolver::SolverInterfaceImpl< SystemMatrixType > opSolve( op.systemMatrix() );
+            OEMSolver::SolverInterfaceImpl< std::decay_t< decltype( op.systemMatrix() ) > > opSolve( op.systemMatrix() );
             FakeConditionerType preConditioner( size, opSolve );
             return OEMSolver::gmres(arg.space().gridPart().comm(),
                      inner,size,op.systemMatrix(),preConditioner,
@@ -940,17 +939,16 @@ namespace Dune
           int size = arg.space().size();
           if( arg.space().gridPart().comm().size() > 1 )
           {
-            typedef typename OperatorImp::MatrixType MatrixType;
-            OEMSolver::SolverInterfaceImpl< MatrixType > opSolve( op.matrix() );
+            OEMSolver::SolverInterfaceImpl< std::decay_t< decltype( op.systemMatrix() ) > > opSolve( op.systemMatrix() );
             FakeConditionerType preConditioner( size, opSolve );
             return OEMSolver::gmres(arg.space().gridPart().comm(),
-                     inner,size,op.matrix(),preConditioner,
+                     inner,size,op.systemMatrix(),preConditioner,
                      arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
           }
           else
           {
             return OEMSolver::gmres(arg.space().gridPart().comm(),
-                     inner,size,op.matrix(),
+                     inner,size,op.systemMatrix(),
                      arg.leakPointer(),dest.leakPointer(),eps,maxIter,verbose);
           }
         }
