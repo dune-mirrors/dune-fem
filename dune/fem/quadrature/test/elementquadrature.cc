@@ -27,7 +27,7 @@ void checkQuadraturePoints ( Dune::GeometryType type, int order )
   std::cout << ">>> Checking ElementQuadrature for type " << type << " and order " << order << "..." << std::endl;
 
   Dune::Fem::ElementQuadrature< FakeGridPart< dim >, 0 > quadrature( type, order );
-  const Dune::ReferenceElement< double, dim > &refElement = Dune::ReferenceElements< double, dim >::general( type );
+  const auto refElement = Dune::referenceElement< double, dim >( type );
   for( std::size_t qp = 0; qp < quadrature.nop(); ++qp )
   {
     if( !refElement.checkInside( Dune::Fem::coordinate( quadrature[ qp ] ) ) )

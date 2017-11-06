@@ -120,8 +120,7 @@ namespace Dune
       FieldVector< ctype, dimensionworld >
       integrationOuterNormal ( const FieldVector< ctype, dimension-1 > &local ) const
       {
-        const ReferenceElement< ctype, dimension > &refElement
-          = ReferenceElements< ctype, dimension>::general( insideGeo_.type() );
+        auto refElement = referenceElement< ctype, dimension>( insideGeo_.type() );
 
         FieldVector< ctype, dimension > x( geometryInInside().global( local ) );
         typedef typename ElementGeometryImplType::JacobianInverseTransposed JacobianInverseTransposed;
@@ -137,8 +136,7 @@ namespace Dune
       FieldVector< ctype, dimensionworld >
       outerNormal ( const FieldVector< ctype, dimension-1 > &local ) const
       {
-        const ReferenceElement< ctype, dimension > &refElement
-          = ReferenceElements< ctype, dimension>::general( insideGeo_.type() );
+        auto refElement = referenceElement< ctype, dimension>( insideGeo_.type() );
 
         FieldVector< ctype, dimension > x( geometryInInside().global( local ) );
         typedef typename ElementGeometryImplType::JacobianInverseTransposed JacobianInverseTransposed;
@@ -160,8 +158,7 @@ namespace Dune
 
       FieldVector< ctype, dimensionworld > centerUnitOuterNormal () const
       {
-        const ReferenceElement< ctype, dimension-1 > &refFace
-          = ReferenceElements< ctype, dimension-1 >::general( type() );
+        auto refFace = referenceElement< ctype, dimension-1 >( type() );
         return unitOuterNormal( refFace.position( 0, 0 ) );
       }
 

@@ -49,7 +49,7 @@ namespace Dune
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
       //! \brief type of reference element
-      typedef Dune::ReferenceElement< typename EntityType::Geometry::ctype, EntityType::Geometry::coorddimension > ReferenceElementType;
+      typedef Dune::ReferenceElement< typename EntityType::Geometry > ReferenceElementType;
 
       /* default constructor
        *
@@ -73,9 +73,9 @@ namespace Dune
       std::size_t size () const { return localFunctionSet().size(); }
 
       //! \brief return reference element
-      const ReferenceElementType &referenceElement () const
+      decltype(auto) referenceElement () const
       {
-        return Dune::ReferenceElements< typename EntityType::Geometry::ctype, EntityType::Geometry::coorddimension >::general( entity().type() );
+        return Dune::referenceElement< typename EntityType::Geometry::ctype, EntityType::Geometry::coorddimension >( entity().type() );
       }
 
       /** \brief evaluate all basis function and multiply with given
