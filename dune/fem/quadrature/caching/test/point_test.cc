@@ -41,7 +41,7 @@ namespace Dune {
     const int dim = 2;
     typedef PointProvider<double,dim,0>::GlobalPointVectorType PointVectorType;
 
-    GeometryType simplex(GeometryType::simplex,dim);
+    GeometryType simplex = GeometryTypes::simplex( dim );
 
     Quadrature<double, dim> quad(simplex, dim);
 
@@ -70,8 +70,8 @@ namespace Dune {
     LocalPointType first(0.5);
     LocalPointType second(0.6);
 
-    GeometryType simplex(GeometryType::simplex,dim);
-    GeometryType line(GeometryType::simplex,dim-1);
+    GeometryType simplex = GeometryTypes::simplex( dim );
+    GeometryType line = GeometryTypes::simplex( dim-1 );
 
     TestQuadrature<double, 1> quadImp(line, 0);
     quadImp.newQuadraturePoint(first, 0.5);
@@ -98,11 +98,11 @@ namespace Dune {
 
   void PointProvider_Test::transformationTest()
   {
-    GeometryType quadrilateral(GeometryType::cube,2);
-    GeometryType triangle(GeometryType::simplex,2);
-    GeometryType lineC(GeometryType::cube,1);
+    GeometryType quadrilateral = GeometryTypes::quadrilateral;
+    GeometryType triangle = GeometryTypes::triangle;
+    GeometryType lineC = GeometryTypes::cube( 1 );
 
-    GeometryType lineS(GeometryType::simplex,1);
+    GeometryType lineS = GeometryTypes::simplex( 1 );
 
     typedef PointProvider<double, 2, 1> PointProvider1Type;
     typedef PointProvider<double, 3, 1> PointProvider2Type;

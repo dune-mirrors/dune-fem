@@ -75,7 +75,7 @@ namespace Dune
       typedef PointProvider< double, dim, codim > PointProviderType;
       typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-      GeometryType elemGeo = GeometryType( GeometryType::prism, 3 );
+      GeometryType elemGeo = GeometryTypes::prism;
 
       // Get reference element
       const auto refElement = Dune::referenceElement< double, dim >( elemGeo );
@@ -84,8 +84,8 @@ namespace Dune
       for( int i = 0; i < refElement.size( codim ); ++i )
       {
         GeometryType faceGeo = (refElement.size( i, codim, dim ) == dim) ?
-                               GeometryType( GeometryType::simplex, 2 ) :
-                               GeometryType( GeometryType::cube, 2 );
+                               GeometryTypes::triangle :
+                               GeometryTypes::quadrilateral;
 
         // Build quadrature
         QuadratureType quad( faceGeo, 3 );
@@ -128,8 +128,8 @@ namespace Dune
       typedef PointProvider< double, dim, codim > PointProviderType;
       typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-      GeometryType elemGeo = GeometryType( GeometryType::cube, 3 );
-      GeometryType faceGeo = GeometryType( GeometryType::cube, 2 );
+      GeometryType elemGeo = GeometryTypes::hexahedron;
+      GeometryType faceGeo = GeometryTypes::quadrilateral;
 
       // Get reference element
       const auto refElement = Dune::referenceElement< double, dim >( elemGeo );
@@ -177,8 +177,8 @@ namespace Dune
       typedef PointProvider< double, dim, codim > PointProviderType;
       typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-      GeometryType elemGeo = GeometryType( GeometryType::simplex, 3 );
-      GeometryType faceGeo = GeometryType( GeometryType::simplex, 2 );
+      GeometryType elemGeo = GeometryTypes::tetrahedron;
+      GeometryType faceGeo = GeometryTypes::triangle;
 
       // Get reference element
       const auto refElement = Dune::referenceElement< double, dim >( elemGeo );
@@ -225,8 +225,8 @@ namespace Dune
       typedef PointProvider< double, dim, codim > PointProviderType;
       typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-      GeometryType elemGeo = GeometryType( GeometryType::simplex, 2 );
-      GeometryType faceGeo = GeometryType( GeometryType::simplex, 1 );
+      GeometryType elemGeo = GeometryTypes::triangle;
+      GeometryType faceGeo = GeometryTypes::line;
 
       // Get reference element
       const auto refElement = Dune::referenceElement< double, dim >( elemGeo );
@@ -272,8 +272,8 @@ namespace Dune
       typedef PointProvider< double, dim, codim > PointProviderType;
       typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-      GeometryType elemGeo = GeometryType( GeometryType::cube, 2 );
-      GeometryType faceGeo = GeometryType( GeometryType::cube, 1 );
+      GeometryType elemGeo = GeometryTypes::quadrilateral;
+      GeometryType faceGeo = GeometryTypes::line;
 
       // Get reference element
       const auto refElement = Dune::referenceElement< double, dim >( elemGeo );
