@@ -23,6 +23,9 @@ const int polOrder = POLORDER;
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 #include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/localfunction/const.hh>
+#include <dune/fem/function/common/localcontribution.hh>
+#include <dune/fem/common/bindguard.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/misc/l2norm.hh>
@@ -243,15 +246,22 @@ bool checkContinuous( DiscreteFunctionType &solution )
   typedef DiscreteFunctionSpaceType :: GridPartType GridPartType;
   typedef GridPartType :: IntersectionIteratorType IntersectionIteratorType;
   typedef GridPartType :: IntersectionType         IntersectionType;
+  typedef ConstLocalFunction<DiscreteFunctionType> LocalFunctionType;
+
+  LocalFunctionType solEn(solution);
+  LocalFunctionType solNb(solution);
 
   for( const auto& entity : solution.space() )
   {
+    auto enGuard = bindGuard(solEn,entity);
     const IntersectionIteratorType endiit = solution.space().gridPart().iend( entity );
     for( IntersectionIteratorType iit = solution.space().gridPart().ibegin( entity ); iit != endiit ; ++ iit )
     {
       const IntersectionType& intersection = *iit ;
 	    if( intersection.neighbor() && intersection.conforming() )
       {
+        auto nb = intersection.outside();
+        auto nbGuard = bindGuard(solNb, nb);
         typedef CachingQuadrature< GridPartType, 1 > FaceQuadratureType;
         typedef IntersectionQuadrature< FaceQuadratureType, true > IntersectionQuadratureType;
         typedef IntersectionQuadratureType :: FaceQuadratureType QuadratureImp;
@@ -261,10 +271,8 @@ bool checkContinuous( DiscreteFunctionType &solution )
         for( unsigned int qp = 0; qp < quadInside.nop(); ++qp )
 	      {
           DiscreteFunctionType::RangeType uIn,uOut;
-          solution.localFunction(entity).evaluate(quadInside[qp], uIn);
-
-          auto nb = intersection.outside();
-          solution.localFunction(nb).evaluate(quadOutside[qp], uOut);
+          solEn.evaluate(quadInside[qp], uIn);
+          solNb.evaluate(quadOutside[qp], uOut);
           ret = std::max(ret, (uIn-uOut).two_norm());
         }
       }

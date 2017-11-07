@@ -6,8 +6,10 @@
 #include <dune/grid/common/capabilities.hh>
 
 //- local includes
+#include <dune/fem/function/common/localcontribution.hh>
 #include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/function/localfunction/temporary.hh>
+#include <dune/fem/common/bindguard.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
 
 namespace Dune
@@ -181,7 +183,7 @@ namespace Dune
       typedef typename BaseType::DomainFieldType DomainFieldType;
 
       typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-      typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
+      typedef ConstLocalFunction<DiscreteFunctionType> ConstLocalFunctionType;
       typedef typename DiscreteFunctionType::GridPartType GridPartType;
 
       typedef DefaultLocalRestrictProlong< DiscreteFunctionSpaceType > LocalRestrictProlongType;
@@ -233,9 +235,9 @@ namespace Dune
                            const LocalGeometry &geometryInFather,
                            bool initialize ) const
       {
-        constLf_.init( son );
-        LocalFunctionType lfFather = discreteFunction_.localFunction( father );
-
+        LocalContribution< DiscreteFunctionType, Assembly::Set > lfFather( discreteFunction_ );
+        auto fatherGuard = bindGuard( lfFather, father );
+        auto sonGuard = bindGuard( constLf_, son );
         localRP_.restrictLocal( lfFather, constLf_, geometryInFather, initialize );
       }
 
@@ -261,9 +263,9 @@ namespace Dune
                           const LocalGeometry &geometryInFather,
                           bool initialize ) const
       {
-        constLf_.init( father );
-        LocalFunctionType lfSon = discreteFunction_.localFunction( son );
-
+        LocalContribution< DiscreteFunctionType, Assembly::Set > lfSon( discreteFunction_ );
+        auto sonGuard = bindGuard( lfSon, son );
+        auto fatherGuard = bindGuard( constLf_, father );
         localRP_.prolongLocal( constLf_, lfSon, geometryInFather, initialize );
       }
 
@@ -300,7 +302,7 @@ namespace Dune
 
     protected:
       DiscreteFunctionType &discreteFunction_;
-      mutable LocalFunctionType constLf_;
+      mutable ConstLocalFunctionType constLf_;
       mutable LocalRestrictProlongType localRP_;
     };
     ///@}

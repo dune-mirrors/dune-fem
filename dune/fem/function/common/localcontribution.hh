@@ -301,6 +301,45 @@ namespace Dune
         basisFunctionSet().axpy( x, factor1, factor2, localDofVector() );
       }
 
+      template <class TmpLF>
+      void assign(const TmpLF &tmpLF)
+      {
+        assert(localDofVector().size() == tmpLF.localDofVector().size());
+        for (std::size_t i=0; i<localDofVector().size(); ++i)
+          localDofVector()[i] = tmpLF.localDofVector()[i];
+      }
+      template <class TmpLF>
+      ThisType &operator+=(const TmpLF &tmpLF)
+      {
+        assert(localDofVector().size() == tmpLF.localDofVector().size());
+        for (std::size_t i=0; i<localDofVector().size(); ++i)
+          localDofVector()[i] += tmpLF.localDofVector()[i];
+        return *this;
+      }
+      template <class TmpLF>
+      ThisType &operator-=(const TmpLF &tmpLF)
+      {
+        assert(localDofVector().size() == tmpLF.localDofVector().size());
+        for (std::size_t i=0; i<localDofVector().size(); ++i)
+          localDofVector()[i] -= tmpLF.localDofVector()[i];
+        return *this;
+      }
+      template <class Factor>
+      ThisType &operator*=(const Factor &factor)
+      {
+        for (std::size_t i=0; i<localDofVector().size(); ++i)
+          localDofVector()[i] *= factor;
+        return *this;
+      }
+      template <class Factor>
+      ThisType &operator/=(const Factor &factor)
+      {
+        assert(std::abs(factor)>1e-15);
+        for (std::size_t i=0; i<localDofVector().size(); ++i)
+          localDofVector()[i] /= factor;
+        return *this;
+      }
+
       /**
        * \brief obtain the order of this local contribution
        *

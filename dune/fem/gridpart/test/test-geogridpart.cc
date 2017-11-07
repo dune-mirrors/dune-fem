@@ -22,6 +22,7 @@ int main () { return 0; }
 #include <dune/fem/misc/gridwidth.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/space/lagrange.hh>
+#include <dune/fem/common/bindguard.hh>
 
 #include "failure.hh"
 #include "checkseed.hh"
@@ -146,7 +147,7 @@ void testExchangeGeometry ( const GridPart &gridPart, LocalFunction &localFuncti
   for( const auto& entity : elements( gridPart ) )
   {
     const auto refElement = Dune::referenceElement< typename GridPart::ctype, GridPart::dimension >( entity.type() );
-    localFunction.init( entity.impl().hostEntity() );
+    auto localFunctionGuard = bindGuard(localFunction, entity.impl().hostEntity() );
     for( int i = 0; i < refElement.size( GridPart::dimension ); ++i )
       for( int k = 0; k < GridPart::dimensionworld; ++k )
         localFunction[ i*GridPart::dimensionworld + k ] = refElement.position( i, GridPart::dimension )[ k ];

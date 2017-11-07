@@ -14,6 +14,9 @@ typedef Dune::YaspGrid< dimw > HGridType;
 
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/localfunction/const.hh>
+#include <dune/fem/function/common/localcontribution.hh>
+#include <dune/fem/common/bindguard.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
@@ -123,32 +126,30 @@ public:
 
     discFunc.clear();
 
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+    typedef LocalContribution<DiscreteFunctionType, Assembly::Add> LocalContrib;
 
     typedef typename DiscreteFunctionSpaceType::RangeType RangeType;
     RangeType ret (0.0);
     std::vector< RangeType > phi;
-    //diagomal of massmatrix
-    DiscreteFunctionType mass("mass",space);
-    mass.clear();
+
+    LocalContrib lc(discFunc);
 
     for(const auto& entity : space)
     {
+      auto lcGuard = bindGuard(lc,entity);
+
       // Get quadrature rule
       CachingQuadrature<GridPartType,0> quad(entity, polOrd);
 
-      LocalFuncType lf = discFunc.localFunction(entity);
-      LocalFuncType tmp = mass.localFunction(entity);
-
       //! Note: basis functions must be ortho-normal!!!!
       typedef typename DiscreteFunctionSpaceType::BasisFunctionSetType BasisFunctionSetType ;
-      const BasisFunctionSetType & basisSet = lf.basisFunctionSet();
+      const BasisFunctionSetType & basisSet = lc.basisFunctionSet();
 
       const typename HGridType::template Codim<0>::Entity::Geometry&
         itGeom = entity.geometry();
 
       const int quadNop = quad.nop();
-      const int numDofs = lf.numDofs();
+      const int numDofs = lc.size();
       phi.resize( numDofs );
 
       for(int qP = 0; qP < quadNop ; ++qP)
@@ -159,13 +160,8 @@ public:
         basisSet.evaluateAll( quad[ qP ], phi );
 
         for(int i=0; i<numDofs; ++i)
-        {
-	        //tmp[i]+=quad.weight(qP)*SQR(phi)*det ;
-          lf[i] += quad.weight(qP) * (ret * phi[i])/*det*/ ;
-        }
+          lc[i] += quad.weight(qP) * (ret * phi[i])/*det*/ ;
       }
-      // for(int i=0; i<numDofs; ++i)
-      //   lf[i]/=tmp[i];
    }
   }
 
@@ -197,7 +193,7 @@ public:
     const DiscreteFunctionSpaceType & space = discFunc.space();
 
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+    typedef ConstLocalFunction<DiscreteFunctionType> LocalFuncType;
 
     RangeType ret (0.0);
     RangeType phi (0.0);
@@ -210,10 +206,11 @@ public:
 
     enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
     enum { dimDomain =DiscreteFunctionSpaceType :: DimDomain};
+    LocalFuncType lf(discFunc);
     for(const auto& entity : space)
     {
+      auto lfGuard = bindGuard(lf,entity);
       CachingQuadrature<GridPartType,0> quad(entity, polOrd);
-      LocalFuncType lf = discFunc.localFunction(entity);
       const int quadNop = quad.nop();
       for(int qP = 0; qP < quadNop; ++qP)
       {
@@ -248,7 +245,7 @@ public:
     const DiscreteFunctionSpaceType & space = discFunc.space();
 
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+    typedef ConstLocalFunction<DiscreteFunctionType> LocalFuncType;
 
     RangeType ret (0.0);
     RangeType phi (0.0);
@@ -256,10 +253,12 @@ public:
     RangeType error(0.0);
 
     enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
+
+    LocalFuncType lf(discFunc);
     for(const auto& entity : space)
     {
+      auto lfGuard = bindGuard(lf, entity);
       CachingQuadrature<GridPartType,0> quad(entity, polOrd);
-      LocalFuncType lf = discFunc.localFunction(entity);
       const int quadNop = quad.nop();
       for(int qP = 0; qP < quadNop; ++qP)
       {

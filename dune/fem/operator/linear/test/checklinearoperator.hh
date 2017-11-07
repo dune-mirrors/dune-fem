@@ -178,7 +178,7 @@ namespace Dune
 
         {
           // check {add,set,addScaled}LocalMatrix
-          temp.init( domainEntity, rangeEntity );
+          temp.bind( domainEntity, rangeEntity );
           temp.clear();
           for( const auto &p : permutation )
             temp.set( p.first, p.second, 1.0 );
@@ -187,6 +187,8 @@ namespace Dune
 
           linOp.addLocalMatrix( domainEntity, rangeEntity, temp );
           linOp.addScaledLocalMatrix( domainEntity, rangeEntity, temp, -1.0 );
+
+          temp.unbind();
         }
       }
       linOp.communicate();
@@ -197,13 +199,14 @@ namespace Dune
         auto domainEntity = entry.first;
         auto rangeEntity = entry.second;
 
-        temp.init( domainEntity, rangeEntity );
+        temp.bind( domainEntity, rangeEntity );
         temp.clear();
         linOp.getLocalMatrix( domainEntity, rangeEntity, temp );
         CheckLinearOperator::verifyPermutation( temp, permutation );
 
         // check old localMatrix implementation
         CheckLinearOperator::verifyLocalMatrixPermutation( linOp, domainEntity, rangeEntity, permutation );
+        temp.unbind();
       }
 
       // test application

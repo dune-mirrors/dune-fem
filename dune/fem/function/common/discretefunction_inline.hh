@@ -148,7 +148,8 @@ namespace Dune
 
       const auto& entity(entitySearch( x ));
       const auto geometry = entity.geometry();
-      functor( geometry.local( x ), BaseType::localFunction( entity ) );
+      ConstLocalFunction<Impl> localFunction(this->asImp(), entity);
+      functor( geometry.local( x ), localFunction );
     }
 
 

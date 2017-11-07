@@ -39,7 +39,7 @@ namespace Dune
       template< class DiscreteFunction, class Intersection >
       struct OutsideLocalFunction
       {
-        typedef typename DiscreteFunction::LocalFunctionType LocalFunctionType;
+        typedef ConstLocalFunction<DiscreteFunction> LocalFunctionType;
 
         typedef typename LocalFunctionType::EntityType EntityType;
         typedef typename LocalFunctionType::FunctionSpaceType FunctionSpaceType;
@@ -62,11 +62,15 @@ namespace Dune
 
         explicit OutsideLocalFunction ( const DiscreteFunction &df ) : localFunction_( df ) {}
 
-        void init ( const EntityType &outside, const GeometryType &geoIn, const GeometryType &geoOut )
+        void bind ( const EntityType &outside, const GeometryType &geoIn, const GeometryType &geoOut )
         {
-          localFunction_.init( outside );
+          localFunction_.bind( outside );
           geoIn_ = &geoIn;
           geoOut_ = &geoOut;
+        }
+        void unbind()
+        {
+          localFunction_.unbind();
         }
 
         template< class Point >
@@ -159,7 +163,7 @@ namespace Dune
             // note: intersection geometries must live until end of intersection loop!
             const auto geoIn = intersection.geometryInInside();
             const auto geoOut = intersection.geometryInOutside();
-            uOutside.init( outside, geoIn, geoOut );
+            uOutside.bind( outside, geoIn, geoOut );
 
             // resize local DoF vectors
             const std::size_t numBlocks = blockMapper.numDofs( inside );

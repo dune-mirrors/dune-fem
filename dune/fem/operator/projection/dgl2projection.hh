@@ -137,7 +137,7 @@ namespace Dune
         {
           // get geometry
           const Geometry& geo = en.geometry();
-          uLocal.init( en );
+          uLocal.bind( en );
           wLocal.bind( en );
 
           // get quadrature
@@ -158,6 +158,7 @@ namespace Dune
           massMatrix.applyInverse( en, wLocal );
 
           wLocal.unbind();
+          uLocal.unbind();
         }
       }
     };

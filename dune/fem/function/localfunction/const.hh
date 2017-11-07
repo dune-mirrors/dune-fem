@@ -152,6 +152,7 @@ namespace Dune
       {
       }
 
+#if 0 // DEPRECATE
       //! cast a MutableLocalFunction into this one !!! expensive !!!
       ConstLocalDiscreteFunction ( const typename DiscreteFunctionType::LocalFunctionType &localFunction )
       : BaseType( localFunction.basisFunctionSet(), LocalDofVectorType( localFunction.size(), localFunction.discreteFunction().localDofVectorAllocator() ) ),
@@ -159,6 +160,7 @@ namespace Dune
       {
         std::copy( localFunction.localDofVector().begin(), localFunction.localDofVector().end(), localDofVector().begin() );
       }
+#endif
 
       /** \brief constructor creating a local function and binding it to an
                  entity
@@ -191,6 +193,10 @@ namespace Dune
       : BaseType( static_cast< BaseType &&>( other ) ),
         discreteFunction_( other.discreteFunction_ )
       {}
+
+      //! destructor
+      ~ConstLocalDiscreteFunction ( )
+      { unbind(); }
 
       using BaseType::localDofVector;
 
@@ -243,14 +249,20 @@ namespace Dune
         return h;
       }
 
+#if 0 // DEPRECATED
       /** \copydoc Dune::Fem::LocalFunction :: init */
       void init ( const EntityType &entity )
       {
         BaseType::init( discreteFunction().space().basisFunctionSet( entity ) );
         discreteFunction().getLocalDofs( entity, localDofVector() );
       }
+#endif
 
-      void bind ( const EntityType &entity ) { init( entity ); }
+      void bind ( const EntityType &entity )
+      {
+        BaseType::init( discreteFunction().space().basisFunctionSet( entity ) );
+        discreteFunction().getLocalDofs( entity, localDofVector() );
+      }
       void unbind () {}
 
       const DiscreteFunctionType &discreteFunction() const { return *discreteFunction_; }
@@ -272,7 +284,7 @@ namespace Dune
       struct ConstLocalFunction;
 
       template< class GF >
-      struct ConstLocalFunction< GF, std::enable_if_t< std::is_base_of< Fem::HasLocalFunction, GF >::value && std::is_base_of< Fem::IsDiscreteFunction, GF >::value > >
+      struct ConstLocalFunction< GF, std::enable_if_t< std::is_base_of< Fem::IsDiscreteFunction, GF >::value > >
       {
         typedef ConstLocalDiscreteFunction< GF > Type;
       };
@@ -294,11 +306,17 @@ namespace Dune
             : GridFunctionType::LocalFunctionType( gridFunction ),
               gridFunction_( gridFunction )
           {}
+          explicit Type ( const GridFunctionType &gridFunction, const EntityType &entity )
+            : GridFunctionType::LocalFunctionType( gridFunction ),
+              gridFunction_( gridFunction )
+          {
+            bind(entity);
+          }
 
           using GF::LocalFunctionType::evaluate;
           using GF::LocalFunctionType::jacobian;
           using GF::LocalFunctionType::hessian;
-          using GF::LocalFunctionType::init;
+          using GF::LocalFunctionType::bind;
 
           //! evaluate local function
           template< class Point >
@@ -327,7 +345,7 @@ namespace Dune
             return h;
           }
 
-          void bind ( const EntityType &entity ) { init( entity ); }
+          void bind ( const EntityType &entity ) { bind( entity ); }
           void unbind () {}
 
           const GridFunctionType &gridFunction () const { return gridFunction_; }
@@ -352,6 +370,9 @@ namespace Dune
           explicit Type ( const GridFunctionType &gridFunction )
             :  gridFunction_( gridFunction )
           {}
+          explicit Type ( const GridFunctionType &gridFunction, const EntityType &entity )
+            :  gridFunction_( gridFunction )
+          { bind(entity); }
 
           template <class Point>
           void evaluate(const Point &x, RangeType &ret) const

@@ -20,6 +20,7 @@ using namespace Dune;
 
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/vectorfunction.hh>
+#include <dune/fem/common/localcontribution.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
@@ -119,11 +120,12 @@ class DGL2ProjectionAllPartitionNoComm
 
     discFunc.clear();
 
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+    typedef LocalContribution<DiscreteFunctionType, Assembly::Add> LocalContribType;
 
     typename FunctionSpaceType::RangeType ret (0.0);
     typename FunctionSpaceType::RangeType phi (0.0);
 
+    LocalContribType lc(discFunc);
     IteratorType it    = space.gridPart().template begin< 0, All_Partition > ();
     IteratorType endit = space.gridPart().template end< 0, All_Partition > ();
     for( ; it != endit ; ++it)
@@ -131,14 +133,14 @@ class DGL2ProjectionAllPartitionNoComm
       const EntityType &entity = *it;
       const GeometryType &itGeom = entity.geometry();
 
-      LocalFuncType lf = discFunc.localFunction(entity);
+      auto lcGuard = bindGuard(lc,entity);
 
       CachingQuadrature<GridPartType,0> quad(entity, polOrd);
       for( size_t qP = 0; qP < quad.nop(); ++qP )
       {
         f.evaluate(itGeom.global(quad.point(qP)), ret);
         ret *= quad.weight(qP) ;
-        lf.axpy( quad[qP], ret );
+        lc.axpy( quad[qP], ret );
       }
     }
   }
@@ -151,13 +153,15 @@ void resetNonInterior( DiscreteFunctionType &solution )
 
   const DiscreteFunctionSpaceType& space = solution.space();
 
+  LocalContribution<DiscreteFunctionType, Assembly::Set> lc(solution);
   int count = 0;
   for( const auto& entity : elements( space.gridPart(), Partitions::all ) )
   {
     if( entity.partitionType() != InteriorEntity )
     {
+      auto lcGuard = bindGuard(lc,entity);
+      lc.clear();
       ++count ;
-      solution.localFunction( entity ).clear();
     }
   }
 

@@ -40,7 +40,6 @@ namespace Dune
         typedef typename BaseType::DestinationType DestinationType;
         typedef typename BaseType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
         typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
-        typedef typename BaseType::LocalFunctionType LocalFunctionType;
 
         typedef typename BaseType::GridPartType GridPartType;
         typedef typename BaseType::GridType GridType;
@@ -114,7 +113,7 @@ namespace Dune
         {
           //- statements
           this->caller_.setEntity(en);
-          LocalFunctionType updEn = this->dest_->localFunction(en);
+          LocalContribution< decltype(this->dest_), Assembly::Set > updEn( this->dest_ );
           const int updEn_numDofs = updEn.numDofs();
           const BasisFunctionSetType& bsetEn = updEn.basisFunctionSet();
 

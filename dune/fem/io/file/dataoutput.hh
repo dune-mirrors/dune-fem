@@ -679,20 +679,21 @@ namespace Dune
       void forEach ( const std::tuple< T ... >& data )
       {
         Hybrid::forEach( Std::make_index_sequence< sizeof...( T ) >{},
-          [&]( auto i ) {
-                          auto df( std::get< i >( data ));
-                          if( df )
-                          {
-                            auto lf = df->localFunction(en_);
-                            typedef typename std::remove_pointer< decltype( df ) >::type DFType;
-                            typename DFType::DiscreteFunctionSpaceType::RangeType u;
-                            lf.evaluate( quad_[ i_ ], u );
+          [&]( auto i )
+          {
+            auto df( std::get< i >( data ));
+            if( df )
+            {
+              ConstLocalFunction<std::decay_t<decltype(*df)>> lf(*df, en_);
+              typedef typename std::remove_pointer< decltype( df ) >::type DFType;
+              typename DFType::DiscreteFunctionSpaceType::RangeType u;
+              lf.evaluate( quad_[ i_ ], u );
 
-                            constexpr int dimRange = DFType::DiscreteFunctionSpaceType::dimRange;
-                            for( auto k = 0; k < dimRange; ++k )
-                              out_ << "  " << u[ k ];
-                          }
-                        });
+              constexpr int dimRange = DFType::DiscreteFunctionSpaceType::dimRange;
+              for( auto k = 0; k < dimRange; ++k )
+                out_ << "  " << u[ k ];
+            }
+          });
       }
 
       template< typename T >

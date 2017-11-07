@@ -280,7 +280,6 @@ namespace Dune
         return (intersection.boundary() ? (intersection.indexInInside()+1) : 0);
       }
     };
-
   } // namespace Fem
 
 } // namespace Dune

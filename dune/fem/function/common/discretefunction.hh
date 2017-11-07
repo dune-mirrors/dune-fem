@@ -15,6 +15,7 @@
 #include <dune/fem/function/common/functor.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/function/common/rangegenerators.hh>
+#include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/gridpart/common/entitysearch.hh>
 #include <dune/fem/io/file/persistencemanager.hh>
 #include <dune/fem/io/streams/streams.hh>
@@ -50,10 +51,10 @@ namespace Dune
     class IsDiscreteFunction
     {};
 
+    // WHAT TO DO WITH THIS?
     /** \brief base class for determing whether a function has local functions or not */
     class HasLocalFunction
     {};
-
 
     template< class DiscreteFunction >
     struct DiscreteFunctionTraits;
@@ -78,9 +79,9 @@ namespace Dune
      */
     template< class Impl >
     class DiscreteFunctionInterface
-    : public Function< typename DiscreteFunctionTraits< Impl >::DiscreteFunctionSpaceType::FunctionSpaceType, Impl >,
-      public IsDiscreteFunction,
-      public HasLocalFunction
+    : public Function< typename DiscreteFunctionTraits< Impl >::DiscreteFunctionSpaceType::FunctionSpaceType, Impl >
+    , public IsDiscreteFunction
+    , public HasLocalFunction   // CHANGE SOMEHOW OR KEEP AS 'ISGRIDFUNCTION'
     {
       typedef DiscreteFunctionInterface< Impl > ThisType;
       typedef Function< typename DiscreteFunctionTraits< Impl >::DiscreteFunctionSpaceType::FunctionSpaceType, Impl > BaseType;
@@ -116,7 +117,7 @@ namespace Dune
       typedef typename DiscreteFunctionSpaceType :: GridType GridType;
 
       //! type of local functions
-      typedef typename Traits :: LocalFunctionType LocalFunctionType;
+      // DEPRECATE typedef typename Traits :: LocalFunctionType LocalFunctionType;
 
       //! type of the dof vector used in the discrete function implementation
       typedef typename Traits :: DofVectorType  DofVectorType;
@@ -208,20 +209,24 @@ namespace Dune
        *  \param[in]  entity  Entity to focus view of discrete function
        *  \returns a local function associated with the entity
        */
+      /* DEPRECATE
       LocalFunctionType localFunction ( const EntityType &entity )
       {
         return asImp().localFunction( entity );
       }
+      */
 
       /** \brief obtain a local function for an entity (read-write)
        *
        *  \param[in]  entity  Entity to focus view of discrete function
        *  \returns a local function associated with the entity
        */
+      /* DEPRECATE
       const LocalFunctionType localFunction ( const EntityType &entity ) const
       {
         return asImp().localFunction( entity );
       }
+      */
 
       /** \brief obtain an uninitialized local function (read-write)
        *
@@ -229,10 +234,12 @@ namespace Dune
        *
        *  \returns an uninitialized local function
        */
+      /* DEPRECATE
       LocalFunctionType localFunction ()
       {
         return asImp().localFunction();
       }
+      */
 
       /** \brief obtain an uninitialized local function (read-write)
        *
@@ -240,10 +247,12 @@ namespace Dune
        *
        *  \returns an uninitialized local function
        */
+      /* DEPRECATE
       const LocalFunctionType localFunction () const
       {
         return asImp().localFunction();
       }
+      */
 
       /** \brief set all degrees of freedom to zero */
       void clear()
@@ -574,8 +583,7 @@ namespace Dune
       typedef typename Traits :: LocalDofVectorAllocatorType LocalDofVectorAllocatorType;
 
       //! type of local functions
-      typedef typename BaseType :: LocalFunctionType LocalFunctionType;
-      typedef typename LocalFunctionType::LocalCoordinateType LocalCoordinateType;
+      // DEPRECATE typedef typename BaseType :: LocalFunctionType LocalFunctionType;
 
       typedef typename BaseType :: DofBlockType DofBlockType;
       typedef typename BaseType :: ConstDofBlockType ConstDofBlockType;
@@ -585,6 +593,8 @@ namespace Dune
       typedef typename BaseType :: EntityType EntityType ;
 
       typedef typename BaseType :: DofType DofType;
+
+      typedef typename EntityType :: Geometry :: LocalCoordinate LocalCoordinateType;
 
       //! size type of the block vector
       typedef typename DofVectorType::SizeType SizeType;
@@ -634,16 +644,16 @@ namespace Dune
       const GridPartType &gridPart () const { return space().gridPart(); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
-      LocalFunctionType localFunction ( const EntityType &entity ) { return LocalFunctionType( asImp(), entity ); }
+      // DEPRECATE LocalFunctionType localFunction ( const EntityType &entity ) { return LocalFunctionType( asImp(), entity ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction(const EntityType &entity) */
-      const LocalFunctionType localFunction ( const EntityType &entity ) const { return LocalFunctionType( asImp(), entity ); }
+      // DEPRECATE const LocalFunctionType localFunction ( const EntityType &entity ) const { return LocalFunctionType( asImp(), entity ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction() */
-      LocalFunctionType localFunction () { return LocalFunctionType( asImp() ); }
+      // DEPRECATE LocalFunctionType localFunction () { return LocalFunctionType( asImp() ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::localFunction() */
-      const LocalFunctionType localFunction () const { return LocalFunctionType( asImp() ); }
+      // DEPRECATE const LocalFunctionType localFunction () const { return LocalFunctionType( asImp() ); }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::clear() */
       void clear() { dofVector().clear(); }
@@ -749,6 +759,7 @@ namespace Dune
       /** \copydoc Dune::Fem::Function::evaluate(const DomainType &x,RangeType &value) const */
       void evaluate ( const DomainType &x, RangeType &value ) const
       {
+        typedef ConstLocalFunction<Impl> LocalFunctionType;
         asImp().evaluateGlobal( x, [ &value ] ( const LocalCoordinateType &x, const LocalFunctionType &localFunction )
                                               { localFunction.evaluate( x, value ); } );
       }
@@ -756,6 +767,7 @@ namespace Dune
       /** \copydoc Dune::Fem::Function::jacobian(const DomainType &x,JacobianRangeType &jacobian) const */
       void jacobian ( const DomainType &x, JacobianRangeType &jacobian ) const
       {
+        typedef ConstLocalFunction<Impl> LocalFunctionType;
         asImp().evaluateGlobal( x, [ &jacobian ] ( const LocalCoordinateType &x, const LocalFunctionType &localFunction )
                                                  { localFunction.jacobian( x, jacobian ); } );
 
@@ -764,6 +776,7 @@ namespace Dune
       /** \copydoc Dune::Fem::Function::hessian (const DomainType &x,HessianRangeType &hessian) const */
       void hessian ( const DomainType &x, HessianRangeType &hessian ) const
       {
+        typedef ConstLocalFunction<Impl> LocalFunctionType;
         asImp().evaluateGlobal( x, [ &hessian ] ( const LocalCoordinateType &x, const LocalFunctionType &localFunction )
                                                 { localFunction.hessian( x, hessian ); } );
       }
@@ -912,7 +925,7 @@ namespace Dune
       }
 
     protected:
-      friend LocalFunctionType;
+      // DEPRECATE friend LocalFunctionType;
 
       //! get local Dofs and store a reference to it in the LocalDofVector
       void getLocalDofReferences ( const EntityType &entity, LocalDofVectorType &localDofs )

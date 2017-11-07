@@ -150,6 +150,15 @@ namespace Dune
         BaseType :: init( domainEntity, rangeEntity );
         fields_.resize( rows() * columns() );
       }
+      /** \copydoc Dune::Fem::LocalMatrixInterface::bind */
+      template< class DomainEntityType, class RangeEntityType >
+      inline void bind ( const DomainEntityType &domainEntity,
+                         const RangeEntityType &rangeEntity )
+      {
+        BaseType :: init( domainEntity, rangeEntity );
+        fields_.resize( rows() * columns() );
+      }
+      inline void unbind() {}
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::add */
       inline void add ( const int localRow,

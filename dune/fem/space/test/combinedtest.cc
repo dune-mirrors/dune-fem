@@ -8,6 +8,9 @@ static const int dimw = Dune::GridSelector::dimworld;
 #include <dune/fem/space/combinedspace/combinedspace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/combinedfunction.hh>
+#include <dune/fem/function/localfunction/const.hh>
+#include <dune/fem/function/common/localcontribution.hh>
+#include <dune/fem/common/bindguard.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
@@ -105,35 +108,35 @@ class L2Projection
 
     discFunc.clear();
 
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+    typedef LocalContribution<DiscreteFunctionType> LocalContrib;
 
     typename DiscreteFunctionSpaceType::RangeType ret (0.0);
     typename DiscreteFunctionSpaceType::RangeType phi (0.0);
 
+    LocalContrib lc(discFunc);
     for(const auto& entity : space)
     {
       // Get quadrature rule
       CachingQuadrature<GridPartType,0> quad(entity, polOrd);
 
-      LocalFuncType lf = discFunc.localFunction(entity);
+      auto lcGuard = bindGuard(lc,entity);
 
       //! Note: BaseFunctions must be ortho-normal!!!!
       typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType
 	BaseFunctionSetType ;
-      const BaseFunctionSetType & baseset =
-        lf.baseFunctionSet();
+      const BaseFunctionSetType & baseset = lc.baseFunctionSet();
 
       const typename MyGridType::template Codim<0>::Entity::Geometry&
         itGeom = entity.geometry();
 
       const int quadNop = quad.nop();
-      const int numDofs = lf.numDofs();
+      const int numDofs = lc.numDofs();
       for(int qP = 0; qP < quadNop ; ++qP)
       {
         f.evaluate(itGeom.global(quad.point(qP)), ret);
         for(int i=0; i<numDofs; ++i) {
           baseset.evaluate( i, quad[qP], phi );
-          lf[i] += quad.weight(qP) * (ret * phi) ;
+          lc[i] += quad.weight(qP) * (ret * phi) ;
         }
       }
     }
@@ -164,7 +167,7 @@ public:
     const DiscreteFunctionSpaceType & space = discFunc.space();
 
     typedef typename DiscreteFunctionSpaceType::GridPartType GridPartType;
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+    typedef ConstLocalFunction<DiscreteFunctionType> LocalFuncType;
 
     RangeType ret (0.0);
     RangeType phi (0.0);
@@ -172,11 +175,12 @@ public:
     RangeType error(0.0);
 
     enum { dimRange = DiscreteFunctionSpaceType :: DimRange };
+    LocalFuncType lf(discFunc);
 
     for(const auto& entity : space)
     {
+      auto lfGuard = bindGuard(lf, discFunc);
       CachingQuadrature<GridPartType,0> quad(entity, polOrd);
-      LocalFuncType lf = discFunc.localFunction(entity);
       const int quadNop = quad.nop();
       for(int qP = 0; qP < quadNop; ++qP)
       {

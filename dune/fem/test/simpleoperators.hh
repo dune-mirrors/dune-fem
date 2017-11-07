@@ -57,8 +57,8 @@ public:
     {
       auto geometry = entity.geometry();
 
-      argLocal.init( entity );
-      local.init( entity );
+      argLocal.bind( entity );
+      local.bind( entity );
 
       // run over quadrature points
       QuadratureType quadrature( entity, 2* argLocal.order()+1 );
@@ -80,6 +80,8 @@ public:
         local.axpy( qp, uValue );
       }
       dest.addLocalDofs( entity, local.localDofVector() );
+      local.unbind();
+      argLocal.unbind();
     }
     dest.communicate();
   }
@@ -120,8 +122,8 @@ public:
     {
       auto geometry = entity.geometry();
 
-      argLocal.init( entity );
-      local.init( entity );
+      argLocal.bind( entity );
+      local.bind( entity );
 
       // run over quadrature points
       QuadratureType quadrature( entity, 2* argLocal.order()+1 );
@@ -143,6 +145,8 @@ public:
         local.axpy( qp, uValue );
       }
       dest.addLocalDofs( entity, local.localDofVector() );
+      local.unbind();
+      argLocal.unbind();
     }
     dest.communicate();
   }

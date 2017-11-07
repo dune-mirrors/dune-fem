@@ -31,6 +31,8 @@
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/space/padaptivespace.hh>
+#include <dune/fem/function/common/localcontribution.hh>
+#include <dune/fem/common/bindguard.hh>
 
 #ifdef HAVE_DUNE_ISTL
 #include <dune/fem/function/blockvectorfunction.hh>
@@ -113,7 +115,11 @@ struct Scheme
       step_( step )
   {
     if( discreteSpace_.begin() != discreteSpace_.end() )
-      solution_.localFunction( *(discreteSpace_.begin()) )[0] = 0.;
+    {
+      Dune::Fem::LocalContribution< DiscreteFunctionType, Dune::Fem::Assembly::Set > solLocal( solution_ );
+      auto uGuard = bindGuard( solLocal, *(discreteSpace_.begin()) );
+      solLocal[0] = 0.;
+    }
     solution_.clear();
   }
 

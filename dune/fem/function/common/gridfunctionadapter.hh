@@ -1,3 +1,5 @@
+// #error WILL BE DEPRECATED
+
 #ifndef DUNE_FEM_GRIDFUNCTIONADAPTER_HH
 #define DUNE_FEM_GRIDFUNCTIONADAPTER_HH
 
@@ -299,6 +301,11 @@ namespace Dune
       {
         entity_ = &entity;
       }
+      void bind ( const EntityType &entity )
+      {
+        init(entity);
+      }
+      void unbind() {}
 
       const EntityType &entity () const
       {

@@ -49,6 +49,10 @@ namespace Dune
         weight_( -1 ),
         temp_( space )
       {}
+      ~DiscontinuousGalerkinLocalRestrictProlong ()
+      {
+        temp_.unbind();
+      }
 
       void setFatherChildWeight ( const DomainFieldType &weight )
       {
@@ -70,7 +74,8 @@ namespace Dune
 
         if( applyInverse )
         {
-          temp_.init( lfFather.entity() );
+          temp_.unbind();
+          temp_.bind( lfFather.entity() );
           temp_.clear();
         }
 

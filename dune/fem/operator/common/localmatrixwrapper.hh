@@ -96,7 +96,7 @@ namespace Dune
         localMatrix_( *localMatrixPtr_ )
       {
         // initialize the wrapped local matrix with the entities
-        localMatrix().init( domainEntity, rangeEntity );
+        localMatrix().bind( domainEntity, rangeEntity );
       }
 
       /** \brief copy constructor
@@ -113,7 +113,9 @@ namespace Dune
       {
         // call finalize on local matrix implementation
         // (e.g. needed for PETSc to add values to the real matrix)
+        // QUESTION: both needed?
         localMatrix().finalize();
+        localMatrix().unbind();
       }
 
       ThisType& operator= ( const ThisType& ) = delete;
@@ -121,7 +123,8 @@ namespace Dune
       /** \copydoc Dune::Fem::LocalMatrixInterface::init */
       void init ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
       {
-        localMatrix().init( domainEntity, rangeEntity );
+        localMatrix().unbind();
+        localMatrix().bind( domainEntity, rangeEntity );
       }
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::add */

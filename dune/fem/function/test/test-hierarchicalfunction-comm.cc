@@ -17,6 +17,7 @@
 #include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
+#include <dune/fem/common/bindguard.hh>
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/discontinuousgalerkin/lagrange.hh>
 #include <dune/fem/space/discontinuousgalerkin/space.hh>
@@ -108,8 +109,8 @@ void interpolateOnly ( const GridFunction &u, DiscreteFunction &v )
   for( const auto entity : elements( v.gridPart(), Dune::Partitions::all ) )
   {
     // initialize u, v to entity
-    uLocal.init( entity );
-    vLocal.init( entity );
+    auto uGuard = bindGuard(uLocal, entity );
+    auto vGuard = bindGuard(vLocal, entity );
 
     // perform local interpolation
     v.space().interpolation( entity )( uLocal, vLocal.localDofVector() );

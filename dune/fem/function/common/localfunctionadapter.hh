@@ -1,3 +1,5 @@
+// #error WILL BE DEPRECATED
+
 #ifndef DUNE_FEM_LOCALFUNCTIONADAPTER_HH
 #define DUNE_FEM_LOCALFUNCTIONADAPTER_HH
 
@@ -541,6 +543,11 @@ namespace Dune
         localFunctionImpl().init( entity );
         entity_ = &entity;
       }
+      void bind ( const EntityType &entity )
+      {
+        init(entity);
+      }
+      void unbind() {}
 
       //! get entity
       const EntityType& entity() const

@@ -78,7 +78,6 @@ namespace Dune
       for( const auto entity : elements( v.gridPart(), ps ) )
       {
         // initialize u to entity
-        // uLocal.init( entity );
         auto uGuard = bindGuard( uLocal, entity );
 
         // bind v to entity

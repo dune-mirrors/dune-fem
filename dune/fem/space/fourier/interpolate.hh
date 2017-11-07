@@ -47,7 +47,7 @@ namespace Dune
       const auto &functionSet = v.space().functionSet();
       if( functionSet.order() == std::numeric_limits< int >::max() )
         DUNE_THROW( InvalidStateException, "Cannot interpolate to Fourier space if quadrature order is not specified" );
-      typename GridFunction::LocalFunctionType uLocal( u );
+      ConstLocalFunction<GridFunction> uLocal(u);
 
       // Note: The partition is ignored, here. As all degrees of freedom are
       //       global, we need to fill in all DoFs anyway.
@@ -57,7 +57,7 @@ namespace Dune
       {
         const auto geometry = entity.geometry();
 
-        uLocal.init( entity );
+        auto guard = bindGuard(uLocal, entity);
 
         for( const auto qp : Dune::Fem::CachingQuadrature< GridPartType, 0 >( entity, 2*functionSet.order() ) )
         {

@@ -25,6 +25,9 @@
 
 #include <dune/fem/function/common/gridfunctionadapter.hh>
 #include <dune/fem/space/common/interpolate.hh>
+#include <dune/fem/function/localfunction/const.hh>
+#include <dune/fem/function/common/localcontribution.hh>
+#include <dune/fem/common/bindguard.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
@@ -139,35 +142,35 @@ class L2Projection
 
     discFunc.clear();
 
-    typedef typename DiscreteFunctionType::LocalFunctionType LocalFuncType;
+    typedef LocalContribution<DiscreteFunctionType, Assembly::Add> LocalContribType;
 
     typename DiscreteFunctionSpaceType::RangeType ret (0.0);
     typename DiscreteFunctionSpaceType::RangeType phi (0.0);
 
+    LocalContribType lc(discFunc);
     for(const auto& entity : space)
     {
+      auto lcGuard = bindGuard(lc,entity);
+
       // Get quadrature rule
       CachingQuadrature<GridPartType,0> quad(entity, polOrd);
 
-      LocalFuncType lf = discFunc.localFunction(entity);
-
       //! Note: BaseFunctions must be ortho-normal!!!!
       typedef typename DiscreteFunctionSpaceType::BaseFunctionSetType BaseFunctionSetType ;
-      const BaseFunctionSetType & baseset =
-        lf.baseFunctionSet();
+      const BaseFunctionSetType & baseset = lc.baseFunctionSet();
 
       //const typename MyGridType::template Codim<0>::Entity::Geometry&
       //  itGeom = entity.geometry();
 
       const int quadNop = quad.nop();
-      const int numDofs = lf.numDofs();
+      const int numDofs = lc.numDofs();
       for(int qP = 0; qP < quadNop ; ++qP)
       {
         // f.evaluate(itGeom.global(quad.point(qP)), ret);
         f.localFunction(entity).jacobian(quad,qP, ret);
         for(int i=0; i<numDofs; ++i) {
           baseset.evaluate(i,quad[qP],phi);
-          lf[i] += quad.weight(qP) * (ret * phi) ;
+          lc[i] += quad.weight(qP) * (ret * phi) ;
         }
       }
     }
@@ -193,8 +196,6 @@ public:
 
   typedef typename DiscreteFunctionType :: FunctionSpaceType
     DiscreteFunctionSpaceType;
-  typedef typename DiscreteFunctionType :: LocalFunctionType
-    LocalFunctionType;
 
   typedef typename DiscreteFunctionSpaceType :: DomainType DomainType;
   typedef typename DiscreteFunctionSpaceType :: RangeType RangeType;
@@ -217,11 +218,13 @@ public:
     const DiscreteFunctionSpaceType &discreteFunctionSpace
       = discreteFunction.space();
 
+    ConstLocalFunction<DiscreteFunctionType> localFunction(discreteFunction);
+
     RangeType error( 0 );
     for( const auto& entity : discreteFunctionSpace )
     {
       CachingQuadrature< GridPartType, 0 > quadrature( entity, polOrder );
-      LocalFunctionType localFunction = discreteFunction.localFunction( entity );
+      auto localFGuard = bindGuard(localFunction, entity );
 
       const GeometryType &geometry = entity.geometry();
 
@@ -270,7 +273,6 @@ public:
 
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType
     DiscreteFunctionSpaceType;
-  typedef typename DiscreteFunctionType::LocalFunctionType LocalFunctionType;
 
   typedef typename DiscreteFunctionSpaceType::DomainFieldType DomainFieldType;
   typedef typename DiscreteFunctionSpaceType::DomainType DomainType;
@@ -296,12 +298,13 @@ public:
   {
     const DiscreteFunctionSpaceType &discreteFunctionSpace
       = discreteFunction.space();
+    ConstLocalFunction<DiscreteFunctionType> localFunction(discreteFunction);
 
     RangeType error( 0 );
     for( const auto& entity : discreteFunctionSpace )
     {
+      auto localFGuard = bindGuard(localFunction, entity);
       CachingQuadrature< GridPartType, 0 > quadrature( entity, polOrder );
-      LocalFunctionType localFunction = discreteFunction.localFunction( entity );
 
       const GeometryType &geometry = entity.geometry();
 

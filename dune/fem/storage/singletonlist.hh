@@ -131,6 +131,7 @@ namespace Dune
           }
         }
 
+        assert(0);
         std :: cerr << "Object could not be deleted, "
                     << "because it is not in the list anymore!" << std :: endl;
       }

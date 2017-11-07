@@ -243,11 +243,15 @@ struct AddLsgErr {
     abort();
   }
   //! init local function
-  void init(const EntityType& en)
+  void bind(const EntityType& en)
   {
     entity_ = &en;
-    lUh_.init(en);
+    lUh_.bind(en);
     initialized_ = true;
+  }
+  void unbind()
+  {
+    lUh_.unbind();
   }
 private:
   const EntityType &entity() const
@@ -256,9 +260,8 @@ private:
     return *entity_;
   }
 
-  typedef typename ConsType::LocalFunctionType ConsLocalFunctionType;
   const DiscreteFunctionSpaceType& space_;
-  ConsLocalFunctionType lUh_;
+  ConstLocalFunction<ConsType> lUh_;
   double time_;
   const EntityType* entity_;
   bool initialized_;

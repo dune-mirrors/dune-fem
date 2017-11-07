@@ -7,6 +7,7 @@
 #include <dune/fem/function/localfunction/temporary.hh>
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/space/lagrange.hh>
+#include <dune/fem/common/bindguard.hh>
 
 namespace Dune
 {
@@ -72,19 +73,20 @@ namespace Dune
       std::cout << std::endl;
       std::cout << "Phase I: Setting each DoF of a discrete function to its global coordinate..." << std::endl;
 
-      typename decltype( id )::LocalFunctionType idLocal( id );
+      ConstLocalFunction<decltype( id )> idLocal( id );
       TemporaryLocalFunction< SpaceType > vLocal( space ), wLocal( space );
       for( const auto &entity : space )
       {
         const auto &interpolation = space.interpolation( entity );
 
-        idLocal.init( entity );
-        vLocal.init( entity );
+        auto idGuard = bindGuard(idLocal, entity );
+        auto vGuard = bindGuard(vLocal, entity );
+        auto wGuard = bindGuard(wLocal, entity );
+
         interpolation( idLocal, vLocal.localDofVector() );
 
         u.setLocalDofs( entity, vLocal.localDofVector() );
 
-        wLocal.init( entity );
         interpolation( vLocal, wLocal.localDofVector() );
 
         if( !std::equal( vLocal.localDofVector().begin(), vLocal.localDofVector().end(), wLocal.localDofVector().begin(), [] ( DofType v, DofType w ) { return (v - w < 1e-10); } ) )
@@ -98,12 +100,12 @@ namespace Dune
       {
         const auto &interpolation = space.interpolation( entity );
 
-        idLocal.init( entity );
-        vLocal.init( entity );
+        auto idGuard = bindGuard(idLocal, entity );
+        auto vGuard = bindGuard(vLocal, entity );
+        auto uGuard = bindGuard(uLocal, entity );
+        auto wGuard = bindGuard(wLocal, entity );
         interpolation( idLocal, vLocal.localDofVector() );
 
-        uLocal.init( entity );
-        wLocal.init( entity );
         interpolation( uLocal, wLocal.localDofVector() );
 
         if( !std::equal( vLocal.localDofVector().begin(), vLocal.localDofVector().end(), wLocal.localDofVector().begin(), [] ( DofType v, DofType w ) { return (v - w < 1e-10); } ) )

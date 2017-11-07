@@ -35,19 +35,21 @@ namespace Dune
       void operator() ( const CoarseFunction &coarseFunction,
                         FineFunction &fineFunction ) const
       {
-        typedef typename CoarseFunction::LocalFunctionType CoarseLocalFunction;
+        typedef ConstLocalFunction<CoarseFunction> CoarseLocalFunction;
         typedef typename CoarseFunction::DiscreteFunctionSpaceType CoarseSpace;
 
-        typedef typename FineFunction::LocalFunctionType FineLocalFunction;
+        typedef LocalContribution< FineFunction, Assembly::Set > FineLocalFunction;
 
         const CoarseSpace &coarseSpace = coarseFunction.space();
+        CoarseLocalFunction coarseLocalFunction(coarseFunction);
+        FineLocalFunction fineLocalFunction(fineFunction);
         for( const auto& entity : coarseSpace )
         {
-          CoarseLocalFunction coarseLocalFunction = coarseFunction.localFunction( entity );
+          auto coarseBind = bindGuard(coarseLocalFunction, entity);
 
           if( isDefinedOn( fineFunction, entity ) )
           {
-            FineLocalFunction fineLocalFunction = fineFunction.localFunction( entity );
+            auto fineBind = bindGuard(fineLocalFunction,entity);
             fineLocalFunction.assign( coarseLocalFunction );
           }
           else
@@ -62,18 +64,19 @@ namespace Dune
       {
         typedef typename CoarseLocalFunction::EntityType Entity;
         typedef typename Entity::HierarchicIterator HierarchicIterator;
-        typedef typename FineFunction::LocalFunctionType FineLocalFunction;
+        typedef LocalContribution< FineFunction, Assembly::Set > FineLocalFunction;
 
         const Entity &father = coarseLocalFunction.entity();
         const int childLevel = father.level()+1;
 
+        FineLocalFunction fineLocalFunction(fineFunction);
         const HierarchicIterator hend = father.hend( childLevel );
         for( HierarchicIterator hit = father.hbegin( childLevel ); hit != hend; ++hit )
         {
           const Entity &son = *hit;
           if( isDefinedOn( fineFunction, son ) )
           {
-            FineLocalFunction fineLocalFunction = fineFunction.localFunction( son );
+            auto fineBind = bindGuard(fineLocalFunction,son);
             localRestrictProlong_.prolongLocal( coarseLocalFunction, fineLocalFunction, son.geometryInFather(), true );
           }
           else
@@ -120,19 +123,22 @@ namespace Dune
       void operator() ( const FineFunction &fineFunction,
                         CoarseFunction &coarseFunction ) const
       {
-        typedef typename CoarseFunction::LocalFunctionType CoarseLocalFunction;
+        typedef LocalContribution< CoarseFunction, Assembly::Set > CoarseLocalFunction;
         typedef typename CoarseFunction::DiscreteFunctionSpaceType CoarseSpace;
 
-        typedef typename FineFunction::LocalFunctionType FineLocalFunction;
+        typedef ConstLocalFunction<FineFunction> FineLocalFunction;
 
         const CoarseSpace &coarseSpace = coarseFunction.space();
+        CoarseLocalFunction coarseLocalFunction(coarseFunction);
+        FineLocalFunction fineLocalFunction(fineFunction);
+
         for( const auto& entity : coarseSpace )
         {
-          CoarseLocalFunction coarseLocalFunction = coarseFunction.localFunction( entity );
+          auto coarseBind = bindGuard(coarseLocalFunction,entity);
 
           if( isDefinedOn( fineFunction, entity ) )
           {
-            FineLocalFunction fineLocalFunction = fineFunction.localFunction( entity );
+            auto fineBind = bindGuard(fineLocalFunction,entity);
             coarseLocalFunction.assign( fineLocalFunction );
           }
           else
@@ -147,7 +153,7 @@ namespace Dune
       {
         typedef typename CoarseLocalFunction::EntityType Entity;
         typedef typename Entity::HierarchicIterator HierarchicIterator;
-        typedef typename FineFunction::LocalFunctionType FineLocalFunction;
+        ConstLocalFunction<FineFunction> fineLocalFunction(fineFunction);
 
         const Entity &father = coarseLocalFunction.entity();
         const int childLevel = father.level()+1;
@@ -159,7 +165,7 @@ namespace Dune
           const Entity &son = *hit;
           if( isDefinedOn( fineFunction, son ) )
           {
-            FineLocalFunction fineLocalFunction = fineFunction.localFunction( son );
+            auto fineBind = bindGuard(fineLocalFunction,son);
             localRestrictProlong_.restrictLocal( coarseLocalFunction, fineLocalFunction, son.geometryInFather(), initialize );
           }
           else

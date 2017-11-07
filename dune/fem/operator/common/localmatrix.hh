@@ -81,10 +81,22 @@ namespace Dune
        *  \param[in]  domainEntity  entity within grid of domain space,
        *  \param[in]  rangeEntity   entity within grid of range space
        */
+      /* DEPRECATE INIT
       void init ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
       {
         CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
           ( asImp().init( domainEntity, rangeEntity ) );
+      }
+      */
+      void bind ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+          ( asImp().bind( domainEntity, rangeEntity ) );
+      }
+      void unbind()
+      {
+        CHECK_AND_CALL_INTERFACE_IMPLEMENTATION
+          ( asImp().unbind() );
       }
 
       /*! \brief add value to matrix entry (row,col) where row and col are
@@ -322,6 +334,13 @@ namespace Dune
         domainBaseSet_ = domainSpace_.basisFunctionSet( domainEntity );
         rangeBaseSet_ = rangeSpace_.basisFunctionSet( rangeEntity );
       }
+      /** \copydoc Dune::Fem::LocalMatrixInterface::bind */
+      void bind ( const DomainEntityType &domainEntity, const RangeEntityType &rangeEntity )
+      {
+        domainBaseSet_ = domainSpace_.basisFunctionSet( domainEntity );
+        rangeBaseSet_ = rangeSpace_.basisFunctionSet( rangeEntity );
+      }
+      void unbind() {}
 
       /** \copydoc Dune::Fem::LocalMatrixInterface::resort */
       void resort () {}
