@@ -75,18 +75,17 @@ namespace Dune
       typedef PointProvider< double, dim, codim > PointProviderType;
       typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-      GeometryType elemGeo = GeometryType( GeometryType::prism, 3 );
+      GeometryType elemGeo = GeometryTypes::prism;
 
       // Get reference element
-      typedef Dune::ReferenceElement< double, dim > RefElement;
-      const RefElement &refElement = Dune::ReferenceElements< double, dim >::general( elemGeo );
+      const auto refElement = Dune::referenceElement< double, dim >( elemGeo );
 
       // Loop over all faces
       for( int i = 0; i < refElement.size( codim ); ++i )
       {
         GeometryType faceGeo = (refElement.size( i, codim, dim ) == dim) ?
-                               GeometryType( GeometryType::simplex, 2 ) :
-                               GeometryType( GeometryType::cube, 2 );
+                               GeometryTypes::triangle :
+                               GeometryTypes::quadrilateral;
 
         // Build quadrature
         QuadratureType quad( faceGeo, 3 );
@@ -103,7 +102,7 @@ namespace Dune
         doTest( m.size() == (size_t) quad.nop());
 
         // Loop over all points
-        const RefElement::Codim< codim >::Geometry refEmbedding = refElement.geometry< codim >( i );
+        const auto refEmbedding = refElement.geometry< codim >( i );
         for( std::size_t j = 0; j < m.size(); ++j )
         {
           const FieldVector< double, dim > qpGlobal = refEmbedding.global( quad.point( j ) );
@@ -129,12 +128,11 @@ namespace Dune
       typedef PointProvider< double, dim, codim > PointProviderType;
       typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-      GeometryType elemGeo = GeometryType( GeometryType::cube, 3 );
-      GeometryType faceGeo = GeometryType( GeometryType::cube, 2 );
+      GeometryType elemGeo = GeometryTypes::hexahedron;
+      GeometryType faceGeo = GeometryTypes::quadrilateral;
 
       // Get reference element
-      typedef Dune::ReferenceElement< double, dim > RefElement;
-      const RefElement &refElement = Dune::ReferenceElements< double, dim >::general( elemGeo );
+      const auto refElement = Dune::referenceElement< double, dim >( elemGeo );
 
       // Build quadrature
       QuadratureType quad( faceGeo, 3 );
@@ -153,7 +151,7 @@ namespace Dune
 
         doTest( m.size() == (size_t) quad.nop());
         // Loop over all points
-        const RefElement::Codim< codim >::Geometry refEmbedding = refElement.geometry< codim >( i );
+        const auto refEmbedding = refElement.geometry< codim >( i );
         for( std::size_t j = 0; j < m.size(); ++j )
         {
           const FieldVector< double, dim > qpGlobal = refEmbedding.global( quad.point( j ) );
@@ -179,12 +177,11 @@ namespace Dune
       typedef PointProvider< double, dim, codim > PointProviderType;
       typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-      GeometryType elemGeo = GeometryType( GeometryType::simplex, 3 );
-      GeometryType faceGeo = GeometryType( GeometryType::simplex, 2 );
+      GeometryType elemGeo = GeometryTypes::tetrahedron;
+      GeometryType faceGeo = GeometryTypes::triangle;
 
       // Get reference element
-      typedef Dune::ReferenceElement< double, dim > RefElement;
-      const RefElement &refElement = Dune::ReferenceElements< double, dim >::general( elemGeo );
+      const auto refElement = Dune::referenceElement< double, dim >( elemGeo );
 
       // Build quadrature
       QuadratureType quad( faceGeo, 3 );
@@ -202,7 +199,7 @@ namespace Dune
 
         doTest( m.size() == (size_t) quad.nop());
         // Loop over all points
-        const RefElement::Codim< codim >::Geometry refEmbedding = refElement.geometry< codim >( i );
+        const auto refEmbedding = refElement.geometry< codim >( i );
         for( std::size_t j = 0; j < m.size(); ++j )
         {
           const FieldVector< double, dim > qpGlobal = refEmbedding.global( quad.point( j ) );
@@ -228,12 +225,11 @@ namespace Dune
       typedef PointProvider< double, dim, codim > PointProviderType;
       typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-      GeometryType elemGeo = GeometryType( GeometryType::simplex, 2 );
-      GeometryType faceGeo = GeometryType( GeometryType::simplex, 1 );
+      GeometryType elemGeo = GeometryTypes::triangle;
+      GeometryType faceGeo = GeometryTypes::line;
 
       // Get reference element
-      typedef Dune::ReferenceElement< double, dim > RefElement;
-      const RefElement &refElement = Dune::ReferenceElements< double, dim >::general( elemGeo );
+      const auto refElement = Dune::referenceElement< double, dim >( elemGeo );
 
       // Build quadrature
       QuadratureType quad( faceGeo, 3 );
@@ -251,7 +247,7 @@ namespace Dune
 
         doTest( m.size() == (size_t) quad.nop());
         // Loop over all points
-        const RefElement::Codim< codim >::Geometry refEmbedding = refElement.geometry< codim >( i );
+        const auto refEmbedding = refElement.geometry< codim >( i );
         for( size_t j = 0; j < m.size(); ++j )
         {
           const FieldVector< double, dim > qpGlobal = refEmbedding.global( quad.point( j ) );
@@ -276,12 +272,11 @@ namespace Dune
       typedef PointProvider< double, dim, codim > PointProviderType;
       typedef PointProviderType::GlobalPointVectorType PointVectorType;
 
-      GeometryType elemGeo = GeometryType( GeometryType::cube, 2 );
-      GeometryType faceGeo = GeometryType( GeometryType::cube, 1 );
+      GeometryType elemGeo = GeometryTypes::quadrilateral;
+      GeometryType faceGeo = GeometryTypes::line;
 
       // Get reference element
-      typedef Dune::ReferenceElement< double, dim > RefElement;
-      const RefElement &refElement = Dune::ReferenceElements< double, dim >::general( elemGeo );
+      const auto refElement = Dune::referenceElement< double, dim >( elemGeo );
 
       // Build quadrature
       QuadratureType quad( faceGeo, 5 );
@@ -299,7 +294,7 @@ namespace Dune
 
         doTest( m.size() == (size_t) quad.nop());
         // Loop over all points
-        const RefElement::Codim< codim >::Geometry refEmbedding = refElement.geometry< codim >( i );
+        const auto refEmbedding = refElement.geometry< codim >( i );
         for( std::size_t j = 0; j < m.size(); ++j )
         {
           const FieldVector< double, dim > qpGlobal = refEmbedding.global( quad.point( j ) );

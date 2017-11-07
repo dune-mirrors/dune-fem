@@ -55,7 +55,7 @@ void testGridPart( const GridPartType & gridPart )
     for(int c=0;c<=GridPartType::dimension;++c)
     {
       int nSubEn =
-        Dune::ReferenceElements< typename GridPartType::GridType::ctype, GridPartType::dimension >::general( element.type() ).size(c);
+        Dune::referenceElement< typename GridPartType::GridType::ctype, GridPartType::dimension >( element.type() ).size(c);
       for(int i=0;i<nSubEn;++i)
       {
         auto index = indexSet.subIndex(element,i,c);
@@ -145,7 +145,7 @@ void testExchangeGeometry ( const GridPart &gridPart, LocalFunction &localFuncti
 {
   for( const auto& entity : elements( gridPart ) )
   {
-    const auto& refElement = Dune::ReferenceElements< typename GridPart::ctype, GridPart::dimension >::general( entity.type() );
+    const auto refElement = Dune::referenceElement< typename GridPart::ctype, GridPart::dimension >( entity.type() );
     localFunction.init( entity.impl().hostEntity() );
     for( int i = 0; i < refElement.size( GridPart::dimension ); ++i )
       for( int k = 0; k < GridPart::dimensionworld; ++k )
