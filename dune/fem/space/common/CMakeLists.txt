@@ -25,3 +25,5 @@ dune_install(
   slavedofs.hh
   uniquefacetorientation.hh
 )
+
+dune_add_subdirs( dataprojection )

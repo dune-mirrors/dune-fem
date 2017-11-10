@@ -88,10 +88,6 @@ namespace Dune
       typedef typename BaseType::CompiledLocalKeyType CompiledLocalKeyType;
       typedef CompiledLocalKeyType LagrangePointSetType;
 
-    protected:
-      using BaseType::dfList_;
-      using BaseType::searchFunction;
-
     public:
       using BaseType::continuous;
       using BaseType::gridPart;
@@ -130,24 +126,6 @@ namespace Dune
       inline const CompiledLocalKeyType &lagrangePointSet( const GeometryType &type, const int order = BaseType::polynomialOrder ) const
       {
         return compiledLocalKey( type, order );
-      }
-
-      /** \brief add function to discrete function space for p-adaptation
-       *         (currently only supported by AdaptiveDiscreteFunction )
-       */
-      template <class DiscreteFunction>
-      void addFunction ( DiscreteFunction &df ) const
-      {
-        assert( searchFunction( df ) == dfList_.end() );
-        // select L2Porjection to be the LocalInterpolation
-        typedef typename BaseType :: template PAdaptiveDiscreteFunctionEntry<
-            DiscreteFunction, DGL2ProjectionImpl > RealEntryType ;
-        typedef typename BaseType :: PAdaptiveDiscreteFunctionEntryInterface
-          EntryInterface;
-
-        EntryInterface *entry = new RealEntryType( df );
-        assert( entry );
-        dfList_.push_front( entry );
       }
     };
 

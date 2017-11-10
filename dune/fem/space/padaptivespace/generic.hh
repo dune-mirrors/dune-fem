@@ -8,7 +8,7 @@
 #include <dune/common/math.hh>
 
 #include <dune/fem/common/forloop.hh>
-#include <dune/fem/function/adaptivefunction.hh>
+#include <dune/fem/function/vectorfunction.hh>
 #include <dune/fem/space/basisfunctionset/default.hh>
 #include <dune/fem/space/common/basesetlocalkeystorage.hh>
 #include <dune/fem/space/common/discretefunctionspace.hh>
@@ -19,6 +19,8 @@
 #include <dune/fem/space/shapefunctionset/simple.hh>
 #include <dune/fem/space/shapefunctionset/vectorial.hh>
 
+#include <dune/fem/space/common/dataprojection/dataprojection.hh>
+#include <dune/fem/space/common/dataprojection/tuple.hh>
 
 namespace Dune
 {
@@ -60,6 +62,7 @@ namespace Dune
 
       typedef typename BaseType::BlockMapperType BlockMapperType;
 
+      /** \brief maximal available polynomial order */
       static const int polynomialOrder = Traits::polynomialOrder;
 
     protected:
@@ -74,39 +77,20 @@ namespace Dune
         typedef typename Traits::template ScalarShapeFunctionSetFactory< pOrd >::Type Type;
       };
 
-    public:
-
-      typedef typename Traits::CompiledLocalKeyType CompiledLocalKeyType;
-      typedef BaseSetLocalKeyStorage< CompiledLocalKeyType > LocalKeyStorageType;
-
     protected:
       template< int pOrd >
       struct Initialize;
 
-      // type of intermediate storage
-      typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > IntermediateStorageFunctionType;
-
-      /// interface for list of p-adaptive functions
-      struct PAdaptiveDiscreteFunctionEntryInterface
-      {
-        virtual ~PAdaptiveDiscreteFunctionEntryInterface() {}
-        virtual bool equals( void * ) const = 0 ;
-        virtual void adaptFunction( IntermediateStorageFunctionType &tmp ) = 0;
-
-      protected:
-        PAdaptiveDiscreteFunctionEntryInterface () {}
-      };
-
-      template < class DF >
-      class PAdaptiveDiscreteFunctionEntry;
-
-      typedef std::list< PAdaptiveDiscreteFunctionEntryInterface * > PAdaptiveDiscreteFunctionListType;
-      typedef typename PAdaptiveDiscreteFunctionListType::iterator DFListIteratorType;
-
-      // type of DoF manager
-      typedef DofManager< GridType > DofManagerType;
+      // DoF manager
+      using BaseType :: dofManager_;
 
     public:
+      typedef typename Traits::CompiledLocalKeyType CompiledLocalKeyType;
+      typedef BaseSetLocalKeyStorage< CompiledLocalKeyType > LocalKeyStorageType;
+
+      // key that identifies the basis function set, here the polynomial order
+      typedef int KeyType;
+
       //! type of identifier for this discrete function space
       typedef int IdentifierType;
       //! identifier of this discrete function space
@@ -128,7 +112,9 @@ namespace Dune
         scalarShapeFunctionSets_( polynomialOrder+1 ),
         compiledLocalKeys_( polynomialOrder+1 ),
         blockMapper_( initialize() )
-      {}
+      {
+        assert( Capabilities::isAdaptiveDofMapper< BlockMapperType>::v );
+      }
 
     protected:
       // copy constructor needed for p-adaptation
@@ -140,13 +126,6 @@ namespace Dune
       {}
 
     public:
-      // Destructor (freeing base functions pointers and block mapper)
-      ~GenericDiscreteFunctionSpace ()
-      {
-        assert( dfList_.empty() );
-        delete blockMapper_;
-      }
-
 
       ///////////////////////
       // Interface methods //
@@ -247,48 +226,92 @@ namespace Dune
       ////////////////////////////////
       // Adaptive interface methods //
       ////////////////////////////////
+      /** \name Adaptation
+       *  \{
+       */
+
+      /** \brief get identifiying basis function set key assigned to given entity
+       *
+       *  \param[in]  entity  grid part entity
+       *
+       *  \returns key
+       */
+      KeyType key ( const EntityType &entity ) const
+      {
+        return blockMapper().order( entity );
+      }
+
+      /** \brief assign new key to given entity
+       *
+       *  \param[in]  key  key identifying basis function set
+       *  \param[in]  entity  grid part entity
+       */
+      void mark ( const KeyType &key, const EntityType &entity ) const
+      {
+        return blockMapper().suggestPolynomOrder( entity, key );
+      }
+
+      /** \brief get key to be assigned to an entity after next call to adapt()
+       *
+       *  \param[in]  entity  grid part entity
+       *
+       *  \returns key
+       */
+      KeyType getMark ( const EntityType &entity ) const
+      {
+        return blockMapper().suggestPolynomOrder( entity );
+      }
 
       /** \brief p adaptation
        *
-       *  \param[in]  polynomialOrders  vector containing polynomial orders for each cell
+       *  \param[in] function  oialOrders  vector containing polynomial orders for each cell
        *  \param[in]  polOrderShift     possible shift of polynomial order (i.e. in case of
        *                                Taylor-Hood put -1 for the pressure) (default = 0)
        */
-      template< class Vector >
-      void adapt ( const Vector &polynomialOrders, const int polOrderShift = 0 ) const
+      void adapt () const
       {
-        typedef typename IteratorType::Entity EntityType ;
-        const IteratorType endit = this->end();
-
-        // create a copy of this space (to be improved)
-        DiscreteFunctionSpaceType oldSpace( asImp() );
-
-        // set new polynomial order for space
-        for( IteratorType it = this->begin(); it != endit; ++it )
-        {
-          const EntityType &entity = *it;
-          const int polOrder = polynomialOrders[ this->indexSet().index( entity ) ] + polOrderShift ;
-          blockMapper().setPolynomOrder( entity, polOrder );
-        }
-
-        // adjust mapper
+        // adjust mapper by using previously set new polynomial orders
         blockMapper().adapt();
 
-        // Adapt space and then discrete functions
-        IntermediateStorageFunctionType tmp( "padapt-temp", oldSpace );
-        const DFListIteratorType endDF = dfList_.end();
-        for( DFListIteratorType it = dfList_.begin(); it != endDF; ++it )
-        {
-          (*it)->adaptFunction( tmp );
-        }
-
-        DofManagerType &dm = DofManagerType::instance( this->grid() );
         // resize discrete functions (only functions belonging
         // to this space will be affected ), for convenience
-        dm.resize();
-        dm.compress();
+        dofManager_.resize();
+        dofManager_.compress();
       }
 
+      template< class DiscreteFunctionSpace, class Implementation >
+      void adapt ( hpDG::DataProjection< DiscreteFunctionSpace, Implementation > &projection ) const
+      {
+        // create a copy of this space (to be improved, avoid DofManager involvement)
+        DiscreteFunctionSpaceType oldSpace( asImp() );
+
+        // adjust mapper by using previously set new polynomial orders
+        blockMapper().adapt();
+
+        // possibly enlarge memory attached to this space
+        dofManager_.enlargeMemory();
+
+        // create temporary storage for projection of discrete functions
+        typedef std::vector< typename BaseType::RangeFieldType > TmpDofVectorType;
+        TmpDofVectorType tmpVector( oldSpace.size() );
+
+        // type of intermediate storage
+        typedef VectorDiscreteFunction< DiscreteFunctionSpaceType, TmpDofVectorType > IntermediateStorageFunctionType;
+
+        // Adapt space and then discrete functions
+        IntermediateStorageFunctionType tmp( "padapt-temp", oldSpace, tmpVector );
+
+        // go through list and adjust discrete functions
+        // see DefaultDataProjectionTuple and DefaultDataProjection for possible implementation
+        projection.project( tmp );
+
+        // resize discrete functions (only functions belonging
+        // to this space will be affected ), for convenience
+        dofManager_.resize();
+        dofManager_.compress();
+      }
+
+      /** \} */
 
     protected:
       // initialize space and create block mapper
@@ -319,31 +342,6 @@ namespace Dune
         }
       }
 
-      template< class DiscreteFunction >
-      DFListIteratorType searchFunction ( const DiscreteFunction &df ) const
-      {
-        assert( &df.space() == this );
-        const DFListIteratorType endDF = dfList_.end();
-        for( DFListIteratorType it = dfList_.begin(); it != endDF; ++it )
-        {
-          if( (*it)->equals( (void *) &df ) )
-            return it;
-        }
-        return endDF;
-      }
-
-    public:
-      template< class DiscreteFunction >
-      void removeFunction ( const DiscreteFunction &df ) const
-      {
-        DFListIteratorType it = searchFunction( df );
-        if( it != dfList_.end() )
-        {
-          delete (*it);
-          dfList_.erase( it );
-        }
-      }
-
     protected:
       // storage for base function sets
       std::vector< ScalarShapeFunctionSetStorageType > scalarShapeFunctionSets_;
@@ -351,9 +349,7 @@ namespace Dune
       std::vector< LocalKeyStorageType > compiledLocalKeys_;
 
       // corresponding mapper
-      BlockMapperType *blockMapper_;
-      // list of registered discrete functions
-      mutable PAdaptiveDiscreteFunctionListType dfList_;
+      std::unique_ptr< BlockMapperType > blockMapper_;
     };
 
 
@@ -387,51 +383,6 @@ namespace Dune
 
         typedef SingletonList< GeometryType, CompiledLocalKeyType, CompiledLocalKeyFactory > CompiledLocalKeySingletonProviderType;
         compiledLocalKeys[ pOrd ].template insert< CompiledLocalKeySingletonProviderType >( type );
-      }
-    };
-
-
-
-    // Implementation of GenericDiscreteFunctionSpace::PAdaptiveDiscreteFunctionEntry
-    // ------------------------------------------------------------------------------
-
-    template< class Traits >
-    template < class DF >
-    class GenericDiscreteFunctionSpace< Traits >::PAdaptiveDiscreteFunctionEntry
-    : public PAdaptiveDiscreteFunctionEntryInterface
-    {
-      DF &df_;
-      DofManagerType &dm_;
-
-    public:
-      PAdaptiveDiscreteFunctionEntry ( DF &df )
-      : df_( df ),
-      dm_( DofManagerType::instance( df.space().grid() ) )
-      {}
-
-      virtual bool equals ( void *ptr ) const { return (((void *) &df_) == ptr ); }
-
-      virtual void adaptFunction ( IntermediateStorageFunctionType &tmp )
-      {
-        typedef typename IntermediateStorageFunctionType::DofIteratorType TmpIteratorType;
-        typedef typename DF::DofIteratorType  DFIteratorType;
-
-        // copy dof to temporary storage
-        DFIteratorType dfit = df_.dbegin();
-        const TmpIteratorType endtmp = tmp.dend();
-        for( TmpIteratorType it = tmp.dbegin(); it != endtmp; ++it, ++dfit )
-        {
-          assert( dfit != df_.dend() );
-          *it = *dfit;
-        }
-        assert( dfit == df_.dend() );
-
-        // adjust size of discrete function
-        df_.resize();
-
-        // interpolate to new space, this can be a
-        // Lagrange interpolation or a L2 projection
-        interpolate( tmp, df_ );
       }
     };
 
