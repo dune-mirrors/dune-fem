@@ -21,7 +21,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
 #include <dune/fem/quadrature/intersectionquadrature.hh>
-#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/interpolate.hh>
@@ -163,7 +163,7 @@ typedef AdaptationManager< MyGridType, RestrictProlongOperatorType >
   AdaptationManagerType;
 
 
-void setPolOrder( const DiscreteFunctionSpaceType &space, DataProjectionType &dp, bool increase )
+void setPolOrder( const DiscreteFunctionSpaceType &space, DiscreteFunctionType& solution, bool increase )
 {
   const int maxPol = POLORDER;
   const int minPol = 1;
@@ -186,14 +186,16 @@ void setPolOrder( const DiscreteFunctionSpaceType &space, DataProjectionType &dp
     space.mark( polOrds[ space.indexSet().index( entity )], entity );
   }
 
+  Dune::Fem::hpDG::AdaptationManager< DiscreteFunctionSpaceType,
+    DataProjectionType > pAdaptManager( const_cast< DiscreteFunctionSpaceType& >(space), DataProjectionType( solution ) );
+
   std::cout << "Set polynomial order to " << p << std::endl;
-  space.adapt( dp );
+  pAdaptManager.adapt();
 }
 
 void polOrderAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step)
 {
-  DataProjectionType dp( solution );
-  setPolOrder( solution.space(), dp, step > 0 );
+  setPolOrder( solution.space(), solution, step > 0 );
 }
 
 void gridAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step,
@@ -438,9 +440,7 @@ try
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
   solution.clear();
 
-  DataProjectionType dp( solution );
-
-  setPolOrder( discreteFunctionSpace, dp, false );
+  setPolOrder( discreteFunctionSpace, solution, false );
 
   ExactSolutionType fexact;
   GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );
@@ -468,7 +468,7 @@ try
     {
       // Test grid ref. (but with polynomial order set to min)
       std :: cout << std :: endl << "Refine grid" << std::endl;
-      setPolOrder( discreteFunctionSpace, dp, true );
+      setPolOrder( discreteFunctionSpace, solution, true );
       gridAdapt( *gridptr, solution, step, locallyAdaptive ) ;
     }
     else if (r==2)

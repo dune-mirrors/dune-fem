@@ -1,6 +1,7 @@
 dune_install(
   adaptcallbackhandle.hh
   adaptmanager.hh
+  adaptationmanager.hh
   allgeomtypes.hh
   arrays.hh
   basesetlocalkeystorage.hh
