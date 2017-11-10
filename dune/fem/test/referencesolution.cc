@@ -9,7 +9,6 @@
 #include <dune/fem/function/localfunction/bindable.hh>
 #include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/io/file/vtkio.hh>
-#include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>

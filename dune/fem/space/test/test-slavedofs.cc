@@ -8,7 +8,7 @@ const int polOrder = POLORDER;
 
 #include <dune/fem/gridpart/levelgridpart.hh>
 
-#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/function/common/scalarproducts.hh>

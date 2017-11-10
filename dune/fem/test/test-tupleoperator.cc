@@ -10,7 +10,6 @@
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/space/combinedspace.hh>
-#include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/finitevolume.hh>
