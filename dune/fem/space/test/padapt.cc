@@ -145,7 +145,7 @@ typedef Fem :: PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, polOrder
 
 //! type of the discrete function we are using
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
-typedef Dune::Fem::hpDG::DefaultDataProjectionTuple< DiscreteFunctionType > DataProjectionType;
+typedef Dune::Fem::DefaultDataProjectionTuple< DiscreteFunctionType > DataProjectionType;
 
 typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 

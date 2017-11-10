@@ -181,6 +181,9 @@ namespace Dune
 
     } // namespace hpDG
 
+    // forward types to Fem namespace for convenience
+    using hpDG::DefaultDataProjection;
+
   } // namespace Fem
 
 } // namespace Dune

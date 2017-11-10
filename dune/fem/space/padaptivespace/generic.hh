@@ -280,7 +280,7 @@ namespace Dune
       }
 
       template< class DiscreteFunctionSpace, class Implementation >
-      void adapt ( hpDG::DataProjection< DiscreteFunctionSpace, Implementation > &projection ) const
+      void adapt ( DataProjection< DiscreteFunctionSpace, Implementation > &projection ) const
       {
         // create a copy of this space (to be improved, avoid DofManager involvement)
         DiscreteFunctionSpaceType oldSpace( asImp() );
