@@ -193,9 +193,10 @@ class Variable(Expression):
 
 
 class UnformattedExpression(Expression):
-    def __init__(self, cppType, value):
+    def __init__(self, cppType, value, uses=None):
         Expression.__init__(self, cppType)
         self.value = value.strip()
+        self.uses = uses
 
     def __hash__(self):
         return hash((self.cppType, self.value))
