@@ -192,15 +192,15 @@ int main(int argc, char** argv)
     pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
   }
 
-  // // OEMGMRESOp + SparseRowLinearOperator
-  // {
-  //   using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
-  //   using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
-  //   using InverseOperator   = Dune::Fem::OEMGMRESOp< DiscreteFunction, LinearOperator >;
+  // OEMGMRESOp + SparseRowLinearOperator
+  {
+    using DiscreteFunction  = Dune::Fem::AdaptiveDiscreteFunction< DiscreteSpaceType >;
+    using LinearOperator    = Dune::Fem::SparseRowLinearOperator< DiscreteFunction, DiscreteFunction >;
+    using InverseOperator   = Dune::Fem::OEMGMRESOp< DiscreteFunction, LinearOperator >;
 
-  //   std::string designation(" === OEMGMRESOp + SparseRowLinearOperator === ");
-  //   pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
-  // }
+    std::string designation(" === OEMGMRESOp + SparseRowLinearOperator === ");
+    pass &= Algorithm< InverseOperator, LinearOperator >::apply( grid, designation, verboseSolver );
+  }
 
   // KrylovInverseOperator + SparseRowLinearOperator
   {
