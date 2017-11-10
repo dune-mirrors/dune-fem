@@ -309,24 +309,35 @@ namespace Dune
 
       struct PolynomOrderStorage
       {
-        unsigned char k_;
-        unsigned char active_ ;
-        PolynomOrderStorage() : k_( maxOrder ), active_( 0 ) {}
-        PolynomOrderStorage( const int k ) : k_( k ), active_( 0 ) {}
-        int order () const { return k_;}
-        void set ( const int k ) { k_ = k; active_ = 1 ; }
-        void activate() { active_ = 1; }
-        bool active () const { return active_; }
+        signed char k_; // stores current polynomial order
+        signed char active_ ; // stores active/non-active and suggested pol order
+
+        PolynomOrderStorage() : k_( maxOrder ), active_( -std::abs(k_) ) {}
+        PolynomOrderStorage( const int k ) : k_( k ), active_( -std::abs(k_) ) {}
+        int order () const { return k_; }
+        void suggest ( const int k )
+        {
+          if( active() )
+            active_ = std::abs( k );
+          else
+            active_ = -std::abs( k );
+        }
+        void set ( const int k ) { k_ = k; active_ = std::abs( k ) ; }
+        void activate() { active_ = std::abs( active_ ); }
+        bool active () const { return active_ > 0; }
         bool deactivate ( int& k )
         {
           k = k_;
-          if( active_ )
+          if( active() )
           {
-            active_ = 0 ;
+            active_ = -active_;
             return true ;
           }
           return false;
         }
+
+        int suggested () const { return std::abs( active_ ); }
+        void update() { set( suggested() ); }
       };
 
       typedef PolynomOrderStorage  PolynomOrderStorageType;
@@ -442,7 +453,7 @@ namespace Dune
     public:
       //! constructor
       GenericAdaptiveDofMapper ( const GridPartType &gridPart,
-                                CompiledLocalKeyVectorType &compiledLocalKeyVector )
+                                 CompiledLocalKeyVectorType &compiledLocalKeyVector )
       : gridPart_( gridPart ),
         dm_( DofManagerType :: instance(gridPart.grid()) ),
         compiledLocalKeys_( compiledLocalKeyVector ),
@@ -494,12 +505,17 @@ namespace Dune
         return entityPolynomOrder_[ entity ].order();
       }
 
-      void setPolynomOrder( const ElementType& entity, const int polOrd )
+      int suggestedOrder( const ElementType& entity ) const
+      {
+        return entityPolynomOrder_[ entity ].suggestedOrder();
+      }
+
+      void suggestPolynomOrder( const ElementType& entity, const int polOrd )
       {
         if( polOrd < 1 || polOrd > polynomialOrder )
           return ;
 
-        entityPolynomOrder_[ entity ].set( polOrd );
+        entityPolynomOrder_[ entity ].suggest( polOrd );
       }
 
       DofContainerType &dofContainer ( const std::size_t codim ) const
@@ -754,6 +770,10 @@ namespace Dune
       //! adjust mapper to newly set polynomial orders
       void adapt()
       {
+        // set new polynomial orders for entities
+        for( auto& pol : entityPolynomOrder_ )
+          pol.update();
+
         sequence_ = -1;
         compress();
       }
@@ -1011,6 +1031,12 @@ namespace Dune
 
       template< class Traits >
       struct isConsecutiveIndexSet< GenericAdaptiveDofMapper< Traits > >
+      {
+        static const bool v = true;
+      };
+
+      template< class Traits >
+      struct isAdaptiveDofMapper< GenericAdaptiveDofMapper< Traits > >
       {
         static const bool v = true;
       };
