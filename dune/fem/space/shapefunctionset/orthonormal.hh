@@ -2,23 +2,15 @@
 #define DUNE_FEM_SPACE_SHAPEFUNCTIONSET_ORTHONORMAL_HH
 
 #include <cassert>
-#include <cstdlib>
-
-#include <dune/common/exceptions.hh>
+#include <cstddef>
 
 #include <dune/geometry/type.hh>
 
 #include <dune/fem/common/coordinate.hh>
+#include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/shapefunctionset/orthonormal/orthonormalbase_1d.hh>
 #include <dune/fem/space/shapefunctionset/orthonormal/orthonormalbase_2d.hh>
 #include <dune/fem/space/shapefunctionset/orthonormal/orthonormalbase_3d.hh>
-
-/**
-  @file
-  @author Christoph Gersbacher
-  @brief Provides orthonormal shape function set
-*/
-
 
 namespace Dune
 {
@@ -28,7 +20,6 @@ namespace Dune
 
     namespace Impl
     {
-
       template< class Topology >
       struct UniqueTopology;
 
@@ -64,354 +55,305 @@ namespace Dune
 
     } // namespace Impl
 
+#ifndef DOXYGEN
 
+    // OrthonormalShapeFunctions
+    // -------------------------
 
-    // Forward declaration
-    // -------------------
+    template< int dimension >
+    struct OrthonormalShapeFunctions;
 
-    template< class FunctionSpace, int polOrder >
-    class OrthonormalShapeFunctionSet;
-
-
-
-    // OrthonormalShapeFunctionSetSize
-    // -------------------------------
-
-    template< class FunctionSpace, int polOrder >
-    class OrthonormalShapeFunctionSetSize
+    template<>
+    struct OrthonormalShapeFunctions< 1 >
     {
-      static_assert( (FunctionSpace::dimDomain <= 3), "Shape function set only implemented up to dimension 3." );
-
-      template< int order, int dimension >
-      struct ShapeFunctionSetSize;
-
-      template< int order >
-      struct ShapeFunctionSetSize< order, 1 >
+      static constexpr std::size_t size ( int order )
       {
-        static const std::size_t v = order + 1;
-      };
-
-      template< int order >
-      struct ShapeFunctionSetSize< order, 2 >
-      {
-        static const std::size_t v = (order + 2) * (order + 1) / 2;
-      };
-
-      template< int order >
-      struct ShapeFunctionSetSize< order, 3 >
-      {
-        static const size_t v = ((order+1)*(order+2)*(2*order+3)/6
-                               + (order+1)*(order+2)/2)/2;
-      };
-
-    public:
-      static const std::size_t v = ShapeFunctionSetSize< polOrder, FunctionSpace::dimDomain >::v;
-    };
-
-
-
-    // OrthonormalShapeFunctionHelper
-    // ------------------------------
-
-    template< class FunctionSpace, int polOrder >
-    struct OrthonormalShapeFunctionHelper
-    {
-      static_assert( (FunctionSpace::dimRange == 1),
-                          "FunctionSpace must be scalar (i.e., dimRange = 1)." );
-
-      typedef FunctionSpace FunctionSpaceType;
-
-      typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
-      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
-
-      typedef typename FunctionSpaceType::DomainType DomainType;
-      typedef typename FunctionSpaceType::RangeType RangeType;
-      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
-
-    protected:
-      // line
-      typedef Dune::Impl::Prism< Dune::Impl::Point > Line;
-      // quadrilateral
-      typedef Dune::Impl::Prism< Line > Quadrilateral;
-      // triangle
-      typedef Dune::Impl::Pyramid< Line > Triangle;
-      // pyramid
-      typedef Dune::Impl::Prism< Quadrilateral > Hexahedron;
-      // hexahedron
-      typedef Dune::Impl::Pyramid< Quadrilateral > Pyramid;
-      // prism
-      typedef Dune::Impl::Prism< Triangle > Prism;
-      // tetrahedron
-      typedef Dune::Impl::Pyramid< Triangle > Tetrahedron;
-
-      template< class Topology >
-      using UniqueTopology = typename Impl::UniqueTopology< Topology >::Type;
-
-    public:
-      template< class Topology >
-      struct EvaluateEach;
-
-      template< class Topology >
-      struct JacobianEach;
-
-      template< class Topology >
-      struct HessianEach;
-    };
-
-
-
-    // Implementation of OrthonormalShapeFunctionHelper::EvaluateEach
-    // --------------------------------------------------------------
-
-    template< class FunctionSpace, int polOrder >
-    template< class Topology >
-    struct OrthonormalShapeFunctionHelper< FunctionSpace, polOrder >::EvaluateEach
-    {
-      template< class Functor >
-      static void apply ( const DomainType &x, Functor functor )
-      {
-        const std::size_t size = OrthonormalShapeFunctionSetSize< FunctionSpace, polOrder >::v;
-        for( std::size_t i = 0; i < size; ++i )
-        {
-          assert( x.size() == Topology::dimension );
-          functor( i, evaluate( UniqueTopology< Topology >(), i, x ) );
-        }
-      }
-
-
-    protected:
-      typedef OrthonormalBase_1D< DomainFieldType, RangeFieldType > OrthonormalBase1d;
-      typedef OrthonormalBase_2D< DomainFieldType, RangeFieldType > OrthonormalBase2d;
-      typedef OrthonormalBase_3D< DomainFieldType, RangeFieldType > OrthonormalBase3d;
-
-      static RangeType evaluate ( const Line &, std::size_t i, const DomainType &x )
-      {
-        return OrthonormalBase1d::eval_line( i, &x[ 0 ] );
-      }
-
-      static RangeType evaluate ( const Quadrilateral &, std::size_t i, const DomainType &x )
-      {
-        return OrthonormalBase2d::eval_quadrilateral_2d( i, &x[ 0 ] );
-      }
-
-      static RangeType evaluate ( const Triangle &, std::size_t i, const DomainType &x )
-      {
-        return OrthonormalBase2d::eval_triangle_2d( i, &x[ 0 ] );
-      }
-
-      static RangeType evaluate ( const Pyramid &, std::size_t i, const DomainType &x )
-      {
-        return OrthonormalBase3d::eval_pyramid_3d( i, &x[ 0 ] );
-      }
-
-      static RangeType evaluate ( const Hexahedron &, std::size_t i, const DomainType &x )
-      {
-        return OrthonormalBase3d::eval_hexahedron_3d( i, &x[ 0 ] );
-      }
-
-      static RangeType evaluate ( const Prism &, std::size_t i, const DomainType &x )
-      {
-        return OrthonormalBase3d::eval_prism_3d( i, &x[ 0 ] );
-      }
-
-      static RangeType evaluate ( const Tetrahedron &, std::size_t i, const DomainType &x )
-      {
-        return OrthonormalBase3d::eval_tetrahedron_3d( i, &x[ 0 ] );
+        return static_cast< std::size_t >( order+1 );
       }
     };
 
-
-
-    // Implementation of OrthonormalShapeFunctionHelper::JacobianEach
-    // --------------------------------------------------------------
-
-    template< class FunctionSpace, int polOrder >
-    template< class Topology >
-    struct OrthonormalShapeFunctionHelper< FunctionSpace, polOrder >::JacobianEach
+    template<>
+    struct OrthonormalShapeFunctions< 2 >
     {
-      template< class Functor >
-      static void apply ( const DomainType &x, Functor functor )
+      static constexpr std::size_t size ( int order )
       {
-        JacobianRangeType jacobian;
-        const std::size_t size = OrthonormalShapeFunctionSetSize< FunctionSpace, polOrder >::v;
-        for( std::size_t i = 0; i < size; ++i )
-        {
-          assert( x.size() == Topology::dimension );
-          evaluate( UniqueTopology< Topology >(), i, x, jacobian );
-          functor( i, jacobian );
-        }
-      }
-
-    protected:
-      typedef OrthonormalBase_1D< DomainFieldType, RangeFieldType > OrthonormalBase1d;
-      typedef OrthonormalBase_2D< DomainFieldType, RangeFieldType > OrthonormalBase2d;
-      typedef OrthonormalBase_3D< DomainFieldType, RangeFieldType > OrthonormalBase3d;
-
-      static void evaluate ( const Line &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
-      {
-        OrthonormalBase1d::grad_line( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
-      }
-
-      static void evaluate ( const Quadrilateral &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
-      {
-        OrthonormalBase2d::grad_quadrilateral_2d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
-      }
-
-      static void evaluate ( const Triangle &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
-      {
-        OrthonormalBase2d::grad_triangle_2d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
-      }
-
-      static void evaluate ( const Pyramid &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
-      {
-        OrthonormalBase3d::grad_pyramid_3d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
-      }
-
-      static void evaluate ( const Hexahedron &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
-      {
-        OrthonormalBase3d::grad_hexahedron_3d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
-      }
-
-      static void evaluate ( const Prism &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
-      {
-        OrthonormalBase3d::grad_prism_3d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
-      }
-
-      static void evaluate ( const Tetrahedron &, std::size_t i, const DomainType &x, JacobianRangeType &jacobian )
-      {
-        OrthonormalBase3d::grad_tetrahedron_3d( i , &x[ 0 ], &jacobian[ 0 ][ 0 ] );
+        return static_cast< std::size_t >( (order+2)*(order+1)/2 );
       }
     };
 
-
-
-    // Implementation of OrthonormalShapeFunctionHelper::HessianEach
-    // -------------------------------------------------------------
-
-    template< class FunctionSpace, int polOrder >
-    template< class Topology >
-    struct OrthonormalShapeFunctionHelper< FunctionSpace, polOrder >::HessianEach
+    template<>
+    struct OrthonormalShapeFunctions< 3 >
     {
-      template< class Functor >
-      static void apply ( const DomainType &x, Functor functor )
+      static constexpr std::size_t size ( int order )
       {
-        HessianRangeType hessian;
-        const std::size_t size = OrthonormalShapeFunctionSetSize< FunctionSpace, polOrder >::v;
-        for( std::size_t i = 0; i < size; ++i )
-        {
-          assert( x.size() == Topology::dimension );
-          evaluate( UniqueTopology< Topology >(), i, x, hessian );
-          functor( i, hessian );
-        }
-      }
-
-    protected:
-      static void evaluate ( const Quadrilateral &, std::size_t i, const DomainType &x, HessianRangeType &hessian )
-      {
-        typedef OrthonormalBase_2D< DomainFieldType, RangeFieldType > OrthonormalBase2d;
-        RangeFieldType values[] = { 0, 0, 0 };
-        OrthonormalBase2d::hess_quadrilateral_2d( i , &x[ 0 ], values );
-
-        for( unsigned int j = 0; j < FunctionSpace::dimDomain;  ++j )
-          for( unsigned int k = 0; k < FunctionSpace::dimDomain; ++k )
-            hessian[ 0 ][ j ][ k ] = values[ j + k ];
-      }
-
-      static void evaluate ( const Triangle &, std::size_t i, const DomainType &x, HessianRangeType &hessian )
-      {
-        typedef OrthonormalBase_2D< DomainFieldType, RangeFieldType > OrthonormalBase2d;
-        RangeFieldType values[] = { 0, 0, 0 };
-        OrthonormalBase2d::hess_triangle_2d( i , &x[ 0 ], values );
-
-        for( unsigned int j = 0; j < FunctionSpace::dimDomain;  ++j )
-          for( unsigned int k = 0; k < FunctionSpace::dimDomain; ++k )
-            hessian[ 0 ][ j ][ k ] = values[ j + k ];
-      }
-
-      template< class Other >
-      static void evaluate ( const Other &, std::size_t i, const DomainType &x, HessianRangeType &hessian )
-      {
-        DUNE_THROW( NotImplemented, "On orthonormal shape function set HessianAll() is only implemented for triangles" );
+        return static_cast< std::size_t >( ((order+1)*(order+2)*(2*order+3)/6+(order+1)*(order+2)/2)/2 );
       }
     };
+
+#endif // #ifndef DOXYGEN
 
 
 
     // OrthonormalShapeFunctionSet
     // ---------------------------
 
-    template< class FunctionSpace, int polOrder >
+    template< class FunctionSpace >
     class OrthonormalShapeFunctionSet
     {
-      static_assert( (FunctionSpace::dimRange == 1),
-                          "FunctionSpace must be scalar (i.e., dimRange = 1)." );
+      typedef OrthonormalShapeFunctionSet< FunctionSpace > ThisType;
 
-      // this type
-      typedef OrthonormalShapeFunctionSet< FunctionSpace, polOrder > ThisType;
-
-      // helper class
-      typedef OrthonormalShapeFunctionHelper< FunctionSpace, polOrder > ShapeFunctionSetHelperType;
+      static_assert( FunctionSpace::dimDomain <= 3, "OrthonormalShapeFunctionSet only implemented up to domain dimension 3" );
+      static_assert( FunctionSpace::dimRange == 1, "OrthonormalShapeFunctionSet only implemented for scalar function spaces" );
 
     public:
-      //! \brief function space type
+      /** \copydoc Dune::Fem::ShapeFunctionSet::FunctionSpaceType */
       typedef FunctionSpace FunctionSpaceType;
 
-      //! \brief dimension
+    private:
+      typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+
+      typedef RangeFieldType (*Evaluate) ( const int, const DomainFieldType * );
+      typedef void (*Jacobian) ( const int i, const DomainFieldType *, RangeFieldType * );
+
+      // hessian is only available for 2d-simplices (aka triangles)
+      typedef RangeFieldType Array[ 3 ];
+      typedef void (*Hessian) ( const int i, const DomainFieldType *, Array & );
+
+      template< class Topology >
+      class Initialize;
+
+    public:
+      /** \copydoc Dune::Fem::ShapeFunctionSet::dimension */
       static const int dimension = FunctionSpaceType::dimDomain;
 
-      //! \brief domain type
+      /** \copydoc Dune::Fem::ShapeFunctionSet::Domaintype */
       typedef typename FunctionSpaceType::DomainType DomainType;
-      //! \brief range type
+      /** \copydoc Dune::Fem::ShapeFunctionSet::RangeType */
       typedef typename FunctionSpaceType::RangeType RangeType;
-      //! \brief jacobian range type
+      /** \copydoc Dune::Fem::ShapeFunctionSet::JacobianRangeType */
       typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
-      //! \brief hessian range type
+      /** \copydoc Dune::Fem::ShapeFunctionSet::HessianRangeType */
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
-      explicit OrthonormalShapeFunctionSet ( const GeometryType &type )
-        : topologyId_( type.id() )
-      {}
+      /** \name Construction
+       *  \{
+       */
 
-      /** @copydoc Dune::Fem::ShapeFunctionSet::order*/
-      int order () const { return polOrder; }
+      OrthonormalShapeFunctionSet () = default;
 
-
-      /** @copydoc Dune::Fem::ShapeFunctionSet::size */
-      std::size_t size () const
+      OrthonormalShapeFunctionSet ( GeometryType type, int order )
+        : order_( order ),
+          evaluate_( nullptr ),
+          jacobian_( nullptr ),
+          hessian_( nullptr )
       {
-        return OrthonormalShapeFunctionSetSize< FunctionSpace, polOrder >::v;
+        Dune::Impl::IfTopology< Initialize, dimension >
+          ::apply( type.id(), evaluate_, jacobian_ );
+        assert( evaluate_ );
+        assert( jacobian_ );
+
+        if( dimension == 2 )
+        {
+          if( type.isTriangle() )
+            hessian_ = OrthonormalBase_2D< DomainFieldType, RangeFieldType >::hess_triangle_2d;
+          else if( type.isQuadrilateral() )
+            hessian_ = OrthonormalBase_2D< DomainFieldType, RangeFieldType >::hess_quadrilateral_2d;
+        }
       }
 
-      /** @copydoc Dune::Fem::ShapeFunctionSet::evaluateEach */
+      OrthonormalShapeFunctionSet ( const ThisType & ) = default;
+
+      OrthonormalShapeFunctionSet ( ThisType && ) = default;
+
+      /** \} */
+
+      /** \name Assignment
+       *  \{
+       */
+
+      OrthonormalShapeFunctionSet &operator= ( const ThisType & ) = default;
+
+      OrthonormalShapeFunctionSet &operator= ( ThisType && ) = default;
+
+      /** \} */
+
+      /** \name Public member methods
+       *  \{
+       */
+
+      /** \copydoc Dune::Fem::ShapeFunctionSet::order */
+      int order () const { return order_; }
+
+      /** \copydoc Dune::Fem::ShapeFunctionSet::size */
+      std::size_t constexpr size () const { return size( order() ); }
+
+      /** \brief please doc me */
+      static std::size_t constexpr size ( int order )
+      {
+        return OrthonormalShapeFunctions< dimension >::size( order );
+      }
+
+      /** \copydoc Dune::Fem::ShapeFunctionSet::evaluateEach */
       template< class Point, class Functor >
       void evaluateEach ( const Point &x, Functor functor ) const
       {
-        const DomainType y = coordinate( x );
-        Dune::Impl::IfTopology< ShapeFunctionSetHelperType::template EvaluateEach, dimension >
-          ::apply( topologyId_, y, functor );
+        const DomainType y = Dune::Fem::coordinate( x );
+        RangeType value;
+        const std::size_t size = this->size();
+        for( std::size_t i = 0; i < size; ++i )
+        {
+          evaluate( i, y, value );
+          functor( i, value );
+        }
       }
 
-      /** @copydoc Dune::Fem::ShapeFunctionSet::jacobianEach */
+      /** \copydoc Dune::Fem::ShapeFunctionSet::jacobianEach */
       template< class Point, class Functor >
       void jacobianEach ( const Point &x, Functor functor ) const
       {
-        const DomainType y = coordinate( x );
-        Dune::Impl::IfTopology< ShapeFunctionSetHelperType::template JacobianEach, dimension >
-          ::apply( topologyId_, y, functor );
+        const DomainType y = Dune::Fem::coordinate( x );
+        JacobianRangeType jacobian;
+        const std::size_t size = this->size();
+        for( std::size_t i = 0; i < size; ++i )
+        {
+          this->jacobian( i, y, jacobian );
+          functor( i, jacobian );
+        }
       }
 
-      /** @copydoc Dune::Fem::ShapeFunctionSet::hessianEach */
+      /** \copydoc Dune::Fem::ShapeFunctionSet::hessianEach */
       template< class Point, class Functor >
       void hessianEach ( const Point &x, Functor functor ) const
       {
-        const DomainType y = coordinate( x );
-        Dune::Impl::IfTopology< ShapeFunctionSetHelperType::template HessianEach, dimension >
-          ::apply( topologyId_, y, functor );
+        const DomainType y = Dune::Fem::coordinate( x );
+        HessianRangeType hessian;
+        const std::size_t size = this->size();
+        for( std::size_t i = 0; i < size; ++i )
+        {
+          this->hessian( i, y, hessian );
+          functor( i, hessian );
+        }
+      }
+
+      /** \} */
+
+    private:
+      void evaluate ( std::size_t i, const DomainType &x, RangeType &value ) const
+      {
+        value[ 0 ] = evaluate_( i, &x[ 0 ] );
+      }
+
+      void jacobian ( std::size_t i, const DomainType &x, JacobianRangeType &jacobian ) const
+      {
+        jacobian_( i, &x[ 0 ], &jacobian[ 0 ][ 0 ] );
+      }
+
+      void hessian ( std::size_t i, const DomainType &x, HessianRangeType &hessian ) const
+      {
+        assert( hessian_ );
+
+        RangeFieldType values[] = { 0, 0, 0 };
+        hessian_( i , &x[ 0 ], values );
+        for( unsigned int j = 0; j < FunctionSpaceType::dimDomain;  ++j )
+          for( unsigned int k = 0; k < FunctionSpaceType::dimDomain; ++k )
+            hessian[ 0 ][ j ][ k ] = values[ j + k ];
+      }
+
+      int order_;
+      Evaluate evaluate_;
+      Jacobian jacobian_;
+      Hessian hessian_;
+    };
+
+
+
+    // OrthonormalShapeFunctionSet::Initialize
+    // ---------------------------------------
+
+    template< class FunctionSpace >
+    template< class Topology >
+    class OrthonormalShapeFunctionSet< FunctionSpace >::Initialize
+    {
+      typedef Dune::Impl::Prism< Dune::Impl::Point > Line;
+      typedef Dune::Impl::Prism< Line > Quadrilateral;
+      typedef Dune::Impl::Pyramid< Line > Triangle;
+      typedef Dune::Impl::Prism< Quadrilateral > Hexahedron;
+      typedef Dune::Impl::Pyramid< Quadrilateral > Pyramid;
+      typedef Dune::Impl::Prism< Triangle > Prism;
+      typedef Dune::Impl::Pyramid< Triangle > Tetrahedron;
+
+      template< class T >
+      class BasicGeometryType
+      {
+        template< unsigned int topologyId >
+        struct UniqueId
+        {
+          static const unsigned int v = topologyId | (unsigned int)Dune::Impl::prismConstruction;
+        };
+
+      public:
+        typedef typename Dune::Fem::Impl::UniqueTopology< T >::Type Type;
+      };
+
+      template< class T >
+      static typename BasicGeometryType< T >::Type basicGeometryType ()
+      {
+        return typename BasicGeometryType< T >::Type();
+      }
+
+    public:
+      static void apply ( Evaluate &evaluate, Jacobian &jacobian )
+      {
+        initialize( evaluate, jacobian, basicGeometryType< Topology >() );
       }
 
     private:
-      unsigned int topologyId_;
+      typedef OrthonormalBase_1D< DomainFieldType, RangeFieldType > OrthonormalBase1d;
+      typedef OrthonormalBase_2D< DomainFieldType, RangeFieldType > OrthonormalBase2d;
+      typedef OrthonormalBase_3D< DomainFieldType, RangeFieldType > OrthonormalBase3d;
+
+      static void initialize ( Evaluate &evaluate, Jacobian &jacobian, const Line & )
+      {
+        evaluate = OrthonormalBase1d::eval_line;
+        jacobian = OrthonormalBase1d::grad_line;
+      }
+
+      static void initialize ( Evaluate &evaluate, Jacobian &jacobian, const Quadrilateral & )
+      {
+        evaluate = OrthonormalBase2d::eval_quadrilateral_2d;
+        jacobian = OrthonormalBase2d::grad_quadrilateral_2d;
+      }
+
+      static void initialize ( Evaluate &evaluate, Jacobian &jacobian, const Triangle & )
+      {
+        evaluate = OrthonormalBase2d::eval_triangle_2d;
+        jacobian = OrthonormalBase2d::grad_triangle_2d;
+      }
+
+      static void initialize ( Evaluate &evaluate, Jacobian &jacobian, const Pyramid & )
+      {
+        evaluate = OrthonormalBase3d::eval_pyramid_3d;
+        jacobian = OrthonormalBase3d::grad_pyramid_3d;
+      }
+
+      static void initialize ( Evaluate &evaluate, Jacobian &jacobian, const Hexahedron & )
+      {
+        evaluate = OrthonormalBase3d::eval_hexahedron_3d;
+        jacobian = OrthonormalBase3d::grad_hexahedron_3d;
+      }
+
+      static void initialize ( Evaluate &evaluate, Jacobian &jacobian, const Prism & )
+      {
+        evaluate = OrthonormalBase3d::eval_prism_3d;
+        jacobian = OrthonormalBase3d::grad_prism_3d;
+      }
+
+      static void initialize ( Evaluate &evaluate, Jacobian &jacobian, const Tetrahedron & )
+      {
+        evaluate = OrthonormalBase3d::eval_tetrahedron_3d;
+        jacobian = OrthonormalBase3d::grad_tetrahedron_3d;
+      }
     };
 
   } // namespace Fem

@@ -46,7 +46,27 @@ namespace Dune
            GridPartType::dimension, 1
         > ScalarShapeFunctionSpaceType;
 
-      typedef SelectCachingShapeFunctionSets< GridPartType, OrthonormalShapeFunctionSet< ScalarShapeFunctionSpaceType, polOrder >, Storage > ScalarShapeFunctionSetsType;
+      struct ScalarShapeFunctionSet
+        : public Dune::Fem::OrthonormalShapeFunctionSet< ScalarShapeFunctionSpaceType >
+      {
+        typedef Dune::Fem::OrthonormalShapeFunctionSet< ScalarShapeFunctionSpaceType >   BaseType;
+
+        static constexpr int numberShapeFunctions =
+              OrthonormalShapeFunctions< ScalarShapeFunctionSpaceType::dimDomain >::size(polOrder);
+      public:
+        explicit ScalarShapeFunctionSet ( Dune::GeometryType type )
+          : BaseType( type, polOrder )
+        {
+          assert( size() == BaseType::size() );
+        }
+
+        // overload size method because it's a static value
+        static constexpr unsigned int size() { return numberShapeFunctions; }
+      };
+
+
+
+      typedef SelectCachingShapeFunctionSets< GridPartType, ScalarShapeFunctionSet, Storage > ScalarShapeFunctionSetsType;
       typedef VectorialShapeFunctionSets< ScalarShapeFunctionSetsType, typename FunctionSpaceType::RangeType > ShapeFunctionSetsType;
 
       typedef DefaultBasisFunctionSets< GridPartType, ShapeFunctionSetsType > BasisFunctionSetsType;
@@ -54,7 +74,7 @@ namespace Dune
 
       typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
 
-      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange * OrthonormalShapeFunctionSetSize< ScalarShapeFunctionSpaceType, polOrder >::v > LocalBlockIndices;
+      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange * ScalarShapeFunctionSet::numberShapeFunctions > LocalBlockIndices;
 
       template <class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
       struct CommDataHandle
