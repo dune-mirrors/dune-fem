@@ -13,6 +13,7 @@
 #include "mapper.hh"
 #include "restrictprolong.hh"
 
+#include <dune/fem/space/discontinuousgalerkin/interpolation.hh>
 
 namespace Dune
 {
@@ -82,17 +83,22 @@ namespace Dune
 
       typedef typename BaseType::Traits Traits;
 
-      typedef typename BaseType::GridPartType GridPartType;
-      typedef typename BaseType::IntersectionType IntersectionType;
+      typedef typename BaseType::GridPartType      GridPartType;
+      typedef typename BaseType::IntersectionType  IntersectionType;
+      typedef typename BaseType::EntityType        EntityType;
 
+      typedef typename BaseType::BasisFunctionSetType  BasisFunctionSetType;
       typedef typename BaseType::CompiledLocalKeyType CompiledLocalKeyType;
       typedef CompiledLocalKeyType LagrangePointSetType;
+
+      typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
 
     public:
       using BaseType::continuous;
       using BaseType::gridPart;
       using BaseType::blockMapper;
       using BaseType::compiledLocalKey;
+      using BaseType::basisFunctionSet;
 
       // default communication interface
       static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
@@ -127,6 +133,12 @@ namespace Dune
       {
         return compiledLocalKey( type, order );
       }
+
+      InterpolationType interpolation ( const EntityType &entity ) const
+      {
+        return InterpolationType( basisFunctionSet( entity ) );
+      }
+
     };
 
   } // namespace Fem
