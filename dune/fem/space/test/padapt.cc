@@ -141,7 +141,8 @@ typedef FunctionSpace< double, double, MyGridType::dimensionworld, MyGridType::d
 // typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
 //! type of the discrete function space our unkown belongs to
 //typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
-typedef Fem :: PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
+//typedef Fem :: PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
+typedef Fem :: PAdaptiveDGSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
 
 //! type of the discrete function we are using
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
