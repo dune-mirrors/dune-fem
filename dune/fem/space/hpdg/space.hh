@@ -61,9 +61,6 @@ namespace Dune
         /** \brief block mapper type */
         using BlockMapperType = typename BaseType::BlockMapperType;
 
-        /** \brief communicaton manager type */
-        //using CommunicationManagerType = typename BaseType::CommunicationManagerType;
-
         typedef typename BaseType::SlaveDofsType SlaveDofsType;
 
     protected:
@@ -93,7 +90,7 @@ namespace Dune
 
       public:
         /** \brief local interpolation type  */
-        using InterpolationType = DiscontinuousGalerkinLocalInterpolation< BasisFunctionSetsType >;
+        using InterpolationType = DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType >;
 
         /** \name Construction
          *  \{
@@ -105,11 +102,8 @@ namespace Dune
                                      const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
                                      const Dune::CommunicationDirection direction = Dune::ForwardCommunication )
           : BaseType( gridPart, interface, direction ),
-            types_( gridPart_.indexSet() ),
             basisFunctionSets_( basisFunctionSets ),
             blockMapper_( gridPart_, basisFunctionSets_, value, function )
-            //interface_( interface ),
-            //direction_( direction )
         {}
 
         DiscontinuousGalerkinSpace ( GridPartType &gridPart, const BasisFunctionSetsType &basisFunctionSets, const KeyType &value,
@@ -147,9 +141,6 @@ namespace Dune
 
         /** \brief please doc me */
         bool multipleBasisFunctionSets () const { return true; }
-
-        /** \brief please doc me */
-        bool multipleGeometryTypes () const { return types_.multipleGeomTypes(); }
 
         /** \} */
 
@@ -189,33 +180,14 @@ namespace Dune
           return InterpolationType( basisFunctionSet( entity ) );
         }
 
-        /** \brief interpolat given local function
-         *
-         *  \param[in]  localFunction  local function to interpolate
-         *  \param[out]  localDofVector  local dof vector
-         */
-        template< class LocalFunction, class LocalDofVector >
-        DUNE_DEPRECATED
-        void interpolate ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
-        {
-          const EntityType &entity = localFunction.entity();
-          const auto interpolation = asImp().interpolation( entity );
-          interpolation( localFunction, localDofVector );
-        }
-
         /** \} */
 
         /** \name Block mapper
          *  \{
          */
 
-        /** \brief return number of dofs */
-        int size () const { return BaseType::localBlockSize*blockMapper().size(); }
-
         /** \brief return block mapper */
         BlockMapperType &blockMapper () const { return blockMapper_; }
-
-        int maxNumDofs () const { return blockMapper().maxNumDofs() * BaseType::localBlockSize; }
 
         /** \} */
 
@@ -293,7 +265,7 @@ namespace Dune
         /** \} */
 
       protected:
-        Dune::Fem::AllGeomTypes< typename BaseType::IndexSetType, typename BaseType::GridType > types_;
+        //Dune::Fem::AllGeomTypes< typename BaseType::IndexSetType, typename BaseType::GridType > types_;
         BasisFunctionSetsType basisFunctionSets_;
         mutable BlockMapperType blockMapper_;
       };

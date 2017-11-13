@@ -246,7 +246,7 @@ namespace Dune
        *  \param[in]  key  key identifying basis function set
        *  \param[in]  entity  grid part entity
        */
-      void mark ( const KeyType &key, const EntityType &entity ) const
+      void mark ( const KeyType &key, const EntityType &entity )
       {
         return blockMapper().suggestPolynomOrder( entity, key );
       }
@@ -268,7 +268,7 @@ namespace Dune
        *  \param[in]  polOrderShift     possible shift of polynomial order (i.e. in case of
        *                                Taylor-Hood put -1 for the pressure) (default = 0)
        */
-      void adapt () const
+      void adapt ()
       {
         // adjust mapper by using previously set new polynomial orders
         blockMapper().adapt();
@@ -280,7 +280,7 @@ namespace Dune
       }
 
       template< class DiscreteFunctionSpace, class Implementation >
-      void adapt ( DataProjection< DiscreteFunctionSpace, Implementation > &projection ) const
+      void adapt ( DataProjection< DiscreteFunctionSpace, Implementation > &projection )
       {
         // create a copy of this space (to be improved, avoid DofManager involvement)
         DiscreteFunctionSpaceType oldSpace( asImp() );
