@@ -41,9 +41,9 @@ namespace Dune
        */
       template< class Traits >
       class DiscontinuousGalerkinSpace
-      : public Dune::Fem::DiscreteFunctionSpaceInterface< Traits >
+      : public Dune::Fem::DiscreteFunctionSpaceDefault< Traits >
       {
-        using BaseType = Dune::Fem::DiscreteFunctionSpaceInterface< Traits >;
+        using BaseType = Dune::Fem::DiscreteFunctionSpaceDefault< Traits >;
 
       public:
         /** \brief grid part type */
@@ -62,10 +62,30 @@ namespace Dune
         using BlockMapperType = typename BaseType::BlockMapperType;
 
         /** \brief communicaton manager type */
-        using CommunicationManagerType = typename BaseType::CommunicationManagerType;
+        //using CommunicationManagerType = typename BaseType::CommunicationManagerType;
+
+        typedef typename BaseType::SlaveDofsType SlaveDofsType;
+
+    protected:
+      struct SlaveDofsFactory
+      {
+        typedef std::pair< SlaveDofsType, int > ObjectType;
+
+        static ObjectType *createObject ( std::pair< GridPartType *, BlockMapperType * > key )
+        {
+          return new ObjectType( std::piecewise_construct, std::tie( *key.first, *key.second ), std::make_tuple( -1 ) );
+        }
+
+        static void deleteObject ( ObjectType *object ) { delete object; }
+      };
+
+      typedef SingletonList< std::pair< GridPartType *, BlockMapperType * >, std::pair< SlaveDofsType, int >, SlaveDofsFactory > SlaveDofsProviderType;
+
+
 
       protected:
         using BaseType::asImp;
+        using BaseType::gridPart_;
 
       private:
         template< class DataProjection >
@@ -84,12 +104,12 @@ namespace Dune
                                      const KeyType &value, Function function,
                                      const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
                                      const Dune::CommunicationDirection direction = Dune::ForwardCommunication )
-          : gridPart_( gridPart ),
-            types_( gridPart_.get().indexSet() ),
+          : BaseType( gridPart, interface, direction ),
+            types_( gridPart_.indexSet() ),
             basisFunctionSets_( basisFunctionSets ),
-            blockMapper_( gridPart_.get(), basisFunctionSets_, value, function ),
-            interface_( interface ),
-            direction_( direction )
+            blockMapper_( gridPart_, basisFunctionSets_, value, function )
+            //interface_( interface ),
+            //direction_( direction )
         {}
 
         DiscontinuousGalerkinSpace ( GridPartType &gridPart, const BasisFunctionSetsType &basisFunctionSets, const KeyType &value,
@@ -199,102 +219,6 @@ namespace Dune
 
         /** \} */
 
-        /** \name Grid part
-         *  \{
-         */
-
-        /** \brief return grid part */
-        GridPartType &gridPart () { return gridPart_.get(); }
-
-        /** \brief return grid part */
-        const GridPartType &gridPart () const { return gridPart_.get(); }
-
-        /** \brief return index set */
-        const typename BaseType::IndexSetType &indexSet () const
-        {
-          return gridPart().indexSet();
-        }
-
-        /** \brief return iterator */
-        typename BaseType::IteratorType begin () const
-        {
-          return gridPart().template begin< EntityType::codimension >();
-        }
-
-        /** \brief return end iterator */
-        typename BaseType::IteratorType end () const
-        {
-          return gridPart().template end< EntityType::codimension >();
-        }
-
-        /** \brief return grid */
-        typename BaseType::GridType &grid () // DUNE_DEPRECATED
-        {
-          return gridPart().grid();
-        }
-
-        /** \brief return grid */
-        const typename BaseType::GridType &grid () const // DUNE_DEPRECATED
-        {
-          return gridPart().grid();
-        }
-
-        /** \brief call function for each grid part element */
-        template< class Function >
-        DUNE_DEPRECATED
-        void forEach ( Function &function ) const
-        {
-          auto first = gridPart().template begin< EntityType::codimension, InteriorBorder_Partition >();
-          auto last = gridPart().template end< EntityType::codimension, InteriorBorder_Partition >();
-          for( ; first != last; ++first )
-            function( *first );
-        }
-
-        /** \} */
-
-        /** \name Parallel interface
-         *  \{
-         */
-
-        /** \brief please doc me */
-        Dune::InterfaceType communicationInterface () const { return interface_; }
-
-        /** \brief please doc me */
-        Dune::CommunicationDirection communicationDirection () const { return direction_; }
-
-        /** \brief please doc me */
-        const CommunicationManagerType &communicator () const
-        {
-          if( !communicator_ )
-            communicator_.reset( new CommunicationManagerType( asImp(), communicationInterface(), communicationDirection() ) );
-          return *communicator_;
-        }
-
-        /** \brief please doc me */
-        template< class DiscreteFunction >
-        void communicate ( DiscreteFunction &discreteFunction ) const
-        {
-          //using OperationType = typename DiscreteFunction::DiscreteFunctionSpaceType::template CommDataHandle< DiscreteFunction >::OperationType;
-          //communicate( discreteFunction, static_cast< OperationType * >( nullptr ) );
-        }
-
-        /** \brief please doc me */
-        template< class DiscreteFunction, class Operation >
-        void communicate ( DiscreteFunction &discreteFunction, const Operation operation ) const
-        {
-          //communicator().exchange( discreteFunction, static_cast< Operation * >( nullptr ) );
-        }
-
-        /** \brief please doc me */
-        template< class DiscreteFunction, class Operation >
-        typename BaseType::template CommDataHandle< DiscreteFunction, Operation >::Type
-        createDataHandle ( DiscreteFunction &discreteFunction, const Operation *operation ) const
-        {
-          return typename BaseType::template CommDataHandle< DiscreteFunction, Operation >::Type( discreteFunction );
-        }
-
-        /** \} */
-
         /** \name Adaptation
          *  \{
          */
@@ -342,9 +266,6 @@ namespace Dune
           return blockMapper_.adapt( wrapper );
         }
 
-        /** \brief get number in grid sequence */
-        int sequence () const { return blockMapper().dofManager().sequence(); }
-
         /** \} */
 
         /** \name Deprecated methods
@@ -372,13 +293,9 @@ namespace Dune
         /** \} */
 
       protected:
-        std::reference_wrapper< GridPartType > gridPart_;
         Dune::Fem::AllGeomTypes< typename BaseType::IndexSetType, typename BaseType::GridType > types_;
         BasisFunctionSetsType basisFunctionSets_;
         mutable BlockMapperType blockMapper_;
-        Dune::InterfaceType interface_;
-        Dune::CommunicationDirection direction_;
-        mutable std::unique_ptr< CommunicationManagerType > communicator_;
       };
 
 
