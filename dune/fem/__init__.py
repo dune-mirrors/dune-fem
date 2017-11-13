@@ -22,7 +22,9 @@ registry["view"] = {
 registry["space"] = {
          "lagrange"      : space.lagrange,
          "dgonb"         : space.dgonb,
+         "dgonbhp"       : space.dgonbhp,
          "dglegendre"    : space.dglegendre,
+         "dglegendrehp"  : space.dglegendrehp,
          "dglagrange"    : space.dglagrange,
          "finitevolume"  : space.finiteVolume,
          "p1bubble"      : space.p1Bubble,
