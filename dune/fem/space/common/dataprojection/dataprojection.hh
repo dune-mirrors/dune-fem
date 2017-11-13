@@ -87,9 +87,9 @@ namespace Dune
          *  \param[in]  tmp  discrete function for temporary storage
          */
         template <class TemporaryStorage>
-        void project ( TemporaryStorage& tmp )
+        void operator () ( TemporaryStorage& tmp )
         {
-          asImp().project( tmp );
+          asImp()( tmp );
         }
 
         /** \brief add discrete function to communicator

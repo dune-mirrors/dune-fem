@@ -99,7 +99,7 @@ namespace Dune
 
         /** \brief transfer of discrete function from old to new space using intermediate storage */
         template <class TemporaryStorage>
-        void project( TemporaryStorage& tmp )
+        void operator () ( TemporaryStorage& tmp )
         {
           auto& df = discreteFunction();
 

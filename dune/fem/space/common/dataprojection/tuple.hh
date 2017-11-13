@@ -70,7 +70,7 @@ namespace Dune
           static void apply ( TemporaryStorage& tmp,
                               std::tuple< Head, Tail... > &tuple )
           {
-            std::get< i >( tuple ).project( tmp );
+            std::get< i >( tuple )( tmp );
           }
         };
 
@@ -119,7 +119,7 @@ namespace Dune
         }
 
         template <class TemporaryStorage>
-        void project( TemporaryStorage& tmp )
+        void operator () ( TemporaryStorage& tmp )
         {
           Dune::Fem::ForLoop< Project, 0, sizeof...( Tail ) >::apply( tmp, tuple_ );
         }

@@ -303,7 +303,7 @@ namespace Dune
 
         // go through list and adjust discrete functions
         // see DefaultDataProjectionTuple and DefaultDataProjection for possible implementation
-        projection.project( tmp );
+        projection( tmp );
 
         // resize discrete functions (only functions belonging
         // to this space will be affected ), for convenience

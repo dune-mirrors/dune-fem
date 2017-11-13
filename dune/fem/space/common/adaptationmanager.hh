@@ -906,9 +906,9 @@ namespace Dune
       }
 
       template <class TemporaryStorage>
-      void project( TemporaryStorage& tmp )
+      void operator() ( TemporaryStorage& tmp )
       {
-        dataProjection_.get().project( tmp );
+        dataProjection_.get()( tmp );
         modified_ = true;
       }
 
