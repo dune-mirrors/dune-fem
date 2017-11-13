@@ -54,9 +54,7 @@ namespace Dune
         static const int localBlockSize = BasisFunctionSetsType::localBlockSize;
         static_assert( localBlockSize == FunctionSpace::dimRange, " dimRange prob ");
 
-        typedef Hybrid::IndexRange< int, FunctionSpace::dimRange > LocalBlockIndices;
-
-
+        typedef Hybrid::IndexRange< int, localBlockSize > LocalBlockIndices;
 
         template< class DiscreteFunction, class Operation = Dune::Fem::DFCommunicationOperation::Copy >
         struct CommDataHandle

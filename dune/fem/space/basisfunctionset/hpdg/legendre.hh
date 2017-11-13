@@ -77,7 +77,7 @@ namespace Dune
       private:
         static GeometryType type ()
         {
-          return GeometryType( GeometryType::cube, FunctionSpace::dimDomain );
+          return GeometryType( Dune::Impl::CubeTopology< FunctionSpace::dimDomain >::type::id, FunctionSpace::dimDomain );
         }
 
         std::array< std::unique_ptr< ShapeFunctionSetType >, order+1 > shapeFunctionSets_;
