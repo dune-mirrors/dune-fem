@@ -12,7 +12,7 @@
 #include <dune/fem/space/common/localrestrictprolong.hh>
 #include <dune/fem/space/discontinuousgalerkin/localrestrictprolong.hh>
 
-#include <dune/fem/hpdg/space/basisfunctionsets/anisotropic.hh>
+#include <dune/fem/space/basisfunctionset/hpdg/anisotropic.hh>
 
 #include "blockmapper.hh"
 #include "space.hh"
@@ -55,6 +55,8 @@ namespace Dune
 
         using BlockMapperType = hpDG::DiscontinuousGalerkinBlockMapper< GridPartType, BasisFunctionSetsType >;
         static const int localBlockSize = BasisFunctionSetsType::localBlockSize;
+
+        typedef Hybrid::IndexRange< int, localBlockSize > LocalBlockIndices;
 
         template< class DiscreteFunction, class Operation = Dune::Fem::DFCommunicationOperation::Copy >
         struct CommDataHandle

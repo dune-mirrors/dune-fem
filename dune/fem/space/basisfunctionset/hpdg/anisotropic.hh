@@ -269,7 +269,7 @@ namespace Dune
         /** \copydoc Dune::Fem::BasisFunctionSets::basisFunctionSet */
         static BasisFunctionSetType basisFunctionSet ( const EntityType &entity, const KeyType &key ) noexcept
         {
-          assert( entity.type() == GeometryType( GeometryType::cube, EntityType::mydimension ) );
+          assert( entity.type() == GeometryType( Dune::Impl::CubeTopology< EntityType::mydimension >::type::id, EntityType::mydimension ) );
           return BasisFunctionSetType( entity, shapeFunctionSet( key ) );
         }
 
