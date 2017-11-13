@@ -185,8 +185,6 @@ inline Algorithm::ErrorType Algorithm::finalize ( DiscreteFunctionType &solution
   const GridPartType &gridPart = solution.space().gridPart();
   ErrorType error;
 
-  const int order = solution.space().order()+1;
-
   Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
   Dune::Fem::H1Norm< GridPartType > h1norm( gridPart );
 
