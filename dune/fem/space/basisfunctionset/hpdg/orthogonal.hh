@@ -184,6 +184,15 @@ namespace Dune
         /** \copydoc Dune::Fem::BasisFunctionSets::KeyType */
         using DataType = typename BaseType::DataType;
 
+        /** \brief type of function space */
+        using FunctionSpaceType = FunctionSpace;
+
+        /** \brief range type of basis functions */
+        using DomainType = typename FunctionSpaceType :: DomainType;
+
+        /** \brief range type of basis functions */
+        using RangeType = typename FunctionSpaceType :: RangeType;
+
         /** \name Construction
          *  \{
          */
