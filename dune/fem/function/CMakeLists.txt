@@ -17,6 +17,7 @@ dune_add_subdirs(
   blockvectors
   combinedfunction
   common
+  grid
   localfunction
   hierarchical
   petscdiscretefunction
