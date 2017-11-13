@@ -42,7 +42,7 @@ namespace Dune
     private:
       typedef GridPart GridPartType;
       typedef typename GridPartType::GridType GridType;
-      static const bool cartesian = Dune::Capabilities::isCartesian< GridType >::v;
+      static const bool cartesian = true;//Dune::Capabilities::isCartesian< GridType >::v;
 
       typedef typename std::conditional< cartesian,
           OrthonormalLocalRieszProjection< BasisFunctionSetType >,

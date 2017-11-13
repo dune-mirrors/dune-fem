@@ -5,7 +5,8 @@
 #include <utility>
 
 #include <dune/geometry/type.hh>
-#include <dune/geometry/typeindexset.hh>
+
+#include "typeindexset.hh"
 
 namespace Dune
 {

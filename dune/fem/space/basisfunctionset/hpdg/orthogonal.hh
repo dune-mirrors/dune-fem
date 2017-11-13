@@ -11,8 +11,6 @@
 #include <vector>
 
 #include <dune/geometry/type.hh>
-#include <dune/geometry/typeindexset.hh>
-#include <dune/geometry/typemap.hh>
 
 #include <dune/grid/common/capabilities.hh>
 
@@ -24,6 +22,8 @@
 
 #include <dune/fem/space/shapefunctionset/orthonormal.hh>
 
+#include "typeindexset.hh"
+#include "typemap.hh"
 #include "basisfunctionsets.hh"
 
 namespace Dune
