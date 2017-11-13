@@ -23,6 +23,8 @@
 #include <dune/fem/space/common/dofmanager.hh>
 #include <dune/fem/space/mapper/dofmapper.hh>
 
+#include <dune/fem/space/common/capabilities.hh>
+
 #include "datahandle.hh"
 #include "localdofstorage.hh"
 
@@ -651,6 +653,28 @@ namespace Dune
       }
 
     } // namespace hpDG
+
+    namespace Capabilities
+    {
+      // isConsecutiveIndexSet
+      // ---------------------
+
+      template< class GridPart, class LocalKeys >
+      struct isConsecutiveIndexSet< hpDG::DiscontinuousGalerkinBlockMapper< GridPart, LocalKeys > >
+      {
+        static const bool v = true;
+      };
+
+      // isAdaptiveDofMapper
+      // -------------------
+
+      template< class GridPart, class LocalKeys >
+      struct isAdaptiveDofMapper< hpDG::DiscontinuousGalerkinBlockMapper< GridPart, LocalKeys > >
+      {
+        static const bool v = true;
+      };
+
+    } // namespace Capabilities
 
   } // namespace Fem
 
