@@ -10,7 +10,7 @@ class Block:
         for obj in objs:
             if isinstance(obj, (list, set, tuple)):
                 self.content += [o for o in obj]
-            else:
+            elif obj is not None:
                 self.content.append(obj)
 
 

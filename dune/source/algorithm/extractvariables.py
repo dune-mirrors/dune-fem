@@ -1,7 +1,7 @@
 from __future__ import division, print_function, unicode_literals
 
 from ..expression import Application, ConstantExpression, ConstructExpression, Expression, InitializerList, LambdaExpression, NullPtr, This, UnformattedExpression, Variable
-from ..cplusplus import Declaration, ReturnStatement, Using
+from ..cplusplus import Declaration, ReturnStatement, SwitchStatement, Using
 
 
 def extractVariablesFromExpression(expr):
@@ -28,7 +28,7 @@ def extractVariablesFromExpression(expr):
     elif isinstance(expr, Variable):
         return {expr}
     elif isinstance(expr, UnformattedExpression):
-        return expr.uses if expr.uses is not None else set()
+        return set(expr.uses) if expr.uses is not None else set()
     else:
         raise Exception("Unknown expression", expr)
 
@@ -46,6 +46,12 @@ def extractVariablesFromStatement(stmt):
         return extractVariablesFromExpression(stmt.initializer) if stmt.initializer is not None else set()
     elif isinstance(stmt, ReturnStatement):
         return extractVariablesFromExpression(stmt.expression);
+    elif isinstance(stmt, SwitchStatement):
+        result = {stmt.var}
+        for case, code in stmt.branches.items():
+            result = result | extractVariablesFromStatements(code.content)
+        result = result | extractVariablesFromStatements(stmt.default.content)
+        return result
     elif isinstance(stmt, Using):
         return set()
     else:
