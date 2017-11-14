@@ -7,6 +7,8 @@
 #include <dune/geometry/type.hh>
 
 #include <dune/fem/common/coordinate.hh>
+#include <dune/fem/quadrature/quadrature.hh>
+
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/shapefunctionset/orthonormal/orthonormalbase_1d.hh>
 #include <dune/fem/space/shapefunctionset/orthonormal/orthonormalbase_2d.hh>
