@@ -150,7 +150,7 @@ namespace Dune
 
         Dune::Fem::CodimensionMapper< GridPart, 0 > mapper_;
         Dune::Fem::DofStorageInterface *dofStorage_ = nullptr;
-        std::vector< int > *p_ = nullptr;
+        container *p_ = nullptr;
       };
 
     } // namespace hpDG
