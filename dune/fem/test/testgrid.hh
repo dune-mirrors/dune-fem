@@ -21,8 +21,8 @@ namespace Dune
       typedef Dune::GridSelector::GridType HGridType;
 
     protected:
-      TestGrid ()
-      : gridptr_( macroGridName() )
+      TestGrid ( const std::string& name )
+      : gridptr_( name )
       {
         gridptr_->loadBalance();
       }
@@ -32,15 +32,15 @@ namespace Dune
 
       ThisType &operator= ( const ThisType & ) = delete;
 
-      static ThisType &instance ()
+      static ThisType &instance ( const std::string& name )
       {
-        static ThisType staticInstance;
+        static ThisType staticInstance( name );
         return staticInstance;
       }
 
-      static HGridType &grid ()
+      static HGridType &grid ( const std::string name = macroGridName() )
       {
-        return *(instance().gridptr_);
+        return *(instance( name ).gridptr_);
       }
 
       static int refineStepsForHalf ()
