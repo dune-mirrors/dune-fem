@@ -859,6 +859,7 @@ namespace Dune
 
       /** \} */
 
+      DataProjection& dataProjection() { return dataProjection_; }
     private:
       DiscreteFunctionSpaceType &space () { return space_.get(); }
 
