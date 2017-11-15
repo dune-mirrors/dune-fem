@@ -119,20 +119,9 @@ namespace Dune
       std::vector< DataProjection > vec_; // vector holding data projection objects
     };
 
-    //! derive from hpDG::AdaptationManager to make dataProjection publicly available
     template< class DiscreteFunctionSpace, class DataProjection >
-    class SpaceAdaptationManager
-      : public Dune::Fem::hpDG::AdaptationManager< DiscreteFunctionSpace, DataProjection >
-    {
-      using BaseType = Dune::Fem::hpDG::AdaptationManager< DiscreteFunctionSpace, DataProjection >;
-      using BaseType :: dataProjection_;
-    public:
-      explicit SpaceAdaptationManager ( DiscreteFunctionSpace &space, DataProjection &&dataProjection )
-        : BaseType( space, std::forward< DataProjection > ( dataProjection ) )
-      {}
-
-      DataProjection& dataProjection() { return dataProjection_; }
-    };
+    using SpaceAdaptationManager
+      = Dune::Fem::hpDG::AdaptationManager< DiscreteFunctionSpace, DataProjection >;
 
     // SpaceAdaptation
     // --------------
@@ -159,6 +148,25 @@ namespace Dune
         for( Iterator it = begin; it != end; ++it )
         {
           adaptationManager_.dataProjection().add( DataProjectionType( *it ) );
+        }
+
+        for( element : space_)
+          space_.mark( marking(element), element );
+
+        // ??? typedef Fem::hpDG::AdaptationManager< DiscreteFunctionSpaceType, DataProjectionVectorType > SpaceAdaptationManager;
+
+        adaptationManager_.adapt();
+
+        // clear list of data projections
+        adaptationManager_.dataProjection().clear();
+      }
+      template< class Iterator >
+      void adapt ( Iterator begin, Iterator end )
+      {
+        // add discrete functions to data projection list
+        for( Iterator it = begin; it != end; ++it )
+        {
+          adaptationManager_.dataProjection().add( DataProjection( *it ) );
         }
 
         // mark new polynomial orders for space
