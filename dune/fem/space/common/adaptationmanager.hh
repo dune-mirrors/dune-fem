@@ -859,7 +859,7 @@ namespace Dune
 
       /** \} */
 
-    private:
+    protected:
       DiscreteFunctionSpaceType &space () { return space_.get(); }
 
       const DiscreteFunctionSpaceType &space () const { return space_.get(); }
