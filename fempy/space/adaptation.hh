@@ -119,10 +119,6 @@ namespace Dune
       std::vector< DataProjection > vec_; // vector holding data projection objects
     };
 
-    template< class DiscreteFunctionSpace, class DataProjection >
-    using SpaceAdaptationManager
-      = Dune::Fem::hpDG::AdaptationManager< DiscreteFunctionSpace, DataProjection >;
-
     // SpaceAdaptation
     // --------------
 
@@ -133,7 +129,8 @@ namespace Dune
       typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType   DiscreteFunctionSpaceType;
       typedef Dune::Fem::DefaultDataProjection< DiscreteFunctionType >     DataProjectionType;
       typedef DataProjectionVector< DataProjectionType >                   DataProjectionVectorType;
-      typedef SpaceAdaptationManager< DiscreteFunctionSpaceType, DataProjectionVectorType > AdaptationManager;
+      typedef Dune::Fem::hpDG::AdaptationManager< DiscreteFunctionSpaceType,
+                  DataProjectionVectorType >                               AdaptationManagerType;
       typedef typename DiscreteFunctionSpaceType::EntityType Element;
 
       explicit SpaceAdaptation ( DiscreteFunctionSpaceType& space )
@@ -150,11 +147,12 @@ namespace Dune
           adaptationManager_.dataProjection().add( DataProjectionType( *it ) );
         }
 
-        for( element : space_)
+        // mark new polynomial orders for space
+        for( const auto element : space_ )
           space_.mark( marking(element), element );
 
-        // ??? typedef Fem::hpDG::AdaptationManager< DiscreteFunctionSpaceType, DataProjectionVectorType > SpaceAdaptationManager;
-
+        // adapt the polynomial orders of the space and adjust
+        // and project the discrete functions to the new space
         adaptationManager_.adapt();
 
         // clear list of data projections
@@ -183,7 +181,7 @@ namespace Dune
 
     protected:
       DiscreteFunctionSpaceType& space_;
-      AdaptationManager          adaptationManager_;
+      AdaptationManagerType      adaptationManager_;
     };
 
   } // namespace FemPy
