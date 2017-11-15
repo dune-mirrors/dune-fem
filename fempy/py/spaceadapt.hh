@@ -18,7 +18,7 @@ namespace Dune
       typedef typename Space::EntityType Element;
       using pybind11::operator""_a;
       cls.def(pybind11::init([] (Space &space)
-            {return SpaceAdapt(space);}
+            {return new SpaceAdapt(space);}
             ),pybind11::keep_alive<1,2>(), "space"_a );
       cls.def( "adapt", [] ( SpaceAdapt &self, std::function<int(Element)> marker, const std::list< DF& > &rpList ) {
           self.adapt( marker, rpList.begin(), rpList.end() );

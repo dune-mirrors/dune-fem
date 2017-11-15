@@ -114,6 +114,7 @@ namespace Dune
       std::vector< DataProjection > vec_; // ???
     };
 
+#if 0
     template< class DiscreteFunctionSpace, class DataProjection >
     class SpaceAdaptationManager
       : public Dune::Fem::hpDG::AdaptationManager< DiscreteFunctionSpace, DataProjection >
@@ -127,8 +128,10 @@ namespace Dune
 
       DataProjection& dataProjection() { return dataProjection_; }
     };
-
-
+#endif
+    template< class DiscreteFunctionSpace, class DataProjection >
+    using SpaceAdaptationManager
+      = Dune::Fem::hpDG::AdaptationManager< DiscreteFunctionSpace, DataProjection >;
 
     // SpaceAdaptation
     // --------------
