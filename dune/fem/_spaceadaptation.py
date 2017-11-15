@@ -26,4 +26,4 @@ def module(space):
 
 
 def spaceAdapt(space, marker, *args, **kwargs):
-    module(space).SpaceAdaptation(space).adapt(*args, **kwargs)
+    module(space).SpaceAdaptation(space).adapt(marker, *args, **kwargs)
