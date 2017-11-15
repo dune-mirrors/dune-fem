@@ -111,7 +111,7 @@ namespace Dune
       void clear() { vec_.clear(); }
 
     protected:
-      std::vector< DataProjectionImpl > vec_;
+      std::vector< DataProjection > vec_; // ???
     };
 
     template< class DiscreteFunctionSpace, class DataProjection >
@@ -121,7 +121,7 @@ namespace Dune
       using BaseType = Dune::Fem::hpDG::AdaptationManager< DiscreteFunctionSpace, DataProjection >;
       using BaseType :: dataProjection_;
     public:
-      explicit AdaptationManager ( DiscreteFunctionSpaceType &space, DataProjection &&dataProjection )
+      explicit SpaceAdaptationManager ( DiscreteFunctionSpace &space, DataProjection &&dataProjection )
         : BaseType( space, std::forward< DataProjection > ( dataProjection ) )
       {}
 
@@ -136,19 +136,37 @@ namespace Dune
     template< class DF >
     struct SpaceAdaptation
     {
-      typedef DF DiscreteFunction;
-      typedef typename DiscreteFunction :: DiscreteFunctionSpaceType   DiscreteFunctionSpace;
-      typedef Dune::Fem::DefaultDataProjection< DiscreteFunction >     DataProjection;
-      typedef DataProjectionVector< DataProjection >                   DataProjectionVector;
-      typedef SpaceAdaptationManager< DiscreteFunctionSpace, DataProjectionVector > AdaptationManager;
+      typedef DF DiscreteFunctionType;
+      typedef typename DiscreteFunctionType :: DiscreteFunctionSpaceType   DiscreteFunctionSpaceType;
+      typedef Dune::Fem::DefaultDataProjection< DiscreteFunctionType >     DataProjectionType;
+      typedef DataProjectionVector< DataProjectionType >                   DataProjectionVectorType;
+      typedef SpaceAdaptationManager< DiscreteFunctionSpaceType, DataProjectionVectorType > AdaptationManager;
+      typedef typename DiscreteFunctionSpaceType::EntityType Element;
 
-      typedef typename Grid::template Codim< 0 >::Entity Element;
-
-      explicit SpaceAdaptation ( DiscreteFunctionSpace& space )
+      explicit SpaceAdaptation ( DiscreteFunctionSpaceType& space )
         : space_( space ),
-          adaptationManager_( space_, DataProjectionVector() )
+          adaptationManager_( space_, DataProjectionVectorType() )
       {}
 
+      template< class Marking, class Iterator >
+      void adapt (const Marking &marking, Iterator begin, Iterator end )
+      {
+        // add discrete functions to data projection list
+        for( Iterator it = begin; it != end; ++it )
+        {
+          adaptationManager_.dataProjection().add( DataProjection( *it ) );
+        }
+
+        for( element : space_)
+          space_( marking(element), element );
+
+        // ??? typedef Fem::hpDG::AdaptationManager< DiscreteFunctionSpaceType, DataProjectionVectorType > SpaceAdaptationManager;
+
+        adaptationManager_.adapt();
+
+        // clear list of data projections
+        adaptationManager_.dataProjection().clear();
+      }
       template< class Iterator >
       void adapt ( Iterator begin, Iterator end )
       {
@@ -158,9 +176,7 @@ namespace Dune
           adaptationManager_.dataProjection().add( DataProjection( *it ) );
         }
 
-        typedef Fem::hpDG::AdaptationManager< DiscreteFunctionSpace, DataProjectionVector > SpaceAdaptationManager;
-
-        // todo mark space according to markings
+        // ???? typedef Fem::hpDG::AdaptationManager< DiscreteFunctionSpace, DataProjectionVector > SpaceAdaptationManager;
 
         adaptationManager_.adapt();
 
@@ -169,8 +185,8 @@ namespace Dune
       }
 
     private:
-      DiscreteFunctionSpace& space_;
-      AdaptationManager      adaptationManager_;
+      DiscreteFunctionSpaceType& space_;
+      AdaptationManager          adaptationManager_;
     };
 
   } // namespace FemPy
