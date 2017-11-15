@@ -20,8 +20,8 @@ namespace Dune
       cls.def(pybind11::init([] (Space &space)
             {return new SpaceAdapt(space);}
             ),pybind11::keep_alive<1,2>(), "space"_a );
-      cls.def( "adapt", [] ( SpaceAdapt &self, std::function<int(Element)> marker, const std::list< DF& > &rpList ) {
-          self.adapt( marker, rpList.begin(), rpList.end() );
+      cls.def( "adapt", [] ( SpaceAdapt &self, std::function<int(Element)> marker, const std::list< std::reference_wrapper<DF> > &dfList ) {
+          // self.adapt( marker, dfList.begin(), dfList.end() );
         } );
     }
 
