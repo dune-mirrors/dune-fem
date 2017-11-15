@@ -21,9 +21,9 @@ def module(space):
     moduleName = "spaceadapt_" + hashlib.md5(typeName.encode('utf8')).hexdigest()
 
     module = generator.load(includes, typeName, moduleName)
-    modules[grid._typeName] = module
+    modules[dfTypeName] = module
     return module
 
 
 def spaceAdapt(space, marker, *args, **kwargs):
-    module(space).spaceAdaptation(space).adapt(*args, **kwargs)
+    module(space).SpaceAdaptation(space).adapt(*args, **kwargs)
