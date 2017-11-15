@@ -38,8 +38,11 @@ try
   // read parameters
   Dune::Fem::Parameter::append( argc, argv );
 
+  std::ostringstream s;
+  s << GridType::dimension << "dgrid_8.dgf";
+
   // create grid
-  GridType &grid = Dune::Fem::TestGrid::grid();
+  GridType &grid = Dune::Fem::TestGrid::grid( s.str() );
 
   // initial refinement
   const int refineStepsForHalf = Dune::Fem::TestGrid::refineStepsForHalf();
