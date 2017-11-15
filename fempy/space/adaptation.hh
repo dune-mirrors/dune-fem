@@ -6,9 +6,9 @@
 
 #include <dune/grid/common/rangegenerators.hh>
 
-#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
-#include <dune/fem/space/common/restrictprolonginterface.hh>
+#include <dune/fem/space/common/dataprojection.hh>
 
 #include <dune/python/common/common.hh>
 
@@ -33,10 +33,10 @@ namespace Dune
      */
     template< class DataProjection >
     class DataProjectionVector
-    : public Dune::Fem::hpDG::DataProjection< typename DataProjection::DiscreteFunctionSpaceType, DataProjectionVector< DataProjection > >
+    : public Dune::Fem::DataProjection< typename DataProjection::DiscreteFunctionSpaceType, DataProjectionVector< DataProjection > >
     {
       using ThisType = DataProjectionVector< DataProjection >;
-      using BaseType = Dune::Fem::hpDG::DataProjection< typename DataProjection::DiscreteFunctionSpaceType, DataProjectionVector< DataProjection > >;
+      using BaseType = Dune::Fem::DataProjection< typename DataProjection::DiscreteFunctionSpaceType, DataProjectionVector< DataProjection > >;
 
     public:
       /** \copydoc Dune::Fem::hpDG::DataProjection::DiscreteFunctionSpaceType */
@@ -103,9 +103,9 @@ namespace Dune
         }
       }
 
-      void add( DiscreteFunction& df )
+      void add( DataProjection&& dp )
       {
-        vec_.emplace_back( DataProjectionImpl( df ) );
+        vec_.emplace_back( std::forward< DataProjection > ( dp ) );
       }
 
       void clear() { vec_.clear(); }
@@ -138,7 +138,9 @@ namespace Dune
     {
       typedef DF DiscreteFunction;
       typedef typename DiscreteFunction :: DiscreteFunctionSpaceType   DiscreteFunctionSpace;
-      typedef DataProjectionVector< DiscreteFunction > DataProjectionVector;
+      typedef Dune::Fem::DefaultDataProjection< DiscreteFunction >     DataProjection;
+      typedef DataProjectionVector< DataProjection >                   DataProjectionVector;
+      typedef SpaceAdaptationManager< DiscreteFunctionSpace, DataProjectionVector > AdaptationManager;
 
       typedef typename Grid::template Codim< 0 >::Entity Element;
 
@@ -153,7 +155,7 @@ namespace Dune
         // add discrete functions to data projection list
         for( Iterator it = begin; it != end; ++it )
         {
-          adaptationManager_.dataProjection().add( *it );
+          adaptationManager_.dataProjection().add( DataProjection( *it ) );
         }
 
         typedef Fem::hpDG::AdaptationManager< DiscreteFunctionSpace, DataProjectionVector > SpaceAdaptationManager;
@@ -168,6 +170,7 @@ namespace Dune
 
     private:
       DiscreteFunctionSpace& space_;
+      AdaptationManager      adaptationManager_;
     };
 
   } // namespace FemPy
