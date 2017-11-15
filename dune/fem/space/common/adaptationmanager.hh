@@ -767,7 +767,7 @@ namespace Dune
      *  \ingroup DiscreteFunctionSpace_RestrictProlong
      */
     template< class DiscreteFunctionSpace, class DataProjection >
-    class AdaptationManager final
+    class AdaptationManager
     : public Dune::Fem::AdaptationManagerInterface
     {
       using ThisType = AdaptationManager< DiscreteFunctionSpace, DataProjection >;
