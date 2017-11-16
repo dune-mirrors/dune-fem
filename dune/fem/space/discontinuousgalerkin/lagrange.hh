@@ -101,29 +101,29 @@ namespace Dune
       typedef DenseLocalRieszProjection< BasisFunctionSetType, QuadratureType > LocalRieszProjectionType;
 
     public:
-      //typedef DefaultLocalL2Projection< LocalRieszProjectionType, QuadratureType > InterpolationType;
-      typedef DiscontinuousGalerkinLocalInterpolation< ThisType > InterpolationType;
+      typedef DefaultLocalL2Projection< LocalRieszProjectionType, QuadratureType > InterpolationType;
+      //typedef DiscontinuousGalerkinLocalInterpolation< ThisType > InterpolationType;
 
       explicit LagrangeDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                                     const InterfaceType commInterface = InteriorBorder_All_Interface,
                                                     const CommunicationDirection commDirection = ForwardCommunication )
-        : BaseType( gridPart, makeBasisFunctionSets( gridPart ), commInterface, commDirection ),
-          interpolation_( *this )
+        : BaseType( gridPart, makeBasisFunctionSets( gridPart ), commInterface, commDirection )
+          // , interpolation_( *this )
       {}
 
       static DFSpaceIdentifier type () { return LagrangeDGSpace_id; }
 
-      //InterpolationType interpolation ( const EntityType &entity ) const
-      //{
-      //  return InterpolationType( basisFunctionSet( entity ) );
-      //}
-      const InterpolationType& interpolation ( const EntityType &entity ) const
+      InterpolationType interpolation ( const EntityType &entity ) const
       {
-        return interpolation_;
+        return InterpolationType( basisFunctionSet( entity ) );
       }
+      //const InterpolationType& interpolation ( const EntityType &entity ) const
+      //{
+      //  return interpolation_;
+      //}
 
     private:
-      InterpolationType interpolation_;
+      //InterpolationType interpolation_;
 
       static BasisFunctionSetsType makeBasisFunctionSets ( const GridPartType &gridPart )
       {
