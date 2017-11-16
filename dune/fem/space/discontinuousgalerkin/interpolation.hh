@@ -23,6 +23,107 @@ namespace Dune
               class Quadrature = CachingQuadrature< GridPart, BasisFunctionSet::EntityType::codimension > >
     class DiscontinuousGalerkinLocalL2Projection;
 
+    template< class GridPart, class BasisFunctionSet,
+              class Quadrature = CachingQuadrature< GridPart, BasisFunctionSet::EntityType::codimension >  >
+    class LocalOrthonormalL2Projection;
+
+
+    // LocalOrthonormalL2Projection
+    // ----------------------------
+
+    /** \brief specialization of local L2 projection for orthonormal DG spaces */
+    template< class GridPart, class BasisFunctionSet, class Quadrature >
+    class LocalOrthonormalL2Projection
+    : public LocalL2Projection< BasisFunctionSet, LocalOrthonormalL2Projection< GridPart, BasisFunctionSet, Quadrature > >
+    {
+      typedef LocalOrthonormalL2Projection< GridPart, BasisFunctionSet, Quadrature > ThisType;
+      typedef LocalL2Projection< BasisFunctionSet, LocalOrthonormalL2Projection< GridPart, BasisFunctionSet, Quadrature > > BaseType;
+
+    public:
+      /** \copydoc Dune::Fem::LocalL2Projection::BasisFunctionSetType */
+      typedef typename BaseType::BasisFunctionSetType      BasisFunctionSetType;
+      /** \copydoc Dune::Fem::LocalL2Projection::EntityType */
+      typedef typename BasisFunctionSetType :: EntityType  EntityType;
+
+    private:
+      typedef GridPart GridPartType;
+      typedef typename GridPartType::GridType GridType;
+      typedef typename BasisFunctionSetType :: RangeType RangeType;
+
+    public:
+      /** \name Construction
+       *  \{
+       */
+
+      explicit LocalOrthonormalL2Projection ( const BasisFunctionSetType &basisFunctionSet )
+        : basisFunctionSet_( basisFunctionSet )
+      {}
+
+      explicit LocalOrthonormalL2Projection ( BasisFunctionSetType &&basisFunctionSet )
+        : basisFunctionSet_( std::forward< BasisFunctionSetType >( basisFunctionSet ) )
+      {}
+
+      /** \} */
+
+      /** \name Copying and assignment
+       *  \{
+       */
+
+      LocalOrthonormalL2Projection ( const ThisType & ) = default;
+
+      LocalOrthonormalL2Projection ( ThisType &&other ) = default;
+
+      ThisType &operator= ( const ThisType & ) = default;
+
+      ThisType &operator= ( ThisType &&other ) = default;
+
+      /** \} */
+
+      /** \name Public member methods
+       *  \{
+       */
+
+      /** \copydoc Dune::Fem::LocalL2Projection::basisFunctionSet */
+      const BasisFunctionSet& basisFunctionSet () const
+      {
+        return basisFunctionSet_;
+      }
+
+      /** \copydoc Dune::Fem::LocalL2Projection::apply */
+      template< class LocalFunction, class LocalDofVector >
+      void apply ( const LocalFunction &localFunction, LocalDofVector &localDofVector ) const
+      {
+        // set all dofs to zero
+        localDofVector.clear();
+
+        // get entity and geometry
+        const EntityType &entity = localFunction.entity();
+
+        // create quadrature with appropriate order
+        Quadrature quadrature( entity, localFunction.order() + basisFunctionSet().order() );
+
+        const int nop = quadrature.nop();
+        // adjust size of values
+        values_.resize( nop );
+
+        // evaluate local function for all quadrature points
+        localFunction.evaluateQuadrature( quadrature, values_ );
+
+        // apply weight only (for orthonormal basis set integration element and
+        // mass matrix can be ignored even if geometry is non-affine)
+        for(auto qp : quadrature )
+          values_[ qp.index() ] *= qp.weight();
+
+        // add values to local dof vector
+        basisFunctionSet().axpy( quadrature, values_, localDofVector );
+      }
+
+      /** \} */
+
+    protected:
+      BasisFunctionSetType basisFunctionSet_;
+      mutable std::vector< RangeType > values_;
+    };
 
 
     // DiscontinuousGalerkinLocalL2Projection
@@ -42,7 +143,7 @@ namespace Dune
     private:
       typedef GridPart GridPartType;
       typedef typename GridPartType::GridType GridType;
-      static const bool cartesian = true;//Dune::Capabilities::isCartesian< GridType >::v;
+      static const bool cartesian = Dune::Capabilities::isCartesian< GridType >::v;
 
       typedef typename std::conditional< cartesian,
           OrthonormalLocalRieszProjection< BasisFunctionSetType >,

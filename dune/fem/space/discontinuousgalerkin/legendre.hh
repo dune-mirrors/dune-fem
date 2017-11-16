@@ -103,6 +103,7 @@ namespace Dune
     : public GenericDiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage, hierarchicalOrdering > >
     {
       typedef GenericDiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage, hierarchicalOrdering > > BaseType;
+      typedef LegendreDiscontinuousGalerkinSpaceBase< FunctionSpace, GridPart, polOrder, Storage, hierarchicalOrdering > ThisType;
 
     public:
       using BaseType::basisFunctionSet;
@@ -115,7 +116,8 @@ namespace Dune
       typedef typename BaseType::BasisFunctionSetsType BasisFunctionSetsType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
-      typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
+      //typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
+      typedef LocalOrthonormalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
 
       explicit LegendreDiscontinuousGalerkinSpaceBase ( GridPartType &gridPart,
                                                         const InterfaceType commInterface = InteriorBorder_All_Interface,
