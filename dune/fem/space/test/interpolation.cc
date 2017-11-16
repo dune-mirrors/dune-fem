@@ -8,6 +8,7 @@
 
 // dune-common includes
 #include <dune/common/exceptions.hh>
+#include <dune/grid/common/capabilities.hh>
 
 // dune-grid includes
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
@@ -43,15 +44,13 @@ typedef Dune::GridSelector::GridType GridType;
 // interpolationError
 // ------------------
 
-template< class DiscreteFunctionSpace >
-double interpolationError ( const DiscreteFunctionSpace &discreteFunctionSpace )
+template< class ExactSolutionType, class DiscreteFunctionSpace >
+double interpolationErrorImpl ( const ExactSolutionType& exactSolution, const DiscreteFunctionSpace &discreteFunctionSpace )
 {
   typedef typename DiscreteFunctionSpace::GridPartType GridPartType;
   const GridPartType &gridPart = discreteFunctionSpace.gridPart();
 
   // create exact solution
-  typedef Dune::Fem::ExactSolution< typename DiscreteFunctionSpace::FunctionSpaceType > ExactSolutionType;
-  ExactSolutionType exactSolution;
   typedef Dune::Fem::GridFunctionAdapter< ExactSolutionType, GridPartType > GridExactSolutionType;
   GridExactSolutionType gridExactSolution( "exact solution", exactSolution, gridPart, 5 );
 
@@ -87,6 +86,23 @@ double interpolationError ( const DiscreteFunctionSpace &discreteFunctionSpace )
   return l2norm.distance( gridExactSolution, solution );
 }
 
+template< class DiscreteFunctionSpace >
+double interpolationError ( const DiscreteFunctionSpace &discreteFunctionSpace )
+{
+  // create exact solution
+  typedef Dune::Fem::ExactSolution< typename DiscreteFunctionSpace::FunctionSpaceType > ExactSolutionType;
+  ExactSolutionType exactSolution;
+  return interpolationErrorImpl( exactSolution, discreteFunctionSpace );
+}
+
+template< class DiscreteFunctionSpace >
+double interpolationErrorPolynomial ( const DiscreteFunctionSpace &discreteFunctionSpace )
+{
+  // create exact solution
+  typedef Dune::Fem::Polynomial< typename DiscreteFunctionSpace::FunctionSpaceType > ExactSolutionType;
+  ExactSolutionType polynomial( polOrder );
+  return interpolationErrorImpl( polynomial, discreteFunctionSpace );
+}
 
 
 // interpolationErrors
@@ -96,6 +112,12 @@ template< class... DiscreteFunctionSpace >
 std::array< double, sizeof...( DiscreteFunctionSpace ) > interpolationErrors ( const DiscreteFunctionSpace &... discreteFunctionSpace )
 {
   return {{ interpolationError( discreteFunctionSpace )... }};
+}
+
+template< class... DiscreteFunctionSpace >
+std::array< double, sizeof...( DiscreteFunctionSpace ) > interpolationErrorsPolynomial ( const DiscreteFunctionSpace &... discreteFunctionSpace )
+{
+  return {{ interpolationErrorPolynomial( discreteFunctionSpace )... }};
 }
 
 
@@ -124,8 +146,17 @@ template< class... DiscreteFunctionSpace >
 void eocLoop ( GridType &grid, int steps, const DiscreteFunctionSpace &... discreteFunctionSpace )
 {
   const std::size_t n = sizeof...( DiscreteFunctionSpace );
-  std::array< double, n > oldErrors = interpolationErrors( discreteFunctionSpace... );
+  std::array< double, n > oldErrors  = interpolationErrors( discreteFunctionSpace... );
+  std::array< double, n > oldErrors2 = interpolationErrorsPolynomial( discreteFunctionSpace... );
   printValues( "L2 error[ 0 ] = ", oldErrors );
+  printValues( "L2 error[ 0 ] = ", oldErrors2 );
+
+  // check that interpolation of polynomial is accurate to machine precision
+  for( size_t i=0; i<n-1; ++i )
+  {
+    if( std::abs(oldErrors2[ i ]) > 1e-14 )
+      DUNE_THROW(Dune::GridError,"interpolation of polynomial of order " << polOrder << " not exact!");
+  }
 
   for( int step = 1; step <= steps ; ++step )
   {
@@ -141,7 +172,32 @@ void eocLoop ( GridType &grid, int steps, const DiscreteFunctionSpace &... discr
   }
 }
 
+void runTest( const int refCount, const int steps, std::istream& gridfile )
+{
+  // create grid
+  Dune::GridPtr< GridType > grid( std::to_string( GridType::dimension ) + "dgrid.dgf" );
+  grid->loadBalance();
+  Dune::Fem::GlobalRefine::apply( *grid, refCount * Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
 
+  // create grid part
+  typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
+  GridPartType gridPart( *grid );
+
+  // function space type
+  typedef typename GridPartType::ctype DomainFieldType;
+  static const int dimDomain = GridPartType::dimensionworld;
+  typedef Dune::Fem::FunctionSpace< DomainFieldType, double, dimDomain, dimRange > FunctionSpaceType;
+
+  // create discrete function spaces
+  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder > discontinuousGalerkinSpace( gridPart );
+  Dune::Fem::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder > hLegendreSpace( gridPart );
+  //Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder > lagrangeDGSpace( gridPart );
+  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > lagrangeSpace( gridPart );
+  Dune::Fem::FourierDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 > fourierSpace( gridPart, polOrder+1 );
+
+  // perform eoc loop
+  eocLoop( *grid, steps, discontinuousGalerkinSpace, hLegendreSpace, lagrangeSpace, fourierSpace );
+}
 
 // main
 // ----
@@ -168,27 +224,47 @@ try
   // number of EOC steps
   const int steps = (argc > 2 ? std::max( 0, std::atoi( argv[ 2 ] ) ) : 1);
 
-  // create grid
-  Dune::GridPtr< GridType > grid( std::to_string( GridType::dimension ) + "dgrid.dgf" );
-  grid->loadBalance();
-  Dune::Fem::GlobalRefine::apply( *grid, refCount * Dune::DGFGridInfo< GridType >::refineStepsForHalf() );
+  std::ifstream cartesiangrid( std::to_string( GridType::dimension ) + "dgrid.dgf" );
+  if( cartesiangrid.is_open() )
+  {
+    runTest( refCount, steps, cartesiangrid );
+  }
 
-  // create grid part
-  typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
-  GridPartType gridPart( *grid );
+  // same tests on a non-affine grid if the grid is capable of this
+  if( Dune::Capabilities::isCartesian< GridType >::v ) return 0;
 
-  // function space type
-  typedef typename GridPartType::ctype DomainFieldType;
-  static const int dimDomain = GridPartType::dimensionworld;
-  typedef Dune::Fem::FunctionSpace< DomainFieldType, double, dimDomain, dimRange > FunctionSpaceType;
+  const double coords[8][3] = {
+            {  0.0,  0.0,  0.0 }, // p0
+            {  1.5, -0.1,  0.1 }, // p1
+            {  0.1,  0.5,  0.2 }, // p2
+            {  1.3,  0.4, -0.1 }, // p3
+            { -0.3,  0.1,  1.2 }, // p4
+            {  1.5, -0.1,  0.9 }, // p5
+            {  0.2,  0.7,  1.0 }, // p6
+            {  0.7,  0.6,  0.6 }};// p7
 
-  // create discrete function spaces
-  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, polOrder > discontinuousGalerkinSpace( gridPart );
-  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > lagrangeSpace( gridPart );
-  Dune::Fem::FourierDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 > fourierSpace( gridPart, polOrder+1 );
+  std::stringstream nonAffineGrid;
+  nonAffineGrid << "DGF" << std::endl;
+  nonAffineGrid << "Vertex" << std::endl;
+  const int vx = GridType::dimension == 3 ? 8 : 4;
+  for( int i=0; i<vx; ++i )
+  {
+    for( int d=0; d<GridType::dimension; ++d )
+    {
+      nonAffineGrid << coords[ vx ][ d ] << " ";
+    }
+    nonAffineGrid << std::endl;
+  }
+  nonAffineGrid << "#" << std::endl;
 
-  // perform eoc loop
-  eocLoop( *grid, steps, discontinuousGalerkinSpace, lagrangeSpace, fourierSpace );
+  nonAffineGrid << "Cube" << std::endl;
+  for( int i=0; i<vx; ++i )
+    nonAffineGrid << i << " ";
+  nonAffineGrid << std::endl << "#" << std::endl;
+  nonAffineGrid << "Simplex" << std::endl;
+  nonAffineGrid << "#" << std::endl;
+
+  runTest( refCount, steps, nonAffineGrid );
 
   return 0;
 }
