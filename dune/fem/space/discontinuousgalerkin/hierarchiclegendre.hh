@@ -18,10 +18,7 @@
 #include <dune/fem/space/shapefunctionset/legendre.hh>
 #include <dune/fem/space/shapefunctionset/selectcaching.hh>
 
-#include "basisfunctionsets.hh"
-#include "generic.hh"
-#include "interpolation.hh"
-#include "shapefunctionsets.hh"
+#include "legendre.hh"
 
 namespace Dune
 {
@@ -29,108 +26,25 @@ namespace Dune
   namespace Fem
   {
 
-    // HierarchicLegendreDiscontinuousGalerkinSpaceTraits
-    // --------------------------------------------------
+    // HierarchicalLegendreDiscontinuousGalerkinSpace
+    // ----------------------------------------------
 
     template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
-    struct HierarchicLegendreDiscontinuousGalerkinSpaceTraits
-    {
-      typedef HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
-
-      typedef GridPart GridPartType;
-      typedef GridFunctionSpace< GridPartType, FunctionSpace > FunctionSpaceType;
-
-      static const int codimension = 0;
-
-      typedef Dune::Fem::FunctionSpace<
-          typename FunctionSpace::DomainFieldType, typename FunctionSpace::RangeFieldType,
-           GridPartType::dimension, 1
-        > ScalarShapeFunctionSpaceType;
-
-      struct ScalarShapeFunctionSet
-        : public Dune::Fem::HierarchicLegendreShapeFunctionSet< ScalarShapeFunctionSpaceType >
-      {
-        typedef Dune::Fem::HierarchicLegendreShapeFunctionSet< ScalarShapeFunctionSpaceType > BaseType;
-
-        static const int numberShapeFunctions =
-            StaticPower<polOrder+1,ScalarShapeFunctionSpaceType::dimDomain>::power;
-      public:
-        explicit ScalarShapeFunctionSet ( Dune::GeometryType type )
-          : BaseType( polOrder )
-        {
-          assert( type.isCube() );
-          assert( size() == BaseType::size() );
-        }
-
-        // overload size method because it's a static value
-        unsigned int size() const { return numberShapeFunctions; }
-      };
-
-      typedef SelectCachingShapeFunctionSets< GridPartType, ScalarShapeFunctionSet, Storage > ScalarShapeFunctionSetsType;
-      typedef VectorialShapeFunctionSets< ScalarShapeFunctionSetsType, typename FunctionSpaceType::RangeType > ShapeFunctionSetsType;
-
-      typedef DefaultBasisFunctionSets< GridPartType, ShapeFunctionSetsType > BasisFunctionSetsType;
-      typedef typename BasisFunctionSetsType::BasisFunctionSetType BasisFunctionSetType;
-
-      typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
-
-      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange * StaticPower< polOrder+1, GridPartType::dimension >::power > LocalBlockIndices;
-
-      template <class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
-      struct CommDataHandle
-      {
-        typedef Operation OperationType;
-        typedef DefaultCommunicationHandler< DiscreteFunction, Operation > Type;
-      };
-    };
-
-
-
-    // HierarchicLegendreDiscontinuousGalerkinSpace
-    // --------------------------------------------
-
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
     class HierarchicLegendreDiscontinuousGalerkinSpace
-    : public GenericDiscontinuousGalerkinSpace< HierarchicLegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
+    : public LegendreDiscontinuousGalerkinSpaceBase< FunctionSpace, GridPart, polOrder, Storage, true >
     {
-      typedef GenericDiscontinuousGalerkinSpace< HierarchicLegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
+      // hierarchicalOrdering = true
+      typedef LegendreDiscontinuousGalerkinSpaceBase< FunctionSpace, GridPart, polOrder, Storage, true > BaseType;
 
     public:
-      using BaseType::basisFunctionSet;
-
-      static const int polynomialOrder = polOrder;
-
       typedef typename BaseType::GridPartType GridPartType;
-      typedef typename BaseType::EntityType EntityType;
-
-      typedef typename BaseType::BasisFunctionSetsType BasisFunctionSetsType;
-      typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
-
-      typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
 
       explicit HierarchicLegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                                               const InterfaceType commInterface = InteriorBorder_All_Interface,
                                                               const CommunicationDirection commDirection = ForwardCommunication )
-        : BaseType( gridPart, makeBasisFunctionSets( gridPart ), commInterface, commDirection )
+        : BaseType( gridPart, commInterface, commDirection )
       {}
-
-      static DFSpaceIdentifier type () { return HierarchicLegendreDGSpace_id; }
-
-      InterpolationType interpolation ( const EntityType &entity ) const
-      {
-        return InterpolationType( basisFunctionSet( entity ) );
-      }
-
-    private:
-      static BasisFunctionSetsType makeBasisFunctionSets ( const GridPartType &gridPart )
-      {
-        typedef typename BasisFunctionSetsType::ShapeFunctionSetsType ShapeFunctionSetsType;
-        ShapeFunctionSetsType shapeFunctionSets( gridPart );
-        return BasisFunctionSetsType( std::move( shapeFunctionSets ) );
-      }
     };
-
-
 
     namespace Capabilities
     {

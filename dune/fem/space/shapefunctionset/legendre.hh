@@ -210,9 +210,10 @@ namespace Dune
 
      *  \note This shape function set can only be used with cubic reference elements.
      *
-     *  \tparam  FunctionSpace  (scalar) function space
+     *  \tparam  FunctionSpace        (scalar) function space
+     *  \tparam  hierarchicalOrdering (bool) if true shape functions are ordered according to their polynomial order
      */
-    template< class FunctionSpace >
+    template< class FunctionSpace, bool hierarchicalOrdering = false >
     class LegendreShapeFunctionSet
     {
     protected:
@@ -231,6 +232,23 @@ namespace Dune
       /** \copydoc Dune::Fem::ShapeFunctionSet::HessianRangeType */
       typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
 
+    protected:
+      struct Compare
+      {
+        bool operator() ( const ShapeFunctionType &lhs, const ShapeFunctionType &rhs ) noexcept
+        {
+          if( lhs.order() != rhs.order() )
+            return lhs.order() < rhs.order();
+          else
+          {
+            const auto &a = lhs.orders();
+            const auto &b = rhs.orders();
+            return std::lexicographical_compare( a.begin(), a.end(), b.begin(), b.end() );
+          }
+        }
+      };
+
+    public:
       /** \name Construction
        *  \{
        */
@@ -272,6 +290,13 @@ namespace Dune
           order_( factory.order() )
       {
         factory( shapeFunctions_.begin() );
+
+        // if hierarchical ordering was selected sort shape functions
+        // according to polynomial order
+        if( hierarchicalOrdering )
+        {
+          std::sort( shapeFunctions_.begin(), shapeFunctions_.end(), Compare() );
+        }
       }
 
       /** \} */
@@ -324,62 +349,6 @@ namespace Dune
     protected:
       std::vector< ShapeFunctionType > shapeFunctions_;
       int order_;
-    };
-
-
-
-    // HierarchicLegendreShapeFunctionSet
-    // ----------------------------------
-
-    /** \brief please doc me
-     *
-     *  \note The range field type used in the evaluation is fixed to `double`.
-     *
-     *  \note This shape function set can only be used with cubic reference elements.
-     *
-     *  \tparam  FunctionSpace  (scalar) function space
-     */
-    template< class FunctionSpace >
-    class HierarchicLegendreShapeFunctionSet
-      : public LegendreShapeFunctionSet< FunctionSpace >
-    {
-      typedef LegendreShapeFunctionSet< FunctionSpace > BaseType;
-
-    protected:
-      typedef typename BaseType:: ShapeFunctionType ShapeFunctionType;
-
-      struct Compare
-      {
-        bool operator() ( const ShapeFunctionType &lhs, const ShapeFunctionType &rhs ) noexcept
-        {
-          if( lhs.order() != rhs.order() )
-            return lhs.order() < rhs.order();
-          else
-          {
-            const auto &a = lhs.orders();
-            const auto &b = rhs.orders();
-            return std::lexicographical_compare( a.begin(), a.end(), b.begin(), b.end() );
-          }
-        }
-      };
-
-    public:
-      /** \name Construction
-       *  \{
-       */
-
-      HierarchicLegendreShapeFunctionSet () = default;
-
-      HierarchicLegendreShapeFunctionSet ( int order )
-        : BaseType( order )
-      {
-        std::sort( shapeFunctions_.begin(), shapeFunctions_.end(), Compare() );
-      }
-
-      /** \} */
-
-    protected:
-      using BaseType::shapeFunctions_;
     };
 
   } // namespace Fem
