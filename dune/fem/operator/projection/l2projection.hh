@@ -43,6 +43,7 @@ namespace Dune
        *          discrete space discreteFunction belongs to.
        *  \param  function          function to be projected
        *  \param  discreteFunction  discrete result of projection  */
+      DUNE_VERSION_DEPRECATED_3_0( "interpolate" )
       virtual void operator() ( const DomainType& function, RangeType& discreteFunction ) const
       {
         if( discreteFunction.space().continuous() )
