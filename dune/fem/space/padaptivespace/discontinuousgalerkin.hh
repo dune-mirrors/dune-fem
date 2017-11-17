@@ -2,7 +2,6 @@
 #define DUNE_FEM_SPACE_PADAPTIVE_DISCONTINUOUSGALERKIN_HH
 
 #include <dune/fem/common/hybrid.hh>
-#include <dune/fem/operator/projection/dgl2projection.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 
