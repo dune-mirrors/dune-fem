@@ -195,6 +195,11 @@ namespace Dune
         return *this;
       }
 
+      void clear()
+      {
+        std::fill( this->begin(), this->end(), FieldType(0) );
+      }
+
       void resize( size_type )
       {}
 
