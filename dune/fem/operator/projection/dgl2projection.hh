@@ -1,5 +1,6 @@
 #ifndef DUNE_FEM_DGL2PROJECTION_HH
 #define DUNE_FEM_DGL2PROJECTION_HH
+#warning "Deprecated header, use #include <dune/fem/space/common/interpolate.hh> instead!"
 
 #include <type_traits>
 
