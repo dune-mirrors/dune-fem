@@ -42,7 +42,9 @@ namespace Dune
     // -------------
 
     template< class Geometry >
-    inline static typename Geometry::ctype maxEdgeLength ( const Geometry &geometry )
+    inline static
+    std::enable_if_t< Geometry::mydimension, typename Geometry::ctype>
+    maxEdgeLength ( const Geometry &geometry )
     {
       typedef typename Geometry::ctype ctype;
       const int dim = Geometry::mydimension;
@@ -54,6 +56,13 @@ namespace Dune
         maxEdgeLength = std::max( maxEdgeLength, edgeLength( geometry, refElement.template geometry< dim-1 >( i ) ) );
 
       return maxEdgeLength;
+    }
+    template< class Geometry >
+    inline static
+    std::enable_if_t< !Geometry::mydimension, typename Geometry::ctype>
+    maxEdgeLength ( const Geometry &geometry )
+    {
+      return 1;
     }
 
 
