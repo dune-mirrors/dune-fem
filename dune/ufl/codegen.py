@@ -262,4 +262,6 @@ def generateCode(predefined, expressions, coefficients=None, tempVars=True):
     expressions = [applyRestrictions(expand_indices(apply_derivatives(apply_algebra_lowering(expr)))) for expr in expressions]
     generator = CodeGenerator(predefined, coefficients, tempVars)
     results = map_expr_dags(generator, expressions)
-    return list(generator.using) + generator.code, results
+    l = list(generator.using)
+    l.sort()
+    return l + generator.code, results
