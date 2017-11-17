@@ -92,9 +92,6 @@ namespace Dune
       // type functionspace
       typedef typename BasisFunctionSetType::FunctionSpaceType FunctionSpaceType;
 
-      // type of local Interpolation
-      typedef PowerSpaceInterpolation< DiscreteFunctionSpace, N > InterpolationType;
-
       // review to make it work for all kind of combinations
       template< class DiscreteFunction,
                 class Operation
@@ -164,8 +161,8 @@ namespace Dune
       //! type of contained discrete function space
       typedef DiscreteFunctionSpace ContainedDiscreteFunctionSpaceType;
 
-      //! type of interpolation
-      typedef typename Traits::InterpolationType InterpolationType;
+      //! type of local Interpolation
+      typedef PowerSpaceInterpolation< ThisType, N > InterpolationType;
 
       typedef typename Traits::EntityType EntityType;
 
@@ -191,9 +188,10 @@ namespace Dune
         return BaseType::template subDiscreteFunctionSpace< 0 >();
       }
 
+      //! return local interpolation object
       InterpolationType interpolation ( const EntityType &entity ) const
       {
-        return InterpolationType( entity );
+        return InterpolationType( *this, entity );
       }
     };
 
