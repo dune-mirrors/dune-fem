@@ -34,8 +34,10 @@ namespace Dune
         pybind11::class_<LocalFunction> cls)
     {
       typedef typename LocalFunction::EntityType::Geometry::LocalCoordinate LocalCoordinate;
+      typedef typename LocalFunction::RangeType::value_type DofType;
 
       cls.def_property_readonly( "dimRange", [] ( LocalFunction & ) -> int { return LocalFunction::RangeType::dimension; } );
+      cls.def_property_readonly( "order", [] ( const LocalFunction & lf ) -> int { return lf.order(); } );
       cls.def( "evaluate", [] ( const LocalFunction &lf, const LocalCoordinate &x ) {
           typename LocalFunction::RangeType value;
           lf.evaluate( x, value );
@@ -45,6 +47,17 @@ namespace Dune
           typename LocalFunction::JacobianRangeType jacobian;
           lf.jacobian( x, jacobian );
           return jacobian;
+        } );
+      cls.def( "hessian", [] ( const LocalFunction &lf, const LocalCoordinate &x ) {
+          typename LocalFunction::HessianRangeType hessian;
+          lf.hessian( x, hessian );
+          return hessian;
+        } );
+      cls.def( "set", [] ( LocalFunction &lf, const DofType& value ) {
+          //std::cout << typeid( lf ) << std::endl;
+          //const int numDofs = lf.numDofs();
+          //for( int i=0; i<numDofs; ++ i ) lf[ i ] = value;
+          return ;
         } );
     }
 
