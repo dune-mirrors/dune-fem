@@ -315,7 +315,6 @@ class Integrands():
 
         def predefineCoefficients(predefined, x, side=None):
             for coefficient, idx in self.coefficients.items():
-                print(coefficient,idx)
                 for derivative in self.coefficient(idx, x, side=side):
                     if side is None:
                         predefined[coefficient] = derivative
