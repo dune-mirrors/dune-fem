@@ -42,50 +42,50 @@ namespace Dune
 
       template <class LinearOperator>
       KrylovInverseOperatorBase ( const LinearOperator &op,
-                                         double redEps, double absLimit, unsigned int maxIterations, bool verbose,
-                                         const ParameterReader &parameter = Parameter::container() )
+                                  double redEps, double absLimit, unsigned int maxIterations, bool verbose,
+                                  const ParameterReader &parameter = Parameter::container() )
       : KrylovInverseOperatorBase( op, nullptr, redEps, absLimit, maxIterations, verbose, parameter ) {}
 
       template <class LinearOperator>
       KrylovInverseOperatorBase ( const LinearOperator &op, double redEps, double absLimit,
-                                         const ParameterReader &parameter = Parameter::container() )
+                                  const ParameterReader &parameter = Parameter::container() )
       : KrylovInverseOperatorBase( op, nullptr, redEps, absLimit,
-                                          std::numeric_limits< unsigned int >::max(), readVerbose( parameter ), parameter ) {}
+                                   std::numeric_limits< unsigned int >::max(), readVerbose( parameter ), parameter ) {}
 
       template <class LinearOperator>
       KrylovInverseOperatorBase ( const LinearOperator &op, double redEps, double absLimit,
-                                         unsigned int maxIterations,
-                                         const ParameterReader &parameter = Parameter::container() )
+                                  unsigned int maxIterations,
+                                  const ParameterReader &parameter = Parameter::container() )
       : KrylovInverseOperatorBase( op, nullptr, redEps, absLimit, maxIterations, readVerbose( parameter ), parameter ) {}
 
       template <class LinearOperator>
       KrylovInverseOperatorBase ( const LinearOperator &op, const PreconditionerType &preconditioner,
-                                         double redEps, double absLimit, unsigned int maxIterations, bool verbose,
-                                         const ParameterReader &parameter = Parameter::container() )
+                                  double redEps, double absLimit, unsigned int maxIterations, bool verbose,
+                                  const ParameterReader &parameter = Parameter::container() )
       : KrylovInverseOperatorBase( op, &preconditioner, redEps, absLimit, maxIterations, verbose, parameter ) {}
 
       template <class LinearOperator>
       KrylovInverseOperatorBase ( const LinearOperator &op, const PreconditionerType &preconditioner,
-                                         double redEps, double absLimit,
-                                         const ParameterReader &parameter = Parameter::container() )
+                                  double redEps, double absLimit,
+                                  const ParameterReader &parameter = Parameter::container() )
       : KrylovInverseOperatorBase( op, &preconditioner, redEps, absLimit, std::numeric_limits< unsigned int >::max(),
                                           readVerbose( parameter ), parameter ) {}
 
       template <class LinearOperator>
       KrylovInverseOperatorBase ( const LinearOperator &op, const PreconditionerType &preconditioner,
-                                         double redEps, double absLimit, unsigned int maxIterations,
-                                         const ParameterReader &parameter = Parameter::container() )
+                                  double redEps, double absLimit, unsigned int maxIterations,
+                                  const ParameterReader &parameter = Parameter::container() )
       : KrylovInverseOperatorBase( op, &preconditioner, redEps, absLimit, maxIterations, readVerbose( parameter ), parameter ) {}
 
       KrylovInverseOperatorBase ( double redEps, double absLimit,
-                              unsigned int maxIterations, bool verbose,
-                              const ParameterReader &parameter = Parameter::container() )
+                                  unsigned int maxIterations, bool verbose,
+                                  const ParameterReader &parameter = Parameter::container() )
       : precondObj_(),
         tolerance_( absLimit ),
         errorType_( getErrorMeasure( parameter, "fem.solver.errormeasure" ) ),
         maxIterations_( std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations ) ),
         numOfIterations_( 0 ),
-        verbose_( readVerbose( parameter, "fem.solver.verbose" ) ),
+        verbose_( readVerbose( parameter, "fem.solver.verbose", verbose )),
         method_( method < 0 ? getMethod( parameter, "fem.solver.krylovmethod" ) : method ),
         restart_( method_ == gmres ? parameter.getValue< int >( "fem.solver.gmres.restart", 20 ) : 0 )
       {}
@@ -216,9 +216,9 @@ namespace Dune
         return errorType ;
       }
 
-      bool readVerbose( const ParameterReader& parameter, const char* paramName = "fem.solver.verbose" ) const
+      bool readVerbose( const ParameterReader& parameter, const char* paramName = "fem.solver.verbose", const bool verbose = false ) const
       {
-        return parameter.getValue< bool >( paramName, false );
+        return parameter.getValue< bool >( paramName, verbose );
       }
 
       int getMethod( const ParameterReader& parameter, const char* paramName ) const
