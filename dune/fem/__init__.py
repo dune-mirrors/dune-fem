@@ -104,3 +104,10 @@ def evaluate(expression,x,**kwargs):
             if isinstance(coefficient,GridCoefficient):
                 coefficient.unbind()
     return val
+
+from dune.grid.grid_generator import _writeVTKDispatcher
+def vtkDispatchUFL(grid,f):
+    from dune.fem.function._functions import uflFunction
+    order = 5 # needs to be derived from f
+    return uflFunction(grid, "tmp", order, f)
+_writeVTKDispatcher.append(vtkDispatchUFL)
