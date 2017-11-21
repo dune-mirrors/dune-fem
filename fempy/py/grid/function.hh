@@ -53,12 +53,6 @@ namespace Dune
           lf.hessian( x, hessian );
           return hessian;
         } );
-      cls.def( "set", [] ( LocalFunction &lf, const DofType& value ) {
-          //std::cout << typeid( lf ) << std::endl;
-          //const int numDofs = lf.numDofs();
-          //for( int i=0; i<numDofs; ++ i ) lf[ i ] = value;
-          return ;
-        } );
     }
 
 

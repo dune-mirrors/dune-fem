@@ -11,6 +11,7 @@
 
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
 #include <dune/fem/space/common/interpolate.hh>
+#include <dune/fem/common/localcontribution.hh>
 
 #include <dune/fempy/py/common/numpyvector.hh>
 #include <dune/fempy/py/function/grid.hh>
@@ -150,6 +151,7 @@ namespace Dune
       {
         typedef typename DF::DiscreteFunctionSpaceType Space;
         typedef typename DF::GridPartType GridPart;
+        typedef typename GridPart::template Codim<0>::EntityType Entity;
         typedef typename DF::RangeType Value;
 
         using pybind11::operator""_a;
@@ -200,6 +202,50 @@ namespace Dune
         }
 
         cls.def_property_readonly( "dofVector", [] ( DF &self ) -> DofVector & { return self.dofVector(); } ); // , pybind11::return_value_policy::reference_internal );
+
+        typedef Dune::Fem::AddLocalContribution<DF> AddLocalContrib;
+        auto clsAddContrib =
+          Dune::Python::insertClass<AddLocalContrib>(module, "AddLocalContribution",
+          Dune::Python::GenerateTypeName("AddLocalContribution",MetaType<DF>()),
+          Dune::Python::IncludeFiles({"dune/fem/common/localcontribution.hh"}));
+        if (clsAddContrib.second)
+        {
+          auto cls = clsAddContrib.first;
+          cls.def("bind",[] (AddLocalContrib &self, const Entity &entity)
+              { self.bind(entity); },
+            pybind11::keep_alive< 1, 2 >() );
+          cls.def("unbind",[] (AddLocalContrib &self)
+              { self.unbind(); } );
+        }
+        cls.def( "addLocalContribution", [] ( DF &self ) {
+            auto ret = std::make_unique<AddLocalContrib>(self);
+            return ret;
+          }, pybind11::keep_alive< 0, 1 >(),
+             pybind11::return_value_policy::take_ownership );
+
+        typedef Dune::Fem::SetLocalContribution<DF> SetLocalContrib;
+        auto clsSetContrib =
+          Dune::Python::insertClass<SetLocalContrib>(module, "SetLocalContribution",
+          Dune::Python::GenerateTypeName("SetLocalContribution",MetaType<DF>()),
+          Dune::Python::IncludeFiles({"dune/fem/common/localcontribution.hh"}));
+        if (clsSetContrib.second)
+        {
+          auto cls = clsSetContrib.first;
+          cls.def("bind",[] (SetLocalContrib &self, const Entity &entity)
+              { self.bind(entity); },
+            pybind11::keep_alive< 1, 2 >() );
+          cls.def("unbind",[] (SetLocalContrib &self)
+              { self.unbind(); } );
+          cls.def("__getitem__",[] (SetLocalContrib &self, const std::size_t idx)
+              { return self[idx]; } );
+          cls.def("__setitem__",[] (SetLocalContrib &self, const std::size_t idx, double value)
+              { self[idx] = value; } );
+        }
+        cls.def( "setLocalContribution", [] ( DF &self ) {
+            auto ret = std::make_unique<SetLocalContrib>(self);
+            return ret;
+          }, pybind11::keep_alive< 0, 1 >(),
+             pybind11::return_value_policy::take_ownership );
       }
 
     } // namespace detail
