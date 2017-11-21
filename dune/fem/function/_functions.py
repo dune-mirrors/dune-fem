@@ -72,8 +72,11 @@ def cppFunction(gridview, name, order, code, *args, **kwargs):
 
 
 def uflFunction(gridview, name, order, ufl, *args, **kwargs):
-    return addUFL( dune.models.localfunction.UFLFunction(gridview, name, order, ufl, *args, **kwargs))
-
+    func = dune.models.localfunction.UFLFunction(gridview, name, order, ufl, *args, **kwargs)
+    if func is not None:
+        return addUFL( func )
+    else:
+        return None
 
 def discreteFunction(space, name, expr=None, *args, **kwargs):
     """create a discrete function
