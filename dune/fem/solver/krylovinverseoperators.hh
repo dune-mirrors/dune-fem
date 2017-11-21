@@ -4,6 +4,7 @@
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/solver/parameter.hh>
 
 #include <dune/fem/solver/cginverseoperator.hh>
 
@@ -30,10 +31,6 @@ namespace Dune
 
       typedef typename MPIManager::CollectiveCommunication  CollectiveCommunicationType;
     public:
-      static const int cg       = 0 ; // CG
-      static const int bicgstab = 1 ; // BiCGStab
-      static const int gmres    = 2 ; // GMRES
-
       typedef typename BaseType::DomainFunctionType DomainFunctionType;
       typedef typename BaseType::RangeFunctionType RangeFunctionType;
 
@@ -43,62 +40,68 @@ namespace Dune
       template <class LinearOperator>
       KrylovInverseOperatorBase ( const LinearOperator &op,
                                   double redEps, double absLimit, unsigned int maxIterations, bool verbose,
-                                  const ParameterReader &parameter = Parameter::container() )
+                                  const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : KrylovInverseOperatorBase( op, nullptr, redEps, absLimit, maxIterations, verbose, parameter ) {}
 
       template <class LinearOperator>
       KrylovInverseOperatorBase ( const LinearOperator &op, double redEps, double absLimit,
-                                  const ParameterReader &parameter = Parameter::container() )
+                                  const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : KrylovInverseOperatorBase( op, nullptr, redEps, absLimit,
-                                   std::numeric_limits< unsigned int >::max(), readVerbose( parameter ), parameter ) {}
+                                   parameter.maxLinearIterationsParameter(), parameter.verbose() ) {}
 
       template <class LinearOperator>
       KrylovInverseOperatorBase ( const LinearOperator &op, double redEps, double absLimit,
                                   unsigned int maxIterations,
-                                  const ParameterReader &parameter = Parameter::container() )
-      : KrylovInverseOperatorBase( op, nullptr, redEps, absLimit, maxIterations, readVerbose( parameter ), parameter ) {}
+                                  const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+      : KrylovInverseOperatorBase( op, nullptr, redEps, absLimit, maxIterations, parameter.verbose() ) {}
 
       template <class LinearOperator>
       KrylovInverseOperatorBase ( const LinearOperator &op, const PreconditionerType &preconditioner,
                                   double redEps, double absLimit, unsigned int maxIterations, bool verbose,
-                                  const ParameterReader &parameter = Parameter::container() )
+                                  const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : KrylovInverseOperatorBase( op, &preconditioner, redEps, absLimit, maxIterations, verbose, parameter ) {}
 
       template <class LinearOperator>
       KrylovInverseOperatorBase ( const LinearOperator &op, const PreconditionerType &preconditioner,
                                   double redEps, double absLimit,
-                                  const ParameterReader &parameter = Parameter::container() )
-      : KrylovInverseOperatorBase( op, &preconditioner, redEps, absLimit, std::numeric_limits< unsigned int >::max(),
-                                          readVerbose( parameter ), parameter ) {}
+                                  const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+      : KrylovInverseOperatorBase( op, &preconditioner, redEps, absLimit, parameter.maxLinearIterationsParameter(),
+                                   parameter.verbose() ) {}
 
       template <class LinearOperator>
       KrylovInverseOperatorBase ( const LinearOperator &op, const PreconditionerType &preconditioner,
                                   double redEps, double absLimit, unsigned int maxIterations,
-                                  const ParameterReader &parameter = Parameter::container() )
-      : KrylovInverseOperatorBase( op, &preconditioner, redEps, absLimit, maxIterations, readVerbose( parameter ), parameter ) {}
+                                  const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+      : KrylovInverseOperatorBase( op, &preconditioner, redEps, absLimit, maxIterations, parameter.verbose() ) {}
+
+      KrylovInverseOperatorBase ( double redEps, double absLimit,
+                                  const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+      : KrylovInverseOperatorBase( redEps, absLimit, parameter.maxLinearIterationsParameter(), parameter.verbose() ) {}
+
+      KrylovInverseOperatorBase ( double redEps, double absLimit,
+                                  unsigned int maxIterations,
+                                  const SolverParameter &parameter = SolverParameter(Parameter::container()) )
+      : KrylovInverseOperatorBase( redEps, absLimit, maxIterations,  parameter.verbose() ) {}
 
       KrylovInverseOperatorBase ( double redEps, double absLimit,
                                   unsigned int maxIterations, bool verbose,
-                                  const ParameterReader &parameter = Parameter::container() )
+                                  const ParameterReader& parameter )
+        : KrylovInverseOperatorBase( redEps, absLimit, maxIterations, verbose,
+            SolverParameter( parameter ) ) {}
+
+      //! main constructor
+      KrylovInverseOperatorBase ( double redEps, double absLimit,
+                                  unsigned int maxIterations, bool verbose,
+                                  const SolverParameter &parameter = SolverParameter(Parameter::container()) )
       : precondObj_(),
         tolerance_( absLimit ),
-        errorType_( getErrorMeasure( parameter, "fem.solver.errormeasure" ) ),
+        errorType_( parameter.errorMeasure() ),
         maxIterations_( std::min( (unsigned int)std::numeric_limits< int >::max(), maxIterations ) ),
         numOfIterations_( 0 ),
-        verbose_( readVerbose( parameter, "fem.solver.verbose", verbose )),
-        method_( method < 0 ? getMethod( parameter, "fem.solver.krylovmethod" ) : method ),
-        restart_( method_ == gmres ? parameter.getValue< int >( "fem.solver.gmres.restart", 20 ) : 0 )
+        verbose_( verbose ? true : parameter.verbose() ), // verbose overrules parameter.verbose()
+        method_( method < 0 ? parameter.krylovMethod() : method ),
+        restart_( method_ == SolverParameter::gmres ? parameter.gmresRestart() : 0 )
       {}
-
-      KrylovInverseOperatorBase ( double redEps, double absLimit,
-                              const ParameterReader &parameter = Parameter::container() )
-      : KrylovInverseOperatorBase( redEps, absLimit,
-                               std::numeric_limits< unsigned int >::max(), readVerbose( parameter ), parameter ) {}
-
-      KrylovInverseOperatorBase ( double redEps, double absLimit,
-                              unsigned int maxIterations,
-                              const ParameterReader &parameter = Parameter::container() )
-      : KrylovInverseOperatorBase( redEps, absLimit, maxIterations, readVerbose( parameter ), parameter ) {}
 
       virtual void operator() ( const DomainFunctionType &u, RangeFunctionType &w ) const
       {
@@ -110,10 +113,9 @@ namespace Dune
           os = &std::cout;
         }
 
-
         int numIter = 0;
 
-        if( method_ == gmres )
+        if( method_ == SolverParameter::gmres )
         {
           if( v_.empty() )
           {
@@ -132,7 +134,7 @@ namespace Dune
                                          tolerance_, maxIterations_,
                                          errorType_, os );
         }
-        else if( method_ == bicgstab )
+        else if( method_ == SolverParameter::bicgstab )
         {
           if( v_.empty() )
           {
@@ -151,17 +153,17 @@ namespace Dune
                                             tolerance_, maxIterations_,
                                             errorType_, os );
         }
-        else if( method_ == cg )
+        else if( method_ == SolverParameter::cg )
         {
           if( v_.empty() )
           {
-            v_.emplace_back( DomainFunctionType( "CG::h",   u.space() ) );
+            v_.emplace_back( DomainFunctionType( "CG::h",  u.space() ) );
             v_.emplace_back( DomainFunctionType( "CG::r",  u.space() ) );
-            v_.emplace_back( DomainFunctionType( "CG::p",   u.space() ) );
+            v_.emplace_back( DomainFunctionType( "CG::p",  u.space() ) );
 
             if( preconditioner_ )
             {
-              v_.emplace_back( DomainFunctionType( "CG::s",   u.space() ) );
+              v_.emplace_back( DomainFunctionType( "CG::s", u.space() ) );
               v_.emplace_back( DomainFunctionType( "CG::q", u.space() ) );
             }
           }
@@ -208,27 +210,6 @@ namespace Dune
       }
 
     private:
-      int getErrorMeasure( const ParameterReader& parameter, const char* paramName ) const
-      {
-        const std::string errorTypeTable[] =
-          { "absolute", "relative", "residualreduction" };
-        const int errorType = parameter.getEnum( paramName, errorTypeTable, 0 );
-        return errorType ;
-      }
-
-      bool readVerbose( const ParameterReader& parameter, const char* paramName = "fem.solver.verbose", const bool verbose = false ) const
-      {
-        return parameter.getValue< bool >( paramName, verbose );
-      }
-
-      int getMethod( const ParameterReader& parameter, const char* paramName ) const
-      {
-        const std::string krylovMethodTable[] =
-          { "cg", "bicgstab", "gmres" };
-        const int methodType = parameter.getEnum( paramName, krylovMethodTable, gmres );
-        return methodType;
-      }
-
       template <class LinearOperator>
       KrylovInverseOperatorBase ( const LinearOperator &op,
                               const PreconditionerType *preconditioner,
@@ -280,21 +261,21 @@ namespace Dune
     // -----------------
 
     template< class DiscreteFunction >
-    using CgInverseOperator = KrylovInverseOperatorBase< DiscreteFunction, KrylovInverseOperator< DiscreteFunction > :: cg >;
+    using CgInverseOperator = KrylovInverseOperatorBase< DiscreteFunction, SolverParameter :: cg >;
 
 
     // BicgstabInverseOperator
     // -----------------------
 
     template< class DiscreteFunction >
-    using BicgstabInverseOperator = KrylovInverseOperatorBase< DiscreteFunction, KrylovInverseOperator< DiscreteFunction > :: bicgstab >;
+    using BicgstabInverseOperator = KrylovInverseOperatorBase< DiscreteFunction, SolverParameter :: bicgstab >;
 
 
     // GmresInverseOperator
     // --------------------
 
     template< class DiscreteFunction >
-    using GmresInverseOperator = KrylovInverseOperatorBase< DiscreteFunction, KrylovInverseOperator< DiscreteFunction > :: gmres >;
+    using GmresInverseOperator = KrylovInverseOperatorBase< DiscreteFunction, SolverParameter :: gmres >;
 
   } // namespace Fem
 
