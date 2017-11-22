@@ -38,10 +38,19 @@ def interpolate(self, func):
             pass
     return self._interpolate(func)
 
+def localContribution(self, assembly):
+    if assembly == "set":
+        return self.setLocalContribution()
+    elif assembly == "add":
+        return self.addLocalContribution()
+    else:
+        raise ValueError("assembly can only be `set` or `add`")
+
 def addAttr(module, cls, storage):
     setattr(cls, "_module", module)
     setattr(cls, "_storage", storage)
     setattr(cls, "interpolate", interpolate )
+    setattr(cls, "localContribution", localContribution )
 
 fileBase = "femdiscretefunction"
 
