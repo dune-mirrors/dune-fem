@@ -277,6 +277,20 @@ namespace Dune
     template< class DiscreteFunction >
     using GmresInverseOperator = KrylovInverseOperatorBase< DiscreteFunction, SolverParameter :: gmres >;
 
+
+    // ParDGGeneralizedMinResInverseOperator
+    // -------------------------------------
+
+    template< class DiscreteFunction >
+    using ParDGGeneralizedMinResInverseOperator = GmresInverseOperator< DiscreteFunction >;
+
+    // ParDGBiCGStabInverseOperator
+    // ----------------------------
+
+    template< class DiscreteFunction >
+    using ParDGBiCGStabInverseOperator = BicgstabInverseOperator< DiscreteFunction >;
+
+
   } // namespace Fem
 
 } // namespace Dune
