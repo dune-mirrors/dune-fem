@@ -124,5 +124,4 @@ namespace DuneODE
 
 } // namespace DuneODE
 
-#undef USE_EXTERNAL_BLAS
 #endif // #ifndef RUNGEKUTTA_ODE_SOLVER_HH

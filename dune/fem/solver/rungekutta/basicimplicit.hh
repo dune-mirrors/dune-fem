@@ -13,7 +13,7 @@
 #include <dune/common/dynvector.hh>
 
 //- dune-fem includes
-#include <dune/fem/solver/odesolver.hh>
+#include <dune/fem/solver/odesolverinterface.hh>
 
 namespace DuneODE
 {
