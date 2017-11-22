@@ -290,6 +290,17 @@ namespace Dune
     template< class DiscreteFunction >
     using ParDGBiCGStabInverseOperator = BicgstabInverseOperator< DiscreteFunction >;
 
+    template <class DiscreteFunctionType, class OpType >
+    using OEMCGOp = CgInverseOperator< DiscreteFunctionType >;
+
+    template <class DiscreteFunctionType, class OpType >
+    using OEMBICGSTABOp = BicgstabInverseOperator< DiscreteFunctionType >;
+
+    template <class DiscreteFunctionType, class OpType >
+    using OEMBICGSQOp = BicgstabInverseOperator< DiscreteFunctionType >;
+
+    template <class DiscreteFunctionType, class OpType >
+    using OEMGMRESOp = GmresInverseOperator< DiscreteFunctionType >;
 
   } // namespace Fem
 
