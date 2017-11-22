@@ -71,19 +71,22 @@ namespace DuneODE
     typedef ImplicitRungeKuttaSolver< HelmholtzOperatorType, ParDGNewtonInverse< Destination > > BaseType;
 
   protected:
-    std::unique_ptr< HelmholtzOperatorType > helmOp_;
+    using BaseType :: helmholtzOp_;
+    std::unique_ptr< HelmholtzOperatorType > helmOpPtr_;
 
-    HelmholtzOperatorType& createHelmholtzOperator( OperatorType& op )
+    HelmholtzOperatorType* createHelmholtzOperator( OperatorType& op )
     {
-      helmOp_.reset( new HelmholtzOperatorType( op ) );
-      return *helmOp_;
+      return new HelmholtzOperatorType( op ) ;
     }
 
   public:
     ImplicitOdeSolver( OperatorType& op, TimeProviderBase& tp, int order,
                        const ParameterReader &parameter = Parameter::container() )
-      : BaseType( createHelmholtzOperator( op ), tp, order, parameter )
-    {}
+      : BaseType( *createHelmholtzOperator( op ), tp, order, parameter )
+    {
+      // store pointer for later removal
+      helmOpPtr_.reset( &helmholtzOp_ );
+    }
   };
 
   ///////////////////////////////////////////////////////
@@ -103,19 +106,22 @@ namespace DuneODE
     typedef SemiImplicitRungeKuttaSolver< OperatorType, HelmholtzOperatorType, ParDGNewtonInverse< Destination > > BaseType;
 
   protected:
-    std::unique_ptr< HelmholtzOperatorType > helmOp_;
+    using BaseType :: helmholtzOp_;
+    std::unique_ptr< HelmholtzOperatorType > helmOpPtr_;
 
-    HelmholtzOperatorType& createHelmholtzOperator( OperatorType& op )
+    HelmholtzOperatorType* createHelmholtzOperator( OperatorType& op )
     {
-      helmOp_.reset( new HelmholtzOperatorType( op ) );
-      return *helmOp_;
+      return new HelmholtzOperatorType( op ) ;
     }
 
   public:
     SemiImplicitOdeSolver( OperatorType& explOp, OperatorType& implOp, TimeProviderBase& tp, int order,
                        const ParameterReader &parameter = Parameter::container() )
-      : BaseType( explOp, createHelmholtzOperator( implOp ), tp, order, parameter )
-    {}
+      : BaseType( explOp, *createHelmholtzOperator( implOp ), tp, order, parameter )
+    {
+      // store pointer for later removal
+      helmOpPtr_.reset( &helmholtzOp_ );
+    }
   };
 
   /**
