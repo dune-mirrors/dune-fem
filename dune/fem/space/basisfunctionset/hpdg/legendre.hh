@@ -33,7 +33,7 @@ namespace Dune
       // Internal forward declarations
       // -----------------------------
 
-      template< class FunctionSpace, class GridPart, int maxOrder, bool caching = true >
+      template< class FunctionSpace, class GridPart, int maxOrder, bool hierarchicalOrdering, bool caching = true >
       class LegendreBasisFunctionSets;
 
 
@@ -43,16 +43,16 @@ namespace Dune
       // LegendreShapeFunctionSets
       // -------------------------
 
-      template< class FunctionSpace, int order, bool caching >
+      template< class FunctionSpace, int order, bool hierarchicalOrdering, bool caching >
       class LegendreShapeFunctionSets
       {
-        using ThisType = LegendreShapeFunctionSets< FunctionSpace, order, caching >;
+        using ThisType = LegendreShapeFunctionSets< FunctionSpace, order, hierarchicalOrdering, caching >;
 
       public:
         using ShapeFunctionSetType
           = typename std::conditional< caching,
-                Dune::Fem::SelectCachingShapeFunctionSet< LegendreShapeFunctionSet< FunctionSpace >, Dune::Fem::CachingStorage >,
-                Dune::Fem::SelectCachingShapeFunctionSet< LegendreShapeFunctionSet< FunctionSpace >, Dune::Fem::SimpleStorage >
+                Dune::Fem::SelectCachingShapeFunctionSet< LegendreShapeFunctionSet< FunctionSpace, hierarchicalOrdering >, Dune::Fem::CachingStorage >,
+                Dune::Fem::SelectCachingShapeFunctionSet< LegendreShapeFunctionSet< FunctionSpace, hierarchicalOrdering >, Dune::Fem::SimpleStorage >
               >::type;
 
       protected:
@@ -88,11 +88,11 @@ namespace Dune
       // LegendreBasisFunctionSetsTraits
       // -------------------------------
 
-      template< class FunctionSpace, class GridPart, int maxOrder, bool caching >
+      template< class FunctionSpace, class GridPart, int maxOrder, bool hierarchicalOrdering, bool caching >
       class LegendreBasisFunctionSetsTraits
       {
       public:
-        using ImplementationType = LegendreBasisFunctionSets< FunctionSpace, GridPart, maxOrder, caching >;
+        using ImplementationType = LegendreBasisFunctionSets< FunctionSpace, GridPart, maxOrder, hierarchicalOrdering, caching >;
 
         using GridPartType = GridPart;
         using Types = std::array< GeometryType, 1 >;
@@ -102,7 +102,7 @@ namespace Dune
 
         using EntityType = typename GridPartType::template Codim< 0 >::EntityType;
 
-        using ShapeFunctionSetsType = LegendreShapeFunctionSets< Dune::Fem::FunctionSpace< typename FunctionSpace::DomainFieldType, typename FunctionSpace::RangeFieldType, EntityType::mydimension, 1 >, maxOrder, caching >;
+        using ShapeFunctionSetsType = LegendreShapeFunctionSets< Dune::Fem::FunctionSpace< typename FunctionSpace::DomainFieldType, typename FunctionSpace::RangeFieldType, EntityType::mydimension, 1 >, maxOrder, hierarchicalOrdering, caching >;
         using ShapeFunctionSetType = Dune::Fem::VectorialShapeFunctionSet< Dune::Fem::ShapeFunctionSetProxy< typename ShapeFunctionSetsType::ShapeFunctionSetType >, typename FunctionSpace::RangeType >;
 
         using BasisFunctionSetType = DefaultBasisFunctionSet< EntityType, ShapeFunctionSetType >;
@@ -128,12 +128,12 @@ namespace Dune
        *
        *  \ingroup DiscreteFunctionSpace_Implementation_Legendre
        */
-      template< class FunctionSpace, class GridPart, int maxOrder, bool caching >
+      template< class FunctionSpace, class GridPart, int maxOrder, bool hierarchicalOrdering, bool caching >
       class LegendreBasisFunctionSets
-        : public BasisFunctionSets< LegendreBasisFunctionSetsTraits< FunctionSpace, GridPart, maxOrder, caching > >
+        : public BasisFunctionSets< LegendreBasisFunctionSetsTraits< FunctionSpace, GridPart, maxOrder, hierarchicalOrdering, caching > >
       {
-        using ThisType = LegendreBasisFunctionSets< FunctionSpace, GridPart, maxOrder, caching >;
-        using BaseType = BasisFunctionSets< LegendreBasisFunctionSetsTraits< FunctionSpace, GridPart, maxOrder, caching > >;
+        using ThisType = LegendreBasisFunctionSets< FunctionSpace, GridPart, maxOrder, hierarchicalOrdering, caching >;
+        using BaseType = BasisFunctionSets< LegendreBasisFunctionSetsTraits< FunctionSpace, GridPart, maxOrder, hierarchicalOrdering, caching > >;
 
       public:
         /** \copydoc Dune::Fem::BasisFunctionSets::GridPartType */

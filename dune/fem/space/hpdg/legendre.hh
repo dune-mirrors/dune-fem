@@ -29,6 +29,8 @@ namespace Dune
       template< class FunctionSpace, class GridPart, int order, bool caching = true >
       class LegendreDiscontinuousGalerkinSpace;
 
+      template< class FunctionSpace, class GridPart, int order, bool caching = true >
+      class HierarchicLegendreDiscontinuousGalerkinSpace;
 
 
 #ifndef DOXYGEN
@@ -36,16 +38,19 @@ namespace Dune
       // LegendreDiscontinuousGalerkinSpaceTraits
       // ----------------------------------------
 
-      template< class FunctionSpace, class GridPart, int order, bool caching >
+      template< class FunctionSpace, class GridPart, int order, bool hierarchicalOrdering, bool caching >
       struct LegendreDiscontinuousGalerkinSpaceTraits
       {
-        using DiscreteFunctionSpaceType = hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching >;
+        // select space implementation depending on basis function ordering
+        typedef typename std::conditional< hierarchicalOrdering,
+            HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching >,
+            LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >::type  DiscreteFunctionSpaceType;
 
         using FunctionSpaceType = FunctionSpace;
 
         using GridPartType = GridPart;
 
-        using BasisFunctionSetsType = hpDG::LegendreBasisFunctionSets< FunctionSpaceType, GridPartType, order, caching >;
+        using BasisFunctionSetsType = hpDG::LegendreBasisFunctionSets< FunctionSpaceType, GridPartType, order, hierarchicalOrdering, caching >;
         using BasisFunctionSetType = typename BasisFunctionSetsType::BasisFunctionSetType;
 
         static const int codimension = BasisFunctionSetType::EntityType::codimension;
@@ -81,9 +86,9 @@ namespace Dune
        */
       template< class FunctionSpace, class GridPart, int order, bool caching >
       class LegendreDiscontinuousGalerkinSpace
-      : public hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, caching > >
+      : public hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, false, caching > >
       {
-        using BaseType = hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, caching > >;
+        using BaseType = hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, false, caching > >;
 
       public:
         using GridPartType = typename BaseType::GridPartType;
@@ -99,6 +104,42 @@ namespace Dune
         LegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart, Function function,
                                              const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
                                              const Dune::CommunicationDirection direction = Dune::ForwardCommunication )
+          : BaseType( gridPart, BasisFunctionSetsType{}, order, function, interface, direction )
+        {}
+      };
+
+      // HierarchicLegendreDiscontinuousGalerkinSpace
+      // --------------------------------------------
+
+      /** \brief Implementation of an \f$hp\f$-adaptive discrete function space using product Legendre polynomials
+       *
+       *  \tparam FunctionSpace  a Dune::Fem::FunctionSpace
+       *  \tparam GridPart  a Dune::Fem::GridPart
+       *  \tparam order  maximum polynomial order per coordinate
+       *  \tparam caching  enable/disable caching of quadratures
+       *
+       *  \ingroup DiscreteFunctionSpace_Implementation_Legendre
+       */
+      template< class FunctionSpace, class GridPart, int order, bool caching >
+      class HierarchicLegendreDiscontinuousGalerkinSpace
+      : public hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, true, caching > >
+      {
+        using BaseType = hpDG::DiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, order, true, caching > >;
+
+      public:
+        using GridPartType = typename BaseType::GridPartType;
+        using BasisFunctionSetsType = typename BaseType::BasisFunctionSetsType;
+
+        explicit HierarchicLegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
+                                                                const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
+                                                                const Dune::CommunicationDirection direction = Dune::ForwardCommunication )
+          : BaseType( gridPart, BasisFunctionSetsType{}, order, interface, direction )
+        {}
+
+        template< class Function >
+        HierarchicLegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart, Function function,
+                                                       const Dune::InterfaceType interface = Dune::InteriorBorder_All_Interface,
+                                                       const Dune::CommunicationDirection direction = Dune::ForwardCommunication )
           : BaseType( gridPart, BasisFunctionSetsType{}, order, function, interface, direction )
         {}
       };
