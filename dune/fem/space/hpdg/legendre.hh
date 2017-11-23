@@ -43,8 +43,8 @@ namespace Dune
       {
         // select space implementation depending on basis function ordering
         typedef typename std::conditional< hierarchicalOrdering,
-            HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching >,
-            LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >::type  DiscreteFunctionSpaceType;
+            HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching >,
+            LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching > >::type  DiscreteFunctionSpaceType;
 
         using FunctionSpaceType = FunctionSpace;
 
@@ -166,12 +166,37 @@ namespace Dune
     };
 
 
+     // DefaultLocalRestrictProlong
+     // ---------------------------
+
+    template< class FunctionSpace, class GridPart, int order, bool caching >
+    class DefaultLocalRestrictProlong< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching > >
+    : public DiscontinuousGalerkinLocalRestrictProlong< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching >, false >
+    {
+      using BaseType = DiscontinuousGalerkinLocalRestrictProlong< hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching >, false >;
+
+    public:
+      explicit DefaultLocalRestrictProlong ( const typename BaseType::DiscreteFunctionSpaceType &space )
+        : BaseType( space )
+      {}
+    };
+
+
 
     // ISTLParallelMatrixAdapter
     // -------------------------
 
     template< class Matrix, class FunctionSpace, class GridPart, int order, bool caching >
     struct ISTLParallelMatrixAdapter< Matrix, hpDG::LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching > >
+    {
+      using Type = DGParallelMatrixAdapter< Matrix >;
+    };
+
+    // ISTLParallelMatrixAdapter
+    // -------------------------
+
+    template< class Matrix, class FunctionSpace, class GridPart, int order, bool caching >
+    struct ISTLParallelMatrixAdapter< Matrix, hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, order, caching > >
     {
       using Type = DGParallelMatrixAdapter< Matrix >;
     };
