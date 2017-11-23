@@ -3,7 +3,6 @@ set( HEADERS
   blockmapper.hh
   datahandle.hh
   default.hh
-  interpolation.hh
   legendre.hh
   localdofstorage.hh
   orthogonal.hh
