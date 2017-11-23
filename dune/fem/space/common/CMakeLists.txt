@@ -11,6 +11,7 @@ dune_install(
   commoperations.hh
   communicationmanager.hh
   datacollector.hh
+  dataprojection.hh
   defaultcommhandler.hh
   discretefunctionspace.hh
   dofmanager.hh
