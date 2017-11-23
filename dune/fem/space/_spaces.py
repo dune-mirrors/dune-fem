@@ -108,7 +108,7 @@ def dglegendre(gridview, order=1, dimrange=1, field="double", storage=None, **un
 
     includes = [ "dune/fem/space/discontinuousgalerkin.hh" ] + gridview._includes
     dimw = gridview.dimWorld
-    typeName = "Dune::Fem::LegendreDiscontinuousGalerkinSpace< " +\
+    typeName = "Dune::Fem::HierarchicLegendreDiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
 
@@ -136,7 +136,7 @@ def dglegendrehp(gridview, order=1, dimrange=1, field="double", storage=None, **
             "dimrange has to be greater or equal to 1")
     if order < 0:
         raise KeyError(\
-            "Parameter error in hpDG::LegendreDiscontinuousGalerkinSpace with "+
+            "Parameter error in hpDG::HierarchicLegendreDiscontinuousGalerkinSpace with "+
             "order=" + str(order) + ": " +\
             "order has to be greater or equal to 0")
     if field == "complex":
@@ -144,7 +144,7 @@ def dglegendrehp(gridview, order=1, dimrange=1, field="double", storage=None, **
 
     includes = [ "dune/fem/space/hpdg/legendre.hh" ] + gridview._includes
     dimw = gridview.dimWorld
-    typeName = "Dune::Fem::hpDG::LegendreDiscontinuousGalerkinSpace< " +\
+    typeName = "Dune::Fem::hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
 
