@@ -14,7 +14,7 @@
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/operator/lagrangeinterpolation.hh>
-#include <dune/fem/io/streams/xdrstreams.hh>
+#include <dune/fem/io/streams/binarystreams.hh>
 #include <dune/fem/io/streams/asciistreams.hh>
 #include <dune/fem/io/streams/virtualstreams.hh>
 #include <dune/fem/io/file/vtkio.hh>
@@ -97,14 +97,14 @@ int main(int argc, char ** argv)
     // Let's check on IO
     DiscreteFunctionType readback( "readback", discreteFunctionSpace );
 
-    XDRFileOutStream xout( "solution-xdr.tmp" );
-    writeOut( virtualize( xout ), solution );
+    BinaryFileOutStream bout( "solution-xdr.tmp" );
+    writeOut( virtualize( bout ), solution );
 
-    XDRFileInStream xin( "solution-xdr.tmp" );
-    readBack( virtualize( xin ), readback );
+    BinaryFileInStream bin( "solution-xdr.tmp" );
+    readBack( virtualize( bin ), readback );
     if( readback != solution )
     {
-      std :: cerr << "xdr read/write gives different function." << std :: endl;
+      std :: cerr << "binary read/write gives different function." << std :: endl;
       return 1;
     }
 
