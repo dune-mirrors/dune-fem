@@ -14,6 +14,7 @@
 #include <dune/fem/gridpart/common/capabilities.hh>
 #include <dune/fem/gridpart/common/policies.hh>
 #include <dune/fem/quadrature/caching/twistutility.hh>
+#include <dune/fem/misc/boundaryidprovider.hh>
 
 namespace Dune
 {
@@ -227,7 +228,7 @@ namespace Dune
         return asImp().iend( entity );
       }
 
-      //! return boundary if given an intersection
+      //! \brief return boundary if given an intersection
       int boundaryId ( const IntersectionType &intersection ) const
       {
         CHECK_INTERFACE_IMPLEMENTATION( asImp().boundaryId( intersection ) );
@@ -306,11 +307,21 @@ namespace Dune
       //! \brief Index set implementation
       typedef typename Traits::IndexSetType IndexSetType;
 
+      //! type of intersection iterator
+      typedef typename Traits::IntersectionIteratorType IntersectionIteratorType;
+
+      //! type of intersection
+      typedef typename IntersectionIteratorType::Intersection IntersectionType;
+
       //! \brief Collective communication
       typedef typename Traits::CollectiveCommunicationType CollectiveCommunicationType;
 
       //! \brief type of DofManager
       typedef DofManager< GridType >  DofManagerType;
+
+      //! type of boundary id provider specialized for each grid type
+      typedef BoundaryIdProvider< GridType > BoundaryIdProviderType;
+
     protected:
       GridType       &grid_;
       DofManagerType &dofManager_;
@@ -373,6 +384,12 @@ namespace Dune
       int sequence () const
       {
         return dofManager_.sequence();
+      }
+
+      //! \brief \copydoc GridPartInterface::entity
+      int boundaryId ( const IntersectionType &intersection ) const
+      {
+        return BoundaryIdProviderType::boundaryId( intersection );
       }
     };
 

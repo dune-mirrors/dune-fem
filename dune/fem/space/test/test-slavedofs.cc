@@ -68,7 +68,10 @@ try
 
   const int ml = Dune::Fem::Parameter::getValue< int >( "lagrangeglobalrefine.maxlevel", 2 );
 
-  MyGridType &grid = Dune::Fem::TestGrid::grid();
+  std::ostringstream s;
+  s << MyGridType::dimension << "dgrid_8.dgf";
+
+  MyGridType &grid = Dune::Fem::TestGrid::grid( s.str() );
 
   for( int level = 0; level < ml; ++level )
   {

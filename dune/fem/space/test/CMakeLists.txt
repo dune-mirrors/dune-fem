@@ -10,6 +10,8 @@ endif()
 configure_file(1dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/1dgrid.dgf COPYONLY)
 configure_file(2dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid.dgf COPYONLY)
 configure_file(3dgrid.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid.dgf COPYONLY)
+configure_file(2dgrid_8.dgf ${CMAKE_CURRENT_BINARY_DIR}/2dgrid_8.dgf COPYONLY)
+configure_file(3dgrid_8.dgf ${CMAKE_CURRENT_BINARY_DIR}/3dgrid_8.dgf COPYONLY)
 configure_file(parameter ${CMAKE_CURRENT_BINARY_DIR}/parameter COPYONLY)
 
 # the default compiler flags
