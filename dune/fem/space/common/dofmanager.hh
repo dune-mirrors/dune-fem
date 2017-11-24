@@ -15,7 +15,6 @@
 
 #include <dune/fem/gridpart/common/indexset.hh>
 #include <dune/fem/io/parameter.hh>
-#include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/io/streams/standardstreams.hh>
 #include <dune/fem/misc/gridobjectstreams.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
@@ -145,10 +144,6 @@ namespace Dune
       /** \copydoc Dune::PersistentObject :: restore */
       virtual void restore() = 0;
 
-      //! new read/write methods using xdr streams
-      virtual void write( XDRFileOutStream& out ) const = 0;
-      virtual void read( XDRFileInStream& out ) = 0;
-
       //! new read/write methods using binary streams
       virtual void write( StandardOutStream& out ) const = 0;
       virtual void read( StandardInStream& out ) = 0;
@@ -257,12 +252,6 @@ namespace Dune
       {
         indexSet_.restore();
       }
-
-      //! new write method
-      virtual void read( XDRFileInStream& in ) { indexSet_.read( in ); }
-
-      //! new write method
-      virtual void write( XDRFileOutStream& out ) const { indexSet_.write( out ); }
 
       //! new write method
       virtual void read( StandardInStream& in ) { indexSet_.read( in ); }
