@@ -116,6 +116,7 @@ void testIntersectionIterator( const GridPartType & gridPart )
 
   for( const auto& element : elements( gridPart )  )
     for( const auto& intersection : intersections( gridPart, element ) )
+    {
       if( intersection.neighbor() )
       {
         const auto neighbor = intersection.outside();
@@ -131,6 +132,13 @@ void testIntersectionIterator( const GridPartType & gridPart )
           continue;
         }
       }
+      if( intersection.boundary() )
+      {
+        const int bndId = gridPart.boundaryId( intersection );
+        if( bndId < 0 )
+          std::cout << "Discovered a negative boundary id" << std::endl;
+      }
+    }
 }
 
 

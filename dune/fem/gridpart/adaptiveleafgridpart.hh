@@ -207,11 +207,6 @@ namespace Dune
         return leafGridView_.iend( entity );
       }
 
-      int boundaryId ( const IntersectionType &intersection ) const
-      {
-        return intersection.boundaryId();
-      }
-
       //! Returns maxlevel of the grid
       int level () const
       {
