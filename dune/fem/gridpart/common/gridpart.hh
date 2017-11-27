@@ -337,9 +337,6 @@ namespace Dune
         dofManager_( DofManagerType :: instance( grid_ ) )
       {}
 
-      ~GridPartDefault ()
-      {}
-
     public:
       //! Returns const reference to the underlying grid
       const GridType &grid () const { return grid_; }

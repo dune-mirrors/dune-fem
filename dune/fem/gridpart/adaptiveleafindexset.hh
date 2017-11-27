@@ -297,8 +297,11 @@ namespace Dune
       //! default partition iterator type
       static const PartitionIteratorType pitype = GridPartType :: indexSetPartitionType ;
 
-      // reference to grid part
+      // reference to grid part (for iterator access)
       const GridPartType& gridPart_;
+      // storage of grid part in case it was created
+      std::unique_ptr< GridPartType > gridPartPtr_;
+
       // Codimension leaf index sets
       mutable CodimIndexSetType* codimLeafSet_[ numCodimensions ];
       // flag for codim is in use or not
@@ -338,6 +341,14 @@ namespace Dune
         {
           Fem::ForLoop< CallSetUpCodimSet, 0, dimension >::apply( codim, *this );
         }
+      }
+
+      //! Constructor, taking ownership of grid part
+      AdaptiveIndexSetBase (std::unique_ptr< GridPartType >&& gridPartPtr)
+        : AdaptiveIndexSetBase( *gridPartPtr )
+      {
+        // store grid part object for later deleting it
+        gridPartPtr_.reset( gridPartPtr.release() );
       }
 
       //! Constructor
@@ -1333,6 +1344,11 @@ namespace Dune
         : BaseType(gridPart)
       {}
 
+      //! Constructor, taking ownership of grid part pointer
+      AdaptiveLeafIndexSet (std::unique_ptr< GridPartType >&& gridPartPtr)
+        : BaseType( std::move( gridPartPtr ) )
+      {}
+
       //! return name of index set
       virtual std::string name () const
       {
@@ -1399,6 +1415,11 @@ namespace Dune
         : BaseType(gridPart)
       {}
 
+      //! Constructor, taking ownership of grid part pointer
+      IntersectionAdaptiveLeafIndexSet (std::unique_ptr< GridPartType >&& gridPartPtr )
+        : BaseType( std::move( gridPartPtr ) )
+      {}
+
       //! return name of index set
       virtual std::string name () const
       {
@@ -1462,6 +1483,11 @@ namespace Dune
       //! Constructor
       DGAdaptiveLeafIndexSet (const GridPartType & gridPart)
         : BaseType(gridPart)
+      {}
+
+      //! Constructor, taking ownership of grid part pointer
+      DGAdaptiveLeafIndexSet (std::unique_ptr< GridPartType >&& gridPartPtr)
+        : BaseType( gridPartPtr )
       {}
 
       //! return name of index set
