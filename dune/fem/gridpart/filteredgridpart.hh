@@ -354,7 +354,7 @@ namespace Dune
       //! \brief boundary id
       int boundaryId ( const IntersectionType &intersection ) const
       {
-        return hostGridPart().boundaryId( intersection );
+        return hostGridPart().boundaryId( intersection.impl().hostIntersection() );
       }
 
       const CollectiveCommunicationType &comm () const { return hostGridPart_.comm(); }
