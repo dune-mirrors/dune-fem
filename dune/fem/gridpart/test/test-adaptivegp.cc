@@ -1,31 +1,6 @@
 #include <config.h>
 
-#include <algorithm>
-#include <iostream>
-#include <vector>
-
-#if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
-// do nothing in this test if experimental_grid_extension is not activated
-int main () { return 0; }
-#else
-
-#include <dune/common/exceptions.hh>
-
-#include <dune/geometry/referenceelements.hh>
-
-#include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/gridpart/leafgridpart.hh>
-#include <dune/fem/gridpart/idgridpart.hh>
-#include <dune/fem/misc/gridwidth.hh>
-
-#include "failure.hh"
-#include "checkseed.hh"
-#include "checkgeometry.hh"
-#include "checkindexset.hh"
-#include "checkintersections.hh"
 #include "checkgridpart.hh"
-#include <dune/fem/test/testgrid.hh>
-
 
 int main ( int argc, char ** argv )
 try
@@ -42,10 +17,23 @@ try
 
   // create grid part
   typedef Dune::GridSelector::GridType GridType;
-  typedef Dune::Fem::AdaptiveLeafGridPart< GridType > HostGridPartType;
-  HostGridPartType hostGridPart( grid );
-  typedef Dune::Fem::IdGridPart< HostGridPartType > GridPartType;
-  GridPartType gridPart( hostGridPart );
+  typedef Dune::Fem::AdaptiveLeafGridPart< GridType > GridPartType;
+  typedef typename GridPartType :: GridViewType GridViewType;
+  //GridPartType gridPart( grid );
+  std::unique_ptr< GridPartType > gpPtr;
+  std::unique_ptr< GridViewType > gvPtr;
+
+  gpPtr.reset( new GridPartType( grid ) );
+  GridPartType gp2( grid );
+
+  gvPtr.reset( new GridViewType( static_cast<GridViewType> ( *gpPtr) ) );
+
+  gpPtr.reset( new GridPartType( grid ) );
+  gvPtr.reset( new GridViewType( static_cast<GridViewType> ( *gpPtr) ) );
+  gpPtr.reset();
+  gvPtr.reset();
+
+  GridPartType& gridPart = gp2;
 
   // run tests
   std::cout << "Testing entities" << std::endl;
@@ -57,6 +45,8 @@ try
   std::cout << std::endl;
 
   std::cout << "GridWidth: " << Dune::Fem::GridWidth::calcGridWidth( gridPart ) << std::endl;
+
+
 
   typedef Dune::DefaultFailureHandler FailureHandlerType;
   FailureHandlerType failureHandler;
@@ -81,4 +71,3 @@ catch( ... )
   std::cerr << "Generic exception!" << std::endl;
   return 2;
 }
-#endif // #if not DUNE_GRID_EXPERIMENTAL_GRID_EXTENSIONS
