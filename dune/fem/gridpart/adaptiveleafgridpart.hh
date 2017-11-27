@@ -94,25 +94,26 @@ namespace Dune
       //! type of intersection
       typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
-    private:
+    protected:
       struct Key
       {
-        const GridPartType& gridPart_;
-        const GridType& grid_;
-        Key(const GridPartType& gridPart, const GridType& grid)
-         : gridPart_( gridPart ), grid_( grid )
-        {}
+        GridType& grid_;
+        Key(GridType& grid) : grid_( grid ) {}
 
         bool operator ==( const Key& other ) const
         {
           // compare grid pointers
           return (&grid_) == (& other.grid_ );
         }
-        operator const GridPartType& () const { return gridPart_; }
+
+        operator std::unique_ptr< GridPartType > () const
+        {
+          return std::unique_ptr< GridPartType > (new GridPartType(grid_, this) );
+        }
       };
       typedef Key KeyType;
 
-      typedef SingletonList < Key, IndexSetType > IndexSetProviderType;
+      typedef SingletonList < KeyType, IndexSetType > IndexSetProviderType;
 
       // type of entity with codimension zero
       typedef typename Codim< 0 > :: EntityType ElementType;
@@ -121,36 +122,43 @@ namespace Dune
       LeafGridView leafGridView_ ;
 
       // reference to index set
-      const IndexSetType& indexSet_;
+      const IndexSetType* indexSet_;
 
-      // method to get DofManager instance to make sure the DofManager is delete after
-      // the index set provider
-      GridType &initDofManager(GridType &grid ) const
-      {
-        DofManager< GridType > :: instance( grid );
-        return grid ;
-      }
+      using BaseType::grid_;
 
     public:
       //! constructor
       explicit AdaptiveGridPartBase ( GridType &grid )
-      : BaseType( initDofManager( grid ) ), // dofManager needs to be initialized before index set provider
+      : BaseType( grid ),
         leafGridView_( grid.leafGridView() ),
-        indexSet_( IndexSetProviderType::getObject( KeyType( asImp(), grid ) ) )
+        indexSet_( &IndexSetProviderType::getObject( KeyType( grid ) ) )
       {}
 
       //! Copy Constructor
       AdaptiveGridPartBase ( const ThisType &other )
       : BaseType( other ),
         leafGridView_( other.leafGridView_ ),
-        indexSet_( IndexSetProviderType::getObject( KeyType( asImp(), other.grid() ) ) )
+        indexSet_( &IndexSetProviderType::getObject( KeyType( other.grid_ ) ) )
       {}
 
-      /** \brief Destrcutor removeing index set, if only one reference left, index set
+    protected:
+      //! Constructor constructing object held by index set (for iterator access)
+      AdaptiveGridPartBase ( GridType& grid, const KeyType* )
+      : BaseType( grid ),
+        leafGridView_( grid.leafGridView() ),
+        indexSet_( nullptr )
+      {}
+
+    public:
+      /** \brief Destructor removing index set, if only one reference left, index set
           removed.  */
       ~AdaptiveGridPartBase ()
       {
-        IndexSetProviderType::removeObject( indexSet() );
+        if( indexSet_ )
+        {
+          IndexSetProviderType::removeObject( indexSet() );
+          indexSet_ = nullptr;
+        }
       }
 
       using BaseType::grid;
@@ -158,7 +166,8 @@ namespace Dune
       //! Returns reference to index set of the underlying grid
       const IndexSetType &indexSet () const
       {
-        return indexSet_;
+        assert( indexSet_ );
+        return *indexSet_;
       }
 
       //! Begin iterator on the leaf level
@@ -317,6 +326,7 @@ namespace Dune
       : public AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > >
     {
       typedef AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, onlyCodimensionZero > > BaseType;
+      typedef typename BaseType :: KeyType  KeyType;
     public:
       typedef typename BaseType :: GridType GridType;
       //! Constructor
@@ -325,11 +335,14 @@ namespace Dune
       {
       }
 
-      //! copy constructor
-      AdaptiveLeafGridPart ( const AdaptiveLeafGridPart& other )
-      : BaseType( other )
+      //! copy constructor (for construction from KeyType, no public use)
+      AdaptiveLeafGridPart ( GridType& grid, const KeyType* dummy )
+      : BaseType( grid, dummy )
       {
       }
+
+      //! copy constructor
+      AdaptiveLeafGridPart ( const AdaptiveLeafGridPart& other ) = default;
     };
 
     /** @ingroup AdaptiveLeafGP
@@ -344,6 +357,7 @@ namespace Dune
     : public AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, true > >
     {
       typedef AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, true > > BaseType;
+      typedef typename BaseType :: KeyType  KeyType;
     public:
       typedef typename BaseType :: GridType GridType;
       //! Constructor
@@ -352,11 +366,14 @@ namespace Dune
       {
       }
 
-      //! copy constructor
-      DGAdaptiveLeafGridPart ( const DGAdaptiveLeafGridPart& other )
-      : BaseType( other )
+      //! copy constructor (for construction from KeyType, no public use)
+      DGAdaptiveLeafGridPart ( GridType& grid, const KeyType* dummy )
+      : BaseType( grid, dummy )
       {
       }
+
+      //! copy constructor
+      DGAdaptiveLeafGridPart ( const DGAdaptiveLeafGridPart& other ) = default;
     };
 
     template< class Grid, PartitionIteratorType idxpitype = All_Partition >
@@ -386,6 +403,7 @@ namespace Dune
     : public AdaptiveGridPartBase< IntersectionAdaptiveLeafGridPartTraits< Grid, idxpitype > >
     {
       typedef AdaptiveGridPartBase< IntersectionAdaptiveLeafGridPartTraits< Grid, idxpitype > > BaseType;
+      typedef typename BaseType :: KeyType  KeyType;
     public:
       typedef typename BaseType :: GridType GridType;
       //! Constructor
@@ -394,11 +412,14 @@ namespace Dune
       {
       }
 
-      //! copy constructor
-      IntersectionAdaptiveLeafGridPart( const IntersectionAdaptiveLeafGridPart& other )
-      : BaseType( other )
+      //! copy constructor (for construction from KeyType, no public use)
+      IntersectionAdaptiveLeafGridPart ( GridType& grid, const KeyType* dummy )
+      : BaseType( grid, dummy )
       {
       }
+
+      //! copy constructor
+      IntersectionAdaptiveLeafGridPart( const IntersectionAdaptiveLeafGridPart& other ) = default;
     };
 
 
