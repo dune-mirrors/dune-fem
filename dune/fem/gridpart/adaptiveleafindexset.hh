@@ -1487,7 +1487,7 @@ namespace Dune
 
       //! Constructor, taking ownership of grid part pointer
       DGAdaptiveLeafIndexSet (std::unique_ptr< GridPartType >&& gridPartPtr)
-        : BaseType( gridPartPtr )
+        : BaseType( std::move( gridPartPtr ) )
       {}
 
       //! return name of index set

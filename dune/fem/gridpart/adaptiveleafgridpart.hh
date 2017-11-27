@@ -353,33 +353,20 @@ namespace Dune
         only for codimension 0.
     */
     template< class Grid, PartitionIteratorType idxpitype = All_Partition >
-    class DGAdaptiveLeafGridPart
-    : public AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, true > >
-    {
-      typedef AdaptiveGridPartBase< AdaptiveLeafGridPartTraits< Grid, idxpitype, true > > BaseType;
-      typedef typename BaseType :: KeyType  KeyType;
-    public:
-      typedef typename BaseType :: GridType GridType;
-      //! Constructor
-      explicit DGAdaptiveLeafGridPart ( GridType &grid )
-      : BaseType( grid )
-      {
-      }
+    using DGAdaptiveLeafGridPart = AdaptiveLeafGridPart< Grid, idxpitype, true >;
 
-      //! copy constructor (for construction from KeyType, no public use)
-      DGAdaptiveLeafGridPart ( GridType& grid, const KeyType* dummy )
-      : BaseType( grid, dummy )
-      {
-      }
 
-      //! copy constructor
-      DGAdaptiveLeafGridPart ( const DGAdaptiveLeafGridPart& other ) = default;
-    };
 
     template< class Grid, PartitionIteratorType idxpitype = All_Partition >
     class IntersectionAdaptiveLeafGridPart ;
 
-    //! Type definitions for the LeafGridPart class
+    /** @ingroup AdaptiveLeafGP
+        \brief A grid part with an index set specially
+        designed for adaptive calculations including indices for intersections.
+
+        The underlying \ref IntersectionAdaptiveLeafIndexSet "index set" is defined
+        also for codimension -1 (intersections).
+    */
     template< class Grid, PartitionIteratorType idxpitype >
     class IntersectionAdaptiveLeafGridPartTraits : public AdaptiveLeafGridPartTraits< Grid, idxpitype, false>
     {
@@ -393,10 +380,10 @@ namespace Dune
 
     /** @ingroup AdaptiveLeafGP
         \brief A grid part with an index set specially
-        designed for adaptive calculations.
+        designed for adaptive calculations including indices for intersections.
 
-        The underlying \ref DGAdaptiveLeafIndexSet "index set" is defined
-        only for codimension 0.
+        The underlying \ref IntersectionAdaptiveLeafIndexSet "index set" is defined
+        also for codimension -1 (intersections).
     */
     template< class Grid, PartitionIteratorType idxpitype >
     class IntersectionAdaptiveLeafGridPart
