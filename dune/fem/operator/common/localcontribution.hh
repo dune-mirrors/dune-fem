@@ -21,26 +21,6 @@ namespace Dune
   namespace Fem
   {
 
-    // IsAssembledOperator
-    // -------------------
-
-    namespace Impl
-    {
-
-      template< class DomainFunction, class RangeFunction >
-      std::true_type isAssembledOperator ( const AssembledOperator< DomainFunction, RangeFunction > & );
-
-      std::false_type isAssembledOperator ( ... );
-
-    } // namespace Impl
-
-    template< class Operator >
-    struct IsAssembledOperator
-      : decltype( Impl::isAssembledOperator( std::declval< const Operator & >() ) )
-    {};
-
-
-
     namespace Assembly
     {
 
