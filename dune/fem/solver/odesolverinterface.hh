@@ -14,7 +14,6 @@ namespace DuneODE
 {
   using namespace Dune;
   using namespace Fem;
-  using namespace std;
 
   /** \brief Interface class for ODE Solver. */
   template <class DestinationImp>
