@@ -109,6 +109,39 @@ namespace Dune
       : public virtual LinearOperator<DomainFunction, RangeFunction>
     {};
 
+
+    // Is*Operator
+    // -----------
+
+    namespace Impl
+    {
+
+      template< class T >
+      using DomainFunctionType_t = typename T::DomainFunctionType;
+
+      template< class T >
+      using RangeFunctionType_t = typename T::RangeFunctionType;
+
+      template< class T >
+      using IsOperatorImpl = std::is_base_of< ::Dune::Fem::Operator< DomainFunctionType_t< T >, RangeFunctionType_t< T > >, T >;
+
+      template< class T >
+      using IsLinearOperatorImpl = std::is_base_of< ::Dune::Fem::LinearOperator< DomainFunctionType_t< T >, RangeFunctionType_t< T > >, T >;
+
+      template< class T >
+      using IsAssembledOperatorImpl = std::is_base_of< ::Dune::Fem::AssembledOperator< DomainFunctionType_t< T >, RangeFunctionType_t< T > >, T >;
+
+    } // namespace Impl
+
+    template< class T >
+    using IsOperator = Impl::IsOperatorImpl< std::decay_t< T > >;
+
+    template< class T >
+    using IsLinearOperator = Impl::IsOperatorImpl< std::decay_t< T > >;
+
+    template< class T >
+    using IsAssembledOperator = Impl::IsAssembledOperatorImpl< std::decay_t< T > >;
+
   } // namespace Fem
 
 
