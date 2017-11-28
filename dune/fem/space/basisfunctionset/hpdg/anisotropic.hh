@@ -53,7 +53,8 @@ namespace Dune
       template< class FunctionSpace, int order, bool caching >
       class LegendreShapeFunctionSetTuple
       {
-        using FactoryType = LegendreShapeFunctionSets< typename Dune::Fem::ToNewDimDomainFunctionSpace< FunctionSpace, 1 >::Type, order, caching >;
+        // false == no hierarchical ordering
+        using FactoryType = LegendreShapeFunctionSets< typename Dune::Fem::ToNewDimDomainFunctionSpace< FunctionSpace, 1 >::Type, order, false, caching >;
         using ElementType = Dune::Fem::ShapeFunctionSetProxy< typename FactoryType::ShapeFunctionSetType >;
 
         template< int i, class MultiIndex >
