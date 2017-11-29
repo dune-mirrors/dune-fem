@@ -134,10 +134,6 @@ namespace Dune
 
       typedef LagrangeLocalInterpolation< GridPartType, maxPolOrder, BasisFunctionSetType > InterpolationType;
 
-    protected:
-      using BaseType::dfList_ ;
-      using BaseType::searchFunction ;
-
     public:
       using BaseType::blockMapper;
       using BaseType::compiledLocalKey;
@@ -195,23 +191,6 @@ namespace Dune
       const CompiledLocalKeyType &lagrangePointSet ( const EntityType &entity ) const
       {
         return compiledLocalKey( entity.type(), blockMapper().polynomOrder( entity ) );
-      }
-
-      /** \brief add function to discrete function space for p-adaptation
-       *         (currently only supported by AdaptiveDiscreteFunction )
-       */
-      template< class DiscreteFunction >
-      void addFunction( DiscreteFunction &df ) const
-      {
-        assert( searchFunction( df ) == dfList_.end() );
-
-        // select LagrangeInterpolation to be the LocalInterpolation
-        typedef typename BaseType :: template PAdaptiveDiscreteFunctionEntry< DiscreteFunction > RealEntryType ;
-        typedef typename BaseType :: PAdaptiveDiscreteFunctionEntryInterface   EntryInterface;
-        EntryInterface *entry = new RealEntryType( df );
-
-        assert( entry );
-        dfList_.push_front( entry );
       }
 
       InterpolationType interpolation ( const EntityType &entity ) const

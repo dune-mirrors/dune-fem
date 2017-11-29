@@ -111,6 +111,79 @@ namespace Dune
       }
     };
 
+    // ExactSolution
+    // -------------
+
+    template< class FunctionSpaceImp>
+    class Polynomial
+      : public Fem::Function< FunctionSpaceImp, ExactSolution< FunctionSpaceImp > >
+    {
+      typedef Polynomial< FunctionSpaceImp > ThisType;
+      typedef Fem::Function< FunctionSpaceImp, ThisType > BaseType;
+
+    public:
+      typedef FunctionSpaceImp FunctionSpaceType;
+
+      typedef typename FunctionSpaceType::DomainFieldType DomainFieldType;
+      typedef typename FunctionSpaceType::RangeFieldType RangeFieldType;
+
+      typedef typename FunctionSpaceType::DomainType DomainType;
+      typedef typename FunctionSpaceType::RangeType RangeType;
+      typedef typename FunctionSpaceType::JacobianRangeType JacobianRangeType;
+      typedef typename FunctionSpaceType::HessianRangeType HessianRangeType;
+    protected:
+      int order_;
+
+    public:
+      Polynomial( const int order ) : order_( order ) {}
+
+      void evaluate( const DomainType &x, RangeType &phi ) const
+      {
+        phi = 1;
+        for( int i=0; i<DomainType::dimension; ++i )
+        {
+          RangeType val( 1. );
+          for( int p=0; p<order_; ++p )
+            val *= x[ i ];
+
+          phi += val;
+        }
+      }
+
+      void evaluate( const DomainType &x, RangeFieldType t, RangeType &phi ) const
+      {
+        evaluate( x, phi );
+      }
+
+      void jacobian( const DomainType &x, JacobianRangeType &Dphi ) const
+      {
+        Dphi = 0;
+        for( int i=0; i<DomainType::dimension; ++i )
+        {
+          JacobianRangeType val = order_;
+          for( int p=0; p<order_-1; ++p )
+            val *= x[ i ];
+
+          Dphi += val;
+        }
+      }
+
+      void jacobian( const DomainType &x, RangeFieldType t, JacobianRangeType &Dphi ) const
+      {
+        jacobian( x, Dphi );
+      }
+
+      void hessian( const DomainType &x, HessianRangeType &H ) const
+      {
+        H = 0 ;
+      }
+
+      void hessian( const DomainType &x, RangeFieldType t, HessianRangeType &H ) const
+      {
+        hessian( x, H );
+      }
+    };
+
   } // namespace Fem
 
 } // namespace Dune

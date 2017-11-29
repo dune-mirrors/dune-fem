@@ -27,7 +27,7 @@
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/io/file/dataoutput.hh>
 #include <dune/fem/space/combinedspace.hh>
-#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/space/padaptivespace.hh>

@@ -9,7 +9,6 @@
 #include <dune/fem/function/localfunction/bindable.hh>
 #include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/io/file/vtkio.hh>
-#include <dune/fem/space/common/adaptmanager.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
@@ -95,6 +94,7 @@ try
   typedef Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 2 > DiscreteFunctionSpaceType;
   DiscreteFunctionSpaceType space( gridPart );
 #endif
+
   typedef Dune::Fem::AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > FunctionType;
   FunctionType reference( "reference", space );
   interpolate( gridFunctionAdapter( Dune::Fem::ExactSolution<FunctionSpaceType>(), gridPart, space.order() + 2 ), reference );
@@ -116,7 +116,7 @@ try
     error.push_back( { l2norm.distance( ToReference(gridPart, approximation), reference ),
                        h1norm.distance( reference, ToReference(gridPart, approximation) ) } );
   }
-  for( int step = 1; step < error.size()-1; ++step )
+  for( size_t step = 1; step < error.size()-1; ++step )
   {
     double l2eoc = log( error[ step ][ 0 ] / error[ step -1 ][ 0 ] ) / log( 0.5 );
     double h1eoc = log( error[ step ][ 1 ] / error[ step -1 ][ 1 ] ) / log( 0.5 );

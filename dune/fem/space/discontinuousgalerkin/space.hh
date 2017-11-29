@@ -19,6 +19,7 @@
 #include "basisfunctionsets.hh"
 #include "declaration.hh"
 #include "generic.hh"
+#include "localinterpolation.hh"
 #include "interpolation.hh"
 #include "shapefunctionsets.hh"
 
@@ -46,7 +47,27 @@ namespace Dune
            GridPartType::dimension, 1
         > ScalarShapeFunctionSpaceType;
 
-      typedef SelectCachingShapeFunctionSets< GridPartType, OrthonormalShapeFunctionSet< ScalarShapeFunctionSpaceType, polOrder >, Storage > ScalarShapeFunctionSetsType;
+      struct ScalarShapeFunctionSet
+        : public Dune::Fem::OrthonormalShapeFunctionSet< ScalarShapeFunctionSpaceType >
+      {
+        typedef Dune::Fem::OrthonormalShapeFunctionSet< ScalarShapeFunctionSpaceType >   BaseType;
+
+        static constexpr int numberShapeFunctions =
+              OrthonormalShapeFunctions< ScalarShapeFunctionSpaceType::dimDomain >::size(polOrder);
+      public:
+        explicit ScalarShapeFunctionSet ( Dune::GeometryType type )
+          : BaseType( type, polOrder )
+        {
+          assert( size() == BaseType::size() );
+        }
+
+        // overload size method because it's a static value
+        static constexpr unsigned int size() { return numberShapeFunctions; }
+      };
+
+
+
+      typedef SelectCachingShapeFunctionSets< GridPartType, ScalarShapeFunctionSet, Storage > ScalarShapeFunctionSetsType;
       typedef VectorialShapeFunctionSets< ScalarShapeFunctionSetsType, typename FunctionSpaceType::RangeType > ShapeFunctionSetsType;
 
       typedef DefaultBasisFunctionSets< GridPartType, ShapeFunctionSetsType > BasisFunctionSetsType;
@@ -54,7 +75,7 @@ namespace Dune
 
       typedef CodimensionMapper< GridPartType, codimension > BlockMapperType;
 
-      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange * OrthonormalShapeFunctionSetSize< ScalarShapeFunctionSpaceType, polOrder >::v > LocalBlockIndices;
+      typedef Hybrid::IndexRange< int, FunctionSpaceType::dimRange * ScalarShapeFunctionSet::numberShapeFunctions > LocalBlockIndices;
 
       template <class DiscreteFunction, class Operation = DFCommunicationOperation::Copy >
       struct CommDataHandle
@@ -74,6 +95,7 @@ namespace Dune
     : public GenericDiscontinuousGalerkinSpace< DiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
     {
       typedef GenericDiscontinuousGalerkinSpace< DiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
+      typedef DiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
 
     public:
       using BaseType::basisFunctionSet;
@@ -86,7 +108,8 @@ namespace Dune
       typedef typename BaseType::BasisFunctionSetsType BasisFunctionSetsType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
-      typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
+      //typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
+      typedef LocalOrthonormalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
 
       explicit DiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                             const InterfaceType commInterface = InteriorBorder_All_Interface,

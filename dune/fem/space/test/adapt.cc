@@ -9,6 +9,8 @@ using namespace Dune;
 #include <dune/fem/function/blockvectorfunction.hh>
 #include <dune/fem/function/blockvectordiscretefunction.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
+#include <dune/fem/space/padaptivespace/padaptivespace.hh>
+#include <dune/fem/space/hpdg/orthogonal.hh>
 
 #if USE_COMBINED_SPACE
 #include <dune/fem/space/combinedspace.hh>
@@ -69,6 +71,10 @@ typedef DGAdaptiveLeafGridPart< MyGridType > GridPartType;
     static const std::string usingSpaceName("Using DiscontinuousGalerkinSpace< dimRange >");
 typedef DiscontinuousGalerkinSpace< FunctionSpace < double , double, MyGridType::dimensionworld, dimRange >,
                                     GridPartType, polOrd, CachingStorage>  DiscreteFunctionSpaceType;
+//typedef hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace < double , double, MyGridType::dimensionworld, dimRange >,
+//                                    GridPartType, polOrd, true >  DiscreteFunctionSpaceType;
+//typedef PAdaptiveDGSpace< FunctionSpace < double , double, MyGridType::dimensionworld, dimRange >,
+//                                    GridPartType, polOrd, CachingStorage >  DiscreteFunctionSpaceType;
 #endif
 
 

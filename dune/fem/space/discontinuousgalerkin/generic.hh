@@ -7,7 +7,6 @@
 #include <dune/fem/space/mapper/codimensionmapper.hh>
 #include <dune/fem/storage/singletonlist.hh>
 
-#include "localinterpolation.hh"
 #include "localrestrictprolong.hh"
 
 namespace Dune

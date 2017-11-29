@@ -7,7 +7,6 @@
 
 #include <utility>
 
-#include <dune/fem/solver/pardg.hh>
 #include <dune/fem/solver/linear/cg.hh>
 
 namespace Dune
@@ -16,6 +15,39 @@ namespace Fem
 {
 namespace LinearSolver
 {
+
+  namespace detail {
+    template <class T>
+    class Matrix
+    {
+    public:
+      Matrix(int n, int m) : n_(n), m_(m), data_( n*m, T(0) ) {}
+      Matrix(int n) : Matrix(n,n) {}
+
+      // element access
+      T& operator()(int i, int j)
+      {
+        assert(i>=0 && i<n_ && j>=0 && j<m_);
+        return data_[i*m_ + j];
+      }
+
+      // const element access
+      T operator()(int i, int j) const
+      {
+        assert(i>=0 && i<n_ && j>=0 && j<m_);
+        return data_[i*m_ + j];
+      }
+
+      // conversion operators
+      operator T*() { return data_.data(); }
+      operator const T *() const { return data_.data(); }
+
+    protected:
+      const int n_, m_;
+      std::vector< T > data_;
+    };
+  }
+
   //! return x * y
   template <class FieldType>
   FieldType scalarProduct( const int dim, const FieldType *x, const FieldType* y )
@@ -99,7 +131,7 @@ namespace LinearSolver
 
     const auto& comm = u.space().gridPart().comm();
 
-    PARDG::Matrix H( m+1, m ); // \in \R^{m+1 \times m}
+    detail::Matrix< FieldType > H( m+1, m ); // \in \R^{m+1 \times m}
     std::vector< FieldType > g_( 6*m, 0.0 );
 
     FieldType* g = g_.data();

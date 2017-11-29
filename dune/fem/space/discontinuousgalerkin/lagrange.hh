@@ -22,6 +22,7 @@
 #include "declaration.hh"
 #include "generic.hh"
 #include "shapefunctionsets.hh"
+#include "localinterpolation.hh"
 
 namespace Dune
 {
@@ -82,6 +83,7 @@ namespace Dune
     : public GenericDiscontinuousGalerkinSpace< LagrangeDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
     {
       typedef GenericDiscontinuousGalerkinSpace< LagrangeDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
+      typedef LagrangeDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > ThisType;
 
     public:
       using BaseType::basisFunctionSet;
@@ -100,11 +102,13 @@ namespace Dune
 
     public:
       typedef DefaultLocalL2Projection< LocalRieszProjectionType, QuadratureType > InterpolationType;
+      //typedef DiscontinuousGalerkinLocalInterpolation< ThisType > InterpolationType;
 
       explicit LagrangeDiscontinuousGalerkinSpace ( GridPartType &gridPart,
                                                     const InterfaceType commInterface = InteriorBorder_All_Interface,
                                                     const CommunicationDirection commDirection = ForwardCommunication )
         : BaseType( gridPart, makeBasisFunctionSets( gridPart ), commInterface, commDirection )
+          // , interpolation_( *this )
       {}
 
       static DFSpaceIdentifier type () { return LagrangeDGSpace_id; }
@@ -113,8 +117,14 @@ namespace Dune
       {
         return InterpolationType( basisFunctionSet( entity ) );
       }
+      //const InterpolationType& interpolation ( const EntityType &entity ) const
+      //{
+      //  return interpolation_;
+      //}
 
     private:
+      //InterpolationType interpolation_;
+
       static BasisFunctionSetsType makeBasisFunctionSets ( const GridPartType &gridPart )
       {
         typedef typename BasisFunctionSetsType::ShapeFunctionSetsType ShapeFunctionSetsType;

@@ -45,6 +45,20 @@ namespace Dune
         std::size_t range_;
       };
 
+      template <class DofVector, class DofAlignment>
+      struct SubDofVectorWrapper
+        : public SubDofVector< DofVector, DofAlignment >
+      {
+        typedef SubDofVector< DofVector, DofAlignment > BaseType;
+
+        SubDofVectorWrapper( DofVector& dofs, int coordinate, const DofAlignment &dofAlignment )
+          : BaseType( dofs, coordinate, dofAlignment )
+        {}
+
+        //! do nothing on clear since it's done in apply of this class
+        void clear() {}
+      };
+
       // Note: BasisFunctionSetType is VectorialBasisFunctionSet
       typedef typename Space::BasisFunctionSetType::DofAlignmentType DofAlignmentType;
 
@@ -52,28 +66,37 @@ namespace Dune
       typedef typename Space::EntityType EntityType;
 
       PowerSpaceInterpolation ( const Space &space, const EntityType &entity )
-        : interpolation_( space.interpolation( entity ) ),
+        : interpolation_( space.containedSpace().interpolation( entity ) ),
           dofAlignment_( space.basisFunctionSet( entity ).dofAlignment() )
       {}
 
       template< class LocalFunction, class LocalDofVector >
+      void operator () ( const LocalFunction &lv, LocalDofVector &ldv ) const
+      {
+        apply( lv, ldv );
+      }
+
+      template< class LocalFunction, class LocalDofVector >
       void apply ( const LocalFunction &lv, LocalDofVector &ldv ) const
       {
+        // clear dofs before something is adedd
+        ldv.clear();
+
         for( std::size_t i = 0; i < N; ++i )
         {
-          SubDofVector< LocalDofVector, DofAlignmentType > subLdv( ldv, i, dofAlignment_ );
+          SubDofVectorWrapper< LocalDofVector, DofAlignmentType > subLdv( ldv, i, dofAlignment_ );
           interpolation_( localFunctionConverter( lv, RangeConverter( i ) ), subLdv );
         }
       }
 
     protected:
-      typename Space::InterpolationType interpolation_;
+      typename Space::ContainedDiscreteFunctionSpaceType::InterpolationType interpolation_;
       DofAlignmentType dofAlignment_;
     };
 
 
     // TupleSpaceInterpolation
-    // ------------------
+    // -----------------------
 
     template< class ... Spaces >
     class TupleSpaceInterpolation

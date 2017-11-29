@@ -356,7 +356,6 @@ namespace Dune
     using DGAdaptiveLeafGridPart = AdaptiveLeafGridPart< Grid, idxpitype, true >;
 
 
-
     template< class Grid, PartitionIteratorType idxpitype = All_Partition >
     class IntersectionAdaptiveLeafGridPart ;
 

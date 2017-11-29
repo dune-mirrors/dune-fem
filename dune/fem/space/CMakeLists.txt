@@ -4,7 +4,7 @@ dune_install(brezzidouglasmarini.hh combinedspace.hh discontinuousgalerkin.hh fi
 dune_add_subdirs(basisfunctionset combinedspace common
                  discontinuousgalerkin finitevolume
                  fourier lagrange mapper
-                 padaptivespace rannacherturek shapefunctionset
+                 padaptivespace rannacherturek shapefunctionset hpdg
                  localfiniteelement
                  test)
 

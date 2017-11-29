@@ -1,6 +1,7 @@
 dune_install(
   adaptcallbackhandle.hh
   adaptmanager.hh
+  adaptationmanager.hh
   allgeomtypes.hh
   arrays.hh
   basesetlocalkeystorage.hh
@@ -10,6 +11,7 @@ dune_install(
   commoperations.hh
   communicationmanager.hh
   datacollector.hh
+  dataprojection.hh
   defaultcommhandler.hh
   discretefunctionspace.hh
   dofmanager.hh
@@ -25,3 +27,5 @@ dune_install(
   slavedofs.hh
   uniquefacetorientation.hh
 )
+
+dune_add_subdirs( dataprojection )

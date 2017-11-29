@@ -7,7 +7,7 @@ dune_install(cachingpointlist.hh cachingquadrature.hh cornerpointset.hh
              quadprovider.hh intersectionquadrature.hh
              pardgsimplexquadrature.hh )
 
-dune_add_subdirs(caching test)
+dune_add_subdirs(caching geometric test)
 
 dune_add_library(quadrature OBJECT
     pardgsimplexquadrature0d.cc
