@@ -33,6 +33,7 @@
 #include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/space/rannacherturek.hh>
 
+#include <dune/fem/space/test/checklocalinterpolation.hh>
 
 
 // dgfUnitCube
@@ -124,6 +125,8 @@ algorithm ( typename DiscreteFunctionSpace::GridPartType &gridPart )
   Dune::Fem::ExactSolution< typename DiscreteFunctionSpace::FunctionSpaceType > uExact;
   const auto uGridExact = gridFunctionAdapter( "exact solution", uExact, gridPart, 3 );
   interpolate( uGridExact, u );
+
+  checkLocalInterpolation( space );
 
   Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
   Dune::Fem::H1Norm< GridPartType > h1norm( gridPart );
