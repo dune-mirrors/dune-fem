@@ -55,10 +55,36 @@ struct LocalBasis
     return jac;
   }
 
+  template< class QuadratureType, class Vector >
+  void evaluateQuadrature( const QuadratureType &quad, Vector& vec ) const
+  {
+    evaluateQuadrature( quad, vec, vec[ 0 ] );
+  }
+
   const int order () const { return bSet_.order(); }
   const EntityType &entity () const { return bSet_.entity(); }
 
 private:
+  template< class QuadratureType, class Vector >
+  void evaluateQuadrature( const QuadratureType &quad, Vector& vec, const RangeType&  ) const
+  {
+    const int nop = quad.nop();
+    for( int qp = 0; qp < nop; ++qp )
+    {
+      evaluate( quad[ qp ], vec[ qp ] );
+    }
+  }
+
+  template< class QuadratureType, class Vector >
+  void evaluateQuadrature( const QuadratureType &quad, Vector& vec, const JacobianRangeType&  ) const
+  {
+    const int nop = quad.nop();
+    for( int qp = 0; qp < nop; ++qp )
+    {
+      jacobian( quad[ qp ], vec[ qp ] );
+    }
+  }
+
   const BasisFunctionSetType &bSet_;
   Dune::DynamicVector< RangeFieldType > comp_;
 };

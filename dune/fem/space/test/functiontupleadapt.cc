@@ -25,7 +25,6 @@ const int polOrder = POLORDER;
 #include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/space/common/restrictprolongtuple.hh>
 #include <dune/fem/space/lagrange.hh>
-// #include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/interpolate.hh>
@@ -303,7 +302,7 @@ void algorithm ( GridPartType &gridPart,
     }
   #endif
 
-    interpolate( f, solution );
+  interpolate( f, solution );
   double newL2error = l2norm.distance( f, solution );
   double newH1error = h1norm.distance( f, solution );
 
