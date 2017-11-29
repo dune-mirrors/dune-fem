@@ -19,7 +19,6 @@ using namespace Dune;
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
-#include <dune/fem/operator/projection/dgl2projection.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/capabilities.hh>
 
@@ -167,7 +166,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 
   {
     ExactSolution f;
-    DGL2ProjectionImpl :: project( f, solution );
+    Dune::Fem::interpolate( f, solution );
     Dune :: Fem :: L2Norm< GridPartType > l2norm ( solution.space().gridPart(), 2*order+2 ) ;
     double new_error = l2norm.distance( f ,solution );
     std::cout << "before ref." << new_error << "\n\n";
@@ -203,7 +202,7 @@ double algorithm ( MyGridType &grid, DiscreteFunctionType &solution, int step, i
 #endif
 
   //! perform l2-projection to refined grid
-  DGL2ProjectionImpl :: project ( f, solution );
+  Dune::Fem::interpolate( f, solution );
   double new_error = l2norm.distance( f, solution );
   std::cout << "\nL2 Error : " << error << " on new grid " << new_error << "\n\n";
 #if USE_GRAPE
