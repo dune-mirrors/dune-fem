@@ -574,19 +574,19 @@ namespace Dune
       }
 
     protected:
-      //const LocalFuncStorageType& localFunctionImpl() const
-      //{
-      //  return localFunctionImpl_;
-      //}
+      const LocalFuncStorageType& localFunctionImpl() const
+      {
+        return localFunctionImpl_;
+      }
 
-      LocalFuncStorageType& localFunctionImpl() const
+      LocalFuncStorageType& localFunctionImpl()
       {
         return localFunctionImpl_;
       }
 
       EntityType const* entity_ = nullptr;
       const DiscreteFunctionType &adapter_;
-      mutable LocalFuncStorageType localFunctionImpl_;
+      LocalFuncStorageType localFunctionImpl_;
     };
 
 
