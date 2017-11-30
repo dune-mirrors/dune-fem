@@ -397,9 +397,7 @@ namespace Dune
         std::string gmresrestart("istl.gmres.restart");
         // overwrite gmres restart if istl version exists
         if( parameter.parameter().exists( gmresrestart ) )
-        {
-          restart = parameter.parameter().getValue< int >(gmresrestart, restart);
-        }
+          restart = parameter.parameter().getValue< int >( gmresrestart );
 
         typedef typename DiscreteFunction :: DofStorageType BlockVectorType;
 
