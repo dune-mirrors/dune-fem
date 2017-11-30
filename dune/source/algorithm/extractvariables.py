@@ -1,6 +1,6 @@
 from __future__ import division, print_function, unicode_literals
 
-from ..expression import Application, ConstantExpression, ConstructExpression, Expression, InitializerList, LambdaExpression, NullPtr, This, UnformattedExpression, Variable
+from ..expression import Application, ConditionalExpression, ConstantExpression, ConstructExpression, Expression, InitializerList, LambdaExpression, NullPtr, This, UnformattedExpression, Variable
 from ..cplusplus import Declaration, ReturnStatement, SwitchStatement, Using
 
 
@@ -10,6 +10,8 @@ def extractVariablesFromExpression(expr):
             return set.union(*[extractVariablesFromExpression(arg) for arg in expr.args])
         else:
             return set()
+    elif isinstance(expr, ConditionalExpression):
+        return set.union(*[extractVariablesFromExpression(e) for e in (expr.cond, expr.true, expr.false)])
     elif isinstance(expr, ConstantExpression):
         return set()
     elif isinstance(expr, ConstructExpression):
