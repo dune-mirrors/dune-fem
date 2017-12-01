@@ -21,6 +21,7 @@ class EllipticModel:
 
         self._constants = []
         self._constantNames = {}
+        self._parameterNames = {}
         self._coefficients = []
 
         self.arg_r = Variable("RangeType &", "result")
@@ -57,11 +58,13 @@ class EllipticModel:
         self._coefficients.append({'dimRange': dimRange, 'name': name, 'field': field})
         return idx
 
-    def addConstant(self, cppType, name=None):
+    def addConstant(self, cppType, name=None, parameter=None):
         idx = len(self._constants)
         self._constants.append(cppType)
         if name is not None:
             self._constantNames[name] = idx
+        if parameter is not None:
+            self._parameterNames[parameter] = idx
         return idx
 
     def constant(self, idx):
@@ -75,7 +78,7 @@ class EllipticModel:
         for t, n in (('RangeType', 'evaluate'), ('JacobianRangeType', 'jacobian'), ('HessianRangeType', 'hessian')):
             result = Variable('typename std::tuple_element_t< ' + str(idx) + ', CoefficientFunctionSpaceTupleType >::' + t, 'result')
             code = [Declaration(result),
-                    UnformattedExpression('void', 'std::get< ' + str(idx) + ' >( coefficients_ ).' + n + '( x, ' + result.name + ' )'),
+                    UnformattedExpression('void', 'std::get< ' + str(idx) + ' >( coefficients_ ).' + n + '( x, ' + result.name + ' )', uses=[result]),
                     return_(result)]
             coefficient += [lambda_(capture=[this], args=['auto x'], code=code)(x)]
         return coefficient
@@ -111,14 +114,16 @@ class EllipticModel:
             code.append(TypeAlias("CoefficientFunctionSpaceTupleType", "std::tuple< " + ", ".join(coefficientSpaces) + " >"))
             code.append(TypeAlias('CoefficientType', 'std::tuple_element_t< i, ' + coefficients_.cppType + ' >', targs=['std::size_t i']))
 
+        arg_param = Variable("const Dune::Fem::ParameterReader &", "parameter")
+        args = [Declaration(arg_param, initializer=UnformattedExpression('const ParameterReader &', 'Dune::Fem::Parameter::container()'))]
+        init = None
         if self.hasCoefficients:
-            args = [Variable("const Coefficient" + str(i) + " &", "coefficient" + str(i)) for i, c in enumerate(self._coefficients)]
+            args = [Variable("const Coefficient" + str(i) + " &", "coefficient" + str(i)) for i, c in enumerate(self._coefficients)] + args
             init = ["coefficients_( " + ", ".join("coefficient" + str(i) for i, c in enumerate(self._coefficients)) + " )"]
-            constructor = Constructor(args=args, init=init)
-        else:
-            constructor = Constructor()
-        if self.hasConstants:
-            constructor.append([assign(get(str(i))(constants_), make_shared(c)()) for i, c in enumerate(self._constants)])
+        constructor = Constructor(args=args, init=init)
+        constructor.append([assign(get(str(i))(constants_), make_shared(c)()) for i, c in enumerate(self._constants)])
+        for name, idx in self._parameterNames.items():
+            constructor.append(assign(dereference(get(idx)(constants_)), UnformattedExpression("auto", arg_param.name + '.getValue< ' + self._constants[idx] + ' >( "' + name + '" )', uses=[arg_param])))
         code.append(constructor)
 
         init = ['entity_ = &entity;']

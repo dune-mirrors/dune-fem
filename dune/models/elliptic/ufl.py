@@ -159,10 +159,14 @@ def compileUFL(form, *args, **kwargs):
         except AttributeError:
             name = str(coefficient)
         if coefficient.is_cellwise_constant():
+            try:
+                parameter = getattr(coefficient, "parameter")
+            except AttributeError:
+                parameter = None
             if len(coefficient.ufl_shape) == 0:
-                constants[coefficient] = model.addConstant('double', name)
+                constants[coefficient] = model.addConstant('double', name=name, parameter=parameter)
             elif len(coefficient.ufl_shape) == 1:
-                constants[coefficient] = model.addConstant('Dune::FieldVector< double, ' + str(coefficient.ufl_shape[0]) + ' >', name)
+                constants[coefficient] = model.addConstant('Dune::FieldVector< double, ' + str(coefficient.ufl_shape[0]) + ' >', name=name, parameter=parameter)
             else:
                 Exception('Currently, only scalars and vectors are supported as constants')
         else:
