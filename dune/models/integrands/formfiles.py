@@ -8,14 +8,11 @@ from dune.ufl.formfiles import readUFLFile
 from .ufl import compileUFL
 
 class Model:
-    def __init__(self, name, form, *args):
+    def __init__(self, name, form):
         self.name = name
         if not isinstance(form, Form):
             raise Exception("Expecting 'form' to be a Form instance")
         self.form = form
-        if not all(isinstance(arg, DirichletBC) for arg in args):
-            raise Exception("Expecting each constraint to be a DirichletBC instances")
-        self.constraints = args
 
 
 def executeUFLCode(code):
@@ -27,12 +24,7 @@ def interpretUFLNamespace(namespace):
     if models is None:
         form = namespace.get("F")
         if isinstance(form, Form):
-            constraints = namespace.get("constraints", [])
-            if not isinstance(constraints, (list, tuple)):
-                raise Exception("Expecting 'constraints' to be a list of a tuple, not '%s'" % type(constraints))
-            if not all(isinstance(c, DirichletBC) for c in constraints):
-                raise Exception("Expecting 'constraints' to be a list of DirichletBC instances")
-            models = [Model("Model", form, *list(constraints))]
+            models = [Model("Integrands", form)]
         elif form is None:
             models = []
         else:
@@ -54,4 +46,4 @@ def loadUFLFile(filename):
 
 def compileUFLFile(filename, tempVars=True):
     models = loadUFLFile(filename)
-    return [compileUFL(model.form, *model.constraints, tempVars=tempVars)[0].code(model.name) for model in models]
+    return [compileUFL(model.form, tempVars=tempVars)[0].code(model.name) for model in models]

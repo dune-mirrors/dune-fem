@@ -9,6 +9,7 @@ from ufl.algorithms.replace import Replacer
 from ufl.constantvalue import IntValue, Zero
 from ufl.corealg.map_dag import map_expr_dags
 from ufl.differentiation import Grad
+from ufl.equation import Equation
 
 from dune.source.builtin import make_pair
 from dune.source.cplusplus import InitializerList, Variable
@@ -152,8 +153,9 @@ def generateBinaryLinearizedCode(predefined, testFunctions, trialFunctions, tens
     return preamble + [return_(make_pair(tensorIn, tensorOut))]
 
 
-def compileUFL(equation, tempVars=True):
-    form = equation.lhs - equation.rhs
+def compileUFL(form, tempVars=True):
+    if isinstance(form, Equation):
+        form = form.lhs - form.rhs
     if not isinstance(form, Form):
         raise Exception("ufl.Form expected.")
     if len(form.arguments()) < 2:
