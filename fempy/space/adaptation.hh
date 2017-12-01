@@ -143,32 +143,10 @@ namespace Dune
       {
         // add discrete functions to data projection list
         for( Iterator it = begin; it != end; ++it )
-        {
           adaptationManager_.dataProjection().add( DataProjectionType( *it ) );
-        }
 
         // mark new polynomial orders for space
         for( const auto element : space_ )
-          space_.mark( marking(element), element );
-
-        // adapt the polynomial orders of the space and adjust
-        // and project the discrete functions to the new space
-        adaptationManager_.adapt();
-
-        // clear list of data projections
-        adaptationManager_.dataProjection().clear();
-      }
-      template< class Iterator >
-      void adapt ( Iterator begin, Iterator end )
-      {
-        // add discrete functions to data projection list
-        for( Iterator it = begin; it != end; ++it )
-        {
-          adaptationManager_.dataProjection().add( DataProjection( *it ) );
-        }
-
-        // mark new polynomial orders for space
-        for( const auto& element : space_ )
           space_.mark( marking(element), element );
 
         // adapt the polynomial orders of the space and adjust
