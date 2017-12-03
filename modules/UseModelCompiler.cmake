@@ -15,7 +15,7 @@ function(dune_fem_add_elliptic_models)
     add_custom_command(
         OUTPUT ${base}.hh
         DEPENDS ${source}
-        COMMAND ${PYTHON_EXECUTABLE} -c "${DUNE_BUILD_SET_PYTHON_PATH}; from dune.models.elliptic.compiler import main; main()" ${source} -o ${CMAKE_CURRENT_BINARY_DIR}/${base}.hh
+        COMMAND ${PYTHON_EXECUTABLE} -c "${DUNE_BUILD_SET_PYTHON_PATH}; from dune.models.elliptic.compiler import main; sys.exit(main())" ${source} -o ${CMAKE_CURRENT_BINARY_DIR}/${base}.hh
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Compiling elliptic model ${base}..."
         VERBATIM
@@ -30,7 +30,7 @@ function(dune_fem_add_integrands_models)
     add_custom_command(
         OUTPUT ${base}.hh
         DEPENDS ${source}
-        COMMAND ${PYTHON_EXECUTABLE} -c "${DUNE_BUILD_SET_PYTHON_PATH}; from dune.models.integrands.compiler import main; main()" ${source} -o ${CMAKE_CURRENT_BINARY_DIR}/${base}.hh
+        COMMAND ${PYTHON_EXECUTABLE} -c "${DUNE_BUILD_SET_PYTHON_PATH}; from dune.models.integrands.compiler import main; sys.exit(main())" ${source} -o ${CMAKE_CURRENT_BINARY_DIR}/${base}.hh
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMENT "Compiling integrands model ${base}..."
         VERBATIM
