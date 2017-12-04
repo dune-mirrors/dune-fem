@@ -157,7 +157,22 @@ def compileUFL(form, tempVars=True):
     if isinstance(form, Equation):
         form = form.lhs - form.rhs
     if not isinstance(form, Form):
-        raise Exception("ufl.Form expected.")
+        raise Exception("ufl.Form or ufl.Equation expected.")
+
+    coefficients = []
+    constants = []
+    for coefficient in set(form.coefficients()):
+        if coefficient.is_cellwise_constant():
+            dimRange = (1 if len(coefficient.ufl_shape) == 0 else coefficient.ufl_shape[0])
+            constants.append(coefficient, 'Dune::FieldVector< double, ' + str(dimRange) + ' >')
+        else:
+            try:
+                field = SourceWriter.cpp_fields(coefficient.ufl_function_space().field())
+            except AttributeError:
+                field = 'double'
+            dimRange = coefficient.ufl_shape[0]
+            coefficient.append(coefficient, 'FieldVector< ' + field + ', ' + str(dimRange) + ' >')
+
     if len(form.arguments()) < 2:
         raise Exception("Elliptic model requires form with at least two arguments.")
 
@@ -183,23 +198,14 @@ def compileUFL(form, tempVars=True):
     derivatives_u = derivatives[1]
     derivatives_ubar = map_expr_dags(Replacer({u: ubar}), derivatives_u)
 
-    integrands = Integrands(form.signature(), (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi))
+    integrands = Integrands(form.signature(), (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi), constants=(c[1] for c in constants), coefficients=(c[1] for c in coefficients))
     try:
         integrands.field = u.ufl_function_space().field()
     except AttributeError:
         pass
 
-    constants = dict()
-    coefficients = dict()
-    for coefficient in set(form.coefficients()):
-        if coefficient.is_cellwise_constant():
-            dimRange = (1 if len(coefficient.ufl_shape) == 0 else coefficient.ufl_shape[0])
-            constants[coefficient] = integrands.addConstant('Dune::FieldVector< double, ' + str(dimRange) + ' >')
-        else:
-            try:
-                coefficients[coefficient] = integrands.addCoefficient(coefficient.ufl_shape[0], coefficient.ufl_function_space().field())
-            except AttributeError:
-                coefficients[coefficient] = integrands.addCoefficient(coefficient.ufl_shape[0])
+    coefficientIdx = { c[0] : i for i, c in enumerate(coefficients) }
+    constantIdx = { c[0] : i for i, c in enumerate(constants) }
 
     integrals = splitForm(form, [phi])
 
@@ -210,7 +216,7 @@ def compileUFL(form, tempVars=True):
         raise Exception('unknown integral encountered in ' + str(set(integrals.keys())) + '.')
 
     def predefineCoefficients(predefined, x, side=None):
-        for coefficient, idx in coefficients.items():
+        for coefficient, idx in coefficientIdx.items():
             for derivative in integrands.coefficient(idx, x, side=side):
                 if side is None:
                     predefined[coefficient] = derivative
@@ -228,7 +234,7 @@ def compileUFL(form, tempVars=True):
         predefined[cellVolume] = integrands.cellVolume()
         predefined[maxCellEdgeLength] = maxEdgeLength(integrands.cellGeometry())
         predefined[minCellEdgeLength] = minEdgeLength(integrands.cellGeometry())
-        predefined.update({c: integrands.constant(i) for c, i in constants.items()})
+        predefined.update({c: integrands.constant(i) for c, i in constantIdx.items()})
         predefineCoefficients(predefined, 'x')
         integrands.interior = generateUnaryCode(predefined, derivatives_phi, integrals['cell'], tempVars=tempVars)
 
@@ -237,7 +243,7 @@ def compileUFL(form, tempVars=True):
         predefined[cellVolume] = integrands.cellVolume()
         predefined[maxCellEdgeLength] = maxEdgeLength(integrands.cellGeometry())
         predefined[minCellEdgeLength] = minEdgeLength(integrands.cellGeometry())
-        predefined.update({c: integrands.constant(i) for c, i in constants.items()})
+        predefined.update({c: integrands.constant(i) for c, i in constantIdx.items()})
         predefineCoefficients(predefined, 'x')
         integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('cell'), tempVars=tempVars)
 
@@ -253,7 +259,7 @@ def compileUFL(form, tempVars=True):
         predefined[facetArea] = integrands.facetArea()
         predefined[maxFacetEdgeLength] = maxEdgeLength(integrands.facetGeometry())
         predefined[minFacetEdgeLength] = minEdgeLength(integrands.facetGeometry())
-        predefined.update({c: integrands.constant(i) for c, i in constants.items()})
+        predefined.update({c: integrands.constant(i) for c, i in constantIdx.items()})
         predefineCoefficients(predefined, 'x')
         integrands.boundary = generateUnaryCode(predefined, derivatives_phi, integrals['exterior_facet'], tempVars=tempVars);
 
@@ -266,7 +272,7 @@ def compileUFL(form, tempVars=True):
         predefined[facetArea] = integrands.facetArea()
         predefined[maxFacetEdgeLength] = maxEdgeLength(integrands.facetGeometry())
         predefined[minFacetEdgeLength] = minEdgeLength(integrands.facetGeometry())
-        predefined.update({c: integrands.constant(i) for c, i in constants.items()})
+        predefined.update({c: integrands.constant(i) for c, i in constantIdx.items()})
         predefineCoefficients(predefined, 'x')
         integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('exterior_facet'), tempVars=tempVars)
 
@@ -286,7 +292,7 @@ def compileUFL(form, tempVars=True):
         predefined[facetArea] = integrands.facetArea()
         predefined[maxFacetEdgeLength] = maxEdgeLength(integrands.facetGeometry())
         predefined[minFacetEdgeLength] = minEdgeLength(integrands.facetGeometry())
-        predefined.update({c: integrands.constant(i) for c, i in constants.items()})
+        predefined.update({c: integrands.constant(i) for c, i in constantIdx.items()})
         predefineCoefficients(predefined, 'xIn', 'Side::in')
         predefineCoefficients(predefined, 'xOut', 'Side::out')
         integrands.skeleton = generateBinaryCode(predefined, derivatives_phi, integrals['interior_facet'], tempVars=tempVars)
@@ -303,10 +309,10 @@ def compileUFL(form, tempVars=True):
         predefined[facetArea] = integrands.facetArea()
         predefined[maxFacetEdgeLength] = maxEdgeLength(integrands.facetGeometry())
         predefined[minFacetEdgeLength] = minEdgeLength(integrands.facetGeometry())
-        predefined.update({c: integrands.constant(i) for c, i in constants.items()})
+        predefined.update({c: integrands.constant(i) for c, i in constantIdx.items()})
         predefineCoefficients(predefined, 'xIn', 'Side::in')
         predefineCoefficients(predefined, 'xOut', 'Side::out')
         integrands.linearizedSkeleton = generateBinaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('interior_facet'), tempVars=tempVars)
 
-    coefficients.update(constants)
-    return integrands, coefficients
+    coefficientIdx.update(constantIdx)
+    return integrands, coefficientIdx
