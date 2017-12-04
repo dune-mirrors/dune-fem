@@ -92,6 +92,18 @@ class MultiLinearExprSplitter(Transformer):
             result[key] = conditionalExprTensor(condition, trueCase.get(key, zero), falseCase.get(key, zero))
         return result
 
+    def max_value(self, expr, left, right):
+        result = dict()
+        if list(left.keys()) != [self.empty] or list(right.keys()) != [self.empty]:
+            raise Exception('Linear arguments may not occur in minimum.')
+        return { self.empty: expr }
+
+    def min_value(self, expr, left, right):
+        result = dict()
+        if list(left.keys()) != [self.empty] or list(right.keys()) != [self.empty]:
+            raise Exception('Linear arguments may not occur in minimum.')
+        return { self.empty: expr }
+
     def terminal(self, expr):
         if len(expr.ufl_shape) > 0:
             raise Exception('Terminal expressions should only occur in fully indexed expressions.')
