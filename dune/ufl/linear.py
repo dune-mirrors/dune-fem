@@ -59,7 +59,7 @@ class MultiLinearExprSplitter(Transformer):
         return {key: value.negative_restricted() for key, value in arg.items()}
 
     def positive_restricted(self, expr, arg):
-        return {key: value.negative_restricted() for key, value in arg.items()}
+        return {key: value.positive_restricted() for key, value in arg.items()}
 
     def product(self, expr, left, right):
         def oneOf(l, r):
