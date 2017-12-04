@@ -4,11 +4,12 @@ from ufl.algorithms import expand_indices
 from ufl.algorithms.analysis import extract_arguments
 from ufl.algorithms.apply_derivatives import apply_derivatives
 from ufl.algorithms.apply_algebra_lowering import apply_algebra_lowering
-from ufl.algorithms.apply_restrictions import apply_restrictions
 from ufl.algorithms.transformer import Transformer
 from ufl.constantvalue import IntValue, Zero
 from ufl.differentiation import Grad
 from ufl.restriction import Restricted
+
+from .applyrestrictions import applyRestrictions
 
 from .tensors import conditionalExprTensor, ExprTensor, keys
 
@@ -176,9 +177,9 @@ def splitForm(form, arguments=None):
     if arguments is None:
         arguments = form.arguments()
 
-    form = apply_restrictions(form)
+    form = applyRestrictions(form)
     form = expand_indices(apply_derivatives(apply_algebra_lowering(form)))
-    form = apply_restrictions(form)
+    form = applyRestrictions(form)
 
     integrals = {}
     for integral in form.integrals():

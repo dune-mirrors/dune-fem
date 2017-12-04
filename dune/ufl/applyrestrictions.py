@@ -1,5 +1,7 @@
 from ufl.corealg.multifunction import MultiFunction
 from ufl.corealg.map_dag import map_expr_dag
+from ufl.algorithms.map_integrands import map_integrand_dags
+from ufl.measure import integral_type_to_measure_name
 
 class RestrictionPropagator(MultiFunction):
     def __init__(self, side=None):
@@ -35,5 +37,6 @@ class RestrictionPropagator(MultiFunction):
     cell_volume = _apply_restriction
 
 
-def applyRestrictions(expression):
-    return map_expr_dag(RestrictionPropagator(), expression)
+def applyRestrictions(form):
+    integral_types = [k for k in integral_type_to_measure_name.keys() if k.startswith("interior_facet")]
+    return map_integrand_dags(RestrictionPropagator(), form, only_integral_type=integral_types)
