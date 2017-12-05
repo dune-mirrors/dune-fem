@@ -6,7 +6,7 @@ from dune.source.cplusplus import Include, NameSpace, TypeAlias
 from dune.source.cplusplus import SourceWriter
 
 from .model import Integrands
-from .ufl import compileUFL, handleCoefficients
+from .ufl import compileUFL
 
 def setConstant(integrands, index, value):
     try:
@@ -29,12 +29,14 @@ def load(grid, integrands, renumbering=None, tempVars=True):
 
     if isinstance(integrands, Equation):
         integrands = integrands.lhs - integrands.rhs
-    if isinstance(integrands, (Form, Equation)):
-        constants, coefficients = handleCoefficients(integrands)
+    if isinstance(integrands, Form):
+        coefficients = set(form.coefficients())
+        constants = [c for c in coefficients if c.is_cellwise_constant()]
+        coefficients = [c for f in coefficients if not c.is_cellwise_constant()]
         integrands = compileUFL(integrands, constants=constants, coefficients=coefficients, tempVars=tempVars)
         renumbering = dict()
-        renumering.update((c[0], i) for i, c in enumerate(coefficients))
-        renumering.update((c[0], i) for i, c in enumerate(constants))
+        renumering.update((c, i) for i, c in enumerate(coefficients))
+        renumering.update((c, i) for i, c in enumerate(constants))
 
     name = 'integrands_' + integrands.signature + '_' + hashIt(grid._typeName)
 
