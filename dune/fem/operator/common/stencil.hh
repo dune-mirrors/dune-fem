@@ -7,6 +7,7 @@
 #include <set>
 
 #include <dune/grid/common/gridenums.hh>
+#include <dune/grid/common/rangegenerators.hh>
 #include <dune/fem/misc/functor.hh>
 
 namespace Dune
@@ -195,7 +196,7 @@ namespace Dune
       DiagonalStencil(const DomainSpace &dSpace, const RangeSpace &rSpace)
         : BaseType( dSpace, rSpace )
       {
-        for (const auto& entity : dSpace)
+        for (const auto& entity : elements( dSpace.gridPart(), Dune::Partitions::interiorBorder ) )
           BaseType::fill(entity,entity);
       }
     };
@@ -225,7 +226,7 @@ namespace Dune
                                  bool onlyNonContinuousNeighbors = false)
         : BaseType( dSpace, rSpace )
       {
-        for (const auto & entity: dSpace)
+        for (const auto & entity: elements( dSpace.gridPart(), Dune::Partitions::interiorBorder ) )
         {
           BaseType::fill(entity,entity);
           for (const auto & intersection: intersections(dSpace.gridPart(), entity) )
