@@ -38,7 +38,7 @@ class DerivativeGatherer(MultiFunction):
 
 
 
-def gatherDerivatives(form, arguments):
+def gatherDerivatives(form, arguments=None):
     if arguments is None:
         arguments = form.arguments()
 

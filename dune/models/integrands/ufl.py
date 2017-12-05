@@ -203,9 +203,7 @@ def compileUFL(form, constants=None, coefficients=None, tempVars=True):
     maxFacetEdgeLength = MaxFacetEdgeLength(form.ufl_cell())
     minFacetEdgeLength = MinFacetEdgeLength(form.ufl_cell())
 
-    phi = form.arguments()[0]
-
-    u = form.arguments()[1]
+    phi, u = form.arguments()
     ubar = Coefficient(u.ufl_function_space())
 
     derivatives = gatherDerivatives(form, [phi, u])
@@ -240,7 +238,7 @@ def compileUFL(form, constants=None, coefficients=None, tempVars=True):
                 coefficient = Grad(coefficient)
 
     if 'cell' in integrals.keys():
-        arg = Variable(integrands.domainValueTuple(), 'u')
+        arg = Variable(integrands.domainValueTuple, 'u')
 
         predefined = {derivatives_u[i]: arg[i] for i in range(len(derivatives_u))}
         predefined[x] = integrands.spatialCoordinate('x')
@@ -261,7 +259,7 @@ def compileUFL(form, constants=None, coefficients=None, tempVars=True):
         integrands.linearizedInterior = generateUnaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('cell'), tempVars=tempVars)
 
     if 'exterior_facet' in integrals.keys():
-        arg = Variable(integrands.domainValueTuple(), 'u')
+        arg = Variable(integrands.domainValueTuple, 'u')
 
         predefined = {derivatives_u[i]: arg[i] for i in range(len(derivatives_u))}
         predefined[x] = integrands.spatialCoordinate('x')
@@ -290,8 +288,8 @@ def compileUFL(form, constants=None, coefficients=None, tempVars=True):
         integrands.linearizedBoundary = generateUnaryLinearizedCode(predefined, derivatives_phi, derivatives_u, linearizedIntegrals.get('exterior_facet'), tempVars=tempVars)
 
     if 'interior_facet' in integrals.keys():
-        argIn = Variable(integrands.domainValueTuple(), 'uIn')
-        argOut = Variable(integrands.domainValueTuple(), 'uOut')
+        argIn = Variable(integrands.domainValueTuple, 'uIn')
+        argOut = Variable(integrands.domainValueTuple, 'uOut')
 
         predefined = {derivatives_u[i](s): arg[i] for i in range(len(derivatives_u)) for s, arg in (('+', argIn), ('-', argOut))}
         predefined[x] = integrands.spatialCoordinate('xIn')

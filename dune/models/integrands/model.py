@@ -3,6 +3,7 @@ from __future__ import division, print_function, unicode_literals
 from dune.source.builtin import get, hybridForEach, make_pair, make_index_sequence, make_shared
 from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, Include, InitializerList, Method, Struct, TypeAlias, UnformattedExpression, Variable
 from dune.source.cplusplus import assign, construct, coordinate, dereference, lambda_, makeExpression, maxEdgeLength, minEdgeLength, return_
+from dune.source.fem import fieldTensorType
 from dune.source.algorithm.extractincludes import extractIncludesFromStatements
 
 class Integrands():
@@ -23,9 +24,9 @@ class Integrands():
         if rangeValue is None:
             rangeValue = domainValue
 
-        self.signature = signature
-        self.domainValue = tuple(domainValue)
-        self.rangeValue = tuple(rangeValue)
+        self._signature = signature
+        self.domainValueTuple = 'std::tuple< ' + ', '.join(fieldTensorType(v) for v in domainValue) + ' >'
+        self.rangeValueTuple = 'std::tuple< ' + ', '.join(fieldTensorType(v) for v in rangeValue) + ' >'
 
         self.field = "double"
         self._constants = [] if constants is None else list(constants)
@@ -42,21 +43,8 @@ class Integrands():
 
         self._derivatives = [('RangeType', 'evaluate'), ('JacobianRangeType', 'jacobian'), ('HessianRangeType', 'hessian')]
 
-    def _cppTensor(self, shape):
-        if len(shape) == 1:
-            return 'Dune::FieldVector< double, ' + str(shape[0]) + ' >'
-        elif len(shape) == 2:
-            return 'Dune::FieldMatrix< double, ' + str(shape[0]) + ', ' + str(shape[1]) + ' >'
-        elif len(shape) == 3:
-            return 'Dune::FieldVector< Dune::FieldMatrix< double, ' + str(shape[1]) + ', ' + str(shape[2]) + ' >, ' + str(shape[0]) + ' >'
-        else:
-            raise ValueError('No C++ type defined for tensors of shape ' + str(shape) + '.')
-
-    def domainValueTuple(self):
-        return 'std::tuple< ' + ', '.join([self._cppTensor(v) for v in self.domainValue]) + ' >'
-
-    def rangeValueTuple(self):
-        return 'std::tuple< ' + ', '.join([self._cppTensor(v) for v in self.rangeValue]) + ' >'
+    def signature(self):
+        return self._signature
 
     def constant(self, idx):
         return UnformattedExpression(self._constants[idx], 'constant< ' + str(idx) + ' >()')
@@ -97,8 +85,8 @@ class Integrands():
 
         code.append(TypeAlias("GlobalCoordinateType", "typename EntityType::Geometry::GlobalCoordinate"))
 
-        code.append(TypeAlias("DomainValueType", self.domainValueTuple()))
-        code.append(TypeAlias("RangeValueType", self.rangeValueTuple()))
+        code.append(TypeAlias("DomainValueType", self.domainValueTuple))
+        code.append(TypeAlias("RangeValueType", self.rangeValueTuple))
 
         constants = ["std::shared_ptr< " + c + " >" for c in self._constants]
         if constants:
