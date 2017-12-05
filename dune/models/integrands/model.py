@@ -3,7 +3,6 @@ from __future__ import division, print_function, unicode_literals
 from dune.source.builtin import get, hybridForEach, make_pair, make_index_sequence, make_shared
 from dune.source.cplusplus import AccessModifier, Declaration, Constructor, EnumClass, Include, InitializerList, Method, Struct, TypeAlias, UnformattedExpression, Variable
 from dune.source.cplusplus import assign, construct, coordinate, dereference, lambda_, makeExpression, maxEdgeLength, minEdgeLength, return_
-from dune.source.cplusplus import SourceWriter
 from dune.source.algorithm.extractincludes import extractIncludesFromStatements
 
 class Integrands():
