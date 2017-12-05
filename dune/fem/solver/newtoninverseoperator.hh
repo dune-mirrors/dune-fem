@@ -283,7 +283,6 @@ namespace Dune
         return *jOp_;
       }
 
-    private:
       const OperatorType *op_ = nullptr;
 
       const double tolerance_;
@@ -295,6 +294,7 @@ namespace Dune
       mutable int iterations_;
       mutable int linearIterations_;
       mutable LinearInverseOperatorType jInv_;
+    private:
       mutable std::unique_ptr< JacobianOperatorType > jOp_;
     };
 
