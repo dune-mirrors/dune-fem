@@ -15,8 +15,10 @@ class Model:
         self.form = form
 
 
-def executeUFLCode(code):
-    return dune.ufl.formfiles.executeUFLCode(code, {"Model": Model})
+def executeUFLCode(code, predefined=None):
+    predefined = {} if predefined is None else predefined
+    predefined["Model"] = Model
+    return dune.ufl.formfiles.executeUFLCode(code, predefined)
 
 
 def interpretUFLNamespace(namespace):
@@ -38,12 +40,12 @@ def interpretUFLNamespace(namespace):
     return models
 
 
-def loadUFLFile(filename):
+def loadUFLFile(filename, predefined=None):
     code = readUFLFile(filename)
-    namespace = executeUFLCode(code)
+    namespace = executeUFLCode(code, predefined=predefined)
     return interpretUFLNamespace(namespace)
 
 
-def compileUFLFile(filename, tempVars=True):
-    models = loadUFLFile(filename)
+def compileUFLFile(filename, predefined=None, tempVars=True):
+    models = loadUFLFile(filename, predefined=predefined)
     return [compileUFL(model.form, tempVars=tempVars).code(model.name) for model in models]
