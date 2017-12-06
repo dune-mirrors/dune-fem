@@ -12,7 +12,9 @@ from ._functions import *
 import dune.ufl
 
 def integrate(grid,expression,order):
-    return dune.ufl.expression2GF(grid,expression,order).integrate()
+    import dune.create as create
+    return create.function("ufl",grid,"tmp",order,expression).integrate()
+    # return dune.ufl.expression2GF(grid,expression,order).integrate()
 # perhaps a general
 #    def assemble(grid/space, expression, order):
 # would be better. If expression is a function this would return a

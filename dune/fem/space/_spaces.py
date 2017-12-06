@@ -42,6 +42,42 @@ def dgonb(gridview, order=1, dimrange=1, field="double", storage=None, **unused)
 
     return module(field, storage, includes, typeName).Space(gridview)
 
+def dgonbhp(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
+    """create a discontinous galerkin space with elementwise orthonormal basis functions capable of hp-adaptation
+
+    Args:
+        gridview: the underlying grid view
+        order: polynomial order of the finite element functions
+        dimrange: dimension of the range space
+        field: field of the range space
+        storage: underlying linear algebra backend
+
+    Returns:
+        Space: the constructed Space
+    """
+
+    from dune.fem.space import module
+    if dimrange < 1:
+        raise KeyError(\
+            "Parameter error in hpDG::OrthogonalDiscontinuosGalerkinSpace with "+
+            "dimrange=" + str(dimrange) + ": " +\
+            "dimrange has to be greater or equal to 1")
+    if order < 0:
+        raise KeyError(\
+            "Parameter error in hpDG::OrthogonalDiscontinuousGalerkinSpace with "+
+            "order=" + str(order) + ": " +\
+            "order has to be greater or equal to 0")
+    if field == "complex":
+        field = "std::complex<double>"
+
+    includes = [ "dune/fem/space/hpdg/orthogonal.hh" ] + gridview._includes
+    dimw = gridview.dimWorld
+    typeName = "Dune::Fem::hpDG::OrthogonalDiscontinuousGalerkinSpace< " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+      "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
+
+    return module(field, storage, includes, typeName).Space(gridview)
+
 def dglegendre(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
     """create a discontinous galerkin space with elementwise legendre tensor product basis function
 
@@ -72,7 +108,43 @@ def dglegendre(gridview, order=1, dimrange=1, field="double", storage=None, **un
 
     includes = [ "dune/fem/space/discontinuousgalerkin.hh" ] + gridview._includes
     dimw = gridview.dimWorld
-    typeName = "Dune::Fem::LegendreDiscontinuousGalerkinSpace< " +\
+    typeName = "Dune::Fem::HierarchicLegendreDiscontinuousGalerkinSpace< " +\
+      "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
+      "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
+
+    return module(field, storage, includes, typeName).Space(gridview)
+
+def dglegendrehp(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
+    """create a discontinous galerkin space with elementwise legendre tensor product basis function capable of hp-adaptation
+
+    Args:
+        gridview: the underlying grid view
+        order: polynomial order of the finite element functions
+        dimrange: dimension of the range space
+        field: field of the range space
+        storage: underlying linear algebra backend
+
+    Returns:
+        Space: the constructed Space
+    """
+
+    from dune.fem.space import module
+    if dimrange < 1:
+        raise KeyError(\
+            "Parameter error in DiscontinuosGalerkinSpace with "+
+            "dimrange=" + str(dimrange) + ": " +\
+            "dimrange has to be greater or equal to 1")
+    if order < 0:
+        raise KeyError(\
+            "Parameter error in hpDG::HierarchicLegendreDiscontinuousGalerkinSpace with "+
+            "order=" + str(order) + ": " +\
+            "order has to be greater or equal to 0")
+    if field == "complex":
+        field = "std::complex<double>"
+
+    includes = [ "dune/fem/space/hpdg/legendre.hh" ] + gridview._includes
+    dimw = gridview.dimWorld
+    typeName = "Dune::Fem::hpDG::HierarchicLegendreDiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
 

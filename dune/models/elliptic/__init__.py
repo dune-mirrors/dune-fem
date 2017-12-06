@@ -143,7 +143,7 @@ def load(grid, model, *args, **kwargs):
 
     from dune.generator import builder
     module = builder.load(name, source, "ellipticModel")
-    if renumbering is not None:
+    if (renumbering is not None) and (module.Model.__dict__['__init__'] != initModel):
         setattr(module.Model, '_renumbering', renumbering)
         setattr(module.Model, '_coefficientNames', {c['name']: i for i, c in enumerate(model._coefficients)})
         module.Model._init = module.Model.__dict__['__init__']

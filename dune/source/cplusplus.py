@@ -131,6 +131,8 @@ class Using:
     def __repr__(self):
         return "using " + repr(self.obj)
 
+    def __lt__(self, other):
+        return str(self.obj) < str(other.obj)
 
 
 # Class

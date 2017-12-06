@@ -78,20 +78,23 @@ def UFLFunction(grid, name, order, expr, **kwargs):
     writer.emit(generateCode({}, ExprTensor((dimR, ), expr), coefficients, False), context=Method('void', 'evaluate'))
     code = '\n'.join(writer.writer.lines)
     evaluate = code.replace("result", "value")
-    jac = []
-    for r in range(dimR):
-        jacForm = [\
-            ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(\
-                ufl.grad(expr)[r, d]*ufl.dx\
-            ))) for d in range(dimD)]
-        jac.append( [jacForm[d].integrals()[0].integrand() if not jacForm[d].empty() else 0 for d in range(dimD)] )
-    jac = ufl.as_matrix(jac)
-    writer = SourceWriter(ListWriter())
-    writer.emit(generateCode({}, ExprTensor((dimR, dimD), jac), coefficients, False), context=Method('void', 'jacobian'))
-    code = '\n'.join(writer.writer.lines)
-    jacobian = code.replace("result", "value")
+    try:
+        jac = []
+        for r in range(dimR):
+            jacForm = [\
+                ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(\
+                    ufl.grad(expr)[r, d]*ufl.dx\
+                ))) for d in range(dimD)]
+            jac.append( [jacForm[d].integrals()[0].integrand() if not jacForm[d].empty() else 0 for d in range(dimD)] )
+        jac = ufl.as_matrix(jac)
+        writer = SourceWriter(ListWriter())
+        writer.emit(generateCode({}, ExprTensor((dimR, dimD), jac), coefficients, False), context=Method('void', 'jacobian'))
+        code = '\n'.join(writer.writer.lines)
+        jacobian = code.replace("result", "value")
+        code = {"evaluate" : evaluate, "jacobian" : jacobian}
+    except:
+        code = {"evaluate" : evaluate}
 
-    code = {"evaluate" : evaluate, "jacobian" : jacobian}
     Gf = gridFunction(grid, code, coefficients, None).GFWrapper
 
     coefficients = kwargs.pop("coefficients", {})
