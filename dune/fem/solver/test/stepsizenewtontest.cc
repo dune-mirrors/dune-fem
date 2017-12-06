@@ -211,7 +211,7 @@ int main(int argc, char** argv)
     const bool verbose = Dune::Fem::Parameter::verbose();
     (void) verbose;
 
-    bool useStandard =Dune::Fem::Parameter::getValue<bool>("useStandard",true);
+    bool useStandard =Dune::Fem::Parameter::getValue<bool>("useStandard",false);
     bool useBR=Dune::Fem::Parameter::getValue<bool>("useBR",true);
     bool useFS=Dune::Fem::Parameter::getValue<bool>("useFS",true);
 
