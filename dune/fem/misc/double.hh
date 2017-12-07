@@ -272,6 +272,7 @@ namespace Dune
         operator>> ( InStreamInterface< Traits > &, Double & );
 
       friend double pow (const Double& v, const double p);
+      friend double pow (const Double& v, const Double& p);
       friend double log (const Double& v);
       friend double sqrt(const Double& v);
       friend double sin(const Double& v);
@@ -878,6 +879,11 @@ namespace Dune
       return std::log(v.value_);
     }
 
+    inline double pow (const Double& a, const double b )
+    {
+      return std::pow(a.value_, b);
+    }
+
     static inline double sqrt(const Double& v)
     {
       return std::sqrt(v.value_);
@@ -937,6 +943,11 @@ namespace std
     return Dune::Fem::abs( a );
   }
 
+  inline Dune::Fem::Double pow( const Dune::Fem::Double &a, const Dune::Fem::Double &b )
+  {
+    return Dune::Fem::pow( a, b );
+  }
+
   // wrap of std min
   inline double min (const Dune::Fem::Double& v, const double p)
   {
@@ -961,7 +972,7 @@ namespace std
     return Dune::Fem::max(v,p);
   }
 
-  // wrap of std power
+  // wrap of std sqrt
   inline double sqrt( const Dune::Fem::Double& v )
   {
     return Dune::Fem::sqrt( v );
@@ -1070,6 +1081,9 @@ namespace std
       = numeric_limits< double > :: round_style;
 
   };
+
+  template <>
+  struct is_floating_point< Dune::Fem::Double > : public is_floating_point< double > {};
 
 } // namespace std
 
