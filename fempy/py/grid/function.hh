@@ -6,6 +6,7 @@
 #include <tuple>
 #include <utility>
 
+#include <dune/common/typeutilities.hh>
 #include <dune/common/visibility.hh>
 
 #include <dune/fem/misc/domainintegral.hh>
@@ -29,12 +30,10 @@ namespace Dune
     // registerLocalFunction
     // ---------------------
 
-    template< class LocalFunction >
-    inline static void registerLocalFunction ( pybind11::handle scope,
-        pybind11::class_<LocalFunction> cls)
+    template< class LocalFunction, class... options >
+    inline static void registerLocalFunction ( pybind11::handle scope, pybind11::class_< LocalFunction, options... > cls)
     {
       typedef typename LocalFunction::EntityType::Geometry::LocalCoordinate LocalCoordinate;
-      typedef typename LocalFunction::RangeType::value_type DofType;
 
       cls.def_property_readonly( "dimRange", [] ( LocalFunction & ) -> int { return LocalFunction::RangeType::dimension; } );
       cls.def_property_readonly( "order", [] ( const LocalFunction & lf ) -> int { return lf.order(); } );
@@ -54,6 +53,7 @@ namespace Dune
           return hessian;
         } );
     }
+
 
 
     namespace detail
@@ -83,12 +83,36 @@ namespace Dune
 
 
 
+
+      // registerGridFunctionName
+      // ------------------------
+
+      template< class GridFunction, class... options >
+      inline static auto registerGridFunctionName ( pybind11::class_< GridFunction, options... > cls, PriorityTag< 1 > )
+        -> std::enable_if_t< std::is_same< decltype( std::declval< GridFunction & >().name() ), std::string & >::value >
+      {
+        cls.def_property( "name", [] ( GridFunction &self ) -> std::string { return self.name(); }, [] ( GridFunction &self, std::string name ) { self.name() = name; } );
+      }
+
+      template< class GridFunction, class... options >
+      inline static void registerGridFunctionName ( pybind11::class_< GridFunction, options... > cls, PriorityTag< 0 > )
+      {
+        cls.def_property_readonly( "name", [] ( GridFunction &self ) -> std::string { return self.name(); } );
+      }
+
+      template< class GridFunction, class... options >
+      inline static void registerGridFunctionName ( pybind11::class_< GridFunction, options... > cls )
+      {
+        registerGridFunctionName( cls, PriorityTag< 42 >() );
+      }
+
+
+
       // registerGridFunction
       // --------------------
 
       template< class GridFunction, class... options >
-      inline static void registerGridFunction ( pybind11::handle scope,
-          pybind11::class_< GridFunction, options... > cls )
+      inline static void registerGridFunction ( pybind11::handle scope, pybind11::class_< GridFunction, options... > cls )
       {
         using pybind11::operator""_a;
 
@@ -112,8 +136,9 @@ namespace Dune
 
         cls.def_property_readonly( "dimRange", [] ( GridFunction & ) -> int { return GridFunction::RangeType::dimension; } );
         cls.def_property_readonly( "order", [] ( GridFunction &self ) -> int { return self.space().order(); } );
-        cls.def_property_readonly( "name", [] ( GridFunction &self ) -> std::string { return self.name(); } );
         cls.def_property_readonly( "grid", [] ( GridFunction &self ) -> GridView { return static_cast< GridView >( self.gridPart() ); } );
+
+        registerGridFunctionName( cls );
 
         cls.def( "localFunction", [] ( const GridFunction &self, const Entity &entity ) { // -> LocalFunction {
             auto ret = std::make_unique<LocalFunction>(self);

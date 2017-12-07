@@ -27,54 +27,6 @@ namespace Dune
       namespace RegisterIntegrands
       {
 
-        // CoefficientsRegistry
-        // --------------------
-
-        template< class Integrands >
-        struct CoefficientsRegistry
-        {
-          typedef std::array< pybind11::object, std::tuple_size< typename Integrands::CoefficientTupleType >::value > Objects;
-
-          Objects &operator() ( pybind11::handle integrands )
-          {
-            auto result = objects_.insert( std::make_pair( integrands.ptr(), Objects() ) );
-            auto pos = result.first;
-            if( result.second )
-            {
-              pybind11::cpp_function remove_objects( [ this, pos ] ( pybind11::handle weakref ) {
-                  objects_.erase( pos );
-                  weakref.dec_ref();
-                } );
-              pybind11::weakref weakref( integrands, remove_objects );
-              weakref.release();
-            }
-            return pos->second;
-          }
-
-          Objects &operator() ( Integrands &integrands )
-          {
-            return (*this)( pybind11::detail::get_object_handle( &integrands, pybind11::detail::get_type_info( typeid( Integrands ) ) ) );
-          }
-
-        private:
-          std::map< PyObject *, Objects > objects_;
-        };
-
-
-
-        // coefficientsRegistry
-        // --------------------
-
-        template< class Integrands >
-        DUNE_EXPORT inline CoefficientsRegistry< Integrands > &coefficientsRegistry ()
-        {
-          static CoefficientsRegistry< Integrands > registry;
-          return registry;
-        }
-
-
-
-
         // setConstant
         // -----------
 
@@ -110,48 +62,6 @@ namespace Dune
         inline static void setConstant ( pybind11::class_< Integrands, options... > cls, PriorityTag< 0 > )
         {}
 
-
-
-        // setCoefficient
-        // --------------
-
-        template< class Integrands, class... options >
-        inline static std::enable_if_t< (std::tuple_size< typename Integrands::CoefficientTupleType >::value > 0) >
-        setCoefficient ( pybind11::class_< Integrands, options... > cls, PriorityTag< 1 > )
-        {
-          const std::size_t numCoefficients = std::tuple_size< typename Integrands::CoefficientTupleType >::value;
-          std::array< std::function< void( Integrands &, pybind11::handle ) >, numCoefficients > dispatch;
-          Hybrid::forEach( std::make_index_sequence< numCoefficients >(), [ &dispatch ] ( auto i ) {
-              dispatch[ i ] = [ i ] ( Integrands &integrands, pybind11::handle o ) {
-                  integrands.template setCoefficient< i >( o.template cast< std::tuple_element_t< i, typename Integrands::CoefficientTupleType > >() );
-                  coefficientsRegistry< Integrands >()( integrands )[ i ] = pybind11::object( o, true );
-                };
-            } );
-
-          using pybind11::operator""_a;
-
-          cls.def( "setCoefficient", [ dispatch ] ( Integrands &self, int k, pybind11::handle coefficient ) {
-              if( k >= dispatch.size() )
-                throw pybind11::index_error( "No such coefficient: " + std::to_string( k ) + " (must be in [0, " + std::to_string( dispatch.size() ) + "[)" );
-              dispatch[ k ]( self, coefficient );
-            }, "k"_a, "coefficient"_a );
-        }
-
-        template< class Integrands, class... options >
-        inline static std::enable_if_t< (std::tuple_size< typename Integrands::CoefficientTupleType >::value == 0) >
-        setCoefficient ( pybind11::class_< Integrands, options... > cls, PriorityTag< 1 > )
-        {
-          using pybind11::operator""_a;
-
-          cls.def( "setCoefficient", [] ( Integrands &, int k, pybind11::handle ) {
-              throw pybind11::index_error( "No such coefficient: " + std::to_string( k ) + " (there are no constants)" );
-            }, "k"_a, "coefficient"_a );
-        }
-
-        template< class Integrands, class... options >
-        inline static void setCoefficient ( pybind11::class_< Integrands, options... > cls, PriorityTag< 0 > )
-        {}
-
       } // namespace RegisterIntegrands
 
 
@@ -163,7 +73,6 @@ namespace Dune
       inline void registerIntegrands ( pybind11::handle scope, pybind11::class_<Integrands> cls )
       {
         RegisterIntegrands::setConstant( cls, PriorityTag< 42 >() );
-        RegisterIntegrands::setCoefficient( cls, PriorityTag< 42 >() );
       }
 
 
