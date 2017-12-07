@@ -24,8 +24,12 @@ def elliptic(view, equation, *args, **kwargs):
     return Model(coefficients=coefficients)
 
 
-def integrands(view, equation, tempVars=True, coefficients={}):
+def integrands(view, form, *args, **kwargs):
     import ufl
     import dune.ufl
     import dune.models.integrands as integrands
-    return integrands.create(view, equation, tempVars=tempVars)
+
+    tempVars = kwargs.pop('tempVars', True)
+    Integrands = integrands.load(view, form, tempVars=tempVars).Integrands
+
+    return Integrands(*args, **kwargs)

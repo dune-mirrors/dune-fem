@@ -3,12 +3,69 @@ from __future__ import division, print_function, unicode_literals
 from ufl import Form
 from ufl.equation import Equation
 
+from dune.common.compatibility import isString
+
 from dune.source.cplusplus import Include, NameSpace, TypeAlias
 from dune.source.cplusplus import SourceWriter
 from dune.source.fem import fieldTensorType
+from dune.ufl import GridFunction
 from dune.ufl.gatherderivatives import gatherDerivatives
 
 from .ufl import compileUFL, fieldVectorType
+
+def init(integrands, *args, **kwargs):
+    coefficients = kwargs.pop('coefficients', dict())
+    if len(args) == 1 and isinstance(args[0], dict):
+        coefficients.update(args[0])
+        args = []
+    else:
+        args = list(args)
+
+    coefficientNames = integrands._coefficientNames
+    if len(args) > len(coefficientNames):
+        raise ValueError('Too many coefficients passed.')
+    args += [None] * (len(coefficientNames) - len(args))
+
+    for name, value in kwargs.items():
+        try:
+            i = coefficientNames[i]
+        except KeyError:
+            raise ValueError('No such coefficent: ' + name + '.')
+
+        if args[i] is not None:
+            raise ValueError('Coefficient already given as positional argument: ' + name + '.')
+        args[i] = value
+
+    for key, value in coefficients.items():
+        if isinstance(key, Coefficient):
+            try:
+                i = integrands._renumbering[key]
+            except AttributeError:
+                raise ValueError('Cannot map UFL coefficients, because model was not generated from UFL form.')
+            except KeyError:
+                raise ValueError('No such coefficient: ' + str(key) + '.')
+        elif isString(key):
+            try:
+                i = coefficientNames[key]
+            except KeyError:
+                raise ValueError('No such coefficent: ' + key + '.')
+        else:
+            raise ValueError('Expecting keys of coefficient map to be strings or  intances of ufl.Coefficient.')
+        if args[i] is not None:
+            raise ValueError('Coefficient already given as positional or keyword argument: ' + str(key) + '.')
+        args[i] = value
+
+    if hasattr(integrands, '_renumbering'):
+        for c, i in integrands._renumbering.items():
+            if args[i] is None and isinstance(c, GridFunction):
+                args[i] = c.gf
+
+    if any(arg is None for arg in args):
+        missing = [name for name, i in coefficientNames.items() if args[i] is None]
+        raise ValueError('Missing coefficients: ' + ', '.join(missing) + '.')
+
+    integrands._init(*args)
+
 
 def setConstant(integrands, index, value):
     try:
@@ -16,14 +73,6 @@ def setConstant(integrands, index, value):
     except KeyError:
         pass
     integrands._setConstant(index, value)
-
-
-def setCoefficient(integrands, index, coefficient):
-    try:
-        index = integrands._renumbering[index]
-    except KeyError:
-        pass
-    integrands._setCoefficient(index, coefficient)
 
 
 class Source(object):
@@ -46,7 +95,7 @@ class Source(object):
             derivatives = gatherDerivatives(self.integrands)
             return ['std::tuple< ' + ', '.join(fieldTensorType(v.ufl_shape) for v in d) + ' >' for d in derivatives]
         else:
-            return [integrands.rangeValueType, integrands.domainValueTuple]
+            return [self.integrands.rangeValueTuple, self.integrands.domainValueTuple]
 
     def __str__(self):
         if isinstance(self.integrands, Form):
@@ -87,7 +136,13 @@ class Source(object):
         name = self.name()
         writer.openPythonModule(name)
         writer.emit('auto cls = Dune::FemPy::registerIntegrands< Integrands >( module );')
-        writer.emit('cls.def( pybind11::init( [] () { return new Integrands(); } ) );')
+        if coefficients:
+            coefficientNames = integrands.coefficientNames
+            initArgs = ', '.join('const ' + t + ' &' + n for t, n in zip(coefficients, coefficientNames))
+            keepAlive = ', '.join('pybind11::keep_alive< 1, ' + str(i+2) + ' >()' for i in range(len(coefficientNames)))
+            writer.emit('cls.def( pybind11::init( [] ( ' + initArgs + ' ) { return new Integrands( ' + ', '.join(coefficientNames) +  ' ); } ), ' + keepAlive + ' );')
+        else:
+            writer.emit('cls.def( pybind11::init( [] () { return new Integrands(); } ) );')
         writer.closePythonModule(name)
 
         source = writer.writer.getvalue()
@@ -100,21 +155,28 @@ def load(grid, integrands, renumbering=None, tempVars=True):
         integrands = integrands.lhs - integrands.rhs
 
     source = Source(grid._typeName, grid._includes, integrands, tempVars=tempVars)
-    if isinstance(integrands, Form) and renumbering is None:
+    if isinstance(integrands, Form):
         coefficients = set(integrands.coefficients())
-        renumbering = dict()
-        renumbering.update((c, i) for i, c in enumerate(c for c in coefficients if not c.is_cellwise_constant()))
-        renumbering.update((c, i) for i, c in enumerate(c for c in coefficients if c.is_cellwise_constant()))
+        numCoefficients = len(coefficients)
+        if renumbering is None:
+            renumbering = dict()
+            renumbering.update((c, i) for i, c in enumerate(c for c in coefficients if not c.is_cellwise_constant()))
+            renumbering.update((c, i) for i, c in enumerate(c for c in coefficients if c.is_cellwise_constant()))
+        coefficientNames = ['coefficient' + str(i) if n is None else n for i, n in enumerate(getattr(c, 'name', None) for c in coefficients if not c.is_cellwise_constant())]
+    else:
+        coefficientNames = integrands.coefficientNames
 
     from dune.generator import builder
     module = builder.load(source.name(), source, "integrands")
     rangeValueTuple, domainValueTuple = source.valueTuples()
     setattr(module.Integrands, "_domainValueType", domainValueTuple)
     setattr(module.Integrands, "_rangeValueType", rangeValueTuple)
-    if (renumbering is not None) and not hasattr(module.Integrands, "_renumbering"):
-        module.Integrands._setConstant = module.Integrands.__dict__['setConstant']
-        module.Integrands._setCoefficient = module.Integrands.__dict__['setCoefficient']
-        setattr(module.Integrands, '_renumbering', renumbering)
-        setattr(module.Integrands, 'setConstant', setConstant)
-        setattr(module.Integrands, 'setCoefficient', setCoefficient)
+    if not hasattr(module.Integrands, "_init"):
+        setattr(module.Integrands, '_coefficientNames', {n: i for i, n in enumerate(coefficientNames)})
+        module.Integrands._init = module.Integrands.__dict__['__init__']
+        setattr(module.Integrands, '__init__', init)
+        if renumbering is not None:
+            setattr(module.Integrands, '_renumbering', renumbering)
+            module.Integrands._setConstant = module.Integrands.__dict__['setConstant']
+            setattr(module.Integrands, 'setConstant', setConstant)
     return module
