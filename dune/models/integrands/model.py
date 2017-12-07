@@ -7,19 +7,26 @@ from dune.source.fem import fieldTensorType
 from dune.source.algorithm.extractincludes import extractIncludesFromStatements
 
 class Integrands():
-    def __init__(self, signature, domainValue, rangeValue=None, constants=None, coefficients=None):
+    def __init__(self, signature, domainValue, rangeValue=None, constants=None, coefficients=None, parameterNames=None):
         """construct new integrands
 
         Args:
-            signature:    unique signature for these integrands
-            domainValue:  structure of domain value tuple
-            rangeVlue:    structure of range value tuple
+            signature:      unique signature for these integrands
+            domainValue:    structure of domain value tuple
+            rangeVlue:      structure of range value tuple
+            constants:      tuple of C++ types for constants to provide
+            coefficients:   tuple of C++ types for the ranges of coefficient functions
+            parameterNames: tuple of strings assigning dune-fem parameter names to the constants
 
         Returns:
             Integrands: newly constructed integrands
 
         The tuples domainValue and rangeValue contain the shapes of the
         corresponding value types for these integrands.
+
+        If parameter names are provided, the tuple must have the same
+        length as the constants tuple. For constants without parameter name,
+        pass None instead of a string.
         """
         if rangeValue is None:
             rangeValue = domainValue
@@ -31,6 +38,10 @@ class Integrands():
         self.field = "double"
         self._constants = [] if constants is None else list(constants)
         self._coefficients = [] if coefficients is None else list(coefficients)
+        self._parameterNames = [None,] * len(self._constants) if parameterNames is None else list(parameterNames)
+        if len(self._parameterNames) != len(self._constants):
+            raise ValueError("Length of parameterNames must match length of constants")
+
         self.init = None
         self.vars = None
 
@@ -130,7 +141,14 @@ class Integrands():
         else:
             coefficients_ = Variable('std::array< std::tuple< typename Coefficients::LocalFunctionType... >, 2 >', 'coefficients_')
 
-        code.append(Constructor(code=hybridForEach(make_index_sequence("std::tuple_size< ConstantTupleType >::value")(), lambda_(args=["auto i"], capture=[Variable('auto', 'this')], code=assign(get("i")(constants_), make_shared("ConstantType< i >")())))))
+        arg_param = Variable('const Dune::Fem::ParameterReader &', 'parameter')
+        constructor = Constructor(args=[Declaration(arg_param, initializer=UnformattedExpression('const ParameterReader &', 'Dune::Fem::Parameter::container()'))])
+        for idx, cppType in enumerate(self._constants):
+            constructor.append(assign(get(idx)(constants_), make_shared(cppType)()))
+        for idx, (name, cppType) in enumerate(zip(self._parameterNames, self._constants)):
+            if name is not None:
+                constructor.append(assign(dereference(get(idx)(constants_)), UnformattedExpression('auto', arg_param.name + '.getValue< ' + cppType + ' >( "' + name + '" )', uses=[arg_param])))
+        code.append(constructor)
 
         entity = Variable('const EntityType &', 'entity')
         initEntity = Method('bool', 'init', args=[entity])

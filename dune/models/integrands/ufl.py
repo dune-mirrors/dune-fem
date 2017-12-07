@@ -212,7 +212,9 @@ def compileUFL(form, constants=None, coefficients=None, tempVars=True):
     derivatives_u = derivatives[1]
     derivatives_ubar = map_expr_dags(Replacer({u: ubar}), derivatives_u)
 
-    integrands = Integrands(form.signature(), (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi), constants=(fieldVectorType(c) for c in constants), coefficients=(fieldVectorType(c) for c in coefficients))
+    integrands = Integrands(form.signature(), (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
+                            constants=(fieldVectorType(c) for c in constants), coefficients=(fieldVectorType(c) for c in coefficients),
+                            parameterNames=(getattr(c, 'parameter', None) for c in constants))
     try:
         integrands.field = u.ufl_function_space().field()
     except AttributeError:
