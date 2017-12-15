@@ -65,7 +65,7 @@ def petsc():
 def petscadapt():
     dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space._typeName + " >"
     return lambda space:[\
-        "adpetsc",\
+        "petscadapt",\
         ["dune/fem/function/adaptivefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
               space._includes,\
         dfType(space),\
