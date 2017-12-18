@@ -200,7 +200,7 @@ class Integrands():
         else:
             initIntersection.append(assign(insideEntity, UnformattedExpression('EntityType', 'intersection.inside()')))
             for i, c in enumerate(self._coefficients):
-                initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).init( entity_[ static_cast< std::size_t >( Side::in ) ] )', uses=[coefficients_]))
+                initIntersection.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).init( entity_[ static_cast< std::size_t >( Side::in ) ] )', uses=[coefficients_]))
             initIntersection.append('if( intersection.neighbor() )')
             initIntersection.append('{')
             initIntersection.append('  entity_[ static_cast< std::size_t >( Side::out ) ] = intersection.outside();')
