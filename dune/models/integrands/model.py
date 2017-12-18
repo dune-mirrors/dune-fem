@@ -155,10 +155,11 @@ class Integrands():
         intersection_ = Variable('IntersectionType', 'intersection_')
 
         constants_ = Variable("ConstantTupleType", "constants_")
+        coefficientsTupleType = 'std::tuple< ' + ', '.join('Dune::Fem::ConstLocalFunction< ' + n + ' >' for n in self.coefficientTypes) + ' >'
         if self.skeleton is None:
-            coefficients_ = Variable('std::tuple< ' + ', '.join('Dune::Fem::ConstLocalFunction< ' + n + ' >' for n in self.coefficientTypes) + ' >', 'coefficients_')
+            coefficients_ = Variable(coefficientsTupleType, 'coefficients_')
         else:
-            coefficients_ = Variable('std::array< std::tuple< ' + ', '.join('Dune::Fem::ConstLocalFunction< ' + n + ' >' for n in self.coefficientTypes) + ' >, 2 >', 'coefficients_')
+            coefficients_ = Variable('std::array< ' + coefficientsTupleType + ', 2 >', 'coefficients_')
 
         arg_param = Variable('const Dune::Fem::ParameterReader &', 'parameter')
         args = [Variable('const ' + t + ' &', n) for t, n in zip(self.coefficientTypes, self.coefficientNames)]
@@ -166,7 +167,7 @@ class Integrands():
             if self.skeleton is None:
                 init = ["coefficients_( " + ", ".join(self.coefficientNames) + " )"]
             else:
-                init = ['coefficients_( std::tie( ' + ', '.join(self.coefficientNames) + ' ), std::tie( ' + ', '.join(self.coefficientNames) + ' )']
+                init = ['coefficients_{{ ' + coefficientsTupleType + '( ' + ', '.join(self.coefficientNames) + ' ), ' + coefficientsTupleType + '( ' + ', '.join(self.coefficientNames) + ' ) }}']
         else:
             init = []
         args.append(Declaration(arg_param, initializer=UnformattedExpression('const ParameterReader &', 'Dune::Fem::Parameter::container()')))
