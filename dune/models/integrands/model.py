@@ -187,7 +187,7 @@ class Integrands():
                 initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + ' ).init( entity )', uses=[entity, coefficients_]))
         else:
             for i, c in enumerate(self._coefficients):
-                initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::out ) ] ).init( entity )', uses=[entity, coefficients_]))
+                initEntity.append(UnformattedExpression('void', 'std::get< ' + str(i) + ' >( ' + coefficients_.name + '[ static_cast< std::size_t >( Side::in ) ] ).init( entity )', uses=[entity, coefficients_]))
         initEntity.append(self.init)
         initEntity.append(return_(True))
         code.append(initEntity)
