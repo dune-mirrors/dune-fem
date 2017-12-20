@@ -136,6 +136,7 @@ namespace Dune
     }
     inline static void KSPGetPC ( KSP ksp, PC *pc ) { ErrorCheck( ::KSPGetPC( ksp, pc ) ); }
     inline static void KSPSetFromOptions ( KSP ksp ) { ErrorCheck( ::KSPSetFromOptions( ksp ) ); }
+    inline static void KSPSetUp ( KSP ksp ) { ErrorCheck( ::KSPSetUp( ksp ) ); }
     inline static void KSPSetType ( KSP ksp, const KSPType type ) { ErrorCheck( ::KSPSetType( ksp, type ) ); }
     inline static void KSPGMRESSetRestart ( KSP ksp, PetscInt restart ) { ErrorCheck( ::KSPGMRESSetRestart( ksp, restart ) ); }
     inline static void KSPView ( KSP ksp, PetscViewer viewer = PETSC_VIEWER_STDOUT_(FEM_PETSC_COMM_DEFAULT)  )
@@ -163,6 +164,7 @@ namespace Dune
 #endif
     inline static void KSPSetTolerances ( KSP ksp, PetscReal rtol, PetscReal abstol, PetscReal dtol, PetscInt maxits )
       { ErrorCheck( ::KSPSetTolerances( ksp, rtol, abstol, dtol, maxits ) ); }
+    inline static void KSPSetInitialGuessNonzero( KSP ksp, PetscBool flg ) { ErrorCheck( ::KSPSetInitialGuessNonzero( ksp, flg ) ); };
     inline static void KSPSolve ( KSP ksp, Vec b, Vec x ) { ErrorCheck( ::KSPSolve( ksp, b, x ) ); }
     inline static void KSPSetPC ( KSP ksp, PC pc ) { ErrorCheck( ::KSPSetPC( ksp, pc ) ); }
 
@@ -176,7 +178,10 @@ namespace Dune
 #endif
     }
     inline static void PCSetType ( PC pc, const PCType type ) { ErrorCheck( ::PCSetType(  pc, type ) ); }
+    inline static void PCSetFromOptions ( PC pc ) { ErrorCheck( ::PCSetFromOptions(  pc ) ); }
+    inline static void PCSetUp ( PC pc ) { ErrorCheck( ::PCSetUp(  pc ) ); }
     inline static void PCFactorSetLevels( PC pc, PetscInt level ) { ErrorCheck( ::PCFactorSetLevels(  pc, level ) ); }
+    inline static void PCSORSetOmega( PC pc, PetscReal omega ) { ErrorCheck( ::PCSORSetOmega(  pc, omega ) ); }
     inline static void PCFactorSetMatSolverPackage( PC pc, const MatSolverPackage type )
     {
       ErrorCheck( ::PCFactorSetMatSolverPackage(  pc, type ) );

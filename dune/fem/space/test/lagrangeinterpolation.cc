@@ -20,7 +20,7 @@
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
-#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 
 #include <dune/fem/function/common/gridfunctionadapter.hh>

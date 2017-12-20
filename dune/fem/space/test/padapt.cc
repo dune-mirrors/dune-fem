@@ -21,13 +21,15 @@ const int polOrder = POLORDER;
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
 #include <dune/fem/quadrature/intersectionquadrature.hh>
-#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 #include <dune/fem/space/padaptivespace.hh>
+#include <dune/fem/space/common/dataprojection/tuple.hh>
+#include <dune/fem/space/hpdg/orthogonal.hh>
 
 #if HAVE_GRAPE
   #define USE_GRAPE WANT_GRAPE
@@ -141,9 +143,16 @@ typedef FunctionSpace< double, double, MyGridType::dimensionworld, MyGridType::d
 //! type of the discrete function space our unkown belongs to
 //typedef LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
 typedef Fem :: PAdaptiveLagrangeSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
+//typedef Fem :: PAdaptiveDGSpace< FunctionSpaceType, GridPartType, polOrder > DiscreteFunctionSpaceType;
+
+//typedef hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpaceType,
+//                                    GridPartType, polOrder, true >  DiscreteFunctionSpaceType;
+
+
 
 //! type of the discrete function we are using
 typedef AdaptiveDiscreteFunction< DiscreteFunctionSpaceType > DiscreteFunctionType;
+typedef Dune::Fem::DefaultDataProjectionTuple< DiscreteFunctionType > DataProjectionType;
 
 typedef ExactSolution< FunctionSpaceType > ExactSolutionType;
 
@@ -161,7 +170,7 @@ typedef AdaptationManager< MyGridType, RestrictProlongOperatorType >
   AdaptationManagerType;
 
 
-void setPolOrder( const DiscreteFunctionSpaceType &space, bool increase )
+void setPolOrder( DiscreteFunctionSpaceType &space, DiscreteFunctionType& solution, bool increase )
 {
   const int maxPol = POLORDER;
   const int minPol = 1;
@@ -176,13 +185,24 @@ void setPolOrder( const DiscreteFunctionSpaceType &space, bool increase )
     polOrds[ i ] = p;
   }
 
+  // mark space for all entities
+  const auto end = space.end();
+  for( auto it = space.begin(); it != end ; ++it )
+  {
+    const auto& entity = *it;
+    space.mark( polOrds[ space.indexSet().index( entity )], entity );
+  }
+
+  Dune::Fem::hpDG::AdaptationManager< DiscreteFunctionSpaceType,
+    DataProjectionType > pAdaptManager( const_cast< DiscreteFunctionSpaceType& >(space), DataProjectionType( solution ) );
+
   std::cout << "Set polynomial order to " << p << std::endl;
-  space.adapt( polOrds );
+  pAdaptManager.adapt();
 }
 
-void polOrderAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step)
+void polOrderAdapt( DiscreteFunctionSpaceType& space, DiscreteFunctionType &solution, int step)
 {
-  setPolOrder( solution.space(), step > 0 );
+  setPolOrder( space, solution, step > 0 );
 }
 
 void gridAdapt( MyGridType &grid, DiscreteFunctionType &solution, int step,
@@ -325,6 +345,7 @@ void interpolateSolution( const Function &f, DiscreteFunctionType &solution )
 }
 
 void algorithm ( GridPartType &gridPart,
+                 DiscreteFunctionSpaceType& space,
                  DiscreteFunctionType &solution,
                  int step,
                  int turn )
@@ -339,8 +360,8 @@ void algorithm ( GridPartType &gridPart,
 
   interpolateSolution( f, solution );
 
-  std::cout << "Unknowns before adaptation: " << solution.space().size() << std::endl;
-  polOrderAdapt( gridPart.grid(), solution, step );
+  std::cout << "Unknowns before adaptation: " << space.size() << std::endl;
+  polOrderAdapt( space, solution, step );
 
   L2Norm< GridPartType > l2norm( gridPart );
   H1Norm< GridPartType > h1norm( gridPart );
@@ -350,7 +371,7 @@ void algorithm ( GridPartType &gridPart,
   //solution.print( std::cout );
   std::cout << "Unknowns after "
             << (step < 0 ? "restriction" : "prolongation")
-            << ": " << solution.space().size() << std::endl;
+            << ": " << space.size() << std::endl;
   std::cout << "L2 error after "
               << (step < 0 ? "restriction" : "prolongation")
               << ": " << postL2error << std::endl;
@@ -358,23 +379,7 @@ void algorithm ( GridPartType &gridPart,
               << (step < 0 ? "restriction" : "prolongation")
               << ": " << postH1error << std::endl;
 
-  #if USE_GRAPE && SHOW_RESTRICT_PROLONG
-    //if( turn > 0 )
-    {
-      GrapeDataDisplay< MyGridType > grape( gridPart.grid() );
-      grape.dataDisplay( solution );
-    }
-  #endif
-
   interpolateSolution( f, solution );
-
-  #if USE_GRAPE && SHOW_INTERPOLATION
-    //if( turn > 0 )
-    {
-      GrapeDataDisplay< MyGridType > grape( gridPart.grid() );
-      grape.dataDisplay( solution );
-    }
-  #endif
 
 /*
   double l2eoc = -log( newL2error / preL2error) / M_LN2;
@@ -384,11 +389,14 @@ void algorithm ( GridPartType &gridPart,
   std :: cout << "H1 EOC: " << h1eoc << std :: endl;
 */
 
-  #if WRITE_DATA
-    GrapeDataIO< MyGridType > dataio;
-    dataio.writeGrid( gridPart.grid(), xdr, "gridout", 0, turn );
-    dataio.writeData( solution, xdr, "sol", turn );
-  #endif
+
+#if WRITE_DATA
+  typedef std::tuple< DiscreteFunctionType* > IODataType;
+  IODataType data( &solution );
+  Dune::Fem::DataOutput< GridType, IODataType > output( grid, data );
+
+  output.writeStep( turn );
+#endif
 
   std :: cout << std :: endl;
 }
@@ -440,7 +448,7 @@ try
   DiscreteFunctionType solution( "solution", discreteFunctionSpace );
   solution.clear();
 
-  setPolOrder( discreteFunctionSpace, false );
+  setPolOrder( discreteFunctionSpace, solution, false );
 
   ExactSolutionType fexact;
   GridExactSolutionType f( "exact solution", fexact, gridPart, polOrder );
@@ -452,11 +460,11 @@ try
   {
     std :: cout << std :: endl << "Refining: " << std :: endl;
     for( int i = 0; i < ml; ++i )
-      algorithm( gridPart, solution, step, (i == ml-1) );
+      algorithm( gridPart, discreteFunctionSpace, solution, step, (i == ml-1) );
 
     std :: cout << std :: endl << "Coarsening:" << std::endl;
     for( int i = ml - 1; i >= 0; --i )
-      algorithm( gridPart, solution, -step, 1 );
+      algorithm( gridPart, discreteFunctionSpace, solution, -step, 1 );
 
     if (r==0)
     {
@@ -468,7 +476,7 @@ try
     {
       // Test grid ref. (but with polynomial order set to min)
       std :: cout << std :: endl << "Refine grid" << std::endl;
-      setPolOrder( discreteFunctionSpace, true );
+      setPolOrder( discreteFunctionSpace, solution, true );
       gridAdapt( *gridptr, solution, step, locallyAdaptive ) ;
     }
     else if (r==2)

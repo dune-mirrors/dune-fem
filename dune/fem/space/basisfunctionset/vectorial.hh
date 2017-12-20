@@ -178,6 +178,7 @@ namespace Dune
     template< class DofVector, class DofAlignment >
     class SubDofVector;
 
+    // note: DofVector can be also const DofVector
     template< class DofVector, class ScalarBasisFunctionSet, class Range >
     class SubDofVector< DofVector, HorizontalDofAlignment< ScalarBasisFunctionSet, Range > >
     {
@@ -188,12 +189,23 @@ namespace Dune
       typedef HorizontalDofAlignment< ScalarBasisFunctionSet, Range > DofAlignmentType;
       typedef typename DofAlignmentType::LocalDofType LocalDofType;
 
+      // extract correct RangeFieldType for const or non-const version
+      typedef typename std::conditional<
+         std::is_const< DofVector > :: value,
+         const RangeFieldType,
+         RangeFieldType > :: type DofType;
+
     public:
       typedef RangeFieldType value_type;
 
-      SubDofVector( const DofVector &dofs, int coordinate, const DofAlignmentType &dofAlignment )
+      SubDofVector( DofVector &dofs, int coordinate, const DofAlignmentType &dofAlignment )
       : dofs_( &(dofs[ dofAlignment.globalDof( LocalDofType( coordinate, 0 ) ) ] ) )
       {}
+
+      DofType &operator[] ( std::size_t i )
+      {
+        return dofs_[ i ];
+      }
 
       const RangeFieldType &operator[] ( std::size_t i ) const
       {
@@ -201,9 +213,10 @@ namespace Dune
       }
 
     private:
-      const RangeFieldType *dofs_;
+      DofType *dofs_;
     };
 
+    // note: DofVector can be also const DofVector
     template< class DofVector, class ScalarBasisFunctionSet, class Range >
     class SubDofVector< DofVector, VerticalDofAlignment< ScalarBasisFunctionSet, Range > >
     {
@@ -214,14 +227,25 @@ namespace Dune
       typedef VerticalDofAlignment< ScalarBasisFunctionSet, Range > DofAlignmentType;
       typedef typename DofAlignmentType::LocalDofType LocalDofType;
 
+      // extract correct RangeFieldType for const or non-const version
+      typedef typename std::conditional<
+         std::is_const< DofVector > :: value,
+         const RangeFieldType,
+         RangeFieldType > :: type DofType;
+
     public:
       typedef RangeFieldType value_type;
 
-      SubDofVector( const DofVector &dofs, int coordinate, const DofAlignmentType &dofAlignment )
+      SubDofVector( DofVector &dofs, int coordinate, const DofAlignmentType &dofAlignment )
       : dofs_( dofs ),
         coordinate_( coordinate ),
         dofAlignment_( dofAlignment )
       {}
+
+      DofType &operator[] ( std::size_t i )
+      {
+        return dofs_[ dofAlignment_.globalDof( LocalDofType( coordinate_, i ) ) ];
+      }
 
       const RangeFieldType &operator[] ( std::size_t i ) const
       {
@@ -229,7 +253,7 @@ namespace Dune
       }
 
     private:
-      const DofVector &dofs_;
+      DofVector &dofs_;
       int coordinate_;
       DofAlignmentType dofAlignment_;
     };
@@ -419,7 +443,7 @@ namespace Dune
         typename Evaluate::Scalar scalar;
         for( int r = 0; r < dimRange; ++r )
         {
-          SubDofVector< DofVector, DofAlignmentType > subDofs( dofs, r, dofAlignment_ );
+          SubDofVector< const DofVector, DofAlignmentType > subDofs( dofs, r, dofAlignment_ );
           Evaluate::apply( scalarBasisFunctionSet(), x, subDofs, scalar );
           vector[ r ] = scalar[ 0 ];
         }

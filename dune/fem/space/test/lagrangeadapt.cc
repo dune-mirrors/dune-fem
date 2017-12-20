@@ -21,7 +21,7 @@ const int polOrder = POLORDER;
 #include <dune/fem/gridpart/leafgridpart.hh>
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/space/lagrange.hh>
 // #include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/function/adaptivefunction.hh>

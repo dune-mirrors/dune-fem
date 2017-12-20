@@ -162,6 +162,18 @@ namespace Dune
         static const bool v = true;
       };
 
+      template< class GridPart, int polOrder >
+      struct isAdaptiveDofMapper< PAdaptiveLagrangeMapper< GridPart, polOrder > >
+      {
+        static const bool v = true;
+      };
+
+      template< class GridPart, int polOrder >
+      struct isAdaptiveDofMapper< PAdaptiveDGMapper< GridPart, polOrder > >
+      {
+        static const bool v = true;
+      };
+
     } // namespace Capabilities
 
   } // namespace Fem

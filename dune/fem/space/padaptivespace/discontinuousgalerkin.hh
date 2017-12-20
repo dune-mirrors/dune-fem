@@ -2,7 +2,6 @@
 #define DUNE_FEM_SPACE_PADAPTIVE_DISCONTINUOUSGALERKIN_HH
 
 #include <dune/fem/common/hybrid.hh>
-#include <dune/fem/operator/projection/dgl2projection.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/mapper/nonblockmapper.hh>
 
@@ -13,6 +12,7 @@
 #include "mapper.hh"
 #include "restrictprolong.hh"
 
+#include <dune/fem/space/discontinuousgalerkin/interpolation.hh>
 
 namespace Dune
 {
@@ -82,21 +82,22 @@ namespace Dune
 
       typedef typename BaseType::Traits Traits;
 
-      typedef typename BaseType::GridPartType GridPartType;
-      typedef typename BaseType::IntersectionType IntersectionType;
+      typedef typename BaseType::GridPartType      GridPartType;
+      typedef typename BaseType::IntersectionType  IntersectionType;
+      typedef typename BaseType::EntityType        EntityType;
 
+      typedef typename BaseType::BasisFunctionSetType  BasisFunctionSetType;
       typedef typename BaseType::CompiledLocalKeyType CompiledLocalKeyType;
       typedef CompiledLocalKeyType LagrangePointSetType;
 
-    protected:
-      using BaseType::dfList_;
-      using BaseType::searchFunction;
+      typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
 
     public:
       using BaseType::continuous;
       using BaseType::gridPart;
       using BaseType::blockMapper;
       using BaseType::compiledLocalKey;
+      using BaseType::basisFunctionSet;
 
       // default communication interface
       static const InterfaceType defaultInterface = InteriorBorder_All_Interface;
@@ -132,23 +133,11 @@ namespace Dune
         return compiledLocalKey( type, order );
       }
 
-      /** \brief add function to discrete function space for p-adaptation
-       *         (currently only supported by AdaptiveDiscreteFunction )
-       */
-      template <class DiscreteFunction>
-      void addFunction ( DiscreteFunction &df ) const
+      InterpolationType interpolation ( const EntityType &entity ) const
       {
-        assert( searchFunction( df ) == dfList_.end() );
-        // select L2Porjection to be the LocalInterpolation
-        typedef typename BaseType :: template PAdaptiveDiscreteFunctionEntry<
-            DiscreteFunction, DGL2ProjectionImpl > RealEntryType ;
-        typedef typename BaseType :: PAdaptiveDiscreteFunctionEntryInterface
-          EntryInterface;
-
-        EntryInterface *entry = new RealEntryType( df );
-        assert( entry );
-        dfList_.push_front( entry );
+        return InterpolationType( basisFunctionSet( entity ) );
       }
+
     };
 
   } // namespace Fem

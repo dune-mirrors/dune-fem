@@ -10,7 +10,6 @@ using namespace Dune;
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 
-#include <dune/fem/operator/projection/dgl2projection.hh>
 #include <dune/fem/misc/l2norm.hh>
 
 #include <dune/fem/io/parameter.hh>

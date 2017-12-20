@@ -52,8 +52,7 @@ namespace Dune
         const Entity &father = lfFather.entity();
         const Entity &son = lfSon.entity();
 
-        const Dune::ReferenceElement< ctype, dimension > &refSon
-          = Dune::ReferenceElements< ctype, dimension >::general( son.type() );
+        auto refSon = referenceElement< ctype, dimension >( son.type() );
 
         const LagrangePointSet &pointSet = lagrangePointSet( father );
 

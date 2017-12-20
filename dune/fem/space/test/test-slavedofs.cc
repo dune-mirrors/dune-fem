@@ -8,7 +8,7 @@ const int polOrder = POLORDER;
 
 #include <dune/fem/gridpart/levelgridpart.hh>
 
-#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/function/common/scalarproducts.hh>
@@ -68,7 +68,10 @@ try
 
   const int ml = Dune::Fem::Parameter::getValue< int >( "lagrangeglobalrefine.maxlevel", 2 );
 
-  MyGridType &grid = Dune::Fem::TestGrid::grid();
+  std::ostringstream s;
+  s << MyGridType::dimension << "dgrid_8.dgf";
+
+  MyGridType &grid = Dune::Fem::TestGrid::grid( s.str() );
 
   for( int level = 0; level < ml; ++level )
   {

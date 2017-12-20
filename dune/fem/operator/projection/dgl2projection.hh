@@ -1,5 +1,6 @@
 #ifndef DUNE_FEM_DGL2PROJECTION_HH
 #define DUNE_FEM_DGL2PROJECTION_HH
+#warning "Deprecated header, use #include <dune/fem/space/common/interpolate.hh> instead!"
 
 #include <type_traits>
 
@@ -10,6 +11,8 @@
 #include <dune/fem/function/common/localcontribution.hh>
 #include <dune/fem/function/localfunction/const.hh>
 #include <dune/fem/operator/1order/localmassmatrix.hh>
+
+#include <dune/fem/space/common/interpolate.hh>
 
 namespace Dune
 {
@@ -56,7 +59,7 @@ namespace Dune
           FunctionAdapterType af( f );
           // create discrete function adapter
           GridFunctionAdapter< FunctionAdapterType, GridPartType> adapter(
-              "DGL2projection::adapter" , f , discFunc.space().gridPart());
+              "DGL2projection::adapter" , f , discFunc.space().gridPart(), discFunc.space().order() );
           DGL2ProjectionImpl::projectFunction(adapter, discFunc, polOrd);
         }
       };
@@ -82,6 +85,7 @@ namespace Dune
        * \param communicate  restore integrity of data (defaults to true)
        */
       template <class FunctionImp, class DiscreteFunctionImp>
+      DUNE_VERSION_DEPRECATED_3_0( "interpolate" )
       static void project(const FunctionImp& f, DiscreteFunctionImp& discFunc,
                           const int quadOrd = -1, const bool communicate = true )
       {
@@ -105,60 +109,7 @@ namespace Dune
                                   DiscreteFunctionImp& discFunc,
                                   int polOrd = -1)
       {
-        typedef typename DiscreteFunctionImp::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-        typedef typename DiscreteFunctionSpaceType::GridPartType  GridPartType;
-        typedef typename DiscreteFunctionSpaceType::RangeType     RangeType;
-
-        const DiscreteFunctionSpaceType& space =  discFunc.space();
-
-        // type of quadrature
-        typedef CachingQuadrature<GridPartType,0> QuadratureType;
-        // type of local mass matrix
-        typedef LocalMassMatrix< DiscreteFunctionSpaceType, QuadratureType > LocalMassMatrixType;
-
-        const int quadOrd = (polOrd == -1) ? (2 * space.order()) : polOrd;
-
-        // create local mass matrix object
-        LocalMassMatrixType massMatrix( space, quadOrd );
-
-        // clear destination
-        discFunc.clear();
-
-        // extract type from grid part
-        typedef typename GridPartType::template Codim<0>::GeometryType Geometry;
-
-        // create storage for values
-        std::vector< RangeType > values;
-
-        ConstLocalFunction< FunctionImp > uLocal( func );
-        LocalContribution< DiscreteFunctionImp, Assembly::Add > wLocal( discFunc );
-
-        for(const auto & en : space)
-        {
-          // get geometry
-          const Geometry& geo = en.geometry();
-          uLocal.init( en );
-          wLocal.bind( en );
-
-          // get quadrature
-          QuadratureType quad(en, quadOrd);
-
-          // adjust size of values
-          values.resize( quad.nop() );
-          uLocal.evaluateQuadrature( quad, values );
-
-          // apply weight
-          for(auto qp : quad )
-            values[ qp.index() ] *= qp.weight() * geo.integrationElement( qp.position() );
-
-          // add values to local function
-          wLocal.axpyQuadrature( quad, values );
-
-          // apply inverse of mass matrix to local function
-          massMatrix.applyInverse( en, wLocal );
-
-          wLocal.unbind();
-        }
+        interpolate( func, discFunc );
       }
     };
 

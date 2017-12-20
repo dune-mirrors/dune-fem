@@ -14,7 +14,7 @@
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/basisfunctionset/vectorial.hh>
-#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/test/testgrid.hh>

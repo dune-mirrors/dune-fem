@@ -21,26 +21,6 @@ namespace Dune
   namespace Fem
   {
 
-    // IsAssembledOperator
-    // -------------------
-
-    namespace Impl
-    {
-
-      template< class DomainFunction, class RangeFunction >
-      std::true_type isAssembledOperator ( const AssembledOperator< DomainFunction, RangeFunction > & );
-
-      std::false_type isAssembledOperator ( ... );
-
-    } // namespace Impl
-
-    template< class Operator >
-    struct IsAssembledOperator
-      : decltype( Impl::isAssembledOperator( std::declval< const Operator & >() ) )
-    {};
-
-
-
     namespace Assembly
     {
 
@@ -279,14 +259,24 @@ namespace Dune
       /** \brief set all DoFs to zero **/
       void clear () { std::fill( localMatrixEntries().begin(), localMatrixEntries().end(), value_type( 0 ) ); }
 
+      SubVector< LocalMatrixEntriesType, ColIndexMapper > column ( SizeType j )
+      {
+        return SubVector< LocalMatrixEntriesType, ColIndexMapper >( localMatrixEntries(), ColIndexMapper( j, mat_cols() ) );
+      }
+
+      SubVector< const LocalMatrixEntriesType, ColIndexMapper > column ( SizeType j ) const
+      {
+        return SubVector< const LocalMatrixEntriesType, ColIndexMapper >( localMatrixEntries(), ColIndexMapper( j, mat_cols() ) );
+      }
+
       template< class Point, class... Factors >
       auto axpy ( const Point &x, const Factors &... factors )
         -> std::enable_if_t< Std::And( (IsRangeValue< std::decay_t< decltype( std::declval< Factors & >()[ 0 ] ) > >::value)... ) >
       {
         for( SizeType j = 0; j < mat_cols(); ++j )
         {
-          SubVector< LocalMatrixEntriesType, ColIndexMapper > column( localMatrixEntries(), ColIndexMapper( j, mat_cols() ) );
-          rangeBasisFunctionSet().axpy( x, factors[ j ]..., column );
+          auto col = column( j );
+          rangeBasisFunctionSet().axpy( x, factors[ j ]..., col );
         }
       }
 

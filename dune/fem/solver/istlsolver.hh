@@ -6,6 +6,7 @@
 #include <dune/fem/function/common/scalarproducts.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/solver/parameter.hh>
 
 
 #if HAVE_DUNE_ISTL
@@ -42,14 +43,17 @@ namespace Dune
              MatrixAdapter& matrix,
              const DiscreteFunction &arg, DiscreteFunction &dest,
              double reduction, double absLimit, int maxIter, bool verbose,
-             const ParameterReader &parameter )
+             const SolverParameter &parameter )
       {
         typedef typename DiscreteFunction :: DofStorageType BlockVectorType;
 
         // verbose only in verbose mode and for rank 0
         int verb = (verbose && (dest.space().gridPart().comm().rank() == 0)) ? 2 : 0;
 
-        if( absLimit < std::numeric_limits< double >::max() )
+        int errorMeasure = parameter.errorMeasure() ;
+
+        // for absolute error measure we need to adjust the reduction accordingly
+        if( errorMeasure == 0 && (absLimit < std::numeric_limits< double >::max()) )
         {
           const double residuum = matrix.residuum( arg.blockVector(), dest.blockVector() );
           reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
@@ -110,7 +114,7 @@ namespace Dune
        *  \note ISTL BiCG-stab only uses the relative reduction.
        */
       ISTLInverseOp ( double reduction, double absLimit, int maxIter, bool verbose,
-                      const ParameterReader &parameter = Parameter::container() )
+                      const SolverParameter& parameter = SolverParameter(Parameter::container()) )
       : reduction_( reduction ),
         absLimit_( absLimit ),
         maxIter_( maxIter ),
@@ -129,10 +133,23 @@ namespace Dune
        *
        *  \note ISTL BiCG-stab only uses the relative reduction.
        */
+      ISTLInverseOp ( double reduction, double absLimit, int maxIter, bool verbose,
+                      const ParameterReader& parameter )
+        : ISTLInverseOp( reduction, absLimit, maxIter, verbose, SolverParameter(parameter) ) {}
+
+      /** \brief constructor
+       *
+       *  \param[in] reduction reduction epsilon
+       *  \param[in] absLimit absolute limit of residual (not used here)
+       *  \param[in] maxIter maximal iteration steps
+       *  \param[in] verbose verbosity
+       *
+       *  \note ISTL BiCG-stab only uses the relative reduction.
+       */
       ISTLInverseOp ( double reduction, double absLimit, int maxIter,
-                      const ParameterReader &parameter = Parameter::container() )
+                      const SolverParameter& parameter = SolverParameter(Parameter::container()) )
       : ISTLInverseOp( reduction, absLimit, maxIter,
-                       parameter.getValue< bool >( "fem.solver.verbose", false ),
+                       parameter.verbose(),
                        parameter )
       {}
 
@@ -144,10 +161,10 @@ namespace Dune
        *  \note ISTL BiCG-stab only uses the relative reduction.
        */
       ISTLInverseOp ( double reduction, double absLimit,
-                      const ParameterReader &parameter = Parameter::container() )
+                      const SolverParameter& parameter = SolverParameter(Parameter::container()) )
       : ISTLInverseOp( reduction, absLimit,
                        std::numeric_limits< int >::max(),
-                       parameter.getValue< bool >( "fem.solver.verbose", false ),
+                       parameter.verbose(),
                        parameter )
       {}
 
@@ -163,7 +180,7 @@ namespace Dune
        */
       ISTLInverseOp ( const OperatorType &op,
                       double reduction, double absLimit, int maxIter, bool verbose,
-                      const ParameterReader &parameter = Parameter::container() )
+                      const SolverParameter& parameter = SolverParameter(Parameter::container()) )
       : ISTLInverseOp( reduction, absLimit, maxIter, verbose, parameter )
       {
         bind( op );
@@ -178,7 +195,7 @@ namespace Dune
        */
       ISTLInverseOp ( const OperatorType &op,
                       double reduction, double absLimit, int maxIter,
-                      const ParameterReader &parameter = Parameter::container() )
+                      const SolverParameter& parameter = SolverParameter(Parameter::container()) )
       : ISTLInverseOp( reduction, absLimit, maxIter, parameter )
       {
         bind( op );
@@ -186,7 +203,7 @@ namespace Dune
 
       ISTLInverseOp ( const OperatorType &op,
                       double reduction, double absLimit,
-                      const ParameterReader &parameter = Parameter::container() )
+                      const SolverParameter& parameter = SolverParameter(Parameter::container()) )
       : ISTLInverseOp( reduction, absLimit, parameter )
       {
         bind( op );
@@ -274,7 +291,7 @@ namespace Dune
       bool verbose_ ;
       mutable int iterations_;
       mutable double averageCommTime_;
-      ParameterReader parameter_;
+      SolverParameter parameter_;
     };
 
 
@@ -374,16 +391,23 @@ namespace Dune
              MatrixAdapter& matrix,
              const DiscreteFunction &arg, DiscreteFunction &dest,
              double reduction, double absLimit, int maxIter, bool verbose,
-             const ParameterReader &parameter )
+             const SolverParameter& parameter )
       {
-        int restart = parameter.getValue< int >( "istl.gmres.restart", 5 );
+        int restart = parameter.gmresRestart();
+        std::string gmresrestart("istl.gmres.restart");
+        // overwrite gmres restart if istl version exists
+        if( parameter.parameter().exists( gmresrestart ) )
+          restart = parameter.parameter().getValue< int >( gmresrestart );
 
         typedef typename DiscreteFunction :: DofStorageType BlockVectorType;
 
         // verbose only in verbose mode and for rank 0
         int verb = (verbose && (dest.space().gridPart().comm().rank() == 0)) ? 2 : 0;
 
-        if( absLimit < std::numeric_limits< double >::max() )
+        int errorMeasure = parameter.errorMeasure();
+
+        // for absolute error measure we need to adjust the reduction
+        if( errorMeasure == 0 && (absLimit < std::numeric_limits< double >::max()) )
         {
           const double residuum = matrix.residuum( arg.blockVector(), dest.blockVector() );
           reduction = (residuum > 0) ? absLimit/ residuum : 1e-3;
@@ -391,6 +415,7 @@ namespace Dune
           if( verbose && (dest.space().gridPart().comm().rank() == 0) )
             std::cout << "ISTL GMRes-Solver: reduction: " << reduction << ", residuum: " << residuum << ", absolut limit: " << absLimit << std::endl;
         }
+
 
         RestartedGMResSolver< BlockVectorType >
           solver( matrix, dest.scalarProduct(), matrix.preconditionAdapter(), reduction, restart, maxIter, verb );

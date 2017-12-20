@@ -3,8 +3,17 @@
 
 #include <iostream>
 
+//- dune-common includes
+#include <dune/common/exceptions.hh>
+
+#include <dune/fem/io/parameter.hh>
+#include <dune/fem/misc/mpimanager.hh>
+#include <dune/fem/operator/common/spaceoperatorif.hh>
+
 namespace DuneODE
 {
+  using namespace Dune;
+  using namespace Fem;
 
   /** \brief Interface class for ODE Solver. */
   template <class DestinationImp>

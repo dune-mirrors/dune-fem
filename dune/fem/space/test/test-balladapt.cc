@@ -19,7 +19,7 @@
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
 #include <dune/fem/io/file/vtkio.hh>
 #include <dune/fem/misc/l2norm.hh>
-#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/space/common/restrictprolongtuple.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>

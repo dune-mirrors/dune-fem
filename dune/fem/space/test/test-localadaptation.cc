@@ -17,7 +17,7 @@
 #include <dune/fem/io/file/dataoutput.hh>
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/misc/mpimanager.hh>
-#include <dune/fem/space/common/adaptmanager.hh>
+#include <dune/fem/space/common/adaptationmanager.hh>
 #include <dune/fem/space/common/functionspace.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/space/common/restrictprolongtuple.hh>
@@ -38,8 +38,11 @@ try
   // read parameters
   Dune::Fem::Parameter::append( argc, argv );
 
+  std::ostringstream s;
+  s << GridType::dimension << "dgrid_8.dgf";
+
   // create grid
-  GridType &grid = Dune::Fem::TestGrid::grid();
+  GridType &grid = Dune::Fem::TestGrid::grid( s.str() );
 
   // initial refinement
   const int refineStepsForHalf = Dune::Fem::TestGrid::refineStepsForHalf();

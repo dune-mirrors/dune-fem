@@ -29,14 +29,23 @@ namespace Dune
 
   namespace Fem
   {
+    // Forward declaration
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
+    class LegendreDiscontinuousGalerkinSpace;
+
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
+    class HierarchicLegendreDiscontinuousGalerkinSpace;
 
     // LegendreDiscontinuousGalerkinSpaceTraits
     // ----------------------------------------
 
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage, bool hierarchicalOrdering  >
     struct LegendreDiscontinuousGalerkinSpaceTraits
     {
-      typedef LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > DiscreteFunctionSpaceType;
+      // select space implementation depending on basis function ordering
+      typedef typename std::conditional< hierarchicalOrdering,
+          HierarchicLegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage >,
+          LegendreDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, Storage > >::type  DiscreteFunctionSpaceType;
 
       typedef GridPart GridPartType;
       typedef GridFunctionSpace< GridPartType, FunctionSpace > FunctionSpaceType;
@@ -49,9 +58,9 @@ namespace Dune
         > ScalarShapeFunctionSpaceType;
 
       struct ScalarShapeFunctionSet
-        : public Dune::Fem::LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType >
+        : public Dune::Fem::LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType, hierarchicalOrdering >
       {
-        typedef Dune::Fem::LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType > BaseType;
+        typedef Dune::Fem::LegendreShapeFunctionSet< ScalarShapeFunctionSpaceType, hierarchicalOrdering > BaseType;
         static const int numberShapeFunctions =
             StaticPower<polOrder+1,ScalarShapeFunctionSpaceType::dimDomain>::power;
 
@@ -64,7 +73,7 @@ namespace Dune
         }
 
         // overload size method because it's a static value
-        unsigned int size() const { return numberShapeFunctions; }
+        static constexpr unsigned int size() { return numberShapeFunctions; }
       };
 
       typedef SelectCachingShapeFunctionSets< GridPartType, ScalarShapeFunctionSet, Storage > ScalarShapeFunctionSetsType;
@@ -86,15 +95,15 @@ namespace Dune
     };
 
 
+    // LegendreDiscontinuousGalerkinSpaceBase
+    // --------------------------------------
 
-    // LegendreDiscontinuousGalerkinSpace
-    // ----------------------------------
-
-    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage = CachingStorage >
-    class LegendreDiscontinuousGalerkinSpace
-    : public GenericDiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > >
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage, bool hierarchicalOrdering >
+    class LegendreDiscontinuousGalerkinSpaceBase
+    : public GenericDiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage, hierarchicalOrdering > >
     {
-      typedef GenericDiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage > > BaseType;
+      typedef GenericDiscontinuousGalerkinSpace< LegendreDiscontinuousGalerkinSpaceTraits< FunctionSpace, GridPart, polOrder, Storage, hierarchicalOrdering > > BaseType;
+      typedef LegendreDiscontinuousGalerkinSpaceBase< FunctionSpace, GridPart, polOrder, Storage, hierarchicalOrdering > ThisType;
 
     public:
       using BaseType::basisFunctionSet;
@@ -107,11 +116,12 @@ namespace Dune
       typedef typename BaseType::BasisFunctionSetsType BasisFunctionSetsType;
       typedef typename BaseType::BasisFunctionSetType BasisFunctionSetType;
 
-      typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
+      //typedef DiscontinuousGalerkinLocalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
+      typedef LocalOrthonormalL2Projection< GridPartType, BasisFunctionSetType > InterpolationType;
 
-      explicit LegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
-                                                    const InterfaceType commInterface = InteriorBorder_All_Interface,
-                                                    const CommunicationDirection commDirection = ForwardCommunication )
+      explicit LegendreDiscontinuousGalerkinSpaceBase ( GridPartType &gridPart,
+                                                        const InterfaceType commInterface = InteriorBorder_All_Interface,
+                                                        const CommunicationDirection commDirection = ForwardCommunication )
         : BaseType( gridPart, makeBasisFunctionSets( gridPart ), commInterface, commDirection )
       {}
 
@@ -131,6 +141,25 @@ namespace Dune
       }
     };
 
+    // LegendreDiscontinuousGalerkinSpace
+    // ----------------------------------
+
+    template< class FunctionSpace, class GridPart, int polOrder, template< class > class Storage >
+    class LegendreDiscontinuousGalerkinSpace
+    : public LegendreDiscontinuousGalerkinSpaceBase< FunctionSpace, GridPart, polOrder, Storage, false >
+    {
+      // hierarchicalOrdering = false
+      typedef LegendreDiscontinuousGalerkinSpaceBase< FunctionSpace, GridPart, polOrder, Storage, false > BaseType;
+
+    public:
+      typedef typename BaseType::GridPartType GridPartType;
+
+      explicit LegendreDiscontinuousGalerkinSpace ( GridPartType &gridPart,
+                                                    const InterfaceType commInterface = InteriorBorder_All_Interface,
+                                                    const CommunicationDirection commDirection = ForwardCommunication )
+        : BaseType( gridPart, commInterface, commDirection )
+      {}
+    };
 
 
     namespace Capabilities

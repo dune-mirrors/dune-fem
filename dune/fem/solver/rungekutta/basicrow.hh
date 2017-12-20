@@ -302,18 +302,22 @@ namespace DuneODE
           helmholtzOp_.jacobian( U, jOp );
         }
         const int remLinearIts = maxLinearIterations_;
+        typename NonlinearSolverType::LinearInverseOperatorType jInv( linReduction_, linAbsTol_, remLinearIts, linVerbose_ );
         if (preconditioner_)
         {
-          typename NonlinearSolverType::LinearInverseOperatorType jInv( jOp, *preconditioner_, linReduction_, linAbsTol_, remLinearIts, linVerbose_ );
+          jInv.bind( jOp, *preconditioner_ );
+          //typename NonlinearSolverType::LinearInverseOperatorType jInv( jOp, *preconditioner_, linReduction_, linAbsTol_, remLinearIts, linVerbose_ );
           jInv( rhs_, updateStage );
           monitor.linearSolverIterations_ += jInv.iterations();
         }
         else
         {
-          typename NonlinearSolverType::LinearInverseOperatorType jInv( jOp, linReduction_, linAbsTol_, remLinearIts, linVerbose_ );
+          jInv.bind( jOp );
           jInv( rhs_, updateStage );
           monitor.linearSolverIterations_ += jInv.iterations();
         }
+
+        jInv.unbind();
       }
 
       double error = 0.0;

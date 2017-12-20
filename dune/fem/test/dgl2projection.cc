@@ -9,7 +9,7 @@ int main () { return 0;}
 #else
 
 #include <dune/fem/gridpart/adaptiveleafgridpart.hh>
-#include <dune/fem/operator/projection/l2projection.hh>
+#include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/misc/gridwidth.hh>
 
 #include <dune/fem/misc/l1norm.hh>
@@ -138,8 +138,7 @@ int main(int argc, char ** argv)
     solution.clear();
 
     // perform the L2Projection
-    Fem :: L2Projection< ExactSolutionType, DiscreteFunctionType > dgl2;
-    dgl2( exactSolution, solution );
+    interpolate( exactSolution, solution );
 
     LPNorm< GridPartType > lpnorm( gridPart, 2.0 );
     L2Norm< GridPartType > l2norm( gridPart );

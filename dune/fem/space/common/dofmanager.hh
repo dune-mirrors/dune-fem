@@ -15,7 +15,6 @@
 
 #include <dune/fem/gridpart/common/indexset.hh>
 #include <dune/fem/io/parameter.hh>
-#include <dune/fem/io/streams/xdrstreams.hh>
 #include <dune/fem/io/streams/standardstreams.hh>
 #include <dune/fem/misc/gridobjectstreams.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
@@ -145,10 +144,6 @@ namespace Dune
       /** \copydoc Dune::PersistentObject :: restore */
       virtual void restore() = 0;
 
-      //! new read/write methods using xdr streams
-      virtual void write( XDRFileOutStream& out ) const = 0;
-      virtual void read( XDRFileInStream& out ) = 0;
-
       //! new read/write methods using binary streams
       virtual void write( StandardOutStream& out ) const = 0;
       virtual void read( StandardInStream& out ) = 0;
@@ -259,12 +254,6 @@ namespace Dune
       }
 
       //! new write method
-      virtual void read( XDRFileInStream& in ) { indexSet_.read( in ); }
-
-      //! new write method
-      virtual void write( XDRFileOutStream& out ) const { indexSet_.write( out ); }
-
-      //! new write method
       virtual void read( StandardInStream& in ) { indexSet_.read( in ); }
 
       //! new write method
@@ -313,7 +302,7 @@ namespace Dune
       virtual ~ManagedDofStorageInterface() = default;
 
       //! resize memory
-      virtual void resize () = 0;
+      virtual void resize ( const bool enlargeOnly ) = 0;
       //! resize memory
       virtual void reserve (int newSize) = 0;
       //! compressed the underlying dof vector
@@ -413,9 +402,9 @@ namespace Dune
       int size () const { return array_.size(); }
 
       //! resize the memory with the new size
-      void resize ()
+      void resize ( const bool enlargeOnly )
       {
-        resize( std::integral_constant< bool, Capabilities::isAdaptiveDofMapper< MapperType >::v >() );
+        resize( std::integral_constant< bool, Capabilities::isAdaptiveDofMapper< MapperType >::v >(), enlargeOnly );
       }
 
       //! reserve memory for what is comming
@@ -433,7 +422,7 @@ namespace Dune
           // therefore use newSize to enleage array
           assert( ! mapper().consecutive() );
           // resize array
-          resize ();
+          resize ( false );
         }
       }
 
@@ -505,18 +494,23 @@ namespace Dune
       }
 
       // resize for non-adaptive mappers
-      void resize ( std::false_type )
+      void resize ( std::false_type, const bool enlargeOnly )
       {
         // note: The mapper might already have been updated, so do not use
         //       it to obtain old array size.
-        mapper().update();
-        const int size = mapper().size();
-        if( size != static_cast< int >( array_.size() ) )
-          array_.resize( size );
+        mapper().update(); // ???
+
+        const int newSize = mapper().size();
+        const int oldSize = array_.size();
+
+        if( enlargeOnly && newSize < oldSize ) return ;
+
+        if( newSize != oldSize )
+          array_.resize( newSize );
       }
 
       // resize for adaptive mappers
-      void resize ( std::true_type )
+      void resize ( std::true_type, const bool enlargeOnly )
       {
         // note: The mapper is adaptive and has been updated automatically, so
         //       do not use it to obtain old array size.
@@ -525,6 +519,10 @@ namespace Dune
         // get current size
         const int nSize = mapper().size();
 
+        // if enlarge only option is given only resize
+        // if new size if larger than old size
+        if( enlargeOnly && nSize <= oldSize ) return ;
+
         // if nothing changed do nothing
         if( nSize == oldSize ) return ;
 
@@ -532,7 +530,7 @@ namespace Dune
         array_.resize( nSize );
 
         // if data is only temporary data, don't adjust memory
-        if( ! dataCompressionEnabled_ ) return ;
+        if( ! dataCompressionEnabled_ || enlargeOnly ) return ;
 
         // now check all blocks beginning with the largest
         const int numBlocks = mapper().numBlocks();
@@ -705,9 +703,9 @@ namespace Dune
       {}
 
       // resize mem object, parameter not needed
-      inline void apply ( int & )
+      inline void apply ( int& enlargeOnly )
       {
-        memobj_.resize();
+        memobj_.resize( bool(enlargeOnly) );
       }
     };
 
@@ -1069,9 +1067,17 @@ namespace Dune
       //! resize the MemObject if necessary
       void resizeMemory()
       {
-        int dummy = -1;
+        int enlargeOnly = 0;
         // pass dummy parameter
-        resizeMemObjs_.apply ( dummy );
+        resizeMemObjs_.apply ( enlargeOnly );
+      }
+
+      //! resize the MemObject if necessary
+      void enlargeMemory()
+      {
+        int enlargeOnly = 1;
+        // pass dummy parameter
+        resizeMemObjs_.apply ( enlargeOnly );
       }
 
       /** \brief increase the DofManagers internal sequence number
