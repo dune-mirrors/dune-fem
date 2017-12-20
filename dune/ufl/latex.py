@@ -38,7 +38,7 @@ class Expr2Latex(Transformer):
     def dot(self, expr, left, right):
         return left + "\\cdot" + right
 
-    def cos(self, expr, arg):
+    def exp(self, expr, arg):
         return "\\exp\\left(" + arg + "\\right)"
 
     def float_value(self, expr):
