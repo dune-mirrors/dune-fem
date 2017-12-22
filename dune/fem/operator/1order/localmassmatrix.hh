@@ -262,7 +262,7 @@ namespace Dune
       template< class LocalMatrix >
       void rightMultiplyInverse ( LocalMatrix &localMatrix ) const
       {
-        const EntityType &entity = localMatrix.domainEntity();
+        const EntityType &entity = localMatrix.rangeEntity();
         Geometry geo = entity.geometry();
         if( affine() || geo.affine() )
           rightMultiplyInverseLocally( entity, geo, localMatrix );
@@ -327,7 +327,7 @@ namespace Dune
       template< class LocalMatrix >
       void rightMultiplyInverseDgOrthoNormalBasis ( LocalMatrix &localMatrix ) const
       {
-        const EntityType &entity = localMatrix.domainEntity();
+        const EntityType &entity = localMatrix.rangeEntity();
         Geometry geo = entity.geometry();
         assert( dgNumDofs == localMatrix.columns() );
 
@@ -337,7 +337,7 @@ namespace Dune
         else
         {
           NoMassDummyCaller caller;
-          buildMatrix( caller, entity, geo, localMatrix.domainBasisFunctionSet(), dgNumDofs, dgMatrix_ );
+          buildMatrix( caller, entity, geo, localMatrix.rangeBasisFunctionSet(), dgNumDofs, dgMatrix_ );
           dgMatrix_.invert();
 
           const int rows = localMatrix.rows();
@@ -425,7 +425,7 @@ namespace Dune
       {
         NoMassDummyCaller caller;
         MatrixType &invMassMatrix
-          = getLocalInverseMassMatrixDefault ( caller, entity, geo, localMatrix.domainBasisFunctionSet() );
+          = getLocalInverseMassMatrixDefault ( caller, entity, geo, localMatrix.rangeBasisFunctionSet() );
 
         const int cols = localMatrix.columns();
         rhs_.resize( cols );
@@ -495,9 +495,9 @@ namespace Dune
       template< class LocalMatrix >
       void rightMultiplyInverseLocally ( const EntityType &entity, const Geometry &geo, LocalMatrix &localMatrix ) const
       {
-        const int cols = localMatrix.colums();
+        const int cols = localMatrix.columns();
         MatrixType &invMassMatrix =
-          getLocalInverseMassMatrix( entity, geo, localMatrix.domainBasisFunctionSet(), cols );
+          getLocalInverseMassMatrix( entity, geo, localMatrix.rangeBasisFunctionSet(), cols );
 
         const double massVolInv = getAffineMassFactor( geo );
 
