@@ -88,13 +88,13 @@ namespace Dune
           auto pos = result.first;
           if( result.second )
           {
-            GridView view = gridView.template cast< GridView >();
+            GridView* view = gridView.template cast< GridView* >();
 
             // add grid modification listener (if not registered)
-            addGridModificationListener( view.grid() );
+            addGridModificationListener( view->grid() );
 
             // create new gridpart object
-            pos->second = new GridPart( view );
+            pos->second = new GridPart( *view );
 
             // create Python guard object, removing the grid part once the grid view dies
             pybind11::cpp_function remove_gridpart( [ this, pos ] ( pybind11::handle weakref ) {
@@ -122,7 +122,7 @@ namespace Dune
 
         GridPart &operator() ( pybind11::handle gridView )
         {
-          return const_cast< GridPart & >( gridView.template cast< GridView >().impl().gridPart() );
+          return const_cast< GridPart & >( gridView.template cast< GridView* >()->impl().gridPart() );
         }
       };
 
@@ -135,7 +135,7 @@ namespace Dune
 
         GridPart &operator() ( pybind11::handle gridView )
         {
-          return const_cast< GridPart & >( gridView.template cast< GridView >().gridPart() );
+          return const_cast< GridPart & >( gridView.template cast< GridView* >()->gridPart() );
         }
       };
 

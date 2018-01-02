@@ -1,24 +1,31 @@
 #ifndef DUNE_FEMPY_PY_DISCRETEFUNCTION_HH
 #define DUNE_FEMPY_PY_DISCRETEFUNCTION_HH
 
+
+#include <dune/fempy/pybind11/pybind11.hh>
+
+#include <dune/common/typeutilities.hh>
+
+
+#if HAVE_DUNE_ISTL
+#include <dune/istl/bvector.hh>
+#include <dune/python/istl/bvector.hh>
+#endif // #if HAVE_DUNE_ISTL
+
 #include <cstddef>
 
 #include <string>
 #include <type_traits>
 #include <utility>
-
-#include <dune/common/typeutilities.hh>
-
 #include <dune/fem/function/vectorfunction/vectorfunction.hh>
 #include <dune/fem/space/common/interpolate.hh>
 #include <dune/fem/common/localcontribution.hh>
-
 #include <dune/fempy/py/common/numpyvector.hh>
 #include <dune/fempy/py/function/grid.hh>
 #include <dune/fempy/py/grid/function.hh>
 #include <dune/fempy/py/grid/restrictprolong.hh>
 #include <dune/fempy/py/space.hh>
-#include <dune/fempy/pybind11/pybind11.hh>
+
 
 namespace Dune
 {
@@ -28,6 +35,61 @@ namespace Dune
 
     namespace detail
     {
+
+#if HAVE_DUNE_ISTL
+      template< class A , class B>
+      inline static const BlockVector<A , B> &getBlockVector (const  BlockVector< A,B > &vector ) noexcept
+      {
+        return vector;
+      }
+
+      template< class A, class B>
+      inline static BlockVector<A , B> &setBlockVector (  BlockVector< A,B > &vector ) noexcept
+      {
+        return vector;
+      }
+
+#endif //#if HAVE_DUNE_ISTL
+
+
+      //create a SFINAE so that if the type is a ISTL blockvector we instead return the self.dofVector.array() instead of just the dofVector in the other cases
+
+      //SFINAE checks whether getBlockVector is a valid function call for ISTL block matrix and also gives
+      //priority
+      // not sure whatthe class... options
+
+
+
+      //if it's of istl blockvector type return the array otherwise do the other stuff
+      template< class DF , class ... options>
+      inline auto addDofVector(pybind11::class_<DF,options...> cls, PriorityTag<2> )
+      -> void_t< decltype(getBlockVector(std::declval<DF&>().dofVector().array())) >
+      {
+        cls.def_property_readonly( "dofVector", [] ( DF &self )
+        -> decltype( getBlockVector(std::declval<DF&>().dofVector().array()) )
+        {
+          return self.dofVector().array();
+        });
+      }
+      template< class DF , class ... options>
+      inline void addDofVector(pybind11::class_<DF,options...> cls, PriorityTag<1> )
+      {
+        cls.def_property_readonly( "dofVector", [] ( DF &self )
+        -> decltype( std::declval<DF&>().dofVector() )
+        {
+          return self.dofVector();
+        });
+      }
+
+      // I'd like to enable this second one as well
+      template< class DF,class ... options >
+      inline static auto returnDofVector (DF &self, PriorityTag<1> )
+      -> decltype(  std::declval< DF&>().dofVector()   )
+      {
+           return self.dofVector();
+      }
+
+
 
       // registerRestrictProlong
       // -----------------------
@@ -95,14 +157,31 @@ namespace Dune
         registerDiscreteFunctionConstructor( cls, PriorityTag< 42 >() );
       }
 
+      //register method if data method already available
 
+
+
+#if HAVE_DUNE_ISTL
+      template < class DofVector, class... options >
+      inline static auto registerDofVectorBuffer ( pybind11::class_< DofVector, options... > cls, PriorityTag< 2 > )
+       -> void_t< decltype( getBlockVector(std::declval<  DofVector& >().array() ) )  >
+      {
+        //check if BlockVector Is already registered if not register it
+        typedef std::decay_t< decltype( getBlockVector( std::declval< DofVector& >().array() ) ) > BlockVector;
+        //it's here that I need to add it's name to the type registery
+        if( !pybind11::already_registered< BlockVector >() )
+        {
+          Python::registerBlockVector< BlockVector >( cls );
+        }
+      }
+#endif
 
       // registerDofVectorBuffer
       // -----------------------
 
       template < class DofVector, class... options >
       inline static auto registerDofVectorBuffer ( pybind11::class_< DofVector, options... > cls, PriorityTag< 1 > )
-        -> std::enable_if_t< std::is_convertible< decltype( std::declval< DofVector & >().array().data()[ 0 ] ), typename DofVector::FieldType >::value >
+        -> std::enable_if_t< std::is_convertible< decltype( std::declval< DofVector >().array().data()[0] ), typename DofVector::FieldType  >::value >
       {
         typedef typename DofVector::FieldType Field;
 
@@ -117,12 +196,15 @@ namespace Dune
             );
           } ); // , pybind11::keep_alive< 0, 1 >() );
 
+
         cls.def( "__getitem__", [] ( const DofVector &self, std::size_t index ) -> Field {
             if( index < self.array().size() )
               return self.array().data()[index];
             else
               throw pybind11::index_error();
           });
+
+
         cls.def( "__setitem__", [] ( DofVector &self, std::size_t index, Field value ) {
             if( index < self.array().size() )
               return self.array().data()[index] = value;
@@ -225,6 +307,10 @@ namespace Dune
             Fem::interpolate( gf, self );
           }, "value"_a );
 
+
+
+        //put all this that follows behind SFINAE or maybe just the readonly dofVector
+        //do I want the buffer protocol if
         typedef typename DF::DofVectorType DofVector;
         if( !pybind11::already_registered< DofVector >() )
         {
@@ -234,12 +320,12 @@ namespace Dune
           clsDof.def( "assign", [] ( DofVector &self, const DofVector &other ) { self = other; }, "other"_a );
           clsDof.def( "scalarProduct", [] ( const DofVector &self, const DofVector &other ) { return self*other; }, "other"_a );
 
+          //the registration of the actual dofvector also happens inside this
           registerDofVectorBuffer( clsDof );
         }
 
-        cls.def_property_readonly( "dofVector", [] ( DF &self ) -> DofVector & { return self.dofVector(); } ); // , pybind11::return_value_policy::reference_internal );
-
         registerSubDiscreteFunction( cls );
+        addDofVector(cls, PriorityTag<2>());
 
         typedef Dune::Fem::AddLocalContribution<DF> AddLocalContrib;
         auto clsAddContrib =
@@ -285,6 +371,7 @@ namespace Dune
           }, pybind11::keep_alive< 0, 1 >(),
              pybind11::return_value_policy::take_ownership );
       }
+
 
     } // namespace detail
 
