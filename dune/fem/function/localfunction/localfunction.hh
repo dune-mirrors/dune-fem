@@ -242,6 +242,11 @@ namespace Dune
       {
         basisFunctionSet().axpy( x, factor, localDofVector() );
       }
+      template< class PointType >
+      void axpy ( const PointType &x, const HessianRangeType &factor)
+      {
+        basisFunctionSet().axpy( x, factor, localDofVector() );
+      }
 
       /** \brief axpy operation for local function
        *
