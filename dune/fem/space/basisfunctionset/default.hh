@@ -177,14 +177,19 @@ namespace Dune
         const GeometryType &geo = geometry();
         const GeometryJacobianInverseTransposedType &gjit = geo.jacobianInverseTransposed( coordinate( x ) );
         LocalHessianRangeType tmpHessianFactor( RangeFieldType(0) );
-        const int c = gjit.cols;
-        const int r = gjit.rows;
+        // don't know how to work directly with the DiagonalMatrix
+        // returned from YaspGrid since gjit[k][l] is not correctly
+        // implemented for k!=l so convert first into a dense matrix...
+        Dune::FieldMatrix<double,DomainType::dimension,DomainType::dimension>
+           G = gjit;
+        DomainType Hg;
         for( int r = 0; r < FunctionSpaceType::dimRange; ++r )
-          for( int j = 0; j < c; ++j )
-            for( int k = 0; k < c; ++k )
-              for( int i = 0; i < r; ++i )
-                for( int l = 0; l < r; ++l )
-                  tmpHessianFactor[r][j][k] += hessianFactor[r][i][l] * gjit[k][l] * gjit[j][i];
+          for( int j = 0; j < gjit.cols; ++j )
+            for( int k = 0; k < gjit.cols; ++k )
+            {
+              hessianFactor[r].mv(G[k],Hg);
+              tmpHessianFactor[r][j][k] += Hg * G[j];
+            }
         FunctionalAxpyFunctor< LocalHessianRangeType, DofVector > f( tmpHessianFactor, dofs );
         shapeFunctionSet().hessianEach( x, f );
       }

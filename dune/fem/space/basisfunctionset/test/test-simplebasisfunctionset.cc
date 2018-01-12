@@ -41,7 +41,7 @@ void traverse ( GridPartType &gridPart )
   QuadratureType quadrature( entity, polorder );
 
   // type of error
-  typedef Dune::FieldVector< double, 6 > ErrorType;
+  typedef Dune::FieldVector< double, 7 > ErrorType;
 
   double eps = 1e-8;
 

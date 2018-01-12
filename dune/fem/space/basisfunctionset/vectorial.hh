@@ -332,6 +332,12 @@ namespace Dune
       }
 
       template< class Point, class DofVector >
+      void axpy ( const Point &x, const HessianRangeType &hessianFactor, DofVector &dofs ) const
+      {
+        axpyH( x, hessianFactor, dofs );
+      }
+
+      template< class Point, class DofVector >
       void axpy ( const Point &x, const RangeType &valueFactor, const JacobianRangeType &jacobianFactor,
                   DofVector &dofs ) const
       {
@@ -433,6 +439,23 @@ namespace Dune
           {
             const GlobalDofType globalDof = dofAlignment_.globalDof( LocalDofType( r, i ) );
             dofs[ globalDof ] += factor[ r ] * scalars[ i ][ 0 ];
+          }
+        }
+      }
+      template< class Point, class DofVector >
+      void axpyH ( const Point &x, const HessianRangeType &factor, DofVector &dofs ) const
+      {
+        const std::size_t size = scalarBasisFunctionSet().size();
+        std::vector< typename HessianAll::Scalar > scalars( size );
+        HessianAll::apply( scalarBasisFunctionSet(), x, scalars );
+
+        for( int r = 0; r < dimRange; ++r )
+        {
+          for( std::size_t i = 0; i < size; ++i )
+          {
+            const GlobalDofType globalDof = dofAlignment_.globalDof( LocalDofType( r, i ) );
+            for ( int j = 0; j < x.size(); ++j )
+              dofs[ globalDof ] += factor[ r ][ j ] * scalars[ i ][ 0 ][ j ];
           }
         }
       }
