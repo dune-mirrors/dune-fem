@@ -13,7 +13,7 @@ from ._schemes import *
 
 from dune.generator.generator import SimpleGenerator
 
-def solve( scheme, target=None, name=None ):
+def solve( scheme, rhs=None, target=None, name=None ):
     import dune.fem.function as function
     if target == None:
         if name == None:
@@ -22,7 +22,10 @@ def solve( scheme, target=None, name=None ):
             else:
                 name = "default"
         target = function.discreteFunction(scheme.space, name=name)
-    info = scheme._solve(target)
+    if rhs is None:
+        info = scheme._solve(target)
+    else:
+        info = scheme._solve(rhs, target)
     return target,info
 
 generator = SimpleGenerator("Scheme", "Dune::FemPy")
