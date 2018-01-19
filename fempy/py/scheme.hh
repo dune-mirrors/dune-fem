@@ -193,6 +193,15 @@ namespace Dune
 
         registerSchemeConstructor( cls );
 
+        cls.def( "_solve", [] ( Scheme &self, const DiscreteFunction &rhs, DiscreteFunction &solution ) {
+            auto info = self.solve( rhs, solution );
+            // needs pybind 1.9: return pybind11::dict("converged"_a=info.converged, "iterations"_a=info.nonlinearIterations, "linear_iterations"_a=info.linearIterations);
+            return std::map<std::string,std::string> {
+                {"converged",std::to_string(info.converged)},
+                {"iterations",std::to_string(info.nonlinearIterations)},
+                {"linear_iterations",std::to_string(info.linearIterations)}
+              };
+          } );
         cls.def( "_solve", [] ( Scheme &self, DiscreteFunction &solution ) {
             auto info = self.solve( solution );
             // needs pybind 1.9: return pybind11::dict("converged"_a=info.converged, "iterations"_a=info.nonlinearIterations, "linear_iterations"_a=info.linearIterations);

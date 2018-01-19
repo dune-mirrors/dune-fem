@@ -134,17 +134,22 @@ public:
     int linearIterations;
     int nonlinearIterations;
   };
-  SolverInfo solve ( DiscreteFunctionType &solution ) const
+  SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
   {
     typedef InverseOperator LinearInverseOperatorType;
     typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
     InverseOperatorType invOp( implicitOperator_, parameter_ );
+    DiscreteFunctionType rhs0 = rhs;
+    implicitOperator_.prepare( rhs0 );
+    implicitOperator_.prepare( rhs0, solution );
+    invOp( rhs0, solution );
+    return SolverInfo(invOp.converged(),invOp.linearIterations(),invOp.iterations());
+  }
+  SolverInfo solve ( DiscreteFunctionType &solution ) const
+  {
     DiscreteFunctionType bnd(solution);
     bnd.clear();
-    implicitOperator_.prepare( bnd );
-    implicitOperator_.prepare( bnd, solution );
-    invOp( bnd, solution );
-    return SolverInfo(invOp.converged(),invOp.linearIterations(),invOp.iterations());
+    return solve(bnd, solution);
   }
 
   template <class GridFunction>
