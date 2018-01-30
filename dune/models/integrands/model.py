@@ -165,10 +165,11 @@ class Integrands():
         arg_param = Variable('const Dune::Fem::ParameterReader &', 'parameter')
         args = [Variable('const ' + t + ' &', n) for t, n in zip(self.coefficientTypes, self.coefficientNames)]
         if self._coefficients:
+            init = ['Dune::Fem::ConstLocalFunction< ' + n + ' >( ' + p + ' )' for n, p in zip(self.coefficientTypes, self.coefficientNames)]
             if self.skeleton is None:
-                init = ["coefficients_( " + ", ".join(self.coefficientNames) + " )"]
+                init = ["coefficients_( " + ", ".join(init) + " )"]
             else:
-                init = ['coefficients_{{ ' + coefficientsTupleType + '( ' + ', '.join(self.coefficientNames) + ' ), ' + coefficientsTupleType + '( ' + ', '.join(self.coefficientNames) + ' ) }}']
+                init = ['coefficients_{{ ' + coefficientsTupleType + '( ' + ', '.join(init) + ' ), ' + coefficientsTupleType + '( ' + ', '.join(init) + ' ) }}']
         else:
             init = []
         args.append(Declaration(arg_param, initializer=UnformattedExpression('const ParameterReader &', 'Dune::Fem::Parameter::container()')))
