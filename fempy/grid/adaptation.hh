@@ -10,7 +10,7 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/restrictprolonginterface.hh>
 
-#include <dune/python/common/common.hh>
+#include <dune/python/grid/enums.hh>
 
 #include <dune/fempy/grid/discretefunctionmanager.hh>
 #include <dune/fempy/grid/virtualizedrestrictprolong.hh>
