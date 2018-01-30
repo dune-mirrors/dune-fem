@@ -831,15 +831,18 @@ namespace Dune
         fullOperator()( u, w );
       }
 
+      SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
+      {
+        Dune::Fem::NewtonInverseOperator< LinearOperatorType, InverseOperator > invOp( fullOperator(), parameter_ );
+        invOp( rhs, solution );
+
+        return SolverInfo( invOp.converged(), invOp.linearIterations(), invOp.iterations() );
+      }
       SolverInfo solve ( DiscreteFunctionType &solution ) const
       {
         DiscreteFunctionType bnd( solution );
         bnd.clear();
-
-        Dune::Fem::NewtonInverseOperator< LinearOperatorType, InverseOperator > invOp( fullOperator(), parameter_ );
-        invOp( bnd, solution );
-
-        return SolverInfo( invOp.converged(), invOp.linearIterations(), invOp.iterations() );
+        return solve(bnd, solution);
       }
 
       template< class GridFunction >
