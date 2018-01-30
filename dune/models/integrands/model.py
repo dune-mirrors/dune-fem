@@ -46,8 +46,9 @@ class Integrands():
         self._coefficientNames = ['coefficient' + str(i) if n is None else n for i, n in enumerate(self._coefficientNames)]
         if len(self._coefficientNames) != len(self._coefficients):
             raise ValueError("Length of coefficientNames must match length of coefficients")
-        if any(n is not None and re.match('^[a-zA-Z_][a-zA-Z0-9_]*$', n) is None for n in self._coefficientNames):
-            raise ValueError("Coefficient names must be valid C++ identifiers.")
+        invalidCoefficients = [n for n in self._coefficientNames if n is not None and re.match('^[a-zA-Z_][a-zA-Z0-9_]*$', n) is None]
+        if invalidCoefficients:
+            raise ValueError('Coefficient names are not valid C++ identifiers:' + ', '.join(invalidCoefficients) + '.')
 
         self._parameterNames = [None,] * len(self._constants) if parameterNames is None else list(parameterNames)
         if len(self._parameterNames) != len(self._constants):
