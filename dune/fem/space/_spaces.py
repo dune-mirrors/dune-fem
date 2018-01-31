@@ -78,7 +78,7 @@ def dgonbhp(gridview, order=1, dimrange=1, field="double", storage=None, **unuse
 
     return module(field, storage, includes, typeName).Space(gridview)
 
-def dglegendre(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
+def dglegendre(gridview, order=1, dimrange=1, field="double", storage=None, hierarchical=True, **unused):
     """create a discontinous galerkin space with elementwise legendre tensor product basis function
 
     Args:
@@ -87,6 +87,8 @@ def dglegendre(gridview, order=1, dimrange=1, field="double", storage=None, **un
         dimrange: dimension of the range space
         field: field of the range space
         storage: underlying linear algebra backend
+        hierarchical: is true sort the shape function according to their
+                      polynomial order otherwise a product arrangement is used
 
     Returns:
         Space: the constructed Space
@@ -108,7 +110,10 @@ def dglegendre(gridview, order=1, dimrange=1, field="double", storage=None, **un
 
     includes = [ "dune/fem/space/discontinuousgalerkin.hh" ] + gridview._includes
     dimw = gridview.dimWorld
-    typeName = "Dune::Fem::HierarchicLegendreDiscontinuousGalerkinSpace< " +\
+    className = "Dune::Fem::HierarchicLegendreDiscontinuousGalerkinSpace" \
+                if hierarchical else \
+                "Dune::Fem::LegendreDiscontinuousGalerkinSpace"
+    typeName = className + "< "\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
 
