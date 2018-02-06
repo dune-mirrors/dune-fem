@@ -8,7 +8,7 @@
 
 namespace Dune {
 
-namespace Fem {
+  namespace Fem {
 
 /**Define a lumping quadrature for all geometries. Note, however, that
  * this may not make sense for anything else than simplices or maybe
@@ -24,237 +24,237 @@ namespace Fem {
  * it can simply be plugged into existing code by replacing
  * the quadrature rules.
  */
-template<class FieldImp, class Topology>
-class LumpingQuadrature
-  : public QuadratureImp<FieldImp, Topology::dimension>
-{
- public:
-  typedef FieldImp FieldType;
-  typedef Topology TopologyType;
-  static constexpr auto dimension = TopologyType::dimension;
+    template<class FieldImp, class Topology>
+    class LumpingQuadrature
+      : public QuadratureImp<FieldImp, Topology::dimension>
+    {
+     public:
+      typedef FieldImp FieldType;
+      typedef Topology TopologyType;
+      static constexpr auto dimension = TopologyType::dimension;
 
- private:
-  typedef LumpingQuadrature<FieldType, TopologyType> ThisType;
-  typedef QuadratureImp<FieldType, dimension> BaseType;
+     private:
+      typedef LumpingQuadrature<FieldType, TopologyType> ThisType;
+      typedef QuadratureImp<FieldType, dimension> BaseType;
 
- public:
-  typedef typename BaseType::CoordinateType CoordinateType;
+     public:
+      typedef typename BaseType::CoordinateType CoordinateType;
 
-  /** \brief constructor filling the list of points and weights.
-   *
-   *  \param[in]  gt     geometry type for which a quadrature is desired
-   *  \param[in]  order  order, ignored
-   *  \param[in]  id     unique identifier, ignored
-   */
-  LumpingQuadrature(const GeometryType& gt, int order, int id)
-    : BaseType(id)
-  {
-    const auto &refElement = Dune::ReferenceElements< FieldType, dimension >::general( gt );
-    const auto numCorners = refElement.size( dimension );
-    for( auto i = decltype( numCorners ){ 0 }; i < numCorners; ++i )
-      this->addQuadraturePoint( refElement.position( i, dimension ), refElement.volume() / numCorners );
-  }
+      /** \brief constructor filling the list of points and weights.
+       *
+       *  \param[in]  gt     geometry type for which a quadrature is desired
+       *  \param[in]  order  order, ignored
+       *  \param[in]  id     unique identifier, ignored
+       */
+      LumpingQuadrature(const GeometryType& gt, int order, int id)
+        : BaseType(id)
+      {
+        const auto &refElement = Dune::ReferenceElements< FieldType, dimension >::general( gt );
+        const auto numCorners = refElement.size( dimension );
+        for( auto i = decltype( numCorners ){ 0 }; i < numCorners; ++i )
+          this->addQuadraturePoint( refElement.position( i, dimension ), refElement.volume() / numCorners );
+      }
 
-  /** \copydoc QuadratureImp::geometry
-   */
-  virtual GeometryType geometryType() const { return GeometryType(TopologyType::id, dimension); }
-  /** \copydoc QuadratureImp::order
-   */
-  virtual int order () const { return 1; }
+      /** \copydoc QuadratureImp::geometry
+       */
+      virtual GeometryType geometryType() const { return GeometryType(TopologyType::id, dimension); }
+      /** \copydoc QuadratureImp::order
+       */
+      virtual int order () const { return 1; }
 
-  //! maximal order of available quadratures
-  static std::size_t maxOrder () { return 1; }
-};
+      //! maximal order of available quadratures
+      static std::size_t maxOrder () { return 1; }
+    };
 
-template<class FieldType, int dimension>
-struct DefaultLumpingQuadratureTraits
-{
-  typedef QuadratureImp<FieldType, dimension> IntegrationPointListType;
+    template<class FieldType, int dimension>
+    struct DefaultLumpingQuadratureTraits
+    {
+      typedef QuadratureImp<FieldType, dimension> IntegrationPointListType;
 
-  typedef LumpingQuadrature<FieldType, typename Dune::Impl::SimplexTopology<dimension>::type> SimplexQuadratureType;
-  typedef LumpingQuadrature<FieldType, typename Dune::Impl::CubeTopology<dimension>::type> CubeQuadratureType;
-  typedef LumpingQuadrature<FieldType, typename Dune::Impl::PrismTopology<dimension>::type> PrismQuadratureType;
-  typedef LumpingQuadrature<FieldType, typename Dune::Impl::PyramidTopology<dimension>::type> PyramidQuadratureType;
-  typedef SimplexQuadratureType PointQuadratureType;
-  typedef SimplexQuadratureType LineQuadratureType;
-};
+      typedef LumpingQuadrature<FieldType, typename Dune::Impl::SimplexTopology<dimension>::type> SimplexQuadratureType;
+      typedef LumpingQuadrature<FieldType, typename Dune::Impl::CubeTopology<dimension>::type> CubeQuadratureType;
+      typedef LumpingQuadrature<FieldType, typename Dune::Impl::PrismTopology<dimension>::type> PrismQuadratureType;
+      typedef LumpingQuadrature<FieldType, typename Dune::Impl::PyramidTopology<dimension>::type> PyramidQuadratureType;
+      typedef SimplexQuadratureType PointQuadratureType;
+      typedef SimplexQuadratureType LineQuadratureType;
+    };
 
-template<class GridPartImp, int codim>
-struct LumpingQuadratureTraits
-{
-  // type of a single coordinate
-  typedef typename GridPartImp::ctype ctype;
+    template<class GridPartImp, int codim>
+    struct LumpingQuadratureTraits
+    {
+      // type of a single coordinate
+      typedef typename GridPartImp::ctype ctype;
 
-  // dimension of the quadrature
-  static constexpr auto dimension = GridPartImp::dimension;
+      // dimension of the quadrature
+      static constexpr auto dimension = GridPartImp::dimension;
 
-  // codimension
-  static constexpr auto codimension = codim;
+      // codimension
+      static constexpr auto codimension = codim;
 
-  typedef Quadrature<ctype, dimension-codim, DefaultLumpingQuadratureTraits> IntegrationPointListType;
+      typedef Quadrature<ctype, dimension-codim, DefaultLumpingQuadratureTraits> IntegrationPointListType;
 
-  // type of local coordinate
-  typedef typename Quadrature<ctype, dimension, DefaultQuadratureTraits>::CoordinateType CoordinateType;
-};
+      // type of local coordinate
+      typedef typename Quadrature<ctype, dimension, DefaultQuadratureTraits>::CoordinateType CoordinateType;
+    };
 
-template<class GridPartImp, int codim>
-class CachingLumpingQuadrature;
+    template<class GridPartImp, int codim>
+    class CachingLumpingQuadrature;
 
-template<typename GridPart>
-class CachingLumpingQuadrature<GridPart, 0>
-  : public CachingPointList<GridPart, 0, LumpingQuadratureTraits<GridPart, 0> >
-{
- public:
-  //! type of grid partition
-  typedef GridPart GridPartType;
+    template<typename GridPart>
+    class CachingLumpingQuadrature<GridPart, 0>
+      : public CachingPointList<GridPart, 0, LumpingQuadratureTraits<GridPart, 0> >
+    {
+     public:
+      //! type of grid partition
+      typedef GridPart GridPartType;
 
-  //! codimension of the element quadrature
-  static constexpr auto codimension = 0;
+      //! codimension of the element quadrature
+      static constexpr auto codimension = 0;
 
- private:
-  typedef LumpingQuadratureTraits<GridPartType, codimension> IntegrationTraits;
+     private:
+      typedef LumpingQuadratureTraits<GridPartType, codimension> IntegrationTraits;
 
-  typedef CachingLumpingQuadrature<GridPartType, codimension> ThisType;
-  typedef CachingPointList<GridPartType, codimension, IntegrationTraits> BaseType;
+      typedef CachingLumpingQuadrature<GridPartType, codimension> ThisType;
+      typedef CachingPointList<GridPartType, codimension, IntegrationTraits> BaseType;
 
- public:
-  //! dimension of the world
-  static constexpr auto dimension = BaseType::dimension;
+     public:
+      //! dimension of the world
+      static constexpr auto dimension = BaseType::dimension;
 
-  //! just another name for double
-  typedef typename BaseType::RealType RealType;
-  //! type of the coordinates in the codim-0 reference element
-  typedef typename BaseType::CoordinateType CoordinateType;
-  //! type of the quadrature point
-  typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
-  //! type of iterator
-  typedef QuadraturePointIterator< ThisType > IteratorType;
+      //! just another name for double
+      typedef typename BaseType::RealType RealType;
+      //! type of the coordinates in the codim-0 reference element
+      typedef typename BaseType::CoordinateType CoordinateType;
+      //! type of the quadrature point
+      typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+      //! type of iterator
+      typedef QuadraturePointIterator< ThisType > IteratorType;
 
-  // for compatibility
-  typedef typename GridPartType::template Codim<0>::EntityType EntityType;
+      // for compatibility
+      typedef typename GridPartType::template Codim<0>::EntityType EntityType;
 
- protected:
-  using BaseType::quadImp;
+     protected:
+      using BaseType::quadImp;
 
- public:
-  using BaseType::nop;
+     public:
+      using BaseType::nop;
 
-  /** \brief constructor
-   *
-   *  \param[in]  entity  entity, on whose reference element the quadratre
-   *                      lives
-   *
-   *  \param[in] order   desired minimal order of the quadrature,
-   *                     which is of course fixed at 1. But we allow
-   *                     for this parameter in order to plug the
-   *                     LumpingQuadrature into generic code which
-   *                     normally passes the quadrature order as
-   *                     second parameter.
-   */
-  CachingLumpingQuadrature(const EntityType &entity, int order = 1)
-    : BaseType(entity.type(), 1)
-  {}
+      /** \brief constructor
+       *
+       *  \param[in]  entity  entity, on whose reference element the quadratre
+       *                      lives
+       *
+       *  \param[in] order   desired minimal order of the quadrature,
+       *                     which is of course fixed at 1. But we allow
+       *                     for this parameter in order to plug the
+       *                     LumpingQuadrature into generic code which
+       *                     normally passes the quadrature order as
+       *                     second parameter.
+       */
+      CachingLumpingQuadrature(const EntityType &entity, int order = 1)
+        : BaseType(entity.type(), 1)
+      {}
 
-  /** \brief copy constructor
-   *
-   *  \param[in]  org  element quadrature to copy
-   */
-  CachingLumpingQuadrature(const ThisType &org) : BaseType(org) {}
+      /** \brief copy constructor
+       *
+       *  \param[in]  org  element quadrature to copy
+       */
+      CachingLumpingQuadrature(const ThisType &org) : BaseType(org) {}
 
-  QuadraturePointWrapperType operator[] ( std::size_t i ) const
-  {
-    return QuadraturePointWrapperType( *this, i );
-  }
+      QuadraturePointWrapperType operator[] ( std::size_t i ) const
+      {
+        return QuadraturePointWrapperType( *this, i );
+      }
 
-  IteratorType begin () const noexcept { return IteratorType( *this, 0 ); }
-  IteratorType end () const noexcept { return IteratorType( *this, nop() ); }
+      IteratorType begin () const noexcept { return IteratorType( *this, 0 ); }
+      IteratorType end () const noexcept { return IteratorType( *this, nop() ); }
 
-  const RealType &weight (std::size_t ) const
-  {
-    // all weights have the same value
-    return quadImp().weight(0);
-  }
-};
+      const RealType &weight (std::size_t ) const
+      {
+        // all weights have the same value
+        return quadImp().weight(0);
+      }
+    };
 
-template<typename GridPart>
-class CachingLumpingQuadrature<GridPart, 1>
-  : public CachingPointList<GridPart, 1, LumpingQuadratureTraits<GridPart, 1> >
-{
- public:
-  //! type of grid partition
-  typedef GridPart GridPartType;
+    template<typename GridPart>
+    class CachingLumpingQuadrature<GridPart, 1>
+      : public CachingPointList<GridPart, 1, LumpingQuadratureTraits<GridPart, 1> >
+    {
+     public:
+      //! type of grid partition
+      typedef GridPart GridPartType;
 
-  //! codimension of the element quadrature
-  static constexpr auto codimension = 1;
+      //! codimension of the element quadrature
+      static constexpr auto codimension = 1;
 
- private:
-  typedef LumpingQuadratureTraits<GridPartType, codimension> IntegrationTraits;
+     private:
+      typedef LumpingQuadratureTraits<GridPartType, codimension> IntegrationTraits;
 
-  typedef CachingLumpingQuadrature<GridPartType, codimension> ThisType;
-  typedef CachingPointList<GridPartType, codimension, IntegrationTraits> BaseType;
+      typedef CachingLumpingQuadrature<GridPartType, codimension> ThisType;
+      typedef CachingPointList<GridPartType, codimension, IntegrationTraits> BaseType;
 
- public:
-  //! dimension of the world
-  static constexpr auto dimension = BaseType::dimension;
+     public:
+      //! dimension of the world
+      static constexpr auto dimension = BaseType::dimension;
 
-  //! just another name for double
-  typedef typename BaseType::RealType RealType;
+      //! just another name for double
+      typedef typename BaseType::RealType RealType;
 
-  //! type of the coordinates in the codim-0 reference element
-  typedef typename BaseType::CoordinateType CoordinateType;
+      //! type of the coordinates in the codim-0 reference element
+      typedef typename BaseType::CoordinateType CoordinateType;
 
-  //! type of the intersection iterator
-  typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
-  typedef typename IntersectionIteratorType::Intersection IntersectionType;
+      //! type of the intersection iterator
+      typedef typename BaseType::IntersectionIteratorType IntersectionIteratorType;
+      typedef typename IntersectionIteratorType::Intersection IntersectionType;
 
-  //! type of the quadrature point
-  typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
-  //! type of iterator
-  typedef QuadraturePointIterator< ThisType > IteratorType;
+      //! type of the quadrature point
+      typedef QuadraturePointWrapper< ThisType > QuadraturePointWrapperType;
+      //! type of iterator
+      typedef QuadraturePointIterator< ThisType > IteratorType;
 
-  using BaseType::nop;
+      using BaseType::nop;
 
- protected:
-  using BaseType::quadImp;
+     protected:
+      using BaseType::quadImp;
 
- public:
-  /** \brief constructor
-   *
-   *  \param[in]  gridPart      grid partition
-   *  \param[in]  intersection  intersection
-   *  \param[in]  ignored       desired order of the quadrature, which is ignored here
-   *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for
-   *                            which the ElementQuadrature shall be created
-   */
-  CachingLumpingQuadrature(const GridPartType& gridPart,
-                           const IntersectionType& intersection,
-                           int ignored,
-                           typename BaseType::Side side)
-    : BaseType(gridPart, intersection, 1, side)
-  {}
+     public:
+      /** \brief constructor
+       *
+       *  \param[in]  gridPart      grid partition
+       *  \param[in]  intersection  intersection
+       *  \param[in]  ignored       desired order of the quadrature, which is ignored here
+       *  \param[in]  side          either INSIDE or OUTSIDE; codim-0 entity for
+       *                            which the ElementQuadrature shall be created
+       */
+      CachingLumpingQuadrature(const GridPartType& gridPart,
+                               const IntersectionType& intersection,
+                               int ignored,
+                               typename BaseType::Side side)
+        : BaseType(gridPart, intersection, 1, side)
+      {}
 
-  /** \brief copy constructor
-   *
-   *  \param[in]  org  element quadrature to copy
-   */
-  CachingLumpingQuadrature(const ThisType &org) : BaseType(org) {}
+      /** \brief copy constructor
+       *
+       *  \param[in]  org  element quadrature to copy
+       */
+      CachingLumpingQuadrature(const ThisType &org) : BaseType(org) {}
 
-  QuadraturePointWrapperType operator[] ( std::size_t i ) const
-  {
-    return QuadraturePointWrapperType( *this, i );
-  }
+      QuadraturePointWrapperType operator[] ( std::size_t i ) const
+      {
+        return QuadraturePointWrapperType( *this, i );
+      }
 
-  IteratorType begin () const noexcept { return IteratorType( *this, 0 ); }
-  IteratorType end () const noexcept { return IteratorType( *this, nop() ); }
+      IteratorType begin () const noexcept { return IteratorType( *this, 0 ); }
+      IteratorType end () const noexcept { return IteratorType( *this, nop() ); }
 
-  const RealType &weight (std::size_t ) const
-  {
-    // all weights should have the same value
-    return quadImp().weight(0);
-  }
-};
+      const RealType &weight (std::size_t ) const
+      {
+        // all weights should have the same value
+        return quadImp().weight(0);
+      }
+    };
 
-} // Fem
+  } // Fem
 
 } // Dune
 
