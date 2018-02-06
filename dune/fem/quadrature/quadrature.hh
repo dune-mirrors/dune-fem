@@ -88,7 +88,7 @@ namespace Dune
    *  \returns a reference to the actual point
    */
   template< class Quadrature >
-  static inline typename Quadrature::CoordinateType
+  static inline const typename Quadrature::CoordinateType&
   coordinate ( const QuadraturePointWrapper< Quadrature > &x )
   {
     return x.position();
