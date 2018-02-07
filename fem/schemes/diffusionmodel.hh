@@ -51,52 +51,51 @@
                 const RangeType &value,\
                 const JacobianRangeType &gradient,\
                 RangeType &flux ) const \
-  { impl().source(x,value,gradient,flux); } \
+  { impl().source(x, value, gradient, flux); } \
   virtual void linSource ( const RangeType& uBar,\
                    const JacobianRangeType &gradientBar,\
                    const POINT &x,\
                    const RangeType &value,\
                    const JacobianRangeType &gradient,\
                    RangeType &flux ) const \
-  { impl().linSource(uBar,gradientBar,x,value,gradient,flux); } \
+  { impl().linSource(uBar, gradientBar, x, value, gradient, flux); } \
   virtual void diffusiveFlux ( const POINT &x,\
                        const RangeType &value,\
                        const JacobianRangeType &gradient,\
                        JacobianRangeType &flux ) const \
-  { impl().diffusiveFlux(x,value,gradient,flux); } \
+  { impl().diffusiveFlux(x, value, gradient, flux); } \
   virtual void linDiffusiveFlux ( const RangeType& uBar,\
                           const JacobianRangeType& gradientBar,\
                           const POINT &x,\
                           const RangeType &value,\
                           const JacobianRangeType &gradient,\
                           JacobianRangeType &flux ) const \
-  { impl().linDiffusiveFlux(uBar,gradientBar,x,value,gradient,flux); } \
+  { impl().linDiffusiveFlux(uBar, gradientBar, x, value, gradient, flux); } \
   virtual void fluxDivergence( const POINT &x,\
                          const RangeType &value,\
                          const JacobianRangeType &jacobian,\
                          const HessianRangeType &hessian,\
                          RangeType &flux) const \
-  { impl().fluxDivergence(x,value,jacobian,hessian,flux); } \
+  { impl().fluxDivergence(x, value, jacobian, hessian, flux); } \
   virtual void alpha(const POINT &x,\
              const RangeType &value,\
              RangeType &val) const \
-  { impl().alpha(x,value,val); } \
+  { impl().alpha(x, value, val); } \
   virtual void linAlpha(const RangeType &uBar,\
                 const POINT &x,\
                 const RangeType &value,\
                 RangeType &val) const \
-  { impl().linAlpha(uBar,x,value,val); } \
+  { impl().linAlpha(uBar, x, value, val); } \
   virtual void dirichlet( int bndId, const POINT &x,\
                 RangeType &value) const \
-  {impl().dirichlet(bndId,x,value);}
-
+  { impl().dirichlet(bndId, x, value); }
 
 template< class GridPart, int dimR, class RangeField = double >
 struct DiffusionModel
 {
   typedef GridPart GridPartType;
   static const int dimRange = dimR;
-  typedef DiffusionModel<GridPartType,dimRange,RangeField> ModelType;
+  typedef DiffusionModel<GridPartType, dimRange, RangeField> ModelType;
   typedef RangeField RangeFieldType;
 
   typedef Dune::Fem::FunctionSpace< double, RangeFieldType,
@@ -143,7 +142,7 @@ public:
 
   virtual bool hasDirichletBoundary () const = 0;
   virtual bool hasNeumanBoundary () const = 0;
-  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int,dimRange> &dirichletComponent ) const = 0;
+  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int, dimRange> &dirichletComponent ) const = 0;
 
   class BoundaryWrapper
   {
@@ -216,7 +215,7 @@ struct DiffusionModelWrapper : public DiffusionModel<typename ModelImpl::GridPar
   {
     return impl().hasNeumanBoundary();
   }
-  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int,dimRange> &dirichletComponent ) const
+  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int, dimRange> &dirichletComponent ) const
   {
     return impl().isDirichletIntersection(inter, dirichletComponent);
   }
@@ -282,7 +281,7 @@ struct DiffusionModelEngine : public DiffusionModel<typename ModelTraits::GridPa
   {
     return impl().hasNeumanBoundary();
   }
-  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int,dimRange> &dirichletComponent ) const
+  virtual bool isDirichletIntersection( const IntersectionType& inter, Dune::FieldVector<int, dimRange> &dirichletComponent ) const
   {
     return impl().isDirichletIntersection(inter, dirichletComponent);
   }
