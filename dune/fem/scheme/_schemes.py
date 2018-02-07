@@ -34,7 +34,7 @@ def femscheme(includes, space, solver, operator):
           "typename " + spaceType + "::GridPartType, " +\
           spaceType + "::dimRange, " +\
           "typename " + spaceType + "::RangeFieldType >"
-    operatorType = operator(linearOperatorType,modelType)
+    operatorType = operator(linearOperatorType, modelType)
     typeName = "FemScheme< " + operatorType + ", " + solverTypeName + " >"
     return includes, typeName
 
@@ -194,31 +194,6 @@ def linearized(scheme, ubar=None, solver=None, parameters={}):
         return m.Scheme(scheme, ubar, parameters)
     else:
         return m.Scheme(scheme, parameters)
-
-
-def nvdg(space, model, name="tmp", **kwargs):
-    """create a scheme for solving non variational second order pdes with discontinuous finite element
-
-    Args:
-
-    Returns:
-        Scheme: the constructed scheme
-    """
-
-    from . import module, storageToSolver
-    storage = storageToSolver(space.storage)
-
-    includes = ["dune/fem/schemes/nvdgelliptic.hh", "dune/fem/schemes/femscheme.hh"] + space._module._includes
-    spaceType = space._module._typeName
-    typeName = "FemScheme< " + spaceType + ", " +\
-        "DiffusionModel< " +\
-          "typename " + spaceType + "::GridPartType, " +\
-          spaceType + "::dimRange, " +\
-          "typename " + spaceType + "::RangeFieldType >, DifferentiableNVDGEllipticOperator, " +\
-          storage + " >"
-
-    return module(includes, typeName).Scheme(space, model, name, **kwargs)
-
 
 def stokes(space, model, name, viscosity, timestep, **kwargs):
     """create a scheme for solving quasi stokes type saddle point problem with continuous finite-elements

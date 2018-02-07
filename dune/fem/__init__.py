@@ -62,7 +62,6 @@ registry["scheme"] = {
          "dggalerkin" : scheme.dgGalerkin,
          "galerkin"   : scheme.galerkin,
          "linearized" : scheme.linearized,
-         "mvdg"       : scheme.nvdg,
          "stokes"     : scheme.stokes,
          "burgers"    : scheme.burgers
      }
