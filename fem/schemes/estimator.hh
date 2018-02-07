@@ -49,8 +49,6 @@
 #include <dune/fem/operator/common/spaceoperatorif.hh>
 #include <dune/fem/operator/matrix/blockmatrix.hh>
 
-#include "diffusionmodel.hh"
-
 // Estimator
 // ---------
 template< class DiscreteFunction, class Model, bool>

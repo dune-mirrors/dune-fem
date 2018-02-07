@@ -55,8 +55,6 @@
 #include <dune/fem/io/parameter.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
 
-#include <dune/fem/schemes/diffusionmodel.hh>
-
 // FemScheme
 //----------
 

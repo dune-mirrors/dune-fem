@@ -60,7 +60,6 @@
 #include <dune/fem/schemes/solver.hh>
 #include <dune/fem/schemes/dgelliptic.hh>
 #include <dune/fem/schemes/dgrhs.hh>
-#include <dune/fem/schemes/diffusionmodel.hh>
 
 template < class Model, int polOrder, SolverType solver >
 class DGFemScheme
