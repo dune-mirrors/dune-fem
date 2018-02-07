@@ -23,7 +23,6 @@ def elliptic(view, equation, *args, **kwargs):
 
     return Model(coefficients=coefficients)
 
-
 def integrands(view, form, *args, **kwargs):
     import ufl
     import dune.ufl
