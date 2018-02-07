@@ -27,7 +27,10 @@ def initModel(model, *args, **kwargs):
     else:
         args = list(args)
 
-    coefficientNames = model._coefficientNames
+    try:
+        coefficientNames = model._coefficientNames
+    except:
+        coefficientNames = []
     if len(args) > len(coefficientNames):
         raise ArgumentError('Too many coefficients passed.')
     args += [None] * (len(coefficientNames) - len(args))
@@ -72,10 +75,23 @@ def initModel(model, *args, **kwargs):
 
 
 def load(grid, model, *args, **kwargs):
+    from dune.generator import builder
     if isinstance(model, (Equation, Form)):
         model, renumbering = compileUFL(model, *args, **kwargs)
     else:
         renumbering = kwargs.get("renumbering")
+
+    if isinstance(model, str):
+        with open(model, 'r') as modelFile:
+             data = modelFile.read()
+        name = data.split('PYBIND11_PLUGIN( ')[1].split(' )')[0]
+        module = builder.load(name, data, "ellipticModel")
+        renumbering = {}
+        if renumbering is not None:
+            setattr(module.Model, '_renumbering', renumbering)
+            module.Model._init = module.Model.__dict__['__init__']
+            setattr(module.Model, '__init__', initModel)
+        return module
 
     name = 'ellipticmodel_' + model.signature + "_" + hashIt(grid._typeName)
 
@@ -93,12 +109,21 @@ def load(grid, model, *args, **kwargs):
     if model.hasCoefficients:
         writer.emit('#include <dune/fempy/function/virtualizedgridfunction.hh>')
         writer.emit('')
-    writer.emit('#include <dune/fem/schemes/diffusionmodel.hh>')
+    if 'virtualModel' in kwargs:
+        virtualModel = kwargs.pop('virtualModel')
+    else:
+        virtualModel = 'dune/fem/schemes/diffusionmodel.hh'
+    writer.emit('#include <' + virtualModel + '>')
 
     code = []
 
     nameSpace = NameSpace("ModelImpl_" + model.signature)
-    nameSpace.append(model.code())
+    if 'modelPatch' in kwargs:
+        modelPatch = kwargs.pop('modelPatch')
+        modelPatch(model)
+        nameSpace.append(model.code(model))
+    else:
+        nameSpace.append(model.code())
     code.append(nameSpace)
 
     code += [TypeAlias("GridPart", "typename Dune::FemPy::GridPart< " + grid._typeName + " >")]
@@ -107,8 +132,9 @@ def load(grid, model, *args, **kwargs):
     coefficients = ["Dune::FemPy::VirtualizedLocalFunction< GridPart, " + r + " >" for r in rangeTypes]
     code += [TypeAlias("Model", nameSpace.name + "::Model< " + ", ".join(["GridPart"] + coefficients) + " >")]
 
-    code += [TypeAlias("ModelWrapper", "DiffusionModelWrapper< Model >"),
-             TypeAlias("ModelBase", "typename ModelWrapper::Base")]
+    code += [TypeAlias("ModelWrapper", "DiffusionModelWrapper< Model >")]
+
+    code += [TypeAlias("ModelBase", "typename ModelWrapper::Base")]
 
     writer.emit(code)
 
@@ -141,7 +167,6 @@ def load(grid, model, *args, **kwargs):
         with open(kwargs["header"], 'w') as modelFile:
             modelFile.write(source)
 
-    from dune.generator import builder
     module = builder.load(name, source, "ellipticModel")
     if (renumbering is not None) and (module.Model.__dict__['__init__'] != initModel):
         setattr(module.Model, '_renumbering', renumbering)

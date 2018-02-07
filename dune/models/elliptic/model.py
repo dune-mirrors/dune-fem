@@ -451,7 +451,7 @@ def compileUFL(equation, *args, **kwargs):
     predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
     model.source = generateCode(predefined, source, model.coefficients, tempVars)
     model.diffusiveFlux = generateCode(predefined, diffusiveFlux, model.coefficients, tempVars=tempVars)
-    predefined.update({ubar: model.arg_ubar, dubar: model.arg_dubar})
+    predefined.update({ubar: model.arg_ubar, dubar: model.arg_dubar, d2ubar: model.arg_d2ubar})
     model.linSource = generateCode(predefined, linSource, model.coefficients, tempVars=tempVars)
     model.linDiffusiveFlux = generateCode(predefined, linDiffusiveFlux, model.coefficients, tempVars=tempVars)
 
