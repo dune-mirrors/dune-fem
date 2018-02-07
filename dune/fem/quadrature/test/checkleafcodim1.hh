@@ -2,7 +2,13 @@
 #define DUNE_CHECKLEAFCODIM1_HH
 
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/quadrature/femquadratures.hh>
+#include <dune/fem/quadrature/dunequadratures.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
+
+#ifndef QUADTRAITS
+# define QUADTRAITS DefaultQuadratureTraits
+#endif
 
 namespace Dune {
   namespace Fem {
@@ -126,7 +132,7 @@ protected:
     typedef typename GridPartType::IntersectionIteratorType IntersectionIterator;
     typedef typename IntersectionIterator::Intersection Intersection;
     typedef typename GridPartType :: template Codim<0> :: IteratorType IteratorType;
-    typedef CachingQuadrature<GridPartType, codim> QuadratureType;
+    typedef CachingQuadrature<GridPartType, codim, QUADTRAITS> QuadratureType;
     typedef PointProvider<ctype, dim, codim> PointProviderType;
     typedef typename PointProviderType::GlobalPointVectorType PointVectorType;
     typedef typename Intersection::LocalGeometry LocalGeometryType;

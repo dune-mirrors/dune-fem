@@ -588,6 +588,53 @@ namespace Dune
       }
     };
 
+    // default defines for used quadratures
+    template< typename FieldType, int dim >
+    struct FemQuadratureTraits
+    {
+      typedef CubeQuadrature< FieldType, dim > CubeQuadratureType;
+      typedef QuadratureImp< FieldType, dim > IntegrationPointListType;
+    };
+
+    // quadratures for points
+    template< typename FieldType >
+    struct FemQuadratureTraits< FieldType, 0 >
+    {
+      typedef CubeQuadrature< FieldType, 0 > PointQuadratureType;
+      typedef QuadratureImp< FieldType, 0 > IntegrationPointListType;
+    };
+
+    // quadratures for lines
+    template< typename FieldType >
+    struct FemQuadratureTraits< FieldType, 1 >
+    {
+      typedef CubeQuadrature< FieldType, 1 > LineQuadratureType;
+      typedef QuadratureImp< FieldType, 1 > IntegrationPointListType;
+    };
+
+    // quadratures for simplex and cubes
+    template< typename FieldType >
+    struct FemQuadratureTraits< FieldType, 2 >
+    {
+      typedef CubeQuadrature< FieldType, 2 > CubeQuadratureType;
+      typedef SimplexQuadrature< FieldType, 2 > SimplexQuadratureType;
+      typedef QuadratureImp< FieldType, 2 > IntegrationPointListType;
+    };
+
+    // quadratures for simplex, cubes, prisms, and pyramids
+    template< typename FieldType >
+    struct FemQuadratureTraits< FieldType , 3 >
+    {
+      typedef CubeQuadrature< FieldType, 3 > CubeQuadratureType;
+      typedef SimplexQuadrature< FieldType, 3 > SimplexQuadratureType;
+
+      typedef PrismQuadrature< FieldType > PrismQuadratureType;
+      typedef PyramidQuadrature< FieldType > PyramidQuadratureType;
+
+      typedef QuadratureImp< FieldType, 3 > IntegrationPointListType;
+    };
+
+
   } // end namespace Fem
 
 } // end namespace Dune

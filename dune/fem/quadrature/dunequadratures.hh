@@ -146,4 +146,29 @@ namespace Dune
 
 } // namespace Dune
 
+// provide Dune::Geometry quadratures unless they are used by default.
+# ifndef USE_DUNE_QUADRATURES
+
+#include "elementquadrature.hh"
+#include "cachingquadrature.hh"
+
+namespace Dune
+{
+
+  namespace Fem
+  {
+    /**Non-caching element-quadrature using Dune::Geometry quadratures.*/
+    template<class GridPart, int codim>
+    using ElementDuneQuadrature = ElementQuadrature<GridPart, codim, DuneQuadratureTraits>;
+
+    /**Caching quadrature using Dune::Geometry quadratures.*/
+    template<class GridPart, int codim>
+    using CachingDuneQuadrature = CachingQuadrature<GridPart, codim, DuneQuadratureTraits>;
+
+  } // namespace Fem
+
+} // namespace Dune
+
+# endif // USE_DUNE_QUADRATURES
+
 #endif // #ifndef DUNE_FEM_DUNEQUADRATURES_HH

@@ -15,10 +15,10 @@
 
 // include quadrature points
 #ifdef USE_DUNE_QUADRATURES
-#warning "Don't use DUNE Quadratures!!!"
-#include "dunequadratures.hh"
+# warning "Using Dune::Geomtry Quadratures by define of USE_DUNE_QUADRATURES!"
+# include "dunequadratures.hh"
 #else
-#include "femquadratures.hh"
+# include "femquadratures.hh"
 #endif
 
 namespace Dune
@@ -27,84 +27,13 @@ namespace Dune
   namespace Fem
   {
 
-    // default defines for used quadratures
-    template< typename FieldType, int dim >
-    struct DefaultQuadratureTraits
-    {
 #ifdef USE_DUNE_QUADRATURES
-      typedef QuadratureRulesFactory< FieldType, dim > CubeQuadratureType;
+    template<class Field, int dim>
+    using DefaultQuadratureTraits = DuneQuadratureTraits<Field, dim>;
 #else
-      typedef CubeQuadrature< FieldType, dim > CubeQuadratureType;
+    template<class Field, int dim>
+    using DefaultQuadratureTraits = FemQuadratureTraits<Field, dim>;
 #endif
-      typedef QuadratureImp< FieldType, dim > IntegrationPointListType;
-    };
-
-
-
-    // quadratures for points
-    template< typename FieldType >
-    struct DefaultQuadratureTraits< FieldType, 0 >
-    {
-#ifdef USE_DUNE_QUADRATURES
-      typedef QuadratureRulesFactory< FieldType, 0 > PointQuadratureType;
-#else
-      typedef CubeQuadrature< FieldType, 0 > PointQuadratureType;
-#endif
-      typedef QuadratureImp< FieldType, 0 > IntegrationPointListType;
-    };
-
-
-
-    // quadratures for lines
-    template< typename FieldType >
-    struct DefaultQuadratureTraits< FieldType, 1 >
-    {
-#ifdef USE_DUNE_QUADRATURES
-      typedef QuadratureRulesFactory< FieldType, 1 > LineQuadratureType;
-#else
-      typedef CubeQuadrature< FieldType, 1 > LineQuadratureType;
-#endif
-      typedef QuadratureImp< FieldType, 1 > IntegrationPointListType;
-    };
-
-
-
-    // quadratures for simplex and cubes
-    template< typename FieldType >
-    struct DefaultQuadratureTraits< FieldType, 2 >
-    {
-#ifdef USE_DUNE_QUADRATURES
-      typedef QuadratureRulesFactory< FieldType, 2 > SimplexQuadratureType;
-      typedef QuadratureRulesFactory< FieldType, 2 > CubeQuadratureType;
-#else
-      typedef CubeQuadrature< FieldType, 2 > CubeQuadratureType;
-      typedef SimplexQuadrature< FieldType, 2 > SimplexQuadratureType;
-#endif
-      typedef QuadratureImp< FieldType, 2 > IntegrationPointListType;
-    };
-
-
-
-    // quadratures for simplex, cubes, prisms, and pyramids
-    template< typename FieldType >
-    struct DefaultQuadratureTraits< FieldType , 3 >
-    {
-#ifdef USE_DUNE_QUADRATURES
-      typedef QuadratureRulesFactory< FieldType, 3 > SimplexQuadratureType;
-      typedef QuadratureRulesFactory< FieldType, 3 > CubeQuadratureType;
-
-      typedef QuadratureRulesFactory< FieldType, 3 > PrismQuadratureType;
-      typedef QuadratureRulesFactory< FieldType, 3 > PyramidQuadratureType;
-#else
-      typedef CubeQuadrature< FieldType, 3 > CubeQuadratureType;
-      typedef SimplexQuadrature< FieldType, 3 > SimplexQuadratureType;
-
-      typedef PrismQuadrature< FieldType > PrismQuadratureType;
-      typedef PyramidQuadrature< FieldType > PyramidQuadratureType;
-#endif
-
-      typedef QuadratureImp< FieldType, 3 > IntegrationPointListType;
-    };
 
   } // namespace Fem
 

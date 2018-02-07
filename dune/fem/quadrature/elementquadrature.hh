@@ -43,12 +43,14 @@ namespace Dune
      *  - ElementQuadrature<GridPartImp,0>
      *  - ElementQuadrature<GridPartImp,1>
      */
-    template< typename GridPartImp, int codim >
+    template< typename GridPartImp, int codim,
+              template< class, int > class QuadratureTraits = DefaultQuadratureTraits >
     class ElementQuadrature;
 
 
 
-    template< class GridPartImp, int codim >
+    template< class GridPartImp, int codim,
+              template< class, int > class QuadratureTraits = DefaultQuadratureTraits >
     struct ElementQuadratureTraits
     {
       // type of single coordinate
@@ -61,22 +63,23 @@ namespace Dune
       enum { codimension = codim };
 
       // type of used integration point list
-      typedef Quadrature< ctype, dimension-codim, DefaultQuadratureTraits > IntegrationPointListType;
+      typedef Quadrature< ctype, dimension-codim, QuadratureTraits > IntegrationPointListType;
 
       // type of local coordinate (with respect to the codim-0 entity)
-      typedef typename Quadrature< ctype, dimension, DefaultQuadratureTraits > :: CoordinateType
+      typedef typename Quadrature< ctype, dimension, QuadratureTraits > :: CoordinateType
         CoordinateType;
     };
 
 
 
     /** \copydoc ElementQuadrature */
-    template< typename GridPartImp >
-    class ElementQuadrature< GridPartImp, 0 >
-    : public ElementIntegrationPointList< GridPartImp, 0, ElementQuadratureTraits< GridPartImp, 0 > >
+    template< typename GridPartImp, template< class, int > class QuadratureTraits >
+    class ElementQuadrature< GridPartImp, 0, QuadratureTraits >
+      : public ElementIntegrationPointList< GridPartImp, 0,
+                                            ElementQuadratureTraits< GridPartImp, 0, QuadratureTraits > >
     {
-      typedef ElementQuadrature< GridPartImp, 0 > ThisType;
-      typedef ElementQuadratureTraits< GridPartImp, 0 > IntegrationTraits;
+      typedef ElementQuadrature< GridPartImp, 0, QuadratureTraits > ThisType;
+      typedef ElementQuadratureTraits< GridPartImp, 0, QuadratureTraits > IntegrationTraits;
       typedef ElementIntegrationPointList< GridPartImp, 0, IntegrationTraits > BaseType;
 
     public:
@@ -155,10 +158,10 @@ namespace Dune
 
 
     /** \copydoc ElementQuadrature */
-    template< class GridPartImp >
-    class ElementQuadrature< GridPartImp, 1 >
-    : public ElementIntegrationPointList
-      < GridPartImp, 1, ElementQuadratureTraits< GridPartImp, 1 > >
+    template< class GridPartImp, template< class, int > class QuadratureTraits >
+    class ElementQuadrature< GridPartImp, 1, QuadratureTraits >
+      : public ElementIntegrationPointList< GridPartImp, 1,
+                                            ElementQuadratureTraits< GridPartImp, 1, QuadratureTraits > >
     {
     public:
       //! type of the grid partition
@@ -168,9 +171,9 @@ namespace Dune
       enum { codimension = 1 };
 
     private:
-      typedef ElementQuadratureTraits< GridPartType, codimension > IntegrationTraits;
+      typedef ElementQuadratureTraits< GridPartType, codimension, QuadratureTraits > IntegrationTraits;
 
-      typedef ElementQuadrature< GridPartType, codimension > ThisType;
+      typedef ElementQuadrature< GridPartType, codimension, QuadratureTraits > ThisType;
       typedef ElementIntegrationPointList< GridPartType, 1, IntegrationTraits >
         BaseType;
 

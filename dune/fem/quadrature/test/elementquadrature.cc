@@ -5,7 +5,16 @@
 #include <dune/geometry/referenceelements.hh>
 
 #include <dune/fem/misc/mpimanager.hh>
+#include <dune/fem/quadrature/femquadratures.hh>
+#include <dune/fem/quadrature/dunequadratures.hh>
 #include <dune/fem/quadrature/elementquadrature.hh>
+
+#ifndef QUADTRAITS
+# define QUADTRAITS Dune::Fem::DefaultQuadratureTraits
+#endif
+
+template<class GridPart, int codim>
+using ElementQuadrature = Dune::Fem::ElementQuadrature<GridPart, codim, QUADTRAITS>;
 
 template< int dim >
 struct FakeGridPart
@@ -26,7 +35,7 @@ void checkQuadraturePoints ( Dune::GeometryType type, int order )
 {
   std::cout << ">>> Checking ElementQuadrature for type " << type << " and order " << order << "..." << std::endl;
 
-  Dune::Fem::ElementQuadrature< FakeGridPart< dim >, 0 > quadrature( type, order );
+  ElementQuadrature< FakeGridPart< dim >, 0 > quadrature( type, order );
   const auto refElement = Dune::referenceElement< double, dim >( type );
   for( std::size_t qp = 0; qp < quadrature.nop(); ++qp )
   {

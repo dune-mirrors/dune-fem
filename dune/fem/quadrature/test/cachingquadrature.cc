@@ -6,13 +6,19 @@
 
 #include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/io/parameter.hh>
+#include <dune/fem/quadrature/femquadratures.hh>
+#include <dune/fem/quadrature/dunequadratures.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/elementquadrature.hh>
 
 #include "checkleafcodim1.hh"
 
+#ifndef QUADTRAITS
+# define QUADTRAITS Dune::Fem::DefaultQuadratureTraits
+#endif
+
 using namespace Dune;
-  using namespace Fem ;
+using namespace Fem;
 
 template<class GridPartType, int codim, bool caching>
 struct QuadratureChooser;
@@ -20,12 +26,12 @@ struct QuadratureChooser;
 template<class GridPartType, int codim>
 struct QuadratureChooser<GridPartType,codim,false>
 {
-  typedef ElementQuadrature< GridPartType, codim > Quadrature;
+  typedef ElementQuadrature< GridPartType, codim, QUADTRAITS > Quadrature;
 };
 template<class GridPartType, int codim>
 struct QuadratureChooser<GridPartType,codim,true>
 {
-  typedef CachingQuadrature< GridPartType, codim > Quadrature;
+  typedef CachingQuadrature< GridPartType, codim, QUADTRAITS > Quadrature;
 };
 
 template<class GridPartType, bool caching>
