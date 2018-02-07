@@ -98,11 +98,11 @@ public:
   : model_( model ),
     space_( space ),
     // the elliptic operator (implicit)
-    implicitOperator_( model_, space_ ),
+    implicitOperator_( model_, space_, parameter ),
     // create linear operator (domainSpace,rangeSpace)
     linearOperator_( "assembled elliptic operator", space_, space_ ), // , parameter ),
     estimator_( space_, model ),
-    parameter_(parameter)
+    parameter_( parameter )
   {}
 
   const DifferentiableOperatorType &fullOperator() const

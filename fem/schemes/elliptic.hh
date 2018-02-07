@@ -55,6 +55,9 @@
 #include <dune/fem/operator/common/differentiableoperator.hh>
 
 #include <dune/fem/schemes/dirichletconstraints.hh>
+// include parameter handling
+#include <dune/fem/io/parameter.hh>
+#include <dune/fem/io/file/dataoutput.hh>
 
 // EllipticOperator
 // ----------------
@@ -115,7 +118,7 @@ protected:
   typedef Dune::Fem::CachingQuadrature< GridPartType, 1 > FaceQuadratureType;
 
 public:
-  EllipticOperator ( const ModelType &model, const RangeDiscreteFunctionSpaceType &rangeSpace )
+  EllipticOperator ( const ModelType &model, const RangeDiscreteFunctionSpaceType &rangeSpace, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
     : model_( model ) , constraints_( model, rangeSpace )
   {}
 
@@ -192,8 +195,8 @@ protected:
 
 public:
   //! contructor
-  DifferentiableEllipticOperator ( const ModelType &model, const RangeDiscreteFunctionSpaceType &space )
-  : BaseType( model, space )
+  DifferentiableEllipticOperator ( const ModelType &model, const RangeDiscreteFunctionSpaceType &space, const Dune::Fem::ParameterReader &parameter = Dune::Fem::Parameter::container() )
+  : BaseType( model, space, parameter )
   {}
 
   //! method to setup the jacobian of the operator for storage in a matrix
@@ -432,5 +435,4 @@ void DifferentiableEllipticOperator< JacobianOperator, Model, Constraints >
   constraints().applyToOperator( jOp );
   jOp.communicate();
 }
-
 #endif // #ifndef DUNE_FEM_SCHEMES_ELLIPTIC_HH
