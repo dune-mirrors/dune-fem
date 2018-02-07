@@ -150,7 +150,13 @@ public:
     return solve(bnd, solution);
   }
 
-  template <class GridFunction>
+  template< class GridFunction, std::enable_if_t<
+        std::is_same< decltype(
+          std::declval< const DifferentiableOperatorType >().apply(
+              std::declval< const GridFunction& >(), std::declval< LinearOperatorType& >()
+            )
+          ), void >::value, int> i = 0
+    >
   const LinearOperatorType &assemble( const GridFunction &ubar )
   {
     implicitOperator_.apply(ubar, linearOperator_);
