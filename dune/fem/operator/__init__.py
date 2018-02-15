@@ -9,7 +9,8 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 
-from dune.generator.generator import Constructor, Method, SimpleGenerator
+from dune.generator import Constructor, Method
+from dune.generator.generator import SimpleGenerator
 
 generator = SimpleGenerator("Operator", "Dune::FemPy")
 

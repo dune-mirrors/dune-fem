@@ -5,7 +5,7 @@ import logging
 
 from ufl.equation import Equation
 
-from dune.generator.generator import Constructor, Method
+from dune.generator import Constructor, Method
 
 logger = logging.getLogger(__name__)
 

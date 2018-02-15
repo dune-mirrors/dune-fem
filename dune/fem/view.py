@@ -6,7 +6,8 @@ import importlib
 
 import dune.grid.grid_generator
 
-from dune.generator.generator import Constructor, Method, SimpleGenerator
+from dune.generator import Constructor, Method
+from dune.generator.generator SimpleGenerator
 
 generator = SimpleGenerator("GridView", "Dune::Python")
 
