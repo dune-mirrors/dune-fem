@@ -1,1 +1,3 @@
-dune_install(space.hh)
+dune_install(
+  localinterpolation.hh
+  space.hh)
