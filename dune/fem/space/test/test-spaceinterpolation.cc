@@ -32,6 +32,7 @@
 #include <dune/fem/space/lagrange.hh>
 #include <dune/fem/space/padaptivespace.hh>
 #include <dune/fem/space/rannacherturek.hh>
+#include <dune/fem/space/raviartthomas.hh>
 
 #include <dune/fem/space/test/checklocalinterpolation.hh>
 
@@ -100,6 +101,8 @@ typedef std::tuple<
 #if HAVE_DUNE_LOCALFUNCTIONS
   Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 1 >,
   Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 2 >,
+  Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 0 >,
+  Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 1 >,
   // Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >,
   // Dune::Fem::RannacherTurekSpace< FunctionSpaceType, GridPartType >,
 #endif // #if HAVE_DUNE_LOCALFUNCTIONS
