@@ -75,7 +75,7 @@ namespace Dune
 
       inline static GeometryType type ( std::size_t index ) noexcept
       {
-        return (index < RegularTypeIndexSet::size() ? RegularTypeIndexSet::type( index ) : GeometryType( GeometryType::none, dim ));
+        return (index < RegularTypeIndexSet::size() ? RegularTypeIndexSet::type( index ) : GeometryType( 0, dim, true ));
       }
     };
 
@@ -151,7 +151,7 @@ namespace Dune
 
       inline static GeometryType type ( std::size_t index ) noexcept
       {
-        return (index < RegularTypeIndexSet::size() ? RegularTypeIndexSet::type( index ) : GeometryType( GeometryType::none, static_cast< int >( index - RegularTypeIndexSet::size() ) ));
+        return (index < RegularTypeIndexSet::size() ? RegularTypeIndexSet::type( index ) : GeometryType( 0, static_cast< int >( index - RegularTypeIndexSet::size() ), true ));
       }
     };
 
