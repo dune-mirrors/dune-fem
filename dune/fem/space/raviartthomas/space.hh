@@ -145,6 +145,8 @@ namespace Dune
       static constexpr int dimLocal = GridPart::dimension;
       static constexpr unsigned int topologyId = hasSingleGeometryType::topologyId;
 
+      static_assert( dimLocal == FunctionSpace::dimRange, "`dimRange` has to be equal to `GridPart::dimension`" );
+
       using Geometry = typename GridPart::template Codim< 0 >::EntityType::Geometry;
 
     public:
