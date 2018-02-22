@@ -49,6 +49,32 @@ namespace Dune
       static size_type index ( const ComponentType &i ) { return i; }
     };
 
+    template< class K, int dimR >
+    struct MakeVectorialTraits< ExplicitFieldVector< K, 1 >, ExplicitFieldVector< K, dimR > >
+    {
+      typedef FieldVector< K, 1 > ScalarType;
+      typedef ExplicitFieldVector< K, dimR > VectorialType;
+
+      typedef typename FieldTraits< VectorialType >::field_type field_type;
+      typedef typename VectorialType::size_type ComponentType;
+      typedef typename VectorialType::size_type size_type;
+
+      static const size_type factor = dimR;
+
+      static ComponentType begin () { return ComponentType( 0 ); }
+      static ComponentType end () { return ComponentType( factor ); }
+
+      static VectorialType zeroVectorial () { return VectorialType( K( field_type( 0 ) ) ); }
+
+      static const K &access ( const ScalarType &x ) { return x[ 0 ]; }
+      static K &access ( ScalarType &x ) { return x[ 0 ]; }
+
+      static const K &access ( const VectorialType &x, const ComponentType &i ) { return x[ i ]; }
+      static K &access ( VectorialType &x, const ComponentType &i ) { return x[ i ]; }
+
+      static size_type index ( const ComponentType &i ) { return i; }
+    };
+
     template< class K, int dimR, int dimD >
     struct MakeVectorialTraits< FieldMatrix< K, 1, dimD >, FieldMatrix< K, dimR, dimD > >
     {
@@ -74,7 +100,6 @@ namespace Dune
 
       static size_type index ( const ComponentType &i ) { return i; }
     };
-
 
 
     // MakeVectorialExpression
@@ -347,8 +372,8 @@ namespace Dune
 
     template< class GeometryJacobianInverseTransposed, class K, int SIZE >
     void hessianTransformation ( const GeometryJacobianInverseTransposed &gjit,
-                                 const MakeVectorialExpression< FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, 1 >, FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, SIZE > > &a,
-                                 FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::rows, GeometryJacobianInverseTransposed::rows >, SIZE > &b )
+                                 const MakeVectorialExpression< ExplicitFieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, 1 >, ExplicitFieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, SIZE > > &a,
+                                 ExplicitFieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::rows, GeometryJacobianInverseTransposed::rows >, SIZE > &b )
     {
       const int dimLocal = GeometryJacobianInverseTransposed::cols;
       const int dimGlobal = GeometryJacobianInverseTransposed::rows;

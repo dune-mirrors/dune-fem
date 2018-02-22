@@ -5,6 +5,7 @@
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 
+#include <dune/fem/common/explicitfieldvector.hh>
 #include <dune/fem/common/fmatrixcol.hh>
 
 namespace Dune
@@ -57,8 +58,8 @@ namespace Dune
 
     template< class GeometryJacobianInverseTransposed, class K, int SIZE >
     void hessianTransformation ( const GeometryJacobianInverseTransposed &gjit,
-                                 const FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, SIZE > &a,
-                                 FieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::rows, GeometryJacobianInverseTransposed::rows >, SIZE > &b )
+                                 const ExplicitFieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::cols, GeometryJacobianInverseTransposed::cols >, SIZE > &a,
+                                 ExplicitFieldVector< FieldMatrix< K, GeometryJacobianInverseTransposed::rows, GeometryJacobianInverseTransposed::rows >, SIZE > &b )
     {
       const int dimLocal = GeometryJacobianInverseTransposed::cols;
       const int dimGlobal = GeometryJacobianInverseTransposed::rows;
