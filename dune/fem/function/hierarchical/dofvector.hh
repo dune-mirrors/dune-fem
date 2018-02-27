@@ -58,7 +58,7 @@ namespace Dune
     template< class DofContainer >
     struct HierarchicalDofBlock
     {
-      friend class HierarchicalDofBlock< const DofContainer >;
+      friend struct HierarchicalDofBlock< const DofContainer >;
 
       typedef typename Impl::BlockIndicesFor< DofContainer >::Type BlockIndices;
       static constexpr std::size_t blockSize = Hybrid::size( BlockIndices() );
