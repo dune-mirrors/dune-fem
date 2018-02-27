@@ -21,7 +21,7 @@ namespace Dune
       // ----------------------------
 
       template< class GridPart, class LocalKeys >
-      class DiscontinuousGalerkinBlockMapper;
+      struct DiscontinuousGalerkinBlockMapper;
 
 
 
