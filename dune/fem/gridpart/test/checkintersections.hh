@@ -48,9 +48,6 @@ namespace Dune
                                    >::value
                       ), "Conflicting types for Intersection" );
 
-      static_assert( ( static_cast< int>( IntersectionType::dimension )
-                          == static_cast< int >( GridPartType::dimension )
-                      ), "IntersectionIterator has wrong dimension" );
       static_assert( ( static_cast< int>( IntersectionType::dimensionworld )
                           == static_cast< int >( GridPartType::dimensionworld )
                       ), "IntersectionIterator has wrong dimensionworld" );
