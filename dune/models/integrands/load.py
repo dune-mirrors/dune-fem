@@ -69,12 +69,9 @@ def init(integrands, *args, **kwargs):
 
 
 def setConstant(integrands, index, value):
-    print(index,value)
     try:
         index = integrands._renumbering[index]
-        print("new index", index)
     except KeyError:
-        print("key error:", index)
         pass
     integrands._setConstant(index, value)
 
@@ -176,16 +173,11 @@ def load(grid, integrands, renumbering=None, tempVars=True):
     setattr(module.Integrands, "_domainValueType", domainValueTuple)
     setattr(module.Integrands, "_rangeValueType", rangeValueTuple)
     if not hasattr(module.Integrands, "_init"):
-        print("not hasattr _init")
         setattr(module.Integrands, '_coefficientNames', {n: i for i, n in enumerate(coefficientNames)})
-        print(module.Integrands._coefficientNames)
         module.Integrands._init = module.Integrands.__dict__['__init__']
         setattr(module.Integrands, '__init__', init)
-        print("new init")
         if renumbering is not None:
-            print("renumberig is not None")
             setattr(module.Integrands, '_renumbering', renumbering)
-            print(module.Integrands._renumbering)
             module.Integrands._setConstant = module.Integrands.__dict__['setConstant']
             setattr(module.Integrands, 'setConstant', setConstant)
     return module
