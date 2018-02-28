@@ -8,6 +8,7 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <vector>
 
 #include <dune/common/classname.hh>
 #include <dune/common/ftraits.hh>
@@ -15,27 +16,23 @@
 
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 
+#include <dune/fem/common/localcontribution.hh>
+#include <dune/fem/common/bindguard.hh>
 #include <dune/fem/function/adaptivefunction.hh>
 #include <dune/fem/function/common/gridfunctionadapter.hh>
+#include <dune/fem/function/common/localcontribution.hh>
 #include <dune/fem/gridpart/leafgridpart.hh>
 #include <dune/fem/misc/mpimanager.hh>
 #include <dune/fem/space/common/interpolate.hh>
+#include <dune/fem/space/common/uniquefacetorientation.hh>
 #include <dune/fem/test/exactsolution.hh>
 
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 
-#include <dune/fem/space/brezzidouglasmarini.hh>
-#include <dune/fem/space/combinedspace.hh>
-#include <dune/fem/space/discontinuousgalerkin.hh>
-#include <dune/fem/space/finitevolume.hh>
-#include <dune/fem/space/lagrange.hh>
-#include <dune/fem/space/padaptivespace.hh>
-#include <dune/fem/space/rannacherturek.hh>
-#include <dune/fem/space/raviartthomas.hh>
-
+#include <dune/fem/space/raviartthomas/space.hh>
+#include <dune/fem/space/raviartthomas/localinterpolation.hh>
 #include <dune/fem/space/test/checklocalinterpolation.hh>
-
 
 // dgfUnitCube
 // -----------
@@ -90,29 +87,88 @@ static const int dimRange = GridPartType::dimensionworld;
 typedef Dune::Fem::GridFunctionSpace< GridPartType, Dune::FieldVector< typename GridPartType::ctype, dimRange > > FunctionSpaceType;
 
 typedef std::tuple<
-  Dune::Fem::FiniteVolumeSpace< FunctionSpaceType, GridPartType >,
-  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 0 >,
-  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::DiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
-  Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::LagrangeDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
-  Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
-#if HAVE_DUNE_LOCALFUNCTIONS
-  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 2 >,
-  Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 0 >,
-  Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 1 >,
-  // Dune::Fem::LagrangeSpace< FunctionSpaceType, GridPartType >,
-  // Dune::Fem::RannacherTurekSpace< FunctionSpaceType, GridPartType >,
-#endif // #if HAVE_DUNE_LOCALFUNCTIONS
-  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 1 >,
-  Dune::Fem::LagrangeDiscreteFunctionSpace< FunctionSpaceType, GridPartType, 2 >
+    Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 0 >,
+    Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 1 >
   > DiscreteFunctionSpacesType;
 
 typedef ErrorTuple< DiscreteFunctionSpacesType >::Type ErrorTupleType;
 
 
+// AlternateInterpolation
+// ----------------------
+
+template< class DiscreteFunctionSpace >
+struct AlternateInterpolation
+{
+  using GridPartType = typename DiscreteFunctionSpace::GridPartType;
+  using FunctionSpaceType = typename DiscreteFunctionSpace::FunctionSpaceType;
+  using LocalFiniteElementType = typename DiscreteFunctionSpace::LocalFiniteElementType;
+
+  using LocalInterpolationType =
+    Dune::Fem::RaviartThomasLocalInterpolation< GridPartType, LocalFiniteElementType, FunctionSpaceType::dimRange >;
+
+  explicit AlternateInterpolation ( const GridPartType& gridPart )
+    : orientations_( gridPart )
+  {}
+
+  template< class DomainFunction, class RangeFunction >
+  void operator() ( const DomainFunction& u, RangeFunction& v ) const
+  {
+    v.clear();
+
+    Dune::Fem::ConstLocalFunction< DomainFunction > uLocal( u );
+    Dune::Fem::SetLocalContribution< RangeFunction > vLocal( v );
+
+    for ( const auto& entity : Dune::elements( u.space().gridPart(), Dune::Partitions::all ) )
+    {
+      auto guard = bindGuard( std::tie( uLocal, vLocal ), entity );
+      auto interpolation = localInterpolation( entity );
+
+      interpolation( [&] ( const auto& x ) { return uLocal.evaluate( x ); }, vLocal );
+    }
+  }
+
+  template< class Entity >
+  auto localInterpolation ( const Entity& entity ) const
+  {
+    return LocalInterpolationType( entity, orientations_( entity ) );
+  }
+
+private:
+  Dune::Fem::UniqueFacetOrientation< GridPartType > orientations_;
+};
+
+// checkLocalInterpolation
+// -----------------------
+
+template< class DiscreteFunctionSpace, class Interpolation >
+void checkLocalInterpolation ( const DiscreteFunctionSpace& space, const Interpolation& interpolation )
+{
+  std::cout << ">>> Testing interpolation " << Dune::className< Interpolation >()
+            << " of " << Dune::className< DiscreteFunctionSpace >() << ":" << std::endl;
+
+  for( auto entity : space )
+  {
+    auto bSet = space.basisFunctionSet( entity );
+    auto interpolation_ = interpolation.localInterpolation( entity );
+
+    for( std::size_t i = 0; i < bSet.size(); ++i )
+    {
+      LocalBasis< DiscreteFunctionSpace > local( bSet, i );
+
+      std::vector< typename DiscreteFunctionSpace::RangeFieldType > phii( bSet.size(), 0 );
+      interpolation_( [&] ( const auto& x ) { return local.evaluate( x ); }, phii );
+
+      for( std::size_t j = 0; j < phii.size(); ++j )
+        if( std::abs( phii[ j ] -( i == j ))  > 1e-8 )
+        {
+          std::cerr << "Local interpolation error for basis function: "<< j <<" with diff: " <<  phii[ j ] <<  std::endl;
+          std::abort();
+        }
+    }
+  }
+  std::cout <<"... done." <<std::endl;
+}
 
 // algorithm
 // ---------
@@ -127,9 +183,11 @@ algorithm ( typename DiscreteFunctionSpace::GridPartType &gridPart )
   // interpolate a function
   Dune::Fem::ExactSolution< typename DiscreteFunctionSpace::FunctionSpaceType > uExact;
   const auto uGridExact = gridFunctionAdapter( "exact solution", uExact, gridPart, 3 );
-  interpolate( uGridExact, u );
 
-  checkLocalInterpolation( space );
+  AlternateInterpolation< DiscreteFunctionSpace > interpolation( gridPart );
+  interpolation( uGridExact, u );
+
+  checkLocalInterpolation( space, interpolation );
 
   Dune::Fem::L2Norm< GridPartType > l2norm( gridPart );
   Dune::Fem::H1Norm< GridPartType > h1norm( gridPart );
