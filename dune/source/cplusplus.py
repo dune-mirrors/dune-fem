@@ -64,7 +64,8 @@ class ListWriter:
 class Include:
     def __init__(self, fileName):
         self.fileName = fileName
-
+    def __lt__(self,other):
+        return self.fileName < other.fileName
 
 
 # NameSpace

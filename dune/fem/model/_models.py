@@ -14,12 +14,13 @@ def elliptic(view, equation, *args, **kwargs):
     coefficients = kwargs.pop('coefficients', dict())
 
     Model = elliptic.load(view, equation, *args, **kwargs).Model
-    if isinstance(equation, ufl.equation.Equation):
-        lhs = ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(equation.lhs)))
-        if lhs == ufl.adjoint(lhs):
-            setattr(Model, 'symmetric', 'true')
-        else:
-            setattr(Model, 'symmetric', 'false')
+    # the following needs to be done for the linearized problem:
+    # if isinstance(equation, ufl.equation.Equation):
+    #     lhs = ufl.algorithms.expand_indices(ufl.algorithms.expand_derivatives(ufl.algorithms.expand_compounds(equation.lhs)))
+    #     if lhs == ufl.adjoint(lhs):
+    #         setattr(Model, 'symmetric', 'true')
+    #    else:
+    #        setattr(Model, 'symmetric', 'false')
 
     return Model(coefficients=coefficients)
 

@@ -260,4 +260,6 @@ class Integrands():
 
     def includes(self):
         incs = set.union(*[extractIncludesFromStatements(stmts) for stmts in (self.interior, self.linearizedInterior, self.boundary, self.linearizedBoundary, self.skeleton, self.linearizedSkeleton)])
-        return [Include(i) for i in incs]
+        ret = [Include(i) for i in incs]
+        ret.sort()
+        return ret
