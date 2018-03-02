@@ -25,6 +25,13 @@ namespace Dune
     // Note: DA[ubar,(c)]u = DL[ubar,(c)]u
     // and if L[u];(c)] = Au + c we have
     // A[u;(c)] = Au + Aubar + c - Aubar = Au + c
+    //
+    // Use in Newton method:
+    //   DL[ubar]d + L[ubar] = 0  ; d = -DL^{-1}L[ubar] ; u = u+d
+    //   u = u-DL^{-1}L[ubar]
+    // A[u] = DL[ubar]u + L[ubar] - DL[ubar]ubar = 0
+    //   u = -DL^{-1}(L[ubar]-DL ubar)
+    //   u = ubar-DL^{-1}L[ubar]
     template< class Scheme >
     struct LinearizedScheme
     {
@@ -33,8 +40,17 @@ namespace Dune
       typedef typename SchemeType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
       typedef typename SchemeType::GridPartType GridPartType;
       typedef typename SchemeType::LinearOperatorType LinearOperatorType;
-      typedef typename SchemeType::UsedSolverType::LinearInverseOperatorType LinearInverseOperatorType;
+      typedef typename SchemeType::InverseOperatorType LinearInverseOperatorType;
       typedef typename SchemeType::ModelType ModelType;
+      struct SolverInfo
+      {
+        SolverInfo ( bool converged, int linearIterations, int nonlinearIterations )
+          : converged( converged ), linearIterations( linearIterations ), nonlinearIterations( nonlinearIterations )
+        {}
+
+        bool converged;
+        int linearIterations, nonlinearIterations;
+      };
 
       LinearizedScheme ( SchemeType &scheme,
                          Dune::Fem::ParameterReader parameter = Dune::Fem::Parameter::container() )
@@ -42,6 +58,7 @@ namespace Dune
           linearOperator_( "linearized Op", scheme.space(), scheme.space() ),
           linabstol_( 1e-12 ), // parameter.getValue< double >("linabstol", 1e-12 ) ),
           linreduction_( 1e-12 ), // parameter_.getValue< double >("linreduction", 1e-12 ) ),
+          maxIter_( 1000 ),
           inverseOperator_( nullptr ),
           affineShift_( "affine shift", scheme.space() ),
           parameter_( std::move( parameter ) ),
@@ -56,6 +73,7 @@ namespace Dune
           linearOperator_( "linearized Op", scheme.space(), scheme.space() ),
           linabstol_( 1e-12 ), // parameter.getValue< double >("linabstol", 1e-12 ) ),
           linreduction_( 1e-12 ), // parameter_.getValue< double >("linreduction", 1e-12 ) ),
+          maxIter_( 1000 ),
           inverseOperator_( nullptr ),
           affineShift_( "affine shift", scheme.space() ),
           parameter_( std::move( parameter ) ),
@@ -67,7 +85,8 @@ namespace Dune
       void setup(const DiscreteFunctionType &ubar)
       {
         scheme_.fullOperator().jacobian(ubar, linearOperator_);
-        inverseOperator_ = std::make_shared<LinearInverseOperatorType>(linearOperator_ ,linreduction_, linabstol_ );
+        inverseOperator_ = std::make_shared<LinearInverseOperatorType>(linreduction_, linabstol_, maxIter_ );
+        inverseOperator_->bind(linearOperator_);
         sequence_ = scheme_.space().sequence();
         ubar_.assign(ubar);
       }
@@ -91,14 +110,18 @@ namespace Dune
         (*this)(tmp,dest);
       }
 
-      void solve ( DiscreteFunctionType &solution ) const
+      SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
       {
         int oldCount = (*inverseOperator_).iterations();
-        affineShift();
         constraint(solution);
         assert( sequence_ == scheme_.space().sequence() );
-        (*inverseOperator_)( affineShift_, solution );
-        // std::cout << "Linear Iterations: " << (*inverseOperator_).iterations()-oldCount << std::endl;
+        (*inverseOperator_)( rhs, solution );
+        return SolverInfo( true, (*inverseOperator_).iterations()-oldCount, 1 );
+      }
+      SolverInfo solve ( DiscreteFunctionType &solution ) const
+      {
+        affineShift();
+        return solve(affineShift_,solution);
       }
 
       template< class GridFunction >
@@ -131,6 +154,7 @@ namespace Dune
       LinearOperatorType linearOperator_;
       double linabstol_;
       double linreduction_;
+      int maxIter_;
       std::shared_ptr<LinearInverseOperatorType> inverseOperator_;
       mutable DiscreteFunctionType affineShift_;
       Dune::Fem::ParameterReader parameter_;

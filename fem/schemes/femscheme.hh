@@ -67,6 +67,7 @@ public:
   typedef typename Operator::RangeDiscreteFunctionType DiscreteFunctionType;
   typedef Operator DifferentiableOperatorType;
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
+  typedef InverseOperator InverseOperatorType;
 
   //! grid view (e.g. leaf grid view) provided in the template argument list
   typedef typename ModelType::GridPartType GridPartType;

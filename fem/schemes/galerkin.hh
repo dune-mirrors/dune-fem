@@ -792,6 +792,8 @@ namespace Dune
     template< class Integrands, class LinearOperator, class InverseOperator >
     struct GalerkinScheme
     {
+      typedef InverseOperator InverseOperatorType;
+      typedef Integrands ModelType;
       typedef DifferentiableGalerkinOperator< Integrands, LinearOperator > DifferentiableOperatorType;
 
       typedef typename DifferentiableOperatorType::DomainFunctionType DomainFunctionType;
