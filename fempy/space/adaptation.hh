@@ -10,8 +10,6 @@
 #include <dune/fem/space/common/communicationmanager.hh>
 #include <dune/fem/space/common/dataprojection.hh>
 
-#include <dune/python/common/common.hh>
-
 #include <dune/fempy/grid/discretefunctionmanager.hh>
 #include <dune/fempy/grid/virtualizedrestrictprolong.hh>
 #include <dune/fempy/parameter.hh>
