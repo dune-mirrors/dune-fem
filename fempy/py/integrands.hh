@@ -38,12 +38,12 @@ namespace Dune
           std::array< std::function< void( Integrands &, pybind11::handle ) >, numConstants > dispatch;
           Hybrid::forEach( std::make_index_sequence< numConstants >(), [ &dispatch ] ( auto i ) {
               dispatch[ i ] = [ i ] ( Integrands &integrands, pybind11::handle o ) {
-                  integrands.template constant< i >() = o.template cast< typename Integrands::template ConstantType< i > >();
+                  integrands.template constant< i.value >() = o.template cast< typename Integrands::template ConstantType< i.value > >();
                 };
             } );
 
           cls.def( "setConstant", [ dispatch ] ( Integrands &self, int k, pybind11::handle o ) {
-              if( k >= dispatch.size() )
+              if( static_cast< std::size_t >( k ) >= dispatch.size() )
                 throw pybind11::index_error( "No such constant: " + std::to_string( k ) + " (must be in [0, " + std::to_string( dispatch.size() ) + "[)" );
               dispatch[ k ]( self, o );
             } );
