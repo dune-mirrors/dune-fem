@@ -214,6 +214,7 @@ def compileUFL(form, constants=None, coefficients=None, tempVars=True):
 
     integrands = Integrands(form.signature(), (d.ufl_shape for d in derivatives_u), (d.ufl_shape for d in derivatives_phi),
                             constants=(fieldVectorType(c) for c in constants), coefficients=(fieldVectorType(c) for c in coefficients),
+                            constantNames=(getattr(c, 'name', None) for c in constants),
                             coefficientNames=(getattr(c, 'name', None) for c in coefficients),
                             parameterNames=(getattr(c, 'parameter', None) for c in constants))
     try:
