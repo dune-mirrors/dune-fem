@@ -3,6 +3,7 @@ dune_add_subdirs(test)
 #install header files
 dune_install( bindguard.hh
               coordinate.hh
+              explicitfieldvector.hh
               fmatrixcol.hh
               forloop.hh
               geometrytypemap.hh
