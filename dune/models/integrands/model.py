@@ -9,7 +9,7 @@ from dune.source.fem import fieldTensorType
 from dune.source.algorithm.extractincludes import extractIncludesFromStatements
 
 class Integrands():
-    def __init__(self, signature, domainValue, rangeValue=None, constants=None, coefficients=None, coefficientNames=None, parameterNames=None):
+    def __init__(self, signature, domainValue, rangeValue=None, constants=None, coefficients=None, constantNames=None, coefficientNames=None, parameterNames=None):
         """construct new integrands
 
         Args:
@@ -18,6 +18,7 @@ class Integrands():
             rangeVlue:        structure of range value tuple
             constants:        tuple of C++ types for constants to provide
             coefficients:     tuple of C++ types for the ranges of coefficient functions
+            constantNames:    tuple of strings naming the constants
             coefficientNames: tuple of string naming the coefficients
             parameterNames:   tuple of strings assigning dune-fem parameter names to the constants
 
@@ -42,6 +43,14 @@ class Integrands():
         self._constants = [] if constants is None else list(constants)
         self._coefficients = [] if coefficients is None else list(coefficients)
 
+        self._constantNames = [None,] * len(self._constants) if constantNames is None else list(constantNames)
+        self._constantNames = ['constant' + str(i) if n is None else n for i, n in enumerate(self._constantNames)]
+        if len(self._constantNames) != len(self._constants):
+            raise ValueError("Length of constantNames must match length of constants")
+        invalidConstants = [n for n in self._constantNames if n is not None and re.match('^[a-zA-Z_][a-zA-Z0-9_]*$', n) is None]
+        if invalidConstants:
+            raise ValueError('Constant names are not valid C++ identifiers:' + ', '.join(invalidCoefficients) + '.')
+
         self._coefficientNames = [None,] * len(self._coefficients) if coefficientNames is None else list(coefficientNames)
         self._coefficientNames = ['coefficient' + str(i) if n is None else n for i, n in enumerate(self._coefficientNames)]
         if len(self._coefficientNames) != len(self._coefficients):
@@ -65,6 +74,14 @@ class Integrands():
         self.linearizedSkeleton = None
 
         self._derivatives = [('RangeType', 'evaluate'), ('JacobianRangeType', 'jacobian'), ('HessianRangeType', 'hessian')]
+
+    @property
+    def constantTypes(self):
+        return [n[0].upper() + n[1:] for n in self._constantNames]
+
+    @property
+    def constantNames(self):
+        return [n[0].lower() + n[1:] for n in self._constantNames]
 
     @property
     def coefficientTypes(self):
@@ -126,19 +143,22 @@ class Integrands():
         else:
             code.append(TypeAlias("ConstantTupleType", "std::tuple<>"))
 
+        for type, alias in zip(self._constants, self.constantTypes):
+            code.append(TypeAlias(alias, type))
+
         if self._coefficients:
             coefficientSpaces = [('Dune::Fem::GridFunctionSpace< GridPartType, ' + c + ' >') for c in self._coefficients]
             code.append(TypeAlias("CoefficientFunctionSpaceTupleType", "std::tuple< " +", ".join(coefficientSpaces) + " >"))
             code.append(TypeAlias('CoefficientTupleType', 'std::tuple< ' + ', '.join(self.coefficientTypes) + ' >'))
 
-            code.append(TypeAlias("CoefficientFunctionSpaceType", "typename std::tuple_element< i, CoefficientFunctionSpaceTupleType >::type", targs=["std::size_t i"]))
+            code.append(TypeAlias("CoefficientFunctionSpaceType", "std::tuple_element_t< i, CoefficientFunctionSpaceTupleType >", targs=["std::size_t i"]))
             for s in ["RangeType", "JacobianRangeType"]:
                 code.append(TypeAlias("Coefficient" + s, "typename CoefficientFunctionSpaceType< i >::" + s, targs=["std::size_t i"]))
         else:
             code.append(TypeAlias("CoefficientTupleType", "std::tuple<>"))
 
-        code.append(TypeAlias('CoefficientType', 'typename std::tuple_element< i, CoefficientTupleType >::type', targs=['std::size_t i']))
-        code.append(TypeAlias('ConstantType', 'typename std::tuple_element< i, ConstantTupleType >::type::element_type', targs=['std::size_t i']))
+        code.append(TypeAlias('CoefficientType', 'std::tuple_element_t< i, CoefficientTupleType >', targs=['std::size_t i']))
+        code.append(TypeAlias('ConstantType', 'typename std::tuple_element_t< i, ConstantTupleType >::element_type', targs=['std::size_t i']))
 
         if self.skeleton is not None:
             code.append(EnumClass('Side', ['in = 0u', 'out = 1u'], 'std::size_t'))
@@ -226,6 +246,10 @@ class Integrands():
 
         code.append(Method('const ConstantType< i > &', 'constant', targs=['std::size_t i'], code=return_(dereference(get('i')(constants_))), const=True))
         code.append(Method('ConstantType< i > &', 'constant', targs=['std::size_t i'], code=return_(dereference(get('i')(constants_)))))
+
+        for i, (t, n) in enumerate(zip(self.constantTypes, self.constantNames)):
+            code.append(Method('const ' + t + ' &', n, code=return_(dereference(get(i)(constants_))), const=True))
+            code.append(Method(t + ' &', n, code=return_(dereference(get(i)(constants_)))))
 
         code.append(Method('const EntityType &', 'entity', const=True, code=return_(insideEntity)))
 
