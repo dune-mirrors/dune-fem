@@ -175,7 +175,7 @@ def h1Galerkin(space, model, solver=None, parameters={}):
     return module(includes, typeName).Scheme(space, model, parameters)
 
 
-def linearized(scheme, ubar=None, solver=None, parameters={}):
+def linearized(scheme, ubar=None, parameters={}):
     from . import module
     schemeType = scheme._typeName
     typeName = "Dune::Fem::LinearizedScheme< " + ", ".join([schemeType]) + " >"

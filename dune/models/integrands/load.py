@@ -28,7 +28,7 @@ def init(integrands, *args, **kwargs):
 
     for name, value in kwargs.items():
         try:
-            i = coefficientNames[i]
+            i = coefficientNames[name]
         except KeyError:
             raise ValueError('No such coefficent: ' + name + '.')
 
