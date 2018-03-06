@@ -335,11 +335,26 @@ namespace Dune
         dw.clear();
         jInv_( residual, dw );
         linearIterations_ += jInv_.iterations();
-        w -= dw;
 
+        double deltaOld = delta_;
+
+        w -= dw;
         (*op_)( w, residual );
         residual -= u;
         delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
+
+        while (delta_ > deltaOld)
+        {
+          if( verbose_ )
+            std::cout << "    line search:" << delta_ << ">" << deltaOld << std::endl;
+          if (std::abs(delta_-deltaOld) < 1e-5*delta_) // line search not working
+            break;
+          dw *= 0.5;
+          w += dw;
+          (*op_)( w, residual );
+          residual -= u;
+          delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
+        }
       }
       jInv_.unbind();
       if( verbose_ )
