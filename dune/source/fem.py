@@ -22,6 +22,6 @@ def fieldTensorType(shape, field = 'double'):
     elif len(shape) == 2:
         return 'Dune::FieldMatrix< ' + field + ', ' + str(shape[0]) + ', ' + str(shape[1]) + ' >'
     elif len(shape) == 3:
-        return 'Dune::FieldVector< Dune::FieldMatrix< ' + field + ', ' + str(shape[1]) + ', ' + str(shape[2]) + ' >, ' + str(shape[0]) + ' >'
+        return 'Dune::Fem::ExplicitFieldVector< Dune::FieldMatrix< ' + field + ', ' + str(shape[1]) + ', ' + str(shape[2]) + ' >, ' + str(shape[0]) + ' >'
     else:
         raise ValueError('No C++ type defined for tensors of shape ' + str(shape) + '.')
