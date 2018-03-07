@@ -102,7 +102,7 @@ class Source(object):
         if isinstance(self.integrands, Form):
             coefficients = set(self.integrands.coefficients())
             constants = [c for c in coefficients if c.is_cellwise_constant()]
-            coefficients = [c for c in coefficients if not c.is_cellwise_constant()]
+            coefficients = sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())
             integrands = compileUFL(self.integrands, constants=constants, coefficients=coefficients, tempVars=self.tempVars)
         else:
             integrands = self.integrands
@@ -166,7 +166,7 @@ def load(grid, integrands, renumbering=None, tempVars=True):
         numCoefficients = len(coefficients)
         if renumbering is None:
             renumbering = dict()
-            renumbering.update((c, i) for i, c in enumerate(c for c in coefficients if not c.is_cellwise_constant()))
+            renumbering.update((c, i) for i, c in enumerate(sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())))
             renumbering.update((c, i) for i, c in enumerate(c for c in coefficients if c.is_cellwise_constant()))
         coefficientNames = ['coefficient' + str(i) if n is None else n for i, n in enumerate(getattr(c, 'name', None) for c in coefficients if not c.is_cellwise_constant())]
     else:

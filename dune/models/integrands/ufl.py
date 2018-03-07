@@ -185,7 +185,7 @@ def compileUFL(form, constants=None, coefficients=None, tempVars=True):
     if coefficients is None and constants is None:
         coefficients = set(form.coefficients())
         constants = [c for c in coefficients if c.is_cellwise_constant()]
-        coefficients = [c for c in coefficients if not c.is_cellwise_constant()]
+        coefficients = sorted((c for c in coefficients if not c.is_cellwise_constant()), key=lambda c: c.count())
     elif coefficients is None or constants is None:
         raise ValueError("Either both, coefficients and constants, or neither of them must be specified.")
 
