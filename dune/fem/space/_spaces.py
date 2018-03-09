@@ -4,6 +4,7 @@ import sys
 import logging
 logger = logging.getLogger(__name__)
 
+from dune.generator import Method
 import dune.common.checkconfiguration as checkconfiguration
 
 def dgonb(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
@@ -153,7 +154,9 @@ def dglegendrehp(gridview, order=1, dimrange=1, field="double", storage=None, **
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
 
-    return module(field, storage, includes, typeName).Space(gridview)
+    localOrder = Method('localOrder', '[](const DuneType &self, const typename DuneType::EntityType &e){return self.order(e);}');
+
+    return module(field, storage, includes, typeName, localOrder).Space(gridview)
 
 def dglagrange(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
     """create a discontinous galerkin space with elementwise lagrange basis function
