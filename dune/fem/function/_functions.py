@@ -5,6 +5,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+import dune.grid
 import dune.models.localfunction
 
 import dune.common.checkconfiguration as checkconfiguration
@@ -55,7 +56,11 @@ def localFunction(gridview, name, order, value):
 
 
 def levelFunction(gridview):
-    return localFunction(gridview, "level", 0, lambda en,_: [en.level])
+    @dune.grid.gridFunction(gridview)
+    def levelFunction(e,x):
+        return [e.level]
+    return levelFunction
+    # return localFunction(gridview, "level", 0, lambda en,_: [en.level])
 
 
 def partitionFunction(gridview):
