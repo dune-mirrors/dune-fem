@@ -50,6 +50,7 @@ PYBIND11_MODULE( _fem, module )
         self.append( key, str( value ) );
       }, "key"_a, "value"_a );
 
+#if 0
     // do we really need this one?
     param.def( "append", [] ( Dune::Fem::ParameterContainer &self, const std::string &key, int value ) {
         self.append( key, std::to_string( value ) );
@@ -59,18 +60,53 @@ PYBIND11_MODULE( _fem, module )
     param.def( "append", [] ( Dune::Fem::ParameterContainer &self, const std::string &key, double value ) {
         self.append( key, std::to_string( value ) );
       }, "key"_a, "value"_a );
+#endif
 
     param.def( "exists", [] ( const Dune::Fem::ParameterContainer &self, const std::string &key ) {
         return self.exists( key );
       }, "key"_a );
 
     param.def( "__getitem__", [] ( const Dune::Fem::ParameterContainer &self, const std::string &key ) {
+        if (!self.exists( key ))
+          throw pybind11::key_error("key not found in parameter file");
         return self.getValue< std::string >( key );
       } , "key"_a );
 
     param.def( "__setitem__", [] ( Dune::Fem::ParameterContainer &self, const std::string &key, pybind11::handle value ) {
         self.append( key, str( value ) );
       }, "key"_a, "value"_a );
+
+    param.def( "get", [] ( Dune::Fem::ParameterContainer &self, const std::string &key, bool defaultValue ) -> bool {
+        if (self.exists( key ))
+          return self.getValue< bool >( key );
+        else
+          self.append( key, defaultValue?"true":"false" );
+        return defaultValue;
+      }, "key"_a, "defaultValue"_a );
+    param.def( "get", [] ( Dune::Fem::ParameterContainer &self, const std::string &key, int defaultValue ) {
+        if (self.exists( key ))
+          return self.getValue< int >( key );
+        else
+          self.append( key, std::to_string(defaultValue) );
+        return defaultValue;
+      }, "key"_a, "defaultValue"_a );
+    param.def( "get", [] ( Dune::Fem::ParameterContainer &self, const std::string &key, double defaultValue ) {
+        if (self.exists( key ))
+          return self.getValue< double >( key );
+        else
+          self.append( key, std::to_string(defaultValue) );
+        return defaultValue;
+      }, "key"_a, "defaultValue"_a );
+
+    param.def( "get", [] ( Dune::Fem::ParameterContainer &self, const std::string &key, pybind11::handle defaultValue ) {
+        if (self.exists( key ))
+          return str( self.getValue< std::string >( key ) );
+        else if (!defaultValue.is_none())
+          self.append( key, str( defaultValue ) );
+        else
+          throw pybind11::key_error("key not found in parameter file");
+        return str( defaultValue );
+      }, "key"_a, pybind11::arg("defaultValue")=pybind11::none() );
 
     param.def( "__str__", [] ( const Dune::Fem::ParameterContainer &self ) {
         std::stringstream s;
