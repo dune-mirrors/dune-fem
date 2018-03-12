@@ -6,15 +6,11 @@ logger = logging.getLogger(__name__)
 
 
 import dune.grid
+import dune.fem.space
 import dune.models.localfunction
 
 import dune.common.checkconfiguration as checkconfiguration
 from dune.common.hashit import hashIt
-
-try:
-    from dune.ufl import GridFunction
-except:
-    pass
 
 def registerGridFunctions(gridview):
     from dune.generator import builder
@@ -113,3 +109,26 @@ def numpyFunction(space, vec, name="tmp", **unused):
           spaceType + ", Dune::FemPy::NumPyVector< " + field + " > >"
 
     return module("numpy", includes, typeName).DiscreteFunction(space,name,vec).as_ufl()
+
+
+def tupleDiscreteFunction(*spaces, **kwargs):
+    from dune.fem.discretefunction import module, addAttr
+    tupleSpace = dune.fem.space.combined(*spaces)
+    dfIncludes = (space.storage[1] for space in spaces)
+    dfTypeNames = (space.storage[2] for space in spaces)
+    includes = sum(dfIncludes, ["dune/fem/function/tuplediscretefunction.hh"])
+    typeName = "Dune::Fem::TupleDiscreteFunction< " + ", ".join(dfTypeNames) + " >"
+    name = kwargs.get("name", "")
+    df = module(tupleSpace.storage, includes, typeName, dynamicAttr=True).DiscreteFunction(tupleSpace, name)
+    # create a discrete function for each space to ensure the DiscreteFunction is registered with pybind11
+    for s in spaces:
+        discreteFunction(s, "")
+    #for i in range(df.components):
+    #    addAttr(df._module, df[i].__class__, df._storage)
+    compNames = kwargs.get("components", None)
+    if not compNames is None:
+        components = df.components
+        assert len(compNames) == len(components)
+        for c, n in zip(components, compNames):
+            df.__dict__[n] = c
+    return df.as_ufl()
