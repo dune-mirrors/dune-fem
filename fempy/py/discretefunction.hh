@@ -145,6 +145,40 @@ namespace Dune
 
 
 
+      // registerSubDiscreteFunction
+      // ---------------------------
+
+      template< class GridFunction, class... options >
+      inline static auto registerSubDiscreteFunction ( pybind11::class_< GridFunction, options... > cls, PriorityTag< 1 > )
+        -> std::enable_if_t< std::is_same< typename GridFunction::template SubDiscreteFunction< 0 >::Type &, decltype( std::declval< GridFunction & >().template subDiscreteFunction< 0 >() ) >::value >
+      {
+        cls.def_property_readonly( "components", [] ( pybind11::object self ) -> pybind11::tuple {
+            GridFunction &gridFunction = pybind11::cast< GridFunction & >( self );
+            pybind11::tuple components( GridFunction::Sequence::size() );
+            Hybrid::forEach( typename GridFunction::Sequence(), [ self, &gridFunction, &components ] ( auto &&i ) {
+                assert( pybind11::already_registered< typename GridFunction::template SubDiscreteFunction< i.value >::Type > );
+                pybind11::object subFunction = pybind11::cast( &gridFunction.template subDiscreteFunction< i.value >(), pybind11::return_value_policy::reference_internal, self );
+                if( subFunction )
+                  components[ i.value ] = subFunction;
+                else
+                  throw pybind11::error_already_set();
+              } );
+            return components;
+          } );
+      }
+
+      template< class GridFunction, class... options >
+      inline static void registerSubDiscreteFunction ( pybind11::class_< GridFunction, options... > cls, PriorityTag< 0 > )
+      {}
+
+      template< class GridFunction, class... options >
+      inline static void registerSubDiscreteFunction ( pybind11::class_< GridFunction, options... > cls )
+      {
+        registerSubDiscreteFunction( cls, PriorityTag< 42 >() );
+      }
+
+
+
       // registerDiscreteFunction
       // ------------------------
 
@@ -203,6 +237,8 @@ namespace Dune
         }
 
         cls.def_property_readonly( "dofVector", [] ( DF &self ) -> DofVector & { return self.dofVector(); } ); // , pybind11::return_value_policy::reference_internal );
+
+        registerSubDiscreteFunction( cls );
 
         typedef Dune::Fem::AddLocalContribution<DF> AddLocalContrib;
         auto clsAddContrib =
