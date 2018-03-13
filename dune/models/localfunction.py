@@ -82,7 +82,7 @@ def UFLFunction(grid, name, order, expr, **kwargs):
     predefined = {}
     predefined[maxCellEdgeLength] = maxEdgeLength(cellGeometry)
 
-    writer.emit(generateCode(predefined, ExprTensor((dimR, ), expr), coefficients, False), context=Method('void', 'evaluate'))
+    writer.emit(generateCode(predefined, ExprTensor((dimR, ), [expr[int(i)] for i in range(dimR)]), coefficients, False), context=Method('void', 'evaluate'))
     code = '\n'.join(writer.writer.lines)
     evaluate = code.replace("result", "value")
     try:
