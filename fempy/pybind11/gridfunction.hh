@@ -1,6 +1,8 @@
 #ifndef DUNE_FEMPY_PYBIND11_GRIDFUNCTION_HH
 #define DUNE_FEMPY_PYBIND11_GRIDFUNCTION_HH
 
+#include <cassert>
+
 #include <type_traits>
 
 #include <dune/common/visibility.hh>
@@ -64,9 +66,16 @@ namespace pybind11
       template< class V >
       static handle cast ( V &&v, return_value_policy policy, handle parent )
       {
-        tuple args( 1 );
-        args[ 0 ] = Base::cast( std::forward< V >( v ), policy, parent );
-        return PyObject_Call( Dune::FemPy::getGridFunctionWrapper().ptr(), args.ptr(), nullptr );
+        pybind11::handle obj = Base::cast( std::forward< V >( v ), policy, parent );
+        if( obj )
+        {
+          tuple args( 1 );
+          args[ 0 ] = reinterpret_steal< object >( obj );
+          assert( args.ptr() );
+          return PyObject_Call( Dune::FemPy::getGridFunctionWrapper().ptr(), args.ptr(), nullptr );
+        }
+        else
+          return obj;
       }
     };
 
