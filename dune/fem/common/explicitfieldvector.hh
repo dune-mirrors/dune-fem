@@ -1,8 +1,12 @@
 #ifndef DUNE_FEM_COMMON_EXPLICITFIELDVECTOR_HH
 #define DUNE_FEM_COMMON_EXPLICITFIELDVECTOR_HH
 
+#include <type_traits>
+#include <utility>
+
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/typeutilities.hh>
 
 namespace Dune
 {
@@ -56,6 +60,7 @@ namespace Dune
     class ExplicitFieldVector
       : public Dune::FieldVector<T, N>
     {
+      typedef ExplicitFieldVector< T, N > ThisType;
       typedef Dune::FieldVector<T, N> BaseType;
      public:
       //! Inherit assignment
@@ -64,8 +69,14 @@ namespace Dune
       /**Redirect any general construction to the base class during
        * explicit conversion
        */
-      template<class... V>
-      explicit ExplicitFieldVector(const V&... args) : BaseType(args...) {}
+      template< class... Args, disableCopyMove< ThisType, Args... > = 0, std::enable_if_t< std::is_constructible< BaseType, Args &&... >::value, int > = 0 >
+      explicit ExplicitFieldVector ( Args &&... args )
+        : BaseType( std::forward< Args >( args )... )
+      {}
+
+      ExplicitFieldVector ( const std::initializer_list< T > &values )
+        : BaseType( values )
+      {}
 
       /**Allow implicit conversion if bothe vector are either
        * composed of field-elements of some fields which can be
