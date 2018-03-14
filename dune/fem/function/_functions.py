@@ -35,24 +35,14 @@ def registerGridFunctions(gridview):
 
     return builder.load(moduleName, source, "gridfunctions")
 
-def addUFL(instance):
-    return instance.as_ufl()
-    try:
-        gf = GridFunction(instance)
-        return GridFunction(instance)
-    except NameError:
-        return instance
-
 def globalFunction(gridview, name, order, value):
     module = registerGridFunctions(gridview)
-    return addUFL(module.globalGridFunction(gridview,name,order,value))
+    return module.globalGridFunction(gridview,name,order,value).as_ufl()
 
 
 def localFunction(gridview, name, order, value):
     module = registerGridFunctions(gridview)
-    ret = module.localGridFunction(gridview,name,order,value)
-    ret = addUFL(ret)
-    return ret
+    return module.localGridFunction(gridview,name,order,value).as_ufl()
 
 
 def levelFunction(gridview):
@@ -78,10 +68,7 @@ def cppFunction(gridview, name, order, code, *args, **kwargs):
 
 def uflFunction(gridview, name, order, ufl, *args, **kwargs):
     func = dune.models.localfunction.UFLFunction(gridview, name, order, ufl, *args, **kwargs)
-    if func is not None:
-        return addUFL( func )
-    else:
-        return None
+    return func.as_ufl() if func is not None else None
 
 def discreteFunction(space, name, expr=None, *args, **kwargs):
     """create a discrete function
@@ -100,7 +87,7 @@ def discreteFunction(space, name, expr=None, *args, **kwargs):
         df.clear()
     else:
         df.interpolate(expr)
-    return addUFL(df)
+    return df.as_ufl()
 
 
 def numpyFunction(space, vec, name="tmp", **unused):
@@ -125,4 +112,4 @@ def numpyFunction(space, vec, name="tmp", **unused):
     typeName = "Dune::Fem::VectorDiscreteFunction< " +\
           spaceType + ", Dune::FemPy::NumPyVector< " + field + " > >"
 
-    return addUFL(module("numpy", includes, typeName).DiscreteFunction(space,name,vec))
+    return module("numpy", includes, typeName).DiscreteFunction(space,name,vec).as_ufl()
