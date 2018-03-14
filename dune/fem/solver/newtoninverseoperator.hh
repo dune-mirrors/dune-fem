@@ -34,8 +34,8 @@ namespace Dune
       const std::string keyPrefix_;
 
       ParameterReader parameter_;
-      public:
 
+    public:
       NewtonParameter( const SolverParameter& baseParameter, const std::string keyPrefix, const ParameterReader &parameter = Parameter::container() )
         : baseParam_( baseParameter.clone() ),
           keyPrefix_( keyPrefix ),
@@ -141,6 +141,8 @@ namespace Dune
 
       typedef NewtonParameter ParametersType;
 
+      typedef std::function< bool ( const RangeFunctionType &w, const RangeFunctionType &dw, double residualNorm ) > ErrorMeasureType;
+
       /** constructor
        *
        *  \param[in]  jInv       linear inverse operator (will be move constructed)
@@ -168,12 +170,12 @@ namespace Dune
        */
 
       NewtonInverseOperator ( LinearInverseOperatorType jInv, const DomainFieldType &epsilon, const NewtonParameter &parameter )
-        : tolerance_( epsilon ),
-          verbose_( parameter.newtonVerbose() && MPIManager::rank () == 0 ),
+        : verbose_( parameter.newtonVerbose() && MPIManager::rank () == 0 ),
           maxIterations_( parameter.maxIterationsParameter() ),
           maxLinearIterations_( parameter.maxLinearIterationsParameter() ),
           jInv_( std::move( jInv ) ),
-          parameter_(parameter)
+          parameter_(parameter),
+          finished_( [ epsilon ] ( const RangeFunctionType &w, const RangeFunctionType &dw, double res ) { return res < epsilon; } )
       {}
 
       NewtonInverseOperator ( LinearInverseOperatorType jInv, const DomainFieldType &epsilon,
@@ -257,6 +259,8 @@ namespace Dune
         bind( op );
       }
 
+      void setErrorMeasure ( ErrorMeasureType finished ) { finished_ = std::move( finished ); }
+
       void bind ( const OperatorType &op ) { op_ = &op; }
 
       void unbind () { op_ = nullptr; }
@@ -267,12 +271,32 @@ namespace Dune
       void setMaxIterations ( int maxIterations ) { maxIterations_ = maxIterations; }
       int linearIterations () const { return linearIterations_; }
       void setMaxLinearIterations ( int maxLinearIterations ) { maxLinearIterations_ = maxLinearIterations; }
+      bool verbose() const { return verbose_; }
 
       bool converged () const
       {
         // check for finite |residual| - this also works for -ffinite-math-only (gcc)
         const bool finite = (delta_ < std::numeric_limits< DomainFieldType >::max());
         return finite && (iterations_ < maxIterations_) && (linearIterations_ < maxLinearIterations_);
+      }
+
+      virtual void lineSearch(RangeFunctionType w, RangeFunctionType &dw,
+                   const DomainFunctionType &u, DomainFunctionType &residual) const
+      {
+        double deltaOld = delta_;
+        delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
+        while (delta_ > deltaOld)
+        {
+          if( verbose() )
+            std::cout << "    line search:" << delta_ << ">" << deltaOld << std::endl;
+          if (std::abs(delta_-deltaOld) < 1e-5*delta_) // line search not working
+            break;
+          dw *= 0.5;
+          w += dw;
+          (*op_)( w, residual );
+          residual -= u;
+          delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
+        }
       }
 
     protected:
@@ -288,7 +312,6 @@ namespace Dune
     private:
       const OperatorType *op_ = nullptr;
 
-      const double tolerance_;
       const bool verbose_;
       const int maxIterations_;
       const int maxLinearIterations_;
@@ -299,8 +322,8 @@ namespace Dune
       mutable LinearInverseOperatorType jInv_;
       mutable std::unique_ptr< JacobianOperatorType > jOp_;
       const NewtonParameter &parameter_;
+      ErrorMeasureType finished_;
     };
-
 
 
     // Implementation of NewtonInverseOperator
@@ -316,16 +339,19 @@ namespace Dune
       RangeFunctionType dw( w );
       JacobianOperatorType& jOp = jacobian( "jacobianOperator", dw.space(), u.space() );
 
+      iterations_ = 0;
+      linearIterations_ = 0;
       // compute initial residual
       (*op_)( w, residual );
       residual -= u;
       delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
 
-      for( iterations_ = 0, linearIterations_ = 0; converged() && (delta_ > tolerance_); ++iterations_ )
+      if( verbose() )
+        std::cerr << "Newton iteration " << iterations_ << ": |residual| = " << delta_;
+      while( true )
       {
-        if( verbose_ )
-          std::cerr << "Newton iteration " << iterations_ << ": |residual| = " << delta_ << std::endl;
-
+        if( verbose() )
+          std::cerr << std::endl;
         // evaluate operator's jacobian
         (*op_).jacobian( w, jOp );
 
@@ -338,30 +364,21 @@ namespace Dune
         dw.clear();
         jInv_( residual, dw );
         linearIterations_ += jInv_.iterations();
-
-        double deltaOld = delta_;
-
         w -= dw;
+
         (*op_)( w, residual );
         residual -= u;
-        delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
-
-        while (delta_ > deltaOld)
-        {
-          if( verbose_ )
-            std::cout << "    line search:" << delta_ << ">" << deltaOld << std::endl;
-          if (std::abs(delta_-deltaOld) < 1e-5*delta_) // line search not working
-            break;
-          dw *= 0.5;
-          w += dw;
-          (*op_)( w, residual );
-          residual -= u;
-          delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
-        }
+        lineSearch(w,dw,u,residual);
+        ++iterations_;
+        if( verbose() )
+          std::cerr << "Newton iteration " << iterations_ << ": |residual| = " << delta_ << std::flush;
+        if( finished_( w, dw, delta_ ) || !converged() )
+          break;
       }
+      if( verbose() )
+        std::cerr << std::endl;
+
       jInv_.unbind();
-      if( verbose_ )
-        std::cerr << "Newton iteration " << iterations_ << ": |residual| = " << delta_ << std::endl;
     }
 
   } // namespace Fem
