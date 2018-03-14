@@ -137,7 +137,7 @@ class GridFunction(ufl.Coefficient):
                 return func(*args, **kwargs)
             return wrapper
         result = getattr(self.__impl__, item)
-        if callable(result):
+        if not isinstance(result, GridFunction) and callable(result):
             # doc = result.func.__doc__
             result = tocontainer(result)
             # result.func.__doc__ = doc
