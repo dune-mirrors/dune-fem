@@ -102,7 +102,7 @@ namespace Dune
 
       template < class DofVector, class... options >
       inline static auto registerDofVectorBuffer ( pybind11::class_< DofVector, options... > cls, PriorityTag< 1 > )
-        -> std::enable_if_t< std::is_convertible< decltype( std::declval< DofVector >().array().data()[ 0 ] ), typename DofVector::FieldType >::value >
+        -> std::enable_if_t< std::is_convertible< decltype( std::declval< DofVector & >().array().data()[ 0 ] ), typename DofVector::FieldType >::value >
       {
         typedef typename DofVector::FieldType Field;
 
@@ -129,6 +129,8 @@ namespace Dune
             else
               throw pybind11::index_error();
           });
+
+        clsDof.def( "__len__", [] ( const DofVector &self ) { return self.array().size(); } );
       }
 
       template< class DofVector, class... options >
@@ -194,8 +196,7 @@ namespace Dune
         {
           auto clsDof = pybind11::class_< DofVector >( module, "DofVector", pybind11::buffer_protocol() );
 
-          clsDof.def_property_readonly( "size", [] ( DofVector &self ) { return self.array().size(); } );
-          clsDof.def( "__len__", [] ( const DofVector &self ) { return self.array().size(); } );
+          clsDof.def_property_readonly( "size", [] ( DofVector &self ) { return self.size(); } );
           clsDof.def( "assign", [] ( DofVector &self, const DofVector &other ) { self = other; }, "other"_a );
 
           registerDofVectorBuffer( clsDof );
