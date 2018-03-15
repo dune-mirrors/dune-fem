@@ -130,7 +130,7 @@ namespace Dune
               throw pybind11::index_error();
           });
 
-        clsDof.def( "__len__", [] ( const DofVector &self ) { return self.array().size(); } );
+        cls.def( "__len__", [] ( const DofVector &self ) { return self.array().size(); } );
       }
 
       template< class DofVector, class... options >
