@@ -113,7 +113,11 @@ def numpyFunction(space, vec, name="tmp", **unused):
 
 def tupleDiscreteFunction(*spaces, **kwargs):
     from dune.fem.discretefunction import module, addAttr
-    tupleSpace = dune.fem.space.combined(*spaces)
+    try:
+        tupleSpace = spaces[0]
+        spaces = spaces[0].components
+    except AttributeError:
+        tupleSpace = dune.fem.space.tuple(*spaces)
     dfIncludes = (space.storage[1] for space in spaces)
     dfTypeNames = (space.storage[2] for space in spaces)
     includes = sum(dfIncludes, ["dune/fem/function/tuplediscretefunction.hh"])
@@ -123,8 +127,6 @@ def tupleDiscreteFunction(*spaces, **kwargs):
     # create a discrete function for each space to ensure the DiscreteFunction is registered with pybind11
     for s in spaces:
         discreteFunction(s, "")
-    #for i in range(df.components):
-    #    addAttr(df._module, df[i].__class__, df._storage)
     compNames = kwargs.get("components", None)
     if not compNames is None:
         components = df.components

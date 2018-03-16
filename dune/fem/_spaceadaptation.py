@@ -25,5 +25,18 @@ def module(space):
     return module
 
 
-def spaceAdapt(space, marker, *args, **kwargs):
-    module(space).SpaceAdaptation(space).adapt(marker, *args, **kwargs)
+def spaceAdapt(space, marker, dfList):
+    if hasattr(space,"components"):
+        # is a tuple space over a single space and all functions should be tuple dfs
+        # singleSpace = space.components[0]
+        dfs = {}
+        for df in dfList:
+            try:
+                dfs[df.space] += [df]
+            except KeyError:
+                dfs[df.space] = [df]
+        for s,df in dfs.items():
+            print(s,df)
+            module(s).SpaceAdaptation(s).adapt(marker, df)
+    else:
+        module(space).SpaceAdaptation(space).adapt(marker, dfList)

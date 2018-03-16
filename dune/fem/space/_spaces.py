@@ -2,9 +2,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import sys
 import logging
+from dune.generator import Constructor, Method
 logger = logging.getLogger(__name__)
 
-from dune.generator import Method
 import dune.common.checkconfiguration as checkconfiguration
 
 def dgonb(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
@@ -154,9 +154,7 @@ def dglegendrehp(gridview, order=1, dimrange=1, field="double", storage=None, **
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
 
-    localOrder = Method('localOrder', '[](const DuneType &self, const typename DuneType::EntityType &e){return self.order(e);}');
-
-    return module(field, storage, includes, typeName, localOrder).Space(gridview)
+    return module(field, storage, includes, typeName).Space(gridview)
 
 def dglagrange(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
     """create a discontinous galerkin space with elementwise lagrange basis function
@@ -335,6 +333,66 @@ def combined(*spaces, **unused):
     typeName = "Dune::Fem::TupleDiscreteFunctionSpace< " + ", ".join([space._typeName for space in spaces]) + " >"
 
     return module(combinedField, combinedStorage, includes, typeName).Space(spaces[0].grid)
+
+def tuple(*spaces, **kwargs):
+    """create a discrete function space from a tuple of discrete function spaces
+
+    Args:
+        spaces: tuple of discrete function spaces
+
+    Returns:
+        Space: the constructed Space
+    """
+
+    from dune.fem.space import module
+    from dune.fem.function import tupleDiscreteFunction
+
+    if not spaces:
+        raise Exception("Cannot create TupleDiscreteFunctionSpace from empty tuple of discrete function spaces")
+    combinedStorage = None
+    combinedField = None
+    for space in spaces:
+        storage, _, _, _, _ = space.storage
+        if combinedStorage and (combinedStorage != storage):
+            raise Exception("Cannot create TupleDiscreteFunctionSpace with different types of storage")
+        else:
+            combinedStorage = storage
+        if combinedField and (combinedField != space.field):
+            raise Exception("Cannot create TupleDiscreteFunctionSpace with different field types")
+        else:
+            combinedField = space.field
+
+    includes = ["dune/fem/space/combinedspace/tuplespace.hh"]
+    for space in spaces:
+        includes += space._includes
+    typeName = "Dune::Fem::TupleDiscreteFunctionSpace< " + ", ".join([space._typeName for space in spaces]) + " >"
+
+    mod = module(combinedField, combinedStorage, includes, typeName)
+    # mod.Space.components = spaces
+    # mod.Space.storage = None            # the DF is a tuple DF and can't be directly used for example to templetize operators
+    try:
+        mod.Space.componentNames = kwargs["components"]
+    except KeyError:
+        pass
+    def interpolate(space, func, name=None, **kwargs):
+        """interpolate a function into a discrete function space
+
+        Args:
+            space: discrete function space to interpolate into
+            func:  function to interpolate
+            name:  name of the resulting discrete function
+
+        Returns:
+            DiscreteFunction: the constructed discrete function
+        """
+        if name is None: name = func.name
+        try:
+            return tupleDiscreteFunction(space, name=name, expr=func, components=space.componentNames,**kwargs)
+        except AttributeError:
+            return tupleDiscreteFunction(space, name=name, expr=func, **kwargs)
+    setattr(mod.Space, "interpolate", interpolate)
+
+    return mod.Space(spaces[0].grid)
 
 def bdm(view, order=1, field="double", storage=None, **unused):
     from dune.fem.space import module
