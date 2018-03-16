@@ -44,6 +44,33 @@ namespace Dune
         registerSpaceConstructor( cls, std::is_constructible< Space, GridPart& >() );
       }
 
+      template< class Space, class... options >
+      inline static auto registerSubSpace ( pybind11::class_< Space, options... > cls, PriorityTag< 1 > )
+        -> std::enable_if_t< std::is_same< const typename Space::template SubDiscreteFunctionSpace< 0 >::Type&, decltype( std::declval< Space & >().template subDiscreteFunctionSpace< 0 >() ) >::value >
+      {
+        cls.def_property_readonly( "components", [] ( pybind11::object self ) -> pybind11::tuple {
+            Space &space = pybind11::cast< Space & >( self );
+            pybind11::tuple components( Space::Sequence::size() );
+            Hybrid::forEach( typename Space::Sequence(), [ self, &space, &components ] ( auto &&i ) {
+                assert( pybind11::already_registered< typename Space::template SubDiscreteFunctionSpace< i.value >::Type > );
+                pybind11::object subSpace = pybind11::cast( &space.template subDiscreteFunctionSpace< i.value >(), pybind11::return_value_policy::reference_internal, self );
+                if( subSpace )
+                  components[ i.value ] = subSpace;
+                else
+                  throw pybind11::error_already_set();
+              } );
+            return components;
+          } );
+      }
+      template< class Space, class... options >
+      inline static void registerSubSpace ( pybind11::class_< Space, options... > cls, PriorityTag< 0 > )
+      {}
+
+      template< class Space, class... options >
+      inline static void registerSubSpace ( pybind11::class_< Space, options... > cls )
+      {
+        registerSubSpace( cls, PriorityTag< 42 >() );
+      }
       // registerSpace
       // -------------
 
@@ -71,6 +98,7 @@ namespace Dune
         cls.def_property_readonly( "order", [] ( Space &self ) -> int { return self.order(); } );
         cls.def_property_readonly( "size", [] ( Space &self ) -> int { return self.size(); } );
         cls.def_property_readonly( "localBlockSize", [] ( Space &spc ) -> unsigned int { return spc.localBlockSize; } );
+        cls.def("localOrder", [] ( Space &self, typename Space::EntityType &e) -> int { return self.order(e); } );
         cls.def("map", [] ( Space &spc, typename Space::EntityType &e) -> std::vector<unsigned int>
             { std::vector<unsigned int> idx(spc.blockMapper().numDofs(e));
               spc.blockMapper().mapEach(e, Fem::AssignFunctor< std::vector< unsigned int > >( idx ) );
@@ -78,6 +106,7 @@ namespace Dune
             } );
 
         registerSpaceConstructor( cls );
+        registerSubSpace( cls );
       }
 
 
