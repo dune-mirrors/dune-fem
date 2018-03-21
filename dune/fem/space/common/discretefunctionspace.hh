@@ -598,7 +598,8 @@ namespace Dune
                stored in the default implementation. */
     template< class FunctionSpaceTraits >
     class DiscreteFunctionSpaceDefault
-    : public DiscreteFunctionSpaceInterface< FunctionSpaceTraits >
+      : public DiscreteFunctionSpaceInterface< FunctionSpaceTraits >,
+        public std::enable_shared_from_this< typename FunctionSpaceTraits::DiscreteFunctionSpaceType >
     {
     public:
       typedef FunctionSpaceTraits Traits;

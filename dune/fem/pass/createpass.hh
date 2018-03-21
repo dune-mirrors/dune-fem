@@ -1,6 +1,9 @@
 #ifndef DUNE_FEM_CREATEPASS_HH
 #define DUNE_FEM_CREATEPASS_HH
 
+#include <memory>
+
+#include <dune/fem/common/memory.hh>
 #include <dune/fem/operator/common/spaceoperatorif.hh>
 #include <dune/fem/pass/common/pass.hh>
 
@@ -47,33 +50,26 @@ namespace Dune
       typedef SpaceOperatorInterface<DestinationType> SpaceOperatorIFType;
     protected:
       Model& model_;
-      const DiscreteFunctionSpaceType& space_;
-      SpaceOperatorIFType* passPointer_;
+      std::shared_ptr< const DiscreteFunctionSpaceType > space_;
+      SpaceOperatorIFType* passPointer_ = nullptr;
 
     public:
       //! constructor
       //! \param model DiscreteModel
       //! \param space DiscreteFunctionSpace
-      CreatePass(Model& model, const DiscreteFunctionSpaceType& space)
-        : model_(model) , space_(space) , passPointer_(0)
-      {
-      }
+      CreatePass ( Model &model, const DiscreteFunctionSpaceType &space )
+        : model_( model ), space_( referenceToSharedPtr( space ) )
+      {}
 
       //! constructor
       //! \param model DiscreteModel (or discrete function)
       //! \param space DiscreteFunctionSpace
-      CreatePass(const Model& model, const DiscreteFunctionSpaceType& space)
-        : model_(const_cast<Model&> (model)) , space_(space) , passPointer_(0)
-      {
-      }
+      CreatePass ( const Model &model, const DiscreteFunctionSpaceType &space )
+        : CreatePass( const_cast< Model & >( model ), space )
+      {}
 
       //! copy constructor
-      CreatePass(const CreatePass& org)
-        : model_(org.model_),
-          space_(org.space_),
-          passPointer_( org.passPointer_ )
-      {
-      }
+      CreatePass ( const CreatePass & ) = default;
 
       //! creation method
       template <class PreviousPass>
@@ -83,7 +79,7 @@ namespace Dune
         typedef PassType< Model , PreviousPass , passId > RealPassType;
         typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
         // create pass
-        RealPassType* pass = new RealPassType(model_,prevObj->pass(),space_);
+        RealPassType* pass = new RealPassType(model_,prevObj->pass(), *space_);
 
         // create pass storage
         ObjPtrType* obj = new ObjPtrType(pass);
@@ -104,7 +100,7 @@ namespace Dune
         typedef PassType< Model , PreviousPass , passId > RealPassType;
         typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
         // create pass
-        RealPassType* pass = new RealPassType(model_,prevObj->pass(),space_);
+        RealPassType* pass = new RealPassType(model_,prevObj->pass(), *space_);
 
         // create pass storage
         ObjPtrType* obj = new ObjPtrType(pass);
@@ -172,36 +168,30 @@ namespace Dune
       typedef DiscreteModelWrapper<Model,SelectorImp> DiscreteModelType;
     protected:
       DiscreteModelType* model_;
-      const DiscreteFunctionSpaceType& space_;
-      SpaceOperatorIFType* passPointer_;
-      bool owner_;
+      std::shared_ptr< const DiscreteFunctionSpaceType > space_;
+      SpaceOperatorIFType *passPointer_ = nullptr;
+      bool owner_ = true;
 
     public:
       //! constructor
       //! \param model DiscreteModel
       //! \param space DiscreteFunctionSpace
       CreateSelectedPass(Model& model, const DiscreteFunctionSpaceType& space)
-        : model_(new DiscreteModelType(model))
-        , space_(space)
-        , passPointer_(0)
-        , owner_(true)
-      {
-      }
+        : model_(new DiscreteModelType(model)), space_( referenceToSharedPtr( space ) )
+      {}
 
       //! copy constructor
       CreateSelectedPass(const CreateSelectedPass& org)
         : model_(new DiscreteModelType(org.model_)),
           space_(org.space_),
-          passPointer_( org.passPointer_ ),
-          owner_(true)
-      {
-      }
+          passPointer_( org.passPointer_ )
+      {}
 
       //! destructor deleting model if still owner
       ~CreateSelectedPass()
       {
         if( owner_ ) delete model_;
-        model_ = 0;
+        model_ = nullptr;
       }
 
       //! creation method
@@ -212,7 +202,7 @@ namespace Dune
         typedef PassType<DiscreteModelType,PreviousPass> RealPassType;
         typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
         // create pass
-        RealPassType* pass = new RealPassType(*model_,prevObj->pass(),space_);
+        RealPassType* pass = new RealPassType(*model_,prevObj->pass(), *space_);
 
         // create pass storage
         ObjPtrType* obj = new ObjPtrType(pass, model_ );
@@ -236,7 +226,7 @@ namespace Dune
         typedef PassType<DiscreteModelType,PreviousPass> RealPassType;
         typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
         // create pass
-        RealPassType* pass = new RealPassType(*model_,prevObj->pass(),space_);
+        RealPassType* pass = new RealPassType(*model_,prevObj->pass(), *space_);
 
         // create pass storage
         ObjPtrType* obj = new ObjPtrType(pass, model_);
@@ -291,9 +281,9 @@ namespace Dune
       typedef SpaceOperatorInterface<DestinationType> SpaceOperatorIFType;
     protected:
       Model& model_;
-      DiscreteFunctionSpaceType& space_;
+      std::shared_ptr< DiscreteFunctionSpaceType > space_;
       const std::string paramFile_;
-      SpaceOperatorIFType* passPointer_;
+      SpaceOperatorIFType* passPointer_ = nullptr;
 
     public:
       //! constructor
@@ -302,19 +292,12 @@ namespace Dune
       //! \param paramfile parameter file passes through
       CreateFeaturedPass(Model& model, DiscreteFunctionSpaceType& space, std::string paramfile = "")
         : model_(model),
-          space_(space),
-          paramFile_(paramfile),
-          passPointer_(0)
-      {
-      }
+          space_( referenceToSharedPtr( space) ),
+          paramFile_(paramfile)
+      {}
 
       //! copy constructor
-      CreateFeaturedPass(const CreateFeaturedPass& org)
-        : model_(org.model_) , space_(org.space_),
-          paramFile_(org.paramFile_),
-          passPointer_(org.passPointer_)
-      {
-      }
+      CreateFeaturedPass ( const CreateFeaturedPass & ) = default;
 
       //! creation method
       template <class PreviousPass>
@@ -324,7 +307,7 @@ namespace Dune
         typedef PassType<Model,PreviousPass,passId> RealPassType;
         typedef SpaceOperatorPtr<RealPassType> ObjPtrType;
         // create pass
-        RealPassType* pass = new RealPassType(model_,prevObj->pass(),space_,paramFile_);
+        RealPassType* pass = new RealPassType(model_,prevObj->pass(), *space_,paramFile_);
 
         // create pass storage
         ObjPtrType* obj = new ObjPtrType(pass);
@@ -345,7 +328,7 @@ namespace Dune
         typedef PassType<Model,PreviousPass,passId> RealPassType;
         typedef SpaceOperatorWrapper<RealPassType> ObjPtrType;
         // create pass
-        RealPassType* pass = new RealPassType(model_,prevObj->pass(),space_,paramFile_);
+        RealPassType* pass = new RealPassType(model_,prevObj->pass(), *space_,paramFile_);
 
         // create pass storage
         ObjPtrType* obj = new ObjPtrType(pass);

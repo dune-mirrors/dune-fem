@@ -5,6 +5,7 @@
 
 #include <dune/geometry/referenceelements.hh>
 
+#include <dune/fem/common/memory.hh>
 #include <dune/fem/gridpart/common/persistentindexset.hh>
 #include <dune/fem/io/streams/streams.hh>
 #include <dune/fem/misc/threads/threadmanager.hh>
@@ -24,7 +25,7 @@ namespace Dune
     inline DiscreteFunctionDefault< Impl >
       :: DiscreteFunctionDefault ( const std::string &name,
                                    const DiscreteFunctionSpaceType &dfSpace )
-    : dfSpace_( dfSpace ),
+    : dfSpace_( referenceToSharedPtr( dfSpace ) ),
       ldvStack_( std::max( std::max( sizeof( DofType ), sizeof( DofType* ) ),
                            sizeof(typename LocalDofVectorType::value_type) ) // for PetscDiscreteFunction
                  * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
@@ -33,6 +34,18 @@ namespace Dune
       scalarProduct_( dfSpace )
     {
     }
+
+
+    template< class Impl >
+    inline DiscreteFunctionDefault< Impl >::DiscreteFunctionDefault ( std::string name, std::shared_ptr< const DiscreteFunctionSpaceType > dfSpace )
+      : dfSpace_( std::move( dfSpace ) ),
+        ldvStack_( std::max( std::max( sizeof( DofType ), sizeof( DofType* ) ),
+                             sizeof(typename LocalDofVectorType::value_type) ) // for PetscDiscreteFunction
+                   * space().blockMapper().maxNumDofs() * DiscreteFunctionSpaceType::localBlockSize ),
+        ldvAllocator_( &ldvStack_ ),
+        name_( std::move( name ) ),
+        scalarProduct_( dfSpace )
+    {}
 
 
     template< class Impl >
@@ -56,7 +69,7 @@ namespace Dune
     inline DiscreteFunctionDefault< Impl >
       :: DiscreteFunctionDefault ( DiscreteFunctionDefault && other )
     : BaseType( static_cast< BaseType&& >( other ) ),
-      dfSpace_( other.dfSpace_ ),
+      dfSpace_( std::move( other.dfSpace_ ) ),
       ldvStack_( std::move( other.ldvStack_ ) ),
       ldvAllocator_( &ldvStack_ ),
       name_( std::move( other.name_ ) ),
