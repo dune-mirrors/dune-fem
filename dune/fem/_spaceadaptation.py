@@ -26,17 +26,18 @@ def module(space):
 
 
 def spaceAdapt(space, marker, dfList):
-    if hasattr(space,"components"):
-        # is a tuple space over a single space and all functions should be tuple dfs
-        # singleSpace = space.components[0]
-        dfs = {}
-        for df in dfList:
+    dfs = {}
+    for df in dfList:
+        try:
+            for dfc in df.components:
+                try:
+                    dfs[dfc.space] += [dfc]
+                except KeyError:
+                    dfs[dfc.space] = [dfc]
+        except:
             try:
                 dfs[df.space] += [df]
             except KeyError:
                 dfs[df.space] = [df]
-        for s,df in dfs.items():
-            print(s,df)
-            module(s).SpaceAdaptation(s).adapt(marker, df)
-    else:
-        module(space).SpaceAdaptation(space).adapt(marker, dfList)
+    for s,df in dfs.items(): # if we really have different spaces then there is still the problem that the marker doesn't know which space we are on
+        module(s).SpaceAdaptation(s).adapt(marker, df)

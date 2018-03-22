@@ -367,7 +367,10 @@ def tuple(*spaces, **kwargs):
         includes += space._includes
     typeName = "Dune::Fem::TupleDiscreteFunctionSpace< " + ", ".join([space._typeName for space in spaces]) + " >"
 
-    mod = module(combinedField, combinedStorage, includes, typeName)
+    constructor = Constructor(['typename DuneType::DiscreteFunctionSpaceTupleType spaceTuple'],
+                              ['return new DuneType( spaceTuple);'],
+                              ['"spaceTuple"_a', 'pybind11::keep_alive<1,2>()'])
+    mod = module(combinedField, combinedStorage, includes, typeName, constructor)
     # mod.Space.components = spaces
     # mod.Space.storage = None            # the DF is a tuple DF and can't be directly used for example to templetize operators
     try:
@@ -392,7 +395,7 @@ def tuple(*spaces, **kwargs):
             return tupleDiscreteFunction(space, name=name, expr=func, **kwargs)
     setattr(mod.Space, "interpolate", interpolate)
 
-    return mod.Space(spaces[0].grid)
+    return mod.Space(spaces)
 
 def bdm(view, order=1, field="double", storage=None, **unused):
     from dune.fem.space import module
