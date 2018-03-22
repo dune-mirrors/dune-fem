@@ -89,7 +89,7 @@ namespace Dune
       }
 
       //! \brief return reference to space
-      const DiscreteFunctionSpaceType &space () const { return spc_; }
+      const DiscreteFunctionSpaceType &space () const { return *spc_; }
 
       /** \brief return accumulated time needed by pass's operator () this method
        *         also resets the compute time to zero
