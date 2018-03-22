@@ -191,6 +191,7 @@ namespace Dune
       typedef GenericCombinedDiscreteFunctionSpace< TupleDiscreteFunctionSpaceTraits< DiscreteFunctionSpaces ... > > BaseType;
 
     public:
+      typedef decltype ( std::index_sequence_for< DiscreteFunctionSpaces ... >() ) Sequence;
       typedef typename BaseType::Traits Traits;
       typedef typename BaseType::GridPartType GridPartType;
       typedef typename BaseType::EntityType EntityType;
