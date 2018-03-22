@@ -104,6 +104,23 @@ namespace Dune
 
 
 
+    // NewtonFailure
+    // -------------
+
+    enum class NewtonFailure
+    // : public int
+    {
+      Success = 0,
+      InvalidResidual = 1,
+      IterationsExceeded = 2,
+      LinearIterationsExceeded = 3,
+      LineSearchFailed = 4,
+      TooManyIterations = 5,
+      TooManyLinearIterations = 6
+    };
+
+
+
     // NewtonInverseOperator
     // ---------------------
 
@@ -273,30 +290,56 @@ namespace Dune
       void setMaxLinearIterations ( int maxLinearIterations ) { maxLinearIterations_ = maxLinearIterations; }
       bool verbose() const { return verbose_; }
 
-      bool converged () const
+      NewtonFailure failed () const
       {
         // check for finite |residual| - this also works for -ffinite-math-only (gcc)
-        const bool finite = (delta_ < std::numeric_limits< DomainFieldType >::max());
-        return finite && (iterations_ < maxIterations_) && (linearIterations_ < maxLinearIterations_);
+        // nan test not working with optimization flags...
+        if( !(delta_ < std::numeric_limits< DomainFieldType >::max()) || std::isnan( delta_ ) )
+          return NewtonFailure::InvalidResidual;
+        else if( iterations_ >= maxIterations_ )
+          return NewtonFailure::TooManyIterations;
+        else if( linearIterations_ >= maxLinearIterations_ )
+          return NewtonFailure::TooManyLinearIterations;
+        else if( !stepCompleted_ )
+          return NewtonFailure::LineSearchFailed;
+        else
+          return NewtonFailure::Success;
       }
 
-      virtual void lineSearch(RangeFunctionType w, RangeFunctionType &dw,
+      bool converged () const { return failed() == NewtonFailure::Success; }
+
+      virtual int lineSearch(RangeFunctionType &w, RangeFunctionType &dw,
                    const DomainFunctionType &u, DomainFunctionType &residual) const
       {
         double deltaOld = delta_;
         delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
-        while (delta_ > deltaOld)
+        if (failed() == NewtonFailure::InvalidResidual)
         {
+          double test = dw.scalarProductDofs( dw );
+          if (! (test < std::numeric_limits< DomainFieldType >::max() &&
+                 !std::isnan(test)) )
+            delta_ = 2.*deltaOld; // enter line search
+        }
+        double factor = 1.0;
+        int noLineSearch = (delta_ < deltaOld)?1:0;
+        while (delta_ >= deltaOld)
+        {
+          double deltaPrev = delta_;
+          factor *= 0.5;
           if( verbose() )
-            std::cout << "    line search:" << delta_ << ">" << deltaOld << std::endl;
-          if (std::abs(delta_-deltaOld) < 1e-5*delta_) // line search not working
-            break;
-          dw *= 0.5;
-          w += dw;
+            std::cerr << "    line search:" << delta_ << ">" << deltaOld << std::endl;
+          if (std::abs(delta_-deltaOld) < 1e-5*delta_) // || !converged()) // line search not working
+            return -1;  // failed
+          w.axpy(factor,dw);
           (*op_)( w, residual );
           residual -= u;
           delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
+          if (std::abs(delta_-deltaPrev) < 1e-15)
+            return -1;
+          if (failed() == NewtonFailure::InvalidResidual)
+            delta_ = 2.*deltaOld; // remain in line search
         }
+        return noLineSearch;
       }
 
     protected:
@@ -322,6 +365,7 @@ namespace Dune
       mutable LinearInverseOperatorType jInv_;
       mutable std::unique_ptr< JacobianOperatorType > jOp_;
       const NewtonParameter &parameter_;
+      mutable int stepCompleted_;
       ErrorMeasureType finished_;
     };
 
@@ -339,6 +383,7 @@ namespace Dune
       RangeFunctionType dw( w );
       JacobianOperatorType& jOp = jacobian( "jacobianOperator", dw.space(), u.space() );
 
+      stepCompleted_ = true;
       iterations_ = 0;
       linearIterations_ = 0;
       // compute initial residual
@@ -368,12 +413,18 @@ namespace Dune
 
         (*op_)( w, residual );
         residual -= u;
-        lineSearch(w,dw,u,residual);
+        int ls = lineSearch(w,dw,u,residual);
+        stepCompleted_ = ls >= 0;
         ++iterations_;
         if( verbose() )
           std::cerr << "Newton iteration " << iterations_ << ": |residual| = " << delta_ << std::flush;
-        if( finished_( w, dw, delta_ ) || !converged() )
+        // if ( (ls==1 && finished_(w, dw, delta_)) || !converged())
+        if ( (finished_(w, dw, delta_)) || !converged())
+        {
+          if( verbose() )
+            std::cerr << std::endl;
           break;
+        }
       }
       if( verbose() )
         std::cerr << std::endl;
