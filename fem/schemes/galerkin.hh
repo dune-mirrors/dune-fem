@@ -835,7 +835,30 @@ namespace Dune
 
       SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
       {
-        Dune::Fem::NewtonInverseOperator< LinearOperatorType, InverseOperator > invOp( fullOperator(), parameter_ );
+        typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, InverseOperator > NewtonOperator;
+        NewtonOperator invOp( fullOperator(), parameter_ );
+
+        // step size estimate
+        L2Norm<typename DiscreteFunctionSpaceType::GridPartType> l2Norm( dfSpace_.gridPart() );
+        double w0Norm = l2Norm.norm(solution);
+        if (w0Norm < 1e-20) w0Norm = 1.;
+        double stepTolerance = 1e-4 * w0Norm;
+        auto stepSize = [&invOp,w0Norm,stepTolerance,l2Norm] (const DiscreteFunctionType w, const DiscreteFunctionType &dw,
+                        double residualNorm, bool verbose)
+          {
+            double wDiff = l2Norm.norm(dw);
+            if( verbose )
+              std::cerr << "Newton iteration " << invOp.iterations() << ": |residual| = " << residualNorm
+                << " using step size control: " << wDiff << "<" << stepTolerance
+                << std::endl;
+            return wDiff < stepTolerance; // || invOp.finished(w,dw,residualNorm,false);
+          };
+
+        // for linear operator
+        auto linear = [] (const DiscreteFunctionType w, const DiscreteFunctionType &dw,
+                      double residualNorm, bool verbose) { return true; };
+
+        invOp.setErrorMeasure( stepSize );
         invOp( rhs, solution );
 
         return SolverInfo( invOp.converged(), invOp.linearIterations(), invOp.iterations() );
