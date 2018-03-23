@@ -1,9 +1,11 @@
 #ifndef DUNE_FEM_PASS_LOCAL_HH
 #define DUNE_FEM_PASS_LOCAL_HH
 
+#include <memory>
 #include <sstream>
 #include <string>
 
+#include <dune/fem/common/memory.hh>
 #include <dune/fem/pass/common/pass.hh>
 
 namespace Dune
@@ -62,7 +64,7 @@ namespace Dune
                  const DiscreteFunctionSpaceType &spc,
                  std::string passName = "LocalPass")
       : BaseType(pass),
-        spc_(spc),
+        spc_( referenceToSharedPtr( spc ) ),
         passName_(passName),
         computeTime_(0.0),
         numberOfElements_( 0 ),
@@ -79,7 +81,7 @@ namespace Dune
         {
           std::ostringstream funcName;
           funcName << passName_ << "_" << this->passNumber();
-          this->destination_ = new DestinationType(funcName.str(), spc_);
+          this->destination_ = new DestinationType(funcName.str(), space());
 
           // set mem handle for deleting destination_
           this->deleteHandler_ = &(BaseType::DeleteHandlerType::instance());
@@ -87,7 +89,7 @@ namespace Dune
       }
 
       //! \brief return reference to space
-      const DiscreteFunctionSpaceType &space () const { return spc_; }
+      const DiscreteFunctionSpaceType &space () const { return *spc_; }
 
       /** \brief return accumulated time needed by pass's operator () this method
        *         also resets the compute time to zero
@@ -137,8 +139,8 @@ namespace Dune
         prepare(arg, dest);
 
         numberOfElements_ = 0 ;
-        const IteratorType endit = spc_.end();
-        for (IteratorType it = spc_.begin(); it != endit; ++it, ++ numberOfElements_ )
+        const IteratorType endit = space().end();
+        for (IteratorType it = space().begin(); it != endit; ++it, ++ numberOfElements_ )
         {
           applyLocal(*it);
         }
@@ -150,7 +152,7 @@ namespace Dune
       }
 
     protected:
-      const DiscreteFunctionSpaceType &spc_;
+      std::shared_ptr< const DiscreteFunctionSpaceType > spc_;
       const std::string passName_;
       mutable double computeTime_;
       mutable size_t numberOfElements_;

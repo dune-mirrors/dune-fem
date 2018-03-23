@@ -149,7 +149,7 @@ namespace Dune {
     }
 
     ThisType& asImp() { return static_cast< ThisType& > (*this); }
-    const ThisType& asImp() const { return static_cast< ThisType& > (*this); }
+    const ThisType& asImp() const { return static_cast< const ThisType& > (*this); }
 
     mutable CounterType sequence_; // for consistency checks...
   };

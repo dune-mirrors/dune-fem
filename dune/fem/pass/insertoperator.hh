@@ -1,12 +1,14 @@
 #ifndef DUNE_FEM_PASS_INSERTOPERATOR_HH
 #define DUNE_FEM_PASS_INSERTOPERATOR_HH
 
+#include <memory>
 #include <string>
 #include <tuple>
 #include <type_traits>
 
 #include <dune/common/tupleutility.hh>
 
+#include <dune/fem/common/memory.hh>
 #include <dune/fem/operator/common/operator.hh>
 #include <dune/fem/pass/common/pass.hh>
 
@@ -104,7 +106,7 @@ namespace Dune
       InsertOperatorPass ( const typename OperatorType::RangeFunctionType::DiscreteFunctionSpaceType &space,
                            const OperatorType &op, PreviousPassType &pass )
         : BaseType( pass ),
-          space_( space ),
+          space_( referenceToSharedPtr( space ) ),
           operator_( op )
       {}
 
@@ -150,7 +152,7 @@ namespace Dune
       /** \brief return discrete function space */
       const typename OperatorType::RangeFunctionType::DiscreteFunctionSpaceType &space () const
       {
-        return space_;
+        return *space_;
       }
 
       /** \} */
@@ -168,7 +170,7 @@ namespace Dune
       }
 
     private:
-      const typename OperatorType::RangeFunctionType::DiscreteFunctionSpaceType &space_;
+      std::shared_ptr< const typename OperatorType::RangeFunctionType::DiscreteFunctionSpaceType > space_;
       const OperatorType &operator_;
     };
 

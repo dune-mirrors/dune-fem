@@ -10,6 +10,7 @@
 #include <dune/geometry/typeindex.hh>
 
 //- dune-fem includes
+#include <dune/fem/common/memory.hh>
 #include <dune/fem/misc/checkgeomaffinity.hh>
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/space/common/allgeomtypes.hh>
@@ -69,7 +70,7 @@ namespace Dune
       typedef Dune::DynamicMatrix< RangeFieldType > MatrixType;
 
     protected:
-      const DiscreteFunctionSpaceType& spc_;
+      std::shared_ptr< const DiscreteFunctionSpaceType > spc_;
       const IndexSetType& indexSet_;
 
       GeometryInformationType geoInfo_;
@@ -163,26 +164,26 @@ namespace Dune
       //! return appropriate quadrature order, default is 2 * order(entity)
       int volumeQuadratureOrder ( const EntityType &entity ) const
       {
-        return (volumeQuadOrd_ < 0 ? 2 * spc_.order( entity ) : volumeQuadOrd_);
+        return (volumeQuadOrd_ < 0 ? 2 * space().order( entity ) : volumeQuadOrd_);
       }
 
       //! return appropriate quadrature order, default is 2 * order()
       int maxVolumeQuadratureOrder () const
       {
-        return (volumeQuadOrd_ < 0 ? 2 * spc_.order() : volumeQuadOrd_);
+        return (volumeQuadOrd_ < 0 ? 2 * space().order() : volumeQuadOrd_);
       }
 
       // return number of max non blocked dofs
       int maxNumDofs () const
       {
-        return spc_.blockMapper().maxNumDofs() * localBlockSize;
+        return space().blockMapper().maxNumDofs() * localBlockSize;
       }
 
     public:
       //! constructor taking space and volume quadrature order
       explicit LocalMassMatrixImplementation ( const DiscreteFunctionSpaceType &spc, int volQuadOrd = -1 )
-        : spc_(spc)
-        , indexSet_( spc.indexSet() )
+        : spc_( referenceToSharedPtr( spc ) )
+        , indexSet_( space().indexSet() )
         , geoInfo_( indexSet_ )
         , volumeQuadOrd_ ( volQuadOrd )
         , affine_ ( setup() )
@@ -198,7 +199,7 @@ namespace Dune
       //! copy constructor
       LocalMassMatrixImplementation ( const ThisType &other )
       : spc_(other.spc_),
-        indexSet_( spc_.indexSet() ),
+        indexSet_( space().indexSet() ),
         geoInfo_( indexSet_ ),
         volumeQuadOrd_( other.volumeQuadOrd_ ),
         affine_( other.affine_ ),
@@ -280,6 +281,8 @@ namespace Dune
         else
           leftMultiplyInverseDefault( entity, geo, localMatrix );
       }
+
+      const DiscreteFunctionSpaceType &space () const { return *spc_; }
 
       /////////////////////////////////////////////
       // end of public methods
@@ -376,7 +379,7 @@ namespace Dune
       bool entityHasChanged( const EntityType& entity ) const
       {
         // don't compute matrix new for the same entity
-        const int currentSequence   = spc_.sequence();
+        const int currentSequence   = space().sequence();
         const unsigned int topologyId = entity.type().id();
         const IndexType entityIndex = indexSet_.index( entity ) ;
 

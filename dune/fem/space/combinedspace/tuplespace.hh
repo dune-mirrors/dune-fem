@@ -8,11 +8,10 @@
 
 #include <dune/common/hybridutilities.hh>
 #include <dune/common/math.hh>
-#include <dune/common/std/memory.hh>
-#include <dune/common/std/utility.hh>
 
 #include <dune/grid/common/grid.hh>
 
+#include <dune/fem/common/memory.hh>
 #include <dune/fem/common/utility.hh>
 #include <dune/fem/space/basisfunctionset/tuple.hh>
 #include <dune/fem/space/combinedspace/generic.hh>
@@ -44,7 +43,7 @@ namespace Dune
                      "You should provide at least one space to the TupleDiscreteFunctionSpace" );
 
       // we need to store pointer to the spaces in the SpaceTuple, since space can not be copied.
-      typedef std::tuple< std::unique_ptr< DiscreteFunctionSpaces > ... > DiscreteFunctionSpaceTupleType;
+      typedef std::tuple< std::shared_ptr< DiscreteFunctionSpaces > ... > DiscreteFunctionSpaceTupleType;
 
     public:
       // helper struct to access contained sub spaces
@@ -131,11 +130,11 @@ namespace Dune
                                                            CommunicationDirection commDirection )
       {
         DiscreteFunctionSpaceTupleType tuple;
-        Hybrid::forEach( Std::make_index_sequence< sizeof ... ( DiscreteFunctionSpaces ) >{},
+        Hybrid::forEach( std::make_index_sequence< sizeof ... ( DiscreteFunctionSpaces ) >{},
           [ & ]( auto i )
           {
             typedef typename SubDiscreteFunctionSpace< i >::Type Element;
-            std::get< i >( tuple ) = Std::make_unique< Element >( gridPart, commInterface, commDirection );
+            std::get< i >( tuple ) = std::make_shared< Element >( gridPart, commInterface, commDirection );
           } );
         return tuple;
       }
@@ -192,6 +191,7 @@ namespace Dune
       typedef GenericCombinedDiscreteFunctionSpace< TupleDiscreteFunctionSpaceTraits< DiscreteFunctionSpaces ... > > BaseType;
 
     public:
+      typedef decltype ( std::index_sequence_for< DiscreteFunctionSpaces ... >() ) Sequence;
       typedef typename BaseType::Traits Traits;
       typedef typename BaseType::GridPartType GridPartType;
       typedef typename BaseType::EntityType EntityType;
@@ -219,8 +219,30 @@ namespace Dune
        *  \note Gridparts, communication interfaces and directions are assumed to be consistent in all spaces.
        *  Otherwise the behaviour of this space is undefined.
        */
-      TupleDiscreteFunctionSpace ( DiscreteFunctionSpaces &&  ... spaces )
-        : BaseType( std::make_tuple( Std::make_unique( spaces ) ... ) )
+      TupleDiscreteFunctionSpace ( DiscreteFunctionSpaces &&... spaces )
+        : BaseType( std::make_tuple( std::make_shared( std::move( spaces ) )... ) )
+      {}
+
+      /** \brief constructor
+       *
+       *  \param[in]  spaces        list of references to spaces
+       *
+       *  \note Gridparts, communication interfaces and directions are assumed to be consistent in all spaces.
+       *  Otherwise the behaviour of this space is undefined.
+       */
+      TupleDiscreteFunctionSpace ( const DiscreteFunctionSpaces &... spaces )
+        : BaseType( std::make_tuple( referenceToSharedPtr( spaces )... ) )
+      {}
+
+      /** \brief constructor
+       *
+       *  \param[in]  spaces        list of shared pointers to spaces
+       *
+       *  \note Gridparts, communication interfaces and directions are assumed to be consistent in all spaces.
+       *  Otherwise the behaviour of this space is undefined.
+       */
+      TupleDiscreteFunctionSpace ( std::shared_ptr< const DiscreteFunctionSpaces >... spaces )
+        : BaseType( std::make_tuple( std::move( spaces )... ) )
       {}
 
       /** \brief constructor
@@ -230,7 +252,7 @@ namespace Dune
        *  \note Gridparts, communication interfaces and directions are assumed to be consistent in all spaces.
        *  Otherwise the behaviour of this space is undefined.
        */
-      TupleDiscreteFunctionSpace ( DiscreteFunctionSpaceTupleType &&spaceTuple )
+      explicit TupleDiscreteFunctionSpace ( DiscreteFunctionSpaceTupleType spaceTuple )
         : BaseType( std::move( spaceTuple ) )
       {}
 
