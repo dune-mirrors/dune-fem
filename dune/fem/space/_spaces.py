@@ -371,8 +371,10 @@ def tuple(*spaces, **kwargs):
                               ['return new DuneType( spaceTuple);'],
                               ['"spaceTuple"_a', 'pybind11::keep_alive<1,2>()'])
     mod = module(combinedField, combinedStorage, includes, typeName, constructor)
-    # mod.Space.components = spaces
-    # mod.Space.storage = None            # the DF is a tuple DF and can't be directly used for example to templetize operators
+    # there is no obvious operator associated with the TupleDF used for this space
+    mod.Space.storage = [None,mod.Space.storage[1]+["dune/fem/function/tuplediscretefunction.hh"],
+                        "Dune::Fem::TupleDiscreteFunction< " + ", ".join(s.storage[2] for s in spaces) + " >",
+                        None,None]
     try:
         mod.Space.componentNames = kwargs["components"]
     except KeyError:

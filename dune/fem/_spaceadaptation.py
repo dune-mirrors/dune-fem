@@ -34,7 +34,7 @@ def spaceAdapt(space, marker, dfList):
                     dfs[dfc.space] += [dfc]
                 except KeyError:
                     dfs[dfc.space] = [dfc]
-        except:
+        except AttributeError:
             try:
                 dfs[df.space] += [df]
             except KeyError:
