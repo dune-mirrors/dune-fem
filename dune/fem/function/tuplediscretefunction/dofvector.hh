@@ -5,6 +5,7 @@
 #include <utility>
 #include <tuple>
 
+#include <dune/common/hybridutilities.hh>
 #include <dune/common/std/utility.hh>
 
 #include <dune/fem/common/utility.hh>
@@ -87,7 +88,9 @@ namespace Dune
 
       FieldType operator* ( const ThisType &other ) const
       {
-        return (*this)*( other, Sequence() );
+        return Hybrid::accumulate( Sequence(), FieldType( 0 ), [ this, &other ] ( FieldType v, auto &&i ) -> FieldType {
+            return v + std::get< i.value >( *this ) * std::get< i.value >( other );
+          } );
       }
 
       const ThisType &operator*= ( const FieldType &scalar )
