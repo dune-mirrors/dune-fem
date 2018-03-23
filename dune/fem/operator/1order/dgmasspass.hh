@@ -3,6 +3,7 @@
 
 #include <dune/geometry/referenceelements.hh>
 
+#include <dune/fem/common/memory.hh>
 #include <dune/fem/pass/localdg.hh>
 #include <dune/fem/space/common/communicationmanager.hh>
 
@@ -77,8 +78,8 @@ namespace Dune
                     int volumeQuadOrd = -1, int faceQuadOrd=-1) :
           BaseType(problem, pass, spc,volumeQuadOrd,faceQuadOrd),
           problem_(problem),
-          spc_(spc),
-          communicationManager_(spc_),
+          spc_( referenceToSharedPtr( spc ) ),
+          communicationManager_( space() ),
           tau_(0.0),
           tauTmp_(0.0),
           massVal_(0.0),
@@ -96,8 +97,8 @@ namespace Dune
         {
           if(problem_.hasMass())
           {
-            IteratorType endit = spc_.end();
-            for (IteratorType it = spc_.begin(); it != endit; ++it)
+            IteratorType endit = space().end();
+            for (IteratorType it = space().begin(); it != endit; ++it)
             {
               applyLocalMass(*it);
             }
@@ -166,6 +167,8 @@ namespace Dune
           }
         }
 
+        const DiscreteFunctionSpaceType &space () const { return *spc_; }
+
       private:
         LocalDGMassPass();
         LocalDGMassPass(const LocalDGMassPass&);
@@ -188,7 +191,7 @@ namespace Dune
       private:
         DiscreteModelType& problem_;
 
-        const DiscreteFunctionSpaceType& spc_;
+        std::shared_ptr< const DiscreteFunctionSpaceType > spc_;
         mutable CommunicationManagerType communicationManager_;
 
         mutable RangeType tau_;

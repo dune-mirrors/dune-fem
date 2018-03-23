@@ -4,6 +4,7 @@
 #include <cassert>
 
 #include <complex>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <typeindex>
@@ -611,6 +612,8 @@ namespace Dune
        */
       DiscreteFunctionDefault ( const std::string &name, const DiscreteFunctionSpaceType &dfSpace );
 
+      DiscreteFunctionDefault ( std::string name, std::shared_ptr< const DiscreteFunctionSpaceType > dfSpace );
+
       DiscreteFunctionDefault ( const ThisType& );
       DiscreteFunctionDefault ( ThisType && other );
 
@@ -628,7 +631,7 @@ namespace Dune
       std::string &name () { return name_; }
 
       /** \copydoc Dune::Fem::DiscreteFunctionInterface::space() const */
-      const DiscreteFunctionSpaceType &space () const { return dfSpace_; }
+      const DiscreteFunctionSpaceType &space () const { return *dfSpace_; }
 
       /** \brief obtain a reference to the underlying grid part */
       const GridPartType &gridPart () const { return space().gridPart(); }
@@ -948,7 +951,7 @@ namespace Dune
       // only PersistenceManager should call backup and restore
       friend class PersistenceManager;
 
-      const DiscreteFunctionSpaceType &dfSpace_;
+      std::shared_ptr< const DiscreteFunctionSpaceType > dfSpace_;
 
       // the local function storage
       typename Traits :: LocalDofVectorStackType ldvStack_;

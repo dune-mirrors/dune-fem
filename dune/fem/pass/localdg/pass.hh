@@ -116,22 +116,19 @@ namespace Dune
         problem_(problem),
         arg_(0),
         dest_(0),
-        spc_(spc),
-        gridPart_(spc_.gridPart()),
+        gridPart_( space().gridPart()),
         indexSet_(gridPart_.indexSet()),
         visited_(0),
-        updEn_(spc_),
-        updNb_(spc_),
+        updEn_( space() ),
+        updNb_( space() ),
         fMatVec_( 20 ),
         valEnVec_( 20 ),
         valNbVec_( 20 ),
         dtMin_(std::numeric_limits<double>::max()),
         minLimit_(2.0*std::numeric_limits<double>::min()),
-        volumeQuadOrd_( (volumeQuadOrd < 0) ?
-            ( 2 * spc_.order()) : volumeQuadOrd ),
-        faceQuadOrd_( (faceQuadOrd < 0) ?
-          ( 2 * spc_.order()+1) : faceQuadOrd ),
-        localMassMatrix_( spc_ , volumeQuadOrd_ ),
+        volumeQuadOrd_( (volumeQuadOrd < 0) ?  ( 2 * space().order()) : volumeQuadOrd ),
+        faceQuadOrd_( (faceQuadOrd < 0) ?  ( 2 * space().order()+1) : faceQuadOrd ),
+        localMassMatrix_( space() , volumeQuadOrd_ ),
         notThreadParallel_( notThreadParallel )
       {
         fMatVec_.setMemoryFactor( 1.1 );
@@ -142,9 +139,12 @@ namespace Dune
         assert( faceQuadOrd_ >= 0 );
       }
 
+      LocalDGPass ( const LocalDGPass & ) = delete;
+
       //! Destructor
-      virtual ~LocalDGPass() {
-      }
+      virtual ~LocalDGPass() = default;
+
+      LocalDGPass &operator= ( const LocalDGPass & ) = delete;
 
       //! print tex info
       void printTexInfo(std::ostream& out) const {
@@ -157,7 +157,7 @@ namespace Dune
       double timeStepEstimateImpl() const
       {
         // factor for LDG  Discretization
-        const double p = 2 * spc_.order() + 1;
+        const double p = 2 * space().order() + 1;
         return dtMin_ / p;
       }
 
@@ -195,7 +195,7 @@ namespace Dune
         if( notThreadParallel_ )
         {
           // communicate calculated function
-          spc_.communicate( dest );
+          space().communicate( dest );
         }
 
         if( caller_ )
@@ -240,6 +240,9 @@ namespace Dune
         // add update to real function
         updateFunctionAndApplyMass(en, updEn_ );
       }
+
+      using BaseType::space;
+
     protected:
       //! local integration
       template <class NeighborChecker>
@@ -256,7 +259,7 @@ namespace Dune
         // only apply volumetric integral if order > 0
         // otherwise this contribution is zero
 
-        if( (spc_.order() > 0) || problem_.hasSource() )
+        if( (space().order() > 0) || problem_.hasSource() )
         {
           // create quadrature
           VolumeQuadratureType volQuad( en, volumeQuadOrd_ );
@@ -570,11 +573,6 @@ namespace Dune
         return *caller_;
       }
 
-    private:
-      LocalDGPass();
-      LocalDGPass(const LocalDGPass&);
-      LocalDGPass& operator=(const LocalDGPass&);
-
     protected:
       mutable DiscreteModelCallerType *caller_;
       DiscreteModelType& problem_;
@@ -582,7 +580,6 @@ namespace Dune
       mutable ArgumentType* arg_;
       mutable DestinationType* dest_;
 
-      const DiscreteFunctionSpaceType& spc_;
       const GridPartType & gridPart_;
       const IndexSetType& indexSet_;
 

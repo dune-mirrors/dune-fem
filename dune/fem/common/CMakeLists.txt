@@ -9,6 +9,7 @@ dune_install( bindguard.hh
               geometrytypemap.hh
               hybrid.hh
               localcontribution.hh
+              memory.hh
               referencevector.hh
               stackallocator.hh
               tupletypetraits.hh
