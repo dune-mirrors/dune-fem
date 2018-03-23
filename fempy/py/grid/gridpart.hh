@@ -172,6 +172,12 @@ namespace Dune
       return detail::gridPartConverter< GridView >()( std::move( gridView ) );
     }
 
+    template< class GridView >
+    inline static GridPart< GridView > &gridPart ( const GridView &gridView )
+    {
+      return gridPart< GridView >( pybind11::detail::get_object_handle( &gridView, pybind11::detail::get_type_info( typeid( GridView ) ) ) );
+    }
+
 
 
     // constructGridPart

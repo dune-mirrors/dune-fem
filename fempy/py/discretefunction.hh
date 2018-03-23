@@ -232,6 +232,7 @@ namespace Dune
 
           clsDof.def_property_readonly( "size", [] ( DofVector &self ) { return self.size(); } );
           clsDof.def( "assign", [] ( DofVector &self, const DofVector &other ) { self = other; }, "other"_a );
+          clsDof.def( "scalarProduct", [] ( const DofVector &self, const DofVector &other ) { return self*other; }, "other"_a );
 
           registerDofVectorBuffer( clsDof );
         }

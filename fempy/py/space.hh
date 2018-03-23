@@ -33,8 +33,8 @@ namespace Dune
         typedef typename Space::GridPartType GridPart;
         typedef typename GridPart::GridViewType GridView;
 
-        cls.def( pybind11::init( [] ( pybind11::object gridView ) {
-            return std::unique_ptr< Space >( new Space( gridPart< GridView >( gridView ) ) );
+        cls.def( pybind11::init( [] ( const GridView &gridView ) {
+            return new Space( gridPart< GridView >( gridView ) );
           } ), pybind11::keep_alive< 1, 2 >(), "gridView"_a );
       }
       template< class Space, class... options >
