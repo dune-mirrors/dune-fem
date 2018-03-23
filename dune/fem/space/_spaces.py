@@ -300,7 +300,7 @@ def p1Bubble(gridview, dimrange=1, field="double", order=1, storage=None, **unus
     return module(field, storage, includes, typeName).Space(gridview)
 
 
-def combined(*spaces, **unused):
+def combined(*spaces, **kwargs):
     """create a discrete function space from a tuple of discrete function spaces
 
     Args:
@@ -332,9 +332,18 @@ def combined(*spaces, **unused):
         includes += space._includes
     typeName = "Dune::Fem::TupleDiscreteFunctionSpace< " + ", ".join([space._typeName for space in spaces]) + " >"
 
-    return module(combinedField, combinedStorage, includes, typeName).Space(spaces[0].grid)
+    constructor = Constructor(['typename DuneType::DiscreteFunctionSpaceTupleType spaceTuple'],
+                              ['return new DuneType( spaceTuple);'],
+                              ['"spaceTuple"_a', 'pybind11::keep_alive<1,2>()'])
 
-def tuple(*spaces, **kwargs):
+    mod = module(combinedField, combinedStorage, includes, typeName, constructor)
+    try:
+        mod.Space.componentNames = kwargs["components"]
+    except KeyError:
+        pass
+    return mod.Space(spaces)
+
+def product(*spaces, **kwargs):
     """create a discrete function space from a tuple of discrete function spaces
 
     Args:
