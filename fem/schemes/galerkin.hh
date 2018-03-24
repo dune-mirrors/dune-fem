@@ -22,6 +22,7 @@
 #include <dune/fem/quadrature/cachingquadrature.hh>
 #include <dune/fem/quadrature/intersectionquadrature.hh>
 #include <dune/fem/solver/newtoninverseoperator.hh>
+#include <dune/fem/misc/l2norm.hh>
 
 #include <dune/fem/operator/common/localmatrixcolumn.hh>
 #include <dune/fem/schemes/integrands.hh>
@@ -839,6 +840,9 @@ namespace Dune
 
       typedef LinearOperator JacobianOperatorType;
 
+      typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, InverseOperator > NewtonOperatorType;
+      typedef typename NewtonOperatorType::ErrorMeasureType ErrorMeasureType;
+
       struct SolverInfo
       {
         SolverInfo ( bool converged, int linearIterations, int nonlinearIterations )
@@ -853,7 +857,8 @@ namespace Dune
         : dfSpace_( dfSpace ),
           fullOperator_( dfSpace, dfSpace, std::move( integrands ) ),
           parameter_( std::move( parameter ) ),
-          linearOperator_( "assembled elliptic operator", dfSpace, dfSpace )
+          linearOperator_( "assembled elliptic operator", dfSpace, dfSpace ),
+          invOp_(parameter_)
       {}
 
       const DifferentiableOperatorType &fullOperator() const { return fullOperator_; }
@@ -866,15 +871,19 @@ namespace Dune
         fullOperator()( u, w );
       }
 
+      void setErrorMeasure(ErrorMeasureType &errorMeasure) const
+      {
+        invOp_.setErrorMeasure(errorMeasure);
+      }
+
       SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
       {
-        typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, InverseOperator > NewtonOperator;
-        NewtonOperator invOp( fullOperator(), parameter_ );
+        invOp_.bind(fullOperator());
         DiscreteFunctionType rhs0 = rhs;
         setZeroConstraints( rhs0 );
         invOp( rhs0, solution );
 
-        return SolverInfo( invOp.converged(), invOp.linearIterations(), invOp.iterations() );
+        return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
       }
       SolverInfo solve ( DiscreteFunctionType &solution ) const
       {
@@ -922,6 +931,7 @@ namespace Dune
       DifferentiableOperatorType fullOperator_;
       ParameterReader parameter_;
       LinearOperatorType linearOperator_;
+      mutable NewtonOperatorType invOp_;
     };
 
   } // namespace Fem
