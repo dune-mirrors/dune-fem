@@ -168,6 +168,31 @@ namespace Dune
         FunctionalAxpyFunctor< LocalJacobianRangeType, DofVector > f( tmpJacobianFactor, dofs );
         shapeFunctionSet().jacobianEach( x, f );
       }
+      /** \brief Add H:D^2phi to each dof
+       */
+      template< class Point, class DofVector >
+      void axpy ( const Point &x, const HessianRangeType &hessianFactor, DofVector &dofs ) const
+      {
+        typedef typename GeometryType::JacobianInverseTransposed GeometryJacobianInverseTransposedType;
+        const GeometryType &geo = geometry();
+        const GeometryJacobianInverseTransposedType &gjit = geo.jacobianInverseTransposed( coordinate( x ) );
+        LocalHessianRangeType tmpHessianFactor( RangeFieldType(0) );
+        // don't know how to work directly with the DiagonalMatrix
+        // returned from YaspGrid since gjit[k][l] is not correctly
+        // implemented for k!=l so convert first into a dense matrix...
+        Dune::FieldMatrix<double,DomainType::dimension,DomainType::dimension>
+           G = gjit;
+        DomainType Hg;
+        for( int r = 0; r < FunctionSpaceType::dimRange; ++r )
+          for( int j = 0; j < gjit.cols; ++j )
+            for( int k = 0; k < gjit.cols; ++k )
+            {
+              hessianFactor[r].mv(G[k],Hg);
+              tmpHessianFactor[r][j][k] += Hg * G[j];
+            }
+        FunctionalAxpyFunctor< LocalHessianRangeType, DofVector > f( tmpHessianFactor, dofs );
+        shapeFunctionSet().hessianEach( x, f );
+      }
 
       /** \brief evaluate all basis function and multiply with given
        *         values and add to dofs

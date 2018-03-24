@@ -19,7 +19,7 @@ namespace Dune
     // --------------------------
 
     template< class BasisFunctionSet, class Quadrature >
-    Dune::FieldVector< typename BasisFunctionSet::RangeType::value_type, 6 >
+    Dune::FieldVector< typename BasisFunctionSet::RangeType::value_type, 7 >
     checkQuadratureConsistency ( const BasisFunctionSet &basisFunctionSet, const Quadrature &quadrature,
                                  bool supportsHessians = false )
     {
@@ -66,8 +66,14 @@ namespace Dune
         for( std::size_t k = 0; k < JacobianRangeType::cols; ++k )
           jacobianFactor[ j ][ k ] = random();
 
+      HessianRangeType hessianFactor;
+      for( std::size_t j = 0; j < JacobianRangeType::rows; ++j )
+        for( std::size_t k = 0; k < JacobianRangeType::cols; ++k )
+          for( std::size_t l = 0; l < JacobianRangeType::cols; ++l )
+            hessianFactor[ j ][ k ][ l ] = random();
+
       // return value
-      Dune::FieldVector< RangeFieldType, 6 > ret;
+      Dune::FieldVector< RangeFieldType, 7 > ret;
 
       const std::size_t nop = quadrature.nop();
       for( std::size_t qp = 0; qp < nop; ++qp )
@@ -163,7 +169,32 @@ namespace Dune
           ret[ 4 ] = std::max( ret[ 4 ], error );
         }
 
-        // check value, jacobian axpy method
+
+        // check hessian axpy method
+        if( supportsHessians )
+        {
+          DomainType x = coordinate( quadrature[ qp ] );
+          std::vector< RangeFieldType > r1( dofs );
+          std::vector< RangeFieldType > r2( dofs );
+
+          basisFunctionSet.axpy( x, hessianFactor, r1 );
+
+          std::vector< HessianRangeType > values( basisFunctionSet.size() );
+          basisFunctionSet.hessianAll( x, values );
+          for( std::size_t i = 0; i < values.size(); ++i )
+            for( int j = 0; j < JacobianRangeType::rows; ++j )
+              for( std::size_t k = 0; k < JacobianRangeType::cols; ++k )
+                for( std::size_t l = 0; l < JacobianRangeType::cols; ++l )
+                  r2[ i ] += hessianFactor[ j ][ k ][ l ] * values[ i ][ j ][ k ][ l ];
+
+          RangeFieldType error = 0;
+          for( std::size_t i = 0; i < values.size(); ++i )
+            error += std::abs( r2[ i ] - r1[ i ] );
+
+          ret[ 5 ] = std::max( ret[ 5 ], error );
+        }
+
+        // check value, jaacobian axpy method
         {
           DomainType x = coordinate( quadrature[ qp ] );
           std::vector< RangeFieldType > r1( dofs );
@@ -188,7 +219,7 @@ namespace Dune
           for( std::size_t i = 0; i < values.size(); ++i )
             error += std::abs( r2[ i ] - r1[ i ] );
 
-          ret[ 5 ] = std::max( ret[ 5 ], error );
+          ret[ 6 ] = std::max( ret[ 6 ], error );
         }
       }
 
