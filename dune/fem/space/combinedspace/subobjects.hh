@@ -30,6 +30,13 @@ namespace Dune
       static const int size = SIZE;
     };
 
+    template< class K, int SIZE >
+    struct RowType< ExplicitFieldVector< K, SIZE > >
+    {
+      typedef K Type;
+      static const int size = SIZE;
+    };
+
     template< class K, int ROWS, int COLS >
     struct RowType< FieldMatrix< K, ROWS, COLS > >
     {

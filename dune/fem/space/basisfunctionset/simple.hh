@@ -125,6 +125,14 @@ namespace Dune
         FunctionalAxpyFunctor< JacobianRangeType, DofVector > functor( jacobianFactor, dofs );
         localFunctionSet().jacobianEach( x, functor );
       }
+      /** \brief Add H:D^2phi to each dof
+       */
+      template< class Point, class DofVector >
+      void axpy ( const Point &x, const HessianRangeType &hessianFactor, DofVector &dofs ) const
+      {
+        FunctionalAxpyFunctor< HessianRangeType, DofVector > functor( hessianFactor, dofs );
+        localFunctionSet().hessianEach( x, functor );
+      }
 
       /** \brief evaluate all basis function and multiply with given
        *         values and add to dofs
