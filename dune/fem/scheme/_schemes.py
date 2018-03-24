@@ -120,7 +120,9 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     return femschemeModule(space,model,includes,solver,operator,paraneters=parameters)
 
 
-def galerkin(integrands, space=None, solver=None, parameters={}, virtualize=None):
+<<<<<<< HEAD
+def galerkin(integrands, space=None, solver=None, parameters={},
+        errorMeasure=None, virtualize=None):
     if hasattr(integrands,"interpolate"):
         warnings.warn("""
         note: the parameter order for the 'schemes' has changes.
@@ -180,6 +182,8 @@ def galerkin(integrands, space=None, solver=None, parameters={}, virtualize=None
     parameters.update(param)
     scheme = module(includes, typeName, *ctors, backend=backend).Scheme(space, integrands, parameters)
     scheme.model = integrands
+    if not errorMeasure is None:
+        scheme.setErrorMeasure( errorMeasure );
     return scheme
 
 
