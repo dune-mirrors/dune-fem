@@ -93,6 +93,9 @@ def load(grid, model, *args, **kwargs):
             setattr(module.Model, '__init__', initModel)
         return module
 
+    if 'modelPatch' in kwargs:
+        modelPatch = kwargs.pop('modelPatch')
+        modelPatch(model)
     name = 'ellipticmodel_' + model.signature + "_" + hashIt(grid._typeName)
 
     writer = SourceWriter()
@@ -118,11 +121,10 @@ def load(grid, model, *args, **kwargs):
     code = []
 
     nameSpace = NameSpace("ModelImpl_" + model.signature)
-    if 'modelPatch' in kwargs:
-        modelPatch = kwargs.pop('modelPatch')
-        modelPatch(model)
+    try:
+        modelPatch
         nameSpace.append(model.code(model))
-    else:
+    except:
         nameSpace.append(model.code())
     code.append(nameSpace)
 
