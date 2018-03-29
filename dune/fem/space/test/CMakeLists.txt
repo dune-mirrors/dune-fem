@@ -69,4 +69,6 @@ dune_add_test( SOURCES test-tupledgspace.cc LINK_LIBRARIES dunefem COMPILE_DEFIN
 
 dune_add_test( SOURCES test-spaceinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
 
+dune_add_test( SOURCES test-raviartthomasinterpolation.cc LINK_LIBRARIES dunefem COMPILE_DEFINITIONS "${DEFAULTFLAGS}" )
+
 install( FILES checklocalinterpolation.hh DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/dune/fem/space/test )

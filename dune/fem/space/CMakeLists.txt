@@ -1,12 +1,30 @@
-dune_install(brezzidouglasmarini.hh combinedspace.hh discontinuousgalerkin.hh finitevolume.hh
-             fourier.hh lagrange.hh padaptivespace.hh rannacherturek.hh)
+dune_install(
+    brezzidouglasmarini.hh
+    combinedspace.hh
+    discontinuousgalerkin.hh
+    finitevolume.hh
+    fourier.hh
+    lagrange.hh
+    padaptivespace.hh
+    rannacherturek.hh
+    raviartthomas.hh)
 
-dune_add_subdirs(basisfunctionset combinedspace common
-                 discontinuousgalerkin finitevolume
-                 fourier lagrange mapper
-                 padaptivespace rannacherturek shapefunctionset hpdg
-                 localfiniteelement
-                 test)
+dune_add_subdirs(
+    basisfunctionset
+    combinedspace
+    common
+    discontinuousgalerkin
+    finitevolume
+    fourier
+    hpdg
+    lagrange
+    localfiniteelement
+    mapper
+    padaptivespace
+    rannacherturek
+    raviartthomas
+    shapefunctionset
+    test)
 
 dune_add_library(space OBJECT
     shapefunctionset/legendrepolynomials.cc
