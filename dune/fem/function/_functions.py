@@ -45,18 +45,16 @@ def levelFunction(gridview,name="levels"):
     @dune.grid.gridFunction(gridview,name=name)
     def levelFunction(e,x):
         return [e.level]
-    print(dir(levelFunction))
     return levelFunction
-    # return localFunction(gridview, "level", 0, lambda en,_: [en.level])
 
 
-def partitionFunction(gridview):
+def partitionFunction(gridview,name="rank"):
     class Partition(object):
         def __init__(self,rank):
             self.rank = rank
         def __call__(self,en,x):
             return [self.rank]
-    return localFunction(gridview, "rank", 0, Partition(gridview.comm.rank))
+    return localFunction(gridview, name, 0, Partition(gridview.comm.rank))
 
 
 def cppFunction(gridview, name, order, code, *args, **kwargs):
