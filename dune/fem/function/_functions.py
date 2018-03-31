@@ -41,10 +41,11 @@ def localFunction(gridview, name, order, value):
     return module.localGridFunction(gridview,name,order,value).as_ufl()
 
 
-def levelFunction(gridview):
-    @dune.grid.gridFunction(gridview)
+def levelFunction(gridview,name="levels"):
+    @dune.grid.gridFunction(gridview,name=name)
     def levelFunction(e,x):
         return [e.level]
+    print(dir(levelFunction))
     return levelFunction
     # return localFunction(gridview, "level", 0, lambda en,_: [en.level])
 
