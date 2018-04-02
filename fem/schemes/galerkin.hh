@@ -882,7 +882,7 @@ namespace Dune
         DiscreteFunctionType rhs0 = rhs;
         setZeroConstraints( rhs0 );
         invOp( rhs0, solution );
-
+        invOp_.unbind();
         return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
       }
       SolverInfo solve ( DiscreteFunctionType &solution ) const

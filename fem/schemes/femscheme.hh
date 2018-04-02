@@ -66,7 +66,7 @@ struct AddDirichletBC<Op,DF,std::enable_if_t<std::is_void< decltype( std::declva
 { static const bool value = true; };
 
 
-template< class Operator, class InverseOperator >
+template< class Operator, class LinearInverseOperator >
 class FemScheme
 {
 public:
@@ -77,7 +77,7 @@ public:
   typedef typename Operator::RangeFunctionType  DiscreteFunctionType;
   typedef Operator DifferentiableOperatorType;
   typedef typename DiscreteFunctionType::DiscreteFunctionSpaceType DiscreteFunctionSpaceType;
-  typedef InverseOperator InverseOperatorType;
+  typedef LinearInverseOperator LinearInverseOperatorType;
 
   //! grid view (e.g. leaf grid view) provided in the template argument list
   typedef typename ModelType::GridPartType GridPartType;
@@ -91,6 +91,9 @@ public:
   typedef typename DiscreteFunctionSpaceType::FunctionSpaceType FunctionSpaceType;
 
   typedef typename Operator::JacobianOperatorType JacobianOperatorType;
+  typedef typename Operator::JacobianOperatorType LinearOperatorType;
+  typedef Dune::Fem::NewtonInverseOperator< LinearOperatorType, LinearInverseOperatorType > InverseOperatorType;
+  typedef typename InverseOperatorType::ErrorMeasureType ErrorMeasureType;
 
   typedef typename FunctionSpaceType::RangeType RangeType;
   static const int dimRange = FunctionSpaceType::dimRange;
@@ -103,7 +106,8 @@ public:
     implicitOperator_( space, space, std::forward<ModelType&>(model_), parameter ),
     // create linear operator (domainSpace,rangeSpace)
     linearOperator_( "assembled elliptic operator", space_, space_ ), // , parameter ),
-    parameter_( parameter )
+    parameter_( parameter ),
+    invOp_( parameter_ )
   {}
 
   const DifferentiableOperatorType &fullOperator() const
@@ -156,13 +160,17 @@ public:
     int linearIterations;
     int nonlinearIterations;
   };
+  void setErrorMeasure(ErrorMeasureType &errorMeasure) const
+  {
+    invOp_.setErrorMeasure(errorMeasure);
+  }
   SolverInfo solve ( const DiscreteFunctionType &rhs, DiscreteFunctionType &solution ) const
   {
-    typedef Dune::Fem::NewtonInverseOperator< JacobianOperatorType, InverseOperatorType > NLInverseOperatorType;
-    NLInverseOperatorType invOp( implicitOperator_, parameter_ );
+    invOp_.bind( implicitOperator_ );
     DiscreteFunctionType rhs0 = rhs;
     setZeroConstraints( rhs0 );
     invOp( rhs0, solution );
+    invOp_.unbind();
     return SolverInfo(invOp.converged(),invOp.linearIterations(),invOp.iterations());
   }
   SolverInfo solve ( DiscreteFunctionType &solution ) const
@@ -203,6 +211,7 @@ protected:
   DifferentiableOperatorType implicitOperator_;
   JacobianOperatorType linearOperator_;
   const Dune::Fem::ParameterReader parameter_;
+  mutable InverseOperatorType invOp_;
 };
 
 #endif // #ifndef DUNE_FEM_SCHEMES_FEMSCHEME_HH
