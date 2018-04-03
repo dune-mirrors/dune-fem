@@ -4,6 +4,7 @@
 #include <dune/grid/common/gridenums.hh>
 
 #include <dune/fem/operator/matrix/istlmatrixadapter.hh>
+#include <dune/fem/space/common/capabilities.hh>
 #include <dune/fem/space/common/commoperations.hh>
 #include <dune/fem/space/common/defaultcommhandler.hh>
 #include <dune/fem/space/common/localrestrictprolong.hh>
@@ -161,6 +162,47 @@ namespace Dune
     };
 
 #endif // #ifndef DOXYGEN
+
+
+    namespace Capabilities
+    {
+      ////////////////////////////////////////////////////////////////////
+      //  hpDG::OrthogonalDiscontinuousGalerkinSpace
+      ////////////////////////////////////////////////////////////////////
+
+      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
+      struct hasStaticPolynomialOrder< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      {
+        static const bool v = true;
+        static const int order = polOrder;
+      };
+
+      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
+      struct isLocalized< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      {
+        static const bool v = true;
+      };
+
+      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
+      struct isAdaptive< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      {
+        static const bool v = true;
+      };
+
+      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
+      struct viewThreadSafe< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      {
+        static const bool v = true;
+      };
+
+      template< class FunctionSpace, class GridPart, int polOrder, bool caching >
+      struct isHierarchic< hpDG::OrthogonalDiscontinuousGalerkinSpace< FunctionSpace, GridPart, polOrder, caching > >
+      {
+        static const bool v = true;
+      };
+
+    } // namespace Capabilities
+
 
   } // namespace Fem
 
