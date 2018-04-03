@@ -145,6 +145,20 @@ namespace Dune
       typedef DiscreteFunctionSpaceImp< NewFunctionSpace, GridPartImp, polOrd, StorageImp > Type;
     };
 
+    template <class FunctionSpaceImp,
+              class GridPartImp,
+              int polOrd,
+              bool caching,
+              template <class,class,int,bool> class DiscreteFunctionSpaceImp,
+              class NewFunctionSpace>
+    struct DifferentDiscreteFunctionSpace<
+        DiscreteFunctionSpaceImp<FunctionSpaceImp,GridPartImp,polOrd,caching>,
+            NewFunctionSpace>
+    {
+      typedef DiscreteFunctionSpaceImp< NewFunctionSpace, GridPartImp, polOrd, caching > Type;
+    };
+
+
     //**************************************************************************
     //
     //  --DiscreteFunctionSpaceInterface
