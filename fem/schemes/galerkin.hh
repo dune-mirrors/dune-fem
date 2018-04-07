@@ -149,8 +149,9 @@ namespace Dune
           if( !integrands_.init( u.entity() ) )
             return;
 
+          const int order = (w.order() == 0) ? 3 : 2*w.order();
           const auto geometry = u.entity().geometry();
-          for( const auto qp : InteriorQuadratureType( u.entity(), 2*w.order()+3 ) )
+          for( const auto qp : InteriorQuadratureType( u.entity(), order ) )
           {
             const ctype weight = qp.weight() * geometry.integrationElement( qp.position() );
 
