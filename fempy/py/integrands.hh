@@ -99,26 +99,22 @@ namespace Dune
     // registerIntegrands
     // ------------------
 
-    template< class Integrands >
-    inline pybind11::class_< Integrands > registerIntegrands ( pybind11::handle scope, const char *clsName = "Integrands" )
+    template< class Integrands, class... options >
+    inline void registerIntegrands ( pybind11::handle scope,
+        pybind11::class_<Integrands,options...> cls)
     {
       typedef typename Integrands::GridPartType GridPart;
       typedef typename Integrands::DomainValueType DomainValue;
       typedef typename Integrands::RangeValueType RangeValue;
       typedef Fem::VirtualizedIntegrands< GridPart, DomainValue, RangeValue > VirtualizedIntegrands;
 
-      auto cls = Python::insertClass<Integrands>(scope, clsName,
-          Python::GenerateTypeName("TODO") );
-      if (cls.second)
-        detail::registerIntegrands( scope, cls.first );
+      detail::registerIntegrands( scope, cls );
 
       detail::clsVirtualizedIntegrands< GridPart, DomainValue, RangeValue >( scope ).
         def( pybind11::init( [] ( Integrands &integrands ) {
           return new VirtualizedIntegrands( std::ref( integrands ) );
         }), pybind11::keep_alive< 1, 2 >() );
       pybind11::implicitly_convertible< Integrands, VirtualizedIntegrands >();
-
-      return cls.first;
     }
 
   } // namespace FemPy
