@@ -142,12 +142,15 @@ namespace Dune
 
         int interiorQuadratureOrder( const int order ) const
         {
-          return 2*order + 3 ;
+          return 2*order + 3;
+          //return (order == 0) ? 3 : 2*order + 1 ;
+          return (order == 0) ? 3 : 2*order + 1 ;
         }
 
         int surfaceQuadratureOrder( const int order ) const
         {
-          return 2 * order + 3 ;
+          return 2*order + 3;
+          //return (order == 0) ? 3 : 2*order + 1 ;
         }
       public:
         // interior integral
