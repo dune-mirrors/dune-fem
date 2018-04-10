@@ -224,11 +224,9 @@ namespace Dune
 
       //! corresponding communication method for this grid part
       template< class DataHandle, class Data >
-      void communicate ( CommDataHandleIF< DataHandle, Data > &data,
-                         InterfaceType iftype,
-                         CommunicationDirection dir ) const
+      decltype( auto ) communicate ( CommDataHandleIF< DataHandle, Data > &data, InterfaceType iftype, CommunicationDirection dir ) const
       {
-        this->grid().communicate( data, iftype, dir );
+        return leafGridView_.communicate( data, iftype, dir );
       }
 
     protected:
