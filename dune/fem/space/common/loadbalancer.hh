@@ -132,7 +132,8 @@ namespace Dune
       {
         // if overlap or ghost elements are available
         // these need to be synchronized here
-        if( (grid_.overlapSize( 0 ) > 0) || (grid_.ghostSize( 0 ) > 0) )
+        const auto gv = grid_.leafGridView();
+        if( (gv.overlapSize( 0 ) > 0) || (gv.ghostSize( 0 ) > 0) )
         {
           // exchange all modified data
           // this also rebuilds the dependecy cache of the
@@ -141,8 +142,8 @@ namespace Dune
         }
 #ifndef NDEBUG
         // make sure every process is on the same page
-        grid_.comm().barrier();
-#endif
+        gv.comm().barrier();
+#endif // #ifndef NDEBUG
       }
 
       //! do load balance
