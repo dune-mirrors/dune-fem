@@ -233,7 +233,7 @@ try
   if( grid->comm().rank() == 0 )
     std::cout << "final L2 error:   " << std::scientific << std::setprecision( 12 ) << finalLagrangeError << "    " << finalDGError << std::endl;
 
-  if( grid->ghostSize( 0 ) > 0 )
+  if( grid->leafGridView().ghostSize( 0 ) > 0 )
   {
     const double lagrangeErrorGhosts = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, polOrder+1 ), lagrangeSolution, Dune::Partitions::ghost );
     const double dgErrorGhosts = l2Norm.distance( gridFunctionAdapter( ExactSolution(), gridPart, dgOrder+1 ), dgSolution, Dune::Partitions::ghost );
