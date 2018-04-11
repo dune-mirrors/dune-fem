@@ -120,7 +120,6 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     return femschemeModule(space,model,includes,solver,operator,paraneters=parameters)
 
 
-<<<<<<< HEAD
 def galerkin(integrands, space=None, solver=None, parameters={},
         errorMeasure=None, virtualize=None):
     if hasattr(integrands,"interpolate"):

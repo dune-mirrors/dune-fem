@@ -79,7 +79,7 @@ def suitesparsesolver(storage,solverType="umfpack"):
     elif solverType == "spqr_symmetric":
         operator = lambda df,linop: "Dune::Fem::SPQROp< " + ",".join([df,linop,"true"]) + " >"
     elif solverType == "spqr_nonsymmetric":
-        operator = lambda df,linop: "Dune::Fem::SPQROp< " + ",".join([df,linop,"fakse"]) + " >"
+        operator = lambda df,linop: "Dune::Fem::SPQROp< " + ",".join([df,linop,"false"]) + " >"
     elif solverType == "umfpack":
         operator = lambda df,linop: "Dune::Fem::UMFPACKOp< " + ",".join([df,linop]) + " >"
     else:
