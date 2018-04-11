@@ -169,9 +169,9 @@ public:
     invOp_.bind( implicitOperator_ );
     DiscreteFunctionType rhs0 = rhs;
     setZeroConstraints( rhs0 );
-    invOp( rhs0, solution );
+    invOp_( rhs0, solution );
     invOp_.unbind();
-    return SolverInfo(invOp.converged(),invOp.linearIterations(),invOp.iterations());
+    return SolverInfo(invOp_.converged(),invOp_.linearIterations(),invOp_.iterations());
   }
   SolverInfo solve ( DiscreteFunctionType &solution ) const
   {

@@ -144,7 +144,6 @@ namespace Dune
         {
           return 2*order + 3;
           //return (order == 0) ? 3 : 2*order + 1 ;
-          return (order == 0) ? 3 : 2*order + 1 ;
         }
 
         int surfaceQuadratureOrder( const int order ) const
@@ -893,7 +892,7 @@ namespace Dune
         invOp_.bind(fullOperator());
         DiscreteFunctionType rhs0 = rhs;
         setZeroConstraints( rhs0 );
-        invOp( rhs0, solution );
+        invOp_( rhs0, solution );
         invOp_.unbind();
         return SolverInfo( invOp_.converged(), invOp_.linearIterations(), invOp_.iterations() );
       }
