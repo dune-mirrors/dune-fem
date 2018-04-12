@@ -109,6 +109,11 @@ namespace Dune
         const std::string lineSearchMethods[] = { "none", "simple" };
         return static_cast< LineSearchMethod>( parameter_.getEnum( keyPrefix_ + "lineSearch", lineSearchMethods, 0 ) );
       }
+      virtual int maxLineSearchIterationsParameter () const
+      {
+        return parameter_.getValue< int >( keyPrefix_ + "maxlinesearchiterations", std::numeric_limits< int >::max() );
+      }
+
     };
 
 
@@ -199,6 +204,7 @@ namespace Dune
         : verbose_( parameter.newtonVerbose() && MPIManager::rank () == 0 ),
           maxIterations_( parameter.maxIterationsParameter() ),
           maxLinearIterations_( parameter.maxLinearIterationsParameter() ),
+          maxLineSearchIterations_( parameter.maxLineSearchIterationsParameter() ),
           jInv_( std::move( jInv ) ),
           parameter_(parameter),
           lsMethod_( parameter.lineSearch() ),
@@ -334,6 +340,7 @@ namespace Dune
         }
         double factor = 1.0;
         int noLineSearch = (delta_ < deltaOld)?1:0;
+        int lineSearchIteration = 0;
         while (delta_ >= deltaOld)
         {
           double deltaPrev = delta_;
@@ -350,6 +357,10 @@ namespace Dune
             return -1;
           if (failed() == NewtonFailure::InvalidResidual)
             delta_ = 2.*deltaOld; // remain in line search
+
+          ++lineSearchIteration;
+          if( lineSearchIteration >= maxLineSearchIterations_ )
+            return -1; // failed
         }
         return noLineSearch;
       }
@@ -370,6 +381,7 @@ namespace Dune
       const bool verbose_;
       const int maxIterations_;
       const int maxLinearIterations_;
+      const int maxLineSearchIterations_;
 
       mutable DomainFieldType delta_;
       mutable int iterations_;
