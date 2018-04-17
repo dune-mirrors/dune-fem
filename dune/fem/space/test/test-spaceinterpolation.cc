@@ -25,6 +25,7 @@
 #include <dune/fem/misc/l2norm.hh>
 #include <dune/fem/misc/h1norm.hh>
 
+#include <dune/fem/space/brezzidouglasfortinmarini.hh>
 #include <dune/fem/space/brezzidouglasmarini.hh>
 #include <dune/fem/space/combinedspace.hh>
 #include <dune/fem/space/discontinuousgalerkin.hh>
@@ -139,6 +140,8 @@ typedef std::tuple<
   Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 1 >,
   Dune::Fem::LegendreDiscontinuousGalerkinSpace< FunctionSpaceType, GridPartType, 2 >,
 #if HAVE_DUNE_LOCALFUNCTIONS
+  Dune::Fem::BrezziDouglasFortinMariniSpace< FunctionSpaceType, GridPartType, 1 >,
+  Dune::Fem::BrezziDouglasFortinMariniSpace< FunctionSpaceType, GridPartType, 2 >,
   Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, 1 >,
   Dune::Fem::BrezziDouglasMariniSpace< FunctionSpaceType, GridPartType, GridPartType :: dimension == 3 ? 1 : 2 >,
   Dune::Fem::RaviartThomasSpace< FunctionSpaceType, GridPartType, 0 >,

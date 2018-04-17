@@ -1,4 +1,5 @@
 dune_install(
+    brezzidouglasfortinmarini.hh
     brezzidouglasmarini.hh
     combinedspace.hh
     discontinuousgalerkin.hh
