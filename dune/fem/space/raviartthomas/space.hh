@@ -87,7 +87,7 @@ namespace Dune
       // 2d, Cube, 2nd order
       template< class D, class R >
       struct RaviartThomasLocalFiniteElement< Dune::Impl::CubeTopology< 2 >::type::id, D, R, 2, 2 >
-        : public RT0Cube2DLocalFiniteElement< D, R >
+        : public RT2Cube2DLocalFiniteElement< D, R >
       {
         static constexpr std::size_t numOrientations = 16;
         using RT2Cube2DLocalFiniteElement< D, R >::RT2Cube2DLocalFiniteElement;
