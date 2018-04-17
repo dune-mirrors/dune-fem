@@ -799,8 +799,22 @@ def product(*spaces, **kwargs):
     addStorage(spc, storage)
     return spc.as_ufl()
 
-def bdm(gridView, order=1, dimRange=None,
-        field="double", storage=None, scalar=False, dimrange=None, codegen=True):
+def _bdmSpaces(gridView, order=1, dimRange=None,
+               field="double", storage=None, scalar=False, dimrange=None, codegen=True,
+               bdmName='BDM',
+               bdmInc='brezzidouglasmarini.hh',
+               bdmType='BrezziDouglasMariniSpace'):
+    """create a BD(F)M space
+
+    Args:
+        gridView: the underlying grid part
+        order: polynomial degree of basis functions
+        field: field of the range space
+        storage: underlying linear algebra backend
+
+    Returns:
+        Space: the constructed BD(F)M Space
+    """
     _kwargs = locals() # store parameter list
 
     from dune.fem.space import module
@@ -813,22 +827,22 @@ def bdm(gridView, order=1, dimRange=None,
         dimRange = gridView.dimension
     else:
         import warnings
-        warnings.warn('dimRange argument for the BDM space is deprecated.  RT is already a vector field and RT^r is not available in dune-fem !\n')
+        warnings.warn(f'dimRange argument for the {bdmName} space is deprecated. {bdmName} is already a vector field and {bdmName}^r is not available in dune-fem !\n')
 
     dimRange = checkDeprecated_dimrange( dimRange=dimRange, dimrange=dimrange )
 
     if order < 1 or order > 2:
         raise KeyError(\
-            "Parameter error in BDMSpace with "+
+            "Parameter error in " + bdmName + " with "+
             "order=" + str(order) + ": " +\
             "order has to be equal to 1 or 2")
 
     # check requirements on parameters
     dimRange, scalar, field = _checkDimRangeScalarOrderField(dimRange, scalar, order, field)
 
-    includes = [ "dune/fem/space/brezzidouglasmarini.hh" ] + gridView.cppIncludes
+    includes = [ "dune/fem/space/" + bdmInc ] + gridView.cppIncludes
     dimw = gridView.dimWorld
-    typeName = "Dune::Fem::BrezziDouglasMariniSpace< " +\
+    typeName = "Dune::Fem::" + bdmType + "< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimw) + " >, " +\
       "Dune::FemPy::GridPart< " + gridView.cppTypeName + " >, " + str(order) + " ," +\
       storageType(codegen) + ">"
@@ -838,6 +852,21 @@ def bdm(gridView, order=1, dimRange=None,
             clone=_clone(_kwargs),
             ctorArgs=[gridView])
     return spc.as_ufl()
+
+# BDM space
+def bdm(gridView, **kwargs):
+    return _bdmSpaces(gridView, **kwargs, )
+bdm.__doc__ = _bdmSpaces.__doc__
+
+# BDFM space
+def bdfm(gridView, **kwargs):
+    assert gridView.type.isCube, "BDFM space only works for cube elements!"
+    return _bdmSpaces(gridView,
+                      bdmName='BDFM',
+                      bdmInc='brezzidouglasfortinmarini.hh',
+                      bdmType='BrezziDouglasFortinMariniSpace',
+                      **kwargs)
+bdfm.__doc__ = _bdmSpaces.__doc__
 
 def raviartThomas(gridView, order=0, dimRange=None,
                   field="double", storage=None, scalar=False, dimrange=None, codegen=True):
