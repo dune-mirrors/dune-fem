@@ -51,15 +51,29 @@ namespace Dune
 
 #endif //#if HAVE_DUNE_ISTL
 
+#ifdef PETSC4PY_H // will be set it petsc4py.h was included (so import_petsc4py exists and the python module as well)
+      template< class DF , class ... options>
+      inline auto addDofVector(pybind11::class_<DF,options...> cls, PriorityTag<3> )
+      -> void_t< decltype(std::declval<DF&>().petscVec()) >
+      {
+        cls.def_property_readonly( "dofVector", [] ( DF &self )
+        {
+          if (import_petsc4py() != 0)
+          {                           \
+            std::cout << "ERROR: could not import petsc4py\n";
+            throw std::runtime_error("Error during import of petsc4py");
+          }
 
+          Vec vec = self.dofVector().array();
+          pybind11::handle petsc_vec(PyPetscVec_New(vec));
+          return petsc_vec;
+        });
+      }
+#endif
       //create a SFINAE so that if the type is a ISTL blockvector we instead return the self.dofVector.array() instead of just the dofVector in the other cases
-
       //SFINAE checks whether getBlockVector is a valid function call for ISTL block matrix and also gives
-      //priority
+      // priority
       // not sure whatthe class... options
-
-
-
       //if it's of istl blockvector type return the array otherwise do the other stuff
       template< class DF , class ... options>
       inline auto addDofVector(pybind11::class_<DF,options...> cls, PriorityTag<2> )
@@ -75,21 +89,10 @@ namespace Dune
       inline void addDofVector(pybind11::class_<DF,options...> cls, PriorityTag<1> )
       {
         cls.def_property_readonly( "dofVector", [] ( DF &self )
-        -> decltype( std::declval<DF&>().dofVector() )
         {
           return self.dofVector();
         });
       }
-
-      // I'd like to enable this second one as well
-      template< class DF,class ... options >
-      inline static auto returnDofVector (DF &self, PriorityTag<1> )
-      -> decltype(  std::declval< DF&>().dofVector()   )
-      {
-           return self.dofVector();
-      }
-
-
 
       // registerRestrictProlong
       // -----------------------
@@ -158,8 +161,6 @@ namespace Dune
       }
 
       //register method if data method already available
-
-
 
 #if HAVE_DUNE_ISTL
       template < class DofVector, class... options >
@@ -324,8 +325,8 @@ namespace Dune
           registerDofVectorBuffer( clsDof );
         }
 
+        addDofVector(cls, PriorityTag<42>());
         registerSubDiscreteFunction( cls );
-        addDofVector(cls, PriorityTag<2>());
 
         typedef Dune::Fem::AddLocalContribution<DF> AddLocalContrib;
         auto clsAddContrib =
