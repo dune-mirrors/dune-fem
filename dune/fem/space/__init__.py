@@ -40,21 +40,11 @@ def storageToSolver(storage):
 
 generator = SimpleGenerator("Space", "Dune::FemPy")
 
-def addAttr(module, cls, field, storage):
+def addAttr(module, cls, field):
     setattr(cls, "_module", module)
     setattr(cls, "field", field)
     setattr(cls, "interpolate", interpolate)
     setattr(cls, "numpyFunction", function.numpyFunction)
-
-    if not storage:
-        storage = str("fem")
-    if isString(storage):
-        import dune.create as create
-        assert storageToSolver(storage), "wrong storage (" + storage + ") passed to space"
-        storage = create.discretefunction(storageToSolver(storage))(cls)
-    else:
-        storage = storage(cls)
-    setattr(cls, "storage", storage)
 
     from ufl.finiteelement import FiniteElementBase
     def uflSpace(self):
@@ -87,12 +77,23 @@ def addAttr(module, cls, field, storage):
     cls.uflVectorConstant = lambda self,dimRange: uflConstant(self,dimRange,None)
     cls.uflNamedConstant  = lambda self, name, dimRange=None: uflConstant(self,dimRange,name)
 
+def addStorage(obj, storage):
+    if not storage:
+        storage = str("fem")
+    if isString(storage):
+        import dune.create as create
+        assert storageToSolver(storage), "wrong storage (" + storage + ") passed to space"
+        storage = create.discretefunction(storageToSolver(storage))(obj)
+    else:
+        storage = storage(cls)
+    setattr(obj, "storage", storage)
+
 fileBase = "femspace"
 
-def module(field, storage, includes, typeName, *args):
+def module(field, includes, typeName, *args):
     includes = includes + ["dune/fempy/py/space.hh"]
     moduleName = fileBase + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
-    module = generator.load(includes, typeName, moduleName, *args,
+    module = generator.load(includes, typeName, moduleName, *args, dynamicAttr=True,
                             options=["std::shared_ptr<DuneType>"])
-    addAttr(module, module.Space, field, storage)
+    addAttr(module, module.Space, field)
     return module
