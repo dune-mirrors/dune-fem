@@ -182,10 +182,17 @@ namespace Dune
     inline static void PCSetUp ( PC pc ) { ErrorCheck( ::PCSetUp(  pc ) ); }
     inline static void PCFactorSetLevels( PC pc, PetscInt level ) { ErrorCheck( ::PCFactorSetLevels(  pc, level ) ); }
     inline static void PCSORSetOmega( PC pc, PetscReal omega ) { ErrorCheck( ::PCSORSetOmega(  pc, omega ) ); }
+#if PETSC_VERSION_MAJOR <= 3 && PETSC_VERSION_MINOR < 9
     inline static void PCFactorSetMatSolverPackage( PC pc, const MatSolverPackage type )
     {
       ErrorCheck( ::PCFactorSetMatSolverPackage(  pc, type ) );
     }
+#else
+    inline static void PCFactorSetMatSolverPackage( PC pc, const MatSolverType type )
+    {
+      ErrorCheck( ::PCFactorSetMatSolverType( pc, type ) );
+    }
+#endif
     inline static void PCHYPRESetType( PC pc, const char* type )
     {
       ErrorCheck( ::PCHYPRESetType( pc, type ) );
