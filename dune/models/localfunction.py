@@ -148,13 +148,10 @@ def gridFunction(grid, code, coefficients, constants):
 
     base = BaseModel(dimRange, myCodeHash)
     if isinstance(coefficients, dict):
+        eval = base.codeCoefficient(eval, coefficients, constants)
 
-        l = list(coefficients)
-        l.sort()
-        eval = base.codeCoefficient(eval, l, constants)
-
-        jac = base.codeCoefficient(jac, l, constants)
-        hess = base.codeCoefficient(hess, l, constants)
+        jac = base.codeCoefficient(jac, coefficients, constants)
+        hess = base.codeCoefficient(hess, coefficients, constants)
     else:
         base.coefficients.extend(coefficients)
 

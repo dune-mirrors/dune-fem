@@ -180,11 +180,13 @@ class BaseModel:
         """find coefficients/constants in code string and do replacements
         """
         if coefficients:
+            l = list(coefficients.items())
+            l.sort()
             number = 0
             numCoeffs = [coef['number'] for coef in self.coefficients if coef['constant'] == False]
             if numCoeffs:
                 number = max(numCoeffs) + 1
-            for key, val in coefficients.items():
+            for key,val in l:
                 check = 0
                 for coef in self.coefficients:
                     if key == coef['name']:
