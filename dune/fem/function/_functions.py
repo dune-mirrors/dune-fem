@@ -76,8 +76,24 @@ def discreteFunction(space, name, expr=None, *args, **kwargs):
     Returns:
         DiscreteFunction: the constructed discrete function
     """
-    storage, dfIncludes, dfTypeName, _, _ = space.storage
-    df = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName).DiscreteFunction(space,name)
+    storage, dfIncludes, dfTypeName, _, _,backend = space.storage
+
+    Df = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName).DiscreteFunction
+    def backend_(self):
+        try:
+            return self._backend
+        except:
+            pass
+        try:
+            import numpy as np
+            return np.array( self.dofVector, copy=False )
+        except:
+            pass
+        return None
+    if not backend is None:
+        setattr(Df,backend,property(backend_))
+
+    df = Df(space,name)
     if expr is None:
         df.clear()
     else:

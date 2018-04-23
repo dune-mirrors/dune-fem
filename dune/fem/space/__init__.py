@@ -85,7 +85,7 @@ def addStorage(obj, storage):
         assert storageToSolver(storage), "wrong storage (" + storage + ") passed to space"
         storage = create.discretefunction(storageToSolver(storage))(obj)
     else:
-        storage = storage(cls)
+        storage = storage(obj)
     setattr(obj, "storage", storage)
 
 fileBase = "femspace"

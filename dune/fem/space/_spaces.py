@@ -327,7 +327,7 @@ def combined(*spaces, **kwargs):
     combinedStorage = None
     combinedField = None
     for space in spaces:
-        storage, _, _, _, _ = space.storage
+        storage, _, _, _, _, _ = space.storage
         if combinedStorage and (combinedStorage != storage):
             raise Exception("Cannot create TupleDiscreteFunctionSpace with different types of storage")
         else:
@@ -373,7 +373,7 @@ def product(*spaces, **kwargs):
     combinedStorage = None
     combinedField = None
     for space in spaces:
-        storage, _, _, _, _ = space.storage
+        storage, _, _, _, _, _ = space.storage
         if combinedStorage and (combinedStorage != storage):
             raise Exception("Cannot create TupleDiscreteFunctionSpace with different types of storage")
         else:
@@ -418,7 +418,7 @@ def product(*spaces, **kwargs):
     spc = mod.Space(spaces)
     addStorage(spc, [None,mod.Space.storage[1]+["dune/fem/function/tuplediscretefunction.hh"],
                         "Dune::Fem::TupleDiscreteFunction< " + ", ".join(s.storage[2] for s in spaces) + " >",
-                        None,None] )
+                        None,None,None] )
     return spc
 
 def bdm(view, order=1, field="double", storage=None, **unused):
