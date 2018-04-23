@@ -36,6 +36,57 @@ namespace Dune
     namespace detail
     {
 
+      // registerDofVectorBuffer
+      // -----------------------
+      //register method if data method already available
+      template < class DofVector, class... options >
+      inline static auto registerDofVectorBuffer ( pybind11::class_< DofVector, options... > cls, PriorityTag< 1 > )
+        -> std::enable_if_t< std::is_convertible< decltype( std::declval< DofVector >().array().data()[0] ), typename DofVector::FieldType  >::value >
+      {
+        typedef typename DofVector::FieldType Field;
+
+        cls.def_buffer( [] ( DofVector &self ) -> pybind11::buffer_info {
+            return pybind11::buffer_info(
+                self.array().data(),                                    /* Pointer to buffer */
+                sizeof( Field ),                                        /* Size of one scalar */
+                pybind11::format_descriptor< Field >::format(),         /* Python struct-style format descriptor */
+                1,                                                      /* Number of dimensions */
+                { self.array().size() },                                /* Buffer dimensions */
+                { sizeof( Field ) }                                     /* Strides (in bytes) for each index */
+            );
+          } ); // , pybind11::keep_alive< 0, 1 >() );
+
+
+        cls.def( "__getitem__", [] ( const DofVector &self, std::size_t index ) -> Field {
+            if( index < self.array().size() )
+              return self.array().data()[index];
+            else
+              throw pybind11::index_error();
+          });
+
+
+        cls.def( "__setitem__", [] ( DofVector &self, std::size_t index, Field value ) {
+            if( index < self.array().size() )
+              return self.array().data()[index] = value;
+            else
+              throw pybind11::index_error();
+          });
+
+        cls.def( "__len__", [] ( const DofVector &self ) { return self.array().size(); } );
+      }
+
+      template< class DofVector, class... options >
+      inline static void registerDofVectorBuffer ( pybind11::class_< DofVector, options... > cls, PriorityTag< 0 > )
+      {}
+
+      template< class DofVector, class... options >
+      inline static void registerDofVectorBuffer ( pybind11::class_< DofVector, options... > cls )
+      {
+        registerDofVectorBuffer( cls, PriorityTag< 42 >() );
+      }
+
+
+
 #if HAVE_DUNE_ISTL
       template< class A , class B>
       inline static const BlockVector<A , B> &getBlockVector (const  BlockVector< A,B > &vector ) noexcept
@@ -53,10 +104,10 @@ namespace Dune
 
 #ifdef PETSC4PY_H // will be set it petsc4py.h was included (so import_petsc4py exists and the python module as well)
       template< class DF , class ... options>
-      inline auto addDofVector(pybind11::class_<DF,options...> cls, PriorityTag<3> )
+      inline auto addDofVectorBackEnd(pybind11::class_<DF,options...> cls, PriorityTag<3> )
       -> void_t< decltype(std::declval<DF&>().petscVec()) >
       {
-        cls.def_property_readonly( "dofVector", [] ( DF &self )
+        cls.def_property_readonly( "_backend", [] ( DF &self )
         {
           if (import_petsc4py() != 0)
           {                           \
@@ -70,30 +121,48 @@ namespace Dune
         });
       }
 #endif
-      //create a SFINAE so that if the type is a ISTL blockvector we instead return the self.dofVector.array() instead of just the dofVector in the other cases
-      //SFINAE checks whether getBlockVector is a valid function call for ISTL block matrix and also gives
-      // priority
-      // not sure whatthe class... options
-      //if it's of istl blockvector type return the array otherwise do the other stuff
       template< class DF , class ... options>
-      inline auto addDofVector(pybind11::class_<DF,options...> cls, PriorityTag<2> )
+      inline auto addDofVectorBackEnd(pybind11::class_<DF,options...> cls, PriorityTag<2> )
       -> void_t< decltype(getBlockVector(std::declval<DF&>().dofVector().array())) >
       {
-        cls.def_property_readonly( "dofVector", [] ( DF &self )
+        typedef typename DF::DofVectorType DofVector;
+        //check if BlockVector Is already registered if not register it
+        typedef std::decay_t< decltype( getBlockVector( std::declval< DofVector& >().array() ) ) > BlockVector;
+        //it's here that I need to add it's name to the type registery
+        if( !pybind11::already_registered< BlockVector >() )
+        {
+          Python::registerBlockVector< BlockVector >( cls );
+        }
+        cls.def_property_readonly( "_backend", [] ( DF &self )
         -> decltype( getBlockVector(std::declval<DF&>().dofVector().array()) )
         {
           return self.dofVector().array();
         });
       }
       template< class DF , class ... options>
-      inline void addDofVector(pybind11::class_<DF,options...> cls, PriorityTag<1> )
+      inline void addDofVectorBackEnd(pybind11::class_<DF,options...> cls, PriorityTag<1> )
       {
+      }
+      template< class DF , class ... options>
+      inline void addDofVector(pybind11::class_<DF,options...> cls )
+      {
+        using pybind11::operator""_a;
+        typedef typename DF::DofVectorType DofVector;
+        if( !pybind11::already_registered< DofVector >() )
+        {
+          auto clsDof = pybind11::class_< DofVector >( cls, "dofVector", pybind11::buffer_protocol() );
+
+          clsDof.def_property_readonly( "size", [] ( DofVector &self ) { return self.size(); } );
+          clsDof.def( "assign", [] ( DofVector &self, const DofVector &other ) { self = other; }, "other"_a );
+          clsDof.def( "scalarProduct", [] ( const DofVector &self, const DofVector &other ) { return self*other; }, "other"_a );
+          registerDofVectorBuffer( clsDof );
+        }
         cls.def_property_readonly( "dofVector", [] ( DF &self )
         {
           return self.dofVector();
         });
+        addDofVectorBackEnd(cls, PriorityTag<42>());
       }
-
       // registerRestrictProlong
       // -----------------------
 
@@ -159,74 +228,6 @@ namespace Dune
       {
         registerDiscreteFunctionConstructor( cls, PriorityTag< 42 >() );
       }
-
-      //register method if data method already available
-
-#if HAVE_DUNE_ISTL
-      template < class DofVector, class... options >
-      inline static auto registerDofVectorBuffer ( pybind11::class_< DofVector, options... > cls, PriorityTag< 2 > )
-       -> void_t< decltype( getBlockVector(std::declval<  DofVector& >().array() ) )  >
-      {
-        //check if BlockVector Is already registered if not register it
-        typedef std::decay_t< decltype( getBlockVector( std::declval< DofVector& >().array() ) ) > BlockVector;
-        //it's here that I need to add it's name to the type registery
-        if( !pybind11::already_registered< BlockVector >() )
-        {
-          Python::registerBlockVector< BlockVector >( cls );
-        }
-      }
-#endif
-
-      // registerDofVectorBuffer
-      // -----------------------
-
-      template < class DofVector, class... options >
-      inline static auto registerDofVectorBuffer ( pybind11::class_< DofVector, options... > cls, PriorityTag< 1 > )
-        -> std::enable_if_t< std::is_convertible< decltype( std::declval< DofVector >().array().data()[0] ), typename DofVector::FieldType  >::value >
-      {
-        typedef typename DofVector::FieldType Field;
-
-        cls.def_buffer( [] ( DofVector &self ) -> pybind11::buffer_info {
-            return pybind11::buffer_info(
-                self.array().data(),                                    /* Pointer to buffer */
-                sizeof( Field ),                                        /* Size of one scalar */
-                pybind11::format_descriptor< Field >::format(),         /* Python struct-style format descriptor */
-                1,                                                      /* Number of dimensions */
-                { self.array().size() },                                /* Buffer dimensions */
-                { sizeof( Field ) }                                     /* Strides (in bytes) for each index */
-            );
-          } ); // , pybind11::keep_alive< 0, 1 >() );
-
-
-        cls.def( "__getitem__", [] ( const DofVector &self, std::size_t index ) -> Field {
-            if( index < self.array().size() )
-              return self.array().data()[index];
-            else
-              throw pybind11::index_error();
-          });
-
-
-        cls.def( "__setitem__", [] ( DofVector &self, std::size_t index, Field value ) {
-            if( index < self.array().size() )
-              return self.array().data()[index] = value;
-            else
-              throw pybind11::index_error();
-          });
-
-        cls.def( "__len__", [] ( const DofVector &self ) { return self.array().size(); } );
-      }
-
-      template< class DofVector, class... options >
-      inline static void registerDofVectorBuffer ( pybind11::class_< DofVector, options... > cls, PriorityTag< 0 > )
-      {}
-
-      template< class DofVector, class... options >
-      inline static void registerDofVectorBuffer ( pybind11::class_< DofVector, options... > cls )
-      {
-        registerDofVectorBuffer( cls, PriorityTag< 42 >() );
-      }
-
-
 
       // registerSubDiscreteFunction
       // ---------------------------
@@ -309,23 +310,7 @@ namespace Dune
           }, "value"_a );
 
 
-
-        //put all this that follows behind SFINAE or maybe just the readonly dofVector
-        //do I want the buffer protocol if
-        typedef typename DF::DofVectorType DofVector;
-        if( !pybind11::already_registered< DofVector >() )
-        {
-          auto clsDof = pybind11::class_< DofVector >( module, "DofVector", pybind11::buffer_protocol() );
-
-          clsDof.def_property_readonly( "size", [] ( DofVector &self ) { return self.size(); } );
-          clsDof.def( "assign", [] ( DofVector &self, const DofVector &other ) { self = other; }, "other"_a );
-          clsDof.def( "scalarProduct", [] ( const DofVector &self, const DofVector &other ) { return self*other; }, "other"_a );
-
-          //the registration of the actual dofvector also happens inside this
-          registerDofVectorBuffer( clsDof );
-        }
-
-        addDofVector(cls, PriorityTag<42>());
+        addDofVector(cls);
         registerSubDiscreteFunction( cls );
 
         typedef Dune::Fem::AddLocalContribution<DF> AddLocalContrib;

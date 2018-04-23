@@ -193,24 +193,6 @@ namespace Dune
         cls.def( "assemble", [] ( pybind11::handle obj, const GF &ubar ) {
             Scheme &self = obj.template cast<Scheme&>();
 
-#if 0
-            ColCompMatrix<MatrixType>* ccs = new ColCompMatrix<MatrixType>();
-            ccs->setMatrix( self.assemble( ubar ).matrix() );
-            pybind11::array data(ccs->nnz(), ccs->getValues());
-            pybind11::array outerIndices(ccs->M() + 1, ccs->getColStart());
-            pybind11::array innerIndices(ccs->nnz(), ccs->getRowIndex());
-            pybind11::object matrix_type = pybind11::module::import("scipy.sparse").attr("csc_matrix");
-            pybind11::object mat = matrix_type(
-                std::make_tuple(data, innerIndices, outerIndices),
-                std::make_pair(ccs->N(), ccs->M())
-            );
-            pybind11::cpp_function remove_ccs( [ ccs ] ( pybind11::handle weakref ) {
-                delete ccs;
-                weakref.dec_ref();
-              } );
-            pybind11::weakref weakref( mat, remove_ccs );
-            weakref.release();
-#endif
             auto& mat = self.assemble( ubar ).matrix();
 
             pybind11::array_t<size_t> outerIndices(mat.rows() + 1);
