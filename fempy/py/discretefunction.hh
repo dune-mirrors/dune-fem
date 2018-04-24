@@ -150,12 +150,12 @@ namespace Dune
         typedef typename DF::DofVectorType DofVector;
         if( !pybind11::already_registered< DofVector >() )
         {
-          auto clsDof = pybind11::class_< DofVector >( cls, "dofVector", pybind11::buffer_protocol() );
+          auto clsDof = pybind11::class_< DofVector >( cls, "DofVector", pybind11::buffer_protocol() );
+          registerDofVectorBuffer( clsDof );
 
           clsDof.def_property_readonly( "size", [] ( DofVector &self ) { return self.size(); } );
           clsDof.def( "assign", [] ( DofVector &self, const DofVector &other ) { self = other; }, "other"_a );
           clsDof.def( "scalarProduct", [] ( const DofVector &self, const DofVector &other ) { return self*other; }, "other"_a );
-          registerDofVectorBuffer( clsDof );
         }
         cls.def_property_readonly( "dofVector", [] ( DF &self )
         {
