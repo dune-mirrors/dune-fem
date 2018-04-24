@@ -370,18 +370,15 @@ def product(*spaces, **kwargs):
 
     if not spaces:
         raise Exception("Cannot create TupleDiscreteFunctionSpace from empty tuple of discrete function spaces")
-    combinedStorage = None
     combinedField = None
+    combinedIncludes = None
     for space in spaces:
         storage, _, _, _, _, _ = space.storage
-        if combinedStorage and (combinedStorage != storage):
-            raise Exception("Cannot create TupleDiscreteFunctionSpace with different types of storage")
-        else:
-            combinedStorage = storage
         if combinedField and (combinedField != space.field):
             raise Exception("Cannot create TupleDiscreteFunctionSpace with different field types")
         else:
             combinedField = space.field
+    combinedIncludes = [i for s in spaces for i in s.storage[1]]
 
     includes = ["dune/fem/space/combinedspace/tuplespace.hh"]
     for space in spaces:
@@ -416,7 +413,7 @@ def product(*spaces, **kwargs):
 
     # there is no obvious operator associated with the TupleDF used for this space
     spc = mod.Space(spaces)
-    addStorage(spc, [None,mod.Space.storage[1]+["dune/fem/function/tuplediscretefunction.hh"],
+    addStorage(spc, lambda _: [None,combinedIncludes+["dune/fem/function/tuplediscretefunction.hh"],
                         "Dune::Fem::TupleDiscreteFunction< " + ", ".join(s.storage[2] for s in spaces) + " >",
                         None,None,None] )
     return spc

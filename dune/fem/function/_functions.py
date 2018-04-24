@@ -78,22 +78,7 @@ def discreteFunction(space, name, expr=None, *args, **kwargs):
     """
     storage, dfIncludes, dfTypeName, _, _,backend = space.storage
 
-    Df = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName).DiscreteFunction
-    def backend_(self):
-        try:
-            return self._backend
-        except:
-            pass
-        try:
-            import numpy as np
-            return np.array( self.dofVector, copy=False )
-        except:
-            pass
-        return None
-    if not backend is None:
-        setattr(Df,backend,property(backend_))
-
-    df = Df(space,name)
+    df = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName, backend).DiscreteFunction(space,name)
     if expr is None:
         df.clear()
     else:
@@ -123,7 +108,7 @@ def numpyFunction(space, vec, name="tmp", **unused):
     typeName = "Dune::Fem::VectorDiscreteFunction< " +\
           spaceType + ", Dune::FemPy::NumPyVector< " + field + " > >"
 
-    return module("numpy", includes, typeName).DiscreteFunction(space,name,vec).as_ufl()
+    return module("numpy", includes, typeName, "as_numpy").DiscreteFunction(space,name,vec).as_ufl()
 
 
 def tupleDiscreteFunction(*spaces, **kwargs):
