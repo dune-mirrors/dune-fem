@@ -212,6 +212,15 @@ namespace Dune
             pybind11::detail::keep_alive_impl( copy, pybind11::detail::get_object_handle( &self.space(), pybind11::detail::get_type_info( typeid( Space ) ) ) );
             return copy;
           } );
+        cls.def( "copy", [] ( DF &self, const std::string &name ) {
+            DF *df = new DF( self );
+            df->name() = name;
+            pybind11::object copy = pybind11::cast( df , pybind11::return_value_policy::take_ownership );
+
+            // keep alive discrete function space until copy dies, too
+            pybind11::detail::keep_alive_impl( copy, pybind11::detail::get_object_handle( &self.space(), pybind11::detail::get_type_info( typeid( Space ) ) ) );
+            return copy;
+          } );
 
         cls.def( "clear", [] ( DF &self ) { self.clear(); } );
         cls.def( "assign", [] ( DF &self, const DF &other ) { self.assign( other ); }, "other"_a );
