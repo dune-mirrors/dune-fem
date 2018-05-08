@@ -97,7 +97,6 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
     return module(includes, typeName).Scheme(space, model, parameters)
 
 
-def galerkin(space, integrands, solver=None, parameters={}):
 def galerkin(space, integrands, solver=None, parameters={},
              virtualize=None):
     integrandsParam = None
