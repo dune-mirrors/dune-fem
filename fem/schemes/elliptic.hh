@@ -72,6 +72,10 @@ struct NoConstraints
   void operator ()( const DiscreteFunctionType& u, DiscreteFunctionType& w ) const
   {}
 
+  template < class DiscreteFunctionType >
+  void operator ()( const DiscreteFunctionType& u) const
+  {}
+
   template < class GridFunctionType, class DiscreteFunctionType >
   void operator ()( const GridFunctionType& u, DiscreteFunctionType& w ) const
   {}
