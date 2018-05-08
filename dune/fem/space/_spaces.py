@@ -21,7 +21,7 @@ def dgonb(gridview, order=1, dimrange=1, field="double", storage=None, **unused)
         Space: the constructed Space
     """
 
-    from dune.fem.space import module
+    from dune.fem.space import module, addStorage
     if dimrange < 1:
         raise KeyError(\
             "Parameter error in DiscontinuosGalerkinSpace with "+
@@ -41,7 +41,9 @@ def dgonb(gridview, order=1, dimrange=1, field="double", storage=None, **unused)
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
 
-    return module(field, storage, includes, typeName).Space(gridview)
+    spc = module(field, includes, typeName).Space(gridview)
+    addStorage(spc, storage)
+    return spc
 
 def dgonbhp(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
     """create a discontinous galerkin space with elementwise orthonormal basis functions capable of hp-adaptation
@@ -57,7 +59,7 @@ def dgonbhp(gridview, order=1, dimrange=1, field="double", storage=None, **unuse
         Space: the constructed Space
     """
 
-    from dune.fem.space import module
+    from dune.fem.space import module, addStorage
     if dimrange < 1:
         raise KeyError(\
             "Parameter error in hpDG::OrthogonalDiscontinuosGalerkinSpace with "+
@@ -77,7 +79,9 @@ def dgonbhp(gridview, order=1, dimrange=1, field="double", storage=None, **unuse
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
 
-    return module(field, storage, includes, typeName).Space(gridview)
+    spc = module(field, includes, typeName).Space(gridview)
+    addStorage(spc, storage)
+    return spc
 
 def dglegendre(gridview, order=1, dimrange=1, field="double", storage=None, hierarchical=True, **unused):
     """create a discontinous galerkin space with elementwise legendre tensor product basis function
@@ -95,7 +99,7 @@ def dglegendre(gridview, order=1, dimrange=1, field="double", storage=None, hier
         Space: the constructed Space
     """
 
-    from dune.fem.space import module
+    from dune.fem.space import module, addStorage
     if dimrange < 1:
         raise KeyError(\
             "Parameter error in DiscontinuosGalerkinSpace with "+
@@ -118,7 +122,9 @@ def dglegendre(gridview, order=1, dimrange=1, field="double", storage=None, hier
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
 
-    return module(field, storage, includes, typeName).Space(gridview)
+    spc = module(field, includes, typeName).Space(gridview)
+    addStorage(spc, storage)
+    return spc
 
 def dglegendrehp(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
     """create a discontinous galerkin space with elementwise legendre tensor product basis function capable of hp-adaptation
@@ -134,7 +140,7 @@ def dglegendrehp(gridview, order=1, dimrange=1, field="double", storage=None, **
         Space: the constructed Space
     """
 
-    from dune.fem.space import module
+    from dune.fem.space import module, addStorage
     if dimrange < 1:
         raise KeyError(\
             "Parameter error in DiscontinuosGalerkinSpace with "+
@@ -154,7 +160,9 @@ def dglegendrehp(gridview, order=1, dimrange=1, field="double", storage=None, **
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
 
-    return module(field, storage, includes, typeName).Space(gridview)
+    spc = module(field, includes, typeName).Space(gridview)
+    addStorage(spc, storage)
+    return spc
 
 def dglagrange(gridview, order=1, dimrange=1, field="double", storage=None, **unused):
     """create a discontinous galerkin space with elementwise lagrange basis function
@@ -170,7 +178,7 @@ def dglagrange(gridview, order=1, dimrange=1, field="double", storage=None, **un
         Space: the constructed Space
     """
 
-    from dune.fem.space import module
+    from dune.fem.space import module, addStorage
     if dimrange < 1:
         raise KeyError(\
             "Parameter error in DiscontinuosGalerkinSpace with "+
@@ -186,16 +194,13 @@ def dglagrange(gridview, order=1, dimrange=1, field="double", storage=None, **un
 
     dimw = gridview.dimWorld
 
-    # includes = [ "dune/fem/space/lagrange.hh" ] + gridview._includes
-    # typeName = "Dune::Fem::DGLagrangeSpace< " +\
-    #   "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
-    #   "Dune::FemPy::GridPart< " + gridview._typeName + " > >"
-    # return module(field, storage, includes, typeName).Space(gridview,order)
     includes = [ "dune/fem/space/discontinuousgalerkin.hh" ] + gridview._includes
     typeName = "Dune::Fem::LagrangeDiscontinuousGalerkinSpace< " +\
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " >, " + str(order) + " >"
-    return module(field, storage, includes, typeName).Space(gridview)
+    spc = module(field, includes, typeName).Space(gridview)
+    addStorage(spc, storage)
+    return spc
 
 
 def lagrange(view, order=1, dimrange=1, field="double", storage=None, **unused):
@@ -212,7 +217,7 @@ def lagrange(view, order=1, dimrange=1, field="double", storage=None, **unused):
         Space: the constructed Space
     """
 
-    from dune.fem.space import module
+    from dune.fem.space import module, addStorage
     if dimrange < 1:
         raise KeyError(\
             "Parameter error in LagrangeSpace with "+
@@ -232,8 +237,9 @@ def lagrange(view, order=1, dimrange=1, field="double", storage=None, **unused):
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(order) + " >"
 
-    return module(field, storage, includes, typeName).Space(view)
-
+    spc = module(field, includes, typeName).Space(view)
+    addStorage(spc, storage)
+    return spc
 
 def finiteVolume(gridview, dimrange=1, field="double", storage=None, **unused):
     """create a finite volume space
@@ -251,7 +257,7 @@ def finiteVolume(gridview, dimrange=1, field="double", storage=None, **unused):
         Space: the constructed Space
     """
 
-    from dune.fem.space import module
+    from dune.fem.space import module, addStorage
     if dimrange < 1:
         raise KeyError("invalid dimRange: " + str(dimrange) + " (must be >= 1)")
     if field == "complex":
@@ -261,7 +267,9 @@ def finiteVolume(gridview, dimrange=1, field="double", storage=None, **unused):
     functionSpaceType = "Dune::Fem::FunctionSpace< double, " + field + ", " + str(gridview.dimWorld) + ", " + str(dimrange) + " >"
     typeName = "Dune::Fem::FiniteVolumeSpace< " + functionSpaceType + ", Dune::FemPy::GridPart< " + gridview._typeName + " > >"
 
-    return module(field, storage, includes, typeName).Space(gridview)
+    spc = module(field, includes, typeName).Space(gridview)
+    addStorage(spc, storage)
+    return spc
 
 
 def p1Bubble(gridview, dimrange=1, field="double", order=1, storage=None, **unused):
@@ -277,7 +285,7 @@ def p1Bubble(gridview, dimrange=1, field="double", order=1, storage=None, **unus
         Space: the constructed Space
     """
 
-    from dune.fem.space import module
+    from dune.fem.space import module, addStorage
     if dimrange < 1:
         raise KeyError(\
             "Parameter error in P1BubbleSpace with "+
@@ -297,7 +305,9 @@ def p1Bubble(gridview, dimrange=1, field="double", order=1, storage=None, **unus
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + gridview._typeName + " > >"
 
-    return module(field, storage, includes, typeName).Space(gridview)
+    spc = module(field, includes, typeName).Space(gridview)
+    addStorage(spc, storage)
+    return spc
 
 
 def combined(*spaces, **kwargs):
@@ -310,14 +320,14 @@ def combined(*spaces, **kwargs):
         Space: the constructed Space
     """
 
-    from dune.fem.space import module
+    from dune.fem.space import module, addStorage
 
     if not spaces:
         raise Exception("Cannot create TupleDiscreteFunctionSpace from empty tuple of discrete function spaces")
     combinedStorage = None
     combinedField = None
     for space in spaces:
-        storage, _, _, _, _ = space.storage
+        storage, _, _, _, _, _ = space.storage
         if combinedStorage and (combinedStorage != storage):
             raise Exception("Cannot create TupleDiscreteFunctionSpace with different types of storage")
         else:
@@ -336,12 +346,14 @@ def combined(*spaces, **kwargs):
                               ['return new DuneType( spaceTuple);'],
                               ['"spaceTuple"_a', 'pybind11::keep_alive<1,2>()'])
 
-    mod = module(combinedField, combinedStorage, includes, typeName, constructor)
+    mod = module(combinedField, includes, typeName, constructor)
     try:
         mod.Space.componentNames = kwargs["components"]
     except KeyError:
         pass
-    return mod.Space(spaces)
+    spc = mod.Space(spaces)
+    addStorage(spc, combinedStorage)
+    return spc
 
 def product(*spaces, **kwargs):
     """create a discrete function space from a tuple of discrete function spaces
@@ -353,23 +365,20 @@ def product(*spaces, **kwargs):
         Space: the constructed Space
     """
 
-    from dune.fem.space import module
+    from dune.fem.space import module, addStorage
     from dune.fem.function import tupleDiscreteFunction
 
     if not spaces:
         raise Exception("Cannot create TupleDiscreteFunctionSpace from empty tuple of discrete function spaces")
-    combinedStorage = None
     combinedField = None
+    combinedIncludes = None
     for space in spaces:
-        storage, _, _, _, _ = space.storage
-        if combinedStorage and (combinedStorage != storage):
-            raise Exception("Cannot create TupleDiscreteFunctionSpace with different types of storage")
-        else:
-            combinedStorage = storage
+        storage, _, _, _, _, _ = space.storage
         if combinedField and (combinedField != space.field):
             raise Exception("Cannot create TupleDiscreteFunctionSpace with different field types")
         else:
             combinedField = space.field
+    combinedIncludes = [i for s in spaces for i in s.storage[1]]
 
     includes = ["dune/fem/space/combinedspace/tuplespace.hh"]
     for space in spaces:
@@ -379,11 +388,7 @@ def product(*spaces, **kwargs):
     constructor = Constructor(['typename DuneType::DiscreteFunctionSpaceTupleType spaceTuple'],
                               ['return new DuneType( spaceTuple);'],
                               ['"spaceTuple"_a', 'pybind11::keep_alive<1,2>()'])
-    mod = module(combinedField, combinedStorage, includes, typeName, constructor)
-    # there is no obvious operator associated with the TupleDF used for this space
-    mod.Space.storage = [None,mod.Space.storage[1]+["dune/fem/function/tuplediscretefunction.hh"],
-                        "Dune::Fem::TupleDiscreteFunction< " + ", ".join(s.storage[2] for s in spaces) + " >",
-                        None,None]
+    mod = module(combinedField, includes, typeName, constructor)
     try:
         mod.Space.componentNames = kwargs["components"]
     except KeyError:
@@ -406,10 +411,15 @@ def product(*spaces, **kwargs):
             return tupleDiscreteFunction(space, name=name, expr=func, **kwargs)
     setattr(mod.Space, "interpolate", interpolate)
 
-    return mod.Space(spaces)
+    # there is no obvious operator associated with the TupleDF used for this space
+    spc = mod.Space(spaces)
+    addStorage(spc, lambda _: [None,combinedIncludes+["dune/fem/function/tuplediscretefunction.hh"],
+                        "Dune::Fem::TupleDiscreteFunction< " + ", ".join(s.storage[2] for s in spaces) + " >",
+                        None,None,None] )
+    return spc
 
 def bdm(view, order=1, field="double", storage=None, **unused):
-    from dune.fem.space import module
+    from dune.fem.space import module, addStorage
     if order < 1:
         raise KeyError(\
             "Parameter error in LagrangeSpace with "+
@@ -424,10 +434,12 @@ def bdm(view, order=1, field="double", storage=None, **unused):
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimw) + " >, " +\
       "Dune::FemPy::GridPart< " + view._typeName + " >, " + str(order) + " >"
 
-    return module(field, storage, includes, typeName).Space(view)
+    spc = module(field, includes, typeName).Space(view)
+    addStorage(spc, storage)
+    return spc
 
 def rannacherTurek(view, dimrange=1, field="double", storage=None, **unused):
-    from dune.fem.space import module
+    from dune.fem.space import module, addStorage
     if dimrange < 1:
         raise KeyError("invalid dimRange: " + str(dimrange) + " (must be >= 1)")
     if field == "complex":
@@ -439,4 +451,6 @@ def rannacherTurek(view, dimrange=1, field="double", storage=None, **unused):
       "Dune::Fem::FunctionSpace< double, " + field + ", " + str(dimw) + ", " + str(dimrange) + " >, " +\
       "Dune::FemPy::GridPart< " + view._typeName + " > >"
 
-    return module(field, storage, includes, typeName).Space(view)
+    spc = module(field, includes, typeName).Space(view)
+    addStorage(spc, storage)
+    return spc

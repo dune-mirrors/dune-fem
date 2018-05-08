@@ -76,8 +76,9 @@ def discreteFunction(space, name, expr=None, *args, **kwargs):
     Returns:
         DiscreteFunction: the constructed discrete function
     """
-    storage, dfIncludes, dfTypeName, _, _ = space.storage
-    df = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName).DiscreteFunction(space,name)
+    storage, dfIncludes, dfTypeName, _, _,backend = space.storage
+
+    df = dune.fem.discretefunction.module(storage, dfIncludes, dfTypeName, backend).DiscreteFunction(space,name)
     if expr is None:
         df.clear()
     else:
@@ -107,7 +108,7 @@ def numpyFunction(space, vec, name="tmp", **unused):
     typeName = "Dune::Fem::VectorDiscreteFunction< " +\
           spaceType + ", Dune::FemPy::NumPyVector< " + field + " > >"
 
-    return module("numpy", includes, typeName).DiscreteFunction(space,name,vec).as_ufl()
+    return module("numpy", includes, typeName, "as_numpy").DiscreteFunction(space,name,vec).as_ufl()
 
 
 def tupleDiscreteFunction(*spaces, **kwargs):

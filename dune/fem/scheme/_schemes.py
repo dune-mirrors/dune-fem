@@ -23,7 +23,7 @@ def getSolver(solver,storage,default):
             return default(storage,solver[0])
 
 def femscheme(includes, space, solver, operator):
-    storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver = space.storage
+    storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver, backend = space.storage
     _, solverIncludes, solverTypeName = getSolver(solver,space.storage,defaultSolver)
 
     includes += ["dune/fem/schemes/femscheme.hh"] +\
@@ -110,7 +110,7 @@ def galerkin(space, integrands, solver=None, parameters={}):
             integrands = makeIntegrands(space.grid,integrands)
     from . import module
 
-    storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver = space.storage
+    storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver,backend = space.storage
     _, solverIncludes, solverTypeName = getSolver(solver, space.storage, defaultSolver)
 
     includes = ["dune/fem/schemes/galerkin.hh"]

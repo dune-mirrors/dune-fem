@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import sys
+import sys,os
 import logging
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,8 @@ def adaptive():
               space._includes,\
         dfType(space),\
         "Dune::Fem::SparseRowLinearOperator< " + dfType(space) + "," + dfType(space) + ">",\
-        solvers.femsolver
+        solvers.femsolver,\
+        "as_numpy"
     ]
 
 def eigen():
@@ -39,7 +40,8 @@ def eigen():
               space._includes,\
         dfType(space),\
         "Dune::Fem::EigenLinearOperator< " + dfType(space) + "," + dfType(space) + ">",\
-        solvers.eigensolver
+        solvers.eigensolver,\
+        "as_numpy"
     ]
 
 def istl():
@@ -50,27 +52,43 @@ def istl():
               space._includes,\
         dfType(space),\
         "Dune::Fem::ISTLLinearOperator< " + dfType(space) + "," + dfType(space) + ">",
-        solvers.istlsolver
+        solvers.istlsolver,\
+        "as_istl"
     ]
 
 def petsc():
     dfType = lambda space: "Dune::Fem::PetscDiscreteFunction< " + space._typeName + " >"
-    return lambda space:[\
-        "istl",\
-        ["dune/fem/function/petscdiscretefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
-              space._includes,\
-        dfType(space),\
-        "Dune::Fem::PetscLinearOperator< " + dfType(space) + "," + dfType(space) + ">",
-        solvers.petscsolver
-    ]
+    try:
+        import petsc4py
+        return lambda space:[\
+            "petsc",\
+            ["dune/fem/function/petscdiscretefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
+                  [os.path.dirname(petsc4py.__file__)+"/include/petsc4py/petsc4py.h"] +\
+                  space._includes,\
+            dfType(space),\
+            "Dune::Fem::PetscLinearOperator< " + dfType(space) + "," + dfType(space) + ">",
+            solvers.petscsolver,\
+            "as_petsc"
+        ]
+    except:
+        return lambda space:[\
+            "petsc",\
+            ["dune/fem/function/petscdiscretefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
+                  space._includes,\
+            dfType(space),\
+            "Dune::Fem::PetscLinearOperator< " + dfType(space) + "," + dfType(space) + ">",
+            solvers.petscsolver,\
+            "as_petsc"
+        ]
 
 def petscadapt():
     dfType = lambda space: "Dune::Fem::AdaptiveDiscreteFunction< " + space._typeName + " >"
     return lambda space:[\
-        "petscadapt",\
+        "petsc",\
         ["dune/fem/function/adaptivefunction.hh", "dune/fem/operator/linear/petscoperator.hh"] +\
               space._includes,\
         dfType(space),\
         "Dune::Fem::PetscLinearOperator< " + dfType(space) + "," + dfType(space) + ">",
-        solvers.petscsolver
+        solvers.petscsolver,\
+        "as_numpy"
     ]

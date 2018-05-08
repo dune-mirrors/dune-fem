@@ -10,7 +10,7 @@ generator = SimpleGenerator("SpaceAdaptation", "Dune::FemPy")
 modules = {}
 
 def module(space):
-    storage, dfIncludes, dfTypeName, _, _ = space.storage
+    storage, dfIncludes, dfTypeName, _, _, _ = space.storage
     try:
         return modules[dfTypeName]
     except KeyError:
