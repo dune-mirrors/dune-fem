@@ -168,6 +168,11 @@ class DirichletBC:
             self.functionSpace = functionSpace
         self.value = value
         self.subDomain = subDomain
+        if type(value) is list:
+            self.ufl_value = [0 if v is None else v for v in value]
+            self.ufl_value = ufl.as_vector(self.ufl_value)
+        else:
+            self.ufl_value = value
 
 # there is an issue here that evaluating a ufl expression can
 # be very slow!
