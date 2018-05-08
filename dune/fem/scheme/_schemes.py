@@ -98,6 +98,8 @@ def dgGalerkin(space, model, penalty, solver=None, parameters={}):
 
 
 def galerkin(space, integrands, solver=None, parameters={}):
+def galerkin(space, integrands, solver=None, parameters={},
+             virtualize=None):
     integrandsParam = None
     if isinstance(integrands, (list, tuple)):
         integrandsParam = integrands[1:]
@@ -113,13 +115,20 @@ def galerkin(space, integrands, solver=None, parameters={}):
     storageStr, dfIncludes, dfTypeName, linearOperatorType, defaultSolver,backend = space.storage
     _, solverIncludes, solverTypeName = getSolver(solver, space.storage, defaultSolver)
 
+    if virtualize is None:
+        virtualize = integrands.virtualized
+
     includes = ["dune/fem/schemes/galerkin.hh"]
     includes += space._includes + dfIncludes + solverIncludes
+    includes += integrands._includes
     includes += ["dune/fempy/parameter.hh"]
 
     spaceType = space._typeName
     valueType = 'std::tuple< typename ' + spaceType + '::RangeType, typename ' + spaceType + '::JacobianRangeType >'
-    integrandsType = 'Dune::Fem::VirtualizedIntegrands< typename ' + spaceType + '::GridPartType, ' + integrands._domainValueType + ", " + integrands._rangeValueType+ ' >'
+    if virtualize:
+        integrandsType = 'Dune::Fem::VirtualizedIntegrands< typename ' + spaceType + '::GridPartType, ' + integrands._domainValueType + ", " + integrands._rangeValueType+ ' >'
+    else:
+        integrandsType = integrands._typeName
 
     typeName = 'Dune::Fem::GalerkinScheme< ' + integrandsType + ', ' + linearOperatorType + ', ' + solverTypeName + ' >'
 

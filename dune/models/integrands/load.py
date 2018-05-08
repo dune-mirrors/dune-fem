@@ -77,19 +77,23 @@ def setConstant(integrands, index, value):
 
 
 class Source(object):
-    def __init__(self, gridType, gridIncludes, integrands, tempVars=True):
+    def __init__(self, gridType, gridIncludes, integrands,
+            tempVars=True, virtualize=True):
         self.gridType = gridType
         self.gridIncludes = gridIncludes
         self.integrands = integrands
         self.tempVars = tempVars
+        self.virtualize = virtualize
 
     def signature(self):
         return self.integrands.signature()
 
     def name(self):
         from dune.common.hashit import hashIt
-        return 'integrands_' + self.signature() + '_' + hashIt(self.gridType)
-
+        if self.virtualize:
+            return 'integrands_' + self.signature() + '_' + hashIt(self.gridType)
+        else:
+            return 'integrands_nv' + self.signature() + '_' + hashIt(self.gridType)
 
     def valueTuples(self):
         if isinstance(self.integrands, Form):
@@ -109,7 +113,6 @@ class Source(object):
 
         code = [Include('config.h')]
         code += [Include(i) for i in self.gridIncludes]
-        #code.append(Include("dune/fem/misc/boundaryidprovider.hh"))
 
         code += integrands.includes()
         code.append(Include("dune/python/pybind11/pybind11.h"))
@@ -117,7 +120,12 @@ class Source(object):
         code.append(Include("dune/fempy/py/grid/gridpart.hh"))
 
         if integrands._coefficients:
-            code.append(Include("dune/fempy/function/virtualizedgridfunction.hh"))
+            if self.virtualize:
+                code.append(Include("dune/fempy/function/virtualizedgridfunction.hh"))
+            else:
+                for c in coefficients:
+                    for i in c._includes:
+                        code.append(Include(i))
         code.append(Include("dune/fempy/py/integrands.hh"))
 
         nameSpace = NameSpace('Integrands_' + integrands.signature())
@@ -126,17 +134,22 @@ class Source(object):
 
         code.append(TypeAlias('GridPart', 'typename Dune::FemPy::GridPart< ' + self.gridType + ' >'))
         if integrands._coefficients:
-            coefficients = ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + c + ' >' for c in integrands._coefficients]
+            if self.virtualize:
+                coefficients = ['Dune::FemPy::VirtualizedGridFunction< GridPart, ' + c + ' >' for c in integrands._coefficients]
+            else:
+                coefficients = [c._typeName for c in coefficients]
         else:
             coefficients = []
-        code.append(TypeAlias('Integrands', nameSpace.name + '::Integrands< ' + ', '.join(['GridPart'] + coefficients) + ' >'))
+        integrandsName = nameSpace.name + '::Integrands< ' + ', '.join(['GridPart'] + coefficients) + ' >'
+        code.append(TypeAlias('Integrands', integrandsName))
 
         writer = SourceWriter()
         writer.emit(code);
 
         name = self.name()
         writer.openPythonModule(name)
-        writer.emit('auto cls = Dune::FemPy::registerIntegrands< Integrands >( module );')
+        writer.emit('auto cls = Dune::Python::insertClass<Integrands>(module,"Integrands",Dune::Python::GenerateTypeName("'+integrandsName+'"), Dune::Python::IncludeFiles({"python/dune/generated/'+name+'.cc"})).first;')
+        writer.emit('Dune::FemPy::registerIntegrands< Integrands >( module, cls );')
         if coefficients:
             coefficientNames = integrands.coefficientNames
             initArgs = ', '.join('const ' + t + ' &' + n for t, n in zip(coefficients, coefficientNames))
@@ -148,6 +161,7 @@ class Source(object):
         for t, n in zip(integrands.constantTypes, integrands.constantNames):
             te = "Integrands::" + t
             writer.emit('cls.def_property( "' + n + '", [] ( Integrands &self ) -> ' + te + ' { return self.' + n + '(); }, [] ( Integrands &self, const ' + te + ' &v ) { self.' + n + '() = v; } );')
+        writer.emit('cls.def_property_readonly( "virtualized", [] ( Integrands& ) -> bool { return '+str(self.virtualize).lower()+';});')
 
         writer.closePythonModule(name)
 
@@ -156,11 +170,12 @@ class Source(object):
         return source
 
 
-def load(grid, integrands, renumbering=None, tempVars=True):
+def load(grid, integrands, renumbering=None, tempVars=True, virtualize=True):
     if isinstance(integrands, Equation):
         integrands = integrands.lhs - integrands.rhs
 
-    source = Source(grid._typeName, grid._includes, integrands, tempVars=tempVars)
+    source = Source(grid._typeName, grid._includes, integrands,
+            tempVars=tempVars,virtualize=virtualize)
     if isinstance(integrands, Form):
         coefficients = set(integrands.coefficients())
         numCoefficients = len(coefficients)
