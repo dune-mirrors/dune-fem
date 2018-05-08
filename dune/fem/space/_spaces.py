@@ -364,10 +364,11 @@ def product(*spaces, **kwargs):
     Returns:
         Space: the constructed Space
     """
-
     from dune.fem.space import module, addStorage
     from dune.fem.function import tupleDiscreteFunction
 
+    if len(spaces)==1 and (isinstance(spaces[0],list) or isinstance(spaces[0],tuple)):
+        spaces = spaces[0]
     if not spaces:
         raise Exception("Cannot create TupleDiscreteFunctionSpace from empty tuple of discrete function spaces")
     combinedField = None
