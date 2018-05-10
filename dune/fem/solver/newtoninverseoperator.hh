@@ -100,6 +100,15 @@ namespace Dune
         return parameter_.getValue< int >( keyPrefix_ + "maxlineariterations", std::numeric_limits< int >::max() );
       }
 
+      enum class LineSearchMethod {
+          none   = 0,
+          simple = 1
+        };
+      virtual LineSearchMethod lineSearch () const
+      {
+        const std::string lineSearchMethods[] = { "none", "simple" };
+        return static_cast< LineSearchMethod>( parameter_.getEnum( keyPrefix_ + "lineSearch", lineSearchMethods, 0 ) );
+      }
     };
 
 
@@ -192,6 +201,7 @@ namespace Dune
           maxLinearIterations_( parameter.maxLinearIterationsParameter() ),
           jInv_( std::move( jInv ) ),
           parameter_(parameter),
+          lsMethod_( parameter.lineSearch() ),
           finished_( [ epsilon ] ( const RangeFunctionType &w, const RangeFunctionType &dw, double res ) { return res < epsilon; } )
       {}
 
@@ -313,6 +323,8 @@ namespace Dune
       {
         double deltaOld = delta_;
         delta_ = std::sqrt( residual.scalarProductDofs( residual ) );
+        if (lsMethod_ == NewtonParameter::LineSearchMethod::none)
+          return 0;
         if (failed() == NewtonFailure::InvalidResidual)
         {
           double test = dw.scalarProductDofs( dw );
@@ -366,6 +378,7 @@ namespace Dune
       mutable std::unique_ptr< JacobianOperatorType > jOp_;
       const NewtonParameter &parameter_;
       mutable int stepCompleted_;
+      NewtonParameter::LineSearchMethod lsMethod_;
       ErrorMeasureType finished_;
     };
 
