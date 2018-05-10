@@ -222,6 +222,8 @@ def compileUFL(form, *args, **kwargs):
 
             if isinstance(bc.value, list):
                 neuman = [i for i, x in enumerate(bc.value) if x == None]
+            else:
+                neuman = []
 
             value = ExprTensor(u.ufl_shape)
             for key in value.keys():
@@ -234,7 +236,7 @@ def compileUFL(form, *args, **kwargs):
         switch = SwitchStatement(bndId, default=return_(False))
         for i,v in bySubDomain.items():
             code = []
-            if v[1]:
+            if len(v[1])>0:
                 [code.append('dirichletComponent[' + str(c) + '] = 0;') for c in v[1]]
             code.append(return_(True))
             switch.append(i, code)
