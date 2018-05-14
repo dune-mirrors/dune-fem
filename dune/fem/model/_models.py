@@ -29,7 +29,8 @@ def integrands(view, form, *args, **kwargs):
     import dune.ufl
     import dune.models.integrands as integrands
 
-    tempVars = kwargs.pop('tempVars', True)
-    Integrands = integrands.load(view, form, tempVars=tempVars).Integrands
+    tempVars   = kwargs.pop('tempVars', True)
+    virtualize = kwargs.pop('virtualize',True)
+    Integrands = integrands.load(view, form, tempVars=tempVars,virtualize=virtualize).Integrands
 
     return Integrands(*args, **kwargs)

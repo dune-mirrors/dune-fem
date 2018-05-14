@@ -28,8 +28,8 @@ def galerkin(integrands, domainSpace, rangeSpace=None):
     domainSpaceType = domainSpace._typeName
     rangeSpaceType = rangeSpace._typeName
 
-    _, domainFunctionIncludes, domainFunctionType, _, _ = domainSpace.storage
-    _, rangeFunctionIncludes, rangeFunctionType, _, _ = rangeSpace.storage
+    _, domainFunctionIncludes, domainFunctionType, _, _, _ = domainSpace.storage
+    _, rangeFunctionIncludes, rangeFunctionType, _, _, _ = rangeSpace.storage
 
     includes = ["dune/fem/schemes/galerkin.hh", "dune/fempy/py/grid/gridpart.hh"]
     includes += domainSpace._includes + domainFunctionIncludes

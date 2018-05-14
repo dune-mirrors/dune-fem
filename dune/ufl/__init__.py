@@ -5,6 +5,8 @@ import ufl
 import ufl.domain
 import ufl.equation
 
+from dune.deprecate import deprecated
+
 # cell
 # ----
 
@@ -119,12 +121,12 @@ class GridFunction(ufl.Coefficient):
         dimRange = gf.dimRange
         uflSpace = Space((grid.dimGrid, grid.dimWorld), dimRange)
         ufl.Coefficient.__init__(self, uflSpace)
-    def copy(self):
-        return self.gf.copy().as_ufl(); # GridFunction(self.gf.copy())
-    @property
-    def as_numpy(self):
-        import numpy as np
-        return np.array( self.dofVector, copy=False )
+    def copy(self,name=None):
+        if name is None:
+            return self.gf.copy().as_ufl()
+        else:
+            return self.gf.copy(name).as_ufl()
+
     def __getitem__(self,i):
         if isinstance(i,int):
             return GridIndexed(self,i)
@@ -166,6 +168,11 @@ class DirichletBC:
             self.functionSpace = functionSpace
         self.value = value
         self.subDomain = subDomain
+        if type(value) is list:
+            self.ufl_value = [0 if v is None else v for v in value]
+            self.ufl_value = ufl.as_vector(self.ufl_value)
+        else:
+            self.ufl_value = value
 
 # there is an issue here that evaluating a ufl expression can
 # be very slow!

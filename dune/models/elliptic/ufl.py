@@ -145,11 +145,8 @@ def compileUFL(form, *args, **kwargs):
 
     uflCoefficients = set(form.coefficients())
     for bc in dirichletBCs:
-        try:
-            _, c = extract_arguments_and_coefficients(bc.value)
-            uflCoefficients |= set(c)
-        except:
-            assert type(bc.value) is list, "DirichletBC needs UFL vector or list"
+        _, c = extract_arguments_and_coefficients(bc.ufl_value)
+        uflCoefficients |= set(c)
 
     constants = dict()
     coefficients = dict()
@@ -225,23 +222,22 @@ def compileUFL(form, *args, **kwargs):
 
             if isinstance(bc.value, list):
                 neuman = [i for i, x in enumerate(bc.value) if x == None]
-                for i in neuman:
-                    bc.value[i] = 0
-                bc.value = as_vector(bc.value)
+            else:
+                neuman = []
 
             value = ExprTensor(u.ufl_shape)
             for key in value.keys():
-                value[key] = Indexed(bc.value, MultiIndex(tuple(FixedIndex(k) for k in key)))
-            bySubDomain[bc.subDomain] = value
+                value[key] = Indexed(bc.ufl_value, MultiIndex(tuple(FixedIndex(k) for k in key)))
+            bySubDomain[bc.subDomain] = value,neuman
 
         bndId = Variable('const int', 'bndId')
         getBndId = UnformattedExpression('int', 'Dune::Fem::BoundaryIdProvider< typename GridPartType::GridType >::boundaryId( ' + model.arg_i.name + ' )')
 
         switch = SwitchStatement(bndId, default=return_(False))
-        for i in bySubDomain:
+        for i,v in bySubDomain.items():
             code = []
-            if neuman:
-                [code.append('dirichletComponent[' + str(i) + '] = 0;') for i in neuman]
+            if len(v[1])>0:
+                [code.append('dirichletComponent[' + str(c) + '] = 0;') for c in v[1]]
             code.append(return_(True))
             switch.append(i, code)
         model.isDirichletIntersection = [Declaration(bndId, initializer=UnformattedExpression('int', 'BoundaryIdProviderType::boundaryId( ' + model.arg_i.name + ' )')),
@@ -253,8 +249,8 @@ def compileUFL(form, *args, **kwargs):
         predefined = {}
         predefined[x] = UnformattedExpression('auto', 'entity().geometry().global( Dune::Fem::coordinate( ' + model.arg_x.name + ' ) )')
         predefineCoefficients(predefined, model.arg_x)
-        for i, value in bySubDomain.items():
-            switch.append(i, generateCode(predefined, value, tempVars=tempVars))
+        for i, v in bySubDomain.items():
+            switch.append(i, generateCode(predefined, v[0], tempVars=tempVars))
         model.dirichlet = [switch]
 
     coefficients.update(constants)

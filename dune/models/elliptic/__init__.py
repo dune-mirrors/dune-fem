@@ -84,7 +84,7 @@ def load(grid, model, *args, **kwargs):
     if isinstance(model, str):
         with open(model, 'r') as modelFile:
              data = modelFile.read()
-        name = data.split('PYBIND11_PLUGIN( ')[1].split(' )')[0]
+        name = data.split('PYBIND11_MODULE( ')[1].split(',')[0]
         module = builder.load(name, data, "ellipticModel")
         renumbering = {}
         if renumbering is not None:

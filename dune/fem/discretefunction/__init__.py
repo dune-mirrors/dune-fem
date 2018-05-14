@@ -19,23 +19,22 @@ except:
 
 generator = SimpleGenerator("DiscreteFunction", "Dune::FemPy")
 
-def interpolate(self, func):
-    try:
-        gl = len(inspect.getargspec(func)[0])
-    except TypeError:
-        gl = 0
-    if gl == 1:   # global function
-        func = function.globalFunction(self.space.grid, "tmp", self.space.order, func)
-    elif gl == 2: # local function
-        func = function.localFunction(self.space.grid, "tmp", self.space.order, func)
+def interpolate(self, f):
+    if ufl and isinstance(f, GridFunction):
+        func = f.gf
+    elif ufl and isinstance(f, ufl.core.expr.Expr):
+        func = expression2GF(self.space.grid,f,self.space.order).as_ufl()
     else:
         try:
-            if ufl and isinstance(func, GridFunction):
-                func = func.gf
-            elif ufl and isinstance(func, ufl.core.expr.Expr):
-                func = expression2GF(self.space.grid,func,self.space.order)
-        except NameError:
-            pass
+            gl = len(inspect.getargspec(f)[0])
+            if gl == 1:   # global function
+                func = function.globalFunction(self.space.grid, "tmp", self.space.order, f)
+            elif gl == 2: # local function
+                func = function.localFunction(self.space.grid, "tmp", self.space.order, f)
+            elif gl == 3: # local function with self argument (i.e. from @gridFunction)
+                func = function.localFunction(self.space.grid, "tmp", self.space.order, lambda en,x: f(en,x))
+        except TypeError:
+            func = f
     return self._interpolate(func)
 
 def localContribution(self, assembly):
@@ -52,11 +51,27 @@ def addAttr(module, cls, storage):
     setattr(cls, "interpolate", interpolate )
     setattr(cls, "localContribution", localContribution )
 
+def addBackend(Df,backend):
+    def backend_(self):
+        try:
+            return self._backend
+        except:
+            pass
+        try:
+            import numpy as np
+            return np.array( self.dofVector, copy=False )
+        except:
+            pass
+        return None
+    setattr(Df,backend,property(backend_))
+
 fileBase = "femdiscretefunction"
 
-def module(storage, includes, typeName, *args, **kwargs):
+def module(storage, includes, typeName, backend=None, *args, **kwargs):
     includes = includes + ["dune/fempy/py/discretefunction.hh"]
     moduleName = fileBase + "_" + hashlib.md5(typeName.encode('utf-8')).hexdigest()
     module = generator.load(includes, typeName, moduleName, *args, bufferProtocol=True, **kwargs)
     addAttr(module, module.DiscreteFunction, storage)
+    if not backend is None:
+        addBackend(module.DiscreteFunction, backend)
     return module
