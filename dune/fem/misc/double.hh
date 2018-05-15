@@ -923,7 +923,7 @@ namespace Dune
   template <>
   struct IsNumber< Double > : public IsNumber< double > {};
   template <>
-  struct has_nan < Double > : public has_nan < double > {};
+  struct HasNaN < Double > : public HasNaN < double > {};
 
 } // namespace Dune
 
